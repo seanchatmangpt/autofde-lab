@@ -6,11 +6,11 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, is_dataclass
-from enum import Enum
 import hashlib
 import json
 import re
+from dataclasses import asdict, is_dataclass
+from enum import Enum
 from typing import Any, Mapping
 
 from skdecide.fabric.models import DecisionRefusal, RefusalCode

@@ -17,14 +17,14 @@ actuation authority.
 
 from __future__ import annotations
 
-from contextlib import contextmanager
 import json
 import math
 import os
-from pathlib import Path
 import sqlite3
-from threading import RLock
 import time
+from contextlib import contextmanager
+from pathlib import Path
+from threading import RLock
 from typing import Any, Iterator
 
 from skdecide.fabric.canonical import canonical_json
@@ -103,7 +103,9 @@ class SQLiteERRCCache:
                 return None
             expires_ns = row["expires_ns"]
             if expires_ns is not None and int(expires_ns) <= now:
-                connection.execute("DELETE FROM entries WHERE cache_key = ?", (cache_key,))
+                connection.execute(
+                    "DELETE FROM entries WHERE cache_key = ?", (cache_key,)
+                )
                 self._bump("expired")
                 self._bump("misses")
                 return None

@@ -72,7 +72,9 @@ class DSPyDecisionCompiler:
             )
             domain = str(prediction.domain).strip()
             solver_text = str(prediction.solver).strip()
-            solver = None if solver_text.upper() in {"", "AUTO", "NONE"} else solver_text
+            solver = (
+                None if solver_text.upper() in {"", "AUTO", "NONE"} else solver_text
+            )
             domain_arguments = _json_object(
                 str(prediction.domain_arguments_json), "domain_arguments_json"
             )

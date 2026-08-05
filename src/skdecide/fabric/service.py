@@ -6,8 +6,8 @@
 
 from __future__ import annotations
 
-from contextlib import nullcontext
 import inspect
+from contextlib import nullcontext
 from typing import Any, Mapping
 
 from skdecide.fabric.backend import DecisionBackend, ScikitDecideBackend
@@ -94,9 +94,14 @@ class DecisionFabric:
                 raise DecisionRefusal.from_dict(cached_refusal)
 
         try:
-            domain_instance = self._construct_domain(domain, dict(domain_arguments or {}))
+            domain_instance = self._construct_domain(
+                domain, dict(domain_arguments or {})
+            )
             compatible = tuple(
-                sorted(_symbol_name(item) for item in self.backend.match_solvers(domain_instance))
+                sorted(
+                    _symbol_name(item)
+                    for item in self.backend.match_solvers(domain_instance)
+                )
             )
             result = DecisionMatch(
                 domain=domain,
@@ -219,9 +224,7 @@ class DecisionFabric:
             terminal = bool(step_tuple and step_tuple[-1].termination)
             trajectory_payload = [step.as_dict() for step in step_tuple]
             trajectory_sha = sha256(trajectory_payload)
-            standing = (
-                DecisionStanding.SOLVED if terminal else DecisionStanding.BOUNDED
-            )
+            standing = DecisionStanding.SOLVED if terminal else DecisionStanding.BOUNDED
             receipt_subject = {
                 "schema": _FABRIC_SCHEMA,
                 "standing": standing.value,
@@ -310,7 +313,17 @@ class DecisionFabric:
         except (TypeError, ValueError):
             signature = None
         try:
-            if signature is not None and "domain_factory" not in signature.parameters:
+            if signature is None:
+                return solver_type(domain_factory=domain_factory, **arguments)
+
+            parameters = signature.parameters
+            accepts_kwargs = any(
+                parameter.kind is inspect.Parameter.VAR_KEYWORD
+                for parameter in parameters.values()
+            )
+            if "domain_factory" in parameters or accepts_kwargs:
+                return solver_type(domain_factory=domain_factory, **arguments)
+            if "domain" in parameters:
                 return solver_type(domain=domain_factory(), **arguments)
             return solver_type(domain_factory=domain_factory, **arguments)
         except Exception as error:

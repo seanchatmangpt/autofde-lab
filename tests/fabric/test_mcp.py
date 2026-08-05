@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import sys
 from types import SimpleNamespace
 from typing import Any
-import sys
 
 from skdecide.fabric.mcp import create_server
 from skdecide.fabric.service import DecisionFabric
