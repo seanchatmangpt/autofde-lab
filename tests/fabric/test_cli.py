@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import importlib
 from typing import Any
 
-from typer.testing import CliRunner
+import pytest
 
-from skdecide.fabric.cli import app
 from skdecide.fabric.service import DecisionFabric
 
+typer_testing = pytest.importorskip("typer.testing")
+app = importlib.import_module("skdecide.fabric.cli").app
+CliRunner = typer_testing.CliRunner
 runner = CliRunner()
 
 
