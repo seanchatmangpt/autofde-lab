@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 import hashlib
 import json
 from pathlib import Path
 import shutil
-from typing import Any
+from typing import Any, Mapping
 
 import pytest
 
@@ -16,7 +17,10 @@ from skdecide.wasm import (
     ComponentRegistry,
     DirectoryArtifactStore,
     EmbeddedArtifactStore,
+    MfwInteropError,
+    MfwWasm4pmBridge,
     NodeBackend,
+    validate_mfw_envelope,
 )
 from skdecide.wasm._artifacts import ARTIFACTS
 from skdecide.wasm.build import materialize, verify
@@ -38,7 +42,7 @@ class BlockedBackend:
             {
                 "schema": "chatman.ecosystem.response.v1",
                 "status": "BLOCKED",
-                "output": {"reason": "SHOULD_NOT_BE_ADMITTED"},
+                "output": {"reason": "EXTERNAL_DEPENDENCY"},
                 "receipt": {
                     "schema": "chatman.ecosystem.receipt.v1",
                     "scope": "negative-fixture",
@@ -105,14 +109,16 @@ def test_describe_and_admit_are_receipt_bound() -> None:
 
 def test_unadmitted_operation_is_typed_refusal() -> None:
     result = ChatmanEcosystem(backend=node_backend()).ggen.invoke("render")
-    assert result.status == "REFUSED"
+    assert result.status == "REFUSED:OPERATION_NOT_ADMITTED"
     assert result.output["reason"] == "OPERATION_NOT_ADMITTED"
+    assert result.receipt["standing"] == "REFUSED:OPERATION_NOT_ADMITTED"
+    assert result.receipt["guest_standing"] == "REFUSED"
 
 
-def test_errc_rejects_blocked_guest_standing() -> None:
-    ecosystem = ChatmanEcosystem(backend=BlockedBackend())
-    with pytest.raises(AbiViolation, match="receipt-bound ABI"):
-        ecosystem.ggen.invoke("self_test")
+def test_blocked_guest_standing_is_preserved() -> None:
+    result = ChatmanEcosystem(backend=BlockedBackend()).ggen.invoke("self_test")
+    assert result.status == "BLOCKED"
+    assert result.receipt["standing"] == "BLOCKED"
 
 
 def test_materialized_inventory_is_deterministic_and_executable(
@@ -138,9 +144,170 @@ def test_directory_store_refuses_artifact_drift(tmp_path: Path) -> None:
         store.load(descriptor)
 
 
-def test_registry_manifest_has_no_blocked_or_partial_state() -> None:
+def test_registry_manifest_has_no_unverified_runtime_state() -> None:
     manifest = ComponentRegistry.default().as_manifest()
     encoded = json.dumps(manifest, sort_keys=True)
     assert "BLOCKED" not in encoded
     assert "PARTIAL_ALIVE" not in encoded
     assert manifest["component_count"] == 16
+
+
+def _canonical(value: Any) -> bytes:
+    return json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    ).encode("utf-8")
+
+
+def _digest(value: Any) -> str:
+    return hashlib.sha256(_canonical(value)).hexdigest()
+
+
+def _interop_envelope(
+    request: Mapping[str, Any],
+    *,
+    mfw_revision: str,
+    wasm4pm_revision: str,
+) -> dict[str, Any]:
+    result = {
+        "ok": True,
+        "oracle": "mfw-python-v1",
+        "result": {"planning_type": "classical", "plan": ["move-a-b"]},
+    }
+    source = {
+        "mfw_repository": "seanchatmangpt/mfw",
+        "mfw_revision": mfw_revision,
+        "wasm4pm_repository": "seanchatmangpt/wasm4pm",
+        "wasm4pm_revision": wasm4pm_revision,
+    }
+    authority = {"class": "candidate", "actuation": "none"}
+    request_sha256 = _digest(request)
+    result_sha256 = _digest(result)
+    receipt_core = {
+        "schema": "chatman.mfw-wasm4pm.receipt.v1",
+        "subject": {
+            **source,
+            "request_sha256": request_sha256,
+            "result_sha256": result_sha256,
+        },
+        "authority": authority,
+        "standing": "ALIVE",
+        "replay": {
+            "operation": "admit_mfw_candidate",
+            "request_sha256": request_sha256,
+            "result_sha256": result_sha256,
+        },
+    }
+    return {
+        "schema": "chatman.mfw-wasm4pm.planning.v1",
+        "status": "ALIVE",
+        "source": source,
+        "authority": authority,
+        "request": dict(request),
+        "request_sha256": request_sha256,
+        "result": result,
+        "result_sha256": result_sha256,
+        "receipt": {
+            **receipt_core,
+            "receipt_sha256": _digest(receipt_core),
+        },
+    }
+
+
+@dataclass
+class _Descriptor:
+    revision: str
+
+
+@dataclass
+class _AdapterResult:
+    status: str
+    receipt: dict[str, Any]
+
+
+class _Binding:
+    def __init__(self, revision: str, name: str) -> None:
+        self.descriptor = _Descriptor(revision)
+        self.name = name
+        self.calls: list[tuple[Mapping[str, Any], Mapping[str, Any]]] = []
+
+    def admit(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        authority: Mapping[str, Any],
+    ) -> _AdapterResult:
+        self.calls.append((payload, authority))
+        return _AdapterResult(
+            "ALIVE",
+            {"component": self.name, "authority": dict(authority)},
+        )
+
+
+class _Ecosystem:
+    def __init__(self, mfw_revision: str, wasm4pm_revision: str) -> None:
+        self.mfw = _Binding(mfw_revision, "mfw")
+        self.wasm4pm = _Binding(wasm4pm_revision, "wasm4pm")
+
+
+class _Transport:
+    def solve(
+        self,
+        request: Mapping[str, Any],
+        *,
+        mfw_revision: str,
+        wasm4pm_revision: str,
+    ) -> Mapping[str, Any]:
+        return _interop_envelope(
+            request,
+            mfw_revision=mfw_revision,
+            wasm4pm_revision=wasm4pm_revision,
+        )
+
+
+def test_mfw_bridge_admits_exact_candidate_through_both_adapters() -> None:
+    registry = ComponentRegistry.default()
+    mfw_revision = registry.by_name("mfw").revision
+    wasm4pm_revision = registry.by_name("wasm4pm").revision
+    request = {
+        "schema": "mfw.universal-planning.v1",
+        "planning_type": "classical",
+        "problem": {"id": "tiny"},
+    }
+    ecosystem = _Ecosystem(mfw_revision, wasm4pm_revision)
+    result = MfwWasm4pmBridge(ecosystem, _Transport()).solve(request)
+    assert result.standing == "ALIVE"
+    assert result.candidate["result"]["plan"] == ["move-a-b"]
+    assert len(ecosystem.mfw.calls) == 1
+    assert len(ecosystem.wasm4pm.calls) == 1
+    assert ecosystem.mfw.calls[0][1] == {
+        "class": "candidate",
+        "actuation": "none",
+    }
+
+
+def test_mfw_candidate_drift_is_refused_before_adapter_execution() -> None:
+    registry = ComponentRegistry.default()
+    mfw_revision = registry.by_name("mfw").revision
+    wasm4pm_revision = registry.by_name("wasm4pm").revision
+    request = {
+        "schema": "mfw.universal-planning.v1",
+        "planning_type": "classical",
+        "problem": {"id": "tiny"},
+    }
+    envelope = _interop_envelope(
+        request,
+        mfw_revision=mfw_revision,
+        wasm4pm_revision=wasm4pm_revision,
+    )
+    envelope["result"]["result"]["plan"].append("tampered")
+    with pytest.raises(MfwInteropError, match="RESULT_DIGEST_MISMATCH"):
+        validate_mfw_envelope(
+            envelope,
+            request=request,
+            mfw_revision=mfw_revision,
+            wasm4pm_revision=wasm4pm_revision,
+        )
