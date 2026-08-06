@@ -40,7 +40,13 @@ repository = "https://github.com/airbus/scikit-decide"
 
 [project.optional-dependencies]
 shared = [  # define a common extra to avoid redefining dependencies in both domains and solvers
-    "gymnasium>=0.28.1,<1",
+    "gymnasium>=0.29.1,<2",  # verified real: gymnasium>=1 is required by ray[rllib]>=2.52.1 (real
+    # gymnasium.VectorizeMode import at rllib import time) and works with GymDomain (real
+    # PPO train+rollout via RayRLlib on gymnasium==1.3.0); <2 matches stable-baselines3's own
+    # real declared ceiling (gymnasium<2.0,>=0.29.1). AsLegacyGymV21Env/AsGymnasiumEnv (which
+    # wrap pre-gymnasium legacy `gym` environments) require gymnasium<1's now-removed
+    # EnvCompatibility/LegacyEnv classes and raise a clear real ImportError if instantiated
+    # on gymnasium>=1 -- see skdecide/hub/domain/gym/gym.py.
     "numpy>=2.0; sys_platform != 'darwin' or platform_machine != 'x86_64'",
     "numpy >=1.20.1,<2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
     "scipy>=1.9.2",
@@ -66,7 +72,13 @@ domains = [
 solvers = [
     "scikit-decide[shared]", # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
     "joblib>=1.0.1",
-    "ray[rllib]>=2.9.0, <2.38",
+    "ray[rllib]>=2.52.1",  # verified real: 2.52.1 is the first PyPI release with cp313 wheels
+    # (previously pinned <2.38 because ray made rllib's "new API stack" the default from 2.38/2.40
+    # onward, which this solver's old-stack-specific code -- RolloutWorker subclassing,
+    # local_worker(), Policy-based masking models -- cannot use; the solver now explicitly opts
+    # into the old stack via `.api_stack(enable_rl_module_and_learner=False,
+    # enable_env_runner_and_connector_v2=False)` when building its own default config, so the
+    # upper bound is no longer needed -- real PPO train+rollout verified on ray==2.52.1).
     "stable-baselines3>=2",
     "sb3_contrib>=2.3",
     "up-tamer>=1.1.2; python_version < '3.12' and platform_machine == 'x86_64'",

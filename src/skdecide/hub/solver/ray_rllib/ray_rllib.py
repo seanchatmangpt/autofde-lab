@@ -193,7 +193,22 @@ class RayRLlib(Solver, Policies, Restorable):
         self.callback = callback
         self._algo_class = algo_class
         self._train_iterations = train_iterations
-        self._config = config or algo_class.get_default_config()
+        if config is not None:
+            self._config = config
+        else:
+            # This solver's rollout/action-masking/graph-observation code
+            # (below) is written against RLlib's old API stack (RolloutWorker,
+            # local_worker(), Policy-based custom models). Ray made the new
+            # API stack the default from 2.40 onward, so a bare
+            # `get_default_config()` on any ray>=2.40 would silently return
+            # a config this solver cannot use. Force the old stack explicitly
+            # when building our own default config; a caller-supplied
+            # `config` is used as-is (their responsibility to opt into
+            # whichever stack it targets).
+            self._config = algo_class.get_default_config().api_stack(
+                enable_rl_module_and_learner=False,
+                enable_env_runner_and_connector_v2=False,
+            )
         if policy_configs is None:
             self._policy_configs = {"policy": {}}
         else:
