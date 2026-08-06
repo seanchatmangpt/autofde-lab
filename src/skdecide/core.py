@@ -265,11 +265,19 @@ class DiscreteDistribution(Distribution[T]):
         move = game_strategy.sample()
         ```
         """
-        self._values = values
-        unzip_values = list(zip(*values))
-        # TODO: make sure every population member is unique (and if not, aggregate same ones by summing their weights)?
-        self._population = unzip_values[0]
-        self._weights = unzip_values[1]
+        deduped_population: list[T] = []
+        deduped_weights: list[float] = []
+        for element, weight in values:
+            try:
+                idx = deduped_population.index(element)
+            except ValueError:
+                deduped_population.append(element)
+                deduped_weights.append(weight)
+            else:
+                deduped_weights[idx] += weight
+        self._values = list(zip(deduped_population, deduped_weights))
+        self._population = tuple(deduped_population)
+        self._weights = tuple(deduped_weights)
 
     def sample(self) -> T:
         return random.choices(self._population, self._weights)[0]
