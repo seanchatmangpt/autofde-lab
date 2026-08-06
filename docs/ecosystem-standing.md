@@ -34,7 +34,7 @@ because that defect was actually fixed — not because the assertion was relaxed
 | # | Stage | Owner | Standing | Witness |
 |---|---|---|---|---|
 | S1 | exemplar → candidate authority | ggen-create | `UNSUPPORTED` | Reverse compiler is **0 lines**; `ontology/` holds only `.keep`. Repo self-declares it: `scan_ontology` → `bootstrap_empty_surface: True`, claim ceiling `ONTOLOGY_SURFACE_INTEGRITY_ONLY`. Its CI/GALL harness *is* real (25/25 tests, 0.26s, real git fixtures) — governance, not payload. |
-| S2 | candidate authority → admitted | mfw | `PARTIAL_ALIVE` | **Changed this pass.** `cargo build -p mfw-planner -p mfw-pcp-cli` now succeeds (47.23s, exit 0); both binaries exist and run. But the fix is **uncommitted** in `~/praxis`, and engine admission is now `BLOCKED:VALIDATOR_ABSENT` — measured pass 3: `mfw-planner probe classical` refuses at **config load** (*"exactly one independent validator role is required; observed 0"*) and no VAL-compatible validator binary exists on this machine. Build repaired; admission structurally refused. See RP-2 and pass 3 §6. |
+| S2 | candidate authority → admitted | mfw | `ALIVE` | **Changed twice this pass; the second change retracts the first.** `cargo build -p mfw-planner -p mfw-pcp-cli` succeeds (47.23s, exit 0), committed as `bc1272b2` in `~/praxis`. Engine admission was first recorded `BLOCKED:VALIDATOR_ABSENT` on the claim that *"no VAL binary exists anywhere on this machine."* **That claim was false and is retracted** — it came from a `command -v` search, i.e. `PATH` only, stated over the whole machine. Four exist, one of them vendored inside mfw-planner itself (`~/mfw/mfw-planner/.vendor-val/build/bin/Validate`, Mach-O arm64, VAL Version 4). Registering both roles and running mfw's own gate: **classical** `purpose=classical_candidate`, `executable_digest=blake3:9c1b1943…`, `status=found`, exit 0; **validator** `purpose=independent_validator`, `executable_digest=blake3:0ce0a2e6…`, `validation_status=**valid**`, exit 0. Two distinct pinned executables, distinct purposes, independent verdict — this is admission, not contract conformance. Plan digest `blake3:d5168d9c…` matches the `export-powl` run; domain/problem digests match scikit-decide's independent computation. **Scope**: `engines.toml` + the wrapper are local and uncommitted, so this is reproducible only from that fixture. See RP-2 and pass 3 §6. |
 | S3 | plan computation (search graph) | **scikit-decide** | `ALIVE` | Engine runs, produces VAL-format plans. Quoted below. |
 | S3b | plan → POWL2 **projection** | **scikit-decide** | `PARTIAL_ALIVE` *(projection only)* | **Demoted this pass — was `ALIVE`, and that was wrong.** Digests are real blake3 and independently cross-checked (below), but the emitted Turtle would be **rejected by mfw's own committed SHACL shapes**: `project_plan_to_powl` never emits `mfwp:implementsAction`, which `powl2:ActivityLeafShape` requires `minCount 1`. It also hardcodes `mfwp:projection "total-order"` and emits zero `powl2:precedes` edges, so its `powl2:PartialOrder` is a chain. **Scope**: this manufactures a document; it is NOT execution — see the decisive question. |
 | S3c | admitted POWL → **executed** workflow | mfw + **bcinr** (RP-7) | `PARTIAL_ALIVE` | A real POWL executor exists in `~/bcinr` (`execution_v2.rs:129` tick loop, OCEL, BLAKE3, deadlock refusal) — but it is **symbolic** (in-memory state only) and **not wired** to mfw's actuating broker. Three POWL representations, zero converters. Blocks the crown. |
@@ -541,6 +541,22 @@ This is the `~/bcinr` miss again, one pass later, with the lesson already writte
 very file. A negative finding is exactly as broad as the search that produced it, and neither
 good faith nor a recorded prior instance prevents the recurrence. Only a queryable authority
 does — which is the argument for the ecosystem-wide ontology, not a stylistic preference.
+
+**Third instance, same pass — and this one cost a standing row.** S2 was recorded
+`BLOCKED:VALIDATOR_ABSENT` on the claim *"no VAL binary exists anywhere on this machine."* The
+search behind it was `command -v Validate validate val VAL` — `PATH` only — and the conclusion
+was stated over the whole filesystem. **Four exist**, and the most relevant one is vendored
+inside the very component under test: `~/mfw/mfw-planner/.vendor-val/build/bin/Validate`
+(Mach-O arm64, VAL Version 4), alongside `~/VAL/build/bin/Validate`,
+`~/ferroplan/benchmarks/.val/VAL/build/bin/Validate`, and `~/pigsty/bin/validate`. Registering
+it took S2 from `BLOCKED` to `ALIVE` in one step.
+
+The pattern across all three is identical and worth naming precisely: **a search bounded by one
+mechanism (one repo, one doc tree, `PATH`) reported as a fact about the world.** The failure is
+not insufficient effort — each search was competently executed within its bound. It is that the
+bound was not carried into the claim. `UNKNOWN` is the correct standing for "I did not find it
+with the method I used"; `UNSUPPORTED` and `BLOCKED` assert absence and require a search whose
+bound is stated. Prefer `UNKNOWN` and name the method.
 
 **Phase 0 mitigation, done this session (in this repo, in scope).** `.claude/rules/*.md` now
 carry YAML `paths:` front-matter, so a rules file loads only when a matching file is read.
