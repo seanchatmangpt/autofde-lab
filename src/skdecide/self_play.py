@@ -6,16 +6,18 @@
 
 This module runs actual episodes of the multi-agent, symmetric
 `skdecide.hub.domain.rock_paper_scissors.RockPaperScissors` domain against
-itself, using the built-in uniform-random policy provided by
-`skdecide.utils.rollout` (solver=None). All numbers returned by
-`self_play_rollout` are derived from the real rewards produced by those
-rollouts -- nothing here is mocked, stubbed, or fabricated.
+itself. By default it uses the built-in uniform-random policy provided by
+`skdecide.utils.rollout` (solver=None); pass any real solver instance (e.g.
+`skdecide.hub.solver.dspy_policy.DSPyPolicy`) to drive self-play with that
+policy instead. All numbers returned by `self_play_rollout` are derived from
+the real rewards produced by those rollouts -- nothing here is mocked,
+stubbed, or fabricated.
 """
 
 from __future__ import annotations
 
 import random
-from typing import Optional
+from typing import Any, Optional
 
 from skdecide.hub.domain.rock_paper_scissors import RockPaperScissors
 from skdecide.utils import rollout
@@ -24,7 +26,10 @@ __all__ = ["self_play_rollout"]
 
 
 def self_play_rollout(
-    num_episodes: int = 20, max_steps: int = 1, seed: Optional[int] = None
+    num_episodes: int = 20,
+    max_steps: int = 1,
+    seed: Optional[int] = None,
+    solver: Optional[Any] = None,
 ) -> dict:
     """Run real self-play episodes of RockPaperScissors and summarize outcomes.
 
@@ -47,6 +52,10 @@ def self_play_rollout(
         best-effort basis (it does affect any tie-break/bookkeeping code
         that does use the global `random` module), but no determinism claim
         is made about the resulting episode outcomes.
+    solver: an already-constructed real solver instance to drive both agents'
+        moves (e.g. a `DSPyPolicy` solver already `.solve()`-d against a
+        domain factory for this domain). If None (default), rollout's
+        built-in uniform-random policy is used, matching prior behavior.
 
     # Returns
     A dict with only real, observable data:
@@ -69,7 +78,7 @@ def self_play_rollout(
 
     episodes = rollout(
         domain,
-        solver=None,
+        solver=solver,
         num_episodes=num_episodes,
         max_steps=max_steps,
         render=False,

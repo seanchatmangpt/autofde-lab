@@ -87,9 +87,12 @@ solvers = [
 pddl = [
     "z3-solver",
 ]
+dspy = [
+    "dspy",  # unpinned: DSPyPolicy always targets the most recent dspy release
+]
 all = [
     # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
-    "scikit-decide[domains, solvers, pddl]",
+    "scikit-decide[domains, solvers, pddl, dspy]",
 ]
 
 [project.entry-points."skdecide.domains"]
@@ -176,6 +179,7 @@ SSPPlanMerger = "skdecide.hub.solver.sspplanmerger:SSPPlanMerger [solvers]"
 Witness = "skdecide.hub.solver.witness:Witness [solvers]"
 HSVI = "skdecide.hub.solver.hsvi:HSVI [solvers]"
 GoalHSVI = "skdecide.hub.solver.hsvi:GoalHSVI [solvers]"
+DSPyPolicy = "skdecide.hub.solver.dspy_policy:DSPyPolicy [dspy]"
 
 [dependency-groups]
 dev = [
