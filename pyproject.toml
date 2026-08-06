@@ -85,10 +85,10 @@ solvers = [
     "up-fast-downward>=0.4.1",
     "up-enhsp>=0.0.25, <0.0.28",
     "up-pyperplan>=1.1.0",
-    "pyRDDLGym-jax>=2.5; python_version < '3.13'",
+    "pyRDDLGym-jax>=2.5",  # verified real: pyRDDLGym-jax 3.1 (py3-none-any wheel) installs on Python 3.13 with jax/jaxlib 0.11.0 (both have cp313 wheels); RDDLJaxSolver imports and actually solves CartPole_Continuous_gym via rddlrepository on Python 3.13 (tests/solvers/python/test_pyrddlgym_solvers.py::test_pyrddlgymdomain_jax)
     "jax>=0.4; sys_platform == 'linux' or sys_platform == 'darwin'",
     "jax>=0.4, <0.6; sys_platform == 'win32'",
-    "pyRDDLGym-gurobi>=0.2; python_version < '3.13'",
+    "pyRDDLGym-gurobi>=0.2",  # verified real: pyRDDLGym-gurobi 0.2 (py3-none-any wheel) installs on Python 3.13; RDDLGurobiSolver imports and actually solves CartPole_Continuous_gym via rddlrepository on Python 3.13 with the already-pinned pyRDDLGym==2.6 (tests/solvers/python/test_pyrddlgym_solvers.py::test_pyrddlgymdomain_gurobi); not separately verified against a paid Gurobi license (the test's small instance ran without one)
     "torch-geometric>=2.5",
     "torch>=2.3; sys_platform != 'darwin' or platform_machine != 'x86_64'",
     "torch>=2.2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
