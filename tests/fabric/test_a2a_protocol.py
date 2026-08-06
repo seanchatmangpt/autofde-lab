@@ -12,7 +12,7 @@ def test_a2a_protocol_executes_json_without_llm(fabric: DecisionFabric) -> None:
     )
 
     assert result["standing"] == "SOLVED"
-    assert result["cache_status"] == "MISS"
+    assert result["cache_status"] == "BYPASS"
     assert result["request"]["domain"] == "Counter"
 
 

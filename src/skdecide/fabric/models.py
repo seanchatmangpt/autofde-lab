@@ -109,11 +109,28 @@ class DecisionRequest:
     subject_digest: str = "UNBOUND_SUBJECT"
     policy_digest: str = "UNBOUND_POLICY"
     environment_digest: str = "UNBOUND_ENVIRONMENT"
+    randomness_digest: str = "UNBOUND_RANDOMNESS"
     use_cache: bool = True
 
     def as_dict(self) -> dict[str, Any]:
         """Return a JSON-compatible representation."""
         return asdict(self)
+
+    def semantic_dict(self) -> dict[str, Any]:
+        """Return decision semantics without the local cache-control flag."""
+        payload = self.as_dict()
+        payload.pop("use_cache")
+        return payload
+
+    def has_exact_reuse_identity(self) -> bool:
+        """Return whether all authority and nondeterminism identities are bound."""
+        values = (
+            self.subject_digest,
+            self.policy_digest,
+            self.environment_digest,
+            self.randomness_digest,
+        )
+        return all(value and not value.startswith("UNBOUND_") for value in values)
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> DecisionRequest:
@@ -127,6 +144,7 @@ class DecisionRequest:
             "subject_digest",
             "policy_digest",
             "environment_digest",
+            "randomness_digest",
             "use_cache",
         }
         unknown = sorted(set(payload) - allowed)
@@ -160,6 +178,9 @@ class DecisionRequest:
             policy_digest=str(payload.get("policy_digest", "UNBOUND_POLICY")),
             environment_digest=str(
                 payload.get("environment_digest", "UNBOUND_ENVIRONMENT")
+            ),
+            randomness_digest=str(
+                payload.get("randomness_digest", "UNBOUND_RANDOMNESS")
             ),
             use_cache=bool(payload.get("use_cache", True)),
         )

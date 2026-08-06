@@ -12,6 +12,18 @@ from skdecide.fabric.models import (
 from skdecide.fabric.service import DecisionFabric
 
 
+def exact_request(**overrides: object) -> DecisionRequest:
+    values = {
+        "domain": "Counter",
+        "subject_digest": "subject:a",
+        "policy_digest": "policy:a",
+        "environment_digest": "environment:a",
+        "randomness_digest": "randomness:deterministic",
+    }
+    values.update(overrides)
+    return DecisionRequest(**values)
+
+
 def test_catalog_and_match_share_one_registry(fabric: DecisionFabric) -> None:
     assert fabric.catalog().domains == ("Counter",)
     assert fabric.catalog().solvers == ("CounterSolver",)
@@ -25,16 +37,10 @@ def test_catalog_and_match_share_one_registry(fabric: DecisionFabric) -> None:
     assert first.identity_sha256 == second.identity_sha256
 
 
-def test_solve_is_receipted_and_second_run_is_cache_hit(
+def test_solve_emits_receipt_and_second_run_is_cache_hit(
     fabric: DecisionFabric,
 ) -> None:
-    request = DecisionRequest(
-        domain="Counter",
-        domain_arguments={"limit": 2},
-        subject_digest="subject:a",
-        policy_digest="policy:a",
-        environment_digest="env:a",
-    )
+    request = exact_request(domain_arguments={"limit": 2})
 
     first = fabric.solve(request)
     second = fabric.solve(request)
@@ -43,6 +49,7 @@ def test_solve_is_receipted_and_second_run_is_cache_hit(
     assert first.cache_status is CacheStatus.MISS
     assert second.cache_status is CacheStatus.HIT
     assert len(first.steps) == 2
+    assert first.solver == "CounterSolver"
     assert first.receipt_sha256 == second.receipt_sha256
     assert first.trajectory_sha256 == second.trajectory_sha256
 
@@ -50,26 +57,33 @@ def test_solve_is_receipted_and_second_run_is_cache_hit(
 def test_material_identity_change_invalidates_exact_reuse(
     fabric: DecisionFabric,
 ) -> None:
-    first = fabric.solve(
-        DecisionRequest(
-            domain="Counter",
-            policy_digest="policy:a",
-            subject_digest="subject:a",
-            environment_digest="env:a",
-        )
-    )
-    changed = fabric.solve(
-        DecisionRequest(
-            domain="Counter",
-            policy_digest="policy:b",
-            subject_digest="subject:a",
-            environment_digest="env:a",
-        )
-    )
+    first = fabric.solve(exact_request(policy_digest="policy:a"))
+    changed = fabric.solve(exact_request(policy_digest="policy:b"))
 
     assert first.cache_status is CacheStatus.MISS
     assert changed.cache_status is CacheStatus.MISS
     assert first.input_sha256 != changed.input_sha256
+
+
+def test_randomness_identity_change_invalidates_exact_reuse(
+    fabric: DecisionFabric,
+) -> None:
+    first = fabric.solve(exact_request(randomness_digest="seed:1"))
+    changed = fabric.solve(exact_request(randomness_digest="seed:2"))
+
+    assert first.cache_status is CacheStatus.MISS
+    assert changed.cache_status is CacheStatus.MISS
+    assert first.input_sha256 != changed.input_sha256
+
+
+def test_unbound_identity_bypasses_solve_cache(fabric: DecisionFabric) -> None:
+    request = DecisionRequest(domain="Counter")
+
+    first = fabric.solve(request)
+    second = fabric.solve(request)
+
+    assert first.cache_status is CacheStatus.BYPASS
+    assert second.cache_status is CacheStatus.BYPASS
 
 
 def test_bounded_run_does_not_claim_goal_completion(fabric: DecisionFabric) -> None:
@@ -88,7 +102,7 @@ def test_bounded_run_does_not_claim_goal_completion(fabric: DecisionFabric) -> N
 
 
 def test_deterministic_refusal_is_cached(fabric: DecisionFabric) -> None:
-    request = DecisionRequest(domain="Counter", solver="Other")
+    request = exact_request(solver="Other")
 
     with pytest.raises(DecisionRefusal) as first:
         fabric.solve(request)

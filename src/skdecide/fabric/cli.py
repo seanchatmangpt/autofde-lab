@@ -88,6 +88,7 @@ def solve(
     subject_digest: str = typer.Option("UNBOUND_SUBJECT"),
     policy_digest: str = typer.Option("UNBOUND_POLICY"),
     environment_digest: str = typer.Option("UNBOUND_ENVIRONMENT"),
+    randomness_digest: str = typer.Option("UNBOUND_RANDOMNESS"),
     use_cache: bool = typer.Option(True, "--cache/--no-cache"),
     cache_path: Path | None = typer.Option(None, help="SQLite ERRC cache path"),
 ) -> None:
@@ -102,6 +103,7 @@ def solve(
             subject_digest=subject_digest,
             policy_digest=policy_digest,
             environment_digest=environment_digest,
+            randomness_digest=randomness_digest,
             use_cache=use_cache,
         )
         _emit(get_fabric(cache_path).solve(request).as_dict())

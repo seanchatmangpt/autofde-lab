@@ -12,7 +12,12 @@ from typing import Any, Mapping
 
 from skdecide.fabric.backend import DecisionBackend, ScikitDecideBackend
 from skdecide.fabric.cache import SQLiteERRCCache
-from skdecide.fabric.canonical import sha256, to_jsonable
+from skdecide.fabric.canonical import (
+    implementation_identity,
+    runtime_identity,
+    sha256,
+    to_jsonable,
+)
 from skdecide.fabric.models import (
     CacheStatus,
     DecisionCatalog,
@@ -25,7 +30,7 @@ from skdecide.fabric.models import (
     RefusalCode,
 )
 
-_FABRIC_SCHEMA = "skdecide.decision-fabric/1"
+_FABRIC_SCHEMA = "skdecide.decision-fabric/2"
 _CLAIM_CEILING = "REGISTERED_DOMAIN_SOLVER_MATCH_AND_BOUNDED_ROLLOUT_ONLY"
 _DETERMINISTIC_REFUSALS = {
     RefusalCode.DOMAIN_UNKNOWN,
@@ -75,11 +80,16 @@ class DecisionFabric:
     ) -> DecisionMatch:
         """Instantiate a domain and return compatible registered solvers."""
         arguments = to_jsonable(domain_arguments or {})
+        domain_type = self.backend.load_domain(domain)
+        catalog = self.catalog()
         identity = {
             "schema": _FABRIC_SCHEMA,
             "operation": "match",
             "domain": domain,
             "domain_arguments": arguments,
+            "runtime": runtime_identity(),
+            "registry_sha256": sha256(catalog.as_dict()),
+            "domain_implementation": implementation_identity(domain_type),
         }
         identity_sha = sha256(identity)
         result_key = f"match:{identity_sha}"
@@ -95,7 +105,9 @@ class DecisionFabric:
 
         try:
             domain_instance = self._construct_domain(
-                domain, dict(domain_arguments or {})
+                domain,
+                dict(domain_arguments or {}),
+                domain_type=domain_type,
             )
             compatible = tuple(
                 sorted(
@@ -132,30 +144,33 @@ class DecisionFabric:
                 details={"max_steps": request.max_steps},
             )
 
-        request_payload = to_jsonable(request.as_dict())
-        input_sha = sha256({"schema": _FABRIC_SCHEMA, "request": request_payload})
-        result_key = f"solve:{input_sha}"
-        refusal_key = f"refusal:{input_sha}"
+        cache_admitted = request.use_cache and request.has_exact_reuse_identity()
+        match = self.match(
+            request.domain,
+            domain_arguments=request.domain_arguments,
+            use_cache=request.use_cache,
+        )
+        selected_solver = request.solver
+        if selected_solver is None:
+            selected_solver = (
+                match.compatible_solvers[0] if match.compatible_solvers else None
+            )
 
-        if request.use_cache:
-            cached = self.cache.get(result_key)
-            if cached is not None:
-                return DecisionResult.from_dict(cached, cache_status=CacheStatus.HIT)
+        intent_identity = {
+            "schema": _FABRIC_SCHEMA,
+            "operation": "solve-intent",
+            "request": to_jsonable(request.semantic_dict()),
+            "selected_solver": selected_solver,
+            "match_identity_sha256": match.identity_sha256,
+            "runtime": runtime_identity(),
+        }
+        refusal_key = f"refusal:{sha256(intent_identity)}"
+        if cache_admitted:
             cached_refusal = self.cache.get(refusal_key)
             if cached_refusal is not None:
                 raise DecisionRefusal.from_dict(cached_refusal)
 
         try:
-            match = self.match(
-                request.domain,
-                domain_arguments=request.domain_arguments,
-                use_cache=request.use_cache,
-            )
-            selected_solver = request.solver
-            if selected_solver is None:
-                selected_solver = (
-                    match.compatible_solvers[0] if match.compatible_solvers else None
-                )
             if selected_solver is None:
                 raise DecisionRefusal(
                     RefusalCode.SOLVER_INCOMPATIBLE,
@@ -175,6 +190,27 @@ class DecisionFabric:
 
             domain_type = self.backend.load_domain(request.domain)
             solver_type = self.backend.load_solver(selected_solver)
+            input_subject = {
+                **intent_identity,
+                "operation": "solve",
+                "domain_implementation": implementation_identity(domain_type),
+                "solver_implementation": implementation_identity(solver_type),
+            }
+            input_sha = sha256(input_subject)
+            result_key = f"solve:{input_sha}"
+            refusal_key = f"refusal:{input_sha}"
+
+            if cache_admitted:
+                cached = self.cache.get(result_key)
+                if cached is not None:
+                    return DecisionResult.from_dict(
+                        cached,
+                        cache_status=CacheStatus.HIT,
+                    )
+                cached_refusal = self.cache.get(refusal_key)
+                if cached_refusal is not None:
+                    raise DecisionRefusal.from_dict(cached_refusal)
+
             domain_instance = self._construct_domain(
                 request.domain,
                 request.domain_arguments,
@@ -242,18 +278,18 @@ class DecisionFabric:
                 steps=step_tuple,
                 terminal=terminal,
                 cache_status=(
-                    CacheStatus.MISS if request.use_cache else CacheStatus.BYPASS
+                    CacheStatus.MISS if cache_admitted else CacheStatus.BYPASS
                 ),
                 input_sha256=input_sha,
                 trajectory_sha256=trajectory_sha,
                 receipt_sha256=sha256(receipt_subject),
                 claim_ceiling=_CLAIM_CEILING,
             )
-            if request.use_cache:
+            if cache_admitted:
                 self.cache.put(result_key, "solve", result.as_dict())
             return result
         except DecisionRefusal as error:
-            if request.use_cache and error.code in _DETERMINISTIC_REFUSALS:
+            if cache_admitted and error.code in _DETERMINISTIC_REFUSALS:
                 self.cache.put(
                     refusal_key,
                     "refusal",
