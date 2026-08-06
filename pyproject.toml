@@ -1,0 +1,223 @@
+[project]
+name = "scikit-decide"
+description = "The AI framework for Reinforcement Learning, Automated Planning and Scheduling"
+authors=[
+  {name= "Airbus AI Research",  email = "scikit-decide@airbus.com"},
+]
+license = "MIT"
+license-files = ["LICENSE"]
+readme = "README.md"
+keywords = ["reinforcement learning", "planning", "scheduling"]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Development Status :: 4 - Beta",
+    "Topic :: Software Development",
+    "Topic :: Scientific/Engineering",
+    "Natural Language :: English",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+    "Programming Language :: C++",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development",
+    "Topic :: Scientific/Engineering",
+]
+dynamic = ["version"]
+requires-python = ">=3.10"
+dependencies = [
+    "pynng>=0.6.2",
+    "pathos>=0.2.7",
+    "discrete-optimization>=0.9.0",
+    "wrapt>=2.2.1",
+]
+
+[project.urls]
+documentation = "https://airbus.github.io/scikit-decide/"
+repository = "https://github.com/airbus/scikit-decide"
+
+[project.optional-dependencies]
+shared = [  # define a common extra to avoid redefining dependencies in both domains and solvers
+    "gymnasium>=0.28.1,<1",
+    "numpy>=2.0; sys_platform != 'darwin' or platform_machine != 'x86_64'",
+    "numpy >=1.20.1,<2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "scipy>=1.9.2",
+    "unified-planning>=1.1,<1.3",
+]
+domains = [
+    "scikit-decide[shared]", # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
+    "matplotlib>=3.3.4",
+    "openap>=1.5",
+    "pygeodesy>=23.6.12",
+    "cartopy>=0.22.0",
+    "pygrib>=2.1.6; sys_platform == 'linux'",
+    "pygrib>=2.1.6; sys_platform == 'darwin' and platform_machine != 'x86_64'",
+    "pygrib==2.1.5; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "setuptools<82.0.0; sys_platform == 'darwin' and platform_machine == 'x86_64'",  # pkg_resources removed from 82.0.0, and needed by pygrib 2.1.5
+    "pyRDDLGym>=2.3, !=2.7; python_version < '3.13'",
+    "pyRDDLGym-rl>=0.2; python_version < '3.13'",
+    "numpy<2.4; python_version < '3.13'",  # incompability with pyRDDLGym-rl (https://github.com/pyrddlgym-project/pyRDDLGym-rl/issues/9)
+    "rddlrepository>=2.1",
+    "plado>=0.1.3",
+    "pytz>=2025.2",
+]
+solvers = [
+    "scikit-decide[shared]", # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
+    "joblib>=1.0.1",
+    "ray[rllib]>=2.9.0, <2.38",
+    "stable-baselines3>=2",
+    "sb3_contrib>=2.3",
+    "up-tamer>=1.1.2; python_version < '3.12' and platform_machine == 'x86_64'",
+    "up-fast-downward>=0.4.1",
+    "up-enhsp>=0.0.25, <0.0.28",
+    "up-pyperplan>=1.1.0",
+    "pyRDDLGym-jax>=2.5; python_version < '3.13'",
+    "jax>=0.4; sys_platform == 'linux' or sys_platform == 'darwin'",
+    "jax>=0.4, <0.6; sys_platform == 'win32'",
+    "pyRDDLGym-gurobi>=0.2; python_version < '3.13'",
+    "torch-geometric>=2.5",
+    "torch>=2.3; sys_platform != 'darwin' or platform_machine != 'x86_64'",
+    "torch>=2.2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "torch!=2.9.0,!=2.9.1,!=2.10, !=2.11.0, !=2.12.0, !=2.12.1; sys_platform == 'win32'",
+    "flax>=0.10.6; (sys_platform == 'linux' or sys_platform == 'win32') and python_version >= '3.12'",
+    "openevolve>=0.2.11",
+]
+pddl = [
+    "z3-solver",
+]
+all = [
+    # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
+    "scikit-decide[domains, solvers, pddl]",
+]
+
+[project.entry-points."skdecide.domains"]
+GymDomain = "skdecide.hub.domain.gym:GymDomain [domains]"
+DeterministicGymDomain = "skdecide.hub.domain.gym:DeterministicGymDomain [domains]"
+CostDeterministicGymDomain = "skdecide.hub.domain.gym:CostDeterministicGymDomain [domains]"
+GymPlanningDomain = "skdecide.hub.domain.gym:GymPlanningDomain [domains]"
+GymWidthDomain = "skdecide.hub.domain.gym:GymWidthDomain [domains]"
+UPDomain = "skdecide.hub.domain.up:UPDomain [domains]"
+MasterMind = "skdecide.hub.domain.mastermind:MasterMind [domains]"
+Maze = "skdecide.hub.domain.maze:Maze [domains]"
+RockPaperScissors = "skdecide.hub.domain.rock_paper_scissors:RockPaperScissors [domains]"
+SimpleGridWorld = "skdecide.hub.domain.simple_grid_world:SimpleGridWorld [domains]"
+FlightPlanningDomain = "skdecide.hub.domain.flight_planning:FlightPlanningDomain [domains]"
+MRCPSP = "skdecide.hub.domain.rcpsp:MRCPSP [domains]"
+MRCPSPCalendar = "skdecide.hub.domain.rcpsp:MRCPSPCalendar [domains]"
+RCPSP = "skdecide.hub.domain.rcpsp:RCPSP [domains]"
+RCPSPCalendar = "skdecide.hub.domain.rcpsp:RCPSPCalendar [domains]"
+Stochastic_RCPSP = "skdecide.hub.domain.rcpsp:Stochastic_RCPSP [domains]"
+SMRCPSPCalendar = "skdecide.hub.domain.rcpsp:SMRCPSPCalendar [domains]"
+MSRCPSP = "skdecide.hub.domain.rcpsp:MSRCPSP [domains]"
+MSRCPSPCalendar = "skdecide.hub.domain.rcpsp:MSRCPSPCalendar [domains]"
+RDDLDomain = "skdecide.hub.domain.rddl:RDDLDomain [domains]"
+RDDLDomainRL = "skdecide.hub.domain.rddl:RDDLDomainRL [domains]"
+RDDLDomainSimplifiedSpaces = "skdecide.hub.domain.rddl:RDDLDomainSimplifiedSpaces [domains]"
+PDDLDomain = "skdecide.hub.domain.pddl:PDDLDomain [domains]"
+PPDDLDomain = "skdecide.hub.domain.pddl:PPDDLDomain [domains]"
+TPDDLDomain = "skdecide.hub.domain.pddl:TPDDLDomain [pddl]"
+
+[project.entry-points."skdecide.solvers"]
+AOstar = "skdecide.hub.solver.aostar:AOstar [solvers]"
+Astar = "skdecide.hub.solver.astar:Astar [solvers]"
+pLRTAstar = "skdecide.hub.solver.lrtastar:LRTAstar [solvers]"
+LRTAstar = "skdecide.hub.solver.lrtdp:LRTAstar [solvers]"
+MCTS = "skdecide.hub.solver.mcts:MCTS [solvers]"
+UCT = "skdecide.hub.solver.mcts:UCT [solvers]"
+AugmentedRandomSearch = "skdecide.hub.solver.ars:AugmentedRandomSearch [solvers]"
+BFWS = "skdecide.hub.solver.bfws:BFWS [solvers]"
+CGP = "skdecide.hub.solver.cgp:CGP [solvers]"
+IW = "skdecide.hub.solver.iw:IW [solvers]"
+RIW = "skdecide.hub.solver.riw:RIW [solvers]"
+LRTDP = "skdecide.hub.solver.lrtdp:LRTDP [solvers]"
+ILAOstar = "skdecide.hub.solver.ilaostar:ILAOstar [solvers]"
+pAstar = "skdecide.hub.solver.p_astar:Astar [solvers]"
+MARTDP = "skdecide.hub.solver.martdp:MARTDP [solvers]"
+MAHD = "skdecide.hub.solver.mahd:MAHD [solvers]"
+MaxentIRL = "skdecide.hub.solver.maxent_irl:MaxentIRL [solvers]"
+POMCP = "skdecide.hub.solver.pomcp:POMCP [solvers]"
+pPOMCP = "skdecide.hub.solver.pomcp:pPOMCP [solvers]"
+RayRLlib = "skdecide.hub.solver.ray_rllib:RayRLlib [solvers]"
+SimpleGreedy = "skdecide.hub.solver.simple_greedy:SimpleGreedy [solvers]"
+StableBaseline = "skdecide.hub.solver.stable_baselines:StableBaseline [solvers]"
+DOSolver = "skdecide.hub.solver.do_solver:DOSolver [solvers]"
+GPHH = "skdecide.hub.solver.do_solver:GPHH [solvers]"
+PilePolicy = "skdecide.hub.solver.pile_policy_scheduling:PilePolicy [solvers]"
+UPSolver = "skdecide.hub.solver.up:UPSolver [solvers]"
+RDDLJaxSolver = "skdecide.hub.solver.rddl:RDDLJaxSolver [solvers]"
+RDDLGurobiSolver = "skdecide.hub.solver.rddl:RDDLGurobiSolver [solvers]"
+VI = "skdecide.hub.solver.vi:VI [solvers]"
+PI = "skdecide.hub.solver.pi:PI [solvers]"
+LDFS = "skdecide.hub.solver.ldfs:LDFS [solvers]"
+IDAstar = "skdecide.hub.solver.ldfs:IDAstar [solvers]"
+RTDPBel = "skdecide.hub.solver.rtdp_bel:RTDPBel [solvers]"
+SSiPP = "skdecide.hub.solver.ssipp:SSiPP [solvers]"
+FRET = "skdecide.hub.solver.fret:FRET [solvers]"
+MDPLP = "skdecide.hub.solver.mdplp:MDPLP [solvers]"
+SSPLP = "skdecide.hub.solver.mdplp:SSPLP [solvers]"
+IDual = "skdecide.hub.solver.idual:IDual [solvers]"
+CIDual = "skdecide.hub.solver.idual:CIDual [solvers]"
+GPCI = "skdecide.hub.solver.gpci:GPCI [solvers]"
+SARSOP = "skdecide.hub.solver.sarsop:SARSOP [solvers]"
+DESPOT = "skdecide.hub.solver.despot:DESPOT [solvers]"
+EHC = "skdecide.hub.solver.ehc:EHC [solvers]"
+FF = "skdecide.hub.solver.pddl.ff:FF [solvers]"
+FFReplan = "skdecide.hub.solver.pddl.ppddlreplan:FFReplan [solvers]"
+PPDDLReplan = "skdecide.hub.solver.pddl.ppddlreplan:PPDDLReplan [solvers]"
+FFDetHindsight = "skdecide.hub.solver.pddl.ppddldethindsight:FFDetHindsight [solvers]"
+PPDDLDetHindsight = "skdecide.hub.solver.pddl.ppddldethindsight:PPDDLDetHindsight [solvers]"
+SSPReplan = "skdecide.hub.solver.sspreplan:SSPReplan [solvers]"
+SSPDetHindsight = "skdecide.hub.solver.sspdethindsight:SSPDetHindsight [solvers]"
+RFF = "skdecide.hub.solver.pddl.ppddlplanmerger:RFF [solvers]"
+PPDDLPlanMerger = "skdecide.hub.solver.pddl.ppddlplanmerger:PPDDLPlanMerger [solvers]"
+SSPPlanMerger = "skdecide.hub.solver.sspplanmerger:SSPPlanMerger [solvers]"
+Witness = "skdecide.hub.solver.witness:Witness [solvers]"
+HSVI = "skdecide.hub.solver.hsvi:HSVI [solvers]"
+GoalHSVI = "skdecide.hub.solver.hsvi:GoalHSVI [solvers]"
+
+[dependency-groups]
+dev = [
+    "docopt>=0.6.2",
+    "jupyter>=1.1.1",
+    "python-dotenv>=1.2.1",
+]
+test = [
+    "pytest>=6.2.2,<8.4", # pytest 8.4 not yet compatible with pytest-cases
+    "pytest-cov>=2.11.1",
+    "pytest-timeout>=2.2",
+    "tqdm>=4.66.3",
+    "nbmake>=1.0",
+    "docopt>=0.6.2",
+    "commonmark>=0.9.1",
+    "graph-jsp-env>=1",
+    "pytest-cases>=3.8",
+    "optuna>=4.5.0",
+]
+
+[tool.uv]
+default-groups = "all"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = ["tests"]
+
+[build-system]
+requires = ["scikit-build-core>=0.11.6,<1"]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+logging.level = "INFO"
+sdist.exclude = ["cpp/tests/data"]
+wheel.packages = ["src/skdecide"]
+wheel.install-dir = "skdecide/hub"
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+cmake.source-dir = "cpp"
+build-dir = "build/{wheel_tag}"  # speedup rebuilds (https://scikit-build-core.readthedocs.io/en/latest/configuration/index.html#other-options)
+
+[tool.scikit-build.cmake.define]
+ONLY_PYTHON = true
+
+[tool.setuptools_scm]

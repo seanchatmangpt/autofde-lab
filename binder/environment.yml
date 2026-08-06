@@ -1,0 +1,34 @@
+name: nb-skdecide-py310
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - cartopy>=0.21
+  - python=3.10
+  - pip
+  - pytorch::cpuonly
+  - pytorch::pytorch
+  - pip:
+    - cdsapi
+    - cfgrib
+    - cartopy
+    - matplotlib
+    - ipywidgets
+    - ipympl
+    - scikit-decide[all]==1.0.2
+    - nbgitpuller
+    - openap
+    - pygeodesy
+    - pyvirtualdisplay
+    - PyOpenGL-accelerate
+    - PyOpenGL
+    - xarray
+    - gymnasium[classic-control]==0.28.1
+    - folium
+    - pyRDDLGym-jax[dashboard]
+    - git+https://github.com/aiplan4eu/up-skdecide.git
+    - optuna
+    - optuna-dashboard
+    - renderlab
+    - moviepy==1.0.3
+    - opencv-python

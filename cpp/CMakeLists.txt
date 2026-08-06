@@ -1,0 +1,177 @@
+# Copyright (c) AIRBUS and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
+CMAKE_MINIMUM_REQUIRED(VERSION 3.26.6...3.29)
+PROJECT(skdecide)
+
+# Allow third-party SDK libraries with old cmake_minimum_required (e.g. backward-cpp 3.0, spdlog 3.10...3.21)
+SET(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+
+OPTION(BUILD_TESTS OFF)
+OPTION(ONLY_PYTHON OFF)
+OPTION(BUILD_PYTHON_BINDING ON)
+
+ENABLE_LANGUAGE(CXX)
+SET(CMAKE_CXX_STANDARD 20)
+SET(CMAKE_CXX_STANDARD_REQUIRED ON)
+SET(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+IF(NOT WIN32 AND NOT CYGWIN)
+    SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden ${CMAKE_CXX_FLAGS}")
+ENDIF()
+
+IF((CMAKE_CXX_COMPILER_ID STREQUAL "MSVC") AND(MSVC_VERSION GREATER_EQUAL 1928))
+    ADD_COMPILE_OPTIONS($<$<COMPILE_LANGUAGE:CXX>:/Zc:lambda>)
+    ADD_COMPILE_OPTIONS($<$<COMPILE_LANGUAGE:CXX>:/Zc:__cplusplus>)
+    ADD_COMPILE_OPTIONS($<$<COMPILE_LANGUAGE:CXX>:/bigobj>)
+ENDIF()
+
+SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+INCLUDE(GenerateTemplateInstantiationFiles)
+INCLUDE(RegisterInnerSolver)
+INCLUDE(RegisterPddlInnerSolver)
+
+SET(LIBS "")
+SET(INTERFACES "")
+SET(INCLUDE_DIRS "")
+
+SET(MULTITHREADING_FRAMEWORK "OpenMP" CACHE STRING "Multi-threading framework to use (either OpenMP or TBB)")
+IF (MULTITHREADING_FRAMEWORK STREQUAL "OpenMP")
+    FIND_PACKAGE(OpenMP)
+
+    IF(OpenMP_CXX_FOUND)
+        MESSAGE("Using OpenMP multi-threading support")
+        SET(HAS_OPENMP True)
+        LIST(APPEND LIBS "OpenMP::OpenMP_CXX")
+    ELSE ()
+        MESSAGE ("/!/ OpenMP multi-threading support not found: providing only single-threaded algorithms")
+    ENDIF ()
+ENDIF ()
+IF (MULTITHREADING_FRAMEWORK STREQUAL "TBB")
+    FIND_PACKAGE(TBB)
+    IF (TBB_FOUND)
+        CMAKE_POLICY(SET CMP0075 NEW)
+        SET(CMAKE_REQUIRED_LIBRARIES TBB::tbb)
+        INCLUDE(CheckIncludeFileCXX)
+        CHECK_INCLUDE_FILE_CXX(execution HAS_EXECUTION)
+        IF (HAS_EXECUTION)
+            MESSAGE ("Using C++-20 and TBB multi-threading support")
+            LIST(APPEND INCLUDE_DIRS "${TBB_INCLUDE_DIRS}")
+            LIST(APPEND LIBS TBB::tbb)
+        ENDIF ()
+        SET(CMAKE_REQUIRED_LIBRARIES "")
+    ELSE ()
+        MESSAGE ("/!/ Requested C++-20 and TBB multi-threading support not found: providing only single-threaded algorithms")
+    ENDIF ()
+ENDIF()
+
+# SDK (before Boost so bundled headers take precedence over system-installed ones)
+ADD_SUBDIRECTORY(sdk/backward-cpp)
+LIST(APPEND LIBS backward)
+
+SET(JSON_BuildTests OFF CACHE INTERNAL "")
+SET(JSON_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/sdk/json/single_include/nlohmann)
+ADD_SUBDIRECTORY(sdk/json)
+LIST(APPEND INCLUDE_DIRS "${JSON_INCLUDE_DIR}")
+
+SET(PEGTL_BUILD_TESTS OFF CACHE BOOL "disable PEGTL tests")
+SET(PEGTL_BUILD_EXAMPLES OFF CACHE BOOL "disable PEGTL examples")
+SET(PEGTL_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/sdk/PEGTL/include/tao)
+ADD_SUBDIRECTORY(sdk/PEGTL)
+LIST(APPEND INCLUDE_DIRS "${PEGTL_INCLUDE_DIR}")
+
+SET(SPDLOG_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/sdk/spdlog/include)
+ADD_SUBDIRECTORY(sdk/spdlog)
+LIST(APPEND INCLUDE_DIRS "${SPDLOG_INCLUDE_DIR}")
+LIST(APPEND LIBS spdlog::spdlog)
+
+# BOOST (after SDK so bundled spdlog/fmt headers are found before any
+# system-installed versions that Boost's include path might expose)
+FIND_PACKAGE(Boost)
+LIST(APPEND INCLUDE_DIRS ${Boost_INCLUDE_DIRS})
+
+# HiGHS LP solver (for LP-based solvers, built from source as static)
+INCLUDE(FetchContent)
+FetchContent_Declare(
+    highs
+    GIT_REPOSITORY https://github.com/ERGO-Code/HiGHS.git
+    GIT_TAG        v1.10.0
+    GIT_SHALLOW    TRUE
+)
+SET(BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
+SET(HIGHS_BUILD_CXX ON CACHE INTERNAL "")
+SET(BUILD_TESTING OFF CACHE INTERNAL "")
+SET(BUILD_EXAMPLES OFF CACHE INTERNAL "")
+FetchContent_MakeAvailable(highs)
+# HiGHS v1.10.0 bug (src/CMakeLists.txt:157): unconditionally adds
+# "${CMAKE_CUDA_PATH}/include" as a PUBLIC include directory. When CUDA is
+# absent CMAKE_CUDA_PATH is empty, expanding to "/include" — a stray root-level
+# path that precedes libc++ headers and breaks the C++ standard library include
+# chain on macOS (error: <cstddef> didn't find libc++'s <stddef.h>).
+if(TARGET highs)
+    get_target_property(_highs_iface_incs highs INTERFACE_INCLUDE_DIRECTORIES)
+    if(_highs_iface_incs)
+        list(REMOVE_ITEM _highs_iface_incs "/include")
+        set_target_properties(highs PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${_highs_iface_incs}")
+    endif()
+endif()
+SET(HAS_HIGHS TRUE)
+MESSAGE(STATUS "HiGHS built from source (static linking)")
+
+# Clingo ASP solver (for PDDL grounding, built from source as static)
+FetchContent_Declare(
+    clingo
+    GIT_REPOSITORY https://github.com/potassco/clingo.git
+    GIT_TAG        v5.8.0
+    GIT_SHALLOW    TRUE
+)
+SET(CLINGO_BUILD_APPS OFF CACHE INTERNAL "")
+SET(CLINGO_BUILD_TESTS OFF CACHE INTERNAL "")
+SET(CLINGO_BUILD_EXAMPLES OFF CACHE INTERNAL "")
+SET(CLINGO_BUILD_WITH_PYTHON OFF CACHE INTERNAL "")
+SET(CLINGO_BUILD_WITH_LUA OFF CACHE INTERNAL "")
+SET(CLINGO_BUILD_SHARED OFF CACHE INTERNAL "")
+SET(CLINGO_BUILD_STATIC ON CACHE INTERNAL "")
+FetchContent_MakeAvailable(clingo)
+MESSAGE(STATUS "Clingo built from source (static linking)")
+
+CMAKE_POLICY(SET CMP0077 NEW)
+SET(NNG_STATIC_LIB ON CACHE INTERNAL "")
+SET(NNG_TESTS OFF CACHE INTERNAL "")
+SET(NNG_TOOLS OFF CACHE INTERNAL "")
+SET(NNG_ENABLE_NNGCAT OFF CACHE INTERNAL "")
+ADD_SUBDIRECTORY(sdk/nng)
+LIST(APPEND INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/sdk/nng/include)
+LIST(APPEND LIBS nng)
+
+LIST(APPEND INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/sdk/nngpp/include)
+
+IF (BUILD_PYTHON_BINDING OR ONLY_PYTHON)
+    SET(PYBIND11_FINDPYTHON ON)
+    FIND_PACKAGE(Python REQUIRED COMPONENTS Interpreter Development.Module)
+    ADD_SUBDIRECTORY(sdk/pybind11)
+    LIST(APPEND INCLUDE_DIRS "${pybind11_INCLUDE_DIR}")
+    LIST(APPEND INCLUDE_DIRS "${Python_INCLUDE_DIRS}")
+ENDIF ()
+
+IF (BUILD_TESTS AND NOT ONLY_PYTHON)
+    SET(CATCH2_INCLUDE_DIR
+        ${CMAKE_BINARY_DIR}/sdk/Catch2/generated-includes
+        ${CMAKE_SOURCE_DIR}/sdk/Catch2/src)
+    ADD_SUBDIRECTORY(sdk/Catch2)
+ENDIF()
+
+# CONFIG FILE
+CONFIGURE_FILE(config.h.in ${PROJECT_BINARY_DIR}/src/config.h)
+LIST(APPEND INCLUDE_DIRS "${PROJECT_BINARY_DIR}/src")
+
+# LIB
+ADD_SUBDIRECTORY(src)
+
+# TESTS
+IF(BUILD_TESTS AND NOT ONLY_PYTHON)
+    ENABLE_TESTING() # leave it outside the 'tests' directory so ctest can find the CTestTestFile.cmake in the top build directory
+    ADD_SUBDIRECTORY(tests)
+ENDIF()
