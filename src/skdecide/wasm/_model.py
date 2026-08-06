@@ -16,7 +16,14 @@ _NAME_RE = re.compile(r"^[a-z][a-z0-9_-]*$")
 _PYTHON_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 _ALIAS_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _ALLOWED_STATES = frozenset(
-    {"UNKNOWN", "PARTIAL_ALIVE", "ALIVE", "BLOCKED", "BUILD_BROKEN", "UNSUPPORTED", "REFUSED"}
+    {
+        "UNKNOWN",
+        "PARTIAL_ALIVE",
+        "ALIVE",
+        "BUILD_BROKEN",
+        "UNSUPPORTED",
+        "REFUSED",
+    }
 )
 
 
@@ -55,19 +62,27 @@ class ComponentDescriptor:
         if not _PYTHON_NAME_RE.fullmatch(self.python_name):
             raise ValueError(f"invalid Python binding name: {self.python_name!r}")
         if not self.repository.startswith("https://github.com/"):
-            raise ValueError(f"repository must be a GitHub HTTPS URL: {self.repository!r}")
+            raise ValueError(
+                f"repository must be a GitHub HTTPS URL: {self.repository!r}"
+            )
         if not _SHA_RE.fullmatch(self.revision):
-            raise ValueError(f"revision must be an exact 40-character SHA: {self.revision!r}")
+            raise ValueError(
+                f"revision must be an exact 40-character SHA: {self.revision!r}"
+            )
         if not _SHA256_RE.fullmatch(self.artifact_sha256):
             raise ValueError("artifact_sha256 must be a lowercase SHA-256 digest")
         if self.artifact_size <= 8:
             raise ValueError("artifact_size is too small to be a Wasm module")
         if not self.artifact.endswith(".wasm") or "/" in self.artifact:
-            raise ValueError(f"artifact must be a local .wasm filename: {self.artifact!r}")
+            raise ValueError(
+                f"artifact must be a local .wasm filename: {self.artifact!r}"
+            )
         if self.visibility not in {"public", "private"}:
             raise ValueError(f"unsupported visibility: {self.visibility!r}")
         if tuple(self.operations) != ADAPTER_OPERATIONS:
-            raise ValueError(f"adapter operations must be exactly {ADAPTER_OPERATIONS!r}")
+            raise ValueError(
+                f"adapter operations must be exactly {ADAPTER_OPERATIONS!r}"
+            )
         for alias in self.aliases:
             if not _ALIAS_RE.fullmatch(alias):
                 raise ValueError(f"invalid alias: {alias!r}")
@@ -129,12 +144,22 @@ class InvocationResult:
     receipt: Mapping[str, Any]
 
     def __post_init__(self) -> None:
+        if self.status == "BLOCKED":
+            raise ValueError(
+                "BLOCKED is not an admissible ERRC standing; use REFUSED for "
+                "denied or unavailable authority and BUILD_BROKEN for failed manufacture"
+            )
         if self.status not in _ALLOWED_STATES:
             raise ValueError(f"unsupported standing state: {self.status!r}")
         object.__setattr__(self, "receipt", _freeze_mapping(self.receipt))
 
     @classmethod
-    def from_bytes(cls, component: ComponentDescriptor, operation: str, value: bytes) -> "InvocationResult":
+    def from_bytes(
+        cls,
+        component: ComponentDescriptor,
+        operation: str,
+        value: bytes,
+    ) -> "InvocationResult":
         try:
             decoded = json.loads(value.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -150,9 +175,13 @@ class InvocationResult:
         if not isinstance(subject, dict):
             raise ValueError("receipt must include a subject object")
         if subject.get("component") != component.name:
-            raise ValueError("receipt component identity does not match the invoked component")
+            raise ValueError(
+                "receipt component identity does not match the invoked component"
+            )
         if subject.get("source_revision") != component.revision:
-            raise ValueError("receipt source revision does not match the registry pin")
+            raise ValueError(
+                "receipt source revision does not match the registry pin"
+            )
         return cls(
             component=component,
             operation=operation,
