@@ -1,0 +1,52 @@
+name: Export cache formatter result
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/cache-format-export.yml"
+      - "src/skdecide/_cache/**"
+      - "tests/test_caching.py"
+      - "tests/test_enterprise_cache.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install repository formatter
+        run: python -m pip install "ruff==0.14.0"
+      - name: Apply repository Ruff hooks
+        run: |
+          ruff check --fix --select=I .
+          ruff check --fix --select=F401 .
+          ruff format .
+      - name: Package formatted cache files
+        run: |
+          tar -czf /tmp/formatted-cache-files.tar.gz \
+            src/skdecide/_cache/coordinator.py \
+            src/skdecide/_cache/domain.py \
+            src/skdecide/_cache/enterprise.py \
+            src/skdecide/_cache/governance.py \
+            src/skdecide/_cache/keys.py \
+            src/skdecide/_cache/observability.py \
+            src/skdecide/_cache/provenance.py \
+            src/skdecide/_cache/quarantine.py \
+            src/skdecide/_cache/quotas.py \
+            src/skdecide/_cache/rollout.py \
+            src/skdecide/_cache/stores.py \
+            src/skdecide/_cache/types.py \
+            tests/test_caching.py \
+            tests/test_enterprise_cache.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: formatted-cache-files
+          path: /tmp/formatted-cache-files.tar.gz
+          if-no-files-found: error
+          retention-days: 1
