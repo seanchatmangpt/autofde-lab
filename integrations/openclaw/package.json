@@ -12,8 +12,11 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "check": "npm run build && node --check dist/index.js && node --test test/*.test.mjs",
-    "pack:dry-run": "npm pack --dry-run"
+    "plugin:build": "npm run build && openclaw plugins build --root . --entry ./dist/index.js",
+    "plugin:check": "npm run build && openclaw plugins build --root . --entry ./dist/index.js --check && openclaw plugins validate --root . --entry ./dist/index.js",
+    "test": "node --test test/*.test.mjs",
+    "check": "npm run plugin:check && npm test",
+    "pack:dry-run": "npm pack --dry-run --json"
   },
   "dependencies": {
     "typebox": "1.1.39"
@@ -24,15 +27,7 @@
   "openclaw": {
     "extensions": [
       "./dist/index.js"
-    ],
-    "compat": {
-      "pluginApi": ">=2026.7.1-2",
-      "minGatewayVersion": "2026.7.1-2"
-    },
-    "build": {
-      "openclawVersion": "2026.7.1-2",
-      "pluginSdkVersion": "2026.7.1-2"
-    }
+    ]
   },
   "devDependencies": {
     "@types/node": "22.15.3",

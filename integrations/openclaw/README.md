@@ -1,25 +1,57 @@
 # scikit-decide for OpenClaw
 
-This package projects scikit-decide's registered Python domain and solver entry points into three OpenClaw-native surfaces:
+This package projects scikit-decide's registered Python domain and solver entry points into three interoperable OpenClaw surfaces:
 
-- a native tool plugin (`skdecide_catalog`, `skdecide_describe`, `skdecide_match`, `skdecide_run`);
+- a generated and validated native tool plugin (`skdecide_catalog`, `skdecide_describe`, `skdecide_match`, `skdecide_run`);
 - a bundled AgentSkills-compatible `SKILL.md`;
-- a static stdio MCP server backed by `python -m skdecide.openclaw_bridge mcp`.
+- a stdio MCP server backed by `python -m skdecide.openclaw_bridge mcp` and configured through OpenClaw's MCP CLI.
 
-The bridge accepts registered names only, applies explicit episode/step/time/output bounds, and emits a receipt for every success, refusal, or failure.
+The bridge admits registered names only, applies explicit episode/step/time/output bounds, and emits a receipt for every success, refusal, or failure.
 
-## Local install
+## Build and validate
+
+OpenClaw owns the plugin metadata projection. Do not hand-maintain tool ownership independently of the `defineToolPlugin` entry.
 
 ```bash
-uv sync
-openclaw plugins install --link ./integrations/openclaw
-openclaw plugins enable scikit-decide
-openclaw gateway restart
-openclaw plugins inspect scikit-decide --runtime --json
-openclaw mcp doctor scikit-decide --probe
+cd integrations/openclaw
+npm install --ignore-scripts --no-audit --no-fund
+npm run build
+openclaw plugins build --root . --entry ./dist/index.js
+openclaw plugins validate --root . --entry ./dist/index.js
+npm test
+npm pack --dry-run --json
 ```
 
-The Gateway's Python environment must be able to import this scikit-decide checkout. Configure a different executable or working directory under `plugins.entries.scikit-decide.config`:
+CI regenerates `openclaw.plugin.json` and fails when the manifest, package metadata, or compiled runtime drifts from source.
+
+## Hermetic host proof
+
+```bash
+export OPENCLAW_STATE_DIR="$(mktemp -d)"
+export OPENCLAW_CONFIG_PATH="$OPENCLAW_STATE_DIR/openclaw.json"
+export OPENCLAW_TEST_FAST=1
+export PYTHONPATH="$(pwd)/src"
+
+openclaw plugins install --link "$(pwd)/integrations/openclaw"
+openclaw plugins enable scikit-decide
+openclaw plugins inspect scikit-decide --runtime --json
+openclaw skills info scikit-decide --json
+
+openclaw mcp add scikit-decide \
+  --command python \
+  --arg=-m \
+  --arg=skdecide.openclaw_bridge \
+  --arg=mcp \
+  --cwd "$(pwd)" \
+  --env "PYTHONPATH=$(pwd)/src"
+openclaw mcp doctor scikit-decide --probe --json
+```
+
+MCP configuration is intentionally explicit. `openclaw.plugin.json` contains plugin discovery metadata, not an ambient MCP actuation path.
+
+## Plugin configuration
+
+The OpenClaw process must use a Python environment that can import scikit-decide. Configure a different executable or working directory under `plugins.entries.scikit-decide.config`:
 
 ```json5
 {
@@ -39,24 +71,14 @@ The Gateway's Python environment must be able to import this scikit-decide check
 }
 ```
 
-The static MCP manifest uses `python` by default. Operators can override `mcp.servers.scikit-decide` when the Gateway needs a different executable.
-
-## Verification
+## Focused replay
 
 ```bash
+python -m py_compile src/skdecide/openclaw_runtime.py src/skdecide/openclaw_bridge.py
 python -m pytest tests/test_openclaw_bridge.py -q
 cd integrations/openclaw
-npm install --ignore-scripts --no-audit --no-fund
 npm run check
-git diff --exit-code -- dist/index.js
-npm pack --dry-run
+npm pack --dry-run --json
 ```
 
-Package-install and live-runtime proof additionally require an installed OpenClaw host:
-
-```bash
-npm pack --pack-destination /tmp
-openclaw plugins install npm-pack:/tmp/chatman-ai-openclaw-scikit-decide-0.1.0.tgz --force
-openclaw plugins inspect scikit-decide --runtime --json
-openclaw mcp doctor scikit-decide --probe
-```
+`skdecide_match` and `skdecide_run` remain optional because they construct domains or perform computation. Catalog and description are read-only. Native plugin calls and MCP calls share the same Python bridge and receipt semantics.

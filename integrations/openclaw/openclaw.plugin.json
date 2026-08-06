@@ -33,17 +33,6 @@
   "skills": [
     "./skills"
   ],
-  "mcpServers": {
-    "scikit-decide": {
-      "transport": "stdio",
-      "command": "python",
-      "args": [
-        "-m",
-        "skdecide.openclaw_bridge",
-        "mcp"
-      ]
-    }
-  },
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
@@ -51,22 +40,26 @@
       "python": {
         "type": "string",
         "minLength": 1,
-        "default": "python"
+        "default": "python",
+        "description": "Python executable."
       },
       "cwd": {
-        "type": "string"
+        "type": "string",
+        "description": "scikit-decide checkout or install directory."
       },
       "timeoutMs": {
         "type": "integer",
         "minimum": 1000,
         "maximum": 600000,
-        "default": 120000
+        "default": 120000,
+        "description": "Maximum wall-clock time for one bridge process."
       },
       "maxOutputBytes": {
         "type": "integer",
         "minimum": 1024,
         "maximum": 16777216,
-        "default": 4194304
+        "default": 4194304,
+        "description": "Combined stdout/stderr capture bound."
       }
     }
   },

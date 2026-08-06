@@ -22,4 +22,4 @@ Use this skill when a task requires automated planning, scheduling, reinforcemen
 - `REFUSED:BOUND_EXCEEDED`: reduce episodes, steps, timeout, or output size.
 - `BUILD_BROKEN`: preserve the receipt and error, identify the first failed domain/solver transition, then repair the narrowest cause.
 
-`skdecide_run` is optional because it performs compute and may initialize native solver dependencies. The catalog and description tools are read-only. MCP and native plugin calls share the same Python bridge and receipt semantics.
+`skdecide_run` is optional because it performs compute and may initialize native solver dependencies. The catalog and description tools are read-only. MCP is configured explicitly through OpenClaw, and MCP and native plugin calls share the same Python bridge and receipt semantics.

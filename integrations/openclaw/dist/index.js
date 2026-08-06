@@ -1,11 +1,27 @@
 import { spawn } from "node:child_process";
 import { Type } from "typebox";
-import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
+import { defineToolPlugin } from "openclaw/plugin-sdk/tool-plugin";
+const PluginConfigSchema = Type.Object({
+    python: Type.Optional(Type.String({ minLength: 1, default: "python", description: "Python executable." })),
+    cwd: Type.Optional(Type.String({ description: "scikit-decide checkout or install directory." })),
+    timeoutMs: Type.Optional(Type.Integer({
+        minimum: 1_000,
+        maximum: 600_000,
+        default: 120_000,
+        description: "Maximum wall-clock time for one bridge process.",
+    })),
+    maxOutputBytes: Type.Optional(Type.Integer({
+        minimum: 1_024,
+        maximum: 16_777_216,
+        default: 4_194_304,
+        description: "Combined stdout/stderr capture bound.",
+    })),
+}, { additionalProperties: false });
 const Subject = Type.Object({
     name: Type.String({ minLength: 1 }),
     kwargs: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
 }, { additionalProperties: false });
-function invokeBridge(config, tool, params) {
+function invokeBridge(config, tool, params, signal) {
     const python = config.python || "python";
     const timeoutMs = config.timeoutMs ?? 120_000;
     const maxOutputBytes = config.maxOutputBytes ?? 4 * 1024 * 1024;
@@ -20,18 +36,30 @@ function invokeBridge(config, tool, params) {
         const stderr = [];
         let size = 0;
         let settled = false;
-        const finish = (error) => {
+        const finish = (error, reply) => {
             if (settled)
                 return;
             settled = true;
             clearTimeout(timer);
+            signal?.removeEventListener("abort", abort);
             if (error)
                 reject(error);
+            else if (reply)
+                resolve(reply);
+        };
+        const abort = () => {
+            child.kill("SIGKILL");
+            finish(new Error("scikit-decide bridge call was aborted"));
         };
         const timer = setTimeout(() => {
             child.kill("SIGKILL");
             finish(new Error(`scikit-decide bridge exceeded ${timeoutMs}ms`));
         }, timeoutMs);
+        if (signal?.aborted) {
+            abort();
+            return;
+        }
+        signal?.addEventListener("abort", abort, { once: true });
         const capture = (target, chunk) => {
             size += chunk.length;
             if (size > maxOutputBytes) {
@@ -47,11 +75,14 @@ function invokeBridge(config, tool, params) {
         child.on("close", (code) => {
             if (settled)
                 return;
-            clearTimeout(timer);
+            const output = Buffer.concat(stdout).toString("utf8");
             try {
-                const reply = JSON.parse(Buffer.concat(stdout).toString("utf8"));
-                settled = true;
-                resolve(reply);
+                const reply = JSON.parse(output);
+                if (code !== 0 && reply.ok) {
+                    finish(new Error(`scikit-decide bridge exited ${code} after reporting success`));
+                    return;
+                }
+                finish(undefined, reply);
             }
             catch (error) {
                 finish(new Error(`scikit-decide bridge returned invalid JSON (exit=${code}): ${Buffer.concat(stderr)
@@ -61,54 +92,49 @@ function invokeBridge(config, tool, params) {
         });
     });
 }
-function toolResult(reply) {
-    return {
-        content: [{ type: "text", text: JSON.stringify(reply) }],
-        details: reply,
-        isError: !reply.ok,
-    };
-}
-export default definePluginEntry({
+export default defineToolPlugin({
     id: "scikit-decide",
     name: "scikit-decide",
-    description: "Registered planning, scheduling, and reinforcement-learning capabilities",
-    register(api) {
-        const config = (api.pluginConfig || {});
-        api.registerTool({
+    description: "Registered planning, scheduling, and reinforcement-learning capabilities from scikit-decide",
+    activation: { onStartup: true },
+    configSchema: PluginConfigSchema,
+    tools: (tool) => [
+        tool({
             name: "skdecide_catalog",
+            label: "scikit-decide catalog",
             description: "List registered scikit-decide domains and solvers.",
             parameters: Type.Object({
-                kind: Type.Optional(Type.Union([
-                    Type.Literal("all"),
-                    Type.Literal("domains"),
-                    Type.Literal("solvers"),
-                ])),
+                kind: Type.Optional(Type.Union([Type.Literal("all"), Type.Literal("domains"), Type.Literal("solvers")])),
             }, { additionalProperties: false }),
-            async execute(_id, params) {
-                return toolResult(await invokeBridge(config, "skdecide_catalog", params));
+            execute(params, config, context) {
+                return invokeBridge(config, "skdecide_catalog", params, context.signal);
             },
-        });
-        api.registerTool({
+        }),
+        tool({
             name: "skdecide_describe",
+            label: "Describe scikit-decide subject",
             description: "Describe one registered scikit-decide domain or solver.",
             parameters: Type.Object({
                 kind: Type.Union([Type.Literal("domain"), Type.Literal("solver")]),
                 name: Type.String({ minLength: 1 }),
             }, { additionalProperties: false }),
-            async execute(_id, params) {
-                return toolResult(await invokeBridge(config, "skdecide_describe", params));
+            execute(params, config, context) {
+                return invokeBridge(config, "skdecide_describe", params, context.signal);
             },
-        });
-        api.registerTool({
+        }),
+        tool({
             name: "skdecide_match",
+            label: "Match scikit-decide solvers",
             description: "Construct a registered domain and list compatible registered solvers.",
             parameters: Type.Object({ domain: Subject }, { additionalProperties: false }),
-            async execute(_id, params) {
-                return toolResult(await invokeBridge(config, "skdecide_match", params));
+            optional: true,
+            execute(params, config, context) {
+                return invokeBridge(config, "skdecide_match", params, context.signal);
             },
-        }, { optional: true });
-        api.registerTool({
+        }),
+        tool({
             name: "skdecide_run",
+            label: "Run scikit-decide rollout",
             description: "Run a bounded scikit-decide rollout using registered subjects only.",
             parameters: Type.Object({
                 domain: Subject,
@@ -120,9 +146,10 @@ export default definePluginEntry({
                 }, { additionalProperties: false })),
                 timeout_seconds: Type.Optional(Type.Number({ exclusiveMinimum: 0, maximum: 600 })),
             }, { additionalProperties: false }),
-            async execute(_id, params) {
-                return toolResult(await invokeBridge(config, "skdecide_run", params));
+            optional: true,
+            execute(params, config, context) {
+                return invokeBridge(config, "skdecide_run", params, context.signal);
             },
-        }, { optional: true });
-    },
+        }),
+    ],
 });
