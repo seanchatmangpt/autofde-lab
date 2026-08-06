@@ -11,12 +11,10 @@ import pytest
 
 from skdecide.wasm import (
     ABI_VERSION,
-    AbiViolation,
     ArtifactIntegrityError,
     ChatmanEcosystem,
     ComponentRegistry,
     DirectoryArtifactStore,
-    EmbeddedArtifactStore,
     MfwInteropError,
     MfwWasm4pmBridge,
     NodeBackend,
@@ -268,15 +266,21 @@ class _Transport:
         )
 
 
-def test_mfw_bridge_admits_exact_candidate_through_both_adapters() -> None:
+def _interop_subject() -> tuple[str, str, dict[str, Any]]:
     registry = ComponentRegistry.default()
-    mfw_revision = registry.by_name("mfw").revision
-    wasm4pm_revision = registry.by_name("wasm4pm").revision
-    request = {
-        "schema": "mfw.universal-planning.v1",
-        "planning_type": "classical",
-        "problem": {"id": "tiny"},
-    }
+    return (
+        registry.by_name("mfw").revision,
+        registry.by_name("wasm4pm").revision,
+        {
+            "schema": "mfw.universal-planning.v1",
+            "planning_type": "classical",
+            "problem": {"id": "tiny"},
+        },
+    )
+
+
+def test_mfw_bridge_admits_exact_candidate_through_both_adapters() -> None:
+    mfw_revision, wasm4pm_revision, request = _interop_subject()
     ecosystem = _Ecosystem(mfw_revision, wasm4pm_revision)
     result = MfwWasm4pmBridge(ecosystem, _Transport()).solve(request)
     assert result.standing == "ALIVE"
@@ -290,14 +294,7 @@ def test_mfw_bridge_admits_exact_candidate_through_both_adapters() -> None:
 
 
 def test_mfw_candidate_drift_is_refused_before_adapter_execution() -> None:
-    registry = ComponentRegistry.default()
-    mfw_revision = registry.by_name("mfw").revision
-    wasm4pm_revision = registry.by_name("wasm4pm").revision
-    request = {
-        "schema": "mfw.universal-planning.v1",
-        "planning_type": "classical",
-        "problem": {"id": "tiny"},
-    }
+    mfw_revision, wasm4pm_revision, request = _interop_subject()
     envelope = _interop_envelope(
         request,
         mfw_revision=mfw_revision,
@@ -305,6 +302,23 @@ def test_mfw_candidate_drift_is_refused_before_adapter_execution() -> None:
     )
     envelope["result"]["result"]["plan"].append("tampered")
     with pytest.raises(MfwInteropError, match="RESULT_DIGEST_MISMATCH"):
+        validate_mfw_envelope(
+            envelope,
+            request=request,
+            mfw_revision=mfw_revision,
+            wasm4pm_revision=wasm4pm_revision,
+        )
+
+
+def test_mfw_non_object_receipt_subject_is_typed_refusal() -> None:
+    mfw_revision, wasm4pm_revision, request = _interop_subject()
+    envelope = _interop_envelope(
+        request,
+        mfw_revision=mfw_revision,
+        wasm4pm_revision=wasm4pm_revision,
+    )
+    envelope["receipt"]["subject"] = ["not", "an", "object"]
+    with pytest.raises(MfwInteropError, match="RECEIPT_SUBJECT_MISSING"):
         validate_mfw_envelope(
             envelope,
             request=request,
