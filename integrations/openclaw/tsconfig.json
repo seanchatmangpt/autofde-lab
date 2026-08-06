@@ -7,7 +7,7 @@
     "outDir": "dist",
     "strict": true,
     "noEmitOnError": true,
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     "types": ["node"]
   },
   "include": ["src/**/*.ts"]
