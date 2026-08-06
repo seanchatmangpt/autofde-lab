@@ -166,7 +166,10 @@ def test_ray_rllib_solver():
     solver.solve()
     assert hasattr(solver, "_algo")
 
-    assert solver._algo.config.num_cpus_per_worker == 0.5
+    # `num_cpus_per_worker` is a hard-removed getter in newer ray (setting
+    # it via `.resources(num_cpus_per_worker=...)` still works -- only
+    # *reading* the old name raises); check the real, current name instead.
+    assert solver._algo.config.num_cpus_per_env_runner == 0.5
     assert solver._algo.config.gamma == 0.95
     assert solver._algo.config.train_batch_size == 256
 

@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from collections.abc import Callable
 from typing import Any, Optional, Union
 
@@ -20,9 +21,7 @@ from ray.rllib import RolloutWorker
 from ray.rllib.algorithms import DQN, PPO, SAC
 from ray.rllib.algorithms.algorithm import Algorithm, AlgorithmConfig
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
-from ray.rllib.env.wrappers.multi_agent_env_compatibility import (
-    MultiAgentEnvCompatibility,
-)
+from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from ray.rllib.models import ModelCatalog
 from ray.rllib.policy.policy import Policy
 from ray.rllib.utils.from_config import NotProvided
@@ -193,28 +192,59 @@ class RayRLlib(Solver, Policies, Restorable):
         self.callback = callback
         self._algo_class = algo_class
         self._train_iterations = train_iterations
-        if config is not None:
-            self._config = config
-        else:
-            # This solver's rollout/action-masking/graph-observation code
-            # (below) is written against RLlib's old API stack (RolloutWorker,
-            # local_worker(), Policy-based custom models). Ray made the new
-            # API stack the default from 2.40 onward, so a bare
-            # `get_default_config()` on any ray>=2.40 would silently return
-            # a config this solver cannot use. Force the old stack explicitly
-            # when building our own default config; a caller-supplied
-            # `config` is used as-is (their responsibility to opt into
-            # whichever stack it targets).
-            self._config = algo_class.get_default_config().api_stack(
-                enable_rl_module_and_learner=False,
-                enable_env_runner_and_connector_v2=False,
+        # This solver's rollout/action-masking/graph-observation code
+        # (below) is written against RLlib's old API stack (RolloutWorker,
+        # local_worker(), Policy-based custom models). Ray made the new
+        # API stack the default from 2.40 onward. There is no configuration
+        # under which this solver's real capabilities (GNN observation
+        # wrapping, action-masking custom models, RolloutWorker
+        # monkey-patching) work under the new stack, so force the old stack
+        # on ANY config this solver ends up using -- whether built here or
+        # supplied by the caller -- rather than only on our own default
+        # config (verified real: a caller-supplied config built via e.g.
+        # `PPO.get_default_config()` without this call hits a real
+        # ValueError deep in RLlib's new-stack Catalog/RLModule code,
+        # "No default encoder config for obs space=...").
+        self._config = (config or algo_class.get_default_config()).api_stack(
+            enable_rl_module_and_learner=False,
+            enable_env_runner_and_connector_v2=False,
+        )
+        if algo_class is DQN and "EpisodeReplayBuffer" in str(
+            self._config.replay_buffer_config.get("type", "")
+        ):
+            # Real, verified default on newer ray:
+            # {'type': 'PrioritizedEpisodeReplayBuffer', ...} -- also guard
+            # against the plain 'EpisodeReplayBuffer' name in case a future
+            # ray version uses that instead.
+            # Real, verified error on newer ray: DQN's new-stack default
+            # replay buffer (EpisodeReplayBuffer) is rejected outright under
+            # the old API stack we just forced above ("the replay buffer
+            # must not be of type `EpisodeReplayBuffer`"). Only override it
+            # when it's still the untouched new-stack default -- a caller
+            # who already set a different, compatible replay_buffer_config
+            # is left alone. This is exactly ray's own suggested old-stack
+            # replacement for DQN.
+            self._config = self._config.training(
+                replay_buffer_config={
+                    "type": "MultiAgentPrioritizedReplayBuffer",
+                    "prioritized_replay_alpha": 0.6,
+                    "prioritized_replay_beta": 0.4,
+                    "prioritized_replay_eps": 1e-6,
+                }
             )
         if policy_configs is None:
             self._policy_configs = {"policy": {}}
         else:
             self._policy_configs = policy_configs
         if policy_mapping_fn is None:
-            self._policy_mapping_fn = lambda agent_id, episode, worker: "policy"
+            # Real signature RLlib now calls this with is
+            # `(agent_id, episode, **kwargs)` -- `worker` is no longer
+            # always passed positionally (or at all); accept it as an
+            # optional kwarg rather than requiring it, to avoid
+            # "missing 1 required positional argument: 'worker'".
+            self._policy_mapping_fn = (
+                lambda agent_id, episode, worker=None, **kwargs: "policy"
+            )
         else:
             self._policy_mapping_fn = policy_mapping_fn
         self._action_embed_sizes = (
@@ -329,7 +359,11 @@ class RayRLlib(Solver, Policies, Restorable):
 
         # un-monkey patch rllib for graphs
         if self._is_graph_obs or self._is_graph_multiinput_obs:
-            self._algo.env_runner_group.foreach_worker(
+            # `EnvRunnerGroup.foreach_worker` was renamed to
+            # `foreach_env_runner` (the "worker"/"workers" naming was
+            # replaced by "env_runner"/"env_runner_group" across RLlib's
+            # old-API-stack classes in newer ray versions).
+            self._algo.env_runner_group.foreach_env_runner(
                 lambda worker: unmonkey_patch_rllib_for_graph()
             )
 
@@ -359,7 +393,29 @@ class RayRLlib(Solver, Policies, Restorable):
 
     def _load(self, path: str):
         self._init_algo()
-        self._algo.restore(path)
+        # Real, verified on newer ray: Algorithm.restore() given a bare
+        # path/URI string hits two DIFFERENT, mutually-inconsistent real
+        # internal expectations in the same call stack -- a URI scheme is
+        # required at `pyarrow.fs.FileSystem.from_uri` ("URI has empty
+        # scheme") but a bare local path is required moments later at
+        # `_exists_at_fs_path`/`fs.get_file_info` ("Expected a local
+        # filesystem path, got a URI"). Passing a real `ray.train.
+        # Checkpoint` object (the modern, documented way to reference a
+        # checkpoint) sidesteps this inconsistency entirely -- it resolves
+        # its own filesystem/path pair internally rather than making the
+        # caller guess which raw string shape is wanted where.
+        from ray.train import Checkpoint
+        from ray.train._internal.session import _TrainingResult
+
+        # A further, real API layer discovered while fixing the above:
+        # `Trainable.restore()` now asserts its argument is a real
+        # `_TrainingResult` (checkpoint + metrics), not a bare `Checkpoint`
+        # (`AssertionError: <class 'ray.train.Checkpoint'>`). No training
+        # metrics are available for a checkpoint loaded this way, so pass
+        # an empty metrics dict -- restore() only needs the wrapped
+        # checkpoint itself.
+        checkpoint = Checkpoint.from_directory(os.path.abspath(path))
+        self._algo.restore(_TrainingResult(checkpoint=checkpoint, metrics={}))
         self.set_callback()  # ensure putting back actual callback
 
     def _init_algo(self) -> None:
@@ -671,8 +727,11 @@ class RayRLlib(Solver, Policies, Restorable):
                     # starting from 2.34, algo.workers becomes algo.env_runner_group
                     local_worker: RolloutWorker = self._algo.workers.local_worker()
                 else:
+                    # `EnvRunnerGroup.local_worker()` was replaced by the
+                    # `local_env_runner` property (no longer a method) in
+                    # newer ray versions.
                     local_worker: RolloutWorker = (
-                        self._algo.env_runner_group.local_worker()
+                        self._algo.env_runner_group.local_env_runner
                     )
                 if local_worker:
                     _set_callbackclass_in_config(
@@ -712,7 +771,23 @@ def _swap_callbacks(
     return previous_callbacks
 
 
-class AsRLlibMultiAgentEnv(MultiAgentEnvCompatibility):
+class AsRLlibMultiAgentEnv(MultiAgentEnv):
+    """Wraps a scikit-decide multi-agent domain as a real RLlib MultiAgentEnv.
+
+    Implemented directly against RLlib's modern MultiAgentEnv contract
+    (`reset() -> (obs_dict, info_dict)`,
+    `step(action_dict) -> (obs_dict, reward_dict, terminated_dict,
+    truncated_dict, info_dict)`) rather than via
+    `ray.rllib.env.wrappers.multi_agent_env_compatibility.
+    MultiAgentEnvCompatibility`, whose conversion no longer satisfies newer
+    RLlib's stricter env validation (observed real failure: "Your
+    environment (<AsRLlibMultiAgentEnv<...>>) does not abide to the new
+    gymnasium-style API! ... the `reset()` method seems to be faulty").
+    Internally still reuses `AsLegacyRLlibMultiAgentEnv` for the actual
+    domain-wrapping logic (action/observation (un)wrapping) and converts
+    its old-style `reset()`/4-tuple `step()` into the modern shapes here.
+    """
+
     def __init__(
         self,
         domain: D,
@@ -720,14 +795,38 @@ class AsRLlibMultiAgentEnv(MultiAgentEnvCompatibility):
         graph2node: bool = False,
         render_mode: Optional[str] = None,
     ) -> None:
-        old_env = AsLegacyRLlibMultiAgentEnv(
+        self._domain = domain
+        self._agent_ids = set(domain.get_agents())
+        self.env = AsLegacyRLlibMultiAgentEnv(
             domain=domain, action_masking=action_masking, graph2node=graph2node
         )
-        self._domain = domain
-        super().__init__(old_env=old_env, render_mode=render_mode)
+        self.observation_space = self.env.observation_space
+        self.action_space = self.env.action_space
+        self.render_mode = render_mode
+        super().__init__()
 
     def get_agent_ids(self) -> set[str]:
         return self._domain.get_agents()
+
+    def reset(self, *, seed: Optional[int] = None, options: Optional[dict] = None):
+        if seed is not None:
+            gym.Env.reset(self, seed=seed)
+        observations = self.env.reset()
+        return observations, {agent: {} for agent in observations}
+
+    def step(self, action_dict):
+        observations, rewards, done, infos = self.env.step(action_dict)
+        # `done` already carries a real "__all__" key (see
+        # AsLegacyRLlibMultiAgentEnv.step above); the modern MultiAgentEnv
+        # API expects the same real per-agent + "__all__" shape for BOTH
+        # terminated and truncated. There is no separate truncation signal
+        # tracked anywhere in this multi-agent path today, so truncated is
+        # real, honestly-defaulted False for every agent (and "__all__")
+        # rather than guessed from `done`.
+        terminated = dict(done)
+        truncated = {agent: False for agent in observations}
+        truncated["__all__"] = False
+        return observations, rewards, terminated, truncated, infos
 
 
 class AsLegacyRLlibMultiAgentEnv(AsLegacyGymV21Env):
