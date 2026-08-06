@@ -63,8 +63,8 @@ domains = [
     "pygrib==2.1.5; sys_platform == 'darwin' and platform_machine == 'x86_64'",
     "setuptools<82.0.0; sys_platform == 'darwin' and platform_machine == 'x86_64'",  # pkg_resources removed from 82.0.0, and needed by pygrib 2.1.5
     "pyRDDLGym>=2.3, !=2.7",  # verified real: pyRDDLGym 2.6 installs and works (RDDLDomain construction + rollout) on Python 3.13; the `!=2.7` exclusion is unrelated to 3.13 (https://github.com/pyrddlgym-project/pyRDDLGym-gurobi/issues/6) and is kept as-is
-    "pyRDDLGym-rl>=0.2",  # verified real: skdecide.hub.domain.rddl unconditionally imports this (SimplifiedActionRDDLEnv), so it's load-bearing, not optional; pyRDDLGym-rl 0.2 imports and works with numpy 2.4.6 on Python 3.13 for RDDLDomain construction + action generation (not full RL-training-loop-tested against https://github.com/pyrddlgym-project/pyRDDLGym-rl/issues/9)
-    "numpy<2.4; python_version < '3.13'",  # incompability with pyRDDLGym-rl (https://github.com/pyrddlgym-project/pyRDDLGym-rl/issues/9)
+    "pyRDDLGym-rl>=0.2",  # verified real: skdecide.hub.domain.rddl unconditionally imports this (SimplifiedActionRDDLEnv), so it's load-bearing, not optional
+    "numpy<2.4",  # pyRDDLGym-rl 0.2 (still the latest release on PyPI, uploaded 2024-11-03) calls np.reshape(newshape=...) in SimplifiedActionRDDLEnv; numpy 2.4.0 removed the `newshape` kwarg (deprecated since 2.1, removed in 2.4 per https://numpy.org/doc/2.4/release/2.4.0-notes.html), breaking it on ALL Python versions including 3.13, not just <3.13 as previously assumed here. The upstream fix (https://github.com/pyrddlgym-project/pyRDDLGym-rl/pull/10, merged 2026-03-02) has not been released to PyPI yet -- see https://github.com/pyrddlgym-project/pyRDDLGym-rl/issues/9. Re-narrow this pin once a fixed release ships.
     "rddlrepository>=2.1",
     "plado>=0.1.3",
     "pytz>=2025.2",
