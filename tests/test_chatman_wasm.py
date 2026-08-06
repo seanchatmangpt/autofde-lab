@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+from typing import Any
 
 import pytest
 
@@ -31,7 +32,7 @@ def node_backend() -> NodeBackend:
 class BlockedBackend:
     name = "blocked-negative-fixture"
 
-    def invoke(self, artifact, request: bytes) -> bytes:
+    def invoke(self, artifact: Any, request: bytes) -> bytes:
         decoded = json.loads(request)
         return json.dumps(
             {
