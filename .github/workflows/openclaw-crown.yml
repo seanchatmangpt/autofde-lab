@@ -21,8 +21,8 @@ permissions:
 
 jobs:
   exact-host:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    runs-on: ubuntu-slim
+    timeout-minutes: 15
     env:
       OPENCLAW_STATE_DIR: ${{ github.workspace }}/.openclaw-ci/state
       OPENCLAW_CONFIG_PATH: ${{ github.workspace }}/.openclaw-ci/state/openclaw.json
