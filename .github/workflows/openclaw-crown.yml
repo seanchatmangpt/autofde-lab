@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   exact-host:
-    runs-on: macos-15
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 15
     env:
       OPENCLAW_STATE_DIR: ${{ github.workspace }}/.openclaw-ci/state
