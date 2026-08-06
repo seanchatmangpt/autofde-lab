@@ -7,8 +7,6 @@ from __future__ import annotations
 import importlib.util
 import json
 import pathlib
-import sys
-import types
 
 MODULE_PATH = (
     pathlib.Path(__file__).parents[1] / "src" / "skdecide" / "openclaw_bridge.py"
@@ -67,8 +65,8 @@ class FakeUtils:
 
 
 def setup_module():
-    bridge._load_utils = lambda: FakeUtils
-    bridge._entry_points = lambda group: {
+    bridge.runtime._load_utils = lambda: FakeUtils
+    bridge.runtime._entry_points = lambda group: {
         "FakeDomain": {
             "name": "FakeDomain",
             "group": group,
@@ -110,7 +108,7 @@ def test_match_uses_only_registered_subjects():
 
 
 def test_direct_run_constructs_solves_and_rolls_out():
-    result = bridge._run_direct(
+    result = bridge.runtime.run_direct(
         {
             "domain": {"name": "FakeDomain", "kwargs": {"size": 5}},
             "solver": {"name": "FakeSolver", "kwargs": {"bias": 7}},
