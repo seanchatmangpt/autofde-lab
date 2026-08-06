@@ -10,8 +10,10 @@ Every row is a **measured win** (command run this session, output quoted, passed
 **deferred/scoped** (a plan exists, nothing under it executed). Where this sheet and the code
 disagree, the code is the witness.
 
-Last update: **pass 1** (2026-08-06) — first session to actually execute across the chain
-rather than describe it. Corresponds to `docs/STATUS.md` pass 2.
+Last update: **pass 2** (2026-08-06) — RP-2 closed by a measured build; S3b demoted on a real
+SHACL defect; G1/G3 merged. Corresponds to `docs/STATUS.md` pass 3. Pass 1 (2026-08-06) was
+the first session to execute across the chain rather than describe it; its rows are corrected
+in place below, never deleted. **The crown remains `BLOCKED`.**
 
 ## Why this file exists
 
@@ -29,18 +31,23 @@ because that defect was actually fixed — not because the assertion was relaxed
 | # | Stage | Owner | Standing | Witness |
 |---|---|---|---|---|
 | S1 | exemplar → candidate authority | ggen-create | `UNSUPPORTED` | Reverse compiler is **0 lines**; `ontology/` holds only `.keep`. Repo self-declares it: `scan_ontology` → `bootstrap_empty_surface: True`, claim ceiling `ONTOLOGY_SURFACE_INTEGRITY_ONLY`. Its CI/GALL harness *is* real (25/25 tests, 0.26s, real git fixtures) — governance, not payload. |
-| S2 | candidate authority → admitted | mfw | `BUILD_BROKEN` | `cargo build -p mfw-planner` fails. See RP-2. |
+| S2 | candidate authority → admitted | mfw | `PARTIAL_ALIVE` | **Changed this pass.** `cargo build -p mfw-planner -p mfw-pcp-cli` now succeeds (47.23s, exit 0); both binaries exist and run. But the fix is **uncommitted** in `~/praxis`, and the skdecide engine is still not registered in `engines.toml` with a blake3 pin — so the build is repaired, admission is not demonstrated. See RP-2. |
 | S3 | plan computation (search graph) | **scikit-decide** | `ALIVE` | Engine runs, produces VAL-format plans. Quoted below. |
-| S3b | plan → POWL2 **projection** | **scikit-decide** | `ALIVE` *(projection only)* | Real blake3 digests, mfw's committed vocabulary. Quoted below. **Scope**: this manufactures a document. It is NOT execution — see the decisive question. |
+| S3b | plan → POWL2 **projection** | **scikit-decide** | `PARTIAL_ALIVE` *(projection only)* | **Demoted this pass — was `ALIVE`, and that was wrong.** Digests are real blake3 and independently cross-checked (below), but the emitted Turtle would be **rejected by mfw's own committed SHACL shapes**: `project_plan_to_powl` never emits `mfwp:implementsAction`, which `powl2:ActivityLeafShape` requires `minCount 1`. It also hardcodes `mfwp:projection "total-order"` and emits zero `powl2:precedes` edges, so its `powl2:PartialOrder` is a chain. **Scope**: this manufactures a document; it is NOT execution — see the decisive question. |
 | S3c | admitted POWL → **executed** workflow | mfw + **bcinr** (RP-7) | `PARTIAL_ALIVE` | A real POWL executor exists in `~/bcinr` (`execution_v2.rs:129` tick loop, OCEL, BLAKE3, deadlock refusal) — but it is **symbolic** (in-memory state only) and **not wired** to mfw's actuating broker. Three POWL representations, zero converters. Blocks the crown. |
 | S4 | manufacture (μ) | ggen | `PARTIAL_ALIVE` | `sync run` executes and self-verifies in CI; `Root Dogfood` 8/8 red at the closure gate. See RP-4. |
-| S5 | independent verification | ggen / ggen-legacy | `BUILD_BROKEN` | **Verifier builds disagree about identical bytes.** See EV-1 / RP-1. |
+| S5 | independent verification | ggen / ggen-legacy | `PARTIAL_ALIVE` | **Changed this pass.** A receipt manufactured this session verified `valid=True`, chain `98e756627c789118`, `outputs=7` under **two** builds, byte-identical — and the verifying build was not the writing build. But only two builds are reachable (`/opt/homebrew/bin/ggen` no longer exists), so EV-1's residual is untested rather than disproven. See EV-1 / RP-1, both still open. |
 | S6 | replay / equivalence / sunset | ggen-legacy | `PARTIAL_ALIVE` | 3 compiled verifier binaries execute and emit typed fail-closed refusals; `decision-engine.py` is a real 3-report + customer-flag gate defaulting to REFUSED. Root LSP crate never built, no CI builds it. |
 | S7 | recursive bootstrap controller | — | `UNSUPPORTED` | `Blocked → spawn child → manufacture → verify → admit → resume parent` exists **nowhere in code** across all five repos (`mfw`, `ggen`, `ggen-create`, `ggen-legacy`, `bcinr`). Primitives real; orchestration absent. Asserted absent by a test so the claim cannot drift silently. |
 
-**The chain does not close.** `ALIVE` is not claimable for the end-to-end path. S3/S3b are
-genuinely `ALIVE`; S1, S2, S3c and S7 each independently prevent closure — **S3c is the
-decisive one**, because a plan that is never executed makes every downstream stage moot.
+**The chain does not close.** `ALIVE` is not claimable for the end-to-end path. S3 is genuinely
+`ALIVE`; S3b is `PARTIAL_ALIVE` pending the `mfwp:implementsAction` defect; S1, S3c and S7 each
+independently prevent closure — **S3c is the decisive one**, because a plan that is never
+executed makes every downstream stage moot.
+
+*Correction, recorded in place.* The pass-1 text here read "S3/S3b are genuinely `ALIVE`". That
+is retracted: S3b's output does not satisfy the shapes it claims to target (see the S3b row and
+S3b below). S2 no longer belongs in the blocking list — it built this pass.
 
 ### The crown condition, stated correctly
 
@@ -108,6 +115,36 @@ Emits the vocabulary of the real committed `~/mfw/runs/ticket-10/plan.powl.ttl`:
 Digests are **real blake3** via `b3sum`. The projector raises `DigestUnavailable` rather than
 emitting another algorithm under a `blake3:` label — a forged identity would mismatch mfw's
 `PLANNER_ENVIRONMENT_DRIFT` check with a misleading reason.
+
+**Independent cross-check — measured win, pass 2.** With `mfw-planner` now building (RP-2),
+`mfw-planner export-powl` was run from `~/mfw/mfw-planner` (the directory holding
+`engines.toml`) over the same blocks domain. It computed:
+
+```text
+domain_digest   blake3:b11c0b44765957b790404ec9c8ec5e8e5b590353dcc98a50f794a469314406e2
+problem_digest  blake3:8a43b3cd62188ce5f366de4f2175825ae3d5c10f69a908115a26ef579ba7e143
+```
+
+**Byte-identical** to the digests quoted above, which `powl.py` produced independently. Two
+implementations in two languages agreeing on blake3 identity is a real cross-check, not a
+self-report — it is the one part of S3b that is unambiguously `ALIVE`.
+
+Minor mismatch, recorded so it is not rediscovered: mfw writes `"projection": "total_order"`
+(underscore); `powl.py` writes `mfwp:projection "total-order"` (hyphen). Cosmetic today,
+load-bearing the moment either string is compared rather than displayed.
+
+**Defect found this pass — why S3b is `PARTIAL_ALIVE`, not `ALIVE`.**
+`src/skdecide/fabric/powl.py::project_plan_to_powl` never emits `mfwp:implementsAction`.
+`~/mfw/mfw-planner/shapes/powl2.shacl.ttl`'s `powl2:ActivityLeafShape` requires it with
+`minCount 1`. So the Turtle this repo produces **would be rejected by the very shapes it is
+projected against** — the pass-1 `ALIVE` was granted on vocabulary resemblance, not on
+validation. Two further defects in the same writer: `mfwp:projection` is hardcoded to
+`"total-order"`, and zero `powl2:precedes` edges are emitted, so a declared
+`powl2:PartialOrder` is in fact a chain and carries no order information a driver could use.
+
+A concurrent agent is repairing the writer. **This entry does not claim that fix** — nothing
+was executed against a repaired `powl.py` here. S3b returns to `ALIVE` only when the emitted
+Turtle passes `shacl_validate` against the committed shapes, run and quoted.
 
 ### S3c — silent-wrong-answer refusal (the most important behavior added)
 
@@ -179,6 +216,56 @@ solvers are ontology-applicable yet not runnable with defaults (`IW`, `RIW`, `Ra
 `StableBaseline`, `UPSolver`, `MAHD`, …). That is a distinct, actionable category —
 `REQUIRES_CONFIGURATION` — not the same as inapplicable, and it is now machine-readable.
 
+### S4 — a real bounded ggen manufacture in a clean workspace (pass 2)
+
+`~/ggen/examples/star-toml-verify` was copied into a temp workspace, `[packs]` repointed at an
+absolute `~/ggen/packs/star-toml-pack`, the pre-existing generated outputs deleted, then real
+`ggen sync run --format json` — **not** `--dry-run`:
+
+```text
+written  : 7
+   + docs/star_toml/CARGO_DEPENDENCIES.md
+   + src/star_toml_config.rs
+   + tests/star_toml_config_proof.rs
+   + tests/star_toml_config_sparql_derived_proof.rs
+   + src/star_toml_lib_wiring.rs
+   + docs/star_toml/admission.md
+   + docs/star_toml/telemetry.md
+skipped  : 0
+graph_hash: a3b0b66476ef6c5afcfeddb8...
+exit=0
+```
+
+Files confirmed on disk afterwards. **Determinism cross-check**: an earlier run of the *same*
+workspace with the outputs still present returned `written: []` and all 7 entries
+`"skipped: unchanged: content identical"` — with an **identical** `graph_hash_hex
+a3b0b664...`. Same graph hash across both the writing and the no-op path.
+
+This is direct evidence for **RP-4**, reproduced outside `~/ggen`'s own root: the no-op run is
+exactly the shape RP-4 records — `sync run` succeeds while reporting zero generated outputs,
+because the "unchanged: content identical" admission path never registers ownership. **RP-4 is
+not closed by this**; the run strengthens its evidence and proves it is not root-specific.
+
+### S5 — independent verification of a manufacture performed this session
+
+That manufacture wrote `.ggen-v2/receipt.json` (4784 bytes) and `.ggen-v2/receipt-log.jsonl`
+(56675 bytes). `ggen receipt verify --format json`, run from the temp workspace under two
+builds:
+
+| build | result |
+|---|---|
+| `~/.cargo/bin/ggen` | `valid=True chain=98e756627c789118 sig_valid=True outputs=7` |
+| `~/ggen/target/debug/ggen` | `valid=True chain=98e756627c789118 sig_valid=True outputs=7` |
+
+Byte-identical chain hash from both, and **the verifying build is not the writing build** — so
+this is genuine independent verification, not self-attestation. It is also a *fresh* receipt,
+distinct from the pre-existing `~/ggen/.ggen-v2/receipt.json` that EV-1 concerned.
+
+**Caveat, and it keeps RP-1 open.** `/opt/homebrew/bin/ggen` **no longer exists on this
+machine**, so only two builds were reachable. EV-1's residual risk — a `brew link` reintroducing
+the stale Cellar binary and silently restoring the disagreement — is therefore **untested here,
+not disproven**. Two agreeing builds out of two reachable is weaker than three out of three.
+
 ### Crown test
 
 ```
@@ -203,10 +290,33 @@ After, the gaps separate and their characters differ sharply:
 
 | Gap | Condition | Character |
 |---|---|---|
-| **G1 representation** | Turtle / JSON / Rust model reps disconnected, zero converters | conventional integration |
+| **G1+G3 ingestion-and-authorization** | the runtime's POWL requires authorization metadata no planner can produce | **genuine architecture** |
 | **G2 scheduling** | `bcinr-powl` already supplies the bounded loop | existing capability, needs composition |
-| **G3 actuation** | symbolic scheduling causes no real effect at plan scale | **genuine architecture** |
 | **RP-6 recursion** | no child manufacture / admission / attachment / resumption | higher-order orchestration |
+
+**Correction, recorded rather than edited away.** Pass 1 split this into *G1 representation*
+("conventional integration") and *G3 actuation* ("genuine architecture"). That split is
+**retracted: G1 and G3 are one gap.** Evidence, measured this pass:
+
+- `mfw-planner export-powl` emits **JSON**, schema `urn:mfw:powl:document:v2` — a nested tree
+  with `model.children[]` and explicit `order: [{before, after}]` edges. That schema string
+  occurs **only** in `mfw-planner` (`solve_rdf.rs:407`, `plan.rs:173`, `powl.rs:439`, plus two
+  tests) and **never** in `mfw-rmcp`.
+- `mfw-rmcp`'s ingested shape (`mfw-rmcp/src/powl.rs:38-105`) is structurally different: a
+  **flat** `nodes: BTreeMap<String, PowlNode>` with `root: String`, each node carrying
+  `predecessors`, `read_set`, `write_set`, `authorization_class`, and
+  `NodeKind::Action { operation: NativeOperation }`.
+
+The decisive part is not the shape mismatch — it is that the runtime's POWL demands
+`authorization_class`, `read_set`, `write_set`, and a concrete `NativeOperation` drawn from a
+closed **3-variant** algebra (`WriteLevel5Pack`, `RecordLevel5Evidence`, `GenerateRmcpModule`).
+**A planner has no way to produce any of those.** So no planner-emitted plan becomes
+runtime-ingestible POWL without a step that assigns authorization classes and binds each
+activity to a native operation — and *that step is exactly* the "what maps a POWL activity to
+an executable operation?" question filed under G3. A format converter alone cannot close G1,
+because the target format's required fields are authorization decisions. Ingestion and
+actuation are the same problem; treating them as two made the cheaper one look independently
+closeable, which it is not.
 
 The accurate diagnosis is **not** "mostly unbuilt." It is **densely implemented but
 operationally discontinuous**: planners without execution, scheduling without actuation,
@@ -247,6 +357,34 @@ and verification rails.
 `ontology/skdecide-capabilities.ttl` is the first instalment — scoped to this repo, generated
 from entry points, and asserted against the live registry so it cannot drift. The
 ecosystem-wide graph is not yet built and is recorded here as scoped, not done.
+
+**The same failure reproduced inside this session — the strongest available evidence for the
+above.** Two of this session's own investigation agents, given the same question about
+`EvaluateSunsetStanding`, returned contradictory answers:
+
+- Agent A: *"no executable exists — only prose in three docs."* It had searched
+  scikit-decide's `docs/` only.
+- Agent B found `~/ggen-legacy/appliance/bin/decision-engine.py` (38 lines, confirmed), which
+  implements the real gate:
+  `release = verifier.standing=="ALIVE" and cross_check.standing=="ALIVE" and
+  replay.status=="REPLAY_MATCH"`, then a 7-field zero-closure check, then
+  `sunset = release and closed and m.get("customer_authorized_retirement") is True` —
+  fail-closed, and the `is True` deliberately rejects a truthy string.
+
+This is the `~/bcinr` miss again, one pass later, with the lesson already written down in this
+very file. A negative finding is exactly as broad as the search that produced it, and neither
+good faith nor a recorded prior instance prevents the recurrence. Only a queryable authority
+does — which is the argument for the ecosystem-wide ontology, not a stylistic preference.
+
+**Phase 0 mitigation, done this session (in this repo, in scope).** `.claude/rules/*.md` now
+carry YAML `paths:` front-matter, so a rules file loads only when a matching file is read.
+Previously all six loaded unconditionally — verifiable from this session's own system prompt,
+which contained all six in full. An `@` import expands at session start, so the earlier
+`CLAUDE.md` split reorganised text without reducing context; that is now actually fixed rather
+than nominally. The root `CLAUDE.md` additionally documents that cross-repo work requires
+`CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` alongside `--add-dir`, because `--add-dir`
+grants **file access but not instruction loading** — the exact condition under which the
+`~/bcinr` miss occurred.
 
 ## Capability surface (measured, for the ontology)
 
@@ -342,7 +480,25 @@ passed**. `git status --porcelain .ggen-v2/receipt.json` empty — evidence unto
 `brew upgrade` could relink it and silently reintroduce the disagreement. RP-1 below is
 therefore **still open** — the machine is fixed, the *class of defect* is not.
 
-### RP-2 — `BUILD_BROKEN`: `cargo build -p mfw-planner`
+**Pass-2 update.** `/opt/homebrew/bin/ggen` is now absent entirely, so only two builds are
+reachable and they agree (S5 above). That reduces the *reachable* disagreement to zero without
+closing RP-1: two-of-two agreeing is a weaker check than three-of-three, and a `brew link`
+still reintroduces the third. Fewer disagreeing builds because one became unreachable is not
+the same as reconciled builds.
+
+**Stale docstring, recorded not fixed.** `tests/ecosystem/test_chatman_chain_chicago.py:364`
+still says the test is *"Left deliberately failing rather than xfail-ed or skipped."* That was
+true when EV-1 was red; it is now stale. The test is *conditionally* red — it hard-fails only
+when two reachable ggen builds disagree, and skips with `BLOCKED:INSUFFICIENT_VERIFIER_BUILDS`
+when fewer than two exist. Needs a one-line docstring correction. Not edited here: `tests/` is
+owned by a concurrent agent this session, and leaving the discrepancy recorded is preferable to
+leaving it silent.
+
+### RP-2 — `BUILD_BROKEN`: `cargo build -p mfw-planner` — **CLOSED this pass**
+
+The failure below was real and is preserved verbatim as the pass-1 record. It no longer
+reproduces; see RP-2 under repair plans for the fix, the retraction of its "one-line" diagnosis,
+and the exact residual (uncommitted).
 
 ```
 error: failed to get `bcinr-powl-receipt` as a dependency of package
@@ -360,6 +516,31 @@ referenced by absolute path at `/Users/sac/praxis/crates/praxis-graphlaw/Cargo.t
 Consequence: mfw's solve → OCEL → receipt path cannot be re-run, so the skdecide engine cannot
 be admitted through mfw's own admission gate this session. Its *contract conformance* is
 tested instead (S3), which is weaker and labelled as such.
+
+### EV-2 — a second dangling absolute path dep, recorded by the ontology and connected to nothing
+
+Fixing RP-2 uncovered the next one immediately. `~/praxis/crates/rust-fable-testbed/Cargo.toml:11`:
+
+```toml
+ggen-core = { path = "../../../ggen/crates/ggen-core" }
+```
+
+`ls ~/ggen/crates/ggen-core` → `No such file or directory`. ggen deleted the crate.
+
+The point is not the broken dep. It is that **the ecosystem's own ontology already records the
+deletion that breaks the sibling build, and nothing connects the record to the build.**
+`~/ggen-legacy/ontology/v26.8.1/legacy-capabilities.ttl:21-28` carries
+`legacy:legacy_ggen_core_pipeline` with
+`ggen:historicalSourceCommit "9cef6e40f (delete) / cbf173f82 (disconnect, PR #255)"`,
+`ggen:legacySourcePath "crates/ggen-core/ (deleted; …)"`, disposition `REPLACED`, standing
+`UNKNOWN`. A build broke on a fact the portfolio had already written down. That is the
+connective-tissue-debt thesis below, demonstrated live rather than argued.
+
+**Scope, stated so this is not over-read.** This does **not** block mfw: mfw pulls
+`praxis-graphlaw` only, not `rust-fable-testbed`, and `cargo metadata --format-version 1` in
+`~/mfw` exits 0. Recorded negative scoped to `~/praxis`; not a crown blocker. Owner `~/praxis`
+(decide whether the testbed follows `ggen-core` to its successor or is retired to match the
+ontology's `REPLACED` disposition).
 
 ## Repair plans
 
@@ -393,7 +574,50 @@ Status: **local symptom fixed this session; the underlying defect class is open.
 
 ### RP-2 — restore `bcinr-powl-receipt`  *(owner: `~/bcinr`, consumed by `~/praxis` → `~/mfw`)*
 
-**Diagnosis complete — the crate was RENAMED, not deleted. This is a one-line fix.**
+Status: **CLOSED — measured win this pass. The build succeeds.**
+
+```text
+$ cd ~/mfw && cargo build -p mfw-planner -p mfw-pcp-cli
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 47.23s
+$ echo $?
+0
+$ ls -la target/debug/mfw-planner target/debug/mfw-pcp-cli
+-rwxr-xr-x  54215280  target/debug/mfw-planner
+-rwxr-xr-x   6813552  target/debug/mfw-pcp-cli
+```
+
+Both run. `mfw-planner --help` → *"Receipted external planner runner"*, subcommands `probe`,
+`run`, `export-powl`, `solve-rdf`, `solve`. `mfw-pcp-cli --help` → *"Proof-carrying plan
+lifecycle verifier"*, subcommands `demo`, `verify-bundle`, `verify-replay`, `render-rdf`.
+
+**Retraction, in place.** The pass-1 heading read *"the crate was RENAMED, not deleted. This is
+a one-line fix."* The rename half is correct; **"one-line fix" was wrong** and is retracted. The
+actual blast radius, measured:
+
+- **four** `bcinr-powl-receipt` declarations, not one — `~/praxis/Cargo.toml:100`,
+  `crates/multifractal-workflow/Cargo.toml:111`, `crates/praxis-core/Cargo.toml:20`,
+  `crates/praxis-graphlaw/Cargo.toml:41`;
+- **26 code import sites across 12 files** using `bcinr_powl_receipt::`.
+
+A single-line edit would have moved the error, not removed it. This is the same
+under-estimation pattern the file exists to catch, so the wrong estimate stays visible.
+
+**Fix applied** on branch `fix/bcinr-powl-receipt-rename` in `~/praxis`: deleted all four
+declarations (the successor `bcinr-powl` was already a dependency in 3 of the 4 crates), added
+it to `praxis-core`, rewrote `bcinr_powl_receipt::` → `bcinr_powl::receipt::`, and replaced the
+absolute `/Users/sac/…` paths with relative ones. Successor confirmed present:
+`~/bcinr/crates/bcinr-powl/src/lib.rs:35` declares `pub mod receipt;` and all 13 successor
+modules exist.
+
+**Residual — not closed, and it is why S2 is `PARTIAL_ALIVE` and not higher.**
+
+1. **The fix is NOT COMMITTED.** `~/praxis` carried 47 pre-existing dirty files, some in files
+   also edited here; committing would entangle unrelated uncommitted work. A build that depends
+   on an uncommitted working tree is not reproducible from a clean clone — the exact defect
+   class this repair plan was opened for.
+2. **Admission is still not demonstrated.** The skdecide engine has not been registered in
+   `engines.toml` with a blake3 pin, so nothing has passed through mfw's own gate. "Builds" is
+   not "admitted," and this pass claims only the former.
 
 - **Missing capability**: none, actually. The dependency target moved.
 - **Root cause**: commit `251f3af5` in `~/bcinr` — *"refactor(powl): collapse
@@ -417,9 +641,11 @@ Status: **local symptom fixed this session; the underlying defect class is open.
   feature-gate it away.
 - **Acceptance test**: `cargo build -p mfw-planner` succeeds; then `cargo test -p mfw-planner`.
 - **Falsifier**: build succeeds locally but not from a clean clone (absolute paths remain).
-- **Resume condition**: S2 → at least `PARTIAL_ALIVE`; the skdecide engine can then be
-  registered in `engines.toml` with a blake3 pin and admitted through mfw's real gate,
-  upgrading S3 from *contract-conformant* to *admitted*.
+  **This falsifier is currently live** — the fix is uncommitted, so no clean clone has been
+  tested. Treat the measured build above as machine-local until the branch lands.
+- **Resume condition**: S2 → `PARTIAL_ALIVE` **(reached this pass)**. S2 → `ALIVE` requires the
+  branch committed *and* the skdecide engine registered in `engines.toml` with a blake3 pin and
+  admitted through mfw's real gate, upgrading S3 from *contract-conformant* to *admitted*.
 
 ### RP-3 — planner for ggen-legacy's orphan corpus  *(owner: `~/ggen-legacy`, needs `~/scikit-decide`)*
 
@@ -521,6 +747,10 @@ composition, not construction, and it is materially smaller than first stated.
      **one** converter and declare **one** canonical form. Cheapest defensible option: a
      Turtle→`PowlModel` reader in `bcinr-powl` (it already owns the model types), making mfw's
      existing `plan.powl.ttl` the interchange format instead of a dead end.
+     **Contested as of pass 2** — Turtle is the weakest of the three representations (it cannot
+     express exclusive choice or guards, which the runtime JSON can), and the runtime's target
+     fields are authorization decisions a converter cannot compute. See "which representation
+     should be canonical" below. Do not execute this step before that decision has an owner.
   2. **Do not write a new scheduler.** Use `execute_and_seal_v2_with_selector`
      (`bcinr-powl/src/receipt/execution_v2.rs:129`) — it already provides the tick loop,
      `max_ticks` bound, deadlock refusal, and BLAKE3 chaining that step 5 of the original plan
@@ -672,6 +902,27 @@ file-write operations, and its PCP lane's sole `Actuator` (`RecordingActuator`,
 `mfw-pcp-broker/src/lib.rs:499`) pushes a digest onto a `Vec`. **The step where a fired POWL
 activity causes an effect in the world is absent from both.**
 
+**Pass-2 correction: G1 and G3 above are ONE gap, not two.** See the merged row in the gap
+table earlier — the runtime's POWL requires `authorization_class`, `read_set`, `write_set` and
+a concrete `NativeOperation`, none of which a planner can emit, so "write a converter" (G1) and
+"decide what an activity actuates" (G3) are the same decision. The two-headed framing in this
+subsection is preserved for the record and is superseded.
+
+**Which representation should be canonical is now an OPEN DECISION with source evidence
+against the obvious answer.** Measured this pass: `mfw-rmcp`'s `NodeKind` has
+`ChoiceGraph { start, end, nodes, edges: Vec<ChoiceEdge> }` where `ChoiceEdge` carries a
+`guard_digest`, plus `Cycle { body, invariant_theorem, variant_theorem }` and
+`CommutationWitness`. So exclusive choice, guards, and bounded loops **are** representable in
+the runtime JSON. They are **not** representable in Turtle (`powl2.shacl.ttl` defines only 3
+shapes, none for choice) and **not** in bcinr's `PowlModel` (no choice variant —
+`~/bcinr/crates/bcinr-powl/src/model/mod.rs:148`).
+
+Therefore **Turtle is the weakest of the three representations, not the canonical one.** RP-7
+step 1 below proposes a Turtle→`PowlModel` reader making Turtle the interchange format; that
+proposal is now **contested by this evidence** — it would canonicalise the only representation
+that cannot express choice or guards. Recorded as an open decision. Not decided here: deciding
+it requires an owner and a stated cost, neither of which a ledger row can supply.
+
 ### Caveats that bound the above
 
 - `~/bcinr` has **no `target/`** — nothing compiled locally. The executor is CI-tested code;
@@ -700,7 +951,12 @@ The crown remains **`BLOCKED`** — but for a corrected reason: not "no executor
 | 8 | verify / replay | OWNED (PCP lane only) | `mfw-pcp-replay/src/lib.rs:45` `verify(records)`, `:60` `records.chunks_exact(2)`. Replays *receipts*; has no POWL model in scope. |
 | 9 | **plan** completed with standing | **STRUCTURALLY ABSENT** | `mfw-pcp-standing/src/lib.rs:106` `close_standing(...)` compares `goal.goal_digest != bundle.plan.body.goal_digest` — "plan" is only a **digest**. The POWL structure is never walked, so **nothing checks that every required activity ran**. Standing can close on a single action, and in its only caller it does: `mfw-pcp-cli/src/main.rs:94` `demo()` builds ONE hard-coded `CanonicalAction` (`:97-118`), one `open`, one `actuate`, then `close_standing` (`:154`) prints `ALIVE`. Plan-completion over N=1. |
 
-### The two disjoint gaps
+### The two disjoint gaps — *superseded, kept for the record*
+
+**Pass-2 note.** "Disjoint" is retracted. G1 (ingestion) and G3 (actuation) are one gap; see the
+gap table earlier for the measurement. Also note that `export-powl` emits **JSON**
+(`urn:mfw:powl:document:v2`), so "the planner emits Turtle" below is incomplete: it emits both,
+and the JSON it emits is still not the flat `nodes`/`root` shape the runtime ingests.
 
 **G1 — ingestion gap.** The planner emits POWL as **Turtle**; the runtime ingests POWL from
 **hand-authored JSON** (`mfw-rmcp/src/config.rs:86` `load_json_files(&config.powl_models)`,

@@ -1,3 +1,12 @@
+---
+paths:
+  - "src/skdecide/fabric/**"
+  - "src/skdecide/openclaw_*.py"
+  - "tests/ecosystem/**"
+  - "ontology/**"
+  - "docs/ecosystem-standing.md"
+---
+
 # Ecosystem boundary — this repo is the search graph, nothing more
 
 The portfolio divides labour so that no component infers a spec, generates the

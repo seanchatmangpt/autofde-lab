@@ -243,7 +243,13 @@ def emit_turtle(capabilities: List[Capability]) -> str:
 # ---------------------------------------------------------------------------
 
 
-def parse_turtle(text: str) -> Dict[str, Dict[str, List[str]]]:
+class TurtleParseError(ValueError):
+    """Raised by :func:`parse_turtle` in ``strict`` mode on a malformed input."""
+
+
+def parse_turtle(
+    text: str, strict: bool = False
+) -> Dict[str, Dict[str, List[str]]]:
     """Parse the Turtle subset this module emits.
 
     Deliberately a *subset* reader, not a general Turtle parser: `rdflib` is
@@ -252,13 +258,55 @@ def parse_turtle(text: str) -> Dict[str, Dict[str, List[str]]]:
     it handles ``<iri> pred obj ;`` / ``.`` statements with quoted literals,
     IRIs, and ``^^`` typed literals, which is exactly what `emit_turtle`
     produces. It is not suitable for arbitrary Turtle.
+
+    ``strict=False`` (the default) preserves the historical lossy behaviour
+    byte for byte, because ``coverage.load_ontology`` depends on it. Four known
+    defects live in that path, all of which ``strict=True`` fixes:
+
+    a. A comma-separated type list (``a powl2:Model, powl2:PartialOrder``) was
+       stored as the single string ``"powl2:Model, powl2:PartialOrder"``, so a
+       membership test for either type failed.
+    b. ``"0"^^xsd:integer`` lost its datatype, so an integer and the string
+       ``"0"`` were indistinguishable.
+    c. After a statement terminated with ``.``, ``subject`` was reassigned to
+       itself -- a no-op -- so a stray predicate line silently attached to the
+       PREVIOUS subject instead of being reported.
+    d. ``@prefix`` was discarded, so prefixed names were compared as opaque
+       strings rather than expanded IRIs.
+
+    In strict mode: types are split, ``^^`` datatypes are preserved on the
+    value (``"0"^^http://www.w3.org/2001/XMLSchema#integer``), prefixed names
+    are expanded against the declared ``@prefix`` map, and a predicate line
+    with no open subject raises :class:`TurtleParseError`.
     """
     graph: Dict[str, Dict[str, List[str]]] = {}
     subject: Optional[str] = None
+    prefixes: Dict[str, str] = {}
+
+    def expand(token: str) -> str:
+        if not strict:
+            return token
+        if token.startswith("<") and token.endswith(">"):
+            return token[1:-1]
+        prefix, sep, local = token.partition(":")
+        if not sep or "/" in prefix:
+            return token
+        if prefix not in prefixes:
+            raise TurtleParseError(f"undeclared prefix {prefix!r} in {token!r}")
+        return prefixes[prefix] + local
 
     for raw_line in text.splitlines():
         line = raw_line.strip()
-        if not line or line.startswith("#") or line.startswith("@prefix"):
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("@prefix"):
+            if strict:
+                body = line[len("@prefix") :].strip().rstrip(".").strip()
+                name, _, iri = body.partition(" ")
+                iri = iri.strip()
+                if not (iri.startswith("<") and iri.endswith(">")):
+                    raise TurtleParseError(f"malformed @prefix: {line!r}")
+                prefixes[name.strip().rstrip(":")] = iri[1:-1]
             continue
 
         terminal = line.endswith(".")
@@ -267,12 +315,26 @@ def parse_turtle(text: str) -> Dict[str, Dict[str, List[str]]]:
         if line.startswith("<") and "> a " in line:
             subject, _, remainder = line.partition("> a ")
             subject = subject.lstrip("<")
-            graph.setdefault(subject, {}).setdefault("a", []).append(
-                remainder.strip()
-            )
+            types = graph.setdefault(subject, {}).setdefault("a", [])
+            if strict:
+                # (a) comma-separated type lists are several types, not one.
+                types.extend(
+                    expand(part.strip())
+                    for part in remainder.split(",")
+                    if part.strip()
+                )
+            else:
+                types.append(remainder.strip())
+            if strict and terminal:
+                subject = None
             continue
 
         if subject is None:
+            if strict:
+                # (c) a stray predicate must not attach to the previous subject.
+                raise TurtleParseError(
+                    f"predicate line with no open subject: {line[:80]!r}"
+                )
             continue
 
         predicate, _, obj = line.partition(" ")
@@ -280,14 +342,21 @@ def parse_turtle(text: str) -> Dict[str, Dict[str, List[str]]]:
         if obj.startswith('"'):
             closing = obj.rfind('"')
             value = obj[1:closing].replace('\\"', '"').replace("\\n", "\n")
+            tail = obj[closing + 1 :].strip()
+            if strict and tail.startswith("^^"):
+                # (b) keep the datatype instead of dropping it.
+                value = f"{value}^^{expand(tail[2:].strip())}"
         elif obj.startswith("<"):
             value = obj.strip("<>")
         else:
-            value = obj
-        graph[subject].setdefault(predicate, []).append(value)
+            value = expand(obj)
+        graph[subject].setdefault(expand(predicate) if strict else predicate, []).append(
+            value
+        )
 
-        if terminal:
-            subject = subject  # statement block ends; subject reused on next `a`
+        if strict and terminal:
+            # (c) the block really is closed.
+            subject = None
 
     return graph
 

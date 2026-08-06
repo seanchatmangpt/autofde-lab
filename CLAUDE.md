@@ -23,8 +23,32 @@ https://airbus.github.io/scikit-decide/
 @.claude/rules/standing-law.md
 
 That file is imported, not merely referenced, because every status claim in
-every session needs it. Everything below is **looked up on demand** — read
-the file when the work matches, rather than carrying all of it always.
+every session needs it.
+
+Everything below is **path-gated**, not imported. Each `.claude/rules/*.md`
+carries YAML `paths:` front-matter and loads only when a matching file is
+read. This distinction is load-bearing and was got wrong once: an `@` import
+is expanded into `CLAUDE.md` at session start, so splitting a long file into
+six imports reorganises text without reducing anything. A rules file with no
+`paths:` gate also loads unconditionally. The table below is a routing hint
+for a human reader; the gates are what actually control loading.
+
+## Working across the ecosystem
+
+Cross-repo claims require the sibling repos' own doctrine, not just their
+code. `--add-dir` grants file access but **not** instruction loading — that
+needs an environment variable:
+
+```bash
+CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude \
+  --add-dir ~/mfw --add-dir ~/bcinr --add-dir ~/praxis \
+  --add-dir ~/ggen --add-dir ~/ggen-create --add-dir ~/ggen-legacy \
+  --add-dir ~/wasm4pm --add-dir ~/wasm4pm-compat
+```
+
+Without it, you read sibling code with none of its rules — the exact
+condition that produced a false ecosystem-wide claim from a search that had
+never looked at `~/bcinr`. Verify with `/memory` and `/context`, don't assume.
 
 ## Look this up when you are doing that
 

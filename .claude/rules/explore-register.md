@@ -1,3 +1,9 @@
+---
+paths:
+  - "docs/**"
+  - "tests/ecosystem/**"
+---
+
 # Explore register — nano-nonfiction dispatch
 
 Default reasoning mode for investigating a transition, a template, a fixture,

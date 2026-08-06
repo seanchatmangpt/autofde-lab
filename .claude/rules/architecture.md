@@ -1,3 +1,10 @@
+---
+paths:
+  - "src/skdecide/**"
+  - "cpp/**"
+  - "tests/**"
+---
+
 # Architecture — retrieve from source, not from memory
 
 This section is deliberately thin. Treat it as an index into where to look,

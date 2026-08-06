@@ -1,3 +1,9 @@
+---
+paths:
+  - ".claude/skills/**"
+  - ".claude/agents/**"
+---
+
 # Project-scoped Claude Code tooling
 
 `.claude/skills/` and `.claude/agents/` in this repo operationalize the

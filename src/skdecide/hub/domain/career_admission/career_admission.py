@@ -137,7 +137,12 @@ class CareerAdmission(D):
         action: D.T_agent[D.T_concurrency[D.T_event]],
         next_state: D.T_state | None = None,
     ) -> D.T_agent[Value[D.T_value]]:
-        return Value(cost=self._facts[action].cost)
+        # `.get` rather than `[]`: an action naming an id absent from the
+        # fact set (e.g. a dangling prerequisite id) must leave the domain
+        # merely *blocked*, never raise. Such an action is never applicable,
+        # so this branch only guards against an out-of-band caller.
+        fact = self._facts.get(action)
+        return Value(cost=fact.cost if fact is not None else float("inf"))
 
     def _is_terminal(self, state: D.T_state) -> D.T_agent[D.T_predicate]:
         return self._is_goal(state)
@@ -159,8 +164,13 @@ class CareerAdmission(D):
 
     def _get_goals_(self) -> D.T_agent[Space[D.T_observation]]:
         def is_goal_state(state: State) -> bool:
+            # Unknown ids contribute no category (see `.get` note above)
+            # rather than raising, so a dangling prerequisite yields a
+            # blocked domain instead of a crash.
             admitted_categories = {
-                self._facts[fact_id].category for fact_id in state.admitted
+                self._facts[fact_id].category
+                for fact_id in state.admitted
+                if fact_id in self._facts
             }
             return self._required_categories.issubset(admitted_categories)
 

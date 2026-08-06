@@ -1,3 +1,10 @@
+---
+paths:
+  - "integrations/openclaw/**"
+  - "src/skdecide/openclaw_*.py"
+  - ".github/**"
+---
+
 # Actuation boundary — what needs confirmation before it runs
 
 Local edits, tests, and notebook runs are Explore-territory — no
