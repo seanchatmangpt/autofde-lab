@@ -20,9 +20,9 @@ _ALLOWED_STATES = frozenset(
         "UNKNOWN",
         "PARTIAL_ALIVE",
         "ALIVE",
+        "BLOCKED",
         "BUILD_BROKEN",
         "UNSUPPORTED",
-        "REFUSED",
     }
 )
 
@@ -39,6 +39,32 @@ def canonical_json_bytes(value: Mapping[str, Any]) -> bytes:
         ensure_ascii=False,
         allow_nan=False,
     ).encode("utf-8")
+
+
+def _valid_standing(value: str) -> bool:
+    return value in _ALLOWED_STATES or (
+        value.startswith("REFUSED:") and len(value) > len("REFUSED:")
+    )
+
+
+def _normalize_legacy_refusal(
+    status: str,
+    output: Any,
+    receipt: Mapping[str, Any],
+) -> tuple[str, Mapping[str, Any]]:
+    if status != "REFUSED":
+        return status, receipt
+    reason = "UNSPECIFIED"
+    if isinstance(output, Mapping):
+        candidate = output.get("reason")
+        if isinstance(candidate, str) and candidate:
+            reason = re.sub(r"[^A-Z0-9_]+", "_", candidate.upper()).strip("_")
+            reason = reason or "UNSPECIFIED"
+    normalized = f"REFUSED:{reason}"
+    normalized_receipt = dict(receipt)
+    normalized_receipt["guest_standing"] = "REFUSED"
+    normalized_receipt["standing"] = normalized
+    return normalized, normalized_receipt
 
 
 @dataclass(frozen=True, slots=True)
@@ -144,12 +170,7 @@ class InvocationResult:
     receipt: Mapping[str, Any]
 
     def __post_init__(self) -> None:
-        if self.status == "BLOCKED":
-            raise ValueError(
-                "BLOCKED is not an admissible ERRC standing; use REFUSED for "
-                "denied or unavailable authority and BUILD_BROKEN for failed manufacture"
-            )
-        if self.status not in _ALLOWED_STATES:
+        if not _valid_standing(self.status):
             raise ValueError(f"unsupported standing state: {self.status!r}")
         object.__setattr__(self, "receipt", _freeze_mapping(self.receipt))
 
@@ -182,10 +203,14 @@ class InvocationResult:
             raise ValueError(
                 "receipt source revision does not match the registry pin"
             )
+        output = decoded.get("output")
+        status, receipt = _normalize_legacy_refusal(
+            str(decoded.get("status", "UNKNOWN")), output, receipt
+        )
         return cls(
             component=component,
             operation=operation,
-            status=str(decoded.get("status", "UNKNOWN")),
-            output=decoded.get("output"),
+            status=status,
+            output=output,
             receipt=receipt,
         )
