@@ -68,7 +68,7 @@ _COMPONENTS = (
         python_name="wasm4pm",
         repository="https://github.com/seanchatmangpt/wasm4pm",
         branch="agent/mfw-interop-admission",
-        revision="7c9c78bf811e9ffb5b97d6c1703feab0fbf19382",
+        revision="400f1795cd17845f0723e4e3edf67c3f1e591b36",
         capability_class="process-evidence",
     ),
     _component(
