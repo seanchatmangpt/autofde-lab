@@ -8,7 +8,6 @@ from __future__ import annotations
 import bisect
 import random
 import struct
-from collections import OrderedDict
 from collections.abc import Callable
 from copy import deepcopy
 from itertools import product
@@ -829,9 +828,11 @@ class GymDiscreteActionDomain(UnrestrictedActions):
                     ).get_elements()
                 )
             )
-            return ListSpace(
-                OrderedDict(zip(dkeys, dvalues)) for dvalues in generate(0)
-            )
+            # NB: gymnasium>=1's `Dict.sample()` returns a plain `dict` (not an
+            # `OrderedDict`) -- see `gymnasium.spaces.Dict.__init__`, which normalizes
+            # any input mapping to a plain `dict`. Match that real, current contract
+            # here so discretized actions have the same type as `action_space.sample()`.
+            return ListSpace(dict(zip(dkeys, dvalues)) for dvalues in generate(0))
         else:
             raise RuntimeError(
                 "Unknown Gym space element of type " + str(type(action_space))

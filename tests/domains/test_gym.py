@@ -3,6 +3,8 @@ from collections.abc import Callable
 
 import gymnasium as gym
 import numpy as np
+import pytest
+from packaging.version import Version
 
 from skdecide.hub.domain.gym import (
     GymDiscreteActionDomain,
@@ -99,11 +101,20 @@ def test_gymdomain4iw():
 def test_asgymnasiumenv():
     domain = Maze()
     domain.reset()
-    env = AsGymnasiumEnv(domain=domain, render_mode="human")
-    env.reset()
-    env.step(env.action_space.sample())
-    env.render()
-    env.close()
+    if Version(gym.__version__) >= Version("1"):
+        # Real, verified gymnasium>=1 behavior: gymnasium.wrappers.compatibility
+        # (EnvCompatibility/LegacyEnv), which AsGymnasiumEnv relies on to wrap a
+        # legacy (pre-gymnasium) `gym.Env`-style domain, was removed in gymnasium
+        # 1.0. AsGymnasiumEnv now raises a clear ImportError on construction
+        # instead of silently breaking at module-import time.
+        with pytest.raises(ImportError, match="removed in gymnasium 1.0"):
+            AsGymnasiumEnv(domain=domain, render_mode="human")
+    else:
+        env = AsGymnasiumEnv(domain=domain, render_mode="human")
+        env.reset()
+        env.step(env.action_space.sample())
+        env.render()
+        env.close()
 
 
 def test_discretisation():
@@ -320,7 +331,11 @@ def test_discretisation():
             status=gym.spaces.MultiBinary(n),
         )
     )
-    assert isinstance(gym_action_space.spaces, OrderedDict)
+    # gymnasium>=1 always normalizes `Dict.spaces` to a plain `dict` (insertion-ordered
+    # since Python 3.7, but no longer specifically an `OrderedDict` instance) -- see
+    # gymnasium.spaces.Dict.__init__, which does `dict(spaces.items())` even when an
+    # OrderedDict is passed in. Assert the real, current contract instead.
+    assert isinstance(gym_action_space.spaces, dict)
     keys = list(gym_action_space.spaces.keys())
     gym_env.action_space = gym_action_space
     an_original_action = gym_action_space.sample()
