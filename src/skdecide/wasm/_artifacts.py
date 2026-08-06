@@ -61,13 +61,13 @@ _ARTIFACTS = {
     'ggen-legacy': PackagedArtifact(component='ggen-legacy', filename='ggen-legacy.wasm', sha256='8de5404fe048939b078628a1db03ad7ad36b623a82931082e5a9691564f4f390', size=6017),
     'lsp-max': PackagedArtifact(component='lsp-max', filename='lsp-max.wasm', sha256='49b775e6e2d20c4985532e322224a8b49e1df86517ad7aff3aaf806f33e368e3', size=5659),
     'mfact': PackagedArtifact(component='mfact', filename='mfact.wasm', sha256='1fee7f453c94acbc179f8867f5c064c0cd5710717218f91d7932bce3c40d5f85', size=5947),
-    'mfw': PackagedArtifact(component='mfw', filename='mfw.wasm', sha256='17789bd914a0ad77943c180d373731d1fcabbdeef71b208f62e5499b3860f544', size=5516),
+    'mfw': PackagedArtifact(component='mfw', filename='mfw.wasm', sha256='15cd91ca2e45ebd9408793162e96fa9a0bf975c237ea6acbf6ed8a8de16ab70a', size=5516),
     'mmdio': PackagedArtifact(component='mmdio', filename='mmdio.wasm', sha256='da2194ea8189ca5da8f3701d44077c20376c18cc4244a65ed36a6118f0b12ffb', size=5673),
     'mu-mcpp': PackagedArtifact(component='mu-mcpp', filename='mu-mcpp.wasm', sha256='916eff9e4e31d29e45b009a8b3ffcd20bc6bb19c5577d74e4b40c702cec6b9a7', size=5697),
     'mu-truex': PackagedArtifact(component='mu-truex', filename='mu-truex.wasm', sha256='517cbd247e1055965ec029729abbf88c14822df31bbbde68332c76299dc9ae20', size=5743),
     'powl': PackagedArtifact(component='powl', filename='powl.wasm', sha256='22439bdfecf98554c3a5b3951e581895e7c6cbfad85e0d0e77e2b24dca7e61a8', size=5902),
     'star-toml': PackagedArtifact(component='star-toml', filename='star-toml.wasm', sha256='13d8b03835009efc433c0d833c4cd1d3e950a33775b9d8f358c09b6e1ef16109', size=5747),
-    'wasm4pm': PackagedArtifact(component='wasm4pm', filename='wasm4pm.wasm', sha256='74ae792d3b4ad3c992d4c7dc14c39b1c861bab4b4fcd4c56004a3070da40f269', size=6037),
+    'wasm4pm': PackagedArtifact(component='wasm4pm', filename='wasm4pm.wasm', sha256='3d3d0d2d16c4e9be0d9e8fbdf798a9e9c86480f18e8cf324e06cfdac5a3291ed', size=6037),
     'wasm4pm-compat': PackagedArtifact(component='wasm4pm-compat', filename='wasm4pm-compat.wasm', sha256='c494687886e1bd5b761d8096848b986315165851ecd6e67078f354247bf485f5', size=6154),
 }
 ARTIFACTS: Mapping[str, PackagedArtifact] = MappingProxyType(_ARTIFACTS)
