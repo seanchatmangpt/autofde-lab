@@ -136,7 +136,12 @@ def validate_mfw_envelope(
             "receipt consequence does not match envelope",
         )
     subject = receipt.get("subject")
-    if dict(subject or {}) != {
+    if not isinstance(subject, Mapping):
+        raise MfwInteropError(
+            "RECEIPT_SUBJECT_MISSING",
+            "receipt subject must be an object",
+        )
+    if dict(subject) != {
         **expected_source,
         "request_sha256": request_digest,
         "result_sha256": result_digest,
