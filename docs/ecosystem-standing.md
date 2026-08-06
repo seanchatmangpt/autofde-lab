@@ -10,8 +10,8 @@ Every row is a **measured win** (command run this session, output quoted, passed
 **deferred/scoped** (a plan exists, nothing under it executed). Where this sheet and the code
 disagree, the code is the witness.
 
-Last update: **pass 1** — first session to actually execute across the chain rather than
-describe it.
+Last update: **pass 1** (2026-08-06) — first session to actually execute across the chain
+rather than describe it. Corresponds to `docs/STATUS.md` pass 2.
 
 ## Why this file exists
 
@@ -20,8 +20,9 @@ reported it `ALIVE` as a "Chicago test." That test passes, but it *encodes an an
 manufacturing law rather than exercising it — no sibling repo was touched, nothing was
 manufactured, nothing independently verified. It has been demoted to
 `tests/domains/python/test_career_admission_unit.py` with an explicit scope warning. The crown
-is `tests/ecosystem/test_chatman_chain_chicago.py`, which drives real binaries and real corpora
-and **is currently red on a real defect** (see EV-1).
+is `tests/ecosystem/test_chatman_chain_chicago.py`, which drives real binaries and real
+corpora. It went red on a real defect the moment it was written (EV-1) and is green now only
+because that defect was actually fixed — not because the assertion was relaxed.
 
 ## Standing by stage
 
@@ -35,7 +36,7 @@ and **is currently red on a real defect** (see EV-1).
 | S4 | manufacture (μ) | ggen | `PARTIAL_ALIVE` | `sync run` executes and self-verifies in CI; `Root Dogfood` 8/8 red at the closure gate. See RP-4. |
 | S5 | independent verification | ggen / ggen-legacy | `BUILD_BROKEN` | **Verifier builds disagree about identical bytes.** See EV-1 / RP-1. |
 | S6 | replay / equivalence / sunset | ggen-legacy | `PARTIAL_ALIVE` | 3 compiled verifier binaries execute and emit typed fail-closed refusals; `decision-engine.py` is a real 3-report + customer-flag gate defaulting to REFUSED. Root LSP crate never built, no CI builds it. |
-| S7 | recursive bootstrap controller | — | `UNSUPPORTED` | `Blocked → spawn child → manufacture → verify → admit → resume parent` exists **nowhere in code** across all four repos. Primitives real; orchestration absent. Asserted absent by a test so the claim cannot drift silently. |
+| S7 | recursive bootstrap controller | — | `UNSUPPORTED` | `Blocked → spawn child → manufacture → verify → admit → resume parent` exists **nowhere in code** across all five repos (`mfw`, `ggen`, `ggen-create`, `ggen-legacy`, `bcinr`). Primitives real; orchestration absent. Asserted absent by a test so the claim cannot drift silently. |
 
 **The chain does not close.** `ALIVE` is not claimable for the end-to-end path. S3/S3b are
 genuinely `ALIVE`; S1, S2, S3c and S7 each independently prevent closure — **S3c is the
@@ -734,4 +735,5 @@ not: **the connective tissue that turns a validated plan into an executed workfl
 - `tests/ecosystem/test_chatman_chain_chicago.py` — the crown test.
 - `tests/domains/python/test_career_admission_unit.py` — the demoted unit checkpoint; carries
   a scope warning so it is not cited as ecosystem evidence.
-- `CLAUDE.md` §1 (standing vocabulary), §3 (actuation boundary).
+- `.claude/rules/standing-law.md` (status vocabulary), `.claude/rules/actuation-boundary.md`,
+  `.claude/rules/ecosystem-boundary.md` (why this repo claims candidate plans and nothing more).

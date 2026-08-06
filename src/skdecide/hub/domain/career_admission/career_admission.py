@@ -5,7 +5,7 @@
 """Career-capability-admission planning domain.
 
 Models the "missing prerequisite" chicken-and-egg concept named in this
-repo's Standing law (CLAUDE.md) and in the ~/mfw doctrine's "Recursive
+repo's standing law (`.claude/rules/standing-law.md`) and the ~/mfw "Recursive
 Process Manufacture" section: some capability facts are inapplicable/blocked
 until their prerequisite facts have been admitted. This domain represents
 that admission-ordering problem as an ordinary deterministic planning

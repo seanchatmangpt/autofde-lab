@@ -4,6 +4,11 @@
 # IDE
 .*/
 !.vuepress/
+# Project-scoped Claude Code tooling is part of the repo, not local config:
+# CLAUDE.md @-imports .claude/rules/ and documents .claude/skills|agents/, so a
+# clone without them gets a broken import. Local-only settings stay ignored.
+!.claude/
+.claude/settings.local.json
 
 # Python
 __pycache__/

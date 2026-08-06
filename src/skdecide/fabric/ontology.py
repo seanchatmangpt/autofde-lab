@@ -20,7 +20,8 @@ would not be ontology-backed. The test consumes the emitted Turtle file, so
 a capability that is registered but missing from the ontology, or present in
 the ontology but no longer registered, makes the coverage assertion fail.
 
-Standing vocabulary follows `CLAUDE.md` §1 and `docs/ecosystem-standing.md`.
+Standing vocabulary follows `.claude/rules/standing-law.md` and
+`docs/ecosystem-standing.md`.
 
 Note on `_load_registered_entry` (``src/skdecide/utils.py:94``): it swallows
 exceptions and returns ``None`` with a warning. A failed load is therefore
@@ -37,7 +38,7 @@ from typing import Dict, List, Optional, Tuple
 SKD = "urn:skdecide:capability:"
 SKDT = "urn:skdecide:term:"
 
-#: `CLAUDE.md` §1 standing vocabulary.
+#: Standing vocabulary from `.claude/rules/standing-law.md`.
 STANDING_ALIVE = "ALIVE"
 STANDING_PARTIAL = "PARTIAL_ALIVE"
 STANDING_BLOCKED = "BLOCKED"
