@@ -6,11 +6,18 @@
 
 from __future__ import annotations
 
+import random
 from collections import deque
-from typing import Optional
+from collections.abc import Iterable, Sequence
+from typing import Optional, TypeVar
 
-from skdecide import DeterministicPlanningDomain, Space, Value
-from skdecide.hub.space.gym import EnumSpace, ListSpace
+from skdecide import (
+    DeterministicPlanningDomain,
+    EnumerableSpace,
+    SamplableSpace,
+    Space,
+    Value,
+)
 
 from .model import (
     INITIAL_STATE,
@@ -22,6 +29,27 @@ from .model import (
     replay_plan,
     transition,
 )
+
+_SpaceT = TypeVar("_SpaceT")
+
+
+class _TupleSpace(EnumerableSpace[_SpaceT], SamplableSpace[_SpaceT]):
+    """Dependency-free finite space backed by an immutable tuple."""
+
+    def __init__(self, elements: Iterable[_SpaceT]):
+        self._elements = tuple(elements)
+
+    def get_elements(self) -> Sequence[_SpaceT]:
+        return self._elements
+
+    def __getitem__(self, index):
+        return self._elements[index]
+
+    def __len__(self) -> int:
+        return len(self._elements)
+
+    def sample(self) -> _SpaceT:
+        return random.choice(self._elements)
 
 
 class D(DeterministicPlanningDomain):
@@ -36,7 +64,7 @@ class D(DeterministicPlanningDomain):
 class TAIForwardDeploymentDomain(D):
     """Deterministic planner for manufacturing and activating the TAI case study.
 
-    The domain models planning intents only.  In particular, ``brce_actuate`` and
+    The domain models planning intents only. In particular, ``brce_actuate`` and
     ``brce_replay`` do not perform external side effects; a production adapter
     must submit the selected intent to BRCE and bind the returned receipt.
     """
@@ -51,9 +79,7 @@ class TAIForwardDeploymentDomain(D):
         memory: D.T_memory[D.T_state],
         action: D.T_agent[D.T_concurrency[D.T_event]],
     ) -> D.T_state:
-        return transition(
-            memory, action, local_conformance=self.local_conformance
-        )
+        return transition(memory, action, local_conformance=self.local_conformance)
 
     def _get_transition_value(
         self,
@@ -67,25 +93,23 @@ class TAIForwardDeploymentDomain(D):
         return is_terminal(state)
 
     def _get_action_space_(self) -> D.T_agent[Space[D.T_event]]:
-        return EnumSpace(TaiAction)
+        return _TupleSpace(TaiAction)
 
     def _get_applicable_actions_from(
         self, memory: D.T_memory[D.T_state]
     ) -> D.T_agent[Space[D.T_event]]:
-        return ListSpace(
-            applicable_actions(
-                memory, local_conformance=self.local_conformance
-            )
+        return _TupleSpace(
+            applicable_actions(memory, local_conformance=self.local_conformance)
         )
 
     def _get_goals_(self) -> D.T_agent[Space[D.T_observation]]:
-        return ListSpace([self._goal])
+        return _TupleSpace((self._goal,))
 
     def _get_initial_state_(self) -> D.T_state:
         return INITIAL_STATE
 
     def _get_observation_space_(self) -> D.T_agent[Space[D.T_observation]]:
-        return ListSpace(self._states)
+        return _TupleSpace(self._states)
 
     def _enumerate_reachable_states(self) -> tuple[TaiState, ...]:
         seen = {INITIAL_STATE}
