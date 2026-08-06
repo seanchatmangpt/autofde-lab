@@ -1,1 +1,0 @@
-SKDECIDE c++ bindings

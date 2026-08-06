@@ -1,4 +1,0 @@
-    if domain.is_goal(state):
-        print("Goal reached!")
-    else:
-        print("Goal not reached.")

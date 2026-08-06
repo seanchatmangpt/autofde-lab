@@ -1,6 +1,0 @@
-(define (problem BLOCKS-3-0)
-(:domain BLOCKS)
-(:objects A B C )
-(:INIT (CLEAR C) (CLEAR A) (ONTABLE C) (ON A B) (ONTABLE B)  (HANDEMPTY))
-(:goal (ON B C))
-)
