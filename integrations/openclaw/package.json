@@ -11,7 +11,8 @@
     "README.md"
   ],
   "scripts": {
-    "check": "node --check dist/index.js && node --test test/*.test.mjs",
+    "build": "tsc -p tsconfig.json",
+    "check": "npm run build && node --check dist/index.js && node --test test/*.test.mjs",
     "pack:dry-run": "npm pack --dry-run"
   },
   "dependencies": {
@@ -32,5 +33,10 @@
       "openclawVersion": "2026.7.1-2",
       "pluginSdkVersion": "2026.7.1-2"
     }
+  },
+  "devDependencies": {
+    "@types/node": "22.15.3",
+    "openclaw": "2026.7.1-2",
+    "typescript": "5.8.3"
   }
 }
