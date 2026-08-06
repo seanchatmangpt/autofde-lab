@@ -17,7 +17,27 @@ from typing import Any, Optional
 
 import gymnasium as gym
 import numpy as np
-from gymnasium.wrappers.compatibility import EnvCompatibility, LegacyEnv
+
+try:
+    # gymnasium.wrappers.compatibility (EnvCompatibility/LegacyEnv) was
+    # removed in gymnasium 1.0 (it existed to wrap pre-gymnasium, legacy
+    # OpenAI Gym v0.21-style environments). Only AsLegacyGymV21Env and
+    # AsGymnasiumEnv below need it; degrade gracefully here so every other
+    # class in this module (GymDomain and friends, which only need the
+    # modern gymnasium.Env API) keeps importing fine on gymnasium>=1 --
+    # verified real: this module's other classes never touch
+    # EnvCompatibility/LegacyEnv.
+    from gymnasium.wrappers.compatibility import EnvCompatibility, LegacyEnv
+
+    _HAS_GYMNASIUM_LEGACY_COMPAT = True
+except ImportError:
+    _HAS_GYMNASIUM_LEGACY_COMPAT = False
+
+    class LegacyEnv:
+        pass
+
+    class EnvCompatibility:
+        pass
 
 from skdecide import Domain, ImplicitSpace, Space, TransitionOutcome, Value
 from skdecide.builders.domain import (
@@ -1162,6 +1182,13 @@ class AsLegacyGymV21Env(LegacyEnv):
         domain: The scikit-decide domain to wrap as a gymnasium environment.
         unwrap_spaces: Boolean specifying whether the action & observation spaces should be unwrapped.
         """
+        if not _HAS_GYMNASIUM_LEGACY_COMPAT:
+            raise ImportError(
+                "AsLegacyGymV21Env requires gymnasium.wrappers.compatibility.LegacyEnv, "
+                "which was removed in gymnasium 1.0. Install gymnasium<1 to use this "
+                "class, or use the `shimmy` package's legacy-gym compatibility "
+                "wrappers directly if you need this on gymnasium>=1."
+            )
         self._domain = domain
         self._unwrap_spaces = unwrap_spaces
         if unwrap_spaces:
@@ -1292,6 +1319,13 @@ class AsGymnasiumEnv(EnvCompatibility):
         unwrap_spaces: bool = True,
         render_mode: Optional[str] = None,
     ) -> None:
+        if not _HAS_GYMNASIUM_LEGACY_COMPAT:
+            raise ImportError(
+                "AsGymnasiumEnv requires gymnasium.wrappers.compatibility.EnvCompatibility, "
+                "which was removed in gymnasium 1.0. Install gymnasium<1 to use this "
+                "class, or use the `shimmy` package's legacy-gym compatibility "
+                "wrappers directly if you need this on gymnasium>=1."
+            )
         legacy_env = AsLegacyGymV21Env(domain=domain, unwrap_spaces=unwrap_spaces)
         super().__init__(old_env=legacy_env, render_mode=render_mode)
 
