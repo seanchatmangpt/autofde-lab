@@ -46,7 +46,9 @@ The static MCP manifest uses `python` by default. Operators can override `mcp.se
 ```bash
 python -m pytest tests/test_openclaw_bridge.py -q
 cd integrations/openclaw
+npm install --ignore-scripts --no-audit --no-fund
 npm run check
+git diff --exit-code -- dist/index.js
 npm pack --dry-run
 ```
 
