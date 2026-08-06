@@ -16,99 +16,17 @@ weights genuinely aren't present on disk, or the real server fails to come
 up -- this is a real external dependency this test cannot fake and still be
 an end-to-end check of the real integration. When both are present, this
 test starts and stops the real server process itself.
+
+The real server-process fixtures (`real_turbo_fieldfare_server`,
+`real_dspy_lm`) and the `requires_real_turbo_fieldfare_binary_and_model` skip
+marker live in `tests/conftest.py`, shared with
+`tests/test_self_play_dspy_all_domains_chicago.py` -- both files exercise the
+same real external server, so its lifecycle is implemented exactly once.
 """
 
 from __future__ import annotations
 
-import subprocess
-import time
-import urllib.request
-from pathlib import Path
-
-import pytest
-
-TURBO_FIELDFARE_DIR = Path.home() / "turbo-fieldfare"
-SERVER_BINARY = TURBO_FIELDFARE_DIR / ".build" / "release" / "TurboFieldfareServer"
-MODEL_PATH = TURBO_FIELDFARE_DIR / "scratch" / "gemma4.gturbo"
-PORT = 8080
-BASE_URL = f"http://127.0.0.1:{PORT}"
-
-requires_real_turbo_fieldfare_binary_and_model = pytest.mark.skipif(
-    not (SERVER_BINARY.exists() and MODEL_PATH.exists()),
-    reason=(
-        f"Real TurboFieldfareServer binary ({SERVER_BINARY}) or real model "
-        f"weights ({MODEL_PATH}) not present -- build/install them per "
-        "turbo-fieldfare's README before running this real end-to-end test."
-    ),
-)
-
-
-def _real_server_is_healthy() -> bool:
-    try:
-        with urllib.request.urlopen(f"{BASE_URL}/health", timeout=1) as resp:
-            return resp.status == 200
-    except OSError:
-        return False
-
-
-@pytest.fixture(scope="module")
-def real_turbo_fieldfare_server():
-    """Start the real TurboFieldfareServer process for the duration of this module.
-
-    If a real server is already listening on the expected port (started
-    separately by the caller), reuse it and do not manage its lifecycle.
-    """
-    if _real_server_is_healthy():
-        yield BASE_URL
-        return
-
-    process = subprocess.Popen(
-        [
-            str(SERVER_BINARY),
-            "--model",
-            str(MODEL_PATH),
-            "--port",
-            str(PORT),
-            "--max-context",
-            "4096",
-        ],
-        cwd=str(TURBO_FIELDFARE_DIR),
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    try:
-        deadline = time.monotonic() + 60
-        while time.monotonic() < deadline:
-            if _real_server_is_healthy():
-                break
-            if process.poll() is not None:
-                pytest.fail(
-                    f"Real TurboFieldfareServer process exited early with "
-                    f"code {process.returncode} before becoming healthy."
-                )
-            time.sleep(1)
-        else:
-            pytest.fail(
-                "Real TurboFieldfareServer did not report healthy within 60s."
-            )
-        yield BASE_URL
-    finally:
-        process.terminate()
-        try:
-            process.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            process.kill()
-
-
-@pytest.fixture()
-def real_dspy_lm(real_turbo_fieldfare_server):
-    import dspy
-
-    from skdecide.hub.solver.dspy_policy import DEFAULT_LM_MODEL
-
-    lm = dspy.LM(DEFAULT_LM_MODEL, api_base=f"{real_turbo_fieldfare_server}/v1", api_key="local")
-    dspy.configure(lm=lm)
-    return lm
+from conftest import requires_real_turbo_fieldfare_binary_and_model
 
 
 @requires_real_turbo_fieldfare_binary_and_model

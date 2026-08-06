@@ -85,12 +85,15 @@ class D(
 
 
 class DSPyPolicy(DeterministicPolicySolver):
-    """A DeterministicPolicySolver whose per-agent action at every step is
-    chosen by a real call to a real language model through DSPy.
+    """A DeterministicPolicySolver whose action at every step is chosen by a
+    real call to a real language model through DSPy.
 
-    Requires a MultiAgent, Sequential, Environment-level domain with an
-    enumerable per-agent action space (checked via `_check_domain_additional`),
-    matching `RockPaperScissors` and similarly-shaped small game domains.
+    Works with both SingleAgent domains (e.g. `Maze`, `SimpleGridWorld`,
+    `MasterMind` -- where `D.T_agent[X]` collapses to plain `X`) and
+    MultiAgent domains (e.g. `RockPaperScissors` -- where observations and
+    action spaces are `{agent_name: ...}` dicts); the two shapes are detected
+    at runtime rather than assumed. Requires an enumerable action space
+    (checked via `_check_domain_additional`, in either shape).
     """
 
     T_domain = D
@@ -124,10 +127,47 @@ class DSPyPolicy(DeterministicPolicySolver):
     def _check_domain_additional(cls, domain: D) -> bool:
         get_action_space = autocast(domain.get_action_space, domain, cls.T_domain)
         action_space = get_action_space()
-        return all(hasattr(space, "get_elements") for space in action_space.values())
+        # MultiAgent domains (e.g. RockPaperScissors): get_action_space()
+        # returns a dict of {agent_name: space}. SingleAgent domains (e.g.
+        # Maze, SimpleGridWorld, MasterMind): D.T_agent[X] collapses to plain
+        # X, so get_action_space() returns a single space directly, not a
+        # dict. Detect which shape we actually have by duck-typing on
+        # `.items()` -- verified empirically against real instances of both
+        # kinds above -- rather than assuming the multi-agent dict shape.
+        if hasattr(action_space, "items"):
+            return all(
+                hasattr(space, "get_elements") for space in action_space.values()
+            )
+        else:
+            return hasattr(action_space, "get_elements")
 
     def _solve(self) -> None:
         self._domain = self._domain_factory()
+
+    def _choose_move(self, obs: Any, agent: str, legal: Any) -> Any:
+        legal_by_name = {str(m): m for m in legal}
+        with dspy.context(lm=self._lm):
+            prediction = self._predict(
+                situation=self._situation_formatter(obs, agent),
+                legal_moves=", ".join(legal_by_name),
+            )
+        chosen_text = prediction.move.strip()
+        move = legal_by_name.get(chosen_text)
+        if move is None:
+            # Real, observable LLM failure -- do not silently default to
+            # an arbitrary move. Try a case-insensitive/substring match
+            # before giving up, since models often add stray punctuation.
+            lowered = chosen_text.lower()
+            candidates = [m for name, m in legal_by_name.items() if name.lower() in lowered]
+            if len(candidates) == 1:
+                move = candidates[0]
+            else:
+                raise ValueError(
+                    f"DSPyPolicy: model returned {chosen_text!r} for agent "
+                    f"{agent!r}, which does not match any legal move in "
+                    f"{list(legal_by_name)}."
+                )
+        return move
 
     def _get_next_action(
         self, observation: D.T_agent[D.T_observation], domain: Optional[D] = None
@@ -137,36 +177,40 @@ class DSPyPolicy(DeterministicPolicySolver):
             logger.warning(
                 "Rollout domain not given. Using domain seen during solve instead."
             )
-        get_action_space = autocast(domain.get_action_space, domain, self.T_domain)
-        action_space = get_action_space()
+        # `self._domain` (built by `_solve()` via `self._domain_factory()`) has
+        # already had its own autocastable methods (including
+        # `get_action_space`) mutated in place by `Solver.__init__`'s
+        # `cast_domain_factory` to present T_domain's shape directly --
+        # verified empirically: for a SingleAgent domain like Maze,
+        # `self._domain.get_action_space()` already returns the
+        # MultiAgent-dict shape `{"agent": space}` with no further casting.
+        # Applying `autocast()` again on top of that already-cast bound
+        # method double-wraps it into `{"agent": {"agent": space}}`. A
+        # `domain` passed in explicitly by the rollout machinery (e.g.
+        # `skdecide.utils.rollout`), by contrast, is the original, never-cast
+        # domain instance and does need the explicit autocast here to reach
+        # T_domain's shape. Distinguish the two by identity rather than
+        # assuming either is always the case.
+        if domain is self._domain:
+            action_space = domain.get_action_space()
+        else:
+            get_action_space = autocast(domain.get_action_space, domain, self.T_domain)
+            action_space = get_action_space()
 
-        actions: dict[Any, Any] = {}
-        for agent, obs in observation.items():
-            legal = action_space[agent].get_elements()
-            legal_by_name = {str(m): m for m in legal}
-            with dspy.context(lm=self._lm):
-                prediction = self._predict(
-                    situation=self._situation_formatter(obs, agent),
-                    legal_moves=", ".join(legal_by_name),
-                )
-            chosen_text = prediction.move.strip()
-            move = legal_by_name.get(chosen_text)
-            if move is None:
-                # Real, observable LLM failure -- do not silently default to
-                # an arbitrary move. Try a case-insensitive/substring match
-                # before giving up, since models often add stray punctuation.
-                lowered = chosen_text.lower()
-                candidates = [m for name, m in legal_by_name.items() if name.lower() in lowered]
-                if len(candidates) == 1:
-                    move = candidates[0]
-                else:
-                    raise ValueError(
-                        f"DSPyPolicy: model returned {chosen_text!r} for agent "
-                        f"{agent!r}, which does not match any legal move in "
-                        f"{list(legal_by_name)}."
-                    )
-            actions[agent] = move
-        return actions
+        # Same MultiAgent-dict vs SingleAgent-collapsed detection as
+        # `_check_domain_additional`, applied to both the observation and the
+        # action space (they always agree in shape for a given domain,
+        # verified empirically against Maze/SimpleGridWorld/MasterMind
+        # (single) and RockPaperScissors (multi)).
+        if hasattr(action_space, "items"):
+            actions: dict[Any, Any] = {}
+            for agent, obs in observation.items():
+                legal = action_space[agent].get_elements()
+                actions[agent] = self._choose_move(obs, agent, legal)
+            return actions
+        else:
+            legal = action_space.get_elements()
+            return self._choose_move(observation, "agent", legal)
 
     def _is_policy_defined_for(self, observation: D.T_agent[D.T_observation]) -> bool:
         return True

@@ -17,3 +17,107 @@ file first happens to import dspy.
 """
 
 import numpy  # noqa: F401
+
+import subprocess
+import time
+import urllib.request
+from pathlib import Path
+
+import pytest
+
+# Shared real TurboFieldfareServer fixtures/marker for DSPyPolicy Chicago-school
+# tests (both the RockPaperScissors-only file and the all-domains file):
+# a real local TurboFieldfareServer subprocess
+# (https://github.com/drumih/turbo-fieldfare), real health-check polling over
+# HTTP, and real teardown. Factored here (rather than duplicated per test
+# file) so every DSPyPolicy test file shares exactly one server-lifecycle
+# implementation; `real_turbo_fieldfare_server` is module-scoped so each test
+# module gets its own fixture instance, but since it first checks whether a
+# real server is already healthy on the expected port and reuses it rather
+# than starting a second one, running multiple test modules against an
+# already-running server (as during normal `pytest tests/` collection) is
+# safe and does not attempt to bind the port twice.
+
+TURBO_FIELDFARE_DIR = Path.home() / "turbo-fieldfare"
+SERVER_BINARY = TURBO_FIELDFARE_DIR / ".build" / "release" / "TurboFieldfareServer"
+MODEL_PATH = TURBO_FIELDFARE_DIR / "scratch" / "gemma4.gturbo"
+PORT = 8080
+BASE_URL = f"http://127.0.0.1:{PORT}"
+
+requires_real_turbo_fieldfare_binary_and_model = pytest.mark.skipif(
+    not (SERVER_BINARY.exists() and MODEL_PATH.exists()),
+    reason=(
+        f"Real TurboFieldfareServer binary ({SERVER_BINARY}) or real model "
+        f"weights ({MODEL_PATH}) not present -- build/install them per "
+        "turbo-fieldfare's README before running this real end-to-end test."
+    ),
+)
+
+
+def _real_server_is_healthy() -> bool:
+    try:
+        with urllib.request.urlopen(f"{BASE_URL}/health", timeout=1) as resp:
+            return resp.status == 200
+    except OSError:
+        return False
+
+
+@pytest.fixture(scope="module")
+def real_turbo_fieldfare_server():
+    """Start the real TurboFieldfareServer process for the duration of this module.
+
+    If a real server is already listening on the expected port (started
+    separately by the caller, or by another already-loaded test module in
+    the same session), reuse it and do not manage its lifecycle.
+    """
+    if _real_server_is_healthy():
+        yield BASE_URL
+        return
+
+    process = subprocess.Popen(
+        [
+            str(SERVER_BINARY),
+            "--model",
+            str(MODEL_PATH),
+            "--port",
+            str(PORT),
+            "--max-context",
+            "4096",
+        ],
+        cwd=str(TURBO_FIELDFARE_DIR),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        deadline = time.monotonic() + 60
+        while time.monotonic() < deadline:
+            if _real_server_is_healthy():
+                break
+            if process.poll() is not None:
+                pytest.fail(
+                    f"Real TurboFieldfareServer process exited early with "
+                    f"code {process.returncode} before becoming healthy."
+                )
+            time.sleep(1)
+        else:
+            pytest.fail(
+                "Real TurboFieldfareServer did not report healthy within 60s."
+            )
+        yield BASE_URL
+    finally:
+        process.terminate()
+        try:
+            process.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            process.kill()
+
+
+@pytest.fixture()
+def real_dspy_lm(real_turbo_fieldfare_server):
+    import dspy
+
+    from skdecide.hub.solver.dspy_policy import DEFAULT_LM_MODEL
+
+    lm = dspy.LM(DEFAULT_LM_MODEL, api_base=f"{real_turbo_fieldfare_server}/v1", api_key="local")
+    dspy.configure(lm=lm)
+    return lm
