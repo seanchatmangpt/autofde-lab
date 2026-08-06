@@ -10,10 +10,13 @@ Every row is a **measured win** (command run this session, output quoted, passed
 **deferred/scoped** (a plan exists, nothing under it executed). Where this sheet and the code
 disagree, the code is the witness.
 
-Last update: **pass 2** (2026-08-06) — RP-2 closed by a measured build; S3b demoted on a real
-SHACL defect; G1/G3 merged. Corresponds to `docs/STATUS.md` pass 3. Pass 1 (2026-08-06) was
-the first session to execute across the chain rather than describe it; its rows are corrected
-in place below, never deleted. **The crown remains `BLOCKED`.**
+Last update: **pass 3** (2026-08-06) — the FDE authority boundary named as a distinct gap; a
+new standing axis (technical / organizational / enterprise); a second crown question; RP-8
+opened. Everything in pass 3 is **deferred/scoped** except one measured win on
+`decision-engine.py`. Pass 2 (2026-08-06) closed RP-2 by a measured build, demoted S3b on a
+real SHACL defect, and merged G1/G3. Pass 1 (2026-08-06) was the first session to execute
+across the chain rather than describe it; its rows are corrected in place below, never
+deleted. **The crown remains `BLOCKED`.**
 
 ## Why this file exists
 
@@ -31,7 +34,7 @@ because that defect was actually fixed — not because the assertion was relaxed
 | # | Stage | Owner | Standing | Witness |
 |---|---|---|---|---|
 | S1 | exemplar → candidate authority | ggen-create | `UNSUPPORTED` | Reverse compiler is **0 lines**; `ontology/` holds only `.keep`. Repo self-declares it: `scan_ontology` → `bootstrap_empty_surface: True`, claim ceiling `ONTOLOGY_SURFACE_INTEGRITY_ONLY`. Its CI/GALL harness *is* real (25/25 tests, 0.26s, real git fixtures) — governance, not payload. |
-| S2 | candidate authority → admitted | mfw | `PARTIAL_ALIVE` | **Changed this pass.** `cargo build -p mfw-planner -p mfw-pcp-cli` now succeeds (47.23s, exit 0); both binaries exist and run. But the fix is **uncommitted** in `~/praxis`, and the skdecide engine is still not registered in `engines.toml` with a blake3 pin — so the build is repaired, admission is not demonstrated. See RP-2. |
+| S2 | candidate authority → admitted | mfw | `PARTIAL_ALIVE` | **Changed this pass.** `cargo build -p mfw-planner -p mfw-pcp-cli` now succeeds (47.23s, exit 0); both binaries exist and run. But the fix is **uncommitted** in `~/praxis`, and engine admission is now `BLOCKED:VALIDATOR_ABSENT` — measured pass 3: `mfw-planner probe classical` refuses at **config load** (*"exactly one independent validator role is required; observed 0"*) and no VAL-compatible validator binary exists on this machine. Build repaired; admission structurally refused. See RP-2 and pass 3 §6. |
 | S3 | plan computation (search graph) | **scikit-decide** | `ALIVE` | Engine runs, produces VAL-format plans. Quoted below. |
 | S3b | plan → POWL2 **projection** | **scikit-decide** | `PARTIAL_ALIVE` *(projection only)* | **Demoted this pass — was `ALIVE`, and that was wrong.** Digests are real blake3 and independently cross-checked (below), but the emitted Turtle would be **rejected by mfw's own committed SHACL shapes**: `project_plan_to_powl` never emits `mfwp:implementsAction`, which `powl2:ActivityLeafShape` requires `minCount 1`. It also hardcodes `mfwp:projection "total-order"` and emits zero `powl2:precedes` edges, so its `powl2:PartialOrder` is a chain. **Scope**: this manufactures a document; it is NOT execution — see the decisive question. |
 | S3c | admitted POWL → **executed** workflow | mfw + **bcinr** (RP-7) | `PARTIAL_ALIVE` | A real POWL executor exists in `~/bcinr` (`execution_v2.rs:129` tick loop, OCEL, BLAKE3, deadlock refusal) — but it is **symbolic** (in-memory state only) and **not wired** to mfw's actuating broker. Three POWL representations, zero converters. Blocks the crown. |
@@ -69,6 +72,169 @@ ontology-governed capability discovery
 Measured against that, this session moved the first four steps and proved the fifth-to-ninth
 absent. Reporting the crown as anything other than `BLOCKED` would require a projector to
 stand in for an executor, which is the specific error this file exists to prevent.
+
+## Pass 3 — the FDE authority boundary (2026-08-06)
+
+All of this section is **deferred/scoped** — a gap named, a vocabulary written, a repair plan
+opened — with exactly one exception, the measured win in §"The sunset gate already splits the
+two standings" below. Nothing else here has executed. The FDE rail does not exist.
+
+### 1. This is a newly-named gap, not a newly-solved one
+
+The technical chain and the enterprise chain are **different closures**. Everything above
+ledgers the technical one: authority → plan → geometry → schedule → manufacture →
+verification. The enterprise closure is customer reality → admitted customer model → bounded
+organizational authority → technical consequence → accountable acceptance → adopted
+organizational capability.
+
+Closing G1, G2 and G3 would close the technical chain and would leave every one of these
+predicates unanswered, because each is **customer-relative** and none is computable by the
+system that would be asking:
+
+1. Is the observation materially complete for the decision it will support?
+2. Does this person hold the authority they are exercising?
+3. May this system touch that production environment?
+4. Does the implementation satisfy the actual operating obligation, not merely the spec?
+5. May the predecessor be retired?
+6. Will the organization adopt the new process?
+
+Naming these does not advance them. This section exists so that a future pass reading a fully
+green technical ledger does not conclude the enterprise consequence closed.
+
+### 2. A standing axis: technical / organizational / enterprise
+
+| dimension | means | today |
+|---|---|---|
+| `technicalStanding` | manufactured, verified, replayed as specified | the subject of every row in both ledgers |
+| `organizationalStanding` | accountable customer authority validated, granted, accepted, owned, authorized | `UNSUPPORTED` — nothing computes it |
+| `enterpriseStanding` | **both** of the above admitted | `UNSUPPORTED` by construction |
+
+**Every existing standing claim in `docs/STATUS.md` and in this file is a `technicalStanding`
+claim.** `S3 = ALIVE` means the engine runs, not that any customer authorized anything. Re-reading
+a technical `ALIVE` as enterprise standing is the same error class as reading a green in-repo
+row in `STATUS.md` as a closed cross-repo consequence — the error this file's scope note already
+guards against, one level up.
+
+`enterpriseStanding` is `ALIVE` only when both other dimensions are admitted. No component
+computes `organizationalStanding` today, so no `enterpriseStanding` claim is currently
+constructible by any component in the portfolio.
+
+### 3. The sunset gate already splits the two standings — **measured win**
+
+The technical/organizational split is **not a new idea imposed on the architecture**. It
+already exists, at exactly one point, in real running code.
+`~/ggen-legacy/appliance/bin/decision-engine.py` (38 lines) was driven directly this session —
+not simulated — in a temp portfolio, with the technical evidence held **constant and fully
+green** in every run (`verifier.standing=ALIVE`, `replay.status=REPLAY_MATCH`,
+`cross_check.standing=ALIVE`, all seven `capability_closure` counters zero). Only
+`customer_authorized_retirement` varied:
+
+```text
+customer_authorized=true     {"release_admitted": true, "sunset_admitted": true}
+customer_authorized=ABSENT   {"release_admitted": true, "sunset_admitted": false}
+customer_authorized=STRING   {"release_admitted": true, "sunset_admitted": false}
+customer_authorized=false    {"release_admitted": true, "sunset_admitted": false}
+```
+
+Three separable findings:
+
+1. **`release_admitted` is `true` in all four rows.** Release is the purely technical admission
+   and it closes every time; `sunset_admitted` flips solely on the organizational predicate. The
+   two dimensions are already independent variables here.
+2. **Fail-closed is real, not incidental.** The `"true"`-as-**string** row returns
+   `sunset_admitted: false`, because `m.get("customer_authorized_retirement") is True` rejects a
+   truthy string. A JSON config that *looks* approved is refused. That is the difference between
+   a gate and a checkbox.
+3. **Row 1 is a control, not a success.** `sunset_admitted: true` there is evidence that a
+   boolean set to `true` satisfies a boolean check — nothing more. It proves the other three
+   rows are refusals rather than a gate that never passes. It is **not** evidence that
+   organizational admission works.
+
+**What is missing is narrower than "no FDE rail exists."** The gate's *shape* is correct and must
+be preserved and invoked, never replaced by a local simulation. The defect is that
+`customer_authorized_retirement` is a naked boolean with **no referent**. A true value there is
+currently unattributable. For the flag to carry organizational authority it must resolve to a
+record naming all of: a named authority holding the retirement decision right; the specific
+predecessor identity being retired; the specific, independently verified replacement identity;
+the evidence set actually reviewed; a timestamp; and the scope conditions under which the grant
+holds. Absent that record, writing `true` is an assertion by whoever wrote the JSON.
+
+RP-8 is therefore scoped as **"give the existing boolean a referent"**, not "build an authority
+system." An earlier pass in this file oversized RP-7 the same way ("build a POWL execution
+controller", when the driver already existed) and had to retract it; the correction is applied
+in advance here rather than after.
+
+### 4. The second crown question
+
+The final question above is technical:
+
+> Did a blocked parent cause a child workflow to be planned, executed, manufacture and verify a
+> capability, admit it, and resume without unreceipted actuation?
+
+There is a second, and it is not a refinement of the first:
+
+> Did accountable customer authority validate the model, grant the bounded transition, accept
+> the verified consequence, assign operating ownership, and explicitly authorize any
+> irreversible sunset?
+
+**The crown is closed only when BOTH are yes.** The first is `BLOCKED` (S3c, S7). The second is
+**no — and not yet even askable**: no organizational-authority rail has run, and no component
+accepts a named customer authority as an input. A future pass that answers the first question
+yes and reports the crown closed will have answered half of it.
+
+### 5. New file: `ontology/fde-authority-schema.ttl`
+
+A **hand-authored T-Box** defining the FDE vocabulary: 12 entities, 8 capabilities, 12
+relations, and the 3 standing dimensions as first-class terms.
+
+It is **different in kind** from `ontology/skdecide-capabilities.ttl`, and the distinction is
+stated in its own header. The capability graph is an **A-Box of standing claims** — what is true
+right now — generated from entry points plus a live import probe, and its credibility rests on
+the probe being the same act as the use; hand-editing it is a defect and is now blocked by a
+`PreToolUse` hook. The FDE schema is a **T-Box**: what kinds of thing exist and how they relate.
+Hand-authoring a vocabulary is legitimate; hand-authoring a standing claim is precisely what the
+generator exists to prevent.
+
+**Nothing in it is `ALIVE`.** Every capability carries `UNSUPPORTED` (nothing implements it) or
+`UNKNOWN` (implementation status genuinely unobserved) with an evidence string. A term existing
+in that file is not evidence that anything implements it.
+
+### 6. mfw refuses a planner that is its own witness — **recorded negative**
+
+Attempted this pass: register the scikit-decide engine in mfw's `classical` role and admit it
+through mfw's own gate. No console script is needed — `program` is the venv python, with
+`args = ["-m", "skdecide.fabric.pddl_engine", "{domain}", "{problem}", "{plan}"]`,
+`version_args = ["-m", "skdecide.fabric.pddl_engine", "--help"]`, `output_mode = "file"`,
+`success_codes = [0]`. The real binary was then run:
+
+```text
+$ mfw-planner probe classical
+Error: InvalidEngineConfiguration("exactly one independent validator role is required; observed 0")
+```
+
+A search for a validator binary (`Validate`, `validate`, `val`, `VAL`) found **none on this
+machine**.
+
+**mfw refuses to load a planner-only configuration at all** — not at solve time, not as a
+warning, but at *config load*. A planner cannot be registered without exactly one **independent**
+validator role alongside it. The anti-self-attestation law is therefore **structurally enforced,
+not conventional**: the architecture will not permit a planner to be its own witness even when
+every other input is valid.
+
+That reframes this whole pass. Independent verification is enforced at **both ends** of the
+chain already — at engine admission here, and at sunset admission in §3's
+`decision-engine.py` result. The FDE authority boundary is the **third instance of an existing
+pattern**, not new architecture being imposed. That is both the more accurate reading and the
+more defensible one.
+
+**Accuracy bounds, so this is not over-read:**
+
+- `~/mfw/mfw-planner/engines.toml` was **not modified**. The registration was written in a temp
+  directory (mfw reads `engines.toml` from cwd) and is uncommitted.
+- It is **not** verified that the engine would pass admission once a validator exists — only
+  that it cannot reach that check today. No predicted pass is recorded.
+- The blake3 executable pin was **never exercised**: config validation refuses before any digest
+  is computed.
 
 ## Measured wins
 
@@ -643,9 +809,19 @@ modules exist.
 - **Falsifier**: build succeeds locally but not from a clean clone (absolute paths remain).
   **This falsifier is currently live** — the fix is uncommitted, so no clean clone has been
   tested. Treat the measured build above as machine-local until the branch lands.
-- **Resume condition**: S2 → `PARTIAL_ALIVE` **(reached this pass)**. S2 → `ALIVE` requires the
+- **Resume condition**: S2 → `PARTIAL_ALIVE` **(reached in pass 2)**. S2 → `ALIVE` requires the
   branch committed *and* the skdecide engine registered in `engines.toml` with a blake3 pin and
   admitted through mfw's real gate, upgrading S3 from *contract-conformant* to *admitted*.
+
+  **Correction, pass 3, recorded in place.** That resume condition is **necessary but not
+  sufficient** — it omits the validator requirement. Measured this pass (pass 3 §6):
+  `mfw-planner probe classical` refuses at config load with *"exactly one independent validator
+  role is required; observed 0"*, and no VAL-compatible validator binary exists on this machine.
+  Registration with a blake3 pin cannot even be attempted; config validation refuses before any
+  digest is computed. The corrected, narrow, nameable remaining gap: **obtain or build a
+  VAL-compatible plan validator, register it in the `validator` role, then re-probe.** Only then
+  does the blake3-pin step become reachable. Engine admission standing is
+  `BLOCKED:VALIDATOR_ABSENT`.
 
 ### RP-3 — planner for ggen-legacy's orphan corpus  *(owner: `~/ggen-legacy`, needs `~/scikit-decide`)*
 
@@ -837,6 +1013,69 @@ composition, not construction, and it is materially smaller than first stated.
 - **Resume condition**: S7 leaves `UNSUPPORTED` only when a bounded, terminating loop is
   demonstrated on a real blocked workflow, with the child's admission independently receipted.
 
+### RP-8 — give `customer_authorized_retirement` a referent  *(owner: `~/ggen-legacy` + `~/mfw`)*
+
+Status: **deferred/scoped — nothing under this plan has executed.** Opened pass 3.
+
+- **Missing capability**: an organizational-authority rail. Concretely and narrowly: a record
+  that a bare boolean in a manifest can resolve to, so that `sunset_admitted: true` becomes
+  attributable rather than an assertion by whoever wrote the JSON. **Not** an authority system
+  built from scratch — the gate already exists and works (pass 3 §3).
+- **Evidence / exact blocker**: `~/ggen-legacy/appliance/bin/decision-engine.py` gates sunset on
+  `release and closed and m.get("customer_authorized_retirement") is True`. Driven over four
+  manifests this session with technical evidence held constant and green, it fail-closes on
+  absent, string and `false`, and passes on boolean `true`. The gate's **shape is correct**. The
+  blocker is that the flag has **no referent**: no named authority, no decision right, no
+  predecessor identity, no verified replacement identity, no reviewed evidence set, no
+  timestamp, no scope conditions.
+- **Ownership — the part that matters.** The rail **cannot live in scikit-decide.** This repo is
+  the search graph; it computes candidate plans and does not actuate. It may at most **compile
+  and check** an authority envelope — a structural well-formedness check over a grant record.
+  It may **never mint or enforce** one. Minting belongs to the accountable customer authority;
+  **enforcement belongs to mfw's broker**, which already holds admission, receipts and replay
+  and already refuses planner-only configurations (pass 3 §6). Putting authority in the planner
+  is the organizational instance of the self-attestation circularity the whole separation exists
+  to prevent.
+- **Required I/O**: in → a `SunsetAuthorization` record naming the six fields above, plus the
+  predecessor and replacement identities and the verifier reports already consumed by
+  `decision-engine.py`; out → the same fail-closed verdict as today, plus an attributable record
+  of *who* authorized *what*, on *what evidence*, *when*, and under *what scope*.
+- **Proposed interface** — extend, never replace:
+  ```text
+  decision-engine.py keeps its exact current conjunction, and additionally requires
+    resolve_authority(manifest.customer_authorized_retirement)
+      -> AuthorityGrant { authority, decision_right, predecessor_id,
+                          replacement_id, evidence_set, timestamp, scope }
+      -> or REFUSE
+  ```
+  The boolean stays; it gains a resolution step in front of it. Vocabulary for the record is in
+  `ontology/fde-authority-schema.ttl` (T-Box only — nothing there is `ALIVE`).
+- **Steps**: (1) define the grant record against the schema's `AuthorityGrant` terms; (2) add
+  resolution in front of the existing conjunction in `decision-engine.py`, leaving the
+  conjunction itself untouched; (3) have mfw's broker enforce the grant's `boundedToEnvironment`
+  and scope conditions at actuation time; (4) optionally, a compile-and-check-only envelope
+  validator in scikit-decide — **read-only**, minting nothing.
+- **Negative fixtures** (each must refuse, not pass):
+  - A grant naming no authority → refuse. (Today this passes as `true`.)
+  - A grant whose `replacement_id` is not independently verified → refuse.
+  - A grant naming a different predecessor than the one being retired → refuse.
+  - An expired grant, or one outside its scope conditions → refuse.
+  - The existing string-`"true"` and `false` cases must **continue** to refuse — a regression
+    here would mean the resolution step replaced the gate instead of preceding it.
+- **Acceptance test**: a sunset admitted only when a fully-resolved grant is present, with the
+  four existing fail-closed rows still red, asserted against a real `decision-engine.py`
+  invocation — never a local simulation of it.
+- **Falsifiers**:
+  - `sunset_admitted: true` with no resolvable authority record → resolution is not being
+    invoked.
+  - The gate is reimplemented anywhere outside `~/ggen-legacy` → a local simulation has replaced
+    the authority, which is the failure this plan exists to prevent.
+  - scikit-decide mints or enforces a grant → the ecosystem boundary has been crossed.
+- **Resume condition**: `organizationalStanding` becomes computable for the sunset transition
+  specifically — one transition, not the axis. The second crown question stays **no** until an
+  organizational-authority rail runs across validate / grant / accept / own / sunset, not just
+  sunset.
+
 ## THE DECISIVE QUESTION — ANSWERED
 
 **Which implemented component executes the complete POWL plan today?**
@@ -992,4 +1231,8 @@ not: **the connective tissue that turns a validated plan into an executed workfl
 - `tests/domains/python/test_career_admission_unit.py` — the demoted unit checkpoint; carries
   a scope warning so it is not cited as ecosystem evidence.
 - `.claude/rules/standing-law.md` (status vocabulary), `.claude/rules/actuation-boundary.md`,
-  `.claude/rules/ecosystem-boundary.md` (why this repo claims candidate plans and nothing more).
+  `.claude/rules/ecosystem-boundary.md` (why this repo claims candidate plans and nothing more),
+  `.claude/rules/fde-authority-boundary.md` (the organizational layer added in pass 3).
+- `ontology/fde-authority-schema.ttl` — hand-authored **T-Box** for the FDE vocabulary and the
+  three standing dimensions. Distinct in kind from the **generated** A-Box
+  `ontology/skdecide-capabilities.ttl`. Nothing in it is `ALIVE`.

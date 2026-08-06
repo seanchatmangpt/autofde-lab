@@ -28,7 +28,8 @@ confirmation needed. These require it:
   canonicalized input/output JSON) on every success, refusal, and failure
   branch, exercised end-to-end by `integrations/openclaw/test/contract.test.mjs`
   against the real compiled plugin, not mocks. A merged PR adding OpenClaw
-  surface is `IMPLEMENTATION_ALIVE` at most — the exact-host crown
+  surface is at most `PARTIAL_ALIVE` on the **technical** dimension — the
+  exact-host crown
   (`openclaw plugins install/enable`, `gateway restart`,
   `plugins inspect --runtime`, `mcp doctor --probe`) is a separate,
   unmerged-until-executed boundary. Queued or pending CI is not evidence

@@ -4,6 +4,39 @@ The crown suite. `test_chatman_chain_chicago.py` drives the **real binaries and 
 of the sibling repositories as subprocesses — `~/mfw`, `~/ggen`, `~/ggen-legacy`, `~/bcinr`,
 `~/ggen-create`. Nothing here is mocked.
 
+The crown scenario covers two closures, not one: **technical causal closure** (an authority
+becomes a verified artifact) and **organizational adoption closure** (a verified artifact
+becomes an adopted organizational capability). The second is not a formality appended to the
+first; it has its own issuers, its own evidence, and its own standing dimension — see
+`.claude/rules/fde-authority-boundary.md`.
+
+## The 18 stages
+
+1. FDE arrives with a compiled legacy-replacement hypothesis — falsifiable, not asserted.
+2. Customer authority validates or corrects the model.
+3. Admitted facts become O*.
+4. Parent reaches `BLOCKED(replacement-capability)`.
+5. scikit-decide proposes the child transition — a candidate, never an actuation.
+6. MFW manufactures and admits POWL geometry.
+7. The authority grant permits **only** the bounded crown operations.
+8. bcinr schedules.
+9. MFW's broker authorizes each occurrence — per occurrence, not once for the plan.
+10. ggen manufactures.
+11. Independent verification and replay succeed.
+12. The FDE presents evidence against the **agreed** business postconditions.
+13. The customer operating owner accepts or refuses.
+14. Organizational capability standing admitted.
+15. Parent resumes.
+16. Explicit retirement authority evaluated by ggen-legacy's **real** decision engine —
+    `~/ggen-legacy/appliance/bin/decision-engine.py` (38 lines; fail-closed on 3 reports,
+    7 zeroed closure counters, and `customer_authorized_retirement is True`).
+    Never replace it with a local simulation; a simulated gate proves nothing about the gate.
+17. Sunset succeeds or refuses.
+18. Enterprise standing closes only after the whole evidence chain — never on stage 11 alone.
+
+Stages 1–2, 7, 12–14 and 16–18 have no rail in this repo today. They are scenario, not
+coverage.
+
 # Authority
 
 - Establish that scikit-decide's engine conforms to `mfw`'s external-engine contract, that the
@@ -22,6 +55,9 @@ of the sibling repositories as subprocesses — `~/mfw`, `~/ggen`, `~/ggen-legac
   `UNSUPPORTED` (0 lines), `mfw-planner` is `BUILD_BROKEN`, POWL execution is `PARTIAL_ALIVE`
   and unwired, the recursive controller is `UNSUPPORTED`.
 - Cannot admit anything. It observes `mfw`'s and `ggen`'s verdicts; it does not issue them.
+- Cannot establish **organizational** closure at all. No test here can stand in for a customer
+  operating owner's acceptance (stage 13) or a retirement decision right (stage 16). A green
+  row is `technicalStanding` only.
 
 # Inputs
 
@@ -51,6 +87,12 @@ Pass / typed skip / hard fail, plus a machine-readable coverage report fixture.
    it green by relaxing the assertion is the one prohibited fix. A red row here is a finding.
 5. Comparison claims must be measured by running, never delegated — `match_solvers(ranked=True)`
    ignores the flag.
+6. **Never simulate the sunset gate.** Stage 16 runs the real
+   `~/ggen-legacy/appliance/bin/decision-engine.py`, or the stage is
+   `BLOCKED:GGEN_LEGACY_CORPUS_ABSENT`. A local reimplementation would test the reimplementation.
+7. **Never synthesize a customer decision.** Writing `customer_authorized_retirement: true` into
+   a fixture manufactures the authority the gate exists to require. If organizational stages are
+   exercised at all, they are exercised as refusals.
 
 # Neighboring components
 
@@ -82,6 +124,13 @@ decisive: a plan never executed makes every downstream stage moot. Reporting the
 anything but `BLOCKED` would require a projector to stand in for an executor — the exact error
 this suite exists to prevent.
 
+**Ceiling on the dimension, not just the stage.** Even a fully green technical chain would
+establish `technicalStanding` only. This suite can at most establish technical standing until an
+organizational-standing rail exists — nothing here observes stages 12–14 or 16–18, and no
+component computes `organizationalStanding` as of this session. `enterpriseStanding` is
+therefore `UNKNOWN` by construction, not pending. Reporting a green crown as enterprise closure
+is the organizational form of letting a projector stand in for an executor.
+
 # Update obligations
 
 - New skip → it must carry a `BLOCKED:<TOKEN>:` reason, and the token should appear in
@@ -90,3 +139,5 @@ this suite exists to prevent.
   assertion changed). Only the former is progress.
 - Any sibling-repo path or binary assumption changing → update the ledger's stage row in the
   same change; a stale absolute path is the defect class RP-2 was written for.
+- An organizational stage (1–2, 7, 12–14, 16–18) gaining a rail → say which dimension it moves,
+  and update the standing ceiling above; a new test does not by itself raise the ceiling.
