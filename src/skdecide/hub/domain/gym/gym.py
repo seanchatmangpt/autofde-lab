@@ -18,24 +18,20 @@ import gymnasium as gym
 import numpy as np
 
 try:
-    # gymnasium.wrappers.compatibility (EnvCompatibility/LegacyEnv) was
-    # removed in gymnasium 1.0 (it existed to wrap pre-gymnasium, legacy
-    # OpenAI Gym v0.21-style environments). Only AsLegacyGymV21Env and
-    # AsGymnasiumEnv below need it; degrade gracefully here so every other
-    # class in this module (GymDomain and friends, which only need the
-    # modern gymnasium.Env API) keeps importing fine on gymnasium>=1 --
-    # verified real: this module's other classes never touch
-    # EnvCompatibility/LegacyEnv.
-    from gymnasium.wrappers.compatibility import EnvCompatibility, LegacyEnv
-
-    _HAS_GYMNASIUM_LEGACY_COMPAT = True
+    # gymnasium.wrappers.compatibility.LegacyEnv was removed in gymnasium
+    # 1.0 (it existed to type pre-gymnasium, legacy OpenAI Gym v0.21-style
+    # environments). AsLegacyGymV21Env below only subclasses it as a
+    # documentation/typing convenience -- none of its real methods call
+    # into LegacyEnv's own machinery -- so degrade to a plain `object`
+    # fallback here rather than failing this whole module's import on
+    # gymnasium>=1. (EnvCompatibility, LegacyEnv's real-conversion
+    # counterpart, is not needed at all here: AsGymnasiumEnv below is
+    # implemented directly against gymnasium's modern Env contract instead
+    # of via that now-removed class.)
+    from gymnasium.wrappers.compatibility import LegacyEnv
 except ImportError:
-    _HAS_GYMNASIUM_LEGACY_COMPAT = False
 
     class LegacyEnv:
-        pass
-
-    class EnvCompatibility:
         pass
 
 from skdecide import Domain, ImplicitSpace, Space, TransitionOutcome, Value
@@ -1183,13 +1179,13 @@ class AsLegacyGymV21Env(LegacyEnv):
         domain: The scikit-decide domain to wrap as a gymnasium environment.
         unwrap_spaces: Boolean specifying whether the action & observation spaces should be unwrapped.
         """
-        if not _HAS_GYMNASIUM_LEGACY_COMPAT:
-            raise ImportError(
-                "AsLegacyGymV21Env requires gymnasium.wrappers.compatibility.LegacyEnv, "
-                "which was removed in gymnasium 1.0. Install gymnasium<1 to use this "
-                "class, or use the `shimmy` package's legacy-gym compatibility "
-                "wrappers directly if you need this on gymnasium>=1."
-            )
+        # NB: this class's own step()/reset()/render()/close() below never
+        # actually call into gymnasium.wrappers.compatibility.LegacyEnv --
+        # subclassing it (when available) is purely a documentation/typing
+        # convenience, not a real functional dependency, so there is
+        # nothing to gracefully degrade here on gymnasium>=1 (unlike
+        # AsGymnasiumEnv below, which is implemented directly against
+        # gymnasium.Env's real, current contract for the same reason).
         self._domain = domain
         self._unwrap_spaces = unwrap_spaces
         if unwrap_spaces:
@@ -1309,10 +1305,19 @@ class AsLegacyGymV21Env(LegacyEnv):
         return self._domain
 
 
-class AsGymnasiumEnv(EnvCompatibility):
-    """This class wraps a scikit-decide domain as a gymnasium environment."""
+class AsGymnasiumEnv(gym.Env):
+    """This class wraps a scikit-decide domain as a real gymnasium.Env.
 
-    env: AsLegacyGymV21Env
+    Implemented directly against gymnasium's modern Env contract (5-tuple
+    `step()`, 2-tuple `reset()`) rather than via
+    `gymnasium.wrappers.compatibility.EnvCompatibility`, which converted an
+    old, 4-tuple-`step()`-style env into this same modern contract but was
+    removed in gymnasium 1.0. Internally still reuses `AsLegacyGymV21Env`
+    for the actual domain-wrapping logic (action/observation (un)wrapping,
+    rendering, closing) and converts its 4-tuple `step()`/plain `reset()`
+    into the modern shapes here -- this is real, current behavior on both
+    gymnasium<1 and gymnasium>=1, not a legacy-only code path.
+    """
 
     def __init__(
         self,
@@ -1320,16 +1325,46 @@ class AsGymnasiumEnv(EnvCompatibility):
         unwrap_spaces: bool = True,
         render_mode: Optional[str] = None,
     ) -> None:
-        if not _HAS_GYMNASIUM_LEGACY_COMPAT:
-            raise ImportError(
-                "AsGymnasiumEnv requires gymnasium.wrappers.compatibility.EnvCompatibility, "
-                "which was removed in gymnasium 1.0. Install gymnasium<1 to use this "
-                "class, or use the `shimmy` package's legacy-gym compatibility "
-                "wrappers directly if you need this on gymnasium>=1."
-            )
-        legacy_env = AsLegacyGymV21Env(domain=domain, unwrap_spaces=unwrap_spaces)
-        super().__init__(old_env=legacy_env, render_mode=render_mode)
+        self.env = AsLegacyGymV21Env(domain=domain, unwrap_spaces=unwrap_spaces)
+        self.observation_space = self.env.observation_space
+        self.action_space = self.env.action_space
+        self.render_mode = render_mode
 
     @property
     def domain(self) -> Domain:
         return self.env.domain
+
+    def reset(
+        self,
+        *,
+        seed: Optional[int] = None,
+        options: Optional[dict[str, Any]] = None,
+    ):
+        if seed is not None:
+            super().reset(seed=seed)
+        observation = self.env.reset()
+        return observation, {}
+
+    def step(self, action):
+        observation, reward, done, info = self.env.step(action)
+        # Match gymnasium's own historical EnvCompatibility convention:
+        # a `TimeLimit.truncated` flag in info (set by skdecide's GymDomain
+        # wrapper on the other side, see GymDomain._state_step above) means
+        # the episode was cut short by a step limit rather than reaching a
+        # real terminal state.
+        truncated = bool(info.pop("TimeLimit.truncated", False))
+        return observation, reward, bool(done), truncated, info
+
+    def render(self):
+        return self.env.render(mode=self.render_mode or "human")
+
+    def close(self):
+        return self.env.close()
+
+    # NB: deliberately no `unwrapped()` method here -- gym.Env already
+    # provides a real `unwrapped` *property* (returns `self` by default,
+    # since this class is not a gym.Wrapper); defining a same-named method
+    # would shadow it and break any real external code (gymnasium/SB3
+    # wrapper-chain machinery) that accesses `.unwrapped` as a property.
+    # Access the underlying scikit-decide Domain via the `.domain` property
+    # above instead.

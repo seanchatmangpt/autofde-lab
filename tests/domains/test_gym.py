@@ -3,8 +3,6 @@ from collections.abc import Callable
 
 import gymnasium as gym
 import numpy as np
-import pytest
-from packaging.version import Version
 
 from skdecide.hub.domain.gym import (
     GymDiscreteActionDomain,
@@ -101,20 +99,19 @@ def test_gymdomain4iw():
 def test_asgymnasiumenv():
     domain = Maze()
     domain.reset()
-    if Version(gym.__version__) >= Version("1"):
-        # Real, verified gymnasium>=1 behavior: gymnasium.wrappers.compatibility
-        # (EnvCompatibility/LegacyEnv), which AsGymnasiumEnv relies on to wrap a
-        # legacy (pre-gymnasium) `gym.Env`-style domain, was removed in gymnasium
-        # 1.0. AsGymnasiumEnv now raises a clear ImportError on construction
-        # instead of silently breaking at module-import time.
-        with pytest.raises(ImportError, match="removed in gymnasium 1.0"):
-            AsGymnasiumEnv(domain=domain, render_mode="human")
-    else:
-        env = AsGymnasiumEnv(domain=domain, render_mode="human")
-        env.reset()
-        env.step(env.action_space.sample())
-        env.render()
-        env.close()
+    # AsGymnasiumEnv is implemented directly against gymnasium's modern
+    # Env contract (not via the now-removed
+    # gymnasium.wrappers.compatibility.EnvCompatibility), so it works the
+    # same real way on both gymnasium<1 and gymnasium>=1 -- verified real
+    # on the actually-installed gymnasium version, whichever it is.
+    env = AsGymnasiumEnv(domain=domain, render_mode="human")
+    observation, info = env.reset()
+    observation, reward, terminated, truncated, info = env.step(
+        env.action_space.sample()
+    )
+    env.render()
+    assert env.unwrapped is env
+    env.close()
 
 
 def test_discretisation():
