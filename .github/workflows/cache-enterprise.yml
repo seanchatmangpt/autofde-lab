@@ -25,8 +25,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install focused test dependencies
-        run: python -m pip install pytest wrapt numpy
+      - name: Install declared runtime and test dependencies
+        run: >-
+          python -m pip install
+          pytest numpy
+          "wrapt>=2.2.1"
+          "pynng>=0.6.2"
+          "pathos>=0.2.7"
+          "discrete-optimization>=0.9.0"
       - name: Compile cache sources
         run: python -m compileall -q src/skdecide/_cache src/skdecide/caching.py
       - name: Run focused cache verifier
