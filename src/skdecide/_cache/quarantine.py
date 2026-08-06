@@ -126,11 +126,14 @@ class QuarantineJournal:
             key_digest=key_digest,
             attributes=dict(attributes or {}),
         )
-        line = json.dumps(
-            event.to_dict(),
-            sort_keys=True,
-            separators=(",", ":"),
-        ) + "\n"
+        line = (
+            json.dumps(
+                event.to_dict(),
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            + "\n"
+        )
         encoded = line.encode("utf-8")
         with self._lock, self._file_lock:
             self._rotate(len(encoded))

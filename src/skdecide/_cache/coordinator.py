@@ -681,8 +681,7 @@ class CacheFabric:
             refusals=logical.refusals,
             corruptions=store_info.corruptions,
             promotions=store_info.promotions,
-            lease_contentions=logical.lease_contentions
-            + store_info.lease_contentions,
+            lease_contentions=logical.lease_contentions + store_info.lease_contentions,
             bytes_read=store_info.bytes_read,
             bytes_written=store_info.bytes_written,
             compute_ns=logical.compute_ns,

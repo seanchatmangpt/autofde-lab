@@ -18,11 +18,11 @@ import wrapt
 
 from .coordinator import CacheFabric
 from .types import (
+    UNSAFE_CAPABILITY_METHODS,
     CacheConfig,
     CacheMode,
     CachePolicy,
     MethodPolicy,
-    UNSAFE_CAPABILITY_METHODS,
 )
 
 __all__ = [
@@ -44,10 +44,7 @@ def _derive_namespace(domain: Any, explicit: str | None) -> str:
     fingerprint = getattr(domain, "__cache_fingerprint__", None)
     if fingerprint is not None:
         projected = fingerprint() if callable(fingerprint) else fingerprint
-        return (
-            f"{type(domain).__module__}.{type(domain).__qualname__}:"
-            f"{projected}"
-        )
+        return f"{type(domain).__module__}.{type(domain).__qualname__}:{projected}"
     # Safe default: no cross-instance equivalence claim. A caller that wants
     # multi-solver or cross-run reuse must name the admitted model namespace.
     return (

@@ -90,12 +90,16 @@ def engine(*, persistence=True):
     ],
 )
 def test_classification_policy(classification, ttl, stale, persistent):
-    decision = engine(persistence=persistent).evaluate(
-        context=context(classification=classification),
-        namespace="flight-controls/optimizer/prod/model",
-        method="evaluate",
-        persistent_enabled=False,
-    ).require()
+    decision = (
+        engine(persistence=persistent)
+        .evaluate(
+            context=context(classification=classification),
+            namespace="flight-controls/optimizer/prod/model",
+            method="evaluate",
+            persistent_enabled=False,
+        )
+        .require()
+    )
     assert decision.max_ttl_seconds == ttl
     assert decision.allow_stale_if_error is stale
     assert decision.allow_persistence is persistent
@@ -421,12 +425,15 @@ def test_gateway_bypasses_only_typed_cache_failures(tmp_path: Path):
         fabric,
         failure_mode=CacheFailureMode.BYPASS,
     )
-    assert managed.execute(
-        context=context(),
-        namespace="flight-controls/optimizer/prod/model",
-        method="evaluate",
-        compute=lambda: 9,
-    ) == 9
+    assert (
+        managed.execute(
+            context=context(),
+            namespace="flight-controls/optimizer/prod/model",
+            method="evaluate",
+            compute=lambda: 9,
+        )
+        == 9
+    )
     assert [call["mode"] for call in fabric.calls] == [
         CacheMode.NORMAL,
         CacheMode.BYPASS,

@@ -13,9 +13,9 @@ import os
 import threading
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Any, Iterable, Mapping
 
 from .locking import InterProcessFileLock
-from typing import Any, Iterable, Mapping
 
 __all__ = [
     "AttestationKeyring",
@@ -191,9 +191,7 @@ class ProvenanceLedger:
             record_digest = hashlib.sha256(_canonical_json(body)).hexdigest()
             record = {**body, "record_digest": record_digest}
             with self.path.open("a", encoding="utf-8") as stream:
-                stream.write(
-                    json.dumps(record, sort_keys=True, separators=(",", ":"))
-                )
+                stream.write(json.dumps(record, sort_keys=True, separators=(",", ":")))
                 stream.write("\n")
                 stream.flush()
                 if self.fsync:

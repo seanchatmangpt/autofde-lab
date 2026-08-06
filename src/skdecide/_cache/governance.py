@@ -13,7 +13,7 @@ import re
 from dataclasses import dataclass, field
 from enum import Enum
 from types import MappingProxyType
-from typing import Any, Mapping
+from typing import Mapping
 
 __all__ = [
     "CacheGovernanceError",
@@ -89,9 +89,7 @@ class EnterpriseContext:
 
     @property
     def subject_id(self) -> str:
-        return "/".join(
-            (self.tenant, self.application, self.environment, self.actor)
-        )
+        return "/".join((self.tenant, self.application, self.environment, self.actor))
 
 
 @dataclass(frozen=True)
@@ -101,9 +99,7 @@ class NamespaceRule:
     namespace_pattern: str
     method_pattern: str = "*"
     allow: bool = True
-    classifications: frozenset[DataClassification] = frozenset(
-        DataClassification
-    )
+    classifications: frozenset[DataClassification] = frozenset(DataClassification)
     max_ttl_seconds: float | None = None
     allow_stale_if_error: bool = True
     allow_persistence: bool = True
@@ -160,9 +156,7 @@ class GovernancePolicy:
     """Fail-closed enterprise policy evaluated before cache access."""
 
     rules: tuple[NamespaceRule, ...] = ()
-    allowed_environments: frozenset[str] = frozenset(
-        {"dev", "test", "staging", "prod"}
-    )
+    allowed_environments: frozenset[str] = frozenset({"dev", "test", "staging", "prod"})
     default_allow: bool = False
     require_namespace_binding: bool = True
     require_change_ticket_for_prod_invalidation: bool = True
@@ -222,9 +216,7 @@ class GovernancePolicy:
                 ),
                 NamespaceRule(
                     namespace_pattern="*",
-                    classifications=frozenset(
-                        {DataClassification.RESTRICTED}
-                    ),
+                    classifications=frozenset({DataClassification.RESTRICTED}),
                     allow=True,
                     allow_persistence=False,
                     allow_stale_if_error=False,
@@ -308,9 +300,7 @@ class PolicyEngine:
     ) -> GovernanceDecision:
         reasons: list[str] = []
         if context.environment not in self.policy.allowed_environments:
-            reasons.append(
-                f"environment is not admitted: {context.environment!r}"
-            )
+            reasons.append(f"environment is not admitted: {context.environment!r}")
         if not namespace or namespace.startswith("_"):
             reasons.append("namespace must be non-empty and public")
         if not method or method.startswith("_") or method.startswith("sample"):
@@ -320,8 +310,7 @@ class PolicyEngine:
             (context.tenant, context.application, context.environment)
         )
         if self.policy.require_namespace_binding and not (
-            namespace == expected_prefix
-            or namespace.startswith(expected_prefix + "/")
+            namespace == expected_prefix or namespace.startswith(expected_prefix + "/")
         ):
             reasons.append(
                 "namespace is not bound to tenant/application/environment: "
@@ -357,8 +346,7 @@ class PolicyEngine:
         if context.classification is DataClassification.RESTRICTED:
             allow_stale = False
             allow_persistence = (
-                allow_persistence
-                and self.policy.allow_restricted_persistence
+                allow_persistence and self.policy.allow_restricted_persistence
             )
         if persistent_enabled and not allow_persistence:
             reasons.append(

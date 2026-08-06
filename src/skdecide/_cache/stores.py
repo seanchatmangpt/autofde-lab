@@ -171,9 +171,8 @@ class MemoryCacheStore:
             if record is None:
                 self._stats.misses += 1
                 return None
-            if (
-                not record.is_fresh(observed_at)
-                and not record.is_stale_servable(observed_at)
+            if not record.is_fresh(observed_at) and not record.is_stale_servable(
+                observed_at
             ):
                 self._remove(key.digest)
                 self._stats.expirations += 1
@@ -750,9 +749,7 @@ class TieredCacheStore:
     def info(self) -> CacheInfo:
         memory = self.memory.info()
         persistent = (
-            self.persistent.info()
-            if self.persistent is not None
-            else CacheInfo()
+            self.persistent.info() if self.persistent is not None else CacheInfo()
         )
         with self._lock:
             local = self._stats.freeze()
@@ -776,9 +773,7 @@ class TieredCacheStore:
             refusals=memory.refusals + persistent.refusals,
             corruptions=memory.corruptions + persistent.corruptions,
             promotions=local.promotions,
-            lease_contentions=(
-                memory.lease_contentions + persistent.lease_contentions
-            ),
+            lease_contentions=(memory.lease_contentions + persistent.lease_contentions),
             bytes_read=memory.bytes_read + persistent.bytes_read,
             bytes_written=memory.bytes_written + persistent.bytes_written,
             compute_ns=memory.compute_ns + persistent.compute_ns,

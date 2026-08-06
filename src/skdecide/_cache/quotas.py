@@ -41,9 +41,7 @@ class QuotaSpec:
         if self.max_concurrent < 1:
             raise ValueError("max_concurrent must be at least 1")
         if self.max_inflight_estimated_bytes < 0:
-            raise ValueError(
-                "max_inflight_estimated_bytes cannot be negative"
-            )
+            raise ValueError("max_inflight_estimated_bytes cannot be negative")
 
 
 @dataclass(frozen=True)
@@ -132,14 +130,10 @@ class QuotaManager:
             self._refill(state, self._monotonic())
             if state.tokens < 1.0:
                 state.refused_rate += 1
-                raise QuotaExceededError(
-                    f"tenant request rate exceeded: {tenant}"
-                )
+                raise QuotaExceededError(f"tenant request rate exceeded: {tenant}")
             if state.concurrent >= state.spec.max_concurrent:
                 state.refused_concurrency += 1
-                raise QuotaExceededError(
-                    f"tenant concurrency exceeded: {tenant}"
-                )
+                raise QuotaExceededError(f"tenant concurrency exceeded: {tenant}")
             projected = state.inflight_bytes + estimated_bytes
             if projected > state.spec.max_inflight_estimated_bytes:
                 state.refused_bytes += 1

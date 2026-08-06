@@ -204,9 +204,7 @@ def test_make_cache_key_binds_namespace_method_version_and_inputs():
 
 
 def test_pickle_codec_compresses_verifies_and_isolates_mutation():
-    codec = PickleCodec(
-        digestor=Digestor("blake2b"), compression_threshold_bytes=1
-    )
+    codec = PickleCodec(digestor=Digestor("blake2b"), compression_threshold_bytes=1)
     value = {"items": [1, 2, 3]}
     encoded = codec.encode(value)
     assert encoded.compressed
@@ -241,9 +239,7 @@ def test_memory_store_promotes_hot_entries_and_evicts_scan_victims():
 def test_memory_store_honors_fresh_stale_and_expired_boundaries():
     clock = FakeClock()
     store = MemoryCacheStore(max_entries=4, max_bytes=100, clock=clock)
-    record = make_record(
-        "ttl", expires_at=clock() + 5, stale_until=clock() + 10
-    )
+    record = make_record("ttl", expires_at=clock() + 5, stale_until=clock() + 10)
     store.put(record)
     assert store.get(record.key).stale is False
     clock.advance(6)
@@ -340,9 +336,12 @@ def test_fabric_caches_once_and_returns_mutation_isolated_hits():
 def test_fabric_persists_across_process_equivalent_instances(tmp_path):
     path = tmp_path / "cache.sqlite3"
     first = make_fabric(persistent_path=path)
-    assert first.execute(
-        namespace="model:v1", method="query", args=(1,), compute=lambda: 42
-    ) == 42
+    assert (
+        first.execute(
+            namespace="model:v1", method="query", args=(1,), compute=lambda: 42
+        )
+        == 42
+    )
     first.close()
     second = make_fabric(persistent_path=path)
     called = False
@@ -352,9 +351,12 @@ def test_fabric_persists_across_process_equivalent_instances(tmp_path):
         called = True
         return 99
 
-    assert second.execute(
-        namespace="model:v1", method="query", args=(1,), compute=fail_compute
-    ) == 42
+    assert (
+        second.execute(
+            namespace="model:v1", method="query", args=(1,), compute=fail_compute
+        )
+        == 42
+    )
     assert not called
     assert second.last_receipt.disposition == CacheDisposition.HIT_L2
 
@@ -392,54 +394,58 @@ def test_fabric_stale_if_error_is_explicit_and_receipted():
     clock = FakeClock()
     fabric = make_fabric(clock=clock)
     policy = MethodPolicy(ttl_seconds=5, stale_if_error_seconds=10)
-    assert fabric.execute(
-        namespace="model:v1",
-        method="query",
-        compute=lambda: "stable",
-        policy=policy,
-    ) == "stable"
+    assert (
+        fabric.execute(
+            namespace="model:v1",
+            method="query",
+            compute=lambda: "stable",
+            policy=policy,
+        )
+        == "stable"
+    )
     clock.advance(6)
 
     def explode():
         raise RuntimeError("upstream unavailable")
 
-    assert fabric.execute(
-        namespace="model:v1", method="query", compute=explode, policy=policy
-    ) == "stable"
+    assert (
+        fabric.execute(
+            namespace="model:v1", method="query", compute=explode, policy=policy
+        )
+        == "stable"
+    )
     assert fabric.last_receipt.disposition == CacheDisposition.STALE_IF_ERROR
     assert fabric.last_receipt.error_type == "RuntimeError"
 
 
 def test_fabric_refresh_replaces_a_fresh_value():
     fabric = make_fabric()
-    assert fabric.execute(
-        namespace="model:v1", method="query", compute=lambda: 1
-    ) == 1
-    assert fabric.execute(
-        namespace="model:v1",
-        method="query",
-        compute=lambda: 2,
-        mode=CacheMode.REFRESH,
-    ) == 2
-    assert fabric.execute(
-        namespace="model:v1", method="query", compute=lambda: 3
-    ) == 2
+    assert fabric.execute(namespace="model:v1", method="query", compute=lambda: 1) == 1
+    assert (
+        fabric.execute(
+            namespace="model:v1",
+            method="query",
+            compute=lambda: 2,
+            mode=CacheMode.REFRESH,
+        )
+        == 2
+    )
+    assert fabric.execute(namespace="model:v1", method="query", compute=lambda: 3) == 2
 
 
 def test_fabric_verify_detects_drift_and_replaces_value():
     fabric = make_fabric()
-    assert fabric.execute(
-        namespace="model:v1", method="query", compute=lambda: 1
-    ) == 1
-    assert fabric.execute(
-        namespace="model:v1",
-        method="query",
-        compute=lambda: 2,
-        mode=CacheMode.VERIFY,
-    ) == 2
-    assert fabric.execute(
-        namespace="model:v1", method="query", compute=lambda: 3
-    ) == 2
+    assert fabric.execute(namespace="model:v1", method="query", compute=lambda: 1) == 1
+    assert (
+        fabric.execute(
+            namespace="model:v1",
+            method="query",
+            compute=lambda: 2,
+            mode=CacheMode.VERIFY,
+        )
+        == 2
+    )
+    assert fabric.execute(namespace="model:v1", method="query", compute=lambda: 3) == 2
 
 
 def test_fabric_verify_emits_verified_hit_when_value_matches():

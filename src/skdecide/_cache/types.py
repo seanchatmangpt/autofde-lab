@@ -267,8 +267,7 @@ class CachePolicy:
         refused = (methods & UNSAFE_CAPABILITY_METHODS) | sampling
         if malformed:
             raise ValueError(
-                "cache method names must be non-empty strings: "
-                f"{malformed!r}"
+                f"cache method names must be non-empty strings: {malformed!r}"
             )
         if private or refused:
             names = sorted(private | refused)

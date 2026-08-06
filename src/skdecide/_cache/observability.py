@@ -54,9 +54,7 @@ class ReceiptFanout:
                     raise
                 if self.failure_policy is ObserverFailurePolicy.COLLECT:
                     with self._lock:
-                        self._errors.append(
-                            f"{type(error).__name__}: {error}"
-                        )
+                        self._errors.append(f"{type(error).__name__}: {error}")
 
     def errors(self) -> tuple[str, ...]:
         with self._lock:
@@ -146,12 +144,8 @@ class SLOTracker:
             value = getattr(disposition, "value", disposition)
             dispositions.append(str(value))
             load_ms.append(float(getattr(receipt, "load_ns", 0)) / 1_000_000)
-            compute_ms.append(
-                float(getattr(receipt, "compute_ns", 0)) / 1_000_000
-            )
-            if str(value) in self._ERRORS or getattr(
-                receipt, "error_type", None
-            ):
+            compute_ms.append(float(getattr(receipt, "compute_ns", 0)) / 1_000_000)
+            if str(value) in self._ERRORS or getattr(receipt, "error_type", None):
                 errors += 1
         samples = len(receipts)
         hit_rate = sum(value in self._HITS for value in dispositions) / samples
@@ -161,8 +155,7 @@ class SLOTracker:
         violations = []
         if hit_rate < self.targets.minimum_hit_rate:
             violations.append(
-                f"hit rate {hit_rate:.4f} below "
-                f"{self.targets.minimum_hit_rate:.4f}"
+                f"hit rate {hit_rate:.4f} below {self.targets.minimum_hit_rate:.4f}"
             )
         if error_rate > self.targets.maximum_error_rate:
             violations.append(

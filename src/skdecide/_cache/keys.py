@@ -73,8 +73,10 @@ class CanonicalKeyEncoder:
     def _encode(self, value: Any, active: set[int]) -> bytes:
         if hasattr(value, "__cache_key__"):
             projected = value.__cache_key__()
-            return b"K" + _length_prefix(_type_name(value)) + _length_prefix(
-                self._encode(projected, active)
+            return (
+                b"K"
+                + _length_prefix(_type_name(value))
+                + _length_prefix(self._encode(projected, active))
             )
         if value is None:
             return b"N"
@@ -114,8 +116,10 @@ class CanonicalKeyEncoder:
         if isinstance(value, uuid.UUID):
             return b"U" + value.bytes
         if isinstance(value, PurePath):
-            return b"P" + _length_prefix(_type_name(value)) + _length_prefix(
-                value.as_posix().encode("utf-8")
+            return (
+                b"P"
+                + _length_prefix(_type_name(value))
+                + _length_prefix(value.as_posix().encode("utf-8"))
             )
         if isinstance(value, dt.datetime):
             if value.tzinfo is not None:
@@ -128,8 +132,10 @@ class CanonicalKeyEncoder:
             payload = value.isoformat(timespec="microseconds").encode("ascii")
             return b"M" + _length_prefix(payload)
         if isinstance(value, enum.Enum):
-            return b"E" + _length_prefix(_type_name(value)) + _length_prefix(
-                value.name.encode("utf-8")
+            return (
+                b"E"
+                + _length_prefix(_type_name(value))
+                + _length_prefix(value.name.encode("utf-8"))
             )
         if isinstance(value, range):
             return b"G" + b"".join(
@@ -159,8 +165,7 @@ class CanonicalKeyEncoder:
                     encoded_name = self._encode(item.name, active)
                     encoded_value = self._encode(getattr(value, item.name), active)
                     fields.append(
-                        _length_prefix(encoded_name)
-                        + _length_prefix(encoded_value)
+                        _length_prefix(encoded_name) + _length_prefix(encoded_value)
                     )
                 return b"@" + _length_prefix(_type_name(value)) + b"".join(fields)
             if isinstance(value, Mapping):
@@ -169,8 +174,7 @@ class CanonicalKeyEncoder:
                     encoded_key = self._encode(key, active)
                     encoded_value = self._encode(item, active)
                     items.append(
-                        _length_prefix(encoded_key)
-                        + _length_prefix(encoded_value)
+                        _length_prefix(encoded_key) + _length_prefix(encoded_value)
                     )
                 items.sort()
                 return b"Q" + _length_prefix(_type_name(value)) + b"".join(items)
@@ -184,8 +188,10 @@ class CanonicalKeyEncoder:
                 )
             if isinstance(value, (set, frozenset)):
                 items = sorted(self._encode(item, active) for item in value)
-                return b"O" + _length_prefix(_type_name(value)) + b"".join(
-                    _length_prefix(item) for item in items
+                return (
+                    b"O"
+                    + _length_prefix(_type_name(value))
+                    + b"".join(_length_prefix(item) for item in items)
                 )
 
             numpy_payload = self._encode_numpy(value)
@@ -217,8 +223,7 @@ class CanonicalKeyEncoder:
             return None
         contiguous = np.ascontiguousarray(array)
         shape = b"".join(
-            struct.pack(">q", int(dimension))
-            for dimension in contiguous.shape
+            struct.pack(">q", int(dimension)) for dimension in contiguous.shape
         )
         return (
             b"V"

@@ -153,9 +153,7 @@ class EnterpriseCacheGateway:
     ) -> dict[str, Any]:
         prefix = self.config.reserved_metadata_prefix
         metadata = dict(supplied or {})
-        collisions = sorted(
-            key for key in metadata if str(key).startswith(prefix)
-        )
+        collisions = sorted(key for key in metadata if str(key).startswith(prefix))
         if collisions:
             raise ValueError(
                 "reserved enterprise metadata cannot be supplied by callers: "
@@ -272,21 +270,15 @@ class EnterpriseCacheGateway:
             requested=mode,
         )
         active_mode = rollout_decision.mode
-        effective_tags = tuple(
-            sorted(set((*tags, *decision.required_tags)))
-        )
+        effective_tags = tuple(sorted(set((*tags, *decision.required_tags))))
         effective_metadata = self._metadata(
             context=context,
             decision=decision,
             supplied=metadata,
         )
         prefix = self.config.reserved_metadata_prefix
-        effective_metadata[prefix + "rollout_reason"] = (
-            rollout_decision.reason.value
-        )
-        effective_metadata[prefix + "rollout_cohort"] = (
-            rollout_decision.cohort
-        )
+        effective_metadata[prefix + "rollout_reason"] = rollout_decision.reason.value
+        effective_metadata[prefix + "rollout_cohort"] = rollout_decision.cohort
 
         with self.quotas.admit(
             context.tenant,

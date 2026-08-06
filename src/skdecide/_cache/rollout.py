@@ -103,10 +103,7 @@ class CircuitBreaker:
             state = self._states.setdefault(key, _BreakerState())
             if state.state is CircuitState.OPEN:
                 assert state.opened_at is not None
-                if (
-                    self._monotonic() - state.opened_at
-                    >= self.config.recovery_seconds
-                ):
+                if self._monotonic() - state.opened_at >= self.config.recovery_seconds:
                     state.state = CircuitState.HALF_OPEN
                     state.half_open_calls = 0
                 else:
@@ -131,8 +128,7 @@ class CircuitBreaker:
             state.consecutive_failures += 1
             if (
                 state.state is CircuitState.HALF_OPEN
-                or state.consecutive_failures
-                >= self.config.failure_threshold
+                or state.consecutive_failures >= self.config.failure_threshold
             ):
                 state.state = CircuitState.OPEN
                 state.opened_at = self._monotonic()
@@ -164,9 +160,7 @@ class RolloutPolicy:
         if not 0.0 <= self.enabled_percent <= 100.0:
             raise ValueError("enabled_percent must be in [0, 100]")
         if not 0.0 <= self.verify_percent <= self.enabled_percent:
-            raise ValueError(
-                "verify_percent must be in [0, enabled_percent]"
-            )
+            raise ValueError("verify_percent must be in [0, enabled_percent]")
         if not self.salt:
             raise ValueError("salt must be non-empty")
         object.__setattr__(
