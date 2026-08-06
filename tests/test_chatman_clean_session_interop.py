@@ -3,12 +3,9 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 
-import pytest
-
 from skdecide.hub.domain.chatman_clean_session import (
     ActionKind,
     ActuationIntent,
-    ActuationRefused,
     BrokerReceipt,
     ChatmanCleanSessionDomain,
     RouteOutcome,
