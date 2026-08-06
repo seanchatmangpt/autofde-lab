@@ -7,10 +7,11 @@
 from __future__ import annotations
 
 from typing import Any
+from uuid import uuid4
 
 from skdecide.fabric.canonical import canonical_json
 from skdecide.fabric.dspy import DecisionCompiler, compile_request_text
-from skdecide.fabric.models import DecisionRefusal, RefusalCode
+from skdecide.fabric.models import DecisionRefusal
 from skdecide.fabric.service import DecisionFabric
 
 
@@ -98,7 +99,8 @@ def create_app(
         from a2a.server.request_handlers import DefaultRequestHandler
         from a2a.server.routes import create_agent_card_routes, create_jsonrpc_routes
         from a2a.server.tasks import InMemoryTaskStore
-        from a2a.utils import new_agent_text_message
+        from a2a.types import Message, Part, Role
+        from a2a.utils.errors import TaskNotCancelableError
         from starlette.applications import Starlette
     except ImportError as error:
         raise RuntimeError(
@@ -112,19 +114,23 @@ def create_app(
     class FabricAgentExecutor(AgentExecutor):
         async def execute(self, context: Any, event_queue: EventQueue) -> None:
             payload = protocol.handle_text(context.get_user_input())
-            await event_queue.enqueue_event(
-                new_agent_text_message(canonical_json(payload))
+            message = Message(
+                message_id=str(uuid4()),
+                context_id=context.context_id or "",
+                task_id=context.task_id or "",
+                role=Role.ROLE_AGENT,
+                parts=[
+                    Part(
+                        text=canonical_json(payload),
+                        media_type="application/json",
+                    )
+                ],
             )
+            await event_queue.enqueue_event(message)
 
         async def cancel(self, context: Any, event_queue: EventQueue) -> None:
-            refusal = DecisionRefusal(
-                RefusalCode.CANCELLATION_UNSUPPORTED,
-                "immediate decision responses do not retain a cancellable task",
-                details={"task_id": getattr(context, "task_id", None)},
-            )
-            await event_queue.enqueue_event(
-                new_agent_text_message(canonical_json(refusal.as_dict()))
-            )
+            del context, event_queue
+            raise TaskNotCancelableError
 
     handler = DefaultRequestHandler(
         agent_executor=FabricAgentExecutor(),
