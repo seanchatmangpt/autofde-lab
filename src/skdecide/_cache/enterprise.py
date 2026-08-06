@@ -48,8 +48,8 @@ class _Fabric(Protocol):
     def invalidate(
         self,
         *,
-        namespace: str | None,
-        method: str | None,
+        namespace: str | None = None,
+        method: str | None = None,
         tags: Iterable[str] = (),
     ) -> int: ...
 
@@ -325,7 +325,7 @@ class EnterpriseCacheGateway:
                     kwargs=kwargs,
                     compute=compute,
                     policy=effective_policy,
-                    mode=CacheMode.BYPAS,
+                    mode=CacheMode.BYPASS,
                     tags=effective_tags,
                     metadata=effective_metadata,
                 )
