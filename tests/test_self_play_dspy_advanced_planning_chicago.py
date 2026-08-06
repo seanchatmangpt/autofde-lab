@@ -49,9 +49,31 @@ repo's Chicago-school convention. Reuses the shared
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from conftest import requires_real_turbo_fieldfare_binary_and_model
+
+# The RCPSP/MRCPSP instances below come from the `discrete_optimization` benchmark
+# corpus, which is not vendored into this repository. Resolve it from the
+# environment so a clean checkout skips with a named blocker instead of failing on
+# a machine-specific absolute path.
+DISCRETE_OPTIMIZATION_DATA = os.path.expanduser(
+    os.environ.get("DISCRETE_OPTIMIZATION_DATA", "~/discrete_optimization_data")
+)
+
+
+def _rcpsp_instance(relative_path: str) -> str:
+    """Return an absolute path to a benchmark instance, or skip if the corpus is absent."""
+    instance_file = os.path.join(DISCRETE_OPTIMIZATION_DATA, relative_path)
+    if not os.path.isfile(instance_file):
+        pytest.skip(
+            f"BLOCKED:DISCRETE_OPTIMIZATION_DATA_ABSENT: {instance_file} not found. "
+            "Set DISCRETE_OPTIMIZATION_DATA to the benchmark corpus root."
+        )
+    return instance_file
+
 
 PDDL_DOMAIN_FILE = "cpp/tests/data/pddl/ipc-1998/domains/gripper-round-1-strips/domain.pddl"
 PDDL_INSTANCE_FILE = (
@@ -108,7 +130,7 @@ def test_real_dspy_policy_solves_real_rcpsp_via_real_applicable_actions_enumerat
     from skdecide.hub.domain.rcpsp.rcpsp_sk_parser import load_domain
     from skdecide.hub.solver.dspy_policy import DSPyPolicy
 
-    instance_file = "/Users/sac/discrete_optimization_data/rcpsp/j301_4.sm"
+    instance_file = _rcpsp_instance("rcpsp/j301_4.sm")
 
     def domain_factory():
         return load_domain(instance_file)
@@ -140,7 +162,7 @@ def test_real_dspy_policy_solves_real_mrcpsp_via_real_applicable_actions_enumera
     from skdecide.hub.domain.rcpsp.rcpsp_sk_parser import load_domain
     from skdecide.hub.solver.dspy_policy import DSPyPolicy
 
-    instance_file = "/Users/sac/discrete_optimization_data/rcpsp/j1010_1.mm"
+    instance_file = _rcpsp_instance("rcpsp/j1010_1.mm")
 
     def domain_factory():
         return load_domain(instance_file)

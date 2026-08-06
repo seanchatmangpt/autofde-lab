@@ -46,6 +46,19 @@ MFWP = "urn:mfw:powl-trace:"
 PROV = "http://www.w3.org/ns/prov#"
 XSD = "http://www.w3.org/2001/XMLSchema#"
 
+#: POWL2 node types this projector deliberately does not model. Detected
+#: explicitly so a document using one is refused by *name*, rather than
+#: incidentally tripping the dangling-``childModel`` check and reporting a
+#: misleading "dangling reference" -- a refusal naming the wrong cause sends
+#: the reader down a false path, which is worse than a generic message.
+UNSUPPORTED_NODE_TYPES: Dict[str, str] = {
+    POWL2
+    + "SilentLeaf": (
+        "this projector emits and parses the total-order projection only; "
+        "silent transitions are not modelled"
+    ),
+}
+
 
 class DigestUnavailable(RuntimeError):
     """Raised when a real blake3 digest cannot be computed.
@@ -513,9 +526,11 @@ def parse_powl_turtle(text: str) -> PowlModel:
     Known scope limit, stated rather than left implicit: ``powl2:SilentLeaf``
     (which mfw's Rust emitter can produce, and which carries no
     ``powl2:activityLabel`` and no ``mfwp:implementsAction``) is not modelled
-    here. A document containing one is REFUSED by the dangling-``childModel``
-    check rather than silently accepted. This projector never emits one, and
-    ``~/mfw/runs/ticket-10/plan.powl.ttl`` contains none.
+    here. A document containing one is REFUSED explicitly, by name, with an
+    ``UNSUPPORTED_CONSTRUCT:`` reason (see :data:`UNSUPPORTED_NODE_TYPES`) --
+    not silently accepted, and not misreported as a dangling reference. This
+    projector never emits one, and ``~/mfw/runs/ticket-10/plan.powl.ttl``
+    contains none.
     """
     graph = _parse_graph(text)
 
@@ -537,6 +552,13 @@ def parse_powl_turtle(text: str) -> PowlModel:
 
     for subject, node in graph.items():
         types = [v for _, v, _ in node.get(RDF_TYPE, [])]
+        for node_type in types:
+            if node_type in UNSUPPORTED_NODE_TYPES:
+                short = "powl2:" + node_type[len(POWL2) :]
+                raise PowlDecodeError(
+                    f"UNSUPPORTED_CONSTRUCT: {short} at <{subject}> -- "
+                    f"{UNSUPPORTED_NODE_TYPES[node_type]}."
+                )
         if POWL2 + "ChildBinding" in types:
             if POWL2 + "childIndex" not in node:
                 raise PowlDecodeError(f"<{subject}>: powl2:childIndex missing (minCount 1)")

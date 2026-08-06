@@ -361,11 +361,22 @@ class TestIndependentVerificationNotSelfAttestation:
         with -- restore from git"), which would send an operator chasing a
         tampering incident that did not occur.
 
-        Left deliberately failing rather than xfail-ed or skipped: the
-        standing of the independent-verification stage genuinely is broken,
-        and docs/ecosystem-standing.md records it as such. Making this green
-        would require either fixing the homebrew build or pretending the
-        disagreement is acceptable.
+        This test is *conditionally* red, not unconditionally failing. It
+        hard-fails only when two or more reachable ggen builds disagree about
+        the same receipt bytes, and skips `BLOCKED:INSUFFICIENT_VERIFIER_BUILDS`
+        when fewer than two are reachable.
+
+        As of 2026-08-06 it PASSES, because `/opt/homebrew/bin/ggen` no longer
+        exists on this machine and only two agreeing builds remain. That is a
+        weaker result than three-of-three agreeing: EV-1's residual risk -- a
+        `brew link` reintroducing the stale Cellar binary and restoring the
+        disagreement -- is untested here, not disproven, and RP-1 stays open
+        (docs/ecosystem-standing.md).
+
+        Never xfail or skip it to make the suite green, and never relax the
+        assertion: a red row here is a finding about the
+        independent-verification stage, which is the one prohibited fix
+        (tests/ecosystem/CLAUDE.md invariant 4).
         """
         binaries = _available_ggen_binaries()
         if len(binaries) < 2:

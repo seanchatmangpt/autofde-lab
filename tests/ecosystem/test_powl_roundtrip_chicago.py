@@ -276,6 +276,33 @@ class TestRejections:
         with pytest.raises(PowlDecodeError, match="dangling"):
             parse_powl_turtle(broken)
 
+    def test_silent_leaf_is_refused_by_name_not_as_a_dangling_reference(
+        self, turtle
+    ):
+        """A powl2:SilentLeaf child must be refused as an unsupported construct.
+
+        Before this test the document was refused only *incidentally*: the
+        silent leaf never registered in ``model.leaves``, so the dangling
+        ``childModel`` check fired and blamed a malformed reference. That
+        message sends an operator hunting a truncated document instead of
+        telling them this projector does not model silent transitions. The
+        second assertion is the regression guard.
+        """
+        broken = _mutate(
+            turtle,
+            f"    powl2:childModel <{BASE}/plan/step/0> .",
+            f"    powl2:childModel <{BASE}/plan/step/tau> .",
+        ) + (
+            f"\n<{BASE}/plan/step/tau> a powl2:SilentLeaf .\n"
+        )
+        with pytest.raises(PowlDecodeError) as excinfo:
+            parse_powl_turtle(broken)
+        message = str(excinfo.value)
+        assert "UNSUPPORTED_CONSTRUCT" in message
+        assert "powl2:SilentLeaf" in message
+        assert f"{BASE}/plan/step/tau" in message
+        assert "dangling" not in message
+
     def test_dangling_binds_parameter_is_refused(self, turtle):
         broken = _mutate(
             turtle,
