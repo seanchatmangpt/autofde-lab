@@ -1,19 +1,20 @@
 name: OpenClaw interoperability
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - "src/skdecide/openclaw_*.py"
       - "tests/test_openclaw_bridge.py"
       - "integrations/openclaw/**"
-      - ".github/workflows/openclaw-interop.yml"
+      - ".github/workflows/openclaw-crown.yml"
   push:
     branches: [master]
     paths:
       - "src/skdecide/openclaw_*.py"
       - "tests/test_openclaw_bridge.py"
       - "integrations/openclaw/**"
-      - ".github/workflows/openclaw-interop.yml"
+      - ".github/workflows/openclaw-crown.yml"
 
 permissions:
   contents: read
@@ -118,7 +119,7 @@ jobs:
               "executed": {
                   "python_bridge": True,
                   "openclaw_metadata_generation": True,
-                  "openclaw metadata_validation": True,
+                  "openclaw_metadata_validation": True,
                   "native_tool_bridge": True,
                   "linked_plugin_runtime": True,
                   "bundled_skill_discovery": True,
