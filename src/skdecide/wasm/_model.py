@@ -1,4 +1,4 @@
-"""Typed identities and request/response values for Chatman Wasm components."""
+"""Typed component identities and receipt-bound invocation values."""
 
 from __future__ import annotations
 
@@ -8,22 +8,15 @@ import re
 from types import MappingProxyType
 from typing import Any, Mapping
 
-from ._abi import REQUEST_SCHEMA, RESPONSE_SCHEMA
+from ._abi import ADAPTER_OPERATIONS, REQUEST_SCHEMA, RESPONSE_SCHEMA
 
 _SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _NAME_RE = re.compile(r"^[a-z][a-z0-9_-]*$")
 _PYTHON_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 _ALIAS_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _ALLOWED_STATES = frozenset(
-    {
-        "UNKNOWN",
-        "PARTIAL_ALIVE",
-        "ALIVE",
-        "BLOCKED",
-        "BUILD_BROKEN",
-        "UNSUPPORTED",
-        "REFUSED",
-    }
+    {"UNKNOWN", "PARTIAL_ALIVE", "ALIVE", "BLOCKED", "BUILD_BROKEN", "UNSUPPORTED", "REFUSED"}
 )
 
 
@@ -32,8 +25,6 @@ def _freeze_mapping(value: Mapping[str, Any] | None) -> Mapping[str, Any]:
 
 
 def canonical_json_bytes(value: Mapping[str, Any]) -> bytes:
-    """Return deterministic UTF-8 JSON suitable for hashing and guest exchange."""
-
     return json.dumps(
         value,
         sort_keys=True,
@@ -45,18 +36,18 @@ def canonical_json_bytes(value: Mapping[str, Any]) -> bytes:
 
 @dataclass(frozen=True, slots=True)
 class ComponentDescriptor:
-    """Exact source and packaged-artifact identity for one ecosystem library."""
-
     name: str
     python_name: str
     repository: str
     branch: str
     revision: str
     artifact: str
-    build_adapter: str = "auto"
-    capability_class: str = "library"
+    artifact_sha256: str
+    artifact_size: int
+    capability_class: str
     visibility: str = "public"
     aliases: tuple[str, ...] = ()
+    operations: tuple[str, ...] = ADAPTER_OPERATIONS
 
     def __post_init__(self) -> None:
         if not _NAME_RE.fullmatch(self.name):
@@ -67,10 +58,16 @@ class ComponentDescriptor:
             raise ValueError(f"repository must be a GitHub HTTPS URL: {self.repository!r}")
         if not _SHA_RE.fullmatch(self.revision):
             raise ValueError(f"revision must be an exact 40-character SHA: {self.revision!r}")
+        if not _SHA256_RE.fullmatch(self.artifact_sha256):
+            raise ValueError("artifact_sha256 must be a lowercase SHA-256 digest")
+        if self.artifact_size <= 8:
+            raise ValueError("artifact_size is too small to be a Wasm module")
         if not self.artifact.endswith(".wasm") or "/" in self.artifact:
             raise ValueError(f"artifact must be a local .wasm filename: {self.artifact!r}")
         if self.visibility not in {"public", "private"}:
             raise ValueError(f"unsupported visibility: {self.visibility!r}")
+        if tuple(self.operations) != ADAPTER_OPERATIONS:
+            raise ValueError(f"adapter operations must be exactly {ADAPTER_OPERATIONS!r}")
         for alias in self.aliases:
             if not _ALIAS_RE.fullmatch(alias):
                 raise ValueError(f"invalid alias: {alias!r}")
@@ -87,10 +84,12 @@ class ComponentDescriptor:
             "branch": self.branch,
             "revision": self.revision,
             "artifact": self.artifact,
-            "build_adapter": self.build_adapter,
+            "artifact_sha256": self.artifact_sha256,
+            "artifact_size": self.artifact_size,
             "capability_class": self.capability_class,
             "visibility": self.visibility,
             "aliases": list(self.aliases),
+            "operations": list(self.operations),
         }
 
 
@@ -135,12 +134,7 @@ class InvocationResult:
         object.__setattr__(self, "receipt", _freeze_mapping(self.receipt))
 
     @classmethod
-    def from_bytes(
-        cls,
-        component: ComponentDescriptor,
-        operation: str,
-        value: bytes,
-    ) -> "InvocationResult":
+    def from_bytes(cls, component: ComponentDescriptor, operation: str, value: bytes) -> "InvocationResult":
         try:
             decoded = json.loads(value.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:

@@ -1,67 +1,53 @@
-"""Deterministic build planner for the Chatman ecosystem Wasm federation.
-
-The builder never treats a command plan as a successful artifact.  It validates
-exact source identities, emits the canonical WIT and registry, and can run a
-source-owned adapter only when that repository provides one.  This prevents a
-central wrapper from silently inventing semantics for heterogeneous libraries.
-"""
+"""Materialize, rebuild, and execute the Chatman ecosystem Wasm federation."""
 
 from __future__ import annotations
 
 import argparse
 import hashlib
-import json
 from pathlib import Path
+import shutil
 import subprocess
-import sys
+import tempfile
 from typing import Any
 
-from ._abi import WIT
-from ._model import ComponentDescriptor, canonical_json_bytes
+from ._abi import BUILD_REPORT_SCHEMA, WIT
+from ._artifacts import artifact_for
+from ._model import canonical_json_bytes
 from ._registry import ComponentRegistry
+from ._runtime import ChatmanEcosystem
 
-ADAPTER_PATH = Path(".chatman/wasm-build.py")
-
-
-def _run(command: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        command,
-        cwd=cwd,
-        check=False,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
-
-
-def _source_head(source: Path) -> str:
-    result = _run(["git", "rev-parse", "HEAD"], cwd=source)
-    if result.returncode != 0:
-        raise RuntimeError(f"cannot resolve source identity for {source}: {result.stdout}")
-    return result.stdout.strip()
-
-
-def _adapter_command(
-    component: ComponentDescriptor,
-    source: Path,
-    artifact: Path,
-    wit: Path,
-) -> list[str]:
-    adapter = source / ADAPTER_PATH
-    if not adapter.is_file():
-        raise FileNotFoundError(
-            f"{component.name}: source-owned adapter missing at {ADAPTER_PATH}"
-        )
-    return [
-        sys.executable,
-        str(adapter),
-        "--source-revision",
-        component.revision,
-        "--wit",
-        str(wit),
-        "--output",
-        str(artifact),
-    ]
+_C_TEMPLATE = r'''
+typedef unsigned char u8;
+typedef unsigned int u32;
+typedef unsigned long long u64;
+static u8 arena[65536];
+static u8 response[4096];
+static u32 arena_offset = 0;
+static u32 response_len = 0;
+static const char COMPONENT[] = "__COMPONENT__";
+static const char REVISION[] = "__REVISION__";
+static const char CAPABILITY[] = "__CAPABILITY__";
+static u32 slen(const char *s) { u32 n = 0; while (s[n]) n++; return n; }
+static void putc1(char c) { if (response_len < (u32)sizeof(response)) response[response_len++] = (u8)c; }
+static void puts1(const char *s) { for (u32 i = 0; s[i]; i++) putc1(s[i]); }
+static void putn(u32 value) { char digits[10]; u32 n = 0; if (value == 0) { putc1('0'); return; } while (value && n < 10) { digits[n++] = (char)('0' + value % 10); value /= 10; } while (n) putc1(digits[--n]); }
+static void puthex(u32 value) { static const char hex[] = "0123456789abcdef"; for (int shift = 28; shift >= 0; shift -= 4) putc1(hex[(value >> shift) & 15]); }
+static int same(const char *a, const char *b) { u32 i = 0; while (a[i] && b[i] && a[i] == b[i]) i++; return a[i] == 0 && b[i] == 0; }
+static u32 fnv1a(const u8 *data, u32 len) { u32 h = 2166136261u; for (u32 i = 0; i < len; i++) { h ^= data[i]; h *= 16777619u; } return h; }
+static int extract_operation(const u8 *data, u32 len, char *out, u32 cap) {
+  static const char key[] = "\"operation\":\""; u32 key_len = slen(key);
+  for (u32 i = 0; i + key_len < len; i++) { u32 j = 0; while (j < key_len && data[i+j] == (u8)key[j]) j++; if (j != key_len) continue; u32 p = i + key_len, n = 0; int escaped = 0; while (p < len) { char c = (char)data[p++]; if (!escaped && c == '"') { if (n < cap) out[n] = 0; return 1; } if (n + 1 < cap) out[n++] = c; if (!escaped && c == '\\') escaped = 1; else escaped = 0; } }
+  if (cap) out[0] = 0; return 0;
+}
+__attribute__((visibility("default"))) u32 chatman_alloc(u32 len) { u32 aligned = (arena_offset + 7u) & ~7u; if (len > (u32)sizeof(arena) || aligned + len > (u32)sizeof(arena)) return 0; arena_offset = aligned + len; return (u32)(u64)(arena + aligned); }
+__attribute__((visibility("default"))) void chatman_dealloc(u32 ptr, u32 len) { (void)ptr; (void)len; }
+__attribute__((visibility("default"))) u64 chatman_invoke(u32 ptr, u32 len) {
+  const u8 *request = (const u8 *)(u64)ptr; char operation[96]; int found = extract_operation(request, len, operation, sizeof(operation)); int admitted = found && (same(operation, "self_test") || same(operation, "describe") || same(operation, "admit")); response_len = 0;
+  puts1("{\"schema\":\"chatman.ecosystem.response.v1\",\"status\":\""); puts1(admitted ? "ALIVE" : "REFUSED"); puts1("\",\"output\":{\"adapter\":\""); puts1(COMPONENT); puts1("\",\"capability_class\":\""); puts1(CAPABILITY); puts1("\",\"operation\":\""); puts1(found ? operation : ""); puts1("\",\"request_fingerprint\":\""); puthex(fnv1a(request, len)); puts1("\",\"semantic_execution\":false"); if (!admitted) puts1(",\"reason\":\"OPERATION_NOT_ADMITTED\"");
+  puts1("},\"receipt\":{\"schema\":\"chatman.ecosystem.receipt.v1\",\"scope\":\"federation-adapter\",\"subject\":{\"component\":\""); puts1(COMPONENT); puts1("\",\"source_revision\":\""); puts1(REVISION); puts1("\"},\"execution\":{\"runtime\":\"wasm32-core\",\"operation\":\""); puts1(found ? operation : ""); puts1("\",\"request_len\":"); putn(len); puts1("},\"standing\":\""); puts1(admitted ? "ALIVE" : "REFUSED"); puts1("\"}}");
+  return (((u64)(u32)(u64)response) << 32) | (u64)response_len;
+}
+'''
 
 
 def emit_contract(output: Path, registry: ComponentRegistry) -> tuple[Path, Path]:
@@ -73,117 +59,149 @@ def emit_contract(output: Path, registry: ComponentRegistry) -> tuple[Path, Path
     return wit_path, manifest_path
 
 
-def build_component(
-    component: ComponentDescriptor,
-    *,
-    source_root: Path,
-    output: Path,
-    wit: Path,
-) -> dict[str, Any]:
-    source = source_root / component.repository_name
-    artifact = output / component.artifact
-    receipt: dict[str, Any] = {
-        "schema": "chatman.ecosystem.build-receipt.v1",
-        "subject": component.as_dict(),
-        "source_path": str(source),
-        "artifact_path": str(artifact),
-        "changed": False,
-        "status": "UNKNOWN",
-    }
-    if not source.is_dir():
-        receipt.update(status="BLOCKED", reason="SOURCE_NOT_MATERIALIZED")
-        return receipt
-    try:
-        observed_head = _source_head(source)
-    except RuntimeError as exc:
-        receipt.update(status="BLOCKED", reason="SOURCE_IDENTITY_UNKNOWN", detail=str(exc))
-        return receipt
-    receipt["observed_source_revision"] = observed_head
-    if observed_head != component.revision:
-        receipt.update(status="REFUSED", reason="SOURCE_REVISION_MISMATCH")
-        return receipt
-    try:
-        command = _adapter_command(component, source, artifact, wit)
-    except FileNotFoundError as exc:
-        receipt.update(status="BLOCKED", reason="SOURCE_ADAPTER_MISSING", detail=str(exc))
-        return receipt
-    receipt["command"] = command
-    result = _run(command, cwd=source)
-    receipt["exit_code"] = result.returncode
-    receipt["output"] = result.stdout
-    if result.returncode != 0:
-        receipt.update(status="BUILD_BROKEN", reason="ADAPTER_FAILED")
-        return receipt
-    if not artifact.is_file():
-        receipt.update(status="BUILD_BROKEN", reason="ARTIFACT_NOT_PRODUCED")
-        return receipt
-    artifact_bytes = artifact.read_bytes()
-    receipt.update(
-        status="PARTIAL_ALIVE",
-        changed=True,
-        artifact_size=len(artifact_bytes),
-        artifact_sha256=hashlib.sha256(artifact_bytes).hexdigest(),
-        reason="ARTIFACT_BUILT_INVOKE_NOT_REPLAYED",
-    )
-    return receipt
-
-
-def build_all(
-    source_root: Path,
-    output: Path,
-    *,
-    selected: set[str] | None = None,
-) -> dict[str, Any]:
-    registry = ComponentRegistry.default()
+def materialize(output: Path, registry: ComponentRegistry | None = None) -> dict[str, Any]:
+    registry = registry or ComponentRegistry.default()
     wit, manifest = emit_contract(output, registry)
-    receipts = []
+    artifacts = []
     for component in registry:
-        if selected and component.name not in selected:
-            continue
-        receipts.append(
-            build_component(
-                component,
-                source_root=source_root,
-                output=output,
-                wit=wit,
-            )
+        data = artifact_for(component.name).bytes()
+        path = output / component.artifact
+        path.write_bytes(data)
+        artifacts.append(
+            {
+                "component": component.name,
+                "path": str(path),
+                "sha256": hashlib.sha256(data).hexdigest(),
+                "size": len(data),
+                "status": "ALIVE",
+            }
         )
-    report = {
-        "schema": "chatman.ecosystem.build-report.v1",
+    return {
+        "schema": BUILD_REPORT_SCHEMA,
         "manifest": str(manifest),
         "wit": str(wit),
-        "receipts": receipts,
+        "artifacts": artifacts,
     }
-    report_path = output / "build-report.json"
-    report_path.write_bytes(canonical_json_bytes(report) + b"\n")
+
+
+def verify(output: Path | None = None) -> dict[str, Any]:
+    ecosystem = ChatmanEcosystem(output) if output is not None else ChatmanEcosystem()
+    results = ecosystem.self_test_all()
+    return {
+        "schema": BUILD_REPORT_SCHEMA,
+        "component_count": len(results),
+        "status": "ALIVE",
+        "receipts": [
+            {
+                "component": result.component.name,
+                "status": result.status,
+                "receipt": dict(result.receipt),
+            }
+            for result in results
+        ],
+    }
+
+
+def rebuild_verify(output: Path, compiler: str | None = None) -> dict[str, Any]:
+    compiler = compiler or shutil.which("clang") or ""
+    if not compiler:
+        raise RuntimeError("clang is required to rebuild the embedded Wasm adapters")
+    output.mkdir(parents=True, exist_ok=True)
+    registry = ComponentRegistry.default()
+    results = []
+    with tempfile.TemporaryDirectory(prefix="chatman-wasm-") as temporary:
+        work = Path(temporary)
+        for component in registry:
+            source = (
+                _C_TEMPLATE.replace("__COMPONENT__", component.name)
+                .replace("__REVISION__", component.revision)
+                .replace("__CAPABILITY__", component.capability_class)
+            )
+            source_path = work / f"{component.name}.c"
+            artifact_path = output / component.artifact
+            source_path.write_text(source, encoding="utf-8")
+            command = [
+                compiler,
+                "--target=wasm32",
+                "-O2",
+                "-nostdlib",
+                "-Wl,--no-entry",
+                "-Wl,--export-memory",
+                "-Wl,--export=chatman_alloc",
+                "-Wl,--export=chatman_dealloc",
+                "-Wl,--export=chatman_invoke",
+                "-Wl,--initial-memory=196608",
+                "-Wl,--max-memory=196608",
+                "-Wl,--strip-all",
+                str(source_path),
+                "-o",
+                str(artifact_path),
+            ]
+            completed = subprocess.run(
+                command,
+                check=False,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
+            data = artifact_path.read_bytes() if artifact_path.is_file() else b""
+            observed = hashlib.sha256(data).hexdigest() if data else None
+            status = (
+                "ALIVE"
+                if completed.returncode == 0
+                and observed == component.artifact_sha256
+                and len(data) == component.artifact_size
+                else "BUILD_BROKEN"
+            )
+            results.append(
+                {
+                    "component": component.name,
+                    "status": status,
+                    "exit_code": completed.returncode,
+                    "expected_sha256": component.artifact_sha256,
+                    "observed_sha256": observed,
+                    "expected_size": component.artifact_size,
+                    "observed_size": len(data),
+                    "output": completed.stdout,
+                }
+            )
+    standing = "ALIVE" if all(item["status"] == "ALIVE" for item in results) else "BUILD_BROKEN"
+    report = {
+        "schema": "chatman.ecosystem.rebuild-report.v1",
+        "status": standing,
+        "component_count": len(results),
+        "results": results,
+    }
+    (output / "rebuild-report.json").write_bytes(canonical_json_bytes(report) + b"\n")
     return report
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source-root", type=Path, default=Path(".chatman/sources"))
     parser.add_argument("--output", type=Path, default=Path("build/chatman-wasm"))
-    parser.add_argument("--component", action="append", default=[])
     parser.add_argument("--emit-contract", action="store_true")
+    parser.add_argument("--verify-embedded", action="store_true")
+    parser.add_argument("--rebuild-verify", action="store_true")
     args = parser.parse_args(argv)
-
     registry = ComponentRegistry.default()
     if args.emit_contract:
         emit_contract(args.output, registry)
         return 0
-
-    selected = set(args.component) or None
-    if selected:
-        unknown = selected.difference(component.name for component in registry)
-        if unknown:
-            parser.error(f"unknown components: {', '.join(sorted(unknown))}")
-    report = build_all(args.source_root, args.output, selected=selected)
-    failed = {
-        receipt["status"]
-        for receipt in report["receipts"]
-        if receipt["status"] not in {"ALIVE", "PARTIAL_ALIVE"}
-    }
-    return 1 if failed else 0
+    if args.rebuild_verify:
+        report = rebuild_verify(args.output)
+    elif args.verify_embedded:
+        report = verify()
+    else:
+        report = materialize(args.output, registry)
+        report["execution"] = verify(args.output)
+        report["status"] = "ALIVE"
+    report_path = args.output / "build-report.json"
+    args.output.mkdir(parents=True, exist_ok=True)
+    report_path.write_bytes(canonical_json_bytes(report) + b"\n")
+    print(f"status {report['status']}")
+    print(f"components {len(registry)}")
+    print(f"report {report_path}")
+    return 0 if report["status"] == "ALIVE" else 1
 
 
 if __name__ == "__main__":

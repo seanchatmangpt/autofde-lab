@@ -1,26 +1,21 @@
-"""Canonical Chatman ecosystem WebAssembly boundary.
-
-The package intentionally exposes a tiny, capability-free core-Wasm ABI.  A
-component receives canonical JSON and returns canonical JSON plus a receipt.
-It receives no WASI imports by default, so filesystem, network, clock, random,
-and process authority must be introduced by an explicit future host policy.
-"""
+"""Canonical receipt-bound ABI for the Chatman ecosystem Wasm adapters."""
 
 from __future__ import annotations
 
 ABI_NAME = "chatman:ecosystem/library"
-ABI_VERSION = "1.0.0"
+ABI_VERSION = "1.1.0"
 REQUEST_SCHEMA = "chatman.ecosystem.invoke.v1"
 RESPONSE_SCHEMA = "chatman.ecosystem.response.v1"
+RECEIPT_SCHEMA = "chatman.ecosystem.receipt.v1"
+REGISTRY_SCHEMA = "chatman.ecosystem.registry.v2"
+BUILD_REPORT_SCHEMA = "chatman.ecosystem.build-report.v2"
 
 MEMORY_EXPORT = "memory"
 ALLOC_EXPORT = "chatman_alloc"
 DEALLOC_EXPORT = "chatman_dealloc"
 INVOKE_EXPORT = "chatman_invoke"
+ADAPTER_OPERATIONS = ("admit", "describe", "self_test")
 
-# The WIT is embedded so it ships in every wheel without relying on non-Python
-# package-data configuration. ``python -m skdecide.wasm.build --emit-contract``
-# writes this exact source to disk for component toolchains.
 WIT = f"""package chatman:ecosystem@{ABI_VERSION};
 
 interface library {{
@@ -51,4 +46,6 @@ CORE_ABI = {
     "invoke": INVOKE_EXPORT,
     "invoke_signature": "(request_ptr: i32, request_len: i32) -> packed_ptr_len: i64",
     "packed_result": "high_u32=response_ptr, low_u32=response_len",
+    "imports": [],
+    "memory_max_pages": 3,
 }

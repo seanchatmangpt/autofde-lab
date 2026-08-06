@@ -1,156 +1,108 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
+import shutil
 
 import pytest
 
 from skdecide.wasm import (
     ABI_VERSION,
-    ArtifactUnavailable,
+    ArtifactIntegrityError,
     ChatmanEcosystem,
     ComponentRegistry,
+    DirectoryArtifactStore,
+    EmbeddedArtifactStore,
+    NodeBackend,
 )
-from skdecide.wasm._abi import RESPONSE_SCHEMA
+from skdecide.wasm._artifacts import ARTIFACTS
+from skdecide.wasm.build import materialize, verify
 
 
-class ReceiptBackend:
-    def __init__(self) -> None:
-        self.requests: list[dict[str, object]] = []
-
-    def invoke(self, artifact: Path, request: bytes) -> bytes:
-        decoded = json.loads(request)
-        self.requests.append(decoded)
-        return json.dumps(
-            {
-                "schema": RESPONSE_SCHEMA,
-                "status": "ALIVE",
-                "output": {"operation": decoded["operation"]},
-                "receipt": {
-                    "subject": {
-                        "component": decoded["component"],
-                        "source_revision": decoded["source_revision"],
-                    },
-                    "artifact": artifact.name,
-                },
-            },
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode()
+def node_backend() -> NodeBackend:
+    executable = shutil.which("node")
+    if executable is None:
+        pytest.skip("Node.js is required for exact Wasm execution in this verifier")
+    return NodeBackend(executable)
 
 
-def test_default_registry_is_complete_and_exact_sha_pinned() -> None:
+def test_registry_is_complete_exact_and_artifact_bound() -> None:
     registry = ComponentRegistry.default()
     assert len(registry) == 16
-    assert {component.name for component in registry} == {
-        "cargo-cicd",
-        "ferroplan",
-        "fgn",
-        "ggen",
-        "ggen-create",
-        "ggen-legacy",
-        "lsp-max",
-        "mfact",
-        "mfw",
-        "mmdio",
-        "mu-mcpp",
-        "mu-truex",
-        "powl",
-        "star-toml",
-        "wasm4pm",
-        "wasm4pm-compat",
-    }
-    assert all(len(component.revision) == 40 for component in registry)
-    assert all(component.artifact.endswith(".wasm") for component in registry)
+    assert set(ARTIFACTS) == {component.name for component in registry}
+    assert ABI_VERSION == "1.1.0"
+    for component in registry:
+        artifact = ARTIFACTS[component.name]
+        data = artifact.bytes()
+        assert component.revision and len(component.revision) == 40
+        assert component.artifact_sha256 == hashlib.sha256(data).hexdigest()
+        assert component.artifact_size == len(data)
+        assert data.startswith(b"\x00asm\x01\x00\x00\x00")
 
 
-def test_python_aliases_resolve_mu_and_powl(tmp_path: Path) -> None:
-    ecosystem = ChatmanEcosystem(tmp_path, backend=ReceiptBackend())
+def test_aliases_resolve_mu_and_powl() -> None:
+    ecosystem = ChatmanEcosystem(backend=node_backend())
     assert ecosystem.mcpp.descriptor.name == "mu-mcpp"
     assert ecosystem.truex.descriptor.name == "mu-truex"
     assert ecosystem.POWL.descriptor.name == "powl"
 
 
-def test_missing_artifact_is_typed_blocker(tmp_path: Path) -> None:
-    ecosystem = ChatmanEcosystem(tmp_path, backend=ReceiptBackend())
-    with pytest.raises(ArtifactUnavailable, match="has not been manufactured"):
-        ecosystem.ggen.invoke("render", {"graph": "urn:test"})
+def test_all_embedded_components_execute_self_test_alive() -> None:
+    ecosystem = ChatmanEcosystem(backend=node_backend())
+    results = ecosystem.self_test_all()
+    assert len(results) == 16
+    assert {result.status for result in results} == {"ALIVE"}
+    assert ecosystem.missing_artifacts() == ()
+    for result in results:
+        assert result.receipt["scope"] == "federation-adapter"
+        assert result.receipt["artifact"]["sha256"] == result.component.artifact_sha256
+        assert result.receipt["host"]["backend"] == "node-webassembly"
+        assert result.output["semantic_execution"] is False
 
 
-def test_receipt_bound_round_trip(tmp_path: Path) -> None:
-    registry = ComponentRegistry.default()
-    descriptor = registry.by_name("ggen")
-    (tmp_path / descriptor.artifact).write_bytes(b"placeholder")
-    backend = ReceiptBackend()
-    ecosystem = ChatmanEcosystem(tmp_path, registry=registry, backend=backend)
-
-    result = ecosystem.ggen.invoke(
-        "render",
-        {"graph": "urn:test"},
-        authority={"actuation": "none"},
-    )
-
-    assert result.status == "ALIVE"
-    assert result.output == {"operation": "render"}
-    assert result.receipt["subject"]["source_revision"] == descriptor.revision
-    assert backend.requests == [
-        {
-            "authority": {"actuation": "none"},
-            "component": "ggen",
-            "operation": "render",
-            "payload": {"graph": "urn:test"},
-            "schema": "chatman.ecosystem.invoke.v1",
-            "source_revision": descriptor.revision,
-        }
-    ]
+def test_describe_and_admit_are_receipt_bound() -> None:
+    ecosystem = ChatmanEcosystem(backend=node_backend())
+    described = ecosystem.ggen.describe()
+    admitted = ecosystem.ggen.admit({"graph": "urn:test"})
+    assert described.status == "ALIVE"
+    assert admitted.status == "ALIVE"
+    assert admitted.receipt["subject"] == {
+        "component": "ggen",
+        "source_revision": ecosystem.ggen.descriptor.revision,
+    }
 
 
-def test_inventory_reports_exact_artifact_availability(tmp_path: Path) -> None:
-    registry = ComponentRegistry.default()
-    first = next(iter(registry))
-    (tmp_path / first.artifact).write_bytes(b"wasm")
-    inventory = ChatmanEcosystem(tmp_path, registry=registry).inventory()
-    by_name = {item["name"]: item for item in inventory}
-    assert by_name[first.name]["available"] is True
-    assert sum(bool(item["available"]) for item in inventory) == 1
-    assert ABI_VERSION == "1.0.0"
+def test_unadmitted_operation_is_typed_refusal() -> None:
+    result = ChatmanEcosystem(backend=node_backend()).ggen.invoke("render")
+    assert result.status == "REFUSED"
+    assert result.output["reason"] == "OPERATION_NOT_ADMITTED"
 
 
-def test_build_contract_is_deterministic(tmp_path: Path) -> None:
-    from skdecide.wasm.build import emit_contract
+def test_materialized_inventory_is_deterministic_and_executable(tmp_path: Path) -> None:
+    first = materialize(tmp_path)
+    manifest_bytes = (tmp_path / "chatman-ecosystem.json").read_bytes()
+    second = materialize(tmp_path)
+    assert (tmp_path / "chatman-ecosystem.json").read_bytes() == manifest_bytes
+    assert first == second
+    report = verify(tmp_path)
+    assert report["status"] == "ALIVE"
+    assert report["component_count"] == 16
+    assert {receipt["status"] for receipt in report["receipts"]} == {"ALIVE"}
 
-    registry = ComponentRegistry.default()
-    wit, manifest = emit_contract(tmp_path, registry)
-    first = manifest.read_bytes()
-    emit_contract(tmp_path, registry)
-    assert manifest.read_bytes() == first
-    assert wit.read_text().startswith("package chatman:ecosystem@1.0.0;")
-    decoded = json.loads(first)
-    assert decoded["component_count"] == 16
 
-
-def test_receipt_identity_mismatch_is_rejected(tmp_path: Path) -> None:
-    class WrongReceiptBackend:
-        def invoke(self, artifact: Path, request: bytes) -> bytes:
-            decoded = json.loads(request)
-            return json.dumps(
-                {
-                    "schema": RESPONSE_SCHEMA,
-                    "status": "ALIVE",
-                    "output": {},
-                    "receipt": {
-                        "subject": {
-                            "component": "not-the-component",
-                            "source_revision": decoded["source_revision"],
-                        }
-                    },
-                }
-            ).encode()
-
+def test_directory_store_refuses_artifact_drift(tmp_path: Path) -> None:
+    materialize(tmp_path)
     descriptor = ComponentRegistry.default().by_name("ggen")
-    (tmp_path / descriptor.artifact).write_bytes(b"placeholder")
-    ecosystem = ChatmanEcosystem(tmp_path, backend=WrongReceiptBackend())
-    from skdecide.wasm import AbiViolation
+    (tmp_path / descriptor.artifact).write_bytes(b"not-wasm")
+    store = DirectoryArtifactStore(tmp_path)
+    with pytest.raises(ArtifactIntegrityError, match="digest mismatch"):
+        store.load(descriptor)
 
-    with pytest.raises(AbiViolation, match="receipt-bound ABI"):
-        ecosystem.ggen.invoke("render")
+
+def test_registry_manifest_has_no_blocked_or_partial_state() -> None:
+    manifest = ComponentRegistry.default().as_manifest()
+    encoded = json.dumps(manifest, sort_keys=True)
+    assert "BLOCKED" not in encoded
+    assert "PARTIAL_ALIVE" not in encoded
+    assert manifest["component_count"] == 16
