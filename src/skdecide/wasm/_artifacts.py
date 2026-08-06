@@ -1,4 +1,4 @@
-"""Metadata and verified loading for the packaged Chatman Wasm archive."""
+"""Metadata and verified loading for packaged Chatman Wasm archives."""
 
 from __future__ import annotations
 
@@ -11,24 +11,35 @@ from types import MappingProxyType
 from typing import Mapping
 from zipfile import BadZipFile, ZipFile
 
+_BASE_ARCHIVE = "chatman-ecosystem-wasm.zip"
+_INTEROP_ARCHIVE = "chatman-interop-wasm.zip"
+_INTEROP_ENTRIES = frozenset({"mfw.wasm", "wasm4pm.wasm"})
 
-@lru_cache(maxsize=1)
-def _archive_bytes() -> bytes:
-    return files("skdecide.wasm.artifacts").joinpath(
-        "chatman-ecosystem-wasm.zip"
-    ).read_bytes()
+
+@lru_cache(maxsize=2)
+def _archive_bytes(name: str) -> bytes:
+    return files("skdecide.wasm.artifacts").joinpath(name).read_bytes()
+
+
+def _read_archive(name: str) -> dict[str, bytes]:
+    try:
+        with ZipFile(BytesIO(_archive_bytes(name))) as archive:
+            names = archive.namelist()
+            if len(names) != len(set(names)):
+                raise ValueError(f"packaged Wasm archive has duplicates: {name}")
+            return {entry: archive.read(entry) for entry in names}
+    except BadZipFile as exc:
+        raise ValueError(f"packaged Chatman Wasm archive is invalid: {name}") from exc
 
 
 @lru_cache(maxsize=1)
 def _archive_entries() -> Mapping[str, bytes]:
-    try:
-        with ZipFile(BytesIO(_archive_bytes())) as archive:
-            names = archive.namelist()
-            if len(names) != len(set(names)):
-                raise ValueError("packaged Wasm archive contains duplicate entries")
-            return MappingProxyType({name: archive.read(name) for name in names})
-    except BadZipFile as exc:
-        raise ValueError("packaged Chatman Wasm archive is invalid") from exc
+    entries = _read_archive(_BASE_ARCHIVE)
+    interop = _read_archive(_INTEROP_ARCHIVE)
+    if frozenset(interop) != _INTEROP_ENTRIES:
+        raise ValueError("interop Wasm archive must contain exactly MFW and wasm4pm")
+    entries.update(interop)
+    return MappingProxyType(entries)
 
 
 @dataclass(frozen=True, slots=True)
