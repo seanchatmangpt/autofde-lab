@@ -5839,16 +5839,17 @@ name = "pyrddlgym"
 version = "2.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "gymnasium", marker = "python_full_version < '3.13'" },
+    { name = "gymnasium" },
     { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "matplotlib", version = "3.11.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and python_full_version < '3.13'" },
-    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13' and platform_machine == 'x86_64' and sys_platform == 'darwin'" },
+    { name = "matplotlib", version = "3.11.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and platform_machine != 'x86_64') or (python_full_version < '3.11' and sys_platform != 'darwin')" },
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and python_full_version < '3.13' and platform_machine != 'x86_64') or (python_full_version >= '3.11' and python_full_version < '3.13' and sys_platform != 'darwin')" },
-    { name = "pillow", marker = "python_full_version < '3.13'" },
-    { name = "ply", marker = "python_full_version < '3.13'" },
-    { name = "pygame-ce", marker = "python_full_version < '3.13'" },
-    { name = "termcolor", marker = "python_full_version < '3.13'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.13' and platform_machine != 'x86_64') or (python_full_version >= '3.13' and sys_platform != 'darwin')" },
+    { name = "pillow" },
+    { name = "ply" },
+    { name = "pygame-ce" },
+    { name = "termcolor" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/3c/39/8b7bcad158181a4cdfdc2cf4ea17d78c6cb9470eb32bbd8294dd5868541e/pyrddlgym-2.6.tar.gz", hash = "sha256:b911f567626bd1958d4910926559b5b109bb78d80733778cea26b3a6311149c5", size = 100075, upload-time = "2026-01-26T18:13:42.83Z" }
 wheels = [
@@ -5890,7 +5891,7 @@ name = "pyrddlgym-rl"
 version = "0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pyrddlgym", marker = "python_full_version < '3.13'" },
+    { name = "pyrddlgym" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/03/be/1b527c4a70c731759a16ea1f449b4d61beb33d45f6b12f6de4284cfeffb2/pyrddlgym_rl-0.2.tar.gz", hash = "sha256:e54c6b0cdc41c4cb8234bb59fdc28ee7d88bd66f33db75dc9248c67190a21a93", size = 9820, upload-time = "2024-11-03T11:51:44.711Z" }
 wheels = [
@@ -6779,10 +6780,10 @@ all = [
     { name = "pygeodesy" },
     { name = "pygrib", version = "2.1.5", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
     { name = "pygrib", version = "2.1.8", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'x86_64' and sys_platform == 'darwin') or sys_platform == 'linux'" },
-    { name = "pyrddlgym", marker = "python_full_version < '3.13'" },
+    { name = "pyrddlgym" },
     { name = "pyrddlgym-gurobi", marker = "python_full_version < '3.13'" },
     { name = "pyrddlgym-jax", marker = "python_full_version < '3.13'" },
-    { name = "pyrddlgym-rl", marker = "python_full_version < '3.13'" },
+    { name = "pyrddlgym-rl" },
     { name = "pytz" },
     { name = "ray", extra = ["rllib"] },
     { name = "rddlrepository" },
@@ -6815,8 +6816,8 @@ domains = [
     { name = "pygeodesy" },
     { name = "pygrib", version = "2.1.5", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
     { name = "pygrib", version = "2.1.8", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'x86_64' and sys_platform == 'darwin') or sys_platform == 'linux'" },
-    { name = "pyrddlgym", marker = "python_full_version < '3.13'" },
-    { name = "pyrddlgym-rl", marker = "python_full_version < '3.13'" },
+    { name = "pyrddlgym" },
+    { name = "pyrddlgym-rl" },
     { name = "pytz" },
     { name = "rddlrepository" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
@@ -6909,10 +6910,10 @@ requires-dist = [
     { name = "pygrib", marker = "platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'domains'", specifier = ">=2.1.6" },
     { name = "pygrib", marker = "sys_platform == 'linux' and extra == 'domains'", specifier = ">=2.1.6" },
     { name = "pynng", specifier = ">=0.6.2" },
-    { name = "pyrddlgym", marker = "python_full_version < '3.13' and extra == 'domains'", specifier = ">=2.3,!=2.7" },
+    { name = "pyrddlgym", marker = "extra == 'domains'", specifier = ">=2.3,!=2.7" },
     { name = "pyrddlgym-gurobi", marker = "python_full_version < '3.13' and extra == 'solvers'", specifier = ">=0.2" },
     { name = "pyrddlgym-jax", marker = "python_full_version < '3.13' and extra == 'solvers'", specifier = ">=2.5" },
-    { name = "pyrddlgym-rl", marker = "python_full_version < '3.13' and extra == 'domains'", specifier = ">=0.2" },
+    { name = "pyrddlgym-rl", marker = "extra == 'domains'", specifier = ">=0.2" },
     { name = "pytz", marker = "extra == 'domains'", specifier = ">=2025.2" },
     { name = "ray", extras = ["rllib"], marker = "extra == 'solvers'", specifier = ">=2.9.0,<2.38" },
     { name = "rddlrepository", marker = "extra == 'domains'", specifier = ">=2.1" },
