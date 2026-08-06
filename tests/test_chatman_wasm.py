@@ -9,6 +9,7 @@ import pytest
 
 from skdecide.wasm import (
     ABI_VERSION,
+    AbiViolation,
     ArtifactIntegrityError,
     ChatmanEcosystem,
     ComponentRegistry,
@@ -25,6 +26,31 @@ def node_backend() -> NodeBackend:
     if executable is None:
         pytest.skip("Node.js is required for exact Wasm execution in this verifier")
     return NodeBackend(executable)
+
+
+class BlockedBackend:
+    name = "blocked-negative-fixture"
+
+    def invoke(self, artifact, request: bytes) -> bytes:
+        decoded = json.loads(request)
+        return json.dumps(
+            {
+                "schema": "chatman.ecosystem.response.v1",
+                "status": "BLOCKED",
+                "output": {"reason": "SHOULD_NOT_BE_ADMITTED"},
+                "receipt": {
+                    "schema": "chatman.ecosystem.receipt.v1",
+                    "scope": "negative-fixture",
+                    "subject": {
+                        "component": decoded["component"],
+                        "source_revision": decoded["source_revision"],
+                    },
+                    "standing": "BLOCKED",
+                },
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
 
 
 def test_registry_is_complete_exact_and_artifact_bound() -> None:
@@ -56,7 +82,10 @@ def test_all_embedded_components_execute_self_test_alive() -> None:
     assert ecosystem.missing_artifacts() == ()
     for result in results:
         assert result.receipt["scope"] == "federation-adapter"
-        assert result.receipt["artifact"]["sha256"] == result.component.artifact_sha256
+        assert (
+            result.receipt["artifact"]["sha256"]
+            == result.component.artifact_sha256
+        )
         assert result.receipt["host"]["backend"] == "node-webassembly"
         assert result.output["semantic_execution"] is False
 
@@ -79,7 +108,15 @@ def test_unadmitted_operation_is_typed_refusal() -> None:
     assert result.output["reason"] == "OPERATION_NOT_ADMITTED"
 
 
-def test_materialized_inventory_is_deterministic_and_executable(tmp_path: Path) -> None:
+def test_errc_rejects_blocked_guest_standing() -> None:
+    ecosystem = ChatmanEcosystem(backend=BlockedBackend())
+    with pytest.raises(AbiViolation, match="receipt-bound ABI"):
+        ecosystem.ggen.invoke("self_test")
+
+
+def test_materialized_inventory_is_deterministic_and_executable(
+    tmp_path: Path,
+) -> None:
     first = materialize(tmp_path)
     manifest_bytes = (tmp_path / "chatman-ecosystem.json").read_bytes()
     second = materialize(tmp_path)
