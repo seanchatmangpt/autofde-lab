@@ -207,6 +207,7 @@ class SessionState:
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)
         value["stage"] = self.stage.value
+        value["attempted_routes"] = list(self.attempted_routes)
         value["route_evidence"] = [
             {
                 "route": evidence.route,
@@ -228,14 +229,27 @@ class ActuationIntent:
 
     @property
     def intent_id(self) -> str:
-        return digest(
-            {
-                "task_identity": self.task_identity,
-                "route": self.route,
-                "action": self.action,
-                "payload": dict(self.payload),
-                "replay_of": self.replay_of,
-            }
+        return digest(self.to_dict())
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "task_identity": self.task_identity,
+            "route": self.route,
+            "action": self.action,
+            "payload": dict(self.payload),
+            "replay_of": self.replay_of,
+        }
+
+    @classmethod
+    def from_mapping(cls, value: Mapping[str, Any]) -> ActuationIntent:
+        return cls(
+            task_identity=str(value["task_identity"]),
+            route=str(value["route"]),
+            action=str(value["action"]),
+            payload=dict(value["payload"]),
+            replay_of=(
+                None if value.get("replay_of") is None else str(value["replay_of"])
+            ),
         )
 
 
@@ -243,6 +257,7 @@ class ActuationIntent:
 class BrokerReceipt:
     receipt_id: str
     intent_id: str
+    intent: Mapping[str, Any]
     standing: str
     consequence: Mapping[str, Any]
     reason: str | None = None
@@ -251,8 +266,19 @@ class BrokerReceipt:
         validate_standing(self.standing)
         if not self.receipt_id:
             raise ValueError("broker receipt_id must not be empty")
-        if not self.intent_id:
-            raise ValueError("broker intent_id must not be empty")
+        if digest(dict(self.intent)) != self.intent_id:
+            raise ValueError("broker intent document does not match intent_id")
+        if digest(self._material()) != self.receipt_id:
+            raise ValueError("broker receipt document does not match receipt_id")
+
+    def _material(self) -> dict[str, Any]:
+        return {
+            "intent_id": self.intent_id,
+            "intent": dict(self.intent),
+            "standing": self.standing,
+            "consequence": dict(self.consequence),
+            "reason": self.reason,
+        }
 
     @classmethod
     def issue(
@@ -263,8 +289,10 @@ class BrokerReceipt:
         reason: str | None = None,
     ) -> BrokerReceipt:
         validate_standing(standing)
+        intent_document = intent.to_dict()
         material = {
             "intent_id": intent.intent_id,
+            "intent": intent_document,
             "standing": standing,
             "consequence": dict(consequence),
             "reason": reason,
@@ -272,38 +300,64 @@ class BrokerReceipt:
         return cls(
             receipt_id=digest(material),
             intent_id=intent.intent_id,
+            intent=intent_document,
             standing=standing,
             consequence=dict(consequence),
             reason=reason,
         )
 
+    @classmethod
+    def from_mapping(cls, value: Mapping[str, Any]) -> BrokerReceipt:
+        return cls(
+            receipt_id=str(value["receipt_id"]),
+            intent_id=str(value["intent_id"]),
+            intent=dict(value["intent"]),
+            standing=str(value["standing"]),
+            consequence=dict(value["consequence"]),
+            reason=None if value.get("reason") is None else str(value["reason"]),
+        )
+
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "receipt_id": self.receipt_id,
-            "intent_id": self.intent_id,
-            "standing": self.standing,
-            "consequence": dict(self.consequence),
-            "reason": self.reason,
-        }
+        return {"receipt_id": self.receipt_id, **self._material()}
 
 
 @dataclass(frozen=True)
 class ExecutionReceipt:
     receipt_id: str
     task_identity: str
+    task: Mapping[str, Any]
     standing: str
     state_digest: str
+    state: Mapping[str, Any]
     broker_receipts: tuple[BrokerReceipt, ...]
     actions: tuple[SessionAction, ...]
     replay_of: str | None = None
 
     def __post_init__(self) -> None:
         validate_standing(self.standing)
+        if digest(dict(self.task)) != self.task_identity:
+            raise ValueError("task document does not match task_identity")
+        if digest(dict(self.state)) != self.state_digest:
+            raise ValueError("state document does not match state_digest")
+        if digest(self._material()) != self.receipt_id:
+            raise ValueError("execution receipt document does not match receipt_id")
+
+    def _material(self) -> dict[str, Any]:
+        return {
+            "task_identity": self.task_identity,
+            "standing": self.standing,
+            "state_digest": self.state_digest,
+            "broker_receipts": [
+                receipt.receipt_id for receipt in self.broker_receipts
+            ],
+            "actions": [action.to_dict() for action in self.actions],
+            "replay_of": self.replay_of,
+        }
 
     @classmethod
     def issue(
         cls,
-        task_identity: str,
+        task: TaskEnvelope,
         standing: str,
         state: SessionState,
         broker_receipts: Sequence[BrokerReceipt],
@@ -311,33 +365,65 @@ class ExecutionReceipt:
         replay_of: str | None = None,
     ) -> ExecutionReceipt:
         validate_standing(standing)
-        state_identity = digest(state.to_dict())
+        task_document = task.to_dict()
+        state_document = state.to_dict()
+        state_identity = digest(state_document)
         material = {
-            "task_identity": task_identity,
+            "task_identity": task.identity,
             "standing": standing,
             "state_digest": state_identity,
             "broker_receipts": [receipt.receipt_id for receipt in broker_receipts],
-            "actions": [
-                {"kind": action.kind.value, "route": action.route} for action in actions
-            ],
+            "actions": [action.to_dict() for action in actions],
             "replay_of": replay_of,
         }
         return cls(
             receipt_id=digest(material),
-            task_identity=task_identity,
+            task_identity=task.identity,
+            task=task_document,
             standing=standing,
             state_digest=state_identity,
+            state=state_document,
             broker_receipts=tuple(broker_receipts),
             actions=tuple(actions),
             replay_of=replay_of,
+        )
+
+    @classmethod
+    def from_mapping(cls, value: Mapping[str, Any]) -> ExecutionReceipt:
+        actions: list[SessionAction] = []
+        for item in value["actions"]:
+            action = SessionAction(
+                ActionKind(str(item["kind"])),
+                None if item.get("route") is None else str(item["route"]),
+            )
+            if item.get("lane") != action.lane.value:
+                raise ValueError("action lane does not match action kind")
+            actions.append(action)
+        return cls(
+            receipt_id=str(value["receipt_id"]),
+            task_identity=str(value["task_identity"]),
+            task=dict(value["task"]),
+            standing=str(value["standing"]),
+            state_digest=str(value["state_digest"]),
+            state=dict(value["state"]),
+            broker_receipts=tuple(
+                BrokerReceipt.from_mapping(item)
+                for item in value["broker_receipts"]
+            ),
+            actions=tuple(actions),
+            replay_of=(
+                None if value.get("replay_of") is None else str(value["replay_of"])
+            ),
         )
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "receipt_id": self.receipt_id,
             "task_identity": self.task_identity,
+            "task": dict(self.task),
             "standing": self.standing,
             "state_digest": self.state_digest,
+            "state": dict(self.state),
             "broker_receipts": [
                 receipt.to_dict() for receipt in self.broker_receipts
             ],

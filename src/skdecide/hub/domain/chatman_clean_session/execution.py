@@ -161,7 +161,7 @@ def execute_actions(
         )
 
     return ExecutionReceipt.issue(
-        task_identity=domain.task.identity,
+        task=domain.task,
         standing=state.standing,
         state=state,
         broker_receipts=broker_receipts,
@@ -222,7 +222,7 @@ def replay_execution(
         )
 
     return ExecutionReceipt.issue(
-        task_identity=domain.task.identity,
+        task=domain.task,
         standing=state.standing,
         state=state,
         broker_receipts=broker_receipts,

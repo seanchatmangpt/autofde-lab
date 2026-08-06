@@ -61,5 +61,7 @@ through the broker, producing a new broker receipt and execution receipt.
 - `schemas/chatman-clean-session-task.schema.json`
 - `schemas/chatman-clean-session-receipt.schema.json`
 
-These JSON Schemas provide language-neutral exchange surfaces for star-toml,
-ggen, BRCE, process-evidence, and other Chatman ecosystem components.
+These JSON Schemas provide bidirectional, language-neutral exchange surfaces for
+star-toml, ggen, BRCE, process-evidence, and other Chatman ecosystem components.
+`ExecutionReceipt.from_mapping` re-admits a received document by recomputing task,
+state, broker-intent, broker-receipt, action-lane, and execution-receipt identities.

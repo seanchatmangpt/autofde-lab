@@ -7,8 +7,10 @@
   "required": [
     "receipt_id",
     "task_identity",
+    "task",
     "standing",
     "state_digest",
+    "state",
     "broker_receipts",
     "actions",
     "replay_of"
@@ -16,8 +18,10 @@
   "properties": {
     "receipt_id": {"$ref": "#/$defs/digest"},
     "task_identity": {"$ref": "#/$defs/digest"},
+    "task": {"$ref": "#/$defs/taskEnvelope"},
     "standing": {"$ref": "#/$defs/standing"},
     "state_digest": {"$ref": "#/$defs/digest"},
+    "state": {"$ref": "#/$defs/sessionState"},
     "broker_receipts": {
       "type": "array",
       "items": {"$ref": "#/$defs/brokerReceipt"}
@@ -47,12 +51,114 @@
         {"type": "string", "pattern": "^REFUSED:.+$"}
       ]
     },
+    "taskEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repo",
+        "base",
+        "task",
+        "acceptance",
+        "constraints",
+        "authority"
+      ],
+      "properties": {
+        "repo": {"type": "string", "minLength": 1},
+        "base": {"type": "string", "minLength": 1},
+        "task": {"type": "string", "minLength": 1},
+        "acceptance": {"type": "string", "minLength": 1},
+        "constraints": {"type": "array", "items": {"type": "string"}},
+        "authority": {"type": "string"}
+      }
+    },
+    "sessionState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_identity",
+        "stage",
+        "attempted_routes",
+        "route_evidence",
+        "selected_route",
+        "standing",
+        "reason"
+      ],
+      "properties": {
+        "task_identity": {"$ref": "#/$defs/digest"},
+        "stage": {
+          "enum": [
+            "parse",
+            "route",
+            "admit",
+            "diagnose_or_repair",
+            "construct",
+            "actuate",
+            "observe_consequence",
+            "verify",
+            "receipt",
+            "replay_or_hook",
+            "standing"
+          ]
+        },
+        "attempted_routes": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "route_evidence": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/routeEvidence"}
+        },
+        "selected_route": {"type": ["string", "null"]},
+        "standing": {"$ref": "#/$defs/standing"},
+        "reason": {"type": ["string", "null"]}
+      }
+    },
+    "routeEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["route", "outcome", "reason"],
+      "properties": {
+        "route": {"type": "string", "minLength": 1},
+        "outcome": {
+          "enum": [
+            "SUCCESS",
+            "FAILED",
+            "BUILD_BROKEN",
+            "BLOCKED",
+            "UNSUPPORTED",
+            "REFUSED"
+          ]
+        },
+        "reason": {"type": ["string", "null"]}
+      }
+    },
+    "actuationIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_identity",
+        "route",
+        "action",
+        "payload",
+        "replay_of"
+      ],
+      "properties": {
+        "task_identity": {"$ref": "#/$defs/digest"},
+        "route": {"type": "string", "minLength": 1},
+        "action": {"type": "string", "minLength": 1},
+        "payload": {"type": "object"},
+        "replay_of": {
+          "anyOf": [{"$ref": "#/$defs/digest"}, {"type": "null"}]
+        }
+      }
+    },
     "brokerReceipt": {
       "type": "object",
       "additionalProperties": false,
       "required": [
         "receipt_id",
         "intent_id",
+        "intent",
         "standing",
         "consequence",
         "reason"
@@ -60,6 +166,7 @@
       "properties": {
         "receipt_id": {"$ref": "#/$defs/digest"},
         "intent_id": {"$ref": "#/$defs/digest"},
+        "intent": {"$ref": "#/$defs/actuationIntent"},
         "standing": {"$ref": "#/$defs/standing"},
         "consequence": {"type": "object"},
         "reason": {"type": ["string", "null"]}

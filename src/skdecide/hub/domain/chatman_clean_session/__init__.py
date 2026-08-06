@@ -17,6 +17,8 @@ from .model import (
     SessionState,
     Stage,
     TaskEnvelope,
+    canonical_json,
+    digest,
     validate_standing,
 )
 
@@ -38,6 +40,8 @@ __all__ = [
     "SessionState",
     "Stage",
     "TaskEnvelope",
+    "canonical_json",
+    "digest",
     "execute_actions",
     "replay_execution",
     "validate_standing",

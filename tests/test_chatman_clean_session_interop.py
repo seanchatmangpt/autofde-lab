@@ -3,16 +3,20 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 
+import pytest
+
 from skdecide.hub.domain.chatman_clean_session import (
     ActionKind,
     ActuationIntent,
     BrokerReceipt,
     ChatmanCleanSessionDomain,
+    ExecutionReceipt,
     RouteOutcome,
     RouteSpec,
     SessionAction,
     Stage,
     TaskEnvelope,
+    digest,
     execute_actions,
     replay_execution,
 )
@@ -182,8 +186,14 @@ def test_interop_documents_are_json_serializable() -> None:
 
     assert json.loads(json.dumps(task_document)) == task_document
     assert json.loads(json.dumps(receipt_document)) == receipt_document
-    assert receipt_document["broker_receipts"][0]["intent_id"]
+    broker_document = receipt_document["broker_receipts"][0]
+    assert digest(receipt_document["task"]) == receipt_document["task_identity"]
+    assert digest(receipt_document["state"]) == receipt_document["state_digest"]
+    assert digest(broker_document["intent"]) == broker_document["intent_id"]
+    assert receipt_document["state"]["selected_route"] == "exact_sha_sparse_tree"
+    assert receipt_document["state"]["route_evidence"]
     assert any(action["lane"] == "DO" for action in receipt_document["actions"])
+    assert ExecutionReceipt.from_mapping(receipt_document).to_dict() == receipt_document
 
 
 @dataclass
@@ -224,3 +234,27 @@ def test_broker_exception_is_typed_and_receipted() -> None:
     assert receipt.standing == "PARTIAL_ALIVE"
     assert receipt.broker_receipts[0].reason == "BROKER_TIMEOUT"
     assert receipt.broker_receipts[0].consequence["exception_type"] == "TimeoutError"
+
+
+def test_tampered_execution_state_is_refused() -> None:
+    domain = make_domain()
+    receipt = execute_actions(
+        domain, domain.canonical_completion_plan(), RecordingBroker()
+    )
+    document = receipt.to_dict()
+    document["state"]["standing"] = "BLOCKED"
+
+    with pytest.raises(ValueError, match="state document"):
+        ExecutionReceipt.from_mapping(document)
+
+
+def test_tampered_broker_intent_is_refused() -> None:
+    domain = make_domain()
+    receipt = execute_actions(
+        domain, domain.canonical_completion_plan(), RecordingBroker()
+    )
+    document = receipt.to_dict()
+    document["broker_receipts"][0]["intent"]["route"] = "forged_route"
+
+    with pytest.raises(ValueError, match="intent document"):
+        ExecutionReceipt.from_mapping(document)
