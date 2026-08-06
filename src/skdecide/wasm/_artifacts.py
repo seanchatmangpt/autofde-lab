@@ -78,7 +78,7 @@ _ARTIFACTS = {
     'mu-truex': PackagedArtifact(component='mu-truex', filename='mu-truex.wasm', sha256='517cbd247e1055965ec029729abbf88c14822df31bbbde68332c76299dc9ae20', size=5743),
     'powl': PackagedArtifact(component='powl', filename='powl.wasm', sha256='22439bdfecf98554c3a5b3951e581895e7c6cbfad85e0d0e77e2b24dca7e61a8', size=5902),
     'star-toml': PackagedArtifact(component='star-toml', filename='star-toml.wasm', sha256='13d8b03835009efc433c0d833c4cd1d3e950a33775b9d8f358c09b6e1ef16109', size=5747),
-    'wasm4pm': PackagedArtifact(component='wasm4pm', filename='wasm4pm.wasm', sha256='3d3d0d2d16c4e9be0d9e8fbdf798a9e9c86480f18e8cf324e06cfdac5a3291ed', size=6037),
+    'wasm4pm': PackagedArtifact(component='wasm4pm', filename='wasm4pm.wasm', sha256='bbdf1da87b28e4fb8953a5defe87e7cfa466d64e601b4bae2b37b3c72e8e7a09', size=6037),
     'wasm4pm-compat': PackagedArtifact(component='wasm4pm-compat', filename='wasm4pm-compat.wasm', sha256='c494687886e1bd5b761d8096848b986315165851ecd6e67078f354247bf485f5', size=6154),
 }
 ARTIFACTS: Mapping[str, PackagedArtifact] = MappingProxyType(_ARTIFACTS)
