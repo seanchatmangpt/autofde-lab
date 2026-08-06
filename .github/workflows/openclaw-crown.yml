@@ -24,11 +24,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      OPENCLAW_STATE_DIR: ${{ runner.temp }}/openclaw-state
-      OPENCLAW_CONFIG_PATH: ${{ runner.temp }}/openclaw-state/openclaw.json
+      OPENCLAW_STATE_DIR: ${{ github.workspace }}/.openclaw-ci/state
+      OPENCLAW_CONFIG_PATH: ${{ github.workspace }}/.openclaw-ci/state/openclaw.json
       OPENCLAW_TEST_FAST: "1"
       PYTHONPATH: ${{ github.workspace }}/src
-      OPENCLAW_NATIVE_TOOL_RECEIPT: ${{ runner.temp }}/openclaw-native-tool.json
+      OPENCLAW_NATIVE_TOOL_RECEIPT: ${{ github.workspace }}/.openclaw-ci/native-tool.json
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
