@@ -32,6 +32,14 @@ rendering or POWL planning ran when it did not.
 Unknown operations return the typed standing `REFUSED` rather than collapsing
 unsupported semantics into success.
 
+### ERRC standing invariant
+
+`BLOCKED` is not an admissible ERRC standing. It cannot be returned by a guest,
+recorded as a successful checkpoint, or used to defer unfinished manufacture.
+A denied or unavailable authority is `REFUSED`. A failed manufacture or rebuild
+is `BUILD_BROKEN`. Verified execution is `ALIVE`. Any guest response containing
+`BLOCKED` is rejected as an ABI violation.
+
 ## Materialization and replay
 
 ```bash
@@ -46,4 +54,5 @@ verifies their SHA-256 identities, executes every module, and records sixteen
 The core ABI exports `memory`, `chatman_alloc`, `chatman_invoke`, and
 `chatman_dealloc`. Modules have zero imports and a fixed three-page memory
 maximum. The host rejects artifact drift, missing exports, ambient imports,
-invalid response lengths, malformed JSON, and receipt identity mismatch.
+invalid response lengths, malformed JSON, receipt identity mismatch, and any
+attempt to return the non-standing `BLOCKED`.
