@@ -34,6 +34,36 @@ jobs:
           set -euo pipefail
           uv run --no-project --with rdflib python docs/papers/bootstrap_papers_ttl.py
 
+      - name: Migrate executable validation to current ggen gate contract
+        run: |
+          set -euo pipefail
+          cat > docs/papers/queries/gate-required-fields.rq <<'RQ'
+          # MESSAGE: ForwardBench benchmark is missing a required executable field
+          PREFIX afb: <https://github.com/seanchatmangpt/autofde-lab/ns/forwardbench#>
+          PREFIX dct: <http://purl.org/dc/terms/>
+          SELECT ?b WHERE {
+            ?b a afb:Benchmark .
+            FILTER(
+              NOT EXISTS { ?b afb:slug ?slug } ||
+              NOT EXISTS { ?b dct:title ?title } ||
+              NOT EXISTS { ?b afb:adapterFamily ?adapter } ||
+              NOT EXISTS { ?b afb:sourceStanding ?standing } ||
+              NOT EXISTS { ?b afb:localSafe ?local_safe } ||
+              NOT EXISTS { ?b afb:requiresAuthority ?authority }
+            )
+          }
+          ORDER BY ?b
+          RQ
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('docs/papers/ggen.toml')
+          s=p.read_text()
+          old='[validation]\nshacl = ["ontology/papers-shapes.ttl"]\nstrict_mode = true'
+          new='[validation]\ngates = ["queries/gate-required-fields.rq"]\nstrict_mode = true'
+          assert old in s
+          p.write_text(s.replace(old,new))
+          PY
+
       - name: Install pinned ggen v26.8.6
         run: |
           set -euo pipefail
