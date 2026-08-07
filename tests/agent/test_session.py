@@ -5,6 +5,12 @@
 """Chicago-style tests for :class:`skdecide.agent.session.AgentSession`.
 
 Real ``Maze`` domain, real ``rollout``, real POWL executor. Nothing mocked.
+
+**Ownership.** Ledger properties belong to ``test_ledger.py``; this file asserts
+them only where the *session* is the thing that must honour them (the occurrence
+count and context split after a real two-epoch run, and the "no intent was
+written" claim on a pre-intent refusal). It does not re-prove the two-phase
+protocol itself.
 """
 
 from __future__ import annotations
@@ -54,7 +60,7 @@ def _session(actions: list[Any], **kwargs: Any) -> AgentSession:
     return AgentSession(Maze(), ScriptedPolicy(actions), **kwargs)
 
 
-# ── the session advances across two epochs ─────────────────────────────────
+# ── the session advances across epochs ─────────────────────────────────────
 
 
 def test_session_advances_across_two_epochs():
@@ -94,10 +100,13 @@ def test_a_partially_traversed_epoch_is_partial_alive_not_alive():
     assert session.outcome().standing is EpochStanding.PARTIAL_ALIVE
 
 
-# ── the bound digest must change the outcome digest ────────────────────────
+# ── the receipt digest ─────────────────────────────────────────────────────
 
 
-def test_bound_digest_changes_the_outcome_digest():
+def test_the_receipt_digest_is_reproducible_and_covers_the_bound():
+    """Collapses two former items. Reproducibility without bound-sensitivity is
+    a constant function and bound-sensitivity without reproducibility is noise,
+    so the two halves are asserted against the same fixed ``session_id``."""
     def run(bound: ExecutionBound):
         session = _session(
             [Action.up, Action.right], bound=bound, session_id="fixed-session"
@@ -106,60 +115,49 @@ def test_bound_digest_changes_the_outcome_digest():
         session.advance(max_steps=2)
         return session.outcome()
 
-    default = run(ExecutionBound())
+    default, again = run(ExecutionBound()), run(ExecutionBound())
     tighter = run(ExecutionBound(max_activity_fires=4))
 
+    assert default.receipt_sha256 == again.receipt_sha256, "the digest is not reproducible"
     assert default.epochs[0].trace == tighter.epochs[0].trace  # same observed run
     assert default.input_sha256 != tighter.input_sha256
     assert default.receipt_sha256 != tighter.receipt_sha256
 
 
-def test_same_bound_and_session_id_reproduce_the_same_digest():
-    def run():
-        session = _session(
-            [Action.up, Action.right],
-            bound=ExecutionBound(),
-            session_id="fixed-session",
-        )
-        session.open_epoch(_unordered("up", "right"))
-        session.advance(max_steps=2)
-        return session.outcome()
-
-    assert run().receipt_sha256 == run().receipt_sha256
-
-
 # ── ACTION_NODE_UNRESOLVED ─────────────────────────────────────────────────
 
 
-def test_action_node_unresolved_when_no_enabled_node_matches():
-    session = _session([Action.left])  # model offers only "up"/"right"
-    session.open_epoch(_unordered("up", "right"))
-    receipt = session.advance(max_steps=1)
+def test_action_node_is_never_guessed_when_resolution_is_not_injective():
+    """Collapses three former items. The refusal has two triggers -- no enabled
+    node matches, and two enabled nodes share a label -- plus the direct
+    ``resolve_enabled_node`` call that shows the refusal names the ambiguous set
+    rather than silently picking one. All three are still executed here; the
+    third is what makes the first two more than "it declined to act".
+    """
+    from skdecide.agent.bridge import resolve_enabled_node
 
+    # (a) the policy offers an action the model does not contain
+    no_match = _session([Action.left])  # model offers only "up"/"right"
+    no_match.open_epoch(_unordered("up", "right"))
+    receipt = no_match.advance(max_steps=1)
     assert receipt.standing is EpochStanding.BLOCKED
     assert receipt.blocked_reason == BLOCKED_ACTION_NODE_UNRESOLVED
     assert receipt.steps == 0
     # The refusal fired *before* any intent was written, so nothing is dangling.
-    assert session.ledger.is_resumable() is True
-    assert session.outcome().standing is EpochStanding.BLOCKED
+    assert no_match.ledger.is_resumable() is True
+    assert no_match.outcome().standing is EpochStanding.BLOCKED
 
-
-def test_action_node_unresolved_when_two_enabled_nodes_share_a_label():
-    """Action -> node is not injective here, and that is refused, never guessed."""
-    session = _session([Action.up])
-    session.open_epoch(_unordered("up", "up"))  # two identically-labelled atoms
-
-    receipt = session.advance(max_steps=1)
+    # (b) two identically-labelled atoms: action -> node is not injective
+    ambiguous = _session([Action.up])
+    ambiguous.open_epoch(_unordered("up", "up"))
+    receipt = ambiguous.advance(max_steps=1)
     assert receipt.standing is EpochStanding.BLOCKED
     assert receipt.blocked_reason == BLOCKED_ACTION_NODE_UNRESOLVED
     assert receipt.steps == 0
 
-
-def test_resolution_refusal_names_the_enabled_set_it_could_not_disambiguate():
-    from skdecide.agent.bridge import resolve_enabled_node
-
-    session = _session([])
-    epoch = session.open_epoch(_unordered("up", "up"))
+    # (c) and the underlying refusal names the set it could not disambiguate
+    direct = _session([])
+    epoch = direct.open_epoch(_unordered("up", "up"))
     with pytest.raises(AgentRefusal) as excinfo:
         resolve_enabled_node(epoch, Action.up)
     assert excinfo.value.code is AgentRefusalCode.ACTION_NODE_UNRESOLVED
@@ -169,7 +167,10 @@ def test_resolution_refusal_names_the_enabled_set_it_could_not_disambiguate():
 # ── replan / supersede ─────────────────────────────────────────────────────
 
 
-def test_replan_supersedes_the_previous_epoch_and_keeps_it_in_the_stack():
+def test_replan_is_append_only_and_may_not_drop_a_preserved_activity():
+    """Collapses two former items — the successful replan and the refused one
+    are the two outcomes of one gate, and the success is only meaningful given
+    that the gate can refuse."""
     session = _session([Action.up, Action.right, Action.down])
     first = session.open_epoch(_unordered("up", "right"))
     session.advance(max_steps=1)
@@ -180,34 +181,36 @@ def test_replan_supersedes_the_previous_epoch_and_keeps_it_in_the_stack():
     assert session.epochs[0].epoch_id == first.epoch_id
     assert session.epochs[0].standing is EpochStanding.SUPERSEDED
 
-
-def test_replan_that_drops_a_preserved_activity_is_refused():
-    session = _session([Action.up])
-    session.open_epoch(_unordered("up", "right"))
+    dropping = _session([Action.up])
+    dropping.open_epoch(_unordered("up", "right"))
     with pytest.raises(AgentRefusal) as excinfo:
-        session.replan(_unordered("down", "left"), preserves=("right",))
+        dropping.replan(_unordered("down", "left"), preserves=("right",))
     assert excinfo.value.code is AgentRefusalCode.PRESERVATION_VIOLATED
     assert excinfo.value.details["missing"] == ["right"]
 
 
-def test_advance_without_an_open_epoch_is_refused():
-    session = _session([Action.up])
+def test_the_session_refuses_calls_that_name_no_epoch_or_a_foreign_one():
+    """Collapses two former items — both are the same law (a session may only
+    act on epochs it opened), asserted at the two entry points that can break
+    it."""
+    no_epoch = _session([Action.up])
     with pytest.raises(AgentRefusal) as excinfo:
-        session.advance(max_steps=1)
+        no_epoch.advance(max_steps=1)
     assert excinfo.value.code is AgentRefusalCode.NO_OPEN_EPOCH
 
-
-def test_supersedes_an_epoch_this_session_never_opened_is_refused():
-    session = _session([])
+    foreign = _session([])
     with pytest.raises(AgentRefusal) as excinfo:
-        session.open_epoch(_unordered("up", "right"), supersedes=("not-an-epoch",))
+        foreign.open_epoch(_unordered("up", "right"), supersedes=("not-an-epoch",))
     assert excinfo.value.code is AgentRefusalCode.UNKNOWN_SUPERSEDED_EPOCH
 
 
 # ── envelope shape ─────────────────────────────────────────────────────────
 
 
-def test_outcome_carries_the_claim_ceiling_and_is_json_shaped():
+def test_outcome_carries_the_claim_ceiling_is_json_shaped_and_is_seeded():
+    """Collapses two former items — the envelope's contents and its determinism
+    source. The seeding claim is part of what makes the envelope reproducible,
+    so it is asserted alongside rather than in isolation."""
     from skdecide.agent.refusals import CLAIM_CEILING
     from skdecide.fabric.canonical import canonical_json
 
@@ -222,8 +225,6 @@ def test_outcome_carries_the_claim_ceiling_and_is_json_shaped():
     assert outcome.epochs[0].evidence is not None
     assert len(outcome.epochs[0].evidence.steps) == 2
 
-
-def test_session_random_is_seeded_from_session_id():
     a = _session([], session_id="seed-a")
     b = _session([], session_id="seed-a")
     c = _session([], session_id="seed-b")
@@ -231,7 +232,7 @@ def test_session_random_is_seeded_from_session_id():
     assert a.random.random() != c.random.random()
 
 
-def test_a_superseded_epoch_enables_nothing():
+def test_a_superseded_epoch_enables_nothing_and_that_is_a_gate_not_a_mutation():
     """Containment must be structural, not a property of one call site.
 
     Every ``AgentSession`` mutator addresses ``_epochs[-1]``, so today no session
@@ -239,6 +240,11 @@ def test_a_superseded_epoch_enables_nothing():
     A caller holding a direct reference to the old epoch — the plan's own
     falsifier list names "superseded POWL0 still enabling activities" — must not
     be handed a live step set for a plan that has been replaced.
+
+    Collapses two former items: restoring the standing revives the same enabled
+    set from the same object, which pins that the containment is a standing gate
+    and not a destructive mutation of the marking. Asserting the containment
+    without that second half would not distinguish the two.
     """
     session = _session([Action.up, Action.right, Action.down])
     old = session.open_epoch(_unordered("up", "right"))
@@ -255,17 +261,7 @@ def test_a_superseded_epoch_enables_nothing():
     # the new epoch is unaffected
     assert session.epochs[-1].enabled()
 
-
-def test_only_standing_closes_an_epoch_the_model_is_untouched():
-    """The refusal is about standing, not about the plan: restore the standing
-    and the same epoch object enables the same set again. This pins that the
-    containment is a gate, not a mutation of the marking."""
-    session = _session([Action.up, Action.right, Action.down])
-    session.open_epoch(_unordered("up", "right"))
-    session.replan(_unordered("right", "down"), preserves=("right",))
-
-    superseded = session.epochs[0]
-    assert superseded.enabled() == frozenset()
+    # the model itself is untouched: restore the standing, get the same set back
     revived = superseded.with_standing(EpochStanding.UNKNOWN)
     assert sorted(revived.enabled()) == [(0,), (1,)]
     assert revived.marking == superseded.marking

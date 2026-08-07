@@ -58,9 +58,13 @@ def _sink():
 
 
 def test_a_committed_record_becomes_one_qualified_event():
-    log = _sink().absorb(_ledger_with()).validated()
+    ledger = _ledger_with()
+    (committed,) = ledger.committed()
+    log = _sink().absorb(ledger).validated()
     assert [e.id for e in log.events]
     (event,) = log.events
+    # the event id IS the token id -- the projection invents no identity
+    assert event.id == committed.token_id
     assert event.activity == "Draft"
     links = [l for l in log.event_object_links if l.event_id == event.id]
     assert links == [EventObjectLink(event.id, "case-1", "belongs_to")]
@@ -70,13 +74,6 @@ def test_a_committed_record_becomes_one_qualified_event():
     assert carried["contextDigest"] == "ctx-a"
     assert carried["occurrenceIndex"] == 0
     assert carried["phase"] == LifecyclePhase.COMMITTED.value
-
-
-def test_the_event_id_is_the_token_id():
-    ledger = _ledger_with()
-    (committed,) = ledger.committed()
-    (event,) = _sink().absorb(ledger).log.events
-    assert event.id == committed.token_id
 
 
 def test_every_lifecycle_phase_is_recordable():
@@ -102,15 +99,11 @@ def test_every_lifecycle_phase_is_recordable():
 
 
 def test_committed_record_with_zero_objects_is_REFUSED_not_repaired():
-    with pytest.raises(OcelSinkError) as excinfo:
-        _sink().absorb(_ledger_with(objects=()))
-    assert excinfo.value.refusal is SinkRefusal.COMMITTED_RECORD_HAS_NO_OBJECTS
-
-
-def test_the_sink_did_not_invent_an_object_to_get_past_validate():
     sink = _sink()
-    with pytest.raises(OcelSinkError):
+    with pytest.raises(OcelSinkError) as excinfo:
         sink.absorb(_ledger_with(objects=()))
+    assert excinfo.value.refusal is SinkRefusal.COMMITTED_RECORD_HAS_NO_OBJECTS
+    # and it did not invent a placeholder object to get past validate()
     assert sink.log.objects == ()
     assert sink.log.events == ()
 
