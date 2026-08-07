@@ -109,10 +109,15 @@ jobs:
 
           python - <<'PY'
           from pathlib import Path
-          p=Path('docs/papers/ggen.toml')
-          s=p.read_text()
-          s=s.replace('[validation]\nshacl = ["ontology/papers-shapes.ttl"]\nstrict_mode = true','[validation]\ngates = ["queries/gate-required-fields.rq"]\nstrict_mode = true')
-          p.write_text(s)
+          cfg=Path('docs/papers/ggen.toml')
+          s=cfg.read_text().replace('[validation]\nshacl = ["ontology/papers-shapes.ttl"]\nstrict_mode = true','[validation]\ngates = ["queries/gate-required-fields.rq"]\nstrict_mode = true')
+          cfg.write_text(s)
+          defaults={'pinned_revision':'','resolution_standing':'UNRESOLVED','smoke_standing':'NOT_RUN','vendor_slug':'','repo':'','path':'','sha256':''}
+          for path in Path('docs/papers/templates').glob('*.tera'):
+              text=path.read_text()
+              for key,value in defaults.items():
+                  text=text.replace(f'row.{key}',f'row["{key}"] | default(value="{value}")')
+              path.write_text(text)
           PY
 
       - name: Install pinned ggen v26.8.6
