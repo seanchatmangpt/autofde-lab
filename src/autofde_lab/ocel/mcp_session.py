@@ -39,7 +39,9 @@ def append_tool_call_event(
     of the following optional keys are carried through as typed OCEL
     attributes when present: ``elapsed_s`` (float), ``steps``/``steps_taken``
     (int), ``receipt_sha256`` (str), ``detail``/``error`` (str, truncated to
-    500 chars), and any other numeric ``*_count`` key.
+    500 chars), any other numeric ``*_count`` key, and ``compatible_solvers``
+    (list[str], recorded as an OCEL list attribute -- see
+    :mod:`autofde_lab.ocel.decision_mining`).
 
     Does not call :meth:`OcelLog.validate` -- the caller decides when to
     validate (typically once, after the whole session is logged), matching
@@ -63,6 +65,10 @@ def append_tool_call_event(
     for key, value in outcome.items():
         if key.endswith("_count") and isinstance(value, int):
             attrs[key] = OcelAttributeValue.integer(value)
+    if isinstance(outcome.get("compatible_solvers"), (list, tuple)):
+        attrs["compatible_solvers"] = OcelAttributeValue.listing(
+            OcelAttributeValue.string(str(s)) for s in outcome["compatible_solvers"]
+        )
 
     return log.append_event(
         event_id,

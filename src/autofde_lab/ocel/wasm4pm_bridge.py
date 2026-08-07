@@ -22,6 +22,23 @@ van der Aalst 2016) and reports per-case fitness and named deviations. Both
 commands were stub ``anyhow::bail!``s before this session's fix to
 ``crates/wasm4pm-cli/src/commands/mining.rs``.
 
+``wpm mining drift`` detects concept drift (windowed Jaccard + total-variation
+distance over consecutive trace windows, Bose/van der Aalst/Žliobaitė/
+Pechenizkiy 2011/2014); ``wpm mining predict-duration`` predicts remaining
+case duration from a bucketed mean-remaining-time estimator. Both reuse
+``wasm4pm``'s tested distance/windowing primitives directly rather than going
+through ``wasm4pm::prediction_drift::detect_drift`` /
+``wasm4pm::prediction_remaining_time::{build_remaining_time_model,
+predict_case_duration}`` themselves: those functions are
+``#[wasm_bindgen]``-only (their success value is a ``JsValue``-wrapped JSON
+string, unreadable natively via ``JsValue::as_string()`` -- confirmed by
+running them off wasm32 this session, not assumed) so the CLI computes the
+same tested math directly instead (see ``mining.rs``'s ``Drift``/
+``PredictDuration`` command docs). ``predict-duration``'s estimator is
+deliberately simpler than ``wasm4pm``'s full bucketed+Weibull
+``RemainingTimeModel`` (bucket-mean only, no survival model) -- named here so
+the difference isn't silently claimed as equivalent.
+
 Like :mod:`autofde_lab.ocel.powl_replay`, this module only *computes and
 reports* -- it never actuates, admits, or issues a receipt implying anything
 was authorized. A conformance report is evidence about a log, nothing more.
@@ -51,10 +68,14 @@ __all__ = [
     "TraceDeviation",
     "DiscoveryResult",
     "ConformanceReport",
+    "DriftPoint",
+    "PredictionResult",
     "resolve_wpm_binary",
     "session_traces_to_wasm4pm_json",
     "discover_petri_net",
     "check_conformance",
+    "detect_drift",
+    "predict_remaining_duration",
 ]
 
 ACTIVITY_KEY = "concept:name"
@@ -100,6 +121,24 @@ class ConformanceReport:
     (the 4th, simplicity, is a property of the discovered model alone -- see
     :attr:`DiscoveryResult.simplicity`, not this report). ``None`` only if an older
     ``wpm`` build (pre-generalization-wiring) is in use and the table row is absent.
+    """
+
+
+@dataclass(frozen=True)
+class DriftPoint:
+    position: int
+    jaccard_distance: float
+    tv_distance: float
+    method: str
+    """``"jaccard"``, ``"tv"``, or ``"both"`` -- which signal(s) crossed the threshold."""
+
+
+@dataclass(frozen=True)
+class PredictionResult:
+    remaining_ms: float
+    method: str
+    """``"bucket(activity,prefix_len)"``, ``"activity_avg(activity)"``, or
+    ``"global_fallback"`` -- which estimator tier produced the prediction.
     """
 
 
@@ -214,6 +253,74 @@ async def discover_petri_net(
         simplicity=float(metrics["Simplicity"]),
         self_fitness=float(metrics["Fitness (self)"]),
         model_path=Path(output_path),
+    )
+
+
+_DRIFT_ROW = re.compile(
+    r"^(?P<position>\d+)\s{2,}(?P<jaccard>[\d.]+)\s{2,}(?P<tv>[\d.]+)\s{2,}(?P<method>\S+)\s*$",
+    re.MULTILINE,
+)
+
+
+async def detect_drift(
+    log_json_path: str | Path,
+    *,
+    activity_key: str = ACTIVITY_KEY,
+    window_size: int = 5,
+    wpm_binary: str | None = None,
+    timeout_s: float = 60.0,
+) -> list[DriftPoint]:
+    """Run ``wpm mining drift`` for real. See module docstring for why this
+    doesn't call ``wasm4pm::prediction_drift::detect_drift`` directly."""
+    binary = wpm_binary or resolve_wpm_binary()
+    outcome = await run_subprocess_bounded(
+        [binary, "mining", "drift", str(log_json_path),
+         "-k", activity_key, "--window-size", str(window_size)],
+        timeout_s=timeout_s,
+    )
+    if outcome.standing != "SOLVED":
+        raise RuntimeError(
+            f"wpm mining drift failed (standing={outcome.standing}): {outcome.stderr}"
+        )
+    points: list[DriftPoint] = []
+    for row in _DRIFT_ROW.finditer(outcome.stdout):
+        points.append(
+            DriftPoint(
+                position=int(row.group("position")),
+                jaccard_distance=float(row.group("jaccard")),
+                tv_distance=float(row.group("tv")),
+                method=row.group("method"),
+            )
+        )
+    return points
+
+
+async def predict_remaining_duration(
+    log_json_path: str | Path,
+    *,
+    prefix: list[str],
+    activity_key: str = ACTIVITY_KEY,
+    timestamp_key: str = "time:timestamp",
+    wpm_binary: str | None = None,
+    timeout_s: float = 60.0,
+) -> PredictionResult:
+    """Run ``wpm mining predict-duration`` for real. See module docstring for
+    why this doesn't call ``wasm4pm::prediction_remaining_time`` directly."""
+    binary = wpm_binary or resolve_wpm_binary()
+    outcome = await run_subprocess_bounded(
+        [binary, "mining", "predict-duration", str(log_json_path),
+         "--prefix", ",".join(prefix), "-k", activity_key,
+         "--timestamp-key", timestamp_key],
+        timeout_s=timeout_s,
+    )
+    if outcome.standing != "SOLVED":
+        raise RuntimeError(
+            f"wpm mining predict-duration failed (standing={outcome.standing}): {outcome.stderr}"
+        )
+    metrics = _parse_table(outcome.stdout)
+    return PredictionResult(
+        remaining_ms=float(metrics["Remaining (ms)"]),
+        method=metrics["Method"],
     )
 
 

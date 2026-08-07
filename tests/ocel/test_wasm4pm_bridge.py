@@ -24,7 +24,10 @@ from autofde_lab.ocel.wasm4pm_bridge import (
     DiscoveryResult,
     Wasm4pmUnavailable,
     _parse_table,
+    _string_attr,
+    detect_drift,
     discover_and_check,
+    predict_remaining_duration,
     resolve_wpm_binary,
     session_traces_to_wasm4pm_json,
 )
@@ -149,3 +152,66 @@ def test_real_conformance_against_mcp_user_simulation_log(tmp_path):
     assert 0.0 <= conformance.precision <= 1.0
     assert conformance.generalization is not None
     assert 0.0 <= conformance.generalization <= 1.0
+
+
+def _write_event_log_json(path, traces: list[list[tuple[str, int]]]) -> None:
+    doc = {
+        "attributes": [],
+        "traces": [
+            {
+                "attributes": [],
+                "events": [
+                    {
+                        "attributes": [
+                            _string_attr("concept:name", name),
+                            {
+                                "key": "time:timestamp",
+                                "value": {"type": "Int", "content": ts},
+                                "own_attributes": None,
+                            },
+                        ]
+                    }
+                    for name, ts in trace
+                ],
+            }
+            for trace in traces
+        ],
+        "extensions": None,
+        "classifiers": None,
+        "global_trace_attrs": None,
+        "global_event_attrs": None,
+    }
+    path.write_text(json.dumps(doc))
+
+
+def test_real_drift_detects_vocabulary_shift(tmp_path):
+    _require_wpm()
+    log_path = tmp_path / "drift_log.json"
+    traces = [[("X", 0), ("Y", 1), ("Z", 2)] for _ in range(4)]
+    traces += [[("P", 0), ("Q", 1), ("R", 2)] for _ in range(4)]
+    _write_event_log_json(log_path, traces)
+
+    points = asyncio.run(detect_drift(log_path, window_size=1, timeout_s=30))
+
+    assert len(points) == 1
+    assert points[0].position == 4
+    assert points[0].jaccard_distance == pytest.approx(1.0)
+    assert points[0].tv_distance == pytest.approx(1.0)
+    assert points[0].method == "both"
+
+
+def test_real_predict_remaining_duration_bucket_estimate(tmp_path):
+    _require_wpm()
+    log_path = tmp_path / "duration_log.json"
+    traces = [
+        [("A", i * 100_000), ("B", i * 100_000 + 1_000), ("C", i * 100_000 + 3_000)]
+        for i in range(6)
+    ]
+    _write_event_log_json(log_path, traces)
+
+    prediction = asyncio.run(
+        predict_remaining_duration(log_path, prefix=["A", "B"], timeout_s=30)
+    )
+
+    assert prediction.remaining_ms == pytest.approx(2000.0)
+    assert prediction.method == "bucket(B,2)"
