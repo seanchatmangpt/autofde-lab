@@ -21,10 +21,31 @@ from autofde_lab.fabric.canonical import sha256
 from autofde_lab.fabric.models import DecisionResult
 from autofde_lab.powl.identity import OccurrenceKey
 
-__all__ = ["EpochStanding", "EpochReceipt", "AgentOutcome"]
+__all__ = [
+    "EpochStanding",
+    "EpochReceipt",
+    "AgentOutcome",
+    "EPOCH_RECEIPT_SCHEMA",
+    "AGENT_OUTCOME_SCHEMA",
+    "LEGACY_EPOCH_RECEIPT_SCHEMA",
+    "LEGACY_AGENT_OUTCOME_SCHEMA",
+    "ACCEPTED_EPOCH_RECEIPT_SCHEMAS",
+    "ACCEPTED_AGENT_OUTCOME_SCHEMAS",
+]
 
-EPOCH_RECEIPT_SCHEMA = "skdecide.agent.epoch_receipt/1"
-AGENT_OUTCOME_SCHEMA = "skdecide.agent.outcome/1"
+# Re-exported from autofde_lab.schema_ids, which owns the dual-read/
+# single-write contract for every persisted identifier. Writers below emit
+# only the current `/2` identifiers; readers must go through
+# ACCEPTED_*_SCHEMAS so receipts written by a pre-rename build stay
+# readable. Do not inline a literal here.
+from autofde_lab.schema_ids import (  # noqa: E402
+    ACCEPTED_AGENT_OUTCOME_SCHEMAS,
+    ACCEPTED_EPOCH_RECEIPT_SCHEMAS,
+    AGENT_OUTCOME_SCHEMA,
+    EPOCH_RECEIPT_SCHEMA,
+    LEGACY_AGENT_OUTCOME_SCHEMA,
+    LEGACY_EPOCH_RECEIPT_SCHEMA,
+)
 
 
 class EpochStanding(StrEnum):

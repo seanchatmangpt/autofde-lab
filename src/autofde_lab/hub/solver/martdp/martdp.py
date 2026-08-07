@@ -27,7 +27,7 @@ from autofde_lab.builders.solver import DeterministicPolicies, FromAnyState, Uti
 from autofde_lab.core import Value
 
 try:
-    from autofde_lab.hub.__skdecide_hub_cpp import _MARTDPSolver_ as martdp_solver
+    from autofde_lab.hub.__autofde_lab_hub_cpp import _MARTDPSolver_ as martdp_solver
 
     # TODO: remove Markovian req?
     class D(

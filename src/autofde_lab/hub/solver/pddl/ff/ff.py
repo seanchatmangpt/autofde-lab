@@ -21,7 +21,7 @@ from autofde_lab.builders.domain import (
 from autofde_lab.builders.solver import DeterministicPolicies, Utilities
 
 try:
-    from autofde_lab.hub.__skdecide_hub_cpp import _PDDL_FFSolver_ as CppFFSolver
+    from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_FFSolver_ as CppFFSolver
     from autofde_lab.hub.domain.pddl.domain import PDDLAction
 
     class D(

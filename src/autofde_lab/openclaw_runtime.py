@@ -126,8 +126,8 @@ def catalog(arguments: Mapping[str, Any]) -> dict[str, Any]:
     utils = _load_utils()
     result: dict[str, Any] = {}
     for label, group, names in (
-        ("domains", "skdecide.domains", utils.get_registered_domains),
-        ("solvers", "skdecide.solvers", utils.get_registered_solvers),
+        ("domains", "autofde_lab.domains", utils.get_registered_domains),
+        ("solvers", "autofde_lab.solvers", utils.get_registered_solvers),
     ):
         if kind in {"all", label}:
             entries = _entry_points(group)
@@ -339,11 +339,34 @@ def run_bounded(arguments: Mapping[str, Any]) -> dict[str, Any]:
     return {"worker_receipt": payload["receipt"], **payload["result"]}
 
 
+# MCP tool names are an external protocol contract: an OpenClaw plugin, a
+# skill file, or a pinned agent config elsewhere calls them by name, and
+# nothing in this repository can observe those callers. Renaming a tool
+# therefore breaks a caller we cannot see, with an UNKNOWN_TOOL refusal as
+# the only symptom. Both spellings are registered against the SAME handler
+# object -- not a copy, not a wrapper -- so the two names cannot drift into
+# different behaviour. The legacy names are the current contract and are not
+# scheduled for removal here.
+_CANONICAL_HANDLERS: dict[str, Callable[[Mapping[str, Any]], Any]] = {
+    "catalog": catalog,
+    "describe": describe,
+    "match": match_direct,
+    "run": run_bounded,
+}
+
+TOOL_NAME_PREFIX = "autofde_lab_"
+LEGACY_TOOL_NAME_PREFIX = "skdecide_"
+
 HANDLERS: dict[str, Callable[[Mapping[str, Any]], Any]] = {
-    "skdecide_catalog": catalog,
-    "skdecide_describe": describe,
-    "skdecide_match": match_direct,
-    "skdecide_run": run_bounded,
+    prefix + suffix: handler
+    for suffix, handler in _CANONICAL_HANDLERS.items()
+    for prefix in (TOOL_NAME_PREFIX, LEGACY_TOOL_NAME_PREFIX)
+}
+
+#: Legacy -> current tool name, for callers that want to migrate.
+TOOL_NAME_ALIASES: dict[str, str] = {
+    LEGACY_TOOL_NAME_PREFIX + suffix: TOOL_NAME_PREFIX + suffix
+    for suffix in _CANONICAL_HANDLERS
 }
 
 

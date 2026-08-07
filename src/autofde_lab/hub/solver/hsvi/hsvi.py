@@ -24,8 +24,8 @@ from autofde_lab.builders.solver import DeterministicPolicies, FromAnyState, Uti
 from autofde_lab.builders.solver.parallelability import ParallelSolver
 
 try:
-    from autofde_lab.hub.__skdecide_hub_cpp import _GoalHSVISolver_ as goal_hsvi_solver
-    from autofde_lab.hub.__skdecide_hub_cpp import _HSVISolver_ as hsvi_solver
+    from autofde_lab.hub.__autofde_lab_hub_cpp import _GoalHSVISolver_ as goal_hsvi_solver
+    from autofde_lab.hub.__autofde_lab_hub_cpp import _HSVISolver_ as hsvi_solver
 
     class D_reward(
         Domain,

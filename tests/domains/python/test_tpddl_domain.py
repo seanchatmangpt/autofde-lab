@@ -51,7 +51,7 @@ class TestTPDDLDomainConstruction:
         assert vending_ts is not None
 
     def test_has_z3(self):
-        from autofde_lab.hub.__skdecide_hub_cpp import (
+        from autofde_lab.hub.__autofde_lab_hub_cpp import (
             _PDDL_TemporalSimulator_ as CppTemporalSimulator,
         )
 

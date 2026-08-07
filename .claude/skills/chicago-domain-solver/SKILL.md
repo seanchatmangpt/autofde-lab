@@ -41,7 +41,7 @@ behavior.
 5. **If registering a new entry point** (for the domain/solver to be
    reachable through the OpenClaw bridge or fabric CLI — see the
    `openclaw-lawful-call` skill), confirm it appears in
-   `skdecide.domains`/`skdecide.solvers` via `python -m autofde_lab.fabric
+   `autofde_lab.domains`/`autofde_lab.solvers` via `python -m autofde_lab.fabric
    catalog` or `skdecide_catalog`, don't assume registration from the code
    change alone.
 

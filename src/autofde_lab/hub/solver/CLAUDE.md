@@ -26,7 +26,7 @@ A domain factory, solver hyperparameters, optional callbacks, optional heuristic
 
 # Outputs
 
-`Solver` subclasses registered under the `skdecide.solvers` entry-point group; `solve()` /
+`Solver` subclasses registered under the `autofde_lab.solvers` entry-point group; `solve()` /
 `get_next_action()` / `get_utility()` results.
 
 # Invariants
@@ -81,7 +81,7 @@ see `../../fabric/CLAUDE.md`); or that R was admitted or executed.
 # Update obligations
 
 - New or removed solver → `pyproject.toml` entry point **and** regenerate
-  `ontology/skdecide-capabilities.ttl`; `tests/ecosystem/` asserts the ontology's requirement
+  `ontology/autofde-lab-capabilities.ttl`; `tests/ecosystem/` asserts the ontology's requirement
   set equals the live `get_domain_requirements()` derivation.
 - Changed `T_domain` → applicability moved; re-run `fabric/coverage.py`.
 - If ranking is implemented, retract invariant 2 here, in `src/autofde_lab/CLAUDE.md`,

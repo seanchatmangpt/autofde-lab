@@ -26,7 +26,7 @@ Problem files (PDDL/RDDL/UP), Gym environments, scheduling data, constructor par
 
 # Outputs
 
-`Domain` subclasses registered under the `skdecide.domains` entry-point group, reachable via
+`Domain` subclasses registered under the `autofde_lab.domains` entry-point group, reachable via
 `load_registered_domain(name)`.
 
 # Invariants
@@ -76,6 +76,6 @@ measured.
 # Update obligations
 
 - New or removed domain → update `pyproject.toml` entry points **and** regenerate
-  `ontology/skdecide-capabilities.ttl`; `tests/ecosystem/` fails on drift.
+  `ontology/autofde-lab-capabilities.ttl`; `tests/ecosystem/` fails on drift.
 - Changed mixin chain → re-run the coverage report; solver applicability moved.
 - Close the loop in the same change (fixture + test), not a follow-up.

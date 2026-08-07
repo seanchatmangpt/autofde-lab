@@ -29,7 +29,12 @@ from typing import Any, Iterator
 
 from autofde_lab.fabric.canonical import canonical_json
 
-_CACHE_SCHEMA = "autofde_lab.fabric.errc-cache/1"
+# Persisted envelope identifier -- see autofde_lab.schema_ids.
+from autofde_lab.schema_ids import (  # noqa: E402
+    ACCEPTED_CACHE_SCHEMAS,
+    CACHE_SCHEMA as _CACHE_SCHEMA,
+    LEGACY_CACHE_SCHEMAS,
+)
 
 
 class SQLiteERRCCache:

@@ -8,7 +8,7 @@ plans**; nothing here actuates.
 
 - Define domain and solver types by composing builder mixins (`builders/domain/`,
   `builders/solver/`) — one single-inheritance chain per dimension.
-- Own the entry-point registry (`skdecide.domains`, `skdecide.solvers` in `pyproject.toml`)
+- Own the entry-point registry (`autofde_lab.domains`, `autofde_lab.solvers` in `pyproject.toml`)
   and the loaders in `utils.py`.
 - Compute plans, policies, and values; project them (POWL, PDDL plan files, MCP/A2A results).
 
@@ -30,7 +30,7 @@ fabric request models (`fabric/models.py`).
 # Outputs
 
 Plans, policies, values, `Value`/`Distribution` objects; `plan.powl.ttl` documents;
-CLI/MCP/A2A responses; `ontology/skdecide-capabilities.ttl` (generated).
+CLI/MCP/A2A responses; `ontology/autofde-lab-capabilities.ttl` (generated).
 
 # Invariants
 
@@ -76,7 +76,7 @@ from here.
 # Update obligations
 
 - Adding/removing a registered domain or solver → regenerate
-  `ontology/skdecide-capabilities.ttl` (`python -m autofde_lab.fabric.ontology`) or
+  `ontology/autofde-lab-capabilities.ttl` (`python -m autofde_lab.fabric.ontology`) or
   `tests/ecosystem/` fails on drift.
 - Changing a public method's tier → update the concrete overrides, not just the wrapper.
 - If `ranked` is ever implemented, delete invariant 3 here and in

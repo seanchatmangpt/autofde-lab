@@ -42,8 +42,19 @@ __all__ = [
 
 from autofde_lab.core import autocast
 
+# Data-home identity. This names a directory on a user's disk that may hold
+# gigabytes of downloaded weather data, so it is VERSIONED_MIGRATION, not a
+# rename: silently switching the default would leave the old directory
+# stranded and re-download everything into the new one, with the only
+# symptom being a slow first run. The legacy names are kept and honoured.
+AUTOFDE_LAB_DEFAULT_DATAHOME = "~/autofde_lab_data"
+AUTOFDE_LAB_DATAHOME_ENVVARNAME = "AUTOFDE_LAB_DATA"
 SKDECIDE_DEFAULT_DATAHOME = "~/skdecide_data"
 SKDECIDE_DEFAULT_DATAHOME_ENVVARNAME = "SKDECIDE_DATA"
+
+# One warning per process, not per call: get_data_home() is called inside
+# download loops.
+_legacy_datahome_warned = False
 
 logger = logging.getLogger("autofde_lab.utils")
 
@@ -61,27 +72,76 @@ if not len(logger.handlers):
     logger.propagate = False
 
 
+def _resolve_default_data_home() -> str:
+    """Resolve the data directory, honouring the pre-rename location.
+
+    Precedence, most explicit first:
+
+    1. ``AUTOFDE_LAB_DATA`` -- the current environment variable.
+    2. ``SKDECIDE_DATA`` -- the legacy variable, still honoured. A user with
+       it exported has said where their data lives; a rename is not a reason
+       to stop listening.
+    3. ``~/skdecide_data`` **if it already exists** -- an existing directory
+       is evidence of a real prior install with real downloaded data. Using
+       it (with a one-time notice) is what keeps the rename from silently
+       re-downloading gigabytes into a new path.
+    4. ``~/autofde_lab_data`` -- the default for a fresh install.
+
+    Nothing is moved, copied, or deleted. Migration is the user's call; this
+    function only avoids making it for them.
+    """
+    global _legacy_datahome_warned
+
+    explicit = os.environ.get(AUTOFDE_LAB_DATAHOME_ENVVARNAME)
+    if explicit:
+        return explicit
+
+    legacy_env = os.environ.get(SKDECIDE_DEFAULT_DATAHOME_ENVVARNAME)
+    if legacy_env:
+        return legacy_env
+
+    legacy_dir = os.path.expanduser(SKDECIDE_DEFAULT_DATAHOME)
+    if os.path.isdir(legacy_dir):
+        if not _legacy_datahome_warned:
+            _legacy_datahome_warned = True
+            logger.info(
+                "Using the legacy data directory %s. The current default is "
+                "%s. Nothing has been moved -- to migrate, move the directory "
+                "yourself or set %s. This notice appears once per process.",
+                legacy_dir,
+                AUTOFDE_LAB_DEFAULT_DATAHOME,
+                AUTOFDE_LAB_DATAHOME_ENVVARNAME,
+            )
+        return legacy_dir
+
+    return AUTOFDE_LAB_DEFAULT_DATAHOME
+
+
 def get_data_home(data_home: Optional[str] = None) -> str:
     """Return the path of the scikit-decide data directory.
 
     This folder is used by some large dataset loaders to avoid downloading the
     data several times, as for instance the weather data used by the flight planning domain.
-    By default the data dir is set to a folder named 'skdecide_data' in the
-    user home folder.
-    Alternatively, it can be set by the 'SKDECIDE_DATA' environment
-    variable or programmatically by giving an explicit folder path. The '~'
-    symbol is expanded to the user home folder.
-    If the folder does not already exist, it is automatically created.
+    This folder is used by some large dataset loaders to avoid downloading
+    the data several times, as for instance the weather data used by the
+    flight planning domain.
+
+    By default the data dir is a folder named 'autofde_lab_data' in the user
+    home folder -- unless a pre-rename '~/skdecide_data' already exists, in
+    which case that is used instead so an existing install keeps its data.
+    It can also be set by the 'AUTOFDE_LAB_DATA' environment variable, by
+    the legacy 'SKDECIDE_DATA' variable, or programmatically by giving an
+    explicit folder path. See `_resolve_default_data_home` for the exact
+    precedence. The '~' symbol is expanded to the user home folder. If the
+    folder does not already exist, it is automatically created.
 
     Params:
-        data_home : The path to scikit-decide data directory. If `None`, the default path
-        is `~/skdecide_data`.
+        data_home : The path to the data directory. If `None`, the default
+        is resolved as described above.
 
     """
     if data_home is None:
-        data_home = os.environ.get(
-            SKDECIDE_DEFAULT_DATAHOME_ENVVARNAME, SKDECIDE_DEFAULT_DATAHOME
-        )
+        data_home = _resolve_default_data_home()
     data_home = os.path.expanduser(data_home)
     os.makedirs(data_home, exist_ok=True)
     return data_home
@@ -107,19 +167,19 @@ def _load_registered_entry(entry_type: str, entry_name: str) -> Optional[Any]:
 
 
 def get_registered_domains() -> list[str]:
-    return _get_registered_entries("skdecide.domains")
+    return _get_registered_entries("autofde_lab.domains")
 
 
 def get_registered_solvers() -> list[str]:
-    return _get_registered_entries("skdecide.solvers")
+    return _get_registered_entries("autofde_lab.solvers")
 
 
 def load_registered_domain(name: str) -> type[Domain]:
-    return _load_registered_entry("skdecide.domains", name)
+    return _load_registered_entry("autofde_lab.domains", name)
 
 
 def load_registered_solver(name: str) -> type[Solver]:
-    return _load_registered_entry("skdecide.solvers", name)
+    return _load_registered_entry("autofde_lab.solvers", name)
 
 
 # TODO: implement ranking heuristic

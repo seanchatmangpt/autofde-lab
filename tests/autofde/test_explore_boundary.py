@@ -44,9 +44,17 @@ CORE_MODULES = sorted(
 #: Matches ``autofde`` as a whole word only. The namespace is ``autofde_lab``,
 #: which *contains* the substring "autofde", so a substring test would flag
 #: every core import (`autofde_lab.powl.algebra`) as an autofde dependency and
-#: the boundary would be unfalsifiable. ``_`` is a word character, so ``\bautofde\b``
-#: matches the subpackage and never the namespace.
-_AUTOFDE_WORD = re.compile(r"\bautofde\b")
+#: the boundary would be unfalsifiable. ``_`` is a word character, so
+#: ``\bautofde\b`` matches the subpackage and never the underscored namespace.
+#:
+#: The lookahead covers the hyphenated form. ``-`` is NOT a word character, so
+#: a bare ``\bautofde\b`` matches inside the project's display names
+#: (``autofde-lab-fabric``, ``ontology/autofde-lab-capabilities.ttl``) and
+#: reports the project's own name as a dependency on its own leaf subpackage.
+#: That is a false positive on the *spelling*, not a real boundary crossing:
+#: neither string is an import, and the extraction boundary this file defends
+#: is about the ``autofde`` subpackage, not about the word.
+_AUTOFDE_WORD = re.compile(r"\bautofde\b(?![-_]lab\b)")
 
 
 def _names_autofde(dotted: str) -> bool:
@@ -87,6 +95,34 @@ def test_no_core_module_imports_autofde():
         if bad:
             offenders.append(f"{path.relative_to(SRC)} imports {bad}")
     assert not offenders, "core modules import autofde:\n" + "\n".join(offenders)
+
+
+def test_the_autofde_word_pattern_still_detects_a_real_crossing():
+    """Anti-vacuity for the pattern itself, not just the module glob.
+
+    The pattern carries a lookahead exempting the project's own hyphenated
+    display name. A lookahead that over-matched would make
+    ``test_core_modules_do_not_reach_autofde_dynamically`` pass for every
+    possible input -- green, and detecting nothing. These cases pin both
+    directions explicitly.
+    """
+    must_match = [
+        "from autofde_lab.autofde import phases",
+        "importlib.import_module('autofde_lab.autofde.graph')",
+        "getattr(mod, 'autofde')",
+        "path = SRC / 'autofde' / 'graph.py'",
+    ]
+    for line in must_match:
+        assert _AUTOFDE_WORD.search(line), f"pattern missed a real crossing: {line!r}"
+
+    must_not_match = [
+        "from autofde_lab.powl.algebra import Atom",
+        'APP_NAME = "autofde-lab-fabric"',
+        '"ontology/autofde-lab-capabilities.ttl"',
+        "AUTOFDE_LAB_DATAHOME_ENVVARNAME = 'AUTOFDE_LAB_DATA'".lower(),
+    ]
+    for line in must_not_match:
+        assert not _AUTOFDE_WORD.search(line), f"pattern false-positived: {line!r}"
 
 
 def test_core_modules_do_not_reach_autofde_dynamically():

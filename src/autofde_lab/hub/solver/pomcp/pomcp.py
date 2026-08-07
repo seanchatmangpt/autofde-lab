@@ -44,7 +44,7 @@ from autofde_lab.builders.solver import (
 # --- C++ POMCP solver (primary) ---
 
 try:
-    from autofde_lab.hub.__skdecide_hub_cpp import _POMCPSolver_ as pomcp_solver
+    from autofde_lab.hub.__autofde_lab_hub_cpp import _POMCPSolver_ as pomcp_solver
 
     class D(
         Domain,

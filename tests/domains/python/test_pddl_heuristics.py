@@ -55,10 +55,10 @@ class TestDeleteRelaxationHeuristics:
         assert h_add_val >= h_max_val, "h_add should always be >= h_max"
 
     def test_goal_state_zero(self, blocks_domain, hmax, hadd):
-        from autofde_lab.hub.__skdecide_hub_cpp import (
+        from autofde_lab.hub.__autofde_lab_hub_cpp import (
             _PDDL_GoalChecker_ as CppGoalChecker,
         )
-        from autofde_lab.hub.__skdecide_hub_cpp import (
+        from autofde_lab.hub.__autofde_lab_hub_cpp import (
             _PDDL_SuccessorGenerator_ as CppSuccessorGenerator,
         )
 
@@ -151,10 +151,10 @@ class TestPPDDLHeuristics:
         assert hadd(init) >= hmax(init), "h_add should always be >= h_max"
 
     def test_ppddl_goal_zero(self, tireworld_domain, hmax, hadd):
-        from autofde_lab.hub.__skdecide_hub_cpp import (
+        from autofde_lab.hub.__autofde_lab_hub_cpp import (
             _PDDL_GoalChecker_ as CppGoalChecker,
         )
-        from autofde_lab.hub.__skdecide_hub_cpp import (
+        from autofde_lab.hub.__autofde_lab_hub_cpp import (
             _PDDL_SuccessorGenerator_ as CppSuccessorGenerator,
         )
 
@@ -232,10 +232,10 @@ class TestDiscountedHeuristics:
         assert hadd_disc(init) > 0
 
     def test_discounted_goal_zero(self, tireworld_domain, hmax_disc, hadd_disc):
-        from autofde_lab.hub.__skdecide_hub_cpp import (
+        from autofde_lab.hub.__autofde_lab_hub_cpp import (
             _PDDL_GoalChecker_ as CppGoalChecker,
         )
-        from autofde_lab.hub.__skdecide_hub_cpp import (
+        from autofde_lab.hub.__autofde_lab_hub_cpp import (
             _PDDL_SuccessorGenerator_ as CppSuccessorGenerator,
         )
 

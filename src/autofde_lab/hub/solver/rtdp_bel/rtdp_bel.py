@@ -33,7 +33,7 @@ from autofde_lab.builders.solver import (
 from autofde_lab.core import Value
 
 try:
-    from autofde_lab.hub.__skdecide_hub_cpp import _RTDPBelSolver_ as rtdp_bel_solver
+    from autofde_lab.hub.__autofde_lab_hub_cpp import _RTDPBelSolver_ as rtdp_bel_solver
 
     class D(
         Domain,

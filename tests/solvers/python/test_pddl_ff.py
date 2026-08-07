@@ -34,8 +34,8 @@ class TestHFFHeuristic:
         assert h_val > 0, "Initial state should have positive h_FF"
 
     def test_hff_goal_zero(self):
-        from autofde_lab.hub.__skdecide_hub_cpp import _PDDL_GoalChecker_ as GoalChecker
-        from autofde_lab.hub.__skdecide_hub_cpp import (
+        from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_GoalChecker_ as GoalChecker
+        from autofde_lab.hub.__autofde_lab_hub_cpp import (
             _PDDL_SuccessorGenerator_ as SuccGen,
         )
 
