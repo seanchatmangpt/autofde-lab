@@ -165,6 +165,7 @@ class SuiteResult:
     wall_clock_s: float = 0.0
     status: str = "UNKNOWN"
     stdout_tail: str = ""
+    failure_detail: str = ""
     failure_ids: list[str] = field(default_factory=list)
 
 
@@ -309,17 +310,31 @@ def scan_for_absolute_sibling_paths(clone: Path) -> list[str]:
 # ---------------------------------------------------------------------------
 
 _COUNT_RE = re.compile(r"(\d+) (passed|failed|error|errors|skipped|xfailed|xpassed|deselected)")
+_SUMMARY_TAIL_RE = re.compile(r"\bin \d+(?:\.\d+)?s\b")
 _SHORT_SKIP_RE = re.compile(r"^SKIPPED \[(\d+)\] ([^:]+:\d+): (.*)$")
 _SKIP_LINE_RE = re.compile(r"^(?:SKIPPED|s)\s")
 
 
 def parse_pytest_output(text: str) -> dict[str, int]:
+    """Parse the final counts line.
+
+    Under ``-q`` the summary has no leading ``=`` (it reads
+    ``3 failed, 100 passed, 26 skipped in 51.92s``), so anchoring on ``=``
+    silently yields all zeros -- which is exactly how an earlier revision of
+    this script reported ALIVE over a red suite. Match the trailing
+    ``... in <n>s`` shape instead, decorated or not, last one wins.
+    """
     counts = {k: 0 for k in ("passed", "failed", "errors", "skipped", "xfailed", "xpassed")}
-    # Last summary line wins.
-    for line in text.splitlines():
-        if not (line.startswith("=") and ("passed" in line or "failed" in line or "error" in line or "skipped" in line)):
+    for raw in text.splitlines():
+        line = raw.strip().strip("=").strip()
+        if not _SUMMARY_TAIL_RE.search(line):
             continue
-        for num, kind in _COUNT_RE.findall(line):
+        found = _COUNT_RE.findall(line)
+        if not found:
+            continue
+        for key in counts:
+            counts[key] = 0
+        for num, kind in found:
             key = "errors" if kind in ("error", "errors") else kind
             if key in counts:
                 counts[key] = int(num)
@@ -349,6 +364,23 @@ def parse_skips(text: str, suite: str) -> list[SkipRecord]:
                 SkipRecord(suite=suite, location="<unparsed>", reason=reason, classification=classify_skip(reason))
             )
     return records
+
+
+def extract_failure_detail(text: str, limit: int = 20000) -> str:
+    """Keep the FAILURES/ERRORS blocks verbatim.
+
+    Without this the receipt records that a suite went red but not why, which
+    makes it useless for the one question it exists to answer.
+    """
+    lines = text.splitlines()
+    start = None
+    for i, line in enumerate(lines):
+        if re.search(r"=+ (FAILURES|ERRORS) =+", line):
+            start = i
+            break
+    if start is None:
+        return text.strip()[-limit:]
+    return "\n".join(lines[start:])[:limit]
 
 
 def parse_failure_ids(text: str) -> list[str]:
@@ -433,6 +465,22 @@ def main() -> int:
             receipt["status"] = "BLOCKED:GIT_CHECKOUT_FAILED"
             receipt["detail"] = co.stderr.strip()[-4000:]
             return emit(receipt, args, tmp, 1)
+        # The compiled hub is built from git submodules under cpp/sdk/. A plain
+        # clone leaves those directories empty and CMake configuration fails --
+        # measured, not assumed. A true clean checkout is recursive.
+        sub = run(
+            ["git", "submodule", "update", "--init", "--recursive", "--depth", "1", "--jobs", "4"],
+            cwd=clone,
+            timeout=1800,
+        )
+        receipt["submodule_init_returncode"] = sub.returncode
+        if sub.returncode != 0:
+            receipt["status"] = "BLOCKED:GIT_SUBMODULE_INIT_FAILED"
+            receipt["detail"] = sub.stderr.strip()[-4000:]
+            return emit(receipt, args, tmp, 1)
+        receipt["submodules"] = [
+            line.strip() for line in run(["git", "submodule", "status"], cwd=clone).stdout.splitlines()
+        ]
         receipt["clone_sha"] = git(clone, "rev-parse", "HEAD")
         receipt["clone_wall_clock_s"] = round(time.time() - t0, 2)
         assert receipt["clone_sha"] == head, "clone is not at source HEAD"
@@ -528,7 +576,10 @@ def main() -> int:
                     returncode=rc,
                     wall_clock_s=elapsed,
                     status=status,
-                    stdout_tail=out.strip()[-3000:] if status not in ("PASS",) else out.strip()[-1200:],
+                    stdout_tail=out.strip()[-1200:],
+                    # Failure detail must survive: a tail alone shows the skip
+                    # summary and drops the tracebacks entirely.
+                    failure_detail=extract_failure_detail(out) if status != "PASS" else "",
                     failure_ids=parse_failure_ids(out),
                     **counts,
                 )
@@ -556,17 +607,26 @@ def main() -> int:
         }
         receipt["total_wall_clock_s"] = round(time.time() - started, 2)
 
-        bad = receipt["totals"]["failed"] + receipt["totals"]["errors"]
+        # Returncode is primary, parsed counts are corroborating only. An
+        # earlier revision derived the verdict from the counts alone; a
+        # parsing bug zeroed them and the receipt reported ALIVE over a suite
+        # that had exited 1. A suite that went red must be able to fail the
+        # receipt even if no count was parsed at all.
+        red_suites = [r.suite for r in results if r.exists and r.returncode not in (0, 5)]
+        bad = len(red_suites) + receipt["totals"]["failed"] + receipt["totals"]["errors"]
+        receipt["red_suites"] = red_suites
         timeouts = [r.suite for r in results if r.status == "TIMEOUT"]
         missing = [r.suite for r in results if r.status == "MISSING"]
         leaked = receipt["isolation"]["siblings"]["leaked_reachable"]
+        # Anti-vacuity: a suite that exited 0 while collecting nothing is not
+        # evidence of anything, and must never read as a green row.
+        vacuous = [r.suite for r in results if r.exists and r.status == "PASS" and r.passed == 0]
+        receipt["vacuous_suites"] = vacuous
         if timeouts:
             receipt["status"] = "BLOCKED:SUITE_TIMEOUT"
         elif bad:
             receipt["status"] = "BUILD_BROKEN"
-        elif missing:
-            receipt["status"] = "PARTIAL_ALIVE"
-        elif leaked:
+        elif missing or leaked or vacuous:
             receipt["status"] = "PARTIAL_ALIVE"
         else:
             receipt["status"] = "ALIVE"
