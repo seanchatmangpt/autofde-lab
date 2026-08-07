@@ -1,3 +1,4 @@
+# one-shot evidence-bound finalizer; deletes itself on success
 name: Finalize ForwardBench gyms
 
 on:
