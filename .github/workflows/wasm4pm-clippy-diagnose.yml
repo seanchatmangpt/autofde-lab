@@ -1,0 +1,51 @@
+name: wasm4pm Clippy diagnosis capsule
+
+on:
+  push:
+    branches:
+      - verify/wasm4pm-clippy-diagnose-20260807
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wasm4pm-clippy-diagnose-20260807
+  cancel-in-progress: true
+
+jobs:
+  clippy:
+    name: clippy ${{ matrix.subject }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - subject: base
+            sha: 43c9141fdcda2c316d33702d08cd9b49d624bb44
+          - subject: head
+            sha: fa5b50fccccd32c89ecda67c3caa3f5118e02cbb
+    steps:
+      - name: Checkout exact wasm4pm subject
+        uses: actions/checkout@v4
+        with:
+          repository: seanchatmangpt/wasm4pm
+          ref: ${{ matrix.sha }}
+      - name: Install repository-pinned Rust
+        run: |
+          rustup toolchain install nightly-2026-04-15 --profile minimal --component clippy
+          rustup override set nightly-2026-04-15
+          test "$(git rev-parse HEAD)" = "${{ matrix.sha }}"
+          rustc --version --verbose
+      - name: Capture exact Clippy diagnostics
+        shell: bash
+        run: |
+          set +e
+          cargo clippy --all-targets -- -D warnings > /tmp/clippy.log 2>&1
+          code=$?
+          set -e
+          tail -n 120 /tmp/clippy.log > /tmp/clippy-tail.log
+          encoded="$(base64 -w0 /tmp/clippy-tail.log)"
+          echo "::warning title=CLIPPY_${{ matrix.subject }}_EXIT_${code}::$encoded"
+          cat /tmp/clippy-tail.log
+          echo "CLIPPY_EXIT=$code"
