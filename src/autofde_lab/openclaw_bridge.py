@@ -36,9 +36,9 @@ _SUBJECT_SCHEMA = {
         "kwargs": {"type": "object"},
     },
 }
-TOOL_DEFINITIONS = [
+_TOOL_SPECS = [
     {
-        "name": "skdecide_catalog",
+        "name": "catalog",
         "description": "List registered scikit-decide domains and solvers.",
         "inputSchema": {
             "type": "object",
@@ -47,7 +47,7 @@ TOOL_DEFINITIONS = [
         },
     },
     {
-        "name": "skdecide_describe",
+        "name": "describe",
         "description": "Describe one registered domain or solver.",
         "inputSchema": {
             "type": "object",
@@ -60,7 +60,7 @@ TOOL_DEFINITIONS = [
         },
     },
     {
-        "name": "skdecide_match",
+        "name": "match",
         "description": "Construct a registered domain and list compatible solvers.",
         "inputSchema": {
             "type": "object",
@@ -70,7 +70,7 @@ TOOL_DEFINITIONS = [
         },
     },
     {
-        "name": "skdecide_run",
+        "name": "run",
         "description": "Run a bounded rollout using registered subjects only.",
         "inputSchema": {
             "type": "object",
@@ -105,6 +105,41 @@ TOOL_DEFINITIONS = [
         },
     },
 ]
+
+# Dual registration. `tools/list` advertises BOTH the current
+# `autofde_lab_*` names and the legacy `skdecide_*` names, because a caller
+# that discovers tools dynamically must keep working, and a caller with a
+# hard-coded legacy name must too. Descriptions differ only by a deprecation
+# note; input schemas are shared objects, so the two spellings cannot drift.
+TOOL_DEFINITIONS = [
+    {**spec, "name": runtime.TOOL_NAME_PREFIX + spec["name"]} for spec in _TOOL_SPECS
+] + [
+    {
+        **spec,
+        "name": runtime.LEGACY_TOOL_NAME_PREFIX + spec["name"],
+        "description": (
+            spec["description"]
+            + " (legacy name; prefer "
+            + runtime.TOOL_NAME_PREFIX
+            + spec["name"]
+            + ")"
+        ),
+    }
+    for spec in _TOOL_SPECS
+]
+
+# Invoked as `python -m autofde_lab.openclaw_bridge`; PROG_NAME is the
+# hyphenated display name only (there is no [project.scripts] console script
+# yet, so nothing on PATH depends on either spelling).
+PROG_NAME = "autofde-lab-openclaw"
+LEGACY_PROG_NAME = "skdecide-openclaw"
+
+CATALOG_RESOURCE_URI = "autofde-lab://catalog"
+LEGACY_CATALOG_RESOURCE_URI = "skdecide://catalog"
+ACCEPTED_CATALOG_RESOURCE_URIS = (
+    CATALOG_RESOURCE_URI,
+    LEGACY_CATALOG_RESOURCE_URI,
+)
 
 
 def execute_tool(
@@ -147,25 +182,35 @@ def _mcp_response(request: Mapping[str, Any]) -> dict[str, Any] | None:
             result = {
                 "resources": [
                     {
-                        "uri": "skdecide://catalog",
-                        "name": "scikit-decide registry catalog",
+                        "uri": CATALOG_RESOURCE_URI,
+                        "name": "AutoFDE Lab registry catalog",
                         "mimeType": "application/json",
-                    }
+                    },
+                    {
+                        "uri": LEGACY_CATALOG_RESOURCE_URI,
+                        "name": "AutoFDE Lab registry catalog (legacy URI)",
+                        "mimeType": "application/json",
+                    },
                 ]
             }
         elif method == "resources/read":
             params = request.get("params") or {}
-            if params.get("uri") != "skdecide://catalog":
+            requested = params.get("uri")
+            if requested not in ACCEPTED_CATALOG_RESOURCE_URIS:
                 raise runtime.BridgeFailure(
                     "UNKNOWN_RESOURCE",
                     f"Unknown resource: {params.get('uri')}",
                     status="REFUSED:UNKNOWN_RESOURCE",
                 )
-            payload = execute_tool("skdecide_catalog", {"kind": "all"})
+            payload = execute_tool(
+                runtime.TOOL_NAME_PREFIX + "catalog", {"kind": "all"}
+            )
             result = {
                 "contents": [
                     {
-                        "uri": "skdecide://catalog",
+                        # Echo the URI the caller asked for, so a legacy
+                        # client's response matches its own request.
+                        "uri": requested,
                         "mimeType": "application/json",
                         "text": json.dumps(payload, sort_keys=True),
                     }
@@ -218,6 +263,14 @@ def _write_json(value: Any) -> None:
     sys.stdout.write(json.dumps(value, ensure_ascii=False, sort_keys=True) + "\n")
 
 
+# Receipt subject for the out-of-process worker. Held at the legacy
+# spelling deliberately: it is written into call-integrity receipts, and
+# both tool names dispatch to this one worker, so a stable label keeps
+# receipts from the two spellings comparable to each other and to receipts
+# already emitted.
+_WORKER_RECEIPT_SUBJECT = runtime.LEGACY_TOOL_NAME_PREFIX + "run"
+
+
 def _worker(arguments: Mapping[str, Any]) -> dict[str, Any]:
     started = time.monotonic_ns()
     try:
@@ -228,7 +281,7 @@ def _worker(arguments: Mapping[str, Any]) -> dict[str, Any]:
             "result": result,
             "receipt": runtime.receipt(
                 operation="worker.run",
-                subject="skdecide_run",
+                subject=_WORKER_RECEIPT_SUBJECT,
                 arguments=arguments,
                 started_ns=started,
                 status="ALIVE",
@@ -243,7 +296,7 @@ def _worker(arguments: Mapping[str, Any]) -> dict[str, Any]:
             "error": error,
             "receipt": runtime.receipt(
                 operation="worker.run",
-                subject="skdecide_run",
+                subject=_WORKER_RECEIPT_SUBJECT,
                 arguments=arguments,
                 started_ns=started,
                 status=exc.status,
@@ -258,7 +311,7 @@ def _worker(arguments: Mapping[str, Any]) -> dict[str, Any]:
             "error": error,
             "receipt": runtime.receipt(
                 operation="worker.run",
-                subject="skdecide_run",
+                subject=_WORKER_RECEIPT_SUBJECT,
                 arguments=arguments,
                 started_ns=started,
                 status="BUILD_BROKEN",
@@ -268,7 +321,7 @@ def _worker(arguments: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="autofde_lab-openclaw")
+    parser = argparse.ArgumentParser(prog=PROG_NAME)
     sub = parser.add_subparsers(dest="command", required=True)
     inspect_parser = sub.add_parser("inspect")
     inspect_parser.add_argument("--catalog", action="store_true")
@@ -286,7 +339,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             "tools": TOOL_DEFINITIONS,
         }
         if args.catalog:
-            payload["catalog"] = execute_tool("skdecide_catalog", {"kind": "all"})
+            payload["catalog"] = execute_tool(
+                runtime.TOOL_NAME_PREFIX + "catalog", {"kind": "all"}
+            )
         _write_json(payload)
         return 0
     if args.command == "call":

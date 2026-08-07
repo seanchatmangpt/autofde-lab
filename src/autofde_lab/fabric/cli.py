@@ -16,9 +16,17 @@ from autofde_lab.fabric.cache import SQLiteERRCCache
 from autofde_lab.fabric.models import DecisionRefusal, DecisionRequest
 from autofde_lab.fabric.service import DecisionFabric
 
+# Display name only -- invoked as `python -m autofde_lab.fabric`, and there
+# is no [project.scripts] console script, so no installed entry point
+# depends on either spelling. LEGACY_APP_NAME is recorded rather than
+# deleted so a doc or script still saying `skdecide-fabric` resolves to
+# something findable.
+APP_NAME = "autofde-lab-fabric"
+LEGACY_APP_NAME = "skdecide-fabric"
+
 app = typer.Typer(
-    name="autofde_lab-fabric",
-    help="CLI, MCP, A2A, DSPy, and ERRC cache for scikit-decide.",
+    name=APP_NAME,
+    help="CLI, MCP, A2A, DSPy, and ERRC cache for AutoFDE Lab.",
     no_args_is_help=True,
 )
 

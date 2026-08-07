@@ -134,11 +134,18 @@ def test_mcp_lifecycle_and_tool_call():
 
     listed = bridge._mcp_response({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
     names = {tool["name"] for tool in listed["result"]["tools"]}
+    # Dual registration: the legacy names are still advertised -- an existing
+    # OpenClaw plugin or pinned agent config calls them and cannot be seen
+    # from here -- and the current names are advertised alongside.
     assert names == {
         "skdecide_catalog",
         "skdecide_describe",
         "skdecide_match",
         "skdecide_run",
+        "autofde_lab_catalog",
+        "autofde_lab_describe",
+        "autofde_lab_match",
+        "autofde_lab_run",
     }
 
     called = bridge._mcp_response(
