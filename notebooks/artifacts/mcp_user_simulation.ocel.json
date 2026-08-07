@@ -21,7 +21,7 @@
           "type": "integer"
         },
         {
-          "name": "error",
+          "name": "detail",
           "type": "string"
         },
         {
@@ -40,10 +40,6 @@
         {
           "name": "elapsed_s",
           "type": "float"
-        },
-        {
-          "name": "max_steps",
-          "type": "integer"
         },
         {
           "name": "receipt_sha256",
@@ -93,7 +89,7 @@
     {
       "id": "evt-catalog",
       "type": "decision_catalog",
-      "time": "2026-08-07T17:03:18.008034000Z",
+      "time": "2026-08-07T17:19:01.809604000Z",
       "attributes": [
         {
           "name": "domain_count",
@@ -114,7 +110,7 @@
     {
       "id": "evt-match-Maze",
       "type": "decision_match",
-      "time": "2026-08-07T17:03:23.422940000Z",
+      "time": "2026-08-07T17:19:07.552605000Z",
       "attributes": [
         {
           "name": "standing",
@@ -139,7 +135,7 @@
     {
       "id": "evt-solve-Maze-AOstar-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:03:38.441805000Z",
+      "time": "2026-08-07T17:19:22.573383000Z",
       "attributes": [
         {
           "name": "standing",
@@ -147,11 +143,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 15.019
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 15.02
         }
       ],
       "relationships": [
@@ -172,7 +164,7 @@
     {
       "id": "evt-solve-Maze-Astar-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:03:40.488080000Z",
+      "time": "2026-08-07T17:19:24.772498000Z",
       "attributes": [
         {
           "name": "standing",
@@ -180,11 +172,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.046
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.199
         },
         {
           "name": "steps_taken",
@@ -213,7 +201,7 @@
     {
       "id": "evt-solve-Maze-Astar-1",
       "type": "decision_solve",
-      "time": "2026-08-07T17:03:42.489702000Z",
+      "time": "2026-08-07T17:19:26.974977000Z",
       "attributes": [
         {
           "name": "standing",
@@ -221,11 +209,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.001
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.202
         },
         {
           "name": "steps_taken",
@@ -254,7 +238,7 @@
     {
       "id": "evt-solve-Maze-AugmentedRandomSearch-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:03:44.698967000Z",
+      "time": "2026-08-07T17:19:29.928413000Z",
       "attributes": [
         {
           "name": "standing",
@@ -262,11 +246,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.209
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.953
         },
         {
           "name": "detail",
@@ -291,7 +271,7 @@
     {
       "id": "evt-solve-Maze-BFWS-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:03:46.809163000Z",
+      "time": "2026-08-07T17:19:32.206367000Z",
       "attributes": [
         {
           "name": "standing",
@@ -299,11 +279,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.11
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.277
         },
         {
           "name": "detail",
@@ -328,7 +304,7 @@
     {
       "id": "evt-solve-Maze-DESPOT-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:01.825410000Z",
+      "time": "2026-08-07T17:19:47.228479000Z",
       "attributes": [
         {
           "name": "standing",
@@ -336,11 +312,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 15.016
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 15.021
         }
       ],
       "relationships": [
@@ -361,7 +333,7 @@
     {
       "id": "evt-solve-Maze-DSPyPolicy-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:05.724150000Z",
+      "time": "2026-08-07T17:19:51.829815000Z",
       "attributes": [
         {
           "name": "standing",
@@ -369,11 +341,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 3.898
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 4.601
         },
         {
           "name": "steps_taken",
@@ -402,7 +370,7 @@
     {
       "id": "evt-solve-Maze-EHC-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:07.851612000Z",
+      "time": "2026-08-07T17:19:54.187821000Z",
       "attributes": [
         {
           "name": "standing",
@@ -410,11 +378,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.127
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.357
         },
         {
           "name": "steps_taken",
@@ -443,7 +407,7 @@
     {
       "id": "evt-solve-Maze-FF-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:09.951808000Z",
+      "time": "2026-08-07T17:19:56.977315000Z",
       "attributes": [
         {
           "name": "standing",
@@ -451,11 +415,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.1
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.789
         },
         {
           "name": "detail",
@@ -480,7 +440,7 @@
     {
       "id": "evt-solve-Maze-FFDetHindsight-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:12.154024000Z",
+      "time": "2026-08-07T17:19:59.899191000Z",
       "attributes": [
         {
           "name": "standing",
@@ -488,11 +448,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.202
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.921
         },
         {
           "name": "detail",
@@ -517,7 +473,7 @@
     {
       "id": "evt-solve-Maze-FFReplan-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:14.339284000Z",
+      "time": "2026-08-07T17:20:02.684841000Z",
       "attributes": [
         {
           "name": "standing",
@@ -525,11 +481,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.185
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.785
         },
         {
           "name": "detail",
@@ -554,7 +506,7 @@
     {
       "id": "evt-solve-Maze-FRET-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:16.552359000Z",
+      "time": "2026-08-07T17:20:05.082423000Z",
       "attributes": [
         {
           "name": "standing",
@@ -562,11 +514,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.213
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.397
         },
         {
           "name": "steps_taken",
@@ -595,7 +543,7 @@
     {
       "id": "evt-solve-Maze-GPCI-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:18.798366000Z",
+      "time": "2026-08-07T17:20:07.272237000Z",
       "attributes": [
         {
           "name": "standing",
@@ -603,11 +551,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.246
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.189
         },
         {
           "name": "steps_taken",
@@ -636,7 +580,7 @@
     {
       "id": "evt-solve-Maze-GoalHSVI-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:20.918273000Z",
+      "time": "2026-08-07T17:20:09.535145000Z",
       "attributes": [
         {
           "name": "standing",
@@ -644,11 +588,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.12
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.262
         },
         {
           "name": "steps_taken",
@@ -677,7 +617,7 @@
     {
       "id": "evt-solve-Maze-HSVI-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:23.195090000Z",
+      "time": "2026-08-07T17:20:11.840681000Z",
       "attributes": [
         {
           "name": "standing",
@@ -685,11 +625,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.277
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.305
         },
         {
           "name": "steps_taken",
@@ -718,7 +654,7 @@
     {
       "id": "evt-solve-Maze-IDAstar-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:25.339290000Z",
+      "time": "2026-08-07T17:20:14.321549000Z",
       "attributes": [
         {
           "name": "standing",
@@ -726,11 +662,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.144
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.48
         },
         {
           "name": "steps_taken",
@@ -759,7 +691,7 @@
     {
       "id": "evt-solve-Maze-IDual-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:27.675204000Z",
+      "time": "2026-08-07T17:20:16.599594000Z",
       "attributes": [
         {
           "name": "standing",
@@ -767,11 +699,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.335
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.277
         },
         {
           "name": "steps_taken",
@@ -800,7 +728,7 @@
     {
       "id": "evt-solve-Maze-ILAOstar-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:29.869818000Z",
+      "time": "2026-08-07T17:20:18.820667000Z",
       "attributes": [
         {
           "name": "standing",
@@ -808,11 +736,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.194
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.22
         },
         {
           "name": "steps_taken",
@@ -841,7 +765,7 @@
     {
       "id": "evt-solve-Maze-IW-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:32.252480000Z",
+      "time": "2026-08-07T17:20:21.086666000Z",
       "attributes": [
         {
           "name": "standing",
@@ -849,11 +773,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.382
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.265
         },
         {
           "name": "detail",
@@ -878,7 +798,7 @@
     {
       "id": "evt-solve-Maze-LDFS-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:34.470947000Z",
+      "time": "2026-08-07T17:20:23.285900000Z",
       "attributes": [
         {
           "name": "standing",
@@ -886,11 +806,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.218
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.199
         },
         {
           "name": "steps_taken",
@@ -919,7 +835,7 @@
     {
       "id": "evt-solve-Maze-LRTAstar-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:36.766118000Z",
+      "time": "2026-08-07T17:20:25.499502000Z",
       "attributes": [
         {
           "name": "standing",
@@ -927,11 +843,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.295
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.213
         },
         {
           "name": "steps_taken",
@@ -960,7 +872,7 @@
     {
       "id": "evt-solve-Maze-LRTAstar-1",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:39.117515000Z",
+      "time": "2026-08-07T17:20:27.794756000Z",
       "attributes": [
         {
           "name": "standing",
@@ -968,11 +880,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.351
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.295
         },
         {
           "name": "steps_taken",
@@ -1001,7 +909,7 @@
     {
       "id": "evt-solve-Maze-LRTDP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:41.406738000Z",
+      "time": "2026-08-07T17:20:30.012124000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1009,11 +917,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.289
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.217
         },
         {
           "name": "steps_taken",
@@ -1042,7 +946,7 @@
     {
       "id": "evt-solve-Maze-MAHD-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:43.811182000Z",
+      "time": "2026-08-07T17:20:32.271105000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1050,11 +954,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.404
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.259
         },
         {
           "name": "detail",
@@ -1079,7 +979,7 @@
     {
       "id": "evt-solve-Maze-MARTDP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:04:46.129536000Z",
+      "time": "2026-08-07T17:20:34.623698000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1087,11 +987,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.318
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.352
         },
         {
           "name": "detail",
@@ -1116,7 +1012,7 @@
     {
       "id": "evt-solve-Maze-MCTS-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:05:01.147635000Z",
+      "time": "2026-08-07T17:20:49.637577000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1124,11 +1020,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 15.018
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 15.013
         }
       ],
       "relationships": [
@@ -1149,7 +1041,7 @@
     {
       "id": "evt-solve-Maze-MDPLP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:05:03.423546000Z",
+      "time": "2026-08-07T17:20:51.927564000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1157,11 +1049,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.275
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.289
         },
         {
           "name": "steps_taken",
@@ -1190,7 +1078,7 @@
     {
       "id": "evt-solve-Maze-MaxentIRL-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:05:05.771256000Z",
+      "time": "2026-08-07T17:20:54.295710000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1198,11 +1086,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.347
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.368
         },
         {
           "name": "detail",
@@ -1227,7 +1111,7 @@
     {
       "id": "evt-solve-Maze-PI-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:05:08.033806000Z",
+      "time": "2026-08-07T17:20:56.513198000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1235,11 +1119,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.262
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.217
         },
         {
           "name": "steps_taken",
@@ -1268,7 +1148,7 @@
     {
       "id": "evt-solve-Maze-POMCP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:05:21.858416000Z",
+      "time": "2026-08-07T17:21:10.431904000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1276,11 +1156,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 13.824
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 13.918
         },
         {
           "name": "steps_taken",
@@ -1288,7 +1164,7 @@
         },
         {
           "name": "receipt_sha256",
-          "value": "e15b82537efda3fe406b89f7689ddcd6af94d58269059f6a3ce5a2f82fd834e0"
+          "value": "4683f5a3104eb04a0c55333e7d60eb8a950d3d130b394f4ad90e7ccc214751bb"
         }
       ],
       "relationships": [
@@ -1309,7 +1185,7 @@
     {
       "id": "evt-solve-Maze-PPDDLDetHindsight-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:05:23.999308000Z",
+      "time": "2026-08-07T17:21:12.883828000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1317,11 +1193,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.14
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.451
         },
         {
           "name": "detail",
@@ -1346,7 +1218,7 @@
     {
       "id": "evt-solve-Maze-PPDDLPlanMerger-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:05:26.184764000Z",
+      "time": "2026-08-07T17:21:15.607462000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1354,11 +1226,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.185
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.723
         },
         {
           "name": "detail",
@@ -1383,7 +1251,7 @@
     {
       "id": "evt-solve-Maze-PPDDLReplan-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:05:28.790765000Z",
+      "time": "2026-08-07T17:21:18.422763000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1391,11 +1259,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.606
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.814
         },
         {
           "name": "detail",
@@ -1420,7 +1284,7 @@
     {
       "id": "evt-solve-Maze-RFF-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:05:31.092522000Z",
+      "time": "2026-08-07T17:21:21.066847000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1428,11 +1292,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.301
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.643
         },
         {
           "name": "detail",
@@ -1457,7 +1317,7 @@
     {
       "id": "evt-solve-Maze-RIW-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:05:33.420969000Z",
+      "time": "2026-08-07T17:21:23.562769000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1465,11 +1325,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.328
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.495
         },
         {
           "name": "detail",
@@ -1494,7 +1350,7 @@
     {
       "id": "evt-solve-Maze-RTDPBel-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:05:48.441806000Z",
+      "time": "2026-08-07T17:21:38.580309000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1502,11 +1358,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 15.021
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 15.017
         }
       ],
       "relationships": [
@@ -1527,7 +1379,7 @@
     {
       "id": "evt-solve-Maze-RayRLlib-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:05:55.124835000Z",
+      "time": "2026-08-07T17:21:45.485541000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1535,11 +1387,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 6.683
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 6.905
         },
         {
           "name": "detail",
@@ -1564,7 +1412,7 @@
     {
       "id": "evt-solve-Maze-SARSOP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:05:57.377973000Z",
+      "time": "2026-08-07T17:21:47.807230000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1572,11 +1420,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.253
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.321
         },
         {
           "name": "steps_taken",
@@ -1605,7 +1449,7 @@
     {
       "id": "evt-solve-Maze-SSPDetHindsight-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:06:06.545538000Z",
+      "time": "2026-08-07T17:21:56.847831000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1613,11 +1457,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 9.167
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 9.04
         },
         {
           "name": "steps_taken",
@@ -1646,7 +1486,7 @@
     {
       "id": "evt-solve-Maze-SSPLP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:06:08.746551000Z",
+      "time": "2026-08-07T17:21:59.118706000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1654,11 +1494,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.201
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.27
         },
         {
           "name": "steps_taken",
@@ -1687,7 +1523,7 @@
     {
       "id": "evt-solve-Maze-SSPPlanMerger-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:06:10.951981000Z",
+      "time": "2026-08-07T17:22:01.437169000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1695,11 +1531,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.205
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.318
         },
         {
           "name": "steps_taken",
@@ -1728,7 +1560,7 @@
     {
       "id": "evt-solve-Maze-SSPReplan-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:06:13.153191000Z",
+      "time": "2026-08-07T17:22:03.663901000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1736,11 +1568,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.201
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.226
         },
         {
           "name": "steps_taken",
@@ -1769,7 +1597,7 @@
     {
       "id": "evt-solve-Maze-SSiPP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:06:19.938099000Z",
+      "time": "2026-08-07T17:22:09.854084000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1777,11 +1605,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 6.782
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 6.187
         },
         {
           "name": "steps_taken",
@@ -1810,7 +1634,7 @@
     {
       "id": "evt-solve-Maze-SimpleGreedy-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:06:22.207786000Z",
+      "time": "2026-08-07T17:22:12.289406000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1818,11 +1642,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.269
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.435
         },
         {
           "name": "detail",
@@ -1847,7 +1667,7 @@
     {
       "id": "evt-solve-Maze-StableBaseline-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:06:25.310098000Z",
+      "time": "2026-08-07T17:22:18.221998000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1855,11 +1675,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 3.102
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 5.932
         },
         {
           "name": "detail",
@@ -1884,7 +1700,7 @@
     {
       "id": "evt-solve-Maze-UCT-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:06:40.326142000Z",
+      "time": "2026-08-07T17:22:33.233336000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1892,11 +1708,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 15.016
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 15.01
         }
       ],
       "relationships": [
@@ -1917,7 +1729,7 @@
     {
       "id": "evt-solve-Maze-UPSolver-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:06:43.425323000Z",
+      "time": "2026-08-07T17:22:36.445366000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1925,11 +1737,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 3.099
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 3.212
         },
         {
           "name": "detail",
@@ -1954,7 +1762,7 @@
     {
       "id": "evt-solve-Maze-VI-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:06:45.752499000Z",
+      "time": "2026-08-07T17:22:38.649356000Z",
       "attributes": [
         {
           "name": "standing",
@@ -1962,11 +1770,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.327
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.203
         },
         {
           "name": "steps_taken",
@@ -1995,7 +1799,7 @@
     {
       "id": "evt-solve-Maze-Witness-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:07:00.770119000Z",
+      "time": "2026-08-07T17:22:53.662193000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2003,11 +1807,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 15.017
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 15.012
         }
       ],
       "relationships": [
@@ -2028,7 +1828,7 @@
     {
       "id": "evt-solve-Maze-pPOMCP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:07:02.996519000Z",
+      "time": "2026-08-07T17:22:55.977492000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2036,11 +1836,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.226
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.315
         },
         {
           "name": "detail",
@@ -2065,7 +1861,7 @@
     {
       "id": "evt-match-SimpleGridWorld",
       "type": "decision_match",
-      "time": "2026-08-07T17:07:03.918463000Z",
+      "time": "2026-08-07T17:22:56.949326000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2090,7 +1886,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-AOstar-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:07:18.939359000Z",
+      "time": "2026-08-07T17:23:11.963854000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2098,11 +1894,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 15.021
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 15.014
         }
       ],
       "relationships": [
@@ -2123,7 +1915,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-Astar-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:07:20.771140000Z",
+      "time": "2026-08-07T17:23:13.668105000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2131,11 +1923,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.831
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.704
         },
         {
           "name": "steps_taken",
@@ -2164,7 +1952,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-Astar-1",
       "type": "decision_solve",
-      "time": "2026-08-07T17:07:22.419847000Z",
+      "time": "2026-08-07T17:23:15.377984000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2172,11 +1960,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.648
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.709
         },
         {
           "name": "steps_taken",
@@ -2205,7 +1989,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-AugmentedRandomSearch-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:07:24.178790000Z",
+      "time": "2026-08-07T17:23:17.205637000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2213,11 +1997,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.759
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.827
         },
         {
           "name": "detail",
@@ -2242,7 +2022,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-BFWS-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:07:25.955308000Z",
+      "time": "2026-08-07T17:23:18.986475000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2250,11 +2030,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.776
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.78
         },
         {
           "name": "detail",
@@ -2279,7 +2055,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-DESPOT-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:07:40.971387000Z",
+      "time": "2026-08-07T17:23:34.000769000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2287,11 +2063,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 15.016
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 15.014
         }
       ],
       "relationships": [
@@ -2312,7 +2084,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-DSPyPolicy-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:07:45.131592000Z",
+      "time": "2026-08-07T17:23:38.990456000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2320,11 +2092,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 4.16
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 4.989
         },
         {
           "name": "steps_taken",
@@ -2353,7 +2121,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-EHC-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:07:46.946999000Z",
+      "time": "2026-08-07T17:23:40.728787000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2361,11 +2129,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.815
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.738
         },
         {
           "name": "steps_taken",
@@ -2394,7 +2158,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-FF-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:07:48.805123000Z",
+      "time": "2026-08-07T17:23:42.651041000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2402,11 +2166,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.858
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.922
         },
         {
           "name": "detail",
@@ -2431,7 +2191,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-FFDetHindsight-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:07:50.559328000Z",
+      "time": "2026-08-07T17:23:44.550255000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2439,11 +2199,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.754
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.899
         },
         {
           "name": "detail",
@@ -2468,7 +2224,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-FFReplan-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:07:52.285119000Z",
+      "time": "2026-08-07T17:23:46.439793000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2476,11 +2232,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.725
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.889
         },
         {
           "name": "detail",
@@ -2505,7 +2257,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-FRET-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:07:53.953551000Z",
+      "time": "2026-08-07T17:23:48.157519000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2513,11 +2265,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.668
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.717
         },
         {
           "name": "steps_taken",
@@ -2546,7 +2294,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-GPCI-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:07:55.631011000Z",
+      "time": "2026-08-07T17:23:49.922078000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2554,11 +2302,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.677
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.764
         },
         {
           "name": "steps_taken",
@@ -2587,7 +2331,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-GoalHSVI-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:07:57.380349000Z",
+      "time": "2026-08-07T17:23:51.677167000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2595,11 +2339,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.749
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.755
         },
         {
           "name": "steps_taken",
@@ -2628,7 +2368,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-HSVI-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:07:59.095012000Z",
+      "time": "2026-08-07T17:23:53.379529000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2636,11 +2376,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.714
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.702
         },
         {
           "name": "steps_taken",
@@ -2669,7 +2405,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-IDAstar-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:00.845104000Z",
+      "time": "2026-08-07T17:23:55.072533000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2677,11 +2413,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.75
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.693
         },
         {
           "name": "steps_taken",
@@ -2710,7 +2442,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-IDual-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:02.551694000Z",
+      "time": "2026-08-07T17:23:56.792141000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2718,11 +2450,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.706
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.719
         },
         {
           "name": "steps_taken",
@@ -2751,7 +2479,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-ILAOstar-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:04.313986000Z",
+      "time": "2026-08-07T17:23:58.552581000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2759,11 +2487,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.762
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.76
         },
         {
           "name": "steps_taken",
@@ -2792,7 +2516,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-IW-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:06.156375000Z",
+      "time": "2026-08-07T17:24:00.370430000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2800,11 +2524,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.842
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.817
         },
         {
           "name": "detail",
@@ -2829,7 +2549,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-LDFS-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:07.910783000Z",
+      "time": "2026-08-07T17:24:02.123701000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2837,11 +2557,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.754
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.753
         },
         {
           "name": "steps_taken",
@@ -2870,7 +2586,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-LRTAstar-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:09.822533000Z",
+      "time": "2026-08-07T17:24:03.878545000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2878,11 +2594,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.911
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.754
         },
         {
           "name": "steps_taken",
@@ -2911,7 +2623,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-LRTAstar-1",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:11.629782000Z",
+      "time": "2026-08-07T17:24:05.673516000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2919,11 +2631,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.807
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.794
         },
         {
           "name": "steps_taken",
@@ -2952,7 +2660,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-LRTDP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:13.316790000Z",
+      "time": "2026-08-07T17:24:07.467615000Z",
       "attributes": [
         {
           "name": "standing",
@@ -2960,11 +2668,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.686
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.793
         },
         {
           "name": "steps_taken",
@@ -2993,7 +2697,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-MAHD-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:15.135593000Z",
+      "time": "2026-08-07T17:24:09.251110000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3001,11 +2705,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.818
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.783
         },
         {
           "name": "detail",
@@ -3030,7 +2730,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-MARTDP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:17.007875000Z",
+      "time": "2026-08-07T17:24:11.087937000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3038,11 +2738,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.872
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.836
         },
         {
           "name": "detail",
@@ -3067,7 +2763,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-MCTS-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:32.024399000Z",
+      "time": "2026-08-07T17:24:26.102911000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3075,11 +2771,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 15.016
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 15.014
         }
       ],
       "relationships": [
@@ -3100,7 +2792,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-MDPLP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:33.626602000Z",
+      "time": "2026-08-07T17:24:27.822165000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3108,11 +2800,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.602
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.719
         },
         {
           "name": "steps_taken",
@@ -3141,7 +2829,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-MaxentIRL-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:35.701487000Z",
+      "time": "2026-08-07T17:24:29.975995000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3149,11 +2837,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.074
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.153
         },
         {
           "name": "detail",
@@ -3178,7 +2862,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-PI-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:37.289252000Z",
+      "time": "2026-08-07T17:24:31.705296000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3186,11 +2870,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.587
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.729
         },
         {
           "name": "steps_taken",
@@ -3219,7 +2899,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-POMCP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:40.415578000Z",
+      "time": "2026-08-07T17:24:35.730124000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3227,11 +2907,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 3.126
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 4.024
         },
         {
           "name": "steps_taken",
@@ -3239,7 +2915,7 @@
         },
         {
           "name": "receipt_sha256",
-          "value": "a25b5d84779d492cb987c1ded88278c2637252ef5dd890c92cde503d40489a80"
+          "value": "e226e2e88e4e1fccf2673c2f9fd67ef5be376326e4844221b22c8d5a509261ef"
         }
       ],
       "relationships": [
@@ -3260,7 +2936,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-PPDDLDetHindsight-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:42.139555000Z",
+      "time": "2026-08-07T17:24:38.107038000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3268,11 +2944,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.723
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.376
         },
         {
           "name": "detail",
@@ -3297,7 +2969,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-PPDDLPlanMerger-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:43.872227000Z",
+      "time": "2026-08-07T17:24:40.469461000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3305,11 +2977,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.732
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.362
         },
         {
           "name": "detail",
@@ -3334,7 +3002,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-PPDDLReplan-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:45.611233000Z",
+      "time": "2026-08-07T17:24:42.515798000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3342,11 +3010,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.739
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.046
         },
         {
           "name": "detail",
@@ -3371,7 +3035,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-RFF-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:47.305806000Z",
+      "time": "2026-08-07T17:24:44.420769000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3379,11 +3043,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.694
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.904
         },
         {
           "name": "detail",
@@ -3408,7 +3068,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-RIW-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:08:48.969281000Z",
+      "time": "2026-08-07T17:24:46.184390000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3416,11 +3076,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.663
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.763
         },
         {
           "name": "detail",
@@ -3445,7 +3101,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-RTDPBel-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:09:03.983657000Z",
+      "time": "2026-08-07T17:25:01.197222000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3453,11 +3109,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 15.014
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 15.012
         }
       ],
       "relationships": [
@@ -3478,7 +3130,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-RayRLlib-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:09:09.278192000Z",
+      "time": "2026-08-07T17:25:06.379658000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3486,11 +3138,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 5.294
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 5.182
         },
         {
           "name": "detail",
@@ -3515,7 +3163,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-SARSOP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:09:10.936588000Z",
+      "time": "2026-08-07T17:25:08.104317000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3523,11 +3171,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.658
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.724
         },
         {
           "name": "steps_taken",
@@ -3556,7 +3200,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-SSPDetHindsight-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:09:15.188109000Z",
+      "time": "2026-08-07T17:25:12.367040000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3564,11 +3208,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 4.25
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 4.262
         },
         {
           "name": "steps_taken",
@@ -3597,7 +3237,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-SSPLP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:09:16.848007000Z",
+      "time": "2026-08-07T17:25:14.115728000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3605,11 +3245,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.659
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.748
         },
         {
           "name": "steps_taken",
@@ -3638,7 +3274,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-SSPPlanMerger-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:09:18.511888000Z",
+      "time": "2026-08-07T17:25:15.828617000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3646,11 +3282,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.663
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.712
         },
         {
           "name": "steps_taken",
@@ -3679,7 +3311,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-SSPReplan-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:09:20.166106000Z",
+      "time": "2026-08-07T17:25:17.545220000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3687,11 +3319,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.654
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.716
         },
         {
           "name": "steps_taken",
@@ -3720,7 +3348,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-SSiPP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:09:21.823846000Z",
+      "time": "2026-08-07T17:25:19.313163000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3728,11 +3356,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.657
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.767
         },
         {
           "name": "steps_taken",
@@ -3761,7 +3385,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-SimpleGreedy-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:09:23.648219000Z",
+      "time": "2026-08-07T17:25:21.278059000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3769,11 +3393,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.824
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.964
         },
         {
           "name": "detail",
@@ -3798,7 +3418,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-StableBaseline-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:09:26.274984000Z",
+      "time": "2026-08-07T17:25:24.030769000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3806,11 +3426,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.626
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.752
         },
         {
           "name": "detail",
@@ -3835,7 +3451,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-UCT-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:09:41.290792000Z",
+      "time": "2026-08-07T17:25:39.042985000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3843,11 +3459,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 15.015
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 15.012
         }
       ],
       "relationships": [
@@ -3868,7 +3480,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-UPSolver-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:09:43.981622000Z",
+      "time": "2026-08-07T17:25:41.813663000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3876,11 +3488,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.69
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.77
         },
         {
           "name": "detail",
@@ -3905,7 +3513,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-VI-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:09:45.693012000Z",
+      "time": "2026-08-07T17:25:43.512062000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3913,11 +3521,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.711
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.698
         },
         {
           "name": "steps_taken",
@@ -3946,7 +3550,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-Witness-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:10:00.709292000Z",
+      "time": "2026-08-07T17:25:58.527529000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3954,11 +3558,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 15.016
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 15.015
         }
       ],
       "relationships": [
@@ -3979,7 +3579,7 @@
     {
       "id": "evt-solve-SimpleGridWorld-pPOMCP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:10:02.446014000Z",
+      "time": "2026-08-07T17:26:00.308824000Z",
       "attributes": [
         {
           "name": "standing",
@@ -3987,11 +3587,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.736
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.781
         },
         {
           "name": "detail",
@@ -4016,7 +3612,7 @@
     {
       "id": "evt-match-MasterMind",
       "type": "decision_match",
-      "time": "2026-08-07T17:10:03.085553000Z",
+      "time": "2026-08-07T17:26:00.963633000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4041,7 +3637,7 @@
     {
       "id": "evt-solve-MasterMind-AugmentedRandomSearch-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:10:04.825473000Z",
+      "time": "2026-08-07T17:26:02.807883000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4049,11 +3645,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.74
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.844
         },
         {
           "name": "detail",
@@ -4078,7 +3670,7 @@
     {
       "id": "evt-solve-MasterMind-DESPOT-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:10:08.580543000Z",
+      "time": "2026-08-07T17:26:07.631284000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4086,19 +3678,15 @@
         },
         {
           "name": "elapsed_s",
-          "value": 3.755
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 4.823
         },
         {
           "name": "steps_taken",
-          "value": 2
+          "value": 3
         },
         {
           "name": "receipt_sha256",
-          "value": "666cf0cc690610106f5ace011c19e2c3973e967d488852c4a3aa24cc1ecb4570"
+          "value": "49dc5d03b2b92b4aaabec2062e341a9619e5d72afef6654eb16523a993faa1f9"
         }
       ],
       "relationships": [
@@ -4119,27 +3707,23 @@
     {
       "id": "evt-solve-MasterMind-DSPyPolicy-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:10:12.768599000Z",
+      "time": "2026-08-07T17:26:13.915664000Z",
       "attributes": [
         {
           "name": "standing",
-          "value": "BOUNDED"
+          "value": "SOLVED"
         },
         {
           "name": "elapsed_s",
-          "value": 4.188
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 6.284
         },
         {
           "name": "steps_taken",
-          "value": 15
+          "value": 1
         },
         {
           "name": "receipt_sha256",
-          "value": "6f45b9192b29f1c21ee7b55be3cf3742913b93c11d6138c72e6931c4b421b4b8"
+          "value": "e61c48d5a58830561c7faf9cef206478f8a6fa0b604d09541090c299876aace4"
         }
       ],
       "relationships": [
@@ -4160,7 +3744,7 @@
     {
       "id": "evt-solve-MasterMind-GoalHSVI-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:10:27.783648000Z",
+      "time": "2026-08-07T17:26:28.932914000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4168,11 +3752,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 15.015
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 15.016
         }
       ],
       "relationships": [
@@ -4193,7 +3773,7 @@
     {
       "id": "evt-solve-MasterMind-HSVI-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:10:42.797264000Z",
+      "time": "2026-08-07T17:26:43.955564000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4201,11 +3781,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 15.013
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 15.022
         }
       ],
       "relationships": [
@@ -4226,7 +3802,7 @@
     {
       "id": "evt-solve-MasterMind-MAHD-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:10:44.402230000Z",
+      "time": "2026-08-07T17:26:45.818538000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4234,11 +3810,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.605
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.862
         },
         {
           "name": "detail",
@@ -4263,7 +3835,7 @@
     {
       "id": "evt-solve-MasterMind-MaxentIRL-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:10:46.369460000Z",
+      "time": "2026-08-07T17:26:48.068375000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4271,11 +3843,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.967
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.249
         },
         {
           "name": "detail",
@@ -4300,7 +3868,7 @@
     {
       "id": "evt-solve-MasterMind-POMCP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:10:48.067356000Z",
+      "time": "2026-08-07T17:26:49.829450000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4308,19 +3876,15 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.698
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.76
         },
         {
           "name": "steps_taken",
-          "value": 3
+          "value": 1
         },
         {
           "name": "receipt_sha256",
-          "value": "bd563af91008a7ad97af9e3feaaf491047100667b94ea127fb2f9e40eb6d9e45"
+          "value": "ea3429cf0de8142189b8a9733fc5d4327b88a1e586e64bd48a2aef04d15ad20e"
         }
       ],
       "relationships": [
@@ -4341,7 +3905,7 @@
     {
       "id": "evt-solve-MasterMind-RTDPBel-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:11:03.082469000Z",
+      "time": "2026-08-07T17:27:04.843682000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4349,11 +3913,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 15.015
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 15.013
         }
       ],
       "relationships": [
@@ -4374,7 +3934,7 @@
     {
       "id": "evt-solve-MasterMind-RayRLlib-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:11:08.324042000Z",
+      "time": "2026-08-07T17:27:10.226136000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4382,11 +3942,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 5.241
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 5.382
         },
         {
           "name": "detail",
@@ -4411,7 +3967,7 @@
     {
       "id": "evt-solve-MasterMind-SARSOP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:11:09.997062000Z",
+      "time": "2026-08-07T17:27:11.957792000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4419,19 +3975,15 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.673
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.731
         },
         {
           "name": "steps_taken",
-          "value": 3
+          "value": 2
         },
         {
           "name": "receipt_sha256",
-          "value": "b2832050135d33f18baa0d5b619cf0079fc4a98fbde64cb00c4e6a0516b77f09"
+          "value": "32dacdc1f5eb2498e5d72a1644439dff44a7ef61afeb868dc2ca4e72128a0b52"
         }
       ],
       "relationships": [
@@ -4452,7 +4004,7 @@
     {
       "id": "evt-solve-MasterMind-StableBaseline-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:11:12.670377000Z",
+      "time": "2026-08-07T17:27:14.794755000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4460,11 +4012,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 2.673
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 2.836
         },
         {
           "name": "detail",
@@ -4489,7 +4037,7 @@
     {
       "id": "evt-solve-MasterMind-Witness-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:11:14.203160000Z",
+      "time": "2026-08-07T17:27:16.490890000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4497,19 +4045,15 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.532
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.696
         },
         {
           "name": "steps_taken",
-          "value": 3
+          "value": 2
         },
         {
           "name": "receipt_sha256",
-          "value": "09f5ff192490e460870f3001662dab2531eac97725d71d153de3851217c3e328"
+          "value": "fc8a6182adef5b94529b66422ca0b213a53c2253135975c71ebd94137410474b"
         }
       ],
       "relationships": [
@@ -4530,7 +4074,7 @@
     {
       "id": "evt-solve-MasterMind-pPOMCP-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:11:15.830878000Z",
+      "time": "2026-08-07T17:27:18.309890000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4538,11 +4082,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.627
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.818
         },
         {
           "name": "detail",
@@ -4567,7 +4107,7 @@
     {
       "id": "evt-match-RockPaperScissors",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:16.400185000Z",
+      "time": "2026-08-07T17:27:18.955017000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4592,7 +4132,7 @@
     {
       "id": "evt-solve-RockPaperScissors-DSPyPolicy-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:11:26.271714000Z",
+      "time": "2026-08-07T17:27:23.401038000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4600,11 +4140,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 9.871
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 4.445
         },
         {
           "name": "steps_taken",
@@ -4633,7 +4169,7 @@
     {
       "id": "evt-solve-RockPaperScissors-MAHD-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:11:28.121596000Z",
+      "time": "2026-08-07T17:27:25.324955000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4641,11 +4177,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 1.85
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 1.923
         },
         {
           "name": "detail",
@@ -4670,7 +4202,7 @@
     {
       "id": "evt-solve-RockPaperScissors-RayRLlib-0",
       "type": "decision_solve",
-      "time": "2026-08-07T17:11:33.211733000Z",
+      "time": "2026-08-07T17:27:30.524572000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4678,11 +4210,7 @@
         },
         {
           "name": "elapsed_s",
-          "value": 5.09
-        },
-        {
-          "name": "max_steps",
-          "value": 15
+          "value": 5.199
         },
         {
           "name": "detail",
@@ -4707,7 +4235,7 @@
     {
       "id": "evt-match-GymWidthDomain",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:33.844637000Z",
+      "time": "2026-08-07T17:27:31.180764000Z",
       "attributes": [
         {
           "name": "standing",
@@ -4732,14 +4260,14 @@
     {
       "id": "evt-match-ChatmanCleanSession",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:33.953292000Z",
+      "time": "2026-08-07T17:27:31.298300000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain ChatmanCleanSession"
         }
       ],
@@ -4757,14 +4285,14 @@
     {
       "id": "evt-match-CostDeterministicGymDomain",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:34.026349000Z",
+      "time": "2026-08-07T17:27:31.369054000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain CostDeterministicGymDomain"
         }
       ],
@@ -4782,14 +4310,14 @@
     {
       "id": "evt-match-DeterministicGymDomain",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:34.100167000Z",
+      "time": "2026-08-07T17:27:31.437848000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain DeterministicGymDomain"
         }
       ],
@@ -4807,14 +4335,14 @@
     {
       "id": "evt-match-FlightPlanningDomain",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:34.527283000Z",
+      "time": "2026-08-07T17:27:31.906479000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain FlightPlanningDomain"
         }
       ],
@@ -4832,14 +4360,14 @@
     {
       "id": "evt-match-GymDomain",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:34.601267000Z",
+      "time": "2026-08-07T17:27:31.977789000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain GymDomain"
         }
       ],
@@ -4857,14 +4385,14 @@
     {
       "id": "evt-match-GymPlanningDomain",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:34.671973000Z",
+      "time": "2026-08-07T17:27:32.049635000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain GymPlanningDomain"
         }
       ],
@@ -4882,14 +4410,14 @@
     {
       "id": "evt-match-MRCPSP",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:34.740863000Z",
+      "time": "2026-08-07T17:27:32.121140000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain MRCPSP"
         }
       ],
@@ -4907,14 +4435,14 @@
     {
       "id": "evt-match-MRCPSPCalendar",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:34.809683000Z",
+      "time": "2026-08-07T17:27:32.190945000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain MRCPSPCalendar"
         }
       ],
@@ -4932,14 +4460,14 @@
     {
       "id": "evt-match-MSRCPSP",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:34.879035000Z",
+      "time": "2026-08-07T17:27:32.259056000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain MSRCPSP"
         }
       ],
@@ -4957,14 +4485,14 @@
     {
       "id": "evt-match-MSRCPSPCalendar",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:34.945787000Z",
+      "time": "2026-08-07T17:27:32.328315000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain MSRCPSPCalendar"
         }
       ],
@@ -4982,14 +4510,14 @@
     {
       "id": "evt-match-PDDLDomain",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:35.017357000Z",
+      "time": "2026-08-07T17:27:32.398293000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain PDDLDomain"
         }
       ],
@@ -5007,14 +4535,14 @@
     {
       "id": "evt-match-PPDDLDomain",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:35.089533000Z",
+      "time": "2026-08-07T17:27:32.467025000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain PPDDLDomain"
         }
       ],
@@ -5032,14 +4560,14 @@
     {
       "id": "evt-match-RCPSP",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:35.155267000Z",
+      "time": "2026-08-07T17:27:32.535387000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain RCPSP"
         }
       ],
@@ -5057,14 +4585,14 @@
     {
       "id": "evt-match-RCPSPCalendar",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:35.224658000Z",
+      "time": "2026-08-07T17:27:32.603680000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain RCPSPCalendar"
         }
       ],
@@ -5082,14 +4610,14 @@
     {
       "id": "evt-match-RDDLDomain",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:35.295142000Z",
+      "time": "2026-08-07T17:27:32.674526000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain RDDLDomain"
         }
       ],
@@ -5107,14 +4635,14 @@
     {
       "id": "evt-match-RDDLDomainRL",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:35.364323000Z",
+      "time": "2026-08-07T17:27:32.748947000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain RDDLDomainRL"
         }
       ],
@@ -5132,14 +4660,14 @@
     {
       "id": "evt-match-RDDLDomainSimplifiedSpaces",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:35.432509000Z",
+      "time": "2026-08-07T17:27:32.820793000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain RDDLDomainSimplifiedSpaces"
         }
       ],
@@ -5157,14 +4685,14 @@
     {
       "id": "evt-match-SMRCPSPCalendar",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:35.498578000Z",
+      "time": "2026-08-07T17:27:32.893169000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain SMRCPSPCalendar"
         }
       ],
@@ -5182,14 +4710,14 @@
     {
       "id": "evt-match-Stochastic_RCPSP",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:35.568475000Z",
+      "time": "2026-08-07T17:27:32.964969000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain Stochastic_RCPSP"
         }
       ],
@@ -5207,14 +4735,14 @@
     {
       "id": "evt-match-TPDDLDomain",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:35.633214000Z",
+      "time": "2026-08-07T17:27:33.038690000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain TPDDLDomain"
         }
       ],
@@ -5232,14 +4760,14 @@
     {
       "id": "evt-match-UPDomain",
       "type": "decision_match",
-      "time": "2026-08-07T17:11:35.699682000Z",
+      "time": "2026-08-07T17:27:33.112111000Z",
       "attributes": [
         {
           "name": "standing",
           "value": "REFUSED"
         },
         {
-          "name": "error",
+          "name": "detail",
           "value": "ToolError: Error calling tool 'decision_match': SKD-FABRIC-006: failed to construct domain UPDomain"
         }
       ],
