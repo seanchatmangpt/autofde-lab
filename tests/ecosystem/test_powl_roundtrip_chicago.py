@@ -30,7 +30,7 @@ from pathlib import Path
 
 import pytest
 
-from skdecide.fabric.powl import (
+from autofde_lab.fabric.powl import (
     MFWP,
     POWL2,
     PROV,

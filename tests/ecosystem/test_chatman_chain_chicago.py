@@ -53,7 +53,7 @@ GL_GOVERNANCE_PROBLEM = GL_PLANNING / "problems" / "01-governance.pddl"
 MFW_TICKET10_POWL = MFW / "runs" / "ticket-10" / "plan.powl.ttl"
 MFW_TICKET10_PLAN = MFW / "runs" / "ticket-10" / "work" / "candidate.plan"
 
-ENGINE = [sys.executable, "-m", "skdecide.fabric.pddl_engine"]
+ENGINE = [sys.executable, "-m", "autofde_lab.fabric.pddl_engine"]
 
 EXIT_PLAN_FOUND = 0
 EXIT_NO_PLAN = 1
@@ -515,14 +515,14 @@ class TestOntologyIsGeneratedNotCurated:
           ontology; as a constant in one module nothing outside can reason
           about it.
         """
-        from skdecide.fabric.ontology import IN_PROCESS_KINDS, parse_kinds
+        from autofde_lab.fabric.ontology import IN_PROCESS_KINDS, parse_kinds
 
         failures: list[str] = []
 
         if not ONTOLOGY.exists():
             pytest.fail(
                 f"FILE_EXISTS: {ONTOLOGY} missing; regenerate with "
-                "`python -m skdecide.fabric.ontology "
+                "`python -m autofde_lab.fabric.ontology "
                 "ontology/skdecide-capabilities.ttl`"
             )
 
@@ -556,8 +556,8 @@ class TestOntologyIsGeneratedNotCurated:
         regenerating the ontology breaks this test, so a capability cannot
         enter the codebase and stay invisible to the coverage report.
         """
-        from skdecide import utils
-        from skdecide.fabric.coverage import load_ontology
+        from autofde_lab import utils
+        from autofde_lab.fabric.coverage import load_ontology
 
         solvers, domains = load_ontology(str(ONTOLOGY))
         live_solvers = set(utils.get_registered_solvers())
@@ -584,7 +584,7 @@ class TestOntologyIsGeneratedNotCurated:
         file got. This closes that hole: every kind the generator declares is
         compared against what the committed artifact actually contains.
         """
-        from skdecide.fabric.ontology import (
+        from autofde_lab.fabric.ontology import (
             ALL_KINDS,
             capabilities_of_kind,
             collect_capabilities,
@@ -602,13 +602,13 @@ class TestOntologyIsGeneratedNotCurated:
                 f"ontology {kind} terms drifted from the live registry.\n"
                 f"  missing from ontology: {sorted(expected - found)}\n"
                 f"  stale in ontology:     {sorted(found - expected)}\n"
-                "  regenerate: python -m skdecide.fabric.ontology "
+                "  regenerate: python -m autofde_lab.fabric.ontology "
                 "ontology/skdecide-capabilities.ttl"
             )
 
     def test_adapter_standing_is_not_baked_from_a_local_probe(self):
         """A host-dependent probe result must never become a committed fact."""
-        from skdecide.fabric.ontology import parse_kinds
+        from autofde_lab.fabric.ontology import parse_kinds
 
         emitted = parse_kinds(ONTOLOGY.read_text())
         assert emitted["Adapter"], "no adapters in the ontology"
@@ -621,8 +621,8 @@ class TestOntologyIsGeneratedNotCurated:
 
     def test_requirements_are_derived_not_asserted(self):
         """Ontology requirements must match get_domain_requirements() exactly."""
-        from skdecide import utils
-        from skdecide.fabric.coverage import load_ontology
+        from autofde_lab import utils
+        from autofde_lab.fabric.coverage import load_ontology
 
         solvers, _ = load_ontology(str(ONTOLOGY))
         checked = 0
@@ -652,8 +652,8 @@ class TestCapabilityCoverageIsComplete:
 
     @pytest.fixture(scope="class")
     def report(self):
-        from skdecide.fabric.coverage import build_report
-        from skdecide.hub.domain.career_admission import CareerAdmission
+        from autofde_lab.fabric.coverage import build_report
+        from autofde_lab.hub.domain.career_admission import CareerAdmission
 
         if not ONTOLOGY.exists():
             pytest.skip("BLOCKED:ONTOLOGY_ABSENT")
@@ -661,7 +661,7 @@ class TestCapabilityCoverageIsComplete:
 
     def test_no_capability_silently_omitted(self, report):
         """THE key invariant from the coverage requirement."""
-        from skdecide.fabric.coverage import coverage_is_complete
+        from autofde_lab.fabric.coverage import coverage_is_complete
 
         complete, problems = coverage_is_complete(report, str(ONTOLOGY))
         assert complete, "coverage incomplete:\n" + "\n".join(problems)
@@ -678,14 +678,14 @@ class TestCapabilityCoverageIsComplete:
         * MACHINE_READABLE_CAUSE -- a free-text reason is not machine-readable;
           "it failed" is not actionable.
         * COMPARISON_MEASURED -- ``match_solvers(ranked=True)`` is a no-op
-          (``src/skdecide/utils.py`` carries ``# TODO: implement ranking
+          (``src/autofde_lab/utils.py`` carries ``# TODO: implement ranking
           heuristic``), so a "dominated" verdict that was not measured is an
           empty claim.
         * APPLICABLE_WERE_RUN -- no capability may be applicable, available,
           and simply skipped.
         * REPORT_SCHEMA -- every JSON row carries the required fields.
         """
-        from skdecide.fabric.coverage import CAUSE_NONE, report_to_json
+        from autofde_lab.fabric.coverage import CAUSE_NONE, report_to_json
 
         failures: list[str] = []
 
@@ -780,7 +780,7 @@ def test_recursive_bootstrap_controller_is_absent_across_ecosystem():
     fails and forces the standing doc to be updated rather than letting the
     claim drift.
     """
-    controller = REPO_ROOT / "src" / "skdecide" / "fabric" / "recursive_controller.py"
+    controller = REPO_ROOT / "src" / "autofde_lab" / "fabric" / "recursive_controller.py"
     assert not controller.exists(), (
         "A recursive bootstrap controller now exists. Update "
         "docs/ecosystem-standing.md: this stage is no longer UNSUPPORTED."

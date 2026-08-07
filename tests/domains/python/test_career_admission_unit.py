@@ -13,7 +13,7 @@ SCOPE WARNING -- read before citing this test as evidence of anything:
     receipts nothing, and verifies nothing independently. It is an ANALOGY
     to the Chatman manufacturing law, not an exercise of it.
 
-    Passing here supports exactly one claim: skdecide's Astar computes a
+    Passing here supports exactly one claim: autofde_lab's Astar computes a
     cost-optimal, prerequisite-respecting order over this domain. It is not
     evidence for any cross-repository or ecosystem standing claim.
 
@@ -21,8 +21,8 @@ SCOPE WARNING -- read before citing this test as evidence of anything:
     and per-stage standing is recorded in docs/ecosystem-standing.md.
 
 What is actually verified below: real domain
-(skdecide.hub.domain.career_admission.CareerAdmission), real registered
-solver (Astar via skdecide.utils), real rollout, no mocks -- an action
+(autofde_lab.hub.domain.career_admission.CareerAdmission), real registered
+solver (Astar via autofde_lab.utils), real rollout, no mocks -- an action
 admitting a fact is inapplicable until that fact's prerequisites are
 admitted, and the solver finds the cost-optimal order, not merely a
 feasible one.
@@ -30,9 +30,9 @@ feasible one.
 
 import pytest
 
-from skdecide import utils
-from skdecide.hub.domain.career_admission import CareerAdmission
-from skdecide.hub.domain.career_admission.career_admission import DEFAULT_FACTS
+from autofde_lab import utils
+from autofde_lab.hub.domain.career_admission import CareerAdmission
+from autofde_lab.hub.domain.career_admission.career_admission import DEFAULT_FACTS
 
 
 @pytest.fixture

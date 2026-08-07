@@ -1,7 +1,7 @@
 ---
 paths:
   - "integrations/openclaw/**"
-  - "src/skdecide/openclaw_*.py"
+  - "src/autofde_lab/openclaw_*.py"
   - ".github/**"
 ---
 
@@ -13,7 +13,7 @@ confirmation needed. These require it:
 - `git push` to a shared branch, opening/merging a PR, a PyPI/conda release,
   docs deploy, or triggering a long CI job.
 - Anything that runs through the **OpenClaw bridge** (`integrations/openclaw/`,
-  `src/skdecide/openclaw_runtime.py`, `src/skdecide/openclaw_bridge.py`).
+  `src/autofde_lab/openclaw_runtime.py`, `src/autofde_lab/openclaw_bridge.py`).
   Verified in code this session, not aspirational: the bridge only admits
   names already present in scikit-decide's own `skdecide.domains` /
   `skdecide.solvers` entry-point registries (`openclaw_runtime.py::load_registered`,

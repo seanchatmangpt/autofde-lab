@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-"""Chicago-style tests for skdecide.ocel — real logs, real refusals.
+"""Chicago-style tests for autofde_lab.ocel — real logs, real refusals.
 
 **Ownership.** This file owns the *in-memory model*: construction via
 ``append_event``/``with_objects``, the whole ``OcelRefusal`` catalogue raised by
@@ -28,7 +28,7 @@ from typing import Callable
 
 import pytest
 
-from skdecide.ocel import (
+from autofde_lab.ocel import (
     EventObjectLink,
     ObjectChange,
     ObjectObjectLink,

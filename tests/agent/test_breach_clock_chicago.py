@@ -4,12 +4,12 @@
 
 """Chicago-style milestone test: the whole breach-clock loop, end to end.
 
-Real :class:`~skdecide.hub.domain.breach_clock.BreachClockDomain`, real POWL 2.0
+Real :class:`~autofde_lab.hub.domain.breach_clock.BreachClockDomain`, real POWL 2.0
 models, the real bounded executor, the real two-phase occurrence ledger, the
 real preserve-map machinery. Nothing is mocked, stubbed, or faked.
 
 **Self-contained by construction.** This module imports nothing outside
-``skdecide`` and the standard library. It reaches no network, no cloud provider,
+``autofde_lab`` and the standard library. It reaches no network, no cloud provider,
 and no sibling repository — ``~/mfw``, ``~/bcinr``, ``~/ggen`` and ``~/mfact``
 may all be absent. ``test_no_sibling_repository_is_imported_anywhere`` asserts
 that mechanically rather than leaving it to review, and
@@ -32,19 +32,19 @@ from typing import Any
 
 import pytest
 
-from skdecide.agent import replan as R
-from skdecide.agent.ledger import LedgerPhase
-from skdecide.agent.models import EpochStanding
-from skdecide.agent.refusals import CLAIM_CEILING
-from skdecide.agent.session import AgentSession
-from skdecide.hub.domain.breach_clock import (
+from autofde_lab.agent import replan as R
+from autofde_lab.agent.ledger import LedgerPhase
+from autofde_lab.agent.models import EpochStanding
+from autofde_lab.agent.refusals import CLAIM_CEILING
+from autofde_lab.agent.session import AgentSession
+from autofde_lab.hub.domain.breach_clock import (
     Action,
     BreachClockDomain,
     Containment,
     Notification,
     Scope,
 )
-from skdecide.powl.algebra import (
+from autofde_lab.powl.algebra import (
     Atom,
     ChoiceGraph,
     ChoiceGraphEdge,
@@ -52,10 +52,10 @@ from skdecide.powl.algebra import (
     PartialOrder,
     Silent,
 )
-from skdecide.powl.executor import enabled, node_at, replay, trace_of
-from skdecide.powl.identity import OccurrenceKey
-from skdecide.powl.membership import explain, trace_in_language
-from skdecide.powl.validate import validate_model
+from autofde_lab.powl.executor import enabled, node_at, replay, trace_of
+from autofde_lab.powl.identity import OccurrenceKey
+from autofde_lab.powl.membership import explain, trace_in_language
+from autofde_lab.powl.validate import validate_model
 
 # ── the two candidate plans ────────────────────────────────────────────────
 
@@ -452,7 +452,7 @@ def test_replay_reproduces_the_identical_final_marking(run):
 
 
 def test_replay_diverges_on_a_tampered_record(run):
-    from skdecide.powl.executor import DeadlockKind, ReplayDivergedError
+    from autofde_lab.powl.executor import DeadlockKind, ReplayDivergedError
 
     choices = list(run.session.epochs[-1].choices)
     tampered = choices[:]

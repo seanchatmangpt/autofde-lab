@@ -9,9 +9,9 @@ planning, RL, or PDDL/MDP algorithms, and you do not edit domain/solver
 source. Two entry points, both invoked via `python -m`, no packaged console
 script exists:
 
-- `python -m skdecide.fabric {catalog|match|solve|cache-stats|cache-hotset}`
+- `python -m autofde_lab.fabric {catalog|match|solve|cache-stats|cache-hotset}`
   — the Typer CLI over the domain/solver registry.
-- `python -m skdecide.openclaw_bridge {inspect|call|mcp}` — the OpenClaw
+- `python -m autofde_lab.openclaw_bridge {inspect|call|mcp}` — the OpenClaw
   bridge's own CLI, a separate stdio MCP transport.
 
 ## Rules

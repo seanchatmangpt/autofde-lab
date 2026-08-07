@@ -124,7 +124,7 @@
       "error": "RuntimeError: scatter(): Expected self.dtype to be equal to src.dtype",
       "location": "hub/solver/stable_baselines/autoregressive/common/distributions.py:135",
       "attributable_to_milestone": false,
-      "attribution_evidence": "no commit in 1ef12de..e32e870 touches src/skdecide/hub/; no changed module appears in the traceback",
+      "attribution_evidence": "no commit in 1ef12de..e32e870 touches src/autofde_lab/hub/; no changed module appears in the traceback",
       "proven_pre_existing": false,
       "pre_existence_standing": "UNKNOWN",
       "pre_existence_note": "Establishing pre-existence requires a control build at 1ef12de in its own environment; not done."
@@ -171,7 +171,7 @@
   "explore_surfaces": {
     "boundary_document": "docs/autofde/EXPLORE.md",
     "paths": [
-      "src/skdecide/autofde/",
+      "src/autofde_lab/autofde/",
       "infra/azure/",
       "infra/github/",
       "docs/autofde/",

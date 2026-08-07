@@ -150,7 +150,7 @@ SCANS: dict[str, re.Pattern[str]] = {
     ),
     # A mapping asserted as policy with nothing computing it. Honest to
     # label, still not an implementation.
-    # Real instance: src/skdecide/agent/faults.py DECLARED_MAPPING_ONLY --
+    # Real instance: src/autofde_lab/agent/faults.py DECLARED_MAPPING_ONLY --
     # 6 of 11 fault outcomes have no mechanism behind them.
     "declared_not_implemented": re.compile(
         r"(DECLARED_MAPPING_ONLY|declared mapping"

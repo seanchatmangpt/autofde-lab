@@ -66,7 +66,7 @@ Read from the commit log, not from a plan.
 
 - `db34caf` — defined the explore boundary and the operating model as documents.
 - `8804504` — admitted phase graph, GitHub projection, independent reconstruction
-  (`src/skdecide/autofde/phase_graph.py`, `github_projection.py`, `reconstruct.py`).
+  (`src/autofde_lab/autofde/phase_graph.py`, `github_projection.py`, `reconstruct.py`).
 - `27863af` — declarative GitHub project management generated from the graph
   (`infra/github/`).
 - `297f042` — refusal-first ephemeral Azure incident-response demo environment

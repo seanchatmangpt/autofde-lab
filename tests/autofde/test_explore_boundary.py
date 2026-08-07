@@ -2,10 +2,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-"""``skdecide.autofde`` is a leaf: nothing in the core may import it.
+"""``autofde_lab.autofde`` is a leaf: nothing in the core may import it.
 
 The dependency arrow points one way — ``autofde`` depends on
-:mod:`skdecide.powl`, and ``skdecide/{powl,agent,ocel,fabric}`` must not depend
+:mod:`autofde_lab.powl`, and ``autofde_lab/{powl,agent,ocel,fabric}`` must not depend
 on ``autofde``. That keeps the extraction boundary real for when AutoFDE moves
 to its own repository: a core module importing it would silently make the move
 a breaking change.
@@ -18,15 +18,16 @@ imports read with :mod:`ast`, not text search.
 from __future__ import annotations
 
 import ast
+import re
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from project_identity import LEGACY_NAMESPACE  # noqa: E402
+from project_identity import PYTHON_NAMESPACE  # noqa: E402
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SRC = REPO_ROOT / "src" / "skdecide"
+SRC = REPO_ROOT / "src" / "autofde_lab"
 AUTOFDE = SRC / "autofde"
 
 #: Core packages that must never depend on autofde.
@@ -38,6 +39,19 @@ CORE_MODULES = sorted(
     for p in (SRC / pkg).rglob("*.py")
     if "__pycache__" not in p.parts
 )
+
+
+#: Matches ``autofde`` as a whole word only. The namespace is ``autofde_lab``,
+#: which *contains* the substring "autofde", so a substring test would flag
+#: every core import (`autofde_lab.powl.algebra`) as an autofde dependency and
+#: the boundary would be unfalsifiable. ``_`` is a word character, so ``\bautofde\b``
+#: matches the subpackage and never the namespace.
+_AUTOFDE_WORD = re.compile(r"\bautofde\b")
+
+
+def _names_autofde(dotted: str) -> bool:
+    """True when a dotted import path refers to the ``autofde`` subpackage."""
+    return "autofde" in dotted.split(".")
 
 
 def _imported_names(tree: ast.AST) -> list[str]:
@@ -69,7 +83,7 @@ def test_no_core_module_imports_autofde():
     offenders: list[str] = []
     for path in CORE_MODULES:
         tree = ast.parse(path.read_text(), filename=str(path))
-        bad = [n for n in _imported_names(tree) if "autofde" in n]
+        bad = [n for n in _imported_names(tree) if _names_autofde(n)]
         if bad:
             offenders.append(f"{path.relative_to(SRC)} imports {bad}")
     assert not offenders, "core modules import autofde:\n" + "\n".join(offenders)
@@ -79,34 +93,34 @@ def test_core_modules_do_not_reach_autofde_dynamically():
     offenders = [
         str(path.relative_to(SRC))
         for path in CORE_MODULES
-        if "autofde" in path.read_text()
+        if _AUTOFDE_WORD.search(path.read_text())
     ]
     assert not offenders, f"core modules mention autofde: {offenders}"
 
 
 def test_skdecide_top_level_init_does_not_import_autofde():
     tree = ast.parse((SRC / "__init__.py").read_text())
-    assert not [n for n in _imported_names(tree) if "autofde" in n]
+    assert not [n for n in _imported_names(tree) if _names_autofde(n)]
 
 
 def test_autofde_depends_only_on_powl_within_skdecide():
     """The arrow points one way, and at exactly one core package."""
-    allowed = {f"{LEGACY_NAMESPACE}.powl", f"{LEGACY_NAMESPACE}.autofde"}
+    allowed = {f"{PYTHON_NAMESPACE}.powl", f"{PYTHON_NAMESPACE}.autofde"}
     offenders: list[str] = []
     checked_any = False
     for path in sorted(AUTOFDE.glob("*.py")):
         tree = ast.parse(path.read_text(), filename=str(path))
         for name in _imported_names(tree):
-            if name.startswith(LEGACY_NAMESPACE):
+            if name.startswith(PYTHON_NAMESPACE):
                 checked_any = True
                 root = ".".join(name.split(".")[:2])
                 if root not in allowed:
                     offenders.append(f"{path.name} imports {name}")
-    # Anti-vacuity: if a rename makes LEGACY_NAMESPACE stop matching anything,
+    # Anti-vacuity: if a rename makes PYTHON_NAMESPACE stop matching anything,
     # this loop silently checks nothing and passes. It must find at least the
-    # `skdecide.powl` import every autofde module is expected to have.
+    # `autofde_lab.powl` import every autofde module is expected to have.
     assert checked_any, (
-        f"no import in {AUTOFDE} starts with {LEGACY_NAMESPACE!r} -- "
+        f"no import in {AUTOFDE} starts with {PYTHON_NAMESPACE!r} -- "
         "the namespace constant is stale, or autofde no longer depends on "
         "the core at all, either of which needs investigating, not a green"
     )

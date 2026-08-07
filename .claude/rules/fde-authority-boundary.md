@@ -3,8 +3,8 @@ paths:
   - "tests/ecosystem/**"
   - "ontology/**"
   - "docs/ecosystem-standing.md"
-  - "src/skdecide/fabric/fde.py"
-  - "src/skdecide/fabric/recursive_controller.py"
+  - "src/autofde_lab/fabric/fde.py"
+  - "src/autofde_lab/fabric/recursive_controller.py"
 ---
 
 # FDE authority boundary — compiling a customer model is not holding customer authority

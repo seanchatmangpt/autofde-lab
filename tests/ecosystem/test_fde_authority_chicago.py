@@ -5,7 +5,7 @@
 """The 14 FDE falsifiers, one negative fixture each.
 
 Scope, stated first so this file is not cited for more than it establishes:
-these tests exercise :mod:`skdecide.fabric.fde` against **committed authority
+these tests exercise :mod:`autofde_lab.fabric.fde` against **committed authority
 artifacts**. They establish that the compiler/checker refuses each named
 organizational failure with a typed code. They establish nothing about any
 customer, any real grant, or any organizational standing -- no test here can
@@ -40,8 +40,8 @@ from pathlib import Path
 
 import pytest
 
-from skdecide.fabric import fde
-from skdecide.fabric.fde import (
+from autofde_lab.fabric import fde
+from autofde_lab.fabric.fde import (
     AuthorityError,
     ProposedOperation,
     load_authority,
@@ -362,7 +362,7 @@ def _check(failures: list[str], label: str, actual, expected) -> None:
 RECURSIVE_CONTROLLER = (
     Path(__file__).resolve().parents[2]
     / "src"
-    / "skdecide"
+    / "autofde_lab"
     / "fabric"
     / "recursive_controller.py"
 )

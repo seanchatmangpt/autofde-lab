@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-"""Mechanical proof that ``skdecide.powl`` and ``skdecide.agent`` are self-contained.
+"""Mechanical proof that ``autofde_lab.powl`` and ``autofde_lab.agent`` are self-contained.
 
 ``tests/agent/test_breach_clock_chicago.py`` claims the milestone loop runs on a
 clean checkout with ``~/mfw``, ``~/bcinr``, ``~/ggen`` and ``~/mfact`` all
@@ -36,20 +36,20 @@ SIBLING_REPOS = (
 _PROBE = r"""
 import json, os, sys
 
-import skdecide.powl
-import skdecide.agent
-from skdecide.powl.algebra import Atom, PartialOrder
-from skdecide.powl.executor import enabled, fire
-from skdecide.powl.validate import validate_model
-from skdecide.agent.session import AgentSession
-from skdecide.agent import replan
-from skdecide.hub.domain.breach_clock import BreachClockDomain
+import autofde_lab.powl
+import autofde_lab.agent
+from autofde_lab.powl.algebra import Atom, PartialOrder
+from autofde_lab.powl.executor import enabled, fire
+from autofde_lab.powl.validate import validate_model
+from autofde_lab.agent.session import AgentSession
+from autofde_lab.agent import replan
+from autofde_lab.hub.domain.breach_clock import BreachClockDomain
 
 # not just importable — usable, with no home directory and no network
 model = PartialOrder((Atom("a"), Atom("b")))
 validate_model(model)
 live = enabled(model)
-marking = fire(model, __import__("skdecide.powl.executor", fromlist=["x"]).INITIAL_MARKING, sorted(live)[0])
+marking = fire(model, __import__("autofde_lab.powl.executor", fromlist=["x"]).INITIAL_MARKING, sorted(live)[0])
 
 files = {}
 for name, mod in list(sys.modules.items()):
@@ -107,10 +107,10 @@ def test_powl_and_agent_import_and_run_with_an_empty_home(tmp_path: Path):
 
     # and the modules the milestone test depends on really were loaded
     for required in (
-        "skdecide.powl.executor",
-        "skdecide.powl.validate",
-        "skdecide.agent.session",
-        "skdecide.agent.replan",
-        "skdecide.hub.domain.breach_clock.breach_clock",
+        "autofde_lab.powl.executor",
+        "autofde_lab.powl.validate",
+        "autofde_lab.agent.session",
+        "autofde_lab.agent.replan",
+        "autofde_lab.hub.domain.breach_clock.breach_clock",
     ):
         assert required in result["files"], sorted(result["files"])

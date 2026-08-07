@@ -9,7 +9,7 @@ import json
 import pathlib
 
 MODULE_PATH = (
-    pathlib.Path(__file__).parents[1] / "src" / "skdecide" / "openclaw_bridge.py"
+    pathlib.Path(__file__).parents[1] / "src" / "autofde_lab" / "openclaw_bridge.py"
 )
 SPEC = importlib.util.spec_from_file_location("openclaw_bridge_under_test", MODULE_PATH)
 assert SPEC is not None and SPEC.loader is not None

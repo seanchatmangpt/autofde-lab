@@ -1,6 +1,6 @@
 {
   "applied": false,
-  "generator": "skdecide.autofde.github_projection",
+  "generator": "autofde_lab.autofde.github_projection",
   "issues": [
     {
       "labels": [

@@ -66,7 +66,7 @@ jobs:
             "pynng>=0.6.2" \
             "pathos>=0.2.7" \
             "discrete-optimization>=0.9.0"
-      - run: python -m compileall -q src/skdecide/_cache src/skdecide/caching.py
+      - run: python -m compileall -q src/autofde_lab/_cache src/autofde_lab/caching.py
       - env:
           PYTHONPATH: src
         run: python -m pytest -q tests/test_caching.py tests/test_enterprise_cache.py
@@ -155,7 +155,7 @@ jobs:
           python -m pip install "build==1.2.2"
           python -m build --sdist
           tar -tzf dist/*.tar.gz > sdist-files.txt
-          grep -Eq '/src/skdecide/_cache/' sdist-files.txt
+          grep -Eq '/src/autofde_lab/_cache/' sdist-files.txt
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: source-distribution

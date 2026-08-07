@@ -17,7 +17,7 @@ session:
   workflow and refusal vocabulary from `actuation-boundary.md`, for invoking a domain/solver
   through the bridge during a session.
 - `standing-report` skill — the `explore-register.md` nano-nonfiction dispatch template.
-- `fabric-runner` agent — narrow agent scoped to `python -m skdecide.fabric`
+- `fabric-runner` agent — narrow agent scoped to `python -m autofde_lab.fabric`
   and `openclaw_bridge` invocations, for when something should actually run
   through the registry rather than be read about.
 

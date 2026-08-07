@@ -389,7 +389,7 @@ def main() -> int:
     branch = git(source, "rev-parse", "--abbrev-ref", "HEAD")
     dirty = bool(git(source, "status", "--porcelain"))
 
-    tmp = Path(tempfile.mkdtemp(prefix="skdecide-clean-checkout-"))
+    tmp = Path(tempfile.mkdtemp(prefix="autofde_lab-clean-checkout-"))
     clone = tmp / "checkout"
     empty_home = tmp / "empty-home"
     empty_home.mkdir()

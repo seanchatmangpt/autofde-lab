@@ -4,8 +4,8 @@ import sys
 from types import SimpleNamespace
 from typing import Any
 
-from skdecide.fabric.mcp import create_server
-from skdecide.fabric.service import DecisionFabric
+from autofde_lab.fabric.mcp import create_server
+from autofde_lab.fabric.service import DecisionFabric
 
 
 class FakeFastMCP:

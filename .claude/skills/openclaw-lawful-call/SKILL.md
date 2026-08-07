@@ -14,11 +14,11 @@ skill), scoped here for in-session Claude Code use.
 
 ## Lawful workflow
 
-1. `python -m skdecide.openclaw_bridge inspect` (or `skdecide_catalog` if
+1. `python -m autofde_lab.openclaw_bridge inspect` (or `skdecide_catalog` if
    working through MCP) — observe registered domains/solvers before
    constructing anything. Never invent a class path outside the registry;
    the bridge refuses unregistered subjects (see below).
-2. `python -m skdecide.openclaw_bridge call describe --name <subject>` before
+2. `python -m autofde_lab.openclaw_bridge call describe --name <subject>` before
    constructing an unfamiliar domain/solver — don't guess constructor args.
 3. `... call match` when compatibility between a concrete domain and a
    solver isn't already established.
@@ -40,7 +40,7 @@ skill), scoped here for in-session Claude Code use.
 - `REFUSED:BOUND_EXCEEDED` — reduce episodes, steps, timeout, or output
   size; don't retry unchanged.
 - `REFUSED:UNKNOWN_TOOL` — the tool name itself isn't in `TOOL_DEFINITIONS`;
-  check `python -m skdecide.openclaw_bridge inspect` for the actual set.
+  check `python -m autofde_lab.openclaw_bridge inspect` for the actual set.
 - `BUILD_BROKEN` — preserve the receipt and error, identify the first
   failed transition, repair the narrowest cause — don't broaden the fix
   past what the receipt implicates.

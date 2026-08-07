@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-"""Adversarial structural-validation tests for :mod:`skdecide.powl.validate`.
+"""Adversarial structural-validation tests for :mod:`autofde_lab.powl.validate`.
 
 Every refusal ``validate_model`` can raise still gets a model built specifically
 to trigger it, and the *exact* refusal is still asserted — not merely that a
@@ -18,7 +18,7 @@ invisible to the other.
 
 Why ``_raw`` exists
 -------------------
-:mod:`skdecide.powl.algebra` refuses most malformed inputs at construction, so
+:mod:`autofde_lab.powl.algebra` refuses most malformed inputs at construction, so
 several of these models cannot be built through the normal constructors.
 :func:`_raw` allocates the frozen dataclass and writes its fields directly.
 """
@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from skdecide.powl.algebra import (
+from autofde_lab.powl.algebra import (
     Atom,
     ChoiceGraph,
     ChoiceGraphEdge,
@@ -37,9 +37,9 @@ from skdecide.powl.algebra import (
     Silent,
     Start,
 )
-from skdecide.powl.frequency import ONCE, ZERO_OR_MORE, Frequency
-from skdecide.powl.refusals import PowlRefusal
-from skdecide.powl.validate import validate_model
+from autofde_lab.powl.frequency import ONCE, ZERO_OR_MORE, Frequency
+from autofde_lab.powl.refusals import PowlRefusal
+from autofde_lab.powl.validate import validate_model
 
 from ._accumulate import Failures
 

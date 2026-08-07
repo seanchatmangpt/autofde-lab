@@ -21,7 +21,7 @@ import random
 
 import pytest
 
-from skdecide.powl.algebra import (
+from autofde_lab.powl.algebra import (
     Atom,
     ChoiceGraph,
     ChoiceGraphEdge,
@@ -30,9 +30,9 @@ from skdecide.powl.algebra import (
     PartialOrder,
     Silent,
 )
-from skdecide.powl.bounds import ExecutionBound
-from skdecide.powl.frequency import Frequency
-from skdecide.powl.executor import (
+from autofde_lab.powl.bounds import ExecutionBound
+from autofde_lab.powl.frequency import Frequency
+from autofde_lab.powl.executor import (
     INITIAL_MARKING,
     ChoiceRecord,
     DeadlockKind,
@@ -46,10 +46,10 @@ from skdecide.powl.executor import (
     replay,
     trace_of,
 )
-from skdecide.powl.membership import explain, trace_in_language
-from skdecide.powl.semantics import language
-from skdecide.powl.normalize import canonical_form, model_digest
-from skdecide.powl.refusals import PowlError, PowlRefusal
+from autofde_lab.powl.membership import explain, trace_in_language
+from autofde_lab.powl.semantics import language
+from autofde_lab.powl.normalize import canonical_form, model_digest
+from autofde_lab.powl.refusals import PowlError, PowlRefusal
 
 from ._accumulate import Failures
 
@@ -321,7 +321,7 @@ def test_membership_decides_a_choice_graph_nested_in_a_partial_order():
     """Positive cross-check over a nested choice graph.
 
     This test previously pinned a *gap*: ``membership.static_labels`` returns
-    ``()`` for a :class:`~skdecide.powl.algebra.ChoiceGraph` (its length is
+    ``()`` for a :class:`~autofde_lab.powl.algebra.ChoiceGraph` (its length is
     branch-dependent), so an enclosing partial order's label multiset came out
     short and a genuinely-in-language trace was rejected. ``membership`` now
     enumerates the branch options (``membership.label_options``) and checks the
@@ -527,7 +527,7 @@ def _frequency_models():
 
     ``membership.trace_in_language`` refuses a non-``ONCE`` frequency outright
     (``IRREDUCIBLE_PROJECTION``: its label multiset is not static), so the
-    independent oracle for these is :mod:`skdecide.powl.semantics`, which is a
+    independent oracle for these is :mod:`autofde_lab.powl.semantics`, which is a
     different algorithm from the executor's and imports none of it.
 
     These are ten *distinct models*, not ten redraws — the set is unchanged by

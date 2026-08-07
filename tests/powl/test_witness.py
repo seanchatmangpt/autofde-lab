@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import math
 
-from skdecide.powl.algebra import (
+from autofde_lab.powl.algebra import (
     Atom,
     ChoiceGraph,
     ChoiceGraphEdge,
@@ -17,8 +17,8 @@ from skdecide.powl.algebra import (
     PartialOrder,
     Silent,
 )
-from skdecide.powl.membership import trace_in_language
-from skdecide.powl.witness import (
+from autofde_lab.powl.membership import trace_in_language
+from autofde_lab.powl.witness import (
     WitnessReport,
     count_linearizations,
     sample_linearizations,

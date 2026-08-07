@@ -5,15 +5,15 @@ description: Add or modify a scikit-decide domain or solver, closing the loop wi
 
 # chicago-domain-solver
 
-Use this skill when adding a new domain (`src/skdecide/hub/domain/`), adding a
-new solver (`src/skdecide/hub/solver/`), or modifying an existing one's
+Use this skill when adding a new domain (`src/autofde_lab/hub/domain/`), adding a
+new solver (`src/autofde_lab/hub/solver/`), or modifying an existing one's
 behavior.
 
 ## Workflow
 
 1. **Find the nearest working sibling first.** Domains: read
-   `src/skdecide/hub/domain/maze/` as the reference shape. Solvers: read any
-   pure-Python solver under `src/skdecide/hub/solver/` (or, for C++ solvers,
+   `src/autofde_lab/hub/domain/maze/` as the reference shape. Solvers: read any
+   pure-Python solver under `src/autofde_lab/hub/solver/` (or, for C++ solvers,
    a sibling under `cpp/` — A* for a simple template, MCTS for a complex
    one). Do not re-derive the mixin/registration pattern from scratch; copy
    the sibling's shape and diverge only where the new subject actually
@@ -41,7 +41,7 @@ behavior.
 5. **If registering a new entry point** (for the domain/solver to be
    reachable through the OpenClaw bridge or fabric CLI — see the
    `openclaw-lawful-call` skill), confirm it appears in
-   `skdecide.domains`/`skdecide.solvers` via `python -m skdecide.fabric
+   `skdecide.domains`/`skdecide.solvers` via `python -m autofde_lab.fabric
    catalog` or `skdecide_catalog`, don't assume registration from the code
    change alone.
 

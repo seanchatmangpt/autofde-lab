@@ -5,7 +5,7 @@ We welcome all contributions to scikit-decide.
 You can help by:
 
 - fixing bugs (see [issues](https://github.com/seanchatmangpt/autofde-lab/issues) with label "bug"),
-- adding new domains or solvers to the hub in `skdecide/hub/`,
+- adding new domains or solvers to the hub in `autofde_lab/hub/`,
 - improving the documentation,
 - adding and improving educational notebooks in `notebooks/`.
 

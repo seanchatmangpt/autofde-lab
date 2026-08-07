@@ -13,7 +13,7 @@ item per model that stops at the first.
 
 from __future__ import annotations
 
-from skdecide.powl import (
+from autofde_lab.powl import (
     ONCE,
     Atom,
     ChoiceGraph,
@@ -26,7 +26,7 @@ from skdecide.powl import (
     Silent,
     Start,
 )
-from skdecide.powl.semantics import enabled_labels, interleavings, language
+from autofde_lab.powl.semantics import enabled_labels, interleavings, language
 
 from ._accumulate import Failures
 

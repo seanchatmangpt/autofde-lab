@@ -1,7 +1,7 @@
 ---
 paths:
-  - "src/skdecide/fabric/**"
-  - "src/skdecide/openclaw_*.py"
+  - "src/autofde_lab/fabric/**"
+  - "src/autofde_lab/openclaw_*.py"
   - "tests/ecosystem/**"
   - "ontology/**"
   - "docs/ecosystem-standing.md"
@@ -39,7 +39,7 @@ no driver, and three POWL representations (mfw Turtle, runtime JSON, bcinr
 
 **Two engineering rules that follow.**
 
-1. `python -m skdecide.fabric.pddl_engine <domain> <problem> <plan>` satisfies
+1. `python -m autofde_lab.fabric.pddl_engine <domain> <problem> <plan>` satisfies
    `~/mfw`'s existing `classical` engine contract (`mfw-planner/src/config.rs`).
    Its `--help` banner must keep starting with `usage:` — that string is pinned
    as `pddl:versionWitnessPrefix` in a `PlannerProfile`, so changing it silently
@@ -53,7 +53,7 @@ no driver, and three POWL representations (mfw Turtle, runtime JSON, bcinr
 
 **Capability claims must be ontology-backed.** `ontology/skdecide-capabilities.ttl`
 is generated from entry points + a live import probe + `get_domain_requirements()`
-MRO derivation — regenerate it with `python -m skdecide.fabric.ontology
+MRO derivation — regenerate it with `python -m autofde_lab.fabric.ontology
 ontology/skdecide-capabilities.ttl`, never hand-edit. `tests/ecosystem/` fails if
 it drifts from the registry. This is an epistemic control, not documentation: a
 false ecosystem claim was made this session ("no POWL executor exists") from a

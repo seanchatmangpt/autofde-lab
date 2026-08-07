@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from skdecide.powl.algebra import (
+from autofde_lab.powl.algebra import (
     Atom,
     ChoiceGraph,
     ChoiceGraphEdge,
@@ -16,9 +16,9 @@ from skdecide.powl.algebra import (
     PartialOrder,
     Silent,
 )
-from skdecide.powl.frequency import ONE_OR_MORE
-from skdecide.powl.membership import explain, static_labels, trace_in_language
-from skdecide.powl.refusals import PowlRefusal
+from autofde_lab.powl.frequency import ONE_OR_MORE
+from autofde_lab.powl.membership import explain, static_labels, trace_in_language
+from autofde_lab.powl.refusals import PowlRefusal
 
 from ._accumulate import Failures
 
@@ -39,7 +39,7 @@ def _diamond() -> PartialOrder:
 
 
 def test_membership_module_does_not_import_the_executor():
-    import skdecide.powl.membership as m
+    import autofde_lab.powl.membership as m
 
     src = open(m.__file__).read()
     import_lines = [

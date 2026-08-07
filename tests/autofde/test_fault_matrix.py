@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import pytest
 
-from skdecide.agent.faults import (
+from autofde_lab.agent.faults import (
     DECLARED_MAPPING_ONLY,
     FaultKind,
     FaultObservation,
@@ -25,9 +25,9 @@ from skdecide.agent.faults import (
     observe_label_context_collision,
     observe_torn_fire,
 )
-from skdecide.agent.ledger import OccurrenceLedger
-from skdecide.agent.refusals import AgentRefusal, AgentRefusalCode
-from skdecide.powl.identity import OccurrenceKey
+from autofde_lab.agent.ledger import OccurrenceLedger
+from autofde_lab.agent.refusals import AgentRefusal, AgentRefusalCode
+from autofde_lab.powl.identity import OccurrenceKey
 
 K = FaultKind
 O = FaultOutcome
@@ -124,9 +124,9 @@ def test_fault_11_torn_ledger_refuses_resume_by_name() -> None:
     The session must refuse by name. It must never guess: assume it committed
     and an action is lost; assume it did not and the action double-fires.
     """
-    from skdecide.hub.domain.maze import Maze
+    from autofde_lab.hub.domain.maze import Maze
 
-    from skdecide.agent.session import AgentSession
+    from autofde_lab.agent.session import AgentSession
 
     torn = OccurrenceLedger()
     torn.intend((0,), "ctx-before-crash", activity_sha256="a" * 64, detail="PRE_ACT")

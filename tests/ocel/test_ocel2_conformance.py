@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-"""Independent OCEL 2.0 conformance checks for :mod:`skdecide.ocel`.
+"""Independent OCEL 2.0 conformance checks for :mod:`autofde_lab.ocel`.
 
 Written by an agent that did not build the package, against the *specification*
 rather than against the package's own docstrings. Two authorities are used, and
@@ -36,8 +36,8 @@ import pathlib
 
 import pytest
 
-from skdecide.ocel.log import SPEC_ATTRIBUTE_TYPES, STATIC_ATTRIBUTE_NS, OcelLog
-from skdecide.ocel.model import (
+from autofde_lab.ocel.log import SPEC_ATTRIBUTE_TYPES, STATIC_ATTRIBUTE_NS, OcelLog
+from autofde_lab.ocel.model import (
     EventObjectLink,
     ObjectChange,
     ObjectObjectLink,
@@ -48,7 +48,7 @@ from skdecide.ocel.model import (
     format_ns,
     parse_ns,
 )
-from skdecide.ocel.refusals import OcelError
+from autofde_lab.ocel.refusals import OcelError
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 

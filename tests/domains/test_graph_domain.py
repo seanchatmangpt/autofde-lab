@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-"""Chicago-school tests for skdecide.hub.domain.graph_domain.
+"""Chicago-school tests for autofde_lab.hub.domain.graph_domain.
 
 GraphDomain / GraphDomainUncertain wrap an already-computed dict-based
 transition table. They are typically built by GraphExploration subclasses
@@ -20,16 +20,16 @@ from __future__ import annotations
 
 import pytest
 
-from skdecide import D, DeterministicPlanningDomain, ImplicitSpace, Space, Value
-from skdecide.hub.domain.graph_domain.GraphDomain import (
+from autofde_lab import D, DeterministicPlanningDomain, ImplicitSpace, Space, Value
+from autofde_lab.hub.domain.graph_domain.GraphDomain import (
     ActionSpace,
     GraphDomain,
     GraphDomainUncertain,
 )
-from skdecide.hub.domain.graph_domain.graph_domain_builders.DFSExploration import (
+from autofde_lab.hub.domain.graph_domain.graph_domain_builders.DFSExploration import (
     DFSExploration,
 )
-from skdecide.hub.domain.graph_domain.graph_domain_builders.FullSpaceExploration import (
+from autofde_lab.hub.domain.graph_domain.graph_domain_builders.FullSpaceExploration import (
     FullSpaceExploration,
 )
 

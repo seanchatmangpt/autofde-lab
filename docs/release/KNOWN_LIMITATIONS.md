@@ -35,7 +35,7 @@ RuntimeError: scatter(): Expected self.dtype to be equal to src.dtype
 Two separate statements, and the distinction is load-bearing:
 
 - **Not attributable to this milestone.** No commit in `1ef12de..e32e870` touches
-  `src/skdecide/hub/`, and no module changed in that range appears anywhere in the traceback.
+  `src/autofde_lab/hub/`, and no module changed in that range appears anywhere in the traceback.
   This is a positive finding from the commit range and the traceback.
 - **Not proven pre-existing.** `UNKNOWN`. Establishing that the failure predates `1ef12de`
   requires building and running the control at that commit in its own environment, which was
@@ -105,7 +105,7 @@ deleting a falsifier also reduces the count.
 
 ## 9. Every AutoFDE surface is EXPLORE
 
-`src/skdecide/autofde/`, `infra/azure/`, `infra/github/`, `docs/autofde/`, `tests/autofde/`,
+`src/autofde_lab/autofde/`, `infra/azure/`, `infra/github/`, `docs/autofde/`, `tests/autofde/`,
 and `demo/` are explore surfaces. Per [../autofde/EXPLORE.md](../autofde/EXPLORE.md), no
 standing row produced under them transfers to the AutoFDE product, which ships from a different
 repository and must re-establish its own evidence there.

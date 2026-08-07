@@ -6,8 +6,8 @@
 
 Real objects throughout — no mocks, no patched internals.
 
-``skdecide.agent.ledger.OccurrenceLedger`` is the write-ahead record;
-``skdecide.agent.replan.Ledger`` is the read view a reuse claim is validated
+``autofde_lab.agent.ledger.OccurrenceLedger`` is the write-ahead record;
+``autofde_lab.agent.replan.Ledger`` is the read view a reuse claim is validated
 against. They were reconciled into one read-view, and this file was merged from
 ``test_ledger.py`` + ``test_ledger_reconciliation.py`` to follow: the WAL and its
 projection are one subject, and keeping them apart meant the central guarantee --
@@ -21,9 +21,9 @@ from __future__ import annotations
 
 import pytest
 
-from skdecide.agent.ledger import LedgerPhase, OccurrenceLedger
-from skdecide.agent.refusals import AgentRefusal, AgentRefusalCode
-from skdecide.agent.replan import (
+from autofde_lab.agent.ledger import LedgerPhase, OccurrenceLedger
+from autofde_lab.agent.refusals import AgentRefusal, AgentRefusalCode
+from autofde_lab.agent.replan import (
     Ledger,
     OccurrenceStatus,
     PreserveMap,
@@ -33,7 +33,7 @@ from skdecide.agent.replan import (
     as_ledger,
     validate_preserve_map,
 )
-from skdecide.powl.algebra import Atom, PartialOrder
+from autofde_lab.powl.algebra import Atom, PartialOrder
 
 
 def _model():
@@ -100,9 +100,9 @@ def test_an_outstanding_intent_makes_the_ledger_unresumable_everywhere():
     guarantee hold in one place and silently not in another, so all four are
     still checked here.
     """
-    from skdecide.hub.domain.maze import Maze
+    from autofde_lab.hub.domain.maze import Maze
 
-    from skdecide.agent.session import AgentSession
+    from autofde_lab.agent.session import AgentSession
 
     ledger = OccurrenceLedger()
     ledger.intend((0,), "ctx")  # crash right here: acted? did not act? UNKNOWN

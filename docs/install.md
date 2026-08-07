@@ -13,8 +13,8 @@ The following examples show how to create a virtual environment with Python vers
 #### With conda
 
 ```shell
-conda create -n skdecide python=3.12
-conda activate skdecide
+conda create -n autofde_lab python=3.12
+conda activate autofde_lab
 ```
 
 #### With pyenv + venv
@@ -22,15 +22,15 @@ conda activate skdecide
 ```shell
 pyenv install 3.12
 pyenv shell 3.12
-python -m venv skdecide-venv
-source skdecide-venv/bin/activate  # skdecide-venv\Scripts\activate on windows
+python -m venv autofde_lab-venv
+source autofde_lab-venv/bin/activate  # autofde_lab-venv\Scripts\activate on windows
 ```
 
 #### With uv
 
 ```shell
-uv venv skdecide-venv --python 3.12
-source skdecide-venv/bin/activate  # skdecide-venv\Scripts\activate on windows
+uv venv autofde_lab-venv --python 3.12
+source autofde_lab-venv/bin/activate  # autofde_lab-venv\Scripts\activate on windows
 ```
 
 ## Install scikit-decide library

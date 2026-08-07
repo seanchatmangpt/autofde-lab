@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import pytest
 
-from skdecide.fabric.models import (
+from autofde_lab.fabric.models import (
     CacheStatus,
     DecisionRefusal,
     DecisionRequest,
     DecisionStanding,
     RefusalCode,
 )
-from skdecide.fabric.service import DecisionFabric
+from autofde_lab.fabric.service import DecisionFabric
 
 
 def exact_request(**overrides: object) -> DecisionRequest:

@@ -2,7 +2,7 @@
 # Refuse edits to generated artifacts.
 #
 # `ontology/skdecide-capabilities.ttl` is produced by
-# `python -m skdecide.fabric.ontology` from entry points + a live import probe
+# `python -m autofde_lab.fabric.ontology` from entry points + a live import probe
 # + get_domain_requirements() MRO derivation. Its credibility rests on the
 # probe being the same act as the use -- a hand-edit silently converts it from
 # a measurement into an assertion, and `tests/ecosystem/` would then be
@@ -31,10 +31,10 @@ REFUSED:GENERATED_ARTIFACT_HAND_EDIT
 
 ontology/skdecide-capabilities.ttl is generated, not authored. Regenerate it:
 
-    python -m skdecide.fabric.ontology ontology/skdecide-capabilities.ttl
+    python -m autofde_lab.fabric.ontology ontology/skdecide-capabilities.ttl
 
 If the content you intended to change is not what the generator emits, the
-generator is what needs changing -- src/skdecide/fabric/ontology.py. Editing
+generator is what needs changing -- src/autofde_lab/fabric/ontology.py. Editing
 the .ttl directly makes the file assert what it is supposed to measure, and
 tests/ecosystem/ would then verify the ontology against itself.
 REFUSED

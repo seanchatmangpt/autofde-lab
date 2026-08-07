@@ -31,7 +31,7 @@ dependencies:
     - gymnasium[classic-control]==0.28.1
     - folium
     - pyRDDLGym-jax[dashboard]
-    - git+https://github.com/aiplan4eu/up-skdecide.git
+    - git+https://github.com/aiplan4eu/up-autofde_lab.git
     - optuna
     - optuna-dashboard
     - renderlab

@@ -66,7 +66,7 @@ nothing to exercise.
 
 ## Explore versus exploit
 
-`src/skdecide/autofde/`, `infra/azure/`, `infra/github/`, `docs/autofde/`, `tests/autofde/`,
+`src/autofde_lab/autofde/`, `infra/azure/`, `infra/github/`, `docs/autofde/`, `tests/autofde/`,
 and `demo/` are EXPLORE surfaces. Per [../autofde/EXPLORE.md](../autofde/EXPLORE.md), no
 standing row produced under them transfers to the AutoFDE product — including the green
 Terraform rows above, which describe **Azure deployment contracts and mocked infrastructure

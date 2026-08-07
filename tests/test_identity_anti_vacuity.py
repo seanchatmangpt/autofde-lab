@@ -10,11 +10,12 @@ partial rename therefore degrades to "zero domains, zero solvers" with no
 error anywhere in the stack -- a valid-looking, capability-less system. These
 tests pin the live counts so that degradation fails loudly instead.
 
-As of this commit the live package is still `skdecide` (Phase 3 of the
-AutoFDE Lab rename has not landed), so these assert against the LEGACY
-entry-point groups in tests/project_identity.py. When Phase 3-4 land, flip
-the group constants these use to the primary ones -- do not delete the
-counts, they do not change.
+As of this commit Phase 3 has landed: the live package is `autofde_lab`, so
+the module imports below use it. The entry-point GROUP names are still the
+legacy `skdecide.domains` / `skdecide.solvers` -- renaming those is Phase 4 --
+so these still assert against the LEGACY group constants in
+tests/project_identity.py. When Phase 4 lands, flip the group constants to
+the primary ones -- do not delete the counts, they do not change.
 """
 
 from __future__ import annotations
@@ -58,7 +59,7 @@ def test_solver_registry_is_not_silently_empty():
 
 
 def test_get_registered_domains_matches_the_entrypoint_count():
-    from skdecide.utils import get_registered_domains
+    from autofde_lab.utils import get_registered_domains
 
     domains = get_registered_domains()
     assert domains, "get_registered_domains() returned nothing"
@@ -66,7 +67,7 @@ def test_get_registered_domains_matches_the_entrypoint_count():
 
 
 def test_get_registered_solvers_matches_the_entrypoint_count():
-    from skdecide.utils import get_registered_solvers
+    from autofde_lab.utils import get_registered_solvers
 
     solvers = get_registered_solvers()
     assert solvers, "get_registered_solvers() returned nothing"

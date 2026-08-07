@@ -24,15 +24,15 @@ TIREWORLD_PROBLEM = os.path.join(PDDL_DIR, "tireworld", "p01.pddl")
 # a skip -- including a stale name after a partial rename -- so a wrong
 # string here degrades to "extension not built" with no error. Update this
 # line in the same commit as the C++/CMake rename, not after.
-pytest.importorskip("skdecide.hub.__skdecide_hub_cpp")
+pytest.importorskip("autofde_lab.hub.__skdecide_hub_cpp")
 
-from skdecide.hub.domain.pddl import PPDDLDomain
-from skdecide.hub.solver.pddl.ppddldethindsight import (
+from autofde_lab.hub.domain.pddl import PPDDLDomain
+from autofde_lab.hub.solver.pddl.ppddldethindsight import (
     FFDetHindsight,
     PPDDLDetHindsight,
 )
-from skdecide.hub.solver.pddl.ppddlplanmerger import RFF, PPDDLPlanMerger
-from skdecide.hub.solver.pddl.ppddlreplan import FFReplan, PPDDLReplan
+from autofde_lab.hub.solver.pddl.ppddlplanmerger import RFF, PPDDLPlanMerger
+from autofde_lab.hub.solver.pddl.ppddlreplan import FFReplan, PPDDLReplan
 
 
 @pytest.fixture

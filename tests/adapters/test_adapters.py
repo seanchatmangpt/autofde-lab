@@ -13,8 +13,8 @@ import sys
 
 import pytest
 
-from skdecide import adapters
-from skdecide.adapters import ADAPTERS, AdapterProbe, AdapterStatus, available, probe_all
+from autofde_lab import adapters
+from autofde_lab.adapters import ADAPTERS, AdapterProbe, AdapterStatus, available, probe_all
 
 ADAPTER_DIR = pathlib.Path(adapters.__file__).parent
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -101,7 +101,7 @@ def test_import_succeeds_in_fresh_subprocess_with_empty_home(tmp_path):
         "PYTHONPATH": str(REPO_ROOT / "src"),
     }
     code = (
-        "import skdecide.adapters as a;"
+        "import autofde_lab.adapters as a;"
         "r = a.probe_all();"
         "assert r, 'no adapters registered';"
         "assert all(p.searched for p in r.values()), 'probe without search boundary';"

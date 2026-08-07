@@ -26,9 +26,9 @@ import sys
 
 import pytest
 
-from skdecide import adapters
-from skdecide.adapters import azure as azure_pkg
-from skdecide.adapters.azure import (
+from autofde_lab import adapters
+from autofde_lab.adapters import azure as azure_pkg
+from autofde_lab.adapters.azure import (
     AZURE_SURFACE_ADAPTERS,
     AzureEvidenceSink,
     AzureIdentity,
@@ -42,7 +42,7 @@ from skdecide.adapters.azure import (
     RefusalCode,
     probe_azure_surfaces,
 )
-from skdecide.adapters.base import AdapterStatus
+from autofde_lab.adapters.base import AdapterStatus
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 
@@ -289,8 +289,8 @@ def test_no_azure_sdk_is_imported_at_module_level_or_lazily(tmp_path):
         "PYTHONPATH": str(REPO_ROOT / "src"),
     }
     code = (
-        "import sys, skdecide.adapters as a;"
-        "from skdecide.adapters.azure import probe_azure_surfaces, AzureIdentity;"
+        "import sys, autofde_lab.adapters as a;"
+        "from autofde_lab.adapters.azure import probe_azure_surfaces, AzureIdentity;"
         "r = probe_azure_surfaces();"
         "assert r, 'no azure surfaces';"
         "assert all(p.searched and p.methods_used for p in r.values());"

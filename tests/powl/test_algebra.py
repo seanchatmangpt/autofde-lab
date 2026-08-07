@@ -12,7 +12,7 @@ and its expected-vs-actual :class:`PowlRefusal` — the same falsifiers, one ite
 
 from __future__ import annotations
 
-from skdecide.powl import (
+from autofde_lab.powl import (
     DEFAULT_BOUND,
     MAX_POWL_DEPTH,
     ONE_OR_MORE,

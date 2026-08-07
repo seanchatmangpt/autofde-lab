@@ -1,6 +1,6 @@
 ---
 paths:
-  - "src/skdecide/**"
+  - "src/autofde_lab/**"
   - "cpp/**"
   - "tests/**"
 ---
@@ -12,10 +12,10 @@ not a description to reason from — the source is the witness, this file
 drifts.
 
 **Core design**: domains and solvers compose orthogonal builder mixins
-(`src/skdecide/builders/domain/`, `src/skdecide/builders/solver/`), one
+(`src/autofde_lab/builders/domain/`, `src/autofde_lab/builders/solver/`), one
 single-inheritance chain per dimension (agent, concurrency, dynamics,
 events, memory, observability, value, initialization). Presets in
-`src/skdecide/domains.py` (`Domain`, `RLDomain`, `MDPDomain`,
+`src/autofde_lab/domains.py` (`Domain`, `RLDomain`, `MDPDomain`,
 `GoalMDPDomain`, `DeterministicPlanningDomain`, `POMDPDomain`, ...).
 
 **Three-tier method naming** — read the actual class before assuming a
@@ -33,21 +33,21 @@ domain._get_X_()  # override point — implement here
 `[project.scripts]` in `pyproject.toml`); everything is invoked via `python
 -m`:
 
-- `python -m skdecide.fabric` — Typer CLI over the domain/solver registry:
+- `python -m autofde_lab.fabric` — Typer CLI over the domain/solver registry:
   `catalog`, `match`, `solve`, `cache-stats`, `cache-hotset`, `serve-mcp`,
   `serve-a2a`. Full design in `docs/agentic-fabric.md`.
-- `src/skdecide/fabric/mcp.py` (`serve-mcp` above) — FastMCP server exposing
+- `src/autofde_lab/fabric/mcp.py` (`serve-mcp` above) — FastMCP server exposing
   `decision_catalog`, `decision_match`, `decision_solve`,
   `decision_cache_stats`, `decision_cache_hotset`, and optionally
   `decision_compile` when a DSPy compiler is configured.
-- `python -m skdecide.openclaw_bridge {inspect|call|mcp}` — a second,
+- `python -m autofde_lab.openclaw_bridge {inspect|call|mcp}` — a second,
   hand-rolled stdio MCP transport backing the OpenClaw integration (see `.claude/rules/actuation-boundary.md`);
   independent of the fabric MCP server above.
 
 **Source layout**:
 
 ```
-src/skdecide/
+src/autofde_lab/
 ├── core.py, domains.py, solvers.py, utils.py
 ├── builders/domain/, builders/solver/   # capability mixins
 ├── hub/domain/, hub/solver/, hub/space/gym/
@@ -71,8 +71,8 @@ docs/ecosystem-standing.md   # the cross-repo standing ledger — see ecosystem-
 ```
 
 **Adding a domain/solver** — nearest working example first
-(`src/skdecide/hub/domain/maze/` for domains, any pure-Python solver under
-`src/skdecide/hub/solver/` for solvers); close the loop with a fixture +
+(`src/autofde_lab/hub/domain/maze/` for domains, any pure-Python solver under
+`src/autofde_lab/hub/solver/` for solvers); close the loop with a fixture +
 Chicago-style test in the same change, not a follow-up (also available as
 the invocable `chicago-domain-solver` skill, see project-tooling.md). C++ solvers follow one
 shared architecture (template header, impl, pybind wrapper, `.cc.in`,

@@ -96,7 +96,7 @@ Pass / typed skip / hard fail, plus a machine-readable coverage report fixture.
 
 # Neighboring components
 
-`src/skdecide/fabric/{pddl_engine,powl,ontology,coverage}.py`; `ontology/`;
+`src/autofde_lab/fabric/{pddl_engine,powl,ontology,coverage}.py`; `ontology/`;
 `docs/ecosystem-standing.md` (per-stage ledger S1–S8 and repair plans RP-1…RP-7);
 `tests/domains/python/test_career_admission_unit.py` (the demoted unit checkpoint this suite
 is explicitly *not*).

@@ -19,7 +19,7 @@ actually executed for it — `.claude/rules/standing-law.md` requires a run, not
 
 # Inputs
 
-The package under `src/skdecide/`, compiled hub `.so`, PDDL/RDDL corpora under
+The package under `src/autofde_lab/`, compiled hub `.so`, PDDL/RDDL corpora under
 `tests/domains/python/pddl_domains/`, optional extras.
 
 # Outputs

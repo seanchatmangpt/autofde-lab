@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import Callable
 
-from skdecide.powl.refusals import PowlError, PowlRefusal
+from autofde_lab.powl.refusals import PowlError, PowlRefusal
 
 
 class Failures(list):

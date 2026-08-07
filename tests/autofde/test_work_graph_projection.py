@@ -8,7 +8,7 @@ The law
 -------
 ``reduce(reconstruct_work_graph(generated tfvars)) == reduce(admitted graph)``
 
-Both sides are reduced explicitly via :func:`skdecide.powl.transitive_reduction`.
+Both sides are reduced explicitly via :func:`autofde_lab.powl.transitive_reduction`.
 
 What this proves and what it does not
 -------------------------------------
@@ -28,7 +28,7 @@ from pathlib import Path
 
 import pytest
 
-from skdecide.autofde.github_projection import (
+from autofde_lab.autofde.github_projection import (
     METADATA_BEGIN,
     METADATA_END,
     project,
@@ -36,7 +36,7 @@ from skdecide.autofde.github_projection import (
     render_project_plan_json,
     render_tfvars,
 )
-from skdecide.autofde.phase_graph import (
+from autofde_lab.autofde.phase_graph import (
     AUTOFDE_PHASE_GRAPH,
     Phase,
     PhaseGraph,
@@ -44,8 +44,8 @@ from skdecide.autofde.phase_graph import (
     reduce_order,
     work_partial_order,
 )
-from skdecide.autofde.reconstruct import parse_tfvars, reconstruct_work_graph
-from skdecide.autofde.refusals import AutoFdeError, AutoFdeRefusal
+from autofde_lab.autofde.reconstruct import parse_tfvars, reconstruct_work_graph
+from autofde_lab.autofde.refusals import AutoFdeError, AutoFdeRefusal
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 GRAPH = AUTOFDE_PHASE_GRAPH
@@ -92,7 +92,7 @@ def edit_meta(text: str, node_id: str, key: str, value: str) -> str:
 
 def test_reconstruct_does_not_import_the_projector():
     """Same discipline as ``tests/powl/test_membership.py``."""
-    import skdecide.autofde.reconstruct as m
+    import autofde_lab.autofde.reconstruct as m
 
     src = Path(m.__file__).read_text()
     import_lines = [
@@ -416,7 +416,7 @@ def test_checked_in_artifacts_match_a_fresh_render():
     for name, render in GENERATED_ARTIFACTS:
         path = GEN_DIR / name
         if not path.exists():
-            offenders.append(f"{name}: missing; run `python -m skdecide.autofde`")
+            offenders.append(f"{name}: missing; run `python -m autofde_lab.autofde`")
         elif path.read_text() != render(GRAPH):
             offenders.append(f"{name}: stale")
     assert not offenders, "generated artifacts out of date:\n" + "\n".join(offenders)
@@ -460,7 +460,7 @@ def test_the_package_contains_no_terraform_invocation_at_all():
     may shell out to Terraform — not ``apply``, not ``plan``. The package
     renders text; running Terraform is a human decision outside this code.
     """
-    pkg = REPO_ROOT / "src" / "skdecide" / "autofde"
+    pkg = REPO_ROOT / "src" / "autofde_lab" / "autofde"
     for path in sorted(pkg.glob("*.py")):
         tree = ast.parse(path.read_text(), filename=str(path))
         docstrings = {

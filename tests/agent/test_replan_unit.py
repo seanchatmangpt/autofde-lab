@@ -14,7 +14,7 @@ its own constructed defect.
 
 import pytest
 
-from skdecide.agent.replan import (
+from autofde_lab.agent.replan import (
     Epoch,
     Ledger,
     LedgerEntry,
@@ -29,9 +29,9 @@ from skdecide.agent.replan import (
     seed_marking,
     validate_preserve_map,
 )
-from skdecide.powl.algebra import Atom, OrderEdge, PartialOrder
-from skdecide.powl.executor import enabled, fire
-from skdecide.powl.identity import OccurrenceKey
+from autofde_lab.powl.algebra import Atom, OrderEdge, PartialOrder
+from autofde_lab.powl.executor import enabled, fire
+from autofde_lab.powl.identity import OccurrenceKey
 
 
 def _po(labels, edges=()):

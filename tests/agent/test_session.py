@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-"""Chicago-style tests for :class:`skdecide.agent.session.AgentSession`.
+"""Chicago-style tests for :class:`autofde_lab.agent.session.AgentSession`.
 
 Real ``Maze`` domain, real ``rollout``, real POWL executor. Nothing mocked.
 
@@ -19,18 +19,18 @@ from typing import Any
 
 import pytest
 
-from skdecide.agent.models import EpochStanding
-from skdecide.agent.refusals import (
+from autofde_lab.agent.models import EpochStanding
+from autofde_lab.agent.refusals import (
     BLOCKED_ACTION_NODE_UNRESOLVED,
     AgentRefusal,
     AgentRefusalCode,
 )
-from skdecide.agent.epoch import DecisionEpoch
-from skdecide.agent.session import AgentSession
-from skdecide.hub.domain.maze import Maze
-from skdecide.hub.domain.maze.maze import Action
-from skdecide.powl.algebra import Atom, PartialOrder
-from skdecide.powl.bounds import ExecutionBound
+from autofde_lab.agent.epoch import DecisionEpoch
+from autofde_lab.agent.session import AgentSession
+from autofde_lab.hub.domain.maze import Maze
+from autofde_lab.hub.domain.maze.maze import Action
+from autofde_lab.powl.algebra import Atom, PartialOrder
+from autofde_lab.powl.bounds import ExecutionBound
 
 # ── fixtures: a scripted policy so the trace is deterministic ───────────────
 
@@ -134,7 +134,7 @@ def test_action_node_is_never_guessed_when_resolution_is_not_injective():
     rather than silently picking one. All three are still executed here; the
     third is what makes the first two more than "it declined to act".
     """
-    from skdecide.agent.bridge import resolve_enabled_node
+    from autofde_lab.agent.bridge import resolve_enabled_node
 
     # (a) the policy offers an action the model does not contain
     no_match = _session([Action.left])  # model offers only "up"/"right"
@@ -211,8 +211,8 @@ def test_outcome_carries_the_claim_ceiling_is_json_shaped_and_is_seeded():
     """Collapses two former items — the envelope's contents and its determinism
     source. The seeding claim is part of what makes the envelope reproducible,
     so it is asserted alongside rather than in isolation."""
-    from skdecide.agent.refusals import CLAIM_CEILING
-    from skdecide.fabric.canonical import canonical_json
+    from autofde_lab.agent.refusals import CLAIM_CEILING
+    from autofde_lab.fabric.canonical import canonical_json
 
     session = _session([Action.up, Action.right])
     session.open_epoch(_unordered("up", "right"))

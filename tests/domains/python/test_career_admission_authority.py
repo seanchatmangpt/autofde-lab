@@ -28,15 +28,15 @@ import os
 
 import pytest
 
-from skdecide.hub.domain.career_admission import CareerAdmission
-from skdecide.hub.domain.career_admission.authority import (
+from autofde_lab.hub.domain.career_admission import CareerAdmission
+from autofde_lab.hub.domain.career_admission.authority import (
     DEFAULT_AUTHORITY_PATH,
     UNASSIGNED_VERIFIER_ID,
     blocked_prerequisites,
     load_capability_facts,
     parse_legacy_turtle,
 )
-from skdecide.hub.domain.career_admission.career_admission import (
+from autofde_lab.hub.domain.career_admission.career_admission import (
     DEFAULT_FACTS,
     DEFAULT_REQUIRED_CATEGORIES,
     State,

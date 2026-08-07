@@ -19,15 +19,15 @@ SCOPE WARNING -- read before citing this file as evidence of anything:
 
 import pytest
 
-from skdecide import utils
-from skdecide.hub.domain.breach_clock import (
+from autofde_lab import utils
+from autofde_lab.hub.domain.breach_clock import (
     Action,
     BreachClockDomain,
     Containment,
     Notification,
     Scope,
 )
-from skdecide.hub.domain.breach_clock.breach_clock import (
+from autofde_lab.hub.domain.breach_clock.breach_clock import (
     CONTAINMENT_CHOICE,
     DIVERGENCE_POPULATION,
     INDEPENDENT_ACTIONS,

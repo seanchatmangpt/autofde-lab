@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from skdecide.standing import (
+from autofde_lab.standing import (
     Blocked,
     BuildBroken,
     NotFound,
@@ -109,7 +109,7 @@ def test_standing_module_raises_no_generic_gap():
     """The replacement for NotImplementedError must not itself use one."""
     import pathlib
 
-    import skdecide.standing as mod
+    import autofde_lab.standing as mod
 
     src = pathlib.Path(mod.__file__).read_text()
     assert "class Blocked" in src, "anti-vacuity: read the wrong file"

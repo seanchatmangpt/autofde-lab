@@ -26,7 +26,7 @@ function invokeBridge(config, tool, params, signal) {
     const timeoutMs = config.timeoutMs ?? 120_000;
     const maxOutputBytes = config.maxOutputBytes ?? 4 * 1024 * 1024;
     return new Promise((resolve, reject) => {
-        const child = spawn(python, ["-m", "skdecide.openclaw_bridge", "call", tool, "--arguments", JSON.stringify(params)], {
+        const child = spawn(python, ["-m", "autofde_lab.openclaw_bridge", "call", tool, "--arguments", JSON.stringify(params)], {
             cwd: config.cwd || undefined,
             env: process.env,
             shell: false,

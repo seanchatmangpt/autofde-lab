@@ -8,8 +8,8 @@ No mocks anywhere in the chain: a real TurboFieldfare server process (local,
 OpenAI-compatible, built from https://github.com/drumih/turbo-fieldfare),
 a real `dspy.LM` configured against it, a real `dspy.Predict` call per move,
 and the real, registered `RockPaperScissors` domain rolled out via the real
-`skdecide.hub.solver.dspy_policy.DSPyPolicy` solver and the real
-`skdecide.self_play.self_play_rollout`.
+`autofde_lab.hub.solver.dspy_policy.DSPyPolicy` solver and the real
+`autofde_lab.self_play.self_play_rollout`.
 
 Skipped (not mocked) when the real TurboFieldfareServer binary or model
 weights genuinely aren't present on disk, or the real server fails to come
@@ -49,8 +49,8 @@ def test_real_dspy_predict_gets_a_real_legal_move_from_the_real_server(real_dspy
 def test_real_dspy_policy_solver_reports_compatible_with_real_rock_paper_scissors(
     real_dspy_lm,
 ):
-    from skdecide.hub.domain.rock_paper_scissors import RockPaperScissors
-    from skdecide.hub.solver.dspy_policy import DSPyPolicy
+    from autofde_lab.hub.domain.rock_paper_scissors import RockPaperScissors
+    from autofde_lab.hub.solver.dspy_policy import DSPyPolicy
 
     domain = RockPaperScissors(max_moves=2)
     assert DSPyPolicy.check_domain(domain) is True
@@ -60,10 +60,10 @@ def test_real_dspy_policy_solver_reports_compatible_with_real_rock_paper_scissor
 def test_real_self_play_rollout_with_real_dspy_policy_produces_real_valid_zero_sum_episode(
     real_dspy_lm,
 ):
-    from skdecide.hub.domain.rock_paper_scissors import RockPaperScissors
-    from skdecide.hub.domain.rock_paper_scissors.rock_paper_scissors import Move
-    from skdecide.hub.solver.dspy_policy import DSPyPolicy
-    from skdecide.self_play import self_play_rollout
+    from autofde_lab.hub.domain.rock_paper_scissors import RockPaperScissors
+    from autofde_lab.hub.domain.rock_paper_scissors.rock_paper_scissors import Move
+    from autofde_lab.hub.solver.dspy_policy import DSPyPolicy
+    from autofde_lab.self_play import self_play_rollout
 
     max_steps = 2
 

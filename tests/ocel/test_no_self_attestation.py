@@ -4,7 +4,7 @@
 
 """The OCEL validators must not know about their producer.
 
-``skdecide.agent.ocel_sink`` emits logs; ``skdecide.ocel`` judges them. If the
+``autofde_lab.agent.ocel_sink`` emits logs; ``autofde_lab.ocel`` judges them. If the
 judge imported the producer it could be shaped -- deliberately, or by drift --
 to admit exactly what that one producer emits, which is the thing being checked
 supplying the check.
@@ -18,20 +18,20 @@ assertions are guarded against a vacuous pass.
 import importlib
 import pkgutil
 
-import skdecide.ocel
+import autofde_lab.ocel
 
 
 def _ocel_modules():
-    modules = [skdecide.ocel]
-    for info in pkgutil.iter_modules(skdecide.ocel.__path__):
-        modules.append(importlib.import_module(f"skdecide.ocel.{info.name}"))
+    modules = [autofde_lab.ocel]
+    for info in pkgutil.iter_modules(autofde_lab.ocel.__path__):
+        modules.append(importlib.import_module(f"autofde_lab.ocel.{info.name}"))
     return modules
 
 
 def test_the_ocel_package_has_modules_to_check():
     """Guard against the whole file passing because it found nothing."""
     names = {m.__name__ for m in _ocel_modules()}
-    assert {"skdecide.ocel.log", "skdecide.ocel.model", "skdecide.ocel.refusals"} <= names
+    assert {"autofde_lab.ocel.log", "autofde_lab.ocel.model", "autofde_lab.ocel.refusals"} <= names
 
 
 def test_no_ocel_module_imports_the_sink():
@@ -47,7 +47,7 @@ def test_no_ocel_module_imports_the_sink():
         offending = [
             line
             for line in import_lines
-            if "ocel_sink" in line or "skdecide.agent" in line
+            if "ocel_sink" in line or "autofde_lab.agent" in line
         ]
         assert not offending, f"{module.__name__} imports its producer: {offending}"
 
@@ -63,11 +63,11 @@ def test_no_loaded_ocel_module_grew_the_dependency_at_runtime():
 
 def test_the_check_would_catch_a_real_back_edge():
     """The producer really does import the judge -- one direction, not both."""
-    import skdecide.agent.ocel_sink as sink
+    import autofde_lab.agent.ocel_sink as sink
 
     src = open(sink.__file__).read()
-    assert "from skdecide.ocel" in src
-    # and nothing under skdecide.ocel names the sink anywhere in its source
+    assert "from autofde_lab.ocel" in src
+    # and nothing under autofde_lab.ocel names the sink anywhere in its source
     for module in _ocel_modules():
         assert "ocel_sink" not in open(module.__file__).read(), module.__name__
 
@@ -79,12 +79,12 @@ def test_validate_is_reachable_without_importing_the_sink_at_all():
 
     script = (
         "import sys\n"
-        "from skdecide.ocel.log import OcelLog\n"
-        "from skdecide.ocel.model import OcelObject\n"
+        "from autofde_lab.ocel.log import OcelLog\n"
+        "from autofde_lab.ocel.model import OcelObject\n"
         "log = OcelLog().with_objects(OcelObject('o', 'T'))"
         ".append_event('e', 'A', [('o', 'q')], timestamp_ns=1)\n"
         "log.validate(strict_qualifiers=True)\n"
-        "assert 'skdecide.agent.ocel_sink' not in sys.modules\n"
+        "assert 'autofde_lab.agent.ocel_sink' not in sys.modules\n"
         "print('OK')\n"
     )
     out = subprocess.run(

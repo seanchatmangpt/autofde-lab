@@ -1,4 +1,4 @@
-from skdecide.core import DiscreteDistribution, SingleValueDistribution
+from autofde_lab.core import DiscreteDistribution, SingleValueDistribution
 
 
 def test_discrete_distribution_deduplicates_members_with_combined_weight():

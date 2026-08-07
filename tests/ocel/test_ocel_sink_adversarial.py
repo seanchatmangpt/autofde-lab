@@ -15,15 +15,15 @@ document about a traversal, not evidence that one happened.
 
 import pytest
 
-from skdecide.agent.ledger import LedgerPhase, OccurrenceLedger
-from skdecide.agent.ocel_sink import (
+from autofde_lab.agent.ledger import LedgerPhase, OccurrenceLedger
+from autofde_lab.agent.ocel_sink import (
     LifecyclePhase,
     OcelSink,
     OcelSinkError,
     SinkRefusal,
 )
-from skdecide.ocel.log import OcelLog
-from skdecide.ocel.model import (
+from autofde_lab.ocel.log import OcelLog
+from autofde_lab.ocel.model import (
     EventObjectLink,
     ObjectChange,
     ObjectObjectLink,
@@ -31,7 +31,7 @@ from skdecide.ocel.model import (
     OcelEvent,
     OcelObject,
 )
-from skdecide.ocel.refusals import OcelError, OcelRefusal
+from autofde_lab.ocel.refusals import OcelError, OcelRefusal
 
 TYPES = {"case-1": "WorkflowCase", "res-1": "Resource"}
 
@@ -295,7 +295,7 @@ def test_an_outstanding_intent_is_projected_only_under_a_distinct_id():
 
 
 def test_the_ledger_itself_refuses_to_resume_across_an_outstanding_intent():
-    from skdecide.agent.refusals import AgentRefusal
+    from autofde_lab.agent.refusals import AgentRefusal
 
     with pytest.raises(AgentRefusal):
         _ledger_with(commit=False).assert_resumable()
