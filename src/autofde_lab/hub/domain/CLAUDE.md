@@ -76,6 +76,6 @@ measured.
 # Update obligations
 
 - New or removed domain → update `pyproject.toml` entry points **and** regenerate
-  `ontology/skdecide-capabilities.ttl`; `tests/ecosystem/` fails on drift.
+  `ontology/autofde-lab-capabilities.ttl`; `tests/ecosystem/` fails on drift.
 - Changed mixin chain → re-run the coverage report; solver applicability moved.
 - Close the loop in the same change (fixture + test), not a follow-up.

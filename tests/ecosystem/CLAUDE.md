@@ -63,7 +63,7 @@ coverage.
 
 Sibling repos at their real paths; installed `ggen` binaries; `b3sum`;
 `~/mfw/runs/ticket-10/{work/candidate.plan,plan.powl.ttl}`;
-`~/ggen-legacy/planning/v26.8.1/`; `ontology/skdecide-capabilities.ttl`.
+`~/ggen-legacy/planning/v26.8.1/`; `ontology/autofde-lab-capabilities.ttl`.
 
 # Outputs
 

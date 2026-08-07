@@ -30,7 +30,7 @@ fabric request models (`fabric/models.py`).
 # Outputs
 
 Plans, policies, values, `Value`/`Distribution` objects; `plan.powl.ttl` documents;
-CLI/MCP/A2A responses; `ontology/skdecide-capabilities.ttl` (generated).
+CLI/MCP/A2A responses; `ontology/autofde-lab-capabilities.ttl` (generated).
 
 # Invariants
 
@@ -76,7 +76,7 @@ from here.
 # Update obligations
 
 - Adding/removing a registered domain or solver → regenerate
-  `ontology/skdecide-capabilities.ttl` (`python -m autofde_lab.fabric.ontology`) or
+  `ontology/autofde-lab-capabilities.ttl` (`python -m autofde_lab.fabric.ontology`) or
   `tests/ecosystem/` fails on drift.
 - Changing a public method's tier → update the concrete overrides, not just the wrapper.
 - If `ranked` is ever implemented, delete invariant 3 here and in

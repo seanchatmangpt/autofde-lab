@@ -86,8 +86,8 @@ page, so they stay inline.
    admitted downstream is strictly worse than a refusal.
 
 4. **Capability claims must be ontology-backed.**
-   `ontology/skdecide-capabilities.ttl` is generated
-   (`python -m autofde_lab.fabric.ontology ontology/skdecide-capabilities.ttl`) —
+   `ontology/autofde-lab-capabilities.ttl` is generated
+   (`python -m autofde_lab.fabric.ontology ontology/autofde-lab-capabilities.ttl`) —
    regenerate it, never hand-edit, and note that `tests/ecosystem/` fails if
    it drifts from the registry. This is an epistemic control, not
    documentation: a false ecosystem claim was made in this repo's history

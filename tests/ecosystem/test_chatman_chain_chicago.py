@@ -485,7 +485,7 @@ class TestPlannerOutputIsCandidateNotActuation:
 # Stage: ontology-governed capability discovery and coverage
 # ---------------------------------------------------------------------------
 
-ONTOLOGY = REPO_ROOT / "ontology" / "skdecide-capabilities.ttl"
+ONTOLOGY = REPO_ROOT / "ontology" / "autofde-lab-capabilities.ttl"
 
 
 class TestOntologyIsGeneratedNotCurated:
@@ -523,7 +523,7 @@ class TestOntologyIsGeneratedNotCurated:
             pytest.fail(
                 f"FILE_EXISTS: {ONTOLOGY} missing; regenerate with "
                 "`python -m autofde_lab.fabric.ontology "
-                "ontology/skdecide-capabilities.ttl`"
+                "ontology/autofde-lab-capabilities.ttl`"
             )
 
         turtle = ONTOLOGY.read_text()
@@ -603,7 +603,7 @@ class TestOntologyIsGeneratedNotCurated:
                 f"  missing from ontology: {sorted(expected - found)}\n"
                 f"  stale in ontology:     {sorted(found - expected)}\n"
                 "  regenerate: python -m autofde_lab.fabric.ontology "
-                "ontology/skdecide-capabilities.ttl"
+                "ontology/autofde-lab-capabilities.ttl"
             )
 
     def test_adapter_standing_is_not_baked_from_a_local_probe(self):

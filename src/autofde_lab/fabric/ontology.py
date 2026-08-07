@@ -530,7 +530,7 @@ def generate(output_path: str) -> List[Capability]:
 if __name__ == "__main__":
     import sys
 
-    target = sys.argv[1] if len(sys.argv) > 1 else "ontology/skdecide-capabilities.ttl"
+    target = sys.argv[1] if len(sys.argv) > 1 else "ontology/autofde-lab-capabilities.ttl"
     caps = generate(target)
     alive = sum(1 for c in caps if c.standing == STANDING_ALIVE)
     print(f"generated {target}: {len(caps)} capabilities, {alive} ALIVE")

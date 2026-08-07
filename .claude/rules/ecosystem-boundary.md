@@ -51,10 +51,10 @@ no driver, and three POWL representations (mfw Turtle, runtime JSON, bcinr
    that can be admitted downstream is strictly worse than a refusal. Never
    "fix" this by removing the gate.
 
-**Capability claims must be ontology-backed.** `ontology/skdecide-capabilities.ttl`
+**Capability claims must be ontology-backed.** `ontology/autofde-lab-capabilities.ttl`
 is generated from entry points + a live import probe + `get_domain_requirements()`
 MRO derivation — regenerate it with `python -m autofde_lab.fabric.ontology
-ontology/skdecide-capabilities.ttl`, never hand-edit. `tests/ecosystem/` fails if
+ontology/autofde-lab-capabilities.ttl`, never hand-edit. `tests/ecosystem/` fails if
 it drifts from the registry. This is an epistemic control, not documentation: a
 false ecosystem claim was made this session ("no POWL executor exists") from a
 search that had never looked at `~/bcinr`, which contains one. Any conclusion

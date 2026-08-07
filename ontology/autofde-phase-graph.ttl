@@ -4,7 +4,7 @@
 #
 # AutoFDE phase graph — T-Box and A-Box.
 #
-# HAND-AUTHORED. Unlike ontology/skdecide-capabilities.ttl, which is generated
+# HAND-AUTHORED. Unlike ontology/autofde-lab-capabilities.ttl, which is generated
 # by `python -m skdecide.fabric.ontology` and must never be hand-edited, this
 # file is written by hand and is the declared vocabulary that the projection in
 # src/skdecide/autofde/ is checked against.

@@ -54,7 +54,7 @@ src/autofde_lab/
 ├── fabric/               # CLI + MCP + A2A layer over the registry — see above
 │   ├── pddl_engine.py    # classical PDDL engine for mfw's external-engine seam — see ecosystem-boundary.md
 │   ├── powl.py           # plan → POWL2 projection (projection only, NOT execution)
-│   ├── ontology.py       # generates ontology/skdecide-capabilities.ttl from entry points
+│   ├── ontology.py       # generates ontology/autofde-lab-capabilities.ttl from entry points
 │   └── coverage.py       # ontology-driven capability-coverage report
 ├── openclaw_runtime.py, openclaw_bridge.py   # OpenClaw bridge — see actuation-boundary.md
 └── wasm/                 # Chatman Ecosystem WASM adapters — see docs/chatman-ecosystem-wasm.md

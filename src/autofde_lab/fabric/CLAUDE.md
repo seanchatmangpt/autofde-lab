@@ -9,7 +9,7 @@ coverage report (`coverage.py`).
 # Authority
 
 - Route requests to the registry and return typed results and typed refusals.
-- Generate `ontology/skdecide-capabilities.ttl` from entry points + live import probe +
+- Generate `ontology/autofde-lab-capabilities.ttl` from entry points + live import probe +
   `get_domain_requirements()` MRO derivation.
 - Refuse PDDL problems whose requirements the backend cannot honour.
 - Emit `plan.powl.ttl` documents carrying real BLAKE3 digests.
@@ -68,7 +68,7 @@ is configured).
 ```bash
 uv run pytest tests/fabric
 uv run python -m autofde_lab.fabric.pddl_engine --help                 # must print "usage: ..."
-uv run python -m autofde_lab.fabric.ontology ontology/skdecide-capabilities.ttl
+uv run python -m autofde_lab.fabric.ontology ontology/autofde-lab-capabilities.ttl
 ```
 
 # Standing ceiling
