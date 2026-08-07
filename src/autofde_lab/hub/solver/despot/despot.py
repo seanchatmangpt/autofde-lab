@@ -26,7 +26,7 @@ from autofde_lab.builders.solver import (
 )
 
 try:
-    from autofde_lab.hub.__skdecide_hub_cpp import _DespotSolver_ as despot_solver
+    from autofde_lab.hub.__autofde_lab_hub_cpp import _DespotSolver_ as despot_solver
 
     class D(
         Domain,

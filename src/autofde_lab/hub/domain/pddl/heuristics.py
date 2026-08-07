@@ -3,11 +3,11 @@
 # LICENSE file in the root directory of this source tree.
 
 from autofde_lab import Value
-from autofde_lab.hub.__skdecide_hub_cpp import (
+from autofde_lab.hub.__autofde_lab_hub_cpp import (
     _PDDL_DeleteRelaxationHeuristic_ as CppDeleteRelaxation,
 )
-from autofde_lab.hub.__skdecide_hub_cpp import _PDDL_FFHeuristic_ as CppFFHeuristic
-from autofde_lab.hub.__skdecide_hub_cpp import _PDDL_HeuristicMode_ as CppMode
+from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_FFHeuristic_ as CppFFHeuristic
+from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_HeuristicMode_ as CppMode
 
 
 def atom_to_str(atom, task):

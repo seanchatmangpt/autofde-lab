@@ -32,8 +32,8 @@ from autofde_lab.builders.solver import (
 from autofde_lab.core import Value
 
 try:
-    from autofde_lab.hub.__skdecide_hub_cpp import _IDAstarSolver_ as idastar_solver
-    from autofde_lab.hub.__skdecide_hub_cpp import _LDFSSolver_ as ldfs_solver
+    from autofde_lab.hub.__autofde_lab_hub_cpp import _IDAstarSolver_ as idastar_solver
+    from autofde_lab.hub.__autofde_lab_hub_cpp import _LDFSSolver_ as ldfs_solver
 
     class D(
         Domain,

@@ -20,17 +20,17 @@ from autofde_lab.hub.domain.pddl.pddl import PDDLReader
 from autofde_lab.hub.space.gym import ListSpace
 
 try:
-    from autofde_lab.hub.__skdecide_hub_cpp import (
+    from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_ApplicableActionsGenerator_ as CppApplicableActionsGenerator,
     )
-    from autofde_lab.hub.__skdecide_hub_cpp import (
+    from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_GoalChecker_ as CppGoalChecker,
     )
-    from autofde_lab.hub.__skdecide_hub_cpp import (
+    from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_SuccessorGenerator_ as CppSuccessorGenerator,
     )
-    from autofde_lab.hub.__skdecide_hub_cpp import _PDDL_Task_ as CppTask
-    from autofde_lab.hub.__skdecide_hub_cpp import (
+    from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_Task_ as CppTask
+    from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_TemporalSimulator_ as CppTemporalSimulator,
     )
 except ImportError:

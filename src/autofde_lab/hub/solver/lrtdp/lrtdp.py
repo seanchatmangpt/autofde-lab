@@ -34,8 +34,8 @@ from autofde_lab.builders.solver import (
 from autofde_lab.core import Value
 
 try:
-    from autofde_lab.hub.__skdecide_hub_cpp import _LRTAstarSolver_ as lrtastar_solver
-    from autofde_lab.hub.__skdecide_hub_cpp import _LRTDPSolver_ as lrtdp_solver
+    from autofde_lab.hub.__autofde_lab_hub_cpp import _LRTAstarSolver_ as lrtastar_solver
+    from autofde_lab.hub.__autofde_lab_hub_cpp import _LRTDPSolver_ as lrtdp_solver
 
     # TODO: remove Markovian req?
     class D(

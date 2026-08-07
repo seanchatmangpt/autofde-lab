@@ -576,7 +576,7 @@ importing every one in this environment:
 - **26 registered domains**, all import OK. `ChatmanCleanSession` is the only one with **no
   extras marker** (pure core). `TPDDLDomain` sits behind the `pddl` extra (needs `z3`).
 - **57 registered solvers**, **all 57 import OK** — none `UNSUPPORTED` here. The compiled hub
-  is present (`.venv/.../__skdecide_hub_cpp.cpython-313-darwin.so`), which is what makes the
+  is present (`.venv/.../__autofde_lab_hub_cpp.cpython-313-darwin.so`), which is what makes the
   ~35 C++-backed solvers live.
 - Applicability is **programmatically derivable**, not a matter of opinion:
   `Solver.get_domain_requirements()` (`src/autofde_lab/solvers.py:85`) derives the requirement set

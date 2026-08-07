@@ -31,5 +31,5 @@ docs/.vuepress/public/notebooks/
 docs/*/_*.md
 docs/notebooks/README.md
 cpp/compile_commands.json
-src/autofde_lab/hub/__skdecide_hub_cpp.*
+src/autofde_lab/hub/__autofde_lab_hub_cpp.*
 TEMP_CGP/*
