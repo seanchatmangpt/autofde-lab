@@ -1,18 +1,21 @@
 # ForwardBench / AutoFDE research corpus
 
-This directory is an **EXPLORE** literature surface for ForwardBench, cloud gyms, real-time process intelligence, IaC verification, incident response, enterprise workflows, and agent evaluation. Inclusion is not admission and does not establish that AutoFDE reproduces a paper's results.
+This directory is an **EXPLORE** source surface for papers, executable agent/cloud gyms, and ggen-manufactured ForwardBench integration.
 
-## Retrieval standing
+## Canonical source
 
-The local creation capsule could not resolve `arxiv.org`, so PDF acquisition was routed through a branch-scoped GitHub Actions capsule. The exact workflow fetched and `%PDF-`-validated every manifest paper, then generated `pdf/SHA256SUMS` before committing the PDFs. Paper reproduction remains `NOT_REPRODUCED`; retrieval standing is `PDF_FETCHED_SHA256_VERIFIED`. `fetch-pdfs.sh` remains the deterministic local replay path for a network-enabled capsule.
+`papers.ttl` is the semantic source of truth. It currently describes **52 papers**, **80 logical benchmark subjects**, and **52 physical vendor projects**. Public vocabularies carry scholarly/software/provenance semantics; the small `afb:` vocabulary is limited to execution metadata that those standards do not define.
 
-## Core clusters
+`ggen sync run` projects the graph into `generated/forwardbench/`: registry, plans, MCP tool declarations, benchmark matrix, paper manifest, and lazy submodule sync/probe helpers. Do not manually fork those projections.
 
-- Cloud / IT operations: ITBench, AIOpsLab, microservice diagnosis, Kubernetes RCA, ARFBench, Agentic NetOps/AIOps.
-- IaC: Multi-IaC-Eval, verifier-first Terraform, security-first Terraform.
-- Security response: SIR-Bench and SecRespond.
-- Process / enterprise dynamics: PM-LLM-Benchmark, process-mining evaluation, World of Workflows, WorkArena/WorkArena++, EnterpriseBench, CRMArena-Pro.
-- Agent environments / interoperability: CUBE, ToolSandbox, tau-bench, OSWorld, AgentBench.
-- Generated/evolving gyms: Continuous Benchmark Generation, Frontier-Eng, BenchBench, R2E-Gym, SciAgentArena.
+Observed facts do not get written back into the declaration graph. Exact git pins, PDF hashes, and executed smoke standing live in `gym-lock.ttl`, `paper-lock.ttl`, and `smoke-lock.ttl` respectively and are imported by ggen.
 
-Use `manifest.toml` as the machine-readable index. Each `<arxiv-id>.md` file contains the canonical record/PDF links, standing, tags, and the reason the paper matters to AutoFDE/ForwardBench.
+## Authority
+
+The generated AutoFDE adapter is SELECT-only. Cloud-security labs that require AWS/Azure/GCP authority remain `REFUSED:LIVE_AUTHORITY_REQUIRED` until a named allowlisted environment is explicitly authorized. Vendoring a repository is not permission to deploy it.
+
+## Standing ladder
+
+`UNKNOWN_REPOSITORY -> PINNED -> BOOTSTRAPS -> SCENARIO_RUNS -> AUTOFDE_ADAPTER_ALIVE`.
+
+A higher standing is recorded only from exact execution evidence. Paper retrieval and paper-result reproduction are separate: a vendored PDF remains `NOT_REPRODUCED` until its reported result is actually reproduced.

@@ -1,0 +1,11 @@
+@prefix afb: <https://github.com/seanchatmangpt/autofde-lab/ns/forwardbench#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+<https://github.com/seanchatmangpt/autofde-lab/data/forwardbench/vendor-cube-standard>
+  afb:smokeStanding "SCENARIO_RUNS" ;
+  prov:wasDerivedFrom <https://github.com/seanchatmangpt/autofde-lab/actions/runs/31205154790> .
+<https://github.com/seanchatmangpt/autofde-lab/data/forwardbench/vendor-harbor>
+  afb:smokeStanding "BOOTSTRAPS" ;
+  prov:wasDerivedFrom <https://github.com/seanchatmangpt/autofde-lab/actions/runs/31205154790> .
+<https://github.com/seanchatmangpt/autofde-lab/data/forwardbench/vendor-browsergym>
+  afb:smokeStanding "BOOTSTRAPS" ;
+  prov:wasDerivedFrom <https://github.com/seanchatmangpt/autofde-lab/actions/runs/31205154790> .
