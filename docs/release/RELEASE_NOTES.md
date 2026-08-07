@@ -23,10 +23,10 @@ There is no version number for this milestone, and inventing one would be a fals
 Until a tag exists and a distribution name is settled (see the blocking prerequisite below),
 the milestone is referred to by name and by commit range only.
 
-## Blocking release prerequisite: distribution name collides with Airbus's package
+## Blocking release prerequisite: distribution name collides with Airbus's package — RESOLVED
 
-This repository is a fork. `origin` is `https://github.com/seanchatmangpt/scikit-decide`, while
-`pyproject.toml` still declares:
+This repository is a fork. At the time this note was first filed, `origin` was
+`https://github.com/seanchatmangpt/scikit-decide` while `pyproject.toml` still declared:
 
 ```toml
 name = "scikit-decide"
@@ -34,10 +34,14 @@ name = "scikit-decide"
 repository = "https://github.com/airbus/scikit-decide"
 ```
 
-`scikit-decide` is Airbus's published PyPI distribution. Building or uploading an artifact from
-this tree under that name would place fork content behind an upstream project's identity.
+`scikit-decide` is Airbus's published PyPI distribution; building or uploading an artifact from
+this tree under that name would have placed fork content behind an upstream project's identity.
 
-Standing: `BLOCKED:FORK_DISTRIBUTION_NAME_COLLIDES_WITH_UPSTREAM_PYPI`.
+The AutoFDE Lab rename (`docs/migration/AUTOFDE_LAB_RENAME.md`) resolved this: `pyproject.toml`
+now declares `name = "autofde-lab"` and `repository = "https://github.com/seanchatmangpt/autofde-lab"`.
+
+Standing: was `BLOCKED:FORK_DISTRIBUTION_NAME_COLLIDES_WITH_UPSTREAM_PYPI`, now resolved. Entry
+kept rather than deleted, per this repo's ledger discipline.
 
 This is a prerequisite, not a cosmetic cleanup. A distinct distribution name — and matching
 project URLs — is required before any artifact leaves this tree by any channel. No packaging

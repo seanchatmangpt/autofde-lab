@@ -22,11 +22,21 @@
 </p>
 <br>
 
-# Scikit-decide for Python
+# AutoFDE Lab
 
-Scikit-decide is an AI framework for Reinforcement Learning, Automated Planning and Scheduling.
+AutoFDE Lab is the exploration, falsification, and proof environment for persistent, governed
+AutoFDE capabilities. It is forked from [Airbus scikit-decide](https://github.com/airbus/scikit-decide),
+an AI framework for Reinforcement Learning, Automated Planning and Scheduling, and inherits its
+full domain/solver catalog, C++ solver core, and API surface unchanged (`autofde_lab.*`, with a
+deprecated `skdecide` compatibility alias — see `docs/migration/from-scikit-decide.md`).
 
-This framework was initiated at [Airbus](https://www.airbus.com) AI Research and notably received contributions through the [ANITI](https://aniti.univ-toulouse.fr/en/) and [TUPLES](https://tuples.ai/) projects, and also from [ANU](https://www.anu.edu.au/).
+This repository establishes **AutoFDE Lab technical standing only** — what the code in this tree
+demonstrably does, evidenced by a test run in the current session (see
+`.claude/rules/standing-law.md`). It establishes none of: AutoFDE product standing (a separate,
+future repository — see `docs/autofde/EXPLORE.md`), organizational standing (accountable customer
+acceptance), or legal standing (this repository confers none; see `NOTICE` and `LICENSE`).
+
+The original framework was initiated at [Airbus](https://www.airbus.com) AI Research and notably received contributions through the [ANITI](https://aniti.univ-toulouse.fr/en/) and [TUPLES](https://tuples.ai/) projects, and also from [ANU](https://www.anu.edu.au/). Renaming this fork does not transfer that copyright — see `NOTICE`.
 
 ## Main features
 

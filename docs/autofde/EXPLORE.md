@@ -24,7 +24,7 @@ available in this tree.
 
 | Path | Status |
 |---|---|
-| `src/skdecide/autofde/` | EXPLORE |
+| `src/autofde_lab/autofde/` | EXPLORE |
 | `infra/azure/` | EXPLORE |
 | `infra/github/` | EXPLORE |
 | `docs/autofde/` | EXPLORE |
@@ -33,7 +33,7 @@ available in this tree.
 
 ## Exploit surfaces
 
-`src/skdecide/{powl,agent,ocel,fabric}/` and `src/skdecide/{core,domains,solvers,hub}/` are
+`src/autofde_lab/{powl,agent,ocel,fabric}/` and `src/autofde_lab/{core,domains,solvers,hub}/` are
 standing-bearing. They carry witnesses, they are cited in `docs/STATUS.md`, and they are what a
 clean checkout must exercise.
 
@@ -55,7 +55,7 @@ extraction below would stop being a copy.
 When the AutoFDE repository is created, these paths move. Nothing else does:
 
 ```text
-src/skdecide/autofde/     →  the work-graph projection and phase graph
+src/autofde_lab/autofde/     →  the work-graph projection and phase graph
 infra/azure/              →  the Terraform world factory
 infra/github/             →  project-management-as-code
 docs/autofde/             →  this directory, minus this file
@@ -64,7 +64,7 @@ demo/                     →  the executive demonstration
 ontology/autofde-*.ttl    →  hand-authored AutoFDE vocabulary
 ```
 
-`src/skdecide/adapters/azure/` is the ambiguous one and stays here on purpose: it is an *optional
+`src/autofde_lab/adapters/azure/` is the ambiguous one and stays here on purpose: it is an *optional
 adapter of scikit-decide*, which is a scikit-decide concern, not an AutoFDE one. The AutoFDE repo
 consumes it as a dependency rather than absorbing it.
 

@@ -92,11 +92,12 @@ deleting a falsifier also reduces the count.
 - The release version is `UNKNOWN`. `pyproject.toml:28` declares `dynamic = ["version"]`, the
   repository has zero git tags, and a build would currently derive `0.1.dev768+gd81479000`.
   The string `26.8.6` belongs to a different project (`ggen`) and does not apply here.
-- `BLOCKED:FORK_DISTRIBUTION_NAME_COLLIDES_WITH_UPSTREAM_PYPI`. This fork's `origin` is
-  `https://github.com/seanchatmangpt/scikit-decide`, while `pyproject.toml` still declares
-  `name = "scikit-decide"` and `repository = "https://github.com/airbus/scikit-decide"`.
-  `scikit-decide` is Airbus's published PyPI distribution. A distinct distribution name is a
-  prerequisite for any outward artifact, not a cleanup task.
+- `BLOCKED:FORK_DISTRIBUTION_NAME_COLLIDES_WITH_UPSTREAM_PYPI` — **resolved** as of the
+  AutoFDE Lab rename (`docs/migration/AUTOFDE_LAB_RENAME.md`). `pyproject.toml` now declares
+  `name = "autofde-lab"` and `repository = "https://github.com/seanchatmangpt/autofde-lab"`;
+  it no longer collides with Airbus's `scikit-decide` PyPI distribution. Left in place, marked
+  resolved rather than deleted, per this repo's ledger discipline of correcting entries in
+  place instead of silently rewriting history.
 
 ## 8. Clean-checkout green has not been run
 
