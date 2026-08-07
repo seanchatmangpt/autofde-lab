@@ -18,6 +18,12 @@ PDDL_DIR = os.path.join(
 TIREWORLD_DOMAIN = os.path.join(PDDL_DIR, "tireworld", "domain.pddl")
 TIREWORLD_PROBLEM = os.path.join(PDDL_DIR, "tireworld", "p01.pddl")
 
+# NOTE(rename): this string is the C++ extension's import path, renamed in
+# Phase 5 of docs/migration/AUTOFDE_LAB_RENAME.md alongside the CMake target
+# and the PYBIND11_MODULE() name. importorskip converts ANY import failure to
+# a skip -- including a stale name after a partial rename -- so a wrong
+# string here degrades to "extension not built" with no error. Update this
+# line in the same commit as the C++/CMake rename, not after.
 pytest.importorskip("skdecide.hub.__skdecide_hub_cpp")
 
 from skdecide.hub.domain.pddl import PPDDLDomain

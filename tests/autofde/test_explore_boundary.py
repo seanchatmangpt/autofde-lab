@@ -18,6 +18,11 @@ imports read with :mod:`ast`, not text search.
 from __future__ import annotations
 
 import ast
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from project_identity import LEGACY_NAMESPACE  # noqa: E402
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -86,13 +91,23 @@ def test_skdecide_top_level_init_does_not_import_autofde():
 
 def test_autofde_depends_only_on_powl_within_skdecide():
     """The arrow points one way, and at exactly one core package."""
-    allowed = {"skdecide.powl", "skdecide.autofde"}
+    allowed = {f"{LEGACY_NAMESPACE}.powl", f"{LEGACY_NAMESPACE}.autofde"}
     offenders: list[str] = []
+    checked_any = False
     for path in sorted(AUTOFDE.glob("*.py")):
         tree = ast.parse(path.read_text(), filename=str(path))
         for name in _imported_names(tree):
-            if name.startswith("skdecide"):
+            if name.startswith(LEGACY_NAMESPACE):
+                checked_any = True
                 root = ".".join(name.split(".")[:2])
                 if root not in allowed:
                     offenders.append(f"{path.name} imports {name}")
+    # Anti-vacuity: if a rename makes LEGACY_NAMESPACE stop matching anything,
+    # this loop silently checks nothing and passes. It must find at least the
+    # `skdecide.powl` import every autofde module is expected to have.
+    assert checked_any, (
+        f"no import in {AUTOFDE} starts with {LEGACY_NAMESPACE!r} -- "
+        "the namespace constant is stale, or autofde no longer depends on "
+        "the core at all, either of which needs investigating, not a green"
+    )
     assert not offenders, offenders

@@ -19,6 +19,8 @@ sys.path.insert(0, str(test_domains_path))
 
 from stochastic_grid import StochasticGridDomain
 
+# NOTE(rename): see the identical comment in test_pddl_determinization.py --
+# update in the same commit as the Phase 5 C++/CMake extension rename.
 pytest.importorskip("skdecide.hub.__skdecide_hub_cpp")
 
 from skdecide.core import Value

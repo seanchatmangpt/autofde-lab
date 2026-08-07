@@ -30,15 +30,21 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from project_identity import LEGACY_NAMESPACE  # noqa: E402
 
 import pytest
 
-_FORBIDDEN = ("skdecide.powl.executor", "skdecide.powl.semantics")
+_NS = LEGACY_NAMESPACE  # a rename updates this one import, not four literals below
+_FORBIDDEN = (f"{_NS}.powl.executor", f"{_NS}.powl.semantics")
 
 _PROBE = '''
 import importlib, importlib.util, json, os, sys, types
 
 FORBIDDEN = {forbidden!r}
+NS = {ns!r}
 
 class _Blocker:
     def find_spec(self, name, path=None, target=None):
@@ -46,23 +52,23 @@ class _Blocker:
             raise AssertionError("FORBIDDEN_IMPORT:" + name)
         return None
 
-import skdecide
+skdecide = importlib.import_module(NS)
 
 pkg_dir = os.path.join(os.path.dirname(skdecide.__file__), "powl")
-stub = types.ModuleType("skdecide.powl")
+stub = types.ModuleType(NS + ".powl")
 stub.__path__ = [pkg_dir]
-stub.__package__ = "skdecide.powl"
-sys.modules["skdecide.powl"] = stub
+stub.__package__ = NS + ".powl"
+sys.modules[NS + ".powl"] = stub
 
 sys.meta_path.insert(0, _Blocker())
 importlib.import_module({module!r})
-print(json.dumps(sorted(m for m in sys.modules if m.startswith("skdecide.powl"))))
+print(json.dumps(sorted(m for m in sys.modules if m.startswith(NS + ".powl"))))
 '''
 
 
 def _loaded_powl_modules(module: str) -> list[str]:
     proc = subprocess.run(
-        [sys.executable, "-c", _PROBE.format(module=module, forbidden=_FORBIDDEN)],
+        [sys.executable, "-c", _PROBE.format(module=module, forbidden=_FORBIDDEN, ns=_NS)],
         capture_output=True,
         text=True,
     )
@@ -111,7 +117,7 @@ def test_probe_would_catch_a_violation():
         [
             sys.executable,
             "-c",
-            _PROBE.format(module="skdecide.powl.semantics", forbidden=_FORBIDDEN),
+            _PROBE.format(module=f"{_NS}.powl.semantics", forbidden=_FORBIDDEN, ns=_NS),
         ],
         capture_output=True,
         text=True,
