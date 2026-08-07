@@ -119,9 +119,16 @@ ofmf = [
     "pyld",
     "SpiffWorkflow",
 ]
+mcp = [
+    # Pin matches requirements-agentic.txt. fabric/mcp.py::create_server() has
+    # always imported fastmcp lazily and converted ImportError to a clear
+    # RuntimeError -- but nothing installed it by default, so `serve-mcp`
+    # never actually started. This extra closes that gap.
+    "fastmcp>=3.4.4,<4",
+]
 all = [
     # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
-    "autofde-lab[domains, solvers, pddl, dspy, ofmf]",
+    "autofde-lab[domains, solvers, pddl, dspy, ofmf, mcp]",
 ]
 
 [project.entry-points."autofde_lab.domains"]
@@ -228,6 +235,7 @@ test = [
     "graph-jsp-env>=1",
     "pytest-cases>=3.8",
     "optuna>=4.5.0",
+    "pytest-xdist>=3.8", # -n for parallel test workers; see Justfile's `test` target
 ]
 
 [tool.uv]

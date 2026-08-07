@@ -136,11 +136,29 @@ def cache_hotset(
 
 
 @app.command("serve-mcp")
-def serve_mcp() -> None:
+def serve_mcp(
+    dspy_compile: bool = typer.Option(
+        False,
+        "--dspy-compile",
+        help=(
+            "Also expose decision_compile, backed by a real "
+            "DSPyDecisionCompiler. Off by default: this pulls in dspy and "
+            "expects an LM to be configured by the caller (see "
+            "autofde_lab.fabric.dspy's module docstring); the base server "
+            "should not require that dependency to start."
+        ),
+    ),
+) -> None:
     """Run the FastMCP server over stdio."""
     from autofde_lab.fabric.mcp import create_server
 
-    create_server().run()
+    compiler = None
+    if dspy_compile:
+        from autofde_lab.fabric.dspy import DSPyDecisionCompiler
+
+        compiler = DSPyDecisionCompiler()
+
+    create_server(compiler=compiler).run()
 
 
 @app.command("serve-a2a")

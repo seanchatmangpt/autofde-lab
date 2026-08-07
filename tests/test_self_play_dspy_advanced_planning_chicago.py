@@ -310,7 +310,14 @@ def test_real_dspy_policy_generates_a_real_valid_action_for_real_rddl_tower_of_h
     from autofde_lab.hub.solver.dspy_policy import DSPyPolicy
 
     def build_domain() -> RDDLDomain:
-        manager = RDDLRepoManager(rebuild=False)
+        # rebuild=True: RDDLRepoManager's on-disk archive cache was built
+        # while this repo lived at ~/scikit-decide (pre-rename) and still
+        # points rddlrepository entries at that now-nonexistent path
+        # (RDDLRepoDomainNotExistError citing
+        # /Users/sac/scikit-decide/.venv/.../TowerOfHanoi/domain.rddl).
+        # rebuild=False trusts that stale cache; True re-derives it against
+        # the current install.
+        manager = RDDLRepoManager(rebuild=True)
         problem = manager.get_problem("TowerOfHanoi_arcade")
         return RDDLDomain(
             rddl_domain=problem.get_domain(),
