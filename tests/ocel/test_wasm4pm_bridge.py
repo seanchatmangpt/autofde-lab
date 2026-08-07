@@ -140,7 +140,10 @@ def test_real_conformance_against_mcp_user_simulation_log(tmp_path):
     discovery, conformance = asyncio.run(discover_and_check(conn, session_ids, timeout_s=60))
 
     # Real payoff: a Petri net mined from real session data, replayed against
-    # that same data with a real (non-1.0, non-trivial) fitness measurement.
+    # that same data with a real (non-1.0, non-trivial) fitness measurement,
+    # plus a real ETConformance precision score alongside it.
     assert discovery.places > 0
     assert conformance.total_cases == len(session_ids)
     assert 0.0 <= conformance.avg_fitness <= 1.0
+    assert conformance.precision is not None
+    assert 0.0 <= conformance.precision <= 1.0

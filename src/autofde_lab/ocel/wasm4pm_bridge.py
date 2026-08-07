@@ -88,6 +88,11 @@ class ConformanceReport:
     conforming_cases: int
     total_cases: int
     deviations: list[TraceDeviation] = field(default_factory=list)
+    precision: float | None = None
+    """ETConformance precision (Muñoz-Gama & Carmona), from
+    ``wasm4pm::etconformance_precision::compute_precision``. ``None`` only if an older
+    ``wpm`` build (pre-precision-wiring) is in use and the table row is absent.
+    """
 
 
 def resolve_wpm_binary() -> str:
@@ -245,6 +250,7 @@ async def check_conformance(
         conforming_cases=int(conforming_str.strip()),
         total_cases=int(total_str.strip()),
         deviations=deviations,
+        precision=float(metrics["Precision"]) if "Precision" in metrics else None,
     )
 
 
