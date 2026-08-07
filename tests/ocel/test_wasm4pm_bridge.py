@@ -147,3 +147,5 @@ def test_real_conformance_against_mcp_user_simulation_log(tmp_path):
     assert 0.0 <= conformance.avg_fitness <= 1.0
     assert conformance.precision is not None
     assert 0.0 <= conformance.precision <= 1.0
+    assert conformance.generalization is not None
+    assert 0.0 <= conformance.generalization <= 1.0

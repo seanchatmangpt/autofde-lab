@@ -93,6 +93,14 @@ class ConformanceReport:
     ``wasm4pm::etconformance_precision::compute_precision``. ``None`` only if an older
     ``wpm`` build (pre-precision-wiring) is in use and the table row is absent.
     """
+    generalization: float | None = None
+    """Token-based generalization (Buijs et al. 2012), from
+    ``wasm4pm::generalization::compute_quality``. Together with ``avg_fitness`` and
+    ``precision`` this closes 3 of van der Aalst's 4 process-mining quality dimensions
+    (the 4th, simplicity, is a property of the discovered model alone -- see
+    :attr:`DiscoveryResult.simplicity`, not this report). ``None`` only if an older
+    ``wpm`` build (pre-generalization-wiring) is in use and the table row is absent.
+    """
 
 
 def resolve_wpm_binary() -> str:
@@ -251,6 +259,7 @@ async def check_conformance(
         total_cases=int(total_str.strip()),
         deviations=deviations,
         precision=float(metrics["Precision"]) if "Precision" in metrics else None,
+        generalization=float(metrics["Generalization"]) if "Generalization" in metrics else None,
     )
 
 
