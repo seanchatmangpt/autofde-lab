@@ -1,0 +1,72 @@
+# One-shot persistence capsule. It deletes itself after committing the validated corpus.
+name: Persist ForwardBench gyms
+
+on:
+  push:
+    branches: [agent/add-forwardbench-gyms]
+    paths: [.github/workflows/persist-forwardbench-gyms.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  persist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Replay the already-admitted finalizer stages
+        run: |
+          set -euo pipefail
+          uv run --no-project --with pyyaml python - <<'PY'
+          import subprocess, yaml
+          from pathlib import Path
+          doc=yaml.safe_load(Path('.github/workflows/finalize-forwardbench-gyms.yml').read_text())
+          wanted=[
+            'Replay successful manufacture pin and paper stages',
+            'Correct authority projection at the ggen template',
+            'Bind prior smoke evidence to unchanged exact pins',
+            'Execute isolated AutoFDE SELECT module',
+            'Validate closure and emit exact receipt',
+          ]
+          steps={s.get('name'):s.get('run') for s in doc['jobs']['finalize']['steps'] if s.get('name')}
+          for i,name in enumerate(wanted):
+              body=steps.get(name); assert body, name
+              path=Path(f'/tmp/persist-forwardbench-{i}.sh')
+              path.write_text('set -euo pipefail\n'+body+'\n')
+              print(f'REPLAY_VALIDATED_STEP {name}')
+              subprocess.run(['bash',str(path)],check=True)
+          PY
+
+      - name: Persist canonical tree
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+          rm -f docs/papers/bootstrap-source.json docs/papers/bootstrap_papers_ttl.py
+          rm -f .github/workflows/bootstrap-forwardbench-gyms.yml
+          rm -f .github/workflows/finalize-forwardbench-gyms.yml
+          rm -f .github/workflows/persist-forwardbench-gyms.yml
+
+          # The replay stage already placed the 52 gitlinks directly in the
+          # index. Stage ordinary corpus changes separately, then stage only
+          # tracked workflow deletions so the repo's .github ignore rule does
+          # not turn deletion into a false failure.
+          git add -A .gitmodules docs/papers src/autofde_lab/forwardbench scripts/forwardbench.py tests/forwardbench
+          git add -u .github/workflows
+
+          test "$(git ls-files --stage vendor/gyms | awk '$1==160000{n++} END{print n+0}')" -eq 52
+          test "$(grep -c '^submodule "forwardbench-' .gitmodules)" -eq 52
+          git status --short
+          git commit -m "feat(forwardbench): vendor RDF-manufactured gym corpus"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
