@@ -1,4 +1,4 @@
-# One-shot persistence capsule. It deletes itself after committing the validated corpus.
+# One-shot persistence capsule. Deletes itself after committing the validated corpus.
 name: Persist ForwardBench gyms
 
 on:
@@ -58,10 +58,6 @@ jobs:
           rm -f .github/workflows/finalize-forwardbench-gyms.yml
           rm -f .github/workflows/persist-forwardbench-gyms.yml
 
-          # The replay stage already placed the 52 gitlinks directly in the
-          # index. Stage ordinary corpus changes separately, then stage only
-          # tracked workflow deletions so the repo's .github ignore rule does
-          # not turn deletion into a false failure.
           git add -A .gitmodules docs/papers src/autofde_lab/forwardbench scripts/forwardbench.py tests/forwardbench
           git add -u .github/workflows
 
