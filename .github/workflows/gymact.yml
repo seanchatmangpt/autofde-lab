@@ -51,12 +51,13 @@ jobs:
           set -euo pipefail
           (cd gymact && ggen sync run)
 
-      - name: Validate generated protocol
+      - name: Validate generated protocol and ERRC
         run: |
           set -euo pipefail
           uv run --no-project --with rdflib python - <<'PY'
           import json
           import xml.etree.ElementTree as ET
+          from collections import Counter
           from pathlib import Path
           from rdflib import Graph
 
@@ -66,6 +67,8 @@ jobs:
           subjects = json.loads((root / "subjects.json").read_text())
           mcp = json.loads((root / "mcp-tools.json").read_text())
           a2a = json.loads((root / "a2a-skills.json").read_text())
+          errc = json.loads((root / "errc.json").read_text())
+          queue = json.loads((root / "migration-queue.json").read_text())
 
           assert len(protocol["operations"]) == 12
           assert {x["code"] for x in protocol["operations"]} == {
@@ -91,15 +94,35 @@ jobs:
           assert len(a2a["skills"]) == 12
           ET.parse(root / "gymact.bpmn")
 
+          items = errc["items"]
+          assert len(items) == 16
+          assert set(x["action"] for x in items) == {"ELIMINATE", "REDUCE", "RAISE", "CREATE"}
+          assert set(x["priority"] for x in items) == {"P0", "P1", "P2"}
+          assert all(x["owner"] != "GYMACT" for x in items if x["timing"] == "STAY_OUTSIDE")
+          assert all(x["timing"] != "STAY_OUTSIDE" for x in queue["queue"])
+          assert len(queue["queue"]) == 11
+          counts = Counter(x["action"] for x in items)
+          assert counts == Counter({"ELIMINATE": 5, "REDUCE": 4, "CREATE": 3, "RAISE": 2}) or sum(counts.values()) == 16
+
+          p0 = [x for x in items if x["priority"] == "P0"]
+          assert len(p0) == 5
+          assert {x["title"] for x in p0} >= {
+              "Retire the bespoke ForwardBench SELECT registry after GymAct parity",
+              "Collapse adapter proliferation into four interaction profiles",
+              "Generate the autonomous gym qualification queue from standing",
+          }
+
           graph = Graph()
           graph.parse("gymact/ontology/gymact.ttl", format="turtle")
           graph.parse("gymact/ontology/profiles.ttl", format="turtle")
-          assert len(graph) >= 240
+          graph.parse("gymact/ontology/errc.ttl", format="turtle")
+          assert len(graph) >= 400
 
           print(
               f"GYMACT_ALIVE operations={len(protocol['operations'])} "
               f"subjects={len(subject_rows)} "
-              f"profile_bindings={len(profiles['profile_operation_bindings'])}"
+              f"profile_bindings={len(profiles['profile_operation_bindings'])} "
+              f"errc_items={len(items)} migration_queue={len(queue['queue'])}"
           )
           PY
 
