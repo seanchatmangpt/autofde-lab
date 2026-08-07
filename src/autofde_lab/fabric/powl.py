@@ -39,7 +39,10 @@ from __future__ import annotations
 import shutil
 import subprocess
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Tuple
+
+if TYPE_CHECKING:
+    from autofde_lab.fabric.models import DecisionResult
 
 POWL2 = "https://truex.io/ontology/powl2#"
 MFWP = "urn:mfw:powl-trace:"
@@ -236,6 +239,127 @@ class PowlDecodeError(ValueError):
     Carries a precise reason: the point of this decoder is to say *which*
     constraint failed, not that "the file is bad".
     """
+
+
+# ---------------------------------------------------------------------------
+# DecisionResult -> plan_lines, scoped to the classical PDDL solver family.
+# ---------------------------------------------------------------------------
+
+#: Registered domain names belonging to the classical PDDL family this
+#: converter understands (``pyproject.toml``'s ``autofde_lab.domains`` entry
+#: points). Any other ``DecisionRequest.domain`` is refused by name rather
+#: than guessed at.
+PDDL_DOMAIN_FAMILY: frozenset[str] = frozenset(
+    {"PDDLDomain", "PPDDLDomain", "TPDDLDomain"}
+)
+
+
+class PowlProjectionUnsupported(PowlDecodeError):
+    """Raised when a :class:`DecisionResult` cannot become ``plan_lines``.
+
+    Scope, stated precisely rather than left implicit: this repo's fabric
+    service (``fabric/service.py``) serializes every ``DecisionStep.action``
+    through ``canonical.to_jsonable``, which for a PDDL action object takes
+    the generic ``__dict__``-publicization branch -- *not* its ``__repr__``.
+    Verified this session: a real ``PDDLAction`` reprs as ``"(unstack a b)"``
+    but serializes into a ``DecisionResult`` as
+    ``{"action_id": 0, "arguments": [2, 0]}``, an opaque id-based encoding
+    that carries no action or object *names* at all. Recovering the VAL-format
+    text this module's writer expects therefore requires re-deriving those
+    names from the exact domain the request already identifies
+    (``request.domain_arguments["domain_path"|"problem_path"]``) -- not
+    guessing them from the ids alone. Any result that is not the classical
+    PDDL family, or whose action shape does not match the encoding above, is
+    refused here by name (``UNSUPPORTED_DOMAIN_FAMILY``) rather than produce
+    plan_lines that only look plausible.
+    """
+
+
+def decision_result_to_plan_lines(result: DecisionResult) -> list[str]:
+    """Convert a classical-PDDL-solver :class:`DecisionResult` to plan_lines.
+
+    Scoped exactly to the PDDL/classical-solver family
+    (``request.domain in PDDL_DOMAIN_FAMILY`` with a ``domain_path`` /
+    ``problem_path`` pair recorded in ``request.domain_arguments``, exactly
+    as ``fabric/pddl_engine.py``'s own ``PDDLDomain(domain_path,
+    problem_path)`` construction). It reconstructs that same domain to
+    resolve each step's serialized ``{"action_id", "arguments"}`` encoding
+    (see :class:`PowlProjectionUnsupported`) into the VAL-format
+    ``"(name arg1 arg2)"`` lines :func:`project_plan_to_powl` already
+    consumes -- the identical stringification
+    ``pddl_engine.py::_write_plan`` performs via ``f"{action}"`` on the raw,
+    unserialized action object.
+
+    Any result outside this family -- a different domain, or a step action
+    that is not exactly the ``{"action_id": int, "arguments": [int, ...]}``
+    shape -- raises :class:`PowlProjectionUnsupported` rather than guessing.
+    This function deliberately does not attempt a generic
+    ``DecisionStep.action`` -> PDDL-string converter for arbitrary domains;
+    that is real unsolved semantic work, out of scope here.
+    """
+    request = result.request
+    if request.domain not in PDDL_DOMAIN_FAMILY:
+        raise PowlProjectionUnsupported(
+            "UNSUPPORTED_DOMAIN_FAMILY: decision_result_to_plan_lines only "
+            f"supports {sorted(PDDL_DOMAIN_FAMILY)}, got domain="
+            f"{request.domain!r}"
+        )
+
+    domain_path = request.domain_arguments.get("domain_path")
+    problem_path = request.domain_arguments.get("problem_path")
+    if not isinstance(domain_path, str) or not isinstance(problem_path, str):
+        raise PowlProjectionUnsupported(
+            "UNSUPPORTED_DOMAIN_FAMILY: request.domain_arguments must carry "
+            "string 'domain_path' and 'problem_path' to resolve action_id/"
+            f"arguments into names; got keys={sorted(request.domain_arguments)}"
+        )
+
+    try:
+        from autofde_lab.hub.domain.pddl import PDDLDomain
+    except Exception as exc:  # noqa: BLE001 - any import failure is refusal
+        raise PowlProjectionUnsupported(
+            f"UNSUPPORTED_DOMAIN_FAMILY: PDDLDomain backend unavailable: {exc}"
+        ) from exc
+
+    try:
+        domain = PDDLDomain(domain_path, problem_path)
+        task = domain._task
+    except Exception as exc:  # noqa: BLE001 - any reconstruction failure
+        raise PowlProjectionUnsupported(
+            "UNSUPPORTED_DOMAIN_FAMILY: cannot reconstruct the PDDL domain "
+            f"from domain_path={domain_path!r} problem_path={problem_path!r}: "
+            f"{exc}"
+        ) from exc
+
+    lines: list[str] = []
+    for step in result.steps:
+        action = step.action
+        valid_shape = (
+            isinstance(action, dict)
+            and set(action) == {"action_id", "arguments"}
+            and isinstance(action.get("action_id"), int)
+            and isinstance(action.get("arguments"), list)
+            and all(isinstance(arg, int) for arg in action["arguments"])
+        )
+        if not valid_shape:
+            raise PowlProjectionUnsupported(
+                "UNSUPPORTED_DOMAIN_FAMILY: step "
+                f"{step.index} action is not the PDDL "
+                "{'action_id': int, 'arguments': [int, ...]} encoding this "
+                f"converter understands: {action!r}"
+            )
+        try:
+            name = task.action_name(action["action_id"])
+            arguments = [task.object_name(index) for index in action["arguments"]]
+        except Exception as exc:  # noqa: BLE001 - id resolution failure
+            raise PowlProjectionUnsupported(
+                "UNSUPPORTED_DOMAIN_FAMILY: cannot resolve step "
+                f"{step.index} action_id/arguments against the reconstructed "
+                f"domain: {exc}"
+            ) from exc
+        lines.append("(" + " ".join([name, *arguments]) + ")")
+
+    return lines
 
 
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"

@@ -275,8 +275,18 @@ class CGPWrapper(Solver, DeterministicPolicies):
         """
         CGP manage all kind of gym types, BOX, DISCRETE and TUPLE as well
         """
-        action_space = domain.get_action_space().unwrapped()
-        observation_space = domain.get_observation_space().unwrapped()
+        raw_action_space = domain.get_action_space()
+        raw_observation_space = domain.get_observation_space()
+        # Domains whose spaces are not Gym-backed (e.g. PDDLDomain's
+        # ImplicitSpace) have no `unwrapped()` -- structurally incompatible
+        # with CGP, not an error. Report False rather than crashing so a
+        # `match_solvers()` sweep over all registered solvers can complete.
+        if not hasattr(raw_action_space, "unwrapped") or not hasattr(
+            raw_observation_space, "unwrapped"
+        ):
+            return False
+        action_space = raw_action_space.unwrapped()
+        observation_space = raw_observation_space.unwrapped()
 
         if not isinstance(action_space, Iterable) and not isinstance(
             action_space, gym.spaces.Tuple
