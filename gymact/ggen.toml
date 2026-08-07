@@ -10,6 +10,7 @@ source = "ontology/gymact.ttl"
 imports = [
   "ontology/profiles.ttl",
   "ontology/errc.ttl",
+  "ontology/closed-vertical.ttl",
   "../docs/papers/papers.ttl",
   "../docs/papers/gym-lock.ttl",
   "../docs/papers/smoke-lock.ttl",
@@ -104,6 +105,13 @@ name = "errc-report"
 query = { file = "queries/errc.rq" }
 template = { file = "templates/ERRC.md.tera" }
 output_file = "generated/ERRC.md"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "azure-closed-vertical-bundle"
+query = { file = "queries/closed-vertical.rq" }
+template = { file = "templates/closed-vertical.json.tera" }
+output_file = "generated/azure-closed-vertical.json"
 mode = "Overwrite"
 
 [validation]
