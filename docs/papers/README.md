@@ -4,7 +4,7 @@ This directory is an **EXPLORE** literature surface for ForwardBench, cloud gyms
 
 ## Retrieval standing
 
-The creation capsule could not resolve `arxiv.org` over local DNS, so raw PDF bytes were not fetched. The paper files here are Markdown capsules converted from canonical arXiv HTML/abstract metadata plus original AutoFDE relevance notes. Every paper records `PDF_NOT_FETCHED|NOT_REPRODUCED`. `fetch-pdfs.sh` records the deterministic canonical PDF acquisition path for a network-enabled capsule and was syntax-validated locally, not executed.
+The local creation capsule could not resolve `arxiv.org`, so PDF acquisition was routed through a branch-scoped GitHub Actions capsule. The exact workflow fetched and `%PDF-`-validated every manifest paper, then generated `pdf/SHA256SUMS` before committing the PDFs. Paper reproduction remains `NOT_REPRODUCED`; retrieval standing is `PDF_FETCHED_SHA256_VERIFIED`. `fetch-pdfs.sh` remains the deterministic local replay path for a network-enabled capsule.
 
 ## Core clusters
 

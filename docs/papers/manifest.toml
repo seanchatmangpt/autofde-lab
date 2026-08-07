@@ -1,7 +1,7 @@
 schema_version = 1
 retrieval_mode = "HTML_METADATA_CONVERTED"
-pdf_transport = "BLOCKED:LOCAL_DNS_ARXIV_ORIGIN"
-standing = "PDF_NOT_FETCHED|NOT_REPRODUCED"
+pdf_transport = "GITHUB_ACTIONS_REMOTE_FETCH"
+standing = "PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2502.05352"
@@ -11,7 +11,7 @@ tags = ["cloud", "itops", "sre", "ciso", "finops"]
 abstract_url = "https://arxiv.org/abs/2502.05352"
 pdf_url = "https://arxiv.org/pdf/2502.05352"
 markdown = "2502.05352.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2501.06706"
@@ -21,7 +21,7 @@ tags = ["cloud", "aiops", "incident", "gym"]
 abstract_url = "https://arxiv.org/abs/2501.06706"
 pdf_url = "https://arxiv.org/pdf/2501.06706"
 markdown = "2501.06706.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2606.29193"
@@ -31,7 +31,7 @@ tags = ["microservices", "aiops", "rca", "telemetry"]
 abstract_url = "https://arxiv.org/abs/2606.29193"
 pdf_url = "https://arxiv.org/pdf/2606.29193"
 markdown = "2606.29193.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2606.08590"
@@ -41,7 +41,7 @@ tags = ["kubernetes", "rca", "evidence", "audit"]
 abstract_url = "https://arxiv.org/abs/2606.08590"
 pdf_url = "https://arxiv.org/pdf/2606.08590"
 markdown = "2606.08590.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2604.21199"
@@ -51,7 +51,7 @@ tags = ["incident", "time-series", "telemetry"]
 abstract_url = "https://arxiv.org/abs/2604.21199"
 pdf_url = "https://arxiv.org/pdf/2604.21199"
 markdown = "2604.21199.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2605.12729"
@@ -61,7 +61,7 @@ tags = ["netops", "aiops", "safety", "governance"]
 abstract_url = "https://arxiv.org/abs/2605.12729"
 pdf_url = "https://arxiv.org/pdf/2605.12729"
 markdown = "2605.12729.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2509.05303"
@@ -71,7 +71,7 @@ tags = ["iac", "terraform", "cloudformation", "cdk"]
 abstract_url = "https://arxiv.org/abs/2509.05303"
 pdf_url = "https://arxiv.org/pdf/2509.05303"
 markdown = "2509.05303.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2607.20478"
@@ -81,7 +81,7 @@ tags = ["iac", "terraform", "opa", "verifier"]
 abstract_url = "https://arxiv.org/abs/2607.20478"
 pdf_url = "https://arxiv.org/pdf/2607.20478"
 markdown = "2607.20478.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2608.02672"
@@ -91,7 +91,7 @@ tags = ["iac", "terraform", "security", "checkov", "trivy"]
 abstract_url = "https://arxiv.org/abs/2608.02672"
 pdf_url = "https://arxiv.org/pdf/2608.02672"
 markdown = "2608.02672.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2604.12040"
@@ -101,7 +101,7 @@ tags = ["security", "incident", "forensics", "cloud"]
 abstract_url = "https://arxiv.org/abs/2604.12040"
 pdf_url = "https://arxiv.org/pdf/2604.12040"
 markdown = "2604.12040.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2607.26791"
@@ -111,7 +111,7 @@ tags = ["security", "incident", "post-compromise", "cyber-range"]
 abstract_url = "https://arxiv.org/abs/2607.26791"
 pdf_url = "https://arxiv.org/pdf/2607.26791"
 markdown = "2607.26791.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2601.22130"
@@ -121,7 +121,7 @@ tags = ["enterprise", "workflow", "servicenow", "dynamics"]
 abstract_url = "https://arxiv.org/abs/2601.22130"
 pdf_url = "https://arxiv.org/pdf/2601.22130"
 markdown = "2601.22130.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2407.13244"
@@ -131,7 +131,7 @@ tags = ["process-mining", "benchmark", "procint"]
 abstract_url = "https://arxiv.org/abs/2407.13244"
 pdf_url = "https://arxiv.org/pdf/2407.13244"
 markdown = "2407.13244.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2403.06749"
@@ -141,7 +141,7 @@ tags = ["process-mining", "evaluation", "conformance"]
 abstract_url = "https://arxiv.org/abs/2403.06749"
 pdf_url = "https://arxiv.org/pdf/2403.06749"
 markdown = "2403.06749.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2603.15798"
@@ -151,7 +151,7 @@ tags = ["benchmark", "mcp", "gym", "interoperability"]
 abstract_url = "https://arxiv.org/abs/2603.15798"
 pdf_url = "https://arxiv.org/pdf/2603.15798"
 markdown = "2603.15798.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2408.04682"
@@ -161,7 +161,7 @@ tags = ["tools", "stateful", "policy", "benchmark"]
 abstract_url = "https://arxiv.org/abs/2408.04682"
 pdf_url = "https://arxiv.org/pdf/2408.04682"
 markdown = "2408.04682.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2406.12045"
@@ -171,7 +171,7 @@ tags = ["tools", "policy", "interactive", "reliability"]
 abstract_url = "https://arxiv.org/abs/2406.12045"
 pdf_url = "https://arxiv.org/pdf/2406.12045"
 markdown = "2406.12045.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2403.07718"
@@ -181,7 +181,7 @@ tags = ["enterprise", "servicenow", "knowledge-work", "browsergym"]
 abstract_url = "https://arxiv.org/abs/2403.07718"
 pdf_url = "https://arxiv.org/pdf/2403.07718"
 markdown = "2403.07718.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2407.05291"
@@ -191,7 +191,7 @@ tags = ["enterprise", "planning", "workflow"]
 abstract_url = "https://arxiv.org/abs/2407.05291"
 pdf_url = "https://arxiv.org/pdf/2407.05291"
 markdown = "2407.05291.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2510.27287"
@@ -201,7 +201,7 @@ tags = ["enterprise", "access-control", "cross-functional"]
 abstract_url = "https://arxiv.org/abs/2510.27287"
 pdf_url = "https://arxiv.org/pdf/2510.27287"
 markdown = "2510.27287.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2505.18878"
@@ -211,7 +211,7 @@ tags = ["enterprise", "crm", "confidentiality", "workflow"]
 abstract_url = "https://arxiv.org/abs/2505.18878"
 pdf_url = "https://arxiv.org/pdf/2505.18878"
 markdown = "2505.18878.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2404.07972"
@@ -221,7 +221,7 @@ tags = ["computer-use", "execution", "workflow"]
 abstract_url = "https://arxiv.org/abs/2404.07972"
 pdf_url = "https://arxiv.org/pdf/2404.07972"
 markdown = "2404.07972.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2308.03688"
@@ -231,7 +231,7 @@ tags = ["agents", "interactive", "environments"]
 abstract_url = "https://arxiv.org/abs/2308.03688"
 pdf_url = "https://arxiv.org/pdf/2308.03688"
 markdown = "2308.03688.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2511.10049"
@@ -241,7 +241,7 @@ tags = ["benchmark-generation", "enterprise", "migration"]
 abstract_url = "https://arxiv.org/abs/2511.10049"
 pdf_url = "https://arxiv.org/pdf/2511.10049"
 markdown = "2511.10049.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2604.12290"
@@ -251,7 +251,7 @@ tags = ["engineering", "verifier", "optimization", "simulation"]
 abstract_url = "https://arxiv.org/abs/2604.12290"
 pdf_url = "https://arxiv.org/pdf/2604.12290"
 markdown = "2604.12290.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2603.20807"
@@ -261,7 +261,7 @@ tags = ["benchmark-generation", "psychometrics", "validation"]
 abstract_url = "https://arxiv.org/abs/2603.20807"
 pdf_url = "https://arxiv.org/pdf/2603.20807"
 markdown = "2603.20807.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2504.07164"
@@ -271,7 +271,7 @@ tags = ["gym", "procedural-generation", "verifier", "self-play"]
 abstract_url = "https://arxiv.org/abs/2504.07164"
 pdf_url = "https://arxiv.org/pdf/2504.07164"
 markdown = "2504.07164.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
 
 [[paper]]
 id = "2606.12736"
@@ -281,4 +281,4 @@ tags = ["agent-agnostic", "stepwise-verification", "interactive"]
 abstract_url = "https://arxiv.org/abs/2606.12736"
 pdf_url = "https://arxiv.org/pdf/2606.12736"
 markdown = "2606.12736.md"
-standing = "HTML_METADATA_CONVERTED|PDF_NOT_FETCHED|NOT_REPRODUCED"
+standing = "HTML_METADATA_CONVERTED|PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED"
