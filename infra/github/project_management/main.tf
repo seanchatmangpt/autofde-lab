@@ -19,8 +19,11 @@
 // edge, so work precedence is carried in generated issue BODY metadata and is
 // read back by autofde_lab.autofde.reconstruct. Never encode work order here.
 //
-// This module is never applied by an agent: github_issue creates real issues
-// in a real repository. `init -backend=false` and `validate` only.
+// Apply authorized: explicit user go-ahead, 2026-08-07, per
+// ~/.claude/plans/read-docs-autofde-explore-md-89-lines-ancient-hippo.md.
+// github_repository.autofde targets the already-existing, already-renamed
+// autofde-lab repo and must be `terraform import`ed before apply, never
+// created fresh.
 
 terraform {
   required_version = ">= 1.5.0"
@@ -33,7 +36,7 @@ terraform {
 }
 
 locals {
-  repository_name = "scikit-decide"
+  repository_name = "autofde-lab"
   github_owner    = "seanchatmangpt"
 }
 

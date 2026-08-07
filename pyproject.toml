@@ -103,9 +103,25 @@ pddl = [
 dspy = [
     "dspy",  # unpinned: DSPyPolicy always targets the most recent dspy release
 ]
+ofmf = [
+    # Vendored from ~/dev/.spec-kit.bak/src/specify_cli/ofmf/ofmf_keystone.py
+    # (whole file, plus its kgc_ofmf_utils/event_adapter/ofmf.utils dependency
+    # closure) at the user's explicit direction, including OFMFEngine — the
+    # actuating half (writes files, drives SpiffWorkflow). Nothing in
+    # autofde_lab imports or registers OFMFEngine; see src/autofde_lab/ofmf/__init__.py.
+    "rdflib",
+    "blake3",
+    "pyshacl",
+    "owlrl",
+    "pyDatalog",
+    "PyShEx",
+    "pyoxigraph",
+    "pyld",
+    "SpiffWorkflow",
+]
 all = [
     # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
-    "autofde-lab[domains, solvers, pddl, dspy]",
+    "autofde-lab[domains, solvers, pddl, dspy, ofmf]",
 ]
 
 [project.entry-points."autofde_lab.domains"]
