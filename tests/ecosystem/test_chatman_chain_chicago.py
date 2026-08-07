@@ -87,34 +87,62 @@ class TestEngineSatisfiesMfwClassicalContract:
     admissible at all -- they are not stylistic.
     """
 
-    def test_version_witness_prefix_is_stable(self):
-        """`--help` must start with the pinned witness prefix.
+    def test_engine_conforms_to_the_classical_file_contract(self, tmp_path):
+        """Four contract clauses, each named on failure.
 
-        ~/mfw's PlannerProfile declares `pddl:versionWitnessPrefix "usage:"`
-        for fast-downward; matching it lets a skdecide engine be pinned the
-        same way. Breaking this silently invalidates any profile.
+        Collapsed from four sibling tests, all redrawing "the engine is
+        admissible under mfw's classical + output_mode=file contract". Every
+        clause still runs and the report lists all offenders.
+
+        * VERSION_WITNESS -- `--help` must start with the pinned prefix. mfw's
+          PlannerProfile declares `pddl:versionWitnessPrefix "usage:"`;
+          breaking it silently invalidates any profile.
+        * ARITY -- exactly {domain} {problem} {plan}.
+        * OUTPUT_MODE_FILE -- the plan goes to the path, not stdout.
+        * EXIT_CODES -- a success_codes gate is vacuous if failures look alike.
         """
+        failures: list[str] = []
+
         result = run_engine("--help")
-        assert result.returncode == EXIT_PLAN_FOUND
-        assert result.stdout.startswith("usage:"), (
-            "version witness must start with 'usage:' to be pinnable as "
-            f"pddl:versionWitnessPrefix; got: {result.stdout[:80]!r}"
-        )
+        if result.returncode != EXIT_PLAN_FOUND:
+            failures.append(f"VERSION_WITNESS: --help exited {result.returncode}")
+        if not result.stdout.startswith("usage:"):
+            failures.append(
+                "VERSION_WITNESS: must start with 'usage:' to be pinnable as "
+                f"pddl:versionWitnessPrefix; got {result.stdout[:80]!r}"
+            )
 
-    def test_three_positional_arguments_is_the_contract(self):
-        """Exactly {domain} {problem} {plan} -- mfw's classical+file set."""
-        result = run_engine(str(BLOCKS_DOMAIN), str(BLOCKS_PROBLEM))
-        assert result.returncode == EXIT_USAGE
+        two_args = run_engine(str(BLOCKS_DOMAIN), str(BLOCKS_PROBLEM))
+        if two_args.returncode != EXIT_USAGE:
+            failures.append(
+                f"ARITY: two positionals exited {two_args.returncode}, "
+                f"expected {EXIT_USAGE}"
+            )
 
-    def test_plan_written_to_file_not_stdout(self, tmp_path):
-        """output_mode="file" means the plan goes to the path, not stdout."""
         plan = tmp_path / "out.plan"
-        result = run_engine(str(BLOCKS_DOMAIN), str(BLOCKS_PROBLEM), str(plan))
-        assert result.returncode == EXIT_PLAN_FOUND
-        assert plan.exists()
-        assert "(unstack" not in result.stdout, (
-            "plan content must not leak to stdout under output_mode=file"
+        produced = run_engine(str(BLOCKS_DOMAIN), str(BLOCKS_PROBLEM), str(plan))
+        if produced.returncode != EXIT_PLAN_FOUND:
+            failures.append(f"OUTPUT_MODE_FILE: exited {produced.returncode}")
+        if not plan.exists():
+            failures.append(f"OUTPUT_MODE_FILE: {plan} was not written")
+        if "(unstack" in produced.stdout:
+            failures.append(
+                "OUTPUT_MODE_FILE: plan content leaked to stdout under "
+                "output_mode=file"
+            )
+
+        missing = run_engine(
+            str(tmp_path / "nope.pddl"),
+            str(tmp_path / "nope2.pddl"),
+            str(tmp_path / "o.plan"),
         )
+        if missing.returncode != EXIT_REFUSED:
+            failures.append(
+                f"EXIT_CODES: absent inputs exited {missing.returncode}, "
+                f"expected {EXIT_REFUSED} (and never {EXIT_NO_PLAN})"
+            )
+
+        assert not failures, "\n".join(failures)
 
     def test_plan_format_matches_mfw_committed_artifact(self, tmp_path):
         """Plan must be VAL-consumable, same shape as mfw's real run.
@@ -141,16 +169,6 @@ class TestEngineSatisfiesMfwClassicalContract:
         assert "; cost =" in produced, (
             "cost trailer missing; mfw's committed plan carries one"
         )
-
-    def test_exit_codes_are_distinguishable(self, tmp_path):
-        """A success_codes gate is vacuous if every failure looks alike."""
-        missing = run_engine(
-            str(tmp_path / "nope.pddl"),
-            str(tmp_path / "nope2.pddl"),
-            str(tmp_path / "o.plan"),
-        )
-        assert missing.returncode == EXIT_REFUSED
-        assert missing.returncode != EXIT_NO_PLAN
 
 
 class TestSilentWrongAnswerIsRefused:
@@ -214,7 +232,25 @@ class TestPowlProjection:
             pytest.fail(f"engine failed: {result.stdout}\n{result.stderr}")
         return powl.read_text()
 
-    def test_uses_mfw_powl2_vocabulary(self, projected):
+    def test_projection_uses_mfw_vocabulary_and_matches_plan_length(self, tmp_path):
+        """Two properties of our own projection, each named on failure.
+
+        Collapsed from two sibling tests that each re-ran the engine over the
+        same domain. One run now, both checks accumulated.
+
+        VOCABULARY -- every powl2/mfwp term mfw's emitter uses.
+        ACTIVITY_COUNT -- the declared count equals the plan's action lines.
+        """
+        failures: list[str] = []
+        plan = tmp_path / "c.plan"
+        powl = tmp_path / "c.powl.ttl"
+        result = run_engine(
+            str(BLOCKS_DOMAIN), str(BLOCKS_PROBLEM), str(plan), str(powl)
+        )
+        if result.returncode != EXIT_PLAN_FOUND:
+            pytest.fail(f"engine failed: {result.stdout}\n{result.stderr}")
+        turtle = powl.read_text()
+
         for term in (
             "powl2:Model",
             "powl2:PartialOrder",
@@ -225,7 +261,20 @@ class TestPowlProjection:
             "mfwp:planOrdinal",
             "mfwp:projection",
         ):
-            assert term in projected, f"POWL projection missing {term}"
+            if term not in turtle:
+                failures.append(f"VOCABULARY: POWL projection missing {term}")
+
+        actions = [
+            line for line in plan.read_text().splitlines() if line.startswith("(")
+        ]
+        expected = f'mfwp:activityCount "{len(actions)}"^^xsd:integer'
+        if expected not in turtle:
+            failures.append(
+                f"ACTIVITY_COUNT: {expected!r} absent; plan has {len(actions)} "
+                "action lines"
+            )
+
+        assert not failures, "\n".join(failures)
 
     def test_vocabulary_agrees_with_mfw_committed_artifact(self):
         """Terms we emit must actually appear in mfw's real POWL output."""
@@ -270,16 +319,6 @@ class TestPowlProjection:
         assert digest == expected, (
             "emitted digest does not match an independent b3sum of the file"
         )
-
-    def test_activity_count_matches_plan_length(self, tmp_path):
-        plan = tmp_path / "c.plan"
-        powl = tmp_path / "c.powl.ttl"
-        run_engine(str(BLOCKS_DOMAIN), str(BLOCKS_PROBLEM), str(plan), str(powl))
-        actions = [
-            line for line in plan.read_text().splitlines() if line.startswith("(")
-        ]
-        turtle = powl.read_text()
-        assert f'mfwp:activityCount "{len(actions)}"^^xsd:integer' in turtle
 
 
 # ---------------------------------------------------------------------------
@@ -411,26 +450,35 @@ class TestPlannerOutputIsCandidateNotActuation:
     planner receipt/admission semantics fails a test instead of sliding in.
     """
 
-    def test_engine_emits_no_receipt(self, tmp_path):
+    def test_engine_emits_no_receipt_and_claims_no_admission(self, tmp_path):
+        """Two boundary properties, each named on failure.
+
+        Collapsed from two sibling tests that each re-ran the same engine
+        invocation. NO_RECEIPT -- the planner writes candidates only.
+        NO_ADMISSION -- the projection asserts no admitted consequence.
+        """
+        failures: list[str] = []
         plan = tmp_path / "d.plan"
         powl = tmp_path / "d.powl.ttl"
         run_engine(str(BLOCKS_DOMAIN), str(BLOCKS_PROBLEM), str(plan), str(powl))
-        produced = {p.name for p in tmp_path.iterdir()}
-        assert produced == {"d.plan", "d.powl.ttl"}, (
-            f"engine wrote unexpected artifacts: {produced}. A planner emits "
-            "candidates only -- receipts belong to the broker/verifier."
-        )
 
-    def test_powl_projection_claims_no_admission(self, tmp_path):
-        plan = tmp_path / "e.plan"
-        powl = tmp_path / "e.powl.ttl"
-        run_engine(str(BLOCKS_DOMAIN), str(BLOCKS_PROBLEM), str(plan), str(powl))
+        produced = {p.name for p in tmp_path.iterdir()}
+        if produced != {"d.plan", "d.powl.ttl"}:
+            failures.append(
+                f"NO_RECEIPT: engine wrote unexpected artifacts: {produced}. A "
+                "planner emits candidates only -- receipts belong to the "
+                "broker/verifier."
+            )
+
         turtle = powl.read_text()
         for forbidden in ("Admitted", "admitted", "ALIVE", "receipt("):
-            assert forbidden not in turtle, (
-                f"POWL projection must not assert {forbidden!r}; it is a "
-                "candidate process model, not an admitted consequence"
-            )
+            if forbidden in turtle:
+                failures.append(
+                    f"NO_ADMISSION: POWL projection asserts {forbidden!r}; it is "
+                    "a candidate process model, not an admitted consequence"
+                )
+
+        assert not failures, "\n".join(failures)
 
 
 # ---------------------------------------------------------------------------
@@ -451,11 +499,55 @@ class TestOntologyIsGeneratedNotCurated:
     the entry points, and the drift is invisible precisely when it matters.
     """
 
-    def test_ontology_file_exists(self):
-        assert ONTOLOGY.exists(), (
-            f"{ONTOLOGY} missing; regenerate with "
-            "`python -m skdecide.fabric.ontology ontology/skdecide-capabilities.ttl`"
-        )
+    def test_committed_ontology_is_present_and_self_describing(self):
+        """Three artifact-level ontology properties, each named on failure.
+
+        Collapsed from three sibling tests. The four *drift* controls below
+        (registry match, every declared kind, adapter standing, derived
+        requirements) are deliberately left as separate tests: each is an
+        independent way the artifact can go stale and each must be able to
+        fail on its own.
+
+        * FILE_EXISTS -- the committed artifact is there at all.
+        * CLAIM_CEILING -- an ALIVE row for a declared term must not read as a
+          capability claim.
+        * PDDL_HAZARD -- the silent-wrong-answer hazard must live in the
+          ontology; as a constant in one module nothing outside can reason
+          about it.
+        """
+        from skdecide.fabric.ontology import IN_PROCESS_KINDS, parse_kinds
+
+        failures: list[str] = []
+
+        if not ONTOLOGY.exists():
+            pytest.fail(
+                f"FILE_EXISTS: {ONTOLOGY} missing; regenerate with "
+                "`python -m skdecide.fabric.ontology "
+                "ontology/skdecide-capabilities.ttl`"
+            )
+
+        turtle = ONTOLOGY.read_text()
+        emitted = parse_kinds(turtle)
+        for kind in IN_PROCESS_KINDS:
+            if not emitted[kind]:
+                failures.append(f"CLAIM_CEILING: no {kind} terms emitted")
+                continue
+            for identifier, record in emitted[kind].items():
+                if not (record.get("skdt:claimCeiling") or []):
+                    failures.append(
+                        f"CLAIM_CEILING: {kind}/{identifier} has no skdt:claimCeiling"
+                    )
+
+        for requirement in (":derived-predicates", ":constraints", ":preferences"):
+            if requirement not in turtle:
+                failures.append(f"PDDL_HAZARD: {requirement} absent from ontology")
+        if 'skdt:standing "UNSUPPORTED"' not in turtle:
+            failures.append(
+                'PDDL_HAZARD: no skdt:standing "UNSUPPORTED" row for the '
+                "unimplemented PDDL requirements"
+            )
+
+        assert not failures, "\n".join(failures)
 
     def test_ontology_matches_live_registry_exactly(self):
         """Fails if any registered capability is absent from the ontology.
@@ -514,17 +606,6 @@ class TestOntologyIsGeneratedNotCurated:
                 "ontology/skdecide-capabilities.ttl"
             )
 
-    def test_vocabulary_terms_carry_an_explicit_claim_ceiling(self):
-        """An ALIVE row for a declared term must not read as a capability claim."""
-        from skdecide.fabric.ontology import IN_PROCESS_KINDS, parse_kinds
-
-        emitted = parse_kinds(ONTOLOGY.read_text())
-        for kind in IN_PROCESS_KINDS:
-            assert emitted[kind], f"no {kind} terms emitted"  # not a vacuous pass
-            for identifier, record in emitted[kind].items():
-                ceiling = record.get("skdt:claimCeiling") or []
-                assert ceiling, f"{kind}/{identifier} has no skdt:claimCeiling"
-
     def test_adapter_standing_is_not_baked_from_a_local_probe(self):
         """A host-dependent probe result must never become a committed fact."""
         from skdecide.fabric.ontology import parse_kinds
@@ -559,17 +640,6 @@ class TestOntologyIsGeneratedNotCurated:
             checked += 1
         assert checked > 20, f"only {checked} solvers cross-checked"
 
-    def test_unimplemented_pddl_requirements_are_first_class_facts(self):
-        """The silent-wrong-answer hazard must live in the ontology.
-
-        If it exists only as a constant in one module, nothing outside that
-        module can reason about it.
-        """
-        turtle = ONTOLOGY.read_text()
-        for requirement in (":derived-predicates", ":constraints", ":preferences"):
-            assert requirement in turtle, f"{requirement} absent from ontology"
-        assert 'skdt:standing "UNSUPPORTED"' in turtle
-
 
 class TestCapabilityCoverageIsComplete:
     """Every declared capability is selected, compared, or excluded with cause.
@@ -596,58 +666,83 @@ class TestCapabilityCoverageIsComplete:
         complete, problems = coverage_is_complete(report, str(ONTOLOGY))
         assert complete, "coverage incomplete:\n" + "\n".join(problems)
 
-    def test_every_capability_classified_exactly_once(self, report):
-        names = [row.capability for row in report]
-        assert len(names) == len(set(names)), "a capability was classified twice"
+    def test_the_report_is_well_formed_and_actually_measured(self, report):
+        """Five report properties, each named on failure.
 
-    def test_every_exclusion_has_a_machine_readable_cause(self, report):
-        """A free-text reason is not machine-readable; "it failed" is not actionable."""
-        from skdecide.fabric.coverage import CAUSE_NONE
+        Collapsed from five sibling tests over the same class-scoped report
+        fixture; each redrew one aspect of "the coverage report is a real,
+        machine-readable measurement". ``test_no_capability_silently_omitted``
+        stays separate above because it is THE key invariant.
+
+        * CLASSIFIED_ONCE -- no capability classified twice.
+        * MACHINE_READABLE_CAUSE -- a free-text reason is not machine-readable;
+          "it failed" is not actionable.
+        * COMPARISON_MEASURED -- ``match_solvers(ranked=True)`` is a no-op
+          (``src/skdecide/utils.py`` carries ``# TODO: implement ranking
+          heuristic``), so a "dominated" verdict that was not measured is an
+          empty claim.
+        * APPLICABLE_WERE_RUN -- no capability may be applicable, available,
+          and simply skipped.
+        * REPORT_SCHEMA -- every JSON row carries the required fields.
+        """
+        from skdecide.fabric.coverage import CAUSE_NONE, report_to_json
+
+        failures: list[str] = []
+
+        names = [row.capability for row in report]
+        if len(names) != len(set(names)):
+            failures.append("CLASSIFIED_ONCE: a capability was classified twice")
 
         for row in report:
             if row.disposition in ("excluded", "failed"):
-                assert row.cause and row.cause != CAUSE_NONE, (
-                    f"{row.capability}: excluded without a machine-readable cause"
-                )
-                assert row.reason.strip(), f"{row.capability}: empty reason"
-                assert row.falsifier.strip(), f"{row.capability}: no falsifier"
+                if not row.cause or row.cause == CAUSE_NONE:
+                    failures.append(
+                        f"MACHINE_READABLE_CAUSE: {row.capability}: excluded "
+                        "without a machine-readable cause"
+                    )
+                if not row.reason.strip():
+                    failures.append(
+                        f"MACHINE_READABLE_CAUSE: {row.capability}: empty reason"
+                    )
+                if not row.falsifier.strip():
+                    failures.append(
+                        f"MACHINE_READABLE_CAUSE: {row.capability}: no falsifier"
+                    )
 
-    def test_comparison_actually_happened(self, report):
-        """`match_solvers(ranked=True)` is a no-op, so ranking must be measured.
-
-        `src/skdecide/utils.py:126` carries `# TODO: implement ranking
-        heuristic` and always returns an unranked list. A "dominated" verdict
-        that was not measured would therefore be an empty claim.
-        """
         compared = [
             row
             for row in report
             if row.disposition in ("selected", "tied_optimal", "dominated")
         ]
-        assert len(compared) >= 2, (
-            "fewer than 2 capabilities were actually run and compared; a "
-            "coverage claim without comparison is not a comparison"
-        )
-        for row in compared:
-            assert "cost" in row.execution_evidence, (
-                f"{row.capability}: claimed comparison without measured cost"
+        if len(compared) < 2:
+            failures.append(
+                f"COMPARISON_MEASURED: only {len(compared)} capabilities were "
+                "actually run and compared; a coverage claim without comparison "
+                "is not a comparison"
             )
+        for row in compared:
+            if "cost" not in row.execution_evidence:
+                failures.append(
+                    f"COMPARISON_MEASURED: {row.capability}: claimed comparison "
+                    "without measured cost"
+                )
 
-    def test_applicable_and_available_capabilities_were_run(self, report):
-        """No capability may be applicable, available, and simply skipped."""
         skipped = [
             row.capability
             for row in report
             if row.applicability == "applicable"
-            and row.disposition not in ("selected", "tied_optimal", "dominated", "failed")
+            and row.disposition
+            not in ("selected", "tied_optimal", "dominated", "failed")
         ]
-        assert not skipped, f"applicable capabilities never exercised: {skipped}"
-
-    def test_report_is_machine_readable(self, report):
-        from skdecide.fabric.coverage import report_to_json
+        if skipped:
+            failures.append(
+                f"APPLICABLE_WERE_RUN: applicable capabilities never exercised: "
+                f"{skipped}"
+            )
 
         payload = json.loads(report_to_json(report))
-        assert payload
+        if not payload:
+            failures.append("REPORT_SCHEMA: empty JSON payload")
         required = {
             "capability",
             "ontology_id",
@@ -661,9 +756,13 @@ class TestCapabilityCoverageIsComplete:
             "falsifier",
         }
         for entry in payload:
-            assert required.issubset(entry.keys()), (
-                f"row missing fields: {required - set(entry.keys())}"
-            )
+            if not required.issubset(entry.keys()):
+                failures.append(
+                    f"REPORT_SCHEMA: row missing fields "
+                    f"{sorted(required - set(entry.keys()))}"
+                )
+
+        assert not failures, "\n".join(failures)
 
 
 # ---------------------------------------------------------------------------

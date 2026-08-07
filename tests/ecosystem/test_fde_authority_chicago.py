@@ -102,21 +102,28 @@ def proposal(**overrides) -> ProposedOperation:
 
 
 def refusal_code(name: str, **overrides) -> str:
-    """Run ``permits`` against a fixture, assert it refused, return the code."""
+    """Run ``permits`` against a fixture and return the typed refusal reason.
+
+    A permitted proposal returns a sentinel rather than raising, so that a
+    collapsed test naming several refusal axes reports *which* axis stopped
+    refusing instead of aborting at the first one.
+    """
     model = fixture(name)
     grant = model.the_grant()
     verdict = permits(model, grant, proposal(**overrides))
-    assert not verdict.allowed, (
-        f"{name}: expected a refusal, got {verdict.verdict} ({verdict.detail})"
-    )
+    if verdict.allowed:
+        return f"NOT_REFUSED({name}: {verdict.verdict} -- {verdict.detail})"
     return verdict.reason
 
 
 def validation_code(name: str) -> str:
+    """Return the typed ``AuthorityError.code``, or a sentinel if none was raised."""
     model = fixture(name)
-    with pytest.raises(AuthorityError) as caught:
+    try:
         validate_authority(model)
-    return caught.value.code
+    except AuthorityError as error:
+        return error.code
+    return f"NOT_REFUSED({name}: validate_authority accepted the artifact)"
 
 
 # ---------------------------------------------------------------------------
@@ -125,27 +132,42 @@ def validation_code(name: str) -> str:
 
 
 class TestTheAuthorityArtifact:
-    def test_shapes_file_is_committed(self):
-        assert SHAPES.exists()
-        text = SHAPES.read_text()
-        assert text.count("a sh:NodeShape") >= 3
-        assert text.count("sh:property") >= 6
-
-    def test_base_artifact_validates(self):
-        assert validate_authority(fixture("customer-authority.ttl")) is not None
-
-    def test_base_artifact_permits_the_bounded_operation(self):
+    def test_base_artifact_validates_and_permits_the_bounded_operation(self):
+        """The positive baseline. If this goes red every refusal below is moot."""
         model = fixture("customer-authority.ttl")
+        assert validate_authority(model) is not None
         verdict = permits(model, model.the_grant(), proposal())
         assert verdict.allowed, verdict.detail
         assert verdict.verdict == "ALLOW"
 
-    def test_no_naked_approval_boolean_anywhere(self):
-        """`approved = true` records no decider, no right, and no evidence.
+    def test_committed_artifacts_are_well_formed(self):
+        """Four distinct artifact-corpus properties, each named on failure.
 
-        Scanned over statement lines only; the prose comments deliberately
-        discuss the banned shape in order to say why it is banned.
+        Collapsed from four sibling tests; every check still runs and the
+        report lists *all* offenders rather than stopping at the first.
+
+        * SHAPES_FILE -- the SHACL shapes are committed with their 3 node
+          shapes / 6 property blocks.
+        * NAKED_APPROVAL -- `approved = true` records no decider, no right and
+          no evidence, so no fixture statement line may carry it. Scanned over
+          statement lines only; the prose comments deliberately discuss the
+          banned shape in order to say why it is banned.
+        * ENTITY_KINDS -- every entity kind the boundary requires is modelled.
+        * NO_MANUFACTURED_DECISION -- invariant 7: the positive fixture must
+          not manufacture customer authority.
         """
+        failures: list[str] = []
+
+        if not SHAPES.exists():
+            failures.append(f"SHAPES_FILE: {SHAPES} missing")
+        else:
+            text = SHAPES.read_text()
+            if text.count("a sh:NodeShape") < 3 or text.count("sh:property") < 6:
+                failures.append(
+                    "SHAPES_FILE: expected >=3 sh:NodeShape and >=6 sh:property, "
+                    f"got {text.count('a sh:NodeShape')} / {text.count('sh:property')}"
+                )
+
         for path in sorted(FIXTURES.glob("*.ttl")):
             for line in path.read_text().splitlines():
                 stripped = line.strip()
@@ -153,11 +175,12 @@ class TestTheAuthorityArtifact:
                     continue
                 lowered = stripped.lower()
                 for banned in ("approved", "approval", "signoff", "sign_off", "ok "):
-                    assert banned not in lowered, (
-                        f"{path.name}: {stripped!r} carries {banned!r}"
-                    )
+                    if banned in lowered:
+                        failures.append(
+                            f"NAKED_APPROVAL: {path.name}: {stripped!r} carries "
+                            f"{banned!r}"
+                        )
 
-    def test_every_required_entity_kind_is_modelled(self):
         turtle = BASE.read_text()
         for term in (
             "fdet:CustomerOrganization",
@@ -177,14 +200,21 @@ class TestTheAuthorityArtifact:
             "fdet:SunsetAuthority",
             "fdet:grantIdentifier",
         ):
-            assert term in turtle, f"authority artifact does not model {term}"
+            if term not in turtle:
+                failures.append(f"ENTITY_KINDS: artifact does not model {term}")
 
-    def test_positive_fixture_asserts_no_customer_decision(self):
-        """Invariant 7: a fixture must not manufacture customer authority."""
-        turtle = BASE.read_text()
-        assert "customerAuthorizedRetirement" not in turtle
-        assert "fdet:SunsetAuthorization" not in turtle
-        assert "fdet:AdoptionDecision" not in turtle
+        for manufactured in (
+            "customerAuthorizedRetirement",
+            "fdet:SunsetAuthorization",
+            "fdet:AdoptionDecision",
+        ):
+            if manufactured in turtle:
+                failures.append(
+                    f"NO_MANUFACTURED_DECISION: positive fixture carries "
+                    f"{manufactured}"
+                )
+
+        assert not failures, "\n".join(failures)
 
 
 # ---------------------------------------------------------------------------
@@ -215,16 +245,26 @@ class TestModuleMintsNothing:
         "execute",
     )
 
-    def test_no_public_callable_names_a_minting_verb(self):
-        """Scoped to functions.
+    def test_module_mints_nothing(self):
+        """Six ways the minting boundary could be crossed, all named on failure.
 
-        Dataclasses are the modelled vocabulary -- ``AuthorizedOperation`` and
-        ``SunsetAuthorization`` are the names of customer acts this module
-        *reads*, and renaming them would obscure the artifact rather than
-        tighten the boundary. What must not exist is a verb you could call to
-        obtain authority.
+        Collapsed from six sibling tests, each of which redrew the single
+        property "``fde.py`` compiles and checks authority, it never produces
+        it". Every check still executes; the report lists all offenders.
+
+        * MINTING_VERB -- scoped to functions. Dataclasses are the modelled
+          vocabulary (``AuthorizedOperation``, ``SunsetAuthorization`` name
+          customer acts this module *reads*); what must not exist is a verb
+          you could call to obtain authority.
+        * VERDICT_SHAPE -- the verdict carries no bearer value.
+        * NOT_A_TRUTH_VALUE -- ``if permission:`` would swallow a refusal.
+        * VALIDATE_CONFERS_NOTHING -- ``validate_authority`` returns its input.
+        * RETURNS_A_GRANT -- no public callable is annotated as producing one.
+        * AUTHORABLE_HERE -- this repo authors recommendations only.
         """
-        offenders = [
+        failures: list[str] = []
+
+        minting = [
             name
             for name, obj in vars(fde).items()
             if not name.startswith("_")
@@ -232,60 +272,81 @@ class TestModuleMintsNothing:
             and obj.__module__ == fde.__name__
             and any(verb in name.lower() for verb in self.MINTING_VERBS)
         ]
-        assert not offenders, (
-            f"fde.py exposes minting-shaped callables {offenders}; this module "
-            "may compile, structure and check an authority envelope, never "
-            "mint or enforce one"
-        )
+        if minting:
+            failures.append(
+                f"MINTING_VERB: fde.py exposes minting-shaped callables {minting}; "
+                "this module may compile, structure and check an authority "
+                "envelope, never mint or enforce one"
+            )
 
-    def test_permission_carries_no_bearer_value(self):
-        model = fixture("customer-authority.ttl")
-        verdict = permits(model, model.the_grant(), proposal())
-        fields = set(vars(verdict))
-        assert fields == {"allowed", "reason", "detail", "advisory"}, fields
-        for forbidden in ("token", "signature", "receipt", "capability", "grant"):
-            assert not hasattr(verdict, forbidden)
-        assert verdict.advisory is True
-
-    def test_permission_is_not_usable_as_a_truth_value(self):
-        """`if permission:` would swallow a refusal silently."""
-        model = fixture("customer-authority.ttl")
-        verdict = permits(model, model.the_grant(), proposal())
-        with pytest.raises(TypeError):
-            bool(verdict)
-
-    def test_validate_returns_the_input_and_confers_nothing(self):
-        model = fixture("customer-authority.ttl")
-        assert validate_authority(model) is model
-
-    def test_no_function_returns_a_grant_object(self):
-        """No public callable is annotated as producing an AuthorityGrant."""
         for name, obj in vars(fde).items():
             if name.startswith("_") or not inspect.isfunction(obj):
                 continue
             if obj.__module__ != fde.__name__:
                 continue
             annotation = inspect.signature(obj).return_annotation
-            assert "AuthorityGrant" not in str(annotation), (
-                f"{name} is annotated to return {annotation}; grants are read "
-                "and checked here, never produced"
+            if "AuthorityGrant" in str(annotation):
+                failures.append(
+                    f"RETURNS_A_GRANT: {name} is annotated to return "
+                    f"{annotation}; grants are read and checked here, never "
+                    "produced"
+                )
+
+        model = fixture("customer-authority.ttl")
+        verdict = permits(model, model.the_grant(), proposal())
+        fields = set(vars(verdict))
+        if fields != {"allowed", "reason", "detail", "advisory"}:
+            failures.append(f"VERDICT_SHAPE: unexpected verdict fields {fields}")
+        for forbidden in ("token", "signature", "receipt", "capability", "grant"):
+            if hasattr(verdict, forbidden):
+                failures.append(f"VERDICT_SHAPE: verdict exposes {forbidden!r}")
+        if verdict.advisory is not True:
+            failures.append("VERDICT_SHAPE: verdict is not marked advisory")
+
+        try:
+            bool(verdict)
+        except TypeError:
+            pass
+        else:
+            failures.append(
+                "NOT_A_TRUTH_VALUE: bool(verdict) succeeded; `if permission:` "
+                "would swallow a refusal silently"
             )
 
-    def test_repository_does_not_author_customer_or_broker_acts(self):
-        assert fde.AUTHORABLE_HERE == (fde.KIND_FDE_RECOMMENDATION,)
-        assert fde.KIND_CUSTOMER_AUTHORITY_GRANT not in fde.AUTHORABLE_HERE
-        assert fde.KIND_BROKER_AUTHORIZATION not in fde.AUTHORABLE_HERE
+        if validate_authority(model) is not model:
+            failures.append(
+                "VALIDATE_CONFERS_NOTHING: validate_authority did not return "
+                "its input unchanged"
+            )
+
+        if fde.AUTHORABLE_HERE != (fde.KIND_FDE_RECOMMENDATION,):
+            failures.append(
+                f"AUTHORABLE_HERE: {fde.AUTHORABLE_HERE!r} is not exactly "
+                "(KIND_FDE_RECOMMENDATION,)"
+            )
+        for kind in (fde.KIND_CUSTOMER_AUTHORITY_GRANT, fde.KIND_BROKER_AUTHORIZATION):
+            if kind in fde.AUTHORABLE_HERE:
+                failures.append(f"AUTHORABLE_HERE: this repo claims to author {kind}")
+
+        assert not failures, "\n".join(failures)
 
 
 class TestActKindsAreNonInterchangeable:
-    def test_seven_kinds_are_declared(self):
-        assert len(fde.ACT_KINDS) == 7
-        assert len(set(fde.ACT_KINDS)) == 7
-
-    def test_a_node_may_not_carry_two_act_kinds(self):
-        assert validation_code("neg-15-act-kind-collapse.ttl") == (
-            fde.REFUSED_ACT_KIND_COLLAPSE
-        )
+    def test_seven_kinds_stay_seven_and_may_not_collapse(self):
+        """Cardinality and the typed collapse refusal, both named on failure."""
+        failures: list[str] = []
+        if len(fde.ACT_KINDS) != 7 or len(set(fde.ACT_KINDS)) != 7:
+            failures.append(
+                f"KIND_CARDINALITY: expected 7 distinct act kinds, got "
+                f"{len(fde.ACT_KINDS)} ({len(set(fde.ACT_KINDS))} distinct)"
+            )
+        code = validation_code("neg-15-act-kind-collapse.ttl")
+        if code != fde.REFUSED_ACT_KIND_COLLAPSE:
+            failures.append(
+                f"ACT_KIND_COLLAPSE: a node carrying two act kinds refused with "
+                f"{code}, expected {fde.REFUSED_ACT_KIND_COLLAPSE}"
+            )
+        assert not failures, "\n".join(failures)
 
 
 # ---------------------------------------------------------------------------
@@ -293,184 +354,250 @@ class TestActKindsAreNonInterchangeable:
 # ---------------------------------------------------------------------------
 
 
+def _check(failures: list[str], label: str, actual, expected) -> None:
+    if actual != expected:
+        failures.append(f"{label}: got {actual!r}, expected {expected!r}")
+
+
+RECURSIVE_CONTROLLER = (
+    Path(__file__).resolve().parents[2]
+    / "src"
+    / "skdecide"
+    / "fabric"
+    / "recursive_controller.py"
+)
+
+
 class TestFalsifier01ModelUsedWithoutCustomerValidation:
     """A compiled customer model is a hypothesis until the customer says so."""
 
     def test_refused(self):
-        assert validation_code("neg-01-model-not-validated.ttl") == (
-            fde.REFUSED_UNVALIDATED_MODEL
+        failures: list[str] = []
+        _check(
+            failures,
+            "VALIDATE",
+            validation_code("neg-01-model-not-validated.ttl"),
+            fde.REFUSED_UNVALIDATED_MODEL,
         )
-
-    def test_permits_propagates_the_same_typed_code(self):
-        assert refusal_code("neg-01-model-not-validated.ttl") == (
-            fde.REFUSED_UNVALIDATED_MODEL
+        _check(
+            failures,
+            "PERMITS_PROPAGATES_SAME_CODE",
+            refusal_code("neg-01-model-not-validated.ttl"),
+            fde.REFUSED_UNVALIDATED_MODEL,
         )
+        assert not failures, "\n".join(failures)
 
 
 class TestFalsifier02FdeClaimsCustomerAuthority:
     """The FDE may not be the source of the authority it operates under."""
 
     def test_refused(self):
-        assert validation_code("neg-02-fde-claims-customer-authority.ttl") == (
-            fde.REFUSED_FDE_SELF_AUTHORITY
+        failures: list[str] = []
+        _check(
+            failures,
+            "VALIDATE",
+            validation_code("neg-02-fde-claims-customer-authority.ttl"),
+            fde.REFUSED_FDE_SELF_AUTHORITY,
         )
-
-    def test_the_fixture_is_otherwise_well_formed(self):
-        """The refusal is about who granted, not about a malformed file."""
+        # The refusal must be about who granted, not about a malformed file.
         model = fixture("neg-02-fde-claims-customer-authority.ttl")
         grant = model.the_grant()
-        assert grant.granted_by == FDE_PARTY
-        assert model.parties[grant.granted_by].is_fde
+        _check(failures, "FIXTURE_GRANTOR", grant.granted_by, FDE_PARTY)
+        _check(failures, "FIXTURE_GRANTOR_IS_FDE", model.parties[grant.granted_by].is_fde, True)
+        assert not failures, "\n".join(failures)
 
 
 class TestFalsifier03CapabilityMismatch:
     """Granted capability A; the operation is capability B."""
 
     def test_refused(self):
-        assert (
+        failures: list[str] = []
+        _check(
+            failures,
+            "CAPABILITY_NOT_GRANTED",
             refusal_code(
                 "neg-03-capability-not-granted.ttl",
                 capability=CAP_PAYROLL,
                 operation=OP_PAYROLL,
-            )
-            == fde.REFUSED_CAPABILITY_NOT_GRANTED
+            ),
+            fde.REFUSED_CAPABILITY_NOT_GRANTED,
         )
-
-    def test_the_granted_capability_still_passes(self):
+        # The refusal must be specific to the ungranted capability, not a
+        # blanket refusal of the artifact.
         model = fixture("neg-03-capability-not-granted.ttl")
         verdict = permits(model, model.the_grant(), proposal())
-        assert verdict.allowed, (
-            "the refusal must be specific to the ungranted capability, not a "
-            f"blanket refusal of the artifact: {verdict.detail}"
-        )
+        if not verdict.allowed:
+            failures.append(
+                f"NOT_A_BLANKET_REFUSAL: the granted capability was also "
+                f"refused ({verdict.reason}: {verdict.detail})"
+            )
+        assert not failures, "\n".join(failures)
 
 
 class TestFalsifier04ModelChangedAfterApproval:
     """Editing the admitted model after approval, without re-admission."""
 
     def test_refused(self):
-        assert validation_code("neg-04-model-changed-after-approval.ttl") == (
-            fde.REFUSED_MODEL_DIGEST_DRIFT
+        failures: list[str] = []
+        _check(
+            failures,
+            "VALIDATE",
+            validation_code("neg-04-model-changed-after-approval.ttl"),
+            fde.REFUSED_MODEL_DIGEST_DRIFT,
         )
-
-    def test_drift_is_detectable_because_the_validation_pins_bytes(self):
+        # Drift is detectable only because validation pins bytes.
         model = fixture("neg-04-model-changed-after-approval.ttl")
         compiled = next(iter(model.models.values()))
         validation = model.validations[compiled.validation]
-        assert compiled.model_digest != validation.validated_model_digest
+        if compiled.model_digest == validation.validated_model_digest:
+            failures.append(
+                "DIGEST_PINNED: fixture digests are equal, so the refusal "
+                "above cannot have come from drift detection"
+            )
+        assert not failures, "\n".join(failures)
 
 
 class TestFalsifier05VerifiedButNobodyAccepted:
     """Technical verification succeeded; no adoption owner accepted."""
 
     def test_refused(self):
-        assert validation_code("neg-05-verified-but-no-adoption-owner.ttl") == (
-            fde.REFUSED_MISSING_ADOPTION_OWNER
+        failures: list[str] = []
+        _check(
+            failures,
+            "VALIDATE",
+            validation_code("neg-05-verified-but-no-adoption-owner.ttl"),
+            fde.REFUSED_MISSING_ADOPTION_OWNER,
         )
-
-    def test_the_technical_chain_did_close_in_this_fixture(self):
-        """Otherwise the test would be passing for the wrong reason."""
+        # Otherwise the test would be passing for the wrong reason.
         model = fixture("neg-05-verified-but-no-adoption-owner.ttl")
-        assert model.verdicts, "fixture must contain a successful verifier verdict"
-        assert model.the_grant().adoption_owner is None
+        if not model.verdicts:
+            failures.append(
+                "TECHNICAL_CHAIN_CLOSED: fixture must contain a successful "
+                "verifier verdict"
+            )
+        _check(failures, "NO_ADOPTION_OWNER", model.the_grant().adoption_owner, None)
+        assert not failures, "\n".join(failures)
 
 
 class TestFalsifier06FdeVerifiesItsOwnArtifact:
     """Self-certification: the producer's own check is not evidence."""
 
     def test_refused(self):
-        assert validation_code("neg-06-fde-verifies-own-artifact.ttl") == (
-            fde.REFUSED_SELF_CERTIFICATION
+        failures: list[str] = []
+        _check(
+            failures,
+            "VALIDATE",
+            validation_code("neg-06-fde-verifies-own-artifact.ttl"),
+            fde.REFUSED_SELF_CERTIFICATION,
         )
-
-    def test_the_verifier_is_not_independent_of_the_producer(self):
         model = fixture("neg-06-fde-verifies-own-artifact.ttl")
         verifier = model.verifiers[FDE_NS + "verifier/fde-inhouse"]
         consequence = next(iter(model.consequences.values()))
-        assert consequence.produced_by not in verifier.independent_of
+        if consequence.produced_by in verifier.independent_of:
+            failures.append(
+                "NOT_INDEPENDENT: fixture verifier is declared independent of "
+                "the producer, so the refusal cannot be about self-certification"
+            )
+        assert not failures, "\n".join(failures)
 
 
 class TestFalsifier07AcceptedWithoutIndependentEvidence:
     """Acceptance resting on nothing is assent, not acceptance."""
 
     def test_refused(self):
-        assert validation_code(
-            "neg-07-accepted-without-independent-evidence.ttl"
-        ) == fde.REFUSED_MISSING_INDEPENDENT_EVIDENCE
-
-    def test_the_adoption_is_declared_adopted(self):
+        failures: list[str] = []
+        _check(
+            failures,
+            "VALIDATE",
+            validation_code("neg-07-accepted-without-independent-evidence.ttl"),
+            fde.REFUSED_MISSING_INDEPENDENT_EVIDENCE,
+        )
         model = fixture("neg-07-accepted-without-independent-evidence.ttl")
         adoption = next(iter(model.adoptions.values()))
-        assert adoption.adoption_decision == "ADOPTED"
-        assert adoption.on_evidence == ()
+        _check(failures, "FIXTURE_DECISION", adoption.adoption_decision, "ADOPTED")
+        _check(failures, "FIXTURE_EVIDENCE", adoption.on_evidence, ())
+        assert not failures, "\n".join(failures)
 
 
 class TestFalsifier08GrantReusedForAnotherCustomerOrEnvironment:
-    def test_reuse_for_another_customer_is_refused(self):
-        assert (
-            refusal_code("neg-08-grant-reused-other-customer.ttl")
-            == fde.REFUSED_WRONG_CUSTOMER
-        )
+    """One class, three axes of reuse -- each still refuses with its own code."""
 
-    def test_reuse_in_another_environment_is_refused(self):
-        assert (
-            refusal_code(
-                "customer-authority.ttl", environment_scope=ES_PRODUCTION
-            )
-            == fde.REFUSED_OUT_OF_ENVIRONMENT_SCOPE
+    def test_refused(self):
+        failures: list[str] = []
+        _check(
+            failures,
+            "OTHER_CUSTOMER",
+            refusal_code("neg-08-grant-reused-other-customer.ttl"),
+            fde.REFUSED_WRONG_CUSTOMER,
         )
-
-    def test_reuse_on_another_resource_is_refused(self):
-        assert (
-            refusal_code("customer-authority.ttl", resource_scope=RS_SOUTH)
-            == fde.REFUSED_OUT_OF_RESOURCE_SCOPE
+        _check(
+            failures,
+            "OTHER_ENVIRONMENT",
+            refusal_code("customer-authority.ttl", environment_scope=ES_PRODUCTION),
+            fde.REFUSED_OUT_OF_ENVIRONMENT_SCOPE,
         )
-
-    def test_the_grant_identifier_is_unchanged_in_the_reuse_fixture(self):
-        """Reuse means the same grant pointed elsewhere, not a new grant."""
+        _check(
+            failures,
+            "OTHER_RESOURCE",
+            refusal_code("customer-authority.ttl", resource_scope=RS_SOUTH),
+            fde.REFUSED_OUT_OF_RESOURCE_SCOPE,
+        )
+        # Reuse means the same grant pointed elsewhere, not a new grant.
         original = fixture("customer-authority.ttl").the_grant()
         reused = fixture("neg-08-grant-reused-other-customer.ttl").the_grant()
-        assert reused.grant_identifier == original.grant_identifier
-        assert reused.for_customer == CUSTOMER_EMEA
+        _check(
+            failures,
+            "SAME_GRANT_IDENTIFIER",
+            reused.grant_identifier,
+            original.grant_identifier,
+        )
+        _check(failures, "REUSE_TARGET", reused.for_customer, CUSTOMER_EMEA)
+        assert not failures, "\n".join(failures)
 
 
 class TestFalsifier09ExpiredOrOverBounds:
-    def test_expired_grant_is_refused(self):
-        assert (
-            refusal_code("neg-09-expired-and-over-bounds.ttl")
-            == fde.REFUSED_GRANT_EXPIRED
-        )
+    """One class, four axes -- expiry plus the three consequence bounds."""
 
-    def test_irreversible_action_beyond_bounds_is_refused(self):
-        assert (
+    def test_refused(self):
+        failures: list[str] = []
+        _check(
+            failures,
+            "EXPIRED",
+            refusal_code("neg-09-expired-and-over-bounds.ttl"),
+            fde.REFUSED_GRANT_EXPIRED,
+        )
+        _check(
+            failures,
+            "BOUNDS_IRREVERSIBLE",
             refusal_code(
                 "neg-09-expired-and-over-bounds.ttl",
                 at=IN_PAST_WINDOW,
                 irreversible_actions=1,
-            )
-            == fde.REFUSED_CONSEQUENCE_BOUNDS_EXCEEDED
+            ),
+            fde.REFUSED_CONSEQUENCE_BOUNDS_EXCEEDED,
         )
-
-    def test_resource_count_beyond_bounds_is_refused(self):
-        assert (
+        _check(
+            failures,
+            "BOUNDS_RESOURCE_COUNT",
             refusal_code(
                 "neg-09-expired-and-over-bounds.ttl",
                 at=IN_PAST_WINDOW,
                 affected_resources=3,
-            )
-            == fde.REFUSED_CONSEQUENCE_BOUNDS_EXCEEDED
+            ),
+            fde.REFUSED_CONSEQUENCE_BOUNDS_EXCEEDED,
         )
-
-    def test_duration_beyond_bounds_is_refused(self):
-        assert (
+        _check(
+            failures,
+            "BOUNDS_DURATION",
             refusal_code(
                 "neg-09-expired-and-over-bounds.ttl",
                 at=IN_PAST_WINDOW,
                 affected_resources=1,
                 duration_seconds=61,
-            )
-            == fde.REFUSED_CONSEQUENCE_BOUNDS_EXCEEDED
+            ),
+            fde.REFUSED_CONSEQUENCE_BOUNDS_EXCEEDED,
         )
+        assert not failures, "\n".join(failures)
 
 
 class TestFalsifier10RetirementFlagWithoutAuthority:
@@ -484,15 +611,18 @@ class TestFalsifier10RetirementFlagWithoutAuthority:
     """
 
     def test_refused(self):
-        assert validation_code("neg-10-retirement-without-authority.ttl") == (
-            fde.REFUSED_MISSING_SUNSET_AUTHORITY
+        failures: list[str] = []
+        _check(
+            failures,
+            "VALIDATE",
+            validation_code("neg-10-retirement-without-authority.ttl"),
+            fde.REFUSED_MISSING_SUNSET_AUTHORITY,
         )
-
-    def test_the_flag_really_is_set_in_the_fixture(self):
         model = fixture("neg-10-retirement-without-authority.ttl")
         sunset = next(iter(model.sunsets.values()))
-        assert sunset.customer_authorized_retirement is True
-        assert sunset.authorized_by is None
+        _check(failures, "FLAG_IS_SET", sunset.customer_authorized_retirement, True)
+        _check(failures, "NO_AUTHORITY_BEHIND_FLAG", sunset.authorized_by, None)
+        assert not failures, "\n".join(failures)
 
 
 class TestFalsifier11ResumedBeforeOrganizationalAdmission:
@@ -514,14 +644,7 @@ class TestFalsifier11ResumedBeforeOrganizationalAdmission:
         asserts is absent across the whole portfolio. Skipping rather than
         faking: there is no loop to observe.
         """
-        controller = (
-            Path(__file__).resolve().parents[2]
-            / "src"
-            / "skdecide"
-            / "fabric"
-            / "recursive_controller.py"
-        )
-        if not controller.exists():
+        if not RECURSIVE_CONTROLLER.exists():
             pytest.skip(
                 "BLOCKED:RECURSIVE_CONTROLLER_ABSENT: no component in the "
                 "portfolio implements blocked -> child -> admit -> resume; "
@@ -535,12 +658,14 @@ class TestFalsifier11ResumedBeforeOrganizationalAdmission:
 
 class TestFalsifier12AdoptedWithoutOwnershipObligations:
     def test_refused(self):
-        assert validation_code(
-            "neg-12-adopted-without-operating-obligations.ttl"
-        ) == fde.REFUSED_MISSING_OPERATING_OBLIGATION
-
-    def test_adoption_decision_without_obligations_is_also_refused(self):
-        """Two distinct places the obligation can go missing; both refuse."""
+        failures: list[str] = []
+        _check(
+            failures,
+            "VALIDATE",
+            validation_code("neg-12-adopted-without-operating-obligations.ttl"),
+            fde.REFUSED_MISSING_OPERATING_OBLIGATION,
+        )
+        # Two distinct places the obligation can go missing; both refuse.
         model = fixture("customer-authority.ttl")
         model.adoptions[FDE_NS + "adoption/x"] = fde.AdoptionDecision(
             iri=FDE_NS + "adoption/x",
@@ -550,7 +675,13 @@ class TestFalsifier12AdoptedWithoutOwnershipObligations:
         )
         with pytest.raises(AuthorityError) as caught:
             validate_authority(model)
-        assert caught.value.code == fde.REFUSED_MISSING_INDEPENDENT_EVIDENCE
+        _check(
+            failures,
+            "INJECTED_ADOPTION",
+            caught.value.code,
+            fde.REFUSED_MISSING_INDEPENDENT_EVIDENCE,
+        )
+        assert not failures, "\n".join(failures)
 
 
 class TestFalsifier13InformalEscalationInsteadOfChildWorkflow:
@@ -568,14 +699,7 @@ class TestFalsifier13InformalEscalationInsteadOfChildWorkflow:
         be manufactured and admitted requires the same absent controller, plus
         an organizational-blocker driver that no component implements.
         """
-        controller = (
-            Path(__file__).resolve().parents[2]
-            / "src"
-            / "skdecide"
-            / "fabric"
-            / "recursive_controller.py"
-        )
-        if not controller.exists():
+        if not RECURSIVE_CONTROLLER.exists():
             pytest.skip(
                 "BLOCKED:CHILD_WORKFLOW_SPAWNER_ABSENT: no component spawns a "
                 "child workflow from an organizational blocker; only the "
@@ -588,16 +712,28 @@ class TestFalsifier13InformalEscalationInsteadOfChildWorkflow:
 
 class TestFalsifier14SunsetAgainstAnUnadoptedReplacement:
     def test_refused(self):
-        assert validation_code("neg-14-sunset-replacement-not-adopted.ttl") == (
-            fde.REFUSED_REPLACEMENT_NOT_ORGANIZATIONALLY_ADMITTED
+        failures: list[str] = []
+        _check(
+            failures,
+            "VALIDATE",
+            validation_code("neg-14-sunset-replacement-not-adopted.ttl"),
+            fde.REFUSED_REPLACEMENT_NOT_ORGANIZATIONALLY_ADMITTED,
         )
-
-    def test_the_replacement_is_technically_complete_in_the_fixture(self):
-        """The point: technical completion is present, adoption is not."""
+        # The point: technical completion is present, adoption is not.
         model = fixture("neg-14-sunset-replacement-not-adopted.ttl")
         adoption = model.adoptions[FDE_NS + "adoption/replacement"]
-        assert adoption.adoption_decision == "TECHNICALLY_COMPLETE"
-        assert adoption.on_evidence, "a verifier verdict does exist"
+        _check(
+            failures,
+            "FIXTURE_TECHNICALLY_COMPLETE",
+            adoption.adoption_decision,
+            "TECHNICALLY_COMPLETE",
+        )
+        if not adoption.on_evidence:
+            failures.append(
+                "FIXTURE_HAS_VERIFIER_VERDICT: no evidence in the fixture, so "
+                "the refusal is not about the adoption gap"
+            )
+        assert not failures, "\n".join(failures)
 
 
 # ---------------------------------------------------------------------------
@@ -606,22 +742,24 @@ class TestFalsifier14SunsetAgainstAnUnadoptedReplacement:
 
 
 class TestRemainingTypedRefusals:
-    def test_delegation_not_allowed(self):
-        assert (
-            refusal_code("customer-authority.ttl", delegated=True)
-            == fde.REFUSED_DELEGATION_NOT_ALLOWED
+    def test_each_remaining_refusal_carries_its_own_code(self):
+        """Three distinct typed refusals, each named on failure."""
+        failures: list[str] = []
+        _check(
+            failures,
+            "DELEGATION_NOT_ALLOWED",
+            refusal_code("customer-authority.ttl", delegated=True),
+            fde.REFUSED_DELEGATION_NOT_ALLOWED,
         )
-
-    def test_executable_digest_mismatch(self):
-        assert (
+        _check(
+            failures,
+            "EXECUTABLE_DIGEST_MISMATCH",
             refusal_code(
                 "customer-authority.ttl", executable_digest="blake3:" + "00" * 32
-            )
-            == fde.REFUSED_EXECUTABLE_DIGEST_MISMATCH
+            ),
+            fde.REFUSED_EXECUTABLE_DIGEST_MISMATCH,
         )
-
-    def test_missing_decision_right(self):
-        """An operation requiring a right the grant does not convey."""
+        # An operation requiring a right the grant does not convey.
         model = fixture("customer-authority.ttl")
         grant = model.the_grant()
         model.operations[OP_REBALANCE] = fde.AuthorizedOperation(
@@ -632,10 +770,17 @@ class TestRemainingTypedRefusals:
             in_environment=ES_STAGING,
             requires_decision_right=(FDE_NS + "right/retire-legacy",),
         )
-        verdict = permits(model, grant, proposal())
-        assert verdict.reason == fde.REFUSED_MISSING_DECISION_RIGHT
+        _check(
+            failures,
+            "MISSING_DECISION_RIGHT",
+            permits(model, grant, proposal()).reason,
+            fde.REFUSED_MISSING_DECISION_RIGHT,
+        )
+        assert not failures, "\n".join(failures)
 
-    def test_every_required_refusal_reason_is_declared(self):
+    def test_the_refusal_vocabulary_is_closed(self):
+        """The typed floor is declared, untyped reasons and bad bytes refuse."""
+        failures: list[str] = []
         required = {
             "WRONG_CUSTOMER",
             "MISSING_DECISION_RIGHT",
@@ -651,13 +796,28 @@ class TestRemainingTypedRefusals:
             "MISSING_ADOPTION_OWNER",
             "MISSING_SUNSET_AUTHORITY",
         }
-        assert required.issubset(set(fde.REFUSAL_REASONS))
+        undeclared = sorted(required - set(fde.REFUSAL_REASONS))
+        if undeclared:
+            failures.append(f"REQUIRED_FLOOR: undeclared refusal reasons {undeclared}")
 
-    def test_an_untyped_refusal_reason_is_rejected(self):
-        with pytest.raises(ValueError):
+        try:
             fde.refuse("BECAUSE_I_SAID_SO", "no")
+        except ValueError:
+            pass
+        else:
+            failures.append(
+                "UNTYPED_REASON_ACCEPTED: fde.refuse admitted an undeclared reason"
+            )
 
-    def test_malformed_turtle_is_refused_not_ignored(self):
-        with pytest.raises(AuthorityError) as caught:
+        try:
             fde.parse_authority_turtle("<urn:x> a fdet:AuthorityGrant ;")
-        assert caught.value.code == fde.REFUSED_MALFORMED_ARTIFACT
+        except AuthorityError as error:
+            _check(
+                failures, "MALFORMED_ARTIFACT", error.code, fde.REFUSED_MALFORMED_ARTIFACT
+            )
+        else:
+            failures.append(
+                "MALFORMED_ARTIFACT: malformed turtle was ignored, not refused"
+            )
+
+        assert not failures, "\n".join(failures)

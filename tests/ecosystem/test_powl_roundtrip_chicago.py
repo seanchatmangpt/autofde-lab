@@ -83,22 +83,61 @@ def plan_lines_from_model(model) -> list[str]:
 class TestShaclConformance:
     """Re-expresses the committed shapes. Would have caught the real defect."""
 
-    def test_every_activity_leaf_implements_an_action(self, turtle):
-        """powl2:ActivityLeafShape: mfwp:implementsAction minCount 1 / maxCount 1.
+    def test_projection_satisfies_the_committed_shapes(self, turtle):
+        """Three shape-derived properties of our own output, all named on failure.
 
-        This is the assertion whose absence let SHACL-invalid output ship.
+        Collapsed from three sibling tests, each redrawing "the emitted Turtle
+        conforms to mfw's committed shapes". Every check still runs.
+
+        * IMPLEMENTS_ACTION -- powl2:ActivityLeafShape requires
+          ``mfwp:implementsAction`` minCount 1 / maxCount 1. This is the
+          assertion whose absence let SHACL-invalid output ship.
+        * PROV_DERIVATION -- the root binds the plan to its source domain.
+        * PRECEDES_EDGES -- a declared PartialOrder with zero edges is a chain
+          by accident.
         """
+        failures: list[str] = []
+
         leaves = [
             block
             for block in turtle.split("\n\n")
             if "a powl2:Leaf, powl2:ActivityLeaf" in block
         ]
-        assert len(leaves) == 4
+        if len(leaves) != 4:
+            failures.append(f"IMPLEMENTS_ACTION: expected 4 leaves, got {len(leaves)}")
         for block in leaves:
-            assert block.count("mfwp:implementsAction") == 1, (
-                "every powl2:ActivityLeaf must carry exactly one "
-                f"mfwp:implementsAction; got:\n{block}"
+            if block.count("mfwp:implementsAction") != 1:
+                failures.append(
+                    "IMPLEMENTS_ACTION: every powl2:ActivityLeaf must carry "
+                    f"exactly one mfwp:implementsAction; got:\n{block}"
+                )
+
+        if "prov:wasDerivedFrom" not in turtle:
+            failures.append(
+                "PROV_DERIVATION: the prov: prefix was declared and never used; "
+                "mfw's emitter binds the plan to its domain with prov:wasDerivedFrom"
             )
+        if turtle.count("powl2:precedes") != 3:
+            failures.append(
+                "PRECEDES_EDGES: 4 steps in total order must yield 3 "
+                f"powl2:precedes edges, got {turtle.count('powl2:precedes')}"
+            )
+
+        model = parse_powl_turtle(turtle)
+        if model.derived_from != (BASE,):
+            failures.append(f"PROV_DERIVATION: derived_from {model.derived_from!r}")
+        if model.was_derived_from != (f"{BASE}/domain",):
+            failures.append(
+                f"PROV_DERIVATION: was_derived_from {model.was_derived_from!r}"
+            )
+        ordered = model.ordered_children()
+        for before, after in zip(ordered, ordered[1:]):
+            if after.iri not in before.precedes:
+                failures.append(
+                    f"PRECEDES_EDGES: {before.iri} does not precede {after.iri}"
+                )
+
+        assert not failures, "\n".join(failures)
 
     def test_shape_file_still_requires_what_we_assert(self):
         """The shapes are the authority; assert we did not drift from them."""
@@ -110,25 +149,6 @@ class TestShaclConformance:
         # 3 node shapes, 6 sh:property constraint blocks.
         assert shapes.count("a sh:NodeShape") == 3
         assert shapes.count("sh:property") == 6
-
-    def test_root_binds_its_source_domain(self, turtle):
-        assert "prov:wasDerivedFrom" in turtle, (
-            "the prov: prefix was declared and never used; mfw's emitter binds "
-            "the plan to its domain with prov:wasDerivedFrom"
-        )
-        model = parse_powl_turtle(turtle)
-        assert model.derived_from == (BASE,)
-        assert model.was_derived_from == (f"{BASE}/domain",)
-
-    def test_partial_order_carries_actual_order_edges(self, turtle):
-        """A declared PartialOrder with zero edges is a chain by accident."""
-        assert turtle.count("powl2:precedes") == 3, (
-            "4 steps in total order must yield 3 powl2:precedes edges"
-        )
-        model = parse_powl_turtle(turtle)
-        ordered = model.ordered_children()
-        for before, after in zip(ordered, ordered[1:]):
-            assert after.iri in before.precedes
 
     def test_rust_emitter_agrees_on_the_terms_we_emit(self):
         if not MFW_RUST_EMITTER.exists():
@@ -150,35 +170,63 @@ class TestShaclConformance:
 
 
 class TestRoundTrip:
-    def test_project_parse_project_is_byte_identical(self, turtle):
+    def test_project_parse_project_is_faithful(self, turtle):
+        """Five round-trip properties, each named on failure.
+
+        Collapsed from five sibling tests, all redrawing "what the projector
+        emits is exactly what the decoder reads back". Every check still runs.
+
+        BYTE_IDENTICAL / STRUCTURE / COMMENTS_DROPPED / EMPTY_PLAN /
+        SINGLE_STEP / VALIDATE_CALLABLE.
+        """
+        failures: list[str] = []
         model = parse_powl_turtle(turtle)
+
         again = project_plan_to_powl(plan_lines_from_model(model), base_iri=BASE)
-        assert again == turtle
+        if again != turtle:
+            failures.append("BYTE_IDENTICAL: re-projection differs from the original")
 
-    def test_decoded_structure_matches_the_plan(self, turtle):
-        model = parse_powl_turtle(turtle)
-        assert model.activity_count == 4
-        assert len(model.children) == 4
-        assert len(model.leaves) == 4
-        assert [c.child_index for c in model.ordered_children()] == [0, 1, 2, 3]
-        assert [
-            model.leaves[c.child_model].activity_label
-            for c in model.ordered_children()
-        ] == ["unstack", "put-down", "pick-up", "stack"]
-        assert model.projection == "total-order"
+        for label, actual, expected in (
+            ("STRUCTURE activity_count", model.activity_count, 4),
+            ("STRUCTURE children", len(model.children), 4),
+            ("STRUCTURE leaves", len(model.leaves), 4),
+            (
+                "STRUCTURE child_index",
+                [c.child_index for c in model.ordered_children()],
+                [0, 1, 2, 3],
+            ),
+            (
+                "STRUCTURE labels",
+                [
+                    model.leaves[c.child_model].activity_label
+                    for c in model.ordered_children()
+                ],
+                ["unstack", "put-down", "pick-up", "stack"],
+            ),
+            ("STRUCTURE projection", model.projection, "total-order"),
+        ):
+            if actual != expected:
+                failures.append(f"{label}: got {actual!r}, expected {expected!r}")
 
-    def test_comment_lines_are_not_activities(self, turtle):
-        assert "cost" not in turtle
+        if "cost" in turtle:
+            failures.append("COMMENTS_DROPPED: a comment line became an activity")
 
-    def test_empty_plan_decodes_to_an_empty_model(self):
-        model = parse_powl_turtle(project_plan_to_powl([], base_iri=BASE))
-        assert model.children == {}
-        assert model.activity_count == 0
+        empty = parse_powl_turtle(project_plan_to_powl([], base_iri=BASE))
+        if empty.children != {} or empty.activity_count != 0:
+            failures.append(
+                f"EMPTY_PLAN: {empty.children!r} / count {empty.activity_count}"
+            )
 
-    def test_single_step_plan_has_no_precedes_edge(self):
-        turtle = project_plan_to_powl(["(pick-up a)"], base_iri=BASE)
-        assert "powl2:precedes" not in turtle
-        assert len(parse_powl_turtle(turtle).children) == 1
+        single = project_plan_to_powl(["(pick-up a)"], base_iri=BASE)
+        if "powl2:precedes" in single:
+            failures.append("SINGLE_STEP: one-step plan emitted a precedes edge")
+        if len(parse_powl_turtle(single).children) != 1:
+            failures.append("SINGLE_STEP: one-step plan did not decode to one child")
+
+        if validate_powl(model) is None:
+            failures.append("VALIDATE_CALLABLE: validate_powl returned None")
+
+        assert not failures, "\n".join(failures)
 
 
 # ---------------------------------------------------------------------------
@@ -196,25 +244,40 @@ class TestRealMfwArtifact:
         return MFW_TICKET10_POWL.read_text()
 
     def test_decoder_accepts_mfws_committed_output(self, reference):
-        """Our decoder must read the real emitter's real output, unmodified."""
-        model = parse_powl_turtle(reference)
-        assert POWL2 + "Model" in model.types
-        assert POWL2 + "PartialOrder" in model.types
-        assert model.activity_count == len(model.children)
-        assert model.projection == "total-order"
+        """Three properties of reading mfw's real artifact, named on failure.
 
-    def test_mfws_own_artifact_satisfies_the_shape_we_enforce(self, reference):
+        Collapsed from three sibling tests behind the same
+        ``BLOCKED:MFW_ARTIFACT_ABSENT`` gate, all redrawing "our decoder reads
+        the real emitter's real output, unmodified".
+
+        DECODES / SHAPE_WE_ENFORCE / PREFIXES_EXPANDED.
+        """
+        failures: list[str] = []
         model = parse_powl_turtle(reference)
+
+        for label, condition in (
+            ("DECODES powl2:Model", POWL2 + "Model" in model.types),
+            ("DECODES powl2:PartialOrder", POWL2 + "PartialOrder" in model.types),
+            ("DECODES activity_count", model.activity_count == len(model.children)),
+            ("DECODES projection", model.projection == "total-order"),
+            ("SHAPE_WE_ENFORCE was_derived_from", bool(model.was_derived_from)),
+            ("PREFIXES_EXPANDED model iri", model.iri.startswith("urn:mfw:id:")),
+            ("PREFIXES_EXPANDED namespaces", MFWP.endswith(":") and PROV.endswith("#")),
+        ):
+            if not condition:
+                failures.append(label)
+
         for leaf in model.leaves.values():
-            assert leaf.implements_action.startswith("urn:mfw:id:")
-        assert model.was_derived_from
+            if not leaf.implements_action.startswith("urn:mfw:id:"):
+                failures.append(
+                    f"SHAPE_WE_ENFORCE implementsAction: {leaf.implements_action!r}"
+                )
+            if leaf.implements_action.startswith("mfwp:"):
+                failures.append(
+                    "PREFIXES_EXPANDED: a prefixed name was compared as a string"
+                )
 
-    def test_prefixes_are_expanded_not_compared_as_strings(self, reference):
-        model = parse_powl_turtle(reference)
-        assert model.iri.startswith("urn:mfw:id:")
-        leaf = next(iter(model.leaves.values()))
-        assert not leaf.implements_action.startswith("mfwp:")
-        assert MFWP.endswith(":") and PROV.endswith("#")
+        assert not failures, "\n".join(failures)
 
 
 # ---------------------------------------------------------------------------
@@ -345,9 +408,6 @@ class TestRejections:
         )
         with pytest.raises(PowlDecodeError, match="activityCount"):
             parse_powl_turtle(broken)
-
-    def test_validate_powl_is_callable_independently(self, turtle):
-        assert validate_powl(parse_powl_turtle(turtle)) is not None
 
 
 # ---------------------------------------------------------------------------
