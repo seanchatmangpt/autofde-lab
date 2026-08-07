@@ -245,6 +245,16 @@ default-groups = "all"
 minversion = "6.0"
 addopts = "-ra -q"
 testpaths = ["tests"]
+# Deliberately NOT --import-mode=importlib here, global -- see
+# docs/STATUS.md Pass 6. importlib mode is the correct fix for two real
+# collisions (tests/solvers/cpp/test_pomcp.py vs .../python/test_pomcp.py;
+# a bare-conftest collision touching tests/solvers/python/{openevolve,
+# autoregressive}), but it's measurably slower than the default "prepend"
+# mode (~2.2x: just test went from ~4.8s to ~11s when this was global).
+# just test's --ignore list already excludes every file involved in either
+# collision, so the hot loop never needs it. It's applied per-invocation
+# instead, only on test-full's partitions that actually touch those files
+# -- see the Justfile.
 
 [build-system]
 requires = ["scikit-build-core>=0.11.6,<1"]

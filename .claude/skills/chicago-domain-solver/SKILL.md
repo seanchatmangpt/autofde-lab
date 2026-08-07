@@ -36,7 +36,9 @@ behavior.
    §1, a solver/domain claim is `ALIVE` only with an executed test this
    session — "compiles" or "the happy path looks right" is not evidence.
    Quote the command and result when reporting standing:
-   `uv run pytest tests/<path>::<test> -v`.
+   `.venv/bin/python -m pytest tests/<path>::<test> -v` — not `uv run
+   pytest`, which re-checks the native build on every invocation (see
+   `CLAUDE.md`'s Build section).
 
 5. **If registering a new entry point** (for the domain/solver to be
    reachable through the OpenClaw bridge or fabric CLI — see the

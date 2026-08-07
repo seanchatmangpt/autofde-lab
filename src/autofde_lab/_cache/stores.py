@@ -318,7 +318,17 @@ class SQLiteCacheStore:
             check_same_thread=False,
         )
         connection.row_factory = sqlite3.Row
-        connection.execute("PRAGMA journal_mode=WAL")
+        # `PRAGMA journal_mode=WAL` needs an exclusive lock to perform the
+        # (one-time, per file) journal-mode switch. sqlite3.connect's own
+        # `timeout=` busy handler covers ordinary statement execution, but
+        # two processes racing to open the *same not-yet-existent* db file
+        # for the first time can still observe "database is locked" here
+        # specifically -- reproduced deterministically (5/5 runs) via two
+        # subprocesses calling CacheFabric(CacheConfig(persistent_path=...))
+        # against a fresh path concurrently. Retry this one statement with
+        # backoff, bounded by the same busy_timeout budget every other
+        # lock-wait in this store already honors.
+        self._execute_with_lock_retry(connection, "PRAGMA journal_mode=WAL")
         connection.execute("PRAGMA synchronous=NORMAL")
         connection.execute(f"PRAGMA busy_timeout={self._busy_timeout_ms}")
         connection.execute("PRAGMA foreign_keys=ON")
@@ -326,6 +336,19 @@ class SQLiteCacheStore:
         with self._connections_lock:
             self._connections.append(connection)
         return connection
+
+    def _execute_with_lock_retry(
+        self, connection: sqlite3.Connection, sql: str, *, poll_seconds: float = 0.01
+    ) -> None:
+        deadline = time.monotonic() + self._busy_timeout_ms / 1000
+        while True:
+            try:
+                connection.execute(sql)
+                return
+            except sqlite3.OperationalError as error:
+                if "locked" not in str(error).lower() or time.monotonic() >= deadline:
+                    raise
+                time.sleep(poll_seconds)
 
     def _initialize(self) -> None:
         connection = self._connect()
