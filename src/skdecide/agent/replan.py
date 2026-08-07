@@ -70,6 +70,8 @@ __all__ = [
     "OccurrenceStatus",
     "LedgerEntry",
     "Ledger",
+    "LedgerLike",
+    "as_ledger",
     "Epoch",
     "PreserveMap",
     "leaf_paths",
@@ -158,9 +160,75 @@ class LedgerEntry:
 
 @dataclass(frozen=True, slots=True)
 class Ledger:
-    """The append-only record of what prior epochs observed."""
+    """The append-only record of what prior epochs observed.
+
+    This is a **read view**, not a second write-ahead log. The authoritative
+    record is :class:`~skdecide.agent.ledger.OccurrenceLedger`; this type is
+    what a reuse claim is validated against, and
+    :meth:`from_occurrence_ledger` is the only sanctioned way to derive one
+    from a live session. Constructing entries directly stays available for
+    tests and for replaying persisted epochs, but a hand-built ``Ledger`` is
+    not evidence of anything the WAL did not record.
+    """
 
     entries: tuple[LedgerEntry, ...] = ()
+
+    @classmethod
+    def from_occurrence_ledger(
+        cls,
+        wal: "OccurrenceLedger",
+        *,
+        epoch: int = 0,
+        committed_only: bool = False,
+    ) -> "Ledger":
+        """Project the two-phase WAL onto the epoch-scoped view.
+
+        ``COMMITTED`` becomes :attr:`OccurrenceStatus.COMPLETED`. An
+        ``INTENDED`` line with no ``COMMITTED`` counterpart becomes
+        :attr:`OccurrenceStatus.INTENDED` carrying the occurrence key it
+        *would* have taken — so a preserve map naming it is refused by name
+        (``SKD-AGENT-005``, "an intention is not an observation") instead of
+        merely failing to resolve. ``committed_only=True`` drops those lines
+        entirely; either way the claim is rejected, and the two paths are
+        tested separately.
+
+        The WAL has no epoch axis, so every projected entry is stamped with
+        ``epoch``. Nothing here infers an epoch boundary.
+        """
+        from skdecide.agent.ledger import LedgerPhase  # local: avoid a cycle
+
+        settled = {r.token_id for r in wal.committed()}
+        entries: list[LedgerEntry] = []
+        for record in wal.records():
+            if record.phase is LedgerPhase.COMMITTED:
+                entries.append(
+                    LedgerEntry(
+                        key=OccurrenceKey(
+                            record.activity_sha256,
+                            int(record.occurrence_index or 0),
+                            record.context_sha256,
+                        ),
+                        path=record.path,
+                        status=OccurrenceStatus.COMPLETED,
+                        epoch=epoch,
+                    )
+                )
+                continue
+            if committed_only or record.token_id in settled:
+                continue
+            entries.append(
+                LedgerEntry(
+                    key=OccurrenceKey(
+                        record.activity_sha256,
+                        wal.provisional_index(record.activity_sha256, record.sequence),
+                        record.context_sha256,
+                    ),
+                    path=record.path,
+                    status=OccurrenceStatus.INTENDED,
+                    epoch=epoch,
+                )
+            )
+        return cls(tuple(entries))
 
     def for_epoch(self, epoch: int) -> tuple[LedgerEntry, ...]:
         return tuple(e for e in self.entries if e.epoch == epoch)
@@ -182,6 +250,23 @@ class Ledger:
             if e.status is OccurrenceStatus.COMPLETED
             and e.key.activity_sha256 == activity
         )
+
+
+#: What the validation entry points accept: the view, or the WAL it derives from.
+LedgerLike = "Ledger | OccurrenceLedger"
+
+
+def as_ledger(ledger: object, *, epoch: int = 0, committed_only: bool = False) -> Ledger:
+    """Normalize a WAL or a view into the view. The single reconciliation point."""
+    from skdecide.agent.ledger import OccurrenceLedger  # local: avoid a cycle
+
+    if isinstance(ledger, OccurrenceLedger):
+        return Ledger.from_occurrence_ledger(
+            ledger, epoch=epoch, committed_only=committed_only
+        )
+    if isinstance(ledger, Ledger):
+        return ledger
+    raise TypeError(f"expected Ledger or OccurrenceLedger, got {type(ledger).__name__}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -258,7 +343,7 @@ class PreserveMap:
 
 def infer_preserve_map(
     prior_epoch: Epoch,
-    ledger: Ledger,
+    ledger: Ledger | object,
     model1: PowlNode,
 ) -> PreserveMap:
     """Content-address prior completions onto ``model1``, greedy by index.
@@ -269,6 +354,7 @@ def infer_preserve_map(
     left unmapped — see law 1 in the module docstring. Nothing here fabricates a
     correspondence that the content addresses cannot support.
     """
+    ledger = as_ledger(ledger, epoch=prior_epoch.index)
     completed = [
         e
         for e in ledger.for_epoch(prior_epoch.index)
@@ -306,13 +392,16 @@ def infer_preserve_map(
 # ── validation ──────────────────────────────────────────────────────────────
 
 
-def validate_preserve_map(model1: PowlNode, pm: PreserveMap, ledger: Ledger) -> None:
+def validate_preserve_map(
+    model1: PowlNode, pm: PreserveMap, ledger: Ledger | object
+) -> None:
     """Refuse a preserve map that would seed a marking outside POWL1's language.
 
     Raises :class:`ReplanError`; returns ``None`` when the map is admissible as
     a *reuse claim*. Admissible here means structurally consistent — it is not
     an admission, an authorization, or a standing verdict.
     """
+    ledger = as_ledger(ledger, epoch=pm.from_epoch)
     if pm.to_epoch != pm.from_epoch + 1:
         raise ReplanError(
             ReplanRefusal.NON_ADJACENT_EPOCH,
@@ -393,7 +482,7 @@ def validate_preserve_map(model1: PowlNode, pm: PreserveMap, ledger: Ledger) -> 
 
 def redo_occurrence_key(
     model1: PowlNode,
-    ledger: Ledger,
+    ledger: Ledger | object,
     path: NodePath,
     context_sha256: str = "",
 ) -> OccurrenceKey:
@@ -403,6 +492,7 @@ def redo_occurrence_key(
     executor derives when firing against a marking seeded by
     :func:`seed_marking`, because that marking carries the prior keys.
     """
+    ledger = as_ledger(ledger)
     activity = activity_of(node_at(model1, path))
     return OccurrenceKey(activity, ledger.completed_count(activity), context_sha256)
 
