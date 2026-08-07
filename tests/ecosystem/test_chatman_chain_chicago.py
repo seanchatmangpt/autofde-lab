@@ -482,6 +482,62 @@ class TestOntologyIsGeneratedNotCurated:
             f"  stale in ontology:     {sorted(set(domains) - live_domains)}"
         )
 
+    def test_ontology_covers_every_declared_kind(self):
+        """The anti-omission invariant, widened past the two entry-point groups.
+
+        ``test_ontology_matches_live_registry_exactly`` compares only
+        ``skdecide.domains`` and ``skdecide.solvers`` -- the same two groups
+        ``collect_capabilities`` walked -- so it could not fail on a missing
+        POWL / agent-lifecycle / OCEL / adapter term no matter how stale the
+        file got. This closes that hole: every kind the generator declares is
+        compared against what the committed artifact actually contains.
+        """
+        from skdecide.fabric.ontology import (
+            ALL_KINDS,
+            capabilities_of_kind,
+            collect_capabilities,
+            parse_kinds,
+        )
+
+        live = collect_capabilities()
+        emitted = parse_kinds(ONTOLOGY.read_text())
+
+        for kind in ALL_KINDS:
+            expected = set(capabilities_of_kind(live, kind))
+            assert expected, f"no live {kind} terms; the walk found nothing"
+            found = set(emitted[kind])
+            assert found == expected, (
+                f"ontology {kind} terms drifted from the live registry.\n"
+                f"  missing from ontology: {sorted(expected - found)}\n"
+                f"  stale in ontology:     {sorted(found - expected)}\n"
+                "  regenerate: python -m skdecide.fabric.ontology "
+                "ontology/skdecide-capabilities.ttl"
+            )
+
+    def test_vocabulary_terms_carry_an_explicit_claim_ceiling(self):
+        """An ALIVE row for a declared term must not read as a capability claim."""
+        from skdecide.fabric.ontology import IN_PROCESS_KINDS, parse_kinds
+
+        emitted = parse_kinds(ONTOLOGY.read_text())
+        for kind in IN_PROCESS_KINDS:
+            assert emitted[kind], f"no {kind} terms emitted"  # not a vacuous pass
+            for identifier, record in emitted[kind].items():
+                ceiling = record.get("skdt:claimCeiling") or []
+                assert ceiling, f"{kind}/{identifier} has no skdt:claimCeiling"
+
+    def test_adapter_standing_is_not_baked_from_a_local_probe(self):
+        """A host-dependent probe result must never become a committed fact."""
+        from skdecide.fabric.ontology import parse_kinds
+
+        emitted = parse_kinds(ONTOLOGY.read_text())
+        assert emitted["Adapter"], "no adapters in the ontology"
+        for identifier, record in emitted["Adapter"].items():
+            assert record["skdt:standing"] == ["UNKNOWN"], (
+                f"adapter {identifier} carries standing "
+                f"{record['skdt:standing']}; availability is host-dependent "
+                "and must stay UNKNOWN in a committed artifact"
+            )
+
     def test_requirements_are_derived_not_asserted(self):
         """Ontology requirements must match get_domain_requirements() exactly."""
         from skdecide import utils

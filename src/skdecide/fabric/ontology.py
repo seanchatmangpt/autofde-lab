@@ -72,12 +72,44 @@ PDDL_REQUIREMENT_STATUS: Dict[str, str] = {
 }
 
 
+#: Kinds discovered from ``pyproject.toml`` entry points.
+ENTRY_POINT_KINDS: Dict[str, str] = {
+    "Domain": "skdecide.domains",
+    "Solver": "skdecide.solvers",
+}
+
+#: Kinds discovered by walking a live in-process registry rather than an entry
+#: point group. Widened here **before** the ontology was widened: the drift test
+#: compares exactly the kinds this module declares, so a kind that is emitted but
+#: not declared, or declared but not emitted, fails. Adding terms first and the
+#: drift control afterwards would have produced an ontology that could go stale
+#: silently, which is the one failure the generator exists to prevent.
+IN_PROCESS_KINDS: Tuple[str, ...] = (
+    "PowlConstruct",
+    "AgentLifecyclePhase",
+    "OcelLaw",
+    "Adapter",
+)
+
+#: Every kind the ontology may contain.
+ALL_KINDS: Tuple[str, ...] = tuple(ENTRY_POINT_KINDS) + IN_PROCESS_KINDS
+
+#: Claim ceiling for kinds that are *vocabulary*, not runnable capability. An
+#: ``ALIVE`` row for one of these says the term is declared and reachable in the
+#: live package -- never that a plan was computed, executed, admitted, or
+#: verified. Stated in the artifact so a downstream reader cannot over-read it.
+VOCABULARY_CEILING = (
+    "declared vocabulary term reachable in the live package; NOT a claim that "
+    "anything was computed, executed, admitted, actuated, or verified"
+)
+
+
 @dataclass
 class Capability:
-    """One registered domain or solver, with derived applicability facts."""
+    """One registered capability or declared term, with derived facts."""
 
     identifier: str
-    kind: str  # "Domain" | "Solver"
+    kind: str  # one of ALL_KINDS
     entry_point: str
     standing: str
     evidence: str
@@ -85,6 +117,7 @@ class Capability:
     extras: Optional[str] = None
     requirements: Tuple[str, ...] = ()
     limitations: Tuple[str, ...] = ()
+    claim_ceiling: Optional[str] = None
 
     @property
     def iri(self) -> str:
@@ -157,16 +190,139 @@ def _probe(kind: str, name: str, entry) -> Capability:
     )
 
 
+def _vocabulary(kind: str, identifier: str, module: str, evidence: str) -> Capability:
+    return Capability(
+        identifier=identifier,
+        kind=kind,
+        entry_point=module,
+        standing=STANDING_ALIVE,
+        evidence=evidence,
+        owning_module=module,
+        claim_ceiling=VOCABULARY_CEILING,
+    )
+
+
+def collect_powl_constructs() -> List[Capability]:
+    """Concrete POWL 2.0 node types, read off the live algebra module."""
+    from skdecide.powl import algebra
+
+    out: List[Capability] = []
+    for name in sorted(vars(algebra)):
+        obj = getattr(algebra, name)
+        if not isinstance(obj, type) or obj is algebra.PowlNode:
+            continue
+        if not issubclass(obj, algebra.PowlNode):
+            continue
+        if obj.__module__ != algebra.__name__:
+            continue
+        out.append(
+            _vocabulary(
+                "PowlConstruct",
+                name,
+                algebra.__name__,
+                f"PowlNode subclass defined in {algebra.__name__}",
+            )
+        )
+    return out
+
+
+def collect_agent_lifecycle() -> List[Capability]:
+    """Agent lifecycle phases an occurrence log can record."""
+    from skdecide.agent.ocel_sink import LifecyclePhase
+
+    return [
+        _vocabulary(
+            "AgentLifecyclePhase",
+            phase.name,
+            "skdecide.agent.ocel_sink",
+            f"LifecyclePhase member with wire value {phase.value!r}",
+        )
+        for phase in LifecyclePhase
+    ]
+
+
+def collect_ocel_laws() -> List[Capability]:
+    """Named OCEL admission refusals -- the laws a projected log is judged by."""
+    from skdecide.ocel.refusals import OcelRefusal
+
+    return [
+        _vocabulary(
+            "OcelLaw",
+            refusal.name,
+            "skdecide.ocel.refusals",
+            f"OcelRefusal member with wire value {refusal.value!r}",
+        )
+        for refusal in OcelRefusal
+    ]
+
+
+def collect_adapters() -> List[Capability]:
+    """Declared sibling-repository adapters.
+
+    Standing is ``UNKNOWN``, deliberately. An adapter's probe result depends on
+    which sibling repositories exist on *this* host, so baking a probe outcome
+    into a committed artifact would make the file machine-dependent and would
+    turn a local filesystem fact into a portfolio-wide claim. What is stable and
+    therefore recorded is only that the adapter is declared.
+    """
+    from skdecide import adapters
+
+    return [
+        Capability(
+            identifier=adapter.name,
+            kind="Adapter",
+            entry_point=f"{type(adapter).__module__}.{type(adapter).__qualname__}",
+            standing=STANDING_UNKNOWN,
+            evidence=(
+                "declared in skdecide.adapters.ADAPTERS; probe status is "
+                "host-dependent and deliberately not baked into this artifact"
+            ),
+            owning_module=type(adapter).__module__,
+            claim_ceiling=(
+                "adapter is declared; availability, compatibility and any "
+                "cross-repository consequence remain UNKNOWN from here"
+            ),
+        )
+        for adapter in sorted(adapters.ADAPTERS, key=lambda a: a.name)
+    ]
+
+
 def collect_capabilities() -> List[Capability]:
-    """Discover every registered domain and solver, with live standing."""
+    """Discover every registered capability and declared term, with standing."""
     capabilities: List[Capability] = []
-    for kind, group in (
-        ("Domain", "skdecide.domains"),
-        ("Solver", "skdecide.solvers"),
-    ):
+    for kind, group in sorted(ENTRY_POINT_KINDS.items()):
         for name, entry in sorted(_entry_points(group).items()):
             capabilities.append(_probe(kind, name, entry))
+    capabilities.extend(collect_powl_constructs())
+    capabilities.extend(collect_agent_lifecycle())
+    capabilities.extend(collect_ocel_laws())
+    capabilities.extend(collect_adapters())
     return capabilities
+
+
+def capabilities_of_kind(capabilities: List[Capability], kind: str) -> Dict[str, Capability]:
+    """Index ``capabilities`` of one kind by identifier."""
+    return {c.identifier: c for c in capabilities if c.kind == kind}
+
+
+def parse_kinds(text: str) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
+    """Read an emitted ontology back, grouped by ``skdt:`` kind.
+
+    Deliberately independent of :func:`skdecide.fabric.coverage.load_ontology`,
+    which knows only about ``Solver`` and ``Domain``. The drift test reads
+    through here so a newly emitted kind is compared rather than ignored.
+    """
+    graph = parse_turtle(text)
+    out: Dict[str, Dict[str, Dict[str, List[str]]]] = {kind: {} for kind in ALL_KINDS}
+    for subject, predicates in graph.items():
+        identifier = (predicates.get("skdt:identifier") or [None])[0]
+        if identifier is None:
+            continue
+        for kind in ALL_KINDS:
+            if f"skdt:{kind}" in predicates.get("a", []):
+                out[kind][identifier] = dict(predicates, iri=[subject])
+                break
+    return out
 
 
 def _literal(text: str) -> str:
@@ -211,6 +367,8 @@ def emit_turtle(capabilities: List[Capability]) -> str:
             )
         for limitation in capability.limitations:
             out.append(f"    skdt:knownLimitation {_literal(limitation)} ;")
+        if capability.claim_ceiling:
+            out.append(f"    skdt:claimCeiling {_literal(capability.claim_ceiling)} ;")
         out.append(
             f"    skdt:capabilityCount "
             f'"{len(capability.requirements)}"^^xsd:integer .'

@@ -1265,6 +1265,276 @@
     skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/UncertainInitialized> ;
     skdt:capabilityCount "9"^^xsd:integer .
 
+<urn:skdecide:capability:powlconstruct/Atom> a skdt:PowlConstruct ;
+    skdt:identifier "Atom" ;
+    skdt:entryPoint "skdecide.powl.algebra" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "PowlNode subclass defined in skdecide.powl.algebra" ;
+    skdt:owningModule "skdecide.powl.algebra" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:powlconstruct/ChoiceGraph> a skdt:PowlConstruct ;
+    skdt:identifier "ChoiceGraph" ;
+    skdt:entryPoint "skdecide.powl.algebra" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "PowlNode subclass defined in skdecide.powl.algebra" ;
+    skdt:owningModule "skdecide.powl.algebra" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:powlconstruct/End> a skdt:PowlConstruct ;
+    skdt:identifier "End" ;
+    skdt:entryPoint "skdecide.powl.algebra" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "PowlNode subclass defined in skdecide.powl.algebra" ;
+    skdt:owningModule "skdecide.powl.algebra" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:powlconstruct/PartialOrder> a skdt:PowlConstruct ;
+    skdt:identifier "PartialOrder" ;
+    skdt:entryPoint "skdecide.powl.algebra" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "PowlNode subclass defined in skdecide.powl.algebra" ;
+    skdt:owningModule "skdecide.powl.algebra" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:powlconstruct/Silent> a skdt:PowlConstruct ;
+    skdt:identifier "Silent" ;
+    skdt:entryPoint "skdecide.powl.algebra" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "PowlNode subclass defined in skdecide.powl.algebra" ;
+    skdt:owningModule "skdecide.powl.algebra" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:powlconstruct/Start> a skdt:PowlConstruct ;
+    skdt:identifier "Start" ;
+    skdt:entryPoint "skdecide.powl.algebra" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "PowlNode subclass defined in skdecide.powl.algebra" ;
+    skdt:owningModule "skdecide.powl.algebra" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:agentlifecyclephase/INTENDED> a skdt:AgentLifecyclePhase ;
+    skdt:identifier "INTENDED" ;
+    skdt:entryPoint "skdecide.agent.ocel_sink" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "LifecyclePhase member with wire value 'intended'" ;
+    skdt:owningModule "skdecide.agent.ocel_sink" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:agentlifecyclephase/COMMITTED> a skdt:AgentLifecyclePhase ;
+    skdt:identifier "COMMITTED" ;
+    skdt:entryPoint "skdecide.agent.ocel_sink" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "LifecyclePhase member with wire value 'committed'" ;
+    skdt:owningModule "skdecide.agent.ocel_sink" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:agentlifecyclephase/REFUSED> a skdt:AgentLifecyclePhase ;
+    skdt:identifier "REFUSED" ;
+    skdt:entryPoint "skdecide.agent.ocel_sink" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "LifecyclePhase member with wire value 'refused'" ;
+    skdt:owningModule "skdecide.agent.ocel_sink" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:agentlifecyclephase/SUPERSEDED> a skdt:AgentLifecyclePhase ;
+    skdt:identifier "SUPERSEDED" ;
+    skdt:entryPoint "skdecide.agent.ocel_sink" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "LifecyclePhase member with wire value 'superseded'" ;
+    skdt:owningModule "skdecide.agent.ocel_sink" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:agentlifecyclephase/REPLANNED> a skdt:AgentLifecyclePhase ;
+    skdt:identifier "REPLANNED" ;
+    skdt:entryPoint "skdecide.agent.ocel_sink" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "LifecyclePhase member with wire value 'replanned'" ;
+    skdt:owningModule "skdecide.agent.ocel_sink" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:agentlifecyclephase/AUTHORITY_REQUESTED> a skdt:AgentLifecyclePhase ;
+    skdt:identifier "AUTHORITY_REQUESTED" ;
+    skdt:entryPoint "skdecide.agent.ocel_sink" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "LifecyclePhase member with wire value 'authority-requested'" ;
+    skdt:owningModule "skdecide.agent.ocel_sink" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:agentlifecyclephase/AUTHORITY_GRANTED> a skdt:AgentLifecyclePhase ;
+    skdt:identifier "AUTHORITY_GRANTED" ;
+    skdt:entryPoint "skdecide.agent.ocel_sink" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "LifecyclePhase member with wire value 'authority-granted'" ;
+    skdt:owningModule "skdecide.agent.ocel_sink" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:agentlifecyclephase/AUTHORITY_REFUSED> a skdt:AgentLifecyclePhase ;
+    skdt:identifier "AUTHORITY_REFUSED" ;
+    skdt:entryPoint "skdecide.agent.ocel_sink" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "LifecyclePhase member with wire value 'authority-refused'" ;
+    skdt:owningModule "skdecide.agent.ocel_sink" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:ocellaw/DANGLING_EVENT_OBJECT_LINK> a skdt:OcelLaw ;
+    skdt:identifier "DANGLING_EVENT_OBJECT_LINK" ;
+    skdt:entryPoint "skdecide.ocel.refusals" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "OcelRefusal member with wire value 'DanglingEventObjectLink'" ;
+    skdt:owningModule "skdecide.ocel.refusals" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:ocellaw/EMPTY_EVENT_OBJECT_LINKS> a skdt:OcelLaw ;
+    skdt:identifier "EMPTY_EVENT_OBJECT_LINKS" ;
+    skdt:entryPoint "skdecide.ocel.refusals" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "OcelRefusal member with wire value 'EmptyEventObjectLinks'" ;
+    skdt:owningModule "skdecide.ocel.refusals" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:ocellaw/MISSING_REFERENCE_OBJECT> a skdt:OcelLaw ;
+    skdt:identifier "MISSING_REFERENCE_OBJECT" ;
+    skdt:entryPoint "skdecide.ocel.refusals" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "OcelRefusal member with wire value 'MissingReferenceObject'" ;
+    skdt:owningModule "skdecide.ocel.refusals" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:ocellaw/MULTIPLE_REFERENCE_OBJECTS> a skdt:OcelLaw ;
+    skdt:identifier "MULTIPLE_REFERENCE_OBJECTS" ;
+    skdt:entryPoint "skdecide.ocel.refusals" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "OcelRefusal member with wire value 'MultipleReferenceObjects'" ;
+    skdt:owningModule "skdecide.ocel.refusals" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:ocellaw/VIOLATES_LOCALITY_PRINCIPLE> a skdt:OcelLaw ;
+    skdt:identifier "VIOLATES_LOCALITY_PRINCIPLE" ;
+    skdt:entryPoint "skdecide.ocel.refusals" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "OcelRefusal member with wire value 'ViolatesLocalityPrinciple'" ;
+    skdt:owningModule "skdecide.ocel.refusals" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:ocellaw/TIME_STABLE_ATTRIBUTE_CHANGED> a skdt:OcelLaw ;
+    skdt:identifier "TIME_STABLE_ATTRIBUTE_CHANGED" ;
+    skdt:entryPoint "skdecide.ocel.refusals" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "OcelRefusal member with wire value 'TimeStableAttributeChanged'" ;
+    skdt:owningModule "skdecide.ocel.refusals" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:ocellaw/DUPLICATE_ENTITY_ID> a skdt:OcelLaw ;
+    skdt:identifier "DUPLICATE_ENTITY_ID" ;
+    skdt:entryPoint "skdecide.ocel.refusals" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "OcelRefusal member with wire value 'DuplicateEntityId'" ;
+    skdt:owningModule "skdecide.ocel.refusals" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:ocellaw/UNQUALIFIED_OBJECT_REFERENCE> a skdt:OcelLaw ;
+    skdt:identifier "UNQUALIFIED_OBJECT_REFERENCE" ;
+    skdt:entryPoint "skdecide.ocel.refusals" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "OcelRefusal member with wire value 'UnqualifiedObjectReference'" ;
+    skdt:owningModule "skdecide.ocel.refusals" ;
+    skdt:claimCeiling "declared vocabulary term reachable in the live package; NOT a claim that anything was computed, executed, admitted, actuated, or verified" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:adapter/azure> a skdt:Adapter ;
+    skdt:identifier "azure" ;
+    skdt:entryPoint "skdecide.adapters.azure.AzureIncidentAdapter" ;
+    skdt:standing "UNKNOWN" ;
+    skdt:evidence "declared in skdecide.adapters.ADAPTERS; probe status is host-dependent and deliberately not baked into this artifact" ;
+    skdt:owningModule "skdecide.adapters.azure" ;
+    skdt:claimCeiling "adapter is declared; availability, compatibility and any cross-repository consequence remain UNKNOWN from here" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:adapter/bcinr> a skdt:Adapter ;
+    skdt:identifier "bcinr" ;
+    skdt:entryPoint "skdecide.adapters.bcinr.BcinrSchedulerAdapter" ;
+    skdt:standing "UNKNOWN" ;
+    skdt:evidence "declared in skdecide.adapters.ADAPTERS; probe status is host-dependent and deliberately not baked into this artifact" ;
+    skdt:owningModule "skdecide.adapters.bcinr" ;
+    skdt:claimCeiling "adapter is declared; availability, compatibility and any cross-repository consequence remain UNKNOWN from here" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:adapter/ferroplan> a skdt:Adapter ;
+    skdt:identifier "ferroplan" ;
+    skdt:entryPoint "skdecide.adapters.ferroplan.FerroplanAdapter" ;
+    skdt:standing "UNKNOWN" ;
+    skdt:evidence "declared in skdecide.adapters.ADAPTERS; probe status is host-dependent and deliberately not baked into this artifact" ;
+    skdt:owningModule "skdecide.adapters.ferroplan" ;
+    skdt:claimCeiling "adapter is declared; availability, compatibility and any cross-repository consequence remain UNKNOWN from here" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:adapter/ggen> a skdt:Adapter ;
+    skdt:identifier "ggen" ;
+    skdt:entryPoint "skdecide.adapters.ggen.GgenManufactureAdapter" ;
+    skdt:standing "UNKNOWN" ;
+    skdt:evidence "declared in skdecide.adapters.ADAPTERS; probe status is host-dependent and deliberately not baked into this artifact" ;
+    skdt:owningModule "skdecide.adapters.ggen" ;
+    skdt:claimCeiling "adapter is declared; availability, compatibility and any cross-repository consequence remain UNKNOWN from here" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:adapter/mfact> a skdt:Adapter ;
+    skdt:identifier "mfact" ;
+    skdt:entryPoint "skdecide.adapters.mfact.MfactProofAdapter" ;
+    skdt:standing "UNKNOWN" ;
+    skdt:evidence "declared in skdecide.adapters.ADAPTERS; probe status is host-dependent and deliberately not baked into this artifact" ;
+    skdt:owningModule "skdecide.adapters.mfact" ;
+    skdt:claimCeiling "adapter is declared; availability, compatibility and any cross-repository consequence remain UNKNOWN from here" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:adapter/mfw> a skdt:Adapter ;
+    skdt:identifier "mfw" ;
+    skdt:entryPoint "skdecide.adapters.mfw.MfwExecutionAdapter" ;
+    skdt:standing "UNKNOWN" ;
+    skdt:evidence "declared in skdecide.adapters.ADAPTERS; probe status is host-dependent and deliberately not baked into this artifact" ;
+    skdt:owningModule "skdecide.adapters.mfw" ;
+    skdt:claimCeiling "adapter is declared; availability, compatibility and any cross-repository consequence remain UNKNOWN from here" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:adapter/openclaw> a skdt:Adapter ;
+    skdt:identifier "openclaw" ;
+    skdt:entryPoint "skdecide.adapters.openclaw.OpenclawAdapter" ;
+    skdt:standing "UNKNOWN" ;
+    skdt:evidence "declared in skdecide.adapters.ADAPTERS; probe status is host-dependent and deliberately not baked into this artifact" ;
+    skdt:owningModule "skdecide.adapters.openclaw" ;
+    skdt:claimCeiling "adapter is declared; availability, compatibility and any cross-repository consequence remain UNKNOWN from here" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:adapter/wasm4pm> a skdt:Adapter ;
+    skdt:identifier "wasm4pm" ;
+    skdt:entryPoint "skdecide.adapters.wasm4pm.Wasm4pmCompatAdapter" ;
+    skdt:standing "UNKNOWN" ;
+    skdt:evidence "declared in skdecide.adapters.ADAPTERS; probe status is host-dependent and deliberately not baked into this artifact" ;
+    skdt:owningModule "skdecide.adapters.wasm4pm" ;
+    skdt:claimCeiling "adapter is declared; availability, compatibility and any cross-repository consequence remain UNKNOWN from here" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
 <urn:skdecide:capability:pddl-requirement/action-costs> a skdt:PddlRequirement ;
     skdt:identifier ":action-costs" ;
     skdt:standing "ALIVE" ;
