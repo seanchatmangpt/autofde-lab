@@ -1,0 +1,10 @@
+PREFIX ga: <https://github.com/seanchatmangpt/autofde-lab/ns/gymact#>
+SELECT ?slug ?model ?processSchema ?authorityMode WHERE {
+  ?cap a ga:ClosedVerticalCapability ;
+       ga:slug ?slug ;
+       ga:interactionProfile ?profile ;
+       ga:processSchema ?processSchema ;
+       ga:authorityMode ?authorityMode .
+  ?profile ga:interactionModel ?model .
+}
+ORDER BY ?slug
