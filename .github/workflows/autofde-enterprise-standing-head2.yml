@@ -1,0 +1,54 @@
+name: AutoFDE enterprise standing current-head capsule
+
+on:
+  push:
+    branches:
+      - verify/autofde-enterprise-standing-head2-20260807
+
+permissions:
+  contents: read
+
+jobs:
+  enterprise-standing:
+    name: exact-head enterprise standing direct tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact AutoFDE PR head
+        uses: actions/checkout@v4
+        with:
+          repository: seanchatmangpt/autofde-lab
+          ref: 1040df9908f7b4920599fbeac103384f969e106e
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Execute committed Chicago tests in dependency-closed package namespace
+        run: |
+          python - <<'PY'
+          import runpy
+          import sys
+          import types
+          from pathlib import Path
+
+          root = Path.cwd()
+          package = types.ModuleType('autofde_lab')
+          package.__path__ = [str(root / 'src' / 'autofde_lab')]
+          package.__package__ = 'autofde_lab'
+          sys.modules['autofde_lab'] = package
+
+          fabric = types.ModuleType('autofde_lab.fabric')
+          fabric.__path__ = [str(root / 'src' / 'autofde_lab' / 'fabric')]
+          fabric.__package__ = 'autofde_lab.fabric'
+          sys.modules['autofde_lab.fabric'] = fabric
+
+          path = 'tests/ecosystem/test_enterprise_standing_chicago.py'
+          namespace = runpy.run_path(path)
+          tests = [(name, fn) for name, fn in namespace.items() if name.startswith('test_') and callable(fn)]
+          if not tests:
+              raise SystemExit('NO_ENTERPRISE_STANDING_TESTS_DISCOVERED')
+          for name, fn in sorted(tests):
+              print(f'RUN {name}')
+              fn()
+              print(f'PASS {name}')
+          print(f'ALIVE enterprise-standing tests={len(tests)}')
+          PY
