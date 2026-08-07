@@ -121,7 +121,11 @@ def test_import_succeeds_in_fresh_subprocess_with_empty_home(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "path", sorted(ADAPTER_DIR.glob("*.py")), ids=lambda p: p.name
+    # rglob, not glob: adapters/azure/ is a subpackage, and a non-recursive glob
+    # would leave every file in it outside this control.
+    "path",
+    sorted(ADAPTER_DIR.rglob("*.py")),
+    ids=lambda p: str(p.relative_to(ADAPTER_DIR)),
 )
 def test_no_adapter_module_imports_a_sibling_at_module_level(path):
     tree = ast.parse(path.read_text(), filename=str(path))
@@ -139,7 +143,7 @@ def test_no_adapter_module_imports_a_sibling_at_module_level(path):
 
 
 def test_adapter_modules_do_not_use_dynamic_import_escape_hatches():
-    for path in ADAPTER_DIR.glob("*.py"):
+    for path in ADAPTER_DIR.rglob("*.py"):  # rglob: subpackages are covered too
         src = path.read_text()
         assert "__import__(" not in src, path.name
         assert "importlib" not in src, path.name

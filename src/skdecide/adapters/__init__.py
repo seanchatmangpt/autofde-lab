@@ -14,7 +14,15 @@ receipts.
 
 from __future__ import annotations
 
-from skdecide.adapters.azure import AzureIncidentAdapter
+from skdecide.adapters.azure import (
+    AZURE_SURFACE_ADAPTERS,
+    AzureIncidentAdapter,
+    AzureProbe,
+    AzureProbeStatus,
+    Refusal,
+    RefusalCode,
+    probe_azure_surfaces,
+)
 from skdecide.adapters.base import Adapter, AdapterProbe, AdapterStatus
 from skdecide.adapters.bcinr import BcinrSchedulerAdapter
 from skdecide.adapters.ferroplan import FerroplanAdapter
@@ -29,6 +37,12 @@ __all__ = [
     "AdapterProbe",
     "AdapterStatus",
     "AzureIncidentAdapter",
+    "AZURE_SURFACE_ADAPTERS",
+    "AzureProbe",
+    "AzureProbeStatus",
+    "Refusal",
+    "RefusalCode",
+    "probe_azure_surfaces",
     "BcinrSchedulerAdapter",
     "FerroplanAdapter",
     "GgenManufactureAdapter",
