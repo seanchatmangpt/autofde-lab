@@ -1,0 +1,71 @@
+name: AutoFDE CI diagnosis capsule
+
+on:
+  push:
+    branches:
+      - verify/autofde-ci-diagnose-20260807
+
+permissions:
+  contents: read
+
+concurrency:
+  group: autofde-ci-diagnose-20260807
+  cancel-in-progress: true
+
+jobs:
+  conflict-marker-location:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: dcc9947f713a719d9c0952f90b95b3f12a2f2cbe
+          persist-credentials: false
+      - name: Emit exact inherited conflict-marker locations
+        shell: bash
+        run: |
+          set -euo pipefail
+          matches="$(git grep -nE '^(<<<<<<<|=======|>>>>>>>)' -- ':!uv.lock' || true)"
+          if [[ -z "$matches" ]]; then
+            echo 'NO_CONFLICT_MARKERS'
+            exit 0
+          fi
+          encoded="$(printf '%s' "$matches" | base64 -w0)"
+          echo "::warning title=CONFLICT_MARKERS_BASE64::$encoded"
+          printf '%s\n' "$matches"
+
+  proposed-quality-patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: d94b8def7ad75041c194cc787650e924efbc38f1
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Install exact quality driver
+        run: python -m pip install 'pre-commit==4.6.1'
+      - name: Run repository quality hooks and expose deterministic patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          pre-commit run --show-diff-on-failure --color=never --files \
+            src/autofde_lab/fabric/enterprise_standing.py \
+            tests/ecosystem/test_enterprise_standing_chicago.py
+          hook_exit=$?
+          set -e
+          git diff -- \
+            src/autofde_lab/fabric/enterprise_standing.py \
+            tests/ecosystem/test_enterprise_standing_chicago.py > /tmp/precommit.diff
+          if [[ -s /tmp/precommit.diff ]]; then
+            encoded="$(base64 -w0 /tmp/precommit.diff)"
+            echo "::warning title=PRECOMMIT_PATCH_BASE64::$encoded"
+            cat /tmp/precommit.diff
+          else
+            echo 'NO_PRECOMMIT_PATCH'
+          fi
+          echo "HOOK_EXIT=$hook_exit"
