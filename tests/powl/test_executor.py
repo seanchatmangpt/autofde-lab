@@ -8,6 +8,11 @@ The headline property is the first test: a partial order with no precedence
 enables *both* children at once. An executor that silently serialized
 concurrency would still pass a trace-membership check, so it has to be pinned
 directly.
+
+Compression note: the seed axes and the frequency-model cross product used to be
+pytest parametrizations (4, and 10x3). They are single items that walk the same
+seeds and the same models, accumulating every failure — the models themselves are
+untouched, because they are distinct models rather than redraws of one.
 """
 
 from __future__ import annotations
@@ -46,6 +51,8 @@ from skdecide.powl.semantics import language
 from skdecide.powl.normalize import canonical_form, model_digest
 from skdecide.powl.refusals import PowlError, PowlRefusal
 
+from ._accumulate import Failures
+
 
 def _oe(a: int, b: int) -> OrderEdge:
     return OrderEdge(NodeId(a), NodeId(b))
@@ -59,12 +66,16 @@ def _ce(a: int, b: int) -> ChoiceGraphEdge:
 
 
 def test_unordered_partial_order_enables_both_children_initially():
-    """Concurrency is preserved, not serialized. The headline property."""
+    """Concurrency is preserved, not serialized. The headline property.
+
+    Kept standalone: this is the only signal for "the executor serialized
+    concurrency", a defect every trace-membership check is blind to.
+    """
     model = PartialOrder((Atom("a"), Atom("b")))
     assert enabled(model) == frozenset({(0,), (1,)})
 
 
-def test_precedence_edge_enables_only_the_predecessor_then_the_successor():
+def test_precedence_governs_enabling_and_is_read_from_the_closure():
     model = PartialOrder((Atom("a"), Atom("b")), frozenset({_oe(0, 1)}))
     assert enabled(model) == frozenset({(0,)})
     after = fire(model, INITIAL_MARKING, (0,))
@@ -74,15 +85,19 @@ def test_precedence_edge_enables_only_the_predecessor_then_the_successor():
     assert enabled(model, final) == frozenset()
     assert is_final(model, final)
 
-
-def test_indirect_precedence_is_read_from_the_closure_not_the_reduction():
     # a -> b -> c; the reduction drops a -> c, the closure keeps it.
-    model = PartialOrder(
+    chain = PartialOrder(
         (Atom("a"), Atom("b"), Atom("c")), frozenset({_oe(0, 1), _oe(1, 2)})
     )
-    assert _oe(0, 2) not in model.order
-    assert _oe(0, 2) in model.closure
-    assert enabled(model) == frozenset({(0,)})
+    assert _oe(0, 2) not in chain.order
+    assert _oe(0, 2) in chain.closure
+    assert enabled(chain) == frozenset({(0,)})
+
+    # two enabled steps stay two enabled steps; no tie-break is applied
+    free = PartialOrder((Atom("a"), Atom("b"), Atom("c")))
+    live = enabled(free)
+    assert isinstance(live, frozenset) and len(live) == 3
+    assert enabled(free, fire(free, INITIAL_MARKING, (2,))) == frozenset({(0,), (1,)})
 
 
 def test_firing_a_path_that_is_not_enabled_is_refused():
@@ -90,18 +105,6 @@ def test_firing_a_path_that_is_not_enabled_is_refused():
     with pytest.raises(PowlError) as excinfo:
         fire(model, INITIAL_MARKING, (1,))
     assert excinfo.value.refusal is PowlRefusal.LANGUAGE_MISMATCH
-
-
-def test_enabled_returns_a_set_and_the_executor_never_picks():
-    """Two enabled steps stay two enabled steps; no tie-break is applied."""
-    model = PartialOrder((Atom("a"), Atom("b"), Atom("c")))
-    live = enabled(model)
-    assert isinstance(live, frozenset)
-    assert len(live) == 3
-    # firing either one leaves the other two, in either order
-    assert enabled(model, fire(model, INITIAL_MARKING, (2,))) == frozenset(
-        {(0,), (1,)}
-    )
 
 
 # ── cyclic choice graph terminates structurally ─────────────────────────────
@@ -136,24 +139,22 @@ def test_cyclic_choice_graph_terminates_and_reports_bound_exhausted():
     assert classify_stall(model, marking, bound).value == "BLOCKED:BOUND_EXHAUSTED"
 
 
-def test_cyclic_choice_graph_can_still_reach_its_end():
+def test_cyclic_choice_graph_reaches_its_end_and_carries_visit_counts():
+    """Two distinct falsifiers, both about the same run: the exit stays
+    reachable under a cap, and re-entry increments rather than resets."""
     model = _cyclic_model()
     bound = ExecutionBound(max_node_visits=3)
     m = fire(model, INITIAL_MARKING, (0,), bound=bound)
     m = fire(model, m, (2,), bound=bound)
     assert (1,) in enabled(model, m, bound)
-    m = fire(model, m, (1,), bound=bound)
-    assert is_final(model, m)
+    assert is_final(model, fire(model, m, (1,), bound=bound))
 
-
-def test_visit_counts_are_carried_not_reset_across_re_entry():
-    model = _cyclic_model()
-    bound = ExecutionBound(max_node_visits=10)
-    m = fire(model, INITIAL_MARKING, (0,), bound=bound)
-    m = fire(model, m, (2,), bound=bound)
+    generous = ExecutionBound(max_node_visits=10)
+    m = fire(model, INITIAL_MARKING, (0,), bound=generous)
+    m = fire(model, m, (2,), bound=generous)
     assert dict(m.visits)[((), 2)] == 1
-    m = fire(model, m, (3,), bound=bound)
-    m = fire(model, m, (2,), bound=bound)
+    m = fire(model, m, (3,), bound=generous)
+    m = fire(model, m, (2,), bound=generous)
     assert dict(m.visits)[((), 2)] == 2, "re-entry must increment, never reset"
 
 
@@ -205,64 +206,90 @@ def _mixed_model() -> PartialOrder:
     )
 
 
-def test_replay_reproduces_the_identical_final_marking():
+def test_replay_reproduces_the_run_and_detects_every_kind_of_tampering():
+    """Four distinct falsifiers accumulated: faithful replay, a swapped pick, a
+    narrowed ``enabled`` set (legal pick, tampered evidence), and a fabricated
+    record. Each fails for its own reason and all are reported."""
     model = _mixed_model()
     records, final = _record_run(model)
-    assert records, "the run must have taken at least one step"
-    assert replay(model, records) == final
+    failures = Failures()
 
+    failures.check(bool(records), "the run must have taken at least one step")
+    failures.check(
+        replay(model, records) == final, "replay did not reproduce the final marking"
+    )
 
-def test_replay_with_a_tampered_choice_diverges():
-    model = _mixed_model()
-    records, _ = _record_run(model)
-    # find a step where more than one path was enabled, and swap the pick
+    # swap the pick at a branching step
+    tampered_pick = None
     for i, rec in enumerate(records):
         others = [p for p in rec.enabled if p != rec.chosen]
         if others:
-            tampered = list(records)
-            tampered[i] = ChoiceRecord(
+            tampered_pick = list(records)
+            tampered_pick[i] = ChoiceRecord(
                 rec.step, others[0], rec.enabled, others[0], rec.decided_by
             )
             break
-    else:
-        pytest.fail("no branching step to tamper with")
+    failures.check(tampered_pick is not None, "no branching step to tamper with")
 
-    with pytest.raises(ReplayDivergedError) as excinfo:
-        replay(model, tampered)
-    assert excinfo.value.kind is DeadlockKind.REPLAY_DIVERGED
-    assert excinfo.value.kind.value == "BLOCKED:REPLAY_DIVERGED"
+    # the record stores the full enabled set precisely so this is catchable
+    rec0 = records[0]
+    narrowed = (
+        [ChoiceRecord(rec0.step, rec0.path, (rec0.chosen,), rec0.chosen, "x")] + records[1:]
+        if len(rec0.enabled) > 1
+        else None
+    )
+    failures.check(narrowed is not None, "first step was not branching in this model")
 
+    divergences = [
+        ("tampered choice", tampered_pick),
+        ("tampered enabled set", narrowed),
+        (
+            "fabricated record for a different model",
+            [ChoiceRecord(0, (1,), ((1,),), (1,), "bogus")],
+        ),
+    ]
+    for name, tampered in divergences:
+        if tampered is None:
+            continue
+        target = model if name != "fabricated record for a different model" else (
+            PartialOrder((Atom("a"), Atom("b")), frozenset({_oe(0, 1)}))
+        )
+        try:
+            replay(target, tampered)
+        except ReplayDivergedError as exc:
+            failures.check(
+                exc.kind is DeadlockKind.REPLAY_DIVERGED
+                and exc.kind.value == "BLOCKED:REPLAY_DIVERGED",
+                f"{name}: diverged with kind {exc.kind!r}",
+            )
+        except Exception as exc:  # noqa: BLE001
+            failures.append(f"{name}: expected ReplayDivergedError, raised {exc!r}")
+        else:
+            failures.append(f"{name}: replay accepted a tampered record")
 
-def test_replay_with_a_tampered_enabled_set_diverges_even_if_the_pick_is_legal():
-    """The record stores the full enabled set precisely so this is catchable."""
-    model = _mixed_model()
-    records, _ = _record_run(model)
-    rec = records[0]
-    tampered = [ChoiceRecord(rec.step, rec.path, (rec.chosen,), rec.chosen, "x")] + records[1:]
-    if len(rec.enabled) == 1:
-        pytest.skip("first step was not branching in this model")
-    with pytest.raises(ReplayDivergedError):
-        replay(model, tampered)
-
-
-def test_replay_never_silently_repicks():
-    model = PartialOrder((Atom("a"), Atom("b")), frozenset({_oe(0, 1)}))
-    bogus = [ChoiceRecord(0, (1,), ((1,),), (1,), "bogus")]
-    with pytest.raises(ReplayDivergedError):
-        replay(model, bogus)
+    assert not failures, failures.report()
 
 
 # ── cross-check against the independent membership implementation ───────────
 
 
-@pytest.mark.parametrize("seed", [f"s{i}" for i in range(4)])
-def test_every_executor_trace_is_in_the_language(seed):
+def test_every_executor_trace_is_in_the_language():
+    """One invariant over four seeds — the seed is a redraw, not a falsifier of
+    its own, so the seeds are looped rather than parametrized."""
     model = _mixed_model()
-    records, final = _record_run(model, seed=seed)
-    assert is_final(model, final)
-    trace = trace_of(model, records)
-    assert sorted(trace) == ["a", "b", "c", "d"]
-    assert trace_in_language(model, trace), f"executor produced {trace!r}"
+    failures = Failures()
+    for seed in (f"s{i}" for i in range(4)):
+        records, final = _record_run(model, seed=seed)
+        failures.check(is_final(model, final), f"seed={seed}: run ended non-final")
+        trace = trace_of(model, records)
+        failures.check(
+            sorted(trace) == ["a", "b", "c", "d"], f"seed={seed}: trace={trace!r}"
+        )
+        failures.check(
+            trace_in_language(model, trace),
+            f"seed={seed}: executor produced {trace!r}, not in the language",
+        )
+    assert not failures, failures.report()
 
 
 def _branching_choice_graph() -> ChoiceGraph:
@@ -277,12 +304,16 @@ def _branching_choice_graph() -> ChoiceGraph:
 def test_cross_check_covers_a_choice_graph_too():
     model = _branching_choice_graph()
     seen = set()
+    failures = Failures()
     for seed in range(30):
         records, final = _record_run(model, seed=f"cg{seed}")
-        assert is_final(model, final)
+        failures.check(is_final(model, final), f"cg{seed}: run ended non-final")
         trace = trace_of(model, records)
-        assert trace_in_language(model, trace), f"executor produced {trace!r}"
+        failures.check(
+            trace_in_language(model, trace), f"cg{seed}: executor produced {trace!r}"
+        )
         seen.add(trace)
+    assert not failures, failures.report()
     assert seen == {("x",), ("y",)}, "both branches must be reachable"
 
 
@@ -311,32 +342,39 @@ def test_membership_decides_a_choice_graph_nested_in_a_partial_order():
 # ── digest / normalization ──────────────────────────────────────────────────
 
 
-def test_model_digest_identical_for_closure_and_reduction_inputs():
+def test_model_digest_is_stable_across_equivalent_forms_and_separates_real_ones():
+    """Under-sensitivity (two different orders colliding) and over-sensitivity
+    (a reduction and its closure differing) are opposite defects; both rows run.
+    """
     kids = (Atom("a"), Atom("b"), Atom("c"))
     reduced = PartialOrder(kids, frozenset({_oe(0, 1), _oe(1, 2)}))
     closed = PartialOrder(kids, frozenset({_oe(0, 1), _oe(1, 2), _oe(0, 2)}))
-    assert model_digest(reduced) == model_digest(closed)
-    assert len(model_digest(reduced)) == 64
-
-
-def test_model_digest_identical_for_differently_ordered_children():
-    forward = PartialOrder(
-        (Atom("a"), Atom("b"), Atom("c")), frozenset({_oe(0, 1), _oe(1, 2)})
-    )
-    reversed_ = PartialOrder(
+    forward = PartialOrder(kids, frozenset({_oe(0, 1), _oe(1, 2)}))
+    relabelled = PartialOrder(
         (Atom("c"), Atom("b"), Atom("a")), frozenset({_oe(2, 1), _oe(1, 0)})
     )
-    assert model_digest(forward) == model_digest(reversed_)
 
-
-def test_model_digest_distinguishes_genuinely_different_orders():
-    kids = (Atom("a"), Atom("b"), Atom("c"))
-    assert model_digest(PartialOrder(kids, frozenset({_oe(0, 1)}))) != model_digest(
-        PartialOrder(kids, frozenset({_oe(1, 0)}))
+    failures = Failures()
+    failures.check(
+        model_digest(reduced) == model_digest(closed),
+        "closure and reduction inputs must digest identically",
     )
-    assert model_digest(PartialOrder(kids)) != model_digest(
-        PartialOrder(kids, frozenset({_oe(0, 1)}))
+    failures.check(
+        model_digest(forward) == model_digest(relabelled),
+        "differently ordered children denoting the same order must digest identically",
     )
+    failures.check(len(model_digest(reduced)) == 64, "digest must be sha256 hex")
+    failures.check(
+        model_digest(PartialOrder(kids, frozenset({_oe(0, 1)})))
+        != model_digest(PartialOrder(kids, frozenset({_oe(1, 0)}))),
+        "a -> b and b -> a must not collide",
+    )
+    failures.check(
+        model_digest(PartialOrder(kids))
+        != model_digest(PartialOrder(kids, frozenset({_oe(0, 1)}))),
+        "unordered and ordered must not collide",
+    )
+    assert not failures, failures.report()
 
 
 def test_canonical_form_is_idempotent_and_semantics_preserving():
@@ -393,72 +431,95 @@ def _greedy_run(model, bound=ExecutionBound(), seed="freq"):
     return marking, tuple(trace)
 
 
-def test_a_frequency_of_two_runs_two_rounds_not_one():
-    """The exact reproducer. Before the fix: 2 fires, ``is_final`` True."""
-    model = PartialOrder((Atom("a"), Atom("b")), frozenset(), frequency=Frequency(2, 2))
-    marking, trace = _greedy_run(model)
-    assert marking.fires == 4, f"expected two rounds of two atoms, got {trace!r}"
-    assert is_final(model, marking)
-    assert sorted(trace) == ["a", "a", "b", "b"]
-    # and the minimum trace length really is 4 — a single round is not enough
-    assert min(len(t) for t in _lang(model)) == 4
+def _lang(model, *, max_traces: int = 400, max_unrolls: int = 4):
+    return language(model, max_traces=max_traces, max_unrolls=max_unrolls)
 
 
-def test_a_frequency_of_two_is_not_final_after_one_round():
-    model = PartialOrder((Atom("a"), Atom("b")), frozenset(), frequency=Frequency(2, 2))
-    m = fire(model, INITIAL_MARKING, (0,))
-    m = fire(model, m, (1,))
-    assert not is_final(model, m), "one round of a (2, 2) composite is not complete"
-    assert enabled(model, m), "the second round must still be offered"
+def test_repetition_is_executed_round_by_round():
+    """Every distinct repetition behaviour, each its own falsifier, accumulated.
 
+    The exact reproducer is the first block: before the fix a ``Frequency(2, 2)``
+    composite reported 2 fires and ``is_final`` True.
+    """
+    failures = Failures()
 
-def test_a_skippable_composite_is_final_with_zero_rounds():
-    """``Frequency(0, 1)``: ``min=0`` must be reachable, i.e. final immediately."""
-    model = PartialOrder((Atom("a"), Atom("b")), frozenset(), frequency=Frequency(0, 1))
-    assert is_final(model, INITIAL_MARKING)
+    # exactly two rounds
+    twice = PartialOrder((Atom("a"), Atom("b")), frozenset(), frequency=Frequency(2, 2))
+    marking, trace = _greedy_run(twice)
+    failures.check(
+        marking.fires == 4, f"exactly-2: expected two rounds of two atoms, got {trace!r}"
+    )
+    failures.check(is_final(twice, marking), "exactly-2: two full rounds must be final")
+    failures.check(sorted(trace) == ["a", "a", "b", "b"], f"exactly-2: trace={trace!r}")
+    failures.check(
+        min(len(t) for t in _lang(twice)) == 4,
+        "exactly-2: the shortest trace in the language must be 4 symbols",
+    )
+
+    # ...and one round is not enough
+    half = fire(twice, INITIAL_MARKING, (0,))
+    half = fire(twice, half, (1,))
+    failures.check(
+        not is_final(twice, half), "exactly-2: one round of a (2, 2) composite is not complete"
+    )
+    failures.check(bool(enabled(twice, half)), "exactly-2: the second round must be offered")
+    # repetition must not have serialized concurrency
+    failures.check(
+        enabled(twice, half) == frozenset({(0,), (1,)}),
+        f"exactly-2: both children must stay enabled, got {sorted(enabled(twice, half))}",
+    )
+
+    # Frequency(0, 1): min=0 must be reachable, i.e. final immediately
+    skippable = PartialOrder(
+        (Atom("a"), Atom("b")), frozenset(), frequency=Frequency(0, 1)
+    )
+    failures.check(
+        is_final(skippable, INITIAL_MARKING), "skippable: zero rounds must be final"
+    )
     # skippable is not the same as empty: the round may still be run...
-    assert enabled(model, INITIAL_MARKING) == frozenset({(0,), (1,)})
+    failures.check(
+        enabled(skippable, INITIAL_MARKING) == frozenset({(0,), (1,)}),
+        "skippable: the round must still be offered",
+    )
     # ...and a half-run round is NOT final, or the trace ('a',) would pass
-    half = fire(model, INITIAL_MARKING, (0,))
-    assert not is_final(model, half)
-    assert () in _lang(model) and ("a",) not in _lang(model)
+    failures.check(
+        not is_final(skippable, fire(skippable, INITIAL_MARKING, (0,))),
+        "skippable: a half-run round must not be final",
+    )
+    skip_lang = _lang(skippable)
+    failures.check(
+        () in skip_lang and ("a",) not in skip_lang,
+        f"skippable: language is {sorted(skip_lang)}",
+    )
 
-
-def test_a_skippable_composite_nested_in_a_partial_order_may_be_skipped():
+    # a skippable child nested in a partial order may contribute zero rounds
     inner = PartialOrder((Atom("c"), Atom("d")), frozenset(), frequency=Frequency(0, 1))
-    model = PartialOrder((Atom("a"), inner), frozenset({_oe(0, 1)}))
-    m = fire(model, INITIAL_MARKING, (0,))
-    assert is_final(model, m), "the skippable child may contribute zero rounds"
+    nested = PartialOrder((Atom("a"), inner), frozenset({_oe(0, 1)}))
+    failures.check(
+        is_final(nested, fire(nested, INITIAL_MARKING, (0,))),
+        "nested skippable: the child may contribute zero rounds",
+    )
 
-
-def test_an_unbounded_frequency_terminates_structurally_not_by_raising():
-    """``max=None`` is bounded by ``max_node_visits``, and runs out of enabled
-    nodes rather than raising — the same rule that terminates a cyclic choice
-    graph. Visit counters stay monotone (law 2)."""
-    model = PartialOrder(
+    # max=None is bounded by max_node_visits and runs out of enabled nodes
+    # rather than raising — the same rule that terminates a cyclic choice graph.
+    unbounded = PartialOrder(
         (Atom("a"), Atom("b")), frozenset(), frequency=Frequency(1, None)
     )
     bound = ExecutionBound(max_node_visits=3)
-    marking, trace = _greedy_run(model, bound=bound)
-    assert marking.fires == 6, f"three rounds of two atoms, got {trace!r}"
-    assert is_final(model, marking)
-    assert enabled(model, marking, bound) == frozenset()
+    marking, trace = _greedy_run(unbounded, bound=bound)
+    failures.check(
+        marking.fires == 6, f"unbounded: three rounds of two atoms, got {trace!r}"
+    )
+    failures.check(is_final(unbounded, marking), "unbounded: must end final, not raise")
+    failures.check(
+        enabled(unbounded, marking, bound) == frozenset(),
+        "unbounded: must run out of enabled nodes",
+    )
 
-
-def test_the_executor_still_never_chooses_under_repetition():
-    """Both children of an unordered repeating composite stay simultaneously
-    enabled — repetition must not have serialized concurrency."""
-    model = PartialOrder((Atom("a"), Atom("b")), frozenset(), frequency=Frequency(2, 2))
-    m = fire(model, INITIAL_MARKING, (0,))
-    m = fire(model, m, (1,))
-    assert enabled(model, m) == frozenset({(0,), (1,)})
+    assert not failures, failures.report()
 
 
 # ── the cross-check that would have caught this originally ──────────────────
-
-
-def _lang(model, *, max_traces: int = 400, max_unrolls: int = 4):
-    return language(model, max_traces=max_traces, max_unrolls=max_unrolls)
 
 
 def _frequency_models():
@@ -468,6 +529,9 @@ def _frequency_models():
     (``IRREDUCIBLE_PROJECTION``: its label multiset is not static), so the
     independent oracle for these is :mod:`skdecide.powl.semantics`, which is a
     different algorithm from the executor's and imports none of it.
+
+    These are ten *distinct models*, not ten redraws — the set is unchanged by
+    compression; only the item packaging changed.
     """
     return {
         "po-exactly-2": PartialOrder(
@@ -537,33 +601,46 @@ def _frequency_models():
     }
 
 
-@pytest.mark.parametrize("name", sorted(_frequency_models()))
-@pytest.mark.parametrize("seed", [f"x{i}" for i in range(3)])
-def test_every_final_frequency_trace_is_in_the_language(name, seed):
+def test_every_final_frequency_trace_is_in_the_language():
     """The invariant that was violated: a marking the executor calls FINAL must
     have an observable trace inside the model's own language.
 
-    A general property over several frequency-carrying models, not one case —
-    the reason no existing test caught the defect is that none of them fired a
-    model carrying a frequency at all.
+    A general property over every frequency-carrying model and three seeds — the
+    reason no earlier test caught the defect is that none of them fired a model
+    carrying a frequency at all. Every (model, seed) pair is still run; the seed
+    is a redraw and the model is not, so failures name both.
     """
-    model = _frequency_models()[name]
-    marking, trace = _greedy_run(model, seed=seed)
-    assert is_final(model, marking), (
-        f"{name}/{seed}: ran out of enabled nodes at a non-final marking, trace={trace!r}"
-    )
-    lang = _lang(model)
-    assert trace in lang, (
-        f"{name}/{seed}: executor called {trace!r} a COMPLETE traversal, but it is "
-        f"not in the language of the model"
-    )
+    models = _frequency_models()
+    failures = Failures()
+    for name in sorted(models):
+        model = models[name]
+        for seed in (f"x{i}" for i in range(3)):
+            marking, trace = _greedy_run(model, seed=seed)
+            if not is_final(model, marking):
+                failures.append(
+                    f"{name}/{seed}: ran out of enabled nodes at a non-final marking, "
+                    f"trace={trace!r}"
+                )
+                continue
+            lang = _lang(model)
+            failures.check(
+                trace in lang,
+                f"{name}/{seed}: executor called {trace!r} a COMPLETE traversal, but "
+                f"it is not in the language of the model",
+            )
+    assert not failures, failures.report()
 
 
-@pytest.mark.parametrize("name", sorted(_frequency_models()))
-def test_a_frequency_model_still_refuses_the_static_membership_check(name):
+def test_every_frequency_model_still_refuses_the_static_membership_check():
     """Pins *why* the cross-check above uses ``semantics`` and not ``membership``:
-    the static checker declines rather than guessing. Recorded, not worked around."""
-    model = _frequency_models()[name]
-    with pytest.raises(PowlError) as excinfo:
-        trace_in_language(model, ("a", "b"))
-    assert excinfo.value.refusal is PowlRefusal.IRREDUCIBLE_PROJECTION
+    the static checker declines rather than guessing. Recorded, not worked around.
+    """
+    models = _frequency_models()
+    failures = Failures()
+    for name in sorted(models):
+        failures.expect_refusal(
+            name,
+            lambda m=models[name]: trace_in_language(m, ("a", "b")),
+            PowlRefusal.IRREDUCIBLE_PROJECTION,
+        )
+    assert not failures, failures.report()

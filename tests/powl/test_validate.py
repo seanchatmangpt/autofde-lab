@@ -4,24 +4,28 @@
 
 """Adversarial structural-validation tests for :mod:`skdecide.powl.validate`.
 
-Every refusal ``validate_model`` can raise gets a model built specifically to
-trigger it, and the *exact* refusal is asserted — not merely that a
-``PowlError`` occurred.
+Every refusal ``validate_model`` can raise still gets a model built specifically
+to trigger it, and the *exact* refusal is still asserted — not merely that a
+``PowlError`` occurred. What changed is packaging: the cases are now rows in two
+accumulating tables instead of one pytest item each, so a regression reports
+every offending row rather than only the first alphabetically.
+
+This file is **not** redundant with ``test_algebra.py`` even where the refusal
+names coincide: ``test_algebra.py`` exercises ``__post_init__`` (the constructor
+path), this file exercises ``validate_model`` on ``_raw`` objects (the wire /
+future-builder path). They are different functions and a defect in one is
+invisible to the other.
 
 Why ``_raw`` exists
 -------------------
 :mod:`skdecide.powl.algebra` refuses most malformed inputs at construction, so
 several of these models cannot be built through the normal constructors.
-:func:`_raw` allocates the frozen dataclass and writes its fields directly,
-which is exactly the situation the validator exists for: a model that arrived
-from a wire form or a future builder rather than from ``__post_init__``.
+:func:`_raw` allocates the frozen dataclass and writes its fields directly.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-
-import pytest
 
 from skdecide.powl.algebra import (
     Atom,
@@ -34,8 +38,10 @@ from skdecide.powl.algebra import (
     Start,
 )
 from skdecide.powl.frequency import ONCE, ZERO_OR_MORE, Frequency
-from skdecide.powl.refusals import PowlError, PowlRefusal
+from skdecide.powl.refusals import PowlRefusal
 from skdecide.powl.validate import validate_model
+
+from ._accumulate import Failures
 
 
 def _raw(cls, **fields):
@@ -69,288 +75,7 @@ def _raw_cg(children, edges=frozenset(), start=0, end=1, frequency=ONCE):
     )
 
 
-def _refusal(exc_info) -> PowlRefusal:
-    return exc_info.value.refusal
-
-
 A, B, C, D = Atom("a"), Atom("b"), Atom("c"), Atom("d")
-
-
-# ── positives ───────────────────────────────────────────────────────────────
-
-
-@pytest.mark.parametrize("leaf", [Start(), End(), Silent(), Atom("a")])
-def test_leaves_are_valid(leaf):
-    assert validate_model(leaf) is None
-
-
-def test_wellformed_partial_order_accepted():
-    node = PartialOrder((A, B, C), frozenset({OrderEdge(0, 1), OrderEdge(1, 2)}))
-    assert validate_model(node) is None
-
-
-def test_partial_order_built_from_closure_accepted():
-    """Construction normalizes a closure input to the reduction, so it validates."""
-    node = PartialOrder(
-        (A, B, C), frozenset({OrderEdge(0, 1), OrderEdge(1, 2), OrderEdge(0, 2)})
-    )
-    assert node.order == frozenset({OrderEdge(0, 1), OrderEdge(1, 2)})
-    assert validate_model(node) is None
-
-
-def test_wellformed_choice_graph_accepted():
-    node = ChoiceGraph((A, B), frozenset({ChoiceGraphEdge(0, 1)}), start=0, end=1)
-    assert validate_model(node) is None
-
-
-def test_cyclic_choice_graph_is_ACCEPTED():
-    """A cycle in a choice graph is iteration, not a defect. Never refuse it.
-
-    ``~/powlv2lsp`` rejects this shape; POWL 2.0 requires accepting it.
-    """
-    node = ChoiceGraph(
-        (A, B, C, D),
-        frozenset(
-            {
-                ChoiceGraphEdge(0, 1),
-                ChoiceGraphEdge(1, 2),
-                ChoiceGraphEdge(2, 1),  # <- the cycle
-                ChoiceGraphEdge(2, 3),
-            }
-        ),
-        start=0,
-        end=3,
-    )
-    assert validate_model(node) is None
-
-
-def test_self_loop_in_choice_graph_is_ACCEPTED():
-    node = ChoiceGraph(
-        (A, B, C),
-        frozenset(
-            {
-                ChoiceGraphEdge(0, 1),
-                ChoiceGraphEdge(1, 1),  # <- self-loop == repeat this step
-                ChoiceGraphEdge(1, 2),
-            }
-        ),
-        start=0,
-        end=2,
-    )
-    assert validate_model(node) is None
-
-
-def test_nesting_at_max_depth_accepted():
-    node = PartialOrder((A, B))  # depth 2
-    for _ in range(6):
-        node = PartialOrder((node, Atom("x")))  # -> depth 8
-    assert node.depth == 8
-    assert validate_model(node) is None
-
-
-def test_recurses_into_children():
-    """A defect buried in a grandchild is still found."""
-    bad = _raw_cg((A, B, C), frozenset({ChoiceGraphEdge(0, 1)}), start=0, end=1)
-    root = PartialOrder((PartialOrder((A, bad)), B))
-    with pytest.raises(PowlError) as e:
-        validate_model(root)
-    assert _refusal(e) is PowlRefusal.CHOICE_GRAPH_DISCONNECTED
-
-
-# ── arity ───────────────────────────────────────────────────────────────────
-
-
-def test_partial_order_arity():
-    with pytest.raises(PowlError) as e:
-        validate_model(_raw_po((A,)))
-    assert _refusal(e) is PowlRefusal.INVALID_PARTIAL_ORDER_ARITY
-
-
-def test_choice_graph_arity():
-    with pytest.raises(PowlError) as e:
-        validate_model(_raw_cg((A,)))
-    assert _refusal(e) is PowlRefusal.INVALID_CHOICE_ARITY
-
-
-# ── partial order relation laws ─────────────────────────────────────────────
-
-
-def test_order_not_irreflexive():
-    with pytest.raises(PowlError) as e:
-        validate_model(_raw_po((A, B), {OrderEdge(0, 0)}))
-    assert _refusal(e) is PowlRefusal.CYCLIC_PARTIAL_ORDER
-
-
-def test_order_cyclic():
-    with pytest.raises(PowlError) as e:
-        validate_model(_raw_po((A, B, C), {OrderEdge(0, 1), OrderEdge(1, 2), OrderEdge(2, 0)}))
-    assert _refusal(e) is PowlRefusal.CYCLIC_PARTIAL_ORDER
-
-
-def test_order_not_transitively_reduced():
-    """Stored order is the closure, not the reduction — refuse the wire form."""
-    closure = {OrderEdge(0, 1), OrderEdge(1, 2), OrderEdge(0, 2)}
-    with pytest.raises(PowlError) as e:
-        validate_model(_raw_po((A, B, C), closure))
-    assert _refusal(e) is PowlRefusal.NOT_TRANSITIVELY_REDUCED
-
-
-def test_closure_not_transitive():
-    node = _raw_po(
-        (A, B, C),
-        order={OrderEdge(0, 1), OrderEdge(1, 2)},
-        closure={OrderEdge(0, 1), OrderEdge(1, 2)},  # missing 0->2
-    )
-    with pytest.raises(PowlError) as e:
-        validate_model(node)
-    assert _refusal(e) is PowlRefusal.NOT_TRANSITIVELY_REDUCED
-
-
-def test_closure_not_antisymmetric():
-    node = _raw_po(
-        (A, B),
-        order=frozenset(),  # reduced and acyclic
-        closure={OrderEdge(0, 1), OrderEdge(1, 0)},
-    )
-    with pytest.raises(PowlError) as e:
-        validate_model(node)
-    assert _refusal(e) is PowlRefusal.CYCLIC_PARTIAL_ORDER
-
-
-def test_closure_not_irreflexive():
-    node = _raw_po((A, B), order=frozenset(), closure={OrderEdge(1, 1)})
-    with pytest.raises(PowlError) as e:
-        validate_model(node)
-    assert _refusal(e) is PowlRefusal.CYCLIC_PARTIAL_ORDER
-
-
-# ── dangling references and edge types ──────────────────────────────────────
-
-
-def test_dangling_order_edge():
-    with pytest.raises(PowlError) as e:
-        validate_model(_raw_po((A, B), {OrderEdge(0, 7)}))
-    assert _refusal(e) is PowlRefusal.DANGLING_REFERENCE
-
-
-def test_dangling_choice_graph_edge():
-    with pytest.raises(PowlError) as e:
-        validate_model(_raw_cg((A, B), {ChoiceGraphEdge(0, 9)}))
-    assert _refusal(e) is PowlRefusal.DANGLING_REFERENCE
-
-
-def test_dangling_start_index():
-    with pytest.raises(PowlError) as e:
-        validate_model(_raw_cg((A, B), frozenset(), start=5, end=1))
-    assert _refusal(e) is PowlRefusal.DANGLING_REFERENCE
-
-
-def test_dangling_end_index():
-    with pytest.raises(PowlError) as e:
-        validate_model(_raw_cg((A, B), frozenset(), start=0, end=-1))
-    assert _refusal(e) is PowlRefusal.DANGLING_REFERENCE
-
-
-def test_edge_type_mismatch_in_partial_order():
-    with pytest.raises(PowlError) as e:
-        validate_model(_raw_po((A, B), {ChoiceGraphEdge(0, 1)}))
-    assert _refusal(e) is PowlRefusal.EDGE_TYPE_MISMATCH
-
-
-def test_edge_type_mismatch_in_choice_graph():
-    with pytest.raises(PowlError) as e:
-        validate_model(_raw_cg((A, B), {OrderEdge(0, 1)}))
-    assert _refusal(e) is PowlRefusal.EDGE_TYPE_MISMATCH
-
-
-# ── choice graph boundary and connectivity ──────────────────────────────────
-
-
-def test_start_has_incoming_edge():
-    node = _raw_cg((A, B, C), {ChoiceGraphEdge(2, 0), ChoiceGraphEdge(0, 1)}, start=0, end=1)
-    with pytest.raises(PowlError) as e:
-        validate_model(node)
-    assert _refusal(e) is PowlRefusal.MULTI_BOUNDARY_CHOICE_GRAPH
-
-
-def test_end_has_outgoing_edge():
-    node = _raw_cg((A, B, C), {ChoiceGraphEdge(0, 1), ChoiceGraphEdge(1, 2)}, start=0, end=1)
-    with pytest.raises(PowlError) as e:
-        validate_model(node)
-    assert _refusal(e) is PowlRefusal.MULTI_BOUNDARY_CHOICE_GRAPH
-
-
-def test_start_equals_end():
-    node = _raw_cg((A, B), frozenset(), start=1, end=1)
-    with pytest.raises(PowlError) as e:
-        validate_model(node)
-    assert _refusal(e) is PowlRefusal.MULTI_BOUNDARY_CHOICE_GRAPH
-
-
-def test_node_unreachable_from_start():
-    node = ChoiceGraph((A, B, C), frozenset({ChoiceGraphEdge(0, 1)}), start=0, end=1)
-    with pytest.raises(PowlError) as e:
-        validate_model(node)
-    assert _refusal(e) is PowlRefusal.CHOICE_GRAPH_DISCONNECTED
-    assert "not reachable from start" in e.value.detail
-
-
-def test_node_does_not_co_reach_end():
-    # index 2 is reachable from start but is a dead end that never reaches `end`.
-    node = ChoiceGraph(
-        (A, B, C),
-        frozenset({ChoiceGraphEdge(0, 1), ChoiceGraphEdge(0, 2)}),
-        start=0,
-        end=1,
-    )
-    with pytest.raises(PowlError) as e:
-        validate_model(node)
-    assert _refusal(e) is PowlRefusal.CHOICE_GRAPH_DISCONNECTED
-    assert "co-reach" in e.value.detail
-
-
-# ── depth ───────────────────────────────────────────────────────────────────
-
-
-def test_depth_exceeded():
-    node = PartialOrder((A, B))  # depth 2
-    for _ in range(6):
-        node = PartialOrder((node, Atom("x")))  # -> depth 8 (legal)
-    too_deep = _raw_po((node, Atom("y")))  # -> height 9
-    with pytest.raises(PowlError) as e:
-        validate_model(too_deep)
-    assert _refusal(e) is PowlRefusal.DEPTH_EXCEEDED
-
-
-# ── frequency ───────────────────────────────────────────────────────────────
-
-
-def test_valid_frequencies_accepted():
-    node = PartialOrder((A, B), frozenset(), frequency=ZERO_OR_MORE)
-    assert validate_model(node) is None
-
-
-def test_frequency_wrong_type():
-    with pytest.raises(PowlError) as e:
-        validate_model(_raw_po((A, B), frequency="often"))
-    assert _refusal(e) is PowlRefusal.INVALID_FREQUENCY
-
-
-def test_frequency_max_below_min():
-    bad = _raw(Frequency, min=3, max=1)
-    with pytest.raises(PowlError) as e:
-        validate_model(_raw_cg((A, B), {ChoiceGraphEdge(0, 1)}, frequency=bad))
-    assert _refusal(e) is PowlRefusal.INVALID_FREQUENCY
-
-
-def test_frequency_negative_min():
-    bad = _raw(Frequency, min=-1, max=None)
-    with pytest.raises(PowlError) as e:
-        validate_model(_raw_po((A, B), frequency=bad))
-    assert _refusal(e) is PowlRefusal.INVALID_FREQUENCY
-
-
-# ── prohibited node kinds ───────────────────────────────────────────────────
 
 
 @dataclass(frozen=True)
@@ -360,13 +85,183 @@ class _Xor:
     children: tuple = ()
 
 
-def test_prohibited_node_kind():
-    with pytest.raises(PowlError) as e:
-        validate_model(_Xor((A, B)))
-    assert _refusal(e) is PowlRefusal.PROHIBITED_NODE_KIND
+def _max_depth_nesting():
+    node = PartialOrder((A, B))  # depth 2
+    for _ in range(6):
+        node = PartialOrder((node, Atom("x")))  # -> depth 8, the legal maximum
+    return node
 
 
-def test_prohibited_node_kind_as_child():
-    with pytest.raises(PowlError) as e:
-        validate_model(_raw_po((A, _Xor((B, C)))))
-    assert _refusal(e) is PowlRefusal.PROHIBITED_NODE_KIND
+# ── positives ───────────────────────────────────────────────────────────────
+
+
+def test_wellformed_models_are_accepted():
+    """One property (``validate_model`` returns ``None``) over every legal shape.
+
+    Each row is a distinct *over-refusal* defect; the loop accumulates so a
+    validator that started rejecting, say, self-loops names that row.
+    """
+    deep = _max_depth_nesting()
+    assert deep.depth == 8
+
+    cases = {
+        "leaf Start": Start(),
+        "leaf End": End(),
+        "leaf Silent": Silent(),
+        "leaf Atom": Atom("a"),
+        "well-formed partial order": PartialOrder(
+            (A, B, C), frozenset({OrderEdge(0, 1), OrderEdge(1, 2)})
+        ),
+        # construction normalizes a closure input to the reduction
+        "partial order built from a closure": PartialOrder(
+            (A, B, C), frozenset({OrderEdge(0, 1), OrderEdge(1, 2), OrderEdge(0, 2)})
+        ),
+        "well-formed choice graph": ChoiceGraph(
+            (A, B), frozenset({ChoiceGraphEdge(0, 1)}), start=0, end=1
+        ),
+        # a cycle in a choice graph is iteration, not a defect. ~/powlv2lsp
+        # rejects this shape; POWL 2.0 requires accepting it.
+        "cyclic choice graph": ChoiceGraph(
+            (A, B, C, D),
+            frozenset(
+                {
+                    ChoiceGraphEdge(0, 1),
+                    ChoiceGraphEdge(1, 2),
+                    ChoiceGraphEdge(2, 1),  # <- the cycle
+                    ChoiceGraphEdge(2, 3),
+                }
+            ),
+            start=0,
+            end=3,
+        ),
+        "self-loop in a choice graph": ChoiceGraph(
+            (A, B, C),
+            frozenset(
+                {
+                    ChoiceGraphEdge(0, 1),
+                    ChoiceGraphEdge(1, 1),  # <- repeat this step
+                    ChoiceGraphEdge(1, 2),
+                }
+            ),
+            start=0,
+            end=2,
+        ),
+        "nesting at max depth": deep,
+        "ZERO_OR_MORE frequency": PartialOrder((A, B), frozenset(), frequency=ZERO_OR_MORE),
+    }
+
+    failures = Failures()
+    for name, node in cases.items():
+        failures.expect_ok(name, lambda node=node: validate_model(node))
+        failures.check(
+            validate_model(node) is None, f"{name}: validate_model must return None"
+        )
+    assert not failures, failures.report()
+
+
+# ── negatives: every refusal the validator can raise ────────────────────────
+
+
+def test_every_structural_defect_raises_its_own_refusal():
+    """N distinct falsifiers in one item — each row carries its own expected
+    :class:`PowlRefusal` (and, where the message is load-bearing, its own
+    expected detail substring). Nothing short-circuits."""
+    legal_depth_8 = _max_depth_nesting()
+
+    R = PowlRefusal
+    cases = [
+        # arity
+        ("partial-order arity", _raw_po((A,)), R.INVALID_PARTIAL_ORDER_ARITY, ""),
+        ("choice-graph arity", _raw_cg((A,)), R.INVALID_CHOICE_ARITY, ""),
+        # partial order relation laws
+        ("order not irreflexive", _raw_po((A, B), {OrderEdge(0, 0)}),
+         R.CYCLIC_PARTIAL_ORDER, ""),
+        ("order cyclic", _raw_po(
+            (A, B, C), {OrderEdge(0, 1), OrderEdge(1, 2), OrderEdge(2, 0)}),
+         R.CYCLIC_PARTIAL_ORDER, ""),
+        ("closure not antisymmetric", _raw_po(
+            (A, B), order=frozenset(), closure={OrderEdge(0, 1), OrderEdge(1, 0)}),
+         R.CYCLIC_PARTIAL_ORDER, ""),
+        ("closure not irreflexive", _raw_po(
+            (A, B), order=frozenset(), closure={OrderEdge(1, 1)}),
+         R.CYCLIC_PARTIAL_ORDER, ""),
+        # stored order is the closure, not the reduction: refuse the wire form
+        ("order not transitively reduced", _raw_po(
+            (A, B, C), {OrderEdge(0, 1), OrderEdge(1, 2), OrderEdge(0, 2)}),
+         R.NOT_TRANSITIVELY_REDUCED, ""),
+        ("closure not transitive", _raw_po(
+            (A, B, C),
+            order={OrderEdge(0, 1), OrderEdge(1, 2)},
+            closure={OrderEdge(0, 1), OrderEdge(1, 2)}),  # missing 0->2
+         R.NOT_TRANSITIVELY_REDUCED, ""),
+        # dangling references
+        ("dangling order edge", _raw_po((A, B), {OrderEdge(0, 7)}),
+         R.DANGLING_REFERENCE, ""),
+        ("dangling choice-graph edge", _raw_cg((A, B), {ChoiceGraphEdge(0, 9)}),
+         R.DANGLING_REFERENCE, ""),
+        ("dangling start index", _raw_cg((A, B), frozenset(), start=5, end=1),
+         R.DANGLING_REFERENCE, ""),
+        ("dangling end index", _raw_cg((A, B), frozenset(), start=0, end=-1),
+         R.DANGLING_REFERENCE, ""),
+        # edge types
+        ("choice edge in a partial order", _raw_po((A, B), {ChoiceGraphEdge(0, 1)}),
+         R.EDGE_TYPE_MISMATCH, ""),
+        ("order edge in a choice graph", _raw_cg((A, B), {OrderEdge(0, 1)}),
+         R.EDGE_TYPE_MISMATCH, ""),
+        # choice-graph boundary
+        ("start has an incoming edge", _raw_cg(
+            (A, B, C), {ChoiceGraphEdge(2, 0), ChoiceGraphEdge(0, 1)}, start=0, end=1),
+         R.MULTI_BOUNDARY_CHOICE_GRAPH, ""),
+        ("end has an outgoing edge", _raw_cg(
+            (A, B, C), {ChoiceGraphEdge(0, 1), ChoiceGraphEdge(1, 2)}, start=0, end=1),
+         R.MULTI_BOUNDARY_CHOICE_GRAPH, ""),
+        ("start equals end", _raw_cg((A, B), frozenset(), start=1, end=1),
+         R.MULTI_BOUNDARY_CHOICE_GRAPH, ""),
+        # connectivity — the detail string is the only thing separating these two
+        ("node unreachable from start", ChoiceGraph(
+            (A, B, C), frozenset({ChoiceGraphEdge(0, 1)}), start=0, end=1),
+         R.CHOICE_GRAPH_DISCONNECTED, "not reachable from start"),
+        ("node does not co-reach end", ChoiceGraph(
+            (A, B, C),
+            frozenset({ChoiceGraphEdge(0, 1), ChoiceGraphEdge(0, 2)}),
+            start=0, end=1),
+         R.CHOICE_GRAPH_DISCONNECTED, "co-reach"),
+        # depth
+        ("height 9", _raw_po((legal_depth_8, Atom("y"))), R.DEPTH_EXCEEDED, ""),
+        # frequency
+        ("frequency wrong type", _raw_po((A, B), frequency="often"),
+         R.INVALID_FREQUENCY, ""),
+        ("frequency max below min", _raw_cg(
+            (A, B), {ChoiceGraphEdge(0, 1)}, frequency=_raw(Frequency, min=3, max=1)),
+         R.INVALID_FREQUENCY, ""),
+        ("frequency negative min", _raw_po(
+            (A, B), frequency=_raw(Frequency, min=-1, max=None)),
+         R.INVALID_FREQUENCY, ""),
+        # prohibited node kinds
+        ("POWL 1.0 Xor at the root", _Xor((A, B)), R.PROHIBITED_NODE_KIND, ""),
+    ]
+
+    failures = Failures()
+    for name, node, expected, detail in cases:
+        failures.expect_refusal(
+            name, lambda node=node: validate_model(node), expected, detail
+        )
+    assert not failures, failures.report()
+
+
+def test_validation_recurses_into_children():
+    """A defect buried in a grandchild is still found — the only signal for
+    "the validator checks the root and stops"."""
+    failures = Failures()
+    buried_cg = _raw_cg((A, B, C), frozenset({ChoiceGraphEdge(0, 1)}), start=0, end=1)
+    failures.expect_refusal(
+        "disconnected choice graph as a grandchild",
+        lambda: validate_model(PartialOrder((PartialOrder((A, buried_cg)), B))),
+        PowlRefusal.CHOICE_GRAPH_DISCONNECTED,
+    )
+    failures.expect_refusal(
+        "prohibited node kind as a child",
+        lambda: validate_model(_raw_po((A, _Xor((B, C))))),
+        PowlRefusal.PROHIBITED_NODE_KIND,
+    )
+    assert not failures, failures.report()

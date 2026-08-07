@@ -6,8 +6,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from skdecide.powl.algebra import (
     Atom,
     ChoiceGraph,
@@ -20,7 +18,9 @@ from skdecide.powl.algebra import (
 )
 from skdecide.powl.frequency import ONE_OR_MORE
 from skdecide.powl.membership import explain, static_labels, trace_in_language
-from skdecide.powl.refusals import PowlError, PowlRefusal
+from skdecide.powl.refusals import PowlRefusal
+
+from ._accumulate import Failures
 
 
 def _diamond() -> PartialOrder:
@@ -55,79 +55,85 @@ def test_membership_module_does_not_import_the_executor():
     )
 
 
-# ── accept ──────────────────────────────────────────────────────────────────
+# ── accept / reject, each with its own diagnostic reason ────────────────────
 
 
-@pytest.mark.parametrize(
-    "trace", [("a", "b", "c", "d"), ("a", "c", "b", "d")]
-)
-def test_accepts_valid_linearizations(trace):
+def test_decisions_and_reasons_over_the_diamond_and_nesting():
+    """Rows are distinct falsifiers: each rejection has its own ``explain``
+    reason, so a checker that rejected for the wrong reason still fails here."""
     po = _diamond()
-    assert trace_in_language(po, trace) is True
-    assert explain(po, trace).startswith("accepted")
+    inner = PartialOrder(
+        children=(Atom("b1"), Atom("b2")),
+        order=frozenset({OrderEdge(NodeId(0), NodeId(1))}),
+    )
+    nested = PartialOrder(
+        children=(Atom("a"), inner),
+        order=frozenset({OrderEdge(NodeId(0), NodeId(1))}),
+    )
+
+    cases = [
+        ("diamond linearization 1", po, ("a", "b", "c", "d"), True, "accepted"),
+        ("diamond linearization 2", po, ("a", "c", "b", "d"), True, "accepted"),
+        ("precedence violated (b before a)", po, ("b", "a", "c", "d"), False,
+         "precedence violated"),
+        ("missing occurrence of d", po, ("a", "b", "c"), False, "missing occurrence"),
+        ("duplicate occurrence of b", po, ("a", "b", "b", "c", "d"), False,
+         "duplicate occurrence"),
+        # a -> d only holds in the closure (the reduction has a->b->d, a->c->d)
+        ("transitive precedence via the closure", po, ("b", "c", "d", "a"), False, ""),
+        ("nested child accepted", nested, ("a", "b1", "b2"), True, "accepted"),
+        ("nested child order violated", nested, ("a", "b2", "b1"), False, "child 1"),
+    ]
+
+    failures = Failures()
+    for name, node, trace, expected, reason in cases:
+        got = trace_in_language(node, trace)
+        failures.check(
+            got is expected, f"{name}: trace_in_language({trace}) == {got}, want {expected}"
+        )
+        explanation = explain(node, trace)
+        failures.check(
+            explanation.startswith("accepted" if expected else "rejected"),
+            f"{name}: explain() said {explanation!r}",
+        )
+        if reason:
+            failures.check(reason in explanation, f"{name}: {reason!r} not in {explanation!r}")
+    # the rejection reasons must name the offending activity, not just the class
+    failures.check("'d'" in explain(po, ("a", "b", "c")), "missing-occurrence reason must name 'd'")
+    assert not failures, failures.report()
 
 
-# ── reject ──────────────────────────────────────────────────────────────────
+# ── leaves and label projection ─────────────────────────────────────────────
 
 
-def test_rejects_precedence_violation():
-    po = _diamond()
-    bad = ("b", "a", "c", "d")  # b before a violates a -> b
-    assert trace_in_language(po, bad) is False
-    reason = explain(po, bad)
-    assert reason.startswith("rejected")
-    assert "precedence violated" in reason
-
-
-def test_rejects_missing_occurrence():
-    po = _diamond()
-    bad = ("a", "b", "c")  # d missing
-    assert trace_in_language(po, bad) is False
-    reason = explain(po, bad)
-    assert "missing occurrence" in reason
-    assert "'d'" in reason
-
-
-def test_rejects_duplicate_occurrence():
-    po = _diamond()
-    bad = ("a", "b", "b", "c", "d")
-    assert trace_in_language(po, bad) is False
-    reason = explain(po, bad)
-    assert "duplicate occurrence" in reason
-
-
-def test_transitive_precedence_is_enforced_via_the_closure():
-    po = _diamond()
-    # a -> d only holds in the closure (reduction has a->b->d, a->c->d)
-    assert trace_in_language(po, ("b", "c", "d", "a")) is False
-
-
-# ── leaves ──────────────────────────────────────────────────────────────────
-
-
-def test_atom_and_silent():
-    assert trace_in_language(Atom("x"), ("x",)) is True
-    assert trace_in_language(Atom("x"), ()) is False
-    assert trace_in_language(Silent(), ()) is True
-    assert trace_in_language(End(), ("x",)) is False
-
-
-def test_silent_child_carries_no_label():
+def test_leaves_and_silent_children_carry_no_label():
     po = PartialOrder(
         children=(Atom("a"), Silent(), Atom("b")),
         order=frozenset({OrderEdge(NodeId(0), NodeId(2))}),
     )
-    assert static_labels(po) == ("a", "b")
-    assert trace_in_language(po, ("a", "b")) is True
-    assert trace_in_language(po, ("b", "a")) is False
+    cases = [
+        ("atom accepts its own label", Atom("x"), ("x",), True),
+        ("atom rejects epsilon", Atom("x"), (), False),
+        ("silent accepts epsilon", Silent(), (), True),
+        ("end rejects a symbol", End(), ("x",), False),
+        ("silent child projects away", po, ("a", "b"), True),
+        ("silent child does not relax precedence", po, ("b", "a"), False),
+    ]
+    failures = Failures()
+    for name, node, trace, expected in cases:
+        got = trace_in_language(node, trace)
+        failures.check(got is expected, f"{name}: got {got}, want {expected}")
+    failures.check(
+        static_labels(po) == ("a", "b"), f"static_labels == {static_labels(po)}"
+    )
+    assert not failures, failures.report()
 
 
 # ── choice graph ────────────────────────────────────────────────────────────
 
 
-def _cyclic_choice() -> ChoiceGraph:
-    """s -> body -> body (loop) and body -> e; boundary nodes are silent."""
-    return ChoiceGraph(
+def test_choice_graph_membership_accepts_iteration_and_rejects_branch_mixing():
+    cyclic = ChoiceGraph(  # s -> w -> w (loop), w -> e; boundaries are silent
         children=(Silent(), Silent(), Atom("w")),
         edges=frozenset(
             {
@@ -139,19 +145,7 @@ def _cyclic_choice() -> ChoiceGraph:
         start=0,
         end=1,
     )
-
-
-def test_cyclic_choice_graph_accepts_iteration():
-    cg = _cyclic_choice()
-    assert trace_in_language(cg, ("w",)) is True
-    assert trace_in_language(cg, ("w", "w", "w")) is True
-    assert trace_in_language(cg, ()) is False
-    assert trace_in_language(cg, ("w", "z")) is False
-    assert "no start->end walk" in explain(cg, ())
-
-
-def test_choice_graph_branches():
-    cg = ChoiceGraph(
+    branching = ChoiceGraph(
         children=(Silent(), Silent(), Atom("p"), Atom("q")),
         edges=frozenset(
             {
@@ -164,26 +158,27 @@ def test_choice_graph_branches():
         start=0,
         end=1,
     )
-    assert trace_in_language(cg, ("p",)) is True
-    assert trace_in_language(cg, ("q",)) is True
-    assert trace_in_language(cg, ("p", "q")) is False
-
-
-# ── nesting and refusals ────────────────────────────────────────────────────
-
-
-def test_nested_partial_order_recursion():
-    inner = PartialOrder(
-        children=(Atom("b1"), Atom("b2")),
-        order=frozenset({OrderEdge(NodeId(0), NodeId(1))}),
+    cases = [
+        ("one iteration", cyclic, ("w",), True),
+        ("three iterations", cyclic, ("w", "w", "w"), True),
+        ("zero iterations is not a start->end walk", cyclic, (), False),
+        ("unknown label", cyclic, ("w", "z"), False),
+        ("left branch", branching, ("p",), True),
+        ("right branch", branching, ("q",), True),
+        ("branches must not be mixed", branching, ("p", "q"), False),
+    ]
+    failures = Failures()
+    for name, node, trace, expected in cases:
+        got = trace_in_language(node, trace)
+        failures.check(got is expected, f"{name}: got {got}, want {expected}")
+    failures.check(
+        "no start->end walk" in explain(cyclic, ()),
+        f"explain(cyclic, ()) == {explain(cyclic, ())!r}",
     )
-    outer = PartialOrder(
-        children=(Atom("a"), inner),
-        order=frozenset({OrderEdge(NodeId(0), NodeId(1))}),
-    )
-    assert trace_in_language(outer, ("a", "b1", "b2")) is True
-    assert trace_in_language(outer, ("a", "b2", "b1")) is False
-    assert "child 1" in explain(outer, ("a", "b2", "b1"))
+    assert not failures, failures.report()
+
+
+# ── refusal ─────────────────────────────────────────────────────────────────
 
 
 def test_non_once_frequency_refuses_rather_than_guessing():
@@ -192,6 +187,10 @@ def test_non_once_frequency_refuses_rather_than_guessing():
         order=frozenset({OrderEdge(NodeId(0), NodeId(1))}),
         frequency=ONE_OR_MORE,
     )
-    with pytest.raises(PowlError) as exc:
-        trace_in_language(po, ("a", "b"))
-    assert exc.value.refusal is PowlRefusal.IRREDUCIBLE_PROJECTION
+    failures = Failures()
+    failures.expect_refusal(
+        "ONE_OR_MORE frequency",
+        lambda: trace_in_language(po, ("a", "b")),
+        PowlRefusal.IRREDUCIBLE_PROJECTION,
+    )
+    assert not failures, failures.report()

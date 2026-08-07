@@ -5,12 +5,13 @@
 """Tests for the POWL 2.0 denotational semantics.
 
 Every model here is small enough that its language is hand-computable, so the
-assertions are on exact sets, never on cardinality alone.
+assertions are on exact sets, never on cardinality alone. The exact expected set
+per model is unchanged by compression — the models are now rows in a table whose
+failure message reports every model whose language came out wrong, instead of one
+item per model that stops at the first.
 """
 
 from __future__ import annotations
-
-import pytest
 
 from skdecide.powl import (
     ONCE,
@@ -21,12 +22,13 @@ from skdecide.powl import (
     NodeId,
     OrderEdge,
     PartialOrder,
-    PowlError,
     PowlRefusal,
     Silent,
     Start,
 )
 from skdecide.powl.semantics import enabled_labels, interleavings, language
+
+from ._accumulate import Failures
 
 A, B, C = Atom("a"), Atom("b"), Atom("c")
 
@@ -43,82 +45,6 @@ def cedge(i, j):
     return ChoiceGraphEdge(NodeId(i), NodeId(j))
 
 
-# ── interleavings (Lean: Interleaves) ───────────────────────────────────────
-
-
-def test_interleavings_matches_lean_nil_case():
-    assert set(interleavings((), ())) == {()}
-
-
-def test_interleavings_with_empty_operand_is_identity():
-    assert set(interleavings(("a", "b"), ())) == {("a", "b")}
-    assert set(interleavings((), ("a", "b"))) == {("a", "b")}
-
-
-def test_interleavings_is_order_preserving_shuffle():
-    assert set(interleavings(("a", "b"), ("c",))) == {
-        ("a", "b", "c"),
-        ("a", "c", "b"),
-        ("c", "a", "b"),
-    }
-    # ("b", "a", "c") is absent: it violates a-before-b inside the left trace.
-
-
-# ── leaves ──────────────────────────────────────────────────────────────────
-
-
-def test_atom_denotes_singleton_trace():
-    assert lang(A) == frozenset({("a",)})
-
-
-def test_silent_and_start_denote_epsilon():
-    assert lang(Silent()) == frozenset({()})
-    assert lang(Start()) == frozenset({()})
-
-
-# ── PartialOrder ────────────────────────────────────────────────────────────
-
-
-def test_unordered_pair_gives_both_orders():
-    po = PartialOrder((A, B))
-    assert lang(po) == frozenset({("a", "b"), ("b", "a")})
-
-
-def test_edge_a_before_b_gives_only_one_order():
-    po = PartialOrder((A, B), frozenset({edge(0, 1)}))
-    assert lang(po) == frozenset({("a", "b")})
-
-
-def test_silent_child_contributes_nothing_to_the_trace():
-    po = PartialOrder((A, Silent()), frozenset({edge(0, 1)}))
-    assert lang(po) == frozenset({("a",)})
-
-
-def test_three_atoms_with_one_edge():
-    # a -> c, b unordered with both.
-    po = PartialOrder((A, B, C), frozenset({edge(0, 2)}))
-    assert lang(po) == frozenset(
-        {("a", "b", "c"), ("a", "c", "b"), ("b", "a", "c")}
-    )
-
-
-def test_nested_partial_orders_interleave_symbol_by_symbol():
-    # (a -> c) concurrent with b: b may land between a and c.
-    inner = PartialOrder((A, C), frozenset({edge(0, 1)}))
-    outer = PartialOrder((inner, B))
-    assert lang(outer) == frozenset(
-        {("a", "c", "b"), ("a", "b", "c"), ("b", "a", "c")}
-    )
-
-
-def test_partial_order_frequency_repeats_the_body():
-    po = PartialOrder((A, B), frozenset({edge(0, 1)}), Frequency(0, 2))
-    assert lang(po) == frozenset({(), ("a", "b"), ("a", "b", "a", "b")})
-
-
-# ── ChoiceGraph ─────────────────────────────────────────────────────────────
-
-
 def two_branch_choice() -> ChoiceGraph:
     """start -> {a, b} -> end; a hand-computable union."""
     return ChoiceGraph(
@@ -129,108 +55,156 @@ def two_branch_choice() -> ChoiceGraph:
     )
 
 
-def test_choice_graph_is_the_union_of_its_branches():
-    assert lang(two_branch_choice()) == frozenset({("a",), ("b",)})
-
-
-def test_cyclic_choice_graph_terminates_under_max_unrolls():
-    # start -> a, a -> a (iteration), a -> end.
-    cg = ChoiceGraph(
+def _self_looping_a() -> ChoiceGraph:
+    """start -> a, a -> a (iteration), a -> end."""
+    return ChoiceGraph(
         (Silent(), Silent(), A),
         frozenset({cedge(0, 2), cedge(2, 2), cedge(2, 1)}),
         start=0,
         end=1,
         frequency=ONCE,
     )
-    assert lang(cg, max_unrolls=1) == frozenset({("a",)})
-    assert lang(cg, max_unrolls=3) == frozenset(
-        {("a",), ("a", "a"), ("a", "a", "a")}
-    )
 
 
-def test_choice_graph_branches_of_different_lengths():
-    inner = PartialOrder((A, B), frozenset({edge(0, 1)}))
-    cg = ChoiceGraph(
-        (Silent(), Silent(), inner, C),
-        frozenset({cedge(0, 2), cedge(2, 1), cedge(0, 3), cedge(3, 1)}),
-        start=0,
-        end=1,
-    )
-    assert lang(cg) == frozenset({("a", "b"), ("c",)})
+# ── interleavings (Lean: Interleaves) ───────────────────────────────────────
+
+
+def test_interleavings_matches_the_lean_specification():
+    assert set(interleavings((), ())) == {()}
+    assert set(interleavings(("a", "b"), ())) == {("a", "b")}
+    assert set(interleavings((), ("a", "b"))) == {("a", "b")}
+    # order-preserving shuffle: ("b", "a", "c") is absent because it violates
+    # a-before-b inside the left operand.
+    assert set(interleavings(("a", "b"), ("c",))) == {
+        ("a", "b", "c"),
+        ("a", "c", "b"),
+        ("c", "a", "b"),
+    }
+
+
+# ── exact languages ─────────────────────────────────────────────────────────
+
+
+def test_exact_language_of_every_hand_computable_model():
+    """One property (``language(model)`` equals a hand-computed set) over every
+    node kind. Rows are checked independently and all mismatches are reported."""
+    inner_ac = PartialOrder((A, C), frozenset({edge(0, 1)}))
+    inner_ab = PartialOrder((A, B), frozenset({edge(0, 1)}))
+
+    cases = [
+        # leaves
+        ("atom", A, {}, {("a",)}),
+        ("silent", Silent(), {}, {()}),
+        ("start", Start(), {}, {()}),
+        # partial orders
+        ("unordered pair gives both orders", PartialOrder((A, B)), {},
+         {("a", "b"), ("b", "a")}),
+        ("edge a->b gives only one order", PartialOrder((A, B), frozenset({edge(0, 1)})),
+         {}, {("a", "b")}),
+        ("silent child contributes no symbol",
+         PartialOrder((A, Silent()), frozenset({edge(0, 1)})), {}, {("a",)}),
+        # a -> c, b unordered with both
+        ("three atoms with one edge", PartialOrder((A, B, C), frozenset({edge(0, 2)})),
+         {}, {("a", "b", "c"), ("a", "c", "b"), ("b", "a", "c")}),
+        # (a -> c) concurrent with b: b may land between a and c
+        ("nested partial orders interleave symbol by symbol",
+         PartialOrder((inner_ac, B)), {},
+         {("a", "c", "b"), ("a", "b", "c"), ("b", "a", "c")}),
+        ("frequency repeats the body",
+         PartialOrder((A, B), frozenset({edge(0, 1)}), Frequency(0, 2)), {},
+         {(), ("a", "b"), ("a", "b", "a", "b")}),
+        ("unbounded frequency is capped, not refused",
+         PartialOrder((A, Silent()), frozenset({edge(0, 1)}), Frequency(1, None)),
+         {"max_unrolls": 3}, {("a",), ("a", "a"), ("a", "a", "a")}),
+        # choice graphs
+        ("choice graph is the union of its branches", two_branch_choice(), {},
+         {("a",), ("b",)}),
+        ("cyclic choice graph at max_unrolls=1", _self_looping_a(),
+         {"max_unrolls": 1}, {("a",)}),
+        ("cyclic choice graph at max_unrolls=3", _self_looping_a(),
+         {"max_unrolls": 3}, {("a",), ("a", "a"), ("a", "a", "a")}),
+        ("branches of different lengths", ChoiceGraph(
+            (Silent(), Silent(), inner_ab, C),
+            frozenset({cedge(0, 2), cedge(2, 1), cedge(0, 3), cedge(3, 1)}),
+            start=0, end=1), {}, {("a", "b"), ("c",)}),
+    ]
+
+    failures = Failures()
+    for name, node, kwargs, expected in cases:
+        try:
+            got = lang(node, **kwargs)
+        except Exception as exc:  # noqa: BLE001
+            failures.append(f"{name}: language() raised {exc!r}")
+            continue
+        failures.check(
+            got == frozenset(expected),
+            f"{name}: expected {sorted(expected)}, got {sorted(got)}",
+        )
+    assert not failures, failures.report()
 
 
 # ── bounds RAISE, never truncate ────────────────────────────────────────────
 
 
-def test_exceeding_max_traces_raises_rather_than_truncating():
-    po = PartialOrder((A, B, C))  # 6 linearizations
-    assert len(lang(po)) == 6
-    with pytest.raises(PowlError) as exc:
-        lang(po, max_traces=3)
-    assert exc.value.refusal is PowlRefusal.BOUND_EXHAUSTED
+def test_bounds_raise_rather_than_truncating():
+    """A truncated language silently claims a model has fewer behaviours than it
+    has, so every way of exceeding a bound must refuse. Four distinct ways."""
+    po3 = PartialOrder((A, B, C))
+    assert len(lang(po3)) == 6, "the unbounded case must still be computable"
 
-
-def test_cyclic_choice_graph_exceeding_max_traces_raises():
-    cg = ChoiceGraph(
-        (Silent(), Silent(), A),
-        frozenset({cedge(0, 2), cedge(2, 2), cedge(2, 1)}),
-        start=0,
-        end=1,
-    )
-    with pytest.raises(PowlError) as exc:
-        lang(cg, max_traces=2, max_unrolls=5)
-    assert exc.value.refusal is PowlRefusal.BOUND_EXHAUSTED
-
-
-def test_explicit_frequency_beyond_the_unroll_cap_raises():
-    po = PartialOrder((A, B), frequency=Frequency(1, 9))
-    with pytest.raises(PowlError) as exc:
-        lang(po, max_unrolls=3)
-    assert exc.value.refusal is PowlRefusal.BOUND_EXHAUSTED
-
-
-def test_unbounded_frequency_is_capped_at_max_unrolls_not_refused():
-    po = PartialOrder((A, Silent()), frozenset({edge(0, 1)}), Frequency(1, None))
-    assert lang(po, max_unrolls=3) == frozenset(
-        {("a",), ("a", "a"), ("a", "a", "a")}
-    )
-
-
-def test_nonsense_bounds_raise():
-    with pytest.raises(PowlError) as exc:
-        language(A, max_traces=0, max_unrolls=1)
-    assert exc.value.refusal is PowlRefusal.BOUND_EXHAUSTED
+    cases = [
+        ("max_traces exceeded", lambda: lang(po3, max_traces=3)),
+        ("cyclic choice graph exceeds max_traces",
+         lambda: lang(ChoiceGraph(
+             (Silent(), Silent(), A),
+             frozenset({cedge(0, 2), cedge(2, 2), cedge(2, 1)}),
+             start=0, end=1), max_traces=2, max_unrolls=5)),
+        ("explicit frequency beyond the unroll cap",
+         lambda: lang(PartialOrder((A, B), frequency=Frequency(1, 9)), max_unrolls=3)),
+        ("nonsense bounds", lambda: language(A, max_traces=0, max_unrolls=1)),
+    ]
+    failures = Failures()
+    for name, run in cases:
+        failures.expect_refusal(name, run, PowlRefusal.BOUND_EXHAUSTED)
+    assert not failures, failures.report()
 
 
 # ── enabled_labels ──────────────────────────────────────────────────────────
 
 
-def test_enabled_labels_of_leaves():
-    assert enabled_labels(A) == frozenset({"a"})
-    assert enabled_labels(Silent()) == frozenset()
-
-
-def test_enabled_labels_respects_precedence():
-    assert enabled_labels(PartialOrder((A, B))) == frozenset({"a", "b"})
-    assert enabled_labels(
-        PartialOrder((A, B), frozenset({edge(0, 1)}))
-    ) == frozenset({"a"})
-
-
-def test_enabled_labels_sees_through_a_nullable_predecessor():
-    po = PartialOrder((Silent(), B), frozenset({edge(0, 1)}))
-    assert enabled_labels(po) == frozenset({"b"})
-
-
-def test_enabled_labels_of_a_choice_graph_is_the_union_of_branches():
-    assert enabled_labels(two_branch_choice()) == frozenset({"a", "b"})
+def test_enabled_labels_of_every_shape():
+    cases = [
+        ("atom", A, {"a"}),
+        ("silent", Silent(), set()),
+        ("unordered pair", PartialOrder((A, B)), {"a", "b"}),
+        ("precedence a->b", PartialOrder((A, B), frozenset({edge(0, 1)})), {"a"}),
+        ("nullable predecessor is seen through",
+         PartialOrder((Silent(), B), frozenset({edge(0, 1)})), {"b"}),
+        ("choice graph is the union of its branches", two_branch_choice(), {"a", "b"}),
+    ]
+    failures = Failures()
+    for name, node, expected in cases:
+        got = enabled_labels(node)
+        failures.check(
+            got == frozenset(expected),
+            f"{name}: expected {sorted(expected)}, got {sorted(got)}",
+        )
+    assert not failures, failures.report()
 
 
 def test_enabled_labels_agrees_with_the_language_first_symbols():
+    """The independent cross-check: ``enabled_labels`` and ``language`` are
+    different algorithms and must agree on which symbols can come first."""
+    failures = Failures()
     for node in (
         PartialOrder((A, B, C), frozenset({edge(0, 2)})),
         two_branch_choice(),
         PartialOrder((PartialOrder((A, C), frozenset({edge(0, 1)})), B)),
     ):
         first = frozenset(t[0] for t in lang(node) if t)
-        assert enabled_labels(node) == first
+        failures.check(
+            enabled_labels(node) == first,
+            f"{node!r}: enabled_labels={sorted(enabled_labels(node))} "
+            f"but language first-symbols={sorted(first)}",
+        )
+    assert not failures, failures.report()
