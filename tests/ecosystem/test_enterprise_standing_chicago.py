@@ -13,7 +13,7 @@ FDE = "urn:skdecide:fde:"
 
 
 def _authority_with_decision(verdict: str = "PASS", adoption: str = "ADOPTED"):
-    extra = f'''
+    extra = f"""
 <{FDE}consequence/rebalance-verified> a <urn:skdecide:fde-term:TechnicalConsequence> ;
     <urn:skdecide:fde-term:consequenceDigest> "blake3:{'a' * 64}" .
 
@@ -28,7 +28,7 @@ def _authority_with_decision(verdict: str = "PASS", adoption: str = "ADOPTED"):
     <urn:skdecide:fde-term:adoptionDecision> "{adoption}" ;
     <urn:skdecide:fde-term:ownershipAssignedTo> <{FDE}owner/director-operations> ;
     <urn:skdecide:fde-term:operatingObligation> "24x7 customer operations ownership" .
-'''
+"""
     return parse_authority_turtle(BASE.read_text(encoding="utf-8") + extra)
 
 
