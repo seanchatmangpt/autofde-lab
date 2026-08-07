@@ -1,8 +1,8 @@
 [project]
-name = "scikit-decide"
-description = "The AI framework for Reinforcement Learning, Automated Planning and Scheduling"
+name = "autofde-lab"
+description = "AutoFDE Lab: exploration, falsification, and proof environment for persistent, governed AutoFDE capabilities. Forked from scikit-decide."
 authors=[
-  {name= "Airbus AI Research",  email = "scikit-decide@airbus.com"},
+  {name= "Sean Chatman",  email = "sean@chatmangpt.com"},
 ]
 license = "MIT"
 license-files = ["LICENSE"]
@@ -35,8 +35,9 @@ dependencies = [
 ]
 
 [project.urls]
-documentation = "https://airbus.github.io/scikit-decide/"
-repository = "https://github.com/airbus/scikit-decide"
+documentation = "https://seanchatmangpt.github.io/autofde-lab/"
+repository = "https://github.com/seanchatmangpt/autofde-lab"
+upstream = "https://github.com/airbus/scikit-decide"
 
 [project.optional-dependencies]
 shared = [  # define a common extra to avoid redefining dependencies in both domains and solvers
@@ -53,7 +54,7 @@ shared = [  # define a common extra to avoid redefining dependencies in both dom
     "unified-planning>=1.1,<1.3",
 ]
 domains = [
-    "scikit-decide[shared]", # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
+    "autofde-lab[shared]", # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
     "matplotlib>=3.3.4",
     "openap>=1.5",
     "pygeodesy>=23.6.12",
@@ -70,7 +71,7 @@ domains = [
     "pytz>=2025.2",
 ]
 solvers = [
-    "scikit-decide[shared]", # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
+    "autofde-lab[shared]", # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
     "joblib>=1.0.1",
     "ray[rllib]>=2.52.1",  # verified real: 2.52.1 is the first PyPI release with cp313 wheels
     # (previously pinned <2.38 because ray made rllib's "new API stack" the default from 2.38/2.40
@@ -104,7 +105,7 @@ dspy = [
 ]
 all = [
     # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
-    "scikit-decide[domains, solvers, pddl, dspy]",
+    "autofde-lab[domains, solvers, pddl, dspy]",
 ]
 
 [project.entry-points."skdecide.domains"]

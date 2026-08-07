@@ -12,7 +12,7 @@ from skdecide.solvers import *
 from skdecide.utils import *
 
 try:
-    __version__ = version("scikit-decide")
+    __version__ = version("autofde-lab")
 except PackageNotFoundError:
     # package is not installed
     pass

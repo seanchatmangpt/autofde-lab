@@ -368,6 +368,209 @@ wheels = [
 ]
 
 [[package]]
+name = "autofde-lab"
+source = { editable = "." }
+dependencies = [
+    { name = "discrete-optimization" },
+    { name = "pathos" },
+    { name = "pynng" },
+    { name = "wrapt" },
+]
+
+[package.optional-dependencies]
+all = [
+    { name = "cartopy" },
+    { name = "dspy" },
+    { name = "flax", marker = "(python_full_version >= '3.12' and sys_platform == 'linux') or (python_full_version >= '3.12' and sys_platform == 'win32')" },
+    { name = "gymnasium" },
+    { name = "jax", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
+    { name = "joblib" },
+    { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "matplotlib", version = "3.11.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and platform_machine != 'x86_64') or (python_full_version < '3.11' and sys_platform != 'darwin')" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64') or (python_full_version >= '3.11' and sys_platform != 'darwin')" },
+    { name = "openap" },
+    { name = "openevolve" },
+    { name = "plado" },
+    { name = "pygeodesy" },
+    { name = "pygrib", version = "2.1.5", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
+    { name = "pygrib", version = "2.1.8", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'x86_64' and sys_platform == 'darwin') or sys_platform == 'linux'" },
+    { name = "pyrddlgym" },
+    { name = "pyrddlgym-gurobi" },
+    { name = "pyrddlgym-jax" },
+    { name = "pyrddlgym-rl" },
+    { name = "pytz" },
+    { name = "ray", extra = ["rllib"] },
+    { name = "rddlrepository" },
+    { name = "sb3-contrib" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "setuptools", marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
+    { name = "stable-baselines3" },
+    { name = "torch", version = "2.8.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32'" },
+    { name = "torch", version = "2.12.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'win32'" },
+    { name = "torch-geometric" },
+    { name = "unified-planning" },
+    { name = "up-enhsp" },
+    { name = "up-fast-downward" },
+    { name = "up-pyperplan" },
+    { name = "up-tamer", marker = "python_full_version < '3.12' and platform_machine == 'x86_64'" },
+    { name = "z3-solver" },
+]
+domains = [
+    { name = "cartopy" },
+    { name = "gymnasium" },
+    { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "matplotlib", version = "3.11.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and platform_machine != 'x86_64') or (python_full_version < '3.11' and sys_platform != 'darwin')" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64') or (python_full_version >= '3.11' and sys_platform != 'darwin')" },
+    { name = "openap" },
+    { name = "plado" },
+    { name = "pygeodesy" },
+    { name = "pygrib", version = "2.1.5", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
+    { name = "pygrib", version = "2.1.8", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'x86_64' and sys_platform == 'darwin') or sys_platform == 'linux'" },
+    { name = "pyrddlgym" },
+    { name = "pyrddlgym-rl" },
+    { name = "pytz" },
+    { name = "rddlrepository" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "setuptools", marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
+    { name = "unified-planning" },
+]
+dspy = [
+    { name = "dspy" },
+]
+pddl = [
+    { name = "z3-solver" },
+]
+shared = [
+    { name = "gymnasium" },
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and platform_machine != 'x86_64') or (python_full_version < '3.11' and sys_platform != 'darwin')" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64') or (python_full_version >= '3.11' and sys_platform != 'darwin')" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "unified-planning" },
+]
+solvers = [
+    { name = "flax", marker = "(python_full_version >= '3.12' and sys_platform == 'linux') or (python_full_version >= '3.12' and sys_platform == 'win32')" },
+    { name = "gymnasium" },
+    { name = "jax", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
+    { name = "joblib" },
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and platform_machine != 'x86_64') or (python_full_version < '3.11' and sys_platform != 'darwin')" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64') or (python_full_version >= '3.11' and sys_platform != 'darwin')" },
+    { name = "openevolve" },
+    { name = "pyrddlgym-gurobi" },
+    { name = "pyrddlgym-jax" },
+    { name = "ray", extra = ["rllib"] },
+    { name = "sb3-contrib" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "stable-baselines3" },
+    { name = "torch", version = "2.8.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32'" },
+    { name = "torch", version = "2.12.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'win32'" },
+    { name = "torch-geometric" },
+    { name = "unified-planning" },
+    { name = "up-enhsp" },
+    { name = "up-fast-downward" },
+    { name = "up-pyperplan" },
+    { name = "up-tamer", marker = "python_full_version < '3.12' and platform_machine == 'x86_64'" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "docopt" },
+    { name = "jupyter" },
+    { name = "python-dotenv" },
+]
+test = [
+    { name = "commonmark" },
+    { name = "docopt" },
+    { name = "graph-jsp-env" },
+    { name = "nbmake" },
+    { name = "optuna" },
+    { name = "pytest" },
+    { name = "pytest-cases" },
+    { name = "pytest-cov" },
+    { name = "pytest-timeout" },
+    { name = "tqdm" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "autofde-lab", extras = ["domains", "dspy", "pddl", "solvers"], marker = "extra == 'all'" },
+    { name = "autofde-lab", extras = ["shared"], marker = "extra == 'domains'" },
+    { name = "autofde-lab", extras = ["shared"], marker = "extra == 'solvers'" },
+    { name = "cartopy", marker = "extra == 'domains'", specifier = ">=0.22.0" },
+    { name = "discrete-optimization", specifier = ">=0.9.0" },
+    { name = "dspy", marker = "extra == 'dspy'" },
+    { name = "flax", marker = "(python_full_version >= '3.12' and sys_platform == 'linux' and extra == 'solvers') or (python_full_version >= '3.12' and sys_platform == 'win32' and extra == 'solvers')", specifier = ">=0.10.6" },
+    { name = "gymnasium", marker = "extra == 'shared'", specifier = ">=0.29.1,<2" },
+    { name = "jax", marker = "(sys_platform == 'darwin' and extra == 'solvers') or (sys_platform == 'linux' and extra == 'solvers')", specifier = ">=0.4" },
+    { name = "jax", marker = "sys_platform == 'win32' and extra == 'solvers'", specifier = ">=0.4,<0.6" },
+    { name = "joblib", marker = "extra == 'solvers'", specifier = ">=1.0.1" },
+    { name = "matplotlib", marker = "extra == 'domains'", specifier = ">=3.3.4" },
+    { name = "numpy", marker = "platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'shared'", specifier = ">=1.20.1,<2" },
+    { name = "numpy", marker = "(platform_machine != 'x86_64' and extra == 'shared') or (sys_platform != 'darwin' and extra == 'shared')", specifier = ">=2.0" },
+    { name = "numpy", marker = "extra == 'domains'", specifier = "<2.4" },
+    { name = "openap", marker = "extra == 'domains'", specifier = ">=1.5" },
+    { name = "openevolve", marker = "extra == 'solvers'", specifier = ">=0.2.11" },
+    { name = "pathos", specifier = ">=0.2.7" },
+    { name = "plado", marker = "extra == 'domains'", specifier = ">=0.1.3" },
+    { name = "pygeodesy", marker = "extra == 'domains'", specifier = ">=23.6.12" },
+    { name = "pygrib", marker = "platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'domains'", specifier = "==2.1.5" },
+    { name = "pygrib", marker = "platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'domains'", specifier = ">=2.1.6" },
+    { name = "pygrib", marker = "sys_platform == 'linux' and extra == 'domains'", specifier = ">=2.1.6" },
+    { name = "pynng", specifier = ">=0.6.2" },
+    { name = "pyrddlgym", marker = "extra == 'domains'", specifier = ">=2.3,!=2.7" },
+    { name = "pyrddlgym-gurobi", marker = "extra == 'solvers'", specifier = ">=0.2" },
+    { name = "pyrddlgym-jax", marker = "extra == 'solvers'", specifier = ">=2.5" },
+    { name = "pyrddlgym-rl", marker = "extra == 'domains'", specifier = ">=0.2" },
+    { name = "pytz", marker = "extra == 'domains'", specifier = ">=2025.2" },
+    { name = "ray", extras = ["rllib"], marker = "extra == 'solvers'", specifier = ">=2.52.1" },
+    { name = "rddlrepository", marker = "extra == 'domains'", specifier = ">=2.1" },
+    { name = "sb3-contrib", marker = "extra == 'solvers'", specifier = ">=2.3" },
+    { name = "scipy", marker = "extra == 'shared'", specifier = ">=1.9.2" },
+    { name = "setuptools", marker = "platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'domains'", specifier = "<82.0.0" },
+    { name = "stable-baselines3", marker = "extra == 'solvers'", specifier = ">=2" },
+    { name = "torch", marker = "platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'solvers'", specifier = ">=2.2" },
+    { name = "torch", marker = "(platform_machine != 'x86_64' and extra == 'solvers') or (sys_platform != 'darwin' and extra == 'solvers')", specifier = ">=2.3" },
+    { name = "torch", marker = "sys_platform == 'win32' and extra == 'solvers'", specifier = "!=2.9.0,!=2.9.1,!=2.10,!=2.11.0,!=2.12.0,!=2.12.1" },
+    { name = "torch-geometric", marker = "extra == 'solvers'", specifier = ">=2.5" },
+    { name = "unified-planning", marker = "extra == 'shared'", specifier = ">=1.1,<1.3" },
+    { name = "up-enhsp", marker = "extra == 'solvers'", specifier = ">=0.0.25,<0.0.28" },
+    { name = "up-fast-downward", marker = "extra == 'solvers'", specifier = ">=0.4.1" },
+    { name = "up-pyperplan", marker = "extra == 'solvers'", specifier = ">=1.1.0" },
+    { name = "up-tamer", marker = "python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'solvers'", specifier = ">=1.1.2" },
+    { name = "wrapt", specifier = ">=2.2.1" },
+    { name = "z3-solver", marker = "extra == 'pddl'" },
+]
+provides-extras = ["shared", "domains", "solvers", "pddl", "dspy", "all"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "docopt", specifier = ">=0.6.2" },
+    { name = "jupyter", specifier = ">=1.1.1" },
+    { name = "python-dotenv", specifier = ">=1.2.1" },
+]
+test = [
+    { name = "commonmark", specifier = ">=0.9.1" },
+    { name = "docopt", specifier = ">=0.6.2" },
+    { name = "graph-jsp-env", specifier = ">=1" },
+    { name = "nbmake", specifier = ">=1.0" },
+    { name = "optuna", specifier = ">=4.5.0" },
+    { name = "pytest", specifier = ">=6.2.2,<8.4" },
+    { name = "pytest-cases", specifier = ">=3.8" },
+    { name = "pytest-cov", specifier = ">=2.11.1" },
+    { name = "pytest-timeout", specifier = ">=2.2" },
+    { name = "tqdm", specifier = ">=4.66.3" },
+]
+
+[[package]]
 name = "babel"
 version = "2.18.0"
 source = { registry = "https://pypi.org/simple" }
@@ -6662,209 +6865,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/28/b9/3f5dd9edea1407a53edb9abf66467a400f68dd709bbdb580dee4eb4ace13/sb3_contrib-2.3.0.tar.gz", hash = "sha256:9755ef9efa08e43afb9c4e79564ed594eb8bc497256920403a7e269a72216221", size = 78790, upload-time = "2024-03-31T18:40:21.583Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/40/60/58163d23588509c8c5415f5ad15164dee08e390f2e96802b8d8828f3904e/sb3_contrib-2.3.0-py3-none-any.whl", hash = "sha256:79dadda884f2242bbab11fdb06ccf00eeead2937f7ed09ba577f803f2e52c8e1", size = 80307, upload-time = "2024-03-31T18:40:18.635Z" },
-]
-
-[[package]]
-name = "scikit-decide"
-source = { editable = "." }
-dependencies = [
-    { name = "discrete-optimization" },
-    { name = "pathos" },
-    { name = "pynng" },
-    { name = "wrapt" },
-]
-
-[package.optional-dependencies]
-all = [
-    { name = "cartopy" },
-    { name = "dspy" },
-    { name = "flax", marker = "(python_full_version >= '3.12' and sys_platform == 'linux') or (python_full_version >= '3.12' and sys_platform == 'win32')" },
-    { name = "gymnasium" },
-    { name = "jax", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
-    { name = "joblib" },
-    { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "matplotlib", version = "3.11.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and platform_machine != 'x86_64') or (python_full_version < '3.11' and sys_platform != 'darwin')" },
-    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64') or (python_full_version >= '3.11' and sys_platform != 'darwin')" },
-    { name = "openap" },
-    { name = "openevolve" },
-    { name = "plado" },
-    { name = "pygeodesy" },
-    { name = "pygrib", version = "2.1.5", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
-    { name = "pygrib", version = "2.1.8", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'x86_64' and sys_platform == 'darwin') or sys_platform == 'linux'" },
-    { name = "pyrddlgym" },
-    { name = "pyrddlgym-gurobi" },
-    { name = "pyrddlgym-jax" },
-    { name = "pyrddlgym-rl" },
-    { name = "pytz" },
-    { name = "ray", extra = ["rllib"] },
-    { name = "rddlrepository" },
-    { name = "sb3-contrib" },
-    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "setuptools", marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
-    { name = "stable-baselines3" },
-    { name = "torch", version = "2.8.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32'" },
-    { name = "torch", version = "2.12.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'win32'" },
-    { name = "torch-geometric" },
-    { name = "unified-planning" },
-    { name = "up-enhsp" },
-    { name = "up-fast-downward" },
-    { name = "up-pyperplan" },
-    { name = "up-tamer", marker = "python_full_version < '3.12' and platform_machine == 'x86_64'" },
-    { name = "z3-solver" },
-]
-domains = [
-    { name = "cartopy" },
-    { name = "gymnasium" },
-    { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "matplotlib", version = "3.11.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and platform_machine != 'x86_64') or (python_full_version < '3.11' and sys_platform != 'darwin')" },
-    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64') or (python_full_version >= '3.11' and sys_platform != 'darwin')" },
-    { name = "openap" },
-    { name = "plado" },
-    { name = "pygeodesy" },
-    { name = "pygrib", version = "2.1.5", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
-    { name = "pygrib", version = "2.1.8", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine != 'x86_64' and sys_platform == 'darwin') or sys_platform == 'linux'" },
-    { name = "pyrddlgym" },
-    { name = "pyrddlgym-rl" },
-    { name = "pytz" },
-    { name = "rddlrepository" },
-    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "setuptools", marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
-    { name = "unified-planning" },
-]
-dspy = [
-    { name = "dspy" },
-]
-pddl = [
-    { name = "z3-solver" },
-]
-shared = [
-    { name = "gymnasium" },
-    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and platform_machine != 'x86_64') or (python_full_version < '3.11' and sys_platform != 'darwin')" },
-    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64') or (python_full_version >= '3.11' and sys_platform != 'darwin')" },
-    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "unified-planning" },
-]
-solvers = [
-    { name = "flax", marker = "(python_full_version >= '3.12' and sys_platform == 'linux') or (python_full_version >= '3.12' and sys_platform == 'win32')" },
-    { name = "gymnasium" },
-    { name = "jax", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
-    { name = "joblib" },
-    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and platform_machine != 'x86_64') or (python_full_version < '3.11' and sys_platform != 'darwin')" },
-    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64') or (python_full_version >= '3.11' and sys_platform != 'darwin')" },
-    { name = "openevolve" },
-    { name = "pyrddlgym-gurobi" },
-    { name = "pyrddlgym-jax" },
-    { name = "ray", extra = ["rllib"] },
-    { name = "sb3-contrib" },
-    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "stable-baselines3" },
-    { name = "torch", version = "2.8.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32'" },
-    { name = "torch", version = "2.12.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'win32'" },
-    { name = "torch-geometric" },
-    { name = "unified-planning" },
-    { name = "up-enhsp" },
-    { name = "up-fast-downward" },
-    { name = "up-pyperplan" },
-    { name = "up-tamer", marker = "python_full_version < '3.12' and platform_machine == 'x86_64'" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "docopt" },
-    { name = "jupyter" },
-    { name = "python-dotenv" },
-]
-test = [
-    { name = "commonmark" },
-    { name = "docopt" },
-    { name = "graph-jsp-env" },
-    { name = "nbmake" },
-    { name = "optuna" },
-    { name = "pytest" },
-    { name = "pytest-cases" },
-    { name = "pytest-cov" },
-    { name = "pytest-timeout" },
-    { name = "tqdm" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "cartopy", marker = "extra == 'domains'", specifier = ">=0.22.0" },
-    { name = "discrete-optimization", specifier = ">=0.9.0" },
-    { name = "dspy", marker = "extra == 'dspy'" },
-    { name = "flax", marker = "(python_full_version >= '3.12' and sys_platform == 'linux' and extra == 'solvers') or (python_full_version >= '3.12' and sys_platform == 'win32' and extra == 'solvers')", specifier = ">=0.10.6" },
-    { name = "gymnasium", marker = "extra == 'shared'", specifier = ">=0.29.1,<2" },
-    { name = "jax", marker = "(sys_platform == 'darwin' and extra == 'solvers') or (sys_platform == 'linux' and extra == 'solvers')", specifier = ">=0.4" },
-    { name = "jax", marker = "sys_platform == 'win32' and extra == 'solvers'", specifier = ">=0.4,<0.6" },
-    { name = "joblib", marker = "extra == 'solvers'", specifier = ">=1.0.1" },
-    { name = "matplotlib", marker = "extra == 'domains'", specifier = ">=3.3.4" },
-    { name = "numpy", marker = "platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'shared'", specifier = ">=1.20.1,<2" },
-    { name = "numpy", marker = "(platform_machine != 'x86_64' and extra == 'shared') or (sys_platform != 'darwin' and extra == 'shared')", specifier = ">=2.0" },
-    { name = "numpy", marker = "extra == 'domains'", specifier = "<2.4" },
-    { name = "openap", marker = "extra == 'domains'", specifier = ">=1.5" },
-    { name = "openevolve", marker = "extra == 'solvers'", specifier = ">=0.2.11" },
-    { name = "pathos", specifier = ">=0.2.7" },
-    { name = "plado", marker = "extra == 'domains'", specifier = ">=0.1.3" },
-    { name = "pygeodesy", marker = "extra == 'domains'", specifier = ">=23.6.12" },
-    { name = "pygrib", marker = "platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'domains'", specifier = "==2.1.5" },
-    { name = "pygrib", marker = "platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'domains'", specifier = ">=2.1.6" },
-    { name = "pygrib", marker = "sys_platform == 'linux' and extra == 'domains'", specifier = ">=2.1.6" },
-    { name = "pynng", specifier = ">=0.6.2" },
-    { name = "pyrddlgym", marker = "extra == 'domains'", specifier = ">=2.3,!=2.7" },
-    { name = "pyrddlgym-gurobi", marker = "extra == 'solvers'", specifier = ">=0.2" },
-    { name = "pyrddlgym-jax", marker = "extra == 'solvers'", specifier = ">=2.5" },
-    { name = "pyrddlgym-rl", marker = "extra == 'domains'", specifier = ">=0.2" },
-    { name = "pytz", marker = "extra == 'domains'", specifier = ">=2025.2" },
-    { name = "ray", extras = ["rllib"], marker = "extra == 'solvers'", specifier = ">=2.52.1" },
-    { name = "rddlrepository", marker = "extra == 'domains'", specifier = ">=2.1" },
-    { name = "sb3-contrib", marker = "extra == 'solvers'", specifier = ">=2.3" },
-    { name = "scikit-decide", extras = ["domains", "dspy", "pddl", "solvers"], marker = "extra == 'all'" },
-    { name = "scikit-decide", extras = ["shared"], marker = "extra == 'domains'" },
-    { name = "scikit-decide", extras = ["shared"], marker = "extra == 'solvers'" },
-    { name = "scipy", marker = "extra == 'shared'", specifier = ">=1.9.2" },
-    { name = "setuptools", marker = "platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'domains'", specifier = "<82.0.0" },
-    { name = "stable-baselines3", marker = "extra == 'solvers'", specifier = ">=2" },
-    { name = "torch", marker = "platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'solvers'", specifier = ">=2.2" },
-    { name = "torch", marker = "(platform_machine != 'x86_64' and extra == 'solvers') or (sys_platform != 'darwin' and extra == 'solvers')", specifier = ">=2.3" },
-    { name = "torch", marker = "sys_platform == 'win32' and extra == 'solvers'", specifier = "!=2.9.0,!=2.9.1,!=2.10,!=2.11.0,!=2.12.0,!=2.12.1" },
-    { name = "torch-geometric", marker = "extra == 'solvers'", specifier = ">=2.5" },
-    { name = "unified-planning", marker = "extra == 'shared'", specifier = ">=1.1,<1.3" },
-    { name = "up-enhsp", marker = "extra == 'solvers'", specifier = ">=0.0.25,<0.0.28" },
-    { name = "up-fast-downward", marker = "extra == 'solvers'", specifier = ">=0.4.1" },
-    { name = "up-pyperplan", marker = "extra == 'solvers'", specifier = ">=1.1.0" },
-    { name = "up-tamer", marker = "python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'solvers'", specifier = ">=1.1.2" },
-    { name = "wrapt", specifier = ">=2.2.1" },
-    { name = "z3-solver", marker = "extra == 'pddl'" },
-]
-provides-extras = ["shared", "domains", "solvers", "pddl", "dspy", "all"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "docopt", specifier = ">=0.6.2" },
-    { name = "jupyter", specifier = ">=1.1.1" },
-    { name = "python-dotenv", specifier = ">=1.2.1" },
-]
-test = [
-    { name = "commonmark", specifier = ">=0.9.1" },
-    { name = "docopt", specifier = ">=0.6.2" },
-    { name = "graph-jsp-env", specifier = ">=1" },
-    { name = "nbmake", specifier = ">=1.0" },
-    { name = "optuna", specifier = ">=4.5.0" },
-    { name = "pytest", specifier = ">=6.2.2,<8.4" },
-    { name = "pytest-cases", specifier = ">=3.8" },
-    { name = "pytest-cov", specifier = ">=2.11.1" },
-    { name = "pytest-timeout", specifier = ">=2.2" },
-    { name = "tqdm", specifier = ">=4.66.3" },
 ]
 
 [[package]]

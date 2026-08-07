@@ -42,23 +42,23 @@ Install scikit-decide library from PyPI with all dependencies required by domain
 You can use pip:
 ```shell
 pip install -U pip
-pip install scikit-decide[all]
+pip install autofde-lab[all]
 ```
 
 or via the faster `uv pip` if you already installed [uv](https://docs.astral.sh/uv/):
 ```shell
-uv pip install scikit-decide[all]
+uv pip install autofde-lab[all]
 ```
 
 ### Minimal install
 Alternatively you can choose to only install the core library, which is enough if you intend to create your own domain and solver.
 ```shell
 pip install -U pip
-pip install scikit-decide
+pip install autofde-lab
 ```
 or
 ```shell
-uv pip install scikit-decide
+uv pip install autofde-lab
 ```
 
 ## Known issues

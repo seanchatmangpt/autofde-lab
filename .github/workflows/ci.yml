@@ -304,6 +304,26 @@ jobs:
           artifacts: dist/*
           tag: ${{ github.ref_name }}
           generateReleaseNotes: true
+      - name: Refuse to publish anything but this fork's own distribution
+        # This job is tag-gated (line 286) and this repo has zero tags as of
+        # the AutoFDE Lab rename, so it has never fired. Before the rename it
+        # could still have attempted to publish a wheel named "scikit-decide"
+        # -- Airbus's PyPI package -- from a fork, on any stray v* tag with
+        # PYPI_API_TOKEN set. It would have 403'd rather than succeeded,
+        # which was luck, not design. This step makes the check structural:
+        # every dist artifact's declared name must equal this fork's own.
+        run: |
+          for f in dist/*; do
+            case "$f" in
+              *.whl) name=$(unzip -p "$f" '*.dist-info/METADATA' | grep -m1 '^Name: ' | cut -d' ' -f2) ;;
+              *.tar.gz) name=$(tar -xzOf "$f" '*/PKG-INFO' | grep -m1 '^Name: ' | cut -d' ' -f2) ;;
+              *) continue ;;
+            esac
+            if [ "$name" != "autofde-lab" ]; then
+              echo "REFUSED: $f declares distribution name '$name', expected 'autofde-lab'" >&2
+              exit 1
+            fi
+          done
       - name: Publish to PyPI when configured
         env:
           PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
