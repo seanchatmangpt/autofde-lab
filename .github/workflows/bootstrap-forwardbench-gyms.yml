@@ -111,6 +111,12 @@ jobs:
           {"schema_version":1,"papers":[{%- for row in sparql_results %}{"arxiv_id":{{ row["id"] | json_encode() }},"title":{{ row["title"] | json_encode() }},"retrieval_standing":{{ row["retrieval"] | json_encode() }},"sha256":{{ row["sha256"] | default(value="") | json_encode() }}}{% if not loop.last %},{% endif %}{%- endfor %}]}
           TERA
 
+          cat > docs/papers/templates/paper-ids.txt.tera <<'TERA'
+          {% for row in sparql_results -%}
+          {{ row["id"] }}
+          {% endfor -%}
+          TERA
+
           python - <<'PY'
           import re
           from pathlib import Path
@@ -125,6 +131,11 @@ jobs:
               for key,value in defaults.items():
                   text=text.replace(f'row.{key}',f'row["{key}"] | default(value="{value}")')
               path.write_text(text)
+
+          # The generated tests are part of this one-shot transport. Use an
+          # exact slug because "cube" intentionally matches several subjects.
+          test=Path('tests/forwardbench/test_registry.py')
+          test.write_text(test.read_text().replace('plan("cube")','plan("cube-standard")'))
           PY
 
       - name: Install pinned ggen v26.8.6
@@ -152,9 +163,11 @@ jobs:
           b=json.loads((r/'registry.json').read_text())['benchmarks']
           p=json.loads((r/'papers.json').read_text())['papers']
           v=[x for x in (r/'vendors.tsv').read_text().splitlines() if x and not x.startswith('#')]
-          assert len(b)==80 and len(p)==52 and len(v)==52
+          ids=[x for x in (r/'paper-ids.txt').read_text().splitlines() if x.strip()]
+          assert len(b)==80 and len(p)==52 and len(v)==52 and len(ids)==52
           assert len({x['slug'] for x in b})==80
-          print(f'GGEN_GALL_ALIVE benchmarks={len(b)} papers={len(p)} vendors={len(v)}')
+          assert len(set(ids))==52
+          print(f'GGEN_GALL_ALIVE benchmarks={len(b)} papers={len(p)} vendors={len(v)} paper_ids={len(ids)}')
           PY
 
       - name: Resolve official repositories to lazy gitlinks
@@ -244,19 +257,20 @@ jobs:
           uv sync
           uv run pytest tests -q
           uv run python - <<'PY'
-          from counter_cube import CounterBenchmark
-          from cube.core import Action
-          benchmark=CounterBenchmark(); benchmark.setup(); completed=0
+          from cube.testing import run_debug_episode
+          import counter_cube.debug as debug_mod
+
+          benchmark = debug_mod.get_debug_benchmark()
+          completed = 0
           for cfg in benchmark.get_task_configs():
-              task=cfg.make(); task.reset()
-              while True:
-                  out=task.step(Action(name='increment', arguments={}))
-                  if out.done:
-                      assert out.reward == 1.0
-                      completed += 1
-                      break
-              task.close()
-          benchmark.close(); assert completed > 0
+              task = cfg.make()
+              agent = debug_mod.make_debug_agent(cfg.task_id)
+              report = run_debug_episode(task, agent, max_steps=20)
+              assert report["done"] is True
+              assert report["reward"] == 1.0
+              assert report["error"] is None
+              completed += 1
+          assert completed > 0
           print(f'CUBE_SCENARIO_RUNS={completed}')
           PY
           popd
@@ -296,7 +310,7 @@ jobs:
           (cd docs/papers && ggen sync run)
           chmod +x docs/papers/generated/forwardbench/*.sh
           PYTHONPATH=src uvx --from pytest pytest tests/forwardbench/test_registry.py -q
-          python scripts/forwardbench.py --registry docs/papers/generated/forwardbench/registry.json plan cube > /tmp/plan.json
+          python scripts/forwardbench.py --registry docs/papers/generated/forwardbench/registry.json plan cube-standard > /tmp/plan.json
           python scripts/forwardbench.py --registry docs/papers/generated/forwardbench/registry.json plan cloudgoat > /tmp/cloudgoat.json
           python - <<'PY'
           import json
