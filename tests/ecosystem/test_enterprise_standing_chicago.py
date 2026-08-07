@@ -15,7 +15,7 @@ FDE = "urn:skdecide:fde:"
 def _authority_with_decision(verdict: str = "PASS", adoption: str = "ADOPTED"):
     extra = f"""
 <{FDE}consequence/rebalance-verified> a <urn:skdecide:fde-term:TechnicalConsequence> ;
-    <urn:skdecide:fde-term:consequenceDigest> "blake3:{'a' * 64}" .
+    <urn:skdecide:fde-term:consequenceDigest> "blake3:{"a" * 64}" .
 
 <{FDE}verdict/rebalance-independent> a <urn:skdecide:fde-term:VerifierVerdict> ;
     <urn:skdecide:fde-term:verdictBy> <{FDE}verifier/ggen-legacy-replay> ;
