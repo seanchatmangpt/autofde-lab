@@ -403,18 +403,23 @@ def test_provisioning_graph_is_invariant_under_work_order():
 GEN_DIR = REPO_ROOT / "infra" / "github" / "project_management"
 
 
-@pytest.mark.parametrize(
-    "name,render",
-    [
-        ("project_management.auto.tfvars", render_tfvars),
-        ("phase-graph.powl.json", render_powl_json),
-        ("github-project-plan.json", render_project_plan_json),
-    ],
+GENERATED_ARTIFACTS = (
+    ("project_management.auto.tfvars", render_tfvars),
+    ("phase-graph.powl.json", render_powl_json),
+    ("github-project-plan.json", render_project_plan_json),
 )
-def test_checked_in_artifact_matches_a_fresh_render(name, render):
-    path = GEN_DIR / name
-    assert path.exists(), f"{name} not generated; run `python -m skdecide.autofde`"
-    assert path.read_text() == render(GRAPH), f"{name} is stale"
+
+
+def test_checked_in_artifacts_match_a_fresh_render():
+    """One property (staleness) over three artifacts; offenders accumulated."""
+    offenders: list[str] = []
+    for name, render in GENERATED_ARTIFACTS:
+        path = GEN_DIR / name
+        if not path.exists():
+            offenders.append(f"{name}: missing; run `python -m skdecide.autofde`")
+        elif path.read_text() != render(GRAPH):
+            offenders.append(f"{name}: stale")
+    assert not offenders, "generated artifacts out of date:\n" + "\n".join(offenders)
 
 
 def test_tfvars_variable_names_match_main_tf():

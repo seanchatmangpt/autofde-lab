@@ -134,18 +134,27 @@ def test_azure_probe_cannot_be_constructed_without_a_search_boundary():
         AzureProbe(status=AdapterStatus.UNAVAILABLE, detail="nope")
 
 
-@pytest.mark.parametrize(
-    "kwargs",
-    [
-        {"searched": ("x",), "surfaces_searched": (), "methods_used": ("m",), "evidence": ("e",)},
-        {"searched": ("x",), "surfaces_searched": ("s",), "methods_used": (), "evidence": ("e",)},
-        {"searched": ("x",), "surfaces_searched": ("s",), "methods_used": ("m",), "evidence": ()},
-    ],
-    ids=["no-surfaces", "no-methods", "no-evidence"],
-)
-def test_azure_probe_requires_every_boundary_field(kwargs):
-    with pytest.raises(ValueError):
-        AzureProbe(status=AdapterStatus.UNAVAILABLE, detail="nope", **kwargs)
+def test_azure_probe_requires_every_boundary_field():
+    """Each boundary field, blanked in turn, must be rejected. Failures accumulated."""
+    cases = {
+        "no-surfaces": {"surfaces_searched": ()},
+        "no-methods": {"methods_used": ()},
+        "no-evidence": {"evidence": ()},
+    }
+    full = {
+        "searched": ("x",),
+        "surfaces_searched": ("s",),
+        "methods_used": ("m",),
+        "evidence": ("e",),
+    }
+    accepted: list[str] = []
+    for label, blank in cases.items():
+        try:
+            AzureProbe(status=AdapterStatus.UNAVAILABLE, detail="nope", **{**full, **blank})
+        except ValueError:
+            continue
+        accepted.append(label)
+    assert not accepted, f"AzureProbe accepted an empty boundary field: {accepted}"
 
 
 def test_unknown_maps_down_to_unavailable_never_up():
@@ -157,31 +166,61 @@ def test_unknown_maps_down_to_unavailable_never_up():
 # --------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("adapter,op,kwargs", OPERATIONS, ids=[o[1] for o in OPERATIONS])
-def test_every_operation_returns_a_typed_refusal_naming_its_prerequisite(adapter, op, kwargs):
-    result = getattr(adapter, op)(**kwargs)
-    assert isinstance(result, Refusal), (op, type(result))
-    assert isinstance(result.code, RefusalCode)
-    assert result.operation == op
-    assert result.missing_prerequisite.strip()
-    assert result.surfaces_searched and result.methods_used
+def test_every_operation_returns_a_typed_refusal_naming_its_prerequisite():
+    """One property over every operation in OPERATIONS; failures accumulated.
+
+    Collapsed from a 7-way parametrize per property: each param redrew the same
+    falsifier, so one red item naming every offending operation carries strictly
+    more information than seven red items each naming one.
+    """
+    # anti-vacuity: the operation table must not silently shrink.
+    assert len(OPERATIONS) == 7, OPERATIONS
+    offenders: list[str] = []
+    for adapter, op, kwargs in OPERATIONS:
+        result = getattr(adapter, op)(**kwargs)
+        if not isinstance(result, Refusal):
+            offenders.append(f"{op}: returned {type(result).__name__}, not Refusal")
+            continue
+        if not isinstance(result.code, RefusalCode):
+            offenders.append(f"{op}: code is {result.code!r}, not a RefusalCode")
+        if result.operation != op:
+            offenders.append(f"{op}: result.operation == {result.operation!r}")
+        if not result.missing_prerequisite.strip():
+            offenders.append(f"{op}: empty missing_prerequisite")
+        if not (result.surfaces_searched and result.methods_used):
+            offenders.append(f"{op}: empty search boundary")
+    assert not offenders, "typed-refusal contract violated:\n" + "\n".join(offenders)
 
 
-@pytest.mark.parametrize("adapter,op,kwargs", OPERATIONS, ids=[o[1] for o in OPERATIONS])
-def test_no_operation_returns_a_boolean_permission(adapter, op, kwargs):
-    result = getattr(adapter, op)(**kwargs)
-    assert not isinstance(result, bool)
-    # `granted` is None, never False: False would be a denial verdict, and this
-    # repository issues no authorization verdict of any polarity.
-    assert result.granted is None
-    for f in dataclasses.fields(result):
-        assert not isinstance(getattr(result, f.name), bool), (op, f.name)
+def test_no_operation_returns_a_boolean_permission():
+    offenders: list[str] = []
+    for adapter, op, kwargs in OPERATIONS:
+        result = getattr(adapter, op)(**kwargs)
+        if isinstance(result, bool):
+            offenders.append(f"{op}: returned a bare bool")
+            continue
+        # `granted` is None, never False: False would be a denial verdict, and
+        # this repository issues no authorization verdict of any polarity.
+        if result.granted is not None:
+            offenders.append(f"{op}: granted == {result.granted!r}, must be None")
+        for f in dataclasses.fields(result):
+            if isinstance(getattr(result, f.name), bool):
+                offenders.append(f"{op}: field {f.name} is a bool")
+    assert not offenders, "boolean permission surfaced:\n" + "\n".join(offenders)
 
 
-@pytest.mark.parametrize("adapter,op,kwargs", OPERATIONS, ids=[o[1] for o in OPERATIONS])
-def test_operations_do_not_raise_under_an_empty_environment(adapter, op, kwargs, tmp_path, monkeypatch):
+def test_operations_do_not_raise_under_an_empty_environment(tmp_path, monkeypatch):
     _empty_environment(tmp_path, monkeypatch)
-    assert isinstance(getattr(adapter, op)(**kwargs), Refusal)
+    offenders: list[str] = []
+    for adapter, op, kwargs in OPERATIONS:
+        try:
+            result = getattr(adapter, op)(**kwargs)
+        except Exception as exc:  # noqa: BLE001 - the property under test
+            offenders.append(f"{op}: raised {type(exc).__name__}: {exc}")
+            continue
+        if not isinstance(result, Refusal):
+            offenders.append(f"{op}: returned {type(result).__name__}, not Refusal")
+    assert not offenders, "empty-environment behaviour:\n" + "\n".join(offenders)
 
 
 def test_request_authority_requests_and_cannot_grant():

@@ -20,8 +20,6 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-import pytest
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC = REPO_ROOT / "src" / "skdecide"
 AUTOFDE = SRC / "autofde"
@@ -55,19 +53,30 @@ def test_core_modules_were_actually_found():
     assert AUTOFDE.is_dir()
 
 
-@pytest.mark.parametrize(
-    "path", CORE_MODULES, ids=lambda p: f"{p.parent.name}/{p.name}"
-)
-def test_no_core_module_imports_autofde(path):
-    tree = ast.parse(path.read_text(), filename=str(path))
-    offenders = [n for n in _imported_names(tree) if "autofde" in n]
-    assert not offenders, f"{path} imports autofde: {offenders}"
+def test_no_core_module_imports_autofde():
+    """One property, every core module — offenders accumulated, not short-circuited.
+
+    Collapsed from a 40-way parametrize: the falsifier is identical for every
+    path, so N red items carried no more information than one red item whose
+    message names *every* offending module. ``break``/first-failure would lose
+    that, so the loop accumulates.
+    """
+    offenders: list[str] = []
+    for path in CORE_MODULES:
+        tree = ast.parse(path.read_text(), filename=str(path))
+        bad = [n for n in _imported_names(tree) if "autofde" in n]
+        if bad:
+            offenders.append(f"{path.relative_to(SRC)} imports {bad}")
+    assert not offenders, "core modules import autofde:\n" + "\n".join(offenders)
 
 
 def test_core_modules_do_not_reach_autofde_dynamically():
-    for path in CORE_MODULES:
-        src = path.read_text()
-        assert "autofde" not in src, f"{path} mentions autofde"
+    offenders = [
+        str(path.relative_to(SRC))
+        for path in CORE_MODULES
+        if "autofde" in path.read_text()
+    ]
+    assert not offenders, f"core modules mention autofde: {offenders}"
 
 
 def test_skdecide_top_level_init_does_not_import_autofde():
@@ -78,9 +87,12 @@ def test_skdecide_top_level_init_does_not_import_autofde():
 def test_autofde_depends_only_on_powl_within_skdecide():
     """The arrow points one way, and at exactly one core package."""
     allowed = {"skdecide.powl", "skdecide.autofde"}
+    offenders: list[str] = []
     for path in sorted(AUTOFDE.glob("*.py")):
         tree = ast.parse(path.read_text(), filename=str(path))
         for name in _imported_names(tree):
             if name.startswith("skdecide"):
                 root = ".".join(name.split(".")[:2])
-                assert root in allowed, f"{path.name} imports {name}"
+                if root not in allowed:
+                    offenders.append(f"{path.name} imports {name}")
+    assert not offenders, offenders

@@ -174,26 +174,38 @@ def test_terraform_test_overall_success(test_output: str) -> None:
     assert re.search(r"\b0 failed\b", test_output), test_output
 
 
-@pytest.mark.parametrize("run_name", REQUIRED_REFUSAL_RUNS)
-def test_refusal_case_actually_refuses(run_name: str, test_output: str) -> None:
-    """Assert the named refusal run exists AND passed.
+def _runs_not_passing(names: tuple[str, ...], test_output: str) -> list[str]:
+    return [
+        n
+        for n in names
+        if not re.search(rf'run "{re.escape(n)}"\.\.\. pass', test_output)
+    ]
+
+
+def test_every_refusal_case_actually_refuses(test_output: str) -> None:
+    """Assert every named refusal run exists AND passed.
 
     Passing, for these runs, means Terraform produced the expected failure --
     each carries ``expect_failures``. Absence of the line is a failure: it
     means the guard's proof was deleted, which is exactly the regression a
     bare exit-code check would miss.
+
+    Collapsed from a per-run parametrize. The distinctness of each falsifier is
+    carried by ``REQUIRED_REFUSAL_RUNS`` itself (which
+    ``test_every_refusal_run_in_hcl_is_listed_here`` cross-checks against the
+    HCL), not by pytest item count; missing runs are accumulated so the message
+    names every guard whose proof vanished, not just the first.
     """
-    assert re.search(rf'run "{re.escape(run_name)}"\.\.\. pass', test_output), (
-        f"refusal case {run_name!r} did not report pass in terraform test "
-        f"output.\n{test_output}"
+    missing = _runs_not_passing(REQUIRED_REFUSAL_RUNS, test_output)
+    assert not missing, (
+        f"refusal cases did not report pass in terraform test output: {missing}"
+        f"\n{test_output}"
     )
 
 
-@pytest.mark.parametrize("run_name", REQUIRED_PLAN_RUNS)
-def test_positive_case_passes(run_name: str, test_output: str) -> None:
-    assert re.search(rf'run "{re.escape(run_name)}"\.\.\. pass', test_output), (
-        f"run {run_name!r} did not report pass.\n{test_output}"
-    )
+def test_every_positive_case_passes(test_output: str) -> None:
+    missing = _runs_not_passing(REQUIRED_PLAN_RUNS, test_output)
+    assert not missing, f"runs did not report pass: {missing}\n{test_output}"
 
 
 def test_every_refusal_run_in_hcl_is_listed_here() -> None:

@@ -120,26 +120,32 @@ def test_import_succeeds_in_fresh_subprocess_with_empty_home(tmp_path):
     assert proc.stdout.startswith("OK")
 
 
-@pytest.mark.parametrize(
-    # rglob, not glob: adapters/azure/ is a subpackage, and a non-recursive glob
-    # would leave every file in it outside this control.
-    "path",
-    sorted(ADAPTER_DIR.rglob("*.py")),
-    ids=lambda p: str(p.relative_to(ADAPTER_DIR)),
-)
-def test_no_adapter_module_imports_a_sibling_at_module_level(path):
-    tree = ast.parse(path.read_text(), filename=str(path))
+def test_no_adapter_module_imports_a_sibling_at_module_level():
+    """One property over every adapter module; offenders accumulated.
+
+    rglob, not glob: adapters/azure/ is a subpackage, and a non-recursive glob
+    would leave every file in it outside this control. Collapsed from a 20-way
+    parametrize — the falsifier is identical per path, and accumulating names
+    *every* offending module in one message rather than one per red item.
+    """
+    paths = sorted(ADAPTER_DIR.rglob("*.py"))
+    assert len(paths) > 5, paths  # anti-vacuity: the glob must actually find modules
     offenders: list[str] = []
-    for node in tree.body:  # top level only
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                if alias.name.split(".")[0] in SIBLING_PACKAGES:
-                    offenders.append(alias.name)
-        elif isinstance(node, ast.ImportFrom):
-            root = (node.module or "").split(".")[0]
-            if node.level == 0 and root in SIBLING_PACKAGES:
-                offenders.append(node.module or "")
-    assert not offenders, f"{path.name} imports siblings at module level: {offenders}"
+    for path in paths:
+        tree = ast.parse(path.read_text(), filename=str(path))
+        bad: list[str] = []
+        for node in tree.body:  # top level only
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name.split(".")[0] in SIBLING_PACKAGES:
+                        bad.append(alias.name)
+            elif isinstance(node, ast.ImportFrom):
+                root = (node.module or "").split(".")[0]
+                if node.level == 0 and root in SIBLING_PACKAGES:
+                    bad.append(node.module or "")
+        if bad:
+            offenders.append(f"{path.relative_to(ADAPTER_DIR)} imports {bad}")
+    assert not offenders, "sibling imports at module level:\n" + "\n".join(offenders)
 
 
 def test_adapter_modules_do_not_use_dynamic_import_escape_hatches():
