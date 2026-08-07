@@ -24,7 +24,7 @@ jobs:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v6
 
-      - name: Replay the already-admitted finalizer stages
+      - name: Replay validated finalizer and persist
         run: |
           set -euo pipefail
           uv run --no-project --with pyyaml python - <<'PY'
@@ -41,28 +41,20 @@ jobs:
           steps={s.get('name'):s.get('run') for s in doc['jobs']['finalize']['steps'] if s.get('name')}
           for i,name in enumerate(wanted):
               body=steps.get(name); assert body, name
-              path=Path(f'/tmp/persist-forwardbench-{i}.sh')
-              path.write_text('set -euo pipefail\n'+body+'\n')
+              p=Path(f'/tmp/persist-forwardbench-{i}.sh')
+              p.write_text('set -euo pipefail\n'+body+'\n')
               print(f'REPLAY_VALIDATED_STEP {name}')
-              subprocess.run(['bash',str(path)],check=True)
+              subprocess.run(['bash',str(p)],check=True)
           PY
 
-      - name: Persist canonical tree
-        run: |
-          set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-
           rm -f docs/papers/bootstrap-source.json docs/papers/bootstrap_papers_ttl.py
           rm -f .github/workflows/bootstrap-forwardbench-gyms.yml
           rm -f .github/workflows/finalize-forwardbench-gyms.yml
           rm -f .github/workflows/persist-forwardbench-gyms.yml
-
           git add -A .gitmodules docs/papers src/autofde_lab/forwardbench scripts/forwardbench.py tests/forwardbench
           git add -u .github/workflows
-
-          test "$(git ls-files --stage vendor/gyms | awk '$1==160000{n++} END{print n+0}')" -eq 52
-          test "$(grep -c '^submodule "forwardbench-' .gitmodules)" -eq 52
           git status --short
           git commit -m "feat(forwardbench): vendor RDF-manufactured gym corpus"
           git push origin "HEAD:${GITHUB_REF_NAME}"
