@@ -9,6 +9,7 @@ license = "MIT"
 source = "ontology/gymact.ttl"
 imports = [
   "ontology/profiles.ttl",
+  "ontology/errc.ttl",
   "../docs/papers/papers.ttl",
   "../docs/papers/gym-lock.ttl",
   "../docs/papers/smoke-lock.ttl",
@@ -84,8 +85,33 @@ template = { file = "templates/gymact.wit.tera" }
 output_file = "generated/wit/gymact.wit"
 mode = "Overwrite"
 
+[[generation.rules]]
+name = "errc-json"
+query = { file = "queries/errc.rq" }
+template = { file = "templates/errc.json.tera" }
+output_file = "generated/errc.json"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "errc-migration-queue"
+query = { file = "queries/errc-migration.rq" }
+template = { file = "templates/migration-queue.json.tera" }
+output_file = "generated/migration-queue.json"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "errc-report"
+query = { file = "queries/errc.rq" }
+template = { file = "templates/ERRC.md.tera" }
+output_file = "generated/ERRC.md"
+mode = "Overwrite"
+
 [validation]
-gates = ["queries/gate-core-operations.rq", "queries/gate-unmapped-adapters.rq"]
+gates = [
+  "queries/gate-core-operations.rq",
+  "queries/gate-unmapped-adapters.rq",
+  "queries/gate-errc.rq",
+]
 strict_mode = true
 
 [sync]
