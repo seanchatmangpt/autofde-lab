@@ -40,15 +40,24 @@ import json
 from dataclasses import asdict, dataclass
 from typing import Dict, List, Optional, Tuple
 
+from autofde_lab.fabric.bounded_exec import run_callable_bounded
 from autofde_lab.fabric.ontology import SKD, parse_turtle
 
 MAX_ROLLOUT_STEPS = 200
+#: Wall-clock bound per solver, via `run_callable_bounded` (signal.alarm).
+#: No timeout existed here before this session: an RL-training solver
+#: (RayRLlib, StableBaseline, AugmentedRandomSearch, MaxentIRL, ...) could
+#: hang `_run_solver` indefinitely, confirmed as a real (not hypothetical)
+#: risk by a full-catalog MCP sweep that needed a timeout for 15/117 real
+#: domain x solver pairs (notebooks/18_mcp_user_simulation_ocel.ipynb).
+SOLVER_TIMEOUT_S = 60
 
 #: Machine-readable exclusion causes. A free-text reason alone would not be
 #: machine-readable, and "it failed" is not an actionable exclusion.
 CAUSE_REQUIRES_CONFIGURATION = "REQUIRES_CONFIGURATION"
 CAUSE_REQUIRES_OTHER_DOMAIN_TYPE = "REQUIRES_OTHER_DOMAIN_TYPE"
 CAUSE_DID_NOT_CONVERGE = "DID_NOT_CONVERGE"
+CAUSE_TIMEOUT = "TIMEOUT"
 CAUSE_RUNTIME_ERROR = "RUNTIME_ERROR"
 CAUSE_UNMET_CHARACTERISTICS = "UNMET_DOMAIN_CHARACTERISTICS"
 CAUSE_UNAVAILABLE = "CAPABILITY_UNAVAILABLE"
@@ -73,6 +82,8 @@ def classify_failure(evidence: str) -> str:
         return CAUSE_REQUIRES_OTHER_DOMAIN_TYPE
     if "rollout steps" in evidence or "off-goal" in evidence:
         return CAUSE_DID_NOT_CONVERGE
+    if evidence.startswith("TimeoutError:") or "wall-clock bound" in evidence:
+        return CAUSE_TIMEOUT
     return CAUSE_RUNTIME_ERROR
 
 
@@ -146,15 +157,24 @@ def _unmet_requirements(domain, requirements: List[str]) -> List[str]:
 
 
 def _run_solver(solver_name: str, domain_factory) -> Tuple[Optional[float], str]:
-    """Run one solver; return (total_cost, evidence). Never raises."""
+    """Run one solver; return (total_cost, evidence). Never raises.
+
+    Bounded by `SOLVER_TIMEOUT_S` via `run_callable_bounded` (`signal.alarm`) --
+    `domain_factory` is an arbitrary caller-supplied closure (e.g.
+    ``lambda: CareerAdmission()``), not a registry name a subprocess could
+    reconstruct on its own, so subprocess isolation (used for the simpler
+    registry-name case in `scripts/mcp_solve_one_pair.py`) does not fit this
+    call site -- see `bounded_exec.py`'s module docstring for why these are
+    two different mechanisms, not one.
+    """
     from autofde_lab import utils
 
     solver_class = utils.load_registered_solver(solver_name)
     if solver_class is None:
         return None, "load_registered_solver returned None"
 
-    domain = domain_factory()
-    try:
+    def _solve_and_rollout() -> Tuple[Optional[float], str]:
+        domain = domain_factory()
         with solver_class(domain_factory=domain_factory) as solver:
             solver.solve()
             observation = domain.reset()
@@ -174,6 +194,9 @@ def _run_solver(solver_name: str, domain_factory) -> Tuple[Optional[float], str]
             if not domain._is_goal(observation):
                 return None, f"rollout ended off-goal after {steps} step(s)"
             return total_cost, f"solved, {steps} step(s), cost {total_cost:g}"
+
+    try:
+        return run_callable_bounded(_solve_and_rollout, timeout_s=SOLVER_TIMEOUT_S)
     except Exception as exc:  # noqa: BLE001 - failure is evidence, not a crash
         return None, f"{type(exc).__name__}: {exc}"
 
