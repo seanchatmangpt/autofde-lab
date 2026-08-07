@@ -39,6 +39,10 @@ from autofde_lab.fabric.powl import (
     project_plan_to_powl,
     validate_powl,
 )
+from autofde_lab.fabric.shacl_conformance import (
+    ShaclDependencyMissing,
+    check_shacl_conformance,
+)
 
 HOME = Path.home()
 MFW = HOME / "mfw"
@@ -138,6 +142,35 @@ class TestShaclConformance:
                 )
 
         assert not failures, "\n".join(failures)
+
+    def test_projection_conforms_to_real_pyshacl_validation(self, turtle):
+        """Run the REAL SHACL engine against the REAL committed shapes.
+
+        The three checks in ``test_projection_satisfies_the_committed_shapes``
+        above are a hand-reimplementation of what the shapes require -- the
+        exact pattern that let SHACL-invalid output ship undetected once
+        already (see this file's module docstring). This test runs
+        ``pyshacl.validate()`` -- an independent, spec-compliant SHACL
+        engine -- against the literal committed
+        ``~/mfw/mfw-planner/shapes/powl2.shacl.ttl``, so there is no second
+        hand-written copy of the constraints to drift from the first.
+
+        SKIPs (never silently passes) if ``~/mfw``'s shapes file is absent
+        or if ``pyshacl``/``rdflib`` are not installed (both are declared
+        only under this repo's optional ``ofmf`` extra).
+        """
+        try:
+            result = check_shacl_conformance(turtle)
+        except FileNotFoundError as exc:
+            pytest.skip(f"BLOCKED:MFW_SHAPES_ABSENT: {exc}")
+        except ShaclDependencyMissing as exc:
+            pytest.skip(f"BLOCKED:PYSHACL_ABSENT: {exc}")
+
+        assert result.conforms, (
+            f"emitted Turtle is not SHACL-conformant against "
+            f"{result.shapes_path} ({result.violation_count} violation(s)):\n"
+            f"{result.report_text}"
+        )
 
     def test_shape_file_still_requires_what_we_assert(self):
         """The shapes are the authority; assert we did not drift from them."""
