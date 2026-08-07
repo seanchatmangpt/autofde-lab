@@ -5,6 +5,11 @@
 .*/
 !.vuepress/
 !.cursor/
+# Project-scoped Claude Code tooling is part of the repo, not local config:
+# CLAUDE.md @-imports .claude/rules/ and documents .claude/skills|agents/, so a
+# clone without them gets a broken import. Local-only settings stay ignored.
+!.claude/
+.claude/settings.local.json
 
 # Python
 __pycache__/
@@ -27,5 +32,5 @@ docs/.vuepress/public/notebooks/
 docs/*/_*.md
 docs/notebooks/README.md
 cpp/compile_commands.json
-src/skdecide/hub/__skdecide_hub_cpp.*
+src/autofde_lab/hub/__autofde_lab_hub_cpp.*
 TEMP_CGP/*

@@ -92,6 +92,6 @@ log "Building scikit-decide (C++ hub + all extras)"
 export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$(nproc)}"
 uv sync --extra=all --python 3.12
 
-log "scikit-decide development environment ready"
-uv run --no-sync python -c "from skdecide import utils; \
+log "autofde-lab development environment ready"
+uv run --no-sync python -c "from autofde_lab import utils; \
 print('solvers:', len(utils.get_registered_solvers()), '| domains:', len(utils.get_registered_domains()))"

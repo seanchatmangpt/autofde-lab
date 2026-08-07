@@ -56,7 +56,7 @@ jobs:
           }
 
           route cache \
-            '^(src/skdecide/(caching\.py|_cache/)|tests/test_(caching|enterprise_cache)\.py|\.github/workflows/)'
+            '^(src/autofde_lab/(caching\.py|_cache/)|tests/test_(caching|enterprise_cache)\.py|\.github/workflows/)'
           route python '^(src/|tests/|examples/|pyproject\.toml|uv\.lock|\.github/workflows/)'
           route package '^(src/|cpp/|scripts/|pyproject\.toml|uv\.lock|CMakeLists\.txt|\.github/workflows/)'
 
@@ -130,7 +130,7 @@ jobs:
             "pathos>=0.2.7" \
             "discrete-optimization>=0.9.0"
       - name: Compile cache sources
-        run: python -m compileall -q src/skdecide/_cache src/skdecide/caching.py
+        run: python -m compileall -q src/autofde_lab/_cache src/autofde_lab/caching.py
       - name: Run cache qualification
         env:
           PYTHONPATH: src
@@ -193,8 +193,8 @@ jobs:
           archive=$(printf '%s\n' dist/*.tar.gz)
           tar -tzf "$archive" > sdist-files.txt
           grep -Eq '/pyproject\.toml$' sdist-files.txt
-          grep -Eq '/src/skdecide/__init__\.py$' sdist-files.txt
-          grep -Eq '/src/skdecide/_cache/' sdist-files.txt
+          grep -Eq '/src/autofde_lab/__init__\.py$' sdist-files.txt
+          grep -Eq '/src/autofde_lab/_cache/' sdist-files.txt
           test "$(wc -c < "$archive")" -gt 10000
 
   gate:

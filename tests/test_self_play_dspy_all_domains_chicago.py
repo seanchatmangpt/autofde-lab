@@ -47,8 +47,8 @@ def test_real_dspy_policy_solves_real_single_agent_maze_and_returns_a_real_legal
     domain's real action space, with no crash from the SingleAgent ->
     MultiAgent-declared-T_domain shape mismatch this test exists to cover.
     """
-    from skdecide.hub.domain.maze import Maze
-    from skdecide.hub.solver.dspy_policy import DSPyPolicy
+    from autofde_lab.hub.domain.maze import Maze
+    from autofde_lab.hub.solver.dspy_policy import DSPyPolicy
 
     def domain_factory() -> Maze:
         return Maze()
@@ -72,8 +72,8 @@ def test_real_dspy_policy_solves_real_single_agent_simple_grid_world_and_returns
     Real solver: DSPyPolicy.
     Real check: real legal action returned, same SingleAgent shape as Maze.
     """
-    from skdecide.hub.domain.simple_grid_world import SimpleGridWorld
-    from skdecide.hub.solver.dspy_policy import DSPyPolicy
+    from autofde_lab.hub.domain.simple_grid_world import SimpleGridWorld
+    from autofde_lab.hub.solver.dspy_policy import DSPyPolicy
 
     def domain_factory() -> SimpleGridWorld:
         return SimpleGridWorld()
@@ -98,8 +98,8 @@ def test_real_dspy_policy_solves_real_single_agent_mastermind_and_returns_a_real
     Real check: real legal guess returned even though the domain is only
     partially observable (observation is a real `Score`, not a state).
     """
-    from skdecide.hub.domain.mastermind import MasterMind
-    from skdecide.hub.solver.dspy_policy import DSPyPolicy
+    from autofde_lab.hub.domain.mastermind import MasterMind
+    from autofde_lab.hub.solver.dspy_policy import DSPyPolicy
 
     def domain_factory() -> MasterMind:
         return MasterMind()
@@ -125,8 +125,8 @@ def test_real_dspy_policy_solves_real_multi_agent_rock_paper_scissors_and_return
     real legal `Move` per real agent name, using the real multi-agent branch
     of `_get_next_action` (the shape this solver originally supported).
     """
-    from skdecide.hub.domain.rock_paper_scissors import RockPaperScissors
-    from skdecide.hub.solver.dspy_policy import DSPyPolicy
+    from autofde_lab.hub.domain.rock_paper_scissors import RockPaperScissors
+    from autofde_lab.hub.solver.dspy_policy import DSPyPolicy
 
     max_moves = 2
 
@@ -152,16 +152,16 @@ def test_real_rollout_utility_with_real_dspy_policy_on_real_single_agent_maze_ru
 ):
     """Real domain: Maze.
     Real solver: DSPyPolicy.
-    Real rollout: `skdecide.utils.rollout` (the generic single-agent-capable
-    rollout, unlike `skdecide.self_play.self_play_rollout` which is
+    Real rollout: `autofde_lab.utils.rollout` (the generic single-agent-capable
+    rollout, unlike `autofde_lab.self_play.self_play_rollout` which is
     RockPaperScissors-specific), 2 real episodes, small `max_steps`.
     Real check: rollout completes without crashing and returns one real
     episode entry per requested episode, each with at least one real,
     legal action recorded.
     """
-    from skdecide.hub.domain.maze import Maze
-    from skdecide.hub.solver.dspy_policy import DSPyPolicy
-    from skdecide.utils import rollout
+    from autofde_lab.hub.domain.maze import Maze
+    from autofde_lab.hub.solver.dspy_policy import DSPyPolicy
+    from autofde_lab.utils import rollout
 
     max_steps = 3
 

@@ -7,26 +7,36 @@
 
 <br>
 <p align="center">
-  <a href="https://github.com/airbus/scikit-decide/actions/workflows/ci.yml?query=branch%3Amaster">
-    <img src="https://img.shields.io/github/actions/workflow/status/airbus/scikit-decide/ci.yml?branch=master&logo=github&label=CI%20status" alt="actions status">
+  <a href="https://github.com/seanchatmangpt/autofde-lab/actions/workflows/ci.yml?query=branch%3Amaster">
+    <img src="https://img.shields.io/github/actions/workflow/status/seanchatmangpt/autofde-lab/ci.yml?branch=master&logo=github&label=CI%20status" alt="actions status">
   </a>
-  <a href="https://github.com/airbus/scikit-decide/tags">
-    <img src="https://img.shields.io/github/tag/airbus/scikit-decide.svg?label=current%20version" alt="version">
+  <a href="https://github.com/seanchatmangpt/autofde-lab/tags">
+    <img src="https://img.shields.io/github/tag/seanchatmangpt/autofde-lab.svg?label=current%20version" alt="version">
   </a>
-  <a href="https://github.com/airbus/scikit-decide/stargazers">
-    <img src="https://img.shields.io/github/stars/airbus/scikit-decide.svg" alt="stars">
+  <a href="https://github.com/seanchatmangpt/autofde-lab/stargazers">
+    <img src="https://img.shields.io/github/stars/seanchatmangpt/autofde-lab.svg" alt="stars">
   </a>
-  <a href="https://github.com/airbus/scikit-decide/network">
-    <img src="https://img.shields.io/github/forks/airbus/scikit-decide.svg" alt="forks">
+  <a href="https://github.com/seanchatmangpt/autofde-lab/network">
+    <img src="https://img.shields.io/github/forks/seanchatmangpt/autofde-lab.svg" alt="forks">
   </a>
 </p>
 <br>
 
-# Scikit-decide for Python
+# AutoFDE Lab
 
-Scikit-decide is an AI framework for Reinforcement Learning, Automated Planning and Scheduling.
+AutoFDE Lab is the exploration, falsification, and proof environment for persistent, governed
+AutoFDE capabilities. It is forked from [Airbus scikit-decide](https://github.com/airbus/scikit-decide),
+an AI framework for Reinforcement Learning, Automated Planning and Scheduling, and inherits its
+full domain/solver catalog, C++ solver core, and API surface unchanged (`autofde_lab.*`, with a
+deprecated `skdecide` compatibility alias — see `docs/migration/from-scikit-decide.md`).
 
-This framework was initiated at [Airbus](https://www.airbus.com) AI Research and notably received contributions through the [ANITI](https://aniti.univ-toulouse.fr/en/) and [TUPLES](https://tuples.ai/) projects, and also from [ANU](https://www.anu.edu.au/).
+This repository establishes **AutoFDE Lab technical standing only** — what the code in this tree
+demonstrably does, evidenced by a test run in the current session (see
+`.claude/rules/standing-law.md`). It establishes none of: AutoFDE product standing (a separate,
+future repository — see `docs/autofde/EXPLORE.md`), organizational standing (accountable customer
+acceptance), or legal standing (this repository confers none; see `NOTICE` and `LICENSE`).
+
+The original framework was initiated at [Airbus](https://www.airbus.com) AI Research and notably received contributions through the [ANITI](https://aniti.univ-toulouse.fr/en/) and [TUPLES](https://tuples.ai/) projects, and also from [ANU](https://www.anu.edu.au/). Renaming this fork does not transfer that copyright — see `NOTICE`.
 
 ## Main features
 
@@ -93,23 +103,23 @@ This framework was initiated at [Airbus](https://www.airbus.com) AI Research and
 
 Quick version:
 ```shell
-pip install scikit-decide[all]
+pip install autofde-lab[all]
 ```
-For more details, see the [online documentation](https://airbus.github.io/scikit-decide/install).
+For more details, see the [online documentation](https://seanchatmangpt.github.io/autofde-lab/install).
 
 ## Documentation
 
-The latest documentation is available [online](https://airbus.github.io/scikit-decide).
+The latest documentation is available [online](https://seanchatmangpt.github.io/autofde-lab).
 
 ## Examples
 
 Some educational notebooks are available in `notebooks/` folder.
 Links to launch them online with [binder](https://mybinder.org/) are provided in the
-[Notebooks section](https://airbus.github.io/scikit-decide/notebooks) of the online documentation.
+[Notebooks section](https://seanchatmangpt.github.io/autofde-lab/notebooks) of the online documentation.
 
 More examples can be found as Python scripts in the `examples/` folder, showing how to import or define a domain,
 and how to run or solve it. Most of the examples rely on scikit-decide Hub, an extensible catalog of domains/solvers.
 
 ## Contributing
 
-See more about how to contribute in the [online documentation](https://airbus.github.io/scikit-decide/contribute).
+See more about how to contribute in the [online documentation](https://seanchatmangpt.github.io/autofde-lab/contribute).

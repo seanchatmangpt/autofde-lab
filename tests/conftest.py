@@ -116,7 +116,7 @@ def real_turbo_fieldfare_server():
 def real_dspy_lm(real_turbo_fieldfare_server):
     import dspy
 
-    from skdecide.hub.solver.dspy_policy import DEFAULT_LM_MODEL
+    from autofde_lab.hub.solver.dspy_policy import DEFAULT_LM_MODEL
 
     lm = dspy.LM(DEFAULT_LM_MODEL, api_base=f"{real_turbo_fieldfare_server}/v1", api_key="local")
     dspy.configure(lm=lm)

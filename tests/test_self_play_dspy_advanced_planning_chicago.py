@@ -8,7 +8,7 @@ toy-game domains covered by `tests/test_self_play_dspy_all_domains_chicago.py`.
 
 These domains exercise two real extensions to `DSPyPolicy`'s action
 resolution, both added alongside this test file (see
-`src/skdecide/hub/solver/dspy_policy/dspy_policy.py`):
+`src/autofde_lab/hub/solver/dspy_policy/dspy_policy.py`):
 
 - **Per-state applicable-actions enumeration** (`PDDLDomain`, `RCPSP`,
   `MRCPSP`): these domains' *static* `get_action_space()` is not enumerable
@@ -49,9 +49,31 @@ repo's Chicago-school convention. Reuses the shared
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from conftest import requires_real_turbo_fieldfare_binary_and_model
+
+# The RCPSP/MRCPSP instances below come from the `discrete_optimization` benchmark
+# corpus, which is not vendored into this repository. Resolve it from the
+# environment so a clean checkout skips with a named blocker instead of failing on
+# a machine-specific absolute path.
+DISCRETE_OPTIMIZATION_DATA = os.path.expanduser(
+    os.environ.get("DISCRETE_OPTIMIZATION_DATA", "~/discrete_optimization_data")
+)
+
+
+def _rcpsp_instance(relative_path: str) -> str:
+    """Return an absolute path to a benchmark instance, or skip if the corpus is absent."""
+    instance_file = os.path.join(DISCRETE_OPTIMIZATION_DATA, relative_path)
+    if not os.path.isfile(instance_file):
+        pytest.skip(
+            f"BLOCKED:DISCRETE_OPTIMIZATION_DATA_ABSENT: {instance_file} not found. "
+            "Set DISCRETE_OPTIMIZATION_DATA to the benchmark corpus root."
+        )
+    return instance_file
+
 
 PDDL_DOMAIN_FILE = "cpp/tests/data/pddl/ipc-1998/domains/gripper-round-1-strips/domain.pddl"
 PDDL_INSTANCE_FILE = (
@@ -74,8 +96,8 @@ def test_real_dspy_policy_solves_real_pddl_gripper_domain_via_real_applicable_ac
     their real `str()` -- the same real string identity DSPyPolicy itself
     matches the model's answer against).
     """
-    from skdecide.hub.domain.pddl.domain import PDDLDomain
-    from skdecide.hub.solver.dspy_policy import DSPyPolicy
+    from autofde_lab.hub.domain.pddl.domain import PDDLDomain
+    from autofde_lab.hub.solver.dspy_policy import DSPyPolicy
 
     def domain_factory() -> PDDLDomain:
         return PDDLDomain(PDDL_DOMAIN_FILE, PDDL_INSTANCE_FILE)
@@ -105,10 +127,10 @@ def test_real_dspy_policy_solves_real_rcpsp_via_real_applicable_actions_enumerat
     only implements `Actions`, so `DSPyPolicy.check_domain` on it was real
     `False` before that widening.
     """
-    from skdecide.hub.domain.rcpsp.rcpsp_sk_parser import load_domain
-    from skdecide.hub.solver.dspy_policy import DSPyPolicy
+    from autofde_lab.hub.domain.rcpsp.rcpsp_sk_parser import load_domain
+    from autofde_lab.hub.solver.dspy_policy import DSPyPolicy
 
-    instance_file = "/Users/sac/discrete_optimization_data/rcpsp/j301_4.sm"
+    instance_file = _rcpsp_instance("rcpsp/j301_4.sm")
 
     def domain_factory():
         return load_domain(instance_file)
@@ -137,10 +159,10 @@ def test_real_dspy_policy_solves_real_mrcpsp_via_real_applicable_actions_enumera
     dispatches to `MRCPSP` when `rcpsp_model.is_rcpsp_multimode()` is real
     `True`, verified directly against this exact instance file).
     """
-    from skdecide.hub.domain.rcpsp.rcpsp_sk_parser import load_domain
-    from skdecide.hub.solver.dspy_policy import DSPyPolicy
+    from autofde_lab.hub.domain.rcpsp.rcpsp_sk_parser import load_domain
+    from autofde_lab.hub.solver.dspy_policy import DSPyPolicy
 
-    instance_file = "/Users/sac/discrete_optimization_data/rcpsp/j1010_1.mm"
+    instance_file = _rcpsp_instance("rcpsp/j1010_1.mm")
 
     def domain_factory():
         return load_domain(instance_file)
@@ -172,8 +194,8 @@ def test_real_dspy_policy_solves_real_updomain_robot_moves_problem(real_dspy_lm)
     import unified_planning.shortcuts as up
     from unified_planning.model import Fluent, InstantaneousAction, Object, Problem
 
-    from skdecide.hub.domain.up import UPDomain
-    from skdecide.hub.solver.dspy_policy import DSPyPolicy
+    from autofde_lab.hub.domain.up import UPDomain
+    from autofde_lab.hub.solver.dspy_policy import DSPyPolicy
 
     def build_problem() -> Problem:
         location = up.UserType("Location")
@@ -232,14 +254,14 @@ def test_real_dspy_policy_solves_real_flight_planning_domain_lfpg_to_lfbo(real_d
     above (this domain already had `UnrestrictedActions`, so it was
     unaffected by that widening either way).
     """
-    from skdecide.hub.domain.flight_planning.aircraft_performance.bean.aircraft_state import (
+    from autofde_lab.hub.domain.flight_planning.aircraft_performance.bean.aircraft_state import (
         AircraftState,
     )
-    from skdecide.hub.domain.flight_planning.aircraft_performance.performance.performance_model_enum import (
+    from autofde_lab.hub.domain.flight_planning.aircraft_performance.performance.performance_model_enum import (
         PerformanceModelEnum,
     )
-    from skdecide.hub.domain.flight_planning.domain import FlightPlanningDomain
-    from skdecide.hub.solver.dspy_policy import DSPyPolicy
+    from autofde_lab.hub.domain.flight_planning.domain import FlightPlanningDomain
+    from autofde_lab.hub.solver.dspy_policy import DSPyPolicy
 
     def domain_factory() -> FlightPlanningDomain:
         aircraft_state = AircraftState(
@@ -284,8 +306,8 @@ def test_real_dspy_policy_generates_a_real_valid_action_for_real_rddl_tower_of_h
     """
     from rddlrepository.core.manager import RDDLRepoManager
 
-    from skdecide.hub.domain.rddl import RDDLDomain
-    from skdecide.hub.solver.dspy_policy import DSPyPolicy
+    from autofde_lab.hub.domain.rddl import RDDLDomain
+    from autofde_lab.hub.solver.dspy_policy import DSPyPolicy
 
     def build_domain() -> RDDLDomain:
         manager = RDDLRepoManager(rebuild=False)
