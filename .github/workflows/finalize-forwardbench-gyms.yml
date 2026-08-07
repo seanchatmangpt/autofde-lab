@@ -24,7 +24,7 @@ jobs:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v6
 
-      - name: Replay successful manufacture/pin/paper stages
+      - name: Replay successful manufacture pin and paper stages
         run: |
           set -euo pipefail
           uv run --no-project --with pyyaml python - <<'PY'
@@ -41,13 +41,26 @@ jobs:
           ]
           steps={s.get('name'):s.get('run') for s in doc['jobs']['bootstrap']['steps'] if s.get('name')}
           for i,name in enumerate(wanted):
-              body=steps.get(name)
-              assert body, name
+              body=steps.get(name); assert body, name
               path=Path(f'/tmp/forwardbench-step-{i}.sh')
               path.write_text('set -euo pipefail\n'+body+'\n')
               print(f'REPLAY_STEP {name}')
               subprocess.run(['bash',str(path)],check=True)
           PY
+
+      - name: Correct authority projection at the ggen template
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('docs/papers/templates/registry.json.tera')
+          s=p.read_text()
+          old='{% if row["requires_authority"] == "true" %}true{% else %}false{% endif %}'
+          new='{% if row["source_standing"] == "BLOCKED:LIVE_CLOUD_AUTHORITY" %}true{% else %}false{% endif %}'
+          assert old in s
+          p.write_text(s.replace(old,new))
+          PY
+          (cd docs/papers && ggen sync run)
 
       - name: Bind prior smoke evidence to unchanged exact pins
         run: |
@@ -82,12 +95,10 @@ jobs:
           from pathlib import Path
           path=Path('src/autofde_lab/forwardbench/registry.py')
           spec=importlib.util.spec_from_file_location('forwardbench_registry',path)
-          mod=importlib.util.module_from_spec(spec)
-          sys.modules[spec.name]=mod
+          mod=importlib.util.module_from_spec(spec); sys.modules[spec.name]=mod
           spec.loader.exec_module(mod)
           r=mod.ForwardBenchRegistry('docs/papers/generated/forwardbench/registry.json')
-          subjects=r.list()
-          assert len(subjects)==80
+          subjects=r.list(); assert len(subjects)==80
           cube=r.plan('cube-standard')
           cloud=r.plan('cloudgoat')
           unknown=r.plan('definitely-not-a-benchmark')
@@ -107,7 +118,6 @@ jobs:
           import configparser, hashlib, json, subprocess
           from pathlib import Path
           from rdflib import Graph
-
           registry=json.loads(Path('docs/papers/generated/forwardbench/registry.json').read_text())
           papers=json.loads(Path('docs/papers/generated/forwardbench/papers.json').read_text())
           links=[x for x in subprocess.check_output(['git','ls-files','--stage','vendor/gyms'],text=True).splitlines() if x.startswith('160000 ')]
