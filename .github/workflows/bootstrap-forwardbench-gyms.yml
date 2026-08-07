@@ -1,0 +1,376 @@
+name: Bootstrap ForwardBench gyms
+
+on:
+  push:
+    branches:
+      - agent/add-forwardbench-gyms
+    paths:
+      - .github/workflows/bootstrap-forwardbench-gyms.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: forwardbench-gym-bootstrap
+  cancel-in-progress: false
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact purpose branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install pinned ggen release
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$(mktemp -d)"
+          cd "$work"
+          base="https://github.com/seanchatmangpt/ggen/releases/download/v26.8.6"
+          curl --fail --location --retry 3 --output ggen-x86_64-unknown-linux-gnu.tar.gz \
+            "$base/ggen-x86_64-unknown-linux-gnu.tar.gz"
+          curl --fail --location --retry 3 --output ggen-x86_64-unknown-linux-gnu.tar.gz.sha256 \
+            "$base/ggen-x86_64-unknown-linux-gnu.tar.gz.sha256"
+          sha256sum -c ggen-x86_64-unknown-linux-gnu.tar.gz.sha256
+          mkdir unpack
+          tar -xzf ggen-x86_64-unknown-linux-gnu.tar.gz -C unpack
+          bin="$(find unpack -type f -name ggen -perm -111 | head -n 1)"
+          test -n "$bin"
+          sudo install -m 0755 "$bin" /usr/local/bin/ggen
+          ggen --version
+
+      - name: Build canonical papers.ttl from one-time transport seed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f docs/papers/bootstrap-source.json && -f docs/papers/bootstrap_papers_ttl.py ]]; then
+            uv run --no-project --with rdflib python docs/papers/bootstrap_papers_ttl.py
+          fi
+          test -s docs/papers/papers.ttl
+
+      - name: Manufacture bootstrap inputs with ggen
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd docs/papers
+          ggen sync run
+          chmod +x generated/forwardbench/sync-gyms.sh generated/forwardbench/probe-gyms.sh
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("generated/forwardbench")
+          registry = json.loads((root / "registry.json").read_text())
+          papers = json.loads((root / "papers.json").read_text())
+          assert len(registry["benchmarks"]) >= 60
+          assert len(papers["papers"]) >= 50
+          print(f"ggen bootstrap: {len(registry['benchmarks'])} benchmarks, {len(papers['papers'])} papers")
+          PY
+
+      - name: Resolve official repositories into lazy gitlinks
+        id: pins
+        shell: bash
+        run: |
+          set -euo pipefail
+          lock="docs/papers/gym-lock.ttl"
+          resolved="/tmp/resolved.tsv"
+          failed="/tmp/failed.tsv"
+          : > "$resolved"
+          : > "$failed"
+          cat > "$lock" <<'TTL'
+          @prefix afb: <https://github.com/seanchatmangpt/autofde-lab/ns/forwardbench#> .
+          @prefix prov: <http://www.w3.org/ns/prov#> .
+          TTL
+
+          while IFS=$'\t' read -r slug repo path requested_ref adapter smoke local_safe requires_authority old_pin old_resolution old_smoke; do
+            [[ -n "${slug:-}" ]] || continue
+            [[ "$slug" == \#* ]] && continue
+            name="forwardbench-${slug}"
+            sha="$(git ls-remote "$repo" HEAD | awk 'NR==1 {print $1}')"
+            if [[ ! "$sha" =~ ^[0-9a-f]{40}$ ]]; then
+              printf '%s\t%s\t%s\n' "$slug" "$repo" "REFUSED:REPOSITORY_UNRESOLVED" >> "$failed"
+              printf '<https://github.com/seanchatmangpt/autofde-lab/data/forwardbench/vendor-%s> afb:resolutionStanding "REFUSED:REPOSITORY_UNRESOLVED" .\n' "$slug" >> "$lock"
+              continue
+            fi
+
+            git config -f .gitmodules --remove-section "submodule.${name}" 2>/dev/null || true
+            git config -f .gitmodules "submodule.${name}.path" "$path"
+            git config -f .gitmodules "submodule.${name}.url" "$repo"
+            git config -f .gitmodules "submodule.${name}.update" "none"
+
+            git update-index --add --info-only --cacheinfo "160000,$sha,$path"
+
+            printf '%s\t%s\t%s\t%s\n' "$slug" "$sha" "$repo" "$path" >> "$resolved"
+            printf '<https://github.com/seanchatmangpt/autofde-lab/data/forwardbench/vendor-%s> afb:pinnedRevision "%s" ; afb:resolutionStanding "PINNED" .\n' \
+              "$slug" "$sha" >> "$lock"
+          done < docs/papers/generated/forwardbench/vendors.tsv
+
+          count="$(wc -l < "$resolved" | tr -d ' ')"
+          failures="$(wc -l < "$failed" | tr -d ' ')"
+          echo "resolved_count=$count" >> "$GITHUB_OUTPUT"
+          echo "resolution_failures=$failures" >> "$GITHUB_OUTPUT"
+          echo "Resolved $count repositories; unresolved $failures"
+          if [[ -s "$failed" ]]; then
+            cat "$failed"
+          fi
+
+      - name: Vendor and hash every paper declared by papers.ttl
+        id: papers
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p docs/papers/pdf
+          lock="docs/papers/paper-lock.ttl"
+          cat > "$lock" <<'TTL'
+          @prefix afb: <https://github.com/seanchatmangpt/autofde-lab/ns/forwardbench#> .
+          TTL
+
+          count=0
+          while IFS= read -r id; do
+            [[ -n "$id" ]] || continue
+            dst="docs/papers/pdf/${id}.pdf"
+            if [[ ! -f "$dst" || "$(head -c 5 "$dst" || true)" != "%PDF-" ]]; then
+              tmp="${dst}.tmp"
+              ok=0
+              for url in "https://arxiv.org/pdf/${id}" "https://export.arxiv.org/pdf/${id}"; do
+                rm -f "$tmp"
+                if curl --fail --silent --show-error --location --retry 3 --retry-delay 1 \
+                    --connect-timeout 20 --max-time 120 --output "$tmp" "$url" &&
+                    [[ "$(head -c 5 "$tmp")" == "%PDF-" ]]; then
+                  mv "$tmp" "$dst"
+                  ok=1
+                  break
+                fi
+              done
+              [[ "$ok" -eq 1 ]] || { echo "REFUSED:PAPER_FETCH_FAILED:$id" >&2; exit 1; }
+            fi
+            hash="$(sha256sum "$dst" | awk '{print $1}')"
+            iri_id="${id//./-}"
+            printf '<https://github.com/seanchatmangpt/autofde-lab/data/forwardbench/paper-%s> afb:sha256 "%s" ; afb:resolutionStanding "PDF_FETCHED_SHA256_VERIFIED|NOT_REPRODUCED" .\n' \
+              "$iri_id" "$hash" >> "$lock"
+            count=$((count + 1))
+          done < docs/papers/generated/forwardbench/paper-ids.txt
+
+          (
+            cd docs/papers/pdf
+            sha256sum ./*.pdf | sort > SHA256SUMS
+            sha256sum -c SHA256SUMS
+          )
+          echo "paper_count=$count" >> "$GITHUB_OUTPUT"
+          echo "Vendored $count papers"
+
+      - name: Re-manufacture registry with exact pins and PDF hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd docs/papers
+          ggen sync run
+          chmod +x generated/forwardbench/sync-gyms.sh generated/forwardbench/probe-gyms.sh
+
+      - name: Materialize CUBE and execute canonical scenario
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -c submodule.forwardbench-cube-standard.update=checkout \
+            submodule update --init --depth 1 -- vendor/gyms/cube-standard
+          bash docs/papers/generated/forwardbench/probe-gyms.sh cube-standard
+          pushd vendor/gyms/cube-standard/examples/counter-cube
+          uv sync
+          uv run pytest tests -q
+          uv run python - <<'PY'
+          from counter_cube import CounterBenchmark
+          from cube.core import Action
+
+          benchmark = CounterBenchmark()
+          benchmark.setup()
+          completed = 0
+          for config in benchmark.get_task_configs():
+              task = config.make()
+              task.reset()
+              while True:
+                  out = task.step(Action(name="increment", arguments={}))
+                  if out.done:
+                      assert out.reward == 1.0
+                      completed += 1
+                      break
+              task.close()
+          benchmark.close()
+          assert completed > 0
+          print(f"CUBE_SCENARIO_RUNS={completed}")
+          PY
+          popd
+
+      - name: Materialize Harbor and enumerate benchmark catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -c submodule.forwardbench-harbor.update=checkout \
+            submodule update --init --depth 1 -- vendor/gyms/harbor
+          bash docs/papers/generated/forwardbench/probe-gyms.sh harbor
+          uv tool install --force ./vendor/gyms/harbor
+          harbor datasets list | tee /tmp/harbor-datasets.txt
+          test -s /tmp/harbor-datasets.txt
+
+      - name: Materialize BrowserGym core and import runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -c submodule.forwardbench-browsergym.update=checkout \
+            submodule update --init --depth 1 -- vendor/gyms/browsergym
+          bash docs/papers/generated/forwardbench/probe-gyms.sh browsergym
+          uv venv /tmp/browsergym-venv --python 3.12
+          uv pip install --python /tmp/browsergym-venv/bin/python \
+            -e vendor/gyms/browsergym/browsergym/core
+          /tmp/browsergym-venv/bin/python - <<'PY'
+          import gymnasium as gym
+          import browsergym.core
+          envs = sorted(x for x in gym.envs.registry if x.startswith("browsergym/"))
+          assert envs
+          print(f"BROWSERGYM_REGISTERED_ENVS={len(envs)}")
+          PY
+
+      - name: Record exact smoke standing and final ggen projection
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > docs/papers/smoke-lock.ttl <<'TTL'
+          @prefix afb: <https://github.com/seanchatmangpt/autofde-lab/ns/forwardbench#> .
+
+          <https://github.com/seanchatmangpt/autofde-lab/data/forwardbench/vendor-cube-standard>
+              afb:smokeStanding "SCENARIO_RUNS" .
+          <https://github.com/seanchatmangpt/autofde-lab/data/forwardbench/vendor-harbor>
+              afb:smokeStanding "BOOTSTRAPS" .
+          <https://github.com/seanchatmangpt/autofde-lab/data/forwardbench/vendor-browsergym>
+              afb:smokeStanding "BOOTSTRAPS" .
+          TTL
+          cd docs/papers
+          ggen sync run
+          chmod +x generated/forwardbench/sync-gyms.sh generated/forwardbench/probe-gyms.sh
+
+      - name: Validate AutoFDE SELECT adapter and lazy-submodule invariant
+        shell: bash
+        run: |
+          set -euo pipefail
+          uvx --from pytest pytest tests/forwardbench/test_registry.py -q
+
+          python scripts/forwardbench.py \
+            --registry docs/papers/generated/forwardbench/registry.json list \
+            > /tmp/forwardbench-list.json
+          python scripts/forwardbench.py \
+            --registry docs/papers/generated/forwardbench/registry.json plan cube \
+            > /tmp/forwardbench-plan.json
+
+          python - <<'PY'
+          import configparser
+          import json
+          import subprocess
+          from pathlib import Path
+
+          registry = json.loads(Path("docs/papers/generated/forwardbench/registry.json").read_text())
+          papers = json.loads(Path("docs/papers/generated/forwardbench/papers.json").read_text())
+          vendors = [
+              line for line in Path("docs/papers/generated/forwardbench/vendors.tsv").read_text().splitlines()
+              if line and not line.startswith("#")
+          ]
+          assert len(registry["benchmarks"]) >= 60
+          assert len(papers["papers"]) >= 50
+          assert len(vendors) >= 40
+          assert len({x["slug"] for x in registry["benchmarks"]}) == len(registry["benchmarks"])
+
+          plan = json.loads(Path("/tmp/forwardbench-plan.json").read_text())
+          assert plan["status"] == "CANDIDATE"
+          assert plan["reason"] == "SELECT_ONLY:NO_ACTUATION"
+
+          stage = subprocess.check_output(
+              ["git", "ls-files", "--stage", "vendor/gyms"], text=True
+          ).splitlines()
+          gitlinks = [row for row in stage if row.startswith("160000 ")]
+          assert len(gitlinks) == int("${{ steps.pins.outputs.resolved_count }}")
+
+          cfg = configparser.ConfigParser()
+          cfg.read(".gitmodules")
+          fb_sections = [s for s in cfg.sections() if s.startswith('submodule "forwardbench-')]
+          assert len(fb_sections) == len(gitlinks)
+          for section in fb_sections:
+              assert cfg[section].get("update") == "none"
+
+          print(
+              f"FORWARDBENCH_VALIDATED benchmarks={len(registry['benchmarks'])} "
+              f"papers={len(papers['papers'])} vendors={len(vendors)} gitlinks={len(gitlinks)}"
+          )
+          PY
+
+      - name: Emit bootstrap receipt
+        shell: bash
+        env:
+          RESOLVED: ${{ steps.pins.outputs.resolved_count }}
+          RESOLUTION_FAILURES: ${{ steps.pins.outputs.resolution_failures }}
+          PAPER_COUNT: ${{ steps.papers.outputs.paper_count }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          registry = json.loads(Path("docs/papers/generated/forwardbench/registry.json").read_text())
+          receipt = {
+              "schema_version": 1,
+              "standing": "PARTIAL_ALIVE",
+              "subject": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+              "ggen_release": "v26.8.6",
+              "benchmarks": len(registry["benchmarks"]),
+              "repository_pins": int(os.environ["RESOLVED"]),
+              "repository_resolution_failures": int(os.environ["RESOLUTION_FAILURES"]),
+              "papers": int(os.environ["PAPER_COUNT"]),
+              "smoke": {
+                  "cube-standard": "SCENARIO_RUNS",
+                  "harbor": "BOOTSTRAPS",
+                  "browsergym": "BOOTSTRAPS",
+              },
+              "authority": "SELECT_ONLY; no live cloud gym deployed",
+              "generated_at": datetime.now(timezone.utc).isoformat(),
+          }
+          canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
+          receipt["sha256"] = hashlib.sha256(canonical).hexdigest()
+          path = Path("docs/papers/generated/forwardbench/BOOTSTRAP_RECEIPT.json")
+          path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
+          print(path.read_text())
+          PY
+
+      - name: Commit exact pins, projections, papers, and receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm -f docs/papers/bootstrap-source.json docs/papers/bootstrap_papers_ttl.py
+          git add -A docs/papers/bootstrap-source.json docs/papers/bootstrap_papers_ttl.py
+          git add -A \
+            .gitmodules \
+            docs/papers \
+            src/autofde_lab/forwardbench \
+            scripts/forwardbench.py \
+            tests/forwardbench
+          if git diff --cached --quiet; then
+            echo "No bootstrap changes to commit."
+            exit 0
+          fi
+          git commit -m "feat(forwardbench): pin executable gym corpus and ggen projections"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

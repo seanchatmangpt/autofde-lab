@@ -1,0 +1,3 @@
+@prefix dct: <http://purl.org/dc/terms/> .
+<https://github.com/seanchatmangpt/autofde-lab/data/forwardbench/bootstrap>
+    dct:title "BOOTSTRAP_PLACEHOLDER" .
