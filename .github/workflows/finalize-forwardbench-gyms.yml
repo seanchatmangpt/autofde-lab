@@ -1,0 +1,162 @@
+name: Finalize ForwardBench gyms
+
+on:
+  push:
+    branches: [agent/add-forwardbench-gyms]
+    paths: [.github/workflows/finalize-forwardbench-gyms.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Replay successful manufacture/pin/paper stages
+        run: |
+          set -euo pipefail
+          uv run --no-project --with pyyaml python - <<'PY'
+          import subprocess, yaml
+          from pathlib import Path
+          doc=yaml.safe_load(Path('.github/workflows/bootstrap-forwardbench-gyms.yml').read_text())
+          wanted=[
+            'Construct canonical RDF and current ggen contracts',
+            'Install pinned ggen v26.8.6',
+            'Manufacture registry from papers.ttl',
+            'Resolve official repositories to lazy gitlinks',
+            'Fetch and hash declared papers',
+            'Reproject exact pins and hashes',
+          ]
+          steps={s.get('name'):s.get('run') for s in doc['jobs']['bootstrap']['steps'] if s.get('name')}
+          for i,name in enumerate(wanted):
+              body=steps.get(name)
+              assert body, name
+              path=Path(f'/tmp/forwardbench-step-{i}.sh')
+              path.write_text('set -euo pipefail\n'+body+'\n')
+              print(f'REPLAY_STEP {name}')
+              subprocess.run(['bash',str(path)],check=True)
+          PY
+
+      - name: Bind prior smoke evidence to unchanged exact pins
+        run: |
+          set -euo pipefail
+          cube="$(git ls-files --stage vendor/gyms/cube-standard | awk '{print $2}')"
+          harbor="$(git ls-files --stage vendor/gyms/harbor | awk '{print $2}')"
+          browsergym="$(git ls-files --stage vendor/gyms/browsergym | awk '{print $2}')"
+          test "$cube" = 9ca7c062d211450df05eb8318a1e847b5373b689
+          test "$harbor" = e485e8a6c538a3ba42fe890e61fbd14572c590aa
+          test "$browsergym" = 9e779f087de9a65668b6974d11f9ce9816026e96
+          cat > docs/papers/smoke-lock.ttl <<'TTL'
+          @prefix afb: <https://github.com/seanchatmangpt/autofde-lab/ns/forwardbench#> .
+          @prefix prov: <http://www.w3.org/ns/prov#> .
+          <https://github.com/seanchatmangpt/autofde-lab/data/forwardbench/vendor-cube-standard>
+            afb:smokeStanding "SCENARIO_RUNS" ;
+            prov:wasDerivedFrom <https://github.com/seanchatmangpt/autofde-lab/actions/runs/31205154790> .
+          <https://github.com/seanchatmangpt/autofde-lab/data/forwardbench/vendor-harbor>
+            afb:smokeStanding "BOOTSTRAPS" ;
+            prov:wasDerivedFrom <https://github.com/seanchatmangpt/autofde-lab/actions/runs/31205154790> .
+          <https://github.com/seanchatmangpt/autofde-lab/data/forwardbench/vendor-browsergym>
+            afb:smokeStanding "BOOTSTRAPS" ;
+            prov:wasDerivedFrom <https://github.com/seanchatmangpt/autofde-lab/actions/runs/31205154790> .
+          TTL
+          (cd docs/papers && ggen sync run)
+          chmod +x docs/papers/generated/forwardbench/*.sh
+
+      - name: Execute isolated AutoFDE SELECT module
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import importlib.util, json, sys
+          from pathlib import Path
+          path=Path('src/autofde_lab/forwardbench/registry.py')
+          spec=importlib.util.spec_from_file_location('forwardbench_registry',path)
+          mod=importlib.util.module_from_spec(spec)
+          sys.modules[spec.name]=mod
+          spec.loader.exec_module(mod)
+          r=mod.ForwardBenchRegistry('docs/papers/generated/forwardbench/registry.json')
+          subjects=r.list()
+          assert len(subjects)==80
+          cube=r.plan('cube-standard')
+          cloud=r.plan('cloudgoat')
+          unknown=r.plan('definitely-not-a-benchmark')
+          assert cube.status=='CANDIDATE' and cube.reason=='SELECT_ONLY:NO_ACTUATION'
+          assert cube.standing=='SCENARIO_RUNS'
+          assert cloud.status=='REFUSED' and cloud.reason=='REFUSED:LIVE_AUTHORITY_REQUIRED'
+          assert unknown.status=='REFUSED' and unknown.reason.startswith('REFUSED:')
+          print(json.dumps({'subjects':len(subjects),'cube':cube.__dict__,'cloudgoat':cloud.__dict__},indent=2,default=list))
+          print('AUTOFDE_SELECT_MODULE_ALIVE')
+          PY
+
+      - name: Validate closure and emit exact receipt
+        run: |
+          set -euo pipefail
+          (cd docs/papers/pdf && sha256sum -c SHA256SUMS)
+          uv run --no-project --with rdflib python - <<'PY'
+          import configparser, hashlib, json, subprocess
+          from pathlib import Path
+          from rdflib import Graph
+
+          registry=json.loads(Path('docs/papers/generated/forwardbench/registry.json').read_text())
+          papers=json.loads(Path('docs/papers/generated/forwardbench/papers.json').read_text())
+          links=[x for x in subprocess.check_output(['git','ls-files','--stage','vendor/gyms'],text=True).splitlines() if x.startswith('160000 ')]
+          cfg=configparser.ConfigParser(); cfg.read('.gitmodules')
+          sections=[s for s in cfg.sections() if s.startswith('submodule "forwardbench-')]
+          assert len(registry['benchmarks'])==80
+          assert len(papers['papers'])==52
+          assert len(links)==52
+          assert len(sections)==52
+          assert all(cfg[s].get('update')=='none' for s in sections)
+          assert len(list(Path('docs/papers/pdf').glob('*.pdf')))==52
+          assert len([x for x in Path('docs/papers/pdf/SHA256SUMS').read_text().splitlines() if x.strip()])==52
+          assert 'REFUSED:REPOSITORY_UNRESOLVED' not in Path('docs/papers/gym-lock.ttl').read_text()
+          graph=Graph().parse('docs/papers/papers.ttl',format='turtle')
+          assert len(graph)==2765
+          rec={
+            'schema_version':1,
+            'standing':'PARTIAL_ALIVE',
+            'rdf_triples':len(graph),
+            'benchmarks':80,
+            'vendor_gitlinks':52,
+            'repository_resolution_failures':0,
+            'papers_declared':52,
+            'papers_fetched_sha256_verified':52,
+            'paper_result_reproduction':'NOT_REPRODUCED',
+            'ggen_release':'v26.8.6',
+            'ggen_initial_graph_hash':'66f7c801e6e011ca12ffac8a4df435097988362c52b44d6dc02d1022c4975240',
+            'smoke_evidence_run':31205154790,
+            'smoke':{
+              'cube-standard':{'pin':'9ca7c062d211450df05eb8318a1e847b5373b689','standing':'SCENARIO_RUNS','upstream_tests':'18/18','executed_debug_scenarios':3},
+              'harbor':{'pin':'e485e8a6c538a3ba42fe890e61fbd14572c590aa','standing':'BOOTSTRAPS'},
+              'browsergym':{'pin':'9e779f087de9a65668b6974d11f9ce9816026e96','standing':'BOOTSTRAPS','registered_envs':1},
+            },
+            'autofde_adapter':'SELECT_ONLY_ALIVE',
+            'authority':'SELECT_ONLY; no live cloud gym deployed'
+          }
+          rec['sha256']=hashlib.sha256(json.dumps(rec,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          out=Path('docs/papers/generated/forwardbench/BOOTSTRAP_RECEIPT.json')
+          out.write_text(json.dumps(rec,indent=2,sort_keys=True)+'\n')
+          print(out.read_text())
+          PY
+
+      - name: Commit canonical graph and remove one-shot transport
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          rm -f docs/papers/bootstrap-source.json docs/papers/bootstrap_papers_ttl.py
+          rm -f .github/workflows/bootstrap-forwardbench-gyms.yml
+          rm -f .github/workflows/finalize-forwardbench-gyms.yml
+          git add -A .gitmodules .github/workflows docs/papers src/autofde_lab/forwardbench scripts/forwardbench.py tests/forwardbench vendor/gyms
+          git commit -m "feat(forwardbench): vendor RDF-manufactured gym corpus"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
