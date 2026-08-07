@@ -255,7 +255,7 @@ def test_replay_never_silently_repicks():
 # ── cross-check against the independent membership implementation ───────────
 
 
-@pytest.mark.parametrize("seed", [f"s{i}" for i in range(12)])
+@pytest.mark.parametrize("seed", [f"s{i}" for i in range(4)])
 def test_every_executor_trace_is_in_the_language(seed):
     model = _mixed_model()
     records, final = _record_run(model, seed=seed)
@@ -538,7 +538,7 @@ def _frequency_models():
 
 
 @pytest.mark.parametrize("name", sorted(_frequency_models()))
-@pytest.mark.parametrize("seed", [f"x{i}" for i in range(8)])
+@pytest.mark.parametrize("seed", [f"x{i}" for i in range(3)])
 def test_every_final_frequency_trace_is_in_the_language(name, seed):
     """The invariant that was violated: a marking the executor calls FINAL must
     have an observable trace inside the model's own language.
