@@ -21,7 +21,7 @@
     {
       "id": "{{ step.id }}",
       "activity": "{{ step.activity }}",
-      "predecessors": [{% if step.id != "p01" %}"p{{ "%02d" | format((step.ordinal / 10) - 1) }}"{% endif %}],
+      "predecessors": [{% if step.id == "p02" %}"p01"{% elif step.id == "p03" %}"p02"{% elif step.id == "p04" %}"p03"{% elif step.id == "p05" %}"p04"{% elif step.id == "p06" %}"p05"{% elif step.id == "p07" %}"p06"{% elif step.id == "p08" %}"p07"{% elif step.id == "p09" %}"p08"{% elif step.id == "p10" %}"p09"{% elif step.id == "p11" %}"p10"{% elif step.id == "p12" %}"p11"{% endif %}],
       "required_object_types": [{% if step.id == "p01" %}"Incident", "AzureSubscription"{% elif step.id == "p02" %}"Incident", "CapabilityBundle"{% elif step.id == "p03" %}"Incident", "AgentSession", "CapabilityBundle"{% elif step.id == "p04" %}"AgentSession", "AzureSubscription"{% elif step.id == "p05" %}"AgentSession", "CapabilityBundle", "TerraformResource"{% elif step.id == "p06" %}"AuthorityEnvelope", "AzureSubscription", "CapabilityBundle"{% elif step.id == "p07" or step.id == "p09" %}"AuthorityEnvelope", "CapabilityBundle", "AzureSubscription", "TerraformResource"{% elif step.id == "p08" or step.id == "p10" or step.id == "p11" %}"AzureSubscription", "TerraformResource"{% else %}"CapabilityBundle", "AgentSession", "AuthorityEnvelope", "AzureSubscription", "TerraformResource"{% endif %}]
     }{% if not loop.last %},{% endif %}
 {% endfor -%}
