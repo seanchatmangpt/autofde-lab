@@ -4,6 +4,7 @@
 # IDE
 .*/
 !.vuepress/
+!.cursor/
 
 # Python
 __pycache__/
