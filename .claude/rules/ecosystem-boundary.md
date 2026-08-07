@@ -17,7 +17,7 @@ self-attestation, and the separation exists to prevent it. Verified in source
 ```
 ggen-create   exemplar → candidate authority   (reverse compiler: 0 lines today)
 ggen          admitted authority → artifacts + BLAKE3 receipt   (works)
-scikit-decide candidate-plan computation       (THIS REPO — search graph only)
+autofde-lab   candidate-plan computation       (THIS REPO — search graph only)
 bcinr-powl    POWL scheduling / tick loop      (works, but SYMBOLIC — no world effect)
 mfw           admission, broker, receipts, replay   (actuates, but has no plan driver)
 ggen-legacy   independent verification, replay, sunset

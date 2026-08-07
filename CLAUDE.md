@@ -1,11 +1,14 @@
-# scikit-decide
+# autofde-lab
 
-AI framework for Reinforcement Learning, Automated Planning, and Scheduling.
-Originally developed by Airbus AI Research. Within the Chatman Ecosystem
-portfolio (`FORWARD_DEPLOYMENT.md`) — the "Forward Deployment OS," whose
-canonical portfolio narrative lives in `seanchatmangpt/chatman-ecosystem` —
-this repository is the foundation layer: the canonical decision, planning,
-and integration control plane, the lawful selection surface between admitted
+AI framework for Reinforcement Learning, Automated Planning, and Scheduling —
+a fork of Airbus AI Research's `scikit-decide`, renamed to `autofde-lab`
+(`gh repo rename`, confirmed live; GitHub project management applied for real
+this session, see `docs/STATUS.md`) as this project pivoted to be the
+foundation layer of the Chatman Ecosystem portfolio. Within that portfolio
+(`FORWARD_DEPLOYMENT.md`) — the "Forward Deployment OS," whose canonical
+portfolio narrative lives in `seanchatmangpt/chatman-ecosystem` — this
+repository is the foundation layer: the canonical decision, planning, and
+integration control plane, the lawful selection surface between admitted
 operational state and candidate plans.
 
 **It computes candidate plans. It does not actuate.** A planner selects; a
@@ -15,7 +18,8 @@ given receipt, admission, or actuation semantics. Actuation runs through
 OpenClaw, never through BRCE (which belongs to other systems in the
 portfolio and has no role here).
 
-Repository: https://github.com/airbus/scikit-decide | Docs:
+Repository: https://github.com/seanchatmangpt/autofde-lab | Upstream:
+https://github.com/airbus/scikit-decide | Docs:
 https://airbus.github.io/scikit-decide/
 
 ## Always in force
