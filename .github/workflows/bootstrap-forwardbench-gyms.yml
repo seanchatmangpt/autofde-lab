@@ -108,9 +108,15 @@ jobs:
           TERA
 
           python - <<'PY'
+          import re
           from pathlib import Path
           cfg=Path('docs/papers/ggen.toml')
           s=cfg.read_text().replace('[validation]\nshacl = ["ontology/papers-shapes.ttl"]\nstrict_mode = true','[validation]\ngates = ["queries/gate-required-fields.rq"]\nstrict_mode = true')
+          # ggen v26.8.6 release parses output_dir but does not apply it. Make
+          # destinations explicit so this project is identical on 26.8.6 and
+          # on later builds where output_dir is implemented.
+          s=s.replace('output_dir = "generated/forwardbench/"','output_dir = "."')
+          s=re.sub(r'output_file = "(?!generated/forwardbench/)([^"]+)"',r'output_file = "generated/forwardbench/\1"',s)
           cfg.write_text(s)
           defaults={'pinned_revision':'','resolution_standing':'UNRESOLVED','smoke_standing':'NOT_RUN','vendor_slug':'','repo':'','path':'','sha256':''}
           for path in Path('docs/papers/templates').glob('*.tera'):
