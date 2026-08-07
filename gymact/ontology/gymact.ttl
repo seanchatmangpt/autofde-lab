@@ -11,22 +11,38 @@
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix sosa: <http://www.w3.org/ns/sosa/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix earl: <http://www.w3.org/ns/earl#> .
+@prefix dqv: <http://www.w3.org/ns/dqv#> .
+@prefix prof: <http://www.w3.org/ns/dx/prof/> .
 
 ga: a owl:Ontology ;
   dct:title "GymAct benchmark environment actuation ontology" ;
   dct:description "Transport-neutral semantics for materializing, running, observing, actuating, verifying, scoring, checkpointing, restoring, and tearing down executable benchmark environments." ;
-  dct:conformsTo prov:, pplan:, sosa:, qudt:, odrl:, skos:, schema: .
+  dct:conformsTo prov:, pplan:, sosa:, qudt:, odrl:, skos:, schema:, earl:, dqv:, prof: .
 
+# NOTE (public-ontology-profile alignment, seanchatmangpt/gymact prep pass):
+# these ga:* classes remain the query/template-facing TBox that
+# operations.rq / profiles.rq / subjects.rq / errc.rq and every
+# generated/*.tera template key off of -- they are NOT being replaced here,
+# because doing so would require rewriting all 10 ggen.toml generation
+# rules and 3 validation gates at once, on an already-green branch. Instead
+# each class is additively declared equivalent to (or a subclass of) its
+# nearest public-vocabulary counterpart, per this session's ontology
+# review, so a future GymAct-proper (seanchatmangpt/gymact) can adopt the
+# public terms directly as its TBox without losing this mapping. See
+# docs/papers/GYMACT_HANDOFF.md for the full rationale and mapping table.
 ga:Gym a owl:Class ; rdfs:subClassOf schema:SoftwareApplication .
-ga:Scenario a owl:Class ; rdfs:subClassOf prov:Entity .
+ga:Scenario a owl:Class ; rdfs:subClassOf prov:Entity, pplan:Plan .
 ga:Episode a owl:Class ; rdfs:subClassOf prov:Activity .
 ga:Operation a owl:Class ; rdfs:subClassOf pplan:Step .
-ga:InteractionProfile a owl:Class ; rdfs:subClassOf prov:Plan .
+ga:InteractionProfile a owl:Class ; rdfs:subClassOf prov:Plan, prof:Profile .
 ga:ActuationIntent a owl:Class ; rdfs:subClassOf prov:Entity .
-ga:Observation a owl:Class ; rdfs:subClassOf sosa:Observation .
-ga:Effect a owl:Class ; rdfs:subClassOf prov:Entity .
-ga:Score a owl:Class ; rdfs:subClassOf qudt:QuantityValue .
-ga:Receipt a owl:Class ; rdfs:subClassOf prov:Entity .
+ga:Observation a owl:Class ; owl:equivalentClass sosa:Observation .
+ga:Effect a owl:Class ; rdfs:subClassOf prov:Entity, sosa:Result .
+ga:Score a owl:Class ; owl:equivalentClass qudt:QuantityValue ; rdfs:subClassOf dqv:QualityMeasurement .
+ga:Receipt a owl:Class ; rdfs:subClassOf prov:Entity, prov:Bundle .
+ga:Verification a owl:Class ; rdfs:subClassOf earl:Assertion .
+ga:Verification ga:realizesOperation ga:op-verify .
 
 ga:slug a owl:DatatypeProperty ; rdfs:range xsd:string .
 ga:operationCode a owl:DatatypeProperty ; rdfs:range xsd:string .
@@ -41,6 +57,7 @@ ga:replayClass a owl:DatatypeProperty ; rdfs:range xsd:string .
 ga:mainline a owl:DatatypeProperty ; rdfs:range xsd:boolean .
 ga:mapsAdapterFamily a owl:DatatypeProperty ; rdfs:range xsd:string .
 ga:supportsOperation a owl:ObjectProperty ; rdfs:range ga:Operation .
+ga:realizesOperation a owl:ObjectProperty ; rdfs:range ga:Operation .
 
 ga:op-discover a ga:Operation ;
   dct:title "Discover" ; ga:operationCode "discover" ; ga:rustVariant "Discover" ;
