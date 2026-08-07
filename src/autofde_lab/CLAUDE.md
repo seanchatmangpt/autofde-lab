@@ -8,7 +8,7 @@ plans**; nothing here actuates.
 
 - Define domain and solver types by composing builder mixins (`builders/domain/`,
   `builders/solver/`) — one single-inheritance chain per dimension.
-- Own the entry-point registry (`skdecide.domains`, `skdecide.solvers` in `pyproject.toml`)
+- Own the entry-point registry (`autofde_lab.domains`, `autofde_lab.solvers` in `pyproject.toml`)
   and the loaders in `utils.py`.
 - Compute plans, policies, and values; project them (POWL, PDDL plan files, MCP/A2A results).
 

@@ -107,19 +107,19 @@ def _load_registered_entry(entry_type: str, entry_name: str) -> Optional[Any]:
 
 
 def get_registered_domains() -> list[str]:
-    return _get_registered_entries("skdecide.domains")
+    return _get_registered_entries("autofde_lab.domains")
 
 
 def get_registered_solvers() -> list[str]:
-    return _get_registered_entries("skdecide.solvers")
+    return _get_registered_entries("autofde_lab.solvers")
 
 
 def load_registered_domain(name: str) -> type[Domain]:
-    return _load_registered_entry("skdecide.domains", name)
+    return _load_registered_entry("autofde_lab.domains", name)
 
 
 def load_registered_solver(name: str) -> type[Solver]:
-    return _load_registered_entry("skdecide.solvers", name)
+    return _load_registered_entry("autofde_lab.solvers", name)
 
 
 # TODO: implement ranking heuristic

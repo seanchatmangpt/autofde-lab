@@ -26,7 +26,7 @@ A domain factory, solver hyperparameters, optional callbacks, optional heuristic
 
 # Outputs
 
-`Solver` subclasses registered under the `skdecide.solvers` entry-point group; `solve()` /
+`Solver` subclasses registered under the `autofde_lab.solvers` entry-point group; `solve()` /
 `get_next_action()` / `get_utility()` results.
 
 # Invariants

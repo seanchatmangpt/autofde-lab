@@ -126,8 +126,8 @@ def catalog(arguments: Mapping[str, Any]) -> dict[str, Any]:
     utils = _load_utils()
     result: dict[str, Any] = {}
     for label, group, names in (
-        ("domains", "skdecide.domains", utils.get_registered_domains),
-        ("solvers", "skdecide.solvers", utils.get_registered_solvers),
+        ("domains", "autofde_lab.domains", utils.get_registered_domains),
+        ("solvers", "autofde_lab.solvers", utils.get_registered_solvers),
     ):
         if kind in {"all", label}:
             entries = _entry_points(group)

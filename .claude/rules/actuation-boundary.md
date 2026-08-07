@@ -15,8 +15,8 @@ confirmation needed. These require it:
 - Anything that runs through the **OpenClaw bridge** (`integrations/openclaw/`,
   `src/autofde_lab/openclaw_runtime.py`, `src/autofde_lab/openclaw_bridge.py`).
   Verified in code this session, not aspirational: the bridge only admits
-  names already present in scikit-decide's own `skdecide.domains` /
-  `skdecide.solvers` entry-point registries (`openclaw_runtime.py::load_registered`,
+  names already present in scikit-decide's own `autofde_lab.domains` /
+  `autofde_lab.solvers` entry-point registries (`openclaw_runtime.py::load_registered`,
   refuses `REFUSED:UNREGISTERED_SUBJECT` otherwise); enforces bounded
   execution — episode/step/timeout/output-size caps
   (`MAX_EPISODES`/`MAX_STEPS`/`MAX_TIMEOUT_SECONDS`/`MAX_RESULT_BYTES`) plus

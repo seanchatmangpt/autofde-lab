@@ -74,8 +74,8 @@ PDDL_REQUIREMENT_STATUS: Dict[str, str] = {
 
 #: Kinds discovered from ``pyproject.toml`` entry points.
 ENTRY_POINT_KINDS: Dict[str, str] = {
-    "Domain": "skdecide.domains",
-    "Solver": "skdecide.solvers",
+    "Domain": "autofde_lab.domains",
+    "Solver": "autofde_lab.solvers",
 }
 
 #: Kinds discovered by walking a live in-process registry rather than an entry

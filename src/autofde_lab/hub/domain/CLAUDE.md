@@ -26,7 +26,7 @@ Problem files (PDDL/RDDL/UP), Gym environments, scheduling data, constructor par
 
 # Outputs
 
-`Domain` subclasses registered under the `skdecide.domains` entry-point group, reachable via
+`Domain` subclasses registered under the `autofde_lab.domains` entry-point group, reachable via
 `load_registered_domain(name)`.
 
 # Invariants

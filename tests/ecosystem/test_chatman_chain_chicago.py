@@ -578,7 +578,7 @@ class TestOntologyIsGeneratedNotCurated:
         """The anti-omission invariant, widened past the two entry-point groups.
 
         ``test_ontology_matches_live_registry_exactly`` compares only
-        ``skdecide.domains`` and ``skdecide.solvers`` -- the same two groups
+        ``autofde_lab.domains`` and ``autofde_lab.solvers`` -- the same two groups
         ``collect_capabilities`` walked -- so it could not fail on a missing
         POWL / agent-lifecycle / OCEL / adapter term no matter how stale the
         file got. This closes that hole: every kind the generator declares is

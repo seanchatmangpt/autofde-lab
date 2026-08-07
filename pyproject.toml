@@ -108,7 +108,7 @@ all = [
     "autofde-lab[domains, solvers, pddl, dspy]",
 ]
 
-[project.entry-points."skdecide.domains"]
+[project.entry-points."autofde_lab.domains"]
 GymDomain = "autofde_lab.hub.domain.gym:GymDomain [domains]"
 DeterministicGymDomain = "autofde_lab.hub.domain.gym:DeterministicGymDomain [domains]"
 CostDeterministicGymDomain = "autofde_lab.hub.domain.gym:CostDeterministicGymDomain [domains]"
@@ -136,7 +136,7 @@ PDDLDomain = "autofde_lab.hub.domain.pddl:PDDLDomain [domains]"
 PPDDLDomain = "autofde_lab.hub.domain.pddl:PPDDLDomain [domains]"
 TPDDLDomain = "autofde_lab.hub.domain.pddl:TPDDLDomain [pddl]"
 
-[project.entry-points."skdecide.solvers"]
+[project.entry-points."autofde_lab.solvers"]
 AOstar = "autofde_lab.hub.solver.aostar:AOstar [solvers]"
 Astar = "autofde_lab.hub.solver.astar:Astar [solvers]"
 pLRTAstar = "autofde_lab.hub.solver.lrtastar:LRTAstar [solvers]"
