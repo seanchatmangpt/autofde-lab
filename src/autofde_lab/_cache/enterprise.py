@@ -22,6 +22,10 @@ from .provenance import CacheAttestation, ProvenanceLedger
 from .quarantine import QuarantineJournal
 from .quotas import QuotaManager, QuotaSnapshot
 from .rollout import RolloutController, RolloutDecision
+
+# Superseded spellings of `EnterpriseGatewayConfig.reserved_metadata_prefix`.
+# Read-side only: never emitted, always rejected as caller-supplied keys.
+LEGACY_RESERVED_METADATA_PREFIXES: tuple[str, ...] = ("skdecide.enterprise.",)
 from .types import (
     CacheCorruptionError,
     CacheLeaseTimeoutError,
@@ -68,6 +72,15 @@ class EnterpriseGatewayConfig:
     persistent_enabled: bool = False
     failure_mode: CacheFailureMode = CacheFailureMode.RAISE
     attest_bypass_results: bool = True
+    # Namespace for cache metadata keys the gateway reserves for itself.
+    # This value is WRITTEN into persisted ledger records, so the legacy
+    # spelling below is not decoration: records produced before the rename
+    # still carry `skdecide.enterprise.*` keys, and -- more sharply -- the
+    # collision guard in `_metadata` is the read side of this prefix. If it
+    # checked only the current value, a caller could supply
+    # `skdecide.enterprise.subject_id` and walk straight through a guard
+    # whose entire purpose is to keep the reserved namespace reserved. Both
+    # are rejected; only this one is emitted.
     reserved_metadata_prefix: str = "autofde_lab.enterprise."
 
     def __post_init__(self) -> None:
@@ -153,7 +166,10 @@ class EnterpriseCacheGateway:
     ) -> dict[str, Any]:
         prefix = self.config.reserved_metadata_prefix
         metadata = dict(supplied or {})
-        collisions = sorted(key for key in metadata if str(key).startswith(prefix))
+        guarded = (prefix, *LEGACY_RESERVED_METADATA_PREFIXES)
+        collisions = sorted(
+            key for key in metadata if str(key).startswith(guarded)
+        )
         if collisions:
             raise ValueError(
                 "reserved enterprise metadata cannot be supplied by callers: "

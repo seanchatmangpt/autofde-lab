@@ -36,6 +36,7 @@ from autofde_lab.agent.models import (
     EpochReceipt,
     EpochStanding,
 )
+from autofde_lab.schema_ids import DECISION_RESULT_SCHEMA
 from autofde_lab.agent.refusals import (
     BLOCKED_ACTION_NODE_UNRESOLVED,
     CLAIM_CEILING,
@@ -455,7 +456,7 @@ class AgentSession:
         }
         trajectory = sha256([s.as_dict() for s in steps])
         return DecisionResult(
-            schema="skdecide.fabric.decision_result/1",
+            schema=DECISION_RESULT_SCHEMA,
             standing=DecisionStanding.BOUNDED,
             request=request,
             solver=self._decided_by(),

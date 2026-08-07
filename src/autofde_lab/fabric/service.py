@@ -30,7 +30,13 @@ from autofde_lab.fabric.models import (
     RefusalCode,
 )
 
-_FABRIC_SCHEMA = "autofde_lab.decision-fabric/2"
+# Persisted envelope identifier -- see autofde_lab.schema_ids for why this
+# is a version bump and not an edit of the previous string.
+from autofde_lab.schema_ids import (  # noqa: E402
+    ACCEPTED_FABRIC_SCHEMAS,
+    FABRIC_SCHEMA as _FABRIC_SCHEMA,
+    LEGACY_FABRIC_SCHEMAS,
+)
 _CLAIM_CEILING = "REGISTERED_DOMAIN_SOLVER_MATCH_AND_BOUNDED_ROLLOUT_ONLY"
 _DETERMINISTIC_REFUSALS = {
     RefusalCode.DOMAIN_UNKNOWN,
