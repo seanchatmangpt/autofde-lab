@@ -28,13 +28,16 @@ from __future__ import annotations
 import json
 import subprocess
 from pathlib import Path
-from typing import Optional
+
+from autofde_lab.hub.domain.gym_procedure.trial_isolation import (
+    acquire_exclusive_evidence_dir,
+)
 
 HOME = Path.home()
 GYMACT = HOME / "gymact"
 GYMACT_VENV_PYTHON = GYMACT / ".venv" / "bin" / "python"
 
-# provider registry name -> (import path, class name)
+# provider registry name -> (import path, class name, provider .name)
 _PROVIDERS = {
     "cube_counter": ("gymact.gyms.cube_counter", "CubeCounterProvider", "cube-counter"),
     "cube_container_counter": (
@@ -42,9 +45,68 @@ _PROVIDERS = {
         "CubeContainerCounterProvider",
         "cube-container-counter",
     ),
+    "switchboard": ("gymact.gyms.switchboard", "SwitchboardProvider", "switchboard"),
+    "resource_flow": (
+        "gymact.gyms.resource_flow",
+        "ResourceFlowProvider",
+        "resource-flow",
+    ),
+    "lock_and_key": (
+        "gymact.gyms.lock_and_key",
+        "LockAndKeyProvider",
+        "lock-and-key",
+    ),
 }
 
-_BRIDGE_SCRIPT = '''
+# How to enumerate a parameterized DO capability's payload space.
+#
+#   binding -> (payload_key, observation_field_bounding_the_range)
+#
+# This is an *enumeration* declaration, not domain knowledge: it says how
+# many distinct actions a capability denotes and what key names the
+# parameter, never what any of them DO. The discovery agent still learns
+# every effect by probing. Bindings absent here take an empty payload.
+_ACTION_PARAMS: dict[str, dict[str, tuple[str, str]]] = {
+    "switchboard": {"toggle_switch": ("index", "n_switches")},
+    "lock_and_key": {"pick_key": ("key", "depth")},
+}
+
+# Fixed payloads for bindings whose parameter is not an index into an
+# observation-bounded range.
+_STATIC_PAYLOADS: dict[str, dict[str, dict]] = {
+    "cube_counter": {"increment_by": {"value": 1}},
+    "cube_container_counter": {"increment_by": {"value": 1}},
+}
+
+_PARAM_SEP_OPEN = "["
+_PARAM_SEP_CLOSE = "]"
+
+
+def encode_action(binding: str, payload: dict) -> str:
+    """Action id for one concrete (binding, payload) pair."""
+    if not payload:
+        return binding
+    inner = ",".join(f"{k}={payload[k]}" for k in sorted(payload))
+    return f"{binding}{_PARAM_SEP_OPEN}{inner}{_PARAM_SEP_CLOSE}"
+
+
+def decode_action(action_id: str) -> tuple[str, dict]:
+    """Inverse of `encode_action`: action id -> (binding, payload)."""
+    if not action_id.endswith(_PARAM_SEP_CLOSE) or _PARAM_SEP_OPEN not in action_id:
+        return action_id, {}
+    binding, _, rest = action_id.partition(_PARAM_SEP_OPEN)
+    payload: dict = {}
+    for part in rest[:-1].split(","):
+        if not part:
+            continue
+        key, _, raw = part.partition("=")
+        try:
+            payload[key] = int(raw)
+        except ValueError:
+            payload[key] = raw
+    return binding, payload
+
+_BRIDGE_SCRIPT = """
 import asyncio
 import importlib
 import json
@@ -87,9 +149,25 @@ async def main(module_path: str, class_name: str, provider_name: str, config: di
         outcome = await gym.act(ActuationIntent(episode_id=episode_id, capability=cap.iri, payload=req.get("payload", {})))
         after = await gym.observe(episode_id)
         after_state = dict(after.state)
+        # The kernel reports accepted=True for any actuate() that did not
+        # raise -- including a lawful-but-inert one (a provider reporting
+        # `applicable: False` in its own effect, e.g. mining into a full
+        # pool). Treating an inert action as applied teaches discovery that
+        # a refused action is available, so the provider's own flag wins
+        # whenever it supplies one.
+        effect = outcome.effect if isinstance(outcome.effect, dict) else {}
         results.append({
-            "action": binding,
-            "applicable": bool(outcome.accepted),
+            "action": req.get("action_id", binding),
+            "binding": binding,
+            "payload": req.get("payload", {}),
+            "applicable": bool(outcome.accepted) and bool(effect.get("applicable", True)),
+            # REAL TYPED observations, straight off gym.observe(...).state.
+            # The stringified `*_facts` fields below are kept for the older
+            # untyped IR, but stringifying is lossy (a float reward becomes an
+            # opaque atom, an int delta becomes an absolute fact) -- typed
+            # induction consumes these two dicts instead.
+            "observed_pre": before_state,
+            "observed_post": after_state,
             "observed_pre_facts": sorted(f"{k}={v}" for k, v in before_state.items()),
             "delta_added": sorted(
                 f"{k}={after_state[k]}" for k in after_state
@@ -111,6 +189,15 @@ async def main(module_path: str, class_name: str, provider_name: str, config: di
         "results": results,
         "final_observe": final_state,
         "ocel_log": ocel_log,
+        # Real capability surface, read off the provider itself. DO bindings
+        # are the only actuatable ones; READ bindings are refused by the
+        # kernel with READ_CAPABILITY_IS_NOT_ACTUATION.
+        "capabilities": [
+            {"binding": c.binding,
+             "consequence": c.consequence.value if hasattr(c.consequence, "value") else str(c.consequence),
+             "iri": c.iri}
+            for c in caps.values()
+        ],
     }
 
 
@@ -120,10 +207,10 @@ if __name__ == "__main__":
     requests = json.loads(sys.argv[5])
     out = asyncio.run(main(module_path, class_name, provider_name, config, requests))
     print(json.dumps(out, default=str))
-'''
+"""
 
 
-def skip_reason() -> Optional[str]:
+def skip_reason() -> str | None:
     if not GYMACT.is_dir():
         return f"BLOCKED:GYMACT_CHECKOUT_ABSENT: {GYMACT} does not exist"
     if not GYMACT_VENV_PYTHON.is_file():
@@ -147,25 +234,108 @@ class RealBlindEnvironment:
     O(n^2) actuation calls across a full discovery run -- acceptable for
     these bounded providers and honestly documented rather than hidden."""
 
-    def __init__(self, provider_key: str, config: dict, evidence_dir: Path) -> None:
+    def __init__(
+        self,
+        provider_key: str,
+        config: dict,
+        evidence_dir: Path,
+        claim: object | None = None,
+    ) -> None:
         if provider_key not in _PROVIDERS:
-            raise ValueError(f"unknown provider {provider_key!r}; known: {sorted(_PROVIDERS)}")
-        self._module_path, self._class_name, self._provider_name = _PROVIDERS[provider_key]
+            raise ValueError(
+                f"unknown provider {provider_key!r}; known: {sorted(_PROVIDERS)}"
+            )
+        self._module_path, self._class_name, self._provider_name = _PROVIDERS[
+            provider_key
+        ]
+        self._provider_key = provider_key
         self._config = config
+        self._actions: list[str] | None = None
+        self._payloads: dict[str, dict] = {}
         self._evidence_dir = evidence_dir
         self._evidence_dir.mkdir(parents=True, exist_ok=True)
+        # Claim the directory exclusively. Without this, two environments
+        # constructed with the same evidence_dir silently share one
+        # probes.jsonl -- reproduced for real: two trials (target=2 and
+        # target=5) each doing one increment leave a single log whose
+        # records carry target values [2, 5], which no verifier reading
+        # that log alone can attribute back to a trial. That is precisely
+        # the Level 3 cross-trial contamination incident's shape, so the
+        # claim is taken here in __init__ rather than left to callers who
+        # can forget it.
+        #
+        # A caller that ALREADY holds the claim for this directory (e.g. a
+        # trial runner that claimed it before constructing anything) passes
+        # it in as `claim`, so a legitimate single owner does not collide
+        # with itself. Passing someone else's claim does not help: the
+        # lockfile is still on disk, so any genuinely different trial that
+        # tries to claim the same directory is still refused.
+        self._claim = claim if claim is not None else acquire_exclusive_evidence_dir(
+            self._evidence_dir, owner=f"RealBlindEnvironment:{provider_key}"
+        )
         self._log_path = self._evidence_dir / "probes.jsonl"
         self._bridge_script = self._evidence_dir / "bridge.py"
         self._bridge_script.write_text(_BRIDGE_SCRIPT, encoding="utf-8")
         self._history: list[dict] = []
-        self._last_episode_id: Optional[str] = None
-        self._last_ocel: Optional[dict] = None
+        self._last_episode_id: str | None = None
+        self._last_ocel: dict | None = None
 
     def available_actions(self) -> list[str]:
-        return ["increment", "decrement", "increment_by"]
+        """The provider's REAL actuatable surface, read off its own
+        `capabilities()` over the bridge -- DO bindings only, since a READ
+        binding is refused by the kernel with
+        READ_CAPABILITY_IS_NOT_ACTUATION and is not an action at all.
 
-    def try_action(self, action: str, payload: Optional[dict] = None) -> dict:
-        req = {"action": action, "payload": payload or {}}
+        A parameterized binding denotes one action per payload value, so it
+        is expanded over the range declared in `_ACTION_PARAMS` and bounded
+        by a real observation field (`n_switches`, `depth`). Discovery still
+        learns every effect by probing; only the *arity* is declared.
+        """
+        if self._actions is None:
+            result = self._call([])
+            observation = dict(result.get("final_observe") or {})
+            params = _ACTION_PARAMS.get(self._provider_key, {})
+            statics = _STATIC_PAYLOADS.get(self._provider_key, {})
+            actions: list[str] = []
+            payloads: dict[str, dict] = {}
+            for cap in result.get("capabilities", []):
+                if cap.get("consequence") != "DO":
+                    continue
+                binding = cap["binding"]
+                if binding in params:
+                    payload_key, bound_field = params[binding]
+                    bound = observation.get(bound_field)
+                    if not isinstance(bound, int) or isinstance(bound, bool):
+                        raise RuntimeError(
+                            f"ACTION_RANGE_UNOBSERVABLE: {self._provider_key}.{binding} "
+                            f"declares its range via observation field {bound_field!r}, "
+                            f"which is absent or non-integer in {sorted(observation)}"
+                        )
+                    for value in range(bound):
+                        action_id = encode_action(binding, {payload_key: value})
+                        actions.append(action_id)
+                        payloads[action_id] = {payload_key: value}
+                else:
+                    payload = dict(statics.get(binding, {}))
+                    action_id = encode_action(binding, payload)
+                    actions.append(action_id)
+                    payloads[action_id] = payload
+            self._actions = actions
+            self._payloads = payloads
+        return list(self._actions)
+
+    def payload_for(self, action_id: str) -> dict:
+        if self._actions is None:
+            self.available_actions()
+        if action_id in self._payloads:
+            return dict(self._payloads[action_id])
+        return decode_action(action_id)[1]
+
+    def try_action(self, action: str, payload: dict | None = None) -> dict:
+        binding, decoded = decode_action(action)
+        if payload is None:
+            payload = self._payloads.get(action, decoded)
+        req = {"action": binding, "action_id": action, "payload": dict(payload)}
         requests = self._history + [req]
         result = self._call(requests)
         self._last_episode_id = result.get("episode_id")
@@ -179,10 +349,10 @@ class RealBlindEnvironment:
             f.write(json.dumps(record) + "\n")
         return record
 
-    def episode_ocel_log(self) -> Optional[dict]:
+    def episode_ocel_log(self) -> dict | None:
         return self._last_ocel
 
-    def episode_id(self) -> Optional[str]:
+    def episode_id(self) -> str | None:
         return self._last_episode_id
 
     def _call(self, requests: list[dict]) -> dict:
@@ -200,7 +370,10 @@ class RealBlindEnvironment:
             text=True,
             cwd=str(GYMACT),
             timeout=120,
+            check=False,
         )
         if completed.returncode != 0:
-            raise RuntimeError(f"gymact bridge subprocess failed:\nstdout={completed.stdout}\nstderr={completed.stderr}")
+            raise RuntimeError(
+                f"gymact bridge subprocess failed:\nstdout={completed.stdout}\nstderr={completed.stderr}"
+            )
         return json.loads(completed.stdout.strip().splitlines()[-1])

@@ -63,7 +63,9 @@ def classify_value(value: Any) -> DimensionKind:
     return DimensionKind.UNKNOWN
 
 
-def classify_observation(observations: list[dict[str, Any]]) -> dict[str, StateDimension]:
+def classify_observation(
+    observations: list[dict[str, Any]],
+) -> dict[str, StateDimension]:
     """Classify every dimension seen across one or more real observations.
 
     A dimension observed with conflicting kinds across samples (e.g. int
@@ -104,8 +106,12 @@ class ProjectionResult:
         return self.unrepresentable_reason is None
 
     @classmethod
-    def unrepresentable(cls, representation: str, reason: str) -> "ProjectionResult":
-        return cls(representation=representation, artifact=None, unrepresentable_reason=f"UNREPRESENTABLE:{reason}")
+    def unrepresentable(cls, representation: str, reason: str) -> ProjectionResult:
+        return cls(
+            representation=representation,
+            artifact=None,
+            unrepresentable_reason=f"UNREPRESENTABLE:{reason}",
+        )
 
 
 def propositionalize(
@@ -127,12 +133,20 @@ def propositionalize(
     for name, value in observation.items():
         dim = dims.get(name)
         kind = dim.kind if dim else classify_value(value)
-        if kind in (DimensionKind.BOOLEAN, DimensionKind.CATEGORICAL, DimensionKind.INTEGER):
+        if kind in (
+            DimensionKind.BOOLEAN,
+            DimensionKind.CATEGORICAL,
+            DimensionKind.INTEGER,
+        ):
             facts.add(f"{name}={value}")
         elif kind is DimensionKind.CONTINUOUS:
-            losses[name] = "UNREPRESENTABLE:CONTINUOUS_DIMENSION_HAS_NO_SOUND_PROPOSITIONAL_ENCODING"
+            losses[name] = (
+                "UNREPRESENTABLE:CONTINUOUS_DIMENSION_HAS_NO_SOUND_PROPOSITIONAL_ENCODING"
+            )
         elif kind is DimensionKind.OBJECT_VALUED:
-            losses[name] = "UNREPRESENTABLE:OBJECT_VALUED_DIMENSION_REQUIRES_TYPED_PREDICATES"
+            losses[name] = (
+                "UNREPRESENTABLE:OBJECT_VALUED_DIMENSION_REQUIRES_TYPED_PREDICATES"
+            )
         else:
             losses[name] = "UNREPRESENTABLE:UNKNOWN_DIMENSION_KIND"
     return frozenset(facts), losses

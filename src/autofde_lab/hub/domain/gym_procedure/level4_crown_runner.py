@@ -24,9 +24,9 @@ from __future__ import annotations
 import hashlib
 import json
 import secrets
-from dataclasses import asdict, dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Optional
 
 
 @dataclass(frozen=True)
@@ -43,7 +43,9 @@ class FrozenCrown:
         return len(self.seeds)
 
 
-def _digest_manifest(seeds: tuple[int, ...], providers: tuple[str, ...], configs: tuple[dict, ...]) -> str:
+def _digest_manifest(
+    seeds: tuple[int, ...], providers: tuple[str, ...], configs: tuple[dict, ...]
+) -> str:
     payload = json.dumps(
         {"seeds": list(seeds), "providers": list(providers), "configs": list(configs)},
         sort_keys=True,
@@ -79,12 +81,22 @@ def freeze_crown(
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     manifest_path.write_text(
         json.dumps(
-            {"seeds": list(seeds), "providers": list(providers), "configs": list(configs), "manifest_digest": digest},
+            {
+                "seeds": list(seeds),
+                "providers": list(providers),
+                "configs": list(configs),
+                "manifest_digest": digest,
+            },
             indent=2,
         ),
         encoding="utf-8",
     )
-    return FrozenCrown(seeds=seeds, provider_assignments=providers, configs=configs, manifest_digest=digest)
+    return FrozenCrown(
+        seeds=seeds,
+        provider_assignments=providers,
+        configs=configs,
+        manifest_digest=digest,
+    )
 
 
 def load_crown(manifest_path: Path) -> FrozenCrown:
@@ -97,7 +109,12 @@ def load_crown(manifest_path: Path) -> FrozenCrown:
         raise ValueError(
             f"CROWN_MANIFEST_TAMPERED: recomputed digest {recomputed} != recorded {data['manifest_digest']}"
         )
-    return FrozenCrown(seeds=seeds, provider_assignments=providers, configs=configs, manifest_digest=recomputed)
+    return FrozenCrown(
+        seeds=seeds,
+        provider_assignments=providers,
+        configs=configs,
+        manifest_digest=recomputed,
+    )
 
 
 def verify_manifest(crown: FrozenCrown, executed_seeds: list[int]) -> list[str]:
@@ -112,8 +129,29 @@ def verify_manifest(crown: FrozenCrown, executed_seeds: list[int]) -> list[str]:
         if extra:
             violations.append(f"POST_HOC_TRIAL_ADDED:seeds_not_in_manifest={extra}")
     if len(executed_seeds) != len(frozen):
-        violations.append(f"DENOMINATOR_CHANGED:frozen={len(frozen)},executed={len(executed_seeds)}")
+        violations.append(
+            f"DENOMINATOR_CHANGED:frozen={len(frozen)},executed={len(executed_seeds)}"
+        )
     return violations
+
+
+def _row_is_alive(row: dict) -> bool:
+    """The full conjunction, matching `TrialReport.is_alive`.
+
+    `real_goal_attained` is load-bearing and was previously missing here: a
+    trial once reported independently_verified=True while the real world sat
+    at counter=1, solved=False, because per-step postcondition verification
+    only says the committed plan's PREDICTED consequence was observed -- not
+    that the goal was reached. A scoreboard without this term scores the
+    model's own prediction, which is the exact failure the typed-induction
+    repair exists to prevent.
+    """
+    return (
+        row.get("real_goal_attained") is True
+        and row.get("independently_verified") is True
+        and not row.get("ocel_ref_violations")
+        and not row.get("replay_mismatches")
+    )
 
 
 @dataclass
@@ -125,7 +163,7 @@ class CrownAttempt:
     repair_note: str = ""
 
     def alive_count(self) -> int:
-        return sum(1 for r in self.results if r.get("independently_verified") is True and not r.get("ocel_ref_violations") and not r.get("replay_mismatches"))
+        return sum(1 for r in self.results if _row_is_alive(r))
 
     def summary(self) -> str:
         return f"attempt {self.attempt_index}: {self.alive_count()}/{len(self.results)} ALIVE"
@@ -144,22 +182,24 @@ class CrownRun:
         if not self.attempts:
             return False
         last = self.attempts[-1]
-        return len(last.results) == self.crown.size() and last.alive_count() == self.crown.size()
+        return (
+            len(last.results) == self.crown.size()
+            and last.alive_count() == self.crown.size()
+        )
 
     def failed_seeds(self) -> list[int]:
         if not self.attempts:
             return list(self.crown.seeds)
         last = self.attempts[-1]
-        alive = {
-            r["seed"]
-            for r in last.results
-            if r.get("independently_verified") is True and not r.get("ocel_ref_violations") and not r.get("replay_mismatches")
-        }
+        alive = {r["seed"] for r in last.results if _row_is_alive(r)}
         return [s for s in self.crown.seeds if s not in alive]
 
     def full_history(self) -> list[str]:
         """Every attempt, in order -- an 8/10 then 10/10 reports BOTH."""
-        return [a.summary() + (f" [{a.repair_note}]" if a.repair_note else "") for a in self.attempts]
+        return [
+            a.summary() + (f" [{a.repair_note}]" if a.repair_note else "")
+            for a in self.attempts
+        ]
 
     def write(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -169,7 +209,12 @@ class CrownRun:
                     "manifest_digest": self.crown.manifest_digest,
                     "denominator": self.crown.size(),
                     "attempts": [
-                        {"attempt_index": a.attempt_index, "repair_note": a.repair_note, "alive": a.alive_count(), "results": a.results}
+                        {
+                            "attempt_index": a.attempt_index,
+                            "repair_note": a.repair_note,
+                            "alive": a.alive_count(),
+                            "results": a.results,
+                        }
                         for a in self.attempts
                     ],
                     "history": self.full_history(),

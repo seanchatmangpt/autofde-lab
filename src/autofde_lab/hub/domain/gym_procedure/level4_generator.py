@@ -70,14 +70,21 @@ def generate_task(seed: int, n_steps: int = 4, n_irrelevant: int = 2) -> Recipe:
         pre = frozenset(have)
         eff = frozenset({facts[i + 1]})
         steps.append(
-            Step(id=name, description=f"synthetic step {i}", preconditions=pre, establishes=eff)
+            Step(
+                id=name,
+                description=f"synthetic step {i}",
+                preconditions=pre,
+                establishes=eff,
+            )
         )
         have.add(facts[i + 1])
     goal = frozenset({facts[n_steps]})
 
     # Deceptive-but-lawful dead-end actions: always applicable, establish an
     # irrelevant fact not on any path to the goal. Real, executable, wrong.
-    deceptive_facts = rng.sample(_DECEPTIVE_FACT_POOL, k=min(n_irrelevant, len(_DECEPTIVE_FACT_POOL)))
+    deceptive_facts = rng.sample(
+        _DECEPTIVE_FACT_POOL, k=min(n_irrelevant, len(_DECEPTIVE_FACT_POOL))
+    )
     for j, dfact in enumerate(deceptive_facts):
         steps.append(
             Step(
@@ -109,7 +116,7 @@ class Trial:
     recipe: Recipe  # hidden from the solver's own reasoning surface -- only used by BlindEnvironment/verifier
 
     @classmethod
-    def new(cls, seed: int, root: Path) -> "Trial":
+    def new(cls, seed: int, root: Path) -> Trial:
         run_id = str(uuid.uuid4())
         evidence_dir = root / f"trial_{seed}_{run_id}"
         evidence_dir.mkdir(parents=True, exist_ok=False)

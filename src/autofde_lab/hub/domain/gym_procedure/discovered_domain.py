@@ -24,7 +24,6 @@ not a one-shot STRIPS reconstruction.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 from autofde_lab.hub.domain.gym_procedure.gym_procedure import Recipe, Step
 
@@ -37,8 +36,12 @@ class DiscoveredAction:
     preconditions: frozenset[str] = field(default_factory=frozenset)
     positive_effects: frozenset[str] = field(default_factory=frozenset)
     negative_effects: frozenset[str] = field(default_factory=frozenset)
-    applicability_evidence: tuple[int, ...] = ()  # probe-log line indices where this action succeeded
-    refusal_evidence: tuple[int, ...] = ()  # probe-log line indices where this action was attempted and refused
+    applicability_evidence: tuple[
+        int, ...
+    ] = ()  # probe-log line indices where this action succeeded
+    refusal_evidence: tuple[
+        int, ...
+    ] = ()  # probe-log line indices where this action was attempted and refused
     confidence: float = 0.0  # fraction of probes of this action that are consistent with the current hypothesis
     unresolved_semantics: bool = True  # True until >=1 discriminating probe has run, or only 1 candidate fact remained
     evidence_refs: tuple[str, ...] = ()
@@ -51,8 +54,12 @@ class DiscoveredDomain:
 
     state_variables: frozenset[str]
     actions: dict[str, DiscoveredAction] = field(default_factory=dict)
-    unknown_actions: frozenset[str] = field(default_factory=frozenset)  # probed, effect not yet resolved
-    invariants: frozenset[str] = field(default_factory=frozenset)  # facts observed stable across irrelevant actions
+    unknown_actions: frozenset[str] = field(
+        default_factory=frozenset
+    )  # probed, effect not yet resolved
+    invariants: frozenset[str] = field(
+        default_factory=frozenset
+    )  # facts observed stable across irrelevant actions
 
     def declared_projections(self) -> frozenset[str]:
         return frozenset({"recipe", "pddl"})
@@ -63,7 +70,7 @@ class DiscoveredProblem:
     initial_state: frozenset[str]
     goal: frozenset[str]
     preservation_constraints: frozenset[str] = field(default_factory=frozenset)
-    cost_bound: Optional[float] = None
+    cost_bound: float | None = None
 
 
 @dataclass(frozen=True)
@@ -92,8 +99,18 @@ def induce_discovered_domain(probe_log: list[dict]) -> DiscoveredDomain:
     for action_id, records in by_action.items():
         successes = [r for r in records if r.get("applicable")]
         refusals = [r for r in records if not r.get("applicable")]
-        pos = frozenset().union(*(frozenset(r.get("delta_added", [])) for r in successes)) if successes else frozenset()
-        neg = frozenset().union(*(frozenset(r.get("delta_removed", [])) for r in successes)) if successes else frozenset()
+        pos = (
+            frozenset().union(*(frozenset(r.get("delta_added", [])) for r in successes))
+            if successes
+            else frozenset()
+        )
+        neg = (
+            frozenset().union(
+                *(frozenset(r.get("delta_removed", [])) for r in successes)
+            )
+            if successes
+            else frozenset()
+        )
         state_vars |= pos | neg
 
         if not successes:
@@ -113,7 +130,11 @@ def induce_discovered_domain(probe_log: list[dict]) -> DiscoveredDomain:
         # (BlindEnvironment.try_action does this for the real bridge; the
         # in-memory harness may omit it, in which case preconditions stay
         # empty/unresolved rather than fabricated).
-        pre_states = [frozenset(r["observed_pre_facts"]) for r in successes if "observed_pre_facts" in r]
+        pre_states = [
+            frozenset(r["observed_pre_facts"])
+            for r in successes
+            if "observed_pre_facts" in r
+        ]
         if pre_states:
             precond_hypothesis = frozenset.intersection(*pre_states)
         else:
@@ -127,13 +148,20 @@ def induce_discovered_domain(probe_log: list[dict]) -> DiscoveredDomain:
             applicability_evidence=tuple(r["_idx"] for r in successes),
             refusal_evidence=tuple(r["_idx"] for r in refusals),
             confidence=len(successes) / len(records),
-            unresolved_semantics=len(precond_hypothesis) > 1,  # >1 candidate fact => still ambiguous until discriminated
+            unresolved_semantics=len(precond_hypothesis)
+            > 1,  # >1 candidate fact => still ambiguous until discriminated
         )
 
-    return DiscoveredDomain(state_variables=frozenset(state_vars), actions=actions, unknown_actions=frozenset(unknown))
+    return DiscoveredDomain(
+        state_variables=frozenset(state_vars),
+        actions=actions,
+        unknown_actions=frozenset(unknown),
+    )
 
 
-def propose_discriminating_probe(domain: DiscoveredDomain, action_id: str) -> Optional[Probe]:
+def propose_discriminating_probe(
+    domain: DiscoveredDomain, action_id: str
+) -> Probe | None:
     """If `action_id`'s precondition hypothesis has >1 candidate fact,
     propose re-attempting it -- the caller is expected to hold all but one
     hypothesized fact fixed and flip the remaining one (harness-level
@@ -154,7 +182,13 @@ def propose_discriminating_probe(domain: DiscoveredDomain, action_id: str) -> Op
     )
 
 
-def refine_from_probe(domain: DiscoveredDomain, action_id: str, held_facts: frozenset[str], flipped_fact: str, succeeded: bool) -> DiscoveredDomain:
+def refine_from_probe(
+    domain: DiscoveredDomain,
+    action_id: str,
+    held_facts: frozenset[str],
+    flipped_fact: str,
+    succeeded: bool,
+) -> DiscoveredDomain:
     """Update `action_id`'s precondition hypothesis given one discriminating
     probe result: if the action still succeeded with `flipped_fact` absent
     (i.e. `held_facts` alone were sufficient), `flipped_fact` is not causal
@@ -189,7 +223,13 @@ def refine_from_probe(domain: DiscoveredDomain, action_id: str, held_facts: froz
     )
 
 
-def project_to_recipe(domain: DiscoveredDomain, problem: DiscoveredProblem, gym: str, task: str, source_ref: str) -> Recipe:
+def project_to_recipe(
+    domain: DiscoveredDomain,
+    problem: DiscoveredProblem,
+    gym: str,
+    task: str,
+    source_ref: str,
+) -> Recipe:
     """The one projection wired to the existing solver registry this pass.
     Actions still marked `unresolved_semantics` are included with their
     current best hypothesis (Recipe/Astar have no "unknown" representation
@@ -246,7 +286,5 @@ def project_to_pddl(domain: DiscoveredDomain, problem: DiscoveredProblem) -> str
     return (
         "(define (domain discovered)\n"
         "  (:requirements :strips)\n"
-        f"  (:predicates {predicates})\n"
-        + "\n".join(actions_pddl)
-        + "\n)"
+        f"  (:predicates {predicates})\n" + "\n".join(actions_pddl) + "\n)"
     )
