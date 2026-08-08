@@ -7,6 +7,7 @@ from autofde_lab.fabric.metrics import (
     ConsequenceReceipt,
     compute_consequence_metrics,
     first_persistent_crossover,
+    little_law_from_wip_and_throughput,
 )
 from autofde_lab.fabric.selection import DecisionRegime
 
@@ -93,3 +94,15 @@ def test_transient_win_is_not_crossover():
     baseline = {1: 1.0, 10: 10.0, 100: 100.0}
     autofde = {1: 2.0, 10: 9.0, 100: 120.0}
     assert first_persistent_crossover(baseline, autofde) is None
+
+
+def test_littles_law_exposes_wait_time_from_wip_and_throughput():
+    flow = little_law_from_wip_and_throughput(12, 0.5)
+    assert flow.mean_wait_s == 24
+    assert flow.residual == pytest.approx(0)
+
+
+def test_littles_law_zero_throughput_with_wip_is_infinite_wait_not_zero():
+    flow = little_law_from_wip_and_throughput(3, 0)
+    assert math.isinf(flow.mean_wait_s)
+    assert flow.residual == 0
