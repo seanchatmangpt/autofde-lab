@@ -27,6 +27,7 @@ from pathlib import Path
 
 import pytest
 
+from autofde_lab.hub.domain.gym_procedure.crown_evidence import UnknownEvidence
 from autofde_lab.hub.domain.gym_procedure.level4_crown import run_real_trial
 from autofde_lab.hub.domain.gym_procedure.level4_crown_runner import _row_is_alive
 from autofde_lab.hub.domain.gym_procedure.level4_gymact_bridge import (
@@ -64,12 +65,14 @@ def test_unmodellable_trial_is_scored_not_raised(tmp_path: Path) -> None:
     )
 
     assert report.outcome == "NO_APPLICABLE_ACTION_DISCOVERED"
-    # Every scored factor reads False on real fields, not absent.
-    assert report.real_goal_attained is False
-    assert report.independently_verified is False
-    assert report.ocel_valid is False
-    assert report.replay_ran is False
-    assert report.replay_valid is False
+    # The trial never reached actuation, so `standing` is a named
+    # `UnknownEvidence` -- never a silently-defaulted `AliveEvidence`, and
+    # never a boolean ground-truth field left to disagree with it.
+    assert isinstance(report.standing, UnknownEvidence)
+    assert report.standing.missing == "NO_APPLICABLE_ACTION_DISCOVERED"
+    assert report.standing.episode_digest is None
+    assert report.is_alive() is False
+    assert report.verdict() == "UNKNOWN"
     assert report.replay_error == "NO_APPLICABLE_ACTION_DISCOVERED"
     assert "NO_APPLICABLE_ACTION_DISCOVERED" in report.replay_mismatches
     # The real provider's own refusal reason survives into the report.
@@ -89,9 +92,13 @@ def test_unmodellable_trial_scores_false_in_the_crown_conjunction(
         evidence_root=tmp_path / "ev",
         probe_budget=6,
     )
-    row = {
-        k: (list(v) if isinstance(v, tuple) else v) for k, v in report.__dict__.items()
-    }
+    # `crown_factor.conjunction_from_row` is now explicitly a legacy-row
+    # compatibility shim, not the live construction path (see
+    # `crown_evidence.py`'s module docstring) -- go through
+    # `TrialReport.to_row()`, the real serialization this refactor
+    # introduced, rather than reconstructing a legacy row shape from
+    # `report.__dict__` by hand.
+    row = report.to_row()
 
     assert _row_is_alive(row) is False
 

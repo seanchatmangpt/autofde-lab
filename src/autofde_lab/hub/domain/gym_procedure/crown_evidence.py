@@ -135,6 +135,36 @@ def standing_to_dict(standing: Standing) -> dict:
     raise TypeError(f"UNKNOWN_STANDING_VARIANT:{type(standing).__name__}")
 
 
+def standing_from_dict(payload: dict) -> Standing:
+    """Reconstruct a `Standing` from its `standing_to_dict` serialization,
+    using real gymact model reconstruction (`model_validate`) for the
+    `AliveEvidence` case's nested `ConformanceResult`/`ReplayReport` --
+    never a re-derived or approximated stand-in for either."""
+    from gymact.process import ConformanceResult
+    from gymact.replay import ReplayMode, ReplayReport
+
+    variant = payload["variant"]
+    if variant == "AliveEvidence":
+        replay_payload = dict(payload["replay"])
+        replay_payload["mode"] = ReplayMode(replay_payload["mode"])
+        return AliveEvidence(
+            episode_digest=payload["episode_digest"],
+            conformance=ConformanceResult.model_validate(payload["conformance"]),
+            replay=ReplayReport.model_validate(replay_payload),
+            receipt_id=payload["receipt_id"],
+            postcondition_ref=payload["postcondition_ref"],
+        )
+    if variant == "UnknownEvidence":
+        return UnknownEvidence(missing=payload["missing"], episode_digest=payload["episode_digest"])
+    if variant == "RefusedEvidence":
+        return RefusedEvidence(reason=payload["reason"], subject=payload["subject"])
+    if variant == "BlockedEvidence":
+        return BlockedEvidence(reason=payload["reason"])
+    if variant == "UnsupportedEvidence":
+        return UnsupportedEvidence(reason=payload["reason"])
+    raise ValueError(f"UNKNOWN_STANDING_VARIANT_IN_PAYLOAD:{variant}")
+
+
 def standing_from_episode(
     log: dict,
     operations: list,

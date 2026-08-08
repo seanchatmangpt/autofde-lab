@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import pytest
 
+from autofde_lab.hub.domain.gym_procedure.crown_evidence import AliveEvidence
 from autofde_lab.hub.domain.gym_procedure.level4_crown import (
     AdvisoryAuthorityRefused,
     ValidatedPlan,
@@ -97,8 +98,17 @@ def test_run_real_trial_end_to_end(tmp_path) -> None:
     # The continuous `reward` dimension has no sound propositional encoding;
     # it must be RECORDED as a loss, never silently dropped.
     assert report.representation_losses["reward"].startswith("UNREPRESENTABLE:")
-    assert report.independently_verified is True
-    assert report.ocel_valid is True
+    # The real evidence chain (`standing_from_episode`) produced a real
+    # `AliveEvidence`: real OCEL schema validity, real conformance, a real
+    # valid replay, and a real receipted postcondition -- not a chain of
+    # independently-asserted booleans that could drift apart.
+    assert isinstance(report.standing, AliveEvidence)
+    assert report.standing.conformance.conformant is True
+    assert report.standing.replay.valid is True
+    assert report.standing.episode_digest
+    assert report.standing.receipt_id
+    assert report.is_alive() is True
+    assert report.verdict() == "ALIVE"
     assert report.ocel_ref_violations == ()
     assert report.replay_mismatches == ()
     assert set(report.step_standings) == {"ALIVE"}

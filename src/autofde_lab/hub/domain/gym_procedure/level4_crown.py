@@ -36,14 +36,20 @@ import hashlib
 import json
 import subprocess
 import uuid
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
+from dataclasses import fields as dataclasses_fields
 from pathlib import Path
 from typing import Any, Optional
 
-from autofde_lab.hub.domain.gym_procedure.crown_factor import (
-    LEVEL4_REQUIRED_FACTORS,
-    CrownFactor,
-    FactorConjunction,
+from autofde_lab.hub.domain.gym_procedure.crown_evidence import (
+    AliveEvidence,
+    BlockedEvidence,
+    RefusedEvidence,
+    Standing,
+    UnknownEvidence,
+    UnsupportedEvidence,
+    standing_from_episode,
+    standing_to_dict,
 )
 from autofde_lab.hub.domain.gym_procedure.discovered_domain import (
     DiscoveredDomain,
@@ -79,6 +85,41 @@ from autofde_lab.hub.domain.gym_procedure.typed_induction import (
 
 def _digest(obj: Any) -> str:
     return hashlib.sha256(json.dumps(obj, sort_keys=True, default=str).encode()).hexdigest()[:16]
+
+
+def _standing_from_bridge_result(result: dict, replay_rec: dict, expected_list: list) -> Standing:
+    """The real construction point for a live `Standing`, on the parent-
+    process side of the `_EXECUTE_SCRIPT` subprocess boundary.
+
+    `result` carries the real OCEL log and the real receipts/replay report,
+    round-tripped as their own real pydantic JSON by the subprocess (see
+    `_EXECUTE_SCRIPT`'s `receipts_json`/`operations_json`/`replay` keys).
+    Reconstructs real `Receipt` and `ReplayReport` objects via
+    `model_validate` -- never re-derived or approximated -- and calls the
+    ONE real constructor, `standing_from_episode`, with them.
+    """
+    from gymact.models import Operation, Receipt
+    from gymact.replay import ReplayMode, ReplayReport
+
+    receipts = [Receipt.model_validate(r) for r in result["receipts_json"]]
+    operations = [Operation(o) for o in result["operations_json"]]
+    replay_payload = dict(replay_rec)
+    replay_mode = ReplayMode(replay_payload.pop("mode"))
+    replay = ReplayReport(
+        mode=replay_mode,
+        valid=bool(replay_payload["valid"]),
+        record_count=int(replay_payload["record_count"] or 0),
+        head_digest=replay_payload["head_digest"],
+        mismatches=tuple(str(m) for m in (replay_payload["mismatches"] or [])),
+    )
+    postcondition_ref = f"final_expected_postcondition:{json.dumps(expected_list, sort_keys=True)}"
+    return standing_from_episode(
+        result["ocel"],
+        operations,
+        receipts,
+        replay=replay,
+        postcondition_ref=postcondition_ref,
+    )
 
 
 # --------------------------------------------------------------------------
@@ -408,6 +449,7 @@ async def main(module_path, class_name, provider_name, config, plan, expected_li
             # mismatch string.
             mismatches.append("REPLAY_REPORT_INVALID")
         replay_report = {
+            "mode": rep.mode.value if hasattr(rep.mode, "value") else str(rep.mode),
             "ran": True,
             "valid": bool(rep.valid),
             "record_count": int(rep.record_count),
@@ -417,8 +459,11 @@ async def main(module_path, class_name, provider_name, config, plan, expected_li
         }
     except Exception as exc:
         # Fail CLOSED: a replay that could not run is a failed factor, never a
-        # silently satisfied one.
+        # silently satisfied one. `mode` is still named -- EVIDENCE_REPLAY was
+        # the mode attempted, even though it never produced a report -- so the
+        # parent process can still reconstruct a real (if failed) ReplayReport.
         replay_report = {
+            "mode": "EVIDENCE_REPLAY",
             "ran": False,
             "valid": False,
             "record_count": 0,
@@ -439,6 +484,19 @@ async def main(module_path, class_name, provider_name, config, plan, expected_li
         "ocel_digest": digest_ocel_log(ocel),
         "n_receipts": len(receipts),
         "replay": replay_report,
+        # The real Receipt/Operation objects backing this episode's standing.
+        # `autofde_lab` is not importable from this subprocess's interpreter
+        # (it runs in ~/gymact's own .venv, not autofde-lab's), so
+        # `standing_from_episode` cannot be called HERE even though this is
+        # the point where the OCEL log, replay report, and receipts are all
+        # simultaneously real, in-hand Python objects. They are instead
+        # round-tripped as their own real pydantic JSON (`model_dump`), and
+        # reconstructed as real `Receipt`/`ReplayReport` objects (via
+        # `model_validate`, not re-derived or approximated) in
+        # `run_real_trial`, which is the nearest point across the process
+        # boundary that can actually import `crown_evidence`.
+        "receipts_json": [r.model_dump(mode="json") for r in receipts],
+        "operations_json": [str(r.operation.value) for r in receipts],
     }
 
 
@@ -838,7 +896,21 @@ def _observation_from_facts(facts: list[str]) -> dict[str, Any]:
 
 @dataclass(frozen=True)
 class TrialReport:
-    """The full, honest record of one real crown trial."""
+    """The full, honest record of one real crown trial.
+
+    The acceptance verdict is carried entirely by `standing` -- a single
+    `crown_evidence.Standing` produced by the ONE real evidence chain,
+    `standing_from_episode` (or, for a trial that never reached actuation, a
+    directly-named `UnknownEvidence`/`RefusedEvidence`/`BlockedEvidence`/
+    `UnsupportedEvidence`). There is no boolean ground-truth field left to
+    disagree with it and no conjunction to assemble: `is_alive()`/`verdict()`
+    below `match` on the real type, branchless by construction.
+
+    `n_probes`, `n_planner_attempts`, `representation_losses`,
+    `ocel_ref_violations`, `replay_mismatches` (and the other evidence-data
+    fields below them) remain plain descriptive counts/records -- they
+    describe what was observed, they do not themselves determine standing.
+    """
 
     seed: int
     run_id: str
@@ -847,8 +919,7 @@ class TrialReport:
     n_planner_attempts: int
     planners_producing_candidates: tuple[str, ...]
     disagreement_detected: bool
-    independently_verified: bool
-    ocel_valid: bool
+    standing: Standing
     ocel_ref_violations: tuple[str, ...]
     replay_mismatches: tuple[str, ...]
     evidence_dir: str
@@ -858,141 +929,56 @@ class TrialReport:
     discriminating_probe: Optional[str] = None
     step_standings: tuple[str, ...] = ()
     outcome: str = "UNKNOWN"
-    # --- typed-model gate + real-goal attainment -------------------------
+    # --- typed-model gate -------------------------------------------------
     goal_predicate_description: str = ""
-    real_goal_attained: bool = False
     typed_derived_dimensions: tuple[str, ...] = ()
     unsound_candidates_rejected: int = 0
     committed_plan_source: str = ""
     final_state: dict = field(default_factory=dict)
-    # --- replay evidence (was silently unverified before this field existed) --
-    replay_ran: bool = False
-    replay_valid: bool = False
+    # --- descriptive replay/OCEL evidence data (not verdicts) -------------
     replay_record_count: int = 0
     replay_error: Optional[str] = None
     ocel_digest: str = ""
     replay_head_digest: Optional[str] = None
-    # --- the typed acceptance equation, built in __post_init__ from the real
-    # --- artifacts this trial actually left on disk.
-    crown_factors: tuple[CrownFactor, ...] = ()
 
-    def __post_init__(self) -> None:
-        # Built here, not at each construction site, so no early-return path
-        # can silently omit a factor: an omitted factor would be scored
-        # `UNKNOWN` by the conjunction anyway, but building centrally means the
-        # *reason* is always named rather than inferred from a hole.
-        if not self.crown_factors:
-            object.__setattr__(self, "crown_factors", self._build_factors())
-
-    # -- evidence references: real artifacts, real digests -------------------
-
-    def _actuation_dir(self) -> str:
-        return str(Path(self.evidence_dir) / "actuation")
-
-    def _ocel_ref(self) -> str:
-        return f"{self._actuation_dir()}/episode.ocel.json#ocel_digest={self.ocel_digest or 'ABSENT'}"
-
-    def _ledger_ref(self) -> str:
-        return (
-            f"{self._actuation_dir()}/receipts.sqlite3"
-            f"#head_digest={self.replay_head_digest or 'ABSENT'}"
-        )
-
-    def _build_factors(self) -> tuple[CrownFactor, ...]:
-        src_bridge = f"gymact_execute_bridge:{self.provider}:{self.run_id}"
-        src_replay = f"gymact_replay_ledger:{self.provider}:{self.run_id}"
-        executed = self.outcome == "EXECUTED"
-        out: list[CrownFactor] = []
-
-        def _obs(name: str, value: bool, source: str, ref: str, observed: Any) -> CrownFactor:
-            ctor = CrownFactor.observed_true if value else CrownFactor.observed_false
-            return ctor(name, source, ref, observed)
-
-        if not executed:
-            # Nothing was actuated, so none of the seven were ever established.
-            # That is UNKNOWN, not failure: the trial did not fail its replay,
-            # it never reached a replay. `is_alive()` is False either way, but
-            # the verdict must not claim an observation that did not happen.
-            reason = f"TRIAL_TERMINATED_BEFORE_ACTUATION:{self.outcome}"
-            src_pre = f"run_real_trial:{self.provider}:{self.run_id}"
-            return tuple(
-                CrownFactor.unknown(name, src_pre, reason) for name in LEVEL4_REQUIRED_FACTORS
-            )
-
-        out.append(
-            _obs(
-                "real_goal_attained", self.real_goal_attained, src_bridge,
-                f"{self._ocel_ref()}|final_state={sorted(self.final_state.items(), key=lambda kv: kv[0])}",
-                self.final_state,
-            )
-        )
-        out.append(
-            _obs("independently_verified", self.independently_verified, src_bridge,
-                 f"{self._actuation_dir()}/commitment.ttl|step_standings={list(self.step_standings)}",
-                 list(self.step_standings))
-        )
-        out.append(_obs("ocel_valid", self.ocel_valid, src_bridge, self._ocel_ref(), self.ocel_valid))
-        out.append(
-            _obs("ocel_referential_integrity", self.ocel_ref_violations == (), src_bridge,
-                 self._ocel_ref(), list(self.ocel_ref_violations))
-        )
-
-        # Replay: `ran` distinguishes a checked-and-failed replay from one that
-        # was never reached. Only the former is OBSERVED_FALSE.
-        if self.replay_ran:
-            out.append(CrownFactor.observed_true("replay_ran", src_replay, self._ledger_ref(), True))
-            out.append(
-                _obs("replay_valid", self.replay_valid, src_replay, self._ledger_ref(),
-                     {"valid": self.replay_valid, "record_count": self.replay_record_count})
-            )
-            out.append(
-                _obs("zero_replay_mismatches", self.replay_mismatches == (), src_replay,
-                     self._ledger_ref(), list(self.replay_mismatches))
-            )
-        elif self.replay_error:
-            out.append(
-                CrownFactor.observed_false("replay_ran", src_replay, self._ledger_ref(), self.replay_error)
-            )
-            out.append(
-                CrownFactor.observed_false("replay_valid", src_replay, self._ledger_ref(), self.replay_error)
-            )
-            out.append(
-                CrownFactor.unknown(
-                    "zero_replay_mismatches", src_replay,
-                    f"REPLAY_DID_NOT_RUN:{self.replay_error}; mismatch tuple carries no evidence",
-                )
-            )
-        else:
-            reason = "REPLAY_NEITHER_RAN_NOR_REPORTED_AN_ERROR"
-            out.append(CrownFactor.unknown("replay_ran", src_replay, reason))
-            out.append(CrownFactor.unknown("replay_valid", src_replay, reason))
-            out.append(CrownFactor.unknown("zero_replay_mismatches", src_replay, reason))
-        return tuple(out)
-
-    # -- the acceptance equation --------------------------------------------
-
-    def conjunction(self) -> FactorConjunction:
-        return FactorConjunction(
-            LEVEL4_REQUIRED_FACTORS, {f.name: f for f in self.crown_factors}
-        )
+    # -- the acceptance verdict, branchless: match on the real type ---------
 
     def is_alive(self) -> bool:
-        """The ONLY green verdict -- now the typed conjunction, not a chain of
-        bare booleans. Every required factor must be PRESENT and
-        `OBSERVED_TRUE`; a factor absent from `crown_factors` is absent, and
-        absence never contributes to ALIVE."""
-        return self.conjunction().is_alive()
+        """The ONLY green verdict. `AliveEvidence` means every real check in
+        `standing_from_episode`'s chain produced positive evidence; every
+        other `Standing` variant is not alive, including the ones -- like
+        `UnknownEvidence` -- that look like "nothing went wrong"."""
+        match self.standing:
+            case AliveEvidence():
+                return True
+            case _:
+                return False
 
     def verdict(self) -> str:
-        """`ALIVE` / `UNKNOWN` / `NOT_ALIVE`. A trial that terminated before
-        actuation is `UNKNOWN`, not a scored failure."""
-        return self.conjunction().verdict()
+        """`ALIVE` / `UNKNOWN` / `NOT_ALIVE`, per standing-law vocabulary.
+        `RefusedEvidence` is a real, checked negative answer (`NOT_ALIVE`,
+        mirroring `CrownFactor.is_evidence()` treating `REFUSED` as
+        evidence); `UnknownEvidence`/`BlockedEvidence`/`UnsupportedEvidence`
+        are all "never established either way" (`UNKNOWN`, mirroring
+        `CrownFactor.NON_EVIDENCE_STATES`)."""
+        match self.standing:
+            case AliveEvidence():
+                return "ALIVE"
+            case RefusedEvidence():
+                return "NOT_ALIVE"
+            case UnknownEvidence() | BlockedEvidence() | UnsupportedEvidence():
+                return "UNKNOWN"
+            case _:  # pragma: no cover - exhaustive over Standing's 5 variants
+                raise TypeError(f"UNHANDLED_STANDING_VARIANT:{type(self.standing).__name__}")
 
     def to_row(self) -> dict:
-        """Scoreboard row, carrying the typed factors so the runner scores the
-        exact same conjunction this report did."""
-        row = dict(asdict(self))
-        row["crown_factors"] = [f.to_dict() for f in self.crown_factors]
+        """Scoreboard row. `standing` is serialized through
+        `crown_evidence.standing_to_dict`, not `dataclasses.asdict`: its
+        `AliveEvidence` case nests real gymact pydantic models
+        (`ConformanceResult`, `ReplayReport`) that `asdict` would leave
+        un-converted rather than turn into plain, JSON-safe dicts."""
+        row = {f.name: getattr(self, f.name) for f in dataclasses_fields(self) if f.name != "standing"}
+        row["standing"] = standing_to_dict(self.standing)
         return row
 
 
@@ -1372,15 +1358,13 @@ def run_real_trial(
             {str(r.get("reason")) for r in raw_records if r.get("reason")}
         )
         return TrialReport(
-            independently_verified=False,
-            ocel_valid=False,
+            standing=UnknownEvidence(
+                missing="NO_APPLICABLE_ACTION_DISCOVERED", episode_digest=None
+            ),
             ocel_ref_violations=(),
             replay_mismatches=("NO_APPLICABLE_ACTION_DISCOVERED",),
-            replay_ran=False,
-            replay_valid=False,
             replay_record_count=0,
             replay_error="NO_APPLICABLE_ACTION_DISCOVERED",
-            real_goal_attained=False,
             outcome="NO_APPLICABLE_ACTION_DISCOVERED",
             unsound_candidates_rejected=0,
             goal_predicate_description=(
@@ -1502,7 +1486,8 @@ def run_real_trial(
                 plan_source = "typed_search"
     if validated is None:
         return TrialReport(
-            independently_verified=False, ocel_valid=False, ocel_ref_violations=(),
+            standing=UnknownEvidence(missing="NO_TYPED_VALID_PLAN", episode_digest=None),
+            ocel_ref_violations=(),
             replay_mismatches=(), outcome="NO_TYPED_VALID_PLAN",
             unsound_candidates_rejected=rejected, **typed_base, **base
         )
@@ -1524,6 +1509,7 @@ def run_real_trial(
     replay_rec = result["replay"] if "replay" in result else None
     if not isinstance(replay_rec, dict):
         replay_rec = {
+            "mode": "EVIDENCE_REPLAY",
             "ran": False,
             "valid": False,
             "record_count": 0,
@@ -1531,6 +1517,7 @@ def run_real_trial(
             "error": "REPLAY_RECORD_ABSENT",
             "mismatches": ["REPLAY_RECORD_ABSENT"],
         }
+    replay_rec.setdefault("mode", "EVIDENCE_REPLAY")
     # Index, never `.get(key, default)`: a replay record that omits `ran` or
     # `valid` is a malformed record, and defaulting it to False would quietly
     # convert "the bridge did not report" into "the bridge reported a
@@ -1554,17 +1541,18 @@ def run_real_trial(
         mismatches.append("REPLAY_DID_NOT_RUN")
     # REAL goal attainment: read off the post-execution observation the
     # actuation bridge returned, not off the model and not off a predicted
-    # postcondition. `independently_verified` only says the predicted
-    # consequence of the committed plan was observed -- it said True in a
-    # prior run while the real world was counter=1, solved=False.
+    # postcondition. `final_state` is kept as descriptive evidence data --
+    # callers that need the boolean can still compute
+    # `real_goal_attained(report.final_state)` themselves; it is no longer
+    # pre-baked as a ground-truth verdict field on `TrialReport`, and it is
+    # NOT part of `standing_from_episode`'s own evidence chain (schema,
+    # conformance, replay validity, receipted postcondition only).
     real_final = dict(result["final_state"] or {}) if "final_state" in result else {}
+    standing = _standing_from_bridge_result(result, replay_rec, expected_steps)
     return TrialReport(
-        independently_verified=bool(result["independently_verified"]),
-        ocel_valid=bool(result["ocel_valid"]),
+        standing=standing,
         ocel_ref_violations=tuple(violations),
         replay_mismatches=tuple(mismatches),
-        replay_ran=replay_ran,
-        replay_valid=replay_valid,
         replay_record_count=int(replay_rec["record_count"] or 0),
         replay_error=replay_rec["error"],
         replay_head_digest=replay_rec["head_digest"],
@@ -1572,7 +1560,6 @@ def run_real_trial(
         committed_plan=validated.plan,
         committed_plan_source=plan_source,
         unsound_candidates_rejected=rejected,
-        real_goal_attained=real_goal_attained(real_final),
         final_state=real_final,
         step_standings=tuple(t["standing"] for t in result["transitions"]),
         outcome="EXECUTED",
