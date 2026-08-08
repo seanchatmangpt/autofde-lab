@@ -14,9 +14,20 @@ is a real, reproduced dspy/numpy interaction bug, not a defect in any
 scikit-decide code -- conftest.py is loaded before any test module is
 collected, so this import ordering guarantee holds regardless of which test
 file first happens to import dspy.
+
+The import is best-effort: some CI jobs (e.g. the "Crown kernel" pr-ci.yml
+job) deliberately run a minimal, numpy-less environment (only `pytest`
+itself is installed) against a fixed subset of tests that never import
+dspy. In that environment there is no dspy/numpy ordering hazard to guard
+against, so a missing numpy must not fail collection for every test file --
+only for whichever specific test actually needs numpy or dspy, which will
+raise its own ImportError/ModuleNotFoundError as usual.
 """
 
-import numpy  # noqa: F401
+try:
+    import numpy  # noqa: F401
+except ModuleNotFoundError:
+    pass
 
 import subprocess
 import time
