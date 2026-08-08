@@ -8,5 +8,5 @@ def evaluate(program_path):
     Based on autofde_lab.hub.solver.openevolve.evaluator_builder.evaluate with pre-filled args.
 
     '''
-    user_evaluator = getattr(evaluator_builder_module, '_openevolve_evaluator_ced8a593')
+    user_evaluator = getattr(evaluator_builder_module, '_openevolve_evaluator_cdc59421')
     return user_evaluator(program_path)

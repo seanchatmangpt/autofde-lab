@@ -56,7 +56,7 @@ import sqlite3
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 #: Modules whose presence would mean the verifier is not independent.
 FORBIDDEN_RUNTIME_MODULES: tuple[str, ...] = (

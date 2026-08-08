@@ -227,7 +227,7 @@ def check_shacl_conformance(
             "to enable real SHACL conformance checking"
         ) from exc
 
-    conforms, _results_graph, report_text = pyshacl.validate(
+    conforms, _, report_text = pyshacl.validate(
         turtle,
         shacl_graph=path.read_text(),
         data_graph_format="turtle",

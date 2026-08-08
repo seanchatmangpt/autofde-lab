@@ -17,6 +17,7 @@ evidence, not something to discard.
 
 from __future__ import annotations
 
+import inspect
 import time
 from dataclasses import dataclass
 from importlib.metadata import entry_points
@@ -32,6 +33,67 @@ class SolverClassification:
     name: str
     entry_point: str
     status: str  # "SUPPORTED" | "UNSUPPORTED:<reason>" | "UNAVAILABLE:<reason>"
+    #: Applicability and runnability are DIFFERENT FACTS and both are reported.
+    #: `status` answers "does `cls.check_domain(domain)` admit this domain?" --
+    #: the ontology question. `constructibility` answers "can this class
+    #: actually be instantiated with the arguments the federation supplies?"
+    #: `Solver.get_domain_requirements()` derives domain *characteristics* and
+    #: says nothing about *constructor* requirements (`src/autofde_lab/CLAUDE.md`
+    #: invariant 2), so a solver can be SUPPORTED and still not constructible.
+    #: Neither field is derivable from the other; a SUPPORTED solver is never
+    #: demoted to UNSUPPORTED merely because it needs configuration.
+    #:   "CONSTRUCTIBLE"                              -- defaults suffice
+    #:   "CONSTRUCTIBLE:VIA_SOLVER_KWARGS(<args>)"    -- `solver_kwargs` supplies them
+    #:   "NOT_CONSTRUCTIBLE:REQUIRES_CONFIGURATION(<args>)"
+    #:   "UNKNOWN:<reason>"                           -- signature not introspectable
+    constructibility: str = "UNKNOWN:NOT_ASSESSED"
+
+
+def unmet_required_args(cls: type, provided: dict) -> tuple[str, ...]:
+    """Constructor arguments `cls` requires that neither defaults nor `provided` supply.
+
+    Deliberately STATIC (`inspect.signature`) rather than a trial
+    instantiation: constructing a real solver can spawn native code, allocate
+    a Ray cluster, or segfault (see `_solve_one_isolated`), none of which is
+    an acceptable cost for an inventory pass. Signature inspection is exact
+    for the one failure class this predicts -- `TypeError: missing 1 required
+    positional argument` -- which is also what `fabric.coverage.classify_failure`
+    maps to `REQUIRES_CONFIGURATION` after the fact. Measuring it *before*
+    running turns a post-hoc raw TypeError into a typed, predicted outcome.
+    """
+    try:
+        sig = inspect.signature(cls.__init__)
+    except (ValueError, TypeError):
+        return ()
+    return tuple(
+        p.name
+        for p in sig.parameters.values()
+        if p.name not in ("self", "domain_factory")
+        and p.default is inspect.Parameter.empty
+        and p.kind
+        in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            inspect.Parameter.KEYWORD_ONLY,
+        )
+        and p.name not in provided
+    )
+
+
+def _constructibility(cls: type, solver_name: str, recipe: Recipe) -> str:
+    try:
+        inspect.signature(cls.__init__)
+    except (ValueError, TypeError) as exc:
+        return f"UNKNOWN:{type(exc).__name__}"
+    provided = solver_kwargs(solver_name, recipe)
+    unmet = unmet_required_args(cls, provided)
+    if unmet:
+        return f"NOT_CONSTRUCTIBLE:REQUIRES_CONFIGURATION({','.join(unmet)})"
+    if provided and not unmet_required_args(cls, {}):
+        return "CONSTRUCTIBLE"
+    if provided:
+        return f"CONSTRUCTIBLE:VIA_SOLVER_KWARGS({','.join(sorted(provided))})"
+    return "CONSTRUCTIBLE"
 
 
 @dataclass(frozen=True)
@@ -39,7 +101,9 @@ class PlannerAttempt:
     planner_identity: str
     representation: str
     problem_digest: str
-    outcome: str  # "PLAN_CANDIDATE" | "UNSUPPORTED" | "TIMEOUT" | "FAILED" | "REFUSED"
+    # "PLAN_CANDIDATE" | "UNSUPPORTED" | "UNSUPPORTED:REQUIRES_CONFIGURATION"
+    # | "TIMEOUT" | "FAILED" | "REFUSED" | "CRASHED"
+    outcome: str
     candidate_plan: tuple[str, ...] = ()
     planning_duration_s: float = 0.0
     detail: str = ""
@@ -66,8 +130,17 @@ def classify_registered_solvers(recipe: Recipe) -> list[SolverClassification]:
             status = "SUPPORTED" if ok else "UNSUPPORTED:CHECK_DOMAIN_FALSE"
         except Exception as exc:  # noqa: BLE001
             status = f"UNSUPPORTED:{type(exc).__name__}"
+        try:
+            constructibility = _constructibility(cls, ep.name, recipe)
+        except Exception as exc:  # noqa: BLE001
+            constructibility = f"UNKNOWN:{type(exc).__name__}"
         results.append(
-            SolverClassification(name=ep.name, entry_point=ep.value, status=status)
+            SolverClassification(
+                name=ep.name,
+                entry_point=ep.value,
+                status=status,
+                constructibility=constructibility,
+            )
         )
     return results
 
@@ -124,6 +197,29 @@ def _solve_one(
                 problem_digest,
                 "UNSUPPORTED",
                 detail="not registered",
+            )
+        # A solver that cannot be constructed with the arguments this harness
+        # supplies is NOT a failed plan search -- it never searched. Recording
+        # it as the generic FAILED with a raw `TypeError: missing 1 required
+        # positional argument` conflates "this planner looked and found
+        # nothing" with "this planner was never configured", which are
+        # different facts about the federation. Detect it up front and emit a
+        # typed outcome whose cause matches
+        # `fabric.coverage.CAUSE_REQUIRES_CONFIGURATION`.
+        unmet = unmet_required_args(cls, solver_kwargs(solver_name, recipe))
+        if unmet:
+            return PlannerAttempt(
+                solver_name,
+                "recipe",
+                problem_digest,
+                "UNSUPPORTED:REQUIRES_CONFIGURATION",
+                (),
+                time.monotonic() - start,
+                detail=(
+                    "constructor requires argument(s) the federation does not "
+                    f"supply: {', '.join(unmet)}; solver is check_domain-applicable "
+                    "but not runnable with defaults"
+                ),
             )
         step_bound = len(recipe.steps) + 2
         with cls(

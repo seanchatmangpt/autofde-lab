@@ -56,9 +56,9 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Mapping
 
 from autofde_lab.ocel.log import OcelLog
 from autofde_lab.ocel.model import (
@@ -180,7 +180,7 @@ def read_commitment(path: Path) -> Commitment:
     graph.parse(str(path), format="turtle")
 
     subject = None
-    for s, p, o in graph.triples((None, rdflib.RDF.type, rdflib.URIRef(_POWL + "Commitment"))):
+    for s, _p, _o in graph.triples((None, rdflib.RDF.type, rdflib.URIRef(_POWL + "Commitment"))):
         subject = str(s)
         break
     if subject is None:
