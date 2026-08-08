@@ -1,8 +1,8 @@
 """Compile mature planner selection into replayable candidate hot paths.
 
-This module is deliberately below the actuation boundary.  It turns a HOT
+This module is deliberately below the actuation boundary. It turns a HOT
 selection decision into a content-bound candidate artifact that can be reused
-without repeating registry ranking.  Reuse is admitted only when every bound
+without repeating registry ranking. Reuse is admitted only when every bound
 identity still matches; drift returns a typed refusal.
 """
 
@@ -24,6 +24,8 @@ class HotPathStanding(str, Enum):
     REFUSED_AMBIGUOUS = "REFUSED:AMBIGUOUS_HOT_ROUTE"
     REFUSED_IDENTITY_DRIFT = "REFUSED:HOT_PATH_IDENTITY_DRIFT"
     REFUSED_CACHE_MISS = "REFUSED:HOT_PATH_CACHE_MISS"
+    REFUSED_AUTHORITY_ESCALATION = "REFUSED:HOT_PATH_AUTHORITY_ESCALATION"
+    REFUSED_MALFORMED = "REFUSED:HOT_PATH_MALFORMED"
 
 
 @dataclass(frozen=True, slots=True)
@@ -151,7 +153,20 @@ def reuse_hot_path(
             None,
             "no compiled candidate exists for the exact expected identity",
         )
-    artifact = HotPathArtifact.from_payload(payload)
+    if payload.get("candidate_only") is not True:
+        return HotPathResult(
+            HotPathStanding.REFUSED_AUTHORITY_ESCALATION,
+            None,
+            "cached object attempted to carry authority beyond candidate selection",
+        )
+    try:
+        artifact = HotPathArtifact.from_payload(payload)
+    except (KeyError, TypeError, ValueError):
+        return HotPathResult(
+            HotPathStanding.REFUSED_MALFORMED,
+            None,
+            "cached hot-path artifact is malformed or incomplete",
+        )
     if artifact.identity != expected:
         return HotPathResult(
             HotPathStanding.REFUSED_IDENTITY_DRIFT,
