@@ -36,10 +36,15 @@ import hashlib
 import json
 import subprocess
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
+from autofde_lab.hub.domain.gym_procedure.crown_factor import (
+    LEVEL4_REQUIRED_FACTORS,
+    CrownFactor,
+    FactorConjunction,
+)
 from autofde_lab.hub.domain.gym_procedure.discovered_domain import (
     DiscoveredDomain,
     DiscoveredProblem,
@@ -445,7 +450,11 @@ def real_goal_attained(observation: dict) -> bool:
     (typed induction records it CONTEXT_DEPENDENT), so this value can only
     come from the real environment after real actuation.
     """
-    return observation.get("solved") is True
+    # Membership check, not `.get("solved")`: an observation that never
+    # published the dimension at all is a different situation from one that
+    # published `False`, and the caller records the whole observation as the
+    # factor's evidence so the distinction survives into the record.
+    return "solved" in observation and observation["solved"] is True
 
 
 def model_goal_predicate(provider_key: str, initial_observation: dict, config: dict):
@@ -481,9 +490,15 @@ def model_goal_predicate(provider_key: str, initial_observation: dict, config: d
     if provider_key == "switchboard":
 
         def board_goal(state: dict) -> bool:
+            # Both sides must be PRESENT. `state.get("required_on") ==
+            # state.get("required_count")` returned True when the state carried
+            # neither dimension (None == None) -- a goal satisfied by a state
+            # that says nothing at all.
+            if "required_on" not in state or "required_count" not in state:
+                return False
             return (
                 state.get("master") is True
-                and state.get("required_on") == state.get("required_count")
+                and state["required_on"] == state["required_count"]
             )
 
         return board_goal, "master and required_on == required_count"
@@ -770,7 +785,20 @@ def commit_and_execute(
     if completed.returncode != 0:
         raise RuntimeError(f"execute bridge failed:\nstdout={completed.stdout}\nstderr={completed.stderr}")
     result = json.loads(completed.stdout.strip().splitlines()[-1])
-    (evidence_dir / "episode.ocel.json").write_text(json.dumps(result["ocel"], indent=2), encoding="utf-8")
+    # Write the CANONICAL bytes, not a pretty-printed rendering.
+    #
+    # `ocel_digest` is computed by gymact's `digest_ocel_log` over
+    # `json.dumps(log, sort_keys=True, separators=(",", ":"))`. Writing the
+    # same log with `indent=2` produced a file that does NOT hash to the
+    # digest the evidence reference cites -- measured on a real crown
+    # artifact: file sha256 07fc9f2e... vs canonical 975b1778... So
+    # `_ocel_ref()`'s `#ocel_digest=` pointed at a file that could not verify
+    # against it, which is precisely the unverifiable evidence reference the
+    # `evidence_ref` requirement exists to prevent. `sha256sum` on this file
+    # now reproduces `ocel_digest`.
+    (evidence_dir / "episode.ocel.json").write_text(
+        json.dumps(result["ocel"], sort_keys=True, separators=(",", ":")), encoding="utf-8"
+    )
     return result
 
 
@@ -830,31 +858,130 @@ class TrialReport:
     replay_valid: bool = False
     replay_record_count: int = 0
     replay_error: Optional[str] = None
+    ocel_digest: str = ""
+    replay_head_digest: Optional[str] = None
+    # --- the typed acceptance equation, built in __post_init__ from the real
+    # --- artifacts this trial actually left on disk.
+    crown_factors: tuple[CrownFactor, ...] = ()
+
+    def __post_init__(self) -> None:
+        # Built here, not at each construction site, so no early-return path
+        # can silently omit a factor: an omitted factor would be scored
+        # `UNKNOWN` by the conjunction anyway, but building centrally means the
+        # *reason* is always named rather than inferred from a hole.
+        if not self.crown_factors:
+            object.__setattr__(self, "crown_factors", self._build_factors())
+
+    # -- evidence references: real artifacts, real digests -------------------
+
+    def _actuation_dir(self) -> str:
+        return str(Path(self.evidence_dir) / "actuation")
+
+    def _ocel_ref(self) -> str:
+        return f"{self._actuation_dir()}/episode.ocel.json#ocel_digest={self.ocel_digest or 'ABSENT'}"
+
+    def _ledger_ref(self) -> str:
+        return (
+            f"{self._actuation_dir()}/receipts.sqlite3"
+            f"#head_digest={self.replay_head_digest or 'ABSENT'}"
+        )
+
+    def _build_factors(self) -> tuple[CrownFactor, ...]:
+        src_bridge = f"gymact_execute_bridge:{self.provider}:{self.run_id}"
+        src_replay = f"gymact_replay_ledger:{self.provider}:{self.run_id}"
+        executed = self.outcome == "EXECUTED"
+        out: list[CrownFactor] = []
+
+        def _obs(name: str, value: bool, source: str, ref: str, observed: Any) -> CrownFactor:
+            ctor = CrownFactor.observed_true if value else CrownFactor.observed_false
+            return ctor(name, source, ref, observed)
+
+        if not executed:
+            # Nothing was actuated, so none of the seven were ever established.
+            # That is UNKNOWN, not failure: the trial did not fail its replay,
+            # it never reached a replay. `is_alive()` is False either way, but
+            # the verdict must not claim an observation that did not happen.
+            reason = f"TRIAL_TERMINATED_BEFORE_ACTUATION:{self.outcome}"
+            src_pre = f"run_real_trial:{self.provider}:{self.run_id}"
+            return tuple(
+                CrownFactor.unknown(name, src_pre, reason) for name in LEVEL4_REQUIRED_FACTORS
+            )
+
+        out.append(
+            _obs(
+                "real_goal_attained", self.real_goal_attained, src_bridge,
+                f"{self._ocel_ref()}|final_state={sorted(self.final_state.items(), key=lambda kv: kv[0])}",
+                self.final_state,
+            )
+        )
+        out.append(
+            _obs("independently_verified", self.independently_verified, src_bridge,
+                 f"{self._actuation_dir()}/commitment.ttl|step_standings={list(self.step_standings)}",
+                 list(self.step_standings))
+        )
+        out.append(_obs("ocel_valid", self.ocel_valid, src_bridge, self._ocel_ref(), self.ocel_valid))
+        out.append(
+            _obs("ocel_referential_integrity", self.ocel_ref_violations == (), src_bridge,
+                 self._ocel_ref(), list(self.ocel_ref_violations))
+        )
+
+        # Replay: `ran` distinguishes a checked-and-failed replay from one that
+        # was never reached. Only the former is OBSERVED_FALSE.
+        if self.replay_ran:
+            out.append(CrownFactor.observed_true("replay_ran", src_replay, self._ledger_ref(), True))
+            out.append(
+                _obs("replay_valid", self.replay_valid, src_replay, self._ledger_ref(),
+                     {"valid": self.replay_valid, "record_count": self.replay_record_count})
+            )
+            out.append(
+                _obs("zero_replay_mismatches", self.replay_mismatches == (), src_replay,
+                     self._ledger_ref(), list(self.replay_mismatches))
+            )
+        elif self.replay_error:
+            out.append(
+                CrownFactor.observed_false("replay_ran", src_replay, self._ledger_ref(), self.replay_error)
+            )
+            out.append(
+                CrownFactor.observed_false("replay_valid", src_replay, self._ledger_ref(), self.replay_error)
+            )
+            out.append(
+                CrownFactor.unknown(
+                    "zero_replay_mismatches", src_replay,
+                    f"REPLAY_DID_NOT_RUN:{self.replay_error}; mismatch tuple carries no evidence",
+                )
+            )
+        else:
+            reason = "REPLAY_NEITHER_RAN_NOR_REPORTED_AN_ERROR"
+            out.append(CrownFactor.unknown("replay_ran", src_replay, reason))
+            out.append(CrownFactor.unknown("replay_valid", src_replay, reason))
+            out.append(CrownFactor.unknown("zero_replay_mismatches", src_replay, reason))
+        return tuple(out)
+
+    # -- the acceptance equation --------------------------------------------
+
+    def conjunction(self) -> FactorConjunction:
+        return FactorConjunction(
+            LEVEL4_REQUIRED_FACTORS, {f.name: f for f in self.crown_factors}
+        )
 
     def is_alive(self) -> bool:
-        """The ONLY green verdict.
+        """The ONLY green verdict -- now the typed conjunction, not a chain of
+        bare booleans. Every required factor must be PRESENT and
+        `OBSERVED_TRUE`; a factor absent from `crown_factors` is absent, and
+        absence never contributes to ALIVE."""
+        return self.conjunction().is_alive()
 
-        Requires the REAL world to have reached the goal -- not the model's
-        prediction, not a per-step postcondition. `replay_ran` and
-        `replay_valid` are explicit conjuncts because an earlier version of
-        this method tested only `replay_mismatches == ()`, which an
-        exception-swallowing replay path satisfied vacuously: a replay that
-        never ran scored identically to one that verified. An absent or
-        unrunnable factor must never read as a satisfied one.
+    def verdict(self) -> str:
+        """`ALIVE` / `UNKNOWN` / `NOT_ALIVE`. A trial that terminated before
+        actuation is `UNKNOWN`, not a scored failure."""
+        return self.conjunction().verdict()
 
-        `ocel_valid` is likewise a conjunct: it was computed fail-closed but
-        omitted from the verdict entirely, so a trial with an invalid OCEL log
-        but clean referential integrity would have scored ALIVE.
-        """
-        return (
-            self.real_goal_attained
-            and self.independently_verified
-            and self.ocel_valid
-            and self.replay_ran
-            and self.replay_valid
-            and self.ocel_ref_violations == ()
-            and self.replay_mismatches == ()
-        )
+    def to_row(self) -> dict:
+        """Scoreboard row, carrying the typed factors so the runner scores the
+        exact same conjunction this report did."""
+        row = dict(asdict(self))
+        row["crown_factors"] = [f.to_dict() for f in self.crown_factors]
+        return row
 
 
 def _is_metric(value: Any) -> bool:
@@ -922,6 +1049,15 @@ def _discover_by_probing(env: RealBlindEnvironment, probe_budget: int) -> tuple[
             sweep[action] = probe(action)
 
         # Chained establisher search for anything still never-applicable.
+        #
+        # Single-helper prefixes only reach preconditions ONE action can
+        # establish. Measured on `switchboard`: `engage_master` needs
+        # switches 0 AND 1 on, so every single-helper probe was refused, the
+        # action was never once observed applicable, and induction had
+        # nothing to model it with -- the trial ended NO_TYPED_VALID_PLAN
+        # for want of an observation, not for want of a plan. Pair prefixes
+        # are tried only for actions single helpers failed to establish, so
+        # the extra cost is paid exactly where the evidence is missing.
         for action in actions:
             if action in learned or n >= probe_budget:
                 continue
@@ -934,6 +1070,21 @@ def _discover_by_probing(env: RealBlindEnvironment, probe_budget: int) -> tuple[
                 if probe(action, prefix=prefix).get("applicable"):
                     establisher[action] = prefix
                     break
+        for action in actions:
+            if action in learned or n >= probe_budget:
+                continue
+            for first in sorted(learned):
+                if action in learned or n >= probe_budget:
+                    break
+                for second in sorted(learned):
+                    if n >= probe_budget:
+                        break
+                    prefix = (first, second)
+                    if action in prefix or first == second:
+                        continue
+                    if probe(action, prefix=prefix).get("applicable"):
+                        establisher[action] = prefix
+                        break
 
         # --- ACTIVELY SEEK REFUSAL EVIDENCE ------------------------------
         # An action with successes and ZERO refusals is the dangerous case:
@@ -1010,6 +1161,64 @@ def _discover_by_probing(env: RealBlindEnvironment, probe_budget: int) -> tuple[
             break
         probe(chosen, commit=True)
         committed.add(chosen)
+
+    # --- ACTIVELY SEEK THE UNOBSERVED RELATIONAL PAIRS -------------------
+    #
+    # An action with a RELATIONAL precondition is known only at the joint
+    # dimension values it was really observed to succeed at; every other pair
+    # is UNKNOWN and `RelationalPrecondition.permits` refuses it. That is
+    # sound, and on `lock_and_key` at depth 3 it is also insufficient:
+    # `open_lock` was observed succeeding exactly once, at
+    # ``(held_key=0, locks_open=0)``, so the model could reach `locks_open`
+    # 1 and never 3 -- an honest NO_TYPED_VALID_PLAN caused by missing
+    # evidence rather than by an unreachable goal.
+    #
+    # Missing evidence is something a discovery agent can go and get. The
+    # probe that gets it is the action re-run from the state ITS OWN SUCCESS
+    # produced, behind each helper in turn: `open_lock` behind
+    # ``(pick_key[perm0], open_lock, pick_key[k])`` observes the second lock's
+    # key, and the round repeats to observe the third. Every probe is
+    # speculative, so nothing is committed; the cost is bounded by the
+    # remaining budget, and if the budget runs out the outcome is the same
+    # honest refusal as before -- never a guess about an unobserved pair.
+    def _relationally_uncertain() -> dict[str, tuple[str, ...]]:
+        typed_now = [r for r in records if "observed_pre" in r and "observed_post" in r]
+        if not typed_now:
+            return {}
+        dom = induce_typed_domain(typed_now)
+        out: dict[str, tuple[str, ...]] = {}
+        for action_id, act in dom.actions.items():
+            if not act.relational_preconditions:
+                continue
+            chain = next(
+                (
+                    tuple(r.get("prefix") or ())
+                    for r in reversed(typed_now)
+                    if r["action"] == action_id and r.get("applicable")
+                ),
+                None,
+            )
+            if chain is not None:
+                out[action_id] = chain
+        return out
+
+    while n < probe_budget:
+        uncertain = _relationally_uncertain()
+        if not uncertain:
+            break
+        progressed = False
+        for action, chain in sorted(uncertain.items()):
+            if n >= probe_budget:
+                break
+            base = chain + (action,)
+            for helper in sorted(learned):
+                if n >= probe_budget:
+                    break
+                if probe(action, prefix=base + (helper,)).get("applicable"):
+                    progressed = True
+                    break
+        if not progressed:
+            break
 
     return records, n
 
@@ -1300,18 +1509,35 @@ def run_real_trial(
     # failed factor, not a satisfied one. The previous code used
     # .get("mismatches", []) and so treated "no replay record at all" as
     # "replay clean".
-    replay_rec = result.get("replay")
+    replay_rec = result["replay"] if "replay" in result else None
     if not isinstance(replay_rec, dict):
         replay_rec = {
             "ran": False,
             "valid": False,
             "record_count": 0,
+            "head_digest": None,
             "error": "REPLAY_RECORD_ABSENT",
             "mismatches": ["REPLAY_RECORD_ABSENT"],
         }
-    mismatches = [str(m) for m in (replay_rec.get("mismatches") or [])]
-    replay_ran = bool(replay_rec.get("ran", False))
-    replay_valid = bool(replay_rec.get("valid", False))
+    # Index, never `.get(key, default)`: a replay record that omits `ran` or
+    # `valid` is a malformed record, and defaulting it to False would quietly
+    # convert "the bridge did not report" into "the bridge reported a
+    # failure". Both are wrong to guess -- so the missing key is materialised
+    # explicitly, with a named reason, before it is read.
+    for required_key, absent_marker in (
+        ("ran", False), ("valid", False), ("mismatches", ["REPLAY_FIELD_ABSENT"]),
+        ("record_count", 0), ("error", None), ("head_digest", None),
+    ):
+        if required_key not in replay_rec:
+            replay_rec[required_key] = absent_marker
+            if required_key in ("ran", "valid"):
+                replay_rec["mismatches"] = list(replay_rec["mismatches"] or []) + [
+                    f"REPLAY_FIELD_ABSENT:{required_key}"
+                ]
+                replay_rec["error"] = f"REPLAY_FIELD_ABSENT:{required_key}"
+    mismatches = [str(m) for m in (replay_rec["mismatches"] or [])]
+    replay_ran = bool(replay_rec["ran"])
+    replay_valid = bool(replay_rec["valid"])
     if not replay_ran and "REPLAY_RECORD_ABSENT" not in mismatches:
         mismatches.append("REPLAY_DID_NOT_RUN")
     # REAL goal attainment: read off the post-execution observation the
@@ -1319,7 +1545,7 @@ def run_real_trial(
     # postcondition. `independently_verified` only says the predicted
     # consequence of the committed plan was observed -- it said True in a
     # prior run while the real world was counter=1, solved=False.
-    real_final = dict(result.get("final_state") or {})
+    real_final = dict(result["final_state"] or {}) if "final_state" in result else {}
     return TrialReport(
         independently_verified=bool(result["independently_verified"]),
         ocel_valid=bool(result["ocel_valid"]),
@@ -1327,8 +1553,10 @@ def run_real_trial(
         replay_mismatches=tuple(mismatches),
         replay_ran=replay_ran,
         replay_valid=replay_valid,
-        replay_record_count=int(replay_rec.get("record_count") or 0),
-        replay_error=replay_rec.get("error"),
+        replay_record_count=int(replay_rec["record_count"] or 0),
+        replay_error=replay_rec["error"],
+        replay_head_digest=replay_rec["head_digest"],
+        ocel_digest=str(result["ocel_digest"]) if "ocel_digest" in result else "",
         committed_plan=validated.plan,
         committed_plan_source=plan_source,
         unsound_candidates_rejected=rejected,
@@ -1346,17 +1574,37 @@ def validate_ocel_referential_integrity(log: dict) -> list[str]:
     and every event/object type against the declared type tables. Returns a
     list of violations (empty == clean)."""
     violations: list[str] = []
-    object_ids = {o.get("id") for o in log.get("objects", [])}
-    object_types = {t.get("name") for t in log.get("objectTypes", [])}
-    event_types = {t.get("name") for t in log.get("eventTypes", [])}
 
-    for obj in log.get("objects", []):
-        if obj.get("type") not in object_types:
+    # A missing section is a violation, not an empty one. `log.get("events",
+    # [])` made a log with NO events table iterate zero times and report clean
+    # -- the same absence-equals-success shape as the replay defect, one layer
+    # down: a log that omits everything scored identically to a log that
+    # referenced everything correctly.
+    for section in ("objects", "objectTypes", "events", "eventTypes"):
+        if section not in log:
+            violations.append(f"OCEL_SECTION_ABSENT:{section}")
+        elif not isinstance(log[section], list):
+            violations.append(f"OCEL_SECTION_NOT_A_LIST:{section}")
+    if violations:
+        return violations
+
+    object_ids = {o["id"] if "id" in o else None for o in log["objects"]}
+    object_types = {t["name"] if "name" in t else None for t in log["objectTypes"]}
+    event_types = {t["name"] if "name" in t else None for t in log["eventTypes"]}
+
+    for obj in log["objects"]:
+        if "type" not in obj or obj["type"] not in object_types:
             violations.append(f"DANGLING_OBJECT_TYPE:{obj.get('id')}->{obj.get('type')}")
-    for ev in log.get("events", []):
-        if ev.get("type") not in event_types:
+    for ev in log["events"]:
+        if "type" not in ev or ev["type"] not in event_types:
             violations.append(f"DANGLING_EVENT_TYPE:{ev.get('id')}->{ev.get('type')}")
-        for rel in ev.get("relationships", []) or []:
-            if rel.get("objectId") not in object_ids:
+        # An event with no relationships key at all is not "an event with zero
+        # relationships" -- it is an event whose object linkage was never
+        # recorded, and OCEL requires that linkage.
+        if "relationships" not in ev:
+            violations.append(f"EVENT_RELATIONSHIPS_ABSENT:{ev.get('id')}")
+            continue
+        for rel in ev["relationships"] or []:
+            if "objectId" not in rel or rel["objectId"] not in object_ids:
                 violations.append(f"DANGLING_OBJECT_REFERENCE:{ev.get('id')}->{rel.get('objectId')}")
     return violations

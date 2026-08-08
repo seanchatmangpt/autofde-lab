@@ -39,6 +39,7 @@ cannot carry.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from itertools import combinations
 from typing import Any, Optional
 
 from autofde_lab.hub.domain.gym_procedure.state_typing import (
@@ -89,6 +90,90 @@ class TypedEffect:
         return f"{self.dimension}: ={self.absolute_value} (absolute){suffix}"
 
 
+#: Cap on how many VARYING boolean dimensions a count-derivation may be
+#: searched over. The search is a real subset enumeration (2**k), so it is
+#: bounded rather than left to blow up on a wide observation. Above the cap
+#: the derivation is simply not claimed -- absence of a search is not
+#: evidence of absence of a derivation.
+DERIVED_COUNT_MAX_BOOL_DIMS = 14
+
+
+@dataclass(frozen=True)
+class DerivedDimension:
+    """A metric dimension that is not independently settable -- it is a
+    FUNCTION of other dimensions, and must be RECOMPUTED after every effect
+    rather than claimed as an effect.
+
+    The measured defect: `switchboard`'s `required_on` is
+    ``sum(switches[i] for i in required)``. Typed induction saw
+    `toggle_switch[2]` move it 0 -> 1 and (before the self-inverse rule)
+    claimed a monotonic `+1`, which BFS stacked for a free gain while the
+    real switch flipped back off. The self-inverse rule correctly stopped
+    that claim -- and then NOTHING claimed `required_on` at all, so the goal
+    ``master and required_on == required_count`` became unreachable in the
+    model and every `switchboard` seed ended NO_TYPED_VALID_PLAN for a
+    representational reason rather than a real one.
+
+    Neither claiming it nor abandoning it is right, because it is neither an
+    effect nor unknowable: it is DERIVED. `kind="count_of"` records
+    ``value == |{b in over : state[b] is True}|``, verified against EVERY
+    observation -- a derivation supported by all but one observation is not
+    claimed at all.
+    """
+
+    name: str
+    kind: str  # currently only "count_of"
+    over: frozenset[str]
+    support: int = 0  # observations the derivation was checked against
+
+    def recompute(self, state: dict[str, Any]) -> Optional[int]:
+        if self.kind != "count_of":
+            return None
+        if any(d not in state for d in self.over):
+            return None
+        return sum(1 for d in self.over if state[d] is True)
+
+    def describe(self) -> str:
+        return (
+            f"{self.name} = count_of({', '.join(sorted(self.over))}) "
+            f"[verified on {self.support} observations]"
+        )
+
+
+@dataclass(frozen=True)
+class RelationalPrecondition:
+    """A precondition that no flat ``dimension -> constant`` map can express:
+    applicability depends on the JOINT value of two dimensions.
+
+    `lock_and_key`'s `open_lock` requires ``held_key == perm[locks_open]``
+    for a permutation the environment never discloses. The flat induction
+    learned `held_key == 0` (the one pair it happened to observe) and so
+    claimed `open_lock` applicable at `locks_open == 1` while holding key 0
+    -- a state reality refuses whenever ``perm[1] != 0``.
+
+    What is honestly known is the set of (dim_a, dim_b) pairs under which the
+    action was really OBSERVED to succeed. An unobserved pair is UNKNOWN: not
+    permitted (the planner may not assume it works) and not forbidden (a
+    later probe may observe it). `permits` therefore returns False for an
+    unobserved pair, which can only ever make the model MORE restrictive --
+    its failure mode is an honest NO_TYPED_VALID_PLAN, never a plan wrongly
+    believed to run.
+    """
+
+    dim_a: str
+    dim_b: str
+    observed_pairs: frozenset[tuple[Any, Any]]
+
+    def permits(self, state: dict[str, Any]) -> bool:
+        if self.dim_a not in state or self.dim_b not in state:
+            return False
+        return (state[self.dim_a], state[self.dim_b]) in self.observed_pairs
+
+    def describe(self) -> str:
+        pairs = ", ".join(repr(p) for p in sorted(self.observed_pairs, key=repr))
+        return f"({self.dim_a}, {self.dim_b}) in {{{pairs}}} (observed only)"
+
+
 @dataclass(frozen=True)
 class TypedAction:
     id: str
@@ -102,6 +187,18 @@ class TypedAction:
     repeatability. Such an action may be applied AT MOST ONCE in a plan --
     see `TypedDomain.simulate` and `search_plan_typed`."""
     n_distinct_success_states: int = 0
+    relational_preconditions: tuple[RelationalPrecondition, ...] = ()
+    """EVERY two-dimension hypothesis consistent with the observed
+    successes and refusals, conjoined.
+
+    Picking one candidate pair arbitrarily is unsound: for `lock_and_key`'s
+    `open_lock` both `(held_key, locks_open)` and `(held_key, holding_key)`
+    separate the observed successes from the observed refusals, yet they
+    disagree about the future -- the second permits opening at
+    `locks_open == 1` while holding key 0, which reality refuses whenever
+    ``perm[1] != 0``. Conjoining every consistent hypothesis permits a state
+    only when NO consistent hypothesis forbids it, so the model can never be
+    less restrictive than the evidence supports."""
     unrepresentable: Optional[str] = None
     """Set when the FLAT precondition map provably cannot explain this
     action's observed refusals.
@@ -126,6 +223,9 @@ class TypedAction:
         for dim, bound in self.metric_lower_bounds.items():
             value = state.get(dim)
             if not isinstance(value, (int, float)) or value < bound:
+                return False
+        for rel in self.relational_preconditions:
+            if not rel.permits(state):
                 return False
         return True
 
@@ -154,12 +254,27 @@ class TypedAction:
 class TypedDomain:
     dimensions: dict[str, StateDimension]
     actions: dict[str, TypedAction]
+    derived: dict[str, DerivedDimension] = field(default_factory=dict)
+
+    def apply_action(self, act: TypedAction, state: dict[str, Any]) -> dict[str, Any]:
+        """Apply an action's effects, then RECOMPUTE every derived dimension.
+
+        This is the single place a derived dimension acquires a value. No
+        action may set one (`induce_typed_domain` strips such claims), and no
+        derived dimension is left stale after an effect changes a dimension
+        it counts over."""
+        new = act.apply(state)
+        for derived in self.derived.values():
+            recomputed = derived.recompute(new)
+            if recomputed is not None:
+                new[derived.name] = recomputed
+        return new
 
     def derived_dimensions(self) -> list[str]:
         """Dimensions no action claims unconditionally -- i.e. derived from
         others (e.g. `solved` == `counter == target`). Naming them is what
         stops a planner from believing one increment sets `solved`."""
-        derived: set[str] = set()
+        derived: set[str] = set(self.derived)
         for act in self.actions.values():
             derived.update(act.context_dependent_dimensions())
         return sorted(derived)
@@ -185,8 +300,121 @@ class TypedDomain:
             if not act.applicable_in(state):
                 return None
             used.add(action_id)
-            state = act.apply(state)
+            state = self.apply_action(act, state)
         return state
+
+
+def detect_derived_dimensions(
+    observations: list[dict[str, Any]], dims: dict[str, StateDimension]
+) -> dict[str, DerivedDimension]:
+    """Find metric dimensions that are a COUNT over boolean dimensions.
+
+    Evidence standard, deliberately strict in three ways:
+
+    1. **Every observation must agree.** A subset consistent with all but one
+       observation is not claimed at all. Absence of a counter-example inside
+       a subset of the data is not proof of the derivation
+       (`.claude/rules/absence-is-not-evidence.md`).
+    2. **The derivation must be UNIQUE.** If two different boolean subsets
+       both reproduce the dimension on every observation, the data does not
+       determine which one is real, so neither is claimed and the dimension
+       stays context-dependent.
+    3. **The dimension must actually VARY.** A constant integer is
+       reproduced by the empty subset (when it is 0) and carries no evidence
+       of a counting relationship.
+
+    Candidate booleans are restricted to those that VARY across the
+    observations: a constant boolean contributes a constant offset that no
+    exact count can distinguish, so including it could only ever manufacture
+    an ambiguity, never resolve one.
+    """
+    if len(observations) < 3:
+        return {}
+    shared = set(observations[0])
+    for obs in observations[1:]:
+        shared &= set(obs)
+
+    bool_dims = sorted(
+        d
+        for d in shared
+        if dims.get(d) is not None
+        and dims[d].kind is DimensionKind.BOOLEAN
+        and len({bool(o[d]) for o in observations}) > 1
+    )
+    if not bool_dims or len(bool_dims) > DERIVED_COUNT_MAX_BOOL_DIMS:
+        return {}
+
+    metric_dims = [
+        d
+        for d in sorted(shared)
+        if dims.get(d) is not None
+        and dims[d].is_metric()
+        and all(isinstance(o[d], int) and not isinstance(o[d], bool) for o in observations)
+        and len({o[d] for o in observations}) > 1
+    ]
+
+    found: dict[str, DerivedDimension] = {}
+    for metric in metric_dims:
+        candidates: list[frozenset[str]] = []
+        pool = [b for b in bool_dims if b != metric]
+        for size in range(1, len(pool) + 1):
+            for subset in combinations(pool, size):
+                if all(
+                    obs[metric] == sum(1 for b in subset if obs[b] is True)
+                    for obs in observations
+                ):
+                    candidates.append(frozenset(subset))
+            if len(candidates) > 1:
+                break  # already ambiguous; no need to enumerate further
+        if len(candidates) == 1:
+            found[metric] = DerivedDimension(
+                name=metric,
+                kind="count_of",
+                over=candidates[0],
+                support=len(observations),
+            )
+    return found
+
+
+def _induce_relational_preconditions(
+    successes: list[dict], refusals: list[dict], dims: dict[str, StateDimension]
+) -> tuple[RelationalPrecondition, ...]:
+    """Every two-dimension hypothesis consistent with the real evidence.
+
+    A candidate pair ``(a, b)`` is admitted only when the set of
+    ``(state[a], state[b])`` values observed on SUCCESS excludes every value
+    observed on a REFUSAL -- i.e. the pair really does separate what worked
+    from what was refused. Both dimensions must VARY across the evidence: a
+    constant dimension separates nothing and would only pad the conjunction.
+
+    All admitted candidates are returned and later conjoined, because they
+    agree about the past and disagree about the future, and there is no
+    evidence to choose between them.
+    """
+    if not successes or not refusals:
+        return ()
+    shared = set(successes[0]["observed_pre"])
+    for rec in successes[1:] + refusals:
+        pre = rec.get("observed_pre")
+        if not isinstance(pre, dict):
+            return ()
+        shared &= set(pre)
+
+    varying = sorted(
+        d
+        for d in shared
+        if len({repr(r["observed_pre"][d]) for r in successes + refusals}) > 1
+    )
+    success_states = [r["observed_pre"] for r in successes]
+    refusal_states = [r["observed_pre"] for r in refusals]
+
+    out: list[RelationalPrecondition] = []
+    for a, b in combinations(varying, 2):
+        good = {(s[a], s[b]) for s in success_states}
+        if any((r[a], r[b]) in good for r in refusal_states):
+            continue  # this pair cannot tell the successes from the refusals
+        out.append(RelationalPrecondition(a, b, frozenset(good)))
+    return tuple(out)
 
 
 def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
@@ -198,6 +426,7 @@ def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
     observations = [r["observed_pre"] for r in probe_records if "observed_pre" in r]
     observations += [r["observed_post"] for r in probe_records if "observed_post" in r]
     dims = classify_observation(observations)
+    derived_dims = detect_derived_dimensions(observations, dims)
 
     by_action: dict[str, list[dict]] = {}
     for rec in probe_records:
@@ -299,6 +528,21 @@ def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
                         dim_name, eff.kind, context_dependent=True, observations=eff.observations
                     )
 
+        # DERIVED DIMENSIONS ARE NEVER AN EFFECT. A dimension proven to be a
+        # count over booleans is recomputed by `TypedDomain.apply_action`
+        # from those booleans; letting an action also claim a delta on it
+        # would double-count. This is the constructive half of the
+        # self-inverse rule above: that rule refuses the unsound claim, this
+        # one supplies the sound derivation in its place.
+        for dim_name in list(effects):
+            if dim_name in derived_dims:
+                effects[dim_name] = TypedEffect(
+                    dim_name,
+                    effects[dim_name].kind,
+                    context_dependent=True,
+                    observations=effects[dim_name].observations,
+                )
+
         # Preconditions: only non-metric dimensions whose value was constant
         # across every success (a metric dimension varying across successes
         # is evidence it is NOT a precondition, not evidence it is one).
@@ -373,6 +617,8 @@ def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
         # applicable falsifies the flat model for this action. See
         # `TypedAction.unrepresentable`.
         unrepresentable: Optional[str] = None
+        relational: tuple[RelationalPrecondition, ...] = ()
+        flat_falsified = False
         for r in refusals:
             pre = r.get("observed_pre")
             if not isinstance(pre, dict):
@@ -381,14 +627,36 @@ def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
                 isinstance(pre.get(d), (int, float)) and pre[d] >= b
                 for d, b in lower_bounds.items()
             ):
-                unrepresentable = "UNREPRESENTABLE:RELATIONAL_PRECONDITION"
+                flat_falsified = True
                 break
+
+        if not successes:
+            # An action never once observed succeeding is not a falsified
+            # flat model -- there is no model to falsify. Reporting it as
+            # RELATIONAL_PRECONDITION (which the falsification test did,
+            # because every `all(...)` over an empty precondition map is
+            # vacuously true) named the wrong defect: measured on
+            # `switchboard`, `engage_master` was never seen applicable at a
+            # 12-probe budget and was reported as relationally
+            # unrepresentable when the real state of affairs was that
+            # probing never established its precondition.
+            unrepresentable = "UNREPRESENTABLE:NEVER_OBSERVED_APPLICABLE"
+        elif flat_falsified:
+            # The flat map is provably wrong here. Before declaring the
+            # action unrepresentable, look for a RELATIONAL precondition
+            # that really does separate the observed successes from the
+            # observed refusals. Only when no pair of dimensions does is the
+            # honest verdict UNREPRESENTABLE.
+            relational = _induce_relational_preconditions(successes, refusals, dims)
+            if not relational:
+                unrepresentable = "UNREPRESENTABLE:RELATIONAL_PRECONDITION"
 
         actions[action_id] = TypedAction(
             id=action_id,
             effects=effects,
             preconditions=preconds,
             metric_lower_bounds=lower_bounds,
+            relational_preconditions=relational,
             unrepresentable=unrepresentable,
             n_successes=len(successes),
             n_refusals=len(refusals),
@@ -398,7 +666,7 @@ def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
             n_distinct_success_states=len(distinct_pre),
         )
 
-    return TypedDomain(dimensions=dims, actions=actions)
+    return TypedDomain(dimensions=dims, actions=actions, derived=derived_dims)
 
 
 def validate_plan_typed(
@@ -457,7 +725,7 @@ def search_plan_typed(
                 continue
             if not act.applicable_in(state):
                 continue
-            nxt = act.apply(state)
+            nxt = domain.apply_action(act, state)
             new_spent = spent | {action_id} if act.repeatability_unknown else spent
             k = (key(nxt), new_spent)
             if k in seen:

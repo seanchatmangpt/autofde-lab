@@ -28,6 +28,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from autofde_lab.hub.domain.gym_procedure.crown_factor import conjunction_from_row
+
 
 @dataclass(frozen=True)
 class FrozenCrown:
@@ -136,42 +138,28 @@ def verify_manifest(crown: FrozenCrown, executed_seeds: list[int]) -> list[str]:
 
 
 def _row_is_alive(row: dict) -> bool:
-    """The full conjunction, matching `TrialReport.is_alive`.
+    """The scoreboard verdict, computed by the SAME typed conjunction
+    `TrialReport.is_alive` uses, so the report and the scoreboard cannot
+    drift apart.
 
-    `real_goal_attained` is load-bearing and was previously missing here: a
-    trial once reported independently_verified=True while the real world sat
-    at counter=1, solved=False, because per-step postcondition verification
-    only says the committed plan's PREDICTED consequence was observed -- not
-    that the goal was reached. A scoreboard without this term scores the
-    model's own prediction, which is the exact failure the typed-induction
-    repair exists to prevent.
-
-    Absence is not success. The collection terms below require the key to be
-    PRESENT and empty, never merely falsy: `not row.get("replay_mismatches")`
-    was true for `[]` *and* for a row that never wrote the field at all, so a
-    trial with no replay evidence whatsoever scored identically to one whose
-    replay verified. Combined with an exception-swallowing replay path in the
-    bridge, that was two independent layers of the same absence-equals-success
-    defect, and it is why every row of crown run 1 reported an empty mismatch
-    tuple regardless of what replay actually did.
-
-    `replay_ran`/`replay_valid`/`ocel_valid` are explicit conjuncts for the
-    same reason: a factor that cannot fail is a factor that is not being
-    checked.
+    Previously this was a hand-maintained chain of `row.get(...)` tests that
+    duplicated `TrialReport.is_alive` by convention -- and had already fallen
+    out of step with it once (`real_goal_attained` was missing here while
+    present there). It now delegates to `conjunction_from_row`, which
+    reconstructs the seven `CrownFactor`s from the row: rows written before
+    the typed equation existed reconstruct to `UNKNOWN` for every factor they
+    never recorded, and `UNKNOWN` is not ALIVE.
     """
+    return conjunction_from_row(row).is_alive()
 
-    def _present_and_empty(key: str) -> bool:
-        return key in row and not row[key]
 
-    return (
-        row.get("real_goal_attained") is True
-        and row.get("independently_verified") is True
-        and row.get("ocel_valid") is True
-        and row.get("replay_ran") is True
-        and row.get("replay_valid") is True
-        and _present_and_empty("ocel_ref_violations")
-        and _present_and_empty("replay_mismatches")
-    )
+def _row_verdict(row: dict) -> str:
+    """`ALIVE` / `UNKNOWN` / `NOT_ALIVE` for one row.
+
+    `UNKNOWN` is the honest verdict for the three pre-repair crown attempts:
+    their rows carry no replay evidence at all, so they were never checked
+    rather than checked and failed."""
+    return conjunction_from_row(row).verdict()
 
 
 @dataclass
@@ -185,8 +173,21 @@ class CrownAttempt:
     def alive_count(self) -> int:
         return sum(1 for r in self.results if _row_is_alive(r))
 
+    def verdict_distribution(self) -> dict[str, int]:
+        """How many rows are ALIVE / UNKNOWN / NOT_ALIVE. Reported alongside
+        the score because `n/10 ALIVE` alone cannot distinguish a trial that
+        failed a check from one whose check never ran."""
+        dist = {"ALIVE": 0, "UNKNOWN": 0, "NOT_ALIVE": 0}
+        for r in self.results:
+            dist[_row_verdict(r)] += 1
+        return dist
+
     def summary(self) -> str:
-        return f"attempt {self.attempt_index}: {self.alive_count()}/{len(self.results)} ALIVE"
+        dist = self.verdict_distribution()
+        return (
+            f"attempt {self.attempt_index}: {self.alive_count()}/{len(self.results)} ALIVE "
+            f"(ALIVE={dist['ALIVE']} UNKNOWN={dist['UNKNOWN']} NOT_ALIVE={dist['NOT_ALIVE']})"
+        )
 
 
 @dataclass

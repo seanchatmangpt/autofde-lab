@@ -157,6 +157,35 @@ class CrownFactor(Generic[T]):
     def unsupported(cls, name: str, source: str, reason: str) -> "CrownFactor":
         return cls(name=name, state=FactorState.UNSUPPORTED, source=source, unknown_reason=reason)
 
+    # -- serialization ------------------------------------------------------
+
+    def to_dict(self) -> dict:
+        return {
+            "name": self.name,
+            "state": self.state.value,
+            "source": self.source,
+            "observed": self.observed,
+            "evidence_ref": self.evidence_ref,
+            "refusal": self.refusal,
+            "unknown_reason": self.unknown_reason,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: dict) -> "CrownFactor":
+        """Rebuild from a serialized row. Deliberately indexes ``state``,
+        ``name`` and ``source`` with ``[]`` and not ``.get(..., default)``: a
+        serialized factor missing its state is a corrupt record, not a
+        satisfied one."""
+        return cls(
+            name=payload["name"],
+            state=FactorState(payload["state"]),
+            source=payload["source"],
+            observed=payload["observed"] if "observed" in payload else None,
+            evidence_ref=payload["evidence_ref"] if "evidence_ref" in payload else None,
+            refusal=payload["refusal"] if "refusal" in payload else None,
+            unknown_reason=payload["unknown_reason"] if "unknown_reason" in payload else None,
+        )
+
 
 @dataclass(frozen=True)
 class FactorConjunction:
@@ -222,3 +251,87 @@ LEVEL4_REQUIRED_FACTORS: tuple[str, ...] = (
     "replay_valid",
     "zero_replay_mismatches",
 )
+
+
+def factors_from_row(row: dict) -> dict[str, CrownFactor]:
+    """Rebuild the acceptance factors from a serialized scoreboard row.
+
+    Two eras of row exist and they must not be scored identically:
+
+    * Rows written **after** the typed acceptance equation landed carry a
+      ``crown_factors`` list; those are authoritative and are rebuilt verbatim.
+    * Rows written **before** it (crown attempts 1-3, and 4-5) carry only loose
+      booleans. Those are reconstructed field by field, and any field the row
+      does not contain becomes ``UNKNOWN`` -- never ``OBSERVED_FALSE`` and
+      never a pass. Attempts 1-3 have no ``replay_ran``/``replay_valid`` field
+      at all, which is exactly why they must re-score ``UNKNOWN``: replay was
+      not checked in those runs, so neither a green nor a red verdict is
+      honest about them.
+
+    ``zero_replay_mismatches`` is deliberately gated on the row containing
+    ``replay_ran``. An empty mismatch tuple from a run where replay never
+    executed is absence, not cleanliness -- the original defect.
+    """
+    if "crown_factors" in row and isinstance(row["crown_factors"], list):
+        rebuilt = {}
+        for payload in row["crown_factors"]:
+            factor = CrownFactor.from_dict(payload)
+            rebuilt[factor.name] = factor
+        return rebuilt
+
+    src = f"crown_row:seed={row['seed'] if 'seed' in row else 'UNSEEDED'}"
+    base_ref = row["evidence_dir"] if "evidence_dir" in row else None
+    factors: dict[str, CrownFactor] = {}
+
+    def _ref(key: str) -> str:
+        # The evidence reference for a reconstructed factor names the exact
+        # recorded field it came from, qualified by the trial's evidence
+        # directory when the row carries one. It is weaker than the live
+        # report's digest-bearing reference, and says so -- but it is still a
+        # real origin, not a claim with nothing behind it. What it can never
+        # be is manufactured from a MISSING field: those become UNKNOWN above.
+        return f"{base_ref}#row.{key}" if base_ref else f"{src}#row.{key}"
+
+    def _from_bool(factor_name: str, key: str, reason: str) -> None:
+        if key not in row:
+            factors[factor_name] = CrownFactor.unknown(factor_name, src, reason)
+            return
+        ctor = CrownFactor.observed_true if row[key] is True else CrownFactor.observed_false
+        factors[factor_name] = ctor(factor_name, src, _ref(key), row[key])
+
+    _from_bool("real_goal_attained", "real_goal_attained", "LEGACY_ROW_LACKS_real_goal_attained")
+    _from_bool("independently_verified", "independently_verified", "LEGACY_ROW_LACKS_independently_verified")
+    _from_bool("ocel_valid", "ocel_valid", "LEGACY_ROW_LACKS_ocel_valid")
+
+    name = "ocel_referential_integrity"
+    if "ocel_ref_violations" not in row:
+        factors[name] = CrownFactor.unknown(name, src, "LEGACY_ROW_LACKS_ocel_ref_violations")
+    else:
+        clean = not row["ocel_ref_violations"]
+        ctor = CrownFactor.observed_true if clean else CrownFactor.observed_false
+        factors[name] = ctor(name, src, _ref("ocel_ref_violations"), list(row["ocel_ref_violations"]))
+
+    _from_bool("replay_ran", "replay_ran", "REPLAY_NOT_CHECKED_IN_THIS_ATTEMPT")
+    _from_bool("replay_valid", "replay_valid", "REPLAY_NOT_CHECKED_IN_THIS_ATTEMPT")
+
+    name = "zero_replay_mismatches"
+    if "replay_ran" not in row or "replay_mismatches" not in row:
+        factors[name] = CrownFactor.unknown(
+            name, src, "MISMATCH_TUPLE_WITHOUT_A_REPLAY_THAT_RAN_IS_ABSENCE_NOT_CLEANLINESS"
+        )
+    elif row["replay_ran"] is not True:
+        factors[name] = CrownFactor.unknown(
+            name, src, "REPLAY_DID_NOT_RUN_SO_MISMATCH_TUPLE_CARRIES_NO_EVIDENCE"
+        )
+    else:
+        clean = not row["replay_mismatches"]
+        ctor = CrownFactor.observed_true if clean else CrownFactor.observed_false
+        factors[name] = ctor(name, src, _ref("replay_mismatches"), list(row["replay_mismatches"]))
+
+    return factors
+
+
+def conjunction_from_row(row: dict) -> FactorConjunction:
+    """The single scoring path shared by `TrialReport` and the scoreboard, so
+    the report and the runner cannot drift apart."""
+    return FactorConjunction(LEVEL4_REQUIRED_FACTORS, factors_from_row(row))
