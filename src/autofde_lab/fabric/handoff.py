@@ -19,7 +19,10 @@ class AuthorityScope:
     resources: frozenset[str]
 
     def contains(self, child: "AuthorityScope") -> bool:
-        return child.capabilities <= self.capabilities and child.resources <= self.resources
+        return (
+            child.capabilities <= self.capabilities
+            and child.resources <= self.resources
+        )
 
 
 @dataclass(frozen=True, slots=True)
