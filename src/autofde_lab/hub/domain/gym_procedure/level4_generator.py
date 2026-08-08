@@ -141,6 +141,7 @@ class BlindEnvironment:
         record = {
             "action": action,
             "pre_state_size": len(self._state),
+            "observed_pre_facts": sorted(self._state),
             "applicable": applicable,
         }
         if applicable:
