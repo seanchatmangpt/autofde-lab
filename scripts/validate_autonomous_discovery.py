@@ -13,6 +13,7 @@ import argparse
 import asyncio
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +40,8 @@ PATTERNS = (
     "entire_family_held_out",
     "full_corpus_no_solution_leakage",
 )
+GYMACT_BASE_SHA = "c839d76125bde97b9eb3dfd82f0e08a1b9dcdf96"
+GYMACT_VERSION = "26.8.7"
 
 
 def _canonical_digest(value: Any) -> str:
@@ -156,6 +159,11 @@ async def _run_recipe(path: Path) -> dict[str, Any]:
 
 
 async def _main(output: Path) -> int:
+    autofde_head_sha = os.environ.get("AUTOFDE_HEAD_SHA")
+    gymact_head_sha = os.environ.get("GYMACT_HEAD_SHA")
+    if not autofde_head_sha or not gymact_head_sha:
+        raise RuntimeError("EXECUTION_IDENTITY_REQUIRED")
+
     recipe_paths = sorted(RECIPES.glob("*.json"))
     if not recipe_paths:
         raise RuntimeError(f"NO_RECIPES_FOUND:{RECIPES}")
@@ -175,6 +183,10 @@ async def _main(output: Path) -> int:
     receipt = {
         "schema": "urn:autofde-lab:autonomous-discovery-receipt:v1",
         "standing": standing,
+        "autofde_head_sha": autofde_head_sha,
+        "gymact_head_sha": gymact_head_sha,
+        "gymact_base_sha": GYMACT_BASE_SHA,
+        "gymact_version": GYMACT_VERSION,
         "corpus_size": len(results),
         "alive": alive,
         "pattern_counts": pattern_counts,

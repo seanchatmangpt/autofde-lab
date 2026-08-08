@@ -6,6 +6,7 @@ on:
       - "src/autofde_lab/hub/domain/gym_procedure/**"
       - "scripts/validate_autonomous_discovery.py"
       - "tests/test_autonomous_procedure_discovery.py"
+      - ".validation/gymact-head/**"
       - ".github/workflows/autonomous-discovery.yml"
   workflow_dispatch:
 
@@ -21,37 +22,70 @@ jobs:
       - name: Checkout autofde-lab exact head
         uses: actions/checkout@v4
 
-      - name: Checkout gymact discovery head
-        uses: actions/checkout@v4
-        with:
-          repository: seanchatmangpt/gymact
-          ref: agent/receipted-autonomous-discovery-20260808
-          path: gymact-repo
-
       - name: Set up Python 3.13
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
-      - name: Install GymAct exact head
-        run: python -m pip install -e ./gymact-repo
+      - name: Install released GymAct base and test runtime
+        run: |
+          python -m pip install "gymact==26.8.7" "pytest>=8.3,<9" "pytest-asyncio>=0.25,<2"
+
+      - name: Manufacture identity-bound GymAct exact-head capsule
+        run: |
+          python - <<'PY'
+          import hashlib
+          import importlib.metadata
+          import json
+          import pathlib
+          import shutil
+          import gymact
+
+          identity = json.loads(pathlib.Path('.validation/gymact-head/IDENTITY.json').read_text())
+          assert importlib.metadata.version('gymact') == identity['version']
+          installed = pathlib.Path(gymact.__file__).resolve().parent
+          capsule = pathlib.Path('.validation/gymact-runtime/src/gymact')
+          if capsule.exists():
+              shutil.rmtree(capsule)
+          shutil.copytree(installed, capsule)
+          overlay = pathlib.Path('.validation/gymact-head/src/gymact')
+          shutil.copytree(overlay, capsule, dirs_exist_ok=True)
+
+          def git_blob_sha(path: pathlib.Path) -> str:
+              data = path.read_bytes()
+              return hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
+
+          for rel, expected in identity['changed_runtime_blobs'].items():
+              runtime_rel = pathlib.Path(rel).relative_to('src/gymact')
+              actual = git_blob_sha(capsule / runtime_rel)
+              assert actual == expected, (rel, actual, expected)
+
+          print('GYMACT_BASE_VERSION=' + identity['version'])
+          print('GYMACT_BASE_SHA=' + identity['base_sha'])
+          print('GYMACT_HEAD_SHA=' + identity['head_sha'])
+          print('GYMACT_EXACT_OVERLAY=VERIFIED')
+          PY
 
       - name: Compile discovery surfaces
+        env:
+          PYTHONPATH: .validation/gymact-runtime/src:src
         run: |
           python -m py_compile \
             src/autofde_lab/hub/domain/gym_procedure/discovery.py \
             scripts/validate_autonomous_discovery.py \
-            gymact-repo/src/gymact/discovery.py \
-            gymact-repo/src/gymact/gyms/opaque_procedure.py
+            .validation/gymact-runtime/src/gymact/discovery.py \
+            .validation/gymact-runtime/src/gymact/gyms/opaque_procedure.py
 
       - name: Unit validate autonomous selector
         env:
-          PYTHONPATH: src
+          PYTHONPATH: .validation/gymact-runtime/src:src
         run: python -m pytest -q tests/test_autonomous_procedure_discovery.py
 
       - name: Execute full autonomous discovery crown
         env:
-          PYTHONPATH: src
+          PYTHONPATH: .validation/gymact-runtime/src:src
+          GYMACT_HEAD_SHA: d74587d9161fd50378751708553b8b1d6370add7
+          AUTOFDE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           python scripts/validate_autonomous_discovery.py \
             --output reports/autonomous-discovery/receipt.json
@@ -62,16 +96,20 @@ jobs:
           import json
           from pathlib import Path
 
-          path = Path("reports/autonomous-discovery/receipt.json")
+          path = Path('reports/autonomous-discovery/receipt.json')
           receipt = json.loads(path.read_text())
-          assert receipt["standing"] == "ALIVE", receipt
-          assert receipt["corpus_size"] == 35, receipt["corpus_size"]
-          assert receipt["alive"] == 35, receipt["alive"]
-          assert all(count == 35 for count in receipt["pattern_counts"].values())
-          assert all(item["goal_verified"] for item in receipt["results"])
-          assert all(item["ocel_schema_valid"] for item in receipt["results"])
-          assert all(item["lifecycle_conformant"] for item in receipt["results"])
-          print("AUTONOMOUS_DISCOVERY_CROWN=ALIVE 35/35")
+          assert receipt['standing'] == 'ALIVE', receipt
+          assert receipt['corpus_size'] == 35, receipt['corpus_size']
+          assert receipt['alive'] == 35, receipt['alive']
+          assert receipt['gymact_head_sha'] == 'd74587d9161fd50378751708553b8b1d6370add7'
+          assert receipt['autofde_head_sha']
+          assert all(count == 35 for count in receipt['pattern_counts'].values())
+          assert all(item['goal_verified'] for item in receipt['results'])
+          assert all(item['ocel_schema_valid'] for item in receipt['results'])
+          assert all(item['lifecycle_conformant'] for item in receipt['results'])
+          print('AUTONOMOUS_DISCOVERY_CROWN=ALIVE 35/35')
+          print('AUTOFDE_HEAD_SHA=' + receipt['autofde_head_sha'])
+          print('GYMACT_HEAD_SHA=' + receipt['gymact_head_sha'])
           PY
 
       - name: Upload receipt
