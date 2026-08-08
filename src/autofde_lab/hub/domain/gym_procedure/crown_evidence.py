@@ -296,9 +296,21 @@ def standing_from_dict(payload: dict) -> Standing:
     approximated stand-in for either."""
     variant = payload["variant"]
     if variant == "Level4AliveEvidence":
+        goal = _goal_consequence_evidence_from_dict(payload["goal"])
+        if goal is None:
+            # Level4AliveEvidence.goal is non-Optional by construction (see
+            # its class docstring) -- a serialized row claiming this variant
+            # with a null goal is a corrupted/malformed record, not a
+            # legitimate Level4AliveEvidence. Refuse rather than silently
+            # constructing a type-invalid instance (dataclasses don't
+            # enforce field types at runtime).
+            raise ValueError(
+                "CORRUPT_LEVEL4_ALIVE_EVIDENCE_ROW:goal is null but "
+                "Level4AliveEvidence requires a real GoalConsequenceEvidence"
+            )
         return Level4AliveEvidence(
             conformant=_conformant_execution_evidence_from_dict(payload["conformant"]),
-            goal=_goal_consequence_evidence_from_dict(payload["goal"]),
+            goal=goal,
         )
     if variant == "ConformantButGoalUnmetEvidence":
         return ConformantButGoalUnmetEvidence(
