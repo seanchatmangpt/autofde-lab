@@ -154,3 +154,23 @@ def test_export_is_deterministic():
     records = idx.export_records()
     assert [r["wall_time_s"] for r in records] == [1.0, 2.0]
     assert all(r["standing"] == "ALIVE" for r in records)
+
+
+def test_untested_applicable_competitor_prevents_hot_crown():
+    idx = index()
+    idx.register(
+        PlannerRequirements(
+            "BFWS",
+            equals={
+                "deterministic": True,
+                "observability": "full",
+                "state_space": "discrete",
+            },
+        )
+    )
+    for wall in (1.0, 0.9, 1.1):
+        idx.record(receipt("Astar", wall=wall))
+    decision = idx.route(sig())
+    assert decision.regime is DecisionRegime.WARM
+    assert decision.candidates == ("Astar",)
+    assert "bounded comparison" in decision.reason
