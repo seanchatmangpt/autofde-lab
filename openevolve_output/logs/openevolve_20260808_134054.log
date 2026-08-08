@@ -25,3 +25,195 @@
 2026-08-08 13:40:54,145 - openevolve.controller - INFO - Initialized OpenEvolve with /Users/sac/autofde-lab/openevolve_output/generated_initial_program.py
 2026-08-08 13:40:54,149 - openevolve.evaluator - INFO - Evaluated program bc3fd095-ba42-49b8-ae8f-edcc2e06d9bc in 0.00s: cost=4.4600, nb_reached_goals=0.0000, combined_score=-4.4600
 2026-08-08 13:40:54,149 - openevolve.evaluator - INFO - Evaluated program bc3fd095-ba42-49b8-ae8f-edcc2e06d9bc in 0.00s: cost=4.4600, nb_reached_goals=0.0000, combined_score=-4.4600
+2026-08-08 13:42:54,074 - root - WARNING - Using custom GNN. custom_param=3.14
+2026-08-08 13:42:54,074 - root - WARNING - Using custom GNN. custom_param=3.14
+2026-08-08 13:42:54,412 - root - WARNING - Using custom GNN. custom_param=3.14
+2026-08-08 13:42:54,412 - root - WARNING - Using custom GNN. custom_param=3.14
+2026-08-08 13:42:54,417 - root - WARNING - Using custom GNN. custom_param=3.14
+2026-08-08 13:42:54,417 - root - WARNING - Using custom GNN. custom_param=3.14
+2026-08-08 13:42:54,744 - root - WARNING - Using custom GNN. custom_param=3.14
+2026-08-08 13:42:54,744 - root - WARNING - Using custom GNN. custom_param=3.14
+2026-08-08 13:42:54,748 - root - WARNING - Using custom reduction layer. custom_param=3.14
+2026-08-08 13:42:54,748 - root - WARNING - Using custom reduction layer. custom_param=3.14
+2026-08-08 13:42:55,013 - root - WARNING - Using custom reduction layer. custom_param=3.14
+2026-08-08 13:42:55,013 - root - WARNING - Using custom reduction layer. custom_param=3.14
+2026-08-08 13:42:55,018 - root - WARNING - Using custom reduction layer. custom_param=3.14
+2026-08-08 13:42:55,018 - root - WARNING - Using custom reduction layer. custom_param=3.14
+2026-08-08 13:42:55,275 - root - WARNING - Using custom reduction layer. custom_param=3.14
+2026-08-08 13:42:55,275 - root - WARNING - Using custom reduction layer. custom_param=3.14
+2026-08-08 13:43:08,366 - jax._src.xla_bridge - INFO - Unable to initialize backend 'rocm': module 'jaxlib.xla_extension' has no attribute 'GpuAllocatorConfig'
+2026-08-08 13:43:08,366 - jax._src.xla_bridge - INFO - Unable to initialize backend 'rocm': module 'jaxlib.xla_extension' has no attribute 'GpuAllocatorConfig'
+2026-08-08 13:43:08,369 - jax._src.xla_bridge - INFO - Unable to initialize backend 'tpu': INTERNAL: Failed to open libtpu.so: dlopen(libtpu.so, 0x0001): tried: 'libtpu.so' (no such file), '/System/Volumes/Preboot/Cryptexes/OSlibtpu.so' (no such file), '/usr/lib/libtpu.so' (no such file, not in dyld cache), 'libtpu.so' (no such file), '/usr/local/lib/libtpu.so' (no such file), '/usr/lib/libtpu.so' (no such file, not in dyld cache)
+2026-08-08 13:43:08,369 - jax._src.xla_bridge - INFO - Unable to initialize backend 'tpu': INTERNAL: Failed to open libtpu.so: dlopen(libtpu.so, 0x0001): tried: 'libtpu.so' (no such file), '/System/Volumes/Preboot/Cryptexes/OSlibtpu.so' (no such file), '/usr/lib/libtpu.so' (no such file, not in dyld cache), 'libtpu.so' (no such file), '/usr/local/lib/libtpu.so' (no such file), '/usr/lib/libtpu.so' (no such file, not in dyld cache)
+2026-08-08 13:43:15,781 - gurobipy - INFO - Restricted license - for non-production use only - expires 2027-11-29
+2026-08-08 13:43:15,781 - gurobipy - INFO - Restricted license - for non-production use only - expires 2027-11-29
+2026-08-08 13:43:15,787 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,787 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,808 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,808 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,814 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,814 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,818 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,818 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,823 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,823 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,828 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,828 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,834 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,834 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,839 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,839 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,844 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,844 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,848 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,848 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,853 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,853 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,859 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,859 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,864 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,864 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,870 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,870 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,875 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,875 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,880 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,880 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,885 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,885 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,891 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,891 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,896 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,896 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,901 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,901 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,906 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,906 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,912 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,912 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,917 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,917 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,922 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,922 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,927 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,927 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,932 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,932 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,937 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,937 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,943 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,943 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,948 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,948 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,953 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,953 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,958 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,958 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,962 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,962 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,968 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,968 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,972 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,972 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,978 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,978 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,984 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,984 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,989 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,989 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,994 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,994 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,999 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:15,999 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,005 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,005 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,010 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,010 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,016 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,016 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,021 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,021 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,028 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,028 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,034 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,034 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,040 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,040 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,045 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,045 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,050 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,050 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,056 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,056 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,061 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,061 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,066 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,066 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,071 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,071 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,076 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,076 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,081 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,081 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,086 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,086 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,090 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,090 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,095 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,095 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,100 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,100 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,105 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,105 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,110 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,110 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,114 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,114 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,119 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,119 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,123 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,123 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,128 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,128 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,133 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,133 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,138 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,138 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,152 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,152 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,158 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,158 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,163 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,163 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,169 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,169 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,174 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,174 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,181 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,181 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,186 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,186 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,192 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,192 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,197 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,197 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,203 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,203 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,208 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,208 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,213 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,213 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,218 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:16,218 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-08 13:43:18,574 - solvers.python.test_python_solvers - WARNING - End of iteration #1.
+2026-08-08 13:43:18,574 - solvers.python.test_python_solvers - WARNING - End of iteration #1.
+2026-08-08 13:43:18,574 - solvers.python.test_python_solvers - WARNING - End of iteration #2.
+2026-08-08 13:43:18,574 - solvers.python.test_python_solvers - WARNING - End of iteration #2.
+2026-08-08 13:43:18,586 - solvers.python.test_python_solvers - WARNING - End of iteration #1.
+2026-08-08 13:43:18,586 - solvers.python.test_python_solvers - WARNING - End of iteration #1.
+2026-08-08 13:43:18,588 - solvers.python.test_python_solvers - WARNING - End of iteration #2.
+2026-08-08 13:43:18,588 - solvers.python.test_python_solvers - WARNING - End of iteration #2.
+2026-08-08 13:43:18,702 - solvers.python.test_python_solvers - WARNING - End of iteration #1.
+2026-08-08 13:43:18,702 - solvers.python.test_python_solvers - WARNING - End of iteration #1.
+2026-08-08 13:43:18,702 - solvers.python.test_python_solvers - WARNING - End of iteration #2.
+2026-08-08 13:43:18,702 - solvers.python.test_python_solvers - WARNING - End of iteration #2.
