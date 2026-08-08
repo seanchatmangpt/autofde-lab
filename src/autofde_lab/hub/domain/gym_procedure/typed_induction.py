@@ -376,6 +376,103 @@ def detect_derived_dimensions(
     return found
 
 
+def _flip_invariant_metrics(
+    successes: list[dict], flip_dims: list[str], dims: dict[str, StateDimension]
+) -> set[str]:
+    """Metric dimensions PROVEN independent of a self-inverse boolean flip.
+
+    The blanket self-inverse rule below demotes every metric dimension an
+    action touches when that action is its own inverse on some boolean. That
+    is right for a DERIVED dimension (`required_on` really does un-count when
+    the switch flips back) and wrong for a genuine counter: `toggles` is
+    incremented by `toggle_switch[i]` in BOTH directions, so toggling on and
+    then off leaves the switch where it started and `toggles` at +2. Demoting
+    it made `engage_master`'s real, refusal-evidenced ``toggles >= 2`` bound
+    unsatisfiable in the model, and every `switchboard` seed stayed
+    NO_TYPED_VALID_PLAN even after `required_on` was correctly derived.
+
+    The exemption is a real falsification, not a relaxation: the SAME
+    constant delta must have been observed in BOTH directions of the flip
+    (pre=False and pre=True). A dimension that un-counts with the boolean
+    yields ``+1`` one way and ``-1`` the other, so its delta set is not a
+    singleton and it can never qualify -- measured, that is exactly what
+    `required_on` does. Absence of one direction in the evidence is not
+    proof of invariance, so both must actually be present.
+    """
+    out: set[str] = set()
+    for dim_name, dim in dims.items():
+        if not dim.is_metric():
+            continue
+        by_direction: dict[bool, set[float]] = {}
+        for rec in successes:
+            pre, post = rec["observed_pre"], rec["observed_post"]
+            if dim_name not in pre or dim_name not in post:
+                continue
+            directions = {bool(pre[f]) for f in flip_dims if f in pre}
+            if len(directions) != 1:
+                continue  # ambiguous which way the flip went; no evidence
+            by_direction.setdefault(next(iter(directions)), set()).add(
+                post[dim_name] - pre[dim_name]
+            )
+        if set(by_direction) != {True, False}:
+            continue  # only ever seen one way round -- UNKNOWN, not invariant
+        deltas = {d for direction in by_direction.values() for d in direction}
+        if len(deltas) == 1:
+            out.add(dim_name)
+    return out
+
+
+def _independently_supported_preconditions(
+    preconds: dict[str, Any], refusals: list[dict]
+) -> dict[str, Any]:
+    """Keep only precondition claims some refusal supports ON ITS OWN.
+
+    "Constant across the successes AND some refusal differed here" is weaker
+    evidence than it looks, because one refusal differs on several dimensions
+    at once. Measured on `switchboard`: `engage_master` really requires only
+    ``switch_0 and switch_1``, but the refusal
+    ``switch_0=False, switch_1=False, switch_2=True`` differs on `switch_2`
+    too, so `switch_2=False` and `switch_3=False` were claimed as
+    preconditions as well. That contradicts the goal
+    (``required_on == required_count`` needs both those switches ON) and made
+    the seed unreachable for a purely representational reason.
+
+    A dimension earns a claim only when some refusal differs on IT and agrees
+    with the claimed value on every OTHER candidate dimension -- that refusal
+    is then explained by that dimension alone. A dimension that could not
+    have been the reason for any observed refusal is a dimension the evidence
+    never tested, and claiming it asserts an unchecked factor
+    (`.claude/rules/absence-is-not-evidence.md`).
+
+    The pruning is guarded: the surviving map must still explain every
+    refusal the full map explained. If it does not, the full map is kept and
+    the model stays honestly over-restrictive rather than becoming permissive
+    on unexamined evidence.
+    """
+    if not preconds:
+        return preconds
+    refusal_pres = [
+        r["observed_pre"] for r in refusals if isinstance(r.get("observed_pre"), dict)
+    ]
+
+    def explains(mapping: dict[str, Any], pre: dict[str, Any]) -> bool:
+        return any(d in pre and pre[d] != v for d, v in mapping.items())
+
+    supported: set[str] = set()
+    for pre in refusal_pres:
+        differing = [d for d, v in preconds.items() if d in pre and pre[d] != v]
+        if len(differing) == 1:
+            supported.add(differing[0])
+
+    pruned = {d: v for d, v in preconds.items() if d in supported}
+    if not pruned:
+        return preconds
+    for pre in refusal_pres:
+        if explains(preconds, pre) and not explains(pruned, pre):
+            return preconds  # pruning would lose real refusal coverage
+    return pruned
+
+
 def _induce_relational_preconditions(
     successes: list[dict], refusals: list[dict], dims: dict[str, StateDimension]
 ) -> tuple[RelationalPrecondition, ...]:
@@ -517,10 +614,15 @@ def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
         # CONTEXT_DEPENDENT, not given a constant delta. It is derived, and
         # the honest statement is that we do not know its value in a
         # different context.
+        # SCOPE. A metric dimension observed to take the SAME delta in BOTH
+        # directions of the flip is proven independent of it and keeps its
+        # delta -- see `_flip_invariant_metrics`. A derived one (`required_on`)
+        # cannot qualify, because its deltas cancel.
         self_inverse_dims = sorted(d for d, e in effects.items() if e.flip)
         if self_inverse_dims:
+            invariant = _flip_invariant_metrics(successes, self_inverse_dims, dims)
             for dim_name, eff in list(effects.items()):
-                if eff.flip or eff.context_dependent:
+                if eff.flip or eff.context_dependent or dim_name in invariant:
                     continue
                 dim = dims.get(dim_name)
                 if dim is not None and dim.is_metric():
@@ -578,6 +680,12 @@ def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
                     for r in refusals
                 ):
                     preconds[dim_name] = value
+
+        # INDEPENDENT SUPPORT. One refusal differs on several dimensions at
+        # once, so "some refusal differed here" over-claims. Keep only the
+        # claims a refusal supports on its own -- see
+        # `_independently_supported_preconditions`.
+        preconds = _independently_supported_preconditions(preconds, refusals)
 
         # Metric preconditions, inferred ONLY from real refusal evidence.
         #

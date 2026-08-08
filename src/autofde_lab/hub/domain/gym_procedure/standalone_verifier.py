@@ -214,7 +214,16 @@ def verify(trial_dir: Path) -> IndependentStanding:
         "no explicit typed edge from POWLCommitment to PlanCandidate",
     )
 
+    # THE CHAIN MUST BE CHAINED.
+    #
+    # Checking each edge for mere EXISTENCE is the correct-sequence/wrong-identity
+    # hole: a graph can hold an Actuation->Commitment edge AND an
+    # Actuation->Authority edge while they hang off DIFFERENT actuations, so
+    # nothing was ever both committed and authorized. A mutation fixture caught
+    # exactly that here. Each link below is therefore anchored to the SAME
+    # actuation identity carried forward from the previous link.
     ca = typed_edge("actuates_commitment", "Actuation", "POWLCommitment")
+    committed_actuations = {s_ for s_, _, _ in ca}
     add(
         "commitment->actuation",
         REQUIRED_CHAIN[1][1],
@@ -223,33 +232,39 @@ def verify(trial_dir: Path) -> IndependentStanding:
         "no explicit typed edge from Actuation to POWLCommitment",
     )
 
-    aa = typed_edge("authorized_by", "Actuation", "AuthorityEnvelope")
+    # Authority must bind an actuation that is ALSO committed -- not merely some
+    # actuation somewhere in the graph.
+    aa = [
+        (s_, q_, t_)
+        for s_, q_, t_ in typed_edge("authorized_by", "Actuation", "AuthorityEnvelope")
+        if s_ in committed_actuations
+    ]
+    authorized_actuations = {s_ for s_, _, _ in aa}
     add(
         "authority->actuation",
         REQUIRED_CHAIN[2][1],
         aa,
-        f"{len(aa)} explicit Actuation->AuthorityEnvelope edge(s)",
-        "no explicit typed edge from Actuation to AuthorityEnvelope",
+        f"{len(aa)} authority edge(s) on an actuation that is also committed",
+        "no AuthorityEnvelope bound to a COMMITTED actuation "
+        "(an authority edge on some other actuation does not authorize this one)",
     )
 
-    ap = typed_edge("observes_actuation", "PostconditionObservation", "Actuation")
+    # The observation must observe an actuation that is committed AND authorized.
+    ap = [
+        (s_, q_, t_)
+        for s_, q_, t_ in typed_edge("observes_actuation", "PostconditionObservation", "Actuation")
+        if t_ in authorized_actuations
+    ]
     add(
         "actuation->postcondition",
         REQUIRED_CHAIN[3][1],
         ap,
-        f"{len(ap)} explicit PostconditionObservation->Actuation edge(s)",
-        "no explicit typed edge from PostconditionObservation to Actuation",
+        f"{len(ap)} observation(s) of a committed+authorized actuation",
+        "no PostconditionObservation observes a committed+authorized actuation",
     )
 
-    # Independence: the observer identity must differ from the actuator identity.
-    # A verifier that is the actuator is SELF_CERTIFIED_POSTCONDITION, and that
-    # must be visible as a graph property, not asserted by a flag.
-    independent: list[tuple[str, str, str]] = []
-    for s, q, t in ap:
-        src_obj = next((o for o in ocel["objects"] if o.get("id") == s), {})
-        tgt_obj = next((o for o in ocel["objects"] if o.get("id") == t), {})
-        if src_obj.get("id") and src_obj.get("id") != tgt_obj.get("id"):
-            independent.append((s, q, t))
+    # Independence: the observer is not the thing it observes.
+    independent = [(s_, q_, t_) for s_, q_, t_ in ap if s_ != t_]
     add(
         "postcondition->independent",
         REQUIRED_CHAIN[4][1],
@@ -258,9 +273,6 @@ def verify(trial_dir: Path) -> IndependentStanding:
         "observer identity not distinguishable from actuator in the graph",
     )
 
-    # Receipt ancestry must be an EXPLICIT edge. Receipt ids double as event ids,
-    # so a parent id will appear as a token whether or not any edge exists --
-    # token presence is exactly the incidental basis this refuses.
     caused = typed_edge("caused_by", "Receipt", "Receipt")
     ledger_parents = sum(len(r.get("parent_receipt_ids") or []) for r in receipts)
     add(
@@ -273,15 +285,23 @@ def verify(trial_dir: Path) -> IndependentStanding:
         f"Receipt->Receipt edge (token co-occurrence does not count)",
     )
 
-    rr = typed_edge("replays", "Replay", "Receipt") or typed_edge(
-        "replays_receipt", "Replay", "Receipt"
-    )
+    # Replay must bind a receipt that is actually in the ancestry DAG, not any
+    # object that happens to be typed Receipt.
+    dag_receipts = {s_ for s_, _, _ in caused} | {t_ for _, _, t_ in caused}
+    rr = [
+        (s_, q_, t_)
+        for s_, q_, t_ in (
+            typed_edge("replays", "Replay", "Receipt")
+            or typed_edge("replays_receipt", "Replay", "Receipt")
+        )
+        if t_ in dag_receipts
+    ]
     add(
         "replay->receipt",
         REQUIRED_CHAIN[6][1],
         rr,
-        f"{len(rr)} explicit Replay->Receipt edge(s)",
-        "no explicit typed edge from Replay to a source Receipt",
+        f"{len(rr)} Replay edge(s) binding a receipt in the ancestry DAG",
+        "no Replay binds a receipt that participates in the receipt DAG",
     )
 
     return IndependentStanding(str(trial_dir), tuple(results), tuple(seen), ())
