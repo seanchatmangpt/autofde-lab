@@ -163,7 +163,7 @@ jobs:
                   compile(path.read_bytes(), str(path), "exec")
       - name: Reject conflict markers
         shell: bash
-        run: "! git grep -nE '^(<<<<<<<|=======|>>>>>>>)' -- ':!uv.lock'"
+        run: "! git grep -nE '^(<<<<<<<($| )|=======$|>>>>>>>($| ))' -- ':!uv.lock'"
 
   package:
     name: Source package smoke
