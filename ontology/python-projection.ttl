@@ -1,0 +1,178 @@
+@prefix afl: <urn:autofde-lab:> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:autofde-lab:ontology:python-projection>
+    a owl:Ontology ;
+    dcterms:title "AutoFDE Lab ggen Python projection" ;
+    dcterms:description "Language projection metadata only. The semantic constitution remains the authority; this graph assigns canonical Python modules and deterministic generation order." ;
+    dcterms:created "2026-08-08"^^xsd:date .
+
+afl:pythonModule
+    a owl:DatatypeProperty ;
+    rdfs:label "Python module" .
+
+afl:pythonOrder
+    a owl:DatatypeProperty ;
+    rdfs:label "Python generation order" .
+
+afl:ggenPythonProjection
+    a afl:ManufactureRule ;
+    dcterms:title "ggen Python semantic projection" .
+
+# lab
+afl:Gym afl:pythonModule "lab" ; afl:pythonOrder 10 .
+afl:Trial afl:pythonModule "lab" ; afl:pythonOrder 20 .
+afl:Experiment afl:pythonModule "lab" ; afl:pythonOrder 30 .
+afl:Goal afl:pythonModule "lab" ; afl:pythonOrder 40 .
+afl:Invariant afl:pythonModule "lab" ; afl:pythonOrder 50 .
+afl:Resource afl:pythonModule "lab" ; afl:pythonOrder 60 .
+afl:Capability afl:pythonModule "lab" ; afl:pythonOrder 70 .
+afl:Perturbation afl:pythonModule "lab" ; afl:pythonOrder 80 .
+
+# world
+afl:World afl:pythonModule "world" ; afl:pythonOrder 10 .
+afl:WorldState afl:pythonModule "world" ; afl:pythonOrder 20 .
+afl:Environment afl:pythonModule "world" ; afl:pythonOrder 30 .
+afl:Observation afl:pythonModule "world" ; afl:pythonOrder 40 .
+afl:AdmittedObservation afl:pythonModule "world" ; afl:pythonOrder 50 .
+afl:ObservationAdmission afl:pythonModule "world" ; afl:pythonOrder 60 .
+
+# planning
+afl:PlanningProblem afl:pythonModule "planning" ; afl:pythonOrder 10 .
+afl:Planner afl:pythonModule "planning" ; afl:pythonOrder 20 .
+afl:PlannerAttempt afl:pythonModule "planning" ; afl:pythonOrder 30 .
+afl:PlanCandidate afl:pythonModule "planning" ; afl:pythonOrder 40 .
+afl:CandidateSet afl:pythonModule "planning" ; afl:pythonOrder 50 .
+afl:Critique afl:pythonModule "planning" ; afl:pythonOrder 60 .
+afl:Validation afl:pythonModule "planning" ; afl:pythonOrder 70 .
+afl:GovernedCandidate afl:pythonModule "planning" ; afl:pythonOrder 80 .
+afl:Disagreement afl:pythonModule "planning" ; afl:pythonOrder 90 .
+afl:DiscriminatingProbe afl:pythonModule "planning" ; afl:pythonOrder 100 .
+
+# process
+afl:POWLProcess afl:pythonModule "process" ; afl:pythonOrder 10 .
+afl:ProcessNode afl:pythonModule "process" ; afl:pythonOrder 20 .
+afl:TransitionNode afl:pythonModule "process" ; afl:pythonOrder 30 .
+afl:SilentTransition afl:pythonModule "process" ; afl:pythonOrder 40 .
+afl:PartialOrderComposite afl:pythonModule "process" ; afl:pythonOrder 50 .
+afl:ChoiceGraph afl:pythonModule "process" ; afl:pythonOrder 60 .
+afl:OrderEdge afl:pythonModule "process" ; afl:pythonOrder 70 .
+afl:POWLCommitment afl:pythonModule "process" ; afl:pythonOrder 80 .
+
+# authority
+afl:AuthorityEnvelope afl:pythonModule "authority" ; afl:pythonOrder 10 .
+afl:Actuation afl:pythonModule "authority" ; afl:pythonOrder 20 .
+
+# evidence
+afl:Postcondition afl:pythonModule "evidence" ; afl:pythonOrder 10 .
+afl:Observer afl:pythonModule "evidence" ; afl:pythonOrder 20 .
+afl:PostconditionObservation afl:pythonModule "evidence" ; afl:pythonOrder 30 .
+afl:Receipt afl:pythonModule "evidence" ; afl:pythonOrder 40 .
+afl:ReceiptDAG afl:pythonModule "evidence" ; afl:pythonOrder 50 .
+afl:Replay afl:pythonModule "evidence" ; afl:pythonOrder 60 .
+afl:Artifact afl:pythonModule "evidence" ; afl:pythonOrder 70 .
+afl:ArtifactManifest afl:pythonModule "evidence" ; afl:pythonOrder 80 .
+afl:SourceRevision afl:pythonModule "evidence" ; afl:pythonOrder 90 .
+afl:DependencyRevision afl:pythonModule "evidence" ; afl:pythonOrder 100 .
+afl:VerifierRun afl:pythonModule "evidence" ; afl:pythonOrder 110 .
+afl:EvidenceWitness afl:pythonModule "evidence" ; afl:pythonOrder 120 .
+afl:Level4Witness afl:pythonModule "evidence" ; afl:pythonOrder 130 .
+
+# standing
+afl:StandingValue afl:pythonModule "standing" ; afl:pythonOrder 10 .
+afl:StandingAssertion afl:pythonModule "standing" ; afl:pythonOrder 20 .
+afl:Refusal afl:pythonModule "standing" ; afl:pythonOrder 30 .
+
+# interop
+afl:InteropContract afl:pythonModule "interop" ; afl:pythonOrder 10 .
+afl:InteropAdapter afl:pythonModule "interop" ; afl:pythonOrder 20 .
+afl:ExternalRepresentation afl:pythonModule "interop" ; afl:pythonOrder 30 .
+afl:Projection afl:pythonModule "interop" ; afl:pythonOrder 40 .
+afl:SemanticLoss afl:pythonModule "interop" ; afl:pythonOrder 50 .
+afl:LossReport afl:pythonModule "interop" ; afl:pythonOrder 60 .
+afl:InteropContractReceipt afl:pythonModule "interop" ; afl:pythonOrder 70 .
+
+# manufacture
+afl:SemanticConstitution afl:pythonModule "manufacture" ; afl:pythonOrder 10 .
+afl:ManufactureRule afl:pythonModule "manufacture" ; afl:pythonOrder 20 .
+afl:ManufactureRun afl:pythonModule "manufacture" ; afl:pythonOrder 30 .
+afl:CanonicalSourceArtifact afl:pythonModule "manufacture" ; afl:pythonOrder 40 .
+afl:ManufactureReceipt afl:pythonModule "manufacture" ; afl:pythonOrder 50 .
+
+afl:python-artifact-1
+    a afl:CanonicalSourceArtifact ;
+    afl:canonicalProjectPath "src/autofde_lab/constitution/_base.py" ;
+    dcterms:identifier "src-autofde-lab-constitution--base-py" .
+
+afl:python-artifact-2
+    a afl:CanonicalSourceArtifact ;
+    afl:canonicalProjectPath "src/autofde_lab/constitution/lab.py" ;
+    dcterms:identifier "src-autofde-lab-constitution-lab-py" .
+
+afl:python-artifact-3
+    a afl:CanonicalSourceArtifact ;
+    afl:canonicalProjectPath "src/autofde_lab/constitution/world.py" ;
+    dcterms:identifier "src-autofde-lab-constitution-world-py" .
+
+afl:python-artifact-4
+    a afl:CanonicalSourceArtifact ;
+    afl:canonicalProjectPath "src/autofde_lab/constitution/planning.py" ;
+    dcterms:identifier "src-autofde-lab-constitution-planning-py" .
+
+afl:python-artifact-5
+    a afl:CanonicalSourceArtifact ;
+    afl:canonicalProjectPath "src/autofde_lab/constitution/process.py" ;
+    dcterms:identifier "src-autofde-lab-constitution-process-py" .
+
+afl:python-artifact-6
+    a afl:CanonicalSourceArtifact ;
+    afl:canonicalProjectPath "src/autofde_lab/constitution/authority.py" ;
+    dcterms:identifier "src-autofde-lab-constitution-authority-py" .
+
+afl:python-artifact-7
+    a afl:CanonicalSourceArtifact ;
+    afl:canonicalProjectPath "src/autofde_lab/constitution/evidence.py" ;
+    dcterms:identifier "src-autofde-lab-constitution-evidence-py" .
+
+afl:python-artifact-8
+    a afl:CanonicalSourceArtifact ;
+    afl:canonicalProjectPath "src/autofde_lab/constitution/standing.py" ;
+    dcterms:identifier "src-autofde-lab-constitution-standing-py" .
+
+afl:python-artifact-9
+    a afl:CanonicalSourceArtifact ;
+    afl:canonicalProjectPath "src/autofde_lab/constitution/interop.py" ;
+    dcterms:identifier "src-autofde-lab-constitution-interop-py" .
+
+afl:python-artifact-10
+    a afl:CanonicalSourceArtifact ;
+    afl:canonicalProjectPath "src/autofde_lab/constitution/manufacture.py" ;
+    dcterms:identifier "src-autofde-lab-constitution-manufacture-py" .
+
+afl:python-artifact-11
+    a afl:CanonicalSourceArtifact ;
+    afl:canonicalProjectPath "src/autofde_lab/constitution/terms.py" ;
+    dcterms:identifier "src-autofde-lab-constitution-terms-py" .
+
+afl:python-artifact-12
+    a afl:CanonicalSourceArtifact ;
+    afl:canonicalProjectPath "src/autofde_lab/constitution/registry.py" ;
+    dcterms:identifier "src-autofde-lab-constitution-registry-py" .
+
+afl:python-artifact-13
+    a afl:CanonicalSourceArtifact ;
+    afl:canonicalProjectPath "src/autofde_lab/constitution/validation.py" ;
+    dcterms:identifier "src-autofde-lab-constitution-validation-py" .
+
+afl:python-artifact-14
+    a afl:CanonicalSourceArtifact ;
+    afl:canonicalProjectPath "src/autofde_lab/constitution/__init__.py" ;
+    dcterms:identifier "src-autofde-lab-constitution---init---py" .
+
+afl:python-artifact-15
+    a afl:CanonicalSourceArtifact ;
+    afl:canonicalProjectPath "tests/constitution/test_semantic_constitution.py" ;
+    dcterms:identifier "tests-constitution-test-semantic-constitution-py" .

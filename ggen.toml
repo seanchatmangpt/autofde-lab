@@ -1,0 +1,370 @@
+[project]
+name = "autofde-lab-semantic-constitution"
+version = "26.8.8"
+description = "ggen manufacture of canonical Python from the AutoFDE Lab semantic constitution"
+authors = ["Sean Chatman"]
+license = "MIT"
+
+[ontology]
+source = "ontology/python-projection.ttl"
+imports = [
+  "ontology/lab.ttl",
+  "ontology/world.ttl",
+  "ontology/planning.ttl",
+  "ontology/process.ttl",
+  "ontology/authority.ttl",
+  "ontology/evidence.ttl",
+  "ontology/standing.ttl",
+  "ontology/interop.ttl",
+  "ontology/manufacture.ttl",
+]
+base_iri = "urn:autofde-lab:"
+
+[ontology.prefixes]
+afl = "urn:autofde-lab:"
+owl = "http://www.w3.org/2002/07/owl#"
+rdfs = "http://www.w3.org/2000/01/rdf-schema#"
+xsd = "http://www.w3.org/2001/XMLSchema#"
+skos = "http://www.w3.org/2004/02/skos/core#"
+
+[generation]
+output_dir = "."
+
+[[generation.rules]]
+name = "python-base"
+query = { inline = """
+PREFIX afl: <urn:autofde-lab:>
+SELECT ?x WHERE { BIND(afl:SemanticConstitution AS ?x) } ORDER BY ?x
+""" }
+template = { file = "templates/python/base.py.tera" }
+output_file = "src/autofde_lab/constitution/_base.py"
+skip_empty = false
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "python-lab"
+query = { inline = """
+PREFIX afl: <urn:autofde-lab:>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?order ?class_name ?class_iri ?base_name
+WHERE {
+  ?class a owl:Class ;
+         afl:pythonModule "lab" ;
+         afl:pythonOrder ?order .
+  BIND(STR(?class) AS ?class_iri)
+  BIND(STRAFTER(STR(?class), "urn:autofde-lab:") AS ?class_name)
+  OPTIONAL {
+    ?class rdfs:subClassOf ?super .
+    ?super afl:pythonModule "lab" .
+  }
+  BIND(IF(BOUND(?super), STRAFTER(STR(?super), "urn:autofde-lab:"), "SemanticEntity") AS ?base_name)
+}
+ORDER BY xsd:integer(?order) ?class_name
+""" }
+template = { file = "templates/python/semantic_module.py.tera" }
+output_file = "src/autofde_lab/constitution/lab.py"
+skip_empty = false
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "python-world"
+query = { inline = """
+PREFIX afl: <urn:autofde-lab:>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?order ?class_name ?class_iri ?base_name
+WHERE {
+  ?class a owl:Class ;
+         afl:pythonModule "world" ;
+         afl:pythonOrder ?order .
+  BIND(STR(?class) AS ?class_iri)
+  BIND(STRAFTER(STR(?class), "urn:autofde-lab:") AS ?class_name)
+  OPTIONAL {
+    ?class rdfs:subClassOf ?super .
+    ?super afl:pythonModule "world" .
+  }
+  BIND(IF(BOUND(?super), STRAFTER(STR(?super), "urn:autofde-lab:"), "SemanticEntity") AS ?base_name)
+}
+ORDER BY xsd:integer(?order) ?class_name
+""" }
+template = { file = "templates/python/semantic_module.py.tera" }
+output_file = "src/autofde_lab/constitution/world.py"
+skip_empty = false
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "python-planning"
+query = { inline = """
+PREFIX afl: <urn:autofde-lab:>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?order ?class_name ?class_iri ?base_name
+WHERE {
+  ?class a owl:Class ;
+         afl:pythonModule "planning" ;
+         afl:pythonOrder ?order .
+  BIND(STR(?class) AS ?class_iri)
+  BIND(STRAFTER(STR(?class), "urn:autofde-lab:") AS ?class_name)
+  OPTIONAL {
+    ?class rdfs:subClassOf ?super .
+    ?super afl:pythonModule "planning" .
+  }
+  BIND(IF(BOUND(?super), STRAFTER(STR(?super), "urn:autofde-lab:"), "SemanticEntity") AS ?base_name)
+}
+ORDER BY xsd:integer(?order) ?class_name
+""" }
+template = { file = "templates/python/semantic_module.py.tera" }
+output_file = "src/autofde_lab/constitution/planning.py"
+skip_empty = false
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "python-process"
+query = { inline = """
+PREFIX afl: <urn:autofde-lab:>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?order ?class_name ?class_iri ?base_name
+WHERE {
+  ?class a owl:Class ;
+         afl:pythonModule "process" ;
+         afl:pythonOrder ?order .
+  BIND(STR(?class) AS ?class_iri)
+  BIND(STRAFTER(STR(?class), "urn:autofde-lab:") AS ?class_name)
+  OPTIONAL {
+    ?class rdfs:subClassOf ?super .
+    ?super afl:pythonModule "process" .
+  }
+  BIND(IF(BOUND(?super), STRAFTER(STR(?super), "urn:autofde-lab:"), "SemanticEntity") AS ?base_name)
+}
+ORDER BY xsd:integer(?order) ?class_name
+""" }
+template = { file = "templates/python/semantic_module.py.tera" }
+output_file = "src/autofde_lab/constitution/process.py"
+skip_empty = false
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "python-authority"
+query = { inline = """
+PREFIX afl: <urn:autofde-lab:>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?order ?class_name ?class_iri ?base_name
+WHERE {
+  ?class a owl:Class ;
+         afl:pythonModule "authority" ;
+         afl:pythonOrder ?order .
+  BIND(STR(?class) AS ?class_iri)
+  BIND(STRAFTER(STR(?class), "urn:autofde-lab:") AS ?class_name)
+  OPTIONAL {
+    ?class rdfs:subClassOf ?super .
+    ?super afl:pythonModule "authority" .
+  }
+  BIND(IF(BOUND(?super), STRAFTER(STR(?super), "urn:autofde-lab:"), "SemanticEntity") AS ?base_name)
+}
+ORDER BY xsd:integer(?order) ?class_name
+""" }
+template = { file = "templates/python/semantic_module.py.tera" }
+output_file = "src/autofde_lab/constitution/authority.py"
+skip_empty = false
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "python-evidence"
+query = { inline = """
+PREFIX afl: <urn:autofde-lab:>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?order ?class_name ?class_iri ?base_name
+WHERE {
+  ?class a owl:Class ;
+         afl:pythonModule "evidence" ;
+         afl:pythonOrder ?order .
+  BIND(STR(?class) AS ?class_iri)
+  BIND(STRAFTER(STR(?class), "urn:autofde-lab:") AS ?class_name)
+  OPTIONAL {
+    ?class rdfs:subClassOf ?super .
+    ?super afl:pythonModule "evidence" .
+  }
+  BIND(IF(BOUND(?super), STRAFTER(STR(?super), "urn:autofde-lab:"), "SemanticEntity") AS ?base_name)
+}
+ORDER BY xsd:integer(?order) ?class_name
+""" }
+template = { file = "templates/python/semantic_module.py.tera" }
+output_file = "src/autofde_lab/constitution/evidence.py"
+skip_empty = false
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "python-standing"
+query = { inline = """
+PREFIX afl: <urn:autofde-lab:>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?order ?class_name ?class_iri ?base_name
+WHERE {
+  ?class a owl:Class ;
+         afl:pythonModule "standing" ;
+         afl:pythonOrder ?order .
+  BIND(STR(?class) AS ?class_iri)
+  BIND(STRAFTER(STR(?class), "urn:autofde-lab:") AS ?class_name)
+  OPTIONAL {
+    ?class rdfs:subClassOf ?super .
+    ?super afl:pythonModule "standing" .
+  }
+  BIND(IF(BOUND(?super), STRAFTER(STR(?super), "urn:autofde-lab:"), "SemanticEntity") AS ?base_name)
+}
+ORDER BY xsd:integer(?order) ?class_name
+""" }
+template = { file = "templates/python/semantic_module.py.tera" }
+output_file = "src/autofde_lab/constitution/standing.py"
+skip_empty = false
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "python-interop"
+query = { inline = """
+PREFIX afl: <urn:autofde-lab:>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?order ?class_name ?class_iri ?base_name
+WHERE {
+  ?class a owl:Class ;
+         afl:pythonModule "interop" ;
+         afl:pythonOrder ?order .
+  BIND(STR(?class) AS ?class_iri)
+  BIND(STRAFTER(STR(?class), "urn:autofde-lab:") AS ?class_name)
+  OPTIONAL {
+    ?class rdfs:subClassOf ?super .
+    ?super afl:pythonModule "interop" .
+  }
+  BIND(IF(BOUND(?super), STRAFTER(STR(?super), "urn:autofde-lab:"), "SemanticEntity") AS ?base_name)
+}
+ORDER BY xsd:integer(?order) ?class_name
+""" }
+template = { file = "templates/python/semantic_module.py.tera" }
+output_file = "src/autofde_lab/constitution/interop.py"
+skip_empty = false
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "python-manufacture"
+query = { inline = """
+PREFIX afl: <urn:autofde-lab:>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?order ?class_name ?class_iri ?base_name
+WHERE {
+  ?class a owl:Class ;
+         afl:pythonModule "manufacture" ;
+         afl:pythonOrder ?order .
+  BIND(STR(?class) AS ?class_iri)
+  BIND(STRAFTER(STR(?class), "urn:autofde-lab:") AS ?class_name)
+  OPTIONAL {
+    ?class rdfs:subClassOf ?super .
+    ?super afl:pythonModule "manufacture" .
+  }
+  BIND(IF(BOUND(?super), STRAFTER(STR(?super), "urn:autofde-lab:"), "SemanticEntity") AS ?base_name)
+}
+ORDER BY xsd:integer(?order) ?class_name
+""" }
+template = { file = "templates/python/semantic_module.py.tera" }
+output_file = "src/autofde_lab/constitution/manufacture.py"
+skip_empty = false
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "python-terms"
+query = { inline = """
+PREFIX afl: <urn:autofde-lab:>
+SELECT ?x WHERE { BIND(afl:SemanticConstitution AS ?x) } ORDER BY ?x
+""" }
+template = { file = "templates/python/terms.py.tera" }
+output_file = "src/autofde_lab/constitution/terms.py"
+skip_empty = false
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "python-registry"
+query = { inline = """
+PREFIX afl: <urn:autofde-lab:>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?module ?order ?class_name ?class_iri
+WHERE {
+  ?class a owl:Class ;
+         afl:pythonModule ?module ;
+         afl:pythonOrder ?order .
+  BIND(STR(?class) AS ?class_iri)
+  BIND(STRAFTER(STR(?class), "urn:autofde-lab:") AS ?class_name)
+}
+ORDER BY ?module xsd:integer(?order) ?class_name
+""" }
+template = { file = "templates/python/registry.py.tera" }
+output_file = "src/autofde_lab/constitution/registry.py"
+skip_empty = false
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "python-validation"
+query = { inline = """
+PREFIX afl: <urn:autofde-lab:>
+SELECT ?x WHERE { BIND(afl:SemanticConstitution AS ?x) } ORDER BY ?x
+""" }
+template = { file = "templates/python/validation.py.tera" }
+output_file = "src/autofde_lab/constitution/validation.py"
+skip_empty = false
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "python-init"
+query = { inline = """
+PREFIX afl: <urn:autofde-lab:>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?module ?order ?class_name ?class_iri
+WHERE {
+  ?class a owl:Class ;
+         afl:pythonModule ?module ;
+         afl:pythonOrder ?order .
+  BIND(STR(?class) AS ?class_iri)
+  BIND(STRAFTER(STR(?class), "urn:autofde-lab:") AS ?class_name)
+}
+ORDER BY ?module xsd:integer(?order) ?class_name
+""" }
+template = { file = "templates/python/init.py.tera" }
+output_file = "src/autofde_lab/constitution/__init__.py"
+skip_empty = false
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "python-tests"
+query = { inline = """
+PREFIX afl: <urn:autofde-lab:>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?module ?order ?class_name ?class_iri
+WHERE {
+  ?class a owl:Class ;
+         afl:pythonModule ?module ;
+         afl:pythonOrder ?order .
+  BIND(STR(?class) AS ?class_iri)
+  BIND(STRAFTER(STR(?class), "urn:autofde-lab:") AS ?class_name)
+}
+ORDER BY ?module xsd:integer(?order) ?class_name
+""" }
+template = { file = "templates/python/test_semantic_constitution.py.tera" }
+output_file = "tests/constitution/test_semantic_constitution.py"
+skip_empty = false
+mode = "Overwrite"
