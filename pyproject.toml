@@ -158,6 +158,11 @@ RDDLDomainSimplifiedSpaces = "autofde_lab.hub.domain.rddl:RDDLDomainSimplifiedSp
 PDDLDomain = "autofde_lab.hub.domain.pddl:PDDLDomain [domains]"
 PPDDLDomain = "autofde_lab.hub.domain.pddl:PPDDLDomain [domains]"
 TPDDLDomain = "autofde_lab.hub.domain.pddl:TPDDLDomain [pddl]"
+terragoat_remediation = "autofde_lab.hub.domain.terragoat.terragoat_remediation:TerraGoatRemediation [domains]"
+k8s_goat_rbac_escalation = "autofde_lab.hub.domain.k8s_goat_rbac_escalation.k8s_goat_rbac_escalation:K8sGoatRBACEscalation [domains]"
+azuregoat_privesc = "autofde_lab.hub.domain.azuregoat_privesc.azuregoat_privesc:AzureGoatPrivilegeEscalation [domains]"
+cloudgoat_iam_privesc = "autofde_lab.hub.domain.cloudgoat_iam_privesc.cloudgoat_iam_privesc:CloudGoatIamPrivescDomain [domains]"
+fix_git_recovery = "autofde_lab.hub.domain.fix_git.git_recovery:GitRecoveryDomain [domains]"
 
 [project.entry-points."autofde_lab.solvers"]
 AOstar = "autofde_lab.hub.solver.aostar:AOstar [solvers]"
