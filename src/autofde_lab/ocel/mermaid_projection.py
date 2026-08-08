@@ -27,6 +27,7 @@ sparse and disconnected. That is the correct output, not a rendering bug.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -54,8 +55,34 @@ def _short(identity: str, keep: int = 12) -> str:
 
 
 def _node_id(raw: str) -> str:
-    """A mermaid-safe node id derived from the real object id."""
-    return "n" + "".join(c if c.isalnum() else "_" for c in raw)[:48]
+    """A mermaid-safe, **injective** node id derived from the real object id.
+
+    The digest suffix is not decoration. Sanitising and truncating alone is not
+    injective -- two distinct object ids sharing a 48-character prefix (routine
+    for URN-shaped ids such as ``urn:gymact:resource_flow:capability:...``)
+    would collapse into one node, silently merging two objects and re-pointing
+    every edge that touched either of them. That is the diagram asserting a
+    relation the log does not contain, which rule 1 in this module forbids.
+    """
+    slug = "".join(c if c.isalnum() else "_" for c in raw)[:48]
+    return "n" + slug + "_" + hashlib.sha256(raw.encode("utf-8")).hexdigest()[:8]
+
+
+def _label(text: str) -> str:
+    """Escape text for a Mermaid quoted node label.
+
+    A raw ``"`` in an object id or type terminates the label early and yields a
+    diagram that will not parse; ``<`` would open a stray tag. Both are escaped
+    to Mermaid/HTML entities so the projection of a hostile-but-legal OCEL log
+    is still syntactically valid Mermaid.
+    """
+    return (
+        str(text)
+        .replace("&", "&amp;")
+        .replace('"', "#quot;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
 
 
 def ocel_to_mermaid(log: dict, title: str = "") -> str:
@@ -79,7 +106,7 @@ def ocel_to_mermaid(log: dict, title: str = "") -> str:
     for obj in sorted(objects, key=sort_key):
         oid = obj.get("id", "")
         otype = obj.get("type", "?")
-        lines.append(f'    {_node_id(oid)}["{otype}<br/>{_short(oid)}"]')
+        lines.append(f'    {_node_id(oid)}["{_label(otype)}<br/>{_label(_short(oid))}"]')
 
     edge_count = 0
     for obj in sorted(objects, key=sort_key):
@@ -91,7 +118,9 @@ def ocel_to_mermaid(log: dict, title: str = "") -> str:
                 # node the evidence does not contain.
                 continue
             qual = rel.get("qualifier", "")
-            label = f"|{qual}|" if qual else ""
+            # ``|`` would terminate the arrow label early; the qualifier is real
+            # log content and is escaped, never dropped.
+            label = f'|"{_label(qual).replace("|", "&#124;")}"|' if qual else ""
             lines.append(f"    {_node_id(src)} -->{label} {_node_id(tgt)}")
             edge_count += 1
 
@@ -117,13 +146,13 @@ def federation_to_mermaid(federation: list[dict], committed_plan: list[str] | No
         plan = tuple(attempt.get("plan") or attempt.get("candidate_plan") or ())
         pid = _node_id(f"p{planner}")
         oid = _node_id(f"o{planner}")
-        lines.append(f'    {pid}["{planner}"]')
+        lines.append(f'    {pid}["{_label(planner)}"]')
         lines.append(f"    D --> {pid}")
         if outcome == "PLAN_CANDIDATE":
             marker = " ✓committed" if committed and plan == committed else ""
             lines.append(f'    {oid}["PlanCandidate<br/>{len(plan)} steps{marker}"]')
         else:
-            lines.append(f'    {oid}["{outcome}"]')
+            lines.append(f'    {oid}["{_label(outcome)}"]')
         lines.append(f"    {pid} --> {oid}")
     return "\n".join(lines)
 
