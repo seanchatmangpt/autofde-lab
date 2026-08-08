@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from typing import Mapping, Sequence
@@ -89,7 +90,10 @@ class ProblemSignature:
 
     def canonical_json(self) -> str:
         return json.dumps(
-            self.canonical_dict(), sort_keys=True, separators=(",", ":"), ensure_ascii=False
+            self.canonical_dict(),
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
         )
 
     @property
@@ -151,10 +155,12 @@ class PlannerReceipt:
     frontier_tokens: int = 0
 
     def __post_init__(self) -> None:
-        for name in ("wall_time_s", "cost_usd", "quality"):
+        for name in ("wall_time_s", "cost_usd"):
             value = getattr(self, name)
             if value < 0:
                 raise ValueError(f"{name} must be non-negative")
+        if not math.isfinite(self.quality):
+            raise ValueError("quality must be finite")
         for name in ("memory_bytes", "human_interventions", "frontier_tokens"):
             value = getattr(self, name)
             if value < 0:
@@ -284,7 +290,9 @@ class EmpiricalPlannerIndex:
                     human_interventions=self._mean(
                         [float(r.human_interventions) for r in rows]
                     ),
-                    frontier_tokens=self._mean([float(r.frontier_tokens) for r in rows]),
+                    frontier_tokens=self._mean(
+                        [float(r.frontier_tokens) for r in rows]
+                    ),
                     standing=standing,
                 )
             )
