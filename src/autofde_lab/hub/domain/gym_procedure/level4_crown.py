@@ -275,11 +275,12 @@ def commit(validated: ValidatedPlan, trial_id: str) -> PowlCommitment:
 # --------------------------------------------------------------------------
 
 _EXECUTE_SCRIPT = '''
+_AUTHORITY_REF = "urn:autofde-lab:level4-crown-authority"
 import asyncio, importlib, json, sys
 
 
 async def main(module_path, class_name, provider_name, config, plan, expected_list, payloads, ledger_path):
-    from gymact import GymAct, MaterializationIntent
+    from gymact import AllowListAuthorityResolver, GymAct, MaterializationIntent
     from gymact.models import ActuationIntent
     from gymact.crown_runtime import execute_verified
     from gymact.sqlite_ledger import SQLiteReceiptLedger
@@ -288,7 +289,18 @@ async def main(module_path, class_name, provider_name, config, plan, expected_li
 
     provider_cls = getattr(importlib.import_module(module_path), class_name)
     ledger = SQLiteReceiptLedger(ledger_path)
-    gym = GymAct(receipt_ledger=ledger)
+    # Authority must be exercised on the ACTUATION path, not only during
+    # discovery. Measured defect: the resolver was wired into the discovery
+    # bridge alone, and discovery writes no ledger while actuation writes the
+    # ledger but passed no authority_ref -- so `authority_ref` and
+    # `authority_evidence_ref` were NULL in 100% of receipts across every
+    # ledger on disk. The receipt schema already has both columns; nothing
+    # was populating them, so the authority factor had no durable evidence
+    # behind it at all.
+    gym = GymAct(
+        receipt_ledger=ledger,
+        authority_resolver=AllowListAuthorityResolver({_AUTHORITY_REF}),
+    )
     gym.register_provider(provider_cls())
 
     m = await gym.materialize(MaterializationIntent(provider=provider_name, config=config))
@@ -303,7 +315,7 @@ async def main(module_path, class_name, provider_name, config, plan, expected_li
     for i, binding in enumerate(plan):
         cap = caps[binding]
         step_expected = expected_list[i]
-        intent = ActuationIntent(episode_id=episode_id, capability=cap.iri, payload=payloads[i])
+        intent = ActuationIntent(episode_id=episode_id, capability=cap.iri, payload=payloads[i], authority_ref=_AUTHORITY_REF)
         vt = await execute_verified(gym, intent, step_expected)
         receipt_standing = (
             vt.receipt.standing.value
