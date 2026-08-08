@@ -1,7 +1,7 @@
 """Bounded construction-operations planning domain.
 
 The domain models the coordination skeleton shared by small contractors and
-larger field-service/capital-project organizations.  It deliberately separates
+larger field-service/capital-project organizations. It deliberately separates
 planner-owned construction from externally observed authority/consequence:
 
     planner Action -> CONSTRUCT only
@@ -13,11 +13,27 @@ claim physical completion, pass an inspection, or manufacture payment.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from enum import Enum
 from typing import NamedTuple, Optional
 
-from autofde_lab import DeterministicPlanningDomain, ImplicitSpace, Space, Value
-from autofde_lab.hub.space.gym import EnumSpace, ListSpace
+from autofde_lab import (
+    DeterministicPlanningDomain,
+    EnumerableSpace,
+    ImplicitSpace,
+    Space,
+    Value,
+)
+
+
+class FiniteSpace(EnumerableSpace):
+    """Dependency-free finite space for the bounded case-study vocabulary."""
+
+    def __init__(self, elements: Sequence[object]):
+        self._elements = tuple(elements)
+
+    def get_elements(self) -> Sequence[object]:
+        return self._elements
 
 
 class State(NamedTuple):
@@ -95,7 +111,7 @@ class D(DeterministicPlanningDomain):
 class ConstructionDomain(D):
     """Gall-layer contractor process model for falsification and replanning.
 
-    The goal is evidence-complete closeout, not merely a generated plan.  The
+    The goal is evidence-complete closeout, not merely a generated plan. The
     domain reaches that goal only after the required external facts have been
     observed and admitted between planning episodes.
     """
@@ -149,12 +165,12 @@ class ConstructionDomain(D):
         return state.closeout_assembled
 
     def _get_action_space_(self) -> D.T_agent[Space[D.T_event]]:
-        return EnumSpace(Action)
+        return FiniteSpace(tuple(Action))
 
     def _get_applicable_actions_from(
         self, memory: D.T_memory[D.T_state]
     ) -> D.T_agent[Space[D.T_event]]:
-        return ListSpace(list(self._applicable_actions(memory)))
+        return FiniteSpace(self._applicable_actions(memory))
 
     def _get_goals_(self) -> D.T_agent[Space[D.T_observation]]:
         return ImplicitSpace(lambda state: state.closeout_assembled)
@@ -174,7 +190,7 @@ class ConstructionDomain(D):
     def observe(self, state: State, observation: ExternalObservation) -> State:
         """Admit one externally sourced authority/consequence observation.
 
-        This method is intentionally outside the planner action API.  It records
+        This method is intentionally outside the planner action API. It records
         an observed fact after checking the minimum causal prerequisites; it does
         not claim that AutoFDE Lab caused the fact.
         """
@@ -245,7 +261,11 @@ class ConstructionDomain(D):
 
         if state.inspection_passed and not state.invoice_issued:
             actions.append(Action.ISSUE_INVOICE)
-        if state.invoice_issued and state.payment_received and not state.closeout_assembled:
+        if (
+            state.invoice_issued
+            and state.payment_received
+            and not state.closeout_assembled
+        ):
             actions.append(Action.ASSEMBLE_CLOSEOUT)
 
         return tuple(actions)
