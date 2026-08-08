@@ -343,6 +343,13 @@ class EmpiricalPlannerIndex:
                 reason="no structurally applicable registered planner",
             )
 
+        aggregates = self.aggregates(
+            signature,
+            objective=objective,
+            environment=environment,
+            hardware=hardware,
+        )
+        observed = {row.planner_id for row in aggregates}
         pareto = self.pareto_candidates(
             signature,
             objective=objective,
@@ -359,7 +366,12 @@ class EmpiricalPlannerIndex:
                 reason="no verified ALIVE empirical receipt for exact signature",
             )
 
-        if len(pareto) == 1 and pareto[0].observations >= self.min_hot_receipts:
+        all_applicable_observed = observed == set(applicable)
+        if (
+            len(pareto) == 1
+            and pareto[0].observations >= self.min_hot_receipts
+            and all_applicable_observed
+        ):
             winner = pareto[0]
             return SelectionDecision(
                 signature_key=signature.key,
