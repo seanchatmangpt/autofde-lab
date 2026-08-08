@@ -88,3 +88,17 @@ def test_cached_payload_cannot_escalate_candidate_into_authority():
         result = reuse_hot_path(cache, compiled.artifact.identity)
         assert result.standing is HotPathStanding.REFUSED_AUTHORITY_ESCALATION
         assert result.artifact is None
+
+
+def test_malformed_cached_candidate_is_typed_refusal():
+    compiled = compile_result()
+    assert compiled.artifact is not None
+    with SQLiteERRCCache(":memory:") as cache:
+        cache.put(
+            compiled.artifact.identity.digest,
+            "planner-hot-path",
+            {"candidate_only": True, "identity": {}},
+        )
+        result = reuse_hot_path(cache, compiled.artifact.identity)
+        assert result.standing is HotPathStanding.REFUSED_MALFORMED
+        assert result.artifact is None
