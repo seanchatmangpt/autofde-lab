@@ -5,7 +5,12 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
-Last update: **pass 6** (2026-08-07) — a second ERRC pass, this time on `just test-full`,
+Last update: **pass 8** (2026-08-08) — Level 4 test-loop measurement: real per-file durations
+for the five Level 4 suites, a cProfile attributing 94% of the slow one to serial planner
+federation (not to the gymact subprocess, which is 6%), and two new Justfile recipes
+(`test-level4`, `test-level4-full`). No test deleted, skipped, or weakened.
+
+Prior update: **pass 6** (2026-08-07) — a second ERRC pass, this time on `just test-full`,
 found and fixed a genuine regression pass 5's own `__init__.py` collision fix had introduced
 into the Ray/RLlib solver partition, replaced that fix with `--import-mode=importlib` plus
 an exported `PYTHONPATH` (root-caused, not worked around), and added `pytest-xdist` to the
@@ -50,6 +55,57 @@ Cross-repo consequence of this pass is ledgered separately in `docs/ecosystem-st
 under its new autofde-lab ↔ gymact section — a **new** linkage with no prior ledger claim.
 No `~/mfw`, `~/ggen`, `~/ggen-create`, `~/ggen-legacy` or `~/bcinr` surface was touched, and
 the POWL crown (`S3c`) is unchanged and still `BLOCKED`.
+
+## Pass 8 — Level 4 test-loop measurement; `just test-level4` (2026-08-08)
+
+Test-infrastructure only. No crown-adjacent surface, no product file, no test deleted,
+skipped, or weakened. Two Justfile recipes added: `test-level4` (fast subset) and
+`test-level4-full` (all of `tests/ecosystem`).
+
+Measured per file, one `.venv/bin/python -m pytest <file> -q --durations=10` invocation
+each, wall clock from `/usr/bin/time -p`, this session:
+
+| File | Wall | Result | Bound by |
+|---|---|---|---|
+| `tests/ecosystem/test_level4_ocel_vocabulary_chicago.py` | **72.19s** | passed | planner federation (see below) |
+| `tests/ecosystem/test_level4_definition_of_done.py` | 5.90s | 22 passed | in-process |
+| `tests/ecosystem/test_level4_isolation_chicago.py` | 3.54s | 3 passed | 4 concurrent real trials (2.07s in one test) |
+| `tests/ecosystem/test_level4_shacl_conformance_chicago.py` | 1.41s | 8 passed | rdflib/pySHACL, in-process |
+| `tests/ecosystem/test_crown_factor_typed_acceptance.py` | 1.10s | 11 passed | in-process (all 10 durations < 0.005s) |
+
+The four fast files together: **8.54s serial → 4.84s at `-n 4`, 44 passed**. `just test-level4`
+measured **5.77s** end to end including `just` overhead.
+
+**Measured win — the dominator is planner federation, not the gymact subprocess.** 69.87s of
+`ocel_vocabulary`'s 72.19s is one module-scoped fixture, `executed_trial`, running a single
+real `run_real_trial(3979297810, "resource_flow", ...)`. A real cProfile of exactly that call
+(cumulative, run this session) splits the 69.60s trial as:
+
+- **65.10s (94%) — `planner_federation.run_federation`**: 49 serial `_solve_one_isolated`
+  calls, each `fork()`ing a child that re-imports the full solver stack
+  (torch / discrete_optimization / …). ~1.33s per solver, of which the actual `solve()` is a
+  small fraction. This is fixed per-child import cost paid 49 times, serially.
+- **4.15s (6%) — 12 × `RealBlindEnvironment.try_action`**, the real gymact actuation
+  subprocess (12 probes, 13 `_call`s, confirmed by counting records in the trial's real
+  `probes.jsonl`).
+
+So the prior expectation that the Level 4 suites are subprocess-round-trip-bound is **not what
+the profile shows** — the gymact bridge is 6% of the cost.
+
+**Recorded, not fixed — `try_action` is O(n²) in committed probes.** Each call sends
+`self._history + prefix + [req]` to one subprocess, i.e. it replays the entire committed
+history to observe one new action, so total actuation work grows quadratically in the number
+of committed probes. At 12 probes that is still only 4.15s and it is *not* today's bottleneck,
+but it is the term that dominates if probe budgets grow. `level4_gymact_bridge.py` is owned
+elsewhere; this pass measures it and changes nothing there.
+
+Likewise **not** changed: `run_federation`'s serial loop. Parallelising 49 independent forked
+solves, or reusing one warm child, is the obvious ~10× lever on this suite, but
+`planner_federation.py` is product surface outside this pass's ownership. Recorded as a lever
+with a measured size, not as work done.
+
+Nothing is excluded from coverage: `test-level4-full` runs all of `tests/ecosystem`, and
+`test-full` already covers it.
 
 ## Pass 6 — ERRC pass #2 on `test-full`; retracts pass 5's `__init__.py` fix (2026-08-07)
 

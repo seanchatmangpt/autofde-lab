@@ -89,6 +89,26 @@ commitment from the observed trace after execution. Conformance is the
 vacuous — the same tautology as mining a process model from the log you then
 check against it.
 
+## Identity is explicit or it does not exist
+
+An identity join may be established ONLY by an explicit typed edge. Never by:
+
+```text
+timestamps          filename similarity     token overlap
+activity ordering   matching labels         matching counts
+```
+
+Each of those is a correlation that happens to hold. None is a statement the
+producer committed to. Co-reference is not relationship: an event naming two
+objects does not assert that those two objects are related to each other.
+
+**Tightening a join may lower the count.** Measured: a checker accepting token
+co-occurrence read 2/5; the same trial under explicit-typed-edge-only reads
+0/7. If the earlier join was incidental, the lower number is the more honest
+one and the drop is a correct regression. Never optimize a verifier toward a
+green result — optimize toward every required identity being explicit in
+durable evidence.
+
 ## The threshold — standing external to the actor
 
 The crown is not a score. It is this property:
