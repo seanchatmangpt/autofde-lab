@@ -42,6 +42,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from autofde_lab.hub.domain.gym_procedure.crown_evidence import (
+    GOAL_CONSEQUENCE_EVENT_TYPE,
     BlockedEvidence,
     ConformantButGoalUnmetEvidence,
     Level4AliveEvidence,
@@ -67,9 +68,14 @@ from autofde_lab.hub.domain.gym_procedure.level4_gymact_bridge import (
     skip_reason,
 )
 from autofde_lab.hub.domain.gym_procedure.planner_federation import (
+    CommonCandidateSet,
     PlannerAttempt,
+    UngovernedCandidateRefused,
     classify_registered_solvers,
+    recipe_problem_digest,
     run_federation,
+    run_typed_search_attempt,
+    select_governed_candidate,
 )
 from autofde_lab.hub.domain.gym_procedure.state_typing import (
     ProjectionResult,
@@ -79,7 +85,6 @@ from autofde_lab.hub.domain.gym_procedure.state_typing import (
 from autofde_lab.hub.domain.gym_procedure.typed_induction import (
     TypedDomain,
     induce_typed_domain,
-    search_plan_typed,
     validate_plan_typed,
 )
 
@@ -1333,6 +1338,15 @@ def run_real_trial(
     evidence_dir = Path(evidence_root) / f"realtrial_{seed}_{run_id}"
     evidence_dir.mkdir(parents=True, exist_ok=False)
 
+    # The witness journal. Every relation the independent chain needs is
+    # STATED here at the transition where it becomes true -- goal admission,
+    # candidate selection, commitment, independent goal verification, replay.
+    # Nothing is written back after the episode finishes: a relation
+    # reconstructed from a completed episode is a claim about a claim.
+    from autofde_lab.hub.domain.gym_procedure.level4_ocel import WitnessJournal
+
+    journal = WitnessJournal(evidence_dir)
+
     env = RealBlindEnvironment(provider_key, config, evidence_dir / "discovery")
 
     # --- probe ------------------------------------------------------------
@@ -1450,12 +1464,49 @@ def run_real_trial(
             domain, recipe, attempts, critique, supported = _plan_round(probe_log)
             break
 
+    # --- TYPED model: the authoritative validation gate -------------------
+    # `induce_discovered_domain` unions deltas across calls and so claims a
+    # single `increment` establishes `solved=True`. That model validated a
+    # 1-step plan for a 3-step goal and 30 planners agreed with it. The typed
+    # model learns `counter += 1` and refuses to claim `solved` at all, so no
+    # federation candidate can reach commitment without surviving it.
+    #
+    # Induced BEFORE `federation.json` is written, deliberately: `typed_search`
+    # needs the typed model, and it is now a federated producer whose attempt
+    # must appear in that file alongside every other planner's.
+    typed_records = [r for r in raw_records if "observed_pre" in r and "observed_post" in r]
+    typed_domain: TypedDomain = induce_typed_domain(typed_records)
+    typed_initial = dict(typed_records[0]["observed_pre"]) if typed_records else {}
+    goal_predicate, goal_expr = model_goal_predicate(provider_key, typed_initial, config)
+    goal_predicate_description = (
+        f"MODEL goal (base dimensions): {goal_expr}; "
+        f"REAL goal: solved is True in the post-execution observation"
+    )
+    # `typed_search` COMPETES -- it does not bypass. Previously it was called
+    # directly further down, produced no `PlannerAttempt`, appeared in no
+    # `federation.json`, was never ranked, and still sourced the commitment
+    # (`committed_plan_source == "typed_search"` on an archived trial where 0
+    # of 13 federation candidates matched the committed plan). It is now one
+    # more producer under the same contract; the advisory ranking is
+    # recomputed over the FULL attempt set so it is ranked with the others.
+    attempts = list(attempts) + [
+        run_typed_search_attempt(
+            typed_domain,
+            typed_initial,
+            goal_predicate,
+            recipe_problem_digest(recipe),
+            timeout_s=planner_timeout_s,
+        )
+    ]
+    critique = critique_candidates(attempts, domain, lm=lm)
+
     candidate_planners = tuple(sorted({a.planner_identity for a in attempts if a.outcome == "PLAN_CANDIDATE"}))
 
     (evidence_dir / "federation.json").write_text(
         json.dumps(
             [
-                {"planner": a.planner_identity, "outcome": a.outcome, "plan": list(a.candidate_plan),
+                {"planner": a.planner_identity, "representation": a.representation,
+                 "outcome": a.outcome, "plan": list(a.candidate_plan),
                  "duration_s": a.planning_duration_s, "detail": a.detail}
                 for a in attempts
             ],
@@ -1464,19 +1515,18 @@ def run_real_trial(
         encoding="utf-8",
     )
 
-    # --- TYPED model: the authoritative validation gate -------------------
-    # `induce_discovered_domain` unions deltas across calls and so claims a
-    # single `increment` establishes `solved=True`. That model validated a
-    # 1-step plan for a 3-step goal and 30 planners agreed with it. The typed
-    # model learns `counter += 1` and refuses to claim `solved` at all, so no
-    # federation candidate can reach commitment without surviving it.
-    typed_records = [r for r in raw_records if "observed_pre" in r and "observed_post" in r]
-    typed_domain: TypedDomain = induce_typed_domain(typed_records)
-    typed_initial = dict(typed_records[0]["observed_pre"]) if typed_records else {}
-    goal_predicate, goal_expr = model_goal_predicate(provider_key, typed_initial, config)
-    goal_predicate_description = (
-        f"MODEL goal (base dimensions): {goal_expr}; "
-        f"REAL goal: solved is True in the post-execution observation"
+    # THE COMMON CANDIDATE SET -- the single door to commitment. Every
+    # producer's PLAN_CANDIDATE enters here and nothing else can.
+    common = CommonCandidateSet(recipe_problem_digest(recipe))
+    common.admit_all(attempts)
+
+    # GOAL ADMISSION -- the admitted goal acquires a durable identity here,
+    # before any plan exists to reach it. A goal recovered afterwards from the
+    # final state could not fail to be met.
+    goal_id = journal.admit_goal(
+        goal_id=f"urn:level4:goal:{run_id}",
+        expression=goal_expr,
+        target=dict(config),
     )
 
     base = dict(
@@ -1512,9 +1562,21 @@ def run_real_trial(
     # Now: validate all DISTINCT candidate plans, count every one the typed
     # model rejected, and persist the per-candidate verdicts so the number is
     # falsifiable from the evidence directory rather than trusted.
-    validated, plan_source, candidate_verdicts = validate_federation_candidates(
-        typed_domain, typed_initial, critique.ranked_candidates, goal_predicate, model_digest
+    #
+    # And every candidate now means EVERY candidate: the selection sweep runs
+    # over the common candidate set, which includes `typed_search`. The
+    # advisory ranking only orders the sweep; it cannot admit or exempt.
+    selected, candidate_verdicts = select_governed_candidate(
+        common, typed_domain, typed_initial, goal_predicate, critique.ranked_candidates
     )
+    validated = (
+        ValidatedPlan(
+            plan=selected.plan, model_digest=model_digest, validated_against="TypedDomain"
+        )
+        if selected is not None
+        else None
+    )
+    plan_source = f"federation:{selected.planner_identity}" if selected is not None else ""
     rejected = sum(1 for v in candidate_verdicts if not v["valid"])
     (evidence_dir / "typed_validation.json").write_text(
         json.dumps(
@@ -1527,13 +1589,9 @@ def run_real_trial(
         ),
         encoding="utf-8",
     )
-    if validated is None:
-        searched = search_plan_typed(typed_domain, typed_initial, goal_predicate)
-        if searched is not None:
-            ok, _final, reason = validate_plan_typed(typed_domain, typed_initial, searched, goal_predicate)
-            if ok:
-                validated = ValidatedPlan(plan=searched, model_digest=model_digest, validated_against="TypedDomain")
-                plan_source = "typed_search"
+    # (The former `search_plan_typed` fallback lived here. It is gone as a
+    # FALLBACK, not as a capability: `typed_search` runs above as a federated
+    # producer, so its candidate reaches this point through the common set.)
     if validated is None:
         return TrialReport(
             standing=UnknownEvidence(missing="NO_TYPED_VALID_PLAN", episode_digest=None),
@@ -1542,7 +1600,26 @@ def run_real_trial(
             unsound_candidates_rejected=rejected, **typed_base, **base
         )
 
+    # SELECTION -- this candidate, for that goal, from that source. Recorded
+    # at the moment of selection, so no reader has to re-derive "which of the
+    # candidates was chosen" from a verdict file.
+    candidate_id = journal.select_candidate(
+        candidate_id=f"urn:level4:candidate:{run_id}",
+        goal_id=goal_id,
+        planner=plan_source,
+        source=validated.validated_against,
+        plan=tuple(validated.plan),
+    )
+
+    # THE GATE. A plan that did not come through the common candidate set
+    # cannot source a commitment -- typed refusal, not a comment.
+    common.require_governed(validated.plan, selected.planner_identity)
+
     commitment = commit(validated, trial_id=run_id)
+    # COMMITMENT -- this commitment realizes that candidate.
+    journal.commit_plan(
+        commitment_subject=f"urn:trial:{run_id}", candidate_id=candidate_id
+    )
     payloads = [env.payload_for(a) for a in validated.plan]
     expected_steps = predict_step_postconditions(
         validated.plan, provider_key, typed_initial, payloads
@@ -1550,6 +1627,43 @@ def run_real_trial(
     result = commit_and_execute(
         commitment, provider_key, config, expected_steps, evidence_dir / "actuation", payloads
     )
+    # INDEPENDENT CONSEQUENCE + REPLAY -- both stated as the execution returns
+    # them, naming exact identities. The goal outcome is read off the real
+    # `verify_goal_consequence` event the subprocess projected from gymact's
+    # own `VerificationResult`; an absent event records NOTHING (UNKNOWN),
+    # and is never written as a refutation.
+    _ledger_path = evidence_dir / "actuation" / "receipts.sqlite3"
+    _final_act = journal.final_actuation_receipt_id(_ledger_path)
+    for _event in result["ocel"].get("events", []) if isinstance(result.get("ocel"), dict) else []:
+        if _event.get("type") != GOAL_CONSEQUENCE_EVENT_TYPE or _final_act is None:
+            continue
+        _attributes = {a["name"]: a["value"] for a in _event.get("attributes", [])}
+        if "passed" not in _attributes or "verification_id" not in _attributes:
+            continue
+        _episode = next(
+            (r["objectId"] for r in _event.get("relationships", []) if r.get("qualifier") == "episode"),
+            "",
+        )
+        journal.observe_goal_consequence(
+            verification_id=str(_attributes["verification_id"]),
+            goal_id=goal_id,
+            outcome="ESTABLISHED" if _attributes["passed"] == "True" else "REFUTED",
+            actuation_receipt_id=_final_act,
+            # The verifier is gymact's kernel `verify()` path; the actuator is
+            # the actuation the plan's final step opened. Two identities, so
+            # self-certification is a graph property, not a flag.
+            verifier_id=f"urn:level4:verifier:gymact-kernel-verify:{_episode}",
+            actuator_id=f"urn:level4:actuation:{_final_act}",
+        )
+    if isinstance(result.get("replay"), dict) and result["replay"].get("head_digest"):
+        journal.complete_replay(
+            ledger=_ledger_path,
+            head_digest=str(result["replay"]["head_digest"]),
+            record_count=int(result["replay"].get("record_count") or 0),
+            valid=bool(result["replay"].get("valid")),
+            mode=str(result["replay"].get("mode") or ""),
+        )
+
     violations = validate_ocel_referential_integrity(result["ocel"])
     # Read the replay record STRICTLY. A missing "replay" key, or a missing
     # field inside it, means replay evidence was not produced -- which is a

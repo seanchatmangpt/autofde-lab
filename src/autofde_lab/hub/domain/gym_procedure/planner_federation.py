@@ -96,6 +96,29 @@ def _constructibility(cls: type, solver_name: str, recipe: Recipe) -> str:
     return "CONSTRUCTIBLE"
 
 
+def recipe_problem_digest(recipe: Recipe) -> str:
+    """The problem identity every attempt on this recipe is stamped with.
+
+    Exposed (rather than computed inline in `run_federation`) so a producer
+    running outside `run_federation` -- `typed_search` -- stamps its attempt
+    with the SAME digest, and so its record is comparable to the others
+    instead of merely adjacent to them.
+    """
+    import hashlib
+    import json
+
+    return hashlib.sha256(
+        json.dumps(
+            {
+                "initial": sorted(recipe.initial_facts),
+                "goal": sorted(recipe.goal_facts),
+                "steps": sorted(s.id for s in recipe.steps),
+            },
+            sort_keys=True,
+        ).encode()
+    ).hexdigest()[:16]
+
+
 @dataclass(frozen=True)
 class PlannerAttempt:
     planner_identity: str
@@ -387,24 +410,289 @@ def _solve_one_isolated(
     )
 
 
+# --------------------------------------------------------------------------
+# typed_search as a FIRST-CLASS candidate producer
+# --------------------------------------------------------------------------
+#
+# The governance defect this closes, measured on an archived trial's
+# `federation.json`: 49 planners attempted, 13 produced PLAN_CANDIDATE, 0
+# matched the committed plan, and `committed_plan_source` read
+# `"typed_search"`. The federation was therefore OBSERVATIONAL -- its
+# candidates were validated and discarded while the plan that actually
+# reached commitment came from `search_plan_typed`, called directly, outside
+# the `PlannerAttempt` record, outside `federation.json`, outside the
+# advisory ranking, and outside the common candidate contract every other
+# producer had to satisfy.
+#
+# The fix is NOT to remove `search_plan_typed` -- it is the only producer
+# that reaches the goal on several providers, so deleting it would trade a
+# governance defect for a capability regression. It joins the contract: same
+# `PlannerAttempt` shape, same typed outcome vocabulary, same appearance in
+# `federation.json`, same advisory ranking, same independent validation.
+
+TYPED_SEARCH_PLANNER_ID = "typed_search"
+
+
+def run_typed_search_attempt(
+    typed_domain,
+    typed_initial: dict,
+    goal_predicate,
+    problem_digest: str,
+    timeout_s: float = 15.0,
+    max_len: int = 12,
+) -> PlannerAttempt:
+    """Run `search_plan_typed` as one more federated planner.
+
+    `representation` is `"typed_model"` rather than `"recipe"` -- that is a
+    real and reportable difference from the Astar/LRTDP/EHC attempts (it
+    searches the typed model, not the projected recipe), and hiding it would
+    misattribute provenance. Everything else is identical: the same record
+    type, the same outcome vocabulary, the same problem digest.
+
+    Outcome mapping, all real facts about this run:
+      UNSUPPORTED  -- no typed actions or no typed initial state to search from
+      PLAN_CANDIDATE -- a plan was found AND survived `validate_plan_typed`
+      REFUSED      -- a plan was found and its own validator rejected it
+                      (model self-inconsistency; never silently upgraded)
+      TIMEOUT      -- no plan, and the search exceeded the budget
+      FAILED       -- no plan within the budget and the length bound
+    """
+    from autofde_lab.hub.domain.gym_procedure.typed_induction import (
+        search_plan_typed,
+        validate_plan_typed,
+    )
+
+    start = time.monotonic()
+    # Guarded on ACTIONS only, deliberately. An all-False initial state is a
+    # real state, not an absent one; the absent case (`typed_records` empty in
+    # the crown) also leaves the model with no actions, so this catches it
+    # without misreporting a legitimately empty state as UNSUPPORTED.
+    if not getattr(typed_domain, "actions", None):
+        return PlannerAttempt(
+            TYPED_SEARCH_PLANNER_ID,
+            "typed_model",
+            problem_digest,
+            "UNSUPPORTED",
+            (),
+            time.monotonic() - start,
+            detail="typed model has no actions or no observed initial state",
+        )
+    try:
+        searched = search_plan_typed(
+            typed_domain, typed_initial, goal_predicate, max_len=max_len
+        )
+    except Exception as exc:  # noqa: BLE001 - a producer failure is evidence
+        return PlannerAttempt(
+            TYPED_SEARCH_PLANNER_ID,
+            "typed_model",
+            problem_digest,
+            "FAILED",
+            (),
+            time.monotonic() - start,
+            detail=f"{type(exc).__name__}: {exc}"[:200],
+        )
+    duration = time.monotonic() - start
+    if searched is None:
+        # The bound is checked after the fact rather than interrupting the
+        # BFS: `search_plan_typed` is a pure in-process loop with no
+        # cancellation point. "It ran over budget and found nothing" is still
+        # a true, distinct fact from "it finished under budget and found
+        # nothing", and both are reported honestly.
+        outcome = "TIMEOUT" if duration > timeout_s else "FAILED"
+        return PlannerAttempt(
+            TYPED_SEARCH_PLANNER_ID,
+            "typed_model",
+            problem_digest,
+            outcome,
+            (),
+            duration,
+            detail=f"no typed-model plan within max_len={max_len}",
+        )
+    ok, _final, reason = validate_plan_typed(
+        typed_domain, typed_initial, searched, goal_predicate
+    )
+    if not ok:
+        return PlannerAttempt(
+            TYPED_SEARCH_PLANNER_ID,
+            "typed_model",
+            problem_digest,
+            "REFUSED",
+            tuple(searched),
+            duration,
+            detail=f"typed search produced a plan its own validator rejected: {reason}",
+        )
+    return PlannerAttempt(
+        TYPED_SEARCH_PLANNER_ID,
+        "typed_model",
+        problem_digest,
+        "PLAN_CANDIDATE",
+        tuple(searched),
+        duration,
+    )
+
+
+# --------------------------------------------------------------------------
+# The common candidate contract -- structural, not advisory
+# --------------------------------------------------------------------------
+
+
+class UngovernedCandidateRefused(Exception):
+    """A plan that never entered the common candidate set tried to source a commitment."""
+
+
+@dataclass(frozen=True)
+class GovernedCandidate:
+    """Proof that a plan entered the common set through a real PlannerAttempt.
+
+    Forging one is not enough to source a commitment: `require_governed`
+    checks membership in the issuing set's own registry, keyed by an
+    admission digest that includes a per-set nonce no caller can predict.
+    Constructing this dataclass by hand therefore produces an object that
+    every gate rejects.
+    """
+
+    plan: tuple[str, ...]
+    planner_identity: str
+    representation: str
+    problem_digest: str
+    admission_digest: str
+
+
+class CommonCandidateSet:
+    """Every candidate producer's output funnels through here, or nowhere.
+
+    This is the enforcement point for "no plan source may bypass the common
+    path". It is structural for anything that asks it -- `require_governed`
+    raises `UngovernedCandidateRefused` on a plan it never admitted -- and
+    the call site that must ask is the commitment edge in
+    `level4_crown.run_real_trial`, immediately before `commit()`.
+    """
+
+    def __init__(self, problem_digest: str) -> None:
+        import secrets
+
+        self.problem_digest = problem_digest
+        self._nonce = secrets.token_hex(16)
+        self._admitted: dict[str, GovernedCandidate] = {}
+        self._order: list[GovernedCandidate] = []
+
+    def _digest(self, planner: str, plan: tuple[str, ...]) -> str:
+        import hashlib
+        import json
+
+        return hashlib.sha256(
+            json.dumps(
+                [self._nonce, self.problem_digest, planner, list(plan)], sort_keys=True
+            ).encode()
+        ).hexdigest()[:32]
+
+    def admit(self, attempt: PlannerAttempt) -> GovernedCandidate | None:
+        """Admit one attempt. Only `PLAN_CANDIDATE` yields a candidate.
+
+        A non-candidate outcome is not an error and is not discarded -- it
+        stays in `federation.json` as evidence -- it simply cannot become
+        something a commitment may be sourced from.
+        """
+        if attempt.outcome != "PLAN_CANDIDATE":
+            return None
+        plan = tuple(attempt.candidate_plan)
+        digest = self._digest(attempt.planner_identity, plan)
+        cand = GovernedCandidate(
+            plan=plan,
+            planner_identity=attempt.planner_identity,
+            representation=attempt.representation,
+            problem_digest=attempt.problem_digest,
+            admission_digest=digest,
+        )
+        if digest not in self._admitted:
+            self._admitted[digest] = cand
+            self._order.append(cand)
+        return self._admitted[digest]
+
+    def admit_all(self, attempts: list[PlannerAttempt]) -> list[GovernedCandidate]:
+        return [c for c in (self.admit(a) for a in attempts) if c is not None]
+
+    def candidates(self) -> tuple[GovernedCandidate, ...]:
+        return tuple(self._order)
+
+    def distinct_plans(self) -> tuple[tuple[str, ...], ...]:
+        seen: list[tuple[str, ...]] = []
+        for c in self._order:
+            if c.plan not in seen:
+                seen.append(c.plan)
+        return tuple(seen)
+
+    def is_governed(self, plan) -> bool:
+        return any(c.plan == tuple(plan) for c in self._order)
+
+    def require_governed(self, plan, planner_identity: str = "") -> GovernedCandidate:
+        """Typed refusal for a plan that did not come through the common set."""
+        plan_t = tuple(plan)
+        for c in self._order:
+            if c.plan == plan_t and (
+                not planner_identity or c.planner_identity == planner_identity
+            ):
+                return c
+        raise UngovernedCandidateRefused(
+            "UNGOVERNED_CANDIDATE_SOURCED_COMMITMENT: plan "
+            f"{list(plan_t)} (claimed source {planner_identity or 'unknown'!r}) "
+            "did not enter the common candidate set via a PlannerAttempt; "
+            f"governed candidates={[ (c.planner_identity, list(c.plan)) for c in self._order ]}"
+        )
+
+
+def select_governed_candidate(
+    common: CommonCandidateSet,
+    typed_domain,
+    typed_initial: dict,
+    goal_predicate,
+    ranking: tuple[tuple[str, tuple[str, ...], float], ...] = (),
+) -> tuple[GovernedCandidate | None, list[dict]]:
+    """Validate EVERY governed candidate, in advisory-ranked order, and select.
+
+    `ranking` is advisory: it orders the validation sweep and therefore which
+    valid candidate is selected first. It cannot admit a candidate the common
+    set never admitted, and it cannot skip validation for one it prefers.
+    Candidates absent from `ranking` (e.g. a producer the critique layer did
+    not rank) are still validated, appended after the ranked ones -- silently
+    dropping them would recreate the bypass in the opposite direction.
+    """
+    from autofde_lab.hub.domain.gym_procedure.typed_induction import validate_plan_typed
+
+    order = {plan: i for i, (_p, plan, _s) in enumerate(ranking)}
+    ordered = sorted(
+        common.candidates(), key=lambda c: order.get(c.plan, len(order) + 1)
+    )
+    selected: GovernedCandidate | None = None
+    verdicts: list[dict] = []
+    seen: set[tuple[str, ...]] = set()
+    for cand in ordered:
+        if cand.plan in seen:
+            continue
+        seen.add(cand.plan)
+        ok, _final, reason = validate_plan_typed(
+            typed_domain, typed_initial, cand.plan, goal_predicate
+        )
+        verdicts.append(
+            {
+                "planner": cand.planner_identity,
+                "representation": cand.representation,
+                "plan": list(cand.plan),
+                "valid": bool(ok),
+                "reason": reason,
+            }
+        )
+        if ok and selected is None:
+            selected = cand
+    return selected, verdicts
+
+
 def run_federation(
     recipe: Recipe, solver_names: list[str], timeout_s: float = 15.0
 ) -> list[PlannerAttempt]:
     """Run every named solver (already classified SUPPORTED) within a bounded
     per-solver timeout; record every attempt, including non-successes."""
-    import hashlib
-    import json
-
-    problem_digest = hashlib.sha256(
-        json.dumps(
-            {
-                "initial": sorted(recipe.initial_facts),
-                "goal": sorted(recipe.goal_facts),
-                "steps": sorted(s.id for s in recipe.steps),
-            },
-            sort_keys=True,
-        ).encode()
-    ).hexdigest()[:16]
+    problem_digest = recipe_problem_digest(recipe)
     return [
         _solve_one_isolated(name, recipe, timeout_s, problem_digest)
         for name in solver_names

@@ -93,7 +93,11 @@ def test_run_real_trial_end_to_end(tmp_path) -> None:
     assert report.n_probes > 0
     # Real federation over the real registry, not an assumed planner count.
     assert report.n_supported_solvers > 0
-    assert report.n_planner_attempts == report.n_supported_solvers
+    # One attempt per SUPPORTED registered solver, plus `typed_search`, which
+    # is now a federated candidate producer under the same PlannerAttempt
+    # contract instead of a direct line to commitment (see
+    # `planner_federation.run_typed_search_attempt`).
+    assert report.n_planner_attempts == report.n_supported_solvers + 1
     assert len(report.planners_producing_candidates) > 0
     # The continuous `reward` dimension has no sound propositional encoding;
     # it must be RECORDED as a loss, never silently dropped.
