@@ -15,12 +15,78 @@ solver under test.
 
 from __future__ import annotations
 
+import re
+
 from autofde_lab.hub.domain.azuregoat_privesc import AzureGoatPrivilegeEscalation
 from autofde_lab.hub.domain.azuregoat_privesc.azuregoat_privesc import (
     ATTACK_STEPS,
+    DEFAULT_MANUAL_FILE,
     GOAL_FACT,
+    parse_manual_steps,
 )
 from autofde_lab.hub.solver.astar import Astar
+
+# For each hand-authored AttackStep, the literal command substring that must
+# appear, verbatim, in the real vendored manual's fenced code block for that
+# step -- proves the domain's preconditions/establishes are not a free-floating
+# fabrication disconnected from the source, even though (unlike TerraGoat's
+# regex-parsed findings) preconditions/establishes are a modeling choice that
+# cannot itself be regex-parsed out of unstructured attack-manual prose.
+_EXPECTED_COMMAND_SUBSTRING: dict[str, str] = {
+    "ssh_login_vm": "ssh -i justin.pem justin@",
+    "az_login_managed_identity": "az login -i",
+    "list_resources_for_principal_id": "az resource list",
+    "list_role_assignments": "az role assignment list -g azuregoat_app",
+    "correlate_owner_principal_to_automation_account": "az resource list",
+    "list_runbooks": "az automation runbook list --automation-account-name",
+    "write_privesc_runbook_script": "New-AzRoleAssignment",
+    "replace_and_publish_runbook": "runbook replace-content",
+    "start_runbook": "runbook start",
+    "confirm_owner_role": "az role assignment list -g azuregoat_app",
+}
+
+
+def test_attack_steps_match_real_manual_commands_parsed_at_runtime():
+    """Cross-check every hand-authored AttackStep against a real runtime
+    regex parse of the real vendored manual file (not a hard-coded copy of
+    the manual's text, and not trusting the domain module's own docstring
+    claim of transcription): the manual step number in each AttackStep must
+    resolve to a real ``**Step N:**`` section in
+    ``vendor/gyms/azuregoat/attack-manuals/module-1/05-Privilege Escalation.md``,
+    and that section's real fenced code block must literally contain the
+    command substring the AttackStep claims to be transcribing.
+
+    This is the AzureGoat analogue of what
+    ``terragoat_remediation.parse_findings`` gives TerraGoat: a runtime,
+    re-checkable link from the domain back to the real vendored source, so
+    manual drift or a transcription error is a real, automatically-caught
+    test failure instead of an unverifiable claim.
+    """
+    assert DEFAULT_MANUAL_FILE.is_file(), (
+        f"expected real vendored manual at {DEFAULT_MANUAL_FILE}"
+    )
+
+    manual_steps = parse_manual_steps(DEFAULT_MANUAL_FILE)
+    assert len(manual_steps) == 9, (
+        "the real vendored manual documents Steps 1-9; a count drift here "
+        "means either the vendored file or this parser changed"
+    )
+    by_number = {s.number: s for s in manual_steps}
+
+    assert len(ATTACK_STEPS) == len(_EXPECTED_COMMAND_SUBSTRING)
+    for step in ATTACK_STEPS:
+        manual_number = int(re.match(r"Step (\d+)", step.manual_step).group(1))
+        assert manual_number in by_number, (
+            f"{step.id!r} claims {step.manual_step!r}, but the real manual "
+            f"has no Step {manual_number}"
+        )
+        real_code = by_number[manual_number].code
+        expected_substring = _EXPECTED_COMMAND_SUBSTRING[step.id]
+        assert expected_substring in real_code, (
+            f"{step.id!r} claims command {expected_substring!r} from real "
+            f"{step.manual_step!r}, but the real manual's code block for "
+            f"Step {manual_number} is:\n{real_code!r}"
+        )
 
 
 def test_attack_steps_are_the_documented_azuregoat_manual_chain():

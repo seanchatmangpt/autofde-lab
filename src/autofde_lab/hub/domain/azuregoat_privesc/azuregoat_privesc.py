@@ -43,12 +43,77 @@ manual's step ordering rather than being handed it.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
+from pathlib import Path
 from typing import NamedTuple, Optional
 
 from autofde_lab import D, DeterministicPlanningDomain, Space, Value
 from autofde_lab.core import ImplicitSpace
 from autofde_lab.hub.space.gym import ListSpace
+
+DEFAULT_MANUAL_FILE = (
+    Path(__file__).resolve().parents[5]
+    / "vendor"
+    / "gyms"
+    / "azuregoat"
+    / "attack-manuals"
+    / "module-1"
+    / "05-Privilege Escalation.md"
+)
+
+# Matches "**Step 1:**", "**Step 8:**", ... headers in the real vendored
+# manual, capturing the step number and the sentence introducing it.
+_STEP_HEADER_RE = re.compile(r"\*\*Step (\d+):\*\*\s*(.*)")
+# Matches a fenced code block's contents (the literal shell/PowerShell text).
+_CODE_BLOCK_RE = re.compile(r"```(?:\w*)\n(.*?)```", re.DOTALL)
+
+
+@dataclass(frozen=True)
+class ManualStep:
+    """One real step parsed at runtime out of AzureGoat's own vendored
+    Module-1 Privilege Escalation manual (not a hand-copied constant)."""
+
+    number: int
+    intro: str
+    code: str
+
+
+def parse_manual_steps(manual_file: Path = DEFAULT_MANUAL_FILE) -> list[ManualStep]:
+    """Parse every ``**Step N:**`` section and its first fenced code block out
+    of the real vendored AzureGoat manual text at runtime.
+
+    This gives the domain a real, re-checkable link back to its source: if
+    the vendored manual changes, or if ``ATTACK_STEPS`` drifts from what the
+    manual actually documents, a parity check against this parse can catch
+    it, the same way ``terragoat_remediation.parse_findings`` keeps that
+    domain's findings tied to the real vendored Terraform text instead of a
+    disconnected hand-authored copy.
+
+    # Parameters
+    manual_file: path to the real vendored manual markdown file.
+
+    # Returns
+    list[ManualStep]: one entry per ``**Step N:**`` header found, in file
+        order, each carrying the real intro sentence and the real fenced
+        code block text (or ``""`` if that step has no code block, e.g. a
+        pure explanation step).
+    """
+    text = manual_file.read_text()
+    headers = list(_STEP_HEADER_RE.finditer(text))
+    if not headers:
+        raise ValueError(f"No '**Step N:**' headers parsed from {manual_file}")
+
+    steps: list[ManualStep] = []
+    for i, match in enumerate(headers):
+        number = int(match.group(1))
+        intro = match.group(2).strip()
+        section_end = headers[i + 1].start() if i + 1 < len(headers) else len(text)
+        section_text = text[match.end() : section_end]
+        code_match = _CODE_BLOCK_RE.search(section_text)
+        code = code_match.group(1) if code_match else ""
+        steps.append(ManualStep(number=number, intro=intro, code=code))
+    return steps
 
 
 @dataclass(frozen=True)

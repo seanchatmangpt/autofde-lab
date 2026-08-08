@@ -32,6 +32,13 @@ dependencies = [
     "pathos>=0.2.7",
     "discrete-optimization>=0.9.0",
     "wrapt>=2.2.1",
+    # Real path dependency on the standalone `~/gymact` package (see
+    # `[tool.uv.sources]` below), for
+    # `autofde_lab.hub.domain.azuregoat_privesc.gymact_bridge`'s real
+    # `EnvironmentProvider`/`Environment` implementation -- not faked, not
+    # vendored; installed for real per
+    # `~/gymact/docs/integrations/consumer-setup.md`.
+    "gymact",
 ]
 
 [project.urls]
@@ -138,6 +145,10 @@ gymact = [
     # come from the `ofmf` extra and fastmcp from `mcp` -- both already real,
     # already-installed-or-installable local dependencies per
     # .claude/rules/testing-chicago-style.md, not faked here either.
+    # The `gymact` package itself (src/autofde_lab/gymact/kernel.py is a thin
+    # wrapper over gymact.runtime.GymAct, not an independent reimplementation)
+    # is already a base `[project.dependencies]` entry -- path-sourced via
+    # `[tool.uv.sources]` -- so it is not repeated here.
     "fastapi>=0.115",
     "httpx>=0.27",
     "typer>=0.12",
@@ -239,6 +250,13 @@ HSVI = "autofde_lab.hub.solver.hsvi:HSVI [solvers]"
 GoalHSVI = "autofde_lab.hub.solver.hsvi:GoalHSVI [solvers]"
 DSPyPolicy = "autofde_lab.hub.solver.dspy_policy:DSPyPolicy [dspy]"
 
+[project.entry-points."gymact.providers"]
+# Real GymAct provider registration, per
+# ~/gymact/docs/integrations/consumer-setup.md step 2. Discovery is
+# metadata-only (gymact.plugins.discover_provider_plugins/load_provider_plugin)
+# -- registering here never imports this module ambiently.
+azuregoat_privesc = "autofde_lab.hub.domain.azuregoat_privesc.gymact_bridge:AzureGoatPrivescProvider"
+
 [dependency-groups]
 dev = [
     "docopt>=0.6.2",
@@ -264,6 +282,7 @@ default-groups = "all"
 
 [tool.uv.sources]
 wasm4pm-compat-py = { path = "/Users/sac/wasm4pm-compat/wasm4pm-compat-py", editable = true }
+gymact = { path = "/Users/sac/gymact", editable = true }
 
 [tool.pytest.ini_options]
 minversion = "6.0"
