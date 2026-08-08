@@ -163,7 +163,48 @@ jobs:
                   compile(path.read_bytes(), str(path), "exec")
       - name: Reject conflict markers
         shell: bash
-        run: "! git grep -nE '^(<<<<<<<|=======|>>>>>>>)' -- ':!uv.lock'"
+        run: "! git grep -nE '^(<<<<<<<($| )|=======$|>>>>>>>($| ))' -- ':!uv.lock'"
+
+  crown:
+    name: Crown kernel / Python 3.12
+    needs: classify
+    if: needs.classify.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+      - name: Install Crown verifier
+        run: python -m pip install "pytest==8.3.5"
+      - name: Execute Crown kernel
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q \
+            tests/autofde/test_authority.py \
+            tests/autofde/test_bootstrap.py \
+            tests/fabric/test_brce.py \
+            tests/fabric/test_brce_identity.py \
+            tests/fabric/test_public_ontology.py \
+            tests/fabric/test_world_model.py \
+            tests/fabric/test_guardrails.py \
+            tests/fabric/test_self_play.py \
+            tests/fabric/test_query_plane.py \
+            tests/fabric/test_selection.py \
+            tests/fabric/test_selection_store.py \
+            tests/fabric/test_metrics.py \
+            tests/fabric/test_cognition_debt.py \
+            tests/fabric/test_causal_placement.py \
+            tests/fabric/test_handoff.py \
+            tests/fabric/test_differential_verification.py \
+            tests/fabric/test_competitive_benchmark.py \
+            tests/fabric/test_coverage_bridge.py \
+            tests/fabric/test_crown.py \
+            tests/fabric/test_crown_evidence.py
 
   package:
     name: Source package smoke
@@ -200,7 +241,7 @@ jobs:
   gate:
     name: CI gate
     if: always()
-    needs: [classify, quality, cache, python-smoke, package]
+    needs: [classify, quality, cache, python-smoke, crown, package]
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
@@ -210,6 +251,7 @@ jobs:
           QUALITY: ${{ needs.quality.result }}
           CACHE: ${{ needs.cache.result }}
           PYTHON_SMOKE: ${{ needs.python-smoke.result }}
+          CROWN: ${{ needs.crown.result }}
           PACKAGE: ${{ needs.package.result }}
         shell: bash
         run: |
@@ -219,6 +261,7 @@ jobs:
             "$QUALITY" \
             "$CACHE" \
             "$PYTHON_SMOKE" \
+            "$CROWN" \
             "$PACKAGE"; do
             case "$result" in
               success|skipped) ;;
