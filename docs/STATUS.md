@@ -20,6 +20,37 @@ Scope note: this sheet ledgers WIP **inside this repository**. Cross-repository 
 `docs/ecosystem-standing.md`, same discipline, wider blast radius. Don't merge the two — a
 green row here says nothing about whether a consequence closes across the portfolio.
 
+## Pass 7 — Level 4 discovery→actuation chain over a real GymAct environment (2026-08-08)
+
+Five commits on `feat/procint-quality-dims-resource-perspective`
+(`34d7462`, `aef1840`, `070cc3a`, `a4f709d`, `b28905c`, oldest first), adding
+`src/autofde_lab/hub/domain/gym_procedure/`: `discovered_domain.py` (causal IR + probe
+refinement), `state_typing.py`, `level4_gymact_bridge.py` (subprocess bridge into
+`~/gymact`'s own venv), `planner_federation.py`, `level4_crown.py`, `level4_crown_runner.py`,
+`level4_generator.py`. Every row below is a `technicalStanding` claim
+(`.claude/rules/standing-law.md`); **nothing here computes `organizationalStanding`**, and the
+frozen crown run has not executed — see the deferred rows.
+
+| Item | State | Witness |
+|---|---|---|
+| Causal refinement of an induced `DiscoveredDomain` | **measured win** | On a deliberately confounded probe log where `{A,B,C}` always co-occur but only `B` is causal, naive `induce_discovered_domain` yields a precondition set `{A,B,C}`; two `propose_discriminating_probe` → `refine_from_probe` rounds shrink it to exactly `{B}`. The discrimination is done by executing the proposed probe, not by inspecting the generator's ground truth. |
+| Real solver inventory against a real `GymProcedureDomain` | **measured win, corrects an in-session figure** | `.venv/bin/python -c "…classify_registered_solvers(load_recipe(recipes/agentbench_kg_relation_path.json))"` re-run this pass → **`TOTAL 57`, `Counter({'SUPPORTED': 49, 'UNSUPPORTED:CHECK_DOMAIN_FALSE': 8})`, 0 `UNAVAILABLE`**. Classification is the framework's own gate (`cls.check_domain(domain)`), not a hardcoded list. The 8 refusals, verbatim: `AugmentedRandomSearch`, `CGP`, `CIDual`, `DOSolver`, `GPHH`, `PilePolicy`, `RDDLGurobiSolver`, `RDDLJaxSolver`. **Correction**: an earlier in-session figure of "55 registered / 6 UNSUPPORTED" is retracted — the re-run measures 57 and 8. Recorded rather than silently overwritten. |
+| Bounded multi-planner federation on a real 7-step recipe | **measured win** | Same recipe (`agentbench/knowledgegraph`, 7 steps confirmed by `len(recipe.steps)` → `7`). `Astar`, `LRTDP` and `EHC` each returned a 7-step `PLAN_CANDIDATE` and agreed on it. Every attempt — including the three failures in the next two rows — is retained as a `PlannerAttempt` record; failures are evidence, not discarded. |
+| `IW` and `BFWS` in the federation | **recorded negative — `UNSUPPORTED:CONSTRUCTOR_SIGNATURE_GAP`** | Both `FAILED` at construction: they require a `state_features` argument that `run_federation`'s uniform `cls(domain_factory=…)` call site does not supply, and no feature function is derivable from a `GymProcedureDomain` recipe without a design decision about what a state feature *is* for a discovered domain. Not fixed this pass; not hidden — the `PlannerAttempt` records the real failure. |
+| `SimpleGreedy` in the federation | **recorded negative — `UNSUPPORTED:OBSERVATION_TYPE_MISMATCH`** | `FAILED` on an observation-type mismatch between what `SimpleGreedy` expects and the observation `GymProcedureDomain` emits. Named as a type-contract gap, not as a flaky solver. |
+| Typed state dimensions on the **real live** observation | **measured win** | Against the real observation `{counter:int, target:int, reward:float, solved:bool}` from the GymAct `CubeCounterProvider`: `classify_observation` marks `reward` `CONTINUOUS`, and `propositionalize` refuses it with `UNREPRESENTABLE:CONTINUOUS_DIMENSION_HAS_NO_SOUND_PROPOSITIONAL_ENCODING` rather than emitting a junk `reward=` atom. `solved` classifies `BOOLEAN` (bool is checked before int, so it is not swallowed by the `INTEGER` branch). This is the same discipline as the PDDL requirements gate: refuse rather than emit a plausible wrong encoding. |
+| Full chain against the real `~/gymact` `CubeCounterProvider` | **measured win, bounded** | `commit_and_execute` over a real GymAct episode driven through `level4_gymact_bridge.py`'s subprocess bridge into `~/gymact/.venv`: `independently_verified=True`; `final_state={'counter': 3, 'target': 3, 'reward': 1.0, 'solved': True}`; **7 real receipts** in a real `SQLiteReceiptLedger`; the emitted OCEL validated against **gymact's own OCEL 2.0 schema** with **0 referential-integrity violations**; `replay_ledger` → **0 mismatches**. Real files on disk: `commitment.ttl`, `episode.ocel.json`, `receipts.sqlite3`. **Scope**: this is actuation of a recipe through a bounded provider plus a commitment record — it is **not** POWL workflow execution, and does not touch `docs/ecosystem-standing.md`'s S3c. |
+| Three falsifiers firing for real | **measured win** | `ADVISORY_AUTHORITY_USED_AS_BEARER` — a raw plan tuple (advisory critique output) is refused at `commit_and_execute`; only a `ValidatedPlan`/`PowlCommitment` bearer is accepted. `CROWN_MANIFEST_TAMPERED` — a one-byte edit to a frozen seed is detected by `verify_manifest`. `SUPPRESSED_TRIAL` + `DENOMINATOR_CHANGED` — an 8-of-10 execution against a 10-trial frozen manifest is flagged rather than reported as a rate over 8. |
+| `execute_verified` per-step postconditions | **recorded negative — real defect, NOT fixed** | `execute_verified` re-checks the **same** expected postcondition after **every** actuation, so intermediate steps of a multi-step plan fail that check and are correctly `REFUSED`. The fix is per-step predicted postconditions (one predicted postcondition per plan step, checked at that step). A separate agent is doing that work; **no row in this pass may be read as claiming multi-step `execute_verified` works.** |
+| Frozen ≥10-trial crown run | **deferred/scoped — not executed** | `level4_crown_runner.py` (`freeze_crown`/`load_crown`/`verify_manifest`/`CrownAttempt`/`CrownRun`) exists and its tamper falsifier fires (row above), but **the frozen ≥10-trial run has not been executed**. Level 4 is therefore **not complete**; standing is `UNKNOWN` until that run produces a manifest-verified result set. |
+| DSPy layer in the Level 4 loop | **deferred/scoped** | Runs on a deterministic fallback path unless an LM is configured; no LM-backed run was executed this pass, so no claim is made about LM-driven discovery quality. |
+| Additional bounded GymAct providers | **deferred/scoped** | Only `cube_counter` and `cube_container_counter` are wired through `level4_gymact_bridge.py`. Every result above is scoped to those two; nothing generalizes to other providers without executing them. |
+
+Cross-repo consequence of this pass is ledgered separately in `docs/ecosystem-standing.md`
+under its new autofde-lab ↔ gymact section — a **new** linkage with no prior ledger claim.
+No `~/mfw`, `~/ggen`, `~/ggen-create`, `~/ggen-legacy` or `~/bcinr` surface was touched, and
+the POWL crown (`S3c`) is unchanged and still `BLOCKED`.
+
 ## Pass 6 — ERRC pass #2 on `test-full`; retracts pass 5's `__init__.py` fix (2026-08-07)
 
 Prompted by "one more full ERRC pass on all tests." Phase 1 (measurement) surfaced a real
