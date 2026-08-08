@@ -83,15 +83,15 @@ def compute_consequence_metrics(
     denominator = wall_time_s * cost_usd * human_attention_s
     vct = _safe_ratio(verified_value, denominator)
     reusable = sum(
-        1
-        for row in verified
-        if row.regime in (DecisionRegime.HOT, DecisionRegime.WARM)
+        1 for row in verified if row.regime in (DecisionRegime.HOT, DecisionRegime.WARM)
     )
     reuse_ratio = _safe_ratio(float(reusable), float(verified_transitions))
     verified_per_frontier_token = _safe_ratio(
         float(verified_transitions), float(frontier_tokens)
     )
-    tokens_per_verified = _safe_ratio(float(frontier_tokens), float(verified_transitions))
+    tokens_per_verified = _safe_ratio(
+        float(frontier_tokens), float(verified_transitions)
+    )
     return ConsequenceMetrics(
         verified_value=verified_value,
         verified_transitions=verified_transitions,
@@ -173,7 +173,11 @@ class LittleLawMetrics:
     @property
     def residual(self) -> float:
         if math.isinf(self.mean_wait_s):
-            return 0.0 if self.throughput_per_s == 0 and self.work_in_progress > 0 else math.inf
+            return (
+                0.0
+                if self.throughput_per_s == 0 and self.work_in_progress > 0
+                else math.inf
+            )
         return self.work_in_progress - self.throughput_per_s * self.mean_wait_s
 
 
