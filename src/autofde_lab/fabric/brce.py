@@ -199,4 +199,6 @@ def replay_receipt(
         receipt.postcondition_digest,
         receipt.verifier_digest,
     )
-    return BrceStanding.REPLAY_MATCH if current == expected else BrceStanding.REPLAY_DRIFT
+    return (
+        BrceStanding.REPLAY_MATCH if current == expected else BrceStanding.REPLAY_DRIFT
+    )

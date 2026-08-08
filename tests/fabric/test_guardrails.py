@@ -17,15 +17,18 @@ def test_provider_identity_is_not_part_of_candidate_correctness():
         output_guards=(lambda row: row.get("answer") == 2,),
         allowed_tools=frozenset({"lookup"}),
     )
-    assert guarded_candidate(ProviderA(), {"x": 1}, **kwargs).candidate == guarded_candidate(
-        ProviderB(), {"x": 1}, **kwargs
-    ).candidate
+    assert (
+        guarded_candidate(ProviderA(), {"x": 1}, **kwargs).candidate
+        == guarded_candidate(ProviderB(), {"x": 1}, **kwargs).candidate
+    )
 
 
 def test_input_output_and_tool_refusals_are_distinct():
     assert (
         guarded_candidate(
-            ProviderA(), {"x": "bad"}, input_guards=(lambda row: isinstance(row.get("x"), int),)
+            ProviderA(),
+            {"x": "bad"},
+            input_guards=(lambda row: isinstance(row.get("x"), int),),
         ).standing
         is GuardrailStanding.REFUSED_INPUT
     )
@@ -35,7 +38,10 @@ def test_input_output_and_tool_refusals_are_distinct():
         ).standing
         is GuardrailStanding.REFUSED_OUTPUT
     )
-    assert guarded_candidate(ProviderA(), {"x": 1}).standing is GuardrailStanding.REFUSED_TOOL
+    assert (
+        guarded_candidate(ProviderA(), {"x": 1}).standing
+        is GuardrailStanding.REFUSED_TOOL
+    )
 
 
 def test_passing_guardrails_still_produce_candidate_not_authority():

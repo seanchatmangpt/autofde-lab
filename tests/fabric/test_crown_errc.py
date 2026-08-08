@@ -13,7 +13,6 @@ from autofde_lab.fabric.crown_errc import (
     errc_crown_report,
 )
 
-
 SUBJECT = "a" * 40
 
 
@@ -43,7 +42,9 @@ def d8_candidate_report() -> CrownReport:
             CrownRequirement("R-402", "cold discovery", partial),
             CrownRequirement("R-500", "cognition compilation", partial),
             CrownRequirement("R-503", "authority-safe reuse", partial),
-            CrownRequirement("D8", "cold cognition becomes durable capability", partial),
+            CrownRequirement(
+                "D8", "cold cognition becomes durable capability", partial
+            ),
             CrownRequirement(
                 "R-1501",
                 "external adoption",

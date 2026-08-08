@@ -50,7 +50,9 @@ class CrownReport:
     @property
     def palantir_defeat_ready(self) -> bool:
         gates = [f"P{i}" for i in range(1, 8)] + [f"D{i}" for i in range(1, 9)]
-        return all(self.get(gate).status is RequirementStatus.SATISFIED for gate in gates)
+        return all(
+            self.get(gate).status is RequirementStatus.SATISFIED for gate in gates
+        )
 
     def validate(self) -> tuple[str, ...]:
         problems: list[str] = []
@@ -66,13 +68,20 @@ class CrownReport:
                     f"{row.requirement_id}: external dependency cannot be internally SATISFIED"
                 )
             if row.status is RequirementStatus.BLOCKED and not row.external_dependency:
-                problems.append(f"{row.requirement_id}: BLOCKED without named dependency")
+                problems.append(
+                    f"{row.requirement_id}: BLOCKED without named dependency"
+                )
             if (
                 row.requirement_id == "R-1501"
                 and row.status is RequirementStatus.SATISFIED
-                and all(path.startswith(("tests/", "fixtures/", "docs/")) for path in row.evidence)
+                and all(
+                    path.startswith(("tests/", "fixtures/", "docs/"))
+                    for path in row.evidence
+                )
             ):
-                problems.append("R-1501: ADOPTED cannot be established by internal fixtures/docs")
+                problems.append(
+                    "R-1501: ADOPTED cannot be established by internal fixtures/docs"
+                )
         return tuple(problems)
 
 
@@ -171,69 +180,281 @@ def _evidence(ids: str, *paths: str) -> None:
         _SATISFIED[requirement_id] = paths
 
 
-_evidence("R-001 R-002 R-003 R-004 R-702 R-703 R-1000 R-1001 R-1002 D3 D7", "src/autofde_lab/fabric/brce.py", "tests/fabric/test_brce.py", "tests/fabric/test_brce_identity.py")
-_evidence("R-005", "src/autofde_lab/autofde/refusals.py", "src/autofde_lab/agent/refusals.py", "tests/ecosystem/test_fde_authority_chicago.py")
-_evidence("R-006 R-007 R-802", "src/autofde_lab/fabric/crown.py", "tests/fabric/test_crown.py", "tests/ecosystem/test_chatman_chain_chicago.py")
-_evidence("R-100 R-104 R-904 D4", "src/autofde_lab/fabric/public_ontology.py", "tests/fabric/test_public_ontology.py")
-_evidence("R-101", "src/autofde_lab/fabric/world_model.py", "tests/fabric/test_world_model.py")
-_evidence("R-102", "src/autofde_lab/fabric/shacl_conformance.py", "tests/ecosystem/test_chatman_chain_chicago.py")
-_evidence("R-103", "src/autofde_lab/fabric/brce.py", "src/autofde_lab/autofde/authority.py", "tests/fabric/test_brce.py")
-_evidence("R-200 R-202 R-1401 D1", "src/autofde_lab/fabric/coverage.py", "src/autofde_lab/fabric/coverage_bridge.py", "tests/fabric/test_coverage_bridge.py")
-_evidence("R-201 R-300 R-301 R-302 R-304 R-400 R-401 R-402 D2", "src/autofde_lab/fabric/selection.py", "tests/fabric/test_selection.py")
-_evidence("R-303", "src/autofde_lab/fabric/selection_store.py", "tests/fabric/test_selection_store.py")
-_evidence("R-500 R-501", "src/autofde_lab/fabric/cognition_debt.py", "tests/fabric/test_cognition_debt.py")
-_evidence("R-503", "src/autofde_lab/fabric/cache.py", "src/autofde_lab/fabric/brce.py", "tests/fabric/test_cache.py", "tests/fabric/test_brce.py")
-_evidence("R-600 R-603", "src/autofde_lab/fabric/guardrails.py", "tests/fabric/test_guardrails.py")
-_evidence("R-601 R-605 R-700", "src/autofde_lab/agent/session.py", "src/autofde_lab/agent/replan.py", "src/autofde_lab/agent/faults.py", "tests/agent/test_session.py", "tests/agent/test_replan_unit.py")
+_evidence(
+    "R-001 R-002 R-003 R-004 R-702 R-703 R-1000 R-1001 R-1002 D3 D7",
+    "src/autofde_lab/fabric/brce.py",
+    "tests/fabric/test_brce.py",
+    "tests/fabric/test_brce_identity.py",
+)
+_evidence(
+    "R-005",
+    "src/autofde_lab/autofde/refusals.py",
+    "src/autofde_lab/agent/refusals.py",
+    "tests/ecosystem/test_fde_authority_chicago.py",
+)
+_evidence(
+    "R-006 R-007 R-802",
+    "src/autofde_lab/fabric/crown.py",
+    "tests/fabric/test_crown.py",
+    "tests/ecosystem/test_chatman_chain_chicago.py",
+)
+_evidence(
+    "R-100 R-104 R-904 D4",
+    "src/autofde_lab/fabric/public_ontology.py",
+    "tests/fabric/test_public_ontology.py",
+)
+_evidence(
+    "R-101", "src/autofde_lab/fabric/world_model.py", "tests/fabric/test_world_model.py"
+)
+_evidence(
+    "R-102",
+    "src/autofde_lab/fabric/shacl_conformance.py",
+    "tests/ecosystem/test_chatman_chain_chicago.py",
+)
+_evidence(
+    "R-103",
+    "src/autofde_lab/fabric/brce.py",
+    "src/autofde_lab/autofde/authority.py",
+    "tests/fabric/test_brce.py",
+)
+_evidence(
+    "R-200 R-202 R-1401 D1",
+    "src/autofde_lab/fabric/coverage.py",
+    "src/autofde_lab/fabric/coverage_bridge.py",
+    "tests/fabric/test_coverage_bridge.py",
+)
+_evidence(
+    "R-201 R-300 R-301 R-302 R-304 R-400 R-401 R-402 D2",
+    "src/autofde_lab/fabric/selection.py",
+    "tests/fabric/test_selection.py",
+)
+_evidence(
+    "R-303",
+    "src/autofde_lab/fabric/selection_store.py",
+    "tests/fabric/test_selection_store.py",
+)
+_evidence(
+    "R-500 R-501",
+    "src/autofde_lab/fabric/cognition_debt.py",
+    "tests/fabric/test_cognition_debt.py",
+)
+_evidence(
+    "R-503",
+    "src/autofde_lab/fabric/cache.py",
+    "src/autofde_lab/fabric/brce.py",
+    "tests/fabric/test_cache.py",
+    "tests/fabric/test_brce.py",
+)
+_evidence(
+    "R-600 R-603",
+    "src/autofde_lab/fabric/guardrails.py",
+    "tests/fabric/test_guardrails.py",
+)
+_evidence(
+    "R-601 R-605 R-700",
+    "src/autofde_lab/agent/session.py",
+    "src/autofde_lab/agent/replan.py",
+    "src/autofde_lab/agent/faults.py",
+    "tests/agent/test_session.py",
+    "tests/agent/test_replan_unit.py",
+)
 _evidence("R-602", "src/autofde_lab/fabric/handoff.py", "tests/fabric/test_handoff.py")
-_evidence("R-604 R-1102", "src/autofde_lab/agent/ledger.py", "src/autofde_lab/agent/ocel_sink.py", "tests/agent/test_ledger.py", "tests/fabric/test_mcp_ocel_instrumentation_chicago.py")
-_evidence("R-701", "src/autofde_lab/agent/ledger.py", "src/autofde_lab/fabric/brce.py", "tests/agent/test_ledger.py", "tests/fabric/test_brce.py")
-_evidence("R-803", "src/autofde_lab/fabric/ontology.py", "src/autofde_lab/adapters/base.py", "tests/ecosystem/test_chatman_chain_chicago.py")
-_evidence("R-900 R-901 R-902 R-903", "src/autofde_lab/autofde/authority.py", "src/autofde_lab/fabric/brce.py", "tests/autofde/test_authority.py", "tests/fabric/test_brce.py")
-_evidence("R-905", "src/autofde_lab/autofde/github_projection.py", ".github/workflows/pr-ci.yml", "tests/ecosystem/test_fde_authority_chicago.py")
-_evidence("R-1003 R-1402", "src/autofde_lab/fabric/differential_verification.py", "tests/fabric/test_differential_verification.py")
-_evidence("R-1100", "src/autofde_lab/powl/algebra.py", "src/autofde_lab/fabric/powl.py", "tests/ecosystem/test_powl_roundtrip_chicago.py")
-_evidence("R-1103 R-1200 R-1502", "src/autofde_lab/fabric/metrics.py", "tests/fabric/test_metrics.py")
-_evidence("R-1201 R-1202", "src/autofde_lab/fabric/causal_placement.py", "tests/fabric/test_causal_placement.py")
-_evidence("R-1300", "src/autofde_lab/fabric/query_plane.py", "tests/fabric/test_query_plane.py")
-_evidence("R-1302", "src/autofde_lab/fabric/query_plane.py", "src/autofde_lab/fabric/selection.py", "tests/fabric/test_query_plane.py", "tests/fabric/test_selection.py")
-_evidence("R-1400", "src/autofde_lab/fabric/self_play.py", "tests/fabric/test_self_play.py")
-_evidence("R-1403", "tests/fabric/test_brce.py", "tests/fabric/test_selection.py", "tests/fabric/test_handoff.py", "tests/fabric/test_differential_verification.py")
-_evidence("R-1500", "src/autofde_lab/autofde/authority.py", "tests/autofde/test_authority.py")
+_evidence(
+    "R-604 R-1102",
+    "src/autofde_lab/agent/ledger.py",
+    "src/autofde_lab/agent/ocel_sink.py",
+    "tests/agent/test_ledger.py",
+    "tests/fabric/test_mcp_ocel_instrumentation_chicago.py",
+)
+_evidence(
+    "R-701",
+    "src/autofde_lab/agent/ledger.py",
+    "src/autofde_lab/fabric/brce.py",
+    "tests/agent/test_ledger.py",
+    "tests/fabric/test_brce.py",
+)
+_evidence(
+    "R-803",
+    "src/autofde_lab/fabric/ontology.py",
+    "src/autofde_lab/adapters/base.py",
+    "tests/ecosystem/test_chatman_chain_chicago.py",
+)
+_evidence(
+    "R-900 R-901 R-902 R-903",
+    "src/autofde_lab/autofde/authority.py",
+    "src/autofde_lab/fabric/brce.py",
+    "tests/autofde/test_authority.py",
+    "tests/fabric/test_brce.py",
+)
+_evidence(
+    "R-905",
+    "src/autofde_lab/autofde/github_projection.py",
+    ".github/workflows/pr-ci.yml",
+    "tests/ecosystem/test_fde_authority_chicago.py",
+)
+_evidence(
+    "R-1003 R-1402",
+    "src/autofde_lab/fabric/differential_verification.py",
+    "tests/fabric/test_differential_verification.py",
+)
+_evidence(
+    "R-1100",
+    "src/autofde_lab/powl/algebra.py",
+    "src/autofde_lab/fabric/powl.py",
+    "tests/ecosystem/test_powl_roundtrip_chicago.py",
+)
+_evidence(
+    "R-1103 R-1200 R-1502",
+    "src/autofde_lab/fabric/metrics.py",
+    "tests/fabric/test_metrics.py",
+)
+_evidence(
+    "R-1201 R-1202",
+    "src/autofde_lab/fabric/causal_placement.py",
+    "tests/fabric/test_causal_placement.py",
+)
+_evidence(
+    "R-1300",
+    "src/autofde_lab/fabric/query_plane.py",
+    "tests/fabric/test_query_plane.py",
+)
+_evidence(
+    "R-1302",
+    "src/autofde_lab/fabric/query_plane.py",
+    "src/autofde_lab/fabric/selection.py",
+    "tests/fabric/test_query_plane.py",
+    "tests/fabric/test_selection.py",
+)
+_evidence(
+    "R-1400", "src/autofde_lab/fabric/self_play.py", "tests/fabric/test_self_play.py"
+)
+_evidence(
+    "R-1403",
+    "tests/fabric/test_brce.py",
+    "tests/fabric/test_selection.py",
+    "tests/fabric/test_handoff.py",
+    "tests/fabric/test_differential_verification.py",
+)
+_evidence(
+    "R-1500", "src/autofde_lab/autofde/authority.py", "tests/autofde/test_authority.py"
+)
 
 _BLOCKED: dict[str, tuple[tuple[str, ...], str]] = {
-    "R-502": (("src/autofde_lab/adapters/ggen.py", "src/autofde_lab/fabric/cognition_debt.py"), "real ggen manufacture/replay execution is external and not observed at this head"),
-    "R-800": (("src/autofde_lab/forwardbench/", "src/autofde_lab/adapters/"), "GymAct package/provider execution is external to autofde-lab and not observed at this head"),
-    "R-801": (("src/autofde_lab/adapters/", "src/autofde_lab/forwardbench/"), "complete browser+cluster+IaC+API/MCP+benchmark real-provider execution is not observed in one environment"),
-    "R-1101": (("src/autofde_lab/adapters/wasm4pm.py",), "real wasm4pm execution/verification is external and unavailable in the current capsule"),
-    "R-1301": (("src/autofde_lab/fabric/query_plane.py",), "QLever runtime and scale corpus are unavailable in the current capsule"),
-    "R-1501": (("src/autofde_lab/autofde/authority.py",), "real external customer/operator adoption evidence cannot be manufactured by this repository"),
-    "P1": (("src/autofde_lab/fabric/world_model.py", "src/autofde_lab/fabric/brce.py"), "Palantir parity requires external comparative execution of operational ontology objects/links/actions"),
-    "P2": (("src/autofde_lab/autofde/authority.py", "src/autofde_lab/fabric/brce.py"), "Palantir parity requires external comparative governance/audit evidence"),
-    "P3": (("src/autofde_lab/fabric/cli.py", "src/autofde_lab/fabric/mcp.py", "src/autofde_lab/fabric/a2a.py"), "Palantir parity requires external comparative FDE operation, not interface presence alone"),
-    "P4": ((".github/workflows/pr-ci.yml", "src/autofde_lab/autofde/github_projection.py"), "Palantir parity requires observed deployment/merge governance against a real target"),
-    "P5": (("src/autofde_lab/adapters/", "src/autofde_lab/forwardbench/"), "Palantir parity requires real heterogeneous enterprise integration execution"),
-    "P6": ((".github/workflows/", "src/autofde_lab/adapters/"), "repeatable local/cloud/edge deployment has not been executed across all three placements"),
-    "P7": (("tests/ecosystem/test_chatman_chain_chicago.py", "src/autofde_lab/autofde/bootstrap.py"), "end-to-end brokered POWL execution remains external/unwired; projection cannot stand in for execution"),
-    "D5": (("src/autofde_lab/fabric/competitive_benchmark.py", "tests/fabric/test_competitive_benchmark.py"), "no real model-centric baseline curve has been executed on the exact same workload/verifier"),
-    "D6": (("src/autofde_lab/fabric/causal_placement.py", "tests/fabric/test_causal_placement.py"), "no real near-effector controller has been measured against a central controller"),
-    "D8": (("src/autofde_lab/fabric/cognition_debt.py", "src/autofde_lab/autofde/bootstrap.py"), "durable ggen manufacture and subsequent hot-path replay are not observed end to end"),
+    "R-502": (
+        (
+            "src/autofde_lab/adapters/ggen.py",
+            "src/autofde_lab/fabric/cognition_debt.py",
+        ),
+        "real ggen manufacture/replay execution is external and not observed at this head",
+    ),
+    "R-800": (
+        ("src/autofde_lab/forwardbench/", "src/autofde_lab/adapters/"),
+        "GymAct package/provider execution is external to autofde-lab and not observed at this head",
+    ),
+    "R-801": (
+        ("src/autofde_lab/adapters/", "src/autofde_lab/forwardbench/"),
+        "complete browser+cluster+IaC+API/MCP+benchmark real-provider execution is not observed in one environment",
+    ),
+    "R-1101": (
+        ("src/autofde_lab/adapters/wasm4pm.py",),
+        "real wasm4pm execution/verification is external and unavailable in the current capsule",
+    ),
+    "R-1301": (
+        ("src/autofde_lab/fabric/query_plane.py",),
+        "QLever runtime and scale corpus are unavailable in the current capsule",
+    ),
+    "R-1501": (
+        ("src/autofde_lab/autofde/authority.py",),
+        "real external customer/operator adoption evidence cannot be manufactured by this repository",
+    ),
+    "P1": (
+        ("src/autofde_lab/fabric/world_model.py", "src/autofde_lab/fabric/brce.py"),
+        "Palantir parity requires external comparative execution of operational ontology objects/links/actions",
+    ),
+    "P2": (
+        ("src/autofde_lab/autofde/authority.py", "src/autofde_lab/fabric/brce.py"),
+        "Palantir parity requires external comparative governance/audit evidence",
+    ),
+    "P3": (
+        (
+            "src/autofde_lab/fabric/cli.py",
+            "src/autofde_lab/fabric/mcp.py",
+            "src/autofde_lab/fabric/a2a.py",
+        ),
+        "Palantir parity requires external comparative FDE operation, not interface presence alone",
+    ),
+    "P4": (
+        (".github/workflows/pr-ci.yml", "src/autofde_lab/autofde/github_projection.py"),
+        "Palantir parity requires observed deployment/merge governance against a real target",
+    ),
+    "P5": (
+        ("src/autofde_lab/adapters/", "src/autofde_lab/forwardbench/"),
+        "Palantir parity requires real heterogeneous enterprise integration execution",
+    ),
+    "P6": (
+        (".github/workflows/", "src/autofde_lab/adapters/"),
+        "repeatable local/cloud/edge deployment has not been executed across all three placements",
+    ),
+    "P7": (
+        (
+            "tests/ecosystem/test_chatman_chain_chicago.py",
+            "src/autofde_lab/autofde/bootstrap.py",
+        ),
+        "end-to-end brokered POWL execution remains external/unwired; projection cannot stand in for execution",
+    ),
+    "D5": (
+        (
+            "src/autofde_lab/fabric/competitive_benchmark.py",
+            "tests/fabric/test_competitive_benchmark.py",
+        ),
+        "no real model-centric baseline curve has been executed on the exact same workload/verifier",
+    ),
+    "D6": (
+        (
+            "src/autofde_lab/fabric/causal_placement.py",
+            "tests/fabric/test_causal_placement.py",
+        ),
+        "no real near-effector controller has been measured against a central controller",
+    ),
+    "D8": (
+        (
+            "src/autofde_lab/fabric/cognition_debt.py",
+            "src/autofde_lab/autofde/bootstrap.py",
+        ),
+        "durable ggen manufacture and subsequent hot-path replay are not observed end to end",
+    ),
 }
 
 
 def _build(requirement_id: str, statement: str) -> CrownRequirement:
     if requirement_id in _SATISFIED:
-        return CrownRequirement(requirement_id, statement, RequirementStatus.SATISFIED, _SATISFIED[requirement_id])
+        return CrownRequirement(
+            requirement_id,
+            statement,
+            RequirementStatus.SATISFIED,
+            _SATISFIED[requirement_id],
+        )
     if requirement_id in _BLOCKED:
         evidence, dependency = _BLOCKED[requirement_id]
-        return CrownRequirement(requirement_id, statement, RequirementStatus.BLOCKED, evidence, external_dependency=dependency)
+        return CrownRequirement(
+            requirement_id,
+            statement,
+            RequirementStatus.BLOCKED,
+            evidence,
+            external_dependency=dependency,
+        )
     return CrownRequirement(requirement_id, statement, RequirementStatus.MISSING)
 
 
-_REQUIREMENTS = tuple(_build(requirement_id, statement) for requirement_id, statement in _STATEMENTS.items())
+_REQUIREMENTS = tuple(
+    _build(requirement_id, statement)
+    for requirement_id, statement in _STATEMENTS.items()
+)
 
 
-def crown_report(requirements: Iterable[CrownRequirement] = _REQUIREMENTS) -> CrownReport:
+def crown_report(
+    requirements: Iterable[CrownRequirement] = _REQUIREMENTS,
+) -> CrownReport:
     report = CrownReport(tuple(requirements))
     problems = report.validate()
     if problems:

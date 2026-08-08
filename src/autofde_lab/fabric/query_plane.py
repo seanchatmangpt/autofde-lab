@@ -39,6 +39,9 @@ class PolyglotQueryPlane:
     def process(self, *, case_id: object) -> QueryResult:
         rows = [row for row in self._records if row.get("case_id") == case_id]
         rows.sort(
-            key=lambda row: (str(row.get("timestamp", "")), str(row.get("event_id", "")))
+            key=lambda row: (
+                str(row.get("timestamp", "")),
+                str(row.get("event_id", "")),
+            )
         )
         return QueryResult("process", tuple(rows), len(self._records))

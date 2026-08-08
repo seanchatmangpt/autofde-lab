@@ -123,7 +123,9 @@ def compile_hot_path(
         policy_digest=policy_digest,
         selector_revision=selector_revision,
     )
-    artifact = HotPathArtifact(identity=identity, evidence_count=decision.evidence_count)
+    artifact = HotPathArtifact(
+        identity=identity, evidence_count=decision.evidence_count
+    )
     return HotPathResult(
         HotPathStanding.COMPILED,
         artifact,

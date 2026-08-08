@@ -59,8 +59,14 @@ _EXPECTED = {
     BootstrapPhase.CHILD_PLANNED: (BootstrapPhase.CHILD_ADMITTED, "admission"),
     BootstrapPhase.CHILD_ADMITTED: (BootstrapPhase.CHILD_EXECUTED, "broker"),
     BootstrapPhase.CHILD_EXECUTED: (BootstrapPhase.CHILD_VERIFIED, "verifier"),
-    BootstrapPhase.CHILD_VERIFIED: (BootstrapPhase.CAPABILITY_ADMITTED, "capability-admission"),
-    BootstrapPhase.CAPABILITY_ADMITTED: (BootstrapPhase.PARENT_RESUMED, "parent-controller"),
+    BootstrapPhase.CHILD_VERIFIED: (
+        BootstrapPhase.CAPABILITY_ADMITTED,
+        "capability-admission",
+    ),
+    BootstrapPhase.CAPABILITY_ADMITTED: (
+        BootstrapPhase.PARENT_RESUMED,
+        "parent-controller",
+    ),
 }
 
 
@@ -84,7 +90,9 @@ def advance_bootstrap(
             "transition requires a receipt from the authority-owning component",
         )
 
-    expected_subject = state.parent_id if target is BootstrapPhase.PARENT_RESUMED else state.child_id
+    expected_subject = (
+        state.parent_id if target is BootstrapPhase.PARENT_RESUMED else state.child_id
+    )
     if receipt.subject_id != expected_subject:
         return BootstrapDecision(
             BootstrapStanding.REFUSED_SUBJECT_MISMATCH,

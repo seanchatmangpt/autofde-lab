@@ -57,7 +57,10 @@ ELIGIBLE_EVIDENCE: dict[str, tuple[str, ...]] = {
         "src/autofde_lab/fabric/differential_verification.py",
         "tests/fabric/test_differential_verification.py",
     ),
-    "R-005": ("src/autofde_lab/fabric/guardrails.py", "tests/fabric/test_guardrails.py"),
+    "R-005": (
+        "src/autofde_lab/fabric/guardrails.py",
+        "tests/fabric/test_guardrails.py",
+    ),
     "R-007": ("src/autofde_lab/fabric/crown.py", "tests/fabric/test_crown.py"),
     "R-100": (
         "src/autofde_lab/fabric/public_ontology.py",
@@ -86,7 +89,10 @@ ELIGIBLE_EVIDENCE: dict[str, tuple[str, ...]] = {
         "tests/fabric/test_selection_store.py",
     ),
     "R-301": ("src/autofde_lab/fabric/selection.py", "tests/fabric/test_selection.py"),
-    "R-302": ("src/autofde_lab/fabric/query_plane.py", "tests/fabric/test_query_plane.py"),
+    "R-302": (
+        "src/autofde_lab/fabric/query_plane.py",
+        "tests/fabric/test_query_plane.py",
+    ),
     "R-303": (
         "src/autofde_lab/fabric/selection_store.py",
         "tests/fabric/test_selection_store.py",
@@ -102,7 +108,10 @@ ELIGIBLE_EVIDENCE: dict[str, tuple[str, ...]] = {
     ),
     "R-503": ("src/autofde_lab/fabric/hot_path.py", "tests/fabric/test_hot_path.py"),
     "R-602": ("src/autofde_lab/fabric/handoff.py", "tests/fabric/test_handoff.py"),
-    "R-603": ("src/autofde_lab/fabric/guardrails.py", "tests/fabric/test_guardrails.py"),
+    "R-603": (
+        "src/autofde_lab/fabric/guardrails.py",
+        "tests/fabric/test_guardrails.py",
+    ),
     "R-1000": (
         "src/autofde_lab/fabric/competitive_benchmark.py",
         "tests/fabric/test_competitive_benchmark.py",
@@ -121,8 +130,14 @@ ELIGIBLE_EVIDENCE: dict[str, tuple[str, ...]] = {
         "src/autofde_lab/fabric/causal_placement.py",
         "tests/fabric/test_causal_placement.py",
     ),
-    "R-1300": ("src/autofde_lab/fabric/query_plane.py", "tests/fabric/test_query_plane.py"),
-    "R-1302": ("src/autofde_lab/fabric/query_plane.py", "tests/fabric/test_query_plane.py"),
+    "R-1300": (
+        "src/autofde_lab/fabric/query_plane.py",
+        "tests/fabric/test_query_plane.py",
+    ),
+    "R-1302": (
+        "src/autofde_lab/fabric/query_plane.py",
+        "tests/fabric/test_query_plane.py",
+    ),
     "R-1400": ("src/autofde_lab/fabric/self_play.py", "tests/fabric/test_self_play.py"),
     "R-1401": (
         "src/autofde_lab/fabric/coverage_bridge.py",
@@ -132,7 +147,10 @@ ELIGIBLE_EVIDENCE: dict[str, tuple[str, ...]] = {
         "src/autofde_lab/fabric/differential_verification.py",
         "tests/fabric/test_differential_verification.py",
     ),
-    "R-1403": ("src/autofde_lab/fabric/guardrails.py", "tests/fabric/test_guardrails.py"),
+    "R-1403": (
+        "src/autofde_lab/fabric/guardrails.py",
+        "tests/fabric/test_guardrails.py",
+    ),
     "R-1502": ("src/autofde_lab/fabric/metrics.py", "tests/fabric/test_metrics.py"),
 }
 
@@ -200,7 +218,9 @@ def errc_crown_report(
 
     by_id = {requirement.requirement_id: requirement for requirement in upgraded}
     for gate, dependencies in GATE_REQUIREMENTS.items():
-        if gate not in by_id or any(dependency not in by_id for dependency in dependencies):
+        if gate not in by_id or any(
+            dependency not in by_id for dependency in dependencies
+        ):
             continue
         gate_requirement = by_id[gate]
         if gate_requirement.external_dependency is not None:
