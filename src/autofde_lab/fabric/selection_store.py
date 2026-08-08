@@ -132,7 +132,9 @@ class SQLitePlannerEvidenceStore:
             )
             return cursor.rowcount == 1
 
-    def receipts(self, *, signature_key: str | None = None) -> tuple[PlannerReceipt, ...]:
+    def receipts(
+        self, *, signature_key: str | None = None
+    ) -> tuple[PlannerReceipt, ...]:
         query = "SELECT * FROM planner_receipts"
         params: tuple[object, ...] = ()
         if signature_key is not None:
