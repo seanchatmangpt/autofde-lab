@@ -160,3 +160,31 @@ def first_persistent_crossover(
         if tail and all(autofde_cost[k] < baseline_cost[k] for k in tail):
             return n
     return None
+
+
+@dataclass(frozen=True, slots=True)
+class LittleLawMetrics:
+    """Flow quantities for L = lambda * W."""
+
+    work_in_progress: float
+    throughput_per_s: float
+    mean_wait_s: float
+
+    @property
+    def residual(self) -> float:
+        if math.isinf(self.mean_wait_s):
+            return 0.0 if self.throughput_per_s == 0 and self.work_in_progress > 0 else math.inf
+        return self.work_in_progress - self.throughput_per_s * self.mean_wait_s
+
+
+def little_law_from_wip_and_throughput(
+    work_in_progress: float, throughput_per_s: float
+) -> LittleLawMetrics:
+    """Derive W from measured L and lambda without hiding a zero-throughput queue."""
+    if work_in_progress < 0 or throughput_per_s < 0:
+        raise ValueError("Little's Law quantities must be non-negative")
+    if throughput_per_s == 0:
+        wait = math.inf if work_in_progress > 0 else 0.0
+    else:
+        wait = work_in_progress / throughput_per_s
+    return LittleLawMetrics(work_in_progress, throughput_per_s, wait)
