@@ -37,8 +37,21 @@ class SimpleGreedy(DeterministicPolicySolver):
     def _get_next_action(
         self, observation: D.T_agent[D.T_observation], domain: Optional[D] = None
     ) -> D.T_agent[D.T_concurrency[D.T_event]]:
+        already_autocast = False
         if domain is None:
             domain = self._domain
+            # `self._domain` came from `self._domain_factory()`, and
+            # `Solver.__init__` wraps that factory in `cast_domain_factory`,
+            # which already ran `autocast_all(domain, domain, self.T_domain)`
+            # on the instance. Wrapping its methods a *second* time below
+            # applies the same cast twice. For most domains the second cast is
+            # a silent no-op; for a domain whose `T_state` is itself a
+            # sequence (e.g. a `NamedTuple` state), the `(Memory, Union)` cast
+            # rule `obj[0]` fires again and hands `_get_applicable_actions_from`
+            # the state's *first field* instead of the state. Observed as
+            # `AttributeError: 'frozenset' object has no attribute 'facts'`
+            # against `GymProcedureDomain`, whose `State` is a NamedTuple.
+            already_autocast = True
             logger.warning(
                 "Rollout domain not given. Using domain seen during solve instead."
             )
@@ -46,15 +59,13 @@ class SimpleGreedy(DeterministicPolicySolver):
         memory = Memory(
             [observation]
         )  # note: observation == state (because FullyObservable)
-        get_applicable_actions = autocast(
-            domain.get_applicable_actions, domain, self.T_domain
-        )
-        get_next_state_distribution = autocast(
-            domain.get_next_state_distribution, domain, self.T_domain
-        )
-        get_transition_value = autocast(
-            domain.get_transition_value, domain, self.T_domain
-        )
+
+        def _cast(f):
+            return f if already_autocast else autocast(f, domain, self.T_domain)
+
+        get_applicable_actions = _cast(domain.get_applicable_actions)
+        get_next_state_distribution = _cast(domain.get_next_state_distribution)
+        get_transition_value = _cast(domain.get_transition_value)
         applicable_actions = get_applicable_actions(memory)
         if domain.is_transition_value_dependent_on_next_state():
             values = []

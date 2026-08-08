@@ -705,6 +705,138 @@ class TrialReport:
         )
 
 
+def _is_metric(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _changed_dims(record: dict, non_metric_only: bool = False) -> set[str]:
+    pre = record.get("observed_pre") or {}
+    post = record.get("observed_post") or {}
+    changed = {k for k in post if pre.get(k) != post.get(k)}
+    if non_metric_only:
+        changed = {k for k in changed if not _is_metric(post.get(k))}
+    return changed
+
+
+def _discover_by_probing(env: RealBlindEnvironment, probe_budget: int) -> tuple[list[dict], int]:
+    """Learn every action's effect without wrecking the episode.
+
+    Replaces a loop that committed every applicable probe to history. That
+    loop had two measured defects, both of which made `lock_and_key`
+    undiscoverable:
+
+    1. **Irreversible probes poisoned the run.** Probing `force_latch`
+       jammed the key rack permanently at probe 6; every remaining probe was
+       refused, so `open_lock` was never observed succeeding and the trial
+       ended `NO_TYPED_VALID_PLAN`. Probes are now SPECULATIVE by default --
+       really executed, really observed, then discarded.
+    2. **A guarded action was never observed succeeding.** `open_lock`
+       requires a held key, `refine` requires a raw token; probing each
+       action alone from the baseline can never see either succeed. An
+       action that stays refused is now retried behind a chained prefix
+       built from actions already known to work, so `assemble` is probed
+       behind `(mine, refine)` and `open_lock` behind each `pick_key[k]`.
+
+    Exactly one action per round is committed, to advance the frontier. The
+    choice prefers an action that is *measurably* safe -- one touching only
+    metric dimensions, or one shown by a real self-inverse probe to undo
+    itself. Only when no safe action exists does it pay for a lookahead
+    sweep and keep whichever candidate leaves the most actions applicable.
+    That is what stops `force_latch` from being adopted: it is measured to
+    strand the episode, not guessed to be dangerous by its name.
+    """
+    records: list[dict] = []
+    actions = env.available_actions()
+    learned: set[str] = set()
+    committed: set[str] = set()
+    establisher: dict[str, tuple[str, ...]] = {}
+    n = 0
+
+    def probe(action: str, prefix: tuple[str, ...] = (), commit: bool = False) -> dict:
+        nonlocal n
+        record = env.try_action(action, commit=commit, prefix=prefix)
+        records.append(record)
+        n += 1
+        if record.get("applicable"):
+            learned.add(action)
+        return record
+
+    while n < probe_budget:
+        sweep: dict[str, dict] = {}
+        for action in actions:
+            if n >= probe_budget:
+                break
+            sweep[action] = probe(action)
+
+        # Chained establisher search for anything still never-applicable.
+        for action in actions:
+            if action in learned or n >= probe_budget:
+                continue
+            for helper in sorted(learned):
+                if n >= probe_budget:
+                    break
+                prefix = establisher.get(helper, ()) + (helper,)
+                if action in prefix:
+                    continue
+                if probe(action, prefix=prefix).get("applicable"):
+                    establisher[action] = prefix
+                    break
+
+        if all(action in learned for action in actions):
+            break  # nothing left to learn; stop before burning budget
+
+        candidates = [
+            a
+            for a in actions
+            if sweep.get(a, {}).get("applicable")
+            and a not in committed
+            and _changed_dims(sweep[a])  # an inert action advances nothing
+        ]
+        if not candidates or n >= probe_budget:
+            break
+
+        chosen: Optional[str] = None
+        risky: list[str] = []
+        for a in candidates:
+            if not _changed_dims(sweep[a], non_metric_only=True):
+                chosen = a  # touches only metric dimensions
+                break
+            if n >= probe_budget:
+                break
+            twice = probe(a, prefix=(a,))
+            baseline = sweep[a].get("observed_pre") or {}
+            after = twice.get("observed_post") or {}
+            if twice.get("applicable") and all(
+                after.get(d) == baseline.get(d)
+                for d in baseline
+                if not _is_metric(baseline.get(d))
+            ):
+                chosen = a  # really undoes itself
+                break
+            risky.append(a)
+
+        if chosen is None:
+            best_count = -1
+            for a in risky:
+                if n >= probe_budget:
+                    break
+                count = 0
+                for b in actions:
+                    if n >= probe_budget:
+                        break
+                    if probe(b, prefix=(a,)).get("applicable"):
+                        count += 1
+                if count > best_count:
+                    best_count, chosen = count, a
+
+        if chosen is None or n >= probe_budget:
+            break
+        probe(chosen, commit=True)
+        committed.add(chosen)
+
+    return records, n
+
+
 def run_real_trial(
     seed: int,
     provider_key: str,
@@ -727,24 +859,7 @@ def run_real_trial(
     env = RealBlindEnvironment(provider_key, config, evidence_dir / "discovery")
 
     # --- probe ------------------------------------------------------------
-    raw_records: list[dict] = []
-    n_probes = 0
-    goal_seen = False
-    while n_probes < probe_budget and not goal_seen:
-        progressed = False
-        for action in env.available_actions():
-            if n_probes >= probe_budget:
-                break
-            rec = env.try_action(action)
-            raw_records.append(rec)
-            n_probes += 1
-            if rec.get("applicable"):
-                progressed = True
-            if any(f == "solved=True" for f in rec.get("delta_added", [])):
-                goal_seen = True
-                break
-        if not progressed:
-            break
+    raw_records, n_probes = _discover_by_probing(env, probe_budget)
 
     # --- typed projection (losses recorded, never silently dropped) --------
     observations = [_observation_from_facts(r.get("observed_pre_facts", [])) for r in raw_records]
@@ -794,7 +909,7 @@ def run_real_trial(
             if probe is None:
                 continue
             discriminating = f"{probe.action}: {probe.rationale}"
-            rec = env.try_action(probe.action)
+            rec = env.try_action(probe.action, commit=False)
             n_probes += 1
             probe_log.append(
                 {

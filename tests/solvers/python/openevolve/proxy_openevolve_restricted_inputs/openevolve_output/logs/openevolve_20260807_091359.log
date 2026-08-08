@@ -1,0 +1,84 @@
+2026-08-07 09:13:59,698 - openevolve.controller - INFO - Logging to /Users/sac/autofde-lab/tests/solvers/python/openevolve/proxy_openevolve_restricted_inputs/openevolve_output/logs/openevolve_20260807_091359.log
+2026-08-07 09:13:59,699 - openevolve.controller - INFO - Set random seed to 42 for reproducibility
+2026-08-07 09:13:59,700 - openevolve.prompt.sampler - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-08-07 09:13:59,701 - openevolve.database - INFO - Initialized program database with 0 programs
+2026-08-07 09:13:59,703 - openevolve.evaluator - INFO - Successfully loaded evaluation function from /Users/sac/autofde-lab/tests/solvers/python/openevolve/proxy_openevolve_restricted_inputs/evaluator.py
+2026-08-07 09:13:59,703 - openevolve.evaluator - INFO - Initialized evaluator with /Users/sac/autofde-lab/tests/solvers/python/openevolve/proxy_openevolve_restricted_inputs/evaluator.py
+2026-08-07 09:13:59,703 - openevolve.controller - INFO - Initialized OpenEvolve with /Users/sac/autofde-lab/tests/solvers/python/openevolve/proxy_openevolve_restricted_inputs/initial_program.py
+2026-08-07 09:13:59,750 - openevolve.evaluator - INFO - Evaluated program 87695222-ad4e-40de-a161-be1513c05a18 in 0.05s: cost=4.2727, combined_score=-4.2727
+2026-08-07 09:13:59,751 - openevolve.controller - INFO - Adding initial program to database
+2026-08-07 09:13:59,954 - openevolve.evaluator - INFO - Evaluated program 012abe19-825f-4d20-a279-0efe8dba5367 in 0.20s: cost=4.9481, combined_score=-4.9481
+2026-08-07 09:13:59,955 - openevolve.database - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 5, 'diversity': 0}
+2026-08-07 09:13:59,956 - openevolve.process_parallel - INFO - Initialized process parallel controller with 1 workers
+2026-08-07 09:13:59,956 - openevolve.process_parallel - INFO - Set max None tasks per child
+2026-08-07 09:13:59,957 - openevolve.process_parallel - INFO - Started process pool with 1 processes
+2026-08-07 09:13:59,957 - openevolve.controller - INFO - Using island-based evolution with 5 islands
+2026-08-07 09:13:59,958 - openevolve.database - INFO - Island Status:
+2026-08-07 09:13:59,958 - openevolve.database - INFO -  * Island 0: 1 programs, best=-4.9481, avg=-4.9481, diversity=0.00, gen=0 (best: 012abe19-825f-4d20-a279-0efe8dba5367)
+2026-08-07 09:13:59,958 - openevolve.database - INFO -    Island 1: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-08-07 09:13:59,959 - openevolve.database - INFO -    Island 2: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-08-07 09:13:59,959 - openevolve.database - INFO -    Island 3: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-08-07 09:13:59,960 - openevolve.database - INFO -    Island 4: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-08-07 09:13:59,960 - openevolve.process_parallel - INFO - Starting process-based evolution from iteration 1 for 0 iterations (total: 1)
+2026-08-07 09:13:59,960 - openevolve.process_parallel - INFO - Early stopping disabled
+2026-08-07 09:13:59,961 - openevolve.process_parallel - INFO - ✅ Evolution completed - Maximum iterations reached
+2026-08-07 09:13:59,961 - openevolve.process_parallel - INFO - Stopped process pool
+2026-08-07 09:13:59,962 - openevolve.controller - INFO - Using tracked best program: 012abe19-825f-4d20-a279-0efe8dba5367
+2026-08-07 09:13:59,962 - openevolve.controller - INFO - Evolution complete. Best program has metrics: cost=4.9481, combined_score=-4.9481
+2026-08-07 09:13:59,963 - openevolve.controller - INFO - Saved best program to /Users/sac/autofde-lab/tests/solvers/python/openevolve/proxy_openevolve_restricted_inputs/openevolve_output/best/best_program.py with program info to /Users/sac/autofde-lab/tests/solvers/python/openevolve/proxy_openevolve_restricted_inputs/openevolve_output/best/best_program_info.json
+2026-08-07 09:14:00,011 - openevolve.evaluator - INFO - Evaluated program 15a14ba4-48a5-4a1a-b55e-b977fb32dc44 in 0.05s: cost=4.8571, combined_score=-4.8571
+2026-08-07 09:14:00,021 - openevolve.evaluator - INFO - Evaluated program 358240f1-10fd-4aee-bfe9-9dd3b466d57f in 0.01s: cost=0.7817, combined_score=-0.7817
+2026-08-07 09:14:00,025 - openevolve.evaluator - INFO - Evaluated program d0701bab-6a0b-4bee-9466-7170e71fdb24 in 0.00s: combined_score=-inf
+2026-08-07 09:14:00,027 - openevolve.database - INFO - Saved database with 1 programs to /Users/sac/.cache/tmp/tmpvz97p9i5
+2026-08-07 09:14:00,028 - openevolve.controller - INFO - Logging to /Users/sac/autofde-lab/tests/solvers/python/openevolve/proxy_openevolve_restricted_inputs/openevolve_output/logs/openevolve_20260807_091400.log
+2026-08-07 09:14:00,028 - openevolve.controller - INFO - Set random seed to 42 for reproducibility
+2026-08-07 09:14:00,030 - openevolve.prompt.sampler - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-08-07 09:14:00,030 - openevolve.database - INFO - Initialized program database with 0 programs
+2026-08-07 09:14:00,031 - openevolve.evaluator - INFO - Successfully loaded evaluation function from /Users/sac/autofde-lab/tests/solvers/python/openevolve/proxy_openevolve_restricted_inputs/evaluator.py
+2026-08-07 09:14:00,031 - openevolve.evaluator - INFO - Initialized evaluator with /Users/sac/autofde-lab/tests/solvers/python/openevolve/proxy_openevolve_restricted_inputs/evaluator.py
+2026-08-07 09:14:00,032 - openevolve.controller - INFO - Initialized OpenEvolve with /Users/sac/autofde-lab/tests/solvers/python/openevolve/proxy_openevolve_restricted_inputs/initial_program_broken.py
+2026-08-07 09:14:00,036 - openevolve.evaluator - INFO - Evaluated program d03b23a0-1f2c-4d92-8ff8-31824906ffa1 in 0.00s: combined_score=-inf
+2026-08-07 09:14:00,037 - openevolve.controller - INFO - Logging to /Users/sac/autofde-lab/tests/solvers/python/openevolve/proxy_openevolve_restricted_inputs/openevolve_output/logs/openevolve_20260807_091400.log
+2026-08-07 09:14:00,038 - openevolve.controller - INFO - Set random seed to 42 for reproducibility
+2026-08-07 09:14:00,039 - openevolve.prompt.sampler - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-08-07 09:14:00,040 - openevolve.database - INFO - Initialized program database with 0 programs
+2026-08-07 09:14:00,040 - openevolve.evaluator - INFO - Successfully loaded evaluation function from /Users/sac/autofde-lab/tests/solvers/python/openevolve/proxy_openevolve_restricted_inputs/evaluator.py
+2026-08-07 09:14:00,042 - openevolve.evaluator - INFO - Initialized evaluator with /Users/sac/autofde-lab/tests/solvers/python/openevolve/proxy_openevolve_restricted_inputs/evaluator.py
+2026-08-07 09:14:00,042 - openevolve.controller - INFO - Initialized OpenEvolve with /Users/sac/autofde-lab/tests/solvers/python/openevolve/proxy_openevolve_restricted_inputs/initial_program_broken.py
+2026-08-07 09:14:00,043 - openevolve.database - INFO - Loaded database metadata with last_iteration=0
+2026-08-07 09:14:00,043 - openevolve.database - INFO - Loaded feature_stats for 1 dimensions
+2026-08-07 09:14:00,043 - openevolve.database - INFO - Reconstructed islands: restored 1 programs to islands
+2026-08-07 09:14:00,044 - openevolve.database - INFO - Loaded database with 1 programs from /Users/sac/.cache/tmp/tmpvz97p9i5
+2026-08-07 09:14:00,044 - openevolve.database - INFO - Island Status:
+2026-08-07 09:14:00,045 - openevolve.database - INFO -  * Island 0: 1 programs, best=-4.9481, avg=-4.9481, diversity=0.00, gen=0 (best: 012abe19-825f-4d20-a279-0efe8dba5367)
+2026-08-07 09:14:00,045 - openevolve.database - INFO -    Island 1: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-08-07 09:14:00,045 - openevolve.database - INFO -    Island 2: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-08-07 09:14:00,046 - openevolve.database - INFO -    Island 3: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-08-07 09:14:00,046 - openevolve.database - INFO -    Island 4: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-08-07 09:14:00,093 - openevolve.evaluator - INFO - Evaluated program 858edeb5-c70e-4041-8f4c-9d77f3fcccaf in 0.04s: cost=4.2727, combined_score=-4.2727
+2026-08-07 09:14:00,180 - openevolve.controller - INFO - Logging to /Users/sac/.cache/tmp/tmp2j1erfj_/logs/openevolve_20260807_091400.log
+2026-08-07 09:14:00,180 - openevolve.controller - INFO - Set random seed to 42 for reproducibility
+2026-08-07 09:14:00,182 - openevolve.prompt.sampler - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-08-07 09:14:00,183 - openevolve.database - INFO - Initialized program database with 0 programs
+2026-08-07 09:14:00,184 - openevolve.evaluator - INFO - Successfully loaded evaluation function from /Users/sac/.cache/tmp/tmp2j1erfj_/generated_evaluator.py
+2026-08-07 09:14:00,184 - openevolve.evaluator - INFO - Initialized evaluator with /Users/sac/.cache/tmp/tmp2j1erfj_/generated_evaluator.py
+2026-08-07 09:14:00,185 - openevolve.controller - INFO - Initialized OpenEvolve with /Users/sac/.cache/tmp/tmp2j1erfj_/generated_initial_program.py
+2026-08-07 09:14:00,260 - openevolve.evaluator - INFO - Evaluated program df1fc555-5edd-4194-95f6-ad7da795b353 in 0.07s: cost=4.2727, nb_reached_goals=2.0000, combined_score=-4.2727
+2026-08-07 09:14:00,339 - openevolve.evaluator - INFO - Evaluated program f43b9c00-16ce-481e-9b54-231fd633698f in 0.08s: cost=5.5065, nb_reached_goals=1.0000, combined_score=-5.5065
+2026-08-07 09:14:00,344 - openevolve.database - INFO - Saved database with 0 programs to /Users/sac/.cache/tmp/tmpu65pof5m
+2026-08-07 09:14:00,344 - openevolve.controller - INFO - Logging to /Users/sac/.cache/tmp/tmp2j1erfj_/logs/openevolve_20260807_091400.log
+2026-08-07 09:14:00,345 - openevolve.controller - INFO - Set random seed to 42 for reproducibility
+2026-08-07 09:14:00,346 - openevolve.prompt.sampler - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-08-07 09:14:00,347 - openevolve.database - INFO - Initialized program database with 0 programs
+2026-08-07 09:14:00,347 - openevolve.evaluator - INFO - Successfully loaded evaluation function from /Users/sac/.cache/tmp/tmp2j1erfj_/generated_evaluator.py
+2026-08-07 09:14:00,348 - openevolve.evaluator - INFO - Initialized evaluator with /Users/sac/.cache/tmp/tmp2j1erfj_/generated_evaluator.py
+2026-08-07 09:14:00,348 - openevolve.controller - INFO - Initialized OpenEvolve with /Users/sac/.cache/tmp/tmp2j1erfj_/generated_initial_program.py
+2026-08-07 09:14:00,349 - openevolve.database - INFO - Loaded database metadata with last_iteration=0
+2026-08-07 09:14:00,349 - openevolve.database - INFO - Reconstructed islands: restored 0 programs to islands
+2026-08-07 09:14:00,349 - openevolve.database - INFO - Loaded database with 0 programs from /Users/sac/.cache/tmp/tmpu65pof5m
+2026-08-07 09:14:00,350 - openevolve.database - INFO - Island Status:
+2026-08-07 09:14:00,350 - openevolve.database - INFO -  * Island 0: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-08-07 09:14:00,351 - openevolve.database - INFO -    Island 1: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-08-07 09:14:00,351 - openevolve.database - INFO -    Island 2: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-08-07 09:14:00,352 - openevolve.database - INFO -    Island 3: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-08-07 09:14:00,352 - openevolve.database - INFO -    Island 4: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0

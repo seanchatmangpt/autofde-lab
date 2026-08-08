@@ -331,23 +331,59 @@ class RealBlindEnvironment:
             return dict(self._payloads[action_id])
         return decode_action(action_id)[1]
 
-    def try_action(self, action: str, payload: dict | None = None) -> dict:
+    def _request_for(self, action: str) -> dict:
+        binding, decoded = decode_action(action)
+        return {
+            "action": binding,
+            "action_id": action,
+            "payload": dict(self._payloads.get(action, decoded)),
+        }
+
+    def try_action(
+        self,
+        action: str,
+        payload: dict | None = None,
+        *,
+        commit: bool = True,
+        prefix: tuple[str, ...] = (),
+    ) -> dict:
+        """Probe one action.
+
+        `commit=False` makes the probe SPECULATIVE: the action is really
+        executed against a real episode replayed from the recorded history,
+        its real effect is observed, and then it is discarded rather than
+        adopted into history. This is what makes probing non-destructive.
+        Committing every probe let an irreversible action wreck the episode
+        mid-discovery -- measured: probing `force_latch` on `lock_and_key`
+        jammed the key rack permanently at probe 6, and all six remaining
+        probes were refused, so nothing about `open_lock` could ever be
+        learned.
+
+        `prefix` runs extra actions (also discarded) before the probe, which
+        is how an action guarded by a precondition another action must
+        establish gets observed succeeding at all.
+        """
         binding, decoded = decode_action(action)
         if payload is None:
             payload = self._payloads.get(action, decoded)
         req = {"action": binding, "action_id": action, "payload": dict(payload)}
-        requests = self._history + [req]
+        requests = self._history + [self._request_for(p) for p in prefix] + [req]
         result = self._call(requests)
         self._last_episode_id = result.get("episode_id")
         self._last_ocel = result.get("ocel_log")
         record = result["results"][-1]
         # Only advance history on real, applied success -- a refused probe
         # doesn't change real state, so it must not be replayed forward.
-        if record.get("applicable"):
+        if commit and record.get("applicable"):
             self._history.append(req)
+        record["committed"] = bool(commit and record.get("applicable"))
+        record["prefix"] = list(prefix)
         with self._log_path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(record) + "\n")
         return record
+
+    def committed_history(self) -> list[str]:
+        return [r.get("action_id", r["action"]) for r in self._history]
 
     def episode_ocel_log(self) -> dict | None:
         return self._last_ocel
