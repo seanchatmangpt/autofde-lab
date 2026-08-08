@@ -5,10 +5,15 @@
 
 from __future__ import annotations
 
-{% set modules = sparql_results | group_by(attribute="module") %}
-{% for group in modules %}
-from . import {{ group.key }} as _{{ group.key }}
-{% endfor %}
+from . import authority as _authority
+from . import evidence as _evidence
+from . import interop as _interop
+from . import lab as _lab
+from . import manufacture as _manufacture
+from . import planning as _planning
+from . import process as _process
+from . import standing as _standing
+from . import world as _world
 from ._base import SemanticEntity
 
 CLASS_BY_IRI: dict[str, type[SemanticEntity]] = {
