@@ -53,7 +53,7 @@ def make_superproject(tmp_path: Path):
 
 
 def test_lock_parser_extracts_pins():
-    text = '''@prefix afb: <x#> .\n<https://x/data/forwardbench/vendor-example> afb:pinnedRevision "0123456789abcdef0123456789abcdef01234567" ; afb:resolutionStanding "PINNED" .'''
+    text = """@prefix afb: <x#> .\n<https://x/data/forwardbench/vendor-example> afb:pinnedRevision "0123456789abcdef0123456789abcdef01234567" ; afb:resolutionStanding "PINNED" ."""
     assert parse_gym_lock(text) == {
         "example": "0123456789abcdef0123456789abcdef01234567"
     }

@@ -53,12 +53,19 @@ def _is_class_qname(qname: str) -> bool:
 
 def emit_alignment_turtle() -> str:
     lines = [
-        *(f"@prefix {prefix}: <{iri}> ." for prefix, iri in sorted(PUBLIC_PREFIXES.items())),
+        *(
+            f"@prefix {prefix}: <{iri}> ."
+            for prefix, iri in sorted(PUBLIC_PREFIXES.items())
+        ),
         "@prefix afde: <https://scikit-decide.local/autofde#> .",
         "@prefix owl: <http://www.w3.org/2002/07/owl#> .",
         "",
     ]
     for local, public in sorted(CONCEPT_ALIGNMENT.items()):
-        relation = "owl:equivalentClass" if _is_class_qname(public) else "owl:equivalentProperty"
+        relation = (
+            "owl:equivalentClass"
+            if _is_class_qname(public)
+            else "owl:equivalentProperty"
+        )
         lines.append(f"afde:{local} {relation} {public} .")
     return "\n".join(lines) + "\n"

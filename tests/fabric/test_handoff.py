@@ -35,15 +35,19 @@ def test_capability_broadening_is_refused():
 
 
 def test_resource_broadening_is_refused():
-    decision = admit_handoff(
-        envelope(delegated_authority=scope(("read",), ("a", "c")))
-    )
+    decision = admit_handoff(envelope(delegated_authority=scope(("read",), ("a", "c"))))
     assert decision.standing is HandoffStanding.REFUSED_AUTHORITY_BROADENING
 
 
 def test_missing_lineage_is_refused_before_handoff():
-    assert admit_handoff(envelope(evidence_lineage=())).standing is HandoffStanding.REFUSED_MISSING_LINEAGE
+    assert (
+        admit_handoff(envelope(evidence_lineage=())).standing
+        is HandoffStanding.REFUSED_MISSING_LINEAGE
+    )
 
 
 def test_schema_mismatch_is_refused():
-    assert admit_handoff(envelope(payload_schema_id="schema:v2")).standing is HandoffStanding.REFUSED_SCHEMA_MISMATCH
+    assert (
+        admit_handoff(envelope(payload_schema_id="schema:v2")).standing
+        is HandoffStanding.REFUSED_SCHEMA_MISMATCH
+    )

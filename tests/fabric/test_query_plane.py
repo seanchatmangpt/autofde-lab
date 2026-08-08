@@ -1,6 +1,5 @@
 from autofde_lab.fabric.query_plane import PolyglotQueryPlane
 
-
 RECORDS = (
     {
         "event_id": "e2",
@@ -31,8 +30,14 @@ RECORDS = (
 
 def test_same_subjects_are_queryable_through_four_views():
     plane = PolyglotQueryPlane(RECORDS)
-    assert [row["event_id"] for row in plane.semantic(predicate="type", object_value="verify").rows] == ["e2"]
-    assert [row["event_id"] for row in plane.relational(lambda row: row["standing"] == "REFUSED").rows] == ["e3"]
+    assert [
+        row["event_id"]
+        for row in plane.semantic(predicate="type", object_value="verify").rows
+    ] == ["e2"]
+    assert [
+        row["event_id"]
+        for row in plane.relational(lambda row: row["standing"] == "REFUSED").rows
+    ] == ["e3"]
     assert [row["event_id"] for row in plane.search("broker").rows] == ["e1"]
     assert [row["event_id"] for row in plane.process(case_id="c1").rows] == ["e1", "e2"]
 

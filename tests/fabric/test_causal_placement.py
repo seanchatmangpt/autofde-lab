@@ -34,9 +34,7 @@ def test_unauthorized_fast_edge_controller_cannot_win():
 
 
 def test_unsafe_fast_edge_controller_cannot_win():
-    decision = select_causal_placement(
-        [c("central", 2), c("edge", 0.01, safety=False)]
-    )
+    decision = select_causal_placement([c("central", 2), c("edge", 0.01, safety=False)])
     assert decision.selected == ("central",)
 
 

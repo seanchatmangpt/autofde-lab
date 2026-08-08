@@ -31,10 +31,15 @@ def test_free_text_with_unbound_cost_is_not_accepted():
 
 
 def test_scientific_notation_is_supported():
-    assert measured_cost(Row(execution_evidence="solved, 1 step(s), cost 1.2e-3")) == 0.0012
+    assert (
+        measured_cost(Row(execution_evidence="solved, 1 step(s), cost 1.2e-3"))
+        == 0.0012
+    )
 
 
 def test_partial_alive_remains_partial_and_cannot_self_promote():
-    receipt = coverage_row_to_receipt(Row(standing="PARTIAL_ALIVE"), signature_key="sig")
+    receipt = coverage_row_to_receipt(
+        Row(standing="PARTIAL_ALIVE"), signature_key="sig"
+    )
     assert receipt is not None
     assert receipt.standing is EvidenceStanding.PARTIAL_ALIVE

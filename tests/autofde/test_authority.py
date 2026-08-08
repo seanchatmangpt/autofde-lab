@@ -31,7 +31,10 @@ def test_authority_is_attributable_and_bounded():
         admit_authority(grant(principal_id=""))
         is AuthorityStanding.REFUSED_MISSING_PRINCIPAL
     )
-    assert admit_authority(grant(evidence_ids=())) is AuthorityStanding.REFUSED_MISSING_EVIDENCE
+    assert (
+        admit_authority(grant(evidence_ids=()))
+        is AuthorityStanding.REFUSED_MISSING_EVIDENCE
+    )
     assert (
         admit_authority(grant(allowed_resources=frozenset()))
         is AuthorityStanding.REFUSED_SCOPE
@@ -59,7 +62,9 @@ def test_acceptance_requires_named_operating_owner():
         operating_owner_id="",
         accepted_at="2026-08-08T06:10:00Z",
     )
-    assert admit_acceptance(record) is AuthorityStanding.REFUSED_UNATTRIBUTABLE_ACCEPTANCE
+    assert (
+        admit_acceptance(record) is AuthorityStanding.REFUSED_UNATTRIBUTABLE_ACCEPTANCE
+    )
 
 
 def test_retirement_boolean_is_replaced_by_attributable_record():

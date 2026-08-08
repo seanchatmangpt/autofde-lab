@@ -45,26 +45,38 @@ def test_persistent_crossover_is_measured_per_verified_consequence():
 def test_workload_identity_mismatch_is_refused():
     baseline, autofde = curves()
     autofde[0] = point("autofde", 1, 0.5, workload="different")
-    assert compare_curves(baseline, autofde).standing is BenchmarkStanding.REFUSED_WORKLOAD_MISMATCH
+    assert (
+        compare_curves(baseline, autofde).standing
+        is BenchmarkStanding.REFUSED_WORKLOAD_MISMATCH
+    )
 
 
 def test_verifier_identity_mismatch_is_refused():
     baseline, autofde = curves()
     autofde[-1] = point("autofde", 1000, 3.0, verifier="different")
-    assert compare_curves(baseline, autofde).standing is BenchmarkStanding.REFUSED_VERIFIER_MISMATCH
+    assert (
+        compare_curves(baseline, autofde).standing
+        is BenchmarkStanding.REFUSED_VERIFIER_MISMATCH
+    )
 
 
 def test_repetition_mismatch_is_refused():
     baseline, autofde = curves()
     autofde.pop()
-    assert compare_curves(baseline, autofde).standing is BenchmarkStanding.REFUSED_REPETITION_MISMATCH
+    assert (
+        compare_curves(baseline, autofde).standing
+        is BenchmarkStanding.REFUSED_REPETITION_MISMATCH
+    )
 
 
 def test_required_curve_points_cannot_be_skipped():
     baseline, autofde = curves()
     baseline = [p for p in baseline if p.repetitions != 1000]
     autofde = [p for p in autofde if p.repetitions != 1000]
-    assert compare_curves(baseline, autofde).standing is BenchmarkStanding.REFUSED_INCOMPLETE_CURVE
+    assert (
+        compare_curves(baseline, autofde).standing
+        is BenchmarkStanding.REFUSED_INCOMPLETE_CURVE
+    )
 
 
 def test_zero_verified_transitions_cannot_create_cheap_false_win():

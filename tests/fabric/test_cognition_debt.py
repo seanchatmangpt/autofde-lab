@@ -50,7 +50,10 @@ def test_unverified_or_failed_hot_runs_do_not_create_compilation_authority():
 
 def test_signatures_are_never_merged_for_convenience():
     assert not detect_repeated_cognition_debt(
-        [ep(DecisionRegime.HOT, 100, signature="a"), ep(DecisionRegime.HOT, 100, signature="b")]
+        [
+            ep(DecisionRegime.HOT, 100, signature="a"),
+            ep(DecisionRegime.HOT, 100, signature="b"),
+        ]
     )
 
 

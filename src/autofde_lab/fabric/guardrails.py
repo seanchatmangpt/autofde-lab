@@ -37,7 +37,9 @@ def guarded_candidate(
         return CandidateDecision(GuardrailStanding.REFUSED_INPUT, None, "input refused")
     candidate = provider.propose(observation)
     if not all(guard(candidate) for guard in output_guards):
-        return CandidateDecision(GuardrailStanding.REFUSED_OUTPUT, None, "output refused")
+        return CandidateDecision(
+            GuardrailStanding.REFUSED_OUTPUT, None, "output refused"
+        )
     requested_tool = candidate.get("tool")
     if requested_tool is not None and str(requested_tool) not in allowed_tools:
         return CandidateDecision(GuardrailStanding.REFUSED_TOOL, None, "tool refused")
