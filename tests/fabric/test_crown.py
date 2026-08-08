@@ -64,12 +64,17 @@ def test_zero_unreceipted_actuation_is_preserved_verbatim_as_requirement():
     assert "Zero unreceipted actuation" in crown_report().get("R-001").statement
 
 
-def test_new_selection_primitives_have_bounded_satisfied_standing():
+def test_new_primitives_have_bounded_satisfied_standing():
     report = crown_report()
     assert report.get("R-201").status is RequirementStatus.SATISFIED
     assert report.get("R-202").status is RequirementStatus.SATISFIED
     assert report.get("R-303").status is RequirementStatus.SATISFIED
     assert report.get("R-304").status is RequirementStatus.SATISFIED
     assert report.get("R-501").status is RequirementStatus.SATISFIED
+    assert report.get("R-602").status is RequirementStatus.SATISFIED
+    assert report.get("R-1003").status is RequirementStatus.SATISFIED
+    assert report.get("R-1103").status is RequirementStatus.SATISFIED
     assert report.get("R-1200").status is RequirementStatus.SATISFIED
+    assert report.get("R-1402").status is RequirementStatus.SATISFIED
+    assert report.get("R-1301").status is RequirementStatus.BLOCKED
     assert report.get("R-1501").status is RequirementStatus.BLOCKED
