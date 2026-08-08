@@ -449,6 +449,7 @@ name = "autofde-lab"
 source = { editable = "." }
 dependencies = [
     { name = "discrete-optimization" },
+    { name = "gymact", marker = "python_full_version >= '3.11'" },
     { name = "pathos" },
     { name = "pynng" },
     { name = "wrapt" },
@@ -500,7 +501,8 @@ all = [
     { name = "torch", version = "2.8.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32'" },
     { name = "torch", version = "2.12.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'win32'" },
     { name = "torch-geometric" },
-    { name = "typer" },
+    { name = "typer", version = "0.26.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "typer", version = "0.27.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "unified-planning" },
     { name = "up-enhsp" },
     { name = "up-fast-downward" },
@@ -536,7 +538,8 @@ dspy = [
 gymact = [
     { name = "fastapi" },
     { name = "httpx" },
-    { name = "typer" },
+    { name = "typer", version = "0.26.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "typer", version = "0.27.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
 mcp = [
     { name = "fastmcp" },
@@ -556,7 +559,7 @@ pddl = [
     { name = "z3-solver" },
 ]
 receipts = [
-    { name = "wasm4pm-compat-py" },
+    { name = "wasm4pm-compat-pydantic" },
 ]
 shared = [
     { name = "gymnasium" },
@@ -625,6 +628,7 @@ requires-dist = [
     { name = "fastapi", marker = "extra == 'gymact'", specifier = ">=0.115" },
     { name = "fastmcp", marker = "extra == 'mcp'", specifier = ">=3.4.4,<4" },
     { name = "flax", marker = "(python_full_version >= '3.12' and sys_platform == 'linux' and extra == 'solvers') or (python_full_version >= '3.12' and sys_platform == 'win32' and extra == 'solvers')", specifier = ">=0.10.6" },
+    { name = "gymact", marker = "python_full_version >= '3.11'", editable = "../gymact" },
     { name = "gymnasium", marker = "extra == 'shared'", specifier = ">=0.29.1,<2" },
     { name = "httpx", marker = "extra == 'gymact'", specifier = ">=0.27" },
     { name = "jax", marker = "(sys_platform == 'darwin' and extra == 'solvers') or (sys_platform == 'linux' and extra == 'solvers')", specifier = ">=0.4" },
@@ -672,7 +676,7 @@ requires-dist = [
     { name = "up-fast-downward", marker = "extra == 'solvers'", specifier = ">=0.4.1" },
     { name = "up-pyperplan", marker = "extra == 'solvers'", specifier = ">=1.1.0" },
     { name = "up-tamer", marker = "python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'solvers'", specifier = ">=1.1.2" },
-    { name = "wasm4pm-compat-py", marker = "extra == 'receipts'", editable = "../wasm4pm-compat/wasm4pm-compat-py" },
+    { name = "wasm4pm-compat-pydantic", marker = "extra == 'receipts'", editable = "../wasm4pm-compat/python" },
     { name = "wrapt", specifier = ">=2.2.1" },
     { name = "z3-solver", marker = "extra == 'pddl'" },
 ]
@@ -2253,6 +2257,24 @@ wheels = [
 ]
 
 [[package]]
+name = "fast-depends"
+version = "3.0.8"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio", marker = "python_full_version >= '3.11'" },
+    { name = "typing-extensions", marker = "python_full_version >= '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f8/6d/787a21ca8043a8fdb737cf28f645e94a46fc30b44a31de54573299156bad/fast_depends-3.0.8.tar.gz", hash = "sha256:896b16f79a512b6ea1df721b0aa1708a192a06f964be6597e01fcf5412559101", size = 18382, upload-time = "2026-03-02T19:54:28.649Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1d/1d/e4843e4eeb65f51447b8c22d200d12d8f94f27c97e77bb7162515cc8d61f/fast_depends-3.0.8-py3-none-any.whl", hash = "sha256:4c52c8a3907bca46d43e70e4364d6d016872d9a3aae4bc0c1c85e72e0a6a21c7", size = 25507, upload-time = "2026-03-02T19:54:27.594Z" },
+]
+
+[package.optional-dependencies]
+pydantic = [
+    { name = "pydantic", marker = "python_full_version >= '3.11'" },
+]
+
+[[package]]
 name = "fastapi"
 version = "0.141.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2339,6 +2361,20 @@ server = [
     { name = "watchfiles" },
     { name = "websockets", version = "16.1.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "websockets", version = "17.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+]
+
+[[package]]
+name = "faststream"
+version = "0.7.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio", marker = "python_full_version >= '3.11'" },
+    { name = "fast-depends", extra = ["pydantic"], marker = "python_full_version >= '3.11'" },
+    { name = "typing-extensions", marker = "python_full_version >= '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d8/7b/bba48f21d1283a56e420ea4b72a44a9dacafdb20a29665c028f0cc615301/faststream-0.7.4.tar.gz", hash = "sha256:1700b8729cca4ebd5873da675495639826737bb4a4e64eae50dbaefae657bf13", size = 335422, upload-time = "2026-08-07T13:35:36.559Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ff/b6/979dfdd970e6a4606680698c05de199e597261175b53963e11907c0eb7d2/faststream-0.7.4-py3-none-any.whl", hash = "sha256:57fe079ff32efd90b5ff5d56b71a4c47cae12544b2e1b791751e30031f8f3bad", size = 563184, upload-time = "2026-08-07T13:35:34.938Z" },
 ]
 
 [[package]]
@@ -2848,6 +2884,64 @@ wheels = [
 ]
 
 [[package]]
+name = "gymact"
+version = "26.8.8"
+source = { editable = "../gymact" }
+dependencies = [
+    { name = "anyio", marker = "python_full_version >= '3.11'" },
+    { name = "blake3", marker = "python_full_version >= '3.11'" },
+    { name = "fastapi", marker = "python_full_version >= '3.11'" },
+    { name = "fastmcp", marker = "python_full_version >= '3.11'" },
+    { name = "faststream", marker = "python_full_version >= '3.11'" },
+    { name = "httpx", marker = "python_full_version >= '3.11'" },
+    { name = "jsonschema", marker = "python_full_version >= '3.11'" },
+    { name = "pydantic", marker = "python_full_version >= '3.11'" },
+    { name = "pyshacl", marker = "python_full_version >= '3.11'" },
+    { name = "rdflib", marker = "python_full_version >= '3.11'" },
+    { name = "rfc3339-validator", marker = "python_full_version >= '3.11'" },
+    { name = "rfc8785", marker = "python_full_version >= '3.11'" },
+    { name = "typer", version = "0.27.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "uvicorn", marker = "python_full_version >= '3.11'" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "anyio", specifier = ">=4.8,<5" },
+    { name = "blake3", specifier = ">=1.0,<2" },
+    { name = "counter-cube", marker = "python_full_version >= '3.12' and extra == 'cube'", editable = "vendor/gyms/cube-standard/examples/counter-cube" },
+    { name = "cube-standard", extras = ["docker"], marker = "python_full_version >= '3.12' and extra == 'cube'", editable = "vendor/gyms/cube-standard" },
+    { name = "fastapi", specifier = ">=0.139.2,<1" },
+    { name = "fastmcp", specifier = ">=3.4.1,<4" },
+    { name = "faststream", specifier = ">=0.7.2,<0.8" },
+    { name = "gymnasium", marker = "extra == 'gyms'", specifier = ">=1.0,<2" },
+    { name = "httpx", specifier = ">=0.28,<1" },
+    { name = "inspect-ai", marker = "extra == 'gyms'", specifier = ">=0.3.90,<1" },
+    { name = "jsonschema", specifier = ">=4.23,<5" },
+    { name = "pettingzoo", marker = "extra == 'gyms'", specifier = ">=1.24,<2" },
+    { name = "pydantic", specifier = ">=2.13,<3" },
+    { name = "pyshacl", specifier = ">=0.40,<1" },
+    { name = "rdflib", specifier = ">=7.1,<8" },
+    { name = "rfc3339-validator", specifier = ">=0.1.4,<1" },
+    { name = "rfc8785", specifier = ">=0.1.4,<1" },
+    { name = "typer", specifier = ">=0.27,<1" },
+    { name = "uvicorn", specifier = ">=0.48,<1" },
+]
+provides-extras = ["gyms", "cube"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "build", specifier = ">=1.2,<2" },
+    { name = "coverage", extras = ["toml"], specifier = ">=7.6,<8" },
+    { name = "httpx2", specifier = ">=2.9,<3" },
+    { name = "mkdocstrings", extras = ["python"], specifier = ">=0.30,<1" },
+    { name = "pytest", specifier = ">=8.3,<9" },
+    { name = "pytest-asyncio", specifier = ">=0.25,<2" },
+    { name = "ruff", specifier = ">=0.15,<1" },
+    { name = "twine", specifier = ">=6,<7" },
+    { name = "zensical", specifier = ">=0.0.51,<1" },
+]
+
+[[package]]
 name = "gymnasium"
 version = "1.2.2"
 source = { registry = "https://pypi.org/simple" }
@@ -2955,7 +3049,8 @@ dependencies = [
     { name = "packaging" },
     { name = "pyyaml" },
     { name = "tqdm" },
-    { name = "typer" },
+    { name = "typer", version = "0.26.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "typer", version = "0.27.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/48/0f/ed994dbade67a54407c28cab96ef845e0e6d25500be56aca6394f8bfc9dd/huggingface_hub-1.16.1.tar.gz", hash = "sha256:7f1dc4c5ec21aed69be630ad0c3378616be16f3de1a47b141c0e812965d9c832", size = 792534, upload-time = "2026-05-21T18:40:00.908Z" }
@@ -7835,6 +7930,15 @@ wheels = [
 ]
 
 [[package]]
+name = "rfc8785"
+version = "0.1.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ef/2f/fa1d2e740c490191b572d33dbca5daa180cb423c24396b856f5886371d8b/rfc8785-0.1.4.tar.gz", hash = "sha256:e545841329fe0eee4f6a3b44e7034343100c12b4ec566dc06ca9735681deb4da", size = 14321, upload-time = "2024-09-27T16:33:31.206Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4d/78/119878110660b2ad709888c8a1614fce7e2fab39080ab960656dc8605bf6/rfc8785-0.1.4-py3-none-any.whl", hash = "sha256:520d690b448ecf0703691c76e1a34a24ddcd4fc5bc41d589cb7c58ec651bcd48", size = 9240, upload-time = "2024-09-27T16:33:29.683Z" },
+]
+
+[[package]]
 name = "rich"
 version = "15.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -9278,15 +9382,64 @@ wheels = [
 name = "typer"
 version = "0.26.7"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.11' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
+    "python_full_version < '3.11' and sys_platform == 'win32'",
+    "python_full_version < '3.11' and platform_machine == 'aarch64' and sys_platform == 'linux'",
+    "python_full_version < '3.11' and platform_machine != 'aarch64' and sys_platform == 'linux'",
+    "python_full_version < '3.11' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
+    "python_full_version < '3.11' and sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
+]
 dependencies = [
-    { name = "annotated-doc" },
-    { name = "colorama", marker = "sys_platform == 'win32'" },
-    { name = "rich" },
-    { name = "shellingham" },
+    { name = "annotated-doc", marker = "python_full_version < '3.11'" },
+    { name = "colorama", marker = "python_full_version < '3.11' and sys_platform == 'win32'" },
+    { name = "rich", marker = "python_full_version < '3.11'" },
+    { name = "shellingham", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/5e/ed/ef06584ccdd5c410df0837951ecd7e15d9a6144ea1bd4c73cecab1a89891/typer-0.26.7.tar.gz", hash = "sha256:e314a34c617e419c091b2830dda3ea1f257134ff593061a8f5b9717ab8dddb3a", size = 201709, upload-time = "2026-06-03T07:18:06.843Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/24/25/2201973529af2c954de0bb725323c3aaed6d7f0ceee8f550dec9185df013/typer-0.26.7-py3-none-any.whl", hash = "sha256:5c87cfbc5d34491c5346ebf49c23e18d56ccb863268d3a8d592b26087c2f5e58", size = 122456, upload-time = "2026-06-03T07:18:05.732Z" },
+]
+
+[[package]]
+name = "typer"
+version = "0.27.1"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version == '3.13.*' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and platform_machine == 'aarch64' and sys_platform == 'linux'",
+    "python_full_version == '3.13.*' and platform_machine == 'aarch64' and sys_platform == 'linux'",
+    "python_full_version >= '3.14' and platform_machine != 'aarch64' and sys_platform == 'linux'",
+    "python_full_version == '3.13.*' and platform_machine != 'aarch64' and sys_platform == 'linux'",
+    "python_full_version >= '3.14' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
+    "python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
+    "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
+    "python_full_version == '3.13.*' and sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
+    "python_full_version == '3.12.*' and sys_platform == 'win32'",
+    "python_full_version == '3.12.*' and platform_machine == 'aarch64' and sys_platform == 'linux'",
+    "python_full_version == '3.12.*' and platform_machine != 'aarch64' and sys_platform == 'linux'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
+    "python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
+    "python_full_version == '3.11.*' and sys_platform == 'win32'",
+    "python_full_version == '3.11.*' and platform_machine == 'aarch64' and sys_platform == 'linux'",
+    "python_full_version == '3.11.*' and platform_machine != 'aarch64' and sys_platform == 'linux'",
+    "python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
+    "python_full_version == '3.11.*' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
+    "python_full_version == '3.12.*' and sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
+    "python_full_version == '3.11.*' and sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
+]
+dependencies = [
+    { name = "annotated-doc", marker = "python_full_version >= '3.11'" },
+    { name = "colorama", marker = "python_full_version >= '3.11' and sys_platform == 'win32'" },
+    { name = "rich", marker = "python_full_version >= '3.11'" },
+    { name = "shellingham", marker = "python_full_version >= '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ae/40/4a3db7990d1f62a53182aa96eaef57aeb2886a27f90a195bc66713565d31/typer-0.27.1.tar.gz", hash = "sha256:a79bef8469a79c45498e7b814ecf8d603cc7644e9acbd9e19cac0334240b18df", size = 203994, upload-time = "2026-08-03T14:41:03.438Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/43/89/9518bc0c3929bee36b3a4a8e3daddd6e03f92f9961c66d4983b837160543/typer-0.27.1-py3-none-any.whl", hash = "sha256:53150287edd11baeb4e4722c8e394fcdf8181c0ae89485cba8d25c778d5edd56", size = 122874, upload-time = "2026-08-03T14:41:04.391Z" },
 ]
 
 [[package]]
@@ -9425,15 +9578,19 @@ wheels = [
 ]
 
 [[package]]
-name = "wasm4pm-compat-py"
-version = "26.6.23"
-source = { editable = "../wasm4pm-compat/wasm4pm-compat-py" }
+name = "wasm4pm-compat-pydantic"
+version = "0.2.0"
+source = { editable = "../wasm4pm-compat/python" }
 dependencies = [
     { name = "pydantic" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pydantic", specifier = ">=2,<3" }]
+requires-dist = [
+    { name = "pydantic", specifier = ">=2.12,<3" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=8,<9" },
+]
+provides-extras = ["test"]
 
 [[package]]
 name = "watchfiles"
