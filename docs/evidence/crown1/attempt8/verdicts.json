@@ -1,0 +1,109 @@
+[
+  {
+    "seed": 890266799,
+    "provider": "cube_counter",
+    "config": {
+      "target": 5
+    },
+    "standing_type": "UnknownEvidence",
+    "standing_repr": "UnknownEvidence(missing='NO_TYPED_VALID_PLAN', episode_digest=None)",
+    "outcome": "NO_TYPED_VALID_PLAN"
+  },
+  {
+    "seed": 4064909771,
+    "provider": "switchboard",
+    "config": {
+      "seed": 4064909771,
+      "n_switches": 5
+    },
+    "standing_type": "UnknownEvidence",
+    "standing_repr": "UnknownEvidence(missing='NO_TYPED_VALID_PLAN', episode_digest=None)",
+    "outcome": "NO_TYPED_VALID_PLAN"
+  },
+  {
+    "seed": 3979297810,
+    "provider": "resource_flow",
+    "config": {
+      "seed": 3979297810,
+      "capacity": 4,
+      "target": 3
+    },
+    "standing_type": "Level4AliveEvidence",
+    "standing_repr": "Level4AliveEvidence(conformant=ConformantExecutionEvidence(episode_digest='f98861e8e21a27f30c0c29cf1e30c1d198e8bec8ffccd95c8df569e6b8b58407', conformance=ConformanceResult(conformant=True, deviations=[]), replay=ReplayReport(mode=<ReplayMode.EVIDENCE_REPLAY: 'EVIDENCE_REPLAY'>, valid=True, record_count=9, head_digest='9f4e3ac62bc7d0450d4ccf7367ea3b2f7d38ffec2ea9f62e95194465bca49c59', mismatches=(), live_reexecution_admitted=False), receipt_id='43eaa2b43cc94bdfb3ba90366c9c4d7d', postcondition_ref='final_expected_postcondition:[{\"catalyst\": true, \"output\": 0, \"raw\": 1, \"refined\": 0, \"solved\": false}, {\"catalyst\": true, \"output\": 0, \"raw\": 0, \"refined\": 1, \"solved\": false}, {\"catalyst\": true, \"output\": 1, \"raw\": 0, \"refined\": 0, \"solved\": false}, {\"catalyst\": false, \"raw\": 0, \"refined\": 0}]'), goal=GoalConsequenceEvidence(verification_id='e3c36a1104a84fcd96416d6428c24d04', passed=True, expected_digest='05dcaf409455262903ba5212629c8b86d20188a076e412c1c9970b644bf1e99c', observed_digest='bdfa798ca70f120268453caa80f0c521b3fd56cc0b5d0099ec16b691632263f3', state_digest='a4ca95551a3e36d79f529af08329fcdf4328ec0dfa806e84d2e330d53dd47ca9'))",
+    "outcome": "EXECUTED"
+  },
+  {
+    "seed": 1811868735,
+    "provider": "lock_and_key",
+    "config": {
+      "seed": 1811868735,
+      "depth": 3
+    },
+    "standing_type": "UnknownEvidence",
+    "standing_repr": "UnknownEvidence(missing='NO_TYPED_VALID_PLAN', episode_digest=None)",
+    "outcome": "NO_TYPED_VALID_PLAN"
+  },
+  {
+    "seed": 1635849486,
+    "provider": "cube_container_counter",
+    "config": {
+      "target": 2
+    },
+    "standing_type": "UnknownEvidence",
+    "standing_repr": "UnknownEvidence(missing='NO_TYPED_VALID_PLAN', episode_digest=None)",
+    "outcome": "NO_TYPED_VALID_PLAN"
+  },
+  {
+    "seed": 1645242857,
+    "provider": "cube_counter",
+    "config": {
+      "target": 3
+    },
+    "standing_type": "UnknownEvidence",
+    "standing_repr": "UnknownEvidence(missing='NO_TYPED_VALID_PLAN', episode_digest=None)",
+    "outcome": "NO_TYPED_VALID_PLAN"
+  },
+  {
+    "seed": 1327771368,
+    "provider": "switchboard",
+    "config": {
+      "seed": 1327771368,
+      "n_switches": 5
+    },
+    "standing_type": "UnknownEvidence",
+    "standing_repr": "UnknownEvidence(missing='NO_TYPED_VALID_PLAN', episode_digest=None)",
+    "outcome": "NO_TYPED_VALID_PLAN"
+  },
+  {
+    "seed": 663999732,
+    "provider": "resource_flow",
+    "config": {
+      "seed": 663999732,
+      "capacity": 4,
+      "target": 2
+    },
+    "standing_type": "Level4AliveEvidence",
+    "standing_repr": "Level4AliveEvidence(conformant=ConformantExecutionEvidence(episode_digest='dec54b982287efd1c719362af658fe50cb761dd5ec18f8eff28f91e7d4aa95cf', conformance=ConformanceResult(conformant=True, deviations=[]), replay=ReplayReport(mode=<ReplayMode.EVIDENCE_REPLAY: 'EVIDENCE_REPLAY'>, valid=True, record_count=3, head_digest='7f681ea9061210690dba6781948ed92ac32336a2a1560e36a17cedf1349bb0ae', mismatches=(), live_reexecution_admitted=False), receipt_id='e0fc96e6c2354c6481652ccb8f822baf', postcondition_ref='final_expected_postcondition:[{\"catalyst\": false, \"raw\": 0, \"refined\": 0}]'), goal=GoalConsequenceEvidence(verification_id='592f52d2887648b5a40050f0ed8b206a', passed=True, expected_digest='05dcaf409455262903ba5212629c8b86d20188a076e412c1c9970b644bf1e99c', observed_digest='29832a192e8c40b9155145495ca109e99bea04c9d4280213c18a38315f5840bd', state_digest='51a37f17c34bb13c0a46c5955bfd3b4f021f0d694380757ada0103c493768859'))",
+    "outcome": "EXECUTED"
+  },
+  {
+    "seed": 1382812562,
+    "provider": "lock_and_key",
+    "config": {
+      "seed": 1382812562,
+      "depth": 2
+    },
+    "standing_type": "ConformantButGoalUnmetEvidence",
+    "standing_repr": "ConformantButGoalUnmetEvidence(conformant=ConformantExecutionEvidence(episode_digest='6fc6ebaa2b6f29060802d71bfa66d73d319d3d5b722fbdb62cd81edbded05653', conformance=ConformanceResult(conformant=True, deviations=[]), replay=ReplayReport(mode=<ReplayMode.EVIDENCE_REPLAY: 'EVIDENCE_REPLAY'>, valid=True, record_count=7, head_digest='73ea065c04421ab7b17a7fbf32d43909cb0f7b60093b55ecbbeab5fe9abf5b8d', mismatches=(), live_reexecution_admitted=False), receipt_id='47cbdf7dd3ad4d8d85dcb5d0cae6b405', postcondition_ref='final_expected_postcondition:[{\"held_key\": -1, \"holding_key\": false, \"locks_open\": 1, \"rack_jammed\": true, \"solved\": false}, {\"held_key\": 1, \"holding_key\": true, \"locks_open\": 1, \"rack_jammed\": true, \"solved\": false}, {\"held_key\": -1, \"holding_key\": false, \"locks_open\": 2, \"rack_jammed\": true, \"solved\": true}]'), goal=GoalConsequenceEvidence(verification_id='6a3d1bc92ead4e8f8c62325e25d2e3c2', passed=False, expected_digest='b3991d4ea84c8fa9c25e8df2aa0539175fd35f59f3376a802175915f877bf109', observed_digest='431cdf63e3743587ca998d47d816767765621bfac015ab09e591b719a5a71ff2', state_digest='2274209427a8a8457470d1a2120afb76ee6c266f121ec4cef21424b19d9017f4'), reason='GOAL_CONSEQUENCE_REPORTED_FALSE:verification_id=6a3d1bc92ead4e8f8c62325e25d2e3c2')",
+    "outcome": "EXECUTED"
+  },
+  {
+    "seed": 69813132,
+    "provider": "cube_container_counter",
+    "config": {
+      "target": 2
+    },
+    "standing_type": "EXCEPTION",
+    "error": "TimeoutExpired: Command '['/Users/sac/gymact/.venv/bin/python', '/Users/sac/autofde-lab-repair-worktree/docs/evidence/crown1/attempt8/realtrial_69813132_98f4a58e-60eb-458b-a3eb-3b1a50208c36/discovery/bridge.py', 'gymact.gyms.cube_container_counter', 'CubeContainerCounterProvider', 'cube-container-counter', '{\"target\": 2}', '[{\"action\": \"decrement\", \"action_id\": \"decrement\", \"payload\": {}}, {\"action\": \"decrement\", \"action_id\": \"decrement\", \"payload\": {}}]']' timed out after 120 seconds"
+  }
+]

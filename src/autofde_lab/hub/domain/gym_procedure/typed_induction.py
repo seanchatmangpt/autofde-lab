@@ -523,11 +523,58 @@ def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
     observations = [r["observed_pre"] for r in probe_records if "observed_pre" in r]
     observations += [r["observed_post"] for r in probe_records if "observed_post" in r]
     dims = classify_observation(observations)
-    derived_dims = detect_derived_dimensions(observations, dims)
 
     by_action: dict[str, list[dict]] = {}
     for rec in probe_records:
         by_action.setdefault(rec["action"], []).append(rec)
+
+    # REAL ARITHMETIC EVIDENCE OVERRIDES A SPURIOUS IDENTITY GUESS.
+    #
+    # `_is_categorical_id` is a population-level heuristic: "a small integer
+    # label set with a negative sentinel is probably an identity dimension
+    # like `held_key` (-1 = holding nothing)". It has no visibility into
+    # per-action behavior, so it cannot tell `held_key` (never touched by a
+    # repeatable constant delta -- `pick_key` sets an ABSOLUTE key) apart
+    # from `counter` under a `decrement` capability, which really can go
+    # negative and is genuinely arithmetic.
+    #
+    # Measured: `cube_counter`'s `decrement` probe alone (0 -> -1) was enough
+    # to trip the sentinel heuristic for `counter` globally, so `increment`
+    # (0->1, 1->2, a real, repeated, constant +1 delta) was recorded
+    # CONTEXT_DEPENDENT and no plan could ever be found -- an honest metric
+    # misclassified as an untyped identity from one probe's negative value.
+    #
+    # The fix does not loosen the sentinel heuristic itself (it is still
+    # right for `held_key`, whose every action shows only ONE success --
+    # single-observation, unrepeatable, exactly the standard the rest of
+    # this module uses for "no repeatability evidence"). It adds a stronger,
+    # more direct signal that must yield when it fires: if some action shows
+    # the SAME nonzero delta on the dimension across >= 2 real successes,
+    # that is direct, repeated, observed arithmetic -- strictly better
+    # evidence than a guess from the value's sign and cardinality.
+    for dim_name, dim in list(dims.items()):
+        if dim.kind is not DimensionKind.CATEGORICAL_ID:
+            continue
+        for records in by_action.values():
+            successes = [
+                r
+                for r in records
+                if r.get("applicable") and "observed_pre" in r and "observed_post" in r
+            ]
+            if len(successes) < 2:
+                continue
+            deltas = {
+                r["observed_post"][dim_name] - r["observed_pre"][dim_name]
+                for r in successes
+                if dim_name in r["observed_post"] and dim_name in r["observed_pre"]
+            }
+            if len(deltas) == 1 and next(iter(deltas)) != 0:
+                dims[dim_name] = StateDimension(
+                    dim_name, DimensionKind.INTEGER, dim.observed_values
+                )
+                break
+
+    derived_dims = detect_derived_dimensions(observations, dims)
 
     actions: dict[str, TypedAction] = {}
     for action_id, records in by_action.items():
