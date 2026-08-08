@@ -42,8 +42,9 @@ from pathlib import Path
 from typing import Any, Optional
 
 from autofde_lab.hub.domain.gym_procedure.crown_evidence import (
-    AliveEvidence,
     BlockedEvidence,
+    ConformantButGoalUnmetEvidence,
+    Level4AliveEvidence,
     RefusedEvidence,
     Standing,
     UnknownEvidence,
@@ -317,7 +318,12 @@ def commit(validated: ValidatedPlan, trial_id: str) -> PowlCommitment:
 
 _EXECUTE_SCRIPT = '''
 _AUTHORITY_REF = "urn:autofde-lab:level4-crown-authority"
-import asyncio, importlib, json, sys
+_GOAL_CONSEQUENCE_EVENT_TYPE = "verify_goal_consequence"
+import asyncio, datetime, hashlib, importlib, json, sys
+
+
+def _digest(obj):
+    return hashlib.sha256(json.dumps(obj, sort_keys=True, default=str).encode()).hexdigest()
 
 
 async def main(module_path, class_name, provider_name, config, plan, expected_list, payloads, ledger_path):
@@ -410,6 +416,45 @@ async def main(module_path, class_name, provider_name, config, plan, expected_li
     verification = await gym.verify(episode_id, final_expected)
     receipts = gym.episode_receipts(episode_id)
     ocel = receipts_to_ocel(receipts)
+
+    # Project the real, independent final-goal verification into the OCEL
+    # graph as a first-class event. `gymact.ocel.receipts_to_ocel` cannot
+    # carry this itself: `kernel.verify()` (called above as
+    # `gym.verify(episode_id, final_expected)`) returns a real
+    # `VerificationResult` but writes no `Receipt` -- only `execute_verified`
+    # (used for the PER-STEP checks above, via `crown_runtime._verification_receipt`)
+    # threads a verification through a receipt. The independent check of the
+    # task's exact admitted goal is therefore built here, by hand, from the
+    # real `verification` object already in memory -- never fabricated, never
+    # a locally re-derived `final_state == expected` comparison -- so that
+    # `crown_evidence.standing_from_episode`'s `_goal_consequence_from_log`
+    # has a real object to find on the far side of the subprocess boundary.
+    goal_event = {
+        "id": "goal-verification:" + str(verification.verification_id),
+        "type": _GOAL_CONSEQUENCE_EVENT_TYPE,
+        "time": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "attributes": [
+            # OCEL 2.0's schema requires every event attribute `value` to be
+            # a JSON string (see the vendored schema's `events.items
+            # .properties.attributes.items.properties.value`), so `passed`
+            # is carried as the real boolean's string form -- the same
+            # convention `receipts_to_ocel` already uses for
+            # `receipt.standing.value` -- not a native JSON boolean.
+            {"name": "passed", "value": str(bool(verification.passed))},
+            {"name": "verification_id", "value": str(verification.verification_id)},
+            {"name": "state_digest", "value": str(verification.state_digest)},
+            {"name": "expected_digest", "value": _digest(verification.expected)},
+            {"name": "observed_digest", "value": _digest(verification.observed)},
+        ],
+        "relationships": [{"objectId": episode_id, "qualifier": "episode"}],
+    }
+    ocel["events"].append(goal_event)
+    if not any(et["name"] == _GOAL_CONSEQUENCE_EVENT_TYPE for et in ocel["eventTypes"]):
+        ocel["eventTypes"].append({
+            "name": _GOAL_CONSEQUENCE_EVENT_TYPE,
+            "attributes": [{"name": "passed", "type": "string"}],
+        })
+
     try:
         validate_ocel_log(ocel)
         ocel_valid = True
@@ -944,39 +989,44 @@ class TrialReport:
     # -- the acceptance verdict, branchless: match on the real type ---------
 
     def is_alive(self) -> bool:
-        """The ONLY green verdict. `AliveEvidence` means every real check in
-        `standing_from_episode`'s chain produced positive evidence; every
-        other `Standing` variant is not alive, including the ones -- like
-        `UnknownEvidence` -- that look like "nothing went wrong"."""
+        """The ONLY green verdict. `Level4AliveEvidence` means every real
+        process check in `standing_from_episode`'s chain produced positive
+        evidence AND a real, independently-observed goal-consequence event
+        reported `passed=True`; every other `Standing` variant is not
+        alive, including `ConformantButGoalUnmetEvidence` (clean process,
+        goal absent/unmet) and `UnknownEvidence` (neither established)."""
         match self.standing:
-            case AliveEvidence():
+            case Level4AliveEvidence():
                 return True
             case _:
                 return False
 
     def verdict(self) -> str:
         """`ALIVE` / `UNKNOWN` / `NOT_ALIVE`, per standing-law vocabulary.
-        `RefusedEvidence` is a real, checked negative answer (`NOT_ALIVE`,
-        mirroring `CrownFactor.is_evidence()` treating `REFUSED` as
-        evidence); `UnknownEvidence`/`BlockedEvidence`/`UnsupportedEvidence`
-        are all "never established either way" (`UNKNOWN`, mirroring
-        `CrownFactor.NON_EVIDENCE_STATES`)."""
+        `RefusedEvidence` and `ConformantButGoalUnmetEvidence` are both real,
+        checked negative answers (`NOT_ALIVE`, mirroring
+        `CrownFactor.is_evidence()` treating `REFUSED` as evidence -- a
+        clean process with a named-absent/failed goal is exactly as checked
+        as an explicit refusal); `UnknownEvidence`/`BlockedEvidence`/
+        `UnsupportedEvidence` are all "never established either way"
+        (`UNKNOWN`, mirroring `CrownFactor.NON_EVIDENCE_STATES`)."""
         match self.standing:
-            case AliveEvidence():
+            case Level4AliveEvidence():
                 return "ALIVE"
-            case RefusedEvidence():
+            case RefusedEvidence() | ConformantButGoalUnmetEvidence():
                 return "NOT_ALIVE"
             case UnknownEvidence() | BlockedEvidence() | UnsupportedEvidence():
                 return "UNKNOWN"
-            case _:  # pragma: no cover - exhaustive over Standing's 5 variants
+            case _:  # pragma: no cover - exhaustive over Standing's 6 variants
                 raise TypeError(f"UNHANDLED_STANDING_VARIANT:{type(self.standing).__name__}")
 
     def to_row(self) -> dict:
         """Scoreboard row. `standing` is serialized through
         `crown_evidence.standing_to_dict`, not `dataclasses.asdict`: its
-        `AliveEvidence` case nests real gymact pydantic models
-        (`ConformanceResult`, `ReplayReport`) that `asdict` would leave
-        un-converted rather than turn into plain, JSON-safe dicts."""
+        `Level4AliveEvidence`/`ConformantButGoalUnmetEvidence` cases nest
+        real gymact pydantic models (`ConformanceResult`, `ReplayReport`)
+        that `asdict` would leave un-converted rather than turn into plain,
+        JSON-safe dicts."""
         row = {f.name: getattr(self, f.name) for f in dataclasses_fields(self) if f.name != "standing"}
         row["standing"] = standing_to_dict(self.standing)
         return row
@@ -1539,14 +1589,17 @@ def run_real_trial(
     replay_valid = bool(replay_rec["valid"])
     if not replay_ran and "REPLAY_RECORD_ABSENT" not in mismatches:
         mismatches.append("REPLAY_DID_NOT_RUN")
-    # REAL goal attainment: read off the post-execution observation the
-    # actuation bridge returned, not off the model and not off a predicted
-    # postcondition. `final_state` is kept as descriptive evidence data --
-    # callers that need the boolean can still compute
-    # `real_goal_attained(report.final_state)` themselves; it is no longer
-    # pre-baked as a ground-truth verdict field on `TrialReport`, and it is
-    # NOT part of `standing_from_episode`'s own evidence chain (schema,
-    # conformance, replay validity, receipted postcondition only).
+    # `final_state` is kept as descriptive evidence data on `TrialReport` --
+    # it is not itself a verdict field and no comparison against it is made
+    # here. The REAL goal-attainment verdict now lives inside `standing`
+    # itself: `_standing_from_bridge_result` -> `standing_from_episode` reads
+    # a real `verify_goal_consequence` OCEL event -- projected by the
+    # execution bridge above from the real `VerificationResult` returned by
+    # `gym.verify(episode_id, final_expected)` -- out of `result["ocel"]`,
+    # and only returns `Level4AliveEvidence` when that independent
+    # postcondition reports `passed=True`. A clean process with an
+    # absent/failed goal consequence returns `ConformantButGoalUnmetEvidence`
+    # instead, never a silently-upgraded `Level4AliveEvidence`.
     real_final = dict(result["final_state"] or {}) if "final_state" in result else {}
     standing = _standing_from_bridge_result(result, replay_rec, expected_steps)
     return TrialReport(
