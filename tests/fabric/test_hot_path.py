@@ -1,6 +1,7 @@
+from dataclasses import replace
+
 from autofde_lab.fabric.cache import SQLiteERRCCache
 from autofde_lab.fabric.hot_path import (
-    HotPathIdentity,
     HotPathStanding,
     compile_hot_path,
     reuse_hot_path,
@@ -71,12 +72,7 @@ def test_policy_or_capability_drift_cannot_reuse_stale_candidate():
     assert compiled.artifact is not None
     with SQLiteERRCCache(":memory:") as cache:
         store_hot_path(cache, compiled.artifact)
-        stale_policy = HotPathIdentity(
-            **{
-                **compiled.artifact.identity.__dict__,
-                "policy_digest": "policy-v2",
-            }
-        )
+        stale_policy = replace(compiled.artifact.identity, policy_digest="policy-v2")
         result = reuse_hot_path(cache, stale_policy)
         assert result.standing is HotPathStanding.REFUSED_CACHE_MISS
         assert result.artifact is None
