@@ -51,8 +51,6 @@ class ExecutionReceipt:
         return self.exit_code == 0
 
 
-# These paths make a requirement eligible for promotion after execution. They do not
-# independently prove that execution happened.
 ELIGIBLE_EVIDENCE: dict[str, tuple[str, ...]] = {
     "R-002": ("src/autofde_lab/fabric/selection.py", "tests/fabric/test_selection.py"),
     "R-004": (
@@ -202,7 +200,11 @@ def errc_crown_report(
 
     by_id = {requirement.requirement_id: requirement for requirement in upgraded}
     for gate, dependencies in GATE_REQUIREMENTS.items():
+        if gate not in by_id or any(dependency not in by_id for dependency in dependencies):
+            continue
         gate_requirement = by_id[gate]
+        if gate_requirement.external_dependency is not None:
+            continue
         if all(
             by_id[dependency].status is RequirementStatus.SATISFIED
             for dependency in dependencies
