@@ -179,7 +179,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install Crown verifier
-        run: python -m pip install "pytest==8.3.5"
+        run: python -m pip install "numpy==2.2.6" "pytest==8.3.5"
       - name: Execute Crown kernel
         env:
           PYTHONPATH: src
@@ -203,8 +203,10 @@ jobs:
             tests/fabric/test_differential_verification.py \
             tests/fabric/test_competitive_benchmark.py \
             tests/fabric/test_coverage_bridge.py \
+            tests/fabric/test_hot_path.py \
             tests/fabric/test_crown.py \
-            tests/fabric/test_crown_evidence.py
+            tests/fabric/test_crown_evidence.py \
+            tests/fabric/test_crown_errc.py
 
   package:
     name: Source package smoke
