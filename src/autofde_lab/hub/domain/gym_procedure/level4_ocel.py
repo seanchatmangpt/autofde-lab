@@ -73,11 +73,14 @@ from autofde_lab.ocel.model import (
 __all__ = [
     "LEVEL4_EVENT_TYPES",
     "LEVEL4_OBJECT_TYPES",
+    "WITNESS_JOURNAL_NAME",
     "Level4Ocel",
     "Level4OcelReport",
+    "WitnessJournal",
     "build_level4_ocel",
     "link_commitment_ttl",
     "read_commitment",
+    "task_identity",
 ]
 
 #: The Level 4 chain vocabulary, in chain order. Declared as a closed set so a
@@ -85,6 +88,9 @@ __all__ = [
 #: happened to be built.
 LEVEL4_EVENT_TYPES: tuple[str, ...] = (
     "TaskAdmitted",
+    "GoalAdmitted",
+    "CandidateSelected",
+    "GoalConsequenceObserved",
     "SessionStarted",
     "CapabilitiesObserved",
     "ProbeExecuted",
@@ -102,6 +108,7 @@ LEVEL4_EVENT_TYPES: tuple[str, ...] = (
 
 LEVEL4_OBJECT_TYPES: tuple[str, ...] = (
     "Task",
+    "Goal",
     "Environment",
     "Capability",
     "Probe",
@@ -112,9 +119,247 @@ LEVEL4_OBJECT_TYPES: tuple[str, ...] = (
     "AuthorityEnvelope",
     "Actuation",
     "PostconditionObservation",
+    "IndependentVerifier",
     "Receipt",
     "Replay",
 )
+
+
+# ── the witness journal: relations recorded WHEN THEY BECOME TRUE ────────
+#
+# Every edge below used to be either absent or reconstructed afterwards from
+# whatever happened to be adjacent on disk. Both are refused by
+# `.claude/rules/no-dual-bookkeeping.md`: a relation inferred after the fact
+# is a claim about a claim.
+#
+# `WitnessJournal` is the producer's place to *state* a relation at the exact
+# transition where it becomes true -- goal admission, candidate selection,
+# commitment, independent goal verification, replay. It is append-only, it
+# names both endpoints by exact identity, and `build_level4_ocel` emits the
+# corresponding typed O2O edge ONLY from a record here. No record, no edge,
+# and the relation stays UNKNOWN -- never guessed from ordering, digests that
+# happen to coincide, filenames, or counts.
+#
+# The one lookup performed anywhere in this module is
+# :meth:`WitnessJournal.complete_replay`'s head-digest -> receipt_id
+# resolution, and it is done BY THE PRODUCER, at the moment of replay, against
+# the ledger the replay just verified. A receipt digest is that receipt's
+# cryptographic identity, not a coincidence; and if no receipt in the ledger
+# carries the digest the replay reports, nothing is recorded at all.
+
+WITNESS_JOURNAL_NAME = "witness.jsonl"
+
+
+def task_identity(evidence_dir: Path) -> str:
+    """The Task identity for a trial directory.
+
+    Exported so the producer and the OCEL build cannot disagree about it: an
+    edge naming a Task the log does not contain is a dangling reference, and
+    two independent spellings of the same rule is exactly the dual bookkeeping
+    that produced the joins this module exists to end.
+    """
+    evidence_dir = Path(evidence_dir)
+    seed = _seed_from_dir(evidence_dir)
+    parts = evidence_dir.name.split("_", 2)
+    run_id = parts[2] if len(parts) == 3 else evidence_dir.name
+    return f"urn:level4:task:{seed if seed is not None else run_id}"
+
+
+class WitnessJournal:
+    """Append-only record of relations, written at the causal moment.
+
+    Not a summary and not a projection: nothing here is derived from anything
+    else in the evidence directory. Each method takes the identities of both
+    endpoints from the caller, which is only possible at the transition where
+    the producer actually holds them.
+    """
+
+    def __init__(self, evidence_dir: Path) -> None:
+        self.evidence_dir = Path(evidence_dir)
+        self.path = self.evidence_dir / WITNESS_JOURNAL_NAME
+        self.task_id = task_identity(self.evidence_dir)
+
+    def _append(self, kind: str, **fields: Any) -> dict[str, Any]:
+        record = {"kind": kind, "task_id": self.task_id, **fields}
+        with self.path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, sort_keys=True) + "\n")
+        return record
+
+    # -- admission ---------------------------------------------------------
+
+    def admit_goal(self, *, goal_id: str, expression: str, target: Mapping[str, Any]) -> str:
+        """At goal admission. The admitted Goal becomes a durable object with
+        its own identity, so runtime ``final_state`` can never be what
+        establishes standing."""
+        self._append(
+            "goal_admitted",
+            goal_id=goal_id,
+            expression=expression,
+            target={str(k): str(v) for k, v in dict(target).items()},
+        )
+        return goal_id
+
+    # -- selection ---------------------------------------------------------
+
+    def select_candidate(
+        self,
+        *,
+        candidate_id: str,
+        goal_id: str,
+        planner: str,
+        source: str,
+        plan: tuple[str, ...],
+    ) -> str:
+        """At the moment one candidate is selected FOR that goal.
+
+        Recorded here rather than reconstructed from ``typed_validation.json``
+        because "the first candidate the file lists as valid" re-derives the
+        selection rule instead of reading the selection.
+        """
+        self._append(
+            "candidate_selected",
+            candidate_id=candidate_id,
+            goal_id=goal_id,
+            planner=planner,
+            source=source,
+            plan=list(plan),
+        )
+        return candidate_id
+
+    def commit_plan(self, *, commitment_subject: str, candidate_id: str) -> None:
+        """At ``commit()``. THIS commitment realizes THAT candidate -- the one
+        relation ``commitment.ttl`` cannot carry, since it records the plan's
+        digest and not which candidate produced it."""
+        self._append(
+            "plan_committed",
+            commitment_subject=commitment_subject,
+            candidate_id=candidate_id,
+        )
+
+    # -- independent consequence -------------------------------------------
+
+    def observe_goal_consequence(
+        self,
+        *,
+        verification_id: str,
+        goal_id: str,
+        outcome: str,
+        actuation_receipt_id: str,
+        verifier_id: str,
+        actuator_id: str,
+    ) -> None:
+        """At the independent ``gym.verify(episode, final_expected)`` return.
+
+        ``outcome`` is ``ESTABLISHED`` or ``REFUTED`` -- both real, checked
+        observations. A verification that did not run records nothing, which
+        is UNKNOWN and must never be written as ``REFUTED``.
+
+        ``verifier_id`` and ``actuator_id`` are both recorded so
+        ``SELF_CERTIFIED_POSTCONDITION`` is a property of the graph (the two
+        identities coincide) rather than a flag anyone can set.
+        """
+        if outcome not in ("ESTABLISHED", "REFUTED"):
+            raise ValueError(
+                f"GOAL_CONSEQUENCE_OUTCOME_MUST_BE_OBSERVED: {outcome!r} is neither "
+                f"ESTABLISHED nor REFUTED; an unobserved goal records nothing"
+            )
+        self._append(
+            "goal_consequence_observed",
+            verification_id=verification_id,
+            goal_id=goal_id,
+            outcome=outcome,
+            actuation_receipt_id=actuation_receipt_id,
+            verifier_id=verifier_id,
+            actuator_id=actuator_id,
+        )
+
+    # -- replay ------------------------------------------------------------
+
+    def complete_replay(
+        self,
+        *,
+        ledger: Path,
+        head_digest: str,
+        record_count: int,
+        valid: bool,
+        mode: str,
+    ) -> str | None:
+        """At the moment ``replay_ledger`` returns, naming the exact receipt.
+
+        The replay reports the head digest it verified; that digest is the
+        cryptographic identity of one receipt row, resolved here against the
+        very ledger that was replayed. If no row carries it, nothing is
+        recorded -- an unbindable replay is UNKNOWN, not a replay of "some
+        receipt".
+        """
+        ledger = Path(ledger)
+        if not head_digest or not ledger.is_file():
+            return None
+        conn = sqlite3.connect(f"file:{ledger}?mode=ro", uri=True)
+        try:
+            # `record_digest` is the ledger's own per-record chain digest --
+            # the thing `replay_ledger` walks and reports as its head. It is
+            # NOT `receipt_digest`; matching against that column silently
+            # found nothing, which correctly recorded no replay at all rather
+            # than binding an approximate receipt.
+            columns = {row[1] for row in conn.execute("PRAGMA table_info(receipt_evidence)")}
+            if "record_digest" not in columns:
+                return None
+            row = conn.execute(
+                "SELECT receipt_id FROM receipt_evidence WHERE record_digest = ?",
+                (head_digest,),
+            ).fetchone()
+        finally:
+            conn.close()
+        if row is None:
+            return None
+        self._append(
+            "replay_completed",
+            receipt_id=row[0],
+            head_digest=head_digest,
+            record_count=int(record_count),
+            valid=bool(valid),
+            mode=mode,
+        )
+        return str(row[0])
+
+    @staticmethod
+    def final_actuation_receipt_id(ledger: Path, *, operations: tuple[str, ...] = ("act",)) -> str | None:
+        """The receipt of the last actuating step, for the producer's own use.
+
+        Called by the producer immediately after execution, where "the last
+        actuating step" is a fact of its own control flow -- the step whose
+        post-state the independent goal verification then observed. It is a
+        lookup in the producer's own ledger, not a reconstruction by a reader:
+        nothing in :func:`build_level4_ocel` calls it, and a consumer that
+        tried to would be inferring a relation from ordering.
+        """
+        ledger = Path(ledger)
+        if not ledger.is_file():
+            return None
+        conn = sqlite3.connect(f"file:{ledger}?mode=ro", uri=True)
+        try:
+            rows = conn.execute(
+                "SELECT receipt_id, receipt_json FROM receipt_evidence ORDER BY sequence"
+            ).fetchall()
+        finally:
+            conn.close()
+        found = None
+        for receipt_id, receipt_json in rows:
+            if str(json.loads(receipt_json).get("operation")) in operations:
+                found = str(receipt_id)
+        return found
+
+    # -- reading -----------------------------------------------------------
+
+    @staticmethod
+    def read(evidence_dir: Path) -> tuple[dict[str, Any], ...]:
+        path = Path(evidence_dir) / WITNESS_JOURNAL_NAME
+        if not path.is_file():
+            return ()
+        return tuple(
+            json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
+        )
 
 
 # ── small typed-attribute helpers ────────────────────────────────────────
@@ -439,6 +684,54 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
         )
     )
     populated_objects.append("Task")
+
+    # --- Goal: a first-class durable object, or nothing ------------------
+    #
+    # Emitted ONLY from a `goal_admitted` witness record. There is deliberately
+    # no fallback that reads the goal out of the runtime, the commitment, or a
+    # final state: a goal recovered from the outcome cannot fail to be met.
+    journal = WitnessJournal.read(evidence_dir)
+    if journal:
+        sources_read.append(WITNESS_JOURNAL_NAME)
+    else:
+        sources_absent.append((WITNESS_JOURNAL_NAME, f"NOT_ON_DISK:{evidence_dir / WITNESS_JOURNAL_NAME}"))
+
+    def _records(kind: str) -> list[dict[str, Any]]:
+        return [r for r in journal if r.get("kind") == kind]
+
+    goal_ids: list[str] = []
+    for record in _records("goal_admitted"):
+        goal_id = str(record["goal_id"])
+        objects.append(
+            OcelObject(
+                goal_id,
+                "Goal",
+                _attrs(
+                    {
+                        "expression": _s(str(record.get("expression", ""))),
+                        # One canonical string rather than a list: a `list`
+                        # attribute has to be declared `string` anyway (it is
+                        # not in OCEL 2.0's five-valued type vocabulary), and
+                        # declaring a type the value does not have is the
+                        # secondary-representation drift this module refuses.
+                        "target": _s(
+                            ",".join(
+                                f"{k}={v}" for k, v in sorted((record.get("target") or {}).items())
+                            )
+                        )
+                        if record.get("target")
+                        else None,
+                    }
+                ),
+            )
+        )
+        o2o.append(ObjectObjectLink(goal_id, task_id, "goal_of_task"))
+        goal_ids.append(goal_id)
+    if goal_ids:
+        populated_objects.append("Goal")
+    else:
+        absent_objects.append(("Goal", "NO_goal_admitted_RECORD_IN_WITNESS_JOURNAL"))
+
     if manifest_digest is None:
         sources_absent.append(("crown manifest_digest", "NO_CROWN_RUN_JSON_IN_PARENT"))
 
@@ -562,6 +855,40 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
         )
         o2o.append(ObjectObjectLink(candidate_id, f"{task_id}:attempt:{index}", "proposed_by"))
         candidate_ids.append(candidate_id)
+    # The SELECTED candidate, stated by the producer at selection time. It is
+    # not necessarily one of the federation attempts above -- a plan found by
+    # `search_plan_typed` is equally a candidate, and reconstructing "which
+    # one was chosen" from the attempt list would re-derive the selection rule
+    # rather than read the selection.
+    selected_candidates: list[str] = []
+    for record in _records("candidate_selected"):
+        candidate_id = str(record["candidate_id"])
+        if candidate_id not in candidate_ids:
+            plan = [str(a) for a in (record.get("plan") or [])]
+            objects.append(
+                OcelObject(
+                    candidate_id,
+                    "PlanCandidate",
+                    _attrs(
+                        {
+                            "planner": _s(str(record.get("planner", ""))),
+                            "source": _s(str(record.get("source", ""))),
+                            "plan_length": _i(len(plan)),
+                            "sequence": OcelAttributeValue(
+                                OcelValueKind.LIST, tuple(_s(a) for a in plan)
+                            )
+                            if plan
+                            else None,
+                        }
+                    ),
+                )
+            )
+            candidate_ids.append(candidate_id)
+        goal_id = str(record.get("goal_id") or "")
+        if goal_id in goal_ids:
+            o2o.append(ObjectObjectLink(candidate_id, goal_id, "targets_goal"))
+        selected_candidates.append(candidate_id)
+
     if candidate_ids:
         populated_objects.append("PlanCandidate")
     else:
@@ -600,6 +927,14 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
             )
         )
         o2o.append(ObjectObjectLink(commitment_id, task_id, "commitment_of_task"))
+        # THIS commitment realizes THAT candidate. Stated at `commit()`;
+        # `commitment.ttl` records the plan's digest and cannot carry it.
+        for record in _records("plan_committed"):
+            if str(record.get("commitment_subject")) != commitment_id:
+                continue
+            candidate_id = str(record.get("candidate_id") or "")
+            if candidate_id in candidate_ids:
+                o2o.append(ObjectObjectLink(commitment_id, candidate_id, "realizes_candidate"))
         if domain_id is not None:
             o2o.append(ObjectObjectLink(commitment_id, domain_id, "commits_model"))
         populated_objects.append("POWLCommitment")
@@ -753,11 +1088,77 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
                 if target is not None:
                     o2o.append(ObjectObjectLink(observation_id, target, "observes_actuation"))
 
+    # --- independent goal consequence ------------------------------------
+    #
+    # The admitted Goal's consequence is a SEPARATE claim from process
+    # conformance, and it enters only through a `goal_consequence_observed`
+    # record written when the independent verifier returned. A lawful
+    # execution that did not reach the goal stays fully representable here --
+    # it records `refutes_goal`, which is a checked negative observation, not
+    # an absence.
+    verifier_ids: list[str] = []
+    goal_observations: list[str] = []
+    for record in _records("goal_consequence_observed"):
+        goal_id = str(record.get("goal_id") or "")
+        actuation_id = actuation_of_receipt.get(str(record.get("actuation_receipt_id") or ""))
+        if goal_id not in goal_ids or actuation_id is None:
+            continue
+        observation_id = f"urn:level4:postcondition:{record['verification_id']}"
+        if observation_id not in observation_of_receipt.values():
+            objects.append(
+                OcelObject(
+                    observation_id,
+                    "PostconditionObservation",
+                    _attrs(
+                        {
+                            "verification_id": _s(str(record["verification_id"])),
+                            "scope": _s("ADMITTED_GOAL"),
+                            "outcome": _s(str(record["outcome"])),
+                        }
+                    ),
+                )
+            )
+        o2o.append(ObjectObjectLink(observation_id, actuation_id, "observes_actuation"))
+        o2o.append(
+            ObjectObjectLink(
+                observation_id,
+                goal_id,
+                "establishes_goal" if record["outcome"] == "ESTABLISHED" else "refutes_goal",
+            )
+        )
+        goal_observations.append(observation_id)
+
+        # The observer is an object with its own identity, so
+        # SELF_CERTIFIED_POSTCONDITION is readable off the graph (the verifier
+        # identity coincides with the actuator identity) instead of asserted.
+        verifier_id = str(record.get("verifier_id") or "")
+        if verifier_id:
+            if verifier_id not in verifier_ids:
+                objects.append(
+                    OcelObject(
+                        verifier_id,
+                        "IndependentVerifier",
+                        _attrs(
+                            {
+                                "verifier_id": _s(verifier_id),
+                                "actuator_id": _s(str(record.get("actuator_id") or "")),
+                            }
+                        ),
+                    )
+                )
+                verifier_ids.append(verifier_id)
+            o2o.append(ObjectObjectLink(observation_id, verifier_id, "verified_by"))
+    if verifier_ids:
+        populated_objects.append("IndependentVerifier")
+    else:
+        absent_objects.append(
+            ("IndependentVerifier", "NO_goal_consequence_observed_RECORD_IN_WITNESS_JOURNAL")
+        )
     if actuation_of_receipt:
         populated_objects.append("Actuation")
     else:
         absent_objects.append(("Actuation", "NO_RECEIPT_WITH_OPERATION_IN_{act,materialize}"))
-    if observation_of_receipt:
+    if observation_of_receipt or goal_observations:
         populated_objects.append("PostconditionObservation")
     else:
         absent_objects.append(
@@ -765,27 +1166,41 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
         )
 
     # --- Replay: the ledger's own head, which is what a replay checks -----
+    # A Replay object used to be synthesised here from `receipts[-1]`, i.e.
+    # from the mere existence of a ledger head. That manufactured a replay out
+    # of the absence of one: a trial whose `replay_ledger` never ran got an
+    # identical object to a trial whose replay ran and passed. It is now
+    # emitted only from a `replay_completed` record, which names the exact
+    # receipt the replay bound.
     replay_id: str | None = None
-    if receipts:
-        head = receipts[-1]["_receipt_digest"]
-        replay_id = f"urn:level4:replay:{head}"
+    for record in _records("replay_completed"):
+        receipt_id = str(record.get("receipt_id") or "")
+        if receipt_id not in receipt_ids:
+            continue
+        replay_id = f"urn:level4:replay:{record['head_digest']}"
         objects.append(
             OcelObject(
                 replay_id,
                 "Replay",
                 _attrs(
                     {
-                        "head_digest": _s(str(head)),
-                        "record_count": _i(len(receipts)),
+                        "head_digest": _s(str(record["head_digest"])),
+                        "record_count": _i(record["record_count"]),
+                        "mode": _s(str(record.get("mode", ""))),
+                        "valid": _b(bool(record.get("valid"))),
                         "ledger": _s(str(ledger_path)),
                     }
                 ),
             )
         )
         o2o.append(ObjectObjectLink(replay_id, task_id, "replay_of_task"))
+        o2o.append(ObjectObjectLink(replay_id, receipt_id, "replays"))
+    if replay_id is not None:
         populated_objects.append("Replay")
     else:
-        absent_objects.append(("Replay", "NO_LEDGER_SO_NO_HEAD_DIGEST"))
+        absent_objects.append(
+            ("Replay", "NO_replay_completed_RECORD_BINDING_A_RECEIPT_IN_THIS_LEDGER")
+        )
 
     # ── events ────────────────────────────────────────────────────────────
     #
@@ -811,6 +1226,20 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
             },
         )
     )
+    for goal_id in goal_ids:
+        pre.append(
+            (
+                f"{goal_id}:GoalAdmitted",
+                "GoalAdmitted",
+                [(task_id, "task"), (goal_id, "goal")],
+                {},
+            )
+        )
+    for candidate_id in selected_candidates:
+        links_sel: list[Any] = [(task_id, "task"), (candidate_id, "candidate")]
+        for goal_id in goal_ids:
+            links_sel.append((goal_id, "goal"))
+        pre.append((f"{candidate_id}:CandidateSelected", "CandidateSelected", links_sel, {}))
     if environment_id is not None:
         pre.append(
             (
@@ -1013,6 +1442,34 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
         )
         populated_events.append("ReceiptEmitted")
 
+    if goal_observations and receipts:
+        after_ns = parse_ns(receipts[-1]["occurred_at"]) if receipts[-1].get("occurred_at") else 0
+        for record in _records("goal_consequence_observed"):
+            observation_id = f"urn:level4:postcondition:{record['verification_id']}"
+            if observation_id not in goal_observations:
+                continue
+            links_goal: list[Any] = [
+                (task_id, "task"),
+                (observation_id, "observation"),
+                (str(record["goal_id"]), "goal"),
+            ]
+            if str(record.get("verifier_id") or "") in verifier_ids:
+                links_goal.append((str(record["verifier_id"]), "verifier"))
+            log = log.append_event(
+                f"{observation_id}:GoalConsequenceObserved",
+                "GoalConsequenceObserved",
+                links_goal,
+                timestamp_ns=after_ns + 1,
+                attributes=_attrs(
+                    {
+                        "outcome": _s(str(record["outcome"])),
+                        "verification_id": _s(str(record["verification_id"])),
+                        "time_basis": _s("DERIVED_ORDINAL"),
+                    }
+                ),
+            )
+            populated_events.append("GoalConsequenceObserved")
+
     if replay_id is not None and receipts:
         last_ns = parse_ns(receipts[-1]["occurred_at"]) if receipts[-1].get("occurred_at") else 0
         log = log.append_event(
@@ -1055,6 +1512,9 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
 
 
 _EVENT_ABSENCE_REASON: dict[str, str] = {
+    "GoalAdmitted": "NO_goal_admitted_RECORD_IN_WITNESS_JOURNAL",
+    "CandidateSelected": "NO_candidate_selected_RECORD_IN_WITNESS_JOURNAL",
+    "GoalConsequenceObserved": "NO_goal_consequence_observed_RECORD_IN_WITNESS_JOURNAL",
     "SessionStarted": "NO_SINGLE_ENVIRONMENT_ID_IN_RECEIPTS",
     "CapabilitiesObserved": "NO_RECEIPTS_WITH_CAPABILITY_REF",
     "ProbeExecuted": "NO_PROBE_LOG_ON_DISK",
@@ -1067,5 +1527,5 @@ _EVENT_ABSENCE_REASON: dict[str, str] = {
     "PostconditionObserved": "NO_RECEIPT_CARRIES_verification_id",
     "PostconditionVerified": "NO_RECEIPT_CARRIES_BOOLEAN_verified",
     "ReceiptEmitted": "NO_LEDGER_SO_NO_RECEIPTS",
-    "ReplayCompleted": "NO_LEDGER_SO_NO_HEAD_DIGEST",
+    "ReplayCompleted": "NO_replay_completed_RECORD_BINDING_A_RECEIPT_IN_THIS_LEDGER",
 }

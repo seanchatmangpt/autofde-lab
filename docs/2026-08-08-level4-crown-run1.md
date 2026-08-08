@@ -256,3 +256,176 @@ to observe a pass. Reported, not repaired here: `level4_crown_runner.py` and
 
 Evidence: `docs/evidence/crown1/attempt7/` (10 trial dirs, `crown_run.json`,
 `verdicts.json`), `docs/evidence/crown1/attempt6/`.
+
+## Destructive reconstruction run — the frozen manifest under a fresh-subprocess verifier
+
+Appended 2026-08-08. Orchestrator:
+`src/autofde_lab/hub/domain/gym_procedure/crown_reconstruct.py`. Evidence root:
+`docs/evidence/reconstruct-run1/` (10 trial dirs, per-trial
+`standalone_verifier.stdout.txt`, `reconstruction.json`). Durable in-repo, not
+`/private/tmp`.
+
+Manifest `docs/evidence/crown1/crown_manifest.json` was **loaded, never
+re-frozen**; `load_crown` re-derived the digest
+`64121fbac6f4cfe29b0b68bf138c9c3f2f7d466dc61294bdde9772947587c7de`, denominator
+`10`.
+
+Per identity: real `run_real_trial` (real probing, real planner federation,
+real gymact actuation subprocess, real sqlite ledger, real replay) → persist →
+**`standalone_verifier.py` launched as a separate process** over the trial dir.
+The verifier printed
+`INDEPENDENCE: no execution-runtime module imported in this process` for all
+ten.
+
+### Per-identity typed missing edge
+
+| identity | provider | producer outcome | independent result |
+|---|---|---|---|
+| 890266799 | cube_counter | NO_TYPED_VALID_PLAN | `UNKNOWN:ARTIFACTS_ABSENT:ocel,commitment.ttl,receipts.sqlite3` |
+| 4064909771 | switchboard | NO_TYPED_VALID_PLAN | `UNKNOWN:ARTIFACTS_ABSENT:ocel,commitment.ttl,receipts.sqlite3` |
+| 3979297810 | resource_flow | EXECUTED | 7/7 edges — `ALIVE_EVIDENCE_RECONSTRUCTED` |
+| 1811868735 | lock_and_key | NO_TYPED_VALID_PLAN | `UNKNOWN:ARTIFACTS_ABSENT:ocel,commitment.ttl,receipts.sqlite3` |
+| 1635849486 | cube_container_counter | NO_TYPED_VALID_PLAN | `UNKNOWN:ARTIFACTS_ABSENT:ocel,commitment.ttl,receipts.sqlite3` |
+| 1645242857 | cube_counter | NO_TYPED_VALID_PLAN | `UNKNOWN:ARTIFACTS_ABSENT:ocel,commitment.ttl,receipts.sqlite3` |
+| 1327771368 | switchboard | NO_TYPED_VALID_PLAN | `UNKNOWN:ARTIFACTS_ABSENT:ocel,commitment.ttl,receipts.sqlite3` |
+| 663999732 | resource_flow | EXECUTED | 7/7 edges — `ALIVE_EVIDENCE_RECONSTRUCTED` |
+| 1382812562 | lock_and_key | EXECUTED | 7/7 edges — `ALIVE_EVIDENCE_RECONSTRUCTED` |
+| 69813132 | cube_container_counter | NO_TYPED_VALID_PLAN | `UNKNOWN:ARTIFACTS_ABSENT:ocel,commitment.ttl,receipts.sqlite3` |
+
+No identity reached the verifier with a *partial* chain. Every trial that
+actuated reconstructed all seven edges; every trial that did not actuate is
+missing the artifacts the chain lives in. The blocking hop is therefore
+upstream of the witness emitter: independent validation rejected every planner
+candidate (`typed_validation.json`: `n_distinct_candidates: 0`) on seven of ten
+identities, so no commitment was ever made and there was nothing to authorize.
+
+### Identity-set comparison — sets, never counts
+
+```text
+frozen                    {69813132, 663999732, 890266799, 1327771368, 1382812562,
+                           1635849486, 1645242857, 1811868735, 3979297810, 4064909771}
+reconstructed_alive_set   {663999732, 1382812562, 3979297810}
+missing identities        {69813132, 890266799, 1327771368, 1635849486,
+                           1645242857, 1811868735, 4064909771}
+foreign identities        {}
+UNKNOWN members           {69813132, 890266799, 1327771368, 1635849486,
+                           1645242857, 1811868735, 4064909771}
+NOT_ALIVE members         {}
+COMPLETE                  False
+```
+
+Zero foreign identities and zero NOT_ALIVE. Consistent with every prior
+attempt: across this run nothing was checked-and-contradicted at the chain
+level; the seven non-members were never checked, because the evidence was never
+produced.
+
+### The producer's witness edges are landing
+
+This is the first run in which a fresh process, with the producing runtime
+absent from `sys.modules`, reconstructed the full
+`PlanCandidate -> POWLCommitment -> AuthorityEnvelope -> Actuation ->
+PostconditionObservation -> Receipt DAG -> Replay` chain from durable artifacts
+alone, on real trials. The regression fixture is unaffected: the pre-emitter
+artifact `docs/evidence/crown1/attempt7/realtrial_1382812562_f9a935fd-.../`
+still reconstructs **0 of 7**, every edge `UNKNOWN`, re-run this session.
+
+### A gap this run exposes, reported and not repaired here
+
+`standalone_verifier.REQUIRED_CHAIN` establishes the causal *topology*. It does
+not require the goal-consequence *outcome*. Measured on this run's
+`witness.jsonl` records:
+
+```text
+3979297810   goal_consequence_observed  outcome=ESTABLISHED
+663999732    goal_consequence_observed  outcome=ESTABLISHED
+1382812562   goal_consequence_observed  outcome=REFUTED
+```
+
+Seed 1382812562 is the already-recorded rack-jam trial. Its chain is fully
+lawful and fully reconstructible, and its admitted goal
+(`locks_open == depth (2)`) was **refuted** by the independent verifier — yet
+the verifier prints `ALIVE_EVIDENCE_RECONSTRUCTED`. Under
+`.claude/rules/level4-completion-law.md` ("a perfectly lawful execution that
+does not achieve the admitted goal remains representable as conformant evidence,
+and still cannot construct `Level4AliveEvidence`"), that trial is
+conformant-but-goal-unmet, not alive. So:
+
+* `reconstructed_alive_set` above is a **chain-topology** set, and must not be
+  read as a set of goal-achieving episodes.
+* Read as goal achievement, the independently-reconstructed set is
+  `{663999732, 3979297810}` and `1382812562` is `NOT_ALIVE` — a checked,
+  contradicted condition, distinct from the seven `UNKNOWN`s.
+
+Reported rather than patched: the verifier is the completion authority for this
+workflow and is owned elsewhere. The repair is an eighth required relation
+binding `PostconditionObservation -> Goal` with the observation's outcome, not a
+change to any of the seven existing ones, and certainly not a relaxation.
+
+## RETRACTION — the single ALIVE result does not establish independent standing
+
+An `ALIVE_EVIDENCE_RECONSTRUCTED` verdict was obtained and reported as evidence
+that standing had become external to the actor. **That claim is retracted.**
+Two adversarial audits and one direct experiment refute it.
+
+### The experiment
+
+One trial's `actuation/` directory was copied verbatim into a **fabricated**
+trial directory with a **made-up seed**:
+
+```bash
+cp -r realtrial_3979297810_0bf93631.../actuation \
+      realtrial_999999999_deadbeef.../actuation
+standalone_verifier.py realtrial_999999999_deadbeef...
+# VERDICT: ALIVE_EVIDENCE_RECONSTRUCTED
+```
+
+The verifier has **no artifact-to-identity binding**. It trusts the directory
+path it is handed. A verdict therefore attributes a graph to whatever identity
+the caller names. `crown_reconstruct` compounds this by pairing the verdict with
+`identity=seed` taken from its own loop variable rather than from the artifacts.
+
+### The chain is not seven chained edges
+
+The actuation leg (`commitment -> authority -> actuation -> postcondition`) is
+genuinely chained and survives mutation. The rest does not:
+
+- **`receipt->dag` and `replay->receipt` float free.** Both are existence checks
+  over *any* two `Receipt` objects joined by `caused_by`, never anchored to the
+  committed+authorized actuation. Appending two unrelated receipts and one
+  replay satisfies both. The producer already emits the anchor
+  (`actuation_of_receipt`, `replay_of_task`); the verifier discards it.
+- **`postcondition->independent` cannot fail.** It tests `s_ != t_` on an edge
+  typed `PostconditionObservation -> Actuation`; one object cannot hold both
+  types. `level4_evidence.py` reasons this out, concludes the check is
+  unreachable, and leaves it in `REQUIRED_CHAIN` as a required member.
+
+Honest count: roughly **four genuinely chained edges, one vacuous, two
+floating** — not seven. A factor that cannot fail is a factor that is not being
+checked, which is this repo's own law applied to its own verifier.
+
+### The originating defect is still open
+
+Artifact selection remains `_load_json(level4) or _load_json(episode)` — a
+silent fallback that cannot distinguish "the Level 4 artifact is absent" from
+"the Level 4 chain is incomplete". That conflation is what produced several
+turns of a false `0/7` when the real baseline was `5/7`. There is now a
+**second, different** selection rule in `level4_evidence.py` using `is_file()`,
+so a `level4.ocel.json` containing `{}` makes the process leg and the goal leg
+read **different documents** — dual bookkeeping over the artifact choice, inside
+the module whose docstring forbids dual bookkeeping.
+
+`assert_no_runtime_imports()` is called only from the CLI `main()`. The
+in-process path (`standing_from_trial_dir` -> `verify`) imports the verifier at
+module scope and never checks independence, so every `Level4AliveEvidence`
+built that way asserts a property it does not verify.
+
+### Standing after retraction
+
+```text
+Level 4 crown:            UNKNOWN
+Independent reconstruction: NOT ESTABLISHED
+```
+
+What is genuinely established: the producer emits a rich typed graph (114
+objects, 99 events, 175 explicit O2O edges), and the actuation leg of the chain
+is real and mutation-resistant. That is progress and it is not standing.
