@@ -217,3 +217,93 @@
 2026-08-08 13:43:18,702 - solvers.python.test_python_solvers - WARNING - End of iteration #1.
 2026-08-08 13:43:18,702 - solvers.python.test_python_solvers - WARNING - End of iteration #2.
 2026-08-08 13:43:18,702 - solvers.python.test_python_solvers - WARNING - End of iteration #2.
+2026-08-08 13:43:41,970 - autofde_lab.hub.solver.simple_greedy.simple_greedy - WARNING - Rollout domain not given. Using domain seen during solve instead.
+2026-08-08 13:43:41,970 - autofde_lab.hub.solver.simple_greedy.simple_greedy - WARNING - Rollout domain not given. Using domain seen during solve instead.
+2026-08-08 13:43:41,971 - autofde_lab.hub.solver.simple_greedy.simple_greedy - WARNING - Rollout domain not given. Using domain seen during solve instead.
+2026-08-08 13:43:41,971 - autofde_lab.hub.solver.simple_greedy.simple_greedy - WARNING - Rollout domain not given. Using domain seen during solve instead.
+2026-08-08 13:43:41,971 - autofde_lab.hub.solver.simple_greedy.simple_greedy - WARNING - Rollout domain not given. Using domain seen during solve instead.
+2026-08-08 13:43:41,971 - autofde_lab.hub.solver.simple_greedy.simple_greedy - WARNING - Rollout domain not given. Using domain seen during solve instead.
+2026-08-08 13:43:41,971 - autofde_lab.hub.solver.simple_greedy.simple_greedy - WARNING - Rollout domain not given. Using domain seen during solve instead.
+2026-08-08 13:43:41,971 - autofde_lab.hub.solver.simple_greedy.simple_greedy - WARNING - Rollout domain not given. Using domain seen during solve instead.
+2026-08-08 13:43:41,971 - autofde_lab.hub.solver.simple_greedy.simple_greedy - WARNING - Rollout domain not given. Using domain seen during solve instead.
+2026-08-08 13:43:41,971 - autofde_lab.hub.solver.simple_greedy.simple_greedy - WARNING - Rollout domain not given. Using domain seen during solve instead.
+2026-08-08 13:43:41,971 - autofde_lab.hub.solver.simple_greedy.simple_greedy - WARNING - Rollout domain not given. Using domain seen during solve instead.
+2026-08-08 13:43:41,971 - autofde_lab.hub.solver.simple_greedy.simple_greedy - WARNING - Rollout domain not given. Using domain seen during solve instead.
+2026-08-08 13:43:41,971 - autofde_lab.hub.solver.simple_greedy.simple_greedy - WARNING - Rollout domain not given. Using domain seen during solve instead.
+2026-08-08 13:43:41,971 - autofde_lab.hub.solver.simple_greedy.simple_greedy - WARNING - Rollout domain not given. Using domain seen during solve instead.
+2026-08-08 13:43:41,973 - autofde_lab.hub.solver.simple_greedy.simple_greedy - WARNING - Rollout domain not given. Using domain seen during solve instead.
+2026-08-08 13:43:41,973 - autofde_lab.hub.solver.simple_greedy.simple_greedy - WARNING - Rollout domain not given. Using domain seen during solve instead.
+2026-08-08 13:43:42,414 - root - INFO - Grounding start: robot
+2026-08-08 13:43:42,414 - root - INFO - Grounding start: robot
+2026-08-08 13:43:42,415 - root - INFO - Relevance analysis removed 0 facts
+2026-08-08 13:43:42,415 - root - INFO - Relevance analysis removed 0 facts
+2026-08-08 13:43:42,415 - root - INFO - Grounding end: robot
+2026-08-08 13:43:42,415 - root - INFO - Grounding end: robot
+2026-08-08 13:43:42,415 - root - INFO - 10 Variables created
+2026-08-08 13:43:42,415 - root - INFO - 10 Variables created
+2026-08-08 13:43:42,415 - root - INFO - 9 Operators created
+2026-08-08 13:43:42,415 - root - INFO - 9 Operators created
+2026-08-08 13:43:42,415 - root - INFO - Search start: robot
+2026-08-08 13:43:42,415 - root - INFO - Search start: robot
+2026-08-08 13:43:42,415 - root - INFO - Initial h value: 9.000000
+2026-08-08 13:43:42,415 - root - INFO - Initial h value: 9.000000
+2026-08-08 13:43:42,415 - root - INFO - Goal reached. Start extraction of solution.
+2026-08-08 13:43:42,415 - root - INFO - Goal reached. Start extraction of solution.
+2026-08-08 13:43:42,416 - root - INFO - 10 Nodes expanded
+2026-08-08 13:43:42,416 - root - INFO - 10 Nodes expanded
+2026-08-08 13:43:42,416 - root - INFO - Search end: robot
+2026-08-08 13:43:42,416 - root - INFO - Search end: robot
+2026-08-08 13:43:42,646 - autofde_lab.optuna_utils - INFO - Launching trial 0 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'enhsp'}
+2026-08-08 13:43:42,646 - autofde_lab.optuna_utils - INFO - Launching trial 0 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'enhsp'}
+2026-08-08 13:43:42,732 - autofde_lab.optuna_utils - INFO - Launching trial 1 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'pyperplan-opt'}
+2026-08-08 13:43:42,732 - autofde_lab.optuna_utils - INFO - Launching trial 1 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'pyperplan-opt'}
+2026-08-08 13:43:42,771 - root - INFO - Grounding start: robot
+2026-08-08 13:43:42,771 - root - INFO - Grounding start: robot
+2026-08-08 13:43:42,771 - root - INFO - Relevance analysis removed 0 facts
+2026-08-08 13:43:42,771 - root - INFO - Relevance analysis removed 0 facts
+2026-08-08 13:43:42,771 - root - INFO - Grounding end: robot
+2026-08-08 13:43:42,771 - root - INFO - Grounding end: robot
+2026-08-08 13:43:42,771 - root - INFO - 10 Variables created
+2026-08-08 13:43:42,771 - root - INFO - 10 Variables created
+2026-08-08 13:43:42,771 - root - INFO - 9 Operators created
+2026-08-08 13:43:42,771 - root - INFO - 9 Operators created
+2026-08-08 13:43:42,771 - root - INFO - Search start: robot
+2026-08-08 13:43:42,771 - root - INFO - Search start: robot
+2026-08-08 13:43:42,772 - root - INFO - Initial h value: 9.000000
+2026-08-08 13:43:42,772 - root - INFO - Initial h value: 9.000000
+2026-08-08 13:43:42,772 - root - INFO - Goal reached. Start extraction of solution.
+2026-08-08 13:43:42,772 - root - INFO - Goal reached. Start extraction of solution.
+2026-08-08 13:43:42,772 - root - INFO - 10 Nodes expanded
+2026-08-08 13:43:42,772 - root - INFO - 10 Nodes expanded
+2026-08-08 13:43:42,772 - root - INFO - Search end: robot
+2026-08-08 13:43:42,772 - root - INFO - Search end: robot
+2026-08-08 13:43:42,790 - autofde_lab.optuna_utils - INFO - Launching trial 2 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'enhsp-opt'}
+2026-08-08 13:43:42,790 - autofde_lab.optuna_utils - INFO - Launching trial 2 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'enhsp-opt'}
+2026-08-08 13:43:42,861 - autofde_lab.optuna_utils - INFO - Launching trial 3 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'fast-downward-opt'}
+2026-08-08 13:43:42,861 - autofde_lab.optuna_utils - INFO - Launching trial 3 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'fast-downward-opt'}
+2026-08-08 13:43:43,075 - autofde_lab.optuna_utils - INFO - Launching trial 4 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'pyperplan'}
+2026-08-08 13:43:43,075 - autofde_lab.optuna_utils - INFO - Launching trial 4 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'pyperplan'}
+2026-08-08 13:43:43,107 - root - INFO - Grounding start: robot
+2026-08-08 13:43:43,107 - root - INFO - Grounding start: robot
+2026-08-08 13:43:43,107 - root - INFO - Relevance analysis removed 0 facts
+2026-08-08 13:43:43,107 - root - INFO - Relevance analysis removed 0 facts
+2026-08-08 13:43:43,107 - root - INFO - Grounding end: robot
+2026-08-08 13:43:43,107 - root - INFO - Grounding end: robot
+2026-08-08 13:43:43,107 - root - INFO - 10 Variables created
+2026-08-08 13:43:43,107 - root - INFO - 10 Variables created
+2026-08-08 13:43:43,107 - root - INFO - 9 Operators created
+2026-08-08 13:43:43,107 - root - INFO - 9 Operators created
+2026-08-08 13:43:43,108 - root - INFO - Search start: robot
+2026-08-08 13:43:43,108 - root - INFO - Search start: robot
+2026-08-08 13:43:43,108 - root - INFO - Initial h value: 9.000000
+2026-08-08 13:43:43,108 - root - INFO - Initial h value: 9.000000
+2026-08-08 13:43:43,108 - root - INFO - Goal reached. Start extraction of solution.
+2026-08-08 13:43:43,108 - root - INFO - Goal reached. Start extraction of solution.
+2026-08-08 13:43:43,108 - root - INFO - 10 Nodes expanded
+2026-08-08 13:43:43,108 - root - INFO - 10 Nodes expanded
+2026-08-08 13:43:43,108 - root - INFO - Search end: robot
+2026-08-08 13:43:43,108 - root - INFO - Search end: robot
+2026-08-08 13:43:43,126 - autofde_lab.optuna_utils - INFO - Launching trial 5 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'fast-downward'}
+2026-08-08 13:43:43,126 - autofde_lab.optuna_utils - INFO - Launching trial 5 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'fast-downward'}
+2026-08-08 13:43:43,327 - autofde_lab.optuna_utils - INFO - Launching trial 6 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'enhsp-any'}
+2026-08-08 13:43:43,327 - autofde_lab.optuna_utils - INFO - Launching trial 6 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'enhsp-any'}
