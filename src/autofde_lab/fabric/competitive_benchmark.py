@@ -122,12 +122,10 @@ def compare_curves(
         )
 
     baseline_cost = {
-        n: point.cost_per_verified_transition
-        for n, point in by_baseline.items()
+        n: point.cost_per_verified_transition for n, point in by_baseline.items()
     }
     challenger_cost = {
-        n: point.cost_per_verified_transition
-        for n, point in by_challenger.items()
+        n: point.cost_per_verified_transition for n, point in by_challenger.items()
     }
     crossover = first_persistent_crossover(baseline_cost, challenger_cost)
     return CompetitiveReport(
