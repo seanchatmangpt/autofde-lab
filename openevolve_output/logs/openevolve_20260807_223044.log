@@ -1,0 +1,293 @@
+2026-08-07 22:30:44,869 - openevolve.controller - INFO - Logging to /Users/sac/autofde-lab/openevolve_output/logs/openevolve_20260807_223044.log
+2026-08-07 22:30:44,869 - openevolve.controller - INFO - Set random seed to 42 for reproducibility
+2026-08-07 22:30:44,870 - openevolve.prompt.sampler - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-08-07 22:30:44,870 - openevolve.database - INFO - Initialized program database with 0 programs
+2026-08-07 22:30:44,871 - openevolve.evaluator - INFO - Successfully loaded evaluation function from /Users/sac/autofde-lab/openevolve_output/generated_evaluator.py
+2026-08-07 22:30:44,871 - openevolve.evaluator - WARNING - Configuration has 'cascade_evaluation: true' but evaluator '/Users/sac/autofde-lab/openevolve_output/generated_evaluator.py' does not define 'evaluate_stage1' function. This will fall back to direct evaluation, making the cascade setting useless. Consider setting 'cascade_evaluation: false' or implementing cascade functions.
+2026-08-07 22:30:44,871 - openevolve.evaluator - INFO - Initialized evaluator with /Users/sac/autofde-lab/openevolve_output/generated_evaluator.py
+2026-08-07 22:30:44,871 - openevolve.controller - INFO - Initialized OpenEvolve with /Users/sac/autofde-lab/openevolve_output/generated_initial_program.py
+2026-08-07 22:30:44,874 - openevolve.evaluator - INFO - Evaluated program cc05b188-c5bb-40a6-a60d-a358e5508c62 in 0.00s: cost=4.3800, nb_reached_goals=0.0000, combined_score=-4.3800
+2026-08-07 22:30:44,875 - openevolve.controller - INFO - Logging to /Users/sac/autofde-lab/openevolve_output/logs/openevolve_20260807_223044.log
+2026-08-07 22:30:44,875 - openevolve.controller - INFO - Logging to /Users/sac/autofde-lab/openevolve_output/logs/openevolve_20260807_223044.log
+2026-08-07 22:30:44,875 - openevolve.controller - INFO - Set random seed to 42 for reproducibility
+2026-08-07 22:30:44,875 - openevolve.controller - INFO - Set random seed to 42 for reproducibility
+2026-08-07 22:30:44,877 - openevolve.prompt.sampler - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-08-07 22:30:44,877 - openevolve.prompt.sampler - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-08-07 22:30:44,877 - openevolve.database - INFO - Initialized program database with 0 programs
+2026-08-07 22:30:44,877 - openevolve.database - INFO - Initialized program database with 0 programs
+2026-08-07 22:30:44,877 - openevolve.evaluator - INFO - Successfully loaded evaluation function from /Users/sac/autofde-lab/openevolve_output/generated_evaluator.py
+2026-08-07 22:30:44,877 - openevolve.evaluator - INFO - Successfully loaded evaluation function from /Users/sac/autofde-lab/openevolve_output/generated_evaluator.py
+2026-08-07 22:30:44,877 - openevolve.evaluator - WARNING - Configuration has 'cascade_evaluation: true' but evaluator '/Users/sac/autofde-lab/openevolve_output/generated_evaluator.py' does not define 'evaluate_stage1' function. This will fall back to direct evaluation, making the cascade setting useless. Consider setting 'cascade_evaluation: false' or implementing cascade functions.
+2026-08-07 22:30:44,877 - openevolve.evaluator - WARNING - Configuration has 'cascade_evaluation: true' but evaluator '/Users/sac/autofde-lab/openevolve_output/generated_evaluator.py' does not define 'evaluate_stage1' function. This will fall back to direct evaluation, making the cascade setting useless. Consider setting 'cascade_evaluation: false' or implementing cascade functions.
+2026-08-07 22:30:44,877 - openevolve.evaluator - INFO - Initialized evaluator with /Users/sac/autofde-lab/openevolve_output/generated_evaluator.py
+2026-08-07 22:30:44,877 - openevolve.evaluator - INFO - Initialized evaluator with /Users/sac/autofde-lab/openevolve_output/generated_evaluator.py
+2026-08-07 22:30:44,877 - openevolve.controller - INFO - Initialized OpenEvolve with /Users/sac/autofde-lab/openevolve_output/generated_initial_program.py
+2026-08-07 22:30:44,877 - openevolve.controller - INFO - Initialized OpenEvolve with /Users/sac/autofde-lab/openevolve_output/generated_initial_program.py
+2026-08-07 22:30:44,880 - openevolve.evaluator - INFO - Evaluated program 67d7df07-d000-468b-bd5d-2a479a70205e in 0.00s: cost=4.4400, nb_reached_goals=0.0000, combined_score=-4.4400
+2026-08-07 22:30:44,880 - openevolve.evaluator - INFO - Evaluated program 67d7df07-d000-468b-bd5d-2a479a70205e in 0.00s: cost=4.4400, nb_reached_goals=0.0000, combined_score=-4.4400
+2026-08-07 22:32:48,152 - root - WARNING - Using custom GNN. custom_param=3.14
+2026-08-07 22:32:48,152 - root - WARNING - Using custom GNN. custom_param=3.14
+2026-08-07 22:32:48,411 - root - WARNING - Using custom GNN. custom_param=3.14
+2026-08-07 22:32:48,411 - root - WARNING - Using custom GNN. custom_param=3.14
+2026-08-07 22:32:48,414 - root - WARNING - Using custom GNN. custom_param=3.14
+2026-08-07 22:32:48,414 - root - WARNING - Using custom GNN. custom_param=3.14
+2026-08-07 22:32:48,654 - root - WARNING - Using custom GNN. custom_param=3.14
+2026-08-07 22:32:48,654 - root - WARNING - Using custom GNN. custom_param=3.14
+2026-08-07 22:32:48,658 - root - WARNING - Using custom reduction layer. custom_param=3.14
+2026-08-07 22:32:48,658 - root - WARNING - Using custom reduction layer. custom_param=3.14
+2026-08-07 22:32:48,852 - root - WARNING - Using custom reduction layer. custom_param=3.14
+2026-08-07 22:32:48,852 - root - WARNING - Using custom reduction layer. custom_param=3.14
+2026-08-07 22:32:48,855 - root - WARNING - Using custom reduction layer. custom_param=3.14
+2026-08-07 22:32:48,855 - root - WARNING - Using custom reduction layer. custom_param=3.14
+2026-08-07 22:32:49,048 - root - WARNING - Using custom reduction layer. custom_param=3.14
+2026-08-07 22:32:49,048 - root - WARNING - Using custom reduction layer. custom_param=3.14
+2026-08-07 22:32:59,861 - jax._src.xla_bridge - INFO - Unable to initialize backend 'rocm': module 'jaxlib.xla_extension' has no attribute 'GpuAllocatorConfig'
+2026-08-07 22:32:59,861 - jax._src.xla_bridge - INFO - Unable to initialize backend 'rocm': module 'jaxlib.xla_extension' has no attribute 'GpuAllocatorConfig'
+2026-08-07 22:32:59,864 - jax._src.xla_bridge - INFO - Unable to initialize backend 'tpu': INTERNAL: Failed to open libtpu.so: dlopen(libtpu.so, 0x0001): tried: 'libtpu.so' (no such file), '/System/Volumes/Preboot/Cryptexes/OSlibtpu.so' (no such file), '/usr/lib/libtpu.so' (no such file, not in dyld cache), 'libtpu.so' (no such file), '/usr/local/lib/libtpu.so' (no such file), '/usr/lib/libtpu.so' (no such file, not in dyld cache)
+2026-08-07 22:32:59,864 - jax._src.xla_bridge - INFO - Unable to initialize backend 'tpu': INTERNAL: Failed to open libtpu.so: dlopen(libtpu.so, 0x0001): tried: 'libtpu.so' (no such file), '/System/Volumes/Preboot/Cryptexes/OSlibtpu.so' (no such file), '/usr/lib/libtpu.so' (no such file, not in dyld cache), 'libtpu.so' (no such file), '/usr/local/lib/libtpu.so' (no such file), '/usr/lib/libtpu.so' (no such file, not in dyld cache)
+2026-08-07 22:33:07,513 - gurobipy - INFO - Restricted license - for non-production use only - expires 2027-11-29
+2026-08-07 22:33:07,513 - gurobipy - INFO - Restricted license - for non-production use only - expires 2027-11-29
+2026-08-07 22:33:07,529 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,529 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,551 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,551 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,557 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,557 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,561 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,561 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,566 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,566 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,571 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,571 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,575 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,575 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,580 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,580 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,584 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,584 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,589 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,589 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,593 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,593 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,598 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,598 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,603 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,603 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,607 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,607 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,612 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,612 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,616 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,616 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,621 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,621 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,626 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,626 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,631 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,631 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,636 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,636 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,640 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,640 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,645 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,645 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,649 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,649 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,654 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,654 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,658 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,658 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,662 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,662 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,667 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,667 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,671 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,671 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,676 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,676 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,680 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,680 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,684 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,684 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,689 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,689 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,693 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,693 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,698 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,698 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,703 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,703 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,707 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,707 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,712 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,712 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,717 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,717 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,721 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,721 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,726 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,726 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,730 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,730 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,735 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,735 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,739 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,739 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,744 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,744 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,749 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,749 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,755 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,755 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,760 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,760 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,765 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,765 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,770 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,770 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,775 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,775 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,779 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,779 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,784 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,784 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,788 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,788 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,793 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,793 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,797 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,797 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,801 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,801 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,806 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,806 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,810 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,810 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,815 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,815 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,819 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,819 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,824 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,824 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,829 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,829 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,834 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,834 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,839 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,839 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,844 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,844 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,849 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,849 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,854 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,854 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,860 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,860 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,865 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,865 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,870 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,870 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,875 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,875 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,880 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,880 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,885 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,885 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,891 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,891 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,896 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,896 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,900 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,900 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,905 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,905 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,910 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,910 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,914 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:07,914 - gurobipy - INFO - Set parameter NonConvex to value 2
+2026-08-07 22:33:10,218 - solvers.python.test_python_solvers - WARNING - End of iteration #1.
+2026-08-07 22:33:10,218 - solvers.python.test_python_solvers - WARNING - End of iteration #1.
+2026-08-07 22:33:10,218 - solvers.python.test_python_solvers - WARNING - End of iteration #2.
+2026-08-07 22:33:10,218 - solvers.python.test_python_solvers - WARNING - End of iteration #2.
+2026-08-07 22:33:10,230 - solvers.python.test_python_solvers - WARNING - End of iteration #1.
+2026-08-07 22:33:10,230 - solvers.python.test_python_solvers - WARNING - End of iteration #1.
+2026-08-07 22:33:10,232 - solvers.python.test_python_solvers - WARNING - End of iteration #2.
+2026-08-07 22:33:10,232 - solvers.python.test_python_solvers - WARNING - End of iteration #2.
+2026-08-07 22:33:10,339 - solvers.python.test_python_solvers - WARNING - End of iteration #1.
+2026-08-07 22:33:10,339 - solvers.python.test_python_solvers - WARNING - End of iteration #1.
+2026-08-07 22:33:10,339 - solvers.python.test_python_solvers - WARNING - End of iteration #2.
+2026-08-07 22:33:10,339 - solvers.python.test_python_solvers - WARNING - End of iteration #2.
+2026-08-07 22:33:31,619 - root - INFO - Grounding start: robot
+2026-08-07 22:33:31,619 - root - INFO - Grounding start: robot
+2026-08-07 22:33:31,620 - root - INFO - Relevance analysis removed 0 facts
+2026-08-07 22:33:31,620 - root - INFO - Relevance analysis removed 0 facts
+2026-08-07 22:33:31,620 - root - INFO - Grounding end: robot
+2026-08-07 22:33:31,620 - root - INFO - Grounding end: robot
+2026-08-07 22:33:31,620 - root - INFO - 10 Variables created
+2026-08-07 22:33:31,620 - root - INFO - 10 Variables created
+2026-08-07 22:33:31,620 - root - INFO - 9 Operators created
+2026-08-07 22:33:31,620 - root - INFO - 9 Operators created
+2026-08-07 22:33:31,620 - root - INFO - Search start: robot
+2026-08-07 22:33:31,620 - root - INFO - Search start: robot
+2026-08-07 22:33:31,620 - root - INFO - Initial h value: 9.000000
+2026-08-07 22:33:31,620 - root - INFO - Initial h value: 9.000000
+2026-08-07 22:33:31,620 - root - INFO - Goal reached. Start extraction of solution.
+2026-08-07 22:33:31,620 - root - INFO - Goal reached. Start extraction of solution.
+2026-08-07 22:33:31,620 - root - INFO - 10 Nodes expanded
+2026-08-07 22:33:31,620 - root - INFO - 10 Nodes expanded
+2026-08-07 22:33:31,620 - root - INFO - Search end: robot
+2026-08-07 22:33:31,620 - root - INFO - Search end: robot
+2026-08-07 22:33:32,369 - autofde_lab.optuna_utils - INFO - Launching trial 0 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'pyperplan-opt'}
+2026-08-07 22:33:32,369 - autofde_lab.optuna_utils - INFO - Launching trial 0 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'pyperplan-opt'}
+2026-08-07 22:33:32,403 - root - INFO - Grounding start: robot
+2026-08-07 22:33:32,403 - root - INFO - Grounding start: robot
+2026-08-07 22:33:32,403 - root - INFO - Relevance analysis removed 0 facts
+2026-08-07 22:33:32,403 - root - INFO - Relevance analysis removed 0 facts
+2026-08-07 22:33:32,403 - root - INFO - Grounding end: robot
+2026-08-07 22:33:32,403 - root - INFO - Grounding end: robot
+2026-08-07 22:33:32,403 - root - INFO - 10 Variables created
+2026-08-07 22:33:32,403 - root - INFO - 10 Variables created
+2026-08-07 22:33:32,403 - root - INFO - 9 Operators created
+2026-08-07 22:33:32,403 - root - INFO - 9 Operators created
+2026-08-07 22:33:32,403 - root - INFO - Search start: robot
+2026-08-07 22:33:32,403 - root - INFO - Search start: robot
+2026-08-07 22:33:32,403 - root - INFO - Initial h value: 9.000000
+2026-08-07 22:33:32,403 - root - INFO - Initial h value: 9.000000
+2026-08-07 22:33:32,404 - root - INFO - Goal reached. Start extraction of solution.
+2026-08-07 22:33:32,404 - root - INFO - Goal reached. Start extraction of solution.
+2026-08-07 22:33:32,404 - root - INFO - 10 Nodes expanded
+2026-08-07 22:33:32,404 - root - INFO - 10 Nodes expanded
+2026-08-07 22:33:32,404 - root - INFO - Search end: robot
+2026-08-07 22:33:32,404 - root - INFO - Search end: robot
+2026-08-07 22:33:32,421 - autofde_lab.optuna_utils - INFO - Launching trial 1 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'fast-downward'}
+2026-08-07 22:33:32,421 - autofde_lab.optuna_utils - INFO - Launching trial 1 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'fast-downward'}
+2026-08-07 22:33:32,612 - autofde_lab.optuna_utils - INFO - Launching trial 2 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'enhsp-opt'}
+2026-08-07 22:33:32,612 - autofde_lab.optuna_utils - INFO - Launching trial 2 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'enhsp-opt'}
+2026-08-07 22:33:32,705 - autofde_lab.optuna_utils - INFO - Launching trial 3 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'pyperplan'}
+2026-08-07 22:33:32,705 - autofde_lab.optuna_utils - INFO - Launching trial 3 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'pyperplan'}
+2026-08-07 22:33:32,732 - root - INFO - Grounding start: robot
+2026-08-07 22:33:32,732 - root - INFO - Grounding start: robot
+2026-08-07 22:33:32,733 - root - INFO - Relevance analysis removed 0 facts
+2026-08-07 22:33:32,733 - root - INFO - Relevance analysis removed 0 facts
+2026-08-07 22:33:32,733 - root - INFO - Grounding end: robot
+2026-08-07 22:33:32,733 - root - INFO - Grounding end: robot
+2026-08-07 22:33:32,733 - root - INFO - 10 Variables created
+2026-08-07 22:33:32,733 - root - INFO - 10 Variables created
+2026-08-07 22:33:32,733 - root - INFO - 9 Operators created
+2026-08-07 22:33:32,733 - root - INFO - 9 Operators created
+2026-08-07 22:33:32,733 - root - INFO - Search start: robot
+2026-08-07 22:33:32,733 - root - INFO - Search start: robot
+2026-08-07 22:33:32,733 - root - INFO - Initial h value: 9.000000
+2026-08-07 22:33:32,733 - root - INFO - Initial h value: 9.000000
+2026-08-07 22:33:32,733 - root - INFO - Goal reached. Start extraction of solution.
+2026-08-07 22:33:32,733 - root - INFO - Goal reached. Start extraction of solution.
+2026-08-07 22:33:32,733 - root - INFO - 10 Nodes expanded
+2026-08-07 22:33:32,733 - root - INFO - 10 Nodes expanded
+2026-08-07 22:33:32,733 - root - INFO - Search end: robot
+2026-08-07 22:33:32,733 - root - INFO - Search end: robot
+2026-08-07 22:33:32,750 - autofde_lab.optuna_utils - INFO - Launching trial 4 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'enhsp'}
+2026-08-07 22:33:32,750 - autofde_lab.optuna_utils - INFO - Launching trial 4 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'enhsp'}
+2026-08-07 22:33:32,810 - autofde_lab.optuna_utils - INFO - Launching trial 5 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'fast-downward-opt'}
+2026-08-07 22:33:32,810 - autofde_lab.optuna_utils - INFO - Launching trial 5 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'fast-downward-opt'}
+2026-08-07 22:33:33,020 - autofde_lab.optuna_utils - INFO - Launching trial 6 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'enhsp-any'}
+2026-08-07 22:33:33,020 - autofde_lab.optuna_utils - INFO - Launching trial 6 with parameters: {'solver': 'UPSolver', 'UPSolver.name': 'enhsp-any'}

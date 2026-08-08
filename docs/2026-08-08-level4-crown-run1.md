@@ -73,3 +73,49 @@ Two distinct failure signatures:
 - `docs/2026-08-08-level4-crown-progress.md`
 - `docs/level4-discovery-architecture.md`
 - `docs/STATUS.md`
+
+## CORRECTION (same day): all three attempts are UNSCOREABLE, not 8/10 and 5/10
+
+An adversarial audit of the evidence chain found the `REPLAY` factor was
+**never verified in any attempt**. Three independent mechanisms let an
+unverified replay read as green:
+
+1. **The verdict field was never read.** The code did
+   `getattr(rep, "admitted", None)`, but `gymact.replay.ReplayReport` has no
+   `admitted` field — its verdict is `valid`. The expression returned `None`
+   unconditionally. (Verified upstream: `ReplayReport.model_fields` contains
+   `valid`, not `admitted`.)
+2. **An exception made the gate pass.** On any raise the bridge returned
+   `{"error": ...}` with no `mismatches` key; the caller's
+   `.get("mismatches", [])` then produced `[]` and the conjunction passed. A
+   replay that never ran was indistinguishable from one that verified, and
+   the error string was dropped before reaching the durable record.
+3. **`not row.get("replay_mismatches")` is true for a missing key**, so a row
+   that never wrote the field at all scored ALIVE. `ocel_valid` was computed
+   fail-closed and then omitted from the verdict entirely.
+
+Re-scoring the real recorded rows under the corrected conjunction:
+
+```text
+attempt 1: reported 8/10  ->  0/10
+attempt 2: reported 5/10  ->  0/10
+attempt 3: reported 5/10  ->  0/10
+```
+
+**The precise reading — 0/10 means unscoreable, not proven-failed.** The
+actuation and real goal attainment in attempt 1 genuinely happened: 8 trials
+really reached their goal in the real world, independently verified per step.
+What was never attested is REPLAY, and REPLAY is a conjunct of the acceptance
+equation. So the correct standing for crown run 1 is `UNKNOWN` on every
+trial, not `ALIVE` on 8 and not `BUILD_BROKEN`. **No valid Level 4 score has
+been produced yet.**
+
+Fixed forward (`is_alive`/`_row_is_alive` now require `replay_ran`,
+`replay_valid`, `ocel_valid`, and present-and-empty collections; the bridge
+reads `rep.valid` and fails closed on exception, persisting `replay_error`).
+Five falsifiers pin each mechanism, including one that asserts upstream's
+`ReplayReport` still has no `admitted` field so this cannot silently regress.
+
+Crown run 1's attempt-1 evidence directories are copied into
+`docs/evidence/crown1/attempt1/` so `DURABLE_RECEIPT` no longer depends on a
+`/private/tmp` scratchpad surviving.

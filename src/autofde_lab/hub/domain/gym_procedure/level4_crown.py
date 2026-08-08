@@ -269,14 +269,55 @@ async def main(module_path, class_name, provider_name, config, plan, expected_li
         ocel_valid = False
         ocel_error = str(exc)[:300]
 
-    replay_report = None
+    # REPLAY verification. Three real defects were found here by an adversarial
+    # audit and are fixed below -- read the comments before simplifying any of
+    # this, because every one of them made an unverified replay look green:
+    #
+    #  1. The verdict field was read as `rep.admitted`, which does NOT EXIST on
+    #     gymact's ReplayReport (its fields are mode/valid/record_count/
+    #     head_digest/mismatches/live_reexecution_admitted). getattr(...) with a
+    #     default therefore returned None unconditionally, so the actual
+    #     pass/fail verdict was never read by anything.
+    #  2. On an exception the report carried only {"error": ...} with no
+    #     "mismatches" key, so the caller's .get("mismatches", []) produced []
+    #     and the ALIVE conjunction passed. A replay that never ran was
+    #     indistinguishable from one that passed, and the error string was
+    #     dropped before it could reach the durable record.
+    #  3. `valid` is now an explicit part of the verdict: a replay that runs
+    #     and reports valid=False must not pass merely because its mismatch
+    #     tuple happens to be empty.
+    replay_report: dict
     try:
-        rep = replay_ledger(ledger, mode=ReplayMode.EVIDENCE_REPLAY,
-                            expected=ReplayExpectation(subject_ref=m.episode.environment_id))
-        replay_report = {"admitted": getattr(rep, "admitted", None),
-                         "mismatches": list(getattr(rep, "mismatches", []) or [])}
+        rep = replay_ledger(
+            ledger,
+            mode=ReplayMode.EVIDENCE_REPLAY,
+            expected=ReplayExpectation(subject_ref=m.episode.environment_id),
+        )
+        mismatches = list(rep.mismatches or [])
+        if not rep.valid:
+            # Surface an invalid verdict THROUGH the mismatch channel so the
+            # ALIVE conjunction sees it even if gymact reported no per-record
+            # mismatch string.
+            mismatches.append("REPLAY_REPORT_INVALID")
+        replay_report = {
+            "ran": True,
+            "valid": bool(rep.valid),
+            "record_count": int(rep.record_count),
+            "head_digest": rep.head_digest,
+            "mismatches": mismatches,
+            "error": None,
+        }
     except Exception as exc:
-        replay_report = {"error": f"{type(exc).__name__}: {exc}"[:300]}
+        # Fail CLOSED: a replay that could not run is a failed factor, never a
+        # silently satisfied one.
+        replay_report = {
+            "ran": False,
+            "valid": False,
+            "record_count": 0,
+            "head_digest": None,
+            "mismatches": [f"REPLAY_DID_NOT_RUN:{type(exc).__name__}"],
+            "error": f"{type(exc).__name__}: {exc}"[:300],
+        }
 
     await gym.teardown(episode_id)
     return {
@@ -693,13 +734,33 @@ class TrialReport:
     unsound_candidates_rejected: int = 0
     committed_plan_source: str = ""
     final_state: dict = field(default_factory=dict)
+    # --- replay evidence (was silently unverified before this field existed) --
+    replay_ran: bool = False
+    replay_valid: bool = False
+    replay_record_count: int = 0
+    replay_error: Optional[str] = None
 
     def is_alive(self) -> bool:
-        """The ONLY green verdict. Requires the REAL world to have reached the
-        goal -- not the model's prediction, not a per-step postcondition."""
+        """The ONLY green verdict.
+
+        Requires the REAL world to have reached the goal -- not the model's
+        prediction, not a per-step postcondition. `replay_ran` and
+        `replay_valid` are explicit conjuncts because an earlier version of
+        this method tested only `replay_mismatches == ()`, which an
+        exception-swallowing replay path satisfied vacuously: a replay that
+        never ran scored identically to one that verified. An absent or
+        unrunnable factor must never read as a satisfied one.
+
+        `ocel_valid` is likewise a conjunct: it was computed fail-closed but
+        omitted from the verdict entirely, so a trial with an invalid OCEL log
+        but clean referential integrity would have scored ALIVE.
+        """
         return (
             self.real_goal_attained
             and self.independently_verified
+            and self.ocel_valid
+            and self.replay_ran
+            and self.replay_valid
             and self.ocel_ref_violations == ()
             and self.replay_mismatches == ()
         )
@@ -1003,7 +1064,25 @@ def run_real_trial(
         commitment, provider_key, config, expected_steps, evidence_dir / "actuation", payloads
     )
     violations = validate_ocel_referential_integrity(result["ocel"])
-    mismatches = [str(m) for m in (result.get("replay") or {}).get("mismatches", []) or []]
+    # Read the replay record STRICTLY. A missing "replay" key, or a missing
+    # field inside it, means replay evidence was not produced -- which is a
+    # failed factor, not a satisfied one. The previous code used
+    # .get("mismatches", []) and so treated "no replay record at all" as
+    # "replay clean".
+    replay_rec = result.get("replay")
+    if not isinstance(replay_rec, dict):
+        replay_rec = {
+            "ran": False,
+            "valid": False,
+            "record_count": 0,
+            "error": "REPLAY_RECORD_ABSENT",
+            "mismatches": ["REPLAY_RECORD_ABSENT"],
+        }
+    mismatches = [str(m) for m in (replay_rec.get("mismatches") or [])]
+    replay_ran = bool(replay_rec.get("ran", False))
+    replay_valid = bool(replay_rec.get("valid", False))
+    if not replay_ran and "REPLAY_RECORD_ABSENT" not in mismatches:
+        mismatches.append("REPLAY_DID_NOT_RUN")
     # REAL goal attainment: read off the post-execution observation the
     # actuation bridge returned, not off the model and not off a predicted
     # postcondition. `independently_verified` only says the predicted
@@ -1015,6 +1094,10 @@ def run_real_trial(
         ocel_valid=bool(result["ocel_valid"]),
         ocel_ref_violations=tuple(violations),
         replay_mismatches=tuple(mismatches),
+        replay_ran=replay_ran,
+        replay_valid=replay_valid,
+        replay_record_count=int(replay_rec.get("record_count") or 0),
+        replay_error=replay_rec.get("error"),
         committed_plan=validated.plan,
         committed_plan_source=plan_source,
         unsound_candidates_rejected=rejected,

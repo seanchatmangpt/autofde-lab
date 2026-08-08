@@ -145,12 +145,32 @@ def _row_is_alive(row: dict) -> bool:
     that the goal was reached. A scoreboard without this term scores the
     model's own prediction, which is the exact failure the typed-induction
     repair exists to prevent.
+
+    Absence is not success. The collection terms below require the key to be
+    PRESENT and empty, never merely falsy: `not row.get("replay_mismatches")`
+    was true for `[]` *and* for a row that never wrote the field at all, so a
+    trial with no replay evidence whatsoever scored identically to one whose
+    replay verified. Combined with an exception-swallowing replay path in the
+    bridge, that was two independent layers of the same absence-equals-success
+    defect, and it is why every row of crown run 1 reported an empty mismatch
+    tuple regardless of what replay actually did.
+
+    `replay_ran`/`replay_valid`/`ocel_valid` are explicit conjuncts for the
+    same reason: a factor that cannot fail is a factor that is not being
+    checked.
     """
+
+    def _present_and_empty(key: str) -> bool:
+        return key in row and not row[key]
+
     return (
         row.get("real_goal_attained") is True
         and row.get("independently_verified") is True
-        and not row.get("ocel_ref_violations")
-        and not row.get("replay_mismatches")
+        and row.get("ocel_valid") is True
+        and row.get("replay_ran") is True
+        and row.get("replay_valid") is True
+        and _present_and_empty("ocel_ref_violations")
+        and _present_and_empty("replay_mismatches")
     )
 
 

@@ -1,0 +1,27 @@
+2026-08-07 09:14:03,166 - openevolve.controller - INFO - Logging to /Users/sac/autofde-lab/openevolve_output/logs/openevolve_20260807_091403.log
+2026-08-07 09:14:03,166 - openevolve.controller - INFO - Set random seed to 42 for reproducibility
+2026-08-07 09:14:03,167 - openevolve.prompt.sampler - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-08-07 09:14:03,167 - openevolve.database - INFO - Initialized program database with 0 programs
+2026-08-07 09:14:03,168 - openevolve.evaluator - INFO - Successfully loaded evaluation function from /Users/sac/autofde-lab/openevolve_output/generated_evaluator.py
+2026-08-07 09:14:03,168 - openevolve.evaluator - WARNING - Configuration has 'cascade_evaluation: true' but evaluator '/Users/sac/autofde-lab/openevolve_output/generated_evaluator.py' does not define 'evaluate_stage1' function. This will fall back to direct evaluation, making the cascade setting useless. Consider setting 'cascade_evaluation: false' or implementing cascade functions.
+2026-08-07 09:14:03,168 - openevolve.evaluator - INFO - Initialized evaluator with /Users/sac/autofde-lab/openevolve_output/generated_evaluator.py
+2026-08-07 09:14:03,168 - openevolve.controller - INFO - Initialized OpenEvolve with /Users/sac/autofde-lab/openevolve_output/generated_initial_program.py
+2026-08-07 09:14:03,172 - openevolve.evaluator - INFO - Evaluated program 0af9c70a-708f-45f7-9da9-9dc915470f1f in 0.00s: cost=4.4200, nb_reached_goals=0.0000, combined_score=-4.4200
+2026-08-07 09:14:03,174 - openevolve.controller - INFO - Logging to /Users/sac/autofde-lab/openevolve_output/logs/openevolve_20260807_091403.log
+2026-08-07 09:14:03,174 - openevolve.controller - INFO - Logging to /Users/sac/autofde-lab/openevolve_output/logs/openevolve_20260807_091403.log
+2026-08-07 09:14:03,174 - openevolve.controller - INFO - Set random seed to 42 for reproducibility
+2026-08-07 09:14:03,174 - openevolve.controller - INFO - Set random seed to 42 for reproducibility
+2026-08-07 09:14:03,175 - openevolve.prompt.sampler - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-08-07 09:14:03,175 - openevolve.prompt.sampler - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-08-07 09:14:03,176 - openevolve.database - INFO - Initialized program database with 0 programs
+2026-08-07 09:14:03,176 - openevolve.database - INFO - Initialized program database with 0 programs
+2026-08-07 09:14:03,176 - openevolve.evaluator - INFO - Successfully loaded evaluation function from /Users/sac/autofde-lab/openevolve_output/generated_evaluator.py
+2026-08-07 09:14:03,176 - openevolve.evaluator - INFO - Successfully loaded evaluation function from /Users/sac/autofde-lab/openevolve_output/generated_evaluator.py
+2026-08-07 09:14:03,176 - openevolve.evaluator - WARNING - Configuration has 'cascade_evaluation: true' but evaluator '/Users/sac/autofde-lab/openevolve_output/generated_evaluator.py' does not define 'evaluate_stage1' function. This will fall back to direct evaluation, making the cascade setting useless. Consider setting 'cascade_evaluation: false' or implementing cascade functions.
+2026-08-07 09:14:03,176 - openevolve.evaluator - WARNING - Configuration has 'cascade_evaluation: true' but evaluator '/Users/sac/autofde-lab/openevolve_output/generated_evaluator.py' does not define 'evaluate_stage1' function. This will fall back to direct evaluation, making the cascade setting useless. Consider setting 'cascade_evaluation: false' or implementing cascade functions.
+2026-08-07 09:14:03,176 - openevolve.evaluator - INFO - Initialized evaluator with /Users/sac/autofde-lab/openevolve_output/generated_evaluator.py
+2026-08-07 09:14:03,176 - openevolve.evaluator - INFO - Initialized evaluator with /Users/sac/autofde-lab/openevolve_output/generated_evaluator.py
+2026-08-07 09:14:03,176 - openevolve.controller - INFO - Initialized OpenEvolve with /Users/sac/autofde-lab/openevolve_output/generated_initial_program.py
+2026-08-07 09:14:03,176 - openevolve.controller - INFO - Initialized OpenEvolve with /Users/sac/autofde-lab/openevolve_output/generated_initial_program.py
+2026-08-07 09:14:03,180 - openevolve.evaluator - INFO - Evaluated program f1e80ad8-53d4-4204-a059-518b642b5cf9 in 0.00s: cost=4.2800, nb_reached_goals=0.0000, combined_score=-4.2800
+2026-08-07 09:14:03,180 - openevolve.evaluator - INFO - Evaluated program f1e80ad8-53d4-4204-a059-518b642b5cf9 in 0.00s: cost=4.2800, nb_reached_goals=0.0000, combined_score=-4.2800

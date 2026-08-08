@@ -315,8 +315,25 @@ def test_12_crown_run_retains_every_attempt_in_order(tmp_path: Path):
     run = CrownRun(crown=crown)
 
     def _results(n_alive: int) -> list[dict]:
+        # A row must carry EVERY factor of the conjunction to score ALIVE.
+        # This helper originally set only `independently_verified`, which
+        # passed when the scoreboard treated a missing key as satisfied --
+        # exactly the absence-equals-success defect `_row_is_alive` now
+        # refuses. Rows are therefore built complete, and the alive/dead
+        # distinction is carried by `real_goal_attained`, the factor that
+        # actually reflects the real world.
         return [
-            {"seed": s, "independently_verified": i < n_alive} for i, s in enumerate(crown.seeds)
+            {
+                "seed": s,
+                "real_goal_attained": i < n_alive,
+                "independently_verified": True,
+                "ocel_valid": True,
+                "replay_ran": True,
+                "replay_valid": True,
+                "ocel_ref_violations": [],
+                "replay_mismatches": [],
+            }
+            for i, s in enumerate(crown.seeds)
         ]
 
     run.record(CrownAttempt(attempt_index=1, results=_results(8), repair_note="typed induction"))
@@ -397,3 +414,97 @@ def test_14_zero_step_plan_law(tmp_path: Path):
     )
     assert accepted.steps == ()
     assert accepted.goal_facts <= accepted.initial_facts
+
+
+# ---------------------------------------------------------------------------
+# Defect 0 falsifiers: REPLAY was scored as satisfied without ever being
+# verified. Each test below pins one of the three independent mechanisms that
+# let an unverified replay read as green, plus the OCEL gate that was computed
+# and then omitted from the verdict entirely.
+# ---------------------------------------------------------------------------
+
+
+def _complete_row(**overrides) -> dict:
+    row = {
+        "seed": 1,
+        "real_goal_attained": True,
+        "independently_verified": True,
+        "ocel_valid": True,
+        "replay_ran": True,
+        "replay_valid": True,
+        "ocel_ref_violations": [],
+        "replay_mismatches": [],
+    }
+    row.update(overrides)
+    return row
+
+
+def test_f0a_row_missing_replay_evidence_entirely_is_not_alive():
+    """A row that never wrote replay fields must NOT score ALIVE.
+
+    Before the fix this row scored ALIVE: `not row.get("replay_mismatches")`
+    is true for a missing key, so a trial with no replay evidence at all was
+    indistinguishable from one whose replay verified.
+    """
+    from autofde_lab.hub.domain.gym_procedure.level4_crown_runner import _row_is_alive
+
+    bare = {"seed": 1, "real_goal_attained": True, "independently_verified": True}
+    assert _row_is_alive(bare) is False
+    assert _row_is_alive(_complete_row()) is True
+
+
+def test_f0b_replay_that_did_not_run_is_not_alive():
+    """An exception in the replay path must be a FAILED factor, not a silent pass."""
+    from autofde_lab.hub.domain.gym_procedure.level4_crown_runner import _row_is_alive
+
+    did_not_run = _complete_row(
+        replay_ran=False,
+        replay_valid=False,
+        replay_mismatches=["REPLAY_DID_NOT_RUN:RuntimeError"],
+    )
+    assert _row_is_alive(did_not_run) is False
+
+
+def test_f0c_replay_report_invalid_is_not_alive():
+    """`ReplayReport.valid is False` must fail even with an empty mismatch tuple.
+
+    The old code read `rep.admitted`, a field that does not exist on gymact's
+    ReplayReport, so the real verdict (`rep.valid`) was never consulted at all.
+    """
+    from autofde_lab.hub.domain.gym_procedure.level4_crown_runner import _row_is_alive
+
+    assert _row_is_alive(_complete_row(replay_valid=False)) is False
+
+
+def test_f0d_invalid_ocel_is_not_alive_even_with_clean_referential_integrity():
+    """`ocel_valid` was computed fail-closed and then left OUT of the verdict."""
+    from autofde_lab.hub.domain.gym_procedure.level4_crown_runner import _row_is_alive
+
+    assert _row_is_alive(_complete_row(ocel_valid=False)) is False
+
+
+def test_f0e_replay_report_has_no_admitted_field_upstream():
+    """Pins the upstream fact that made the bug possible, so it cannot silently
+    change back: gymact's ReplayReport exposes `valid`, never `admitted`."""
+    import subprocess
+
+    from autofde_lab.hub.domain.gym_procedure.level4_gymact_bridge import GYMACT_VENV_PYTHON
+
+    out = subprocess.run(
+        [
+            str(GYMACT_VENV_PYTHON),
+            "-c",
+            "from gymact.replay import ReplayReport; "
+            "print(sorted(ReplayReport.model_fields))",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert out.returncode == 0, out.stderr
+    fields = out.stdout.strip()
+    assert "'valid'" in fields, fields
+    assert "'admitted'" not in fields, (
+        f"gymact's ReplayReport now has an `admitted` field ({fields}); the crown "
+        f"reads `valid` -- reconcile before trusting either."
+    )
