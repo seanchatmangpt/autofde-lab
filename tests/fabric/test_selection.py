@@ -1,3 +1,7 @@
+import math
+
+import pytest
+
 from autofde_lab.fabric.selection import (
     DecisionRegime,
     EmpiricalPlannerIndex,
@@ -174,3 +178,14 @@ def test_untested_applicable_competitor_prevents_hot_crown():
     assert decision.regime is DecisionRegime.WARM
     assert decision.candidates == ("Astar",)
     assert "bounded comparison" in decision.reason
+
+
+def test_negative_normalized_utility_is_admitted():
+    row = receipt("Astar", wall=1.0, quality=-7.25)
+    assert row.quality == -7.25
+
+
+@pytest.mark.parametrize("quality", [math.inf, -math.inf, math.nan])
+def test_non_finite_utility_is_refused(quality: float):
+    with pytest.raises(ValueError, match="quality must be finite"):
+        receipt("Astar", wall=1.0, quality=quality)
