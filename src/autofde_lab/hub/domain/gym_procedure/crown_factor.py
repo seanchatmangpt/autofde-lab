@@ -71,6 +71,7 @@ class CrownFactor(Generic[T]):
     state: FactorState
     source: str  # evidence ref: a file path, a receipt id, a command, a digest
     observed: Optional[T] = None
+    evidence_ref: Optional[str] = None  # the artifact answering "why is this true?"
     refusal: Optional[str] = None  # typed refusal reason, when state is REFUSED
     unknown_reason: Optional[str] = None  # why it was never observed
 
@@ -84,16 +85,35 @@ class CrownFactor(Generic[T]):
             )
         if self.state is FactorState.REFUSED and not self.refusal:
             raise ValueError(f"REFUSED_FACTOR_REQUIRES_REASON: {self.name!r}")
+        if self.state is FactorState.OBSERVED_TRUE and not self.evidence_ref:
+            # "Why is replay_valid true?" must answer with an artifact, not a
+            # boolean. A satisfied factor with no evidence_ref is exactly the
+            # self-certification this type exists to prevent.
+            raise ValueError(
+                f"OBSERVED_TRUE_FACTOR_REQUIRES_EVIDENCE_REF: {self.name!r} claims to hold "
+                f"but names no artifact establishing it"
+            )
         if self.state in NON_EVIDENCE_STATES and not self.unknown_reason:
             raise ValueError(
                 f"NON_EVIDENCE_FACTOR_REQUIRES_REASON: {self.name!r} is "
                 f"{self.state.value} and must say why it was not observed"
             )
 
-    def is_satisfied(self) -> bool:
-        """True ONLY for OBSERVED_TRUE. There is no truthy shortcut here, and
-        deliberately no ``__bool__``: `if factor:` must not compile to a pass."""
+    @property
+    def holds(self) -> bool:
+        """True ONLY for OBSERVED_TRUE.
+
+        Deliberately no ``__bool__``: ``if factor:`` must never compile to a
+        pass. UNKNOWN, REFUSED, UNSUPPORTED, BLOCKED and OBSERVED_FALSE all
+        return False -- five distinct ways of not being established, none of
+        which may contribute to ALIVE.
+        """
         return self.state is FactorState.OBSERVED_TRUE
+
+    def is_satisfied(self) -> bool:
+        """Deprecated alias for :attr:`holds`. Kept so existing call sites do
+        not silently change meaning mid-refactor."""
+        return self.holds
 
     def is_evidence(self) -> bool:
         """Whether anything was actually checked (true or false), as opposed to
@@ -107,29 +127,34 @@ class CrownFactor(Generic[T]):
 
     # -- constructors, so a caller states which case it is ------------------
 
-    @classmethod
-    def from_observation(cls, name: str, value: T, source: str, holds: bool) -> "CrownFactor[T]":
-        return cls(
-            name=name,
-            state=FactorState.OBSERVED_TRUE if holds else FactorState.OBSERVED_FALSE,
-            source=source,
-            observed=value,
-        )
+    # One named constructor per state. Deliberately NOT one generic
+    # constructor taking booleans: every impossible state removed from the
+    # type surface is one fewer way to recreate the same bug under a new name.
 
     @classmethod
-    def unknown(cls, name: str, source: str, reason: str) -> "CrownFactor[T]":
+    def observed_true(cls, name: str, source: str, evidence_ref: str, value: Any = True) -> "CrownFactor":
+        return cls(name=name, state=FactorState.OBSERVED_TRUE, source=source,
+                   evidence_ref=evidence_ref, observed=value)
+
+    @classmethod
+    def observed_false(cls, name: str, source: str, evidence_ref: str, value: Any = False) -> "CrownFactor":
+        return cls(name=name, state=FactorState.OBSERVED_FALSE, source=source,
+                   evidence_ref=evidence_ref, observed=value)
+
+    @classmethod
+    def unknown(cls, name: str, source: str, reason: str) -> "CrownFactor":
         return cls(name=name, state=FactorState.UNKNOWN, source=source, unknown_reason=reason)
 
     @classmethod
-    def refused(cls, name: str, source: str, refusal: str) -> "CrownFactor[T]":
+    def refused(cls, name: str, source: str, refusal: str) -> "CrownFactor":
         return cls(name=name, state=FactorState.REFUSED, source=source, refusal=refusal)
 
     @classmethod
-    def blocked(cls, name: str, source: str, reason: str) -> "CrownFactor[T]":
+    def blocked(cls, name: str, source: str, reason: str) -> "CrownFactor":
         return cls(name=name, state=FactorState.BLOCKED, source=source, unknown_reason=reason)
 
     @classmethod
-    def unsupported(cls, name: str, source: str, reason: str) -> "CrownFactor[T]":
+    def unsupported(cls, name: str, source: str, reason: str) -> "CrownFactor":
         return cls(name=name, state=FactorState.UNSUPPORTED, source=source, unknown_reason=reason)
 
 
@@ -151,7 +176,7 @@ class FactorConjunction:
 
     def unsatisfied(self) -> list[str]:
         out = list(self.missing())
-        out += [n for n in self.required if n in self.factors and not self.factors[n].is_satisfied()]
+        out += [n for n in self.required if n in self.factors and not self.factors[n].holds]
         return out
 
     def never_checked(self) -> list[str]:
@@ -162,7 +187,10 @@ class FactorConjunction:
         ]
 
     def is_alive(self) -> bool:
-        return not self.unsatisfied()
+        """Every required factor present AND holding. No `.get(..., default)`
+        anywhere on this path: a factor absent from the record is absent, and
+        absence never contributes to ALIVE."""
+        return all(n in self.factors and self.factors[n].holds for n in self.required)
 
     def verdict(self) -> str:
         """`ALIVE` / `UNKNOWN` / `NOT_ALIVE`, per standing-law vocabulary.
