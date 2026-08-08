@@ -65,6 +65,7 @@ never looked at `~/bcinr`. Verify with `/memory` and `/context`, don't assume.
 | touching `fabric/pddl_engine.py`, `fabric/powl.py`, PDDL requirements, or the capability ontology | `.claude/rules/ecosystem-boundary.md` |
 | reaching for a project skill or agent instead of re-deriving a workflow | `.claude/rules/project-tooling.md` |
 | filing what you just did into the in-repo ledger | `docs/STATUS.md` |
+| writing or reviewing any test | `.claude/rules/testing-chicago-style.md` |
 
 ## Four rules that do not fit in a table
 
@@ -75,7 +76,9 @@ page, so they stay inline.
    exercising `solve()` on a real domain, run this session.** Never
    "compiles," never "the happy path works." Queued CI, a merged PR, and a
    green synthetic check are not evidence — only an executed job against the
-   exact commit is.
+   exact commit is. This is the solver/domain instance of a repo-wide rule:
+   see `.claude/rules/testing-chicago-style.md` for the general no-mocking
+   discipline and its verification requirement.
 
 2. **Projection is not execution.** `fabric/powl.py` writes
    `plan.powl.ttl`; that manufactures a document, it does not run a

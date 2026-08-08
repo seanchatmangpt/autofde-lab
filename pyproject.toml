@@ -53,6 +53,12 @@ shared = [  # define a common extra to avoid redefining dependencies in both dom
     "scipy>=1.9.2",
     "unified-planning>=1.1,<1.3",
 ]
+receipts = [  # autofde_lab.receipts admission/broker layer: typed process-mining
+    # observation shapes (Receipt/OcelEvent/Evidence/...), see
+    # autofde_lab/receipts/wasm4pm_types.py. Pure pydantic, no native/Rust
+    # dependency -- see ~/wasm4pm-compat/wasm4pm-compat-py/README.md.
+    "wasm4pm-compat-py",
+]
 domains = [
     "autofde-lab[shared]", # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
     "matplotlib>=3.3.4",
@@ -126,9 +132,19 @@ mcp = [
     # never actually started. This extra closes that gap.
     "fastmcp>=3.4.4,<4",
 ]
+gymact = [
+    # GymAct kernel surfaces (src/autofde_lab/gymact/): real FastAPI ASGI app,
+    # real httpx in-process client against it, real Typer CLI. rdflib/pyshacl
+    # come from the `ofmf` extra and fastmcp from `mcp` -- both already real,
+    # already-installed-or-installable local dependencies per
+    # .claude/rules/testing-chicago-style.md, not faked here either.
+    "fastapi>=0.115",
+    "httpx>=0.27",
+    "typer>=0.12",
+]
 all = [
     # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
-    "autofde-lab[domains, solvers, pddl, dspy, ofmf, mcp]",
+    "autofde-lab[domains, solvers, pddl, dspy, ofmf, mcp, gymact]",
 ]
 
 [project.entry-points."autofde_lab.domains"]
@@ -245,6 +261,9 @@ test = [
 
 [tool.uv]
 default-groups = "all"
+
+[tool.uv.sources]
+wasm4pm-compat-py = { path = "/Users/sac/wasm4pm-compat/wasm4pm-compat-py", editable = true }
 
 [tool.pytest.ini_options]
 minversion = "6.0"
