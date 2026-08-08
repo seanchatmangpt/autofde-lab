@@ -1,11 +1,52 @@
 import subprocess
+from pathlib import Path
 
 from autofde_lab.fabric.vendor_materialization import (
     VendorMaterializationState,
     audit_vendor,
 )
 from autofde_lab.fabric.vendor_materializer import materialize_vendor
-from tests.fabric.test_vendor_materialization import git, make_superproject
+
+
+def git(cwd: Path, *args: str) -> str:
+    result = subprocess.run(
+        ["git", "-C", str(cwd), *args],
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    return result.stdout.strip()
+
+
+def init_repo(path: Path, name: str) -> str:
+    path.mkdir(parents=True)
+    git(path, "init", "-q")
+    git(path, "config", "user.name", "AutoFDE Test")
+    git(path, "config", "user.email", "autofde@example.invalid")
+    (path / "subject.txt").write_text(name)
+    git(path, "add", ".")
+    git(path, "commit", "-q", "-m", "initial")
+    return git(path, "rev-parse", "HEAD")
+
+
+def make_superproject(tmp_path: Path):
+    source = tmp_path / "source"
+    source_sha = init_repo(source, "vendor")
+    parent = tmp_path / "parent"
+    init_repo(parent, "parent")
+    (parent / "vendor" / "gyms").mkdir(parents=True)
+    git(
+        parent,
+        "-c",
+        "protocol.file.allow=always",
+        "submodule",
+        "add",
+        "-q",
+        str(source),
+        "vendor/gyms/example",
+    )
+    git(parent, "commit", "-q", "-am", "pin vendor")
+    return parent, source, source_sha
 
 
 def test_materializer_initializes_exact_gitlink_without_weakening_pin(tmp_path):
