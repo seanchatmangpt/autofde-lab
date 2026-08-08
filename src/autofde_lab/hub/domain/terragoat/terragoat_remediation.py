@@ -53,20 +53,7 @@ class Finding:
     description: str
 
 
-def parse_findings(terraform_file: Path, max_findings: Optional[int] = None) -> list[Finding]:
-    """Parse ``# <misconfiguration>`` comment lines immediately following each
-    ``resource "type" "name" {`` block header in a real TerraGoat ``.tf`` file.
-
-    # Parameters
-    terraform_file: path to a real vendored TerraGoat Terraform file.
-    max_findings: if given, cap the number of findings returned (keeps the
-        resulting planning problem tractable for a bounded demo domain).
-
-    # Returns
-    list[Finding]: findings in file order, each with a unique id
-        ``"<resource_type>.<resource_name>#<n>"``.
-    """
-    text = terraform_file.read_text()
+def _parse_findings_from_text(text: str) -> list[Finding]:
     findings: list[Finding] = []
     for match in _RESOURCE_RE.finditer(text):
         rtype, rname = match.groups()
@@ -88,6 +75,32 @@ def parse_findings(terraform_file: Path, max_findings: Optional[int] = None) -> 
                 )
             )
             per_resource_index += 1
+    return findings
+
+
+def parse_findings(
+    terraform_file: Path | list[Path], max_findings: Optional[int] = None
+) -> list[Finding]:
+    """Parse ``# <misconfiguration>`` comment lines immediately following each
+    ``resource "type" "name" {`` block header in one or more real TerraGoat
+    ``.tf`` files.
+
+    # Parameters
+    terraform_file: path to a real vendored TerraGoat Terraform file, or a
+        list of such paths (e.g. every real ``.tf`` file in one cloud
+        subdirectory such as ``terraform/alicloud``, whose resources are
+        split across multiple files rather than one).
+    max_findings: if given, cap the number of findings returned (keeps the
+        resulting planning problem tractable for a bounded demo domain).
+
+    # Returns
+    list[Finding]: findings in file order (files processed in the order
+        given), each with a unique id ``"<resource_type>.<resource_name>#<n>"``.
+    """
+    files = [terraform_file] if isinstance(terraform_file, Path) else list(terraform_file)
+    findings: list[Finding] = []
+    for f in files:
+        findings.extend(_parse_findings_from_text(f.read_text()))
         if max_findings is not None and len(findings) >= max_findings:
             return findings[:max_findings]
     return findings
@@ -113,17 +126,24 @@ class TerraGoatRemediation(D_):
 
     def __init__(
         self,
-        terraform_file: Path = DEFAULT_TERRAFORM_FILE,
-        max_findings: int = 8,
+        terraform_file: Path | list[Path] = DEFAULT_TERRAFORM_FILE,
+        max_findings: Optional[int] = 8,
     ) -> None:
         """
         # Parameters
-        terraform_file: real TerraGoat ``.tf`` file to parse findings from.
-            Defaults to ``vendor/gyms/terragoat/terraform/aws/s3.tf``.
+        terraform_file: real TerraGoat ``.tf`` file (or list of files -- e.g.
+            every real ``.tf`` file in one cloud subdirectory, whose
+            resources are split across multiple files) to parse findings
+            from. Defaults to ``vendor/gyms/terragoat/terraform/aws/s3.tf``.
         max_findings: cap on how many parsed findings form the goal set,
-            keeping the search space small and tractable.
+            keeping the search space small and tractable. ``None`` means no
+            cap -- use every real finding parsed.
         """
-        self.terraform_file = Path(terraform_file)
+        self.terraform_file = (
+            Path(terraform_file)
+            if isinstance(terraform_file, (str, Path))
+            else [Path(f) for f in terraform_file]
+        )
         self.findings: list[Finding] = parse_findings(
             self.terraform_file, max_findings=max_findings
         )
