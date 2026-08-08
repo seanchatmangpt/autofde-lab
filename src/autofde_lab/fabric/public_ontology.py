@@ -1,7 +1,7 @@
 """Public-ontology projection for AutoFDE evidence and authority concepts.
 
 The lab keeps local implementation identifiers, but interchange semantics use established public
-vocabularies wherever an equivalent term exists.  This module is deliberately a projection map,
+vocabularies wherever an equivalent term exists. This module is deliberately a projection map,
 not a second source of truth.
 """
 
@@ -46,6 +46,11 @@ def aligned_iri(local_concept: str) -> str:
     return expand(CONCEPT_ALIGNMENT[local_concept])
 
 
+def _is_class_qname(qname: str) -> bool:
+    local = qname.split(":", 1)[1]
+    return bool(local) and local[0].isupper()
+
+
 def emit_alignment_turtle() -> str:
     lines = [
         *(f"@prefix {prefix}: <{iri}> ." for prefix, iri in sorted(PUBLIC_PREFIXES.items())),
@@ -54,5 +59,6 @@ def emit_alignment_turtle() -> str:
         "",
     ]
     for local, public in sorted(CONCEPT_ALIGNMENT.items()):
-        lines.append(f"afde:{local} owl:equivalentClass {public} ." if public[0].isupper() else f"afde:{local} owl:equivalentProperty {public} .")
+        relation = "owl:equivalentClass" if _is_class_qname(public) else "owl:equivalentProperty"
+        lines.append(f"afde:{local} {relation} {public} .")
     return "\n".join(lines) + "\n"

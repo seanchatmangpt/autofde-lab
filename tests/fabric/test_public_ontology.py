@@ -19,6 +19,6 @@ def test_alignment_projection_is_deterministic_and_uses_equivalence_not_duplicat
     first = emit_alignment_turtle()
     second = emit_alignment_turtle()
     assert first == second
-    assert "owl:equivalentClass" in first
-    assert "owl:equivalentProperty" in first
+    assert "afde:Observation owl:equivalentClass sosa:Observation ." in first
+    assert "afde:GeneratedBy owl:equivalentProperty prov:wasGeneratedBy ." in first
     assert "prov:" in first and "odrl:" in first and "sosa:" in first
