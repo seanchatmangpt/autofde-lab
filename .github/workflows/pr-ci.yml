@@ -17,21 +17,19 @@ env:
   PYTHONUNBUFFERED: "1"
 
 jobs:
-  classify:
-    name: Classify change
+  qualification:
+    name: Exact-head qualification
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      cache: ${{ steps.routes.outputs.cache }}
-      python: ${{ steps.routes.outputs.python }}
-      package: ${{ steps.routes.outputs.package }}
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 0
+          submodules: recursive
           persist-credentials: false
+
       - id: routes
-        name: Route changed paths
+        name: Classify change
         shell: bash
         run: |
           set -euo pipefail
@@ -57,28 +55,23 @@ jobs:
           route python '^(src/|tests/|examples/|pyproject\.toml|uv\.lock|\.github/workflows/)'
           route package '^(src/|cpp/|scripts/|pyproject\.toml|uv\.lock|CMakeLists\.txt|\.github/workflows/)'
 
-  quality:
-    name: Deterministic quality
-    needs: classify
-    runs-on: ubuntu-latest
-    timeout-minutes: 12
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          fetch-depth: 0
-          persist-credentials: false
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
-      - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
-      - name: Install pre-commit
-        run: python -m pip install "pre-commit==4.6.1"
-      - id: formatter
-        name: Check proposed files
-        continue-on-error: true
+
+      - name: Install Python 3.12 qualification dependencies
+        run: |
+          python -m pip install \
+            "pre-commit==4.6.1" \
+            "build==1.2.2" \
+            "numpy==2.2.6" \
+            "pytest==8.3.5" \
+            "wrapt>=2.2.1,<3" \
+            "pynng>=0.6.2" \
+            "pathos>=0.2.7" \
+            "discrete-optimization>=0.9.0"
+
+      - name: Deterministic quality
         shell: bash
         run: |
           set -euo pipefail
@@ -99,76 +92,9 @@ jobs:
             --show-diff-on-failure \
             --color=always \
             --files "${files[@]}"
-      - name: Capture exact formatter patch
-        if: steps.formatter.outcome == 'failure'
-        shell: bash
-        run: |
-          git diff --binary > formatter.patch
-          test -s formatter.patch
-      - name: Upload exact formatter patch
-        if: steps.formatter.outcome == 'failure'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: exact-formatter-patch
-          path: formatter.patch
-          if-no-files-found: error
-          retention-days: 1
-      - name: Preserve deterministic quality failure
-        if: steps.formatter.outcome == 'failure'
-        run: exit 1
 
-  cache:
-    name: Cache verifier / Python ${{ matrix.python-version }}
-    needs: classify
-    if: needs.classify.outputs.cache == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 12
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.10", "3.12", "3.13"]
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - name: Install focused verifier dependencies
-        run: |
-          python -m pip install \
-            "numpy==2.2.6" \
-            "pytest==8.3.5" \
-            "wrapt>=2.2.1,<3" \
-            "pynng>=0.6.2" \
-            "pathos>=0.2.7" \
-            "discrete-optimization>=0.9.0"
-      - name: Compile cache sources
-        run: python -m compileall -q src/autofde_lab/_cache src/autofde_lab/caching.py
-      - name: Run cache qualification
-        env:
-          PYTHONPATH: src
-        run: |
-          python -m pytest -q \
-            tests/test_caching.py \
-            tests/test_enterprise_cache.py
-
-  python-smoke:
-    name: Python source smoke
-    needs: classify
-    if: needs.classify.outputs.python == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 8
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
-        with:
-          python-version: "3.12"
-      - name: Compile source and tests without writing bytecode
+      - name: Python source smoke
+        if: steps.routes.outputs.python == 'true'
         shell: python
         run: |
           from pathlib import Path
@@ -176,33 +102,14 @@ jobs:
           for root in roots:
               for path in root.rglob("*.py"):
                   compile(path.read_bytes(), str(path), "exec")
+
       - name: Reject conflict markers
+        if: steps.routes.outputs.python == 'true'
         shell: bash
         run: "! git grep -nE '^(<<<<<<<($| )|=======$|>>>>>>>($| ))' -- ':!uv.lock'"
 
-  crown:
-    name: Crown kernel / Python 3.12
-    needs: classify
-    if: needs.classify.outputs.python == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 12
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
-        with:
-          python-version: "3.12"
-      - name: Install Crown verifier
-        run: |
-          python -m pip install \
-            "numpy==2.2.6" \
-            "pytest==8.3.5" \
-            "wrapt>=2.2.1,<3" \
-            "pynng>=0.6.2" \
-            "pathos>=0.2.7" \
-            "discrete-optimization>=0.9.0"
-      - name: Execute Crown kernel
+      - name: Execute Crown kernel / Python 3.12
+        if: steps.routes.outputs.python == 'true'
         env:
           PYTHONPATH: src
         run: |
@@ -230,31 +137,22 @@ jobs:
             tests/fabric/test_crown_evidence.py \
             tests/fabric/test_crown_errc.py
 
-  package:
-    name: Source package smoke
-    needs: classify
-    if: needs.classify.outputs.package == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 12
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          fetch-depth: 0
-          submodules: recursive
-          persist-credentials: false
-      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
-        with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - name: Build source distribution
+      - name: Cache qualification / Python 3.12
+        if: steps.routes.outputs.cache == 'true'
+        env:
+          PYTHONPATH: src
         run: |
-          python -m pip install "build==1.2.2"
-          python -m build --sdist
-      - name: Verify source distribution contract
+          python -m compileall -q src/autofde_lab/_cache src/autofde_lab/caching.py
+          python -m pytest -q \
+            tests/test_caching.py \
+            tests/test_enterprise_cache.py
+
+      - name: Source package smoke
+        if: steps.routes.outputs.package == 'true'
         shell: bash
         run: |
           set -euo pipefail
+          python -m build --sdist
           archive=$(printf '%s\n' dist/*.tar.gz)
           tar -tzf "$archive" > sdist-files.txt
           grep -Eq '/pyproject\.toml$' sdist-files.txt
@@ -262,33 +160,50 @@ jobs:
           grep -Eq '/src/autofde_lab/_cache/' sdist-files.txt
           test "$(wc -c < "$archive")" -gt 10000
 
-  gate:
-    name: CI gate
-    if: always()
-    needs: [classify, quality, cache, python-smoke, crown, package]
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
-    steps:
-      - name: Admit successful or intentionally skipped routes
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        if: steps.routes.outputs.cache == 'true'
+        with:
+          python-version: "3.10"
+
+      - name: Cache qualification / Python 3.10
+        if: steps.routes.outputs.cache == 'true'
         env:
-          CLASSIFY: ${{ needs.classify.result }}
-          QUALITY: ${{ needs.quality.result }}
-          CACHE: ${{ needs.cache.result }}
-          PYTHON_SMOKE: ${{ needs.python-smoke.result }}
-          CROWN: ${{ needs.crown.result }}
-          PACKAGE: ${{ needs.package.result }}
+          PYTHONPATH: src
         shell: bash
         run: |
           set -euo pipefail
-          for result in \
-            "$CLASSIFY" \
-            "$QUALITY" \
-            "$CACHE" \
-            "$PYTHON_SMOKE" \
-            "$CROWN" \
-            "$PACKAGE"; do
-            case "$result" in
-              success|skipped) ;;
-              *) echo "CI route ended with: $result"; exit 1 ;;
-            esac
-          done
+          python -m pip install \
+            "numpy==2.2.6" \
+            "pytest==8.3.5" \
+            "wrapt>=2.2.1,<3" \
+            "pynng>=0.6.2" \
+            "pathos>=0.2.7" \
+            "discrete-optimization>=0.9.0"
+          python -m compileall -q src/autofde_lab/_cache src/autofde_lab/caching.py
+          python -m pytest -q \
+            tests/test_caching.py \
+            tests/test_enterprise_cache.py
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        if: steps.routes.outputs.cache == 'true'
+        with:
+          python-version: "3.13"
+
+      - name: Cache qualification / Python 3.13
+        if: steps.routes.outputs.cache == 'true'
+        env:
+          PYTHONPATH: src
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install \
+            "numpy==2.2.6" \
+            "pytest==8.3.5" \
+            "wrapt>=2.2.1,<3" \
+            "pynng>=0.6.2" \
+            "pathos>=0.2.7" \
+            "discrete-optimization>=0.9.0"
+          python -m compileall -q src/autofde_lab/_cache src/autofde_lab/caching.py
+          python -m pytest -q \
+            tests/test_caching.py \
+            tests/test_enterprise_cache.py
