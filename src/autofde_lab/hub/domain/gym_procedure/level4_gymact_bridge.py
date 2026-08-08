@@ -106,7 +106,12 @@ def decode_action(action_id: str) -> tuple[str, dict]:
             payload[key] = raw
     return binding, payload
 
+#: Admitted by the AllowListAuthorityResolver below. A real ref through a
+#: real resolver -- an unadmitted ref is still refused.
+_AUTHORITY_REF = "urn:autofde-lab:level4-crown-authority"
+
 _BRIDGE_SCRIPT = """
+_AUTHORITY_REF = "urn:autofde-lab:level4-crown-authority"
 import asyncio
 import importlib
 import json
@@ -114,11 +119,25 @@ import sys
 
 
 async def main(module_path: str, class_name: str, provider_name: str, config: dict, requests: list) -> dict:
-    from gymact import GymAct, MaterializationIntent
+    from gymact import AllowListAuthorityResolver, GymAct, MaterializationIntent
     from gymact.models import ActuationIntent
 
     provider_cls = getattr(importlib.import_module(module_path), class_name)
-    gym = GymAct()
+    # Authority is EXERCISED, not bypassed. gymact's providers disagree on
+    # their own default: cube_counter's materialize does
+    # config.get("requires_authority", True) while its environment __init__
+    # defaults the same flag False, and resource_flow defaults it False. With
+    # a bare GymAct() the fail-closed DenyAuthorityResolver then refused every
+    # cube_counter actuation with LIVE_AUTHORITY_REQUIRED, so discovery
+    # observed zero applicable actions and every counter trial ended
+    # NO_APPLICABLE_ACTION_DISCOVERED.
+    #
+    # The fix is a real resolver and a real authority_ref, NOT
+    # `requires_authority: False` in config -- that would switch the gate off,
+    # whereas this runs it. AllowListAuthorityResolver is gymact's own
+    # bounded resolver, documented for exactly this local-gym case, and it
+    # still refuses any capability whose ref is not admitted.
+    gym = GymAct(authority_resolver=AllowListAuthorityResolver({_AUTHORITY_REF}))
     gym.register_provider(provider_cls())
 
     materialization = await gym.materialize(MaterializationIntent(provider=provider_name, config=config))
@@ -146,7 +165,7 @@ async def main(module_path: str, class_name: str, provider_name: str, config: di
             continue
         before = await gym.observe(episode_id)
         before_state = dict(before.state)
-        outcome = await gym.act(ActuationIntent(episode_id=episode_id, capability=cap.iri, payload=req.get("payload", {})))
+        outcome = await gym.act(ActuationIntent(episode_id=episode_id, capability=cap.iri, payload=req.get("payload", {}), authority_ref=_AUTHORITY_REF))
         after = await gym.observe(episode_id)
         after_state = dict(after.state)
         # The kernel reports accepted=True for any actuate() that did not

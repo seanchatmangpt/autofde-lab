@@ -92,26 +92,78 @@ class AdvisoryCritique:
     source: str  # "dspy" | "deterministic"
 
 
-def critique_candidates(attempts: list[PlannerAttempt], domain: DiscoveredDomain) -> AdvisoryCritique:
+def _dspy_preferred_plan(
+    lm: Any, candidates: list[tuple[str, tuple[str, ...]]]
+) -> Optional[tuple[str, ...]]:
+    """Make ONE real LM call and return the plan it picked, or None.
+
+    Returns None -- and the caller then reports ``source="deterministic"`` --
+    on any of: dspy missing, the call raising, an unparseable reply, or a
+    reply that does not name a plan present in the REAL candidate set. The
+    last case is the load-bearing one: a model that hallucinates a plan has
+    contributed nothing, and labelling the output "dspy" because a call was
+    attempted is the same absence-equals-success error this module keeps
+    finding elsewhere.
+    """
+    if lm is None or not candidates:
+        return None
+    try:
+        import dspy
+    except Exception:  # noqa: BLE001
+        return None
+
+    numbered = {str(i + 1): plan for i, (_, plan) in enumerate(candidates)}
+    listing = "\n".join(f"{i}. {' -> '.join(p) or '(empty plan)'}" for i, p in numbered.items())
+
+    class _RankPlans(dspy.Signature):
+        """Choose the single most plausible plan from a numbered list of
+        candidate plans produced by independent planners. Reply with only
+        the number of the chosen plan."""
+
+        candidate_plans: str = dspy.InputField(desc="numbered candidate plans, one per line")
+        choice: str = dspy.OutputField(desc="the number of the chosen plan, digits only")
+
+    try:
+        with dspy.context(lm=lm):
+            prediction = dspy.Predict(_RankPlans)(candidate_plans=listing)
+        raw = str(getattr(prediction, "choice", "")).strip()
+    except Exception:  # noqa: BLE001
+        return None
+    digits = "".join(ch for ch in raw if ch.isdigit())
+    chosen = numbered.get(digits)
+    if chosen is None:
+        return None
+    # VALIDATE AGAINST THE REAL CANDIDATE SET, not just against the index.
+    if chosen not in {plan for _, plan in candidates}:
+        return None
+    return chosen
+
+
+def critique_candidates(
+    attempts: list[PlannerAttempt],
+    domain: DiscoveredDomain,
+    lm: Any = None,
+) -> AdvisoryCritique:
     """Rank candidate plans and detect disagreement.
 
-    Uses the registered DSPyPolicy solver's DSPy stack when it is
-    configured and reachable; otherwise a deterministic ranking. Either
-    way the output is advisory -- the distinction changes ranking quality,
-    never authority.
+    `lm` is an EXPLICIT dependency, defaulting to None (deterministic).
+    It previously sniffed ``dspy.settings.lm`` and set ``source="dspy"``
+    whenever anything anywhere in the process had configured a global LM --
+    then ranked deterministically regardless, making zero LM calls. Every
+    trial in all three frozen attempts carried ``source="dspy"`` on the
+    strength of an import, not a call. The label now follows a real call
+    whose output validated against the real candidate set; anything else is
+    ``"deterministic"``.
+
+    Either way the output is advisory -- the distinction changes ranking
+    quality, never authority.
     """
     candidates = [(a.planner_identity, a.candidate_plan) for a in attempts if a.outcome == "PLAN_CANDIDATE"]
     distinct_plans = {tuple(p) for _, p in candidates}
     disagreement = len(distinct_plans) > 1
 
-    source = "deterministic"
-    try:  # DSPy is optional; its absence must not fabricate a different verdict
-        import dspy  # noqa: F401
-
-        if getattr(dspy.settings, "lm", None) is not None:
-            source = "dspy"
-    except Exception:  # noqa: BLE001
-        source = "deterministic"
+    preferred = _dspy_preferred_plan(lm, [(p, tuple(c)) for p, c in candidates])
+    source = "dspy" if preferred is not None else "deterministic"
 
     # Ranking signal: shorter plans, corroborated by more independent
     # planners, over a model with fewer unresolved actions.
@@ -122,6 +174,8 @@ def critique_candidates(attempts: list[PlannerAttempt], domain: DiscoveredDomain
     for planner, plan in candidates:
         votes = plan_votes[tuple(plan)]
         score = votes * 10.0 - len(plan)
+        if preferred is not None and tuple(plan) == preferred:
+            score += 100.0  # advisory preference: ranking only, never authority
         ranked.append((planner, tuple(plan), score))
     ranked.sort(key=lambda t: -t[2])
 
@@ -246,13 +300,50 @@ async def main(module_path, class_name, provider_name, config, plan, expected_li
         step_expected = expected_list[i]
         intent = ActuationIntent(episode_id=episode_id, capability=cap.iri, payload=payloads[i])
         vt = await execute_verified(gym, intent, step_expected)
+        receipt_standing = (
+            vt.receipt.standing.value
+            if hasattr(vt.receipt.standing, "value")
+            else str(vt.receipt.standing)
+        )
+        reason = vt.receipt.reason
+
+        # PROVIDER APPLICABILITY IS PART OF THE REAL OUTCOME.
+        #
+        # gymact's kernel never reads the `applicable` flag the provider
+        # returns from `actuate()` (grep: `applicable` appears nowhere in
+        # src/gymact/kernel.py). An inapplicable actuation therefore comes
+        # back accepted=True, standing=ALIVE, with the world unchanged --
+        # and if the model's expectation for that step happens to have
+        # dropped the very dimension the action failed to move, verification
+        # passes too. Measured: resource-flow recorded ["ALIVE","ALIVE"] for
+        # a plan whose SECOND `burn_catalyst` was really refused by the
+        # provider ("catalyst already burned", output stayed 2), because
+        # `_predict_resource_flow` drops `output` after the first burn.
+        #
+        # The provider's own verdict is the ground truth about whether the
+        # step did anything, so it is read here and it OVERRIDES a green
+        # receipt. This can only ever turn a green red, never the reverse.
+        effect = vt.actuation.effect if vt.actuation is not None else None
+        applicable = None
+        if isinstance(effect, dict) and "applicable" in effect:
+            applicable = bool(effect["applicable"])
+        standing = receipt_standing
+        if applicable is False:
+            standing = "REFUSED"
+            reason = "PROVIDER_REPORTED_INAPPLICABLE:" + str(
+                (effect or {}).get("result_text", "")
+            )[:160]
+
         transitions.append({
             "action": binding,
             "step_index": i,
             "expected": step_expected,
-            "standing": vt.receipt.standing.value if hasattr(vt.receipt.standing, "value") else str(vt.receipt.standing),
+            "standing": standing,
+            "receipt_standing": receipt_standing,
+            "provider_applicable": applicable,
+            "world_changed": bool(getattr(vt.receipt, "world_changed", False)),
             "verified": vt.receipt.verified,
-            "reason": vt.receipt.reason,
+            "reason": reason,
         })
 
     final_expected = expected_list[-1] if expected_list else {}
@@ -810,6 +901,7 @@ def _discover_by_probing(env: RealBlindEnvironment, probe_budget: int) -> tuple[
     actions = env.available_actions()
     learned: set[str] = set()
     committed: set[str] = set()
+    self_probed: set[str] = set()
     establisher: dict[str, tuple[str, ...]] = {}
     n = 0
 
@@ -843,7 +935,31 @@ def _discover_by_probing(env: RealBlindEnvironment, probe_budget: int) -> tuple[
                     establisher[action] = prefix
                     break
 
-        if all(action in learned for action in actions):
+        # --- ACTIVELY SEEK REFUSAL EVIDENCE ------------------------------
+        # An action with successes and ZERO refusals is the dangerous case:
+        # the induction had no evidence to bound it with, so it was modelled
+        # as unconditionally applicable with a constant effect, and BFS
+        # stacked it. The probe that settles it is the action re-run from the
+        # state ITS OWN EFFECT produced -- which is what reveals `force_latch`
+        # jamming the rack, `toggle_switch[i]` turning the switch back off,
+        # and `burn_catalyst` having spent the catalyst. That is real active
+        # experimentation, not a workaround, and it costs one speculative
+        # probe per action.
+        #
+        # It also supplies the POSITIVE evidence: an action that really is
+        # repeatable (`increment`) is now seen succeeding twice from two
+        # different pre-states with the same delta, which is exactly what
+        # clears `repeatability_unknown`. Without this probe the sweep only
+        # ever observes each action once, from one state.
+        for action in actions:
+            if n >= probe_budget:
+                break
+            if action not in learned or action in self_probed:
+                continue
+            self_probed.add(action)
+            probe(action, prefix=establisher.get(action, ()) + (action,))
+
+        if all(action in learned for action in actions) and self_probed >= learned:
             break  # nothing left to learn; stop before burning budget
 
         candidates = [
@@ -898,6 +1014,48 @@ def _discover_by_probing(env: RealBlindEnvironment, probe_budget: int) -> tuple[
     return records, n
 
 
+def validate_federation_candidates(
+    typed_domain: TypedDomain,
+    typed_initial: dict,
+    ranked: tuple[tuple[str, tuple[str, ...], float], ...],
+    goal_predicate,
+    model_digest: str = "",
+) -> tuple[Optional[ValidatedPlan], str, list[dict]]:
+    """Validate EVERY distinct federation candidate against the typed model.
+
+    Extracted from `run_real_trial` so the rejection count is exercisable
+    directly with real collaborators (a real `TypedDomain` from real probe
+    records, real `PlannerAttempt`s) rather than only reachable through a
+    full trial.
+
+    The defect this replaces: the original loop `break`-ed on the first valid
+    candidate, so `unsound_candidates_rejected` counted only the candidates
+    ranked ahead of the accepted one -- and read 0 on every trial of all three
+    frozen attempts. A metric that cannot be non-zero is not evidence.
+    """
+    validated: Optional[ValidatedPlan] = None
+    plan_source = ""
+    verdicts: list[dict] = []
+    seen: set[tuple[str, ...]] = set()
+    for planner, plan, _score in ranked:
+        plan_t = tuple(plan)
+        if plan_t in seen:
+            continue
+        seen.add(plan_t)
+        ok, _final, reason = validate_plan_typed(
+            typed_domain, typed_initial, plan_t, goal_predicate
+        )
+        verdicts.append(
+            {"planner": planner, "plan": list(plan_t), "valid": bool(ok), "reason": reason}
+        )
+        if ok and validated is None:
+            validated = ValidatedPlan(
+                plan=plan_t, model_digest=model_digest, validated_against="TypedDomain"
+            )
+            plan_source = f"federation:{planner}"
+    return validated, plan_source, verdicts
+
+
 def run_real_trial(
     seed: int,
     provider_key: str,
@@ -905,6 +1063,7 @@ def run_real_trial(
     evidence_root: Path,
     probe_budget: int = 12,
     planner_timeout_s: float = 10.0,
+    lm: Any = None,
 ) -> TrialReport:
     """probe -> induce -> project -> federate -> critique -> (discriminate,
     re-induce, replan) -> independently validate -> commit -> execute.
@@ -957,7 +1116,59 @@ def run_real_trial(
         classified = classify_registered_solvers(recipe)
         supported = [c.name for c in classified if c.status == "SUPPORTED"]
         attempts = run_federation(recipe, supported, timeout_s=planner_timeout_s)
-        return domain, recipe, attempts, critique_candidates(attempts, domain), supported
+        return domain, recipe, attempts, critique_candidates(attempts, domain, lm=lm), supported
+
+    base_probe = dict(
+        seed=seed,
+        run_id=run_id,
+        provider=provider_key,
+        n_probes=n_probes,
+        n_planner_attempts=0,
+        planners_producing_candidates=(),
+        disagreement_detected=False,
+        evidence_dir=str(evidence_dir),
+        representation_losses=dict(losses),
+        n_supported_solvers=0,
+        discriminating_probe=None,
+    )
+
+    # A trial in which probing never observed ANY action succeed cannot be
+    # modelled at all: `induce_discovered_domain` marks every action unknown,
+    # `project_to_recipe` drops all of them, and `Recipe.__post_init__`
+    # rightly refuses an empty procedure whose goal is unsatisfied. That
+    # refusal is correct -- but raising it out of `run_real_trial` removes
+    # the trial from the scoreboard entirely rather than scoring it as the
+    # failure it is. Measured: 4 of 10 frozen seeds terminated as uncaught
+    # `ValueError` and had to be hand-classified outside the conjunction,
+    # which is precisely the "absent evidence is not a scored factor" hole
+    # the replay repair closed one level up.
+    #
+    # A trial that cannot be modelled is a FAILED trial with a named reason,
+    # never an absent one. Report it through the normal TrialReport channel
+    # so `_row_is_alive` scores it False on real fields.
+    if all(not r.get("applicable") for r in probe_log):
+        refusal_reasons = sorted(
+            {str(r.get("reason")) for r in raw_records if r.get("reason")}
+        )
+        return TrialReport(
+            independently_verified=False,
+            ocel_valid=False,
+            ocel_ref_violations=(),
+            replay_mismatches=("NO_APPLICABLE_ACTION_DISCOVERED",),
+            replay_ran=False,
+            replay_valid=False,
+            replay_record_count=0,
+            replay_error="NO_APPLICABLE_ACTION_DISCOVERED",
+            real_goal_attained=False,
+            outcome="NO_APPLICABLE_ACTION_DISCOVERED",
+            unsound_candidates_rejected=0,
+            goal_predicate_description=(
+                "REAL goal: solved is True in the post-execution observation "
+                f"(unreachable: every probe was refused; provider reasons={refusal_reasons})"
+            ),
+            typed_derived_dimensions=(),
+            **base_probe,
+        )
 
     domain, recipe, attempts, critique, supported = _plan_round(probe_log)
     n_supported = len(supported)
@@ -1031,16 +1242,36 @@ def run_real_trial(
         {a: sorted(e.describe() for e in act.effects.values()) for a, act in typed_domain.actions.items()}
     )
 
-    validated = None
-    rejected = 0
-    plan_source = ""
-    for planner, plan, _score in critique.ranked_candidates:
-        ok, _final, reason = validate_plan_typed(typed_domain, typed_initial, tuple(plan), goal_predicate)
-        if ok:
-            validated = ValidatedPlan(plan=tuple(plan), model_digest=model_digest, validated_against="TypedDomain")
-            plan_source = f"federation:{planner}"
-            break
-        rejected += 1
+    # EVERY federation candidate is validated, not just the ones ahead of the
+    # first acceptance.
+    #
+    # The previous loop `break`-ed on the first valid plan and incremented
+    # `rejected` only for candidates examined before it. Measured: the counter
+    # read 0 on every trial of all three frozen attempts -- including trials
+    # whose committed plan was model-valid and reality-invalid -- because
+    # either the top-ranked candidate validated (so nothing was ever counted)
+    # or the federation produced no candidates at all and the plan came from
+    # `search_plan_typed` (so the loop body never ran). A metric that cannot
+    # be non-zero is not evidence that nothing unsound was proposed.
+    #
+    # Now: validate all DISTINCT candidate plans, count every one the typed
+    # model rejected, and persist the per-candidate verdicts so the number is
+    # falsifiable from the evidence directory rather than trusted.
+    validated, plan_source, candidate_verdicts = validate_federation_candidates(
+        typed_domain, typed_initial, critique.ranked_candidates, goal_predicate, model_digest
+    )
+    rejected = sum(1 for v in candidate_verdicts if not v["valid"])
+    (evidence_dir / "typed_validation.json").write_text(
+        json.dumps(
+            {
+                "n_distinct_candidates": len(candidate_verdicts),
+                "unsound_candidates_rejected": rejected,
+                "verdicts": candidate_verdicts,
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
     if validated is None:
         searched = search_plan_typed(typed_domain, typed_initial, goal_predicate)
         if searched is not None:

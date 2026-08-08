@@ -28,10 +28,29 @@ from typing import Any
 class DimensionKind(str, Enum):
     BOOLEAN = "BOOLEAN"
     CATEGORICAL = "CATEGORICAL"
+    CATEGORICAL_ID = "CATEGORICAL_ID"
     INTEGER = "INTEGER"
     CONTINUOUS = "CONTINUOUS"
     OBJECT_VALUED = "OBJECT_VALUED"
     UNKNOWN = "UNKNOWN"
+
+
+#: An INTEGER dimension is re-classified CATEGORICAL_ID when it carries a
+#: NEGATIVE SENTINEL over a small label set. `lock_and_key`'s `held_key` is
+#: exactly that: -1 means "holding nothing", 0/1/2 name distinct keys.
+#:
+#: Arithmetic on such a dimension is a category error of the same family
+#: this module exists to catch one level down. Measured: probing
+#: `pick_key[key=2]` from the empty hand observed -1 -> 2 and the delta
+#: induction learned `held_key: +3`, so the model believed picking that key
+#: twice would leave key 5 in hand. Absolute effects are the only sound
+#: reading of an identity.
+#:
+#: The discriminator is deliberately narrow -- a negative value must have
+#: been really observed. `counter`, `raw`, `output`, `locks_open` are all
+#: small integer dimensions too and none of them is ever negative, so none
+#: is caught by this rule and none loses its delta semantics.
+CATEGORICAL_ID_MAX_LABELS = 8
 
 
 @dataclass(frozen=True)
@@ -41,7 +60,11 @@ class StateDimension:
     observed_values: tuple[Any, ...] = ()
 
     def is_metric(self) -> bool:
-        """True when ordering/arithmetic on this dimension is meaningful."""
+        """True when ordering/arithmetic on this dimension is meaningful.
+
+        CATEGORICAL_ID is deliberately NOT metric even though its values are
+        integers -- a key identity has no arithmetic.
+        """
         return self.kind in (DimensionKind.INTEGER, DimensionKind.CONTINUOUS)
 
 
@@ -89,8 +112,20 @@ def classify_observation(
             kind = next(iter(kinds))
         else:
             kind = DimensionKind.UNKNOWN
+        if kind is DimensionKind.INTEGER and _is_categorical_id(values):
+            kind = DimensionKind.CATEGORICAL_ID
         dims[name] = StateDimension(name=name, kind=kind, observed_values=tuple(values))
     return dims
+
+
+def _is_categorical_id(values: list[Any]) -> bool:
+    """A small integer label set carrying a negative sentinel. See
+    `CATEGORICAL_ID_MAX_LABELS` for why the test is this narrow."""
+    ints = [v for v in values if isinstance(v, int) and not isinstance(v, bool)]
+    if len(ints) != len(values) or not ints:
+        return False
+    distinct = set(ints)
+    return len(distinct) <= CATEGORICAL_ID_MAX_LABELS and min(distinct) < 0
 
 
 @dataclass(frozen=True)
@@ -136,6 +171,7 @@ def propositionalize(
         if kind in (
             DimensionKind.BOOLEAN,
             DimensionKind.CATEGORICAL,
+            DimensionKind.CATEGORICAL_ID,
             DimensionKind.INTEGER,
         ):
             facts.add(f"{name}={value}")
