@@ -65,3 +65,10 @@ repos:
         files: ^uv\.lock$
         pass_filenames: false
         stages: [pre-commit]
+      - id: verify-ggen-constitution
+        name: Verify ggen semantic constitution
+        entry: bash scripts/verify-ggen-constitution.sh
+        language: system
+        files: ^(ggen\.toml|ontology/(lab|world|planning|process|authority|evidence|standing|interop|manufacture|python-projection)\.ttl|ontology/shapes/.*\.ttl|templates/python/|src/autofde_lab/constitution/|tests/constitution/test_semantic_constitution\.py|scripts/verify-ggen-constitution\.sh)$
+        pass_filenames: false
+        stages: [pre-commit]

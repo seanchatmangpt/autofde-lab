@@ -4,12 +4,26 @@
 """Canonical Python projection of the AutoFDE Lab semantic constitution."""
 
 from ._base import SemanticEntity
-{% for row in sparql_results %}
-from .{{ row.module }} import {{ row.class_name }}
-{% endfor %}
+{% set modules = sparql_results | group_by(attribute="module") %}
+{% for group in modules %}
+{% if group.key == "standing" %}
 from .registry import CLASS_BY_IRI, class_for_rdf_type, entity_from_rdf_type
+{% endif %}
+from .{{ group.key }} import (
+{% for row in group.value %}
+    {{ row.class_name }},
+{% endfor %}
+)
+{% if group.key == "standing" %}
 from .terms import PROPERTY_IRI_BY_NAME, STANDING_VALUE_IRI
-from .validation import CONSTITUTION_FILES, SHAPE_FILES, load_constitution, validate_graph
+from .validation import (
+    CONSTITUTION_FILES,
+    SHAPE_FILES,
+    load_constitution,
+    validate_graph,
+)
+{% endif %}
+{% endfor %}
 
 __all__ = [
     "SemanticEntity",

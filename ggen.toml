@@ -341,7 +341,7 @@ WHERE {
   BIND(STR(?class) AS ?class_iri)
   BIND(STRAFTER(STR(?class), "urn:autofde-lab:") AS ?class_name)
 }
-ORDER BY ?module xsd:integer(?order) ?class_name
+ORDER BY ?module ?class_name
 """ }
 template = { file = "templates/python/init.py.tera" }
 output_file = "src/autofde_lab/constitution/__init__.py"

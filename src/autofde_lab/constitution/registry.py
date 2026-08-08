@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-from ._base import SemanticEntity
 from . import authority as _authority
 from . import evidence as _evidence
 from . import interop as _interop
@@ -15,6 +14,7 @@ from . import planning as _planning
 from . import process as _process
 from . import standing as _standing
 from . import world as _world
+from ._base import SemanticEntity
 
 CLASS_BY_IRI: dict[str, type[SemanticEntity]] = {
     "urn:autofde-lab:AuthorityEnvelope": _authority.AuthorityEnvelope,
@@ -87,7 +87,9 @@ def class_for_rdf_type(rdf_type: str) -> type[SemanticEntity]:
     try:
         return CLASS_BY_IRI[rdf_type]
     except KeyError as exc:
-        raise KeyError(f"No generated Python projection for RDF type {rdf_type}") from exc
+        raise KeyError(
+            f"No generated Python projection for RDF type {rdf_type}"
+        ) from exc
 
 
 def entity_from_rdf_type(

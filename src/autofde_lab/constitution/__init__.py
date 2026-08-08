@@ -4,136 +4,159 @@
 """Canonical Python projection of the AutoFDE Lab semantic constitution."""
 
 from ._base import SemanticEntity
-from .authority import AuthorityEnvelope
-from .authority import Actuation
-from .evidence import Postcondition
-from .evidence import Observer
-from .evidence import PostconditionObservation
-from .evidence import Receipt
-from .evidence import ReceiptDAG
-from .evidence import Replay
-from .evidence import Artifact
-from .evidence import ArtifactManifest
-from .evidence import SourceRevision
-from .evidence import DependencyRevision
-from .evidence import VerifierRun
-from .evidence import EvidenceWitness
-from .evidence import Level4Witness
-from .interop import InteropContract
-from .interop import InteropAdapter
-from .interop import ExternalRepresentation
-from .interop import Projection
-from .interop import SemanticLoss
-from .interop import LossReport
-from .interop import InteropContractReceipt
-from .lab import Gym
-from .lab import Trial
-from .lab import Experiment
-from .lab import Goal
-from .lab import Invariant
-from .lab import Resource
-from .lab import Capability
-from .lab import Perturbation
-from .manufacture import SemanticConstitution
-from .manufacture import ManufactureRule
-from .manufacture import ManufactureRun
-from .manufacture import CanonicalSourceArtifact
-from .manufacture import ManufactureReceipt
-from .planning import PlanningProblem
-from .planning import Planner
-from .planning import PlannerAttempt
-from .planning import PlanCandidate
-from .planning import CandidateSet
-from .planning import Critique
-from .planning import Validation
-from .planning import GovernedCandidate
-from .planning import Disagreement
-from .planning import DiscriminatingProbe
-from .process import POWLProcess
-from .process import ProcessNode
-from .process import TransitionNode
-from .process import SilentTransition
-from .process import PartialOrderComposite
-from .process import ChoiceGraph
-from .process import OrderEdge
-from .process import POWLCommitment
-from .standing import StandingValue
-from .standing import StandingAssertion
-from .standing import Refusal
-from .world import World
-from .world import WorldState
-from .world import Environment
-from .world import Observation
-from .world import AdmittedObservation
-from .world import ObservationAdmission
+from .authority import (
+    Actuation,
+    AuthorityEnvelope,
+)
+from .evidence import (
+    Artifact,
+    ArtifactManifest,
+    DependencyRevision,
+    EvidenceWitness,
+    Level4Witness,
+    Observer,
+    Postcondition,
+    PostconditionObservation,
+    Receipt,
+    ReceiptDAG,
+    Replay,
+    SourceRevision,
+    VerifierRun,
+)
+from .interop import (
+    ExternalRepresentation,
+    InteropAdapter,
+    InteropContract,
+    InteropContractReceipt,
+    LossReport,
+    Projection,
+    SemanticLoss,
+)
+from .lab import (
+    Capability,
+    Experiment,
+    Goal,
+    Gym,
+    Invariant,
+    Perturbation,
+    Resource,
+    Trial,
+)
+from .manufacture import (
+    CanonicalSourceArtifact,
+    ManufactureReceipt,
+    ManufactureRule,
+    ManufactureRun,
+    SemanticConstitution,
+)
+from .planning import (
+    CandidateSet,
+    Critique,
+    Disagreement,
+    DiscriminatingProbe,
+    GovernedCandidate,
+    PlanCandidate,
+    Planner,
+    PlannerAttempt,
+    PlanningProblem,
+    Validation,
+)
+from .process import (
+    ChoiceGraph,
+    OrderEdge,
+    POWLCommitment,
+    POWLProcess,
+    PartialOrderComposite,
+    ProcessNode,
+    SilentTransition,
+    TransitionNode,
+)
 from .registry import CLASS_BY_IRI, class_for_rdf_type, entity_from_rdf_type
+from .standing import (
+    Refusal,
+    StandingAssertion,
+    StandingValue,
+)
 from .terms import PROPERTY_IRI_BY_NAME, STANDING_VALUE_IRI
-from .validation import CONSTITUTION_FILES, SHAPE_FILES, load_constitution, validate_graph
+from .validation import (
+    CONSTITUTION_FILES,
+    SHAPE_FILES,
+    load_constitution,
+    validate_graph,
+)
+from .world import (
+    AdmittedObservation,
+    Environment,
+    Observation,
+    ObservationAdmission,
+    World,
+    WorldState,
+)
 
 __all__ = [
     "SemanticEntity",
-    "AuthorityEnvelope",
     "Actuation",
-    "Postcondition",
+    "AuthorityEnvelope",
+    "Artifact",
+    "ArtifactManifest",
+    "DependencyRevision",
+    "EvidenceWitness",
+    "Level4Witness",
     "Observer",
+    "Postcondition",
     "PostconditionObservation",
     "Receipt",
     "ReceiptDAG",
     "Replay",
-    "Artifact",
-    "ArtifactManifest",
     "SourceRevision",
-    "DependencyRevision",
     "VerifierRun",
-    "EvidenceWitness",
-    "Level4Witness",
-    "InteropContract",
-    "InteropAdapter",
     "ExternalRepresentation",
+    "InteropAdapter",
+    "InteropContract",
+    "InteropContractReceipt",
+    "LossReport",
     "Projection",
     "SemanticLoss",
-    "LossReport",
-    "InteropContractReceipt",
-    "Gym",
-    "Trial",
+    "Capability",
     "Experiment",
     "Goal",
+    "Gym",
     "Invariant",
-    "Resource",
-    "Capability",
     "Perturbation",
-    "SemanticConstitution",
-    "ManufactureRule",
-    "ManufactureRun",
+    "Resource",
+    "Trial",
     "CanonicalSourceArtifact",
     "ManufactureReceipt",
-    "PlanningProblem",
-    "Planner",
-    "PlannerAttempt",
-    "PlanCandidate",
+    "ManufactureRule",
+    "ManufactureRun",
+    "SemanticConstitution",
     "CandidateSet",
     "Critique",
-    "Validation",
-    "GovernedCandidate",
     "Disagreement",
     "DiscriminatingProbe",
-    "POWLProcess",
-    "ProcessNode",
-    "TransitionNode",
-    "SilentTransition",
-    "PartialOrderComposite",
+    "GovernedCandidate",
+    "PlanCandidate",
+    "Planner",
+    "PlannerAttempt",
+    "PlanningProblem",
+    "Validation",
     "ChoiceGraph",
     "OrderEdge",
     "POWLCommitment",
-    "StandingValue",
-    "StandingAssertion",
+    "POWLProcess",
+    "PartialOrderComposite",
+    "ProcessNode",
+    "SilentTransition",
+    "TransitionNode",
     "Refusal",
-    "World",
-    "WorldState",
+    "StandingAssertion",
+    "StandingValue",
+    "AdmittedObservation",
     "Environment",
     "Observation",
-    "AdmittedObservation",
     "ObservationAdmission",
+    "World",
+    "WorldState",
     "CLASS_BY_IRI",
     "class_for_rdf_type",
     "entity_from_rdf_type",

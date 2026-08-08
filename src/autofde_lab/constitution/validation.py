@@ -12,7 +12,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-
 CONSTITUTION_FILES = (
     "ontology/lab.ttl",
     "ontology/world.ttl",
@@ -59,7 +58,9 @@ def validate_graph(data_graph: Any, root: str | Path | None = None) -> tuple[boo
         from pyshacl import validate
         from rdflib import Graph
     except ImportError as exc:
-        raise RuntimeError("pyshacl and rdflib are required; install autofde-lab[ofmf]") from exc
+        raise RuntimeError(
+            "pyshacl and rdflib are required; install autofde-lab[ofmf]"
+        ) from exc
 
     base = _repo_root(root)
     shapes = Graph()

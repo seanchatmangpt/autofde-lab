@@ -5,11 +5,11 @@
 
 from __future__ import annotations
 
-from ._base import SemanticEntity
 {% set modules = sparql_results | group_by(attribute="module") %}
 {% for group in modules %}
 from . import {{ group.key }} as _{{ group.key }}
 {% endfor %}
+from ._base import SemanticEntity
 
 CLASS_BY_IRI: dict[str, type[SemanticEntity]] = {
 {% for row in sparql_results %}
@@ -23,7 +23,9 @@ def class_for_rdf_type(rdf_type: str) -> type[SemanticEntity]:
     try:
         return CLASS_BY_IRI[rdf_type]
     except KeyError as exc:
-        raise KeyError(f"No generated Python projection for RDF type {rdf_type}") from exc
+        raise KeyError(
+            f"No generated Python projection for RDF type {rdf_type}"
+        ) from exc
 
 
 def entity_from_rdf_type(
