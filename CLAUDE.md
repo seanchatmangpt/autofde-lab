@@ -26,8 +26,15 @@ https://airbus.github.io/scikit-decide/
 
 @.claude/rules/standing-law.md
 
-That file is imported, not merely referenced, because every status claim in
-every session needs it.
+@.claude/rules/absence-is-not-evidence.md
+
+Both files are imported, not merely referenced. The first because every
+status claim in every session needs it. The second because it governs what
+may enter O* from O at all: a learned model that coerces `UNKNOWN` into the
+value most convenient to a planner hands that planner a certainty the
+experiment never established, and the resulting confident-wrong plan is an
+admission defect, not a planner defect. It was written after a frozen crown
+scored 8/10 against a conjunction in which one factor could not fail.
 
 Everything below is **path-gated**, not imported. Each `.claude/rules/*.md`
 carries YAML `paths:` front-matter and loads only when a matching file is
