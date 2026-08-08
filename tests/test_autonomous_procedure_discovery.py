@@ -45,7 +45,6 @@ async def test_discovers_without_transition_model_and_preserves_failed_edges() -
 
     result = await discover_procedure(challenge, probe)
     assert result.plan == ("opaque-a", "opaque-b")
-    assert result.goal_facts if False else True
     assert challenge.goal_facts <= result.goal_state
     assert result.rejected_probes >= 1
     assert result.evidence_receipt_ids
