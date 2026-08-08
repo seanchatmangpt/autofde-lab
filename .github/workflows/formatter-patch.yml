@@ -25,7 +25,7 @@ jobs:
           python-version: "3.12"
       - name: Install formatter
         run: python -m pip install "pre-commit==4.6.1"
-      - name: Manufacture exact formatter patch
+      - name: Manufacture exact formatter artifacts
         shell: bash
         run: |
           set -euo pipefail
@@ -36,10 +36,17 @@ jobs:
           )
           pre-commit run --files "${files[@]}" || true
           git diff --binary > formatter.patch
+          mapfile -d '' formatted < <(git diff --name-only -z)
           test -s formatter.patch
+          test "${#formatted[@]}" -gt 0
+          printf '%s\0' "${formatted[@]}" | tar --null -T - -czf formatted-tree.tar.gz
+          printf '%s\n' "${formatted[@]}" > formatted-files.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: exact-formatter-patch
-          path: formatter.patch
+          name: exact-formatter-tree
+          path: |
+            formatter.patch
+            formatted-tree.tar.gz
+            formatted-files.txt
           if-no-files-found: error
           retention-days: 1
