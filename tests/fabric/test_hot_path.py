@@ -85,9 +85,6 @@ def test_cached_payload_cannot_escalate_candidate_into_authority():
     payload["candidate_only"] = False
     with SQLiteERRCCache(":memory:") as cache:
         cache.put(compiled.artifact.identity.digest, "planner-hot-path", payload)
-        try:
-            reuse_hot_path(cache, compiled.artifact.identity)
-        except ValueError as exc:
-            assert "never carry execution authority" in str(exc)
-        else:
-            raise AssertionError("authority-escalated cache payload must be refused")
+        result = reuse_hot_path(cache, compiled.artifact.identity)
+        assert result.standing is HotPathStanding.REFUSED_AUTHORITY_ESCALATION
+        assert result.artifact is None
