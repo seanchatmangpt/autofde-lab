@@ -1,8 +1,8 @@
 """Minimal Brokered Receipted Consequential Execution (BRCE) experiment kernel.
 
-The kernel is intentionally provider-neutral.  It is the only function in this module that calls
+The kernel is intentionally provider-neutral. It is the only function in this module that calls
 an actuator, and it cannot return a successful consequence without independently observing and
-verifying the postcondition and manufacturing a content-bound receipt.  Lost acknowledgement
+verifying the postcondition and manufacturing a content-bound receipt. Lost acknowledgement
 after possible actuation is ``UNCERTAIN`` and must be reconciled; it is never blindly retried.
 """
 
@@ -34,6 +34,9 @@ class ActuationIntent:
     resource: str
     intended_effect: Mapping[str, object]
     idempotency_key: str
+    planner_id: str = ""
+    environment_id: str = ""
+    revision_id: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,7 +74,9 @@ class BrceDecision:
 
 
 def _digest(value: object) -> str:
-    payload = json.dumps(value, sort_keys=True, separators=(",", ":"), default=str).encode()
+    payload = json.dumps(
+        value, sort_keys=True, separators=(",", ":"), default=str
+    ).encode()
     return "sha256:" + hashlib.sha256(payload).hexdigest()
 
 
@@ -96,7 +101,7 @@ def execute_brce(
 ) -> BrceDecision:
     """Execute exactly one admitted intent and return its causal receipt.
 
-    ``actuator`` is called at most once.  No caller-visible success path exists without a receipt.
+    ``actuator`` is called at most once. No caller-visible success path exists without a receipt.
     The observer receives the actuator result but must obtain/construct the postcondition view
     independently of the actuator's success assertion; the verifier judges that view.
     """
