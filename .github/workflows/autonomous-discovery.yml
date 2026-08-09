@@ -115,7 +115,7 @@ jobs:
             .validation/gymact-runtime/src/gymact/gyms/opaque_procedure.py
 
       - name: Unit validate isolated autonomous selector
-        run: python -m pytest -q tests/test_autonomous_procedure_discovery.py
+        run: python -m pytest -q --noconftest tests/test_autonomous_procedure_discovery.py
 
       - name: Execute full autonomous discovery crown
         env:
