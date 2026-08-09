@@ -42,6 +42,7 @@ jobs:
             "pyshacl>=0.40,<1" \
             "rdflib>=7.1,<8" \
             "rfc8785>=0.1.4,<1" \
+            "wrapt>=2.2.1,<3" \
             "pytest>=8.3,<9" \
             "pytest-asyncio>=0.25,<2"
 
