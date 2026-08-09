@@ -60,7 +60,9 @@ def _pass(plan) -> TrialResult:
     )
 
 
-def test_portfolio_round_robins_benchmark_targets_and_finishes_only_when_all_done() -> None:
+def test_portfolio_round_robins_benchmark_targets_and_finishes_only_when_all_done() -> (
+    None
+):
     portfolio = SOTAPortfolio((_factory("b2"), _factory("b1")))
 
     batch = portfolio.next_batch(2)
