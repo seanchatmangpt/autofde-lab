@@ -179,6 +179,46 @@ misconfig_app_hotel_res_autofde_lab_planner_results.csv`. A genuine, real, non-L
 solve of a real, live, unmodified external benchmark task, scored by the benchmark's own real
 evaluators — zero paid credential, zero LLM call anywhere in the decision-making loop.
 
+## Extension: `faulty_image_correlated` — real evidence of generalization
+
+Per task #53 (running the same, unmodified driver across sregym's other real problems
+sharing `misconfig_app_hotel_res`'s exact `IncorrectImageMitigationOracle` class): ran
+`faulty_image_correlated` — same real `HotelReservation` app, same real canonical baseline
+image, but the injected fault hits **all 8** real microservices simultaneously (a correlated
+bad rollout, `jackcuii/hotel-reservation:latest`), not just `geo`. **Zero driver code
+changes.** Real, clean, complete PASS: `Diagnosis.composite_score = 1.00`,
+`Diagnosis.success = True`, `Mitigation.success = True`, `TTL = 59.7s`, `TTM = 65.9s`. Real
+CSV: `vendor/gyms/sregym/results/0809_0155/autofde_lab_planner/faulty_image_correlated/
+faulty_image_correlated_autofde_lab_planner_results.csv`.
+
+This is the real, direct evidence the driver generalizes across an oracle class rather than
+being secretly specialized to `misconfig_app_hotel_res` alone — it correctly scanned, in one
+pass, all 8 real microservices and fixed all 8, with the same deny-list scope filter and the
+same canonical-image comparison, unmodified.
+
+**Two of the four same-oracle-class problems remain honestly out of scope, not attempted
+without real, tested support** — named precisely rather than silently skipped:
+
+- **`incorrect_image`** targets `AstronomyShop`, not `HotelReservation`. Checked this
+  session: `sregym/service/apps/astronomy_shop.py` has no single canonical-image constant
+  analogous to `HOTEL_RESERVATION_APPLICATION_IMAGE` (it deploys via an external Helm chart,
+  `Helm.install(**self.helm_configs)`, with no local manifest checked out in this vendored
+  tree — `SREGym-applications/astronomy-shop/` is empty). Astronomy-shop's real convention is
+  almost certainly per-service distinct images (consistent with its OpenTelemetry Demo
+  origin), which this driver's "one shared canonical image" comparison cannot handle without
+  new, real, tested per-service image discovery — not built tonight.
+- **`update_incompatible_correlated`** injects its fault onto the `mongodb-*` deployments —
+  exactly the tier this driver's `_KNOWN_INFRA_PRODUCT_TOKENS` deny-list deliberately
+  excludes as "not application code, don't touch." This driver would report a false "no
+  mismatch" on this problem **by design**, not by bug. A real fix path was identified but not
+  built or tested this session: `kubectl rollout undo` (confirmed real and permitted —
+  `kubectl_server_helper/cmd_category.py:74`, in `kubectl_dry_run_commands`) reverts a
+  Deployment to its prior ReplicaSet revision without needing this driver to know any
+  "correct" image value in advance — a more general mitigation primitive than
+  compare-against-one-canonical-image, but real detection (e.g. via `kubectl rollout
+  history`'s revision count, or pod-health signals) was not implemented or verified live,
+  and is not claimed as working.
+
 ## Precision on the "beats SOTA" question — not yet established, named honestly
 
 A real, cited WebSearch this session found sregym's real published numbers

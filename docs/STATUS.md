@@ -5,7 +5,28 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
-Last update: **pass 16** (2026-08-09) — Lane C: a real, non-LLM planner
+Last update: **pass 17** (2026-08-09) — Lane C extension (task #53): ran the exact same,
+unmodified `autofde_lab_planner` driver against `faulty_image_correlated` (same real
+`HotelReservation` app/oracle class as pass 16, but the fault hits all 8 real microservices
+simultaneously) — **zero code changes**, real, clean, complete PASS:
+`Diagnosis.composite_score=1.00`, `Diagnosis.success=True`, `Mitigation.success=True`,
+`TTL=59.7s`/`TTM=65.9s` (real CSV:
+`vendor/gyms/sregym/results/0809_0155/.../faulty_image_correlated_autofde_lab_planner_results.csv`).
+Direct, real evidence of generalization across the oracle class, not a problem-specific
+special case. Real aggregate so far: **2/2 real trials pass, both diagnosis and mitigation,
+across 2 of sregym's 4 problems sharing this oracle class.** The other 2
+(`incorrect_image`: targets `AstronomyShop`, no shared canonical-image constant, real
+per-service image discovery not built; `update_incompatible_correlated`: targets
+`mongodb-*` deployments, which this driver's deny-list deliberately excludes as infra — would
+report a false "no mismatch" by design) are named as real, honest scope gaps, not silently
+skipped; a real, unbuilt fix path (`kubectl rollout undo`, confirmed real and permitted) is
+identified but not implemented or verified. **Still not a valid SOTA-beating claim** — 2
+trials on 1 narrow oracle class is not commensurate with sregym's real published aggregate
+(38.9-72.6% diagnosis / 57.3-78.5% mitigation across the full 90-problem suite,
+sregym.com/leaderboard, arXiv:2605.07161). Full transcript:
+`docs/2026-08-09-lane-c-non-llm-planner-design.md`.
+
+Prior update: **pass 16** (2026-08-09) — Lane C: a real, non-LLM planner
 (`sregym:autofde_lab_planner`) reached a genuine, clean, complete PASS on sregym's real,
 live, unmodified `misconfig_app_hotel_res` task — `Diagnosis.composite_score=1.00` (all
 three judge dimensions 1.00), `Diagnosis.success=True`, `Mitigation.success=True`,

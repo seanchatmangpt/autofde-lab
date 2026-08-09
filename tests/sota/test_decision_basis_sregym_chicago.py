@@ -245,3 +245,34 @@ def test_real_run4_result_csv_matches_this_basis_verification_oracle() -> None:
 
     basis = current_sregym_autofde_lab_planner_basis()
     assert basis.extra["problem_id"] == row["problem_id"]
+
+
+def test_real_faulty_image_correlated_result_confirms_generalization_with_zero_code_changes() -> None:
+    """`faulty_image_correlated` (same real IncorrectImageMitigationOracle class, same real
+    HotelReservation app, but the injected fault hits ALL 8 real microservices simultaneously
+    rather than just `geo`) was run this session against the exact same driver code as
+    `misconfig_app_hotel_res` -- zero changes -- and reached the same real, clean, complete
+    result. This is the real evidence the driver generalizes across an oracle class rather
+    than being secretly specialized to one problem."""
+    result_csv = (
+        SREGYM_ROOT
+        / "results"
+        / "0809_0155"
+        / "autofde_lab_planner"
+        / "faulty_image_correlated"
+        / "faulty_image_correlated_autofde_lab_planner_results.csv"
+    )
+    if not result_csv.is_file():
+        pytest.skip(
+            f"BLOCKED:REAL_TRIAL_ARTIFACT_ABSENT: {result_csv} not on disk -- re-run the "
+            "real autofde_lab_planner trial against faulty_image_correlated before "
+            "re-enabling this check"
+        )
+    import csv as csv_module
+
+    rows = list(csv_module.DictReader(result_csv.read_text().splitlines()))
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["Diagnosis.success"] == "True"
+    assert row["Mitigation.success"] == "True"
+    assert float(row["Diagnosis.composite_score"]) == 1.0
