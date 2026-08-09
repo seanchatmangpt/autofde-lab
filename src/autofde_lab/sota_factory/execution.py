@@ -32,7 +32,9 @@ class GymActExecutionProfile:
         if self.capability_ref is not None and self.capability_binding is not None:
             raise ValueError("execution profile selects capability by ref OR binding")
         if not self.expected:
-            raise ValueError("execution profile requires a non-empty verification oracle")
+            raise ValueError(
+                "execution profile requires a non-empty verification oracle"
+            )
 
 
 @runtime_checkable
