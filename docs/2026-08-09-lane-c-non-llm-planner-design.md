@@ -377,7 +377,48 @@ unilaterally, so it was not attempted. ~7 of the 25 sampled problems target `ast
 and will hit this same wall; the final aggregate accounts for them as a separate,
 named category, never silently folded into either PASS or FAIL.
 
-_Real, corrected-batch results appended here once the run completes or is checkpointed._
+## Real, unbiased, representative-sample result — complete
+
+The corrected 25-problem batch (real `--agent-timeout 600`/outer `timeout 750`, evidence-based)
+ran to completion. Raw results: `docs/2026-08-09-representative-sample-batch-results.tsv`.
+
+**Real, critical finding surfaced by classifying every result**: 10 of the 25 sampled problems
+are structurally undeployable in this environment — confirmed by direct inspection of
+`SREGym-applications/`'s real file counts: `astronomy-shop` (0 files), `FleetCast` (0 files),
+`train-ticket` (0 files), vs. `hotelReservation` (776 files) and `socialNetwork` (699 files).
+Every problem targeting AstronomyShop, FleetCast/TiDB, or TrainTicket fails at deploy time
+with `Helm chart_path does not exist` — before this driver's own logic ever runs. This is a
+real environment gap (missing vendored charts), not a planner defect, and is excluded from
+the comparable denominator, named precisely rather than silently counted either way:
+
+| | Count |
+|---|---|
+| `BLOCKED:ENVIRONMENT` (chart never vendored) | 10 |
+| Real, comparable attempts (deployed, real oracle verdict reached) | 15 |
+| — of which real PASS | 1 (`misconfig_app_hotel_res`) |
+| — of which real FAIL | 14 |
+
+**Real rate on the 15 environment-comparable, unbiased attempts: Diagnosis 1/15 = 6.7%,
+Mitigation 1/15 = 6.7%.** This is the honest, representative-sample answer the standing goal
+required, and it is decisive: **far below sregym's published aggregate range** (diagnosis
+38.9-72.6%, mitigation 57.3-78.5%) **and far below the earlier, hand-picked 4-trial 75%/75%**
+— confirming precisely what that earlier result's own caveat predicted ("the survey's own
+Category-C/D findings guarantee a lower full-suite rate"). Four of the 14 real FAILs were
+genuine timeouts (the driver made no detectable progress within 600s — fault types this
+planner has no detector for at all: `admission_webhook_outage`, `cfs_cpu_throttling`,
+`ephemeral_port_range`, `finalizer_deadlock_controller`); the other 10 reached a real
+diagnosis submission (mostly a mechanical "no image mismatch / no anomaly detected" report,
+scoring partial credit around 0.11 from the judge for correctly describing a clean scan, but
+failing to identify the real fault) and a real, correctly-failed mitigation.
+
+**Conclusion, stated plainly**: this session's non-LLM planner is a real, working, generalizing
+architecture on the ~2 fault categories (13 of 60 real fault types) it was deliberately built
+for, verified with 5 complete live wins across those categories. On an unbiased, representative
+draw from sregym's actual problem diversity, its real success rate is 6.7%/6.7% — **AutoFDE
+Lab does not beat sregym's published SOTA on a representative sample.** Reaching that would
+require building out most of the remaining 15 real Category-B mechanisms (62 more problems)
+identified in the original fault-catalog survey, not further testing of what already exists.
+That is real, scoped, unbuilt work, named as such.
 
 ## Precision on the "beats SOTA" question — not yet established, named honestly
 

@@ -5,7 +5,29 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
-Last update: **pass 19** (2026-08-09) — Broadened the elevated-revision fallback to app-tier
+Last update: **pass 20** (2026-08-09) — **Real, unbiased, representative-sample measurement,
+complete: AutoFDE Lab does not beat sregym's published SOTA.** A real, programmatically-
+generated stride-5 systematic sample (25 of 123 active registrations, computed once via
+`ProblemRegistry().get_problem_ids(all=True)`, never hand-edited) was run to completion
+against the real, unmodified benchmark (`--agent-timeout 600`/outer `timeout 750`, evidence-
+based after a first attempt with tighter limits was discarded as invalid — even
+`misconfig_app_hotel_res` timed out under it). Real, critical finding: 10 of 25 sampled
+problems are structurally undeployable in this environment (`SREGym-applications/astronomy-
+shop`, `FleetCast`, `train-ticket` are all 0 files — `Helm chart_path does not exist`, before
+this driver's own logic ever runs), separated from the comparable denominator as
+`BLOCKED:ENVIRONMENT`, not silently counted either way. **Real rate on the 15
+environment-comparable attempts: Diagnosis 1/15 = 6.7%, Mitigation 1/15 = 6.7%** — far below
+sregym's published aggregate (diagnosis 38.9-72.6%, mitigation 57.3-78.5%) and far below the
+earlier hand-picked 4-trial 75%/75%, confirming that result's own caveat. This session's
+non-LLM planner is a real, working, generalizing architecture on the ~2 fault categories (13
+of 60 real fault types) it was built for, with 5 complete live wins across those categories —
+but on a representative draw from sregym's actual diversity, it does not beat published SOTA.
+Reaching that would require building most of the remaining 15 real Category-B mechanisms (62
+more problems), not further testing. Raw results:
+`docs/2026-08-09-representative-sample-batch-results.tsv`. Full transcript:
+`docs/2026-08-09-lane-c-non-llm-planner-design.md`.
+
+Prior update: **pass 19** (2026-08-09) — Broadened the elevated-revision fallback to app-tier
 deployments (a real gap: only infra-excluded deployments were ever checked, silently missing
 any app-tier fault that mutates a spec field other than the image), then live-verified
 against `configmap_drift_hotel_reservation`. Two more real defects found and fixed:
