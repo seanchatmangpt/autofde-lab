@@ -68,7 +68,9 @@ def test_full_factorial_still_refuses_same_oversized_space() -> None:
         )
 
 
-def test_pairwise_second_order_design_refuses_instead_of_silently_losing_coverage() -> None:
+def test_pairwise_second_order_design_refuses_instead_of_silently_losing_coverage() -> (
+    None
+):
     space = _maximal_space()
     baseline = next(space.iter_decisions(limit=1))
     with pytest.raises(ValueError, match="PAIRWISE_DESIGN_TOO_LARGE"):
