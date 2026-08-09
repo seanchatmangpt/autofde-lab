@@ -107,7 +107,10 @@ class SOTAAutopilot:
                 round_results.append(result)
                 executed.append(result)
                 if self.policy.max_cost_usd is not None:
-                    if sum(item.cost_usd for item in executed) >= self.policy.max_cost_usd:
+                    if (
+                        sum(item.cost_usd for item in executed)
+                        >= self.policy.max_cost_usd
+                    ):
                         stop_reason = "MAX_COST_REACHED"
                         break
                 if len(executed) >= self.policy.max_trials:
@@ -120,7 +123,9 @@ class SOTAAutopilot:
             rounds.append(
                 AutopilotRound(
                     index=round_index,
-                    plan_ids=tuple(plan.plan_id for plan in plans[: len(round_results)]),
+                    plan_ids=tuple(
+                        plan.plan_id for plan in plans[: len(round_results)]
+                    ),
                     result_ids=tuple(result.plan_id for result in round_results),
                     terminal_after_round=terminal,
                 )
