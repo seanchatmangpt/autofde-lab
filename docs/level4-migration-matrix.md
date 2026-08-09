@@ -2,22 +2,35 @@
 
 Real census, this session, of every GymAct-capable provider reachable from `level4_gymact_bridge.py`, the sibling `~/gymact` package's `gyms/` directory, and `autofde_lab.hub.domain.*` bridges — gathered by 30 real, read-only census agents (out of ~44 dispatched; the workflow was killed mid-run at 46 agents dispatched/31 completed, `w9lme71pm`/`wf_a0bbfca7-d50`) plus 3 real tracer-bullet trials run directly. Every row below is either a real trial result or a real-source-inspection census result — none is inferred from memory.
 
-## Level 4 ALIVE (3)
+## Level 4 ALIVE (4)
 
 | Gym | Trial identity | Real finding |
 |---|---|---|
 | `resource_flow` (TracerBulletA) | seed `3979297810`, trial `5e10eecf-52e6-463f-893c-efa0da93d5a7` | `Conforms: True`, 14/14 falsifiers, destructive verification. See `docs/2026-08-08-level4-shacl-tracer-bullet.md`. |
 | `lock_and_key` (TracerBulletB) | seed `3979297810`, `depth=2`, `probe_budget=40`, trial `7ee7eaec-3eff-4b07-b796-6bff521c0ece` | Same, zero kernel edits from A. |
 | `switchboard` (TracerBulletC) | seed `3979297810`, `probe_budget=40`, trial `b95bea45-4b18-48f7-9321-934e325ce443` | Same, zero kernel edits from A/B, run by a census workflow agent through the unmodified CLI. |
+| `cube_counter` (TracerBulletD) | seed `3979297810`, trial `bc560e63-0844-4245-9382-9a9828f3f4da` | Reached only after a real fix (see below) to a discovery/planning-layer bug -- **zero changes** to the evidence kernel itself. `Conforms: True`, real severed-edge non-vacuousness check flips to `False`. Committed plan `(increment, increment, increment)`, deriving the unobserved goal state `counter=3` from a learned `+1` law rather than having directly probed it. |
 
-`THREE_GYM_KERNEL_GATE = PASSED`: `level4_witness.py`, `verify.py`, and `ontology/shapes/{level4,authority,planning}.shacl.ttl` are byte-identical across all three. Zero provider-specific branches exist in any of them (`grep -n "resource_flow\|lock_and_key\|switchboard\|cube_counter\|provider_key ==" src/autofde_lab/evidence/*.py` → zero matches).
+`FOUR_GYM_KERNEL_GATE = PASSED`: `level4_witness.py`, `verify.py`, and `ontology/shapes/{level4,authority,planning}.shacl.ttl` are byte-identical across all four. Zero provider-specific branches exist in any of them (`grep -n "resource_flow\|lock_and_key\|switchboard\|cube_counter\|provider_key ==" src/autofde_lab/evidence/*.py` → zero matches).
+
+### The `cube_counter` fix, precisely
+
+`cube_counter` failed for a reason entirely outside the evidence kernel: `state_typing._is_categorical_id()` reclassified `counter` from `INTEGER` to `CATEGORICAL_ID` the moment `decrement` produced a negative value, stripping its arithmetic semantics before effect induction ever ran -- confirmed directly by calling `classify_observation()` on the real trial's observations. The heuristic exists to fix a real, different bug (`lock_and_key`'s `held_key=-1` "no key held" sentinel wrongly getting arithmetic treatment); its own docstring's stated premise ("counter/raw/output/locks_open... never negative") is exactly what `cube_counter`'s own `decrement` action falsifies.
+
+Fix (`typed_induction.py`, `_dimensions_with_arithmetic_evidence`): a `CATEGORICAL_ID`-classified dimension is reclassified back to arithmetic-eligible only when some single action was observed succeeding from **>= 2 distinct pre-state values** of that dimension with the **same delta each time** -- real transition evidence outweighing the value-set coincidence. The bar is set precisely so it cannot reopen the original bug: `held_key` never clears it for any of its actions (`pick_key[key=K]` is only ever observed from the one pre-state `held_key=-1`; `drop_key`/`open_lock` set an absolute value from varying pre-states, an inconsistent "delta" by construction). Verified live, both directions, on real trial data:
+
+- `cube_counter`: `counter` regains `INTEGER`/metric standing; `increment.effects['counter'].delta == 1.0`; `search_plan_typed` derives `(increment, increment, increment)` reaching `counter=3` **without `counter=3` ever having been observed** during the bounded probe budget.
+- `lock_and_key`: `held_key` stays `CATEGORICAL_ID`, non-metric; every action's effect on it stays an absolute assignment, never a delta -- the paired regression guard holds.
+
+Chicago-style test: `tests/domains/python/test_typed_induction_arithmetic_standing_chicago.py`, 4/4 real (real `RealBlindEnvironment`/`_discover_by_probing` against both real providers, real `induce_typed_domain`, real `run_real_trial` end-to-end, zero mocks). Attribution of two pre-existing, unrelated failures in `test_level4_crown_unmodellable_trial_chicago.py` confirmed precisely by `git stash`-ing the fix and re-running: identical failures occur with or without it.
 
 ## Real, precisely diagnosed: not yet ALIVE
 
 | Gym | Real finding |
 |---|---|
-| `cube_counter` | **Not a kernel gap, and narrower than "the induction can't generalize numeric effects."** `TypedDomain`'s effect representation already generalizes correctly — `TypedEffect.delta` is a real relative-change value (`counter' = counter + delta`), and `search_plan_typed` does a real forward BFS over `TypedDomain.apply_action`, capable in principle of deriving an unobserved state (e.g. `counter=3`) from a learned `+1` rule without ever having seen that exact transition. Confirmed directly: in this trial's own induced model, `reward` (a `CONTINUOUS` dimension) correctly got `delta=+0.166667`, generalized correctly. The real, exact bug: `counter` itself gets reclassified from `INTEGER` to `CATEGORICAL_ID` by `state_typing.py`'s `_is_categorical_id()` — a heuristic added deliberately to fix `lock_and_key`'s `held_key=-1` "no key held" sentinel (small distinct integer set + a negative value present ⟹ treat as an identity, strip arithmetic). Its own docstring states the premise `_is_categorical_id` relies on: `counter`/`raw`/`output`/`locks_open` are "never negative, so none is caught by this rule." `cube_counter`'s `decrement` action falsifies that premise directly — confirmed live: `classify_observation` on this trial's real observations returns `counter -> CATEGORICAL_ID` (`is_metric: False`) the moment a `decrement`-produced negative value is observed, and `induce_typed_domain` then marks `counter`'s effect `CONTEXT_DEPENDENT` (unclaimed) rather than `delta=+1`/`-1`, so `search_plan_typed` has no rule to extrapolate with and correctly (given that model) returns no plan. This is a real false positive in one classifier heuristic — conflating "a negative value was observed" with "this is an identity-sentinel pattern" — not a missing representational capability. Matches and sharpens pre-existing task #21 ("lock_and_key: prefix-keyed induction + CATEGORICAL_ID dimensions") with an exact second failure mode of the same discriminator. `level4_witness.py`/`verify.py`/SHACL are completely unimplicated — this gym was never reached by the evidence kernel at all, since `run_real_trial` returns before any actuation happens. |
-| `cube_container_counter` | Census: `SAFE_EXECUTABLE`, `estimated_migration_difficulty: low`, real dependencies verified live (Docker daemon reachable via colima, `vendor/gyms/cube-standard` submodule checked out, module imports cleanly in `~/gymact/.venv`). Shares `cube_counter`'s goal predicate and oracle — **likely shares the same discovery-termination gap**, not yet run through `run_real_trial` this session to confirm either way. |
+| `cube_container_counter` | Census: `SAFE_EXECUTABLE`, `estimated_migration_difficulty: low`, real dependencies verified live (Docker daemon reachable via colima, `vendor/gyms/cube-standard` submodule checked out, module imports cleanly in `~/gymact/.venv`). Shares `cube_counter`'s goal predicate/oracle **and its `counter` dimension** -- now likely fixed by the same `_dimensions_with_arithmetic_evidence` change (see "Level 4 ALIVE" above), not yet run through `run_real_trial` this session to confirm. |
+
+`cube_counter` moved from this table to "Level 4 ALIVE" above after a real, precisely diagnosed fix -- see that section for the full mechanism.
 
 ## ADAPTER_MISSING (19)
 
@@ -50,10 +63,10 @@ The workflow was killed (`status: killed`, not `completed`) partway through the 
 
 - Did not fix the `_BRIDGE_SCRIPT` constructor-signature mismatch. It is a real, precisely diagnosed, single-point defect blocking ~52 vendor benchmarks, but fixing it without also resolving the goal-oracle and authority gaps would just move the failure mode from "won't construct" to "constructs, then either can't be graded or can execute unbounded native commands" — not real progress.
 - Did not hand-write per-vendor goal predicates. Per this session's own explicit instruction, that would be exactly the `if vendor == "foo": ...` anti-pattern this kernel's design forbids. Whether vendor benchmarks' own evaluator/expected-state/test-oracle output can be projected through a small number of shared semantic categories (not 52 individual cases) is real, unstarted design work.
-- Did not attempt `cube_container_counter` (its dependency chain — Docker/colima — makes a failed attempt more expensive to clean up than `cube_counter`'s pure in-memory case, and it likely shares `cube_counter`'s exact discovery-termination gap, so root-causing that gap once is worth more than a second confirming trial right now).
+- Did not attempt `cube_container_counter` (its dependency chain — Docker/colima — makes a failed attempt more expensive to clean up than `cube_counter`'s pure in-memory case). Now that `cube_counter`'s `counter`-classification bug is fixed and shared code paths confirmed, this is next to try, not next to root-cause.
 
 ## See also
 
 - `docs/2026-08-08-level4-shacl-tracer-bullet.md` — the three real ALIVE tracer bullets, in full.
 - `docs/STATUS.md` Pass 10 — the ledger row.
-- Repo task #21 — the pre-existing, still-open "lock_and_key: prefix-keyed induction" item this pass's `cube_counter` finding is the same character of gap as.
+- Repo task #21 / #41 — the pre-existing "lock_and_key: prefix-keyed induction + CATEGORICAL_ID dimensions" item this pass's `cube_counter` fix sharpened and closed one real failure mode of; task #21 itself (`lock_and_key`'s own prefix-keyed relational induction, a separate concern from dimension classification) remains open.

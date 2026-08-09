@@ -514,6 +514,76 @@ def _induce_relational_preconditions(
     return tuple(out)
 
 
+def _dimensions_with_arithmetic_evidence(
+    probe_records: list[dict], dims: dict[str, StateDimension]
+) -> set[str]:
+    """Real, affirmative evidence that a `CATEGORICAL_ID`-classified integer
+    dimension is actually a genuine arithmetic quantity, not an identity or
+    sentinel.
+
+    `state_typing._is_categorical_id`'s static value-set heuristic (a small
+    distinct integer set including a negative value) is a real false
+    positive for any dimension that legitimately traverses negative
+    territory via consistent arithmetic -- measured live on `cube_counter`'s
+    `counter`: its own `decrement` action falsifies that discriminator's
+    stated premise ("counter/raw/output/locks_open... never negative"), so
+    `counter` was reclassified `CATEGORICAL_ID`, `is_metric()` returned
+    `False`, and `increment`'s effect on it was recorded `CONTEXT_DEPENDENT`
+    instead of `delta=+1` -- even though `reward` in the same trial, same
+    action, correctly generalized to `delta=+0.166667`. The delta-induction
+    machinery works; the dimension never reached it.
+
+    This function supplies the behavioral discriminator the static
+    value-set morphology alone cannot: affirmative transition evidence
+    outweighs a negative-value coincidence. The bar is set precisely so it
+    does not reopen the bug `_is_categorical_id` exists to fix
+    (`lock_and_key`'s `held_key=-1` sentinel): a dimension qualifies only
+    when some SINGLE action was observed succeeding from >= 2 DISTINCT
+    pre-state values of that dimension, with the SAME delta each time.
+    `held_key` never clears this bar for any of its actions --
+    `pick_key[key=K]` is only ever observed from the one pre-state
+    `held_key=-1` (the environment requires an empty hand to pick), and
+    `drop_key`/`open_lock` set an ABSOLUTE value (`-1`) from varying
+    pre-states, which is an inconsistent "delta" by construction, not a
+    repeated quantity update. Repeating from one starting point, however
+    many times, is not composability evidence -- the same discipline
+    `repeatability_unknown`/`distinct_pre` already apply below in this
+    module, applied one layer earlier, at dimension classification instead
+    of at effect claiming.
+    """
+    by_action: dict[str, list[dict]] = {}
+    for rec in probe_records:
+        by_action.setdefault(rec["action"], []).append(rec)
+
+    qualifies: set[str] = set()
+    for records in by_action.values():
+        successes = [
+            r
+            for r in records
+            if r.get("applicable") and "observed_pre" in r and "observed_post" in r
+        ]
+        for dim_name, dim in dims.items():
+            if dim.kind is not DimensionKind.CATEGORICAL_ID:
+                continue
+            pairs = [
+                (r["observed_pre"][dim_name], r["observed_post"][dim_name])
+                for r in successes
+                if dim_name in r["observed_pre"]
+                and dim_name in r["observed_post"]
+                and isinstance(r["observed_pre"][dim_name], (int, float))
+                and not isinstance(r["observed_pre"][dim_name], bool)
+                and isinstance(r["observed_post"][dim_name], (int, float))
+                and not isinstance(r["observed_post"][dim_name], bool)
+            ]
+            distinct_pre_values = {pre for pre, _ in pairs}
+            if len(distinct_pre_values) < 2:
+                continue  # one starting point repeated is not composability evidence
+            deltas = {post - pre for pre, post in pairs}
+            if len(deltas) == 1:
+                qualifies.add(dim_name)
+    return qualifies
+
+
 def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
     """Induce a typed, delta-aware action model from real probe records.
 
@@ -523,6 +593,25 @@ def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
     observations = [r["observed_pre"] for r in probe_records if "observed_pre" in r]
     observations += [r["observed_post"] for r in probe_records if "observed_post" in r]
     dims = classify_observation(observations)
+
+    # See `_dimensions_with_arithmetic_evidence`'s docstring: real transition
+    # evidence outweighs `_is_categorical_id`'s value-set heuristic. Applied
+    # here, before `derived_dims`/effect induction, so a reclassified
+    # dimension is treated as metric everywhere downstream -- not patched
+    # only at the one call site that first exposed the bug.
+    arithmetic_evidence = _dimensions_with_arithmetic_evidence(probe_records, dims)
+    if arithmetic_evidence:
+        dims = {
+            name: (
+                StateDimension(
+                    name=name, kind=DimensionKind.INTEGER, observed_values=dim.observed_values
+                )
+                if name in arithmetic_evidence
+                else dim
+            )
+            for name, dim in dims.items()
+        }
+
     derived_dims = detect_derived_dimensions(observations, dims)
 
     by_action: dict[str, list[dict]] = {}
