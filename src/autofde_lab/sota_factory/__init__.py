@@ -28,6 +28,7 @@ from .models import (
     TrialOutcome,
     TrialResult,
 )
+from .portfolio import PortfolioSnapshot, SOTAPortfolio
 from .score import ScoreLaw
 from .scoreboard import Scoreboard
 from .space import CompatibilityRule, DecisionSpace, hamming_distance, pairwise_covering
@@ -55,9 +56,11 @@ __all__ = [
     "LearningCompiler",
     "LearningSignal",
     "OptimizationDirection",
+    "PortfolioSnapshot",
     "ProofObligation",
     "RepairLeverage",
     "SOTAFactory",
+    "SOTAPortfolio",
     "ScoreLaw",
     "Scoreboard",
     "SelectionStrategy",
