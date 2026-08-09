@@ -78,10 +78,14 @@ class DecisionSpace:
         ):
             values = getattr(self, field_name)
             if not values:
-                raise ValueError(f"decision-space dimension {field_name} must be non-empty")
+                raise ValueError(
+                    f"decision-space dimension {field_name} must be non-empty"
+                )
             names = [value.name for value in values]
             if len(names) != len(set(names)):
-                raise ValueError(f"decision-space dimension {field_name} contains duplicate names")
+                raise ValueError(
+                    f"decision-space dimension {field_name} contains duplicate names"
+                )
 
     @property
     def upper_bound_size(self) -> int:
@@ -131,7 +135,9 @@ class DecisionSpace:
             if limit is not None and emitted >= limit:
                 return
 
-    def materialize(self, *, candidate_limit: int = 100_000) -> tuple[DecisionBasis, ...]:
+    def materialize(
+        self, *, candidate_limit: int = 100_000
+    ) -> tuple[DecisionBasis, ...]:
         if candidate_limit <= 0:
             raise ValueError("candidate_limit must be > 0")
         decisions = tuple(self.iter_decisions(limit=candidate_limit + 1))
@@ -156,7 +162,8 @@ def one_factor_at_a_time(
     chosen.extend(
         decision
         for decision in decisions
-        if decision.digest != baseline.digest and hamming_distance(decision, baseline) == 1
+        if decision.digest != baseline.digest
+        and hamming_distance(decision, baseline) == 1
     )
     if not chosen:
         raise ValueError("baseline does not exist in the lawful DecisionSpace")
