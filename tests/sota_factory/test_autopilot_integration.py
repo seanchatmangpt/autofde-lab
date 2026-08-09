@@ -3,7 +3,10 @@ from __future__ import annotations
 import pytest
 
 from autofde_lab.sota_factory.autopilot import AutopilotPolicy, SOTAAutopilot
-from autofde_lab.sota_factory.execution import ExperimentExecutionPort, GymActExecutionProfile
+from autofde_lab.sota_factory.execution import (
+    ExperimentExecutionPort,
+    GymActExecutionProfile,
+)
 from autofde_lab.sota_factory.factory import SOTAFactory
 from autofde_lab.sota_factory.models import (
     BasisChoice,
