@@ -1,9 +1,9 @@
 """Autonomous procedure discovery from observations and opaque capabilities.
 
 This module belongs to the Hub SELECT plane. It never imports a recipe, source
-walkthrough, provider transition model, or GymAct runtime. Consequential probes
-are intents supplied to a caller; the caller is responsible for routing every
-DO through GymAct/BRCE and returning only observed evidence.
+walkthrough, provider transition model, or execution runtime. Consequential probes
+are opaque requests to an external harness; this module only selects candidate
+actions from receipted observations and carries no execution authority.
 """
 
 from __future__ import annotations
@@ -89,9 +89,9 @@ async def discover_procedure(
     """Discover a shortest observed goal path by bounded black-box BFS.
 
     The search has no transition model. For each reached state it asks the
-    caller to execute an opaque action from a replayable prefix. Failed actions
-    are topology evidence; accepted actions manufacture observed graph edges.
-    No provider failure is interpreted as global graph failure.
+    external harness to execute an opaque action from a replayable prefix.
+    Failed actions are topology evidence; accepted actions manufacture observed
+    graph edges. No provider failure is interpreted as global graph failure.
     """
 
     if challenge.goal_facts <= challenge.initial_facts:

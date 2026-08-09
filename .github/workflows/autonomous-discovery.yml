@@ -18,7 +18,7 @@ jobs:
   crown:
     name: 35-recipe no-leak crown
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 15
     steps:
       - name: Checkout autofde-lab exact head
         uses: actions/checkout@v4
@@ -36,17 +36,11 @@ jobs:
             "anyio>=4.8,<5" \
             "blake3>=1.0,<2" \
             "jsonschema>=4.23,<5" \
-            "numpy==2.2.6" \
             "rfc3339-validator>=0.1.4,<1" \
             "pydantic>=2.13,<3" \
             "pyshacl>=0.40,<1" \
             "rdflib>=7.1,<8" \
             "rfc8785>=0.1.4,<1" \
-            "wrapt>=2.2.1,<3" \
-            "pynng>=0.6.2" \
-            "pathos>=0.2.7" \
-            "discrete-optimization>=0.9.0" \
-            "gymnasium>=0.29.1,<2" \
             "pytest>=8.3,<9" \
             "pytest-asyncio>=0.25,<2"
 
@@ -111,22 +105,21 @@ jobs:
 
       - name: Compile discovery surfaces
         env:
-          PYTHONPATH: .validation/gymact-runtime/src:src
+          PYTHONPATH: .validation/gymact-runtime/src
         run: |
           python -m py_compile \
             src/autofde_lab/hub/domain/gym_procedure/discovery.py \
+            src/autofde_lab/hub/domain/gym_procedure/discovery_worker.py \
             scripts/validate_autonomous_discovery.py \
             .validation/gymact-runtime/src/gymact/discovery.py \
             .validation/gymact-runtime/src/gymact/gyms/opaque_procedure.py
 
-      - name: Unit validate autonomous selector
-        env:
-          PYTHONPATH: .validation/gymact-runtime/src:src
+      - name: Unit validate isolated autonomous selector
         run: python -m pytest -q tests/test_autonomous_procedure_discovery.py
 
       - name: Execute full autonomous discovery crown
         env:
-          PYTHONPATH: .validation/gymact-runtime/src:src
+          PYTHONPATH: .validation/gymact-runtime/src
           GYMACT_HEAD_SHA: d74587d9161fd50378751708553b8b1d6370add7
           AUTOFDE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
@@ -141,16 +134,24 @@ jobs:
 
           path = Path('reports/autonomous-discovery/receipt.json')
           receipt = json.loads(path.read_text())
+          assert receipt['schema'] == 'urn:autofde-lab:autonomous-discovery-receipt:v2'
           assert receipt['standing'] == 'ALIVE', receipt
           assert receipt['corpus_size'] == 35, receipt['corpus_size']
           assert receipt['alive'] == 35, receipt['alive']
+          assert receipt['isolated_planner_processes'] == 35
           assert receipt['gymact_head_sha'] == 'd74587d9161fd50378751708553b8b1d6370add7'
           assert receipt['autofde_head_sha']
+          assert receipt['planner_boundary'] == 'urn:autofde-lab:discovery-worker:v1'
           assert all(count == 35 for count in receipt['pattern_counts'].values())
           assert all(item['goal_verified'] for item in receipt['results'])
           assert all(item['ocel_schema_valid'] for item in receipt['results'])
           assert all(item['lifecycle_conformant'] for item in receipt['results'])
+          assert all(
+              item['planner_isolation']['isolated_interpreter']
+              for item in receipt['results']
+          )
           print('AUTONOMOUS_DISCOVERY_CROWN=ALIVE 35/35')
+          print('PLANNER_PROCESS_ISOLATION=ALIVE 35/35')
           print('AUTOFDE_HEAD_SHA=' + receipt['autofde_head_sha'])
           print('GYMACT_HEAD_SHA=' + receipt['gymact_head_sha'])
           PY
