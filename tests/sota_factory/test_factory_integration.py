@@ -7,8 +7,8 @@ from autofde_lab.sota_factory import (
     DecisionSpace,
     FailureKind,
     FrontierStanding,
-    SOTAFactory,
     SelectionStrategy,
+    SOTAFactory,
     TrialOutcome,
     TrialResult,
 )
@@ -40,7 +40,9 @@ def _target(frontier: float = 50.0) -> BenchmarkTarget:
     )
 
 
-def _result(plan, outcome: TrialOutcome, kind: FailureKind = FailureKind.NONE, blocker: str = ""):
+def _result(
+    plan, outcome: TrialOutcome, kind: FailureKind = FailureKind.NONE, blocker: str = ""
+):
     return TrialResult(
         plan_id=plan.plan_id,
         benchmark_id=plan.benchmark_id,
@@ -75,7 +77,9 @@ def test_factory_reaches_terminal_only_from_own_complete_score_above_frontier() 
 
 def test_identity_drift_is_refused() -> None:
     factory = SOTAFactory(
-        target=_target(), decision_space=_space(), strategy=SelectionStrategy.FULL_FACTORIAL
+        target=_target(),
+        decision_space=_space(),
+        strategy=SelectionStrategy.FULL_FACTORIAL,
     )
     plan = factory.plans[0]
     bad = TrialResult(
@@ -91,7 +95,9 @@ def test_identity_drift_is_refused() -> None:
         factory.ingest([bad])
 
 
-def test_next_batch_prunes_architecture_that_cannot_mathematically_beat_frontier() -> None:
+def test_next_batch_prunes_architecture_that_cannot_mathematically_beat_frontier() -> (
+    None
+):
     factory = SOTAFactory(
         target=_target(frontier=75.0),
         decision_space=_space(),
@@ -110,6 +116,8 @@ def test_next_batch_prunes_architecture_that_cannot_mathematically_beat_frontier
 
     batch = factory.next_batch(20)
     assert batch
-    assert all(plan.architecture_digest == arch_b[0].architecture_digest for plan in batch)
+    assert all(
+        plan.architecture_digest == arch_b[0].architecture_digest for plan in batch
+    )
     signals = factory.snapshot().learning_signals
     assert signals[0].action == "VARY_DECISION_DIMENSION:model"
