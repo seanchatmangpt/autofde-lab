@@ -12,7 +12,7 @@ AFL = Namespace('urn:autofde-lab:')
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE_DIRS = [ROOT / 'docs' / 'c4', ROOT / 'docs' / 'diagrams']
-OUT_DIR = ROOT / 'ontology' / 'architecture' / 'graphs'
+CATALOG_DIR = ROOT / 'ontology' / 'architecture' / 'catalog'
 CORE = URIRef('urn:autofde-lab:ontology:architecture')
 
 KIND_MAP = {
@@ -127,9 +127,6 @@ def add_element(g: Graph, diagram: URIRef, base: str, local_id: str, label: str,
     g.add((uri, ARCH.localIdentifier, Literal(local_id)))
     g.add((uri, ARCH.belongsToDiagram, diagram))
     g.add((diagram, ARCH.depicts, uri))
-    g.add((uri, ARCH.sourceLine, Literal(line_no, datatype=XSD.integer)))
-    if description:
-        g.add((uri, DCTERMS.description, Literal(description)))
     if technology:
         g.add((uri, ARCH.technology, Literal(technology)))
     canonical = CANONICAL.get(label.strip().lower())
@@ -145,8 +142,6 @@ def add_relationship(g: Graph, diagram: URIRef, base: str, idx: int, src: URIRef
     g.add((rel, ARCH.source, src))
     g.add((rel, ARCH.target, dst))
     g.add((rel, ARCH.belongsToDiagram, diagram))
-    g.add((diagram, ARCH.hasRelationship, rel))
-    g.add((rel, ARCH.sourceLine, Literal(line_no, datatype=XSD.integer)))
     if label:
         g.add((rel, RDFS.label, Literal(label.strip())))
     if seq is not None:
@@ -280,7 +275,6 @@ def parse_class(g, diagram, base, text):
             g.add((attr, RDFS.label, Literal(line)))
             g.add((attr, ARCH.belongsToClass, nodes[current]))
             g.add((attr, ARCH.belongsToDiagram, diagram))
-            g.add((attr, ARCH.sourceLine, Literal(n, datatype=XSD.integer)))
             continue
         m = re.match(r'([A-Za-z0-9_]+)(?:\s+"([^"]*)")?\s+([^\s]+)\s+(?:"([^"]*)"\s+)?([A-Za-z0-9_]+)(?:\s*:\s*(.*))?$', line)
         if m and any(x in m.group(3) for x in ['--', '..', '<|', '*--', 'o--']):
@@ -314,7 +308,6 @@ def parse_er(g, diagram, base, text):
                 g.add((attr, ARCH.dataType, Literal(parts[0])))
                 g.add((attr, ARCH.belongsToEntity, nodes[current]))
                 g.add((attr, ARCH.belongsToDiagram, diagram))
-                g.add((attr, ARCH.sourceLine, Literal(n, datatype=XSD.integer)))
                 if len(parts) > 2:
                     g.add((attr, ARCH.keyMarker, Literal(' '.join(parts[2:]))))
             continue
@@ -383,25 +376,39 @@ def group_for(source: Path) -> str:
     raise ValueError(source)
 
 
-def build_bundle(name: str, sources: list[Path]) -> Graph:
+def build_detail_bundle(name: str, sources: list[Path]) -> Graph:
     g = Graph(); bind(g)
-    ontology = URIRef(f'urn:autofde-lab:architecture:bundle:{name}')
+    ontology = URIRef(f'urn:autofde-lab:architecture:detail-bundle:{name}')
     g.add((ontology, RDF.type, OWL.Ontology))
     g.add((ontology, OWL.imports, CORE))
-    g.add((ontology, DCTERMS.title, Literal(f'Generated architecture graph bundle: {name}')))
+    g.add((ontology, DCTERMS.title, Literal(f'Generated detailed architecture graph bundle: {name}')))
     for src in sources:
-        prefix = 'd' + src.name.split('_', 1)[0]
-        g.bind(prefix, Namespace(f'urn:autofde-lab:architecture:diagram:{src.stem}:'))
         sg = build(src)
         for triple in sg:
             g.add(triple)
-        rel_source = src.relative_to(ROOT).as_posix()
-        g.add((ontology, PROV.wasDerivedFrom, URIRef(f'https://github.com/seanchatmangpt/autofde-lab/blob/master/{rel_source}')))
     return g
 
 
-def generate(check: bool = False) -> int:
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+def build_catalog_bundle(name: str, sources: list[Path]) -> Graph:
+    g = Graph(); bind(g)
+    ontology = URIRef(f'urn:autofde-lab:architecture:catalog:{name}')
+    g.add((ontology, RDF.type, OWL.Ontology))
+    g.add((ontology, OWL.imports, CORE))
+    g.add((ontology, DCTERMS.title, Literal(f'Generated architecture catalog bundle: {name}')))
+    for src in sources:
+        sg = build(src)
+        diagram = next(sg.subjects(RDF.type, ARCH.Diagram))
+        for predicate in (
+            RDF.type, DCTERMS.title, ARCH.diagramKind, ARCH.sourcePath,
+            ARCH.sourceDigest, ARCH.mermaidSyntax, ARCH.elementCount,
+            ARCH.relationshipCount, ARCH.parseStanding,
+        ):
+            for value in sg.objects(diagram, predicate):
+                g.add((diagram, predicate, value))
+    return g
+
+
+def grouped_sources() -> dict[str, list[Path]]:
     sources = source_files()
     if len(sources) != 50:
         raise SystemExit(f'expected exactly 50 Mermaid sources, found {len(sources)}')
@@ -410,27 +417,45 @@ def generate(check: bool = False) -> int:
         groups.setdefault(group_for(src), []).append(src)
     if len(groups) != 10 or any(len(v) != 5 for v in groups.values()):
         raise SystemExit(f'expected ten groups of five, got {[(k, len(v)) for k, v in groups.items()]}')
+    return groups
+
+
+def generate_catalog(check: bool = False) -> int:
+    CATALOG_DIR.mkdir(parents=True, exist_ok=True)
     drift = []
-    for name in sorted(groups):
-        out = OUT_DIR / f'{name}.ttl'
-        rendered = serialize(build_bundle(name, groups[name]))
+    for name, sources in sorted(grouped_sources().items()):
+        out = CATALOG_DIR / f'{name}.ttl'
+        rendered = serialize(build_catalog_bundle(name, sources))
         if check:
             if not out.exists() or out.read_text(encoding='utf-8') != rendered:
                 drift.append(out)
         else:
             out.write_text(rendered, encoding='utf-8')
-    if check and drift:
+    if drift:
         print('architecture ontology drift:')
-        for p in drift: print(p.relative_to(ROOT))
+        for p in drift:
+            print(p.relative_to(ROOT))
         return 1
     return 0
+
+
+def emit_detail(directory: Path) -> None:
+    directory.mkdir(parents=True, exist_ok=True)
+    for name, sources in sorted(grouped_sources().items()):
+        (directory / f'{name}.ttl').write_text(
+            serialize(build_detail_bundle(name, sources)), encoding='utf-8'
+        )
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--check', action='store_true')
+    ap.add_argument('--detail-dir', type=Path)
     args = ap.parse_args()
-    raise SystemExit(generate(check=args.check))
+    rc = generate_catalog(check=args.check)
+    if rc == 0 and args.detail_dir is not None:
+        emit_detail(args.detail_dir)
+    raise SystemExit(rc)
 
 if __name__ == '__main__':
     main()
