@@ -5,7 +5,40 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
-Last update: **pass 12** (2026-08-08) — `FIRST_EXTERNAL_BENCHMARK_SCORE` gate attempted via
+Last update: **pass 14** (2026-08-08) — Lane B: extracted the `DecisionBasis` vocabulary
+(`Model x Planner x ToolPolicy x RepairPolicy x VerificationPolicy x Budget`) this repo's own
+prior SOTA-attack work found missing -- only `Model` had ever been proven swappable. New
+package `src/autofde_lab/sota/`: real, cited D0 points for both real agent-driven attempts
+this session ran (`harbor`/`terminus-2`: grounded against the real, already-persisted
+`hello-world-v3` trial artifact, `n_episodes` confirmed = main-loop-LLM-call count via a real
+trajectory cross-check; `sregym`/`stratus`: read directly from the real, checked-out
+`mitigation_agent_config.yaml` at call time, not duplicated, avoiding
+`no-dual-bookkeeping.md`'s exact failure mode). 10/10 real tests, zero mocks; the load-bearing
+assertion in each is that the materializer reproduces, byte-for-byte, the real command this
+session actually ran. Ran in parallel with (never touching or waiting for) the still-in-flight
+`misconfig_app_hotel_res` trial (Lane A, unperturbed, frozen configuration) per this session's
+explicit two-lane instruction. Explicitly NOT done: no architecture search (a second `D` point
+has not been generated or run), no benchmark matrix (33 of 34 real "Ported" `sregym` problems
+remain unexercised), no evidence attached to the `sregym` D0 yet (Lane A had not concluded when
+this pass closed). Full transcript: `docs/2026-08-08-decision-basis-lane-b.md`.
+
+Prior update: **pass 13** (2026-08-08) — Stage 1 of the local-LLM agent-driven benchmark plan:
+`harbor`'s real, unmodified `terminus-2` agent run against this repo's own already-wired
+TurboFieldfare/Gemma local server (`http://127.0.0.1:8080/v1`, model `gemma-4-26b-a4b-it`),
+zero paid API cost, `ANTHROPIC_API_KEY`/`ZAI_API_KEY` scrubbed from the subprocess env. Two
+real, named failures fixed en route (missing `/v1` in `api_base`; placeholder `local-model`
+name not matching the server's real model id) before a real success: `harbor run --agent
+terminus-2 --model hosted_vllm/gemma-4-26b-a4b-it ... --path examples/tasks/hello-world`,
+real reward `1.0`, 4 real local-inference LLM round-trips (`n_episodes: 4`), zero exceptions.
+**Verdict: `PARTIAL_ALIVE`** — a genuine, non-oracle-replay, local-LLM-driven agent decision
+loop, scored by Harbor's own unmodified verifier; the larger `FIRST_EXTERNAL_BENCHMARK_SCORE`
+claim does not follow from it, since `hello-world` is Harbor's own bundled toy task, not a
+public benchmark. Stage 2 (a harder, externally-recognized benchmark: `sregym`'s
+`misconfig_app_hotel_res` via the `stratus` driver, same local server) is in progress, not yet
+complete. Full transcript:
+`docs/2026-08-08-local-server-agent-driven-harbor-checkpoint.md`.
+
+Prior update: **pass 12** (2026-08-08) — `FIRST_EXTERNAL_BENCHMARK_SCORE` gate attempted via
 an 11-agent ultracode workflow: 8 real, independently re-verified candidate vendor benchmarks
 triaged read-only (`devops-gym`, `mcpmark`, `sregym`, `sec-bench`, `sadservers`, `harbor`,
 `o11y-bench`, `osworld`). 7/8 genuinely blocked (5 `REQUIRES_EXTERNAL_API`, 2
