@@ -78,7 +78,9 @@ class ConcurrentPassingPort:
 
 
 @pytest.mark.asyncio
-async def test_portfolio_autopilot_finishes_all_targets_with_bounded_concurrency() -> None:
+async def test_portfolio_autopilot_finishes_all_targets_with_bounded_concurrency() -> (
+    None
+):
     portfolio = SOTAPortfolio((_factory("alpha"), _factory("beta")))
     port = ConcurrentPassingPort()
     run = await SOTAPortfolioAutopilot(
@@ -104,7 +106,9 @@ async def test_portfolio_autopilot_finishes_all_targets_with_bounded_concurrency
 
 
 @pytest.mark.asyncio
-async def test_portfolio_autopilot_trial_bound_cannot_false_complete_portfolio() -> None:
+async def test_portfolio_autopilot_trial_bound_cannot_false_complete_portfolio() -> (
+    None
+):
     portfolio = SOTAPortfolio((_factory("alpha"), _factory("beta")))
     run = await SOTAPortfolioAutopilot(
         portfolio,
