@@ -65,6 +65,7 @@ never looked at `~/bcinr`. Verify with `/memory` and `/context`, don't assume.
 | touching `fabric/pddl_engine.py`, `fabric/powl.py`, PDDL requirements, or the capability ontology | `.claude/rules/ecosystem-boundary.md` |
 | reaching for a project skill or agent instead of re-deriving a workflow | `.claude/rules/project-tooling.md` |
 | filing what you just did into the in-repo ledger | `docs/STATUS.md` |
+| writing or reviewing any test | `.claude/rules/testing-chicago-style.md` |
 
 ## Four rules that do not fit in a table
 
@@ -75,7 +76,9 @@ page, so they stay inline.
    exercising `solve()` on a real domain, run this session.** Never
    "compiles," never "the happy path works." Queued CI, a merged PR, and a
    green synthetic check are not evidence — only an executed job against the
-   exact commit is.
+   exact commit is. This is the solver/domain instance of a repo-wide rule:
+   see `.claude/rules/testing-chicago-style.md` for the general no-mocking
+   discipline and its verification requirement.
 
 2. **Projection is not execution.** `fabric/powl.py` writes
    `plan.powl.ttl`; that manufactures a document, it does not run a
@@ -99,14 +102,67 @@ page, so they stay inline.
 
 ## Build
 
-`uv sync --extra=all -v`; `uv run pytest tests`;
-`uv run pytest --nbmake notebooks -v`; `pre-commit run --all-files`.
+`uv sync --extra=all -v`; `pre-commit run --all-files`.
 Python 3.10+ per `pyproject.toml`; the verified working dev environment is
 3.13.9 — treat 3.13 as current, not merely supported. CMake/C++20/pybind11
 for the compiled extension.
 
-Whole-suite collection is currently `BUILD_BROKEN` — run new suites by path.
-Details and the exact failing files are in `.claude/rules/standing-law.md`.
+**Tests: use `.venv/bin/python -m pytest ...`, not `uv run pytest ...`.**
+`uv run` re-checks the native build on every invocation (a full CMake/Ninja
+pass, tens of seconds to minutes on an unchanged tree) before pytest even
+starts; `.venv/bin/python -m pytest` skips that check entirely. Reach for
+`uv run` only when dependencies or build config actually changed.
+
+Two local test commands, both defined in `Justfile`, matching
+`.github/workflows/pr-ci.yml` / `ci.yml`'s own job routing 1:1 so they never
+drift from what CI asserts:
+
+- `just test` — the hot loop for routine dev work: **unit-weight tests only,
+  ~5.9-6.0s measured over several runs, `-n 4` pytest-xdist workers** (swept
+  `{4,6,8,12,auto}`, 4 wins consistently — more workers get *slower* since no
+  test here exceeds 5s but each worker repays full import startup cost).
+  Ignores the native C++ solvers, RL/native-heavy python solvers
+  (`tests/solvers/cpp`, `tests/solvers/python`), `tests/scheduling`,
+  `tests/ecosystem` (cross-repo crown), **`tests/domains` and
+  `tests/flight_planning` entirely** (not because their tests are slow
+  individually, but because collecting them pays for
+  torch_geometric/unified-planning/cartopy/gymnasium/openap/pygeodesy —
+  `tests/domains` alone measured ~7s just to *collect*), the real-`terraform`-binary
+  `tests/autofde/test_terraform_guards.py`, the two real-MCP-server
+  (`fastmcp` `Client`) tests `tests/fabric/test_dspy_mcp_planner_loop_chicago.py`
+  and `tests/fabric/test_mcp_ocel_instrumentation_chicago.py` (~5.9s alone —
+  the single largest item found when this pass profiled the hot loop with
+  `--durations`), the
+  fresh-subprocess-per-test `tests/powl/test_import_separation.py`, one
+  `--deselect` for `test_up_bridge_domain_rl` (real `ray.rllib` DQN training,
+  silently free on macOS only via an unrelated `libomp` skip — pulled out
+  structurally so it doesn't ride the hot path on Linux/CI), the three
+  real-subprocess-LLM-server Chicago tests, and the two WASM tests
+  (separately-tracked WIP: packaged archive is corrupt). Nothing here is
+  dropped from coverage — everything excluded still runs, unrestricted, in
+  `test-full`. Full rationale and the exact exclusion list live as comments
+  in the `Justfile` itself; don't let this paragraph drift from it.
+- `just test-full` — everything, the same four partitions `ci.yml`'s
+  `integration` job runs. Minutes, not seconds — run before finishing a
+  branch, not on every edit.
+- `uv run pytest --nbmake notebooks -v` for notebooks (unaffected by the
+  above; not part of either Justfile target).
+
+Whole-suite collection previously failed on a `test_pomcp.py` basename
+collision (`tests/solvers/cpp` vs `tests/solvers/python`) and a bare-`conftest`
+module-name collision (`tests/conftest.py` vs
+`tests/solvers/python/{openevolve,autoregressive}/conftest.py`) — fixed by
+`--import-mode=importlib`, **not** `__init__.py` markers: those were tried
+first, fixed both collisions, and broke Ray/RLlib worker unpickling and
+shadowed the real `openevolve` package in the same session — see
+`docs/STATUS.md` Pass 6. The flag is passed explicitly where needed
+(`.venv/bin/python -m pytest tests --collect-only -q --import-mode=importlib`
+for a whole-suite check), **not** set as a `pyproject.toml` default — it's
+~2.2x slower than the default mode and neither `just test` nor
+`just test-full` ever needs it (see the Build section above and the
+`Justfile`'s own comments). `.claude/rules/standing-law.md` records the
+corrected history; re-verify before citing it, per that file's own
+instruction.
 
 ## See also
 

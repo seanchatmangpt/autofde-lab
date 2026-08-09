@@ -32,6 +32,13 @@ dependencies = [
     "pathos>=0.2.7",
     "discrete-optimization>=0.9.0",
     "wrapt>=2.2.1",
+    # Real path dependency on the standalone `~/gymact` package (see
+    # `[tool.uv.sources]` below), for
+    # `autofde_lab.hub.domain.azuregoat_privesc.gymact_bridge`'s real
+    # `EnvironmentProvider`/`Environment` implementation -- not faked, not
+    # vendored; installed for real per
+    # `~/gymact/docs/integrations/consumer-setup.md`.
+    "gymact",
 ]
 
 [project.urls]
@@ -52,6 +59,12 @@ shared = [  # define a common extra to avoid redefining dependencies in both dom
     "numpy >=1.20.1,<2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
     "scipy>=1.9.2",
     "unified-planning>=1.1,<1.3",
+]
+receipts = [  # autofde_lab.receipts admission/broker layer: typed process-mining
+    # observation shapes (Receipt/OcelEvent/Evidence/...), see
+    # autofde_lab/receipts/wasm4pm_types.py. Pure pydantic, no native/Rust
+    # dependency -- see ~/wasm4pm-compat/wasm4pm-compat-py/README.md.
+    "wasm4pm-compat-py",
 ]
 domains = [
     "autofde-lab[shared]", # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
@@ -126,9 +139,23 @@ mcp = [
     # never actually started. This extra closes that gap.
     "fastmcp>=3.4.4,<4",
 ]
+gymact = [
+    # GymAct kernel surfaces (src/autofde_lab/gymact/): real FastAPI ASGI app,
+    # real httpx in-process client against it, real Typer CLI. rdflib/pyshacl
+    # come from the `ofmf` extra and fastmcp from `mcp` -- both already real,
+    # already-installed-or-installable local dependencies per
+    # .claude/rules/testing-chicago-style.md, not faked here either.
+    # The `gymact` package itself (src/autofde_lab/gymact/kernel.py is a thin
+    # wrapper over gymact.runtime.GymAct, not an independent reimplementation)
+    # is already a base `[project.dependencies]` entry -- path-sourced via
+    # `[tool.uv.sources]` -- so it is not repeated here.
+    "fastapi>=0.115",
+    "httpx>=0.27",
+    "typer>=0.12",
+]
 all = [
     # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
-    "autofde-lab[domains, solvers, pddl, dspy, ofmf, mcp]",
+    "autofde-lab[domains, solvers, pddl, dspy, ofmf, mcp, gymact]",
 ]
 
 [project.entry-points."autofde_lab.domains"]
@@ -158,6 +185,11 @@ RDDLDomainSimplifiedSpaces = "autofde_lab.hub.domain.rddl:RDDLDomainSimplifiedSp
 PDDLDomain = "autofde_lab.hub.domain.pddl:PDDLDomain [domains]"
 PPDDLDomain = "autofde_lab.hub.domain.pddl:PPDDLDomain [domains]"
 TPDDLDomain = "autofde_lab.hub.domain.pddl:TPDDLDomain [pddl]"
+terragoat_remediation = "autofde_lab.hub.domain.terragoat.terragoat_remediation:TerraGoatRemediation [domains]"
+k8s_goat_rbac_escalation = "autofde_lab.hub.domain.k8s_goat_rbac_escalation.k8s_goat_rbac_escalation:K8sGoatRBACEscalation [domains]"
+azuregoat_privesc = "autofde_lab.hub.domain.azuregoat_privesc.azuregoat_privesc:AzureGoatPrivilegeEscalation [domains]"
+cloudgoat_iam_privesc = "autofde_lab.hub.domain.cloudgoat_iam_privesc.cloudgoat_iam_privesc:CloudGoatIamPrivescDomain [domains]"
+fix_git_recovery = "autofde_lab.hub.domain.fix_git.git_recovery:GitRecoveryDomain [domains]"
 
 [project.entry-points."autofde_lab.solvers"]
 AOstar = "autofde_lab.hub.solver.aostar:AOstar [solvers]"
@@ -218,6 +250,13 @@ HSVI = "autofde_lab.hub.solver.hsvi:HSVI [solvers]"
 GoalHSVI = "autofde_lab.hub.solver.hsvi:GoalHSVI [solvers]"
 DSPyPolicy = "autofde_lab.hub.solver.dspy_policy:DSPyPolicy [dspy]"
 
+[project.entry-points."gymact.providers"]
+# Real GymAct provider registration, per
+# ~/gymact/docs/integrations/consumer-setup.md step 2. Discovery is
+# metadata-only (gymact.plugins.discover_provider_plugins/load_provider_plugin)
+# -- registering here never imports this module ambiently.
+azuregoat_privesc = "autofde_lab.hub.domain.azuregoat_privesc.gymact_bridge:AzureGoatPrivescProvider"
+
 [dependency-groups]
 dev = [
     "docopt>=0.6.2",
@@ -241,10 +280,24 @@ test = [
 [tool.uv]
 default-groups = "all"
 
+[tool.uv.sources]
+wasm4pm-compat-py = { path = "/Users/sac/wasm4pm-compat/wasm4pm-compat-py", editable = true }
+gymact = { path = "/Users/sac/gymact", editable = true }
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-ra -q"
 testpaths = ["tests"]
+# Deliberately NOT --import-mode=importlib here, global -- see
+# docs/STATUS.md Pass 6. importlib mode is the correct fix for two real
+# collisions (tests/solvers/cpp/test_pomcp.py vs .../python/test_pomcp.py;
+# a bare-conftest collision touching tests/solvers/python/{openevolve,
+# autoregressive}), but it's measurably slower than the default "prepend"
+# mode (~2.2x: just test went from ~4.8s to ~11s when this was global).
+# just test's --ignore list already excludes every file involved in either
+# collision, so the hot loop never needs it. It's applied per-invocation
+# instead, only on test-full's partitions that actually touch those files
+# -- see the Justfile.
 
 [build-system]
 requires = ["scikit-build-core>=0.11.6,<1"]

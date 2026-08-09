@@ -46,14 +46,16 @@ Pass/fail with named blockers; the witnesses quoted into `docs/STATUS.md`.
    `solve()`, executed this session.
 3. Skips gated on missing extras (`z3-solver`, `optuna`, `plado`, Node.js, macOS `libomp`
    segfault) are environment gates — `UNSUPPORTED`, not incomplete work.
-4. **Whole-suite collection is `BUILD_BROKEN`. Run by path.** Four files error at collection,
-   re-verified 2026-08-06:
-   - `tests/solvers/python/test_pomcp.py` collides on basename with
-     `tests/solvers/cpp/test_pomcp.py` (no package markers to disambiguate);
-   - `test_self_play_dspy_advanced_planning_chicago.py`,
-     `test_self_play_dspy_all_domains_chicago.py`,
-     `test_self_play_dspy_turbofieldfare_chicago.py` all fail to import.
-   Do not report "Chicago-test infra is healthy" — three of them do not import.
+4. **Whole-suite collection is `ALIVE` as of 2026-08-07** (was `BUILD_BROKEN`; see
+   `.claude/rules/standing-law.md` for the full history and fix). Re-verify with
+   `.venv/bin/python -m pytest tests --collect-only -q --import-mode=importlib` before repeating this line —
+   don't cite it from memory.
+5. **Use `.venv/bin/python -m pytest ...`, not `uv run pytest ...`, for routine runs** — `uv run`
+   re-checks the native build every invocation (a full CMake/Ninja pass) even when nothing
+   changed. Two commands, both in the repo-root `Justfile`: `just test` (fast loop, ~5.9-6.0s, parallel via pytest-xdist,
+   excludes the native/RL-heavy and cross-repo-crown suites) and `just test-full` (everything,
+   matching `ci.yml`'s partitioning). See `CLAUDE.md`'s Build section for the full exclusion
+   list and rationale.
 
 # Neighboring components
 
@@ -64,8 +66,9 @@ Pass/fail with named blockers; the witnesses quoted into `docs/STATUS.md`.
 # Verification
 
 ```bash
-uv run pytest tests/domains tests/fabric tests/ecosystem -v        # by path
-uv run pytest tests --collect-only -q                              # expect the 4 errors above
+.venv/bin/python -m pytest tests/domains tests/fabric tests/ecosystem -v   # by path
+.venv/bin/python -m pytest tests --collect-only -q --import-mode=importlib                        # expect zero errors
+just test                                                                  # fast loop, ~5.9-6.0s, parallel via pytest-xdist
 ```
 
 # Standing ceiling

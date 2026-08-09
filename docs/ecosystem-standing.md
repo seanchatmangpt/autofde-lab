@@ -36,17 +36,17 @@ because that defect was actually fixed — not because the assertion was relaxed
 | S1 | exemplar → candidate authority | ggen-create | `UNSUPPORTED` | Reverse compiler is **0 lines**; `ontology/` holds only `.keep`. Repo self-declares it: `scan_ontology` → `bootstrap_empty_surface: True`, claim ceiling `ONTOLOGY_SURFACE_INTEGRITY_ONLY`. Its CI/GALL harness *is* real (25/25 tests, 0.26s, real git fixtures) — governance, not payload. |
 | S2 | candidate authority → admitted | mfw | `ALIVE` | **Changed twice this pass; the second change retracts the first.** `cargo build -p mfw-planner -p mfw-pcp-cli` succeeds (47.23s, exit 0), committed as `bc1272b2` in `~/praxis`. Engine admission was first recorded `BLOCKED:VALIDATOR_ABSENT` on the claim that *"no VAL binary exists anywhere on this machine."* **That claim was false and is retracted** — it came from a `command -v` search, i.e. `PATH` only, stated over the whole machine. Four exist, one of them vendored inside mfw-planner itself (`~/mfw/mfw-planner/.vendor-val/build/bin/Validate`, Mach-O arm64, VAL Version 4). Registering both roles and running mfw's own gate: **classical** `purpose=classical_candidate`, `executable_digest=blake3:9c1b1943…`, `status=found`, exit 0; **validator** `purpose=independent_validator`, `executable_digest=blake3:0ce0a2e6…`, `validation_status=**valid**`, exit 0. Two distinct pinned executables, distinct purposes, independent verdict — this is admission, not contract conformance. Plan digest `blake3:d5168d9c…` matches the `export-powl` run; domain/problem digests match scikit-decide's independent computation. **Scope**: `engines.toml` + the wrapper are local and uncommitted, so this is reproducible only from that fixture. See RP-2 and pass 3 §6. |
 | S3 | plan computation (search graph) | **scikit-decide** | `ALIVE` | Engine runs, produces VAL-format plans. Quoted below. |
-| S3b | plan → POWL2 **projection** | **scikit-decide** | `PARTIAL_ALIVE` *(projection only)* | **Demoted this pass — was `ALIVE`, and that was wrong.** Digests are real blake3 and independently cross-checked (below), but the emitted Turtle would be **rejected by mfw's own committed SHACL shapes**: `project_plan_to_powl` never emits `mfwp:implementsAction`, which `powl2:ActivityLeafShape` requires `minCount 1`. It also hardcodes `mfwp:projection "total-order"` and emits zero `powl2:precedes` edges, so its `powl2:PartialOrder` is a chain. **Scope**: this manufactures a document; it is NOT execution — see the decisive question. |
+| S3b | plan → POWL2 **projection** | **scikit-decide** | `ALIVE` *(projection only)* | **Restored this pass, on real evidence, not restored to the pass-1 claim's basis.** The writer defect (missing `mfwp:implementsAction`, zero `powl2:precedes` edges) was repaired by a concurrent agent before this pass; what this pass adds is the actual missing check — `src/autofde_lab/fabric/shacl_conformance.py` runs `pyshacl.validate()` (a real, independent SHACL engine, not a second hand-written copy of the constraints) against the literal committed `~/mfw/mfw-planner/shapes/powl2.shacl.ttl`. Run and quoted (below): `conforms=True`, 0 violations; the wired test `test_projection_conforms_to_real_pyshacl_validation` passed (not skipped). **Scope**: this manufactures a document; it is NOT execution — see the decisive question. |
 | S3c | admitted POWL → **executed** workflow | mfw + **bcinr** (RP-7) | `PARTIAL_ALIVE` | A real POWL executor exists in `~/bcinr` (`execution_v2.rs:129` tick loop, OCEL, BLAKE3, deadlock refusal) — but it is **symbolic** (in-memory state only) and **not wired** to mfw's actuating broker. Three POWL representations, zero converters. Blocks the crown. |
 | S4 | manufacture (μ) | ggen | `PARTIAL_ALIVE` | `sync run` executes and self-verifies in CI; `Root Dogfood` 8/8 red at the closure gate. See RP-4. |
 | S5 | independent verification | ggen / ggen-legacy | `PARTIAL_ALIVE` | **Changed this pass.** A receipt manufactured this session verified `valid=True`, chain `98e756627c789118`, `outputs=7` under **two** builds, byte-identical — and the verifying build was not the writing build. But only two builds are reachable (`/opt/homebrew/bin/ggen` no longer exists), so EV-1's residual is untested rather than disproven. See EV-1 / RP-1, both still open. |
 | S6 | replay / equivalence / sunset | ggen-legacy | `PARTIAL_ALIVE` | 3 compiled verifier binaries execute and emit typed fail-closed refusals; `decision-engine.py` is a real 3-report + customer-flag gate defaulting to REFUSED. Root LSP crate never built, no CI builds it. |
 | S7 | recursive bootstrap controller | — | `UNSUPPORTED` | `Blocked → spawn child → manufacture → verify → admit → resume parent` exists **nowhere in code** across all five repos (`mfw`, `ggen`, `ggen-create`, `ggen-legacy`, `bcinr`). Primitives real; orchestration absent. Asserted absent by a test so the claim cannot drift silently. |
 
-**The chain does not close.** `ALIVE` is not claimable for the end-to-end path. S3 is genuinely
-`ALIVE`; S3b is `PARTIAL_ALIVE` pending the `mfwp:implementsAction` defect; S1, S3c and S7 each
-independently prevent closure — **S3c is the decisive one**, because a plan that is never
-executed makes every downstream stage moot.
+**The chain does not close.** `ALIVE` is not claimable for the end-to-end path. S3 and S3b are
+genuinely `ALIVE` (S3b's real SHACL conformance is verified this pass — see the S3b row); S1,
+S3c and S7 each independently prevent closure — **S3c is the decisive one**, because a plan
+that is never executed makes every downstream stage moot.
 
 *Correction, recorded in place.* The pass-1 text here read "S3/S3b are genuinely `ALIVE`". That
 is retracted: S3b's output does not satisfy the shapes it claims to target (see the S3b row and
@@ -299,18 +299,49 @@ Minor mismatch, recorded so it is not rediscovered: mfw writes `"projection": "t
 (underscore); `powl.py` writes `mfwp:projection "total-order"` (hyphen). Cosmetic today,
 load-bearing the moment either string is compared rather than displayed.
 
-**Defect found this pass — why S3b is `PARTIAL_ALIVE`, not `ALIVE`.**
-`src/autofde_lab/fabric/powl.py::project_plan_to_powl` never emits `mfwp:implementsAction`.
-`~/mfw/mfw-planner/shapes/powl2.shacl.ttl`'s `powl2:ActivityLeafShape` requires it with
-`minCount 1`. So the Turtle this repo produces **would be rejected by the very shapes it is
-projected against** — the pass-1 `ALIVE` was granted on vocabulary resemblance, not on
-validation. Two further defects in the same writer: `mfwp:projection` is hardcoded to
-`"total-order"`, and zero `powl2:precedes` edges are emitted, so a declared
-`powl2:PartialOrder` is in fact a chain and carries no order information a driver could use.
+**Defect from a prior pass — since repaired, and now independently checked, this pass.**
+A concurrent agent had already added `mfwp:implementsAction`, `prov:wasDerivedFrom`, and
+real `powl2:precedes` edges to `project_plan_to_powl` by the time this pass started
+(`mfwp:projection` is still the literal `"total-order"`, matching mfw's own Turtle emitter —
+see the "minor mismatch" note above, which is about the JSON receipt field, not this Turtle
+literal). What had never been done — the condition this doc itself set for S3b to return to
+`ALIVE` — was running the real shapes against the real output. That gap is now closed, not by
+hand-reimplementing the shapes again (the mistake that let the original defect ship
+undetected), but by running an independent, spec-compliant SHACL engine:
 
-A concurrent agent is repairing the writer. **This entry does not claim that fix** — nothing
-was executed against a repaired `powl.py` here. S3b returns to `ALIVE` only when the emitted
-Turtle passes `shacl_validate` against the committed shapes, run and quoted.
+`src/autofde_lab/fabric/shacl_conformance.py` (new this pass) calls
+`pyshacl.validate(turtle, shacl_graph=<~/mfw/mfw-planner/shapes/powl2.shacl.ttl>, ...)` —
+`pyshacl`/`rdflib` are real, installed dependencies in this repo's own `.venv` (declared
+under the `ofmf` extra; `powl.py`'s existing docstring claim that `rdflib` "is not
+installed" describes the core package's dependency list, not this environment). Run for
+real, this pass, against the same blocks-world plan quoted above:
+
+```text
+$ .venv/bin/python -c "
+from autofde_lab.fabric.powl import project_plan_to_powl
+from autofde_lab.fabric.shacl_conformance import check_shacl_conformance
+turtle = project_plan_to_powl(
+    ['(unstack b a)', '(put-down b)', '(pick-up a)', '(stack a c)'],
+    base_iri='urn:skdecide:plan',
+)
+result = check_shacl_conformance(turtle)
+print('conforms=', result.conforms)
+print('violation_count=', result.violation_count)
+print(result.report_text)
+"
+conforms= True
+violation_count= 0
+Validation Report
+Conforms: True
+```
+
+And the same check wired into the test suite —
+`tests/ecosystem/test_powl_roundtrip_chicago.py::TestShaclConformance::
+test_projection_conforms_to_real_pyshacl_validation` — `1 passed`, not skipped (skips only
+if `~/mfw`'s shapes file or `pyshacl` itself is absent, named `BLOCKED:MFW_SHAPES_ABSENT`/
+`BLOCKED:PYSHACL_ABSENT`, never substituted). This is a real conformance verdict from a real
+engine against the real committed shapes, run and quoted — the exact bar this entry set.
+**S3b returns to `ALIVE`.**
 
 ### S3c — silent-wrong-answer refusal (the most important behavior added)
 

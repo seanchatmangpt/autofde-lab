@@ -48,29 +48,56 @@ are not silently over-read. Every existing standing claim in this repo and in bo
 
 See `.claude/rules/fde-authority-boundary.md` for who may issue what.
 
-### Known standing exception (recorded, not silently omitted)
+### Former standing exception — resolved 2026-08-07
 
-`uv run pytest tests --collect-only -q` currently fails collection outright
-(`BUILD_BROKEN` by this section's own vocabulary) — confirmed this session,
-re-verified before writing this line:
+`uv run pytest tests --collect-only -q` previously failed collection outright
+(`BUILD_BROKEN` by this section's own vocabulary), for reasons recorded here
+across 2026-08-06 and earlier:
 
-- `tests/solvers/python/test_pomcp.py` collides on basename with
+- `tests/solvers/python/test_pomcp.py` collided on basename with
   `tests/solvers/cpp/test_pomcp.py` (no package markers to disambiguate).
 - `tests/test_self_play_dspy_advanced_planning_chicago.py`,
-  `_all_domains_chicago.py`, `_turbofieldfare_chicago.py` — all three fail to
-  import. These are the exact Chicago-test files `docs/STATUS.md`'s "close
-  WIP with Chicago-style tests" pass references; they don't import cleanly,
-  which is worth surfacing precisely so the pass isn't read as "Chicago-test
-  infra is healthy across the board."
+  `_all_domains_chicago.py`, `_turbofieldfare_chicago.py` — all three failed
+  to import, via a *different* mechanism than first assumed: a bare-`conftest`
+  module-name collision between `tests/conftest.py` and
+  `tests/solvers/python/{openevolve,autoregressive}/conftest.py` (both lacked
+  `__init__.py`, so pytest's prepend import mode gave them the same bare
+  module name `conftest`, and whichever collected first shadowed the other).
 
-Don't claim green collection without re-running the command above and
-checking the file list still matches.
+**Fixed 2026-08-07, then corrected same day** (`docs/STATUS.md` Pass 6 has the
+full account — read that, not this summary, if the mechanism matters): the
+first fix added `__init__.py` to `tests/solvers/`, `tests/solvers/cpp/`,
+`tests/solvers/python/`, `tests/solvers/python/openevolve/`, and
+`tests/solvers/python/autoregressive/`, which disambiguated both collisions
+but broke two other things the same session — real `ray.rllib` actor workers
+unpickling test-defined classes by their now-dotted module name, and
+`tests/solvers/python/openevolve/__init__.py` shadowing the real installed
+`openevolve` PyPI package. **All five `__init__.py` files were removed.**
+The actual, current fix is `--import-mode=importlib` (no `sys.path`
+insertion, so no shadowing is possible by construction) — passed explicitly,
+**not** a global `pyproject.toml` default, because it's measurably slower
+than the default "prepend" mode (~2.2x, confirmed live on `just test`) and
+neither `Justfile` target ever needs it: `just test`'s `--ignore`s already
+exclude every file involved in either collision, and `just test-full` runs
+each partition in its own pytest process, which never combines the
+colliding files in one collection pass either. It's only needed for a
+combined `pytest tests` invocation — e.g. this section's own verification
+command, `.venv/bin/python -m pytest tests --collect-only -q
+--import-mode=importlib`, re-verified this session: zero collection errors,
+whole-suite collection is `ALIVE`. An exported `PYTHONPATH` in the
+`Justfile` fixes a separate, unrelated issue: Ray's spawned worker
+processes need it explicitly, since they don't inherit pytest's in-process
+`sys.path` mutation.
 
-**Re-verified 2026-08-06** — still exactly these four errors, same files. The
-new suites added since (`tests/ecosystem/`,
-`tests/domains/python/test_career_admission_unit.py`) collect and pass
-independently; run them by path rather than relying on a whole-suite
-collection that is still `BUILD_BROKEN`.
+Separately, joblib and pyarrow were missing from the venv entirely (not
+corrupt — absent), causing `tests/domains` and `tests/scheduling` collection
+errors; fixed by installing both, then a full `uv sync --extra=all` to also
+land `torch`, `stable-baselines3`, `torch-geometric`, `openap`, `pygeodesy`,
+`fsspec`, and the rest of the `domains`/`solvers` extras that were likewise
+absent (not a stale-lock or corruption issue — the venv had simply never been
+synced with `--extra=all` in this checkout). Don't claim green collection
+without re-running the command above — this entry documents what was true as
+of 2026-08-07, not a permanent guarantee.
 
 ## See also
 

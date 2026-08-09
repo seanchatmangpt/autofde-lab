@@ -79,12 +79,15 @@ shared architecture (template header, impl, pybind wrapper, `.cc.in`,
 `CMakeLists.txt`) — read a sibling solver (A* for simple, MCTS for complex)
 rather than re-deriving the pattern here.
 
-**Build**: `uv sync --extra=all -v`; `uv run pytest tests`;
-`uv run pytest --nbmake notebooks -v`; `pre-commit run --all-files`. Python
-3.10+ per `pyproject.toml`; the verified working dev environment this
-session is 3.13.9 (pyproject.toml carries explicit 3.13 compatibility pins
-for numpy/pyRDDLGym-rl/ray) — treat 3.13 as current, not merely supported.
-CMake/C++20/pybind11 for the compiled extension.
+**Build**: `uv sync --extra=all -v`; `pre-commit run --all-files`;
+`uv run pytest --nbmake notebooks -v`. For `pytest tests/...`, see
+`CLAUDE.md`'s Build section (`just test` / `just test-full`, and why
+`uv run pytest` is the wrong command for routine runs) — don't restate that
+guidance here, it drifts. Python 3.10+ per `pyproject.toml`; the verified
+working dev environment this session is 3.13.9 (pyproject.toml carries
+explicit 3.13 compatibility pins for numpy/pyRDDLGym-rl/ray) — treat 3.13 as
+current, not merely supported. CMake/C++20/pybind11 for the compiled
+extension.
 
 ## See also
 
