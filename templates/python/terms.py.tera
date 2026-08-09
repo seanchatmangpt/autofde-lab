@@ -4,7 +4,7 @@
 """Canonical RDF term IRIs projected from the semantic constitution."""
 
 {%- set properties = sparql(query='PREFIX afl: <urn:autofde-lab:> PREFIX owl: <http://www.w3.org/2002/07/owl#> SELECT ?name ?iri WHERE { VALUES ?kind { owl:ObjectProperty owl:DatatypeProperty } ?p a ?kind . FILTER(STRSTARTS(STR(?p), "urn:autofde-lab:")) BIND(STRAFTER(STR(?p), "urn:autofde-lab:") AS ?name) BIND(STR(?p) AS ?iri) } ORDER BY ?name') -%}
-{%- set standing = sparql(query='PREFIX afl: <urn:autofde-lab:> PREFIX skos: <http://www.w3.org/2004/02/skos/core#> SELECT ?label ?iri WHERE { ?value a afl:StandingValue ; skos:prefLabel ?label . BIND(STR(?value) AS ?iri) } ORDER BY ?label') -%}
+{% set standing = sparql(query='PREFIX afl: <urn:autofde-lab:> PREFIX skos: <http://www.w3.org/2004/02/skos/core#> SELECT ?label ?iri WHERE { ?value a afl:StandingValue ; skos:prefLabel ?label . BIND(STR(?value) AS ?iri) } ORDER BY ?label') %}
 
 PROPERTY_IRI_BY_NAME = {
 {% for row in properties %}
