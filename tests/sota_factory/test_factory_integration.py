@@ -37,11 +37,18 @@ def _target(frontier: float = 50.0) -> BenchmarkTarget:
         primary_metric="e2e_success_percent",
         task_ids=("t1", "t2", "t3", "t4"),
         expected_task_count=4,
+        evaluator_ref="official-evaluator:r1",
+        frontier_source_ref="published-frontier:r1",
     )
 
 
 def _result(
-    plan, outcome: TrialOutcome, kind: FailureKind = FailureKind.NONE, blocker: str = ""
+    plan,
+    outcome: TrialOutcome,
+    kind: FailureKind = FailureKind.NONE,
+    blocker: str = "",
+    *,
+    evidence: bool = True,
 ):
     return TrialResult(
         plan_id=plan.plan_id,
@@ -52,6 +59,7 @@ def _result(
         outcome=outcome,
         failure_kind=kind,
         blocker=blocker,
+        evidence_refs=(f"receipt:{plan.plan_id}",) if evidence else (),
     )
 
 
@@ -72,7 +80,25 @@ def test_factory_reaches_terminal_only_from_own_complete_score_above_frontier() 
     assert winner.standing is FrontierStanding.SOTA_SURPASSED
     assert winner.score == 100.0
     assert factory.terminal
+    assert factory.definition_of_done().done
     assert factory.next_batch(4) == ()
+
+
+def test_score_above_frontier_without_receipts_is_not_definition_of_done() -> None:
+    factory = SOTAFactory(
+        target=_target(),
+        decision_space=_space(),
+        strategy=SelectionStrategy.BASELINE_FIRST,
+        baseline=next(_space().iter_decisions(limit=1)),
+    )
+    factory.ingest(
+        _result(plan, TrialOutcome.PASS, evidence=False) for plan in factory.plans
+    )
+
+    assert factory.scoreboard().champion.standing is FrontierStanding.SOTA_SURPASSED
+    assert not factory.terminal
+    missing = {item.obligation_id for item in factory.definition_of_done().missing}
+    assert missing == {"DOD-005"}
 
 
 def test_identity_drift_is_refused() -> None:
