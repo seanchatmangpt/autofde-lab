@@ -94,11 +94,21 @@ def load_spec(path: str | Path) -> FactorySpec:
         models=tuple(_choice(value) for value in space_payload["models"]),
         planners=tuple(_choice(value) for value in space_payload["planners"]),
         tool_policies=tuple(_choice(value) for value in space_payload["tool_policies"]),
-        repair_policies=tuple(_choice(value) for value in space_payload["repair_policies"]),
-        replanning_policies=tuple(_choice(value) for value in space_payload["replanning_policies"]),
-        verification_policies=tuple(_choice(value) for value in space_payload["verification_policies"]),
-        projection_policies=tuple(_choice(value) for value in space_payload["projection_policies"]),
-        memory_policies=tuple(_choice(value) for value in space_payload["memory_policies"]),
+        repair_policies=tuple(
+            _choice(value) for value in space_payload["repair_policies"]
+        ),
+        replanning_policies=tuple(
+            _choice(value) for value in space_payload["replanning_policies"]
+        ),
+        verification_policies=tuple(
+            _choice(value) for value in space_payload["verification_policies"]
+        ),
+        projection_policies=tuple(
+            _choice(value) for value in space_payload["projection_policies"]
+        ),
+        memory_policies=tuple(
+            _choice(value) for value in space_payload["memory_policies"]
+        ),
         budgets=tuple(_budget(value) for value in space_payload["budgets"]),
         rules=rules,
     )
@@ -157,7 +167,9 @@ def load_results(path: str | Path) -> tuple[TrialResult, ...]:
     return tuple(rows)
 
 
-def dump_jsonl(rows: Iterable[Mapping[str, Any]], path: str | Path | None = None) -> str:
+def dump_jsonl(
+    rows: Iterable[Mapping[str, Any]], path: str | Path | None = None
+) -> str:
     text = "".join(json.dumps(dict(row), sort_keys=True) + "\n" for row in rows)
     if path is not None:
         Path(path).write_text(text)
