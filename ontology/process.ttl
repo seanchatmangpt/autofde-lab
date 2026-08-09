@@ -1,0 +1,33 @@
+@prefix afl: <urn:autofde-lab:> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:autofde-lab:ontology:process>
+    a owl:Ontology ;
+    dcterms:title "AutoFDE Lab partial-order process vocabulary" ;
+    dcterms:description "A research-bounded partial-order process contract. Generating DAG edges are transport syntax; semantic precedence is reachability/transitive closure. Execution is outside this vocabulary." ;
+    dcterms:created "2026-08-08"^^xsd:date .
+
+afl:POWLProcess a owl:Class , prov:Entity ; rdfs:label "POWL process" .
+afl:ProcessNode a owl:Class , prov:Entity ; rdfs:label "Process node" .
+afl:TransitionNode a owl:Class ; rdfs:subClassOf afl:ProcessNode ; rdfs:label "Transition node" .
+afl:SilentTransition a owl:Class ; rdfs:subClassOf afl:TransitionNode ; rdfs:label "Silent transition" .
+afl:PartialOrderComposite a owl:Class ; rdfs:subClassOf afl:ProcessNode ; rdfs:label "Partial-order composite" .
+afl:ChoiceGraph a owl:Class ; rdfs:subClassOf afl:ProcessNode ; rdfs:label "Choice graph" .
+afl:OrderEdge a owl:Class , prov:Entity ; rdfs:label "Generating order edge" ; rdfs:comment "One direct/generating precedence edge. The mathematical strict partial-order relation is its acyclic reachability closure." .
+afl:POWLCommitment a owl:Class , prov:Entity ; rdfs:label "POWL commitment" ; rdfs:comment "An exact partial-order commitment derived only from a governed candidate. It does not itself grant actuation authority." .
+
+afl:hasRootNode a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain afl:POWLProcess ; rdfs:range afl:ProcessNode ; rdfs:label "has root node" .
+afl:hasChildNode a owl:ObjectProperty ; rdfs:domain afl:ProcessNode ; rdfs:range afl:ProcessNode ; rdfs:label "has child node" .
+afl:hasOrderEdge a owl:ObjectProperty ; rdfs:domain afl:PartialOrderComposite ; rdfs:range afl:OrderEdge ; rdfs:label "has generating order edge" .
+afl:beforeNode a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain afl:OrderEdge ; rdfs:range afl:ProcessNode ; rdfs:label "before node" .
+afl:afterNode a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain afl:OrderEdge ; rdfs:range afl:ProcessNode ; rdfs:label "after node" .
+afl:precedes a owl:ObjectProperty , owl:TransitiveProperty ; rdfs:domain afl:ProcessNode ; rdfs:range afl:ProcessNode ; rdfs:label "precedes" ; rdfs:comment "Semantic strict precedence derived from reachability, not necessarily materialized on the wire." .
+afl:commitsTo a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain afl:POWLCommitment ; rdfs:range afl:GovernedCandidate ; rdfs:label "commits to" ; rdfs:comment "The range is deliberately GovernedCandidate, preventing raw plan candidates from being the semantic commitment target." .
+afl:committedProcess a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain afl:POWLCommitment ; rdfs:range afl:POWLProcess ; rdfs:label "committed process" .
+afl:repairOf a owl:ObjectProperty ; rdfs:domain afl:POWLProcess ; rdfs:range afl:POWLProcess ; rdfs:label "repair of" .
+afl:preservesNode a owl:ObjectProperty ; rdfs:domain afl:POWLProcess ; rdfs:range afl:ProcessNode ; rdfs:label "preserves node" .
+afl:affectedByPerturbation a owl:ObjectProperty ; rdfs:domain afl:ProcessNode ; rdfs:range afl:Perturbation ; rdfs:label "affected by perturbation" .
