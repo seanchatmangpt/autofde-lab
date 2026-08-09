@@ -56,9 +56,13 @@ class GymActExecutionProfile:
             self.capability_binding is not None
         )
         if selected != 1:
-            raise ValueError("execution profile requires exactly one capability selector")
+            raise ValueError(
+                "execution profile requires exactly one capability selector"
+            )
         if not self.expected:
-            raise ValueError("execution profile requires a non-empty verification oracle")
+            raise ValueError(
+                "execution profile requires a non-empty verification oracle"
+            )
 
 
 @runtime_checkable
@@ -89,7 +93,9 @@ def _without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for key, value in pairs:
         if key in result:
-            raise ExecutionProfileRefused(f"REFUSED:DUPLICATE_EXECUTION_PROFILE_KEY:{key}")
+            raise ExecutionProfileRefused(
+                f"REFUSED:DUPLICATE_EXECUTION_PROFILE_KEY:{key}"
+            )
         result[key] = value
     return result
 
@@ -121,9 +127,13 @@ def _json_object(
     except ExecutionProfileRefused:
         raise
     except json.JSONDecodeError as exc:
-        raise ExecutionProfileRefused(f"REFUSED:EXECUTION_PROFILE_JSON_INVALID:{key}") from exc
+        raise ExecutionProfileRefused(
+            f"REFUSED:EXECUTION_PROFILE_JSON_INVALID:{key}"
+        ) from exc
     if not isinstance(value, dict) or (nonempty and not value):
-        raise ExecutionProfileRefused(f"REFUSED:EXECUTION_PROFILE_OBJECT_REQUIRED:{key}")
+        raise ExecutionProfileRefused(
+            f"REFUSED:EXECUTION_PROFILE_OBJECT_REQUIRED:{key}"
+        )
     return value
 
 
@@ -138,7 +148,9 @@ class GgenExecutionProfileBundleResolver:
     def __init__(self, raw: bytes, *, expected_sha256: str) -> None:
         observed = _sha256(raw)
         if observed != expected_sha256.lower():
-            raise ExecutionProfileRefused("REFUSED:EXECUTION_PROFILE_BUNDLE_DIGEST_DRIFT")
+            raise ExecutionProfileRefused(
+                "REFUSED:EXECUTION_PROFILE_BUNDLE_DIGEST_DRIFT"
+            )
         try:
             document = json.loads(
                 raw.decode("utf-8"), object_pairs_hook=_without_duplicate_keys
@@ -146,7 +158,9 @@ class GgenExecutionProfileBundleResolver:
         except ExecutionProfileRefused:
             raise
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise ExecutionProfileRefused("REFUSED:EXECUTION_PROFILE_BUNDLE_JSON") from exc
+            raise ExecutionProfileRefused(
+                "REFUSED:EXECUTION_PROFILE_BUNDLE_JSON"
+            ) from exc
         if not isinstance(document, dict) or set(document) != _GGEN_TOP_KEYS:
             raise ExecutionProfileRefused("REFUSED:EXECUTION_PROFILE_BUNDLE_SHAPE")
         if document.get("schema") != _GGEN_SCHEMA:
