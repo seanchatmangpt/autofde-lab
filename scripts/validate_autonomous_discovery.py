@@ -46,6 +46,20 @@ PLANNER_INPUT_KEYS = frozenset(
         "max_probes",
     }
 )
+FORBIDDEN_PLANNER_KEYS = frozenset(
+    {
+        "steps",
+        "source_ref",
+        "source",
+        "description",
+        "preconditions",
+        "establishes",
+        "removes",
+        "requires_authority",
+        "provider_private_config",
+        "walkthrough",
+    }
+)
 PLANNER_ENV_KEYS = frozenset({"LANG", "PYTHONIOENCODING"})
 
 
@@ -78,17 +92,15 @@ def _private_world(recipe: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _private_tokens(recipe: dict[str, Any]) -> tuple[str, ...]:
-    values: list[str] = []
-    source_ref = recipe.get("source_ref")
-    if isinstance(source_ref, str) and source_ref:
-        values.append(source_ref)
-    for step in recipe["steps"]:
-        for key in ("id", "description", "source"):
-            value = step.get(key)
-            if isinstance(value, str) and value:
-                values.append(value)
-    return tuple(values)
+def _forbidden_planner_key_present(value: Any) -> bool:
+    if isinstance(value, dict):
+        return any(
+            key in FORBIDDEN_PLANNER_KEYS or _forbidden_planner_key_present(item)
+            for key, item in value.items()
+        )
+    if isinstance(value, (list, tuple)):
+        return any(_forbidden_planner_key_present(item) for item in value)
+    return False
 
 
 def _independent_ocel_replay(log: dict[str, Any]) -> tuple[bool, int]:
@@ -110,8 +122,7 @@ async def _read_worker_message(
         if process.stderr is not None:
             stderr = await process.stderr.read()
         raise RuntimeError(
-            "DISCOVERY_WORKER_EOF:"
-            + stderr.decode("utf-8", errors="replace")[-1000:]
+            "DISCOVERY_WORKER_EOF:" + stderr.decode("utf-8", errors="replace")[-1000:]
         )
     value = json.loads(line)
     if not isinstance(value, dict):
@@ -139,6 +150,8 @@ async def _discover_in_isolated_process(
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     if set(challenge) != PLANNER_INPUT_KEYS:
         raise RuntimeError("DISCOVERY_PLANNER_INPUT_SURFACE_DRIFT")
+    if _forbidden_planner_key_present(challenge):
+        raise RuntimeError("DISCOVERY_PRIVATE_FIELD_LEAKAGE_REFUSED")
 
     with tempfile.TemporaryDirectory(prefix="autofde-discovery-") as directory:
         worker_root = Path(directory)
@@ -164,11 +177,17 @@ async def _discover_in_isolated_process(
 
         try:
             ready = await _read_worker_message(process)
-            if ready.get("type") != "ready" or ready.get("protocol") != PLANNER_PROTOCOL:
+            if (
+                ready.get("type") != "ready"
+                or ready.get("protocol") != PLANNER_PROTOCOL
+            ):
                 raise RuntimeError("DISCOVERY_WORKER_HANDSHAKE_REFUSED")
             if ready.get("isolated") is not True:
                 raise RuntimeError("DISCOVERY_WORKER_NOT_ISOLATED")
-            if set(ready.get("cwd_sources", ())) != {"discovery.py", "discovery_worker.py"}:
+            if set(ready.get("cwd_sources", ())) != {
+                "discovery.py",
+                "discovery_worker.py",
+            }:
                 raise RuntimeError("DISCOVERY_WORKER_CWD_NOT_SPARSE")
             if set(ready.get("environment_keys", ())) - PLANNER_ENV_KEYS:
                 raise RuntimeError("DISCOVERY_WORKER_ENVIRONMENT_NOT_SANITIZED")
@@ -230,18 +249,16 @@ async def _discover_in_isolated_process(
 
 def _pattern_evidence(
     *,
-    recipe: dict[str, Any],
     challenge: dict[str, Any],
     discovered: dict[str, Any],
     isolation: dict[str, Any],
 ) -> dict[str, bool]:
-    encoded_challenge = json.dumps(challenge, sort_keys=True, separators=(",", ":"))
-    private_tokens = _private_tokens(recipe)
+    exact_admission_surface = set(challenge) == PLANNER_INPUT_KEYS
+    forbidden_fields_absent = not _forbidden_planner_key_present(challenge)
     opaque_actions = all(
         str(action_id).startswith("urn:gymact:opaque:action:")
         for action_id in challenge["action_ids"]
     )
-    source_text_hidden = all(token not in encoded_challenge for token in private_tokens)
     process_cut = all(
         isolation[name]
         for name in (
@@ -251,15 +268,16 @@ def _pattern_evidence(
             "sanitized_environment",
         )
     )
+    admitted_no_leak = exact_admission_surface and forbidden_fields_absent
     return {
-        "recipe_hidden_source_visible": source_text_hidden,
-        "recipe_and_walkthrough_hidden": source_text_hidden and process_cut,
+        "recipe_hidden_source_visible": admitted_no_leak,
+        "recipe_and_walkthrough_hidden": admitted_no_leak and process_cut,
         "unknown_action_semantics_active_probing": opaque_actions
         and discovered["probes"] > 0,
-        "entire_task_held_out": source_text_hidden and opaque_actions,
-        "entire_family_held_out": process_cut,
-        "full_corpus_no_solution_leakage": process_cut
-        and source_text_hidden
+        "entire_task_held_out": admitted_no_leak and opaque_actions,
+        "entire_family_held_out": admitted_no_leak and process_cut,
+        "full_corpus_no_solution_leakage": admitted_no_leak
+        and process_cut
         and discovered["evidence_receipt_count"] > 0,
     }
 
@@ -305,13 +323,14 @@ async def _run_recipe(path: Path) -> dict[str, Any]:
         raise AssertionError(f"{path.name}: final replay has no receipts")
 
     patterns = _pattern_evidence(
-        recipe=recipe,
         challenge=challenge,
         discovered=discovered,
         isolation=isolation,
     )
     if not all(patterns.values()):
-        raise AssertionError(f"{path.name}: no-leak pattern evidence failed: {patterns}")
+        raise AssertionError(
+            f"{path.name}: no-leak pattern evidence failed: {patterns}"
+        )
 
     return {
         "recipe": path.name,
@@ -378,6 +397,7 @@ async def _main(output: Path) -> int:
         "pattern_counts": pattern_counts,
         "planner_boundary": PLANNER_PROTOCOL,
         "planner_input_keys": sorted(PLANNER_INPUT_KEYS),
+        "planner_forbidden_keys": sorted(FORBIDDEN_PLANNER_KEYS),
         "execution_path": (
             "autofde SELECT isolated process -> external GymAct benchmark harness "
             "-> verified consequence -> OCEL -> conformance replay"
