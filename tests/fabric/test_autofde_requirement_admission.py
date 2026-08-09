@@ -1,8 +1,10 @@
 import importlib.util
-from pathlib import Path
 import unittest
+from pathlib import Path
 
-SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "autofde_admit_requirement.py"
+SCRIPT = (
+    Path(__file__).resolve().parents[2] / "scripts" / "autofde_admit_requirement.py"
+)
 SPEC = importlib.util.spec_from_file_location("autofde_admit_requirement", SCRIPT)
 admit = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
@@ -23,7 +25,9 @@ def requirement():
 class AutoFDERequirementAdmissionTests(unittest.TestCase):
     def test_deterministic_powl_and_admission(self):
         first_admission, first_powl = admit.admit(requirement(), "lab@abc", "urn:test")
-        second_admission, second_powl = admit.admit(requirement(), "lab@abc", "urn:test")
+        second_admission, second_powl = admit.admit(
+            requirement(), "lab@abc", "urn:test"
+        )
         self.assertEqual((first_admission, first_powl), (second_admission, second_powl))
         self.assertEqual(first_admission["standing"], "ALIVE")
         self.assertFalse(first_admission["do_authority"])
