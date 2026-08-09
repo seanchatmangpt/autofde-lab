@@ -52,8 +52,13 @@ class ExperimentCompiler:
         task_ids: Sequence[str] | None = None,
     ) -> CompiledExperimentSet:
         if strategy is SelectionStrategy.PAIRWISE_COVERING:
+            covering_baseline = baseline or next(
+                decision_space.iter_decisions(limit=1), None
+            )
+            if covering_baseline is None:
+                raise ValueError("REFUSED:NO_LAWFUL_DECISION_BASIS")
             selected = decision_space.combinatorial_pairwise_covering(
-                baseline=baseline,
+                baseline=covering_baseline,
                 candidate_limit=candidate_limit,
                 max_architectures=max_architectures,
             )
