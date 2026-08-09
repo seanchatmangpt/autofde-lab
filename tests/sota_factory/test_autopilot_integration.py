@@ -54,7 +54,12 @@ def _factory() -> SOTAFactory:
     return SOTAFactory(target=target, decision_space=_space())
 
 
-def _ggen_bundle(plan: ExperimentPlan, *, revision: str | None = None) -> bytes:
+def _ggen_bundle(
+    plan: ExperimentPlan,
+    *,
+    revision: str | None = None,
+    config_json: str | None = None,
+) -> bytes:
     document = {
         "schema": "urn:autofde:execution-profile:v1",
         "generated_by": "ggen:autofde-execution-profile-pack",
@@ -67,12 +72,14 @@ def _ggen_bundle(plan: ExperimentPlan, *, revision: str | None = None) -> bytes:
                 "provider": "memory",
                 "benchmark_revision": revision or plan.benchmark_revision,
                 "scenario": None,
-                "config": {"initial": {"counter": 0}},
+                "config_json": config_json
+                if config_json is not None
+                else json.dumps({"initial": {"counter": 0}}, sort_keys=True),
                 "capability_ref": None,
                 "capability_binding": "increment",
-                "payload": {"key": "counter", "amount": 1},
-                "expected": {"counter": 1},
-                "input_schema": {"type": "object"},
+                "payload_json": json.dumps({"key": "counter", "amount": 1}, sort_keys=True),
+                "expected_json": json.dumps({"counter": 1}, sort_keys=True),
+                "input_schema_json": json.dumps({"type": "object"}, sort_keys=True),
                 "authority_ref": "urn:test:authority",
                 "action_ref": "urn:test:action:increment",
             }
@@ -138,7 +145,7 @@ def test_ggen_bundle_resolver_binds_exact_plan_revision_and_digest() -> None:
     assert profile.expected == {"counter": 1}
 
 
-def test_ggen_bundle_resolver_refuses_digest_or_benchmark_revision_drift() -> None:
+def test_ggen_bundle_resolver_refuses_digest_revision_or_inner_json_drift() -> None:
     plan = _factory().plans[0]
     raw = _ggen_bundle(plan)
     with pytest.raises(ExecutionProfileRefused, match="BUNDLE_DIGEST_DRIFT"):
@@ -149,6 +156,13 @@ def test_ggen_bundle_resolver_refuses_digest_or_benchmark_revision_drift() -> No
         drifted, expected_sha256=hashlib.sha256(drifted).hexdigest()
     )
     with pytest.raises(ExecutionProfileRefused, match="REVISION_DRIFT"):
+        resolver.resolve(plan)
+
+    malformed = _ggen_bundle(plan, config_json="{not-json}")
+    resolver = GgenExecutionProfileBundleResolver(
+        malformed, expected_sha256=hashlib.sha256(malformed).hexdigest()
+    )
+    with pytest.raises(ExecutionProfileRefused, match="JSON_INVALID:config_json"):
         resolver.resolve(plan)
 
 
