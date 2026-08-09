@@ -77,7 +77,9 @@ def _ggen_bundle(
                 else json.dumps({"initial": {"counter": 0}}, sort_keys=True),
                 "capability_ref": None,
                 "capability_binding": "increment",
-                "payload_json": json.dumps({"key": "counter", "amount": 1}, sort_keys=True),
+                "payload_json": json.dumps(
+                    {"key": "counter", "amount": 1}, sort_keys=True
+                ),
                 "expected_json": json.dumps({"counter": 1}, sort_keys=True),
                 "input_schema_json": json.dumps({"type": "object"}, sort_keys=True),
                 "authority_ref": "urn:test:authority",
