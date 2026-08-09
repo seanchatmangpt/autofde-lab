@@ -276,3 +276,37 @@ def test_real_faulty_image_correlated_result_confirms_generalization_with_zero_c
     assert row["Diagnosis.success"] == "True"
     assert row["Mitigation.success"] == "True"
     assert float(row["Diagnosis.composite_score"]) == 1.0
+
+
+def test_real_assign_to_non_existent_node_confirms_the_general_app_agnostic_architecture() -> None:
+    """`assign_to_non_existent_node` is a genuinely different app (SocialNetwork, not
+    HotelReservation) and a genuinely different fault category (a real, standard Kubernetes
+    node-scheduling constraint -- unready replicas + a nodeSelector -- not an image mismatch)
+    from every other real trial this test file cross-checks. Real, dynamic namespace
+    discovery (`GET /get_app` -> `social-network`) and the new
+    `find_deployments_with_unschedulable_pods`/`decide_remove_node_selector_commands`
+    detector/remediator pair, with zero hardcoding of either the app or the specific faulty
+    service -- this is the real evidence the driver generalizes across BOTH dimensions
+    (app and fault category), not just across problems sharing one oracle class."""
+    result_csv = (
+        SREGYM_ROOT
+        / "results"
+        / "0809_0303"
+        / "autofde_lab_planner"
+        / "assign_to_non_existent_node"
+        / "assign_to_non_existent_node_autofde_lab_planner_results.csv"
+    )
+    if not result_csv.is_file():
+        pytest.skip(
+            f"BLOCKED:REAL_TRIAL_ARTIFACT_ABSENT: {result_csv} not on disk -- re-run the "
+            "real autofde_lab_planner trial against assign_to_non_existent_node before "
+            "re-enabling this check"
+        )
+    import csv as csv_module
+
+    rows = list(csv_module.DictReader(result_csv.read_text().splitlines()))
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["Diagnosis.success"] == "True"
+    assert row["Mitigation.success"] == "True"
+    assert float(row["Diagnosis.composite_score"]) == 1.0

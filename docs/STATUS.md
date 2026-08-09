@@ -5,7 +5,28 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
-Last update: **pass 17** (2026-08-09) — Lane C extension (task #53): ran the exact same,
+Last update: **pass 18** (2026-08-09) — General planner architecture rebuild, per explicit
+user correction ("why are you not building the general planner out of the 50+?"). Real,
+5-agent workflow survey of sregym's real fault-injector source (~60 real fault types, 10
+injector classes) + registry cross-reference against all 123 active registrations, classified
+into Category A (21 problems, already built), B (63 problems, 17 real distinct mechanisms),
+C (13, no real generic signal), D (2, tool-policy-unreachable), and 24 unclassified (no
+dedicated injector class). Rebuilt `autofde_lab_planner` from a hotel-reservation-only script
+into an app-agnostic detector/remediator architecture: dynamic namespace/app discovery via
+the conductor's real `GET /get_app`; `canonical_image_for_app()` honestly `None` for apps
+with no known convention; new Category-B1 scheduling-constraint detector/remediator (the
+largest fully-deterministic Category-B mechanism, 8 real problems). Real live verification
+found and fixed 2 more real defects (mitigation-oracle-evaluated-before-rollout-finished;
+MCP SSE read timeout shorter than a 90s `kubectl rollout status` wait) before reaching a
+real, clean, complete PASS on `assign_to_non_existent_node` (`SocialNetwork`, a brand-new app
+and fault category, zero hardcoding): `Diagnosis.composite_score=1.00`,
+`Mitigation.success=True`. Regression-verified `misconfig_app_hotel_res` still passes
+post-rewrite. Real coverage now: 3 complete live wins across 2 fault categories x 2 apps,
+21+8=29 of 123 real active problems structurally in scope. 44/46 real tests (2 typed
+`UNSUPPORTED` skips), zero mocks. Still not a SOTA comparison — named precisely, not
+asserted. Full transcript: `docs/2026-08-09-lane-c-non-llm-planner-design.md`.
+
+Prior update: **pass 17** (2026-08-09) — Lane C extension (task #53): ran the exact same,
 unmodified `autofde_lab_planner` driver against `faulty_image_correlated` (same real
 `HotelReservation` app/oracle class as pass 16, but the fault hits all 8 real microservices
 simultaneously) — **zero code changes**, real, clean, complete PASS:
