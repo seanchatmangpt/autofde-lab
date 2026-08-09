@@ -15,6 +15,10 @@ The Lab's own score must still come from the declared benchmark population and e
 100% result is useful evidence about that architecture point, but it cannot produce `SOTA_SURPASSED`
 for a 34-task target until the 34-task population is declared and completed.
 
+`SOTA_SURPASSED` is a score standing, not the final factory standing. `DONE` additionally requires the
+complete population, evaluator identity, frontier-source identity, and terminal evidence references for
+every task in the winning architecture. See `SOTA-FACTORY-80-20-ERRC.md`.
+
 ## Boundary
 
 `autofde_lab.sota_factory` is **SELECT / LEARN only**. It has no subprocess, Kubernetes, cloud,
@@ -49,7 +53,7 @@ BenchmarkTarget ----> DecisionSpace × ExperimentBasis
            +-------------> next_batch <-----+
                               |
                               v
-                  stop only at SOTA_SURPASSED
+                  DefinitionOfDone court
 ```
 
 ## DecisionBasis
@@ -77,16 +81,41 @@ invalid combinations inspectable and serializable.
 
 ## Design for Combinatorial Maximalism
 
-The factory represents the lawful architecture space combinatorially but does not blindly execute its
-Cartesian product. The compiler provides four selection rails:
+The factory represents the lawful architecture space combinatorially but does not blindly execute or
+materialize its Cartesian product.
+
+The compiler provides four selection rails:
 
 - `BASELINE_FIRST` — freeze and measure the current architecture.
 - `ONE_FACTOR_AT_A_TIME` — discriminating variants one DecisionBasis dimension from baseline.
-- `PAIRWISE_COVERING` — deterministic greedy coverage of pairwise option interactions.
-- `FULL_FACTORIAL` — explicit bounded exhaustive enumeration when the space is small enough.
+- `PAIRWISE_COVERING` — the default maximalist rail. It constructs the admitted baseline plus every
+  lawful one-factor and two-factor substitution around that baseline, then deterministically covers
+  those interactions under an explicit architecture budget. It does **not** materialize the full
+  Cartesian DecisionSpace first.
+- `FULL_FACTORIAL` — explicit bounded exhaustive enumeration when the complete space is small enough.
 
-Candidate-space materialization is bounded. Oversized spaces refuse with
-`REFUSED:ARCHITECTURE_SPACE_TOO_LARGE` until constraints or an explicit larger bound are supplied.
+For dimension cardinalities `k_i`, pairwise design construction is bounded by:
+
+```text
+O(Σ k_i + Σ(i<j) k_i*k_j)
+```
+
+rather than:
+
+```text
+O(∏ k_i)
+```
+
+The admitted baseline is a required seed of the pairwise design: maximalism may explore away from
+current behavior, but it may not optimize current behavior out of the experiment before measuring it.
+
+`candidate_limit` has two deliberately different meanings:
+
+- under `FULL_FACTORIAL`, it bounds complete Cartesian materialization;
+- under `PAIRWISE_COVERING`, it bounds the polynomial second-order candidate design.
+
+If the second-order design itself exceeds its explicit budget, compilation refuses with
+`REFUSED:PAIRWISE_DESIGN_TOO_LARGE` rather than silently claiming complete interaction coverage.
 
 ## Scoring and safe pruning
 
@@ -103,6 +132,21 @@ published frontier. This is score-law pruning, not a heuristic guess.
 The scoreboard orders the primary benchmark score before cost. Cost, latency, tokens, model size, and
 actuation count remain secondary unless a benchmark or authority policy explicitly makes them hard
 constraints.
+
+## Definition of Done
+
+`DefinitionOfDone` is an evidence court distinct from `ScoreLaw`.
+
+```text
+DONE(B) :=
+    PopulationDeclared(B)
+  ∧ EvaluatorBound(B)
+  ∧ FrontierSourceBound(B)
+  ∧ ∃A. SOTA_SURPASSED(A,B)
+  ∧ EvidenceBoundEveryWinnerTask(A,B)
+```
+
+This prevents a numerically winning but unreceipted result from terminating the factory.
 
 ## Failure learning
 
