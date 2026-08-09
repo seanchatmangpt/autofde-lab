@@ -289,6 +289,60 @@ unreachable), and all 24 problems outside the 4 injector-source reports (unclass
 session). This is now a real, general architecture with a real, quantified map of what it
 covers and doesn't — not a claim that it covers sregym broadly.
 
+## Broadening the elevated-revision check + a real, honest 4th trial FAIL
+
+The elevated-revision fallback only ever checked infra-excluded deployments -- a real gap
+found by inspection: any app-tier fault that mutates a deployment's spec WITHOUT changing its
+image (env var, ConfigMap mount, DNS policy, rollout strategy) was silently invisible to the
+scan. Broadened to check every deployment not already flagged by the image comparison,
+covering both infra tiers and app tiers with one mechanism. 29/29 tests still pass.
+
+Live-verified against `configmap_drift_hotel_reservation` (real Category-A problem, targets
+`geo`, ConfigMap-based, not image-based) -- two more real defects found and fixed along the
+way:
+
+- **Run 1**: the 3 flagged deployments' `kubectl rollout undo` commands all succeeded
+  instantly, then the whole agent **hung for the full 600s harness timeout** with zero further
+  output -- `kubectl rollout status --timeout=90s` was not honored somewhere in the real
+  MCP/subprocess stack. Strictly worse than the premature-evaluation defect the wait was built
+  to fix (a total loss vs. a real but wrong submission). Fixed: a hard `asyncio.wait_for`
+  backstop that does not trust kubectl's own timeout flag alone -- a real timeout is now caught,
+  logged, and execution proceeds to submit regardless.
+- **Run 2** (with the backstop): confirmed the fix works -- all 3 rollout-status calls hit the
+  real timeout cleanly (logged as `TIMEOUT: rollout status did not confirm convergence...`),
+  execution continued, `main.py` exited cleanly (return code 0) instead of hanging. Real,
+  complete, honest FAIL: `Diagnosis.success=False` (composite 0.0), `Mitigation.success=False`,
+  `TTL=102.6s`, `TTM=329.4s`.
+
+**Root cause, not a mystery -- already named in the original fault-catalog survey table**:
+`recover_configmap_drift`'s own real entry noted "rollout undo removes the injected volume
+mount; doesn't restore ConfigMap content -- a real but minor gap." `kubectl rollout undo`
+reverts the Deployment's pod-template spec; it does not (and cannot) restore a ConfigMap
+object's own data if the fault corrupted that separately. If the pod keeps failing readiness
+because the ConfigMap content is still wrong, the rollout genuinely never converges -- which
+is exactly why all 3 real rollout-status waits timed out, not a new bug. A real, honest
+mechanism boundary of "rollback the Deployment spec," not a defect to keep chasing.
+
+## Real, honest 4-trial aggregate (not yet a valid SOTA sample)
+
+| Problem | App | Fault category | Diagnosis | Mitigation |
+|---|---|---|---|---|
+| `misconfig_app_hotel_res` | HotelReservation | image-mismatch | 1.00 / True | True |
+| `faulty_image_correlated` | HotelReservation | image-mismatch (8 services) | 1.00 / True | True |
+| `assign_to_non_existent_node` | SocialNetwork | node-scheduling | 1.00 / True | True |
+| `configmap_drift_hotel_reservation` | HotelReservation | ConfigMap drift | 0.0 / False | False |
+
+**Real, measured rate on this 4-trial sample: Diagnosis 3/4 = 75%, Mitigation 3/4 = 75%** --
+both, numerically, at or above the top of sregym's real published aggregate ranges
+(diagnosis 38.9-72.6%, mitigation 57.3-78.5%). **This is explicitly not yet a valid SOTA
+claim**: n=4 is a hand-picked sample, not a representative draw from the full 90-problem
+distribution; 3 of the 4 problems were specifically the ones this architecture was built to
+solve; and the survey's own Category-C/D findings (15 real problems with no generic solvable
+signal, 2 structurally unreachable) mean the full-suite rate is certain to be lower once a
+representative sample is run. Reporting 75% > 72.6% as "SOTA beaten" from this sample would
+be a real, precise violation of `.claude/rules/no-overclaiming-conversational.md` --
+named here explicitly so it is not asserted elsewhere.
+
 ## Precision on the "beats SOTA" question — not yet established, named honestly
 
 A real, cited WebSearch this session found sregym's real published numbers

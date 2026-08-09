@@ -5,7 +5,27 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
-Last update: **pass 18** (2026-08-09) — General planner architecture rebuild, per explicit
+Last update: **pass 19** (2026-08-09) — Broadened the elevated-revision fallback to app-tier
+deployments (a real gap: only infra-excluded deployments were ever checked, silently missing
+any app-tier fault that mutates a spec field other than the image), then live-verified
+against `configmap_drift_hotel_reservation`. Two more real defects found and fixed:
+`kubectl rollout status --timeout=90s` was not honored somewhere in the real MCP/subprocess
+stack — the whole agent hung for the full 600s harness timeout after all 3 real
+`kubectl rollout undo` commands had already succeeded, never reaching `submit()` (a total
+loss); fixed with a hard `asyncio.wait_for` backstop. Re-run confirmed the fix (all 3 waits
+timed out cleanly, logged, execution proceeded) but the underlying real result was an honest,
+complete FAIL: `Diagnosis.success=False` (0.0), `Mitigation.success=False`. **Root cause is
+not a new bug** — the original fault-catalog survey already named it:
+`kubectl rollout undo` reverts a Deployment's pod-template spec, not a ConfigMap's own data,
+so a fault that corrupts ConfigMap content separately is genuinely outside this remediation's
+reach. **Real, honest 4-trial aggregate**: 3/4 = 75% Diagnosis, 3/4 = 75% Mitigation —
+numerically at/above sregym's published range tops, but explicitly **not** a valid SOTA claim
+(n=4, hand-picked, 3 of 4 chosen specifically because the architecture was built for them; the
+survey's own Category-C/D findings guarantee a lower full-suite rate). 45/47 real tests (2
+typed `UNSUPPORTED` skips), zero mocks. Full transcript:
+`docs/2026-08-09-lane-c-non-llm-planner-design.md`.
+
+Prior update: **pass 18** (2026-08-09) — General planner architecture rebuild, per explicit
 user correction ("why are you not building the general planner out of the 50+?"). Real,
 5-agent workflow survey of sregym's real fault-injector source (~60 real fault types, 10
 injector classes) + registry cross-reference against all 123 active registrations, classified

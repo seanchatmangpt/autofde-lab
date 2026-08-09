@@ -310,3 +310,38 @@ def test_real_assign_to_non_existent_node_confirms_the_general_app_agnostic_arch
     assert row["Diagnosis.success"] == "True"
     assert row["Mitigation.success"] == "True"
     assert float(row["Diagnosis.composite_score"]) == 1.0
+
+
+def test_real_configmap_drift_result_is_an_honest_documented_fail_not_a_hidden_regression() -> None:
+    """`configmap_drift_hotel_reservation` is a real, honest FAIL, not silently swallowed:
+    `kubectl rollout undo` (this driver's only remediation for a revision-elevated, non-
+    image-mismatched deployment) reverts the Deployment's pod-template spec but cannot
+    restore a ConfigMap object's own data -- a real mechanism boundary named in the original
+    fault-catalog survey ("rollout undo removes the injected volume mount; doesn't restore
+    ConfigMap content"), confirmed live: all 3 real `kubectl rollout status` waits timed out
+    (logged, not hung -- the real `asyncio.wait_for` hard-backstop fix this session's second
+    live trial against this problem required), and the real oracle scored both stages False.
+    This test exists so a future change that silently starts reporting a fake pass here would
+    be caught, per this repo's own no-dual-bookkeeping discipline."""
+    result_csv = (
+        SREGYM_ROOT
+        / "results"
+        / "0809_0339"
+        / "autofde_lab_planner"
+        / "configmap_drift_hotel_reservation"
+        / "configmap_drift_hotel_reservation_autofde_lab_planner_results.csv"
+    )
+    if not result_csv.is_file():
+        pytest.skip(
+            f"BLOCKED:REAL_TRIAL_ARTIFACT_ABSENT: {result_csv} not on disk -- re-run the "
+            "real autofde_lab_planner trial against configmap_drift_hotel_reservation before "
+            "re-enabling this check"
+        )
+    import csv as csv_module
+
+    rows = list(csv_module.DictReader(result_csv.read_text().splitlines()))
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["Diagnosis.success"] == "False"
+    assert row["Mitigation.success"] == "False"
+    assert float(row["Diagnosis.composite_score"]) == 0.0
