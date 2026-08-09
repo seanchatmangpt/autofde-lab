@@ -10,8 +10,10 @@ from .autopilot import AutopilotPolicy, AutopilotRound, AutopilotRun, SOTAAutopi
 from .compiler import CompiledExperimentSet, ExperimentCompiler
 from .done import DefinitionOfDone, DefinitionOfDoneReport, ProofObligation
 from .execution import (
+    ExecutionProfileRefused,
     ExecutionProfileResolver,
     ExperimentExecutionPort,
+    GgenExecutionProfileBundleResolver,
     GymActExecutionPort,
     GymActExecutionProfile,
 )
@@ -55,6 +57,7 @@ __all__ = [
     "DecisionSpace",
     "DefinitionOfDone",
     "DefinitionOfDoneReport",
+    "ExecutionProfileRefused",
     "ExecutionProfileResolver",
     "ExperimentBasis",
     "ExperimentCompiler",
@@ -65,6 +68,7 @@ __all__ = [
     "FailureKind",
     "FailureRouter",
     "FrontierStanding",
+    "GgenExecutionProfileBundleResolver",
     "GymActExecutionPort",
     "GymActExecutionProfile",
     "LearningCompiler",
