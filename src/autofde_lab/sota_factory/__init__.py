@@ -2,8 +2,8 @@
 
 The package represents benchmark targets, DecisionBasis architecture spaces,
 experiment designs, score/frontier standing, and failure-driven learning. The
-``SOTAFactory`` itself remains SELECT/LEARN only. ``SOTAAutopilot`` may invoke an
-injected execution port; the governed GymAct implementation keeps DO behind BRCE.
+``SOTAFactory`` itself remains SELECT/LEARN only. The single-target and portfolio
+autopilots may invoke an injected execution port; GymAct keeps DO behind BRCE.
 """
 
 from .autopilot import AutopilotPolicy, AutopilotRound, AutopilotRun, SOTAAutopilot
@@ -38,6 +38,12 @@ from .models import (
     TrialResult,
 )
 from .portfolio import PortfolioSnapshot, SOTAPortfolio
+from .portfolio_autopilot import (
+    PortfolioAutopilotPolicy,
+    PortfolioAutopilotRound,
+    PortfolioAutopilotRun,
+    SOTAPortfolioAutopilot,
+)
 from .score import ScoreLaw
 from .scoreboard import Scoreboard
 from .space import CompatibilityRule, DecisionSpace, hamming_distance, pairwise_covering
@@ -74,12 +80,16 @@ __all__ = [
     "LearningCompiler",
     "LearningSignal",
     "OptimizationDirection",
+    "PortfolioAutopilotPolicy",
+    "PortfolioAutopilotRound",
+    "PortfolioAutopilotRun",
     "PortfolioSnapshot",
     "ProofObligation",
     "RepairLeverage",
     "SOTAAutopilot",
     "SOTAFactory",
     "SOTAPortfolio",
+    "SOTAPortfolioAutopilot",
     "ScoreLaw",
     "Scoreboard",
     "SelectionStrategy",
