@@ -33,7 +33,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    compile_p = sub.add_parser("compile", help="compile lawful experiment plans as JSONL")
+    compile_p = sub.add_parser(
+        "compile", help="compile lawful experiment plans as JSONL"
+    )
     compile_p.add_argument("spec")
     compile_p.add_argument("--out")
 
