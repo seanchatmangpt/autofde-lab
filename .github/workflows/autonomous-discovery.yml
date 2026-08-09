@@ -30,7 +30,7 @@ jobs:
       - name: Install identity-bound GymAct base and test runtime
         run: |
           python -m pip install \
-            "gymact @ git+https://github.com/seanchatmangpt/gymact.git@c839d76125bde97b9eb3dfd82f0e08a1b9dcdf96" \
+            "https://github.com/seanchatmangpt/gymact/archive/c839d76125bde97b9eb3dfd82f0e08a1b9dcdf96.tar.gz" \
             "pytest>=8.3,<9" \
             "pytest-asyncio>=0.25,<2"
 
