@@ -3,6 +3,8 @@ set -euo pipefail
 
 readonly GGEN_VERSION="v26.8.8"
 readonly GGEN_SYNC_TIMEOUT_SECONDS="30"
+readonly COMPILE_TIMEOUT_SECONDS="20"
+readonly TEST_TIMEOUT_SECONDS="60"
 
 annotate() {
   local level="$1"
@@ -15,6 +17,39 @@ annotate() {
     message="${message//$'\n'/'%0A'}"
     printf '::%s title=%s::%s\n' "${level}" "${title}" "${message}" >&2
   fi
+}
+
+bounded_exec() {
+  local stage="$1"
+  local timeout_seconds="$2"
+  shift 2
+  python - "${stage}" "${timeout_seconds}" "$@" <<'PY'
+from __future__ import annotations
+
+import os
+import subprocess
+import sys
+
+stage = sys.argv[1]
+timeout = float(sys.argv[2])
+command = sys.argv[3:]
+try:
+    completed = subprocess.run(command, check=False, timeout=timeout)
+except subprocess.TimeoutExpired:
+    title = f"REFUSED:{stage}_TIMEOUT"
+    message = f"timeout_seconds={timeout:g}"
+    print(f"{title}: {message}", file=sys.stderr)
+    if os.environ.get("GITHUB_ACTIONS"):
+        print(f"::error title={title}::{message}", file=sys.stderr)
+    raise SystemExit(124)
+if completed.returncode != 0:
+    title = f"REFUSED:{stage}_FAILED"
+    message = f"exit={completed.returncode}"
+    print(f"{title}: {message}", file=sys.stderr)
+    if os.environ.get("GITHUB_ACTIONS"):
+        print(f"::error title={title}::{message}", file=sys.stderr)
+    raise SystemExit(completed.returncode or 125)
+PY
 }
 
 case "$(uname -s)/$(uname -m)" in
@@ -63,8 +98,8 @@ workdir="$(mktemp -d)"
 trap 'rm -rf "$workdir"' EXIT
 archive="${workdir}/${asset}"
 
-if ! curl --fail --location --retry 2 --silent --show-error \
-  --connect-timeout 10 --max-time 60 \
+if ! curl --fail --location --retry 1 --silent --show-error \
+  --connect-timeout 10 --max-time 45 \
   "${url}" \
   --output "${archive}"; then
   annotate error "REFUSED:GGEN_ASSET_FETCH_FAILED" "url=${url}"
@@ -100,43 +135,6 @@ if [[ -z "${ggen_bin}" ]]; then
   exit 6
 fi
 chmod +x "${ggen_bin}"
-
-run_ggen() {
-  python - "${ggen_bin}" "${GGEN_SYNC_TIMEOUT_SECONDS}" <<'PY'
-from __future__ import annotations
-
-import os
-import subprocess
-import sys
-
-binary = sys.argv[1]
-timeout = float(sys.argv[2])
-try:
-    completed = subprocess.run(
-        [binary, "sync", "run"],
-        check=False,
-        timeout=timeout,
-    )
-except subprocess.TimeoutExpired:
-    message = f"timeout_seconds={timeout:g}"
-    print(f"REFUSED:GGEN_SYNC_TIMEOUT: {message}", file=sys.stderr)
-    if os.environ.get("GITHUB_ACTIONS"):
-        print(
-            f"::error title=REFUSED:GGEN_SYNC_TIMEOUT::{message}",
-            file=sys.stderr,
-        )
-    raise SystemExit(8)
-if completed.returncode != 0:
-    message = f"exit={completed.returncode}"
-    print(f"REFUSED:GGEN_SYNC_FAILED: {message}", file=sys.stderr)
-    if os.environ.get("GITHUB_ACTIONS"):
-        print(
-            f"::error title=REFUSED:GGEN_SYNC_FAILED::{message}",
-            file=sys.stderr,
-        )
-    raise SystemExit(completed.returncode or 9)
-PY
-}
 
 projection_manifest() {
   python - "${GENERATED_ROOTS[@]}" <<'PY'
@@ -175,12 +173,12 @@ verify_clean_projection() {
 }
 
 # Pass 1 proves committed projection correspondence.
-run_ggen
+bounded_exec GGEN_SYNC "${GGEN_SYNC_TIMEOUT_SECONDS}" "${ggen_bin}" sync run
 verify_clean_projection
 projection_manifest > "${workdir}/manifest-1.sha256"
 
 # Pass 2 proves the manufacturer is idempotent at the exact same subject.
-run_ggen
+bounded_exec GGEN_SYNC "${GGEN_SYNC_TIMEOUT_SECONDS}" "${ggen_bin}" sync run
 verify_clean_projection
 projection_manifest > "${workdir}/manifest-2.sha256"
 if ! cmp -s "${workdir}/manifest-1.sha256" "${workdir}/manifest-2.sha256"; then
@@ -191,10 +189,12 @@ if ! cmp -s "${workdir}/manifest-1.sha256" "${workdir}/manifest-2.sha256"; then
   exit 10
 fi
 
-python -m compileall -q \
+bounded_exec COMPILE "${COMPILE_TIMEOUT_SECONDS}" \
+  python -m compileall -q \
   src/autofde_lab/constitution \
   tests/constitution/test_semantic_constitution.py
-PYTHONPATH=src python -m pytest -q tests/constitution/test_semantic_constitution.py
+PYTHONPATH=src bounded_exec CONSTITUTION_TEST "${TEST_TIMEOUT_SECONDS}" \
+  python -m pytest -q tests/constitution/test_semantic_constitution.py
 
 if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
   printf '::notice title=GGEN_CONSTITUTION_VERIFIER::passed two-pass byte-identical manufacture\n'
