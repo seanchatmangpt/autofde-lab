@@ -7,6 +7,7 @@ benchmark runtime boundary.
 """
 
 from .compiler import CompiledExperimentSet, ExperimentCompiler
+from .done import DefinitionOfDone, DefinitionOfDoneReport, ProofObligation
 from .factory import FactorySnapshot, SOTAFactory
 from .learning import FailureRouter, LearningCompiler, LearningSignal
 from .models import (
@@ -41,6 +42,8 @@ __all__ = [
     "CompiledExperimentSet",
     "DecisionBasis",
     "DecisionSpace",
+    "DefinitionOfDone",
+    "DefinitionOfDoneReport",
     "ExperimentBasis",
     "ExperimentCompiler",
     "ExperimentPlan",
@@ -52,6 +55,7 @@ __all__ = [
     "LearningCompiler",
     "LearningSignal",
     "OptimizationDirection",
+    "ProofObligation",
     "RepairLeverage",
     "SOTAFactory",
     "ScoreLaw",
