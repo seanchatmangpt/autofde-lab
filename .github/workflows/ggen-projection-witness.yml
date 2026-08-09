@@ -1,4 +1,4 @@
-name: Ggen projection witness
+name: Ggen projection manufacturer
 
 on:
   pull_request:
@@ -12,19 +12,26 @@ on:
       - ".github/workflows/ggen-projection-witness.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  witness:
-    name: Manufacture projection witness
+  manufacture:
+    name: Manufacture canonical projections
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
+          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
           submodules: false
-          persist-credentials: false
+          persist-credentials: true
+
+      - name: Assert exact branch head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
 
       - name: Run pinned ggen manufacturer
         shell: bash
@@ -43,16 +50,16 @@ jobs:
           test -n "${ggen_bin}"
           chmod +x "${ggen_bin}"
           "${ggen_bin}" sync run
-          git diff --name-only -- src/autofde_lab/constitution tests/constitution/test_semantic_constitution.py > ggen-projection-changed.txt
-          tar -czf ggen-projection-witness.tar.gz \
-            src/autofde_lab/constitution \
-            tests/constitution/test_semantic_constitution.py \
-            ggen-projection-changed.txt
+          git diff --name-only -- src/autofde_lab/constitution tests/constitution/test_semantic_constitution.py
+          test -n "$(git status --porcelain -- src/autofde_lab/constitution tests/constitution/test_semantic_constitution.py)"
 
-      - name: Upload exact manufactured projection
-        uses: actions/upload-artifact@v4
-        with:
-          name: ggen-projection-witness
-          path: ggen-projection-witness.tar.gz
-          if-no-files-found: error
-          retention-days: 1
+      - name: Commit exact manufacturer consequence and retire helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/autofde_lab/constitution tests/constitution/test_semantic_constitution.py
+          git rm .github/workflows/ggen-projection-witness.yml
+          git commit -m "ggen: refresh semantic constitution projections"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
