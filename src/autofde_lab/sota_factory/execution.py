@@ -18,22 +18,14 @@ _GGEN_PROFILE_KEYS = {
     "provider",
     "benchmark_revision",
     "scenario",
-    "config",
+    "config_json",
     "capability_ref",
     "capability_binding",
-    "payload",
-    "expected",
-    "input_schema",
+    "payload_json",
+    "expected_json",
+    "input_schema_json",
     "authority_ref",
     "action_ref",
-}
-_GGEN_FORBIDDEN_AUTHORITY_KEYS = {
-    "principal",
-    "delegated_principal",
-    "nonce",
-    "expires_at",
-    "execution_grant",
-    "permission_token",
 }
 
 
@@ -102,19 +94,6 @@ def _without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return result
 
 
-def _reject_embedded_authority(value: Any) -> None:
-    if isinstance(value, dict):
-        forbidden = _GGEN_FORBIDDEN_AUTHORITY_KEYS.intersection(value)
-        if forbidden:
-            key = sorted(forbidden)[0]
-            raise ExecutionProfileRefused(f"REFUSED:AUTHORITY_TOKEN_FIELD:{key}")
-        for child in value.values():
-            _reject_embedded_authority(child)
-    elif isinstance(value, list):
-        for child in value:
-            _reject_embedded_authority(child)
-
-
 def _required_string(row: dict[str, Any], key: str) -> str:
     value = row.get(key)
     if not isinstance(value, str) or not value.strip():
@@ -131,8 +110,18 @@ def _nullable_string(row: dict[str, Any], key: str) -> str | None:
     return value or None
 
 
-def _object(row: dict[str, Any], key: str, *, nonempty: bool = False) -> dict[str, Any]:
-    value = row.get(key)
+def _json_object(
+    row: dict[str, Any], key: str, *, nonempty: bool = False
+) -> dict[str, Any]:
+    lexical = row.get(key)
+    if not isinstance(lexical, str):
+        raise ExecutionProfileRefused(f"REFUSED:EXECUTION_PROFILE_JSON_REQUIRED:{key}")
+    try:
+        value = json.loads(lexical, object_pairs_hook=_without_duplicate_keys)
+    except ExecutionProfileRefused:
+        raise
+    except json.JSONDecodeError as exc:
+        raise ExecutionProfileRefused(f"REFUSED:EXECUTION_PROFILE_JSON_INVALID:{key}") from exc
     if not isinstance(value, dict) or (nonempty and not value):
         raise ExecutionProfileRefused(f"REFUSED:EXECUTION_PROFILE_OBJECT_REQUIRED:{key}")
     return value
@@ -141,9 +130,9 @@ def _object(row: dict[str, Any], key: str, *, nonempty: bool = False) -> dict[st
 class GgenExecutionProfileBundleResolver:
     """Resolve ExperimentPlans only from exact, digest-bound ggen profile output.
 
-    The resolver is deliberately non-actuating. It proves the handoff from ggen's
-    admitted generated artifact into Lab's experiment identity and rejects benchmark
-    revision drift before a request can reach GymAct.
+    The resolver is deliberately non-actuating. ggen safely manufactures lexical JSON
+    data; this boundary performs the strict parse, proves the experiment-plan identity,
+    and rejects benchmark revision drift before a request can reach GymAct.
     """
 
     def __init__(self, raw: bytes, *, expected_sha256: str) -> None:
@@ -166,7 +155,6 @@ class GgenExecutionProfileBundleResolver:
             raise ExecutionProfileRefused("REFUSED:EXECUTION_PROFILE_GENERATOR")
         if document.get("authority_mode") != _GGEN_AUTHORITY_MODE:
             raise ExecutionProfileRefused("REFUSED:EXECUTION_PROFILE_AUTHORITY_MODE")
-        _reject_embedded_authority(document)
         rows = document.get("profiles")
         if not isinstance(rows, list) or not rows:
             raise ExecutionProfileRefused("REFUSED:EXECUTION_PROFILE_ROWS_REQUIRED")
@@ -210,15 +198,15 @@ class GgenExecutionProfileBundleResolver:
         return GymActExecutionProfile(
             provider=_required_string(row, "provider"),
             scenario=_nullable_string(row, "scenario"),
-            config=_object(row, "config"),
+            config=_json_object(row, "config_json"),
             capability_ref=capability_ref,
             capability_binding=capability_binding,
-            payload=_object(row, "payload"),
-            expected=_object(row, "expected", nonempty=True),
+            payload=_json_object(row, "payload_json"),
+            expected=_json_object(row, "expected_json", nonempty=True),
             authority_ref=_nullable_string(row, "authority_ref"),
             subject_revision=revision,
             action_ref=_nullable_string(row, "action_ref"),
-            input_schema=_object(row, "input_schema", nonempty=True),
+            input_schema=_json_object(row, "input_schema_json", nonempty=True),
         )
 
 
@@ -262,8 +250,6 @@ class GymActExecutionPort:
         self._resolver = resolver
 
     async def execute(self, plan: ExperimentPlan) -> TrialResult:
-        # Lazy import lets the Lab remain importable while GymAct's autonomic surface
-        # is delivered independently through its own PR. Execution itself requires it.
         try:
             from gymact.autonomic import ConsequenceRequest
         except ImportError as exc:
