@@ -1,7 +1,9 @@
 from pathlib import Path
 
 
-def test_sota_factory_ontology_declares_core_basis_and_strict_standing_vocabulary() -> None:
+def test_sota_factory_ontology_declares_core_basis_and_strict_standing_vocabulary() -> (
+    None
+):
     text = Path("ontology/sota-factory.ttl").read_text()
     for term in (
         "afl:BenchmarkTarget",
