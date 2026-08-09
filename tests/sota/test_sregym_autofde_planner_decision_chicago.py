@@ -286,6 +286,98 @@ def test_canonical_hotel_reservation_image_matches_the_apps_own_real_source_cons
     assert driver.canonical_hotel_reservation_image() == HOTEL_RESERVATION_APPLICATION_IMAGE
 
 
+# --- App-agnostic generalization: dynamic namespace + per-app canonical image ------------
+#
+# Per the real fault-catalog survey this session (5-agent workflow covering all ~60 real
+# sregym fault types): building toward a genuinely general planner, not a hotel-reservation-
+# only script. This driver now discovers its target namespace from the conductor's own real
+# `GET /get_app` response rather than a hardcoded constant, and only attempts an image-
+# mismatch scan for apps with a real, known, single-image convention.
+
+
+def test_parse_app_info_extracts_the_real_namespace(driver):
+    assert driver.parse_app_info({"app_name": "Social Network", "namespace": "social-network"}) == (
+        "social-network"
+    )
+
+
+def test_parse_app_info_falls_back_to_the_module_default_on_missing_field(driver):
+    assert driver.parse_app_info({}) == driver.NAMESPACE
+
+
+def test_canonical_image_for_app_knows_hotel_reservation(driver):
+    try:
+        from sregym.service.apps.hotel_reservation import HOTEL_RESERVATION_APPLICATION_IMAGE
+    except ModuleNotFoundError as e:
+        pytest.skip(
+            f"UNSUPPORTED:SREGYM_OWN_VENV_REQUIRED: {e} -- re-run with "
+            f"{SREGYM_ROOT}/.venv/bin/python to exercise this import for real"
+        )
+
+    assert driver.canonical_image_for_app("Hotel Reservation") == HOTEL_RESERVATION_APPLICATION_IMAGE
+
+
+def test_canonical_image_for_app_is_honestly_none_for_an_unknown_app(driver):
+    """Astronomy Shop deploys via an external Helm chart with no local manifest and no
+    single-image constant in its real source (checked this session) -- returning a wrong
+    guess would be worse than admitting this app's convention is unknown."""
+    assert driver.canonical_image_for_app("OpenTelemetry Demo Astronomy Shop") is None
+    assert driver.canonical_image_for_app("Social Network") is None
+
+
+# --- Generalization: app-agnostic scheduling-constraint detector (Category "B1" from the ---
+# --- real fault-catalog survey) -------------------------------------------------------------
+
+
+def test_parse_replica_counts_handles_the_real_omitted_zero_quirk(driver):
+    """The real Kubernetes API omits status.readyReplicas entirely (prints nothing) when it
+    is zero -- not a parsing bug, a real, documented API quirk."""
+    assert driver.parse_replica_counts("3", "") == (3, 0)
+    assert driver.parse_replica_counts("3", "3") == (3, 3)
+    assert driver.parse_replica_counts("", "") == (0, 0)
+
+
+def test_parse_has_node_selector_detects_presence(driver):
+    assert driver.parse_has_node_selector("") is False
+    assert driver.parse_has_node_selector('map[extra-node:true]') is True
+
+
+def test_find_deployments_with_unschedulable_pods_requires_both_real_signals(driver):
+    """Real regression guard: neither an unhealthy deployment alone (could just be starting
+    up) nor a nodeSelector alone (could be legitimately healthy on dedicated nodes) is
+    sufficient -- only both together are flagged."""
+    replica_counts = {
+        "user-service": (3, 0),   # unhealthy + has selector -> flagged
+        "geo": (3, 3),            # healthy + has selector -> not flagged
+        "starting-up": (3, 1),    # unhealthy, no selector -> not flagged
+    }
+    has_node_selector = {"user-service": True, "geo": True, "starting-up": False}
+    assert driver.find_deployments_with_unschedulable_pods(replica_counts, has_node_selector) == [
+        "user-service"
+    ]
+
+
+def test_decide_remove_node_selector_commands_builds_the_exact_real_json_patch(driver):
+    assert driver.decide_remove_node_selector_commands(["user-service"], "social-network") == [
+        'kubectl patch deployment user-service -n social-network --type=json '
+        '-p=\'[{"op": "remove", "path": "/spec/template/spec/nodeSelector"}]\''
+    ]
+    assert driver.decide_remove_node_selector_commands([], "social-network") == []
+
+
+def test_build_diagnosis_text_reports_scheduling_anomalies_as_a_distinct_signal(driver):
+    text = driver.build_diagnosis_text(
+        mismatched=[],
+        observed_images={},
+        canonical_image=None,
+        namespace="social-network",
+        unschedulable=["user-service"],
+    )
+    assert "no known single canonical container image convention" in text
+    assert "user-service" in text
+    assert "nodeSelector constraint" in text
+
+
 def test_agents_yaml_registers_the_new_planner_with_container_isolation_disabled():
     import yaml
 
