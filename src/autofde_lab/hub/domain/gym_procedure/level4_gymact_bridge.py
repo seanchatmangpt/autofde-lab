@@ -163,7 +163,22 @@ async def main(module_path: str, class_name: str, provider_name: str, config: di
     gym = GymAct(authority_resolver=AllowListAuthorityResolver({_AUTHORITY_REF}))
     gym.register_provider(_construct_provider(provider_cls, provider_name))
 
-    materialization = await gym.materialize(MaterializationIntent(provider=provider_name, config=config))
+    # Authority is exercised at MATERIALIZE time too, not only on each
+    # ActuationIntent. Measured live this session: providers whose
+    # `materialization_requires_authority` is True (a class attribute on
+    # every gymact.gyms.vendor_benchmarks.VendorBenchmarkProvider instance,
+    # among others -- confirmed for terragoat/sqlite/swe-bench/tau2-bench/
+    # ggen-legacy) were refused with LIVE_AUTHORITY_REQUIRED before
+    # `capabilities()` was ever reached, because `MaterializationIntent`
+    # carries its own real `authority_ref` field (confirmed via
+    # `MaterializationIntent.model_fields`) that neither bridge script ever
+    # populated -- only `ActuationIntent` calls did. Same fix, same
+    # generalization discipline as that one: a real, admitted ref through
+    # the same real bounded resolver, not a config flag that switches the
+    # gate off.
+    materialization = await gym.materialize(
+        MaterializationIntent(provider=provider_name, config=config, authority_ref=_AUTHORITY_REF)
+    )
     if not materialization.accepted:
         return {"materialize_failed": True, "reason": materialization.receipt.reason}
     episode_id = materialization.episode.episode_id

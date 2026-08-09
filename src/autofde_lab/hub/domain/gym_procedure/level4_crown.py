@@ -393,7 +393,15 @@ async def main(module_path, class_name, provider_name, config, plan, expected_li
     )
     gym.register_provider(_construct_provider(provider_cls, provider_name))
 
-    m = await gym.materialize(MaterializationIntent(provider=provider_name, config=config))
+    # See _BRIDGE_SCRIPT's identical fix (level4_gymact_bridge.py): every
+    # MaterializationIntent, not only every ActuationIntent, needs a real
+    # admitted authority_ref -- providers whose materialization_requires_
+    # authority is True refuse before capabilities() is ever reached
+    # otherwise. Same real bounded resolver, same real ref, exercised at
+    # both transitions.
+    m = await gym.materialize(
+        MaterializationIntent(provider=provider_name, config=config, authority_ref=_AUTHORITY_REF)
+    )
     if not m.accepted or m.episode is None:
         # A refused actuation-time materialize is a typed answer, never a
         # crash while reporting it -- the same convention the discovery
