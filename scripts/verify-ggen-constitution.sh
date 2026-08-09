@@ -26,29 +26,77 @@ bounded_exec() {
   python - "${stage}" "${timeout_seconds}" "$@" <<'PY'
 from __future__ import annotations
 
+import errno
 import os
+import signal
 import subprocess
 import sys
+import time
 
 stage = sys.argv[1]
 timeout = float(sys.argv[2])
 command = sys.argv[3:]
+
+
+def emit(title: str, message: str) -> None:
+    print(f"{title}: {message}", file=sys.stderr)
+    if os.environ.get("GITHUB_ACTIONS"):
+        safe = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+        print(f"::error title={title}::{safe}", file=sys.stderr)
+
+
+def terminate_group(pid: int) -> None:
+    try:
+        os.killpg(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        return
+    deadline = time.monotonic() + 2.0
+    while time.monotonic() < deadline:
+        try:
+            os.killpg(pid, 0)
+        except ProcessLookupError:
+            return
+        time.sleep(0.05)
+    try:
+        os.killpg(pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+
+
+proc = subprocess.Popen(command, start_new_session=True)
 try:
-    completed = subprocess.run(command, check=False, timeout=timeout)
+    returncode = proc.wait(timeout=timeout)
 except subprocess.TimeoutExpired:
+    terminate_group(proc.pid)
+    try:
+        proc.wait(timeout=2.0)
+    except subprocess.TimeoutExpired:
+        pass
     title = f"REFUSED:{stage}_TIMEOUT"
-    message = f"timeout_seconds={timeout:g}"
-    print(f"{title}: {message}", file=sys.stderr)
-    if os.environ.get("GITHUB_ACTIONS"):
-        print(f"::error title={title}::{message}", file=sys.stderr)
+    emit(title, f"timeout_seconds={timeout:g}")
     raise SystemExit(124)
-if completed.returncode != 0:
+
+# A successful bounded stage must also leave no descendant process behind.
+time.sleep(0.05)
+try:
+    os.killpg(proc.pid, 0)
+except ProcessLookupError:
+    leaked = False
+except OSError as exc:
+    leaked = exc.errno not in (errno.ESRCH,)
+else:
+    leaked = True
+
+if leaked:
+    terminate_group(proc.pid)
+    title = f"REFUSED:{stage}_PROCESS_LEAK"
+    emit(title, "descendant process survived stage completion")
+    raise SystemExit(125)
+
+if returncode != 0:
     title = f"REFUSED:{stage}_FAILED"
-    message = f"exit={completed.returncode}"
-    print(f"{title}: {message}", file=sys.stderr)
-    if os.environ.get("GITHUB_ACTIONS"):
-        print(f"::error title={title}::{message}", file=sys.stderr)
-    raise SystemExit(completed.returncode or 125)
+    emit(title, f"exit={returncode}")
+    raise SystemExit(returncode or 126)
 PY
 }
 
@@ -193,8 +241,8 @@ bounded_exec COMPILE "${COMPILE_TIMEOUT_SECONDS}" \
   python -m compileall -q \
   src/autofde_lab/constitution \
   tests/constitution/test_semantic_constitution.py
-PYTHONPATH=src bounded_exec CONSTITUTION_TEST "${TEST_TIMEOUT_SECONDS}" \
-  python -m pytest -q tests/constitution/test_semantic_constitution.py
+bounded_exec CONSTITUTION_TEST "${TEST_TIMEOUT_SECONDS}" \
+  env PYTHONPATH=src python -m pytest -q tests/constitution/test_semantic_constitution.py
 
 if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
   printf '::notice title=GGEN_CONSTITUTION_VERIFIER::passed two-pass byte-identical manufacture\n'
