@@ -33,7 +33,7 @@ jobs:
           asset="ggen-x86_64-unknown-linux-gnu.tar.gz"
           expected="c651d873c2aeb6bd71c3d5356634f0b3f4adafd2454ee354c817a7079c2ea802"
           workdir="$(mktemp -d)"
-          curl --fail --location --silent --show-error \
+          curl --fail --location --retry 3 --retry-all-errors --silent --show-error \
             "https://github.com/seanchatmangpt/ggen/releases/download/v26.8.8/${asset}" \
             --output "${workdir}/${asset}"
           actual="$(sha256sum "${workdir}/${asset}" | cut -d' ' -f1)"
