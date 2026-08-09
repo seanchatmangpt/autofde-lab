@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Iterable, Sequence
 
 from .compiler import CompiledExperimentSet, ExperimentCompiler
+from .done import DefinitionOfDone, DefinitionOfDoneReport
 from .learning import LearningCompiler, LearningSignal
 from .models import (
     BenchmarkScore,
@@ -27,10 +28,11 @@ class FactorySnapshot:
     result_count: int
     scoreboard: Scoreboard
     learning_signals: tuple[LearningSignal, ...]
+    definition_of_done: DefinitionOfDoneReport
 
     @property
     def terminal(self) -> bool:
-        return bool(self.scoreboard.sota_winners)
+        return self.definition_of_done.done
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -38,6 +40,7 @@ class FactorySnapshot:
             "compiled_plan_count": self.compiled_plan_count,
             "result_count": self.result_count,
             "terminal": self.terminal,
+            "definition_of_done": self.definition_of_done.to_dict(),
             "scoreboard": self.scoreboard.to_dict(),
             "learning_signals": [
                 {"action": signal.action, "cluster": signal.cluster.to_dict()}
@@ -77,6 +80,7 @@ class SOTAFactory:
         self._compiler = ExperimentCompiler()
         self._scorer = ScoreLaw()
         self._learning = LearningCompiler()
+        self._done = DefinitionOfDone()
         self._compiled = self._compiler.compile(
             target=target,
             decision_space=decision_space,
@@ -132,6 +136,13 @@ class SOTAFactory:
     def scoreboard(self) -> Scoreboard:
         return Scoreboard.from_scores(self.scores())
 
+    def definition_of_done(self) -> DefinitionOfDoneReport:
+        return self._done.evaluate(
+            target=self.target,
+            scoreboard=self.scoreboard(),
+            results=self.results,
+        )
+
     def snapshot(self) -> FactorySnapshot:
         return FactorySnapshot(
             target=self.target,
@@ -139,11 +150,12 @@ class SOTAFactory:
             result_count=len(self._results),
             scoreboard=self.scoreboard(),
             learning_signals=self._learning.signals(self.results),
+            definition_of_done=self.definition_of_done(),
         )
 
     @property
     def terminal(self) -> bool:
-        return bool(self.scoreboard().sota_winners)
+        return self.definition_of_done().done
 
     def next_batch(self, batch_size: int) -> tuple[ExperimentPlan, ...]:
         if batch_size <= 0:
