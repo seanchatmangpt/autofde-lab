@@ -1,13 +1,20 @@
 """AutoFDE Lab SOTA factory control plane.
 
 The package represents benchmark targets, DecisionBasis architecture spaces,
-experiment designs, score/frontier standing, and failure-driven learning. It is
-SELECT/LEARN only: execution results are ingested from the governed GymAct /
-benchmark runtime boundary.
+experiment designs, score/frontier standing, and failure-driven learning. The
+``SOTAFactory`` itself remains SELECT/LEARN only. ``SOTAAutopilot`` may invoke an
+injected execution port; the governed GymAct implementation keeps DO behind BRCE.
 """
 
+from .autopilot import AutopilotPolicy, AutopilotRound, AutopilotRun, SOTAAutopilot
 from .compiler import CompiledExperimentSet, ExperimentCompiler
 from .done import DefinitionOfDone, DefinitionOfDoneReport, ProofObligation
+from .execution import (
+    ExecutionProfileResolver,
+    ExperimentExecutionPort,
+    GymActExecutionPort,
+    GymActExecutionProfile,
+)
 from .factory import FactorySnapshot, SOTAFactory
 from .learning import FailureRouter, LearningCompiler, LearningSignal
 from .models import (
@@ -35,6 +42,9 @@ from .space import CompatibilityRule, DecisionSpace, hamming_distance, pairwise_
 
 __all__ = [
     "ArchitecturePoint",
+    "AutopilotPolicy",
+    "AutopilotRound",
+    "AutopilotRun",
     "BasisChoice",
     "BenchmarkScore",
     "BenchmarkTarget",
@@ -45,20 +55,25 @@ __all__ = [
     "DecisionSpace",
     "DefinitionOfDone",
     "DefinitionOfDoneReport",
+    "ExecutionProfileResolver",
     "ExperimentBasis",
     "ExperimentCompiler",
+    "ExperimentExecutionPort",
     "ExperimentPlan",
     "FactorySnapshot",
     "FailureCluster",
     "FailureKind",
     "FailureRouter",
     "FrontierStanding",
+    "GymActExecutionPort",
+    "GymActExecutionProfile",
     "LearningCompiler",
     "LearningSignal",
     "OptimizationDirection",
     "PortfolioSnapshot",
     "ProofObligation",
     "RepairLeverage",
+    "SOTAAutopilot",
     "SOTAFactory",
     "SOTAPortfolio",
     "ScoreLaw",
