@@ -2,6 +2,8 @@
 
 Real census, this session, of every GymAct-capable provider reachable from `level4_gymact_bridge.py`, the sibling `~/gymact` package's `gyms/` directory, and `autofde_lab.hub.domain.*` bridges — gathered by 30 real, read-only census agents (out of ~44 dispatched; the workflow was killed mid-run at 46 agents dispatched/31 completed, `w9lme71pm`/`wf_a0bbfca7-d50`) plus 3 real tracer-bullet trials run directly. Every row below is either a real trial result or a real-source-inspection census result — none is inferred from memory.
 
+**Superseded in coverage, not in content, by `docs/2026-08-08-level4-gym-census-round2.md`**: a second, complete (57/57, zero kills) census workflow found 74 total gyms (up from this round's ~44), including a real 5-category goal-oracle semantic taxonomy for the `VendorBenchmarkProvider` family and a second, separate, family-wide authority-threading gap discovered after the constructor fix below landed. Read that document for the current full picture; this document's own 5 `LEVEL4_ALIVE` tracer bullets and their trial identities remain the authoritative record of what's actually been run.
+
 ## Level 4 ALIVE (5)
 
 | Gym | Trial identity | Real finding |
