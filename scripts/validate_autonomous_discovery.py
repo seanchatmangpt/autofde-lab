@@ -260,7 +260,7 @@ def _pattern_evidence(
         "entire_family_held_out": process_cut,
         "full_corpus_no_solution_leakage": process_cut
         and source_text_hidden
-        and bool(discovered["evidence_receipt_ids"]),
+        and discovered["evidence_receipt_count"] > 0,
     }
 
 
@@ -324,7 +324,9 @@ async def _run_recipe(path: Path) -> dict[str, Any]:
         "probes": discovered["probes"],
         "rejected_probes": discovered["rejected_probes"],
         "visited_states": discovered["visited_states"],
-        "discovery_receipts": len(discovered["evidence_receipt_ids"]),
+        "learned_transitions": discovered["learned_transition_count"],
+        "discovery_receipts": discovered["evidence_receipt_count"],
+        "discovery_receipt_sha256": discovered["evidence_receipt_sha256"],
         "final_receipts": list(replay.receipt_ids),
         "ocel_sha256": digest_ocel_log(replay.ocel_log),
         "ocel_events": event_count,

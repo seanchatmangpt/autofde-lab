@@ -186,4 +186,6 @@ def test_worker_isolated_stdio_protocol_has_no_parent_object_graph() -> None:
         process.stdin.close()
         assert process.wait(timeout=10) == 0
         assert result["plan"] == ["opaque-a", "opaque-b"]
-        assert result["evidence_receipt_ids"]
+        assert result["evidence_receipt_count"] > 0
+        assert len(result["evidence_receipt_sha256"]) == 64
+        assert result["learned_transition_count"] > 0

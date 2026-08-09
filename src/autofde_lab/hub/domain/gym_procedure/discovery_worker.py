@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import importlib.util
 import json
 import os
@@ -39,6 +40,11 @@ def _read_message() -> dict[str, Any]:
 def _write_message(value: dict[str, Any]) -> None:
     sys.stdout.write(json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n")
     sys.stdout.flush()
+
+
+def _receipt_digest(receipt_ids: tuple[str, ...]) -> str:
+    payload = json.dumps(list(receipt_ids), separators=(",", ":")).encode()
+    return hashlib.sha256(payload).hexdigest()
 
 
 async def _run() -> int:
@@ -101,16 +107,9 @@ async def _run() -> int:
             "probes": result.probes,
             "rejected_probes": result.rejected_probes,
             "visited_states": result.visited_states,
-            "evidence_receipt_ids": list(result.evidence_receipt_ids),
-            "learned_transitions": [
-                {
-                    "before_facts": sorted(item.before_facts),
-                    "action_id": item.action_id,
-                    "after_facts": sorted(item.after_facts),
-                    "receipt_ids": list(item.receipt_ids),
-                }
-                for item in result.learned_transitions
-            ],
+            "learned_transition_count": len(result.learned_transitions),
+            "evidence_receipt_count": len(result.evidence_receipt_ids),
+            "evidence_receipt_sha256": _receipt_digest(result.evidence_receipt_ids),
         }
     )
     return 0
