@@ -36,6 +36,7 @@ jobs:
             "anyio>=4.8,<5" \
             "blake3>=1.0,<2" \
             "jsonschema>=4.23,<5" \
+            "numpy==2.2.6" \
             "rfc3339-validator>=0.1.4,<1" \
             "pydantic>=2.13,<3" \
             "pyshacl>=0.40,<1" \
