@@ -24,9 +24,21 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
-          submodules: recursive
           persist-credentials: false
+
+      - name: Assert exact subject identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="${{ github.event.pull_request.head.sha || github.sha }}"
+          actual="$(git rev-parse HEAD)"
+          if [[ "${actual}" != "${expected}" ]]; then
+            echo "::error title=REFUSED:EXACT_HEAD_MISMATCH::actual=${actual} expected=${expected}"
+            exit 2
+          fi
+          printf 'exact_head=%s\n' "${actual}"
 
       - id: routes
         name: Classify change
