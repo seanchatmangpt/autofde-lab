@@ -61,7 +61,9 @@ class SOTAPortfolio:
         return all(factory.terminal for factory in self.factories)
 
     def snapshot(self) -> PortfolioSnapshot:
-        return PortfolioSnapshot(tuple(factory.snapshot() for factory in self.factories))
+        return PortfolioSnapshot(
+            tuple(factory.snapshot() for factory in self.factories)
+        )
 
     def ingest(self, results: Iterable[TrialResult]) -> None:
         grouped: dict[tuple[str, str], list[TrialResult]] = defaultdict(list)
