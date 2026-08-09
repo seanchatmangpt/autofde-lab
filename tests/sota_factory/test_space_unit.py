@@ -1,4 +1,9 @@
-from autofde_lab.sota_factory import BasisChoice, BudgetPolicy, CompatibilityRule, DecisionSpace
+from autofde_lab.sota_factory import (
+    BasisChoice,
+    BudgetPolicy,
+    CompatibilityRule,
+    DecisionSpace,
+)
 from autofde_lab.sota_factory.space import one_factor_at_a_time, pairwise_covering
 
 
@@ -45,7 +50,9 @@ def test_declarative_compatibility_rule_prunes_illegal_combination() -> None:
         budgets=base.budgets,
         rules=(
             CompatibilityRule.from_mappings(
-                when={"model": "m2"}, forbid={"planner": "p2"}, reason="measured incompatibility"
+                when={"model": "m2"},
+                forbid={"planner": "p2"},
+                reason="measured incompatibility",
             ),
         ),
     )
