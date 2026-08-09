@@ -2,7 +2,7 @@
 
 Real census, this session, of every GymAct-capable provider reachable from `level4_gymact_bridge.py`, the sibling `~/gymact` package's `gyms/` directory, and `autofde_lab.hub.domain.*` bridges — gathered by 30 real, read-only census agents (out of ~44 dispatched; the workflow was killed mid-run at 46 agents dispatched/31 completed, `w9lme71pm`/`wf_a0bbfca7-d50`) plus 3 real tracer-bullet trials run directly. Every row below is either a real trial result or a real-source-inspection census result — none is inferred from memory.
 
-## Level 4 ALIVE (4)
+## Level 4 ALIVE (5)
 
 | Gym | Trial identity | Real finding |
 |---|---|---|
@@ -10,8 +10,15 @@ Real census, this session, of every GymAct-capable provider reachable from `leve
 | `lock_and_key` (TracerBulletB) | seed `3979297810`, `depth=2`, `probe_budget=40`, trial `7ee7eaec-3eff-4b07-b796-6bff521c0ece` | Same, zero kernel edits from A. |
 | `switchboard` (TracerBulletC) | seed `3979297810`, `probe_budget=40`, trial `b95bea45-4b18-48f7-9321-934e325ce443` | Same, zero kernel edits from A/B, run by a census workflow agent through the unmodified CLI. |
 | `cube_counter` (TracerBulletD) | seed `3979297810`, trial `bc560e63-0844-4245-9382-9a9828f3f4da` | Reached only after a real fix (see below) to a discovery/planning-layer bug -- **zero changes** to the evidence kernel itself. `Conforms: True`, real severed-edge non-vacuousness check flips to `False`. Committed plan `(increment, increment, increment)`, deriving the unobserved goal state `counter=3` from a learned `+1` law rather than having directly probed it. |
+| `cube_container_counter` (TracerBulletE) | seed `3979297810`, trial `c6398f4e-6328-4f8c-a01f-23e9cca63cdd` | **The repair-leverage confirmation.** Same `_dimensions_with_arithmetic_evidence` fix, applied to `cube_counter` alone, transferred to this second, structurally distinct, Docker-backed gym with **zero further code changes** -- real `EXECUTED`, real `Level4AliveEvidence`, committed plan `(increment, increment, increment)`, `Conforms: True`, severed-edge check flips to `False`. First observed instance of one basis-level repair generalizing to a previously untested gym. |
 
-`FOUR_GYM_KERNEL_GATE = PASSED`: `level4_witness.py`, `verify.py`, and `ontology/shapes/{level4,authority,planning}.shacl.ttl` are byte-identical across all four. Zero provider-specific branches exist in any of them (`grep -n "resource_flow\|lock_and_key\|switchboard\|cube_counter\|provider_key ==" src/autofde_lab/evidence/*.py` → zero matches).
+`FIVE_GYM_KERNEL_GATE = PASSED`: `level4_witness.py`, `verify.py`, and `ontology/shapes/{level4,authority,planning}.shacl.ttl` are byte-identical across all five. Zero provider-specific branches exist in any of them (`grep -n "resource_flow\|lock_and_key\|switchboard\|cube_counter\|provider_key ==" src/autofde_lab/evidence/*.py` → zero matches).
+
+### The `cube_container_counter` leverage result, precisely
+
+The first attempt (colima's daemon unreachable) produced a second, real, independent finding: `_EXECUTE_SCRIPT` (the actuation-stage bridge) accessed `m.episode.episode_id` without checking `m.accepted` first -- unlike the discovery-stage bridge, which does check -- so any actuation-time materialize refusal crashed `run_real_trial` with an unhandled `AttributeError` instead of the typed `TrialReport` this module's own design promises everywhere else. Fixed: `_EXECUTE_SCRIPT` now returns a typed `{"materialize_failed": True, "reason": ...}` result on refusal; `commit_and_execute` raises a new `ActuationMaterializeRefused`; `run_real_trial` catches it and returns `BlockedEvidence(reason=...)` / `outcome="ACTUATION_MATERIALIZE_REFUSED"`. Verified live in isolation (`commit_and_execute` called directly against the real refusing provider) before colima was touched, and with a real, deterministic, environment-independent trigger (an unregistered `MaterializationIntent.provider` name, refused by `gymact`'s own kernel with `UNKNOWN_PROVIDER`) in `tests/domains/python/test_execute_bridge_materialize_refusal_chicago.py`.
+
+With the user's explicit authorization, colima was restarted (`colima restart`; it had reported itself "already running" while its socket was dead -- a hung daemon, not merely a stopped one) and the **identical, unmodified** trial was rerun: real `EXECUTED`, confirming the leverage hypothesis directly rather than leaving it open. Both runs (blocked, then alive) are the real controlled experiment -- not two unrelated data points.
 
 ### The `cube_counter` fix, precisely
 
@@ -22,11 +29,9 @@ Fix (`typed_induction.py`, `_dimensions_with_arithmetic_evidence`): a `CATEGORIC
 - `cube_counter`: `counter` regains `INTEGER`/metric standing; `increment.effects['counter'].delta == 1.0`; `search_plan_typed` derives `(increment, increment, increment)` reaching `counter=3` **without `counter=3` ever having been observed** during the bounded probe budget.
 - `lock_and_key`: `held_key` stays `CATEGORICAL_ID`, non-metric; every action's effect on it stays an absolute assignment, never a delta -- the paired regression guard holds.
 
-### Repair leverage to `cube_container_counter`: genuinely open, not yet answered
+### Repair leverage to `cube_container_counter`: resolved (see "Level 4 ALIVE" above)
 
-Attempted a real `run_real_trial("cube_container_counter", ...)` to test whether the same fix transfers to a second gym sharing `counter`'s classification bug, without any further change. The attempt itself surfaced a **separate, real, external** blocker, root-caused to the exact command rather than assumed: `cube.infra_local.py`'s `_launch_docker_service` shells out to `docker ps -q` during container provisioning, and that call returned exit 1 -- `Cannot connect to the Docker daemon at unix:///Users/sac/.colima/default/docker.sock`. Confirmed live and precisely: `docker info` succeeded minutes earlier in this same session (recorded in the census as "dependency available"), so the colima VM/daemon became unreachable *between* that check and this trial's actuation step -- a real, transient, external condition, not a code defect anywhere in this repo, and unrelated to the `_dimensions_with_arithmetic_evidence` fix.
-
-Status: `BLOCKED:EXTERNAL_COLIMA_DAEMON_UNREACHABLE`. This is not evidence the leverage hypothesis is false -- discovery/typed-search planning reached the commit stage before the actuation bridge failed, consistent with the same induction code path being exercised successfully. It is also not evidence the hypothesis is true -- actuation, replay, and SHACL projection never ran. Per `.claude/rules/absence-is-not-evidence.md`, this stays an open question, not a quiet pass or fail. Re-attempt once colima is confirmed live (`docker ps -q` exits 0) with the identical, unmodified fix.
+The first attempt genuinely blocked on `BLOCKED:EXTERNAL_COLIMA_DAEMON_UNREACHABLE` (`cube.infra_local._launch_docker_service`'s `docker ps -q` call returning exit 1, root-caused to the exact command -- colima's daemon had gone unreachable between an earlier successful `docker info` check and this trial's actuation step). Per `.claude/rules/absence-is-not-evidence.md` that was correctly recorded as genuinely open, not a quiet pass or fail, since discovery/typed-search reaching commit was suggestive but not conclusive. With explicit authorization the daemon was restarted and the identical, unmodified trial reran to a real, conclusive `EXECUTED` -- see TracerBulletE above.
 
 Chicago-style test: `tests/domains/python/test_typed_induction_arithmetic_standing_chicago.py`, 4/4 real (real `RealBlindEnvironment`/`_discover_by_probing` against both real providers, real `induce_typed_domain`, real `run_real_trial` end-to-end, zero mocks). Attribution of two pre-existing, unrelated failures in `test_level4_crown_unmodellable_trial_chicago.py` confirmed precisely by `git stash`-ing the fix and re-running: identical failures occur with or without it.
 

@@ -257,6 +257,24 @@ class AdvisoryAuthorityRefused(Exception):
     """Raised when advisory output is used where a bearer commitment is required."""
 
 
+class ActuationMaterializeRefused(Exception):
+    """Raised when `_EXECUTE_SCRIPT`'s `gym.materialize()` call is refused at
+    the actuation stage -- distinct from a genuine subprocess crash.
+
+    Named the exact real condition this repairs: a real trial against
+    `cube_container_counter` reached commitment (discovery and typed search
+    both succeeded), then the actuation subprocess crashed with
+    `AttributeError: 'NoneType' object has no attribute 'episode_id'` because
+    `_EXECUTE_SCRIPT` accessed `m.episode.episode_id` without checking
+    `m.accepted` first -- unlike `_BRIDGE_SCRIPT`'s discovery-side
+    materialize call, which does check. Root cause was a real, external
+    condition (the local colima Docker daemon became unreachable between an
+    earlier `docker info` check and this actuation attempt), but the bridge
+    should surface a typed refusal for that either way, never crash while
+    reporting it: `ProviderRefusal != BridgeCrash`.
+    """
+
+
 @dataclass(frozen=True)
 class ValidatedPlan:
     """Only producible by `independently_validate`. Not enough to actuate."""
@@ -356,6 +374,17 @@ async def main(module_path, class_name, provider_name, config, plan, expected_li
     gym.register_provider(provider_cls())
 
     m = await gym.materialize(MaterializationIntent(provider=provider_name, config=config))
+    if not m.accepted or m.episode is None:
+        # A refused actuation-time materialize is a typed answer, never a
+        # crash while reporting it -- the same convention the discovery
+        # bridge (`_BRIDGE_SCRIPT`) already uses for the identical case.
+        # `commit_and_execute` interprets this key and raises
+        # `ActuationMaterializeRefused` rather than letting the caller see a
+        # bare non-zero exit / `AttributeError`.
+        return {
+            "materialize_failed": True,
+            "reason": m.receipt.reason if m.receipt else "UNKNOWN_MATERIALIZE_REFUSAL",
+        }
     episode_id = m.episode.episode_id
 
     probe_provider = provider_cls()
@@ -905,6 +934,14 @@ def commit_and_execute(
     if completed.returncode != 0:
         raise RuntimeError(f"execute bridge failed:\nstdout={completed.stdout}\nstderr={completed.stderr}")
     result = json.loads(completed.stdout.strip().splitlines()[-1])
+    if result.get("materialize_failed"):
+        # A typed refusal from `_EXECUTE_SCRIPT`, not a crash -- surfaced as
+        # a distinct exception so `run_real_trial` can report it through the
+        # normal TrialReport channel (BlockedEvidence), matching the "a
+        # trial that cannot be modelled is a FAILED trial with a named
+        # reason, never an absent one" convention this module uses
+        # everywhere else.
+        raise ActuationMaterializeRefused(str(result.get("reason") or "UNKNOWN_MATERIALIZE_REFUSAL"))
     # Write the CANONICAL bytes, not a pretty-printed rendering.
     #
     # `ocel_digest` is computed by gymact's `digest_ocel_log` over
@@ -1624,9 +1661,31 @@ def run_real_trial(
     expected_steps = predict_step_postconditions(
         validated.plan, provider_key, typed_initial, payloads
     )
-    result = commit_and_execute(
-        commitment, provider_key, config, expected_steps, evidence_dir / "actuation", payloads
-    )
+    try:
+        result = commit_and_execute(
+            commitment, provider_key, config, expected_steps, evidence_dir / "actuation", payloads
+        )
+    except ActuationMaterializeRefused as exc:
+        # A real, named blocker at the actuation stage -- discovery and
+        # typed search both already succeeded (this trial reached
+        # commitment), so this is not an unmodellable trial and not a
+        # planning-layer gap. Reported through the normal TrialReport
+        # channel, never an unhandled crash: see
+        # `ActuationMaterializeRefused`'s docstring for the real incident
+        # this repairs.
+        return TrialReport(
+            standing=BlockedEvidence(reason=str(exc)),
+            ocel_ref_violations=(),
+            replay_mismatches=("ACTUATION_MATERIALIZE_REFUSED",),
+            replay_record_count=0,
+            replay_error=str(exc),
+            outcome="ACTUATION_MATERIALIZE_REFUSED",
+            unsound_candidates_rejected=rejected,
+            committed_plan=validated.plan,
+            committed_plan_source=plan_source,
+            **typed_base,
+            **base,
+        )
     # INDEPENDENT CONSEQUENCE + REPLAY -- both stated as the execution returns
     # them, naming exact identities. The goal outcome is read off the real
     # `verify_goal_consequence` event the subprocess projected from gymact's
