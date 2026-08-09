@@ -107,10 +107,15 @@ class SOTAFactory:
             if plan is None:
                 raise ValueError(f"REFUSED:UNKNOWN_EXPERIMENT_PLAN:{result.plan_id}")
             if result.architecture_digest != plan.architecture_digest:
-                raise ValueError(f"REFUSED:ARCHITECTURE_IDENTITY_DRIFT:{result.plan_id}")
+                raise ValueError(
+                    f"REFUSED:ARCHITECTURE_IDENTITY_DRIFT:{result.plan_id}"
+                )
             if result.task_id != plan.task_id:
                 raise ValueError(f"REFUSED:TASK_IDENTITY_DRIFT:{result.plan_id}")
-            if result.benchmark_id != self.target.benchmark_id or result.benchmark_revision != self.target.revision:
+            if (
+                result.benchmark_id != self.target.benchmark_id
+                or result.benchmark_revision != self.target.revision
+            ):
                 raise ValueError(f"REFUSED:BENCHMARK_IDENTITY_DRIFT:{result.plan_id}")
             existing = self._results.get(result.plan_id)
             if existing is not None and existing != result:
