@@ -34,7 +34,9 @@ class Scoreboard:
 
     @property
     def sota_winners(self) -> tuple[BenchmarkScore, ...]:
-        return tuple(row for row in self.rows if row.standing is FrontierStanding.SOTA_SURPASSED)
+        return tuple(
+            row for row in self.rows if row.standing is FrontierStanding.SOTA_SURPASSED
+        )
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -45,5 +47,7 @@ class Scoreboard:
     def write_json(self, path: str | Path) -> Path:
         destination = Path(path)
         destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_text(json.dumps(self.to_dict(), indent=2, sort_keys=True) + "\n")
+        destination.write_text(
+            json.dumps(self.to_dict(), indent=2, sort_keys=True) + "\n"
+        )
         return destination
