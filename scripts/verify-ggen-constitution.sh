@@ -28,6 +28,18 @@ esac
 
 readonly asset sha256
 readonly url="https://github.com/seanchatmangpt/ggen/releases/download/${GGEN_VERSION}/${asset}"
+readonly -a GENERATED_ROOTS=(
+  "src/autofde_lab/constitution"
+  "tests/constitution/test_semantic_constitution.py"
+)
+
+for forbidden in generated src/autofde_lab/generated; do
+  if [[ -e "${forbidden}" ]]; then
+    echo "REFUSED:GENERATED_NAMESPACE_FORBIDDEN:${forbidden}" >&2
+    exit 3
+  fi
+done
+
 workdir="$(mktemp -d)"
 trap 'rm -rf "$workdir"' EXIT
 archive="${workdir}/${asset}"
@@ -35,21 +47,80 @@ archive="${workdir}/${asset}"
 curl --fail --location --retry 3 --silent --show-error \
   "${url}" \
   --output "${archive}"
-printf '%s  %s\n' "${sha256}" "${archive}" | sha256sum --check --strict
+
+actual_sha256="$(python - "${archive}" <<'PY'
+from __future__ import annotations
+
+import hashlib
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+h = hashlib.sha256()
+with path.open("rb") as stream:
+    for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+        h.update(chunk)
+print(h.hexdigest())
+PY
+)"
+if [[ "${actual_sha256}" != "${sha256}" ]]; then
+  echo "REFUSED:GGEN_ASSET_DIGEST_DRIFT:${actual_sha256}!=${sha256}" >&2
+  exit 4
+fi
 
 tar -xzf "${archive}" -C "${workdir}"
 ggen_bin="$(find "${workdir}" -type f -name ggen -print -quit)"
 if [[ -z "${ggen_bin}" ]]; then
   echo "REFUSED:GGEN_BINARY_NOT_FOUND" >&2
-  exit 3
+  exit 5
 fi
 chmod +x "${ggen_bin}"
 
-"${ggen_bin}" sync run
+projection_manifest() {
+  python - "${GENERATED_ROOTS[@]}" <<'PY'
+from __future__ import annotations
 
-git diff --exit-code -- \
-  src/autofde_lab/constitution \
-  tests/constitution/test_semantic_constitution.py
+import hashlib
+from pathlib import Path
+import sys
+
+paths: list[Path] = []
+for raw in sys.argv[1:]:
+    root = Path(raw)
+    if root.is_dir():
+        paths.extend(path for path in root.rglob("*") if path.is_file())
+    elif root.is_file():
+        paths.append(root)
+    else:
+        raise SystemExit(f"REFUSED:GENERATED_PROJECTION_MISSING:{root}")
+
+for path in sorted(paths, key=lambda item: item.as_posix()):
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    print(f"{digest}  {path.as_posix()}")
+PY
+}
+
+verify_clean_projection() {
+  git diff --exit-code -- "${GENERATED_ROOTS[@]}" || {
+    echo "REFUSED:GGEN_PROJECTION_DRIFT" >&2
+    exit 6
+  }
+}
+
+# Pass 1 proves committed projection correspondence.
+"${ggen_bin}" sync run
+verify_clean_projection
+projection_manifest > "${workdir}/manifest-1.sha256"
+
+# Pass 2 proves the manufacturer is idempotent at the exact same subject.
+"${ggen_bin}" sync run
+verify_clean_projection
+projection_manifest > "${workdir}/manifest-2.sha256"
+if ! cmp -s "${workdir}/manifest-1.sha256" "${workdir}/manifest-2.sha256"; then
+  echo "REFUSED:GGEN_NONDETERMINISTIC_PROJECTION" >&2
+  diff -u "${workdir}/manifest-1.sha256" "${workdir}/manifest-2.sha256" >&2 || true
+  exit 7
+fi
 
 python -m compileall -q \
   src/autofde_lab/constitution \

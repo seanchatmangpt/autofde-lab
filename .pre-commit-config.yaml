@@ -32,16 +32,19 @@ repos:
     # Ruff version.
     rev: v0.14.0
     hooks:
-      # Run the linter (only sorting imports for now)
+      # ggen-owned Python is a canonical projection. Generic fixers must never
+      # rewrite it; scripts/verify-ggen-constitution.sh owns its byte identity.
       - id: ruff-check
         name: ruff sort imports
         args: [ --fix, --select=I ]
+        exclude: ^(src/autofde_lab/constitution/|tests/constitution/test_semantic_constitution\.py$)
       - id: ruff-check
         name: ruff clean unused imports
         args: [ --fix, --select=F401 ]
-      # Run the formatter.
+        exclude: ^(src/autofde_lab/constitution/|tests/constitution/test_semantic_constitution\.py$)
+      # Run the formatter on handwritten Python only.
       - id: ruff-format
-        exclude: ^cpp/
+        exclude: ^(cpp/|src/autofde_lab/constitution/|tests/constitution/test_semantic_constitution\.py$)
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: v13.0.0
