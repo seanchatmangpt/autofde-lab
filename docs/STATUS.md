@@ -5,7 +5,26 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
-Last update: **pass 14** (2026-08-08) — Lane B: extracted the `DecisionBasis` vocabulary
+Last update: **pass 15** (2026-08-09) — sregym/stratus LLM-driven attempt closed
+`BLOCKED:LOCAL_MODEL_TOOL_CALLING_REQUEST_INCOMPATIBLE`, attached as D0's first observation.
+Four real infra defects were found and fixed live getting the kind cluster to a genuine
+`diagnosis`-stage-ready state (Docker daemon `default-ulimits`; stale kube-system
+namespace-controller cache after a daemon restart; hung containerd on `kind-worker2`;
+kernel-wide `fs.inotify.max_user_instances=128` exhaustion — the classic Linux default, the
+real root cause of a promtail crash-loop). The `stratus` diagnosis agent then crashed on its
+first LLM call: `litellm.BadRequestError: OpenAIException - generation failed`. Three
+hypotheses tested and ruled out with real evidence (context window 4096→65536 re-test, direct
+`curl` replication of the real 7-tool schema succeeding, prompt-length measurement); one real,
+cited, unconfirmed candidate named and deliberately not chased further
+(`get_llm_backend.py`'s `bind_tools(tools, tool_choice="auto")` + LiteLLM's global
+`drop_params`/`modify_params`) — per this session's explicit correction: "you should not
+default to LLM always." Pivoted to a new Lane C: this repo's own `fabric catalog` already
+registers a `k8s_goat_rbac_escalation` domain and real non-LLM planners (`BFWS`, `IW`, `RIW`,
+`Astar`, `MCTS`, `POMCP`) plus the already-ALIVE bounded-structured `DSPyPolicy` solver, none
+yet pointed at a real external benchmark task — investigation in progress. Full transcript:
+`docs/2026-08-09-sregym-stratus-llm-attempt-terminal-result.md`.
+
+Prior update: **pass 14** (2026-08-08) — Lane B: extracted the `DecisionBasis` vocabulary
 (`Model x Planner x ToolPolicy x RepairPolicy x VerificationPolicy x Budget`) this repo's own
 prior SOTA-attack work found missing -- only `Model` had ever been proven swappable. New
 package `src/autofde_lab/sota/`: real, cited D0 points for both real agent-driven attempts
