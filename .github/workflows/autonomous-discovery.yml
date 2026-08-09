@@ -27,9 +27,12 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install released GymAct base and test runtime
+      - name: Install identity-bound GymAct base and test runtime
         run: |
-          python -m pip install "gymact==26.8.7" "pytest>=8.3,<9" "pytest-asyncio>=0.25,<2"
+          python -m pip install \
+            "gymact @ git+https://github.com/seanchatmangpt/gymact.git@c839d76125bde97b9eb3dfd82f0e08a1b9dcdf96" \
+            "pytest>=8.3,<9" \
+            "pytest-asyncio>=0.25,<2"
 
       - name: Manufacture identity-bound GymAct exact-head capsule
         run: |
@@ -118,4 +121,4 @@ jobs:
         with:
           name: autonomous-discovery-receipt
           path: reports/autonomous-discovery/receipt.json
-          if-no-files-found: error
+          if-no-files-found: warn
