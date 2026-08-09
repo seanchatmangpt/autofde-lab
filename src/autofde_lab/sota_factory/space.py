@@ -283,7 +283,9 @@ def pairwise_covering(
         raise ValueError("max_architectures must be > 0")
 
     by_digest = {decision.digest: decision for decision in decisions}
-    token_map = {digest: _pair_tokens(decision) for digest, decision in by_digest.items()}
+    token_map = {
+        digest: _pair_tokens(decision) for digest, decision in by_digest.items()
+    }
     uncovered = set().union(*(tokens for tokens in token_map.values()))
     remaining = dict(by_digest)
     selected: list[DecisionBasis] = []
