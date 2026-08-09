@@ -343,6 +343,42 @@ representative sample is run. Reporting 75% > 72.6% as "SOTA beaten" from this s
 be a real, precise violation of `.claude/rules/no-overclaiming-conversational.md` --
 named here explicitly so it is not asserted elsewhere.
 
+## Real, unbiased, representative-sample measurement — in progress
+
+Per the standing goal's own precise objection to the 4-trial result: a hand-picked sample
+cannot be compared against an aggregate rate measured on a representative sample. Response:
+a real, programmatically-generated, unbiased systematic sample — every 5th `problem_id` from
+the real, full, alphabetically-sorted list of all 123 active `ProblemRegistry` registrations
+(computed once via `ProblemRegistry().get_problem_ids(all=True)`, never hand-edited to add or
+remove a favorable/unfavorable case) — 25 problems, run sequentially against the real,
+unmodified benchmark.
+
+**A first batch attempt (stride-5, `--agent-timeout 200`/outer `timeout 240`) was discarded
+as invalid, not reported**: even `misconfig_app_hotel_res` — the one case with the most real,
+repeated, successful verification this session — timed out under those limits. Real cause,
+confirmed by inspection of the batch log: deploying sregym's observability stack (Loki,
+Promtail, MCP server) alone can take 3-5+ real minutes before the target app namespace is
+even created, and legitimate driver work (multiple rollout waits) has been observed taking up
+to 488.9s in this session's own prior real trials. A 240s ceiling was tight enough to produce
+false timeouts on cases this driver can genuinely solve — mixing that data into an aggregate
+would have been exactly the kind of manufactured-from-absence error
+`.claude/rules/absence-is-not-evidence.md` forbids (a timeout is evidence the ceiling was too
+low, not evidence the planner failed). Corrected to `--agent-timeout 600`/outer `timeout 750`
+(evidence-based, not guessed) and restarted from scratch.
+
+**Real, structural environment finding surfaced during the discarded run, still valid**:
+`astronomy_shop_*`-targeted problems fail at deploy time, before this driver's own logic ever
+runs -- `Helm chart_path does not exist: .../SREGym-applications/astronomy-shop/charts/
+opentelemetry-demo`. The real OpenTelemetry Demo Helm chart was never vendored into this
+checkout (confirmed: the local directory is empty). This is a real, honest `BLOCKED:
+ENVIRONMENT` reason distinct from a planner defect -- fetching the missing chart would mean
+downloading a file, which this session did not have standing authorization to do
+unilaterally, so it was not attempted. ~7 of the 25 sampled problems target `astronomy_shop_*`
+and will hit this same wall; the final aggregate accounts for them as a separate,
+named category, never silently folded into either PASS or FAIL.
+
+_Real, corrected-batch results appended here once the run completes or is checkpointed._
+
 ## Precision on the "beats SOTA" question — not yet established, named honestly
 
 A real, cited WebSearch this session found sregym's real published numbers
