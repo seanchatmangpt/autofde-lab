@@ -215,6 +215,56 @@ def test_decide_mitigation_commands_is_empty_when_nothing_is_mismatched(driver):
     ) == []
 
 
+# --- Generalization: revision-based anomaly detection for tiers with no known-correct image ---
+#
+# update_incompatible_correlated injects its fault onto mongodb-* deployments -- exactly the
+# tier the deny-list excludes as infra. These tests exercise the real, standard-Kubernetes
+# fallback signal (deployment.kubernetes.io/revision) + `kubectl rollout undo`, which needs no
+# known-correct value at all.
+
+
+def test_parse_revision_parses_the_real_kubectl_annotation_output(driver):
+    assert driver.parse_revision("2\n") == 2
+    assert driver.parse_revision("1") == 1
+
+
+def test_parse_revision_defaults_to_baseline_on_missing_annotation(driver):
+    """A missing/unreadable annotation must never manufacture a false "this was mutated"
+    signal -- default to 1 (a real, never-rolled-out Deployment's real value)."""
+    assert driver.parse_revision("") == 1
+    assert driver.parse_revision("<none>") == 1
+
+
+def test_find_deployments_with_elevated_revision_flags_only_real_divergence(driver):
+    revisions = {"consul": 1, "mongodb-geo": 2, "jaeger": 1, "mongodb-rate": 3}
+    assert driver.find_deployments_with_elevated_revision(revisions) == ["mongodb-geo", "mongodb-rate"]
+
+
+def test_find_deployments_with_elevated_revision_reports_none_when_nothing_moved(driver):
+    assert driver.find_deployments_with_elevated_revision({"consul": 1, "jaeger": 1}) == []
+
+
+def test_decide_rollback_commands_builds_the_exact_real_kubectl_undo_command(driver):
+    assert driver.decide_rollback_commands(anomalous_infra=["mongodb-geo"], namespace="hotel-reservation") == [
+        "kubectl rollout undo deployment/mongodb-geo -n hotel-reservation"
+    ]
+    assert driver.decide_rollback_commands(anomalous_infra=[], namespace="hotel-reservation") == []
+
+
+def test_build_diagnosis_text_reports_infra_anomalies_as_a_distinct_secondary_signal(driver):
+    canonical = "ghcr.io/sregym/hotel-reservation:latest"
+    text = driver.build_diagnosis_text(
+        mismatched=[],
+        observed_images={},
+        canonical_image=canonical,
+        namespace="hotel-reservation",
+        anomalous_infra=["mongodb-geo"],
+    )
+    assert "No image misconfiguration detected" in text
+    assert "mongodb-geo" in text
+    assert "elevated deployment.kubernetes.io/revision" in text
+
+
 def test_canonical_hotel_reservation_image_matches_the_apps_own_real_source_constant(driver):
     """Cross-checks against the real, checked-out `hotel_reservation.py` constant directly --
     not a duplicated/hand-copied string, avoiding this repo's own no-dual-bookkeeping trap.
