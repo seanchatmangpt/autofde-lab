@@ -92,7 +92,9 @@ class BasisChoice:
             _validate_scalar(value)
 
     @classmethod
-    def from_mapping(cls, name: str, parameters: Mapping[str, Scalar] | None = None) -> "BasisChoice":
+    def from_mapping(
+        cls, name: str, parameters: Mapping[str, Scalar] | None = None
+    ) -> "BasisChoice":
         pairs = tuple(sorted((str(k), v) for k, v in (parameters or {}).items()))
         return cls(name=name, parameters=pairs)
 
@@ -225,7 +227,9 @@ class ExperimentBasis:
     def __post_init__(self) -> None:
         if self.probe_budget < 0 or self.replication < 0:
             raise ValueError("probe_budget and replication must be >= 0")
-        if self.time_limit_s is not None and (not math.isfinite(self.time_limit_s) or self.time_limit_s < 0):
+        if self.time_limit_s is not None and (
+            not math.isfinite(self.time_limit_s) or self.time_limit_s < 0
+        ):
             raise ValueError("time_limit_s must be finite and >= 0")
         if self.horizon is not None and self.horizon < 0:
             raise ValueError("horizon must be >= 0")
@@ -264,7 +268,10 @@ class ArchitecturePoint:
     experiment: ExperimentBasis = field(default_factory=ExperimentBasis)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"decision": self.decision.to_dict(), "experiment": self.experiment.to_dict()}
+        return {
+            "decision": self.decision.to_dict(),
+            "experiment": self.experiment.to_dict(),
+        }
 
     @property
     def digest(self) -> str:
@@ -285,7 +292,11 @@ class BenchmarkTarget:
     frontier_source_ref: str = ""
 
     def __post_init__(self) -> None:
-        if not self.benchmark_id.strip() or not self.revision.strip() or not self.primary_metric.strip():
+        if (
+            not self.benchmark_id.strip()
+            or not self.revision.strip()
+            or not self.primary_metric.strip()
+        ):
             raise ValueError("benchmark_id, revision, and primary_metric are required")
         if not math.isfinite(self.published_sota):
             raise ValueError("published_sota must be finite")
@@ -381,7 +392,10 @@ class TrialResult:
             raise ValueError("latency_s must be finite and >= 0")
         if self.tokens < 0:
             raise ValueError("tokens must be >= 0")
-        if self.outcome is TrialOutcome.PASS and self.failure_kind is not FailureKind.NONE:
+        if (
+            self.outcome is TrialOutcome.PASS
+            and self.failure_kind is not FailureKind.NONE
+        ):
             raise ValueError("PASS cannot carry a failure_kind")
 
     @property
