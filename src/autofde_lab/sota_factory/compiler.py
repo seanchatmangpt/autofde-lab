@@ -51,13 +51,21 @@ class ExperimentCompiler:
         max_architectures: int | None = None,
         task_ids: Sequence[str] | None = None,
     ) -> CompiledExperimentSet:
-        lawful = decision_space.materialize(candidate_limit=candidate_limit)
-        selected = self._select(
-            lawful,
-            strategy=strategy,
-            baseline=baseline,
-            max_architectures=max_architectures,
-        )
+        if strategy is SelectionStrategy.PAIRWISE_COVERING:
+            selected = decision_space.combinatorial_pairwise_covering(
+                baseline=baseline,
+                candidate_limit=candidate_limit,
+                max_architectures=max_architectures,
+            )
+        else:
+            lawful = decision_space.materialize(candidate_limit=candidate_limit)
+            selected = self._select(
+                lawful,
+                strategy=strategy,
+                baseline=baseline,
+                max_architectures=max_architectures,
+            )
+
         experiments = tuple(experiment_bases)
         if not experiments:
             raise ValueError("experiment_bases must be non-empty")
