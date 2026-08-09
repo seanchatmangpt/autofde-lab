@@ -114,8 +114,31 @@ _BRIDGE_SCRIPT = """
 _AUTHORITY_REF = "urn:autofde-lab:level4-crown-authority"
 import asyncio
 import importlib
+import inspect
 import json
 import sys
+
+
+def _construct_provider(provider_cls, provider_name: str):
+    # Construct a provider generically, whether its class needs zero
+    # constructor arguments (cube_counter, switchboard, resource_flow,
+    # lock_and_key, cube_container_counter -- every currently wired
+    # provider) or one real required argument matching its own registered
+    # name (e.g. gymact.gyms.vendor_benchmarks.VendorBenchmarkProvider's
+    # `name: str`, shared by every VENDOR_REVISIONS entry). Introspects the
+    # REAL constructor signature -- never a per-provider-name branch -- so
+    # this generalizes to any future provider without editing this bridge
+    # again. A provider needing more than one required argument beyond
+    # `self` is an honest TypeError here, not a silent misconfiguration.
+    required = [
+        p for n, p in inspect.signature(provider_cls.__init__).parameters.items()
+        if n != "self"
+        and p.default is inspect.Parameter.empty
+        and p.kind in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.KEYWORD_ONLY)
+    ]
+    if not required:
+        return provider_cls()
+    return provider_cls(provider_name)
 
 
 async def main(module_path: str, class_name: str, provider_name: str, config: dict, requests: list) -> dict:
@@ -138,7 +161,7 @@ async def main(module_path: str, class_name: str, provider_name: str, config: di
     # bounded resolver, documented for exactly this local-gym case, and it
     # still refuses any capability whose ref is not admitted.
     gym = GymAct(authority_resolver=AllowListAuthorityResolver({_AUTHORITY_REF}))
-    gym.register_provider(provider_cls())
+    gym.register_provider(_construct_provider(provider_cls, provider_name))
 
     materialization = await gym.materialize(MaterializationIntent(provider=provider_name, config=config))
     if not materialization.accepted:
@@ -151,7 +174,7 @@ async def main(module_path: str, class_name: str, provider_name: str, config: di
     # actuation happens here), so reading them off a second, disposable,
     # never-actuated Environment instance is side-effect-free and gives
     # the real binding->iri mapping without reaching into kernel internals.
-    probe_provider = provider_cls()
+    probe_provider = _construct_provider(provider_cls, provider_name)
     probe_env = await probe_provider.materialize(scenario=None, config=config)
     caps = {c.binding: c for c in probe_env.capabilities()}
     await probe_env.teardown()

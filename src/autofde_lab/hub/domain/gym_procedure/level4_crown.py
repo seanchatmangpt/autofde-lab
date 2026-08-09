@@ -342,11 +342,31 @@ def commit(validated: ValidatedPlan, trial_id: str) -> PowlCommitment:
 _EXECUTE_SCRIPT = '''
 _AUTHORITY_REF = "urn:autofde-lab:level4-crown-authority"
 _GOAL_CONSEQUENCE_EVENT_TYPE = "verify_goal_consequence"
-import asyncio, datetime, hashlib, importlib, json, sys
+import asyncio, datetime, hashlib, importlib, inspect, json, sys
 
 
 def _digest(obj):
     return hashlib.sha256(json.dumps(obj, sort_keys=True, default=str).encode()).hexdigest()
+
+
+def _construct_provider(provider_cls, provider_name):
+    # See level4_gymact_bridge.py's _BRIDGE_SCRIPT copy of this same helper
+    # (kept identical in both scripts deliberately -- the discovery and
+    # actuation bridges construct providers the same way): generic
+    # introspection of the real constructor signature, never a
+    # per-provider-name branch, so a provider needing one real required
+    # argument matching its own registered name (e.g.
+    # VendorBenchmarkProvider's `name: str`) constructs correctly alongside
+    # every zero-arg provider without editing this bridge again.
+    required = [
+        p for n, p in inspect.signature(provider_cls.__init__).parameters.items()
+        if n != "self"
+        and p.default is inspect.Parameter.empty
+        and p.kind in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.KEYWORD_ONLY)
+    ]
+    if not required:
+        return provider_cls()
+    return provider_cls(provider_name)
 
 
 async def main(module_path, class_name, provider_name, config, plan, expected_list, payloads, ledger_path):
@@ -371,7 +391,7 @@ async def main(module_path, class_name, provider_name, config, plan, expected_li
         receipt_ledger=ledger,
         authority_resolver=AllowListAuthorityResolver({_AUTHORITY_REF}),
     )
-    gym.register_provider(provider_cls())
+    gym.register_provider(_construct_provider(provider_cls, provider_name))
 
     m = await gym.materialize(MaterializationIntent(provider=provider_name, config=config))
     if not m.accepted or m.episode is None:
@@ -387,7 +407,7 @@ async def main(module_path, class_name, provider_name, config, plan, expected_li
         }
     episode_id = m.episode.episode_id
 
-    probe_provider = provider_cls()
+    probe_provider = _construct_provider(provider_cls, provider_name)
     probe_env = await probe_provider.materialize(scenario=None, config=config)
     caps = {c.binding: c for c in probe_env.capabilities()}
     await probe_env.teardown()
