@@ -65,3 +65,10 @@ repos:
         files: ^uv\.lock$
         pass_filenames: false
         stages: [pre-commit]
+      - id: verify-sota-combinatorial-ggen
+        name: Verify ggen combinatorial-maximalism court
+        entry: bash scripts/verify-sota-combinatorial-ggen.sh
+        language: system
+        files: ^(ggen/sota_factory/|scripts/verify-sota-combinatorial-ggen\.sh|src/autofde_lab/sota_factory/(space|compiler|models)\.py|tests/sota_factory/test_combinatorial_maximalism_unit\.py)$
+        pass_filenames: false
+        stages: [pre-commit]
