@@ -3,6 +3,19 @@ set -euo pipefail
 
 readonly GGEN_VERSION="v26.8.8"
 
+annotate() {
+  local level="$1"
+  local title="$2"
+  local message="$3"
+  printf '%s\n' "${title}: ${message}" >&2
+  if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+    message="${message//'%'/'%25'}"
+    message="${message//$'\r'/'%0D'}"
+    message="${message//$'\n'/'%0A'}"
+    printf '::%s title=%s::%s\n' "${level}" "${title}" "${message}" >&2
+  fi
+}
+
 case "$(uname -s)/$(uname -m)" in
   Linux/x86_64)
     asset="ggen-x86_64-unknown-linux-gnu.tar.gz"
@@ -21,7 +34,7 @@ case "$(uname -s)/$(uname -m)" in
     sha256="a4304371ce787e7bfe479fdba050960cdb8761fc9ca3d272da6bd7e64af08570"
     ;;
   *)
-    echo "REFUSED:UNSUPPORTED_GGEN_VERIFIER_PLATFORM $(uname -s)/$(uname -m)" >&2
+    annotate error "REFUSED:UNSUPPORTED_GGEN_VERIFIER_PLATFORM" "$(uname -s)/$(uname -m)"
     exit 2
     ;;
 esac
@@ -33,9 +46,14 @@ readonly -a GENERATED_ROOTS=(
   "tests/constitution/test_semantic_constitution.py"
 )
 
+if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+  printf '::notice title=GGEN_CONSTITUTION_VERIFIER::started version=%s asset=%s\n' \
+    "${GGEN_VERSION}" "${asset}"
+fi
+
 for forbidden in generated src/autofde_lab/generated; do
   if [[ -e "${forbidden}" ]]; then
-    echo "REFUSED:GENERATED_NAMESPACE_FORBIDDEN:${forbidden}" >&2
+    annotate error "REFUSED:GENERATED_NAMESPACE_FORBIDDEN" "${forbidden}"
     exit 3
   fi
 done
@@ -64,14 +82,16 @@ print(h.hexdigest())
 PY
 )"
 if [[ "${actual_sha256}" != "${sha256}" ]]; then
-  echo "REFUSED:GGEN_ASSET_DIGEST_DRIFT:${actual_sha256}!=${sha256}" >&2
+  annotate error \
+    "REFUSED:GGEN_ASSET_DIGEST_DRIFT" \
+    "actual=${actual_sha256} expected=${sha256}"
   exit 4
 fi
 
 tar -xzf "${archive}" -C "${workdir}"
 ggen_bin="$(find "${workdir}" -type f -name ggen -print -quit)"
 if [[ -z "${ggen_bin}" ]]; then
-  echo "REFUSED:GGEN_BINARY_NOT_FOUND" >&2
+  annotate error "REFUSED:GGEN_BINARY_NOT_FOUND" "asset=${asset}"
   exit 5
 fi
 chmod +x "${ggen_bin}"
@@ -101,10 +121,15 @@ PY
 }
 
 verify_clean_projection() {
-  git diff --exit-code -- "${GENERATED_ROOTS[@]}" || {
-    echo "REFUSED:GGEN_PROJECTION_DRIFT" >&2
-    exit 6
-  }
+  local changed
+  changed="$(git diff --name-only -- "${GENERATED_ROOTS[@]}")"
+  if [[ -n "${changed}" ]]; then
+    local compact
+    compact="$(printf '%s\n' "${changed}" | paste -sd, -)"
+    annotate error "REFUSED:GGEN_PROJECTION_DRIFT" "changed=${compact}"
+    git diff --stat -- "${GENERATED_ROOTS[@]}" >&2 || true
+    return 6
+  fi
 }
 
 # Pass 1 proves committed projection correspondence.
@@ -117,7 +142,9 @@ projection_manifest > "${workdir}/manifest-1.sha256"
 verify_clean_projection
 projection_manifest > "${workdir}/manifest-2.sha256"
 if ! cmp -s "${workdir}/manifest-1.sha256" "${workdir}/manifest-2.sha256"; then
-  echo "REFUSED:GGEN_NONDETERMINISTIC_PROJECTION" >&2
+  annotate error \
+    "REFUSED:GGEN_NONDETERMINISTIC_PROJECTION" \
+    "pass-1 and pass-2 projection manifests differ"
   diff -u "${workdir}/manifest-1.sha256" "${workdir}/manifest-2.sha256" >&2 || true
   exit 7
 fi
@@ -126,3 +153,7 @@ python -m compileall -q \
   src/autofde_lab/constitution \
   tests/constitution/test_semantic_constitution.py
 PYTHONPATH=src python -m pytest -q tests/constitution/test_semantic_constitution.py
+
+if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+  printf '::notice title=GGEN_CONSTITUTION_VERIFIER::passed two-pass byte-identical manufacture\n'
+fi
