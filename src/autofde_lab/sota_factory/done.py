@@ -29,7 +29,9 @@ class DefinitionOfDoneReport:
 
     @property
     def done(self) -> bool:
-        return bool(self.obligations) and all(item.satisfied for item in self.obligations)
+        return bool(self.obligations) and all(
+            item.satisfied for item in self.obligations
+        )
 
     @property
     def missing(self) -> tuple[ProofObligation, ...]:
