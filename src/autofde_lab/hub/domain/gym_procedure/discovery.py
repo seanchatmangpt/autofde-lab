@@ -106,9 +106,7 @@ async def discover_procedure(
             evidence_receipt_ids=(),
         )
 
-    queue: deque[tuple[FactState, Plan]] = deque(
-        [(challenge.initial_facts, ())]
-    )
+    queue: deque[tuple[FactState, Plan]] = deque([(challenge.initial_facts, ())])
     seen: set[FactState] = {challenge.initial_facts}
     learned: list[LearnedTransition] = []
     evidence_ids: list[str] = []
