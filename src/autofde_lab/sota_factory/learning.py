@@ -4,8 +4,13 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Iterable
 
-from .models import FailureCluster, FailureKind, RepairLeverage, TrialOutcome, TrialResult
-
+from .models import (
+    FailureCluster,
+    FailureKind,
+    RepairLeverage,
+    TrialOutcome,
+    TrialResult,
+)
 
 _FAILURE_DIMENSION = {
     FailureKind.MODEL: "model",
@@ -50,11 +55,18 @@ class FailureRouter:
                     signature=signature,
                     count=len(rows),
                     task_ids=tuple(sorted({row.task_id for row in rows})),
-                    architecture_digests=tuple(sorted({row.architecture_digest for row in rows})),
+                    architecture_digests=tuple(
+                        sorted({row.architecture_digest for row in rows})
+                    ),
                     target_dimension=self.target_dimension(kind),
                 )
             )
-        return tuple(sorted(clusters, key=lambda item: (-item.count, item.failure_kind.value, item.signature)))
+        return tuple(
+            sorted(
+                clusters,
+                key=lambda item: (-item.count, item.failure_kind.value, item.signature),
+            )
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -86,7 +98,9 @@ class LearningCompiler:
         return tuple(signals)
 
     @staticmethod
-    def leverage(before_score: float, after_score: float, repair_count: int = 1) -> RepairLeverage:
+    def leverage(
+        before_score: float, after_score: float, repair_count: int = 1
+    ) -> RepairLeverage:
         if repair_count <= 0:
             raise ValueError("repair_count must be > 0")
         return RepairLeverage(before_score, after_score, repair_count)
