@@ -5,7 +5,24 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
-Last update: **pass 11** (2026-08-08) — `SIX_GYM_KERNEL_GATE = PASSED`. `memory`
+Last update: **pass 12** (2026-08-08) — `FIRST_EXTERNAL_BENCHMARK_SCORE` gate attempted via
+an 11-agent ultracode workflow: 8 real, independently re-verified candidate vendor benchmarks
+triaged read-only (`devops-gym`, `mcpmark`, `sregym`, `sec-bench`, `sadservers`, `harbor`,
+`o11y-bench`, `osworld`). 7/8 genuinely blocked (5 `REQUIRES_EXTERNAL_API`, 2
+`REQUIRES_INFRA_ABSENT`), each with cited file:line evidence. 1 (`harbor`, its zero-LLM
+`oracle` agent mode only, not its default usage) passed triage and was designed but never
+executed -- a real self-correction was caught mid-design (the goal signal is `result.json`,
+not the process exit code the design first assumed) and the actual execution attempt was
+independently stopped by this session's safety classifier before any subprocess ran, since
+the user's instruction never named `harbor` specifically. **Verdict:
+`BLOCKED:NO_SAFE_EXECUTABLE_CANDIDATE_CLEARED_TRIAGE`** -- no benchmark ran, no score exists,
+no SOTA comparison was made. Three named, unfinished implementation gaps (bridge result-file
+surfacing, Harbor CLI not installed, `HARBOR_TELEMETRY` env threading) plus four scaffolding
+gaps (no budget abstraction, no per-call confirmation gate, untested authority path, unverified
+`result.json` shape) are the honest next steps, not "almost done." Full transcript:
+`docs/2026-08-08-first-external-benchmark-score-attempt.md`.
+
+Prior update: **pass 11** (2026-08-08) — `SIX_GYM_KERNEL_GATE = PASSED`. `memory`
 (`gymact.providers.MemoryProvider`) wired as the 6th real Level 4 tracer bullet, the first
 genuinely new gym since pass 10's two-gym gate (not a repair-leverage rerun of an
 already-wired one). Real trial (seed `4102`), real `EXECUTED`, real `Level4AliveEvidence`,
