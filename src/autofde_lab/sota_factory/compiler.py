@@ -69,7 +69,9 @@ class ExperimentCompiler:
             )
         unknown = set(tasks) - set(target.task_ids)
         if unknown:
-            raise ValueError(f"task_ids are not declared by BenchmarkTarget: {sorted(unknown)!r}")
+            raise ValueError(
+                f"task_ids are not declared by BenchmarkTarget: {sorted(unknown)!r}"
+            )
 
         purpose = strategy.value.lower()
         plans = tuple(
@@ -77,7 +79,9 @@ class ExperimentCompiler:
                 benchmark_id=target.benchmark_id,
                 benchmark_revision=target.revision,
                 task_id=task_id,
-                architecture=ArchitecturePoint(decision=decision, experiment=experiment),
+                architecture=ArchitecturePoint(
+                    decision=decision, experiment=experiment
+                ),
                 purpose=purpose,
             )
             for decision in selected
@@ -117,7 +121,10 @@ class ExperimentCompiler:
         else:
             raise ValueError(f"unknown strategy: {strategy}")
 
-        if max_architectures is not None and strategy is not SelectionStrategy.PAIRWISE_COVERING:
+        if (
+            max_architectures is not None
+            and strategy is not SelectionStrategy.PAIRWISE_COVERING
+        ):
             if max_architectures <= 0:
                 raise ValueError("max_architectures must be > 0")
             selected = selected[:max_architectures]
