@@ -13,7 +13,9 @@ MFWP = "urn:mfw:powl-trace:"
 
 
 def canonical_bytes(value: object) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
+    return json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+    ).encode()
 
 
 def sha256_json(value: object) -> str:
@@ -59,20 +61,24 @@ def render_powl(req: dict, base_iri: str) -> str:
     lines.append("")
     for i, (name, capability) in enumerate(steps):
         step = f"{plan}/step/{i}"
-        lines.extend([
-            f"<{plan}/binding-slot/{i}> a powl2:ChildBinding ;",
-            f'    powl2:childIndex "{i}"^^xsd:integer ;',
-            f"    powl2:childModel <{step}> .",
-            "",
-            f"<{step}> a powl2:Leaf, powl2:ActivityLeaf ;",
-            f'    powl2:activityLabel "{name}" ;',
-            f"    mfwp:implementsAction <urn:autofde:action:{name}> ;",
-            f'    mfwp:planOrdinal "{i}"^^xsd:integer ;',
-            f'    mfwp:capability "{capability}" .',
-            "",
-        ])
+        lines.extend(
+            [
+                f"<{plan}/binding-slot/{i}> a powl2:ChildBinding ;",
+                f'    powl2:childIndex "{i}"^^xsd:integer ;',
+                f"    powl2:childModel <{step}> .",
+                "",
+                f"<{step}> a powl2:Leaf, powl2:ActivityLeaf ;",
+                f'    powl2:activityLabel "{name}" ;',
+                f"    mfwp:implementsAction <urn:autofde:action:{name}> ;",
+                f'    mfwp:planOrdinal "{i}"^^xsd:integer ;',
+                f'    mfwp:capability "{capability}" .',
+                "",
+            ]
+        )
     for i in range(len(steps) - 1):
-        lines.append(f"<{plan}/binding-slot/{i}> powl2:precedes <{plan}/binding-slot/{i+1}> .")
+        lines.append(
+            f"<{plan}/binding-slot/{i}> powl2:precedes <{plan}/binding-slot/{i + 1}> ."
+        )
     lines.append("")
     return "\n".join(lines)
 
@@ -117,7 +123,16 @@ def main() -> int:
         return 2
     Path(args.out).write_text(json.dumps(admission, indent=2, sort_keys=True) + "\n")
     Path(args.powl_out).write_text(powl)
-    print(json.dumps({"standing": "ALIVE", "admission_digest": admission["admission_digest"], "powl_digest": admission["powl_digest"]}, sort_keys=True))
+    print(
+        json.dumps(
+            {
+                "standing": "ALIVE",
+                "admission_digest": admission["admission_digest"],
+                "powl_digest": admission["powl_digest"],
+            },
+            sort_keys=True,
+        )
+    )
     return 0
 
 
