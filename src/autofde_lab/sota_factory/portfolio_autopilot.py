@@ -93,7 +93,9 @@ class SOTAPortfolioAutopilot:
         stop_reason = "MAX_ROUNDS_REACHED"
 
         if self.portfolio.terminal:
-            return PortfolioAutopilotRun((), (), self.portfolio.snapshot(), "DEFINITION_OF_DONE")
+            return PortfolioAutopilotRun(
+                (), (), self.portfolio.snapshot(), "DEFINITION_OF_DONE"
+            )
 
         for round_index in range(1, self.policy.max_rounds + 1):
             if len(executed) >= self.policy.max_trials:
@@ -104,7 +106,10 @@ class SOTAPortfolioAutopilot:
                     stop_reason = "MAX_WALL_TIME_REACHED"
                     break
             if self.policy.max_cost_usd is not None:
-                if sum(result.cost_usd for result in executed) >= self.policy.max_cost_usd:
+                if (
+                    sum(result.cost_usd for result in executed)
+                    >= self.policy.max_cost_usd
+                ):
                     stop_reason = "MAX_COST_REACHED"
                     break
 
@@ -134,7 +139,10 @@ class SOTAPortfolioAutopilot:
                 stop_reason = "MAX_TRIALS_REACHED"
                 break
             if self.policy.max_cost_usd is not None:
-                if sum(result.cost_usd for result in executed) >= self.policy.max_cost_usd:
+                if (
+                    sum(result.cost_usd for result in executed)
+                    >= self.policy.max_cost_usd
+                ):
                     stop_reason = "MAX_COST_REACHED"
                     break
 
