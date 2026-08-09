@@ -686,6 +686,19 @@ def model_goal_predicate(provider_key: str, initial_observation: dict, config: d
             return depth is not None and state.get("locks_open") == depth
 
         return lock_goal, f"locks_open == depth ({depth})"
+    if provider_key == "memory":
+        # `target` is a crown-layer-only config key -- MemoryEnvironment has
+        # no concept of "target" at all and silently ignores it (confirmed
+        # live: materialize() reads only config["initial"]/
+        # config["requires_authority"]), unlike resource_flow where target
+        # really is part of the provider's own domain state. Read from
+        # config only, never from obs, for that reason.
+        target = config.get("target")
+
+        def memory_goal(state: dict) -> bool:
+            return target is not None and state.get("counter") == target
+
+        return memory_goal, f"counter == target ({target})"
     raise ValueError(f"UNSUPPORTED_PROVIDER_FOR_GOAL:{provider_key}")
 
 
@@ -716,11 +729,12 @@ def predict_step_postconditions(
         "switchboard",
         "resource_flow",
         "lock_and_key",
+        "memory",
     ):
         raise ValueError(
             f"UNSUPPORTED_PROVIDER_FOR_POSTCONDITION_PREDICTION:{provider_key}; "
             f"known: cube_counter, cube_container_counter, switchboard, "
-            f"resource_flow, lock_and_key"
+            f"resource_flow, lock_and_key, memory"
         )
     if provider_key == "switchboard":
         return _predict_switchboard(plan, initial_observation)
@@ -728,6 +742,17 @@ def predict_step_postconditions(
         return _predict_resource_flow(plan, initial_observation)
     if provider_key == "lock_and_key":
         return _predict_lock_and_key(plan, initial_observation)
+    if provider_key == "memory":
+        # MUST be an explicit branch, not left to fall through to the
+        # generic _COUNTER_DELTAS tail below: that generic branch would
+        # numerically coincide for `increment` (delta=1 either way) but
+        # also unconditionally attaches a `solved` key MemoryEnvironment
+        # never publishes (observe() returns the raw KV dict verbatim, no
+        # derived dimension) -- causing every step to spuriously fail
+        # POSTCONDITION_FAILED. Real, precisely-named wiring hazard caught
+        # by design review before this was ever wired; see
+        # docs/2026-08-08-level4-gym-census-round2.md's memory design.
+        return _predict_memory(plan, initial_observation)
     from autofde_lab.hub.domain.gym_procedure.level4_gymact_bridge import decode_action
 
     payloads = payloads or [{} for _ in plan]
@@ -876,6 +901,39 @@ def _predict_lock_and_key(plan: tuple[str, ...], initial: dict) -> list[dict]:
                 "solved": locks_open >= depth,
             }
         )
+    return out
+
+
+def _predict_memory(plan: tuple[str, ...], initial: dict) -> list[dict]:
+    """Independent oracle for `memory`, from MemoryEnvironment.actuate's own
+    increment arithmetic (gymact/providers.py:99-107) -- NOT from the
+    discovered model. Never predicts `solved`: unlike cube_counter/
+    resource_flow/lock_and_key, MemoryEnvironment never computes or
+    publishes a derived `solved` dimension (observe() returns the raw KV
+    state verbatim, gymact/providers.py:85-87) -- a predicted `solved` key
+    would never match observed state and would make every step spuriously
+    POSTCONDITION_FAILED. `set`/`delete` are not handled here: they are
+    excluded from this migration's bounded action space entirely (see
+    _ACTION_PARAMS/_STATIC_PAYLOADS design), so a plan containing one is
+    impossible to construct in the first place; an unexpected binding
+    raises rather than fabricating an effect for it.
+    """
+    from autofde_lab.hub.domain.gym_procedure.level4_gymact_bridge import decode_action
+
+    counter_key = "counter"
+    value = initial.get(counter_key, 0)
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise ValueError(f"UNPREDICTABLE_INITIAL_VALUE_FOR_MEMORY_ORACLE:{counter_key}={value!r}")
+    out: list[dict] = []
+    for action_id in plan:
+        binding, payload = decode_action(action_id)
+        if binding != "increment" or payload.get("key") != counter_key:
+            raise ValueError(f"UNSUPPORTED_ACTION_FOR_POSTCONDITION_PREDICTION:{action_id}")
+        amount = payload.get("amount", 1)
+        if not isinstance(amount, int) or isinstance(amount, bool):
+            raise ValueError(f"UNPREDICTABLE_AMOUNT_FOR_POSTCONDITION_PREDICTION:{action_id}")
+        value += amount
+        out.append({counter_key: value})
     return out
 
 

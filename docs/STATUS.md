@@ -5,7 +5,27 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
-Last update: **pass 10** (2026-08-08) — closed System C (the PR #37 constitution) as a real,
+Last update: **pass 11** (2026-08-08) — `SIX_GYM_KERNEL_GATE = PASSED`. `memory`
+(`gymact.providers.MemoryProvider`) wired as the 6th real Level 4 tracer bullet, the first
+genuinely new gym since pass 10's two-gym gate (not a repair-leverage rerun of an
+already-wired one). Real trial (seed `4102`), real `EXECUTED`, real `Level4AliveEvidence`,
+`representation_losses == {}`. Projected through the **unmodified**
+`autofde_lab.evidence` kernel to `Conforms: True`; a real severed-`derivedByVerifier`-edge
+mutation flips it to `Conforms: False` (non-vacuousness, matching the falsifier discipline
+from pass 10). `git status --short src/autofde_lab/evidence/ ontology/shapes/` shows zero
+diff. Required one new, explicit `_predict_memory` postcondition-oracle branch in
+`level4_crown.py` (crown-layer, not kernel-layer) dispatched *before* the generic
+`_COUNTER_DELTAS` fallback — routing through the fallback instead would have numerically
+coincided on `increment` but spuriously attached a `solved` key the real `MemoryEnvironment`
+never publishes, failing every step. Two pre-existing `_PROVIDERS`-set pin assertions
+(`test_bridge_provider_construction_chicago.py`, `test_bridge_materialize_authority_chicago.py`)
+updated to include `memory`; the 2 failures in `test_level4_crown_unmodellable_trial_chicago.py`
+reconfirmed pre-existing and unrelated via `git stash` (identical failures with or without
+this pass's changes). New test: `tests/domains/python/test_level4_memory_gym_chicago.py`,
+5/5 real. See `docs/level4-migration-matrix.md`'s "Level 4 ALIVE (6)" table for the full
+per-gym record.
+
+Prior update: **pass 10** (2026-08-08) — closed System C (the PR #37 constitution) as a real,
 independently SHACL-verified Level 4 evidence path: new `src/autofde_lab/evidence/` package
 (`level4_witness.py` projects a real trial's durable artifacts to `afl:`-namespaced RDF,
 `verify.py` runs the real committed shapes through `pyshacl`), 14/14 real identity-mutation

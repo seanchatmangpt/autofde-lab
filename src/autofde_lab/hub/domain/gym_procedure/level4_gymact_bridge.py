@@ -56,6 +56,13 @@ _PROVIDERS = {
         "LockAndKeyProvider",
         "lock-and-key",
     ),
+    # NOT gymact.local_providers -- that module holds FilesystemProvider/
+    # GitProvider/SQLiteProvider (real disk/subprocess state). MemoryProvider
+    # is a separate, genuinely in-process module (gymact/providers.py),
+    # confirmed live before wiring this entry -- see
+    # docs/2026-08-08-level4-gym-census-round2.md's own module-path
+    # correction note for this gym.
+    "memory": ("gymact.providers", "MemoryProvider", "memory"),
 }
 
 # How to enumerate a parameterized DO capability's payload space.
@@ -76,6 +83,17 @@ _ACTION_PARAMS: dict[str, dict[str, tuple[str, str]]] = {
 _STATIC_PAYLOADS: dict[str, dict[str, dict]] = {
     "cube_counter": {"increment_by": {"value": 1}},
     "cube_container_counter": {"increment_by": {"value": 1}},
+    # `memory`'s `set`/`delete` bindings take a fully open-ended string key
+    # (and `set` an open-ended value) with no declared mechanism to bound
+    # candidate values -- deliberately left unentered here, matching the
+    # census's honest scope-narrowing for filesystem/http-json's own
+    # open-ended payloads. Both fall through to available_actions()'s
+    # existing empty-payload default, which the real MemoryEnvironment
+    # refuses with a real, safe, typed KeyError (caught by GymAct's kernel
+    # as PROVIDER_ERROR:KeyError, never a crash) -- so discovery correctly
+    # learns them as permanently inapplicable rather than exercising them
+    # unboundedly.
+    "memory": {"increment": {"key": "counter", "amount": 1}},
 }
 
 _PARAM_SEP_OPEN = "["

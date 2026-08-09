@@ -84,11 +84,14 @@ def test_fix_adds_no_provider_registry_entry_or_goal_predicate() -> None:
     """This fix is additive-only at the authority-threading layer, exactly
     like the constructor fix before it. Confirms the real, current state:
     `terragoat` (and every other vendor) is still unreachable through
-    `run_real_trial` as a side effect of this change -- `_PROVIDERS` is
-    unchanged."""
+    `run_real_trial` as a side effect of this change -- `_PROVIDERS` carries
+    no vendor entry. (`memory` was added later this session as its own,
+    separately-designed 6th tracer bullet -- see
+    `tests/domains/python/test_level4_memory_gym_chicago.py` -- not as a
+    side effect of the authority-threading fix this test pins.)"""
     assert set(_PROVIDERS) == {
         "cube_counter", "cube_container_counter", "switchboard",
-        "resource_flow", "lock_and_key",
+        "resource_flow", "lock_and_key", "memory",
     }
 
 

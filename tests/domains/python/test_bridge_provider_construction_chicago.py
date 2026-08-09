@@ -128,10 +128,14 @@ def test_vendor_benchmark_provider_now_constructs(script_text: str) -> None:
 
 def test_no_provider_entry_or_goal_predicate_was_added_for_any_vendor() -> None:
     """This fix is additive-only at the construction layer. Confirms the
-    real, current state: no vendor benchmark is reachable through
-    `run_real_trial` as a side effect of this change -- `_PROVIDERS` still
-    names exactly the 5 gyms already migrated this session."""
+    real, current state: no `VendorBenchmarkProvider` vendor is reachable
+    through `run_real_trial` as a side effect of this change -- `_PROVIDERS`
+    names exactly the gyms genuinely migrated this session, none of which is
+    a vendor benchmark. (`memory` was added later this session as its own,
+    separately-designed 6th tracer bullet -- see
+    `tests/domains/python/test_level4_memory_gym_chicago.py` -- not as a
+    side effect of the constructor fix this test pins.)"""
     assert set(_PROVIDERS) == {
         "cube_counter", "cube_container_counter", "switchboard",
-        "resource_flow", "lock_and_key",
+        "resource_flow", "lock_and_key", "memory",
     }
