@@ -17,17 +17,18 @@ import os
 from pathlib import Path
 from typing import Any
 
-from autofde_lab.hub.domain.gym_procedure.discovery import (
-    DiscoveryChallenge,
-    ProbeEvidence,
-    discover_procedure,
-)
 from gymact.discovery import DiscoveryProbeRunner
 from gymact.gyms.opaque_procedure import OpaqueProcedureProvider
 from gymact.models import Operation, Standing
 from gymact.ocel import digest_ocel_log, validate_ocel_log
 from gymact.process import ConformanceChecker
 from gymact.runtime import ProductionGymAct
+
+from autofde_lab.hub.domain.gym_procedure.discovery import (
+    DiscoveryChallenge,
+    ProbeEvidence,
+    discover_procedure,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 RECIPES = ROOT / "src/autofde_lab/hub/domain/gym_procedure/recipes"
@@ -177,9 +178,12 @@ async def _main(output: Path) -> int:
         pattern: sum(bool(item["patterns"][pattern]) for item in results)
         for pattern in PATTERNS
     }
-    standing = "ALIVE" if alive == len(results) and all(
-        count == len(results) for count in pattern_counts.values()
-    ) else "BLOCKED"
+    standing = (
+        "ALIVE"
+        if alive == len(results)
+        and all(count == len(results) for count in pattern_counts.values())
+        else "BLOCKED"
+    )
     receipt = {
         "schema": "urn:autofde-lab:autonomous-discovery-receipt:v1",
         "standing": standing,
