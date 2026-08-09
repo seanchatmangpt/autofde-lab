@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import hashlib
+import json
+
 import pytest
 
 from autofde_lab.sota_factory.autopilot import AutopilotPolicy, SOTAAutopilot
 from autofde_lab.sota_factory.execution import (
+    ExecutionProfileRefused,
     ExperimentExecutionPort,
+    GgenExecutionProfileBundleResolver,
     GymActExecutionProfile,
 )
 from autofde_lab.sota_factory.factory import SOTAFactory
@@ -49,6 +54,33 @@ def _factory() -> SOTAFactory:
     return SOTAFactory(target=target, decision_space=_space())
 
 
+def _ggen_bundle(plan: ExperimentPlan, *, revision: str | None = None) -> bytes:
+    document = {
+        "schema": "urn:autofde:execution-profile:v1",
+        "generated_by": "ggen:autofde-execution-profile-pack",
+        "authority_mode": "external-only",
+        "profiles": [
+            {
+                "profile_id": plan.plan_id,
+                "source_ref": "urn:test:benchmark-source",
+                "derived_from": f"urn:test:experiment:{plan.plan_id}",
+                "provider": "memory",
+                "benchmark_revision": revision or plan.benchmark_revision,
+                "scenario": None,
+                "config": {"initial": {"counter": 0}},
+                "capability_ref": None,
+                "capability_binding": "increment",
+                "payload": {"key": "counter", "amount": 1},
+                "expected": {"counter": 1},
+                "input_schema": {"type": "object"},
+                "authority_ref": "urn:test:authority",
+                "action_ref": "urn:test:action:increment",
+            }
+        ],
+    }
+    return json.dumps(document, sort_keys=True).encode("utf-8")
+
+
 class PassingExecutionPort:
     """Real deterministic implementation of the execution-port contract."""
 
@@ -87,7 +119,37 @@ def test_execution_port_protocol_is_structural() -> None:
 
 def test_execution_profile_cannot_encode_vacuous_verification() -> None:
     with pytest.raises(ValueError, match="non-empty verification oracle"):
-        GymActExecutionProfile(provider="memory")
+        GymActExecutionProfile(provider="memory", capability_binding="increment")
+
+
+def test_ggen_bundle_resolver_binds_exact_plan_revision_and_digest() -> None:
+    plan = _factory().plans[0]
+    raw = _ggen_bundle(plan)
+    expected = hashlib.sha256(raw).hexdigest()
+    resolver = GgenExecutionProfileBundleResolver(raw, expected_sha256=expected)
+
+    profile = resolver.resolve(plan)
+
+    assert resolver.sha256 == expected
+    assert profile.provider == "memory"
+    assert profile.subject_revision == plan.benchmark_revision
+    assert profile.config == {"initial": {"counter": 0}}
+    assert profile.capability_binding == "increment"
+    assert profile.expected == {"counter": 1}
+
+
+def test_ggen_bundle_resolver_refuses_digest_or_benchmark_revision_drift() -> None:
+    plan = _factory().plans[0]
+    raw = _ggen_bundle(plan)
+    with pytest.raises(ExecutionProfileRefused, match="BUNDLE_DIGEST_DRIFT"):
+        GgenExecutionProfileBundleResolver(raw, expected_sha256="0" * 64)
+
+    drifted = _ggen_bundle(plan, revision="sha256:wrong-benchmark")
+    resolver = GgenExecutionProfileBundleResolver(
+        drifted, expected_sha256=hashlib.sha256(drifted).hexdigest()
+    )
+    with pytest.raises(ExecutionProfileRefused, match="REVISION_DRIFT"):
+        resolver.resolve(plan)
 
 
 @pytest.mark.asyncio
