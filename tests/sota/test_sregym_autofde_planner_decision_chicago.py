@@ -84,6 +84,86 @@ def test_find_mismatched_deployments_detects_only_real_divergence(driver):
     assert driver.find_mismatched_deployments(observed, canonical) == ["geo"]
 
 
+def test_parse_jaeger_services_parses_the_real_tool_output_shape(driver):
+    """`mcp_server/jaeger_server.py:get_services()` returns `str(response.json()["data"])`
+    -- a Python-list repr, verified against the real vendored source this session."""
+    assert driver.parse_jaeger_services("['frontend', 'geo', 'profile', 'rate']") == [
+        "frontend",
+        "geo",
+        "profile",
+        "rate",
+    ]
+    assert driver.parse_jaeger_services("None") == []
+    assert driver.parse_jaeger_services("") == []
+
+
+_REAL_DEPLOYMENT_LIST = [
+    "consul",
+    "frontend",
+    "geo",
+    "jaeger",
+    "memcached-profile",
+    "memcached-rate",
+    "memcached-reserve",
+    "mongodb-geo",
+    "mongodb-profile",
+    "mongodb-rate",
+    "mongodb-recommendation",
+    "mongodb-reservation",
+    "mongodb-user",
+    "profile",
+    "rate",
+    "recommendation",
+    "reservation",
+    "search",
+    "user",
+]
+_REAL_MICROSERVICE_NAMES = ["frontend", "geo", "profile", "rate", "recommendation", "reservation", "search", "user"]
+
+
+def test_filter_traced_application_deployments_excludes_real_infra_sidecars(driver):
+    """Regression test #1 for a real defect this session's first live trial exposed: an
+    earlier version of this driver flagged (and attempted to "fix")
+    consul/jaeger/memcached-*/mongodb-* deployments as mismatched, because it compared every
+    real k8s Deployment's image against the app's single canonical image without first
+    restricting to genuine application microservices. sregym's own independent LLM judge
+    caught the same defect (D3 'Scope Precision' scored 0.67/1.00 on the real run: 'The agent
+    lists many other deployments (consul, jaeger, mongodb, etc.) as being part of the
+    mismatch/fault.') -- independent, convergent confirmation of the manually-diagnosed root
+    cause. Real deployment list observed live this session (results/0809_0128)."""
+    in_scope = driver.filter_traced_application_deployments(_REAL_DEPLOYMENT_LIST, traced_services=[])
+
+    assert set(in_scope) == set(_REAL_MICROSERVICE_NAMES)
+    for infra in ("consul", "jaeger", "memcached-profile", "mongodb-geo", "mongodb-user"):
+        assert infra not in in_scope
+
+
+def test_filter_traced_application_deployments_does_not_exclude_the_real_fault_when_tracing_is_incomplete(driver):
+    """Regression test #2 for a second real defect this session's SECOND live trial exposed:
+    an interim version of this driver used Jaeger's `get_services()` output as the sole
+    ALLOW-list. Immediately after a fresh deployment, before the workload generator has
+    produced enough traffic, Jaeger had only traced 1 of 8 real microservices
+    (`['reservation']`, observed live this session) -- so gating on "is it traced" excluded
+    `geo`, the actual injected-fault deployment, producing a false "no mismatch" diagnosis
+    that missed the real fault entirely. The fix: the deny-list (known infra product
+    names) is the primary signal, deterministic and available immediately; a genuinely
+    traced name is only ever used to ALLOW, never to exclude."""
+    incomplete_traced_services = ["reservation"]  # the real, live, incomplete signal observed
+
+    in_scope = driver.filter_traced_application_deployments(_REAL_DEPLOYMENT_LIST, incomplete_traced_services)
+
+    assert "geo" in in_scope
+    assert set(in_scope) == set(_REAL_MICROSERVICE_NAMES)
+
+
+def test_filter_traced_application_deployments_allows_a_traced_name_even_if_it_looks_like_infra(driver):
+    """A deployment that has genuinely emitted traces is real, observed evidence of being
+    application code and must be included even if its name happens to contain a generic
+    infra-product token -- the traced signal is a real ALLOW override, not decoration."""
+    in_scope = driver.filter_traced_application_deployments(["redis-cache-service"], ["redis-cache-service"])
+    assert in_scope == ["redis-cache-service"]
+
+
 def test_find_mismatched_deployments_reports_none_when_everything_matches(driver):
     canonical = "ghcr.io/sregym/hotel-reservation:latest"
     observed = {"frontend": canonical, "geo": canonical}
@@ -164,5 +244,12 @@ def test_agents_yaml_registers_the_new_planner_with_container_isolation_disabled
     entries = {a["name"]: a for a in data["agents"]}
     assert "autofde_lab_planner" in entries
     entry = entries["autofde_lab_planner"]
-    assert entry["kickoff_command"] == "python -m clients.autofde_lab_planner.driver"
+    # Absolute interpreter path, not bare "python" -- a real defect this session's live
+    # trial exposed: agent_launcher.py's subprocess inherits os.environ.copy() with no venv
+    # activation, so bare "python" resolved to nothing (/bin/sh: python: command not found,
+    # exit 127, empty result) until pinned to the real venv interpreter main.py itself runs
+    # under.
+    assert entry["kickoff_command"] == (
+        f"{SREGYM_ROOT}/.venv/bin/python -m clients.autofde_lab_planner.driver"
+    )
     assert entry["container_isolation"] is False

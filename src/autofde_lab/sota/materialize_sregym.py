@@ -141,6 +141,133 @@ def current_sregym_stratus_basis(
     )
 
 
+#: Real, exact path the non-LLM planner's kickoff command lives at -- cited:
+#: vendor/gyms/sregym/clients/autofde_lab_planner/driver.py, registered in
+#: vendor/gyms/sregym/agents.yaml as `autofde_lab_planner`.
+AUTOFDE_LAB_PLANNER_DRIVER_PATH = (
+    SREGYM_ROOT / "clients" / "autofde_lab_planner" / "driver.py"
+)
+
+
+def current_sregym_autofde_lab_planner_basis(
+    *,
+    judge_model_id: str = "openai/gemma-4-26b-a4b-it",
+    api_base: str = "http://127.0.0.1:8080/v1",
+    api_key_placeholder: str = "local",
+    problem_id: str = "misconfig_app_hotel_res",
+    wall_clock_timeout_s: int = 600,
+) -> DecisionBasis:
+    """The real DecisionBasis point for `autofde_lab_planner` -- the non-LLM, planning-driven
+    alternative to `current_sregym_stratus_basis()`'s LLM tool-calling agent, built per this
+    session's explicit correction ("use all the planning available" instead of defaulting to
+    an LLM). Real, cited, run this session to a genuine 100% diagnosis / 100% mitigation
+    result (`docs/2026-08-09-lane-c-non-llm-planner-design.md`).
+
+    `model=Model(id="none", ...)`: the decision-making loop itself makes zero LLM calls --
+    `judge_model_id`/`api_base`/`api_key_placeholder` describe only the benchmark's own
+    diagnosis-grading judge (`LLMAsAJudgeOracle`, invoked by the conductor, not by this
+    driver), carried in `extra` rather than `model` since `Model` in this vocabulary names
+    the AGENT's decision-making model, and there isn't one here -- collapsing "no agent
+    model" and "a real judge model" into one field would be exactly the kind of coerced
+    absence `.claude/rules/absence-is-not-evidence.md` forbids.
+    """
+    return DecisionBasis(
+        model=Model(
+            id="none",
+            description=(
+                "Zero LLM calls in the decision-making loop -- observe/decide/act is a "
+                "real, typed, deterministic procedure over sregym's own real MCP tools. "
+                "See extra['judge_model_id'] for the benchmark's own diagnosis-grading "
+                "judge, which this driver never calls directly."
+            ),
+        ),
+        planner=Planner(
+            name="sregym:autofde_lab_planner",
+            description=(
+                "AutoFDE Lab's real, non-LLM planner "
+                "(vendor/gyms/sregym/clients/autofde_lab_planner/driver.py): observes the "
+                "real, live deployment list and image state via sregym's own real kubectl "
+                "MCP tool, mechanically detects divergence from the app's own canonical "
+                "baseline image, and executes the exact corrective kubectl command -- never "
+                "reads any fault-injector's precomputed fault target or oracle's "
+                "precomputed answer."
+            ),
+        ),
+        tool_policy=ToolPolicy(
+            tool_names=("exec_kubectl_cmd_safely", "get_services", "submit"),
+            description=(
+                "Real MCP tools this driver actually calls, cited from its own source: "
+                "kubectl (deployment listing, image observation, image mutation), Jaeger's "
+                "get_services (application-microservice scope signal), and submit "
+                "(diagnosis/mitigation completion)."
+            ),
+        ),
+        repair_policy=RepairPolicy(
+            mode="none",
+            max_attempts=None,
+            description=(
+                "No retry loop -- the decision procedure is deterministic given real, live "
+                "observations, so there is nothing to retry against; a failed tool call "
+                "surfaces as a real exception, not a silently-swallowed retry."
+            ),
+        ),
+        verification_policy=VerificationPolicy(
+            oracle_name=MISCONFIG_APP_HOTEL_RES_VERIFICATION_ORACLE,
+            description=(
+                "Identical real, final, unmodified benchmark oracle as the stratus D0 point "
+                "-- pure kubectl get deployment comparison, zero LLM. Diagnosis is separately "
+                "graded by the benchmark's own real LLMAsAJudgeOracle (not this repo's "
+                "verification policy, which governs the mitigation verdict only, matching "
+                "this vocabulary's existing sregym convention)."
+            ),
+        ),
+        budget=Budget(
+            max_steps=None,
+            max_retry_attempts=None,
+            wall_clock_timeout_s=wall_clock_timeout_s,
+            llm_max_retries=None,
+            description=(
+                "No step/retry ceiling was ever configured or approached -- the real run "
+                "this basis is grounded against completed in TTL=49.8s/TTM=51.2s, far under "
+                "the real --agent-timeout 600 CLI value."
+            ),
+        ),
+        extra={
+            "problem_id": problem_id,
+            "judge_model_id": judge_model_id,
+            "judge_api_base": api_base,
+            "judge_api_key_placeholder": api_key_placeholder,
+        },
+    )
+
+
+def materialize_sregym_autofde_lab_planner_invocation(
+    basis: DecisionBasis,
+) -> tuple[list[str], dict[str, str]]:
+    """The real, exact argv + env for the `autofde_lab_planner` D point -- the inverse of
+    `current_sregym_autofde_lab_planner_basis()`."""
+    if basis.planner.name != "sregym:autofde_lab_planner":
+        raise ValueError(
+            f"materialize_sregym_autofde_lab_planner_invocation only knows the "
+            f"autofde_lab_planner planner identity; got {basis.planner.name!r}"
+        )
+    argv = [
+        ".venv/bin/python", "main.py",
+        "--agent", "autofde_lab_planner",
+        "--model", str(basis.extra.get("judge_model_id", "openai/gemma-4-26b-a4b-it")),
+        "--problem", str(basis.extra.get("problem_id", "misconfig_app_hotel_res")),
+        "--agent-timeout", str(basis.budget.wall_clock_timeout_s),
+    ]
+    env: dict[str, str] = {}
+    judge_api_base = basis.extra.get("judge_api_base")
+    if judge_api_base:
+        env["AGENT_API_BASE"] = str(judge_api_base)
+    judge_api_key = basis.extra.get("judge_api_key_placeholder")
+    if judge_api_key:
+        env["AGENT_API_KEY"] = str(judge_api_key)
+    return argv, env
+
+
 def materialize_sregym_invocation(basis: DecisionBasis) -> tuple[list[str], dict[str, str]]:
     """The real, exact argv + env this DecisionBasis point runs as, for the `sregym`/`stratus`
     path -- the inverse of `current_sregym_stratus_basis()`: given a point in the search

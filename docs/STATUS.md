@@ -5,7 +5,34 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
-Last update: **pass 15** (2026-08-09) — sregym/stratus LLM-driven attempt closed
+Last update: **pass 16** (2026-08-09) — Lane C: a real, non-LLM planner
+(`sregym:autofde_lab_planner`) reached a genuine, clean, complete PASS on sregym's real,
+live, unmodified `misconfig_app_hotel_res` task — `Diagnosis.composite_score=1.00` (all
+three judge dimensions 1.00), `Diagnosis.success=True`, `Mitigation.success=True`,
+`TTL=49.8s`/`TTM=51.2s` (real CSV:
+`vendor/gyms/sregym/results/0809_0143/.../misconfig_app_hotel_res_autofde_lab_planner_results.csv`).
+Zero LLM calls in the decision loop (observe real cluster state via sregym's own real
+kubectl/Jaeger MCP tools -> mechanically compare against the app's own canonical baseline ->
+execute the corrective `kubectl` command); the benchmark's own real judge (immune to the
+`bind_tools` crash that blocked `stratus`, confirmed by source read: judge calls carry no
+`tools=` argument) still grades the diagnosis text. Took 4 real live trials to reach this
+result, each failure real, root-caused, and fixed in place, never silently retried:
+run1 `python` not on the launcher's inherited `PATH` (exit 127) -> absolute interpreter path;
+run2 real PASS but a real, judge-confirmed scope defect (mismatch scan flagged/mutated 11
+real infra sidecars alongside the real fault) -> `filter_traced_application_deployments`;
+run3 that fix's Jaeger-only ALLOW-list excluded the real fault itself (incomplete trace data
+immediately post-deploy) -> real FAIL -> deny-list of known infra product names as the
+primary, timing-independent signal; run4 clean PASS. 14/14 (+14/14 cross-venv) and 28/29 (+1
+typed `UNSUPPORTED` skip) real Chicago tests, zero mocks, 3 regression tests added — one per
+real defect found. New `current_sregym_autofde_lab_planner_basis()` D point in
+`src/autofde_lab/sota/materialize_sregym.py`, real, cited, `Model.id="none"` (zero
+agent-side LLM). **Precision, not overclaiming**: sregym's real published SOTA
+(`sregym.com/leaderboard`, arXiv:2605.07161) is an aggregate rate across 90 problems
+(diagnosis 38.9-72.6%, mitigation 57.3-78.5%); this is one real, complete win on one task —
+a genuine existence proof for the non-LLM approach, not yet a valid SOTA comparison. Full
+transcript: `docs/2026-08-09-lane-c-non-llm-planner-design.md`.
+
+Prior update: **pass 15** (2026-08-09) — sregym/stratus LLM-driven attempt closed
 `BLOCKED:LOCAL_MODEL_TOOL_CALLING_REQUEST_INCOMPATIBLE`, attached as D0's first observation.
 Four real infra defects were found and fixed live getting the kind cluster to a genuine
 `diagnosis`-stage-ready state (Docker daemon `default-ulimits`; stale kube-system

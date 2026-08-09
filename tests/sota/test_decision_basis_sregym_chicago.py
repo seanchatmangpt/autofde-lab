@@ -22,8 +22,12 @@ import pytest
 
 from autofde_lab.sota.decision_basis import DecisionBasis
 from autofde_lab.sota.materialize_sregym import (
+    AUTOFDE_LAB_PLANNER_DRIVER_PATH,
     MITIGATION_AGENT_CONFIG_PATH,
+    SREGYM_ROOT,
+    current_sregym_autofde_lab_planner_basis,
     current_sregym_stratus_basis,
+    materialize_sregym_autofde_lab_planner_invocation,
     materialize_sregym_invocation,
 )
 
@@ -136,3 +140,108 @@ def test_override_knobs_are_real_cli_level_overrides_not_vendor_config_edits() -
     # Vendor-config-sourced fields are untouched by a CLI-level override.
     assert basis.repair_policy.mode == "validate"
     assert basis.budget.max_steps == 20
+
+
+# --- autofde_lab_planner: the non-LLM D point, real terminal result 2026-08-09 -----------
+#
+# Real, complete, 4-run trial history this session (all against the real, live kind cluster
+# + real, unmodified sregym oracles -- docs/2026-08-09-lane-c-non-llm-planner-design.md):
+#   run1: agent kickoff_command used bare "python", not on the launcher's inherited PATH --
+#         exit 127, empty result. Fixed: absolute venv interpreter path.
+#   run2: real PASS (Diagnosis 89/100, Mitigation True) but a real, judge-confirmed scope
+#         defect (D3 Scope Precision 0.67/1.00) -- an early filter compared every deployment
+#         against one canonical image, incorrectly flagging and "fixing" real infra sidecars
+#         (consul/jaeger/mongodb-*/memcached-*). Fixed: filter_traced_application_deployments.
+#   run3: the fix's first version depended solely on Jaeger's get_services() as an ALLOW-list
+#         -- immediately post-deploy, before the workload generator produced traffic, only 1
+#         of 8 real microservices had been traced, so the actual injected fault (geo) was
+#         excluded from scope -- real FAIL (Diagnosis Failed, Mitigation Failed). Fixed: a
+#         deterministic deny-list of known infra product names as the primary signal: tracing
+#         only ever ALLOWS, never excludes.
+#   run4: real, clean, complete PASS -- Diagnosis.composite_score=1.0 (D1/D2/D3 all 1.00),
+#         Diagnosis.success=True, Mitigation.success=True, TTL=49.8s, TTM=51.2s. Real CSV:
+#         vendor/gyms/sregym/results/0809_0143/autofde_lab_planner/misconfig_app_hotel_res/
+#         misconfig_app_hotel_res_autofde_lab_planner_results.csv.
+#
+# This is a real, single-task, complete ALIVE result -- NOT, on its own, a valid claim of
+# beating sregym's real published SOTA (WebSearch this session:
+# https://sregym.com/leaderboard / arXiv:2605.07161 report aggregate rates across the full
+# 90-problem suite -- diagnosis 38.9-72.6%, mitigation 57.3-78.5%, frontier paid models).
+# Comparing this one favorable, well-shaped task against an aggregate 90-problem rate would
+# be exactly the overclaim `.claude/rules/no-overclaiming-conversational.md` forbids; a real
+# aggregate comparison needs this driver run across a representative problem sample.
+
+
+def test_autofde_lab_planner_driver_file_exists_and_is_registered() -> None:
+    assert AUTOFDE_LAB_PLANNER_DRIVER_PATH.is_file()
+
+
+def test_current_sregym_autofde_lab_planner_basis_has_no_agent_model() -> None:
+    basis = current_sregym_autofde_lab_planner_basis()
+    assert isinstance(basis, DecisionBasis)
+    assert basis.model.id == "none"
+    assert basis.planner.name == "sregym:autofde_lab_planner"
+    assert basis.repair_policy.mode == "none"
+    assert basis.verification_policy.oracle_name == "IncorrectImageMitigationOracle"
+    # The judge model is real information but belongs in extra, not in `model` -- `model`
+    # names the agent's own decision-making model, and there isn't one here.
+    assert basis.extra["judge_model_id"] == "openai/gemma-4-26b-a4b-it"
+
+
+def test_materialize_autofde_lab_planner_matches_the_real_command_this_session_ran() -> None:
+    """Cross-checked against the exact real command this session's real, final (run4, clean
+    PASS) trial used."""
+    basis = current_sregym_autofde_lab_planner_basis(wall_clock_timeout_s=600)
+    argv, env = materialize_sregym_autofde_lab_planner_invocation(basis)
+
+    assert argv == [
+        ".venv/bin/python", "main.py",
+        "--agent", "autofde_lab_planner",
+        "--model", "openai/gemma-4-26b-a4b-it",
+        "--problem", "misconfig_app_hotel_res",
+        "--agent-timeout", "600",
+    ]
+    assert env == {
+        "AGENT_API_BASE": "http://127.0.0.1:8080/v1",
+        "AGENT_API_KEY": "local",
+    }
+
+
+def test_materialize_autofde_lab_planner_refuses_the_stratus_identity() -> None:
+    from dataclasses import replace
+
+    basis = current_sregym_autofde_lab_planner_basis()
+    wrong = replace(basis, planner=replace(basis.planner, name="sregym:stratus:mitigation_agent"))
+    with pytest.raises(ValueError, match="autofde_lab_planner planner identity"):
+        materialize_sregym_autofde_lab_planner_invocation(wrong)
+
+
+def test_real_run4_result_csv_matches_this_basis_verification_oracle() -> None:
+    """Cross-checks the basis's declared VerificationPolicy against the real, on-disk result
+    of this session's real, final, clean-PASS trial -- not a memory of what happened, the
+    durable CSV artifact itself."""
+    result_csv = (
+        SREGYM_ROOT
+        / "results"
+        / "0809_0143"
+        / "autofde_lab_planner"
+        / "misconfig_app_hotel_res"
+        / "misconfig_app_hotel_res_autofde_lab_planner_results.csv"
+    )
+    if not result_csv.is_file():
+        pytest.skip(
+            f"BLOCKED:REAL_TRIAL_ARTIFACT_ABSENT: {result_csv} not on disk -- re-run the "
+            "real autofde_lab_planner trial (docs/2026-08-09-lane-c-non-llm-planner-design.md) "
+            "before re-enabling this check"
+        )
+    import csv as csv_module
+
+    rows = list(csv_module.DictReader(result_csv.read_text().splitlines()))
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["Diagnosis.success"] == "True"
+    assert row["Mitigation.success"] == "True"
+    assert float(row["Diagnosis.composite_score"]) == 1.0
+
+    basis = current_sregym_autofde_lab_planner_basis()
+    assert basis.extra["problem_id"] == row["problem_id"]
