@@ -2,6 +2,7 @@
 set -euo pipefail
 
 readonly GGEN_VERSION="v26.8.8"
+readonly GGEN_SYNC_TIMEOUT_SECONDS="30"
 
 annotate() {
   local level="$1"
@@ -62,9 +63,13 @@ workdir="$(mktemp -d)"
 trap 'rm -rf "$workdir"' EXIT
 archive="${workdir}/${asset}"
 
-curl --fail --location --retry 3 --silent --show-error \
+if ! curl --fail --location --retry 2 --silent --show-error \
+  --connect-timeout 10 --max-time 60 \
   "${url}" \
-  --output "${archive}"
+  --output "${archive}"; then
+  annotate error "REFUSED:GGEN_ASSET_FETCH_FAILED" "url=${url}"
+  exit 4
+fi
 
 actual_sha256="$(python - "${archive}" <<'PY'
 from __future__ import annotations
@@ -85,16 +90,53 @@ if [[ "${actual_sha256}" != "${sha256}" ]]; then
   annotate error \
     "REFUSED:GGEN_ASSET_DIGEST_DRIFT" \
     "actual=${actual_sha256} expected=${sha256}"
-  exit 4
+  exit 5
 fi
 
 tar -xzf "${archive}" -C "${workdir}"
 ggen_bin="$(find "${workdir}" -type f -name ggen -print -quit)"
 if [[ -z "${ggen_bin}" ]]; then
   annotate error "REFUSED:GGEN_BINARY_NOT_FOUND" "asset=${asset}"
-  exit 5
+  exit 6
 fi
 chmod +x "${ggen_bin}"
+
+run_ggen() {
+  python - "${ggen_bin}" "${GGEN_SYNC_TIMEOUT_SECONDS}" <<'PY'
+from __future__ import annotations
+
+import os
+import subprocess
+import sys
+
+binary = sys.argv[1]
+timeout = float(sys.argv[2])
+try:
+    completed = subprocess.run(
+        [binary, "sync", "run"],
+        check=False,
+        timeout=timeout,
+    )
+except subprocess.TimeoutExpired:
+    message = f"timeout_seconds={timeout:g}"
+    print(f"REFUSED:GGEN_SYNC_TIMEOUT: {message}", file=sys.stderr)
+    if os.environ.get("GITHUB_ACTIONS"):
+        print(
+            f"::error title=REFUSED:GGEN_SYNC_TIMEOUT::{message}",
+            file=sys.stderr,
+        )
+    raise SystemExit(8)
+if completed.returncode != 0:
+    message = f"exit={completed.returncode}"
+    print(f"REFUSED:GGEN_SYNC_FAILED: {message}", file=sys.stderr)
+    if os.environ.get("GITHUB_ACTIONS"):
+        print(
+            f"::error title=REFUSED:GGEN_SYNC_FAILED::{message}",
+            file=sys.stderr,
+        )
+    raise SystemExit(completed.returncode or 9)
+PY
+}
 
 projection_manifest() {
   python - "${GENERATED_ROOTS[@]}" <<'PY'
@@ -128,17 +170,17 @@ verify_clean_projection() {
     compact="$(printf '%s\n' "${changed}" | paste -sd, -)"
     annotate error "REFUSED:GGEN_PROJECTION_DRIFT" "changed=${compact}"
     git diff --stat -- "${GENERATED_ROOTS[@]}" >&2 || true
-    return 6
+    return 7
   fi
 }
 
 # Pass 1 proves committed projection correspondence.
-"${ggen_bin}" sync run
+run_ggen
 verify_clean_projection
 projection_manifest > "${workdir}/manifest-1.sha256"
 
 # Pass 2 proves the manufacturer is idempotent at the exact same subject.
-"${ggen_bin}" sync run
+run_ggen
 verify_clean_projection
 projection_manifest > "${workdir}/manifest-2.sha256"
 if ! cmp -s "${workdir}/manifest-1.sha256" "${workdir}/manifest-2.sha256"; then
@@ -146,7 +188,7 @@ if ! cmp -s "${workdir}/manifest-1.sha256" "${workdir}/manifest-2.sha256"; then
     "REFUSED:GGEN_NONDETERMINISTIC_PROJECTION" \
     "pass-1 and pass-2 projection manifests differ"
   diff -u "${workdir}/manifest-1.sha256" "${workdir}/manifest-2.sha256" >&2 || true
-  exit 7
+  exit 10
 fi
 
 python -m compileall -q \
