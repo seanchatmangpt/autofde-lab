@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from itertools import combinations, product
 from math import prod
 from typing import Iterable, Iterator, Mapping, Sequence
@@ -89,20 +89,30 @@ class DecisionSpace:
 
     @property
     def upper_bound_size(self) -> int:
-        return prod(
-            len(values)
-            for values in (
-                self.models,
-                self.planners,
-                self.tool_policies,
-                self.repair_policies,
-                self.replanning_policies,
-                self.verification_policies,
-                self.projection_policies,
-                self.memory_policies,
-                self.budgets,
-            )
-        )
+        return prod(len(values) for values in self.dimension_options().values())
+
+    def dimension_options(
+        self,
+    ) -> dict[str, tuple[BasisChoice, ...] | tuple[BudgetPolicy, ...]]:
+        return {
+            "model": self.models,
+            "planner": self.planners,
+            "tool_policy": self.tool_policies,
+            "repair_policy": self.repair_policies,
+            "replanning_policy": self.replanning_policies,
+            "verification_policy": self.verification_policies,
+            "projection_policy": self.projection_policies,
+            "memory_policy": self.memory_policies,
+            "budget": self.budgets,
+        }
+
+    def is_lawful(self, basis: DecisionBasis) -> bool:
+        options = self.dimension_options()
+        for dimension in DecisionBasis.DIMENSIONS:
+            value = getattr(basis, dimension)
+            if value.name not in {item.name for item in options[dimension]}:
+                return False
+        return all(rule.allows(basis) for rule in self.rules)
 
     def iter_decisions(self, *, limit: int | None = None) -> Iterator[DecisionBasis]:
         emitted = 0
@@ -148,6 +158,84 @@ class DecisionSpace:
             )
         return decisions
 
+    def combinatorial_pairwise_candidates(
+        self,
+        *,
+        baseline: DecisionBasis | None = None,
+        candidate_limit: int = 100_000,
+    ) -> tuple[DecisionBasis, ...]:
+        """Build a polynomial second-order design without Cartesian materialization.
+
+        The candidate basis is the current behavior plus every lawful one-factor
+        and two-factor substitution around it. Its description cost is bounded
+        by O(sum(k_i) + sum(k_i*k_j)), rather than O(product(k_i)).
+
+        ``candidate_limit`` applies to this second-order design, not to the full
+        architecture-space upper bound. If even the pairwise design is too large,
+        refusal is explicit rather than silently dropping interaction coverage.
+        """
+
+        if candidate_limit <= 0:
+            raise ValueError("candidate_limit must be > 0")
+        if baseline is None:
+            baseline = next(self.iter_decisions(limit=1), None)
+            if baseline is None:
+                raise ValueError("REFUSED:NO_LAWFUL_DECISION_BASIS")
+        if not self.is_lawful(baseline):
+            raise ValueError("baseline does not exist in the lawful DecisionSpace")
+
+        options = self.dimension_options()
+        by_digest: dict[str, DecisionBasis] = {baseline.digest: baseline}
+
+        def admit(candidate: DecisionBasis) -> None:
+            if not self.is_lawful(candidate):
+                return
+            by_digest.setdefault(candidate.digest, candidate)
+            if len(by_digest) > candidate_limit:
+                raise ValueError(
+                    "REFUSED:PAIRWISE_DESIGN_TOO_LARGE:"
+                    f"{len(by_digest)}>{candidate_limit}; reduce basis cardinality, "
+                    "add compatibility laws, or raise the explicit candidate_limit"
+                )
+
+        for dimension in DecisionBasis.DIMENSIONS:
+            for option in options[dimension]:
+                admit(replace(baseline, **{dimension: option}))
+
+        for left, right in combinations(DecisionBasis.DIMENSIONS, 2):
+            for left_option in options[left]:
+                for right_option in options[right]:
+                    admit(
+                        replace(
+                            baseline,
+                            **{left: left_option, right: right_option},
+                        )
+                    )
+
+        return tuple(by_digest[key] for key in sorted(by_digest))
+
+    def combinatorial_pairwise_covering(
+        self,
+        *,
+        baseline: DecisionBasis | None = None,
+        candidate_limit: int = 100_000,
+        max_architectures: int | None = None,
+    ) -> tuple[DecisionBasis, ...]:
+        """Select a bounded deterministic covering design from the pairwise basis."""
+
+        candidates = self.combinatorial_pairwise_candidates(
+            baseline=baseline,
+            candidate_limit=candidate_limit,
+        )
+        seed = baseline
+        if seed is None:
+            seed = candidates[0]
+        return pairwise_covering(
+            candidates,
+            max_architectures=max_architectures,
+            seed=(seed,),
+        )
+
 
 def hamming_distance(left: DecisionBasis, right: DecisionBasis) -> int:
     lvals = left.dimension_values()
@@ -176,22 +264,37 @@ def _pair_tokens(basis: DecisionBasis) -> frozenset[tuple[str, str, str, str]]:
 
 
 def pairwise_covering(
-    decisions: Sequence[DecisionBasis], *, max_architectures: int | None = None
+    decisions: Sequence[DecisionBasis],
+    *,
+    max_architectures: int | None = None,
+    seed: Sequence[DecisionBasis] = (),
 ) -> tuple[DecisionBasis, ...]:
     """Greedy deterministic pairwise covering selection.
 
     This is intentionally a bounded experimental-design primitive, not a claim
-    of optimal minimum covering-array size. It preserves all pairwise observed
-    option interactions represented by the lawful candidate set while avoiding
-    blind full-factorial execution when possible.
+    of optimal minimum covering-array size. It preserves pairwise interactions
+    represented by the supplied lawful candidate set while avoiding blind
+    full-factorial execution.
     """
 
     if not decisions:
         return ()
-    token_map = {decision.digest: _pair_tokens(decision) for decision in decisions}
+    if max_architectures is not None and max_architectures <= 0:
+        raise ValueError("max_architectures must be > 0")
+
+    by_digest = {decision.digest: decision for decision in decisions}
+    token_map = {digest: _pair_tokens(decision) for digest, decision in by_digest.items()}
     uncovered = set().union(*(tokens for tokens in token_map.values()))
-    remaining = {decision.digest: decision for decision in decisions}
+    remaining = dict(by_digest)
     selected: list[DecisionBasis] = []
+
+    for item in unique_by_digest(seed):
+        if item.digest not in remaining:
+            raise ValueError("seed decision does not exist in candidate set")
+        if max_architectures is not None and len(selected) >= max_architectures:
+            break
+        selected.append(remaining.pop(item.digest))
+        uncovered.difference_update(token_map[item.digest])
 
     while uncovered and remaining:
         if max_architectures is not None and len(selected) >= max_architectures:
