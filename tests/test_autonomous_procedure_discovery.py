@@ -18,7 +18,9 @@ WORKER_SOURCE = ROOT / "src/autofde_lab/hub/domain/gym_procedure/discovery_worke
 
 
 def _load_discovery() -> ModuleType:
-    spec = importlib.util.spec_from_file_location("_autofde_test_discovery", DISCOVERY_SOURCE)
+    spec = importlib.util.spec_from_file_location(
+        "_autofde_test_discovery", DISCOVERY_SOURCE
+    )
     if spec is None or spec.loader is None:
         raise RuntimeError("DISCOVERY_MODULE_LOAD_REFUSED")
     module = importlib.util.module_from_spec(spec)
@@ -43,9 +45,7 @@ async def test_discovers_without_transition_model_and_preserves_failed_edges() -
         "opaque-b": (frozenset({"middle"}), frozenset({"done"})),
     }
 
-    async def probe(
-        prefix: tuple[str, ...], action_id: str
-    ) -> DISCOVERY.ProbeEvidence:
+    async def probe(prefix: tuple[str, ...], action_id: str) -> DISCOVERY.ProbeEvidence:
         state = frozenset({"start"})
         for prior in prefix:
             required, effect = hidden[prior]
@@ -81,9 +81,7 @@ async def test_refuses_unreceipted_probe_evidence() -> None:
         action_ids=("opaque-a",),
     )
 
-    async def probe(
-        prefix: tuple[str, ...], action_id: str
-    ) -> DISCOVERY.ProbeEvidence:
+    async def probe(prefix: tuple[str, ...], action_id: str) -> DISCOVERY.ProbeEvidence:
         return DISCOVERY.ProbeEvidence(
             action_id=action_id,
             prefix=prefix,
