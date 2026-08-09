@@ -34,7 +34,7 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            printf 'cache=true\npython=true\npackage=true\n' >> "$GITHUB_OUTPUT"
+            printf 'cache=true\nconstitution=true\npython=true\npackage=true\n' >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git diff --name-only \
@@ -52,6 +52,8 @@ jobs:
           }
           route cache \
             '^(src/autofde_lab/(caching\.py|_cache/)|tests/test_(caching|enterprise_cache)\.py|\.github/workflows/)'
+          route constitution \
+            '^(ggen\.toml|ontology/(lab|world|planning|process|authority|evidence|standing|interop|manufacture|python-projection)\.ttl|ontology/shapes/.*\.ttl|templates/python/|src/autofde_lab/constitution/|tests/constitution/test_semantic_constitution\.py|scripts/verify-ggen-constitution\.sh)$'
           route python '^(src/|tests/|examples/|pyproject\.toml|uv\.lock|\.github/workflows/)'
           route package '^(src/|cpp/|scripts/|pyproject\.toml|uv\.lock|CMakeLists\.txt|\.github/workflows/)'
 
@@ -70,6 +72,11 @@ jobs:
             "pynng>=0.6.2" \
             "pathos>=0.2.7" \
             "discrete-optimization>=0.9.0"
+
+      - name: Ggen semantic constitution correspondence
+        if: steps.routes.outputs.constitution == 'true'
+        shell: bash
+        run: bash scripts/verify-ggen-constitution.sh
 
       - name: Deterministic quality
         shell: bash

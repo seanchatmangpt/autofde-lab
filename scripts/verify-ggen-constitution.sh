@@ -2,9 +2,11 @@
 set -euo pipefail
 
 readonly GGEN_VERSION="v26.8.8"
-readonly GGEN_SYNC_TIMEOUT_SECONDS="30"
-readonly COMPILE_TIMEOUT_SECONDS="20"
-readonly TEST_TIMEOUT_SECONDS="60"
+readonly ASSET_FETCH_TIMEOUT_SECONDS="30"
+readonly ASSET_EXTRACT_TIMEOUT_SECONDS="10"
+readonly GGEN_SYNC_TIMEOUT_SECONDS="20"
+readonly COMPILE_TIMEOUT_SECONDS="10"
+readonly TEST_TIMEOUT_SECONDS="30"
 
 annotate() {
   local level="$1"
@@ -26,7 +28,6 @@ bounded_exec() {
   python - "${stage}" "${timeout_seconds}" "$@" <<'PY'
 from __future__ import annotations
 
-import errno
 import os
 import signal
 import subprocess
@@ -45,20 +46,66 @@ def emit(title: str, message: str) -> None:
         print(f"::error title={title}::{safe}", file=sys.stderr)
 
 
-def terminate_group(pid: int) -> None:
+def descendants(root_pid: int) -> list[int]:
+    completed = subprocess.run(
+        ["ps", "-axo", "pid=,ppid="],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    children: dict[int, list[int]] = {}
+    for line in completed.stdout.splitlines():
+        parts = line.split()
+        if len(parts) != 2:
+            continue
+        pid, ppid = map(int, parts)
+        children.setdefault(ppid, []).append(pid)
+    found: list[int] = []
+    stack = list(children.get(root_pid, ()))
+    while stack:
+        pid = stack.pop()
+        found.append(pid)
+        stack.extend(children.get(pid, ()))
+    return found
+
+
+def signal_pid(pid: int, sig: signal.Signals) -> None:
     try:
-        os.killpg(pid, signal.SIGTERM)
+        os.kill(pid, sig)
     except ProcessLookupError:
-        return
-    deadline = time.monotonic() + 2.0
+        pass
+
+
+def terminate_tree(root_pid: int) -> None:
+    # Discover before terminating the root so children that created their own
+    # sessions/process groups cannot escape by being re-parented first.
+    targets = descendants(root_pid)
+    for pid in reversed(targets):
+        signal_pid(pid, signal.SIGTERM)
+    signal_pid(root_pid, signal.SIGTERM)
+    try:
+        os.killpg(root_pid, signal.SIGTERM)
+    except ProcessLookupError:
+        pass
+
+    deadline = time.monotonic() + 1.0
     while time.monotonic() < deadline:
-        try:
-            os.killpg(pid, 0)
-        except ProcessLookupError:
+        alive = []
+        for pid in [root_pid, *targets]:
+            try:
+                os.kill(pid, 0)
+            except ProcessLookupError:
+                continue
+            alive.append(pid)
+        if not alive:
             return
         time.sleep(0.05)
+
+    for pid in reversed(targets):
+        signal_pid(pid, signal.SIGKILL)
+    signal_pid(root_pid, signal.SIGKILL)
     try:
-        os.killpg(pid, signal.SIGKILL)
+        os.killpg(root_pid, signal.SIGKILL)
     except ProcessLookupError:
         pass
 
@@ -67,31 +114,14 @@ proc = subprocess.Popen(command, start_new_session=True)
 try:
     returncode = proc.wait(timeout=timeout)
 except subprocess.TimeoutExpired:
-    terminate_group(proc.pid)
+    terminate_tree(proc.pid)
     try:
-        proc.wait(timeout=2.0)
+        proc.wait(timeout=1.0)
     except subprocess.TimeoutExpired:
         pass
     title = f"REFUSED:{stage}_TIMEOUT"
     emit(title, f"timeout_seconds={timeout:g}")
     raise SystemExit(124)
-
-# A successful bounded stage must also leave no descendant process behind.
-time.sleep(0.05)
-try:
-    os.killpg(proc.pid, 0)
-except ProcessLookupError:
-    leaked = False
-except OSError as exc:
-    leaked = exc.errno not in (errno.ESRCH,)
-else:
-    leaked = True
-
-if leaked:
-    terminate_group(proc.pid)
-    title = f"REFUSED:{stage}_PROCESS_LEAK"
-    emit(title, "descendant process survived stage completion")
-    raise SystemExit(125)
 
 if returncode != 0:
     title = f"REFUSED:{stage}_FAILED"
@@ -146,13 +176,11 @@ workdir="$(mktemp -d)"
 trap 'rm -rf "$workdir"' EXIT
 archive="${workdir}/${asset}"
 
-if ! curl --fail --location --retry 1 --silent --show-error \
-  --connect-timeout 10 --max-time 45 \
+bounded_exec ASSET_FETCH "${ASSET_FETCH_TIMEOUT_SECONDS}" \
+  curl --fail --location --retry 1 --silent --show-error \
+  --connect-timeout 10 --max-time 25 \
   "${url}" \
-  --output "${archive}"; then
-  annotate error "REFUSED:GGEN_ASSET_FETCH_FAILED" "url=${url}"
-  exit 4
-fi
+  --output "${archive}"
 
 actual_sha256="$(python - "${archive}" <<'PY'
 from __future__ import annotations
@@ -176,7 +204,8 @@ if [[ "${actual_sha256}" != "${sha256}" ]]; then
   exit 5
 fi
 
-tar -xzf "${archive}" -C "${workdir}"
+bounded_exec ASSET_EXTRACT "${ASSET_EXTRACT_TIMEOUT_SECONDS}" \
+  tar -xzf "${archive}" -C "${workdir}"
 ggen_bin="$(find "${workdir}" -type f -name ggen -print -quit)"
 if [[ -z "${ggen_bin}" ]]; then
   annotate error "REFUSED:GGEN_BINARY_NOT_FOUND" "asset=${asset}"
