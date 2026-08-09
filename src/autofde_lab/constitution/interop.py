@@ -8,10 +8,12 @@ from __future__ import annotations
 from ._base import SemanticEntity
 
 
+
 class InteropContract(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:InteropContract``."""
 
     RDF_TYPE = "urn:autofde-lab:InteropContract"
+
 
 
 class InteropAdapter(SemanticEntity):
@@ -20,10 +22,12 @@ class InteropAdapter(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:InteropAdapter"
 
 
+
 class ExternalRepresentation(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:ExternalRepresentation``."""
 
     RDF_TYPE = "urn:autofde-lab:ExternalRepresentation"
+
 
 
 class Projection(SemanticEntity):
@@ -32,10 +36,12 @@ class Projection(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:Projection"
 
 
+
 class SemanticLoss(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:SemanticLoss``."""
 
     RDF_TYPE = "urn:autofde-lab:SemanticLoss"
+
 
 
 class LossReport(SemanticEntity):
@@ -44,18 +50,28 @@ class LossReport(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:LossReport"
 
 
+
 class InteropContractReceipt(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:InteropContractReceipt``."""
 
     RDF_TYPE = "urn:autofde-lab:InteropContractReceipt"
 
 
+
 __all__ = [
+
     "InteropContract",
+
     "InteropAdapter",
+
     "ExternalRepresentation",
+
     "Projection",
+
     "SemanticLoss",
+
     "LossReport",
+
     "InteropContractReceipt",
+
 ]

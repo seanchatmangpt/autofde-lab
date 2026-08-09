@@ -8,10 +8,12 @@ from __future__ import annotations
 from ._base import SemanticEntity
 
 
+
 class World(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:World``."""
 
     RDF_TYPE = "urn:autofde-lab:World"
+
 
 
 class WorldState(SemanticEntity):
@@ -20,10 +22,12 @@ class WorldState(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:WorldState"
 
 
+
 class Environment(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:Environment``."""
 
     RDF_TYPE = "urn:autofde-lab:Environment"
+
 
 
 class Observation(SemanticEntity):
@@ -32,10 +36,12 @@ class Observation(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:Observation"
 
 
+
 class AdmittedObservation(Observation):
     """Generated semantic type for ``urn:autofde-lab:AdmittedObservation``."""
 
     RDF_TYPE = "urn:autofde-lab:AdmittedObservation"
+
 
 
 class ObservationAdmission(SemanticEntity):
@@ -44,11 +50,19 @@ class ObservationAdmission(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:ObservationAdmission"
 
 
+
 __all__ = [
+
     "World",
+
     "WorldState",
+
     "Environment",
+
     "Observation",
+
     "AdmittedObservation",
+
     "ObservationAdmission",
+
 ]

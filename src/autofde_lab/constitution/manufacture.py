@@ -8,10 +8,12 @@ from __future__ import annotations
 from ._base import SemanticEntity
 
 
+
 class SemanticConstitution(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:SemanticConstitution``."""
 
     RDF_TYPE = "urn:autofde-lab:SemanticConstitution"
+
 
 
 class ManufactureRule(SemanticEntity):
@@ -20,10 +22,12 @@ class ManufactureRule(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:ManufactureRule"
 
 
+
 class ManufactureRun(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:ManufactureRun``."""
 
     RDF_TYPE = "urn:autofde-lab:ManufactureRun"
+
 
 
 class CanonicalSourceArtifact(SemanticEntity):
@@ -32,16 +36,24 @@ class CanonicalSourceArtifact(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:CanonicalSourceArtifact"
 
 
+
 class ManufactureReceipt(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:ManufactureReceipt``."""
 
     RDF_TYPE = "urn:autofde-lab:ManufactureReceipt"
 
 
+
 __all__ = [
+
     "SemanticConstitution",
+
     "ManufactureRule",
+
     "ManufactureRun",
+
     "CanonicalSourceArtifact",
+
     "ManufactureReceipt",
+
 ]

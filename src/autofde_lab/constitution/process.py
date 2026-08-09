@@ -8,10 +8,12 @@ from __future__ import annotations
 from ._base import SemanticEntity
 
 
+
 class POWLProcess(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:POWLProcess``."""
 
     RDF_TYPE = "urn:autofde-lab:POWLProcess"
+
 
 
 class ProcessNode(SemanticEntity):
@@ -20,10 +22,12 @@ class ProcessNode(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:ProcessNode"
 
 
+
 class TransitionNode(ProcessNode):
     """Generated semantic type for ``urn:autofde-lab:TransitionNode``."""
 
     RDF_TYPE = "urn:autofde-lab:TransitionNode"
+
 
 
 class SilentTransition(TransitionNode):
@@ -32,10 +36,12 @@ class SilentTransition(TransitionNode):
     RDF_TYPE = "urn:autofde-lab:SilentTransition"
 
 
+
 class PartialOrderComposite(ProcessNode):
     """Generated semantic type for ``urn:autofde-lab:PartialOrderComposite``."""
 
     RDF_TYPE = "urn:autofde-lab:PartialOrderComposite"
+
 
 
 class ChoiceGraph(ProcessNode):
@@ -44,10 +50,12 @@ class ChoiceGraph(ProcessNode):
     RDF_TYPE = "urn:autofde-lab:ChoiceGraph"
 
 
+
 class OrderEdge(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:OrderEdge``."""
 
     RDF_TYPE = "urn:autofde-lab:OrderEdge"
+
 
 
 class POWLCommitment(SemanticEntity):
@@ -56,13 +64,23 @@ class POWLCommitment(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:POWLCommitment"
 
 
+
 __all__ = [
+
     "POWLProcess",
+
     "ProcessNode",
+
     "TransitionNode",
+
     "SilentTransition",
+
     "PartialOrderComposite",
+
     "ChoiceGraph",
+
     "OrderEdge",
+
     "POWLCommitment",
+
 ]

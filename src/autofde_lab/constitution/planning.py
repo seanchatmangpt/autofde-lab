@@ -8,10 +8,12 @@ from __future__ import annotations
 from ._base import SemanticEntity
 
 
+
 class PlanningProblem(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:PlanningProblem``."""
 
     RDF_TYPE = "urn:autofde-lab:PlanningProblem"
+
 
 
 class Planner(SemanticEntity):
@@ -20,10 +22,12 @@ class Planner(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:Planner"
 
 
+
 class PlannerAttempt(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:PlannerAttempt``."""
 
     RDF_TYPE = "urn:autofde-lab:PlannerAttempt"
+
 
 
 class PlanCandidate(SemanticEntity):
@@ -32,10 +36,12 @@ class PlanCandidate(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:PlanCandidate"
 
 
+
 class CandidateSet(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:CandidateSet``."""
 
     RDF_TYPE = "urn:autofde-lab:CandidateSet"
+
 
 
 class Critique(SemanticEntity):
@@ -44,10 +50,12 @@ class Critique(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:Critique"
 
 
+
 class Validation(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:Validation``."""
 
     RDF_TYPE = "urn:autofde-lab:Validation"
+
 
 
 class GovernedCandidate(SemanticEntity):
@@ -56,10 +64,12 @@ class GovernedCandidate(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:GovernedCandidate"
 
 
+
 class Disagreement(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:Disagreement``."""
 
     RDF_TYPE = "urn:autofde-lab:Disagreement"
+
 
 
 class DiscriminatingProbe(SemanticEntity):
@@ -68,15 +78,27 @@ class DiscriminatingProbe(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:DiscriminatingProbe"
 
 
+
 __all__ = [
+
     "PlanningProblem",
+
     "Planner",
+
     "PlannerAttempt",
+
     "PlanCandidate",
+
     "CandidateSet",
+
     "Critique",
+
     "Validation",
+
     "GovernedCandidate",
+
     "Disagreement",
+
     "DiscriminatingProbe",
+
 ]

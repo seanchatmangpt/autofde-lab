@@ -8,10 +8,12 @@ from __future__ import annotations
 from ._base import SemanticEntity
 
 
+
 class AuthorityEnvelope(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:AuthorityEnvelope``."""
 
     RDF_TYPE = "urn:autofde-lab:AuthorityEnvelope"
+
 
 
 class Actuation(SemanticEntity):
@@ -20,7 +22,11 @@ class Actuation(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:Actuation"
 
 
+
 __all__ = [
+
     "AuthorityEnvelope",
+
     "Actuation",
+
 ]

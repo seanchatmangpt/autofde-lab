@@ -8,10 +8,12 @@ from __future__ import annotations
 from ._base import SemanticEntity
 
 
+
 class StandingValue(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:StandingValue``."""
 
     RDF_TYPE = "urn:autofde-lab:StandingValue"
+
 
 
 class StandingAssertion(SemanticEntity):
@@ -20,14 +22,20 @@ class StandingAssertion(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:StandingAssertion"
 
 
+
 class Refusal(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:Refusal``."""
 
     RDF_TYPE = "urn:autofde-lab:Refusal"
 
 
+
 __all__ = [
+
     "StandingValue",
+
     "StandingAssertion",
+
     "Refusal",
+
 ]

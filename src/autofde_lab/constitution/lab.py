@@ -8,10 +8,12 @@ from __future__ import annotations
 from ._base import SemanticEntity
 
 
+
 class Gym(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:Gym``."""
 
     RDF_TYPE = "urn:autofde-lab:Gym"
+
 
 
 class Trial(SemanticEntity):
@@ -20,10 +22,12 @@ class Trial(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:Trial"
 
 
+
 class Experiment(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:Experiment``."""
 
     RDF_TYPE = "urn:autofde-lab:Experiment"
+
 
 
 class Goal(SemanticEntity):
@@ -32,10 +36,12 @@ class Goal(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:Goal"
 
 
+
 class Invariant(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:Invariant``."""
 
     RDF_TYPE = "urn:autofde-lab:Invariant"
+
 
 
 class Resource(SemanticEntity):
@@ -44,10 +50,12 @@ class Resource(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:Resource"
 
 
+
 class Capability(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:Capability``."""
 
     RDF_TYPE = "urn:autofde-lab:Capability"
+
 
 
 class Perturbation(SemanticEntity):
@@ -56,13 +64,23 @@ class Perturbation(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:Perturbation"
 
 
+
 __all__ = [
+
     "Gym",
+
     "Trial",
+
     "Experiment",
+
     "Goal",
+
     "Invariant",
+
     "Resource",
+
     "Capability",
+
     "Perturbation",
+
 ]

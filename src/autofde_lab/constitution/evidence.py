@@ -8,10 +8,12 @@ from __future__ import annotations
 from ._base import SemanticEntity
 
 
+
 class Postcondition(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:Postcondition``."""
 
     RDF_TYPE = "urn:autofde-lab:Postcondition"
+
 
 
 class Observer(SemanticEntity):
@@ -20,10 +22,12 @@ class Observer(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:Observer"
 
 
+
 class PostconditionObservation(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:PostconditionObservation``."""
 
     RDF_TYPE = "urn:autofde-lab:PostconditionObservation"
+
 
 
 class Receipt(SemanticEntity):
@@ -32,10 +36,12 @@ class Receipt(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:Receipt"
 
 
+
 class ReceiptDAG(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:ReceiptDAG``."""
 
     RDF_TYPE = "urn:autofde-lab:ReceiptDAG"
+
 
 
 class Replay(SemanticEntity):
@@ -44,10 +50,12 @@ class Replay(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:Replay"
 
 
+
 class Artifact(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:Artifact``."""
 
     RDF_TYPE = "urn:autofde-lab:Artifact"
+
 
 
 class ArtifactManifest(SemanticEntity):
@@ -56,10 +64,12 @@ class ArtifactManifest(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:ArtifactManifest"
 
 
+
 class SourceRevision(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:SourceRevision``."""
 
     RDF_TYPE = "urn:autofde-lab:SourceRevision"
+
 
 
 class DependencyRevision(SemanticEntity):
@@ -68,10 +78,12 @@ class DependencyRevision(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:DependencyRevision"
 
 
+
 class VerifierRun(SemanticEntity):
     """Generated semantic type for ``urn:autofde-lab:VerifierRun``."""
 
     RDF_TYPE = "urn:autofde-lab:VerifierRun"
+
 
 
 class EvidenceWitness(SemanticEntity):
@@ -80,24 +92,40 @@ class EvidenceWitness(SemanticEntity):
     RDF_TYPE = "urn:autofde-lab:EvidenceWitness"
 
 
+
 class Level4Witness(EvidenceWitness):
     """Generated semantic type for ``urn:autofde-lab:Level4Witness``."""
 
     RDF_TYPE = "urn:autofde-lab:Level4Witness"
 
 
+
 __all__ = [
+
     "Postcondition",
+
     "Observer",
+
     "PostconditionObservation",
+
     "Receipt",
+
     "ReceiptDAG",
+
     "Replay",
+
     "Artifact",
+
     "ArtifactManifest",
+
     "SourceRevision",
+
     "DependencyRevision",
+
     "VerifierRun",
+
     "EvidenceWitness",
+
     "Level4Witness",
+
 ]
