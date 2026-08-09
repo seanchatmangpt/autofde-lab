@@ -5,7 +5,16 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
-Last update: **pass 9** (2026-08-08) — real `ggen sync run` manufactured 8 Python modules
+Last update: **pass 10** (2026-08-08) — closed System C (the PR #37 constitution) as a real,
+independently SHACL-verified Level 4 evidence path: new `src/autofde_lab/evidence/` package
+(`level4_witness.py` projects a real trial's durable artifacts to `afl:`-namespaced RDF,
+`verify.py` runs the real committed shapes through `pyshacl`), 14/14 real identity-mutation
+falsifiers, a real fresh-process destructive-verification proof, and the two-gym architecture
+gate (`resource_flow` + `lock_and_key`, structurally unrelated domains) passed with **zero**
+changes to the evidence kernel or any SHACL shape. Full transcripts:
+`docs/2026-08-08-level4-shacl-tracer-bullet.md`.
+
+Prior update: **pass 9** (2026-08-08) — real `ggen sync run` manufactured 8 Python modules
 into `src/autofde_lab/constitution/` from the merged working-backwards Lab constitution
 (PR #37), no `generated/` directory. Two real defects caught by inspecting rendered output
 before treating the run as done (a URN-scheme `local()` bug producing invalid Python; a
@@ -31,6 +40,26 @@ Scope note: this sheet ledgers WIP **inside this repository**. Cross-repository 
 (`~/mfw`, `~/ggen`, `~/ggen-create`, `~/ggen-legacy`, `~/bcinr`) is ledgered separately in
 `docs/ecosystem-standing.md`, same discipline, wider blast radius. Don't merge the two — a
 green row here says nothing about whether a consequence closes across the portfolio.
+
+## Pass 10 — Level 4 SHACL tracer bullet, two-gym architecture gate (2026-08-08)
+
+New `src/autofde_lab/evidence/` package closes System C (PR #37's `afl:`/`urn:autofde-lab:`
+constitution) as a real, independently verified Level 4 evidence path — distinct from System A
+(`level4_crown.py` et al., still defective, superseded for validation, reused read-only for its
+real trial-execution machinery) and System B (`ocel/rdf_projection.py`, real, untouched). Full
+transcripts, exact identities, and both frozen tracer-bullet records:
+`docs/2026-08-08-level4-shacl-tracer-bullet.md`.
+
+| Item | State | Witness |
+|---|---|---|
+| `level4_witness.py` — real trial → `afl:`-namespaced RDF | **measured win** | Mechanical, identity-preserving transcription of 3 real durable artifacts (`commitment.ttl`, `level4.ocel.json`, `receipts.sqlite3`); replay-anchored backward walk, no invented edges; raises `Level4WitnessGap` on any missing required edge rather than fabricating one. |
+| `verify.py` — real `pyshacl` against real committed shapes | **measured win** | `resource_flow` trial (seed `3979297810`): 131-triple graph, `Conforms: True`. Non-vacuous — severing a real edge flips it to `Conforms: False` naming the exact shape. |
+| 14 identity-mutation falsifiers, real trial fixture | **measured win** | `pytest tests/evidence/test_level4_witness_falsifiers_chicago.py -v` → `14 passed`. One real bug found and fixed en route (a test-helper `_clone()` dropped namespace bindings, causing pyshacl's `sh:sparql` prefix resolution to fail on every mutated graph) — root-caused before fixing, not patched blind. |
+| Destructive fresh-process verification | **measured win** | Real subprocess running only `python -m autofde_lab.evidence.verify <trial_dir>`; a `sys.modules` inspection afterward confirms zero `autofde_lab.hub.domain.gym_procedure.*` (System A) or `autofde_lab.ocel.rdf_projection` (System B) modules present — the destructive criterion holds by import-graph construction, not a bolted-on assertion. |
+| **Two-gym architecture gate** | **measured win** | TracerBulletA (`resource_flow`) and TracerBulletB (`lock_and_key` — hidden key permutation, one irreversible trap action, structurally unrelated to `resource_flow`'s linear production chain) both `Conforms: True` through the **identical, unmodified** `level4_witness.py`/`verify.py`/SHACL shapes. `git status --short src/autofde_lab/evidence/ ontology/shapes/` confirms zero changes between the two. `TWO_GYM_KERNEL_GATE = PASSED`. |
+| `switchboard`/`lock_and_key` initially `NO_TYPED_VALID_PLAN` at default `probe_budget=12` | **recorded finding, root-caused** | Not a config or kernel gap — `lock_and_key`'s `depth` self-discloses via `observe()` (defaults to 3); `switchboard`'s goal depends only on hidden state, not config. Raising `probe_budget` to 40 reached `EXECUTED` on every retried seed. Matches this session's own pre-existing task #21 ("lock_and_key: prefix-keyed induction"), a planning-layer discovery-budget characteristic, not an evidence-kernel defect. |
+| Mock-usage grep, `src/autofde_lab/evidence/` + `tests/evidence/` | **measured win** | Zero real matches (one docstring line denying mock usage, not usage itself). |
+| Gym census + backfill swarm | **deferred/scoped — a background workflow is running** | Not reported here; will be filed as a follow-up pass once it returns, against whatever it actually finds. |
 
 ## Pass 9 — ggen manufactures the semantic constitution (2026-08-08)
 

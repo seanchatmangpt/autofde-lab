@@ -39,6 +39,13 @@ export PYTHONPATH := justfile_directory()
 #     free on this macOS box only because of an unrelated libomp skipif --
 #     would run for real on Linux/CI, so it's pulled out structurally rather
 #     than relying on that skip.
+#   - tests/evidence/test_level4_witness_falsifiers_chicago.py -- same shape
+#     as test_level4_ocel_vocabulary_chicago.py below (72.19s excluded from
+#     the "Level 4 crown hot loop" recipe for the identical reason): its
+#     module-scoped fixture runs one real `run_real_trial`, measured
+#     ~73.6s alone (2026-08-08, `pytest tests/evidence/... -v`). 14 real
+#     identity-mutation falsifiers against that one real trial is exactly
+#     the right shape for a Chicago test; it is simply not unit-weight.
 # None of the above is dropped from coverage -- everything excluded here
 # still runs, unrestricted, in test-full below.
 #
@@ -64,7 +71,8 @@ test:
         --ignore=tests/test_self_play_dspy_all_domains_chicago.py \
         --ignore=tests/test_self_play_dspy_turbofieldfare_chicago.py \
         --ignore=tests/test_chatman_wasm.py \
-        --ignore=tests/test_import_all_submodules.py
+        --ignore=tests/test_import_all_submodules.py \
+        --ignore=tests/evidence/test_level4_witness_falsifiers_chicago.py
 
 # Full loop: everything, matching .github/workflows/ci.yml's `integration`
 # job partitioning -- actually 5 pytest invocations, not 4: the python
