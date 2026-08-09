@@ -1,0 +1,103 @@
+[project]
+name = "autofde-lab-constitution"
+version = "0.1.0"
+description = "Direct Python projection of the working-backwards AutoFDE Lab semantic constitution (PR #37) into src/autofde_lab/constitution/ -- no generated/ directory, manufacture is provenance."
+authors = ["AutoFDE Lab"]
+license = "MIT"
+
+[ontology]
+source = "ontology/lab.ttl"
+imports = [
+    "ontology/world.ttl",
+    "ontology/planning.ttl",
+    "ontology/process.ttl",
+    "ontology/authority.ttl",
+    "ontology/evidence.ttl",
+    "ontology/standing.ttl",
+    "ontology/interop.ttl",
+]
+base_iri = "urn:autofde-lab:"
+
+[ontology.prefixes]
+afl = "urn:autofde-lab:"
+owl = "http://www.w3.org/2002/07/owl#"
+rdfs = "http://www.w3.org/2000/01/rdf-schema#"
+rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+dcterms = "http://purl.org/dc/terms/"
+prov = "http://www.w3.org/ns/prov#"
+skos = "http://www.w3.org/2004/02/skos/core#"
+xsd = "http://www.w3.org/2001/XMLSchema#"
+
+[generation]
+output_dir = "."
+
+[[generation.rules]]
+name = "constitution-lab"
+query = { file = "queries/constitution/lab.rq" }
+template = { file = "templates/constitution_module.py.tera" }
+output_file = "src/autofde_lab/constitution/lab.py"
+mode = "Create"
+
+[[generation.rules]]
+name = "constitution-world"
+query = { file = "queries/constitution/world.rq" }
+template = { file = "templates/constitution_module.py.tera" }
+output_file = "src/autofde_lab/constitution/world.py"
+mode = "Create"
+
+[[generation.rules]]
+name = "constitution-planning"
+query = { file = "queries/constitution/planning.rq" }
+template = { file = "templates/constitution_module.py.tera" }
+output_file = "src/autofde_lab/constitution/planning.py"
+mode = "Create"
+
+[[generation.rules]]
+name = "constitution-process"
+query = { file = "queries/constitution/process.rq" }
+template = { file = "templates/constitution_module.py.tera" }
+output_file = "src/autofde_lab/constitution/process.py"
+mode = "Create"
+
+[[generation.rules]]
+name = "constitution-authority"
+query = { file = "queries/constitution/authority.rq" }
+template = { file = "templates/constitution_module.py.tera" }
+output_file = "src/autofde_lab/constitution/authority.py"
+mode = "Create"
+
+[[generation.rules]]
+name = "constitution-evidence"
+query = { file = "queries/constitution/evidence.rq" }
+template = { file = "templates/constitution_module.py.tera" }
+output_file = "src/autofde_lab/constitution/evidence.py"
+mode = "Create"
+
+[[generation.rules]]
+name = "constitution-standing"
+query = { file = "queries/constitution/standing.rq" }
+template = { file = "templates/constitution_module.py.tera" }
+output_file = "src/autofde_lab/constitution/standing.py"
+mode = "Create"
+
+[[generation.rules]]
+name = "constitution-interop"
+query = { file = "queries/constitution/interop.rq" }
+template = { file = "templates/constitution_module.py.tera" }
+output_file = "src/autofde_lab/constitution/interop.py"
+mode = "Create"
+
+[sync]
+enabled = true
+on_change = "manual"
+validate_after = true
+conflict_mode = "fail"
+
+[rdf]
+formats = ["turtle"]
+default_format = "turtle"
+strict_validation = false
+
+[templates]
+enable_caching = true
+auto_reload = true

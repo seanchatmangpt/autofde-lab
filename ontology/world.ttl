@@ -13,29 +13,35 @@
 
 afl:World
     a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:world> ;
     rdfs:label "World" .
 
 afl:WorldState
     a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:world> ;
     rdfs:label "World state" .
 
 afl:Environment
     a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:world> ;
     rdfs:label "Environment" .
 
 afl:Observation
     a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:world> ;
     rdfs:label "Observation" ;
     rdfs:comment "Raw observed information. Observation is not admission." .
 
 afl:AdmittedObservation
     a owl:Class ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:world> ;
     rdfs:subClassOf afl:Observation ;
     rdfs:label "Admitted observation" ;
     rdfs:comment "An observation accepted for a bounded decision or experiment after its required admission checks." .
 
 afl:ObservationAdmission
     a owl:Class , prov:Activity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:world> ;
     rdfs:label "Observation admission" .
 
 afl:observedFrom

@@ -5,7 +5,14 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
-Last update: **pass 8** (2026-08-08) — Level 4 test-loop measurement: real per-file durations
+Last update: **pass 9** (2026-08-08) — real `ggen sync run` manufactured 8 Python modules
+into `src/autofde_lab/constitution/` from the merged working-backwards Lab constitution
+(PR #37), no `generated/` directory. Two real defects caught by inspecting rendered output
+before treating the run as done (a URN-scheme `local()` bug producing invalid Python; a
+vocabulary-class/Enum name collision) — both fixed and re-verified, not glossed over. See
+`docs/2026-08-08-ggen-manufactures-the-constitution.md` for full transcripts.
+
+Prior update: **pass 8** (2026-08-08) — Level 4 test-loop measurement: real per-file durations
 for the five Level 4 suites, a cProfile attributing 94% of the slow one to serial planner
 federation (not to the gymact subprocess, which is 6%), and two new Justfile recipes
 (`test-level4`, `test-level4-full`). No test deleted, skipped, or weakened.
@@ -24,6 +31,29 @@ Scope note: this sheet ledgers WIP **inside this repository**. Cross-repository 
 (`~/mfw`, `~/ggen`, `~/ggen-create`, `~/ggen-legacy`, `~/bcinr`) is ledgered separately in
 `docs/ecosystem-standing.md`, same discipline, wider blast radius. Don't merge the two — a
 green row here says nothing about whether a consequence closes across the portfolio.
+
+## Pass 9 — ggen manufactures the semantic constitution (2026-08-08)
+
+Real `ggen sync run` (binary `~/ggen/target/release/ggen`, self-reported `--version` `26.8.6`,
+git HEAD `657a0befb`, 3 commits past a real tag `v26.8.8` — the version-string/git-tag mismatch
+is itself a live instance of `docs/ecosystem-standing.md`'s open **RP-1**, reported not glossed
+over) manufactured 8 Python modules into `src/autofde_lab/constitution/` from the 8 non-meta
+`ontology/*.ttl` files merged in PR #37. No `generated/` directory — `output_file` lands
+directly at its semantic path, matching `ontology/manufacture.ttl`'s own law. Full transcripts:
+`docs/2026-08-08-ggen-manufactures-the-constitution.md`.
+
+| Item | State | Witness |
+|---|---|---|
+| Ontology augmentation (`rdfs:isDefinedBy`, 8 files) | **measured win** | One triple added per `owl:Class`, nothing else touched; independently re-parsed with `rdflib`, class-count vs. tagged-count matches exactly in all 8 files (57 total). |
+| `ggen graph validate` on the 8 files | **measured win** | Real command, 0 violations, quad counts matching the independent `rdflib` parse exactly. |
+| Real `ggen sync run` | **measured win** | 8/8 files written; `ggen receipt verify` → `valid=true, signed=true, signature_valid=true, outputs=8`. |
+| Two real defects caught before treating the run as done | **measured win — corrected in place, not glossed over** | (1) `local()` doesn't split `urn:`-scheme IRIs, producing invalid Python (`urn:autofde-lab:ALIVE = ...`) — fixed via a `replace()` prefix-strip. (2) `afl:StandingValue` is both a vocabulary class and an `owl:Class`, producing two conflicting `class StandingValue` definitions in one file (the second silently shadowing the first) — fixed by excluding vocabulary classes from the dataclass-render arm. A third, cosmetic defect (`pascal_case` mangling `POWLCommitment`→`Powlcommitment`) was also caught and fixed. |
+| Determinism re-run | **measured win** | Same graph_hash, `written: []`, all 8 correctly refused as `mode=create: target already exists` (stricter than the S4 precedent's `Overwrite`-mode "unchanged: content identical", same underlying guarantee). |
+| 57 manufactured names, real import + construction | **measured win** | `.venv/bin/python` real import of all 8 modules; every one of the 57 `__all__` names (56 dataclasses + 1 enum) constructed/verified for real; count matches the 57 `owl:Class` declarations exactly. |
+| 8 new Chicago-style test files, 89 tests | **measured win** | Real `pytest` run, 89/89 passed; `grep` for `unittest.mock\|Mock(\|MagicMock\|patch(\|monkeypatch` across all 8 → zero matches. |
+| `just test` full regression | **recorded negative, unrelated** | 3 pre-existing failures (`test_crown_errc.py`, `test_explore_boundary.py`, `test_powl_replay_boundary.py`) plus 1 environment skip (`a2a` absent) — confirmed via `git status --short` that none of the failing files were touched this pass; they arrived via the Stage-0 `git merge origin/master` (77 files, unrelated to this work). Not investigated or fixed here. |
+| Standing dimensions / `BLOCKED`-carries-reason rule | **deferred/scoped — not invented** | `technicalStanding`/`organizationalStanding`/`enterpriseStanding` do not exist anywhere in the merged ontology (grepped, zero occurrences across all 12 files); `afl:Refusal.refusalReason` is not wired to `afl:BLOCKED` by any property. Reported as a gap per `absence-is-not-evidence.md`, not filled in. |
+| Runtime wiring | **deferred/scoped — not attempted** | `autofde_lab.constitution.*` is imported by nothing outside its own tests. Pure additive projection, matching PR #37's own stated non-scope. The live Level4-crown `FactorState`/`CrownStanding` types are untouched. |
 
 ## Pass 7 — Level 4 discovery→actuation chain over a real GymAct environment (2026-08-08)
 
