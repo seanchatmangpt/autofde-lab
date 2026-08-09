@@ -84,7 +84,10 @@ async def _run() -> int:
         response = _read_message()
         if response.get("type") != "probe_result":
             raise ValueError("DISCOVERY_PROBE_RESULT_REQUIRED")
-        if response.get("action_id") != action_id or tuple(response.get("prefix", ())) != prefix:
+        if (
+            response.get("action_id") != action_id
+            or tuple(response.get("prefix", ())) != prefix
+        ):
             raise ValueError("DISCOVERY_PROBE_RESULT_IDENTITY_MISMATCH")
         return discovery.ProbeEvidence(
             action_id=action_id,
