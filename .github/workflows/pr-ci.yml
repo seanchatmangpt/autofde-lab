@@ -49,28 +49,17 @@ jobs:
           PYTHONPATH: src
         run: |
           python -m pytest -q \
-            tests/autofde/test_authority.py \
-            tests/autofde/test_bootstrap.py \
-            tests/fabric/test_brce.py \
-            tests/fabric/test_brce_identity.py \
-            tests/fabric/test_public_ontology.py \
-            tests/fabric/test_world_model.py \
-            tests/fabric/test_guardrails.py \
-            tests/fabric/test_self_play.py \
-            tests/fabric/test_query_plane.py \
-            tests/fabric/test_selection.py \
-            tests/fabric/test_selection_store.py \
-            tests/fabric/test_metrics.py \
-            tests/fabric/test_cognition_debt.py \
-            tests/fabric/test_causal_placement.py \
-            tests/fabric/test_handoff.py \
-            tests/fabric/test_differential_verification.py \
-            tests/fabric/test_competitive_benchmark.py \
-            tests/fabric/test_coverage_bridge.py \
-            tests/fabric/test_hot_path.py \
-            tests/fabric/test_crown.py \
-            tests/fabric/test_crown_evidence.py \
-            tests/fabric/test_crown_errc.py \
+            tests/autofde/test_authority.py tests/autofde/test_bootstrap.py \
+            tests/fabric/test_brce.py tests/fabric/test_brce_identity.py \
+            tests/fabric/test_public_ontology.py tests/fabric/test_world_model.py \
+            tests/fabric/test_guardrails.py tests/fabric/test_self_play.py \
+            tests/fabric/test_query_plane.py tests/fabric/test_selection.py \
+            tests/fabric/test_selection_store.py tests/fabric/test_metrics.py \
+            tests/fabric/test_cognition_debt.py tests/fabric/test_causal_placement.py \
+            tests/fabric/test_handoff.py tests/fabric/test_differential_verification.py \
+            tests/fabric/test_competitive_benchmark.py tests/fabric/test_coverage_bridge.py \
+            tests/fabric/test_hot_path.py tests/fabric/test_crown.py \
+            tests/fabric/test_crown_evidence.py tests/fabric/test_crown_errc.py \
             tests/fabric/test_issue_reasoning.py
 
       - name: Execute 8x8 Challenger value benchmark
@@ -96,6 +85,7 @@ jobs:
           tar -tzf "$archive" > sdist-files.txt
           grep -Eq '/pyproject\.toml$' sdist-files.txt
           grep -Eq '/src/autofde_lab/__init__\.py$' sdist-files.txt
+          grep -Eq '/src/autofde_lab/_cache/' sdist-files.txt
           test "$(wc -c < "$archive")" -gt 10000
 
       - uses: actions/upload-artifact@v4
