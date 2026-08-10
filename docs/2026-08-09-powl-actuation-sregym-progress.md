@@ -300,4 +300,36 @@ first failure. No CONFIRMED/DISPUTED verdict yet for any problem ID, but the
 path to one is now real and close: the remaining blocker is a single,
 precisely-named readiness race, not an architectural dead end.
 
+### Cycle 4 (2026-08-10)
+
+**Fixed the readiness-race blocker named at the end of Cycle 3.**
+`SregymEnvironment.__init__` now requires BOTH the conductor API's `/status`
+AND a real TCP-reachable kubectl-mcp port before declaring ready (new
+`_tcp_port_reachable()` helper, real socket probe, no cluster needed to test
+it). Also fixed, found while testing: `_real_sregym_checkout_ready()`
+(gymact's own test file) let a transient `kubectl cluster-info` TLS timeout
+raise uncaught at MODULE IMPORT TIME, aborting collection of the whole test
+file including unrelated non-live tests -- now caught, degrades to a named
+skip reason. `15/15` non-live tests passing.
+
+**Real infrastructure failure hit and recovered from this cycle**: the
+cluster became genuinely unreachable (`TLS handshake timeout`, persistent
+across 3 real retries with waits, not transient) -- likely accumulated
+strain from this session's many hours of repeated real deploys. Recovered
+via `colima stop && colima start --cpu 12 --memory 20` (the same
+already-proven-safe recovery this session used once before; node state and
+age persisted through the restart, confirming non-destructive). **Real,
+newly-confirmed fact**: the earlier node-affinity label fix
+(`node-role.kubernetes.io/control-plane=""`) does NOT survive a colima
+restart -- k3s re-applies its own default (`"true"`) on every restart.
+Re-applied this cycle; **any future cycle that hits the Prometheus
+`FailedScheduling` dead-end again should check this label first** before
+assuming it's a new problem.
+
+Given this cycle's time was largely consumed by real infrastructure
+recovery (not wasted -- a real, working cluster is a hard prerequisite for
+everything else), no new live trial was attempted this cycle. Next cycle
+should attempt the live trial now that both the readiness-race fix and a
+healthy cluster are confirmed in place.
+
 (Grows as cycles attempt more problems.)
