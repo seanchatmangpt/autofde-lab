@@ -1174,3 +1174,62 @@ still report a false `no_anomaly_detected` rather than a clear
 `BLOCKED:NAMESPACE_NOT_FOUND`. Not yet verified as a real gap -- named as
 a hypothesis for next cycle to check by source reading, not yet
 confirmed.
+
+### Cycle 15 (2026-08-10)
+
+**Key-rotation check**: real direct `curl` against the Groq API -> still
+`401`, `expired_api_key`. No orphaned processes found.
+`wrong_dns_policy_social_network` stays
+`ATTEMPTED:BLOCKED:EXPIRED_GROQ_API_KEY`.
+
+**Independently re-verified cycle 14's claims**: real re-run, 126 passed,
+zero-mock grep clean. Also independently re-confirmed the 123-entry
+`PROBLEM_ID_NAMESPACE` table still exactly matches the real registry
+(re-parsed `registry.py` fresh this cycle, zero drift).
+
+**Investigated and confirmed cycle 14's own named hypothesis**: tested
+directly against the real cluster (still available even though the
+credential blocker prevents a full live SREGym trial):
+`kubectl get deployments -n <nonexistent-namespace> -o json` -> real
+exit 0, real valid EMPTY `{"items": []}` body. Confirmed real, live: a
+resolved-but-never-deployed (or genuinely wrong) namespace would
+silently scan as empty and produce a false `no_anomaly_detected` --
+indistinguishable from a genuinely healthy app, even after cycle 14's
+namespace-resolution fix gets the namespace NAME right. By contrast,
+real `kubectl get namespace <nonexistent>` DOES raise (real non-zero
+exit, source-confirmed via `cmd_category.py`'s
+`kubectl_monitoring_commands` list -- `get namespace` isn't in it, so the
+real `RuntimeError` from a non-zero exit propagates and gets wrapped as
+`"Command Rejected: ..."` by the MCP tool's own outer handler -- the
+exact rejection shape this driver's `_kubectl_json` has raised on since
+cycle 7).
+
+**Fix**: `_observe()` now runs a real `kubectl get namespace <namespace>
+-o json` pre-check before the deployments/pods/services scan, reusing
+the already-hardened rejection path -- zero new detection logic, closing
+a real gap in what gets checked before scanning. Real Chicago test added
+modeling the exact measured real asymmetry (namespace check rejected,
+deployments/pods/services would otherwise succeed with real empty data).
+
+`.venv/bin/python -m pytest tests/reasoning/test_gymact_diagnosis_driver_chicago.py
+tests/case_library tests/powl tests/fabric/test_capability_gate_chicago.py`
+-> **127 passed** (was 126; 1 new test). Zero-mock grep clean.
+Committed: `93b76ef`.
+
+**Status table**: `wrong_dns_policy_social_network` ->
+`ATTEMPTED:BLOCKED:EXPIRED_GROQ_API_KEY` (unchanged, re-confirmed this
+cycle). Combined with cycle 14's fix, a live trial against any of the
+123 real registered problems now both resolves the correct namespace AND
+fails loudly if that namespace turns out not to exist, rather than
+silently misreporting either way.
+
+**Note for cycle 16**: the two most recent cycles (14, 15) both found
+real defects by directly testing against the live cluster rather than
+purely static source reading -- this is a more productive avenue than
+cycle 13's exhausted static sweep. If the Groq key is still not
+rotated, continue probing real, observable cluster/kubectl-tool behavior
+for other silent-failure-shaped gaps (e.g., what does a real `submit`
+call return if the conductor's problem was never actually started, or
+what does a real teardown look like against an already-torn-down
+environment) rather than re-reading code that's already been read
+closely.
