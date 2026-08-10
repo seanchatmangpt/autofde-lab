@@ -569,4 +569,52 @@ port 9954. Not yet concluded whether this is the same intermittent gap
 distinct problem -- retrying directly (PID `90341`) as a reproducibility
 check before deciding.
 
+**Trial v2 (PID `90341`) confirmed the connection failure was transient
+(not reproducible) -- full pipeline completed again, RETURNCODE 0.** But
+this run revealed the real, most significant defect of the session:
+
+**Real submissions worked for the first time**: `gymact_submit_diagnosis`
+-> `{'status': '200', 'text': 'Submission received'}`, real stage
+`setup -> diagnosis`. `gymact_submit_mitigation` -> same real success, real
+stage `diagnosis -> mitigation`. The Cycle 7 submission-timing fix worked
+exactly as designed. Still `UNCONFIRMED` only because `verify()` expected
+`'complete'`, observed `'mitigation'`.
+
+**Investigating why `gymact_actuate_remediate` was rejected
+(`"Command Rejected: Only kubectl commands are allowed"`) found the real,
+larger defect, source-confirmed** in
+`mcp_server/kubectl_server_helper/kubectl_cmd_runner.py`:
+`if not command.strip().startswith("kubectl"): return "Command
+Rejected: ..."`. Every kubectl command this driver has EVER sent omitted
+the literal `"kubectl"` prefix (e.g. `"get pods -n ... -o json"` instead of
+`"kubectl get pods -n ... -o json"`).
+
+**RETRACTION, per this doc's own standing discipline**: Cycle 6's report of
+a "real anomaly, `inject_scale_pods_to_zero`" and Cycle 7's repeat of the
+same finding are now suspect, not confirmed real. `_kubectl_json`'s own
+`except (json.JSONDecodeError, TypeError): return {"raw": raw}` fallback
+silently absorbed what were very likely REJECTION STRINGS (not real
+`kubectl get ...` JSON output) into a plausible-looking dict the scanner
+then read as if it were real cluster state. The "anomaly" observed in both
+landmark runs may have been a false positive from garbage/rejected-command
+data, not genuine cluster inspection. This does not retract the real,
+independently-true parts of those runs (the pipeline genuinely completed,
+submissions genuinely succeeded once attempted at the right stage) -- only
+the scan/observe step's data validity is now in question.
+
+**Fixed** (autofde-lab commit, this cycle): every command through
+`_kubectl_json` is now prefixed with `"kubectl "` if not already present.
+Also hardened: a real `"Command Rejected"` response now raises
+`RuntimeError` instead of being silently absorbed -- closes the exact
+false-anomaly-detection risk this defect created, for good. Real
+regression tests: proves every real command carries the prefix, proves a
+rejection response raises rather than returning fabricated-looking data.
+`4/4` passing.
+
+**Trial relaunched with the complete fix** -- for the first time, every
+kubectl call this pipeline makes will be real, valid, non-rejected. This
+is the most consequential single fix of the whole session: if the
+"anomaly" was real garbage all along, this trial's scan result may differ
+entirely from every prior cycle's.
+
 (Grows as cycles attempt more problems.)
