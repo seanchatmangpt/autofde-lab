@@ -1620,3 +1620,43 @@ further has already been tried and named insufficient.
 
 **Status table**: `admission_webhook_outage_hotel_reservation` -> `ATTEMPTED:UNCONFIRMED` (real,
 complete run, same conductor-/status-outage class as v27).
+
+### Cycle 21 (2026-08-10)
+
+**No in-flight work found**: no Monitor/Workflow/agent notifications pending at cycle start
+(the prior 4-agent Chicago swarm and 5-agent SOTA-exploration swarm both completed and were
+integrated in earlier cycles/turns). No live trial subprocess currently running (`ps aux`
+confirmed). Proceeding with new work.
+
+**Retraction, with evidence, of the cycle-20 CSV-oracle plan step** (per this file's own
+"never overwrite, add a retraction beside it" convention): cycle 20 proposed wiring
+`vendor/gyms/sregym/tests/results_preliminary/queries.py`'s native-CSV
+`Diagnosis.success`/`Mitigation.success` reader into `gymact_verify` as an independent
+verification path. **This premise was investigated further (mid-session, before this cycle)
+and found incorrect for the invocation mode this repo actually uses**: that CSV is written
+only by `main.py`'s separate BATCH `run_benchmark` loop (`main.py:305,516` --
+`_running_{pid}_{agent}_results.csv` -> `{pid}_{agent}_results.csv` on completion), a
+different top-level code path than the single-episode `"debug"`-agent server mode
+`SregymEnvironment`/`gymact_diagnosis_driver.py` actually drives. **No CSV is ever written in
+this repo's real invocation mode** -- there is nothing to wire in.
+
+**Real root cause found instead** (traced directly in the real vendored oracle source,
+`sregym/conductor/oracles/admission_webhook_outage_mitigation.py`): `evaluate()` (and the
+oracle base class pattern it follows) uses **synchronous `time.sleep()`-based polling loops
+inside the conductor's own asyncio event loop** (`_wait_for_current_rollout`/
+`_wait_for_replacement`, `rollout_timeout_seconds=120`/`replacement_timeout_seconds=120`,
+`poll_interval_seconds=2`, real blocking `time.sleep()` not `await asyncio.sleep()`) --
+this genuinely blocks the WHOLE HTTP server (including `/status`) for the real duration of
+evaluation, up to 240s from this one oracle alone (other, unread oracles for other problem
+types may block longer or shorter). This is real, understood, bounded-but-substantial
+blocking in SREGym's own exact-pinned vendored code (`ba07faf`) -- not a hang, not a crash,
+and not something this repo should patch (vendor-pin discipline: altering exact-pinned
+benchmark code would invalidate any future "unmodified benchmark" SOTA comparison).
+
+**Real, correctly-scoped fix**: widen `verify_timeout_seconds` past the real observed
+blocking window on the CALLING (gymact/autofde-lab) side, not the vendored side. Two real
+trials (v27, v28) both exhausted the full 600s budget with zero successful poll -- the real
+blocking window is evidently longer than the 240s traced for one oracle alone (diagnosis
+evaluation likely adds its own separate blocking on top, unread this cycle). Widening to
+900s is the honest next real experiment (a real, evidenced upper-bound guess, not a blind
+retry), applied to a new live trial this cycle against a third, distinct problem id.
