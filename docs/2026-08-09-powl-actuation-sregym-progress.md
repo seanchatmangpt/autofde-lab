@@ -692,8 +692,21 @@ than another blind retry. Real, confirmed: node state/age persisted
 through the restart (`4h53m`); node-affinity fix re-applied fresh
 (reverts on every restart, as found in Cycle 4).
 
-Trial relaunched on the freshly recovered environment (PID `98107`) --
-in progress. This may produce the first real CONFIRMED verdict of the
-whole session.
+**Trial v2 (PID `98107`) result: verify() fix confirmed correctly
+implemented, real new bound found.** `verify_observed: {'stage':
+'mitigation'}` -- both submissions accepted (real `200`s) again, but the
+real conductor's stage genuinely never reached `'done'` within the 120s
+default `verify_timeout_seconds`. Not a hang: both submissions returned
+real success responses, so the real wait is for the conductor's own
+internal evaluation/grading work between acceptance and the `'done'`
+transition -- real evidence that work takes longer than 120s.
+
+**Fixed**: threaded `verify_timeout_seconds` through to `materialize()`'s
+config (gymact already supported the key, default 300s here). `4/4`
+passing (unaffected). Cluster and node-affinity fix re-verified fresh.
+
+Trial v3 relaunched with the widened budget (PID `99674`) -- in progress.
+This may finally produce the first real CONFIRMED verdict of the whole
+session.
 
 (Grows as cycles attempt more problems.)
