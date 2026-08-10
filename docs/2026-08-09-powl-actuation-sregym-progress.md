@@ -131,6 +131,46 @@ claiming a terminal result that hasn't happened yet.
 
 | problem_id | status | last real evidence |
 |---|---|---|
-| wrong_dns_policy_social_network | ATTEMPTED:UNCONFIRMED (in progress via gymact-mediated path, agent_name=autofde_lab_dspy) | `ps aux` this cycle: PID 56207 alive, past previous missing-module blocker; terminal outcome pending |
+| wrong_dns_policy_social_network | ATTEMPTED:UNCONFIRMED (in progress via gymact-mediated path, agent_name=autofde_lab_dspy, v2 with real startup timeout) | see Cycle 3 section below |
+
+### Cycle 3 (2026-08-10)
+
+**Real gap found: Cycle 2's `LiveTrial` phase agent abandoned its own monitoring.**
+It launched a real trial (PID `56207`) and submitted "Waiting for background
+completion notification" as its literal final workflow answer instead of actually
+waiting/monitoring -- the workflow then reported "completed" with no real outcome
+ever recorded, and the underlying trial's own log file/output could not be located
+afterward (unrecoverable). Named precisely so this pattern doesn't repeat: a
+dispatched agent that launches a real background process must be told, explicitly,
+to Monitor it itself before returning, not delegate that back implicitly.
+
+**Independent re-verification this cycle** (`tests/scanner tests/powl tests/ocel
+tests/case_library tests/fabric tests/reasoning tests/scripts`): confirmed the
+`dspy.settings.lm` global-state test-isolation leak (first seen and only
+documented, never fixed, earlier this session) is real and still present,
+bisected precisely this cycle via directory-subset re-runs: `tests/reasoning`
+alone passes clean; `tests/fabric tests/reasoning` together reproduces the 2
+failures. Root cause narrowed to `tests/fabric` (likely `test_dspy_ensemble_chicago.py`'s
+module-scoped `real_groq_lm` fixture, though its skip guard appeared correctly
+applied in this run's own SKIPPED output -- not yet fully explained). Not fixed
+this cycle (lower priority than the live-trial blocker); named precisely for a
+future cycle rather than left as a vague "sometimes tests fail."
+
+**Re-ran the trial directly** (v1, PID `56207`'s replacement after the abandoned
+monitoring): reached a NEW real terminal outcome, past the missing-module crash --
+`RuntimeError: sregym conductor API at http://127.0.0.1:8002 did not become ready
+within 120.0s: last_error=ConnectError(...)`. Real, precise root cause: gymact's
+own `SregymEnvironment.__init__` default `startup_timeout_seconds=120.0` is too
+short for this problem set's confirmed 5-15+ minute real deploy, and
+`gymact_diagnosis_driver.py` never overrode it. Fixed: added
+`startup_timeout_seconds: float = 900.0` parameter, threaded into `materialize()`'s
+config (autofde-lab commit, this cycle -- see `git log --grep "startup_timeout_seconds"`
+on `feat/crown-receipt-architecture`). Verified: `tests/reasoning/test_gymact_diagnosis_driver_chicago.py`
+still `2 passed`.
+
+**Trial v2 launched with the real fix** (PID `63890`, ports 9957/8003,
+`startup_timeout_seconds=900.0`, `wall_clock_timeout_s=1200`) -- in progress as of
+this note, monitored, real outcome to be recorded in Cycle 4 (or a later note in
+this same cycle if it completes before this cycle ends).
 
 (Grows as cycles attempt more problems.)
