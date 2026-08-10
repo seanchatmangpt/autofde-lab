@@ -258,6 +258,12 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
     assert result.verdict == OutcomeVerdict.CONFIRMED
     assert result.confirmed_via == "structural_and_oracle"
     assert result.verify_observed["stage"] == "done"
+    # Real regression coverage for a real observability gap found and fixed
+    # this cycle: `submit_diagnosis_stage_wait_passed` was tracked in
+    # `diagnosis_state` (exactly the diagnostic this session's own
+    # submission-timing-race fix relies on) but silently dropped at
+    # result-construction time -- now surfaced for real.
+    assert result.submit_diagnosis_stage_wait_passed is True
     # Real regression coverage for the DISPUTED-unreachable defect found and
     # fixed forward this cycle: the remediate re-read now genuinely re-scans
     # (see `_FakeSregymEnvironment`'s "recovered by the time of the second

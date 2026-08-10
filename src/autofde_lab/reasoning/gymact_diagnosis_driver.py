@@ -145,6 +145,17 @@ class GymactMediatedDiagnosisResult:
     confirmed_via: str
     verify_observed: dict[str, Any]
     structural_recheck_anomaly_count: int | None
+    submit_diagnosis_stage_wait_passed: bool | None
+    """Real, observable state for diagnosing a submission-timing race,
+    exactly the class of defect found and fixed forward earlier this
+    session ("Cannot submit at stage: 'setup'" -- the real conductor
+    correctly rejecting a submission attempted before its own stage
+    machine reached 'diagnosis'). ``None`` when ``_submit_diagnosis``'s
+    binding never fired at all (distinct from ``False``, which means it
+    fired and the real bounded wait for stage 'diagnosis' timed out) --
+    was previously tracked in ``diagnosis_state`` but silently dropped at
+    result-construction time, unavailable for a caller diagnosing a real
+    failure without re-reading the raw OCEL log."""
 
 
 async def run_gymact_mediated_diagnosis(
@@ -479,6 +490,7 @@ async def run_gymact_mediated_diagnosis(
             confirmed_via=confirmed_via,
             verify_observed=verify_observed,
             structural_recheck_anomaly_count=recheck_anomaly_count if structural_recheck_ran else None,
+            submit_diagnosis_stage_wait_passed=diagnosis_state.get("submit_diagnosis_stage_wait_passed"),
         )
     finally:
         # Real bug found and fixed forward this session: `finally:
