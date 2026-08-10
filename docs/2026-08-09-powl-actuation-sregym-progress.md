@@ -543,4 +543,20 @@ layer this session.
 |---|---|---|
 | wrong_dns_policy_social_network | ATTEMPTED:UNCONFIRMED (real, full pipeline completion, real conductor rejection reasons, not a crash) | PID `85203`, full OCEL log quoted above |
 
+### Cycle 7 (2026-08-10)
+
+**Fixed Cycle 6's precisely-named submission-timing race.**
+`_submit_diagnosis()` now calls `env.verify({"stage": "diagnosis"})` first
+-- reusing the already-real, already-tested bounded-poll `verify()`
+mechanism rather than adding new retry logic -- before attempting the real
+submission. Honest, best-effort: if the real conductor never reaches
+`'diagnosis'` within the bound, submission is still attempted (surfacing
+the real rejection, never silently skipped). Real regression test updated
+to the new real call order (a second `verify` now precedes
+`submit_diagnosis`). `3/3` passing. Cluster health and node-affinity fix
+re-verified fresh before relaunching.
+
+Trial relaunched with the fix (PID `89588`) -- in progress; this may reach
+the first real CONFIRMED/DISPUTED verdict.
+
 (Grows as cycles attempt more problems.)
