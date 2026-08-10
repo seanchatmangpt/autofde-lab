@@ -6,6 +6,7 @@ on:
     paths:
       - "src/autofde_lab/powl/**"
       - "tests/powl/**"
+      - "benchmarks/powl_runner.py"
       - ".github/workflows/powl-runner.yml"
   workflow_dispatch:
 
@@ -80,3 +81,13 @@ jobs:
           PYTHONPATH: src
         run: |
           python -m pytest -q tests/powl/test_runner*.py
+
+      - name: Benchmark full runner
+        env:
+          PYTHONPATH: src
+        run: |
+          python benchmarks/powl_runner.py \
+            --workers 8 \
+            --warmups 2 \
+            --repetitions 9 \
+            --json "powl-benchmark-${{ matrix.python-version }}.json"
