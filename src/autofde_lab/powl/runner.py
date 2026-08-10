@@ -128,7 +128,10 @@ class RunnerConfig:
             raise ValueError("max_workers must be >= 1")
         if self.max_attempts < 1:
             raise ValueError("max_attempts must be >= 1")
-        if self.activity_timeout_seconds is not None and self.activity_timeout_seconds <= 0:
+        if (
+            self.activity_timeout_seconds is not None
+            and self.activity_timeout_seconds <= 0
+        ):
             raise ValueError("activity_timeout_seconds must be > 0 when supplied")
 
 
@@ -586,12 +589,19 @@ class PowlV2Runner:
             done: set[Future[_TaskResult]], *, allow_retry: bool, commit_success: bool
         ) -> None:
             nonlocal terminal, detail, stop_scheduling
-            ordered = sorted(done, key=lambda future: (in_flight[future].path, in_flight[future].attempt))
+            ordered = sorted(
+                done,
+                key=lambda future: (in_flight[future].path, in_flight[future].attempt),
+            )
             for future in ordered:
                 task = in_flight.pop(future)
                 result = future.result()
                 failure = result.error
-                if result.outcome is not None and not result.outcome.success and failure is None:
+                if (
+                    result.outcome is not None
+                    and not result.outcome.success
+                    and failure is None
+                ):
                     failure = RuntimeError("activity driver returned success=False")
                 success = failure is None
                 committed = False
@@ -728,7 +738,9 @@ class PowlV2Runner:
                         detail = classify_stall(model, marking, self.config.bound).value
                         break
                     terminal = RunStatus.BLOCKED
-                    detail = "no dispatchable activity after policy/reservation filtering"
+                    detail = (
+                        "no dispatchable activity after policy/reservation filtering"
+                    )
                     break
 
                 done, _ = wait(tuple(in_flight), return_when=FIRST_COMPLETED)
@@ -782,7 +794,9 @@ class PowlV2Runner:
                 if replayed != marking:
                     refusal = RunnerRefusal.REPLAY_DIVERGED
                     status = RunStatus.REFUSED
-                    detail = "replayed final marking differs from observed final marking"
+                    detail = (
+                        "replayed final marking differs from observed final marking"
+                    )
 
         return RunEvidence(
             run_id=run_id,

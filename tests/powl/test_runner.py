@@ -52,7 +52,9 @@ class SuccessDriver:
     def execute(self, intent: ActivityIntent) -> ActivityOutcome:
         with self._lock:
             self.labels.append(intent.label)
-        return ActivityOutcome(authority_receipt=f"test:{intent.label}:{intent.attempt}")
+        return ActivityOutcome(
+            authority_receipt=f"test:{intent.label}:{intent.attempt}"
+        )
 
 
 class Pick:
@@ -282,9 +284,7 @@ def test_terminal_activity_failure_blocks_dependents():
                 raise RuntimeError("permanent")
             return super().execute(intent)
 
-    model = PartialOrder(
-        (Atom("a"), Atom("dependent")), frozenset({_oe(0, 1)})
-    )
+    model = PartialOrder((Atom("a"), Atom("dependent")), frozenset({_oe(0, 1)}))
     with PowlV2Runner(RunnerConfig(fail_fast=False)) as runner:
         evidence = runner.run(model, FailingDriver())
 
