@@ -705,8 +705,16 @@ transition -- real evidence that work takes longer than 120s.
 config (gymact already supported the key, default 300s here). `4/4`
 passing (unaffected). Cluster and node-affinity fix re-verified fresh.
 
-Trial v3 relaunched with the widened budget (PID `99674`) -- in progress.
-This may finally produce the first real CONFIRMED verdict of the whole
-session.
+**Trial v3 (PID `99674`) hit the recurring 10/10 connection exhaustion
+again -- immediately after a fresh full infra recovery.** This is new,
+real information: the earlier hypothesis (accumulated session-load
+degradation, fixed by a colima restart) is now less well-supported, since
+this failure recurred on a genuinely fresh environment. Checked for a real
+port-reuse/TIME_WAIT hypothesis (`ss`/`netstat` on ports 9954/8000, both
+reused across many consecutive trials this session) -- no lingering
+connections found, hypothesis not directly confirmed by evidence but
+tested anyway (cheap, real experiment): relaunched with entirely fresh
+ports (9970/8020 instead of the reused 9954/8000 defaults), PID `542` --
+in progress.
 
 (Grows as cycles attempt more problems.)
