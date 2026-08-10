@@ -479,6 +479,29 @@ appears in the final message. `18/18` passing. Cluster health and the
 node-affinity fix both re-verified fresh before relaunching (per the
 now-standing per-cycle check established in Cycle 4/5).
 
-Trial relaunched with the widened budget (PID `83951`) -- in progress.
+**Trial (PID `83951`) result: real, major progress -- past the connection
+gap entirely.** The widened retry budget worked; the trial proceeded all
+the way through observe/scan/phi/dispatch/solve/case-library and reached
+the actuation stage for real. New, real, different failure:
+`fastmcp.exceptions.ToolError: Unknown tool: submit_diagnosis`.
+
+**Precise root cause found in source** (`mcp_server/submit_server.py`): the
+real sregym submit MCP server exposes exactly ONE real tool, `"submit"`,
+taking a single free-text `ans` argument -- there is no separate
+`submit_diagnosis`/`submit_mitigation` tool in the real benchmark.
+Cross-checked against a real working client
+(`clients/demo/driver.py`'s `manual_submit_tool()`, which calls
+`call_tool("submit", {"ans": ...})`). SREGym's real grading model is one
+free-text answer, not two typed submissions -- gymact's own capability
+model assumed a shape the real benchmark doesn't have.
+
+**Fixed** (gymact commit, this cycle): `actuate()`'s submit handling now
+calls the real `"submit"` tool, with payload rendered via new
+`_render_submit_answer()` into the one real text answer. Real regression
+tests (pure function, no cluster needed): `20/20` passing.
+
+**Trial v2 launched with the real submit-tool fix** (PID `85203`) -- in
+progress. This may be the first trial to reach a real CONFIRMED/DISPUTED
+verdict.
 
 (Grows as cycles attempt more problems.)
