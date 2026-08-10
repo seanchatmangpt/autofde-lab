@@ -23,10 +23,11 @@ def decide_probe_remediation_commands(
         if dep not in affected_deployments:
             affected_deployments.append(dep)
 
+        c_idx = getattr(f, "container_index", 0)
         # JSON patch to remove faulty probe
         remove_probe_cmd = (
             f"kubectl patch deployment {dep} -n {namespace} --type=json "
-            f'-p=\'[{{"op": "remove", "path": "/spec/template/spec/containers/0/{p_type}"}}]\''
+            f'-p=\'[{{"op": "remove", "path": "/spec/template/spec/containers/{c_idx}/{p_type}"}}]\''
         )
         commands.append(remove_probe_cmd)
 

@@ -6,26 +6,53 @@ from typing import Any
 from autofde_lab_planner.models import ProbeFault
 
 
-def parse_container_probes(deployment_item: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def _to_item_list(data: Any) -> list[dict[str, Any]]:
+    if not data:
+        return []
+    if isinstance(data, dict):
+        raw_items = data.get("items")
+        if raw_items is None:
+            return [data]
+        if isinstance(raw_items, list):
+            return [i for i in raw_items if isinstance(i, dict)]
+        return []
+    if isinstance(data, list):
+        return [i for i in data if isinstance(i, dict)]
+    return []
+
+
+def parse_container_probes(deployment_item: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
     """Extracts container probes and ports from a Deployment dict."""
     containers_info: dict[str, dict[str, Any]] = {}
-    spec = deployment_item.get("spec", {})
-    template_spec = spec.get("template", {}).get("spec", {})
-    containers = template_spec.get("containers", [])
+    if not isinstance(deployment_item, dict):
+        return containers_info
 
-    for c in containers:
+    spec = deployment_item.get("spec") or {}
+    template = spec.get("template") or {}
+    template_spec = template.get("spec") or {}
+    containers = template_spec.get("containers") or []
+
+    for c_idx, c in enumerate(containers):
+        if not isinstance(c, dict):
+            continue
         c_name = c.get("name", "")
-        ports = [p.get("containerPort") for p in c.get("ports", []) if "containerPort" in p]
+        raw_ports = c.get("ports") or []
+        ports = [
+            p.get("containerPort")
+            for p in raw_ports
+            if isinstance(p, dict) and "containerPort" in p
+        ]
         containers_info[c_name] = {
-            "livenessProbe": c.get("livenessProbe"),
-            "readinessProbe": c.get("readinessProbe"),
+            "livenessProbe": c.get("livenessProbe") if isinstance(c.get("livenessProbe"), dict) else None,
+            "readinessProbe": c.get("readinessProbe") if isinstance(c.get("readinessProbe"), dict) else None,
             "ports": ports,
+            "index": c_idx,
         }
     return containers_info
 
 
 def detect_probe_faults(
-    deployments_json: dict[str, Any] | list[dict[str, Any]],
+    deployments_json: dict[str, Any] | list[dict[str, Any]] | None = None,
     pods_json: dict[str, Any] | list[dict[str, Any]] | None = None,
     events_json: dict[str, Any] | list[dict[str, Any]] | None = None,
 ) -> list[ProbeFault]:
@@ -33,57 +60,59 @@ def detect_probe_faults(
 
     Operates over raw K8s API JSON structures (Deployments, Pods, Events).
     """
-    items: list[dict[str, Any]] = []
-    if isinstance(deployments_json, dict):
-        items = deployments_json.get("items", [deployments_json])
-    elif isinstance(deployments_json, list):
-        items = deployments_json
-
-    pod_items: list[dict[str, Any]] = []
-    if isinstance(pods_json, dict):
-        pod_items = pods_json.get("items", [pods_json])
-    elif isinstance(pods_json, list):
-        pod_items = pods_json or []
+    items = _to_item_list(deployments_json)
+    pod_items = _to_item_list(pods_json)
 
     # Map deployment_name -> pod statuses (ready count, max restarts)
     pod_metrics: dict[str, dict[str, Any]] = {}
     for p in pod_items:
-        labels = p.get("metadata", {}).get("labels", {})
-        app_name = labels.get("app") or p.get("metadata", {}).get("name", "").split("-")[0]
-        status = p.get("status", {})
-        c_statuses = status.get("containerStatuses", [])
-        restarts = sum(cs.get("restartCount", 0) for cs in c_statuses)
-        ready = all(cs.get("ready", False) for cs in c_statuses) if c_statuses else False
-        if app_name not in pod_metrics:
-            pod_metrics[app_name] = {"restarts": 0, "unready_count": 0}
-        pod_metrics[app_name]["restarts"] += restarts
-        if not ready:
-            pod_metrics[app_name]["unready_count"] += 1
+        meta = p.get("metadata") or {}
+        labels = meta.get("labels") or {}
+        p_name = meta.get("name") or ""
+        app_name = labels.get("app") or (p_name.split("-")[0] if p_name else "")
+        status = p.get("status") or {}
+        c_statuses = status.get("containerStatuses") or []
+        restarts = sum(
+            (cs.get("restartCount", 0) if isinstance(cs, dict) else 0)
+            for cs in c_statuses
+        )
+        ready = (
+            all((cs.get("ready", False) if isinstance(cs, dict) else False) for cs in c_statuses)
+            if c_statuses
+            else False
+        )
+        if app_name:
+            if app_name not in pod_metrics:
+                pod_metrics[app_name] = {"restarts": 0, "unready_count": 0}
+            pod_metrics[app_name]["restarts"] += restarts
+            if not ready:
+                pod_metrics[app_name]["unready_count"] += 1
 
     faults: list[ProbeFault] = []
 
     for dep in items:
-        metadata = dep.get("metadata", {})
+        metadata = dep.get("metadata") or {}
         dep_name = metadata.get("name", "")
         if not dep_name:
             continue
 
-        spec = dep.get("spec", {})
+        spec = dep.get("spec") or {}
         desired_replicas = spec.get("replicas", 1)
-        status = dep.get("status", {})
+        status = dep.get("status") or {}
         ready_replicas = status.get("readyReplicas", 0)
 
         c_probes = parse_container_probes(dep)
 
         for c_name, p_info in c_probes.items():
             ports = p_info.get("ports", [])
+            c_idx = p_info.get("index", 0)
             for probe_type in ("readinessProbe", "livenessProbe"):
                 probe = p_info.get(probe_type)
-                if not probe:
+                if not probe or not isinstance(probe, dict):
                     continue
 
-                http_get = probe.get("httpGet")
-                tcp_socket = probe.get("tcpSocket")
+                http_get = probe.get("httpGet") if isinstance(probe.get("httpGet"), dict) else None
+                tcp_socket = probe.get("tcpSocket") if isinstance(probe.get("tcpSocket"), dict) else None
                 initial_delay = probe.get("initialDelaySeconds")
                 period_seconds = probe.get("periodSeconds")
                 failure_threshold = probe.get("failureThreshold")
@@ -140,6 +169,7 @@ def detect_probe_faults(
                             ready_replicas=ready_replicas,
                             desired_replicas=desired_replicas,
                             restart_count=app_pm.get("restarts", 0),
+                            container_index=c_idx,
                         )
                     )
                 elif is_aggressive and (has_health_issue or initial_delay == 0):
@@ -157,7 +187,9 @@ def detect_probe_faults(
                             ready_replicas=ready_replicas,
                             desired_replicas=desired_replicas,
                             restart_count=app_pm.get("restarts", 0),
+                            container_index=c_idx,
                         )
                     )
 
     return faults
+

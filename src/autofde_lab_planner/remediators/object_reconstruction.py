@@ -3,7 +3,13 @@
 from __future__ import annotations
 
 import json
-from autofde_lab_planner.baselines.k8s_baselines import get_baseline_manifest
+from autofde_lab_planner.baselines.k8s_baselines import (
+    KNOWN_CONFIGMAP_BASELINES,
+    KNOWN_SECRET_BASELINES,
+    get_baseline_manifest,
+    synthesize_configmap_manifest,
+    synthesize_secret_manifest,
+)
 from autofde_lab_planner.models import MissingObjectFault
 
 
@@ -26,6 +32,18 @@ def decide_object_reconstruction_commands(
                 f'-p=\'{{"spec":{{"selector":{{"app":"{obj_name}"}}}}}}\''
             )
             commands.append(patch_cmd)
+        elif f.reason == "corrupted_configmap_keys" or kind == "ConfigMap":
+            base_data = KNOWN_CONFIGMAP_BASELINES.get(obj_name)
+            manifest = synthesize_configmap_manifest(obj_name, ns, data=base_data)
+            manifest_json = json.dumps(manifest).replace("'", "'\\''")
+            apply_cmd = f"echo '{manifest_json}' | kubectl apply -f -"
+            commands.append(apply_cmd)
+        elif f.reason == "corrupted_secret_keys" or kind == "Secret":
+            base_data = KNOWN_SECRET_BASELINES.get(obj_name)
+            manifest = synthesize_secret_manifest(obj_name, ns, data=base_data)
+            manifest_json = json.dumps(manifest).replace("'", "'\\''")
+            apply_cmd = f"echo '{manifest_json}' | kubectl apply -f -"
+            commands.append(apply_cmd)
         else:
             manifest = get_baseline_manifest(kind=kind, object_name=obj_name, namespace=ns)
             manifest_json = json.dumps(manifest).replace("'", "'\\''")
@@ -41,3 +59,4 @@ def decide_object_reconstruction_commands(
         commands.append(f"kubectl rollout restart deployment/{dep} -n {namespace}")
 
     return commands, deployments_to_restart
+

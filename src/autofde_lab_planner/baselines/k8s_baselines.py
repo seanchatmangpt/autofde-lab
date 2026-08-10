@@ -35,14 +35,43 @@ KNOWN_CONFIGMAP_BASELINES: dict[str, dict[str, str]] = {
     "geo-config": {
         "GeoMongoAddress": "mongodb-geo:27017",
         "GeoPort": "8083",
+        "config.json": json.dumps(
+            {
+                "consulAddress": "consul:8500",
+                "jaegerAddress": "jaeger:6831",
+                "FrontendPort": "8080",
+                "GeoPort": "8083",
+                "GeoMongoAddress": "mongodb-geo:27017",
+                "ProfilePort": "8081",
+                "ProfileMongoAddress": "mongodb-profile:27017",
+                "RatePort": "8084",
+                "RateMongoAddress": "mongodb-rate:27017",
+                "TraceAddr": "jaeger:6831",
+            },
+            indent=2,
+        ),
     },
     "rate-config": {
         "RateMongoAddress": "mongodb-rate:27017",
         "RatePort": "8084",
+        "config.json": json.dumps(
+            {
+                "RateMongoAddress": "mongodb-rate:27017",
+                "RatePort": "8084",
+            },
+            indent=2,
+        ),
     },
     "profile-config": {
         "ProfileMongoAddress": "mongodb-profile:27017",
         "ProfilePort": "8081",
+        "config.json": json.dumps(
+            {
+                "ProfileMongoAddress": "mongodb-profile:27017",
+                "ProfilePort": "8081",
+            },
+            indent=2,
+        ),
     },
 }
 
@@ -50,6 +79,7 @@ KNOWN_SECRET_BASELINES: dict[str, dict[str, str]] = {
     "jwt-secret": {"secret": "c2VjcmV0"},  # base64 encoded 'secret'
     "db-secret": {"password": "cGFzc3dvcmQ="},
 }
+
 
 
 def synthesize_service_manifest(service_name: str, namespace: str, target_port: int = 8080) -> dict[str, Any]:

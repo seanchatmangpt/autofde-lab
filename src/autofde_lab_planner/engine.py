@@ -1,22 +1,32 @@
-"""Composite multi-detector planning engine for Category-B fault mechanisms."""
+"""Composite multi-detector planning engine for Category-B and expanded fault mechanisms."""
 
 from __future__ import annotations
 
 from typing import Any
 
+from autofde_lab_planner.detectors.coredns_fault import detect_coredns_faults
+from autofde_lab_planner.detectors.cronjob_mutation import detect_cronjob_mutations
 from autofde_lab_planner.detectors.flagd_drift import detect_flagd_config_drift
+from autofde_lab_planner.detectors.ingress_targetport import detect_ingress_and_targetport_faults
 from autofde_lab_planner.detectors.object_reconstruction import detect_missing_objects
 from autofde_lab_planner.detectors.otel_trace import detect_otel_trace_anomalies
 from autofde_lab_planner.detectors.probe_heuristics import detect_probe_faults
+from autofde_lab_planner.detectors.rolling_update_misconfig import detect_workload_and_rolling_update_misconfigs
+from autofde_lab_planner.detectors.scheduling_deadlock import detect_scheduling_deadlocks
 from autofde_lab_planner.models import CategoryBDiagnosis, CategoryBMitigation
+from autofde_lab_planner.remediators.coredns_fault import decide_coredns_remediation_commands
+from autofde_lab_planner.remediators.cronjob_mutation import decide_cronjob_remediation_commands
 from autofde_lab_planner.remediators.flagd_drift import decide_flagd_remediation_commands
+from autofde_lab_planner.remediators.ingress_targetport import decide_ingress_targetport_remediation_commands
 from autofde_lab_planner.remediators.object_reconstruction import decide_object_reconstruction_commands
 from autofde_lab_planner.remediators.otel_trace import decide_otel_remediation_commands
 from autofde_lab_planner.remediators.probe_heuristics import decide_probe_remediation_commands
+from autofde_lab_planner.remediators.rolling_update_misconfig import decide_workload_remediation_commands
+from autofde_lab_planner.remediators.scheduling_deadlock import decide_scheduling_remediation_commands
 
 
 class CompositePlannerEngine:
-    """Orchestrates detection and remediation generation for Category-B fault mechanisms."""
+    """Orchestrates detection and remediation generation across all SREGym fault mechanisms."""
 
     def __init__(self, namespace: str = "default", app_name: str = ""):
         self.namespace = namespace
@@ -30,10 +40,13 @@ class CompositePlannerEngine:
         secrets_json: dict[str, Any] | list[dict[str, Any]] | None = None,
         pods_json: dict[str, Any] | list[dict[str, Any]] | None = None,
         events_json: dict[str, Any] | list[dict[str, Any]] | None = None,
+        ingresses_json: dict[str, Any] | list[dict[str, Any]] | None = None,
+        cronjobs_json: dict[str, Any] | list[dict[str, Any]] | None = None,
         flagd_configmap_json: str | dict[str, Any] | None = None,
         raw_traces_by_service: dict[str, Any] | None = None,
+        elevated_revision_deployments: set[str] | None = None,
     ) -> CategoryBDiagnosis:
-        """Executes all Category-B detectors (B13, B4, B9, B6) and generates diagnosis report."""
+        """Executes all Category-B and expanded detectors and generates structured diagnosis report."""
         # 1. B13: Missing/Corrupted K8s Objects
         missing_objects = detect_missing_objects(
             deployments_json=deployments_json,
@@ -42,6 +55,7 @@ class CompositePlannerEngine:
             live_secrets_json=secrets_json,
             pods_json=pods_json,
             namespace=self.namespace,
+            elevated_revision_deployments=elevated_revision_deployments,
         )
 
         # 2. B4: Probe Heuristics (Readiness/Liveness)
@@ -64,6 +78,44 @@ class CompositePlannerEngine:
         if raw_traces_by_service:
             trace_anomalies = detect_otel_trace_anomalies(raw_traces_by_service)
 
+        # 5. Ingress & TargetPort Misconfigurations
+        ingress_misroutes, target_port_faults = detect_ingress_and_targetport_faults(
+            ingresses_json=ingresses_json,
+            services_json=services_json,
+            deployments_json=deployments_json,
+            namespace=self.namespace,
+        )
+
+        # 6. CronJob / Scheduled Mutations
+        cronjob_mutations = detect_cronjob_mutations(
+            cronjobs_json=cronjobs_json,
+            deployments_json=deployments_json,
+            configmaps_json=configmaps_json,
+            namespace=self.namespace,
+        )
+
+        # 7. B1: Pod Anti-Affinity & Scheduling Deadlocks
+        scheduling_deadlocks = detect_scheduling_deadlocks(
+            deployments_json=deployments_json,
+            pods_json=pods_json,
+            events_json=events_json,
+            namespace=self.namespace,
+        )
+
+        # 8. CoreDNS & Service Discovery Faults
+        coredns_faults = detect_coredns_faults(
+            configmaps_json=configmaps_json,
+            namespace="kube-system",
+        )
+
+        # 9. Workload & Rolling Update Misconfigurations
+        workload_misconfigs = detect_workload_and_rolling_update_misconfigs(
+            deployments_json=deployments_json,
+            pods_json=pods_json,
+            events_json=events_json,
+            namespace=self.namespace,
+        )
+
         # Build natural-language diagnosis text
         text_parts: list[str] = []
 
@@ -82,8 +134,32 @@ class CompositePlannerEngine:
         if trace_anomalies and trace_anomalies.has_anomaly:
             text_parts.append(f"Detected OTel trace RPC anomalies: {trace_anomalies.reasoning}")
 
+        if ingress_misroutes:
+            ing_str = ", ".join(f"{ing.ingress_name} path {ing.path} -> {ing.observed_backend_service}" for ing in ingress_misroutes)
+            text_parts.append(f"Detected Ingress backend misroutes in namespace {self.namespace}: {ing_str}.")
+
+        if target_port_faults:
+            tp_str = ", ".join(f"{tp.service_name} targetPort={tp.observed_target_port}" for tp in target_port_faults)
+            text_parts.append(f"Detected Service targetPort mismatches in namespace {self.namespace}: {tp_str}.")
+
+        if cronjob_mutations:
+            cj_str = ", ".join(f"CronJob {cj.cronjob_namespace}/{cj.cronjob_name} -> victim {cj.victim_deployment}" for cj in cronjob_mutations)
+            text_parts.append(f"Detected mutator CronJobs targeting deployments: {cj_str}.")
+
+        if scheduling_deadlocks:
+            sd_str = ", ".join(f"{sd.deployment_name} ({sd.constraint_type})" for sd in scheduling_deadlocks)
+            text_parts.append(f"Detected scheduling deadlocks in namespace {self.namespace}: {sd_str}.")
+
+        if coredns_faults:
+            dns_str = ", ".join(f"{cd.configmap_name} ({cd.fault_kind})" for cd in coredns_faults)
+            text_parts.append(f"Detected CoreDNS configuration faults in kube-system: {dns_str}.")
+
+        if workload_misconfigs:
+            wm_str = ", ".join(f"{wm.deployment_name} ({wm.fault_kind})" for wm in workload_misconfigs)
+            text_parts.append(f"Detected workload/rolling update misconfigurations in namespace {self.namespace}: {wm_str}.")
+
         if not text_parts:
-            diagnosis_text = f"No Category-B fault mechanism anomalies detected in namespace {self.namespace}."
+            diagnosis_text = f"No fault mechanism anomalies detected in namespace {self.namespace}."
         else:
             diagnosis_text = " ".join(text_parts)
 
@@ -92,11 +168,17 @@ class CompositePlannerEngine:
             trace_anomalies=trace_anomalies,
             flagd_drift=flagd_drift,
             missing_objects=tuple(missing_objects),
+            ingress_misroutes=tuple(ingress_misroutes),
+            target_port_faults=tuple(target_port_faults),
+            cronjob_mutations=tuple(cronjob_mutations),
+            scheduling_deadlocks=tuple(scheduling_deadlocks),
+            coredns_faults=tuple(coredns_faults),
+            workload_misconfigs=tuple(workload_misconfigs),
             diagnosis_text=diagnosis_text,
         )
 
     def run_mitigation(self, diagnosis: CategoryBDiagnosis) -> CategoryBMitigation:
-        """Generates all remediation commands across B13, B4, B9, B6 mechanisms."""
+        """Generates all remediation commands across all fault mechanisms."""
         commands: list[str] = []
         rollout_wait: list[str] = []
 
@@ -129,6 +211,52 @@ class CompositePlannerEngine:
             )
             commands.extend(b6_cmds)
             rollout_wait.extend(b6_deps)
+
+        # 5. Ingress & TargetPort Remediations
+        if diagnosis.ingress_misroutes or diagnosis.target_port_faults:
+            ing_cmds, ing_deps = decide_ingress_targetport_remediation_commands(
+                ingress_faults=list(diagnosis.ingress_misroutes),
+                target_port_faults=list(diagnosis.target_port_faults),
+                namespace=self.namespace,
+            )
+            commands.extend(ing_cmds)
+            rollout_wait.extend(ing_deps)
+
+        # 6. CronJob Remediations
+        if diagnosis.cronjob_mutations:
+            cj_cmds, cj_deps = decide_cronjob_remediation_commands(
+                faults=list(diagnosis.cronjob_mutations),
+                namespace=self.namespace,
+            )
+            commands.extend(cj_cmds)
+            rollout_wait.extend(cj_deps)
+
+        # 7. Scheduling Deadlock Remediations
+        if diagnosis.scheduling_deadlocks:
+            sd_cmds, sd_deps = decide_scheduling_remediation_commands(
+                faults=list(diagnosis.scheduling_deadlocks),
+                namespace=self.namespace,
+            )
+            commands.extend(sd_cmds)
+            rollout_wait.extend(sd_deps)
+
+        # 8. CoreDNS Remediations
+        if diagnosis.coredns_faults:
+            dns_cmds, dns_deps = decide_coredns_remediation_commands(
+                faults=list(diagnosis.coredns_faults),
+                namespace="kube-system",
+            )
+            commands.extend(dns_cmds)
+            rollout_wait.extend(dns_deps)
+
+        # 9. Workload & Rolling Update Remediations
+        if diagnosis.workload_misconfigs:
+            wm_cmds, wm_deps = decide_workload_remediation_commands(
+                faults=list(diagnosis.workload_misconfigs),
+                namespace=self.namespace,
+            )
+            commands.extend(wm_cmds)
+            rollout_wait.extend(wm_deps)
 
         # Deduplicate wait deployments
         unique_wait = tuple(dict.fromkeys(rollout_wait))

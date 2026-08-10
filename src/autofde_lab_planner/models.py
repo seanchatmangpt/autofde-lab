@@ -25,6 +25,7 @@ class ProbeFault:
     desired_replicas: int = 1
     restart_count: int = 0
     event_messages: tuple[str, ...] = ()
+    container_index: int = 0
 
 
 # -----------------------------------------------------------------------------
@@ -110,8 +111,87 @@ class MissingObjectFault:
         "missing_referenced_secret",
         "corrupted_service_selector",
         "corrupted_configmap_keys",
+        "corrupted_secret_keys",
     ] = "missing_service_for_deployment"
     missing_keys: tuple[str, ...] = ()
+
+
+# -----------------------------------------------------------------------------
+# Ingress & TargetPort Misconfig Models
+# -----------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class IngressMisrouteFault:
+    ingress_name: str
+    namespace: str
+    path: str
+    observed_backend_service: str
+    expected_backend_service: str
+    rule_index: int = 0
+    path_index: int = 0
+
+
+@dataclass(frozen=True)
+class TargetPortFault:
+    service_name: str
+    namespace: str
+    observed_target_port: int | str
+    expected_target_port: int | str
+    port_index: int = 0
+
+
+# -----------------------------------------------------------------------------
+# CronJob / Scheduled Mutation Models
+# -----------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class CronJobMutationFault:
+    cronjob_name: str
+    cronjob_namespace: str
+    victim_deployment: str
+    victim_namespace: str
+    injected_memory_limit: str = "4Mi"
+    container_name: str | None = None
+    container_index: int = 0
+
+
+# -----------------------------------------------------------------------------
+# B1: Scheduling & Anti-Affinity Deadlock Models
+# -----------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class SchedulingDeadlockFault:
+    deployment_name: str
+    namespace: str
+    constraint_type: Literal["podAntiAffinity", "nodeSelector", "both"]
+    unready_replicas: int = 0
+    desired_replicas: int = 1
+
+
+# -----------------------------------------------------------------------------
+# CoreDNS & Service Discovery Fault Models
+# -----------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class CoreDNSFault:
+    configmap_name: str = "coredns"
+    namespace: str = "kube-system"
+    fault_kind: Literal["nxdomain_template", "invalid_rewrite"] = "nxdomain_template"
+    repaired_corefile: str | None = None
+
+
+# -----------------------------------------------------------------------------
+# Workload & Rolling Update Misconfig Models
+# -----------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class WorkloadMisconfigFault:
+    deployment_name: str
+    namespace: str
+    fault_kind: Literal["resource_request_too_large", "rolling_update_misconfigured"]
+    details: str = ""
+    container_name: str | None = None
+    container_index: int = 0
 
 
 # -----------------------------------------------------------------------------
@@ -124,6 +204,12 @@ class CategoryBDiagnosis:
     trace_anomalies: TraceAnomalyResult | None = None
     flagd_drift: FlagdDriftResult | None = None
     missing_objects: tuple[MissingObjectFault, ...] = ()
+    ingress_misroutes: tuple[IngressMisrouteFault, ...] = ()
+    target_port_faults: tuple[TargetPortFault, ...] = ()
+    cronjob_mutations: tuple[CronJobMutationFault, ...] = ()
+    scheduling_deadlocks: tuple[SchedulingDeadlockFault, ...] = ()
+    coredns_faults: tuple[CoreDNSFault, ...] = ()
+    workload_misconfigs: tuple[WorkloadMisconfigFault, ...] = ()
     diagnosis_text: str = ""
 
 
@@ -132,3 +218,4 @@ class CategoryBMitigation:
     commands: tuple[str, ...] = ()
     rollout_wait_deployments: tuple[str, ...] = ()
     mitigation_text: str = ""
+
