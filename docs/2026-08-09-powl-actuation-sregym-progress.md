@@ -1445,3 +1445,24 @@ gate), zero mocks. Committed in gymact: `5ff806d`.
 
 **Third live trial launched** (PID `51709`) against both fixes combined --
 in progress via Monitor at the time of this entry.
+
+### Cycle 19 (2026-08-10)
+
+**No duplicate work dispatched**: the third live trial (PID `51709`,
+launched end of cycle 18 with both the deploy-readiness fix and the
+`actuate()` status-resilience fix applied) was still genuinely deploying
+at the start of this cycle (real subprocess confirmed alive via `ps aux`,
+real CPU time accruing) -- per this cycle's own step 2, picked up
+monitoring it to completion rather than dispatching overlapping work.
+
+**Independently re-verified prior cycle's real claims**: both repos
+re-checked fresh this cycle, not trusted from commit messages --
+autofde-lab: 56/56 real tests pass across
+`test_runner_pipeline_chicago.py`, `test_gymact_diagnosis_driver_chicago.py`,
+`test_executor.py`, and the two orthogonal TDD files, zero mocks. gymact:
+24/24 real tests pass (1 pre-existing deselected live-cluster gate), zero
+mocks.
+
+**Status table**: `wrong_dns_policy_social_network` ->
+`ATTEMPTED:UNCONFIRMED (trial v27 in progress, monitored)`. Real outcome
+to be recorded once the live trial reaches a real terminal state.
