@@ -23,10 +23,7 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          fetch-depth: 0
-          submodules: recursive
-          persist-credentials: false
+        with: {fetch-depth: 0, submodules: recursive, persist-credentials: false}
       - id: routes
         name: Classify change
         shell: bash
@@ -68,15 +65,11 @@ jobs:
         if: steps.routes.outputs.python == 'true'
         env: {PYTHONPATH: src}
         run: |
-          python -m pytest -q \
-            tests/autofde/test_authority.py tests/autofde/test_bootstrap.py \
-            tests/fabric/test_brce.py tests/fabric/test_brce_identity.py \
-            tests/fabric/test_public_ontology.py tests/fabric/test_world_model.py tests/fabric/test_guardrails.py \
-            tests/fabric/test_self_play.py tests/fabric/test_query_plane.py tests/fabric/test_selection.py \
-            tests/fabric/test_selection_store.py tests/fabric/test_metrics.py tests/fabric/test_cognition_debt.py \
-            tests/fabric/test_causal_placement.py tests/fabric/test_handoff.py tests/fabric/test_differential_verification.py \
-            tests/fabric/test_competitive_benchmark.py tests/fabric/test_coverage_bridge.py tests/fabric/test_hot_path.py \
-            tests/fabric/test_crown.py tests/fabric/test_crown_evidence.py tests/fabric/test_crown_errc.py tests/fabric/test_issue_reasoning.py
+          python -m pytest -q tests/autofde/test_authority.py tests/autofde/test_bootstrap.py tests/fabric/test_brce.py tests/fabric/test_brce_identity.py tests/fabric/test_public_ontology.py tests/fabric/test_world_model.py tests/fabric/test_guardrails.py tests/fabric/test_self_play.py tests/fabric/test_query_plane.py tests/fabric/test_selection.py tests/fabric/test_selection_store.py tests/fabric/test_metrics.py tests/fabric/test_cognition_debt.py tests/fabric/test_causal_placement.py tests/fabric/test_handoff.py tests/fabric/test_differential_verification.py tests/fabric/test_competitive_benchmark.py tests/fabric/test_coverage_bridge.py tests/fabric/test_hot_path.py tests/fabric/test_crown.py tests/fabric/test_crown_evidence.py tests/fabric/test_crown_errc.py
+      - name: Execute compiled issue reasoning tests
+        if: steps.routes.outputs.challenger == 'true'
+        env: {PYTHONPATH: src}
+        run: python -m pytest -q tests/fabric/test_issue_reasoning.py
       - name: Execute 8x8 Challenger value benchmark
         if: steps.routes.outputs.challenger == 'true'
         env: {PYTHONPATH: src}
