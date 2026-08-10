@@ -23,31 +23,23 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          fetch-depth: 0
-          submodules: recursive
-          persist-credentials: false
+        with: {fetch-depth: 0, submodules: recursive, persist-credentials: false}
       - id: routes
         name: Classify change
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            printf 'cache=true\npython=true\npackage=true\n' >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then printf 'cache=true\npython=true\npackage=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
           git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" > changed-files.txt
           cat changed-files.txt
           route() { local name="$1"; local pattern="$2"; if grep -Eq "$pattern" changed-files.txt; then echo "$name=true" >> "$GITHUB_OUTPUT"; else echo "$name=false" >> "$GITHUB_OUTPUT"; fi; }
-          route cache '^(src/autofde_lab/(caching\.py|_cache/)|tests/test_(caching|enterprise_cache)\.py)'
+          route cache '^(src/autofde_lab/(caching\.py|_cache/)|tests/test_(caching|enterprise_cache)\.py|\.github/workflows/)'
           route python '^(src/|tests/|examples/|pyproject\.toml|uv\.lock|\.github/workflows/)'
           route package '^(src/|cpp/|scripts/|pyproject\.toml|uv\.lock|CMakeLists\.txt|\.github/workflows/)'
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
-        with:
-          python-version: "3.12"
+        with: {python-version: "3.12"}
       - name: Install Python 3.12 qualification dependencies
-        run: |
-          python -m pip install "pre-commit==4.6.1" "build==1.2.2" "numpy==2.2.6" "pytest==8.3.5" "wrapt>=2.2.1,<3" "pynng>=0.6.2" "pathos>=0.2.7" "discrete-optimization>=0.9.0"
+        run: python -m pip install "pre-commit==4.6.1" "build==1.2.2" "numpy==2.2.6" "pytest==8.3.5" "wrapt>=2.2.1,<3" "pynng>=0.6.2" "pathos>=0.2.7" "discrete-optimization>=0.9.0"
       - name: Deterministic quality
         shell: bash
         run: |
@@ -69,16 +61,12 @@ jobs:
         run: "! git grep -nE '^(<<<<<<<($| )|=======$|>>>>>>>($| ))' -- ':!uv.lock'"
       - name: Execute Crown kernel / Python 3.12
         if: steps.routes.outputs.python == 'true'
-        env:
-          PYTHONPATH: src
+        env: {PYTHONPATH: src}
         run: python -m pytest -q tests/autofde/test_authority.py tests/autofde/test_bootstrap.py tests/fabric/test_brce.py tests/fabric/test_brce_identity.py tests/fabric/test_public_ontology.py tests/fabric/test_world_model.py tests/fabric/test_guardrails.py tests/fabric/test_self_play.py tests/fabric/test_query_plane.py tests/fabric/test_selection.py tests/fabric/test_selection_store.py tests/fabric/test_metrics.py tests/fabric/test_cognition_debt.py tests/fabric/test_causal_placement.py tests/fabric/test_handoff.py tests/fabric/test_differential_verification.py tests/fabric/test_competitive_benchmark.py tests/fabric/test_coverage_bridge.py tests/fabric/test_hot_path.py tests/fabric/test_crown.py tests/fabric/test_crown_evidence.py tests/fabric/test_crown_errc.py
       - name: Cache qualification / Python 3.12
         if: steps.routes.outputs.cache == 'true'
-        env:
-          PYTHONPATH: src
-        run: |
-          python -m compileall -q src/autofde_lab/_cache src/autofde_lab/caching.py
-          python -m pytest -q tests/test_caching.py tests/test_enterprise_cache.py
+        env: {PYTHONPATH: src}
+        run: python -m compileall -q src/autofde_lab/_cache src/autofde_lab/caching.py && python -m pytest -q tests/test_caching.py tests/test_enterprise_cache.py
       - name: Source package smoke
         if: steps.routes.outputs.package == 'true'
         shell: bash
@@ -93,29 +81,21 @@ jobs:
           test "$(wc -c < "$archive")" -gt 10000
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         if: steps.routes.outputs.cache == 'true'
-        with:
-          python-version: "3.10"
+        with: {python-version: "3.10"}
       - name: Cache qualification / Python 3.10
         if: steps.routes.outputs.cache == 'true'
-        env:
-          PYTHONPATH: src
-        shell: bash
+        env: {PYTHONPATH: src}
         run: |
-          set -euo pipefail
           python -m pip install "numpy==2.2.6" "pytest==8.3.5" "wrapt>=2.2.1,<3" "pynng>=0.6.2" "pathos>=0.2.7" "discrete-optimization>=0.9.0"
           python -m compileall -q src/autofde_lab/_cache src/autofde_lab/caching.py
           python -m pytest -q tests/test_caching.py tests/test_enterprise_cache.py
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         if: steps.routes.outputs.cache == 'true'
-        with:
-          python-version: "3.13"
+        with: {python-version: "3.13"}
       - name: Cache qualification / Python 3.13
         if: steps.routes.outputs.cache == 'true'
-        env:
-          PYTHONPATH: src
-        shell: bash
+        env: {PYTHONPATH: src}
         run: |
-          set -euo pipefail
           python -m pip install "numpy==2.2.6" "pytest==8.3.5" "wrapt>=2.2.1,<3" "pynng>=0.6.2" "pathos>=0.2.7" "discrete-optimization>=0.9.0"
           python -m compileall -q src/autofde_lab/_cache src/autofde_lab/caching.py
           python -m pytest -q tests/test_caching.py tests/test_enterprise_cache.py
@@ -126,20 +106,16 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          persist-credentials: false
+        with: {persist-credentials: false}
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
-        with:
-          python-version: "3.12"
+        with: {python-version: "3.12"}
       - name: Install benchmark dependencies
         run: python -m pip install "pytest==8.3.5" "wrapt>=2.2.1,<3"
       - name: Execute compiled issue reasoning tests
-        env:
-          PYTHONPATH: src
+        env: {PYTHONPATH: src}
         run: python -m pytest -q tests/fabric/test_issue_reasoning.py
       - name: Execute 8x8 Challenger value benchmark
-        env:
-          PYTHONPATH: src
+        env: {PYTHONPATH: src}
         run: |
           python benchmarks/challenger_issue_reasoning.py --repeats 100000 --output challenger-issue-reasoning.csv | tee challenger-summary.json
           python - <<'PY'
