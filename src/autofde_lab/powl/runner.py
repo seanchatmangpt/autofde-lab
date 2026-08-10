@@ -427,6 +427,36 @@ def _concurrent_read_block(labels: Sequence[str]) -> PartialOrder:
     return PartialOrder(children=tuple(Atom(label=l) for l in labels), order=frozenset())
 
 
+def _sequence(nodes: tuple[PowlNode, ...], *, start_index: int) -> frozenset[OrderEdge]:
+    """The `OrderEdge` set chaining every adjacent pair in `nodes` (`nodes[i]
+    -> nodes[i+1]` for each `i`), offset so `nodes[0]` sits at `start_index`
+    in the caller's own top-level children tuple.
+
+    Real, index-based counterpart to the real reference `powl` package's own
+    `builders.py::sequence()` (`~/POWL/powl/objects/tagged_powl/builders.py`
+    -- confirmed via direct read this session: `PartialOrder(nodes=ordered,
+    edges=[(ordered[i], ordered[i+1]) for i in range(len(ordered)-1)], ...)`,
+    an *object-identity*-keyed edge scheme). autofde-lab's own `algebra.py`
+    addresses children by 0-based `NodeId` position instead (a deliberate,
+    documented arena convention, mirroring `~/wasm4pm-compat/src/powl.rs` --
+    kept as-is, not changed to match the reference), so this helper is the
+    generic, index-based version of the same "chain every adjacent pair"
+    pattern `build_pipeline_powl_node()` used to compute by hand, inline,
+    once per call site (`choice_index`/`record_index`/`actuation_start_index`
+    plus a bespoke `for offset in range(...)` loop) -- extracted here so that
+    bookkeeping exists in exactly one place. Purely an ergonomics refactor:
+    the real, source-verified compliance audit this session found no other
+    real reference execution/discovery machinery worth porting -- see
+    `~/.claude/plans/what-are-the-current-shimmying-bear.md` for the full,
+    evidence-grounded comparison (cycles, single-start/end, frequency,
+    canonical storage, and the executor itself all checked directly against
+    the real `~/POWL` reference package's own source, not assumed)."""
+    return frozenset(
+        OrderEdge(NodeId(start_index + i), NodeId(start_index + i + 1))
+        for i in range(len(nodes) - 1)
+    )
+
+
 def build_pipeline_powl_node(turtle_text: str | None = None) -> PowlNode:
     """The full pipeline as one real, executor-consumable `PowlNode` tree.
 
@@ -516,12 +546,13 @@ def build_pipeline_powl_node(turtle_text: str | None = None) -> PowlNode:
         Atom(label=GYMACT_VERIFY_LABEL),
     )
 
-    top_children: tuple[PowlNode, ...] = (
-        linear_atoms + (choice_graph, record_atom) + actuation_entries
-    )
-    choice_index = n_linear
-    record_index = n_linear + 1
-    actuation_start_index = n_linear + 2
+    # Everything downstream of the turtle-sourced linear prefix is one real,
+    # strictly-sequenced chain: choice_graph -> record_atom -> the actuation
+    # entries. `_sequence()` computes its own internal chaining; only the one
+    # edge joining the linear prefix's last atom to this chain's first
+    # element needs to be added separately.
+    tail: tuple[PowlNode, ...] = (choice_graph, record_atom) + actuation_entries
+    top_children: tuple[PowlNode, ...] = linear_atoms + tail
 
     # Remap the turtle-sourced order relation (already 0..n_linear-1) as-is,
     # then chain: last linear step -> choice graph -> record atom -> the new
@@ -533,13 +564,8 @@ def build_pipeline_powl_node(turtle_text: str | None = None) -> PowlNode:
     # (both recurse into any `PartialOrder`/`ChoiceGraph` child uniformly;
     # confirmed by reading `executor.py`'s `node_at`/`_enabled` this session).
     order_edges: set[OrderEdge] = {OrderEdge(edge.src, edge.dst) for edge in linear.order}
-    order_edges.add(OrderEdge(NodeId(n_linear - 1), NodeId(choice_index)))
-    order_edges.add(OrderEdge(NodeId(choice_index), NodeId(record_index)))
-    order_edges.add(OrderEdge(NodeId(record_index), NodeId(actuation_start_index)))
-    for offset in range(len(actuation_entries) - 1):
-        order_edges.add(
-            OrderEdge(NodeId(actuation_start_index + offset), NodeId(actuation_start_index + offset + 1))
-        )
+    order_edges.add(OrderEdge(NodeId(n_linear - 1), NodeId(n_linear)))
+    order_edges |= _sequence(tail, start_index=n_linear)
 
     return PartialOrder(children=top_children, order=frozenset(order_edges))
 
