@@ -285,9 +285,7 @@ class PromotionCourtTests(unittest.TestCase):
         for observation in attacks:
             with self.subTest(observation=observation):
                 result = route_promoted_hook(promoted, observation)
-                self.assertEqual(
-                    RouteDecision.ESCALATE_TO_COGNITION, result.decision
-                )
+                self.assertEqual(RouteDecision.ESCALATE_TO_COGNITION, result.decision)
                 self.assertTrue(result.cognition_required)
                 self.assertIsNone(result.request)
 
