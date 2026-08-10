@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import replace
 import importlib.util
-from pathlib import Path
 import sys
 import unittest
+from dataclasses import replace
+from pathlib import Path
 
 
 MODULE_PATH = (
@@ -151,7 +151,9 @@ class PromotionCourtTests(unittest.TestCase):
             ):
                 self.court.evaluate(attacked, evidence())
 
-    def test_duplicate_receipt_does_not_satisfy_independent_evidence_threshold(self) -> None:
+    def test_duplicate_receipt_does_not_satisfy_independent_evidence_threshold(
+        self,
+    ) -> None:
         duplicate = receipt("urn:receipt:positive-1")
         with self.assertRaisesRegex(
             PromotionRefusal, "REFUSED:INSUFFICIENT_POSITIVE_EVIDENCE"
@@ -283,7 +285,9 @@ class PromotionCourtTests(unittest.TestCase):
                 self.assertTrue(result.cognition_required)
                 self.assertIsNone(result.request)
 
-    def test_promotion_receipt_is_deterministic_and_evidence_order_independent(self) -> None:
+    def test_promotion_receipt_is_deterministic_and_evidence_order_independent(
+        self,
+    ) -> None:
         forward = self.court.evaluate(hook(), evidence())
         reverse = self.court.evaluate(hook(), reversed(evidence()))
         self.assertEqual(forward.promotion_digest, reverse.promotion_digest)
