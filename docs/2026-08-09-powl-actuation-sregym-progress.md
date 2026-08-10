@@ -1506,3 +1506,27 @@ whether the conductor's real evaluation logic for THIS problem
 (`inject_scale_pods_to_zero`) has its own real, separate failure/hang, by
 reading `sregym`'s real oracle/evaluation code for this specific fault
 type, rather than continuing to widen a timeout blindly.
+
+**Cycle 19 continued -- new real paper-compliance Chicago test for the
+runner, per direct user redirection ("focus on chicago testing the powl
+runner based on the paper").** Traced a real, previously-unverified risk:
+`run_pipeline`'s concurrent-batch-fire path (`len(batch) > 1`) is applied
+uniformly to whatever `executor.enabled()` returns for a round, with no
+structural distinction in that code between `PartialOrder` AND-concurrency
+(paper Definition 3.11) and `ChoiceGraph` exclusive decision (Definition
+3.6) -- both can produce a >1-element live set. Traced the real executor
+directly against the production case-library `ChoiceGraph` shape
+(`retrieve -> case_hit | case_miss -> retain`): confirmed live that after
+`retrieve` fires, `enabled()` really does return both `case_hit` and
+`case_miss` simultaneously (forcing the concurrent-batch path), and that
+`fire()`'s own fresh re-validation against the marking already updated by
+`case_hit` genuinely refuses `case_miss` with `LANGUAGE_MISMATCH` --
+Step A's `except PowlError: break` therefore stops before `case_miss`'s
+binding is ever submitted to the `ThreadPoolExecutor`. Added
+`test_run_pipeline_concurrent_batch_path_still_enforces_choice_graph_exclusivity`
+to `tests/powl/test_runner_pipeline_chicago.py`, driving `run_pipeline`
+itself (not the bare executor) with real bindings, asserting the excluded
+branch is never invoked and never recorded. Real, currently correct by
+construction -- this closes a real evidence gap, not a defect. 23/23 in
+that file passing, 5x flake-check clean, zero mock usage (grep verified).
+Committed as `8fbf88d`.
