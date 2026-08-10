@@ -59,18 +59,21 @@ name = "submit_mitigation"
 consequence = "DO"
 reason = "Submits the agent's OWN mitigation to sregym's conductor for external grading. Same rationale as submit_diagnosis: outbound submission of the agent's own answer, not a read of ground truth."
 
+[[capability]]
+name = "verify"
+consequence = "READ"
+reason = "Not a real gymact Capability -- SregymEnvironment.verify() is a plain coroutine, never wired into actuate()'s dispatch table (see gymact_capability_gate.py's module docstring). Listed here so autofde_lab.reasoning.gymact_diagnosis_driver's gymact_verify binding can still be constructed as a real GatedCapabilityBinding (run_pipeline requires one for every ALLOWED_ACTUATION_BINDING_LABELS entry) -- the wrapped callable calls env.verify() directly, never env.actuate(), and this manifest entry gates that call by the same allowlist mechanism as every other actuation-class label. verify() only reports pass/fail plus a bounded observed-state snapshot; it does not expose injected-fault ground truth or scoring internals."
+
 # Deliberately NOT listed, and therefore refused by capability_gate.py even
 # if gymact adds a same-shaped Capability under one of these names in a
 # future revision without this manifest being reviewed and updated:
 #   - anything that would read injected-fault ground truth (e.g. a
 #     hypothetical "get_injected_fault" / "read_fault_spec" capability)
-#   - anything that would read or drive `SregymEnvironment.verify()` /
-#     scoring internals (e.g. a hypothetical "get_verify_result" /
-#     "score_submission" capability) -- verify() itself is not a Capability
-#     in gymact today, so there is currently nothing of this shape to list,
-#     but the allowlist-by-name design means such a capability stays
-#     refused by default the moment it exists, rather than silently
-#     inherited.
+#   - anything that would read or drive scoring internals beyond the
+#     bounded pass/fail + observed-state shape verify() itself already
+#     returns (e.g. a hypothetical "score_submission" capability that
+#     exposes the grading rubric) -- the "verify" entry above lists only
+#     verify() itself, admitted narrowly for the reason given there.
 #
 # capability_gate.py checks capability `.binding` values duck-typed against
 # real `gymact.gyms.sregym.Capability`/`SREGYM_CAPABILITIES` objects -- it
