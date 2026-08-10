@@ -65,6 +65,14 @@ def append_tool_call_event(
         if outcome.get(detail_key):
             attrs["detail"] = OcelAttributeValue.string(str(outcome[detail_key])[:500])
             break
+    # ``detail`` and ``error`` are independent claims (e.g. a POWL action
+    # binding error carries both: ``detail`` the fired Atom's label,
+    # ``error`` the real exception type/message) -- when both are present
+    # the loop above's first-match-wins only ever wrote ``detail``, silently
+    # dropping the real error text. Give ``error`` its own attribute
+    # whenever it is present, regardless of whether ``detail`` also is.
+    if outcome.get("error"):
+        attrs["error"] = OcelAttributeValue.string(str(outcome["error"])[:500])
     if "action_result" in outcome and outcome["action_result"] is not None:
         attrs["action_result"] = OcelAttributeValue.string(
             str(outcome["action_result"])[:500]
