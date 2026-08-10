@@ -820,12 +820,48 @@ Both submissions' own embedded `before`/`after` status checks succeeded
 right up through `submit_mitigation`'s own real response -- the outage
 begins specifically after both submissions are accepted, not before.
 
-**Real next step for Cycle 10, not yet attempted**: either widen
-`verify_timeout_seconds` substantially further (600-1200s, to test
-whether the conductor eventually recovers once its own evaluation
-completes), or investigate `main.py`'s own source for what synchronous/
-blocking work runs between accepting a submission and its next real
-`/status` response.
+**Real mechanism found, source-confirmed** (`sregym/conductor/conductor.py`):
+`submit()` (L516-568) returns immediately, dispatching
+`_submit_evaluate_and_advance` to a background `ThreadPoolExecutor`. For
+the LAST stage (mitigation), that same background thread doesn't stop at
+`_evaluate_mitigation()` -- it goes on to call `_advance_to_next_stage()`
+(L504-505), which with no more stages calls `_finish_problem()` ->
+`_cleanup_sync()` (L319-365): real synchronous fault recovery + app
+undeploy + cluster-state reconciliation, ALL in that same background
+thread, only setting `submission_stage = "done"` at the very end. This
+real, substantial blocking work is a strong candidate for the ~307s
+`/status` outage measured in trial v2 -- correlated by timing, not yet
+proven to be the sole cause (whether it's enough load to genuinely starve
+uvicorn's async loop, vs. some other real gap, is still open).
+
+**Trial v3 launched** (PID `8001`, widened `verify_timeout_seconds=1500.0`,
+`wall_clock_timeout_s=2400`) specifically to observe whether `/status`
+eventually recovers once `_cleanup_sync()` finishes and reaches `"done"`
+-- the real experiment that discharges or confirms this hypothesis. Killed
+a third real orphaned port-forward (PID 6209) before launching.
+
+**Trial v3 result: `ATTEMPTED:BLOCKED:EXPIRED_GROQ_API_KEY`.** Real,
+external, unrelated to the /status-outage investigation. `main.py` itself
+exited during startup (returncode=1) before even reaching the judge's own
+pre-flight check's model call: `litellm.BadRequestError: GroqException -
+{"error":{"message":"Invalid API Key","code":"expired_api_key"}}`. Not a
+code defect in autofde-lab or gymact -- the Groq API key backing
+`judge_model=groq/openai/gpt-oss-20b` expired sometime between trial v2
+(which completed real judge-backed evaluation calls successfully) and
+this trial's launch. Requires a live user action (rotate/renew the key)
+that this autonomous cycle cannot perform. The `/status`-outage hypothesis
+above (`_cleanup_sync()` blocking the background thread through undeploy
++ reconciliation) remains open and unconfirmed -- this credential expiry
+blocks re-testing it further this cycle, not disproves it.
+
+**Cycle 9 closes here**: `wrong_dns_policy_social_network` status for
+this cycle is `ATTEMPTED:BLOCKED:EXPIRED_GROQ_API_KEY`. Real, substantial
+progress made regardless (orphan-port-forward pattern found+killed 3x,
+verify()-crash-on-transient-failure fixed+tested, `/status`-outage
+mechanism source-confirmed and hypothesis narrowed to `_cleanup_sync()`).
+Next cycle should check whether the Groq key has been rotated before
+relaunching a live trial; if not, this stays `BLOCKED` and the cycle
+should record that rather than retry the same expired key.
 
 **Cycle 9 summary**: found and fixed the real orphaned-port-forward
 pattern (likely explaining much of the session's connection-reliability
