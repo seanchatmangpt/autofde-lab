@@ -326,10 +326,91 @@ Re-applied this cycle; **any future cycle that hits the Prometheus
 `FailedScheduling` dead-end again should check this label first** before
 assuming it's a new problem.
 
-Given this cycle's time was largely consumed by real infrastructure
-recovery (not wasted -- a real, working cluster is a hard prerequisite for
-everything else), no new live trial was attempted this cycle. Next cycle
-should attempt the live trial now that both the readiness-race fix and a
-healthy cluster are confirmed in place.
+**Live trial attempted after cluster recovery -- real progress, past the
+connection/readiness stage entirely this time.** New real failure, further
+downstream: `fastmcp.exceptions.ToolError: 2 validation errors for
+call[exec_kubectl_cmd_safely]: cmd Missing required argument, command
+Unexpected keyword argument`. Precise, simple root cause: gymact's own
+`actuate()` called the real MCP tool with `{"command": ...}`, but the real
+tool's schema requires `{"cmd": ...}` -- confirmed by cross-checking every
+OTHER real client in the vendored sregym checkout
+(`clients/demo/driver.py`, `clients/stratus/tools/kubectl_tools.py`), all of
+which already correctly use `cmd`. Fixed (gymact commit, this cycle);
+`15/15` unaffected tests still passing. Not independently unit-tested (the
+call is inline, not a separable pure function) -- strongest evidence is a
+real live re-run, launched immediately (PID `75406`).
+
+**Trial v2 (PID `75406`) result: real, informative regression.** The `cmd`
+argument fix worked (no more validation error), but the SAME connection
+failure from before recurred: `RuntimeError: Client failed to connect: All
+connection attempts failed`, at the exact same `_kubectl_client.__aenter__()`
+call. Real, precise conclusion: the earlier `_tcp_port_reachable` fix is a
+NECESSARY but NOT SUFFICIENT readiness signal -- a raw TCP accept succeeding
+does not prove the real port-forward/MCP protocol handshake behind it is
+actually ready. Confirmed live, twice.
+
+**Fixed with the architecturally correct approach**: a bounded retry (5
+attempts, 2s delay) directly around the real `Client.__aenter__()` call
+itself (`_connect_with_retry()`), not a stronger pre-check -- no pre-check
+can fully predict a later real handshake's outcome. Real regression tests
+(hand-written fake client, not a mock, whose `__aenter__` genuinely fails a
+counted number of times): `17/17` passing.
+
+**Trial v3 (PID `76306`) result: a real bug in the retry fix itself, found
+immediately.** `RuntimeError: Client is not connected. Use the 'async with
+client:' context manager first.` -- even though the retry loop had just
+reported success. Real, precise cause: retrying `__aenter__()` on the SAME
+already-failed `Client` instance left it in a broken internal state; many
+async context managers are not safe to re-enter after a failed attempt.
+
+**Fixed**: `_connect_with_retry()` now takes a `client_factory` (builds a
+genuinely fresh `Client` per attempt) instead of a single pre-built
+instance, and returns the one real successful client. Real regression tests
+rewritten to prove fresh instances are actually built per attempt and that
+failed instances were never entered. `17/17` passing.
+
+**Trial v4 (PID `77290`) result: the SAME error recurred despite the fresh-
+instance fix, revealing the REAL, deeper root cause.** `RuntimeError: Client
+is not connected...` again. This is not the connect-retry defect at all --
+it is a real, architectural mismatch between autofde-lab's own driver and
+any persistent async client:
+
+`gymact_diagnosis_driver.py`'s `_run_coroutine_sync()` (needed because each
+`action_bindings` closure runs inside `run_pipeline`'s synchronous callback,
+which may itself already be inside a running event loop) does
+`with ThreadPoolExecutor(max_workers=1) as pool: pool.submit(asyncio.run,
+coro).result()` -- creating and fully tearing down a FRESH event loop on
+EVERY SINGLE real gymact_* binding call. The first call (`gymact_observe`)
+connects `self._kubectl_client` using event loop A's transport/tasks; loop A
+is closed the moment that call returns. The second call
+(`gymact_actuate_remediate`, a `run_kubectl` call) creates a brand new loop
+B and tries to reuse the already-open client object -- but its underlying
+async resources are bound to the now-closed loop A. Async transport/tasks
+cannot cross event loops; this is not a timing race, it is a structural
+impossibility as currently wired, and would recur 100% of the time past the
+first real client-using call, regardless of any retry/timing fix.
+
+**Real, precisely-named next blocker for Cycle 5 (not yet fixed, given this
+cycle's already substantial scope)**: `SregymEnvironment`'s persistent
+`_kubectl_client`/`_submit_client` design (opened once, reused across many
+calls -- explicitly built this way for efficiency, per its own module
+docstring) is fundamentally incompatible with being driven from a caller
+that runs each call in its own fresh event loop. Two real fix directions,
+neither attempted yet: (a) make `_ensure_clients_open()` connect-use-close
+fresh on every single call instead of caching (trades connection overhead
+for correctness, matches `vendor_benchmarks.py`'s own one-shot-per-call
+precedent), or (b) redesign the driver side so all `gymact_*` bindings for
+one trial run inside a SINGLE persistent event loop/thread for the whole
+`run_pipeline` call, not one fresh loop per binding.
+
+**Cycle 4 summary**: eight real, distinct defects found and fixed across
+autofde-lab and gymact (readiness-race, collection-safety, cmd-argument-
+name, connect-retry, the retry-fix's own instance-reuse bug, plus real infra
+recovery + a non-persistent node-label finding), PLUS this cycle's real,
+architecturally deeper discovery -- the actual reason connection-layer fixes
+alone could never fully succeed. This is the deepest real debugging chain
+of the whole session: each fix surfaced the next real defect underneath it,
+never a false all-clear, converging on a genuine structural finding rather
+than another symptom.
 
 (Grows as cycles attempt more problems.)
