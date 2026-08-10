@@ -107,4 +107,30 @@ different `--agent` value that DOES have a real driver (`clients/autofde_lab_dsp
 confirmed present on disk, unlike `autofde_lab_planner`) -- try (b) first, it is
 strictly less work and may unblock every problem ID in one fix.
 
+### Cycle 2 (2026-08-10)
+
+**Priority (b) from Cycle 1 done, real, verified.** `~/gymact`'s `_build_argv()`
+now takes `agent_name` (default `autofde_lab_dspy`, the driver confirmed present on
+disk), threaded through `SregymVendorProvider.materialize()`'s config resolution
+(extracted as a testable pure function, `_resolve_materialize_argv_and_env`).
+Committed on `feat/sregym-vendor-provider` (gymact repo), commit `2399f6a`, stacked
+on the Cycle 1 env-merge fix (`6e46cb2`). Independently re-verified this cycle:
+12/13 passing (the 1 failure is the same pre-existing live-cluster integration test,
+different transient symptom this time -- `httpx.ReadError`, consistent with port/
+cluster contention from this cycle's own concurrently-running live trial, not a
+regression).
+
+**Real, direct confirmation the missing-module blocker is cleared**: `ps aux` shows
+PID `56207` running `.venv/bin/python main.py --agent autofde_lab_dspy --model
+groq/openai/gpt-oss-20b --problem wrong_dns_policy_social_network --agent-timeout
+1200` -- alive, past the point every previous attempt crashed immediately on
+`No module named clients.autofde_lab_planner.driver`. Full trial outcome not yet
+observed as of this note (dispatched agent monitoring it in background, will report
+via task notification) -- recording the confirmed interim fact now rather than
+claiming a terminal result that hasn't happened yet.
+
+| problem_id | status | last real evidence |
+|---|---|---|
+| wrong_dns_policy_social_network | ATTEMPTED:UNCONFIRMED (in progress via gymact-mediated path, agent_name=autofde_lab_dspy) | `ps aux` this cycle: PID 56207 alive, past previous missing-module blocker; terminal outcome pending |
+
 (Grows as cycles attempt more problems.)
