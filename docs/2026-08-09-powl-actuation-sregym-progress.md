@@ -681,7 +681,19 @@ requested stage, proves the final call requests exactly `{"stage":
 "done"}`). `4/4` passing. Cluster health and node-affinity fix re-verified
 fresh before relaunching.
 
-Trial relaunched with the fix (PID `96576`) -- in progress. This may
-produce the first real CONFIRMED verdict of the whole session.
+**Trial (PID `96576`) hit the recurring intermittent 10/10 connection
+exhaustion again** -- now the 4th occurrence, more frequent than earlier
+cycles. Real evidence (cluster/pod both healthy, no new crash) still
+didn't explain it; given the increasing frequency after this session's
+many cumulative hours of real usage, did a full infra recovery this time
+(`colima stop && colima start --cpu 12 --memory 20` + explicit
+`colima kubernetes start`, matching Cycle 4's proven-safe pattern) rather
+than another blind retry. Real, confirmed: node state/age persisted
+through the restart (`4h53m`); node-affinity fix re-applied fresh
+(reverts on every restart, as found in Cycle 4).
+
+Trial relaunched on the freshly recovered environment (PID `98107`) --
+in progress. This may produce the first real CONFIRMED verdict of the
+whole session.
 
 (Grows as cycles attempt more problems.)
