@@ -1,0 +1,73 @@
+name: Knowledge Hook Promotion Court
+
+on:
+  pull_request:
+    paths:
+      - "src/autofde_lab/reflex/**"
+      - "tests/reflex/**"
+      - "docs/knowledge-hook-promotion.md"
+      - ".github/workflows/knowledge-hook-promotion-court.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  promotion-court:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact admitted subject
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Prove exact head identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="${{ github.event.pull_request.head.sha || github.sha }}"
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$expected" || {
+            echo "REFUSED:EXACT_HEAD_MISMATCH expected=$expected actual=$actual"
+            exit 1
+          }
+          echo "exact_head=$actual"
+
+      - name: Compile promotion surfaces
+        run: |
+          python -m py_compile \
+            src/autofde_lab/reflex/__init__.py \
+            src/autofde_lab/reflex/promotion.py \
+            tests/reflex/test_knowledge_hook_promotion.py
+
+      - name: Execute adversarial promotion court
+        env:
+          PYTHONPATH: src
+        run: python -m unittest -v tests/reflex/test_knowledge_hook_promotion.py
+
+      - name: Refuse Lab actuation surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          source = Path("src/autofde_lab/reflex/promotion.py").read_text()
+          forbidden = (
+              "subprocess.",
+              "os.system(",
+              "requests.",
+              "httpx.",
+              "boto3.",
+              "azure.",
+              "google.cloud",
+          )
+          hits = [token for token in forbidden if token in source]
+          if hits:
+              raise SystemExit(f"REFUSED:LAB_ACTUATION_SURFACE {hits}")
+          if "do_authority: bool = False" not in source:
+              raise SystemExit("REFUSED:POWERLESS_BRCE_REQUEST_FENCE_MISSING")
+          print("AUTOFDE_LAB_PROMOTION_AUTHORITY_FENCE_ALIVE")
+          PY
