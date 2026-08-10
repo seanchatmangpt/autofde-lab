@@ -1,10 +1,16 @@
-"""Eight Challenger Enterprise Architecture benchmark case studies.
+"""Eight Challenger Enterprise Architecture value benchmarks.
 
 Each case study executes the compiled issue-reasoning tool eight times against a
-bounded evidence portfolio.  The benchmark proves properties of the candidate
-reasoner itself: deterministic routing, hypothesis elimination, fallback/refusal
-boundaries, zero actuation authority, and measured local throughput.  It does NOT
-claim human/LLM displacement without a separately executed comparator.
+bounded evidence portfolio. The benchmark directly observes routing, hypothesis
+elimination, fallback/refusal boundaries, zero actuation authority, and throughput.
+
+Economic values are DERIVED SCENARIOS, never realized-savings claims. Only MATCHED
+compiled episodes are assigned displaced-cognition capacity. FALLBACK_NOVELTY and
+REFUSED_EVIDENCE carry zero replacement value.
+
+Money semantics are pinned to ggen's vendored FIBO Currency Amount ontology:
+https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/
+ggen source snapshot: c37b46015b8e5ab40be771d61aafe3d7c7af084c
 """
 from __future__ import annotations
 
@@ -18,6 +24,14 @@ from statistics import median
 from typing import Iterable
 
 from autofde_lab.fabric.issue_reasoning import CompiledIssueReasoner, IssueRoute
+
+FIBO_CURRENCY_AMOUNT = "https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/"
+FIBO_MONETARY_AMOUNT = f"{FIBO_CURRENCY_AMOUNT}MonetaryAmount"
+FIBO_HAS_CURRENCY = f"{FIBO_CURRENCY_AMOUNT}hasCurrency"
+FIBO_USD = "https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/ISO4217-CurrencyCodes/USDollar"
+GGEN_FIBO_SOURCE_SHA = "c37b46015b8e5ab40be771d61aafe3d7c7af084c"
+LOADED_ENGINEERING_USD_PER_HOUR = 100
+SCENARIO_MINUTES = (5, 15, 30)
 
 
 @dataclass(frozen=True)
@@ -39,6 +53,11 @@ CASES: tuple[CaseStudy, ...] = (
 )
 
 
+def scenario_usd(compiled_calls: int, minutes: int) -> float:
+    """Derived displaced-cognition capacity for a declared economic envelope."""
+    return compiled_calls * (minutes / 60) * LOADED_ENGINEERING_USD_PER_HOUR
+
+
 def execute_case(reasoner: CompiledIssueReasoner, case: CaseStudy, repeats: int) -> dict[str, object]:
     started = time.perf_counter_ns()
     routes = {route.value: 0 for route in IssueRoute}
@@ -54,19 +73,31 @@ def execute_case(reasoner: CompiledIssueReasoner, case: CaseStudy, repeats: int)
             identities.add(result.candidate_identity_sha256)
             calls += 1
     elapsed_ns = time.perf_counter_ns() - started
+    compiled_calls = routes[IssueRoute.MATCHED.value]
     return {
         "case": case.id,
         "tool_uses_per_portfolio": len(case.episodes),
         "repeats": repeats,
         "calls": calls,
+        "compiled_calls": compiled_calls,
+        "portfolio_compiled_coverage": compiled_calls / calls,
         "elapsed_ns": elapsed_ns,
         "calls_per_second": calls * 1_000_000_000 / elapsed_ns,
         "hypotheses_eliminated": eliminated,
         "hypotheses_eliminated_per_second": eliminated * 1_000_000_000 / elapsed_ns,
-        "matched": routes[IssueRoute.MATCHED.value],
+        "matched": compiled_calls,
         "refused_evidence": routes[IssueRoute.REFUSED_EVIDENCE.value],
         "fallback_novelty": routes[IssueRoute.FALLBACK_NOVELTY.value],
         "unique_candidate_identities": len(identities),
+        "loaded_engineering_usd_per_hour": LOADED_ENGINEERING_USD_PER_HOUR,
+        "derived_5m_usd": scenario_usd(compiled_calls, 5),
+        "derived_15m_usd": scenario_usd(compiled_calls, 15),
+        "derived_30m_usd": scenario_usd(compiled_calls, 30),
+        "fibo_type": FIBO_MONETARY_AMOUNT,
+        "fibo_currency_property": FIBO_HAS_CURRENCY,
+        "fibo_currency": FIBO_USD,
+        "ggen_fibo_source_sha": GGEN_FIBO_SOURCE_SHA,
+        "economic_standing": "DERIVED_SCENARIO_NOT_REALIZED_SAVINGS",
         "actuation": "REFUSED",
         "challenger_question": case.challenger_question,
     }
@@ -78,12 +109,24 @@ def validate(rows: Iterable[dict[str, object]], repeats: int) -> None:
     expected = repeats * 8
     assert sum(int(row["calls"]) for row in rows) == 64 * repeats
     for row in rows:
+        calls = int(row["calls"])
+        compiled = int(row["compiled_calls"])
         assert row["tool_uses_per_portfolio"] == 8
-        assert row["calls"] == expected
+        assert calls == expected
+        assert 0 <= compiled <= calls
+        assert abs(float(row["portfolio_compiled_coverage"]) - (compiled / calls)) < 1e-12
         assert row["elapsed_ns"] > 0
         assert row["calls_per_second"] > 0
         assert row["hypotheses_eliminated_per_second"] >= 0
         assert int(row["matched"]) + int(row["refused_evidence"]) + int(row["fallback_novelty"]) == expected
+        for minutes in SCENARIO_MINUTES:
+            observed = float(row[f"derived_{minutes}m_usd"])
+            expected_usd = scenario_usd(compiled, minutes)
+            assert abs(observed - expected_usd) < 1e-6
+        assert row["fibo_type"] == FIBO_MONETARY_AMOUNT
+        assert row["fibo_currency"] == FIBO_USD
+        assert row["ggen_fibo_source_sha"] == GGEN_FIBO_SOURCE_SHA
+        assert row["economic_standing"] == "DERIVED_SCENARIO_NOT_REALIZED_SAVINGS"
         assert row["actuation"] == "REFUSED"
 
 
@@ -99,16 +142,29 @@ def main() -> None:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
+
+    direct_calls = sum(int(row["calls"]) for row in rows)
+    compiled_calls = sum(int(row["compiled_calls"]) for row in rows)
     summary = {
         "case_studies": 8,
         "tool_uses_per_case_portfolio": 8,
-        "direct_calls": sum(int(row["calls"]) for row in rows),
+        "direct_calls": direct_calls,
+        "compiled_calls": compiled_calls,
+        "portfolio_compiled_coverage": compiled_calls / direct_calls,
         "median_calls_per_second": median(float(row["calls_per_second"]) for row in rows),
         "total_hypotheses_eliminated": sum(int(row["hypotheses_eliminated"]) for row in rows),
         "fallback_calls": sum(int(row["fallback_novelty"]) for row in rows),
         "refused_calls": sum(int(row["refused_evidence"]) for row in rows),
+        "loaded_engineering_usd_per_hour": LOADED_ENGINEERING_USD_PER_HOUR,
+        "derived_5m_usd": scenario_usd(compiled_calls, 5),
+        "derived_15m_usd": scenario_usd(compiled_calls, 15),
+        "derived_30m_usd": scenario_usd(compiled_calls, 30),
+        "fibo_type": FIBO_MONETARY_AMOUNT,
+        "fibo_currency": FIBO_USD,
+        "ggen_fibo_source_sha": GGEN_FIBO_SOURCE_SHA,
+        "economic_standing": "DERIVED_SCENARIO_NOT_REALIZED_SAVINGS",
         "actuation": "REFUSED",
-        "claim_boundary": "No human/LLM displacement claim without separately executed comparator.",
+        "claim_boundary": "Dollar values apply only to MATCHED compiled episodes under declared loaded-rate/time assumptions; no realized savings or human/LLM displacement claim without an executed comparator and enterprise corpus.",
     }
     print(json.dumps(summary, sort_keys=True))
 
