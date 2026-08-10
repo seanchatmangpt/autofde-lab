@@ -12,8 +12,12 @@
     dcterms:description "Describes explicit authority required by consequential transitions. This vocabulary models the boundary contract; it does not grant autofde-lab ambient authority to actuate." ;
     dcterms:created "2026-08-08"^^xsd:date .
 
-afl:AuthorityEnvelope a owl:Class ; rdfs:subClassOf odrl:Policy ; rdfs:label "Authority envelope" ; rdfs:comment "A bounded grant associated with an exact subject, capability, scope, and consequential transition." .
-afl:Actuation a owl:Class , prov:Activity ; rdfs:label "Actuation" ; rdfs:comment "A consequential transition in an external or simulated world. Capability to perform it is not authority to perform it." .
+afl:AuthorityEnvelope a owl:Class ; rdfs:subClassOf odrl:Policy ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:authority> ;
+    rdfs:label "Authority envelope" ; rdfs:comment "A bounded grant associated with an exact subject, capability, scope, and consequential transition." .
+afl:Actuation a owl:Class , prov:Activity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:authority> ;
+    rdfs:label "Actuation" ; rdfs:comment "A consequential transition in an external or simulated world. Capability to perform it is not authority to perform it." .
 
 afl:authoritySubject a owl:ObjectProperty ; rdfs:domain afl:AuthorityEnvelope ; rdfs:range prov:Agent ; rdfs:label "authority subject" .
 afl:authorityCapability a owl:ObjectProperty ; rdfs:domain afl:AuthorityEnvelope ; rdfs:range afl:Capability ; rdfs:label "authority capability" .

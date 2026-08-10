@@ -14,37 +14,45 @@
 
 afl:Gym
     a owl:Class ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:lab> ;
     rdfs:label "Gym" ;
     rdfs:comment "A bounded consequential world with observable state, capabilities, authority, goals/invariants, lawful transitions, verification, and evidence." .
 
 afl:Trial
     a owl:Class , prov:Activity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:lab> ;
     rdfs:label "Trial" ;
     rdfs:comment "One identity-bounded experimental episode. Evidence from different trials must never satisfy one witness." .
 
 afl:Experiment
     a owl:Class , prov:Activity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:lab> ;
     rdfs:label "Experiment" .
 
 afl:Goal
     a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:lab> ;
     rdfs:label "Goal" .
 
 afl:Invariant
     a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:lab> ;
     rdfs:label "Invariant" .
 
 afl:Resource
     a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:lab> ;
     rdfs:label "Resource" .
 
 afl:Capability
     a owl:Class ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:lab> ;
     rdfs:label "Capability" ;
     rdfs:comment "Something the system can do. Capability does not imply authority." .
 
 afl:Perturbation
     a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:lab> ;
     rdfs:label "Perturbation" ;
     rdfs:comment "A change to the world used to test adaptation, repair, or replanning." .
 

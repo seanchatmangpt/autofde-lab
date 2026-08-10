@@ -65,8 +65,23 @@ class Recipe:
     steps: tuple[Step, ...]
 
     def __post_init__(self) -> None:
-        if not self.steps:
-            raise ValueError(f"Recipe {self.gym!r}/{self.task!r} has no steps")
+        if not self.steps and not (self.goal_facts <= self.initial_facts):
+            # A genuinely empty procedure is only valid when the goal is
+            # ALREADY, verifiably true at the initial state (e.g. a task
+            # whose real success condition is established by passive
+            # environment/infrastructure behavior, not by any agent
+            # action -- confirmed real case: Harbor's environment-env-multi
+            # task, whose own instruction.md is literally "Do nothing").
+            # This is not a loophole: an empty-steps Recipe whose
+            # goal_facts is NOT already a subset of initial_facts is still
+            # rejected here, and would anyway fail to solve (no action
+            # exists to reach an unmet goal), so this cannot be used to
+            # fake success on a task that actually requires real steps.
+            raise ValueError(
+                f"Recipe {self.gym!r}/{self.task!r} has no steps and goal_facts "
+                f"is not already satisfied by initial_facts -- an empty procedure "
+                f"is only valid when the goal genuinely holds without any agent action"
+            )
         if not self.goal_facts:
             raise ValueError(f"Recipe {self.gym!r}/{self.task!r} has no goal_facts")
         ids = [s.id for s in self.steps]

@@ -214,4 +214,13 @@ def test_real_predict_remaining_duration_bucket_estimate(tmp_path):
     )
 
     assert prediction.remaining_ms == pytest.approx(2000.0)
-    assert prediction.method == "bucket(B,2)"
+    # The separator is ``|``, not ``,``. ``wasm4pm/src/prediction_remaining_time.rs:70``
+    # defines ``bucket_key`` as ``format!("{}|{}", activity, prefix_len)``, and the ``|``
+    # is load-bearing rather than cosmetic: line 336 builds ``format!("{}|", activity)``
+    # and uses it as a ``starts_with`` sentinel for the strategy-2 (same activity, any
+    # prefix length) fallback, so a comma there would break bucket-key prefix matching.
+    # wasm4pm's own CLI test (``crates/wasm4pm-cli/tests/cli_tests.rs:275``) asserts the
+    # same ``bucket(B|2)``. This expectation previously read ``bucket(B,2)``, copied from
+    # the (also wrong) ``PredictionResult.method`` docstring in ``wasm4pm_bridge`` --
+    # confirmed against the real binary's real stdout, not against that docstring.
+    assert prediction.method == "bucket(B|2)"

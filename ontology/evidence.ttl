@@ -11,19 +11,45 @@
     dcterms:description "Defines identity-preserving evidence as one connected causal witness. Counts, matching types, filenames, and directory proximity are insufficient." ;
     dcterms:created "2026-08-08"^^xsd:date .
 
-afl:Postcondition a owl:Class , prov:Entity ; rdfs:label "Postcondition" .
-afl:Observer a owl:Class , prov:Agent ; rdfs:label "Observer" .
-afl:PostconditionObservation a owl:Class , prov:Entity ; rdfs:label "Postcondition observation" .
-afl:Receipt a owl:Class , prov:Entity ; rdfs:label "Receipt" .
-afl:ReceiptDAG a owl:Class , prov:Collection ; rdfs:label "Receipt DAG" .
-afl:Replay a owl:Class , prov:Activity ; rdfs:label "Replay" .
-afl:Artifact a owl:Class , prov:Entity ; rdfs:label "Artifact" .
-afl:ArtifactManifest a owl:Class , prov:Entity ; rdfs:label "Artifact manifest" ; rdfs:comment "Binds explicit artifact identities and digests to a trial and exact source/dependency revisions. Filenames are never sufficient identity." .
-afl:SourceRevision a owl:Class , prov:Entity ; rdfs:label "Source revision" .
-afl:DependencyRevision a owl:Class , prov:Entity ; rdfs:label "Dependency revision" .
-afl:VerifierRun a owl:Class , prov:Activity ; rdfs:label "Verifier run" .
-afl:EvidenceWitness a owl:Class , prov:Entity ; rdfs:label "Evidence witness" .
-afl:Level4Witness a owl:Class ; rdfs:subClassOf afl:EvidenceWitness ; rdfs:label "Level 4 witness" ; rdfs:comment "A fully joined identity-preserving witness whose standing can be independently reconstructed from persisted evidence." .
+afl:Postcondition a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:evidence> ;
+    rdfs:label "Postcondition" .
+afl:Observer a owl:Class , prov:Agent ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:evidence> ;
+    rdfs:label "Observer" .
+afl:PostconditionObservation a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:evidence> ;
+    rdfs:label "Postcondition observation" .
+afl:Receipt a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:evidence> ;
+    rdfs:label "Receipt" .
+afl:ReceiptDAG a owl:Class , prov:Collection ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:evidence> ;
+    rdfs:label "Receipt DAG" .
+afl:Replay a owl:Class , prov:Activity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:evidence> ;
+    rdfs:label "Replay" .
+afl:Artifact a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:evidence> ;
+    rdfs:label "Artifact" .
+afl:ArtifactManifest a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:evidence> ;
+    rdfs:label "Artifact manifest" ; rdfs:comment "Binds explicit artifact identities and digests to a trial and exact source/dependency revisions. Filenames are never sufficient identity." .
+afl:SourceRevision a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:evidence> ;
+    rdfs:label "Source revision" .
+afl:DependencyRevision a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:evidence> ;
+    rdfs:label "Dependency revision" .
+afl:VerifierRun a owl:Class , prov:Activity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:evidence> ;
+    rdfs:label "Verifier run" .
+afl:EvidenceWitness a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:evidence> ;
+    rdfs:label "Evidence witness" .
+afl:Level4Witness a owl:Class ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:evidence> ;
+    rdfs:subClassOf afl:EvidenceWitness ; rdfs:label "Level 4 witness" ; rdfs:comment "A fully joined identity-preserving witness whose standing can be independently reconstructed from persisted evidence." .
 
 afl:observesActuation a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain afl:PostconditionObservation ; rdfs:range afl:Actuation ; rdfs:label "observes actuation" .
 afl:assertsPostcondition a owl:ObjectProperty ; rdfs:domain afl:PostconditionObservation ; rdfs:range afl:Postcondition ; rdfs:label "asserts postcondition" .

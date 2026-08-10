@@ -11,16 +11,36 @@
     dcterms:description "Models planner attempts as candidate producers. No producer has a private path to commitment; candidates meet in one governed candidate set before selection." ;
     dcterms:created "2026-08-08"^^xsd:date .
 
-afl:PlanningProblem a owl:Class , prov:Entity ; rdfs:label "Planning problem" .
-afl:Planner a owl:Class , prov:Agent ; rdfs:label "Planner" .
-afl:PlannerAttempt a owl:Class , prov:Activity ; rdfs:label "Planner attempt" .
-afl:PlanCandidate a owl:Class , prov:Entity ; rdfs:label "Plan candidate" ; rdfs:comment "A candidate future proposed by any producer. It is not commitment authority." .
-afl:CandidateSet a owl:Class , prov:Collection ; rdfs:label "Candidate set" ; rdfs:comment "The common constitutional meeting point for every candidate producer." .
-afl:Critique a owl:Class , prov:Entity ; rdfs:label "Critique" .
-afl:Validation a owl:Class , prov:Activity ; rdfs:label "Validation" .
-afl:GovernedCandidate a owl:Class , prov:Entity ; rdfs:label "Governed candidate" ; rdfs:comment "A plan candidate that obtained standing through the common candidate-set critique and validation path." .
-afl:Disagreement a owl:Class , prov:Entity ; rdfs:label "Disagreement" .
-afl:DiscriminatingProbe a owl:Class , prov:Activity ; rdfs:label "Discriminating probe" ; rdfs:comment "An experiment or observation selected to distinguish unresolved planner/model hypotheses." .
+afl:PlanningProblem a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:planning> ;
+    rdfs:label "Planning problem" .
+afl:Planner a owl:Class , prov:Agent ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:planning> ;
+    rdfs:label "Planner" .
+afl:PlannerAttempt a owl:Class , prov:Activity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:planning> ;
+    rdfs:label "Planner attempt" .
+afl:PlanCandidate a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:planning> ;
+    rdfs:label "Plan candidate" ; rdfs:comment "A candidate future proposed by any producer. It is not commitment authority." .
+afl:CandidateSet a owl:Class , prov:Collection ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:planning> ;
+    rdfs:label "Candidate set" ; rdfs:comment "The common constitutional meeting point for every candidate producer." .
+afl:Critique a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:planning> ;
+    rdfs:label "Critique" .
+afl:Validation a owl:Class , prov:Activity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:planning> ;
+    rdfs:label "Validation" .
+afl:GovernedCandidate a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:planning> ;
+    rdfs:label "Governed candidate" ; rdfs:comment "A plan candidate that obtained standing through the common candidate-set critique and validation path." .
+afl:Disagreement a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:planning> ;
+    rdfs:label "Disagreement" .
+afl:DiscriminatingProbe a owl:Class , prov:Activity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:planning> ;
+    rdfs:label "Discriminating probe" ; rdfs:comment "An experiment or observation selected to distinguish unresolved planner/model hypotheses." .
 
 afl:attemptedBy a owl:ObjectProperty ; rdfs:domain afl:PlannerAttempt ; rdfs:range afl:Planner ; rdfs:label "attempted by" .
 afl:solvesProblem a owl:ObjectProperty ; rdfs:domain afl:PlannerAttempt ; rdfs:range afl:PlanningProblem ; rdfs:label "solves problem" .
