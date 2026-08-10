@@ -1391,3 +1391,33 @@ of this entry -- real outcome to be recorded once it completes.
 
 **Status table**: `wrong_dns_policy_social_network` ->
 `ATTEMPTED:UNCONFIRMED (in progress)` pending this trial's real completion.
+
+**Cycle 18 continued**: the first live trial (PID `13083`) against the new
+concurrent runner failed fast with the real, expected
+`namespaces "social-network" not found` error -- a genuine, valuable
+result: it confirmed the new concurrent error-handling path (wait for all
+N bindings, record every outcome, then raise the first error in
+deterministic order) worked correctly end to end against a real live
+failure, not just the fake-environment test suite.
+
+**Real design discussion mid-cycle**: an initial fix attempt (a bare
+`kubectl get namespace` poll-on-a-timer retry inside `_check_namespace`)
+was written, then explicitly rejected before landing -- it is the naive
+version of a pattern Kubernetes already has a correct idiom for (watch a
+real observable condition, not blind interval polling), and it duplicated
+a mechanism this driver already has and trusts.
+
+**Real fix landed instead**: a new, explicit `gymact_wait_for_deploy` POWL
+atom, structurally sequenced BEFORE the concurrent observe block, reusing
+the already-tested `env.verify({"stage": "diagnosis"})` bounded poll (the
+same mechanism `_submit_diagnosis`'s stage-wait already uses) -- the
+conductor's own real stage transition is the actual, intended signal for
+"deploy phase complete", not a namespace-existence proxy. Models the wait
+as its own real pipeline step, not a side effect hidden inside one
+concurrent check. 56/56 real tests pass (mechanical index/count updates
+across both Chicago test files, since the tree gained one more top-level
+position), 136/136 on the broader regression sweep, zero mocks. Committed:
+`89a1592`.
+
+**Second live trial launched** (PID `49145`) against the fixed runner --
+in progress via Monitor at the time of this entry.
