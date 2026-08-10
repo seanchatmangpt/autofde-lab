@@ -11,6 +11,15 @@ Extends the already-imported ``autofde_lab`` package's ``__path__`` with
 this worktree's ``src/autofde_lab`` directory, so ``import
 autofde_lab.case_library`` finds the module physically present here without
 needing a separate ``pip install -e`` of the worktree.
+
+The venv's `autofde_lab` package is an editable install pointing at the main
+repo checkout (a separate worktree), whose meta-path finder takes priority
+over ordinary `sys.path` entries -- so a plain `sys.path`/`PYTHONPATH`
+insertion of this worktree's `src/` does not shadow it. Extending the
+already-imported package's `__path__` to also include this worktree's
+`src/autofde_lab` directory lets `autofde_lab.case_library` (which only
+exists here, not yet in the main checkout) be found, without touching or
+depending on any other worktree's files.
 """
 
 from __future__ import annotations
