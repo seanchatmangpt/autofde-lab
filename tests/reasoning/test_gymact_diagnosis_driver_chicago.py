@@ -165,16 +165,23 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
     # The real fake env's own call log -- observable, real state, not an
     # interaction assertion -- proves the five real calls happened in
     # exactly the order a linear observe->diagnose->remediate->mitigate->
-    # verify actuation chain requires.
+    # verify actuation chain requires. A second real `verify` call now
+    # precedes `submit_diagnosis` -- the real, precise fix for the
+    # submission-timing race found live this session (the real conductor
+    # correctly rejected a submission attempted before its own stage
+    # machine reached 'diagnosis'; this driver now waits for that real
+    # stage via the same already-tested verify() bounded poll before
+    # attempting submission).
     assert fake_env.call_log == [
         "observe_cluster_state",
         "run_kubectl",  # deployments
         "run_kubectl",  # pods
         "run_kubectl",  # services
+        "verify",  # stage-wait before submit_diagnosis
         "submit_diagnosis",
         "run_kubectl",  # actuate_remediate re-read
         "submit_mitigation",
-        "verify",
+        "verify",  # final verify
         "teardown",
     ]
 

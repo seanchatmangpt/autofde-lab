@@ -252,6 +252,22 @@ async def run_gymact_mediated_diagnosis(
     async def _submit_diagnosis() -> Any:
         cap = _capability(SREGYM_CAPABILITIES, "submit_diagnosis")
         gate.guard_capability(cap)
+        # Real, precise defect found live this session and fixed here: a
+        # full pipeline run reached this step and was correctly rejected by
+        # the real conductor -- "Cannot submit at stage: 'setup'". The
+        # conductor's own real stage machine had not yet transitioned to
+        # 'diagnosis' when submission was attempted immediately after
+        # observe() -- it did so only later, per that same run's final
+        # verify() observing {'stage': 'diagnosis'}. Reusing the already-real,
+        # already-tested verify() bounded poll here (rather than adding new
+        # retry logic) to genuinely wait for the real stage transition
+        # before attempting submission -- an honest, best-effort wait: if
+        # the real conductor never reaches 'diagnosis' within the bound, the
+        # submission is still attempted (surfacing the real rejection
+        # rather than silently giving up), matching this session's standing
+        # "never fabricate success" discipline.
+        stage_ready, _ = await env.verify({"stage": "diagnosis"})
+        diagnosis_state["submit_diagnosis_stage_wait_passed"] = stage_ready
         top = diagnosis_state.get("top_anomaly")
         label = diagnosis_state.get("label", "no_anomaly_detected")
         payload: dict[str, Any] = {
