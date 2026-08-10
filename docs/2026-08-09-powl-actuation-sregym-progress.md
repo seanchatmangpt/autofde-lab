@@ -775,4 +775,27 @@ orphan-port-forward hypothesis is strongly supported; a future cycle
 should add automated pre-trial orphan cleanup as a standing habit (already
 done manually this cycle) rather than leave it to chance.
 
+**Trial (PID `3971`) result: strongly confirms the orphan hypothesis AND
+finds a new, further-downstream real defect.** The trial got all the way
+through every real pipeline step -- observe, both real submissions,
+real remediation -- and only failed on the very LAST step:
+`verify()`'s own polling loop let a single transient
+`httpx.ReadTimeout: timed out` (one 10s-bounded `/status` poll, well
+within the overall verify budget) propagate uncaught instead of treating
+it as "not yet observed, keep polling." A real, further orphaned
+port-forward was ALSO found after this crash (`teardown()`'s
+`process.terminate()` does not reliably kill the child port-forward
+`main.py` spawns internally -- a real, structural cleanup gap, named but
+not fixed given vendored-code scope).
+
+**Fixed**: `verify()` now catches a failed `_status()` poll and treats it
+as a non-matching observation, letting the real bounded deadline (not a
+swallowed exception) still end the loop correctly. Real regression test:
+a real `SregymEnvironment` instance (bypassing only the heavy subprocess
+`__init__`) pointed at a real unreachable port, proving `verify()`
+completes rather than raising. `21/21` passing.
+
+Orphan port-forward cleaned again, trial relaunched with the resilience
+fix (PID `5961`) -- in progress.
+
 (Grows as cycles attempt more problems.)
