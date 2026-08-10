@@ -479,3 +479,156 @@ def test_build_oracle_verdict_fn_is_a_real_sync_wrapper_around_verify() -> None:
     assert verdict.present is True
     assert verdict.passed is True
     assert target.last_expected == {"stage": "diagnosis_complete"}
+
+
+# ---------------------------------------------------------------------------
+# Oracle failure degrades to OracleVerdict(present=False), never propagates
+# ---------------------------------------------------------------------------
+
+
+def test_build_oracle_verdict_fn_degrades_on_real_raising_verify() -> None:
+    """A real object whose ``verify()`` genuinely raises (simulating a
+    network error / unreachable cluster / malformed conductor response)
+    must not crash the caller -- ``build_oracle_verdict_fn``'s wrapper
+    must catch it and degrade to ``OracleVerdict(present=False)`` so
+    ``evaluate_outcome`` falls back to a structural-only verdict.
+
+    This is not a mock of gymact: it's a real, hand-written object that
+    implements the exact ``verify()`` contract and has real (if simple)
+    behavior -- it really raises when called, which is the legitimate
+    Chicago-style way to exercise this repo's own error-handling code
+    under a real raising collaborator, per
+    ``.claude/rules/testing-chicago-style.md``.
+    """
+
+    class _RealAlwaysRaisingVerifyTarget:
+        """A real object whose ``verify()`` really raises a real
+        exception every time it is awaited -- simulating a transient
+        oracle failure (e.g. a network error) without fabricating a
+        canned return value."""
+
+        def __init__(self) -> None:
+            self.call_count = 0
+
+        async def verify(self, expected: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
+            self.call_count += 1
+            raise ConnectionError("real simulated conductor unreachable")
+
+    target = _RealAlwaysRaisingVerifyTarget()
+    oracle_verdict_fn = build_oracle_verdict_fn(target)
+
+    verdict = oracle_verdict_fn({"stage": "diagnosis_complete"})
+
+    assert verdict.present is False
+    assert target.call_count == 1
+
+
+def test_oracle_verdict_from_environment_degrades_on_real_raising_verify() -> None:
+    """Same degrade-on-raise behavior as the sync wrapper, exercised
+    against the async entry point :func:`oracle_verdict_from_environment`
+    directly, using the same kind of real raising collaborator."""
+    import asyncio
+
+    from autofde_lab.reasoning.sregym_pipeline import oracle_verdict_from_environment
+
+    class _RealAlwaysRaisingVerifyTarget:
+        async def verify(self, expected: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
+            raise TimeoutError("real simulated conductor poll timeout")
+
+    verdict = asyncio.run(
+        oracle_verdict_from_environment(_RealAlwaysRaisingVerifyTarget(), {"stage": "x"})
+    )
+
+    assert verdict.present is False
+
+
+# ---------------------------------------------------------------------------
+# retain(): CONFIRMED with an unproven confirmed_via must raise, not persist
+# ---------------------------------------------------------------------------
+
+
+def test_retain_confirmed_with_default_na_confirmed_via_raises() -> None:
+    """A caller that calls ``retain(verdict=OutcomeVerdict.CONFIRMED)``
+    without also passing a real ``confirmed_via`` must not silently
+    persist ``confirmed_via="n/a"`` on a confirmed case -- that violates
+    the documented invariant that CONFIRMED means
+    ``"structural_only"``/``"structural_and_oracle"``, never ``"n/a"``.
+    ``retain`` must raise ``ValueError`` and the store must stay empty
+    (the real, final-state proof that nothing was persisted)."""
+    from autofde_lab.case_library.outcome_predicate import OutcomeVerdict
+    from autofde_lab.reasoning.sregym_pipeline import PipelineResult
+
+    store = CaseLibraryStore(":memory:")
+    pipeline = SregymDiagnosisPipeline(store, environment=None, ensemble_n=2)
+    result = PipelineResult(
+        source="reasoning",
+        diagnosis="Deployment payments-api scaled to zero.",
+        mitigation_commands=(),
+        taxonomy_category="inject_scale_pods_to_zero",
+        confidence=0.7,
+    )
+    mitigation = ("kubectl -n payments scale deployment payments-api --replicas=3",)
+
+    with pytest.raises(ValueError, match="confirmed_via"):
+        pipeline.retain(
+            _ANOMALY,
+            result,
+            mitigation_commands=mitigation,
+            verdict=OutcomeVerdict.CONFIRMED,
+            # confirmed_via omitted -- defaults to "n/a", which must be
+            # rejected for a CONFIRMED verdict.
+        )
+
+    assert len(store) == 0
+
+
+# ---------------------------------------------------------------------------
+# retain(): Case construction atomicity -- a failed Case(...) build never
+# reaches self._case_store.put(), so a partial write can never occur.
+# ---------------------------------------------------------------------------
+
+
+def test_retain_never_partially_writes_when_case_construction_fails() -> None:
+    """Regression test for case-construction atomicity: everything
+    ``retain`` computes before calling ``Case(...)`` (here,
+    ``symptom_signature_from_anomaly(anomaly)``) runs to completion
+    before ``self._case_store.put(case)`` is ever reached in
+    :meth:`SregymDiagnosisPipeline.retain`. If that upstream computation
+    fails for any reason, ``put`` must never run and the real store must
+    observably contain nothing afterward.
+
+    Uses a real, genuinely malformed ``anomaly`` object (lacking the
+    attributes ``symptom_signature_from_anomaly`` reads) so the failure
+    is a real ``AttributeError`` raised by real code -- not a mock of
+    ``Case``, ``symptom_signature_from_anomaly``, or a monkeypatched
+    ``put``.
+    """
+    from autofde_lab.case_library.outcome_predicate import OutcomeVerdict
+    from autofde_lab.reasoning.sregym_pipeline import PipelineResult
+
+    class _MalformedAnomaly:
+        """A real object that is not a valid ``Anomaly`` -- it has none
+        of the attributes (``kind``/``namespace``/``field``/``observed``)
+        ``symptom_signature_from_anomaly`` reads, so accessing them
+        raises a real ``AttributeError`` before any ``Case`` is built."""
+
+    store = CaseLibraryStore(":memory:")
+    pipeline = SregymDiagnosisPipeline(store, environment=None, ensemble_n=2)
+    result = PipelineResult(
+        source="reasoning",
+        diagnosis="Deployment payments-api scaled to zero.",
+        mitigation_commands=(),
+        taxonomy_category="inject_scale_pods_to_zero",
+        confidence=0.7,
+    )
+
+    with pytest.raises(AttributeError):
+        pipeline.retain(
+            _MalformedAnomaly(),  # type: ignore[arg-type]
+            result,
+            mitigation_commands=("kubectl -n payments scale deployment payments-api --replicas=3",),
+            verdict=OutcomeVerdict.CONFIRMED,
+            confirmed_via="structural_only",
+        )
+
+    assert len(store) == 0
