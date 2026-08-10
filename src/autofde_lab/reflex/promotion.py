@@ -13,7 +13,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Iterable
 
-
 CONSEQUENCE_IR_PACK = "ggen-marketplace:consequence-ir-pack@0.2.0"
 PROMOTION_SCHEMA = "urn:autofde-lab:knowledge-hook-promotion:v1"
 
@@ -281,14 +280,10 @@ class PromotionCourt:
             receipt.subject not in hook.envelope.subjects
             or receipt.scope not in hook.envelope.scopes
         ):
-            raise PromotionRefusal(
-                "REFUSED:EVIDENCE_SCOPE_DRIFT", receipt.evidence_id
-            )
+            raise PromotionRefusal("REFUSED:EVIDENCE_SCOPE_DRIFT", receipt.evidence_id)
 
     @staticmethod
-    def _promotion_digest(
-        hook: CandidateHook, evidence_ids: tuple[str, ...]
-    ) -> str:
+    def _promotion_digest(hook: CandidateHook, evidence_ids: tuple[str, ...]) -> str:
         payload = {
             "schema": PROMOTION_SCHEMA,
             "hook_id": hook.hook_id,
