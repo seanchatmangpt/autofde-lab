@@ -6,7 +6,9 @@ from typing import Any
 
 from autofde_lab_planner.detectors.coredns_fault import detect_coredns_faults
 from autofde_lab_planner.detectors.cronjob_mutation import detect_cronjob_mutations
+from autofde_lab_planner.detectors.dns_policy_override import detect_dns_policy_overrides
 from autofde_lab_planner.detectors.flagd_drift import detect_flagd_config_drift
+from autofde_lab_planner.detectors.host_port_conflict import detect_host_port_conflicts
 from autofde_lab_planner.detectors.ingress_targetport import detect_ingress_and_targetport_faults
 from autofde_lab_planner.detectors.object_reconstruction import detect_missing_objects
 from autofde_lab_planner.detectors.otel_trace import detect_otel_trace_anomalies
@@ -16,7 +18,9 @@ from autofde_lab_planner.detectors.scheduling_deadlock import detect_scheduling_
 from autofde_lab_planner.models import CategoryBDiagnosis, CategoryBMitigation
 from autofde_lab_planner.remediators.coredns_fault import decide_coredns_remediation_commands
 from autofde_lab_planner.remediators.cronjob_mutation import decide_cronjob_remediation_commands
+from autofde_lab_planner.remediators.dns_policy_override import decide_dns_policy_remediation_commands
 from autofde_lab_planner.remediators.flagd_drift import decide_flagd_remediation_commands
+from autofde_lab_planner.remediators.host_port_conflict import decide_host_port_conflict_remediation_commands
 from autofde_lab_planner.remediators.ingress_targetport import decide_ingress_targetport_remediation_commands
 from autofde_lab_planner.remediators.object_reconstruction import decide_object_reconstruction_commands
 from autofde_lab_planner.remediators.otel_trace import decide_otel_remediation_commands
@@ -116,6 +120,18 @@ class CompositePlannerEngine:
             namespace=self.namespace,
         )
 
+        # 10. Deployment-level DNS Policy Overrides
+        dns_policy_overrides = detect_dns_policy_overrides(
+            deployments_json=deployments_json,
+            namespace=self.namespace,
+        )
+
+        # 11. Container hostPort Binding Conflicts
+        host_port_conflicts = detect_host_port_conflicts(
+            deployments_json=deployments_json,
+            namespace=self.namespace,
+        )
+
         # Build natural-language diagnosis text
         text_parts: list[str] = []
 
@@ -158,6 +174,21 @@ class CompositePlannerEngine:
             wm_str = ", ".join(f"{wm.deployment_name} ({wm.fault_kind})" for wm in workload_misconfigs)
             text_parts.append(f"Detected workload/rolling update misconfigurations in namespace {self.namespace}: {wm_str}.")
 
+        if dns_policy_overrides:
+            dp_str = ", ".join(
+                f"{dp.deployment_name} dnsPolicy={dp.observed_dns_policy}"
+                f" nameservers={list(dp.observed_nameservers)}"
+                for dp in dns_policy_overrides
+            )
+            text_parts.append(f"Detected Deployment DNS policy overrides in namespace {self.namespace}: {dp_str}.")
+
+        if host_port_conflicts:
+            hp_str = ", ".join(
+                f"{hp.deployment_name}/{hp.container_name} hostPort={hp.conflicting_host_port}"
+                for hp in host_port_conflicts
+            )
+            text_parts.append(f"Detected container hostPort binding conflicts in namespace {self.namespace}: {hp_str}.")
+
         if not text_parts:
             diagnosis_text = f"No fault mechanism anomalies detected in namespace {self.namespace}."
         else:
@@ -174,6 +205,8 @@ class CompositePlannerEngine:
             scheduling_deadlocks=tuple(scheduling_deadlocks),
             coredns_faults=tuple(coredns_faults),
             workload_misconfigs=tuple(workload_misconfigs),
+            dns_policy_overrides=tuple(dns_policy_overrides),
+            host_port_conflicts=tuple(host_port_conflicts),
             diagnosis_text=diagnosis_text,
         )
 
@@ -257,6 +290,24 @@ class CompositePlannerEngine:
             )
             commands.extend(wm_cmds)
             rollout_wait.extend(wm_deps)
+
+        # 10. DNS Policy Override Remediations
+        if diagnosis.dns_policy_overrides:
+            dp_cmds, dp_deps = decide_dns_policy_remediation_commands(
+                faults=list(diagnosis.dns_policy_overrides),
+                namespace=self.namespace,
+            )
+            commands.extend(dp_cmds)
+            rollout_wait.extend(dp_deps)
+
+        # 11. hostPort Conflict Remediations
+        if diagnosis.host_port_conflicts:
+            hp_cmds, hp_deps = decide_host_port_conflict_remediation_commands(
+                faults=list(diagnosis.host_port_conflicts),
+                namespace=self.namespace,
+            )
+            commands.extend(hp_cmds)
+            rollout_wait.extend(hp_deps)
 
         # Deduplicate wait deployments
         unique_wait = tuple(dict.fromkeys(rollout_wait))
