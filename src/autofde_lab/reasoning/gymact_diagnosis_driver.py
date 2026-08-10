@@ -106,6 +106,7 @@ from autofde_lab.powl.runner import (
     GYMACT_SUBMIT_DIAGNOSIS_LABEL,
     GYMACT_SUBMIT_MITIGATION_LABEL,
     GYMACT_VERIFY_LABEL,
+    GYMACT_WAIT_FOR_DEPLOY_LABEL,
     GatedCapabilityBinding,
     PipelineStallResult,
     build_pipeline_powl_node,
@@ -485,6 +486,47 @@ async def run_gymact_mediated_diagnosis(
         except (json.JSONDecodeError, TypeError):
             return {"raw": raw}
 
+    async def _wait_for_deploy() -> dict[str, Any]:
+        # Real defect found live this cycle, via an actual live trial against
+        # this cycle's own newly-landed concurrent runner: a real trial failed
+        # in mere SECONDS with "namespaces 'social-network' not found". Root
+        # cause: `provider.materialize()`'s readiness signal answers "is the
+        # real conductor's OWN API/MCP surface reachable" -- never "has the
+        # target app finished deploying" (a real, separate, slower process
+        # this session has measured taking 5-15 real minutes). The observe
+        # block's checks used to fire the instant materialize() returned,
+        # racing the real deploy.
+        #
+        # The first fix attempted here was a bare `kubectl get namespace`
+        # poll-on-a-timer retry inside `_check_namespace` -- rejected once
+        # written: it is the naive version of a pattern Kubernetes already has
+        # a real, correct idiom for (watch/wait on an actual observable
+        # condition, not blind interval polling), AND it duplicated a
+        # mechanism this driver already has and already trusts:
+        # `env.verify()`'s real, bounded stage-poll, the exact same call
+        # `_submit_diagnosis` already uses to wait for the conductor's real
+        # stage machine to leave `"setup"`. Reusing that -- rather than
+        # inventing a second, parallel readiness mechanism -- is both more
+        # correct (the conductor's own stage transition IS the real, intended
+        # signal for "deploy phase complete", not a proxy we're guessing at)
+        # and less code. This function is a real, explicit, separate POWL
+        # atom -- structurally sequenced before the concurrent observe block
+        # even starts -- rather than a wait hidden inside one of the block's
+        # own concurrent checks, so the model honestly represents "wait for
+        # deploy" as its own real pipeline step, not a side effect.
+        #
+        # Honest best-effort: if the conductor never leaves "setup" within its
+        # real, already-configured bounded budget (verify_timeout_seconds),
+        # this returns whatever `env.verify()` itself returns (a real, honest
+        # {"passed": False, ...} on timeout, per env.verify()'s own contract)
+        # rather than raising -- the observe block still fires afterward and
+        # will surface its own real, precise failure if the deploy genuinely
+        # never completed, exactly as it did before this fix, just no longer
+        # racing a deploy that (per real measurement) usually finishes well
+        # within this bound.
+        passed, observed = await env.verify({"stage": "diagnosis"})
+        return {"passed": passed, "observed": observed}
+
     async def _check_status() -> dict[str, Any]:
         obs_cap = _capability(SREGYM_CAPABILITIES, "observe_cluster_state")
         gate.guard_capability(obs_cap)
@@ -527,6 +569,17 @@ async def run_gymact_mediated_diagnosis(
         # calls" -- not a silent regression; it does not change whether the
         # overall diagnosis run fails on a bad namespace, only whether the
         # other three real kubectl calls still fire alongside it.
+        #
+        # Real defect found live this cycle, via an actual live trial against
+        # this cycle's own newly-landed concurrent runner (not a hypothetical):
+        # a real trial failed in mere SECONDS with "namespaces 'social-network'
+        # not found". Root cause and fix now live upstream, in
+        # `_wait_for_deploy()` (fired structurally before this whole observe
+        # block even starts) -- see that function's docstring for why polling
+        # `kubectl get namespace` on a timer here was rejected in favor of
+        # waiting on the conductor's own real stage-transition signal. By the
+        # time this check runs, the deploy phase is already known-complete, so
+        # this stays a single, non-retrying, fail-loud check.
         await _kubectl_json(f"get namespace {namespace} -o json")
 
     async def _check_deployments() -> Any:
@@ -767,6 +820,7 @@ async def run_gymact_mediated_diagnosis(
         # manifest entry that had been added just to satisfy the (incorrect)
         # requirement that every actuation-class label be capability-gated.
         GYMACT_VERIFY_LABEL: _binding(_verify),
+        GYMACT_WAIT_FOR_DEPLOY_LABEL: _binding(_wait_for_deploy),
     }
 
     try:

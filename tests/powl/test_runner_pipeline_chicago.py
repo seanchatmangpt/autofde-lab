@@ -63,6 +63,7 @@ from autofde_lab.powl.runner import (
     GYMACT_SUBMIT_DIAGNOSIS_LABEL,
     GYMACT_SUBMIT_MITIGATION_LABEL,
     GYMACT_VERIFY_LABEL,
+    GYMACT_WAIT_FOR_DEPLOY_LABEL,
     GatedCapabilityBinding,
     RECORD_LABEL,
     build_pipeline_powl_node,
@@ -110,6 +111,7 @@ def test_pipeline_node_grafts_real_choicegraph_onto_turtle_sourced_atoms():
         "Atom",  # solve
         "ChoiceGraph",
         "Atom",  # ocel_record
+        "Atom",  # gymact_wait_for_deploy
         "PartialOrder",  # observe block
         "Atom",  # gymact_scan_anomalies
         "Atom",  # gymact_submit_diagnosis
@@ -126,6 +128,7 @@ def test_pipeline_node_grafts_real_choicegraph_onto_turtle_sourced_atoms():
         "dispatch_solve",
         "solve",
         RECORD_LABEL,
+        GYMACT_WAIT_FOR_DEPLOY_LABEL,
         GYMACT_SCAN_ANOMALIES_LABEL,
         GYMACT_SUBMIT_DIAGNOSIS_LABEL,
         GYMACT_RECHECK_SCAN_LABEL,
@@ -137,7 +140,7 @@ def test_pipeline_node_grafts_real_choicegraph_onto_turtle_sourced_atoms():
     entry_labels = {c.label for c in choice.children if isinstance(c, Atom)}
     assert entry_labels == {CASE_RETRIEVE_LABEL, CASE_HIT_LABEL, "case_miss", "cbr_retain"}
 
-    observe_block = node.children[6]
+    observe_block = node.children[7]
     assert isinstance(observe_block, PartialOrder)
     assert observe_block.order == frozenset()  # no order edges -- real AND-concurrency
     assert [c.label for c in observe_block.children] == [
@@ -148,7 +151,7 @@ def test_pipeline_node_grafts_real_choicegraph_onto_turtle_sourced_atoms():
         GYMACT_CHECK_SERVICES_LABEL,
     ]
 
-    remediate_block = node.children[9]
+    remediate_block = node.children[10]
     assert isinstance(remediate_block, PartialOrder)
     assert remediate_block.order == frozenset()
     assert [c.label for c in remediate_block.children] == [
@@ -189,12 +192,13 @@ def test_replay_structural_fires_invokes_real_action_bindings_one_event_per_fire
 
     # 8 leaves in the linear+choice+record prefix (scan, phi_encode,
     # dispatch_solve, solve = 4; retrieve -> case_hit -> retain = 3; record
-    # = 1), then the 13-atom terminal actuation chain (5-check observe block
-    # + scan_anomalies + submit_diagnosis + 3-check remediate block +
-    # recheck_scan + submit_mitigation + verify) -- unbound here, so they
-    # fire as structural no-ops -- = 8 + 13 = 21 real fires.
-    assert len(log.events) == 21
-    assert [e.activity for e in log.events].count("powl_structural_fire") == 21
+    # = 1), then the 14-atom terminal actuation chain (wait_for_deploy +
+    # 5-check observe block + scan_anomalies + submit_diagnosis + 3-check
+    # remediate block + recheck_scan + submit_mitigation + verify) --
+    # unbound here, so they fire as structural no-ops -- = 8 + 14 = 22 real
+    # fires.
+    assert len(log.events) == 22
+    assert [e.activity for e in log.events].count("powl_structural_fire") == 22
 
     # Exactly the 3 bound labels were really invoked, once each.
     assert [label for label, _ in invocations] == ["scan", "cbr_retrieve", "case_hit"]
@@ -514,7 +518,7 @@ def test_gymact_check_block_enables_all_five_checks_simultaneously():
     marking = _drive_to(node, target_len=5)
 
     live = enabled(node, marking)
-    assert live == {(6, 0), (6, 1), (6, 2), (6, 3), (6, 4)}
+    assert live == {(7, 0), (7, 1), (7, 2), (7, 3), (7, 4)}
 
 
 def test_gymact_scan_anomalies_and_joins_all_five_checks():
@@ -524,17 +528,17 @@ def test_gymact_scan_anomalies_and_joins_all_five_checks():
     node = build_pipeline_powl_node()
     marking = _drive_to(node, target_len=5)
     check_paths = sorted(enabled(node, marking))
-    assert check_paths == [(6, 0), (6, 1), (6, 2), (6, 3), (6, 4)]
+    assert check_paths == [(7, 0), (7, 1), (7, 2), (7, 3), (7, 4)]
 
     for i, path in enumerate(check_paths):
         live_before = enabled(node, marking)
-        assert (7,) not in live_before, f"gymact_scan_anomalies enabled too early, after {i} of 5 checks"
+        assert (8,) not in live_before, f"gymact_scan_anomalies enabled too early, after {i} of 5 checks"
         marking = fire(node, marking, path)
 
     # All 5 have now fired -- the AND-join is enabled, and ONLY it (the
     # remaining 4 check paths are gone, no other atom jumped ahead).
     live_after = enabled(node, marking)
-    assert live_after == {(7,)}
+    assert live_after == {(8,)}
 
 
 def _capability_gate() -> CapabilityGate:
@@ -706,10 +710,11 @@ def test_run_pipeline_handles_bound_exhaustion_mid_batch_honestly():
     batch: only the atoms that actually fired get bindings invoked, and
     `classify_pipeline_stall` correctly reports `BLOCKED:BOUND_EXHAUSTED`
     afterward. The linear prefix (4) + choice graph (3) + record atom (1) =
-    8 real fires complete first; `max_activity_fires=10` allows exactly 2 of
-    the 5-check batch to fire before the mid-batch `PowlError` stops it."""
+    8 real fires, then `gymact_wait_for_deploy` (unbound here -- fires as a
+    real structural no-op) = 9, then `max_activity_fires=11` allows exactly
+    2 of the 5-check batch to fire before the mid-batch `PowlError` stops it."""
     node = build_pipeline_powl_node()
-    straddling_bound = ExecutionBound(max_activity_fires=10, max_node_visits=4096, max_marking_states=8192)
+    straddling_bound = ExecutionBound(max_activity_fires=11, max_node_visits=4096, max_marking_states=8192)
     calls: list[tuple[str, int]] = []
     # No sleeps needed here -- this test is about fire-budget honesty, not
     # concurrency timing.
@@ -738,8 +743,8 @@ def test_run_pipeline_handles_bound_exhaustion_mid_batch_honestly():
 
     assert result.final is False
     assert result.stall == "BLOCKED:BOUND_EXHAUSTED"
-    # Exactly 10 real fires total (8 prefix + 2 of the 5-check batch).
-    assert len(log.events) == 10
+    # Exactly 11 real fires total (8 prefix + wait_for_deploy + 2 of the 5-check batch).
+    assert len(log.events) == 11
     # Only the atoms that actually fired got a binding invoked -- 2, not 5.
     assert len(calls) == 2, f"expected exactly 2 real bindings invoked mid-batch, got {calls!r}"
 
@@ -781,12 +786,12 @@ def test_remediate_recheck_block_is_independently_concurrent_from_observe_block(
     # -- all single-enabled or sequentially-fired via `_drive_to`'s
     # lexicographically-smallest-path policy -- until the remediate-recheck
     # block's 3 real check paths are all simultaneously enabled.
-    marking = _drive_to(node, target_len=3, min_step=15)
+    marking = _drive_to(node, target_len=3, min_step=16)
 
     live = enabled(node, marking)
-    assert live == {(9, 0), (9, 1), (9, 2)}
+    assert live == {(10, 0), (10, 1), (10, 2)}
 
     # The already-complete observe block's own paths are gone -- not
     # re-enabled, not interfered with by reaching the remediate block.
-    for path in [(6, 0), (6, 1), (6, 2), (6, 3), (6, 4), (7,), (8,)]:
+    for path in [(7, 0), (7, 1), (7, 2), (7, 3), (7, 4), (8,), (9,)]:
         assert path not in live

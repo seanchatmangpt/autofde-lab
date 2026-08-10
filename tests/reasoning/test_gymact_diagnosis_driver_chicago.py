@@ -61,6 +61,7 @@ from autofde_lab.powl.runner import (
     GYMACT_SUBMIT_DIAGNOSIS_LABEL,
     GYMACT_SUBMIT_MITIGATION_LABEL,
     GYMACT_VERIFY_LABEL,
+    GYMACT_WAIT_FOR_DEPLOY_LABEL,
 )
 from autofde_lab.reasoning.gymact_diagnosis_driver import (
     GymactMediatedDiagnosisResult,
@@ -243,11 +244,20 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
     # `submit_diagnosis`, in that order), a second `Counter`-based multiset
     # over the concurrent remediate-recheck slice, and a strict-order
     # suffix (unchanged from today).
-    assert len(fake_env.call_log) == 13
-    observe_phase = fake_env.call_log[0:5]
-    middle = fake_env.call_log[5:7]
-    remediate_phase = fake_env.call_log[7:10]
-    suffix = fake_env.call_log[10:13]
+    # Real prefix addition (cycle 18, found via an actual live trial):
+    # `gymact_wait_for_deploy` fires a real, single, strictly-ordered
+    # `verify()` call BEFORE the observe block ever starts -- closing a real
+    # race between gymact's `materialize()` readiness signal and the real,
+    # slower app deployment. This is deliberately NOT part of the concurrent
+    # observe-phase multiset below: it structurally precedes the whole block.
+    assert len(fake_env.call_log) == 14
+    prefix = fake_env.call_log[0:1]
+    observe_phase = fake_env.call_log[1:6]
+    middle = fake_env.call_log[6:8]
+    remediate_phase = fake_env.call_log[8:11]
+    suffix = fake_env.call_log[11:14]
+
+    assert prefix == ["verify"], "gymact_wait_for_deploy must fire before the observe block"
 
     assert Counter(observe_phase) == Counter(
         {
@@ -290,6 +300,7 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
         if e.activity == "powl_structural_fire"
     ]
     gymact_all_labels = {
+        GYMACT_WAIT_FOR_DEPLOY_LABEL,
         GYMACT_CHECK_STATUS_LABEL,
         GYMACT_CHECK_NAMESPACE_LABEL,
         GYMACT_CHECK_DEPLOYMENTS_LABEL,
@@ -305,9 +316,13 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
         GYMACT_VERIFY_LABEL,
     }
     gymact_labels_in_fire_order = [label for label in fired_labels if label in gymact_all_labels]
-    assert len(gymact_labels_in_fire_order) == 13
+    assert len(gymact_labels_in_fire_order) == 14
 
-    observe_block_labels = gymact_labels_in_fire_order[0:5]
+    assert gymact_labels_in_fire_order[0] == GYMACT_WAIT_FOR_DEPLOY_LABEL, (
+        "gymact_wait_for_deploy must be the first real gymact_* atom to fire"
+    )
+
+    observe_block_labels = gymact_labels_in_fire_order[1:6]
     assert Counter(observe_block_labels) == Counter(
         {
             GYMACT_CHECK_STATUS_LABEL: 1,
@@ -317,9 +332,9 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
             GYMACT_CHECK_SERVICES_LABEL: 1,
         }
     )
-    assert gymact_labels_in_fire_order[5:7] == [GYMACT_SCAN_ANOMALIES_LABEL, GYMACT_SUBMIT_DIAGNOSIS_LABEL]
+    assert gymact_labels_in_fire_order[6:8] == [GYMACT_SCAN_ANOMALIES_LABEL, GYMACT_SUBMIT_DIAGNOSIS_LABEL]
 
-    remediate_block_labels = gymact_labels_in_fire_order[7:10]
+    remediate_block_labels = gymact_labels_in_fire_order[8:11]
     assert Counter(remediate_block_labels) == Counter(
         {
             GYMACT_RECHECK_DEPLOYMENTS_LABEL: 1,
@@ -327,7 +342,7 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
             GYMACT_RECHECK_SERVICES_LABEL: 1,
         }
     )
-    assert gymact_labels_in_fire_order[10:13] == [
+    assert gymact_labels_in_fire_order[11:14] == [
         GYMACT_RECHECK_SCAN_LABEL,
         GYMACT_SUBMIT_MITIGATION_LABEL,
         GYMACT_VERIFY_LABEL,

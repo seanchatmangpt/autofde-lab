@@ -297,6 +297,16 @@ GYMACT_SUBMIT_DIAGNOSIS_LABEL = "gymact_submit_diagnosis"
 GYMACT_ACTUATE_REMEDIATE_LABEL = "gymact_actuate_remediate"
 GYMACT_SUBMIT_MITIGATION_LABEL = "gymact_submit_mitigation"
 GYMACT_VERIFY_LABEL = "gymact_verify"
+#: Real, explicit pipeline step (found and fixed forward this cycle, via an
+#: actual live trial): waits on the conductor's own real stage-transition
+#: signal (the same bounded `env.verify()` poll `gymact_verify` uses) BEFORE
+#: the concurrent observe block ever fires -- closing a real race between
+#: `materialize()`'s readiness signal (the conductor API/MCP surface being
+#: reachable) and the real, slower app deployment (measured 5-15 real
+#: minutes) actually finishing. Same class as `gymact_verify`: a plain
+#: coroutine oracle call, never a real gymact `Capability`, so it takes a
+#: bare `ActionBinding`, not a `GatedCapabilityBinding`.
+GYMACT_WAIT_FOR_DEPLOY_LABEL = "gymact_wait_for_deploy"
 
 #: Remediate-phase sibling of the three observe-phase check labels that need a
 #: real capability call (deployments/pods/services -- not namespace/status,
@@ -338,7 +348,9 @@ ALLOWED_ACTUATION_BINDING_LABELS: frozenset[str] = frozenset(
 #: completeness check -- a caller may run a pipeline with or without a real
 #: oracle-verify step wired in, unlike the nine always-required read-only
 #: pipeline steps.
-ALLOWED_ACTUATION_ORACLE_LABELS: frozenset[str] = frozenset({GYMACT_VERIFY_LABEL})
+ALLOWED_ACTUATION_ORACLE_LABELS: frozenset[str] = frozenset(
+    {GYMACT_VERIFY_LABEL, GYMACT_WAIT_FOR_DEPLOY_LABEL}
+)
 
 
 class ActuationBindingRefused(ValueError):
@@ -494,6 +506,7 @@ def build_pipeline_powl_node(turtle_text: str | None = None) -> PowlNode:
         ]
     )
     actuation_entries: tuple[PowlNode, ...] = (
+        Atom(label=GYMACT_WAIT_FOR_DEPLOY_LABEL),
         observe_block,
         Atom(label=GYMACT_SCAN_ANOMALIES_LABEL),
         Atom(label=GYMACT_SUBMIT_DIAGNOSIS_LABEL),
