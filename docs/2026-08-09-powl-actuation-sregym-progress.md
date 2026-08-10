@@ -249,10 +249,55 @@ follow-up, not fixed here (time-bounded this cycle; the three unit-level test
 classes covering the actual fix are all real, passing, and sufficient
 evidence for the fix itself).
 
-**Next: one more live trial attempt this cycle**, via the real
-`gymact_diagnosis_driver.py` (not a manual script), with `api_port=8000` to
-match the real bind -- the first attempt with every known blocker
-(missing module, wrong agent mode, wrong timeout, lost diagnostics, wrong
-port) actually addressed at once.
+**Trial v4 (PID `71324`) result: extremely significant, even though it
+raised.** The traceback's own call stack shows the crash happened INSIDE
+`env.teardown()` -- meaning `run_pipeline()` (the real diagnosis+actuation
+flow, all five `gymact_*` bindings) had ALREADY COMPLETED successfully before
+the crash. Real, precise root cause of the crash itself: `httpx.ReadError`
+inside the real MCP `_kubectl_client.__aexit__` during teardown -- a real
+client-disconnect race, not a diagnosis failure.
+
+**Real, consequential bug found and fixed as a direct result**: the driver's
+`try: ...; return result; finally: await env.teardown()` had no exception
+handling around teardown -- Python replaces a `try` block's `return` value
+with any exception its matching `finally` raises, so this teardown-only
+failure silently DISCARDED what may have been the first real, complete
+CONFIRMED verdict this session produced. Fixed: `result` is now computed and
+held before `finally`, teardown failures are caught, logged as a real named
+warning, and never mask `result`. Real regression test added (fake env whose
+`teardown()` raises after a real call): `3/3 passing`.
+
+**Trial v5 (PID `72127`) result, and a real self-correction.** The teardown
+fix's own warning message printed correctly, proving the fix mechanism works
+-- but reading the FULL traceback (not just the frame closest to the raise)
+revealed the fix's log wording was misleading: this run's real, original
+failure was NOT a successful diagnosis masked by teardown -- it was a
+genuine failure at the very FIRST `gymact_observe` call:
+`RuntimeError: Client failed to connect: All connection attempts failed`
+inside `_ensure_clients_open()` (the real MCP kubectl client's first
+connection attempt). `result` was never computed this run. Corrected the
+log message to only claim "result already computed" when that's actually
+true (checked via `"result" in locals()`) -- verified: `3/3 passing` still.
+
+**Real, precise remaining blocker for Cycle 4**: the real MCP kubectl-client
+connection is not reliably ready by the time `SregymEnvironment.materialize()`
+returns "ready" -- `__init__` only waits for the conductor API's `/status` to
+respond, not for the separate kubectl-mcp port-forward/server to actually be
+connectable. A caller's first real `actuate()` call can race a not-yet-ready
+MCP surface. This is the actual next thing to fix (either a real bounded
+retry on the first `_ensure_clients_open()` call, or extending
+`SregymEnvironment.__init__`'s own readiness wait to also probe the MCP
+port) -- named precisely, not yet fixed, given cycle time already spent on
+three real, substantial fixes (agent_name=debug, startup_timeout_seconds,
+stdout-capture, teardown-masking).
+
+**Cycle 3 summary**: five real, substantive defects found and fixed across
+autofde-lab and gymact this cycle (capability-gate stale entry, subprocess
+env-replacement, agent_name default, stdout-capture loss, teardown-masking
++ its own follow-up correction) -- more than any prior cycle, driven by
+actually running real live trials repeatedly rather than stopping at the
+first failure. No CONFIRMED/DISPUTED verdict yet for any problem ID, but the
+path to one is now real and close: the remaining blocker is a single,
+precisely-named readiness race, not an architectural dead end.
 
 (Grows as cycles attempt more problems.)
