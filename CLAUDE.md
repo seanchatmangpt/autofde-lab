@@ -18,6 +18,14 @@ given receipt, admission, or actuation semantics. Actuation runs through
 OpenClaw, never through BRCE (which belongs to other systems in the
 portfolio and has no role here).
 
+The same law applies to gyms. `vendor/gyms/` (sregym, devops-gym,
+enterprisebench, ...) are real, exact-pinned vendored checkouts for
+**reference only** — read their source, cite it, audit/materialize their
+git pin. This repo never imports or subprocess-launches them directly.
+`gymact` (the real, standalone sibling package at `~/gymact`) is the one
+real actuation surface for any gym; every real diagnosis/mitigation trial
+goes through it. See `.claude/rules/gym-actuation-boundary.md`.
+
 Repository: https://github.com/seanchatmangpt/autofde-lab | Upstream:
 https://github.com/airbus/scikit-decide | Docs:
 https://airbus.github.io/scikit-decide/
@@ -83,6 +91,7 @@ never looked at `~/bcinr`. Verify with `/memory` and `/context`, don't assume.
 | reporting status, or writing any Explore-phase report to the user | `.claude/rules/explore-register.md` |
 | about to `git push`, open/merge a PR, release, deploy docs, trigger long CI, or call the OpenClaw bridge | `.claude/rules/actuation-boundary.md` |
 | adding or modifying a domain, solver, or C++ hub solver; or looking for where anything lives | `.claude/rules/architecture.md` |
+| touching `vendor/gyms/**`, `src/autofde_lab/gymact/**`, `src/autofde_lab/reasoning/**`, or `src/autofde_lab/sota/**` — or working on gymact/sregym actuation at all | `.claude/rules/gym-actuation-boundary.md` |
 | making any claim that spans `~/mfw`, `~/ggen`, `~/ggen-create`, `~/ggen-legacy`, or `~/bcinr` | `.claude/rules/ecosystem-boundary.md` **and** `docs/ecosystem-standing.md` |
 | touching `fabric/pddl_engine.py`, `fabric/powl.py`, PDDL requirements, or the capability ontology | `.claude/rules/ecosystem-boundary.md` |
 | reaching for a project skill or agent instead of re-deriving a workflow | `.claude/rules/project-tooling.md` |
