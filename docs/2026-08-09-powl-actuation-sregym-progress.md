@@ -747,4 +747,32 @@ landed (the `verify()` stage-name defect explaining every prior
 recovery. The connection-reliability gap remains real and only partially
 understood -- named precisely rather than resolved, for Cycle 9.
 
+### Cycle 9 (2026-08-10)
+
+**Addressed Cycle 8's open question (b), and found a real, likely-
+complete explanation for the whole recurring connection-reliability
+gap.** Before relaunching, checked for leftover processes and found a
+real, live, orphaned `kubectl port-forward svc/mcp-server 9954:9954`
+process, dangling since an earlier failed trial (timestamp matched Cycle
+8's own default-port failure). Real, precise hypothesis: `main.py` spawns
+this port-forward as ITS OWN child process (confirmed by prior-session log
+evidence: `"Port forwarding established at 9954"` logged from within
+`main.py`'s own stdout, not gymact); `SregymEnvironment.teardown()` only
+calls `self._process.terminate()` on the parent `main.py` process --
+if that termination doesn't reliably propagate to kill the child
+port-forward (e.g. a trial failing before `__init__` even completes,
+meaning `env` and thus `teardown()` never runs at all), the port-forward
+survives as an orphan. A STALE port-forward would accept real TCP
+connections (satisfying `_tcp_port_reachable`'s check) while actually
+proxying to a dead/wrong backend session -- exactly matching every real
+connection-exhaustion failure's signature observed this entire session
+(TCP-reachable, MCP-handshake-never-completes).
+
+Killed the orphan, relaunched on the now-confirmed-clean default ports
+(9954/8000, reverting Cycle 8's port-change experiment per its own named
+next step) -- PID `3971`, in progress. If this run succeeds cleanly, the
+orphan-port-forward hypothesis is strongly supported; a future cycle
+should add automated pre-trial orphan cleanup as a standing habit (already
+done manually this cycle) rather than leave it to chance.
+
 (Grows as cycles attempt more problems.)
