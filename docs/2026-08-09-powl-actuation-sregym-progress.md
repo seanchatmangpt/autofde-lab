@@ -1361,3 +1361,33 @@ reviewed with this specific lens, or (b) accepting that static review
 has reached a genuine, honest plateau and the primary remaining
 bottleneck is squarely the credential, worth stating plainly rather than
 manufacturing further busywork.
+
+### Cycle 18 (2026-08-10)
+
+**Key-rotation check**: real direct `curl` against the Groq API -> **HTTP 200,
+real response**. Key was rotated by the user between cycles. Cluster healthy,
+no orphaned processes.
+
+**Independently re-verified prior cycle's real, substantial landing**: the
+POWL v2 concurrent-runner work (real POWL v2 marked-graph/AND-concurrency in
+`build_pipeline_powl_node()` + a real `ThreadPoolExecutor`-based concurrent
+batch-fire in `run_pipeline()`, plus a corresponding driver binding split)
+merged in commit `5df7972` between cycles. Re-verified this cycle, not
+trusted from the commit message alone: both modules import cleanly, **56/56
+real tests pass** across `test_runner_pipeline_chicago.py`,
+`test_executor.py`, `test_gymact_diagnosis_driver_chicago.py`, and the two
+new orthogonal TDD files (`test_runner_concurrency_property_based.py`,
+`test_runner_concurrency_adversarial.py`), zero real mock matches (grep
+re-run this cycle).
+
+**First real live trial launched against the new concurrent runner**
+(PID `13083`, `wrong_dns_policy_social_network`, the same test problem used
+throughout this session) -- the observe-block's 5 environment checks
+(status, namespace, deployments, pods, services) and the remediate-recheck
+block's 3 checks will now genuinely fire concurrently via real OS threads
+for the first time against a real live cluster, not just in the Chicago
+test suite's fake-environment coverage. In progress via Monitor at the time
+of this entry -- real outcome to be recorded once it completes.
+
+**Status table**: `wrong_dns_policy_social_network` ->
+`ATTEMPTED:UNCONFIRMED (in progress)` pending this trial's real completion.
