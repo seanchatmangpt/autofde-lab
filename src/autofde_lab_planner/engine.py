@@ -8,9 +8,11 @@ from autofde_lab_planner.detectors.coredns_fault import detect_coredns_faults
 from autofde_lab_planner.detectors.cronjob_mutation import detect_cronjob_mutations
 from autofde_lab_planner.detectors.flagd_drift import detect_flagd_config_drift
 from autofde_lab_planner.detectors.ingress_targetport import detect_ingress_and_targetport_faults
+from autofde_lab_planner.detectors.limitrange_violation import detect_limitrange_violations
 from autofde_lab_planner.detectors.object_reconstruction import detect_missing_objects
 from autofde_lab_planner.detectors.otel_trace import detect_otel_trace_anomalies
 from autofde_lab_planner.detectors.probe_heuristics import detect_probe_faults
+from autofde_lab_planner.detectors.resourcequota_exhaustion import detect_resourcequota_exhaustion
 from autofde_lab_planner.detectors.rolling_update_misconfig import detect_workload_and_rolling_update_misconfigs
 from autofde_lab_planner.detectors.scheduling_deadlock import detect_scheduling_deadlocks
 from autofde_lab_planner.models import CategoryBDiagnosis, CategoryBMitigation
@@ -18,9 +20,11 @@ from autofde_lab_planner.remediators.coredns_fault import decide_coredns_remedia
 from autofde_lab_planner.remediators.cronjob_mutation import decide_cronjob_remediation_commands
 from autofde_lab_planner.remediators.flagd_drift import decide_flagd_remediation_commands
 from autofde_lab_planner.remediators.ingress_targetport import decide_ingress_targetport_remediation_commands
+from autofde_lab_planner.remediators.limitrange_violation import decide_limitrange_remediation_commands
 from autofde_lab_planner.remediators.object_reconstruction import decide_object_reconstruction_commands
 from autofde_lab_planner.remediators.otel_trace import decide_otel_remediation_commands
 from autofde_lab_planner.remediators.probe_heuristics import decide_probe_remediation_commands
+from autofde_lab_planner.remediators.resourcequota_exhaustion import decide_resourcequota_remediation_commands
 from autofde_lab_planner.remediators.rolling_update_misconfig import decide_workload_remediation_commands
 from autofde_lab_planner.remediators.scheduling_deadlock import decide_scheduling_remediation_commands
 
@@ -42,6 +46,8 @@ class CompositePlannerEngine:
         events_json: dict[str, Any] | list[dict[str, Any]] | None = None,
         ingresses_json: dict[str, Any] | list[dict[str, Any]] | None = None,
         cronjobs_json: dict[str, Any] | list[dict[str, Any]] | None = None,
+        resourcequotas_json: dict[str, Any] | list[dict[str, Any]] | None = None,
+        limitranges_json: dict[str, Any] | list[dict[str, Any]] | None = None,
         flagd_configmap_json: str | dict[str, Any] | None = None,
         raw_traces_by_service: dict[str, Any] | None = None,
         elevated_revision_deployments: set[str] | None = None,
@@ -116,6 +122,20 @@ class CompositePlannerEngine:
             namespace=self.namespace,
         )
 
+        # 10. ResourceQuota Exhaustion
+        resourcequota_exhaustions = detect_resourcequota_exhaustion(
+            resourcequotas_json=resourcequotas_json,
+            events_json=events_json,
+            namespace=self.namespace,
+        )
+
+        # 11. LimitRange Violations
+        limitrange_violations = detect_limitrange_violations(
+            limitranges_json=limitranges_json,
+            deployments_json=deployments_json,
+            namespace=self.namespace,
+        )
+
         # Build natural-language diagnosis text
         text_parts: list[str] = []
 
@@ -158,6 +178,20 @@ class CompositePlannerEngine:
             wm_str = ", ".join(f"{wm.deployment_name} ({wm.fault_kind})" for wm in workload_misconfigs)
             text_parts.append(f"Detected workload/rolling update misconfigurations in namespace {self.namespace}: {wm_str}.")
 
+        if resourcequota_exhaustions:
+            rq_str = ", ".join(
+                f"{rq.quota_name}/{rq.resource_name} ({rq.used}/{rq.hard}, {rq.fault_kind})"
+                for rq in resourcequota_exhaustions
+            )
+            text_parts.append(f"Detected ResourceQuota exhaustion in namespace {self.namespace}: {rq_str}.")
+
+        if limitrange_violations:
+            lr_str = ", ".join(
+                f"{lv.deployment_name}/{lv.container_name}:{lv.resource_name} ({lv.fault_kind})"
+                for lv in limitrange_violations
+            )
+            text_parts.append(f"Detected LimitRange violations in namespace {self.namespace}: {lr_str}.")
+
         if not text_parts:
             diagnosis_text = f"No fault mechanism anomalies detected in namespace {self.namespace}."
         else:
@@ -174,6 +208,8 @@ class CompositePlannerEngine:
             scheduling_deadlocks=tuple(scheduling_deadlocks),
             coredns_faults=tuple(coredns_faults),
             workload_misconfigs=tuple(workload_misconfigs),
+            resourcequota_exhaustions=tuple(resourcequota_exhaustions),
+            limitrange_violations=tuple(limitrange_violations),
             diagnosis_text=diagnosis_text,
         )
 
@@ -257,6 +293,24 @@ class CompositePlannerEngine:
             )
             commands.extend(wm_cmds)
             rollout_wait.extend(wm_deps)
+
+        # 10. ResourceQuota Exhaustion Remediations
+        if diagnosis.resourcequota_exhaustions:
+            rq_cmds, rq_deps = decide_resourcequota_remediation_commands(
+                faults=list(diagnosis.resourcequota_exhaustions),
+                namespace=self.namespace,
+            )
+            commands.extend(rq_cmds)
+            rollout_wait.extend(rq_deps)
+
+        # 11. LimitRange Violation Remediations
+        if diagnosis.limitrange_violations:
+            lr_cmds, lr_deps = decide_limitrange_remediation_commands(
+                faults=list(diagnosis.limitrange_violations),
+                namespace=self.namespace,
+            )
+            commands.extend(lr_cmds)
+            rollout_wait.extend(lr_deps)
 
         # Deduplicate wait deployments
         unique_wait = tuple(dict.fromkeys(rollout_wait))

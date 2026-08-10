@@ -195,6 +195,38 @@ class WorkloadMisconfigFault:
 
 
 # -----------------------------------------------------------------------------
+# ResourceQuota Exhaustion Models
+# -----------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class ResourceQuotaExhaustionFault:
+    quota_name: str
+    namespace: str
+    resource_name: str
+    used: str
+    hard: str
+    used_ratio: float
+    blocked_deployment: str | None = None
+    fault_kind: Literal["near_exhaustion", "exceeded"] = "near_exhaustion"
+
+
+# -----------------------------------------------------------------------------
+# LimitRange Violation Models
+# -----------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class LimitRangeViolationFault:
+    limitrange_name: str
+    namespace: str
+    deployment_name: str
+    container_name: str
+    resource_name: str
+    fault_kind: Literal["below_min", "above_max", "missing_default", "ratio_exceeded"]
+    observed_value: str | None = None
+    bound_value: str | None = None
+
+
+# -----------------------------------------------------------------------------
 # Aggregate Engine Diagnosis & Mitigation Models
 # -----------------------------------------------------------------------------
 
@@ -210,6 +242,8 @@ class CategoryBDiagnosis:
     scheduling_deadlocks: tuple[SchedulingDeadlockFault, ...] = ()
     coredns_faults: tuple[CoreDNSFault, ...] = ()
     workload_misconfigs: tuple[WorkloadMisconfigFault, ...] = ()
+    resourcequota_exhaustions: tuple[ResourceQuotaExhaustionFault, ...] = ()
+    limitrange_violations: tuple[LimitRangeViolationFault, ...] = ()
     diagnosis_text: str = ""
 
 
