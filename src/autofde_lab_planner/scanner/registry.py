@@ -342,6 +342,126 @@ def scan_cronjobs(state: ClusterState) -> tuple[Anomaly, ...]:
 
 
 # ---------------------------------------------------------------------------
+# Pod composite -- declared_vs_observed on probe config, dnsPolicy, and an
+# aggregate_threshold on hostPort collisions. Covers what the abandoned
+# enumeration called ProbeFault, DnsPolicyOverrideFault, HostPortConflictFault.
+# ---------------------------------------------------------------------------
+
+
+def scan_pods(state: ClusterState) -> tuple[Anomaly, ...]:
+    anomalies: list[Anomaly] = []
+    host_port_usage: dict[tuple[str, int], list[str]] = {}
+    for pod in _items(state.get("pods")):
+        pod_name = pod.get("metadata", {}).get("name", "<unknown>")
+        namespace = pod.get("metadata", {}).get("namespace", "default")
+
+        baseline_dns_policy = pod.get("metadata", {}).get("annotations", {}).get("baseline-dns-policy")
+        observed_dns_policy = pod.get("spec", {}).get("dnsPolicy", "ClusterFirst")
+        if baseline_dns_policy is not None:
+            anomaly = diff_engine.compare_declared_vs_observed(
+                kind="Pod",
+                object_name=pod_name,
+                namespace=namespace,
+                field="spec.dnsPolicy",
+                declared=baseline_dns_policy,
+                observed=observed_dns_policy,
+            )
+            if anomaly is not None:
+                anomalies.append(anomaly)
+
+        for container in pod.get("spec", {}).get("containers", []):
+            probe = container.get("livenessProbe") or container.get("readinessProbe")
+            if probe is not None:
+                baseline_threshold = container.get("baselineFailureThreshold")
+                observed_threshold = probe.get("failureThreshold")
+                if baseline_threshold is not None:
+                    anomaly = diff_engine.compare_declared_vs_observed(
+                        kind="Pod",
+                        object_name=pod_name,
+                        namespace=namespace,
+                        field="probe.failureThreshold",
+                        declared=baseline_threshold,
+                        observed=observed_threshold,
+                        detail=f"container {container.get('name')} probe too aggressive",
+                    )
+                    if anomaly is not None:
+                        anomalies.append(anomaly)
+
+            for port in container.get("ports", []):
+                host_port = port.get("hostPort")
+                if host_port is not None:
+                    key = (namespace, host_port)
+                    host_port_usage.setdefault(key, []).append(pod_name)
+
+    for (namespace, host_port), users in host_port_usage.items():
+        if len(users) > 1:
+            anomalies.append(
+                Anomaly(
+                    kind="Pod",
+                    object_name=",".join(sorted(users)),
+                    namespace=namespace,
+                    relation_class="aggregate_threshold",
+                    field="spec.containers[].ports[].hostPort",
+                    observed=f"{len(users)} pods on hostPort {host_port}",
+                    expected="<= 1 pod per hostPort",
+                    detail=f"hostPort {host_port} conflicts across pods {sorted(users)}",
+                )
+            )
+    return tuple(anomalies)
+
+
+# ---------------------------------------------------------------------------
+# Ingress -- dangling_reference (backend service missing) and
+# declared_vs_observed (target port mismatch). Covers IngressMisrouteFault,
+# TargetPortFault.
+# ---------------------------------------------------------------------------
+
+
+def scan_ingresses(state: ClusterState) -> tuple[Anomaly, ...]:
+    anomalies: list[Anomaly] = []
+    services_by_name: dict[str, dict[str, Any]] = {
+        svc.get("metadata", {}).get("name"): svc for svc in _items(state.get("services"))
+    }
+    for ing in _items(state.get("ingresses")):
+        name = ing.get("metadata", {}).get("name", "<unknown>")
+        namespace = ing.get("metadata", {}).get("namespace", "default")
+        for rule in ing.get("spec", {}).get("rules", []):
+            for path in rule.get("http", {}).get("paths", []):
+                backend = path.get("backend", {}).get("service", {})
+                svc_name = backend.get("name")
+                if svc_name is None:
+                    continue
+                svc = services_by_name.get(svc_name)
+                anomaly = diff_engine.find_dangling_reference(
+                    kind="Ingress",
+                    object_name=name,
+                    namespace=namespace,
+                    field="spec.rules[].http.paths[].backend.service.name",
+                    referenced_name=svc_name,
+                    available_names=set(services_by_name.keys()),
+                )
+                if anomaly is not None:
+                    anomalies.append(anomaly)
+                    continue
+                declared_port = backend.get("port", {}).get("number")
+                observed_ports = {p.get("port") for p in svc.get("spec", {}).get("ports", [])}
+                if declared_port is not None and declared_port not in observed_ports:
+                    anomalies.append(
+                        Anomaly(
+                            kind="Ingress",
+                            object_name=name,
+                            namespace=namespace,
+                            relation_class="declared_vs_observed",
+                            field="spec.rules[].http.paths[].backend.service.port.number",
+                            observed=str(sorted(observed_ports)),
+                            expected=str(declared_port),
+                            detail=f"backend service {svc_name!r} exposes ports {sorted(observed_ports)}, ingress targets {declared_port}",
+                        )
+                    )
+    return tuple(anomalies)
+
+
+# ---------------------------------------------------------------------------
 ANALYZERS: dict[str, Callable[[ClusterState], tuple[Anomaly, ...]]] = {
     "Deployment": scan_deployments,
     "Service": scan_services,
@@ -350,6 +470,8 @@ ANALYZERS: dict[str, Callable[[ClusterState], tuple[Anomaly, ...]]] = {
     "RBAC": scan_rbac,
     "ResourceQuota": scan_resourcequotas,
     "CronJob": scan_cronjobs,
+    "Pod": scan_pods,
+    "Ingress": scan_ingresses,
 }
 
 
