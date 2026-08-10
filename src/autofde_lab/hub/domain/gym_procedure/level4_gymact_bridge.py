@@ -63,6 +63,21 @@ _PROVIDERS = {
     # docs/2026-08-08-level4-gym-census-round2.md's own module-path
     # correction note for this gym.
     "memory": ("gymact.providers", "MemoryProvider", "memory"),
+    # Real class name confirmed by direct read of ~/gymact's own sregym.py
+    # (not the differently-named SREGymProvider that also exists on an
+    # unmerged gymact PR branch): SregymVendorProvider, provider .name
+    # "sregym", already imported directly (not through this bridge) by
+    # autofde_lab.reasoning.sregym_pipeline via SREGYM_CAPABILITIES. This
+    # entry is what lets the generic Level-4 discovery/trial harness reach
+    # the same real provider generically, not just that one hand-written
+    # pipeline.
+    "sregym": ("gymact.gyms.sregym", "SregymVendorProvider", "sregym"),
+    # Cherry-picked into ~/gymact as a standalone file (see that repo's own
+    # commit ba52b51) from an unmerged first-class-SWEGym PR -- real, not
+    # vendored/faked. materialization_requires_authority=False (materialize
+    # only looks up dataset metadata); the single evaluate-patch DO
+    # capability requires authority at actuate time (real Docker mutation).
+    "swegym": ("gymact.gyms.swegym", "SWEGymProvider", "swegym"),
 }
 
 # How to enumerate a parameterized DO capability's payload space.
