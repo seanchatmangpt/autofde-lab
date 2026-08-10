@@ -6,6 +6,7 @@ from typing import Any
 
 from autofde_lab_planner.detectors.coredns_fault import detect_coredns_faults
 from autofde_lab_planner.detectors.cronjob_mutation import detect_cronjob_mutations
+from autofde_lab_planner.detectors.env_var_shadow import detect_env_var_shadow_faults
 from autofde_lab_planner.detectors.flagd_drift import detect_flagd_config_drift
 from autofde_lab_planner.detectors.ingress_targetport import detect_ingress_and_targetport_faults
 from autofde_lab_planner.detectors.object_reconstruction import detect_missing_objects
@@ -16,6 +17,7 @@ from autofde_lab_planner.detectors.scheduling_deadlock import detect_scheduling_
 from autofde_lab_planner.models import CategoryBDiagnosis, CategoryBMitigation
 from autofde_lab_planner.remediators.coredns_fault import decide_coredns_remediation_commands
 from autofde_lab_planner.remediators.cronjob_mutation import decide_cronjob_remediation_commands
+from autofde_lab_planner.remediators.env_var_shadow import decide_env_var_shadow_remediation_commands
 from autofde_lab_planner.remediators.flagd_drift import decide_flagd_remediation_commands
 from autofde_lab_planner.remediators.ingress_targetport import decide_ingress_targetport_remediation_commands
 from autofde_lab_planner.remediators.object_reconstruction import decide_object_reconstruction_commands
@@ -116,6 +118,12 @@ class CompositePlannerEngine:
             namespace=self.namespace,
         )
 
+        # 10. Env Var Shadowing Faults
+        env_var_shadows = detect_env_var_shadow_faults(
+            deployments_json=deployments_json,
+            namespace=self.namespace,
+        )
+
         # Build natural-language diagnosis text
         text_parts: list[str] = []
 
@@ -158,6 +166,13 @@ class CompositePlannerEngine:
             wm_str = ", ".join(f"{wm.deployment_name} ({wm.fault_kind})" for wm in workload_misconfigs)
             text_parts.append(f"Detected workload/rolling update misconfigurations in namespace {self.namespace}: {wm_str}.")
 
+        if env_var_shadows:
+            ev_str = ", ".join(
+                f"{ev.deployment_name}/{ev.container_name}:{ev.env_var_name}='{ev.observed_value}'"
+                for ev in env_var_shadows
+            )
+            text_parts.append(f"Detected env var shadowing faults in namespace {self.namespace}: {ev_str}.")
+
         if not text_parts:
             diagnosis_text = f"No fault mechanism anomalies detected in namespace {self.namespace}."
         else:
@@ -174,6 +189,7 @@ class CompositePlannerEngine:
             scheduling_deadlocks=tuple(scheduling_deadlocks),
             coredns_faults=tuple(coredns_faults),
             workload_misconfigs=tuple(workload_misconfigs),
+            env_var_shadows=tuple(env_var_shadows),
             diagnosis_text=diagnosis_text,
         )
 
@@ -257,6 +273,15 @@ class CompositePlannerEngine:
             )
             commands.extend(wm_cmds)
             rollout_wait.extend(wm_deps)
+
+        # 10. Env Var Shadowing Remediations
+        if diagnosis.env_var_shadows:
+            ev_cmds, ev_deps = decide_env_var_shadow_remediation_commands(
+                faults=list(diagnosis.env_var_shadows),
+                namespace=self.namespace,
+            )
+            commands.extend(ev_cmds)
+            rollout_wait.extend(ev_deps)
 
         # Deduplicate wait deployments
         unique_wait = tuple(dict.fromkeys(rollout_wait))

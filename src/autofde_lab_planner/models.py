@@ -195,6 +195,26 @@ class WorkloadMisconfigFault:
 
 
 # -----------------------------------------------------------------------------
+# Environment Variable Shadowing Fault Models
+# -----------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class EnvVarShadowFault:
+    """A container env var whose value silently overrides/shadows the expected
+    baseline value (e.g. FRONTEND_HOST=localhost overriding a real upstream
+    host), per sregym's inject_env_variable_shadowing."""
+
+    deployment_name: str
+    namespace: str
+    container_name: str
+    env_var_name: str
+    observed_value: str
+    expected_value: str
+    container_index: int = 0
+    env_index: int = 0
+
+
+# -----------------------------------------------------------------------------
 # Aggregate Engine Diagnosis & Mitigation Models
 # -----------------------------------------------------------------------------
 
@@ -210,6 +230,7 @@ class CategoryBDiagnosis:
     scheduling_deadlocks: tuple[SchedulingDeadlockFault, ...] = ()
     coredns_faults: tuple[CoreDNSFault, ...] = ()
     workload_misconfigs: tuple[WorkloadMisconfigFault, ...] = ()
+    env_var_shadows: tuple[EnvVarShadowFault, ...] = ()
     diagnosis_text: str = ""
 
 
