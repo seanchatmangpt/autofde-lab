@@ -202,6 +202,22 @@ def test_coverage_rbac_misconfig():
     assert any(a.relation_class == "insufficient_capability" for a in anomalies)
 
 
+def test_coverage_cronjob_mutation():
+    """Abandoned CronJobMutationFault (cronjob_mutation.py). Also the concrete
+    proof this scanner adds a new kind at O(1) cost -- see registry.py's
+    `scan_cronjobs`, added as the sixth analyzer after the initial five."""
+    state = {
+        "cronjobs": [
+            {
+                "metadata": {"name": "nightly", "namespace": "ns", "annotations": {"baseline-schedule": "0 2 * * *"}},
+                "spec": {"schedule": "* * * * *"},
+            }
+        ]
+    }
+    anomalies = scan(state)
+    assert any(a.kind == "CronJob" and a.relation_class == "declared_vs_observed" for a in anomalies)
+
+
 def test_taxonomy_classifies_known_anomaly():
     a = Anomaly(
         kind="PersistentVolumeClaim",

@@ -311,6 +311,36 @@ def scan_resourcequotas(state: ClusterState) -> tuple[Anomaly, ...]:
     return tuple(anomalies)
 
 
+
+# ---------------------------------------------------------------------------
+# Sixth kind, added after the initial five (+RBAC composite) to demonstrate
+# O(1) extension: one new analyzer function, one new ANALYZERS entry.
+# ---------------------------------------------------------------------------
+
+
+def scan_cronjobs(state: ClusterState) -> tuple[Anomaly, ...]:
+    """CronJob -- declared_vs_observed on schedule mutation."""
+    anomalies: list[Anomaly] = []
+    for cj in _items(state.get("cronjobs")):
+        name = cj.get("metadata", {}).get("name", "<unknown>")
+        namespace = cj.get("metadata", {}).get("namespace", "default")
+        annotations = cj.get("metadata", {}).get("annotations", {})
+        baseline_schedule = annotations.get("baseline-schedule")
+        observed_schedule = cj.get("spec", {}).get("schedule")
+        if baseline_schedule is not None:
+            anomaly = diff_engine.compare_declared_vs_observed(
+                kind="CronJob",
+                object_name=name,
+                namespace=namespace,
+                field="spec.schedule",
+                declared=baseline_schedule,
+                observed=observed_schedule,
+            )
+            if anomaly is not None:
+                anomalies.append(anomaly)
+    return tuple(anomalies)
+
+
 # ---------------------------------------------------------------------------
 ANALYZERS: dict[str, Callable[[ClusterState], tuple[Anomaly, ...]]] = {
     "Deployment": scan_deployments,
@@ -319,6 +349,7 @@ ANALYZERS: dict[str, Callable[[ClusterState], tuple[Anomaly, ...]]] = {
     "ConfigMap": scan_configmaps,
     "RBAC": scan_rbac,
     "ResourceQuota": scan_resourcequotas,
+    "CronJob": scan_cronjobs,
 }
 
 
