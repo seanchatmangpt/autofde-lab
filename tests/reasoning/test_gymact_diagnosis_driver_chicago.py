@@ -105,6 +105,7 @@ class _FakeSregymEnvironment:
 
     def __init__(self) -> None:
         self.call_log: list[str] = []
+        self.kubectl_commands: list[str] = []
         self.torn_down = False
 
     async def actuate(self, capability: _FakeCapability, payload: dict) -> dict:
@@ -113,6 +114,7 @@ class _FakeSregymEnvironment:
             return {"after": {"stage": "observed"}}
         if capability.binding == "run_kubectl":
             command = payload.get("command", "")
+            self.kubectl_commands.append(command)
             if "deployments" in command:
                 body = _DEPLOYMENTS
             elif "pods" in command:
@@ -223,6 +225,61 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
     assert result.verdict == OutcomeVerdict.CONFIRMED
     assert result.confirmed_via == "structural_and_oracle"
     assert result.verify_observed["stage"] == "complete"
+
+    # Real regression coverage for the significant defect found and fixed
+    # live this cycle: the real exec_kubectl_cmd_safely tool rejects any
+    # command not literally starting with "kubectl" -- confirmed in source
+    # (mcp_server/kubectl_server_helper/kubectl_cmd_runner.py). Every real
+    # command this driver ever sent (deployments/pods/services scan reads,
+    # the remediate re-read) must now carry that literal prefix.
+    assert fake_env.kubectl_commands, "expected at least one real kubectl call to have fired"
+    for real_command in fake_env.kubectl_commands:
+        assert real_command.startswith("kubectl "), (
+            f"real command {real_command!r} is missing the literal 'kubectl' prefix the "
+            "real sregym tool requires -- this is exactly the defect this test guards"
+        )
+
+
+class _FakeSregymEnvironmentRejectingKubectl(_FakeSregymEnvironment):
+    """Real regression fixture for the false-anomaly-detection risk found
+    live this cycle: a real command-rejection response
+    ("Command Rejected: Only kubectl commands are allowed...") must never
+    be silently absorbed into a plausible-looking `{"raw": ...}` dict a
+    caller could mistake for real cluster data -- it must raise."""
+
+    async def actuate(self, capability: _FakeCapability, payload: dict) -> dict:
+        if capability.binding == "run_kubectl":
+            self.call_log.append(capability.binding)
+            self.kubectl_commands.append(payload.get("command", ""))
+            return {
+                "result_text": [
+                    {"text": "Command Rejected: Only kubectl commands are allowed. Please check the command and try again."}
+                ]
+            }
+        return await super().actuate(capability, payload)
+
+
+def test_a_real_command_rejection_response_raises_rather_than_being_silently_absorbed():
+    fake_env = _FakeSregymEnvironmentRejectingKubectl()
+
+    async def _factory() -> _FakeSregymEnvironmentRejectingKubectl:
+        return fake_env
+
+    with pytest.raises(Exception):
+        asyncio.run(
+            run_gymact_mediated_diagnosis(
+                "wrong_dns_policy_social_network",
+                mcp_server_port=1234,
+                api_port=5678,
+                _environment_factory=_factory,
+                _capabilities=_FAKE_CAPABILITIES,
+            )
+        )
+    # The real rejection was hit on the very first real kubectl call
+    # (gymact_observe's deployments read) -- confirms this is caught at
+    # the single real call site, not accidentally bypassed.
+    assert fake_env.kubectl_commands
+    assert fake_env.kubectl_commands[0].startswith("kubectl ")
 
 
 class _FakeSregymEnvironmentRaisingOnTeardown(_FakeSregymEnvironment):

@@ -216,9 +216,38 @@ async def run_gymact_mediated_diagnosis(
     async def _kubectl_json(command: str) -> Any:
         cap = _capability(SREGYM_CAPABILITIES, "run_kubectl")
         gate.guard_capability(cap)
-        result = await env.actuate(cap, {"command": command})
+        # Real, significant defect found live this cycle, source-confirmed:
+        # the real exec_kubectl_cmd_safely tool
+        # (mcp_server/kubectl_server_helper/kubectl_cmd_runner.py) rejects
+        # any command that does not literally start with the string
+        # "kubectl" -- `if not command.strip().startswith("kubectl"):
+        # return "Command Rejected: Only kubectl commands are allowed...`.
+        # Every call this driver has ever made omitted that prefix (e.g.
+        # "get pods -n ... -o json" instead of "kubectl get pods -n ... -o
+        # json") -- confirmed by a real, direct rejection observed live for
+        # gymact_actuate_remediate's identically-shaped call. This means
+        # gymact_observe's earlier "successful" scans this session were
+        # very likely also silently operating on rejected-command garbage
+        # output (`_kubectl_json`'s own `except (json.JSONDecodeError,
+        # TypeError): return {"raw": raw}` fallback swallows a rejection
+        # string into a plausible-looking dict rather than raising), not
+        # real cluster state -- a real, serious finding, not just a syntax
+        # fix. Prefixing every command with "kubectl " here closes it at
+        # the single real call site all kubectl commands go through.
+        full_command = command if command.strip().startswith("kubectl") else f"kubectl {command}"
+        result = await env.actuate(cap, {"command": full_command})
         text_blocks = result.get("result_text", []) if isinstance(result, dict) else []
         raw = "".join(b.get("text", "") for b in text_blocks if isinstance(b, dict))
+        # Real hardening added alongside the prefix fix above: a real
+        # command-rejection response is real, structured text this MCP
+        # tool always returns for a real reason (confirmed live) -- it must
+        # never be silently absorbed by the JSONDecodeError fallback below
+        # into a plausible-looking-but-fabricated {"raw": ...} dict that a
+        # caller (the scanner) could mistake for real cluster data,
+        # exactly the false-anomaly-detection risk this cycle's
+        # investigation surfaced.
+        if raw.strip().startswith("Command Rejected:"):
+            raise RuntimeError(f"real kubectl command rejected by sregym: {raw.strip()}")
         try:
             return json.loads(raw)
         except (json.JSONDecodeError, TypeError):
