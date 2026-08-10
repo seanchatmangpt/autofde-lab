@@ -556,7 +556,17 @@ to the new real call order (a second `verify` now precedes
 `submit_diagnosis`). `3/3` passing. Cluster health and node-affinity fix
 re-verified fresh before relaunching.
 
-Trial relaunched with the fix (PID `89588`) -- in progress; this may reach
-the first real CONFIRMED/DISPUTED verdict.
+**Trial (PID `89588`) result: real, full connection-retry exhaustion,
+10/10 identical failures over 30s.** Different signature from Cycle 5's
+intermittent case (which succeeded after retries) -- every one of the 10
+attempts failed identically: `RuntimeError: Client failed to connect: All
+connection attempts failed`. Real, checked evidence: cluster healthy
+(`kubectl cluster-info` succeeds), `mcp-server` pod healthy right now
+(`1/1 Running`, though `RESTARTS: 1 (79m ago)` -- a real prior crash,
+timing not yet correlated to any specific trial), no leftover process on
+port 9954. Not yet concluded whether this is the same intermittent gap
+(just unlucky enough to exhaust the widened budget this time) or a new,
+distinct problem -- retrying directly (PID `90341`) as a reproducibility
+check before deciding.
 
 (Grows as cycles attempt more problems.)
