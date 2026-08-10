@@ -208,8 +208,7 @@ def pool_startup_benchmark(
 
 def format_table(summaries: list[SampleSummary]) -> str:
     header = (
-        f"{'scenario':<24} {'median ms':>10} {'p95 ms':>10} "
-        f"{'act/s':>11} {'peak':>6}"
+        f"{'scenario':<24} {'median ms':>10} {'p95 ms':>10} {'act/s':>11} {'peak':>6}"
     )
     rows = [header, "-" * len(header)]
     for item in summaries:
