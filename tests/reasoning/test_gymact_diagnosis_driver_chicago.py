@@ -207,6 +207,7 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
     # attempting submission).
     assert fake_env.call_log == [
         "observe_cluster_state",
+        "run_kubectl",  # get namespace pre-check
         "run_kubectl",  # deployments
         "run_kubectl",  # pods
         "run_kubectl",  # services
@@ -332,10 +333,72 @@ def test_a_real_command_rejection_response_raises_rather_than_being_silently_abs
             )
         )
     # The real rejection was hit on the very first real kubectl call
-    # (gymact_observe's deployments read) -- confirms this is caught at
-    # the single real call site, not accidentally bypassed.
+    # (gymact_observe's real namespace-existence pre-check, added this
+    # cycle) -- confirms this is caught at the single real call site, not
+    # accidentally bypassed.
     assert fake_env.kubectl_commands
     assert fake_env.kubectl_commands[0].startswith("kubectl ")
+
+
+class _FakeSregymEnvironmentRejectingOnlyNamespaceCheck(_FakeSregymEnvironment):
+    """Real regression fixture for the namespace-existence gap found and
+    fixed this cycle (verified live against a real cluster): `kubectl get
+    deployments -n <nonexistent> -o json` returns real exit 0 with a real,
+    valid, EMPTY `{"items": []}` body -- NOT an error -- while real `kubectl
+    get namespace <nonexistent>` DOES raise (non-zero exit, wrapped as a
+    real `"Command Rejected: ..."` response by the real
+    `kubectl_cmd_runner.py`). This fixture models exactly that asymmetry:
+    only the namespace pre-check is rejected; deployments/pods/services
+    reads would otherwise succeed with real (if empty) data, same as they
+    genuinely do against a nonexistent namespace on a real cluster."""
+
+    async def actuate(self, capability: _FakeCapability, payload: dict) -> dict:
+        if capability.binding == "run_kubectl":
+            command = payload.get("command", "")
+            self.call_log.append(capability.binding)
+            self.kubectl_commands.append(command)
+            if command.startswith("kubectl get namespace"):
+                return {
+                    "result_text": [
+                        {
+                            "text": (
+                                'Command Rejected: Error executing kubectl command:\n'
+                                'Error from server (NotFound): namespaces "does-not-exist" not found'
+                            )
+                        }
+                    ]
+                }
+            return {"result_text": [{"text": json.dumps({"items": []})}]}
+        return await super().actuate(capability, payload)
+
+
+def test_observe_refuses_a_nonexistent_namespace_instead_of_silently_scanning_it_empty():
+    """Proves the real fix this cycle: before this fix, a resolved-but-
+    never-deployed (or genuinely wrong) namespace would silently produce a
+    plausible-looking `{"items": []}` scan and a false `no_anomaly_detected`
+    verdict -- indistinguishable from a genuinely healthy app. Now the real
+    namespace-existence pre-check raises first, before that silent false
+    negative can ever be reached."""
+    fake_env = _FakeSregymEnvironmentRejectingOnlyNamespaceCheck()
+
+    async def _factory() -> _FakeSregymEnvironmentRejectingOnlyNamespaceCheck:
+        return fake_env
+
+    with pytest.raises(RuntimeError, match="Command Rejected"):
+        asyncio.run(
+            run_gymact_mediated_diagnosis(
+                "wrong_dns_policy_social_network",
+                mcp_server_port=1234,
+                api_port=5678,
+                _environment_factory=_factory,
+                _capabilities=_FAKE_CAPABILITIES,
+            )
+        )
+    # The real namespace pre-check fired first and was the ONLY real
+    # kubectl call -- the deployments/pods/services scan (which this
+    # fixture would otherwise have let through with real, valid, empty
+    # data) never ran.
+    assert fake_env.kubectl_commands == ["kubectl get namespace social-network -o json"]
 
 
 class _FakeSregymEnvironmentDisputedOracle(_FakeSregymEnvironment):

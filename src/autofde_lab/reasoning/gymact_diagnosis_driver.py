@@ -453,6 +453,27 @@ async def run_gymact_mediated_diagnosis(
         gate.guard_capability(obs_cap)
         status = await env.actuate(obs_cap, {})
 
+        # Real, precise defect found live this cycle (verified directly
+        # against a real cluster, not assumed): `kubectl get deployments -n
+        # <nonexistent-namespace> -o json` returns real exit code 0 with a
+        # real, valid, EMPTY `{"items": []}` body -- the k8s API server does
+        # not validate namespace existence for a list query. A resolved-but-
+        # never-deployed (or genuinely wrong) namespace would therefore
+        # silently produce zero real anomalies, indistinguishable from a
+        # genuinely healthy app -- exactly the false-negative
+        # `no_anomaly_detected` risk `PROBLEM_ID_NAMESPACE` (this cycle's
+        # namespace-resolution fix) reduces but cannot fully close on its
+        # own. By contrast, real `kubectl get namespace <nonexistent>`
+        # DOES raise: non-zero exit, non-monitoring command, so
+        # `kubectl_cmd_runner.py`'s own `_execute_kubectl_command` raises a
+        # real `RuntimeError`, wrapped as `"Command Rejected: ..."` by its
+        # outer handler -- the exact real rejection shape `_kubectl_json`
+        # above already raises on. Reusing that already-hardened path here
+        # closes the gap: a namespace that doesn't exist now fails loudly,
+        # before the (silently-empty) deployments/pods/services scan ever
+        # runs, rather than producing a plausible-looking false negative.
+        await _kubectl_json(f"get namespace {namespace} -o json")
+
         deployments = await _kubectl_json(f"get deployments -n {namespace} -o json")
         pods = await _kubectl_json(f"get pods -n {namespace} -o json")
         services = await _kubectl_json(f"get services -n {namespace} -o json")
