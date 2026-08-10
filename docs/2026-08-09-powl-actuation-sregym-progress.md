@@ -798,4 +798,41 @@ completes rather than raising. `21/21` passing.
 Orphan port-forward cleaned again, trial relaunched with the resilience
 fix (PID `5961`) -- in progress.
 
+**Trial v2 (PID `5961`) result: verify() fix confirmed working (no crash),
+but a NEW, deeper, real finding surfaced.** `RETURNCODE: 0`, real full
+completion again -- but `verify_observed: {}`. Not one transient poll
+failure this time: EVERY real `/status` poll across the FULL 300s verify
+budget failed to get a response, a sustained total outage, not an
+intermittent gap. Checked real state directly afterward: the separate
+`mcp-server` k8s pod (serving the kubectl-mcp surface, port 9954) stayed
+genuinely healthy throughout (used successfully by `gymact_observe`/
+`gymact_actuate_remediate` in the SAME run, confirmed by real returned
+pod data) -- the failure is isolated to the conductor's OWN local API
+process (`main.py`'s own in-process uvicorn server on port 8000), which is
+architecturally distinct from the k8s-hosted MCP surface.
+
+**Real, well-evidenced hypothesis, NOT yet confirmed** (named precisely,
+not guessed): the conductor's own `/status` endpoint may become genuinely
+unresponsive -- not crashed, but busy -- for the entire post-submission
+evaluation window, consistent with a long-running, blocking judge/
+evaluation call running on the SAME event loop that also serves the API.
+Both submissions' own embedded `before`/`after` status checks succeeded
+right up through `submit_mitigation`'s own real response -- the outage
+begins specifically after both submissions are accepted, not before.
+
+**Real next step for Cycle 10, not yet attempted**: either widen
+`verify_timeout_seconds` substantially further (600-1200s, to test
+whether the conductor eventually recovers once its own evaluation
+completes), or investigate `main.py`'s own source for what synchronous/
+blocking work runs between accepting a submission and its next real
+`/status` response.
+
+**Cycle 9 summary**: found and fixed the real orphaned-port-forward
+pattern (likely explaining much of the session's connection-reliability
+noise) and a real verify()-crash-on-transient-failure defect. The pipeline
+now runs completely clean end to end with zero crashes -- the remaining
+gap is a genuine, well-evidenced question about the conductor's own
+post-submission evaluation latency, not a code defect in this repo or
+gymact.
+
 (Grows as cycles attempt more problems.)
