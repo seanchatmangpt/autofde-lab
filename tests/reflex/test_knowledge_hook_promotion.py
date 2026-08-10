@@ -6,7 +6,6 @@ import unittest
 from dataclasses import replace
 from pathlib import Path
 
-
 MODULE_PATH = (
     Path(__file__).resolve().parents[2]
     / "src"
@@ -14,7 +13,9 @@ MODULE_PATH = (
     / "reflex"
     / "promotion.py"
 )
-SPEC = importlib.util.spec_from_file_location("autofde_lab_reflex_promotion", MODULE_PATH)
+SPEC = importlib.util.spec_from_file_location(
+    "autofde_lab_reflex_promotion", MODULE_PATH
+)
 assert SPEC is not None and SPEC.loader is not None
 promotion = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = promotion
@@ -49,7 +50,9 @@ def envelope(*, compensation: str | None = None) -> HookEnvelope:
     )
 
 
-def hook(hook_class: HookClass = HookClass.ACTUATION, **changes: object) -> CandidateHook:
+def hook(
+    hook_class: HookClass = HookClass.ACTUATION, **changes: object
+) -> CandidateHook:
     value = CandidateHook(
         hook_id="urn:hook:restart-service-after-known-failure",
         hook_class=hook_class,
@@ -131,9 +134,7 @@ class PromotionCourtTests(unittest.TestCase):
         with self.assertRaisesRegex(
             PromotionRefusal, "REFUSED:REFLEX_COMPENSATION_REQUIRED"
         ):
-            self.court.evaluate(
-                hook(HookClass.REFLEX, envelope=envelope()), evidence()
-            )
+            self.court.evaluate(hook(HookClass.REFLEX, envelope=envelope()), evidence())
 
     def test_construct_hook_never_enters_fast_path(self) -> None:
         with self.assertRaisesRegex(PromotionRefusal, "REFUSED:CONSTRUCT_ONLY"):
@@ -146,8 +147,9 @@ class PromotionCourtTests(unittest.TestCase):
             (hook(embedded_authority_token="secret"), "REFUSED:EMBEDDED_AUTHORITY"),
         ]
         for attacked, refusal in attacks:
-            with self.subTest(refusal=refusal), self.assertRaisesRegex(
-                PromotionRefusal, refusal
+            with (
+                self.subTest(refusal=refusal),
+                self.assertRaisesRegex(PromotionRefusal, refusal),
             ):
                 self.court.evaluate(attacked, evidence())
 
@@ -188,8 +190,9 @@ class PromotionCourtTests(unittest.TestCase):
     def test_unverified_positive_evidence_is_refused(self) -> None:
         for field in ("postcondition_verified", "replay_verified"):
             bad = replace(receipt("urn:receipt:positive-2"), **{field: False})
-            with self.subTest(field=field), self.assertRaisesRegex(
-                PromotionRefusal, "REFUSED:POSITIVE_NOT_ALIVE"
+            with (
+                self.subTest(field=field),
+                self.assertRaisesRegex(PromotionRefusal, "REFUSED:POSITIVE_NOT_ALIVE"),
             ):
                 self.court.evaluate(
                     hook(),
@@ -227,8 +230,9 @@ class PromotionCourtTests(unittest.TestCase):
             ),
         ]
         for attacked, refusal in attacks:
-            with self.subTest(refusal=refusal), self.assertRaisesRegex(
-                PromotionRefusal, refusal
+            with (
+                self.subTest(refusal=refusal),
+                self.assertRaisesRegex(PromotionRefusal, refusal),
             ):
                 self.court.evaluate(
                     hook(),
@@ -281,7 +285,9 @@ class PromotionCourtTests(unittest.TestCase):
         for observation in attacks:
             with self.subTest(observation=observation):
                 result = route_promoted_hook(promoted, observation)
-                self.assertEqual(RouteDecision.ESCALATE_TO_COGNITION, result.decision)
+                self.assertEqual(
+                    RouteDecision.ESCALATE_TO_COGNITION, result.decision
+                )
                 self.assertTrue(result.cognition_required)
                 self.assertIsNone(result.request)
 
@@ -307,7 +313,9 @@ class PromotionCourtTests(unittest.TestCase):
                 ],
             )
 
-    def test_cognition_elimination_rate_measures_compiled_known_patterns(self) -> None:
+    def test_cognition_elimination_rate_measures_compiled_known_patterns(
+        self,
+    ) -> None:
         self.assertEqual(0.0, cognition_elimination_rate(100, 100))
         self.assertEqual(0.95, cognition_elimination_rate(100, 5))
         self.assertEqual(1.0, cognition_elimination_rate(100, 0))
