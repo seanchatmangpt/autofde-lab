@@ -364,12 +364,26 @@ async def run_gymact_mediated_diagnosis(
         except Exception as teardown_exc:  # noqa: BLE001 -- intentionally broad: any teardown failure must not mask `result`
             import logging
 
+            # `result` may not be bound yet if the `try` block above itself
+            # raised before reaching its own `result = ...` assignment --
+            # in that case this teardown failure is a real, SEPARATE issue,
+            # and Python will still (correctly) propagate the try block's
+            # own original exception once this `finally` completes without
+            # itself raising. Word the log accurately for both cases rather
+            # than always claiming success.
+            _result_was_computed = "result" in locals()
             logging.getLogger(__name__).warning(
-                "gymact_diagnosis_driver: env.teardown() raised %r after a "
-                "real diagnosis result was already computed -- the result "
-                "is still returned; this is a real resource-cleanup gap, "
-                "not a diagnosis failure.",
+                "gymact_diagnosis_driver: env.teardown() raised %r%s",
                 teardown_exc,
+                (
+                    " after a real diagnosis result was already computed -- "
+                    "the result is still returned; this is a real "
+                    "resource-cleanup gap, not a diagnosis failure."
+                    if _result_was_computed
+                    else " while the try block itself was already failing for "
+                    "a separate reason -- that original exception, not this "
+                    "teardown failure, is what will propagate."
+                ),
             )
 
     return result
