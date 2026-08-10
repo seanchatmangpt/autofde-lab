@@ -628,4 +628,33 @@ scope. A future cycle should consider whether the retry budget needs
 another real increase, or whether this warrants investigating the
 port-forward's own real stability under this session's accumulated load.
 
+**Trial v4 (PID `92880`) result: CONFIRMS the retraction, real further
+progress.** With the kubectl-prefix fix live, `gymact_observe` for the
+SAME problem (`wrong_dns_policy_social_network`) now genuinely returns
+`anomaly_count: 0, label: 'no_anomaly_detected'` -- empirical proof the
+earlier `inject_scale_pods_to_zero` finding was a false positive from
+garbage/rejected-command data, exactly as the retraction above concluded.
+
+`gymact_actuate_remediate` now succeeds with real data (a real
+`kubectl get pods` JSON response, real pod names like
+`compose-post-service-cc6886b66-...`) -- previously rejected, now real.
+Both submissions succeeded again. The pipeline correctly submitted an
+honest "no anomaly detected" diagnosis rather than fabricating one,
+matching this session's own design principle.
+
+Still `UNCONFIRMED` on the same precise gap (`verify()` expects
+`'complete'`, observes `'mitigation'`). **New, real, useful open question**:
+the scanner found zero anomalies for a DNS-policy fault -- either a real
+scanner-coverage gap (DNS policy correctness isn't modeled by any of the
+scanner's 4 generic relation-classes: declared_vs_observed,
+dangling_reference, insufficient_capability, aggregate_threshold), or the
+fault genuinely isn't visible in what's currently scanned (deployments/
+pods/services, not the `dnsPolicy`/`dnsConfig` spec fields the injected
+fault actually mutates). Named precisely for a future cycle -- not
+investigated further this cycle given its already extensive scope.
+
+| problem_id | status | last real evidence |
+|---|---|---|
+| wrong_dns_policy_social_network | ATTEMPTED:UNCONFIRMED (real, full pipeline, real submissions accepted, real remediation data, scanner found no anomaly for this fault type -- real gap named, not a crash) | PID `92880`, full OCEL log this cycle |
+
 (Grows as cycles attempt more problems.)
