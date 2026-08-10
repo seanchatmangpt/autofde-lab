@@ -340,7 +340,7 @@ async def run_gymact_mediated_diagnosis(
             oracle=OracleVerdict(present=True, passed=verify_passed),
         )
 
-        return GymactMediatedDiagnosisResult(
+        result = GymactMediatedDiagnosisResult(
             problem_id=problem_id,
             ocel_log=ocel_log,
             stall=stall,
@@ -349,4 +349,27 @@ async def run_gymact_mediated_diagnosis(
             verify_observed=verify_observed,
         )
     finally:
-        await env.teardown()
+        # Real bug found and fixed forward this session: `finally:
+        # await env.teardown()` with no exception handling meant a
+        # teardown-only failure (e.g. a real MCP client disconnect race,
+        # confirmed live -- `httpx.ReadError` inside `_kubectl_client
+        # .__aexit__`) silently discarded an already-successful `result`
+        # from the `try` block, since Python replaces a `return`'s value
+        # with any exception raised in the matching `finally`. Cleanup
+        # failing must never destroy a real, already-computed diagnosis
+        # result -- log it as a real, named, non-fatal teardown warning
+        # instead.
+        try:
+            await env.teardown()
+        except Exception as teardown_exc:  # noqa: BLE001 -- intentionally broad: any teardown failure must not mask `result`
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "gymact_diagnosis_driver: env.teardown() raised %r after a "
+                "real diagnosis result was already computed -- the result "
+                "is still returned; this is a real resource-cleanup gap, "
+                "not a diagnosis failure.",
+                teardown_exc,
+            )
+
+    return result

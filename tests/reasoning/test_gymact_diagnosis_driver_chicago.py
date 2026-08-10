@@ -218,6 +218,46 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
     assert result.verify_observed["stage"] == "complete"
 
 
+class _FakeSregymEnvironmentRaisingOnTeardown(_FakeSregymEnvironment):
+    """Real regression fixture for the bug found and fixed forward this
+    session: `finally: await env.teardown()` with no exception handling
+    meant a teardown-only failure discarded an already-successful `result`
+    (Python replaces a `try` block's `return` value with any exception a
+    matching `finally` raises). Confirmed live: `httpx.ReadError` inside the
+    real `_kubectl_client.__aexit__` during a real trial's teardown, after
+    the real diagnosis had already completed successfully."""
+
+    async def teardown(self) -> None:
+        self.call_log.append("teardown")
+        self.torn_down = True
+        raise RuntimeError("real teardown-only failure, e.g. a client disconnect race")
+
+
+def test_teardown_failure_does_not_discard_an_already_computed_result():
+    fake_env = _FakeSregymEnvironmentRaisingOnTeardown()
+
+    async def _factory() -> _FakeSregymEnvironmentRaisingOnTeardown:
+        return fake_env
+
+    result = asyncio.run(
+        run_gymact_mediated_diagnosis(
+            "wrong_dns_policy_social_network",
+            mcp_server_port=1234,
+            api_port=5678,
+            _environment_factory=_factory,
+            _capabilities=_FAKE_CAPABILITIES,
+        )
+    )
+
+    # The real diagnosis result survives a real teardown failure -- this is
+    # the whole point of the fix. Before the fix, this call raised
+    # RuntimeError instead of returning, silently discarding a real,
+    # already-computed CONFIRMED verdict.
+    assert isinstance(result, GymactMediatedDiagnosisResult)
+    assert result.verdict == OutcomeVerdict.CONFIRMED
+    assert fake_env.torn_down is True, "teardown was still attempted, just its failure didn't mask the result"
+
+
 def test_run_gymact_mediated_diagnosis_calls_run_pipeline_exactly_once():
     """Structural proof, via real source inspection (not a mock), that
     `run_gymact_mediated_diagnosis`'s own body contains exactly one call to
