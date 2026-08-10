@@ -381,6 +381,12 @@ async def run_gymact_mediated_diagnosis(
         # alone would still have left verify() permanently failing on the
         # phantom "diagnosis" key. Fixed: expect only the real key/value
         # the real conductor actually returns.
+        # Marks that the real oracle was actually consulted at all -- set
+        # BEFORE the poll result is known, since even a real "not done yet"
+        # response is a real, present oracle answer, distinct from this
+        # binding never firing at all (see the finally-block comment below
+        # for the fabricated-DISPUTED defect this closes).
+        diagnosis_state["verify_attempted"] = True
         passed, observed = await env.verify({"stage": "done"})
         diagnosis_state["verify_passed"] = passed
         diagnosis_state["verify_observed"] = observed if isinstance(observed, dict) else {"raw": observed}
@@ -446,9 +452,23 @@ async def run_gymact_mediated_diagnosis(
         structural_recheck_ran = "structural_recheck_passed" in diagnosis_state
         structural_passed = bool(diagnosis_state.get("structural_recheck_passed", verify_passed))
         recheck_anomaly_count = diagnosis_state.get("structural_recheck_anomaly_count")
+        # Real, second instance of the same class of defect the DISPUTED fix
+        # above closed: `oracle=OracleVerdict(present=True, ...)` was
+        # hardcoded regardless of whether `gymact_verify`'s binding ever
+        # actually fired. A genuine structural stall (BOUND_EXHAUSTED /
+        # DEADLOCK, no exception -- see `runner.py`'s `classify_stall()`) can
+        # leave `_verify()` never called while EARLIER bindings (including
+        # `_actuate_remediate`'s structural recheck) already completed. In
+        # that case the old code fabricated `oracle.passed=False` (the
+        # `.get(..., False)` default) as though a real conductor had
+        # answered and disagreed -- capable of producing a false DISPUTED
+        # verdict for a run that never actually reached the oracle at all.
+        # `OracleVerdict.present` exists exactly to represent "no oracle was
+        # consulted" honestly (see its own docstring) -- now used for real.
+        verify_attempted = bool(diagnosis_state.get("verify_attempted", False))
         verdict, confirmed_via = evaluate_outcome(
             structural_passed=structural_passed,
-            oracle=OracleVerdict(present=True, passed=verify_passed),
+            oracle=OracleVerdict(present=verify_attempted, passed=verify_passed if verify_attempted else None),
         )
 
         result = GymactMediatedDiagnosisResult(
