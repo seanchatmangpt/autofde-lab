@@ -872,3 +872,54 @@ post-submission evaluation latency, not a code defect in this repo or
 gymact.
 
 (Grows as cycles attempt more problems.)
+
+### Cycle 10 (2026-08-10)
+
+**Key-rotation check (real, minimal cost)**: rather than launching a full
+live SREGym trial (5-15 real minutes) just to rediscover the same
+credential blocker, probed the real Groq API directly:
+`curl https://api.groq.com/openai/v1/chat/completions` with the configured
+key -> real `401`, `{"error":{"code":"expired_api_key", ...}}`. Confirms
+`wrong_dns_policy_social_network` (and every problem needing the judge
+model) stays `ATTEMPTED:BLOCKED:EXPIRED_GROQ_API_KEY` this cycle too --
+still requires a live user action (rotate the key at `~/.env`) this
+autonomous cycle cannot perform.
+
+**Real, non-credential-dependent progress made instead**: fixed the
+structural teardown gap explicitly deferred at the end of cycle 9 --
+`main.py`'s own child `kubectl port-forward` process was surviving
+`teardown()` because `subprocess.Popen()` never put it in the same
+process group as the parent. Fixed in `~/gymact/src/gymact/gyms/sregym.py`:
+launch with `start_new_session=True`, and `teardown()` now
+`os.killpg()`s the whole group (SIGTERM, SIGKILL on timeout) instead of
+signaling `self._process` alone. Real regression test added
+(`TeardownKillsProcessGroupTests`): builds an actual `sh -c` subprocess
+tree with a real `sleep` grandchild, asserts both parent and grandchild
+are dead after `teardown()` via real `os.kill(pid, 0)` checks -- no
+mocks. `.venv/bin/python -m pytest tests/test_sregym_provider.py -k "not
+test_real_materialize" -v` -> **22 passed, 1 deselected**. Zero-mock grep
+clean. Driver-side tests (`tests/reasoning/test_gymact_diagnosis_driver_chicago.py`)
+re-verified unaffected: **4 passed**, zero-mock grep clean (only match is
+the file's own self-describing docstring sentence). Committed in gymact
+(`b9d31be`).
+
+This directly addresses the `/status`-outage investigation's own
+confounding orphan-port-forward noise from cycle 9 -- future trials
+should no longer need manual `ps aux`/`kill` sweeps before each launch,
+though this is not yet re-verified live (blocked on the same credential
+issue).
+
+**Status table**: `wrong_dns_policy_social_network` ->
+`ATTEMPTED:BLOCKED:EXPIRED_GROQ_API_KEY` (unchanged from cycle 9, real
+evidence re-confirmed via direct API probe this cycle). No other problem
+ID attempted this cycle since the credential blocker is global to every
+live trial regardless of problem ID.
+
+**Note for cycle 11**: if the key is still not rotated, further cycles
+should keep preferring this cheap `curl` probe over a full live trial
+launch to avoid wasting real cluster/deploy time re-discovering the same
+blocker -- and should look for other non-credential-dependent hardening
+(e.g. re-reading `_evaluate_mitigation`'s oracle path, or adding a
+regression test for the `_cleanup_sync()` blocking-duration hypothesis
+using a real but fast fake oracle) rather than repeatedly re-attempting
+live trials against a known-expired key.
