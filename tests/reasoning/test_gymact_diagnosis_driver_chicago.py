@@ -296,6 +296,26 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
             "real sregym tool requires -- this is exactly the defect this test guards"
         )
 
+    # Real regression coverage for the dual-bookkeeping gap found and fixed
+    # this cycle: the final verdict must be its OWN durable OCEL event, not
+    # only a field on the Python dataclass this function returns -- proven
+    # here by reading it straight off `result.ocel_log`, never off
+    # `result.verdict` (which the fix under test does not touch).
+    verdict_events = [e for e in result.ocel_log.events if e.activity == "gymact_verdict_computed"]
+    assert len(verdict_events) == 1, "expected exactly one real verdict-recording OCEL event"
+    verdict_event = verdict_events[0]
+    verdict_attrs = {a.key: a.value.value for a in verdict_event.attributes}
+    assert verdict_attrs["standing"] == "CONFIRMED"
+    assert verdict_attrs["detail"] == "structural_and_oracle"
+    # The verdict event must be linked to the same real session object every
+    # other event in this run is linked to -- not a free-floating event with
+    # no real object-centric relationship to the rest of the log.
+    session_object_id = f"gymact-mediated-{result.problem_id}"
+    linked_object_ids = {
+        link.object_id for link in result.ocel_log.event_object_links if link.event_id == verdict_event.id
+    }
+    assert session_object_id in linked_object_ids
+
 
 class _FakeSregymEnvironmentRejectingKubectl(_FakeSregymEnvironment):
     """Real regression fixture for the false-anomaly-detection risk found

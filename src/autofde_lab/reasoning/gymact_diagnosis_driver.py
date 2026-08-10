@@ -83,6 +83,7 @@ from __future__ import annotations
 import asyncio
 import concurrent.futures
 import json
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
@@ -90,6 +91,7 @@ from typing import Any, Callable
 from autofde_lab.case_library.outcome_predicate import OracleVerdict, OutcomeVerdict, evaluate_outcome
 from autofde_lab.fabric.gymact_capability_gate import DEFAULT_MANIFEST_PATH, CapabilityGate
 from autofde_lab.ocel.log import OcelLog
+from autofde_lab.ocel.mcp_session import append_tool_call_event
 from autofde_lab.powl.runner import (
     GYMACT_ACTUATE_REMEDIATE_LABEL,
     GYMACT_OBSERVE_LABEL,
@@ -671,6 +673,44 @@ async def run_gymact_mediated_diagnosis(
         verdict, confirmed_via = evaluate_outcome(
             structural_passed=structural_passed,
             oracle=OracleVerdict(present=verify_attempted, passed=verify_passed if verify_attempted else None),
+        )
+
+        # Real dual-bookkeeping gap found and fixed forward this cycle
+        # (`.claude/rules/no-dual-bookkeeping.md`: "Standing is a query over
+        # one joined evidence graph. It is never a field."). `verdict` is a
+        # pure, deterministic function of data already present in the
+        # `ocel_log`'s own recorded events (`_verify()`'s and
+        # `_actuate_remediate()`'s outcomes) -- but before this fix the
+        # verdict itself was NEVER recorded as its own durable OCEL fact,
+        # only as a field on this function's returned Python dataclass. A
+        # caller who deleted the Python runtime and tried to recompute
+        # standing from durable OCEL artifacts alone (the real threshold
+        # `no-dual-bookkeeping.md` names) could still re-derive the verdict
+        # by re-running `evaluate_outcome` over the sub-events -- but would
+        # have to re-execute decision logic to do so, rather than reading
+        # the verdict directly off the log the way `level4-completion-law.md`
+        # requires goal consequence to "enter the evidence". Closing that
+        # gap: the real, final verdict is now its own explicit, durable OCEL
+        # event, linked to the same real session object every other event in
+        # this run is linked to -- not a second, parallel source of truth,
+        # since its own content is still wholly derived from (never
+        # contradicts) the sub-events already in the log.
+        ocel_log = append_tool_call_event(
+            ocel_log,
+            event_id=f"evt-gymact_verdict_computed-{problem_id}-{uuid.uuid4().hex[:8]}",
+            activity="gymact_verdict_computed",
+            object_ids=[f"gymact-mediated-{problem_id}"],
+            outcome={
+                "standing": verdict.value,
+                "detail": confirmed_via,
+                "structural_passed": str(structural_passed),
+                "oracle_present": str(verify_attempted),
+                **(
+                    {"structural_recheck_anomaly_count": recheck_anomaly_count}
+                    if structural_recheck_ran and recheck_anomaly_count is not None
+                    else {}
+                ),
+            },
         )
 
         result = GymactMediatedDiagnosisResult(
