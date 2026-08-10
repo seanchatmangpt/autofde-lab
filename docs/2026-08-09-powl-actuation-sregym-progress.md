@@ -714,7 +714,37 @@ port-reuse/TIME_WAIT hypothesis (`ss`/`netstat` on ports 9954/8000, both
 reused across many consecutive trials this session) -- no lingering
 connections found, hypothesis not directly confirmed by evidence but
 tested anyway (cheap, real experiment): relaunched with entirely fresh
-ports (9970/8020 instead of the reused 9954/8000 defaults), PID `542` --
-in progress.
+ports (9970/8020 instead of the reused 9954/8000 defaults), PID `542`.
+
+**Trial v4 (PID `542`) result: a different, more severe failure with
+non-default ports.** `RuntimeError: sregym did not become fully ready
+within 900.0s (conductor API ready=False, kubectl-mcp port 9970
+reachable=False)` -- the ENTIRE subprocess never got either real server up
+in a full 15-minute window (this is `__init__`'s own top-level readiness
+wait timing out completely, not the later actuate()-level connection
+retry seen in every other occurrence this cycle). Real, checked: no
+lingering process found afterward (matches `__init__`'s own kill-on-
+timeout). Port-reuse hypothesis is NOT confirmed by this result -- if
+anything, non-default ports made things worse, not better, which argues
+against it and suggests the reused-default-port failures and this one may
+be genuinely different problems.
+
+**Real, open questions for Cycle 9, not yet answered** (named precisely,
+not guessed): (a) does `main.py` actually honor non-default
+`API_PORT`/`MCP_SERVER_PORT` env var values at all, or is there a hidden
+assumption tied to the 9954/8000 defaults specifically -- worth a direct
+manual repro with non-default ports and full stdout capture; (b) is the
+intermittent 10/10 connection-exhaustion failure (on default ports,
+recurring ~5 times this session, including once right after a fresh infra
+recovery) actually unrelated to any port-reuse theory and something else
+entirely -- possibly worth just reverting to default ports for future
+trials given they have historically reached further (all the way to real
+submissions) than this port-change experiment did.
+
+**Cycle 8 summary**: the single most consequential fix of the session
+landed (the `verify()` stage-name defect explaining every prior
+`UNCONFIRMED`), plus a real verify-timeout widening, plus a full infra
+recovery. The connection-reliability gap remains real and only partially
+understood -- named precisely rather than resolved, for Cycle 9.
 
 (Grows as cycles attempt more problems.)
