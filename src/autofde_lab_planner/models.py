@@ -256,6 +256,27 @@ class PVCMultiAttachFault:
 
 
 # -----------------------------------------------------------------------------
+# RBAC Misconfiguration Fault Models
+# -----------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class RBACMisconfigFault:
+    deployment_name: str
+    namespace: str
+    service_account_name: str
+    fault_kind: Literal[
+        "missing_rbac_permission",
+        "missing_service_account",
+        "missing_role_binding",
+    ]
+    missing_resources: tuple[str, ...] = ()
+    missing_verbs: tuple[str, ...] = ()
+    cluster_role_name: str | None = None
+    cluster_role_binding_name: str | None = None
+    details: str = ""
+
+
+# -----------------------------------------------------------------------------
 # Aggregate Engine Diagnosis & Mitigation Models
 # -----------------------------------------------------------------------------
 
@@ -275,6 +296,7 @@ class CategoryBDiagnosis:
     host_port_conflicts: tuple[HostPortConflictFault, ...] = ()
     pvc_claim_mismatches: tuple[PVCClaimMismatchFault, ...] = ()
     pvc_multi_attach_faults: tuple[PVCMultiAttachFault, ...] = ()
+    rbac_misconfigs: tuple[RBACMisconfigFault, ...] = ()
     diagnosis_text: str = ""
 
 
