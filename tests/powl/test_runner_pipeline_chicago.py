@@ -28,6 +28,7 @@ from autofde_lab.powl.algebra import Atom, PartialOrder
 from autofde_lab.powl.bounds import ExecutionBound
 from autofde_lab.powl.executor import INITIAL_MARKING, enabled, fire
 from autofde_lab.powl.runner import (
+    ActuationBindingRefused,
     CASE_HIT_LABEL,
     CASE_RETRIEVE_LABEL,
     RECORD_LABEL,
@@ -137,6 +138,38 @@ def test_run_pipeline_surfaces_classify_stall_on_bound_exhaustion_no_hang():
     assert result.stall == "BLOCKED:BOUND_EXHAUSTED"
     # Only 2 real fires were attempted before the structural bound stopped it.
     assert len(log.events) == 2
+
+
+def test_run_pipeline_refuses_action_binding_for_non_pipeline_label():
+    """`run_pipeline`'s docstring states the runner "stays structural-only"
+    and never lets a cluster-mutating actuator fire as a side effect of Atom
+    marking advancement. This test proves that decision is a real runtime
+    guard, not merely prose: a caller trying to smuggle a mutating actuator
+    in under a label this pipeline never has (i.e. not one of the known
+    read-only/diagnostic Atom labels) is refused before any Atom fires --
+    the real sentinel list below staying empty is direct evidence nothing
+    was ever invoked, not an inference from "no exception propagated"."""
+    node = build_pipeline_powl_node()
+
+    invocations: list[str] = []
+
+    def _would_mutate_cluster(atom_attrs: dict) -> None:  # pragma: no cover - must never run
+        invocations.append(atom_attrs["label"])
+
+    try:
+        run_pipeline(
+            node,
+            session_id="test-refused-actuation-binding",
+            action_bindings={"delete_pod": _would_mutate_cluster},
+        )
+        raised = False
+    except ActuationBindingRefused:
+        raised = True
+
+    assert raised, "run_pipeline must refuse an action_bindings key outside the known pipeline labels"
+    assert invocations == [], (
+        f"the refused binding must never be invoked -- got invocations={invocations!r}"
+    )
 
 
 def test_classify_pipeline_stall_reports_final_on_completed_marking():

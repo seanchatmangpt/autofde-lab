@@ -304,7 +304,24 @@ def run_pipeline(
     `replay_structural_fires`, which does not return its final `Marking`)
     for exactly that reason: surfacing `classify_stall()` requires the
     marking `replay_structural_fires` does not expose.
+
+    Enforces this module's docstring decision at runtime, not merely in
+    prose: any `action_bindings` key outside `ALLOWED_ACTION_BINDING_LABELS`
+    raises `ActuationBindingRefused` before any Atom fires -- a caller
+    cannot wire a cluster-mutating actuator to fire as a side effect of
+    structural marking advancement.
     """
+    if action_bindings:
+        refused = sorted(set(action_bindings) - ALLOWED_ACTION_BINDING_LABELS)
+        if refused:
+            raise ActuationBindingRefused(
+                f"run_pipeline refuses action_bindings for label(s) {refused!r} -- "
+                f"only {sorted(ALLOWED_ACTION_BINDING_LABELS)!r} (read-only/diagnostic "
+                f"pipeline steps) may be bound. This runner stays structural-only per "
+                f"its own module docstring; any real actuation step must be reached "
+                f"through a separate, explicitly authorized call outside this replay."
+            )
+
     session_id = session_id or "powl-runner-pipeline"
     recorder = OcelSessionRecorder(session_id, server_name="powl-runner")
 
