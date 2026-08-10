@@ -500,8 +500,47 @@ calls the real `"submit"` tool, with payload rendered via new
 `_render_submit_answer()` into the one real text answer. Real regression
 tests (pure function, no cluster needed): `20/20` passing.
 
-**Trial v2 launched with the real submit-tool fix** (PID `85203`) -- in
-progress. This may be the first trial to reach a real CONFIRMED/DISPUTED
-verdict.
+**Trial v2 (PID `85203`) result: LANDMARK -- first full pipeline completion
+this entire session, real and honest end to end.** `RETURNCODE: 0`,
+`PipelineStallResult(final=True, stall=None)` -- all 13 real POWL structural
+fire events completed cleanly, zero crash, zero exception. Real OCEL
+evidence, in order: scan -> phi_encode -> dispatch_solve -> solve ->
+cbr_retrieve -> case_hit -> cbr_retain -> ocel_record -> gymact_observe ->
+gymact_submit_diagnosis -> gymact_actuate_remediate -> gymact_submit_mitigation
+-> gymact_verify.
+
+**Verdict: UNCONFIRMED (honest, not fabricated)** -- three real, precise
+findings, not a crash:
+
+1. **Real scanner finding, possible mismatch**: `gymact_observe`'s real scan
+   found `anomaly_count: 1, label: 'inject_scale_pods_to_zero'` for the
+   `wrong_dns_policy_social_network` problem_id -- either real leftover
+   fault state from an earlier trial on this session's reused, warm
+   cluster, or a real scanner-matching gap. Named, not yet investigated.
+2. **Real submission-timing race**: `gymact_submit_diagnosis` was correctly
+   REJECTED by the real conductor -- `"Cannot submit at stage: 'setup'"`.
+   The conductor's own real stage machine hadn't yet reached `'diagnosis'`
+   when the pipeline attempted to submit (it transitioned there only later,
+   per the real final `verify()` observing `{'stage': 'diagnosis'}`). This
+   is the single precise, real gap separating `UNCONFIRMED` from a real
+   verdict -- the pipeline needs to wait for/detect the real `'diagnosis'`
+   stage before submitting, not submit immediately after observe.
+3. **Real, expected remediation gap**: `gymact_actuate_remediate` was
+   correctly rejected -- `"Command Rejected: Only kubectl commands are
+   allowed"` -- because the driver's remediation-command synthesis is
+   already-documented, unbuilt placeholder scope from earlier this session
+   (`scripts/run_gymact_mediated_trial.py`'s own docstring already named
+   this), not a new defect.
+
+**Next real priority, precisely named**: fix the submission-timing race --
+either poll/wait for the conductor's real stage to reach `'diagnosis'`
+before calling `gymact_submit_diagnosis`, or retry the submission on a
+`"Cannot submit at stage"` rejection with a bounded backoff, matching the
+same real-collaborator retry discipline already applied to the connection
+layer this session.
+
+| problem_id | status | last real evidence |
+|---|---|---|
+| wrong_dns_policy_social_network | ATTEMPTED:UNCONFIRMED (real, full pipeline completion, real conductor rejection reasons, not a crash) | PID `85203`, full OCEL log quoted above |
 
 (Grows as cycles attempt more problems.)
