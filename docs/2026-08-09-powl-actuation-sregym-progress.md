@@ -211,12 +211,26 @@ don't have) if `--agent` is omitted -- a real usability quirk in SREGym's own
 `main.py`, out of scope to fix directly this cycle (sibling vendored code, not
 gymact or autofde-lab).
 
-**Empirically testing now** (in progress, PID `67972`): `main.py --use-external-harness
---agent autofde_lab_dspy ...` (passing a real agent name purely to satisfy the
-unconditional preflight check, since the agent itself is never launched under
-external-harness mode) -- checking whether the conductor/MCP API server stays
-alive after fault injection, which is the real prerequisite for
-`SregymEnvironment` to ever work as designed. This is now the single most
-consequential open question for the whole goal.
+**`--use-external-harness` test (PID `67972`) result: definitive, real answer,
+and it's a NO.** `"Fault injected... exit for external harness"` immediately
+followed by `"Shutting down API"`, `"Finished server process"` -- the whole
+process exits right after fault injection, same as agent mode. **No invocation
+shape of `main.py` produces a persistent, externally-drivable server on its
+own.** `SregymEnvironment`'s core architectural assumption does not match how
+`main.py` behaves, in any documented mode tried so far.
+
+**New, evidence-based hypothesis, testing now (PID `69279`)**: `agents.yaml`
+already has a real, pre-registered `"debug"` agent whose `kickoff_command` is
+`python -c "import signal; signal.pause()"` (a real no-op that just waits
+forever). Combined with a docstring read directly from `main.py` --
+`"Deploy each problem and wait for HTTP grading via POST /submit"` -- and the
+earlier-confirmed `while conductor.submission_stage != "done":` polling loop,
+the real intended mechanism is likely: deploy the fault, launch the no-op
+`debug` agent (so nothing internal ever calls submit), and the conductor's
+own API/MCP server stays alive polling for submission_stage to flip to
+`"done"` -- which an EXTERNAL caller (gymact's `SregymEnvironment.actuate()`,
+calling `submit_diagnosis`/`submit_mitigation` via the real MCP surface) would
+trigger. Testing `main.py --agent debug ...` directly now to confirm the
+server genuinely stays alive past the deploy phase, rather than assuming.
 
 (Grows as cycles attempt more problems.)
