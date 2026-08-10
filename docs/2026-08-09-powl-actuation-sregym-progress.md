@@ -186,9 +186,37 @@ real evidence that `materialize()` failing before `env` is constructed means the
 driver's `finally: env.teardown()` never triggers (real, not-yet-fixed resource-
 leak gap, named here for a future cycle rather than fixed this one given time).
 
-**Trial v3 launched with the stdout-capture fix live** (PID `65952`, ports
-9958/8004) -- in progress as of this note; the real cause of the fast
-`returncode=0` exit will be directly visible in its failure message this time
-if it recurs, rather than requiring another manual repro.
+**Trial v3 (PID `65952`) real terminal outcome, and it's a major architectural
+finding, not a small bug.** The stdout-capture fix worked -- the real cause is
+now fully visible: `main.py --agent autofde_lab_dspy` does NOT wait for external
+control at all. It deploys the fault, then runs its OWN internal benchmark loop
+autonomously end-to-end (launches the `autofde_lab_dspy` driver, waits for it,
+submits results, tears everything down: `"Completed wrong_dns_policy_social_network:
+results={}"`, `"Benchmark complete!"`, `"Finished server process"`) -- all inside
+the 900s startup window, so by the time gymact polls again the whole process has
+already exited cleanly (code 0). **`SregymEnvironment`'s entire design (a
+persistent subprocess serving MCP/API while gymact drives diagnosis externally)
+is incompatible with launching ANY real `--agent` driver** -- a real driver runs
+its own loop and exits; only `main.py --use-external-harness` ("deploy the fault
+and exit [the internal agent loop only, not the process]" per source read of
+`main.py:369-371`) matches the persistent-server pattern `SregymEnvironment`
+actually needs.
+
+**Verified in source** (`vendor/gyms/sregym/main.py`): `use_external_harness=True`
+correctly skips `run_judge_preflight_check()` (line 585) AND skips launching any
+agent driver (`if use_external_harness: ... return []` at line 369). But a
+SEPARATE, unconditional `run_preflight_check(args.agent, ...)` (line 597) always
+runs regardless of harness mode, defaulting to `stratus` (needs OPENAI creds we
+don't have) if `--agent` is omitted -- a real usability quirk in SREGym's own
+`main.py`, out of scope to fix directly this cycle (sibling vendored code, not
+gymact or autofde-lab).
+
+**Empirically testing now** (in progress, PID `67972`): `main.py --use-external-harness
+--agent autofde_lab_dspy ...` (passing a real agent name purely to satisfy the
+unconditional preflight check, since the agent itself is never launched under
+external-harness mode) -- checking whether the conductor/MCP API server stays
+alive after fault injection, which is the real prerequisite for
+`SregymEnvironment` to ever work as designed. This is now the single most
+consequential open question for the whole goal.
 
 (Grows as cycles attempt more problems.)
