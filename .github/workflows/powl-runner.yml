@@ -46,12 +46,33 @@ jobs:
             "discrete-optimization>=0.9.0"
 
       - name: Reject mockist concurrency proof
-        shell: bash
+        shell: python
         run: |
-          set -euo pipefail
-          ! grep -En \
-            'unittest\.mock|Mock\(|MagicMock|patch\(|monkeypatch' \
-            tests/powl/test_runner.py
+          import ast
+          from pathlib import Path
+
+          path = Path("tests/powl/test_runner.py")
+          tree = ast.parse(path.read_text(), filename=str(path))
+          banned_names = {"Mock", "MagicMock", "patch", "monkeypatch"}
+          violations = []
+          for node in ast.walk(tree):
+              if isinstance(node, ast.Import):
+                  for alias in node.names:
+                      if alias.name == "unittest.mock":
+                          violations.append((node.lineno, f"import {alias.name}"))
+              elif isinstance(node, ast.ImportFrom):
+                  if node.module == "unittest.mock":
+                      violations.append((node.lineno, "from unittest.mock import ..."))
+              elif isinstance(node, ast.Name) and node.id in banned_names:
+                  violations.append((node.lineno, node.id))
+              elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                  for arg in (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs):
+                      if arg.arg == "monkeypatch":
+                          violations.append((node.lineno, "monkeypatch fixture"))
+          if violations:
+              for line, detail in violations:
+                  print(f"{path}:{line}: banned mockist construct: {detail}")
+              raise SystemExit(1)
 
       - name: Execute real concurrent runner court
         env:
