@@ -1295,3 +1295,69 @@ reviewing whether this driver's own OCEL evidence emission (via
 `run_pipeline`'s `recorder`) captures everything a future crown-level
 audit would need, matching `level4-completion-law.md`'s evidence
 requirements -- not yet checked this whole marathon.
+
+### Cycle 17 (2026-08-10)
+
+**Key-rotation check**: real direct `curl` against the Groq API -> still
+`401`, `expired_api_key`. Cluster confirmed healthy (cycle 16's recovery
+held). `wrong_dns_policy_social_network` stays
+`ATTEMPTED:BLOCKED:EXPIRED_GROQ_API_KEY`.
+
+**Independently re-verified prior state**: real re-run, 127 passed,
+zero-mock grep clean.
+
+**Real, precise dual-bookkeeping gap found this cycle** (per cycle 16's
+option (b) recommendation): read `level4_process_fitness.py` first --
+confirmed it targets a genuinely different, unrelated crown-trial
+activity vocabulary (`ProbeExecuted`/`PlanConstructed`, not
+`gymact_*`), so wiring this driver into it would be a large,
+out-of-scope undertaking, not real work for one cycle (named honestly
+rather than attempted superficially). Pivoted to a narrower, real
+question instead: does THIS driver's own OCEL log carry the final
+verdict as a durable fact, per `.claude/rules/no-dual-bookkeeping.md`
+("Standing is a query over one joined evidence graph. It is never a
+field.")? It did not -- `verdict`/`confirmed_via` were computed by the
+pure `evaluate_outcome()` function AFTER `run_pipeline()` returned, and
+placed only on the returned Python dataclass, never recorded as their
+own OCEL event. The verdict WAS technically re-derivable from data
+already in the log's own sub-events (`_verify()`'s and
+`_actuate_remediate()`'s outcomes), but only by re-executing Python
+decision logic over them, short of
+`.claude/rules/level4-completion-law.md`'s "goal consequence must enter
+the evidence" requirement.
+
+**Fix**: after computing the verdict, a real `gymact_verdict_computed`
+OCEL event is now appended (via the existing, already-tested, standalone
+`append_tool_call_event` helper -- no new OCEL machinery introduced),
+carrying `standing=<verdict>`, `detail=<confirmed_via>`, and the real
+structural/oracle signals, correctly E2O-linked to the same session
+object every other event in the run is linked to. Not a second source
+of truth -- its content is wholly derived from, and never contradicts,
+the sub-events already present.
+
+Real Chicago test coverage added to the existing full-run test: asserts
+exactly one `gymact_verdict_computed` event exists, read directly from
+`result.ocel_log` (never from `result.verdict`), with correct
+attributes and the correct real object link.
+
+`.venv/bin/python -m pytest tests/reasoning/test_gymact_diagnosis_driver_chicago.py
+tests/case_library tests/powl tests/fabric/test_capability_gate_chicago.py`
+-> **127 passed** (assertions added to an existing test, not a new test
+function -- count correctly unchanged from cycle 15). Zero-mock grep
+clean. Committed: `193c070`.
+
+**Status table**: `wrong_dns_policy_social_network` ->
+`ATTEMPTED:BLOCKED:EXPIRED_GROQ_API_KEY` (unchanged, re-confirmed this
+cycle).
+
+**Note for cycle 18**: static source review of the driver itself has
+now covered fabrication-of-presence defects (cycles 11-13), namespace
+correctness (cycles 14-15), and dual-bookkeeping (this cycle) --
+converging toward diminishing returns on THIS specific file. If the Groq
+key is still not rotated, the most honest next avenues are: (a) checking
+whether `runner.py`'s OCEL recording (not just this driver's use of it)
+has any similar dual-bookkeeping gaps of its own, since it wasn't
+reviewed with this specific lens, or (b) accepting that static review
+has reached a genuine, honest plateau and the primary remaining
+bottleneck is squarely the credential, worth stating plainly rather than
+manufacturing further busywork.
