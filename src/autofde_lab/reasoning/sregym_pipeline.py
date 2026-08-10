@@ -375,10 +375,23 @@ async def oracle_verdict_from_environment(
     ``environment.verify(expected)`` polls the real conductor ``/status``
     endpoint (bounded, real HTTP, real subprocess) until it matches
     ``expected`` or times out -- this is the external, independently
-    observed check; the returned ``OracleVerdict`` always has
-    ``present=True`` because an oracle call was actually made.
+    observed check; the returned ``OracleVerdict`` has ``present=True``
+    when an oracle call actually completed.
+
+    If ``verify()`` itself raises (network error, unreachable cluster,
+    malformed conductor response, timeout escaping as an exception, ...)
+    that failure is caught here and degrades to
+    ``OracleVerdict(present=False)`` -- per
+    ``.claude/rules/absence-is-not-evidence.md``, a transient oracle
+    failure is not evidence the oracle disagreed; it is evidence the
+    oracle was not consulted, so ``evaluate_outcome`` correctly falls
+    back to a structural-only verdict rather than the exception
+    propagating raw and crashing the whole pipeline.
     """
-    passed, _observed = await environment.verify(expected)
+    try:
+        passed, _observed = await environment.verify(expected)
+    except Exception:
+        return OracleVerdict(present=False)
     return OracleVerdict(present=True, passed=bool(passed))
 
 
@@ -386,10 +399,19 @@ def build_oracle_verdict_fn(environment: Any) -> Callable[[dict[str, Any]], Orac
     """Synchronous wrapper around :func:`oracle_verdict_from_environment`,
     matching the synchronous style of :func:`build_sregym_submission_fns`
     (``dspy``/plain callers invoke this synchronously; the real
-    ``verify()`` coroutine runs underneath via :func:`_run_coroutine`)."""
+    ``verify()`` coroutine runs underneath via :func:`_run_coroutine`).
+
+    Same degrade-on-exception behavior as
+    :func:`oracle_verdict_from_environment`: a raised exception from
+    ``verify()`` becomes ``OracleVerdict(present=False)``, never a raw
+    propagated exception.
+    """
 
     def oracle_verdict(expected: dict[str, Any]) -> OracleVerdict:
-        passed, _observed = _run_coroutine(environment.verify(expected))
+        try:
+            passed, _observed = _run_coroutine(environment.verify(expected))
+        except Exception:
+            return OracleVerdict(present=False)
         return OracleVerdict(present=True, passed=bool(passed))
 
     return oracle_verdict
@@ -594,6 +616,15 @@ class SregymDiagnosisPipeline(dspy.Module):
             case_outcome: bool | None = None
             case_confirmed_via = "disputed"
         else:
+            if confirmed_via not in ("structural_only", "structural_and_oracle"):
+                raise ValueError(
+                    "retain(verdict=OutcomeVerdict.CONFIRMED) requires confirmed_via to be "
+                    "'structural_only' or 'structural_and_oracle' (the real provenance "
+                    "evaluate_outcome() returned alongside CONFIRMED); got "
+                    f"{confirmed_via!r}. The 'n/a' default exists only for UNCONFIRMED/"
+                    "DISPUTED callers -- a CONFIRMED case must never silently persist "
+                    "with unproven provenance."
+                )
             case_outcome = True
             case_confirmed_via = confirmed_via
         case = Case(
