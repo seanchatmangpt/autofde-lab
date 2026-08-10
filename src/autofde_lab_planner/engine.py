@@ -10,6 +10,7 @@ from autofde_lab_planner.detectors.dns_policy_override import detect_dns_policy_
 from autofde_lab_planner.detectors.flagd_drift import detect_flagd_config_drift
 from autofde_lab_planner.detectors.host_port_conflict import detect_host_port_conflicts
 from autofde_lab_planner.detectors.ingress_targetport import detect_ingress_and_targetport_faults
+from autofde_lab_planner.detectors.limitrange_violation import detect_limitrange_violations
 from autofde_lab_planner.detectors.object_reconstruction import detect_missing_objects
 from autofde_lab_planner.detectors.otel_trace import detect_otel_trace_anomalies
 from autofde_lab_planner.detectors.probe_heuristics import detect_probe_faults
@@ -18,6 +19,7 @@ from autofde_lab_planner.detectors.pvc_storage_faults import (
     detect_pvc_multi_attach_faults,
 )
 from autofde_lab_planner.detectors.rbac_misconfig import detect_rbac_misconfigurations
+from autofde_lab_planner.detectors.resourcequota_exhaustion import detect_resourcequota_exhaustion
 from autofde_lab_planner.detectors.rolling_update_misconfig import detect_workload_and_rolling_update_misconfigs
 from autofde_lab_planner.detectors.scheduling_deadlock import detect_scheduling_deadlocks
 from autofde_lab_planner.models import CategoryBDiagnosis, CategoryBMitigation
@@ -27,6 +29,7 @@ from autofde_lab_planner.remediators.dns_policy_override import decide_dns_polic
 from autofde_lab_planner.remediators.flagd_drift import decide_flagd_remediation_commands
 from autofde_lab_planner.remediators.host_port_conflict import decide_host_port_conflict_remediation_commands
 from autofde_lab_planner.remediators.ingress_targetport import decide_ingress_targetport_remediation_commands
+from autofde_lab_planner.remediators.limitrange_violation import decide_limitrange_remediation_commands
 from autofde_lab_planner.remediators.object_reconstruction import decide_object_reconstruction_commands
 from autofde_lab_planner.remediators.otel_trace import decide_otel_remediation_commands
 from autofde_lab_planner.remediators.probe_heuristics import decide_probe_remediation_commands
@@ -35,6 +38,7 @@ from autofde_lab_planner.remediators.pvc_storage_faults import (
     decide_pvc_multi_attach_commands,
 )
 from autofde_lab_planner.remediators.rbac_misconfig import decide_rbac_remediation_commands
+from autofde_lab_planner.remediators.resourcequota_exhaustion import decide_resourcequota_remediation_commands
 from autofde_lab_planner.remediators.rolling_update_misconfig import decide_workload_remediation_commands
 from autofde_lab_planner.remediators.scheduling_deadlock import decide_scheduling_remediation_commands
 
@@ -57,6 +61,8 @@ class CompositePlannerEngine:
         ingresses_json: dict[str, Any] | list[dict[str, Any]] | None = None,
         cronjobs_json: dict[str, Any] | list[dict[str, Any]] | None = None,
         pvcs_json: dict[str, Any] | list[dict[str, Any]] | None = None,
+        resourcequotas_json: dict[str, Any] | list[dict[str, Any]] | None = None,
+        limitranges_json: dict[str, Any] | list[dict[str, Any]] | None = None,
         flagd_configmap_json: str | dict[str, Any] | None = None,
         raw_traces_by_service: dict[str, Any] | None = None,
         elevated_revision_deployments: set[str] | None = None,
@@ -171,6 +177,20 @@ class CompositePlannerEngine:
             namespace=self.namespace,
         )
 
+        # 15. ResourceQuota Exhaustion
+        resourcequota_exhaustions = detect_resourcequota_exhaustion(
+            resourcequotas_json=resourcequotas_json,
+            events_json=events_json,
+            namespace=self.namespace,
+        )
+
+        # 16. LimitRange Violations
+        limitrange_violations = detect_limitrange_violations(
+            limitranges_json=limitranges_json,
+            deployments_json=deployments_json,
+            namespace=self.namespace,
+        )
+
         # Build natural-language diagnosis text
         text_parts: list[str] = []
 
@@ -246,6 +266,20 @@ class CompositePlannerEngine:
             rbac_str = ", ".join(f"{rf.deployment_name}/{rf.service_account_name} ({rf.fault_kind})" for rf in rbac_misconfigs)
             text_parts.append(f"Detected RBAC misconfigurations in namespace {self.namespace}: {rbac_str}.")
 
+        if resourcequota_exhaustions:
+            rq_str = ", ".join(
+                f"{rq.quota_name}/{rq.resource_name} ({rq.used}/{rq.hard}, {rq.fault_kind})"
+                for rq in resourcequota_exhaustions
+            )
+            text_parts.append(f"Detected ResourceQuota exhaustion in namespace {self.namespace}: {rq_str}.")
+
+        if limitrange_violations:
+            lr_str = ", ".join(
+                f"{lv.deployment_name}/{lv.container_name}:{lv.resource_name} ({lv.fault_kind})"
+                for lv in limitrange_violations
+            )
+            text_parts.append(f"Detected LimitRange violations in namespace {self.namespace}: {lr_str}.")
+
         if not text_parts:
             diagnosis_text = f"No fault mechanism anomalies detected in namespace {self.namespace}."
         else:
@@ -267,6 +301,8 @@ class CompositePlannerEngine:
             pvc_claim_mismatches=tuple(pvc_claim_mismatches),
             pvc_multi_attach_faults=tuple(pvc_multi_attach_faults),
             rbac_misconfigs=tuple(rbac_misconfigs),
+            resourcequota_exhaustions=tuple(resourcequota_exhaustions),
+            limitrange_violations=tuple(limitrange_violations),
             diagnosis_text=diagnosis_text,
         )
 
@@ -395,6 +431,24 @@ class CompositePlannerEngine:
             )
             commands.extend(rbac_cmds)
             rollout_wait.extend(rbac_deps)
+
+        # 15. ResourceQuota Exhaustion Remediations
+        if diagnosis.resourcequota_exhaustions:
+            rq_cmds, rq_deps = decide_resourcequota_remediation_commands(
+                faults=list(diagnosis.resourcequota_exhaustions),
+                namespace=self.namespace,
+            )
+            commands.extend(rq_cmds)
+            rollout_wait.extend(rq_deps)
+
+        # 16. LimitRange Violation Remediations
+        if diagnosis.limitrange_violations:
+            lr_cmds, lr_deps = decide_limitrange_remediation_commands(
+                faults=list(diagnosis.limitrange_violations),
+                namespace=self.namespace,
+            )
+            commands.extend(lr_cmds)
+            rollout_wait.extend(lr_deps)
 
         # Deduplicate wait deployments
         unique_wait = tuple(dict.fromkeys(rollout_wait))
