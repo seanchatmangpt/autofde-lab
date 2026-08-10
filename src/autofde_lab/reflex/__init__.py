@@ -5,21 +5,21 @@ requests; it does not grant authority or actuate consequences.
 """
 
 from .promotion import (
+    CONSEQUENCE_IR_PACK,
     BrceRequest,
     CandidateHook,
-    CONSEQUENCE_IR_PACK,
-    cognition_elimination_rate,
     EpisodeEvidence,
     EvidenceKind,
     HookClass,
     HookEnvelope,
-    implementation_digest,
     Observation,
     PromotionCandidate,
     PromotionCourt,
     PromotionRefusal,
     RouteDecision,
     RouteResult,
+    cognition_elimination_rate,
+    implementation_digest,
     route_promoted_hook,
 )
 
