@@ -2,25 +2,25 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-"""Concurrent POWL 2.0 orchestration runner.
+"""Enterprise concurrent runner for the AutoFDE POWL 2.0 algebra.
 
-The existing :mod:`autofde_lab.powl.executor` is deliberately a one-fire
-reference semantics: it exposes every structurally enabled leaf and never
-chooses among alternatives. This module adds the missing *runner* above that
-semantics without weakening the fence:
+The package's reference executor deliberately exposes one-fire structural
+semantics.  This module is the orchestration layer above that court:
 
-* every legally concurrent activity is dispatched concurrently;
-* choice remains an explicit SELECT seam supplied by ``ChoicePolicy``;
-* an ``Atom.action`` payload is never invoked directly;
-* world authority remains outside this package behind ``ActivityDriver``;
-* successful structural commits are recorded as replayable ``ChoiceRecord``s;
-* the default pool eagerly starts eight worker threads.
+* all legally concurrent activities are work-conservingly dispatched;
+* eight worker threads are eagerly created by default;
+* POWL precedence is the only implicit sequencing constraint;
+* ambiguous ChoiceGraph alternatives require an explicit SELECT policy;
+* Atom.action is inert data here and is never called by the runner;
+* external consequence is delegated to an explicit ActivityDriver authority
+  seam;
+* every dispatched activity is accounted for, including fail-fast drain work;
+* successful structural commits are replay-verified against the reference
+  executor before evidence is returned.
 
-"100% concurrent" here has a precise meaning: the scheduler is work-conserving
-up to ``max_workers`` and never serializes two enabled activities merely to
-obtain a deterministic trace. Physical completion order is evidence, not
-semantic authority; POWL precedence and explicit choices remain the only
-ordering constraints.
+The runner manufactures execution *evidence*, not an authority receipt.  A
+driver may return an authority receipt issued by a downstream broker, but this
+module neither fabricates nor upgrades that standing.
 """
 
 from __future__ import annotations
@@ -71,11 +71,13 @@ DEFAULT_WORKERS = 8
 
 
 class RunnerRefusal(StrEnum):
-    """Typed runner-level refusals; structural refusals remain ``PowlError``."""
+    """Typed orchestration refusals; structural POWL refusals stay PowlError."""
 
     ACTIVITY_DRIVER_REQUIRED = "ACTIVITY_DRIVER_REQUIRED"
     CHOICE_POLICY_REQUIRED = "CHOICE_POLICY_REQUIRED"
     INVALID_CHOICE = "INVALID_CHOICE"
+    POLICY_FAILED = "POLICY_FAILED"
+    RUNNER_BUSY = "RUNNER_BUSY"
     RUNNER_CLOSED = "RUNNER_CLOSED"
     REPLAY_DIVERGED = "REPLAY_DIVERGED"
 
@@ -99,16 +101,17 @@ class RunStatus(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class RunnerConfig:
-    """Bounded scheduler configuration.
+    """Bounded runner configuration.
 
-    ``max_workers`` is also the maximum number of simultaneously in-flight
-    activities. The default is exactly eight and the pool is eagerly warmed,
-    so a newly-created runner starts with eight live worker threads rather than
-    waiting for the first burst to lazily create them.
+    ``max_workers`` is both the thread-pool size and the maximum number of
+    activities the scheduler may admit concurrently.  The default is exactly
+    eight.  With ``eager_start=True`` all eight threads exist before
+    construction returns.
 
-    ``activity_timeout_seconds`` is handed to the external driver as a bounded
-    execution contract. CPython threads cannot be killed safely; the runner
-    therefore never pretends this field is a hard in-process kill switch.
+    ``activity_timeout_seconds`` is a deadline contract passed to the external
+    driver. Python threads cannot be safely force-killed, so this runner does
+    not misrepresent that value as a hard in-process kill switch. Enterprise
+    drivers must enforce their own I/O/process timeout at the actuation seam.
     """
 
     max_workers: int = DEFAULT_WORKERS
@@ -131,11 +134,7 @@ class RunnerConfig:
 
 @dataclass(frozen=True, slots=True)
 class ActivityIntent:
-    """Authority-neutral intent handed to the external activity driver.
-
-    The runner never invokes ``action``. A driver may interpret it only under
-    whatever admission/authorization boundary that driver owns.
-    """
+    """Authority-neutral activity intent supplied to an external driver."""
 
     run_id: str
     model_sha256: str
@@ -151,6 +150,12 @@ class ActivityIntent:
 
 @dataclass(frozen=True, slots=True)
 class ActivityOutcome:
+    """Outcome observed at the driver seam.
+
+    ``authority_receipt`` is optional because the runner cannot issue one. If
+    present it must have been manufactured by the downstream authority path.
+    """
+
     success: bool = True
     value: Any = None
     authority_receipt: str | None = None
@@ -186,15 +191,25 @@ class PolicyRecord:
 
 @dataclass(frozen=True, slots=True)
 class ActivityRecord:
+    """Observed activity execution.
+
+    ``committed`` distinguishes successful external completion from successful
+    completion that was also admitted into the structural marking. The latter
+    can be false only when the runner itself hits a refusal while draining
+    already-dispatched work.
+    """
+
     path: NodePath
     occurrence: int
     attempt: int
     label: str
     success: bool
+    committed: bool
     worker_thread: str
     started_ns: int
     finished_ns: int
     authority_receipt: str | None = None
+    metadata: Mapping[str, Any] = field(default_factory=dict)
     error_type: str | None = None
     error_message: str | None = None
 
@@ -205,7 +220,7 @@ class ActivityRecord:
 
 @dataclass(frozen=True, slots=True)
 class RunEvidence:
-    """Observed runner evidence; deliberately not an authority receipt."""
+    """Replayable runner evidence; deliberately not an authority receipt."""
 
     run_id: str
     status: RunStatus
@@ -228,6 +243,10 @@ class RunEvidence:
     def failed_activities(self) -> int:
         return sum(not record.success for record in self.activity_records)
 
+    @property
+    def committed_activities(self) -> int:
+        return sum(record.committed for record in self.activity_records)
+
 
 @dataclass(slots=True)
 class _Task:
@@ -248,7 +267,7 @@ class _TaskResult:
 
 
 class PowlV2Runner:
-    """Eager eight-thread, work-conserving runner for POWL 2.0 models."""
+    """Eager, work-conserving, bounded POWL 2.0 thread runner."""
 
     def __init__(self, config: RunnerConfig | None = None) -> None:
         self.config = config or RunnerConfig()
@@ -257,6 +276,7 @@ class PowlV2Runner:
             thread_name_prefix=self.config.thread_name_prefix,
         )
         self._closed = False
+        self._run_gate = Lock()
         self._worker_names: set[str] = set()
         self._worker_names_lock = Lock()
         self._activity_lock = Lock()
@@ -271,7 +291,7 @@ class PowlV2Runner:
             return tuple(sorted(self._worker_names))
 
     def _prestart_workers(self) -> None:
-        """Force ``ThreadPoolExecutor`` to create every configured worker now."""
+        """Force ThreadPoolExecutor to create every configured worker now."""
         barrier = Barrier(self.config.max_workers + 1)
 
         def warm() -> str:
@@ -285,17 +305,19 @@ class PowlV2Runner:
         barrier.wait()
         for future in futures:
             future.result()
-        if len(self.worker_threads) != self.config.max_workers:
+        observed = len(self.worker_threads)
+        if observed != self.config.max_workers:
             raise RuntimeError(
                 "worker prestart invariant failed: "
-                f"expected={self.config.max_workers} observed={len(self.worker_threads)}"
+                f"expected={self.config.max_workers} observed={observed}"
             )
 
     def close(self) -> None:
-        if self._closed:
-            return
-        self._closed = True
-        self._pool.shutdown(wait=True, cancel_futures=True)
+        with self._run_gate:
+            if self._closed:
+                return
+            self._closed = True
+            self._pool.shutdown(wait=True, cancel_futures=False)
 
     def __enter__(self) -> "PowlV2Runner":
         return self
@@ -398,7 +420,13 @@ class PowlV2Runner:
                 },
                 marking=marking,
             )
-            chosen = policy.choose(decision)
+            try:
+                chosen = policy.choose(decision)
+            except Exception as exc:
+                raise RunnerRefused(
+                    RunnerRefusal.POLICY_FAILED,
+                    f"choice_path={prefix}: {type(exc).__name__}: {exc}",
+                ) from exc
             if chosen not in by_candidate:
                 raise RunnerRefused(
                     RunnerRefusal.INVALID_CHOICE,
@@ -442,16 +470,42 @@ class PowlV2Runner:
         cancellation: Event | None = None,
         run_id: str | None = None,
     ) -> RunEvidence:
-        """Run ``model`` to terminal standing or a typed boundary.
+        """Execute one POWL run with maximal legal concurrency.
 
-        The activity pool is dynamic rather than wave/barrier based: whenever a
-        worker finishes, its successful leaf is committed immediately and any
-        newly-enabled successor may occupy the freed slot while unrelated work
-        is still running. That avoids head-of-line blocking across independent
-        POWL branches.
+        Capacity is replenished on every completed future rather than at wave
+        boundaries. On fail-fast, no new activity is admitted after the first
+        terminal failure, but every activity already dispatched is drained and
+        recorded. Successful drain work is structurally committed because that
+        consequence was actually observed.
         """
         if self._closed:
             raise RunnerRefused(RunnerRefusal.RUNNER_CLOSED)
+        if not self._run_gate.acquire(blocking=False):
+            raise RunnerRefused(RunnerRefusal.RUNNER_BUSY)
+        try:
+            return self._run_locked(
+                model,
+                driver,
+                choice_policy=choice_policy,
+                initial=initial,
+                context_sha256=context_sha256,
+                cancellation=cancellation,
+                run_id=run_id,
+            )
+        finally:
+            self._run_gate.release()
+
+    def _run_locked(
+        self,
+        model: PowlNode,
+        driver: ActivityDriver | None,
+        *,
+        choice_policy: ChoicePolicy | None,
+        initial: Marking,
+        context_sha256: str,
+        cancellation: Event | None,
+        run_id: str | None,
+    ) -> RunEvidence:
         validate_model(model)
         run_id = run_id or uuid4().hex
         cancel = cancellation or Event()
@@ -469,7 +523,8 @@ class PowlV2Runner:
 
         refusal: RunnerRefusal | None = None
         detail = ""
-        status = RunStatus.BLOCKED
+        terminal: RunStatus | None = None
+        stop_scheduling = False
 
         def commit(path: NodePath) -> None:
             nonlocal marking
@@ -498,15 +553,110 @@ class PowlV2Runner:
             )
             self._consume_reservations(path, reservations)
 
+        def activity_record(
+            result: _TaskResult,
+            *,
+            success: bool,
+            committed: bool,
+            failure: BaseException | None,
+        ) -> ActivityRecord:
+            return ActivityRecord(
+                path=result.task.path,
+                occurrence=result.task.occurrence,
+                attempt=result.task.attempt,
+                label=result.task.node.label,
+                success=success,
+                committed=committed,
+                worker_thread=result.worker_thread,
+                started_ns=result.started_ns,
+                finished_ns=result.finished_ns,
+                authority_receipt=(
+                    result.outcome.authority_receipt
+                    if result.outcome is not None
+                    else None
+                ),
+                metadata=(
+                    result.outcome.metadata if result.outcome is not None else {}
+                ),
+                error_type=type(failure).__name__ if failure is not None else None,
+                error_message=str(failure) if failure is not None else None,
+            )
+
+        def process_done(
+            done: set[Future[_TaskResult]], *, allow_retry: bool, commit_success: bool
+        ) -> None:
+            nonlocal terminal, detail, stop_scheduling
+            ordered = sorted(done, key=lambda future: (in_flight[future].path, in_flight[future].attempt))
+            for future in ordered:
+                task = in_flight.pop(future)
+                result = future.result()
+                failure = result.error
+                if result.outcome is not None and not result.outcome.success and failure is None:
+                    failure = RuntimeError("activity driver returned success=False")
+                success = failure is None
+                committed = False
+                if success and commit_success:
+                    try:
+                        commit(task.path)
+                    except RunnerRefused:
+                        activity_records.append(
+                            activity_record(
+                                result,
+                                success=True,
+                                committed=False,
+                                failure=None,
+                            )
+                        )
+                        raise
+                    committed = True
+                    occurrences[task.path] = task.occurrence + 1
+                    attempts.pop(task.path, None)
+                activity_records.append(
+                    activity_record(
+                        result,
+                        success=success,
+                        committed=committed,
+                        failure=failure,
+                    )
+                )
+                if success:
+                    continue
+
+                can_retry = (
+                    allow_retry
+                    and terminal is None
+                    and task.attempt < self.config.max_attempts
+                    and not cancel.is_set()
+                )
+                if can_retry:
+                    continue
+
+                failed_paths.add(task.path)
+                if self.config.fail_fast and terminal is None:
+                    terminal = RunStatus.FAILED
+                    detail = (
+                        f"activity {task.node.label!r} failed after "
+                        f"{task.attempt} attempt(s): {failure}"
+                    )
+                    stop_scheduling = True
+                    cancel.set()
+
         try:
             while True:
-                if cancel.is_set():
-                    status = RunStatus.CANCELLED
+                if terminal is None and cancel.is_set():
+                    terminal = RunStatus.CANCELLED
                     detail = "cancellation requested"
-                    break
+                    stop_scheduling = True
+
+                if stop_scheduling:
+                    if not in_flight:
+                        break
+                    done, _ = wait(tuple(in_flight), return_when=FIRST_COMPLETED)
+                    process_done(done, allow_retry=False, commit_success=True)
+                    continue
 
                 if is_final(model, marking):
-                    status = (
+                    terminal = (
                         RunStatus.COMPLETED if not failed_paths else RunStatus.FAILED
                     )
                     break
@@ -552,12 +702,7 @@ class PowlV2Runner:
                     attempt = attempts.get(path, 0) + 1
                     attempts[path] = attempt
                     occurrence = occurrences.get(path, 0)
-                    task = _Task(
-                        path=path,
-                        occurrence=occurrence,
-                        attempt=attempt,
-                        node=node,
-                    )
+                    task = _Task(path, occurrence, attempt, node)
                     intent = ActivityIntent(
                         run_id=run_id,
                         model_sha256=digest,
@@ -575,98 +720,52 @@ class PowlV2Runner:
 
                 if not in_flight:
                     if failed_paths:
-                        status = RunStatus.FAILED
+                        terminal = RunStatus.FAILED
                         detail = f"activity failures at paths={sorted(failed_paths)}"
                         break
                     if not full_live:
-                        status = RunStatus.BLOCKED
-                        detail = classify_stall(
-                            model, marking, self.config.bound
-                        ).value
+                        terminal = RunStatus.BLOCKED
+                        detail = classify_stall(model, marking, self.config.bound).value
                         break
-                    status = RunStatus.BLOCKED
-                    detail = (
-                        "no dispatchable activity after policy/reservation filtering"
-                    )
+                    terminal = RunStatus.BLOCKED
+                    detail = "no dispatchable activity after policy/reservation filtering"
                     break
 
                 done, _ = wait(tuple(in_flight), return_when=FIRST_COMPLETED)
-                for future in sorted(done, key=lambda item: in_flight[item].path):
-                    task = in_flight.pop(future)
-                    result = future.result()
-                    failure = result.error
-                    if (
-                        result.outcome is not None
-                        and not result.outcome.success
-                        and failure is None
-                    ):
-                        failure = RuntimeError(
-                            "activity driver returned success=False"
-                        )
-                    success = failure is None
-                    activity_records.append(
-                        ActivityRecord(
-                            path=task.path,
-                            occurrence=task.occurrence,
-                            attempt=task.attempt,
-                            label=task.node.label,
-                            success=success,
-                            worker_thread=result.worker_thread,
-                            started_ns=result.started_ns,
-                            finished_ns=result.finished_ns,
-                            authority_receipt=(
-                                result.outcome.authority_receipt
-                                if result.outcome is not None
-                                else None
-                            ),
-                            error_type=(
-                                type(failure).__name__
-                                if failure is not None
-                                else None
-                            ),
-                            error_message=(
-                                str(failure) if failure is not None else None
-                            ),
-                        )
-                    )
-                    if success:
-                        occurrences[task.path] = task.occurrence + 1
-                        attempts.pop(task.path, None)
-                        commit(task.path)
-                        continue
-
-                    if (
-                        task.attempt < self.config.max_attempts
-                        and not cancel.is_set()
-                    ):
-                        continue
-                    failed_paths.add(task.path)
-                    if self.config.fail_fast:
-                        cancel.set()
-                        for pending in in_flight:
-                            pending.cancel()
-                        status = RunStatus.FAILED
-                        detail = (
-                            f"activity {task.node.label!r} failed after "
-                            f"{task.attempt} attempt(s): {failure}"
-                        )
-                        break
-                if status is RunStatus.FAILED and self.config.fail_fast:
-                    break
+                if terminal is None and cancel.is_set():
+                    terminal = RunStatus.CANCELLED
+                    detail = "cancellation requested"
+                    stop_scheduling = True
+                process_done(
+                    done,
+                    allow_retry=not stop_scheduling,
+                    commit_success=True,
+                )
         except RunnerRefused as exc:
             refusal = exc.refusal
             detail = exc.detail
-            status = RunStatus.REFUSED
+            terminal = RunStatus.REFUSED
+            stop_scheduling = True
         finally:
-            if status in {
+            if terminal in {
                 RunStatus.FAILED,
                 RunStatus.REFUSED,
                 RunStatus.CANCELLED,
             }:
                 cancel.set()
             if in_flight:
-                wait(tuple(in_flight))
+                remaining = set(in_flight)
+                wait(tuple(remaining))
+                # A refusal can interrupt structural committing. We still bind
+                # every dispatched outcome into evidence, but do not pretend an
+                # uncommitted success advanced the reference marking.
+                process_done(
+                    remaining,
+                    allow_retry=False,
+                    commit_success=terminal is not RunStatus.REFUSED,
+                )
 
+        status = terminal or RunStatus.BLOCKED
         if self.config.verify_replay and records:
             try:
                 replayed = replay(
@@ -683,9 +782,7 @@ class PowlV2Runner:
                 if replayed != marking:
                     refusal = RunnerRefusal.REPLAY_DIVERGED
                     status = RunStatus.REFUSED
-                    detail = (
-                        "replayed final marking differs from observed final marking"
-                    )
+                    detail = "replayed final marking differs from observed final marking"
 
         return RunEvidence(
             run_id=run_id,

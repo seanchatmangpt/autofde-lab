@@ -51,26 +51,27 @@ jobs:
           import ast
           from pathlib import Path
 
-          path = Path("tests/powl/test_runner.py")
-          tree = ast.parse(path.read_text(), filename=str(path))
           banned_names = {"Mock", "MagicMock", "patch", "monkeypatch"}
           violations = []
-          for node in ast.walk(tree):
-              if isinstance(node, ast.Import):
-                  for alias in node.names:
-                      if alias.name == "unittest.mock":
-                          violations.append((node.lineno, f"import {alias.name}"))
-              elif isinstance(node, ast.ImportFrom):
-                  if node.module == "unittest.mock":
-                      violations.append((node.lineno, "from unittest.mock import ..."))
-              elif isinstance(node, ast.Name) and node.id in banned_names:
-                  violations.append((node.lineno, node.id))
-              elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                  for arg in (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs):
-                      if arg.arg == "monkeypatch":
-                          violations.append((node.lineno, "monkeypatch fixture"))
+          for path in sorted(Path("tests/powl").glob("test_runner*.py")):
+              tree = ast.parse(path.read_text(), filename=str(path))
+              for node in ast.walk(tree):
+                  if isinstance(node, ast.Import):
+                      for alias in node.names:
+                          if alias.name == "unittest.mock":
+                              violations.append((path, node.lineno, f"import {alias.name}"))
+                  elif isinstance(node, ast.ImportFrom):
+                      if node.module == "unittest.mock":
+                          violations.append((path, node.lineno, "from unittest.mock import ..."))
+                  elif isinstance(node, ast.Name) and node.id in banned_names:
+                      violations.append((path, node.lineno, node.id))
+                  elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                      args = (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs)
+                      for arg in args:
+                          if arg.arg == "monkeypatch":
+                              violations.append((path, node.lineno, "monkeypatch fixture"))
           if violations:
-              for line, detail in violations:
+              for path, line, detail in violations:
                   print(f"{path}:{line}: banned mockist construct: {detail}")
               raise SystemExit(1)
 
@@ -78,4 +79,4 @@ jobs:
         env:
           PYTHONPATH: src
         run: |
-          python -m pytest -q tests/powl/test_runner.py
+          python -m pytest -q tests/powl/test_runner*.py
