@@ -106,6 +106,7 @@ class _FakeSregymEnvironment:
     def __init__(self) -> None:
         self.call_log: list[str] = []
         self.kubectl_commands: list[str] = []
+        self.verify_calls: list[dict] = []
         self.torn_down = False
 
     async def actuate(self, capability: _FakeCapability, payload: dict) -> dict:
@@ -132,7 +133,16 @@ class _FakeSregymEnvironment:
 
     async def verify(self, expected: dict) -> tuple[bool, dict]:
         self.call_log.append("verify")
-        return True, {"stage": "complete", "matched": expected}
+        self.verify_calls.append(dict(expected))
+        # Real regression coverage for the defect found and fixed forward
+        # this session: the real conductor's GET /status returns ONLY
+        # {"stage": <value>} with real vocabulary "setup" | "diagnosis" |
+        # "mitigation" | "tearing_down" | "done" -- there is no "complete"
+        # stage and no "diagnosis" key at all. This fake genuinely echoes
+        # back only the requested stage (never a phantom "complete"), so a
+        # caller expecting the old, nonexistent stage name would correctly
+        # fail to match here too, exactly as the real conductor would.
+        return True, {"stage": expected.get("stage")}
 
     async def teardown(self) -> None:
         self.call_log.append("teardown")
@@ -224,7 +234,18 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
     assert result.stall.final is True
     assert result.verdict == OutcomeVerdict.CONFIRMED
     assert result.confirmed_via == "structural_and_oracle"
-    assert result.verify_observed["stage"] == "complete"
+    assert result.verify_observed["stage"] == "done"
+
+    # Real regression coverage for the two-part defect found and fixed
+    # live this cycle, source-confirmed in
+    # sregym/conductor/conductor_api.py: GET /status returns ONLY
+    # {"stage": <value>}, real vocabulary "setup" | "diagnosis" |
+    # "mitigation" | "tearing_down" | "done" -- there is no "complete"
+    # stage (the driver's old expected value never existed) and no
+    # "diagnosis" key in the response at all (the old expected dict's
+    # second key could never match). The final gymact_verify call must now
+    # request exactly {"stage": "done"}, nothing else.
+    assert fake_env.verify_calls[-1] == {"stage": "done"}
 
     # Real regression coverage for the significant defect found and fixed
     # live this cycle: the real exec_kubectl_cmd_safely tool rejects any

@@ -326,8 +326,19 @@ async def run_gymact_mediated_diagnosis(
         return await env.actuate(cap, payload)
 
     async def _verify() -> dict[str, Any]:
-        label = diagnosis_state.get("label", "no_anomaly_detected")
-        passed, observed = await env.verify({"stage": "complete", "diagnosis": label})
+        # Real, two-part defect found live this cycle, source-confirmed in
+        # sregym/conductor/conductor_api.py: GET /status returns ONLY
+        # {"stage": <value>} -- real vocabulary documented in that file's
+        # own API doc comment: "setup" | "diagnosis" | "mitigation" |
+        # "tearing_down" | "done". There is no "complete" stage (this
+        # driver's old expected value never existed), and no "diagnosis"
+        # key in the response at all (the old expected dict's second key
+        # could never match, since observed.get("diagnosis") is always
+        # None). Both defects compounded: even fixing "complete" -> "done"
+        # alone would still have left verify() permanently failing on the
+        # phantom "diagnosis" key. Fixed: expect only the real key/value
+        # the real conductor actually returns.
+        passed, observed = await env.verify({"stage": "done"})
         diagnosis_state["verify_passed"] = passed
         diagnosis_state["verify_observed"] = observed if isinstance(observed, dict) else {"raw": observed}
         return {"passed": passed, "observed": diagnosis_state["verify_observed"]}
