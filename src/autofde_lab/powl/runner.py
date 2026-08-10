@@ -74,6 +74,24 @@ brokered, independently authorized actuation call (a property of the
 *world*), the same class of defect ``.claude/rules/absence-is-not-evidence.md``
 and ``.claude/rules/no-dual-bookkeeping.md`` name for admission and evidence:
 a convenient coupling standing in for a lawful one.
+
+Capability boundary when gymact is the target environment
+------------------------------------------------------------
+Whenever an ``action_bindings`` entry in this runner does reach a gymact
+``Capability`` (e.g. ``run_kubectl``, ``submit_diagnosis``), it must go
+through :class:`autofde_lab.fabric.gymact_capability_gate.CapabilityGate`
+rather than importing a gymact capability constructor directly. The gate
+loads an explicit TOML allowlist (``fabric/gymact_capabilities.toml``) of
+exactly which real ``gymact.gyms.sregym.SREGYM_CAPABILITIES`` entries this
+diagnosing pipeline may invoke, and refuses (``CapabilityRefused``, never a
+silent pass) anything not listed -- concretely enforcing that the diagnosing
+agent cannot reach ground-truth or grading-internal surfaces even if a
+future gymact capability is added carelessly. This is a real allowlist, not
+documentation: verified this session that none of the 5 real capabilities
+expose ground truth, and that ``SregymEnvironment.verify()`` is not a
+``Capability`` at all (a plain coroutine never wired into ``actuate()``'s
+dispatch table), so it is structurally unreachable through this surface
+regardless of the manifest's contents.
 """
 
 from __future__ import annotations
@@ -119,6 +137,8 @@ __all__ = [
     "PipelineStallResult",
     "classify_pipeline_stall",
     "run_pipeline",
+    "ALLOWED_ACTION_BINDING_LABELS",
+    "ActuationBindingRefused",
 ]
 
 #: The turtle-bridge-eligible linear prefix: scan the cluster, phi-encode the
@@ -136,6 +156,38 @@ CASE_HIT_LABEL = "case_hit"
 CASE_MISS_LABEL = "case_miss"
 CASE_RETAIN_LABEL = "cbr_retain"
 RECORD_LABEL = "ocel_record"
+
+#: The complete, closed set of labels this runner will ever invoke an
+#: `action_bindings` callable for -- every one of them read-only or
+#: diagnostic (scan, phi-encode, dispatch, solve, case-library
+#: retrieve/hit/miss/retain, OCEL record). This is the code-level
+#: enforcement of this module's own docstring decision ("the runner stays
+#: structural-only; it does not gain a direct actuation path"): a caller
+#: cannot smuggle a cluster-mutating actuator into `run_pipeline` by
+#: keying it under one of this pipeline's Atom labels, because `run_pipeline`
+#: refuses any `action_bindings` key outside this set below -- the decision
+#: is a runtime guard, not merely stated prose.
+ALLOWED_ACTION_BINDING_LABELS: frozenset[str] = frozenset(
+    {
+        "scan",
+        "phi_encode",
+        "dispatch_solve",
+        "solve",
+        CASE_RETRIEVE_LABEL,
+        CASE_HIT_LABEL,
+        CASE_MISS_LABEL,
+        CASE_RETAIN_LABEL,
+        RECORD_LABEL,
+    }
+)
+
+
+class ActuationBindingRefused(ValueError):
+    """Raised when `run_pipeline` is given an `action_bindings` key outside
+    `ALLOWED_ACTION_BINDING_LABELS` -- i.e. a caller trying to wire a
+    cluster-mutating actuator to fire as a side effect of structural marking
+    advancement, which this module's docstring states it deliberately never
+    does."""
 
 
 class BridgeUnavailable(ValueError):
