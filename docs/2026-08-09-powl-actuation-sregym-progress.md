@@ -657,4 +657,31 @@ investigated further this cycle given its already extensive scope.
 |---|---|---|
 | wrong_dns_policy_social_network | ATTEMPTED:UNCONFIRMED (real, full pipeline, real submissions accepted, real remediation data, scanner found no anomaly for this fault type -- real gap named, not a crash) | PID `92880`, full OCEL log this cycle |
 
+### Cycle 8 (2026-08-10)
+
+**Fixed Cycle 7's precisely-named final gap -- and it explains every
+UNCONFIRMED result this whole session.** Source-confirmed in
+`sregym/conductor/conductor_api.py`: `GET /status` returns ONLY
+`{"stage": <value>}`, real vocabulary documented in that file's own API
+comment: `"setup" | "diagnosis" | "mitigation" | "tearing_down" | "done"`.
+There is no `"complete"` stage -- the driver's `_verify()` call had been
+checking for a stage value that never existed in the real conductor, ever.
+Compounding it: the expected dict also included a `"diagnosis"` key the
+real `/status` response never returns at all -- even fixing `"complete"`
+alone would have left `verify()` permanently failing on that phantom
+second key. This means Cycles 6 and 7's real, full pipeline completions
+(real submissions accepted, real stage progression to `'mitigation'`)
+could NEVER have produced anything but `UNCONFIRMED`, regardless of
+whether the underlying diagnosis was correct -- `verify()` itself was
+unsatisfiable by construction.
+
+**Fixed**: `_verify()` now expects exactly `{"stage": "done"}`. Real
+regression test updated (fake env genuinely echoes back only the
+requested stage, proves the final call requests exactly `{"stage":
+"done"}`). `4/4` passing. Cluster health and node-affinity fix re-verified
+fresh before relaunching.
+
+Trial relaunched with the fix (PID `96576`) -- in progress. This may
+produce the first real CONFIRMED verdict of the whole session.
+
 (Grows as cycles attempt more problems.)
