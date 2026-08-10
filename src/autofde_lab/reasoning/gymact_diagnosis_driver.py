@@ -155,6 +155,7 @@ async def run_gymact_mediated_diagnosis(
     judge_api_base: str = "https://api.groq.com/openai/v1",
     wall_clock_timeout_s: int = 900,
     startup_timeout_seconds: float = 900.0,
+    verify_timeout_seconds: float = 300.0,
     namespace: str = "social-network",
     manifest_path: Path | str = DEFAULT_MANIFEST_PATH,
     _environment_factory: Callable[[], Any] | None = None,
@@ -173,6 +174,17 @@ async def run_gymact_mediated_diagnosis(
     problem set requires genuinely takes 5-15+ real minutes (measured this
     session, multiple live attempts), so the 120s default was never
     sufficient for this workload, not a transient flake.
+
+    ``verify_timeout_seconds`` defaults to 300s, not gymact's own 120s
+    default: real trials this session (with the now-fixed real
+    ``{"stage": "done"}`` expectation) genuinely reached ``'mitigation'``
+    with both submissions accepted, then exhausted the 120s bound still
+    observing ``'mitigation'`` -- real evidence the conductor's own
+    internal evaluation between accepting a submission and transitioning
+    to ``'done'`` can take longer than 120s (a real judging/grading step,
+    not a hang -- both accepted submissions returned real ``200``
+    responses, so the wait is for the conductor's own async work, not a
+    stuck request).
 
     ``_environment_factory``/``_capabilities`` are test-only injection
     points (leading underscore -- not part of the public contract): when
@@ -202,6 +214,7 @@ async def run_gymact_mediated_diagnosis(
                 "judge_api_base": judge_api_base,
                 "wall_clock_timeout_s": wall_clock_timeout_s,
                 "startup_timeout_seconds": startup_timeout_seconds,
+                "verify_timeout_seconds": verify_timeout_seconds,
                 "mcp_server_port": mcp_server_port,
                 "api_port": api_port,
             },
