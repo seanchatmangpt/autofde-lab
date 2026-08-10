@@ -33,7 +33,7 @@ jobs:
           git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" > changed-files.txt
           cat changed-files.txt
           route() { local name="$1"; local pattern="$2"; if grep -Eq "$pattern" changed-files.txt; then echo "$name=true" >> "$GITHUB_OUTPUT"; else echo "$name=false" >> "$GITHUB_OUTPUT"; fi; }
-          route cache '^(src/autofde_lab/(caching\.py|_cache/)|tests/test_(caching|enterprise_cache)\.py)'
+          route cache '^(src/autofde_lab/(caching\.py|_cache/)|tests/test_(caching|enterprise_cache)\.py|\.github/workflows/)'
           route python '^(src/|tests/|examples/|pyproject\.toml|uv\.lock|\.github/workflows/)'
           route package '^(src/|cpp/|scripts/|pyproject\.toml|uv\.lock|CMakeLists\.txt|\.github/workflows/)'
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
