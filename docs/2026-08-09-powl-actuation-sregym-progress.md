@@ -1046,3 +1046,59 @@ real, present answer rather than "this never happened" (the exact shape
 of both bugs found so far). If the key IS rotated, prioritize a live
 trial over further static review -- the fixes so far are source-correct
 but have never been exercised against a real `SregymEnvironment`.
+
+### Cycle 13 (2026-08-10)
+
+**Key-rotation check**: real direct `curl` against the Groq API -> still
+`401`, `expired_api_key`. No orphaned processes found.
+`wrong_dns_policy_social_network` stays
+`ATTEMPTED:BLOCKED:EXPIRED_GROQ_API_KEY`.
+
+**Independently re-verified cycle 12's claims**: real re-run,
+`tests/reasoning/test_gymact_diagnosis_driver_chicago.py` + neighboring
+suites -> 124 passed, zero-mock grep clean.
+
+**Systematic sweep completed** (per cycle 12's own recommendation): read
+every remaining `diagnosis_state.get(key, default)` call site in the
+driver for the same class of fabrication-of-presence defect the last two
+cycles found and fixed. Real, precise result: **no further fabrication
+defects found**. `top_anomaly`/`label` (used by `_submit_diagnosis`) are
+always explicitly set by `_observe()` before `_submit_diagnosis` can
+structurally fire (strict linear order), and their fallback defaults are
+conservative (never fabricate a positive finding even in the
+structurally-impossible case where they're unset). `verify_observed` and
+`structural_recheck_anomaly_count` were already correctly guarded by the
+last two cycles' fixes. This negative result is itself real evidence,
+recorded rather than silently assumed.
+
+**One real observability gap found and fixed instead**:
+`submit_diagnosis_stage_wait_passed` -- tracking exactly the diagnostic
+this session's own submission-timing-race fix relies on (the real
+conductor correctly rejecting a submission attempted before its own
+stage machine reached `'diagnosis'`) -- was written into
+`diagnosis_state` but silently dropped at result-construction time,
+unavailable to a caller diagnosing a real failure without re-reading the
+raw OCEL log. Now a real field on `GymactMediatedDiagnosisResult`
+(`None` when `_submit_diagnosis` never fired at all, distinct from
+`False`, which means it fired and the bounded wait genuinely timed out).
+
+`.venv/bin/python -m pytest tests/reasoning/test_gymact_diagnosis_driver_chicago.py
+tests/case_library tests/powl tests/fabric/test_capability_gate_chicago.py`
+-> **124 passed**. Zero-mock grep clean. Committed: `e14dc21`.
+
+**Status table**: `wrong_dns_policy_social_network` ->
+`ATTEMPTED:BLOCKED:EXPIRED_GROQ_API_KEY` (unchanged, re-confirmed this
+cycle). No other problem ID attempted -- credential blocker is global.
+
+**Note for cycle 14**: the systematic-sweep well is now dry for this
+class of defect (real negative evidence, cycle 13). Static/source-only
+hardening on this driver has reached a natural point of diminishing
+returns without a live trial to surface NEW real failures. If the Groq
+key is still not rotated next cycle, consider: (a) reviewing
+`src/autofde_lab/powl/runner.py` itself (not just the driver) for
+similar issues, since it hasn't had the same close-reading pass this
+session's later cycles gave the driver, or (b) reviewing whether
+`_actuate_remediate`'s real recheck-scan cost (3 extra real kubectl
+calls per run, added cycle 11) is worth exposing as an opt-out for
+callers who don't need the DISPUTED distinction, though no evidence yet
+suggests this is a real problem worth solving pre-emptively.
