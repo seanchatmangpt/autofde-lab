@@ -158,3 +158,83 @@ def test_real_gymact_capability_object_with_unlisted_binding_is_refused() -> Non
     with pytest.raises(CapabilityRefused) as excinfo:
         gate.guard_capability(hypothetical_ground_truth_capability)
     assert excinfo.value.binding == "get_injected_fault"
+
+
+def test_stale_entries_is_empty_against_real_sregym_capabilities() -> None:
+    """Cross-check the shipped manifest's allowlist against the real,
+    imported `gymact.gyms.sregym.SREGYM_CAPABILITIES` binding names. Zero
+    stale entries today proves the manifest is not silently carrying a
+    typo'd or dropped-upstream capability name that `from_toml` alone has no
+    way to detect (a manifest is self-consistent TOML regardless of whether
+    its names mean anything to the real environment)."""
+    gate = CapabilityGate.from_toml(DEFAULT_MANIFEST_PATH)
+    real_names = frozenset(c.binding for c in SREGYM_CAPABILITIES)
+    assert gate.stale_entries(real_names) == frozenset()
+
+
+def test_stale_entries_detects_an_injected_fake_entry() -> None:
+    """A manifest entry naming a capability gymact does not actually have
+    (a stale/typo'd binding) must be detected by `stale_entries`, not
+    silently accepted -- prove this against a real TOML file on disk, not
+    the shipped manifest, so the shipped manifest itself is never mutated
+    to make this test pass."""
+    import tempfile
+    from pathlib import Path
+
+    real_names = frozenset(c.binding for c in SREGYM_CAPABILITIES)
+    assert "get_injected_fault_TYPO_DOES_NOT_EXIST" not in real_names
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        manifest = Path(tmpdir) / "manifest_with_stale_entry.toml"
+        manifest.write_text(
+            """
+            [gymact]
+            environment = "sregym"
+
+            [[capability]]
+            name = "run_kubectl"
+            consequence = "DO"
+            reason = "real capability"
+
+            [[capability]]
+            name = "get_injected_fault_TYPO_DOES_NOT_EXIST"
+            consequence = "READ"
+            reason = "stale/typo'd entry that does not exist in real gymact"
+            """,
+            encoding="utf-8",
+        )
+        gate = CapabilityGate.from_toml(manifest)
+        stale = gate.stale_entries(real_names)
+        assert stale == frozenset({"get_injected_fault_TYPO_DOES_NOT_EXIST"})
+
+
+# ---------------------------------------------------------------------------
+# Corrupt/malformed TOML on disk -- gymact importability is irrelevant here,
+# this exercises tomllib's own fail-closed behavior against a real file.
+# ---------------------------------------------------------------------------
+
+
+def test_syntactically_corrupt_toml_file_raises_uncaught(tmp_path) -> None:
+    """A present-but-syntactically-invalid TOML file must raise
+    `tomllib.TOMLDecodeError` uncaught -- `from_toml` does no try/except
+    around `tomllib.load`, so a corrupt manifest fails closed exactly like a
+    missing one, rather than being papered over into an implicit
+    allow-everything or allow-nothing default. Real malformed file on disk,
+    not assumed from reading the source."""
+    import tomllib
+
+    corrupt = tmp_path / "corrupt.toml"
+    corrupt.write_text(
+        """
+        [gymact
+        environment = "sregym"
+
+        [[capability]]
+        name = "run_kubectl"
+        consequence = "DO"
+        reason = "unterminated table header above breaks TOML syntax"
+        """,
+        encoding="utf-8",
+    )
+    with pytest.raises(tomllib.TOMLDecodeError):
+        CapabilityGate.from_toml(corrupt)
