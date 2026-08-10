@@ -76,6 +76,7 @@ _DEPLOYMENT_MARKERS = (
 _SERVICE_MARKERS = (
     r"svc/(?P<name>[a-zA-Z0-9][a-zA-Z0-9._-]*)",
     r"service/(?P<name>[a-zA-Z0-9][a-zA-Z0-9._-]*)",
+    r"service\s+(?P<name>[a-zA-Z0-9][a-zA-Z0-9._-]*)",
 )
 _NAMESPACE_MARKERS = (
     r"-n\s+(?P<name>[a-zA-Z0-9][a-zA-Z0-9._-]*)",

@@ -66,6 +66,43 @@ def test_abstract_raw_case_extracts_deployment_and_namespace_into_placeholders()
     }
 
 
+def test_abstract_raw_case_abstracts_space_separated_service_reference():
+    """Regression: `_SERVICE_MARKERS` previously only matched slash-prefixed
+    forms (`svc/`, `service/`), so a diagnosis phrased as `"service
+    billing-api"` (no slash) leaked the concrete service name verbatim into
+    the stored template -- pure memorization of that one app, not
+    generalization. Confirmed defect this session; fixed by adding a
+    space-separated marker alongside the slash-prefixed ones.
+    """
+    raw_diagnosis = (
+        "service billing-api in namespace payments is not receiving traffic; "
+        "endpoints list is empty."
+    )
+    raw_mitigation_commands = (
+        "kubectl describe service billing-api -n payments",
+    )
+    observed_symptoms = frozenset({"service.endpoints=empty"})
+
+    case = abstract_raw_case(
+        raw_diagnosis=raw_diagnosis,
+        raw_mitigation_commands=raw_mitigation_commands,
+        observed_symptoms=observed_symptoms,
+        case_id="trial-svc-001",
+        outcome_confirmed=True,
+    )
+
+    assert case is not None
+
+    # The concrete service name must not leak into the stored template.
+    assert "billing-api" not in case.diagnosis_template
+    assert "billing-api" not in "\n".join(case.mitigation_template)
+
+    # Replaced with the service placeholder instead.
+    assert "{{service}}" in case.diagnosis_template
+    assert "{{service}}" in case.mitigation_template[0]
+    assert case.placeholder_bindings_schema["service"] == "k8s_object_name"
+
+
 def test_abstract_raw_case_returns_none_when_outcome_not_confirmed():
     case = abstract_raw_case(
         raw_diagnosis="deployment/foo in namespace bar is crashlooping",
