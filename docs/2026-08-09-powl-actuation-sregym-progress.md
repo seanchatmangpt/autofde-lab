@@ -1421,3 +1421,27 @@ position), 136/136 on the broader regression sweep, zero mocks. Committed:
 
 **Second live trial launched** (PID `49145`) against the fixed runner --
 in progress via Monitor at the time of this entry.
+
+**Cycle 18 continued further**: the second live trial (PID `49145`) with
+the `wait_for_deploy` fix worked as designed -- confirmed the fix real: the
+run got past the namespace race entirely, through the full concurrent
+observe block, into `_submit_diagnosis`'s `env.actuate()` call. It then hit
+a DIFFERENT, new real failure: a single transient `httpx.ReadTimeout` (10s)
+on `actuate()`'s own internal `before = self._status()` bookkeeping call
+(`~/gymact/src/gymact/gyms/sregym.py:483`) -- the same class of defect an
+earlier cycle (9) already fixed for `verify()`'s polling loop, but never
+applied to `actuate()`'s own before/after status snapshots.
+
+**Real fix landed in `~/gymact`**: new `_safe_status()` wraps `_status()`
+with a real try/except degrading to `{}` on any exception (matching
+`verify()`'s already-established resilience contract); `actuate()`'s three
+real before/after call sites now use it. `_status()` itself is unchanged
+(still raises -- other real callers, e.g. `observe()`, still rely on that).
+Real regression tests added (`ActuateStatusResilienceTests`, reusing
+`VerifyResilienceTests`' own real fixture pattern -- a real
+`SregymEnvironment` via `object.__new__` pointed at a real, genuinely
+unreachable port). 24/24 passed (1 deselected, pre-existing live-cluster
+gate), zero mocks. Committed in gymact: `5ff806d`.
+
+**Third live trial launched** (PID `51709`) against both fixes combined --
+in progress via Monitor at the time of this entry.
