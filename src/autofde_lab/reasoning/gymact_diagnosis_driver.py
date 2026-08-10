@@ -158,6 +158,164 @@ class GymactMediatedDiagnosisResult:
     failure without re-reading the raw OCEL log."""
 
 
+# Real, source-derived map from every real SREGym problem_id (as registered
+# in the real `sregym/conductor/problems/registry.py`'s own
+# `PROBLEM_REGISTRY` dict) to the real k8s namespace that problem's app
+# deploys into. Found and fixed forward this cycle: this driver previously
+# hardcoded `namespace="social-network"` as the ONE default for every
+# problem_id, correct only by coincidence for this session's sole live test
+# problem (`wrong_dns_policy_social_network`) -- 101 of these 123 real
+# problem IDs deploy a DIFFERENT app into a DIFFERENT real namespace
+# (`hotel-reservation`, `astronomy-shop`, `train-ticket`,
+# `blueprint-hotel-reservation`, or `fleetcast`, confirmed by directly
+# reading each app's own `service/metadata/*.json` "Namespace" key -- NOT
+# guessed from a naming convention: `fleet_cast` -> `"fleetcast"`, no dash,
+# breaking the pattern every other app happened to follow). A live trial
+# against any of those 101 problems using the old hardcoded default would
+# have silently scanned the WRONG (or a nonexistent) namespace, producing a
+# false `no_anomaly_detected` -- exactly the confident-wrong-plan failure
+# `.claude/rules/absence-is-not-evidence.md` names.
+#
+# Derived by statically parsing (Python `ast`, no execution, no side
+# effects) `registry.py`'s real `PROBLEM_REGISTRY` dict: for each entry
+# either read the literal `app_name=` keyword argument the lambda passes to
+# its problem class (e.g. `WrongDNSPolicy(app_name="hotel_reservation", ...)`
+# for the 22 parameterized entries), or -- for the 101 entries that are bare
+# class references with no `app_name` kwarg -- resolve which
+# `sregym.service.apps.*` module that class's own file imports and hardcodes
+# via `super().__init__(app=...)`. Every one of the 123 real registry
+# entries resolved this way (zero guessed). `multiple_failures` (a real,
+# dynamically-composed multi-app problem) is not a static registry entry and
+# is intentionally absent from this table -- a caller for that one real
+# problem must pass `namespace=` explicitly, honestly, since no single
+# static namespace exists for it.
+PROBLEM_ID_NAMESPACE: dict[str, str] = {
+    "admission_webhook_outage_hotel_reservation": "hotel-reservation",
+    "admission_webhook_tls_mismatch_hotel_reservation": "hotel-reservation",
+    "assign_to_non_existent_node": "social-network",
+    "astronomy_shop_ad_service_failure": "astronomy-shop",
+    "astronomy_shop_ad_service_high_cpu": "astronomy-shop",
+    "astronomy_shop_ad_service_image_slow_load": "astronomy-shop",
+    "astronomy_shop_ad_service_manual_gc": "astronomy-shop",
+    "astronomy_shop_cart_service_failure": "astronomy-shop",
+    "astronomy_shop_failed_readiness_probe": "astronomy-shop",
+    "astronomy_shop_payment_service_failure": "astronomy-shop",
+    "astronomy_shop_payment_service_unreachable": "astronomy-shop",
+    "astronomy_shop_product_catalog_service_failure": "astronomy-shop",
+    "auth_miss_mongodb": "social-network",
+    "calico_route_reflector_label_drift_hotel_reservation": "hotel-reservation",
+    "capacity_decrease_rpc_retry_storm": "blueprint-hotel-reservation",
+    "cfs_cpu_throttling_hotel_reservation": "hotel-reservation",
+    "configmap_drift_hotel_reservation": "hotel-reservation",
+    "cronjob_sidecar_blocks_completion_hotel_reservation": "hotel-reservation",
+    "cumulative_admission_webhook_timeout_hotel_reservation": "hotel-reservation",
+    "dev_shm_exhaustion_hotel_reservation": "hotel-reservation",
+    "duplicate_pvc_mounts_astronomy_shop": "astronomy-shop",
+    "duplicate_pvc_mounts_hotel_reservation": "hotel-reservation",
+    "duplicate_pvc_mounts_social_network": "social-network",
+    "edge_request_filter_cpu_saturation": "astronomy-shop",
+    "env_variable_shadowing_astronomy_shop": "astronomy-shop",
+    "ephemeral_port_range_hotel_reservation": "hotel-reservation",
+    "expired_tls_hotel_reservation": "hotel-reservation",
+    "faulty_image_correlated": "hotel-reservation",
+    "feature_flag_latent_bug_hotel_reservation": "hotel-reservation",
+    "file_descriptor_exhaustion": "hotel-reservation",
+    "finalizer_deadlock_controller_hotel_reservation": "hotel-reservation",
+    "gc_capacity_degradation": "blueprint-hotel-reservation",
+    "hpa_missing_effective_cpu_request_hotel_reservation": "hotel-reservation",
+    "incorrect_image": "astronomy-shop",
+    "incorrect_port_assignment": "astronomy-shop",
+    "ingress_misroute": "hotel-reservation",
+    "init_container_dependency_hang_astronomy_shop": "astronomy-shop",
+    "init_container_dependency_hang_hotel_reservation": "hotel-reservation",
+    "init_container_dependency_hang_social_network": "social-network",
+    "internal_traffic_policy_local_astronomy_shop": "astronomy-shop",
+    "k8s_target_port-misconfig": "social-network",
+    "kafka_poison_pill_hol_block": "astronomy-shop",
+    "kafka_producer_leak": "astronomy-shop",
+    "kafka_queue_problems": "astronomy-shop",
+    "kubelet_crash": "astronomy-shop",
+    "kubelet_eviction_threshold_misconfig": "astronomy-shop",
+    "latent_sector_error": "hotel-reservation",
+    "liveness_probe_misconfiguration_astronomy_shop": "astronomy-shop",
+    "liveness_probe_misconfiguration_hotel_reservation": "hotel-reservation",
+    "liveness_probe_misconfiguration_social_network": "social-network",
+    "liveness_probe_too_aggressive_astronomy_shop": "astronomy-shop",
+    "liveness_probe_too_aggressive_hotel_reservation": "hotel-reservation",
+    "liveness_probe_too_aggressive_social_network": "social-network",
+    "load_spike_rpc_retry_storm": "blueprint-hotel-reservation",
+    "loadgenerator_flood_homepage": "astronomy-shop",
+    "misconfig_app_hotel_res": "hotel-reservation",
+    "missing_configmap_hotel_reservation": "hotel-reservation",
+    "missing_configmap_social_network": "social-network",
+    "missing_env_variable_astronomy_shop": "astronomy-shop",
+    "missing_service_astronomy_shop": "astronomy-shop",
+    "missing_service_hotel_reservation": "hotel-reservation",
+    "missing_service_social_network": "social-network",
+    "mutating_webhook_resource_limits_social_network": "social-network",
+    "namespace_memory_limit": "hotel-reservation",
+    "network_policy_block": "hotel-reservation",
+    "nightly_rebalance_oom_hotel_reservation": "hotel-reservation",
+    "node_clock_drift_hotel_reservation": "hotel-reservation",
+    "node_conntrack_exhaustion_hotel_reservation": "hotel-reservation",
+    "operator_invalid_affinity_toleration": "fleetcast",
+    "operator_non_existent_storage": "fleetcast",
+    "operator_overload_replicas": "fleetcast",
+    "operator_security_context_fault": "fleetcast",
+    "operator_wrong_operator_image": "fleetcast",
+    "operator_wrong_update_strategy_fault": "fleetcast",
+    "persistent_volume_affinity_violation": "social-network",
+    "pod_anti_affinity_deadlock": "social-network",
+    "pod_cidr_exhaustion_hotel_reservation": "hotel-reservation",
+    "postgres_lock_contention_product_catalog": "astronomy-shop",
+    "priority_preemption_cascade_hotel_reservation": "hotel-reservation",
+    "psa_restricted_blocks_recreation_hotel_reservation": "hotel-reservation",
+    "pvc_claim_mismatch": "hotel-reservation",
+    "rbac_misconfiguration": "astronomy-shop",
+    "readiness_probe_misconfiguration_astronomy_shop": "astronomy-shop",
+    "readiness_probe_misconfiguration_hotel_reservation": "hotel-reservation",
+    "readiness_probe_misconfiguration_social_network": "social-network",
+    "resource_request_too_large": "hotel-reservation",
+    "resource_request_too_small": "hotel-reservation",
+    "revoke_auth_mongodb-1": "hotel-reservation",
+    "revoke_auth_mongodb-2": "hotel-reservation",
+    "rolling_update_misconfigured_hotel_reservation": "hotel-reservation",
+    "rolling_update_misconfigured_social_network": "social-network",
+    "scale_pod_zero_social_net": "social-network",
+    "search_rate_retry_collapse_hotel_reservation": "hotel-reservation",
+    "secret_rotation_stale_env_credentials_astronomy_shop": "astronomy-shop",
+    "service_dns_resolution_failure_astronomy_shop": "astronomy-shop",
+    "service_dns_resolution_failure_social_network": "social-network",
+    "service_port_conflict_astronomy_shop": "astronomy-shop",
+    "service_port_conflict_hotel_reservation": "hotel-reservation",
+    "service_port_conflict_social_network": "social-network",
+    "service_wrong_pod_selection_hotel_reservation": "hotel-reservation",
+    "sidecar_port_conflict_astronomy_shop": "astronomy-shop",
+    "sidecar_port_conflict_hotel_reservation": "hotel-reservation",
+    "sidecar_port_conflict_social_network": "social-network",
+    "silent_data_corruption": "hotel-reservation",
+    "stale_coredns_config_astronomy_shop": "astronomy-shop",
+    "stale_coredns_config_social_network": "social-network",
+    "storage_user_unregistered-1": "hotel-reservation",
+    "storage_user_unregistered-2": "hotel-reservation",
+    "taint_no_toleration_social_network": "social-network",
+    "trainticket_f17_nested_sql_select_clause_error": "train-ticket",
+    "trainticket_f22_sql_column_name_mismatch_error": "train-ticket",
+    "unschedulable_incorrect_port_assignment": "astronomy-shop",
+    "update_incompatible_correlated": "hotel-reservation",
+    "valkey_auth_disruption": "astronomy-shop",
+    "valkey_memory_disruption": "astronomy-shop",
+    "workload_imbalance": "astronomy-shop",
+    "wrong_bin_usage": "hotel-reservation",
+    "wrong_dns_policy_astronomy_shop": "astronomy-shop",
+    "wrong_dns_policy_hotel_reservation": "hotel-reservation",
+    "wrong_dns_policy_social_network": "social-network",
+    "wrong_service_selector_astronomy_shop": "astronomy-shop",
+    "wrong_service_selector_hotel_reservation": "hotel-reservation",
+    "wrong_service_selector_social_network": "social-network",
+}
+
+
 async def run_gymact_mediated_diagnosis(
     problem_id: str,
     *,
@@ -168,7 +326,7 @@ async def run_gymact_mediated_diagnosis(
     wall_clock_timeout_s: int = 900,
     startup_timeout_seconds: float = 900.0,
     verify_timeout_seconds: float = 300.0,
-    namespace: str = "social-network",
+    namespace: str | None = None,
     manifest_path: Path | str = DEFAULT_MANIFEST_PATH,
     _environment_factory: Callable[[], Any] | None = None,
     _capabilities: Any = None,
@@ -209,6 +367,18 @@ async def run_gymact_mediated_diagnosis(
     assert the runner -- not this function's own code -- is what triggers
     each call, without materializing a real subprocess/cluster.
     """
+    if namespace is None:
+        namespace = PROBLEM_ID_NAMESPACE.get(problem_id)
+        if namespace is None:
+            raise ValueError(
+                f"no known real namespace for problem_id={problem_id!r} -- pass namespace= "
+                f"explicitly. PROBLEM_ID_NAMESPACE covers {len(PROBLEM_ID_NAMESPACE)} real problem "
+                f"IDs derived this session from sregym/conductor/problems/registry.py's own "
+                f"PROBLEM_REGISTRY; an unlisted problem_id is likely a genuinely new/renamed real "
+                f"registry entry (or the real, dynamically-composed 'multiple_failures' problem, "
+                f"which has no single static namespace), never a namespace worth guessing at."
+            )
+
     gate = CapabilityGate.from_toml(manifest_path)
 
     if _environment_factory is not None:

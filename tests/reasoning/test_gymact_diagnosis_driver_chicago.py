@@ -425,6 +425,65 @@ def test_teardown_failure_does_not_discard_an_already_computed_result():
     assert fake_env.torn_down is True, "teardown was still attempted, just its failure didn't mask the result"
 
 
+def test_namespace_is_resolved_from_the_real_problem_id_when_not_given_explicitly():
+    """Real regression coverage for the namespace-hardcoding defect found
+    and fixed this cycle: this driver used to default `namespace` to the
+    single literal `"social-network"` for every real problem_id, correct
+    only by coincidence for this session's sole live test problem. A real
+    `hotel-reservation`-app problem_id must now resolve to the real
+    `"hotel-reservation"` namespace (source-derived from
+    `sregym/conductor/problems/registry.py`'s own `PROBLEM_REGISTRY`, not
+    guessed from the problem_id's own text) -- proven here by observing the
+    real fake environment's own kubectl command text, not by re-deriving
+    the mapping inline."""
+    from autofde_lab.reasoning.gymact_diagnosis_driver import PROBLEM_ID_NAMESPACE
+
+    fake_env = _FakeSregymEnvironment()
+
+    async def _factory() -> _FakeSregymEnvironment:
+        return fake_env
+
+    hotel_problem_id = "expired_tls_hotel_reservation"
+    assert PROBLEM_ID_NAMESPACE[hotel_problem_id] == "hotel-reservation"
+
+    asyncio.run(
+        run_gymact_mediated_diagnosis(
+            hotel_problem_id,
+            mcp_server_port=1234,
+            api_port=5678,
+            _environment_factory=_factory,
+            _capabilities=_FAKE_CAPABILITIES,
+        )
+    )
+
+    real_deployments_command = next(c for c in fake_env.kubectl_commands if "deployments" in c)
+    assert "-n hotel-reservation" in real_deployments_command, (
+        f"real command {real_deployments_command!r} should have scanned the real "
+        "hotel-reservation namespace, not the old hardcoded social-network default"
+    )
+
+
+def test_unknown_problem_id_refuses_rather_than_guessing_a_namespace():
+    """A problem_id absent from the real, source-derived
+    `PROBLEM_ID_NAMESPACE` table must raise, naming the gap honestly --
+    never silently fall back to a namespace that is probably wrong."""
+    fake_env = _FakeSregymEnvironment()
+
+    async def _factory() -> _FakeSregymEnvironment:
+        return fake_env
+
+    with pytest.raises(ValueError, match="no known real namespace"):
+        asyncio.run(
+            run_gymact_mediated_diagnosis(
+                "not_a_real_registered_problem_id",
+                mcp_server_port=1234,
+                api_port=5678,
+                _environment_factory=_factory,
+                _capabilities=_FAKE_CAPABILITIES,
+            )
+        )
+
+
 def test_run_gymact_mediated_diagnosis_calls_run_pipeline_exactly_once():
     """Structural proof, via real source inspection (not a mock), that
     `run_gymact_mediated_diagnosis`'s own body contains exactly one call to
