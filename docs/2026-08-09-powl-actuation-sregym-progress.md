@@ -1233,3 +1233,65 @@ call return if the conductor's problem was never actually started, or
 what does a real teardown look like against an already-torn-down
 environment) rather than re-reading code that's already been read
 closely.
+
+### Cycle 16 (2026-08-10)
+
+**Key-rotation check**: real direct `curl` against the Groq API -> still
+`401`, `expired_api_key`. `wrong_dns_policy_social_network` stays
+`ATTEMPTED:BLOCKED:EXPIRED_GROQ_API_KEY`.
+
+**Independently re-verified cycle 15's claims**: real re-run, 127
+passed, zero-mock grep clean.
+
+**Real, distinct SECOND blocker found and self-resolved this cycle**:
+`kubectl cluster-info` genuinely failed (`net/http: TLS handshake
+timeout`), independent of the credential blocker -- the cluster itself
+was unreachable. Performed the same colima recovery procedure this
+session has used before (`colima stop` -> `colima start --cpu 12
+--memory 20` -> explicit `colima kubernetes start`, since kubernetes
+does not auto-re-enable on a bare `colima start`) -> real, confirmed
+recovery: `kubectl cluster-info` succeeded, control plane reachable.
+Reapplied the node-affinity label (`kubectl label node colima
+node-role.kubernetes.io/control-plane="" --overwrite`) -- confirmed this
+does not survive a colima restart, consistent with this session's prior
+findings.
+
+The `mcp-server` pod briefly showed `Error` then `ImagePullBackOff`
+immediately after the restart -- investigated via real `kubectl
+describe`/`logs`, confirmed this was a transient DNS/network blip during
+the restart window (`dial tcp ...: i/o timeout` resolving `ghcr.io`),
+not an application defect: the pod self-recovered to `1/1 Running`
+within ~2 minutes with no intervention beyond waiting and re-checking.
+Real, final confirmed state: cluster healthy, `mcp-server` pod
+`1/1 Running`.
+
+**Investigated further live-cluster probing avenues (per cycle 15's own
+recommendation) and found this avenue is now largely exhausted too**:
+the persistent `mcp-server` k8s deployment only hosts the kubectl-mcp/
+Jaeger/Loki/Prometheus tool surface -- the SREGym CONDUCTOR itself (the
+component whose `/status`/`/submit` edge cases would be most valuable to
+probe further) is spawned per-trial by `main.py` as its own subprocess,
+not a persistent k8s resource, and `main.py`'s own judge pre-flight
+check still blocks on the expired Groq key before the conductor process
+even starts (confirmed cycles 9-10). Direct-cluster probing without a
+live trial has therefore reached a real, honest limit -- further
+progress on conductor-specific edge cases genuinely requires either the
+Groq key being rotated, or a source-only investigation of
+`conductor.py`/`conductor_api.py` (already read closely across cycles
+9-10).
+
+**Status table**: `wrong_dns_policy_social_network` ->
+`ATTEMPTED:BLOCKED:EXPIRED_GROQ_API_KEY` (unchanged). This cycle's real
+contribution is restoring live-trial-readiness (cluster health) for
+whenever the credential blocker clears, not a driver code change.
+
+**Note for cycle 17**: both real blockers (credential, and until this
+cycle, cluster health) are now isolated to exactly the credential one.
+If the Groq key is still not rotated next cycle, the most productive
+remaining avenues are: (a) re-reading `conductor.py`/`conductor_api.py`
+one more time with fresh eyes for anything cycles 9-10 might have missed
+(diminishing returns expected, already read closely twice), or (b)
+reviewing whether this driver's own OCEL evidence emission (via
+`run_pipeline`'s `recorder`) captures everything a future crown-level
+audit would need, matching `level4-completion-law.md`'s evidence
+requirements -- not yet checked this whole marathon.
