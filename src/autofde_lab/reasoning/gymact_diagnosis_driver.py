@@ -93,8 +93,16 @@ from autofde_lab.fabric.gymact_capability_gate import DEFAULT_MANIFEST_PATH, Cap
 from autofde_lab.ocel.log import OcelLog
 from autofde_lab.ocel.mcp_session import append_tool_call_event
 from autofde_lab.powl.runner import (
-    GYMACT_ACTUATE_REMEDIATE_LABEL,
-    GYMACT_OBSERVE_LABEL,
+    GYMACT_CHECK_DEPLOYMENTS_LABEL,
+    GYMACT_CHECK_NAMESPACE_LABEL,
+    GYMACT_CHECK_PODS_LABEL,
+    GYMACT_CHECK_SERVICES_LABEL,
+    GYMACT_CHECK_STATUS_LABEL,
+    GYMACT_RECHECK_DEPLOYMENTS_LABEL,
+    GYMACT_RECHECK_PODS_LABEL,
+    GYMACT_RECHECK_SCAN_LABEL,
+    GYMACT_RECHECK_SERVICES_LABEL,
+    GYMACT_SCAN_ANOMALIES_LABEL,
     GYMACT_SUBMIT_DIAGNOSIS_LABEL,
     GYMACT_SUBMIT_MITIGATION_LABEL,
     GYMACT_VERIFY_LABEL,
@@ -332,6 +340,7 @@ async def run_gymact_mediated_diagnosis(
     manifest_path: Path | str = DEFAULT_MANIFEST_PATH,
     _environment_factory: Callable[[], Any] | None = None,
     _capabilities: Any = None,
+    _diagnosis_state_sink: dict[str, Any] | None = None,
 ) -> GymactMediatedDiagnosisResult:
     """Materialize a real ``SregymEnvironment``, build the real POWL
     pipeline tree extended with the five ``gymact_*`` actuation Atoms, bind
@@ -358,8 +367,16 @@ async def run_gymact_mediated_diagnosis(
     responses, so the wait is for the conductor's own async work, not a
     stuck request).
 
-    ``_environment_factory``/``_capabilities`` are test-only injection
-    points (leading underscore -- not part of the public contract): when
+    ``_environment_factory``/``_capabilities``/``_diagnosis_state_sink`` are
+    test-only injection points (leading underscore -- not part of the
+    public contract). ``_diagnosis_state_sink``, when given a real (empty)
+    dict, is updated in place with the real, final ``diagnosis_state``
+    closure once ``run_pipeline`` returns -- a genuine diagnostic seam (not
+    a mock/stub) for a Chicago-style test to assert directly on real,
+    per-key state written by the now-concurrent observe/remediate-recheck
+    check bindings, since ``diagnosis_state`` itself is otherwise a
+    closure-local variable with no other externally observable projection
+    of its full key set. When
     omitted, this function materializes the one real environment via
     ``gymact.gyms.sregym.SregymVendorProvider().materialize()`` against the
     real ``SREGYM_CAPABILITIES`` tuple, exactly as
@@ -404,10 +421,28 @@ async def run_gymact_mediated_diagnosis(
             },
         )
 
-    # Mutable closure state -- carries the diagnosis/anomaly found by
-    # gymact_observe across to the later gymact_submit_diagnosis /
-    # gymact_actuate_remediate / gymact_verify bindings, exactly the way a
-    # real diagnosing pipeline's steps depend on each other's real output.
+    # Mutable closure state -- carries the diagnosis/anomaly found by the
+    # concurrent observe-block checks across to the later
+    # gymact_submit_diagnosis / remediate-recheck / gymact_verify bindings,
+    # exactly the way a real diagnosing pipeline's steps depend on each
+    # other's real output.
+    #
+    # Real thread-safety argument, load-bearing (per the plan's decision to
+    # fire the 5 observe-block checks -- and the 3 remediate-recheck checks
+    # -- concurrently via a real ThreadPoolExecutor in runner.py's
+    # run_pipeline): every one of the 6 check/recheck coroutines below
+    # writes to its OWN distinct diagnosis_state key
+    # (check_status/deployments/pods/services; recheck_deployments/pods/
+    # services), never a key another concurrently-running coroutine also
+    # writes. CPython's GIL makes a single `dict.__setitem__` atomic, so N
+    # threads writing to N distinct keys of the same dict can never race or
+    # lose a write -- no lock is needed here. This would NOT hold if two
+    # concurrent writers ever shared a key (e.g. both appending to the same
+    # list) -- they deliberately never do; `_scan_anomalies()` and
+    # `_recheck_scan_anomalies()` only ever READ the check-phase keys, after
+    # the AND-join Atom that follows the concurrent block has already fired
+    # (i.e. after all writers have already returned), so there is no
+    # concurrent reader either.
     diagnosis_state: dict[str, Any] = {}
 
     async def _kubectl_json(command: str) -> Any:
@@ -450,11 +485,14 @@ async def run_gymact_mediated_diagnosis(
         except (json.JSONDecodeError, TypeError):
             return {"raw": raw}
 
-    async def _observe() -> dict[str, Any]:
+    async def _check_status() -> dict[str, Any]:
         obs_cap = _capability(SREGYM_CAPABILITIES, "observe_cluster_state")
         gate.guard_capability(obs_cap)
         status = await env.actuate(obs_cap, {})
+        diagnosis_state["check_status"] = status
+        return status
 
+    async def _check_namespace() -> None:
         # Real, precise defect found live this cycle (verified directly
         # against a real cluster, not assumed): `kubectl get deployments -n
         # <nonexistent-namespace> -o json` returns real exit code 0 with a
@@ -472,18 +510,54 @@ async def run_gymact_mediated_diagnosis(
         # outer handler -- the exact real rejection shape `_kubectl_json`
         # above already raises on. Reusing that already-hardened path here
         # closes the gap: a namespace that doesn't exist now fails loudly,
-        # before the (silently-empty) deployments/pods/services scan ever
-        # runs, rather than producing a plausible-looking false negative.
+        # rather than producing a plausible-looking false negative.
+        #
+        # Real, accepted behavior-change tradeoff from this cycle's
+        # concurrency pass: this check no longer STRUCTURALLY prevents
+        # `_check_deployments`/`_check_pods`/`_check_services` from firing
+        # -- all five observe-block checks are now genuinely concurrent
+        # (fired in the same real ThreadPoolExecutor batch by
+        # `run_pipeline`), so a nonexistent-namespace run will still issue
+        # 3 additional real kubectl calls against a namespace already known
+        # to be invalid before this coroutine's own rejection surfaces and
+        # fails the whole pipeline run (Step C of `run_pipeline`'s batch-fire
+        # loop still raises the first recorded error). This is a real,
+        # minor, accepted tradeoff -- favoring "don't lose independent
+        # evidence from the other checks" over "avoid unnecessary real
+        # calls" -- not a silent regression; it does not change whether the
+        # overall diagnosis run fails on a bad namespace, only whether the
+        # other three real kubectl calls still fire alongside it.
         await _kubectl_json(f"get namespace {namespace} -o json")
 
+    async def _check_deployments() -> Any:
         deployments = await _kubectl_json(f"get deployments -n {namespace} -o json")
-        pods = await _kubectl_json(f"get pods -n {namespace} -o json")
-        services = await _kubectl_json(f"get services -n {namespace} -o json")
+        diagnosis_state["deployments"] = deployments
+        return deployments
 
+    async def _check_pods() -> Any:
+        pods = await _kubectl_json(f"get pods -n {namespace} -o json")
+        diagnosis_state["pods"] = pods
+        return pods
+
+    async def _check_services() -> Any:
+        services = await _kubectl_json(f"get services -n {namespace} -o json")
+        diagnosis_state["services"] = services
+        return services
+
+    async def _scan_anomalies() -> dict[str, Any]:
+        # Pure computation over the 3 real reads gathered by the concurrent
+        # observe-block checks above -- no capability call of its own. Bound
+        # to `GYMACT_SCAN_ANOMALIES_LABEL` as a bare `ActionBinding` (see
+        # `runner.py`'s `ALLOWED_ACTION_BINDING_LABELS`), enabled only once
+        # all 5 checks have fired (the AND-join `runner.py`'s
+        # `_concurrent_read_block` + `build_pipeline_powl_node` construct),
+        # so `diagnosis_state["deployments"/"pods"/"services"]` are always
+        # already populated by the time this reads them. Content unchanged
+        # from the old monolithic `_observe()`'s tail -- just relocated.
         state: ClusterState = {
-            "deployments": deployments,
-            "pods": pods,
-            "services": services,
+            "deployments": diagnosis_state["deployments"],
+            "pods": diagnosis_state["pods"],
+            "services": diagnosis_state["services"],
         }
         anomalies = scan(state)
         diagnosis_state["anomalies"] = anomalies
@@ -494,6 +568,7 @@ async def run_gymact_mediated_diagnosis(
         else:
             diagnosis_state["top_anomaly"] = None
             diagnosis_state["label"] = "no_anomaly_detected"
+        status = diagnosis_state.get("check_status")
         return {"status": status, "anomaly_count": len(anomalies), "label": diagnosis_state["label"]}
 
     async def _submit_diagnosis() -> Any:
@@ -530,12 +605,31 @@ async def run_gymact_mediated_diagnosis(
             }
         return await env.actuate(cap, payload)
 
-    async def _actuate_remediate() -> Any:
-        # No automated remediation-command synthesis from an Anomaly exists
-        # yet (see this module's docstring) -- a real, non-mutating
-        # run_kubectl re-read, honestly scoped as a re-confirm, not a
-        # fabricated fix.
-        #
+    # No automated remediation-command synthesis from an Anomaly exists yet
+    # (see this module's docstring) -- the three coroutines below are real,
+    # non-mutating run_kubectl re-reads, honestly scoped as a re-confirm,
+    # not a fabricated fix. Symmetric split of the old monolithic
+    # `_actuate_remediate()`, writing DISTINCT `diagnosis_state` keys
+    # (`recheck_deployments`/`recheck_pods`/`recheck_services`) from the
+    # observe-phase checks' keys, per the same real thread-safety argument
+    # given at `diagnosis_state`'s declaration above.
+
+    async def _recheck_deployments() -> Any:
+        deployments = await _kubectl_json(f"get deployments -n {namespace} -o json")
+        diagnosis_state["recheck_deployments"] = deployments
+        return deployments
+
+    async def _recheck_pods() -> Any:
+        pods = await _kubectl_json(f"get pods -n {namespace} -o json")
+        diagnosis_state["recheck_pods"] = pods
+        return pods
+
+    async def _recheck_services() -> Any:
+        services = await _kubectl_json(f"get services -n {namespace} -o json")
+        diagnosis_state["recheck_services"] = services
+        return services
+
+    async def _recheck_scan_anomalies() -> dict[str, Any]:
         # Real defect found and fixed forward this session: this re-read's
         # result was previously discarded, and `evaluate_outcome` below was
         # called with the SAME `env.verify()` boolean passed as both
@@ -549,22 +643,26 @@ async def run_gymact_mediated_diagnosis(
         # case that module's own docstring names as the reason DISPUTED
         # exists as a third outcome, not folded into UNCONFIRMED. Fixed: this
         # re-read now also re-fetches deployments/services and re-runs the
-        # real `scan()` the same way `_observe()` does, producing a genuine,
-        # independent structural-recheck signal (anomaly gone, per this
-        # scanner) distinct from the conductor's own oracle verdict
+        # real `scan()` the same way the observe block does, producing a
+        # genuine, independent structural-recheck signal (anomaly gone, per
+        # this scanner) distinct from the conductor's own oracle verdict
         # (`env.verify()`, still computed separately in `_verify()` below).
-        deployments = await _kubectl_json(f"get deployments -n {namespace} -o json")
-        pods = await _kubectl_json(f"get pods -n {namespace} -o json")
-        services = await _kubectl_json(f"get services -n {namespace} -o json")
+        # Pure computation, bare `ActionBinding` -- unchanged content from
+        # the old monolithic `_actuate_remediate()`'s tail, just relocated;
+        # enabled only once all 3 recheck coroutines above have fired (the
+        # remediate-block AND-join, same construct as the observe block's).
         recheck_state: ClusterState = {
-            "deployments": deployments,
-            "pods": pods,
-            "services": services,
+            "deployments": diagnosis_state["recheck_deployments"],
+            "pods": diagnosis_state["recheck_pods"],
+            "services": diagnosis_state["recheck_services"],
         }
         recheck_anomalies = scan(recheck_state)
         diagnosis_state["structural_recheck_anomaly_count"] = len(recheck_anomalies)
         diagnosis_state["structural_recheck_passed"] = len(recheck_anomalies) == 0
-        return {"pods": pods, "recheck_anomaly_count": len(recheck_anomalies)}
+        return {
+            "pods": diagnosis_state["recheck_pods"],
+            "recheck_anomaly_count": len(recheck_anomalies),
+        }
 
     async def _submit_mitigation() -> Any:
         cap = _capability(SREGYM_CAPABILITIES, "submit_mitigation")
@@ -603,21 +701,59 @@ async def run_gymact_mediated_diagnosis(
         return _call
 
     action_bindings = {
-        GYMACT_OBSERVE_LABEL: GatedCapabilityBinding(
+        # Observe-block: 5 real, independent, now-concurrent checks (each a
+        # real GatedCapabilityBinding) + 1 bare-binding AND-join
+        # (_scan_anomalies, pure computation, no capability call).
+        GYMACT_CHECK_STATUS_LABEL: GatedCapabilityBinding(
             capability_name="observe_cluster_state",
-            callable_=_binding(_observe),
+            callable_=_binding(_check_status),
             gate=gate,
         ),
+        GYMACT_CHECK_NAMESPACE_LABEL: GatedCapabilityBinding(
+            capability_name="run_kubectl",
+            callable_=_binding(_check_namespace),
+            gate=gate,
+        ),
+        GYMACT_CHECK_DEPLOYMENTS_LABEL: GatedCapabilityBinding(
+            capability_name="run_kubectl",
+            callable_=_binding(_check_deployments),
+            gate=gate,
+        ),
+        GYMACT_CHECK_PODS_LABEL: GatedCapabilityBinding(
+            capability_name="run_kubectl",
+            callable_=_binding(_check_pods),
+            gate=gate,
+        ),
+        GYMACT_CHECK_SERVICES_LABEL: GatedCapabilityBinding(
+            capability_name="run_kubectl",
+            callable_=_binding(_check_services),
+            gate=gate,
+        ),
+        GYMACT_SCAN_ANOMALIES_LABEL: _binding(_scan_anomalies),
         GYMACT_SUBMIT_DIAGNOSIS_LABEL: GatedCapabilityBinding(
             capability_name="submit_diagnosis",
             callable_=_binding(_submit_diagnosis),
             gate=gate,
         ),
-        GYMACT_ACTUATE_REMEDIATE_LABEL: GatedCapabilityBinding(
+        # Remediate-recheck block: 3 real, independent, now-concurrent
+        # rechecks (each a real GatedCapabilityBinding) + 1 bare-binding
+        # AND-join (_recheck_scan_anomalies, pure computation).
+        GYMACT_RECHECK_DEPLOYMENTS_LABEL: GatedCapabilityBinding(
             capability_name="run_kubectl",
-            callable_=_binding(_actuate_remediate),
+            callable_=_binding(_recheck_deployments),
             gate=gate,
         ),
+        GYMACT_RECHECK_PODS_LABEL: GatedCapabilityBinding(
+            capability_name="run_kubectl",
+            callable_=_binding(_recheck_pods),
+            gate=gate,
+        ),
+        GYMACT_RECHECK_SERVICES_LABEL: GatedCapabilityBinding(
+            capability_name="run_kubectl",
+            callable_=_binding(_recheck_services),
+            gate=gate,
+        ),
+        GYMACT_RECHECK_SCAN_LABEL: _binding(_recheck_scan_anomalies),
         GYMACT_SUBMIT_MITIGATION_LABEL: GatedCapabilityBinding(
             capability_name="submit_mitigation",
             callable_=_binding(_submit_mitigation),
@@ -641,6 +777,8 @@ async def run_gymact_mediated_diagnosis(
             action_bindings=action_bindings,
             allow_partial_bindings=True,
         )
+        if _diagnosis_state_sink is not None:
+            _diagnosis_state_sink.update(diagnosis_state)
 
         verify_passed = bool(diagnosis_state.get("verify_passed", False))
         verify_observed = diagnosis_state.get("verify_observed", {})

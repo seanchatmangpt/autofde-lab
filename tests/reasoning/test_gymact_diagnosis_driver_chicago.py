@@ -40,14 +40,24 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
+from collections import Counter
 from dataclasses import dataclass, field
 
 import pytest
 
 from autofde_lab.case_library.outcome_predicate import OutcomeVerdict
 from autofde_lab.powl.runner import (
-    GYMACT_ACTUATE_REMEDIATE_LABEL,
-    GYMACT_OBSERVE_LABEL,
+    GYMACT_CHECK_DEPLOYMENTS_LABEL,
+    GYMACT_CHECK_NAMESPACE_LABEL,
+    GYMACT_CHECK_PODS_LABEL,
+    GYMACT_CHECK_SERVICES_LABEL,
+    GYMACT_CHECK_STATUS_LABEL,
+    GYMACT_RECHECK_DEPLOYMENTS_LABEL,
+    GYMACT_RECHECK_PODS_LABEL,
+    GYMACT_RECHECK_SCAN_LABEL,
+    GYMACT_RECHECK_SERVICES_LABEL,
+    GYMACT_SCAN_ANOMALIES_LABEL,
     GYMACT_SUBMIT_DIAGNOSIS_LABEL,
     GYMACT_SUBMIT_MITIGATION_LABEL,
     GYMACT_VERIFY_LABEL,
@@ -127,7 +137,30 @@ class _FakeSregymEnvironment:
         self._recover_pods_on_second_read = recover_pods_on_second_read
 
     async def actuate(self, capability: _FakeCapability, payload: dict) -> dict:
-        self.call_log.append(capability.binding)
+        if capability.binding == "run_kubectl":
+            # Real, small test-fixture enhancement (not a production-code
+            # change): tag each real kubectl call's `call_log` entry with
+            # WHICH distinct check it was (namespace/deployments/pods/
+            # services), derived from the real command text -- the bare
+            # `"run_kubectl"` binding name alone can't distinguish the four
+            # now-concurrent observe-block reads (or the three
+            # remediate-block rereads) from one another, which a real
+            # Counter-based multiset assertion over the concurrent phase
+            # needs in order to verify the right DISTINCT checks ran, not
+            # merely "N kubectl calls happened in some order".
+            command = payload.get("command", "")
+            if command.startswith("kubectl get namespace"):
+                self.call_log.append("run_kubectl:namespace")
+            elif "deployments" in command:
+                self.call_log.append("run_kubectl:deployments")
+            elif "pods" in command:
+                self.call_log.append("run_kubectl:pods")
+            elif "services" in command:
+                self.call_log.append("run_kubectl:services")
+            else:
+                self.call_log.append("run_kubectl")
+        else:
+            self.call_log.append(capability.binding)
         if capability.binding == "observe_cluster_state":
             return {"after": {"stage": "observed"}}
         if capability.binding == "run_kubectl":
@@ -196,61 +229,106 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
     assert fake_env.torn_down is True, "env.teardown() must run in a finally block"
 
     # The real fake env's own call log -- observable, real state, not an
-    # interaction assertion -- proves the five real calls happened in
-    # exactly the order a linear observe->diagnose->remediate->mitigate->
-    # verify actuation chain requires. A second real `verify` call now
-    # precedes `submit_diagnosis` -- the real, precise fix for the
-    # submission-timing race found live this session (the real conductor
-    # correctly rejected a submission attempted before its own stage
-    # machine reached 'diagnosis'; this driver now waits for that real
-    # stage via the same already-tested verify() bounded poll before
-    # attempting submission).
-    assert fake_env.call_log == [
-        "observe_cluster_state",
-        "run_kubectl",  # get namespace pre-check
-        "run_kubectl",  # deployments
-        "run_kubectl",  # pods
-        "run_kubectl",  # services
-        "verify",  # stage-wait before submit_diagnosis
-        "submit_diagnosis",
-        "run_kubectl",  # actuate_remediate re-scan: deployments
-        "run_kubectl",  # actuate_remediate re-scan: pods
-        "run_kubectl",  # actuate_remediate re-scan: services
-        "submit_mitigation",
-        "verify",  # final verify
-        "teardown",
-    ]
+    # interaction assertion. Real POWL v2 concurrency (this session's
+    # change) means the five observe-block checks and the three
+    # remediate-recheck reads each fire in a real, genuinely
+    # nondeterministic `ThreadPoolExecutor` order -- so this can no longer
+    # be one strict-order list. Per the plan
+    # (`what-are-the-current-shimmying-bear.md`, Testing Plan item h), split
+    # into: a strict-order prefix (empty -- the observe block is the very
+    # first thing that fires), a `Counter`-based multiset over the
+    # concurrent observe-phase slice, a strict-order middle segment
+    # (unchanged -- `scan_anomalies` is pure computation with no real call,
+    # so the next two real calls are always `verify` then
+    # `submit_diagnosis`, in that order), a second `Counter`-based multiset
+    # over the concurrent remediate-recheck slice, and a strict-order
+    # suffix (unchanged from today).
+    assert len(fake_env.call_log) == 13
+    observe_phase = fake_env.call_log[0:5]
+    middle = fake_env.call_log[5:7]
+    remediate_phase = fake_env.call_log[7:10]
+    suffix = fake_env.call_log[10:13]
+
+    assert Counter(observe_phase) == Counter(
+        {
+            "observe_cluster_state": 1,
+            "run_kubectl:namespace": 1,
+            "run_kubectl:deployments": 1,
+            "run_kubectl:pods": 1,
+            "run_kubectl:services": 1,
+        }
+    ), f"expected exactly the five distinct observe-block checks, got {observe_phase!r}"
+
+    assert middle == ["verify", "submit_diagnosis"], (
+        "stage-wait verify() then submit_diagnosis must still fire strictly in order -- "
+        "neither is part of a concurrent block"
+    )
+
+    assert Counter(remediate_phase) == Counter(
+        {
+            "run_kubectl:deployments": 1,
+            "run_kubectl:pods": 1,
+            "run_kubectl:services": 1,
+        }
+    ), f"expected exactly the three distinct remediate-recheck reads, got {remediate_phase!r}"
+
+    assert suffix == ["submit_mitigation", "verify", "teardown"]
 
     # Cross-check: the real OCEL log `run_pipeline` produced independently
     # records one `powl_structural_fire` event per real Atom fire, in the
-    # same real tree-traversal order. The five real gymact_* labels appear
-    # in that structural log in exactly the same relative order as the real
-    # calls above -- direct evidence that `run_pipeline`'s own structural
-    # replay is what triggered each call (this driver's code calls
-    # `run_pipeline` exactly once and never calls `env.actuate`/`env.verify`
-    # from inside `run_gymact_mediated_diagnosis`'s own body -- it only
-    # builds bindings for `run_pipeline` to invoke).
+    # same real tree-traversal order. The real gymact_* labels appear in
+    # that structural log in the same segmented shape as the real calls
+    # above -- direct evidence that `run_pipeline`'s own structural replay
+    # (not this driver's own control flow) is what triggered each call
+    # (this driver's code calls `run_pipeline` exactly once and never calls
+    # `env.actuate`/`env.verify` from inside
+    # `run_gymact_mediated_diagnosis`'s own body -- it only builds bindings
+    # for `run_pipeline` to invoke).
     fired_labels = [
         next(a.value.value for a in e.attributes if a.key == "detail")
         for e in result.ocel_log.events
         if e.activity == "powl_structural_fire"
     ]
-    gymact_labels_in_fire_order = [
-        label
-        for label in fired_labels
-        if label
-        in {
-            GYMACT_OBSERVE_LABEL,
-            GYMACT_SUBMIT_DIAGNOSIS_LABEL,
-            GYMACT_ACTUATE_REMEDIATE_LABEL,
-            GYMACT_SUBMIT_MITIGATION_LABEL,
-            GYMACT_VERIFY_LABEL,
-        }
-    ]
-    assert gymact_labels_in_fire_order == [
-        GYMACT_OBSERVE_LABEL,
+    gymact_all_labels = {
+        GYMACT_CHECK_STATUS_LABEL,
+        GYMACT_CHECK_NAMESPACE_LABEL,
+        GYMACT_CHECK_DEPLOYMENTS_LABEL,
+        GYMACT_CHECK_PODS_LABEL,
+        GYMACT_CHECK_SERVICES_LABEL,
+        GYMACT_SCAN_ANOMALIES_LABEL,
         GYMACT_SUBMIT_DIAGNOSIS_LABEL,
-        GYMACT_ACTUATE_REMEDIATE_LABEL,
+        GYMACT_RECHECK_DEPLOYMENTS_LABEL,
+        GYMACT_RECHECK_PODS_LABEL,
+        GYMACT_RECHECK_SERVICES_LABEL,
+        GYMACT_RECHECK_SCAN_LABEL,
+        GYMACT_SUBMIT_MITIGATION_LABEL,
+        GYMACT_VERIFY_LABEL,
+    }
+    gymact_labels_in_fire_order = [label for label in fired_labels if label in gymact_all_labels]
+    assert len(gymact_labels_in_fire_order) == 13
+
+    observe_block_labels = gymact_labels_in_fire_order[0:5]
+    assert Counter(observe_block_labels) == Counter(
+        {
+            GYMACT_CHECK_STATUS_LABEL: 1,
+            GYMACT_CHECK_NAMESPACE_LABEL: 1,
+            GYMACT_CHECK_DEPLOYMENTS_LABEL: 1,
+            GYMACT_CHECK_PODS_LABEL: 1,
+            GYMACT_CHECK_SERVICES_LABEL: 1,
+        }
+    )
+    assert gymact_labels_in_fire_order[5:7] == [GYMACT_SCAN_ANOMALIES_LABEL, GYMACT_SUBMIT_DIAGNOSIS_LABEL]
+
+    remediate_block_labels = gymact_labels_in_fire_order[7:10]
+    assert Counter(remediate_block_labels) == Counter(
+        {
+            GYMACT_RECHECK_DEPLOYMENTS_LABEL: 1,
+            GYMACT_RECHECK_PODS_LABEL: 1,
+            GYMACT_RECHECK_SERVICES_LABEL: 1,
+        }
+    )
+    assert gymact_labels_in_fire_order[10:13] == [
+        GYMACT_RECHECK_SCAN_LABEL,
         GYMACT_SUBMIT_MITIGATION_LABEL,
         GYMACT_VERIFY_LABEL,
     ]
@@ -352,12 +430,21 @@ def test_a_real_command_rejection_response_raises_rather_than_being_silently_abs
                 _capabilities=_FAKE_CAPABILITIES,
             )
         )
-    # The real rejection was hit on the very first real kubectl call
-    # (gymact_observe's real namespace-existence pre-check, added this
-    # cycle) -- confirms this is caught at the single real call site, not
-    # accidentally bypassed.
-    assert fake_env.kubectl_commands
-    assert fake_env.kubectl_commands[0].startswith("kubectl ")
+    # Real, order-independent assertion (updated per the plan's concurrency
+    # pass): the four real observe-block kubectl checks
+    # (namespace/deployments/pods/services) now fire concurrently via a real
+    # `ThreadPoolExecutor`, so which one is issued first is genuinely
+    # nondeterministic -- `kubectl_commands[0]` is no longer guaranteed to
+    # be any particular check. What remains a real, deterministic guarantee
+    # is that every real kubectl call this rejecting fixture ever received
+    # carries the real "kubectl " prefix, and that at least one really was
+    # issued and rejected (the rejection is what makes the whole run raise,
+    # asserted above via `pytest.raises`).
+    assert fake_env.kubectl_commands, "expected at least one real kubectl call to have fired"
+    for real_command in fake_env.kubectl_commands:
+        assert real_command.startswith("kubectl "), (
+            f"real command {real_command!r} is missing the literal 'kubectl' prefix"
+        )
 
 
 class _FakeSregymEnvironmentRejectingOnlyNamespaceCheck(_FakeSregymEnvironment):
@@ -414,11 +501,19 @@ def test_observe_refuses_a_nonexistent_namespace_instead_of_silently_scanning_it
                 _capabilities=_FAKE_CAPABILITIES,
             )
         )
-    # The real namespace pre-check fired first and was the ONLY real
-    # kubectl call -- the deployments/pods/services scan (which this
-    # fixture would otherwise have let through with real, valid, empty
-    # data) never ran.
-    assert fake_env.kubectl_commands == ["kubectl get namespace social-network -o json"]
+    # Real, accepted behavior change from this cycle's concurrency pass
+    # (named explicitly in the plan, section 5 -- not a silent regression):
+    # `_check_namespace` no longer STRUCTURALLY prevents
+    # `_check_deployments`/`_check_pods`/`_check_services` from firing --
+    # all four observe-block kubectl checks now fire concurrently in the
+    # same real `ThreadPoolExecutor` batch, so this fixture's otherwise-
+    # successful deployments/pods/services reads (real, valid, empty data)
+    # may also have run before the namespace rejection surfaces. The
+    # durable guarantee is no longer "only the namespace check ran" -- it is
+    # "the namespace check ran, and its rejection is what ultimately made
+    # the whole diagnosis raise" (already proven above via
+    # `pytest.raises(RuntimeError, match="Command Rejected")`).
+    assert "kubectl get namespace social-network -o json" in fake_env.kubectl_commands
 
 
 class _FakeSregymEnvironmentDisputedOracle(_FakeSregymEnvironment):
@@ -579,6 +674,86 @@ def test_run_gymact_mediated_diagnosis_calls_run_pipeline_exactly_once():
 
     source = inspect.getsource(gymact_diagnosis_driver.run_gymact_mediated_diagnosis)
     assert source.count("run_pipeline(") == 1
+
+
+class _FakeSregymEnvironmentWithRealSleep(_FakeSregymEnvironment):
+    """Real regression fixture for
+    ``test_five_concurrent_check_bindings_each_write_their_own_diagnosis_state_key_without_loss``
+    ONLY -- never reused by any other test, so the other ~15+ tests reusing
+    the base `_FakeSregymEnvironment` pay none of this cost. A small, real
+    `time.sleep` inside `actuate()` (blocking only the one dedicated worker
+    thread each concurrently-fired binding runs in via
+    `_run_coroutine_sync` -- never the driver's own event loop) makes
+    genuine OS-thread interleaving of the five real observe-block checks
+    likely, rather than merely possible."""
+
+    async def actuate(self, capability: _FakeCapability, payload: dict) -> dict:
+        time.sleep(0.01)
+        return await super().actuate(capability, payload)
+
+
+def test_five_concurrent_check_bindings_each_write_their_own_diagnosis_state_key_without_loss():
+    """Real, state-based proof of the plan's decision-4 thread-safety
+    argument (distinct `diagnosis_state` dict keys, GIL-atomic
+    `dict.__setitem__`, no lock needed): run the real driver end to end
+    through the real `run_pipeline` structural replay against the real
+    `_FakeSregymEnvironmentWithRealSleep`, and assert every one of the five
+    real observe-block writes landed with its correct real value -- nothing
+    lost or overwritten by a concurrently-running sibling coroutine.
+
+    Uses the real `_diagnosis_state_sink` test-only injection point (see
+    `gymact_diagnosis_driver.py`'s docstring) since `diagnosis_state` is
+    otherwise a closure-local variable with no other externally observable
+    projection of its full key set -- a genuine diagnostic seam, not a
+    mock: the sink is a real, empty dict, updated in place with the real
+    dict the real bindings really wrote to.
+    """
+    fake_env = _FakeSregymEnvironmentWithRealSleep()
+    diagnosis_state_sink: dict = {}
+
+    async def _factory() -> _FakeSregymEnvironmentWithRealSleep:
+        return fake_env
+
+    result = asyncio.run(
+        run_gymact_mediated_diagnosis(
+            "wrong_dns_policy_social_network",
+            mcp_server_port=1234,
+            api_port=5678,
+            _environment_factory=_factory,
+            _capabilities=_FAKE_CAPABILITIES,
+            _diagnosis_state_sink=diagnosis_state_sink,
+        )
+    )
+
+    assert isinstance(result, GymactMediatedDiagnosisResult)
+
+    # Real values, from the fake's own canned responses -- proves each of
+    # the five distinct observe-block keys landed correctly, none lost and
+    # none overwritten by a different concurrently-running check.
+    assert diagnosis_state_sink["check_status"] == {"after": {"stage": "observed"}}
+    assert diagnosis_state_sink["deployments"] == _DEPLOYMENTS
+    assert diagnosis_state_sink["pods"] == _PODS
+    assert diagnosis_state_sink["services"] == _SERVICES
+    # `_check_namespace` writes no diagnosis_state key by design (see its
+    # own docstring in gymact_diagnosis_driver.py) -- its only observable
+    # effect is not raising, already proven by `result` existing at all.
+
+    # The AND-join (`_scan_anomalies`) only ever reads the three keys above
+    # AFTER all five observe-block writers have returned -- if any write had
+    # been lost, this would have raised a real `KeyError` rather than
+    # computing a real anomaly count, or would disagree with the real
+    # deployments/pods data above.
+    assert "anomalies" in diagnosis_state_sink
+    assert len(diagnosis_state_sink["anomalies"]) == 1
+    assert diagnosis_state_sink["label"] != "no_anomaly_detected"
+
+    # Real regression coverage that the remediate-recheck block's three
+    # distinct keys (a symmetric, independently-writing concurrent block)
+    # were likewise all preserved.
+    assert diagnosis_state_sink["recheck_deployments"] == _DEPLOYMENTS
+    assert diagnosis_state_sink["recheck_pods"] == _PODS_RECOVERED
+    assert diagnosis_state_sink["recheck_services"] == _SERVICES
+    assert diagnosis_state_sink["structural_recheck_anomaly_count"] == 0
 
 
 if __name__ == "__main__":

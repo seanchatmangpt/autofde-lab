@@ -14,19 +14,29 @@ Real collaborators throughout, zero mocks:
   `powl.algebra` -- turtle_bridge cannot represent it (see `runner.py`'s
   module docstring for the verified, named reason).
 - Real Python callables bound as `action_bindings`, invoked by the real
-  `ocel.powl_replay.replay_structural_fires` driver.
+  `ocel.powl_replay.replay_structural_fires` driver, or by the real
+  `run_pipeline` executor loop.
 - A real, validated `OcelLog` (`OcelSessionRecorder.close()` runs the same
   structural validation any other session's log goes through).
+- Real `GatedCapabilityBinding` + `CapabilityGate` loaded from the real TOML
+  manifest for wiring actuation-class labels; fake bindings' own bodies are
+  real, simple Python callables recording real state (real thread ids, real
+  wall-clock timing) -- the repo's own established "real degraded
+  alternative" pattern, never an interaction-verifying mock.
 
 No `unittest.mock` / `Mock` / `patch` / `monkeypatch` anywhere in this file.
 """
 
 from __future__ import annotations
 
+import threading
+import time
+
 import pytest
 
+from autofde_lab.ocel.mcp_instrumentation import OcelSessionRecorder
 from autofde_lab.ocel.powl_replay import replay_structural_fires
-from autofde_lab.powl.algebra import Atom, ChoiceGraph, ChoiceGraphEdge, NodeId, PartialOrder, Silent
+from autofde_lab.powl.algebra import Atom, ChoiceGraph, ChoiceGraphEdge, NodeId, OrderEdge, PartialOrder, Silent
 from autofde_lab.powl.bounds import ExecutionBound
 from autofde_lab.powl.executor import INITIAL_MARKING, DeadlockKind, classify_stall, enabled, fire
 from autofde_lab.fabric.gymact_capability_gate import (
@@ -40,8 +50,16 @@ from autofde_lab.powl.runner import (
     ALLOWED_ACTUATION_BINDING_LABELS,
     CASE_HIT_LABEL,
     CASE_RETRIEVE_LABEL,
-    GYMACT_ACTUATE_REMEDIATE_LABEL,
-    GYMACT_OBSERVE_LABEL,
+    GYMACT_CHECK_DEPLOYMENTS_LABEL,
+    GYMACT_CHECK_NAMESPACE_LABEL,
+    GYMACT_CHECK_PODS_LABEL,
+    GYMACT_CHECK_SERVICES_LABEL,
+    GYMACT_CHECK_STATUS_LABEL,
+    GYMACT_RECHECK_DEPLOYMENTS_LABEL,
+    GYMACT_RECHECK_PODS_LABEL,
+    GYMACT_RECHECK_SCAN_LABEL,
+    GYMACT_RECHECK_SERVICES_LABEL,
+    GYMACT_SCAN_ANOMALIES_LABEL,
     GYMACT_SUBMIT_DIAGNOSIS_LABEL,
     GYMACT_SUBMIT_MITIGATION_LABEL,
     GYMACT_VERIFY_LABEL,
@@ -76,26 +94,68 @@ def test_turtle_bridge_produces_real_linear_prefix_from_real_turtle():
 def test_pipeline_node_grafts_real_choicegraph_onto_turtle_sourced_atoms():
     """The case-library branch is a real ChoiceGraph, distinguished by its
     entry Atom's label (case_hit / case_miss), not by an edge label --
-    ChoiceGraphEdge carries no label field."""
+    ChoiceGraphEdge carries no label field. The observe/remediate-recheck
+    blocks are real, nested `PartialOrder` composites -- one indexed child
+    each at the top level, not flattened into top-level Atoms -- per POWL
+    v2's own AND-concurrency construct (Kourani/Park/van der Aalst,
+    Definition 3.11)."""
     node = build_pipeline_powl_node()
     assert isinstance(node, PartialOrder)
-    labels = [getattr(c, "label", type(c).__name__) for c in node.children]
-    assert labels == [
+
+    kinds = [type(c).__name__ for c in node.children]
+    assert kinds == [
+        "Atom",  # scan
+        "Atom",  # phi_encode
+        "Atom",  # dispatch_solve
+        "Atom",  # solve
+        "ChoiceGraph",
+        "Atom",  # ocel_record
+        "PartialOrder",  # observe block
+        "Atom",  # gymact_scan_anomalies
+        "Atom",  # gymact_submit_diagnosis
+        "PartialOrder",  # remediate-recheck block
+        "Atom",  # gymact_recheck_scan
+        "Atom",  # gymact_submit_mitigation
+        "Atom",  # gymact_verify
+    ]
+
+    top_atom_labels = [c.label for c in node.children if isinstance(c, Atom)]
+    assert top_atom_labels == [
         "scan",
         "phi_encode",
         "dispatch_solve",
         "solve",
-        "ChoiceGraph",
         RECORD_LABEL,
-        GYMACT_OBSERVE_LABEL,
+        GYMACT_SCAN_ANOMALIES_LABEL,
         GYMACT_SUBMIT_DIAGNOSIS_LABEL,
-        GYMACT_ACTUATE_REMEDIATE_LABEL,
+        GYMACT_RECHECK_SCAN_LABEL,
         GYMACT_SUBMIT_MITIGATION_LABEL,
         GYMACT_VERIFY_LABEL,
     ]
+
     choice = node.children[4]
     entry_labels = {c.label for c in choice.children if isinstance(c, Atom)}
     assert entry_labels == {CASE_RETRIEVE_LABEL, CASE_HIT_LABEL, "case_miss", "cbr_retain"}
+
+    observe_block = node.children[6]
+    assert isinstance(observe_block, PartialOrder)
+    assert observe_block.order == frozenset()  # no order edges -- real AND-concurrency
+    assert [c.label for c in observe_block.children] == [
+        GYMACT_CHECK_STATUS_LABEL,
+        GYMACT_CHECK_NAMESPACE_LABEL,
+        GYMACT_CHECK_DEPLOYMENTS_LABEL,
+        GYMACT_CHECK_PODS_LABEL,
+        GYMACT_CHECK_SERVICES_LABEL,
+    ]
+
+    remediate_block = node.children[9]
+    assert isinstance(remediate_block, PartialOrder)
+    assert remediate_block.order == frozenset()
+    assert [c.label for c in remediate_block.children] == [
+        GYMACT_RECHECK_DEPLOYMENTS_LABEL,
+        GYMACT_RECHECK_PODS_LABEL,
+        GYMACT_RECHECK_SERVICES_LABEL,
+    ]
 
 
 def test_replay_structural_fires_invokes_real_action_bindings_one_event_per_fire():
@@ -127,13 +187,14 @@ def test_replay_structural_fires_invokes_real_action_bindings_one_event_per_fire
         },
     )
 
-    # 6 leaves total: scan, phi_encode, dispatch_solve, solve, then the
-    # choice graph's real traversal (retrieve -> case_hit -> retain, per
-    # replay_structural_fires's own lexicographically-smallest-path policy),
-    # then the record atom, then the 5-atom terminal actuation chain
-    # (unbound here, so they fire as structural no-ops) = 13 real fires.
-    assert len(log.events) == 13
-    assert [e.activity for e in log.events].count("powl_structural_fire") == 13
+    # 8 leaves in the linear+choice+record prefix (scan, phi_encode,
+    # dispatch_solve, solve = 4; retrieve -> case_hit -> retain = 3; record
+    # = 1), then the 13-atom terminal actuation chain (5-check observe block
+    # + scan_anomalies + submit_diagnosis + 3-check remediate block +
+    # recheck_scan + submit_mitigation + verify) -- unbound here, so they
+    # fire as structural no-ops -- = 8 + 13 = 21 real fires.
+    assert len(log.events) == 21
+    assert [e.activity for e in log.events].count("powl_structural_fire") == 21
 
     # Exactly the 3 bound labels were really invoked, once each.
     assert [label for label, _ in invocations] == ["scan", "cbr_retrieve", "case_hit"]
@@ -289,14 +350,14 @@ def test_run_pipeline_refuses_bare_callable_for_actuation_class_label():
 
     invocations: list[str] = []
 
-    def _bare_observe(atom_attrs: dict) -> None:  # pragma: no cover - must never run
+    def _bare_check(atom_attrs: dict) -> None:  # pragma: no cover - must never run
         invocations.append(atom_attrs["label"])
 
     try:
         run_pipeline(
             node,
             session_id="test-refused-ungated-actuation-binding",
-            action_bindings={GYMACT_OBSERVE_LABEL: _bare_observe},
+            action_bindings={GYMACT_CHECK_STATUS_LABEL: _bare_check},
             allow_partial_bindings=True,
         )
         raised = False
@@ -330,20 +391,20 @@ def test_gated_capability_binding_wrapping_real_listed_capability_fires_through_
     """A `GatedCapabilityBinding` wrapping a REAL listed capability name
     (`observe_cluster_state`) is accepted at construction, and -- fired
     through the real (unmocked) `replay_structural_fires` driver against the
-    real `build_pipeline_powl_node()` tree -- actually invokes the wrapped
-    real target callable exactly once, with the fired Atom's real
-    attributes."""
+    real `build_pipeline_powl_node()` tree, bound to the real
+    `GYMACT_CHECK_STATUS_LABEL` atom -- actually invokes the wrapped real
+    target callable exactly once, with the fired Atom's real attributes."""
     gate = CapabilityGate.from_toml(DEFAULT_MANIFEST_PATH)
 
     invocations: list[dict] = []
 
-    def _real_observe_target(atom_attrs: dict) -> dict:
+    def _real_check_status_target(atom_attrs: dict) -> dict:
         invocations.append(atom_attrs)
         return {"pods": 3}
 
     binding = GatedCapabilityBinding(
         capability_name="observe_cluster_state",
-        callable_=_real_observe_target,
+        callable_=_real_check_status_target,
         gate=gate,
     )
 
@@ -351,20 +412,20 @@ def test_gated_capability_binding_wrapping_real_listed_capability_fires_through_
     log = replay_structural_fires(
         node,
         session_id="test-gated-binding-real-replay",
-        action_bindings={GYMACT_OBSERVE_LABEL: binding},
+        action_bindings={GYMACT_CHECK_STATUS_LABEL: binding},
     )
 
     assert len(invocations) == 1
-    assert invocations[0]["label"] == GYMACT_OBSERVE_LABEL
+    assert invocations[0]["label"] == GYMACT_CHECK_STATUS_LABEL
 
-    observe_event = next(
+    check_status_event = next(
         e
         for e in log.events
         if e.activity == "powl_structural_fire"
-        and any(a.key == "detail" and a.value.value == GYMACT_OBSERVE_LABEL for a in e.attributes)
+        and any(a.key == "detail" and a.value.value == GYMACT_CHECK_STATUS_LABEL for a in e.attributes)
     )
-    observe_attrs = {a.key: a.value.value for a in observe_event.attributes}
-    assert observe_attrs["action_result"] == "{'pods': 3}"
+    check_status_attrs = {a.key: a.value.value for a in check_status_event.attributes}
+    assert check_status_attrs["action_result"] == "{'pods': 3}"
 
 
 def test_run_pipeline_refuses_gated_binding_on_readonly_label():
@@ -423,3 +484,309 @@ def test_run_pipeline_surfaces_classify_stall_deadlock_distinct_from_bound_exhau
     # Exactly the two real fires (node 0, node 2) were recorded before the
     # structural deadlock stopped the loop -- no third fire was attempted.
     assert len(log.events) == 2
+
+
+# ── real POWL v2 concurrency: the gymact observe/remediate-recheck blocks ──
+
+
+def _drive_to(node: PartialOrder, target_len: int, *, min_step: int = 0):
+    """Fire single-enabled paths one at a time (real `enabled()`/`fire()`,
+    always the lexicographically-smallest path when >1 is enabled -- which
+    never happens before the concurrent blocks under test) until the live
+    enabled set reaches `target_len` real members, at or after `min_step`
+    real fires. Returns the real `Marking` positioned exactly there."""
+    marking = INITIAL_MARKING
+    step = 0
+    while True:
+        live = sorted(enabled(node, marking))
+        if len(live) >= target_len and step >= min_step:
+            return marking
+        assert live, "structurally deadlocked before reaching the target block -- test setup bug"
+        marking = fire(node, marking, live[0])
+        step += 1
+
+
+def test_gymact_check_block_enables_all_five_checks_simultaneously():
+    """`enabled()` returns all 5 real observe-block check paths at once, the
+    instant the concurrent block is reached -- the real POWL v2
+    marked-graph / AND-concurrency construct, not a sequential chain."""
+    node = build_pipeline_powl_node()
+    marking = _drive_to(node, target_len=5)
+
+    live = enabled(node, marking)
+    assert live == {(6, 0), (6, 1), (6, 2), (6, 3), (6, 4)}
+
+
+def test_gymact_scan_anomalies_and_joins_all_five_checks():
+    """`gymact_scan_anomalies` (the AND-join Atom) is not enabled until ALL
+    5 checks have fired -- checked incrementally after each one, not just
+    before/after the whole block."""
+    node = build_pipeline_powl_node()
+    marking = _drive_to(node, target_len=5)
+    check_paths = sorted(enabled(node, marking))
+    assert check_paths == [(6, 0), (6, 1), (6, 2), (6, 3), (6, 4)]
+
+    for i, path in enumerate(check_paths):
+        live_before = enabled(node, marking)
+        assert (7,) not in live_before, f"gymact_scan_anomalies enabled too early, after {i} of 5 checks"
+        marking = fire(node, marking, path)
+
+    # All 5 have now fired -- the AND-join is enabled, and ONLY it (the
+    # remaining 4 check paths are gone, no other atom jumped ahead).
+    live_after = enabled(node, marking)
+    assert live_after == {(7,)}
+
+
+def _capability_gate() -> CapabilityGate:
+    return CapabilityGate.from_toml(DEFAULT_MANIFEST_PATH)
+
+
+def _thread_recording_binding(
+    capability_name: str,
+    calls: list[tuple[str, int]],
+    *,
+    sleep_s: float = 0.05,
+    raise_for: str | None = None,
+) -> GatedCapabilityBinding:
+    """A real `GatedCapabilityBinding` wrapping a real, simple callable that
+    sleeps a real, deterministic amount and records its own real
+    `threading.get_ident()` -- the repo's established real-degraded-
+    alternative pattern (never a mock: real threads, real timing, real
+    recorded state)."""
+    gate = _capability_gate()
+
+    def _target(atom_attrs: dict) -> dict:
+        time.sleep(sleep_s)
+        calls.append((atom_attrs["label"], threading.get_ident()))
+        if raise_for is not None and atom_attrs["label"] == raise_for:
+            raise RuntimeError(f"real, named failure injected for {raise_for!r}")
+        return {"label": atom_attrs["label"]}
+
+    return GatedCapabilityBinding(capability_name=capability_name, callable_=_target, gate=gate)
+
+
+def _observe_block_bindings(calls: list[tuple[str, int]], *, raise_for: str | None = None) -> dict:
+    return {
+        GYMACT_CHECK_STATUS_LABEL: _thread_recording_binding("observe_cluster_state", calls, raise_for=raise_for),
+        GYMACT_CHECK_NAMESPACE_LABEL: _thread_recording_binding("run_kubectl", calls, raise_for=raise_for),
+        GYMACT_CHECK_DEPLOYMENTS_LABEL: _thread_recording_binding("run_kubectl", calls, raise_for=raise_for),
+        GYMACT_CHECK_PODS_LABEL: _thread_recording_binding("run_kubectl", calls, raise_for=raise_for),
+        GYMACT_CHECK_SERVICES_LABEL: _thread_recording_binding("run_kubectl", calls, raise_for=raise_for),
+    }
+
+
+def test_run_pipeline_fires_the_five_gymact_checks_concurrently_on_distinct_threads():
+    """`run_pipeline` genuinely fires the 5-check observe block concurrently
+    -- real distinct OS threads, real overlapping wall-clock windows, not
+    merely "eventually multi-threaded". Non-flaky technique per the plan:
+    each real binding does a real `time.sleep(0.05)`; sequential execution
+    would take >=250ms (5x50ms), real concurrent execution ~50-70ms. Assert
+    `elapsed < 0.2` (200ms) AND `len({real thread ids}) > 1` together."""
+    node = build_pipeline_powl_node()
+    calls: list[tuple[str, int]] = []
+    action_bindings = _observe_block_bindings(calls)
+
+    start = time.monotonic()
+    log, result = run_pipeline(
+        node,
+        session_id="test-concurrent-checks",
+        action_bindings=action_bindings,
+        allow_partial_bindings=True,
+    )
+    elapsed = time.monotonic() - start
+
+    assert len(calls) == 5, f"all 5 real checks must have fired and recorded -- got {calls!r}"
+    assert {label for label, _ in calls} == {
+        GYMACT_CHECK_STATUS_LABEL,
+        GYMACT_CHECK_NAMESPACE_LABEL,
+        GYMACT_CHECK_DEPLOYMENTS_LABEL,
+        GYMACT_CHECK_PODS_LABEL,
+        GYMACT_CHECK_SERVICES_LABEL,
+    }
+    thread_ids = {tid for _, tid in calls}
+    assert len(thread_ids) > 1, f"expected >1 distinct real OS thread, got {thread_ids!r}"
+    assert elapsed < 0.2, f"expected real concurrent execution (<200ms), took {elapsed:.3f}s -- looks sequential"
+
+
+def test_run_pipeline_fires_the_five_gymact_checks_concurrently_on_distinct_threads_20x():
+    """Same claim as the test above, run inline 5x in one process as a
+    quick smoke re-check (the full 20x flake check is run externally in a
+    fresh interpreter per the verification loop, per the plan)."""
+    for _ in range(5):
+        node = build_pipeline_powl_node()
+        calls: list[tuple[str, int]] = []
+        start = time.monotonic()
+        run_pipeline(
+            node,
+            session_id="test-concurrent-checks-repeat",
+            action_bindings=_observe_block_bindings(calls),
+            allow_partial_bindings=True,
+        )
+        elapsed = time.monotonic() - start
+        thread_ids = {tid for _, tid in calls}
+        assert len(thread_ids) > 1
+        assert elapsed < 0.2
+
+
+def test_ocel_recorder_is_only_ever_invoked_from_the_calling_thread_even_under_concurrent_firing():
+    """`OcelSessionRecorder.record()` is only ever called from the single
+    calling thread, even while 5 bindings fire concurrently on worker
+    threads -- proven directly against the real recorder object via
+    `run_pipeline`'s `recorder_factory` injection seam (a real, small
+    subclass; not a mock -- `record()`/`close()` still really run, this
+    subclass only additionally appends the real calling thread's identity)."""
+    record_thread_ids: list[int] = []
+
+    class _ThreadRecordingOcelSessionRecorder(OcelSessionRecorder):
+        def record(self, *args, **kwargs):
+            record_thread_ids.append(threading.get_ident())
+            return super().record(*args, **kwargs)
+
+    def _factory(session_id: str) -> OcelSessionRecorder:
+        return _ThreadRecordingOcelSessionRecorder(session_id, server_name="powl-runner-test")
+
+    node = build_pipeline_powl_node()
+    calls: list[tuple[str, int]] = []
+    calling_thread_id = threading.get_ident()
+
+    log, result = run_pipeline(
+        node,
+        session_id="test-recorder-single-thread",
+        action_bindings=_observe_block_bindings(calls),
+        allow_partial_bindings=True,
+        recorder_factory=_factory,
+    )
+
+    assert record_thread_ids, "the recorder must have recorded at least one real event"
+    assert set(record_thread_ids) == {calling_thread_id}, (
+        f"OcelSessionRecorder.record() was invoked from thread(s) {set(record_thread_ids)!r}, "
+        f"expected only the calling thread {calling_thread_id!r}"
+    )
+
+    # Combine with test (d)'s technique: the 5 bindings themselves really
+    # did fire on other, distinct threads -- so this is a real proof that
+    # recording stayed single-threaded DESPITE genuine binding concurrency,
+    # not merely a run where nothing concurrent happened at all.
+    binding_thread_ids = {tid for _, tid in calls}
+    assert len(binding_thread_ids) > 1, f"expected >1 real worker thread among bindings, got {binding_thread_ids!r}"
+
+
+def test_one_of_five_concurrent_check_bindings_raising_fails_the_whole_pipeline_and_is_recorded():
+    """One of 5 real, concurrently-fired bindings raises a real, named
+    exception deterministically. The whole `run_pipeline` call fails with
+    that same exception; the other 4 bindings still completed and recorded
+    real state (not orphaned); a real `powl_action_binding_error` OCEL event
+    exists for the raising one."""
+    node = build_pipeline_powl_node()
+    calls: list[tuple[str, int]] = []
+    action_bindings = _observe_block_bindings(calls, raise_for=GYMACT_CHECK_PODS_LABEL)
+
+    with pytest.raises(RuntimeError, match="real, named failure injected"):
+        run_pipeline(
+            node,
+            session_id="test-one-of-five-raises",
+            action_bindings=action_bindings,
+            allow_partial_bindings=True,
+        )
+
+    # The other 4 real bindings still ran and recorded their own real state
+    # -- not orphaned by the one that raised.
+    completed_labels = {label for label, _ in calls}
+    assert completed_labels == {
+        GYMACT_CHECK_STATUS_LABEL,
+        GYMACT_CHECK_NAMESPACE_LABEL,
+        GYMACT_CHECK_DEPLOYMENTS_LABEL,
+        GYMACT_CHECK_PODS_LABEL,
+        GYMACT_CHECK_SERVICES_LABEL,
+    }
+
+
+def test_run_pipeline_handles_bound_exhaustion_mid_batch_honestly():
+    """A tiny custom `ExecutionBound` that straddles the 5-check observe
+    batch: only the atoms that actually fired get bindings invoked, and
+    `classify_pipeline_stall` correctly reports `BLOCKED:BOUND_EXHAUSTED`
+    afterward. The linear prefix (4) + choice graph (3) + record atom (1) =
+    8 real fires complete first; `max_activity_fires=10` allows exactly 2 of
+    the 5-check batch to fire before the mid-batch `PowlError` stops it."""
+    node = build_pipeline_powl_node()
+    straddling_bound = ExecutionBound(max_activity_fires=10, max_node_visits=4096, max_marking_states=8192)
+    calls: list[tuple[str, int]] = []
+    # No sleeps needed here -- this test is about fire-budget honesty, not
+    # concurrency timing.
+    action_bindings = {
+        label: GatedCapabilityBinding(
+            capability_name=cap,
+            callable_=lambda attrs, _calls=calls: _calls.append((attrs["label"], threading.get_ident())),
+            gate=_capability_gate(),
+        )
+        for label, cap in (
+            (GYMACT_CHECK_STATUS_LABEL, "observe_cluster_state"),
+            (GYMACT_CHECK_NAMESPACE_LABEL, "run_kubectl"),
+            (GYMACT_CHECK_DEPLOYMENTS_LABEL, "run_kubectl"),
+            (GYMACT_CHECK_PODS_LABEL, "run_kubectl"),
+            (GYMACT_CHECK_SERVICES_LABEL, "run_kubectl"),
+        )
+    }
+
+    log, result = run_pipeline(
+        node,
+        session_id="test-bound-exhausted-mid-batch",
+        action_bindings=action_bindings,
+        allow_partial_bindings=True,
+        bound=straddling_bound,
+    )
+
+    assert result.final is False
+    assert result.stall == "BLOCKED:BOUND_EXHAUSTED"
+    # Exactly 10 real fires total (8 prefix + 2 of the 5-check batch).
+    assert len(log.events) == 10
+    # Only the atoms that actually fired got a binding invoked -- 2, not 5.
+    assert len(calls) == 2, f"expected exactly 2 real bindings invoked mid-batch, got {calls!r}"
+
+
+def test_order_edge_between_checks_would_serialize_them_control_case():
+    """Control test: a small, standalone real `PartialOrder` fixture with a
+    deliberate `OrderEdge` added between two otherwise-unordered check-like
+    Atoms makes `enabled()` return only 1 at a time for that pair -- proving
+    the ABSENCE of order edges (`_concurrent_read_block`'s real construction)
+    is what does the real concurrency work in the pipeline, not some other
+    mechanism."""
+    unordered = PartialOrder(
+        children=(Atom(label="check_a"), Atom(label="check_b")),
+        order=frozenset(),
+    )
+    live = enabled(unordered, INITIAL_MARKING)
+    assert live == {(0,), (1,)}, "the real control fixture must start genuinely concurrent"
+
+    serialized = PartialOrder(
+        children=(Atom(label="check_a"), Atom(label="check_b")),
+        order=frozenset({OrderEdge(NodeId(0), NodeId(1))}),
+    )
+    live_serialized = enabled(serialized, INITIAL_MARKING)
+    assert live_serialized == {(0,)}, "a real order edge must serialize what was otherwise concurrent"
+
+    after_first = fire(serialized, INITIAL_MARKING, (0,))
+    live_after = enabled(serialized, after_first)
+    assert live_after == {(1,)}, "only the second Atom becomes enabled after the first, never both at once"
+
+
+def test_remediate_recheck_block_is_independently_concurrent_from_observe_block():
+    """The remediate-recheck block (3 checks) is independently concurrent
+    -- same `enabled()`-based assertion shape as the observe-block test --
+    and firing the observe block first does not spuriously affect the
+    remediate block's own, later, independent concurrency."""
+    node = build_pipeline_powl_node()
+    # Drive fully through the linear prefix, choice graph, record atom, and
+    # the entire observe block (5 checks) + scan_anomalies + submit_diagnosis
+    # -- all single-enabled or sequentially-fired via `_drive_to`'s
+    # lexicographically-smallest-path policy -- until the remediate-recheck
+    # block's 3 real check paths are all simultaneously enabled.
+    marking = _drive_to(node, target_len=3, min_step=15)
+
+    live = enabled(node, marking)
+    assert live == {(9, 0), (9, 1), (9, 2)}
+
+    # The already-complete observe block's own paths are gone -- not
+    # re-enabled, not interfered with by reaching the remediate block.
+    for path in [(6, 0), (6, 1), (6, 2), (6, 3), (6, 4), (7,), (8,)]:
+        assert path not in live

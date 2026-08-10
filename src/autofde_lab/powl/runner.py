@@ -158,8 +158,9 @@ second, disjoint set of labels exists alongside it.
 
 from __future__ import annotations
 
+import concurrent.futures
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Callable, Sequence
 
 from autofde_lab.fabric.gymact_capability_gate import CapabilityGate
 from autofde_lab.fabric.powl import parse_powl_turtle, project_plan_to_powl
@@ -176,6 +177,7 @@ from autofde_lab.powl.algebra import (
     PowlNode,
 )
 from autofde_lab.powl.bounds import DEFAULT_BOUND, ExecutionBound
+from autofde_lab.powl.refusals import PowlError
 from autofde_lab.powl.executor import (
     INITIAL_MARKING,
     Marking,
@@ -202,7 +204,13 @@ __all__ = [
     "run_pipeline",
     "ALLOWED_ACTION_BINDING_LABELS",
     "ALLOWED_ACTUATION_BINDING_LABELS",
-    "GYMACT_OBSERVE_LABEL",
+    "GYMACT_CHECK_STATUS_LABEL",
+    "GYMACT_CHECK_NAMESPACE_LABEL",
+    "GYMACT_CHECK_DEPLOYMENTS_LABEL",
+    "GYMACT_CHECK_PODS_LABEL",
+    "GYMACT_CHECK_SERVICES_LABEL",
+    "GYMACT_SCAN_ANOMALIES_LABEL",
+    "GYMACT_RECHECK_SCAN_LABEL",
     "GYMACT_SUBMIT_DIAGNOSIS_LABEL",
     "GYMACT_ACTUATE_REMEDIATE_LABEL",
     "GYMACT_SUBMIT_MITIGATION_LABEL",
@@ -226,6 +234,7 @@ CASE_HIT_LABEL = "case_hit"
 CASE_MISS_LABEL = "case_miss"
 CASE_RETAIN_LABEL = "cbr_retain"
 RECORD_LABEL = "ocel_record"
+GYMACT_SCAN_ANOMALIES_LABEL = "gymact_scan_anomalies"
 
 #: The complete, closed set of labels this runner will ever invoke an
 #: `action_bindings` callable for -- every one of them read-only or
@@ -237,6 +246,13 @@ RECORD_LABEL = "ocel_record"
 #: keying it under one of this pipeline's Atom labels, because `run_pipeline`
 #: refuses any `action_bindings` key outside this set below -- the decision
 #: is a runtime guard, not merely stated prose.
+#: Aggregation atom for the remediate-recheck block (`_concurrent_read_block`'s
+#: three-check AND-join), the remediate-side sibling of
+#: `GYMACT_SCAN_ANOMALIES_LABEL` above -- same reasoning: pure computation over
+#: already-gathered results, no `env.actuate()` call, so it belongs with the
+#: read-only/diagnostic labels, not the actuation-class set.
+GYMACT_RECHECK_SCAN_LABEL = "gymact_recheck_scan"
+
 ALLOWED_ACTION_BINDING_LABELS: frozenset[str] = frozenset(
     {
         "scan",
@@ -248,14 +264,49 @@ ALLOWED_ACTION_BINDING_LABELS: frozenset[str] = frozenset(
         CASE_MISS_LABEL,
         CASE_RETAIN_LABEL,
         RECORD_LABEL,
+        GYMACT_SCAN_ANOMALIES_LABEL,
+        GYMACT_RECHECK_SCAN_LABEL,
     }
 )
 
-GYMACT_OBSERVE_LABEL = "gymact_observe"
+#: Real, POWL v2 partial-order-shaped replacement for the old monolithic
+#: `gymact_observe` Atom (fixed forward, per Kourani/Park/van der Aalst,
+#: "Hierarchical Decomposition of Separable Workflow-Nets": a partial order
+#: with no order edges among its children IS the formalism's own concurrent
+#: / marked-graph construct -- Definition 3.11 there, `_enabled()`'s own
+#: docstring here ("Two mutually unordered children of a partial order are
+#: both in the result; concurrency is preserved, not serialized.")). These
+#: five real, independent environment observations have no causal
+#: dependency on one another -- each is its own real gymact capability call
+#: -- so wiring them as ONE sequential Atom label (the pre-existing
+#: `gymact_observe`) was a real, corrected defect: POWL v2's whole
+#: distinguishing expressiveness over a plain sequence/choice model is
+#: exactly this kind of unordered, genuinely concurrent structure, and this
+#: pipeline previously never used it anywhere.
+GYMACT_CHECK_STATUS_LABEL = "gymact_check_status"
+GYMACT_CHECK_NAMESPACE_LABEL = "gymact_check_namespace"
+GYMACT_CHECK_DEPLOYMENTS_LABEL = "gymact_check_deployments"
+GYMACT_CHECK_PODS_LABEL = "gymact_check_pods"
+GYMACT_CHECK_SERVICES_LABEL = "gymact_check_services"
+#: Structurally downstream of the whole concurrent check block above (an
+#: AND-join per `_body_complete()`'s `PartialOrder` rule: enabled only once
+#: ALL five checks have fired) -- pure computation over their already-
+#: gathered results, no `env.actuate()` call, so it belongs with the
+#: original read-only/diagnostic labels, not the actuation-class set.
 GYMACT_SUBMIT_DIAGNOSIS_LABEL = "gymact_submit_diagnosis"
 GYMACT_ACTUATE_REMEDIATE_LABEL = "gymact_actuate_remediate"
 GYMACT_SUBMIT_MITIGATION_LABEL = "gymact_submit_mitigation"
 GYMACT_VERIFY_LABEL = "gymact_verify"
+
+#: Remediate-phase sibling of the three observe-phase check labels that need a
+#: real capability call (deployments/pods/services -- not namespace/status,
+#: which the remediate block does not recheck). Distinct labels from the
+#: observe-phase ones because they write distinct `diagnosis_state` keys
+#: (`recheck_deployments`/`recheck_pods`/`recheck_services`), not because the
+#: capability differs.
+GYMACT_RECHECK_DEPLOYMENTS_LABEL = "gymact_recheck_deployments"
+GYMACT_RECHECK_PODS_LABEL = "gymact_recheck_pods"
+GYMACT_RECHECK_SERVICES_LABEL = "gymact_recheck_services"
 
 #: A second, disjoint set of labels -- never merged into
 #: `ALLOWED_ACTION_BINDING_LABELS` -- for which `run_pipeline` allows a real
@@ -266,10 +317,17 @@ GYMACT_VERIFY_LABEL = "gymact_verify"
 #: guarantee for `ALLOWED_ACTION_BINDING_LABELS`.
 ALLOWED_ACTUATION_BINDING_LABELS: frozenset[str] = frozenset(
     {
-        GYMACT_OBSERVE_LABEL,
+        GYMACT_CHECK_STATUS_LABEL,
+        GYMACT_CHECK_NAMESPACE_LABEL,
+        GYMACT_CHECK_DEPLOYMENTS_LABEL,
+        GYMACT_CHECK_PODS_LABEL,
+        GYMACT_CHECK_SERVICES_LABEL,
         GYMACT_SUBMIT_DIAGNOSIS_LABEL,
         GYMACT_ACTUATE_REMEDIATE_LABEL,
         GYMACT_SUBMIT_MITIGATION_LABEL,
+        GYMACT_RECHECK_DEPLOYMENTS_LABEL,
+        GYMACT_RECHECK_PODS_LABEL,
+        GYMACT_RECHECK_SERVICES_LABEL,
     }
 )
 
@@ -343,6 +401,20 @@ def build_pipeline_turtle(base_iri: str = "urn:autofde-lab:powl-runner") -> str:
     return project_plan_to_powl(list(PIPELINE_LINEAR_STEPS), base_iri=base_iri)
 
 
+def _concurrent_read_block(labels: Sequence[str]) -> PartialOrder:
+    """N unordered `Atom` children, no order edges among them -- the real POWL
+    v2 marked-graph / AND-concurrency construct (Kourani/Park/van der Aalst,
+    Definition 3.11). Callers graft the returned node into the outer tree as
+    one indexed child, then chain a single `OrderEdge` from it to whatever
+    aggregation `Atom` must AND-join all N.
+
+    Narrow scope, deliberately: only the tree-*construction* shape is shared
+    between the observe and remediate-recheck blocks -- the driver-side
+    binding/`diagnosis_state`-write logic for the two blocks stays separate.
+    """
+    return PartialOrder(children=tuple(Atom(label=l) for l in labels), order=frozenset())
+
+
 def build_pipeline_powl_node(turtle_text: str | None = None) -> PowlNode:
     """The full pipeline as one real, executor-consumable `PowlNode` tree.
 
@@ -397,16 +469,42 @@ def build_pipeline_powl_node(turtle_text: str | None = None) -> PowlNode:
     # these five `gymact_*` labels sees them fire as pure structural no-ops,
     # exactly like any other unbound label -- adding this branch is safe
     # even before any binding exists.
-    actuation_atoms: tuple[PowlNode, ...] = (
-        Atom(label=GYMACT_OBSERVE_LABEL),
+    # Real POWL v2 partial-order-shaped actuation chain: an unordered
+    # concurrent observe block (5 real, independent environment checks, no
+    # causal dependency on one another) AND-joined by gymact_scan_anomalies,
+    # then submit_diagnosis, then an unordered concurrent remediate-recheck
+    # block (3 real, independent rechecks) AND-joined by gymact_recheck_scan,
+    # then submit_mitigation, then verify. See this module's docstring
+    # ("Revised decision") for why this stays disjoint from the case_hit/
+    # case_miss ChoiceGraph above.
+    observe_block = _concurrent_read_block(
+        [
+            GYMACT_CHECK_STATUS_LABEL,
+            GYMACT_CHECK_NAMESPACE_LABEL,
+            GYMACT_CHECK_DEPLOYMENTS_LABEL,
+            GYMACT_CHECK_PODS_LABEL,
+            GYMACT_CHECK_SERVICES_LABEL,
+        ]
+    )
+    remediate_block = _concurrent_read_block(
+        [
+            GYMACT_RECHECK_DEPLOYMENTS_LABEL,
+            GYMACT_RECHECK_PODS_LABEL,
+            GYMACT_RECHECK_SERVICES_LABEL,
+        ]
+    )
+    actuation_entries: tuple[PowlNode, ...] = (
+        observe_block,
+        Atom(label=GYMACT_SCAN_ANOMALIES_LABEL),
         Atom(label=GYMACT_SUBMIT_DIAGNOSIS_LABEL),
-        Atom(label=GYMACT_ACTUATE_REMEDIATE_LABEL),
+        remediate_block,
+        Atom(label=GYMACT_RECHECK_SCAN_LABEL),
         Atom(label=GYMACT_SUBMIT_MITIGATION_LABEL),
         Atom(label=GYMACT_VERIFY_LABEL),
     )
 
     top_children: tuple[PowlNode, ...] = (
-        linear_atoms + (choice_graph, record_atom) + actuation_atoms
+        linear_atoms + (choice_graph, record_atom) + actuation_entries
     )
     choice_index = n_linear
     record_index = n_linear + 1
@@ -414,13 +512,18 @@ def build_pipeline_powl_node(turtle_text: str | None = None) -> PowlNode:
 
     # Remap the turtle-sourced order relation (already 0..n_linear-1) as-is,
     # then chain: last linear step -> choice graph -> record atom -> the new
-    # linear actuation chain (observe -> submit_diagnosis ->
-    # actuate_remediate -> submit_mitigation -> verify).
+    # actuation chain (observe_block -> scan_anomalies -> submit_diagnosis ->
+    # remediate_block -> recheck_scan -> submit_mitigation -> verify). Each
+    # `PartialOrder` entry above is addressed by exactly one index from this
+    # top-level `PartialOrder` -- the same nested-composite-as-child shape
+    # `choice_graph` above already proves works with `node_at`/`_enabled`
+    # (both recurse into any `PartialOrder`/`ChoiceGraph` child uniformly;
+    # confirmed by reading `executor.py`'s `node_at`/`_enabled` this session).
     order_edges: set[OrderEdge] = {OrderEdge(edge.src, edge.dst) for edge in linear.order}
     order_edges.add(OrderEdge(NodeId(n_linear - 1), NodeId(choice_index)))
     order_edges.add(OrderEdge(NodeId(choice_index), NodeId(record_index)))
     order_edges.add(OrderEdge(NodeId(record_index), NodeId(actuation_start_index)))
-    for offset in range(len(actuation_atoms) - 1):
+    for offset in range(len(actuation_entries) - 1):
         order_edges.add(
             OrderEdge(NodeId(actuation_start_index + offset), NodeId(actuation_start_index + offset + 1))
         )
@@ -466,6 +569,7 @@ def run_pipeline(
     action_bindings: dict[str, ActionBinding] | None = None,
     bound: ExecutionBound = DEFAULT_BOUND,
     allow_partial_bindings: bool = False,
+    recorder_factory: Callable[[str], OcelSessionRecorder] | None = None,
 ) -> tuple[OcelLog, PipelineStallResult]:
     """Drive `model` to completion or to a classified stall, recording one
     real `"powl_structural_fire"` OCEL event per fire -- the same event shape
@@ -508,6 +612,22 @@ def run_pipeline(
     (no bindings at all) is unaffected by this check -- an caller running a
     purely structural replay with zero bound callables is unambiguous about
     what it did, unlike a partial dict that could be mistaken for complete.
+
+    `recorder_factory` -- test-only injection seam, not part of the
+    documented public contract's normal use
+    --------------------------------------------------------------------
+    When omitted (the default for every real caller), `run_pipeline`
+    constructs its own `OcelSessionRecorder(session_id, server_name="powl-
+    runner")`, exactly as before this parameter existed. A caller may pass a
+    zero-arg-beyond-`session_id` callable returning a real (not mocked)
+    `OcelSessionRecorder`-shaped object instead -- e.g. a small, real
+    subclass that also records `threading.get_ident()` on every `record()`
+    call -- so a test can assert directly on the *real* recorder's own
+    invocation-thread identity, rather than inferring thread-safety only
+    indirectly from the returned `OcelLog`'s event ordering. This is a real
+    injection point, not a mock: the object returned still is a real
+    `OcelSessionRecorder` (or a real subclass of one) that genuinely performs
+    `record()`/`close()`, never a stand-in that fakes the interaction.
     """
     if action_bindings:
         known_labels = (
@@ -576,7 +696,11 @@ def run_pipeline(
                 )
 
     session_id = session_id or "powl-runner-pipeline"
-    recorder = OcelSessionRecorder(session_id, server_name="powl-runner")
+    recorder = (
+        recorder_factory(session_id)
+        if recorder_factory is not None
+        else OcelSessionRecorder(session_id, server_name="powl-runner")
+    )
 
     marking: Marking = INITIAL_MARKING
     step = 0
@@ -590,38 +714,125 @@ def run_pipeline(
         live = enabled(model, marking, bound)
         if not live:
             break
-        chosen: NodePath = sorted(live)[0]
-        node = node_at(model, chosen)
-        label = node.label if isinstance(node, Atom) else f"path:{chosen}"
+        batch: list[NodePath] = sorted(live)  # deterministic ORDER; never a subset pick
 
-        marking = fire(model, marking, chosen, bound=bound)
-        step += 1
+        if len(batch) == 1:
+            # Byte-identical to the pre-existing single-path body -- keeps
+            # every pre-existing test passing unchanged.
+            chosen: NodePath = batch[0]
+            node = node_at(model, chosen)
+            label = node.label if isinstance(node, Atom) else f"path:{chosen}"
 
-        node_object_id = f"{session_id}-node-{'.'.join(map(str, chosen))}"
-        outcome: dict[str, Any] = {"standing": "FIRED", "detail": label, "steps_taken": step}
+            marking = fire(model, marking, chosen, bound=bound)
+            step += 1
 
-        binding = action_bindings.get(label) if action_bindings else None
-        if binding is not None and isinstance(node, Atom):
-            atom_attrs = {"label": node.label, "action": node.action, "bindings": dict(node.bindings)}
+            node_object_id = f"{session_id}-node-{'.'.join(map(str, chosen))}"
+            outcome: dict[str, Any] = {"standing": "FIRED", "detail": label, "steps_taken": step}
+
+            binding = action_bindings.get(label) if action_bindings else None
+            if binding is not None and isinstance(node, Atom):
+                atom_attrs = {"label": node.label, "action": node.action, "bindings": dict(node.bindings)}
+                try:
+                    outcome["action_result"] = binding(atom_attrs)
+                except Exception as exc:  # noqa: BLE001 -- recorded honestly, then re-raised
+                    recorder.record(
+                        activity="powl_action_binding_error",
+                        objects=[(node_object_id, "PowlNode")],
+                        outcome={
+                            "standing": "ERROR",
+                            "detail": label,
+                            "steps_taken": step,
+                            "error": f"{type(exc).__name__}: {exc}",
+                        },
+                    )
+                    raise
+
+            recorder.record(
+                activity="powl_structural_fire",
+                objects=[(node_object_id, "PowlNode")],
+                outcome=outcome,
+            )
+            continue
+
+        # len(batch) > 1: real concurrent batch-fire -- the executor's own
+        # documented law ("the caller picks... never a tie-break") applied
+        # for real: fire the whole concurrently-enabled set, not one
+        # arbitrarily chosen member.
+        #
+        # Step A: advance the marking for every chosen path first,
+        # sequentially, on the calling thread -- `fire()` is pure/cheap
+        # (frozen `Marking`, `dataclasses.replace`, no module-level state),
+        # so doing all fires up front keeps `marking` fully consistent before
+        # any binding (slow, impure, may raise) runs. Handle BOUND_EXHAUSTED
+        # honestly mid-batch: if `fire()` raises partway through, stop firing
+        # further batch members; only what actually fired gets a binding
+        # invoked or an event recorded, and `classify_pipeline_stall` reports
+        # the real verdict afterward.
+        fired_this_round: list[tuple[NodePath, PowlNode, str, int]] = []
+        for path in batch:
             try:
-                outcome["action_result"] = binding(atom_attrs)
-            except Exception as exc:  # noqa: BLE001 -- recorded honestly, then re-raised
+                marking = fire(model, marking, path, bound=bound)
+            except PowlError:
+                break  # BOUND_EXHAUSTED mid-batch -- stop firing; handle what did fire below
+            step += 1
+            fired_node = node_at(model, path)
+            fired_label = fired_node.label if isinstance(fired_node, Atom) else f"path:{path}"
+            fired_this_round.append((path, fired_node, fired_label, step))
+
+        # Step B: invoke bindings for everything that DID fire, concurrently,
+        # via a ThreadPoolExecutor sized to the batch -- every future starts
+        # immediately, so there is never a queued-but-not-started future to
+        # cancel on error.
+        results: dict[NodePath, Any] = {}
+        errors: dict[NodePath, Exception] = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(fired_this_round)) as pool:
+            future_to_path: dict[concurrent.futures.Future, NodePath] = {}
+            for path, fired_node, fired_label, _fired_step in fired_this_round:
+                binding = action_bindings.get(fired_label) if action_bindings else None
+                if binding is not None and isinstance(fired_node, Atom):
+                    atom_attrs = {
+                        "label": fired_node.label,
+                        "action": fired_node.action,
+                        "bindings": dict(fired_node.bindings),
+                    }
+                    future_to_path[pool.submit(binding, atom_attrs)] = path
+            for future in concurrent.futures.as_completed(future_to_path):
+                path = future_to_path[future]
+                try:
+                    results[path] = future.result()
+                except Exception as exc:  # noqa: BLE001 -- recorded honestly, then re-raised
+                    errors[path] = exc
+
+        # Step C: record OCEL events sequentially on the calling thread
+        # (`OcelSessionRecorder` is explicitly documented not thread-safe --
+        # single-writer -- so recording must never happen from a worker
+        # thread), in batch order, for every fired path, success or error,
+        # THEN raise the first error in that same deterministic order if any.
+        for path, fired_node, fired_label, fired_step in fired_this_round:
+            node_object_id = f"{session_id}-node-{'.'.join(map(str, path))}"
+            if path in errors:
+                exc = errors[path]
                 recorder.record(
                     activity="powl_action_binding_error",
                     objects=[(node_object_id, "PowlNode")],
                     outcome={
                         "standing": "ERROR",
-                        "detail": label,
-                        "steps_taken": step,
+                        "detail": fired_label,
+                        "steps_taken": fired_step,
                         "error": f"{type(exc).__name__}: {exc}",
                     },
                 )
-                raise
-
-        recorder.record(
-            activity="powl_structural_fire",
-            objects=[(node_object_id, "PowlNode")],
-            outcome=outcome,
-        )
+                continue
+            outcome = {"standing": "FIRED", "detail": fired_label, "steps_taken": fired_step}
+            if path in results:
+                outcome["action_result"] = results[path]
+            recorder.record(
+                activity="powl_structural_fire",
+                objects=[(node_object_id, "PowlNode")],
+                outcome=outcome,
+            )
+        if errors:
+            first_path = next(p for p, *_ in fired_this_round if p in errors)
+            raise errors[first_path]
 
     return recorder.close(), classify_pipeline_stall(model, marking, bound)
