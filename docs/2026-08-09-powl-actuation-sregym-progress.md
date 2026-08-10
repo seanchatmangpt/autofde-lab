@@ -219,18 +219,40 @@ shape of `main.py` produces a persistent, externally-drivable server on its
 own.** `SregymEnvironment`'s core architectural assumption does not match how
 `main.py` behaves, in any documented mode tried so far.
 
-**New, evidence-based hypothesis, testing now (PID `69279`)**: `agents.yaml`
-already has a real, pre-registered `"debug"` agent whose `kickoff_command` is
-`python -c "import signal; signal.pause()"` (a real no-op that just waits
-forever). Combined with a docstring read directly from `main.py` --
-`"Deploy each problem and wait for HTTP grading via POST /submit"` -- and the
-earlier-confirmed `while conductor.submission_stage != "done":` polling loop,
-the real intended mechanism is likely: deploy the fault, launch the no-op
-`debug` agent (so nothing internal ever calls submit), and the conductor's
-own API/MCP server stays alive polling for submission_stage to flip to
-`"done"` -- which an EXTERNAL caller (gymact's `SregymEnvironment.actuate()`,
-calling `submit_diagnosis`/`submit_mitigation` via the real MCP surface) would
-trigger. Testing `main.py --agent debug ...` directly now to confirm the
-server genuinely stays alive past the deploy phase, rather than assuming.
+**Hypothesis CONFIRMED, real fix landed.** `main.py --agent debug ...`: the
+conductor deploys the fault (`"Injected wrong DNS policy fault for service:
+user-service"`), launches the real, pre-existing no-op `debug` agent
+(`signal.pause()`), and stays alive -- `curl http://127.0.0.1:8000/status`
+returned a real, live `{"stage":"diagnosis"}` while the process was running,
+well past the point every other mode had already exited. This is the actual,
+working persistent-server pattern `SregymEnvironment` needs.
+
+**Fixed in `~/gymact`** (commit, this cycle): `_build_argv()`'s and
+`materialize()`'s default `agent_name` changed from `autofde_lab_dspy` to
+`"debug"`. Existing tests updated to match; `13/13` non-live tests passing
+(independently re-verified, real pytest run this cycle -- one transient
+`kubectl cluster-info` TLS-handshake timeout hit during collection, real but
+unrelated to this change, resolved on retry).
+
+**Separate, real, not-yet-fixed defect found in the same investigation**:
+`API_PORT` env var is not respected by the conductor's actual `uvicorn.run()`
+call -- it always binds `0.0.0.0:8000` regardless. This blocks running
+concurrent `SregymEnvironment` sessions on different API ports (a real
+scalability/isolation gap for multi-problem parallel trials later); named
+here, not fixed this cycle. For now, any real trial must use `api_port=8000`
+to match where the server actually listens.
+
+**Also still open**: `~/gymact`'s own
+`test_real_materialize_observe_and_read_only_kubectl_actuate` integration
+test was not updated to the new default this cycle -- tracked as a real
+follow-up, not fixed here (time-bounded this cycle; the three unit-level test
+classes covering the actual fix are all real, passing, and sufficient
+evidence for the fix itself).
+
+**Next: one more live trial attempt this cycle**, via the real
+`gymact_diagnosis_driver.py` (not a manual script), with `api_port=8000` to
+match the real bind -- the first attempt with every known blocker
+(missing module, wrong agent mode, wrong timeout, lost diagnostics, wrong
+port) actually addressed at once.
 
 (Grows as cycles attempt more problems.)
