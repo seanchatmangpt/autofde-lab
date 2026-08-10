@@ -11,6 +11,7 @@ from autofde_lab_planner.detectors.ingress_targetport import detect_ingress_and_
 from autofde_lab_planner.detectors.object_reconstruction import detect_missing_objects
 from autofde_lab_planner.detectors.otel_trace import detect_otel_trace_anomalies
 from autofde_lab_planner.detectors.probe_heuristics import detect_probe_faults
+from autofde_lab_planner.detectors.rbac_misconfig import detect_rbac_misconfigurations
 from autofde_lab_planner.detectors.rolling_update_misconfig import detect_workload_and_rolling_update_misconfigs
 from autofde_lab_planner.detectors.scheduling_deadlock import detect_scheduling_deadlocks
 from autofde_lab_planner.models import CategoryBDiagnosis, CategoryBMitigation
@@ -21,6 +22,7 @@ from autofde_lab_planner.remediators.ingress_targetport import decide_ingress_ta
 from autofde_lab_planner.remediators.object_reconstruction import decide_object_reconstruction_commands
 from autofde_lab_planner.remediators.otel_trace import decide_otel_remediation_commands
 from autofde_lab_planner.remediators.probe_heuristics import decide_probe_remediation_commands
+from autofde_lab_planner.remediators.rbac_misconfig import decide_rbac_remediation_commands
 from autofde_lab_planner.remediators.rolling_update_misconfig import decide_workload_remediation_commands
 from autofde_lab_planner.remediators.scheduling_deadlock import decide_scheduling_remediation_commands
 
@@ -45,6 +47,9 @@ class CompositePlannerEngine:
         flagd_configmap_json: str | dict[str, Any] | None = None,
         raw_traces_by_service: dict[str, Any] | None = None,
         elevated_revision_deployments: set[str] | None = None,
+        service_accounts_json: dict[str, Any] | list[dict[str, Any]] | None = None,
+        cluster_roles_json: dict[str, Any] | list[dict[str, Any]] | None = None,
+        cluster_role_bindings_json: dict[str, Any] | list[dict[str, Any]] | None = None,
     ) -> CategoryBDiagnosis:
         """Executes all Category-B and expanded detectors and generates structured diagnosis report."""
         # 1. B13: Missing/Corrupted K8s Objects
@@ -116,6 +121,15 @@ class CompositePlannerEngine:
             namespace=self.namespace,
         )
 
+        # 10. RBAC Misconfigurations
+        rbac_misconfigs = detect_rbac_misconfigurations(
+            deployments_json=deployments_json,
+            service_accounts_json=service_accounts_json,
+            cluster_roles_json=cluster_roles_json,
+            cluster_role_bindings_json=cluster_role_bindings_json,
+            namespace=self.namespace,
+        )
+
         # Build natural-language diagnosis text
         text_parts: list[str] = []
 
@@ -158,6 +172,10 @@ class CompositePlannerEngine:
             wm_str = ", ".join(f"{wm.deployment_name} ({wm.fault_kind})" for wm in workload_misconfigs)
             text_parts.append(f"Detected workload/rolling update misconfigurations in namespace {self.namespace}: {wm_str}.")
 
+        if rbac_misconfigs:
+            rbac_str = ", ".join(f"{rf.deployment_name}/{rf.service_account_name} ({rf.fault_kind})" for rf in rbac_misconfigs)
+            text_parts.append(f"Detected RBAC misconfigurations in namespace {self.namespace}: {rbac_str}.")
+
         if not text_parts:
             diagnosis_text = f"No fault mechanism anomalies detected in namespace {self.namespace}."
         else:
@@ -174,6 +192,7 @@ class CompositePlannerEngine:
             scheduling_deadlocks=tuple(scheduling_deadlocks),
             coredns_faults=tuple(coredns_faults),
             workload_misconfigs=tuple(workload_misconfigs),
+            rbac_misconfigs=tuple(rbac_misconfigs),
             diagnosis_text=diagnosis_text,
         )
 
@@ -257,6 +276,15 @@ class CompositePlannerEngine:
             )
             commands.extend(wm_cmds)
             rollout_wait.extend(wm_deps)
+
+        # 10. RBAC Remediations
+        if diagnosis.rbac_misconfigs:
+            rbac_cmds, rbac_deps = decide_rbac_remediation_commands(
+                faults=list(diagnosis.rbac_misconfigs),
+                namespace=self.namespace,
+            )
+            commands.extend(rbac_cmds)
+            rollout_wait.extend(rbac_deps)
 
         # Deduplicate wait deployments
         unique_wait = tuple(dict.fromkeys(rollout_wait))
