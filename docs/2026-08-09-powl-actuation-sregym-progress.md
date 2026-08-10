@@ -1660,3 +1660,43 @@ blocking window is evidently longer than the 240s traced for one oracle alone (d
 evaluation likely adds its own separate blocking on top, unread this cycle). Widening to
 900s is the honest next real experiment (a real, evidenced upper-bound guess, not a blind
 retry), applied to a new live trial this cycle against a third, distinct problem id.
+
+**Cycle 21 continued -- direct user instruction: shut down the running deployment,
+autofde-lab is not supposed to be doing that either.** Per the newly-codified gym
+actuation boundary (`.claude/rules/gym-actuation-boundary.md`, committed this cycle),
+the user directed a full stop of live trial activity from this session, not just the
+boundary documentation. Real actions taken:
+
+1. Killed trial v29's real process tree: `run_trial_v29.py` (PID 78037), the real
+   sregym conductor `main.py --agent debug --problem astronomy_shop_cart_service_failure`
+   (PID 80557), and the real `kubectl port-forward svc/mcp-server` (PID 83667).
+   Attempted graceful `SIGTERM` to the conductor's process group first (13s, no
+   effect -- the conductor did not shut down gracefully), escalated to `SIGKILL`.
+2. Found real, live-cluster evidence of incomplete teardown across multiple
+   cycles: `astronomy-shop` (22m old, from v29), `hotel-reservation` (53m old, a
+   real LEFTOVER from trial v28 two cycles ago that was never cleaned up), and
+   `sregym` (11h old, the conductor/mcp-server infra) all still `Active` in the
+   real cluster. `social-network` was already properly gone (an earlier trial's
+   teardown worked correctly), confirming the other three were genuine leaks, not
+   expected persistent infra.
+3. Confirmed via real labels (`sregym` namespace carries
+   `app.kubernetes.io/part-of: sregym`) and exact problem-id name matches before
+   deleting -- `kubectl delete namespace astronomy-shop hotel-reservation sregym
+   --wait=false`, real deletion confirmed in progress (`Terminating` status on all
+   three).
+
+**Trial v29 verdict**: never reached one -- killed mid-deployment/diagnosis by
+direct user instruction, not a real completed run. Do not record this as
+`ATTEMPTED:UNCONFIRMED`; it is `ATTEMPTED:ABORTED_BY_USER_INSTRUCTION`, a new,
+honest status this table has not needed before now.
+
+**Status table**: `astronomy_shop_cart_service_failure` ->
+`ATTEMPTED:ABORTED_BY_USER_INSTRUCTION` (killed before any real diagnosis/mitigation
+stage was reached; cluster cleanup completed).
+
+**This session's own live-trial activity stops here per direct instruction.** The
+30-minute recurring cron job (job id from earlier this session) should NOT launch
+further live trials going forward -- if it fires again, it must read this entry,
+recognize the standing instruction, and limit itself to non-actuating work (tests,
+docs, the gym-actuation-boundary rule's own upkeep) rather than resuming live
+deployments.
