@@ -923,3 +923,61 @@ blocker -- and should look for other non-credential-dependent hardening
 regression test for the `_cleanup_sync()` blocking-duration hypothesis
 using a real but fast fake oracle) rather than repeatedly re-attempting
 live trials against a known-expired key.
+
+### Cycle 11 (2026-08-10)
+
+**Key-rotation check (cheap probe, per cycle 10's own recommendation)**:
+real direct `curl` against `https://api.groq.com/openai/v1/chat/completions`
+-> still `401`, `{"error":{"code":"expired_api_key"}}`. `~/.env`'s
+`GROQ_API_KEY` mtime unchanged. `wrong_dns_policy_social_network` stays
+`ATTEMPTED:BLOCKED:EXPIRED_GROQ_API_KEY` -- still requires a live user
+action this autonomous cycle cannot perform. No orphaned port-forward
+processes found this cycle (consistent with cycle 10's process-group
+teardown fix holding, though not yet re-verified against a real trial).
+
+**Real, non-credential-dependent progress made instead**: independently
+re-verified cycle 10's claims first (22/22 real gymact tests, 4/4 real
+driver tests, both zero-mock-grep clean, both re-run live this cycle) --
+then found and fixed a real, distinct defect in
+`src/autofde_lab/reasoning/gymact_diagnosis_driver.py` by direct source
+inspection (no live trial required): `evaluate_outcome()` was being
+called with the SAME `env.verify()` boolean passed as both
+`structural_passed` and `oracle.passed`. Since `outcome_predicate.py`'s
+own `DISPUTED` branch requires `structural_passed=True` AND
+`oracle.passed=False`, passing one real boolean for both made `DISPUTED`
+mathematically unreachable from this driver -- silently discarding
+exactly the third outcome that module's own docstring names DISPUTED
+for: "the fix took structurally but an independent signal disagrees."
+
+**Fix**: `_actuate_remediate()`'s previously-discarded pod re-read now
+also re-fetches deployments/services and re-runs the real `scan()`,
+producing a genuine, independent structural-recheck signal
+(`structural_recheck_anomaly_count`, now on `GymactMediatedDiagnosisResult`)
+distinct from the conductor's own oracle verdict (`env.verify()`, still
+computed separately). Real Chicago test added
+(`test_disputed_verdict_reachable_when_structural_recheck_passes_but_oracle_disagrees`):
+extended the fake environment to model a real recovery between the
+initial observe and the remediate re-scan (matching `scan_deployments`'
+real Ready-pod-matching-selector logic, not a status-field shortcut),
+plus a fixture where the conductor's own oracle explicitly disagrees --
+the first real test proving DISPUTED is reachable at all.
+
+`.venv/bin/python -m pytest tests/reasoning/test_gymact_diagnosis_driver_chicago.py -v`
+-> **5 passed** (was 4; the new DISPUTED test is the 5th).
+`.venv/bin/python -m pytest tests/fabric/test_capability_gate_chicago.py
+tests/powl tests/case_library` -> **119 passed**, unaffected. Zero-mock
+grep clean (only match is the file's own self-describing docstring
+sentence). Committed: `155d0f5`.
+
+**Status table**: `wrong_dns_policy_social_network` ->
+`ATTEMPTED:BLOCKED:EXPIRED_GROQ_API_KEY` (unchanged, re-confirmed via
+direct API probe this cycle). No other problem ID attempted -- credential
+blocker is global to every live trial regardless of problem ID.
+
+**Note for cycle 12**: the driver can now, for real, distinguish CONFIRMED
+/ DISPUTED / UNCONFIRMED rather than only ever reaching CONFIRMED or
+UNCONFIRMED -- this should be verified against an ACTUAL live trial once
+the Groq key is rotated (the fix is source-tested via the fake
+environment, but has never fired against a real `SregymEnvironment`).
+Continue preferring the cheap `curl` key-probe over a full live trial
+launch each cycle until the key is rotated.
