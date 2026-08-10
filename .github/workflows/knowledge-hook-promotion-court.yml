@@ -15,7 +15,7 @@ permissions:
 jobs:
   promotion-court:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 7
     steps:
       - name: Checkout exact admitted subject
         uses: actions/checkout@v4
@@ -71,3 +71,33 @@ jobs:
               raise SystemExit("REFUSED:POWERLESS_BRCE_REQUEST_FENCE_MISSING")
           print("AUTOFDE_LAB_PROMOTION_AUTHORITY_FENCE_ALIVE")
           PY
+
+      - name: Execute repository deterministic quality
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install "pre-commit==4.6.1"
+          files=(
+            .github/workflows/knowledge-hook-promotion-court.yml
+            docs/knowledge-hook-promotion.md
+            src/autofde_lab/reflex/__init__.py
+            src/autofde_lab/reflex/promotion.py
+            tests/reflex/test_knowledge_hook_promotion.py
+          )
+          if pre-commit run --show-diff-on-failure --color=never --files "${files[@]}"; then
+            echo "AUTOFDE_LAB_PROMOTION_DETERMINISTIC_QUALITY_ALIVE"
+            exit 0
+          fi
+          python - <<'PY'
+          import base64
+          import subprocess
+
+          patch = subprocess.run(
+              ["git", "diff", "--", ".github/workflows/knowledge-hook-promotion-court.yml", "docs/knowledge-hook-promotion.md", "src/autofde_lab/reflex/__init__.py", "src/autofde_lab/reflex/promotion.py", "tests/reflex/test_knowledge_hook_promotion.py"],
+              check=True,
+              capture_output=True,
+          ).stdout
+          encoded = base64.b64encode(patch).decode()
+          print(f"::error title=PRECOMMIT_PATCH_BASE64::{encoded}")
+          PY
+          exit 1
