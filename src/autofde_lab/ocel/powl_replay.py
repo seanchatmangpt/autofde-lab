@@ -45,7 +45,7 @@ flat, real plan action sequence).
 from __future__ import annotations
 
 import uuid
-from typing import Sequence
+from typing import Any, Callable, Sequence
 
 from autofde_lab.ocel.log import OcelLog
 from autofde_lab.ocel.mcp_instrumentation import OcelSessionRecorder
@@ -60,6 +60,14 @@ from autofde_lab.powl.executor import (
 )
 
 __all__ = ["plan_lines_to_powl_node", "replay_structural_fires"]
+
+#: An action binding: given a fired Atom's real attributes (``label``,
+#: ``action``, ``bindings``) as a plain dict, returns a real, JSON-attachable
+#: result. Receives only the Atom's data, never the ``Atom`` object or the
+#: ``PowlNode`` tree itself, so a binding cannot reach back into the
+#: structural replay this module drives -- it may only compute a value from
+#: what fired.
+ActionBinding = Callable[[dict[str, Any]], Any]
 
 
 def plan_lines_to_powl_node(plan_lines: Sequence[str]) -> PowlNode:
@@ -94,6 +102,7 @@ def replay_structural_fires(
     model: PowlNode,
     *,
     session_id: str | None = None,
+    action_bindings: dict[str, ActionBinding] | None = None,
 ) -> OcelLog:
     """Replay ``model`` to completion via ``powl/executor.py``'s
     ``enabled()``/``fire()`` only, recording one real ``"powl_structural_fire"``
@@ -104,6 +113,40 @@ def replay_structural_fires(
     never inside the executor itself (``enabled()``'s own law: it returns a
     set, never an ordered choice). Returns the validated
     :class:`~autofde_lab.ocel.log.OcelLog`.
+
+    ``action_bindings`` -- optional, additive, backward-compatible
+    -----------------------------------------------------------------
+    When ``None`` (the default) or when a fired :class:`Atom`'s ``label`` has
+    no matching key, behavior is byte-for-byte unchanged from before this
+    parameter existed: pure structural advancement, one
+    ``"powl_structural_fire"`` event per fire, nothing else invoked.
+
+    When provided and a fired ``Atom``'s ``label`` matches a key, the bound
+    callable is invoked with that atom's real attributes
+    (``{"label": ..., "action": ..., "bindings": ...}``) *after* the
+    structural fire has already advanced the marking -- so a binding can
+    never influence which path was enabled or chosen; it only observes what
+    already, structurally, fired. Note this module's own boundary doctrine is
+    unaffected: ``powl/executor.py`` itself still never invokes ``action``;
+    this module still calls only ``enabled()``/``fire()`` for traversal. The
+    binding is invoked by *this* replay driver, as an explicit, opt-in,
+    caller-supplied side effect layered on top of the same structural trace,
+    not a change to the executor's own neutrality.
+
+    A successful binding's real return value is recorded as an additional
+    ``outcome`` attribute (``action_result``) on that same fire's OCEL event
+    -- the existing event shape (``standing``, ``detail``, ``steps_taken``)
+    is extended, never replaced.
+
+    A binding that raises is recorded honestly as a real
+    ``"powl_action_binding_error"`` OCEL event (never silently swallowed),
+    and replay then **halts**: the original exception is re-raised after
+    recording, so the caller observes the failure and no further structural
+    fires are attempted past an action whose real invocation failed. This
+    mirrors ``mcp_instrumentation.instrumented``'s own precedent (record,
+    then re-raise unchanged) and this repo's absence-is-not-evidence law: a
+    replay that pressed on past an unobserved-to-have-succeeded action would
+    manufacture a completed trace the world never actually produced.
     """
     session_id = session_id or f"powl-replay-{uuid.uuid4().hex[:8]}"
     recorder = OcelSessionRecorder(session_id, server_name="powl-structural-replay")
@@ -123,14 +166,40 @@ def replay_structural_fires(
         marking = fire(model, marking, chosen)
         step += 1
 
+        node_object_id = f"{session_id}-node-{'.'.join(map(str, chosen))}"
+        outcome: dict[str, Any] = {
+            "standing": "FIRED",
+            "detail": label,
+            "steps_taken": step,
+        }
+
+        binding = action_bindings.get(label) if action_bindings else None
+        if binding is not None and isinstance(node, Atom):
+            atom_attrs = {
+                "label": node.label,
+                "action": node.action,
+                "bindings": dict(node.bindings),
+            }
+            try:
+                action_result = binding(atom_attrs)
+            except Exception as exc:  # noqa: BLE001 -- recorded honestly, then re-raised
+                recorder.record(
+                    activity="powl_action_binding_error",
+                    objects=[(node_object_id, "PowlNode")],
+                    outcome={
+                        "standing": "ERROR",
+                        "detail": label,
+                        "steps_taken": step,
+                        "error": f"{type(exc).__name__}: {exc}",
+                    },
+                )
+                raise
+            outcome["action_result"] = action_result
+
         recorder.record(
             activity="powl_structural_fire",
-            objects=[(f"{session_id}-node-{'.'.join(map(str, chosen))}", "PowlNode")],
-            outcome={
-                "standing": "FIRED",
-                "detail": label,
-                "steps_taken": step,
-            },
+            objects=[(node_object_id, "PowlNode")],
+            outcome=outcome,
         )
 
     return recorder.close()
