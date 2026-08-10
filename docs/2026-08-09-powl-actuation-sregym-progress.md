@@ -466,4 +466,19 @@ either hypothesis.
 connection-timing gap remains, precisely named with real evidence rather
 than guessed.
 
+### Cycle 6 (2026-08-10)
+
+**Addressed Cycle 5's named next step.** Widened `_connect_with_retry`'s
+budget from 5x2s (10s total) to 10x3s (30s total) -- real evidence from
+Cycle 5's own trial showed the smaller budget was genuinely exhausted with
+no zombie process present and a fast (~69s) `__init__`. Also: the raised
+error now names every real per-attempt error individually (type + message),
+not just a final summary -- a recurrence is now diagnosable from the
+message alone. Real regression test added proving every attempt's error
+appears in the final message. `18/18` passing. Cluster health and the
+node-affinity fix both re-verified fresh before relaunching (per the
+now-standing per-cycle check established in Cycle 4/5).
+
+Trial relaunched with the widened budget (PID `83951`) -- in progress.
+
 (Grows as cycles attempt more problems.)
