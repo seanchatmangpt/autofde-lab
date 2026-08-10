@@ -96,7 +96,7 @@ from autofde_lab.case_library import (
     ScoredCase,
     retrieve_best_match,
 )
-from autofde_lab.case_library.outcome_predicate import ConfirmedVia, OutcomeVerdict
+from autofde_lab.case_library.outcome_predicate import ConfirmedVia, OracleVerdict, OutcomeVerdict
 
 __all__ = [
     "Anomaly",
@@ -107,6 +107,8 @@ __all__ = [
     "TaxonomyClassification",
     "DiagnoseFault",
     "SregymDiagnosisPipeline",
+    "oracle_verdict_from_environment",
+    "build_oracle_verdict_fn",
 ]
 
 
@@ -342,6 +344,55 @@ def build_sregym_submission_fns(
         return str(result)
 
     return submit_diagnosis, submit_mitigation
+
+
+# ---------------------------------------------------------------------------
+# External oracle -- gymact's real verify(), not a self-certified re-scan
+# ---------------------------------------------------------------------------
+#
+# `outcome_predicate.evaluate_outcome()` requires a real `OracleVerdict` to
+# distinguish CONFIRMED from DISPUTED; a caller that always passes
+# `OracleVerdict(present=False)` is silently skipping independent
+# verification and letting the structural re-check alone decide. gymact's
+# `SregymEnvironment.verify(expected)` (see `~/gymact/src/gymact/gyms/
+# sregym.py`) is a real, bounded poll of sregym's own conductor /status
+# endpoint until it matches `expected` or a timeout elapses -- the exact
+# externally-observed check `kubernetes_reconciliation.py`'s
+# `KubernetesReconciliationEnvironment.verify()` uses the same way. Wiring
+# it here (rather than autofde-lab's own re-scan) is what makes a
+# CONFIRMED verdict `confirmed_via="structural_and_oracle"` mean an
+# independent process actually re-checked convergence, not that
+# autofde-lab re-asked itself the same question twice.
+
+
+async def oracle_verdict_from_environment(
+    environment: Any,
+    expected: dict[str, Any],
+) -> OracleVerdict:
+    """Build a real :class:`OracleVerdict` from a real
+    ``gymact.gyms.sregym.SregymEnvironment.verify()`` call.
+
+    ``environment.verify(expected)`` polls the real conductor ``/status``
+    endpoint (bounded, real HTTP, real subprocess) until it matches
+    ``expected`` or times out -- this is the external, independently
+    observed check; the returned ``OracleVerdict`` always has
+    ``present=True`` because an oracle call was actually made.
+    """
+    passed, _observed = await environment.verify(expected)
+    return OracleVerdict(present=True, passed=bool(passed))
+
+
+def build_oracle_verdict_fn(environment: Any) -> Callable[[dict[str, Any]], OracleVerdict]:
+    """Synchronous wrapper around :func:`oracle_verdict_from_environment`,
+    matching the synchronous style of :func:`build_sregym_submission_fns`
+    (``dspy``/plain callers invoke this synchronously; the real
+    ``verify()`` coroutine runs underneath via :func:`_run_coroutine`)."""
+
+    def oracle_verdict(expected: dict[str, Any]) -> OracleVerdict:
+        passed, _observed = _run_coroutine(environment.verify(expected))
+        return OracleVerdict(present=True, passed=bool(passed))
+
+    return oracle_verdict
 
 
 class _EnsembleClassify(dspy.Module):
