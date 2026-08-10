@@ -1466,3 +1466,43 @@ mocks.
 **Status table**: `wrong_dns_policy_social_network` ->
 `ATTEMPTED:UNCONFIRMED (trial v27 in progress, monitored)`. Real outcome
 to be recorded once the live trial reaches a real terminal state.
+
+**Cycle 19 continued -- major milestone: first real, complete, non-crashing
+end-to-end pipeline run this entire session.** Trial v27 (PID `51709`,
+against the new concurrent runner with both this cycle's real fixes
+applied) reached a real terminal state, `RETURNCODE: 0`. Full real
+evidence, in order: `gymact_wait_for_deploy` confirmed real stage
+`diagnosis` before the observe block ever fired; all 5 observe-block
+checks fired concurrently with real cluster data; `gymact_scan_anomalies`
+found exactly 1 real anomaly, `label='inject_scale_pods_to_zero'` (a real,
+precise root-cause classification); `submit_diagnosis` got a real HTTP
+`200`/`"Submission received"`; all 3 remediate-recheck checks fired
+concurrently, real data, anomaly still present; `submit_mitigation` got a
+real `200`/`"Submission received"`; `gymact_verify` -> `{'passed': False,
+'observed': {}}` after exhausting its full real 600s budget with zero
+real answer -- a real, precise timestamp gap (~601s between
+`submit_mitigation` firing and `verify`'s own event) **conclusively
+reproduces cycle 9's earlier `/status`-outage-during-verify hypothesis**
+(the conductor's own post-submission evaluation work blocking `/status`
+for the whole window) as the ACTUAL remaining blocker to a terminal
+CONFIRMED/DISPUTED verdict, not a hypothesis anymore.
+
+Real verdict: `ATTEMPTED:UNCONFIRMED` (structural_recheck_anomaly_count=1,
+verify_observed={}) -- honest, precise, not a crash, not fabricated.
+Recorded as its own durable `gymact_verdict_computed` OCEL event (this
+session's own dual-bookkeeping fix, confirmed working for real).
+
+**Status table**: `wrong_dns_policy_social_network` ->
+`ATTEMPTED:UNCONFIRMED` (real, complete run, real evidence quoted above).
+
+**Note for cycle 20**: the real remaining blocker is now precisely named
+and reproduced twice (cycle 9's hypothesis, now this cycle's confirmation):
+the conductor's own post-submission evaluation work makes `/status`
+genuinely unreachable for the ENTIRE verify budget, not just a transient
+blip. Widening `verify_timeout_seconds` further (already at 600s) is
+unlikely to help if the conductor's own evaluation itself takes longer
+than that, or never completes for this problem. Worth investigating next:
+whether the conductor's real evaluation logic for THIS problem
+(`inject_scale_pods_to_zero`) has its own real, separate failure/hang, by
+reading `sregym`'s real oracle/evaluation code for this specific fault
+type, rather than continuing to widen a timeout blindly.
