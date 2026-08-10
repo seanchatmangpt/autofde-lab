@@ -220,6 +220,42 @@ class HostPortConflictFault:
 
 
 # -----------------------------------------------------------------------------
+# Storage / PVC Fault Models
+# -----------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class PVCClaimMismatchFault:
+    """A Deployment volume references a PersistentVolumeClaim name that has no
+    matching PVC object in the namespace (SREGym `inject_pvc_claim_mismatch`:
+    the claimName is suffixed with "-broken"), leaving pods stuck Pending."""
+
+    deployment_name: str
+    namespace: str
+    volume_name: str
+    observed_claim_name: str
+    expected_claim_name: str | None = None
+    container_name: str | None = None
+    unready_replicas: int = 0
+    desired_replicas: int = 1
+
+
+@dataclass(frozen=True)
+class PVCMultiAttachFault:
+    """A single ReadWriteOnce PersistentVolumeClaim is mounted by a Deployment
+    with replicas > 1 (optionally combined with podAntiAffinity forcing pods
+    onto different nodes), producing FailedAttachVolume / Multi-Attach errors
+    (SREGym `inject_duplicate_pvc_mounts`)."""
+
+    deployment_name: str
+    namespace: str
+    pvc_name: str
+    access_modes: tuple[str, ...] = ()
+    desired_replicas: int = 1
+    has_anti_affinity: bool = False
+    multi_attach_events: tuple[str, ...] = ()
+
+
+# -----------------------------------------------------------------------------
 # Aggregate Engine Diagnosis & Mitigation Models
 # -----------------------------------------------------------------------------
 
@@ -237,6 +273,8 @@ class CategoryBDiagnosis:
     workload_misconfigs: tuple[WorkloadMisconfigFault, ...] = ()
     dns_policy_overrides: tuple[DnsPolicyOverrideFault, ...] = ()
     host_port_conflicts: tuple[HostPortConflictFault, ...] = ()
+    pvc_claim_mismatches: tuple[PVCClaimMismatchFault, ...] = ()
+    pvc_multi_attach_faults: tuple[PVCMultiAttachFault, ...] = ()
     diagnosis_text: str = ""
 
 
