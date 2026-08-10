@@ -593,7 +593,24 @@ def classify_pipeline_stall(
     """
     if is_final(model, marking):
         return PipelineStallResult(final=True, stall=None)
-    if marking.fires >= bound.max_activity_fires or not enabled(model, marking, bound):
+    # `max_marking_states` is a genuine third gate here, alongside `fires`
+    # and `not enabled(...)` -- found and fixed forward this session
+    # (tests/powl/test_runner_bounds_concurrent_chicago.py`): unlike
+    # `max_node_visits`, a `max_marking_states` exhaustion is invisible to
+    # `enabled()` (it is enforced only inside `fire()`, never removes a
+    # path from the enabled set), so a marking that `run_pipeline` actually
+    # stopped advancing because of it can still have a real, structurally
+    # enabled successor -- `enabled(...)` returns non-empty, and without
+    # this explicit check this function fell through to the final `return
+    # ... stall=None` line below ("more work enabled, not stalled"), which
+    # is a genuinely honest-sounding but wrong verdict: the caller's own
+    # `run_pipeline` loop had already halted, so "not stalled" mis-reported
+    # a real stop as ongoing progress.
+    if (
+        marking.fires >= bound.max_activity_fires
+        or len(marking.completed_paths) >= bound.max_marking_states
+        or not enabled(model, marking, bound)
+    ):
         # Delegate the actual verdict to executor.classify_stall itself --
         # this module never re-derives BOUND_EXHAUSTED vs. DEADLOCK on its
         # own, only forwards the executor's real classification.
@@ -756,13 +773,33 @@ def run_pipeline(
         batch: list[NodePath] = sorted(live)  # deterministic ORDER; never a subset pick
 
         if len(batch) == 1:
-            # Byte-identical to the pre-existing single-path body -- keeps
-            # every pre-existing test passing unchanged.
+            # Byte-identical to the pre-existing single-path body, except for
+            # the try/except immediately below -- keeps every pre-existing
+            # test passing unchanged (the try/except is a no-op whenever
+            # `fire()` does not raise).
             chosen: NodePath = batch[0]
             node = node_at(model, chosen)
             label = node.label if isinstance(node, Atom) else f"path:{chosen}"
 
-            marking = fire(model, marking, chosen, bound=bound)
+            # Genuine bug found and fixed forward this session (tests/powl/
+            # test_runner_bounds_concurrent_chicago.py): the top-of-loop
+            # `if marking.fires >= bound.max_activity_fires: break` only
+            # guards the fire-budget bound. `max_marking_states` (bounds.py)
+            # is enforced *inside* `fire()` itself and was left uncaught
+            # here, unlike the concurrent batch path's Step A (`except
+            # PowlError: break` below) -- so a `max_marking_states`
+            # exhaustion discovered on the single-fire path (concretely:
+            # right after a concurrent batch partially fired and left
+            # exactly one path enabled) propagated out of `run_pipeline` as
+            # an uncaught `PowlError` instead of the honest, classified
+            # `BLOCKED:BOUND_EXHAUSTED` stall every other bound-exhaustion
+            # path already returns. Mirrors Step A's own handling exactly:
+            # stop advancing, let `classify_pipeline_stall` report the real
+            # verdict afterward.
+            try:
+                marking = fire(model, marking, chosen, bound=bound)
+            except PowlError:
+                break
             step += 1
 
             node_object_id = f"{session_id}-node-{'.'.join(map(str, chosen))}"
@@ -818,29 +855,65 @@ def run_pipeline(
             fired_label = fired_node.label if isinstance(fired_node, Atom) else f"path:{path}"
             fired_this_round.append((path, fired_node, fired_label, step))
 
+        if not fired_this_round:
+            # Genuine bug found and fixed forward this session (tests/powl/
+            # test_runner_bounds_concurrent_chicago.py): a >1-sized batch
+            # whose very FIRST fire attempt already raises `PowlError`
+            # (e.g. a second concurrent batch, recomputed fresh at the top
+            # of the loop, whose first member is already over budget
+            # because an earlier round spent the whole bound) leaves
+            # `marking` completely unchanged by this iteration. Without
+            # this explicit `break`, the `while not is_final(...)` loop
+            # would recompute the exact same non-empty `batch` next
+            # iteration (nothing advanced) and retry the exact same failing
+            # first fire forever -- a genuine hang, not merely the
+            # `ThreadPoolExecutor(max_workers=0)` crash this guard was
+            # originally added alongside (see Step B's own comment). Every
+            # other honest stop in this loop (the `max_activity_fires`
+            # pre-check above, Step A's own partial-batch `break`, `not
+            # live: break`) already leaves the loop via a path that either
+            # advanced `marking` or exits outright -- this is the one gap
+            # where neither happened.
+            break
+
         # Step B: invoke bindings for everything that DID fire, concurrently,
         # via a ThreadPoolExecutor sized to the batch -- every future starts
         # immediately, so there is never a queued-but-not-started future to
         # cancel on error.
+        #
+        # Genuine bug found and fixed forward this session (tests/powl/
+        # test_runner_bounds_concurrent_chicago.py): `fired_this_round` can
+        # legitimately be EMPTY -- not just partially filled -- whenever a
+        # bound is exhausted on the very *first* fire attempt of a >1-sized
+        # batch (concretely: a second concurrent batch, computed fresh at
+        # the top of the loop, whose first member is already over budget
+        # because an earlier round used up the whole bound). Constructing
+        # `ThreadPoolExecutor(max_workers=len(fired_this_round))` with that
+        # count `== 0` raised `ValueError("max_workers must be greater than
+        # 0")` uncaught -- a crash on an entirely legitimate, honest "0 of a
+        # >1 batch fired" outcome. Step C's own loop below was already a
+        # correct no-op over an empty `fired_this_round`; only Step B needed
+        # this guard.
         results: dict[NodePath, Any] = {}
         errors: dict[NodePath, Exception] = {}
-        with concurrent.futures.ThreadPoolExecutor(max_workers=len(fired_this_round)) as pool:
-            future_to_path: dict[concurrent.futures.Future, NodePath] = {}
-            for path, fired_node, fired_label, _fired_step in fired_this_round:
-                binding = action_bindings.get(fired_label) if action_bindings else None
-                if binding is not None and isinstance(fired_node, Atom):
-                    atom_attrs = {
-                        "label": fired_node.label,
-                        "action": fired_node.action,
-                        "bindings": dict(fired_node.bindings),
-                    }
-                    future_to_path[pool.submit(binding, atom_attrs)] = path
-            for future in concurrent.futures.as_completed(future_to_path):
-                path = future_to_path[future]
-                try:
-                    results[path] = future.result()
-                except Exception as exc:  # noqa: BLE001 -- recorded honestly, then re-raised
-                    errors[path] = exc
+        if fired_this_round:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=len(fired_this_round)) as pool:
+                future_to_path: dict[concurrent.futures.Future, NodePath] = {}
+                for path, fired_node, fired_label, _fired_step in fired_this_round:
+                    binding = action_bindings.get(fired_label) if action_bindings else None
+                    if binding is not None and isinstance(fired_node, Atom):
+                        atom_attrs = {
+                            "label": fired_node.label,
+                            "action": fired_node.action,
+                            "bindings": dict(fired_node.bindings),
+                        }
+                        future_to_path[pool.submit(binding, atom_attrs)] = path
+                for future in concurrent.futures.as_completed(future_to_path):
+                    path = future_to_path[future]
+                    try:
+                        results[path] = future.result()
+                    except Exception as exc:  # noqa: BLE001 -- recorded honestly, then re-raised
+                        errors[path] = exc
 
         # Step C: record OCEL events sequentially on the calling thread
         # (`OcelSessionRecorder` is explicitly documented not thread-safe --
