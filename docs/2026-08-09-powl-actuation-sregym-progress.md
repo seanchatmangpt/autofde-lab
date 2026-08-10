@@ -52,4 +52,59 @@ deploy stage that failed twice before. The remaining blocker is unrelated to tha
 it's the vendored `clients/autofde_lab_planner/driver.py` being absent, on the OLD
 bypass path this session's redesign was already moving away from.
 
+### Cycle 1 (2026-08-10, first real cron-triggered swarm cycle)
+
+**`wm112zth9` workflow (Design/Implement/Wire/Verify) completed.** Real, substantial
+landing: `GatedCapabilityBinding` + `ALLOWED_ACTUATION_BINDING_LABELS` in
+`src/autofde_lab/powl/runner.py` (commit `f396167`), `src/autofde_lab/reasoning/gymact_diagnosis_driver.py`
+(commit `03572c8`) -- the real runner-triggered driver, superseding the throwaway
+`scripts/run_gymact_mediated_trial.py` spike. Independently re-verified before trusting
+(per this doc's own standing law): found and fixed 2 real defects the Implement/Wire
+phases introduced --
+
+1. **Fictitious `"verify"` capability manifest entry.** `CapabilityGate.stale_entries()`
+   itself caught this (own detector working correctly): `SregymEnvironment.verify()` is
+   not a real gymact `Capability` (confirmed earlier this session -- plain coroutine,
+   never wired into `actuate()`'s dispatch table), but was padded into
+   `gymact_capabilities.toml` anyway just to satisfy `run_pipeline`'s blanket
+   "every actuation label needs `GatedCapabilityBinding`" rule. Fixed forward: `gymact_verify`
+   moved to its own `ALLOWED_ACTUATION_ORACLE_LABELS` set (bare-binding-only, not
+   required by the default completeness check). autofde-lab commit (this fix): see
+   `git log -1 --grep "fictitious"` on `feat/crown-receipt-architecture`.
+   Re-verified: `106 passed, 2 skipped` across `tests/fabric/test_capability_gate_chicago.py`,
+   `tests/powl/`, `tests/reasoning/`.
+
+2. **Real cross-repo blocker found and fixed: `~/gymact`'s `SregymEnvironment.__init__`
+   replaced the subprocess environment instead of merging with `os.environ`.** Found
+   during the `Verify` phase's live attempt (`run_gymact_mediated_diagnosis` failed in
+   under a minute with `RuntimeError: sregym main.py exited during startup (returncode=1)`),
+   root-caused by direct manual reproduction (not guessed): `GROQ_API_KEY` never reached
+   the child process regardless of shell state, because `subprocess.Popen(env=...)`
+   replaces rather than merges. Fixed in `~/gymact/src/gymact/gyms/sregym.py`
+   (extracted `_build_full_subprocess_env()`, `os.environ` as base). Real regression
+   tests, no cluster needed: `3/3 passing` (`tests/test_sregym_provider.py`, gymact repo).
+
+**Still blocked, confirmed pre-existing and unrelated to either fix above**:
+`~/gymact`'s own live-materialization integration test
+(`test_real_materialize_observe_and_read_only_kubectl_actuate`) still fails --
+`_build_argv()` hardcodes `--agent autofde_lab_planner`, which fails independently on
+the same missing `clients/autofde_lab_planner/driver.py` module documented in Cycle 0.
+This is now the single most load-bearing remaining blocker for ANY gymact-mediated
+trial to reach a real diagnosis -- named precisely so the next cycle doesn't
+rediscover it from zero.
+
+| problem_id | status | last real evidence |
+|---|---|---|
+| wrong_dns_policy_social_network | ATTEMPTED:BLOCKED:VENDORED_DRIVER_MODULE_MISSING (both direct-bypass AND gymact-mediated paths now confirmed blocked by the SAME root cause: missing `clients/autofde_lab_planner/driver.py`) | this cycle: gymact-mediated attempt via `run_gymact_mediated_diagnosis` failed at `provider.materialize()`, same missing-module signature after the env-fix ruled out the GROQ_API_KEY explanation |
+| misconfig_app_hotel_res | ATTEMPTED:BLOCKED:VENDORED_DRIVER_MODULE_MISSING | `~/gymact/tests/test_sregym_provider.py::test_real_materialize_observe_and_read_only_kubectl_actuate`, this cycle, same signature |
+
+**Next cycle priority** (named here so it isn't rediscovered): the vendored
+`clients/autofde_lab_planner/driver.py` module needs to either (a) be built for real
+(a thin stub that just deploys the fault and waits, matching the "external harness"
+mode `main.py --help` advertises, since gymact intends to drive diagnosis externally
+via MCP, not have SREGym's own subprocess do it), or (b) `_build_argv()` needs a real,
+different `--agent` value that DOES have a real driver (`clients/autofde_lab_dspy/driver.py`
+confirmed present on disk, unlike `autofde_lab_planner`) -- try (b) first, it is
+strictly less work and may unblock every problem ID in one fix.
+
 (Grows as cycles attempt more problems.)
