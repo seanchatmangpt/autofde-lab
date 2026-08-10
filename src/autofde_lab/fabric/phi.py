@@ -93,14 +93,44 @@ def _extract_number(text: str | None) -> float | None:
     `Anomaly.observed`/`.expected` are free-text (`detail` is explicitly
     documented as human-readable), so this is a best-effort parse, not a
     guarantee -- callers must treat a `None` return as UNREPRESENTABLE, not
-    as "zero".
+    as "zero". A malformed `Anomaly` whose `observed`/`expected` is not
+    `str | None` at all (e.g. an `int`, a corrupted record) is treated the
+    same way -- `re.search` would raise `TypeError` on a non-`str`/`bytes`
+    argument, and that is not this function's job to surface; the caller's
+    `None`-is-UNREPRESENTABLE contract already covers it.
     """
     if text is None:
+        return None
+    if not isinstance(text, str):
         return None
     match = re.search(r"-?\d+(?:\.\d+)?", text)
     if match is None:
         return None
     return float(match.group(0))
+
+
+def _field(anomaly: Anomaly, name: str, relation_class: "RelationClass | str"):
+    """Read one declared field off `anomaly`, never leaking a raw `AttributeError`.
+
+    Used only to read the `Anomaly`'s own fields *before* any domain
+    constructor runs -- never wrapped around a constructor call. That
+    placement is what keeps this narrow: a missing/malformed field on the
+    `Anomaly` itself becomes a typed `PhiUnrepresentableError` named at the
+    `phi()` boundary (case 2), while an unrelated failure raised from
+    *inside* `ReconcileDomain`/`GraphDomain`/`RCPSP`'s own constructor is
+    never caught here and propagates as itself -- so it can never be
+    mislabeled UNREPRESENTABLE for a reason that has nothing to do with
+    representability (case 4).
+    """
+    try:
+        return getattr(anomaly, name)
+    except AttributeError as exc:
+        raise PhiUnrepresentableError(
+            PhiUnrepresentable(
+                relation_class=relation_class,
+                reason=f"anomaly is missing required field {name!r} ({exc})",
+            )
+        ) from exc
 
 
 class ReconcileDomain(DeterministicPlanningDomain):
@@ -144,21 +174,28 @@ class ReconcileDomain(DeterministicPlanningDomain):
 
 
 def _encode_declared_vs_observed(anomaly: Anomaly) -> ReconcileDomain:
-    observed_state = f"{anomaly.namespace}/{anomaly.object_name}:{anomaly.observed}"
-    declared_state = f"{anomaly.namespace}/{anomaly.object_name}:{anomaly.expected}"
-    if anomaly.expected is None:
+    relation_class = anomaly.relation_class
+    namespace = _field(anomaly, "namespace", relation_class)
+    object_name = _field(anomaly, "object_name", relation_class)
+    observed = _field(anomaly, "observed", relation_class)
+    expected = _field(anomaly, "expected", relation_class)
+    if expected is None:
         raise PhiUnrepresentableError(
             PhiUnrepresentable(
-                relation_class=anomaly.relation_class,
+                relation_class=relation_class,
                 reason="declared_vs_observed anomaly has no `expected` value "
                 "to reconcile toward",
             )
         )
+    observed_state = f"{namespace}/{object_name}:{observed}"
+    declared_state = f"{namespace}/{object_name}:{expected}"
     return ReconcileDomain(observed_state=observed_state, declared_state=declared_state)
 
 
 def _encode_dangling_reference(anomaly: Anomaly) -> GraphDomain:
-    dangling_state = f"{anomaly.namespace}/{anomaly.object_name}"
+    namespace = _field(anomaly, "namespace", anomaly.relation_class)
+    object_name = _field(anomaly, "object_name", anomaly.relation_class)
+    dangling_state = f"{namespace}/{object_name}"
     # A dangling reference is, at the domain level, a state with no outgoing
     # edge to any goal: the referenced target does not exist to transition
     # into. next_state_map carries the state with zero actions, and targets
@@ -176,18 +213,22 @@ def _encode_dangling_reference(anomaly: Anomaly) -> GraphDomain:
 
 
 def _encode_insufficient_capability(anomaly: Anomaly) -> RCPSP:
-    demand = _extract_number(anomaly.observed)
-    capacity = _extract_number(anomaly.expected)
+    relation_class = anomaly.relation_class
+    observed = _field(anomaly, "observed", relation_class)
+    expected = _field(anomaly, "expected", relation_class)
+    field = _field(anomaly, "field", relation_class)
+    demand = _extract_number(observed)
+    capacity = _extract_number(expected)
     if demand is None or capacity is None:
         raise PhiUnrepresentableError(
             PhiUnrepresentable(
-                relation_class=anomaly.relation_class,
+                relation_class=relation_class,
                 reason="insufficient_capability requires a numeric `observed` "
-                f"demand and `expected` capacity (got observed={anomaly.observed!r}, "
-                f"expected={anomaly.expected!r})",
+                f"demand and `expected` capacity (got observed={observed!r}, "
+                f"expected={expected!r})",
             )
         )
-    resource_name = anomaly.field or "capacity"
+    resource_name = field or "capacity"
     task_id = 1
     tasks_mode = {task_id: {1: {"duration": 1, resource_name: int(demand)}}}
     return RCPSP(
@@ -201,18 +242,22 @@ def _encode_insufficient_capability(anomaly: Anomaly) -> RCPSP:
 
 
 def _encode_aggregate_threshold(anomaly: Anomaly) -> RCPSP:
-    aggregate_demand = _extract_number(anomaly.observed)
-    threshold = _extract_number(anomaly.expected)
+    relation_class = anomaly.relation_class
+    observed = _field(anomaly, "observed", relation_class)
+    expected = _field(anomaly, "expected", relation_class)
+    field = _field(anomaly, "field", relation_class)
+    aggregate_demand = _extract_number(observed)
+    threshold = _extract_number(expected)
     if aggregate_demand is None or threshold is None:
         raise PhiUnrepresentableError(
             PhiUnrepresentable(
-                relation_class=anomaly.relation_class,
+                relation_class=relation_class,
                 reason="aggregate_threshold requires a numeric `observed` "
                 "aggregate and `expected` threshold (got observed="
-                f"{anomaly.observed!r}, expected={anomaly.expected!r})",
+                f"{observed!r}, expected={expected!r})",
             )
         )
-    resource_name = anomaly.field or "aggregate"
+    resource_name = field or "aggregate"
     # The aggregate case is encoded as a single task carrying the full
     # already-summed demand against the threshold capacity -- the RCPSP
     # resource-sum-vs-limit primitive `CLAUDE.md`'s task description points
@@ -249,17 +294,29 @@ def phi(anomaly: Anomaly) -> ProblemInstance:
 
     Raises `PhiUnrepresentableError` (carrying a `PhiUnrepresentable` typed
     result on `.result`) when `anomaly.relation_class` has no entry in the
-    closed encoder table, or when the anomaly's `observed`/`expected` fields
-    cannot be parsed into what the matched domain primitive requires. Never
-    returns a placeholder or guessed domain in either case.
+    closed encoder table, when `anomaly` is itself so malformed that even
+    `.relation_class` cannot be read (a corrupted/duck-typed object missing
+    the attribute entirely), or when the anomaly's other fields cannot be
+    read or parsed into what the matched domain primitive requires. Never
+    returns a placeholder or guessed domain in any of these cases.
     """
-    encoder = _ENCODERS.get(anomaly.relation_class)
+    try:
+        relation_class = anomaly.relation_class
+    except AttributeError as exc:
+        raise PhiUnrepresentableError(
+            PhiUnrepresentable(
+                relation_class="<unreadable>",
+                reason=f"malformed anomaly: `.relation_class` is unreadable ({exc})",
+            )
+        ) from exc
+
+    encoder = _ENCODERS.get(relation_class)
     if encoder is None:
         raise PhiUnrepresentableError(
             PhiUnrepresentable(
-                relation_class=anomaly.relation_class,
+                relation_class=relation_class,
                 reason=f"no encoder registered for relation_class "
-                f"{anomaly.relation_class!r}; closed table only covers "
+                f"{relation_class!r}; closed table only covers "
                 f"{sorted(_ENCODERS)}",
             )
         )
