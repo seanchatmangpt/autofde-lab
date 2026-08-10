@@ -240,7 +240,12 @@ def test_runner_never_invokes_atom_action_payload_directly():
             assert intent.action is dangerous_action
             return ActivityOutcome()
 
-    model = PartialOrder((Atom("a", action=dangerous_action), Atom("b")))
+    model = PartialOrder(
+        (
+            Atom("a", action=dangerous_action),
+            Atom("b", action=dangerous_action),
+        )
+    )
     with PowlV2Runner() as runner:
         evidence = runner.run(model, InspectingDriver())
 
