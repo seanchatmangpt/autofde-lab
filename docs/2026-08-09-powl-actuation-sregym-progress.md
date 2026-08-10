@@ -981,3 +981,68 @@ the Groq key is rotated (the fix is source-tested via the fake
 environment, but has never fired against a real `SregymEnvironment`).
 Continue preferring the cheap `curl` key-probe over a full live trial
 launch each cycle until the key is rotated.
+
+### Cycle 12 (2026-08-10)
+
+**Key-rotation check**: real direct `curl` against the Groq API -> still
+`401`, `expired_api_key`. No orphaned processes found (consistent with
+cycle 10's teardown fix). `wrong_dns_policy_social_network` stays
+`ATTEMPTED:BLOCKED:EXPIRED_GROQ_API_KEY`.
+
+**Independently re-verified cycle 11's claims** before building further:
+`tests/reasoning/test_gymact_diagnosis_driver_chicago.py` -> real 5/5
+passed, zero-mock grep clean (re-run live this cycle, not trusted from
+the prior cycle's own report).
+
+**Real, non-credential-dependent progress made instead**: found a SECOND
+instance of the same class of defect the DISPUTED-reachability fix
+(cycle 11, `155d0f5`) closed. `oracle=OracleVerdict(present=True, ...)`
+was hardcoded regardless of whether `gymact_verify`'s binding had ever
+actually fired. A genuine structural stall (`BOUND_EXHAUSTED`/`DEADLOCK`,
+no exception) could leave `_verify()` never called while an earlier
+binding (`_actuate_remediate`'s structural recheck, added last cycle)
+already completed -- the old code would fabricate `oracle.passed=False`
+via a dict `.get(..., False)` default, as though a real conductor had
+actually answered and disagreed, capable of producing a **false
+DISPUTED verdict** for a run that never reached the oracle at all.
+
+**Fix**: `_verify()` now sets `diagnosis_state['verify_attempted'] = True`
+before the poll result is known. Result construction now passes
+`oracle=OracleVerdict(present=verify_attempted, passed=verify_passed if
+verify_attempted else None)` -- using `OracleVerdict.present` for its
+actual documented purpose ("no oracle was consulted") for the first
+time in this driver.
+
+**Honest scope note** (source-confirmed, not assumed): the real
+actuation chain (`observe -> submit_diagnosis -> actuate_remediate ->
+submit_mitigation -> verify`) is a strict linear `PartialOrder`
+downstream of the case-library choice graph in
+`build_pipeline_powl_node()` -- under this driver's default bounds,
+`verify` structurally always fires on a normal run. The
+`verify_attempted=False` path is therefore NOT independently reachable
+through the real end-to-end structural replay without exposing a bound
+override on `run_gymact_mediated_diagnosis` (out of scope this cycle) --
+named honestly rather than fabricating a test for an unreachable-today
+path. Verified instead via the already-real, already-tested pure
+function coverage: `evaluate_outcome`'s `OracleVerdict(present=False)`
+branch is independently covered by
+`tests/case_library/test_outcome_predicate_chicago.py`.
+
+`.venv/bin/python -m pytest tests/reasoning/test_gymact_diagnosis_driver_chicago.py
+tests/case_library tests/powl tests/fabric/test_capability_gate_chicago.py`
+-> **124 passed**. Zero-mock grep clean. Committed: `522e08f`.
+
+**Status table**: `wrong_dns_policy_social_network` ->
+`ATTEMPTED:BLOCKED:EXPIRED_GROQ_API_KEY` (unchanged, re-confirmed this
+cycle). No other problem ID attempted -- credential blocker is global.
+
+**Note for cycle 13**: two independent verdict-fabrication defects have
+now been found and fixed by close source reading alone, without a live
+trial (cycles 11 and 12). This suggests a real, systematic pattern worth
+a deliberate sweep next cycle if the key is still not rotated: read
+every other `diagnosis_state.get(key, <default>)` call site in this
+driver and ask, for each, whether the default could be mistaken for a
+real, present answer rather than "this never happened" (the exact shape
+of both bugs found so far). If the key IS rotated, prioritize a live
+trial over further static review -- the fixes so far are source-correct
+but have never been exercised against a real `SregymEnvironment`.
