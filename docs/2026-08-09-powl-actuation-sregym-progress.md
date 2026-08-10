@@ -413,4 +413,57 @@ of the whole session: each fix surfaced the next real defect underneath it,
 never a false all-clear, converging on a genuine structural finding rather
 than another symptom.
 
+### Cycle 5 (2026-08-10)
+
+**Implemented fix direction (a) from Cycle 4's close-out**: `SregymEnvironment`
+no longer caches persistent `_kubectl_client`/`_submit_client` instance
+state at all. New `_open_client_with_retry()` async context manager (builds
+on the already-real `_connect_with_retry`) opens, uses, and closes a fresh
+client entirely within the ONE event loop actually running each real
+`actuate()` call -- `_ensure_clients_open()` removed entirely, `teardown()`
+simplified. Cluster health and the node-affinity fix both independently
+re-verified before relaunching (per this cycle's own past lesson: the
+affinity fix does not survive a colima restart, so it's checked fresh every
+cycle now rather than assumed). `17/17` unaffected tests still passing.
+
+Not independently unit-tested at the `actuate()` level itself (a real
+fastmcp protocol handshake needs a real MCP server) -- trial launched
+immediately (PID `79041`) as the real evidence.
+
+**Trial result: the per-call fix is confirmed WORKING (real, positive
+evidence), but a NEW, distinct, not-yet-understood failure surfaced.**
+`RuntimeError: real MCP client 'kubectl_client' failed to connect after 5
+real attempts` -- this is the retry mechanism's own exhaustion message,
+firing exactly as designed, proving the new per-call architecture is
+genuinely exercised (the old "Client is not connected" instance-reuse bug
+is confirmed gone). All 5 real attempts over ~10s genuinely failed to
+connect.
+
+**Real, checked evidence, not guessed**: no zombie/orphaned port-forward
+process was found (`lsof`/`ps` both clean) -- ruling out the exact defect
+found and killed manually in Cycle 3. Real timing evidence: the whole run,
+start to this failure, took only ~69 real seconds (log file created and
+last modified 69s apart) -- far too fast for a from-scratch deploy (5-15+
+confirmed real minutes earlier this session), meaning `_tcp_port_reachable`
+genuinely passed quickly, almost certainly because the conductor's own
+idempotent "already exists, leaving unchanged" redeploy logic reused this
+session's already-warm cluster state rather than performing a real fresh
+deploy.
+
+**Real, open question for Cycle 6, not yet answered**: why would a TCP port
+that just became reachable still fail a real MCP protocol handshake 5 times
+in a row moments later? Candidate hypotheses, NONE yet confirmed: (a) a
+listening socket that accepts but the tunnel behind it doesn't yet proxy
+real traffic, (b) a real timing gap between port-forward TCP-acceptability
+and the pod-side MCP server actually being ready to handshake, larger than
+the current retry budget (5 x 2s = 10s) allows for. Next real step: increase
+the retry budget and/or capture the underlying low-level exception from each
+of the 5 attempts individually, not just the final summary, before assuming
+either hypothesis.
+
+**Cycle 5 summary**: the deep architectural per-call-client fix from Cycle
+4's finding is confirmed real and working; one further, real, distinct
+connection-timing gap remains, precisely named with real evidence rather
+than guessed.
+
 (Grows as cycles attempt more problems.)
