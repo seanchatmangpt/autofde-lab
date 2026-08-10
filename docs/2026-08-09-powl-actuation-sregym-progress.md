@@ -1530,3 +1530,58 @@ branch is never invoked and never recorded. Real, currently correct by
 construction -- this closes a real evidence gap, not a defect. 23/23 in
 that file passing, 5x flake-check clean, zero mock usage (grep verified).
 Committed as `8fbf88d`.
+
+### Cycle 20 (2026-08-10)
+
+**No duplicate work**: checked in-flight tasks first -- a 4-agent parallel
+Chicago-testing swarm (dispatched the prior turn, independent of this
+cron cycle's own SREGym-trial mandate) was mid-flight; let all 4 finish
+rather than overlapping, then independently re-verified and integrated
+each (real pytest + real grep, never trusted the agent's own self-report):
+
+- OCEL log shape under real concurrent batch firing: 5 new tests, no bug
+  found. Committed `bd392ef`.
+- Turtle-bridge -> runner integration + malformed-Turtle refusal paths:
+  22 new tests, plus one real genuine bug found and fixed forward (a
+  subject IRI missing its closing `>` leaked a bare `ValueError` instead
+  of a named `PowlDecodeError` -- `fabric/powl.py`'s `_parse_graph`).
+  Committed `1553bfd`.
+- POWL-vs-OCEL conformance module property-based/cross-executor
+  expansion: 5 new tests (30+30 fixed-seed random structures, both
+  `replay_structural_fires`- and `run_pipeline`-produced logs), no bug
+  found. Committed `ad3f6f9`.
+- Concurrent-batch bound-exhaustion edge cases: 10 new tests, **3 real
+  production bugs found and fixed forward** -- (1) `run_pipeline`'s
+  single-fire branch had no `except PowlError` guard around `fire()`,
+  so a `max_marking_states` exhaustion discovered there crashed instead
+  of stalling honestly; (2) neither `executor.classify_stall` nor
+  `runner.classify_pipeline_stall` checked `max_marking_states`
+  exhaustion at all (unlike `max_node_visits`/`max_activity_fires`),
+  misreporting a real stop as `DEADLOCK` or "not stalled"; (3) Step B's
+  `ThreadPoolExecutor(max_workers=len(fired_this_round))` crashed with
+  `ValueError` when a batch's first fire attempt itself raised
+  (`fired_this_round == 0`), and needed an explicit `break` to avoid an
+  infinite retry loop on the same failing batch. Independently
+  re-verified this cycle (139/139 `tests/powl`, zero mocks) before
+  trusting or building on it. Committed `e95cbc6`.
+
+`tests/reasoning` re-run after all 4 integrations: real pass with 2
+honest, named skips (no `GROQ_API_KEY` in this shell's env for one test;
+no live port-forward active for the materialization-gated test at the
+moment it ran -- both pre-existing environment gates, not regressions).
+
+**New live trial dispatched, per this cycle's own mandate to try
+additional real problem IDs beyond `wrong_dns_policy_social_network`
+(already reached a real terminal `UNCONFIRMED` verdict in cycle 19)**:
+trial v28, problem id `admission_webhook_outage_hotel_reservation`
+(different namespace -- `hotel-reservation`, not `social-network` -- and a
+genuinely different fault class -- webhook outage, not DNS policy --
+deliberately chosen to help determine whether cycle 19's `verify()`
+`/status`-outage finding is conductor-global or specific to
+`inject_scale_pods_to_zero`). PID `34247`, log
+`/tmp/gymact_cycle20_trial_v28.log`, real cluster confirmed reachable via
+`kubectl cluster-info` before launch. In progress via Monitor at the time
+of this entry -- real outcome to be recorded once it completes.
+
+**Status table**: `admission_webhook_outage_hotel_reservation` ->
+`ATTEMPTED:UNCONFIRMED (trial v28 in progress, monitored)`.
