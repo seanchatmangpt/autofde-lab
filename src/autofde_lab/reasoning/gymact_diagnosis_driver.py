@@ -144,6 +144,7 @@ class GymactMediatedDiagnosisResult:
     verdict: OutcomeVerdict
     confirmed_via: str
     verify_observed: dict[str, Any]
+    structural_recheck_anomaly_count: int | None
 
 
 async def run_gymact_mediated_diagnosis(
@@ -330,7 +331,36 @@ async def run_gymact_mediated_diagnosis(
         # yet (see this module's docstring) -- a real, non-mutating
         # run_kubectl re-read, honestly scoped as a re-confirm, not a
         # fabricated fix.
-        return await _kubectl_json(f"get pods -n {namespace} -o json")
+        #
+        # Real defect found and fixed forward this session: this re-read's
+        # result was previously discarded, and `evaluate_outcome` below was
+        # called with the SAME `env.verify()` boolean passed as both
+        # `structural_passed` AND `oracle.passed` -- since evaluate_outcome's
+        # DISPUTED branch requires `structural_passed=True` AND
+        # `oracle.passed=False`, passing one real boolean for both made
+        # DISPUTED structurally UNREACHABLE from this driver (confirmed by
+        # direct inspection of evaluate_outcome's decision table in
+        # `case_library/outcome_predicate.py`), silently discarding exactly
+        # the "fix took structurally but an independent signal disagrees"
+        # case that module's own docstring names as the reason DISPUTED
+        # exists as a third outcome, not folded into UNCONFIRMED. Fixed: this
+        # re-read now also re-fetches deployments/services and re-runs the
+        # real `scan()` the same way `_observe()` does, producing a genuine,
+        # independent structural-recheck signal (anomaly gone, per this
+        # scanner) distinct from the conductor's own oracle verdict
+        # (`env.verify()`, still computed separately in `_verify()` below).
+        deployments = await _kubectl_json(f"get deployments -n {namespace} -o json")
+        pods = await _kubectl_json(f"get pods -n {namespace} -o json")
+        services = await _kubectl_json(f"get services -n {namespace} -o json")
+        recheck_state: ClusterState = {
+            "deployments": deployments,
+            "pods": pods,
+            "services": services,
+        }
+        recheck_anomalies = scan(recheck_state)
+        diagnosis_state["structural_recheck_anomaly_count"] = len(recheck_anomalies)
+        diagnosis_state["structural_recheck_passed"] = len(recheck_anomalies) == 0
+        return {"pods": pods, "recheck_anomaly_count": len(recheck_anomalies)}
 
     async def _submit_mitigation() -> Any:
         cap = _capability(SREGYM_CAPABILITIES, "submit_mitigation")
@@ -404,8 +434,20 @@ async def run_gymact_mediated_diagnosis(
 
         verify_passed = bool(diagnosis_state.get("verify_passed", False))
         verify_observed = diagnosis_state.get("verify_observed", {})
+        # Real, independent structural-recheck signal from `_actuate_remediate`'s
+        # re-scan (see the comment there for the DISPUTED-unreachable defect
+        # this fixes). Absent (binding never fired, e.g. `allow_partial_bindings`
+        # short-circuited before reaching it) falls back to the conductor's own
+        # oracle verdict -- the driver's prior behavior -- rather than a
+        # fabricated True/False; that fallback still can't produce DISPUTED
+        # (structural_passed == oracle.passed, same as before this fix), which
+        # is the honest, absence-is-not-evidence-correct answer when no real
+        # independent recheck ran.
+        structural_recheck_ran = "structural_recheck_passed" in diagnosis_state
+        structural_passed = bool(diagnosis_state.get("structural_recheck_passed", verify_passed))
+        recheck_anomaly_count = diagnosis_state.get("structural_recheck_anomaly_count")
         verdict, confirmed_via = evaluate_outcome(
-            structural_passed=verify_passed,
+            structural_passed=structural_passed,
             oracle=OracleVerdict(present=True, passed=verify_passed),
         )
 
@@ -416,6 +458,7 @@ async def run_gymact_mediated_diagnosis(
             verdict=verdict,
             confirmed_via=confirmed_via,
             verify_observed=verify_observed,
+            structural_recheck_anomaly_count=recheck_anomaly_count if structural_recheck_ran else None,
         )
     finally:
         # Real bug found and fixed forward this session: `finally:

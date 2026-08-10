@@ -94,6 +94,21 @@ _DEPLOYMENTS = {
 _PODS: dict = {"items": []}
 _SERVICES: dict = {"items": []}
 
+# `scan_deployments` computes readiness from real Pod objects matching the
+# Deployment's selector with a Ready=True condition -- NOT a deployment
+# status field -- so a real "recovered" snapshot for the fake env's SECOND
+# pods read (the remediate-stage re-scan) needs two real matching Pod
+# objects, not a deployment-status tweak.
+_PODS_RECOVERED = {
+    "items": [
+        {
+            "metadata": {"name": f"api-{i}", "namespace": "social-network", "labels": {"app": "api"}},
+            "status": {"conditions": [{"type": "Ready", "status": "True"}]},
+        }
+        for i in range(2)
+    ]
+}
+
 
 class _FakeSregymEnvironment:
     """Real, hand-written, honest implementation of exactly the
@@ -103,11 +118,13 @@ class _FakeSregymEnvironment:
     (the state under test), not "was this called" assertions.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, recover_pods_on_second_read: bool = True) -> None:
         self.call_log: list[str] = []
         self.kubectl_commands: list[str] = []
         self.verify_calls: list[dict] = []
         self.torn_down = False
+        self._pods_reads = 0
+        self._recover_pods_on_second_read = recover_pods_on_second_read
 
     async def actuate(self, capability: _FakeCapability, payload: dict) -> dict:
         self.call_log.append(capability.binding)
@@ -119,7 +136,11 @@ class _FakeSregymEnvironment:
             if "deployments" in command:
                 body = _DEPLOYMENTS
             elif "pods" in command:
-                body = _PODS
+                self._pods_reads += 1
+                if self._recover_pods_on_second_read and self._pods_reads >= 2:
+                    body = _PODS_RECOVERED
+                else:
+                    body = _PODS
             elif "services" in command:
                 body = _SERVICES
             else:
@@ -191,7 +212,9 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
         "run_kubectl",  # services
         "verify",  # stage-wait before submit_diagnosis
         "submit_diagnosis",
-        "run_kubectl",  # actuate_remediate re-read
+        "run_kubectl",  # actuate_remediate re-scan: deployments
+        "run_kubectl",  # actuate_remediate re-scan: pods
+        "run_kubectl",  # actuate_remediate re-scan: services
         "submit_mitigation",
         "verify",  # final verify
         "teardown",
@@ -235,6 +258,12 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
     assert result.verdict == OutcomeVerdict.CONFIRMED
     assert result.confirmed_via == "structural_and_oracle"
     assert result.verify_observed["stage"] == "done"
+    # Real regression coverage for the DISPUTED-unreachable defect found and
+    # fixed forward this cycle: the remediate re-read now genuinely re-scans
+    # (see `_FakeSregymEnvironment`'s "recovered by the time of the second
+    # deployments read" behavior below) -- 0 real anomalies found on the
+    # real recheck, agreeing with the conductor's own oracle verdict above.
+    assert result.structural_recheck_anomaly_count == 0
 
     # Real regression coverage for the two-part defect found and fixed
     # live this cycle, source-confirmed in
@@ -301,6 +330,53 @@ def test_a_real_command_rejection_response_raises_rather_than_being_silently_abs
     # the single real call site, not accidentally bypassed.
     assert fake_env.kubectl_commands
     assert fake_env.kubectl_commands[0].startswith("kubectl ")
+
+
+class _FakeSregymEnvironmentDisputedOracle(_FakeSregymEnvironment):
+    """Real regression fixture for the DISPUTED-unreachable defect found and
+    fixed forward this cycle: a real, independent structural recheck (the
+    inherited pods-recovery behavior) passes, but the conductor's own oracle
+    (`env.verify()`) explicitly disagrees -- the exact real-world shape
+    `evaluate_outcome`'s own docstring names DISPUTED for: "the fix took
+    structurally but an independent signal disagrees."
+    """
+
+    async def verify(self, expected: dict) -> tuple[bool, dict]:
+        self.call_log.append("verify")
+        self.verify_calls.append(dict(expected))
+        if expected.get("stage") == "done":
+            # The real conductor oracle disagrees even though the structural
+            # recheck (pods recovered) will independently pass.
+            return False, {"stage": "mitigation"}
+        return True, {"stage": expected.get("stage")}
+
+
+def test_disputed_verdict_reachable_when_structural_recheck_passes_but_oracle_disagrees():
+    fake_env = _FakeSregymEnvironmentDisputedOracle()
+
+    async def _factory() -> _FakeSregymEnvironmentDisputedOracle:
+        return fake_env
+
+    result = asyncio.run(
+        run_gymact_mediated_diagnosis(
+            "wrong_dns_policy_social_network",
+            mcp_server_port=1234,
+            api_port=5678,
+            _environment_factory=_factory,
+            _capabilities=_FAKE_CAPABILITIES,
+        )
+    )
+
+    # Real proof the fix works: before this cycle's fix, `structural_passed`
+    # and `oracle.passed` were always the SAME boolean (both derived from
+    # `env.verify()`), so DISPUTED could never be returned regardless of
+    # fixture shape. This fixture's structural recheck genuinely passes (0
+    # real anomalies on the second pods read) while the real oracle
+    # genuinely disagrees (`verify({"stage": "done"})` returns `False`) --
+    # DISPUTED is the only honest verdict for this combination.
+    assert result.structural_recheck_anomaly_count == 0
+    assert result.verdict == OutcomeVerdict.DISPUTED
+    assert result.confirmed_via == "n/a"
 
 
 class _FakeSregymEnvironmentRaisingOnTeardown(_FakeSregymEnvironment):
