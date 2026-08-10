@@ -187,7 +187,11 @@ class ActuationBindingRefused(ValueError):
     `ALLOWED_ACTION_BINDING_LABELS` -- i.e. a caller trying to wire a
     cluster-mutating actuator to fire as a side effect of structural marking
     advancement, which this module's docstring states it deliberately never
-    does."""
+    does. Also raised when `action_bindings` is incomplete relative to
+    `ALLOWED_ACTION_BINDING_LABELS` and the caller did not explicitly opt
+    into a partial pipeline via `allow_partial_bindings` -- see
+    `run_pipeline`'s docstring for why an unbound label silently firing as a
+    no-op is refused by default rather than treated as a legitimate gap."""
 
 
 class BridgeUnavailable(ValueError):
@@ -293,6 +297,7 @@ def run_pipeline(
     session_id: str | None = None,
     action_bindings: dict[str, ActionBinding] | None = None,
     bound: ExecutionBound = DEFAULT_BOUND,
+    allow_partial_bindings: bool = False,
 ) -> tuple[OcelLog, PipelineStallResult]:
     """Drive `model` to completion or to a classified stall, recording one
     real `"powl_structural_fire"` OCEL event per fire -- the same event shape
@@ -310,6 +315,31 @@ def run_pipeline(
     raises `ActuationBindingRefused` before any Atom fires -- a caller
     cannot wire a cluster-mutating actuator to fire as a side effect of
     structural marking advancement.
+
+    `action_bindings` completeness -- refuse-if-incomplete by default
+    --------------------------------------------------------------------
+    When a non-empty `action_bindings` is given, the DEFAULT is to require it
+    to cover the full `ALLOWED_ACTION_BINDING_LABELS` set exactly. An Atom
+    whose label has no bound callable still fires structurally (the marking
+    advances -- this runner never re-derives a different traversal), but no
+    `action_result` is ever computed for it and no `powl_action_binding_error`
+    can ever be raised for it either, because the callable that would have
+    produced either is simply absent. A caller who thinks their diagnosis
+    pipeline "ran end-to-end" from a clean `run_pipeline` return could
+    otherwise be silently wrong about which steps actually executed real
+    logic -- exactly the confident-wrong-plan failure mode
+    `.claude/rules/absence-is-not-evidence.md` names for admission, here
+    recurring at the binding-coverage boundary. `run_pipeline` therefore
+    raises `ActuationBindingRefused`, naming every missing label, before any
+    Atom fires.
+
+    A caller with a legitimate partial-pipeline use case (e.g. driving only
+    the linear scan/phi/dispatch/solve prefix in a context that never reaches
+    the case-library branch) opts out explicitly with
+    `allow_partial_bindings=True`. Passing `action_bindings=None` or `{}`
+    (no bindings at all) is unaffected by this check -- an caller running a
+    purely structural replay with zero bound callables is unambiguous about
+    what it did, unlike a partial dict that could be mistaken for complete.
     """
     if action_bindings:
         refused = sorted(set(action_bindings) - ALLOWED_ACTION_BINDING_LABELS)
@@ -321,6 +351,20 @@ def run_pipeline(
                 f"its own module docstring; any real actuation step must be reached "
                 f"through a separate, explicitly authorized call outside this replay."
             )
+        if not allow_partial_bindings:
+            missing = sorted(ALLOWED_ACTION_BINDING_LABELS - set(action_bindings))
+            if missing:
+                raise ActuationBindingRefused(
+                    f"run_pipeline refuses incomplete action_bindings -- missing "
+                    f"binding(s) for label(s) {missing!r}. An unbound label still "
+                    f"fires structurally but silently skips its action_result / "
+                    f"binding-error reporting, which could let a caller believe "
+                    f"their diagnosis pipeline ran end-to-end when a step was "
+                    f"actually a no-op. Pass a callable for every label in "
+                    f"{sorted(ALLOWED_ACTION_BINDING_LABELS)!r}, or pass "
+                    f"allow_partial_bindings=True to explicitly opt into a "
+                    f"partial pipeline."
+                )
 
     session_id = session_id or "powl-runner-pipeline"
     recorder = OcelSessionRecorder(session_id, server_name="powl-runner")
