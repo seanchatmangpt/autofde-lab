@@ -7,11 +7,11 @@ It never executes that request and never grants DO authority.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from enum import Enum
 import hashlib
 import json
-from typing import Iterable, Mapping
+from dataclasses import dataclass
+from enum import Enum
+from typing import Iterable
 
 
 CONSEQUENCE_IR_PACK = "ggen-marketplace:consequence-ir-pack@0.2.0"
@@ -57,11 +57,18 @@ class HookEnvelope:
 
     def __post_init__(self) -> None:
         if not self.subjects or not self.scopes:
-            raise PromotionRefusal("REFUSED:VACUOUS_ENVELOPE", "subjects and scopes are required")
+            raise PromotionRefusal(
+                "REFUSED:VACUOUS_ENVELOPE", "subjects and scopes are required"
+            )
         if not self.action or not self.policy or not self.verifier:
-            raise PromotionRefusal("REFUSED:VACUOUS_ENVELOPE", "action, policy, and verifier are required")
+            raise PromotionRefusal(
+                "REFUSED:VACUOUS_ENVELOPE",
+                "action, policy, and verifier are required",
+            )
         if self.max_age_ticks <= 0:
-            raise PromotionRefusal("REFUSED:VACUOUS_ENVELOPE", "max_age_ticks must be positive")
+            raise PromotionRefusal(
+                "REFUSED:VACUOUS_ENVELOPE", "max_age_ticks must be positive"
+            )
 
 
 @dataclass(frozen=True)
@@ -77,9 +84,14 @@ class CandidateHook:
 
     def __post_init__(self) -> None:
         if not self.hook_id or not self.predicate_id:
-            raise PromotionRefusal("REFUSED:INVALID_HOOK", "hook_id and predicate_id are required")
+            raise PromotionRefusal(
+                "REFUSED:INVALID_HOOK", "hook_id and predicate_id are required"
+            )
         if not self.implementation_digest.startswith("sha256:"):
-            raise PromotionRefusal("REFUSED:INVALID_DIGEST", "implementation digest must be sha256-bound")
+            raise PromotionRefusal(
+                "REFUSED:INVALID_DIGEST",
+                "implementation digest must be sha256-bound",
+            )
 
 
 @dataclass(frozen=True)
@@ -151,31 +163,53 @@ class RouteResult:
 class PromotionCourt:
     """Falsification court for converting repeated cognition into deterministic reflexes."""
 
-    def __init__(self, minimum_positive_receipts: int = 2, minimum_falsifiers: int = 1) -> None:
+    def __init__(
+        self, minimum_positive_receipts: int = 2, minimum_falsifiers: int = 1
+    ) -> None:
         if minimum_positive_receipts < 2:
-            raise ValueError("promotion requires at least two independent positive receipts")
+            raise ValueError(
+                "promotion requires at least two independent positive receipts"
+            )
         if minimum_falsifiers < 1:
             raise ValueError("promotion requires at least one falsifier")
         self.minimum_positive_receipts = minimum_positive_receipts
         self.minimum_falsifiers = minimum_falsifiers
 
-    def evaluate(self, hook: CandidateHook, evidence: Iterable[EpisodeEvidence]) -> PromotionCandidate:
+    def evaluate(
+        self, hook: CandidateHook, evidence: Iterable[EpisodeEvidence]
+    ) -> PromotionCandidate:
         if hook.hook_class is HookClass.CONSTRUCT:
-            raise PromotionRefusal("REFUSED:CONSTRUCT_ONLY", "construct hooks cannot enter the BRCE fast path")
+            raise PromotionRefusal(
+                "REFUSED:CONSTRUCT_ONLY",
+                "construct hooks cannot enter the BRCE fast path",
+            )
         if hook.direct_do_authority:
-            raise PromotionRefusal("REFUSED:DIRECT_DO_AUTHORITY", "hooks may request BRCE but may never own DO")
+            raise PromotionRefusal(
+                "REFUSED:DIRECT_DO_AUTHORITY",
+                "hooks may request BRCE but may never own DO",
+            )
         if not hook.requires_brce:
-            raise PromotionRefusal("REFUSED:BRCE_BYPASS", "promoted hooks must route through BRCE")
+            raise PromotionRefusal(
+                "REFUSED:BRCE_BYPASS", "promoted hooks must route through BRCE"
+            )
         if hook.embedded_authority_token is not None:
-            raise PromotionRefusal("REFUSED:EMBEDDED_AUTHORITY", "authority must be external to the hook bundle")
+            raise PromotionRefusal(
+                "REFUSED:EMBEDDED_AUTHORITY",
+                "authority must be external to the hook bundle",
+            )
         if hook.hook_class is HookClass.REFLEX and not hook.envelope.compensation:
-            raise PromotionRefusal("REFUSED:REFLEX_COMPENSATION_REQUIRED", "reflex hooks require bounded compensation")
+            raise PromotionRefusal(
+                "REFUSED:REFLEX_COMPENSATION_REQUIRED",
+                "reflex hooks require bounded compensation",
+            )
 
         unique: dict[str, EpisodeEvidence] = {}
         for receipt in evidence:
             prior = unique.get(receipt.evidence_id)
             if prior is not None and prior != receipt:
-                raise PromotionRefusal("REFUSED:EVIDENCE_ID_COLLISION", receipt.evidence_id)
+                raise PromotionRefusal(
+                    "REFUSED:EVIDENCE_ID_COLLISION", receipt.evidence_id
+                )
             unique[receipt.evidence_id] = receipt
 
         positives = []
@@ -183,18 +217,33 @@ class PromotionCourt:
         for receipt in unique.values():
             self._validate_binding(hook, receipt)
             if receipt.kind is EvidenceKind.POSITIVE:
-                if receipt.standing != "ALIVE" or not receipt.postcondition_verified or not receipt.replay_verified:
-                    raise PromotionRefusal("REFUSED:POSITIVE_NOT_ALIVE", receipt.evidence_id)
+                if (
+                    receipt.standing != "ALIVE"
+                    or not receipt.postcondition_verified
+                    or not receipt.replay_verified
+                ):
+                    raise PromotionRefusal(
+                        "REFUSED:POSITIVE_NOT_ALIVE", receipt.evidence_id
+                    )
                 positives.append(receipt)
             else:
-                if not receipt.falsifier_killed or receipt.standing not in {"ALIVE", "REFUSED"}:
-                    raise PromotionRefusal("REFUSED:FALSIFIER_NOT_PROVEN", receipt.evidence_id)
+                if not receipt.falsifier_killed or receipt.standing not in {
+                    "ALIVE",
+                    "REFUSED",
+                }:
+                    raise PromotionRefusal(
+                        "REFUSED:FALSIFIER_NOT_PROVEN", receipt.evidence_id
+                    )
                 falsifiers.append(receipt)
 
         if len(positives) < self.minimum_positive_receipts:
-            raise PromotionRefusal("REFUSED:INSUFFICIENT_POSITIVE_EVIDENCE", str(len(positives)))
+            raise PromotionRefusal(
+                "REFUSED:INSUFFICIENT_POSITIVE_EVIDENCE", str(len(positives))
+            )
         if len(falsifiers) < self.minimum_falsifiers:
-            raise PromotionRefusal("REFUSED:INSUFFICIENT_FALSIFIERS", str(len(falsifiers)))
+            raise PromotionRefusal(
+                "REFUSED:INSUFFICIENT_FALSIFIERS", str(len(falsifiers))
+            )
 
         evidence_ids = tuple(sorted(unique))
         digest = self._promotion_digest(hook, evidence_ids)
@@ -225,12 +274,21 @@ class PromotionCourt:
             "verifier": receipt.verifier,
         }
         if actual != expected:
-            raise PromotionRefusal("REFUSED:EVIDENCE_BINDING_DRIFT", receipt.evidence_id)
-        if receipt.subject not in hook.envelope.subjects or receipt.scope not in hook.envelope.scopes:
-            raise PromotionRefusal("REFUSED:EVIDENCE_SCOPE_DRIFT", receipt.evidence_id)
+            raise PromotionRefusal(
+                "REFUSED:EVIDENCE_BINDING_DRIFT", receipt.evidence_id
+            )
+        if (
+            receipt.subject not in hook.envelope.subjects
+            or receipt.scope not in hook.envelope.scopes
+        ):
+            raise PromotionRefusal(
+                "REFUSED:EVIDENCE_SCOPE_DRIFT", receipt.evidence_id
+            )
 
     @staticmethod
-    def _promotion_digest(hook: CandidateHook, evidence_ids: tuple[str, ...]) -> str:
+    def _promotion_digest(
+        hook: CandidateHook, evidence_ids: tuple[str, ...]
+    ) -> str:
         payload = {
             "schema": PROMOTION_SCHEMA,
             "hook_id": hook.hook_id,
@@ -252,7 +310,9 @@ class PromotionCourt:
         return "sha256:" + hashlib.sha256(canonical).hexdigest()
 
 
-def route_promoted_hook(promotion: PromotionCandidate, observation: Observation) -> RouteResult:
+def route_promoted_hook(
+    promotion: PromotionCandidate, observation: Observation
+) -> RouteResult:
     """Select the BRCE fast path only inside the exact promoted envelope.
 
     This function does not call BRCE. It manufactures powerless request data that a production
