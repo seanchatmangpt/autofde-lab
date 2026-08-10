@@ -617,4 +617,15 @@ is the most consequential single fix of the whole session: if the
 "anomaly" was real garbage all along, this trial's scan result may differ
 entirely from every prior cycle's.
 
+**Note: the intermittent 10/10 connection-exhaustion signature recurred a
+third time this cycle** (PID `92214`, identical to the earlier
+Cycle-7 occurrence) -- real, checked, cluster and `mcp-server` pod both
+healthy each time, no new environmental cause found. Retried directly each
+time (matches the established pattern); named here as a real, recurring-
+but-still-intermittent reliability gap in the kubectl-mcp port-forward
+warm-up, not yet root-caused further given this cycle's already extensive
+scope. A future cycle should consider whether the retry budget needs
+another real increase, or whether this warrants investigating the
+port-forward's own real stability under this session's accumulated load.
+
 (Grows as cycles attempt more problems.)
