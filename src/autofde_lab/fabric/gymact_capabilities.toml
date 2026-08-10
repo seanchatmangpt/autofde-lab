@@ -59,10 +59,18 @@ name = "submit_mitigation"
 consequence = "DO"
 reason = "Submits the agent's OWN mitigation to sregym's conductor for external grading. Same rationale as submit_diagnosis: outbound submission of the agent's own answer, not a read of ground truth."
 
-[[capability]]
-name = "verify"
-consequence = "READ"
-reason = "Not a real gymact Capability -- SregymEnvironment.verify() is a plain coroutine, never wired into actuate()'s dispatch table (see gymact_capability_gate.py's module docstring). Listed here so autofde_lab.reasoning.gymact_diagnosis_driver's gymact_verify binding can still be constructed as a real GatedCapabilityBinding (run_pipeline requires one for every ALLOWED_ACTUATION_BINDING_LABELS entry) -- the wrapped callable calls env.verify() directly, never env.actuate(), and this manifest entry gates that call by the same allowlist mechanism as every other actuation-class label. verify() only reports pass/fail plus a bounded observed-state snapshot; it does not expose injected-fault ground truth or scoring internals."
+# NOTE: "verify" is deliberately NOT listed here. An earlier pass in this
+# session added a fake "verify" entry so gymact_diagnosis_driver's
+# gymact_verify binding could be constructed as a GatedCapabilityBinding --
+# but CapabilityGate.stale_entries() correctly flagged this as drift (no
+# real gymact.gyms.sregym.SREGYM_CAPABILITIES entry is named "verify").
+# Fixed forward in runner.py: gymact_verify now takes a bare ActionBinding
+# (same rule as the original nine read-only labels), since
+# SregymEnvironment.verify() was never a gated Capability to begin with --
+# it is a plain coroutine, never wired into actuate()'s dispatch table.
+# Padding this manifest with a fictitious capability to make unrelated code
+# typecheck would have been exactly the kind of false authorization this
+# allowlist exists to prevent.
 
 # Deliberately NOT listed, and therefore refused by capability_gate.py even
 # if gymact adds a same-shaped Capability under one of these names in a

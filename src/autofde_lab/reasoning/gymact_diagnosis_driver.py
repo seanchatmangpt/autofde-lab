@@ -66,13 +66,16 @@ cannot yet synthesize. ``submit_mitigation`` reports
 ``SregymEnvironment.verify()`` is a plain coroutine, never wired into
 ``actuate()``'s dispatch table (see ``gymact_capability_gate.py``'s module
 docstring) -- so the ``gymact_verify`` binding calls ``env.verify()``
-directly, not through ``env.actuate()``. It is still wrapped in a real
-``GatedCapabilityBinding`` (``run_pipeline`` requires that for every one of
-the five actuation-class labels, ``gymact_verify`` included) against a
-``"verify"`` manifest entry added to ``gymact_capabilities.toml`` for
-exactly this non-``Capability`` oracle call -- gated by the same allowlist
-mechanism as every other actuation-class label, even though it does not
-route through ``env.actuate()``.
+directly, not through ``env.actuate()``, and takes a bare ``ActionBinding``
+rather than a ``GatedCapabilityBinding``: there is no real gymact
+``Capability`` behind it to gate against. An earlier pass in this session
+added a fictitious ``"verify"`` entry to ``gymact_capabilities.toml`` just to
+satisfy the (incorrect) requirement that every actuation-class label be
+capability-gated; ``CapabilityGate.stale_entries()`` correctly caught it as
+drift (no real ``SREGYM_CAPABILITIES`` entry named ``"verify"`` exists), and
+it was removed. Fixed forward in both ``runner.py`` (``gymact_verify`` moved
+to its own ``ALLOWED_ACTUATION_ORACLE_LABELS`` set, bare-binding-only, not
+required by the default completeness check) and here.
 """
 
 from __future__ import annotations
@@ -301,11 +304,14 @@ async def run_gymact_mediated_diagnosis(
             callable_=_binding(_submit_mitigation),
             gate=gate,
         ),
-        GYMACT_VERIFY_LABEL: GatedCapabilityBinding(
-            capability_name="verify",
-            callable_=_binding(_verify),
-            gate=gate,
-        ),
+        # gymact_verify takes a bare ActionBinding, not a GatedCapabilityBinding:
+        # SregymEnvironment.verify() is a plain coroutine, never a real gymact
+        # Capability, never wired into actuate()'s dispatch table -- there is no
+        # real capability name to gate it against. Fixed forward this session
+        # after CapabilityGate.stale_entries() caught a fictitious "verify"
+        # manifest entry that had been added just to satisfy the (incorrect)
+        # requirement that every actuation-class label be capability-gated.
+        GYMACT_VERIFY_LABEL: _binding(_verify),
     }
 
     try:

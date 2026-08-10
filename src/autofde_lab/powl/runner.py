@@ -98,17 +98,31 @@ binding, narrowly
 ---------------------------------------------------------------------------
 The blanket "this runner stays structural-only; it does not gain a direct
 actuation path" decision above is superseded by a narrower, principled rule
-for exactly five new labels (:data:`ALLOWED_ACTUATION_BINDING_LABELS`,
+for exactly four new labels (:data:`ALLOWED_ACTUATION_BINDING_LABELS`,
 disjoint from :data:`ALLOWED_ACTION_BINDING_LABELS`): a mutating actuation
-step MAY be bound to one of those five labels, but *only* as a
+step MAY be bound to one of those four labels, but *only* as a
 :class:`GatedCapabilityBinding` -- never a bare :class:`ActionBinding`
 callable. Constructing a ``GatedCapabilityBinding`` itself calls
 ``CapabilityGate.check(capability_name)`` (see its docstring), so an
 unauthorized capability name can never even be wrapped, let alone bound;
 ``run_pipeline`` additionally refuses, structurally
 (``isinstance(binding, GatedCapabilityBinding)``, never a docstring
-convention), any of the five actuation-class labels bound to anything else,
+convention), any of the four actuation-class labels bound to anything else,
 before any Atom fires.
+
+``verify()`` is deliberately NOT one of these four. Confirmed earlier this
+session, directly from source: ``SregymEnvironment.verify()`` is a plain
+coroutine, never wrapped as a real gymact ``Capability``, never wired into
+``actuate()``'s dispatch table. Forcing it through ``GatedCapabilityBinding``
+would mean inventing a fake ``Capability`` for it in the TOML manifest --
+which an earlier pass in this session actually did, and which
+``CapabilityGate.stale_entries()`` correctly flagged as a real defect (an
+allowlist entry matching no real capability name is exactly the drift that
+detector exists to catch). Fixed forward: :data:`GYMACT_VERIFY_LABEL` takes a
+bare :class:`ActionBinding` instead, the same as the original nine read-only
+labels -- ``verify()`` was always a plain oracle call available to any
+caller with a live environment reference, not a gated capability invocation,
+so gating it added a false capability without adding real authorization.
 
 Why this does not violate ``.claude/rules/ecosystem-boundary.md``'s "this
 repo... does not attach actuation semantics" law: that law binds this
@@ -256,9 +270,17 @@ ALLOWED_ACTUATION_BINDING_LABELS: frozenset[str] = frozenset(
         GYMACT_SUBMIT_DIAGNOSIS_LABEL,
         GYMACT_ACTUATE_REMEDIATE_LABEL,
         GYMACT_SUBMIT_MITIGATION_LABEL,
-        GYMACT_VERIFY_LABEL,
     }
 )
+
+#: A third, disjoint label set: actuation-adjacent but never capability-gated,
+#: because there is no real gymact `Capability` behind it to gate against.
+#: `gymact_verify` takes a bare `ActionBinding` (same rule as
+#: `ALLOWED_ACTION_BINDING_LABELS`) but is NOT required by the default
+#: completeness check -- a caller may run a pipeline with or without a real
+#: oracle-verify step wired in, unlike the nine always-required read-only
+#: pipeline steps.
+ALLOWED_ACTUATION_ORACLE_LABELS: frozenset[str] = frozenset({GYMACT_VERIFY_LABEL})
 
 
 class ActuationBindingRefused(ValueError):
@@ -488,7 +510,11 @@ def run_pipeline(
     what it did, unlike a partial dict that could be mistaken for complete.
     """
     if action_bindings:
-        known_labels = ALLOWED_ACTION_BINDING_LABELS | ALLOWED_ACTUATION_BINDING_LABELS
+        known_labels = (
+            ALLOWED_ACTION_BINDING_LABELS
+            | ALLOWED_ACTUATION_BINDING_LABELS
+            | ALLOWED_ACTUATION_ORACLE_LABELS
+        )
         refused = sorted(set(action_bindings) - known_labels)
         if refused:
             raise ActuationBindingRefused(
@@ -520,16 +546,18 @@ def run_pipeline(
         misgated = sorted(
             label
             for label in action_bindings
-            if label in ALLOWED_ACTION_BINDING_LABELS
+            if label in (ALLOWED_ACTION_BINDING_LABELS | ALLOWED_ACTUATION_ORACLE_LABELS)
             and isinstance(action_bindings[label], GatedCapabilityBinding)
         )
         if misgated:
             raise ActuationBindingRefused(
                 f"REFUSED:ACTUATION_BINDING_ON_READONLY_LABEL label(s)={misgated!r} -- "
-                f"the original read-only/diagnostic pipeline labels may only ever "
-                f"take a bare ActionBinding callable, never a GatedCapabilityBinding "
-                f"(or any other capability-gated actuation wrapper). Their "
-                f"structural-only guarantee stays unconditional."
+                f"the original read-only/diagnostic pipeline labels, plus "
+                f"gymact_verify (no real gymact Capability exists to gate it "
+                f"against), may only ever take a bare ActionBinding callable, "
+                f"never a GatedCapabilityBinding (or any other capability-gated "
+                f"actuation wrapper). Their structural-only guarantee stays "
+                f"unconditional."
             )
 
         if not allow_partial_bindings:
