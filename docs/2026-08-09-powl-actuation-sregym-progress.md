@@ -168,9 +168,27 @@ config (autofde-lab commit, this cycle -- see `git log --grep "startup_timeout_s
 on `feat/crown-receipt-architecture`). Verified: `tests/reasoning/test_gymact_diagnosis_driver_chicago.py`
 still `2 passed`.
 
-**Trial v2 launched with the real fix** (PID `63890`, ports 9957/8003,
-`startup_timeout_seconds=900.0`, `wall_clock_timeout_s=1200`) -- in progress as of
-this note, monitored, real outcome to be recorded in Cycle 4 (or a later note in
-this same cycle if it completes before this cycle ends).
+**Trial v2 (PID `63890`) real terminal outcome**: `RuntimeError: sregym main.py
+exited during startup (returncode=0)` -- a fast, clean exit, not a timeout, so the
+startup_timeout_seconds fix above was real and correct but not sufficient alone.
+The raised message's `stderr` was only deprecation-warning noise -- the real cause
+was invisible, because `SregymEnvironment.__init__` only ever captured `stderr`,
+silently dropping `main.py`'s own rich-logged `stdout` diagnostics. Confirmed this
+is a real, recurring diagnostic-loss defect (this is the second time this session
+an ambiguous empty/unhelpful error message required manual reproduction to
+understand). Fixed forward (gymact commit, this cycle): the RuntimeError now
+includes both streams. Real regression test added (throwaway fake `main.py`
+script, real subprocess, no cluster needed): `10/10 passing`.
+
+**Also found and cleaned this cycle**: an orphaned `kubectl port-forward
+svc/mcp-server 9954:9954 -n sregym` process from an earlier crashed trial --
+real evidence that `materialize()` failing before `env` is constructed means the
+driver's `finally: env.teardown()` never triggers (real, not-yet-fixed resource-
+leak gap, named here for a future cycle rather than fixed this one given time).
+
+**Trial v3 launched with the stdout-capture fix live** (PID `65952`, ports
+9958/8004) -- in progress as of this note; the real cause of the fast
+`returncode=0` exit will be directly visible in its failure message this time
+if it recurs, rather than requiring another manual repro.
 
 (Grows as cycles attempt more problems.)
