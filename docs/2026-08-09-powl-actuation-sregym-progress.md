@@ -1102,3 +1102,75 @@ session's later cycles gave the driver, or (b) reviewing whether
 calls per run, added cycle 11) is worth exposing as an opt-out for
 callers who don't need the DISPUTED distinction, though no evidence yet
 suggests this is a real problem worth solving pre-emptively.
+
+### Cycle 14 (2026-08-10)
+
+**Key-rotation check**: real direct `curl` against the Groq API -> still
+`401`, `expired_api_key`. No orphaned processes found.
+`wrong_dns_policy_social_network` stays
+`ATTEMPTED:BLOCKED:EXPIRED_GROQ_API_KEY`.
+
+**Independently re-verified cycle 13's claims**: real re-run, 124 passed,
+zero-mock grep clean.
+
+**Major real, non-credential-dependent finding this cycle**: reviewed
+`runner.py`'s own core loop closely per cycle 13's recommendation --
+found no analogous fabrication-of-presence defect there (real negative
+evidence). Pivoted to checking whether the driver's hardcoded
+`namespace="social-network"` default was safe for problems beyond this
+session's sole live test problem. It was NOT: statically parsed (Python
+`ast`, no execution) the real `sregym/conductor/problems/registry.py`'s
+own `PROBLEM_REGISTRY` dict and found **101 of 123 real registered
+problem IDs deploy into a DIFFERENT real k8s namespace**
+(`hotel-reservation`, `astronomy-shop`, `train-ticket`,
+`blueprint-hotel-reservation`, or `fleetcast`) -- confirmed by directly
+reading each app's own `service/metadata/*.json` "Namespace" key, not
+guessed from naming convention (`fleet_cast` -> `"fleetcast"`, no dash,
+would have broken a naive substitution rule -- caught only by reading
+the real JSON). A live trial against any of those 101 problems would
+have silently scanned the wrong (or nonexistent) namespace, producing a
+false `no_anomaly_detected` verdict, undetected until now because this
+whole session's only live test problem
+(`wrong_dns_policy_social_network`) happened to match the hardcoded
+default.
+
+**Fix**: `PROBLEM_ID_NAMESPACE`, a real, 123-entry, source-derived map
+now in `gymact_diagnosis_driver.py`. `namespace` parameter changed from
+a hardcoded default to `Optional[str]`; when omitted, resolved from the
+table. An unlisted `problem_id` (including the real,
+dynamically-composed `multiple_failures` problem, which has no single
+static namespace) raises `ValueError` naming the gap explicitly, never
+silently falling back to a likely-wrong namespace.
+
+**Independently cross-verified** (not just trusted from the derivation
+script): a fresh, separate script re-parsed the real `registry.py` this
+session and diffed its 123 keys against the hardcoded table's 123 keys
+-- **zero missing, zero extra, exact match**.
+
+Real Chicago tests added: proving a `hotel-reservation` problem resolves
+correctly (via the real fake environment's own observed kubectl command
+text, not by re-deriving the mapping inline in the test) and that an
+unknown problem_id refuses rather than guessing.
+`.venv/bin/python -m pytest tests/reasoning/test_gymact_diagnosis_driver_chicago.py
+tests/case_library tests/powl tests/fabric/test_capability_gate_chicago.py`
+-> **126 passed** (was 124; 2 new tests). Zero-mock grep clean.
+Committed: `8e5633e`.
+
+**Status table**: `wrong_dns_policy_social_network` ->
+`ATTEMPTED:BLOCKED:EXPIRED_GROQ_API_KEY` (unchanged, re-confirmed this
+cycle). This cycle's fix widens the SAFE problem-ID surface for future
+live trials from 1 (the only one previously guaranteed correct) to all
+123 real registered problems, once the credential blocker clears.
+
+**Note for cycle 15**: this is the most significant real hardening found
+via static review since the driver's own systematic sweep went dry
+(cycle 13). If the Groq key is still not rotated, consider whether
+`_actuate_remediate`'s and `_observe`'s real kubectl reads should also
+verify the target namespace actually EXISTS before scanning it (a
+`kubectl get namespace <ns>` pre-check) -- today, a namespace resolved
+correctly by name could still be one that was never deployed for a given
+live cluster state, and the scanner would likely (though not certainly)
+still report a false `no_anomaly_detected` rather than a clear
+`BLOCKED:NAMESPACE_NOT_FOUND`. Not yet verified as a real gap -- named as
+a hypothesis for next cycle to check by source reading, not yet
+confirmed.
