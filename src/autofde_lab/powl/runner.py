@@ -49,6 +49,31 @@ wall-clock timeout -- see ``executor.py``'s module docstring and
 ``max_marking_states``). :func:`classify_pipeline_stall` surfaces
 ``executor.classify_stall()``'s result directly rather than adding a new
 timeout layer of its own.
+
+Decision: the runner stays structural-only; it does not gain a direct
+actuation path
+---------------------------------------------------------------------------
+Now that ``action_bindings`` is merged (``ocel/powl_replay.py``), this
+runner is free to bind real callables to Atom labels for every read-only or
+diagnostic pipeline step -- scan, phi-encode, dispatch, solve, case-library
+retrieve -- because none of those steps mutate a live cluster; they compute
+or look up, and their own modules already own whatever standing they carry.
+What this runner deliberately does NOT do is bind a cluster-mutating
+remediation action directly to an Atom and let structural replay invoke it
+as a side effect of marking advancement. Any real actuation step must be
+reached through a separate, explicitly authorized call the runner's own
+``action_bindings`` dict never performs itself -- e.g. a caller-held,
+independently admitted actuator such as a gymact-mediated
+``SregymEnvironment.actuate()``, invoked outside and after this runner's
+structural replay, never from inside an Atom's binding. This matches
+``CLAUDE.md``'s standing law verbatim: "It computes candidate plans. It does
+not actuate." Collapsing that seam here -- letting a POWL Atom's action
+payload double as a real actuator -- would hand structural marking
+advancement (a property of the *plan*) the authority that belongs only to a
+brokered, independently authorized actuation call (a property of the
+*world*), the same class of defect ``.claude/rules/absence-is-not-evidence.md``
+and ``.claude/rules/no-dual-bookkeeping.md`` name for admission and evidence:
+a convenient coupling standing in for a lawful one.
 """
 
 from __future__ import annotations

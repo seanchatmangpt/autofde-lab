@@ -40,19 +40,17 @@ scope below -- never `organizationalStanding` or `enterpriseStanding` per
   have bindings fired in the same replay -- there is no implicit or
   ambient actuation leak from "some binding exists" to "every Atom fires
   something". Also checked below, not merely asserted.
-- If the ``action_bindings`` parameter does not yet exist in this worktree
-  (the sibling branch has not merged here), the tests below fail import
-  with a named, honest reason and are marked `xfail` -- never faked green,
-  per ``.claude/rules/absence-is-not-evidence.md``: absence of the API is
-  not evidence the behaviour is wrong, and it must not be coerced into a
-  passing assertion either way.
+- ``action_bindings`` is now merged in this worktree (confirmed by a real
+  ``inspect.signature`` check on import, not an assumption), so all four
+  tests below run as real assertions -- none are skip- or xfail-gated.
 """
 
 from __future__ import annotations
 
+import inspect
 import sys
 
-import pytest
+from autofde_lab.ocel.powl_replay import replay_structural_fires as _rsf
 
 FORBIDDEN_MODULE_KEYS = (
     "SpiffWorkflow",
@@ -60,21 +58,11 @@ FORBIDDEN_MODULE_KEYS = (
     "autofde_lab.ofmf.ofmf_keystone",
 )
 
-try:
-    import inspect
-
-    from autofde_lab.ocel.powl_replay import replay_structural_fires as _rsf
-
-    _ACTION_BINDINGS_PARAM = "action_bindings" in inspect.signature(_rsf).parameters
-except Exception:  # pragma: no cover - import-time failure is itself a signal
-    _ACTION_BINDINGS_PARAM = False
-
-_NO_ACTION_BINDINGS_REASON = (
-    "replay_structural_fires(..., action_bindings=...) is not present in this "
-    "worktree yet -- the sibling branch adding it (parallel task, not this "
-    "one's to build) has not merged here. This is a named BLOCKED condition "
-    "per .claude/rules/standing-law.md, not a passing or failing claim about "
-    "the feature's correctness."
+assert "action_bindings" in inspect.signature(_rsf).parameters, (
+    "replay_structural_fires(..., action_bindings=...) is missing from this "
+    "worktree -- the merge this test file depends on did not land; failing "
+    "loudly at import per .claude/rules/absence-is-not-evidence.md rather "
+    "than silently skipping."
 )
 
 
@@ -154,7 +142,6 @@ def test_replay_structural_fires_produces_ordered_ocel_trace() -> None:
     assert details == plan_lines
 
 
-@pytest.mark.skipif(not _ACTION_BINDINGS_PARAM, reason=_NO_ACTION_BINDINGS_REASON)
 def test_replay_without_action_bindings_is_zero_actuation_by_default() -> None:
     """Calling ``replay_structural_fires`` with no ``action_bindings`` (the
     default) must produce identical behaviour to before the extension point
@@ -177,8 +164,8 @@ def test_replay_without_action_bindings_is_zero_actuation_by_default() -> None:
 
     invocations: list[str] = []
 
-    def _would_actuate(label: str) -> None:  # pragma: no cover - must never run
-        invocations.append(label)
+    def _would_actuate(atom_attrs: dict) -> None:  # pragma: no cover - must never run
+        invocations.append(atom_attrs["label"])
 
     plan_lines = [
         "(unstack a b)",
@@ -220,7 +207,6 @@ def test_replay_without_action_bindings_is_zero_actuation_by_default() -> None:
     assert leaked == [], f"default-path replay leaked forbidden module(s): {leaked}"
 
 
-@pytest.mark.skipif(not _ACTION_BINDINGS_PARAM, reason=_NO_ACTION_BINDINGS_REASON)
 def test_replay_action_bindings_are_scoped_to_exact_atom_label_no_leak() -> None:
     """When ``action_bindings`` IS supplied, only Atoms whose label has an
     EXPLICIT matching binding invoke anything. An Atom with no matching
@@ -252,8 +238,12 @@ def test_replay_action_bindings_are_scoped_to_exact_atom_label_no_leak() -> None
 
     actuated: list[str] = []
 
-    def _record_call(label: str) -> None:
-        actuated.append(label)
+    def _record_call(atom_attrs: dict) -> None:
+        # replay_structural_fires invokes bindings with the fired Atom's real
+        # attributes dict ({"label": ..., "action": ..., "bindings": ...}),
+        # not a bare label string -- confirmed from replay_structural_fires's
+        # own docstring and implementation.
+        actuated.append(atom_attrs["label"])
 
     # Only ONE of the four Atoms in this plan gets an explicit binding.
     action_bindings = {bound_label: _record_call}
