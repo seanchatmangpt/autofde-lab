@@ -154,6 +154,7 @@ async def run_gymact_mediated_diagnosis(
     judge_model_id: str = "groq/openai/gpt-oss-20b",
     judge_api_base: str = "https://api.groq.com/openai/v1",
     wall_clock_timeout_s: int = 900,
+    startup_timeout_seconds: float = 900.0,
     namespace: str = "social-network",
     manifest_path: Path | str = DEFAULT_MANIFEST_PATH,
     _environment_factory: Callable[[], Any] | None = None,
@@ -164,6 +165,14 @@ async def run_gymact_mediated_diagnosis(
     each to a real, capability-gated closure over that one environment, and
     call ``run_pipeline`` exactly once -- the runner's own structural replay
     is what triggers each real call, in tree order, not this function.
+
+    ``startup_timeout_seconds`` defaults to 900s, not gymact's own 120s
+    default: a real trial this session hit
+    ``RuntimeError: sregym conductor API ... did not become ready within
+    120.0s`` -- confirmed live, the full observability+app deploy this
+    problem set requires genuinely takes 5-15+ real minutes (measured this
+    session, multiple live attempts), so the 120s default was never
+    sufficient for this workload, not a transient flake.
 
     ``_environment_factory``/``_capabilities`` are test-only injection
     points (leading underscore -- not part of the public contract): when
@@ -192,6 +201,7 @@ async def run_gymact_mediated_diagnosis(
                 "judge_model_id": judge_model_id,
                 "judge_api_base": judge_api_base,
                 "wall_clock_timeout_s": wall_clock_timeout_s,
+                "startup_timeout_seconds": startup_timeout_seconds,
                 "mcp_server_port": mcp_server_port,
                 "api_port": api_port,
             },
