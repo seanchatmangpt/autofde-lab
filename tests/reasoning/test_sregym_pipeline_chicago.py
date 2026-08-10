@@ -203,7 +203,15 @@ def test_case_library_miss_with_empty_store_also_routes_to_reasoning() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_retain_persists_only_on_confirmed_success() -> None:
+def test_retain_persists_only_on_confirmed_or_disputed_verdict() -> None:
+    """Exercises all three real :class:`OutcomeVerdict` retention paths
+    against a real :class:`CaseLibraryStore` (SQLite ``:memory:``), using
+    the real :func:`evaluate_outcome` decision function to produce each
+    verdict rather than constructing ``OutcomeVerdict`` members by hand --
+    so this test proves the pipeline's ``retain`` wiring, not just its own
+    understanding of the enum.
+    """
+    from autofde_lab.case_library.outcome_predicate import OracleVerdict, evaluate_outcome
     from autofde_lab.reasoning.sregym_pipeline import PipelineResult
 
     store = CaseLibraryStore(":memory:")
@@ -215,43 +223,88 @@ def test_retain_persists_only_on_confirmed_success() -> None:
         taxonomy_category="inject_scale_pods_to_zero",
         confidence=0.7,
     )
+    mitigation = ("kubectl -n payments scale deployment payments-api --replicas=3",)
 
+    # UNCONFIRMED: structural re-check itself failed -- refuse to retain.
+    unconfirmed_verdict, unconfirmed_via = evaluate_outcome(
+        structural_passed=False, oracle=OracleVerdict(present=False)
+    )
     refused = pipeline.retain(
         _ANOMALY,
         result,
-        mitigation_commands=("kubectl -n payments scale deployment payments-api --replicas=3",),
-        outcome_confirmed=False,
+        mitigation_commands=mitigation,
+        verdict=unconfirmed_verdict,
+        confirmed_via=unconfirmed_via,
     )
     assert refused is None
     assert len(store) == 0
 
-    unknown_outcome_refused = pipeline.retain(
+    # DISPUTED: structural re-check passed, but a present oracle disagreed --
+    # retained as its own tagged artifact, never discarded and never
+    # coerced into a boolean outcome.
+    disputed_verdict, disputed_via = evaluate_outcome(
+        structural_passed=True, oracle=OracleVerdict(present=True, passed=False)
+    )
+    disputed = pipeline.retain(
         _ANOMALY,
         result,
-        mitigation_commands=("kubectl -n payments scale deployment payments-api --replicas=3",),
-        outcome_confirmed=None,  # type: ignore[arg-type]
+        mitigation_commands=mitigation,
+        verdict=disputed_verdict,
+        confirmed_via=disputed_via,
+        case_id="trial-disputed-001",
     )
-    assert unknown_outcome_refused is None
-    assert len(store) == 0
+    assert disputed is not None
+    assert disputed.outcome is None
+    assert disputed.confirmed_via == "disputed"
+    assert len(store) == 1
+    reloaded_disputed = store.get("trial-disputed-001")
+    assert reloaded_disputed is not None
+    assert reloaded_disputed.outcome is None
+    assert reloaded_disputed.confirmed_via == "disputed"
 
+    # CONFIRMED via structural check alone (no oracle consulted).
+    confirmed_verdict, confirmed_via = evaluate_outcome(
+        structural_passed=True, oracle=OracleVerdict(present=False)
+    )
+    assert confirmed_via == "structural_only"
     retained = pipeline.retain(
         _ANOMALY,
         result,
-        mitigation_commands=("kubectl -n payments scale deployment payments-api --replicas=3",),
-        outcome_confirmed=True,
+        mitigation_commands=mitigation,
+        verdict=confirmed_verdict,
+        confirmed_via=confirmed_via,
         case_id="trial-retained-001",
     )
     assert retained is not None
     assert retained.case_id == "trial-retained-001"
     assert retained.outcome is True
-    assert len(store) == 1
+    assert retained.confirmed_via == "structural_only"
+    assert len(store) == 2
 
     reloaded = store.get("trial-retained-001")
     assert reloaded is not None
     assert reloaded.diagnosis == "Deployment payments-api scaled to zero."
-    assert reloaded.mitigation_commands == (
-        "kubectl -n payments scale deployment payments-api --replicas=3",
+    assert reloaded.mitigation_commands == mitigation
+    assert reloaded.outcome is True
+    assert reloaded.confirmed_via == "structural_only"
+
+    # CONFIRMED via structural check AND oracle agreement.
+    confirmed_oracle_verdict, confirmed_oracle_via = evaluate_outcome(
+        structural_passed=True, oracle=OracleVerdict(present=True, passed=True)
     )
+    assert confirmed_oracle_via == "structural_and_oracle"
+    retained_with_oracle = pipeline.retain(
+        _ANOMALY,
+        result,
+        mitigation_commands=mitigation,
+        verdict=confirmed_oracle_verdict,
+        confirmed_via=confirmed_oracle_via,
+        case_id="trial-retained-002",
+    )
+    assert retained_with_oracle is not None
+    assert retained_with_oracle.outcome is True
+    assert retained_with_oracle.confirmed_via == "structural_and_oracle"
+    assert len(store) == 3
 
 
 # ---------------------------------------------------------------------------

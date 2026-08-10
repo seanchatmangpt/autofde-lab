@@ -96,6 +96,7 @@ from autofde_lab.case_library import (
     ScoredCase,
     retrieve_best_match,
 )
+from autofde_lab.case_library.outcome_predicate import ConfirmedVia, OutcomeVerdict
 
 __all__ = [
     "Anomaly",
@@ -504,26 +505,53 @@ class SregymDiagnosisPipeline(dspy.Module):
         result: PipelineResult,
         *,
         mitigation_commands: tuple[str, ...],
-        outcome_confirmed: bool,
+        verdict: OutcomeVerdict,
+        confirmed_via: ConfirmedVia = "n/a",
         case_id: str | None = None,
     ) -> Case | None:
-        """Retain a case on a CONFIRMED successful outcome.
+        """Retain a case per the real three-way
+        :class:`~autofde_lab.case_library.outcome_predicate.OutcomeVerdict`.
 
-        Returns ``None`` -- never persists a fabricated success -- when
-        ``outcome_confirmed`` is not ``True``, per
-        ``.claude/rules/absence-is-not-evidence.md``. See the module
-        docstring's "case-library abstraction note" for why this stores a
-        concrete :class:`Case` rather than an abstracted/templated one.
+        ``verdict`` and ``confirmed_via`` are the exact pair
+        :func:`autofde_lab.case_library.outcome_predicate.evaluate_outcome`
+        returns -- callers run the real structural re-check (and oracle, if
+        one is available) and pass its verdict through unmodified, rather
+        than this method re-deriving or hardcoding an outcome.
+
+        - ``UNCONFIRMED`` refuses to retain (returns ``None``, matching the
+          prior ``outcome_confirmed=False``/``None`` refusal shape) -- the
+          structural re-check itself failed, so there is nothing to
+          persist, per ``.claude/rules/absence-is-not-evidence.md``.
+        - ``CONFIRMED`` retains with ``outcome=True`` and ``confirmed_via``
+          set to the real provenance (``"structural_only"`` or
+          ``"structural_and_oracle"``).
+        - ``DISPUTED`` is retained too -- never discarded -- as its own
+          tagged evidence artifact: ``outcome=None`` (the disagreement is
+          not coerced into a boolean) and ``confirmed_via="disputed"``,
+          so a disputed case remains distinguishable in the store from both
+          a confirmed success and a case with no verdict provenance at all
+          (``confirmed_via="n/a"``).
+
+        See the module docstring's "case-library abstraction note" for why
+        this stores a concrete :class:`Case` rather than an
+        abstracted/templated one.
         """
-        if outcome_confirmed is not True:
+        if verdict is OutcomeVerdict.UNCONFIRMED:
             return None
         signature = symptom_signature_from_anomaly(anomaly)
+        if verdict is OutcomeVerdict.DISPUTED:
+            case_outcome: bool | None = None
+            case_confirmed_via = "disputed"
+        else:
+            case_outcome = True
+            case_confirmed_via = confirmed_via
         case = Case(
             case_id=case_id or f"trial-{uuid4().hex}",
             signature=signature,
             diagnosis=result.diagnosis,
             mitigation_commands=mitigation_commands,
-            outcome=True,
+            outcome=case_outcome,
+            confirmed_via=case_confirmed_via,
         )
         self._case_store.put(case)
         return case

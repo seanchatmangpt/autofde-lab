@@ -89,6 +89,15 @@ class Case:
         tried and failed, ``None`` if the outcome is genuinely unknown (never
         coerce ``None`` into ``True``/``False`` -- see
         ``.claude/rules/absence-is-not-evidence.md``).
+    :param confirmed_via: How ``outcome`` was reached, mirroring
+        :mod:`autofde_lab.case_library.outcome_predicate`'s
+        ``OutcomeVerdict``/``ConfirmedVia`` vocabulary: ``"structural_only"``
+        or ``"structural_and_oracle"`` for a ``CONFIRMED`` (``outcome=True``)
+        case, ``"disputed"`` for a ``DISPUTED`` case (structural re-check
+        passed but a present oracle disagreed -- retained with
+        ``outcome=None`` rather than coerced into ``True``/``False``, per
+        ``.claude/rules/absence-is-not-evidence.md``), or ``"n/a"`` for a
+        case that predates this field / carries no verdict provenance.
     """
 
     case_id: str
@@ -96,3 +105,4 @@ class Case:
     diagnosis: str
     mitigation_commands: tuple[str, ...]
     outcome: bool | None = None
+    confirmed_via: str = "n/a"
