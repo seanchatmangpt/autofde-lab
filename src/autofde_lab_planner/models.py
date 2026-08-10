@@ -195,6 +195,31 @@ class WorkloadMisconfigFault:
 
 
 # -----------------------------------------------------------------------------
+# Network/DNS Faults: DNS Policy Override & hostPort Conflict
+# -----------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class DnsPolicyOverrideFault:
+    deployment_name: str
+    namespace: str
+    observed_dns_policy: str
+    observed_nameservers: tuple[str, ...] = ()
+    fault_kind: Literal["dns_policy_override"] = "dns_policy_override"
+
+
+@dataclass(frozen=True)
+class HostPortConflictFault:
+    deployment_name: str
+    namespace: str
+    container_name: str
+    container_port: int
+    conflicting_host_port: int
+    container_index: int = 0
+    port_index: int = 0
+    fault_kind: Literal["host_port_conflict"] = "host_port_conflict"
+
+
+# -----------------------------------------------------------------------------
 # Aggregate Engine Diagnosis & Mitigation Models
 # -----------------------------------------------------------------------------
 
@@ -210,6 +235,8 @@ class CategoryBDiagnosis:
     scheduling_deadlocks: tuple[SchedulingDeadlockFault, ...] = ()
     coredns_faults: tuple[CoreDNSFault, ...] = ()
     workload_misconfigs: tuple[WorkloadMisconfigFault, ...] = ()
+    dns_policy_overrides: tuple[DnsPolicyOverrideFault, ...] = ()
+    host_port_conflicts: tuple[HostPortConflictFault, ...] = ()
     diagnosis_text: str = ""
 
 
