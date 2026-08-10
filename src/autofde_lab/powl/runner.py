@@ -92,6 +92,54 @@ expose ground truth, and that ``SregymEnvironment.verify()`` is not a
 ``Capability`` at all (a plain coroutine never wired into ``actuate()``'s
 dispatch table), so it is structurally unreachable through this surface
 regardless of the manifest's contents.
+
+Revised decision: capability-gated actuation IS now allowed from inside a
+binding, narrowly
+---------------------------------------------------------------------------
+The blanket "this runner stays structural-only; it does not gain a direct
+actuation path" decision above is superseded by a narrower, principled rule
+for exactly five new labels (:data:`ALLOWED_ACTUATION_BINDING_LABELS`,
+disjoint from :data:`ALLOWED_ACTION_BINDING_LABELS`): a mutating actuation
+step MAY be bound to one of those five labels, but *only* as a
+:class:`GatedCapabilityBinding` -- never a bare :class:`ActionBinding`
+callable. Constructing a ``GatedCapabilityBinding`` itself calls
+``CapabilityGate.check(capability_name)`` (see its docstring), so an
+unauthorized capability name can never even be wrapped, let alone bound;
+``run_pipeline`` additionally refuses, structurally
+(``isinstance(binding, GatedCapabilityBinding)``, never a docstring
+convention), any of the five actuation-class labels bound to anything else,
+before any Atom fires.
+
+Why this does not violate ``.claude/rules/ecosystem-boundary.md``'s "this
+repo... does not attach actuation semantics" law: that law binds this
+repo's *own* claims about the portfolio's actuation, broker, and receipt
+surfaces (``mfw``'s admission/broker, ``bcinr``'s scheduler,
+``ggen``/``ggen-legacy``'s manufacture-and-receipt chain) -- it does not
+forbid this repo from *calling into* a sibling project's own,
+already-authorized, already-gated capability surface, the same way any
+caller of a properly bounded external API is expected to. `gymact` is not
+part of this repo's actuation/broker/receipt chain at all; it is the real,
+external environment this diagnosing pipeline targets, and
+``SREGYM_CAPABILITIES`` is gymact's own intended external-caller surface
+(``gymact.gyms.sregym``'s own module, not something this repo reverse
+engineers). Routing exclusively through that real, gated, bounded surface
+-- never gymact internals, never ``verify()``, never anything outside the
+TOML allowlist -- is invoking gymact's *own* authorization the way gymact
+itself intends external callers to, not autofde-lab manufacturing or
+claiming ecosystem-wide actuation authority of its own. See
+``.claude/rules/actuation-boundary.md`` for the parallel: a bounded,
+catalog-described, typed-refusal-capable external call is the lawful shape
+of "this repo may call out," which is what this widened rule uses --
+``CapabilityGate`` is exactly that catalog/refusal mechanism, applied here
+at bind-construction time rather than at call time only.
+
+This keeps the original guarantee for the original nine labels completely
+unchanged: they may still only ever take a bare :class:`ActionBinding`
+callable (never a ``GatedCapabilityBinding``, never any wider capability),
+so the "structural-only, no actuation" property for scan/phi-encode/
+dispatch/solve/case-library/record remains true by the same unmodified
+refusal code path it always was, not merely by convention now that a
+second, disjoint set of labels exists alongside it.
 """
 
 from __future__ import annotations
@@ -99,6 +147,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from autofde_lab.fabric.gymact_capability_gate import CapabilityGate
 from autofde_lab.fabric.powl import parse_powl_turtle, project_plan_to_powl
 from autofde_lab.ocel.log import OcelLog
 from autofde_lab.ocel.mcp_instrumentation import OcelSessionRecorder
@@ -138,6 +187,13 @@ __all__ = [
     "classify_pipeline_stall",
     "run_pipeline",
     "ALLOWED_ACTION_BINDING_LABELS",
+    "ALLOWED_ACTUATION_BINDING_LABELS",
+    "GYMACT_OBSERVE_LABEL",
+    "GYMACT_SUBMIT_DIAGNOSIS_LABEL",
+    "GYMACT_ACTUATE_REMEDIATE_LABEL",
+    "GYMACT_SUBMIT_MITIGATION_LABEL",
+    "GYMACT_VERIFY_LABEL",
+    "GatedCapabilityBinding",
     "ActuationBindingRefused",
 ]
 
@@ -181,17 +237,79 @@ ALLOWED_ACTION_BINDING_LABELS: frozenset[str] = frozenset(
     }
 )
 
+GYMACT_OBSERVE_LABEL = "gymact_observe"
+GYMACT_SUBMIT_DIAGNOSIS_LABEL = "gymact_submit_diagnosis"
+GYMACT_ACTUATE_REMEDIATE_LABEL = "gymact_actuate_remediate"
+GYMACT_SUBMIT_MITIGATION_LABEL = "gymact_submit_mitigation"
+GYMACT_VERIFY_LABEL = "gymact_verify"
+
+#: A second, disjoint set of labels -- never merged into
+#: `ALLOWED_ACTION_BINDING_LABELS` -- for which `run_pipeline` allows a real
+#: actuation-capable binding, but *only* as a `GatedCapabilityBinding` whose
+#: construction already proved the wrapped capability name was admitted by a
+#: real `CapabilityGate`. See this module's docstring ("Revised decision")
+#: for why this narrower rule does not reopen the original structural-only
+#: guarantee for `ALLOWED_ACTION_BINDING_LABELS`.
+ALLOWED_ACTUATION_BINDING_LABELS: frozenset[str] = frozenset(
+    {
+        GYMACT_OBSERVE_LABEL,
+        GYMACT_SUBMIT_DIAGNOSIS_LABEL,
+        GYMACT_ACTUATE_REMEDIATE_LABEL,
+        GYMACT_SUBMIT_MITIGATION_LABEL,
+        GYMACT_VERIFY_LABEL,
+    }
+)
+
 
 class ActuationBindingRefused(ValueError):
     """Raised when `run_pipeline` is given an `action_bindings` key outside
-    `ALLOWED_ACTION_BINDING_LABELS` -- i.e. a caller trying to wire a
-    cluster-mutating actuator to fire as a side effect of structural marking
-    advancement, which this module's docstring states it deliberately never
-    does. Also raised when `action_bindings` is incomplete relative to
-    `ALLOWED_ACTION_BINDING_LABELS` and the caller did not explicitly opt
-    into a partial pipeline via `allow_partial_bindings` -- see
-    `run_pipeline`'s docstring for why an unbound label silently firing as a
-    no-op is refused by default rather than treated as a legitimate gap."""
+    `ALLOWED_ACTION_BINDING_LABELS` / `ALLOWED_ACTUATION_BINDING_LABELS` --
+    i.e. a caller trying to wire a cluster-mutating actuator to fire as a
+    side effect of structural marking advancement, which this module's
+    docstring states it deliberately never does for the original nine
+    read-only/diagnostic labels. Also raised when: (a) `action_bindings` is
+    incomplete relative to `ALLOWED_ACTION_BINDING_LABELS` and the caller
+    did not explicitly opt into a partial pipeline via
+    `allow_partial_bindings` -- see `run_pipeline`'s docstring for why an
+    unbound label silently firing as a no-op is refused by default rather
+    than treated as a legitimate gap; or (b) an actuation-class label
+    (`ALLOWED_ACTUATION_BINDING_LABELS`) is bound to anything other than a
+    real `GatedCapabilityBinding` -- a bare, ungated callable for one of
+    those five labels is refused before any Atom fires, never invoked; or
+    (c) one of the original nine read-only/diagnostic labels is bound to a
+    `GatedCapabilityBinding` -- those labels may only ever take a bare
+    `ActionBinding`, keeping their structural-only guarantee unconditional."""
+
+
+@dataclass(frozen=True, slots=True)
+class GatedCapabilityBinding:
+    """The only construction path an actuation-class Atom label
+    (`ALLOWED_ACTUATION_BINDING_LABELS`) may bind to.
+
+    Wraps a raw `ActionBinding` callable together with the real gymact
+    capability name it exercises, and eagerly proves that name was admitted
+    by a real `CapabilityGate` at *wrap time* -- not merely by convention,
+    and not deferred until first invocation. `__post_init__` calls
+    `gate.check(capability_name)`, which raises the real, named
+    `CapabilityRefused` (from `autofde_lab.fabric.gymact_capability_gate`)
+    immediately if `capability_name` is not in the gate's loaded TOML
+    manifest -- so an unauthorized capability can never even be
+    constructed as a binding, let alone fired.
+
+    Calling the resulting object is a plain pass-through to the wrapped
+    callable -- this class adds no new invocation semantics, only the
+    construction-time capability proof described above.
+    """
+
+    capability_name: str
+    callable_: ActionBinding
+    gate: CapabilityGate
+
+    def __post_init__(self) -> None:
+        self.gate.check(self.capability_name)
+
+    def __call__(self, atom_attrs: dict[str, Any]) -> Any:
+        return self.callable_(atom_attrs)
 
 
 class BridgeUnavailable(ValueError):
@@ -247,15 +365,43 @@ def build_pipeline_powl_node(turtle_text: str | None = None) -> PowlNode:
 
     record_atom = Atom(label=RECORD_LABEL)
 
-    top_children: tuple[PowlNode, ...] = linear_atoms + (choice_graph, record_atom)
+    # A new, terminal, linear actuation branch, strictly downstream of
+    # record_atom -- never interleaved into the case_hit/case_miss
+    # ChoiceGraph above. See this module's docstring ("Revised decision")
+    # for why the two must stay disjoint: case_hit/case_miss selects *how a
+    # solution was found* (orthogonal to *whether the result is later
+    # actuated*), so collapsing them would let structural choice-graph
+    # traversal double as an actuation gate. A caller who never binds any of
+    # these five `gymact_*` labels sees them fire as pure structural no-ops,
+    # exactly like any other unbound label -- adding this branch is safe
+    # even before any binding exists.
+    actuation_atoms: tuple[PowlNode, ...] = (
+        Atom(label=GYMACT_OBSERVE_LABEL),
+        Atom(label=GYMACT_SUBMIT_DIAGNOSIS_LABEL),
+        Atom(label=GYMACT_ACTUATE_REMEDIATE_LABEL),
+        Atom(label=GYMACT_SUBMIT_MITIGATION_LABEL),
+        Atom(label=GYMACT_VERIFY_LABEL),
+    )
+
+    top_children: tuple[PowlNode, ...] = (
+        linear_atoms + (choice_graph, record_atom) + actuation_atoms
+    )
     choice_index = n_linear
     record_index = n_linear + 1
+    actuation_start_index = n_linear + 2
 
     # Remap the turtle-sourced order relation (already 0..n_linear-1) as-is,
-    # then chain: last linear step -> choice graph -> record atom.
+    # then chain: last linear step -> choice graph -> record atom -> the new
+    # linear actuation chain (observe -> submit_diagnosis ->
+    # actuate_remediate -> submit_mitigation -> verify).
     order_edges: set[OrderEdge] = {OrderEdge(edge.src, edge.dst) for edge in linear.order}
     order_edges.add(OrderEdge(NodeId(n_linear - 1), NodeId(choice_index)))
     order_edges.add(OrderEdge(NodeId(choice_index), NodeId(record_index)))
+    order_edges.add(OrderEdge(NodeId(record_index), NodeId(actuation_start_index)))
+    for offset in range(len(actuation_atoms) - 1):
+        order_edges.add(
+            OrderEdge(NodeId(actuation_start_index + offset), NodeId(actuation_start_index + offset + 1))
+        )
 
     return PartialOrder(children=top_children, order=frozenset(order_edges))
 
@@ -342,15 +488,50 @@ def run_pipeline(
     what it did, unlike a partial dict that could be mistaken for complete.
     """
     if action_bindings:
-        refused = sorted(set(action_bindings) - ALLOWED_ACTION_BINDING_LABELS)
+        known_labels = ALLOWED_ACTION_BINDING_LABELS | ALLOWED_ACTUATION_BINDING_LABELS
+        refused = sorted(set(action_bindings) - known_labels)
         if refused:
             raise ActuationBindingRefused(
                 f"run_pipeline refuses action_bindings for label(s) {refused!r} -- "
-                f"only {sorted(ALLOWED_ACTION_BINDING_LABELS)!r} (read-only/diagnostic "
-                f"pipeline steps) may be bound. This runner stays structural-only per "
-                f"its own module docstring; any real actuation step must be reached "
-                f"through a separate, explicitly authorized call outside this replay."
+                f"only {sorted(known_labels)!r} (read-only/diagnostic pipeline steps, "
+                f"plus the narrow, capability-gated actuation-class labels in "
+                f"ALLOWED_ACTUATION_BINDING_LABELS) may be bound. Any other real "
+                f"actuation step must be reached through a separate, explicitly "
+                f"authorized call outside this replay."
             )
+
+        ungated = sorted(
+            label
+            for label in action_bindings
+            if label in ALLOWED_ACTUATION_BINDING_LABELS
+            and not isinstance(action_bindings[label], GatedCapabilityBinding)
+        )
+        if ungated:
+            raise ActuationBindingRefused(
+                f"REFUSED:UNGATED_ACTUATION_BINDING label(s)={ungated!r} -- an "
+                f"actuation-class label may only be bound to a real "
+                f"GatedCapabilityBinding (whose construction already proved the "
+                f"wrapped capability name was admitted by a real CapabilityGate), "
+                f"never a bare ActionBinding callable. Wrap the callable in "
+                f"GatedCapabilityBinding(capability_name=..., callable_=..., gate=...) "
+                f"before binding it to {ungated!r}."
+            )
+
+        misgated = sorted(
+            label
+            for label in action_bindings
+            if label in ALLOWED_ACTION_BINDING_LABELS
+            and isinstance(action_bindings[label], GatedCapabilityBinding)
+        )
+        if misgated:
+            raise ActuationBindingRefused(
+                f"REFUSED:ACTUATION_BINDING_ON_READONLY_LABEL label(s)={misgated!r} -- "
+                f"the original read-only/diagnostic pipeline labels may only ever "
+                f"take a bare ActionBinding callable, never a GatedCapabilityBinding "
+                f"(or any other capability-gated actuation wrapper). Their "
+                f"structural-only guarantee stays unconditional."
+            )
+
         if not allow_partial_bindings:
             missing = sorted(ALLOWED_ACTION_BINDING_LABELS - set(action_bindings))
             if missing:

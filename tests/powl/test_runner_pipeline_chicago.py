@@ -23,15 +23,29 @@ No `unittest.mock` / `Mock` / `patch` / `monkeypatch` anywhere in this file.
 
 from __future__ import annotations
 
+import pytest
+
 from autofde_lab.ocel.powl_replay import replay_structural_fires
 from autofde_lab.powl.algebra import Atom, ChoiceGraph, ChoiceGraphEdge, NodeId, PartialOrder, Silent
 from autofde_lab.powl.bounds import ExecutionBound
 from autofde_lab.powl.executor import INITIAL_MARKING, DeadlockKind, classify_stall, enabled, fire
+from autofde_lab.fabric.gymact_capability_gate import (
+    DEFAULT_MANIFEST_PATH,
+    CapabilityGate,
+    CapabilityRefused,
+)
 from autofde_lab.powl.runner import (
     ActuationBindingRefused,
     ALLOWED_ACTION_BINDING_LABELS,
+    ALLOWED_ACTUATION_BINDING_LABELS,
     CASE_HIT_LABEL,
     CASE_RETRIEVE_LABEL,
+    GYMACT_ACTUATE_REMEDIATE_LABEL,
+    GYMACT_OBSERVE_LABEL,
+    GYMACT_SUBMIT_DIAGNOSIS_LABEL,
+    GYMACT_SUBMIT_MITIGATION_LABEL,
+    GYMACT_VERIFY_LABEL,
+    GatedCapabilityBinding,
     RECORD_LABEL,
     build_pipeline_powl_node,
     build_pipeline_turtle,
@@ -73,6 +87,11 @@ def test_pipeline_node_grafts_real_choicegraph_onto_turtle_sourced_atoms():
         "solve",
         "ChoiceGraph",
         RECORD_LABEL,
+        GYMACT_OBSERVE_LABEL,
+        GYMACT_SUBMIT_DIAGNOSIS_LABEL,
+        GYMACT_ACTUATE_REMEDIATE_LABEL,
+        GYMACT_SUBMIT_MITIGATION_LABEL,
+        GYMACT_VERIFY_LABEL,
     ]
     choice = node.children[4]
     entry_labels = {c.label for c in choice.children if isinstance(c, Atom)}
@@ -111,9 +130,10 @@ def test_replay_structural_fires_invokes_real_action_bindings_one_event_per_fire
     # 6 leaves total: scan, phi_encode, dispatch_solve, solve, then the
     # choice graph's real traversal (retrieve -> case_hit -> retain, per
     # replay_structural_fires's own lexicographically-smallest-path policy),
-    # then the final record atom = 8 real structural fires.
-    assert len(log.events) == 8
-    assert [e.activity for e in log.events].count("powl_structural_fire") == 8
+    # then the record atom, then the 5-atom terminal actuation chain
+    # (unbound here, so they fire as structural no-ops) = 13 real fires.
+    assert len(log.events) == 13
+    assert [e.activity for e in log.events].count("powl_structural_fire") == 13
 
     # Exactly the 3 bound labels were really invoked, once each.
     assert [label for label, _ in invocations] == ["scan", "cbr_retrieve", "case_hit"]
@@ -257,6 +277,121 @@ def test_run_pipeline_allows_incomplete_action_bindings_when_opted_in():
     for event in other_events:
         attrs = {a.key: a.value.value for a in event.attributes}
         assert "action_result" not in attrs
+
+
+def test_run_pipeline_refuses_bare_callable_for_actuation_class_label():
+    """A bare, unwrapped `ActionBinding` callable bound to an
+    actuation-class label (`ALLOWED_ACTUATION_BINDING_LABELS`) is refused
+    before any Atom fires -- only a real `GatedCapabilityBinding` may be
+    bound there. The sentinel list staying empty is direct evidence nothing
+    was ever invoked."""
+    node = build_pipeline_powl_node()
+
+    invocations: list[str] = []
+
+    def _bare_observe(atom_attrs: dict) -> None:  # pragma: no cover - must never run
+        invocations.append(atom_attrs["label"])
+
+    try:
+        run_pipeline(
+            node,
+            session_id="test-refused-ungated-actuation-binding",
+            action_bindings={GYMACT_OBSERVE_LABEL: _bare_observe},
+            allow_partial_bindings=True,
+        )
+        raised = False
+    except ActuationBindingRefused as exc:
+        raised = True
+        assert "UNGATED_ACTUATION_BINDING" in str(exc)
+
+    assert raised, "run_pipeline must refuse a bare callable for an actuation-class label"
+    assert invocations == [], f"the refused binding must never be invoked -- got {invocations!r}"
+
+
+def test_gated_capability_binding_construction_refuses_unlisted_capability():
+    """Wrapping an UNLISTED capability name fails at `GatedCapabilityBinding`
+    *construction* time, with the real, named `CapabilityRefused` from the
+    real `CapabilityGate` -- never deferred to bind time or first call."""
+    gate = CapabilityGate.from_toml(DEFAULT_MANIFEST_PATH)
+
+    def _target(atom_attrs: dict) -> None:  # pragma: no cover - must never run
+        raise AssertionError("must never be constructed far enough to be callable")
+
+    with pytest.raises(CapabilityRefused) as excinfo:
+        GatedCapabilityBinding(
+            capability_name="get_injected_fault",  # not in the shipped manifest
+            callable_=_target,
+            gate=gate,
+        )
+    assert excinfo.value.binding == "get_injected_fault"
+
+
+def test_gated_capability_binding_wrapping_real_listed_capability_fires_through_real_replay():
+    """A `GatedCapabilityBinding` wrapping a REAL listed capability name
+    (`observe_cluster_state`) is accepted at construction, and -- fired
+    through the real (unmocked) `replay_structural_fires` driver against the
+    real `build_pipeline_powl_node()` tree -- actually invokes the wrapped
+    real target callable exactly once, with the fired Atom's real
+    attributes."""
+    gate = CapabilityGate.from_toml(DEFAULT_MANIFEST_PATH)
+
+    invocations: list[dict] = []
+
+    def _real_observe_target(atom_attrs: dict) -> dict:
+        invocations.append(atom_attrs)
+        return {"pods": 3}
+
+    binding = GatedCapabilityBinding(
+        capability_name="observe_cluster_state",
+        callable_=_real_observe_target,
+        gate=gate,
+    )
+
+    node = build_pipeline_powl_node()
+    log = replay_structural_fires(
+        node,
+        session_id="test-gated-binding-real-replay",
+        action_bindings={GYMACT_OBSERVE_LABEL: binding},
+    )
+
+    assert len(invocations) == 1
+    assert invocations[0]["label"] == GYMACT_OBSERVE_LABEL
+
+    observe_event = next(
+        e
+        for e in log.events
+        if e.activity == "powl_structural_fire"
+        and any(a.key == "detail" and a.value.value == GYMACT_OBSERVE_LABEL for a in e.attributes)
+    )
+    observe_attrs = {a.key: a.value.value for a in observe_event.attributes}
+    assert observe_attrs["action_result"] == "{'pods': 3}"
+
+
+def test_run_pipeline_refuses_gated_binding_on_readonly_label():
+    """A `GatedCapabilityBinding` bound to one of the original nine
+    read-only/diagnostic labels is refused -- their structural-only
+    guarantee stays unconditional, never opened up by the new wrapper type."""
+    gate = CapabilityGate.from_toml(DEFAULT_MANIFEST_PATH)
+    binding = GatedCapabilityBinding(
+        capability_name="observe_cluster_state",
+        callable_=lambda attrs: None,
+        gate=gate,
+    )
+    node = build_pipeline_powl_node()
+
+    try:
+        run_pipeline(
+            node,
+            session_id="test-refused-gated-binding-on-readonly-label",
+            action_bindings={"scan": binding},
+            allow_partial_bindings=True,
+        )
+        raised = False
+    except ActuationBindingRefused as exc:
+        raised = True
+        assert "ACTUATION_BINDING_ON_READONLY_LABEL" in str(exc)
+
+    assert raised, "run_pipeline must refuse a GatedCapabilityBinding on a read-only label"
 
 
 def _ce(a: int, b: int) -> ChoiceGraphEdge:
