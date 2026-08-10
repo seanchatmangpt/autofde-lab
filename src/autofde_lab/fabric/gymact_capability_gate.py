@@ -147,6 +147,22 @@ class CapabilityGate:
         `entry()` for callers that only need the refuse/allow decision."""
         self.entry(binding)
 
+    def stale_entries(self, real_names: frozenset[str] | set[str]) -> frozenset[str]:
+        """Return the subset of this manifest's allowed names that do not
+        appear in `real_names` -- the real capability-name set of the target
+        environment (e.g. `{c.binding for c in SREGYM_CAPABILITIES}`).
+
+        A non-empty result means the manifest lists at least one binding
+        that does not correspond to any real capability today: a stale or
+        typo'd entry that `from_toml` alone cannot detect, since a manifest
+        is self-consistent TOML regardless of whether its names mean
+        anything to the real environment. This method never mutates the
+        gate or the manifest; it is a pure cross-check callers can run at
+        startup (or in a test) to catch drift between the allowlist and
+        gymact's real capability set.
+        """
+        return self.allowed_names - frozenset(real_names)
+
     def guard_capability(self, capability: Any) -> Any:
         """Check a real `gymact.models.Capability`-shaped object's
         `.binding` attribute against the manifest and return it unchanged
