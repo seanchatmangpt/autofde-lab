@@ -1585,3 +1585,38 @@ of this entry -- real outcome to be recorded once it completes.
 
 **Status table**: `admission_webhook_outage_hotel_reservation` ->
 `ATTEMPTED:UNCONFIRMED (trial v28 in progress, monitored)`.
+
+**Cycle 20 continued -- trial v28 real complete outcome, and the plan pivots per direct user
+correction.** Trial v28 (`admission_webhook_outage_hotel_reservation`, different namespace and
+fault class than v27) reached the exact same real shape as v27: real anomaly found
+(`inject_scale_pods_to_zero` -- same label as v27, worth a note but not yet investigated
+further), both submissions got real HTTP 200s, and `gymact_verify` again observed `{}` after a
+real ~606s gap (event 20 -> 21 timestamp delta: 606.16s) -- **conclusively confirms the
+`/status`-during-evaluation outage is conductor-global, not specific to
+`inject_scale_pods_to_zero`**, since it now reproduces identically on a second, structurally
+different real problem.
+
+Real verdict: `ATTEMPTED:UNCONFIRMED` for
+`admission_webhook_outage_hotel_reservation` too (structural_recheck_anomaly_count=1,
+verify_observed={}).
+
+**User directly corrected the SOTA-preparation framing this cycle**: a parallel research
+effort (5 Explore agents, real evidence) found the `autofde_lab_dspy`/`autofde_lab_planner`
+SREGym-native-agent drivers are real but orphaned (recoverable from git history) -- but the
+user clarified this whole investigation targets a bypassed, sibling architecture. **The real,
+intended layering is POWL v2 runner -> gymact -> sregym** (exactly what this session's own
+`gymact_diagnosis_driver.py` + `run_pipeline` already do, via the "debug" no-op SREGym agent +
+external MCP tool calls) -- not the in-process SREGym agent path. A new plan was written and
+approved reflecting this: recovering the old driver is explicitly out of scope (and would not
+help regardless -- that exact driver already produced the real, honest pass-20 measurement of
+6.7% vs published 38.9-72.6%/57.3-78.5%, a different architecture's result).
+
+**Real next step per the approved plan**: wire the real, already-existing native-CSV oracle
+(`vendor/gyms/sregym/tests/results_preliminary/queries.py`'s `Diagnosis.success`/
+`Mitigation.success` reader) into `gymact_verify` as a second, genuinely independent
+verification path -- since two real trials now agree the conductor's own `/status` self-report
+is unreachable for the whole post-submission evaluation window, and widening the timeout
+further has already been tried and named insufficient.
+
+**Status table**: `admission_webhook_outage_hotel_reservation` -> `ATTEMPTED:UNCONFIRMED` (real,
+complete run, same conductor-/status-outage class as v27).
