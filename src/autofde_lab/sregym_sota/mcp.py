@@ -1,0 +1,90 @@
+from __future__ import annotations
+
+import os
+import uuid
+from dataclasses import dataclass
+from typing import Any
+
+from fastmcp import Client
+from fastmcp.client import SSETransport
+
+from .models import Capability
+
+
+@dataclass(frozen=True)
+class Surface:
+    name: str
+    url: str
+    required: bool = False
+
+
+class McpBroker:
+    """Discover and invoke only SREGym's public MCP capability surface."""
+
+    def __init__(self) -> None:
+        host = os.getenv("API_HOSTNAME", "localhost")
+        mcp_port = os.getenv("MCP_SERVER_PORT", "9954")
+        api_port = os.getenv("API_PORT", "8000")
+        self.session_id = uuid.uuid4().hex
+        self.surfaces = (
+            Surface("kubectl", f"http://{host}:{mcp_port}/kubectl/sse", True),
+            Surface("prometheus", f"http://{host}:{mcp_port}/prometheus/sse"),
+            Surface("jaeger", f"http://{host}:{mcp_port}/jaeger/sse"),
+            Surface("loki", f"http://{host}:{mcp_port}/loki/sse"),
+            Surface("submit", f"http://{host}:{api_port}/submit_mcp/sse", True),
+        )
+        self._available: dict[str, Surface] = {}
+
+    async def discover(self) -> list[Capability]:
+        capabilities: list[Capability] = []
+        failures: list[str] = []
+        for surface in self.surfaces:
+            try:
+                async with Client(self._transport(surface)) as client:
+                    tools = await client.list_tools()
+            except Exception as exc:
+                if surface.required:
+                    failures.append(f"{surface.name}: {type(exc).__name__}: {exc}")
+                continue
+            self._available[surface.name] = surface
+            for tool in tools:
+                name = getattr(tool, "name", None) or str(tool)
+                description = getattr(tool, "description", "") or ""
+                capabilities.append(
+                    Capability(
+                        id=f"mcp:{surface.name}:{name}",
+                        surface=surface.name,
+                        tool=name,
+                        description=str(description),
+                    )
+                )
+        if failures:
+            raise RuntimeError("required MCP discovery failed: " + "; ".join(failures))
+        return capabilities
+
+    async def call(self, surface_name: str, tool: str, arguments: dict[str, Any]) -> str:
+        surface = self._available.get(surface_name)
+        if surface is None:
+            raise RuntimeError(f"MCP surface not discovered: {surface_name}")
+        async with Client(self._transport(surface)) as client:
+            result = await client.call_tool(tool, arguments=arguments)
+        return self._textify(result)
+
+    def _transport(self, surface: Surface) -> SSETransport:
+        headers = {"sregym_ssid": self.session_id} if surface.name == "kubectl" else {}
+        return SSETransport(
+            url=surface.url,
+            headers=headers,
+            sse_read_timeout=float(os.getenv("SSE_READ_TIMEOUT", "3600")),
+        )
+
+    @staticmethod
+    def _textify(result: Any) -> str:
+        content = getattr(result, "content", result)
+        if not isinstance(content, (list, tuple)):
+            content = [content]
+        parts: list[str] = []
+        for item in content:
+            text = getattr(item, "text", None)
+            parts.append(str(text if text is not None else item))
+        return "\n".join(parts)
