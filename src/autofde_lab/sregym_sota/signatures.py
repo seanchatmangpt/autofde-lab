@@ -7,6 +7,7 @@ from .models import (
     EpistemicObligation,
     EvidenceLinkProposal,
     HypothesisProposal,
+    IncidentOrientation,
     MitigationProcessProposal,
     ObservationProcessProposal,
 )
@@ -14,23 +15,32 @@ from .models import (
 
 class OrientIncident(dspy.Signature):
     """Orient to the observed operational system without assuming a fault taxonomy.
-    Separate observed facts from assumptions and identify the smallest relevant boundary.
+
+    Separate *direct anomalies with an observed impact path* from merely loud or unusual
+    background signals. A warning/error/log line is not causal evidence by itself. Keep
+    multiple plausible system boundaries open when the facts do not yet localize impact,
+    and state the questions that would distinguish those boundaries.
     """
 
     goal: str = dspy.InputField()
     facts_json: str = dspy.InputField()
     capabilities_json: str = dspy.InputField()
-    focus: str = dspy.OutputField()
-    open_questions: list[str] = dspy.OutputField()
+    orientation: IncidentOrientation = dspy.OutputField()
 
 
 class GenerateHypotheses(dspy.Signature):
-    """Manufacture a diverse portfolio of falsifiable causal hypotheses.
-    Do not use a predefined benchmark/fault taxonomy. Prefer mechanisms over symptoms,
-    distinguish causes from victims, and give each hypothesis predictions and falsifiers.
+    """Manufacture a causally diverse portfolio of falsifiable hypotheses.
+
+    Do not use a predefined benchmark/fault taxonomy. Prefer mechanisms over symptoms and
+    distinguish causes from victims. Span materially different relationships/boundaries
+    rather than producing variants of one subsystem theory. `prior_hypotheses_json`
+    contains earlier or retired portfolios; do not repeat a retired mechanism unless new
+    admitted facts specifically change its predictions or falsifiers. Every hypothesis
+    must expose predictions and at least one observation that could falsify it.
     """
 
     goal: str = dspy.InputField()
+    orientation_json: str = dspy.InputField()
     facts_json: str = dspy.InputField()
     prior_hypotheses_json: str = dspy.InputField()
     max_hypotheses: int = dspy.InputField()
@@ -38,8 +48,14 @@ class GenerateHypotheses(dspy.Signature):
 
 
 class RelateEvidence(dspy.Signature):
-    """Propose relationships between admitted fact IDs and hypotheses.
-    Never assign epistemic standing. Cite only fact IDs present in the input.
+    """Propose mechanism-specific relationships between admitted fact IDs and hypotheses.
+
+    Never assign epistemic standing. Cite only fact IDs present in the input. Mark a fact
+    SUPPORTS only when it is a predicted consequence that is materially more specific to
+    that hypothesis than to its live competitors. Generic warnings, health symptoms,
+    resource existence, and facts equally compatible with multiple causes should be
+    IRRELEVANT and should create a discriminating obligation instead of falsely supporting
+    a cause. Mark REFUTES when an admitted fact contradicts a stated prediction/mechanism.
     """
 
     facts_json: str = dspy.InputField()
@@ -49,19 +65,28 @@ class RelateEvidence(dspy.Signature):
 
 
 class ConstructDiscriminationProcess(dspy.Signature):
-    """Construct a bounded POWL-compatible observation process that partitions the
-    surviving hypotheses. Each step MUST copy one exact `capability_id` from the supplied
-    capability catalog and shape `arguments` according to that capability's input_schema.
-    Never invent a surface, tool name, capability ID, argument name, or benchmark fault
-    category. Prefer observations whose possible outcomes falsify multiple competitors.
-    Do not actuate. If prior candidates were refused, obey those typed refusals rather
-    than repeating the same invalid process.
+    """Construct a bounded POWL-compatible process that maximally partitions survivors.
+
+    Each step MUST copy one exact `capability_id` from the supplied capability catalog and
+    shape `arguments` according to its input_schema. Never invent a surface, tool name,
+    capability ID, argument name, or benchmark fault category. `read_history_json` lists
+    already executed reads: do not repeat the same capability+arguments unless a temporal
+    repeat is genuinely required, in which case `repeat_reason` must explain what changed
+    or why comparison across time is discriminating.
+
+    Every step must name current hypothesis IDs in `discriminates` and provide expected
+    `outcomes`; at least one possible outcome must REFUTE a current competitor. Prefer
+    reads that split or falsify the largest number of survivors. When prior rounds failed
+    to shrink the frontier, deliberately inspect an unexamined relationship or system
+    boundary rather than gathering more detail around the current anchor. Do not actuate.
+    If prior candidates were refused, obey those typed refusals.
     """
 
     facts_json: str = dspy.InputField()
     hypotheses_json: str = dspy.InputField()
     obligations_json: str = dspy.InputField()
     capabilities_json: str = dspy.InputField()
+    read_history_json: str = dspy.InputField()
     rejections_json: str = dspy.InputField()
     max_steps: int = dspy.InputField()
     process: ObservationProcessProposal = dspy.OutputField()
@@ -81,7 +106,8 @@ class CommitDiagnosis(dspy.Signature):
 class ChallengeDiagnosis(dspy.Signature):
     """Try to falsify the proposed diagnosis and return evidence obligations only.
     Check temporal behavior, victim-versus-cause errors, viable competitors, symptom
-    coverage, and whether removing the cause predicts recovery. Do not assign standing.
+    coverage, whether the causal chain reaches the observed impact, and whether removing
+    the proposed cause predicts recovery. Do not assign standing.
     """
 
     diagnosis_json: str = dspy.InputField()
