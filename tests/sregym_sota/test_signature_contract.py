@@ -15,7 +15,7 @@ from autofde_lab.sregym_sota.signatures import (
 
 
 def test_signature_revision_is_explicit() -> None:
-    assert SIGNATURE_REVISION == "SRE-SIG-001"
+    assert SIGNATURE_REVISION == "SRE-SIG-002"
 
 
 def test_exact_signature_surface() -> None:
@@ -52,3 +52,12 @@ def test_core_contains_no_sregym_problem_ids_or_fault_taxonomy_keys() -> None:
         "fault_type",
     )
     assert not any(token in text for token in forbidden)
+
+
+def test_discriminator_requires_exact_capability_identity_and_rejection_feedback() -> None:
+    inputs = ConstructDiscriminationProcess.input_fields
+    assert "capabilities_json" in inputs
+    assert "rejections_json" in inputs
+    doc = ConstructDiscriminationProcess.__doc__ or ""
+    assert "capability_id" in doc
+    assert "input_schema" in doc
