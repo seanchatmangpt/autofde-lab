@@ -1,6 +1,8 @@
 name: SREGym kind live signature trial
 
 on:
+  # Durable operator surface. The temporary pull_request trigger below exists
+  # only to qualify this PR once before merge; remove it after the one-shot run.
   workflow_dispatch:
     inputs:
       problem:
@@ -16,31 +18,44 @@ on:
         type: boolean
         required: true
         default: false
+  pull_request:
+    types: [synchronize]
 
 permissions:
   contents: read
 
 concurrency:
-  group: sregym-live-${{ github.ref }}-${{ inputs.problem }}
+  group: sregym-live-${{ github.event.pull_request.head.ref || github.ref }}-${{ inputs.problem || 'target_port' }}
   cancel-in-progress: false
 
 jobs:
   live-kind:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'agent/sregym-signature-sota'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
       SREGYM_SHA: ba07faf1a322f9b6d4a279643bb796aa2f36f64b
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       AUTOFDE_MAX_DISCRIMINATION_ROUNDS: "6"
+      PROBLEM_ID: ${{ inputs.problem || 'target_port' }}
+      MODEL_ID: ${{ inputs.model || 'groq/openai/gpt-oss-120b' }}
+      NOISE_ENABLED: ${{ inputs.noise || 'false' }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
           python-version: "3.12"
+
+      - name: Bind exact AutoFDE subject
+        run: |
+          expected="${{ github.event.pull_request.head.sha || github.sha }}"
+          observed="$(git rev-parse HEAD)"
+          test "$observed" = "$expected"
+          echo "autofde_head=$observed" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Refuse absent Groq authority
         run: test -n "$GROQ_API_KEY"
@@ -54,24 +69,40 @@ jobs:
           git -C sregym checkout --detach "$SREGYM_SHA"
           test "$(git -C sregym rev-parse HEAD)" = "$SREGYM_SHA"
           git -C sregym submodule update --init --recursive
+          echo "sregym_head=$(git -C sregym rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Qualify Linux host for kind
+      - name: Install kind v0.27.0
+        run: |
+          curl -fsSLo /tmp/kind https://kind.sigs.k8s.io/dl/v0.27.0/kind-linux-amd64
+          chmod +x /tmp/kind
+          sudo mv /tmp/kind /usr/local/bin/kind
+          kind version
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Qualify Linux host for SREGym kind
         run: |
           sudo sysctl -w fs.inotify.max_user_instances=1024
           sudo sysctl -w fs.inotify.max_user_watches=1048576
+          sudo mkdir -p /run/udev
+          docker pull jacksonarthurclark/aiopslab-kind-x86:latest
+          kubectl version --client
+          helm version
 
-      - name: Install SREGym and AutoFDE agent dependencies
+      - name: Install SREGym and signature-agent dependencies
         run: |
           cd sregym
           uv sync
-          uv pip install "dspy>=3.1,<4" "fastmcp>=3.4,<4"
+          # Add DSPy only; retain SREGym's own locked MCP stack.
+          uv pip install "dspy>=3.1,<4"
 
-      - name: Install signature-driven agent into SREGym
+      - name: Install signature-driven agent into exact SREGym checkout
         run: |
           uv run --project sregym python scripts/sregym/install_autofde_sota.py --sregym-dir sregym
           grep -n "name: autofde-sota" sregym/agents.yaml
 
-      - name: Build disposable kind cluster
+      - name: Build disposable kind cluster using upstream recipe
         run: |
           cd sregym
           bash kind/setup_kind_cluster.sh x86
@@ -83,12 +114,13 @@ jobs:
           args=(
             python main.py
             --agent autofde-sota
-            --model "${{ inputs.model }}"
-            --judge-model "${{ inputs.model }}"
-            --problem "${{ inputs.problem }}"
+            --model "$MODEL_ID"
+            --judge-model "$MODEL_ID"
+            --problem "$PROBLEM_ID"
+            --n-attempts 1
             --agent-timeout 1200
           )
-          if [[ "${{ inputs.noise }}" == "true" ]]; then
+          if [[ "$NOISE_ENABLED" == "true" ]]; then
             args+=(--noise)
           fi
           uv run "${args[@]}"
@@ -96,7 +128,26 @@ jobs:
       - name: Surface exact episode evidence
         if: always()
         run: |
-          echo "autofde_head=$(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
-          echo "sregym_head=$(git -C sregym rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
-          find sregym/results -maxdepth 5 -type f -print 2>/dev/null | sort | tail -100 || true
+          echo "problem=$PROBLEM_ID" >> "$GITHUB_STEP_SUMMARY"
+          echo "model=$MODEL_ID" >> "$GITHUB_STEP_SUMMARY"
+          find sregym/results -maxdepth 6 -type f -print 2>/dev/null | sort | tail -100 || true
           find sregym -name 'autofde-sota-receipt.json' -print -exec cat {} \; 2>/dev/null || true
+
+      - name: Export kind diagnostics on failure
+        if: failure()
+        run: |
+          kubectl get nodes -o wide || true
+          kubectl get pods -A -o wide || true
+          kubectl get events -A --sort-by='.lastTimestamp' | tail -100 || true
+          kind export logs /tmp/kind-logs || true
+
+      - name: Upload live evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sregym-autofde-${{ inputs.problem || 'target_port' }}
+          path: |
+            sregym/results/
+            sregym/**/autofde-sota-receipt.json
+            /tmp/kind-logs/
+          if-no-files-found: ignore
