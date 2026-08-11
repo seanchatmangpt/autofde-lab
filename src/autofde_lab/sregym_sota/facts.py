@@ -11,7 +11,7 @@ from .models import Fact
 class FactStore:
     """Deterministic observation -> fact compiler. The LM never admits facts."""
 
-    def __init__(self, *, max_facts: int = 900, max_value_chars: int = 800) -> None:
+    def __init__(self, *, max_facts: int = 1400, max_value_chars: int = 800) -> None:
         self.max_facts = max_facts
         self.max_value_chars = max_value_chars
         self._facts: dict[str, Fact] = {}
@@ -44,13 +44,29 @@ class FactStore:
                 admitted.append(fact)
         return admitted
 
+    @staticmethod
+    def _semantic_list_segment(item: Any, index: int) -> str:
+        if not isinstance(item, dict):
+            return f"[{index}]"
+        metadata = item.get("metadata")
+        if not isinstance(metadata, dict):
+            return f"[{index}]"
+        name = metadata.get("name")
+        if not name:
+            return f"[{index}]"
+        namespace = metadata.get("namespace") or "_cluster"
+        kind = item.get("kind") or "Object"
+        safe = lambda value: str(value).replace("/", "_").replace("]", "_")
+        return f"[kind={safe(kind)},ns={safe(namespace)},name={safe(name)}]"
+
     def _flatten(self, value: Any, path: str = "$") -> Iterator[tuple[str, Any]]:
         if isinstance(value, dict):
             for key in sorted(value, key=str):
                 yield from self._flatten(value[key], f"{path}.{key}")
         elif isinstance(value, list):
             for index, item in enumerate(value):
-                yield from self._flatten(item, f"{path}[{index}]")
+                segment = self._semantic_list_segment(item, index)
+                yield from self._flatten(item, f"{path}{segment}")
         else:
             yield path, value
 
