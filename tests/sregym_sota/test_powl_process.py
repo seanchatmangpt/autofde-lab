@@ -8,9 +8,11 @@ from autofde_lab.sregym_sota.models import (
     ObservationStep,
 )
 from autofde_lab.sregym_sota.powl_process import (
+    McpActivityDriver,
     ProcessAdmissionError,
     compile_mitigation_process,
     compile_observation_process,
+    kubectl_command_is_read_only,
 )
 
 
@@ -77,3 +79,62 @@ def test_reversible_mitigation_with_verify_compiles() -> None:
         ],
     )
     assert isinstance(compile_mitigation_process(process), PartialOrder)
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "kubectl get pods -A -o json",
+        "kubectl logs pod-a -n ns",
+        "kubectl auth can-i patch deployments -n ns",
+        "kubectl rollout status deployment/app -n ns",
+        "kubectl api-resources -o wide",
+    ],
+)
+def test_kubectl_observation_classifier_admits_only_read_semantics(command: str) -> None:
+    assert kubectl_command_is_read_only(command)
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "kubectl patch deployment app -p {}",
+        "kubectl delete pod app-1",
+        "kubectl annotate pod app-1 x=y",
+        "kubectl exec app-1 -- rm -rf /tmp/x",
+        "kubectl scale deployment app --replicas=0",
+    ],
+)
+def test_kubectl_mutations_cannot_be_relabelled_as_reads(command: str) -> None:
+    assert not kubectl_command_is_read_only(command)
+    driver = McpActivityDriver(
+        broker=object(),
+        allowed_capabilities={("kubectl", "exec_kubectl_cmd_safely")},
+        allow_do=True,
+    )
+    assert (
+        driver._authority_refusal(
+            surface="kubectl",
+            tool="exec_kubectl_cmd_safely",
+            arguments={"cmd": command},
+            consequence="READ",
+        )
+        == "MUTATION_MISLABELED_AS_OBSERVATION"
+    )
+
+
+def test_submit_mcp_is_reserved_from_llm_manufactured_processes() -> None:
+    driver = McpActivityDriver(
+        broker=object(),
+        allowed_capabilities={("submit", "submit")},
+        allow_do=True,
+    )
+    assert (
+        driver._authority_refusal(
+            surface="submit",
+            tool="submit",
+            arguments={"ans": "anything"},
+            consequence="DO",
+        )
+        == "CONTROL_SURFACE_RESERVED"
+    )
