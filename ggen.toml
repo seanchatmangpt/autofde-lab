@@ -16,6 +16,7 @@ imports = [
     "ontology/standing.ttl",
     "ontology/interop.ttl",
     "ontology/k8s-fault-taxonomy.ttl",
+    "ontology/world-transformation-taxonomy.ttl",
 ]
 base_iri = "urn:autofde-lab:"
 
@@ -93,6 +94,13 @@ name = "k8s-fault-universes"
 query = { file = "queries/k8s-fault/cross_product.rq" }
 template = { file = "templates/k8s_fault_universe.py.tera" }
 output_file = "src/autofde_lab/reasoning/universes/k8s_fault_universes.py"
+mode = "Create"
+
+[[generation.rules]]
+name = "world-transformation-scenarios"
+query = { file = "queries/world-transformation/scenario_projection.rq" }
+template = { file = "templates/world_transformation_scenario.py.tera" }
+output_file = "src/autofde_lab/reasoning/scenarios/world_transformation_scenarios.py"
 mode = "Create"
 
 [sync]

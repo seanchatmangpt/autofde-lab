@@ -14,7 +14,7 @@ verify_registry.py`'s pattern: a standalone script, real `rdflib` parse, a
 machine-readable JSON receipt on stdout using this repo's own standing
 vocabulary (`.claude/rules/standing-law.md`): ALIVE / UNKNOWN / UNSUPPORTED.
 
-Two real, independent checks:
+Three real, independent checks:
 
 1. **k8s-fault-universes**: recompute the cross-product cardinality
    |Component| x |FailureMode| x |AppTopology| x |Severity| by counting real
@@ -28,6 +28,11 @@ Two real, independent checks:
    `src/autofde_lab/constitution/*.py` module (StandingValue-only files --
    i.e. every class is a SKOS vocabulary and none survives as a dataclass --
    count as zero real dataclasses, which is asserted too, not skipped).
+3. **world-transformation-scenarios**: recompute the real
+   `afl:WorldTransformationScenario` individual count in
+   `ontology/world-transformation-taxonomy.ttl` and assert it equals the
+   real `def scenario_*` count in the committed
+   `src/autofde_lab/reasoning/scenarios/world_transformation_scenarios.py`.
 
 This script never imports or subprocesses `ggen` itself -- it is
 intentionally independent of the generator under audit.
@@ -52,6 +57,11 @@ AFL = Namespace("urn:autofde-lab:")
 K8S_TAXONOMY_TTL = REPO_ROOT / "ontology" / "k8s-fault-taxonomy.ttl"
 K8S_UNIVERSES_PY = REPO_ROOT / "src" / "autofde_lab" / "reasoning" / "universes" / "k8s_fault_universes.py"
 K8S_AXES = ("Component", "FailureMode", "AppTopology", "Severity")
+
+WORLD_TRANSFORMATION_TTL = REPO_ROOT / "ontology" / "world-transformation-taxonomy.ttl"
+WORLD_TRANSFORMATION_PY = (
+    REPO_ROOT / "src" / "autofde_lab" / "reasoning" / "scenarios" / "world_transformation_scenarios.py"
+)
 
 CONSTITUTION_FILES = (
     "lab", "world", "planning", "process", "authority", "evidence", "standing", "interop",
@@ -87,6 +97,29 @@ def _verify_k8s_fault_universes() -> dict:
         "axis_counts": axis_counts,
         "expected_universe_count": expected_universe_count,
         "actual_universe_count": actual_universe_count,
+        "match": ok,
+    }
+
+
+def _count_scenario_functions(py_path: Path) -> int:
+    text = py_path.read_text(encoding="utf-8")
+    return len(re.findall(r"^def scenario_", text, flags=re.MULTILINE))
+
+
+def _verify_world_transformation_scenarios() -> dict:
+    graph = Graph()
+    graph.parse(WORLD_TRANSFORMATION_TTL, format="turtle")
+
+    scenario_class = AFL["WorldTransformationScenario"]
+    scenarios = {s for s, _, _ in graph.triples((None, RDF.type, scenario_class))}
+    expected_scenario_count = len(scenarios)
+    actual_scenario_count = _count_scenario_functions(WORLD_TRANSFORMATION_PY)
+
+    ok = expected_scenario_count == actual_scenario_count and expected_scenario_count > 0
+    return {
+        "check": "world-transformation-scenarios",
+        "expected_scenario_count": expected_scenario_count,
+        "actual_scenario_count": actual_scenario_count,
         "match": ok,
     }
 
@@ -134,7 +167,7 @@ def _verify_constitution_file(name: str) -> dict:
 
 
 def main() -> int:
-    results = [_verify_k8s_fault_universes()]
+    results = [_verify_k8s_fault_universes(), _verify_world_transformation_scenarios()]
     results.extend(_verify_constitution_file(name) for name in CONSTITUTION_FILES)
 
     all_match = all(r["match"] for r in results)

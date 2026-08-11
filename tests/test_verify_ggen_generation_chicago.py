@@ -57,6 +57,15 @@ def test_verifier_recomputes_the_real_378_cell_k8s_cross_product_independently_o
     assert k8s_result["actual_universe_count"] == 378
 
 
+def test_verifier_recomputes_the_real_world_transformation_scenario_count_independently_of_ggen() -> None:
+    _, receipt = _run_verifier()
+
+    scenario_result = next(r for r in receipt["results"] if r["check"] == "world-transformation-scenarios")
+    assert scenario_result["expected_scenario_count"] == 1
+    assert scenario_result["actual_scenario_count"] == 1
+    assert scenario_result["match"] is True
+
+
 def test_verifier_checks_every_one_of_the_eight_constitution_modules() -> None:
     _, receipt = _run_verifier()
 
