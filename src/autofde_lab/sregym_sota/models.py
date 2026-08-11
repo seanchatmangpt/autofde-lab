@@ -17,6 +17,7 @@ class Capability(BaseModel):
     surface: str
     tool: str
     description: str = ""
+    input_schema: dict[str, Any] = Field(default_factory=dict)
 
 
 class HypothesisProposal(BaseModel):
@@ -49,8 +50,7 @@ class EpistemicObligation(BaseModel):
 
 class ObservationStep(BaseModel):
     id: str
-    surface: str
-    tool: str
+    capability_id: str
     arguments: dict[str, Any] = Field(default_factory=dict)
     after: list[str] = Field(default_factory=list)
     why: str = ""
@@ -77,8 +77,7 @@ class DiagnosisCandidate(BaseModel):
 class MitigationStep(BaseModel):
     id: str
     consequence: Literal["DO", "VERIFY"]
-    surface: str
-    tool: str
+    capability_id: str
     arguments: dict[str, Any] = Field(default_factory=dict)
     after: list[str] = Field(default_factory=list)
     expected_effect: str = ""
