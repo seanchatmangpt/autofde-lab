@@ -275,9 +275,22 @@ class _Counter:
 
 class _StepSink:
     """Thread-safe accumulator of :class:`ExecutionStep`s, so concurrent
-    :class:`PartialOrder` branches can append safely."""
+    :class:`PartialOrder` branches can append safely.
 
-    __slots__ = ("_steps", "_lock", "_on_step", "_transitions", "_top_level_cursor_fn")
+    Owns the "does this step also mirror into an :class:`ExecutionContext`'s
+    ``history``" decision (via the optional ``context`` constructor arg),
+    rather than threading a separate flag through every ``_walk_*``
+    function -- a *buffered* per-child sink used during concurrent
+    execution (see ``_walk_partial_order_once``) is constructed with
+    ``context=None`` so its steps are recorded locally without prematurely
+    mirroring into the shared context out of deterministic order; only the
+    real, top-level sink (constructed with the caller's real ``context``)
+    mirrors, and buffered children are later flushed *through* that real
+    sink in deterministic sorted order, so the mirror still happens, just
+    at the correct point.
+    """
+
+    __slots__ = ("_steps", "_lock", "_on_step", "_transitions", "_top_level_cursor_fn", "_context")
 
     def __init__(
         self,
@@ -285,17 +298,21 @@ class _StepSink:
         transitions: _Counter,
         on_step: "OnStep | None",
         top_level_cursor_fn: Callable[[], tuple[str, Any]],
+        context: "ExecutionContext | None" = None,
     ) -> None:
         self._steps = initial
         self._lock = threading.Lock()
         self._on_step = on_step
         self._transitions = transitions
         self._top_level_cursor_fn = top_level_cursor_fn
+        self._context = context
 
     def append(self, step: ExecutionStep, *, node_key: str) -> None:
         with self._lock:
             self._steps.append(step)
             snapshot = tuple(self._steps)
+        if self._context is not None:
+            self._context.history.append(step)
         if self._on_step is not None:
             self._on_step(
                 ExecutionCheckpoint(
@@ -364,7 +381,7 @@ def execute(
     transitions_taken.value = resume_from.choice_transitions_taken if resume_from is not None else 0
 
     top_cursor_holder: dict[str, tuple[str, Any]] = {"cursor": ("leaf", None)}
-    sink = _StepSink(steps, transitions_taken, on_step, lambda: top_cursor_holder["cursor"])
+    sink = _StepSink(steps, transitions_taken, on_step, lambda: top_cursor_holder["cursor"], context=context)
 
     _walk(
         node,
@@ -427,11 +444,11 @@ def _walk(
     repetition_index: int = 0,
 ) -> None:
     if isinstance(node, Start):
-        _emit(sink, ExecutionStep(kind="Start", repetition_index=repetition_index), node_key, context)
+        sink.append(ExecutionStep(kind="Start", repetition_index=repetition_index), node_key=node_key)
     elif isinstance(node, End):
-        _emit(sink, ExecutionStep(kind="End", repetition_index=repetition_index), node_key, context)
+        sink.append(ExecutionStep(kind="End", repetition_index=repetition_index), node_key=node_key)
     elif isinstance(node, Silent):
-        _emit(sink, ExecutionStep(kind="Silent", repetition_index=repetition_index), node_key, context)
+        sink.append(ExecutionStep(kind="Silent", repetition_index=repetition_index), node_key=node_key)
     elif isinstance(node, Atom):
         try:
             result = _invoke_atom(atom_invoker, node, arity, context)
@@ -440,7 +457,7 @@ def _walk(
                 kind="Atom", label=node.label, consequence=node.consequence, result=None,
                 repetition_index=repetition_index, failed=True,
             )
-            _emit(sink, failure_step, node_key, context)
+            sink.append(failure_step, node_key=node_key)
             raise PowlError(
                 PowlRefusal.ATOM_INVOCATION_FAILED,
                 f"atom_invoker raised for atom label={node.label!r}: {exc}",
@@ -450,7 +467,7 @@ def _walk(
             kind="Atom", label=node.label, consequence=node.consequence, result=result,
             repetition_index=repetition_index,
         )
-        _emit(sink, step, node_key, context)
+        sink.append(step, node_key=node_key)
     elif isinstance(node, PartialOrder):
         _walk_partial_order_with_frequency(
             node, guard_evaluator, atom_invoker, sink, transitions_taken, max_choice_transitions,
@@ -469,20 +486,26 @@ def _walk(
         raise PowlError(PowlRefusal.PROHIBITED_NODE_KIND, f"{type(node).__name__} is not executable")
 
 
-def _emit(sink: _StepSink, step: ExecutionStep, node_key: str, context: "ExecutionContext | None") -> None:
-    sink.append(step, node_key=node_key)
-    if context is not None:
-        context.history.append(step)
-
-
-def _should_repeat(node: PartialOrder | ChoiceGraph, completed: int, repeat_evaluator: "RepeatEvaluator | None") -> bool:
+def _should_run_repetition(node: PartialOrder | ChoiceGraph, completed: int, repeat_evaluator: "RepeatEvaluator | None") -> bool:
+    """Decides whether repetition number ``completed`` (0-indexed) should
+    run at all -- called *before* every repetition, including the very
+    first, so a genuinely zero-repetition composite (``frequency.max == 0``,
+    or an evaluator-driven decision to skip an optional composite entirely
+    when ``frequency.min == 0``) is representable. A prior design only
+    consulted a repetition decision *after* the first repetition had
+    already run unconditionally, which silently executed
+    ``Frequency(min=0, max=0)`` once -- a real bug, found by
+    `tests/powl/test_guard_executor_property_based.py`'s generative
+    sweep, fixed forward here."""
     freq = node.frequency
     if completed < freq.min:
         return True  # mandatory repetition, never optional
     if freq.max is not None and completed >= freq.max:
         return False
     if repeat_evaluator is None:
-        return False
+        # No evaluator: preserve the documented default -- exactly one
+        # repetition when nothing else mandates more or forbids it.
+        return completed == 0
     return repeat_evaluator(None, completed)
 
 
@@ -495,7 +518,7 @@ def _walk_partial_order_with_frequency(
         already_completed = frozenset(resume_cursor[1])
 
     completed_repetitions = 0
-    while True:
+    while _should_run_repetition(node, completed_repetitions, repeat_evaluator):
         _walk_partial_order_once(
             node, guard_evaluator, atom_invoker, sink, transitions_taken, max_choice_transitions,
             repeat_evaluator=repeat_evaluator, max_workers=max_workers, arity=arity, context=context,
@@ -504,8 +527,6 @@ def _walk_partial_order_with_frequency(
         )
         already_completed = frozenset()
         completed_repetitions += 1
-        if not _should_repeat(node, completed_repetitions, repeat_evaluator):
-            break
 
 
 def _walk_partial_order_once(
@@ -543,22 +564,53 @@ def _walk_partial_order_once(
         if is_top_level:
             top_cursor_holder["cursor"] = ("partial_order", frozenset(completed))
 
-        def _run_child(i: int) -> None:
+        def _run_child(i: int, target_sink: _StepSink) -> None:
             _walk(
-                node.children[i], guard_evaluator, atom_invoker, sink, transitions_taken,
+                node.children[i], guard_evaluator, atom_invoker, target_sink, transitions_taken,
                 max_choice_transitions, repeat_evaluator=repeat_evaluator, max_workers=max_workers,
                 arity=arity, context=context, node_key=node_key, is_top_level=False,
                 top_cursor_holder=top_cursor_holder, resume_cursor=None, repetition_index=repetition_index,
             )
 
         if max_workers > 1 and len(level) > 1:
+            # Each concurrently-run child gets its own LOCAL, unmirrored
+            # buffer (no on_step, no context mirroring -- see _StepSink's
+            # own docstring) so real thread-scheduling nondeterminism never
+            # leaks into recorded step order. After every child in this
+            # ready-set level has genuinely finished (or failed), every
+            # child's buffered steps are flushed into the real `sink` in
+            # deterministic sorted-index order -- this is what makes
+            # concurrency change *when* work happens without ever changing
+            # *what the trace records* or *in what order*.
+            def _run_child_buffered(i: int) -> tuple[list[ExecutionStep], PowlError | None]:
+                local_steps: list[ExecutionStep] = []
+                local_sink = _StepSink(local_steps, transitions_taken, on_step=None, top_level_cursor_fn=lambda: top_cursor_holder["cursor"])
+                try:
+                    _run_child(i, local_sink)
+                except PowlError as exc:
+                    return local_steps, exc
+                return local_steps, None
+
             with ThreadPoolExecutor(max_workers=min(max_workers, len(level))) as pool:
-                futures = {i: pool.submit(_run_child, i) for i in level}
-                for i in level:  # deterministic re-raise order
-                    futures[i].result()
+                futures = {i: pool.submit(_run_child_buffered, i) for i in level}
+                results = {i: futures[i].result() for i in level}
+
+            first_error: PowlError | None = None
+            for i in level:  # deterministic flush order, regardless of real completion order
+                local_steps, error = results[i]
+                for step in local_steps:
+                    sink.append(step, node_key=node_key)
+                if error is not None and first_error is None:
+                    first_error = error
+            if first_error is not None:
+                raise PowlError(
+                    first_error.refusal,
+                    first_error.detail,
+                    partial_trace=ExecutionTrace(steps=sink.snapshot(), choice_transitions_taken=transitions_taken.value),
+                ) from first_error.__cause__
         else:
             for i in level:
-                _run_child(i)
+                _run_child(i, sink)
 
         for i in level:
             completed.add(i)
@@ -580,7 +632,7 @@ def _walk_choice_graph_with_frequency(
         resume_current = resume_cursor[1]
 
     completed_repetitions = 0
-    while True:
+    while _should_run_repetition(node, completed_repetitions, repeat_evaluator):
         _walk_choice_graph_once(
             node, guard_evaluator, atom_invoker, sink, transitions_taken, max_choice_transitions,
             arity=arity, context=context, node_key=node_key, is_top_level=is_top_level,
@@ -590,8 +642,6 @@ def _walk_choice_graph_with_frequency(
         )
         resume_current = None
         completed_repetitions += 1
-        if not _should_repeat(node, completed_repetitions, repeat_evaluator):
-            break
 
 
 def _walk_choice_graph_once(
