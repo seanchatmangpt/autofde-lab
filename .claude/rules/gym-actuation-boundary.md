@@ -99,6 +99,10 @@ scope; resurrecting it as a second, parallel actuation path is not.
 
 ## See also
 
+- `.claude/rules/autonomic-loop-doctrine.md` — this same boundary restated
+  as a four-stage loop with four boxed invariants, each traced to real
+  code or named absent; `docs/2026-08-11-autonomic-loop-gap-ledger.md` is
+  its evidence table.
 - `CLAUDE.md` — the top-level project law this repo's rules restate; **"It
   computes candidate plans. It does not actuate."** — that applies to gyms
   exactly as it applies to everything else this repo touches.
