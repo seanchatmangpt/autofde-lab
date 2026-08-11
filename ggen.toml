@@ -15,6 +15,7 @@ imports = [
     "ontology/evidence.ttl",
     "ontology/standing.ttl",
     "ontology/interop.ttl",
+    "ontology/k8s-fault-taxonomy.ttl",
 ]
 base_iri = "urn:autofde-lab:"
 
@@ -85,6 +86,13 @@ name = "constitution-interop"
 query = { file = "queries/constitution/interop.rq" }
 template = { file = "templates/constitution_module.py.tera" }
 output_file = "src/autofde_lab/constitution/interop.py"
+mode = "Create"
+
+[[generation.rules]]
+name = "k8s-fault-universes"
+query = { file = "queries/k8s-fault/cross_product.rq" }
+template = { file = "templates/k8s_fault_universe.py.tera" }
+output_file = "src/autofde_lab/reasoning/universes/k8s_fault_universes.py"
 mode = "Create"
 
 [sync]
