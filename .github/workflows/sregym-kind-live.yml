@@ -1,8 +1,6 @@
 name: SREGym kind live signature trial
 
 on:
-  # Durable operator surface. The temporary pull_request trigger below exists
-  # only to qualify this PR once before merge; remove it after the one-shot run.
   workflow_dispatch:
     inputs:
       problem:
@@ -18,32 +16,29 @@ on:
         type: boolean
         required: true
         default: false
-  pull_request:
-    types: [synchronize]
 
 permissions:
   contents: read
 
 concurrency:
-  group: sregym-live-${{ github.event.pull_request.head.ref || github.ref }}-${{ inputs.problem || 'target_port' }}
+  group: sregym-live-${{ github.ref }}-${{ inputs.problem }}
   cancel-in-progress: false
 
 jobs:
   live-kind:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'agent/sregym-signature-sota'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
       SREGYM_SHA: ba07faf1a322f9b6d4a279643bb796aa2f36f64b
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       AUTOFDE_MAX_DISCRIMINATION_ROUNDS: "6"
-      PROBLEM_ID: ${{ inputs.problem || 'target_port' }}
-      MODEL_ID: ${{ inputs.model || 'groq/openai/gpt-oss-120b' }}
-      NOISE_ENABLED: ${{ inputs.noise || 'false' }}
+      PROBLEM_ID: ${{ inputs.problem }}
+      MODEL_ID: ${{ inputs.model }}
+      NOISE_ENABLED: ${{ inputs.noise }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
@@ -52,9 +47,8 @@ jobs:
 
       - name: Bind exact AutoFDE subject
         run: |
-          expected="${{ github.event.pull_request.head.sha || github.sha }}"
           observed="$(git rev-parse HEAD)"
-          test "$observed" = "$expected"
+          test "$observed" = "${{ github.sha }}"
           echo "autofde_head=$observed" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Refuse absent Groq authority
@@ -94,7 +88,6 @@ jobs:
         run: |
           cd sregym
           uv sync
-          # Add DSPy only; retain SREGym's own locked MCP stack.
           uv pip install "dspy>=3.1,<4"
 
       - name: Install signature-driven agent into exact SREGym checkout
@@ -145,7 +138,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: sregym-autofde-${{ inputs.problem || 'target_port' }}
+          name: sregym-autofde-${{ inputs.problem }}
           path: |
             sregym/results/
             sregym/**/autofde-sota-receipt.json
