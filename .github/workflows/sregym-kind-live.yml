@@ -91,6 +91,22 @@ jobs:
           git -C sregym submodule update --init --recursive
           echo "sregym_head=$(git -C sregym rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Install SREGym and signature-agent dependencies
+        run: |
+          cd sregym
+          uv sync
+          uv pip install "dspy==3.1.3"
+
+      - name: Install signature-driven agent into exact SREGym checkout
+        run: |
+          uv run --project sregym python scripts/sregym/install_autofde_sota.py --sregym-dir sregym
+          grep -n "name: autofde-sota" sregym/agents.yaml
+
+      - name: Import exact agent capsule before cluster/model spend
+        run: |
+          cd sregym
+          uv run python -c "import clients.autofde.driver; from clients.autofde.autofde_sota import SIGNATURE_REVISION; assert SIGNATURE_REVISION == 'SRE-SIG-001'; print('AUTOFDE_SREGYM_AGENT_IMPORT=ALIVE')"
+
       - name: Install kind v0.27.0
         run: |
           curl -fsSLo /tmp/kind https://kind.sigs.k8s.io/dl/v0.27.0/kind-linux-amd64
@@ -109,17 +125,6 @@ jobs:
           docker pull jacksonarthurclark/aiopslab-kind-x86:latest
           kubectl version --client
           helm version
-
-      - name: Install SREGym and signature-agent dependencies
-        run: |
-          cd sregym
-          uv sync
-          uv pip install "dspy==3.1.3"
-
-      - name: Install signature-driven agent into exact SREGym checkout
-        run: |
-          uv run --project sregym python scripts/sregym/install_autofde_sota.py --sregym-dir sregym
-          grep -n "name: autofde-sota" sregym/agents.yaml
 
       - name: Build disposable kind cluster using upstream recipe
         run: |
