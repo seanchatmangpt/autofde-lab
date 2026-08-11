@@ -52,12 +52,12 @@ jobs:
     env:
       SREGYM_SHA: ba07faf1a322f9b6d4a279643bb796aa2f36f64b
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-      AUTOFDE_MAX_DISCRIMINATION_ROUNDS: "6"
+      AUTOFDE_MAX_DISCRIMINATION_ROUNDS: "8"
       AUTOFDE_MAX_PROCESS_CANDIDATE_ATTEMPTS: "3"
       PROBLEM_ID: ${{ inputs.problem || 'k8s_target_port-misconfig' }}
       MODEL_ID: ${{ inputs.model || 'groq/openai/gpt-oss-120b' }}
       NOISE_ENABLED: ${{ inputs.noise || 'false' }}
-      SIGNATURE_REVISION: SRE-SIG-002
+      SIGNATURE_REVISION: SRE-SIG-003
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
@@ -73,6 +73,7 @@ jobs:
           observed="$(git rev-parse HEAD)"
           test "$observed" = "$expected"
           echo "autofde_head=$observed" >> "$GITHUB_STEP_SUMMARY"
+          echo "AUTOFDE_HEAD=$observed" >> "$GITHUB_ENV"
       - name: Refuse absent Groq authority
         run: test -n "$GROQ_API_KEY"
       - name: Install uv
@@ -96,7 +97,7 @@ jobs:
       - name: Import exact agent capsule before cluster/model spend
         run: |
           cd sregym
-          uv run python -c "import clients.autofde.driver; from clients.autofde.autofde_sota import SIGNATURE_REVISION; assert SIGNATURE_REVISION == 'SRE-SIG-002'; print('AUTOFDE_SREGYM_AGENT_IMPORT=ALIVE', SIGNATURE_REVISION)"
+          uv run python -c "import clients.autofde.driver; from clients.autofde.autofde_sota import SIGNATURE_REVISION; assert SIGNATURE_REVISION == 'SRE-SIG-003'; print('AUTOFDE_SREGYM_AGENT_IMPORT=ALIVE', SIGNATURE_REVISION)"
       - name: Install kind v0.27.0
         run: |
           curl -fsSLo /tmp/kind https://kind.sigs.k8s.io/dl/v0.27.0/kind-linux-amd64
@@ -132,7 +133,7 @@ jobs:
           echo "result_csv=$result_csv" >> "$GITHUB_STEP_SUMMARY"
           cat "$result_csv"
           mkdir -p ../sregym-evidence
-          python ../scripts/sregym/summarize_result.py "$result_csv" --output "../sregym-evidence/${PROBLEM_ID}.json" --autofde-head "$(git -C .. rev-parse HEAD)" --sregym-head "$SREGYM_SHA" --problem-id "$PROBLEM_ID" --model-id "$MODEL_ID" --signature-revision "$SIGNATURE_REVISION"
+          python ../scripts/sregym/summarize_result.py "$result_csv" --output "../sregym-evidence/${PROBLEM_ID}.json" --autofde-head "$AUTOFDE_HEAD" --sregym-head "$SREGYM_SHA" --problem-id "$PROBLEM_ID" --model-id "$MODEL_ID" --signature-revision "$SIGNATURE_REVISION"
           cp "$result_csv" "../sregym-evidence/${PROBLEM_ID}.csv"
           receipt="$(find . -name 'autofde-sota-receipt.json' -print -quit)"
           if [[ -n "$receipt" ]]; then cp "$receipt" "../sregym-evidence/${PROBLEM_ID}.receipt.json"; fi
