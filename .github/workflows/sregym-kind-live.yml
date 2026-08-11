@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       problem:
-        description: "Pinned SREGym problem id"
+        description: "Pinned SREGym registry problem id"
         required: true
-        default: "target_port"
+        default: "k8s_target_port-misconfig"
       model:
         description: "LiteLLM/DSPy model id"
         required: true
@@ -117,6 +117,14 @@ jobs:
             args+=(--noise)
           fi
           uv run "${args[@]}"
+
+          result_csv="$(find results -type f -name 'autofde-sota_ALL_results.csv' -print -quit)"
+          if [[ -z "$result_csv" ]]; then
+            echo "::error::SREGym exited without producing an autofde-sota benchmark result"
+            exit 1
+          fi
+          echo "result_csv=$result_csv" >> "$GITHUB_STEP_SUMMARY"
+          cat "$result_csv"
 
       - name: Surface exact episode evidence
         if: always()
