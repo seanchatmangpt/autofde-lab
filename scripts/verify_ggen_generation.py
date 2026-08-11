@@ -33,6 +33,9 @@ Three real, independent checks:
    `ontology/world-transformation-taxonomy.ttl` and assert it equals the
    real `def scenario_*` count in the committed
    `src/autofde_lab/reasoning/scenarios/world_transformation_scenarios.py`.
+4. **togaf-artifacts**: same real `owl:Class`-count-vs-`@dataclass`-count
+   discipline as the constitution check, applied to
+   `ontology/togaf-artifacts.ttl` -> `src/autofde_lab/reasoning/togaf_artifacts.py`.
 
 This script never imports or subprocesses `ggen` itself -- it is
 intentionally independent of the generator under audit.
@@ -131,14 +134,11 @@ def _count_dataclasses(py_path: Path) -> int:
     return len(re.findall(r"^@dataclass", text, flags=re.MULTILINE))
 
 
-def _verify_constitution_file(name: str) -> dict:
-    ttl_path = REPO_ROOT / "ontology" / f"{name}.ttl"
-    py_path = REPO_ROOT / "src" / "autofde_lab" / "constitution" / f"{name}.py"
-
+def _verify_dataclass_projection(*, check_name: str, ttl_path: Path, ontology_name: str, py_path: Path) -> dict:
     graph = Graph()
     graph.parse(ttl_path, format="turtle")
 
-    ontology_iri = AFL[f"ontology:{name}"]
+    ontology_iri = AFL[f"ontology:{ontology_name}"]
     owl_class = Namespace("http://www.w3.org/2002/07/owl#")["Class"]
 
     all_classes = {s for s, _, _ in graph.triples((None, RDF.type, owl_class)) if (s, RDFS.isDefinedBy, ontology_iri) in graph}
@@ -159,15 +159,33 @@ def _verify_constitution_file(name: str) -> dict:
 
     ok = expected_dataclass_count == actual_dataclass_count
     return {
-        "check": f"constitution-{name}",
+        "check": check_name,
         "expected_dataclass_count": expected_dataclass_count,
         "actual_dataclass_count": actual_dataclass_count,
         "match": ok,
     }
 
 
+def _verify_constitution_file(name: str) -> dict:
+    return _verify_dataclass_projection(
+        check_name=f"constitution-{name}",
+        ttl_path=REPO_ROOT / "ontology" / f"{name}.ttl",
+        ontology_name=name,
+        py_path=REPO_ROOT / "src" / "autofde_lab" / "constitution" / f"{name}.py",
+    )
+
+
+def _verify_togaf_artifacts() -> dict:
+    return _verify_dataclass_projection(
+        check_name="togaf-artifacts",
+        ttl_path=REPO_ROOT / "ontology" / "togaf-artifacts.ttl",
+        ontology_name="togaf-artifacts",
+        py_path=REPO_ROOT / "src" / "autofde_lab" / "reasoning" / "togaf_artifacts.py",
+    )
+
+
 def main() -> int:
-    results = [_verify_k8s_fault_universes(), _verify_world_transformation_scenarios()]
+    results = [_verify_k8s_fault_universes(), _verify_world_transformation_scenarios(), _verify_togaf_artifacts()]
     results.extend(_verify_constitution_file(name) for name in CONSTITUTION_FILES)
 
     all_match = all(r["match"] for r in results)

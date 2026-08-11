@@ -21,16 +21,35 @@ from autofde_lab.reasoning.togaf_loop_demo import (
 )
 
 
-def test_all_fifteen_real_phases_fire_in_the_real_intended_order() -> None:
+def test_all_eighteen_real_phases_fire_in_the_real_intended_order() -> None:
     log, phase_results, conformance = run_full_togaf_loop_with_ocel()
 
-    assert len(PHASE_SEQUENCE) == 15
-    assert len(log.events) == 15
+    assert len(PHASE_SEQUENCE) == 18
+    assert len(log.events) == 18
     assert conformance.all_conform is True
     assert conformance.overall_fitness == 1.0
 
     execution_object = next(o for o in conformance.per_object if o.object_type == "TogafLoopExecution")
     assert execution_object.observed_trace == PHASE_SEQUENCE
+
+
+def test_ggen_generated_togaf_artifacts_are_really_constructed_never_fabricating_approval() -> None:
+    """Iteration 3 closed 3 UNSUPPORTED gaps via real ggen generation
+    (ontology/togaf-artifacts.ttl -> togaf_artifacts.py). Confirm the
+    real generated types are actually constructed with real data, and
+    that approval-status fields are honestly PendingHumanApproval --
+    never fabricated as granted, per fde-authority-boundary.md."""
+    _, phase_results, _ = run_full_togaf_loop_with_ocel()
+
+    sow = phase_results["phase_a_statement_of_architecture_work"]
+    assert sow["sow_approval_status"] == "PendingHumanApproval"
+    assert sow["sow_scope_item_count"] == 2
+
+    contract = phase_results["phase_g_architecture_contract"]
+    assert contract["contract_governance_role"] == ("ArchitectureBoard",)
+
+    change = phase_results["phase_h_change_request"]
+    assert change["change_approval_status"] == "PendingHumanApproval"
 
 
 def test_unsupported_togaf_substeps_are_named_explicitly_not_silently_dropped() -> None:

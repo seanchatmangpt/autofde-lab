@@ -17,6 +17,7 @@ imports = [
     "ontology/interop.ttl",
     "ontology/k8s-fault-taxonomy.ttl",
     "ontology/world-transformation-taxonomy.ttl",
+    "ontology/togaf-artifacts.ttl",
 ]
 base_iri = "urn:autofde-lab:"
 
@@ -101,6 +102,13 @@ name = "world-transformation-scenarios"
 query = { file = "queries/world-transformation/scenario_projection.rq" }
 template = { file = "templates/world_transformation_scenario.py.tera" }
 output_file = "src/autofde_lab/reasoning/scenarios/world_transformation_scenarios.py"
+mode = "Create"
+
+[[generation.rules]]
+name = "togaf-artifacts"
+query = { file = "queries/togaf-artifacts/artifacts.rq" }
+template = { file = "templates/constitution_module.py.tera" }
+output_file = "src/autofde_lab/reasoning/togaf_artifacts.py"
 mode = "Create"
 
 [sync]

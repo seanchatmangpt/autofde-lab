@@ -62,6 +62,12 @@ from autofde_lab.reasoning.laboratory import (
 from autofde_lab.reasoning.scenarios.world_transformation_scenarios import (
     ScenarioMetadata_checkout_latency_scenario_v_1,
 )
+from autofde_lab.reasoning.togaf_artifacts import (
+    ArchitectureContract,
+    ChangeRequest,
+    StandingValue,
+    StatementOfArchitectureWork,
+)
 from autofde_lab.reasoning.world_transformation_orchestrator import compute_delta, infer_desired_state, select_transformation
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -71,12 +77,16 @@ _EXECUTION_OBJECT_TYPE = "TogafLoopExecution"
 _ACTIVITY_OBJECT_TYPE = "TogafPhaseActivity"
 
 # The real, ordered TOGAF ADM phase sequence this module implements --
-# 15 real atoms, expanded from iteration 1's 10 per the gap audit.
+# 18 real atoms: iteration 1's 10, expanded to 15 in iteration 2 (the
+# 4-agent gap audit), expanded again here (iteration 3) with 3 real
+# ggen-generated typed artifacts (togaf_artifacts.py, manufactured from
+# ontology/togaf-artifacts.ttl) closing 3 previously-UNSUPPORTED gaps.
 PHASE_SEQUENCE: tuple[str, ...] = (
     "preliminary_identify_architecture_principles",
     "requirements_document_specification",
     "phase_a_confirm_constraints",
     "phase_a_architecture_vision_artifact",
+    "phase_a_statement_of_architecture_work",
     "phase_b_objectives_and_constraints",
     "phase_b_gap_analysis",
     "phase_c_data_and_application_model",
@@ -87,7 +97,9 @@ PHASE_SEQUENCE: tuple[str, ...] = (
     "phase_f_powl_migration_plan",
     "phase_f_prioritize_via_falsification",
     "phase_g_admission_and_conformance",
+    "phase_g_architecture_contract",
     "phase_h_gap_ledger_reference",
+    "phase_h_change_request",
 )
 
 # Every real, officially-documented TOGAF ADM sub-step this repo has NO
@@ -96,6 +108,11 @@ PHASE_SEQUENCE: tuple[str, ...] = (
 # 4 parallel validation agents' real, cited findings (each row traces to
 # a specific agent's gap table). This is metadata, not an OCEL event --
 # there is nothing real to compute for these, so no event is fabricated.
+# Closed this iteration via real ggen generation (ontology/togaf-artifacts.ttl
+# -> togaf_artifacts.py): "phase_a.statement_of_architecture_work_approval",
+# "phase_g.guide_development_architecture_contract",
+# "phase_h.develop_change_requirements" -- each now a real typed atom below,
+# not a fabricated approval/decision (approval_status stays PendingHumanApproval).
 UNSUPPORTED_TOGAF_SUBSTEPS: dict[str, str] = {
     "preliminary.scope_enterprise_capability": "no real enterprise-inventory mechanism exists",
     "preliminary.governance_framework": "no governance-body/EA-team-roster mechanism exists",
@@ -104,7 +121,6 @@ UNSUPPORTED_TOGAF_SUBSTEPS: dict[str, str] = {
     "requirements.impact_assessment": "no requirements-impact-assessment mechanism exists",
     "phase_a.identify_stakeholders": "ScenarioMetadata carries no stakeholder field",
     "phase_a.evaluate_capability_readiness": "no business-capability-readiness mechanism exists (distinct from operator applicability)",
-    "phase_a.statement_of_architecture_work_approval": "no approval/admission object for a Statement of Architecture Work exists",
     "phase_b.select_reference_models": "no reference-model/viewpoint/tool-selection mechanism exists",
     "phase_b.resolve_impacts_across_landscape": "no cross-landscape impact-resolution mechanism exists",
     "phase_b.stakeholder_review": "no formal stakeholder-review mechanism exists",
@@ -115,12 +131,10 @@ UNSUPPORTED_TOGAF_SUBSTEPS: dict[str, str] = {
     "phase_f.assign_business_value": "no cost/value model exists; ArchitectureCandidate.cost_bound is a real typed slot, unpopulated",
     "phase_f.estimate_resource_timing": "no resource/timing estimation mechanism exists",
     "phase_g.confirm_scope_with_development_mgmt": "no Development Management stakeholder concept exists",
-    "phase_g.guide_development_architecture_contract": "no typed Architecture Contract object exists",
     "phase_g.implement_business_and_it_operations": "correctly out of scope by design -- this repo computes candidate plans, never actuates",
     "phase_g.post_implementation_review": "no formal implementation-closure record mechanism exists",
     "phase_h.value_realization": "no value/outcome-tracking mechanism exists",
     "phase_h.risk_management": "no risk-register mechanism exists",
-    "phase_h.develop_change_requirements": "no change-request object type exists",
     "phase_h.manage_governance_process": "no Architecture-Board/review-meeting record mechanism exists",
     "phase_h.activate_change_process": "no Request-for-Architecture-Work object type exists",
 }
@@ -201,6 +215,22 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
             }
             phase_results["_desired_state"] = desired
             phase_results["_architecture_candidate"] = candidate
+
+        elif label == "phase_a_statement_of_architecture_work":
+            # Real ggen-generated typed container (togaf_artifacts.py, from
+            # ontology/togaf-artifacts.ttl). Closes phase_a.statement_of_
+            # architecture_work_approval -- but constructing this object
+            # never itself grants approval; approval_status is honestly
+            # PendingHumanApproval, per fde-authority-boundary.md.
+            candidate = phase_results.get("_architecture_candidate")
+            sow = StatementOfArchitectureWork(
+                sow_scope=candidate.target_state_assertions if candidate is not None else (),
+                sow_approval_status=StandingValue.PendingHumanApproval.value,
+            )
+            phase_results[label] = {
+                "sow_scope_item_count": len(sow.sow_scope),
+                "sow_approval_status": sow.sow_approval_status,
+            }
 
         elif label == "phase_b_objectives_and_constraints":
             phase_results[label] = {
@@ -298,7 +328,23 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
             # full Architecture-Contract-based review TOGAF documents.
             phase_results[label] = {
                 "admission": "validate_model passed before execution began",
-                "compliance_review_scope": "PARTIAL -- order-fitness only, no Architecture Contract object exists",
+                "compliance_review_scope": "PARTIAL -- order-fitness only; a real ArchitectureContract type now exists (see phase_g_architecture_contract), but this run constructs no populated review criteria against it",
+            }
+
+        elif label == "phase_g_architecture_contract":
+            # Real ggen-generated typed container. Closes the TYPE gap for
+            # "no typed Architecture Contract object exists" -- the actual
+            # review verdict against a real deliverable remains separate,
+            # real work this construction does not perform.
+            candidate = phase_results.get("_architecture_candidate")
+            contract = ArchitectureContract(
+                contract_scope=candidate.target_state_assertions if candidate is not None else (),
+                contract_criterion=candidate.verification_criteria if candidate is not None else (),
+                contract_governance_role=(StandingValue.ArchitectureBoard.value,),
+            )
+            phase_results[label] = {
+                "contract_scope_item_count": len(contract.contract_scope),
+                "contract_governance_role": contract.contract_governance_role,
             }
 
         elif label == "phase_h_gap_ledger_reference":
@@ -306,6 +352,22 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
             phase_results[label] = {
                 "gap_ledger_exists": ledger.is_file(),
                 "unsupported_togaf_substep_count": len(UNSUPPORTED_TOGAF_SUBSTEPS),
+            }
+
+        elif label == "phase_h_change_request":
+            # Real ggen-generated typed container. Closes "no change-request
+            # object type exists" -- governance disposition
+            # (accepted/rejected/deferred) remains separate, real work.
+            delta = compute_delta(metadata, phase_results["_desired_state"])
+            violated_kinds = tuple(d.kind for d in delta if d.violated is True)
+            change = ChangeRequest(
+                change_description=(f"address {len(violated_kinds)} violated objective(s)",) if violated_kinds else (),
+                change_affected_requirement=violated_kinds,
+                change_approval_status=StandingValue.PendingHumanApproval.value,
+            )
+            phase_results[label] = {
+                "change_affected_requirement_count": len(change.change_affected_requirement),
+                "change_approval_status": change.change_approval_status,
             }
 
     context = ExecutionContext()
