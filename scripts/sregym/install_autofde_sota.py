@@ -17,6 +17,34 @@ AGENT_STANZA = """
 """.rstrip() + "\n"
 
 
+DRIVER_SOURCE = '''from __future__ import annotations
+
+import sys
+import types
+from pathlib import Path
+
+# The legacy autofde_lab package root eagerly imports the historical planning
+# stack. SREGym needs only the POWL execution substrate, so manufacture a
+# package namespace pointing at the exact AutoFDE source tree without executing
+# autofde_lab/__init__.py. Importing autofde_lab.powl.* then executes only the
+# admitted POWL package and its local closure.
+_autofde_source = Path(__file__).resolve().parents[3] / "src" / "autofde_lab"
+if not _autofde_source.is_dir():
+    raise RuntimeError(f"AutoFDE source package not found: {_autofde_source}")
+if "autofde_lab" not in sys.modules:
+    _package = types.ModuleType("autofde_lab")
+    _package.__path__ = [str(_autofde_source)]
+    _package.__package__ = "autofde_lab"
+    sys.modules["autofde_lab"] = _package
+
+from clients.autofde.autofde_sota.agent import main
+
+
+if __name__ == "__main__":
+    main()
+'''
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--sregym-dir", required=True)
@@ -32,11 +60,7 @@ def main() -> None:
     if copied.exists():
         shutil.rmtree(copied)
     shutil.copytree(source, copied)
-    (target / "driver.py").write_text(
-        "from clients.autofde.autofde_sota.agent import main\n\n"
-        "if __name__ == '__main__':\n"
-        "    main()\n"
-    )
+    (target / "driver.py").write_text(DRIVER_SOURCE)
 
     agents = target_root / "agents.yaml"
     text = agents.read_text()
