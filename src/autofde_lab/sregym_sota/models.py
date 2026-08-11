@@ -20,6 +20,14 @@ class Capability(BaseModel):
     input_schema: dict[str, Any] = Field(default_factory=dict)
 
 
+class IncidentOrientation(BaseModel):
+    summary: str
+    candidate_boundaries: list[str] = Field(default_factory=list)
+    direct_anomalies: list[str] = Field(default_factory=list)
+    background_noise_candidates: list[str] = Field(default_factory=list)
+    open_questions: list[str] = Field(default_factory=list)
+
+
 class HypothesisProposal(BaseModel):
     id: str
     claim: str
@@ -48,6 +56,12 @@ class EpistemicObligation(BaseModel):
     would_refute: list[str] = Field(default_factory=list)
 
 
+class OutcomePrediction(BaseModel):
+    condition: str
+    supports: list[str] = Field(default_factory=list)
+    refutes: list[str] = Field(default_factory=list)
+
+
 class ObservationStep(BaseModel):
     id: str
     capability_id: str
@@ -55,6 +69,8 @@ class ObservationStep(BaseModel):
     after: list[str] = Field(default_factory=list)
     why: str = ""
     discriminates: list[str] = Field(default_factory=list)
+    outcomes: list[OutcomePrediction] = Field(default_factory=list)
+    repeat_reason: str = ""
 
 
 class ObservationProcessProposal(BaseModel):
