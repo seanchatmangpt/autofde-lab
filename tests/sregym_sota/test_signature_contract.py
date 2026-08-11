@@ -55,9 +55,9 @@ def test_core_contains_no_sregym_problem_ids_or_fault_taxonomy_keys() -> None:
 
 
 def test_discriminator_requires_exact_capability_identity_and_rejection_feedback() -> None:
-    inputs = ConstructDiscriminationProcess.input_fields
-    assert "capabilities_json" in inputs
-    assert "rejections_json" in inputs
+    fields = ConstructDiscriminationProcess.__annotations__
+    assert "capabilities_json" in fields
+    assert "rejections_json" in fields
     doc = ConstructDiscriminationProcess.__doc__ or ""
     assert "capability_id" in doc
     assert "input_schema" in doc
