@@ -21,7 +21,12 @@ from .epistemic import (
 from .facts import FactStore
 from .mcp import McpBroker
 from .models import DiagnosisCandidate, HypothesisProposal, HypothesisRecord, MitigationProcessProposal
-from .powl_process import McpActivityDriver, compile_mitigation_process, compile_observation_process
+from .powl_process import (
+    McpActivityDriver,
+    ProcessAdmissionError,
+    compile_mitigation_process,
+    compile_observation_process,
+)
 from .signatures import (
     ChallengeDiagnosis,
     CommitDiagnosis,
@@ -102,22 +107,28 @@ def _process_observations(evidence, store: FactStore) -> int:
     return count
 
 
-def _select_mitigation(processes: list[MitigationProcessProposal]) -> MitigationProcessProposal:
-    admitted = [
-        process
-        for process in processes
-        if process.reversible and any(step.consequence == "VERIFY" for step in process.steps)
+def _activity_records(evidence) -> list[dict]:
+    return [
+        {
+            "label": record.label,
+            "path": list(record.path),
+            "attempt": record.attempt,
+            "success": record.success,
+            "committed": record.committed,
+            "metadata": dict(record.metadata),
+            "error_type": record.error_type,
+            "error_message": record.error_message,
+        }
+        for record in evidence.activity_records
     ]
-    if not admitted:
-        raise RuntimeError("no reversible mitigation with explicit verification")
-    return min(
-        admitted,
-        key=lambda process: (
-            process.risk,
-            sum(step.consequence == "DO" for step in process.steps),
-            len(process.steps),
-            process.id,
-        ),
+
+
+def _mitigation_rank(process: MitigationProcessProposal) -> tuple:
+    return (
+        process.risk,
+        sum(step.consequence == "DO" for step in process.steps),
+        len(process.steps),
+        process.id,
     )
 
 
@@ -153,6 +164,35 @@ def _subject_metadata(model: str) -> dict[str, str]:
     }
 
 
+def _write_receipt(payload: dict) -> None:
+    root = Path(os.getenv("AGENT_LOGS_DIR", "."))
+    root.mkdir(parents=True, exist_ok=True)
+    path = root / "autofde-sota-receipt.json"
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True, default=str) + "\n")
+
+
+async def _refuse_diagnosis(
+    broker: McpBroker,
+    *,
+    subject: dict[str, str],
+    standing: str,
+    facts: FactStore,
+    trajectory: list[dict],
+    detail: object | None = None,
+) -> dict:
+    result = {
+        "subject": subject,
+        "signature_revision": SIGNATURE_REVISION,
+        "standing": standing,
+        "facts": len(facts.facts),
+        "trajectory": trajectory,
+        "detail": detail,
+    }
+    _write_receipt(result)
+    await broker.call("submit", "submit", {"ans": standing})
+    return result
+
+
 async def run() -> dict:
     model = os.getenv("AGENT_MODEL_ID", os.getenv("MODEL_ID", "groq/openai/gpt-oss-120b"))
     key = os.getenv("GROQ_API_KEY")
@@ -160,9 +200,9 @@ async def run() -> dict:
         raise RuntimeError("GROQ_API_KEY is required")
     dspy.configure(lm=dspy.LM(model, api_key=key, max_tokens=8000, cache=False))
 
+    subject = _subject_metadata(model)
     broker = McpBroker()
     capabilities = await broker.discover()
-    capability_set = {(c.surface, c.tool) for c in capabilities}
     store = FactStore()
     await _seed_observations(broker, store, capabilities)
 
@@ -179,8 +219,15 @@ async def run() -> dict:
 
     hypotheses: list[HypothesisProposal] = []
     records: list[HypothesisRecord] = []
-    trajectory: list[dict] = [{"stage": "orient", "focus": orient.focus}]
+    trajectory: list[dict] = [
+        {
+            "stage": "orient",
+            "focus": orient.focus,
+            "capability_ids": [capability.id for capability in capabilities],
+        }
+    ]
     max_rounds = int(os.getenv("AUTOFDE_MAX_DISCRIMINATION_ROUNDS", "6"))
+    max_process_attempts = int(os.getenv("AUTOFDE_MAX_PROCESS_CANDIDATE_ATTEMPTS", "3"))
     diagnosis: DiagnosisCandidate | None = None
     stagnant_rounds = 0
 
@@ -195,7 +242,14 @@ async def run() -> dict:
             hypotheses = list(predicted.hypotheses)
             ids = [hypothesis.id for hypothesis in hypotheses]
             if not ids or len(ids) != len(set(ids)):
-                raise RuntimeError("hypothesis portfolio must contain unique non-empty identities")
+                return await _refuse_diagnosis(
+                    broker,
+                    subject=subject,
+                    standing="REFUSED:HYPOTHESIS_IDENTITY_INVALID",
+                    facts=store,
+                    trajectory=trajectory,
+                    detail={"ids": ids},
+                )
 
         related = program.relate(
             facts_json=_json(store.facts),
@@ -232,7 +286,14 @@ async def run() -> dict:
                 hypotheses_json=_json(records),
             ).diagnosis
             if not _diagnosis_identity_is_admitted(candidate, records, admitted_fact_ids):
-                raise RuntimeError("diagnosis references unadmitted fact or hypothesis identities")
+                return await _refuse_diagnosis(
+                    broker,
+                    subject=subject,
+                    standing="REFUSED:DIAGNOSIS_IDENTITY_NOT_ADMITTED",
+                    facts=store,
+                    trajectory=trajectory,
+                    detail=candidate.model_dump(),
+                )
             challenged = program.challenge(
                 diagnosis_json=_json(candidate),
                 facts_json=_json(store.facts),
@@ -246,24 +307,72 @@ async def run() -> dict:
             obligations = list(related.obligations)
 
         frontier = discrimination_frontier(records)
-        proposed = program.discriminate(
-            facts_json=_json(store.facts),
-            hypotheses_json=_json(frontier),
-            obligations_json=_json(obligations),
-            capabilities_json=_json(capabilities),
-            max_steps=4,
-        ).process
-        model_powl = compile_observation_process(proposed)
-        with PowlV2Runner(RunnerConfig(max_workers=4, max_attempts=1)) as runner:
-            evidence = await asyncio.to_thread(
-                runner.run,
-                model_powl,
-                McpActivityDriver(broker, capability_set, allow_do=False),
+        rejections: list[dict] = []
+        evidence = None
+        for candidate_attempt in range(max_process_attempts):
+            proposed = program.discriminate(
+                facts_json=_json(store.facts),
+                hypotheses_json=_json(frontier),
+                obligations_json=_json(obligations),
+                capabilities_json=_json(capabilities),
+                rejections_json=_json(rejections),
+                max_steps=4,
+            ).process
+            try:
+                model_powl = compile_observation_process(proposed, capabilities)
+            except ProcessAdmissionError as exc:
+                rejection = {
+                    "candidate_attempt": candidate_attempt,
+                    "kind": "PROCESS_ADMISSION",
+                    "refusal": str(exc),
+                    "process": proposed.model_dump(),
+                }
+                rejections.append(rejection)
+                trajectory.append(
+                    {
+                        "stage": "discrimination_candidate_refused",
+                        "round": round_index,
+                        **rejection,
+                    }
+                )
+                continue
+
+            with PowlV2Runner(RunnerConfig(max_workers=4, max_attempts=1)) as runner:
+                evidence = await asyncio.to_thread(
+                    runner.run,
+                    model_powl,
+                    McpActivityDriver(broker, capabilities, allow_do=False),
+                )
+            if evidence.status is RunStatus.COMPLETED:
+                break
+            rejection = {
+                "candidate_attempt": candidate_attempt,
+                "kind": "PROCESS_EXECUTION",
+                "status": evidence.status.value,
+                "detail": evidence.detail,
+                "activities": _activity_records(evidence),
+                "process": proposed.model_dump(),
+            }
+            rejections.append(rejection)
+            trajectory.append(
+                {
+                    "stage": "discrimination_candidate_refused",
+                    "round": round_index,
+                    **rejection,
+                }
             )
-        if evidence.status is not RunStatus.COMPLETED:
-            raise RuntimeError(
-                f"discrimination POWL failed: {evidence.status}: {evidence.detail}"
+            evidence = None
+
+        if evidence is None:
+            return await _refuse_diagnosis(
+                broker,
+                subject=subject,
+                standing="REFUSED:DISCRIMINATION_PROCESS_NOT_ADMITTED",
+                facts=store,
+                trajectory=trajectory,
+                detail={"rejections": rejections},
             )
+
         new_facts = _process_observations(evidence, store)
         trajectory.append(
             {
@@ -272,6 +381,7 @@ async def run() -> dict:
                 "new_facts": new_facts,
                 "powl_sha256": evidence.model_sha256,
                 "peak_concurrency": evidence.peak_concurrency,
+                "activities": _activity_records(evidence),
             }
         )
         if new_facts == 0:
@@ -290,20 +400,14 @@ async def run() -> dict:
         else:
             stagnant_rounds = 0
 
-    subject = _subject_metadata(model)
     if diagnosis is None:
-        standing = "REFUSED:CAUSAL_CLOSURE_NOT_REACHED"
-        result = {
-            "subject": subject,
-            "signature_revision": SIGNATURE_REVISION,
-            "standing": standing,
-            "rounds": len(trajectory),
-            "facts": len(store.facts),
-            "trajectory": trajectory,
-        }
-        _write_receipt(result)
-        await broker.call("submit", "submit", {"ans": standing})
-        return result
+        return await _refuse_diagnosis(
+            broker,
+            subject=subject,
+            standing="REFUSED:CAUSAL_CLOSURE_NOT_REACHED",
+            facts=store,
+            trajectory=trajectory,
+        )
 
     await broker.call("submit", "submit", {"ans": diagnosis.explanation})
     post_diagnosis_stage = await _wait_for_stage({"mitigation", "done"})
@@ -327,22 +431,73 @@ async def run() -> dict:
             max_processes=4,
         ).processes
     )
-    selected = _select_mitigation(processes)
-    mitigation_powl = compile_mitigation_process(selected)
+    ids = [process.id for process in processes]
+    if not ids or len(ids) != len(set(ids)):
+        mitigation_rejections = [{"refusal": "MITIGATION_PROCESS_IDENTITY_INVALID", "ids": ids}]
+        admitted_mitigations = []
+    else:
+        mitigation_rejections: list[dict] = []
+        admitted_mitigations: list[tuple[MitigationProcessProposal, object]] = []
+        for process in processes:
+            try:
+                powl = compile_mitigation_process(process, capabilities)
+            except ProcessAdmissionError as exc:
+                mitigation_rejections.append(
+                    {
+                        "process_id": process.id,
+                        "refusal": str(exc),
+                        "process": process.model_dump(),
+                    }
+                )
+            else:
+                admitted_mitigations.append((process, powl))
+
+    trajectory.append(
+        {
+            "stage": "mitigation_admission",
+            "admitted": [process.id for process, _ in admitted_mitigations],
+            "rejections": mitigation_rejections,
+        }
+    )
+    if not admitted_mitigations:
+        result = {
+            "subject": subject,
+            "signature_revision": SIGNATURE_REVISION,
+            "standing": "REFUSED:MITIGATION_PROCESS_NOT_ADMITTED",
+            "diagnosis": diagnosis.model_dump(),
+            "facts": len(store.facts),
+            "trajectory": trajectory,
+        }
+        _write_receipt(result)
+        await broker.call("submit", "submit", {"ans": ""})
+        return result
+
+    selected, mitigation_powl = min(
+        admitted_mitigations, key=lambda pair: _mitigation_rank(pair[0])
+    )
     with PowlV2Runner(RunnerConfig(max_workers=4, max_attempts=1)) as runner:
         mitigation_evidence = await asyncio.to_thread(
             runner.run,
             mitigation_powl,
-            McpActivityDriver(broker, capability_set, allow_do=True),
+            McpActivityDriver(broker, capabilities, allow_do=True),
         )
     if mitigation_evidence.status is not RunStatus.COMPLETED:
-        raise RuntimeError(
-            f"mitigation POWL failed: {mitigation_evidence.status}: {mitigation_evidence.detail}"
-        )
-    _process_observations(mitigation_evidence, store)
+        result = {
+            "subject": subject,
+            "signature_revision": SIGNATURE_REVISION,
+            "standing": "REFUSED:MITIGATION_PROCESS_EXECUTION_FAILED",
+            "diagnosis": diagnosis.model_dump(),
+            "mitigation_process": selected.model_dump(),
+            "mitigation_powl_sha256": mitigation_evidence.model_sha256,
+            "facts": len(store.facts),
+            "trajectory": trajectory,
+            "activities": _activity_records(mitigation_evidence),
+        }
+        _write_receipt(result)
+        await broker.call("submit", "submit", {"ans": ""})
+        return result
 
-    # SREGym grades the resulting live state; its reference Stratus client also
-    # uses an empty mitigation submission after successful external verification.
+    _process_observations(mitigation_evidence, store)
     await broker.call("submit", "submit", {"ans": ""})
     result = {
         "subject": subject,
@@ -353,16 +508,10 @@ async def run() -> dict:
         "mitigation_powl_sha256": mitigation_evidence.model_sha256,
         "facts": len(store.facts),
         "trajectory": trajectory,
+        "mitigation_activities": _activity_records(mitigation_evidence),
     }
     _write_receipt(result)
     return result
-
-
-def _write_receipt(payload: dict) -> None:
-    root = Path(os.getenv("AGENT_LOGS_DIR", "."))
-    root.mkdir(parents=True, exist_ok=True)
-    path = root / "autofde-sota-receipt.json"
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True, default=str) + "\n")
 
 
 def main() -> None:
