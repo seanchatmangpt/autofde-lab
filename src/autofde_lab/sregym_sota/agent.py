@@ -121,8 +121,40 @@ def _select_mitigation(processes: list[MitigationProcessProposal]) -> Mitigation
     )
 
 
+def _diagnosis_identity_is_admitted(
+    diagnosis: DiagnosisCandidate,
+    records: list[HypothesisRecord],
+    admitted_fact_ids: set[str],
+) -> bool:
+    if not diagnosis.root_causes:
+        return False
+    supported_ids = {record.id for record in records if record.state == "SUPPORTED"}
+    if len(supported_ids) != 1:
+        return False
+    for root_cause in diagnosis.root_causes:
+        if not root_cause.hypothesis_ids:
+            return False
+        if not set(root_cause.hypothesis_ids) <= supported_ids:
+            return False
+        if not root_cause.evidence_fact_ids:
+            return False
+        if not set(root_cause.evidence_fact_ids) <= admitted_fact_ids:
+            return False
+    return True
+
+
+def _subject_metadata(model: str) -> dict[str, str]:
+    return {
+        "autofde_head": os.getenv("GITHUB_SHA", "UNKNOWN"),
+        "sregym_head": os.getenv("SREGYM_SHA", "UNKNOWN"),
+        "problem_id": os.getenv("PROBLEM_ID", "UNKNOWN"),
+        "model_id": model,
+        "signature_revision": SIGNATURE_REVISION,
+    }
+
+
 async def run() -> dict:
-    model = os.getenv("AGENT_MODEL_ID", "groq/openai/gpt-oss-120b")
+    model = os.getenv("AGENT_MODEL_ID", os.getenv("MODEL_ID", "groq/openai/gpt-oss-120b"))
     key = os.getenv("GROQ_API_KEY")
     if not key:
         raise RuntimeError("GROQ_API_KEY is required")
@@ -150,6 +182,7 @@ async def run() -> dict:
     trajectory: list[dict] = [{"stage": "orient", "focus": orient.focus}]
     max_rounds = int(os.getenv("AUTOFDE_MAX_DISCRIMINATION_ROUNDS", "6"))
     diagnosis: DiagnosisCandidate | None = None
+    stagnant_rounds = 0
 
     for round_index in range(max_rounds):
         if not hypotheses:
@@ -160,12 +193,23 @@ async def run() -> dict:
                 max_hypotheses=6,
             )
             hypotheses = list(predicted.hypotheses)
+            ids = [hypothesis.id for hypothesis in hypotheses]
+            if not ids or len(ids) != len(set(ids)):
+                raise RuntimeError("hypothesis portfolio must contain unique non-empty identities")
 
         related = program.relate(
             facts_json=_json(store.facts),
             hypotheses_json=_json(hypotheses),
         )
-        records = compute_hypothesis_records(hypotheses, list(related.links))
+        links = list(related.links)
+        admitted_fact_ids = {fact.id for fact in store.facts}
+        known_hypothesis_ids = {hypothesis.id for hypothesis in hypotheses}
+        rejected_links = sum(
+            link.hypothesis_id not in known_hypothesis_ids
+            or link.fact_id not in admitted_fact_ids
+            for link in links
+        )
+        records = compute_hypothesis_records(hypotheses, links, admitted_fact_ids)
         route = route_epistemic_state(records)
         trajectory.append(
             {
@@ -174,6 +218,7 @@ async def run() -> dict:
                 "route": route.value,
                 "states": {h.id: h.state for h in records},
                 "fact_count": len(store.facts),
+                "rejected_evidence_links": rejected_links,
             }
         )
 
@@ -186,6 +231,8 @@ async def run() -> dict:
                 facts_json=_json(store.facts),
                 hypotheses_json=_json(records),
             ).diagnosis
+            if not _diagnosis_identity_is_admitted(candidate, records, admitted_fact_ids):
+                raise RuntimeError("diagnosis references unadmitted fact or hypothesis identities")
             challenged = program.challenge(
                 diagnosis_json=_json(candidate),
                 facts_json=_json(store.facts),
@@ -227,10 +274,27 @@ async def run() -> dict:
                 "peak_concurrency": evidence.peak_concurrency,
             }
         )
+        if new_facts == 0:
+            stagnant_rounds += 1
+            hypotheses = []
+            trajectory.append(
+                {
+                    "stage": "stagnation",
+                    "round": round_index,
+                    "count": stagnant_rounds,
+                    "action": "rehypothesize" if stagnant_rounds < 2 else "refuse",
+                }
+            )
+            if stagnant_rounds >= 2:
+                break
+        else:
+            stagnant_rounds = 0
 
+    subject = _subject_metadata(model)
     if diagnosis is None:
         standing = "REFUSED:CAUSAL_CLOSURE_NOT_REACHED"
         result = {
+            "subject": subject,
             "signature_revision": SIGNATURE_REVISION,
             "standing": standing,
             "rounds": len(trajectory),
@@ -242,7 +306,18 @@ async def run() -> dict:
         return result
 
     await broker.call("submit", "submit", {"ans": diagnosis.explanation})
-    await _wait_for_stage({"mitigation", "done"})
+    post_diagnosis_stage = await _wait_for_stage({"mitigation", "done"})
+    if post_diagnosis_stage == "done":
+        result = {
+            "subject": subject,
+            "signature_revision": SIGNATURE_REVISION,
+            "standing": "BENCHMARK_DONE_AFTER_DIAGNOSIS",
+            "diagnosis": diagnosis.model_dump(),
+            "facts": len(store.facts),
+            "trajectory": trajectory,
+        }
+        _write_receipt(result)
+        return result
 
     processes = list(
         program.mitigate(
@@ -270,6 +345,7 @@ async def run() -> dict:
     # uses an empty mitigation submission after successful external verification.
     await broker.call("submit", "submit", {"ans": ""})
     result = {
+        "subject": subject,
         "signature_revision": SIGNATURE_REVISION,
         "standing": "CANDIDATE_EXECUTED",
         "diagnosis": diagnosis.model_dump(),
