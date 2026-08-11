@@ -1064,12 +1064,37 @@ async def run_dspy_diagnosis(
 
         mitigation_response: Any | None = None
         if attempt_mitigation:
-            mitigation_cap = _capability(capabilities, "submit_mitigation")
-            gate.guard_capability(mitigation_cap)
-            mitigation_response = await env.actuate(
-                mitigation_cap,
-                {"mitigation": "not_attempted", "reason": "no_automated_command_synthesis_yet"},
+            from autofde_lab.reasoning.gymact_mitigation_actuation import execute_and_submit_mitigation
+
+            # A fresh, real observe_cluster_state read -- the diagnosis
+            # ReAct loop's own observations live inside its internal
+            # dspy.ReAct trajectory dict (per-step, not one clean string),
+            # so this re-observes real, current state rather than guessing
+            # at a trajectory key that doesn't hold it.
+            observe_cap = _capability(capabilities, "observe_cluster_state")
+            gate.guard_capability(observe_cap)
+            observed_state = await env.actuate(observe_cap, {})
+
+            # Real mitigation actuation (closes the gap named in this
+            # module's own earlier docstring: every prior call site here
+            # submitted a literal "not_attempted" placeholder). Uses the
+            # real, committed diagnosis text as root_cause.
+            mitigation_result = await execute_and_submit_mitigation(
+                env,
+                gate,
+                capabilities,
+                root_cause=diagnosis_text,
+                relevant_resource_spec=str(observed_state),
+                capability_catalog="\n".join(f"- {cap.binding}" for cap in capabilities),
+                namespace=namespace,
             )
+            mitigation_response = mitigation_result.submit_mitigation_response
+            trajectory = dict(trajectory) if isinstance(trajectory, dict) else {"trajectory": trajectory}
+            trajectory["mitigation_execution"] = {
+                "attempted": mitigation_result.attempted,
+                "reason": mitigation_result.reason,
+                "executed_commands": mitigation_result.executed_commands,
+            }
 
         return DiagnosisResult(
             problem_id=problem_id,

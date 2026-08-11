@@ -29,6 +29,7 @@ import pytest
 from autofde_lab.powl.algebra import Atom, PartialOrder
 from autofde_lab.powl.validate import validate_model
 from autofde_lab.reasoning.sre_mitigation_portfolio import (
+    MitigationPortfolioCandidate,
     MitigationProcessParseError,
     construct_mitigation_portfolio,
     parse_process_steps,
@@ -183,13 +184,18 @@ def test_construct_mitigation_portfolio_returns_real_admitted_candidates() -> No
     assert program._call_count == 3
     assert len(portfolio) == 2
 
-    for node in portfolio:
-        assert isinstance(node, PartialOrder)
-        validate_model(node)  # each returned candidate is independently admitted
+    for candidate in portfolio:
+        assert isinstance(candidate, MitigationPortfolioCandidate)
+        assert isinstance(candidate.node, PartialOrder)
+        validate_model(candidate.node)  # each returned candidate is independently admitted
+        # The real prediction's safety fields survive, not discarded.
+        assert candidate.safe_to_actuate is True
+        assert candidate.expected_consequence == "the OOMKilled restarts stop"
+        assert candidate.rollback_plan == "revert the deployment memory limit/request change"
 
     # The two admitted candidates are genuinely different processes (a real
     # portfolio, not padded duplicates).
-    assert portfolio[0].children != portfolio[1].children
+    assert portfolio[0].node.children != portfolio[1].node.children
 
 
 def test_construct_mitigation_portfolio_makes_exactly_portfolio_size_real_calls() -> None:
@@ -250,5 +256,6 @@ def test_live_construct_mitigation_portfolio_produces_real_admitted_candidates()
         )
 
     assert len(portfolio) > 0
-    for node in portfolio:
-        validate_model(node)
+    for candidate in portfolio:
+        assert isinstance(candidate, MitigationPortfolioCandidate)
+        validate_model(candidate.node)

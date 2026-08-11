@@ -33,6 +33,7 @@ malformed line is NEVER silently dropped.
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 
 import dspy
 
@@ -42,10 +43,30 @@ from autofde_lab.powl.validate import validate_model
 from autofde_lab.reasoning.sre_mitigation_portfolio_signatures import ConstructSreMitigationProcess
 
 __all__ = [
+    "MitigationPortfolioCandidate",
     "MitigationProcessParseError",
     "construct_mitigation_portfolio",
     "parse_process_steps",
 ]
+
+
+@dataclass(frozen=True, slots=True)
+class MitigationPortfolioCandidate:
+    """One real, admitted portfolio candidate, carrying the real DSPy
+    prediction's safety-relevant fields alongside the parsed process --
+    `construct_mitigation_portfolio` previously discarded
+    `safe_to_actuate`/`expected_consequence`/`rollback_plan` and returned
+    only the bare `PowlNode`. A caller that would actually actuate a
+    candidate against a live environment (see
+    `gymact_mitigation_actuation.py`) needs `safe_to_actuate` to decide
+    whether actuating it is admissible at all -- dropping it here would
+    force that caller to either re-derive it (a second, competing
+    computation of the same real signal) or actuate blind."""
+
+    node: PowlNode
+    safe_to_actuate: bool
+    expected_consequence: str
+    rollback_plan: str
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +138,7 @@ def construct_mitigation_portfolio(
     capability_catalog: str,
     portfolio_size: int = 3,
     program: dspy.Module | None = None,
-) -> list[PowlNode]:
+) -> list[MitigationPortfolioCandidate]:
     """Construct a real portfolio of up to `portfolio_size` independently
     admitted mitigation-process candidates.
 
@@ -134,13 +155,19 @@ def construct_mitigation_portfolio(
     whole portfolio, and never appears unvalidated in the returned list.
     A partial (even empty) portfolio is an honest, legitimate result when
     every candidate this round happened to be malformed or inadmissible.
+
+    Returns `MitigationPortfolioCandidate`s (not bare `PowlNode`s) --
+    each carries the real prediction's `safe_to_actuate`/
+    `expected_consequence`/`rollback_plan` alongside the parsed process, so
+    a caller deciding whether to actuate a candidate never has to re-derive
+    or discard that real safety signal.
     """
     if portfolio_size < 1:
         raise ValueError(f"portfolio_size must be >= 1, got {portfolio_size}")
 
     predictor: dspy.Module = program if program is not None else dspy.Predict(ConstructSreMitigationProcess)
 
-    portfolio: list[PowlNode] = []
+    portfolio: list[MitigationPortfolioCandidate] = []
     for i in range(portfolio_size):
         prediction = predictor(
             root_cause=root_cause,
@@ -161,6 +188,13 @@ def construct_mitigation_portfolio(
             logger.warning("portfolio candidate %d skipped: admission failure: %s", i, exc)
             continue
 
-        portfolio.append(node)
+        portfolio.append(
+            MitigationPortfolioCandidate(
+                node=node,
+                safe_to_actuate=bool(getattr(prediction, "safe_to_actuate", False)),
+                expected_consequence=str(getattr(prediction, "expected_consequence", "")),
+                rollback_plan=str(getattr(prediction, "rollback_plan", "")),
+            )
+        )
 
     return portfolio
