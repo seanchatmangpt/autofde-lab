@@ -12,7 +12,7 @@ AGENT_STANZA = """
     kickoff_env:
       PYTHONPATH: "../src"
     install_script: null
-    agent_version: SRE-SIG-001
+    agent_version: SRE-SIG-002
     container_isolation: false
 """.rstrip() + "\n"
 
