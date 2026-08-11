@@ -14,18 +14,57 @@ freshly-produced log). No `unittest.mock` / `Mock` / `MagicMock` / `patch`
 
 from __future__ import annotations
 
-from autofde_lab.reasoning.togaf_loop_demo import PHASE_SEQUENCE, run_full_togaf_loop_with_ocel
+from autofde_lab.reasoning.togaf_loop_demo import (
+    PHASE_SEQUENCE,
+    UNSUPPORTED_TOGAF_SUBSTEPS,
+    run_full_togaf_loop_with_ocel,
+)
 
 
-def test_all_ten_real_phases_fire_in_the_real_intended_order() -> None:
+def test_all_fifteen_real_phases_fire_in_the_real_intended_order() -> None:
     log, phase_results, conformance = run_full_togaf_loop_with_ocel()
 
-    assert len(log.events) == 10
+    assert len(PHASE_SEQUENCE) == 15
+    assert len(log.events) == 15
     assert conformance.all_conform is True
     assert conformance.overall_fitness == 1.0
 
     execution_object = next(o for o in conformance.per_object if o.object_type == "TogafLoopExecution")
     assert execution_object.observed_trace == PHASE_SEQUENCE
+
+
+def test_unsupported_togaf_substeps_are_named_explicitly_not_silently_dropped() -> None:
+    """'ALL MUST BE REPRESENTED': every real, documented TOGAF sub-step
+    this repo has no mechanism for must appear here, named -- never
+    silently absent from both the event stream AND this record."""
+    assert len(UNSUPPORTED_TOGAF_SUBSTEPS) > 0
+    for substep, reason in UNSUPPORTED_TOGAF_SUBSTEPS.items():
+        assert reason, f"{substep} has no real stated reason"
+
+
+def test_architecture_candidate_and_falsification_are_really_wired_not_left_unused() -> None:
+    """Prior audit found laboratory.py's ArchitectureCandidate/
+    falsify_candidate machinery real but completely unused by this
+    module. Confirm it is now actually invoked, and that the honest
+    result (no real gymact connector exists) is UNSUPPORTED, never a
+    fabricated SURVIVES/FALSIFIED verdict."""
+    _, phase_results, _ = run_full_togaf_loop_with_ocel()
+
+    assert phase_results["phase_a_architecture_vision_artifact"]["candidate_id"] == "checkout-latency-vision-v1"
+
+    falsification = phase_results["phase_f_prioritize_via_falsification"]
+    assert falsification["falsification_standing"] == "UNSUPPORTED"
+
+
+def test_phase_d_enumerates_the_real_documented_decision_points_it_refuses() -> None:
+    """Prior audit found Phase D's refusal under-specified (a bare
+    boolean). Confirm it now names the real TOGAF 9.2 Phase D decision
+    points being declined."""
+    _, phase_results, _ = run_full_togaf_loop_with_ocel()
+
+    refused_points = phase_results["phase_d_delegated_to_gymact_boundary_refusal"]["refused_decision_points"]
+    assert len(refused_points) == 9
+    assert "develop_target_technology_architecture" in refused_points
 
 
 def test_phase_d_is_a_real_explicit_refusal_never_a_fabricated_technology_decision() -> None:

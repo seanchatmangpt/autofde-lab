@@ -9,15 +9,34 @@ and self-checks it with `object_centric_conformance`
 (`autofde_lab.ocel.object_centric_conformance`) -- an independent module
 built in a prior turn, checking this turn's freshly-produced log.
 
+**Iteration 2 (this session)**: 4 parallel validation agents each
+researched one TOGAF phase-group's real, official documented sub-steps
+(cited sources in each agent's own report -- see
+`docs/2026-08-11-togaf-ocel-coverage-gap-report.md`) and compared them
+against iteration 1's single-atom-per-phase representation. This module
+now implements every **high-priority, real-mechanism** finding from that
+audit: 15 real atoms (up from 10), each backed by an already-existing
+repo function -- `infer_desired_state_hypotheses`/`ArchitectureCandidate`/
+`falsify_candidate` (`laboratory.py`) are now actually wired in, not left
+unused as the audit found them. `UNSUPPORTED_TOGAF_SUBSTEPS` records
+every real, documented TOGAF sub-step this repo has genuinely no
+mechanism for -- named explicitly, not silently dropped, per
+`.claude/rules/absence-is-not-evidence.md`. "ALL MUST BE REPRESENTED"
+is satisfied by representing every sub-step as either a real computed
+event or a real, explicit `UNSUPPORTED` record -- never by fabricating
+content for a sub-step this repo cannot actually compute.
+
 **Phase D (Technology Architecture) is deliberately never simulated.**
 Per `.claude/rules/gym-actuation-boundary.md`/`autonomic-loop-doctrine.md`,
 this repo owns no technology-architecture mechanism -- `gymact` does. The
-Phase D atom records a real, explicit boundary-refusal/delegation event,
-never a fabricated technology decision. An honest gap in the OCEL log is
-stronger proof of correct implementation than a fabricated phase would be.
+Phase D atom now enumerates the real, documented decision points it
+refuses (baseline/target technology architecture, technology portfolio,
+standards, building blocks -- TOGAF 9.2 Phase D's own 9 steps), rather
+than a bare boolean refusal -- an honest, itemized gap is stronger proof
+than a vague one.
 
-See `docs/2026-08-11-v26.8.11-fortune5-togaf-prd.md` for the full phase
-table this module implements.
+See `docs/2026-08-11-v26.8.11-fortune5-togaf-prd.md` and
+`docs/2026-08-11-togaf-ocel-coverage-gap-report.md` for the full context.
 """
 
 from __future__ import annotations
@@ -34,6 +53,12 @@ from autofde_lab.ocel.object_centric_conformance import (
 from autofde_lab.powl.algebra import Atom, ChoiceGraph, ChoiceGraphEdge, End, NodeId, Start
 from autofde_lab.powl.guard_executor import ExecutionContext, execute
 from autofde_lab.powl.validate import validate_model
+from autofde_lab.reasoning.laboratory import (
+    ArchitectureCandidate,
+    UnsupportedWorldExperimentProvider,
+    falsify_candidate,
+    infer_desired_state_hypotheses,
+)
 from autofde_lab.reasoning.scenarios.world_transformation_scenarios import (
     ScenarioMetadata_checkout_latency_scenario_v_1,
 )
@@ -45,18 +70,73 @@ _EXECUTION_OBJECT_ID = "togaf-loop-execution-001"
 _EXECUTION_OBJECT_TYPE = "TogafLoopExecution"
 _ACTIVITY_OBJECT_TYPE = "TogafPhaseActivity"
 
-# The real, ordered TOGAF ADM phase sequence this module implements.
+# The real, ordered TOGAF ADM phase sequence this module implements --
+# 15 real atoms, expanded from iteration 1's 10 per the gap audit.
 PHASE_SEQUENCE: tuple[str, ...] = (
-    "preliminary_architecture_principles",
-    "requirements_from_scenario_metadata",
-    "phase_a_infer_desired_state",
+    "preliminary_identify_architecture_principles",
+    "requirements_document_specification",
+    "phase_a_confirm_constraints",
+    "phase_a_architecture_vision_artifact",
     "phase_b_objectives_and_constraints",
+    "phase_b_gap_analysis",
     "phase_c_data_and_application_model",
     "phase_d_delegated_to_gymact_boundary_refusal",
+    "phase_e_business_constraints",
+    "phase_e_consolidate_gap_analysis",
     "phase_e_compute_delta_and_select_transformation",
     "phase_f_powl_migration_plan",
+    "phase_f_prioritize_via_falsification",
     "phase_g_admission_and_conformance",
     "phase_h_gap_ledger_reference",
+)
+
+# Every real, officially-documented TOGAF ADM sub-step this repo has NO
+# real mechanism for, as of this iteration -- named explicitly per
+# absence-is-not-evidence.md, never silently omitted. Populated from the
+# 4 parallel validation agents' real, cited findings (each row traces to
+# a specific agent's gap table). This is metadata, not an OCEL event --
+# there is nothing real to compute for these, so no event is fabricated.
+UNSUPPORTED_TOGAF_SUBSTEPS: dict[str, str] = {
+    "preliminary.scope_enterprise_capability": "no real enterprise-inventory mechanism exists",
+    "preliminary.governance_framework": "no governance-body/EA-team-roster mechanism exists",
+    "preliminary.framework_tailoring": "no TOGAF-framework-tailoring mechanism exists",
+    "requirements.baseline": "no requirements-baselining/versioning mechanism exists",
+    "requirements.impact_assessment": "no requirements-impact-assessment mechanism exists",
+    "phase_a.identify_stakeholders": "ScenarioMetadata carries no stakeholder field",
+    "phase_a.evaluate_capability_readiness": "no business-capability-readiness mechanism exists (distinct from operator applicability)",
+    "phase_a.statement_of_architecture_work_approval": "no approval/admission object for a Statement of Architecture Work exists",
+    "phase_b.select_reference_models": "no reference-model/viewpoint/tool-selection mechanism exists",
+    "phase_b.resolve_impacts_across_landscape": "no cross-landscape impact-resolution mechanism exists",
+    "phase_b.stakeholder_review": "no formal stakeholder-review mechanism exists",
+    "phase_b.finalize_and_create_add": "no Architecture Definition Document authoring mechanism exists",
+    "phase_c.select_reference_models": "same as phase_b -- no reference-model-selection mechanism exists",
+    "phase_c.stakeholder_review_and_add": "no data/application Architecture Definition Document mechanism exists",
+    "phase_e.transition_architectures": "no staged/incremental-delivery architecture mechanism exists",
+    "phase_f.assign_business_value": "no cost/value model exists; ArchitectureCandidate.cost_bound is a real typed slot, unpopulated",
+    "phase_f.estimate_resource_timing": "no resource/timing estimation mechanism exists",
+    "phase_g.confirm_scope_with_development_mgmt": "no Development Management stakeholder concept exists",
+    "phase_g.guide_development_architecture_contract": "no typed Architecture Contract object exists",
+    "phase_g.implement_business_and_it_operations": "correctly out of scope by design -- this repo computes candidate plans, never actuates",
+    "phase_g.post_implementation_review": "no formal implementation-closure record mechanism exists",
+    "phase_h.value_realization": "no value/outcome-tracking mechanism exists",
+    "phase_h.risk_management": "no risk-register mechanism exists",
+    "phase_h.develop_change_requirements": "no change-request object type exists",
+    "phase_h.manage_governance_process": "no Architecture-Board/review-meeting record mechanism exists",
+    "phase_h.activate_change_process": "no Request-for-Architecture-Work object type exists",
+}
+
+# Phase D's real, documented TOGAF 9.2 decision points (§12.4) -- named
+# explicitly as refused, never a vague single boolean.
+_PHASE_D_REFUSED_DECISION_POINTS: tuple[str, ...] = (
+    "select_reference_models_viewpoints_tools",
+    "develop_baseline_technology_architecture",
+    "develop_target_technology_architecture",
+    "perform_gap_analysis",
+    "define_candidate_roadmap_components",
+    "resolve_impacts_across_landscape",
+    "conduct_formal_stakeholder_review",
+    "finalize_technology_architecture_and_select_standards",
+    "create_architecture_definition_document",
 )
 
 
@@ -73,7 +153,7 @@ def _build_graph() -> ChoiceGraph:
 
 
 def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCentricConformanceResult]:
-    """Execute the real 10-phase TOGAF chain, emit one real OCEL 2.0 log,
+    """Execute the real 15-phase TOGAF chain, emit one real OCEL 2.0 log,
     and self-check it with `check_object_centric_conformance`.
 
     Returns `(log, phase_results, conformance)` -- the real log, the real
@@ -89,26 +169,51 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
 
     def atom_invoker(atom: Atom) -> None:
         label = atom.label
-        if label == "preliminary_architecture_principles":
-            standing_law = REPO_ROOT / ".claude" / "rules" / "standing-law.md"
-            phase_results[label] = {"principles_file_exists": standing_law.is_file()}
+        if label == "preliminary_identify_architecture_principles":
+            rules_dir = REPO_ROOT / ".claude" / "rules"
+            principle_files = sorted(p.stem for p in rules_dir.glob("*.md")) if rules_dir.is_dir() else []
+            phase_results[label] = {"principle_count": len(principle_files), "principle_names": principle_files[:10]}
 
-        elif label == "requirements_from_scenario_metadata":
+        elif label == "requirements_document_specification":
+            hypotheses = infer_desired_state_hypotheses(metadata)
             phase_results[label] = {
+                "hypothesis_count": len(hypotheses),
+                "hypothesis_ids": [h.hypothesis_id for h in hypotheses],
                 "observation_count": len(metadata.observations),
-                "objective_count": len(metadata.objectives),
-                "constraint_count": len(metadata.constraints),
             }
+            phase_results["_hypotheses"] = hypotheses
 
-        elif label == "phase_a_infer_desired_state":
+        elif label == "phase_a_confirm_constraints":
+            phase_results[label] = {"constraint_kinds": [c["kind"] for c in metadata.constraints]}
+
+        elif label == "phase_a_architecture_vision_artifact":
             desired = infer_desired_state(metadata)
-            phase_results[label] = {"target_count": len(desired.targets)}
+            candidate = ArchitectureCandidate(
+                candidate_id="checkout-latency-vision-v1",
+                target_state_assertions=tuple(f"{t['kind']} {t['comparator']} {t['threshold']}" for t in desired.targets),
+                requirement_satisfaction_claims=tuple(t["kind"] for t in desired.targets),
+                provenance="rule-based",
+                generator_identity="world_transformation_orchestrator.infer_desired_state",
+            )
+            phase_results[label] = {
+                "candidate_id": candidate.candidate_id,
+                "target_state_assertion_count": len(candidate.target_state_assertions),
+            }
             phase_results["_desired_state"] = desired
+            phase_results["_architecture_candidate"] = candidate
 
         elif label == "phase_b_objectives_and_constraints":
             phase_results[label] = {
                 "objectives": [o["kind"] for o in metadata.objectives],
                 "constraints": [c["kind"] for c in metadata.constraints],
+            }
+
+        elif label == "phase_b_gap_analysis":
+            desired = phase_results["_desired_state"]
+            delta = compute_delta(metadata, desired)
+            phase_results[label] = {
+                "delta_item_count": len(delta),
+                "unknown_count": sum(1 for d in delta if d.current is None),
             }
 
         elif label == "phase_c_data_and_application_model":
@@ -117,11 +222,25 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
             phase_results[label] = {"ocel_object_model": "OcelObject/OcelEvent/EventObjectLink", "constitution_module_count": module_count}
 
         elif label == "phase_d_delegated_to_gymact_boundary_refusal":
-            # Deliberate, explicit refusal -- never a simulated technology decision.
+            # Deliberate, explicit, itemized refusal -- never a simulated
+            # technology decision. Names the real TOGAF 9.2 Phase D
+            # decision points being declined, not a bare boolean.
             phase_results[label] = {
                 "refused": True,
                 "delegated_to": "gymact",
                 "reason": "this repo owns no technology-architecture mechanism, per gym-actuation-boundary.md",
+                "refused_decision_points": _PHASE_D_REFUSED_DECISION_POINTS,
+            }
+
+        elif label == "phase_e_business_constraints":
+            phase_results[label] = {"implementation_constraints": [c["kind"] for c in metadata.constraints]}
+
+        elif label == "phase_e_consolidate_gap_analysis":
+            desired = phase_results["_desired_state"]
+            delta = compute_delta(metadata, desired)
+            phase_results[label] = {
+                "delta_kinds": [d.kind for d in delta],
+                "delta_violated": [bool(d.violated) if d.violated is not None else "UNKNOWN" for d in delta],
             }
 
         elif label == "phase_e_compute_delta_and_select_transformation":
@@ -133,20 +252,61 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
                 "violated_count": sum(1 for d in delta if d.violated is True),
                 "candidate_label": candidate.label if candidate is not None else "NONE",
             }
+            phase_results["_transformation_candidate"] = candidate
 
         elif label == "phase_f_powl_migration_plan":
-            phase_results[label] = {"node_count": len(graph.children), "edge_count": len(graph.edges)}
+            candidate = phase_results.get("_transformation_candidate")
+            phase_results[label] = {
+                "node_count": len(graph.children),
+                "edge_count": len(graph.edges),
+                "phase_sequence": PHASE_SEQUENCE,
+                "selected_transformation": candidate.label if candidate is not None else "NONE",
+            }
+
+        elif label == "phase_f_prioritize_via_falsification":
+            # Real risk-validation step (TOGAF F §14.4.4), wired to
+            # laboratory.py's real, previously-unused falsify_candidate.
+            # No real gymact connector exists yet, so the provider is the
+            # real, honest UnsupportedWorldExperimentProvider -- this
+            # produces a real, correctly-typed UNSUPPORTED standing, never
+            # a fabricated SURVIVES/FALSIFIED verdict.
+            arch_candidate = phase_results["_architecture_candidate"]
+            provider = UnsupportedWorldExperimentProvider()
+            from autofde_lab.reasoning.laboratory import ExperimentIntent
+
+            intent = ExperimentIntent(
+                candidate_id=arch_candidate.candidate_id,
+                target_world_ref="world:checkout-latency-v1",
+                initial_state_evidence_ref="scenario:checkout-latency-v1",
+                proposed_actions=(phase_results.get("phase_e_compute_delta_and_select_transformation", {}).get("candidate_label", "NONE"),),
+            )
+            receipt = provider.submit_experiment(intent)
+            falsification = falsify_candidate(arch_candidate, receipts=(receipt,))
+            phase_results[label] = {
+                "falsification_standing": falsification.standing.value,
+                "rationale": falsification.rationale,
+            }
 
         elif label == "phase_g_admission_and_conformance":
             # The admission half already happened (validate_model above);
-            # this records that fact -- the conformance self-check itself
-            # runs after the whole execution completes, over the resulting
-            # log, since it needs the completed log to check.
-            phase_results[label] = {"admission": "validate_model passed before execution began"}
+            # this records that fact. The conformance self-check runs
+            # after the whole execution completes, over the resulting
+            # log, since it needs the completed log to check -- per
+            # iteration-2's audit, this is honestly a PARTIAL input to
+            # TOGAF's G4 "Perform Architecture Compliance Reviews" (real
+            # order-fitness signal), never a claim of implementing the
+            # full Architecture-Contract-based review TOGAF documents.
+            phase_results[label] = {
+                "admission": "validate_model passed before execution began",
+                "compliance_review_scope": "PARTIAL -- order-fitness only, no Architecture Contract object exists",
+            }
 
         elif label == "phase_h_gap_ledger_reference":
             ledger = REPO_ROOT / "docs" / "2026-08-11-autonomic-loop-gap-ledger.md"
-            phase_results[label] = {"gap_ledger_exists": ledger.is_file()}
+            phase_results[label] = {
+                "gap_ledger_exists": ledger.is_file(),
+                "unsupported_togaf_substep_count": len(UNSUPPORTED_TOGAF_SUBSTEPS),
+            }
 
     context = ExecutionContext()
     execute(
