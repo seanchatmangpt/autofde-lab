@@ -979,6 +979,16 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
     receipt_ids = {r["receipt_id"] for r in receipts}
     actuation_of_receipt: dict[str, str] = {}
     observation_of_receipt: dict[str, str] = {}
+    # Real bug found and fixed this session (van der Aalst-style integrity
+    # audit): NEITHER of the two loops below that can append a real
+    # `PostconditionObservation` object guarded against appending the SAME
+    # `observation_id` (derived purely from `verification_id`) twice --
+    # not even within a single loop. Two different receipts sharing one
+    # `verification_id` (a real, legitimate case) silently double-declared
+    # the same object id, which `OcelLog.validate()`'s DUPLICATE_ENTITY_ID
+    # law (OCPQ Definition 2, law 3) now catches. One real, shared guard
+    # for both loops.
+    seen_postcondition_ids: set[str] = set()
 
     for r in receipts:
         rid = r["receipt_id"]
@@ -1060,26 +1070,28 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
         if r.get("verification_id"):
             observation_id = f"urn:level4:postcondition:{r['verification_id']}"
             observation_of_receipt[rid] = observation_id
-            objects.append(
-                OcelObject(
-                    observation_id,
-                    "PostconditionObservation",
-                    _attrs(
-                        {
-                            "verification_id": _s(str(r["verification_id"])),
-                            "verified": _b(r["verified"])
-                            if isinstance(r.get("verified"), bool)
-                            else None,
-                            "acknowledgement_status": _s(str(r["acknowledgement_status"]))
-                            if r.get("acknowledgement_status")
-                            else None,
-                            "observation_confidence": _f(r["observation_confidence"])
-                            if isinstance(r.get("observation_confidence"), (int, float))
-                            else None,
-                        }
-                    ),
+            if observation_id not in seen_postcondition_ids:
+                seen_postcondition_ids.add(observation_id)
+                objects.append(
+                    OcelObject(
+                        observation_id,
+                        "PostconditionObservation",
+                        _attrs(
+                            {
+                                "verification_id": _s(str(r["verification_id"])),
+                                "verified": _b(r["verified"])
+                                if isinstance(r.get("verified"), bool)
+                                else None,
+                                "acknowledgement_status": _s(str(r["acknowledgement_status"]))
+                                if r.get("acknowledgement_status")
+                                else None,
+                                "observation_confidence": _f(r["observation_confidence"])
+                                if isinstance(r.get("observation_confidence"), (int, float))
+                                else None,
+                            }
+                        ),
+                    )
                 )
-            )
             o2o.append(ObjectObjectLink(observation_id, rid, "evidenced_by_receipt"))
             # An observation observes the actuation it was derived from --
             # the receipt whose id appears in this receipt's parents.
@@ -1098,13 +1110,19 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
     # an absence.
     verifier_ids: list[str] = []
     goal_observations: list[str] = []
+    # Reuses `seen_postcondition_ids` declared above the first
+    # `PostconditionObservation` loop (do NOT re-initialize it here --
+    # this loop must see ids the first loop already appended too, which a
+    # prior version of this fix got wrong by shadowing the name with a
+    # narrower, loop-2-only set).
     for record in _records("goal_consequence_observed"):
         goal_id = str(record.get("goal_id") or "")
         actuation_id = actuation_of_receipt.get(str(record.get("actuation_receipt_id") or ""))
         if goal_id not in goal_ids or actuation_id is None:
             continue
         observation_id = f"urn:level4:postcondition:{record['verification_id']}"
-        if observation_id not in observation_of_receipt.values():
+        if observation_id not in seen_postcondition_ids:
+            seen_postcondition_ids.add(observation_id)
             objects.append(
                 OcelObject(
                     observation_id,
@@ -1208,6 +1226,16 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
     # unique reference object per event (Gianola Assumption 3).
 
     log = OcelLog.new(objects=objects, object_object_links=o2o)
+    # Real object-centric integrity check (OCPQ Definition 2, per
+    # OcelLog.validate()'s own docstring) -- van der Aalst-style audit
+    # found this function previously constructed and returned/persisted
+    # its log with NO integrity check anywhere in its own call chain
+    # (`_persist_level4_ocel` writes `built.log.to_ocel2_json()` straight
+    # to disk). Events are appended below with real, individually-gated
+    # O2O links; validating here, before any event is appended, would be
+    # premature (no events exist yet) -- the real check happens once
+    # events are appended, right before this function returns (see the
+    # `log = log.validate()` call near the end of this function).
 
     first_receipt_ns = (
         parse_ns(receipts[0]["occurred_at"]) if receipts and receipts[0].get("occurred_at") else 0
@@ -1501,6 +1529,14 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
         sources_read=tuple(sources_read),
         sources_absent=tuple(sources_absent),
     )
+    # Real integrity check before this log is ever returned/persisted --
+    # OcelLog.validate() enforces OCPQ Definition 2 (no dangling E2O
+    # links, no duplicate ids, no time-stable-attribute mutation, every
+    # event has >=1 real object link). Raises OcelError, never silently
+    # swallowed -- a structurally invalid Level 4 log must never reach
+    # `_persist_level4_ocel`'s `to_ocel2_json()` write to disk.
+    log = log.validate()
+
     return Level4Ocel(
         log=log,
         report=report,

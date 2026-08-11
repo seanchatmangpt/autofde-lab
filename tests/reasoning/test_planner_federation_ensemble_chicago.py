@@ -17,8 +17,10 @@ from __future__ import annotations
 import os
 import threading
 
+from autofde_lab.ocel.object_centric_conformance import check_object_centric_conformance
 from autofde_lab.powl.algebra import Atom, PartialOrder
 from autofde_lab.powl.guard_executor import ExecutionContext, execute
+from autofde_lab.powl.ocel_bridge import OcelExecutionRecorder
 from autofde_lab.reasoning.planner_federation import SOLVER_NAMES, federate, solve_with_one_solver
 from autofde_lab.reasoning.planner_federation_ensemble import federate_concurrently
 
@@ -98,3 +100,42 @@ def test_a_real_unregistered_solver_still_returns_none_without_breaking_others()
     )
     assert result["Astar"] is not None
     assert result["NotARealRegisteredSolverName"] is None
+
+
+def test_real_ocel_v2_trace_is_produced_when_a_recorder_is_supplied_and_conforms() -> None:
+    """Closes a real gap a van der Aalst-style process-discovery-completeness
+    audit found this session: this module ran a real, admitted, concurrent
+    POWL process with ZERO OCEL trace anywhere. Confirm a real OCEL 2.0 log
+    is now produced when a `recorder` is supplied, real events exist for
+    both real solvers, and the resulting log independently passes
+    `check_object_centric_conformance` (the same module/discipline built
+    two turns ago) -- not merely "an event fired.\""""
+    recorder = OcelExecutionRecorder(execution_id="planner-federation-run-001")
+
+    result = federate_concurrently(
+        domain_path=BLOCKS3_DOMAIN,
+        problem_path=BLOCKS3_PROBLEM,
+        solver_names=("Astar", "FF"),
+        timeout_s=30.0,
+        max_workers=2,
+        recorder=recorder,
+    )
+    assert result["Astar"] is not None
+    assert result["FF"] is not None
+
+    log = recorder.close()
+    assert len(log.events) == 2
+
+    intended = {"planner-federation-run-001": ("Astar", "FF")}
+    conformance = check_object_centric_conformance(log, intended_traces_by_object_id=intended)
+    assert conformance.all_conform is True
+    assert conformance.overall_fitness == 1.0
+
+
+def test_no_recorder_preserves_the_exact_prior_behavior() -> None:
+    """The new `recorder` parameter must be strictly additive -- calling
+    without it (every pre-existing call site in this repo) behaves exactly
+    as before."""
+    result = federate_concurrently(domain_path=BLOCKS3_DOMAIN, problem_path=BLOCKS3_PROBLEM, solver_names=("Astar",))
+    assert set(result) == {"Astar"}
+    assert result["Astar"] is not None

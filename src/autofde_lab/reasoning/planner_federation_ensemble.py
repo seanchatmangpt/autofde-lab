@@ -43,6 +43,21 @@ any caller-visible change.
 `planner_federation.py` itself is unmodified -- this module only imports and
 reuses its real `solve_with_one_solver`, `SOLVER_NAMES`, and `validate_model`
 re-check discipline, never re-implementing solver invocation.
+
+Real OCEL observation, optional (added this session)
+------------------------------------------------------
+A van der Aalst-style process-discovery-completeness audit found this
+module (and `breed_ensemble.py`, `breed_ensemble_loop.py`,
+`gymact_dspy_react.py`) running real, `validate_model`-admitted POWL
+processes via `guard_executor.execute` with **zero OCEL trace produced
+anywhere** -- a real gap, since `powl.ocel_bridge.execute_with_ocel`
+(the mechanism that would produce one) previously had no `max_workers`/
+`context` passthrough and so could not observe a concurrent execution
+like this one without silently dropping its concurrency. That passthrough
+was added this session; `federate_concurrently`'s optional `recorder`
+parameter below is the first real caller to use it. Passing no `recorder`
+(the default) preserves this function's exact prior behavior and
+signature -- existing callers are unaffected.
 """
 
 from __future__ import annotations
@@ -51,7 +66,8 @@ import logging
 from typing import Optional
 
 from autofde_lab.powl.algebra import Atom, PartialOrder
-from autofde_lab.powl.guard_executor import ExecutionContext, execute
+from autofde_lab.powl.guard_executor import ExecutionContext, ExecutionTrace, execute
+from autofde_lab.powl.ocel_bridge import OcelExecutionRecorder, execute_with_ocel
 from autofde_lab.powl.refusals import PowlError
 from autofde_lab.powl.validate import validate_model
 from autofde_lab.reasoning.planner_federation import SOLVER_NAMES, solve_with_one_solver
@@ -68,6 +84,7 @@ def federate_concurrently(
     solver_names: tuple[str, ...] = SOLVER_NAMES,
     timeout_s: float = 30.0,
     max_workers: int | None = None,
+    recorder: OcelExecutionRecorder | None = None,
 ) -> dict[str, Optional[PartialOrder]]:
     """Run every named solver **concurrently** against the same real domain,
     via the real, unmodified POWL runner.
@@ -110,13 +127,26 @@ def federate_concurrently(
     def atom_invoker(atom: Atom, ctx: ExecutionContext) -> None:
         ctx.attributes[atom.label] = _solve_one(atom.label)
 
-    execute(
-        node,
-        guard_evaluator=lambda name, args: True,  # PartialOrder has no ChoiceGraph -- never consulted
-        atom_invoker=atom_invoker,
-        max_choice_transitions=1,
-        max_workers=max_workers or len(solver_names),
-        context=context,
-    )
+    real_max_workers = max_workers or len(solver_names)
+    if recorder is not None:
+        trace: ExecutionTrace = execute_with_ocel(
+            node,
+            guard_evaluator=lambda name, args: True,  # PartialOrder has no ChoiceGraph -- never consulted
+            atom_invoker=atom_invoker,
+            max_choice_transitions=1,
+            max_workers=real_max_workers,
+            context=context,
+            recorder=recorder,
+        )
+        del trace  # real trace is available if a future caller needs it; discarded here, same as the no-recorder path
+    else:
+        execute(
+            node,
+            guard_evaluator=lambda name, args: True,  # PartialOrder has no ChoiceGraph -- never consulted
+            atom_invoker=atom_invoker,
+            max_choice_transitions=1,
+            max_workers=real_max_workers,
+            context=context,
+        )
 
     return {name: context.attributes.get(name) for name in solver_names}

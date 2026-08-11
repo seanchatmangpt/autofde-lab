@@ -62,6 +62,7 @@ from autofde_lab.ocel.model import OcelAttribute, OcelAttributeValue, OcelObject
 from autofde_lab.powl.algebra import Atom, PowlNode
 from autofde_lab.powl.guard_executor import (
     AtomInvoker,
+    ExecutionContext,
     ExecutionStep,
     ExecutionTrace,
     GuardEvaluator,
@@ -163,6 +164,8 @@ def execute_with_ocel(
     guard_evaluator: GuardEvaluator,
     atom_invoker: AtomInvoker,
     max_choice_transitions: int = 64,
+    max_workers: int = 1,
+    context: "ExecutionContext | None" = None,
     recorder: OcelExecutionRecorder,
 ) -> ExecutionTrace:
     """Wrap :func:`autofde_lab.powl.guard_executor.execute` so every real
@@ -179,7 +182,18 @@ def execute_with_ocel(
     ``execute()``'s own return value, untouched. OCEL events are derived
     *after* the real walk completes, by replaying the trace's own
     already-recorded steps (never a second, parallel decision mechanism,
-    and never able to alter what was actually invoked).
+    and never able to alter what was actually invoked) -- this is why
+    concurrent execution (``max_workers > 1``) is safe here: OCEL emission
+    happens by replaying the final, already-synchronized ``trace.steps``,
+    never by a live hook fired from inside concurrent worker threads.
+
+    ``max_workers``/``context`` are forwarded to ``execute()`` unchanged
+    (added so real concurrent callers, e.g.
+    `reasoning.planner_federation_ensemble.federate_concurrently`, can gain
+    real OCEL observation without losing their real concurrency -- a van
+    der Aalst-style audit this session found several real, concurrent,
+    `validate_model`-admitted POWL executions producing zero OCEL trace
+    specifically because this function couldn't previously accept them).
 
     ``recorder`` must be a real, fresh-or-reused
     :class:`OcelExecutionRecorder`; its log is left in a real, appended (not
@@ -199,6 +213,8 @@ def execute_with_ocel(
         guard_evaluator=guard_evaluator,
         atom_invoker=atom_invoker,
         max_choice_transitions=max_choice_transitions,
+        max_workers=max_workers,
+        context=context,
     )
 
     timestamp_ns = 0
