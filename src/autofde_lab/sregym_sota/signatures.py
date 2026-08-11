@@ -50,14 +50,19 @@ class RelateEvidence(dspy.Signature):
 
 class ConstructDiscriminationProcess(dspy.Signature):
     """Construct a bounded POWL-compatible observation process that partitions the
-    surviving hypotheses. Every step must use a discovered capability. Prefer reads
-    whose possible outcomes can falsify multiple competitors. Do not actuate.
+    surviving hypotheses. Each step MUST copy one exact `capability_id` from the supplied
+    capability catalog and shape `arguments` according to that capability's input_schema.
+    Never invent a surface, tool name, capability ID, argument name, or benchmark fault
+    category. Prefer observations whose possible outcomes falsify multiple competitors.
+    Do not actuate. If prior candidates were refused, obey those typed refusals rather
+    than repeating the same invalid process.
     """
 
     facts_json: str = dspy.InputField()
     hypotheses_json: str = dspy.InputField()
     obligations_json: str = dspy.InputField()
     capabilities_json: str = dspy.InputField()
+    rejections_json: str = dspy.InputField()
     max_steps: int = dspy.InputField()
     process: ObservationProcessProposal = dspy.OutputField()
 
@@ -65,6 +70,7 @@ class ConstructDiscriminationProcess(dspy.Signature):
 class CommitDiagnosis(dspy.Signature):
     """Describe the smallest causal explanation justified by externally computed
     epistemic standing. The input is already at causal closure; do not broaden it.
+    Reference only supplied hypothesis IDs and admitted fact IDs.
     """
 
     facts_json: str = dspy.InputField()
@@ -86,8 +92,11 @@ class ChallengeDiagnosis(dspy.Signature):
 
 class ConstructMitigationProcesses(dspy.Signature):
     """Construct multiple lawful POWL-compatible recovery processes for the admitted
-    diagnosis. Use only discovered capabilities. Consequential steps are explicit DO;
-    verification is explicit VERIFY. Prefer reversible causal repairs. Do not execute.
+    diagnosis. Each step MUST copy one exact `capability_id` from the supplied catalog
+    and use only arguments admitted by that capability's input_schema. Consequential
+    steps are explicit DO; verification is explicit VERIFY. Prefer reversible causal
+    repairs. Never invent a capability, surface, tool name, or benchmark fault category.
+    Do not execute.
     """
 
     diagnosis_json: str = dspy.InputField()
