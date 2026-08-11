@@ -53,3 +53,6 @@ rddl_movies/
 # .ocel2.sqlite per problem, reproducible by re-running the batch -- the
 # tooling that produces/reads them is tracked, the generated data is not.
 docs/ocel/sregym/*.ocel2.sqlite
+
+# Local secrets (GROQ_API_KEY etc.) -- never committed
+.env

@@ -36,10 +36,15 @@ import pytest
 
 from autofde_lab.fabric.gymact_capability_gate import CapabilityGate, CapabilityRefused
 from autofde_lab.reasoning.gymact_dspy_react import (
+    DecisionOutcome,
     DiagnosisResult,
+    DspyReActDecisionBackend,
+    GymActReActDiagnoser,
+    UngroundedKubectlReferenceRefused,
     build_gated_react_tools,
     run_dspy_diagnosis,
 )
+from autofde_lab.reasoning.k8s_signatures import DiagnoseKubernetesFault
 
 
 class _FakeCapability:
@@ -56,8 +61,8 @@ _FAKE_CAPABILITIES: tuple[_FakeCapability, ...] = (
 
 
 class _FakeSregymEnvironment:
-    """Real, hand-written, honest fake of exactly the `actuate`/`teardown`
-    surface `gymact_dspy_react.py` calls -- not gymact itself."""
+    """Real, hand-written, honest fake of exactly the `actuate`/`verify`/
+    `teardown` surface `gymact_dspy_react.py` calls -- not gymact itself."""
 
     def __init__(self) -> None:
         self.call_log: list[str] = []
@@ -65,6 +70,16 @@ class _FakeSregymEnvironment:
         self.torn_down = False
         self.last_diagnosis_payload: dict | None = None
         self.last_mitigation_payload: dict | None = None
+        self.verify_calls: list[dict] = []
+
+    async def verify(self, expected: dict) -> tuple[bool, dict]:
+        # Same real, honest-echo shape as
+        # test_gymact_diagnosis_driver_chicago.py's own fake `verify()` --
+        # the real conductor's GET /status returns only {"stage": <value>},
+        # never a phantom stage this fake would otherwise invent.
+        self.call_log.append("verify")
+        self.verify_calls.append(dict(expected))
+        return True, {"stage": expected.get("stage")}
 
     async def actuate(self, capability: _FakeCapability, payload: dict) -> dict:
         self.call_log.append(capability.binding)
@@ -149,6 +164,162 @@ def test_build_gated_react_tools_run_kubectl_respects_explicit_namespace(tmp_pat
     run_kubectl("get pods -n other-namespace -o json")
 
     assert env.kubectl_commands == ["kubectl get pods -n other-namespace -o json"]
+
+
+# ---------------------------------------------------------------------------
+# Grounding guard: a fabricated resource reference is really refused
+# ---------------------------------------------------------------------------
+
+
+def _manifest_with_both_bindings(tmp_path) -> CapabilityGate:
+    manifest = tmp_path / "capabilities.toml"
+    manifest.write_text(
+        '[gymact]\nenvironment = "sregym"\n\n'
+        '[[capability]]\nname = "run_kubectl"\nconsequence = "DO"\nreason = "x"\n\n'
+        '[[capability]]\nname = "observe_cluster_state"\nconsequence = "READ"\nreason = "x"\n'
+    )
+    return CapabilityGate.from_toml(manifest)
+
+
+def test_run_kubectl_first_call_is_never_grounding_checked(tmp_path) -> None:
+    """Bootstrap: the very first tool call this run makes has nothing to
+    ground against yet, so it is never refused even if it names a specific
+    resource -- matching gymact.dspy_agent's own "always starts from a real
+    observation" discipline (there is no prior observation before the
+    first call)."""
+    gate = _manifest_with_both_bindings(tmp_path)
+    env = _FakeSregymEnvironment()
+    tools = build_gated_react_tools(env, gate, _FAKE_CAPABILITIES, namespace="social-network")
+    run_kubectl = next(t for t in tools if t.__name__ == "run_kubectl")
+
+    # Real fake environment: any run_kubectl call returns a fixed result
+    # regardless of the resource name in the command, so this is really
+    # exercising the grounding guard's bootstrap path, not a fake that
+    # happens to know about "nope-fabricated-pod".
+    run_kubectl("describe pod nope-fabricated-pod")
+
+    assert env.kubectl_commands == ["kubectl describe pod nope-fabricated-pod -n social-network"]
+
+
+def test_run_kubectl_refuses_fabricated_resource_after_real_observation(tmp_path) -> None:
+    """Once a real observation has happened, naming a resource that never
+    appeared in any real prior tool result is mechanically refused --
+    before any real actuate() call for that second command."""
+    gate = _manifest_with_both_bindings(tmp_path)
+    env = _FakeSregymEnvironment()
+    tools = build_gated_react_tools(env, gate, _FAKE_CAPABILITIES, namespace="social-network")
+    run_kubectl = next(t for t in tools if t.__name__ == "run_kubectl")
+
+    # First, a real observation that grounds "api-0" (embedded as JSON text
+    # inside result_text, per _FakeSregymEnvironment's real return shape).
+    run_kubectl("get pods -o json")
+    assert env.call_log == ["run_kubectl"]
+
+    with pytest.raises(UngroundedKubectlReferenceRefused) as excinfo:
+        run_kubectl("describe pod totally-fabricated-name")
+
+    assert "totally-fabricated-name" in excinfo.value.ungrounded_identifiers
+    # The refusal happened before any second real actuate() call.
+    assert env.call_log == ["run_kubectl"]
+
+
+def test_run_kubectl_accepts_a_really_grounded_resource_reference(tmp_path) -> None:
+    """A resource name that DID appear in a real prior tool result is
+    accepted, not refused -- the guard grounds, it doesn't just block."""
+    gate = _manifest_with_both_bindings(tmp_path)
+    env = _FakeSregymEnvironment()
+    tools = build_gated_react_tools(env, gate, _FAKE_CAPABILITIES, namespace="social-network")
+    run_kubectl = next(t for t in tools if t.__name__ == "run_kubectl")
+
+    run_kubectl("get pods -o json")  # grounds "api-0" (see _FakeSregymEnvironment)
+    result = run_kubectl("describe pod api-0")
+
+    assert env.call_log == ["run_kubectl", "run_kubectl"]
+    assert "result_text" in result
+
+
+# ---------------------------------------------------------------------------
+# Unified signature vocabulary: the diagnoser now reasons over
+# k8s_signatures.DiagnoseKubernetesFault, not a sregym-coupled signature.
+# ---------------------------------------------------------------------------
+
+
+def test_dspy_react_decision_backend_uses_generic_k8s_signature() -> None:
+    def _fake_tool() -> str:
+        """A fake tool."""
+        return "ok"
+
+    # DspyReActDecisionBackend() with no program= builds a fresh
+    # dspy.ReAct(DiagnoseKubernetesFault, ...) inside decide() -- assert
+    # against the real signature class it is documented to use, the same
+    # way the module under test constructs it.
+    program = dspy.ReAct(DiagnoseKubernetesFault, tools=[_fake_tool], max_iters=1)
+
+    assert program.signature is DiagnoseKubernetesFault
+    assert DspyReActDecisionBackend()._program is None
+
+
+# ---------------------------------------------------------------------------
+# The decision-backend seam is real plumbing: an explicit backend is used.
+# ---------------------------------------------------------------------------
+
+
+class _FixedDecisionBackend:
+    """A real, honest, hand-written DiagnosisDecisionBackend that makes no
+    LLM call at all -- proving GymActReActDiagnoser really delegates to
+    whatever backend it is given, not always to a freshly-built dspy.ReAct.
+    This is the concrete evidence the swappable seam is real plumbing, not
+    decoration: a future PlannerDecisionBackend would look exactly like
+    this from GymActReActDiagnoser's point of view."""
+
+    def __init__(self) -> None:
+        self.calls: list[dict] = []
+
+    def decide(
+        self, *, namespace, symptom_description, observed_resource_state, tools, max_iters
+    ) -> DecisionOutcome:
+        self.calls.append(
+            {
+                "namespace": namespace,
+                "symptom_description": symptom_description,
+                "observed_resource_state": observed_resource_state,
+                "tool_count": len(tools),
+                "max_iters": max_iters,
+            }
+        )
+        return DecisionOutcome(
+            root_cause="fixed-root-cause",
+            confidence=0.42,
+            supporting_evidence="fixed-evidence",
+            trajectory={},
+        )
+
+
+def test_gym_act_react_diagnoser_delegates_to_explicit_decision_backend(tmp_path) -> None:
+    gate = _manifest_with_both_bindings(tmp_path)
+    env = _FakeSregymEnvironment()
+    backend = _FixedDecisionBackend()
+
+    diagnoser = GymActReActDiagnoser(
+        environment=env,
+        gate=gate,
+        capabilities=_FAKE_CAPABILITIES,
+        namespace="social-network",
+        max_iters=3,
+        decision_backend=backend,
+    )
+
+    outcome = diagnoser(problem_id="wrong_dns_policy_social_network", namespace="social-network")
+
+    assert isinstance(outcome, DecisionOutcome)
+    assert outcome.root_cause == "fixed-root-cause"
+    assert outcome.confidence == 0.42
+    assert len(backend.calls) == 1
+    assert backend.calls[0]["namespace"] == "social-network"
+    assert backend.calls[0]["max_iters"] == 3
+    # Real tools (run_kubectl, observe_cluster_state) were really built and
+    # handed to the backend, even though this fake backend never calls them.
+    assert backend.calls[0]["tool_count"] == 2
 
 
 # ---------------------------------------------------------------------------

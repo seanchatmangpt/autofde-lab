@@ -124,6 +124,7 @@ pddl = [
 ]
 dspy = [
     "dspy",  # unpinned: DSPyPolicy always targets the most recent dspy release
+    "faker",  # anti-memorization name substitution for gepa_train.py's offline trainset
 ]
 ofmf = [
     # Vendored from ~/dev/.spec-kit.bak/src/specify_cli/ofmf/ofmf_keystone.py

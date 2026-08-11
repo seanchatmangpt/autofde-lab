@@ -23,9 +23,35 @@ from enum import Enum
 
 
 
+class StandingValue(str, Enum):
+    """Status-vocabulary named individuals from this ontology file."""
+
+    DO = "DO"
+    PURE = "PURE"
+    READ = "READ"
+    VERIFY = "VERIFY"
+
+
+
+@dataclass(frozen=True)
+class Activity:
+    """A labelled process step with an explicit consequence class. DSPy reasons and constructs candidate activities; it never itself performs a DO-consequence activity's real effect -- that routes through GymAct/BRCE, unchanged by this vocabulary."""
+    estimated_cost: str | None = None  #  (ref: http://www.w3.org/2001/XMLSchema#double)
+    expected_information_gain: str | None = None  #  (ref: http://www.w3.org/2001/XMLSchema#double)
+    has_consequence: str | None = None  #  (ref: ConsequenceClass)
+    required_capability_class: str | None = None  # A named capability class an executor must resolve to a real, gated capability before this Activity may run -- never resolved by this vocabulary itself. (ref: http://www.w3.org/2001/XMLSchema#string)
+
+
 @dataclass(frozen=True)
 class ChoiceGraph:
     """ChoiceGraph"""
+
+
+@dataclass(frozen=True)
+class Guard:
+    """A named, evaluable predicate on a choice-graph transition. Guard evaluation is deterministic and external to this vocabulary -- the ontology names the predicate, it does not define its truth."""
+    guard_predicate: str | None = None  # A named predicate identifier (e.g. 'causal_closure') an external, deterministic evaluator resolves against the current epistemic state. (ref: http://www.w3.org/2001/XMLSchema#string)
+    guards_edge: str | None = None  #  (ref: ProcessNode)
 
 
 @dataclass(frozen=True)
@@ -75,7 +101,10 @@ class TransitionNode:
 
 
 __all__ = [
+    "StandingValue",
+    "Activity",
     "ChoiceGraph",
+    "Guard",
     "OrderEdge",
     "POWLCommitment",
     "POWLProcess",

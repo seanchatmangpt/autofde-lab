@@ -20,10 +20,17 @@ from autofde_lab.constitution import process
 
 
 def test_real_import_succeeds_and_dunder_all_matches_known_manifest() -> None:
-    """The real import succeeds, and ``__all__`` is exactly the eight manufactured
-    classes read directly from the source file (no guessing)."""
+    """The real import succeeds, and ``__all__`` is exactly the manufactured
+    classes read directly from the source file (no guessing) -- extended
+    2026-08-10 with ``Activity``/``Guard``/``StandingValue`` after
+    ``ontology/process.ttl`` gained the ``afl:Activity``/``afl:Guard``
+    classes and the ``afl:ConsequenceClass`` (PURE/READ/DO/VERIFY) named
+    individuals, regenerated via a real ``ggen sync run``."""
     assert process.__all__ == [
+        "StandingValue",
+        "Activity",
         "ChoiceGraph",
+        "Guard",
         "OrderEdge",
         "POWLCommitment",
         "POWLProcess",
@@ -32,6 +39,37 @@ def test_real_import_succeeds_and_dunder_all_matches_known_manifest() -> None:
         "SilentTransition",
         "TransitionNode",
     ]
+
+
+def test_standing_value_enum_carries_the_four_consequence_classes() -> None:
+    """The manufactured ``StandingValue`` enum (the shared template's own
+    name for any vocabulary-individual block, per
+    ``templates/constitution_module.py.tera``) carries exactly the four
+    named individuals ``ontology/process.ttl``'s ``afl:ConsequenceScheme``
+    declares -- PURE/READ/DO/VERIFY, real activity-consequence classes, not
+    guessed values."""
+    assert {member.value for member in process.StandingValue} == {"PURE", "READ", "DO", "VERIFY"}
+
+
+def test_activity_dataclass_has_the_real_ontology_fields() -> None:
+    cls = process.Activity
+    instance = cls(
+        estimated_cost="urn:example:cost-1",
+        expected_information_gain="urn:example:gain-1",
+        has_consequence="urn:example:DO",
+        required_capability_class="urn:example:capability-class-1",
+    )
+    assert instance.estimated_cost == "urn:example:cost-1"
+    assert instance.expected_information_gain == "urn:example:gain-1"
+    assert instance.has_consequence == "urn:example:DO"
+    assert instance.required_capability_class == "urn:example:capability-class-1"
+
+
+def test_guard_dataclass_has_the_real_ontology_fields() -> None:
+    cls = process.Guard
+    instance = cls(guard_predicate="causal_closure", guards_edge="urn:example:edge-1")
+    assert instance.guard_predicate == "causal_closure"
+    assert instance.guards_edge == "urn:example:edge-1"
 
 
 def test_powl_commitment_and_powl_process_class_names_render_with_correct_casing() -> None:
@@ -113,10 +151,13 @@ def test_process_node_all_fields_explicit() -> None:
 
 
 def test_every_name_in_dunder_all_resolves_via_getattr_and_constructs() -> None:
-    """Generic sweep over ``process.__all__``: every name resolves via ``getattr``
-    to a real dataclass, gets constructed with representative values for every one
-    of its real fields (discovered from ``dataclasses.fields``, not hardcoded per
-    class), and the constructed instance's real field values round-trip exactly."""
+    """Generic sweep over ``process.__all__``: every DATACLASS name resolves
+    via ``getattr`` to a real dataclass, gets constructed with representative
+    values for every one of its real fields (discovered from
+    ``dataclasses.fields``, not hardcoded per class), and the constructed
+    instance's real field values round-trip exactly. ``StandingValue`` (the
+    manufactured vocabulary enum, not a dataclass) is swept separately below
+    rather than skipped silently."""
     representative_values = {
         "after_node": "urn:example:after-node-1",
         "before_node": "urn:example:before-node-1",
@@ -129,18 +170,25 @@ def test_every_name_in_dunder_all_resolves_via_getattr_and_constructs() -> None:
         "affected_by_perturbation": ("urn:example:perturbation-1",),
         "has_child_node": ("urn:example:child-node-1",),
         "precedes": ("urn:example:successor-node-1",),
+        "estimated_cost": "urn:example:cost-1",
+        "expected_information_gain": "urn:example:gain-1",
+        "has_consequence": "urn:example:DO",
+        "required_capability_class": "urn:example:capability-class-1",
+        "guard_predicate": "urn:example:causal-closure",
+        "guards_edge": "urn:example:edge-1",
     }
     checked_classes = []
     for name in process.__all__:
         cls = getattr(process, name)
-        assert dataclasses.is_dataclass(cls)
+        if not dataclasses.is_dataclass(cls):
+            continue
         field_names = [f.name for f in dataclasses.fields(cls)]
         kwargs = {fname: representative_values[fname] for fname in field_names}
         instance = cls(**kwargs)
         for fname, value in kwargs.items():
             assert getattr(instance, fname) == value
         checked_classes.append(name)
-    assert checked_classes == list(process.__all__)
+    assert checked_classes == [n for n in process.__all__ if n != "StandingValue"]
 
 
 def test_dataclasses_are_frozen_mutation_raises_frozen_instance_error() -> None:

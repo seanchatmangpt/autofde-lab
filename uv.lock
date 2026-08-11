@@ -460,6 +460,7 @@ all = [
     { name = "blake3" },
     { name = "cartopy" },
     { name = "dspy" },
+    { name = "faker" },
     { name = "fastapi" },
     { name = "fastmcp" },
     { name = "flax", marker = "(python_full_version >= '3.12' and sys_platform == 'linux') or (python_full_version >= '3.12' and sys_platform == 'win32')" },
@@ -534,6 +535,7 @@ domains = [
 ]
 dspy = [
     { name = "dspy" },
+    { name = "faker" },
 ]
 gymact = [
     { name = "fastapi" },
@@ -625,6 +627,7 @@ requires-dist = [
     { name = "cartopy", marker = "extra == 'domains'", specifier = ">=0.22.0" },
     { name = "discrete-optimization", specifier = ">=0.9.0" },
     { name = "dspy", marker = "extra == 'dspy'" },
+    { name = "faker", marker = "extra == 'dspy'" },
     { name = "fastapi", marker = "extra == 'gymact'", specifier = ">=0.115" },
     { name = "fastmcp", marker = "extra == 'mcp'", specifier = ">=3.4.4,<4" },
     { name = "flax", marker = "(python_full_version >= '3.12' and sys_platform == 'linux' and extra == 'solvers') or (python_full_version >= '3.12' and sys_platform == 'win32' and extra == 'solvers')", specifier = ">=0.10.6" },
@@ -2248,6 +2251,18 @@ wheels = [
 ]
 
 [[package]]
+name = "faker"
+version = "40.36.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/98/d2/026af1e002bbc6df534d1f8262b18ec79a974f928e9290bfbfdfe7c7b2af/faker-40.36.0.tar.gz", hash = "sha256:754048c76c03afa7de83eee8f4bcee3cf668cbb7d995f54a4e9678db7f110308", size = 2025903, upload-time = "2026-07-24T21:11:33.088Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/50/9a/b947ed175ce9a0dcb070ccf3607f0ce8720cfb5ed1a36166a150b2acd5af/faker-40.36.0-py3-none-any.whl", hash = "sha256:82b9497d9cfe017048075bcf969298a74b1b6e39f5e4dad1211085d1133f7b62", size = 2062829, upload-time = "2026-07-24T21:11:31.37Z" },
+]
+
+[[package]]
 name = "farama-notifications"
 version = "0.0.6"
 source = { registry = "https://pypi.org/simple" }
@@ -2910,6 +2925,8 @@ requires-dist = [
     { name = "blake3", specifier = ">=1.0,<2" },
     { name = "counter-cube", marker = "python_full_version >= '3.12' and extra == 'cube'", editable = "vendor/gyms/cube-standard/examples/counter-cube" },
     { name = "cube-standard", extras = ["docker"], marker = "python_full_version >= '3.12' and extra == 'cube'", editable = "vendor/gyms/cube-standard" },
+    { name = "datasets", marker = "extra == 'gyms'", specifier = ">=3,<4" },
+    { name = "dspy", marker = "extra == 'dspy'", specifier = ">=3.3,<4" },
     { name = "fastapi", specifier = ">=0.139.2,<1" },
     { name = "fastmcp", specifier = ">=3.4.1,<4" },
     { name = "faststream", specifier = ">=0.7.2,<0.8" },
@@ -2926,7 +2943,7 @@ requires-dist = [
     { name = "typer", specifier = ">=0.27,<1" },
     { name = "uvicorn", specifier = ">=0.48,<1" },
 ]
-provides-extras = ["gyms", "cube"]
+provides-extras = ["gyms", "cube", "dspy"]
 
 [package.metadata.requires-dev]
 dev = [
