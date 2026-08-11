@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import uuid
 from dataclasses import dataclass
@@ -35,13 +36,33 @@ class McpBroker:
         )
         self._available: dict[str, Surface] = {}
 
+    async def _list_tools_with_retry(self, surface: Surface) -> list[Any]:
+        attempts = int(
+            os.getenv(
+                "AUTOFDE_REQUIRED_MCP_DISCOVERY_ATTEMPTS" if surface.required else "AUTOFDE_OPTIONAL_MCP_DISCOVERY_ATTEMPTS",
+                "12" if surface.required else "3",
+            )
+        )
+        delay = float(os.getenv("AUTOFDE_MCP_DISCOVERY_RETRY_SECONDS", "1"))
+        last_error: Exception | None = None
+        for attempt in range(1, max(1, attempts) + 1):
+            try:
+                async with Client(self._transport(surface)) as client:
+                    return list(await client.list_tools())
+            except Exception as exc:  # SREGym may still be publishing a port-forward.
+                last_error = exc
+                if attempt < attempts:
+                    await asyncio.sleep(delay)
+        assert last_error is not None
+        raise last_error
+
     async def discover(self) -> list[Capability]:
         capabilities: list[Capability] = []
         failures: list[str] = []
+        self._available.clear()
         for surface in self.surfaces:
             try:
-                async with Client(self._transport(surface)) as client:
-                    tools = await client.list_tools()
+                tools = await self._list_tools_with_retry(surface)
             except Exception as exc:
                 if surface.required:
                     failures.append(f"{surface.name}: {type(exc).__name__}: {exc}")
