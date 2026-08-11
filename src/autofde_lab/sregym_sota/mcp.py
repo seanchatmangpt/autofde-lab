@@ -39,7 +39,9 @@ class McpBroker:
     async def _list_tools_with_retry(self, surface: Surface) -> list[Any]:
         attempts = int(
             os.getenv(
-                "AUTOFDE_REQUIRED_MCP_DISCOVERY_ATTEMPTS" if surface.required else "AUTOFDE_OPTIONAL_MCP_DISCOVERY_ATTEMPTS",
+                "AUTOFDE_REQUIRED_MCP_DISCOVERY_ATTEMPTS"
+                if surface.required
+                else "AUTOFDE_OPTIONAL_MCP_DISCOVERY_ATTEMPTS",
                 "12" if surface.required else "3",
             )
         )
@@ -55,6 +57,18 @@ class McpBroker:
                     await asyncio.sleep(delay)
         assert last_error is not None
         raise last_error
+
+    @staticmethod
+    def _tool_input_schema(tool: Any) -> dict[str, Any]:
+        raw = getattr(tool, "inputSchema", None)
+        if raw is None:
+            raw = getattr(tool, "input_schema", None)
+        if raw is None:
+            return {}
+        if hasattr(raw, "model_dump"):
+            dumped = raw.model_dump()
+            return dumped if isinstance(dumped, dict) else {}
+        return dict(raw) if isinstance(raw, dict) else {}
 
     async def discover(self) -> list[Capability]:
         capabilities: list[Capability] = []
@@ -77,6 +91,7 @@ class McpBroker:
                         surface=surface.name,
                         tool=name,
                         description=str(description),
+                        input_schema=self._tool_input_schema(tool),
                     )
                 )
         if failures:
