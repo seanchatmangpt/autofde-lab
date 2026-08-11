@@ -5,6 +5,7 @@ import json
 import os
 import time
 from pathlib import Path
+from typing import Any
 from urllib.request import urlopen
 
 import dspy
@@ -24,6 +25,7 @@ from .models import DiagnosisCandidate, HypothesisProposal, HypothesisRecord, Mi
 from .powl_process import (
     McpActivityDriver,
     ProcessAdmissionError,
+    canonical_read_identity,
     compile_mitigation_process,
     compile_observation_process,
 )
@@ -38,7 +40,7 @@ from .signatures import (
 )
 
 
-def _json(value) -> str:
+def _json(value: Any) -> str:
     if isinstance(value, list):
         payload = [v.model_dump() if hasattr(v, "model_dump") else v for v in value]
     elif hasattr(value, "model_dump"):
@@ -77,37 +79,78 @@ async def _wait_for_stage(target: set[str], *, timeout_s: int = 300) -> str:
     raise TimeoutError(f"benchmark stage did not enter {sorted(target)}")
 
 
-async def _seed_observations(broker: McpBroker, facts: FactStore, capabilities) -> None:
-    available = {(c.surface, c.tool) for c in capabilities}
-    if ("kubectl", "exec_kubectl_cmd_safely") not in available:
+def _history_entry(
+    capability_id: str,
+    arguments: dict[str, Any],
+    *,
+    phase: str,
+    round_index: int | None = None,
+    repeat_reason: str = "",
+) -> dict[str, Any]:
+    return {
+        "identity": canonical_read_identity(capability_id, arguments),
+        "capability_id": capability_id,
+        "arguments": arguments,
+        "phase": phase,
+        "round": round_index,
+        "repeat_reason": repeat_reason,
+    }
+
+
+async def _seed_observations(
+    broker: McpBroker,
+    facts: FactStore,
+    capabilities,
+    read_history: list[dict[str, Any]],
+) -> None:
+    available = {(c.surface, c.tool): c for c in capabilities}
+    capability = available.get(("kubectl", "exec_kubectl_cmd_safely"))
+    if capability is None:
         return
-    # Kubernetes adapter bootstrap only. Core epistemic routing never branches
-    # on object kinds; subsequent reads are signature-manufactured from the live
-    # capability catalog.
     for cmd in (
         "kubectl api-resources -o wide",
-        "kubectl get events -A --sort-by=.lastTimestamp",
-        "kubectl get pods -A -o wide",
+        "kubectl get events -A -o json",
+        "kubectl get all -A -o json",
     ):
-        raw = await broker.call("kubectl", "exec_kubectl_cmd_safely", {"cmd": cmd})
-        facts.ingest(f"mcp:kubectl:{cmd}", raw)
+        arguments = {"cmd": cmd}
+        raw = await broker.call("kubectl", capability.tool, arguments)
+        identity = canonical_read_identity(capability.id, arguments)
+        facts.ingest(identity, raw)
+        read_history.append(_history_entry(capability.id, arguments, phase="seed"))
 
 
-def _process_observations(evidence, store: FactStore) -> int:
+def _process_observations(
+    evidence,
+    store: FactStore,
+    read_history: list[dict[str, Any]],
+    *,
+    round_index: int,
+    repeat_reasons: dict[str, str],
+) -> int:
     count = 0
     for record in evidence.activity_records:
-        observation = record.metadata.get("observation") if record.success else None
-        if observation:
-            count += len(
-                store.ingest(
-                    f"mcp:{record.metadata.get('surface')}:{record.metadata.get('tool')}",
-                    str(observation),
-                )
+        if not record.success:
+            continue
+        capability_id = str(record.metadata.get("capability_id", ""))
+        arguments = dict(record.metadata.get("arguments", {}))
+        observation = record.metadata.get("observation")
+        if not capability_id or observation is None:
+            continue
+        identity = canonical_read_identity(capability_id, arguments)
+        count += len(store.ingest(identity, str(observation)))
+        read_history.append(
+            _history_entry(
+                capability_id,
+                arguments,
+                phase="discriminate",
+                round_index=round_index,
+                repeat_reason=repeat_reasons.get(record.label, ""),
             )
+        )
     return count
 
 
-def _activity_records(evidence) -> list[dict]:
+def _activity_records(evidence) -> list[dict[str, Any]]:
     return [
         {
             "label": record.label,
@@ -156,7 +199,7 @@ def _diagnosis_identity_is_admitted(
 
 def _subject_metadata(model: str) -> dict[str, str]:
     return {
-        "autofde_head": os.getenv("GITHUB_SHA", "UNKNOWN"),
+        "autofde_head": os.getenv("AUTOFDE_HEAD", os.getenv("GITHUB_SHA", "UNKNOWN")),
         "sregym_head": os.getenv("SREGYM_SHA", "UNKNOWN"),
         "problem_id": os.getenv("PROBLEM_ID", "UNKNOWN"),
         "model_id": model,
@@ -164,7 +207,11 @@ def _subject_metadata(model: str) -> dict[str, str]:
     }
 
 
-def _write_receipt(payload: dict) -> None:
+def _epistemic_signature(records: list[HypothesisRecord]) -> tuple[tuple[str, str], ...]:
+    return tuple(sorted((record.id, record.state) for record in records))
+
+
+def _write_receipt(payload: dict[str, Any]) -> None:
     root = Path(os.getenv("AGENT_LOGS_DIR", "."))
     root.mkdir(parents=True, exist_ok=True)
     path = root / "autofde-sota-receipt.json"
@@ -177,9 +224,9 @@ async def _refuse_diagnosis(
     subject: dict[str, str],
     standing: str,
     facts: FactStore,
-    trajectory: list[dict],
+    trajectory: list[dict[str, Any]],
     detail: object | None = None,
-) -> dict:
+) -> dict[str, Any]:
     result = {
         "subject": subject,
         "signature_revision": SIGNATURE_REVISION,
@@ -193,7 +240,7 @@ async def _refuse_diagnosis(
     return result
 
 
-async def run() -> dict:
+async def run() -> dict[str, Any]:
     model = os.getenv("AGENT_MODEL_ID", os.getenv("MODEL_ID", "groq/openai/gpt-oss-120b"))
     key = os.getenv("GROQ_API_KEY")
     if not key:
@@ -204,39 +251,56 @@ async def run() -> dict:
     broker = McpBroker()
     capabilities = await broker.discover()
     store = FactStore()
-    await _seed_observations(broker, store, capabilities)
+    read_history: list[dict[str, Any]] = []
+    await _seed_observations(broker, store, capabilities, read_history)
 
     program = SignatureProgram()
     goal = (
         "restore the benchmarked system to verified healthy operation by "
         "identifying and repairing the causal mechanism"
     )
-    orient = program.orient(
+    orientation = program.orient(
         goal=goal,
         facts_json=_json(store.facts),
         capabilities_json=_json(capabilities),
-    )
+    ).orientation
 
     hypotheses: list[HypothesisProposal] = []
+    retired_portfolios: list[dict[str, Any]] = []
     records: list[HypothesisRecord] = []
-    trajectory: list[dict] = [
+    trajectory: list[dict[str, Any]] = [
         {
             "stage": "orient",
-            "focus": orient.focus,
+            "orientation": orientation.model_dump(),
             "capability_ids": [capability.id for capability in capabilities],
+            "seed_read_history": read_history,
         }
     ]
-    max_rounds = int(os.getenv("AUTOFDE_MAX_DISCRIMINATION_ROUNDS", "6"))
+    max_rounds = int(os.getenv("AUTOFDE_MAX_DISCRIMINATION_ROUNDS", "8"))
     max_process_attempts = int(os.getenv("AUTOFDE_MAX_PROCESS_CANDIDATE_ATTEMPTS", "3"))
     diagnosis: DiagnosisCandidate | None = None
-    stagnant_rounds = 0
+    previous_signature: tuple[tuple[str, str], ...] | None = None
 
     for round_index in range(max_rounds):
         if not hypotheses:
+            if retired_portfolios:
+                orientation = program.orient(
+                    goal=goal,
+                    facts_json=_json(store.facts),
+                    capabilities_json=_json(capabilities),
+                ).orientation
+                trajectory.append(
+                    {
+                        "stage": "reorient",
+                        "round": round_index,
+                        "orientation": orientation.model_dump(),
+                    }
+                )
             predicted = program.hypothesize(
                 goal=goal,
+                orientation_json=_json(orientation),
                 facts_json=_json(store.facts),
-                prior_hypotheses_json="[]",
+                prior_hypotheses_json=_json(retired_portfolios),
                 max_hypotheses=6,
             )
             hypotheses = list(predicted.hypotheses)
@@ -250,6 +314,15 @@ async def run() -> dict:
                     trajectory=trajectory,
                     detail={"ids": ids},
                 )
+            previous_signature = None
+            trajectory.append(
+                {
+                    "stage": "hypothesize",
+                    "round": round_index,
+                    "hypotheses": [hypothesis.model_dump() for hypothesis in hypotheses],
+                    "retired_portfolio_count": len(retired_portfolios),
+                }
+            )
 
         related = program.relate(
             facts_json=_json(store.facts),
@@ -265,20 +338,53 @@ async def run() -> dict:
         )
         records = compute_hypothesis_records(hypotheses, links, admitted_fact_ids)
         route = route_epistemic_state(records)
+        signature = _epistemic_signature(records)
         trajectory.append(
             {
                 "stage": "epistemic",
                 "round": round_index,
                 "route": route.value,
                 "states": {h.id: h.state for h in records},
+                "hypotheses": [h.model_dump() for h in records],
                 "fact_count": len(store.facts),
                 "rejected_evidence_links": rejected_links,
+                "epistemic_signature": list(signature),
             }
         )
 
         if route is EpistemicRoute.REHYPOTHESIZE:
+            retired_portfolios.append(
+                {
+                    "reason": "ALL_REFUTED",
+                    "round": round_index,
+                    "hypotheses": [hypothesis.model_dump() for hypothesis in hypotheses],
+                }
+            )
             hypotheses = []
+            previous_signature = None
             continue
+
+        if route is EpistemicRoute.DISCRIMINATE and previous_signature == signature:
+            retired_portfolios.append(
+                {
+                    "reason": "EPISTEMIC_FRONTIER_UNCHANGED",
+                    "round": round_index,
+                    "hypotheses": [hypothesis.model_dump() for hypothesis in hypotheses],
+                    "states": {h.id: h.state for h in records},
+                }
+            )
+            trajectory.append(
+                {
+                    "stage": "epistemic_stagnation",
+                    "round": round_index,
+                    "action": "retire_and_rehypothesize",
+                    "signature": list(signature),
+                }
+            )
+            hypotheses = []
+            previous_signature = None
+            continue
+        previous_signature = signature
 
         if route is EpistemicRoute.DIAGNOSIS_READY:
             candidate = program.commit(
@@ -307,19 +413,28 @@ async def run() -> dict:
             obligations = list(related.obligations)
 
         frontier = discrimination_frontier(records)
-        rejections: list[dict] = []
+        frontier_ids = {hypothesis.id for hypothesis in frontier}
+        read_identities = {str(item["identity"]) for item in read_history}
+        rejections: list[dict[str, Any]] = []
         evidence = None
+        proposed = None
         for candidate_attempt in range(max_process_attempts):
             proposed = program.discriminate(
                 facts_json=_json(store.facts),
                 hypotheses_json=_json(frontier),
                 obligations_json=_json(obligations),
                 capabilities_json=_json(capabilities),
+                read_history_json=_json(read_history),
                 rejections_json=_json(rejections),
                 max_steps=4,
             ).process
             try:
-                model_powl = compile_observation_process(proposed, capabilities)
+                model_powl = compile_observation_process(
+                    proposed,
+                    capabilities,
+                    hypothesis_ids=frontier_ids,
+                    prior_read_identities=read_identities,
+                )
             except ProcessAdmissionError as exc:
                 rejection = {
                     "candidate_attempt": candidate_attempt,
@@ -363,7 +478,7 @@ async def run() -> dict:
             )
             evidence = None
 
-        if evidence is None:
+        if evidence is None or proposed is None:
             return await _refuse_diagnosis(
                 broker,
                 subject=subject,
@@ -373,7 +488,14 @@ async def run() -> dict:
                 detail={"rejections": rejections},
             )
 
-        new_facts = _process_observations(evidence, store)
+        repeat_reasons = {step.id: step.repeat_reason for step in proposed.steps}
+        new_facts = _process_observations(
+            evidence,
+            store,
+            read_history,
+            round_index=round_index,
+            repeat_reasons=repeat_reasons,
+        )
         trajectory.append(
             {
                 "stage": "discriminate",
@@ -381,24 +503,11 @@ async def run() -> dict:
                 "new_facts": new_facts,
                 "powl_sha256": evidence.model_sha256,
                 "peak_concurrency": evidence.peak_concurrency,
+                "process": proposed.model_dump(),
                 "activities": _activity_records(evidence),
+                "read_history_count": len(read_history),
             }
         )
-        if new_facts == 0:
-            stagnant_rounds += 1
-            hypotheses = []
-            trajectory.append(
-                {
-                    "stage": "stagnation",
-                    "round": round_index,
-                    "count": stagnant_rounds,
-                    "action": "rehypothesize" if stagnant_rounds < 2 else "refuse",
-                }
-            )
-            if stagnant_rounds >= 2:
-                break
-        else:
-            stagnant_rounds = 0
 
     if diagnosis is None:
         return await _refuse_diagnosis(
@@ -407,6 +516,10 @@ async def run() -> dict:
             standing="REFUSED:CAUSAL_CLOSURE_NOT_REACHED",
             facts=store,
             trajectory=trajectory,
+            detail={
+                "retired_portfolios": retired_portfolios,
+                "read_history": read_history,
+            },
         )
 
     await broker.call("submit", "submit", {"ans": diagnosis.explanation})
@@ -436,7 +549,7 @@ async def run() -> dict:
         mitigation_rejections = [{"refusal": "MITIGATION_PROCESS_IDENTITY_INVALID", "ids": ids}]
         admitted_mitigations = []
     else:
-        mitigation_rejections: list[dict] = []
+        mitigation_rejections: list[dict[str, Any]] = []
         admitted_mitigations: list[tuple[MitigationProcessProposal, object]] = []
         for process in processes:
             try:
@@ -497,7 +610,6 @@ async def run() -> dict:
         await broker.call("submit", "submit", {"ans": ""})
         return result
 
-    _process_observations(mitigation_evidence, store)
     await broker.call("submit", "submit", {"ans": ""})
     result = {
         "subject": subject,
