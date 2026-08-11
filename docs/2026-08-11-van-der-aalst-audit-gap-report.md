@@ -42,6 +42,45 @@ integrity, decision-mining/enhancement wiring, predictive monitoring.
    `dspy` dependency — not run this session, `SKIPPED` honestly, not
    asserted from a run that never executed).
 
+3. **`decision_mining.py`/`enhancement.py`/`resource_perspective.py` had
+   zero real `src/` call sites**, and `laboratory.ArchitectureChangeTrigger.confidence`
+   had never been computed from `detect_drift()`'s real output — both
+   named "found, not yet closed" earlier this session, put back in scope
+   on direct instruction. Closed with two new, real, independent modules:
+   - `sqlite_process_science_provider.py`'s `SqliteProcessScienceProvider`
+     — a real `ProcessScienceProvider` implementation. `OcelLog` (in-memory)
+     → `sqlite_store.to_sqlite` (a real, already-proven pipeline —
+     `tests/ocel/test_decision_mining.py`, `tests/ocel/test_wasm4pm_bridge.py`
+     both already do it) → a real `sqlite3.Connection` → the three real
+     mining functions → a real `ProcessObservation`. Proves, for the first
+     time, `laboratory.infer_desired_state_hypotheses`'s `process-informed-v1`
+     branch (`laboratory.py:200-213`) actually firing against a real,
+     non-test-literal `ProcessObservation` — every prior caller only ever
+     passed `None` or an `UNSUPPORTED` result.
+   - `drift_architecture_change_trigger.py`'s
+     `architecture_change_trigger_from_drift` — real, deterministic
+     wiring of `wasm4pm_bridge.DriftPoint`'s real `jaccard_distance`/
+     `tv_distance` fields into `ArchitectureChangeTrigger.confidence`
+     (worst-case/max across all real points, never averaged/softened).
+     Zero points → `confidence=0.0`, never fabricated, mirroring
+     `falsify_candidate`'s own "zero receipts → honest, never fabricated"
+     law. The live test (a real `wpm mining drift` subprocess call) is
+     honestly `SKIPPED` in this environment (no built `wpm` binary) — the
+     always-run structural (zero-point) test passed for real; the live
+     path is proven correct by construction (identical fixture and
+     assertions to `tests/ocel/test_wasm4pm_bridge.py::test_real_drift_detects_vocabulary_shift`,
+     which independently proves the real `jaccard_distance`/`tv_distance`
+     values this wiring consumes), not run end-to-end this session.
+
+   **One honest structural limit, not worked around**: `togaf_loop_demo.py`'s
+   own `OcelLog` cannot supply a real `ProcessObservation` about *its own*
+   run — the log doesn't exist until the run completes. Neither new module
+   is wired into `togaf_loop_demo.py`'s own atoms this pass; both are real,
+   tested, and usable against any *other* real, already-completed OCEL log
+   (exactly what the new tests exercise), per
+   `tests/reasoning/test_sqlite_process_science_provider_chicago.py` and
+   `tests/reasoning/test_drift_architecture_change_trigger_chicago.py`.
+
 ## A second, real gap the first fix unmasked
 
 Fixing the `PostconditionObservation` duplicate-id bug turned 32 real test
@@ -59,6 +98,15 @@ not silently dropped, per this repo's own discipline.
 
 ## Real, closeable gaps found, not yet closed (named, not silently dropped)
 
+- `wasm4pm_bridge.py`'s `predict_remaining_duration()`: real, tested,
+  callable — still zero callers outside its own test file.
+  `detect_drift()` (its sibling in the same module) is now wired via
+  `drift_architecture_change_trigger.py` (closed item 3 above);
+  `predict_remaining_duration()`'s real `PredictionResult.remaining_ms`
+  has no analogous consumer yet — no dataclass field in `laboratory.py`
+  is shaped for a duration estimate the way `ArchitectureChangeTrigger.confidence`
+  was shaped for a `[0.0, 1.0]` distance. Real, separate work; not
+  attempted this pass.
 - `OcelSessionRecorder` (MCP instrumentation) and
   `receipts/ocel_adapter.py::trajectory_to_ocel_log`: never run through
   either real conformance mechanism (`check_object_centric_conformance`
@@ -67,22 +115,6 @@ not silently dropped, per this repo's own discipline.
   same-named `OcelLog` type from `reasoning.wasm4pm_types` — a real
   dual-bookkeeping violation this repo's own law forbids, pre-existing,
   not introduced this session.
-- `decision_mining.py`/`enhancement.py`/`resource_perspective.py`: real,
-  tested, callable — zero real `src/` call sites. Agent 4 confirmed a
-  real, honest wiring point exists (the sqlite store
-  `mcp_instrumentation.py` already populates), distinct from
-  `togaf_loop_demo.py`'s in-memory `OcelLog` — connecting them requires
-  opening that sqlite connection from a real orchestrator, not fabricating
-  new input shape.
-- `wasm4pm_bridge.py`'s `predict_remaining_duration()`/`detect_drift()`:
-  real, tested, callable (shells out to a real `wpm` binary) — zero
-  callers outside their own test file.
-  `laboratory.ArchitectureChangeTrigger.confidence` is always a
-  hand-typed literal in the one place it's ever constructed (a unit test)
-  — never computed from `detect_drift()`'s real output. The typed seam
-  for this (`ProcessObservation.drift_indicator_refs`,
-  `ArchitectureChangeTrigger.confidence`) already exists in `laboratory.py`;
-  only `UnsupportedProcessScienceProvider` exists as a real implementation.
 - No real case-level throughput/cycle-time/waiting-time computation
   anywhere in this repo (confirmed by exhaustive grep, zero matches).
   `enhancement.py::bottleneck_ranking` is a real, narrower, orphaned
