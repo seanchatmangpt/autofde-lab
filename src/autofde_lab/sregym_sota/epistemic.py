@@ -15,19 +15,26 @@ class EpistemicRoute(StrEnum):
 def compute_hypothesis_records(
     hypotheses: list[HypothesisProposal],
     links: list[EvidenceLinkProposal],
+    admitted_fact_ids: set[str],
 ) -> list[HypothesisRecord]:
-    """Compute standing mechanically from proposed evidence relationships.
+    """Compute standing mechanically from admitted evidence relationships.
 
-    SUPPORTED requires support and no refutation. REFUTED requires refutation and
-    no support. Missing or conflicting evidence is UNKNOWN, so contradiction can
-    never be silently crowned.
+    The LM may *propose* an evidence link, but a proposal only affects standing
+    when both referenced identities exist in the kernel's admitted state. An
+    invented fact ID is therefore epistemically inert.
+
+    SUPPORTED requires admitted support and no admitted refutation. REFUTED
+    requires admitted refutation and no admitted support. Missing or conflicting
+    evidence is UNKNOWN, so contradiction can never be silently crowned.
     """
 
     support: dict[str, set[str]] = defaultdict(set)
     refute: dict[str, set[str]] = defaultdict(set)
-    known = {h.id for h in hypotheses}
+    known_hypotheses = {h.id for h in hypotheses}
     for link in links:
-        if link.hypothesis_id not in known:
+        if link.hypothesis_id not in known_hypotheses:
+            continue
+        if link.fact_id not in admitted_fact_ids:
             continue
         if link.relation == "SUPPORTS":
             support[link.hypothesis_id].add(link.fact_id)
