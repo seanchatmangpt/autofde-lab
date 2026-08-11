@@ -6,6 +6,6 @@ receipts. Exact-head live qualification is evidence for that subject only; it
 never transfers standing to a later signature revision implicitly.
 """
 
-SIGNATURE_REVISION = "SRE-SIG-002"
+SIGNATURE_REVISION = "SRE-SIG-003"
 
 __all__ = ["SIGNATURE_REVISION"]
