@@ -105,6 +105,7 @@ from autofde_lab.fabric.gymact_capability_gate import DEFAULT_MANIFEST_PATH, Cap
 from autofde_lab.powl.algebra import ChoiceGraph, ChoiceGraphEdge, End, Guard, NodeId, Silent, Start
 from autofde_lab.powl.algebra import Atom as PowlAtom
 from autofde_lab.powl.guard_executor import execute as execute_powl
+from autofde_lab.powl.ocel_bridge import OcelExecutionRecorder, execute_with_ocel
 from autofde_lab.reasoning.breed_ensemble import BreedEnsembleMember, run_breed_ensemble
 from autofde_lab.reasoning.hearsay_cross_check import _bullet_lines, hypotheses_to_breed_input
 from autofde_lab.reasoning.k8s_signatures import DiagnoseKubernetesFault
@@ -377,6 +378,7 @@ class DiagnosisDecisionBackend(Protocol):
         observed_resource_state: str,
         tools: list[Callable[..., str]],
         max_iters: int,
+        recorder: OcelExecutionRecorder | None = None,
     ) -> DecisionOutcome: ...
 
 
@@ -404,7 +406,14 @@ class DspyReActDecisionBackend:
         observed_resource_state: str,
         tools: list[Callable[..., str]],
         max_iters: int,
+        recorder: OcelExecutionRecorder | None = None,
     ) -> DecisionOutcome:
+        # `recorder` is accepted for Protocol conformance but not used here
+        # -- this implementation runs a real dspy.ReAct loop, not a POWL
+        # graph, so there is no admitted process for execute_with_ocel to
+        # attach to. Real OCEL wiring belongs to SreTroubleshootingDecisionBackend.decide
+        # below, the implementation that actually calls execute_powl.
+        del recorder
         program = self._program or dspy.ReAct(
             DiagnoseKubernetesFault, tools=tools, max_iters=max_iters
         )
@@ -721,6 +730,7 @@ class SreTroubleshootingDecisionBackend:
         observed_resource_state: str,
         tools: list[Callable[..., str]],
         max_iters: int,
+        recorder: OcelExecutionRecorder | None = None,
     ) -> DecisionOutcome:
         capability_catalog = _capability_catalog_text(tools)
         observe_tool = next((t for t in tools if getattr(t, "__name__", "") == "observe_cluster_state"), None)
@@ -823,12 +833,21 @@ class SreTroubleshootingDecisionBackend:
         # tighter real bound than `probe_rounds` alone would allow.
         max_choice_transitions = 5 + max(0, self._probe_rounds) * 4
         max_choice_transitions = min(max_choice_transitions, 5 + max(0, max_iters) * 4)
-        execute_powl(
-            graph,
-            guard_evaluator=guard_evaluator,
-            atom_invoker=atom_invoker,
-            max_choice_transitions=max_choice_transitions,
-        )
+        if recorder is not None:
+            execute_with_ocel(
+                graph,
+                guard_evaluator=guard_evaluator,
+                atom_invoker=atom_invoker,
+                max_choice_transitions=max_choice_transitions,
+                recorder=recorder,
+            )
+        else:
+            execute_powl(
+                graph,
+                guard_evaluator=guard_evaluator,
+                atom_invoker=atom_invoker,
+                max_choice_transitions=max_choice_transitions,
+            )
 
         commit_pred = state["commit_pred"]
         assert commit_pred is not None, "unreachable: End only reached via commit_diagnosis"

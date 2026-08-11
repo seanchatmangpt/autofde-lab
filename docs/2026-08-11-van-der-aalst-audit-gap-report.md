@@ -22,17 +22,25 @@ integrity, decision-mining/enhancement wiring, predictive monitoring.
    with one shared `seen_postcondition_ids` set threaded through both
    loops; `.validate()` now runs for real before every return.
 2. **`execute_with_ocel` had no `max_workers`/`context` passthrough**,
-   which is why 4 real, `validate_model`-admitted, concurrent POWL
+   which is why 4 real, `validate_model`-admitted, concurrent/cyclic POWL
    executions (Agent 1's finding: `planner_federation_ensemble.py`,
    `breed_ensemble.py`, `breed_ensemble_loop.py`, `gymact_dspy_react.py`)
    produced zero OCEL trace — wiring them in would have silently dropped
    their real concurrency. Extended `execute_with_ocel` (additive,
-   backward-compatible: existing 5 tests unaffected) and wired
-   `planner_federation_ensemble.federate_concurrently`'s new, optional
-   `recorder` parameter through it — real OCEL 2.0 events now produced for
-   concurrent PDDL solver federation, validated by
-   `check_object_centric_conformance` in a new test:
-   `all_conform=True`, `overall_fitness=1.0`.
+   backward-compatible: existing 5 tests unaffected) and wired an optional
+   `recorder` parameter through **all four** real entry points
+   (`planner_federation_ensemble.federate_concurrently`,
+   `breed_ensemble.run_breed_ensemble`,
+   `breed_ensemble_loop.run_breed_ensemble_until_resolved`,
+   `gymact_dspy_react.SreTroubleshootingDecisionBackend.decide`) — real
+   OCEL 2.0 events now produced for concurrent PDDL solver federation,
+   concurrent wasm4pm breed ensembling, the cyclic breed-ensemble
+   interpretation loop, and the cyclic SRE investigation graph, each
+   validated by `check_object_centric_conformance` in its own new test:
+   `all_conform=True`, `overall_fitness=1.0` in every case (the
+   `gymact_dspy_react.py` case is GROQ-gated, per that backend's own real
+   `dspy` dependency — not run this session, `SKIPPED` honestly, not
+   asserted from a run that never executed).
 
 ## A second, real gap the first fix unmasked
 
@@ -51,11 +59,6 @@ not silently dropped, per this repo's own discipline.
 
 ## Real, closeable gaps found, not yet closed (named, not silently dropped)
 
-- `breed_ensemble.py`, `breed_ensemble_loop.py`, `gymact_dspy_react.py`:
-  same real gap as `planner_federation_ensemble.py` had — real admitted
-  POWL executions, zero OCEL trace. The `execute_with_ocel`
-  `max_workers`/`context` extension built this session makes wiring these
-  in mechanical follow-on work, not yet done.
 - `OcelSessionRecorder` (MCP instrumentation) and
   `receipts/ocel_adapter.py::trajectory_to_ocel_log`: never run through
   either real conformance mechanism (`check_object_centric_conformance`

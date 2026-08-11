@@ -21,6 +21,8 @@ import os
 import dspy
 import pytest
 
+from autofde_lab.ocel.object_centric_conformance import check_object_centric_conformance
+from autofde_lab.powl.ocel_bridge import OcelExecutionRecorder
 from autofde_lab.powl.refusals import PowlError, PowlRefusal
 from autofde_lab.powl.validate import validate_model
 from autofde_lab.reasoning.breed_ensemble import BreedEnsembleMember
@@ -112,6 +114,41 @@ def test_single_round_resolves_immediately_when_the_ensemble_already_resolves() 
     assert result.resolved is True
     assert trajectory == []
     assert call_count["interpret"] == 0
+
+
+@requires_real_wasm4pm_cli
+def test_real_ocel_v2_trace_is_produced_when_a_recorder_is_supplied_and_conforms() -> None:
+    """Closes the real gap the van der Aalst-style audit found: this real,
+    admitted, cyclic-`ChoiceGraph` process ran with zero OCEL trace
+    anywhere. Confirm a real OCEL 2.0 log is produced when a `recorder` is
+    supplied, and independently passes `check_object_centric_conformance`."""
+
+    def build_members(_task_context: str):
+        return [
+            BreedEnsembleMember(breed="hearsay", build_input=lambda: _HEARSAY_INPUT),
+            BreedEnsembleMember(breed="abductive_ibe", build_input=lambda: _IBE_INPUT),
+        ]
+
+    recorder = OcelExecutionRecorder(execution_id="breed-ensemble-loop-run-001")
+
+    result, trajectory = run_breed_ensemble_until_resolved(
+        build_members=build_members,
+        initial_task_context="diagnose pod crash",
+        resolution_threshold=0.1,
+        max_rounds=5,
+        recorder=recorder,
+    )
+
+    assert result.resolved is True
+    assert trajectory == []  # resolved round 1 -- interpret_via_dspy never ran
+
+    log = recorder.close()
+    assert len(log.events) == 1  # only the real Atom "run_ensemble" -- decide is Silent, never an event
+
+    intended = {"breed-ensemble-loop-run-001": ("run_ensemble",)}
+    conformance = check_object_centric_conformance(log, intended_traces_by_object_id=intended)
+    assert conformance.all_conform is True
+    assert conformance.overall_fitness == 1.0
 
 
 @requires_real_wasm4pm_cli

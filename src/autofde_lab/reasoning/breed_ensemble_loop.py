@@ -28,6 +28,7 @@ import dspy
 
 from autofde_lab.powl.algebra import Atom, ChoiceGraph, ChoiceGraphEdge, End, Guard, NodeId, Silent, Start
 from autofde_lab.powl.guard_executor import execute
+from autofde_lab.powl.ocel_bridge import OcelExecutionRecorder, execute_with_ocel
 from autofde_lab.powl.refusals import PowlError, PowlRefusal
 from autofde_lab.reasoning.breed_ensemble import BreedEnsembleMember, BreedEnsembleResult, run_breed_ensemble
 
@@ -102,6 +103,7 @@ def run_breed_ensemble_until_resolved(
     interpret: Callable[..., dspy.Prediction] | None = None,
     resolution_threshold: float = 0.5,
     max_rounds: int = 5,
+    recorder: OcelExecutionRecorder | None = None,
 ) -> tuple[BreedEnsembleResult, list[dspy.Prediction]]:
     """Drive `run_breed_ensemble` round after round via a real, admitted,
     guarded `ChoiceGraph`, using `interpret` (default:
@@ -165,12 +167,21 @@ def run_breed_ensemble_until_resolved(
     max_choice_transitions = 1 + max(1, max_rounds) * 3
 
     try:
-        execute(
-            graph,
-            guard_evaluator=guard_evaluator,
-            atom_invoker=atom_invoker,
-            max_choice_transitions=max_choice_transitions,
-        )
+        if recorder is not None:
+            execute_with_ocel(
+                graph,
+                guard_evaluator=guard_evaluator,
+                atom_invoker=atom_invoker,
+                max_choice_transitions=max_choice_transitions,
+                recorder=recorder,
+            )
+        else:
+            execute(
+                graph,
+                guard_evaluator=guard_evaluator,
+                atom_invoker=atom_invoker,
+                max_choice_transitions=max_choice_transitions,
+            )
     except PowlError as exc:
         if exc.refusal == PowlRefusal.TRANSITION_BUDGET_EXHAUSTED:
             raise PowlError(

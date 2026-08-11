@@ -248,3 +248,62 @@ def test_live_full_pipeline_chain_produces_real_outcome() -> None:
     assert outcome.mitigation_intent  # real mitigation candidate constructed
     assert outcome.safe_to_actuate is not None
     assert any(stage["stage"] == "probe" for stage in outcome.trajectory["stages"])
+
+
+@requires_real_groq_key
+def test_live_ocel_v2_trace_is_produced_when_a_recorder_is_supplied_and_conforms() -> None:
+    """Closes the third and final OCEL-wiring gap the van der Aalst-style
+    audit found: `SreTroubleshootingDecisionBackend.decide` walks a real,
+    admitted, cyclic `ChoiceGraph` (probe/hypothesize rounds looping back
+    to `normalize`/`hypothesize`) with zero OCEL trace anywhere. Confirm a
+    real OCEL 2.0 log is produced when a `recorder` is supplied, and
+    independently passes `check_object_centric_conformance`.
+
+    The real investigation path this backend walks is genuinely
+    LM-dependent (how many probe/regenerate rounds occur before causal
+    closure is not knowable in advance) -- so the intended trace used for
+    conformance is the log's own real, ordered activity sequence, the same
+    self-consistency check `togaf_loop_demo.py`'s own OCEL self-check
+    uses. This proves the OCEL structure itself is object-centrically
+    sound (every event correctly linked to the one real execution object,
+    correct ordering, no dangling/duplicate identities) -- not a prediction
+    of which LM path will be taken.
+    """
+    from autofde_lab.ocel.object_centric_conformance import check_object_centric_conformance
+    from autofde_lab.powl.ocel_bridge import OcelExecutionRecorder
+
+    lm = dspy.LM("groq/openai/gpt-oss-120b", api_key=_GROQ_API_KEY, cache=False, max_tokens=16000)
+
+    def observe_cluster_state() -> str:
+        return (
+            '{"pods": [{"name": "geo-0", "status": "CrashLoopBackOff", '
+            '"lastState": {"terminated": {"reason": "OOMKilled", "exitCode": 137}}, '
+            '"containerStatuses": [{"restartCount": 12}]}]}'
+        )
+
+    backend = SreTroubleshootingDecisionBackend(probe_rounds=3)
+    recorder = OcelExecutionRecorder(execution_id="sre-troubleshooting-decide-run-001")
+
+    with dspy.context(lm=lm):
+        outcome = backend.decide(
+            namespace="hotel-reservation",
+            symptom_description="geo service is crash-looping",
+            observed_resource_state=observe_cluster_state(),
+            tools=[observe_cluster_state],
+            max_iters=6,
+            recorder=recorder,
+        )
+
+    assert isinstance(outcome, DecisionOutcome)
+    assert outcome.root_cause  # real, non-empty LM-produced text
+
+    log = recorder.close()
+    assert len(log.events) >= 3  # normalize -> hypothesize -> commit_diagnosis, minimum
+
+    real_activity_sequence = tuple(
+        next(attr.value for attr in event.attributes if attr.key == "label") for event in log.events
+    )
+    intended = {"sre-troubleshooting-decide-run-001": real_activity_sequence}
+    conformance = check_object_centric_conformance(log, intended_traces_by_object_id=intended)
+    assert conformance.all_conform is True
+    assert conformance.overall_fitness == 1.0

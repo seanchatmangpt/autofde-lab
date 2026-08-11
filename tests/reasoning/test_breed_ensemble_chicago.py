@@ -19,6 +19,8 @@ import time
 
 import pytest
 
+from autofde_lab.ocel.object_centric_conformance import check_object_centric_conformance
+from autofde_lab.powl.ocel_bridge import OcelExecutionRecorder
 from autofde_lab.reasoning.breed_ensemble import BreedEnsembleMember, run_breed_ensemble
 from autofde_lab.receipts.wasm4pm_cognition import Wasm4pmCognitionUnavailable, resolve_wpm_cognition_entry
 
@@ -162,3 +164,27 @@ def test_resolution_threshold_is_a_real_caller_configurable_bar() -> None:
 
     assert lenient.resolved is True
     assert strict.resolved is False
+
+
+@requires_real_wasm4pm_cli
+def test_real_ocel_v2_trace_is_produced_when_a_recorder_is_supplied_and_conforms() -> None:
+    """Closes the real gap the van der Aalst-style audit found: this real,
+    admitted, concurrent POWL process ran with zero OCEL trace anywhere.
+    Confirm a real OCEL 2.0 log is produced when a `recorder` is supplied,
+    and independently passes `check_object_centric_conformance`."""
+    recorder = OcelExecutionRecorder(execution_id="breed-ensemble-run-001")
+    members = [
+        BreedEnsembleMember(breed="hearsay", build_input=lambda: _HEARSAY_INPUT),
+        BreedEnsembleMember(breed="abductive_ibe", build_input=lambda: _IBE_INPUT),
+    ]
+
+    result = run_breed_ensemble(members, max_workers=2, timeout_s=20.0, recorder=recorder)
+    assert result.member_evidence  # real evidence was produced
+
+    log = recorder.close()
+    assert len(log.events) == 2
+
+    intended = {"breed-ensemble-run-001": ("hearsay", "abductive_ibe")}
+    conformance = check_object_centric_conformance(log, intended_traces_by_object_id=intended)
+    assert conformance.all_conform is True
+    assert conformance.overall_fitness == 1.0

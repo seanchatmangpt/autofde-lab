@@ -21,16 +21,33 @@ from autofde_lab.reasoning.togaf_loop_demo import (
 )
 
 
-def test_all_eighteen_real_phases_fire_in_the_real_intended_order() -> None:
+def test_all_twenty_real_phases_fire_in_the_real_intended_order() -> None:
     log, phase_results, conformance = run_full_togaf_loop_with_ocel()
 
-    assert len(PHASE_SEQUENCE) == 18
-    assert len(log.events) == 18
+    assert len(PHASE_SEQUENCE) == 20
+    assert len(log.events) == 20
     assert conformance.all_conform is True
     assert conformance.overall_fitness == 1.0
 
     execution_object = next(o for o in conformance.per_object if o.object_type == "TogafLoopExecution")
     assert execution_object.observed_trace == PHASE_SEQUENCE
+
+
+def test_reference_model_selection_atoms_expose_real_ggen_generated_vocabulary_never_a_fabricated_choice() -> None:
+    """Iteration 4 closed the phase_b/phase_c 'no reference-model-selection
+    mechanism exists' gaps via real, ggen-generated
+    togaf_artifacts.StandingValue vocabulary. Confirm both atoms name real
+    available models and honestly leave `selected` as `None` -- this repo
+    has no real mechanism to make that selection for a real deliverable."""
+    _, phase_results, _ = run_full_togaf_loop_with_ocel()
+
+    phase_b = phase_results["phase_b_reference_model_selection"]
+    assert "TechnicalReferenceModel" in phase_b["available_reference_models"]
+    assert phase_b["selected"] is None
+
+    phase_c = phase_results["phase_c_reference_model_selection"]
+    assert "IntegratedInfoInfrastructureReferenceModel" in phase_c["available_reference_models"]
+    assert phase_c["selected"] is None
 
 
 def test_ggen_generated_togaf_artifacts_are_really_constructed_never_fabricating_approval() -> None:

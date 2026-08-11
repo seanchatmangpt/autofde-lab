@@ -63,6 +63,7 @@ from typing import Any, Callable, Mapping, Sequence
 
 from autofde_lab.powl.algebra import Atom, PartialOrder
 from autofde_lab.powl.guard_executor import ExecutionContext, execute
+from autofde_lab.powl.ocel_bridge import OcelExecutionRecorder, execute_with_ocel
 from autofde_lab.receipts.wasm4pm_cognition import (
     CognitionEvidence,
     NoEvidence,
@@ -177,6 +178,7 @@ def run_breed_ensemble(
     resolution_threshold: float = _DEFAULT_RESOLUTION_THRESHOLD,
     max_workers: int | None = None,
     timeout_s: float = 15.0,
+    recorder: OcelExecutionRecorder | None = None,
 ) -> BreedEnsembleResult:
     """Run every real `member` concurrently via the real POWL runner, then
     arbitrate via wasm4pm's own real `meta_reasoning` breed.
@@ -217,14 +219,25 @@ def run_breed_ensemble(
         ctx.attributes[f"breed:{atom.label}:conclusion"] = evidence.selected
         ctx.attributes[f"breed:{atom.label}:confidence"] = confidence
 
-    execute(
-        node,
-        guard_evaluator=lambda name, args: True,  # PartialOrder has no ChoiceGraph -- never consulted
-        atom_invoker=atom_invoker,
-        max_choice_transitions=1,
-        max_workers=max_workers or len(members),
-        context=context,
-    )
+    if recorder is not None:
+        execute_with_ocel(
+            node,
+            guard_evaluator=lambda name, args: True,  # PartialOrder has no ChoiceGraph -- never consulted
+            atom_invoker=atom_invoker,
+            max_choice_transitions=1,
+            max_workers=max_workers or len(members),
+            context=context,
+            recorder=recorder,
+        )
+    else:
+        execute(
+            node,
+            guard_evaluator=lambda name, args: True,  # PartialOrder has no ChoiceGraph -- never consulted
+            atom_invoker=atom_invoker,
+            max_choice_transitions=1,
+            max_workers=max_workers or len(members),
+            context=context,
+        )
 
     member_evidence: dict[str, CognitionEvidence] = {
         m.breed: context.attributes[m.breed] for m in members if m.breed in context.attributes

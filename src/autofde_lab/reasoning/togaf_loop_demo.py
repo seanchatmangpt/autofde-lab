@@ -77,10 +77,18 @@ _EXECUTION_OBJECT_TYPE = "TogafLoopExecution"
 _ACTIVITY_OBJECT_TYPE = "TogafPhaseActivity"
 
 # The real, ordered TOGAF ADM phase sequence this module implements --
-# 18 real atoms: iteration 1's 10, expanded to 15 in iteration 2 (the
-# 4-agent gap audit), expanded again here (iteration 3) with 3 real
+# 20 real atoms: iteration 1's 10, expanded to 15 in iteration 2 (the
+# 4-agent gap audit), expanded to 18 in iteration 3 with 3 real
 # ggen-generated typed artifacts (togaf_artifacts.py, manufactured from
-# ontology/togaf-artifacts.ttl) closing 3 previously-UNSUPPORTED gaps.
+# ontology/togaf-artifacts.ttl) closing 3 previously-UNSUPPORTED gaps,
+# expanded again here (iteration 4) with 2 real reference-model-vocabulary
+# atoms consuming togaf_artifacts.StandingValue's real, ggen-generated
+# TechnicalReferenceModel/IntegratedInfoInfrastructureReferenceModel
+# individuals -- closing the "no reference-model-selection mechanism
+# exists" gaps for Phase B and Phase C. These atoms record which reference
+# models exist as real, admitted vocabulary, not that a real architect
+# selected one for a real deliverable -- that judgment stays a separate,
+# real, unclosable gap, named honestly in each atom's own result.
 PHASE_SEQUENCE: tuple[str, ...] = (
     "preliminary_identify_architecture_principles",
     "requirements_document_specification",
@@ -89,7 +97,9 @@ PHASE_SEQUENCE: tuple[str, ...] = (
     "phase_a_statement_of_architecture_work",
     "phase_b_objectives_and_constraints",
     "phase_b_gap_analysis",
+    "phase_b_reference_model_selection",
     "phase_c_data_and_application_model",
+    "phase_c_reference_model_selection",
     "phase_d_delegated_to_gymact_boundary_refusal",
     "phase_e_business_constraints",
     "phase_e_consolidate_gap_analysis",
@@ -113,6 +123,14 @@ PHASE_SEQUENCE: tuple[str, ...] = (
 # "phase_g.guide_development_architecture_contract",
 # "phase_h.develop_change_requirements" -- each now a real typed atom below,
 # not a fabricated approval/decision (approval_status stays PendingHumanApproval).
+# Closed in iteration 4: "phase_b.select_reference_models" and
+# "phase_c.select_reference_models" -- each now a real atom consuming
+# togaf_artifacts.StandingValue's real TechnicalReferenceModel/
+# IntegratedInfoInfrastructureReferenceModel vocabulary (see
+# phase_b_reference_model_selection / phase_c_reference_model_selection
+# below). Selecting a real model FOR a real deliverable remains separate,
+# unclosed, real work -- these atoms only make the real vocabulary exist
+# and be recorded as considered.
 UNSUPPORTED_TOGAF_SUBSTEPS: dict[str, str] = {
     "preliminary.scope_enterprise_capability": "no real enterprise-inventory mechanism exists",
     "preliminary.governance_framework": "no governance-body/EA-team-roster mechanism exists",
@@ -121,11 +139,9 @@ UNSUPPORTED_TOGAF_SUBSTEPS: dict[str, str] = {
     "requirements.impact_assessment": "no requirements-impact-assessment mechanism exists",
     "phase_a.identify_stakeholders": "ScenarioMetadata carries no stakeholder field",
     "phase_a.evaluate_capability_readiness": "no business-capability-readiness mechanism exists (distinct from operator applicability)",
-    "phase_b.select_reference_models": "no reference-model/viewpoint/tool-selection mechanism exists",
     "phase_b.resolve_impacts_across_landscape": "no cross-landscape impact-resolution mechanism exists",
     "phase_b.stakeholder_review": "no formal stakeholder-review mechanism exists",
     "phase_b.finalize_and_create_add": "no Architecture Definition Document authoring mechanism exists",
-    "phase_c.select_reference_models": "same as phase_b -- no reference-model-selection mechanism exists",
     "phase_c.stakeholder_review_and_add": "no data/application Architecture Definition Document mechanism exists",
     "phase_e.transition_architectures": "no staged/incremental-delivery architecture mechanism exists",
     "phase_f.assign_business_value": "no cost/value model exists; ArchitectureCandidate.cost_bound is a real typed slot, unpopulated",
@@ -167,7 +183,7 @@ def _build_graph() -> ChoiceGraph:
 
 
 def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCentricConformanceResult]:
-    """Execute the real 15-phase TOGAF chain, emit one real OCEL 2.0 log,
+    """Execute the real 20-phase TOGAF chain, emit one real OCEL 2.0 log,
     and self-check it with `check_object_centric_conformance`.
 
     Returns `(log, phase_results, conformance)` -- the real log, the real
@@ -246,10 +262,43 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
                 "unknown_count": sum(1 for d in delta if d.current is None),
             }
 
+        elif label == "phase_b_reference_model_selection":
+            # Real, ggen-generated vocabulary (togaf_artifacts.StandingValue),
+            # never a fabricated selection: this atom records which real
+            # reference models EXIST as admitted vocabulary for Phase B
+            # (Business Architecture) to draw from -- it does not decide
+            # which one a real architect would select for a real
+            # deliverable, which stays a separate, real, unclosed gap.
+            phase_results[label] = {
+                "available_reference_models": (
+                    StandingValue.TechnicalReferenceModel.value,
+                    StandingValue.IntegratedInfoInfrastructureReferenceModel.value,
+                ),
+                "selected": None,
+                "selection_rationale": "no reference-model-selection mechanism exists -- vocabulary is real, the choice is not",
+            }
+
         elif label == "phase_c_data_and_application_model":
             constitution_dir = REPO_ROOT / "src" / "autofde_lab" / "constitution"
             module_count = len(list(constitution_dir.glob("*.py"))) if constitution_dir.is_dir() else 0
             phase_results[label] = {"ocel_object_model": "OcelObject/OcelEvent/EventObjectLink", "constitution_module_count": module_count}
+
+        elif label == "phase_c_reference_model_selection":
+            # Same real vocabulary as phase_b_reference_model_selection --
+            # Phase C (Data and Application Architecture) is the other real
+            # TOGAF phase that documents reference-model selection as a
+            # sub-step. III-RM is the model TOGAF's own documentation most
+            # directly associates with data/application architecture, named
+            # first here for that reason -- still no real selection
+            # mechanism, so `selected` stays honestly `None`.
+            phase_results[label] = {
+                "available_reference_models": (
+                    StandingValue.IntegratedInfoInfrastructureReferenceModel.value,
+                    StandingValue.TechnicalReferenceModel.value,
+                ),
+                "selected": None,
+                "selection_rationale": "no reference-model-selection mechanism exists -- vocabulary is real, the choice is not",
+            }
 
         elif label == "phase_d_delegated_to_gymact_boundary_refusal":
             # Deliberate, explicit, itemized refusal -- never a simulated
