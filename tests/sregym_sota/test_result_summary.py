@@ -32,7 +32,7 @@ def test_result_summary_uses_only_sregym_grader_fields(tmp_path: Path) -> None:
             "--model-id",
             "model",
             "--signature-revision",
-            "SRE-SIG-001",
+            "SRE-SIG-002",
         ],
         check=True,
     )
@@ -45,6 +45,7 @@ def test_result_summary_uses_only_sregym_grader_fields(tmp_path: Path) -> None:
     assert payload["ttm_seconds"] == 25.0
     assert payload["subject"]["autofde_head"] == "a" * 40
     assert payload["subject"]["sregym_head"] == "b" * 40
+    assert payload["subject"]["signature_revision"] == "SRE-SIG-002"
 
 
 def test_result_summary_refuses_missing_attempt_row(tmp_path: Path) -> None:
@@ -70,7 +71,7 @@ def test_result_summary_refuses_missing_attempt_row(tmp_path: Path) -> None:
             "--model-id",
             "model",
             "--signature-revision",
-            "SRE-SIG-001",
+            "SRE-SIG-002",
         ],
         check=False,
         capture_output=True,
