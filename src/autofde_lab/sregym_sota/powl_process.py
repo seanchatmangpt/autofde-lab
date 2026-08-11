@@ -14,6 +14,35 @@ class ProcessAdmissionError(ValueError):
     pass
 
 
+# Adapter law derived from the public SREGym kubectl MCP contract. This is not a
+# Kubernetes object/fault taxonomy; it distinguishes observation from mutation
+# at the capability boundary so an LM cannot relabel a patch/delete as READ.
+_KUBECTL_READ_PREFIXES = (
+    "kubectl api-resources",
+    "kubectl api-versions",
+    "kubectl auth can-i",
+    "kubectl auth whoami",
+    "kubectl cluster-info",
+    "kubectl describe",
+    "kubectl diff",
+    "kubectl events",
+    "kubectl explain",
+    "kubectl get",
+    "kubectl logs",
+    "kubectl rollout status",
+    "kubectl top",
+    "kubectl version",
+)
+
+
+def kubectl_command_is_read_only(command: str) -> bool:
+    normalized = " ".join(str(command).strip().split())
+    return any(
+        normalized == prefix or normalized.startswith(prefix + " ")
+        for prefix in _KUBECTL_READ_PREFIXES
+    )
+
+
 def _compile_steps(steps: list[Any], *, allowed_consequences: set[str]) -> PartialOrder:
     if not steps:
         raise ProcessAdmissionError("empty process")
@@ -69,6 +98,40 @@ class McpActivityDriver:
     allowed_capabilities: set[tuple[str, str]]
     allow_do: bool = False
 
+    def _authority_refusal(
+        self,
+        *,
+        surface: str,
+        tool: str,
+        arguments: dict[str, Any],
+        consequence: str,
+    ) -> str | None:
+        if surface == "submit":
+            return "CONTROL_SURFACE_RESERVED"
+
+        if surface != "kubectl":
+            # Prometheus/Jaeger/Loki are observation surfaces in SREGym.
+            return None if consequence != "DO" else "DO_SURFACE_NOT_ADMITTED"
+
+        if tool == "get_previous_rollbackable_cmd":
+            return None if consequence != "DO" else "DO_TOOL_IS_OBSERVATIONAL"
+
+        if tool == "rollback_command":
+            if consequence != "DO":
+                return "MUTATION_MISLABELED_AS_OBSERVATION"
+            return None if self.allow_do else "DO_NOT_ADMITTED"
+
+        if tool != "exec_kubectl_cmd_safely":
+            return "UNKNOWN_KUBECTL_TOOL_AUTHORITY"
+
+        command = str(arguments.get("cmd", ""))
+        read_only = kubectl_command_is_read_only(command)
+        if consequence in {"READ", "VERIFY"} and not read_only:
+            return "MUTATION_MISLABELED_AS_OBSERVATION"
+        if consequence == "DO" and not self.allow_do:
+            return "DO_NOT_ADMITTED"
+        return None
+
     def execute(self, intent: ActivityIntent) -> ActivityOutcome:
         surface = str(intent.bindings["surface"])
         tool = str(intent.bindings["tool"])
@@ -78,8 +141,16 @@ class McpActivityDriver:
             return ActivityOutcome(
                 success=False, metadata={"refusal": "CAPABILITY_NOT_DISCOVERED"}
             )
-        if consequence == "DO" and not self.allow_do:
-            return ActivityOutcome(success=False, metadata={"refusal": "DO_NOT_ADMITTED"})
+
+        refusal = self._authority_refusal(
+            surface=surface,
+            tool=tool,
+            arguments=arguments,
+            consequence=consequence,
+        )
+        if refusal:
+            return ActivityOutcome(success=False, metadata={"refusal": refusal})
+
         text = asyncio.run(self.broker.call(surface, tool, arguments))
         return ActivityOutcome(
             success=True,
