@@ -1,10 +1,16 @@
+from autofde_lab.sregym_sota.agent import _diagnosis_identity_is_admitted
 from autofde_lab.sregym_sota.epistemic import (
     EpistemicRoute,
     compute_hypothesis_records,
     discrimination_frontier,
     route_epistemic_state,
 )
-from autofde_lab.sregym_sota.models import EvidenceLinkProposal, HypothesisProposal
+from autofde_lab.sregym_sota.models import (
+    DiagnosisCandidate,
+    EvidenceLinkProposal,
+    HypothesisProposal,
+    RootCause,
+)
 
 
 def _h(i: int) -> HypothesisProposal:
@@ -80,3 +86,31 @@ def test_real_admitted_fact_id_can_support() -> None:
     assert records[0].state == "SUPPORTED"
     assert records[0].supporting_fact_ids == [real.fact_id]
     assert route_epistemic_state(records) is EpistemicRoute.DIAGNOSIS_READY
+
+
+def test_diagnosis_requires_supported_hypothesis_and_admitted_fact_identity() -> None:
+    real = _support(1)
+    records = compute_hypothesis_records([_h(1)], [real], {real.fact_id})
+    valid = DiagnosisCandidate(
+        root_causes=[
+            RootCause(
+                component_refs=["component"],
+                mechanism="mechanism",
+                causal_chain=["cause", "effect"],
+                evidence_fact_ids=[real.fact_id],
+                hypothesis_ids=["H1"],
+            )
+        ],
+        explanation="grounded explanation",
+    )
+    assert _diagnosis_identity_is_admitted(valid, records, {real.fact_id})
+
+    fabricated_fact = valid.model_copy(deep=True)
+    fabricated_fact.root_causes[0].evidence_fact_ids = ["fact:invented"]
+    assert not _diagnosis_identity_is_admitted(fabricated_fact, records, {real.fact_id})
+
+    fabricated_hypothesis = valid.model_copy(deep=True)
+    fabricated_hypothesis.root_causes[0].hypothesis_ids = ["H999"]
+    assert not _diagnosis_identity_is_admitted(
+        fabricated_hypothesis, records, {real.fact_id}
+    )
