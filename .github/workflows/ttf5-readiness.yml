@@ -7,6 +7,7 @@ on:
       - "src/autofde_lab/fortune5/**"
       - "tests/fortune5/**"
       - "docs/TTF5_AR.md"
+      - "docs/ENTERPRISE_ARCHITECTURE_CONTROL_PLANE.md"
       - ".github/workflows/ttf5-readiness.yml"
   workflow_dispatch:
 
@@ -57,23 +58,25 @@ jobs:
             "pathos>=0.2.7" \
             "discrete-optimization>=0.9.0"
 
-      - name: Refuse mockist readiness proof
+      - name: Refuse mockist Fortune-5 proof
         shell: bash
         run: |
           set -euo pipefail
           if grep -nE 'unittest\.mock|Mock\(|MagicMock|patch\(|monkeypatch' \
-            tests/fortune5/test_readiness.py; then
-            echo "::error title=REFUSED:MOCKIST_READINESS_COURT::Chicago-style execution required"
+            tests/fortune5/test_readiness.py \
+            tests/fortune5/test_enterprise_architecture.py; then
+            echo "::error title=REFUSED:MOCKIST_FORTUNE5_COURT::Chicago-style execution required"
             exit 3
           fi
 
       - name: Compile Fortune-5 verifier surface
         run: python -m compileall -q src/autofde_lab/fortune5
 
-      - name: Execute TTF5-AR and Fortune-5 state-space courts
+      - name: Execute TTF5-AR, EA, and Fortune-5 state-space courts
         env:
           PYTHONPATH: src
         run: |
           python -m pytest -q \
+            tests/fortune5/test_enterprise_architecture.py \
             tests/fortune5/test_readiness.py \
             tests/fortune5/test_space.py
