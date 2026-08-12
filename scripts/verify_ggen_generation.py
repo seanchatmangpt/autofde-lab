@@ -14,7 +14,7 @@ verify_registry.py`'s pattern: a standalone script, real `rdflib` parse, a
 machine-readable JSON receipt on stdout using this repo's own standing
 vocabulary (`.claude/rules/standing-law.md`): ALIVE / UNKNOWN / UNSUPPORTED.
 
-Three real, independent checks:
+Five real, independent checks:
 
 1. **k8s-fault-universes**: recompute the cross-product cardinality
    |Component| x |FailureMode| x |AppTopology| x |Severity| by counting real
@@ -36,6 +36,9 @@ Three real, independent checks:
 4. **togaf-artifacts**: same real `owl:Class`-count-vs-`@dataclass`-count
    discipline as the constitution check, applied to
    `ontology/togaf-artifacts.ttl` -> `src/autofde_lab/reasoning/togaf_artifacts.py`.
+5. **gymact-certification**: same real `owl:Class`-count-vs-`@dataclass`-count
+   discipline, applied to `ontology/gymact-certification.ttl` ->
+   `src/autofde_lab/reasoning/gymact_certification_types.py`.
 
 This script never imports or subprocesses `ggen` itself -- it is
 intentionally independent of the generator under audit.
@@ -184,8 +187,22 @@ def _verify_togaf_artifacts() -> dict:
     )
 
 
+def _verify_gymact_certification() -> dict:
+    return _verify_dataclass_projection(
+        check_name="gymact-certification",
+        ttl_path=REPO_ROOT / "ontology" / "gymact-certification.ttl",
+        ontology_name="gymact-certification",
+        py_path=REPO_ROOT / "src" / "autofde_lab" / "reasoning" / "gymact_certification_types.py",
+    )
+
+
 def main() -> int:
-    results = [_verify_k8s_fault_universes(), _verify_world_transformation_scenarios(), _verify_togaf_artifacts()]
+    results = [
+        _verify_k8s_fault_universes(),
+        _verify_world_transformation_scenarios(),
+        _verify_togaf_artifacts(),
+        _verify_gymact_certification(),
+    ]
     results.extend(_verify_constitution_file(name) for name in CONSTITUTION_FILES)
 
     all_match = all(r["match"] for r in results)
