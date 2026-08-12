@@ -246,7 +246,23 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          submodules: false
           persist-credentials: false
+
+      - name: Assert exact Challenger subject identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="${{ github.event.pull_request.head.sha || github.sha }}"
+          actual="$(git rev-parse HEAD)"
+          if [[ "${actual}" != "${expected}" ]]; then
+            echo "::error title=REFUSED:EXACT_CHALLENGER_HEAD_MISMATCH::actual=${actual} expected=${expected}"
+            exit 2
+          fi
+          printf 'challenger_exact_head=%s\n' "${actual}"
+
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
@@ -279,7 +295,7 @@ jobs:
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: challenger-issue-reasoning-${{ github.sha }}
+          name: challenger-issue-reasoning-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
             challenger-issue-reasoning.csv
             challenger-summary.json
