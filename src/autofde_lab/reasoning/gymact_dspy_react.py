@@ -81,13 +81,18 @@ against), matching ``gymact.dspy_agent.GymActReActAgent.run_goal``'s own
 
 ``submit_mitigation``, if attempted at all
 --------------------------------------------
-Per this task's own scope note, no automated remediation-command synthesis
-exists in this repo yet (see ``gymact_diagnosis_driver.py``'s module
-docstring for the confirmed gap). ``run_dspy_diagnosis`` therefore only
-observes and diagnoses by default; ``attempt_mitigation=True`` submits the
-same honest ``{"mitigation": "not_attempted", ...}`` payload
-``gymact_diagnosis_driver.py`` submits, gated the same way -- never a
-fabricated remediation command.
+``run_dspy_diagnosis`` only observes and diagnoses by default;
+``attempt_mitigation=True`` routes to
+``autofde_lab.reasoning.gymact_mitigation_actuation.execute_and_submit_mitigation``,
+which constructs a real mitigation portfolio, filters it down to candidates
+marked ``safe_to_actuate``, translates each surviving step into a real
+``kubectl`` command via ``TranslateMitigationStepToKubectlCommand``, actuates
+those commands through the same gated ``run_kubectl`` capability this module
+uses elsewhere, and submits the real, non-placeholder result of that
+actuation -- never a fabricated remediation command. Only when the portfolio
+yields zero ``safe_to_actuate`` candidates does it fall back to an honest
+``attempted=False`` early return, rather than actuating nothing and claiming
+otherwise.
 """
 
 from __future__ import annotations

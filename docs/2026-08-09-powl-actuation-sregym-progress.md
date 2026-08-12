@@ -1700,3 +1700,83 @@ further live trials going forward -- if it fires again, it must read this entry,
 recognize the standing instruction, and limit itself to non-actuating work (tests,
 docs, the gym-actuation-boundary rule's own upkeep) rather than resuming live
 deployments.
+
+### 2026-08-11
+
+**Closed the previously-named "not_attempted" mitigation-actuation gap, in code
+this session.** Prior entries in this file (and the commit history, see
+`91cff10`) document that across all 29 documented real trials, every real
+mitigation call site submitted the literal placeholder
+`{"mitigation": "not_attempted", "reason": "no_automated_command_synthesis_yet"}`
+-- no automated remediation-command synthesis existed at all, so
+`Mitigation.success` was structurally unreachable regardless of infra
+reliability.
+
+Two new files close that gap for real, in code:
+
+- `src/autofde_lab/reasoning/gymact_mitigation_actuation.py` (new) --
+  `execute_and_submit_mitigation`: constructs a real mitigation portfolio via
+  `construct_mitigation_portfolio`, filters it to candidates marked
+  `safe_to_actuate`, translates each surviving candidate into a real
+  `kubectl` command, actuates through the same gated `run_kubectl` capability
+  used elsewhere in this module, and submits the real, non-placeholder result.
+  Falls back to an honest `attempted=False` only when zero candidates survive
+  the `safe_to_actuate` filter -- never actuates nothing while claiming
+  otherwise.
+- `src/autofde_lab/reasoning/mitigation_kubectl_translation_signatures.py`
+  (new) -- the DSPy signature(s) that perform the mitigation-step ->
+  `kubectl` command translation `execute_and_submit_mitigation` calls into.
+
+`gymact_dspy_react.py`'s `run_dspy_diagnosis` was rewired this session so
+`attempt_mitigation=True` now routes through this real chain -- portfolio
+construction -> `safe_to_actuate` filter -> kubectl translation -> gated
+`env.actuate()` -> `submit_mitigation` -- instead of the old hardcoded
+`not_attempted` payload. The module's own docstring (the
+"``submit_mitigation``, if attempted at all" section) was updated in the same
+diff to describe this real chain instead of the stale "no automated
+remediation-command synthesis exists" claim, which was no longer true after
+the rewire and would otherwise have been a stale-doc / dual-bookkeeping
+defect in its own right.
+
+**technicalStanding: PARTIAL_ALIVE.** Real code path, and real Chicago-style
+tests passing this session for the reasoning test tree as a whole. Verify
+phase, run this session:
+
+```
+.venv/bin/python -m pytest tests/reasoning -q
+```
+
+Result: **189 passed, 2 failed, 3 skipped**, out of 194 total tests collected.
+
+Failures (both pre-existing, real, live-Groq-LM tests in
+`tests/reasoning/test_sre_troubleshooting_pipeline_chicago.py`, unrelated to
+this change):
+
+1. `test_live_full_pipeline_chain_produces_real_outcome` --
+   `assert any(stage["stage"] == "probe" for stage in outcome.trajectory["stages"])`
+   -> `assert False`
+2. `test_live_ocel_v2_trace_is_produced_when_a_recorder_is_supplied_and_conforms`
+   -> `AssertionError: assert False is True`
+   (`ObjectCentricConformanceResult(... fitness=0.0, conforms=False)`)
+
+Skips (all named, non-mock reasons): `test_gepa_train_chicago.py:202,225`
+(hard-disabled per user instruction -- real billed `dspy.GEPA` compile);
+`test_sregym_pipeline_chicago.py:415` (no reachable Kubernetes cluster).
+
+`grep -rn "unittest.mock\|Mock(\|MagicMock\|patch(\|monkeypatch" tests/reasoning src/autofde_lab/reasoning`
+run this session: 32 matches, all prose (docstrings/comments) stating the
+file does *not* use mocking (e.g. `` No `unittest.mock` / `Mock` /
+`MagicMock` / `patch` / `monkeypatch` anywhere in this file. ``); zero are
+executable mock usage. `src/autofde_lab/reasoning` alone: zero matches.
+
+**What this is not, stated so it is not silently over-read**: no live trial
+against a real sregym environment was executed this session. The chain above
+is exercised by Chicago-style unit/integration tests with real collaborators
+(real portfolio construction, real DSPy signatures, real kubectl-translation
+logic), not by a real deployed sregym cluster + conductor + `Mitigation.success`
+observation. The module docstring's nonzero-E2E-score claim (`60.7% top score`
+target, etc.) therefore remains **UNKNOWN** until a real live E2E trial is run
+against this new code path and its result recorded in this file the same way
+prior trials (v1-v29) were. Do not read `PARTIAL_ALIVE` above as evidence of
+a real E2E score -- it is evidence only that the code path and its unit-level
+tests are real and passing.
