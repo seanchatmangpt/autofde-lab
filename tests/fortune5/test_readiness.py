@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -204,8 +204,8 @@ def test_independent_cli_reads_real_file_and_writes_machine_witness(
         )
     )
     env = os.environ.copy()
-    src = Path(__file__).parents[1]
-    env["PYTHONPATH"] = str(src)
+    repo_root = Path(__file__).parents[2]
+    env["PYTHONPATH"] = str(repo_root / "src")
     completed = subprocess.run(
         [
             sys.executable,
@@ -217,7 +217,7 @@ def test_independent_cli_reads_real_file_and_writes_machine_witness(
             "--output",
             str(output_path),
         ],
-        cwd=src,
+        cwd=repo_root,
         env=env,
         text=True,
         capture_output=True,
