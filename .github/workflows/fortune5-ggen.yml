@@ -51,7 +51,11 @@ jobs:
           python -m pip install \
             "numpy==2.2.6" \
             "pytest==8.3.5" \
-            "rdflib==7.5.0"
+            "rdflib==7.5.0" \
+            "wrapt>=2.2.1,<3" \
+            "pynng>=0.6.2" \
+            "pathos>=0.2.7" \
+            "discrete-optimization>=0.9.0"
 
       - name: Manufacture and execute Fortune-5 law court
         run: bash scripts/verify-fortune5-ggen.sh
