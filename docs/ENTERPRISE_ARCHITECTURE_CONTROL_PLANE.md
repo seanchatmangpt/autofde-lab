@@ -269,3 +269,32 @@ PYTHONPATH=src python -m pytest -q \
 Repository-wide qualification and the independent Fortune-5 ggen CMD court remain
 separate required evidence. A queued workflow, documentation artifact, or architecture
 diagram is not a crown.
+
+## 15. Exact-head qualification receipt
+
+The implementation reached exact-head `ALIVE` on PR #58 before this documentation-only
+receipt update. The qualifying candidate was:
+
+```text
+5fcb847c742a95cc06452d027d4a12918dc883e8
+```
+
+Observed evidence on that exact candidate included:
+
+- TTF5 + enterprise-architecture + state-space court: 27 tests passed;
+- Fortune-5 ggen CMD manufacture court: successful;
+- deterministic quality, source compilation, Crown kernel, Fortune-5 runtime, package
+  smoke, and cache qualification on Python 3.10/3.12/3.13: successful;
+- built source distribution contained `readiness.py`, `f5bench.py`, `f5verify.py`, and
+  `enterprise_architecture.py`;
+- Challenger court explicitly asserted the same exact PR head before execution;
+- Challenger compiled issue-reasoning court: 5 tests passed;
+- Challenger value court: 6,400,000 direct calls, 6,000,000 compiled calls, 400,000
+  fallback calls, 93.75% compiled portfolio coverage, zero refused benchmark calls,
+  22,500,000 hypotheses eliminated, and `actuation=REFUSED`;
+- Challenger artifact name bound the exact head and its uploaded ZIP carried SHA-256
+  `046d3bb4b75d551fb915291e84bda0c992dbdf89f70e2895f7a34b151ce86d9f`.
+
+This section is historical receipt data for that exact candidate. Editing this document
+changes repository identity and therefore does not transfer the crown to the new head.
+The PR-level receipt must always be read against the latest exact-head CI results.
