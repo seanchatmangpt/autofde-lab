@@ -20,7 +20,9 @@ concrete gaps were named:
 1. No typed, hierarchical k8s object schema (CRD-aware) exists in either repo.
 2. `ggen-marketplace`'s `dspy-pack` gate-caps field types to `str`/`int`/`float`/`bool`
    and explicitly excludes nested `PydanticModel` composition
-   (`packs/dspy-pack/gates/010_admission.rq:28-31`).
+   (`packs/dspy-pack/gates/010_admission.rq:47-51` — citation corrected 2026-08-11; the
+   gate file grew since this was originally cited, and the restriction itself still
+   holds, only the pinpoint line range had drifted).
 3. No schema-to-ontology generator exists in the 94-pack marketplace.
 4. `wasm4pm`'s Hearsay-II blackboard (`crates/wasm4pm-cognition/src/breeds/hearsay.rs`)
    is the structurally right *pattern* for multi-hypothesis reasoning over
