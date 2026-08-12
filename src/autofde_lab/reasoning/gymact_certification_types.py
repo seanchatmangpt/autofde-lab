@@ -33,6 +33,11 @@ class StandingValue(str, Enum):
     CERT_UNSUPPORTED = "CERT_UNSUPPORTED"
     SMOKE_TESTED = "SMOKE_TESTED"
     STRUCTURAL_ONLY = "STRUCTURAL_ONLY"
+    NO_ARGS = "NO_ARGS"
+    SOLUTION_DURATION_NO_TRACE = "SOLUTION_DURATION_NO_TRACE"
+    SOLUTION_ONLY = "SOLUTION_ONLY"
+    SOLUTION_TRACE_DURATION_OPTIONAL = "SOLUTION_TRACE_DURATION_OPTIONAL"
+    VARARGS = "VARARGS"
 
 
 
@@ -64,9 +69,19 @@ class CertificationManifest:
     manifest_provider_class_ref: str | None = None  #  (ref: http://www.w3.org/2001/XMLSchema#string)
 
 
+@dataclass(frozen=True)
+class OracleContractFinding:
+    """One real, statically-derived (ast.parse over real vendored source text, never an import) classification of one real Oracle subclass's evaluate() method. This is exhaustive over every file scanned -- every oracle class found gets a real finding, never silently dropped. findingReturnTypeAnnotationMismatch is a real, syntactic heuristic (annotation says one type, a real return statement in the body returns a dict literal) -- named as a heuristic, never claimed as a full type-checker."""
+    finding_evaluate_arg_shape_ref: str | None = None  #  (ref: EvaluateArgShape)
+    finding_oracle_class_name: str | None = None  #  (ref: http://www.w3.org/2001/XMLSchema#string)
+    finding_return_type_annotation_mismatch: str | None = None  #  (ref: http://www.w3.org/2001/XMLSchema#boolean)
+    finding_source_file_ref: str | None = None  #  (ref: http://www.w3.org/2001/XMLSchema#string)
+
+
 __all__ = [
     "StandingValue",
     "CertificationCheck",
     "CertificationCheckResult",
     "CertificationManifest",
+    "OracleContractFinding",
 ]

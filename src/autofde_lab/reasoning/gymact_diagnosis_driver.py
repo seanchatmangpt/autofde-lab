@@ -21,14 +21,28 @@ builds the exact same real collaborators (real ``SregymEnvironment`` via
 directly in this module's own control flow. Instead:
 
 1. :func:`autofde_lab.powl.runner.build_pipeline_powl_node` builds the real
-   POWL pipeline tree, whose five terminal ``gymact_*`` Atom labels
+   POWL pipeline tree, whose terminal ``gymact_*`` Atom labels
    (``ALLOWED_ACTUATION_BINDING_LABELS`` in that module) are the real
-   actuation-class labels this driver binds to.
-2. Each of the five labels is bound to a real
+   actuation-class labels this driver binds to. **Correction (2026-08-12)**:
+   this paragraph previously said "five" -- re-verified this session
+   directly against the real frozenset literal in ``runner.py``, the real
+   current count is **11** (grew via later, separate work adding the
+   recheck/mitigation labels; ``runner.py``'s own docstring carried the
+   same stale "four" count, corrected in the same pass -- see that
+   module's own correction note). This driver's real ``action_bindings``
+   dict (below) currently binds all 14 real ``GYMACT_*_LABEL`` constants
+   it imports (10 as gated capability bindings, 4 as bare action bindings
+   for labels with no real gymact ``Capability`` behind them) -- the 14
+   total is a different, larger count than the 11-member
+   ``ALLOWED_ACTUATION_BINDING_LABELS`` set itself, since this driver also
+   binds real non-actuation-class labels (status/namespace/pod/scan reads)
+   that were never part of that frozenset.
+2. Each of the 11 real actuation-class labels is bound to a real
    :class:`~autofde_lab.powl.runner.GatedCapabilityBinding` -- a closure over
    the one materialized ``env``, wrapping a real ``CapabilityGate``-checked
    gymact capability name -- never a bare callable (``run_pipeline`` itself
-   refuses a bare callable for these five labels; see that module).
+   refuses a bare callable for these actuation-class labels; see that
+   module).
 3. :func:`autofde_lab.powl.runner.run_pipeline` is called exactly once. THAT
    call is what fires each bound closure, in the order the real POWL tree's
    structural replay enables them -- this module's own code never calls
@@ -344,7 +358,9 @@ async def run_gymact_mediated_diagnosis(
     _diagnosis_state_sink: dict[str, Any] | None = None,
 ) -> GymactMediatedDiagnosisResult:
     """Materialize a real ``SregymEnvironment``, build the real POWL
-    pipeline tree extended with the five ``gymact_*`` actuation Atoms, bind
+    pipeline tree extended with the real ``gymact_*`` actuation Atoms (11
+    real actuation-class labels as of this session's re-verified count --
+    see the module docstring's 2026-08-12 correction), bind
     each to a real, capability-gated closure over that one environment, and
     call ``run_pipeline`` exactly once -- the runner's own structural replay
     is what triggers each real call, in tree order, not this function.

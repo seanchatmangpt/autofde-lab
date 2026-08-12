@@ -80,8 +80,14 @@ reason = "Submits the agent's OWN mitigation to sregym's conductor for external 
 #   - anything that would read or drive scoring internals beyond the
 #     bounded pass/fail + observed-state shape verify() itself already
 #     returns (e.g. a hypothetical "score_submission" capability that
-#     exposes the grading rubric) -- the "verify" entry above lists only
-#     verify() itself, admitted narrowly for the reason given there.
+#     exposes the grading rubric) -- verify() itself is not a capability
+#     at all (see the NOTE above: it takes a bare ActionBinding, never a
+#     GatedCapabilityBinding), so there is no "verify" entry in this
+#     manifest to point to; this bullet is a boundary statement about a
+#     hypothetical future capability, not a reference to an existing one.
+#     (Correction, 2026-08-12: this comment previously referred to "the
+#     verify entry above" as if one still existed in this manifest -- it
+#     does not, and per the NOTE above, never should.)
 #
 # capability_gate.py checks capability `.binding` values duck-typed against
 # real `gymact.gyms.sregym.Capability`/`SREGYM_CAPABILITIES` objects -- it

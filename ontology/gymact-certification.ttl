@@ -67,3 +67,31 @@ afl:manifestConformanceLevelRef a owl:ObjectProperty , owl:FunctionalProperty ; 
 afl:manifestCheckResultRef a owl:DatatypeProperty ; rdfs:domain afl:CertificationManifest ; rdfs:range xsd:string ; rdfs:label "manifest check result reference" .
 afl:manifestIssuedAtRef a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain afl:CertificationManifest ; rdfs:range xsd:string ; rdfs:label "manifest issued-at reference" .
 afl:manifestComputationReceiptRef a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain afl:CertificationManifest ; rdfs:range xsd:string ; rdfs:label "manifest computation receipt reference" .
+
+#: Real Oracle.evaluate() parameter shapes found by exhaustive, static
+#: (ast-based, never-imports-vendor) scan of every real file under
+#: vendor/gyms/sregym/sregym/conductor/oracles/ this session. The base
+#: Oracle ABC declares evaluate(self, solution, trace, duration) but
+#: matches ZERO real subclasses exactly -- these 5 individuals are the
+#: real, distinct shapes actually found in the vendored source, not a
+#: guessed or idealized taxonomy.
+afl:EvaluateArgShape a owl:Class ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:gymact-certification> ;
+    rdfs:subClassOf skos:Concept ; rdfs:label "Evaluate argument shape" .
+afl:EvaluateArgShapeScheme a skos:ConceptScheme ; skos:prefLabel "Evaluate argument shape" .
+afl:NO_ARGS a afl:EvaluateArgShape ; skos:inScheme afl:EvaluateArgShapeScheme ; skos:prefLabel "NO_ARGS" .
+afl:SOLUTION_ONLY a afl:EvaluateArgShape ; skos:inScheme afl:EvaluateArgShapeScheme ; skos:prefLabel "SOLUTION_ONLY" .
+afl:VARARGS a afl:EvaluateArgShape ; skos:inScheme afl:EvaluateArgShapeScheme ; skos:prefLabel "VARARGS" .
+afl:SOLUTION_TRACE_DURATION_OPTIONAL a afl:EvaluateArgShape ; skos:inScheme afl:EvaluateArgShapeScheme ; skos:prefLabel "SOLUTION_TRACE_DURATION_OPTIONAL" .
+afl:SOLUTION_DURATION_NO_TRACE a afl:EvaluateArgShape ; skos:inScheme afl:EvaluateArgShapeScheme ; skos:prefLabel "SOLUTION_DURATION_NO_TRACE" .
+
+#: OracleContractFinding -- one real, statically-scanned oracle class's
+#: real evaluate() shape classification.
+afl:OracleContractFinding a owl:Class ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:gymact-certification> ;
+    rdfs:label "Oracle contract finding" ;
+    rdfs:comment "One real, statically-derived (ast.parse over real vendored source text, never an import) classification of one real Oracle subclass's evaluate() method. This is exhaustive over every file scanned -- every oracle class found gets a real finding, never silently dropped. findingReturnTypeAnnotationMismatch is a real, syntactic heuristic (annotation says one type, a real return statement in the body returns a dict literal) -- named as a heuristic, never claimed as a full type-checker." .
+afl:findingOracleClassName a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain afl:OracleContractFinding ; rdfs:range xsd:string ; rdfs:label "finding oracle class name" .
+afl:findingEvaluateArgShapeRef a owl:ObjectProperty , owl:FunctionalProperty ; rdfs:domain afl:OracleContractFinding ; rdfs:range afl:EvaluateArgShape ; rdfs:label "finding evaluate arg shape" .
+afl:findingSourceFileRef a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain afl:OracleContractFinding ; rdfs:range xsd:string ; rdfs:label "finding source file reference" .
+afl:findingReturnTypeAnnotationMismatch a owl:DatatypeProperty , owl:FunctionalProperty ; rdfs:domain afl:OracleContractFinding ; rdfs:range xsd:boolean ; rdfs:label "finding return type annotation mismatch" .

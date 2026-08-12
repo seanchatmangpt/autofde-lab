@@ -124,6 +124,22 @@ labels -- ``verify()`` was always a plain oracle call available to any
 caller with a live environment reference, not a gated capability invocation,
 so gating it added a false capability without adding real authorization.
 
+**Correction (2026-08-12), per this repo's own "never overwrite, add a
+retraction beside it" convention**: the "exactly four new labels" claim
+above described :data:`ALLOWED_ACTUATION_BINDING_LABELS` as it stood at
+the time this paragraph was written. Real, current count, re-verified this
+session directly against the frozenset literal below:
+:data:`ALLOWED_ACTUATION_BINDING_LABELS` now has **11** members (grew via
+later, separate work adding the recheck/mitigation labels
+:data:`GYMACT_ACTUATE_REMEDIATE_LABEL`, :data:`GYMACT_SUBMIT_MITIGATION_LABEL`,
+:data:`GYMACT_RECHECK_DEPLOYMENTS_LABEL`, :data:`GYMACT_RECHECK_PODS_LABEL`,
+:data:`GYMACT_RECHECK_SERVICES_LABEL`, :data:`GYMACT_CHECK_SERVICES_LABEL`,
+never updated in this narrative when they were added). The narrower,
+principled rule described above (gated-actuation-only, structurally
+refused otherwise) is unchanged and still real -- only the literal count
+"four" is stale; read the frozenset literal itself as the source of truth
+for the current real count, not this prose.
+
 Why this does not violate ``.claude/rules/ecosystem-boundary.md``'s "this
 repo... does not attach actuation semantics" law: that law binds this
 repo's *own* claims about the portfolio's actuation, broker, and receipt

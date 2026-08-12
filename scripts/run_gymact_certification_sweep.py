@@ -22,6 +22,22 @@ A provider class that cannot be constructed with zero arguments (a real,
 legitimate case -- several real providers require config, e.g. a target
 Terraform module path) is reported honestly as `CONSTRUCTION_FAILED`, never
 silently skipped from the printed output.
+
+Also folds in gymact's own real, already-built native validation machinery
+-------------------------------------------------------------------------------
+`gymact` ships its own real `doctor`/`validate-profile` CLI commands
+(`gymact.cli`, real console script `gymact = "gymact.cli:app"`) --
+`doctor` reports real crown/errc/module/provider-registry status,
+`validate-profile` runs real SHACL + zero-custom-TBox validation against
+the packaged `ontology/profile.ttl`/`profile.shacl.ttl`/
+`gym_algebra.shacl.ttl`. This sweep real-subprocess-calls both (resolving
+the real installed console script, e.g. `.venv/bin/gymact`, via
+`shutil.which`/a direct venv-relative fallback) and folds their real,
+verbatim output into this sweep's own JSON under `gymact_native_validation`
+-- additional real evidence from gymact's own already-working machinery,
+never a competing reimplementation. If the `gymact` console script cannot
+be resolved, this is reported as a real, honest `UNSUPPORTED` entry with
+the exact reason, never silently omitted.
 """
 
 from __future__ import annotations
@@ -31,9 +47,56 @@ import importlib
 import inspect
 import json
 import pkgutil
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _resolve_gymact_cli() -> str | None:
+    """Real resolution of the installed `gymact` console script -- prefers
+    the venv this script's own interpreter belongs to (matches how this
+    repo's own `.venv/bin/python` was used to confirm both commands work
+    this session), falls back to `shutil.which` for a global install."""
+    venv_relative = Path(sys.executable).parent / "gymact"
+    if venv_relative.is_file():
+        return str(venv_relative)
+    return shutil.which("gymact")
+
+
+def _run_gymact_native_validation() -> dict:
+    """Real subprocess calls to `gymact doctor` and `gymact validate-profile`,
+    verbatim real output folded in. Never raises -- a real subprocess
+    failure (non-zero exit, malformed JSON) is reported honestly in the
+    result dict, never crashes the sweep."""
+    cli_path = _resolve_gymact_cli()
+    if cli_path is None:
+        return {
+            "standing": "UNSUPPORTED",
+            "reason": "no real installed 'gymact' console script found (checked venv-relative "
+            f"path next to {sys.executable!r} and PATH via shutil.which)",
+        }
+
+    result: dict = {"standing": "OBSERVED", "cli_path": cli_path}
+    for command_name in ("doctor", "validate-profile"):
+        try:
+            completed = subprocess.run(
+                [cli_path, command_name], capture_output=True, text=True, timeout=30
+            )
+        except (subprocess.TimeoutExpired, OSError) as exc:
+            result[command_name] = {"error": f"real subprocess failure: {type(exc).__name__}: {exc}"}
+            continue
+        entry: dict = {"exit_code": completed.returncode, "stdout": completed.stdout.strip()}
+        if completed.stderr.strip():
+            entry["stderr"] = completed.stderr.strip()
+        try:
+            entry["parsed"] = json.loads(completed.stdout)
+        except json.JSONDecodeError:
+            entry["parsed"] = None
+        result[command_name] = entry
+    return result
 
 
 def _discover_provider_classes() -> list[tuple[str, type]]:
@@ -97,7 +160,12 @@ async def _run_sweep() -> list[dict]:
 
 def main() -> int:
     manifests = asyncio.run(_run_sweep())
-    print(json.dumps({"gymact_certification_sweep": manifests}, indent=2))
+    native_validation = _run_gymact_native_validation()
+    print(
+        json.dumps(
+            {"gymact_certification_sweep": manifests, "gymact_native_validation": native_validation}, indent=2
+        )
+    )
     return 0
 
 
