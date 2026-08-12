@@ -32,13 +32,19 @@ reviewed and updated," per this repo's absence-is-not-evidence rule: absence
 of a known problem today is not permission to admit an unreviewed capability
 tomorrow.
 
-Real TOML parsing (`tomllib`, stdlib) against a real file on disk; no mocked
-manifest, no interaction-based fakes.
+Real TOML parsing uses stdlib ``tomllib`` on Python 3.11+ and the compatible
+``tomli`` parser on the project's supported Python 3.10 floor. Both read the
+real manifest bytes from disk; no mocked manifest and no implicit fallback
+policy is used.
 """
 
 from __future__ import annotations
 
-import tomllib
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10: project support floor.
+    import tomli as tomllib
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -85,8 +91,8 @@ class CapabilityManifestEntry:
 class CapabilityGate:
     """Loads a TOML capability manifest and enforces it at call time.
 
-    Real collaborators only: a real `Path`, real `tomllib.load` against a
-    real file's real bytes. No mocked filesystem, no faked TOML content.
+    Real collaborators only: a real `Path`, real TOML parsing against a real
+    file's real bytes. No mocked filesystem, no faked TOML content.
     """
 
     def __init__(self, entries: tuple[CapabilityManifestEntry, ...], *, environment: str) -> None:
@@ -143,37 +149,15 @@ class CapabilityGate:
 
     def check(self, binding: str) -> None:
         """Raise `CapabilityRefused` if `binding` is not in the manifest;
-        return `None` (no value) if it is allowed. Named separately from
-        `entry()` for callers that only need the refuse/allow decision."""
+        return `None` (no value) if it is allowed."""
         self.entry(binding)
 
     def stale_entries(self, real_names: frozenset[str] | set[str]) -> frozenset[str]:
-        """Return the subset of this manifest's allowed names that do not
-        appear in `real_names` -- the real capability-name set of the target
-        environment (e.g. `{c.binding for c in SREGYM_CAPABILITIES}`).
-
-        A non-empty result means the manifest lists at least one binding
-        that does not correspond to any real capability today: a stale or
-        typo'd entry that `from_toml` alone cannot detect, since a manifest
-        is self-consistent TOML regardless of whether its names mean
-        anything to the real environment. This method never mutates the
-        gate or the manifest; it is a pure cross-check callers can run at
-        startup (or in a test) to catch drift between the allowlist and
-        gymact's real capability set.
-        """
+        """Return manifest names absent from the real capability-name set."""
         return self.allowed_names - frozenset(real_names)
 
     def guard_capability(self, capability: Any) -> Any:
-        """Check a real `gymact.models.Capability`-shaped object's
-        `.binding` attribute against the manifest and return it unchanged
-        if allowed.
-
-        Accepts anything with a `.binding` attribute (duck-typed, so this
-        module never needs an import-time dependency on the real `gymact`
-        package -- the TOML-parsing/refusal logic this file exists to test
-        does not require gymact to be importable) rather than importing
-        `gymact.models.Capability` directly.
-        """
+        """Check a real `gymact.models.Capability`-shaped object's binding."""
         binding = getattr(capability, "binding", None)
         if binding is None:
             raise CapabilityRefused(
