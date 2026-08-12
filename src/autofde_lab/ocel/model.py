@@ -27,8 +27,19 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-from enum import StrEnum
+from enum import Enum
 from typing import Any, Iterable, Mapping, Sequence
+
+try:
+    from enum import StrEnum
+except ImportError:  # Python 3.10: project support floor.
+
+    class StrEnum(str, Enum):
+        """Minimal stdlib-compatible StrEnum surface for explicit values."""
+
+        def __str__(self) -> str:
+            return str(self.value)
+
 
 __all__ = [
     "OcelValueKind",
