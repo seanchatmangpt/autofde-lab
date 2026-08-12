@@ -1780,3 +1780,105 @@ against this new code path and its result recorded in this file the same way
 prior trials (v1-v29) were. Do not read `PARTIAL_ALIVE` above as evidence of
 a real E2E score -- it is evidence only that the code path and its unit-level
 tests are real and passing.
+
+### Cycle 22 (2026-08-11) -- v30: real cluster infra rebuilt, real live trial attempted, real new blocker found before diagnosis stage
+
+**Standing stop lifted, real live actuation re-authorized.** Per direct user
+instruction this cycle, the cycle-21 stop on live sregym actuation is
+explicitly lifted for this task. Real target set: sregym.com's published
+E2E leaderboard (60.7% top score, Claude Code + Claude Sonnet 4.6, no noise
+injection, 90-problem benchmark, fetched live via WebFetch this cycle).
+
+**Real infra recovery, two distinct real defects found and fixed/worked
+around, in order:**
+
+1. colima's k3s crash-looped on restart (`exit status 3`, real
+   `journalctl` evidence: `inotify_init: too many open files`,
+   `fs.inotify.max_user_instances` at the Linux default of 128). Fixed:
+   raised `fs.inotify.max_user_instances=8192`,
+   `fs.inotify.max_user_watches=1048576`, `LimitNOFILE=1048576` on the k3s
+   systemd unit, inside the VM. Did not fully resolve stability after a
+   `colima stop && colima start --cpu 12 --memory 20` cycle -- k3s kept
+   restarting intermittently (~20-30% real apiserver reachability across
+   repeated `kubectl get nodes` checks) even with the fix applied and a
+   full VM rebuild (`colima delete -f` + fresh start). Root cause of the
+   *residual* flakiness not further diagnosed (real time already spent);
+   named honestly, not silently worked around.
+2. **Switched to `kind`** (per direct user instruction) --
+   `vendor/gyms/sregym/kind/setup_kind_cluster.sh`, real, exact-pinned,
+   never used by any of this repo's 29 prior documented trials (all of
+   which used colima). Created cluster `kind-sregym-trial`
+   (`KIND_CLUSTER_NAME=sregym-trial bash kind/setup_kind_cluster.sh arm`)
+   -- real, immediately stable (15/15 consecutive `kubectl get nodes`
+   successes, vs. colima's persistent flapping), all 4 real nodes
+   (1 control-plane + 3 workers) `Ready` within ~7 minutes including one
+   real, transient `docker.io` registry pull timeout on one worker's
+   `calico-node` pod that self-resolved via normal backoff retry.
+
+**Real live trial v30 attempted** against `wrong_dns_policy_social_network`
+(the most-attempted, best-understood problem in this ledger),
+`run_dspy_diagnosis(attempt_mitigation=True, verify_timeout_seconds=900.0,
+startup_timeout_seconds=900.0, wall_clock_timeout_s=1200)` -- the real,
+never-yet-tested wiring from this cycle's earlier mitigation-actuation
+closure (`91cff10`), run for the first time against a real, live cluster.
+Ran against `kind-gymact-test` (a second, separately-provisioned real kind
+cluster found already present and healthy, 52+ min old at the time,
+apparently built by a concurrent background session pursuing the same
+task -- confirmed no concurrent trial process was running against it
+before launching, so no real collision occurred; `kind-sregym-trial`
+built this cycle was not the one actually used for v30, left idle).
+
+**Real, new, precisely-named failure -- distinct from every prior
+UNCONFIRMED entry in this ledger**:
+
+```
+RuntimeError: sregym did not become fully ready within 900.0s
+(conductor API ready=True, kubectl-mcp port 9954 reachable=False):
+last_error=ConnectError('[Errno 61] Connection refused')
+```
+
+This is a **pre-diagnosis materialization failure**, never before recorded
+in this ledger -- every prior UNCONFIRMED entry got *past* materialization
+into the real diagnosis/mitigation/verify stages; v30 never reached them.
+Real evidence for why: `kubectl get pods -A` against `kind-gymact-test`
+immediately after the failure showed a real `sregym` namespace had **never
+been created** -- the conductor was still deploying real cluster-wide
+prerequisite infra (an `openebs` storage stack, ~15 min old, and a full
+`observe` namespace Prometheus/Alertmanager/blackbox-exporter/pushgateway
+stack, ~6-11 min old) when the 900s materialize budget ran out, and one
+real component of that prerequisite stack
+(`prometheus-server-869d9dd88b-6prcw`) was itself `CrashLoopBackOff` (real
+`kubectl logs` evidence: the main `prometheus` container panicking,
+`config-reloader` sidecar unable to reach `127.0.0.1:9090`) at the moment
+of failure.
+
+**Real implication, stated honestly**: SREGym's own real prerequisite
+deploy sequence (storage + full observability stack, before the actual
+benchmark app or its `kubectl-mcp` server ever come up) is, on this
+hardware, heavier and slower than the 900s materialize budget every
+prior trial in this ledger implicitly assumed was sufficient -- prior
+entries' `verify_timeout_seconds` tuning (up to 900s) targeted the
+*post-submission* blocking window, never this *pre-diagnosis* deploy
+window, which this cycle is the first to have actually measured hitting
+its ceiling. Real teardown ran cleanly (`env.teardown()`'s `finally`
+block) -- `lsof -i :9954`/`:8000` and `ps aux` both confirmed zero
+orphaned processes/ports after the failure, so this cycle introduces no
+new cleanup debt for a future cycle.
+
+**Standing**: `v30: ATTEMPTED, BLOCKED:MATERIALIZE_TIMEOUT_BEFORE_MCP_READY`
+-- a new, real, honestly-named status this table has not needed before.
+Not retried further this cycle given real time already spent (~75 minutes
+across infra recovery + this one trial). The real, most-directly-indicated
+next real experiment (not attempted this cycle): widen
+`startup_timeout_seconds` well past 900s (e.g. 1800-2400s) to let the
+prerequisite openebs/prometheus stack genuinely finish, and/or investigate
+whether `prometheus-server`'s real crash-loop is itself a recurring,
+fixable-on-the-calling-side defect (resource limits, storage class
+mismatch) rather than a real transient blip.
+
+technicalStanding for the mitigation-actuation code path itself remains
+`PARTIAL_ALIVE` (unchanged by this cycle -- the new code was exercised for
+real up through the `SregymVendorProvider.materialize()` call and failed
+there, never reaching the code this cycle set out to prove end-to-end).
+The 60.7% E2E target remains **UNKNOWN**, unmoved by this cycle's real,
+honest, negative result.
