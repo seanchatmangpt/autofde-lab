@@ -17,8 +17,10 @@ def _canonical(value: Any) -> bytes:
     def default(obj: Any) -> Any:
         if hasattr(obj, "__dataclass_fields__"):
             return asdict(obj)
-        if isinstance(obj, (set, frozenset, tuple)):
-            return sorted(obj) if not isinstance(obj, tuple) else list(obj)
+        if isinstance(obj, (set, frozenset)):
+            return sorted(obj)
+        if isinstance(obj, tuple):
+            return list(obj)
         raise TypeError(type(obj).__name__)
 
     return json.dumps(value, default=default, sort_keys=True, separators=(",", ":")).encode()
@@ -37,7 +39,7 @@ class EvidenceBinding:
 
     def __post_init__(self) -> None:
         if not self.ref.strip() or not self.kind.strip() or not self.subject_digest.strip():
-            raise ValueError("evidence bindings require ref, kind, and subject_digest")
+            raise ValueError("INCOMPLETE_EVIDENCE_BINDING_REFUSED")
 
 
 @dataclass(frozen=True)
@@ -49,9 +51,9 @@ class BaselineSnapshot:
 
     def __post_init__(self) -> None:
         if not self.snapshot_id.strip() or not self.world_digest.strip():
-            raise ValueError("baseline requires identity and world digest")
+            raise ValueError("INCOMPLETE_BASELINE_REFUSED")
         if any(not e.admitted for e in self.evidence):
-            raise ValueError("baseline may contain only admitted evidence")
+            raise ValueError("UNADMITTED_BASELINE_EVIDENCE_REFUSED")
 
     @property
     def digest(self) -> str:
@@ -68,6 +70,8 @@ class WorldDelta:
     def __post_init__(self) -> None:
         if self.before_digest == self.after_digest:
             raise ValueError("WORLD_DELTA_EMPTY_REFUSED")
+        if not self.baseline_digest.strip():
+            raise ValueError("MISSING_BASELINE_BINDING_REFUSED")
         if any(not e.admitted for e in self.evidence):
             raise ValueError("UNADMITTED_DELTA_EVIDENCE_REFUSED")
 
@@ -98,6 +102,8 @@ class HypothesisPortfolio:
     hypotheses: tuple[Hypothesis, ...]
 
     def __post_init__(self) -> None:
+        if not self.delta_digest.strip():
+            raise ValueError("MISSING_DELTA_BINDING_REFUSED")
         ids = [h.hypothesis_id for h in self.hypotheses]
         if len(ids) != len(set(ids)):
             raise ValueError("DUPLICATE_HYPOTHESIS_ID_REFUSED")
@@ -121,6 +127,8 @@ class DiscriminatingExperiment:
     def __post_init__(self) -> None:
         if len(self.distinguishes) < 2:
             raise ValueError("NON_DISCRIMINATING_EXPERIMENT_REFUSED")
+        if not self.observation_contract.strip():
+            raise ValueError("MISSING_OBSERVATION_CONTRACT_REFUSED")
         if self.authority_requirement != "observe":
             raise ValueError("CONSEQUENTIAL_EXPERIMENT_REFUSED")
 
@@ -173,7 +181,7 @@ class DesiredStateEnvelope:
     objective_id: str
     required_postconditions: tuple[str, ...]
     preservation_laws: tuple[str, ...]
-    authority_ceiling: str
+    authority_ceiling: frozenset[str]
 
     def __post_init__(self) -> None:
         if not self.required_postconditions:
@@ -228,7 +236,7 @@ def construct_solution_graph(
     future = by_id.get(future_id)
     if future is None:
         raise ValueError("UNKNOWN_FUTURE_REFUSED")
-    if any(req not in desired.authority_ceiling for req in authority_requirements):
+    if not set(authority_requirements) <= desired.authority_ceiling:
         raise ValueError("AUTHORITY_CEILING_EXCEEDED_REFUSED")
     body = {
         "possibilities": possibilities.digest,
