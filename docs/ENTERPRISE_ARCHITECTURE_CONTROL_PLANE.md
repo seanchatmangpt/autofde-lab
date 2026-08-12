@@ -273,8 +273,9 @@ diagram is not a crown.
 ## 15. Qualification receipt model
 
 Exact-head standing is SHA-scoped. Any repository edit changes subject identity and
-requires a new exact-head qualification. The repository therefore records only the
-stable proof contract, not transient run status.
+requires a new exact-head qualification. The repository records the stable proof
+contract; run-specific standing belongs in external receipt metadata associated with the
+exact candidate SHA.
 
 ```text
 PR head SHA
@@ -285,6 +286,3 @@ PR head SHA
 × head-bound artifact digest
 → scoped technical standing
 ```
-
-Run-specific standing belongs in external receipt metadata associated with the exact
-candidate SHA, not in a source file whose mutation would itself invalidate that standing.
