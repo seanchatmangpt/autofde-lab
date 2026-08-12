@@ -32,16 +32,18 @@ repos:
     # Ruff version.
     rev: v0.14.0
     hooks:
-      # Run the linter (only sorting imports for now)
+      # Identity-bound validation capsules are evidence, not editing surfaces.
       - id: ruff-check
         name: ruff sort imports
         args: [ --fix, --select=I ]
+        exclude: ^\.validation/gymact-(base|head)/
       - id: ruff-check
         name: ruff clean unused imports
         args: [ --fix, --select=F401 ]
-      # Run the formatter.
+        exclude: ^\.validation/gymact-(base|head)/
+      # Run the formatter on authored source only.
       - id: ruff-format
-        exclude: ^cpp/
+        exclude: ^(cpp/|\.validation/gymact-(base|head)/)
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: v13.0.0
