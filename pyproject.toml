@@ -38,7 +38,11 @@ dependencies = [
     # `EnvironmentProvider`/`Environment` implementation -- not faked, not
     # vendored; installed for real per
     # `~/gymact/docs/integrations/consumer-setup.md`.
-    "gymact",
+    # Marker added 2026-08-08: gymact declares requires-python >=3.11,<4.0 while
+    # this project declares >=3.10, so uv's 3.10 resolution split was
+    # unsatisfiable and `uv run` failed. The marker excludes gymact from that
+    # split rather than narrowing this project's own supported range.
+    "gymact; python_version >= '3.11'",
 ]
 
 [project.urls]
@@ -63,8 +67,13 @@ shared = [  # define a common extra to avoid redefining dependencies in both dom
 receipts = [  # autofde_lab.receipts admission/broker layer: typed process-mining
     # observation shapes (Receipt/OcelEvent/Evidence/...), see
     # autofde_lab/receipts/wasm4pm_types.py. Pure pydantic, no native/Rust
-    # dependency -- see ~/wasm4pm-compat/wasm4pm-compat-py/README.md.
-    "wasm4pm-compat-py",
+    # dependency -- see ~/wasm4pm-compat/python/README.md. NOTE (2026-08-08):
+    # the dependency was previously named "wasm4pm-compat-py" and sourced from
+    # /Users/sac/wasm4pm-compat/wasm4pm-compat-py, a path that does not exist on
+    # disk; that broke `uv run` repo-wide with "Distribution not found". The real
+    # package is `wasm4pm-compat-pydantic` (module `wasm4pm_compat_pydantic`) at
+    # /Users/sac/wasm4pm-compat/python.
+    "wasm4pm-compat-pydantic",
 ]
 domains = [
     "autofde-lab[shared]", # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
@@ -115,6 +124,7 @@ pddl = [
 ]
 dspy = [
     "dspy",  # unpinned: DSPyPolicy always targets the most recent dspy release
+    "faker",  # anti-memorization name substitution for gepa_train.py's offline trainset
 ]
 ofmf = [
     # Vendored from ~/dev/.spec-kit.bak/src/specify_cli/ofmf/ofmf_keystone.py
@@ -281,7 +291,7 @@ test = [
 default-groups = "all"
 
 [tool.uv.sources]
-wasm4pm-compat-py = { path = "/Users/sac/wasm4pm-compat/wasm4pm-compat-py", editable = true }
+wasm4pm-compat-pydantic = { path = "/Users/sac/wasm4pm-compat/python", editable = true }
 gymact = { path = "/Users/sac/gymact", editable = true }
 
 [tool.pytest.ini_options]
