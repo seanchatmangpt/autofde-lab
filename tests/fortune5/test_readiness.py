@@ -14,8 +14,8 @@ from autofde_lab.fortune5.f5bench import (
     verify_resynchronization,
 )
 from autofde_lab.fortune5.readiness import (
-    F5ReadinessVerifier,
     REQUIRED_GATES,
+    F5ReadinessVerifier,
     build_submission,
     evidence_digest,
     failure_rate,
@@ -177,9 +177,12 @@ def test_derived_metric_family_is_bounded_and_nonvacuous() -> None:
     )
     bad = verifier.verify(bad_submission, verified_at_ns=175)
     assert failure_rate((good, bad)) == 0.5
-    assert architecture_optionality_density(
-        lawful_verified_alternatives=1605, irreversible_decisions=1
-    ) == 802.5
+    assert (
+        architecture_optionality_density(
+            lawful_verified_alternatives=1605, irreversible_decisions=1
+        )
+        == 802.5
+    )
 
 
 def test_independent_cli_reads_real_file_and_writes_machine_witness(
