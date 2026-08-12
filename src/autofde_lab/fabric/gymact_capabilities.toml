@@ -6,8 +6,9 @@
 # reviewed, and an entry that disappears upstream is treated as stale drift.
 #
 # Exact reviewed upstream subject:
-#   seanchatmangpt/gymact@4f640dff61ab688960a72cebd355150675d0cc56
-#   src/gymact/gyms/sregym.py::SREGYM_CAPABILITIES
+#   seanchatmangpt/gymact@5a40c8f402aeb14699e216e17b2ef7aae9f0bc8f
+#   src/gymact/gyms/sregym.py blob c7d669253693f1275a0f413d816d7ec00d691bfe
+#   SREGYM_CAPABILITIES
 #
 # All current SREGym capabilities are Consequence.DO in GymAct because its
 # named-capability invocation path is `gym.act()`/Environment.actuate(). Some
@@ -18,7 +19,8 @@
 [gymact]
 environment = "sregym"
 source_repo = "seanchatmangpt/gymact"
-source_sha = "4f640dff61ab688960a72cebd355150675d0cc56"
+source_sha = "5a40c8f402aeb14699e216e17b2ef7aae9f0bc8f"
+source_blob = "c7d669253693f1275a0f413d816d7ec00d691bfe"
 
 [[capability]]
 name = "observe_cluster_state"
