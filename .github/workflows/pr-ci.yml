@@ -116,6 +116,8 @@ jobs:
           python -m pytest -q \
             tests/autofde/test_authority.py \
             tests/autofde/test_bootstrap.py \
+            tests/autofde/test_ercc_control_plane.py \
+            tests/autofde/test_default_head_composition_court.py \
             tests/fabric/test_brce.py \
             tests/fabric/test_brce_identity.py \
             tests/fabric/test_public_ontology.py \
