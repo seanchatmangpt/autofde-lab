@@ -36,8 +36,8 @@ environment = "sregym"
 
 [[capability]]
 name = "observe_cluster_state"
-consequence = "READ"
-reason = "Reads sregym's real conductor /status endpoint. Pure diagnostic observation, no ground truth."
+consequence = "DO"
+reason = "Reads sregym's real conductor /status endpoint. Semantically read-only (no cluster mutation, no ground truth) but classified DO, not READ (corrected 2026-08-11, matching a real fix in ~/gymact/src/gymact/gyms/sregym.py): gymact's own kernel mechanically refuses ANY Consequence.READ capability routed through gym.act(), and SregymEnvironment has no separate observe()-based invocation path for a named query -- gym.act() is the only real way this tool can actually execute, so DO is the only classification that is actually true here. The prior READ classification silently meant every real gym.act() call against this capability was refused before this fix."
 
 [[capability]]
 name = "run_kubectl"
@@ -46,8 +46,8 @@ reason = "Executes a real kubectl command through sregym's kubectl-mcp server. T
 
 [[capability]]
 name = "get_benchmark_status"
-consequence = "READ"
-reason = "Reads sregym's conductor /status endpoint (benchmark-stage view). Pure diagnostic observation, no ground truth."
+consequence = "DO"
+reason = "Reads sregym's conductor /status endpoint (benchmark-stage view). Semantically read-only (no cluster mutation, no ground truth) but classified DO, not READ (corrected 2026-08-11, matching a real fix in ~/gymact/src/gymact/gyms/sregym.py) -- same rationale as observe_cluster_state above: gymact's own kernel mechanically refuses ANY Consequence.READ capability routed through gym.act(), so DO is the only classification that is actually true here."
 
 [[capability]]
 name = "submit_diagnosis"
