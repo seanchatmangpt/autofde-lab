@@ -8,11 +8,11 @@ from .f5bench import (
     verify_resynchronization,
 )
 from .readiness import (
+    REQUIRED_GATES,
     F5ReadinessVerifier,
     GateEvidence,
     ReadinessSubmission,
     ReadinessWitness,
-    REQUIRED_GATES,
     build_submission,
     evidence_digest,
     failure_rate,
