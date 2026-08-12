@@ -18,6 +18,7 @@ file first happens to import dspy.
 
 import numpy  # noqa: F401
 
+import os
 import subprocess
 import time
 import urllib.request
@@ -119,5 +120,38 @@ def real_dspy_lm(real_turbo_fieldfare_server):
     from autofde_lab.hub.solver.dspy_policy import DEFAULT_LM_MODEL
 
     lm = dspy.LM(DEFAULT_LM_MODEL, api_base=f"{real_turbo_fieldfare_server}/v1", api_key="local")
+    dspy.configure(lm=lm)
+    return lm
+
+
+# Real Groq-backed alternative to `real_dspy_lm` for the same non-sregym
+# DSPyPolicy tests: no local server process required, so this exercises the
+# real DSPyPolicy action-resolution code paths (ChooseMove /
+# GenerateStructuredAction) against a real, always-reachable Groq endpoint
+# instead of depending on a locally-built TurboFieldfareServer binary + model
+# weights being present on this machine. `llama-3.1-8b-instant` is Groq's
+# smallest/fastest hosted chat model -- adequate for these short,
+# structured-output prompts and cheap enough to run per-test, matching the
+# gpt-oss-20b choice other GROQ_API_KEY-gated tests in this repo use for the
+# same "small model, real call, never a mock" reasoning.
+GROQ_DSPY_POLICY_MODEL = "groq/llama-3.1-8b-instant"
+
+_GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+
+requires_real_groq_key = pytest.mark.skipif(
+    not _GROQ_API_KEY,
+    reason=(
+        "GROQ_API_KEY is not set in this environment -- a real live Groq "
+        "call is required for this test and no mock substitute is used per "
+        ".claude/rules/testing-chicago-style.md."
+    ),
+)
+
+
+@pytest.fixture()
+def real_groq_dspy_lm():
+    import dspy
+
+    lm = dspy.LM(GROQ_DSPY_POLICY_MODEL, api_key=_GROQ_API_KEY, cache=False)
     dspy.configure(lm=lm)
     return lm
