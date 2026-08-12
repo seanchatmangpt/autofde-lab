@@ -184,6 +184,10 @@ jobs:
           if [[ "${{ steps.routes.outputs.fortune5 }}" == "true" ]]; then
             grep -Eq '/src/autofde_lab/fortune5/space\.py$' sdist-files.txt
             grep -Eq '/src/autofde_lab/fortune5/catalog\.py$' sdist-files.txt
+            grep -Eq '/src/autofde_lab/fortune5/readiness\.py$' sdist-files.txt
+            grep -Eq '/src/autofde_lab/fortune5/f5bench\.py$' sdist-files.txt
+            grep -Eq '/src/autofde_lab/fortune5/f5verify\.py$' sdist-files.txt
+            grep -Eq '/src/autofde_lab/fortune5/enterprise_architecture\.py$' sdist-files.txt
           fi
           test "$(wc -c < "$archive")" -gt 10000
 
