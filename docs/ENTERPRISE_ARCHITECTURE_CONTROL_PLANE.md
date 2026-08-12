@@ -275,7 +275,7 @@ diagram is not a crown.
 Exact-head standing is recorded in the pull-request receipt because repository evidence
 is SHA-scoped. Any edit to this document changes repository identity and requires a new
 exact-head qualification; therefore this file intentionally avoids embedding a mutable
-"current head is ALIVE" claim.
+current-state claim.
 
 The persistent proof contract is:
 
