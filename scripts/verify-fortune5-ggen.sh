@@ -37,6 +37,115 @@ cp "${source_root}/ggen.toml" "${project}/ggen.toml"
 cp -R "${source_root}/ontology" "${project}/ontology"
 cp -R "${source_root}/templates" "${project}/templates"
 
+python - "${source_root}/ontology/fortune5-k8s.ttl" <<'PYONTOLOGY'
+from collections import Counter
+from pathlib import Path
+import sys
+
+from rdflib import Graph, Namespace
+from rdflib.namespace import DCTERMS, PROV, RDF, RDFS, SKOS
+
+path = Path(sys.argv[1])
+graph = Graph().parse(path)
+f5 = Namespace("urn:autofde-lab:fortune5:")
+
+def one(subject, predicate, label):
+    values = list(graph.objects(subject, predicate))
+    if len(values) != 1:
+        raise SystemExit(f"REFUSED:FORTUNE5_ONTOLOGY_CARDINALITY:{label}:{len(values)}")
+    return values[0]
+
+required_public_grounding = (
+    (f5.Axis, RDFS.subClassOf, SKOS.ConceptScheme),
+    (f5.Option, RDFS.subClassOf, SKOS.Concept),
+    (f5.hasOption, RDFS.subPropertyOf, SKOS.hasTopConcept),
+    (f5.axisName, RDFS.subPropertyOf, DCTERMS.identifier),
+    (f5.optionName, RDFS.subPropertyOf, SKOS.prefLabel),
+    (f5.ontology, RDF.type, PROV.Entity),
+    (f5.ontology, PROV.wasAttributedTo, f5["autofde-lab"]),
+)
+for triple in required_public_grounding:
+    if triple not in graph:
+        raise SystemExit(f"REFUSED:PUBLIC_ONTOLOGY_GROUNDING_MISSING:{triple}")
+
+axes = sorted(set(graph.subjects(RDF.type, f5.Axis)), key=str)
+options = sorted(set(graph.subjects(RDF.type, f5.Option)), key=str)
+if len(axes) != 14:
+    raise SystemExit(f"REFUSED:FORTUNE5_AXIS_COUNT:{len(axes)}")
+if len(options) != 74:
+    raise SystemExit(f"REFUSED:FORTUNE5_OPTION_COUNT:{len(options)}")
+
+axis_names = []
+axis_orders = []
+owned_options = []
+enterprise_options = []
+for axis in axes:
+    axis_name = str(one(axis, f5.axisName, f"axisName:{axis}"))
+    axis_order = int(one(axis, f5.axisOrder, f"axisOrder:{axis}"))
+    axis_names.append(axis_name)
+    axis_orders.append(axis_order)
+    members = list(graph.objects(axis, f5.hasOption))
+    if not members:
+        raise SystemExit(f"REFUSED:FORTUNE5_AXIS_EMPTY:{axis_name}")
+    owned_options.extend(members)
+    if axis_name == "enterprise":
+        enterprise_options = [str(one(o, f5.optionName, f"optionName:{o}")) for o in members]
+
+if len(axis_names) != len(set(axis_names)):
+    raise SystemExit("REFUSED:DUPLICATE_FORTUNE5_AXIS_NAME")
+if len(axis_orders) != len(set(axis_orders)):
+    raise SystemExit("REFUSED:DUPLICATE_FORTUNE5_AXIS_ORDER")
+ownership = Counter(owned_options)
+if set(ownership) != set(options) or any(count != 1 for count in ownership.values()):
+    raise SystemExit("REFUSED:FORTUNE5_OPTION_OWNERSHIP_NOT_EXACT")
+
+for option in options:
+    one(option, f5.optionName, f"optionName:{option}")
+    one(option, f5.optionOrder, f"optionOrder:{option}")
+
+if sorted(enterprise_options) != [f"enterprise-{index:02d}" for index in range(1, 6)]:
+    raise SystemExit("REFUSED:CLIENT_NEUTRAL_ENTERPRISE_SET_DRIFT")
+
+print(
+    f"fortune5_ontology_triples={len(graph)} axes={len(axes)} options={len(options)} "
+    "public_grounding=SKOS+PROV-O+DCTERMS"
+)
+PYONTOLOGY
+
+python - "${repo_root}/src/autofde_lab/fortune5" <<'PYAUTHORITY'
+import ast
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+banned_imports = (
+    "boto3",
+    "google.cloud",
+    "httpx",
+    "kubernetes",
+    "requests",
+    "socket",
+    "subprocess",
+    "urllib",
+)
+banned_callables = {"actuate", "execute", "deploy", "mutate"}
+for path in sorted(root.glob("*.py")):
+    tree = ast.parse(path.read_text(), filename=str(path))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names = [alias.name for alias in node.names]
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            names = [node.module]
+        else:
+            names = []
+        for name in names:
+            if any(name == banned or name.startswith(f"{banned}.") for banned in banned_imports):
+                raise SystemExit(f"REFUSED:FORTUNE5_AMBIENT_AUTHORITY_IMPORT:{path}:{name}")
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in banned_callables:
+            raise SystemExit(f"REFUSED:FORTUNE5_ACTUATION_SURFACE:{path}:{node.name}")
+print("fortune5_authority_fence=SELECT_CONSTRUCT_ONLY")
+PYAUTHORITY
+
 curl --fail --location --retry 3 --silent --show-error \
   "https://github.com/seanchatmangpt/ggen/releases/download/${GGEN_VERSION}/${asset}" \
   --output "${archive}"
@@ -129,8 +238,30 @@ if committed != manufactured:
 print(f"fortune5_catalog_rows={len(committed)}")
 PY
 
+python -m compileall -q "${repo_root}/src/autofde_lab/fortune5" "${project}"
 PYTHONPATH="${repo_root}/src" python -m pytest -q \
   "${project}/test_fortune5_laws.py" \
   "${repo_root}/tests/fortune5/test_space.py"
+
+PYTHONPATH="${repo_root}/src" python -m autofde_lab.fortune5 summary > "${workdir}/summary.json"
+python - "${workdir}/summary.json" <<'PYRECEIPT'
+import json
+from pathlib import Path
+import sys
+
+payload = json.loads(Path(sys.argv[1]).read_text())
+expected = {
+    "standing": "CANDIDATE",
+    "authority": "NONE",
+    "axes": 14,
+    "raw_upper_bound": 1_327_104_000,
+    "pairwise_candidates": 1_605,
+    "pairwise_tokens": 2_415,
+}
+for key, value in expected.items():
+    if payload.get(key) != value:
+        raise SystemExit(f"REFUSED:FORTUNE5_CLI_RECEIPT_DRIFT:{key}:{payload.get(key)}!={value}")
+print("fortune5_cli_receipt=PASS")
+PYRECEIPT
 
 printf 'FORTUNE5_GGEN_ALIVE version=%s\n%s\n' "${GGEN_VERSION}" "${second_manifest}"

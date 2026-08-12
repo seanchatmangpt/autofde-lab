@@ -13,6 +13,7 @@ def _summary() -> dict[str, object]:
     return {
         "standing": "CANDIDATE",
         "authority": "NONE",
+        "space_digest": FORTUNE5_SPACE.digest,
         "axes": len(FORTUNE5_SPACE.axes),
         "raw_upper_bound": FORTUNE5_SPACE.raw_upper_bound,
         "pairwise_candidates": len(candidates),
@@ -37,6 +38,8 @@ def main(argv: list[str] | None = None) -> int:
         scenario = FORTUNE5_SPACE.raw_coordinate_at(args.index)
         payload = {
             "scenario_id": scenario.scenario_id,
+            "space_digest": scenario.space_digest,
+            "raw_index": FORTUNE5_SPACE.raw_index_of(scenario),
             "lawful": FORTUNE5_SPACE.is_lawful(scenario),
             "standing": scenario.standing,
             "authority": scenario.authority,
@@ -51,6 +54,7 @@ def main(argv: list[str] | None = None) -> int:
         payload = {
             "standing": "CANDIDATE",
             "authority": "NONE",
+            "space_digest": FORTUNE5_SPACE.digest,
             "candidate_count": len(candidates),
             "candidate_pair_tokens": pairwise_token_count(candidates),
             "cover_count": len(cover),

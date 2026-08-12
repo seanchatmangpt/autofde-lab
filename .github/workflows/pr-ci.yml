@@ -24,9 +24,22 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           submodules: recursive
           persist-credentials: false
+
+      - name: Assert exact subject identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="${{ github.event.pull_request.head.sha || github.sha }}"
+          actual="$(git rev-parse HEAD)"
+          if [[ "${actual}" != "${expected}" ]]; then
+            echo "::error title=REFUSED:EXACT_HEAD_MISMATCH::actual=${actual} expected=${expected}"
+            exit 2
+          fi
+          printf 'exact_head=%s\n' "${actual}"
 
       - id: routes
         name: Classify change
@@ -34,7 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            printf 'cache=true\npython=true\npackage=true\n' >> "$GITHUB_OUTPUT"
+            printf 'cache=true\npython=true\npackage=true\nfortune5=true\n' >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git diff --name-only \
@@ -54,6 +67,8 @@ jobs:
             '^(src/autofde_lab/(caching\.py|_cache/)|tests/test_(caching|enterprise_cache)\.py|\.github/workflows/)'
           route python '^(src/|tests/|examples/|pyproject\.toml|uv\.lock|\.github/workflows/)'
           route package '^(src/|cpp/|scripts/|pyproject\.toml|uv\.lock|CMakeLists\.txt|\.github/workflows/)'
+          route fortune5 \
+            '^(ggen/fortune5/|src/autofde_lab/fortune5/|tests/fortune5/|scripts/verify-fortune5-ggen\.sh|\.github/workflows/(fortune5-ggen|pr-ci)\.yml)'
 
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
@@ -137,6 +152,12 @@ jobs:
             tests/fabric/test_crown_evidence.py \
             tests/fabric/test_crown_errc.py
 
+      - name: Fortune-5 runtime court / Python 3.12
+        if: steps.routes.outputs.fortune5 == 'true'
+        env:
+          PYTHONPATH: src
+        run: python -m pytest -q tests/fortune5/test_space.py
+
       - name: Cache qualification / Python 3.12
         if: steps.routes.outputs.cache == 'true'
         env:
@@ -158,6 +179,10 @@ jobs:
           grep -Eq '/pyproject\.toml$' sdist-files.txt
           grep -Eq '/src/autofde_lab/__init__\.py$' sdist-files.txt
           grep -Eq '/src/autofde_lab/_cache/' sdist-files.txt
+          if [[ "${{ steps.routes.outputs.fortune5 }}" == "true" ]]; then
+            grep -Eq '/src/autofde_lab/fortune5/space\.py$' sdist-files.txt
+            grep -Eq '/src/autofde_lab/fortune5/catalog\.py$' sdist-files.txt
+          fi
           test "$(wc -c < "$archive")" -gt 10000
 
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6

@@ -6,6 +6,11 @@ from .space import Axis, Option
 
 ONTOLOGY_IRI = "urn:autofde-lab:fortune5:ontology"
 MANUFACTURE = "ggen"
+PUBLIC_ONTOLOGY_FOUNDATIONS = (
+    "http://purl.org/dc/terms/",
+    "http://www.w3.org/2004/02/skos/core#",
+    "http://www.w3.org/ns/prov#",
+)
 
 CATALOG_ROWS: tuple[tuple[str, str], ...] = (
 {% for row in sparql_results %}

@@ -9,10 +9,20 @@ from __future__ import annotations
 import hashlib
 import heapq
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from itertools import combinations
 from math import prod
 from typing import Iterable, Iterator, Mapping, Sequence
+
+
+def _canonical_digest(value: object) -> str:
+    raw = json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+    ).encode()
+    return hashlib.sha256(raw).hexdigest()
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,16 +108,25 @@ class CompatibilityLaw:
 
 @dataclass(frozen=True, slots=True)
 class Scenario:
+    space_digest: str
     choices: tuple[tuple[str, Option], ...]
+    _digest: str = field(init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        if len(self.space_digest) != 64:
+            raise ValueError("REFUSED:INVALID_STATE_SPACE_DIGEST")
+        payload = {
+            "space_digest": self.space_digest,
+            "choices": [
+                [axis, option.name, [[key, value] for key, value in option.attrs]]
+                for axis, option in self.choices
+            ],
+        }
+        object.__setattr__(self, "_digest", _canonical_digest(payload))
 
     @property
     def digest(self) -> str:
-        payload = [
-            [axis, option.name, [[key, value] for key, value in option.attrs]]
-            for axis, option in self.choices
-        ]
-        raw = json.dumps(payload, separators=(",", ":"), ensure_ascii=True).encode()
-        return hashlib.sha256(raw).hexdigest()
+        return self._digest
 
     @property
     def scenario_id(self) -> str:
@@ -132,6 +151,7 @@ class Scenario:
 class StateSpace:
     axes: tuple[Axis, ...]
     laws: tuple[CompatibilityLaw, ...] = ()
+    _digest: str = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
         if not self.axes:
@@ -140,6 +160,33 @@ class StateSpace:
         if len(axis_names) != len(set(axis_names)):
             raise ValueError("REFUSED:DUPLICATE_AXIS_NAME")
         self._validate_laws()
+        payload = {
+            "axes": [
+                {
+                    "name": axis.name,
+                    "options": [
+                        [option.name, [[key, value] for key, value in option.attrs]]
+                        for option in axis.options
+                    ],
+                }
+                for axis in self.axes
+            ],
+            "laws": [
+                {
+                    "when": list(law.when),
+                    "require": list(law.require),
+                    "forbid": list(law.forbid),
+                    "reason": law.reason,
+                }
+                for law in self.laws
+            ],
+        }
+        object.__setattr__(self, "_digest", _canonical_digest(payload))
+
+    @property
+    def digest(self) -> str:
+        """Identity of the exact admitted axes, option identities, and laws."""
+        return self._digest
 
     @property
     def raw_upper_bound(self) -> int:
@@ -185,7 +232,7 @@ class StateSpace:
                     f"REFUSED:OPTION_IDENTITY_NOT_ADMITTED:{axis.name}:{option.name}"
                 )
             resolved.append((axis.name, option))
-        return Scenario(tuple(resolved))
+        return Scenario(self.digest, tuple(resolved))
 
     def raw_coordinate_at(self, index: int) -> Scenario:
         if index < 0 or index >= self.raw_upper_bound:
@@ -197,18 +244,35 @@ class StateSpace:
             cursor, option_index = divmod(cursor, len(axis.options))
             selected[axis_index] = axis.options[option_index]
         return Scenario(
-            tuple((axis.name, option) for axis, option in zip(self.axes, selected))
+            self.digest,
+            tuple((axis.name, option) for axis, option in zip(self.axes, selected)),
         )
 
-    def is_lawful(self, scenario: Scenario) -> bool:
+    def raw_index_of(self, scenario: Scenario) -> int:
+        """Reverse a scenario to its exact mixed-radix raw coordinate."""
+        if scenario.space_digest != self.digest:
+            raise ValueError("REFUSED:SCENARIO_STATE_SPACE_MISMATCH")
         if tuple(axis for axis, _ in scenario.choices) != tuple(
             axis.name for axis in self.axes
         ):
+            raise ValueError("REFUSED:SCENARIO_AXIS_SET_MISMATCH")
+        index = 0
+        for axis, (_, option) in zip(self.axes, scenario.choices):
+            try:
+                option_index = axis.options.index(option)
+            except ValueError as exc:
+                raise ValueError(
+                    f"REFUSED:OPTION_IDENTITY_NOT_ADMITTED:{axis.name}:{option.name}"
+                ) from exc
+            index = index * len(axis.options) + option_index
+        return index
+
+    def is_lawful(self, scenario: Scenario) -> bool:
+        try:
+            self.raw_index_of(scenario)
+        except ValueError:
             return False
         values = scenario.by_axis()
-        for axis in self.axes:
-            if values[axis.name] not in axis.options:
-                return False
         return all(law.allows(values) for law in self.laws)
 
     def iter_raw(

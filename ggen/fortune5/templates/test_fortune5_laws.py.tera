@@ -2,7 +2,14 @@
 
 from math import prod
 
-from autofde_lab.fortune5 import FORTUNE5_SPACE, pairwise_token_count
+from autofde_lab.fortune5 import (
+    FORTUNE5_SPACE,
+    Axis,
+    CompatibilityLaw,
+    Option,
+    StateSpace,
+    pairwise_token_count,
+)
 
 EXPECTED_ROWS = (
 {% for row in sparql_results %}
@@ -12,9 +19,17 @@ EXPECTED_ROWS = (
 
 
 def test_ontology_projection_matches_runtime() -> None:
-    from autofde_lab.fortune5.catalog import CATALOG_ROWS
+    from autofde_lab.fortune5.catalog import (
+        CATALOG_ROWS,
+        PUBLIC_ONTOLOGY_FOUNDATIONS,
+    )
 
     assert CATALOG_ROWS == EXPECTED_ROWS
+    assert PUBLIC_ONTOLOGY_FOUNDATIONS == (
+        "http://purl.org/dc/terms/",
+        "http://www.w3.org/2004/02/skos/core#",
+        "http://www.w3.org/ns/prov#",
+    )
 
 
 def test_raw_upper_bound_is_exact_product_without_materialization() -> None:
@@ -41,3 +56,20 @@ def test_scenarios_are_powerless_candidates() -> None:
     assert scenario.standing == "CANDIDATE"
     assert not hasattr(scenario, "execute")
     assert not hasattr(scenario, "actuate")
+
+
+def test_coordinate_replay_round_trip_binds_state_space_identity() -> None:
+    for index in (0, 73, 74_001, FORTUNE5_SPACE.raw_upper_bound - 1):
+        scenario = FORTUNE5_SPACE.raw_coordinate_at(index)
+        assert scenario.space_digest == FORTUNE5_SPACE.digest
+        assert FORTUNE5_SPACE.raw_index_of(scenario) == index
+
+
+def test_constitution_drift_changes_candidate_identity() -> None:
+    base = StateSpace((Axis("cloud", (Option("aws"), Option("azure"))),))
+    changed = StateSpace(
+        (Axis("cloud", (Option("aws"), Option("azure"))),),
+        (CompatibilityLaw.from_mappings(forbid={"cloud": "azure"}),),
+    )
+    assert base.digest != changed.digest
+    assert base.scenario({"cloud": "aws"}).digest != changed.scenario({"cloud": "aws"}).digest

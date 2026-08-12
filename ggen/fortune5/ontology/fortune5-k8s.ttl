@@ -1,19 +1,28 @@
 @prefix f5: <urn:autofde-lab:fortune5:> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-f5:ontology a owl:Ontology ;
+f5:ontology a owl:Ontology, prov:Entity ;
     dcterms:title "AutoFDE Lab Fortune-5 combinatorial enterprise reference profile" ;
     dcterms:description "Vendor-neutral, non-client-specific possibility graph for bounded Fortune-5-scale enterprise and Kubernetes exploration; grants no execution authority." ;
-    dcterms:created "2026-08-11"^^xsd:date .
+    dcterms:created "2026-08-11"^^xsd:date ;
+    prov:wasAttributedTo f5:autofde-lab .
 
-f5:Axis a owl:Class .
-f5:Option a owl:Class .
-f5:axisName a owl:DatatypeProperty .
+f5:autofde-lab a prov:Agent ;
+    dcterms:title "AutoFDE Lab" .
+
+# Public-ontology grounding: the local graph specializes, rather than replaces,
+# canonical SKOS concept modeling and PROV-O provenance.
+f5:Axis a owl:Class ; rdfs:subClassOf skos:ConceptScheme .
+f5:Option a owl:Class ; rdfs:subClassOf skos:Concept .
+f5:axisName a owl:DatatypeProperty ; rdfs:subPropertyOf dcterms:identifier .
 f5:axisOrder a owl:DatatypeProperty .
-f5:hasOption a owl:ObjectProperty .
-f5:optionName a owl:DatatypeProperty .
+f5:hasOption a owl:ObjectProperty ; rdfs:subPropertyOf skos:hasTopConcept .
+f5:optionName a owl:DatatypeProperty ; rdfs:subPropertyOf skos:prefLabel .
 f5:optionOrder a owl:DatatypeProperty .
 
 f5:a-enterprise a f5:Axis ; f5:axisName "enterprise" ; f5:axisOrder 10 ; f5:hasOption f5:o-enterprise-enterprise-01, f5:o-enterprise-enterprise-02, f5:o-enterprise-enterprise-03, f5:o-enterprise-enterprise-04, f5:o-enterprise-enterprise-05 .
@@ -117,3 +126,4 @@ f5:o-fault-schema a f5:Option ; f5:optionName "schema" ; f5:optionOrder 170 .
 f5:o-fault-backpressure a f5:Option ; f5:optionName "backpressure" ; f5:optionOrder 180 .
 f5:o-fault-node-pressure a f5:Option ; f5:optionName "node-pressure" ; f5:optionOrder 190 .
 f5:o-fault-zone-loss a f5:Option ; f5:optionName "zone-loss" ; f5:optionOrder 200 .
+
