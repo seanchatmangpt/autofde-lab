@@ -272,12 +272,9 @@ diagram is not a crown.
 
 ## 15. Qualification receipt model
 
-Exact-head standing is recorded in the pull-request receipt because repository evidence
-is SHA-scoped. Any edit to this document changes repository identity and requires a new
-exact-head qualification; therefore this file intentionally avoids embedding a mutable
-current-state claim.
-
-The persistent proof contract is:
+Exact-head standing is SHA-scoped. Any repository edit changes subject identity and
+requires a new exact-head qualification. The repository therefore records only the
+stable proof contract, not transient run status.
 
 ```text
 PR head SHA
@@ -289,5 +286,5 @@ PR head SHA
 → scoped technical standing
 ```
 
-The pull-request body is the current receipt surface for the latest exact head. It may
-be updated without mutating the Git tree.
+Run-specific standing belongs in external receipt metadata associated with the exact
+candidate SHA, not in a source file whose mutation would itself invalidate that standing.
