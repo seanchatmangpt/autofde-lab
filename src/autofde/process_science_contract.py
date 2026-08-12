@@ -11,7 +11,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-
 _ALLOWED_STANDING = {"OBSERVED", "DERIVED", "ADMITTED"}
 
 
