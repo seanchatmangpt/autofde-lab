@@ -133,11 +133,15 @@ def test_exact_composition_keeps_planning_projection_inert() -> None:
         "url",
     }
     assert forbidden.isdisjoint({field.name for field in fields(PlanningRouteProposal)})
-    assert forbidden.isdisjoint({field.name for field in fields(ProjectedPlanningRoute)})
+    assert forbidden.isdisjoint(
+        {field.name for field in fields(ProjectedPlanningRoute)}
+    )
     assert forbidden.isdisjoint({field.name for field in fields(HookProposal)})
 
 
-def test_verified_outcome_only_compiles_an_inert_hook_after_real_verification_reference() -> None:
+def test_verified_outcome_only_compiles_an_inert_hook_after_real_verification_reference() -> (
+    None
+):
     snapshot, domains, problems, planners, profiles, objectives = _space()
     graph = compile_candidate_graph(
         snapshot,
@@ -208,7 +212,9 @@ def test_known_hook_fast_path_is_selection_only_not_actuation() -> None:
     def predictor(**_kwargs):
         nonlocal called
         called = True
-        raise AssertionError("known lawful pattern should compile out repeated cognition")
+        raise AssertionError(
+            "known lawful pattern should compile out repeated cognition"
+        )
 
     decision = choose_planning_route(
         task="restore the deployment",
@@ -237,7 +243,9 @@ def test_known_hook_fast_path_is_selection_only_not_actuation() -> None:
 
 def test_control_plane_source_has_no_direct_io_or_actuation_import_surface() -> None:
     """A merge cannot quietly turn the planning control plane into a second DO path."""
-    tree = ast.parse(CONTROL_PLANE.read_text(encoding="utf-8"), filename=str(CONTROL_PLANE))
+    tree = ast.parse(
+        CONTROL_PLANE.read_text(encoding="utf-8"), filename=str(CONTROL_PLANE)
+    )
     imported: set[str] = set()
     calls: set[str] = set()
     for node in ast.walk(tree):
