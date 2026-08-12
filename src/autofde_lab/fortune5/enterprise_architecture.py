@@ -202,7 +202,9 @@ class EnterpriseArchitectureProfile:
         refs = dict(self.reference_artifacts)
         if len(refs) != len(self.reference_artifacts):
             raise ValueError("REFUSED:DUPLICATE_REFERENCE_ARTIFACT")
-        missing = tuple(name for name in REQUIRED_REFERENCE_ARTIFACTS if name not in refs)
+        missing = tuple(
+            name for name in REQUIRED_REFERENCE_ARTIFACTS if name not in refs
+        )
         if missing:
             raise ValueError(
                 "REFUSED:REFERENCE_ARTIFACTS_INCOMPLETE:" + ",".join(missing)
@@ -256,7 +258,9 @@ class EnterpriseArchitecturePackage:
         artifacts = dict(self.artifacts)
         if len(artifacts) != len(self.artifacts):
             raise ValueError("REFUSED:DUPLICATE_ARCHITECTURE_VIEW")
-        missing = tuple(name for name in REQUIRED_ARCHITECTURE_VIEWS if name not in artifacts)
+        missing = tuple(
+            name for name in REQUIRED_ARCHITECTURE_VIEWS if name not in artifacts
+        )
         if missing:
             raise ValueError(
                 "REFUSED:ARCHITECTURE_PACKAGE_INCOMPLETE:" + ",".join(missing)
@@ -346,10 +350,18 @@ class RequirementEvidence:
             raise ValueError("REFUSED:EMPTY_REQUIREMENT_EVIDENCE_ID")
         if self.decision not in CONFORMANCE_DECISIONS:
             raise ValueError(f"REFUSED:UNKNOWN_CONFORMANCE_DECISION:{self.decision}")
-        _require_digest(self.evidence_digest, f"requirement_evidence:{self.requirement_id}")
-        _require_digest(self.subject_digest, f"requirement_subject:{self.requirement_id}")
-        _require_digest(self.package_digest, f"requirement_package:{self.requirement_id}")
-        _require_digest(self.profile_digest, f"requirement_profile:{self.requirement_id}")
+        _require_digest(
+            self.evidence_digest, f"requirement_evidence:{self.requirement_id}"
+        )
+        _require_digest(
+            self.subject_digest, f"requirement_subject:{self.requirement_id}"
+        )
+        _require_digest(
+            self.package_digest, f"requirement_package:{self.requirement_id}"
+        )
+        _require_digest(
+            self.profile_digest, f"requirement_profile:{self.requirement_id}"
+        )
 
     def canonical(self) -> dict[str, str]:
         return {
@@ -526,9 +538,7 @@ class EnterpriseArchitectureWitness:
             "failed_mandatory": list(self.failed_mandatory),
             "unknown_mandatory": list(self.unknown_mandatory),
             "exceptioned_requirements": list(self.exceptioned_requirements),
-            "invalid_exception_requirements": list(
-                self.invalid_exception_requirements
-            ),
+            "invalid_exception_requirements": list(self.invalid_exception_requirements),
             "advisory_gaps": list(self.advisory_gaps),
             "evidence_coverage_ratio": self.evidence_coverage_ratio,
             "mandatory_clean_conformance_ratio": (

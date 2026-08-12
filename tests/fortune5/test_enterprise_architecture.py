@@ -167,13 +167,16 @@ def test_full_architecture_package_is_conformant_and_replayable() -> None:
         "workloads",
         "optimization",
     )
-    assert verifier.replay(
-        candidate,
-        result,
-        package=architecture_package,
-        transition_plan=transition_plan,
-        readiness_witness=readiness,
-    ) == result
+    assert (
+        verifier.replay(
+            candidate,
+            result,
+            package=architecture_package,
+            transition_plan=transition_plan,
+            readiness_witness=readiness,
+        )
+        == result
+    )
 
 
 def test_mandatory_failure_cannot_be_compensated_by_other_passes() -> None:
