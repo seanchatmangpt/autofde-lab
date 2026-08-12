@@ -137,9 +137,7 @@ class ReadinessSubmission:
             raise ValueError("REFUSED:DUPLICATE_READINESS_GATE_EVIDENCE")
         for item in self.evidence:
             if item.subject_digest != self.subject_digest:
-                raise ValueError(
-                    f"REFUSED:GATE_EVIDENCE_SUBJECT_MISMATCH:{item.gate}"
-                )
+                raise ValueError(f"REFUSED:GATE_EVIDENCE_SUBJECT_MISMATCH:{item.gate}")
 
     @property
     def digest(self) -> str:
@@ -229,9 +227,7 @@ class F5ReadinessVerifier:
         decisions = {item.gate: item.decision for item in submission.evidence}
         missing = tuple(gate for gate in self.gates if gate not in decisions)
         failed = tuple(gate for gate in self.gates if decisions.get(gate) == "FAIL")
-        unknown = tuple(
-            gate for gate in self.gates if decisions.get(gate) == "UNKNOWN"
-        )
+        unknown = tuple(gate for gate in self.gates if decisions.get(gate) == "UNKNOWN")
         passing = tuple(gate for gate in self.gates if decisions.get(gate) == "PASS")
         coverage = (len(self.gates) - len(missing)) / len(self.gates)
 
