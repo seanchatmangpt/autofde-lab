@@ -5,3 +5,7 @@ fastmcp>=3.4.4,<4
 a2a-sdk[http-server]>=1.0.2,<2
 dspy>=3,<4
 uvicorn>=0.35,<1
+# Python 3.10 compatibility for fabric TOML admission; stdlib tomllib is 3.11+.
+tomli>=2.0,<3; python_version < "3.11"
+# Immutable public ecosystem dependency. Do not rely on /Users/sac path sources in CI.
+wasm4pm-compat-pydantic @ git+https://github.com/seanchatmangpt/wasm4pm-compat.git@1d04337818d409160026b69c6917430267cf073a#subdirectory=python
