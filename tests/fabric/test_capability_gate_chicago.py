@@ -1,16 +1,8 @@
-"""Chicago-style tests for `autofde_lab.fabric.gymact_capability_gate`.
+"""Chicago courts for the reviewed AutoFDE <-> GymAct SREGym capability contract.
 
-Real collaborators throughout: a real TOML manifest file on disk (both the
-shipped `gymact_capabilities.toml` and, for the malformed/refusal cases, a
-real temp file written by the test itself), real TOML parsing, and -- where
-the exact external `gymact.gyms.sregym` package is importable -- real
-`SREGYM_CAPABILITIES` `Capability` objects checked against the gate. No
-`unittest.mock` / `Mock` / `patch` / `monkeypatch` anywhere in this module.
-
-The manifest/parsing/refusal courts do not depend on the private external
-gymact repository. The cross-repository courts skip individually when that
-exact module is unavailable; a missing collaborator never suppresses the
-local admission tests and a skip is never upgraded into cross-repo proof.
+Local manifest/refusal courts always execute. Cross-repository courts execute
+only when the exact private GymAct package is present; those skips remain
+visible and are never promoted to integration proof. No mocks are used.
 """
 
 from __future__ import annotations
@@ -23,6 +15,25 @@ from autofde_lab.fabric.gymact_capability_gate import (
     CapabilityRefused,
 )
 
+EXPECTED_SREGYM_BINDINGS = frozenset(
+    {
+        "observe_cluster_state",
+        "run_kubectl",
+        "get_benchmark_status",
+        "jaeger_get_services",
+        "jaeger_get_operations",
+        "jaeger_get_traces",
+        "jaeger_get_dependency_graph",
+        "loki_get_logs",
+        "loki_get_labels",
+        "loki_get_label_values",
+        "prometheus_get_metrics",
+        "prometheus_get_alerts",
+        "submit_diagnosis",
+        "submit_mitigation",
+    }
+)
+
 
 def _real_sregym_capabilities():
     module = pytest.importorskip(
@@ -33,33 +44,30 @@ def _real_sregym_capabilities():
 
 
 def test_default_manifest_exists_and_parses() -> None:
-    """The shipped manifest is a real file that really parses."""
     assert DEFAULT_MANIFEST_PATH.exists()
     gate = CapabilityGate.from_toml(DEFAULT_MANIFEST_PATH)
     assert gate.environment == "sregym"
-    assert gate.allowed_names == frozenset(
-        {
-            "observe_cluster_state",
-            "run_kubectl",
-            "get_benchmark_status",
-            "submit_diagnosis",
-            "submit_mitigation",
-        }
-    )
+    assert gate.allowed_names == EXPECTED_SREGYM_BINDINGS
 
 
-def test_listed_capability_is_permitted() -> None:
+def test_observability_and_terminal_capabilities_are_explicitly_admitted() -> None:
     gate = CapabilityGate.from_toml(DEFAULT_MANIFEST_PATH)
-    entry = gate.entry("run_kubectl")
-    assert entry.name == "run_kubectl"
-    assert entry.consequence == "DO"
-    assert "diagnostic" in entry.reason.lower()
-    gate.check("observe_cluster_state")
+    for binding in (
+        "run_kubectl",
+        "jaeger_get_traces",
+        "loki_get_logs",
+        "prometheus_get_metrics",
+        "submit_diagnosis",
+        "submit_mitigation",
+    ):
+        entry = gate.entry(binding)
+        assert entry.name == binding
+        assert entry.consequence == "DO"
+        assert entry.reason
 
 
 def test_unlisted_capability_is_refused_with_named_error() -> None:
     gate = CapabilityGate.from_toml(DEFAULT_MANIFEST_PATH)
-
     with pytest.raises(CapabilityRefused) as excinfo:
         gate.check("get_injected_fault")
 
@@ -111,32 +119,27 @@ def test_missing_manifest_file_raises_file_not_found(tmp_path) -> None:
         CapabilityGate.from_toml(missing)
 
 
-# ---------------------------------------------------------------------------
-# Cross-repository courts. These require the real private gymact package.
-# Their skips are visible and are not evidence of integration success.
-# ---------------------------------------------------------------------------
-
-
-def test_real_sregym_capabilities_are_all_permitted() -> None:
+def test_real_sregym_capabilities_exactly_match_reviewed_manifest() -> None:
     capabilities = _real_sregym_capabilities()
     gate = CapabilityGate.from_toml(DEFAULT_MANIFEST_PATH)
-    assert len(capabilities) == 5
+    real_names = frozenset(capability.binding for capability in capabilities)
+
+    assert len(capabilities) == 14
+    assert real_names == EXPECTED_SREGYM_BINDINGS
+    assert gate.allowed_names == real_names
+    assert gate.stale_entries(real_names) == frozenset()
     for capability in capabilities:
-        permitted = gate.guard_capability(capability)
-        assert permitted is capability
+        assert gate.guard_capability(capability) is capability
 
 
 def test_real_gymact_capability_object_with_unlisted_binding_is_refused() -> None:
     models = pytest.importorskip(
         "gymact.models", reason="real external gymact.models module is not available"
     )
-    Capability = models.Capability
-    Consequence = models.Consequence
-
-    hypothetical_ground_truth_capability = Capability(
+    hypothetical_ground_truth_capability = models.Capability(
         iri="urn:gymact:sregym:capability:get_injected_fault",
-        title="Read the injected fault spec (ground truth, grading-only)",
-        consequence=Consequence.READ,
+        title="Read injected fault ground truth",
+        consequence=models.Consequence.READ,
         binding="get_injected_fault",
     )
     gate = CapabilityGate.from_toml(DEFAULT_MANIFEST_PATH)
@@ -145,18 +148,9 @@ def test_real_gymact_capability_object_with_unlisted_binding_is_refused() -> Non
     assert excinfo.value.binding == "get_injected_fault"
 
 
-def test_stale_entries_is_empty_against_real_sregym_capabilities() -> None:
-    capabilities = _real_sregym_capabilities()
-    gate = CapabilityGate.from_toml(DEFAULT_MANIFEST_PATH)
-    real_names = frozenset(c.binding for c in capabilities)
-    assert gate.stale_entries(real_names) == frozenset()
-
-
 def test_stale_entries_detects_an_injected_fake_entry(tmp_path) -> None:
     capabilities = _real_sregym_capabilities()
-    real_names = frozenset(c.binding for c in capabilities)
-    assert "get_injected_fault_TYPO_DOES_NOT_EXIST" not in real_names
-
+    real_names = frozenset(capability.binding for capability in capabilities)
     manifest = tmp_path / "manifest_with_stale_entry.toml"
     manifest.write_text(
         """
@@ -171,10 +165,11 @@ def test_stale_entries_detects_an_injected_fake_entry(tmp_path) -> None:
         [[capability]]
         name = "get_injected_fault_TYPO_DOES_NOT_EXIST"
         consequence = "READ"
-        reason = "stale/typo'd entry that does not exist in real gymact"
+        reason = "stale entry"
         """,
         encoding="utf-8",
     )
     gate = CapabilityGate.from_toml(manifest)
-    stale = gate.stale_entries(real_names)
-    assert stale == frozenset({"get_injected_fault_TYPO_DOES_NOT_EXIST"})
+    assert gate.stale_entries(real_names) == frozenset(
+        {"get_injected_fault_TYPO_DOES_NOT_EXIST"}
+    )
