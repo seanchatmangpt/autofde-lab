@@ -27,16 +27,26 @@ jobs:
         python-version: ["3.10", "3.12"]
 
     steps:
-      - name: Check out exact candidate
+      - name: Check out exact candidate source capsule
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 1
+          submodules: recursive
 
-      - name: Assert exact head
+      - name: Assert exact head and submodule closure
         env:
           EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test -f cpp/sdk/backward-cpp/CMakeLists.txt
+          test -f cpp/sdk/json/CMakeLists.txt
+          test -f cpp/sdk/PEGTL/CMakeLists.txt
+          test -f cpp/sdk/spdlog/CMakeLists.txt
+          test -f cpp/sdk/nng/CMakeLists.txt
+          test -f cpp/sdk/pybind11/CMakeLists.txt
+          git submodule status --recursive
 
       - name: Install Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -61,9 +71,9 @@ jobs:
           # Domain and solver discovery is intentionally entry-point based.
           # A bare PYTHONPATH source tree has modules but no distribution
           # metadata, so it is not the same executable subject. Install this
-          # exact checkout without resolving its workstation-only/private
-          # dependencies; the focused runtime above supplies this court's
-          # dependency closure.
+          # exact, dependency-closed checkout without resolving its private
+          # workstation dependency; the focused runtime above supplies this
+          # court's dependency closure.
           python -m pip install --disable-pip-version-check --no-deps -e .
 
       - name: Compile authored fabric surfaces
