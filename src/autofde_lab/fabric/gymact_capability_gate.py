@@ -69,7 +69,9 @@ class CapabilityRefused(PermissionError):
     refusal, not input validation.
     """
 
-    def __init__(self, binding: str, *, allowed: frozenset[str], environment: str) -> None:
+    def __init__(
+        self, binding: str, *, allowed: frozenset[str], environment: str
+    ) -> None:
         self.binding = binding
         self.allowed = allowed
         self.environment = environment
@@ -95,7 +97,9 @@ class CapabilityGate:
     file's real bytes. No mocked filesystem, no faked TOML content.
     """
 
-    def __init__(self, entries: tuple[CapabilityManifestEntry, ...], *, environment: str) -> None:
+    def __init__(
+        self, entries: tuple[CapabilityManifestEntry, ...], *, environment: str
+    ) -> None:
         self._entries = entries
         self._by_name: dict[str, CapabilityManifestEntry] = {e.name: e for e in entries}
         self.environment = environment
@@ -161,7 +165,9 @@ class CapabilityGate:
         binding = getattr(capability, "binding", None)
         if binding is None:
             raise CapabilityRefused(
-                repr(capability), allowed=self.allowed_names, environment=self.environment
+                repr(capability),
+                allowed=self.allowed_names,
+                environment=self.environment,
             )
         self.check(binding)
         return capability
