@@ -13,9 +13,6 @@ on:
 permissions:
   contents: read
 
-# Workflow-level concurrency cannot reference matrix context because the matrix
-# exists only after job expansion.  Cancel the older whole-workflow candidate;
-# each matrix job still gets an independent Python-version execution below.
 concurrency:
   group: agentic-fabric-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -59,19 +56,27 @@ jobs:
             "discrete-optimization>=0.9.0" \
             -r requirements-agentic.txt
 
+      - name: Install exact candidate distribution metadata
+        run: |
+          # Domain and solver discovery is intentionally entry-point based.
+          # A bare PYTHONPATH source tree has modules but no distribution
+          # metadata, so it is not the same executable subject. Install this
+          # exact checkout without resolving its workstation-only/private
+          # dependencies; the focused runtime above supplies this court's
+          # dependency closure.
+          python -m pip install --disable-pip-version-check --no-deps -e .
+
       - name: Compile authored fabric surfaces
         run: |
           python -m compileall -q src/autofde_lab/fabric tests/fabric
 
       - name: Execute cache, service, CLI, MCP, A2A, and DSPy tests
         env:
-          PYTHONPATH: src
           SKDECIDE_FABRIC_CACHE: /tmp/scikit-decide-fabric.sqlite3
         run: python -m pytest -q -c /dev/null tests/fabric
 
       - name: Verify CLI and real protocol construction
         env:
-          PYTHONPATH: src
           SKDECIDE_FABRIC_CACHE: /tmp/scikit-decide-fabric-smoke.sqlite3
         run: |
           python -m autofde_lab.fabric --help | grep -q solve
