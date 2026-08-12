@@ -209,7 +209,7 @@ SONY_ECOSYSTEM_PINS: tuple[EcosystemPin, ...] = (
     EcosystemPin(
         "seanchatmangpt/gymact",
         "main",
-        "4f640dff61ab688960a72cebd355150675d0cc56",
+        "5a40c8f402aeb14699e216e17b2ef7aae9f0bc8f",
         "private",
         "bounded gym and capability execution",
     ),
@@ -264,7 +264,8 @@ class _BrceFilesystemDriver:
         self.workspace.mkdir(parents=True, exist_ok=True)
         self.scenario_id = scenario_id
         self._resources = frozenset(
-            str((self.workspace / f"{label}.json").resolve()) for label in _ACTIVITY_LABELS
+            str((self.workspace / f"{label}.json").resolve())
+            for label in _ACTIVITY_LABELS
         )
         self._authority = Authority(
             principal_id="sony-crown-broker",
@@ -322,9 +323,7 @@ class _BrceFilesystemDriver:
                 possibly_actuated=True,
             )
 
-        def observer(
-            _: ActuationIntent, __: ActuationResult
-        ) -> Mapping[str, object]:
+        def observer(_: ActuationIntent, __: ActuationResult) -> Mapping[str, object]:
             current = path.read_bytes()
             decoded = json.loads(current)
             observed.update(
@@ -415,7 +414,9 @@ def run_sony_crown(workspace: Path) -> SonyCrownEvidence:
         raise RuntimeError("REFUSED:SONY_CROWN_ACTIVITY_ACCOUNTING_DRIFT")
 
     receipts = tuple(record.authority_receipt or "" for record in run.activity_records)
-    replays = tuple(str(record.metadata.get("brce_replay", "")) for record in run.activity_records)
+    replays = tuple(
+        str(record.metadata.get("brce_replay", "")) for record in run.activity_records
+    )
     if not all(receipts):
         raise RuntimeError("REFUSED:UNRECEIPTED_SONY_CROWN_ACTIVITY")
     if any(value != BrceStanding.REPLAY_MATCH.value for value in replays):
@@ -437,7 +438,9 @@ def run_sony_crown(workspace: Path) -> SonyCrownEvidence:
         raw_upper_bound=space.raw_upper_bound,
         scenario_authority=scenario.authority,
         architecture=scenario.names(),
-        requirement_ids=tuple(requirement.requirement_id for requirement in SONY_REQUIREMENTS),
+        requirement_ids=tuple(
+            requirement.requirement_id for requirement in SONY_REQUIREMENTS
+        ),
         activity_receipts=receipts,
         activity_replays=replays,
         powl_status=run.status.value,
