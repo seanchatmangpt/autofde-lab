@@ -170,7 +170,9 @@ class OcelAttributeValue:
 
     @classmethod
     def mapping(
-        cls, pairs: Mapping[str, "OcelAttributeValue"] | Sequence[tuple[str, "OcelAttributeValue"]]
+        cls,
+        pairs: Mapping[str, "OcelAttributeValue"]
+        | Sequence[tuple[str, "OcelAttributeValue"]],
     ) -> "OcelAttributeValue":
         items = pairs.items() if isinstance(pairs, Mapping) else pairs
         return cls(OcelValueKind.MAP, tuple((str(k), v) for k, v in items))
@@ -204,7 +206,11 @@ class OcelAttributeValue:
                 return cls.time_ns(parse_ns(raw))
             if kind is OcelValueKind.FLOAT and isinstance(raw, (int, float)):
                 return cls.floating(raw)
-            if kind is OcelValueKind.INTEGER and isinstance(raw, bool) is False and isinstance(raw, int):
+            if (
+                kind is OcelValueKind.INTEGER
+                and isinstance(raw, bool) is False
+                and isinstance(raw, int)
+            ):
                 return cls.integer(raw)
         if raw is None:
             return cls.null()
