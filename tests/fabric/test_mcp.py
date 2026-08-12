@@ -2,14 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-"""Real `fastmcp.FastMCP` server driven by a real `fastmcp.Client`, matching the
-pattern already established in ``test_mcp_ocel_instrumentation_chicago.py`` (whose
-own docstring says "not FakeFastMCP"). ``fastmcp`` is a real, installed dependency
-here (confirmed via `import fastmcp` in this repo's `.venv`) -- there is no reason to
-fake a real, already-available dependency, so this no longer does. Skips (named,
-not silent) via `pytest.importorskip` on a machine where fastmcp genuinely isn't
-installed, rather than substituting a fake for it.
-"""
+"""Real FastMCP projection court against the current fabric tool surface."""
 
 from __future__ import annotations
 
@@ -34,9 +27,10 @@ def test_mcp_projects_one_fabric(fabric: DecisionFabric) -> None:
                 "decision_solve",
                 {"request": {"domain": "Counter", "domain_arguments": {"limit": 1}}},
             )
-            return tools, catalog_result, solve_result
+            issue_catalog = await client.call_tool("issue_reasoning_catalog", {})
+            return tools, catalog_result, solve_result, issue_catalog
 
-    tools, catalog_result, solve_result = asyncio.run(run())
+    tools, catalog_result, solve_result, issue_catalog = asyncio.run(run())
 
     assert {t.name for t in tools} == {
         "decision_cache_hotset",
@@ -44,6 +38,10 @@ def test_mcp_projects_one_fabric(fabric: DecisionFabric) -> None:
         "decision_catalog",
         "decision_match",
         "decision_solve",
+        "issue_reason",
+        "issue_reasoning_catalog",
     }
     assert catalog_result.structured_content["domains"] == ["Counter"]
     assert solve_result.structured_content["standing"] == "SOLVED"
+    assert issue_catalog.structured_content["authority"] == "CANDIDATE_ONLY"
+    assert issue_catalog.structured_content["actuation"] == "REFUSED"
