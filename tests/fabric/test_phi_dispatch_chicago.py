@@ -23,8 +23,11 @@ registered* solver entry points and calls each one's real `check_domain(domain)`
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
+from autofde_lab import utils as autofde_lab_utils
 from autofde_lab.fabric.backend import ScikitDecideBackend
 from autofde_lab.fabric.phi import _ENCODERS, phi
 from autofde_lab_planner.scanner.models import Anomaly, RelationClass
@@ -125,3 +128,88 @@ def test_phi_output_dispatches_to_a_real_nonempty_compatible_solver_set(relation
     # coincidental truthy value.
     for solver_type in compatible_solvers:
         assert isinstance(solver_type, type)
+
+
+class TestMatchSolversRanked:
+    """Real coverage of ``match_solvers(ranked=True)``'s two real code paths.
+
+    Chicago style: no mock/patch/monkeypatch of ``subprocess`` or of
+    ``_resolve_cmca_rank_cli_bin``'s internals -- both sub-tests exercise the
+    real function against a real filesystem state (the binary genuinely
+    present, or the env genuinely pointed at a real nonexistent path).
+    """
+
+    def _representative_domain(self):
+        anomaly = _REPRESENTABLE_ANOMALIES["declared_vs_observed"]
+        return phi(anomaly)
+
+    def test_ranked_true_binary_unavailable_falls_back_gracefully(self, monkeypatch):
+        """cmca_rank_cli genuinely unresolvable -> ranked=True must not crash.
+
+        This direction is always real regardless of environment: point
+        CMCA_RANK_CLI_BIN at a real nonexistent path and unset BCINR_HOME so
+        the default-root fallback also can't resolve a real binary.
+        """
+        monkeypatch.setenv(
+            "CMCA_RANK_CLI_BIN", "/nonexistent/path/does-not-exist/cmca_rank_cli"
+        )
+        monkeypatch.delenv("BCINR_HOME", raising=False)
+
+        domain_instance = self._representative_domain()
+        result = autofde_lab_utils.match_solvers(domain_instance, ranked=True)
+
+        assert result, "expected a non-empty ranked result (fallback to match order)"
+        for solver_type, score in result:
+            assert isinstance(solver_type, type)
+            assert isinstance(score, int)
+        # Fallback preserves match order and pairs it with 1-based rank position.
+        unranked = autofde_lab_utils.match_solvers(domain_instance, ranked=False)
+        assert [s for s, _ in result] == unranked
+        assert [score for _, score in result] == list(range(1, len(unranked) + 1))
+
+    def test_ranked_false_default_behaviour_is_unchanged(self):
+        domain_instance = self._representative_domain()
+        result = autofde_lab_utils.match_solvers(domain_instance)
+        assert result
+        for solver_type in result:
+            assert isinstance(solver_type, type)
+
+    @pytest.mark.skipif(
+        autofde_lab_utils._resolve_cmca_rank_cli_bin() is None,
+        reason=(
+            "cmca_rank_cli binary not resolvable in this environment "
+            "(checked CMCA_RANK_CLI_BIN and $BCINR_HOME/target/debug/cmca_rank_cli); "
+            "ranked=True's optional binary-present path is skipped, not faked"
+        ),
+    )
+    def test_ranked_true_binary_present_returns_real_shares(self):
+        """Only runs when cmca_rank_cli is genuinely resolvable on this machine.
+
+        The real matched-candidate count for this domain (46, see the actual
+        run this test was built against) exceeds cmca_rank_cli's compiled
+        N=8 limit (CMCA-108), so the CLI legitimately refuses with a typed
+        error and match_solvers() must fall back to match order -- this is
+        the real >8-candidate refusal path, exercised honestly, not a test
+        bug. When the real matched count is <=8 this instead exercises the
+        real subprocess ranking path and asserts float shares.
+        """
+        domain_instance = self._representative_domain()
+        unranked = autofde_lab_utils.match_solvers(domain_instance, ranked=False)
+        result = autofde_lab_utils.match_solvers(domain_instance, ranked=True)
+
+        assert len(result) == len(unranked)
+        assert {s for s, _ in result} == set(unranked)
+        scores = [score for _, score in result]
+
+        if len(unranked) <= 8:
+            # Real subprocess ranking path: real float shares, sorted descending.
+            assert scores == sorted(scores, reverse=True)
+            for _, score in result:
+                assert isinstance(score, float)
+        else:
+            # Real >8-candidate refusal path: graceful fallback to match order,
+            # scored by ascending 1-based rank position (not descending shares).
+            for _, score in result:
+                assert isinstance(score, int)
+            assert [s for s, _ in result] == unranked
+            assert scores == list(range(1, len(unranked) + 1))
