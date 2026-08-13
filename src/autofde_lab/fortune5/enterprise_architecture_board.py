@@ -331,6 +331,12 @@ class EnterpriseArchitectureBoard:
                 f"UNKNOWN:MISSING_ADMISSION_VIEWPOINT_EVIDENCE:{missing_at_admission[0]}",
             )
 
+        falsification_subject_id = str(getattr(falsification, "candidate_id", ""))
+        if falsification_subject_id != candidate_id:
+            return ArchitectureAdmissionDecision(
+                candidate_id, ArchitectureAdmissionStanding.REFUSED,
+                "REFUSED:FALSIFICATION_SUBJECT_MISMATCH",
+            )
         falsification_value = getattr(getattr(falsification, "standing", None), "value", getattr(falsification, "standing", None))
         falsification_evidence_refs = tuple(
             dict.fromkeys(

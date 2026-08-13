@@ -39,6 +39,7 @@ class FStanding(str, Enum):
 class Falsification:
     standing: FStanding
     receipt_refs: tuple[str, ...] = ("receipt:falsification:1",)
+    candidate_id: str = Candidate().candidate_id
 
 
 def _requirements():
@@ -190,6 +191,26 @@ def test_execution_receipt_must_bind_candidate_and_not_alias_intent():
     )
     assert decision.standing is ArchitectureAdmissionStanding.REFUSED
     assert "EXECUTION_EVIDENCE_SUBJECT_MISMATCH" in decision.reason
+
+
+def test_cross_subject_falsification_is_refused():
+    board = EnterpriseArchitectureBoard()
+    assessment = board.assess_candidate(
+        Candidate(), _requirements(), _requirement_evidence(),
+        viewpoint_evidence=_viewpoint_evidence(),
+    )
+    decision = board.admit_for_manufacture(
+        observation=Observation(), candidate=Candidate(), requirements=_requirements(),
+        assessment=assessment,
+        falsification=Falsification(FStanding.SURVIVES, candidate_id="candidate:other"),
+        execution_evidence=(ExecutionEvidence(
+            "receipt:1", "intent:1", "ALIVE", ("outcome:1",),
+            candidate_id=Candidate().candidate_id,
+        ),),
+        viewpoint_evidence=_viewpoint_evidence(), generation_profile="ggen:fortune5-v1",
+    )
+    assert decision.standing is ArchitectureAdmissionStanding.REFUSED
+    assert decision.reason == "REFUSED:FALSIFICATION_SUBJECT_MISMATCH"
 
 
 def test_unreceipted_falsification_cannot_crown_candidate():
