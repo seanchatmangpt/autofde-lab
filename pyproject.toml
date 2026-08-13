@@ -165,7 +165,13 @@ gymact = [
 ]
 all = [
     # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
-    "autofde-lab[domains, solvers, pddl, dspy, ofmf, mcp, gymact]",
+    # "receipts" added back 2026-08-12: `uv sync --extra=all` was silently uninstalling
+    # wasm4pm-compat-pydantic (src/autofde_lab/receipts/wasm4pm_types.py,
+    # src/autofde_lab/constitution/__init__.py, and
+    # hub/domain/gym_procedure/dependency_admission.py all import it) because this list
+    # never actually included the "receipts" extra it lives under, despite `all` being
+    # documented/assumed to mean "everything".
+    "autofde-lab[domains, solvers, pddl, dspy, ofmf, mcp, gymact, receipts]",
 ]
 
 [project.entry-points."autofde_lab.domains"]
