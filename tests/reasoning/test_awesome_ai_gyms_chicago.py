@@ -76,3 +76,25 @@ def test_selection_module_has_no_gym_execution_path() -> None:
     assert "subprocess" not in source
     assert "EnvironmentProvider" not in source
     assert ".act(" not in source
+
+
+def test_repo_planner_frontier_reads_entry_points_without_importing_solvers() -> None:
+    candidates = subject.parse_awesome_ai_gyms_tsv(CATALOG)
+    pyproject = """
+[project.entry-points."autofde_lab.solvers"]
+AOstar = "autofde_lab.hub.solver.aostar:AOstar [solvers]"
+MCTS = "autofde_lab.hub.solver.mcts:MCTS [solvers]"
+DSPyPolicy = "autofde_lab.hub.solver.dspy_policy:DSPyPolicy [dspy]"
+"""
+
+    refs = subject.planner_refs_from_pyproject(pyproject)
+    frontier = subject.build_repo_planner_gym_frontier(candidates, pyproject)
+
+    assert refs == ("AOstar", "DSPyPolicy", "MCTS")
+    assert len(frontier) == 6
+    assert {edge.planner_ref for edge in frontier} == set(refs)
+
+
+def test_missing_planner_entry_points_are_refused() -> None:
+    with pytest.raises(ValueError, match="AUTOFDE_PLANNER_ENTRY_POINTS_MISSING"):
+        subject.planner_refs_from_pyproject("[project]\nname='autofde-lab'\n")

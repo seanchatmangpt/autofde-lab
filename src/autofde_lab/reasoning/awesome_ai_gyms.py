@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import io
+import tomllib
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Literal
@@ -93,6 +94,29 @@ def load_awesome_ai_gyms(path: str | Path) -> tuple[AwesomeAIGymCandidate, ...]:
     """Load the caller-selected catalog projection as inert selection candidates."""
 
     return parse_awesome_ai_gyms_tsv(Path(path).read_text(encoding="utf-8"))
+
+
+def planner_refs_from_pyproject(text: str) -> tuple[str, ...]:
+    """Read the canonical solver entry-point names without importing any planner."""
+
+    document = tomllib.loads(text)
+    project = document.get("project", {})
+    entry_points = project.get("entry-points", {})
+    solvers = entry_points.get("autofde_lab.solvers", {})
+    if not isinstance(solvers, dict) or not solvers:
+        raise ValueError("AUTOFDE_PLANNER_ENTRY_POINTS_MISSING")
+    refs = tuple(sorted(str(name) for name in solvers))
+    if len(set(refs)) != len(refs):
+        raise ValueError("DUPLICATE_PLANNER_REF")
+    return refs
+
+
+def build_repo_planner_gym_frontier(
+    candidates: tuple[AwesomeAIGymCandidate, ...], pyproject_text: str
+) -> tuple[PlannerGymEdge, ...]:
+    """Cross every catalog candidate with the repo-declared planner population."""
+
+    return build_planner_gym_frontier(candidates, planner_refs_from_pyproject(pyproject_text))
 
 
 def build_planner_gym_frontier(
