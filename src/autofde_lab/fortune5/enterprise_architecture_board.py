@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 from math import isfinite
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Iterable, Sequence
 
 from autofde_lab.fortune5.enterprise_architecture_catalog import (
     ENTERPRISE_ARCHITECTURE_PRINCIPLES,
@@ -55,6 +55,7 @@ class RequirementEvidence:
     requirement_id: str
     standing: RequirementStanding
     evidence_refs: tuple[str, ...] = ()
+    subject_id: str = ""
     rationale: str = ""
 
     def __post_init__(self) -> None:
@@ -92,6 +93,7 @@ class CandidateAssessment:
 class ViewpointEvidence:
     viewpoint_id: str
     evidence_refs: tuple[str, ...]
+    subject_id: str = ""
 
     def __post_init__(self) -> None:
         if self.viewpoint_id not in ENTERPRISE_VIEWPOINTS:
@@ -106,13 +108,19 @@ class ExecutionEvidence:
     intent_id: str
     standing: str
     observed_outcome_refs: tuple[str, ...]
+    candidate_id: str = ""
     ocel_evidence_ref: str | None = None
 
     def __post_init__(self) -> None:
         if self.standing == "ALIVE" and (
-            not self.receipt_id.strip() or not self.observed_outcome_refs
+            not self.receipt_id.strip()
+            or not self.intent_id.strip()
+            or not self.candidate_id.strip()
+            or not self.observed_outcome_refs
         ):
             raise ValueError("REFUSED:UNRECEIPTED_EXECUTION_EVIDENCE")
+        if self.standing == "ALIVE" and self.receipt_id == self.intent_id:
+            raise ValueError("REFUSED:RECEIPT_IDENTITY_COLLIDES_WITH_INTENT")
 
 
 @dataclass(frozen=True, slots=True)
@@ -215,6 +223,17 @@ class EnterpriseArchitectureBoard:
         viewpoint_evidence: Sequence[ViewpointEvidence],
         risk_classes: Iterable[str] = (),
     ) -> CandidateAssessment:
+        candidate_id = str(candidate.candidate_id)
+        for item in evidence:
+            if item.subject_id != candidate_id:
+                raise ValueError(
+                    f"REFUSED:REQUIREMENT_EVIDENCE_SUBJECT_MISMATCH:{item.requirement_id}"
+                )
+        for item in viewpoint_evidence:
+            if item.subject_id != candidate_id:
+                raise ValueError(
+                    f"REFUSED:VIEWPOINT_EVIDENCE_SUBJECT_MISMATCH:{item.viewpoint_id}"
+                )
         evidence_by_requirement = {item.requirement_id: item for item in evidence}
         results: list[RequirementEvidence] = []
         for requirement in requirements:
@@ -223,6 +242,7 @@ class EnterpriseArchitectureBoard:
                 result = RequirementEvidence(
                     requirement_id=requirement.requirement_id,
                     standing=RequirementStanding.UNKNOWN,
+                    subject_id=candidate_id,
                     rationale="no independent evidence was supplied",
                 )
             results.append(result)
@@ -235,7 +255,7 @@ class EnterpriseArchitectureBoard:
 
         missing = tuple(v for v in self.required_viewpoints if v not in covered)
         return CandidateAssessment(
-            candidate_id=str(candidate.candidate_id),
+            candidate_id=candidate_id,
             requirement_results=tuple(results),
             covered_viewpoints=covered,
             missing_viewpoints=missing,
@@ -264,7 +284,15 @@ class EnterpriseArchitectureBoard:
                 standing=ArchitectureAdmissionStanding.REFUSED,
                 reason="REFUSED:ASSESSMENT_SUBJECT_MISMATCH",
             )
-        mandatory = {r.requirement_id for r in requirements if r.mandatory}
+        candidate_id = str(candidate.candidate_id)
+        mandatory_requirements = tuple(r for r in requirements if r.mandatory)
+        mandatory = {r.requirement_id for r in mandatory_requirements}
+        for requirement in mandatory_requirements:
+            if not requirement.source_evidence_refs:
+                return ArchitectureAdmissionDecision(
+                    candidate_id, ArchitectureAdmissionStanding.UNKNOWN,
+                    f"UNKNOWN:UNGROUNDED_MANDATORY_REQUIREMENT:{requirement.requirement_id}",
+                )
         result_by_id = {r.requirement_id: r for r in assessment.requirement_results}
         for requirement_id in mandatory:
             result = result_by_id.get(requirement_id)
@@ -286,14 +314,38 @@ class EnterpriseArchitectureBoard:
 
         if assessment.missing_viewpoints:
             return ArchitectureAdmissionDecision(
-                str(candidate.candidate_id), ArchitectureAdmissionStanding.UNKNOWN,
+                candidate_id, ArchitectureAdmissionStanding.UNKNOWN,
                 f"UNKNOWN:MISSING_VIEWPOINT:{assessment.missing_viewpoints[0]}",
+            )
+        supplied_viewpoints = {item.viewpoint_id for item in viewpoint_evidence}
+        for item in viewpoint_evidence:
+            if item.subject_id != candidate_id:
+                return ArchitectureAdmissionDecision(
+                    candidate_id, ArchitectureAdmissionStanding.REFUSED,
+                    f"REFUSED:VIEWPOINT_EVIDENCE_SUBJECT_MISMATCH:{item.viewpoint_id}",
+                )
+        missing_at_admission = tuple(v for v in self.required_viewpoints if v not in supplied_viewpoints)
+        if missing_at_admission:
+            return ArchitectureAdmissionDecision(
+                candidate_id, ArchitectureAdmissionStanding.UNKNOWN,
+                f"UNKNOWN:MISSING_ADMISSION_VIEWPOINT_EVIDENCE:{missing_at_admission[0]}",
             )
 
         falsification_value = getattr(getattr(falsification, "standing", None), "value", getattr(falsification, "standing", None))
+        falsification_evidence_refs = tuple(
+            dict.fromkeys(
+                tuple(getattr(falsification, "receipt_refs", ()))
+                + tuple(getattr(falsification, "counterexample_refs", ()))
+            )
+        )
+        if falsification_value in {"FALSIFIED", "SURVIVES"} and not falsification_evidence_refs:
+            return ArchitectureAdmissionDecision(
+                candidate_id, ArchitectureAdmissionStanding.UNKNOWN,
+                "UNKNOWN:UNRECEIPTED_FALSIFICATION_STANDING",
+            )
         if falsification_value == "FALSIFIED":
             return ArchitectureAdmissionDecision(
-                str(candidate.candidate_id), ArchitectureAdmissionStanding.REFUSED,
+                candidate_id, ArchitectureAdmissionStanding.REFUSED,
                 "REFUSED:CANDIDATE_FALSIFIED",
             )
         if falsification_value == "UNSUPPORTED":
@@ -308,6 +360,12 @@ class EnterpriseArchitectureBoard:
             )
 
         evidence_refs: list[str] = []
+        for item in execution_evidence:
+            if item.candidate_id != candidate_id:
+                return ArchitectureAdmissionDecision(
+                    candidate_id, ArchitectureAdmissionStanding.REFUSED,
+                    f"REFUSED:EXECUTION_EVIDENCE_SUBJECT_MISMATCH:{item.receipt_id}",
+                )
         alive_execution = tuple(item for item in execution_evidence if item.standing == "ALIVE")
         if not alive_execution:
             return ArchitectureAdmissionDecision(
@@ -319,6 +377,9 @@ class EnterpriseArchitectureBoard:
             evidence_refs.extend(item.observed_outcome_refs)
             if item.ocel_evidence_ref:
                 evidence_refs.append(item.ocel_evidence_ref)
+        evidence_refs.extend(falsification_evidence_refs)
+        for requirement in requirements:
+            evidence_refs.extend(requirement.source_evidence_refs)
         for result in assessment.requirement_results:
             evidence_refs.extend(result.evidence_refs)
         for item in viewpoint_evidence:

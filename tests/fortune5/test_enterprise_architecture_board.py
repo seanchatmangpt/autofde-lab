@@ -38,31 +38,32 @@ class FStanding(str, Enum):
 @dataclass(frozen=True)
 class Falsification:
     standing: FStanding
+    receipt_refs: tuple[str, ...] = ("receipt:falsification:1",)
 
 
 def _requirements():
     return (
-        EnterpriseRequirement("req:availability", "AvailabilitySLORequirement", "99.99% availability"),
-        EnterpriseRequirement("req:residency", "DataResidencyRequirement", "EU data remains in EU"),
-        EnterpriseRequirement("req:cost", "CostCeilingRequirement", "monthly cost <= ceiling", mandatory=False),
+        EnterpriseRequirement("req:availability", "AvailabilitySLORequirement", "99.99% availability", source_evidence_refs=("source:slo",)),
+        EnterpriseRequirement("req:residency", "DataResidencyRequirement", "EU data remains in EU", source_evidence_refs=("source:residency-policy",)),
+        EnterpriseRequirement("req:cost", "CostCeilingRequirement", "monthly cost <= ceiling", mandatory=False, source_evidence_refs=("source:budget",)),
     )
 
 
 def _requirement_evidence():
     return (
-        RequirementEvidence("req:availability", RequirementStanding.SATISFIED, ("receipt:req:availability",)),
-        RequirementEvidence("req:residency", RequirementStanding.SATISFIED, ("receipt:req:residency",)),
-        RequirementEvidence("req:cost", RequirementStanding.UNKNOWN),
+        RequirementEvidence("req:availability", RequirementStanding.SATISFIED, ("receipt:req:availability",), subject_id=Candidate().candidate_id),
+        RequirementEvidence("req:residency", RequirementStanding.SATISFIED, ("receipt:req:residency",), subject_id=Candidate().candidate_id),
+        RequirementEvidence("req:cost", RequirementStanding.UNKNOWN, subject_id=Candidate().candidate_id),
     )
 
 
 def _viewpoint_evidence():
-    return tuple(ViewpointEvidence(v, (f"receipt:view:{v}",)) for v in ENTERPRISE_VIEWPOINTS)
+    return tuple(ViewpointEvidence(v, (f"receipt:view:{v}",), subject_id=Candidate().candidate_id) for v in ENTERPRISE_VIEWPOINTS)
 
 
 def test_requirement_judgment_cannot_self_certify_without_evidence():
     with pytest.raises(ValueError, match="UNRECEIPTED_REQUIREMENT_JUDGMENT"):
-        RequirementEvidence("req:availability", RequirementStanding.SATISFIED)
+        RequirementEvidence("req:availability", RequirementStanding.SATISFIED, subject_id=Candidate().candidate_id)
 
 
 def test_full_enterprise_viewpoint_court_requires_evidence_for_every_viewpoint():
@@ -91,7 +92,7 @@ def test_falsified_candidate_is_refused_even_when_requirements_are_green():
     decision = board.admit_for_manufacture(
         observation=Observation(), candidate=Candidate(), requirements=_requirements(),
         assessment=assessment, falsification=Falsification(FStanding.FALSIFIED),
-        execution_evidence=(ExecutionEvidence("receipt:1", "intent:1", "ALIVE", ("outcome:1",)),),
+        execution_evidence=(ExecutionEvidence("receipt:1", "intent:1", "ALIVE", ("outcome:1",), candidate_id=Candidate().candidate_id),),
         viewpoint_evidence=_viewpoint_evidence(), generation_profile="ggen:fortune5-v1",
     )
     assert decision.standing is ArchitectureAdmissionStanding.REFUSED
@@ -101,8 +102,8 @@ def test_falsified_candidate_is_refused_even_when_requirements_are_green():
 def test_unknown_mandatory_requirement_blocks_manufacturing_admission():
     board = EnterpriseArchitectureBoard()
     evidence = (
-        RequirementEvidence("req:availability", RequirementStanding.SATISFIED, ("receipt:req:availability",)),
-        RequirementEvidence("req:residency", RequirementStanding.UNKNOWN),
+        RequirementEvidence("req:availability", RequirementStanding.SATISFIED, ("receipt:req:availability",), subject_id=Candidate().candidate_id),
+        RequirementEvidence("req:residency", RequirementStanding.UNKNOWN, subject_id=Candidate().candidate_id),
     )
     assessment = board.assess_candidate(
         Candidate(), _requirements(), evidence, viewpoint_evidence=_viewpoint_evidence(),
@@ -110,7 +111,7 @@ def test_unknown_mandatory_requirement_blocks_manufacturing_admission():
     decision = board.admit_for_manufacture(
         observation=Observation(), candidate=Candidate(), requirements=_requirements(),
         assessment=assessment, falsification=Falsification(FStanding.SURVIVES),
-        execution_evidence=(ExecutionEvidence("receipt:1", "intent:1", "ALIVE", ("outcome:1",)),),
+        execution_evidence=(ExecutionEvidence("receipt:1", "intent:1", "ALIVE", ("outcome:1",), candidate_id=Candidate().candidate_id),),
         viewpoint_evidence=_viewpoint_evidence(), generation_profile="ggen:fortune5-v1",
     )
     assert decision.standing is ArchitectureAdmissionStanding.UNKNOWN
@@ -128,6 +129,7 @@ def test_survivor_with_receipted_requirements_viewpoints_and_execution_becomes_m
         intent_id="intent:global-checkout",
         standing="ALIVE",
         observed_outcome_refs=("outcome:availability", "outcome:residency"),
+        candidate_id=Candidate().candidate_id,
         ocel_evidence_ref="ocel:experiment:42",
     )
     decision = board.admit_for_manufacture(
@@ -146,9 +148,68 @@ def test_survivor_with_receipted_requirements_viewpoints_and_execution_becomes_m
 
 def test_alive_execution_evidence_requires_receipt_identity_and_observed_outcome():
     with pytest.raises(ValueError, match="UNRECEIPTED_EXECUTION_EVIDENCE"):
-        ExecutionEvidence("", "intent:1", "ALIVE", ("outcome:1",))
+        ExecutionEvidence("", "intent:1", "ALIVE", ("outcome:1",), candidate_id=Candidate().candidate_id)
     with pytest.raises(ValueError, match="UNRECEIPTED_EXECUTION_EVIDENCE"):
-        ExecutionEvidence("receipt:1", "intent:1", "ALIVE", ())
+        ExecutionEvidence("receipt:1", "intent:1", "ALIVE", (), candidate_id=Candidate().candidate_id)
+
+
+def test_cross_subject_evidence_is_refused_before_assessment():
+    board = EnterpriseArchitectureBoard()
+    wrong = (
+        RequirementEvidence(
+            "req:availability", RequirementStanding.SATISFIED,
+            ("receipt:req:other",), subject_id="candidate:other",
+        ),
+    )
+    with pytest.raises(ValueError, match="REQUIREMENT_EVIDENCE_SUBJECT_MISMATCH"):
+        board.assess_candidate(
+            Candidate(), _requirements(), wrong, viewpoint_evidence=_viewpoint_evidence()
+        )
+
+
+def test_execution_receipt_must_bind_candidate_and_not_alias_intent():
+    with pytest.raises(ValueError, match="RECEIPT_IDENTITY_COLLIDES_WITH_INTENT"):
+        ExecutionEvidence(
+            "intent:1", "intent:1", "ALIVE", ("outcome:1",),
+            candidate_id=Candidate().candidate_id,
+        )
+
+    board = EnterpriseArchitectureBoard()
+    assessment = board.assess_candidate(
+        Candidate(), _requirements(), _requirement_evidence(),
+        viewpoint_evidence=_viewpoint_evidence(),
+    )
+    decision = board.admit_for_manufacture(
+        observation=Observation(), candidate=Candidate(), requirements=_requirements(),
+        assessment=assessment, falsification=Falsification(FStanding.SURVIVES),
+        execution_evidence=(ExecutionEvidence(
+            "receipt:other", "intent:1", "ALIVE", ("outcome:1",),
+            candidate_id="candidate:other",
+        ),),
+        viewpoint_evidence=_viewpoint_evidence(), generation_profile="ggen:fortune5-v1",
+    )
+    assert decision.standing is ArchitectureAdmissionStanding.REFUSED
+    assert "EXECUTION_EVIDENCE_SUBJECT_MISMATCH" in decision.reason
+
+
+def test_unreceipted_falsification_cannot_crown_candidate():
+    board = EnterpriseArchitectureBoard()
+    assessment = board.assess_candidate(
+        Candidate(), _requirements(), _requirement_evidence(),
+        viewpoint_evidence=_viewpoint_evidence(),
+    )
+    decision = board.admit_for_manufacture(
+        observation=Observation(), candidate=Candidate(), requirements=_requirements(),
+        assessment=assessment,
+        falsification=Falsification(FStanding.SURVIVES, receipt_refs=()),
+        execution_evidence=(ExecutionEvidence(
+            "receipt:1", "intent:1", "ALIVE", ("outcome:1",),
+            candidate_id=Candidate().candidate_id,
+        ),),
+        viewpoint_evidence=_viewpoint_evidence(), generation_profile="ggen:fortune5-v1",
+    )
+    assert decision.standing is ArchitectureAdmissionStanding.UNKNOWN
+    assert decision.reason == "UNKNOWN:UNRECEIPTED_FALSIFICATION_STANDING"
 
 
 def test_committed_enterprise_catalog_is_exact_projection_of_ggen_ontology():
