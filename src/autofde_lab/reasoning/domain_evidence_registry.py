@@ -48,6 +48,104 @@ class DomainEvidenceSpec:
 
 DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
 
+"breach_clock": DomainEvidenceSpec(
+        domain_name="breach_clock",
+        python_module_path="autofde_lab.hub.domain.breach_clock.breach_clock",
+        domain_class_name="BreachClockDomain",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="state.notification is Notification.DELIVERED and state.notified_populations == state.populations",
+        verify_mode="fresh-instance-replay",
+        evidence_out_path="docs/evidence/breach_clock/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="deliver_notification", consequence="DO", precondition_expr="state.notification is Notification.DRAFTED and state.notified_populations == state.populations"),
+        ),
+    ),
+
+"career_admission": DomainEvidenceSpec(
+        domain_name="career_admission",
+        python_module_path="autofde_lab.hub.domain.career_admission.career_admission",
+        domain_class_name="CareerAdmission",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="self._required_categories.issubset({self._facts[fact_id].category for fact_id in state.admitted if fact_id in self._facts})",
+        verify_mode="fresh-instance-replay",
+        evidence_out_path="docs/evidence/career_admission/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="intuit_automl", consequence="DO", precondition_expr="fact.id not in admitted and set(fact.prerequisite_ids).issubset(admitted)"),
+        ),
+    ),
+
+"cloudgoat_iam_privesc": DomainEvidenceSpec(
+        domain_name="cloudgoat_iam_privesc",
+        python_module_path="autofde_lab.hub.domain.cloudgoat_iam_privesc.cloudgoat_iam_privesc",
+        domain_class_name="CloudGoatIamPrivescDomain",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="state.enumerated and state.admin_role_on_profile and state.keypair_created and state.instance_launched and state.has_shell_access and state.target_terminated",
+        verify_mode="fresh-instance-replay",
+        evidence_out_path="docs/evidence/cloudgoat_iam_privesc/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="terminate_target_instance", consequence="DO", precondition_expr="state.has_shell_access and not state.target_terminated"),
+        ),
+    ),
+
+"fix_git": DomainEvidenceSpec(
+        domain_name="fix_git",
+        python_module_path="autofde_lab.hub.domain.fix_git.git_recovery",
+        domain_class_name="GitRecoveryDomain",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="state.current_branch == self.base_branch and state.recovery_branch_exists and state.merged",
+        verify_mode="fresh-instance-replay",
+        evidence_out_path="docs/evidence/fix_git/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="merge_recovery", consequence="DO", precondition_expr="memory.current_branch == self.base_branch and memory.recovery_branch_exists and not memory.merged"),
+        ),
+    ),
+
+"k8s_goat_rbac_escalation": DomainEvidenceSpec(
+        domain_name="k8s_goat_rbac_escalation",
+        python_module_path="autofde_lab.hub.domain.k8s_goat_rbac_escalation.k8s_goat_rbac_escalation",
+        domain_class_name="K8sGoatRBACEscalation",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="GOAL_STEP_ID in state.known",
+        verify_mode="fresh-instance-replay",
+        evidence_out_path="docs/evidence/k8s_goat_rbac_escalation/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="read_and_decode_k8svaultapikey", consequence="DO", precondition_expr="'list_namespace_secrets' in known"),
+        ),
+    ),
+
+"maze": DomainEvidenceSpec(
+        domain_name="maze",
+        python_module_path="autofde_lab.hub.domain.maze.maze",
+        domain_class_name="Maze",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="state == self._goal",
+        verify_mode="fresh-instance-replay",
+        evidence_out_path="docs/evidence/maze/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="up|down|left|right", consequence="DO", precondition_expr="true"),
+        ),
+    ),
+
+"pddl": DomainEvidenceSpec(
+        domain_name="pddl",
+        python_module_path="autofde_lab.hub.domain.pddl.domain",
+        domain_class_name="PDDLDomain",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="self._goal_checker.is_goal(s.to_cpp())  # C++ CppGoalChecker compiled from the loaded PDDL domain/problem file; for the proven fixture (blocks-3-0) the goal is 'on(b, c)'",
+        verify_mode="fresh-instance-replay",
+        evidence_out_path="docs/evidence/pddl/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
+        ),
+    ),
+
 "terragoat": DomainEvidenceSpec(
         domain_name="terragoat",
         python_module_path="autofde_lab.hub.domain.terragoat.terragoat_remediation",
@@ -59,6 +157,20 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
         evidence_out_path="docs/evidence/terragoat/domain-evidence-episode.ocel.json",
         capabilities=(
             CapabilitySpec(name="close_finding", consequence="DO", precondition_expr="finding_id in state.open_findings"),
+        ),
+    ),
+
+"up": DomainEvidenceSpec(
+        domain_name="up",
+        python_module_path="autofde_lab.hub.domain.up.up",
+        domain_class_name="UPDomain",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="self._simulator.is_goal(state.up_state)",
+        verify_mode="fresh-instance-replay",
+        evidence_out_path="docs/evidence/up/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="SkUPAction", consequence="DO", precondition_expr="true"),
         ),
     ),
 }

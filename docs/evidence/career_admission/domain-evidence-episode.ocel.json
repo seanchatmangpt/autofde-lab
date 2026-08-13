@@ -1,0 +1,243 @@
+{
+  "eventTypes": [
+    {
+      "attributes": [
+        {
+          "name": "plan_length",
+          "type": "integer"
+        },
+        {
+          "name": "standing",
+          "type": "string"
+        }
+      ],
+      "name": "materialize"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "type": "string"
+        },
+        {
+          "name": "step_index",
+          "type": "integer"
+        }
+      ],
+      "name": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "goal_reached",
+          "type": "boolean"
+        },
+        {
+          "name": "standing",
+          "type": "string"
+        },
+        {
+          "name": "verify_mode",
+          "type": "string"
+        }
+      ],
+      "name": "verify"
+    },
+    {
+      "attributes": [
+        {
+          "name": "standing",
+          "type": "string"
+        }
+      ],
+      "name": "teardown"
+    }
+  ],
+  "events": [
+    {
+      "attributes": [
+        {
+          "name": "standing",
+          "value": "ALIVE"
+        },
+        {
+          "name": "plan_length",
+          "value": 3
+        }
+      ],
+      "id": "ev:materialize",
+      "relationships": [
+        {
+          "objectId": "episode:career_admission",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:career_admission",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:14:11.145947000Z",
+      "type": "materialize"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "intuit_automl"
+        },
+        {
+          "name": "step_index",
+          "value": 0
+        }
+      ],
+      "id": "ev:act:0",
+      "relationships": [
+        {
+          "objectId": "episode:career_admission",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:career_admission",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:14:11.168526000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "intuit_ml_governance"
+        },
+        {
+          "name": "step_index",
+          "value": 1
+        }
+      ],
+      "id": "ev:act:1",
+      "relationships": [
+        {
+          "objectId": "episode:career_admission",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:career_admission",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:14:11.168540000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "agentic_orchestration"
+        },
+        {
+          "name": "step_index",
+          "value": 2
+        }
+      ],
+      "id": "ev:act:2",
+      "relationships": [
+        {
+          "objectId": "episode:career_admission",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:career_admission",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:14:11.168548000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "standing",
+          "value": "ALIVE"
+        },
+        {
+          "name": "goal_reached",
+          "value": true
+        },
+        {
+          "name": "verify_mode",
+          "value": "fresh-instance-replay"
+        }
+      ],
+      "id": "ev:verify",
+      "relationships": [
+        {
+          "objectId": "episode:career_admission",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:career_admission",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:14:11.168617000Z",
+      "type": "verify"
+    },
+    {
+      "attributes": [
+        {
+          "name": "standing",
+          "value": "ALIVE"
+        }
+      ],
+      "id": "ev:teardown",
+      "relationships": [
+        {
+          "objectId": "episode:career_admission",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:career_admission",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:14:11.168628000Z",
+      "type": "teardown"
+    }
+  ],
+  "objectTypes": [
+    {
+      "attributes": [],
+      "name": "episode"
+    },
+    {
+      "attributes": [
+        {
+          "name": "domain_class",
+          "type": "string"
+        }
+      ],
+      "name": "domain"
+    }
+  ],
+  "objects": [
+    {
+      "attributes": [],
+      "id": "episode:career_admission",
+      "relationships": [],
+      "type": "episode"
+    },
+    {
+      "attributes": [
+        {
+          "name": "domain_class",
+          "time": "1970-01-01T00:00:00.000000000Z",
+          "value": "CareerAdmission"
+        }
+      ],
+      "id": "domain:career_admission",
+      "relationships": [],
+      "type": "domain"
+    }
+  ]
+}

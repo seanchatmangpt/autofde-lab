@@ -65,3 +65,142 @@ afl:domain_terragoat_cap_close_finding a afl:Capability ;
     afl:capabilityName "close_finding" ;
     afl:capabilityConsequence "DO" ;
     afl:capabilityPrecondition "finding_id in state.open_findings" .
+
+
+# --- 8 more domains, real Astar-reaches-goal proofs grounded via ultracode fan-out ---
+
+afl:domain_breach_clock a afl:DomainEvidenceSpec ;
+    afl:domainName "breach_clock" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.breach_clock.breach_clock" ;
+    afl:domainClassName "BreachClockDomain" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "state.notification is Notification.DELIVERED and state.notified_populations == state.populations" ;
+    afl:verifyMode "fresh-instance-replay" ;
+    afl:evidenceOutPath "docs/evidence/breach_clock/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_breach_clock_cap_1 .
+
+afl:domain_breach_clock_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "deliver_notification" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "state.notification is Notification.DRAFTED and state.notified_populations == state.populations" .
+
+afl:domain_career_admission a afl:DomainEvidenceSpec ;
+    afl:domainName "career_admission" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.career_admission.career_admission" ;
+    afl:domainClassName "CareerAdmission" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "self._required_categories.issubset({self._facts[fact_id].category for fact_id in state.admitted if fact_id in self._facts})" ;
+    afl:verifyMode "fresh-instance-replay" ;
+    afl:evidenceOutPath "docs/evidence/career_admission/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_career_admission_cap_1 .
+
+afl:domain_career_admission_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "intuit_automl" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "fact.id not in admitted and set(fact.prerequisite_ids).issubset(admitted)" .
+
+afl:domain_up a afl:DomainEvidenceSpec ;
+    afl:domainName "up" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.up.up" ;
+    afl:domainClassName "UPDomain" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "self._simulator.is_goal(state.up_state)" ;
+    afl:verifyMode "fresh-instance-replay" ;
+    afl:evidenceOutPath "docs/evidence/up/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_up_cap_1 .
+
+afl:domain_up_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "SkUPAction" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "true" .
+
+afl:domain_cloudgoat_iam_privesc a afl:DomainEvidenceSpec ;
+    afl:domainName "cloudgoat_iam_privesc" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.cloudgoat_iam_privesc.cloudgoat_iam_privesc" ;
+    afl:domainClassName "CloudGoatIamPrivescDomain" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "state.enumerated and state.admin_role_on_profile and state.keypair_created and state.instance_launched and state.has_shell_access and state.target_terminated" ;
+    afl:verifyMode "fresh-instance-replay" ;
+    afl:evidenceOutPath "docs/evidence/cloudgoat_iam_privesc/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_cloudgoat_iam_privesc_cap_1 .
+
+afl:domain_cloudgoat_iam_privesc_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "terminate_target_instance" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "state.has_shell_access and not state.target_terminated" .
+
+afl:domain_fix_git a afl:DomainEvidenceSpec ;
+    afl:domainName "fix_git" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.fix_git.git_recovery" ;
+    afl:domainClassName "GitRecoveryDomain" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "state.current_branch == self.base_branch and state.recovery_branch_exists and state.merged" ;
+    afl:verifyMode "fresh-instance-replay" ;
+    afl:evidenceOutPath "docs/evidence/fix_git/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_fix_git_cap_1 .
+
+afl:domain_fix_git_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "merge_recovery" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "memory.current_branch == self.base_branch and memory.recovery_branch_exists and not memory.merged" .
+
+afl:domain_k8s_goat_rbac_escalation a afl:DomainEvidenceSpec ;
+    afl:domainName "k8s_goat_rbac_escalation" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.k8s_goat_rbac_escalation.k8s_goat_rbac_escalation" ;
+    afl:domainClassName "K8sGoatRBACEscalation" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "GOAL_STEP_ID in state.known" ;
+    afl:verifyMode "fresh-instance-replay" ;
+    afl:evidenceOutPath "docs/evidence/k8s_goat_rbac_escalation/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_k8s_goat_rbac_escalation_cap_1 .
+
+afl:domain_k8s_goat_rbac_escalation_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "read_and_decode_k8svaultapikey" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "'list_namespace_secrets' in known" .
+
+afl:domain_maze a afl:DomainEvidenceSpec ;
+    afl:domainName "maze" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.maze.maze" ;
+    afl:domainClassName "Maze" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "state == self._goal" ;
+    afl:verifyMode "fresh-instance-replay" ;
+    afl:evidenceOutPath "docs/evidence/maze/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_maze_cap_1 .
+
+afl:domain_maze_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "up|down|left|right" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "true" .
+
+afl:domain_pddl a afl:DomainEvidenceSpec ;
+    afl:domainName "pddl" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.pddl.domain" ;
+    afl:domainClassName "PDDLDomain" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "self._goal_checker.is_goal(s.to_cpp())  # C++ CppGoalChecker compiled from the loaded PDDL domain/problem file; for the proven fixture (blocks-3-0) the goal is 'on(b, c)'" ;
+    afl:verifyMode "fresh-instance-replay" ;
+    afl:evidenceOutPath "docs/evidence/pddl/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_pddl_cap_1 .
+
+afl:domain_pddl_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module" .
