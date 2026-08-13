@@ -8,7 +8,7 @@ the payoff hypergraph when an external GymAct execution receipt is supplied.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import StrEnum
+from enum import Enum
 import hashlib
 import json
 from math import fsum
@@ -24,7 +24,7 @@ from .catalog import (
 )
 
 
-class CompatibilityStanding(StrEnum):
+class CompatibilityStanding(str, Enum):
     COMPATIBLE = "COMPATIBLE"
     REFUSED = "REFUSED"
     UNSUPPORTED = "UNSUPPORTED"
