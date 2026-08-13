@@ -3,24 +3,49 @@ PREFIX afl: <urn:autofde-lab:>
 # One row per (domain, capability) pair, ordered so the template can group
 # capabilities back under their owning domain via Tera's group_by -- same
 # real pattern queries/world-transformation/scenario_projection.rq already
-# uses for domain -> sub-item grouping.
-SELECT ?domainName ?pythonModulePath ?domainClassName ?bridgeModulePath
+# uses for domain -> sub-item grouping. Solver candidates are a SEPARATE
+# rowKind in the same result set (VALUES-joined per domain, not a second
+# query file) so the generated registry can carry an ordered fallback list
+# per domain without a second [[generation.rules]] entry.
+SELECT ?rowKind ?domainName ?pythonModulePath ?domainClassName ?bridgeModulePath
        ?bridgeClassName ?goalCheckExpr ?verifyMode ?evidenceOutPath
        ?capabilityOrder ?capabilityName ?capabilityConsequence ?capabilityPrecondition
+       ?candidateOrder ?solverStrategy ?solverTimeoutSeconds
 WHERE {
-  ?domain a afl:DomainEvidenceSpec ;
-          afl:domainName ?domainName ;
-          afl:pythonModulePath ?pythonModulePath ;
-          afl:domainClassName ?domainClassName ;
-          afl:bridgeModulePath ?bridgeModulePath ;
-          afl:bridgeClassName ?bridgeClassName ;
-          afl:goalCheckExpr ?goalCheckExpr ;
-          afl:verifyMode ?verifyMode ;
-          afl:evidenceOutPath ?evidenceOutPath ;
-          afl:hasCapability ?cap .
-  ?cap afl:capabilityOrder ?capabilityOrder ;
-       afl:capabilityName ?capabilityName ;
-       afl:capabilityConsequence ?capabilityConsequence ;
-       afl:capabilityPrecondition ?capabilityPrecondition .
+  {
+    SELECT ?rowKind ?domainName ?pythonModulePath ?domainClassName ?bridgeModulePath
+           ?bridgeClassName ?goalCheckExpr ?verifyMode ?evidenceOutPath
+           ?capabilityOrder ?capabilityName ?capabilityConsequence ?capabilityPrecondition
+    WHERE {
+      BIND("capability" AS ?rowKind)
+      ?domain a afl:DomainEvidenceSpec ;
+              afl:domainName ?domainName ;
+              afl:pythonModulePath ?pythonModulePath ;
+              afl:domainClassName ?domainClassName ;
+              afl:bridgeModulePath ?bridgeModulePath ;
+              afl:bridgeClassName ?bridgeClassName ;
+              afl:goalCheckExpr ?goalCheckExpr ;
+              afl:verifyMode ?verifyMode ;
+              afl:evidenceOutPath ?evidenceOutPath ;
+              afl:hasCapability ?cap .
+      ?cap afl:capabilityOrder ?capabilityOrder ;
+           afl:capabilityName ?capabilityName ;
+           afl:capabilityConsequence ?capabilityConsequence ;
+           afl:capabilityPrecondition ?capabilityPrecondition .
+    }
+  }
+  UNION
+  {
+    SELECT ?rowKind ?domainName ?candidateOrder ?solverStrategy ?solverTimeoutSeconds
+    WHERE {
+      BIND("solver_candidate" AS ?rowKind)
+      ?domain a afl:DomainEvidenceSpec ;
+              afl:domainName ?domainName ;
+              afl:hasSolverCandidate ?cand .
+      ?cand afl:candidateOrder ?candidateOrder ;
+            afl:solverStrategy ?solverStrategy ;
+            afl:solverTimeoutSeconds ?solverTimeoutSeconds .
+    }
+  }
 }
-ORDER BY ?domainName ?capabilityOrder
+ORDER BY ?domainName ?rowKind ?capabilityOrder ?candidateOrder

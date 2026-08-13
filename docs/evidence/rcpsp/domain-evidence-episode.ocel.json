@@ -3,18 +3,51 @@
     {
       "attributes": [
         {
+          "name": "candidate_order",
+          "type": "integer"
+        },
+        {
+          "name": "elapsed_seconds",
+          "type": "float"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        },
+        {
+          "name": "strategy",
+          "type": "string"
+        }
+      ],
+      "name": "solver_refused"
+    },
+    {
+      "attributes": [
+        {
+          "name": "candidate_order",
+          "type": "integer"
+        },
+        {
+          "name": "elapsed_seconds",
+          "type": "float"
+        },
+        {
           "name": "plan_length",
           "type": "integer"
         },
         {
-          "name": "standing",
+          "name": "strategy",
           "type": "string"
         }
       ],
-      "name": "materialize"
+      "name": "solver_selected"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "type": "string"
+        },
         {
           "name": "step_index",
           "type": "integer"
@@ -35,6 +68,10 @@
         {
           "name": "verify_mode",
           "type": "string"
+        },
+        {
+          "name": "winning_strategy",
+          "type": "string"
         }
       ],
       "name": "verify"
@@ -53,15 +90,23 @@
     {
       "attributes": [
         {
-          "name": "standing",
-          "value": "ALIVE"
+          "name": "strategy",
+          "value": "astar-plain"
         },
         {
-          "name": "plan_length",
-          "value": 75
+          "name": "candidate_order",
+          "value": 1
+        },
+        {
+          "name": "elapsed_seconds",
+          "value": 20.017164945602417
+        },
+        {
+          "name": "reason",
+          "value": "timeout"
         }
       ],
-      "id": "ev:materialize",
+      "id": "ev:solver_refused:1",
       "relationships": [
         {
           "objectId": "episode:rcpsp",
@@ -72,11 +117,48 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.095230000Z",
-      "type": "materialize"
+      "time": "2026-08-13T18:26:18.520223000Z",
+      "type": "solver_refused"
     },
     {
       "attributes": [
+        {
+          "name": "strategy",
+          "value": "do-solver-cpsat"
+        },
+        {
+          "name": "candidate_order",
+          "value": 2
+        },
+        {
+          "name": "elapsed_seconds",
+          "value": 2.0093300342559814
+        },
+        {
+          "name": "plan_length",
+          "value": 75
+        }
+      ],
+      "id": "ev:solver_selected:2",
+      "relationships": [
+        {
+          "objectId": "episode:rcpsp",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:rcpsp",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:26:20.529906000Z",
+      "type": "solver_selected"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 1\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 0
@@ -93,11 +175,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323727000Z",
+      "time": "2026-08-13T18:26:20.530154000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 3\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 1
@@ -114,11 +200,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323739000Z",
+      "time": "2026-08-13T18:26:20.530190000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 4\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 2
@@ -135,11 +225,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323746000Z",
+      "time": "2026-08-13T18:26:20.530202000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 3
@@ -156,11 +250,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323751000Z",
+      "time": "2026-08-13T18:26:20.530210000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 4
@@ -177,11 +275,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323756000Z",
+      "time": "2026-08-13T18:26:20.530217000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 5
@@ -198,11 +300,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323761000Z",
+      "time": "2026-08-13T18:26:20.530223000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 6
@@ -219,11 +325,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323765000Z",
+      "time": "2026-08-13T18:26:20.530235000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 2\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 7
@@ -240,11 +350,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323769000Z",
+      "time": "2026-08-13T18:26:20.530241000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 7\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 8
@@ -261,11 +375,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323773000Z",
+      "time": "2026-08-13T18:26:20.530275000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 8\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 9
@@ -282,11 +400,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323777000Z",
+      "time": "2026-08-13T18:26:20.530282000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 13\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 10
@@ -303,11 +425,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323781000Z",
+      "time": "2026-08-13T18:26:20.530289000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 11
@@ -324,11 +450,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323788000Z",
+      "time": "2026-08-13T18:26:20.530295000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 12
@@ -345,11 +475,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323792000Z",
+      "time": "2026-08-13T18:26:20.530301000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 10\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 13
@@ -366,11 +500,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323796000Z",
+      "time": "2026-08-13T18:26:20.530307000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 14
@@ -387,11 +525,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323801000Z",
+      "time": "2026-08-13T18:26:20.530313000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 15
@@ -408,11 +550,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323805000Z",
+      "time": "2026-08-13T18:26:20.530319000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 16
@@ -429,11 +575,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323809000Z",
+      "time": "2026-08-13T18:26:20.530325000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 17
@@ -450,11 +600,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323813000Z",
+      "time": "2026-08-13T18:26:20.530335000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 9\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 18
@@ -471,11 +625,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323817000Z",
+      "time": "2026-08-13T18:26:20.530343000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 18\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 19
@@ -492,11 +650,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323823000Z",
+      "time": "2026-08-13T18:26:20.530352000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 20
@@ -513,11 +675,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323827000Z",
+      "time": "2026-08-13T18:26:20.530358000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 21
@@ -534,11 +700,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323831000Z",
+      "time": "2026-08-13T18:26:20.530367000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 5\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 22
@@ -555,11 +725,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323835000Z",
+      "time": "2026-08-13T18:26:20.530374000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 11\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 23
@@ -576,11 +750,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323839000Z",
+      "time": "2026-08-13T18:26:20.530384000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 15\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 24
@@ -597,11 +775,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323844000Z",
+      "time": "2026-08-13T18:26:20.530393000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 25
@@ -618,11 +800,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323848000Z",
+      "time": "2026-08-13T18:26:20.530400000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 12\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 26
@@ -639,11 +825,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323852000Z",
+      "time": "2026-08-13T18:26:20.530406000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 16\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 27
@@ -660,11 +850,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323856000Z",
+      "time": "2026-08-13T18:26:20.530413000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 28
@@ -681,11 +875,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323860000Z",
+      "time": "2026-08-13T18:26:20.530420000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 29
@@ -702,11 +900,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323864000Z",
+      "time": "2026-08-13T18:26:20.530426000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 14\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 30
@@ -723,11 +925,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323869000Z",
+      "time": "2026-08-13T18:26:20.530432000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 27\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 31
@@ -744,11 +950,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323873000Z",
+      "time": "2026-08-13T18:26:20.530438000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 32
@@ -765,11 +975,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323877000Z",
+      "time": "2026-08-13T18:26:20.530443000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 33
@@ -786,11 +1000,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323881000Z",
+      "time": "2026-08-13T18:26:20.530449000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 34
@@ -807,11 +1025,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323885000Z",
+      "time": "2026-08-13T18:26:20.530454000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 19\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 35
@@ -828,11 +1050,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323889000Z",
+      "time": "2026-08-13T18:26:20.530460000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 36
@@ -849,11 +1075,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323894000Z",
+      "time": "2026-08-13T18:26:20.530466000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 37
@@ -870,11 +1100,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323898000Z",
+      "time": "2026-08-13T18:26:20.530471000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 38
@@ -891,11 +1125,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323902000Z",
+      "time": "2026-08-13T18:26:20.530477000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 20\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 39
@@ -912,11 +1150,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323906000Z",
+      "time": "2026-08-13T18:26:20.530482000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 26\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 40
@@ -933,11 +1175,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323911000Z",
+      "time": "2026-08-13T18:26:20.530488000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 41
@@ -954,11 +1200,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323915000Z",
+      "time": "2026-08-13T18:26:20.530493000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 42
@@ -975,11 +1225,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323919000Z",
+      "time": "2026-08-13T18:26:20.530499000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 17\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 43
@@ -996,11 +1250,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323923000Z",
+      "time": "2026-08-13T18:26:20.530504000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 44
@@ -1017,11 +1275,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323927000Z",
+      "time": "2026-08-13T18:26:20.530510000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 45
@@ -1038,11 +1300,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323932000Z",
+      "time": "2026-08-13T18:26:20.530516000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 46
@@ -1059,11 +1325,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323936000Z",
+      "time": "2026-08-13T18:26:20.530522000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 47
@@ -1080,11 +1350,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323940000Z",
+      "time": "2026-08-13T18:26:20.530528000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 48
@@ -1101,11 +1375,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323945000Z",
+      "time": "2026-08-13T18:26:20.530533000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 25\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 49
@@ -1122,11 +1400,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323949000Z",
+      "time": "2026-08-13T18:26:20.530539000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 29\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 50
@@ -1143,11 +1425,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323953000Z",
+      "time": "2026-08-13T18:26:20.530544000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 51
@@ -1164,11 +1450,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323957000Z",
+      "time": "2026-08-13T18:26:20.530550000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 21\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 52
@@ -1185,11 +1475,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323962000Z",
+      "time": "2026-08-13T18:26:20.530556000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 22\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 53
@@ -1206,11 +1500,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323966000Z",
+      "time": "2026-08-13T18:26:20.530562000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 54
@@ -1227,11 +1525,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323970000Z",
+      "time": "2026-08-13T18:26:20.530568000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 55
@@ -1248,11 +1550,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323974000Z",
+      "time": "2026-08-13T18:26:20.530574000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 6\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 56
@@ -1269,11 +1575,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323979000Z",
+      "time": "2026-08-13T18:26:20.530580000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 57
@@ -1290,11 +1600,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323983000Z",
+      "time": "2026-08-13T18:26:20.530588000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 58
@@ -1311,11 +1625,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323987000Z",
+      "time": "2026-08-13T18:26:20.530594000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 59
@@ -1332,11 +1650,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323992000Z",
+      "time": "2026-08-13T18:26:20.530600000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 60
@@ -1353,11 +1675,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.323996000Z",
+      "time": "2026-08-13T18:26:20.530606000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 28\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 61
@@ -1374,11 +1700,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.324000000Z",
+      "time": "2026-08-13T18:26:20.530611000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 62
@@ -1395,11 +1725,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.324005000Z",
+      "time": "2026-08-13T18:26:20.530617000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 23\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 63
@@ -1416,11 +1750,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.324009000Z",
+      "time": "2026-08-13T18:26:20.530623000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 64
@@ -1437,11 +1775,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.324013000Z",
+      "time": "2026-08-13T18:26:20.530628000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 65
@@ -1458,11 +1800,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.324018000Z",
+      "time": "2026-08-13T18:26:20.530635000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 24\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 66
@@ -1479,11 +1825,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.324022000Z",
+      "time": "2026-08-13T18:26:20.530641000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 31\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 67
@@ -1500,11 +1850,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.324026000Z",
+      "time": "2026-08-13T18:26:20.530647000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 68
@@ -1521,11 +1875,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.324030000Z",
+      "time": "2026-08-13T18:26:20.530653000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 69
@@ -1542,11 +1900,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.324035000Z",
+      "time": "2026-08-13T18:26:20.530658000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 70
@@ -1563,11 +1925,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.324040000Z",
+      "time": "2026-08-13T18:26:20.530664000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 30\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 71
@@ -1584,11 +1950,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.324045000Z",
+      "time": "2026-08-13T18:26:20.530669000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 72
@@ -1605,11 +1975,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.324049000Z",
+      "time": "2026-08-13T18:26:20.530675000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : None\nMode : None\nAction type TIME_PR\nTime progress True\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 73
@@ -1626,11 +2000,15 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.324053000Z",
+      "time": "2026-08-13T18:26:20.530680000Z",
       "type": "act"
     },
     {
       "attributes": [
+        {
+          "name": "action_id",
+          "value": "Action \nTask : 32\nMode : 1\nAction type START\nTime progress False\nResource : None"
+        },
         {
           "name": "step_index",
           "value": 74
@@ -1647,7 +2025,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.324058000Z",
+      "time": "2026-08-13T18:26:20.530686000Z",
       "type": "act"
     },
     {
@@ -1663,6 +2041,10 @@
         {
           "name": "verify_mode",
           "value": "independent-resolve"
+        },
+        {
+          "name": "winning_strategy",
+          "value": "do-solver-cpsat"
         }
       ],
       "id": "ev:verify",
@@ -1676,7 +2058,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.346446000Z",
+      "time": "2026-08-13T18:26:22.552455000Z",
       "type": "verify"
     },
     {
@@ -1697,7 +2079,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:48.346471000Z",
+      "time": "2026-08-13T18:26:22.552574000Z",
       "type": "teardown"
     }
   ],

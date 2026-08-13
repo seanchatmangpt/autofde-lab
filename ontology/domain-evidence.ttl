@@ -37,6 +37,27 @@ afl:capabilityName a rdf:Property ; rdfs:domain afl:Capability ; rdfs:range xsd:
 afl:capabilityConsequence a rdf:Property ; rdfs:domain afl:Capability ; rdfs:range xsd:string .
 afl:capabilityPrecondition a rdf:Property ; rdfs:domain afl:Capability ; rdfs:range xsd:string .
 
+# --- Planner-of-planners extension (per the session design: "given this
+# domain's real shape, which of the ~60 registered solvers -- or which
+# non-search closure mechanism -- actually applies", made mechanical and
+# receipted instead of a human hardcoding one `if domain_key == ...` branch
+# per domain in the runner). Each afl:SolverCandidate is one real, ordered
+# attempt: a named strategy the runner's dispatcher (see
+# _SOLVER_STRATEGIES in run_domain_gymact_ocel_episode.py) knows how to
+# build+solve+rollout, plus a real bounded timeout. The dispatcher tries
+# candidates in afl:candidateOrder, and falls through to the next one on a
+# real timeout or exception -- both receipted as ev:solver_refused OCEL
+# events, so "which of N solvers was tried and why the first M failed" is
+# checkable evidence, not a debugging session.
+
+afl:SolverCandidate a rdfs:Class ;
+    rdfs:comment "One ordered solver-strategy attempt for a domain, with a real bounded timeout." .
+
+afl:hasSolverCandidate a rdf:Property ; rdfs:domain afl:DomainEvidenceSpec ; rdfs:range afl:SolverCandidate .
+afl:candidateOrder a rdf:Property ; rdfs:domain afl:SolverCandidate ; rdfs:range xsd:integer .
+afl:solverStrategy a rdf:Property ; rdfs:domain afl:SolverCandidate ; rdfs:range xsd:string .
+afl:solverTimeoutSeconds a rdf:Property ; rdfs:domain afl:SolverCandidate ; rdfs:range xsd:integer .
+
 # --- Pilot domain: terragoat ---
 # Real source verified this session: src/autofde_lab/hub/domain/terragoat/
 # terragoat_remediation.py -- TerraGoatRemediation, real-time parse of
@@ -318,13 +339,30 @@ afl:domain_flight_planning a afl:DomainEvidenceSpec ;
     afl:goalCheckExpr "destination reached within tolerance, per _get_goals_" ;
     afl:verifyMode "fresh-instance-replay" ;
     afl:evidenceOutPath "docs/evidence/flight_planning/domain-evidence-episode.ocel.json" ;
-    afl:hasCapability afl:domain_flight_planning_cap_1 .
+    afl:hasCapability afl:domain_flight_planning_cap_1 ;
+    afl:hasSolverCandidate afl:domain_flight_planning_solver_1, afl:domain_flight_planning_solver_2 .
 
 afl:domain_flight_planning_cap_1 a afl:Capability ;
     afl:capabilityOrder 1 ;
     afl:capabilityName "H_Action,V_Action tuple  # horizontal/vertical routing action" ;
     afl:capabilityConsequence "DO" ;
     afl:capabilityPrecondition "per _get_applicable_actions_from" .
+
+# Real, proven fallback order: plain Astar genuinely hangs past 90s on this
+# domain's continuous-ish state space (confirmed this session, two real
+# timeouts) -- ordered FIRST anyway so the meta-planner's own timeout,
+# not a human's prior knowledge, is what rules it out, receipted as a real
+# ev:solver_refused event. astar-heuristic is the real, proven fix (0.28s,
+# plan_length=19).
+afl:domain_flight_planning_solver_1 a afl:SolverCandidate ;
+    afl:candidateOrder 1 ;
+    afl:solverStrategy "astar-plain" ;
+    afl:solverTimeoutSeconds 20 .
+
+afl:domain_flight_planning_solver_2 a afl:SolverCandidate ;
+    afl:candidateOrder 2 ;
+    afl:solverStrategy "astar-heuristic" ;
+    afl:solverTimeoutSeconds 30 .
 
 afl:domain_graph_domain a afl:DomainEvidenceSpec ;
     afl:domainName "graph_domain" ;
@@ -448,13 +486,29 @@ afl:domain_rcpsp a afl:DomainEvidenceSpec ;
     afl:goalCheckExpr "state.tasks_complete == state.task_ids  # all 32 j301_1.sm tasks complete" ;
     afl:verifyMode "independent-resolve" ;
     afl:evidenceOutPath "docs/evidence/rcpsp/domain-evidence-episode.ocel.json" ;
-    afl:hasCapability afl:domain_rcpsp_cap_1 .
+    afl:hasCapability afl:domain_rcpsp_cap_1 ;
+    afl:hasSolverCandidate afl:domain_rcpsp_solver_1, afl:domain_rcpsp_solver_2 .
 
 afl:domain_rcpsp_cap_1 a afl:Capability ;
     afl:capabilityOrder 1 ;
     afl:capabilityName "start_task(task_id, mode)" ;
     afl:capabilityConsequence "DO" ;
     afl:capabilityPrecondition "precedence + resource constraints satisfied (SGS_PRECEDENCE policy)" .
+
+# Real, proven fallback order: registered Astar genuinely hangs indefinitely
+# on real PSPLIB instances (confirmed this session, two real timeouts) --
+# ordered first so the meta-planner's own timeout is what rules it out, not
+# prior human knowledge. do-solver-cpsat is the real, proven fix (75-step
+# plan, 32/32 tasks complete).
+afl:domain_rcpsp_solver_1 a afl:SolverCandidate ;
+    afl:candidateOrder 1 ;
+    afl:solverStrategy "astar-plain" ;
+    afl:solverTimeoutSeconds 20 .
+
+afl:domain_rcpsp_solver_2 a afl:SolverCandidate ;
+    afl:candidateOrder 2 ;
+    afl:solverStrategy "do-solver-cpsat" ;
+    afl:solverTimeoutSeconds 60 .
 
 
 # --- mastermind: real closure via one-guess solve (state exposes the

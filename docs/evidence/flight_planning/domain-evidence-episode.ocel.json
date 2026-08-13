@@ -3,15 +3,44 @@
     {
       "attributes": [
         {
+          "name": "candidate_order",
+          "type": "integer"
+        },
+        {
+          "name": "elapsed_seconds",
+          "type": "float"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        },
+        {
+          "name": "strategy",
+          "type": "string"
+        }
+      ],
+      "name": "solver_refused"
+    },
+    {
+      "attributes": [
+        {
+          "name": "candidate_order",
+          "type": "integer"
+        },
+        {
+          "name": "elapsed_seconds",
+          "type": "float"
+        },
+        {
           "name": "plan_length",
           "type": "integer"
         },
         {
-          "name": "standing",
+          "name": "strategy",
           "type": "string"
         }
       ],
-      "name": "materialize"
+      "name": "solver_selected"
     },
     {
       "attributes": [
@@ -39,6 +68,10 @@
         {
           "name": "verify_mode",
           "type": "string"
+        },
+        {
+          "name": "winning_strategy",
+          "type": "string"
         }
       ],
       "name": "verify"
@@ -57,15 +90,23 @@
     {
       "attributes": [
         {
-          "name": "standing",
-          "value": "ALIVE"
+          "name": "strategy",
+          "value": "astar-plain"
         },
         {
-          "name": "plan_length",
-          "value": 19
+          "name": "candidate_order",
+          "value": 1
+        },
+        {
+          "name": "elapsed_seconds",
+          "value": 20.01661205291748
+        },
+        {
+          "name": "reason",
+          "value": "timeout"
         }
       ],
-      "id": "ev:materialize",
+      "id": "ev:solver_refused:1",
       "relationships": [
         {
           "objectId": "episode:flight_planning",
@@ -76,8 +117,41 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:42.424416000Z",
-      "type": "materialize"
+      "time": "2026-08-13T18:26:49.654287000Z",
+      "type": "solver_refused"
+    },
+    {
+      "attributes": [
+        {
+          "name": "strategy",
+          "value": "astar-heuristic"
+        },
+        {
+          "name": "candidate_order",
+          "value": 2
+        },
+        {
+          "name": "elapsed_seconds",
+          "value": 2.297111988067627
+        },
+        {
+          "name": "plan_length",
+          "value": 19
+        }
+      ],
+      "id": "ev:solver_selected:2",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:26:51.951628000Z",
+      "type": "solver_selected"
     },
     {
       "attributes": [
@@ -101,7 +175,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031107000Z",
+      "time": "2026-08-13T18:26:51.951918000Z",
       "type": "act"
     },
     {
@@ -126,7 +200,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031127000Z",
+      "time": "2026-08-13T18:26:51.951960000Z",
       "type": "act"
     },
     {
@@ -151,7 +225,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031138000Z",
+      "time": "2026-08-13T18:26:51.951971000Z",
       "type": "act"
     },
     {
@@ -176,7 +250,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031146000Z",
+      "time": "2026-08-13T18:26:51.951978000Z",
       "type": "act"
     },
     {
@@ -201,7 +275,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031152000Z",
+      "time": "2026-08-13T18:26:51.951987000Z",
       "type": "act"
     },
     {
@@ -226,7 +300,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031159000Z",
+      "time": "2026-08-13T18:26:51.951996000Z",
       "type": "act"
     },
     {
@@ -251,7 +325,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031165000Z",
+      "time": "2026-08-13T18:26:51.952004000Z",
       "type": "act"
     },
     {
@@ -276,7 +350,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031170000Z",
+      "time": "2026-08-13T18:26:51.952010000Z",
       "type": "act"
     },
     {
@@ -301,7 +375,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031176000Z",
+      "time": "2026-08-13T18:26:51.952017000Z",
       "type": "act"
     },
     {
@@ -326,7 +400,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031182000Z",
+      "time": "2026-08-13T18:26:51.952027000Z",
       "type": "act"
     },
     {
@@ -351,7 +425,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031187000Z",
+      "time": "2026-08-13T18:26:51.952033000Z",
       "type": "act"
     },
     {
@@ -376,7 +450,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031193000Z",
+      "time": "2026-08-13T18:26:51.952042000Z",
       "type": "act"
     },
     {
@@ -401,7 +475,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031199000Z",
+      "time": "2026-08-13T18:26:51.952048000Z",
       "type": "act"
     },
     {
@@ -426,7 +500,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031205000Z",
+      "time": "2026-08-13T18:26:51.952054000Z",
       "type": "act"
     },
     {
@@ -451,7 +525,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031211000Z",
+      "time": "2026-08-13T18:26:51.952060000Z",
       "type": "act"
     },
     {
@@ -476,7 +550,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031217000Z",
+      "time": "2026-08-13T18:26:51.952066000Z",
       "type": "act"
     },
     {
@@ -501,7 +575,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031222000Z",
+      "time": "2026-08-13T18:26:51.952072000Z",
       "type": "act"
     },
     {
@@ -526,7 +600,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031228000Z",
+      "time": "2026-08-13T18:26:51.952082000Z",
       "type": "act"
     },
     {
@@ -551,7 +625,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.031234000Z",
+      "time": "2026-08-13T18:26:51.952090000Z",
       "type": "act"
     },
     {
@@ -567,6 +641,10 @@
         {
           "name": "verify_mode",
           "value": "fresh-instance-replay"
+        },
+        {
+          "name": "winning_strategy",
+          "value": "astar-heuristic"
         }
       ],
       "id": "ev:verify",
@@ -580,7 +658,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.336465000Z",
+      "time": "2026-08-13T18:26:54.184501000Z",
       "type": "verify"
     },
     {
@@ -601,7 +679,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:43.336488000Z",
+      "time": "2026-08-13T18:26:54.184673000Z",
       "type": "teardown"
     }
   ],

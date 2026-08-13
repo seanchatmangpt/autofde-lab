@@ -29,6 +29,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import functools
 import importlib
 import subprocess
 import sys
@@ -497,102 +498,6 @@ def _run_trajectory_replay(domain_key: str, spec, factory: Callable[[], object])
         raise SystemExit(1)
 
 
-def _run_rcpsp_episode(spec) -> None:
-    """Real closure for rcpsp: NOT the registered Astar solver (confirmed
-    this session to hang indefinitely on real PSPLIB instances) -- uses the
-    repo's own real DOSolver wrapping discrete_optimization's
-    CpSatRcpspSolver (OR-Tools CP-SAT, no external MiniZinc binary, unlike
-    CpRcpspSolver which hit a real MiniZinc data-typing bug this session).
-    Proven this session: 32/32 tasks complete, goal reached, 75-step
-    rollout on j301_1.sm."""
-    from examples.scheduling.rcpsp_datasets import get_complete_path
-
-    from autofde_lab import rollout as do_rollout
-    from autofde_lab.hub.domain.rcpsp.rcpsp_sk_parser import load_domain
-    from autofde_lab.hub.solver.do_solver.do_solver_scheduling import DOSolver
-    from autofde_lab.hub.solver.do_solver.sgs_policies import BasePolicyMethod, PolicyMethodParams
-    from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
-
-    log = OcelLog.new()
-    episode_obj = "episode:rcpsp"
-    domain_obj = "domain:rcpsp"
-    log = log.with_objects(
-        OcelObject(episode_obj, "episode"),
-        OcelObject(domain_obj, "domain", (OcelAttribute("domain_class", OcelAttributeValue.string(spec.domain_class_name)),)),
-    )
-
-    t0 = time.time_ns()
-    domain = load_domain(get_complete_path("j301_1.sm"))
-    domain.set_inplace_environment(False)
-    initial_state = domain.get_initial_state()
-    solver = DOSolver(
-        domain_factory=lambda: domain,
-        policy_method_params=PolicyMethodParams(
-            base_policy_method=BasePolicyMethod.SGS_PRECEDENCE, delta_index_freedom=0, delta_time_freedom=0
-        ),
-        do_solver_type=CpSatRcpspSolver,
-    )
-    solver.solve()
-    states, actions, _values = do_rollout(
-        domain=domain, solver=solver, from_memory=initial_state, max_steps=500, return_episodes=True
-    )[0]
-    materialized_goal_reached = domain.is_goal(states[-1])
-    log = log.append_event(
-        "ev:materialize", "materialize", [episode_obj, domain_obj],
-        timestamp_ns=t0, attributes=_attr(standing="ALIVE" if materialized_goal_reached else "PARTIAL_ALIVE", plan_length=len(actions)),
-    )
-    for i, a in enumerate(actions):
-        log = log.append_event(
-            f"ev:act:{i}", "act", [episode_obj, domain_obj],
-            timestamp_ns=time.time_ns(), attributes=_attr(step_index=i),
-        )
-
-    # verify -- fresh second instance + fresh second solve, independent of
-    # the acting instance, confirming the same instance data is solvable to
-    # goal (a full independent re-solve, stronger than a bare replay since
-    # CP-SAT's search is itself independently re-run, not just the
-    # deterministic transition function).
-    fresh_domain = load_domain(get_complete_path("j301_1.sm"))
-    fresh_domain.set_inplace_environment(False)
-    fresh_state = fresh_domain.get_initial_state()
-    fresh_solver = DOSolver(
-        domain_factory=lambda: fresh_domain,
-        policy_method_params=PolicyMethodParams(
-            base_policy_method=BasePolicyMethod.SGS_PRECEDENCE, delta_index_freedom=0, delta_time_freedom=0
-        ),
-        do_solver_type=CpSatRcpspSolver,
-    )
-    fresh_solver.solve()
-    fresh_states, _fresh_actions, _fresh_values = do_rollout(
-        domain=fresh_domain, solver=fresh_solver, from_memory=fresh_state, max_steps=500, return_episodes=True
-    )[0]
-    verify_passed = fresh_domain.is_goal(fresh_states[-1])
-    goal_reached = materialized_goal_reached
-
-    log = log.append_event(
-        "ev:verify", "verify", [episode_obj, domain_obj],
-        timestamp_ns=time.time_ns(),
-        attributes=_attr(standing="ALIVE" if verify_passed else "REFUSED", goal_reached=goal_reached, verify_mode=spec.verify_mode),
-    )
-    log = log.append_event(
-        "ev:teardown", "teardown", [episode_obj, domain_obj],
-        timestamp_ns=time.time_ns(), attributes=_attr(standing="ALIVE"),
-    )
-
-    validated = log.validate()
-    document = validated.to_ocel2_json()
-    out_path = REPO_ROOT / spec.evidence_out_path
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    import json
-    out_path.write_text(json.dumps(document, indent=2, sort_keys=True))
-
-    print(f"domain_evidence[rcpsp]: plan_length={len(actions)} goal_reached={goal_reached} verify_passed={verify_passed}")
-    print(f"domain_evidence[rcpsp]: wrote {len(validated.events)} events to {out_path}")
-
-    if not (goal_reached and verify_passed):
-        raise SystemExit(1)
-
-
 def _run_mastermind_episode(spec) -> None:
     """Real closure for mastermind: a GoalPOMDPDomain (stochastic initial
     state distribution over the hidden solution), not a Astar-solvable
@@ -671,6 +576,200 @@ def _run_mastermind_episode(spec) -> None:
         raise SystemExit(1)
 
 
+# ---------------------------------------------------------------------------
+# Planner of planners: real, receipted solver-portfolio dispatch.
+#
+# Each strategy below is a self-contained, MODULE-LEVEL function (required:
+# `try_solver` runs candidates in a spawned subprocess -- multiprocessing's
+# `spawn` context can only pickle-and-reconstruct a function by its
+# importable qualified name, never a lambda/closure, confirmed this session
+# by a real AttributeError when a lambda was tried). Each strategy rebuilds
+# everything itself (domain, solver) inside the child process -- nothing is
+# shared with the parent, matching the real proof scripts this session
+# already ran standalone.
+# ---------------------------------------------------------------------------
+
+
+def _build_rcpsp_for_astar() -> object:
+    from examples.scheduling.rcpsp_datasets import get_complete_path
+
+    from autofde_lab.hub.domain.rcpsp.rcpsp_sk_parser import load_domain
+
+    domain = load_domain(get_complete_path("j301_1.sm"))
+    domain.set_inplace_environment(False)
+    return domain
+
+
+def _strategy_astar_plain(domain_key: str) -> dict:
+    factory = _DOMAIN_FACTORIES.get(domain_key, _build_rcpsp_for_astar if domain_key == "rcpsp" else None)
+    if factory is None:
+        raise ValueError(f"no known construction for {domain_key!r} under astar-plain")
+    domain = factory()
+    astar_cls = utils.load_registered_solver("Astar")
+    plan: list = []
+    with astar_cls(domain_factory=lambda: domain) as solver:
+        solver.solve()
+        state = domain.get_initial_state()
+        for _ in range(200):
+            if domain.is_goal(state):
+                break
+            action = solver.sample_action(state)
+            plan.append(action)
+            state = domain.get_next_state(state, action)
+    return {"plan": plan, "goal_reached": domain.is_goal(state)}
+
+
+def _strategy_astar_heuristic(domain_key: str) -> dict:
+    factory = _DOMAIN_FACTORIES[domain_key]
+    domain = factory()
+    astar_cls = utils.load_registered_solver("Astar")
+    plan: list = []
+    with astar_cls(domain_factory=lambda: domain, heuristic=lambda d, s: d.heuristic(s)) as solver:
+        solver.solve()
+        state = domain.get_initial_state()
+        for _ in range(200):
+            if domain.is_goal(state):
+                break
+            action = solver.sample_action(state)
+            plan.append(action)
+            state = domain.get_next_state(state, action)
+    return {"plan": plan, "goal_reached": domain.is_goal(state)}
+
+
+def _strategy_do_solver_cpsat(domain_key: str) -> dict:
+    del domain_key  # only rcpsp uses this strategy today
+    from examples.scheduling.rcpsp_datasets import get_complete_path
+
+    from autofde_lab import rollout as do_rollout
+    from autofde_lab.hub.domain.rcpsp.rcpsp_sk_parser import load_domain
+    from autofde_lab.hub.solver.do_solver.do_solver_scheduling import DOSolver
+    from autofde_lab.hub.solver.do_solver.sgs_policies import BasePolicyMethod, PolicyMethodParams
+    from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
+
+    domain = load_domain(get_complete_path("j301_1.sm"))
+    domain.set_inplace_environment(False)
+    initial_state = domain.get_initial_state()
+    solver = DOSolver(
+        domain_factory=lambda: domain,
+        policy_method_params=PolicyMethodParams(
+            base_policy_method=BasePolicyMethod.SGS_PRECEDENCE, delta_index_freedom=0, delta_time_freedom=0
+        ),
+        do_solver_type=CpSatRcpspSolver,
+    )
+    solver.solve()
+    states, actions, _values = do_rollout(
+        domain=domain, solver=solver, from_memory=initial_state, max_steps=500, return_episodes=True
+    )[0]
+    return {"plan": list(actions), "goal_reached": domain.is_goal(states[-1])}
+
+
+_SOLVER_STRATEGIES: dict[str, Callable[[str], dict]] = {
+    "astar-plain": _strategy_astar_plain,
+    "astar-heuristic": _strategy_astar_heuristic,
+    "do-solver-cpsat": _strategy_do_solver_cpsat,
+}
+
+
+def _run_solver_portfolio_episode(domain_key: str, spec) -> None:
+    """Real planner-of-planners dispatch: try each `spec.solver_candidates`
+    in `order`, bounded by its own `timeout_seconds`, via `try_solver`
+    (separate process -- a hung C++ solve cannot be interrupted any other
+    way, confirmed this session). Every rejected candidate is a real,
+    receipted `ev:solver_refused` OCEL event -- "which of N solvers was
+    tried and why the first M failed" is checkable evidence, not a
+    debugging session."""
+    from autofde_lab.solver_control.try_solver import try_solver
+
+    log = OcelLog.new()
+    episode_obj = f"episode:{domain_key}"
+    domain_obj = f"domain:{domain_key}"
+    log = log.with_objects(
+        OcelObject(episode_obj, "episode"),
+        OcelObject(domain_obj, "domain", (OcelAttribute("domain_class", OcelAttributeValue.string(spec.domain_class_name)),)),
+    )
+
+    t0 = time.time_ns()
+    selected = None
+    outcome = None
+    for candidate in sorted(spec.solver_candidates, key=lambda c: c.order):
+        strategy_fn = _SOLVER_STRATEGIES[candidate.strategy]
+        print(f"domain_evidence[{domain_key}]: trying solver candidate order={candidate.order} strategy={candidate.strategy} timeout={candidate.timeout_seconds}s")
+        attempt_t0 = time.time()
+        result = try_solver(functools.partial(strategy_fn, domain_key), candidate.timeout_seconds)
+        elapsed = time.time() - attempt_t0
+        if result["status"] == "success" and result["result"].get("goal_reached"):
+            selected = candidate
+            outcome = result["result"]
+            log = log.append_event(
+                f"ev:solver_selected:{candidate.order}", "solver_selected", [episode_obj, domain_obj],
+                timestamp_ns=time.time_ns(),
+                attributes=_attr(strategy=candidate.strategy, candidate_order=candidate.order, elapsed_seconds=elapsed, plan_length=len(outcome["plan"])),
+            )
+            print(f"domain_evidence[{domain_key}]: solver candidate {candidate.strategy} succeeded in {elapsed:.2f}s")
+            break
+        else:
+            reason = result["status"] if result["status"] != "success" else "goal_not_reached"
+            log = log.append_event(
+                f"ev:solver_refused:{candidate.order}", "solver_refused", [episode_obj, domain_obj],
+                timestamp_ns=time.time_ns(),
+                attributes=_attr(strategy=candidate.strategy, candidate_order=candidate.order, elapsed_seconds=elapsed, reason=reason),
+            )
+            print(f"domain_evidence[{domain_key}]: solver candidate {candidate.strategy} refused ({reason}) after {elapsed:.2f}s")
+
+    if selected is None:
+        log = log.append_event(
+            "ev:materialize", "materialize", [episode_obj, domain_obj],
+            timestamp_ns=t0, attributes=_attr(standing="BLOCKED", plan_length=0),
+        )
+        log = log.append_event(
+            "ev:teardown", "teardown", [episode_obj, domain_obj], timestamp_ns=time.time_ns(), attributes=_attr(standing="ALIVE"),
+        )
+        validated = log.validate()
+        out_path = REPO_ROOT / spec.evidence_out_path
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        import json
+        out_path.write_text(json.dumps(validated.to_ocel2_json(), indent=2, sort_keys=True))
+        print(f"domain_evidence[{domain_key}]: ALL solver candidates refused -- no solution found")
+        raise SystemExit(1)
+
+    plan = outcome["plan"]
+    for i, action_id in enumerate(plan):
+        log = log.append_event(
+            f"ev:act:{i}", "act", [episode_obj, domain_obj],
+            timestamp_ns=time.time_ns(), attributes=_attr(action_id=str(action_id), step_index=i),
+        )
+
+    # verify -- independent re-attempt of the SAME winning strategy in a
+    # fresh subprocess, confirming the win reproduces (matches the
+    # independent-resolve pattern already proven for rcpsp/mastermind this
+    # session -- a fresh solve, not merely a replay).
+    verify_result = try_solver(functools.partial(_SOLVER_STRATEGIES[selected.strategy], domain_key), selected.timeout_seconds)
+    verify_passed = verify_result["status"] == "success" and verify_result["result"].get("goal_reached", False)
+
+    log = log.append_event(
+        "ev:verify", "verify", [episode_obj, domain_obj],
+        timestamp_ns=time.time_ns(),
+        attributes=_attr(standing="ALIVE" if verify_passed else "REFUSED", goal_reached=outcome["goal_reached"], verify_mode=spec.verify_mode, winning_strategy=selected.strategy),
+    )
+    log = log.append_event(
+        "ev:teardown", "teardown", [episode_obj, domain_obj],
+        timestamp_ns=time.time_ns(), attributes=_attr(standing="ALIVE"),
+    )
+
+    validated = log.validate()
+    document = validated.to_ocel2_json()
+    out_path = REPO_ROOT / spec.evidence_out_path
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    import json
+    out_path.write_text(json.dumps(document, indent=2, sort_keys=True))
+
+    print(f"domain_evidence[{domain_key}]: winning_strategy={selected.strategy} plan_length={len(plan)} goal_reached={outcome['goal_reached']} verify_passed={verify_passed}")
+    print(f"domain_evidence[{domain_key}]: wrote {len(validated.events)} events to {out_path}")
+
+    if not (outcome["goal_reached"] and verify_passed):
+        raise SystemExit(1)
+
+
 def run(domain_key: str) -> None:
     spec = DOMAIN_EVIDENCE_REGISTRY.get(domain_key)
     if spec is None:
@@ -685,8 +784,8 @@ def run(domain_key: str) -> None:
         _run_trajectory_replay(domain_key, spec, factory)
         return
 
-    if domain_key == "rcpsp":
-        _run_rcpsp_episode(spec)
+    if spec.solver_candidates:
+        _run_solver_portfolio_episode(domain_key, spec)
         return
 
     if domain_key == "mastermind":
@@ -701,24 +800,16 @@ def run(domain_key: str) -> None:
         OcelObject(domain_obj, "domain", (OcelAttribute("domain_class", OcelAttributeValue.string(spec.domain_class_name)),)),
     )
 
-    # materialize -- a real domain instance, real Astar solve. A few real
-    # domains need an explicit admissible heuristic to solve in reasonable
-    # time -- flight_planning's continuous-ish state space genuinely hangs
-    # under plain Astar (confirmed this session: no heuristic never
-    # returned past 180s; with domain.heuristic(), the same repo test uses
-    # it and solves in 0.28s/19 steps) -- a named, documented exception,
-    # not silently applied everywhere.
-    _ASTAR_HEURISTICS: dict[str, Callable] = {
-        "flight_planning": lambda d, s: d.heuristic(s),
-    }
+    # materialize -- a real domain instance, real Astar solve. (Domains
+    # needing an explicit heuristic or an alternate solver entirely --
+    # flight_planning, rcpsp -- are routed through
+    # `_run_solver_portfolio_episode` above via `spec.solver_candidates`,
+    # not handled here anymore.)
     t0 = time.time_ns()
     domain = factory()
     astar_cls = utils.load_registered_solver("Astar")
     plan: list[str] = []
-    astar_kwargs = {}
-    if domain_key in _ASTAR_HEURISTICS:
-        astar_kwargs["heuristic"] = _ASTAR_HEURISTICS[domain_key]
-    with astar_cls(domain_factory=lambda: domain, **astar_kwargs) as solver:
+    with astar_cls(domain_factory=lambda: domain) as solver:
         solver.solve()
         state = domain.get_initial_state()
         max_steps = 200
