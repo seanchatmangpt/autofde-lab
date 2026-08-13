@@ -7,10 +7,10 @@ the payoff hypergraph when an external GymAct execution receipt is supplied.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from enum import Enum
 import hashlib
 import json
+from dataclasses import dataclass, field
+from enum import Enum
 from math import fsum
 from typing import Any, Iterable, Mapping, Sequence
 
@@ -188,17 +188,23 @@ class PlannerLeague:
     ) -> CompatibilityResult:
         if planner_id in NOVELTY_ORACLES:
             return CompatibilityResult(
-                planner_id, role_id, CompatibilityStanding.REFUSED,
+                planner_id,
+                role_id,
+                CompatibilityStanding.REFUSED,
                 "REFUSED:LLM_NOVELTY_BOUNDARY",
             )
         if planner_id not in self.planners:
             return CompatibilityResult(
-                planner_id, role_id, CompatibilityStanding.UNSUPPORTED,
+                planner_id,
+                role_id,
+                CompatibilityStanding.UNSUPPORTED,
                 "UNSUPPORTED:UNKNOWN_PLANNER",
             )
         if role_id not in ROLE_SPECS:
             return CompatibilityResult(
-                planner_id, role_id, CompatibilityStanding.REFUSED,
+                planner_id,
+                role_id,
+                CompatibilityStanding.REFUSED,
                 "REFUSED:UNKNOWN_ROLE",
             )
 
@@ -208,23 +214,31 @@ class PlannerLeague:
         solver_type = load_registered_solver(planner_id)
         if solver_type is None:
             return CompatibilityResult(
-                planner_id, role_id, CompatibilityStanding.UNSUPPORTED,
+                planner_id,
+                role_id,
+                CompatibilityStanding.UNSUPPORTED,
                 "UNSUPPORTED:PLANNER_LOAD_FAILED",
             )
         try:
             compatible = bool(solver_type.check_domain(domain))
         except Exception as exc:
             return CompatibilityResult(
-                planner_id, role_id, CompatibilityStanding.UNSUPPORTED,
+                planner_id,
+                role_id,
+                CompatibilityStanding.UNSUPPORTED,
                 f"UNSUPPORTED:DOMAIN_CHECK_FAILED:{type(exc).__name__}",
             )
         if not compatible:
             return CompatibilityResult(
-                planner_id, role_id, CompatibilityStanding.REFUSED,
+                planner_id,
+                role_id,
+                CompatibilityStanding.REFUSED,
                 "REFUSED:DOMAIN_CONTRACT_MISMATCH",
             )
         return CompatibilityResult(
-            planner_id, role_id, CompatibilityStanding.COMPATIBLE,
+            planner_id,
+            role_id,
+            CompatibilityStanding.COMPATIBLE,
             "COMPATIBLE:DOMAIN_CONTRACT",
         )
 
@@ -289,13 +303,15 @@ class PlannerLeague:
                         world_id=world_id,
                         left_role_id=left_role_id,
                         left_policy=PolicySpec.for_role(
-                            left_id, left_role_id,
+                            left_id,
+                            left_role_id,
                             observation_projection_id=observation_projection_id,
                             budget_id=budget_id,
                         ),
                         right_role_id=right_role_id,
                         right_policy=PolicySpec.for_role(
-                            right_id, right_role_id,
+                            right_id,
+                            right_role_id,
                             observation_projection_id=observation_projection_id,
                             budget_id=budget_id,
                         ),

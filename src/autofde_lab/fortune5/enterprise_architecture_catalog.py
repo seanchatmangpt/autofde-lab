@@ -5,8 +5,16 @@ from __future__ import annotations
 _ROWS = (
     ("principle", "EvidenceBoundedPrinciple", "EvidenceBounded"),
     ("principle", "NoSelfCertificationPrinciple", "NoSelfCertification"),
-    ("principle", "OrganizationalStandingExternalPrinciple", "OrganizationalStandingExternal"),
-    ("principle", "ReversibleBeforeIrreversiblePrinciple", "ReversibleBeforeIrreversible"),
+    (
+        "principle",
+        "OrganizationalStandingExternalPrinciple",
+        "OrganizationalStandingExternal",
+    ),
+    (
+        "principle",
+        "ReversibleBeforeIrreversiblePrinciple",
+        "ReversibleBeforeIrreversible",
+    ),
     ("principle", "ZeroUnreceiptedActuationPrinciple", "ZeroUnreceiptedActuation"),
     ("requirement_kind", "AuthorityPolicyRequirement", "AuthorityPolicy"),
     ("requirement_kind", "AvailabilitySLORequirement", "AvailabilitySLO"),
@@ -42,10 +50,26 @@ _ROWS = (
     ("viewpoint", "TechnologyViewpoint", "Technology"),
 )
 
-ENTERPRISE_VIEWPOINTS = {identifier: label for category, identifier, label in _ROWS if category == "viewpoint"}
-ENTERPRISE_REQUIREMENT_KINDS = {identifier: label for category, identifier, label in _ROWS if category == "requirement_kind"}
-ENTERPRISE_RISK_CLASSES = {identifier: label for category, identifier, label in _ROWS if category == "risk_class"}
-ENTERPRISE_ARCHITECTURE_PRINCIPLES = {identifier: label for category, identifier, label in _ROWS if category == "principle"}
+ENTERPRISE_VIEWPOINTS = {
+    identifier: label
+    for category, identifier, label in _ROWS
+    if category == "viewpoint"
+}
+ENTERPRISE_REQUIREMENT_KINDS = {
+    identifier: label
+    for category, identifier, label in _ROWS
+    if category == "requirement_kind"
+}
+ENTERPRISE_RISK_CLASSES = {
+    identifier: label
+    for category, identifier, label in _ROWS
+    if category == "risk_class"
+}
+ENTERPRISE_ARCHITECTURE_PRINCIPLES = {
+    identifier: label
+    for category, identifier, label in _ROWS
+    if category == "principle"
+}
 
 __all__ = [
     "ENTERPRISE_VIEWPOINTS",

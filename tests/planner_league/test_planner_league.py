@@ -6,12 +6,12 @@ from pathlib import Path
 import pytest
 
 from autofde_lab.planner_league import (
-    CompatibilityResult,
-    CompatibilityStanding,
-    LeagueMatch,
     NOVELTY_ORACLES,
     PLANNER_CAPABILITY_FIELDS,
     PRIMARY_PLANNERS,
+    CompatibilityResult,
+    CompatibilityStanding,
+    LeagueMatch,
     PayoffHypergraph,
     PayoffObservation,
     PlannerLeague,
@@ -124,36 +124,58 @@ def test_empirical_best_response_requires_complete_mixture_evidence() -> None:
                 right_role_id="red_disturbance",
                 right_policy=PolicySpec.for_role(opponent_id, "red_disturbance"),
             )
-            graph.add(PayoffObservation(match, score, -score, receipt_id=f"receipt-{planner_id}-{opponent_id}"))
+            graph.add(
+                PayoffObservation(
+                    match,
+                    score,
+                    -score,
+                    receipt_id=f"receipt-{planner_id}-{opponent_id}",
+                )
+            )
 
-    assert graph.empirical_best_response(
-        candidates=("Astar", "POMCP"),
-        opponent_mixture={"MCTS": 0.5, "UCT": 0.5},
-        role_id="blue_defender",
-        opponent_role_id="red_disturbance",
-        world_id="cyber_incident",
-    ) == "POMCP"
+    assert (
+        graph.empirical_best_response(
+            candidates=("Astar", "POMCP"),
+            opponent_mixture={"MCTS": 0.5, "UCT": 0.5},
+            role_id="blue_defender",
+            opponent_role_id="red_disturbance",
+            world_id="cyber_incident",
+        )
+        == "POMCP"
+    )
 
-    assert graph.empirical_best_response(
-        candidates=("Astar",),
-        opponent_mixture={"MCTS": 0.5, "DESPOT": 0.5},
-        role_id="blue_defender",
-        opponent_role_id="red_disturbance",
-        world_id="cyber_incident",
-    ) is None
+    assert (
+        graph.empirical_best_response(
+            candidates=("Astar",),
+            opponent_mixture={"MCTS": 0.5, "DESPOT": 0.5},
+            role_id="blue_defender",
+            opponent_role_id="red_disturbance",
+            world_id="cyber_incident",
+        )
+        is None
+    )
 
 
 def test_novelty_frontier_requires_refusal_not_unknown_edges() -> None:
     refused = (
-        CompatibilityResult("Astar", "blue_defender", CompatibilityStanding.REFUSED, "REFUSED:X"),
-        CompatibilityResult("MCTS", "blue_defender", CompatibilityStanding.REFUSED, "REFUSED:Y"),
+        CompatibilityResult(
+            "Astar", "blue_defender", CompatibilityStanding.REFUSED, "REFUSED:X"
+        ),
+        CompatibilityResult(
+            "MCTS", "blue_defender", CompatibilityStanding.REFUSED, "REFUSED:Y"
+        ),
     )
     request = PlannerLeague.novelty_frontier(refused)
     assert request is not None
     assert request.allowed_oracles == ("DSPyPolicy",)
 
     unsupported = refused + (
-        CompatibilityResult("POMCP", "blue_defender", CompatibilityStanding.UNSUPPORTED, "UNSUPPORTED:LOAD"),
+        CompatibilityResult(
+            "POMCP",
+            "blue_defender",
+            CompatibilityStanding.UNSUPPORTED,
+            "UNSUPPORTED:LOAD",
+        ),
     )
     assert PlannerLeague.novelty_frontier(unsupported) is None
 
@@ -166,7 +188,5 @@ def test_gymact_projection_keeps_authority_out_of_planner() -> None:
         "planner_has_authority": False,
         "payoff_requires_execution_receipt": True,
     }
-    planner_ids = {
-        row["id"] for row in payload["catalog"] if row["kind"] == "planner"
-    }
+    planner_ids = {row["id"] for row in payload["catalog"] if row["kind"] == "planner"}
     assert set(PRIMARY_PLANNERS) | set(NOVELTY_ORACLES) == planner_ids

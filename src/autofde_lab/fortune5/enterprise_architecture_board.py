@@ -59,7 +59,11 @@ class RequirementEvidence:
     rationale: str = ""
 
     def __post_init__(self) -> None:
-        if self.standing in (RequirementStanding.SATISFIED, RequirementStanding.VIOLATED) and not self.evidence_refs:
+        if (
+            self.standing
+            in (RequirementStanding.SATISFIED, RequirementStanding.VIOLATED)
+            and not self.evidence_refs
+        ):
             raise ValueError("REFUSED:UNRECEIPTED_REQUIREMENT_JUDGMENT")
 
 
@@ -147,7 +151,9 @@ class ExperimentEconomics:
 
     @property
     def priority_score(self) -> float:
-        numerator = self.expected_information_gain * self.reversibility * self.consequence_value
+        numerator = (
+            self.expected_information_gain * self.reversibility * self.consequence_value
+        )
         denominator = max(self.cost * self.execution_risk * self.time, 1e-12)
         return numerator / denominator
 
@@ -208,9 +214,15 @@ class EnterpriseArchitectureBoard:
 
         return PlannerRoute(
             role_id=role_id,
-            compatible_planners=tuple(r.planner_id for r in results if standing_value(r) == "COMPATIBLE"),
-            refused_planners=tuple(r.planner_id for r in results if standing_value(r) == "REFUSED"),
-            unsupported_planners=tuple(r.planner_id for r in results if standing_value(r) == "UNSUPPORTED"),
+            compatible_planners=tuple(
+                r.planner_id for r in results if standing_value(r) == "COMPATIBLE"
+            ),
+            refused_planners=tuple(
+                r.planner_id for r in results if standing_value(r) == "REFUSED"
+            ),
+            unsupported_planners=tuple(
+                r.planner_id for r in results if standing_value(r) == "UNSUPPORTED"
+            ),
             novelty_request=PlannerLeague.novelty_frontier(results),
         )
 
@@ -263,8 +275,12 @@ class EnterpriseArchitectureBoard:
         )
 
     @staticmethod
-    def prioritize_experiments(items: Iterable[ExperimentEconomics]) -> tuple[ExperimentEconomics, ...]:
-        return tuple(sorted(items, key=lambda item: (-item.priority_score, item.intent_id)))
+    def prioritize_experiments(
+        items: Iterable[ExperimentEconomics],
+    ) -> tuple[ExperimentEconomics, ...]:
+        return tuple(
+            sorted(items, key=lambda item: (-item.priority_score, item.intent_id))
+        )
 
     def admit_for_manufacture(
         self,
@@ -290,7 +306,8 @@ class EnterpriseArchitectureBoard:
         for requirement in mandatory_requirements:
             if not requirement.source_evidence_refs:
                 return ArchitectureAdmissionDecision(
-                    candidate_id, ArchitectureAdmissionStanding.UNKNOWN,
+                    candidate_id,
+                    ArchitectureAdmissionStanding.UNKNOWN,
                     f"UNKNOWN:UNGROUNDED_MANDATORY_REQUIREMENT:{requirement.requirement_id}",
                 )
         result_by_id = {r.requirement_id: r for r in assessment.requirement_results}
@@ -298,70 +315,90 @@ class EnterpriseArchitectureBoard:
             result = result_by_id.get(requirement_id)
             if result is None or result.standing is RequirementStanding.UNKNOWN:
                 return ArchitectureAdmissionDecision(
-                    str(candidate.candidate_id), ArchitectureAdmissionStanding.UNKNOWN,
+                    str(candidate.candidate_id),
+                    ArchitectureAdmissionStanding.UNKNOWN,
                     f"UNKNOWN:MANDATORY_REQUIREMENT:{requirement_id}",
                 )
             if result.standing is RequirementStanding.UNSUPPORTED:
                 return ArchitectureAdmissionDecision(
-                    str(candidate.candidate_id), ArchitectureAdmissionStanding.UNSUPPORTED,
+                    str(candidate.candidate_id),
+                    ArchitectureAdmissionStanding.UNSUPPORTED,
                     f"UNSUPPORTED:MANDATORY_REQUIREMENT:{requirement_id}",
                 )
             if result.standing is RequirementStanding.VIOLATED:
                 return ArchitectureAdmissionDecision(
-                    str(candidate.candidate_id), ArchitectureAdmissionStanding.REFUSED,
+                    str(candidate.candidate_id),
+                    ArchitectureAdmissionStanding.REFUSED,
                     f"REFUSED:MANDATORY_REQUIREMENT_VIOLATED:{requirement_id}",
                 )
 
         if assessment.missing_viewpoints:
             return ArchitectureAdmissionDecision(
-                candidate_id, ArchitectureAdmissionStanding.UNKNOWN,
+                candidate_id,
+                ArchitectureAdmissionStanding.UNKNOWN,
                 f"UNKNOWN:MISSING_VIEWPOINT:{assessment.missing_viewpoints[0]}",
             )
         supplied_viewpoints = {item.viewpoint_id for item in viewpoint_evidence}
         for item in viewpoint_evidence:
             if item.subject_id != candidate_id:
                 return ArchitectureAdmissionDecision(
-                    candidate_id, ArchitectureAdmissionStanding.REFUSED,
+                    candidate_id,
+                    ArchitectureAdmissionStanding.REFUSED,
                     f"REFUSED:VIEWPOINT_EVIDENCE_SUBJECT_MISMATCH:{item.viewpoint_id}",
                 )
-        missing_at_admission = tuple(v for v in self.required_viewpoints if v not in supplied_viewpoints)
+        missing_at_admission = tuple(
+            v for v in self.required_viewpoints if v not in supplied_viewpoints
+        )
         if missing_at_admission:
             return ArchitectureAdmissionDecision(
-                candidate_id, ArchitectureAdmissionStanding.UNKNOWN,
+                candidate_id,
+                ArchitectureAdmissionStanding.UNKNOWN,
                 f"UNKNOWN:MISSING_ADMISSION_VIEWPOINT_EVIDENCE:{missing_at_admission[0]}",
             )
 
         falsification_subject_id = str(getattr(falsification, "candidate_id", ""))
         if falsification_subject_id != candidate_id:
             return ArchitectureAdmissionDecision(
-                candidate_id, ArchitectureAdmissionStanding.REFUSED,
+                candidate_id,
+                ArchitectureAdmissionStanding.REFUSED,
                 "REFUSED:FALSIFICATION_SUBJECT_MISMATCH",
             )
-        falsification_value = getattr(getattr(falsification, "standing", None), "value", getattr(falsification, "standing", None))
+        falsification_value = getattr(
+            getattr(falsification, "standing", None),
+            "value",
+            getattr(falsification, "standing", None),
+        )
         falsification_evidence_refs = tuple(
             dict.fromkeys(
                 tuple(getattr(falsification, "receipt_refs", ()))
                 + tuple(getattr(falsification, "counterexample_refs", ()))
             )
         )
-        if falsification_value in {"FALSIFIED", "SURVIVES"} and not falsification_evidence_refs:
+        if (
+            falsification_value in {"FALSIFIED", "SURVIVES"}
+            and not falsification_evidence_refs
+        ):
             return ArchitectureAdmissionDecision(
-                candidate_id, ArchitectureAdmissionStanding.UNKNOWN,
+                candidate_id,
+                ArchitectureAdmissionStanding.UNKNOWN,
                 "UNKNOWN:UNRECEIPTED_FALSIFICATION_STANDING",
             )
         if falsification_value == "FALSIFIED":
             return ArchitectureAdmissionDecision(
-                candidate_id, ArchitectureAdmissionStanding.REFUSED,
+                candidate_id,
+                ArchitectureAdmissionStanding.REFUSED,
                 "REFUSED:CANDIDATE_FALSIFIED",
             )
         if falsification_value == "UNSUPPORTED":
             return ArchitectureAdmissionDecision(
-                str(candidate.candidate_id), ArchitectureAdmissionStanding.UNSUPPORTED,
+                str(candidate.candidate_id),
+                ArchitectureAdmissionStanding.UNSUPPORTED,
                 "UNSUPPORTED:FALSIFICATION_EVIDENCE",
             )
         if falsification_value != "SURVIVES":
             return ArchitectureAdmissionDecision(
-                str(candidate.candidate_id), ArchitectureAdmissionStanding.UNKNOWN,
+                str(candidate.candidate_id),
+                ArchitectureAdmissionStanding.UNKNOWN,
                 f"UNKNOWN:FALSIFICATION_STANDING:{falsification_value}",
             )
 
@@ -369,13 +406,17 @@ class EnterpriseArchitectureBoard:
         for item in execution_evidence:
             if item.candidate_id != candidate_id:
                 return ArchitectureAdmissionDecision(
-                    candidate_id, ArchitectureAdmissionStanding.REFUSED,
+                    candidate_id,
+                    ArchitectureAdmissionStanding.REFUSED,
                     f"REFUSED:EXECUTION_EVIDENCE_SUBJECT_MISMATCH:{item.receipt_id}",
                 )
-        alive_execution = tuple(item for item in execution_evidence if item.standing == "ALIVE")
+        alive_execution = tuple(
+            item for item in execution_evidence if item.standing == "ALIVE"
+        )
         if not alive_execution:
             return ArchitectureAdmissionDecision(
-                str(candidate.candidate_id), ArchitectureAdmissionStanding.UNKNOWN,
+                str(candidate.candidate_id),
+                ArchitectureAdmissionStanding.UNKNOWN,
                 "UNKNOWN:NO_ALIVE_EXECUTION_RECEIPT",
             )
         for item in alive_execution:
@@ -393,7 +434,8 @@ class EnterpriseArchitectureBoard:
         evidence_refs = list(dict.fromkeys(evidence_refs))
         if not evidence_refs:
             return ArchitectureAdmissionDecision(
-                str(candidate.candidate_id), ArchitectureAdmissionStanding.UNKNOWN,
+                str(candidate.candidate_id),
+                ArchitectureAdmissionStanding.UNKNOWN,
                 "UNKNOWN:NO_OBSERVED_EVIDENCE_FOR_ADMISSION",
             )
 
@@ -403,9 +445,13 @@ class EnterpriseArchitectureBoard:
             evidence_dag_refs=tuple(evidence_refs),
             requirement_refs=tuple(r.requirement_id for r in requirements),
             constraint_refs=tuple(getattr(observation, "constraint_refs", ())),
-            required_capabilities=tuple(getattr(candidate, "required_capabilities", ())),
+            required_capabilities=tuple(
+                getattr(candidate, "required_capabilities", ())
+            ),
             generation_profile=generation_profile,
-            verification_obligations=tuple(getattr(candidate, "verification_criteria", ())),
+            verification_obligations=tuple(
+                getattr(candidate, "verification_criteria", ())
+            ),
             authority_requirements=tuple(getattr(candidate, "authority_needs", ())),
         )
         return ArchitectureAdmissionDecision(
