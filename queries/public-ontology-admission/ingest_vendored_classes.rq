@@ -1,0 +1,33 @@
+PREFIX pa: <http://seanchatmangpt.github.io/packs/public-ontology-admission#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+CONSTRUCT {
+  ?admittedClass a pa:AdmittedClass ;
+    pa:belongsTo ?authority ;
+    pa:className ?localName ;
+    pa:classIri ?classIriStr ;
+    pa:classComment ?comment .
+}
+WHERE {
+  { ?class a owl:Class } UNION { ?class a rdfs:Class }
+  FILTER(isIRI(?class))
+
+  VALUES (?nsPrefix ?authority ?authId) {
+    ("http://www.w3.org/ns/prov#" pa:authority_provo "prov-o")
+    ("http://www.w3.org/ns/org#" pa:authority_org "org")
+    ("http://www.w3.org/ns/dcat#" pa:authority_dcat3 "dcat3")
+    ("http://www.w3.org/ns/dqv#" pa:authority_dqv "dqv")
+    ("http://www.w3.org/ns/shacl#" pa:authority_shacl "shacl")
+  }
+  FILTER(STRSTARTS(STR(?class), ?nsPrefix))
+
+  BIND(STR(?class) AS ?classIriStr)
+  BIND(STRAFTER(?classIriStr, "#") AS ?localName)
+  OPTIONAL {
+    ?class rdfs:comment ?rawComment .
+    FILTER(LANG(?rawComment) = "en" || LANG(?rawComment) = "")
+  }
+  BIND(COALESCE(?rawComment, "") AS ?comment)
+  BIND(IRI(CONCAT("http://seanchatmangpt.github.io/packs/public-ontology-admission#class_", ?authId, "_", LCASE(?localName))) AS ?admittedClass)
+}
+ORDER BY ?class

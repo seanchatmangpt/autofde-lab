@@ -1,0 +1,116 @@
+# Real source of truth for gymact.semantics.admission's PUBLIC-ONLY ADMISSION policy.
+#
+# GROUNDING METHOD (real, not simulated). Two admission modes now coexist, both real:
+#
+#   - HAND-TYPED (SKOS only, below): verified live via WebFetch this session, transcribed by
+#     hand. Kept hand-typed because skos.rdf (RDF/XML) is not yet wired as a ggen ontology
+#     import (autofde-lab's [rdf] default_format is turtle) -- see
+#     `docs/jira/.../PRD-ARD-finish-ingestion-layer.md` FR3 for the real, named reason this
+#     is deferred, not silently dropped.
+#   - MECHANICALLY INGESTED (PROV-O, ORG, DCAT, DQV, SHACL): this file declares only the
+#     `pa:PublicAuthority` individuals below. Every `pa:AdmittedClass` for these five
+#     authorities is produced by a real `[[inference.rules]]` CONSTRUCT query
+#     (`queries/public-ontology-admission/ingest_vendored_classes.rq`) walking every real
+#     `owl:Class`/`rdfs:Class` triple in the real vendored bytes at
+#     `ontology/vendor/public-semantic-sources/*.ttl` -- fetched for real, this session, via
+#     `ggen-marketplace/packs/autofde-semantic-registry-pack/sources/materialize.py`, with a
+#     real sha256 receipt per file (`sources/vendor/<id>/receipt.json`). This replaces the
+#     3-of-3 PROV-O / 4-of-9 ORG hand-picked subsets from the prior version of this file with
+#     the real, complete class lists -- not a curated selection.
+#
+# Authority facts (namespace/spec/publication status) were independently WebFetch-verified
+# this session before being hand-typed here; the CLASSES themselves are never hand-typed for
+# these five authorities, only mechanically derived.
+
+@prefix pa:   <http://seanchatmangpt.github.io/packs/public-ontology-admission#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+pa:PublicAuthority a rdfs:Class ;
+  rdfs:comment "One recognized public semantic authority (a real, versioned, resolvable namespace) whose classes may be admitted." .
+pa:AdmittedClass a rdfs:Class ;
+  rdfs:comment "One class IRI, from an admitted authority, that a local individual may be typed by." .
+
+pa:authorityId       a rdf:Property ; rdfs:domain pa:PublicAuthority ; rdfs:range xsd:string .
+pa:namespaceUri       a rdf:Property ; rdfs:domain pa:PublicAuthority ; rdfs:range xsd:string .
+pa:specUri            a rdf:Property ; rdfs:domain pa:PublicAuthority ; rdfs:range xsd:string .
+pa:publicationStatus  a rdf:Property ; rdfs:domain pa:PublicAuthority ; rdfs:range xsd:string .
+pa:sourceKind         a rdf:Property ; rdfs:range xsd:string .
+
+pa:className     a rdf:Property ; rdfs:domain pa:AdmittedClass ; rdfs:range xsd:string .
+pa:classIri       a rdf:Property ; rdfs:domain pa:AdmittedClass ; rdfs:range xsd:string .
+pa:belongsTo      a rdf:Property ; rdfs:domain pa:AdmittedClass ; rdfs:range pa:PublicAuthority .
+pa:classComment   a rdf:Property ; rdfs:domain pa:AdmittedClass ; rdfs:range xsd:string .
+
+# ── W3C PROV-O (classes mechanically ingested -- see grounding note) ──────
+
+pa:authority_provo a pa:PublicAuthority ;
+  pa:authorityId "prov-o" ;
+  pa:namespaceUri "http://www.w3.org/ns/prov#" ;
+  pa:specUri "https://www.w3.org/ns/prov-o" ;
+  pa:publicationStatus "W3C Recommendation 2013-04-30" ;
+  pa:sourceKind "NATIVE_ONTOLOGY" .
+
+# ── W3C Organization Ontology (ORG) (classes mechanically ingested) ───────
+
+pa:authority_org a pa:PublicAuthority ;
+  pa:authorityId "org" ;
+  pa:namespaceUri "http://www.w3.org/ns/org#" ;
+  pa:specUri "https://www.w3.org/TR/vocab-org/" ;
+  pa:publicationStatus "W3C Recommendation 2014-01-16" ;
+  pa:sourceKind "NATIVE_ONTOLOGY" .
+
+# ── W3C DCAT 3 (classes mechanically ingested) ────────────────────────────
+
+pa:authority_dcat3 a pa:PublicAuthority ;
+  pa:authorityId "dcat-3" ;
+  pa:namespaceUri "http://www.w3.org/ns/dcat#" ;
+  pa:specUri "https://www.w3.org/TR/vocab-dcat-3/" ;
+  pa:publicationStatus "W3C Recommendation 2024-08-22" ;
+  pa:sourceKind "NATIVE_ONTOLOGY" .
+
+# ── W3C DQV (Data Quality Vocabulary) (classes mechanically ingested) ─────
+
+pa:authority_dqv a pa:PublicAuthority ;
+  pa:authorityId "dqv" ;
+  pa:namespaceUri "http://www.w3.org/ns/dqv#" ;
+  pa:specUri "https://www.w3.org/TR/vocab-dqv/" ;
+  pa:publicationStatus "W3C Working Group Note 2016-12-15" ;
+  pa:sourceKind "NATIVE_ONTOLOGY" .
+
+# ── W3C SHACL (classes mechanically ingested) ─────────────────────────────
+
+pa:authority_shacl a pa:PublicAuthority ;
+  pa:authorityId "shacl" ;
+  pa:namespaceUri "http://www.w3.org/ns/shacl#" ;
+  pa:specUri "https://www.w3.org/TR/shacl/" ;
+  pa:publicationStatus "W3C Recommendation 2017-07-20" ;
+  pa:sourceKind "NATIVE_ONTOLOGY" .
+
+# ── W3C SKOS ─────────────────────────────────────────────────────────────
+# Added as pure ontology data -- zero template/pack code changes. Proves the
+# marginal per-authority cost is verification + transcription only, not new
+# generation code, once the generic SPARQL-loop templates exist.
+# Verified live (WebFetch, this session): https://www.w3.org/TR/skos-reference/,
+# W3C Recommendation 2009-08-18, real namespace http://www.w3.org/2004/02/skos/core#.
+
+pa:authority_skos a pa:PublicAuthority ;
+  pa:authorityId "skos" ;
+  pa:namespaceUri "http://www.w3.org/2004/02/skos/core#" ;
+  pa:specUri "https://www.w3.org/TR/skos-reference/" ;
+  pa:publicationStatus "W3C Recommendation 2009-08-18" ;
+  pa:sourceKind "NATIVE_ONTOLOGY" .
+
+pa:class_skos_concept a pa:AdmittedClass ;
+  pa:belongsTo pa:authority_skos ; pa:className "Concept" ; pa:classIri "http://www.w3.org/2004/02/skos/core#Concept" ;
+  pa:classComment "an idea or notion; a unit of thought within a knowledge organization system" .
+pa:class_skos_conceptscheme a pa:AdmittedClass ;
+  pa:belongsTo pa:authority_skos ; pa:className "ConceptScheme" ; pa:classIri "http://www.w3.org/2004/02/skos/core#ConceptScheme" ;
+  pa:classComment "an aggregation of one or more SKOS concepts and their semantic relationships" .
+pa:class_skos_collection a pa:AdmittedClass ;
+  pa:belongsTo pa:authority_skos ; pa:className "Collection" ; pa:classIri "http://www.w3.org/2004/02/skos/core#Collection" ;
+  pa:classComment "a labeled and/or ordered group of concepts or nested collections" .
+pa:class_skos_orderedcollection a pa:AdmittedClass ;
+  pa:belongsTo pa:authority_skos ; pa:className "OrderedCollection" ; pa:classIri "http://www.w3.org/2004/02/skos/core#OrderedCollection" ;
+  pa:classComment "a specialized collection that maintains member ordering" .

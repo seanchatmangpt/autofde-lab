@@ -1,0 +1,25 @@
+PREFIX pa: <http://seanchatmangpt.github.io/packs/public-ontology-admission#>
+SELECT ?rowKind ?authorityId ?namespaceUri ?specUri ?publicationStatus ?sourceKind
+       ?className ?classIri ?classComment ?belongsToAuthorityId
+WHERE {
+  {
+    ?a a pa:PublicAuthority ;
+       pa:authorityId ?authorityId ;
+       pa:namespaceUri ?namespaceUri ;
+       pa:specUri ?specUri ;
+       pa:publicationStatus ?publicationStatus ;
+       pa:sourceKind ?sourceKind .
+    BIND("authority" AS ?rowKind)
+  }
+  UNION
+  {
+    ?c a pa:AdmittedClass ;
+       pa:belongsTo ?a ;
+       pa:className ?className ;
+       pa:classIri ?classIri ;
+       pa:classComment ?classComment .
+    ?a pa:authorityId ?belongsToAuthorityId .
+    BIND("class" AS ?rowKind)
+  }
+}
+ORDER BY ?rowKind ?authorityId ?classIri
