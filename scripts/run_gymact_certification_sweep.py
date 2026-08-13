@@ -8,10 +8,26 @@ imports every real module under `gymact.gyms`, finds every real class whose
 name ends in `Provider` (the real, consistent naming convention this
 package's own real modules already follow -- confirmed live this session
 across all 22 real `gymact/src/gymact/gyms/*.py` modules), and runs the real,
-provider-agnostic structural conformance check
-(`gymact_certification_checker.check_environment_provider_conformance`,
-`run_smoke_cycle=False`) against each one it can construct with zero
-arguments.
+provider-agnostic structural conformance check against each one it can
+construct with zero arguments -- as its own real, subprocess-isolated
+`scripts/run_gymact_certification_check.py` call, never an in-process import
+of `check_environment_provider_conformance` (see that script and
+`gymact_certification_checker.py`'s own module docstring for why: `gymact`
+is an ordinary dependency of this repo, and an in-process checker call
+always leaves `gymact` in the calling process's `sys.modules`). Pass
+`--smoke` to additionally drive a real materialize->observe->checkpoint->
+teardown cycle per provider (opt-in; real side-effect risk; off by default).
+
+Named, honest residual: `_discover_provider_classes()` below still does
+`import gymact.gyms` directly, in THIS sweep script's own process, to
+enumerate the real provider classes to check -- that import is real,
+in-process, and leaves `gymact` in this sweep process's `sys.modules`.
+Discovery is not the certified verdict, though: it never computes a
+conformance result, only a list of names to hand to the isolated
+subprocess. The independence property this file establishes is narrower
+and honestly scoped: each provider's real *conformance result* is computed
+in a fresh process; the *catalog of what to check* is still gathered
+in-process here.
 
 Read-only, no live cluster/network required for the structural pass. Never
 asserts "every gym repo" as a headline claim independent of this script's
@@ -42,7 +58,7 @@ the exact reason, never silently omitted.
 
 from __future__ import annotations
 
-import asyncio
+import argparse
 import importlib
 import inspect
 import json
@@ -53,6 +69,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+_CHECK_ENTRYPOINT = REPO_ROOT / "scripts" / "run_gymact_certification_check.py"
 
 
 def _resolve_gymact_cli() -> str | None:
@@ -122,35 +139,89 @@ def _discover_provider_classes() -> list[tuple[str, type]]:
     return found
 
 
-async def _run_sweep() -> list[dict]:
-    from autofde_lab.reasoning.gymact_certification_checker import check_environment_provider_conformance
-
+def _run_sweep(*, smoke: bool) -> list[dict]:
+    """Real, per-provider sweep -- each provider's check runs as its own
+    real `subprocess.run([sys.executable, str(_CHECK_ENTRYPOINT), ...])`
+    call to `scripts/run_gymact_certification_check.py`, never an in-process
+    import of `check_environment_provider_conformance` -- the real fix for
+    the independence gap: this sweep process itself never needs `gymact` in
+    its own `sys.modules` to certify a provider. `smoke=True` passes
+    `--smoke` through to the entrypoint (real materialize/observe/checkpoint/
+    teardown against every discovered provider -- opt-in, real side-effect
+    risk, off by default)."""
     manifests: list[dict] = []
     for module_name, provider_cls in _discover_provider_classes():
+        cmd = [
+            sys.executable,
+            str(_CHECK_ENTRYPOINT),
+            "--module",
+            module_name,
+            "--class",
+            provider_cls.__qualname__,
+            "--gym-name",
+            module_name.rsplit(".", 1)[-1],
+        ]
+        if smoke:
+            cmd.append("--smoke")
         try:
-            provider = provider_cls()
-        except Exception as exc:  # noqa: BLE001 -- real, honest, non-fatal to the sweep
+            completed = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        except (subprocess.TimeoutExpired, OSError) as exc:
             manifests.append(
                 {
                     "module": module_name,
                     "provider_class": provider_cls.__qualname__,
                     "conformance_level": "CONSTRUCTION_FAILED",
-                    "detail": f"real zero-arg construction raised: {type(exc).__name__}: {exc}",
+                    "detail": f"real subprocess failure invoking the check entrypoint: {type(exc).__name__}: {exc}",
                 }
             )
             continue
 
-        manifest, results = await check_environment_provider_conformance(
-            provider, gym_name=module_name.rsplit(".", 1)[-1], run_smoke_cycle=False
-        )
+        try:
+            outcome = json.loads(completed.stdout)
+        except json.JSONDecodeError:
+            manifests.append(
+                {
+                    "module": module_name,
+                    "provider_class": provider_cls.__qualname__,
+                    "conformance_level": "CONSTRUCTION_FAILED",
+                    "detail": f"real entrypoint produced non-JSON stdout (exit {completed.returncode}): "
+                    f"{completed.stdout[:500]!r} stderr={completed.stderr[:500]!r}",
+                }
+            )
+            continue
+
+        if outcome.get("error"):
+            manifests.append(
+                {
+                    "module": module_name,
+                    "provider_class": provider_cls.__qualname__,
+                    "conformance_level": "CONSTRUCTION_FAILED",
+                    "detail": outcome["error"],
+                }
+            )
+            continue
+
+        if outcome.get("conformance_level") == "CONSTRUCTION_FAILED":
+            manifests.append(
+                {
+                    "module": module_name,
+                    "provider_class": provider_cls.__qualname__,
+                    "conformance_level": "CONSTRUCTION_FAILED",
+                    "detail": outcome.get("detail", ""),
+                }
+            )
+            continue
+
+        manifest = outcome["manifest"]
+        results = outcome["results"]
         manifests.append(
             {
                 "module": module_name,
                 "provider_class": provider_cls.__qualname__,
-                "conformance_level": manifest.manifest_conformance_level_ref,
+                "conformance_level": manifest["manifest_conformance_level_ref"],
                 "check_count": len(results),
                 "checks": [
-                    {"check": r.result_check_ref, "passed": r.result_passed, "detail": r.result_detail}
+                    {"check": r["result_check_ref"], "passed": r["result_passed"], "detail": r["result_detail"]}
                     for r in results
                 ],
             }
@@ -159,7 +230,16 @@ async def _run_sweep() -> list[dict]:
 
 
 def main() -> int:
-    manifests = asyncio.run(_run_sweep())
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--smoke",
+        action="store_true",
+        help="also run the real materialize->observe->checkpoint->teardown smoke cycle "
+        "against every discovered provider (opt-in; real side-effect risk; off by default)",
+    )
+    args = parser.parse_args()
+
+    manifests = _run_sweep(smoke=args.smoke)
     native_validation = _run_gymact_native_validation()
     print(
         json.dumps(

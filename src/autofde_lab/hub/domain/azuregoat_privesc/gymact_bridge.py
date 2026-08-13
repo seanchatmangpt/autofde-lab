@@ -35,12 +35,26 @@ the real current state -- both the domain's own real precondition check
 inapplicable step nor an out-of-order-but-applicable step is silently
 admitted.
 
-`verify()` checks real observed state against `GOAL_FACT`
-(`has_owner_role_on_resource_group`) membership, matching the manual's own
-stated objective. `checkpoint()`/`restore()` snapshot/restore the real
-`(facts, plan_cursor)` pair. `teardown()` is a real, idempotent no-op --
-this domain holds no external resources (no subprocess, no network, no
-filesystem handle) to release.
+`verify()` does NOT read `self._state` (the same in-process object `actuate()`
+mutates) as its evidence -- that was a self-report bug, corrected 2026-08-12
+per `docs/jira/v26.8.12/cloud-cert-wbpr-prd.md` Correction 4 and this session's
+own actor/verifier-independence ARD requirement. Instead `verify()`
+independently replays the domain's real transition function
+(`get_next_state`) over `self._action_log` -- an append-only record of every
+step actually applied, written once by `actuate()` and never read back by it
+-- starting from `get_initial_state()`, and cross-checks the replayed fact
+set against `self._state.facts`, failing closed (returning `passed=False`
+with the divergence detail) if the two disagree. This is a real, structurally
+independent re-derivation, not a live external poll: no live Azure API is
+reachable from this environment, so it cannot reach
+`kubernetes_reconciliation.py`'s stronger "poll a live external system"
+guarantee. It is documented here as a materially weaker but still genuinely
+independent check, per this session's own no-overclaiming discipline --
+future work with real Azure credentials should replace this with an actual
+resource-state query. `checkpoint()`/`restore()` snapshot/restore the real
+`(facts, plan_cursor, action_log)` triple. `teardown()` is a real, idempotent
+no-op -- this domain holds no external resources (no subprocess, no network,
+no filesystem handle) to release.
 """
 
 from __future__ import annotations
@@ -106,6 +120,11 @@ class AzureGoatPrivescEnvironment:
         self._plan: tuple[str, ...] = tuple(plan)
         self._state: State = self._domain.get_initial_state()
         self._plan_cursor = 0
+        # Append-only record of every step_id actually applied by actuate(),
+        # in order. verify() replays the domain's transition function over
+        # this log independently of `self._state` -- see module docstring
+        # ("verify() does NOT read self._state...") for why this exists.
+        self._action_log: list[str] = []
 
     def _ensure_open(self) -> None:
         if self._closed:
@@ -152,6 +171,7 @@ class AzureGoatPrivescEnvironment:
         next_state = self._domain.get_next_state(before, step_id)
         self._state = next_state
         self._plan_cursor += 1
+        self._action_log.append(step_id)
         return {
             "before": {"facts": sorted(before.facts)},
             "after": {"facts": sorted(next_state.facts)},
@@ -160,24 +180,53 @@ class AzureGoatPrivescEnvironment:
             "established": step.establishes,
         }
 
+    def _replay_state_from_log(self) -> State:
+        """Independently re-derive the current fact-set by replaying the
+        domain's real transition function over `self._action_log` from a
+        fresh `get_initial_state()` -- never reads `self._state` directly.
+        This is what makes `verify()` a genuine re-derivation rather than a
+        self-report of the same object `actuate()` mutated.
+        """
+        state = self._domain.get_initial_state()
+        for step_id in self._action_log:
+            state = self._domain.get_next_state(state, step_id)
+        return state
+
     async def verify(self, expected: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
         self._ensure_open()
-        observed = await self.observe()
+        replayed = self._replay_state_from_log()
+        replayed_facts = sorted(replayed.facts)
+        live_facts = sorted(self._state.facts)
+        divergence = None if replayed_facts == live_facts else {
+            "replayed_facts": replayed_facts,
+            "live_state_facts": live_facts,
+        }
+        observed: dict[str, Any] = {"facts": replayed_facts, "action_log": list(self._action_log)}
+        if divergence is not None:
+            # Fail closed: the independently-replayed state disagrees with
+            # the live in-process object. Never silently prefer one.
+            observed["divergence"] = divergence
+            return False, observed
         if "facts" in expected:
             expected_facts = set(expected["facts"])
-            passed = expected_facts <= set(observed["facts"])
+            passed = expected_facts <= set(replayed_facts)
         else:
-            passed = GOAL_FACT in observed["facts"]
+            passed = GOAL_FACT in replayed_facts
         return passed, observed
 
     async def checkpoint(self) -> dict[str, Any]:
         self._ensure_open()
-        return {"facts": sorted(self._state.facts), "plan_cursor": self._plan_cursor}
+        return {
+            "facts": sorted(self._state.facts),
+            "plan_cursor": self._plan_cursor,
+            "action_log": list(self._action_log),
+        }
 
     async def restore(self, checkpoint: dict[str, Any]) -> None:
         self._ensure_open()
         self._state = State(facts=frozenset(checkpoint["facts"]))
         self._plan_cursor = int(checkpoint.get("plan_cursor", 0))
+        self._action_log = list(checkpoint.get("action_log", []))
 
     async def teardown(self) -> None:
         # Real, idempotent no-op: this domain holds no external resource

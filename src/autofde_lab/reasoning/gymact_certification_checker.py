@@ -80,7 +80,25 @@ module deliberately does not hand-edit the generated output (that would
 violate `mode = "Create"`'s own "GENERATED, DO NOT EDIT BY HAND"
 contract) -- it constructs real Python `bool` values at the field
 despite the (slightly imprecise) static type hint; dataclass field types
-are not runtime-enforced.
+are not runtime-enforced. Fixing the template itself is out of scope here
+-- it is shared by every other ggen-generated module in this repo and
+deserves its own reviewed change, not a side effect of this file.
+
+Evidence fields are honestly UNKNOWN, never fabricated
+--------------------------------------------------------
+`CertificationCheckResult.result_evidence_ref`,
+`CertificationManifest.manifest_computation_receipt_ref`, and
+`manifest_issued_at_ref` are schema'd (`ontology/gymact-certification.ttl`
+declares an `EVIDENCE` severity and these three reference fields) but this
+module always constructs them as `None`/unset -- there is no real
+receipt-chain implementation behind them. A real evidence chain here would
+duplicate Level 4's OCEL/commitment machinery
+(`src/autofde_lab/hub/domain/gym_procedure/`) and is deliberately out of
+scope for this checker. Per this repo's own standing-law vocabulary
+(`.claude/rules/standing-law.md`), that makes the `EVIDENCE` severity tier
+`UNKNOWN`, not `ALIVE` and not silently dropped -- named here so a future
+change doesn't "fix" these fields by inventing a fake evidence identifier
+just to make them non-`None`.
 
 Never calls `actuate()`
 --------------------------
@@ -90,6 +108,49 @@ dispatch; swegym: docker exec + patch + pytest). Calling `actuate()`
 without knowing what it does would be exactly the kind of blind real
 actuation `.claude/rules/gym-actuation-boundary.md` forbids. Named here as
 a real, permanent boundary of this checker, not a gap silently left open.
+
+In-process use of this module is NOT independent -- use the subprocess entrypoint
+------------------------------------------------------------------------------------
+This module does `from gymact.models import Consequence` / `from
+gymact.providers import Environment, EnvironmentProvider` at import time --
+real, in-process, no `sys.modules` guard. `gymact` is an ordinary
+`pyproject.toml` dependency of `autofde-lab`, so any caller that imports
+`check_environment_provider_conformance` directly always has `gymact`
+present in its own `sys.modules` for the lifetime of that process. That is
+exactly the self-certification shape
+`~/gymact/docs/2026-08-12-gymact-certification-and-ggen-from-sregym.md`'s
+central finding rejects ("a certification mechanism that lives inside
+GymAct cannot be the independent verifier -- structurally, not by
+discipline" -- and by extension, nor can a checker that imports `gymact`
+in-process with no process boundary at all, regardless of which submodule
+it imports).
+
+`scripts/run_gymact_certification_check.py` is the one real, subprocess-isolated
+entrypoint -- it imports `gymact` only inside its own fresh interpreter,
+never inside a caller's process
+(`tests/reasoning/test_gymact_certification_process_isolation_chicago.py`
+proves this the same way
+`tests/ecosystem/test_identity_mutation_chicago.py::test_verifier_runs_independently_in_a_fresh_process`
+proves it for `standalone_verifier.py`). Calling
+`check_environment_provider_conformance` directly, in-process, from a test
+or another module is still real and useful for structural/smoke checks --
+it is simply not the certified, independent path, and must never be
+represented as one.
+
+This closes only the structural (process-isolation) half of the
+independence question, honestly, not the harder half. `standalone_verifier.py`
+-- this repo's own real precedent for the `FORBIDDEN_RUNTIME_MODULES` +
+`sys.modules`-guard pattern -- was itself self-retracted in commit
+`7369e0ab` ("retract: the ALIVE reconstruction does not establish
+independent standing"): a fabricated directory with a copied artifact tree
+still reconstructed as `ALIVE_EVIDENCE_RECONSTRUCTED`, because nothing
+bound the durable artifact to a specific real trial's identity. This
+module's manifest has the identical gap -- nothing in a
+`CertificationManifest` binds it to a specific real materialization event
+beyond the caller's own say-so. Subprocess isolation is real progress
+(the checking process no longer needs `gymact` importable to trust its own
+result), but it is not identity-binding independence, and this module must
+never claim the latter.
 """
 
 from __future__ import annotations
@@ -101,6 +162,7 @@ from gymact.models import Consequence
 from gymact.providers import Environment, EnvironmentProvider
 
 from autofde_lab.reasoning.gymact_certification_types import (
+    CertificationCheck,
     CertificationCheckResult,
     CertificationManifest,
     StandingValue,
@@ -121,14 +183,117 @@ _REQUIRED_ENVIRONMENT_METHODS: tuple[str, ...] = (
 )
 _REQUIRED_ENVIRONMENT_ATTRIBUTES: tuple[str, ...] = ("environment_id", "requires_authority")
 
+#: Real `CertificationCheck` catalog -- the check *definitions* this checker
+#: performs, backed by the real ggen-generated type (previously unused: the
+#: schema declared `afl:CertificationCheck` but no code constructed one; every
+#: `CertificationCheckResult.result_check_ref` was a bare string literal with
+#: no declared check behind it). Only the fixed-name checks are catalogued
+#: here -- the per-method/per-attribute smoke checks
+#: (`smoke_environment_has_method_{name}`, `smoke_environment_has_attribute_{attr}`)
+#: are parameterized at runtime over `_REQUIRED_ENVIRONMENT_METHODS`/
+#: `_REQUIRED_ENVIRONMENT_ATTRIBUTES` and are synthesized on demand by
+#: `_dynamic_check` below rather than pre-enumerated, since their count is
+#: derived from those tuples, not fixed.
+_CERTIFICATION_CHECKS: tuple[CertificationCheck, ...] = (
+    CertificationCheck(
+        check_name="provider_satisfies_environment_provider_protocol",
+        check_description="Real isinstance check against gymact.providers.EnvironmentProvider, a @runtime_checkable Protocol.",
+        check_severity_ref=StandingValue.STRUCTURAL.value,
+    ),
+    CertificationCheck(
+        check_name="materialize_method_present",
+        check_description="Real inspect.signature check: materialize accepts keyword-only scenario/config.",
+        check_severity_ref=StandingValue.STRUCTURAL.value,
+    ),
+    CertificationCheck(
+        check_name="capabilities_returns_valid_consequences",
+        check_description="Real capabilities() call returns a non-empty tuple of Capability objects with valid Consequence values.",
+        check_severity_ref=StandingValue.BEHAVIORAL.value,
+    ),
+    CertificationCheck(
+        check_name="smoke_materialize_succeeds",
+        check_description="Real materialize() call completes without raising.",
+        check_severity_ref=StandingValue.BEHAVIORAL.value,
+    ),
+    CertificationCheck(
+        check_name="smoke_materialize_returns_environment",
+        check_description="Real materialize() return value structurally satisfies gymact.providers.Environment.",
+        check_severity_ref=StandingValue.BEHAVIORAL.value,
+    ),
+    CertificationCheck(
+        check_name="smoke_observe_returns_dict",
+        check_description="Real observe() call returns a dict.",
+        check_severity_ref=StandingValue.BEHAVIORAL.value,
+    ),
+    CertificationCheck(
+        check_name="smoke_checkpoint_returns_dict",
+        check_description="Real checkpoint() call returns a dict.",
+        check_severity_ref=StandingValue.BEHAVIORAL.value,
+    ),
+    CertificationCheck(
+        check_name="smoke_teardown_succeeds",
+        check_description="Real teardown() call completes without raising.",
+        check_severity_ref=StandingValue.BEHAVIORAL.value,
+    ),
+    CertificationCheck(
+        check_name="smoke_cycle_skipped_due_to_structural_failure",
+        check_description="Honest non-check: run_smoke_cycle=True was requested but a structural check failed first, so no smoke cycle ran.",
+        check_severity_ref=StandingValue.STRUCTURAL.value,
+    ),
+)
+_CERTIFICATION_CHECKS_BY_NAME: dict[str, CertificationCheck] = {
+    check.check_name: check for check in _CERTIFICATION_CHECKS if check.check_name is not None
+}
+
+
+def _dynamic_check(check_name: str, description: str) -> CertificationCheck:
+    """Real `CertificationCheck` for a parameterized smoke check (one real
+    instance is constructed per call, per real method/attribute name, rather
+    than pre-enumerated in `_CERTIFICATION_CHECKS` -- the set of names is
+    derived from `_REQUIRED_ENVIRONMENT_METHODS`/`_REQUIRED_ENVIRONMENT_ATTRIBUTES`,
+    not fixed)."""
+    return CertificationCheck(
+        check_name=check_name,
+        check_description=description,
+        check_severity_ref=StandingValue.BEHAVIORAL.value,
+    )
+
+
+def _catalog_check_name(name: str) -> str:
+    """Resolves `name` against the real `_CERTIFICATION_CHECKS_BY_NAME`
+    catalog -- raises `KeyError` if a caller passes a check name with no
+    real, declared `CertificationCheck` backing it, so a new check added
+    without a matching catalog entry fails loudly rather than silently
+    staying a bare string literal (the real gap Priority 4 closes)."""
+    return _CERTIFICATION_CHECKS_BY_NAME[name].check_name or name
+
+
+#: Named marker for the one real, known type-hint imprecision in this
+#: module: `CertificationCheckResult.result_passed` is ggen-generated as
+#: `str | None` (its real ontology range is `xsd:boolean`) because the
+#: shared `templates/constitution_module.py.tera` has no `xsd:boolean`
+#: branch -- see the module docstring's "resultPassed's real
+#: generated-type quirk" section for the full explanation and why fixing
+#: the shared template is out of scope here. Grep this name to find every
+#: call site working around it.
+_BOOL_TYPE_HINT_QUIRK = (
+    "gymact_certification_types.CertificationCheckResult.result_passed is generated "
+    "str | None, real value is bool -- templates/constitution_module.py.tera has no "
+    "xsd:boolean branch"
+)
+
 
 def _result(check_ref: str, passed: bool, detail: str, evidence_ref: str | None = None) -> CertificationCheckResult:
     # `passed` is a real bool constructed here despite result_passed's
-    # generated `str | None` type hint -- see module docstring's
-    # "resultPassed's real generated-type quirk" section.
+    # generated type hint -- see _BOOL_TYPE_HINT_QUIRK above.
+    #
+    # `evidence_ref` stays `None` for every real check this module performs
+    # -- see the module docstring's "Evidence fields are honestly UNKNOWN,
+    # never fabricated" section. Never invent a receipt/evidence identifier
+    # here to make `EVIDENCE`-severity checks look populated.
     return CertificationCheckResult(
         result_check_ref=check_ref,
-        result_passed=passed,  # type: ignore[arg-type]
+        result_passed=passed,  # type: ignore[arg-type]  # see _BOOL_TYPE_HINT_QUIRK
         result_detail=detail,
         result_evidence_ref=evidence_ref,
     )
@@ -136,15 +301,16 @@ def _result(check_ref: str, passed: bool, detail: str, evidence_ref: str | None 
 
 def _check_provider_protocol(provider: Any) -> CertificationCheckResult:
     """Real structural check: does `provider` satisfy `EnvironmentProvider`?"""
+    check_name = _catalog_check_name("provider_satisfies_environment_provider_protocol")
     if isinstance(provider, EnvironmentProvider):
         return _result(
-            "provider_satisfies_environment_provider_protocol",
+            check_name,
             True,
             f"real object of type {type(provider).__name__!r} structurally satisfies "
             "gymact.providers.EnvironmentProvider",
         )
     return _result(
-        "provider_satisfies_environment_provider_protocol",
+        check_name,
         False,
         f"real object of type {type(provider).__name__!r} does NOT satisfy "
         "gymact.providers.EnvironmentProvider (isinstance check against the real, "
@@ -155,10 +321,11 @@ def _check_provider_protocol(provider: Any) -> CertificationCheckResult:
 def _check_materialize_signature(provider: Any) -> CertificationCheckResult:
     """Real structural check: does `materialize` accept the real, documented
     `(*, scenario, config)` keyword-only shape?"""
+    check_name = _catalog_check_name("materialize_method_present")
     materialize = getattr(provider, "materialize", None)
     if materialize is None:
         return _result(
-            "materialize_method_present",
+            check_name,
             False,
             "real object has no materialize attribute at all",
         )
@@ -166,7 +333,7 @@ def _check_materialize_signature(provider: Any) -> CertificationCheckResult:
         sig = inspect.signature(materialize)
     except (TypeError, ValueError) as exc:
         return _result(
-            "materialize_method_present",
+            check_name,
             False,
             f"materialize is present but its real signature could not be inspected: {exc}",
         )
@@ -175,12 +342,12 @@ def _check_materialize_signature(provider: Any) -> CertificationCheckResult:
     has_config = "config" in params and params["config"].kind == inspect.Parameter.KEYWORD_ONLY
     if has_scenario and has_config:
         return _result(
-            "materialize_method_present",
+            check_name,
             True,
             f"real materialize signature is {sig} -- carries keyword-only scenario/config",
         )
     return _result(
-        "materialize_method_present",
+        check_name,
         False,
         f"real materialize signature is {sig} -- missing the real, required keyword-only "
         "scenario/config parameters",
@@ -191,10 +358,11 @@ def _check_capabilities(provider_or_env: Any) -> tuple[CertificationCheckResult,
     """Real check: does `capabilities()` return real `Capability` tuples
     with valid `Consequence` values? Returns the real capabilities alongside
     the check result so a caller can report the real count."""
+    check_name = _catalog_check_name("capabilities_returns_valid_consequences")
     capabilities_fn = getattr(provider_or_env, "capabilities", None)
     if capabilities_fn is None:
         return (
-            _result("capabilities_returns_valid_consequences", False, "no capabilities() method present"),
+            _result(check_name, False, "no capabilities() method present"),
             (),
         )
     try:
@@ -202,7 +370,7 @@ def _check_capabilities(provider_or_env: Any) -> tuple[CertificationCheckResult,
     except Exception as exc:  # noqa: BLE001 -- a real, external failure, reported honestly
         return (
             _result(
-                "capabilities_returns_valid_consequences",
+                check_name,
                 False,
                 f"real capabilities() call raised: {type(exc).__name__}: {exc}",
             ),
@@ -211,7 +379,7 @@ def _check_capabilities(provider_or_env: Any) -> tuple[CertificationCheckResult,
     if not real_capabilities:
         return (
             _result(
-                "capabilities_returns_valid_consequences",
+                check_name,
                 False,
                 "real capabilities() returned zero capabilities -- a real, honest "
                 "STRUCTURAL_ONLY-capping finding, never silently passed",
@@ -222,7 +390,7 @@ def _check_capabilities(provider_or_env: Any) -> tuple[CertificationCheckResult,
     if invalid:
         return (
             _result(
-                "capabilities_returns_valid_consequences",
+                check_name,
                 False,
                 f"{len(invalid)} of {len(real_capabilities)} real capabilities carry a "
                 "consequence value that is not a real gymact.models.Consequence member",
@@ -231,7 +399,7 @@ def _check_capabilities(provider_or_env: Any) -> tuple[CertificationCheckResult,
         )
     return (
         _result(
-            "capabilities_returns_valid_consequences",
+            check_name,
             True,
             f"real capabilities() returned {len(real_capabilities)} capabilities, every "
             "consequence value real and valid",
@@ -253,7 +421,7 @@ async def _run_smoke_cycle(
     except Exception as exc:  # noqa: BLE001 -- real, external, reported honestly
         results.append(
             _result(
-                "smoke_materialize_succeeds",
+                _catalog_check_name("smoke_materialize_succeeds"),
                 False,
                 f"real materialize() raised: {type(exc).__name__}: {exc}",
             )
@@ -263,7 +431,7 @@ async def _run_smoke_cycle(
     if not isinstance(env, Environment):
         results.append(
             _result(
-                "smoke_materialize_returns_environment",
+                _catalog_check_name("smoke_materialize_returns_environment"),
                 False,
                 f"real materialize() returned an object of type {type(env).__name__!r} that "
                 "does NOT structurally satisfy gymact.providers.Environment",
@@ -281,7 +449,7 @@ async def _run_smoke_cycle(
 
     results.append(
         _result(
-            "smoke_materialize_returns_environment",
+            _catalog_check_name("smoke_materialize_returns_environment"),
             True,
             f"real materialize() returned a real, Protocol-conformant Environment "
             f"(environment_id={getattr(env, 'environment_id', '<missing>')!r})",
@@ -289,10 +457,17 @@ async def _run_smoke_cycle(
     )
 
     for method_name in _REQUIRED_ENVIRONMENT_METHODS:
+        # Real CertificationCheck constructed per real required method name
+        # (see `_dynamic_check` -- these are parameterized over
+        # `_REQUIRED_ENVIRONMENT_METHODS`, not pre-enumerated literals).
+        check = _dynamic_check(
+            f"smoke_environment_has_method_{method_name}",
+            f"Real Environment instance exposes a callable {method_name!r} method.",
+        )
         present = callable(getattr(env, method_name, None))
         results.append(
             _result(
-                f"smoke_environment_has_method_{method_name}",
+                check.check_name or "",
                 present,
                 f"real Environment {'exposes' if present else 'is missing'} a callable "
                 f"{method_name!r} method",
@@ -303,10 +478,14 @@ async def _run_smoke_cycle(
     results.append(capabilities_result)
 
     for attr in _REQUIRED_ENVIRONMENT_ATTRIBUTES:
+        check = _dynamic_check(
+            f"smoke_environment_has_attribute_{attr}",
+            f"Real Environment instance carries the required {attr!r} attribute.",
+        )
         present = hasattr(env, attr)
         results.append(
             _result(
-                f"smoke_environment_has_attribute_{attr}",
+                check.check_name or "",
                 present,
                 f"real Environment {'carries' if present else 'is missing'} the required "
                 f"{attr!r} attribute",
@@ -317,7 +496,7 @@ async def _run_smoke_cycle(
         observed = await env.observe()
         results.append(
             _result(
-                "smoke_observe_returns_dict",
+                _catalog_check_name("smoke_observe_returns_dict"),
                 isinstance(observed, dict),
                 f"real observe() returned {type(observed).__name__}"
                 + (f" with {len(observed)} real key(s)" if isinstance(observed, dict) else ""),
@@ -325,29 +504,43 @@ async def _run_smoke_cycle(
         )
     except Exception as exc:  # noqa: BLE001
         results.append(
-            _result("smoke_observe_returns_dict", False, f"real observe() raised: {type(exc).__name__}: {exc}")
+            _result(
+                _catalog_check_name("smoke_observe_returns_dict"),
+                False,
+                f"real observe() raised: {type(exc).__name__}: {exc}",
+            )
         )
 
     try:
         checkpoint = await env.checkpoint()
         results.append(
             _result(
-                "smoke_checkpoint_returns_dict",
+                _catalog_check_name("smoke_checkpoint_returns_dict"),
                 isinstance(checkpoint, dict),
                 f"real checkpoint() returned {type(checkpoint).__name__}",
             )
         )
     except Exception as exc:  # noqa: BLE001
         results.append(
-            _result("smoke_checkpoint_returns_dict", False, f"real checkpoint() raised: {type(exc).__name__}: {exc}")
+            _result(
+                _catalog_check_name("smoke_checkpoint_returns_dict"),
+                False,
+                f"real checkpoint() raised: {type(exc).__name__}: {exc}",
+            )
         )
 
     try:
         await env.teardown()
-        results.append(_result("smoke_teardown_succeeds", True, "real teardown() completed without raising"))
+        results.append(
+            _result(_catalog_check_name("smoke_teardown_succeeds"), True, "real teardown() completed without raising")
+        )
     except Exception as exc:  # noqa: BLE001
         results.append(
-            _result("smoke_teardown_succeeds", False, f"real teardown() raised: {type(exc).__name__}: {exc}")
+            _result(
+                _catalog_check_name("smoke_teardown_succeeds"),
+                False,
+                f"real teardown() raised: {type(exc).__name__}: {exc}",
+            )
         )
 
     return results, env
@@ -376,10 +569,18 @@ async def check_environment_provider_conformance(
     reference, never a duplicated copy" convention) alongside the full,
     real, ordered `CertificationCheckResult` tuple a caller/test can
     inspect for per-check detail. `manifest_conformance_level_ref` is
-    honestly computed -- `CERT_BUILD_BROKEN` if any structural check
-    fails, `STRUCTURAL_ONLY` if structural checks pass but no smoke cycle
-    ran (or ran and failed), `SMOKE_TESTED` only if every structural AND
-    smoke check passed for real.
+    honestly computed:
+
+    - `CERT_UNSUPPORTED` if `provider` does not satisfy `EnvironmentProvider`
+      at all (the object is not even the right kind of thing to certify --
+      distinct from "conforms but a check failed").
+    - `CERT_BUILD_BROKEN` if `provider` satisfies the Protocol but some
+      other structural check fails (e.g. a malformed `materialize`
+      signature).
+    - `STRUCTURAL_ONLY` if all structural checks pass but no smoke cycle
+      ran (or ran and failed).
+    - `SMOKE_TESTED` only if every structural AND smoke check passed for
+      real.
     """
     results: list[CertificationCheckResult] = []
 
@@ -391,6 +592,30 @@ async def check_environment_provider_conformance(
     # only point a real Environment instance actually exists.
     provider_protocol_result = _check_provider_protocol(provider)
     results.append(provider_protocol_result)
+
+    # `CERT_UNSUPPORTED` is distinct from `CERT_BUILD_BROKEN`: a provider
+    # that isn't even structurally an `EnvironmentProvider` is not "broken
+    # certification", it's the wrong kind of object entirely -- checking its
+    # materialize signature would be meaningless, so the remaining
+    # structural checks are skipped in that case.
+    if not provider_protocol_result.result_passed:
+        results.append(
+            _result(
+                _catalog_check_name("materialize_method_present"),
+                False,
+                "skipped -- provider does not satisfy EnvironmentProvider, so its "
+                "materialize signature cannot be meaningfully checked",
+            )
+        )
+        manifest = CertificationManifest(
+            manifest_gym_name=gym_name,
+            manifest_provider_class_ref=f"{type(provider).__module__}.{type(provider).__qualname__}",
+            manifest_conformance_level_ref=StandingValue.CERT_UNSUPPORTED.value,
+            manifest_check_result_ref=tuple(r.result_check_ref or "" for r in results),
+            manifest_issued_at_ref=None,
+            manifest_computation_receipt_ref=None,
+        )
+        return manifest, tuple(results)
 
     results.append(_check_materialize_signature(provider))
 
@@ -408,7 +633,7 @@ async def check_environment_provider_conformance(
     elif run_smoke_cycle and not structural_passed:
         results.append(
             _result(
-                "smoke_cycle_skipped_due_to_structural_failure",
+                _catalog_check_name("smoke_cycle_skipped_due_to_structural_failure"),
                 False,
                 "run_smoke_cycle=True was requested, but a structural check failed first -- "
                 "never running a smoke cycle against a provider that isn't even a real "

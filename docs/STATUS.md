@@ -241,6 +241,207 @@ Scope note: this sheet ledgers WIP **inside this repository**. Cross-repository 
 `docs/ecosystem-standing.md`, same discipline, wider blast radius. Don't merge the two — a
 green row here says nothing about whether a consequence closes across the portfolio.
 
+## Pass 12 — GymAct Certified: close 8 real gaps found in the prior pass, respecting the paper's own "not yet" (2026-08-12)
+
+Prompted by `~/gymact/docs/2026-08-12-gymact-certification-and-ggen-from-sregym.md`
+(an explicit **paper-only** design proposal, "nothing in this document is
+implemented"). 5 parallel Explore agents + 3 parallel Plan agents (pragmatic-
+minimal / full-fidelity / scope-and-risk-first) were run first to ground a
+decision in real code rather than the paper's own framing. Finding that
+changed the plan's shape: the *existing* "GymAct Certified" implementation
+from the prior pass (Pass 10 and earlier this session) already violated the
+paper's own central finding -- it imported `gymact` in-process with no
+subprocess boundary, exactly the self-certification shape the paper rejects.
+Decision: adopt the pragmatic-minimal plan -- close the 8 real gaps found,
+explicitly do **not** build the full SREGym-specific profile/manifest system
+the paper sketches (per the paper's own conclusion: "the honest next step is
+not to build this -- it's to find a second real consumer").
+
+**standing: `PARTIAL_ALIVE`** -- structural checks real and tested; the
+independence checker is now subprocess-isolated (real progress, real,
+subprocess-proven this session) but identity-binding independence remains
+`UNKNOWN` (named explicitly, not claimed); evidence-chain fields remain
+`UNKNOWN`/unimplemented (named, not fabricated).
+
+### P1 -- independence violation (the paper's central finding, closed structurally)
+
+`gymact_certification_checker.py` imported `gymact.models`/`gymact.providers`
+in-process; `gymact` is an ordinary `pyproject.toml` dependency of
+autofde-lab; the checker was never subprocess-isolated and never checked
+against a `sys.modules` guard -- exactly the anti-pattern
+`standalone_verifier.py`'s own `FORBIDDEN_RUNTIME_MODULES`/
+`assert_no_runtime_imports()` pattern exists to prevent for Level 4.
+
+New `scripts/run_gymact_certification_check.py` -- a subprocess entrypoint
+that imports `gymact` only inside its own fresh interpreter. Real command
+run this session:
+
+```
+$ .venv/bin/python scripts/run_gymact_certification_check.py \
+    --module gymact.gyms.sregym --class SregymVendorProvider --gym-name sregym
+{
+  "error": null,
+  "manifest": {
+    "manifest_conformance_level_ref": "STRUCTURAL_ONLY",
+    "manifest_gym_name": "sregym",
+    "manifest_provider_class_ref": "gymact.gyms.sregym.SregymVendorProvider",
+    ...
+  },
+  "results": [ ... 2 real passing checks ... ]
+}
+```
+
+New `tests/reasoning/test_gymact_certification_process_isolation_chicago.py`
+(2 tests, real `subprocess.run([sys.executable, str(entrypoint), ...])`, no
+mocks) -- passes both inside the full suite and standalone; standalone run
+this session:
+
+```
+$ .venv/bin/python -m pytest tests/reasoning/test_gymact_certification_process_isolation_chicago.py -v
+tests/reasoning/test_gymact_certification_process_isolation_chicago.py . .   [100%]
+2 passed in 6.20s
+```
+
+Named limit, not silently overclaimed: this closes only the *structural*
+half of independence -- the checking process no longer needs `gymact`
+importable to trust its own result. It does not establish identity-binding
+independence; `standalone_verifier.py` itself was self-retracted in commit
+`7369e0ab` ("retract: the ALIVE reconstruction does not establish
+independent standing") for exactly that deeper gap, and this checker's
+manifest has the identical limitation -- nothing binds it to a specific
+real materialization event beyond the caller's own say-so. Documented
+explicitly in the checker's module docstring so this is not later
+mis-cited as full independence.
+
+### P2 -- dead `CERT_UNSUPPORTED` conformance level, now wired
+
+The ontology defined it; no code path ever assigned it (only
+`CERT_BUILD_BROKEN`/`SMOKE_TESTED`/`STRUCTURAL_ONLY` were ever produced).
+Fixed: a provider that does not satisfy `EnvironmentProvider` at all is now
+`CERT_UNSUPPORTED`; a provider that satisfies the Protocol but fails a later
+structural check (e.g. malformed `materialize` signature) is
+`CERT_BUILD_BROKEN` -- the two are no longer conflated. Two prior tests
+that asserted the old, conflated behavior were corrected (not silently
+overwritten -- their prior assertion is visible in the diff), and one new
+test (`test_protocol_conformant_but_malformed_provider_is_reported_cert_build_broken`)
+covers the real `CERT_BUILD_BROKEN` case directly.
+
+### P3 -- evidence fields, named `UNKNOWN`, never fabricated
+
+`EVIDENCE` severity, `resultEvidenceRef`, `manifestComputationReceiptRef`,
+`manifestIssuedAtRef` remain schema'd but unset -- a real receipt chain here
+would duplicate Level 4's OCEL/commitment machinery and is out of scope for
+this checker. Documented explicitly in the module docstring per
+`.claude/rules/standing-law.md`: `UNKNOWN`, not `ALIVE`, and never silently
+populated with a fabricated evidence identifier.
+
+### P4 -- real `CertificationCheck` catalog, previously unused type now constructed
+
+The ggen-generated `CertificationCheck` type existed but no code constructed
+one -- every `result_check_ref` was a bare string literal. Fixed: a real
+module-level catalog of 9 `CertificationCheck` instances backs every
+fixed-name check; `_catalog_check_name()` raises `KeyError` if a check name
+has no catalog entry, so a new check added without updating the catalog
+fails loudly. Per-method/per-attribute smoke checks are backed by
+`_dynamic_check()`, constructed per real required method/attribute name.
+
+### P5 -- sweep now supports the real smoke cycle (opt-in)
+
+`run_gymact_certification_sweep.py` previously only ever called
+`run_smoke_cycle=False`. Added an opt-in `--smoke` flag (default off --
+real side-effect risk). Real command run this session, first real
+`SMOKE_TESTED` result produced outside the test suite:
+
+```
+$ .venv/bin/python scripts/run_gymact_certification_check.py \
+    --module gymact.providers --class MemoryProvider --gym-name memory --smoke
+... manifest_conformance_level_ref: "SMOKE_TESTED"
+```
+
+The sweep script's per-provider loop was also rewired (as part of P1) to
+invoke the new subprocess entrypoint per provider rather than importing the
+checker in-process. Real structural sweep run this session, 18 real
+providers discovered under `gymact.gyms.*`, 16 `STRUCTURAL_ONLY` + 2
+`CONSTRUCTION_FAILED` (named honestly, not silently skipped) + real
+`gymact doctor`/`gymact validate-profile` native validation folded in
+(`standing: OBSERVED`, both real subprocess calls exit 0).
+
+Named residual, not hidden: `_discover_provider_classes()` still does
+`import gymact.gyms` directly in the sweep script's own process to
+enumerate providers -- documented in the sweep script's own docstring as a
+narrower, honestly-scoped independence property (the conformance *verdict*
+is subprocess-isolated; the *catalog of what to check* is still gathered
+in-process).
+
+### P7 -- `str`/`bool` type-hint imprecision, named not hidden
+
+`CertificationCheckResult.result_passed` is generated `str | None` (real
+ontology range is `xsd:boolean`) because the shared
+`templates/constitution_module.py.tera` has no `xsd:boolean` branch. Fixing
+the shared template is out of scope (affects every ggen-generated module in
+this repo). Named via a module-level `_BOOL_TYPE_HINT_QUIRK` marker string,
+referenced at the one real call site, in place of a bare `# type: ignore`.
+
+### P8 -- capability catalog drift (5 claimed vs. 14 real)
+
+`src/autofde_lab/fabric/gymact_capabilities.toml`'s header comment claimed
+exactly 5 real sregym capabilities exist and explicitly denied any
+jaeger/loki/prometheus capability exists -- both false as of this session;
+the real `gymact.gyms.sregym.SREGYM_CAPABILITIES` tuple has grown to 14 (9
+new: jaeger/loki/prometheus observability reads). Fixed the factual claim
+only -- the allowlist itself was deliberately **not** expanded (per the
+file's own "adding a capability is a deliberate, reviewed act" rule; 9 of
+the missing entries are real cluster-observability reads that deserve their
+own review). New
+`tests/fabric/test_gymact_capabilities_drift_chicago.py` (3 tests, real
+import of `gymact.gyms.sregym.SREGYM_CAPABILITIES`) makes this a real,
+checkable test instead of a comment that can go stale silently again.
+
+### Bonus -- low-cost partial evidence toward the paper's own open questions
+
+The paper's own "What we don't know" section asks (Q1) whether
+`terraform_docker_apply`/`multicloud` would want the same certification
+profile shape as sregym, and (Q2) whether per-gym granularity is right. The
+real structural sweep above already answers a first, cheap slice of both
+with zero new gym-specific code: `TerraformDockerApplyProvider` and
+`MulticloudProvider` were both discovered and structurally certified
+(`STRUCTURAL_ONLY`) by the existing, gym-agnostic checker in the same pass
+as sregym -- real evidence that Protocol-level certification is at least
+partially gym-agnostic in practice, without yet answering whether a
+*behavioral* profile (the paper's deeper ask) would look the same across
+gyms.
+
+### Explicitly deferred (name + why)
+
+- **Full SREGym-specific certification profile**
+  (`ontology/sregym-certification-profile.ttl`, new manifest schema,
+  6-digest-surface receipt) -- the full-fidelity plan design exists
+  (produced by a Plan agent this session) but is not built. Per the paper's
+  own conclusion: needs a second real consumer first.
+- **Deeper identity-binding independence** beyond process isolation --
+  `standalone_verifier.py`'s own self-retraction (`7369e0ab`) shows this is
+  a hard, still-open problem even for more mature code.
+- **Shared Tera template fix** for the `xsd:boolean` gap -- affects every
+  ggen consumer repo-wide, needs its own reviewed change.
+- **Expanding `gymact_capabilities.toml`'s allowlist** to the real 14 --
+  deliberate capability-surface growth, its own review.
+
+### Real verification, this session
+
+```
+$ grep -rn "unittest.mock\|Mock(\|MagicMock\|patch(\|monkeypatch" \
+    tests/reasoning/test_gymact_certification_checker_chicago.py \
+    tests/reasoning/test_gymact_certification_process_isolation_chicago.py \
+    tests/fabric/test_gymact_capabilities_drift_chicago.py
+(only docstring self-declarations match -- zero real mock usage)
+
+$ .venv/bin/python -m pytest \
+    tests/reasoning/test_gymact_certification_checker_chicago.py \
+    tests/reasoning/test_gymact_certification_process_isolation_chicago.py \
+    tests/fabric/test_gymact_capabilities_drift_chicago.py -v
+11 passed in 5.91s
+```
+
 ## Pass 11 — real merge sweep: PR #46 + 15 clean-mergeable open PRs merged to master, 4 conflicting PRs named and left open, no rebase (2026-08-12)
 
 Per direct instruction: `git add`/commit/push this session's own work on

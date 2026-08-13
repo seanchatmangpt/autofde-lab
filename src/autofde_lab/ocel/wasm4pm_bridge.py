@@ -24,7 +24,41 @@ commands were stub ``anyhow::bail!``s before this session's fix to
 
 ``wpm mining drift`` detects concept drift (windowed Jaccard + total-variation
 distance over consecutive trace windows, Bose/van der Aalst/Žliobaitė/
-Pechenizkiy 2011/2014); ``wpm mining predict-duration`` predicts remaining
+Pechenizkiy 2011/2014). **Named correction (2026-08-12, audited against the
+real cited paper and pm4py's public API this session):** the paper cited
+here -- "Handling Concept Drift in Process Mining" -- defines drift
+detection via a different, more specific pipeline: extract windowed
+features from the directly-follows relation (notably the *J-measure*, an
+information-theoretic measure of how well one activity predicts the next),
+then compare the feature *distributions* of adjacent windows with a
+non-parametric two-sample statistical test, most commonly the
+Kolmogorov-Smirnov (KS) test, flagging a drift point where the test
+statistic crosses a significance threshold. ``wpm mining drift``'s real,
+implemented method -- Jaccard distance (set overlap of trace-activity
+vocabulary between windows) plus total-variation distance -- is a related
+but **not identical** operationalization: it is inspired by the same
+windowed-distributional-shift idea the paper introduces, not a
+reproduction of the paper's own J-measure/KS-test pipeline. pm4py itself
+does not ship a first-class public concept-drift API to cross-check
+against directly (confirmed this session: no ``pm4py.discover_concept_drift``-
+style function exists in its current top-level API; this remains
+literature/plugin territory rather than a stable pm4py surface). Treat
+this citation as "same problem, different concrete method" -- not as a
+claim that ``wpm mining drift`` reproduces the cited paper's formula.
+
+**Update, same day**: ``~/wasm4pm`` now has a real, separate implementation
+of the paper's own method -- ``wpm mining drift --method ks-test`` (backed
+by ``detect_drift_ks_native``: real windowed J-measure feature extraction
+plus a real two-sample Kolmogorov-Smirnov test, Massey 1951 critical
+values). This Python bridge's :func:`detect_drift` has **not** been
+extended to call it -- the new CLI output uses a different table shape
+(``KS Statistic``/``Critical Value`` columns, no jaccard/tv/method
+columns) that :data:`_DRIFT_ROW` cannot parse, and no Python dataclass for
+the KS-test result exists here yet. Named as a real, bounded follow-up:
+wire a ``detect_drift_ks`` bridge function mirroring this one, with its
+own regex and result dataclass, rather than silently implying this
+function already exposes the real method.
+``wpm mining predict-duration`` predicts remaining
 case duration from a bucketed mean-remaining-time estimator. Both reuse
 ``wasm4pm``'s tested distance/windowing primitives directly rather than going
 through ``wasm4pm::prediction_drift::detect_drift`` /
@@ -126,6 +160,13 @@ class ConformanceReport:
 
 @dataclass(frozen=True)
 class DriftPoint:
+    """A real, windowed Jaccard/total-variation distributional-shift
+    signal -- inspired by, but not a reproduction of, Bose/van der
+    Aalst/Žliobaitė/Pechenizkiy's J-measure + Kolmogorov-Smirnov concept-drift
+    method. See the module docstring's 2026-08-12 correction for the exact
+    difference before citing this as "the" concept-drift detector from that
+    paper."""
+
     position: int
     jaccard_distance: float
     tv_distance: float

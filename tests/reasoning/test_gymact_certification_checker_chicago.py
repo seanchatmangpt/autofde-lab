@@ -24,7 +24,10 @@ from typing import Any
 
 from gymact.models import Capability, Consequence
 
-from autofde_lab.reasoning.gymact_certification_checker import check_environment_provider_conformance
+from autofde_lab.reasoning.gymact_certification_checker import (
+    _CERTIFICATION_CHECKS_BY_NAME,
+    check_environment_provider_conformance,
+)
 from autofde_lab.reasoning.gymact_certification_types import StandingValue
 
 
@@ -53,11 +56,22 @@ def test_real_sregym_vendor_provider_passes_every_structural_check() -> None:
     assert all(r.result_passed for r in results)
     assert any(r.result_check_ref == "provider_satisfies_environment_provider_protocol" for r in results)
     assert any(r.result_check_ref == "materialize_method_present" for r in results)
+    # Priority 4: every fixed-name result_check_ref is now backed by a real,
+    # declared CertificationCheck in the module's catalog -- not a bare
+    # string literal with no check definition behind it.
+    for result in results:
+        assert result.result_check_ref in _CERTIFICATION_CHECKS_BY_NAME
+        catalog_entry = _CERTIFICATION_CHECKS_BY_NAME[result.result_check_ref]
+        assert catalog_entry.check_description
+        assert catalog_entry.check_severity_ref in (StandingValue.STRUCTURAL.value, StandingValue.BEHAVIORAL.value)
 
 
-def test_non_conformant_object_is_reported_build_broken_never_a_fabricated_pass() -> None:
-    """A real, plain object satisfying none of the Protocol must be
-    reported honestly as CERT_BUILD_BROKEN, never coerced into a pass."""
+def test_non_conformant_object_is_reported_cert_unsupported_never_a_fabricated_pass() -> None:
+    """A real, plain object satisfying none of the Protocol at all must be
+    reported honestly as CERT_UNSUPPORTED (the wrong kind of object
+    entirely), never coerced into a pass and never conflated with
+    CERT_BUILD_BROKEN (a real EnvironmentProvider with a real broken
+    check -- see the next test)."""
 
     class _NotAProvider:
         pass
@@ -66,10 +80,46 @@ def test_non_conformant_object_is_reported_build_broken_never_a_fabricated_pass(
         check_environment_provider_conformance(_NotAProvider(), gym_name="not-a-real-gym", run_smoke_cycle=False)
     )
 
-    assert manifest.manifest_conformance_level_ref == StandingValue.CERT_BUILD_BROKEN.value
+    assert manifest.manifest_conformance_level_ref == StandingValue.CERT_UNSUPPORTED.value
     assert any(
         r.result_check_ref == "provider_satisfies_environment_provider_protocol" and r.result_passed is False
         for r in results
+    )
+
+
+class _ProtocolConformantButMalformedProvider:
+    """A real object that genuinely satisfies `EnvironmentProvider`'s
+    structural shape (the real, @runtime_checkable Protocol only checks
+    attribute/method presence, not signatures) but whose real
+    `materialize` signature is malformed -- the real, distinct case
+    `CERT_BUILD_BROKEN` exists for."""
+
+    def __init__(self) -> None:
+        self.name = "malformed-gym"
+        self.materialization_requires_authority = False
+
+    async def materialize(self, positional_arg: str) -> Any:  # missing keyword-only scenario/config
+        raise NotImplementedError
+
+
+def test_protocol_conformant_but_malformed_provider_is_reported_cert_build_broken() -> None:
+    """A real object that DOES satisfy EnvironmentProvider structurally but
+    fails a later structural check (materialize's real signature) is
+    CERT_BUILD_BROKEN, not CERT_UNSUPPORTED -- the two must not collapse
+    into one bucket."""
+    manifest, results = asyncio.run(
+        check_environment_provider_conformance(
+            _ProtocolConformantButMalformedProvider(), gym_name="malformed-gym", run_smoke_cycle=False
+        )
+    )
+
+    assert manifest.manifest_conformance_level_ref == StandingValue.CERT_BUILD_BROKEN.value
+    assert any(
+        r.result_check_ref == "provider_satisfies_environment_provider_protocol" and r.result_passed is True
+        for r in results
+    )
+    assert any(
+        r.result_check_ref == "materialize_method_present" and r.result_passed is False for r in results
     )
 
 
@@ -159,6 +209,28 @@ def test_smoke_cycle_is_skipped_when_structural_checks_already_failed() -> None:
     manifest, results = asyncio.run(
         check_environment_provider_conformance(
             _StructurallyBroken(), gym_name="broken-gym", run_smoke_cycle=True
+        )
+    )
+
+    assert manifest.manifest_conformance_level_ref == StandingValue.CERT_UNSUPPORTED.value
+    assert not any((r.result_check_ref or "").startswith("smoke_materialize") for r in results)
+    # This object fails the Protocol check itself (CERT_UNSUPPORTED), so the
+    # checker never even reaches the run_smoke_cycle branch that would emit
+    # "smoke_cycle_skipped_due_to_structural_failure" -- that check name is
+    # reserved for a real EnvironmentProvider whose *later* structural check
+    # (materialize signature) fails, see
+    # test_protocol_conformant_but_malformed_provider_is_reported_cert_build_broken.
+    assert not any(r.result_check_ref == "smoke_cycle_skipped_due_to_structural_failure" for r in results)
+
+
+def test_smoke_cycle_is_skipped_when_a_conformant_provider_has_a_malformed_materialize() -> None:
+    """The real `smoke_cycle_skipped_due_to_structural_failure` path: a
+    provider that DOES satisfy EnvironmentProvider but fails the later
+    materialize-signature check must still skip the smoke cycle, reported
+    as CERT_BUILD_BROKEN (not CERT_UNSUPPORTED)."""
+    manifest, results = asyncio.run(
+        check_environment_provider_conformance(
+            _ProtocolConformantButMalformedProvider(), gym_name="malformed-gym", run_smoke_cycle=True
         )
     )
 

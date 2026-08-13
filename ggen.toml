@@ -19,6 +19,12 @@ imports = [
     "ontology/world-transformation-taxonomy.ttl",
     "ontology/togaf-artifacts.ttl",
     "ontology/gymact-certification.ttl",
+    "ontology/public-ontology-admission.ttl",
+    "ontology/vendor/public-semantic-sources/prov-o.ttl",
+    "ontology/vendor/public-semantic-sources/org.ttl",
+    "ontology/vendor/public-semantic-sources/dcat-3.ttl",
+    "ontology/vendor/public-semantic-sources/dqv.ttl",
+    "ontology/vendor/public-semantic-sources/shacl.ttl",
 ]
 base_iri = "urn:autofde-lab:"
 
@@ -31,6 +37,46 @@ dcterms = "http://purl.org/dc/terms/"
 prov = "http://www.w3.org/ns/prov#"
 skos = "http://www.w3.org/2004/02/skos/core#"
 xsd = "http://www.w3.org/2001/XMLSchema#"
+
+[[inference.rules]]
+name = "ingest-vendored-public-ontology-classes"
+description = "Mechanically walks every real owl:Class/rdfs:Class in the vendored PROV-O/ORG/DCAT-3/DQV/SHACL bytes (fetched for real via ggen-marketplace's materialize.py, see ontology/public-ontology-admission.ttl's grounding note) and constructs pa:AdmittedClass individuals -- replaces hand-picked subsets with complete, receipted ingestion. Kept in sync with queries/public-ontology-admission/ingest_vendored_classes.rq (same text, kept on disk too for readability/review)."
+order = 0
+construct = """
+PREFIX pa: <http://seanchatmangpt.github.io/packs/public-ontology-admission#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+CONSTRUCT {
+  ?admittedClass a pa:AdmittedClass ;
+    pa:belongsTo ?authority ;
+    pa:className ?localName ;
+    pa:classIri ?classIriStr ;
+    pa:classComment ?comment .
+}
+WHERE {
+  { ?class a owl:Class } UNION { ?class a rdfs:Class }
+  FILTER(isIRI(?class))
+
+  VALUES (?nsPrefix ?authority ?authId) {
+    ("http://www.w3.org/ns/prov#" pa:authority_provo "prov-o")
+    ("http://www.w3.org/ns/org#" pa:authority_org "org")
+    ("http://www.w3.org/ns/dcat#" pa:authority_dcat3 "dcat3")
+    ("http://www.w3.org/ns/dqv#" pa:authority_dqv "dqv")
+    ("http://www.w3.org/ns/shacl#" pa:authority_shacl "shacl")
+  }
+  FILTER(STRSTARTS(STR(?class), ?nsPrefix))
+
+  BIND(STR(?class) AS ?classIriStr)
+  BIND(STRAFTER(?classIriStr, "#") AS ?localName)
+  OPTIONAL {
+    ?class rdfs:comment ?rawComment .
+    FILTER(LANG(?rawComment) = "en" || LANG(?rawComment) = "")
+  }
+  BIND(COALESCE(?rawComment, "") AS ?comment)
+  BIND(IRI(CONCAT("http://seanchatmangpt.github.io/packs/public-ontology-admission#class_", ?authId, "_", LCASE(?localName))) AS ?admittedClass)
+}
+ORDER BY ?class
+"""
 
 [generation]
 output_dir = "."
@@ -118,6 +164,20 @@ query = { file = "queries/gymact-certification/manifest.rq" }
 template = { file = "templates/constitution_module.py.tera" }
 output_file = "src/autofde_lab/reasoning/gymact_certification_types.py"
 mode = "Create"
+
+[[generation.rules]]
+name = "public-ontology-admission"
+query = { file = "queries/public-ontology-admission/admission.rq" }
+template = { file = "templates/public_ontology_admission_module.py.tera" }
+output_file = "src/autofde_lab/semantics/admission.py"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "public-ontology-admission-test"
+query = { file = "queries/public-ontology-admission/admission.rq" }
+template = { file = "templates/public_ontology_admission_test.py.tera" }
+output_file = "tests/semantics/test_admission_generated.py"
+mode = "Overwrite"
 
 [sync]
 enabled = true

@@ -32,6 +32,31 @@ Identity is explicit or it does not exist (`.claude/rules/no-dual-bookkeeping.md
 `intended_traces_by_object_id` is keyed by real object id, never inferred
 from `object_type` alone -- two objects of the same type can have
 different intended traces, and this module never assumes otherwise.
+
+Named correction against the real academic definition (2026-08-12, audited
+this session): "object-centric conformance" as a named term in the real
+process-mining literature -- van der Aalst & Berti, "Discovering
+Object-centric Petri Nets" (Fundamenta Informaticae 175(1-4), 2020,
+arXiv:2010.02047), and its more rigorous extension, Adams et al.,
+"Object-Centric Conformance Alignments with Synchronization"
+(arXiv:2312.08537) -- means something stronger than per-object edit
+distance: **per-object-type token-based replay (or alignment) against a
+discovered object-centric Petri net, PLUS explicit checking of
+event-to-object relationship cardinalities** (e.g. does an activity
+consume exactly one order and one-or-many items, matching the model's
+declared cardinality). That per-object-type-replay-plus-cardinality-check
+notion is what real tools compute (confirmed this session: `~/gymact`
+independently ran `pm4py.discover_oc_petri_net` -- a real, live
+implementation of the 2020 paper above -- against a real gymact OCEL
+fixture and recovered real per-object-type Petri nets, per
+`~/gymact/docs/2026-08-12-gymact-ocel-analysis-implementation-plan-part2.md`).
+This module's per-object Levenshtein edit distance is a deliberately
+simpler, real, useful heuristic -- it genuinely catches the crossed-link
+gap named above -- but it is not an implementation of the real academic
+"object-centric conformance" definition, and never claims cardinality
+correctness the way a real OCPN-replay/alignment check would. Named here
+so this module's plain-English name doesn't stand in for the stronger,
+differently-defined term from the literature.
 """
 
 from __future__ import annotations
