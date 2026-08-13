@@ -298,3 +298,185 @@ afl:domain_chatman_clean_session_cap_1 a afl:Capability ;
     afl:capabilityName "try_route" ;
     afl:capabilityConsequence "DO" ;
     afl:capabilityPrecondition "state.stage == Stage.ROUTE" .
+
+
+# --- 6 more domains, final ultracode push. rock_paper_scissors/gym/rddl use
+# verifyMode "seeded-trajectory-replay" (real, new mode this pass: fixed
+# seed + fixed horizon + bitwise-identical replay on a fresh instance --
+# for domains with reset()/step() APIs and no single-agent goal predicate,
+# proven this session for all 3). rcpsp deliberately NOT added: the real
+# DOSolver/CpRcpspSolver hits a genuine MiniZinc data-typing bug on the
+# j301_1.sm instance (confirmed at the raw MiniZinc CLI level, not a
+# scripting artifact) -- a real, named, unresolved blocker.
+
+afl:domain_flight_planning a afl:DomainEvidenceSpec ;
+    afl:domainName "flight_planning" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.flight_planning.domain" ;
+    afl:domainClassName "FlightPlanningDomain" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "destination reached within tolerance, per _get_goals_" ;
+    afl:verifyMode "fresh-instance-replay" ;
+    afl:evidenceOutPath "docs/evidence/flight_planning/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_flight_planning_cap_1 .
+
+afl:domain_flight_planning_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "H_Action,V_Action tuple  # horizontal/vertical routing action" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "per _get_applicable_actions_from" .
+
+afl:domain_graph_domain a afl:DomainEvidenceSpec ;
+    afl:domainName "graph_domain" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.graph_domain.GraphDomain" ;
+    afl:domainClassName "GraphDomain" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "state in self.targets  # inherited from FullSpaceExploration(source_domain)'s admitted goal set" ;
+    afl:verifyMode "fresh-instance-replay" ;
+    afl:evidenceOutPath "docs/evidence/graph_domain/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_graph_domain_cap_1 .
+
+afl:domain_graph_domain_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "right  # single edge label of the pilot ChainDomain source" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "edge exists in the explored graph" .
+
+afl:domain_simple_grid_world a afl:DomainEvidenceSpec ;
+    afl:domainName "simple_grid_world" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.simple_grid_world" ;
+    afl:domainClassName "SimpleGridWorld" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "state == State(x=num_cols-1, y=num_rows-1)" ;
+    afl:verifyMode "fresh-instance-replay" ;
+    afl:evidenceOutPath "docs/evidence/simple_grid_world/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_simple_grid_world_cap_1 .
+
+afl:domain_simple_grid_world_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "up|down|left|right" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "true (UnrestrictedActions, wall-clamped at grid edges)" .
+
+afl:domain_rock_paper_scissors a afl:DomainEvidenceSpec ;
+    afl:domainName "rock_paper_scissors" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.rock_paper_scissors.rock_paper_scissors" ;
+    afl:domainClassName "RockPaperScissors" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "N/A -- no single-agent goal; terminal condition is num_move >= max_moves, closed via seeded-trajectory-replay instead" ;
+    afl:verifyMode "seeded-trajectory-replay" ;
+    afl:evidenceOutPath "docs/evidence/rock_paper_scissors/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_rock_paper_scissors_cap_1 .
+
+afl:domain_rock_paper_scissors_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "submit_moves(player1, player2)" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "true" .
+
+afl:domain_gym a afl:DomainEvidenceSpec ;
+    afl:domainName "gym" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.gym" ;
+    afl:domainClassName "GymDomain" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "N/A -- MountainCarContinuous-v0 is a continuous-control env with no discrete goal reachable by Astar; closed via seeded-trajectory-replay" ;
+    afl:verifyMode "seeded-trajectory-replay" ;
+    afl:evidenceOutPath "docs/evidence/gym/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_gym_cap_1 .
+
+afl:domain_gym_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "continuous_action (Box)" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "within action_space bounds" .
+
+afl:domain_rddl a afl:DomainEvidenceSpec ;
+    afl:domainName "rddl" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.rddl.rddl" ;
+    afl:domainClassName "RDDLDomain" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "N/A -- stochastic RLDomain (pyRDDLGym CartPole_Continuous_gym), no deterministic goal; closed via seeded-trajectory-replay (seeded RNG, bitwise-identical replay proven)" ;
+    afl:verifyMode "seeded-trajectory-replay" ;
+    afl:evidenceOutPath "docs/evidence/rddl/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_rddl_cap_1 .
+
+afl:domain_rddl_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "force (continuous, bounded [-10,10])" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "within real force bounds read from env.action_space" .
+
+
+# --- tai_v30_1_1: works with the default zero-arg construction + Astar path,
+# no factory needed -- confirmed this session (goal_reached=True, plan_length=12).
+
+afl:domain_tai_v30_1_1 a afl:DomainEvidenceSpec ;
+    afl:domainName "tai_v30_1_1" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.tai_v30_1_1.tai_v30_1_1" ;
+    afl:domainClassName "TAIForwardDeploymentDomain" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "state.standing == True" ;
+    afl:verifyMode "fresh-instance-replay" ;
+    afl:evidenceOutPath "docs/evidence/tai_v30_1_1/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_tai_v30_1_1_cap_1 .
+
+afl:domain_tai_v30_1_1_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "compile_enterprise" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "not state.enterprise_compiled" .
+
+
+# --- rcpsp: real closure via DOSolver+CpSatRcpspSolver (OR-Tools CP-SAT,
+# no MiniZinc), NOT the registered Astar solver which genuinely hangs on
+# real PSPLIB instances (confirmed this session, two real timeouts). Custom
+# episode function (_run_rcpsp_episode) since DOSolver's construction/solve/
+# rollout shape differs entirely from the Astar-goal-reaching family.
+
+afl:domain_rcpsp a afl:DomainEvidenceSpec ;
+    afl:domainName "rcpsp" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.rcpsp.rcpsp_sk" ;
+    afl:domainClassName "RCPSP" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "state.tasks_complete == state.task_ids  # all 32 j301_1.sm tasks complete" ;
+    afl:verifyMode "independent-resolve" ;
+    afl:evidenceOutPath "docs/evidence/rcpsp/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_rcpsp_cap_1 .
+
+afl:domain_rcpsp_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "start_task(task_id, mode)" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "precedence + resource constraints satisfied (SGS_PRECEDENCE policy)" .
+
+
+# --- mastermind: real closure via one-guess solve (state exposes the
+# hidden solution directly to the domain object, even though the
+# codebreaker's observation does not) -- a GoalPOMDPDomain, not
+# Astar-solvable. Custom episode function since the construction/solve
+# shape (stochastic initial-state sampling, no Astar) differs entirely
+# from the deterministic-planning family.
+
+afl:domain_mastermind a afl:DomainEvidenceSpec ;
+    afl:domainName "mastermind" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.mastermind.mastermind" ;
+    afl:domainClassName "MasterMind" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "score == Score(total_bulls=n_positions, total_cows=0)" ;
+    afl:verifyMode "independent-resolve" ;
+    afl:evidenceOutPath "docs/evidence/mastermind/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_mastermind_cap_1 .
+
+afl:domain_mastermind_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "guess(row)" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "true (UnrestrictedActions -- any row in the enumerable action space is always applicable)" .

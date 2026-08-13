@@ -1,0 +1,643 @@
+{
+  "eventTypes": [
+    {
+      "attributes": [
+        {
+          "name": "plan_length",
+          "type": "integer"
+        },
+        {
+          "name": "standing",
+          "type": "string"
+        }
+      ],
+      "name": "materialize"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "type": "string"
+        },
+        {
+          "name": "step_index",
+          "type": "integer"
+        }
+      ],
+      "name": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "goal_reached",
+          "type": "boolean"
+        },
+        {
+          "name": "standing",
+          "type": "string"
+        },
+        {
+          "name": "verify_mode",
+          "type": "string"
+        }
+      ],
+      "name": "verify"
+    },
+    {
+      "attributes": [
+        {
+          "name": "standing",
+          "type": "string"
+        }
+      ],
+      "name": "teardown"
+    }
+  ],
+  "events": [
+    {
+      "attributes": [
+        {
+          "name": "standing",
+          "value": "ALIVE"
+        },
+        {
+          "name": "plan_length",
+          "value": 19
+        }
+      ],
+      "id": "ev:materialize",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:42.424416000Z",
+      "type": "materialize"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.straight: 0>, <V_Action.climb: 1>)"
+        },
+        {
+          "name": "step_index",
+          "value": 0
+        }
+      ],
+      "id": "ev:act:0",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031107000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.right: 1>, <V_Action.climb: 1>)"
+        },
+        {
+          "name": "step_index",
+          "value": 1
+        }
+      ],
+      "id": "ev:act:1",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031127000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.right: 1>, <V_Action.climb: 1>)"
+        },
+        {
+          "name": "step_index",
+          "value": 2
+        }
+      ],
+      "id": "ev:act:2",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031138000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.right: 1>, <V_Action.climb: 1>)"
+        },
+        {
+          "name": "step_index",
+          "value": 3
+        }
+      ],
+      "id": "ev:act:3",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031146000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.straight: 0>, <V_Action.cruise: 0>)"
+        },
+        {
+          "name": "step_index",
+          "value": 4
+        }
+      ],
+      "id": "ev:act:4",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031152000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.straight: 0>, <V_Action.cruise: 0>)"
+        },
+        {
+          "name": "step_index",
+          "value": 5
+        }
+      ],
+      "id": "ev:act:5",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031159000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.straight: 0>, <V_Action.cruise: 0>)"
+        },
+        {
+          "name": "step_index",
+          "value": 6
+        }
+      ],
+      "id": "ev:act:6",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031165000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.straight: 0>, <V_Action.cruise: 0>)"
+        },
+        {
+          "name": "step_index",
+          "value": 7
+        }
+      ],
+      "id": "ev:act:7",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031170000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.straight: 0>, <V_Action.cruise: 0>)"
+        },
+        {
+          "name": "step_index",
+          "value": 8
+        }
+      ],
+      "id": "ev:act:8",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031176000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.straight: 0>, <V_Action.cruise: 0>)"
+        },
+        {
+          "name": "step_index",
+          "value": 9
+        }
+      ],
+      "id": "ev:act:9",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031182000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.straight: 0>, <V_Action.cruise: 0>)"
+        },
+        {
+          "name": "step_index",
+          "value": 10
+        }
+      ],
+      "id": "ev:act:10",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031187000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.straight: 0>, <V_Action.cruise: 0>)"
+        },
+        {
+          "name": "step_index",
+          "value": 11
+        }
+      ],
+      "id": "ev:act:11",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031193000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.straight: 0>, <V_Action.cruise: 0>)"
+        },
+        {
+          "name": "step_index",
+          "value": 12
+        }
+      ],
+      "id": "ev:act:12",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031199000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.straight: 0>, <V_Action.cruise: 0>)"
+        },
+        {
+          "name": "step_index",
+          "value": 13
+        }
+      ],
+      "id": "ev:act:13",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031205000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.left: -1>, <V_Action.descent: -1>)"
+        },
+        {
+          "name": "step_index",
+          "value": 14
+        }
+      ],
+      "id": "ev:act:14",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031211000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.left: -1>, <V_Action.descent: -1>)"
+        },
+        {
+          "name": "step_index",
+          "value": 15
+        }
+      ],
+      "id": "ev:act:15",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031217000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.left: -1>, <V_Action.descent: -1>)"
+        },
+        {
+          "name": "step_index",
+          "value": 16
+        }
+      ],
+      "id": "ev:act:16",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031222000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.straight: 0>, <V_Action.descent: -1>)"
+        },
+        {
+          "name": "step_index",
+          "value": 17
+        }
+      ],
+      "id": "ev:act:17",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031228000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "(<H_Action.straight: 0>, <V_Action.descent: -1>)"
+        },
+        {
+          "name": "step_index",
+          "value": 18
+        }
+      ],
+      "id": "ev:act:18",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.031234000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "standing",
+          "value": "ALIVE"
+        },
+        {
+          "name": "goal_reached",
+          "value": true
+        },
+        {
+          "name": "verify_mode",
+          "value": "fresh-instance-replay"
+        }
+      ],
+      "id": "ev:verify",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.336465000Z",
+      "type": "verify"
+    },
+    {
+      "attributes": [
+        {
+          "name": "standing",
+          "value": "ALIVE"
+        }
+      ],
+      "id": "ev:teardown",
+      "relationships": [
+        {
+          "objectId": "episode:flight_planning",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:flight_planning",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:43.336488000Z",
+      "type": "teardown"
+    }
+  ],
+  "objectTypes": [
+    {
+      "attributes": [],
+      "name": "episode"
+    },
+    {
+      "attributes": [
+        {
+          "name": "domain_class",
+          "type": "string"
+        }
+      ],
+      "name": "domain"
+    }
+  ],
+  "objects": [
+    {
+      "attributes": [],
+      "id": "episode:flight_planning",
+      "relationships": [],
+      "type": "episode"
+    },
+    {
+      "attributes": [
+        {
+          "name": "domain_class",
+          "time": "1970-01-01T00:00:00.000000000Z",
+          "value": "FlightPlanningDomain"
+        }
+      ],
+      "id": "domain:flight_planning",
+      "relationships": [],
+      "type": "domain"
+    }
+  ]
+}

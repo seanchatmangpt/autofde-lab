@@ -16,10 +16,6 @@
     {
       "attributes": [
         {
-          "name": "action_id",
-          "type": "string"
-        },
-        {
           "name": "step_index",
           "type": "integer"
         }
@@ -62,29 +58,25 @@
         },
         {
           "name": "plan_length",
-          "value": 58
+          "value": 75
         }
       ],
       "id": "ev:materialize",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.893848000Z",
+      "time": "2026-08-13T18:08:48.095230000Z",
       "type": "materialize"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 0
@@ -93,23 +85,19 @@
       "id": "ev:act:0",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.917911000Z",
+      "time": "2026-08-13T18:08:48.323727000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.right"
-        },
         {
           "name": "step_index",
           "value": 1
@@ -118,23 +106,19 @@
       "id": "ev:act:1",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.917927000Z",
+      "time": "2026-08-13T18:08:48.323739000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.right"
-        },
         {
           "name": "step_index",
           "value": 2
@@ -143,23 +127,19 @@
       "id": "ev:act:2",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.917935000Z",
+      "time": "2026-08-13T18:08:48.323746000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.right"
-        },
         {
           "name": "step_index",
           "value": 3
@@ -168,23 +148,19 @@
       "id": "ev:act:3",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.917941000Z",
+      "time": "2026-08-13T18:08:48.323751000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.right"
-        },
         {
           "name": "step_index",
           "value": 4
@@ -193,23 +169,19 @@
       "id": "ev:act:4",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.917947000Z",
+      "time": "2026-08-13T18:08:48.323756000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.right"
-        },
         {
           "name": "step_index",
           "value": 5
@@ -218,23 +190,19 @@
       "id": "ev:act:5",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.917953000Z",
+      "time": "2026-08-13T18:08:48.323761000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.right"
-        },
         {
           "name": "step_index",
           "value": 6
@@ -243,23 +211,19 @@
       "id": "ev:act:6",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.917958000Z",
+      "time": "2026-08-13T18:08:48.323765000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.right"
-        },
         {
           "name": "step_index",
           "value": 7
@@ -268,23 +232,19 @@
       "id": "ev:act:7",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.917963000Z",
+      "time": "2026-08-13T18:08:48.323769000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.right"
-        },
         {
           "name": "step_index",
           "value": 8
@@ -293,23 +253,19 @@
       "id": "ev:act:8",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.917968000Z",
+      "time": "2026-08-13T18:08:48.323773000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 9
@@ -318,23 +274,19 @@
       "id": "ev:act:9",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.917973000Z",
+      "time": "2026-08-13T18:08:48.323777000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 10
@@ -343,23 +295,19 @@
       "id": "ev:act:10",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.917978000Z",
+      "time": "2026-08-13T18:08:48.323781000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 11
@@ -368,23 +316,19 @@
       "id": "ev:act:11",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.917984000Z",
+      "time": "2026-08-13T18:08:48.323788000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 12
@@ -393,23 +337,19 @@
       "id": "ev:act:12",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.917989000Z",
+      "time": "2026-08-13T18:08:48.323792000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 13
@@ -418,23 +358,19 @@
       "id": "ev:act:13",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.917994000Z",
+      "time": "2026-08-13T18:08:48.323796000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 14
@@ -443,23 +379,19 @@
       "id": "ev:act:14",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.917999000Z",
+      "time": "2026-08-13T18:08:48.323801000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.right"
-        },
         {
           "name": "step_index",
           "value": 15
@@ -468,23 +400,19 @@
       "id": "ev:act:15",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918004000Z",
+      "time": "2026-08-13T18:08:48.323805000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.right"
-        },
         {
           "name": "step_index",
           "value": 16
@@ -493,23 +421,19 @@
       "id": "ev:act:16",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918008000Z",
+      "time": "2026-08-13T18:08:48.323809000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 17
@@ -518,23 +442,19 @@
       "id": "ev:act:17",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918013000Z",
+      "time": "2026-08-13T18:08:48.323813000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 18
@@ -543,23 +463,19 @@
       "id": "ev:act:18",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918018000Z",
+      "time": "2026-08-13T18:08:48.323817000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 19
@@ -568,23 +484,19 @@
       "id": "ev:act:19",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918023000Z",
+      "time": "2026-08-13T18:08:48.323823000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 20
@@ -593,23 +505,19 @@
       "id": "ev:act:20",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918028000Z",
+      "time": "2026-08-13T18:08:48.323827000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.left"
-        },
         {
           "name": "step_index",
           "value": 21
@@ -618,23 +526,19 @@
       "id": "ev:act:21",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918033000Z",
+      "time": "2026-08-13T18:08:48.323831000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.left"
-        },
         {
           "name": "step_index",
           "value": 22
@@ -643,23 +547,19 @@
       "id": "ev:act:22",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918038000Z",
+      "time": "2026-08-13T18:08:48.323835000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.left"
-        },
         {
           "name": "step_index",
           "value": 23
@@ -668,23 +568,19 @@
       "id": "ev:act:23",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918043000Z",
+      "time": "2026-08-13T18:08:48.323839000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.left"
-        },
         {
           "name": "step_index",
           "value": 24
@@ -693,23 +589,19 @@
       "id": "ev:act:24",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918048000Z",
+      "time": "2026-08-13T18:08:48.323844000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.left"
-        },
         {
           "name": "step_index",
           "value": 25
@@ -718,23 +610,19 @@
       "id": "ev:act:25",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918053000Z",
+      "time": "2026-08-13T18:08:48.323848000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.left"
-        },
         {
           "name": "step_index",
           "value": 26
@@ -743,23 +631,19 @@
       "id": "ev:act:26",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918058000Z",
+      "time": "2026-08-13T18:08:48.323852000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 27
@@ -768,23 +652,19 @@
       "id": "ev:act:27",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918063000Z",
+      "time": "2026-08-13T18:08:48.323856000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 28
@@ -793,23 +673,19 @@
       "id": "ev:act:28",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918068000Z",
+      "time": "2026-08-13T18:08:48.323860000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.left"
-        },
         {
           "name": "step_index",
           "value": 29
@@ -818,23 +694,19 @@
       "id": "ev:act:29",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918073000Z",
+      "time": "2026-08-13T18:08:48.323864000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.left"
-        },
         {
           "name": "step_index",
           "value": 30
@@ -843,23 +715,19 @@
       "id": "ev:act:30",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918078000Z",
+      "time": "2026-08-13T18:08:48.323869000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.left"
-        },
         {
           "name": "step_index",
           "value": 31
@@ -868,23 +736,19 @@
       "id": "ev:act:31",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918083000Z",
+      "time": "2026-08-13T18:08:48.323873000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.left"
-        },
         {
           "name": "step_index",
           "value": 32
@@ -893,23 +757,19 @@
       "id": "ev:act:32",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918088000Z",
+      "time": "2026-08-13T18:08:48.323877000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.up"
-        },
         {
           "name": "step_index",
           "value": 33
@@ -918,23 +778,19 @@
       "id": "ev:act:33",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918094000Z",
+      "time": "2026-08-13T18:08:48.323881000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.up"
-        },
         {
           "name": "step_index",
           "value": 34
@@ -943,23 +799,19 @@
       "id": "ev:act:34",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918099000Z",
+      "time": "2026-08-13T18:08:48.323885000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.left"
-        },
         {
           "name": "step_index",
           "value": 35
@@ -968,23 +820,19 @@
       "id": "ev:act:35",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918104000Z",
+      "time": "2026-08-13T18:08:48.323889000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.left"
-        },
         {
           "name": "step_index",
           "value": 36
@@ -993,23 +841,19 @@
       "id": "ev:act:36",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918109000Z",
+      "time": "2026-08-13T18:08:48.323894000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.left"
-        },
         {
           "name": "step_index",
           "value": 37
@@ -1018,23 +862,19 @@
       "id": "ev:act:37",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918114000Z",
+      "time": "2026-08-13T18:08:48.323898000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.left"
-        },
         {
           "name": "step_index",
           "value": 38
@@ -1043,23 +883,19 @@
       "id": "ev:act:38",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918119000Z",
+      "time": "2026-08-13T18:08:48.323902000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 39
@@ -1068,23 +904,19 @@
       "id": "ev:act:39",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918124000Z",
+      "time": "2026-08-13T18:08:48.323906000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 40
@@ -1093,23 +925,19 @@
       "id": "ev:act:40",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918129000Z",
+      "time": "2026-08-13T18:08:48.323911000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.right"
-        },
         {
           "name": "step_index",
           "value": 41
@@ -1118,23 +946,19 @@
       "id": "ev:act:41",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918134000Z",
+      "time": "2026-08-13T18:08:48.323915000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.right"
-        },
         {
           "name": "step_index",
           "value": 42
@@ -1143,23 +967,19 @@
       "id": "ev:act:42",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918139000Z",
+      "time": "2026-08-13T18:08:48.323919000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 43
@@ -1168,23 +988,19 @@
       "id": "ev:act:43",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918144000Z",
+      "time": "2026-08-13T18:08:48.323923000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 44
@@ -1193,23 +1009,19 @@
       "id": "ev:act:44",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918149000Z",
+      "time": "2026-08-13T18:08:48.323927000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 45
@@ -1218,23 +1030,19 @@
       "id": "ev:act:45",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918154000Z",
+      "time": "2026-08-13T18:08:48.323932000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 46
@@ -1243,23 +1051,19 @@
       "id": "ev:act:46",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918159000Z",
+      "time": "2026-08-13T18:08:48.323936000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.left"
-        },
         {
           "name": "step_index",
           "value": 47
@@ -1268,23 +1072,19 @@
       "id": "ev:act:47",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918164000Z",
+      "time": "2026-08-13T18:08:48.323940000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.left"
-        },
         {
           "name": "step_index",
           "value": 48
@@ -1293,23 +1093,19 @@
       "id": "ev:act:48",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918169000Z",
+      "time": "2026-08-13T18:08:48.323945000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 49
@@ -1318,23 +1114,19 @@
       "id": "ev:act:49",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918174000Z",
+      "time": "2026-08-13T18:08:48.323949000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 50
@@ -1343,23 +1135,19 @@
       "id": "ev:act:50",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918181000Z",
+      "time": "2026-08-13T18:08:48.323953000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.right"
-        },
         {
           "name": "step_index",
           "value": 51
@@ -1368,23 +1156,19 @@
       "id": "ev:act:51",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918197000Z",
+      "time": "2026-08-13T18:08:48.323957000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.right"
-        },
         {
           "name": "step_index",
           "value": 52
@@ -1393,23 +1177,19 @@
       "id": "ev:act:52",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918203000Z",
+      "time": "2026-08-13T18:08:48.323962000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.right"
-        },
         {
           "name": "step_index",
           "value": 53
@@ -1418,23 +1198,19 @@
       "id": "ev:act:53",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918208000Z",
+      "time": "2026-08-13T18:08:48.323966000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.right"
-        },
         {
           "name": "step_index",
           "value": 54
@@ -1443,23 +1219,19 @@
       "id": "ev:act:54",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918213000Z",
+      "time": "2026-08-13T18:08:48.323970000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.right"
-        },
         {
           "name": "step_index",
           "value": 55
@@ -1468,23 +1240,19 @@
       "id": "ev:act:55",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918219000Z",
+      "time": "2026-08-13T18:08:48.323974000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.right"
-        },
         {
           "name": "step_index",
           "value": 56
@@ -1493,23 +1261,19 @@
       "id": "ev:act:56",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918224000Z",
+      "time": "2026-08-13T18:08:48.323979000Z",
       "type": "act"
     },
     {
       "attributes": [
-        {
-          "name": "action_id",
-          "value": "Action.down"
-        },
         {
           "name": "step_index",
           "value": 57
@@ -1518,15 +1282,372 @@
       "id": "ev:act:57",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918229000Z",
+      "time": "2026-08-13T18:08:48.323983000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "step_index",
+          "value": 58
+        }
+      ],
+      "id": "ev:act:58",
+      "relationships": [
+        {
+          "objectId": "episode:rcpsp",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:rcpsp",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:48.323987000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "step_index",
+          "value": 59
+        }
+      ],
+      "id": "ev:act:59",
+      "relationships": [
+        {
+          "objectId": "episode:rcpsp",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:rcpsp",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:48.323992000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "step_index",
+          "value": 60
+        }
+      ],
+      "id": "ev:act:60",
+      "relationships": [
+        {
+          "objectId": "episode:rcpsp",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:rcpsp",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:48.323996000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "step_index",
+          "value": 61
+        }
+      ],
+      "id": "ev:act:61",
+      "relationships": [
+        {
+          "objectId": "episode:rcpsp",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:rcpsp",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:48.324000000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "step_index",
+          "value": 62
+        }
+      ],
+      "id": "ev:act:62",
+      "relationships": [
+        {
+          "objectId": "episode:rcpsp",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:rcpsp",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:48.324005000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "step_index",
+          "value": 63
+        }
+      ],
+      "id": "ev:act:63",
+      "relationships": [
+        {
+          "objectId": "episode:rcpsp",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:rcpsp",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:48.324009000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "step_index",
+          "value": 64
+        }
+      ],
+      "id": "ev:act:64",
+      "relationships": [
+        {
+          "objectId": "episode:rcpsp",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:rcpsp",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:48.324013000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "step_index",
+          "value": 65
+        }
+      ],
+      "id": "ev:act:65",
+      "relationships": [
+        {
+          "objectId": "episode:rcpsp",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:rcpsp",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:48.324018000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "step_index",
+          "value": 66
+        }
+      ],
+      "id": "ev:act:66",
+      "relationships": [
+        {
+          "objectId": "episode:rcpsp",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:rcpsp",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:48.324022000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "step_index",
+          "value": 67
+        }
+      ],
+      "id": "ev:act:67",
+      "relationships": [
+        {
+          "objectId": "episode:rcpsp",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:rcpsp",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:48.324026000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "step_index",
+          "value": 68
+        }
+      ],
+      "id": "ev:act:68",
+      "relationships": [
+        {
+          "objectId": "episode:rcpsp",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:rcpsp",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:48.324030000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "step_index",
+          "value": 69
+        }
+      ],
+      "id": "ev:act:69",
+      "relationships": [
+        {
+          "objectId": "episode:rcpsp",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:rcpsp",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:48.324035000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "step_index",
+          "value": 70
+        }
+      ],
+      "id": "ev:act:70",
+      "relationships": [
+        {
+          "objectId": "episode:rcpsp",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:rcpsp",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:48.324040000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "step_index",
+          "value": 71
+        }
+      ],
+      "id": "ev:act:71",
+      "relationships": [
+        {
+          "objectId": "episode:rcpsp",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:rcpsp",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:48.324045000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "step_index",
+          "value": 72
+        }
+      ],
+      "id": "ev:act:72",
+      "relationships": [
+        {
+          "objectId": "episode:rcpsp",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:rcpsp",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:48.324049000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "step_index",
+          "value": 73
+        }
+      ],
+      "id": "ev:act:73",
+      "relationships": [
+        {
+          "objectId": "episode:rcpsp",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:rcpsp",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:48.324053000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "step_index",
+          "value": 74
+        }
+      ],
+      "id": "ev:act:74",
+      "relationships": [
+        {
+          "objectId": "episode:rcpsp",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:rcpsp",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T18:08:48.324058000Z",
       "type": "act"
     },
     {
@@ -1541,21 +1662,21 @@
         },
         {
           "name": "verify_mode",
-          "value": "fresh-instance-replay"
+          "value": "independent-resolve"
         }
       ],
       "id": "ev:verify",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918362000Z",
+      "time": "2026-08-13T18:08:48.346446000Z",
       "type": "verify"
     },
     {
@@ -1568,15 +1689,15 @@
       "id": "ev:teardown",
       "relationships": [
         {
-          "objectId": "episode:maze",
+          "objectId": "episode:rcpsp",
           "qualifier": ""
         },
         {
-          "objectId": "domain:maze",
+          "objectId": "domain:rcpsp",
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:08:37.918374000Z",
+      "time": "2026-08-13T18:08:48.346471000Z",
       "type": "teardown"
     }
   ],
@@ -1598,7 +1719,7 @@
   "objects": [
     {
       "attributes": [],
-      "id": "episode:maze",
+      "id": "episode:rcpsp",
       "relationships": [],
       "type": "episode"
     },
@@ -1607,10 +1728,10 @@
         {
           "name": "domain_class",
           "time": "1970-01-01T00:00:00.000000000Z",
-          "value": "Maze"
+          "value": "RCPSP"
         }
       ],
-      "id": "domain:maze",
+      "id": "domain:rcpsp",
       "relationships": [],
       "type": "domain"
     }

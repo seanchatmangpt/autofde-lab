@@ -121,6 +121,48 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
         ),
     ),
 
+"flight_planning": DomainEvidenceSpec(
+        domain_name="flight_planning",
+        python_module_path="autofde_lab.hub.domain.flight_planning.domain",
+        domain_class_name="FlightPlanningDomain",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="destination reached within tolerance, per _get_goals_",
+        verify_mode="fresh-instance-replay",
+        evidence_out_path="docs/evidence/flight_planning/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="H_Action,V_Action tuple  # horizontal/vertical routing action", consequence="DO", precondition_expr="per _get_applicable_actions_from"),
+        ),
+    ),
+
+"graph_domain": DomainEvidenceSpec(
+        domain_name="graph_domain",
+        python_module_path="autofde_lab.hub.domain.graph_domain.GraphDomain",
+        domain_class_name="GraphDomain",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="state in self.targets  # inherited from FullSpaceExploration(source_domain)'s admitted goal set",
+        verify_mode="fresh-instance-replay",
+        evidence_out_path="docs/evidence/graph_domain/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="right  # single edge label of the pilot ChainDomain source", consequence="DO", precondition_expr="edge exists in the explored graph"),
+        ),
+    ),
+
+"gym": DomainEvidenceSpec(
+        domain_name="gym",
+        python_module_path="autofde_lab.hub.domain.gym",
+        domain_class_name="GymDomain",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="N/A -- MountainCarContinuous-v0 is a continuous-control env with no discrete goal reachable by Astar; closed via seeded-trajectory-replay",
+        verify_mode="seeded-trajectory-replay",
+        evidence_out_path="docs/evidence/gym/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="continuous_action (Box)", consequence="DO", precondition_expr="within action_space bounds"),
+        ),
+    ),
+
 "k8s_goat_rbac_escalation": DomainEvidenceSpec(
         domain_name="k8s_goat_rbac_escalation",
         python_module_path="autofde_lab.hub.domain.k8s_goat_rbac_escalation.k8s_goat_rbac_escalation",
@@ -132,6 +174,20 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
         evidence_out_path="docs/evidence/k8s_goat_rbac_escalation/domain-evidence-episode.ocel.json",
         capabilities=(
             CapabilitySpec(name="read_and_decode_k8svaultapikey", consequence="DO", precondition_expr="'list_namespace_secrets' in known"),
+        ),
+    ),
+
+"mastermind": DomainEvidenceSpec(
+        domain_name="mastermind",
+        python_module_path="autofde_lab.hub.domain.mastermind.mastermind",
+        domain_class_name="MasterMind",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="score == Score(total_bulls=n_positions, total_cows=0)",
+        verify_mode="independent-resolve",
+        evidence_out_path="docs/evidence/mastermind/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="guess(row)", consequence="DO", precondition_expr="true (UnrestrictedActions -- any row in the enumerable action space is always applicable)"),
         ),
     ),
 
@@ -159,9 +215,6 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
         verify_mode="fresh-instance-replay",
         evidence_out_path="docs/evidence/pddl/domain-evidence-episode.ocel.json",
         capabilities=(
-            CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
-            CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
-            CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
             CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
             CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
             CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
@@ -175,6 +228,9 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
             CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
             CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
             CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
+            CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
+            CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
+            CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
         ),
     ),
 
@@ -189,6 +245,76 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
         evidence_out_path="docs/evidence/plado/domain-evidence-episode.ocel.json",
         capabilities=(
             CapabilitySpec(name="PladoAction  # native-encoded grounded action", consequence="DO", precondition_expr="applicable per native PDDL applicability generator"),
+        ),
+    ),
+
+"rcpsp": DomainEvidenceSpec(
+        domain_name="rcpsp",
+        python_module_path="autofde_lab.hub.domain.rcpsp.rcpsp_sk",
+        domain_class_name="RCPSP",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="state.tasks_complete == state.task_ids  # all 32 j301_1.sm tasks complete",
+        verify_mode="independent-resolve",
+        evidence_out_path="docs/evidence/rcpsp/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="start_task(task_id, mode)", consequence="DO", precondition_expr="precedence + resource constraints satisfied (SGS_PRECEDENCE policy)"),
+        ),
+    ),
+
+"rddl": DomainEvidenceSpec(
+        domain_name="rddl",
+        python_module_path="autofde_lab.hub.domain.rddl.rddl",
+        domain_class_name="RDDLDomain",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="N/A -- stochastic RLDomain (pyRDDLGym CartPole_Continuous_gym), no deterministic goal; closed via seeded-trajectory-replay (seeded RNG, bitwise-identical replay proven)",
+        verify_mode="seeded-trajectory-replay",
+        evidence_out_path="docs/evidence/rddl/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="force (continuous, bounded [-10,10])", consequence="DO", precondition_expr="within real force bounds read from env.action_space"),
+        ),
+    ),
+
+"rock_paper_scissors": DomainEvidenceSpec(
+        domain_name="rock_paper_scissors",
+        python_module_path="autofde_lab.hub.domain.rock_paper_scissors.rock_paper_scissors",
+        domain_class_name="RockPaperScissors",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="N/A -- no single-agent goal; terminal condition is num_move >= max_moves, closed via seeded-trajectory-replay instead",
+        verify_mode="seeded-trajectory-replay",
+        evidence_out_path="docs/evidence/rock_paper_scissors/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="submit_moves(player1, player2)", consequence="DO", precondition_expr="true"),
+        ),
+    ),
+
+"simple_grid_world": DomainEvidenceSpec(
+        domain_name="simple_grid_world",
+        python_module_path="autofde_lab.hub.domain.simple_grid_world",
+        domain_class_name="SimpleGridWorld",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="state == State(x=num_cols-1, y=num_rows-1)",
+        verify_mode="fresh-instance-replay",
+        evidence_out_path="docs/evidence/simple_grid_world/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="up|down|left|right", consequence="DO", precondition_expr="true (UnrestrictedActions, wall-clamped at grid edges)"),
+        ),
+    ),
+
+"tai_v30_1_1": DomainEvidenceSpec(
+        domain_name="tai_v30_1_1",
+        python_module_path="autofde_lab.hub.domain.tai_v30_1_1.tai_v30_1_1",
+        domain_class_name="TAIForwardDeploymentDomain",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="state.standing == True",
+        verify_mode="fresh-instance-replay",
+        evidence_out_path="docs/evidence/tai_v30_1_1/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="compile_enterprise", consequence="DO", precondition_expr="not state.enterprise_compiled"),
         ),
     ),
 
