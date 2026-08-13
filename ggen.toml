@@ -19,6 +19,7 @@ imports = [
     "ontology/world-transformation-taxonomy.ttl",
     "ontology/togaf-artifacts.ttl",
     "ontology/gymact-certification.ttl",
+    "ontology/domain-evidence.ttl",
 ]
 base_iri = "urn:autofde-lab:"
 
@@ -118,6 +119,13 @@ query = { file = "queries/gymact-certification/manifest.rq" }
 template = { file = "templates/constitution_module.py.tera" }
 output_file = "src/autofde_lab/reasoning/gymact_certification_types.py"
 mode = "Create"
+
+[[generation.rules]]
+name = "domain-evidence-registry"
+query = { file = "queries/domain-evidence/registry.rq" }
+template = { file = "templates/domain_evidence_registry.py.tera" }
+output_file = "src/autofde_lab/reasoning/domain_evidence_registry.py"
+mode = "Overwrite"
 
 [sync]
 enabled = true

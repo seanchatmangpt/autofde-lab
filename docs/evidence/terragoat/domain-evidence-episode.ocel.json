@@ -1,0 +1,368 @@
+{
+  "eventTypes": [
+    {
+      "attributes": [
+        {
+          "name": "plan_length",
+          "type": "integer"
+        },
+        {
+          "name": "standing",
+          "type": "string"
+        }
+      ],
+      "name": "materialize"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "type": "string"
+        },
+        {
+          "name": "step_index",
+          "type": "integer"
+        }
+      ],
+      "name": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "goal_reached",
+          "type": "boolean"
+        },
+        {
+          "name": "standing",
+          "type": "string"
+        },
+        {
+          "name": "verify_mode",
+          "type": "string"
+        }
+      ],
+      "name": "verify"
+    },
+    {
+      "attributes": [
+        {
+          "name": "standing",
+          "type": "string"
+        }
+      ],
+      "name": "teardown"
+    }
+  ],
+  "events": [
+    {
+      "attributes": [
+        {
+          "name": "standing",
+          "value": "ALIVE"
+        },
+        {
+          "name": "plan_length",
+          "value": 8
+        }
+      ],
+      "id": "ev:materialize",
+      "relationships": [
+        {
+          "objectId": "episode:terragoat",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:terragoat",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:07:09.542004000Z",
+      "type": "materialize"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "aws_s3_bucket.data#0"
+        },
+        {
+          "name": "step_index",
+          "value": 0
+        }
+      ],
+      "id": "ev:act:0",
+      "relationships": [
+        {
+          "objectId": "episode:terragoat",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:terragoat",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:07:09.698922000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "aws_s3_bucket.data#1"
+        },
+        {
+          "name": "step_index",
+          "value": 1
+        }
+      ],
+      "id": "ev:act:1",
+      "relationships": [
+        {
+          "objectId": "episode:terragoat",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:terragoat",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:07:09.698940000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "aws_s3_bucket.financials#2"
+        },
+        {
+          "name": "step_index",
+          "value": 2
+        }
+      ],
+      "id": "ev:act:2",
+      "relationships": [
+        {
+          "objectId": "episode:terragoat",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:terragoat",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:07:09.698950000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "aws_s3_bucket.operations#0"
+        },
+        {
+          "name": "step_index",
+          "value": 3
+        }
+      ],
+      "id": "ev:act:3",
+      "relationships": [
+        {
+          "objectId": "episode:terragoat",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:terragoat",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:07:09.698958000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "aws_s3_bucket.financials#1"
+        },
+        {
+          "name": "step_index",
+          "value": 4
+        }
+      ],
+      "id": "ev:act:4",
+      "relationships": [
+        {
+          "objectId": "episode:terragoat",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:terragoat",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:07:09.698965000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "aws_s3_bucket.financials#0"
+        },
+        {
+          "name": "step_index",
+          "value": 5
+        }
+      ],
+      "id": "ev:act:5",
+      "relationships": [
+        {
+          "objectId": "episode:terragoat",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:terragoat",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:07:09.698972000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "aws_s3_bucket.data#3"
+        },
+        {
+          "name": "step_index",
+          "value": 6
+        }
+      ],
+      "id": "ev:act:6",
+      "relationships": [
+        {
+          "objectId": "episode:terragoat",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:terragoat",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:07:09.698978000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "aws_s3_bucket.data#2"
+        },
+        {
+          "name": "step_index",
+          "value": 7
+        }
+      ],
+      "id": "ev:act:7",
+      "relationships": [
+        {
+          "objectId": "episode:terragoat",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:terragoat",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:07:09.698984000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "standing",
+          "value": "ALIVE"
+        },
+        {
+          "name": "goal_reached",
+          "value": true
+        },
+        {
+          "name": "verify_mode",
+          "value": "fresh-instance-replay"
+        }
+      ],
+      "id": "ev:verify",
+      "relationships": [
+        {
+          "objectId": "episode:terragoat",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:terragoat",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:07:09.699321000Z",
+      "type": "verify"
+    },
+    {
+      "attributes": [
+        {
+          "name": "standing",
+          "value": "ALIVE"
+        }
+      ],
+      "id": "ev:teardown",
+      "relationships": [
+        {
+          "objectId": "episode:terragoat",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:terragoat",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:07:09.699337000Z",
+      "type": "teardown"
+    }
+  ],
+  "objectTypes": [
+    {
+      "attributes": [],
+      "name": "episode"
+    },
+    {
+      "attributes": [
+        {
+          "name": "domain_class",
+          "type": "string"
+        }
+      ],
+      "name": "domain"
+    }
+  ],
+  "objects": [
+    {
+      "attributes": [],
+      "id": "episode:terragoat",
+      "relationships": [],
+      "type": "episode"
+    },
+    {
+      "attributes": [
+        {
+          "name": "domain_class",
+          "time": "1970-01-01T00:00:00.000000000Z",
+          "value": "TerraGoatRemediation"
+        }
+      ],
+      "id": "domain:terragoat",
+      "relationships": [],
+      "type": "domain"
+    }
+  ]
+}

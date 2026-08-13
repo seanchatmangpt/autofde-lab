@@ -1,0 +1,26 @@
+PREFIX afl: <urn:autofde-lab:>
+
+# One row per (domain, capability) pair, ordered so the template can group
+# capabilities back under their owning domain via Tera's group_by -- same
+# real pattern queries/world-transformation/scenario_projection.rq already
+# uses for domain -> sub-item grouping.
+SELECT ?domainName ?pythonModulePath ?domainClassName ?bridgeModulePath
+       ?bridgeClassName ?goalCheckExpr ?verifyMode ?evidenceOutPath
+       ?capabilityOrder ?capabilityName ?capabilityConsequence ?capabilityPrecondition
+WHERE {
+  ?domain a afl:DomainEvidenceSpec ;
+          afl:domainName ?domainName ;
+          afl:pythonModulePath ?pythonModulePath ;
+          afl:domainClassName ?domainClassName ;
+          afl:bridgeModulePath ?bridgeModulePath ;
+          afl:bridgeClassName ?bridgeClassName ;
+          afl:goalCheckExpr ?goalCheckExpr ;
+          afl:verifyMode ?verifyMode ;
+          afl:evidenceOutPath ?evidenceOutPath ;
+          afl:hasCapability ?cap .
+  ?cap afl:capabilityOrder ?capabilityOrder ;
+       afl:capabilityName ?capabilityName ;
+       afl:capabilityConsequence ?capabilityConsequence ;
+       afl:capabilityPrecondition ?capabilityPrecondition .
+}
+ORDER BY ?domainName ?capabilityOrder

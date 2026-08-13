@@ -1,0 +1,67 @@
+@prefix afl: <urn:autofde-lab:> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Domain-evidence-generation ontology: real facts about each hub domain
+# needed to generate a generic OCEL episode runner + standalone verifier
+# registry entry, per docs/jira/2026-08-13-domain-maturity-l4/
+# INDEX-AND-GGEN-DESIGN.md's "autofde-domain-evidence-pack" design.
+#
+# Only ONE domain individual is admitted here so far: afl:domain_terragoat
+# (the L4 push's pilot, per the same doc -- terragoat already scores >=4 on
+# 5/7 maturity dimensions, so this closes the real remaining gap for real,
+# rather than adding untested breadth). Adding the other 21 domains is
+# future work -- each addition is one new individual, zero template changes,
+# the same "generic template, growing ontology" pattern already proven this
+# session (public-ontology-admission-pack's SKOS add).
+
+afl:DomainEvidenceSpec a rdfs:Class ;
+    rdfs:comment "One hub domain's facts needed to generate a generic OCEL episode runner + standalone verifier registry entry." .
+
+afl:Capability a rdfs:Class ;
+    rdfs:comment "One DO/OBSERVE capability of a domain, with its precondition expression." .
+
+afl:domainName a rdf:Property ; rdfs:domain afl:DomainEvidenceSpec ; rdfs:range xsd:string .
+afl:pythonModulePath a rdf:Property ; rdfs:domain afl:DomainEvidenceSpec ; rdfs:range xsd:string .
+afl:domainClassName a rdf:Property ; rdfs:domain afl:DomainEvidenceSpec ; rdfs:range xsd:string .
+afl:bridgeModulePath a rdf:Property ; rdfs:domain afl:DomainEvidenceSpec ; rdfs:range xsd:string .
+afl:bridgeClassName a rdf:Property ; rdfs:domain afl:DomainEvidenceSpec ; rdfs:range xsd:string .
+afl:goalCheckExpr a rdf:Property ; rdfs:domain afl:DomainEvidenceSpec ; rdfs:range xsd:string .
+afl:verifyMode a rdf:Property ; rdfs:domain afl:DomainEvidenceSpec ; rdfs:range xsd:string .
+afl:evidenceOutPath a rdf:Property ; rdfs:domain afl:DomainEvidenceSpec ; rdfs:range xsd:string .
+afl:hasCapability a rdf:Property ; rdfs:domain afl:DomainEvidenceSpec ; rdfs:range afl:Capability .
+afl:capabilityOrder a rdf:Property ; rdfs:domain afl:Capability ; rdfs:range xsd:integer .
+afl:capabilityName a rdf:Property ; rdfs:domain afl:Capability ; rdfs:range xsd:string .
+afl:capabilityConsequence a rdf:Property ; rdfs:domain afl:Capability ; rdfs:range xsd:string .
+afl:capabilityPrecondition a rdf:Property ; rdfs:domain afl:Capability ; rdfs:range xsd:string .
+
+# --- Pilot domain: terragoat ---
+# Real source verified this session: src/autofde_lab/hub/domain/terragoat/
+# terragoat_remediation.py -- TerraGoatRemediation, real-time parse of
+# vendored .tf files, real Astar-solved plan (5/5), no gymact_bridge.py yet
+# (AFL-TERRAGOAT-1, ticketed, not yet built -- bridgeClassName left "" here,
+# honestly reflecting that gap rather than inventing a bridge that doesn't
+# exist). verifyMode is "fresh-instance-replay": a fresh TerraGoatRemediation
+# instance is constructed and the recorded finding-closure sequence replayed
+# against it, independent of the actor's own in-process object, per
+# terragoat's already-real verification-independence pattern
+# (tests/ecosystem/test_gymact_terragoat_bridge_chicago.py).
+
+afl:domain_terragoat a afl:DomainEvidenceSpec ;
+    afl:domainName "terragoat" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.terragoat.terragoat_remediation" ;
+    afl:domainClassName "TerraGoatRemediation" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "len(state.open_findings) == 0" ;
+    afl:verifyMode "fresh-instance-replay" ;
+    afl:evidenceOutPath "docs/evidence/terragoat/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_terragoat_cap_close_finding .
+
+afl:domain_terragoat_cap_close_finding a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "close_finding" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "finding_id in state.open_findings" .
