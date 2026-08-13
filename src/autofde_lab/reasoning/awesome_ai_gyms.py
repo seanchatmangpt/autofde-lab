@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import csv
 import io
-import tomllib
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Literal
+
+import tomllib
 
 Compatibility = Literal["UNKNOWN", "COMPATIBLE", "REFUSED"]
 _REGISTRY_COLUMNS = (
@@ -116,7 +117,9 @@ def build_repo_planner_gym_frontier(
 ) -> tuple[PlannerGymEdge, ...]:
     """Cross every catalog candidate with the repo-declared planner population."""
 
-    return build_planner_gym_frontier(candidates, planner_refs_from_pyproject(pyproject_text))
+    return build_planner_gym_frontier(
+        candidates, planner_refs_from_pyproject(pyproject_text)
+    )
 
 
 def build_planner_gym_frontier(
@@ -162,5 +165,7 @@ def manufacture_gymact_handoff(edge: PlannerGymEdge) -> GymActHandoffIntent:
     """Manufacture an inert intent only after this edge is explicitly compatible."""
 
     if edge.compatibility != "COMPATIBLE":
-        raise ValueError(f"GYMACT_HANDOFF_REQUIRES_COMPATIBLE_EDGE:{edge.compatibility}")
+        raise ValueError(
+            f"GYMACT_HANDOFF_REQUIRES_COMPATIBLE_EDGE:{edge.compatibility}"
+        )
     return GymActHandoffIntent(planner_ref=edge.planner_ref, gym_ref=edge.gym_ref)
