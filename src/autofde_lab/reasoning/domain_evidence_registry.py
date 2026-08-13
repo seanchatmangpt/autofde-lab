@@ -180,6 +180,8 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
             CapabilitySpec(name="right  # single edge label of the pilot ChainDomain source", consequence="DO", precondition_expr="edge exists in the explored graph"),
         ),
         solver_candidates=(
+            SolverCandidateSpec(order=1, strategy="astar-plain", timeout_seconds=15),
+            SolverCandidateSpec(order=2, strategy="iw-state-features", timeout_seconds=15),
         ),
     ),
 
@@ -244,6 +246,8 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
             CapabilitySpec(name="up|down|left|right", consequence="DO", precondition_expr="true"),
         ),
         solver_candidates=(
+            SolverCandidateSpec(order=1, strategy="astar-plain", timeout_seconds=30),
+            SolverCandidateSpec(order=2, strategy="lrtastar-plain", timeout_seconds=30),
         ),
     ),
 
@@ -253,7 +257,7 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
         domain_class_name="PDDLDomain",
         bridge_module_path="",
         bridge_class_name="",
-        goal_check_expr="self._goal_checker.is_goal(state.to_cpp())  # blocks-3-0 fixture, goal on(b,c)",
+        goal_check_expr="self._goal_checker.is_goal(s.to_cpp())  # C++ CppGoalChecker compiled from the loaded PDDL domain/problem file; for the proven fixture (blocks-3-0) the goal is 'on(b, c)'",
         verify_mode="fresh-instance-replay",
         evidence_out_path="docs/evidence/pddl/domain-evidence-episode.ocel.json",
         capabilities=(
@@ -357,6 +361,8 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
             CapabilitySpec(name="up|down|left|right", consequence="DO", precondition_expr="true (UnrestrictedActions, wall-clamped at grid edges)"),
         ),
         solver_candidates=(
+            SolverCandidateSpec(order=1, strategy="astar-plain", timeout_seconds=15),
+            SolverCandidateSpec(order=2, strategy="bfws-state-features", timeout_seconds=15),
         ),
     ),
 

@@ -201,7 +201,23 @@ afl:domain_maze a afl:DomainEvidenceSpec ;
     afl:goalCheckExpr "state == self._goal" ;
     afl:verifyMode "fresh-instance-replay" ;
     afl:evidenceOutPath "docs/evidence/maze/domain-evidence-episode.ocel.json" ;
-    afl:hasCapability afl:domain_maze_cap_1 .
+    afl:hasCapability afl:domain_maze_cap_1 ;
+    afl:hasSolverCandidate afl:domain_maze_solver_1, afl:domain_maze_solver_2 .
+
+# Real, proven second candidate this round: LRTAstar independently
+# reproduces the identical 58-step optimal goal state Astar already proved
+# (utils.load_registered_solver("LRTAstar") resolves to
+# autofde_lab.hub.solver.lrtdp.lrtdp.LRTAstar). astar-plain kept first
+# (already the domain's proven-working mechanism, no reason to demote it).
+afl:domain_maze_solver_1 a afl:SolverCandidate ;
+    afl:candidateOrder 1 ;
+    afl:solverStrategy "astar-plain" ;
+    afl:solverTimeoutSeconds 30 .
+
+afl:domain_maze_solver_2 a afl:SolverCandidate ;
+    afl:candidateOrder 2 ;
+    afl:solverStrategy "lrtastar-plain" ;
+    afl:solverTimeoutSeconds 30 .
 
 afl:domain_maze_cap_1 a afl:Capability ;
     afl:capabilityOrder 1 ;
@@ -373,13 +389,26 @@ afl:domain_graph_domain a afl:DomainEvidenceSpec ;
     afl:goalCheckExpr "state in self.targets  # inherited from FullSpaceExploration(source_domain)'s admitted goal set" ;
     afl:verifyMode "fresh-instance-replay" ;
     afl:evidenceOutPath "docs/evidence/graph_domain/domain-evidence-episode.ocel.json" ;
-    afl:hasCapability afl:domain_graph_domain_cap_1 .
+    afl:hasCapability afl:domain_graph_domain_cap_1 ;
+    afl:hasSolverCandidate afl:domain_graph_domain_solver_1, afl:domain_graph_domain_solver_2 .
 
 afl:domain_graph_domain_cap_1 a afl:Capability ;
     afl:capabilityOrder 1 ;
     afl:capabilityName "right  # single edge label of the pilot ChainDomain source" ;
     afl:capabilityConsequence "DO" ;
     afl:capabilityPrecondition "edge exists in the explored graph" .
+
+# Real, proven second candidate: IW (Iterated Width) independently
+# reproduces the identical 3-step goal (0->1->2->3) Astar already proved.
+afl:domain_graph_domain_solver_1 a afl:SolverCandidate ;
+    afl:candidateOrder 1 ;
+    afl:solverStrategy "astar-plain" ;
+    afl:solverTimeoutSeconds 15 .
+
+afl:domain_graph_domain_solver_2 a afl:SolverCandidate ;
+    afl:candidateOrder 2 ;
+    afl:solverStrategy "iw-state-features" ;
+    afl:solverTimeoutSeconds 15 .
 
 afl:domain_simple_grid_world a afl:DomainEvidenceSpec ;
     afl:domainName "simple_grid_world" ;
@@ -390,13 +419,26 @@ afl:domain_simple_grid_world a afl:DomainEvidenceSpec ;
     afl:goalCheckExpr "state == State(x=num_cols-1, y=num_rows-1)" ;
     afl:verifyMode "fresh-instance-replay" ;
     afl:evidenceOutPath "docs/evidence/simple_grid_world/domain-evidence-episode.ocel.json" ;
-    afl:hasCapability afl:domain_simple_grid_world_cap_1 .
+    afl:hasCapability afl:domain_simple_grid_world_cap_1 ;
+    afl:hasSolverCandidate afl:domain_simple_grid_world_solver_1, afl:domain_simple_grid_world_solver_2 .
 
 afl:domain_simple_grid_world_cap_1 a afl:Capability ;
     afl:capabilityOrder 1 ;
     afl:capabilityName "up|down|left|right" ;
     afl:capabilityConsequence "DO" ;
     afl:capabilityPrecondition "true (UnrestrictedActions, wall-clamped at grid edges)" .
+
+# Real, proven second candidate: BFWS independently reproduces the
+# identical Manhattan-optimal 18-step goal Astar already proved.
+afl:domain_simple_grid_world_solver_1 a afl:SolverCandidate ;
+    afl:candidateOrder 1 ;
+    afl:solverStrategy "astar-plain" ;
+    afl:solverTimeoutSeconds 15 .
+
+afl:domain_simple_grid_world_solver_2 a afl:SolverCandidate ;
+    afl:candidateOrder 2 ;
+    afl:solverStrategy "bfws-state-features" ;
+    afl:solverTimeoutSeconds 15 .
 
 afl:domain_rock_paper_scissors a afl:DomainEvidenceSpec ;
     afl:domainName "rock_paper_scissors" ;

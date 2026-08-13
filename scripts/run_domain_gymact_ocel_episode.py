@@ -600,10 +600,21 @@ def _build_rcpsp_for_astar() -> object:
     return domain
 
 
+def _default_construct(domain_key: str) -> object:
+    """Same fallback `run()` itself uses: for a domain with no entry in
+    `_DOMAIN_FACTORIES`, import its class and construct it with zero args
+    (e.g. maze -- proven this session to be zero-arg constructible)."""
+    spec = DOMAIN_EVIDENCE_REGISTRY[domain_key]
+    module = importlib.import_module(spec.python_module_path)
+    domain_cls = getattr(module, spec.domain_class_name)
+    return domain_cls()
+
+
 def _strategy_astar_plain(domain_key: str) -> dict:
-    factory = _DOMAIN_FACTORIES.get(domain_key, _build_rcpsp_for_astar if domain_key == "rcpsp" else None)
-    if factory is None:
-        raise ValueError(f"no known construction for {domain_key!r} under astar-plain")
+    if domain_key == "rcpsp":
+        factory = _build_rcpsp_for_astar
+    else:
+        factory = _DOMAIN_FACTORIES.get(domain_key, functools.partial(_default_construct, domain_key))
     domain = factory()
     astar_cls = utils.load_registered_solver("Astar")
     plan: list = []
@@ -663,10 +674,81 @@ def _strategy_do_solver_cpsat(domain_key: str) -> dict:
     return {"plan": list(actions), "goal_reached": domain.is_goal(states[-1])}
 
 
+def _strategy_lrtastar_plain(domain_key: str) -> dict:
+    """LRTAstar -- real second candidate proven this session for `maze`
+    (registered name resolves to autofde_lab.hub.solver.lrtdp.lrtdp.LRTAstar,
+    NOT a separate lrtastar module -- two classes share this name in the
+    solver hub; the registered one is this one). No `max_iter` kwarg
+    (confirmed by a real TypeError before correcting -- its real signature
+    is domain_factory/heuristic/time_budget/rollout_budget/max_depth/...)."""
+    factory = _DOMAIN_FACTORIES.get(domain_key, functools.partial(_default_construct, domain_key))
+    domain = factory()
+    solver_cls = utils.load_registered_solver("LRTAstar")
+    plan: list = []
+    with solver_cls(domain_factory=lambda: domain) as solver:
+        solver.solve()
+        state = domain.get_initial_state()
+        for _ in range(200):
+            if domain.is_goal(state):
+                break
+            action = solver.sample_action(state)
+            plan.append(action)
+            state = domain.get_next_state(state, action)
+    return {"plan": plan, "goal_reached": domain.is_goal(state)}
+
+
+def _strategy_bfws_state_features(domain_key: str) -> dict:
+    """BFWS (Best-First Width Search) -- real second candidate proven this
+    session for `simple_grid_world`. Requires a `state_features` callable
+    (no generic default exists) -- the raw state itself is used as the
+    novelty feature vector, the minimal real choice, not a stub."""
+    factory = _DOMAIN_FACTORIES.get(domain_key, functools.partial(_default_construct, domain_key))
+    domain = factory()
+    solver_cls = utils.load_registered_solver("BFWS")
+    plan: list = []
+    with solver_cls(domain_factory=lambda: domain, state_features=lambda d, s: s) as solver:
+        solver.solve()
+        state = domain.get_initial_state()
+        for _ in range(200):
+            if domain.is_goal(state):
+                break
+            action = solver.sample_action(state)
+            plan.append(action)
+            state = domain.get_next_state(state, action)
+    return {"plan": plan, "goal_reached": domain.is_goal(state)}
+
+
+def _strategy_iw_state_features(domain_key: str) -> dict:
+    """IW (Iterated Width) -- real second candidate proven this session for
+    `graph_domain`. Real bug found and fixed while wiring: IW's
+    state_features must return a container (list/tuple/array), not a bare
+    scalar -- confirmed by a real `ValueError: Unhandled container type
+    'int'` when graph_domain's raw int state was passed directly (unlike
+    BFWS, which accepted the same bare-int feature fine); wrapped in a
+    1-tuple."""
+    factory = _DOMAIN_FACTORIES.get(domain_key, functools.partial(_default_construct, domain_key))
+    domain = factory()
+    solver_cls = utils.load_registered_solver("IW")
+    plan: list = []
+    with solver_cls(domain_factory=lambda: domain, state_features=lambda d, s: (s,)) as solver:
+        solver.solve()
+        state = domain.get_initial_state()
+        for _ in range(200):
+            if domain.is_goal(state):
+                break
+            action = solver.sample_action(state)
+            plan.append(action)
+            state = domain.get_next_state(state, action)
+    return {"plan": plan, "goal_reached": domain.is_goal(state)}
+
+
 _SOLVER_STRATEGIES: dict[str, Callable[[str], dict]] = {
     "astar-plain": _strategy_astar_plain,
     "astar-heuristic": _strategy_astar_heuristic,
     "do-solver-cpsat": _strategy_do_solver_cpsat,
+    "lrtastar-plain": _strategy_lrtastar_plain,
+    "bfws-state-features": _strategy_bfws_state_features,
+    "iw-state-features": _strategy_iw_state_features,
 }
 
 
