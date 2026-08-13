@@ -3,15 +3,23 @@
     {
       "attributes": [
         {
+          "name": "candidate_order",
+          "type": "integer"
+        },
+        {
+          "name": "elapsed_seconds",
+          "type": "float"
+        },
+        {
           "name": "plan_length",
           "type": "integer"
         },
         {
-          "name": "standing",
+          "name": "strategy",
           "type": "string"
         }
       ],
-      "name": "materialize"
+      "name": "solver_selected"
     },
     {
       "attributes": [
@@ -39,6 +47,10 @@
         {
           "name": "verify_mode",
           "type": "string"
+        },
+        {
+          "name": "winning_strategy",
+          "type": "string"
         }
       ],
       "name": "verify"
@@ -57,15 +69,23 @@
     {
       "attributes": [
         {
-          "name": "standing",
-          "value": "ALIVE"
+          "name": "strategy",
+          "value": "astar-plain"
+        },
+        {
+          "name": "candidate_order",
+          "value": 1
+        },
+        {
+          "name": "elapsed_seconds",
+          "value": 1.0575857162475586
         },
         {
           "name": "plan_length",
           "value": 2
         }
       ],
-      "id": "ev:materialize",
+      "id": "ev:solver_selected:1",
       "relationships": [
         {
           "objectId": "episode:up",
@@ -76,8 +96,8 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:19.278965000Z",
-      "type": "materialize"
+      "time": "2026-08-13T18:46:25.533736000Z",
+      "type": "solver_selected"
     },
     {
       "attributes": [
@@ -101,7 +121,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:19.455733000Z",
+      "time": "2026-08-13T18:46:25.533982000Z",
       "type": "act"
     },
     {
@@ -126,7 +146,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:19.455760000Z",
+      "time": "2026-08-13T18:46:25.533998000Z",
       "type": "act"
     },
     {
@@ -142,6 +162,10 @@
         {
           "name": "verify_mode",
           "value": "fresh-instance-replay"
+        },
+        {
+          "name": "winning_strategy",
+          "value": "astar-plain"
         }
       ],
       "id": "ev:verify",
@@ -155,7 +179,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:19.456859000Z",
+      "time": "2026-08-13T18:46:26.581706000Z",
       "type": "verify"
     },
     {
@@ -176,7 +200,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:19.456874000Z",
+      "time": "2026-08-13T18:46:26.581959000Z",
       "type": "teardown"
     }
   ],

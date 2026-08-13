@@ -3,15 +3,23 @@
     {
       "attributes": [
         {
+          "name": "candidate_order",
+          "type": "integer"
+        },
+        {
+          "name": "elapsed_seconds",
+          "type": "float"
+        },
+        {
           "name": "plan_length",
           "type": "integer"
         },
         {
-          "name": "standing",
+          "name": "strategy",
           "type": "string"
         }
       ],
-      "name": "materialize"
+      "name": "solver_selected"
     },
     {
       "attributes": [
@@ -39,6 +47,10 @@
         {
           "name": "verify_mode",
           "type": "string"
+        },
+        {
+          "name": "winning_strategy",
+          "type": "string"
         }
       ],
       "name": "verify"
@@ -57,15 +69,23 @@
     {
       "attributes": [
         {
-          "name": "standing",
-          "value": "ALIVE"
+          "name": "strategy",
+          "value": "astar-plain"
+        },
+        {
+          "name": "candidate_order",
+          "value": 1
+        },
+        {
+          "name": "elapsed_seconds",
+          "value": 0.2730429172515869
         },
         {
           "name": "plan_length",
           "value": 10
         }
       ],
-      "id": "ev:materialize",
+      "id": "ev:solver_selected:1",
       "relationships": [
         {
           "objectId": "episode:chatman_clean_session",
@@ -76,8 +96,8 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:19.867695000Z",
-      "type": "materialize"
+      "time": "2026-08-13T18:46:27.275830000Z",
+      "type": "solver_selected"
     },
     {
       "attributes": [
@@ -101,7 +121,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:19.890213000Z",
+      "time": "2026-08-13T18:46:27.276038000Z",
       "type": "act"
     },
     {
@@ -126,7 +146,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:19.890230000Z",
+      "time": "2026-08-13T18:46:27.276058000Z",
       "type": "act"
     },
     {
@@ -151,7 +171,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:19.890241000Z",
+      "time": "2026-08-13T18:46:27.276067000Z",
       "type": "act"
     },
     {
@@ -176,7 +196,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:19.890248000Z",
+      "time": "2026-08-13T18:46:27.276075000Z",
       "type": "act"
     },
     {
@@ -201,7 +221,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:19.890256000Z",
+      "time": "2026-08-13T18:46:27.276081000Z",
       "type": "act"
     },
     {
@@ -226,7 +246,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:19.890262000Z",
+      "time": "2026-08-13T18:46:27.276090000Z",
       "type": "act"
     },
     {
@@ -251,7 +271,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:19.890269000Z",
+      "time": "2026-08-13T18:46:27.276095000Z",
       "type": "act"
     },
     {
@@ -276,7 +296,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:19.890275000Z",
+      "time": "2026-08-13T18:46:27.276102000Z",
       "type": "act"
     },
     {
@@ -301,7 +321,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:19.890281000Z",
+      "time": "2026-08-13T18:46:27.276109000Z",
       "type": "act"
     },
     {
@@ -326,7 +346,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:19.890287000Z",
+      "time": "2026-08-13T18:46:27.276115000Z",
       "type": "act"
     },
     {
@@ -342,6 +362,10 @@
         {
           "name": "verify_mode",
           "value": "fresh-instance-replay"
+        },
+        {
+          "name": "winning_strategy",
+          "value": "astar-plain"
         }
       ],
       "id": "ev:verify",
@@ -355,7 +379,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:19.890471000Z",
+      "time": "2026-08-13T18:46:27.553486000Z",
       "type": "verify"
     },
     {
@@ -376,7 +400,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:19.890483000Z",
+      "time": "2026-08-13T18:46:27.553701000Z",
       "type": "teardown"
     }
   ],

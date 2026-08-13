@@ -3,15 +3,23 @@
     {
       "attributes": [
         {
+          "name": "candidate_order",
+          "type": "integer"
+        },
+        {
+          "name": "elapsed_seconds",
+          "type": "float"
+        },
+        {
           "name": "plan_length",
           "type": "integer"
         },
         {
-          "name": "standing",
+          "name": "strategy",
           "type": "string"
         }
       ],
-      "name": "materialize"
+      "name": "solver_selected"
     },
     {
       "attributes": [
@@ -39,6 +47,10 @@
         {
           "name": "verify_mode",
           "type": "string"
+        },
+        {
+          "name": "winning_strategy",
+          "type": "string"
         }
       ],
       "name": "verify"
@@ -57,15 +69,23 @@
     {
       "attributes": [
         {
-          "name": "standing",
-          "value": "ALIVE"
+          "name": "strategy",
+          "value": "astar-plain"
+        },
+        {
+          "name": "candidate_order",
+          "value": 1
+        },
+        {
+          "name": "elapsed_seconds",
+          "value": 0.3014559745788574
         },
         {
           "name": "plan_length",
           "value": 6
         }
       ],
-      "id": "ev:materialize",
+      "id": "ev:solver_selected:1",
       "relationships": [
         {
           "objectId": "episode:breach_clock",
@@ -76,8 +96,8 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:12.891916000Z",
-      "type": "materialize"
+      "time": "2026-08-13T18:46:15.086007000Z",
+      "type": "solver_selected"
     },
     {
       "attributes": [
@@ -101,7 +121,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:12.914318000Z",
+      "time": "2026-08-13T18:46:15.086326000Z",
       "type": "act"
     },
     {
@@ -126,7 +146,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:12.914333000Z",
+      "time": "2026-08-13T18:46:15.086345000Z",
       "type": "act"
     },
     {
@@ -151,7 +171,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:12.914342000Z",
+      "time": "2026-08-13T18:46:15.086354000Z",
       "type": "act"
     },
     {
@@ -176,7 +196,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:12.914349000Z",
+      "time": "2026-08-13T18:46:15.086361000Z",
       "type": "act"
     },
     {
@@ -201,7 +221,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:12.914355000Z",
+      "time": "2026-08-13T18:46:15.086367000Z",
       "type": "act"
     },
     {
@@ -226,7 +246,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:12.914361000Z",
+      "time": "2026-08-13T18:46:15.086375000Z",
       "type": "act"
     },
     {
@@ -242,6 +262,10 @@
         {
           "name": "verify_mode",
           "value": "fresh-instance-replay"
+        },
+        {
+          "name": "winning_strategy",
+          "value": "astar-plain"
         }
       ],
       "id": "ev:verify",
@@ -255,7 +279,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:12.914436000Z",
+      "time": "2026-08-13T18:46:15.384623000Z",
       "type": "verify"
     },
     {
@@ -276,7 +300,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:12.914447000Z",
+      "time": "2026-08-13T18:46:15.384814000Z",
       "type": "teardown"
     }
   ],

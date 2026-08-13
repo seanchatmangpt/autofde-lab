@@ -3,15 +3,23 @@
     {
       "attributes": [
         {
+          "name": "candidate_order",
+          "type": "integer"
+        },
+        {
+          "name": "elapsed_seconds",
+          "type": "float"
+        },
+        {
           "name": "plan_length",
           "type": "integer"
         },
         {
-          "name": "standing",
+          "name": "strategy",
           "type": "string"
         }
       ],
-      "name": "materialize"
+      "name": "solver_selected"
     },
     {
       "attributes": [
@@ -39,6 +47,10 @@
         {
           "name": "verify_mode",
           "type": "string"
+        },
+        {
+          "name": "winning_strategy",
+          "type": "string"
         }
       ],
       "name": "verify"
@@ -57,15 +69,23 @@
     {
       "attributes": [
         {
-          "name": "standing",
-          "value": "ALIVE"
+          "name": "strategy",
+          "value": "astar-plain"
+        },
+        {
+          "name": "candidate_order",
+          "value": 1
+        },
+        {
+          "name": "elapsed_seconds",
+          "value": 0.31208300590515137
         },
         {
           "name": "plan_length",
           "value": 4
         }
       ],
-      "id": "ev:materialize",
+      "id": "ev:solver_selected:1",
       "relationships": [
         {
           "objectId": "episode:plado",
@@ -76,8 +96,8 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:17.556584000Z",
-      "type": "materialize"
+      "time": "2026-08-13T18:46:23.294339000Z",
+      "type": "solver_selected"
     },
     {
       "attributes": [
@@ -101,7 +121,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:17.584657000Z",
+      "time": "2026-08-13T18:46:23.294559000Z",
       "type": "act"
     },
     {
@@ -126,7 +146,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:17.584672000Z",
+      "time": "2026-08-13T18:46:23.294575000Z",
       "type": "act"
     },
     {
@@ -151,7 +171,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:17.584681000Z",
+      "time": "2026-08-13T18:46:23.294583000Z",
       "type": "act"
     },
     {
@@ -176,7 +196,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:17.584688000Z",
+      "time": "2026-08-13T18:46:23.294592000Z",
       "type": "act"
     },
     {
@@ -192,6 +212,10 @@
         {
           "name": "verify_mode",
           "value": "fresh-instance-replay"
+        },
+        {
+          "name": "winning_strategy",
+          "value": "astar-plain"
         }
       ],
       "id": "ev:verify",
@@ -205,7 +229,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:17.588114000Z",
+      "time": "2026-08-13T18:46:23.602974000Z",
       "type": "verify"
     },
     {
@@ -226,7 +250,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:17.588130000Z",
+      "time": "2026-08-13T18:46:23.603126000Z",
       "type": "teardown"
     }
   ],

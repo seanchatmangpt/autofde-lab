@@ -625,7 +625,7 @@ def _strategy_astar_plain(domain_key: str) -> dict:
             if domain.is_goal(state):
                 break
             action = solver.sample_action(state)
-            plan.append(action)
+            plan.append(str(action))
             state = domain.get_next_state(state, action)
     return {"plan": plan, "goal_reached": domain.is_goal(state)}
 
@@ -642,7 +642,7 @@ def _strategy_astar_heuristic(domain_key: str) -> dict:
             if domain.is_goal(state):
                 break
             action = solver.sample_action(state)
-            plan.append(action)
+            plan.append(str(action))
             state = domain.get_next_state(state, action)
     return {"plan": plan, "goal_reached": domain.is_goal(state)}
 
@@ -692,7 +692,7 @@ def _strategy_lrtastar_plain(domain_key: str) -> dict:
             if domain.is_goal(state):
                 break
             action = solver.sample_action(state)
-            plan.append(action)
+            plan.append(str(action))
             state = domain.get_next_state(state, action)
     return {"plan": plan, "goal_reached": domain.is_goal(state)}
 
@@ -713,7 +713,7 @@ def _strategy_bfws_state_features(domain_key: str) -> dict:
             if domain.is_goal(state):
                 break
             action = solver.sample_action(state)
-            plan.append(action)
+            plan.append(str(action))
             state = domain.get_next_state(state, action)
     return {"plan": plan, "goal_reached": domain.is_goal(state)}
 
@@ -737,7 +737,7 @@ def _strategy_iw_state_features(domain_key: str) -> dict:
             if domain.is_goal(state):
                 break
             action = solver.sample_action(state)
-            plan.append(action)
+            plan.append(str(action))
             state = domain.get_next_state(state, action)
     return {"plan": plan, "goal_reached": domain.is_goal(state)}
 

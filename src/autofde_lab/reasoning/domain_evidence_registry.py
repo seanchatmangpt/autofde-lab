@@ -79,6 +79,8 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
             CapabilitySpec(name="deliver_notification", consequence="DO", precondition_expr="state.notification is Notification.DRAFTED and state.notified_populations == state.populations"),
         ),
         solver_candidates=(
+            SolverCandidateSpec(order=1, strategy="astar-plain", timeout_seconds=20),
+            SolverCandidateSpec(order=2, strategy="lrtastar-plain", timeout_seconds=20),
         ),
     ),
 
@@ -95,6 +97,8 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
             CapabilitySpec(name="intuit_automl", consequence="DO", precondition_expr="fact.id not in admitted and set(fact.prerequisite_ids).issubset(admitted)"),
         ),
         solver_candidates=(
+            SolverCandidateSpec(order=1, strategy="astar-plain", timeout_seconds=15),
+            SolverCandidateSpec(order=2, strategy="lrtastar-plain", timeout_seconds=15),
         ),
     ),
 
@@ -111,6 +115,8 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
             CapabilitySpec(name="try_route", consequence="DO", precondition_expr="state.stage == Stage.ROUTE"),
         ),
         solver_candidates=(
+            SolverCandidateSpec(order=1, strategy="astar-plain", timeout_seconds=20),
+            SolverCandidateSpec(order=2, strategy="lrtastar-plain", timeout_seconds=20),
         ),
     ),
 
@@ -127,6 +133,8 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
             CapabilitySpec(name="terminate_target_instance", consequence="DO", precondition_expr="state.has_shell_access and not state.target_terminated"),
         ),
         solver_candidates=(
+            SolverCandidateSpec(order=1, strategy="astar-plain", timeout_seconds=20),
+            SolverCandidateSpec(order=2, strategy="lrtastar-plain", timeout_seconds=20),
         ),
     ),
 
@@ -146,6 +154,8 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
             CapabilitySpec(name="merge_recovery", consequence="DO", precondition_expr="memory.current_branch == self.base_branch and memory.recovery_branch_exists and not memory.merged"),
         ),
         solver_candidates=(
+            SolverCandidateSpec(order=1, strategy="astar-plain", timeout_seconds=20),
+            SolverCandidateSpec(order=2, strategy="lrtastar-plain", timeout_seconds=20),
         ),
     ),
 
@@ -214,6 +224,8 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
             CapabilitySpec(name="read_and_decode_k8svaultapikey", consequence="DO", precondition_expr="'list_namespace_secrets' in known"),
         ),
         solver_candidates=(
+            SolverCandidateSpec(order=1, strategy="astar-plain", timeout_seconds=20),
+            SolverCandidateSpec(order=2, strategy="lrtastar-plain", timeout_seconds=20),
         ),
     ),
 
@@ -253,17 +265,21 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
 
 "pddl": DomainEvidenceSpec(
         domain_name="pddl",
-        python_module_path="autofde_lab.hub.domain.pddl.domain",
+        python_module_path="autofde_lab.hub.domain.pddl",
         domain_class_name="PDDLDomain",
         bridge_module_path="",
         bridge_class_name="",
-        goal_check_expr="self._goal_checker.is_goal(s.to_cpp())  # C++ CppGoalChecker compiled from the loaded PDDL domain/problem file; for the proven fixture (blocks-3-0) the goal is 'on(b, c)'",
+        goal_check_expr="self._goal_checker.is_goal(state.to_cpp())  # blocks-3-0 fixture, goal on(b,c)",
         verify_mode="fresh-instance-replay",
         evidence_out_path="docs/evidence/pddl/domain-evidence-episode.ocel.json",
         capabilities=(
             CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
+            CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
+            CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
+            CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
             CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
             CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
+            CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
             CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
             CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
             CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
@@ -272,13 +288,11 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
             CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
             CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
             CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
-            CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
-            CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
-            CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
             CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
-            CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
         ),
         solver_candidates=(
+            SolverCandidateSpec(order=1, strategy="astar-plain", timeout_seconds=15),
+            SolverCandidateSpec(order=2, strategy="lrtastar-plain", timeout_seconds=15),
         ),
     ),
 
@@ -295,6 +309,8 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
             CapabilitySpec(name="PladoAction  # native-encoded grounded action", consequence="DO", precondition_expr="applicable per native PDDL applicability generator"),
         ),
         solver_candidates=(
+            SolverCandidateSpec(order=1, strategy="astar-plain", timeout_seconds=15),
+            SolverCandidateSpec(order=2, strategy="lrtastar-plain", timeout_seconds=15),
         ),
     ),
 
@@ -379,6 +395,8 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
             CapabilitySpec(name="compile_enterprise", consequence="DO", precondition_expr="not state.enterprise_compiled"),
         ),
         solver_candidates=(
+            SolverCandidateSpec(order=1, strategy="astar-plain", timeout_seconds=20),
+            SolverCandidateSpec(order=2, strategy="lrtastar-plain", timeout_seconds=20),
         ),
     ),
 
@@ -395,6 +413,8 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
             CapabilitySpec(name="close_finding", consequence="DO", precondition_expr="finding_id in state.open_findings"),
         ),
         solver_candidates=(
+            SolverCandidateSpec(order=1, strategy="astar-plain", timeout_seconds=20),
+            SolverCandidateSpec(order=2, strategy="lrtastar-plain", timeout_seconds=20),
         ),
     ),
 
@@ -412,6 +432,8 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
             CapabilitySpec(name="SkUPAction", consequence="DO", precondition_expr="true"),
         ),
         solver_candidates=(
+            SolverCandidateSpec(order=1, strategy="astar-plain", timeout_seconds=15),
+            SolverCandidateSpec(order=2, strategy="lrtastar-plain", timeout_seconds=15),
         ),
     ),
 }

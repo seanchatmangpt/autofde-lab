@@ -576,3 +576,131 @@ afl:domain_mastermind_cap_1 a afl:Capability ;
     afl:capabilityName "guess(row)" ;
     afl:capabilityConsequence "DO" ;
     afl:capabilityPrecondition "true (UnrestrictedActions -- any row in the enumerable action space is always applicable)" .
+
+
+# --- All-planners-ready round: real LRTAstar second candidates for the
+# remaining 11 Astar-family domains, proven via ultracode fan-out (every
+# plan length matches the already-proven Astar baseline exactly).
+
+afl:domain_fix_git_solver_1 a afl:SolverCandidate ;
+    afl:candidateOrder 1 ;
+    afl:solverStrategy "astar-plain" ;
+    afl:solverTimeoutSeconds 20 .
+
+afl:domain_fix_git_solver_2 a afl:SolverCandidate ;
+    afl:candidateOrder 2 ;
+    afl:solverStrategy "lrtastar-plain" ;
+    afl:solverTimeoutSeconds 20 .
+
+afl:domain_pddl_solver_1 a afl:SolverCandidate ;
+    afl:candidateOrder 1 ;
+    afl:solverStrategy "astar-plain" ;
+    afl:solverTimeoutSeconds 15 .
+
+afl:domain_pddl_solver_2 a afl:SolverCandidate ;
+    afl:candidateOrder 2 ;
+    afl:solverStrategy "lrtastar-plain" ;
+    afl:solverTimeoutSeconds 15 .
+
+afl:domain_plado_solver_1 a afl:SolverCandidate ;
+    afl:candidateOrder 1 ;
+    afl:solverStrategy "astar-plain" ;
+    afl:solverTimeoutSeconds 15 .
+
+afl:domain_plado_solver_2 a afl:SolverCandidate ;
+    afl:candidateOrder 2 ;
+    afl:solverStrategy "lrtastar-plain" ;
+    afl:solverTimeoutSeconds 15 .
+
+afl:domain_up_solver_1 a afl:SolverCandidate ;
+    afl:candidateOrder 1 ;
+    afl:solverStrategy "astar-plain" ;
+    afl:solverTimeoutSeconds 15 .
+
+afl:domain_up_solver_2 a afl:SolverCandidate ;
+    afl:candidateOrder 2 ;
+    afl:solverStrategy "lrtastar-plain" ;
+    afl:solverTimeoutSeconds 15 .
+
+afl:domain_chatman_clean_session_solver_1 a afl:SolverCandidate ;
+    afl:candidateOrder 1 ;
+    afl:solverStrategy "astar-plain" ;
+    afl:solverTimeoutSeconds 20 .
+
+afl:domain_chatman_clean_session_solver_2 a afl:SolverCandidate ;
+    afl:candidateOrder 2 ;
+    afl:solverStrategy "lrtastar-plain" ;
+    afl:solverTimeoutSeconds 20 .
+
+afl:domain_tai_v30_1_1_solver_1 a afl:SolverCandidate ;
+    afl:candidateOrder 1 ;
+    afl:solverStrategy "astar-plain" ;
+    afl:solverTimeoutSeconds 20 .
+
+afl:domain_tai_v30_1_1_solver_2 a afl:SolverCandidate ;
+    afl:candidateOrder 2 ;
+    afl:solverStrategy "lrtastar-plain" ;
+    afl:solverTimeoutSeconds 20 .
+
+afl:domain_terragoat_solver_1 a afl:SolverCandidate ;
+    afl:candidateOrder 1 ;
+    afl:solverStrategy "astar-plain" ;
+    afl:solverTimeoutSeconds 20 .
+
+afl:domain_terragoat_solver_2 a afl:SolverCandidate ;
+    afl:candidateOrder 2 ;
+    afl:solverStrategy "lrtastar-plain" ;
+    afl:solverTimeoutSeconds 20 .
+
+afl:domain_breach_clock_solver_1 a afl:SolverCandidate ;
+    afl:candidateOrder 1 ;
+    afl:solverStrategy "astar-plain" ;
+    afl:solverTimeoutSeconds 20 .
+
+afl:domain_breach_clock_solver_2 a afl:SolverCandidate ;
+    afl:candidateOrder 2 ;
+    afl:solverStrategy "lrtastar-plain" ;
+    afl:solverTimeoutSeconds 20 .
+
+afl:domain_career_admission_solver_1 a afl:SolverCandidate ;
+    afl:candidateOrder 1 ;
+    afl:solverStrategy "astar-plain" ;
+    afl:solverTimeoutSeconds 15 .
+
+afl:domain_career_admission_solver_2 a afl:SolverCandidate ;
+    afl:candidateOrder 2 ;
+    afl:solverStrategy "lrtastar-plain" ;
+    afl:solverTimeoutSeconds 15 .
+
+afl:domain_cloudgoat_iam_privesc_solver_1 a afl:SolverCandidate ;
+    afl:candidateOrder 1 ;
+    afl:solverStrategy "astar-plain" ;
+    afl:solverTimeoutSeconds 20 .
+
+afl:domain_cloudgoat_iam_privesc_solver_2 a afl:SolverCandidate ;
+    afl:candidateOrder 2 ;
+    afl:solverStrategy "lrtastar-plain" ;
+    afl:solverTimeoutSeconds 20 .
+
+afl:domain_k8s_goat_rbac_escalation_solver_1 a afl:SolverCandidate ;
+    afl:candidateOrder 1 ;
+    afl:solverStrategy "astar-plain" ;
+    afl:solverTimeoutSeconds 20 .
+
+afl:domain_k8s_goat_rbac_escalation_solver_2 a afl:SolverCandidate ;
+    afl:candidateOrder 2 ;
+    afl:solverStrategy "lrtastar-plain" ;
+    afl:solverTimeoutSeconds 20 .
+
+# Link triples (RDF allows restating facts about an existing subject):
+afl:domain_fix_git afl:hasSolverCandidate afl:domain_fix_git_solver_1, afl:domain_fix_git_solver_2 .
+afl:domain_pddl afl:hasSolverCandidate afl:domain_pddl_solver_1, afl:domain_pddl_solver_2 .
+afl:domain_plado afl:hasSolverCandidate afl:domain_plado_solver_1, afl:domain_plado_solver_2 .
+afl:domain_up afl:hasSolverCandidate afl:domain_up_solver_1, afl:domain_up_solver_2 .
+afl:domain_chatman_clean_session afl:hasSolverCandidate afl:domain_chatman_clean_session_solver_1, afl:domain_chatman_clean_session_solver_2 .
+afl:domain_tai_v30_1_1 afl:hasSolverCandidate afl:domain_tai_v30_1_1_solver_1, afl:domain_tai_v30_1_1_solver_2 .
+afl:domain_terragoat afl:hasSolverCandidate afl:domain_terragoat_solver_1, afl:domain_terragoat_solver_2 .
+afl:domain_breach_clock afl:hasSolverCandidate afl:domain_breach_clock_solver_1, afl:domain_breach_clock_solver_2 .
+afl:domain_career_admission afl:hasSolverCandidate afl:domain_career_admission_solver_1, afl:domain_career_admission_solver_2 .
+afl:domain_cloudgoat_iam_privesc afl:hasSolverCandidate afl:domain_cloudgoat_iam_privesc_solver_1, afl:domain_cloudgoat_iam_privesc_solver_2 .
+afl:domain_k8s_goat_rbac_escalation afl:hasSolverCandidate afl:domain_k8s_goat_rbac_escalation_solver_1, afl:domain_k8s_goat_rbac_escalation_solver_2 .

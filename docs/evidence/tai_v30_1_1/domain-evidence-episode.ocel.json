@@ -3,15 +3,23 @@
     {
       "attributes": [
         {
+          "name": "candidate_order",
+          "type": "integer"
+        },
+        {
+          "name": "elapsed_seconds",
+          "type": "float"
+        },
+        {
           "name": "plan_length",
           "type": "integer"
         },
         {
-          "name": "standing",
+          "name": "strategy",
           "type": "string"
         }
       ],
-      "name": "materialize"
+      "name": "solver_selected"
     },
     {
       "attributes": [
@@ -39,6 +47,10 @@
         {
           "name": "verify_mode",
           "type": "string"
+        },
+        {
+          "name": "winning_strategy",
+          "type": "string"
         }
       ],
       "name": "verify"
@@ -57,15 +69,23 @@
     {
       "attributes": [
         {
-          "name": "standing",
-          "value": "ALIVE"
+          "name": "strategy",
+          "value": "astar-plain"
+        },
+        {
+          "name": "candidate_order",
+          "value": 1
+        },
+        {
+          "name": "elapsed_seconds",
+          "value": 0.28456592559814453
         },
         {
           "name": "plan_length",
           "value": 12
         }
       ],
-      "id": "ev:materialize",
+      "id": "ev:solver_selected:1",
       "relationships": [
         {
           "objectId": "episode:tai_v30_1_1",
@@ -76,8 +96,8 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:51.378427000Z",
-      "type": "materialize"
+      "time": "2026-08-13T18:46:57.762646000Z",
+      "type": "solver_selected"
     },
     {
       "attributes": [
@@ -101,7 +121,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:51.399909000Z",
+      "time": "2026-08-13T18:46:57.762877000Z",
       "type": "act"
     },
     {
@@ -126,7 +146,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:51.399924000Z",
+      "time": "2026-08-13T18:46:57.762894000Z",
       "type": "act"
     },
     {
@@ -151,7 +171,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:51.399932000Z",
+      "time": "2026-08-13T18:46:57.762903000Z",
       "type": "act"
     },
     {
@@ -176,7 +196,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:51.399939000Z",
+      "time": "2026-08-13T18:46:57.762909000Z",
       "type": "act"
     },
     {
@@ -201,7 +221,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:51.399945000Z",
+      "time": "2026-08-13T18:46:57.762915000Z",
       "type": "act"
     },
     {
@@ -226,7 +246,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:51.399951000Z",
+      "time": "2026-08-13T18:46:57.762922000Z",
       "type": "act"
     },
     {
@@ -251,7 +271,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:51.399956000Z",
+      "time": "2026-08-13T18:46:57.762928000Z",
       "type": "act"
     },
     {
@@ -276,7 +296,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:51.399961000Z",
+      "time": "2026-08-13T18:46:57.762933000Z",
       "type": "act"
     },
     {
@@ -301,7 +321,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:51.399966000Z",
+      "time": "2026-08-13T18:46:57.762940000Z",
       "type": "act"
     },
     {
@@ -326,7 +346,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:51.399971000Z",
+      "time": "2026-08-13T18:46:57.762947000Z",
       "type": "act"
     },
     {
@@ -351,7 +371,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:51.399976000Z",
+      "time": "2026-08-13T18:46:57.762952000Z",
       "type": "act"
     },
     {
@@ -376,7 +396,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:51.399981000Z",
+      "time": "2026-08-13T18:46:57.762957000Z",
       "type": "act"
     },
     {
@@ -392,6 +412,10 @@
         {
           "name": "verify_mode",
           "value": "fresh-instance-replay"
+        },
+        {
+          "name": "winning_strategy",
+          "value": "astar-plain"
         }
       ],
       "id": "ev:verify",
@@ -405,7 +429,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:51.400139000Z",
+      "time": "2026-08-13T18:46:58.041546000Z",
       "type": "verify"
     },
     {
@@ -426,7 +450,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:39:51.400150000Z",
+      "time": "2026-08-13T18:46:58.041692000Z",
       "type": "teardown"
     }
   ],
