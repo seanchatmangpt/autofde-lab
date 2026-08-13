@@ -1,0 +1,243 @@
+{
+  "eventTypes": [
+    {
+      "attributes": [
+        {
+          "name": "plan_length",
+          "type": "integer"
+        },
+        {
+          "name": "standing",
+          "type": "string"
+        }
+      ],
+      "name": "materialize"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "type": "string"
+        },
+        {
+          "name": "step_index",
+          "type": "integer"
+        }
+      ],
+      "name": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "goal_reached",
+          "type": "boolean"
+        },
+        {
+          "name": "standing",
+          "type": "string"
+        },
+        {
+          "name": "verify_mode",
+          "type": "string"
+        }
+      ],
+      "name": "verify"
+    },
+    {
+      "attributes": [
+        {
+          "name": "standing",
+          "type": "string"
+        }
+      ],
+      "name": "teardown"
+    }
+  ],
+  "events": [
+    {
+      "attributes": [
+        {
+          "name": "standing",
+          "value": "ALIVE"
+        },
+        {
+          "name": "plan_length",
+          "value": 3
+        }
+      ],
+      "id": "ev:materialize",
+      "relationships": [
+        {
+          "objectId": "episode:fix_git",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:fix_git",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:27:10.159902000Z",
+      "type": "materialize"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "checkout_recovery"
+        },
+        {
+          "name": "step_index",
+          "value": 0
+        }
+      ],
+      "id": "ev:act:0",
+      "relationships": [
+        {
+          "objectId": "episode:fix_git",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:fix_git",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:27:10.302645000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "checkout_master"
+        },
+        {
+          "name": "step_index",
+          "value": 1
+        }
+      ],
+      "id": "ev:act:1",
+      "relationships": [
+        {
+          "objectId": "episode:fix_git",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:fix_git",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:27:10.302661000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "action_id",
+          "value": "merge_recovery"
+        },
+        {
+          "name": "step_index",
+          "value": 2
+        }
+      ],
+      "id": "ev:act:2",
+      "relationships": [
+        {
+          "objectId": "episode:fix_git",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:fix_git",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:27:10.302671000Z",
+      "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "standing",
+          "value": "ALIVE"
+        },
+        {
+          "name": "goal_reached",
+          "value": true
+        },
+        {
+          "name": "verify_mode",
+          "value": "fresh-instance-replay"
+        }
+      ],
+      "id": "ev:verify",
+      "relationships": [
+        {
+          "objectId": "episode:fix_git",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:fix_git",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:27:10.413755000Z",
+      "type": "verify"
+    },
+    {
+      "attributes": [
+        {
+          "name": "standing",
+          "value": "ALIVE"
+        }
+      ],
+      "id": "ev:teardown",
+      "relationships": [
+        {
+          "objectId": "episode:fix_git",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:fix_git",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-13T17:27:10.413833000Z",
+      "type": "teardown"
+    }
+  ],
+  "objectTypes": [
+    {
+      "attributes": [],
+      "name": "episode"
+    },
+    {
+      "attributes": [
+        {
+          "name": "domain_class",
+          "type": "string"
+        }
+      ],
+      "name": "domain"
+    }
+  ],
+  "objects": [
+    {
+      "attributes": [],
+      "id": "episode:fix_git",
+      "relationships": [],
+      "type": "episode"
+    },
+    {
+      "attributes": [
+        {
+          "name": "domain_class",
+          "time": "1970-01-01T00:00:00.000000000Z",
+          "value": "GitRecoveryDomain"
+        }
+      ],
+      "id": "domain:fix_git",
+      "relationships": [],
+      "type": "domain"
+    }
+  ]
+}

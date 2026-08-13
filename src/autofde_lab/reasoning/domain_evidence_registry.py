@@ -76,6 +76,20 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
         ),
     ),
 
+"chatman_clean_session": DomainEvidenceSpec(
+        domain_name="chatman_clean_session",
+        python_module_path="autofde_lab.hub.domain.chatman_clean_session",
+        domain_class_name="ChatmanCleanSessionDomain",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="state.stage == Stage.STANDING and state.standing == 'ALIVE'",
+        verify_mode="fresh-instance-replay",
+        evidence_out_path="docs/evidence/chatman_clean_session/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="try_route", consequence="DO", precondition_expr="state.stage == Stage.ROUTE"),
+        ),
+    ),
+
 "cloudgoat_iam_privesc": DomainEvidenceSpec(
         domain_name="cloudgoat_iam_privesc",
         python_module_path="autofde_lab.hub.domain.cloudgoat_iam_privesc.cloudgoat_iam_privesc",
@@ -92,14 +106,17 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
 
 "fix_git": DomainEvidenceSpec(
         domain_name="fix_git",
-        python_module_path="autofde_lab.hub.domain.fix_git.git_recovery",
+        python_module_path="autofde_lab.hub.domain.fix_git",
         domain_class_name="GitRecoveryDomain",
         bridge_module_path="",
         bridge_class_name="",
-        goal_check_expr="state.current_branch == self.base_branch and state.recovery_branch_exists and state.merged",
+        goal_check_expr="memory.current_branch == self.base_branch and memory.recovery_branch_exists and memory.merged",
         verify_mode="fresh-instance-replay",
         evidence_out_path="docs/evidence/fix_git/domain-evidence-episode.ocel.json",
         capabilities=(
+            CapabilitySpec(name="merge_recovery", consequence="DO", precondition_expr="memory.current_branch == self.base_branch and memory.recovery_branch_exists and not memory.merged"),
+            CapabilitySpec(name="merge_recovery", consequence="DO", precondition_expr="memory.current_branch == self.base_branch and memory.recovery_branch_exists and not memory.merged"),
+            CapabilitySpec(name="merge_recovery", consequence="DO", precondition_expr="memory.current_branch == self.base_branch and memory.recovery_branch_exists and not memory.merged"),
             CapabilitySpec(name="merge_recovery", consequence="DO", precondition_expr="memory.current_branch == self.base_branch and memory.recovery_branch_exists and not memory.merged"),
         ),
     ),
@@ -134,15 +151,44 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
 
 "pddl": DomainEvidenceSpec(
         domain_name="pddl",
-        python_module_path="autofde_lab.hub.domain.pddl.domain",
+        python_module_path="autofde_lab.hub.domain.pddl",
         domain_class_name="PDDLDomain",
         bridge_module_path="",
         bridge_class_name="",
-        goal_check_expr="self._goal_checker.is_goal(s.to_cpp())  # C++ CppGoalChecker compiled from the loaded PDDL domain/problem file; for the proven fixture (blocks-3-0) the goal is 'on(b, c)'",
+        goal_check_expr="self._goal_checker.is_goal(state.to_cpp())  # blocks-3-0 fixture, goal on(b,c)",
         verify_mode="fresh-instance-replay",
         evidence_out_path="docs/evidence/pddl/domain-evidence-episode.ocel.json",
         capabilities=(
+            CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
+            CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
+            CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
             CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
+            CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
+            CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
+            CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
+            CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
+            CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
+            CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
+            CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
+            CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
+            CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
+            CapabilitySpec(name="PDDLAction  # grounded action, enumerated per problem file", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
+            CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())"),
+            CapabilitySpec(name="PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant", consequence="DO", precondition_expr="self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module"),
+        ),
+    ),
+
+"plado": DomainEvidenceSpec(
+        domain_name="plado",
+        python_module_path="autofde_lab.hub.domain.plado",
+        domain_class_name="PladoPddlDomain",
+        bridge_module_path="",
+        bridge_class_name="",
+        goal_check_expr="self.is_goal(state)  # blocks-3-0 fixture, native encoding, real Astar-solvable in 4 steps -- closes a real pre-existing test gap (test_plado_domain_planning never asserted goal-reaching)",
+        verify_mode="fresh-instance-replay",
+        evidence_out_path="docs/evidence/plado/domain-evidence-episode.ocel.json",
+        capabilities=(
+            CapabilitySpec(name="PladoAction  # native-encoded grounded action", consequence="DO", precondition_expr="applicable per native PDDL applicability generator"),
         ),
     ),
 
@@ -162,7 +208,7 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
 
 "up": DomainEvidenceSpec(
         domain_name="up",
-        python_module_path="autofde_lab.hub.domain.up.up",
+        python_module_path="autofde_lab.hub.domain.up",
         domain_class_name="UPDomain",
         bridge_module_path="",
         bridge_class_name="",
@@ -170,6 +216,7 @@ DOMAIN_EVIDENCE_REGISTRY: dict[str, DomainEvidenceSpec] = {
         verify_mode="fresh-instance-replay",
         evidence_out_path="docs/evidence/up/domain-evidence-episode.ocel.json",
         capabilities=(
+            CapabilitySpec(name="SkUPAction", consequence="DO", precondition_expr="true"),
             CapabilitySpec(name="SkUPAction", consequence="DO", precondition_expr="true"),
         ),
     ),

@@ -30,9 +30,12 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
+from typing import Callable
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
@@ -42,6 +45,142 @@ from autofde_lab.ocel.model import OcelAttribute, OcelAttributeValue, OcelObject
 from autofde_lab.reasoning.domain_evidence_registry import DOMAIN_EVIDENCE_REGISTRY
 
 REPO_ROOT = Path(__file__).parent.parent
+
+_PDDL_DIR = REPO_ROOT / "tests" / "domains" / "python" / "pddl_domains"
+_BLOCKS_DOMAIN = str(_PDDL_DIR / "blocks" / "domain.pddl")
+_BLOCKS_PROBLEM = str(_PDDL_DIR / "blocks" / "probBLOCKS-3-0.pddl")
+
+
+def _build_fix_git() -> object:
+    """Real temp git repo, same pattern as tests/domains/python/
+    test_fix_git_domain.py's `fix_git_repo` fixture -- proven this session
+    (uv run, real goal_reached=True, plan=[checkout_recovery, checkout_master,
+    merge_recovery])."""
+    from autofde_lab.hub.domain.fix_git import GitRecoveryDomain
+
+    def _run_git(repo_dir: Path, *args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(["git", *args], cwd=repo_dir, check=True, capture_output=True, text=True)
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="fix_git_domain_"))
+    repo_dir = tmp_dir / "personal-site"
+    repo_dir.mkdir()
+    _run_git(repo_dir, "init", "-b", "master")
+    _run_git(repo_dir, "config", "user.email", "domain-evidence@example.invalid")
+    _run_git(repo_dir, "config", "user.name", "Domain Evidence Runner")
+    (repo_dir / "_includes").mkdir()
+    (repo_dir / "_layouts").mkdir()
+    (repo_dir / "_includes" / "about.md").write_text("original about\n")
+    (repo_dir / "_layouts" / "default.html").write_text("<html>original</html>\n")
+    _run_git(repo_dir, "add", "-A")
+    _run_git(repo_dir, "commit", "-m", "Initial site")
+    _run_git(repo_dir, "checkout", "--detach", "HEAD")
+    patch_dir = REPO_ROOT / "vendor" / "gyms" / "terminal-bench" / "fix-git" / "environment" / "resources" / "patch_files"
+    (repo_dir / "_includes" / "about.md").write_text((patch_dir / "about.md").read_text())
+    (repo_dir / "_layouts" / "default.html").write_text((patch_dir / "default.html").read_text())
+    _run_git(repo_dir, "add", "-A")
+    _run_git(repo_dir, "commit", "-m", "Move to Stanford")
+    lost_commit = _run_git(repo_dir, "rev-parse", "HEAD").stdout.strip()
+    _run_git(repo_dir, "checkout", "master")
+    return GitRecoveryDomain(repo_dir=repo_dir, target_commit=lost_commit)
+
+
+def _build_pddl() -> object:
+    """Real BLOCKS_DOMAIN/BLOCKS_PROBLEM fixture files, same pattern as
+    tests/domains/python/test_pddl_domain.py -- proven this session
+    (goal_reached=True, plan_length=4)."""
+    from autofde_lab.hub.domain.pddl import PDDLDomain
+
+    return PDDLDomain(_BLOCKS_DOMAIN, _BLOCKS_PROBLEM)
+
+
+def _build_plado() -> object:
+    """Real blocksworld PDDL fixture via PladoPddlDomain (native encoding),
+    same pattern as tests/domains/python/test_plado_domain.py's
+    plado_native_domain_factory -- proven this session (goal_reached=True,
+    plan_length=4). NOTE: the repo's own existing test
+    (test_plado_domain_planning) calls solve()+rollout() but never asserts
+    is_goal -- a real, pre-existing test gap this generic runner's episode
+    now closes with a real goal-reaching check."""
+    from autofde_lab.hub.domain.plado import ActionEncoding, PladoPddlDomain, StateEncoding
+
+    return PladoPddlDomain(
+        domain_path=_BLOCKS_DOMAIN,
+        problem_path=_BLOCKS_PROBLEM,
+        state_encoding=StateEncoding.NATIVE,
+        action_encoding=ActionEncoding.NATIVE,
+    )
+
+
+def _build_up() -> object:
+    """Real unified_planning Problem, same construction as tests/domains/
+    python/test_up_bridge_domain.py's test_up_bridge_domain_planning --
+    proven this session (goal_reached=True, plan_length=2, actions b then c,
+    matching that test's own assertion)."""
+    import unified_planning
+    from unified_planning.shortcuts import Fluent, InstantaneousAction, Not
+
+    from autofde_lab.hub.domain.up import UPDomain
+
+    x = Fluent("x")
+    y = Fluent("y")
+    a = InstantaneousAction("a")
+    a.add_precondition(Not(x))
+    a.add_effect(x, True)
+    b = InstantaneousAction("b")
+    b.add_precondition(Not(y))
+    b.add_effect(y, True)
+    c = InstantaneousAction("c")
+    c.add_precondition(y)
+    c.add_effect(x, True)
+    problem = unified_planning.model.Problem("simple_with_costs")
+    problem.add_fluent(x)
+    problem.add_fluent(y)
+    problem.add_action(a)
+    problem.add_action(b)
+    problem.add_action(c)
+    problem.set_initial_value(x, False)
+    problem.set_initial_value(y, False)
+    problem.add_goal(x)
+    problem.add_quality_metric(unified_planning.model.metrics.MinimizeActionCosts({a: 10, b: 1, c: 1}))
+    return UPDomain(problem, state_encoding="native")
+
+
+def _build_chatman_clean_session() -> object:
+    """Real TaskEnvelope + RouteSpec construction, same shape as this
+    session's own ultracode grounding probe -- proven (goal_reached=True,
+    plan_length=10, stage PARSE->...->STANDING, standing='ALIVE')."""
+    from autofde_lab.hub.domain.chatman_clean_session import (
+        ChatmanCleanSessionDomain,
+        RouteOutcome,
+        RouteSpec,
+        TaskEnvelope,
+    )
+
+    return ChatmanCleanSessionDomain(
+        TaskEnvelope(
+            repo="seanchatmangpt/scikit-decide",
+            base="0f32a25500262047539166a98facc29211e54d01",
+            task="prove Clean-Session Environment Prime interoperability",
+            acceptance="public domain API plus broker-bound execution and replay",
+            constraints=("zero unreceipted actuation",),
+            authority="repository owner",
+        ),
+        routes=(RouteSpec("exact_sha_sparse_tree", cost=1.0, outcome=RouteOutcome.SUCCESS),),
+    )
+
+
+# Named, per-domain exceptions to the default zero-arg `domain_cls()`
+# construction -- real domains whose real __init__ needs arguments the
+# ontology cannot itself supply (a temp git repo, PDDL file paths, a UP
+# Problem object). Each factory here is real, tested code (see this
+# session's ultracode grounding pass), not a stub.
+_DOMAIN_FACTORIES: dict[str, Callable[[], object]] = {
+    "fix_git": _build_fix_git,
+    "pddl": _build_pddl,
+    "plado": _build_plado,
+    "up": _build_up,
+    "chatman_clean_session": _build_chatman_clean_session,
+}
 
 
 def _attr(**kwargs: object) -> dict[str, OcelAttributeValue]:
@@ -71,6 +210,7 @@ def run(domain_key: str) -> None:
 
     module = importlib.import_module(spec.python_module_path)
     domain_cls = getattr(module, spec.domain_class_name)
+    factory: Callable[[], object] = _DOMAIN_FACTORIES.get(domain_key, domain_cls)
 
     log = OcelLog.new()
     episode_obj = f"episode:{domain_key}"
@@ -82,7 +222,7 @@ def run(domain_key: str) -> None:
 
     # materialize -- a real domain instance, real Astar solve.
     t0 = time.time_ns()
-    domain = domain_cls()
+    domain = factory()
     astar_cls = utils.load_registered_solver("Astar")
     plan: list[str] = []
     with astar_cls(domain_factory=lambda: domain) as solver:
@@ -124,7 +264,7 @@ def run(domain_key: str) -> None:
     # acting instance's own object. This is the real verification-
     # independence mechanism from spec.verify_mode == "fresh-instance-replay".
     if spec.verify_mode == "fresh-instance-replay":
-        fresh_domain = domain_cls()
+        fresh_domain = factory()
         fresh_state = fresh_domain.get_initial_state()
         for action_id in plan:
             fresh_state = fresh_domain.get_next_state(fresh_state, action_id)

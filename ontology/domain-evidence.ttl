@@ -204,3 +204,97 @@ afl:domain_pddl_cap_1 a afl:Capability ;
     afl:capabilityName "PDDLAction  # grounded action instance, e.g. (pick-up|stack|...) — dynamically enumerated per problem file, not a fixed constant" ;
     afl:capabilityConsequence "DO" ;
     afl:capabilityPrecondition "self._aops_gen.get_applicable_actions(memory.to_cpp())  # C++ delete-relaxation-free applicability generator over the PDDL task's compiled action schema; no static Python precondition expression exists in this module" .
+
+
+# --- 5 more domains: real constructor factories + real Astar-reaches-goal
+# proofs, grounded via ultracode fan-out. up/pddl/plado/fix_git/
+# chatman_clean_session's real __init__ needs non-ontology-expressible
+# arguments (temp git repo, PDDL file paths, a UP Problem object) -- their
+# construction lives in scripts/run_domain_gymact_ocel_episode.py's
+# _DOMAIN_FACTORIES dict, a named, documented exception, not silently
+# worked around.
+
+afl:domain_up a afl:DomainEvidenceSpec ;
+    afl:domainName "up" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.up" ;
+    afl:domainClassName "UPDomain" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "self._simulator.is_goal(state.up_state)" ;
+    afl:verifyMode "fresh-instance-replay" ;
+    afl:evidenceOutPath "docs/evidence/up/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_up_cap_1 .
+
+afl:domain_up_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "SkUPAction" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "true" .
+
+afl:domain_pddl a afl:DomainEvidenceSpec ;
+    afl:domainName "pddl" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.pddl" ;
+    afl:domainClassName "PDDLDomain" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "self._goal_checker.is_goal(state.to_cpp())  # blocks-3-0 fixture, goal on(b,c)" ;
+    afl:verifyMode "fresh-instance-replay" ;
+    afl:evidenceOutPath "docs/evidence/pddl/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_pddl_cap_1 .
+
+afl:domain_pddl_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "PDDLAction  # grounded action, enumerated per problem file" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "self._aops_gen.get_applicable_actions(memory.to_cpp())" .
+
+afl:domain_plado a afl:DomainEvidenceSpec ;
+    afl:domainName "plado" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.plado" ;
+    afl:domainClassName "PladoPddlDomain" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "self.is_goal(state)  # blocks-3-0 fixture, native encoding, real Astar-solvable in 4 steps -- closes a real pre-existing test gap (test_plado_domain_planning never asserted goal-reaching)" ;
+    afl:verifyMode "fresh-instance-replay" ;
+    afl:evidenceOutPath "docs/evidence/plado/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_plado_cap_1 .
+
+afl:domain_plado_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "PladoAction  # native-encoded grounded action" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "applicable per native PDDL applicability generator" .
+
+afl:domain_fix_git a afl:DomainEvidenceSpec ;
+    afl:domainName "fix_git" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.fix_git" ;
+    afl:domainClassName "GitRecoveryDomain" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "memory.current_branch == self.base_branch and memory.recovery_branch_exists and memory.merged" ;
+    afl:verifyMode "fresh-instance-replay" ;
+    afl:evidenceOutPath "docs/evidence/fix_git/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_fix_git_cap_1 .
+
+afl:domain_fix_git_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "merge_recovery" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "memory.current_branch == self.base_branch and memory.recovery_branch_exists and not memory.merged" .
+
+afl:domain_chatman_clean_session a afl:DomainEvidenceSpec ;
+    afl:domainName "chatman_clean_session" ;
+    afl:pythonModulePath "autofde_lab.hub.domain.chatman_clean_session" ;
+    afl:domainClassName "ChatmanCleanSessionDomain" ;
+    afl:bridgeModulePath "" ;
+    afl:bridgeClassName "" ;
+    afl:goalCheckExpr "state.stage == Stage.STANDING and state.standing == 'ALIVE'" ;
+    afl:verifyMode "fresh-instance-replay" ;
+    afl:evidenceOutPath "docs/evidence/chatman_clean_session/domain-evidence-episode.ocel.json" ;
+    afl:hasCapability afl:domain_chatman_clean_session_cap_1 .
+
+afl:domain_chatman_clean_session_cap_1 a afl:Capability ;
+    afl:capabilityOrder 1 ;
+    afl:capabilityName "try_route" ;
+    afl:capabilityConsequence "DO" ;
+    afl:capabilityPrecondition "state.stage == Stage.ROUTE" .
