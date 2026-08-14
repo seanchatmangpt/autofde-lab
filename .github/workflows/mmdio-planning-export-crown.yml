@@ -1,4 +1,4 @@
-name: mmdio Planning Export Crown
+name: mmdio Planning DFCM Export Crown
 
 on:
   pull_request:
@@ -6,6 +6,7 @@ on:
       - "src/autofde_lab/interchange/**"
       - "tests/interchange/test_mmdio_planning.py"
       - "docs/mmdio-planning-export.md"
+      - "docs/mmdio-planning-dfcm.md"
       - ".github/workflows/mmdio-planning-export-crown.yml"
   workflow_dispatch:
 
@@ -98,55 +99,99 @@ jobs:
           }, sort_keys=True))
           PY
 
-      - name: Check out exact mmdio planning contract
+      - name: Check out exact proven mmdio DFCM planning contract
         uses: actions/checkout@v4
         with:
           repository: seanchatmangpt/mmdio
-          ref: b175b4cf07216a8a8a33afc1d3542c21fd0ba4b2
+          ref: c8af82335a3f279fc4a73660e51a8d98b0349b21
           path: _oracle/mmdio
           fetch-depth: 1
 
-      - name: Admit exports through real mmdio and manufacture docs + receipts
+      - name: DFCM-admit exports and manufacture all evidence outcomes
         env:
           PYTHONPATH: _oracle/mmdio/src
         run: |
-          python - <<'PY'
+          python - <<'PY' | tee /tmp/autofde-mmdio-dfcm.json
           import json
           from pathlib import Path
-          from mmdio.planning.jsonio import load_planning_graph
-          from mmdio.planning.projections import generate_planning_documents
-          from mmdio.planning.receipts import receipt_for, verify_receipt
+          from mmdio.planning import (
+              generate_planning_bundle,
+              load_planning_graph,
+              write_planning_bundle,
+          )
 
           source = Path("/tmp/autofde-mmdio")
           docs_root = Path("/tmp/autofde-mmdio-docs")
           docs_root.mkdir(parents=True, exist_ok=True)
-          admitted = []
-          diagrams = 0
-          receipts = 0
+
+          formalisms = []
+          candidates = admitted = refused = receipts = 0
+          subjects = []
+
           for path in sorted(source.glob("*.json")):
               graph = load_planning_graph(path)
-              documents = generate_planning_documents(graph)
-              assert documents, f"no planning documents for {path}"
-              admitted.append(graph.formalism)
-              target = docs_root / graph.formalism.replace("+", "plus")
-              target.mkdir(parents=True, exist_ok=True)
-              for document in documents:
-                  receipt = receipt_for(graph, document)
-                  verify_receipt(graph, document, receipt)
-                  (target / f"{document.name}.{document.diagram_type}.mmd").write_text(
-                      document.content, encoding="utf-8"
+              bundle = generate_planning_bundle(graph)
+              bundle.verify()
+              matrix = bundle.dfcm_matrix()
+              if matrix.candidate_count != 8:
+                  raise SystemExit(
+                      f"{graph.formalism}: expected 8 DFCM candidates, "
+                      f"observed {matrix.candidate_count}"
                   )
-                  diagrams += 1
-                  receipts += 1
-          assert set(admitted) == {"pddl", "ppddl", "pddl+", "rddl", "powl-2.0"}
-          assert receipts == diagrams
+
+              target = docs_root / graph.formalism.replace("+", "plus")
+              write_planning_bundle(bundle, target)
+
+              actual_refusals = list((target / "refusals").glob("*.refusal.json"))
+              if len(actual_refusals) != matrix.refused_count:
+                  raise SystemExit(
+                      f"{graph.formalism}: refusal artifact cardinality drift"
+                  )
+              if len(bundle.receipts) != matrix.admitted_count:
+                  raise SystemExit(
+                      f"{graph.formalism}: receipt/admission cardinality drift"
+                  )
+
+              formalisms.append(graph.formalism)
+              candidates += matrix.candidate_count
+              admitted += matrix.admitted_count
+              refused += matrix.refused_count
+              receipts += len(bundle.receipts)
+              subjects.append({
+                  "formalism": graph.formalism,
+                  "planning_digest": graph.digest(),
+                  "dfcm_digest": matrix.digest(),
+                  "admitted": sorted(
+                      cell.projection_name for cell in matrix.admitted
+                  ),
+                  "refused": sorted(
+                      cell.projection_name for cell in matrix.refused
+                  ),
+              })
+
+          if set(formalisms) != {"pddl", "ppddl", "pddl+", "rddl", "powl-2.0"}:
+              raise SystemExit(f"formalism coverage drift: {sorted(formalisms)!r}")
+          if candidates != 40:
+              raise SystemExit(f"expected 40 DFCM cells, observed {candidates}")
+          if admitted + refused != candidates:
+              raise SystemExit(
+                  f"DFCM closure failed admitted={admitted} refused={refused}"
+              )
+          if receipts != admitted:
+              raise SystemExit(
+                  f"receipt closure failed admitted={admitted} receipts={receipts}"
+              )
+
           print(json.dumps({
-              "schema": "autofde.mmdio-cross-repo-crown/1",
-              "mmdio_head": "b175b4cf07216a8a8a33afc1d3542c21fd0ba4b2",
-              "formalisms": sorted(admitted),
-              "diagrams": diagrams,
+              "schema": "autofde.mmdio-dfcm-cross-repo-crown/1",
+              "mmdio_head": "c8af82335a3f279fc4a73660e51a8d98b0349b21",
+              "formalisms": sorted(formalisms),
+              "candidate_count": candidates,
+              "admitted_count": admitted,
+              "refused_count": refused,
               "receipts_verified": receipts,
-              "claim": "NATIVE_PLANNING_SEMANTICS_TO_MMDIO_PROJECTION_ONLY",
+              "subjects": subjects,
+              "claim": "NATIVE_PLANNING_SEMANTICS_TO_DFCM_MMDIO_PROJECTION_ONLY",
           }, sort_keys=True))
           PY
 
@@ -154,8 +199,10 @@ jobs:
         working-directory: _oracle/mmdio/tests/oracle
         run: npm ci
 
-      - name: Parse every generated planning document with Mermaid 11.16.0
+      - name: Parse every DFCM-admitted planning document with Mermaid 11.16.0
         run: |
-          mapfile -t diagrams < <(find /tmp/autofde-mmdio-docs -name '*.mmd' -print | sort)
+          mapfile -t diagrams < <(
+            find /tmp/autofde-mmdio-docs -name '*.mmd' -print | sort
+          )
           test "${#diagrams[@]}" -gt 0
           node _oracle/mmdio/tests/oracle/planning_oracle.mjs "${diagrams[@]}"
