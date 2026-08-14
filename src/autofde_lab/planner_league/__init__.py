@@ -22,6 +22,7 @@ from .core import (
     PlannerLeague,
     PolicySpec,
 )
+from .psro import PolicySpaceResponseOracle, PsroReceipt, PsroState, PsroStep
 
 __all__ = [
     "ACTION_PROJECTIONS",
@@ -39,7 +40,11 @@ __all__ = [
     "PayoffHypergraph",
     "PayoffObservation",
     "PlannerLeague",
+    "PolicySpaceResponseOracle",
     "PolicySpec",
+    "PsroReceipt",
+    "PsroState",
+    "PsroStep",
     "ROLE_SPECS",
     "WORLD_CLASSES",
 ]
