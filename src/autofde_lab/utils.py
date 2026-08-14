@@ -354,6 +354,56 @@ def _rank_via_cmca_rank_cli(
     return ranked_pairs
 
 
+# cmca_rank_cli (CMCA-108) is compiled for at most this many candidates and
+# refuses (typed error, not a crash) above it. Real autofde-lab domains can
+# match up to 46 candidates, so without a pre-filter ranked=True always hit
+# the refusal and silently fell back to unranked order -- the real ranking
+# success path was never exercised on real data.
+_CMCA_RANK_CLI_MAX_CANDIDATES = 8
+
+
+def _prefilter_top_for_ranking(
+    matches: list[type[Solver]], limit: int = _CMCA_RANK_CLI_MAX_CANDIDATES
+) -> tuple[list[type[Solver]], list[type[Solver]]]:
+    """Split ``matches`` into (top ``limit``, remainder) for ``cmca_rank_cli``.
+
+    Criterion, chosen deliberately rather than inventing a new metric: the
+    unweighted sum of ``_solver_measures``'s 4 existing real signals
+    (``domain_requirements + hyperparameter_count + has_domain_check +
+    mro_depth``). This reuses exactly the measures already computed for the
+    CLI payload -- no fifth metric is introduced. The sum is defensible as a
+    single "overall structural specificity" proxy: solvers that declare more
+    domain requirements, more tunable hyperparameters, override the
+    additional domain-check hook, and sit deeper in the class hierarchy are,
+    on these real, inspectable signals, the more specialized/informative
+    candidates to spend the CLI's 8-candidate budget on. Ties are broken by
+    the qualified name (``module.qualname``) for full determinism, since
+    ``_solver_measures`` alone can tie.
+
+    Returns ``(top, rest)`` where ``top`` has at most ``limit`` entries
+    (sent to ``cmca_rank_cli`` for real governed ranking) and ``rest`` holds
+    every other matched candidate, in their original relative match order
+    (see ``match_solvers`` for what happens to ``rest`` in the final
+    result -- they are appended, not dropped).
+    """
+    if len(matches) <= limit:
+        return matches, []
+
+    def _sort_key(solver_type: type[Solver]) -> tuple[float, str]:
+        total = sum(_solver_measures(solver_type))
+        qualified_name = f"{solver_type.__module__}.{solver_type.__qualname__}"
+        return (-total, qualified_name)
+
+    ordered = sorted(matches, key=_sort_key)
+    top_set = set(ordered[:limit])
+    # Preserve each group's original match order rather than the
+    # criterion-sorted order, so `rest` reads as "everything else, in the
+    # order match_solvers found it" -- the least surprising behaviour.
+    top = [s for s in matches if s in top_set]
+    rest = [s for s in matches if s not in top_set]
+    return top, rest
+
+
 def match_solvers(
     domain: Domain,
     candidates: Optional[Iterable[type[Solver]]] = None,
@@ -376,6 +426,20 @@ def match_solvers(
     (each solver paired with rank position as its score) rather than raising
     -- matching this repo's stated philosophy that sibling repos are never
     prerequisites (see ``autofde_lab/adapters/base.py``).
+
+    ``cmca_rank_cli`` (CMCA-108) is compiled for at most 8 candidates and
+    refuses above that. When more than 8 candidates match, this function
+    pre-filters to the top 8 (see ``_prefilter_top_for_ranking`` for the
+    exact criterion) *before* invoking the CLI, so the real ranking success
+    path actually fires on real data instead of always hitting the refusal.
+    The candidates outside the top 8 are **not dropped** from the returned
+    list: they are appended after the ranked 8, in their original match
+    order, each paired with a synthetic score strictly lower than every real
+    share returned by the CLI -- so a caller that sorts or reads the list
+    top-down sees "really ranked" candidates first and "matched but not
+    CLI-ranked" candidates last, without silently losing any match. This is
+    the least-surprising choice: ``ranked=True`` never returns fewer
+    candidates than ``ranked=False`` would for the same domain.
     """
     if candidates is None:
         candidates = [load_registered_solver(s) for s in get_registered_solvers()]
@@ -390,9 +454,18 @@ def match_solvers(
     if not ranked:
         return matches
 
-    ranked_via_cli = _rank_via_cmca_rank_cli(matches) if matches else []
+    top, rest = _prefilter_top_for_ranking(matches) if matches else ([], [])
+    ranked_via_cli = _rank_via_cmca_rank_cli(top) if top else []
     if ranked_via_cli is not None:
         ranked_via_cli.sort(key=lambda pair: pair[1], reverse=True)
+        if rest:
+            # Synthetic scores strictly below every real share so `rest`
+            # always sorts after the real-ranked candidates, while
+            # preserving `rest`'s own original match order among itself.
+            min_share = min(score for _, score in ranked_via_cli)
+            floor = min_share - 1.0
+            tail = [(solver_type, floor - i) for i, solver_type in enumerate(rest)]
+            return ranked_via_cli + tail
         return ranked_via_cli
 
     # Graceful fallback: preserve existing match order, pairing each solver

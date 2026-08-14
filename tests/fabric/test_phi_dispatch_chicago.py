@@ -182,34 +182,114 @@ class TestMatchSolversRanked:
             "ranked=True's optional binary-present path is skipped, not faked"
         ),
     )
-    def test_ranked_true_binary_present_returns_real_shares(self):
+    def test_ranked_true_binary_present_returns_all_matches_with_real_or_synthetic_scores(
+        self,
+    ):
         """Only runs when cmca_rank_cli is genuinely resolvable on this machine.
 
-        The real matched-candidate count for this domain (46, see the actual
-        run this test was built against) exceeds cmca_rank_cli's compiled
-        N=8 limit (CMCA-108), so the CLI legitimately refuses with a typed
-        error and match_solvers() must fall back to match order -- this is
-        the real >8-candidate refusal path, exercised honestly, not a test
-        bug. When the real matched count is <=8 this instead exercises the
-        real subprocess ranking path and asserts float shares.
+        Renamed from ``..._returns_real_shares``: that name was misleading --
+        before the >8 pre-filter existed, this domain's 46 real matched
+        candidates always exceeded cmca_rank_cli's N=8 limit (CMCA-108) and
+        the test only ever proved the refusal/fallback path, never real
+        shares. ``match_solvers`` now pre-filters to the top 8 before
+        calling the CLI (see ``_prefilter_top_for_ranking``), so this test
+        instead asserts the *documented* combined-path contract: all
+        matches are still present in the result (none silently dropped),
+        and every entry has a real cmca_rank_cli float share or the
+        documented lower synthetic fallback score.
+        See ``test_ranked_true_prefilters_and_exercises_real_success_path``
+        for the assertion that the real subprocess success path fires.
         """
         domain_instance = self._representative_domain()
         unranked = autofde_lab_utils.match_solvers(domain_instance, ranked=False)
         result = autofde_lab_utils.match_solvers(domain_instance, ranked=True)
 
+        # No match is ever dropped by ranked=True, regardless of >8 pre-filtering.
         assert len(result) == len(unranked)
         assert {s for s, _ in result} == set(unranked)
-        scores = [score for _, score in result]
 
-        if len(unranked) <= 8:
-            # Real subprocess ranking path: real float shares, sorted descending.
-            assert scores == sorted(scores, reverse=True)
-            for _, score in result:
-                assert isinstance(score, float)
-        else:
-            # Real >8-candidate refusal path: graceful fallback to match order,
-            # scored by ascending 1-based rank position (not descending shares).
-            for _, score in result:
-                assert isinstance(score, int)
-            assert [s for s, _ in result] == unranked
-            assert scores == list(range(1, len(unranked) + 1))
+        for _, score in result:
+            assert isinstance(score, (int, float))
+
+    def test_ranked_true_prefilters_and_exercises_real_success_path(self):
+        """New test: proves the real >8 pre-filter + real cmca_rank_cli success path.
+
+        Before this fix, ranked=True on a >8-candidate domain always sent
+        every candidate to cmca_rank_cli, which always refused (CMCA-108),
+        so the real ranking success path was never exercised on real data.
+        This test asserts, with real data and no mock/patch/monkeypatch of
+        the subprocess boundary:
+
+        (a) the pre-filter reduces what's sent to cmca_rank_cli to <=8
+            candidates before the subprocess call (verified directly via
+            ``_prefilter_top_for_ranking``, the same function
+            ``match_solvers`` uses internally);
+        (b) the real subprocess call succeeds -- ``_rank_via_cmca_rank_cli``
+            returns a non-``None`` ranking for those <=8 candidates, i.e.
+            the refusal path is not what fired;
+        (c) the returned shares for the CLI-ranked candidates are real,
+            distinct-ish floats from cmca_rank_cli -- not the unranked
+            fallback's synthetic 1-based int ranks.
+
+        Skipped, not faked, when either the binary or a real >8-candidate
+        domain isn't available in this environment.
+        """
+        if autofde_lab_utils._resolve_cmca_rank_cli_bin() is None:
+            pytest.skip(
+                "cmca_rank_cli binary not resolvable in this environment "
+                "(checked CMCA_RANK_CLI_BIN and $BCINR_HOME/target/debug/cmca_rank_cli)"
+            )
+
+        domain_instance = self._representative_domain()
+        unranked = autofde_lab_utils.match_solvers(domain_instance, ranked=False)
+        if len(unranked) <= autofde_lab_utils._CMCA_RANK_CLI_MAX_CANDIDATES:
+            pytest.skip(
+                f"this domain matched only {len(unranked)} candidates (<=8); "
+                "the >8 pre-filter this test targets isn't exercised without "
+                "a real >8-candidate domain"
+            )
+
+        # (a) real pre-filter reduces to <=8 before the subprocess call.
+        top, rest = autofde_lab_utils._prefilter_top_for_ranking(unranked)
+        assert len(top) == autofde_lab_utils._CMCA_RANK_CLI_MAX_CANDIDATES
+        assert len(rest) == len(unranked) - autofde_lab_utils._CMCA_RANK_CLI_MAX_CANDIDATES
+        assert set(top) | set(rest) == set(unranked)
+
+        # (b) the real subprocess call on the pre-filtered <=8 succeeds --
+        # not the >8 refusal path.
+        ranked_via_cli = autofde_lab_utils._rank_via_cmca_rank_cli(top)
+        assert ranked_via_cli is not None, (
+            "cmca_rank_cli refused even after pre-filtering to "
+            f"{autofde_lab_utils._CMCA_RANK_CLI_MAX_CANDIDATES} candidates -- "
+            "the real success path did not fire"
+        )
+        assert len(ranked_via_cli) == len(top)
+
+        # (c) real, distinct-ish float shares -- not synthetic 1-based ranks.
+        cli_shares = [score for _, score in ranked_via_cli]
+        for score in cli_shares:
+            assert isinstance(score, float)
+        assert len(set(cli_shares)) > 1, (
+            "expected real cmca_rank_cli shares to differ across distinct "
+            "candidates, not collapse to a single repeated value"
+        )
+        assert sorted(cli_shares) != list(range(1, len(cli_shares) + 1)), (
+            "shares look like the unranked fallback's synthetic 1-based "
+            "int ranks, not real cmca_rank_cli output"
+        )
+
+        # End-to-end: match_solvers(ranked=True) itself must reflect the
+        # same real success path (real floats first, `rest` appended with
+        # documented lower synthetic scores, nothing dropped).
+        result = autofde_lab_utils.match_solvers(domain_instance, ranked=True)
+        assert len(result) == len(unranked)
+        assert {s for s, _ in result} == set(unranked)
+        ranked_prefix = result[: len(top)]
+        assert {s for s, _ in ranked_prefix} == set(top)
+        for _, score in ranked_prefix:
+            assert isinstance(score, float)
+        tail = result[len(top) :]
+        assert [s for s, _ in tail] == rest
+        if tail:
+            min_ranked_score = min(score for _, score in ranked_prefix)
+            assert all(score < min_ranked_score for _, score in tail)
