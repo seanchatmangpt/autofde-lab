@@ -9,7 +9,8 @@ from .model import Builder, PlanningExport, PlanningExportError, canonical, dige
 
 def export_powl(root: Any, *, subject: str) -> PlanningExport:
     builder = Builder(
-        "powl-2.0", subject,
+        "powl-2.0",
+        subject,
         {"source": "autofde-lab:POWL2", "export_mode": "structural"},
     )
     _visit(builder, root, "root")
@@ -22,7 +23,8 @@ def _visit(builder: Builder, node: Any, path: str) -> tuple[set[str], set[str]]:
     if kind == "Atom":
         node_id = builder.node(
             f"powl_{digest({'path': path, 'key': getattr(node, 'key', repr(node))})[:20]}",
-            "action", str(getattr(node, "label", "atom")),
+            "action",
+            str(getattr(node, "label", "atom")),
             {
                 "consequence": getattr(node, "consequence", "PURE"),
                 "bindings": canonical(dict(getattr(node, "bindings", {}) or {})),
@@ -37,7 +39,9 @@ def _visit(builder: Builder, node: Any, path: str) -> tuple[set[str], set[str]]:
         return {node_id}, {node_id}
     if kind == "PartialOrder":
         children = tuple(getattr(node, "children"))
-        bounds = [_visit(builder, child, f"{path}.{i}") for i, child in enumerate(children)]
+        bounds = [
+            _visit(builder, child, f"{path}.{i}") for i, child in enumerate(children)
+        ]
         incoming, outgoing = [0] * len(children), [0] * len(children)
         for edge in tuple(getattr(node, "order", ())):
             src, dst = int(getattr(edge, "src")), int(getattr(edge, "dst"))
@@ -55,11 +59,14 @@ def _visit(builder: Builder, node: Any, path: str) -> tuple[set[str], set[str]]:
         return entries, exits
     if kind == "ChoiceGraph":
         children = tuple(getattr(node, "children"))
-        bounds = [_visit(builder, child, f"{path}.{i}") for i, child in enumerate(children)]
+        bounds = [
+            _visit(builder, child, f"{path}.{i}") for i, child in enumerate(children)
+        ]
         edges = sorted(
             getattr(node, "edges", ()),
             key=lambda edge: (
-                int(getattr(edge, "src")), int(getattr(edge, "dst")),
+                int(getattr(edge, "src")),
+                int(getattr(edge, "dst")),
                 getattr(getattr(edge, "guard", None), "key", ""),
             ),
         )
@@ -71,7 +78,9 @@ def _visit(builder: Builder, node: Any, path: str) -> tuple[set[str], set[str]]:
                 label = str(getattr(guard, "predicate_name", "guard"))
                 attrs["guard"] = {
                     "predicate_name": label,
-                    "predicate_args": canonical(dict(getattr(guard, "predicate_args", {}) or {})),
+                    "predicate_args": canonical(
+                        dict(getattr(guard, "predicate_args", {}) or {})
+                    ),
                 }
             for left in sorted(bounds[src][1]):
                 for right in sorted(bounds[dst][0]):
