@@ -58,6 +58,31 @@ afl:candidateOrder a rdf:Property ; rdfs:domain afl:SolverCandidate ; rdfs:range
 afl:solverStrategy a rdf:Property ; rdfs:domain afl:SolverCandidate ; rdfs:range xsd:string .
 afl:solverTimeoutSeconds a rdf:Property ; rdfs:domain afl:SolverCandidate ; rdfs:range xsd:integer .
 
+# --- Verifier-of-verifiers extension: the SAME planner-of-planners pattern
+# applied to verify_mode, not just solver strategy. A domain's real shape may
+# admit more than one independent verification mechanism (fresh-instance
+# replay of the recorded plan, an independent from-scratch re-solve, a
+# seeded-trajectory replay) -- afl:VerifyCandidate makes the ordered
+# fallback list a real, admitted fact instead of the single hardcoded
+# afl:verifyMode string every domain was previously limited to. The runner's
+# dispatcher (see _VERIFY_STRATEGIES/_run_verify_portfolio in
+# run_domain_gymact_ocel_episode.py) tries afl:hasVerifyCandidate entries in
+# afl:verifyCandidateOrder, each bounded by a real wall-clock timeout, and
+# falls through to the next on a real timeout or a failed check -- receipted
+# as ev:verifier_refused / ev:verifier_selected OCEL events, mirroring
+# ev:solver_refused / ev:solver_selected exactly. afl:verifyMode is kept as
+# the legacy single-strategy fact (still authoritative for every domain that
+# has not yet been given a afl:hasVerifyCandidate list) -- this is additive,
+# not a breaking schema change.
+
+afl:VerifyCandidate a rdfs:Class ;
+    rdfs:comment "One ordered verify-strategy attempt for a domain, with a real bounded timeout." .
+
+afl:hasVerifyCandidate a rdf:Property ; rdfs:domain afl:DomainEvidenceSpec ; rdfs:range afl:VerifyCandidate .
+afl:verifyCandidateOrder a rdf:Property ; rdfs:domain afl:VerifyCandidate ; rdfs:range xsd:integer .
+afl:verifyStrategy a rdf:Property ; rdfs:domain afl:VerifyCandidate ; rdfs:range xsd:string .
+afl:verifyTimeoutSeconds a rdf:Property ; rdfs:domain afl:VerifyCandidate ; rdfs:range xsd:integer .
+
 # --- Pilot domain: terragoat ---
 # Real source verified this session: src/autofde_lab/hub/domain/terragoat/
 # terragoat_remediation.py -- TerraGoatRemediation, real-time parse of
@@ -99,13 +124,34 @@ afl:domain_breach_clock a afl:DomainEvidenceSpec ;
     afl:goalCheckExpr "state.notification is Notification.DELIVERED and state.notified_populations == state.populations" ;
     afl:verifyMode "fresh-instance-replay" ;
     afl:evidenceOutPath "docs/evidence/breach_clock/domain-evidence-episode.ocel.json" ;
-    afl:hasCapability afl:domain_breach_clock_cap_1 .
+    afl:hasCapability afl:domain_breach_clock_cap_1 ;
+    afl:hasVerifyCandidate afl:domain_breach_clock_verify_1, afl:domain_breach_clock_verify_2 .
 
 afl:domain_breach_clock_cap_1 a afl:Capability ;
     afl:capabilityOrder 1 ;
     afl:capabilityName "deliver_notification" ;
     afl:capabilityConsequence "DO" ;
     afl:capabilityPrecondition "state.notification is Notification.DRAFTED and state.notified_populations == state.populations" .
+
+# Verifier-of-verifiers, same maze pattern: BreachClockDomain is zero-arg
+# constructible (real source: __init__(self, initial_populations=
+# DEFAULT_INITIAL_POPULATIONS, step_cost=1.0) -- confirmed both params
+# default, so run()'s existing `domain_cls()` call already proves zero-arg
+# construction works) and goes through the generic run() path (no
+# afl:hasSolverCandidate declared, not in _TRAJECTORY_REPLAY, not
+# mastermind). independent-resolve reuses that exact same zero-arg factory
+# via _strategy_astar_plain's `_DOMAIN_FACTORIES.get(domain_key,
+# functools.partial(_default_construct, domain_key))` fallback, so it is a
+# genuinely independent from-scratch Astar re-solve, not a restated replay.
+afl:domain_breach_clock_verify_1 a afl:VerifyCandidate ;
+    afl:verifyCandidateOrder 1 ;
+    afl:verifyStrategy "fresh-instance-replay" ;
+    afl:verifyTimeoutSeconds 15 .
+
+afl:domain_breach_clock_verify_2 a afl:VerifyCandidate ;
+    afl:verifyCandidateOrder 2 ;
+    afl:verifyStrategy "independent-resolve" ;
+    afl:verifyTimeoutSeconds 30 .
 
 afl:domain_career_admission a afl:DomainEvidenceSpec ;
     afl:domainName "career_admission" ;
@@ -116,13 +162,29 @@ afl:domain_career_admission a afl:DomainEvidenceSpec ;
     afl:goalCheckExpr "self._required_categories.issubset({self._facts[fact_id].category for fact_id in state.admitted if fact_id in self._facts})" ;
     afl:verifyMode "fresh-instance-replay" ;
     afl:evidenceOutPath "docs/evidence/career_admission/domain-evidence-episode.ocel.json" ;
-    afl:hasCapability afl:domain_career_admission_cap_1 .
+    afl:hasCapability afl:domain_career_admission_cap_1 ;
+    afl:hasVerifyCandidate afl:domain_career_admission_verify_1, afl:domain_career_admission_verify_2 .
 
 afl:domain_career_admission_cap_1 a afl:Capability ;
     afl:capabilityOrder 1 ;
     afl:capabilityName "intuit_automl" ;
     afl:capabilityConsequence "DO" ;
     afl:capabilityPrecondition "fact.id not in admitted and set(fact.prerequisite_ids).issubset(admitted)" .
+
+# Verifier-of-verifiers, same maze pattern: CareerAdmission is zero-arg
+# constructible (real source: __init__(self, facts=DEFAULT_FACTS,
+# required_categories=DEFAULT_REQUIRED_CATEGORIES) -- both default) and
+# goes through the generic run() path. independent-resolve reuses the same
+# zero-arg factory, a genuinely independent from-scratch Astar re-solve.
+afl:domain_career_admission_verify_1 a afl:VerifyCandidate ;
+    afl:verifyCandidateOrder 1 ;
+    afl:verifyStrategy "fresh-instance-replay" ;
+    afl:verifyTimeoutSeconds 15 .
+
+afl:domain_career_admission_verify_2 a afl:VerifyCandidate ;
+    afl:verifyCandidateOrder 2 ;
+    afl:verifyStrategy "independent-resolve" ;
+    afl:verifyTimeoutSeconds 30 .
 
 afl:domain_up a afl:DomainEvidenceSpec ;
     afl:domainName "up" ;
@@ -150,7 +212,23 @@ afl:domain_cloudgoat_iam_privesc a afl:DomainEvidenceSpec ;
     afl:goalCheckExpr "state.enumerated and state.admin_role_on_profile and state.keypair_created and state.instance_launched and state.has_shell_access and state.target_terminated" ;
     afl:verifyMode "fresh-instance-replay" ;
     afl:evidenceOutPath "docs/evidence/cloudgoat_iam_privesc/domain-evidence-episode.ocel.json" ;
-    afl:hasCapability afl:domain_cloudgoat_iam_privesc_cap_1 .
+    afl:hasCapability afl:domain_cloudgoat_iam_privesc_cap_1 ;
+    afl:hasVerifyCandidate afl:domain_cloudgoat_iam_privesc_verify_1, afl:domain_cloudgoat_iam_privesc_verify_2 .
+
+# Verifier-of-verifiers, same maze pattern: CloudGoatIamPrivescDomain is
+# zero-arg constructible (real source: __init__(self, initial_state:
+# Optional[State] = None) -- defaults to None) and goes through the
+# generic run() path. independent-resolve reuses the same zero-arg
+# factory, a genuinely independent from-scratch Astar re-solve.
+afl:domain_cloudgoat_iam_privesc_verify_1 a afl:VerifyCandidate ;
+    afl:verifyCandidateOrder 1 ;
+    afl:verifyStrategy "fresh-instance-replay" ;
+    afl:verifyTimeoutSeconds 15 .
+
+afl:domain_cloudgoat_iam_privesc_verify_2 a afl:VerifyCandidate ;
+    afl:verifyCandidateOrder 2 ;
+    afl:verifyStrategy "independent-resolve" ;
+    afl:verifyTimeoutSeconds 30 .
 
 afl:domain_cloudgoat_iam_privesc_cap_1 a afl:Capability ;
     afl:capabilityOrder 1 ;
@@ -202,7 +280,8 @@ afl:domain_maze a afl:DomainEvidenceSpec ;
     afl:verifyMode "fresh-instance-replay" ;
     afl:evidenceOutPath "docs/evidence/maze/domain-evidence-episode.ocel.json" ;
     afl:hasCapability afl:domain_maze_cap_1 ;
-    afl:hasSolverCandidate afl:domain_maze_solver_1, afl:domain_maze_solver_2 .
+    afl:hasSolverCandidate afl:domain_maze_solver_1, afl:domain_maze_solver_2 ;
+    afl:hasVerifyCandidate afl:domain_maze_verify_1, afl:domain_maze_verify_2 .
 
 # Real, proven second candidate this round: LRTAstar independently
 # reproduces the identical 58-step optimal goal state Astar already proved
@@ -218,6 +297,25 @@ afl:domain_maze_solver_2 a afl:SolverCandidate ;
     afl:candidateOrder 2 ;
     afl:solverStrategy "lrtastar-plain" ;
     afl:solverTimeoutSeconds 30 .
+
+# Verifier-of-verifiers pilot: maze declares 2 candidate verify strategies in
+# priority order. fresh-instance-replay first (cheap: replay the recorded
+# plan on a brand-new Maze instance, check goal + state match -- already the
+# domain's real proven mechanism). independent-resolve second, as the real
+# fallback: an entirely independent from-scratch Astar re-solve of a FRESH
+# domain instance, checking only that it too reaches goal -- a genuinely
+# different verification mechanism (doesn't touch the recorded plan at all),
+# proven this pass by real execution (see the runner's _run_verify_portfolio
+# and this domain's real episode run).
+afl:domain_maze_verify_1 a afl:VerifyCandidate ;
+    afl:verifyCandidateOrder 1 ;
+    afl:verifyStrategy "fresh-instance-replay" ;
+    afl:verifyTimeoutSeconds 15 .
+
+afl:domain_maze_verify_2 a afl:VerifyCandidate ;
+    afl:verifyCandidateOrder 2 ;
+    afl:verifyStrategy "independent-resolve" ;
+    afl:verifyTimeoutSeconds 30 .
 
 afl:domain_maze_cap_1 a afl:Capability ;
     afl:capabilityOrder 1 ;

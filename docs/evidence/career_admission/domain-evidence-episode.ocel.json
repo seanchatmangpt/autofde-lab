@@ -37,6 +37,23 @@
     {
       "attributes": [
         {
+          "name": "candidate_order",
+          "type": "integer"
+        },
+        {
+          "name": "elapsed_seconds",
+          "type": "float"
+        },
+        {
+          "name": "strategy",
+          "type": "string"
+        }
+      ],
+      "name": "verifier_selected"
+    },
+    {
+      "attributes": [
+        {
           "name": "goal_reached",
           "type": "boolean"
         },
@@ -50,6 +67,10 @@
         },
         {
           "name": "winning_strategy",
+          "type": "string"
+        },
+        {
+          "name": "winning_verify_strategy",
           "type": "string"
         }
       ],
@@ -78,7 +99,7 @@
         },
         {
           "name": "elapsed_seconds",
-          "value": 0.29132795333862305
+          "value": 0.3272221088409424
         },
         {
           "name": "plan_length",
@@ -96,7 +117,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:46:16.031529000Z",
+      "time": "2026-08-14T01:00:37.386673000Z",
       "type": "solver_selected"
     },
     {
@@ -121,7 +142,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:46:16.031723000Z",
+      "time": "2026-08-14T01:00:37.386952000Z",
       "type": "act"
     },
     {
@@ -146,7 +167,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:46:16.031741000Z",
+      "time": "2026-08-14T01:00:37.386979000Z",
       "type": "act"
     },
     {
@@ -171,8 +192,37 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:46:16.031755000Z",
+      "time": "2026-08-14T01:00:37.386989000Z",
       "type": "act"
+    },
+    {
+      "attributes": [
+        {
+          "name": "strategy",
+          "value": "fresh-instance-replay"
+        },
+        {
+          "name": "candidate_order",
+          "value": 1
+        },
+        {
+          "name": "elapsed_seconds",
+          "value": 0.0005052089691162109
+        }
+      ],
+      "id": "ev:verifier_selected:1",
+      "relationships": [
+        {
+          "objectId": "episode:career_admission",
+          "qualifier": ""
+        },
+        {
+          "objectId": "domain:career_admission",
+          "qualifier": ""
+        }
+      ],
+      "time": "2026-08-14T01:00:37.387531000Z",
+      "type": "verifier_selected"
     },
     {
       "attributes": [
@@ -191,6 +241,10 @@
         {
           "name": "winning_strategy",
           "value": "astar-plain"
+        },
+        {
+          "name": "winning_verify_strategy",
+          "value": "fresh-instance-replay"
         }
       ],
       "id": "ev:verify",
@@ -204,7 +258,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:46:16.332036000Z",
+      "time": "2026-08-14T01:00:37.387551000Z",
       "type": "verify"
     },
     {
@@ -225,7 +279,7 @@
           "qualifier": ""
         }
       ],
-      "time": "2026-08-13T18:46:16.332250000Z",
+      "time": "2026-08-14T01:00:37.387564000Z",
       "type": "teardown"
     }
   ],
