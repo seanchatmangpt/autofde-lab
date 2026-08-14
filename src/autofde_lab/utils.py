@@ -272,7 +272,7 @@ def _resolve_cmca_rank_cli_bin() -> Optional[str]:
 
 def _rank_via_cmca_rank_cli(
     matches: list[type[Solver]],
-) -> Optional[list[tuple[type[Solver], int]]]:
+) -> Optional[list[tuple[type[Solver], float]]]:
     """Try to rank ``matches`` via the optional ``cmca_rank_cli`` subprocess.
 
     Returns ``None`` (never raises) on any failure -- binary not found,
@@ -408,7 +408,7 @@ def match_solvers(
     domain: Domain,
     candidates: Optional[Iterable[type[Solver]]] = None,
     ranked: bool = False,
-) -> Union[list[type[Solver]], list[tuple[type[Solver], int]]]:
+) -> Union[list[type[Solver]], list[tuple[type[Solver], float]]]:
     """Filter registered solver classes by domain compatibility.
 
     If ``ranked`` is ``False`` (the default), behaviour is unchanged: a plain
@@ -469,8 +469,8 @@ def match_solvers(
         return ranked_via_cli
 
     # Graceful fallback: preserve existing match order, pairing each solver
-    # with its (1-based) rank position as an int score, satisfying the
-    # declared list[tuple[type[Solver], int]] return type.
+    # with its (1-based) rank position as an int score (an int is trivially
+    # compatible with the declared list[tuple[type[Solver], float]] slot).
     return [(solver_type, i) for i, solver_type in enumerate(matches, start=1)]
 
 
