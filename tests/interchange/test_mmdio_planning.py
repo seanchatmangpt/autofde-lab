@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import importlib
-from pathlib import Path
 import sys
 import types
+from dataclasses import dataclass
+from pathlib import Path
 
 import pytest
 
@@ -216,7 +216,9 @@ def test_pddl_exports_state_action_and_direct_state_transitions():
 def test_ppddl_normalizes_probability_weights_and_preserves_value():
     export = m.export_ppddl_domain(ProbabilisticDomain(), subject="uncertain")
     payload = export.canonical_dict()
-    probability_edges = [edge for edge in payload["edges"] if edge["kind"] == "probabilistic"]
+    probability_edges = [
+        edge for edge in payload["edges"] if edge["kind"] == "probabilistic"
+    ]
     probabilities = sorted(
         {
             edge["attributes"]["probability"]
