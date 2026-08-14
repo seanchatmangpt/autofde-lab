@@ -625,7 +625,7 @@ def _strategy_astar_plain(domain_key: str) -> dict:
             if domain.is_goal(state):
                 break
             action = solver.sample_action(state)
-            plan.append(str(action))
+            plan.append(action)
             state = domain.get_next_state(state, action)
     return {"plan": plan, "goal_reached": domain.is_goal(state)}
 
@@ -642,7 +642,7 @@ def _strategy_astar_heuristic(domain_key: str) -> dict:
             if domain.is_goal(state):
                 break
             action = solver.sample_action(state)
-            plan.append(str(action))
+            plan.append(action)
             state = domain.get_next_state(state, action)
     return {"plan": plan, "goal_reached": domain.is_goal(state)}
 
@@ -692,7 +692,7 @@ def _strategy_lrtastar_plain(domain_key: str) -> dict:
             if domain.is_goal(state):
                 break
             action = solver.sample_action(state)
-            plan.append(str(action))
+            plan.append(action)
             state = domain.get_next_state(state, action)
     return {"plan": plan, "goal_reached": domain.is_goal(state)}
 
@@ -713,7 +713,7 @@ def _strategy_bfws_state_features(domain_key: str) -> dict:
             if domain.is_goal(state):
                 break
             action = solver.sample_action(state)
-            plan.append(str(action))
+            plan.append(action)
             state = domain.get_next_state(state, action)
     return {"plan": plan, "goal_reached": domain.is_goal(state)}
 
@@ -737,7 +737,7 @@ def _strategy_iw_state_features(domain_key: str) -> dict:
             if domain.is_goal(state):
                 break
             action = solver.sample_action(state)
-            plan.append(str(action))
+            plan.append(action)
             state = domain.get_next_state(state, action)
     return {"plan": plan, "goal_reached": domain.is_goal(state)}
 
@@ -750,6 +750,184 @@ _SOLVER_STRATEGIES: dict[str, Callable[[str], dict]] = {
     "bfws-state-features": _strategy_bfws_state_features,
     "iw-state-features": _strategy_iw_state_features,
 }
+
+
+# ---------------------------------------------------------------------------
+# Verifier of verifiers: the SAME planner-of-planners pattern applied to
+# verify_mode, not just solver strategy. A domain's real shape may admit
+# more than one independent verification mechanism (fresh-instance replay
+# of the recorded plan, an independent from-scratch re-solve, ...) --
+# spec.verify_candidates (from afl:hasVerifyCandidate in
+# ontology/domain-evidence.ttl) makes the ordered fallback list a real,
+# admitted fact instead of the single legacy spec.verify_mode string every
+# domain was previously limited to.
+#
+# Real bounded attempt via SIGALRM, not a subprocess: unlike the solver
+# candidates (which rebuild everything from scratch and are naturally
+# pickle-safe for multiprocessing's spawn context), verify strategies need
+# to inspect the ALREADY-LIVE `domain`/`final_state`/recorded `plan` the
+# acting run produced -- those objects are frequently not picklable
+# (C++-backed PDDL/plado bindings, live solver handles), confirmed
+# impractical to thread through try_solver's spawn boundary. SIGALRM gives
+# a real, enforced wall-clock bound in-process instead (POSIX only --
+# this workspace is macOS/Linux, matching every other bounded-attempt
+# mechanism already in this file).
+# ---------------------------------------------------------------------------
+
+import signal
+
+
+class _VerifyTimeout(Exception):
+    """Raised by the SIGALRM handler when a verify strategy exceeds its
+    real declared timeout_seconds."""
+
+
+def _with_alarm_timeout(fn: Callable, timeout_seconds: int, *args, **kwargs):
+    def _handler(signum, frame):
+        raise _VerifyTimeout(f"verify strategy exceeded {timeout_seconds}s")
+
+    old_handler = signal.signal(signal.SIGALRM, _handler)
+    signal.alarm(timeout_seconds)
+    try:
+        return fn(*args, **kwargs)
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old_handler)
+
+
+def _verify_fresh_instance_replay(ctx: dict) -> bool:
+    """Real closure: a brand-new domain instance, independent of the
+    acting `domain` object, replays the exact recorded action sequence and
+    the terminal check is re-derived against IT. Matches `final_state`
+    from the acting run when one was captured (the Astar-family `run()`
+    path); when only a goal check is available (the solver-portfolio path,
+    which never retains the acting domain object across its subprocess
+    boundary), goal-reaching alone is the real check."""
+    factory = ctx["factory"]
+    plan = ctx["plan"]
+    final_state = ctx.get("final_state")
+    fresh_domain = factory()
+    fresh_state = fresh_domain.get_initial_state()
+    for action_id in plan:
+        fresh_state = fresh_domain.get_next_state(fresh_state, action_id)
+    if not fresh_domain.is_goal(fresh_state):
+        return False
+    if final_state is not None:
+        return fresh_state == final_state
+    return True
+
+
+def _verify_independent_resolve(ctx: dict, timeout_seconds: int) -> bool:
+    """Real fallback verify strategy: an entirely independent from-scratch
+    re-solve of a FRESH domain instance via the winning solver strategy (or
+    astar-plain if none is known in this context) -- doesn't touch the
+    recorded plan/final_state at all, just re-derives goal-reachability
+    independently. Reuses the already-proven solver-candidate strategy
+    functions rather than duplicating solve logic.
+
+    Bounded via `try_solver` (separate subprocess), NOT SIGALRM: unlike
+    `_verify_fresh_instance_replay`, this strategy never touches the
+    already-live `domain`/`final_state` objects -- it only takes
+    `domain_key` (a plain string) and rebuilds everything from scratch
+    inside the child, exactly like the solver candidates in
+    `_SOLVER_STRATEGIES` (naturally pickle-safe for multiprocessing's spawn
+    context, same as the legacy independent-resolve fallback at the bottom
+    of `_run_solver_portfolio_episode`). SIGALRM cannot preempt a blocking
+    C-extension solver.solve() frame -- confirmed this session by a real
+    >90s unkillable hang that no signal.alarm approach could abort; only a
+    separate OS process can be terminated regardless of what it's blocked
+    on."""
+    from autofde_lab.solver_control.try_solver import try_solver
+
+    domain_key = ctx["domain_key"]
+    winning_strategy = ctx.get("winning_strategy")
+    strategy_fn = _SOLVER_STRATEGIES.get(winning_strategy, _strategy_astar_plain)
+    outcome = try_solver(functools.partial(strategy_fn, domain_key), timeout_seconds)
+    if outcome["status"] != "success":
+        return False
+    return bool(outcome["result"].get("goal_reached"))
+
+
+# Verify strategies that bound themselves via a real subprocess (try_solver)
+# rather than the generic SIGALRM wrapper below -- see
+# `_verify_independent_resolve`'s docstring for why SIGALRM is unsafe for
+# these specifically (a picklable, from-scratch rebuild that can run in a
+# child process) versus the others (live, frequently-unpicklable objects
+# that must stay in-process).
+_SUBPROCESS_VERIFY_STRATEGIES: dict[str, Callable[[dict, int], bool]] = {
+    "independent-resolve": _verify_independent_resolve,
+}
+
+_VERIFY_STRATEGIES: dict[str, Callable[[dict], bool]] = {
+    "fresh-instance-replay": _verify_fresh_instance_replay,
+}
+
+
+def _run_verify_portfolio(domain_key: str, spec, log, episode_obj: str, domain_obj: str, ctx: dict):
+    """Real verifier-of-verifiers dispatch, mirroring
+    `_run_solver_portfolio_episode`'s ev:solver_refused/ev:solver_selected
+    pattern for verify_mode: try each `spec.verify_candidates` in order,
+    bounded by its own real SIGALRM timeout, falling through to the next
+    candidate on a real timeout or a failed check. Every rejected candidate
+    is a real, receipted `ev:verifier_refused` OCEL event; the winner is
+    `ev:verifier_selected`. Falls back to the legacy single
+    `spec.verify_mode` field (existing fresh-instance-replay-only behavior)
+    when no verify_candidates are declared, so every already-generated
+    registry entry keeps working unchanged.
+
+    Returns (verify_passed, updated_log, selected_strategy_or_None).
+    """
+    if not spec.verify_candidates:
+        if spec.verify_mode != "fresh-instance-replay":
+            raise NotImplementedError(
+                f"verify_mode={spec.verify_mode!r} has no declared verify_candidates and is not "
+                "fresh-instance-replay -- add afl:hasVerifyCandidate individuals in "
+                "ontology/domain-evidence.ttl to opt this domain into the verify-portfolio dispatcher"
+            )
+        verify_passed = _verify_fresh_instance_replay(ctx)
+        return verify_passed, log, "fresh-instance-replay"
+
+    for candidate in sorted(spec.verify_candidates, key=lambda c: c.order):
+        subprocess_strategy_fn = _SUBPROCESS_VERIFY_STRATEGIES.get(candidate.strategy)
+        print(f"domain_evidence[{domain_key}]: trying verify candidate order={candidate.order} strategy={candidate.strategy} timeout={candidate.timeout_seconds}s")
+        attempt_t0 = time.time()
+        try:
+            if subprocess_strategy_fn is not None:
+                # Bounded via a real subprocess (try_solver), not SIGALRM --
+                # see _verify_independent_resolve's docstring.
+                passed = subprocess_strategy_fn(ctx, candidate.timeout_seconds)
+            else:
+                strategy_fn = _VERIFY_STRATEGIES[candidate.strategy]
+                passed = _with_alarm_timeout(strategy_fn, candidate.timeout_seconds, ctx)
+            elapsed = time.time() - attempt_t0
+        except Exception as exc:  # real SIGALRM timeout or a real check-raising failure
+            elapsed = time.time() - attempt_t0
+            reason = "timeout" if isinstance(exc, _VerifyTimeout) else f"error:{exc.__class__.__name__}"
+            log = log.append_event(
+                f"ev:verifier_refused:{candidate.order}", "verifier_refused", [episode_obj, domain_obj],
+                timestamp_ns=time.time_ns(),
+                attributes=_attr(strategy=candidate.strategy, candidate_order=candidate.order, elapsed_seconds=elapsed, reason=reason),
+            )
+            print(f"domain_evidence[{domain_key}]: verify candidate {candidate.strategy} refused ({reason}) after {elapsed:.2f}s")
+            continue
+
+        if passed:
+            log = log.append_event(
+                f"ev:verifier_selected:{candidate.order}", "verifier_selected", [episode_obj, domain_obj],
+                timestamp_ns=time.time_ns(),
+                attributes=_attr(strategy=candidate.strategy, candidate_order=candidate.order, elapsed_seconds=elapsed),
+            )
+            print(f"domain_evidence[{domain_key}]: verify candidate {candidate.strategy} succeeded in {elapsed:.2f}s")
+            return True, log, candidate.strategy
+
+        log = log.append_event(
+            f"ev:verifier_refused:{candidate.order}", "verifier_refused", [episode_obj, domain_obj],
+            timestamp_ns=time.time_ns(),
+            attributes=_attr(strategy=candidate.strategy, candidate_order=candidate.order, elapsed_seconds=elapsed, reason="check_failed"),
+        )
+        print(f"domain_evidence[{domain_key}]: verify candidate {candidate.strategy} refused (check_failed) after {elapsed:.2f}s")
+
+    return False, log, None
 
 
 def _run_solver_portfolio_episode(domain_key: str, spec) -> None:
@@ -821,17 +999,27 @@ def _run_solver_portfolio_episode(domain_key: str, spec) -> None:
             timestamp_ns=time.time_ns(), attributes=_attr(action_id=str(action_id), step_index=i),
         )
 
-    # verify -- independent re-attempt of the SAME winning strategy in a
-    # fresh subprocess, confirming the win reproduces (matches the
-    # independent-resolve pattern already proven for rcpsp/mastermind this
-    # session -- a fresh solve, not merely a replay).
-    verify_result = try_solver(functools.partial(_SOLVER_STRATEGIES[selected.strategy], domain_key), selected.timeout_seconds)
-    verify_passed = verify_result["status"] == "success" and verify_result["result"].get("goal_reached", False)
+    # verify -- verifier-of-verifiers dispatch (spec.verify_candidates),
+    # mirroring the solver-candidate dispatcher above. Domains with no
+    # declared verify_candidates keep the prior behavior (an independent
+    # re-attempt of the SAME winning strategy in a fresh subprocess --
+    # equivalent to "independent-resolve"), via _run_verify_portfolio's
+    # legacy fallback path.
+    factory = _DOMAIN_FACTORIES.get(domain_key, functools.partial(_default_construct, domain_key))
+    verify_ctx = {"domain_key": domain_key, "plan": plan, "factory": factory, "winning_strategy": selected.strategy}
+    if spec.verify_candidates:
+        verify_passed, log, selected_verify_strategy = _run_verify_portfolio(
+            domain_key, spec, log, episode_obj, domain_obj, verify_ctx
+        )
+    else:
+        verify_result = try_solver(functools.partial(_SOLVER_STRATEGIES[selected.strategy], domain_key), selected.timeout_seconds)
+        verify_passed = verify_result["status"] == "success" and verify_result["result"].get("goal_reached", False)
+        selected_verify_strategy = "independent-resolve"
 
     log = log.append_event(
         "ev:verify", "verify", [episode_obj, domain_obj],
         timestamp_ns=time.time_ns(),
-        attributes=_attr(standing="ALIVE" if verify_passed else "REFUSED", goal_reached=outcome["goal_reached"], verify_mode=spec.verify_mode, winning_strategy=selected.strategy),
+        attributes=_attr(standing="ALIVE" if verify_passed else "REFUSED", goal_reached=outcome["goal_reached"], verify_mode=spec.verify_mode, winning_strategy=selected.strategy, winning_verify_strategy=str(selected_verify_strategy)),
     )
     log = log.append_event(
         "ev:teardown", "teardown", [episode_obj, domain_obj],
@@ -924,28 +1112,22 @@ def run(domain_key: str) -> None:
     final_state = state
     goal_reached = domain.is_goal(final_state)
 
-    # verify -- fresh-instance-replay: a brand-new domain instance,
-    # independent of `domain` above, replays the exact same recorded action
-    # sequence and the terminal check is re-derived against IT, not the
-    # acting instance's own object. This is the real verification-
-    # independence mechanism from spec.verify_mode == "fresh-instance-replay".
-    if spec.verify_mode == "fresh-instance-replay":
-        fresh_domain = factory()
-        fresh_state = fresh_domain.get_initial_state()
-        for action_id in plan:
-            fresh_state = fresh_domain.get_next_state(fresh_state, action_id)
-        verify_passed = fresh_domain.is_goal(fresh_state) and (fresh_state == final_state)
-    else:
-        raise NotImplementedError(
-            f"verify_mode={spec.verify_mode!r} not yet implemented in this generic runner "
-            "(only fresh-instance-replay is wired so far -- see "
-            "docs/jira/2026-08-13-domain-maturity-l4/INDEX-AND-GGEN-DESIGN.md for the other 3 modes)"
-        )
+    # verify -- verifier-of-verifiers dispatch (spec.verify_candidates) when
+    # declared, else the legacy single fresh-instance-replay mechanism via
+    # _run_verify_portfolio's fallback path (same real check as before this
+    # extension: a brand-new domain instance, independent of `domain`
+    # above, replays the exact recorded action sequence and the terminal
+    # check is re-derived against IT, not the acting instance's own
+    # object).
+    verify_ctx = {"domain_key": domain_key, "plan": plan, "factory": factory, "final_state": final_state}
+    verify_passed, log, selected_verify_strategy = _run_verify_portfolio(
+        domain_key, spec, log, episode_obj, domain_obj, verify_ctx
+    )
 
     log = log.append_event(
         "ev:verify", "verify", [episode_obj, domain_obj],
         timestamp_ns=time.time_ns(),
-        attributes=_attr(standing="ALIVE" if verify_passed else "REFUSED", goal_reached=goal_reached, verify_mode=spec.verify_mode),
+        attributes=_attr(standing="ALIVE" if verify_passed else "REFUSED", goal_reached=goal_reached, verify_mode=spec.verify_mode, winning_verify_strategy=str(selected_verify_strategy)),
     )
     log = log.append_event(
         "ev:teardown", "teardown", [episode_obj, domain_obj],
