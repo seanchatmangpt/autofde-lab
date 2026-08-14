@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from hashlib import sha256
 import json
 import math
+from dataclasses import dataclass
+from hashlib import sha256
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -14,14 +14,31 @@ CLAIM_CEILING = "NATIVE_PLANNING_SEMANTICS_TO_MMDIO_PROJECTION_ONLY"
 FORMALISMS = frozenset({"pddl", "ppddl", "pddl+", "rddl", "powl-2.0"})
 NODE_KINDS = frozenset(
     {
-        "state", "action", "process", "event", "goal", "constraint",
-        "fluent", "reward", "choice", "observation", "silent",
+        "state",
+        "action",
+        "process",
+        "event",
+        "goal",
+        "constraint",
+        "fluent",
+        "reward",
+        "choice",
+        "observation",
+        "silent",
     }
 )
 EDGE_KINDS = frozenset(
     {
-        "precondition", "effect", "transition", "precedence", "causal",
-        "probabilistic", "temporal", "dependency", "observation", "reward",
+        "precondition",
+        "effect",
+        "transition",
+        "precedence",
+        "causal",
+        "probabilistic",
+        "temporal",
+        "dependency",
+        "observation",
+        "reward",
     }
 )
 
@@ -88,8 +105,11 @@ class PlanningExport:
 
     def canonical_json(self) -> str:
         return json.dumps(
-            self.canonical_dict(), sort_keys=True, separators=(",", ":"),
-            ensure_ascii=False, allow_nan=False,
+            self.canonical_dict(),
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
         )
 
     def digest(self) -> str:
@@ -100,9 +120,13 @@ class PlanningExport:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(
             json.dumps(
-                self.canonical_dict(), indent=2, sort_keys=True,
-                ensure_ascii=False, allow_nan=False,
-            ) + "\n",
+                self.canonical_dict(),
+                indent=2,
+                sort_keys=True,
+                ensure_ascii=False,
+                allow_nan=False,
+            )
+            + "\n",
             encoding="utf-8",
         )
         return target
@@ -112,7 +136,9 @@ class Builder:
     """Identity-preserving constructor for one planning export."""
 
     def __init__(
-        self, formalism: str, subject: str,
+        self,
+        formalism: str,
+        subject: str,
         metadata: Mapping[str, Any] | None = None,
     ) -> None:
         if formalism not in FORMALISMS:
@@ -128,13 +154,18 @@ class Builder:
         self.metadata = dict(metadata or {})
 
     def node(
-        self, node_id: str, kind: str, label: str,
+        self,
+        node_id: str,
+        kind: str,
+        label: str,
         attributes: Mapping[str, Any] | None = None,
     ) -> str:
         if kind not in NODE_KINDS:
             raise PlanningExportError("AFL-MMDIO-004", f"unknown node kind {kind!r}")
         payload = {
-            "id": node_id, "kind": kind, "label": str(label),
+            "id": node_id,
+            "kind": kind,
+            "label": str(label),
             "attributes": canonical(dict(attributes or {})),
         }
         previous = self.nodes.get(node_id)
@@ -146,14 +177,19 @@ class Builder:
         return node_id
 
     def edge(
-        self, source: str, target: str, kind: str,
+        self,
+        source: str,
+        target: str,
+        kind: str,
         label: str | None = None,
         attributes: Mapping[str, Any] | None = None,
     ) -> None:
         if kind not in EDGE_KINDS:
             raise PlanningExportError("AFL-MMDIO-006", f"unknown edge kind {kind!r}")
         payload = {
-            "source": source, "target": target, "kind": kind,
+            "source": source,
+            "target": target,
+            "kind": kind,
             "label": None if label is None else str(label),
             "attributes": canonical(dict(attributes or {})),
         }
@@ -176,7 +212,8 @@ class Builder:
             nodes=tuple(self.nodes.values()),
             edges=tuple(self.edges.values()),
             metadata={
-                **self.metadata, "schema": SCHEMA,
+                **self.metadata,
+                "schema": SCHEMA,
                 "claim_ceiling": CLAIM_CEILING,
                 "authority": "non-actuating",
             },
@@ -237,8 +274,11 @@ def canonical(value: Any) -> Any:
 
 def canonical_json(value: Any) -> str:
     return json.dumps(
-        canonical(value), sort_keys=True, separators=(",", ":"),
-        ensure_ascii=False, allow_nan=False,
+        canonical(value),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
     )
 
 
@@ -260,7 +300,9 @@ def short_label(value: Any, limit: int = 160) -> str:
 
 def edge_sort_key(edge: Mapping[str, Any]) -> tuple[str, str, str, str, str]:
     return (
-        str(edge["source"]), str(edge["target"]), str(edge["kind"]),
+        str(edge["source"]),
+        str(edge["target"]),
+        str(edge["kind"]),
         str(edge.get("label") or ""),
         json.dumps(edge.get("attributes", {}), sort_keys=True, separators=(",", ":")),
     )
