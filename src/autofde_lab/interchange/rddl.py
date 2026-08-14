@@ -9,14 +9,18 @@ from .model import Builder, ExportLimits, PlanningExport, canonical, digest, sho
 
 
 def export_rddl_rollout(
-    domain: Any, actions: Iterable[Any], *, subject: str,
+    domain: Any,
+    actions: Iterable[Any],
+    *,
+    subject: str,
     limits: ExportLimits = ExportLimits(),
 ) -> PlanningExport:
     """Export observed stochastic consequences without claiming full enumeration."""
 
     limits.validate()
     builder = Builder(
-        "rddl", subject,
+        "rddl",
+        subject,
         {"source": "autofde-lab:RDDLDomain", "export_mode": "observed-bounded-rollout"},
     )
     observation = domain.reset()
@@ -27,8 +31,14 @@ def export_rddl_rollout(
             break
         action_id = builder.node(
             f"action_{digest({'step': step, 'action': canonical(action)})[:20]}",
-            "action", str(action),
-            {"start": step - 1, "duration": 1, "step": step, "ground": canonical(action)},
+            "action",
+            str(action),
+            {
+                "start": step - 1,
+                "duration": 1,
+                "step": step,
+                "ground": canonical(action),
+            },
         )
         builder.edge(previous_id, action_id, "precondition", "selected-policy-action")
         outcome = domain.step(action)
@@ -42,7 +52,8 @@ def export_rddl_rollout(
             break
     builder.metadata.update(
         {
-            "steps": steps, "terminated": terminated,
+            "steps": steps,
+            "terminated": terminated,
             "truncated": steps >= limits.max_steps and not terminated,
             "limits": limits.as_dict(),
         }
@@ -50,8 +61,12 @@ def export_rddl_rollout(
     return builder.finish()
 
 
-def _state(builder: Builder, observation: Any, *, step: int, initial: bool = False) -> str:
-    node_id = f"state_{digest({'step': step, 'observation': canonical(observation)})[:20]}"
+def _state(
+    builder: Builder, observation: Any, *, step: int, initial: bool = False
+) -> str:
+    node_id = (
+        f"state_{digest({'step': step, 'observation': canonical(observation)})[:20]}"
+    )
     attrs: dict[str, Any] = {"time": step, "step": step}
     if initial:
         attrs["initial"] = True
@@ -62,6 +77,10 @@ def _value_attrs(value: Any) -> dict[str, Any]:
     attrs: dict[str, Any] = {}
     for name in ("reward", "cost"):
         candidate = getattr(value, name, None)
-        if isinstance(candidate, (int, float)) and not isinstance(candidate, bool) and math.isfinite(float(candidate)):
+        if (
+            isinstance(candidate, (int, float))
+            and not isinstance(candidate, bool)
+            and math.isfinite(float(candidate))
+        ):
             attrs[name] = float(candidate)
     return attrs
