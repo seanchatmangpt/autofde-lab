@@ -71,8 +71,8 @@ jobs:
         run: |
           set -euo pipefail
           ! grep -nE 'editable = "\.\./(gymact|wasm4pm-compat/python)"|/Users/sac/' uv.lock
-          grep -Fq 'git+https://github.com/seanchatmangpt/gymact.git?rev=524d0bc8633d8534f500d67f27384ce9368c0863' uv.lock || \
-            grep -Fq 'git+https://github.com/seanchatmangpt/gymact.git@524d0bc8633d8534f500d67f27384ce9368c0863' uv.lock
+          grep -Fq 'https://github.com/seanchatmangpt/gymact.git?rev=524d0bc8633d8534f500d67f27384ce9368c0863' uv.lock
+          grep -Fq 'https://github.com/seanchatmangpt/wasm4pm-compat.git?subdirectory=python&rev=577e2d1d8bdfe27d96f61c63f3ea120994e8bfda' uv.lock
 
       - name: Commit hardened source binding and regenerated lock
         if: steps.lock.outputs.status == '0'
