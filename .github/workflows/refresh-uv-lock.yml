@@ -1,0 +1,49 @@
+name: Refresh uv lock for Git sources
+
+on:
+  push:
+    branches: [agent/replace-local-uv-sources]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-uv-lock-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/replace-local-uv-sources
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Regenerate lock from exact Git sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv lock
+          ! grep -nE 'editable = "\.\./(gymact|wasm4pm-compat/python)"|/Users/sac/' uv.lock
+
+      - name: Commit regenerated lock when changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- uv.lock; then
+            echo "uv.lock already matches pyproject sources"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add uv.lock
+          git commit -m "chore: regenerate uv lock for GitHub sources"
+          git push origin HEAD:agent/replace-local-uv-sources
