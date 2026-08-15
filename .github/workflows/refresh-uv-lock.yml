@@ -28,13 +28,36 @@ jobs:
       - uses: astral-sh/setup-uv@v6
 
       - name: Regenerate lock from exact Git sources
+        id: lock
+        shell: bash
+        run: |
+          set +e
+          uv lock > uv-lock.log 2>&1
+          status=$?
+          cat uv-lock.log
+          echo "status=${status}" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Preserve lock regeneration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: uv-lock-regeneration-${{ github.sha }}
+          path: |
+            uv-lock.log
+            uv.lock
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Verify regenerated lock
+        if: steps.lock.outputs.status == '0'
         shell: bash
         run: |
           set -euo pipefail
-          uv lock
           ! grep -nE 'editable = "\.\./(gymact|wasm4pm-compat/python)"|/Users/sac/' uv.lock
 
       - name: Commit regenerated lock when changed
+        if: steps.lock.outputs.status == '0'
         shell: bash
         run: |
           set -euo pipefail
@@ -47,3 +70,7 @@ jobs:
           git add uv.lock
           git commit -m "chore: regenerate uv lock for GitHub sources"
           git push origin HEAD:agent/replace-local-uv-sources
+
+      - name: Refuse failed lock resolution
+        if: steps.lock.outputs.status != '0'
+        run: exit 2
