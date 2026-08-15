@@ -281,7 +281,7 @@ default-groups = "all"
 
 [tool.uv.sources]
 wasm4pm-compat-pydantic = { git = "https://github.com/seanchatmangpt/wasm4pm-compat.git", rev = "577e2d1d8bdfe27d96f61c63f3ea120994e8bfda", subdirectory = "python" }
-gymact = { git = "https://github.com/seanchatmangpt/gymact.git", rev = "7f5048dcd62514a1ece3cc3bb04d41462ab6a97b" }
+gymact = { git = "https://github.com/seanchatmangpt/gymact.git", rev = "524d0bc8633d8534f500d67f27384ce9368c0863" }
 
 [tool.pytest.ini_options]
 minversion = "6.0"
