@@ -27,6 +27,22 @@ jobs:
 
       - uses: astral-sh/setup-uv@v6
 
+      - name: Pin AutoFDE-Lab to the hardened GymAct source revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path("pyproject.toml")
+          text = path.read_text()
+          old = 'gymact = { git = "https://github.com/seanchatmangpt/gymact.git", rev = "7f5048dcd62514a1ece3cc3bb04d41462ab6a97b" }'
+          new = 'gymact = { git = "https://github.com/seanchatmangpt/gymact.git", rev = "524d0bc8633d8534f500d67f27384ce9368c0863" }'
+          if old in text:
+              path.write_text(text.replace(old, new))
+          elif new not in text:
+              raise SystemExit("REFUSED: expected GymAct source binding not found")
+          PY
+
       - name: Regenerate lock from exact Git sources
         id: lock
         shell: bash
@@ -55,19 +71,21 @@ jobs:
         run: |
           set -euo pipefail
           ! grep -nE 'editable = "\.\./(gymact|wasm4pm-compat/python)"|/Users/sac/' uv.lock
+          grep -Fq 'git+https://github.com/seanchatmangpt/gymact.git?rev=524d0bc8633d8534f500d67f27384ce9368c0863' uv.lock || \
+            grep -Fq 'git+https://github.com/seanchatmangpt/gymact.git@524d0bc8633d8534f500d67f27384ce9368c0863' uv.lock
 
-      - name: Commit regenerated lock when changed
+      - name: Commit hardened source binding and regenerated lock
         if: steps.lock.outputs.status == '0'
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- uv.lock; then
-            echo "uv.lock already matches pyproject sources"
+          if git diff --quiet -- pyproject.toml uv.lock; then
+            echo "pyproject.toml and uv.lock already match exact Git sources"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add uv.lock
+          git add pyproject.toml uv.lock
           git commit -m "chore: regenerate uv lock for GitHub sources"
           git push origin HEAD:agent/replace-local-uv-sources
 
