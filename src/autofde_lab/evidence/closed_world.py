@@ -139,7 +139,10 @@ def admit_absence(
         reasons.append(RefusalReason.OBSERVATION_NOT_NOT_FOUND)
     if observation.scope != closure.scope:
         reasons.append(RefusalReason.SCOPE_MISMATCH)
-        if observation.scope.authority_fingerprint != closure.scope.authority_fingerprint:
+        if (
+            observation.scope.authority_fingerprint
+            != closure.scope.authority_fingerprint
+        ):
             reasons.append(RefusalReason.AUTHORITY_MISMATCH)
     if not closure.authority_complete:
         reasons.append(RefusalReason.INSUFFICIENT_AUTHORITY)

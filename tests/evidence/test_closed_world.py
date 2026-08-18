@@ -10,7 +10,6 @@ from autofde_lab.evidence.closed_world import (
     admit_absence,
 )
 
-
 NOW = datetime(2026, 8, 18, 2, 0, tzinfo=timezone.utc)
 SUBJECT = "/subscriptions/s1/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm1"
 
