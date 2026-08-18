@@ -50,11 +50,24 @@ def test_pairwise_strategy_does_not_materialize_cartesian_space() -> None:
         strategy=SelectionStrategy.PAIRWISE_COVERING,
         baseline=baseline,
         candidate_limit=2_000,
-        max_architectures=32,
     )
 
-    assert compiled.architecture_count <= 32
+    assert compiled.architecture_count < space.upper_bound_size
     assert compiled.decisions[0].digest == baseline.digest
+
+
+def test_pairwise_execution_ceiling_refuses_incomplete_coverage() -> None:
+    space = _maximal_space()
+    baseline = next(space.iter_decisions(limit=1))
+    with pytest.raises(ValueError, match="PAIRWISE_COVERAGE_INCOMPLETE"):
+        ExperimentCompiler().compile(
+            target=_target(),
+            decision_space=space,
+            strategy=SelectionStrategy.PAIRWISE_COVERING,
+            baseline=baseline,
+            candidate_limit=2_000,
+            max_architectures=2,
+        )
 
 
 def test_full_factorial_still_refuses_same_oversized_space() -> None:

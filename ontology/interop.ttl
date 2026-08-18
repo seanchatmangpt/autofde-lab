@@ -11,13 +11,35 @@
     dcterms:description "Foreign representations enter through explicit revision-bound, loss-aware contracts. Adapters may translate representation but may not silently translate meaning." ;
     dcterms:created "2026-08-08"^^xsd:date .
 
-afl:InteropContract a owl:Class , prov:Entity ; rdfs:label "Interop contract" .
-afl:InteropAdapter a owl:Class , prov:Agent ; rdfs:label "Interop adapter" .
-afl:ExternalRepresentation a owl:Class , prov:Entity ; rdfs:label "External representation" .
-afl:Projection a owl:Class , prov:Entity ; rdfs:label "Projection" .
-afl:SemanticLoss a owl:Class , prov:Entity ; rdfs:label "Semantic loss" .
-afl:LossReport a owl:Class , prov:Entity ; rdfs:label "Loss report" .
-afl:InteropContractReceipt a owl:Class , prov:Entity ; rdfs:label "Interop contract receipt" ; rdfs:comment "Binds an adapter to the exact external repository/API contract and revision used as its oracle." .
+afl:InteropContract
+    a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:interop> ;
+    rdfs:label "Interop contract" .
+afl:InteropAdapter
+    a owl:Class , prov:Agent ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:interop> ;
+    rdfs:label "Interop adapter" .
+afl:ExternalRepresentation
+    a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:interop> ;
+    rdfs:label "External representation" .
+afl:Projection
+    a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:interop> ;
+    rdfs:label "Projection" .
+afl:SemanticLoss
+    a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:interop> ;
+    rdfs:label "Semantic loss" .
+afl:LossReport
+    a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:interop> ;
+    rdfs:label "Loss report" .
+afl:InteropContractReceipt
+    a owl:Class , prov:Entity ;
+    rdfs:isDefinedBy <urn:autofde-lab:ontology:interop> ;
+    rdfs:label "Interop contract receipt" ;
+    rdfs:comment "Binds an adapter to the exact external repository/API contract and revision used as its oracle." .
 
 afl:targetsRepresentation a owl:ObjectProperty ; rdfs:domain afl:InteropContract ; rdfs:range afl:ExternalRepresentation ; rdfs:label "targets representation" .
 afl:usesContract a owl:ObjectProperty ; rdfs:domain afl:InteropAdapter ; rdfs:range afl:InteropContract ; rdfs:label "uses contract" .

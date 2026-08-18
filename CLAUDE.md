@@ -18,6 +18,14 @@ given receipt, admission, or actuation semantics. Actuation runs through
 OpenClaw, never through BRCE (which belongs to other systems in the
 portfolio and has no role here).
 
+The same law applies to gyms. `vendor/gyms/` (sregym, devops-gym,
+enterprisebench, ...) are real, exact-pinned vendored checkouts for
+**reference only** — read their source, cite it, audit/materialize their
+git pin. This repo never imports or subprocess-launches them directly.
+`gymact` (the real, standalone sibling package at `~/gymact`) is the one
+real actuation surface for any gym; every real diagnosis/mitigation trial
+goes through it. See `.claude/rules/gym-actuation-boundary.md`.
+
 Repository: https://github.com/seanchatmangpt/autofde-lab | Upstream:
 https://github.com/airbus/scikit-decide | Docs:
 https://airbus.github.io/scikit-decide/
@@ -26,8 +34,30 @@ https://airbus.github.io/scikit-decide/
 
 @.claude/rules/standing-law.md
 
-That file is imported, not merely referenced, because every status claim in
-every session needs it.
+@.claude/rules/absence-is-not-evidence.md
+
+@.claude/rules/no-dual-bookkeeping.md
+
+@.claude/rules/level4-completion-law.md
+
+All four are imported, not merely referenced — every session needs them, and
+each was written after a specific defect got through:
+
+1. **standing-law** — the status vocabulary every claim carries.
+2. **absence-is-not-evidence** — what may enter O* from O. A learned model
+   that coerces `UNKNOWN` into whatever value suits a planner hands it a
+   certainty the experiment never established; the resulting confident-wrong
+   plan is an *admission* defect, not a planner defect. Written after a frozen
+   crown scored 8/10 against a conjunction in which one factor could not fail.
+3. **no-dual-bookkeeping** — where claims may live. Written after derived
+   Python summary state drifted from the execution record three separate
+   times, each caught only by adversarial audit.
+4. **level4-completion-law** — what completion *is*. Written after edge counts
+   and crown scores were reported as though they were standing.
+
+They share one law: never manufacture semantics from absence, coincidence,
+prediction, or a secondary representation when the primary evidence can carry
+the relation itself.
 
 Everything below is **path-gated**, not imported. Each `.claude/rules/*.md`
 carries YAML `paths:` front-matter and loads only when a matching file is
@@ -61,6 +91,7 @@ never looked at `~/bcinr`. Verify with `/memory` and `/context`, don't assume.
 | reporting status, or writing any Explore-phase report to the user | `.claude/rules/explore-register.md` |
 | about to `git push`, open/merge a PR, release, deploy docs, trigger long CI, or call the OpenClaw bridge | `.claude/rules/actuation-boundary.md` |
 | adding or modifying a domain, solver, or C++ hub solver; or looking for where anything lives | `.claude/rules/architecture.md` |
+| touching `vendor/gyms/**`, `src/autofde_lab/gymact/**`, `src/autofde_lab/reasoning/**`, or `src/autofde_lab/sota/**` — or working on gymact/sregym actuation at all | `.claude/rules/gym-actuation-boundary.md` |
 | making any claim that spans `~/mfw`, `~/ggen`, `~/ggen-create`, `~/ggen-legacy`, or `~/bcinr` | `.claude/rules/ecosystem-boundary.md` **and** `docs/ecosystem-standing.md` |
 | touching `fabric/pddl_engine.py`, `fabric/powl.py`, PDDL requirements, or the capability ontology | `.claude/rules/ecosystem-boundary.md` |
 | reaching for a project skill or agent instead of re-deriving a workflow | `.claude/rules/project-tooling.md` |

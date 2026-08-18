@@ -5,6 +5,25 @@
 **Surface:** `EXPLORE`  
 **Class:** live SRE diagnosis + mitigation under Kubernetes noise
 
+**2026-08-10 update — architecture closed, no result yet:** the "Required crown
+receipt" schema below is now a real, enforced type
+(`autofde_lab.sota.crown_receipt.CrownReceipt`), not prose — `admit()` refuses any
+receipt missing a required field, composing `gymact.sota.StandingEvidence`'s own
+independent admission for the subject/experiment/receipt/verifier/replay-verified
+portion. `sregym`/`swegym` are now wired into `level4_gymact_bridge.py`'s `_PROVIDERS`,
+so the generic Level-4 discovery/trial harness can reach both real gymact providers.
+Real Chicago-style tests prove the gate (`tests/sota/test_crown_receipt_chicago.py`)
+and a real, `require_standing`-gated attempt at the actual `autofde_lab_planner`
+episode (`tests/sota/test_crown_receipt_live_chicago.py`).
+
+**Status stays `PLAN / UNKNOWN` — no result exists.** A real colima+k3s cluster and the
+real vendored SREGym checkout were both stood up and exercised this session; the
+concrete remaining blocker is external and named, not implied to be "almost done":
+even the non-LLM `autofde_lab_planner` path's judge pre-flight check requires
+`OPENAI_API_KEY`, which is not configured. Until real judge-model credentials exist,
+`test_crown_receipt_live_chicago.py` correctly refuses (fails loudly, not silently) —
+matching this doc's own Victory-claim gate below.
+
 ## Observed frontier
 
 Current public leaderboard snapshot: Claude Code + Claude Sonnet 4.6 leads at 60.7% end-to-end without noise and 53.7% with noise. SREGym only counts E2E when diagnosis and mitigation both succeed on the same live run.

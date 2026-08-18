@@ -86,6 +86,7 @@ class DecisionSpace:
                 raise ValueError(
                     f"decision-space dimension {field_name} contains duplicate names"
                 )
+        self._validate_compatibility_rules()
 
     @property
     def upper_bound_size(self) -> int:
@@ -106,11 +107,49 @@ class DecisionSpace:
             "budget": self.budgets,
         }
 
+    def _validate_compatibility_rules(self) -> None:
+        options = self.dimension_options()
+        for rule_index, rule in enumerate(self.rules):
+            for clause_name in ("when", "require", "forbid"):
+                pairs = getattr(rule, clause_name)
+                seen: set[str] = set()
+                for dimension, option_name in pairs:
+                    if dimension not in options:
+                        raise ValueError(
+                            "REFUSED:UNKNOWN_COMPATIBILITY_DIMENSION:"
+                            f"rule={rule_index}:{clause_name}:{dimension}"
+                        )
+                    if dimension in seen:
+                        raise ValueError(
+                            "REFUSED:DUPLICATE_COMPATIBILITY_DIMENSION:"
+                            f"rule={rule_index}:{clause_name}:{dimension}"
+                        )
+                    seen.add(dimension)
+                    admitted_names = {item.name for item in options[dimension]}
+                    if option_name not in admitted_names:
+                        raise ValueError(
+                            "REFUSED:UNKNOWN_COMPATIBILITY_OPTION:"
+                            f"rule={rule_index}:{clause_name}:{dimension}={option_name}"
+                        )
+            contradictions = set(rule.require) & set(rule.forbid)
+            if contradictions:
+                detail = ",".join(
+                    f"{dimension}={option}"
+                    for dimension, option in sorted(contradictions)
+                )
+                raise ValueError(
+                    "REFUSED:CONTRADICTORY_COMPATIBILITY_RULE:"
+                    f"rule={rule_index}:{detail}"
+                )
+
     def is_lawful(self, basis: DecisionBasis) -> bool:
         options = self.dimension_options()
         for dimension in DecisionBasis.DIMENSIONS:
             value = getattr(basis, dimension)
-            if value.name not in {item.name for item in options[dimension]}:
+            # Full value equality is intentional. Name-only admission would allow
+            # a caller to smuggle different model parameters or budget limits
+            # under the identity of an admitted option.
+            if value not in options[dimension]:
                 return False
         return all(rule.allows(basis) for rule in self.rules)
 
@@ -221,7 +260,12 @@ class DecisionSpace:
         candidate_limit: int = 100_000,
         max_architectures: int | None = None,
     ) -> tuple[DecisionBasis, ...]:
-        """Select a bounded deterministic covering design from the pairwise basis."""
+        """Select a bounded deterministic covering design from the pairwise basis.
+
+        ``max_architectures`` is an acceptance ceiling, not permission to return
+        an incomplete design under a covering label. If the ceiling cannot cover
+        every represented lawful pair token, the operation refuses explicitly.
+        """
 
         candidates = self.combinatorial_pairwise_candidates(
             baseline=baseline,
@@ -272,9 +316,9 @@ def pairwise_covering(
     """Greedy deterministic pairwise covering selection.
 
     This is intentionally a bounded experimental-design primitive, not a claim
-    of optimal minimum covering-array size. It preserves pairwise interactions
-    represented by the supplied lawful candidate set while avoiding blind
-    full-factorial execution.
+    of optimal minimum covering-array size. It preserves every pairwise
+    interaction represented by the supplied lawful candidate set. A bound that
+    is too small is a typed refusal, never silent loss of claimed coverage.
     """
 
     if not decisions:
@@ -313,8 +357,12 @@ def pairwise_covering(
         uncovered.difference_update(token_map[winner.digest])
         remaining.pop(winner.digest)
 
-    if max_architectures is None and uncovered:
-        raise AssertionError("pairwise covering failed to cover lawful pair tokens")
+    if uncovered:
+        ceiling = "unbounded" if max_architectures is None else str(max_architectures)
+        raise ValueError(
+            "REFUSED:PAIRWISE_COVERAGE_INCOMPLETE:"
+            f"uncovered={len(uncovered)}:max_architectures={ceiling}"
+        )
     return tuple(selected)
 
 
