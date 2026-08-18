@@ -12,7 +12,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 from math import fsum
-from typing import Iterable, Mapping
+from typing import Iterable
 
 from .core import PayoffHypergraph
 
@@ -54,7 +54,9 @@ class PsroState:
         """Return the normalized empirical meta-strategy."""
         count_map = dict(self.counts)
         total = fsum(count_map.values())
-        return {planner_id: count_map[planner_id] / total for planner_id in self.population}
+        return {
+            planner_id: count_map[planner_id] / total for planner_id in self.population
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -163,7 +165,9 @@ class PolicySpaceResponseOracle:
             count_map[best_response] += 1
         next_state = PsroState(
             population=next_population,
-            counts=tuple((planner_id, count_map[planner_id]) for planner_id in next_population),
+            counts=tuple(
+                (planner_id, count_map[planner_id]) for planner_id in next_population
+            ),
             iteration=state.iteration + 1,
         )
         receipt = PsroReceipt(
