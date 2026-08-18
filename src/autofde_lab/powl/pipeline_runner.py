@@ -193,7 +193,6 @@ from autofde_lab.powl.algebra import (
     PowlNode,
 )
 from autofde_lab.powl.bounds import DEFAULT_BOUND, ExecutionBound
-from autofde_lab.powl.refusals import PowlError
 from autofde_lab.powl.executor import (
     INITIAL_MARKING,
     Marking,
@@ -204,6 +203,7 @@ from autofde_lab.powl.executor import (
     is_final,
     node_at,
 )
+from autofde_lab.powl.refusals import PowlError
 
 __all__ = [
     "PIPELINE_LINEAR_STEPS",
@@ -440,7 +440,9 @@ def _concurrent_read_block(labels: Sequence[str]) -> PartialOrder:
     between the observe and remediate-recheck blocks -- the driver-side
     binding/`diagnosis_state`-write logic for the two blocks stays separate.
     """
-    return PartialOrder(children=tuple(Atom(label=l) for l in labels), order=frozenset())
+    return PartialOrder(
+        children=tuple(Atom(label=l) for l in labels), order=frozenset()
+    )
 
 
 def _sequence(nodes: tuple[PowlNode, ...], *, start_index: int) -> frozenset[OrderEdge]:
@@ -513,7 +515,9 @@ def build_pipeline_powl_node(turtle_text: str | None = None) -> PowlNode:
             ChoiceGraphEdge(NodeId(2), NodeId(3)),
         }
     )
-    choice_graph = ChoiceGraph(children=choice_children, edges=choice_edges, start=0, end=3)
+    choice_graph = ChoiceGraph(
+        children=choice_children, edges=choice_edges, start=0, end=3
+    )
 
     record_atom = Atom(label=RECORD_LABEL)
 
@@ -579,7 +583,9 @@ def build_pipeline_powl_node(turtle_text: str | None = None) -> PowlNode:
     # `choice_graph` above already proves works with `node_at`/`_enabled`
     # (both recurse into any `PartialOrder`/`ChoiceGraph` child uniformly;
     # confirmed by reading `executor.py`'s `node_at`/`_enabled` this session).
-    order_edges: set[OrderEdge] = {OrderEdge(edge.src, edge.dst) for edge in linear.order}
+    order_edges: set[OrderEdge] = {
+        OrderEdge(edge.src, edge.dst) for edge in linear.order
+    }
     order_edges.add(OrderEdge(NodeId(n_linear - 1), NodeId(n_linear)))
     order_edges |= _sequence(tail, start_index=n_linear)
 
@@ -630,8 +636,12 @@ def classify_pipeline_stall(
         # Delegate the actual verdict to executor.classify_stall itself --
         # this module never re-derives BOUND_EXHAUSTED vs. DEADLOCK on its
         # own, only forwards the executor's real classification.
-        return PipelineStallResult(final=False, stall=str(classify_stall(model, marking, bound)))
-    return PipelineStallResult(final=False, stall=None)  # more work enabled, not stalled
+        return PipelineStallResult(
+            final=False, stall=str(classify_stall(model, marking, bound))
+        )
+    return PipelineStallResult(
+        final=False, stall=None
+    )  # more work enabled, not stalled
 
 
 def run_pipeline(
@@ -738,7 +748,8 @@ def run_pipeline(
         misgated = sorted(
             label
             for label in action_bindings
-            if label in (ALLOWED_ACTION_BINDING_LABELS | ALLOWED_ACTUATION_ORACLE_LABELS)
+            if label
+            in (ALLOWED_ACTION_BINDING_LABELS | ALLOWED_ACTUATION_ORACLE_LABELS)
             and isinstance(action_bindings[label], GatedCapabilityBinding)
         )
         if misgated:
@@ -819,11 +830,19 @@ def run_pipeline(
             step += 1
 
             node_object_id = f"{session_id}-node-{'.'.join(map(str, chosen))}"
-            outcome: dict[str, Any] = {"standing": "FIRED", "detail": label, "steps_taken": step}
+            outcome: dict[str, Any] = {
+                "standing": "FIRED",
+                "detail": label,
+                "steps_taken": step,
+            }
 
             binding = action_bindings.get(label) if action_bindings else None
             if binding is not None and isinstance(node, Atom):
-                atom_attrs = {"label": node.label, "action": node.action, "bindings": dict(node.bindings)}
+                atom_attrs = {
+                    "label": node.label,
+                    "action": node.action,
+                    "bindings": dict(node.bindings),
+                }
                 try:
                     outcome["action_result"] = binding(atom_attrs)
                 except Exception as exc:  # noqa: BLE001 -- recorded honestly, then re-raised
@@ -868,7 +887,9 @@ def run_pipeline(
                 break  # BOUND_EXHAUSTED mid-batch -- stop firing; handle what did fire below
             step += 1
             fired_node = node_at(model, path)
-            fired_label = fired_node.label if isinstance(fired_node, Atom) else f"path:{path}"
+            fired_label = (
+                fired_node.label if isinstance(fired_node, Atom) else f"path:{path}"
+            )
             fired_this_round.append((path, fired_node, fired_label, step))
 
         if not fired_this_round:
@@ -913,10 +934,14 @@ def run_pipeline(
         results: dict[NodePath, Any] = {}
         errors: dict[NodePath, Exception] = {}
         if fired_this_round:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=len(fired_this_round)) as pool:
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=len(fired_this_round)
+            ) as pool:
                 future_to_path: dict[concurrent.futures.Future, NodePath] = {}
                 for path, fired_node, fired_label, _fired_step in fired_this_round:
-                    binding = action_bindings.get(fired_label) if action_bindings else None
+                    binding = (
+                        action_bindings.get(fired_label) if action_bindings else None
+                    )
                     if binding is not None and isinstance(fired_node, Atom):
                         atom_attrs = {
                             "label": fired_node.label,
@@ -951,7 +976,11 @@ def run_pipeline(
                     },
                 )
                 continue
-            outcome = {"standing": "FIRED", "detail": fired_label, "steps_taken": fired_step}
+            outcome = {
+                "standing": "FIRED",
+                "detail": fired_label,
+                "steps_taken": fired_step,
+            }
             if path in results:
                 outcome["action_result"] = results[path]
             recorder.record(
