@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from gymact.action_contract import (
     ActionDefinition,
     ExecutionGrant,
@@ -84,7 +83,9 @@ def _request(
 
 
 @pytest.mark.asyncio
-async def test_candidate_plan_executes_only_via_gymact_brce_and_returns_verified_alive() -> None:
+async def test_candidate_plan_executes_only_via_gymact_brce_and_returns_verified_alive() -> (
+    None
+):
     runtime = ProductionGymAct(
         validate_profile=False,
         authority_resolver=AllowListAuthorityResolver({AUTHORITY}),
@@ -133,7 +134,10 @@ async def test_candidate_plan_executes_only_via_gymact_brce_and_returns_verified
         transition.receipt.principal == "urn:autofde-lab:test:principal"
         for transition in execution.transitions
     )
-    assert "mfwp:implementsAction <urn:autofde-lab:test:brce-plan/set>" in execution.powl_turtle
+    assert (
+        "mfwp:implementsAction <urn:autofde-lab:test:brce-plan/set>"
+        in execution.powl_turtle
+    )
     assert (
         "mfwp:implementsAction <urn:autofde-lab:test:brce-plan/increment>"
         in execution.powl_turtle

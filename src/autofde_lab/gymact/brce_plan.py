@@ -62,7 +62,9 @@ def _flat_atoms(tree: PowlNode) -> tuple[Atom, ...]:
     """Return the exact flat atom set admitted by AutoFDE's Turtle bridge."""
     if isinstance(tree, Atom):
         return (tree,)
-    if isinstance(tree, PartialOrder) and all(isinstance(child, Atom) for child in tree.children):
+    if isinstance(tree, PartialOrder) and all(
+        isinstance(child, Atom) for child in tree.children
+    ):
         return tree.children  # type: ignore[return-value]
     raise ValueError(
         "REFUSED:UNSUPPORTED_POWL_EXECUTION_SHAPE: expected the flat Atom/PartialOrder "
@@ -115,7 +117,9 @@ def execute_plan_lines_via_gymact_brce(
             raise ValueError(f"REFUSED:MISSING_IMPLEMENTS_ACTION: label={atom.label!r}")
         request = request_binding.get(action_ref)
         if request is None:
-            raise ValueError(f"REFUSED:UNBOUND_IMPLEMENTS_ACTION: action={action_ref!r}")
+            raise ValueError(
+                f"REFUSED:UNBOUND_IMPLEMENTS_ACTION: action={action_ref!r}"
+            )
 
         def execute_bound(
             atom_attrs: dict[str, Any],
@@ -135,7 +139,8 @@ def execute_plan_lines_via_gymact_brce(
                 "receipt_id": transition.receipt.receipt_id,
                 "verified": transition.receipt.verified,
                 "verification_passed": bool(
-                    transition.verification is not None and transition.verification.passed
+                    transition.verification is not None
+                    and transition.verification.passed
                 ),
             }
 
