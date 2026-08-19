@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   federation:
-    uses: seanchatmangpt/chatman-ecosystem/.github/workflows/federated-capability-owner.yml@475d36e9c716fbedb33db6b74b55b0edf6f73c71
+    uses: seanchatmangpt/chatman-ecosystem/.github/workflows/federated-capability-owner.yml@7430dfc9b3ca138e703430d25de7c6f48a8d6ade
     with:
-      control-plane-sha: 475d36e9c716fbedb33db6b74b55b0edf6f73c71
+      control-plane-sha: 7430dfc9b3ca138e703430d25de7c6f48a8d6ade
       descriptor-path: ecosystem/capability-owner.toml
