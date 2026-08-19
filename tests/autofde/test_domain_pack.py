@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import replace
+
 import pytest
 
 from autofde_lab.autofde.domain_pack import DomainPack, ProjectionContract, SourceProvenance
@@ -40,11 +42,15 @@ def pack(*, projections: tuple[ProjectionContract, ...] | None = None) -> Domain
     )
 
 
-def test_domain_pack_requires_all_four_projection_roles() -> None:
+def test_domain_pack_requires_all_four_projection_roles_and_digest_binds_content() -> None:
     subject = pack()
+    same_subject = pack()
+    changed_subject = replace(subject, ontology_digest="sha256:different-ontology")
+
     assert subject.projection("world").generator_ref == "ggen:world"
     assert subject.projection("runtime").schema_ref == "schema:runtime"
-    assert subject.digest == subject.digest
+    assert subject.digest == same_subject.digest
+    assert subject.digest != changed_subject.digest
 
 
 def test_missing_projection_role_is_refused() -> None:
