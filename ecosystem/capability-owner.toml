@@ -3,11 +3,16 @@ version = "26.9.1"
 repository = "seanchatmangpt/autofde-lab"
 owner_id = "repository:autofde-lab"
 control_plane_repository = "seanchatmangpt/chatman-ecosystem"
-control_plane_subject = "git:475d36e9c716fbedb33db6b74b55b0edf6f73c71"
+control_plane_subject = "git:7430dfc9b3ca138e703430d25de7c6f48a8d6ade"
 base_sha = "d444c70b11dbb57b97813262132530c327ca8aa3"
+release_component = "autofde-lab"
+release_role = "explore"
+release_dependencies = ["bcinr", "gymact"]
 allowed_authorities = ["classify"]
 simulation_only = false
+do_mode = "none"
 ambient_do = false
+automatic_irreversible_do = false
 
 [[capability]]
 id = "capability:admit-planner-policy-role-separation"
