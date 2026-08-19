@@ -201,9 +201,7 @@ async def test_chicago_preflight_refuses_identity_drift_before_first_do() -> Non
 
 
 @pytest.mark.asyncio
-async def test_chicago_preflight_refuses_out_of_scope_bundle_before_first_do() -> (
-    None
-):
+async def test_chicago_preflight_refuses_out_of_scope_bundle_before_first_do() -> None:
     runtime, episode_id = await _runtime_and_episode()
     bundle = _authorized_bundle(episode_id)
     bundle[INCREMENT_ACTION] = _request(

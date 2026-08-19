@@ -162,7 +162,10 @@ def _preflight_request_bundle(
                 "REFUSED:BROKER_REQUEST_ACTION_IDENTITY_DRIFT: "
                 f"binding={action_ref!r} identities={sorted(identities)!r}"
             )
-        if required_scope_ref is not None and required_scope_ref not in request.grant.scope_refs:
+        if (
+            required_scope_ref is not None
+            and required_scope_ref not in request.grant.scope_refs
+        ):
             raise PermissionError(
                 "REFUSED:ACTUATION_SCOPE_MISMATCH: "
                 f"action={action_ref!r} required_scope={required_scope_ref!r} "
