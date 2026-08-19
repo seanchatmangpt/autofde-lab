@@ -23,6 +23,7 @@ jobs:
     timeout-minutes: 15
     env:
       GYMACT_SUBJECT_SHA: ae80d0a054687022622f01deb0c8a732966f69dd
+      WASM4PM_COMPAT_SHA: 577e2d1d8bdfe27d96f61c63f3ea120994e8bfda
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -54,12 +55,14 @@ jobs:
             "pynng>=0.6.2" \
             "pathos>=0.2.7" \
             "discrete-optimization>=0.9.0" \
+            "wasm4pm-compat-pydantic @ git+https://github.com/seanchatmangpt/wasm4pm-compat.git@$WASM4PM_COMPAT_SHA#subdirectory=python" \
             "gymact @ git+https://github.com/seanchatmangpt/gymact.git@$GYMACT_SUBJECT_SHA"
           python - <<'PY'
           import importlib.metadata
           import gymact.brce
           import gymact.runtime
           print("gymact_version=" + importlib.metadata.version("gymact"))
+          print("wasm4pm_compat_pydantic_version=" + importlib.metadata.version("wasm4pm-compat-pydantic"))
           PY
 
       - name: Execute exact cross-repo crown
