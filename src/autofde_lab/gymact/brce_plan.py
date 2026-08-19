@@ -2,9 +2,15 @@
 
 AutoFDE owns candidate-plan geometry. GymAct owns consequential execution.
 This module projects a flat admitted plan into POWL2, converts that document
-through AutoFDE's existing POWL bridge, and binds each structural fire to a
-caller-supplied :class:`gymact.brce.BrokerRequest`. It never constructs an
+through AutoFDE's existing POWL bridge, and binds each structural fire to an
+already-authorized :class:`gymact.brce.BrokerRequest`. It never constructs an
 ExecutionGrant, infers a capability, or calls a provider/runtime ``act`` port.
+
+For bounded autonomous testing, :class:`AdmittedActuationSession` accepts one
+finite, caller-authorized request bundle and then drives the complete admitted
+plan without per-step caller intervention. The whole bundle is mechanically
+preflighted before the first DO so structural identity/scope defects cannot
+produce an avoidable prefix consequence.
 """
 
 from __future__ import annotations
@@ -15,6 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Any
 
+from gymact.action_contract import admit_execution
 from gymact.brce import BRCEBroker, BrokerRequest
 from gymact.crown_runtime import VerifiedTransition
 from gymact.models import Standing
@@ -25,7 +32,11 @@ from autofde_lab.ocel.powl_replay import ActionBinding, replay_structural_fires
 from autofde_lab.powl.algebra import Atom, PartialOrder, PowlNode
 from autofde_lab.powl.turtle_bridge import powl_model_to_node
 
-__all__ = ["AdmittedPowlExecution", "execute_plan_lines_via_gymact_brce"]
+__all__ = [
+    "AdmittedActuationSession",
+    "AdmittedPowlExecution",
+    "execute_plan_lines_via_gymact_brce",
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,6 +56,50 @@ class AdmittedPowlExecution:
             and transition.verification.passed
             and transition.receipt.verified is True
             for transition in self.transitions
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class AdmittedActuationSession:
+    """One finite authority bundle that AutoFDE may execute autonomously.
+
+    The caller remains responsible for manufacturing the prepared actions and
+    identity-bound execution grants. After this session is created, AutoFDE
+    needs no per-action callback: ``run`` preflights the complete bundle and
+    drives every admitted consequence exclusively through ``BRCEBroker``.
+    """
+
+    broker: BRCEBroker
+    request_binding: Mapping[str, BrokerRequest]
+    scope_ref: str
+
+    def __post_init__(self) -> None:
+        if not self.scope_ref:
+            raise ValueError("REFUSED:EMPTY_ACTUATION_SCOPE")
+        if not self.request_binding:
+            raise ValueError("REFUSED:EMPTY_ACTUATION_BUNDLE")
+
+    def run(
+        self,
+        plan_lines: Sequence[str],
+        *,
+        base_iri: str,
+        domain_path: str | None = None,
+        problem_path: str | None = None,
+        planner_run: str = "run-autofde-lab-autonomous-brce",
+        domain_iri: str | None = None,
+    ) -> AdmittedPowlExecution:
+        """Autonomously execute one admitted plan inside this exact scope."""
+        return execute_plan_lines_via_gymact_brce(
+            plan_lines,
+            base_iri=base_iri,
+            broker=self.broker,
+            request_binding=self.request_binding,
+            required_scope_ref=self.scope_ref,
+            domain_path=domain_path,
+            problem_path=problem_path,
+            planner_run=planner_run,
+            domain_iri=domain_iri,
         )
 
 
@@ -72,12 +127,68 @@ def _flat_atoms(tree: PowlNode) -> tuple[Atom, ...]:
     )
 
 
+def _preflight_request_bundle(
+    atoms: tuple[Atom, ...],
+    request_binding: Mapping[str, BrokerRequest],
+    *,
+    required_scope_ref: str | None,
+) -> None:
+    """Admit the complete finite request bundle before any consequential DO."""
+    action_refs: list[str] = []
+    for atom in atoms:
+        action_ref = atom.action
+        if not isinstance(action_ref, str) or not action_ref:
+            raise ValueError(f"REFUSED:MISSING_IMPLEMENTS_ACTION: label={atom.label!r}")
+        action_refs.append(action_ref)
+
+    expected_refs = set(action_refs)
+    missing = sorted(expected_refs - set(request_binding))
+    if missing:
+        raise ValueError(f"REFUSED:UNBOUND_IMPLEMENTS_ACTION: action(s)={missing!r}")
+
+    extra = sorted(set(request_binding) - expected_refs)
+    if extra:
+        raise ValueError(f"REFUSED:UNUSED_BROKER_REQUEST: action(s)={extra!r}")
+
+    for action_ref in action_refs:
+        request = request_binding[action_ref]
+        identities = {
+            request.action.semantic_id,
+            request.prepared.action_ref,
+            request.grant.action_ref,
+        }
+        if identities != {action_ref}:
+            raise ValueError(
+                "REFUSED:BROKER_REQUEST_ACTION_IDENTITY_DRIFT: "
+                f"binding={action_ref!r} identities={sorted(identities)!r}"
+            )
+        if required_scope_ref is not None and required_scope_ref not in request.grant.scope_refs:
+            raise PermissionError(
+                "REFUSED:ACTUATION_SCOPE_MISMATCH: "
+                f"action={action_ref!r} required_scope={required_scope_ref!r} "
+                f"grant_scopes={sorted(request.grant.scope_refs)!r}"
+            )
+
+        admission = admit_execution(
+            request.action,
+            request.prepared,
+            request.grant,
+            current_revision=request.current_revision,
+        )
+        if not admission.admitted:
+            raise PermissionError(
+                "REFUSED:BRCE_PREFLIGHT: "
+                f"action={action_ref!r} reason={admission.reason}"
+            )
+
+
 def execute_plan_lines_via_gymact_brce(
     plan_lines: Sequence[str],
     *,
     base_iri: str,
     broker: BRCEBroker,
     request_binding: Mapping[str, BrokerRequest],
+    required_scope_ref: str | None = None,
     domain_path: str | None = None,
     problem_path: str | None = None,
     planner_run: str = "run-autofde-lab-brce",
@@ -88,7 +199,8 @@ def execute_plan_lines_via_gymact_brce(
     ``request_binding`` is keyed by the exact ``mfwp:implementsAction`` IRI
     emitted into the POWL document. Every request must already contain its
     ``PreparedAction`` and identity-bound ``ExecutionGrant``; this function
-    is intentionally incapable of manufacturing either.
+    is intentionally incapable of manufacturing either. The complete bundle
+    is mechanically preflighted before structural replay begins.
     """
     turtle = project_plan_to_powl(
         plan_lines,
@@ -108,18 +220,19 @@ def execute_plan_lines_via_gymact_brce(
             "per structural activity in this flat execution adapter"
         )
 
+    _preflight_request_bundle(
+        atoms,
+        request_binding,
+        required_scope_ref=required_scope_ref,
+    )
+
     transitions: list[VerifiedTransition] = []
     action_bindings: dict[str, ActionBinding] = {}
 
     for atom in atoms:
         action_ref = atom.action
-        if not isinstance(action_ref, str) or not action_ref:
-            raise ValueError(f"REFUSED:MISSING_IMPLEMENTS_ACTION: label={atom.label!r}")
-        request = request_binding.get(action_ref)
-        if request is None:
-            raise ValueError(
-                f"REFUSED:UNBOUND_IMPLEMENTS_ACTION: action={action_ref!r}"
-            )
+        assert isinstance(action_ref, str)
+        request = request_binding[action_ref]
 
         def execute_bound(
             atom_attrs: dict[str, Any],
@@ -145,10 +258,6 @@ def execute_plan_lines_via_gymact_brce(
             }
 
         action_bindings[atom.label] = execute_bound
-
-    extra = sorted(set(request_binding) - {atom.action for atom in atoms})
-    if extra:
-        raise ValueError(f"REFUSED:UNUSED_BROKER_REQUEST: action(s)={extra!r}")
 
     ocel_log = replay_structural_fires(tree, action_bindings=action_bindings)
     return AdmittedPowlExecution(
