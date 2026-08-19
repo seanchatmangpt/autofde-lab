@@ -22,7 +22,6 @@ from autofde_lab.gymact.brce_plan import AdmittedActuationSession
 
 BASE = "urn:autofde-lab:test:brce-plan"
 AUTHORITY = f"{BASE}:authority"
-CHICAGO_SCOPE = f"{BASE}:scope:chicago"
 SET_ACTION = f"{BASE}/set"
 INCREMENT_ACTION = f"{BASE}/increment"
 SET_CAPABILITY = "urn:gymact:memory:capability:set"
@@ -37,7 +36,7 @@ def _request(
     payload: dict[str, object],
     expected: dict[str, object],
     key: str,
-    scope_refs: tuple[str, ...] = (CHICAGO_SCOPE,),
+    scope_refs: tuple[str, ...] | None = None,
 ) -> BrokerRequest:
     effect = ExpectedEffect(predicate="state", parameters=expected)
     action = ActionDefinition(
@@ -57,6 +56,7 @@ def _request(
         semantic_id=f"urn:gymact:episode:{episode_id}",
         provider_ref="memory",
     )
+    bound_scope_refs = (subject.semantic_id,) if scope_refs is None else scope_refs
     prepared = construct_prepared_action(
         action,
         episode_id=episode_id,
@@ -74,7 +74,7 @@ def _request(
         policy_revision="autofde-test-policy-v1",
         admitted_observation_ref=f"urn:autofde-lab:test:observation:{key}",
         intended_effects=action.expected_effects,
-        scope_refs=scope_refs,
+        scope_refs=bound_scope_refs,
         nonce=f"nonce:{key}",
     )
     return BrokerRequest(
@@ -102,6 +102,11 @@ async def _runtime_and_episode() -> tuple[ProductionGymAct, str]:
     return runtime, materialized.episode.episode_id
 
 
+def _episode_scope(episode_id: str) -> str:
+    """Exact Chicago test-world authority scope: this materialized episode only."""
+    return f"urn:gymact:episode:{episode_id}"
+
+
 def _authorized_bundle(episode_id: str) -> dict[str, BrokerRequest]:
     return {
         SET_ACTION: _request(
@@ -124,12 +129,14 @@ def _authorized_bundle(episode_id: str) -> dict[str, BrokerRequest]:
 
 
 @pytest.mark.asyncio
-async def test_chicago_session_autonomously_actuates_complete_plan_only_via_brce() -> None:
+async def test_chicago_session_autonomously_actuates_complete_plan_only_via_brce() -> (
+    None
+):
     runtime, episode_id = await _runtime_and_episode()
     session = AdmittedActuationSession(
         broker=BRCEBroker(runtime),
         request_binding=_authorized_bundle(episode_id),
-        scope_ref=CHICAGO_SCOPE,
+        scope_ref=_episode_scope(episode_id),
     )
 
     execution = session.run(
@@ -147,7 +154,7 @@ async def test_chicago_session_autonomously_actuates_complete_plan_only_via_brce
         for transition in execution.transitions
     )
     assert all(
-        CHICAGO_SCOPE in request.grant.scope_refs
+        session.scope_ref in request.grant.scope_refs
         for request in session.request_binding.values()
     )
     assert not hasattr(session, "act")
@@ -179,10 +186,12 @@ async def test_chicago_preflight_refuses_identity_drift_before_first_do() -> Non
     session = AdmittedActuationSession(
         broker=BRCEBroker(runtime),
         request_binding=bundle,
-        scope_ref=CHICAGO_SCOPE,
+        scope_ref=_episode_scope(episode_id),
     )
 
-    with pytest.raises(ValueError, match="REFUSED:BROKER_REQUEST_ACTION_IDENTITY_DRIFT"):
+    with pytest.raises(
+        ValueError, match="REFUSED:BROKER_REQUEST_ACTION_IDENTITY_DRIFT"
+    ):
         session.run(
             ["(set counter ten)", "(increment counter five)"],
             base_iri=BASE,
@@ -192,7 +201,9 @@ async def test_chicago_preflight_refuses_identity_drift_before_first_do() -> Non
 
 
 @pytest.mark.asyncio
-async def test_chicago_preflight_refuses_out_of_scope_bundle_before_first_do() -> None:
+async def test_chicago_preflight_refuses_out_of_scope_bundle_before_first_do() -> (
+    None
+):
     runtime, episode_id = await _runtime_and_episode()
     bundle = _authorized_bundle(episode_id)
     bundle[INCREMENT_ACTION] = _request(
@@ -202,12 +213,14 @@ async def test_chicago_preflight_refuses_out_of_scope_bundle_before_first_do() -
         payload={"key": "counter", "amount": 5},
         expected={"counter": 15},
         key="autofde-brce-out-of-scope",
-        scope_refs=(f"{BASE}:scope:not-chicago",),
+        # Provider scope is independently valid in GymAct, but intentionally
+        # broader than this session's exact episode scope. AutoFDE must refuse it.
+        scope_refs=("memory",),
     )
     session = AdmittedActuationSession(
         broker=BRCEBroker(runtime),
         request_binding=bundle,
-        scope_ref=CHICAGO_SCOPE,
+        scope_ref=_episode_scope(episode_id),
     )
 
     with pytest.raises(PermissionError, match="REFUSED:ACTUATION_SCOPE_MISMATCH"):
