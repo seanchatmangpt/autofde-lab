@@ -1,0 +1,62 @@
+name: Nightly canonicalize
+
+on:
+  push:
+    branches:
+      - nightly/pr75-78-20260819
+
+permissions:
+  contents: write
+
+jobs:
+  canonicalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact pushed head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install repository quality runner
+        run: python -m pip install 'pre-commit==4.6.0'
+
+      - name: Canonicalize integrated diff and prove replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=d444c70b11dbb57b97813262132530c327ca8aa3
+          mapfile -d '' files < <(git diff --name-only -z --diff-filter=ACMR "$base" HEAD)
+          if ((${#files[@]} == 0)); then
+            echo 'REFUSED:NO_CHANGED_FILES'
+            exit 2
+          fi
+
+          first=0
+          pre-commit run --show-diff-on-failure --color=always --files "${files[@]}" || first=$?
+          if (( first != 0 )) && git diff --quiet; then
+            echo "REFUSED:NON_REWRITING_QUALITY_FAILURE:$first"
+            exit "$first"
+          fi
+
+          pre-commit run --show-diff-on-failure --color=always --files "${files[@]}"
+          git diff --check
+
+      - name: Commit canonical authored files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -u
+          if git diff --cached --quiet; then
+            echo 'No canonicalization delta remains.'
+            exit 0
+          fi
+          git commit -m 'style: apply deterministic quality canonicalization'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
