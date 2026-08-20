@@ -45,7 +45,9 @@ def test_exactly_one_supported_and_no_unknown_is_terminal() -> None:
     assert route_epistemic_state(records) is EpistemicRoute.DIAGNOSIS_READY
 
 
-def test_four_supported_is_not_terminal_and_all_are_on_discrimination_frontier() -> None:
+def test_four_supported_is_not_terminal_and_all_are_on_discrimination_frontier() -> (
+    None
+):
     hypotheses = [_h(i) for i in range(1, 5)]
     links = [_support(i) for i in range(1, 5)]
     records = compute_hypothesis_records(hypotheses, links, _admitted(*links))

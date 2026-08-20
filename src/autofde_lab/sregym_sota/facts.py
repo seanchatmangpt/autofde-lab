@@ -37,7 +37,9 @@ class FactStore:
             if len(self._facts) >= self.max_facts:
                 break
             text = self._safe_value(path, value)[: self.max_value_chars]
-            digest = hashlib.sha256(f"{source}\0{path}\0{text}".encode()).hexdigest()[:24]
+            digest = hashlib.sha256(f"{source}\0{path}\0{text}".encode()).hexdigest()[
+                :24
+            ]
             fact = Fact(id=f"fact:{digest}", source=source, path=path, value=text)
             if fact.id not in self._facts:
                 self._facts[fact.id] = fact

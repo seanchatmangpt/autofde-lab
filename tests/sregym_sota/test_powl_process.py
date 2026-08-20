@@ -18,7 +18,6 @@ from autofde_lab.sregym_sota.powl_process import (
     kubectl_command_is_read_only,
 )
 
-
 KUBECTL = Capability(
     id="mcp:kubectl:exec_kubectl_cmd_safely",
     surface="kubectl",
@@ -43,7 +42,9 @@ SUBMIT = Capability(
 CAPABILITIES = [KUBECTL, SUBMIT]
 
 
-def _contrastive_step(step_id: str, cmd: str, *, after: list[str] | None = None) -> ObservationStep:
+def _contrastive_step(
+    step_id: str, cmd: str, *, after: list[str] | None = None
+) -> ObservationStep:
     return ObservationStep(
         id=step_id,
         capability_id=KUBECTL.id,
@@ -51,8 +52,12 @@ def _contrastive_step(step_id: str, cmd: str, *, after: list[str] | None = None)
         after=after or [],
         discriminates=["H1", "H2"],
         outcomes=[
-            OutcomePrediction(condition="relationship present", supports=["H1"], refutes=["H2"]),
-            OutcomePrediction(condition="relationship absent", supports=["H2"], refutes=["H1"]),
+            OutcomePrediction(
+                condition="relationship present", supports=["H1"], refutes=["H2"]
+            ),
+            OutcomePrediction(
+                condition="relationship absent", supports=["H2"], refutes=["H1"]
+            ),
         ],
     )
 
@@ -77,7 +82,9 @@ def test_discrimination_compiles_exact_capability_ids_to_real_powl() -> None:
 
 def test_single_read_is_still_a_valid_powl_process() -> None:
     model = compile_observation_process(
-        ObservationProcessProposal(steps=[_contrastive_step("a", "kubectl get pods -A")]),
+        ObservationProcessProposal(
+            steps=[_contrastive_step("a", "kubectl get pods -A")]
+        ),
         CAPABILITIES,
         hypothesis_ids={"H1", "H2"},
     )
@@ -97,7 +104,9 @@ def test_discrimination_requires_named_competitors_and_refuting_outcome() -> Non
         ]
     )
     with pytest.raises(ProcessAdmissionError, match="DISCRIMINATION_TARGET_REQUIRED"):
-        compile_observation_process(missing_targets, CAPABILITIES, hypothesis_ids={"H1", "H2"})
+        compile_observation_process(
+            missing_targets, CAPABILITIES, hypothesis_ids={"H1", "H2"}
+        )
 
     no_refute = ObservationProcessProposal(
         steps=[
@@ -111,14 +120,18 @@ def test_discrimination_requires_named_competitors_and_refuting_outcome() -> Non
         ]
     )
     with pytest.raises(ProcessAdmissionError, match="MUST_REFUTE_COMPETITOR"):
-        compile_observation_process(no_refute, CAPABILITIES, hypothesis_ids={"H1", "H2"})
+        compile_observation_process(
+            no_refute, CAPABILITIES, hypothesis_ids={"H1", "H2"}
+        )
 
 
 def test_exact_repeat_read_requires_temporal_reason() -> None:
     step = _contrastive_step("a", "kubectl get services -A -o wide")
     identity = canonical_read_identity(step.capability_id, step.arguments)
     process = ObservationProcessProposal(steps=[step])
-    with pytest.raises(ProcessAdmissionError, match="DUPLICATE_READ_WITHOUT_TEMPORAL_REASON"):
+    with pytest.raises(
+        ProcessAdmissionError, match="DUPLICATE_READ_WITHOUT_TEMPORAL_REASON"
+    ):
         compile_observation_process(
             process,
             CAPABILITIES,
@@ -230,7 +243,9 @@ def test_reversible_mitigation_with_verify_compiles() -> None:
         "kubectl api-resources -o wide",
     ],
 )
-def test_kubectl_observation_classifier_admits_only_read_semantics(command: str) -> None:
+def test_kubectl_observation_classifier_admits_only_read_semantics(
+    command: str,
+) -> None:
     assert kubectl_command_is_read_only(command)
 
 
@@ -246,7 +261,9 @@ def test_kubectl_observation_classifier_admits_only_read_semantics(command: str)
 )
 def test_kubectl_mutations_cannot_be_relabelled_as_reads(command: str) -> None:
     assert not kubectl_command_is_read_only(command)
-    driver = McpActivityDriver(broker=object(), capabilities=CAPABILITIES, allow_do=True)
+    driver = McpActivityDriver(
+        broker=object(), capabilities=CAPABILITIES, allow_do=True
+    )
     assert (
         driver._authority_refusal(
             capability_id=KUBECTL.id,
@@ -260,7 +277,9 @@ def test_kubectl_mutations_cannot_be_relabelled_as_reads(command: str) -> None:
 
 
 def test_capability_binding_drift_is_refused() -> None:
-    driver = McpActivityDriver(broker=object(), capabilities=CAPABILITIES, allow_do=True)
+    driver = McpActivityDriver(
+        broker=object(), capabilities=CAPABILITIES, allow_do=True
+    )
     assert (
         driver._authority_refusal(
             capability_id=KUBECTL.id,
@@ -274,7 +293,9 @@ def test_capability_binding_drift_is_refused() -> None:
 
 
 def test_submit_mcp_is_reserved_from_llm_manufactured_processes() -> None:
-    driver = McpActivityDriver(broker=object(), capabilities=CAPABILITIES, allow_do=True)
+    driver = McpActivityDriver(
+        broker=object(), capabilities=CAPABILITIES, allow_do=True
+    )
     assert (
         driver._authority_refusal(
             capability_id=SUBMIT.id,

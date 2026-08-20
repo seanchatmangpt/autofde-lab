@@ -4,7 +4,6 @@ import sys
 import types
 from pathlib import Path
 
-
 # Root tests/conftest.py intentionally imports numpy before DSPy. After that
 # repository-wide bootstrap, this focused court narrows import scope to the
 # subsystem under test: the source package path is made available without

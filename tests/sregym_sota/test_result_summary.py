@@ -5,7 +5,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 REVISION = "SRE-SIG-003"
 
 
@@ -19,10 +18,23 @@ def test_result_summary_uses_only_sregym_grader_fields(tmp_path: Path) -> None:
         "True,True,12.5,25.0,1,problem-a\n"
     )
     subprocess.run(
-        [sys.executable, str(script), str(source), "--output", str(output),
-         "--autofde-head", "a" * 40, "--sregym-head", "b" * 40,
-         "--problem-id", "problem-a", "--model-id", "model",
-         "--signature-revision", REVISION],
+        [
+            sys.executable,
+            str(script),
+            str(source),
+            "--output",
+            str(output),
+            "--autofde-head",
+            "a" * 40,
+            "--sregym-head",
+            "b" * 40,
+            "--problem-id",
+            "problem-a",
+            "--model-id",
+            "model",
+            "--signature-revision",
+            REVISION,
+        ],
         check=True,
     )
     payload = json.loads(output.read_text())
@@ -43,10 +55,23 @@ def test_result_summary_refuses_missing_attempt_row(tmp_path: Path) -> None:
     output = tmp_path / "summary.json"
     source.write_text("Diagnosis.success,Mitigation.success,attempt,problem_id\n")
     completed = subprocess.run(
-        [sys.executable, str(script), str(source), "--output", str(output),
-         "--autofde-head", "a" * 40, "--sregym-head", "b" * 40,
-         "--problem-id", "problem-a", "--model-id", "model",
-         "--signature-revision", REVISION],
+        [
+            sys.executable,
+            str(script),
+            str(source),
+            "--output",
+            str(output),
+            "--autofde-head",
+            "a" * 40,
+            "--sregym-head",
+            "b" * 40,
+            "--problem-id",
+            "problem-a",
+            "--model-id",
+            "model",
+            "--signature-revision",
+            REVISION,
+        ],
         check=False,
         capture_output=True,
         text=True,

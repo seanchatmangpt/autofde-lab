@@ -98,7 +98,9 @@ class McpBroker:
             raise RuntimeError("required MCP discovery failed: " + "; ".join(failures))
         return capabilities
 
-    async def call(self, surface_name: str, tool: str, arguments: dict[str, Any]) -> str:
+    async def call(
+        self, surface_name: str, tool: str, arguments: dict[str, Any]
+    ) -> str:
         surface = self._available.get(surface_name)
         if surface is None:
             raise RuntimeError(f"MCP surface not discovered: {surface_name}")

@@ -21,7 +21,12 @@ from .epistemic import (
 )
 from .facts import FactStore
 from .mcp import McpBroker
-from .models import DiagnosisCandidate, HypothesisProposal, HypothesisRecord, MitigationProcessProposal
+from .models import (
+    DiagnosisCandidate,
+    HypothesisProposal,
+    HypothesisRecord,
+    MitigationProcessProposal,
+)
 from .powl_process import (
     McpActivityDriver,
     ProcessAdmissionError,
@@ -207,7 +212,9 @@ def _subject_metadata(model: str) -> dict[str, str]:
     }
 
 
-def _epistemic_signature(records: list[HypothesisRecord]) -> tuple[tuple[str, str], ...]:
+def _epistemic_signature(
+    records: list[HypothesisRecord],
+) -> tuple[tuple[str, str], ...]:
     return tuple(sorted((record.id, record.state) for record in records))
 
 
@@ -241,7 +248,9 @@ async def _refuse_diagnosis(
 
 
 async def run() -> dict[str, Any]:
-    model = os.getenv("AGENT_MODEL_ID", os.getenv("MODEL_ID", "groq/openai/gpt-oss-120b"))
+    model = os.getenv(
+        "AGENT_MODEL_ID", os.getenv("MODEL_ID", "groq/openai/gpt-oss-120b")
+    )
     key = os.getenv("GROQ_API_KEY")
     if not key:
         raise RuntimeError("GROQ_API_KEY is required")
@@ -319,7 +328,9 @@ async def run() -> dict[str, Any]:
                 {
                     "stage": "hypothesize",
                     "round": round_index,
-                    "hypotheses": [hypothesis.model_dump() for hypothesis in hypotheses],
+                    "hypotheses": [
+                        hypothesis.model_dump() for hypothesis in hypotheses
+                    ],
                     "retired_portfolio_count": len(retired_portfolios),
                 }
             )
@@ -357,7 +368,9 @@ async def run() -> dict[str, Any]:
                 {
                     "reason": "ALL_REFUTED",
                     "round": round_index,
-                    "hypotheses": [hypothesis.model_dump() for hypothesis in hypotheses],
+                    "hypotheses": [
+                        hypothesis.model_dump() for hypothesis in hypotheses
+                    ],
                 }
             )
             hypotheses = []
@@ -369,7 +382,9 @@ async def run() -> dict[str, Any]:
                 {
                     "reason": "EPISTEMIC_FRONTIER_UNCHANGED",
                     "round": round_index,
-                    "hypotheses": [hypothesis.model_dump() for hypothesis in hypotheses],
+                    "hypotheses": [
+                        hypothesis.model_dump() for hypothesis in hypotheses
+                    ],
                     "states": {h.id: h.state for h in records},
                 }
             )
@@ -391,7 +406,9 @@ async def run() -> dict[str, Any]:
                 facts_json=_json(store.facts),
                 hypotheses_json=_json(records),
             ).diagnosis
-            if not _diagnosis_identity_is_admitted(candidate, records, admitted_fact_ids):
+            if not _diagnosis_identity_is_admitted(
+                candidate, records, admitted_fact_ids
+            ):
                 return await _refuse_diagnosis(
                     broker,
                     subject=subject,
@@ -546,7 +563,9 @@ async def run() -> dict[str, Any]:
     )
     ids = [process.id for process in processes]
     if not ids or len(ids) != len(set(ids)):
-        mitigation_rejections = [{"refusal": "MITIGATION_PROCESS_IDENTITY_INVALID", "ids": ids}]
+        mitigation_rejections = [
+            {"refusal": "MITIGATION_PROCESS_IDENTITY_INVALID", "ids": ids}
+        ]
         admitted_mitigations = []
     else:
         mitigation_rejections: list[dict[str, Any]] = []

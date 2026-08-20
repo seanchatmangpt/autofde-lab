@@ -4,8 +4,8 @@ import argparse
 import shutil
 from pathlib import Path
 
-
-AGENT_STANZA = """
+AGENT_STANZA = (
+    """
   - name: autofde-sota
     kickoff_command: python -m clients.autofde.driver
     kickoff_workdir: .
@@ -14,10 +14,12 @@ AGENT_STANZA = """
     install_script: null
     agent_version: SRE-SIG-003
     container_isolation: false
-""".rstrip() + "\n"
+""".rstrip()
+    + "\n"
+)
 
 
-DRIVER_SOURCE = '''from __future__ import annotations
+DRIVER_SOURCE = """from __future__ import annotations
 
 import sys
 import types
@@ -42,7 +44,7 @@ from clients.autofde.autofde_sota.agent import main
 
 if __name__ == "__main__":
     main()
-'''
+"""
 
 
 def main() -> None:

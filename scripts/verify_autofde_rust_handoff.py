@@ -10,12 +10,12 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import subprocess
-import tomllib
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
+import tomllib
 
 SHA1 = re.compile(r"^[0-9a-f]{40}$")
 
@@ -49,7 +49,9 @@ def exact_head(root: Path, expected: str, label: str) -> str:
         raise Refusal(f"{label}: expected revision is not an exact git SHA-1")
     actual = git(root, "rev-parse", "HEAD")
     if actual != expected:
-        raise Refusal(f"{label}: exact-head mismatch actual={actual} expected={expected}")
+        raise Refusal(
+            f"{label}: exact-head mismatch actual={actual} expected={expected}"
+        )
     return actual
 
 
@@ -70,7 +72,9 @@ def require_prose_tokens(path: Path, tokens: list[str], label: str) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--manifest", type=Path, default=Path("ecosystem/autofde-rust-handoff.toml"))
+    parser.add_argument(
+        "--manifest", type=Path, default=Path("ecosystem/autofde-rust-handoff.toml")
+    )
     parser.add_argument("--lab", type=Path, default=Path("."))
     parser.add_argument("--ggen", type=Path, required=True)
     parser.add_argument("--autofde", type=Path, required=True)
@@ -147,7 +151,10 @@ def main() -> int:
         raise Refusal("manufacture receipt schema drift")
     if manufacturer["validator"] != "ggen:autofde-capability-bundle/2":
         raise Refusal("manufacture validator drift")
-    if manufacturer["authority_mode"] != "external-only" or manufacturer["do_authority"] is not False:
+    if (
+        manufacturer["authority_mode"] != "external-only"
+        or manufacturer["do_authority"] is not False
+    ):
         raise Refusal("handoff attempted to smuggle DO authority")
 
     autofde_head = exact_head(args.autofde, consumer["revision"], "autofde")
@@ -197,7 +204,9 @@ def main() -> int:
         )
     checks["gymact_admitted_pin_unchanged"] = "ALIVE"
 
-    gymact_head = exact_head(args.gymact, gymact["candidate_revision"], "gymact candidate")
+    gymact_head = exact_head(
+        args.gymact, gymact["candidate_revision"], "gymact candidate"
+    )
     checks["gymact_candidate_exact_revision"] = "ALIVE"
 
     required = qualification["required_checks"]

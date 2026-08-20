@@ -131,11 +131,15 @@ def _validate_discrimination_contract(
                 )
             refutable |= refs
         if not (refutable & declared):
-            raise ProcessAdmissionError(f"DISCRIMINATION_MUST_REFUTE_COMPETITOR:{step.id}")
+            raise ProcessAdmissionError(
+                f"DISCRIMINATION_MUST_REFUTE_COMPETITOR:{step.id}"
+            )
 
         identity = canonical_read_identity(step.capability_id, dict(step.arguments))
         if identity in seen and not step.repeat_reason.strip():
-            raise ProcessAdmissionError(f"DUPLICATE_READ_WITHOUT_TEMPORAL_REASON:{step.id}")
+            raise ProcessAdmissionError(
+                f"DUPLICATE_READ_WITHOUT_TEMPORAL_REASON:{step.id}"
+            )
         seen.add(identity)
 
 
@@ -161,7 +165,9 @@ def _compile_steps(
             raise ProcessAdmissionError(f"CONSEQUENCE_NOT_ADMITTED:{consequence}")
         capability = available.get(step.capability_id)
         if capability is None:
-            raise ProcessAdmissionError(f"CAPABILITY_ID_NOT_DISCOVERED:{step.capability_id}")
+            raise ProcessAdmissionError(
+                f"CAPABILITY_ID_NOT_DISCOVERED:{step.capability_id}"
+            )
         _validate_arguments(capability, dict(step.arguments))
         refusal = _authority_refusal(
             capability=capability,
@@ -220,7 +226,10 @@ def compile_observation_process(
 def compile_mitigation_process(
     process: MitigationProcessProposal, capabilities: list[Capability]
 ) -> PartialOrder:
-    if any(step.consequence == "DO" for step in process.steps) and not process.reversible:
+    if (
+        any(step.consequence == "DO" for step in process.steps)
+        and not process.reversible
+    ):
         raise ProcessAdmissionError("CONSEQUENTIAL_PROCESS_NOT_REVERSIBLE")
     if not any(step.consequence == "VERIFY" for step in process.steps):
         raise ProcessAdmissionError("MITIGATION_VERIFICATION_REQUIRED")
