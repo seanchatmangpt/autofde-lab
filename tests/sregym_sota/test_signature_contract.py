@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import get_type_hints
 
 import dspy
 
@@ -56,7 +57,7 @@ def test_core_contains_no_sregym_problem_ids_or_fault_taxonomy_keys() -> None:
 
 
 def test_orient_returns_typed_noise_aware_orientation() -> None:
-    assert OrientIncident.__annotations__["orientation"] is IncidentOrientation
+    assert get_type_hints(OrientIncident)["orientation"] is IncidentOrientation
     doc = (OrientIncident.__doc__ or "").lower()
     assert "background" in doc
     assert "impact path" in doc
