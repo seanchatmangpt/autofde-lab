@@ -60,6 +60,14 @@ def require_tokens(path: Path, tokens: list[str], label: str) -> None:
         raise Refusal(f"{label}: missing contract tokens: {missing}")
 
 
+def require_prose_tokens(path: Path, tokens: list[str], label: str) -> None:
+    """Require prose tokens while ignoring Markdown line wrapping only."""
+    text = " ".join(path.read_text(encoding="utf-8").split())
+    missing = [token for token in tokens if " ".join(token.split()) not in text]
+    if missing:
+        raise Refusal(f"{label}: missing contract tokens: {missing}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", type=Path, default=Path("ecosystem/autofde-rust-handoff.toml"))
@@ -108,7 +116,7 @@ def main() -> int:
         "lab_exact_head_descends_from_base": "ALIVE",
     }
 
-    require_tokens(
+    require_prose_tokens(
         args.lab / "CLAUDE.md",
         [
             "It computes candidate plans. It does not actuate.",
