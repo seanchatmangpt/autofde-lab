@@ -27,7 +27,7 @@ runtime_abi = "autofde.runtime/26.8.8"
 
 [gymact]
 repository = "seanchatmangpt/gymact"
-admitted_revision = "524d0bcab71e414b47a4cc6ee5baa80b43b9f9c5"
+admitted_revision = "524d0bc8633d8534f500d67f27384ce9368c0863"
 candidate_revision = "04bccc45ea0c0793ca2efbb0d08cc610880e5bb8"
 promotion_policy = "candidate must qualify against exact Lab/ggen/AutoFDE subject before pyproject.toml and uv.lock may move"
 
