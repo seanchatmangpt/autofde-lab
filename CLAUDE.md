@@ -30,6 +30,12 @@ Repository: https://github.com/seanchatmangpt/autofde-lab | Upstream:
 https://github.com/airbus/scikit-decide | Docs:
 https://airbus.github.io/scikit-decide/
 
+Check `docs/KNOWN_FACTS.md` before re-implementing domain-construction fallback
+logic, re-deriving the actuation boundary, or manually re-running a "diff two
+runs" idempotency check — read it first, verify against its cited pointer if you
+need more, and add a dated entry if you learn something new that cost real
+re-derivation time.
+
 ## Always in force
 
 @.claude/rules/standing-law.md
