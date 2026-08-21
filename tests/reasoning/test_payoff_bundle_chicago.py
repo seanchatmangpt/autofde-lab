@@ -11,7 +11,10 @@ from autofde_lab.planner_league import (
     PayoffObservation,
     PolicySpec,
 )
-from autofde_lab.reasoning.payoff_bundle import decode_payoff_bundle, encode_payoff_bundle
+from autofde_lab.reasoning.payoff_bundle import (
+    decode_payoff_bundle,
+    encode_payoff_bundle,
+)
 
 
 def _observation(
@@ -41,7 +44,9 @@ def _rebind_digest(bundle: dict[str, object]) -> None:
     canonical = json.dumps(
         observations, ensure_ascii=True, sort_keys=True, separators=(",", ":")
     )
-    bundle["observations_sha256"] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    bundle["observations_sha256"] = hashlib.sha256(
+        canonical.encode("utf-8")
+    ).hexdigest()
 
 
 def test_payoff_bundle_round_trips_and_replays_deterministically() -> None:
@@ -74,9 +79,7 @@ def test_payoff_bundle_round_trips_and_replays_deterministically() -> None:
 
 def test_payoff_bundle_refuses_digest_tampering() -> None:
     bundle = json.loads(
-        encode_payoff_bundle(
-            (_observation("Astar", "BFWS", 1.0, 0.0, "receipt-a-b"),)
-        )
+        encode_payoff_bundle((_observation("Astar", "BFWS", 1.0, 0.0, "receipt-a-b"),))
     )
     bundle["observations"][0]["left_score"] = 0.0
 
@@ -86,9 +89,7 @@ def test_payoff_bundle_refuses_digest_tampering() -> None:
 
 def test_payoff_bundle_refuses_unreceipted_recomputed_payload() -> None:
     bundle = json.loads(
-        encode_payoff_bundle(
-            (_observation("Astar", "BFWS", 1.0, 0.0, "receipt-a-b"),)
-        )
+        encode_payoff_bundle((_observation("Astar", "BFWS", 1.0, 0.0, "receipt-a-b"),))
     )
     bundle["observations"][0]["receipt_id"] = ""
     _rebind_digest(bundle)
@@ -99,14 +100,14 @@ def test_payoff_bundle_refuses_unreceipted_recomputed_payload() -> None:
 
 def test_payoff_bundle_refuses_objective_drift_even_with_valid_digest() -> None:
     bundle = json.loads(
-        encode_payoff_bundle(
-            (_observation("Astar", "BFWS", 1.0, 0.0, "receipt-a-b"),)
-        )
+        encode_payoff_bundle((_observation("Astar", "BFWS", 1.0, 0.0, "receipt-a-b"),))
     )
     bundle["observations"][0]["match"]["left_policy"]["objective_id"] = (
         "invented-objective"
     )
     _rebind_digest(bundle)
 
-    with pytest.raises(ValueError, match="REFUSED:INVALID_PAYOFF_BUNDLE:OBJECTIVE_DRIFT"):
+    with pytest.raises(
+        ValueError, match="REFUSED:INVALID_PAYOFF_BUNDLE:OBJECTIVE_DRIFT"
+    ):
         decode_payoff_bundle(json.dumps(bundle))
