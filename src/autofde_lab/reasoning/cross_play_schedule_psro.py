@@ -2,45 +2,27 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-"""Drives a real PSRO step from `cross_play_schedule_payoff.py`'s real,
-bounded scoring of `cover_cross_play`'s scheduled matches -- closing the
-gap this pass's own investigation found: `admit_cross_play_schedule_payoffs`
-had zero real callers outside its own test; its real `PayoffHypergraph`
-output had never itself been driven through
-`exploration_psro_loop.py`-style `PolicySpaceResponseOracle.step()`
-(`grep -rln "admit_cross_play_schedule_payoffs|ScheduledMatchPayoffOutcome"
-src/ tests/` found only its own definition and test file).
+"""Drive a real PSRO step from bounded, observed cross-play payoffs.
 
-Real, load-bearing finding confirmed live before any code was written:
-`cover_cross_play`'s own real covering schedule is explicitly **not** a
-full N x N sweep ("Deterministic covering schedule over admitted edges,
-not an N^2 sweep" -- its own docstring). Each real constructor planner is
-paired against only `rounds` real opponents, and different constructors'
-opponent windows shift. Seeding a real `PsroState` uniformly over every
-real opponent observed in a bounded subset therefore usually -- and
-correctly -- produces a real `REFUSED:PSRO_MISSING_PAYOFF_CLOSURE`, not an
-advance: confirmed live with `limit=6` against `BreachClockDomain`,
-`AOstar`'s real opponent window is `{AOstar, Astar, BFWS}` and `Astar`'s is
-`{Astar, BFWS, DESPOT}` -- neither has real coverage of the union, so PSRO
-correctly refuses rather than guessing. This is `psro.py`'s own designed
-fail-closed contract working exactly as intended, not a defect in this
-module. `run_cross_play_schedule_psro_round` therefore seeds `PsroState`
-over the real union of every opponent actually observed in the bounded
-subset **by default** -- never artificially narrowed to a
-conveniently-always-covered subset. A caller wanting a genuine advance
-over multiple real candidates may pass an explicit `opponent_ids` naming a
-real intersecting subset (confirmed live: seeding just `("Astar", "BFWS")`
--- the real intersection of `AOstar`'s and `Astar`'s own observed
-opponents -- produces a real `ALIVE` advance, `Astar` selected via
-`empirical_best_response`'s own real lexicographic tie-break at an
-observed real 0.5/0.5 tie) -- but this module never computes or defaults
-to that intersection itself; doing so silently would manufacture an
-advance rather than report the real, empirically-observed contract.
+``cover_cross_play`` deliberately produces a covering schedule rather than a
+full N x N sweep.  The evidence-preserving default therefore seeds PSRO over
+the union of every opponent observed in the bounded subset; when candidates
+do not all have payoff coverage against that union, PSRO correctly refuses
+with ``REFUSED:PSRO_MISSING_PAYOFF_CLOSURE``.
+
+This module also exposes one explicit, reversible alternative:
+``OBSERVED_COMMON_CLOSURE``.  It computes the maximal opponent population
+that is *actually observed for every candidate in the bounded subset* and
+seeds PSRO over that deterministic intersection.  It never interpolates a
+missing payoff, never changes the covering schedule, and never becomes the
+default.  An empty intersection is a typed refusal, not permission to invent
+an edge.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import Sequence
 
 from autofde_lab.planner_league import PayoffHypergraph
@@ -49,19 +31,64 @@ from autofde_lab.planner_league.psro import PolicySpaceResponseOracle, PsroState
 
 from .cross_play_schedule_payoff import ScheduledMatchPayoffOutcome, admit_cross_play_schedule_payoffs
 
-__all__ = ["CrossPlaySchedulePsroOutcome", "run_cross_play_schedule_psro_round"]
+__all__ = [
+    "CrossPlaySchedulePsroOutcome",
+    "OpponentPopulationStrategy",
+    "run_cross_play_schedule_psro_round",
+]
+
+
+class OpponentPopulationStrategy(str, Enum):
+    """How to derive a PSRO opponent population from observed payoffs only."""
+
+    OBSERVED_UNION = "observed_union"
+    OBSERVED_COMMON_CLOSURE = "observed_common_closure"
 
 
 @dataclass(frozen=True, slots=True)
 class CrossPlaySchedulePsroOutcome:
-    """Real, typed result of one full real run: the real per-match payoff
-    outcomes, the real `PayoffHypergraph` they populated, and the real
-    `PsroStep` computed from it -- every real intermediate object
-    preserved, never only a summary derived from them."""
+    """Typed result preserving the real payoff graph and real PSRO step."""
 
     payoff_outcomes: tuple[ScheduledMatchPayoffOutcome, ...]
     hypergraph: PayoffHypergraph
     psro_step: PsroStep
+
+
+def _observed_opponent_population(
+    payoff_outcomes: tuple[ScheduledMatchPayoffOutcome, ...],
+    constructor_planner_ids: tuple[str, ...],
+    strategy: OpponentPopulationStrategy,
+) -> tuple[str, ...]:
+    """Derive an opponent population without manufacturing payoff edges.
+
+    Ordering is always the first-observed schedule order so repeated runs over
+    the same bounded schedule replay byte-for-byte through ``PsroState.seed``.
+    """
+
+    observed_order = tuple(
+        dict.fromkeys(outcome.match.right_policy.planner_id for outcome in payoff_outcomes)
+    )
+    if strategy is OpponentPopulationStrategy.OBSERVED_UNION:
+        return observed_order
+
+    opponents_by_constructor: dict[str, set[str]] = {
+        planner_id: set() for planner_id in constructor_planner_ids
+    }
+    for outcome in payoff_outcomes:
+        constructor_id = outcome.match.left_policy.planner_id
+        if constructor_id in opponents_by_constructor:
+            opponents_by_constructor[constructor_id].add(
+                outcome.match.right_policy.planner_id
+            )
+
+    common = set(observed_order)
+    for planner_id in constructor_planner_ids:
+        common.intersection_update(opponents_by_constructor[planner_id])
+
+    selected = tuple(opponent_id for opponent_id in observed_order if opponent_id in common)
+    if not selected:
+        raise ValueError("REFUSED:NO_COMMON_OBSERVED_OPPONENTS")
+    return selected
 
 
 def run_cross_play_schedule_psro_round(
@@ -73,40 +100,51 @@ def run_cross_play_schedule_psro_round(
     opponent_role_id: str,
     world_id: str,
     opponent_ids: Sequence[str] | None = None,
+    opponent_population_strategy: OpponentPopulationStrategy | str = OpponentPopulationStrategy.OBSERVED_UNION,
     observation_projection_id: str = "full_observation",
     budget_id: str = "balanced",
 ) -> CrossPlaySchedulePsroOutcome:
-    """Real-score the first `limit` real matches of `schedule` (via
-    `admit_cross_play_schedule_payoffs`), then run one real PSRO step
-    treating every distinct real left-side planner observed as a
-    candidate and (by default) every distinct real right-side planner
-    observed as the opponent population -- see module docstring for why
-    that default is the real union, never a manufactured intersection.
+    """Score a bounded real schedule and run one evidence-bounded PSRO step.
 
-    `opponent_ids`, if supplied, replaces the default union with the
-    caller's own explicit real opponent set (e.g. a real intersecting
-    subset, to make an advance possible) -- this function performs no
-    validation that the supplied set is itself real/intersecting; an
-    invalid choice simply flows into `PsroState.seed`'s own real
-    validation and `empirical_best_response`'s own real coverage check,
-    exactly as any other caller of those real objects would experience.
+    With no override, ``opponent_population_strategy`` controls how the
+    opponent population is derived from *observed* payoff edges:
 
-    Raises `ValueError("REFUSED:NO_SCHEDULED_MATCHES")` if the bounded
-    subset produced zero real candidates (an empty/refused `schedule`, or
-    `limit` larger than `schedule.matches` is otherwise harmless -- Python
-    slicing -- but zero real matches leaves nothing to seed PSRO with).
+    - ``OBSERVED_UNION`` (default) preserves the existing fail-closed
+      behavior and can legitimately return ``PSRO_MISSING_PAYOFF_CLOSURE``.
+    - ``OBSERVED_COMMON_CLOSURE`` uses the deterministic intersection of
+      opponents observed for every candidate.  This can advance without an
+      N x N sweep while still requiring every payoff edge PSRO consumes to
+      exist in the real hypergraph.
+
+    ``opponent_ids`` remains the highest-precedence explicit caller override
+    for backward compatibility.  It is never widened or repaired here; an
+    invalid override reaches the existing PSRO validation/coverage checks.
+
+    Raises ``REFUSED:NO_SCHEDULED_MATCHES`` when no candidate exists and
+    ``REFUSED:NO_COMMON_OBSERVED_OPPONENTS`` when the opt-in common-closure
+    strategy has no non-empty observed intersection.
     """
-    hypergraph = PayoffHypergraph()
-    payoff_outcomes = admit_cross_play_schedule_payoffs(schedule, domain, hypergraph=hypergraph, limit=limit)
 
-    constructor_planner_ids = tuple(dict.fromkeys(o.match.left_policy.planner_id for o in payoff_outcomes))
+    hypergraph = PayoffHypergraph()
+    payoff_outcomes = admit_cross_play_schedule_payoffs(
+        schedule, domain, hypergraph=hypergraph, limit=limit
+    )
+
+    constructor_planner_ids = tuple(
+        dict.fromkeys(
+            outcome.match.left_policy.planner_id for outcome in payoff_outcomes
+        )
+    )
     if not constructor_planner_ids:
         raise ValueError("REFUSED:NO_SCHEDULED_MATCHES")
 
+    strategy = OpponentPopulationStrategy(opponent_population_strategy)
     real_opponent_ids = (
-        tuple(opponent_ids)
+        tuple(dict.fromkeys(opponent_ids))
         if opponent_ids is not None
-        else tuple(dict.fromkeys(o.match.right_policy.planner_id for o in payoff_outcomes))
+        else _observed_opponent_population(
+            payoff_outcomes, constructor_planner_ids, strategy
+        )
     )
 
     state = PsroState.seed(real_opponent_ids)
@@ -121,5 +159,7 @@ def run_cross_play_schedule_psro_round(
     psro_step = oracle.step(state, candidates=constructor_planner_ids)
 
     return CrossPlaySchedulePsroOutcome(
-        payoff_outcomes=payoff_outcomes, hypergraph=hypergraph, psro_step=psro_step
+        payoff_outcomes=payoff_outcomes,
+        hypergraph=hypergraph,
+        psro_step=psro_step,
     )
