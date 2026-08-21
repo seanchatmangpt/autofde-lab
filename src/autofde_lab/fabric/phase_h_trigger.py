@@ -17,27 +17,29 @@ one concrete drift signal: the content hash of
 ``ontology/autofde-lab-capabilities.ttl`` versus a stored baseline hash.
 When the live hash diverges from the baseline, that is drift -- the
 capability ontology changed since the baseline was captured -- and the
-trigger fires an unattended ``python -m autofde_lab.fabric solve``
-invocation against the known-working PDDLDomain/Astar blocksworld fixture
-(``tests/domains/python/pddl_domains/blocks``), with zero interactive
-input, and returns the parsed receipt (including ``trajectory_sha256``)
-as evidence the outer loop closed.
+trigger fires an unattended, in-process solve+falsify (via
+``fabric.solve_and_falsify``) against the known-working PDDLDomain/Astar
+blocksworld fixture (``tests/domains/python/pddl_domains/blocks``), with
+zero interactive input, and returns both the real trajectory receipt
+(``trajectory_sha256``) AND a real falsification standing as evidence the
+outer loop closed -- not just "it solved," but "the solve's result was
+checked against its own postconditions immediately, automatically."
 
 This is a narrow instance of Phase H, not the full
 conformance/drift-analysis pipeline the plan describes (OCEL process
 inference is out of scope here) -- it demonstrates the specific claim in
-question: that a trigger can fire and invoke a solve with no human in the
-loop.
+question: that a trigger can fire, invoke a solve, and falsify the result,
+with no human in the loop and no separate manual invocation required.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
-import subprocess
-import sys
 from dataclasses import dataclass
 from pathlib import Path
+
+from autofde_lab.fabric.solve_and_falsify import solve_and_falsify
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_WATCH_FILE = REPO_ROOT / "ontology" / "autofde-lab-capabilities.ttl"
@@ -91,45 +93,34 @@ def check_drift(
 
 
 def unattended_solve() -> dict:
-    """Invoke the real fabric CLI solve command with zero human input.
+    """Invoke the real, in-process solve+falsify step with zero human input.
 
-    Runs `python -m autofde_lab.fabric solve PDDLDomain --solver Astar`
-    against the real, already-working blocksworld fixture, and returns the
-    parsed JSON receipt (including trajectory_sha256).
+    Calls `fabric.solve_and_falsify.solve_and_falsify()` directly (no
+    subprocess, no CLI re-invocation) against the real, already-working
+    blocksworld fixture, and returns both the real trajectory receipt AND
+    a real falsification standing -- the automatic trigger path now closes
+    both halves of the loop (solve, then check the solve) in one call.
     """
-    domain_arguments = json.dumps(
-        {"domain_path": str(FIXTURE_DOMAIN), "problem_path": str(FIXTURE_PROBLEM)}
+    domain_arguments = {"domain_path": str(FIXTURE_DOMAIN), "problem_path": str(FIXTURE_PROBLEM)}
+    result, falsification = solve_and_falsify(
+        domain="PDDLDomain",
+        domain_arguments=domain_arguments,
+        solver="Astar",
     )
-    completed = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "autofde_lab.fabric",
-            "solve",
-            "PDDLDomain",
-            "--solver",
-            "Astar",
-            "--domain-arguments",
-            domain_arguments,
-            "--no-cache",
-        ],
-        cwd=REPO_ROOT,
-        stdin=subprocess.DEVNULL,  # no interactive input possible
-        capture_output=True,
-        text=True,
-        timeout=120,
-        check=True,
-    )
-    stdout = completed.stdout
-    # The PDDL parser logs informational lines to stdout ahead of the
-    # JSON receipt (e.g. "[info] Parsing ...pddl"); the receipt itself is
-    # the final top-level JSON object in the stream, so decode from its
-    # first '{' rather than assuming stdout is pure JSON.
-    start = stdout.rfind("\n{\n")
-    if start == -1 and stdout.startswith("{"):
-        start = -1
-    payload = stdout[start + 1 :] if start != -1 else stdout
-    return json.loads(payload)
+    return {
+        "domain": "PDDLDomain",
+        "standing": result.standing.value,
+        "terminal": result.terminal,
+        "steps": len(result.steps),
+        "trajectory_sha256": result.receipt_sha256,
+        "falsification": {
+            "candidate_id": falsification.candidate_id,
+            "standing": falsification.standing.value,
+            "rationale": falsification.rationale,
+            "receipt_refs": falsification.receipt_refs,
+            "violated_constraints": falsification.violated_constraints,
+        },
+    }
 
 
 def run_once(
