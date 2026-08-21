@@ -29,6 +29,17 @@ def _seed_bundle() -> str:
     return encode_payoff_bundle((observation,))
 
 
+def test_cli_without_bundle_preserves_fresh_hypergraph_refusal() -> None:
+    result = runner.invoke(app, ["dmedi-solve-payoff", "DSPyPolicy", "Astar"])
+
+    assert result.exit_code == 3
+    payload = json.loads(result.stdout)
+    assert payload["reason"] == "REFUSED:LLM_NOVELTY_BOUNDARY:DSPyPolicy"
+    assert payload["seeded_observation_count"] == 0
+    assert payload["hypergraph_observation_count"] == 0
+    assert payload["payoff_bundle"]["observations"] == []
+
+
 def test_cli_loads_real_bundle_before_existing_novelty_refusal(tmp_path) -> None:
     bundle_path = tmp_path / "payoffs.json"
     bundle_path.write_text(_seed_bundle(), encoding="utf-8")
