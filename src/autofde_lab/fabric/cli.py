@@ -152,20 +152,56 @@ def dmedi_solve_payoff(
     role_id: str = typer.Option("plan_constructor", help="LeagueMatch role id for both sides"),
     observation_projection_id: str = typer.Option("full_observation"),
     budget_id: str = typer.Option("balanced"),
+    input_payoff_bundle: Path | None = typer.Option(
+        None,
+        "--input-payoff-bundle",
+        help="Read a deterministic payoff-evidence bundle and seed the in-process hypergraph",
+    ),
 ) -> None:
-    """Drive two real planners through the DMEDI-curriculum PDDL problem via
-    `dflss_planner_solve.attempt_solve_dflss_curriculum`, then admit their
-    real, independently-observed outcomes as one real head-to-head
-    `PayoffObservation` into a real `PayoffHypergraph` (fresh per
-    invocation -- `PayoffHypergraph` has no persistence layer anywhere in
-    this codebase; every existing caller, e.g. `exploration_psro_loop.py`,
-    constructs one fresh in-process too). Prints the real sha256 receipt and
-    both real solve outcomes; exits 3 on REFUSED (unknown planner, or an LLM
-    novelty oracle named on either side)."""
+    """Drive two real planners through the DMEDI-curriculum PDDL problem and
+    emit one receipt-bearing head-to-head observation plus a portable payoff
+    bundle.
+
+    Without ``--input-payoff-bundle`` the hypergraph is fresh, preserving the
+    previous behavior. With it, only already-receipted observations that pass
+    bundle digest and structural admission are loaded before the new attempt.
+    This is evidence transport, not persistence authority or actuation.
+    """
     from autofde_lab.planner_league import PayoffHypergraph
     from autofde_lab.reasoning.dflss_solve_payoff_bridge import admit_dflss_solve_payoff
+    from autofde_lab.reasoning.payoff_bundle import decode_payoff_bundle, encode_payoff_bundle
 
     hypergraph = PayoffHypergraph()
+    seeded_observation_count = 0
+    if input_payoff_bundle is not None:
+        try:
+            prior_observations = decode_payoff_bundle(input_payoff_bundle.read_text(encoding="utf-8"))
+        except OSError as exc:
+            _emit(
+                {
+                    "standing": "REFUSED",
+                    "reason": f"REFUSED:PAYOFF_BUNDLE_READ:{type(exc).__name__}",
+                    "admitted": False,
+                    "seeded_observation_count": 0,
+                    "hypergraph_observation_count": 0,
+                }
+            )
+            raise typer.Exit(code=3) from exc
+        except ValueError as exc:
+            _emit(
+                {
+                    "standing": "REFUSED",
+                    "reason": str(exc),
+                    "admitted": False,
+                    "seeded_observation_count": 0,
+                    "hypergraph_observation_count": 0,
+                }
+            )
+            raise typer.Exit(code=3) from exc
+        for observation in prior_observations:
+            hypergraph.add(observation)
+        seeded_observation_count = len(prior_observations)
+
     result = admit_dflss_solve_payoff(
         left_planner,
         right_planner,
@@ -194,7 +230,9 @@ def dmedi_solve_payoff(
             "left_planner_id": result.observation.match.left_policy.planner_id,
             "right_planner_id": result.observation.match.right_policy.planner_id,
         },
+        "seeded_observation_count": seeded_observation_count,
         "hypergraph_observation_count": len(hypergraph.observations),
+        "payoff_bundle": json.loads(encode_payoff_bundle(hypergraph.observations)),
     }
     _emit(payload)
     if not result.admitted:
@@ -235,4 +273,4 @@ def serve_a2a(
     """Run the A2A JSON-RPC server."""
     from autofde_lab.fabric.a2a import run
 
-    run(host=host, port=port)
+    run(host=host, port=port).run()
