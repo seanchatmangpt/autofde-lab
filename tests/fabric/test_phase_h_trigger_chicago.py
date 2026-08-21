@@ -267,3 +267,88 @@ def test_module_constants_are_sane(has_prior_state: bool) -> None:
     assert mod.COVERAGE_GAP_THRESHOLD == 1
     assert mod.MAX_CONSECUTIVE_SKIPS_BEFORE_PROBE > 1
     assert not has_prior_state  # parametrize placeholder for symmetry with other Chicago tests
+
+
+def test_forced_probe_transient_failure_carries_detection_status_and_self_heals(tmp_path: Path) -> None:
+    """Adversarial case found during independent verification of the
+    RPN=540 fix (2026-08-21): the module docstring/PR claim is that
+    "every returned dict carries a `detection_status`" (the Detection=10
+    half of the FMEA fix), for a human/monitor to distinguish real
+    outcomes. The subprocess-error branch (real `FileNotFoundError` /
+    `TimeoutExpired`) did not actually carry that field -- a monitor
+    reading `result["detection_status"]` unconditionally would KeyError
+    on exactly the tick where Detection matters most: a real invocation
+    failure during a forced probe.
+
+    Uses a REAL nonexistent binary path to trigger a real
+    `FileNotFoundError` from `subprocess.run` -- no mocking of the
+    subprocess call. Then proves the on-disk state is left untouched by
+    the failed probe (so the next tick still recomputes forced_probe as
+    True) and that the very next tick actually retries and succeeds --
+    the trigger self-heals from a real transient failure rather than
+    silently losing its forced-probe state.
+    """
+    state_file = tmp_path / "coverage_state.json"
+    script = tmp_path / "stand_in_mix_task.py"
+    log_file = tmp_path / "invocations.log"
+    xaas_repo_root = tmp_path
+    _write_stand_in_script(script)
+
+    healthy_counts = {
+        "PlannerCandidate": 2,
+        "PlannerCatalogRequest": 2,
+        "PlannerMatchRequest": 2,
+        "PlannerCacheStatsRequest": 2,
+        "PlannerCacheHotsetRequest": 2,
+    }
+
+    def tick(before_counts: dict) -> dict:
+        return _tick(
+            state_file=state_file,
+            script=script,
+            log_file=log_file,
+            xaas_repo_root=xaas_repo_root,
+            before_counts=before_counts,
+        )
+
+    # Tick 1: baseline invoke.
+    result = tick(healthy_counts)
+    assert result["invoked"] is True
+
+    # Ticks 2..(1+MAX_SKIPS): skip up to the forced-probe boundary.
+    for _ in range(MAX_SKIPS):
+        result = tick(healthy_counts)
+        assert result["invoked"] is False
+
+    state_before_failed_probe = json.loads(state_file.read_text())
+    assert state_before_failed_probe["skips_since_last_invoke"] == MAX_SKIPS
+
+    # The forced-probe tick: real nonexistent command -> real FileNotFoundError.
+    failed_result = check_coverage_gap(
+        xaas_repo_root=xaas_repo_root,
+        state_file=state_file,
+        threshold=THRESHOLD,
+        max_consecutive_skips_before_probe=MAX_SKIPS,
+        command=[str(tmp_path / "definitely-does-not-exist-binary")],
+    )
+    assert failed_result["invoked"] is True
+    assert "error" in failed_result
+    assert failed_result["detection_status"] == "invoke_failed_transient_error", (
+        "every returned dict must carry detection_status, including the "
+        "transient-subprocess-failure path -- this is the real gap found "
+        "during independent verification"
+    )
+
+    # State file must be left untouched by the failed probe (real file
+    # state, not the returned dict) so the next tick still forces a probe.
+    state_after_failed_probe = json.loads(state_file.read_text())
+    assert state_after_failed_probe == state_before_failed_probe
+
+    # Next tick: retries the forced probe against the real working
+    # stand-in script and actually succeeds -- proves self-healing from a
+    # real transient failure, not a permanently lost forced-probe state.
+    recovered = tick(healthy_counts)
+    assert recovered["invoked"] is True
+    assert "forced probe" in recovered["invoke_reason"]
+    assert recovered["detection_status"] == "verified_healthy_this_tick"
+    assert recovered["skips_since_last_invoke"] == 0

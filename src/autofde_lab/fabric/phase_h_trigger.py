@@ -331,7 +331,21 @@ def check_coverage_gap(
             timeout=timeout_seconds,
         )
     except (subprocess.TimeoutExpired, FileNotFoundError) as exc:
-        return {"invoked": True, "error": f"{type(exc).__name__}: {exc}", "invoke_reason": invoke_reason}
+        # Real gap closed 2026-08-21 (adversarial verification of the RPN=540
+        # fix): every OTHER return path carries `detection_status` (the
+        # Detection=10 half of the fix), but this transient-subprocess-
+        # failure path did not. A monitor/consumer reading this field
+        # unconditionally would KeyError precisely on a real failure --
+        # the one moment Detection matters most. State does NOT get
+        # persisted here on purpose: the on-disk skip counter is left as-is
+        # so the very next tick recomputes forced_probe as still True and
+        # retries, rather than silently losing the forced-probe state.
+        return {
+            "invoked": True,
+            "error": f"{type(exc).__name__}: {exc}",
+            "invoke_reason": invoke_reason,
+            "detection_status": "invoke_failed_transient_error",
+        }
 
     stdout = (proc.stdout or "") + (proc.stderr or "")
     parsed = _parse_coverage_gap_output(stdout)
