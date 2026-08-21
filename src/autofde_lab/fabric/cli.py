@@ -149,7 +149,9 @@ def dmedi_solve_payoff(
     left_planner: str = typer.Argument(..., help="Left planner id, e.g. Astar"),
     right_planner: str = typer.Argument(..., help="Right planner id, e.g. LRTAstar"),
     world_id: str = typer.Option("generic_enterprise", help="LeagueMatch world id"),
-    role_id: str = typer.Option("plan_constructor", help="LeagueMatch role id for both sides"),
+    role_id: str = typer.Option(
+        "plan_constructor", help="LeagueMatch role id for both sides"
+    ),
     observation_projection_id: str = typer.Option("full_observation"),
     budget_id: str = typer.Option("balanced"),
     input_payoff_bundle: Path | None = typer.Option(
