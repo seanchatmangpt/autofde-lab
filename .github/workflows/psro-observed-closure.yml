@@ -50,6 +50,13 @@ jobs:
             cpp/sdk/spdlog \
             cpp/sdk/PEGTL
 
+      - name: Install C++ build headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libboost-dev
+
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.13"
