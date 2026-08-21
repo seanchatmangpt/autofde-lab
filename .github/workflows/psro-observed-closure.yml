@@ -46,6 +46,8 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip
+          python -m pip install \
+            "gymact @ git+https://github.com/seanchatmangpt/gymact.git@524d0bc8633d8534f500d67f27384ce9368c0863"
           python -m pip install -e ".[solvers]" "pytest==8.3.5"
 
       - name: Reject mockist seams in the owning court
