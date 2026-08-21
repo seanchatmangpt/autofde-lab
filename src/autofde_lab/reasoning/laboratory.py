@@ -595,3 +595,121 @@ def generate_triz_candidates(
                 )
             )
     return tuple(candidates)
+
+
+# ---------------------------------------------------------------------------
+# 15. DOE (Design of Experiments) full-factorial candidate generation -- real, partial
+# ---------------------------------------------------------------------------
+
+
+class DOEFactor(StrEnum):
+    """Real factors, honestly scoped to exactly the two
+    `ArchitectureCandidate` fields TRIZ section 14 already reuses -- named
+    as an analogy to classical DOE factor naming, never claimed as a
+    general factor ontology."""
+
+    COST_BOUND = "COST_BOUND"  # ArchitectureCandidate.cost_bound
+    AUTHORITY_NEEDS = "AUTHORITY_NEEDS"  # ArchitectureCandidate.authority_needs
+
+
+@dataclass(frozen=True, slots=True)
+class DOELevel:
+    """One real level for one real factor -- the caller states the actual
+    LOW/HIGH values; this module never guesses what "low cost" or "narrow
+    authority" means for a given problem."""
+
+    factor: DOEFactor
+    level_id: str  # "LOW" or "HIGH" -- exactly 2 levels/factor, by construction
+    cost_value: float | None = None
+    authority_value: tuple[str, ...] | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class DOEDesignPoint:
+    """One real run of the design matrix -- exactly one `DOELevel` per
+    factor, in `DOEFactor` declaration order."""
+
+    run_id: str
+    levels: tuple[DOELevel, DOELevel]  # (COST_BOUND level, AUTHORITY_NEEDS level)
+
+
+def generate_full_factorial_design(
+    cost_levels: tuple[float, float],
+    authority_levels: tuple[tuple[str, ...], tuple[str, ...]],
+) -> tuple[DOEDesignPoint, ...]:
+    """Real 2^2 full-factorial design matrix over exactly 2 factors x 2
+    levels -- 4 real design points, every combination, no interaction
+    terms computed (see module-level NOT COVERED note below).
+    `cost_levels` = (LOW, HIGH) cost_bound values;
+    `authority_levels` = (LOW, HIGH) authority_needs tuples, caller-supplied."""
+    cost_pairs = (("LOW", cost_levels[0]), ("HIGH", cost_levels[1]))
+    authority_pairs = (("LOW", authority_levels[0]), ("HIGH", authority_levels[1]))
+
+    points: list[DOEDesignPoint] = []
+    for cost_id, cost_value in cost_pairs:
+        for authority_id, authority_value in authority_pairs:
+            run_id = _digest("doe-full-factorial", cost_id, authority_id)
+            points.append(
+                DOEDesignPoint(
+                    run_id=run_id,
+                    levels=(
+                        DOELevel(factor=DOEFactor.COST_BOUND, level_id=cost_id, cost_value=cost_value),
+                        DOELevel(
+                            factor=DOEFactor.AUTHORITY_NEEDS,
+                            level_id=authority_id,
+                            authority_value=authority_value,
+                        ),
+                    ),
+                )
+            )
+    return tuple(points)
+
+
+def generate_doe_candidates(
+    hypotheses: tuple[DesiredStateHypothesis, ...],
+    cost_levels: tuple[float, float],
+    authority_levels: tuple[tuple[str, ...], tuple[str, ...]],
+) -> tuple[ArchitectureCandidate, ...]:
+    """For each hypothesis, emit exactly one `ArchitectureCandidate` per
+    real design point (4 per hypothesis, never one merged candidate per
+    hypothesis -- mirrors `generate_triz_candidates`'s own 'plural
+    matters' discipline). Every design point is materialized; a
+    full-factorial design has no UNSUPPORTED branch the way TRIZ's partial
+    matrix does, since every combination of 2 caller-supplied levels for 2
+    factors is by construction a real, meaningful run."""
+    design = generate_full_factorial_design(cost_levels, authority_levels)
+
+    candidates: list[ArchitectureCandidate] = []
+    for hypothesis in hypotheses:
+        for point in design:
+            cost_level, authority_level = point.levels
+            candidate_id = _digest(hypothesis.hypothesis_id, "doe-v1", point.run_id)
+            assertions = tuple(str(t) for t in hypothesis.targets)
+            candidates.append(
+                ArchitectureCandidate(
+                    candidate_id=candidate_id,
+                    target_state_assertions=assertions,
+                    assumptions=(
+                        f"DOE design point {point.run_id}: cost_bound={cost_level.level_id}, "
+                        f"authority_needs={authority_level.level_id}",
+                        *hypothesis.assumptions,
+                    ),
+                    cost_bound=cost_level.cost_value,
+                    authority_needs=authority_level.authority_value or (),
+                    provenance="doe-v1",
+                    generator_identity="doe-full-factorial-2x2",
+                )
+            )
+    return tuple(candidates)
+
+
+# ---------------------------------------------------------------------------
+# NOT COVERED by this module, stated explicitly rather than left implicit:
+# - No fractional-factorial or Taguchi-style designs -- only the full 2^2.
+# - No factors beyond COST_BOUND/AUTHORITY_NEEDS -- no general factor ontology.
+# - No interaction-effect computation across design points; each point is an
+#   independent candidate, never statistically analyzed against the others.
+# - No response-surface / regression fit over the resulting candidates after
+#   `falsify_candidate`/`admit_surviving_candidates` run -- that scoring loop
+#   is out of scope for this module.
+# ---------------------------------------------------------------------------
