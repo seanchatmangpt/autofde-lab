@@ -135,6 +135,72 @@ def cache_hotset(
     _emit(get_fabric(cache_path).cache_hotset())
 
 
+def _dflss_solve_payoff_outcome_dict(outcome: Any) -> dict[str, Any]:
+    return {
+        "planner_id": outcome.planner_id,
+        "standing": outcome.standing,
+        "reason": outcome.reason,
+        "plan_length": outcome.plan_length,
+    }
+
+
+@app.command("dmedi-solve-payoff")
+def dmedi_solve_payoff(
+    left_planner: str = typer.Argument(..., help="Left planner id, e.g. Astar"),
+    right_planner: str = typer.Argument(..., help="Right planner id, e.g. LRTAstar"),
+    world_id: str = typer.Option("generic_enterprise", help="LeagueMatch world id"),
+    role_id: str = typer.Option("plan_constructor", help="LeagueMatch role id for both sides"),
+    observation_projection_id: str = typer.Option("full_observation"),
+    budget_id: str = typer.Option("balanced"),
+) -> None:
+    """Drive two real planners through the DMEDI-curriculum PDDL problem via
+    `dflss_planner_solve.attempt_solve_dflss_curriculum`, then admit their
+    real, independently-observed outcomes as one real head-to-head
+    `PayoffObservation` into a real `PayoffHypergraph` (fresh per
+    invocation -- `PayoffHypergraph` has no persistence layer anywhere in
+    this codebase; every existing caller, e.g. `exploration_psro_loop.py`,
+    constructs one fresh in-process too). Prints the real sha256 receipt and
+    both real solve outcomes; exits 3 on REFUSED (unknown planner, or an LLM
+    novelty oracle named on either side)."""
+    from autofde_lab.planner_league import PayoffHypergraph
+    from autofde_lab.reasoning.dflss_solve_payoff_bridge import admit_dflss_solve_payoff
+
+    hypergraph = PayoffHypergraph()
+    result = admit_dflss_solve_payoff(
+        left_planner,
+        right_planner,
+        hypergraph=hypergraph,
+        world_id=world_id,
+        role_id=role_id,
+        observation_projection_id=observation_projection_id,
+        budget_id=budget_id,
+    )
+
+    payload: dict[str, Any] = {
+        "standing": result.standing,
+        "reason": result.reason,
+        "admitted": result.admitted,
+        "left_outcome": _dflss_solve_payoff_outcome_dict(result.left_outcome),
+        "right_outcome": _dflss_solve_payoff_outcome_dict(result.right_outcome),
+        "observation": None
+        if result.observation is None
+        else {
+            "left_score": result.observation.left_score,
+            "right_score": result.observation.right_score,
+            "receipt_id": result.observation.receipt_id,
+            "world_id": result.observation.match.world_id,
+            "left_role_id": result.observation.match.left_role_id,
+            "right_role_id": result.observation.match.right_role_id,
+            "left_planner_id": result.observation.match.left_policy.planner_id,
+            "right_planner_id": result.observation.match.right_policy.planner_id,
+        },
+        "hypergraph_observation_count": len(hypergraph.observations),
+    }
+    _emit(payload)
+    if not result.admitted:
+        raise typer.Exit(code=3)
+
+
 @app.command("serve-mcp")
 def serve_mcp(
     dspy_compile: bool = typer.Option(
