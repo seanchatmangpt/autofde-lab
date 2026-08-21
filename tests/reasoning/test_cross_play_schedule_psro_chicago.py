@@ -2,27 +2,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-"""Chicago-style tests for `cross_play_schedule_psro` -- the real join
-between `cross_play_schedule_payoff.py`'s real, bounded match scoring and
-a real `PolicySpaceResponseOracle.step()`.
+"""Chicago-style tests for the real cross-play schedule -> payoff -> PSRO join.
 
-Real collaborators throughout: a real `BreachClockDomain`, a real
-`PlannerLeague`, real `schedule_cross_play_for_world` output, and the
-real, installed `AOstar`/`Astar`/`BFWS`/`DESPOT` solver entry points. No
-`unittest.mock` / `Mock` / `MagicMock` / `patch` / `monkeypatch` anywhere
-in this file.
-
-Every value asserted below was confirmed live before being written, not
-assumed: with `limit=3` (only `AOstar`'s real row), PSRO trivially
-advances with `AOstar` selected (the single-candidate case this session
-established repeatedly). With `limit=6` (`AOstar`'s and `Astar`'s real
-rows), the real default union-of-opponents seed
-(`{AOstar, Astar, BFWS, DESPOT}`) gives neither candidate real complete
-coverage -> real `REFUSED:PSRO_MISSING_PAYOFF_CLOSURE`. Passing the real
-intersection `("Astar", "BFWS")` explicitly as `opponent_ids` gives both
-candidates real complete coverage -> real `ALIVE` advance, with `Astar`
-selected via `empirical_best_response`'s own real lexicographic tie-break
-at an observed real 0.5/0.5 score tie.
+Real collaborators throughout: ``BreachClockDomain``, ``PlannerLeague``,
+``schedule_cross_play_for_world``, and installed planner entry points. No
+interaction mocks are used. The reversible experiment compares the existing
+fail-closed union seed with an explicit evidence-derived intersection seed and
+with the previous caller-supplied manual intersection.
 """
 
 from __future__ import annotations
@@ -39,7 +25,22 @@ from autofde_lab.reasoning.cross_play_schedule_psro import (
 def _real_schedule():
     league = PlannerLeague()
     return schedule_cross_play_for_world(
-        league, "cyber_incident", left_role_id="plan_constructor", right_role_id="plan_falsifier"
+        league,
+        "cyber_incident",
+        left_role_id="plan_constructor",
+        right_role_id="plan_falsifier",
+    )
+
+
+def _run(schedule, domain, **kwargs):
+    return run_cross_play_schedule_psro_round(
+        schedule,
+        domain,
+        limit=kwargs.pop("limit", 6),
+        role_id="plan_constructor",
+        opponent_role_id="plan_falsifier",
+        world_id="cyber_incident",
+        **kwargs,
     )
 
 
@@ -47,18 +48,12 @@ def test_single_candidate_subset_advances_trivially() -> None:
     schedule = _real_schedule()
     domain = BreachClockDomain()
 
-    result = run_cross_play_schedule_psro_round(
-        schedule,
-        domain,
-        limit=3,
-        role_id="plan_constructor",
-        opponent_role_id="plan_falsifier",
-        world_id="cyber_incident",
-    )
+    result = _run(schedule, domain, limit=3)
 
     assert isinstance(result, CrossPlaySchedulePsroOutcome)
     assert len(result.payoff_outcomes) == 3
     assert len(result.hypergraph.observations) == 3
+    assert result.opponent_ids == ("AOstar", "Astar", "BFWS")
     assert result.psro_step.advanced
     assert result.psro_step.standing == "ALIVE"
     assert result.psro_step.receipt is not None
@@ -66,24 +61,15 @@ def test_single_candidate_subset_advances_trivially() -> None:
 
 
 def test_default_union_seed_over_two_candidates_honestly_refuses() -> None:
-    """The real, load-bearing finding this module's docstring names:
-    cover_cross_play's covering schedule deliberately does not give full
-    pairwise coverage, so the honest default (seed over every real
-    observed opponent) usually refuses rather than guessing."""
+    """The old/default alternative remains fail-closed on incomplete coverage."""
     schedule = _real_schedule()
     domain = BreachClockDomain()
 
-    result = run_cross_play_schedule_psro_round(
-        schedule,
-        domain,
-        limit=6,
-        role_id="plan_constructor",
-        opponent_role_id="plan_falsifier",
-        world_id="cyber_incident",
-    )
+    result = _run(schedule, domain)
 
     assert len(result.payoff_outcomes) == 6
     assert len(result.hypergraph.observations) == 6
+    assert result.opponent_ids == ("AOstar", "Astar", "BFWS", "DESPOT")
     assert not result.psro_step.advanced
     assert result.psro_step.standing == "REFUSED"
     assert result.psro_step.reason == "REFUSED:PSRO_MISSING_PAYOFF_CLOSURE"
@@ -94,29 +80,62 @@ def test_explicit_intersecting_opponent_ids_makes_a_real_two_candidate_advance_p
     schedule = _real_schedule()
     domain = BreachClockDomain()
 
-    result = run_cross_play_schedule_psro_round(
-        schedule,
-        domain,
-        limit=6,
-        role_id="plan_constructor",
-        opponent_role_id="plan_falsifier",
-        world_id="cyber_incident",
-        opponent_ids=("Astar", "BFWS"),
-    )
+    result = _run(schedule, domain, opponent_ids=("Astar", "BFWS"))
 
+    assert result.opponent_ids == ("Astar", "BFWS")
     assert result.psro_step.advanced
     assert result.psro_step.standing == "ALIVE"
     assert result.psro_step.receipt is not None
-    # Real tie at 0.5/0.5 (AOstar: [vs Astar=1.0, vs BFWS=0.0]; Astar: [vs
-    # Astar=1.0, vs BFWS=0.0]) -- empirical_best_response's own real
-    # lexicographic tie-break picks the greater planner_id string.
     assert result.psro_step.receipt.selected_best_response == "Astar"
+
+
+def test_intersection_strategy_derives_the_same_real_seed_and_receipt_as_manual_override() -> None:
+    """Falsifier for the new feature: derive, do not invent, the known closure."""
+    schedule = _real_schedule()
+    domain = BreachClockDomain()
+
+    derived = _run(schedule, domain, opponent_selection="intersection")
+    manual = _run(schedule, domain, opponent_ids=("Astar", "BFWS"))
+
+    assert derived.opponent_ids == ("Astar", "BFWS")
+    assert derived.opponent_ids == manual.opponent_ids
+    assert derived.psro_step.advanced
+    assert derived.psro_step.standing == "ALIVE"
+    assert derived.psro_step.receipt is not None
+    assert manual.psro_step.receipt is not None
+    assert derived.psro_step.receipt == manual.psro_step.receipt
+    assert derived.hypergraph.observations == manual.hypergraph.observations
+
+
+def test_intersection_strategy_is_deterministic_across_independent_runs() -> None:
+    schedule = _real_schedule()
+
+    first = _run(schedule, BreachClockDomain(), opponent_selection="intersection")
+    second = _run(schedule, BreachClockDomain(), opponent_selection="intersection")
+
+    assert first.opponent_ids == second.opponent_ids == ("Astar", "BFWS")
+    assert first.psro_step.receipt == second.psro_step.receipt
+    assert first.hypergraph.observations == second.hypergraph.observations
+
+
+def test_unknown_opponent_selection_refuses_instead_of_falling_back() -> None:
+    schedule = _real_schedule()
+    domain = BreachClockDomain()
+
+    try:
+        _run(schedule, domain, opponent_selection="guess")
+        assert False, "expected ValueError"
+    except ValueError as exc:
+        assert str(exc) == "REFUSED:UNKNOWN_OPPONENT_SELECTION:guess"
 
 
 def test_refuses_when_the_bounded_subset_has_zero_real_matches() -> None:
     league = PlannerLeague()
     unsupported_schedule = schedule_cross_play_for_world(
-        league, "cyber_incident", left_role_id="plan_constructor", right_role_id="plan_falsifier",
+        league,
+        "cyber_incident",
+        left_role_id="plan_constructor",
+        right_role_id="plan_falsifier",
         domain_factories={},
     )
     assert unsupported_schedule.standing == "UNSUPPORTED"
@@ -124,14 +143,7 @@ def test_refuses_when_the_bounded_subset_has_zero_real_matches() -> None:
 
     domain = BreachClockDomain()
     try:
-        run_cross_play_schedule_psro_round(
-            unsupported_schedule,
-            domain,
-            limit=5,
-            role_id="plan_constructor",
-            opponent_role_id="plan_falsifier",
-            world_id="cyber_incident",
-        )
+        _run(unsupported_schedule, domain, limit=5)
         assert False, "expected ValueError"
     except ValueError as exc:
         assert str(exc) == "REFUSED:NO_SCHEDULED_MATCHES"
