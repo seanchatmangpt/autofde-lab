@@ -113,6 +113,9 @@ def _observation_from_dict(payload: Any) -> PayoffObservation:
         data.get("match"), "REFUSED:INVALID_PAYOFF_BUNDLE:MATCH_NOT_OBJECT"
     )
     try:
+        execution_observed = data["execution_observed"]
+        if not isinstance(execution_observed, bool):
+            raise ValueError("REFUSED:INVALID_PAYOFF_BUNDLE:EXECUTION_FLAG_NOT_BOOL")
         left_role_id = str(match_data["left_role_id"])
         right_role_id = str(match_data["right_role_id"])
         match = LeagueMatch(
@@ -129,7 +132,7 @@ def _observation_from_dict(payload: Any) -> PayoffObservation:
             left_score=float(data["left_score"]),
             right_score=float(data["right_score"]),
             receipt_id=str(data["receipt_id"]),
-            execution_observed=bool(data["execution_observed"]),
+            execution_observed=execution_observed,
         )
     except KeyError as exc:
         raise ValueError("REFUSED:INVALID_PAYOFF_BUNDLE:OBSERVATION_FIELDS") from exc
