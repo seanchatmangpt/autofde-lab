@@ -21,7 +21,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-          submodules: recursive
+          submodules: false
           persist-credentials: false
 
       - name: Assert exact subject identity
@@ -35,6 +35,20 @@ jobs:
             exit 2
           }
           printf 'exact_head=%s\n' "$actual"
+
+      - name: Materialize bounded C++ SDK source capsule
+        shell: bash
+        run: |
+          set -euo pipefail
+          git submodule update --init --depth 1 -- \
+            cpp/sdk/Catch2 \
+            cpp/sdk/backward-cpp \
+            cpp/sdk/json \
+            cpp/sdk/nng \
+            cpp/sdk/nngpp \
+            cpp/sdk/pybind11 \
+            cpp/sdk/spdlog \
+            cpp/sdk/PEGTL
 
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
