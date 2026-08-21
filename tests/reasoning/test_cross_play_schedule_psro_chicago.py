@@ -15,7 +15,9 @@ from __future__ import annotations
 
 from autofde_lab.hub.domain.breach_clock import BreachClockDomain
 from autofde_lab.planner_league import PlannerLeague
-from autofde_lab.planner_league.cross_play_world_schedule import schedule_cross_play_for_world
+from autofde_lab.planner_league.cross_play_world_schedule import (
+    schedule_cross_play_for_world,
+)
 from autofde_lab.reasoning.cross_play_schedule_psro import (
     CrossPlaySchedulePsroOutcome,
     run_cross_play_schedule_psro_round,
@@ -76,7 +78,9 @@ def test_default_union_seed_over_two_candidates_honestly_refuses() -> None:
     assert result.psro_step.receipt is None
 
 
-def test_explicit_intersecting_opponent_ids_makes_a_real_two_candidate_advance_possible() -> None:
+def test_explicit_intersecting_opponent_ids_makes_a_real_two_candidate_advance_possible() -> (
+    None
+):
     schedule = _real_schedule()
     domain = BreachClockDomain()
 
@@ -89,7 +93,9 @@ def test_explicit_intersecting_opponent_ids_makes_a_real_two_candidate_advance_p
     assert result.psro_step.receipt.selected_best_response == "Astar"
 
 
-def test_intersection_strategy_derives_the_same_real_seed_and_receipt_as_manual_override() -> None:
+def test_intersection_strategy_derives_the_same_real_seed_and_receipt_as_manual_override() -> (
+    None
+):
     """Falsifier for the new feature: derive, do not invent, the known closure."""
     schedule = _real_schedule()
     domain = BreachClockDomain()

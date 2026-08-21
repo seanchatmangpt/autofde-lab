@@ -22,10 +22,19 @@ from dataclasses import dataclass
 from typing import Sequence
 
 from autofde_lab.planner_league import PayoffHypergraph
-from autofde_lab.planner_league.cross_play_world_schedule import CrossPlayScheduleOutcome
-from autofde_lab.planner_league.psro import PolicySpaceResponseOracle, PsroState, PsroStep
+from autofde_lab.planner_league.cross_play_world_schedule import (
+    CrossPlayScheduleOutcome,
+)
+from autofde_lab.planner_league.psro import (
+    PolicySpaceResponseOracle,
+    PsroState,
+    PsroStep,
+)
 
-from .cross_play_schedule_payoff import ScheduledMatchPayoffOutcome, admit_cross_play_schedule_payoffs
+from .cross_play_schedule_payoff import (
+    ScheduledMatchPayoffOutcome,
+    admit_cross_play_schedule_payoffs,
+)
 
 __all__ = ["CrossPlaySchedulePsroOutcome", "run_cross_play_schedule_psro_round"]
 
@@ -63,7 +72,12 @@ def _observed_opponent_intersection(
         if right not in first_seen:
             first_seen.append(right)
 
-    common = set.intersection(*(opponents_by_constructor[planner_id] for planner_id in constructor_planner_ids))
+    common = set.intersection(
+        *(
+            opponents_by_constructor[planner_id]
+            for planner_id in constructor_planner_ids
+        )
+    )
     selected = tuple(opponent_id for opponent_id in first_seen if opponent_id in common)
     if not selected:
         raise ValueError("REFUSED:NO_COMMON_OBSERVED_OPPONENTS")
@@ -80,7 +94,9 @@ def _select_opponent_ids(
     if opponent_ids is not None:
         return tuple(opponent_ids)
     if opponent_selection == "union":
-        return tuple(dict.fromkeys(o.match.right_policy.planner_id for o in payoff_outcomes))
+        return tuple(
+            dict.fromkeys(o.match.right_policy.planner_id for o in payoff_outcomes)
+        )
     if opponent_selection == "intersection":
         return _observed_opponent_intersection(payoff_outcomes, constructor_planner_ids)
     raise ValueError(f"REFUSED:UNKNOWN_OPPONENT_SELECTION:{opponent_selection}")
