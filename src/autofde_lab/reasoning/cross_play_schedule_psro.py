@@ -26,10 +26,19 @@ from enum import Enum
 from typing import Sequence
 
 from autofde_lab.planner_league import PayoffHypergraph
-from autofde_lab.planner_league.cross_play_world_schedule import CrossPlayScheduleOutcome
-from autofde_lab.planner_league.psro import PolicySpaceResponseOracle, PsroState, PsroStep
+from autofde_lab.planner_league.cross_play_world_schedule import (
+    CrossPlayScheduleOutcome,
+)
+from autofde_lab.planner_league.psro import (
+    PolicySpaceResponseOracle,
+    PsroState,
+    PsroStep,
+)
 
-from .cross_play_schedule_payoff import ScheduledMatchPayoffOutcome, admit_cross_play_schedule_payoffs
+from .cross_play_schedule_payoff import (
+    ScheduledMatchPayoffOutcome,
+    admit_cross_play_schedule_payoffs,
+)
 
 __all__ = [
     "CrossPlaySchedulePsroOutcome",
@@ -66,7 +75,9 @@ def _observed_opponent_population(
     """
 
     observed_order = tuple(
-        dict.fromkeys(outcome.match.right_policy.planner_id for outcome in payoff_outcomes)
+        dict.fromkeys(
+            outcome.match.right_policy.planner_id for outcome in payoff_outcomes
+        )
     )
     if strategy is OpponentPopulationStrategy.OBSERVED_UNION:
         return observed_order
@@ -85,7 +96,9 @@ def _observed_opponent_population(
     for planner_id in constructor_planner_ids:
         common.intersection_update(opponents_by_constructor[planner_id])
 
-    selected = tuple(opponent_id for opponent_id in observed_order if opponent_id in common)
+    selected = tuple(
+        opponent_id for opponent_id in observed_order if opponent_id in common
+    )
     if not selected:
         raise ValueError("REFUSED:NO_COMMON_OBSERVED_OPPONENTS")
     return selected
@@ -100,7 +113,8 @@ def run_cross_play_schedule_psro_round(
     opponent_role_id: str,
     world_id: str,
     opponent_ids: Sequence[str] | None = None,
-    opponent_population_strategy: OpponentPopulationStrategy | str = OpponentPopulationStrategy.OBSERVED_UNION,
+    opponent_population_strategy: OpponentPopulationStrategy
+    | str = OpponentPopulationStrategy.OBSERVED_UNION,
     observation_projection_id: str = "full_observation",
     budget_id: str = "balanced",
 ) -> CrossPlaySchedulePsroOutcome:

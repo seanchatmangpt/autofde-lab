@@ -15,7 +15,9 @@ import pytest
 
 from autofde_lab.hub.domain.breach_clock import BreachClockDomain
 from autofde_lab.planner_league import PlannerLeague
-from autofde_lab.planner_league.cross_play_world_schedule import schedule_cross_play_for_world
+from autofde_lab.planner_league.cross_play_world_schedule import (
+    schedule_cross_play_for_world,
+)
 from autofde_lab.reasoning.cross_play_schedule_psro import (
     CrossPlaySchedulePsroOutcome,
     OpponentPopulationStrategy,
@@ -111,11 +113,19 @@ def test_observed_common_closure_replays_deterministically() -> None:
 
     assert first.psro_step.receipt is not None
     assert second.psro_step.receipt is not None
-    assert first.psro_step.receipt.prior_population == second.psro_step.receipt.prior_population
-    assert first.psro_step.receipt.identity_sha256 == second.psro_step.receipt.identity_sha256
+    assert (
+        first.psro_step.receipt.prior_population
+        == second.psro_step.receipt.prior_population
+    )
+    assert (
+        first.psro_step.receipt.identity_sha256
+        == second.psro_step.receipt.identity_sha256
+    )
 
 
-def test_common_closure_refuses_when_four_real_candidate_windows_do_not_intersect() -> None:
+def test_common_closure_refuses_when_four_real_candidate_windows_do_not_intersect() -> (
+    None
+):
     """Negative fixture: four consecutive 3-opponent windows have no common edge."""
     with pytest.raises(ValueError, match="^REFUSED:NO_COMMON_OBSERVED_OPPONENTS$"):
         _run(
