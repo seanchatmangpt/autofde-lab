@@ -108,7 +108,9 @@ def _policy_from_dict(payload: Any, *, role_id: str) -> PolicySpec:
 
 
 def _observation_from_dict(payload: Any) -> PayoffObservation:
-    data = _require_mapping(payload, "REFUSED:INVALID_PAYOFF_BUNDLE:OBSERVATION_NOT_OBJECT")
+    data = _require_mapping(
+        payload, "REFUSED:INVALID_PAYOFF_BUNDLE:OBSERVATION_NOT_OBJECT"
+    )
     match_data = _require_mapping(
         data.get("match"), "REFUSED:INVALID_PAYOFF_BUNDLE:MATCH_NOT_OBJECT"
     )
@@ -121,10 +123,16 @@ def _observation_from_dict(payload: Any) -> PayoffObservation:
         match = LeagueMatch(
             world_id=str(match_data["world_id"]),
             left_role_id=left_role_id,
-            left_policy=_policy_from_dict(match_data["left_policy"], role_id=left_role_id),
+            left_policy=_policy_from_dict(
+                match_data["left_policy"], role_id=left_role_id
+            ),
             right_role_id=right_role_id,
-            right_policy=_policy_from_dict(match_data["right_policy"], role_id=right_role_id),
-            information_partition_id=str(match_data.get("information_partition_id", "shared")),
+            right_policy=_policy_from_dict(
+                match_data["right_policy"], role_id=right_role_id
+            ),
+            information_partition_id=str(
+                match_data.get("information_partition_id", "shared")
+            ),
             authority_context_ref=match_data.get("authority_context_ref"),
         )
         return PayoffObservation(
