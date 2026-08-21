@@ -36,14 +36,17 @@ jobs:
           }
           printf 'exact_head=%s\n' "$actual"
 
-      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          version: "0.9.2"
           python-version: "3.13"
-          enable-cache: true
+          cache: pip
 
-      - name: Install repository validation capsule
-        run: uv sync --extra=all
+      - name: Install focused solver validation capsule
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[solvers]" "pytest==8.3.5"
 
       - name: Reject mockist seams in the owning court
         shell: bash
@@ -53,6 +56,6 @@ jobs:
 
       - name: Execute real cross-play PSRO strategy court
         run: >-
-          .venv/bin/python -m pytest
+          python -m pytest
           tests/reasoning/test_cross_play_schedule_psro_chicago.py
           -v
