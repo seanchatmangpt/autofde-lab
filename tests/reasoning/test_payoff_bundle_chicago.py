@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import hashlib
 import json
 
 import pytest
 
-from autofde_lab.planner_league import LeagueMatch, PayoffHypergraph, PayoffObservation, PolicySpec
+from autofde_lab.planner_league import (
+    LeagueMatch,
+    PayoffHypergraph,
+    PayoffObservation,
+    PolicySpec,
+)
 from autofde_lab.reasoning.payoff_bundle import decode_payoff_bundle, encode_payoff_bundle
 
 
@@ -28,6 +34,14 @@ def _observation(
         right_score=right_score,
         receipt_id=receipt_id,
     )
+
+
+def _rebind_digest(bundle: dict[str, object]) -> None:
+    observations = bundle["observations"]
+    canonical = json.dumps(
+        observations, ensure_ascii=True, sort_keys=True, separators=(",", ":")
+    )
+    bundle["observations_sha256"] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def test_payoff_bundle_round_trips_and_replays_deterministically() -> None:
@@ -60,7 +74,9 @@ def test_payoff_bundle_round_trips_and_replays_deterministically() -> None:
 
 def test_payoff_bundle_refuses_digest_tampering() -> None:
     bundle = json.loads(
-        encode_payoff_bundle((_observation("Astar", "BFWS", 1.0, 0.0, "receipt-a-b"),))
+        encode_payoff_bundle(
+            (_observation("Astar", "BFWS", 1.0, 0.0, "receipt-a-b"),)
+        )
     )
     bundle["observations"][0]["left_score"] = 0.0
 
@@ -70,15 +86,12 @@ def test_payoff_bundle_refuses_digest_tampering() -> None:
 
 def test_payoff_bundle_refuses_unreceipted_recomputed_payload() -> None:
     bundle = json.loads(
-        encode_payoff_bundle((_observation("Astar", "BFWS", 1.0, 0.0, "receipt-a-b"),))
+        encode_payoff_bundle(
+            (_observation("Astar", "BFWS", 1.0, 0.0, "receipt-a-b"),)
+        )
     )
     bundle["observations"][0]["receipt_id"] = ""
-    canonical = json.dumps(
-        bundle["observations"], ensure_ascii=True, sort_keys=True, separators=(",", ":")
-    )
-    import hashlib
-
-    bundle["observations_sha256"] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    _rebind_digest(bundle)
 
     with pytest.raises(ValueError, match="REFUSED:UNRECEIPTED_PAYOFF"):
         decode_payoff_bundle(json.dumps(bundle))
@@ -86,15 +99,14 @@ def test_payoff_bundle_refuses_unreceipted_recomputed_payload() -> None:
 
 def test_payoff_bundle_refuses_objective_drift_even_with_valid_digest() -> None:
     bundle = json.loads(
-        encode_payoff_bundle((_observation("Astar", "BFWS", 1.0, 0.0, "receipt-a-b"),))
+        encode_payoff_bundle(
+            (_observation("Astar", "BFWS", 1.0, 0.0, "receipt-a-b"),)
+        )
     )
-    bundle["observations"][0]["match"]["left_policy"]["objective_id"] = "invented-objective"
-    canonical = json.dumps(
-        bundle["observations"], ensure_ascii=True, sort_keys=True, separators=(",", ":")
+    bundle["observations"][0]["match"]["left_policy"]["objective_id"] = (
+        "invented-objective"
     )
-    import hashlib
-
-    bundle["observations_sha256"] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    _rebind_digest(bundle)
 
     with pytest.raises(ValueError, match="REFUSED:INVALID_PAYOFF_BUNDLE:OBJECTIVE_DRIFT"):
         decode_payoff_bundle(json.dumps(bundle))
