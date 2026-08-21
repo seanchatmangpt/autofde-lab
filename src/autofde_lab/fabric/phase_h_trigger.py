@@ -293,7 +293,7 @@ def check_coverage_gap(
     guard_would_skip = last_state is not None and last_gap is not None and last_gap <= threshold
     forced_probe = guard_would_skip and skips_since_last_invoke >= max_consecutive_skips_before_probe
 
-    if guard_would_skip and not forced_probe:
+    if guard_would_skip and not forced_probe and last_state is not None:
         next_skip_count = skips_since_last_invoke + 1
         skip_state = dict(last_state)
         skip_state["skips_since_last_invoke"] = next_skip_count
