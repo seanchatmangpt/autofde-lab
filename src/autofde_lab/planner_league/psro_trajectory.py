@@ -47,7 +47,7 @@ from typing import Iterable
 
 from .psro import PolicySpaceResponseOracle, PsroState, PsroStep
 
-__all__ = ["PsroTrajectory", "run_psro_trajectory"]
+__all__ = ["PsroTrajectory", "run_psro_trajectory", "dominant_response"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -116,3 +116,26 @@ def run_psro_trajectory(
         state = step.state
 
     return PsroTrajectory(initial_state=initial_state, steps=tuple(steps))
+
+
+def dominant_response(state: PsroState) -> str:
+    """Real, deterministic argmax over `state.mixture` -- the real,
+    currently-converged PSRO conclusion: which population member
+    presently carries the most empirical weight. Ties are broken by the
+    same `(weight, planner_id)` lexicographic comparison
+    `PayoffHypergraph.empirical_best_response` itself already uses (a
+    strictly greater `planner_id` string wins a weight tie) -- this
+    function introduces no new tie-break rule of its own, it reuses the
+    one real convention already established.
+
+    `state.population` is always non-empty (`PsroState.__post_init__`'s
+    own real `REFUSED:PSRO_EMPTY_POPULATION` validation guarantees this),
+    so `state.mixture` always has at least one real entry.
+    """
+    best: tuple[float, str] | None = None
+    for planner_id, weight in state.mixture.items():
+        key = (weight, planner_id)
+        if best is None or key > best:
+            best = key
+    assert best is not None
+    return best[1]
