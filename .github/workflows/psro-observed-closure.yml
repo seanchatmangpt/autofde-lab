@@ -21,7 +21,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-          submodules: false
+          submodules: recursive
           persist-credentials: false
 
       - name: Assert exact subject identity
