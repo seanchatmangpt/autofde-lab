@@ -1,13 +1,21 @@
 {
+  "after": 5,
+  "before": 4,
   "before_counts": {
-    "PlannerCacheHotsetRequest": 2,
-    "PlannerCacheStatsRequest": 2,
-    "PlannerCandidate": 2,
-    "PlannerCatalogRequest": 2,
-    "PlannerMatchRequest": 2
+    "PlannerCacheHotsetRequest": 4,
+    "PlannerCacheStatsRequest": 4,
+    "PlannerCandidate": 5,
+    "PlannerCatalogRequest": 5,
+    "PlannerMatchRequest": 5
   },
-  "closed": false,
-  "gap": 0,
+  "closed": true,
+  "closed_class": "PlannerCacheStatsRequest",
+  "delta": 1,
+  "detection_status": "stale_skip_using_prior_observation",
+  "gap": 1,
+  "invoke_reason": "forced probe after 5 consecutive skips (max_consecutive_skips_before_probe=5)",
   "invoked": true,
-  "returncode": 1
+  "returncode": 0,
+  "skip_reason": "last observed gap=1 <= threshold=1; skip 1/5 before a forced re-probe",
+  "skips_since_last_invoke": 1
 }

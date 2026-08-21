@@ -57,19 +57,22 @@ DEFAULT_COVERAGE_STATE_FILE = (
 # aacm: class counts and unconditionally Acts on whichever class comes out
 # lowest -- even when all 5 counts are already equal (gap == 0), confirmed
 # by a real run on 2026-08-20 against the live xaas Postgres rows, all at 2
-# each, which still picked PlannerCandidate and attempted to Act on it. So
-# calling the mix task itself is NOT naturally idempotent/self-limiting --
-# every invocation Acts, win or not, and a live gap==0 tick would spend a
-# real cnv-deploy call for no coverage reason. The guard below is therefore
-# real and additive: before invoking the mix task, autofde-lab consults the
-# LAST real before/after counts it observed from the previous invocation
-# (persisted locally in DEFAULT_COVERAGE_STATE_FILE) and only invokes again
-# once that last-observed gap (max count - min count) exceeds
-# COVERAGE_GAP_THRESHOLD. Rationale for the threshold value: a single Act
-# call moves exactly one class's count by +1 (confirmed in the ex source --
-# one Ash.create per run), so immediately after any Act the freshly-created
-# imbalance is exactly gap==1 relative to the other four classes -- that is
-# the *expected*, not-yet-actionable state right after closing a gap, so
+# each, which still picked PlannerCandidate and attempted to Act on it. Real
+# check of the current ~/xaas source this session (2026-08-20, same day as
+# this fix) confirms the task has NOT since gained a gap==0 guard --
+# `least_exercised/1` is unchanged. So calling the mix task itself is NOT
+# naturally idempotent/self-limiting -- every invocation Acts, win or not,
+# and a live gap==0 tick would spend a real cnv-deploy call for no coverage
+# reason. The guard below is therefore real and additive: before invoking
+# the mix task, autofde-lab consults the LAST real before/after counts it
+# observed from the previous invocation (persisted locally in
+# DEFAULT_COVERAGE_STATE_FILE) and only invokes again once that
+# last-observed gap (max count - min count) exceeds COVERAGE_GAP_THRESHOLD.
+# Rationale for the threshold value: a single Act call moves exactly one
+# class's count by +1 (confirmed in the ex source -- one Ash.create per
+# run), so immediately after any Act the freshly-created imbalance is
+# exactly gap==1 relative to the other four classes -- that is the
+# *expected*, not-yet-actionable state right after closing a gap, so
 # threshold must be > 1 to avoid re-triggering on every single tick chasing
 # its own last Act. COVERAGE_GAP_THRESHOLD = 1 means "skip while gap <= 1,
 # invoke once gap >= 2" -- the smallest threshold that does not fire on the
@@ -77,6 +80,43 @@ DEFAULT_COVERAGE_STATE_FILE = (
 # persisted state yet, always invokes once so a real gap baseline exists to
 # compare against.
 COVERAGE_GAP_THRESHOLD = 1
+
+# FMEA finding this session, RPN=540 (Severity=6 x Occurrence=9 x
+# Detection=10): the guard above is a real chicken-and-egg trap. The ONLY
+# way to learn the CURRENT live gap is to invoke the mix task (it is the
+# sole real Monitor step -- there is no read-only SPARQL-count path into
+# xaas from here), but the guard blocks invocation whenever the LAST
+# persisted gap was <= threshold. Confirmed real, current on-disk state:
+# `.phase_h_coverage_state.json` has gap=0 (last real Monitor: all 5 classes
+# at count=2), so every tick since has returned invoked=False with no way
+# to tell "still genuinely healthy" from "permanently stuck" -- if the real
+# live gap grew past threshold in the meantime (e.g. any real external
+# K-graph write outside this trigger's own Act calls: xaas seed/import
+# scripts, other automation, or a human running `mix
+# xaas.close_coverage_gap` directly), this trigger would never rediscover
+# it and would report "skipped" forever.
+#
+# Fix: a second, independent cadence that is NOT gated by the last-observed
+# gap. MAX_CONSECUTIVE_SKIPS_BEFORE_PROBE bounds how many consecutive
+# guard-held skips are allowed before the next tick is forced to invoke
+# (probe) regardless of last_gap, re-discovering the real current state.
+# This does not reintroduce the original problem (Act firing every tick
+# even at gap==0): between forced probes, the threshold guard still holds
+# exactly as before, so a genuinely healthy run of ticks still costs zero
+# extra Act calls except for the bounded, periodic re-Monitor.
+#
+# Value: 5. Justification -- (a) must be > 1 tick, so the single expected
+# post-Act perturbation (gap immediately becomes 1, see threshold rationale
+# above) does not itself force a redundant second probe on the very next
+# tick; (b) small enough that worst-case staleness ("using a stale prior
+# observation instead of the live gap") is bounded and auditable -- at most
+# 5 consecutive ticks -- never unbounded/permanent; (c) tick-count-based
+# rather than wall-clock-based, since this repo has no established Phase H
+# scheduling cadence to anchor a time threshold against (confirmed: no
+# cron/systemd/launchd timer for phase_h_trigger exists in this repo --
+# run_once() is invoked directly, once per process run), so counting
+# invocations of this function itself is the only real, available signal.
+MAX_CONSECUTIVE_SKIPS_BEFORE_PROBE = 5
 
 FIXTURE_DOMAIN = REPO_ROOT / "tests" / "domains" / "python" / "pddl_domains" / "blocks" / "domain.pddl"
 FIXTURE_PROBLEM = (
@@ -206,7 +246,9 @@ def check_coverage_gap(
     xaas_repo_root: Path = XAAS_REPO_ROOT,
     state_file: Path = DEFAULT_COVERAGE_STATE_FILE,
     threshold: int = COVERAGE_GAP_THRESHOLD,
+    max_consecutive_skips_before_probe: int = MAX_CONSECUTIVE_SKIPS_BEFORE_PROBE,
     timeout_seconds: int = 180,
+    command: list[str] | None = None,
 ) -> dict:
     """Second real Phase H trigger: the xaas real-SPARQL K-graph coverage gap.
 
@@ -215,35 +257,91 @@ def check_coverage_gap(
     remains the sole owner of the SPARQL count / least-exercised / Act
     logic (~/xaas/lib/mix/tasks/xaas.close_coverage_gap.ex, untouched).
 
-    Guarded by COVERAGE_GAP_THRESHOLD (see module docstring above) using
-    the last real gap this function itself observed, persisted in
+    Guarded by `threshold` (see COVERAGE_GAP_THRESHOLD docstring above)
+    using the last real gap this function itself observed, persisted in
     `state_file`, since the mix task has no internal guard of its own.
+
+    Second, independent guard (the RPN=540 chicken-and-egg fix, see
+    MAX_CONSECUTIVE_SKIPS_BEFORE_PROBE docstring above): every tick the
+    threshold guard would skip, this function increments and persists a
+    `skips_since_last_invoke` counter. Once that counter reaches
+    `max_consecutive_skips_before_probe`, the next tick invokes anyway (a
+    forced probe) regardless of the last-observed gap, so the trigger can
+    never become permanently stuck reporting a stale "skipped" forever --
+    worst case it goes stale for `max_consecutive_skips_before_probe`
+    ticks, then self-corrects.
+
+    Every returned dict carries a `detection_status` distinguishing real
+    outcomes for a human/monitor (the Detection=10 half of the FMEA fix):
+    - "verified_healthy_this_tick": invoked this tick, and the real live
+      gap it observed is genuinely <= threshold right now.
+    - "verified_gap_open_this_tick": invoked this tick, and the real live
+      gap it observed is genuinely > threshold right now.
+    - "stale_skip_using_prior_observation": did NOT invoke this tick;
+      reporting the last real observation from `skips_since_last_invoke`
+      ticks ago, not the current live state.
+
+    `command` overrides the real subprocess argv (default
+    `["mix", "xaas.close_coverage_gap"]`) -- used by tests to run a real,
+    separate, controllable subprocess instead of the live xaas/Postgres/
+    cnv-deploy stack, without mocking any of this function's own logic.
     """
     last_state = _read_coverage_state(state_file)
     last_gap = last_state.get("gap") if last_state else None
+    skips_since_last_invoke = last_state.get("skips_since_last_invoke", 0) if last_state else 0
 
-    if last_state is not None and last_gap is not None and last_gap <= threshold:
+    guard_would_skip = last_state is not None and last_gap is not None and last_gap <= threshold
+    forced_probe = guard_would_skip and skips_since_last_invoke >= max_consecutive_skips_before_probe
+
+    if guard_would_skip and not forced_probe:
+        next_skip_count = skips_since_last_invoke + 1
+        skip_state = dict(last_state)
+        skip_state["skips_since_last_invoke"] = next_skip_count
+        skip_state["detection_status"] = "stale_skip_using_prior_observation"
+        skip_state["skip_reason"] = (
+            f"last observed gap={last_gap} <= threshold={threshold}; "
+            f"skip {next_skip_count}/{max_consecutive_skips_before_probe} "
+            "before a forced re-probe"
+        )
+        _write_coverage_state(skip_state, state_file)
         return {
             "invoked": False,
-            "reason": f"last observed gap={last_gap} <= threshold={threshold}",
+            "reason": skip_state["skip_reason"],
+            "detection_status": skip_state["detection_status"],
+            "skips_since_last_invoke": next_skip_count,
             "last_state": last_state,
         }
 
+    if last_state is None:
+        invoke_reason = "no_prior_state"
+    elif forced_probe:
+        invoke_reason = (
+            f"forced probe after {skips_since_last_invoke} consecutive skips "
+            f"(max_consecutive_skips_before_probe={max_consecutive_skips_before_probe})"
+        )
+    else:
+        invoke_reason = f"last observed gap={last_gap} > threshold={threshold}"
+
     try:
         proc = subprocess.run(
-            ["mix", "xaas.close_coverage_gap"],
+            list(command) if command is not None else ["mix", "xaas.close_coverage_gap"],
             cwd=str(xaas_repo_root),
             capture_output=True,
             text=True,
             timeout=timeout_seconds,
         )
     except (subprocess.TimeoutExpired, FileNotFoundError) as exc:
-        return {"invoked": True, "error": f"{type(exc).__name__}: {exc}"}
+        return {"invoked": True, "error": f"{type(exc).__name__}: {exc}", "invoke_reason": invoke_reason}
 
     stdout = (proc.stdout or "") + (proc.stderr or "")
     parsed = _parse_coverage_gap_output(stdout)
     parsed["invoked"] = True
     parsed["returncode"] = proc.returncode
+    parsed["skips_since_last_invoke"] = 0
+    parsed["invoke_reason"] = invoke_reason
+    parsed["detection_status"] = (
+        "verified_healthy_this_tick" if parsed["gap"] <= threshold else "verified_gap_open_this_tick"
+    )
     _write_coverage_state(parsed, state_file)
     return parsed
 
