@@ -49,6 +49,11 @@ __all__ = [
     "falsify_candidate",
     "admit_surviving_candidates",
     "ArchitectureChangeTrigger",
+    "TRIZParameter",
+    "TRIZContradiction",
+    "TRIZResolutionApplicability",
+    "classify_triz_contradiction",
+    "generate_triz_candidates",
 ]
 
 
@@ -455,3 +460,138 @@ class ArchitectureChangeTrigger:
         0.5 never silently fires; this is a real, if simple, threshold,
         not a placeholder claiming to be a policy engine."""
         return self.confidence >= 0.5
+
+
+# ---------------------------------------------------------------------------
+# 14. TRIZ contradiction-resolution candidate generation -- real, partial
+# ---------------------------------------------------------------------------
+
+
+class TRIZParameter(StrEnum):
+    """Real TRIZ-style engineering parameters, honestly scoped to exactly
+    the two fields this repo's own `ArchitectureCandidate` already
+    carries -- named as an analogy to Altshuller's 39 parameters, never
+    claimed as an orthodox mapping onto them."""
+
+    COST = "COST"  # ArchitectureCandidate.cost_bound, lower is "improving"
+    AUTHORITY_NEEDS = "AUTHORITY_NEEDS"  # ArchitectureCandidate.authority_needs, fewer/narrower is "improving"
+
+
+# Real, honestly partial 39x39-style matrix subset: exactly ONE cell
+# covered -- (COST improving, AUTHORITY_NEEDS worsening). Sourced loosely
+# from Altshuller's published principle numbers for the closest real
+# published matrix cell (cost-of-object worsening vs
+# reliability/complexity-type parameters), NOT claimed as an authoritative
+# citation of the orthodox matrix -- COST/AUTHORITY_NEEDS are this repo's
+# own coarse re-mapping, not Altshuller's original 39. Every other
+# (improving, worsening) pair is absent by construction and MUST be
+# classified UNSUPPORTED, never guessed.
+_CONTRADICTION_MATRIX: dict[tuple["TRIZParameter", "TRIZParameter"], tuple[int, ...]] = {
+    (TRIZParameter.COST, TRIZParameter.AUTHORITY_NEEDS): (1, 10, 28, 35),
+    # 1  Segmentation
+    # 10 Prior action
+    # 28 Mechanics substitution
+    # 35 Parameter change
+}
+
+# A small, real, named prescription table for exactly the 4 principles this
+# module covers -- never all 40; an uncovered principle number is real
+# evidence of nothing and is never guessed at generation time.
+_PRINCIPLE_PRESCRIPTIONS: dict[int, str] = {
+    1: "segment the migration into independently-verifiable partial actions "
+    "instead of one monolithic authority grant",
+    10: "front-load the cheapest, lowest-authority verification actions before "
+    "any action that would require broader authority",
+    28: "substitute a narrower automated check for the broader authority "
+    "envelope the candidate currently assumes it needs",
+    35: "vary the authority scope granted per migration_action rather than "
+    "requesting one uniform authority_needs set for the whole candidate",
+}
+
+
+@dataclass(frozen=True, slots=True)
+class TRIZContradiction:
+    """A real, named engineering contradiction -- never inferred silently.
+    The caller states which two parameters are in tension; this module
+    never guesses one from a hypothesis's raw fields."""
+
+    improving_parameter: TRIZParameter
+    worsening_parameter: TRIZParameter
+
+
+@dataclass(frozen=True, slots=True)
+class TRIZResolutionApplicability:
+    """Mirrors `OperatorApplicability`'s honesty contract for this specific
+    contradiction lookup -- a contradiction pair absent from
+    `_CONTRADICTION_MATRIX` is real evidence of nothing, never fabricated
+    as covered."""
+
+    contradiction: TRIZContradiction
+    status: OperatorApplicabilityStatus  # ADMITTED or UNSUPPORTED (never REFUSED/UNKNOWN here)
+    matched_principles: tuple[int, ...] = ()
+    reason: str = ""
+
+
+def classify_triz_contradiction(contradiction: TRIZContradiction) -> TRIZResolutionApplicability:
+    """Real, deterministic lookup against the partial matrix -- reuses the
+    same ADMITTED/UNSUPPORTED vocabulary as `classify_operator_applicability`
+    rather than inventing a parallel one."""
+    key = (contradiction.improving_parameter, contradiction.worsening_parameter)
+    principles = _CONTRADICTION_MATRIX.get(key)
+    if principles is None:
+        return TRIZResolutionApplicability(
+            contradiction=contradiction,
+            status=OperatorApplicabilityStatus.UNSUPPORTED,
+            reason=(
+                f"no real matrix cell exists for "
+                f"({contradiction.improving_parameter!r}, {contradiction.worsening_parameter!r}) "
+                "-- this module covers exactly one cell by construction"
+            ),
+        )
+    return TRIZResolutionApplicability(
+        contradiction=contradiction,
+        status=OperatorApplicabilityStatus.ADMITTED,
+        matched_principles=principles,
+        reason=(
+            f"real matrix cell ({contradiction.improving_parameter!r}, "
+            f"{contradiction.worsening_parameter!r}) matches {len(principles)} inventive principle(s)"
+        ),
+    )
+
+
+def generate_triz_candidates(
+    hypotheses: tuple[DesiredStateHypothesis, ...],
+    contradiction: TRIZContradiction,
+) -> tuple[ArchitectureCandidate, ...]:
+    """For each hypothesis, if `classify_triz_contradiction(contradiction)`
+    is ADMITTED, emit exactly one `ArchitectureCandidate` per matched
+    principle (never one merged candidate per hypothesis -- 'plural
+    matters', mirrors `infer_desired_state_hypotheses`'s own portfolio
+    discipline). If UNSUPPORTED, returns `()` for every hypothesis -- never
+    a fabricated candidate for a contradiction this table doesn't cover."""
+    applicability = classify_triz_contradiction(contradiction)
+    if applicability.status is not OperatorApplicabilityStatus.ADMITTED:
+        return ()
+
+    candidates: list[ArchitectureCandidate] = []
+    for hypothesis in hypotheses:
+        for principle in applicability.matched_principles:
+            prescription = _PRINCIPLE_PRESCRIPTIONS[principle]
+            candidate_id = _digest(
+                hypothesis.hypothesis_id,
+                contradiction.improving_parameter,
+                contradiction.worsening_parameter,
+                str(principle),
+            )
+            assertions = tuple(str(t) for t in hypothesis.targets)
+            candidates.append(
+                ArchitectureCandidate(
+                    candidate_id=candidate_id,
+                    target_state_assertions=assertions,
+                    assumptions=(f"TRIZ principle {principle}: {prescription}", *hypothesis.assumptions),
+                    migration_actions=(f"apply TRIZ principle {principle}: {prescription}",),
+                    provenance="triz-v1",
+                    generator_identity="triz-contradiction-matrix-partial",
+                )
+            )
+    return tuple(candidates)
