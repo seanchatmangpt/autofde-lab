@@ -168,14 +168,21 @@ def dmedi_solve_payoff(
     This is evidence transport, not persistence authority or actuation.
     """
     from autofde_lab.planner_league import PayoffHypergraph
-    from autofde_lab.reasoning.dflss_solve_payoff_bridge import admit_dflss_solve_payoff
-    from autofde_lab.reasoning.payoff_bundle import decode_payoff_bundle, encode_payoff_bundle
+    from autofde_lab.reasoning.dflss_solve_payoff_bridge import (
+        admit_dflss_solve_payoff,
+    )
+    from autofde_lab.reasoning.payoff_bundle import (
+        decode_payoff_bundle,
+        encode_payoff_bundle,
+    )
 
     hypergraph = PayoffHypergraph()
     seeded_observation_count = 0
     if input_payoff_bundle is not None:
         try:
-            prior_observations = decode_payoff_bundle(input_payoff_bundle.read_text(encoding="utf-8"))
+            prior_observations = decode_payoff_bundle(
+                input_payoff_bundle.read_text(encoding="utf-8")
+            )
         except OSError as exc:
             _emit(
                 {
@@ -273,4 +280,4 @@ def serve_a2a(
     """Run the A2A JSON-RPC server."""
     from autofde_lab.fabric.a2a import run
 
-    run(host=host, port=port).run()
+    run(host=host, port=port)
