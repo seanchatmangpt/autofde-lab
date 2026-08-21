@@ -164,6 +164,24 @@ gymact = [
     "kubernetes==30.1.0",
     "langchain>=0.3.25",
 ]
+ocpq = [
+    # Native PyO3 bindings (wasm4pm-bindings-py) over wasm4pm's real OCPQ
+    # query engine (wasm4pm/src/ocpq_runtime.rs), used by
+    # hub/domain/gym_procedure/level4_ocpq.py to query the Level 4 OCEL log.
+    # Requires a Rust toolchain to build (maturin backend, PEP 517) --
+    # deliberately NOT in `all` for that reason, same policy as other
+    # native-toolchain extras in this file. Not yet pinned to a pushed
+    # wasm4pm git revision (the crate lives at
+    # https://github.com/seanchatmangpt/wasm4pm, subdirectory
+    # crates/wasm4pm-bindings-py, but the revision built and verified in
+    # this session had uncommitted local changes -- pin this to a real
+    # pushed rev, mirroring wasm4pm-compat-pydantic's `[tool.uv.sources]`
+    # entry below, once wasm4pm-bindings-py is published from a clean
+    # commit); until then, build the wheel locally with
+    # `maturin build --release -m wasm4pm/crates/wasm4pm-bindings-py/Cargo.toml`
+    # and install it into this project's venv.
+    "wasm4pm",
+]
 all = [
     # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
     # "receipts" added back 2026-08-12: `uv sync --extra=all` was silently uninstalling
