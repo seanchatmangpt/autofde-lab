@@ -1,0 +1,13 @@
+{
+  "before_counts": {
+    "PlannerCacheHotsetRequest": 2,
+    "PlannerCacheStatsRequest": 2,
+    "PlannerCandidate": 2,
+    "PlannerCatalogRequest": 2,
+    "PlannerMatchRequest": 2
+  },
+  "closed": false,
+  "gap": 0,
+  "invoked": true,
+  "returncode": 1
+}
