@@ -36,16 +36,40 @@ jobs:
           }
           printf 'exact_head=%s\n' "$actual"
 
+      - name: Materialize bounded C++ SDK source capsule
+        shell: bash
+        run: |
+          set -euo pipefail
+          git submodule update --init --depth 1 -- \
+            cpp/sdk/Catch2 \
+            cpp/sdk/backward-cpp \
+            cpp/sdk/json \
+            cpp/sdk/nng \
+            cpp/sdk/nngpp \
+            cpp/sdk/pybind11 \
+            cpp/sdk/spdlog \
+            cpp/sdk/PEGTL
+
+      - name: Install C++ build headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libboost-dev
+
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.13"
           cache: pip
 
-      - name: Install bounded validation capsule
+      - name: Install repository-pinned validation capsule
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install "pytest==8.3.5"
+          python -m pip install --upgrade pip
+          python -m pip install \
+            "gymact @ git+https://github.com/seanchatmangpt/gymact.git@524d0bc8633d8534f500d67f27384ce9368c0863"
+          python -m pip install -e . "pytest==8.3.5"
 
       - name: Reject mockist seams in the owning court
         shell: bash
@@ -61,8 +85,6 @@ jobs:
           tests/reasoning/test_montecarlo_chicago.py
 
       - name: Execute real Monte Carlo stopping court
-        env:
-          PYTHONPATH: src
         run: >-
           python -m pytest
           tests/reasoning/test_montecarlo_stopping_chicago.py
