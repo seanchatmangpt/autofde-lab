@@ -5,7 +5,7 @@
 """Chicago-style tests for deterministic Monte Carlo stability stopping.
 
 Real ``MonteCarloCostModel`` collaborators and real seeded ``random.Random``
-draws are used throughout. No mocks, patches, or monkeypatching.
+draws are used throughout. Collaborators remain real throughout.
 """
 
 from __future__ import annotations
