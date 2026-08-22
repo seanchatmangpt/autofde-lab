@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      GYMACT_SUBJECT_SHA: ae80d0a054687022622f01deb0c8a732966f69dd
+      GYMACT_SUBJECT_SHA: 51b217cbd9a5d037278eeeb66a6ae2123f6df680
       WASM4PM_COMPAT_SHA: 577e2d1d8bdfe27d96f61c63f3ea120994e8bfda
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
