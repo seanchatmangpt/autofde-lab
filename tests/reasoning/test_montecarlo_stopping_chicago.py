@@ -5,7 +5,7 @@
 """Chicago-style tests for deterministic Monte Carlo stability stopping.
 
 Real ``MonteCarloCostModel`` collaborators and real seeded ``random.Random``
-draws are used throughout.  No mocks, patches, or monkeypatching.
+draws are used throughout. No mocks, patches, or monkeypatching.
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ import pytest
 from autofde_lab.reasoning.laboratory import DETERMINISTIC_SEED, MonteCarloCostModel, MonteCarloDistribution
 from autofde_lab.reasoning.montecarlo_stopping import (
     MonteCarloStabilityConfig,
+    StabilitySignal,
     StabilityStoppingReason,
     draw_until_mean_stable,
 )
@@ -32,13 +33,12 @@ def test_constant_real_distribution_stops_after_required_stable_checkpoints() ->
         consecutive_stable_checkpoints=2,
         max_samples=20,
     )
-
     outcome = draw_until_mean_stable(CONSTANT_MODEL, config, seed=DETERMINISTIC_SEED)
-
     assert outcome.reason is StabilityStoppingReason.STABLE
     assert outcome.sample_count == 8
     assert tuple(c.sample_count for c in outcome.checkpoints) == (4, 6, 8)
     assert tuple(c.stable_run_length for c in outcome.checkpoints) == (0, 1, 2)
+    assert all(c.signal is StabilitySignal.CUMULATIVE_MEAN for c in outcome.checkpoints)
     assert all(sample.cost_bound == 42.0 for sample in outcome.samples)
 
 
@@ -50,9 +50,7 @@ def test_zero_tolerance_wide_distribution_hits_max_samples_instead_of_claiming_c
         consecutive_stable_checkpoints=2,
         max_samples=12,
     )
-
     outcome = draw_until_mean_stable(WIDE_MODEL, config, seed=DETERMINISTIC_SEED)
-
     assert outcome.reason is StabilityStoppingReason.MAX_SAMPLES
     assert outcome.sample_count == 12
     assert outcome.checkpoints[-1].sample_count == 12
@@ -66,21 +64,57 @@ def test_sequential_rule_is_deterministic_across_two_real_runs() -> None:
         absolute_mean_tolerance=5.0,
         consecutive_stable_checkpoints=2,
         max_samples=30,
+        signal=StabilitySignal.RECENT_WINDOW_MEAN,
     )
-
     left = draw_until_mean_stable(WIDE_MODEL, config, seed=DETERMINISTIC_SEED)
     right = draw_until_mean_stable(WIDE_MODEL, config, seed=DETERMINISTIC_SEED)
-
     assert left == right
     assert tuple(s.sample_id for s in left.samples) == tuple(s.sample_id for s in right.samples)
 
 
-def test_fixed_n_previous_alternative_and_stability_rule_share_identical_seed_prefix() -> None:
-    """Comparison against the rejected previous alternative: fixed-n sampling.
+def test_recent_window_signal_rejects_cumulative_mean_inertia_false_stability() -> None:
+    """Compare new signal with predecessor on one exact real sample stream."""
+    common = dict(
+        min_samples=20,
+        checkpoint_every=5,
+        absolute_mean_tolerance=1.0,
+        consecutive_stable_checkpoints=2,
+        max_samples=60,
+    )
+    cumulative = draw_until_mean_stable(
+        WIDE_MODEL,
+        MonteCarloStabilityConfig(**common, signal=StabilitySignal.CUMULATIVE_MEAN),
+        seed=0,
+    )
+    recent = draw_until_mean_stable(
+        WIDE_MODEL,
+        MonteCarloStabilityConfig(**common, signal=StabilitySignal.RECENT_WINDOW_MEAN),
+        seed=0,
+    )
+    assert cumulative.reason is StabilityStoppingReason.STABLE
+    assert cumulative.sample_count == 30
+    assert recent.sample_count > cumulative.sample_count
+    assert recent.samples[: cumulative.sample_count] == cumulative.samples
+    assert tuple(round(c.absolute_delta or 0.0, 3) for c in cumulative.checkpoints[-2:]) == (0.11, 0.158)
+    assert all(c.absolute_delta is None or c.absolute_delta > 1.0 for c in recent.checkpoints[:3])
 
-    The sequential rule must preserve the same seeded sample prefix rather than
-    manufacture a new random process merely because stopping is adaptive.
-    """
+
+def test_recent_window_checkpoint_keeps_cumulative_mean_observable() -> None:
+    config = MonteCarloStabilityConfig(
+        min_samples=20,
+        checkpoint_every=5,
+        absolute_mean_tolerance=1.0,
+        consecutive_stable_checkpoints=2,
+        max_samples=30,
+        signal=StabilitySignal.RECENT_WINDOW_MEAN,
+    )
+    outcome = draw_until_mean_stable(WIDE_MODEL, config, seed=0)
+    checkpoint = outcome.checkpoints[1]
+    assert checkpoint.signal is StabilitySignal.RECENT_WINDOW_MEAN
+    assert checkpoint.mean != checkpoint.cumulative_mean
+
+
+def test_fixed_n_previous_alternative_and_stability_rule_share_identical_seed_prefix() -> None:
     from autofde_lab.reasoning.laboratory import draw_monte_carlo_samples
 
     config = MonteCarloStabilityConfig(
@@ -92,7 +126,6 @@ def test_fixed_n_previous_alternative_and_stability_rule_share_identical_seed_pr
     )
     adaptive = draw_until_mean_stable(WIDE_MODEL, config, seed=DETERMINISTIC_SEED)
     fixed = draw_monte_carlo_samples(WIDE_MODEL, adaptive.sample_count, seed=DETERMINISTIC_SEED)
-
     assert adaptive.samples == fixed
 
 
@@ -104,9 +137,7 @@ def test_terminal_checkpoint_exists_when_max_samples_is_off_cadence() -> None:
         consecutive_stable_checkpoints=3,
         max_samples=12,
     )
-
     outcome = draw_until_mean_stable(WIDE_MODEL, config, seed=DETERMINISTIC_SEED)
-
     assert outcome.reason is StabilityStoppingReason.MAX_SAMPLES
     assert tuple(c.sample_count for c in outcome.checkpoints) == (5, 9, 12)
 
@@ -119,6 +150,11 @@ def test_terminal_checkpoint_exists_when_max_samples_is_off_cadence() -> None:
         ({"absolute_mean_tolerance": -0.1}, "absolute_mean_tolerance must be >= 0"),
         ({"consecutive_stable_checkpoints": 0}, "consecutive_stable_checkpoints must be >= 1"),
         ({"min_samples": 10, "max_samples": 9}, "max_samples must be >= min_samples"),
+        ({"signal": "RECENT_WINDOW_MEAN"}, "signal must be a StabilitySignal"),
+        (
+            {"min_samples": 3, "checkpoint_every": 4, "signal": StabilitySignal.RECENT_WINDOW_MEAN},
+            "min_samples must be >= checkpoint_every for RECENT_WINDOW_MEAN",
+        ),
     ],
 )
 def test_invalid_stopping_configs_refuse_before_sampling(kwargs: dict[str, object], message: str) -> None:
