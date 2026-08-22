@@ -128,8 +128,14 @@ def test_terminal_checkpoint_exists_when_max_samples_is_off_cadence() -> None:
         ({"min_samples": 1}, "min_samples must be >= 2"),
         ({"checkpoint_every": 0}, "checkpoint_every must be >= 1"),
         ({"absolute_mean_tolerance": -0.1}, "absolute_mean_tolerance must be >= 0"),
-        ({"absolute_mean_tolerance": float("nan")}, "absolute_mean_tolerance must be finite"),
-        ({"absolute_mean_tolerance": float("inf")}, "absolute_mean_tolerance must be finite"),
+        (
+            {"absolute_mean_tolerance": float("nan")},
+            "absolute_mean_tolerance must be finite",
+        ),
+        (
+            {"absolute_mean_tolerance": float("inf")},
+            "absolute_mean_tolerance must be finite",
+        ),
         (
             {"consecutive_stable_checkpoints": 0},
             "consecutive_stable_checkpoints must be >= 1",

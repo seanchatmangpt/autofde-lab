@@ -83,9 +83,7 @@ def test_payoff_bundle_round_trips_and_replays_deterministically() -> None:
 
 def test_payoff_bundle_refuses_digest_tampering() -> None:
     bundle = json.loads(
-        encode_payoff_bundle(
-            (_observation("Astar", "BFWS", 1.0, 0.0, "receipt-a-b"),)
-        )
+        encode_payoff_bundle((_observation("Astar", "BFWS", 1.0, 0.0, "receipt-a-b"),))
     )
     bundle["observations"][0]["left_score"] = 0.0
 
@@ -95,9 +93,7 @@ def test_payoff_bundle_refuses_digest_tampering() -> None:
 
 def test_payoff_bundle_refuses_unreceipted_recomputed_payload() -> None:
     bundle = json.loads(
-        encode_payoff_bundle(
-            (_observation("Astar", "BFWS", 1.0, 0.0, "receipt-a-b"),)
-        )
+        encode_payoff_bundle((_observation("Astar", "BFWS", 1.0, 0.0, "receipt-a-b"),))
     )
     bundle["observations"][0]["receipt_id"] = ""
     _rebind_digest(bundle)
@@ -108,9 +104,7 @@ def test_payoff_bundle_refuses_unreceipted_recomputed_payload() -> None:
 
 def test_payoff_bundle_refuses_objective_drift_even_with_valid_digest() -> None:
     bundle = json.loads(
-        encode_payoff_bundle(
-            (_observation("Astar", "BFWS", 1.0, 0.0, "receipt-a-b"),)
-        )
+        encode_payoff_bundle((_observation("Astar", "BFWS", 1.0, 0.0, "receipt-a-b"),))
     )
     bundle["observations"][0]["match"]["left_policy"]["objective_id"] = (
         "invented-objective"
@@ -123,7 +117,9 @@ def test_payoff_bundle_refuses_objective_drift_even_with_valid_digest() -> None:
         decode_payoff_bundle(json.dumps(bundle))
 
 
-def test_payoff_bundle_refuses_nonfinite_observation_before_receipt_manufacture() -> None:
+def test_payoff_bundle_refuses_nonfinite_observation_before_receipt_manufacture() -> (
+    None
+):
     observation = _observation("Astar", "BFWS", float("nan"), 0.0, "receipt-a-b")
 
     with pytest.raises(
