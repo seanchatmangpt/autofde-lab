@@ -5,23 +5,19 @@
 """Deterministic sequential stability stopping for Monte Carlo EXPLORE runs.
 
 This module adds a reversible stopping alternative to the fixed-``n`` Monte
-Carlo generator in :mod:`autofde_lab.reasoning.laboratory`.  It deliberately
+Carlo generator in :mod:`autofde_lab.reasoning.laboratory`. It deliberately
 makes no claim of statistical significance or distributional convergence.
 Instead it implements a bounded engineering falsifier: continue drawing until
 successive checkpoint means remain within an explicit absolute tolerance for a
 caller-chosen number of consecutive checkpoints, or stop at ``max_samples``.
-
-The rule is deterministic for a fixed seed/configuration, uses only the real
-``MonteCarloCostModel.sample`` collaborator, and never changes authority or
-actuation semantics.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from enum import StrEnum
 import random
 import statistics
+from dataclasses import dataclass
+from enum import StrEnum
 
 from autofde_lab.reasoning.laboratory import DETERMINISTIC_SEED, MonteCarloCostModel, MonteCarloSample
 
@@ -29,6 +25,13 @@ from autofde_lab.reasoning.laboratory import DETERMINISTIC_SEED, MonteCarloCostM
 class StabilityStoppingReason(StrEnum):
     STABLE = "STABLE"
     MAX_SAMPLES = "MAX_SAMPLES"
+
+
+class StabilitySignal(StrEnum):
+    """Statistic whose checkpoint movement must remain inside tolerance."""
+
+    CUMULATIVE_MEAN = "CUMULATIVE_MEAN"
+    RECENT_WINDOW_MEAN = "RECENT_WINDOW_MEAN"
 
 
 @dataclass(frozen=True, slots=True)
@@ -40,6 +43,7 @@ class MonteCarloStabilityConfig:
     absolute_mean_tolerance: float = 0.5
     consecutive_stable_checkpoints: int = 2
     max_samples: int = 64
+    signal: StabilitySignal = StabilitySignal.CUMULATIVE_MEAN
 
     def __post_init__(self) -> None:
         if self.min_samples < 2:
@@ -52,6 +56,10 @@ class MonteCarloStabilityConfig:
             raise ValueError("consecutive_stable_checkpoints must be >= 1")
         if self.max_samples < self.min_samples:
             raise ValueError("max_samples must be >= min_samples")
+        if not isinstance(self.signal, StabilitySignal):
+            raise ValueError("signal must be a StabilitySignal")
+        if self.signal is StabilitySignal.RECENT_WINDOW_MEAN and self.min_samples < self.checkpoint_every:
+            raise ValueError("min_samples must be >= checkpoint_every for RECENT_WINDOW_MEAN")
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,6 +68,8 @@ class StabilityCheckpoint:
     mean: float
     previous_mean: float | None
     absolute_delta: float | None
+    cumulative_mean: float
+    signal: StabilitySignal
     stable: bool
     stable_run_length: int
 
@@ -87,13 +97,11 @@ def draw_until_mean_stable(
 ) -> MonteCarloStabilityOutcome:
     """Draw real samples until bounded checkpoint-mean stability or cap.
 
-    Checkpoints start only once ``min_samples`` have been observed.  Thereafter
-    a checkpoint is taken every ``checkpoint_every`` samples and always at
-    ``max_samples`` so the terminal state is observable even when the cap is
-    not aligned to the cadence.  A checkpoint is stable iff its mean differs
-    from the immediately preceding checkpoint mean by no more than the caller's
-    absolute tolerance.  ``consecutive_stable_checkpoints`` such observations
-    are required before early stop.
+    ``CUMULATIVE_MEAN`` preserves the original behavior. The additive
+    ``RECENT_WINDOW_MEAN`` alternative compares the last
+    ``checkpoint_every`` real draws at each checkpoint, preventing a long
+    earlier history from damping recent movement into a false engineering
+    stability signal. Neither signal is a statistical-convergence claim.
     """
 
     rng = random.Random(seed)
@@ -112,7 +120,12 @@ def draw_until_mean_stable(
         if not (cadence_hit or terminal):
             continue
 
-        mean = statistics.fmean(sample.cost_bound for sample in samples)
+        cumulative_mean = statistics.fmean(sample.cost_bound for sample in samples)
+        if config.signal is StabilitySignal.CUMULATIVE_MEAN:
+            mean = cumulative_mean
+        else:
+            mean = statistics.fmean(sample.cost_bound for sample in samples[-config.checkpoint_every :])
+
         delta = None if previous_mean is None else abs(mean - previous_mean)
         stable = delta is not None and delta <= config.absolute_mean_tolerance
         stable_run_length = stable_run_length + 1 if stable else 0
@@ -123,6 +136,8 @@ def draw_until_mean_stable(
                 mean=mean,
                 previous_mean=previous_mean,
                 absolute_delta=delta,
+                cumulative_mean=cumulative_mean,
+                signal=config.signal,
                 stable=stable,
                 stable_run_length=stable_run_length,
             )
