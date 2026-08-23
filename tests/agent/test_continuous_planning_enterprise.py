@@ -5,13 +5,16 @@
 """Fortune-5 qualification falsifiers for continuous planning memory.
 
 These tests exercise persistence, corruption refusal, concurrent writers,
-restart recovery, large candidate sets, and the invariant that retrieval never
-becomes admission. No test actuates a world or grants execution authority.
+restart recovery, tenant/workload isolation, bounded storage, large candidate
+sets, and the invariant that retrieval never becomes admission. No test
+actuates a world or grants execution authority.
 """
 
 from __future__ import annotations
 
+import os
 import sqlite3
+import stat
 from concurrent.futures import ThreadPoolExecutor
 from time import perf_counter
 
@@ -98,6 +101,50 @@ def test_durable_cache_refuses_memory_only_sqlite_mode() -> None:
         match="UNSUPPORTED:PERSISTENT_PLAN_CACHE_REQUIRES_FILE",
     ):
         SQLitePlanCache(":memory:")
+
+
+def test_persistent_cache_namespaces_do_not_enumerate_each_other(tmp_path) -> None:
+    path = tmp_path / "plans.sqlite3"
+    alpha = SQLitePlanCache(path, namespace="tenant-alpha")
+    beta = SQLitePlanCache(path, namespace="tenant-beta")
+    plan = _plan(8)
+    key = alpha.remember(plan)
+
+    assert alpha.exact(key) == plan
+    assert alpha.retrieve_candidates(_context()) == (plan,)
+    assert beta.exact(key) is None
+    assert beta.retrieve_candidates(_context()) == ()
+    assert beta.count() == 0
+
+    # The same content identity may exist independently in another namespace
+    # without making either namespace able to enumerate the other.
+    assert beta.remember(plan) == key
+    assert alpha.count() == 1
+    assert beta.count() == 1
+
+
+def test_persistent_cache_capacity_evicts_oldest_candidates_per_namespace(tmp_path) -> None:
+    path = tmp_path / "plans.sqlite3"
+    cache = SQLitePlanCache(path, namespace="bounded", max_entries=10)
+    keys = [cache.remember(_plan(index)) for index in range(20)]
+
+    assert cache.count() == 10
+    assert all(cache.exact(key) is None for key in keys[:10])
+    assert all(cache.exact(key) is not None for key in keys[10:])
+
+    # A neighboring namespace gets its own independent capacity budget.
+    neighbor = SQLitePlanCache(path, namespace="neighbor", max_entries=3)
+    for index in range(3):
+        neighbor.remember(_plan(100 + index))
+    assert neighbor.count() == 3
+    assert cache.count() == 10
+
+
+def test_persistent_cache_file_is_owner_only_on_posix(tmp_path) -> None:
+    path = tmp_path / "plans.sqlite3"
+    SQLitePlanCache(path)
+    if os.name == "posix":
+        assert stat.S_IMODE(path.stat().st_mode) == 0o600
 
 
 def test_persistent_retrieval_still_requires_fresh_admission(tmp_path) -> None:
