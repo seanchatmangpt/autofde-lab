@@ -13,11 +13,24 @@ The store deliberately opens a short-lived SQLite connection per operation.
 That makes lifecycle ownership explicit, avoids leaked descriptors, and lets
 independent processes safely share a WAL-backed cache without sharing Python
 objects or ambient authority.
+
+Enterprise boundaries are explicit:
+
+* every cache instance has a non-empty namespace; exact and similarity lookup
+  are namespace-scoped so one tenant/workload cannot enumerate another's
+  candidate plans through this API;
+* every namespace has a deterministic capacity ceiling, with oldest inserted
+  candidates evicted after successful insertion so durable memory cannot grow
+  without bound;
+* the SQLite file is owner-readable/writable only on POSIX after creation;
+* legacy pre-namespace databases are migrated into the ``default`` namespace
+  transactionally rather than becoming silently unreadable.
 """
 
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 from pathlib import Path
 from typing import Any, Mapping
@@ -45,7 +58,8 @@ from autofde_lab.powl.frequency import Frequency
 
 __all__ = ["PersistentPlanCorruption", "SQLitePlanCache"]
 
-_SCHEMA_VERSION = 1
+_ARTIFACT_SCHEMA_VERSION = 1
+_DEFAULT_MAX_ENTRIES = 100_000
 
 
 class PersistentPlanCorruption(ValueError):
@@ -191,7 +205,7 @@ def _decode_path(value: str) -> tuple[int, ...]:
 
 def _artifact_payload(plan: PlanArtifact) -> dict[str, Any]:
     return {
-        "schema": f"urn:autofde-lab:persistent-plan-cache:{_SCHEMA_VERSION}",
+        "schema": f"urn:autofde-lab:persistent-plan-cache:{_ARTIFACT_SCHEMA_VERSION}",
         "model": _encode_node(plan.model),
         "applicability": plan.applicability.as_dict(),
         "planner": plan.planner,
@@ -211,7 +225,9 @@ def _artifact_payload(plan: PlanArtifact) -> dict[str, Any]:
 
 
 def _decode_artifact(payload: Mapping[str, Any]) -> PlanArtifact:
-    expected_schema = f"urn:autofde-lab:persistent-plan-cache:{_SCHEMA_VERSION}"
+    expected_schema = (
+        f"urn:autofde-lab:persistent-plan-cache:{_ARTIFACT_SCHEMA_VERSION}"
+    )
     if payload.get("schema") != expected_schema:
         raise PersistentPlanCorruption(
             f"REFUSED:PERSISTED_PLAN_SCHEMA:{payload.get('schema')!r}"
@@ -258,8 +274,69 @@ def _context_signature(context: PlanningContext) -> str:
     )
 
 
+def _create_current_schema(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS plan_artifacts (
+            stored_seq INTEGER PRIMARY KEY AUTOINCREMENT,
+            namespace TEXT NOT NULL,
+            exact_key TEXT NOT NULL,
+            retrieval_signature TEXT NOT NULL,
+            artifact_json TEXT NOT NULL,
+            artifact_digest TEXT NOT NULL,
+            schema_version INTEGER NOT NULL,
+            UNIQUE(namespace, exact_key)
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS plan_artifacts_signature_idx
+        ON plan_artifacts (namespace, retrieval_signature, exact_key)
+        """
+    )
+
+
+def _migrate_legacy_schema(connection: sqlite3.Connection) -> None:
+    columns = {
+        str(row[1]) for row in connection.execute("PRAGMA table_info(plan_artifacts)")
+    }
+    if not columns or "namespace" in columns:
+        return
+    required = {
+        "exact_key",
+        "retrieval_signature",
+        "artifact_json",
+        "artifact_digest",
+        "schema_version",
+    }
+    if not required.issubset(columns):
+        raise PersistentPlanCorruption(
+            f"REFUSED:PERSISTED_PLAN_DB_SCHEMA:{sorted(columns)!r}"
+        )
+    connection.execute("ALTER TABLE plan_artifacts RENAME TO plan_artifacts_legacy")
+    _create_current_schema(connection)
+    connection.execute(
+        """
+        INSERT INTO plan_artifacts (
+            namespace,
+            exact_key,
+            retrieval_signature,
+            artifact_json,
+            artifact_digest,
+            schema_version
+        )
+        SELECT 'default', exact_key, retrieval_signature, artifact_json,
+               artifact_digest, schema_version
+        FROM plan_artifacts_legacy
+        ORDER BY exact_key
+        """
+    )
+    connection.execute("DROP TABLE plan_artifacts_legacy")
+
+
 class SQLitePlanCache:
-    """Restart-survivable candidate cache with content-verified retrieval.
+    """Restart-survivable, namespace-partitioned candidate plan cache.
 
     SQLite indexes candidates; it does not admit them. The class intentionally
     implements the same ``remember``/``exact``/``retrieve_candidates`` surface
@@ -267,15 +344,35 @@ class SQLitePlanCache:
     new authority or execution path.
     """
 
-    def __init__(self, path: str | Path) -> None:
+    def __init__(
+        self,
+        path: str | Path,
+        *,
+        namespace: str = "default",
+        max_entries: int = _DEFAULT_MAX_ENTRIES,
+    ) -> None:
         self.path = Path(path)
         if self.path == Path(":memory:"):
             raise ValueError(
                 "UNSUPPORTED:PERSISTENT_PLAN_CACHE_REQUIRES_FILE: short-lived "
                 "connection ownership cannot provide restart durability for :memory:"
             )
+        if not isinstance(namespace, str) or not namespace.strip():
+            raise ValueError("REFUSED:EMPTY_PERSISTENT_PLAN_NAMESPACE")
+        if len(namespace) > 256 or "\x00" in namespace:
+            raise ValueError("REFUSED:INVALID_PERSISTENT_PLAN_NAMESPACE")
+        if (
+            not isinstance(max_entries, int)
+            or isinstance(max_entries, bool)
+            or max_entries < 1
+        ):
+            raise ValueError("REFUSED:INVALID_PERSISTENT_PLAN_CAPACITY")
+        self.namespace = namespace
+        self.max_entries = max_entries
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._initialize()
+        if os.name == "posix":
+            os.chmod(self.path, 0o600)
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(
@@ -290,23 +387,33 @@ class SQLitePlanCache:
 
     def _initialize(self) -> None:
         with self._connect() as connection:
-            connection.execute(
-                """
-                CREATE TABLE IF NOT EXISTS plan_artifacts (
-                    exact_key TEXT PRIMARY KEY,
-                    retrieval_signature TEXT NOT NULL,
-                    artifact_json TEXT NOT NULL,
-                    artifact_digest TEXT NOT NULL,
-                    schema_version INTEGER NOT NULL
-                )
-                """
+            connection.execute("BEGIN IMMEDIATE")
+            _migrate_legacy_schema(connection)
+            _create_current_schema(connection)
+            connection.commit()
+
+    def _enforce_capacity(self, connection: sqlite3.Connection) -> None:
+        row = connection.execute(
+            "SELECT COUNT(*) FROM plan_artifacts WHERE namespace = ?",
+            (self.namespace,),
+        ).fetchone()
+        assert row is not None
+        excess = int(row[0]) - self.max_entries
+        if excess <= 0:
+            return
+        connection.execute(
+            """
+            DELETE FROM plan_artifacts
+            WHERE stored_seq IN (
+                SELECT stored_seq
+                FROM plan_artifacts
+                WHERE namespace = ?
+                ORDER BY stored_seq ASC
+                LIMIT ?
             )
-            connection.execute(
-                """
-                CREATE INDEX IF NOT EXISTS plan_artifacts_signature_idx
-                ON plan_artifacts (retrieval_signature, exact_key)
-                """
-            )
+            """,
+            (self.namespace, excess),
+        )
 
     def remember(self, plan: PlanArtifact) -> str:
         key = plan.exact_key
@@ -319,20 +426,29 @@ class SQLitePlanCache:
             connection.execute(
                 """
                 INSERT INTO plan_artifacts (
+                    namespace,
                     exact_key,
                     retrieval_signature,
                     artifact_json,
                     artifact_digest,
                     schema_version
-                ) VALUES (?, ?, ?, ?, ?)
-                ON CONFLICT(exact_key) DO UPDATE SET
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(namespace, exact_key) DO UPDATE SET
                     retrieval_signature = excluded.retrieval_signature,
                     artifact_json = excluded.artifact_json,
                     artifact_digest = excluded.artifact_digest,
                     schema_version = excluded.schema_version
                 """,
-                (key, signature, artifact_json, artifact_digest, _SCHEMA_VERSION),
+                (
+                    self.namespace,
+                    key,
+                    signature,
+                    artifact_json,
+                    artifact_digest,
+                    _ARTIFACT_SCHEMA_VERSION,
+                ),
             )
+            self._enforce_capacity(connection)
             connection.commit()
         return key
 
@@ -343,7 +459,7 @@ class SQLitePlanCache:
         artifact_digest: str,
         schema_version: int,
     ) -> PlanArtifact:
-        if schema_version != _SCHEMA_VERSION:
+        if schema_version != _ARTIFACT_SCHEMA_VERSION:
             raise PersistentPlanCorruption(
                 f"REFUSED:PERSISTED_PLAN_SCHEMA_VERSION:{schema_version}"
             )
@@ -366,9 +482,9 @@ class SQLitePlanCache:
                 """
                 SELECT exact_key, artifact_json, artifact_digest, schema_version
                 FROM plan_artifacts
-                WHERE exact_key = ?
+                WHERE namespace = ? AND exact_key = ?
                 """,
-                (key,),
+                (self.namespace, key),
             ).fetchone()
         if row is None:
             return None
@@ -381,15 +497,18 @@ class SQLitePlanCache:
                 """
                 SELECT exact_key, artifact_json, artifact_digest, schema_version
                 FROM plan_artifacts
-                WHERE retrieval_signature = ?
+                WHERE namespace = ? AND retrieval_signature = ?
                 ORDER BY exact_key
                 """,
-                (signature,),
+                (self.namespace, signature),
             ).fetchall()
         return tuple(self._decode_row(*row) for row in rows)
 
     def count(self) -> int:
         with self._connect() as connection:
-            row = connection.execute("SELECT COUNT(*) FROM plan_artifacts").fetchone()
+            row = connection.execute(
+                "SELECT COUNT(*) FROM plan_artifacts WHERE namespace = ?",
+                (self.namespace,),
+            ).fetchone()
         assert row is not None
         return int(row[0])
