@@ -203,12 +203,15 @@ async def test_cached_plan_autonomously_actuates_complete_plan_only_via_brce() -
         transition.receipt.planning_provenance_digest is not None
         for transition in execution.transitions
     )
-    assert len(
-        {
-            transition.receipt.planning_provenance_digest
-            for transition in execution.transitions
-        }
-    ) == 2
+    assert (
+        len(
+            {
+                transition.receipt.planning_provenance_digest
+                for transition in execution.transitions
+            }
+        )
+        == 2
+    )
     assert all(
         transition.receipt.principal == "urn:autofde-lab:test:principal"
         for transition in execution.transitions
