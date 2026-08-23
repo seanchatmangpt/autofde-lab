@@ -25,9 +25,11 @@ from autofde_lab.agent.continuous_planning import (
 from autofde_lab.agent.persistent_plan_cache import SQLitePlanCache
 from autofde_lab.powl.algebra import Atom, OrderEdge, PartialOrder
 
-
 MODEL = PartialOrder(
-    (Atom("observe", action="urn:bench:observe"), Atom("repair", action="urn:bench:repair")),
+    (
+        Atom("observe", action="urn:bench:observe"),
+        Atom("repair", action="urn:bench:repair"),
+    ),
     frozenset({OrderEdge(0, 1)}),
 )
 APP = PlanApplicability(
@@ -92,8 +94,7 @@ def main() -> int:
         for index in range(closure_count)
     }
     downstream = {
-        (index,): frozenset({(index + 1,)})
-        for index in range(closure_count - 1)
+        (index,): frozenset({(index + 1,)}) for index in range(closure_count - 1)
     }
     closure_plan = PlanArtifact(
         model=MODEL,
