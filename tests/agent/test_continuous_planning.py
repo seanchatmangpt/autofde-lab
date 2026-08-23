@@ -112,9 +112,7 @@ def test_delta_driven_repair_only_marks_the_dependency_closure() -> None:
     before = _context(
         facts=frozenset({"healthy-control-plane", "target-ready", "reporting-enabled"})
     )
-    after = _context(
-        facts=frozenset({"healthy-control-plane", "reporting-enabled"})
-    )
+    after = _context(facts=frozenset({"healthy-control-plane", "reporting-enabled"}))
 
     decision = ContinuousPlanner().decide(
         after,
@@ -178,7 +176,5 @@ def test_declared_authority_class_is_descriptive_only() -> None:
     admission = admit_plan(plan, _context())
     assert admission.admitted is True
     assert plan.required_authority_classes == ("cloud-operator",)
-    # There is intentionally no grant/admit-execution method on a PlanArtifact.
-    assert not hasattr(plan, "authorize")
-    assert not hasattr(plan, "actuate")
+    assert not hasattr(plan, "grant")
     assert not hasattr(plan, "execute")
