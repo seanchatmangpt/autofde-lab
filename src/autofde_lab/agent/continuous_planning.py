@@ -4,9 +4,9 @@
 
 """Continuous, cache-aware planning over POWL candidate plans.
 
-This module is SELECT/CONSTRUCT only.  It retrieves candidate plans, checks
+This module is SELECT/CONSTRUCT only. It retrieves candidate plans, checks
 applicability, computes delta-local repair cones, and guards promotion against
-historical regressions.  It never actuates, grants authority, brokers execution,
+historical regressions. It never actuates, grants authority, brokers execution,
 or manufactures an execution receipt.
 
 Similarity/retrieval is deliberately weaker than admission:
@@ -18,7 +18,7 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Mapping
+from typing import Mapping, Protocol
 
 from autofde_lab.agent.replan import ReplanningMode
 from autofde_lab.fabric.canonical import sha256
@@ -37,6 +37,7 @@ __all__ = [
     "PlanArtifact",
     "PlanCache",
     "PlanDisposition",
+    "PlanRepository",
     "PlanningContext",
     "PromotionDecision",
     "PromotionPolicy",
@@ -95,7 +96,7 @@ class PlanArtifact:
     downstream: Mapping[NodePath, frozenset[NodePath]] = field(default_factory=dict)
     family_id: str | None = None
     version: int = 1
-    # Describes the authority classes an eventual executor may need.  These
+    # Describes the authority classes an eventual executor may need. These
     # strings never represent a grant and are not inspected by admission.
     required_authority_classes: tuple[str, ...] = ()
 
@@ -140,6 +141,24 @@ class PlanningContext:
     semantic_revision: str = ""
 
 
+class PlanRepository(Protocol):
+    """Powerless candidate-memory boundary consumed by ``ContinuousPlanner``.
+
+    Implementations may be in-memory, SQLite, or an external HA store. The
+    contract intentionally contains no admission, authority, broker, actuation,
+    or receipt method: persistence can widen availability but never execution
+    power.
+    """
+
+    def remember(self, plan: PlanArtifact) -> str: ...
+
+    def exact(self, key: str) -> PlanArtifact | None: ...
+
+    def retrieve_candidates(
+        self, context: PlanningContext
+    ) -> tuple[PlanArtifact, ...]: ...
+
+
 class AdmissionCode(StrEnum):
     ADMITTED = "ADMITTED"
     GOAL_MISMATCH = "GOAL_MISMATCH"
@@ -157,7 +176,7 @@ class PlanAdmission:
 
 
 def admit_plan(plan: PlanArtifact, context: PlanningContext) -> PlanAdmission:
-    """Check symbolic applicability.  This does not authorize execution."""
+    """Check symbolic applicability. This does not authorize execution."""
     a = plan.applicability
     codes: list[AdmissionCode] = []
     if a.goal != context.goal:
@@ -269,9 +288,9 @@ class ContinuousPlanDecision:
 
 @dataclass(slots=True)
 class ContinuousPlanner:
-    """Route over current plans, cache candidates, repair, and fresh planning."""
+    """Route over current plans, candidate memory, repair, and fresh planning."""
 
-    cache: PlanCache = field(default_factory=PlanCache)
+    cache: PlanRepository = field(default_factory=PlanCache)
 
     def decide(
         self,
@@ -367,16 +386,16 @@ def evaluate_promotion(
     anchors: tuple[AnchorVerdict, ...],
     policy: PromotionPolicy = PromotionPolicy(),
 ) -> PromotionDecision:
-    """HCL-style guarded promotion: improve now, retain anchors, remain valid."""
-    if not validity_passed:
-        return PromotionDecision(False, (), "VALIDITY_FAILED")
-    if policy.require_current_improvement and candidate_score <= current_score:
-        return PromotionDecision(False, (), "NO_CURRENT_IMPROVEMENT")
+    """HCL-style promote only if validity and historical retention stay within policy."""
     regressions = tuple(
-        anchor.anchor_id
-        for anchor in anchors
-        if anchor.current_passed and not anchor.candidate_passed
+        item.anchor_id
+        for item in anchors
+        if item.current_passed and not item.candidate_passed
     )
+    if not validity_passed:
+        return PromotionDecision(False, regressions, "VALIDITY_FAILED")
+    if policy.require_current_improvement and candidate_score <= current_score:
+        return PromotionDecision(False, regressions, "CURRENT_SCORE_NOT_IMPROVED")
     if len(regressions) > policy.max_retention_regressions:
         return PromotionDecision(False, regressions, "RETENTION_BUDGET_EXCEEDED")
     return PromotionDecision(True, regressions, "PROMOTED")
