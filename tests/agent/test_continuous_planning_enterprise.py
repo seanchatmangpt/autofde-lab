@@ -6,7 +6,7 @@
 
 These tests exercise persistence, corruption refusal, concurrent writers,
 restart recovery, large candidate sets, and the invariant that retrieval never
-becomes admission.  No test actuates a world or grants execution authority.
+becomes admission. No test actuates a world or grants execution authority.
 """
 
 from __future__ import annotations
@@ -92,6 +92,14 @@ def test_sqlite_cache_survives_restart_and_preserves_exact_identity(tmp_path) ->
     assert not hasattr(recovered, "authorize")
 
 
+def test_durable_cache_refuses_memory_only_sqlite_mode() -> None:
+    with pytest.raises(
+        ValueError,
+        match="UNSUPPORTED:PERSISTENT_PLAN_CACHE_REQUIRES_FILE",
+    ):
+        SQLitePlanCache(":memory:")
+
+
 def test_persistent_retrieval_still_requires_fresh_admission(tmp_path) -> None:
     cache = SQLitePlanCache(tmp_path / "plans.sqlite3")
     plan = _plan(1, required_facts=frozenset({"secret-fact"}))
@@ -137,7 +145,9 @@ def test_concurrent_writers_are_atomic_and_lossless(tmp_path) -> None:
     assert {plan.exact_key for plan in recovered} == set(keys)
 
 
-def test_ten_thousand_candidate_retrieval_is_deterministic_and_bounded(tmp_path) -> None:
+def test_ten_thousand_candidate_retrieval_is_deterministic_and_bounded(
+    tmp_path,
+) -> None:
     cache = SQLitePlanCache(tmp_path / "plans.sqlite3")
     plans = tuple(_plan(index) for index in range(10_000))
     for plan in plans:
