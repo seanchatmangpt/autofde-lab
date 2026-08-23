@@ -172,7 +172,9 @@ def admit_plan(plan: PlanArtifact, context: PlanningContext) -> PlanAdmission:
         codes.append(AdmissionCode.CONSTRAINT_MISMATCH)
     if a.semantic_revision and a.semantic_revision != context.semantic_revision:
         codes.append(AdmissionCode.SEMANTIC_REVISION_MISMATCH)
-    return PlanAdmission(not codes, tuple(codes) if codes else (AdmissionCode.ADMITTED,))
+    return PlanAdmission(
+        not codes, tuple(codes) if codes else (AdmissionCode.ADMITTED,)
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -182,7 +184,9 @@ class ObservationDelta:
     changed_keys: frozenset[str] = frozenset()
 
     @classmethod
-    def between(cls, before: PlanningContext, after: PlanningContext) -> "ObservationDelta":
+    def between(
+        cls, before: PlanningContext, after: PlanningContext
+    ) -> "ObservationDelta":
         changed: set[str] = set()
         changed.update(f"fact:{item}" for item in before.facts ^ after.facts)
         changed.update(
@@ -225,7 +229,9 @@ class PlanCache:
     def remember(self, plan: PlanArtifact) -> str:
         key = plan.exact_key
         self._by_exact[key] = plan
-        bucket = self._by_signature.setdefault(plan.applicability.retrieval_signature, {})
+        bucket = self._by_signature.setdefault(
+            plan.applicability.retrieval_signature, {}
+        )
         bucket[key] = plan
         return key
 
@@ -263,7 +269,7 @@ class ContinuousPlanDecision:
 
 @dataclass(slots=True)
 class ContinuousPlanner:
-    """Delta-driven router over current, exact-cache, candidate-cache and fresh planning."""
+    """Route over current plans, cache candidates, repair, and fresh planning."""
 
     cache: PlanCache = field(default_factory=PlanCache)
 
