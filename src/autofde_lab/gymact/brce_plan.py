@@ -331,7 +331,11 @@ def execute_plan_lines_via_gymact_brce(
                 transition = _run_async(broker.execute(bound_request))
             else:
                 try:
-                    from gymact.planning import PlanProvenance, bind_plan, execute_planned
+                    from gymact.planning import (
+                        PlanProvenance,
+                        bind_plan,
+                        execute_planned,
+                    )
                 except ImportError as exc:
                     raise RuntimeError(
                         "UNSUPPORTED:GYMACT_PLAN_PROVENANCE_API"
