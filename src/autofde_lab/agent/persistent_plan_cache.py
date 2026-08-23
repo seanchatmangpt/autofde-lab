@@ -4,8 +4,8 @@
 
 """Durable candidate-plan memory for continuous planning.
 
-The SQLite database is a persistence and retrieval index only.  A row is never
-an admission proof and never carries execution authority.  Every artifact is
+The SQLite database is a persistence and retrieval index only. A row is never
+an admission proof and never carries execution authority. Every artifact is
 reconstructed, content-verified, and still has to pass ``admit_plan`` before a
 ``ContinuousPlanner`` may reuse it.
 
@@ -108,7 +108,9 @@ def _encode_node(node: PowlNode) -> dict[str, Any]:
             "children": [_encode_node(child) for child in node.children],
             "order": [
                 [int(edge.src), int(edge.dst)]
-                for edge in sorted(node.order, key=lambda item: (int(item.src), int(item.dst)))
+                for edge in sorted(
+                    node.order, key=lambda item: (int(item.src), int(item.dst))
+                )
             ],
             "frequency": _encode_frequency(node.frequency),
         }
@@ -259,7 +261,7 @@ def _context_signature(context: PlanningContext) -> str:
 class SQLitePlanCache:
     """Restart-survivable candidate cache with content-verified retrieval.
 
-    SQLite indexes candidates; it does not admit them.  The class intentionally
+    SQLite indexes candidates; it does not admit them. The class intentionally
     implements the same ``remember``/``exact``/``retrieve_candidates`` surface
     as ``PlanCache`` so ``ContinuousPlanner`` can consume it without gaining a
     new authority or execution path.
@@ -267,8 +269,12 @@ class SQLitePlanCache:
 
     def __init__(self, path: str | Path) -> None:
         self.path = Path(path)
-        if self.path != Path(":memory:"):
-            self.path.parent.mkdir(parents=True, exist_ok=True)
+        if self.path == Path(":memory:"):
+            raise ValueError(
+                "UNSUPPORTED:PERSISTENT_PLAN_CACHE_REQUIRES_FILE: short-lived "
+                "connection ownership cannot provide restart durability for :memory:"
+            )
+        self.path.parent.mkdir(parents=True, exist_ok=True)
         self._initialize()
 
     def _connect(self) -> sqlite3.Connection:
@@ -331,7 +337,11 @@ class SQLitePlanCache:
         return key
 
     def _decode_row(
-        self, exact_key: str, artifact_json: str, artifact_digest: str, schema_version: int
+        self,
+        exact_key: str,
+        artifact_json: str,
+        artifact_digest: str,
+        schema_version: int,
     ) -> PlanArtifact:
         if schema_version != _SCHEMA_VERSION:
             raise PersistentPlanCorruption(
@@ -344,14 +354,10 @@ class SQLitePlanCache:
                 "REFUSED:PERSISTED_PLAN_JSON_CORRUPT"
             ) from exc
         if sha256(payload) != artifact_digest:
-            raise PersistentPlanCorruption(
-                "REFUSED:PERSISTED_PLAN_DIGEST_MISMATCH"
-            )
+            raise PersistentPlanCorruption("REFUSED:PERSISTED_PLAN_DIGEST_MISMATCH")
         plan = _decode_artifact(payload)
         if plan.exact_key != exact_key:
-            raise PersistentPlanCorruption(
-                "REFUSED:PERSISTED_PLAN_EXACT_KEY_MISMATCH"
-            )
+            raise PersistentPlanCorruption("REFUSED:PERSISTED_PLAN_EXACT_KEY_MISMATCH")
         return plan
 
     def exact(self, key: str) -> PlanArtifact | None:
