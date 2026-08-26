@@ -39,7 +39,7 @@ jobs:
           p='fanout/r80/generated/forced-top25/3.json'
           d=json.load(open(p))
           assert d['consumer_repo']=='seanchatmangpt/autofde-lab'
-          assert d['producer_head']=='a658cda7066bba344e481173b5b52a0dc18c5c75'
+          assert d['producer_head']=='5e8a89f7bb472c9d359cccfcca5fd0d4b5e15e2d'
           assert d['compatibility_state']=='COMPATIBLE_READY'
           assert d['authority']=='VERIFY|CONSTRUCT'
           assert d['consequential_do'] is False
