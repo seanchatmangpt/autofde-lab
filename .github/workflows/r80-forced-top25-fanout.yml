@@ -34,12 +34,13 @@ jobs:
         working-directory: fanout/r80
         run: ../../.constructor/ggen/target/release/ggen sync run
       - name: Verify exact generated consequence
-        run: python3 - <<'PY'
+        run: |
+          python3 - <<'PY'
           import json
           p='fanout/r80/generated/forced-top25/3.json'
           d=json.load(open(p))
           assert d['consumer_repo']=='seanchatmangpt/autofde-lab'
-          assert d['producer_head']=='5e8a89f7bb472c9d359cccfcca5fd0d4b5e15e2d'
+          assert d['producer_head']=='92e319a927db0b10e6b74a04a1ac490e1d0bb466'
           assert d['compatibility_state']=='COMPATIBLE_READY'
           assert d['authority']=='VERIFY|CONSTRUCT'
           assert d['consequential_do'] is False
