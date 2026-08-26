@@ -6,6 +6,3 @@ source = "ontology.ttl"
 
 [packs]
 forced-top25-admissibility-factory-pack = { git = "https://github.com/seanchatmangpt/ggen-marketplace.git", version = "a658cda7066bba344e481173b5b52a0dc18c5c75", subdir = "packs/forced-top25-admissibility-factory-pack" }
-
-[templates]
-dir = "templates"
