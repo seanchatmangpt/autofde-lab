@@ -8,4 +8,4 @@ source = "ontology.ttl"
 dir = "templates"
 
 [packs]
-forced-top25-admissibility-factory-pack = { git = "https://github.com/seanchatmangpt/ggen-marketplace.git", version = "5e8a89f7bb472c9d359cccfcca5fd0d4b5e15e2d", subdir = "packs/forced-top25-admissibility-factory-pack" }
+forced-top25-admissibility-factory-pack = { git = "https://github.com/seanchatmangpt/ggen-marketplace.git", version = "92e319a927db0b10e6b74a04a1ac490e1d0bb466", subdir = "packs/forced-top25-admissibility-factory-pack" }
