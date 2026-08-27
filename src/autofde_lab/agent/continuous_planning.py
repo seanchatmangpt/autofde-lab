@@ -257,7 +257,9 @@ class PlanCache:
     def exact(self, key: str) -> PlanArtifact | None:
         return self._by_exact.get(key)
 
-    def retrieve_candidates(self, context: PlanningContext) -> tuple[PlanArtifact, ...]:
+    def retrieve_candidates(
+        self, context: PlanningContext
+    ) -> tuple[PlanArtifact, ...]:
         signature = sha256(
             {
                 "goal": context.goal,
