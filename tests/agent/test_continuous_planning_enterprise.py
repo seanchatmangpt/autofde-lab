@@ -123,7 +123,9 @@ def test_persistent_cache_namespaces_do_not_enumerate_each_other(tmp_path) -> No
     assert beta.count() == 1
 
 
-def test_persistent_cache_capacity_evicts_oldest_candidates_per_namespace(tmp_path) -> None:
+def test_persistent_cache_capacity_evicts_oldest_candidates_per_namespace(
+    tmp_path,
+) -> None:
     path = tmp_path / "plans.sqlite3"
     cache = SQLitePlanCache(path, namespace="bounded", max_entries=10)
     keys = [cache.remember(_plan(index)) for index in range(20)]
