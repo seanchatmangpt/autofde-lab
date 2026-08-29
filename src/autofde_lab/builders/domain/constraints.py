@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from __future__ import annotations
+import functools
 
 import wrapt
 
@@ -33,7 +34,7 @@ class Constrained:
         """
         return self._get_constraints()
 
-    @wrapt.lru_cache()
+    @functools.lru_cache()
     def _get_constraints(
         self,
     ) -> list[

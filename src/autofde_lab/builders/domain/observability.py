@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from __future__ import annotations
+import functools
 
 from typing import Optional, Union
 
@@ -40,7 +41,7 @@ class PartiallyObservable:
         """
         return self._get_observation_space()
 
-    @wrapt.lru_cache()
+    @functools.lru_cache()
     def _get_observation_space(self) -> D.T_agent[Space[D.T_observation]]:
         """Get the (cached) observation space (finite or infinite set).
 

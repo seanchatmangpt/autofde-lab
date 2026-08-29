@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from __future__ import annotations
+import functools
 
 from typing import Optional, Union
 
@@ -114,7 +115,7 @@ class Events:
         """
         return self._get_action_space()
 
-    @wrapt.lru_cache()
+    @functools.lru_cache()
     def _get_action_space(self) -> D.T_agent[Space[D.T_event]]:
         """Get the (cached) domain action space (finite or infinite set).
 

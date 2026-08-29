@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from __future__ import annotations
+import functools
 
 import wrapt
 
@@ -64,7 +65,7 @@ class UncertainInitialized(Initializable):
         """
         return self._get_initial_state_distribution()
 
-    @wrapt.lru_cache()
+    @functools.lru_cache()
     def _get_initial_state_distribution(self) -> Distribution[D.T_state]:
         """Get the (cached) probability distribution of initial states.
 
@@ -125,7 +126,7 @@ class DeterministicInitialized(UncertainInitialized):
         """
         return self._get_initial_state()
 
-    @wrapt.lru_cache()
+    @functools.lru_cache()
     def _get_initial_state(self) -> D.T_state:
         """Get the (cached) initial state.
 

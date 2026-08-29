@@ -8,9 +8,16 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
-    Hyperparametrizable,
-)
+try:
+    from discrete_optimization.generic_tools.hyperparameters.hyperparametrizable import (
+        Hyperparametrizable,
+    )
+except ImportError:
+    class Hyperparametrizable:
+        hyperparameters = []
+        @classmethod
+        def get_hyperparameters(cls):
+            return []
 
 from autofde_lab import autocast_all
 from autofde_lab.builders.solver.fromanystatesolvability import FromInitialState

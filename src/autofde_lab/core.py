@@ -3,8 +3,8 @@
 # LICENSE file in the root directory of this source tree.
 
 from __future__ import annotations
-
 import functools
+
 import inspect
 import random
 import re
@@ -521,7 +521,7 @@ class Constraint(Generic[D.T_memory, D.T_event, D.T_state], Castable):
         """
         raise NotImplementedError
 
-    @wrapt.lru_cache()
+    @functools.lru_cache()
     def is_constraint_dependent_on_next_state(self) -> bool:
         """Indicate whether this constraint requires the next_state parameter for its computation (cached).
 

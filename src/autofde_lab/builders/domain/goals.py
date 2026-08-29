@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from __future__ import annotations
+import functools
 
 from typing import Union
 
@@ -34,7 +35,7 @@ class Goals:
         """
         return self._get_goals()
 
-    @wrapt.lru_cache()
+    @functools.lru_cache()
     def _get_goals(self) -> D.T_agent[Space[D.T_observation]]:
         """Get the (cached) domain goals space (finite or infinite set).
 

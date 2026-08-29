@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from __future__ import annotations
+import functools
 
 from typing import Optional
 
@@ -353,7 +354,7 @@ class UncertainTransitions(Simulation):
         """
         return self._is_transition_value_dependent_on_next_state()
 
-    @wrapt.lru_cache()
+    @functools.lru_cache()
     def _is_transition_value_dependent_on_next_state(self) -> bool:
         """Indicate whether _get_transition_value() requires the next_state parameter for its computation (cached).
 

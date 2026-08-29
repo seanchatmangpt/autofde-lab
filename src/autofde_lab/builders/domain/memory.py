@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from __future__ import annotations
+import functools
 
 from typing import Optional, Union
 
@@ -56,7 +57,7 @@ class FiniteHistory(History):
 
     T_memory = Memory
 
-    @wrapt.lru_cache()
+    @functools.lru_cache()
     def _get_memory_maxlen(self) -> int:
         """Get the (cached) memory max length.
 
