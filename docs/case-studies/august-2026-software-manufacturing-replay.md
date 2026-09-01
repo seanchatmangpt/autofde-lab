@@ -71,10 +71,38 @@ digests. The repeated transition compacts to one plan step while all 24,340 comm
 SHAs remain in the historical trace. This validates scale and determinism without
 pretending the synthetic scale court is the real August export.
 
+## Real GitHub ingestion (2026-09-01)
+
+`fetch_github_events(repo, since=..., kinds=...)` queries the real, locally-authenticated
+`gh` CLI directly (`gh api`, no mocking) and normalizes the response into the same
+`HistoricalEvent` shape the checked-in fixture uses. This is a real subprocess against a
+real repository, not a synthetic corpus: replaying this session's own recent
+`seanchatmangpt/autofde-lab` history compiled 16 real episodes (merges, pull requests,
+workflow runs) from 110 real events, and one of those episodes replayed to
+`state: ALIVE` through `ReplayWorld`.
+
+Widening `GITHUB_FETCHABLE_KINDS` (currently `commit`, `pull_request`, `review`,
+`workflow_run`, `release`, `issue`, `deployment`) is how the agent/planner frontier gains
+more distinct real, actuatable step kinds — each fetchable kind that GitHub actually
+returns data for becomes its own admissible plan-step type in `ReplayWorld`, not just more
+commits. A real bug in the first pass of this ingestion (`--paginate --slurp` silently
+returning zero events for an object-wrapped endpoint like `actions/runs`, rather than
+erroring) was caught and fixed by comparing the tool's own output against an independent
+`gh api ... --jq '.total_count'` call before trusting either — see
+`test_fetch_github_events_workflow_run_kind_is_not_silently_empty` for the regression
+court. Still observation-only: `authority: NONE`, `do_authority: false`, no endpoint used
+performs a write.
+
+CLI: `python -m autofde_lab.agent.software_manufacturing_history fetch <owner/repo>
+<output.json> --since <ISO-8601> [--until <ISO-8601>] [--kinds ...]`.
+
 ## Next experiment
 
 Materialize the complete August export across repositories and run multiple policies
 against the resulting episode set. Compare trajectory closure, surface coverage,
 repair frequency, dependency violations, information gain, and option preservation.
 The benchmark unit is then an operating software-manufacturing organization, not an
-isolated coding issue.
+isolated coding issue. The real-GitHub ingestion above is a step toward that: the same
+`fetch_github_events` call, pointed at a wider `since`/repository set, is how "materialize
+the complete August export" stops being a checked-in synthetic fixture and becomes a real,
+replayable pull from the actual history.

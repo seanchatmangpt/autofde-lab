@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import pytest
+
 from autofde_lab.agent.software_manufacturing_history import (
+    GITHUB_FETCHABLE_KINDS,
     HistoricalEvent,
     ReplayWorld,
     compile_history,
+    fetch_github_events,
+    is_github_queryable,
 )
 
 
@@ -220,3 +225,72 @@ def test_24340_commit_scale_compiles_compactly_and_deterministically() -> None:
     assert len(plans_a[0]["plan"]["steps"]) == 1
     assert plans_a[0]["plan"]["steps"][0]["count"] == 24_340
     assert len(plans_a[0]["historical_trace"]["commit_shas"]) == 24_340
+
+
+# The real, locally-installed `gh` CLI is the collaborator here -- an authenticated
+# subprocess against the live GitHub REST API, not a mock or a canned fixture. Per
+# testing-chicago-style.md, an external dependency genuinely infeasible to fake gets a
+# named skip when unavailable, never a silent substitution.
+_GH_QUERYABLE = is_github_queryable()
+
+
+@pytest.mark.skipif(not _GH_QUERYABLE, reason="gh CLI not installed/authenticated")
+def test_fetch_github_events_returns_real_multi_kind_evidence() -> None:
+    """Query this repo's own real, recent history and compile+replay it.
+
+    Bounded to a tight, recent window (this repo's own merge activity) so the
+    assertions are about real *structural* properties -- distinct kinds present,
+    unique ids, a step that actually replays -- rather than brittle exact counts
+    that would drift the moment more history lands.
+    """
+
+    events = fetch_github_events(
+        "seanchatmangpt/autofde-lab",
+        since="2026-09-01T20:00:00Z",
+        kinds=("commit", "pull_request", "workflow_run"),
+        include_commit_files=True,
+        commit_file_limit=5,
+    )
+
+    assert len(events) > 0
+    kinds_present = {event.kind for event in events}
+    # At least two distinct real kinds -- proof the frontier isn't commit-only.
+    assert len(kinds_present) >= 2
+    assert kinds_present.issubset(set(GITHUB_FETCHABLE_KINDS) | {"merge"})
+
+    event_ids = [event.event_id for event in events]
+    assert len(event_ids) == len(set(event_ids))  # no duplicate real events
+    assert all(event.repository == "seanchatmangpt/autofde-lab" for event in events)
+    assert any(event.kind == "commit" and event.sha for event in events)
+
+    manifest, plans = compile_history(events, period="2026-09-fetch-test")
+    assert manifest["source_event_count"] == len(events)
+    assert manifest["observed_commit_count"] > 0
+    assert len(plans) >= 1
+
+    # Real replay: at least one compiled episode must be fully executable by the
+    # reference agent and reach the ALIVE terminal state.
+    receipt = ReplayWorld(plans[0]).run_reference()
+    assert receipt["state"] == "ALIVE"
+    assert receipt["authority"] == "NONE"
+    assert receipt["do_authority"] is False
+
+
+@pytest.mark.skipif(not _GH_QUERYABLE, reason="gh CLI not installed/authenticated")
+def test_fetch_github_events_workflow_run_kind_is_not_silently_empty() -> None:
+    """Regression court for a real bug found and fixed this session: an
+    object-wrapped paginated endpoint (`actions/runs`) was silently returning
+    zero events instead of erroring, because `--paginate --slurp` doesn't merge
+    a named array field the way it merges a bare-array endpoint. This asserts
+    the fixed behavior directly against the real API on a window known (at
+    write time) to contain real workflow runs for this repository.
+    """
+
+    events = fetch_github_events(
+        "seanchatmangpt/autofde-lab",
+        since="2026-09-01T20:00:00Z",
+        kinds=("workflow_run",),
+    )
+
+    assert len(events) > 0
+    assert all(event.kind == "workflow_run" for event in events)
