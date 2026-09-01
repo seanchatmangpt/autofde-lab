@@ -258,8 +258,10 @@ class _MutableStep:
 
 
 def _authority_classes(event: HistoricalEvent) -> set[str]:
-    explicit = event.metadata.get("required_authority_classes", ())
-    if isinstance(explicit, Sequence) and not isinstance(explicit, (str, bytes)):
+    if "required_authority_classes" in event.metadata:
+        explicit = event.metadata["required_authority_classes"]
+        if not isinstance(explicit, Sequence) or isinstance(explicit, (str, bytes)):
+            raise ValueError("required_authority_classes must be an array")
         return {str(item) for item in explicit}
     if event.kind in {"merge", "pull_request", "review", "branch"}:
         return {"github:write"}
