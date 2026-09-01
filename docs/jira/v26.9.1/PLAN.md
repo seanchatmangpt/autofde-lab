@@ -269,4 +269,35 @@ commit as the pattern).
   of this plan — the Measure section's branch list is a snapshot as of
   2026-09-01 and will go stale as new branches are pushed.
 
+## Closure (2026-09-01)
+
+Both branches merged, in the order this plan's Implement section recommended
+(fortune5-sim first, aps-protocol second):
+
+- `feat/fortune5-safe-dfcm-sim` → PR
+  [#94](https://github.com/seanchatmangpt/autofde-lab/pull/94), merge `2bf2871f`. Its own
+  Exact-head-qualification CI run initially failed on `ruff-check`/`ruff-format` pre-commit
+  hooks (the branch's new files were never run through the repo-pinned ruff before this plan's
+  own Develop section's "lint/format check" step was skipped) — fixed with a follow-up commit
+  applying `uvx ruff@0.14.0` (the exact `.pre-commit-config.yaml`-pinned version), re-verified
+  6/6 tests still pass, re-pushed, CI green on retry.
+- `adapt/aps-autofde-protocol` → PR
+  [#95](https://github.com/seanchatmangpt/autofde-lab/pull/95), merge `d2242c39`. All 4 checks
+  passed on first run, including its own new self-qualifying `aps-protocol-profile.yml` gate.
+
+Real, this-session evidence per branch (see `docs/STATUS.md` pass 21 for the full command
+list): `pytest tests/simulation/test_fortune5_safe.py -v` → 6 passed;
+`pytest tests/test_aps_protocol_profile_chicago.py -v` → 5 passed; independent
+`pyshacl.validate()` of `ontology/aps-autofde-profile.ttl` against its shapes file →
+**Conforms: True** (this goes beyond the test suite's own rdflib structural checks, which
+this plan's Develop section had flagged as unconfirmed whether a real SHACL validator was
+being exercised). Combined post-merge run on `master`:
+`pytest tests/simulation/ tests/test_aps_protocol_profile_chicago.py
+tests/agent/test_life_autonomic_case_study.py -v` → 14 passed, confirming the Measure
+section's "no file overlap" prediction held under a real merge, not just a diff.
+
+`README.md` and the repo documentation map were rewritten against this closed state in the
+same pass — see `docs/STATUS.md` pass 21 and `README.md`'s own "What's new in v26.9.1"
+section for the user-facing record.
+
 ## Last Updated: 2026-09-01

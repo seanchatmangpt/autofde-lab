@@ -5,7 +5,32 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
-Last update: **pass 20** (2026-08-09) — **Real, unbiased, representative-sample measurement,
+Last update: **pass 21** (2026-09-01) — **v26.9.1: merged both additive branches named in
+`docs/jira/v26.9.1/PLAN.md`, real evidence per PR.** `feat/fortune5-safe-dfcm-sim` → PR #94,
+merge `2bf2871f`: `.venv/bin/python -m pytest tests/simulation/test_fortune5_safe.py -v` → 6
+passed; `pytest tests/simulation/ -v` → 6 passed, no regression; zero
+`unittest.mock|Mock(|MagicMock|patch(|monkeypatch` matches. First PR run failed real CI
+(`ruff-check`/`ruff-format` pre-commit hooks) — fixed with the repo-pinned `ruff` v0.14.0
+(from `.pre-commit-config.yaml`, not the venv's absent ruff), re-verified 6/6 still pass,
+re-pushed, CI green. `adapt/aps-autofde-protocol` → PR #95, merge `d2242c39`:
+`pytest tests/test_aps_protocol_profile_chicago.py -v` → 5 passed, zero mock matches; an
+independent `pyshacl.validate()` run (not just the test suite's own rdflib structural checks)
+of `ontology/aps-autofde-profile.ttl` against `ontology/shapes/aps-autofde-profile.shacl.ttl`
+→ **Conforms: True**. Post-merge on combined `master`,
+`pytest tests/simulation/ tests/test_aps_protocol_profile_chicago.py
+tests/agent/test_life_autonomic_case_study.py -v` → 14 passed, no cross-branch
+interaction. Separately: `docs/archive/` created per
+`docs/CLAUDE.md`'s convention, populated by a real 32-file triage+adversarial-verify workflow
+(64 agents) over every `docs/2026-08-*.md` snapshot — 31/32 stay in place (cited by an active
+`.claude/rules/*.md` file, cited by another live doc, or no specific covering successor);
+only `docs/2026-08-08-corrections.md` moved, its claimed successor (`docs/STATUS.md`, this
+file, line ~383) independently re-verified to carry the corrected figures verbatim.
+`README.md` rewritten to state the repo's actual identity/law instead of unmodified
+scikit-decide-fork boilerplate, with a documentation map to this file,
+`docs/ecosystem-standing.md`, `docs/diataxis/README.md`, `FORWARD_DEPLOYMENT.md`, and
+`docs/jira/v26.9.1/PLAN.md`.
+
+Prior update: **pass 20** (2026-08-09) — **Real, unbiased, representative-sample measurement,
 complete: AutoFDE Lab does not beat sregym's published SOTA.** A real, programmatically-
 generated stride-5 systematic sample (25 of 123 active registrations, computed once via
 `ProblemRegistry().get_problem_ids(all=True)`, never hand-edited) was run to completion
