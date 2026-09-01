@@ -22,7 +22,9 @@ def parse(*relative_paths: str) -> Graph:
 
 
 def require(graph: Graph, subject, predicate, obj) -> None:
-    assert (subject, predicate, obj) in graph, f"missing triple: {subject} {predicate} {obj}"
+    assert (subject, predicate, obj) in graph, (
+        f"missing triple: {subject} {predicate} {obj}"
+    )
 
 
 def test_profile_is_pinned_and_parseable() -> None:
@@ -35,7 +37,14 @@ def test_profile_is_pinned_and_parseable() -> None:
 
 def test_shared_standing_is_identity_mapped_without_collapsing_refusal() -> None:
     graph = parse("ontology/aps-autofde-profile.ttl", "ontology/standing.ttl")
-    for name in ("UNKNOWN", "PARTIAL_ALIVE", "ALIVE", "BLOCKED", "BUILD_BROKEN", "UNSUPPORTED"):
+    for name in (
+        "UNKNOWN",
+        "PARTIAL_ALIVE",
+        "ALIVE",
+        "BLOCKED",
+        "BUILD_BROKEN",
+        "UNSUPPORTED",
+    ):
         require(graph, APS[name], OWL.sameAs, AFL[name])
         require(graph, AFL[name], RDF.type, AFL.StandingValue)
 
@@ -74,7 +83,8 @@ def test_connected_reconstitution_fixture_reaches_derived_standing() -> None:
     require(graph, EX.governed, AFL.governsCandidate, EX.strategy)
     require(graph, EX.commitment, AFL.commitsTo, EX.governed)
 
-    # DO is authorized through the existing target boundary, never by the protocol intent itself.
+    # DO is authorized through the existing target boundary, never by the protocol
+    # intent itself.
     require(graph, EX.intent, AFL.intentCommitment, EX.commitment)
     require(graph, EX.intent, AFL.intentAuthority, EX.authority)
     require(graph, EX.actuation, AFL.authorizedBy, EX.authority)
@@ -100,4 +110,6 @@ def test_shacl_profile_covers_each_new_protocol_subject() -> None:
         AFL.ProtocolActuationIntent,
         AFL.ReconstitutionTrial,
     ):
-        assert any(shapes.triples((None, SH.targetClass, target))), f"no SHACL target for {target}"
+        assert any(shapes.triples((None, SH.targetClass, target))), (
+            f"no SHACL target for {target}"
+        )
