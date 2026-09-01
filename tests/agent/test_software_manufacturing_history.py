@@ -137,6 +137,14 @@ def test_compile_full_stack_history_into_replayable_plan() -> None:
     assert plan["world"]["closure_expected"] is True
     assert plan["authority"]["do_authority"] is False
     assert len(plan["historical_trace"]["commit_shas"]) == 8
+    authority = {
+        step["intent"]: set(step["required_authority_classes"])
+        for step in plan["plan"]["steps"]
+    }
+    assert authority["manufacture-infrastructure"] == {"infrastructure:write"}
+    assert authority["open-pr"] == {"github:write"}
+    assert authority["merge-qualified-head"] == {"github:write"}
+    assert authority["publish-release"] == {"release:publish"}
 
 
 def test_replay_world_enforces_dependencies_and_closes() -> None:
