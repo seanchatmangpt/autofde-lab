@@ -93,10 +93,20 @@ class Fortune5Config:
 
     def __post_init__(self) -> None:
         for name in (
-            "portfolios", "value_streams_per_portfolio", "value_streams_per_solution_train",
-            "arts_per_value_stream", "teams_per_art", "people_per_team", "planning_intervals",
-            "iterations_per_pi", "working_days_per_iteration", "strategic_themes_per_portfolio",
-            "epics_per_theme", "capabilities_per_epic", "features_per_capability", "stories_per_feature",
+            "portfolios",
+            "value_streams_per_portfolio",
+            "value_streams_per_solution_train",
+            "arts_per_value_stream",
+            "teams_per_art",
+            "people_per_team",
+            "planning_intervals",
+            "iterations_per_pi",
+            "working_days_per_iteration",
+            "strategic_themes_per_portfolio",
+            "epics_per_theme",
+            "capabilities_per_epic",
+            "features_per_capability",
+            "stories_per_feature",
         ):
             if getattr(self, name) <= 0:
                 raise ValueError(f"{name} must be positive")
@@ -248,18 +258,26 @@ class EnterpriseTopology:
     @cached_property
     def counts(self) -> Mapping[str, int]:
         return {
-            "portfolios": len(self.portfolios), "value_streams": len(self.value_streams),
-            "solution_trains": len(self.solution_trains), "arts": len(self.arts),
-            "teams": len(self.teams), "personnel": len(self.personnel),
-            "role_assignments": len(self.roles), "work_items": len(self.work_items),
-            "strategic_themes": sum(item.kind == "strategic_theme" for item in self.work_items),
+            "portfolios": len(self.portfolios),
+            "value_streams": len(self.value_streams),
+            "solution_trains": len(self.solution_trains),
+            "arts": len(self.arts),
+            "teams": len(self.teams),
+            "personnel": len(self.personnel),
+            "role_assignments": len(self.roles),
+            "work_items": len(self.work_items),
+            "strategic_themes": sum(
+                item.kind == "strategic_theme" for item in self.work_items
+            ),
             "epics": sum(item.kind == "epic" for item in self.work_items),
             "capabilities": sum(item.kind == "capability" for item in self.work_items),
             "features": sum(item.kind == "feature" for item in self.work_items),
             "stories": sum(item.kind == "story" for item in self.work_items),
             "enablers": sum(item.enabler for item in self.work_items),
             "dependencies": len(self.dependencies),
-            "cadence_events_per_pi": sum(bucket.count_per_pi for bucket in self.cadence),
+            "cadence_events_per_pi": sum(
+                bucket.count_per_pi for bucket in self.cadence
+            ),
         }
 
     @property
@@ -282,9 +300,17 @@ class PolicyVector:
 
     @property
     def id(self) -> str:
-        return "|".join(item.value for item in (
-            self.priority, self.funding, self.capacity, self.cadence, self.architecture, self.risk
-        ))
+        return "|".join(
+            item.value
+            for item in (
+                self.priority,
+                self.funding,
+                self.capacity,
+                self.cadence,
+                self.architecture,
+                self.risk,
+            )
+        )
 
     @property
     def digest(self) -> str:
@@ -403,9 +429,15 @@ def _canonical(value):
     if isinstance(value, Enum):
         return value.value
     if is_dataclass(value):
-        return {field.name: _canonical(getattr(value, field.name)) for field in fields(value)}
+        return {
+            field.name: _canonical(getattr(value, field.name))
+            for field in fields(value)
+        }
     if isinstance(value, Mapping):
-        return {str(key): _canonical(item) for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))}
+        return {
+            str(key): _canonical(item)
+            for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+        }
     if isinstance(value, (tuple, list)):
         return [_canonical(item) for item in value]
     if isinstance(value, (set, frozenset)):
@@ -418,5 +450,7 @@ def _canonical(value):
 
 
 def stable_digest(value) -> str:
-    payload = json.dumps(_canonical(value), sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    payload = json.dumps(
+        _canonical(value), sort_keys=True, separators=(",", ":"), ensure_ascii=True
+    )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
