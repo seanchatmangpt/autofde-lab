@@ -16,6 +16,7 @@ covers the archived doc's claims (verified by reading both, not assumed from fil
 
 ## Archived
 
-| File | Superseded by | Reason |
-|---|---|---|
-| [`2026-08-08-corrections.md`](2026-08-08-corrections.md) | `docs/STATUS.md` | One-off correction note for a single commit's wrong planner-inventory figures (070cc3a); the corrected figures ("57 classified", "8 UNSUPPORTED") are carried verbatim in `docs/STATUS.md` (line ~383). Zero inbound references from any other doc or active rule file. |
+- [`2026-08-08-corrections.md`](2026-08-08-corrections.md) — superseded by `docs/STATUS.md`.
+  One-off note on commit `070cc3a`'s wrong planner-inventory figures; the corrected numbers
+  are carried verbatim in `docs/STATUS.md`. No inbound references from any other doc or
+  active rule file.
