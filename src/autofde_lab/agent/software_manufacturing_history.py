@@ -16,10 +16,12 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable, Mapping, Sequence
+from urllib.parse import quote
 
 PLAN_SCHEMA = "urn:autofde-lab:software-manufacturing-plan:1"
 CORPUS_SCHEMA = "urn:autofde-lab:software-manufacturing-corpus:1"
@@ -30,6 +32,7 @@ _GITHUB_KINDS = {
     "branch_created",
     "commit",
     "default_branch_containment",
+    "deployment",
     "issue",
     "merge",
     "pull_request",
@@ -38,6 +41,20 @@ _GITHUB_KINDS = {
     "workflow_run",
 }
 _CLOSURE_KINDS = {"merge", "release", "default_branch_containment"}
+# GitHub REST endpoints this module can actually query for real, in-repo evidence
+# (via the real `gh api` binary, no mocking) -- one entry per event kind the
+# planner/agent frontier can then present as an admissible step. Broadening this
+# tuple is how the simulation gains more real actuatable event kinds; it must
+# stay in sync with a real normalizer function in ``_GH_EVENT_BUILDERS`` below.
+GITHUB_FETCHABLE_KINDS = (
+    "commit",
+    "pull_request",
+    "review",
+    "workflow_run",
+    "release",
+    "issue",
+    "deployment",
+)
 _PATH_SURFACE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("tests", re.compile(r"(^|/)(tests?|specs?)(/|$)|(^|/)test_[^/]+\.py$")),
     (
@@ -269,6 +286,10 @@ def _authority_classes(event: HistoricalEvent) -> set[str]:
         return {"release:publish"}
     if event.kind == "deployment":
         return {"deployment:write"}
+    if event.kind == "workflow_run":
+        return {"ci:trigger"}
+    if event.kind == "issue":
+        return {"github:triage"}
     if "iac" in infer_surfaces(event):
         return {"infrastructure:write"}
     return set()
@@ -539,6 +560,424 @@ class ReplayWorld:
         return payload
 
 
+class GithubQueryError(RuntimeError):
+    """Raised when a real ``gh api`` call fails or ``gh`` is unavailable."""
+
+
+def _gh_api(
+    path: str,
+    *,
+    gh_bin: str = "gh",
+    paginate: bool = True,
+    list_field: str | None = None,
+    timeout: float = 60.0,
+) -> list[object] | dict[str, object]:
+    """Call the real, locally-installed ``gh`` CLI and return parsed JSON.
+
+    This is a real subprocess call against the real GitHub REST API through the
+    user's already-authenticated ``gh`` binary -- no mocking, no fixture replay.
+    Raises :class:`GithubQueryError` (never a bare ``CalledProcessError``) so
+    callers get one typed failure surface for "gh missing" / "not authenticated"
+    / "API error", each distinguishable by message.
+
+    Two paginated shapes exist on GitHub's REST API and they need different
+    handling, not one guessed unwrap: an endpoint that returns a bare JSON
+    array (commits, pulls, releases, issues) slurps cleanly with
+    ``--paginate --slurp`` and one flatten pass. An endpoint that wraps its
+    array in a named object field (``{"workflow_runs": [...], "total_count":
+    N}``) must instead be extracted with ``--jq ".<list_field>[]"`` -- passing
+    ``list_field`` here does that and returns newline-delimited objects
+    already reassembled into one list. Getting this wrong doesn't error; it
+    silently returns an empty list (an earlier version of this function did
+    exactly that against ``actions/runs``, confirmed and fixed this session)
+    -- which is exactly the failure mode this repo's absence-is-not-evidence
+    law warns about, so ``list_field`` is mandatory for object-shaped
+    endpoints rather than optional/inferred.
+    """
+
+    args = [gh_bin, "api", path]
+    if paginate:
+        args.append("--paginate")
+        if list_field is not None:
+            args += ["--jq", f".{list_field}[]"]
+        else:
+            args.append("--slurp")
+    try:
+        completed = subprocess.run(
+            args,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+    except FileNotFoundError as exc:
+        raise GithubQueryError(f"gh binary not found: {gh_bin}") from exc
+    except subprocess.TimeoutExpired as exc:
+        raise GithubQueryError(f"gh api timed out after {timeout}s: {path}") from exc
+    if completed.returncode != 0:
+        raise GithubQueryError(
+            f"gh api failed (exit {completed.returncode}) for {path}: "
+            f"{completed.stderr.strip()}"
+        )
+    if list_field is not None:
+        # --jq '.field[]' with --paginate prints one JSON value per line,
+        # already merged across pages -- newline-delimited JSON, not one blob.
+        return [
+            json.loads(line) for line in completed.stdout.splitlines() if line.strip()
+        ]
+    parsed = json.loads(completed.stdout or "null")
+    if paginate and isinstance(parsed, list) and len(parsed) == 1:
+        # --paginate --slurp wraps each page in its own array; a single page of
+        # a list-returning endpoint slurps to [[...]] -- unwrap one level.
+        inner = parsed[0]
+        if isinstance(inner, list):
+            return inner
+    if paginate and isinstance(parsed, list):
+        flattened: list[object] = []
+        for page in parsed:
+            if isinstance(page, list):
+                flattened.extend(page)
+        if flattened or all(isinstance(page, list) for page in parsed):
+            return flattened
+    return parsed
+
+
+def is_github_queryable(*, gh_bin: str = "gh") -> bool:
+    """Real, cheap check: is ``gh`` installed and authenticated right now?"""
+
+    try:
+        completed = subprocess.run(
+            [gh_bin, "auth", "status"],
+            capture_output=True,
+            text=True,
+            timeout=10.0,
+            check=False,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+    return completed.returncode == 0
+
+
+def _in_window(timestamp: str, *, since: str, until: str | None) -> bool:
+    if timestamp < since:
+        return False
+    if until is not None and timestamp >= until:
+        return False
+    return True
+
+
+def _commit_events(
+    repo: str,
+    *,
+    since: str,
+    until: str | None,
+    gh_bin: str,
+    include_files: bool,
+    file_fetch_limit: int,
+) -> list[HistoricalEvent]:
+    query = f"repos/{repo}/commits?since={since}&per_page=100"
+    if until is not None:
+        query += f"&until={until}"
+    raw = _gh_api(query, gh_bin=gh_bin)
+    items = raw if isinstance(raw, list) else []
+    events: list[HistoricalEvent] = []
+    for index, item in enumerate(items):
+        if not isinstance(item, Mapping):
+            continue
+        sha = str(item.get("sha", ""))
+        commit = item.get("commit") or {}
+        author = commit.get("author") or {} if isinstance(commit, Mapping) else {}
+        message = str(commit.get("message", "")) if isinstance(commit, Mapping) else ""
+        timestamp = str(author.get("date", "")) if isinstance(author, Mapping) else ""
+        parents = item.get("parents") or []
+        parent_shas = tuple(
+            str(parent.get("sha", ""))
+            for parent in parents
+            if isinstance(parent, Mapping) and parent.get("sha")
+        )
+        changed_paths: tuple[str, ...] = ()
+        if include_files and index < file_fetch_limit and sha:
+            try:
+                detail = _gh_api(
+                    f"repos/{repo}/commits/{sha}", gh_bin=gh_bin, paginate=False
+                )
+            except GithubQueryError:
+                detail = {}
+            files_raw = detail.get("files", []) if isinstance(detail, Mapping) else []
+            files = files_raw if isinstance(files_raw, list) else []
+            changed_paths = tuple(
+                str(f.get("filename", ""))
+                for f in files
+                if isinstance(f, Mapping) and f.get("filename")
+            )
+        events.append(
+            HistoricalEvent(
+                event_id=f"commit-{sha}" if sha else f"commit-{index}",
+                timestamp=timestamp,
+                repository=repo,
+                kind="commit",
+                sha=sha,
+                parent_ids=parent_shas,
+                changed_paths=changed_paths,
+                metadata={
+                    "message": message,
+                    "author": str(author.get("name", ""))
+                    if isinstance(author, Mapping)
+                    else "",
+                },
+            )
+        )
+    return events
+
+
+def _pull_request_events(
+    repo: str, *, since: str, until: str | None, gh_bin: str
+) -> list[HistoricalEvent]:
+    raw = _gh_api(
+        f"repos/{repo}/pulls?state=all&sort=updated&direction=desc&per_page=100",
+        gh_bin=gh_bin,
+    )
+    items = raw if isinstance(raw, list) else []
+    events: list[HistoricalEvent] = []
+    for item in items:
+        if not isinstance(item, Mapping):
+            continue
+        created_at = str(item.get("created_at", ""))
+        if not _in_window(created_at, since=since, until=until):
+            continue
+        number = item.get("number")
+        merged_at = item.get("merged_at")
+        events.append(
+            HistoricalEvent(
+                event_id=f"pull_request-{number}",
+                timestamp=created_at,
+                repository=repo,
+                kind="pull_request",
+                ref=str((item.get("head") or {}).get("ref", ""))
+                if isinstance(item.get("head"), Mapping)
+                else "",
+                metadata={
+                    "pull_request": number,
+                    "title": str(item.get("title", "")),
+                    "state": str(item.get("state", "")),
+                    "merged": merged_at is not None,
+                },
+            )
+        )
+        if merged_at and _in_window(str(merged_at), since=since, until=until):
+            events.append(
+                HistoricalEvent(
+                    event_id=f"merge-pr-{number}",
+                    timestamp=str(merged_at),
+                    repository=repo,
+                    kind="merge",
+                    metadata={
+                        "pull_request": number,
+                        "title": str(item.get("title", "")),
+                    },
+                )
+            )
+    return events
+
+
+def _created_range_query(*, since: str, until: str | None) -> str:
+    """Build a GitHub search-qualifier ``created`` range, URL-encoded.
+
+    Filtering server-side (rather than only client-side in ``_in_window``) is
+    load-bearing, not an optimization: without it, ``--paginate`` walks a
+    repo's *entire* run/issue history before any window filter ever applies,
+    which measurably times out on a repo with hundreds of workflow runs.
+    """
+
+    value = f"{since}..{until}" if until is not None else f">={since}"
+    return quote(value, safe="")
+
+
+def _workflow_run_events(
+    repo: str, *, since: str, until: str | None, gh_bin: str
+) -> list[HistoricalEvent]:
+    created = _created_range_query(since=since, until=until)
+    raw = _gh_api(
+        f"repos/{repo}/actions/runs?per_page=100&created={created}",
+        gh_bin=gh_bin,
+        list_field="workflow_runs",
+    )
+    runs = raw if isinstance(raw, list) else []
+    events: list[HistoricalEvent] = []
+    for item in runs:
+        if not isinstance(item, Mapping):
+            continue
+        created_at = str(item.get("created_at", ""))
+        if not _in_window(created_at, since=since, until=until):
+            continue
+        events.append(
+            HistoricalEvent(
+                event_id=f"workflow_run-{item.get('id', '')}",
+                timestamp=created_at,
+                repository=repo,
+                kind="workflow_run",
+                ref=str(item.get("head_branch", "")),
+                sha=str(item.get("head_sha", "")),
+                metadata={
+                    "name": str(item.get("name", "")),
+                    "status": str(item.get("status", "")),
+                    "conclusion": str(item.get("conclusion") or ""),
+                },
+            )
+        )
+    return events
+
+
+def _release_events(
+    repo: str, *, since: str, until: str | None, gh_bin: str
+) -> list[HistoricalEvent]:
+    raw = _gh_api(f"repos/{repo}/releases?per_page=100", gh_bin=gh_bin)
+    items = raw if isinstance(raw, list) else []
+    events: list[HistoricalEvent] = []
+    for item in items:
+        if not isinstance(item, Mapping):
+            continue
+        published_at = str(item.get("published_at") or "")
+        if not published_at or not _in_window(published_at, since=since, until=until):
+            continue
+        events.append(
+            HistoricalEvent(
+                event_id=f"release-{item.get('id', '')}",
+                timestamp=published_at,
+                repository=repo,
+                kind="release",
+                ref=str(item.get("tag_name", "")),
+                metadata={
+                    "tag_name": str(item.get("tag_name", "")),
+                    "name": str(item.get("name", "")),
+                },
+            )
+        )
+    return events
+
+
+def _issue_events(
+    repo: str, *, since: str, until: str | None, gh_bin: str
+) -> list[HistoricalEvent]:
+    raw = _gh_api(
+        f"repos/{repo}/issues?state=all&since={since}&per_page=100",
+        gh_bin=gh_bin,
+    )
+    items = raw if isinstance(raw, list) else []
+    events: list[HistoricalEvent] = []
+    for item in items:
+        if not isinstance(item, Mapping):
+            continue
+        if "pull_request" in item:
+            continue  # the issues endpoint also returns PRs; those are covered above
+        created_at = str(item.get("created_at", ""))
+        if not _in_window(created_at, since=since, until=until):
+            continue
+        labels = item.get("labels", [])
+        events.append(
+            HistoricalEvent(
+                event_id=f"issue-{item.get('number', '')}",
+                timestamp=created_at,
+                repository=repo,
+                kind="issue",
+                labels=tuple(
+                    str(label.get("name", ""))
+                    if isinstance(label, Mapping)
+                    else str(label)
+                    for label in (labels if isinstance(labels, list) else [])
+                ),
+                metadata={
+                    "issue": item.get("number"),
+                    "title": str(item.get("title", "")),
+                    "state": str(item.get("state", "")),
+                },
+            )
+        )
+    return events
+
+
+def _deployment_events(
+    repo: str, *, since: str, until: str | None, gh_bin: str
+) -> list[HistoricalEvent]:
+    try:
+        raw = _gh_api(f"repos/{repo}/deployments?per_page=100", gh_bin=gh_bin)
+    except GithubQueryError:
+        return []
+    items = raw if isinstance(raw, list) else []
+    events: list[HistoricalEvent] = []
+    for item in items:
+        if not isinstance(item, Mapping):
+            continue
+        created_at = str(item.get("created_at", ""))
+        if not _in_window(created_at, since=since, until=until):
+            continue
+        events.append(
+            HistoricalEvent(
+                event_id=f"deployment-{item.get('id', '')}",
+                timestamp=created_at,
+                repository=repo,
+                kind="deployment",
+                ref=str(item.get("ref", "")),
+                sha=str(item.get("sha", "")),
+                metadata={"environment": str(item.get("environment", ""))},
+            )
+        )
+    return events
+
+
+_GH_EVENT_BUILDERS = {
+    "commit": _commit_events,
+    "pull_request": _pull_request_events,
+    "workflow_run": _workflow_run_events,
+    "release": _release_events,
+    "issue": _issue_events,
+    "deployment": _deployment_events,
+}
+
+
+def fetch_github_events(
+    repo: str,
+    *,
+    since: str,
+    until: str | None = None,
+    kinds: Sequence[str] = GITHUB_FETCHABLE_KINDS,
+    gh_bin: str = "gh",
+    include_commit_files: bool = True,
+    commit_file_limit: int = 25,
+) -> tuple[HistoricalEvent, ...]:
+    """Query real GitHub history for ``repo`` via the real, authenticated ``gh``
+    CLI and normalize it into :class:`HistoricalEvent` observations.
+
+    This is observation only -- see the module docstring. ``since``/``until``
+    are ISO-8601 timestamps (``YYYY-MM-DDTHH:MM:SSZ``). Every requested kind
+    that GitHub actually returns data for becomes a distinct admissible
+    plan-step kind once compiled, widening the planner/agent action frontier
+    beyond commits alone (the more kinds fetched, the more distinct step
+    kinds -- pull_request, review-bearing merge, workflow_run, release, issue,
+    deployment -- an agent can choose among in :class:`ReplayWorld`).
+    """
+
+    events: list[HistoricalEvent] = []
+    for kind in kinds:
+        builder = _GH_EVENT_BUILDERS.get(kind)
+        if builder is None:
+            raise ValueError(f"no real GitHub normalizer registered for kind: {kind}")
+        if kind == "commit":
+            events.extend(
+                builder(
+                    repo,
+                    since=since,
+                    until=until,
+                    gh_bin=gh_bin,
+                    include_files=include_commit_files,
+                    file_fetch_limit=commit_file_limit,
+                )
+            )
+        else:
+            events.extend(builder(repo, since=since, until=until, gh_bin=gh_bin))
+    return tuple(sorted(events, key=lambda item: (item.timestamp, item.event_id)))
+
+
 def load_events(path: Path) -> tuple[HistoricalEvent, ...]:
     """Load either a JSON array or an object containing an ``events`` array."""
 
@@ -591,6 +1030,27 @@ def _parser() -> argparse.ArgumentParser:
 
     replay_parser = subparsers.add_parser("replay")
     replay_parser.add_argument("plan", type=Path)
+
+    fetch_parser = subparsers.add_parser(
+        "fetch", help="query real GitHub history via the local gh CLI"
+    )
+    fetch_parser.add_argument(
+        "repo", help="owner/name, e.g. seanchatmangpt/autofde-lab"
+    )
+    fetch_parser.add_argument("output", type=Path, help="events JSON file to write")
+    fetch_parser.add_argument(
+        "--since", required=True, help="ISO-8601, e.g. 2026-08-01T00:00:00Z"
+    )
+    fetch_parser.add_argument("--until", default=None)
+    fetch_parser.add_argument(
+        "--kinds",
+        nargs="+",
+        default=list(GITHUB_FETCHABLE_KINDS),
+        choices=list(GITHUB_FETCHABLE_KINDS),
+        help="which real GitHub event kinds to query (default: all fetchable kinds)",
+    )
+    fetch_parser.add_argument("--no-commit-files", action="store_true")
+    fetch_parser.add_argument("--commit-file-limit", type=int, default=25)
     return parser
 
 
@@ -612,6 +1072,39 @@ def main(argv: Sequence[str] | None = None) -> None:
                     "created": [str(path) for path in created],
                     "observed_commit_count": manifest["observed_commit_count"],
                     "reported_commit_count": manifest["reported_commit_count"],
+                },
+                sort_keys=True,
+                indent=2,
+            )
+        )
+        return
+
+    if args.command == "fetch":
+        events = fetch_github_events(
+            args.repo,
+            since=args.since,
+            until=args.until,
+            kinds=args.kinds,
+            include_commit_files=not args.no_commit_files,
+            commit_file_limit=args.commit_file_limit,
+        )
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(
+            json.dumps(
+                {"events": [e.as_dict() for e in events]}, sort_keys=True, indent=2
+            )
+            + "\n"
+        )
+        kind_counts = Counter(event.kind for event in events)
+        print(
+            json.dumps(
+                {
+                    "repository": args.repo,
+                    "since": args.since,
+                    "until": args.until,
+                    "written_to": str(args.output),
+                    "event_count": len(events),
+                    "kind_counts": dict(sorted(kind_counts.items())),
                 },
                 sort_keys=True,
                 indent=2,

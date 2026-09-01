@@ -43,19 +43,58 @@
   },
   "plan": {
     "edges": [
-      ["s00000-open-workstream", "s00001-implement-runtime"],
-      ["s00001-implement-runtime", "s00002-falsify-runtime"],
-      ["s00002-falsify-runtime", "s00003-manufacture-infrastructure"],
-      ["s00003-manufacture-infrastructure", "s00004-qualify-container"],
-      ["s00004-qualify-container", "s00005-enforce-authority"],
-      ["s00005-enforce-authority", "s00006-instrument-observability"],
-      ["s00006-instrument-observability", "s00007-repair-exact-head-ci"],
-      ["s00007-repair-exact-head-ci", "s00008-publish-runbook"],
-      ["s00008-publish-runbook", "s00009-open-pr"],
-      ["s00009-open-pr", "s00010-exact-head-green"],
-      ["s00010-exact-head-green", "s00011-merge-qualified-head"],
-      ["s00011-merge-qualified-head", "s00012-publish-release"],
-      ["s00012-publish-release", "s00013-prove-default-branch-containment"]
+      [
+        "s00000-open-workstream",
+        "s00001-implement-runtime"
+      ],
+      [
+        "s00001-implement-runtime",
+        "s00002-falsify-runtime"
+      ],
+      [
+        "s00002-falsify-runtime",
+        "s00003-manufacture-infrastructure"
+      ],
+      [
+        "s00003-manufacture-infrastructure",
+        "s00004-qualify-container"
+      ],
+      [
+        "s00004-qualify-container",
+        "s00005-enforce-authority"
+      ],
+      [
+        "s00005-enforce-authority",
+        "s00006-instrument-observability"
+      ],
+      [
+        "s00006-instrument-observability",
+        "s00007-repair-exact-head-ci"
+      ],
+      [
+        "s00007-repair-exact-head-ci",
+        "s00008-publish-runbook"
+      ],
+      [
+        "s00008-publish-runbook",
+        "s00009-open-pr"
+      ],
+      [
+        "s00009-open-pr",
+        "s00010-exact-head-green"
+      ],
+      [
+        "s00010-exact-head-green",
+        "s00011-merge-qualified-head"
+      ],
+      [
+        "s00011-merge-qualified-head",
+        "s00012-publish-release"
+      ],
+      [
+        "s00012-publish-release",
+        "s00013-prove-default-branch-containment"
+      ]
     ],
     "steps": [
       {
@@ -66,156 +105,275 @@
         "intent": "open-workstream",
         "kind": "branch_created",
         "required_authority_classes": [],
-        "source_event_ids": ["e00000"],
-        "surfaces": ["github"]
+        "source_event_ids": [
+          "e00000"
+        ],
+        "surfaces": [
+          "github"
+        ]
       },
       {
-        "commit_shas": ["1111111111111111111111111111111111111111"],
+        "commit_shas": [
+          "1111111111111111111111111111111111111111"
+        ],
         "count": 1,
-        "depends_on": ["s00000-open-workstream"],
+        "depends_on": [
+          "s00000-open-workstream"
+        ],
         "id": "s00001-implement-runtime",
         "intent": "implement-runtime",
         "kind": "commit",
         "required_authority_classes": [],
-        "source_event_ids": ["e00001"],
-        "surfaces": ["github", "source"]
+        "source_event_ids": [
+          "e00001"
+        ],
+        "surfaces": [
+          "github",
+          "source"
+        ]
       },
       {
-        "commit_shas": ["2222222222222222222222222222222222222222"],
+        "commit_shas": [
+          "2222222222222222222222222222222222222222"
+        ],
         "count": 1,
-        "depends_on": ["s00001-implement-runtime"],
+        "depends_on": [
+          "s00001-implement-runtime"
+        ],
         "id": "s00002-falsify-runtime",
         "intent": "falsify-runtime",
         "kind": "commit",
         "required_authority_classes": [],
-        "source_event_ids": ["e00002"],
-        "surfaces": ["github", "tests"]
+        "source_event_ids": [
+          "e00002"
+        ],
+        "surfaces": [
+          "github",
+          "tests"
+        ]
       },
       {
-        "commit_shas": ["3333333333333333333333333333333333333333"],
+        "commit_shas": [
+          "3333333333333333333333333333333333333333"
+        ],
         "count": 1,
-        "depends_on": ["s00002-falsify-runtime"],
+        "depends_on": [
+          "s00002-falsify-runtime"
+        ],
         "id": "s00003-manufacture-infrastructure",
         "intent": "manufacture-infrastructure",
         "kind": "commit",
-        "required_authority_classes": ["infrastructure:write"],
-        "source_event_ids": ["e00003"],
-        "surfaces": ["cloud", "github", "iac"]
+        "required_authority_classes": [
+          "infrastructure:write"
+        ],
+        "source_event_ids": [
+          "e00003"
+        ],
+        "surfaces": [
+          "cloud",
+          "github",
+          "iac"
+        ]
       },
       {
-        "commit_shas": ["4444444444444444444444444444444444444444"],
+        "commit_shas": [
+          "4444444444444444444444444444444444444444"
+        ],
         "count": 1,
-        "depends_on": ["s00003-manufacture-infrastructure"],
+        "depends_on": [
+          "s00003-manufacture-infrastructure"
+        ],
         "id": "s00004-qualify-container",
         "intent": "qualify-container",
         "kind": "commit",
         "required_authority_classes": [],
-        "source_event_ids": ["e00004"],
-        "surfaces": ["container", "github"]
+        "source_event_ids": [
+          "e00004"
+        ],
+        "surfaces": [
+          "container",
+          "github"
+        ]
       },
       {
-        "commit_shas": ["5555555555555555555555555555555555555555"],
+        "commit_shas": [
+          "5555555555555555555555555555555555555555"
+        ],
         "count": 1,
-        "depends_on": ["s00004-qualify-container"],
+        "depends_on": [
+          "s00004-qualify-container"
+        ],
         "id": "s00005-enforce-authority",
         "intent": "enforce-authority",
         "kind": "commit",
         "required_authority_classes": [],
-        "source_event_ids": ["e00005"],
-        "surfaces": ["github", "security"]
+        "source_event_ids": [
+          "e00005"
+        ],
+        "surfaces": [
+          "github",
+          "security"
+        ]
       },
       {
-        "commit_shas": ["6666666666666666666666666666666666666666"],
+        "commit_shas": [
+          "6666666666666666666666666666666666666666"
+        ],
         "count": 1,
-        "depends_on": ["s00005-enforce-authority"],
+        "depends_on": [
+          "s00005-enforce-authority"
+        ],
         "id": "s00006-instrument-observability",
         "intent": "instrument-observability",
         "kind": "commit",
         "required_authority_classes": [],
-        "source_event_ids": ["e00006"],
-        "surfaces": ["github", "observability", "source"]
+        "source_event_ids": [
+          "e00006"
+        ],
+        "surfaces": [
+          "github",
+          "observability",
+          "source"
+        ]
       },
       {
-        "commit_shas": ["7777777777777777777777777777777777777777"],
+        "commit_shas": [
+          "7777777777777777777777777777777777777777"
+        ],
         "count": 1,
-        "depends_on": ["s00006-instrument-observability"],
+        "depends_on": [
+          "s00006-instrument-observability"
+        ],
         "id": "s00007-repair-exact-head-ci",
         "intent": "repair-exact-head-ci",
         "kind": "commit",
         "required_authority_classes": [],
-        "source_event_ids": ["e00007"],
-        "surfaces": ["ci_cd", "github"]
+        "source_event_ids": [
+          "e00007"
+        ],
+        "surfaces": [
+          "ci_cd",
+          "github"
+        ]
       },
       {
-        "commit_shas": ["8888888888888888888888888888888888888888"],
+        "commit_shas": [
+          "8888888888888888888888888888888888888888"
+        ],
         "count": 1,
-        "depends_on": ["s00007-repair-exact-head-ci"],
+        "depends_on": [
+          "s00007-repair-exact-head-ci"
+        ],
         "id": "s00008-publish-runbook",
         "intent": "publish-runbook",
         "kind": "commit",
         "required_authority_classes": [],
-        "source_event_ids": ["e00008"],
-        "surfaces": ["docs", "github"]
+        "source_event_ids": [
+          "e00008"
+        ],
+        "surfaces": [
+          "docs",
+          "github"
+        ]
       },
       {
         "commit_shas": [],
         "count": 1,
-        "depends_on": ["s00008-publish-runbook"],
+        "depends_on": [
+          "s00008-publish-runbook"
+        ],
         "id": "s00009-open-pr",
         "intent": "open-pr",
         "kind": "pull_request",
-        "required_authority_classes": ["github:write"],
-        "source_event_ids": ["e00009"],
-        "surfaces": ["github"]
+        "required_authority_classes": [
+          "github:write"
+        ],
+        "source_event_ids": [
+          "e00009"
+        ],
+        "surfaces": [
+          "github"
+        ]
       },
       {
         "commit_shas": [],
         "count": 1,
-        "depends_on": ["s00009-open-pr"],
+        "depends_on": [
+          "s00009-open-pr"
+        ],
         "id": "s00010-exact-head-green",
         "intent": "exact-head-green",
         "kind": "workflow_run",
-        "required_authority_classes": [],
-        "source_event_ids": ["e00010"],
-        "surfaces": ["github"]
+        "required_authority_classes": [
+          "ci:trigger"
+        ],
+        "source_event_ids": [
+          "e00010"
+        ],
+        "surfaces": [
+          "github"
+        ]
       },
       {
         "commit_shas": [],
         "count": 1,
-        "depends_on": ["s00010-exact-head-green"],
+        "depends_on": [
+          "s00010-exact-head-green"
+        ],
         "id": "s00011-merge-qualified-head",
         "intent": "merge-qualified-head",
         "kind": "merge",
-        "required_authority_classes": ["github:write"],
-        "source_event_ids": ["e00011"],
-        "surfaces": ["github"]
+        "required_authority_classes": [
+          "github:write"
+        ],
+        "source_event_ids": [
+          "e00011"
+        ],
+        "surfaces": [
+          "github"
+        ]
       },
       {
         "commit_shas": [],
         "count": 1,
-        "depends_on": ["s00011-merge-qualified-head"],
+        "depends_on": [
+          "s00011-merge-qualified-head"
+        ],
         "id": "s00012-publish-release",
         "intent": "publish-release",
         "kind": "release",
-        "required_authority_classes": ["release:publish"],
-        "source_event_ids": ["e00012"],
-        "surfaces": ["github", "release"]
+        "required_authority_classes": [
+          "release:publish"
+        ],
+        "source_event_ids": [
+          "e00012"
+        ],
+        "surfaces": [
+          "github",
+          "release"
+        ]
       },
       {
         "commit_shas": [],
         "count": 1,
-        "depends_on": ["s00012-publish-release"],
+        "depends_on": [
+          "s00012-publish-release"
+        ],
         "id": "s00013-prove-default-branch-containment",
         "intent": "prove-default-branch-containment",
         "kind": "default_branch_containment",
         "required_authority_classes": [],
-        "source_event_ids": ["e00013"],
-        "surfaces": ["github"]
+        "source_event_ids": [
+          "e00013"
+        ],
+        "surfaces": [
+          "github"
+        ]
       }
     ],
     "type": "partial-order"
   },
-  "plan_digest": "3b40ee99aa7708a52d715fd90b680bf8cce4d034b989c5282626d54780084c9f",
+  "plan_digest": "63af20a55b0d260c3d3b4064182913aeb2082a5e3d95acbc16464177163f04a2",
   "roles": [
     "planner",
     "implementer",

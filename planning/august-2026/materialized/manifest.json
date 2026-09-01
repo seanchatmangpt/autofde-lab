@@ -4,12 +4,12 @@
     "mode": "SIMULATION_ONLY"
   },
   "complete_history_observed": false,
-  "corpus_digest": "c926d8c3c563bbe8dcd04178656255000a0b51aaf5d08c7e2fbad167a5781e0e",
+  "corpus_digest": "b1ef7e6152dce7c3a574b2f22a4995d8d2c1b3686f64d71bc098b1fefcdc8a31",
   "episode_count": 1,
   "observed_commit_count": 8,
   "period": "2026-08",
   "plan_digests": [
-    "3b40ee99aa7708a52d715fd90b680bf8cce4d034b989c5282626d54780084c9f"
+    "63af20a55b0d260c3d3b4064182913aeb2082a5e3d95acbc16464177163f04a2"
   ],
   "reported_commit_count": 24340,
   "repositories": [
