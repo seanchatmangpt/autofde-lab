@@ -79,6 +79,7 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf artifacts/august-2026
+          mkdir -p artifacts
           python -m autofde_lab.agent.software_manufacturing_history compile \
             planning/august-2026/history/full-stack-example.json \
             artifacts/august-2026/materialized \
