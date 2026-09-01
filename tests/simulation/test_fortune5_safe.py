@@ -28,6 +28,13 @@ def test_fortune5_topology_closes_scale_budget_roles_dependencies_and_cadence():
     assert topology.counts["arts"] == 60
     assert topology.counts["teams"] == 720
     assert topology.counts["personnel"] == 7_200
+    assert topology.counts["strategic_themes"] == 8
+    assert topology.counts["epics"] == 40
+    assert topology.counts["capabilities"] == 160
+    assert topology.counts["features"] == 960
+    assert topology.counts["stories"] == 8_640
+    assert topology.counts["work_items"] == 9_808
+    assert topology.counts["enablers"] > 0
     assert topology.annual_budget_usd == 1_200_000_000.0
     assert topology.counts["role_assignments"] >= 300
     assert topology.counts["dependencies"] >= 700

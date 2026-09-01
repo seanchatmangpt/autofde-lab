@@ -13,7 +13,7 @@ consequences; no result admits or actuates a real-world action.
   $1.2B annual budget.
 
 The adaptation expands the topology to 10 Solution Trains, scoped SAFe role assignments,
-dependency edges, and cadence-event volume while preserving the APS scale invariants above.
+dependency edges, explicit strategy/backlog hierarchy, and cadence-event volume while preserving the APS scale invariants above.
 
 ## DfCM calculus
 
@@ -37,7 +37,9 @@ and a normalized Hamming diversity score. There is intentionally no `winner` or
 ## Enterprise model
 
 The topology models portfolio/LPM, development value streams, Solution Trains, ARTs, teams,
-personnel seats, role assignments, cross-level dependencies, and cadence buckets including
+personnel seats, role assignments, cross-level dependencies, and an explicit work graph of
+8 strategic themes → 40 epics → 160 capabilities → 960 features → 8,640 stories (9,808 work
+items total, including enabler flags). Cadence buckets include
 portfolio sync, Pre/Post-PI, PI Planning, ART Sync, System/Solution Demo, Inspect & Adapt,
 iteration events, and team sync.
 

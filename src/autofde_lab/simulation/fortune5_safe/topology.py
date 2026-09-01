@@ -6,7 +6,7 @@ import math
 
 from .model import (
     AgileReleaseTrain, AgileTeam, CadenceBucket, Dependency, EnterpriseTopology,
-    Fortune5Config, PersonnelSeat, Portfolio, RoleAssignment, SolutionTrain, ValueStream,
+    Fortune5Config, PersonnelSeat, Portfolio, RoleAssignment, SolutionTrain, ValueStream, WorkItem,
 )
 
 TEAM_ROLES = (
@@ -27,6 +27,7 @@ def build_topology(config: Fortune5Config = Fortune5Config()) -> EnterpriseTopol
     teams: list[AgileTeam] = []
     people: list[PersonnelSeat] = []
     roles: list[RoleAssignment] = []
+    work_items: list[WorkItem] = []
     solution_to_vs = {f"ST-{i:02d}": [] for i in range(config.solution_trains)}
     solution_to_arts = {key: [] for key in solution_to_vs}
 
@@ -98,6 +99,36 @@ def build_topology(config: Fortune5Config = Fortune5Config()) -> EnterpriseTopol
         for index, role in enumerate(("release_train_engineer", "product_management", "system_architect", "business_owner")):
             roles.append(RoleAssignment("art", art.id, role, seats[index]))
 
+    # Explicit SAFe work hierarchy: strategy -> epics -> capabilities -> features -> stories.
+    theme_index = epic_index = capability_index = feature_index = story_index = 0
+    for portfolio in portfolios:
+        for local_theme in range(config.strategic_themes_per_portfolio):
+            theme_id = f"THEME-{theme_index + 1:03d}"
+            work_items.append(WorkItem(theme_id, "strategic_theme", None, portfolio.id, 1000.0, 0.0, 0.0))
+            for local_epic in range(config.epics_per_theme):
+                epic_id = f"EPIC-{epic_index + 1:04d}"
+                work_items.append(WorkItem(epic_id, "epic", theme_id, portfolio.id, 500.0 + local_epic * 15, 180.0 + local_epic * 9, 40.0))
+                for local_capability in range(config.capabilities_per_epic):
+                    value_stream_id = portfolio.value_stream_ids[(epic_index + local_capability) % len(portfolio.value_stream_ids)]
+                    capability_id = f"CAP-{capability_index + 1:05d}"
+                    work_items.append(WorkItem(capability_id, "capability", epic_id, value_stream_id, 120.0, 55.0 + local_capability * 3, 18.0, local_capability == 0))
+                    value_stream = vs_by_id[value_stream_id]
+                    for local_feature in range(config.features_per_capability):
+                        art_id = value_stream.art_ids[(capability_index + local_feature) % len(value_stream.art_ids)]
+                        feature_id = f"FEAT-{feature_index + 1:05d}"
+                        feature_enabler = local_feature % 5 == 0
+                        work_items.append(WorkItem(feature_id, "feature", capability_id, art_id, 30.0, 13.0 + local_feature, 8.0, feature_enabler))
+                        art = art_by_id[art_id]
+                        for local_story in range(config.stories_per_feature):
+                            team_id = art.team_ids[(feature_index + local_story) % len(art.team_ids)]
+                            story_id = f"STORY-{story_index + 1:06d}"
+                            work_items.append(WorkItem(story_id, "story", feature_id, team_id, 5.0, 2.0 + (local_story % 4), 1.0 + (local_story % 5), feature_enabler and local_story < 2))
+                            story_index += 1
+                        feature_index += 1
+                    capability_index += 1
+                epic_index += 1
+            theme_index += 1
+
     dependencies: list[Dependency] = []
     for art in arts:
         dependencies.extend(Dependency(left, right, "team_flow", 0.35) for left, right in zip(art.team_ids, art.team_ids[1:]))
@@ -123,12 +154,14 @@ def build_topology(config: Fortune5Config = Fortune5Config()) -> EnterpriseTopol
     )
     topology = EnterpriseTopology(
         tuple(portfolios), tuple(value_streams), solutions, tuple(arts), tuple(teams), tuple(people),
-        tuple(roles), tuple(dependencies), cadence,
+        tuple(roles), tuple(work_items), tuple(dependencies), cadence,
     )
     expected = {
         "portfolios": config.portfolios, "value_streams": config.value_streams,
         "solution_trains": config.solution_trains, "arts": config.arts,
         "teams": config.teams, "personnel": config.personnel,
+        "strategic_themes": config.strategic_themes, "epics": config.epics,
+        "capabilities": config.capabilities, "features": config.features, "stories": config.stories,
     }
     for key, value in expected.items():
         if topology.counts[key] != value:

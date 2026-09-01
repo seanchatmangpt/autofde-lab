@@ -84,13 +84,19 @@ class Fortune5Config:
     working_days_per_iteration: int = 10
     base_team_capacity: float = 100.0
     base_team_demand: float = 96.0
+    strategic_themes_per_portfolio: int = 2
+    epics_per_theme: int = 5
+    capabilities_per_epic: int = 4
+    features_per_capability: int = 6
+    stories_per_feature: int = 9
     seed: int = 2030
 
     def __post_init__(self) -> None:
         for name in (
             "portfolios", "value_streams_per_portfolio", "value_streams_per_solution_train",
             "arts_per_value_stream", "teams_per_art", "people_per_team", "planning_intervals",
-            "iterations_per_pi", "working_days_per_iteration",
+            "iterations_per_pi", "working_days_per_iteration", "strategic_themes_per_portfolio",
+            "epics_per_theme", "capabilities_per_epic", "features_per_capability", "stories_per_feature",
         ):
             if getattr(self, name) <= 0:
                 raise ValueError(f"{name} must be positive")
@@ -118,6 +124,26 @@ class Fortune5Config:
     @property
     def personnel(self) -> int:
         return self.teams * self.people_per_team
+
+    @property
+    def strategic_themes(self) -> int:
+        return self.portfolios * self.strategic_themes_per_portfolio
+
+    @property
+    def epics(self) -> int:
+        return self.strategic_themes * self.epics_per_theme
+
+    @property
+    def capabilities(self) -> int:
+        return self.epics * self.capabilities_per_epic
+
+    @property
+    def features(self) -> int:
+        return self.capabilities * self.features_per_capability
+
+    @property
+    def stories(self) -> int:
+        return self.features * self.stories_per_feature
 
     @property
     def pi_days(self) -> int:
@@ -188,6 +214,18 @@ class Dependency:
 
 
 @dataclass(frozen=True)
+class WorkItem:
+    id: str
+    kind: str
+    parent_id: str | None
+    scope_id: str
+    business_value: float
+    cost_of_delay: float
+    estimate: float
+    enabler: bool = False
+
+
+@dataclass(frozen=True)
 class CadenceBucket:
     event: str
     count_per_pi: int
@@ -203,16 +241,24 @@ class EnterpriseTopology:
     teams: tuple[AgileTeam, ...]
     personnel: tuple[PersonnelSeat, ...]
     roles: tuple[RoleAssignment, ...]
+    work_items: tuple[WorkItem, ...]
     dependencies: tuple[Dependency, ...]
     cadence: tuple[CadenceBucket, ...]
 
-    @property
+    @cached_property
     def counts(self) -> Mapping[str, int]:
         return {
             "portfolios": len(self.portfolios), "value_streams": len(self.value_streams),
             "solution_trains": len(self.solution_trains), "arts": len(self.arts),
             "teams": len(self.teams), "personnel": len(self.personnel),
-            "role_assignments": len(self.roles), "dependencies": len(self.dependencies),
+            "role_assignments": len(self.roles), "work_items": len(self.work_items),
+            "strategic_themes": sum(item.kind == "strategic_theme" for item in self.work_items),
+            "epics": sum(item.kind == "epic" for item in self.work_items),
+            "capabilities": sum(item.kind == "capability" for item in self.work_items),
+            "features": sum(item.kind == "feature" for item in self.work_items),
+            "stories": sum(item.kind == "story" for item in self.work_items),
+            "enablers": sum(item.enabler for item in self.work_items),
+            "dependencies": len(self.dependencies),
             "cadence_events_per_pi": sum(bucket.count_per_pi for bucket in self.cadence),
         }
 
