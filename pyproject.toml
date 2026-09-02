@@ -290,6 +290,7 @@ DSPyPolicy = "autofde_lab.hub.solver.dspy_policy:DSPyPolicy [dspy]"
 # (gymact.plugins.discover_provider_plugins/load_provider_plugin) --
 # registering here never imports this module ambiently.
 azuregoat_privesc = "autofde_lab.hub.domain.azuregoat_privesc.gymact_bridge:AzureGoatPrivescProvider"
+software_manufacturing = "autofde_lab.agent.software_manufacturing_gymact_bridge:SoftwareManufacturingProvider"
 
 [dependency-groups]
 dev = [
