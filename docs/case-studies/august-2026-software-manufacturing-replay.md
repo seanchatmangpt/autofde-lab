@@ -96,6 +96,42 @@ performs a write.
 CLI: `python -m autofde_lab.agent.software_manufacturing_history fetch <owner/repo>
 <output.json> --since <ISO-8601> [--until <ISO-8601>] [--kinds ...]`.
 
+## GymAct bridge: the plan as a real gym episode (2026-09-01)
+
+`autofde_lab.agent.software_manufacturing_gymact_bridge` wraps `ReplayWorld` in a real
+`gymact.providers.Environment`/`EnvironmentProvider` pair (`SoftwareManufacturingEnvironment`/
+`SoftwareManufacturingProvider`), registered as a real, gymact-discoverable plugin
+(`[project.entry-points."gymact.providers"]`, name `software_manufacturing`), structurally
+matching this repo's own `azuregoat_privesc/gymact_bridge.py` reference integration. One
+`Capability` per compiled plan step; `actuate()` refuses (typed `ActuationRefused`, never a
+silent no-op) any step that is not currently admissible from the real dependency-cone state,
+mirroring `ReplayWorld.apply()`'s own refusal exactly rather than re-deriving it.
+
+Verified this session against the real checked-in fixture, driven entirely through the real
+`gymact.runtime.GymAct` kernel (not by calling `ReplayWorld` directly): materialize → 14 real
+`act()` calls closing every step → `verify(episode_id, {"state": "ALIVE"})` → checkpoint →
+2 more acts → restore → re-observe confirms the restored state exactly. All receipts standing
+`ALIVE`; `ConformanceChecker().check(operations)` confirms the operation sequence is a legal
+GymAct lifecycle. A real bug was caught doing this: `Environment.observe()` originally had no
+`"state"` field, and `GymAct.verify()` independently judges `expected` against a fresh
+`observe()` read (never trusting a provider's own `verify()` self-report) — so the first pass
+silently failed verification until `observe()` was made to include the same real
+`ReplayWorld.receipt()` fields (`state`, `authority`, `do_authority`, `evidence_kind`,
+`receipt_sha256`) that `verify()` and `checkpoint()` already exposed.
+
+**Scope, stated precisely.** This is REPLAY mode only, in the vocabulary of a fuller
+"August as a computational laboratory" architecture (world model → counterfactual episodes →
+heterogeneous policies → real/simulated consequences → receipts → comparative learning): the
+trajectory a materialized episode can take is exactly the admissible-action frontier the
+compiled plan's own partial order already allows — no transition-probability model, no
+counterfactual branching beyond that partial order, no policy-competition harness, no DfCM
+possibility-frontier receipts, and no escalation to a real sandbox/BRCE execution path. Those
+are each their own real design program (calibrating failure/repair/latency distributions from
+the empirical GitHub corpus; a small stable action vocabulary decoupled from per-step
+capability IRIs; running many policies against the same world/seed; information-partitioned
+observation projections per role) — worth building, not attempted in this pass, and not
+implied as done by this section.
+
 ## Next experiment
 
 Materialize the complete August export across repositories and run multiple policies
