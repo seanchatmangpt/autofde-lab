@@ -5,7 +5,28 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
-Last update: **pass 21** (2026-09-01) — **v26.9.1: merged both additive branches named in
+Last update: **pass 22** (2026-09-02) — **Real month-of-history replay experiment: current
+compiled plans contain zero branching, so no non-LLM (or LLM) policy's competence is actually
+tested by REPLAY mode yet — a real, critical negative finding, not a capability claim.**
+Fetched real GitHub history (`fetch_github_events`) for the last 30 days across
+`seanchatmangpt/autofde-lab` (2239 events), `seanchatmangpt/ggen` (1787), `-ggen-create` (451),
+`-ggen-legacy` (412) — 4889 real events, compiled into 418 real episodes / 2373 steps. Two
+distinct deterministic non-LLM policies (`greedy_first`: lexicographically-first admissible
+step; `kind_priority`: fixed kind-order preference) each closed **418/418 episodes to `ALIVE`,
+zero deadlocks**. That number is **not evidence of capability**: a direct check found **0 of
+418 episodes ever had more than 1 simultaneously-admissible step** (217/418 are single-step
+chains outright) — `compile_history`'s dependency-fallback (`elif index: previous =
+event_to_step[...]`) imposes a strict total order whenever real history carries no explicit
+causal `depends_on` metadata, which is almost always. With the admissible frontier never
+exceeding 1, there is no decision point for any policy — good, bad, non-LLM, or LLM — to be
+distinguished on. This is real, first-party evidence for exactly the gap named in this
+session's own earlier GymAct-architecture discussion: REPLAY mode needs real branching
+(CI-failure/repair-attempt alternatives, a transition model) before "can a non-LLM agent do
+full-stack dev" is an answerable question against this substrate — it currently is not.
+`workflow_run` hit a 1000-event cap for two repos (GitHub's endpoint result ceiling), so the
+per-repo event counts above are a lower bound, not exhaustive, for that one kind.
+
+Prior update: **pass 21** (2026-09-01) — **v26.9.1: merged both additive branches named in
 `docs/jira/v26.9.1/PLAN.md`, real evidence per PR.** `feat/fortune5-safe-dfcm-sim` → PR #94,
 merge `2bf2871f`: `.venv/bin/python -m pytest tests/simulation/test_fortune5_safe.py -v` → 6
 passed; `pytest tests/simulation/ -v` → 6 passed, no regression; zero
