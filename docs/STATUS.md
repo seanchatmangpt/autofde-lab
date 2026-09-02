@@ -5,7 +5,24 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
-Last update: **pass 22** (2026-09-02) — **Real month-of-history replay experiment: current
+Last update: **pass 23** (2026-09-02) — **Pass 22's zero-branching finding confirmed at true
+scale, not a small-sample artifact.** Measured the real total first: GraphQL commit-count query
+across all 382 real `seanchatmangpt` repos, last 30 days → **27,613 real commits**, confirming
+the portfolio's own "~24k commits/month" figure was real (order of magnitude matches). Fetched
+full commit+PR+merge history (no per-file detail, for speed at this scale) for the 15 repos
+covering 90.1% of that volume (24,886/27,613 commits) — `ggen-marketplace` (8150),
+`chatman-ecosystem` (4508), `ggen-ecosystem` (3947), `gymact` (2040), `chatgpt-cloud-elixir`
+(1870), `autofde-lab` (1066), `ex4pm`, `ggen`, `beam4pm`, `wasm4pm`, `ash_r2rml`, `semantica`,
+`wasm4pm-compat`, `ferroplan`, `tcps` — 27,247 real events, compiled into **1,432 real episodes
+/ 27,050 real steps**. Re-ran the branching check at this scale: **0 of 1,432 episodes ever had
+more than 1 simultaneously-admissible step** (475/1432 single-step outright), identical to pass
+22's small-sample result. This includes the ggen ecosystem's own dominant repos
+(`ggen-marketplace`, `ggen-ecosystem`, `ggen` itself) — the zero-branching finding is not an
+artifact of which repos were sampled; it holds across the real dominant volume of this
+portfolio's actual last-30-days activity. `kind_priority` policy closed 1432/1432 to ALIVE,
+zero deadlocks — again not evidence of capability, for the same reason as pass 22.
+
+Prior update: **pass 22** (2026-09-02) — **Real month-of-history replay experiment: current
 compiled plans contain zero branching, so no non-LLM (or LLM) policy's competence is actually
 tested by REPLAY mode yet — a real, critical negative finding, not a capability claim.**
 Fetched real GitHub history (`fetch_github_events`) for the last 30 days across
