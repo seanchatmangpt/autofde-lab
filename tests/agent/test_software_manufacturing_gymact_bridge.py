@@ -23,7 +23,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-from gymact import GymAct, MaterializationIntent
 from gymact.models import ActuationIntent, Operation, Standing
 from gymact.plugins import load_provider_plugin
 from gymact.process import ConformanceChecker
@@ -31,6 +30,7 @@ from gymact.process import ConformanceChecker
 from autofde_lab.agent.software_manufacturing_gymact_bridge import (
     SoftwareManufacturingProvider,
 )
+from gymact import GymAct, MaterializationIntent
 
 _FIXTURE = (
     Path(__file__).parents[2]
