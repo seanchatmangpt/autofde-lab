@@ -1,0 +1,2086 @@
+{
+  "objectTypes": [
+    {
+      "name": "Composition",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Repository",
+      "attributes": [
+        {
+          "name": "path",
+          "type": "string"
+        },
+        {
+          "name": "remote_url",
+          "type": "string"
+        },
+        {
+          "name": "default_branch",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Commit",
+      "attributes": [
+        {
+          "name": "sha",
+          "type": "string"
+        },
+        {
+          "name": "author",
+          "type": "string"
+        },
+        {
+          "name": "message",
+          "type": "string"
+        },
+        {
+          "name": "committed_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "Worktree",
+      "attributes": [
+        {
+          "name": "path",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "type": "string"
+        },
+        {
+          "name": "base_ref",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Domain",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "observed_at",
+          "type": "time"
+        },
+        {
+          "name": "state_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "SolverImplementation",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Policy",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "policy_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "Plan",
+      "attributes": [
+        {
+          "name": "summary",
+          "type": "string"
+        },
+        {
+          "name": "steps_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "cost_estimate",
+          "type": "float"
+        }
+      ]
+    },
+    {
+      "name": "PredictionReceipt",
+      "attributes": [
+        {
+          "name": "prediction_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "confidence",
+          "type": "float"
+        },
+        {
+          "name": "frozen_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityDecision",
+      "attributes": [
+        {
+          "name": "decision",
+          "type": "string"
+        },
+        {
+          "name": "rationale",
+          "type": "string"
+        },
+        {
+          "name": "decided_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "args_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "QualificationRun",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "result",
+          "type": "string"
+        },
+        {
+          "name": "metrics_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "Receipt",
+      "attributes": [
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "digest",
+          "type": "string"
+        },
+        {
+          "name": "issued_at",
+          "type": "time"
+        },
+        {
+          "name": "evidence_path",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ClaudeSession",
+      "attributes": [
+        {
+          "name": "session_url",
+          "type": "string"
+        },
+        {
+          "name": "model",
+          "type": "string"
+        },
+        {
+          "name": "started_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "ClaudeToolInvocation",
+      "attributes": [
+        {
+          "name": "tool_name",
+          "type": "string"
+        },
+        {
+          "name": "args_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "result_summary",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ClaudeSubagent",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "role",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ProcessEpisode",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "started_at",
+          "type": "time"
+        },
+        {
+          "name": "ended_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "CapabilityGraph",
+      "attributes": [
+        {
+          "name": "digest",
+          "type": "string"
+        },
+        {
+          "name": "capability_ids",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "EvidenceArtifact",
+      "attributes": [
+        {
+          "name": "identity",
+          "type": "string"
+        },
+        {
+          "name": "durable_path",
+          "type": "string"
+        },
+        {
+          "name": "sha256",
+          "type": "string"
+        },
+        {
+          "name": "parser",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "CapabilityResolution",
+      "attributes": [
+        {
+          "name": "gap_label",
+          "type": "string"
+        },
+        {
+          "name": "selected_kind",
+          "type": "string"
+        },
+        {
+          "name": "selected_ref",
+          "type": "string"
+        },
+        {
+          "name": "route_to_codegen",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "type": "string"
+        },
+        {
+          "name": "planner",
+          "type": "string"
+        },
+        {
+          "name": "unavailable_transition",
+          "type": "string"
+        },
+        {
+          "name": "standing",
+          "type": "string"
+        },
+        {
+          "name": "receipt_digest",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "eventTypes": [
+    {
+      "name": "CompositionCreated",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "WorldStateObserved",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "state_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "PlannerInvoked",
+      "attributes": [
+        {
+          "name": "solver_name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "PlanProduced",
+      "attributes": [
+        {
+          "name": "summary",
+          "type": "string"
+        },
+        {
+          "name": "cost_estimate",
+          "type": "float"
+        }
+      ]
+    },
+    {
+      "name": "PlanRefused",
+      "attributes": [
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "PredictionFrozen",
+      "attributes": [
+        {
+          "name": "confidence",
+          "type": "float"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityEvaluated",
+      "attributes": [
+        {
+          "name": "rationale",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityGranted",
+      "attributes": [
+        {
+          "name": "rationale",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityRefused",
+      "attributes": [
+        {
+          "name": "rationale",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionStarted",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionCompleted",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "result_summary",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionFailed",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "error",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionRefused",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "QualificationObserved",
+      "attributes": [
+        {
+          "name": "result",
+          "type": "string"
+        },
+        {
+          "name": "metrics_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "PredictionCompared",
+      "attributes": [
+        {
+          "name": "delta_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "verdict",
+          "type": "string"
+        },
+        {
+          "name": "digest",
+          "type": "string"
+        },
+        {
+          "name": "schema_digest",
+          "type": "string"
+        },
+        {
+          "name": "n_match",
+          "type": "int"
+        },
+        {
+          "name": "n_mismatch",
+          "type": "int"
+        },
+        {
+          "name": "n_unobservable",
+          "type": "int"
+        },
+        {
+          "name": "n_not_applicable",
+          "type": "int"
+        },
+        {
+          "name": "n_type_error",
+          "type": "int"
+        },
+        {
+          "name": "n_missing_prediction",
+          "type": "int"
+        },
+        {
+          "name": "n_missing_observation",
+          "type": "int"
+        },
+        {
+          "name": "n_expected_transition_happened",
+          "type": "int"
+        },
+        {
+          "name": "n_expected_transition_absent",
+          "type": "int"
+        },
+        {
+          "name": "n_unexpected_transition_happened",
+          "type": "int"
+        },
+        {
+          "name": "n_expected_invariant_violated",
+          "type": "int"
+        },
+        {
+          "name": "field_classes_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "transition_classes_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "ReceiptIssued",
+      "attributes": [
+        {
+          "name": "digest",
+          "type": "string"
+        },
+        {
+          "name": "evidence_path",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LoopStarted",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LoopClosed",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LoopBlocked",
+      "attributes": [
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "DomainProjected",
+      "attributes": [
+        {
+          "name": "graph_digest",
+          "type": "string"
+        },
+        {
+          "name": "domain_digest",
+          "type": "string"
+        },
+        {
+          "name": "action_count",
+          "type": "int"
+        },
+        {
+          "name": "actions_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "EvidenceResolved",
+      "attributes": [
+        {
+          "name": "identity",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "EvidenceRefused",
+      "attributes": [
+        {
+          "name": "identity",
+          "type": "string"
+        },
+        {
+          "name": "check",
+          "type": "string"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "CapabilityResolved",
+      "attributes": [
+        {
+          "name": "selected_kind",
+          "type": "string"
+        },
+        {
+          "name": "candidate_count",
+          "type": "int"
+        },
+        {
+          "name": "dominated_count",
+          "type": "int"
+        },
+        {
+          "name": "resolution_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "GapDiagnosed",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "type": "string"
+        },
+        {
+          "name": "unavailable_transition",
+          "type": "string"
+        },
+        {
+          "name": "missing_preconditions",
+          "type": "string"
+        },
+        {
+          "name": "receipt_digest",
+          "type": "string"
+        },
+        {
+          "name": "diagnosis_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "id": "repo:beam4pm",
+      "type": "Repository",
+      "attributes": [
+        {
+          "name": "path",
+          "value": "/Users/sac/beam4pm",
+          "time": "2026-09-04T00:23:03.546699+00:00"
+        },
+        {
+          "name": "remote_url",
+          "value": "",
+          "time": "2026-09-04T00:23:03.546699+00:00"
+        },
+        {
+          "name": "default_branch",
+          "value": "main",
+          "time": "2026-09-04T00:23:03.546699+00:00"
+        }
+      ]
+    },
+    {
+      "id": "solver:astar-staged",
+      "type": "SolverImplementation",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.547993+00:00"
+        },
+        {
+          "name": "kind",
+          "value": "astar",
+          "time": "2026-09-04T00:23:03.547993+00:00"
+        },
+        {
+          "name": "version",
+          "value": "ws1",
+          "time": "2026-09-04T00:23:03.547993+00:00"
+        }
+      ]
+    },
+    {
+      "id": "gap:canonical_disallowed_consequential",
+      "type": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "AUTHORITY_GAP",
+          "time": "2026-09-04T00:23:03.549281+00:00"
+        },
+        {
+          "name": "planner",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.549281+00:00"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "ELIXIR_DEPS_READY",
+          "time": "2026-09-04T00:23:03.549281+00:00"
+        },
+        {
+          "name": "standing",
+          "value": "LAB_PROVEN",
+          "time": "2026-09-04T00:23:03.549281+00:00"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:43524c5d0c962dc5ccddc2220b52534a8f2b05025b177ca37534644caa09bd67",
+          "time": "2026-09-04T00:23:03.549281+00:00"
+        }
+      ]
+    },
+    {
+      "id": "gap:canonical_genuinely_absent_action",
+      "type": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "MANUFACTURING_GAP",
+          "time": "2026-09-04T00:23:03.551387+00:00"
+        },
+        {
+          "name": "planner",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.551387+00:00"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "ORACLE_ENV_SET",
+          "time": "2026-09-04T00:23:03.551387+00:00"
+        },
+        {
+          "name": "standing",
+          "value": "LAB_PROVEN",
+          "time": "2026-09-04T00:23:03.551387+00:00"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:265b8f08d56020c49212bdddbf646bf6f773a6cc11bc72a4614d5e59d56cd5ab",
+          "time": "2026-09-04T00:23:03.551387+00:00"
+        }
+      ]
+    },
+    {
+      "id": "gap:canonical_hidden_repo_action_mix_deps_get",
+      "type": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "ACTION_DISCOVERY_GAP",
+          "time": "2026-09-04T00:23:03.553444+00:00"
+        },
+        {
+          "name": "planner",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.553444+00:00"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "ELIXIR_DEPS_READY",
+          "time": "2026-09-04T00:23:03.553444+00:00"
+        },
+        {
+          "name": "standing",
+          "value": "LAB_PROVEN",
+          "time": "2026-09-04T00:23:03.553444+00:00"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:fb8120cecb2274a782a15c88213e548ac83acffbc3f30529c0e19f4d34226fe0",
+          "time": "2026-09-04T00:23:03.553444+00:00"
+        }
+      ]
+    },
+    {
+      "id": "gap:canonical_impossible_goal",
+      "type": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "GOAL_IMPOSSIBLE",
+          "time": "2026-09-04T00:23:03.555559+00:00"
+        },
+        {
+          "name": "planner",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.555559+00:00"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "MIX_TEST_GREEN",
+          "time": "2026-09-04T00:23:03.555559+00:00"
+        },
+        {
+          "name": "standing",
+          "value": "LAB_PROVEN",
+          "time": "2026-09-04T00:23:03.555559+00:00"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:cbe9839d95f515d5e62316842a90599ee4ae55921a58568ef9a8106ccfee434f",
+          "time": "2026-09-04T00:23:03.555559+00:00"
+        }
+      ]
+    },
+    {
+      "id": "gap:class_action_gap_manufacturer_registered",
+      "type": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "ACTION_GAP",
+          "time": "2026-09-04T00:23:03.557822+00:00"
+        },
+        {
+          "name": "planner",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.557822+00:00"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "ORACLE_ENV_SET",
+          "time": "2026-09-04T00:23:03.557822+00:00"
+        },
+        {
+          "name": "standing",
+          "value": "LAB_PROVEN",
+          "time": "2026-09-04T00:23:03.557822+00:00"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:292d84a040a599fd13342d0dc198554cdc371cec549047238e1eba6beea6d87c",
+          "time": "2026-09-04T00:23:03.557822+00:00"
+        }
+      ]
+    },
+    {
+      "id": "gap:class_authority_gap_domain_rejected",
+      "type": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "AUTHORITY_GAP",
+          "time": "2026-09-04T00:23:03.560230+00:00"
+        },
+        {
+          "name": "planner",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.560230+00:00"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "QUALIFICATION_COMPLETE",
+          "time": "2026-09-04T00:23:03.560230+00:00"
+        },
+        {
+          "name": "standing",
+          "value": "LAB_PROVEN",
+          "time": "2026-09-04T00:23:03.560230+00:00"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:378fe2310b1c7db117f6616dda3f55e83e3bdf5aec703c919f1376f2d7a8ce4e",
+          "time": "2026-09-04T00:23:03.560230+00:00"
+        }
+      ]
+    },
+    {
+      "id": "gap:class_knowledge_gap_marketplace_only",
+      "type": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "KNOWLEDGE_GAP",
+          "time": "2026-09-04T00:23:03.562749+00:00"
+        },
+        {
+          "name": "planner",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.562749+00:00"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "ORACLE_ENV_SET",
+          "time": "2026-09-04T00:23:03.562749+00:00"
+        },
+        {
+          "name": "standing",
+          "value": "LAB_PROVEN",
+          "time": "2026-09-04T00:23:03.562749+00:00"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:bf87c2b56484fbfa2f048b7dc6ff2c864527103d92418793a0fbbb61c542ba52",
+          "time": "2026-09-04T00:23:03.562749+00:00"
+        }
+      ]
+    },
+    {
+      "id": "gap:class_novel_information_gap_two_actions",
+      "type": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "NOVEL_INFORMATION_GAP",
+          "time": "2026-09-04T00:23:03.565377+00:00"
+        },
+        {
+          "name": "planner",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.565377+00:00"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "NATIVE_ORACLES_BUILT",
+          "time": "2026-09-04T00:23:03.565377+00:00"
+        },
+        {
+          "name": "standing",
+          "value": "LAB_PROVEN",
+          "time": "2026-09-04T00:23:03.565377+00:00"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:03de5a2f6910e2686e077d99eab29c62026fa3ee1299f3e4dc8edaf128ae7d27",
+          "time": "2026-09-04T00:23:03.565377+00:00"
+        }
+      ]
+    },
+    {
+      "id": "gap:class_observation_gap_sensor_missing",
+      "type": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "OBSERVATION_GAP",
+          "time": "2026-09-04T00:23:03.568146+00:00"
+        },
+        {
+          "name": "planner",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.568146+00:00"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "NATIVE_ORACLES_BUILT",
+          "time": "2026-09-04T00:23:03.568146+00:00"
+        },
+        {
+          "name": "standing",
+          "value": "LAB_PROVEN",
+          "time": "2026-09-04T00:23:03.568146+00:00"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:efc01b13049842ccd1f5821f418216201b3bf66f1fa7d365985dd8c6f4fe422f",
+          "time": "2026-09-04T00:23:03.568146+00:00"
+        }
+      ]
+    },
+    {
+      "id": "gap:class_observation_gap_sensor_stale",
+      "type": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "OBSERVATION_GAP",
+          "time": "2026-09-04T00:23:03.570970+00:00"
+        },
+        {
+          "name": "planner",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.570970+00:00"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "NATIVE_ORACLES_BUILT",
+          "time": "2026-09-04T00:23:03.570970+00:00"
+        },
+        {
+          "name": "standing",
+          "value": "LAB_PROVEN",
+          "time": "2026-09-04T00:23:03.570970+00:00"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:2b33d8e78b0ec15cc6846f2990d056508d49e7ad419b5fe39d13c4339948ff80",
+          "time": "2026-09-04T00:23:03.570970+00:00"
+        }
+      ]
+    },
+    {
+      "id": "gap:class_qualification_gap_env_absent",
+      "type": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "QUALIFICATION_GAP",
+          "time": "2026-09-04T00:23:03.573944+00:00"
+        },
+        {
+          "name": "planner",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.573944+00:00"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "MIX_TEST_GREEN",
+          "time": "2026-09-04T00:23:03.573944+00:00"
+        },
+        {
+          "name": "standing",
+          "value": "LAB_PROVEN",
+          "time": "2026-09-04T00:23:03.573944+00:00"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:47828edcef3ef6f976aed4d1f59e7a8dca24224de8648d08742de0ada2f67444",
+          "time": "2026-09-04T00:23:03.573944+00:00"
+        }
+      ]
+    },
+    {
+      "id": "gap:state_absent_action_no_manufacturer_no_sensor",
+      "type": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "MANUFACTURING_GAP",
+          "time": "2026-09-04T00:23:03.577097+00:00"
+        },
+        {
+          "name": "planner",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.577097+00:00"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "ORACLE_ENV_SET",
+          "time": "2026-09-04T00:23:03.577097+00:00"
+        },
+        {
+          "name": "standing",
+          "value": "LAB_PROVEN",
+          "time": "2026-09-04T00:23:03.577097+00:00"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:265b8f08d56020c49212bdddbf646bf6f773a6cc11bc72a4614d5e59d56cd5ab",
+          "time": "2026-09-04T00:23:03.577097+00:00"
+        }
+      ]
+    },
+    {
+      "id": "gap:state_command_exists_but_undocumented",
+      "type": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "ACTION_DISCOVERY_GAP",
+          "time": "2026-09-04T00:23:03.580316+00:00"
+        },
+        {
+          "name": "planner",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.580316+00:00"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "NATIVE_ORACLES_BUILT",
+          "time": "2026-09-04T00:23:03.580316+00:00"
+        },
+        {
+          "name": "standing",
+          "value": "LAB_PROVEN",
+          "time": "2026-09-04T00:23:03.580316+00:00"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:47ac6bc2f50b73c496213383524bac4d459978b6cbcfca8c096f68b3438a9547",
+          "time": "2026-09-04T00:23:03.580316+00:00"
+        }
+      ]
+    },
+    {
+      "id": "gap:state_command_only_in_ci",
+      "type": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "ACTION_DISCOVERY_GAP",
+          "time": "2026-09-04T00:23:03.583639+00:00"
+        },
+        {
+          "name": "planner",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.583639+00:00"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "ORACLE_ENV_SET",
+          "time": "2026-09-04T00:23:03.583639+00:00"
+        },
+        {
+          "name": "standing",
+          "value": "LAB_PROVEN",
+          "time": "2026-09-04T00:23:03.583639+00:00"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:9ab0278bc5a5591f6400d82920273a18a15cf0930e7ddf0c77f3fdbf979a6157",
+          "time": "2026-09-04T00:23:03.583639+00:00"
+        }
+      ]
+    },
+    {
+      "id": "gap:state_command_only_in_generated_code",
+      "type": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "ACTION_DISCOVERY_GAP",
+          "time": "2026-09-04T00:23:03.587100+00:00"
+        },
+        {
+          "name": "planner",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.587100+00:00"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "NATIVE_ORACLES_BUILT",
+          "time": "2026-09-04T00:23:03.587100+00:00"
+        },
+        {
+          "name": "standing",
+          "value": "LAB_PROVEN",
+          "time": "2026-09-04T00:23:03.587100+00:00"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:55505e1d6c7c0916d1c63922f10de6daa2382841b2ae6a5a61ae77693d7d9d26",
+          "time": "2026-09-04T00:23:03.587100+00:00"
+        }
+      ]
+    },
+    {
+      "id": "gap:state_command_requires_credential",
+      "type": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "AUTHORITY_GAP",
+          "time": "2026-09-04T00:23:03.590680+00:00"
+        },
+        {
+          "name": "planner",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.590680+00:00"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "ORACLE_ENV_SET",
+          "time": "2026-09-04T00:23:03.590680+00:00"
+        },
+        {
+          "name": "standing",
+          "value": "LAB_PROVEN",
+          "time": "2026-09-04T00:23:03.590680+00:00"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:3400312696cd0dfd7e37ce94d7961ff9c7826126ddbac2289203e2b177d0e744",
+          "time": "2026-09-04T00:23:03.590680+00:00"
+        }
+      ]
+    },
+    {
+      "id": "gap:state_command_requires_credential_granted",
+      "type": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "ACTION_DISCOVERY_GAP",
+          "time": "2026-09-04T00:23:03.594463+00:00"
+        },
+        {
+          "name": "planner",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.594463+00:00"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "ORACLE_ENV_SET",
+          "time": "2026-09-04T00:23:03.594463+00:00"
+        },
+        {
+          "name": "standing",
+          "value": "LAB_PROVEN",
+          "time": "2026-09-04T00:23:03.594463+00:00"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:1edf7e29b536e9e0439cb0d7f151a7352f0c7bfa5b41025d69b9b6611356458c",
+          "time": "2026-09-04T00:23:03.594463+00:00"
+        }
+      ]
+    },
+    {
+      "id": "gap:state_goal_self_contradictory",
+      "type": "GapDiagnosis",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "GOAL_IMPOSSIBLE",
+          "time": "2026-09-04T00:23:03.598337+00:00"
+        },
+        {
+          "name": "planner",
+          "value": "astar/staged-qualification",
+          "time": "2026-09-04T00:23:03.598337+00:00"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "MIX_TEST_GREEN",
+          "time": "2026-09-04T00:23:03.598337+00:00"
+        },
+        {
+          "name": "standing",
+          "value": "LAB_PROVEN",
+          "time": "2026-09-04T00:23:03.598337+00:00"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:b2636fc02b7f750824d1d86a5a175eb36c39faf5a27017a07572209d6d4a3495",
+          "time": "2026-09-04T00:23:03.598337+00:00"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "ev:gapdiagnosed:canonical_disallowed_consequential",
+      "type": "GapDiagnosed",
+      "time": "2026-09-04T00:23:03.550324+00:00",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "AUTHORITY_GAP"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "ELIXIR_DEPS_READY"
+        },
+        {
+          "name": "missing_preconditions",
+          "value": "ELIXIR_DEPS_READY"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:43524c5d0c962dc5ccddc2220b52534a8f2b05025b177ca37534644caa09bd67"
+        },
+        {
+          "name": "diagnosis_json",
+          "value": "{\"explored_actions\":[\"git submodule update --init --recursive\",\"make sync\",\"make lint_truth\",\"cargo test --workspace\",\"mix test\",\"qualify\"],\"gap_type\":\"AUTHORITY_GAP\",\"goal\":{\"MIX_TEST_GREEN\":true,\"QUALIFICATION_COMPLETE\":true},\"initial_world_state\":{\"ELIXIR_DEPS_READY\":false,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":false,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true,\"observed\":{\"mix_test_exit\":1,\"mix_test_stderr\":\"Unchecked dependencies ... run \\\"mix deps.get\\\"\",\"rust_tests_passed\":1548}},\"missing_preconditions\":[\"ELIXIR_DEPS_READY\"],\"planner\":\"astar/staged-qualification\",\"receipt_digest\":\"sha256:43524c5d0c962dc5ccddc2220b52534a8f2b05025b177ca37534644caa09bd67\",\"rejected_actions\":[],\"standing\":\"LAB_PROVEN\",\"supporting_observations\":[\"rm -rf _build deps && mix deps.get is destructive and policy forbids destructive actions\"],\"unavailable_transition\":\"ELIXIR_DEPS_READY\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "gap:canonical_disallowed_consequential",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-staged",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:gapdiagnosed:canonical_genuinely_absent_action",
+      "type": "GapDiagnosed",
+      "time": "2026-09-04T00:23:03.552351+00:00",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "MANUFACTURING_GAP"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "ORACLE_ENV_SET"
+        },
+        {
+          "name": "missing_preconditions",
+          "value": "ORACLE_ENV_SET"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:265b8f08d56020c49212bdddbf646bf6f773a6cc11bc72a4614d5e59d56cd5ab"
+        },
+        {
+          "name": "diagnosis_json",
+          "value": "{\"explored_actions\":[\"git submodule update --init --recursive\",\"make sync\",\"make lint_truth\",\"cargo test --workspace\",\"mix test\",\"qualify\"],\"gap_type\":\"MANUFACTURING_GAP\",\"goal\":{\"MIX_TEST_GREEN\":true,\"QUALIFICATION_COMPLETE\":true},\"initial_world_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true,\"observed\":{\"failure_classes\":[\"System.EnvError RF3_ORACLE_BIN not set\",\"RuntimeError rf1-dfg-oracle binary not found\"],\"failures\":18,\"mix_test_exit\":2,\"mix_tests\":2393,\"skipped\":92}},\"missing_preconditions\":[\"ORACLE_ENV_SET\"],\"planner\":\"astar/staged-qualification\",\"receipt_digest\":\"sha256:265b8f08d56020c49212bdddbf646bf6f773a6cc11bc72a4614d5e59d56cd5ab\",\"rejected_actions\":[],\"standing\":\"LAB_PROVEN\",\"supporting_observations\":[\"no action and no manufacturer supplies ORACLE_ENV_SET\"],\"unavailable_transition\":\"ORACLE_ENV_SET\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "gap:canonical_genuinely_absent_action",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-staged",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:gapdiagnosed:canonical_hidden_repo_action_mix_deps_get",
+      "type": "GapDiagnosed",
+      "time": "2026-09-04T00:23:03.554458+00:00",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "ACTION_DISCOVERY_GAP"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "ELIXIR_DEPS_READY"
+        },
+        {
+          "name": "missing_preconditions",
+          "value": "ELIXIR_DEPS_READY"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:fb8120cecb2274a782a15c88213e548ac83acffbc3f30529c0e19f4d34226fe0"
+        },
+        {
+          "name": "diagnosis_json",
+          "value": "{\"explored_actions\":[\"git submodule update --init --recursive\",\"make sync\",\"make lint_truth\",\"cargo test --workspace\",\"mix test\",\"qualify\"],\"gap_type\":\"ACTION_DISCOVERY_GAP\",\"goal\":{\"MIX_TEST_GREEN\":true,\"QUALIFICATION_COMPLETE\":true},\"initial_world_state\":{\"ELIXIR_DEPS_READY\":false,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":false,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true,\"observed\":{\"mix_test_exit\":1,\"mix_test_stderr\":\"Unchecked dependencies ... run \\\"mix deps.get\\\"\",\"rust_tests_passed\":1548}},\"missing_preconditions\":[\"ELIXIR_DEPS_READY\"],\"planner\":\"astar/staged-qualification\",\"receipt_digest\":\"sha256:fb8120cecb2274a782a15c88213e548ac83acffbc3f30529c0e19f4d34226fe0\",\"rejected_actions\":[],\"standing\":\"LAB_PROVEN\",\"supporting_observations\":[\"repo-surface action 'mix deps.get' (source=mix.exs+README, documented=True) supplies ELIXIR_DEPS_READY but is absent from domain\"],\"unavailable_transition\":\"ELIXIR_DEPS_READY\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "gap:canonical_hidden_repo_action_mix_deps_get",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-staged",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:gapdiagnosed:canonical_impossible_goal",
+      "type": "GapDiagnosed",
+      "time": "2026-09-04T00:23:03.556642+00:00",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "GOAL_IMPOSSIBLE"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "MIX_TEST_GREEN"
+        },
+        {
+          "name": "missing_preconditions",
+          "value": "MIX_TEST_GREEN"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:cbe9839d95f515d5e62316842a90599ee4ae55921a58568ef9a8106ccfee434f"
+        },
+        {
+          "name": "diagnosis_json",
+          "value": "{\"explored_actions\":[\"git submodule update --init --recursive\",\"make sync\",\"make lint_truth\",\"cargo test --workspace\",\"mix test\",\"qualify\"],\"gap_type\":\"GOAL_IMPOSSIBLE\",\"goal\":{\"MIX_TEST_GREEN\":true,\"QUALIFICATION_COMPLETE\":true},\"initial_world_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true,\"observed\":{\"failure_classes\":[\"System.EnvError RF3_ORACLE_BIN not set\",\"RuntimeError rf1-dfg-oracle binary not found\"],\"failures\":18,\"mix_test_exit\":2,\"mix_tests\":2393,\"skipped\":92}},\"missing_preconditions\":[\"MIX_TEST_GREEN\"],\"planner\":\"astar/staged-qualification\",\"receipt_digest\":\"sha256:cbe9839d95f515d5e62316842a90599ee4ae55921a58568ef9a8106ccfee434f\",\"rejected_actions\":[],\"standing\":\"LAB_PROVEN\",\"supporting_observations\":[\"goal requires MIX_TEST_GREEN=True but invariant fixes MIX_TEST_GREEN=False\"],\"unavailable_transition\":\"MIX_TEST_GREEN\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "gap:canonical_impossible_goal",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-staged",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:gapdiagnosed:class_action_gap_manufacturer_registered",
+      "type": "GapDiagnosed",
+      "time": "2026-09-04T00:23:03.558963+00:00",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "ACTION_GAP"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "ORACLE_ENV_SET"
+        },
+        {
+          "name": "missing_preconditions",
+          "value": "ORACLE_ENV_SET"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:292d84a040a599fd13342d0dc198554cdc371cec549047238e1eba6beea6d87c"
+        },
+        {
+          "name": "diagnosis_json",
+          "value": "{\"explored_actions\":[\"git submodule update --init --recursive\",\"make sync\",\"make lint_truth\",\"cargo test --workspace\",\"mix test\",\"qualify\"],\"gap_type\":\"ACTION_GAP\",\"goal\":{\"MIX_TEST_GREEN\":true,\"QUALIFICATION_COMPLETE\":true},\"initial_world_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true,\"observed\":{\"failure_classes\":[\"System.EnvError RF3_ORACLE_BIN not set\",\"RuntimeError rf1-dfg-oracle binary not found\"],\"failures\":18,\"mix_test_exit\":2,\"mix_tests\":2393,\"skipped\":92}},\"missing_preconditions\":[\"ORACLE_ENV_SET\"],\"planner\":\"astar/staged-qualification\",\"receipt_digest\":\"sha256:292d84a040a599fd13342d0dc198554cdc371cec549047238e1eba6beea6d87c\",\"rejected_actions\":[],\"standing\":\"LAB_PROVEN\",\"supporting_observations\":[\"no action supplies ORACLE_ENV_SET; manufacturer(s) ['ggen:envrc-generator'] registered\"],\"unavailable_transition\":\"ORACLE_ENV_SET\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "gap:class_action_gap_manufacturer_registered",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-staged",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:gapdiagnosed:class_authority_gap_domain_rejected",
+      "type": "GapDiagnosed",
+      "time": "2026-09-04T00:23:03.561437+00:00",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "AUTHORITY_GAP"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "QUALIFICATION_COMPLETE"
+        },
+        {
+          "name": "missing_preconditions",
+          "value": "QUALIFICATION_COMPLETE"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:378fe2310b1c7db117f6616dda3f55e83e3bdf5aec703c919f1376f2d7a8ce4e"
+        },
+        {
+          "name": "diagnosis_json",
+          "value": "{\"explored_actions\":[\"git submodule update --init --recursive\",\"make sync\",\"make lint_truth\",\"cargo test --workspace\",\"mix test\",\"qualify\"],\"gap_type\":\"AUTHORITY_GAP\",\"goal\":{\"MIX_TEST_GREEN\":true,\"QUALIFICATION_COMPLETE\":true},\"initial_world_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true,\"observed\":{\"failure_classes\":[\"System.EnvError RF3_ORACLE_BIN not set\",\"RuntimeError rf1-dfg-oracle binary not found\"],\"failures\":18,\"mix_test_exit\":2,\"mix_tests\":2393,\"skipped\":92}},\"missing_preconditions\":[\"QUALIFICATION_COMPLETE\"],\"planner\":\"astar/staged-qualification\",\"receipt_digest\":\"sha256:378fe2310b1c7db117f6616dda3f55e83e3bdf5aec703c919f1376f2d7a8ce4e\",\"rejected_actions\":[{\"name\":\"qualify\",\"reason\":\"authority: no AuthorityDecision for consequential step\"}],\"standing\":\"LAB_PROVEN\",\"supporting_observations\":[\"domain action(s) ['qualify'] rejected by authority: ['authority: no AuthorityDecision for consequential step']\"],\"unavailable_transition\":\"QUALIFICATION_COMPLETE\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "gap:class_authority_gap_domain_rejected",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-staged",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:gapdiagnosed:class_knowledge_gap_marketplace_only",
+      "type": "GapDiagnosed",
+      "time": "2026-09-04T00:23:03.563998+00:00",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "KNOWLEDGE_GAP"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "ORACLE_ENV_SET"
+        },
+        {
+          "name": "missing_preconditions",
+          "value": "ORACLE_ENV_SET"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:bf87c2b56484fbfa2f048b7dc6ff2c864527103d92418793a0fbbb61c542ba52"
+        },
+        {
+          "name": "diagnosis_json",
+          "value": "{\"explored_actions\":[\"git submodule update --init --recursive\",\"make sync\",\"make lint_truth\",\"cargo test --workspace\",\"mix test\",\"qualify\"],\"gap_type\":\"KNOWLEDGE_GAP\",\"goal\":{\"MIX_TEST_GREEN\":true,\"QUALIFICATION_COMPLETE\":true},\"initial_world_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true,\"observed\":{\"failure_classes\":[\"System.EnvError RF3_ORACLE_BIN not set\",\"RuntimeError rf1-dfg-oracle binary not found\"],\"failures\":18,\"mix_test_exit\":2,\"mix_tests\":2393,\"skipped\":92}},\"missing_preconditions\":[\"ORACLE_ENV_SET\"],\"planner\":\"astar/staged-qualification\",\"receipt_digest\":\"sha256:bf87c2b56484fbfa2f048b7dc6ff2c864527103d92418793a0fbbb61c542ba52\",\"rejected_actions\":[],\"standing\":\"LAB_PROVEN\",\"supporting_observations\":[\"ORACLE_ENV_SET supplied only by marketplace pack(s) ['ggen pack apply oracle-env']; semantics not yet in domain or repo\"],\"unavailable_transition\":\"ORACLE_ENV_SET\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "gap:class_knowledge_gap_marketplace_only",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-staged",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:gapdiagnosed:class_novel_information_gap_two_actions",
+      "type": "GapDiagnosed",
+      "time": "2026-09-04T00:23:03.566734+00:00",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "NOVEL_INFORMATION_GAP"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "NATIVE_ORACLES_BUILT"
+        },
+        {
+          "name": "missing_preconditions",
+          "value": "NATIVE_ORACLES_BUILT"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:03de5a2f6910e2686e077d99eab29c62026fa3ee1299f3e4dc8edaf128ae7d27"
+        },
+        {
+          "name": "diagnosis_json",
+          "value": "{\"explored_actions\":[\"git submodule update --init --recursive\",\"make sync\",\"make lint_truth\",\"cargo test --workspace\",\"mix test\",\"qualify\"],\"gap_type\":\"NOVEL_INFORMATION_GAP\",\"goal\":{\"MIX_TEST_GREEN\":true,\"QUALIFICATION_COMPLETE\":true},\"initial_world_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true,\"observed\":{\"failure_classes\":[\"System.EnvError RF3_ORACLE_BIN not set\",\"RuntimeError rf1-dfg-oracle binary not found\"],\"failures\":18,\"mix_test_exit\":2,\"mix_tests\":2393,\"skipped\":92}},\"missing_preconditions\":[\"NATIVE_ORACLES_BUILT\"],\"planner\":\"astar/staged-qualification\",\"receipt_digest\":\"sha256:03de5a2f6910e2686e077d99eab29c62026fa3ee1299f3e4dc8edaf128ae7d27\",\"rejected_actions\":[],\"standing\":\"LAB_PROVEN\",\"supporting_observations\":[\"2 admissible undominated repo actions supply NATIVE_ORACLES_BUILT: ['cargo build --release (native/rf1-dfg-oracle)', 'make oracles']\"],\"unavailable_transition\":\"NATIVE_ORACLES_BUILT\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "gap:class_novel_information_gap_two_actions",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-staged",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:gapdiagnosed:class_observation_gap_sensor_missing",
+      "type": "GapDiagnosed",
+      "time": "2026-09-04T00:23:03.569505+00:00",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "OBSERVATION_GAP"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "NATIVE_ORACLES_BUILT"
+        },
+        {
+          "name": "missing_preconditions",
+          "value": "NATIVE_ORACLES_BUILT"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:efc01b13049842ccd1f5821f418216201b3bf66f1fa7d365985dd8c6f4fe422f"
+        },
+        {
+          "name": "diagnosis_json",
+          "value": "{\"explored_actions\":[\"git submodule update --init --recursive\",\"make sync\",\"make lint_truth\",\"cargo test --workspace\",\"mix test\",\"qualify\"],\"gap_type\":\"OBSERVATION_GAP\",\"goal\":{\"MIX_TEST_GREEN\":true,\"QUALIFICATION_COMPLETE\":true},\"initial_world_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true,\"observed\":{\"failure_classes\":[\"System.EnvError RF3_ORACLE_BIN not set\",\"RuntimeError rf1-dfg-oracle binary not found\"],\"failures\":18,\"mix_test_exit\":2,\"mix_tests\":2393,\"skipped\":92}},\"missing_preconditions\":[\"NATIVE_ORACLES_BUILT\"],\"planner\":\"astar/staged-qualification\",\"receipt_digest\":\"sha256:efc01b13049842ccd1f5821f418216201b3bf66f1fa7d365985dd8c6f4fe422f\",\"rejected_actions\":[],\"standing\":\"LAB_PROVEN\",\"supporting_observations\":[\"sensor for NATIVE_ORACLES_BUILT is missing; suppliers exist (['cargo build --release (native/rf1-dfg-oracle)'])\"],\"unavailable_transition\":\"NATIVE_ORACLES_BUILT\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "gap:class_observation_gap_sensor_missing",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-staged",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:gapdiagnosed:class_observation_gap_sensor_stale",
+      "type": "GapDiagnosed",
+      "time": "2026-09-04T00:23:03.572413+00:00",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "OBSERVATION_GAP"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "NATIVE_ORACLES_BUILT"
+        },
+        {
+          "name": "missing_preconditions",
+          "value": "NATIVE_ORACLES_BUILT"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:2b33d8e78b0ec15cc6846f2990d056508d49e7ad419b5fe39d13c4339948ff80"
+        },
+        {
+          "name": "diagnosis_json",
+          "value": "{\"explored_actions\":[\"git submodule update --init --recursive\",\"make sync\",\"make lint_truth\",\"cargo test --workspace\",\"mix test\",\"qualify\"],\"gap_type\":\"OBSERVATION_GAP\",\"goal\":{\"MIX_TEST_GREEN\":true,\"QUALIFICATION_COMPLETE\":true},\"initial_world_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true,\"observed\":{\"failure_classes\":[\"System.EnvError RF3_ORACLE_BIN not set\",\"RuntimeError rf1-dfg-oracle binary not found\"],\"failures\":18,\"mix_test_exit\":2,\"mix_tests\":2393,\"skipped\":92}},\"missing_preconditions\":[\"NATIVE_ORACLES_BUILT\"],\"planner\":\"astar/staged-qualification\",\"receipt_digest\":\"sha256:2b33d8e78b0ec15cc6846f2990d056508d49e7ad419b5fe39d13c4339948ff80\",\"rejected_actions\":[],\"standing\":\"LAB_PROVEN\",\"supporting_observations\":[\"sensor for NATIVE_ORACLES_BUILT is stale; suppliers exist (['cargo build --release (native/rf1-dfg-oracle)'])\"],\"unavailable_transition\":\"NATIVE_ORACLES_BUILT\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "gap:class_observation_gap_sensor_stale",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-staged",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:gapdiagnosed:class_qualification_gap_env_absent",
+      "type": "GapDiagnosed",
+      "time": "2026-09-04T00:23:03.575448+00:00",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "QUALIFICATION_GAP"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "MIX_TEST_GREEN"
+        },
+        {
+          "name": "missing_preconditions",
+          "value": "MIX_TEST_GREEN"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:47828edcef3ef6f976aed4d1f59e7a8dca24224de8648d08742de0ada2f67444"
+        },
+        {
+          "name": "diagnosis_json",
+          "value": "{\"explored_actions\":[\"git submodule update --init --recursive\",\"make sync\",\"make lint_truth\",\"cargo test --workspace\",\"mix test\",\"qualify\"],\"gap_type\":\"QUALIFICATION_GAP\",\"goal\":{\"MIX_TEST_GREEN\":true,\"QUALIFICATION_COMPLETE\":true},\"initial_world_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true,\"observed\":{\"failure_classes\":[\"System.EnvError RF3_ORACLE_BIN not set\",\"RuntimeError rf1-dfg-oracle binary not found\"],\"failures\":18,\"mix_test_exit\":2,\"mix_tests\":2393,\"skipped\":92}},\"missing_preconditions\":[\"MIX_TEST_GREEN\"],\"planner\":\"astar/staged-qualification\",\"receipt_digest\":\"sha256:47828edcef3ef6f976aed4d1f59e7a8dca24224de8648d08742de0ada2f67444\",\"rejected_actions\":[],\"standing\":\"LAB_PROVEN\",\"supporting_observations\":[\"domain action(s) ['mix test'] supply MIX_TEST_GREEN but no qualification environment\"],\"unavailable_transition\":\"MIX_TEST_GREEN\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "gap:class_qualification_gap_env_absent",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-staged",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:gapdiagnosed:state_absent_action_no_manufacturer_no_sensor",
+      "type": "GapDiagnosed",
+      "time": "2026-09-04T00:23:03.578670+00:00",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "MANUFACTURING_GAP"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "ORACLE_ENV_SET"
+        },
+        {
+          "name": "missing_preconditions",
+          "value": "ORACLE_ENV_SET"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:265b8f08d56020c49212bdddbf646bf6f773a6cc11bc72a4614d5e59d56cd5ab"
+        },
+        {
+          "name": "diagnosis_json",
+          "value": "{\"explored_actions\":[\"git submodule update --init --recursive\",\"make sync\",\"make lint_truth\",\"cargo test --workspace\",\"mix test\",\"qualify\"],\"gap_type\":\"MANUFACTURING_GAP\",\"goal\":{\"MIX_TEST_GREEN\":true,\"QUALIFICATION_COMPLETE\":true},\"initial_world_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true,\"observed\":{\"failure_classes\":[\"System.EnvError RF3_ORACLE_BIN not set\",\"RuntimeError rf1-dfg-oracle binary not found\"],\"failures\":18,\"mix_test_exit\":2,\"mix_tests\":2393,\"skipped\":92}},\"missing_preconditions\":[\"ORACLE_ENV_SET\"],\"planner\":\"astar/staged-qualification\",\"receipt_digest\":\"sha256:265b8f08d56020c49212bdddbf646bf6f773a6cc11bc72a4614d5e59d56cd5ab\",\"rejected_actions\":[],\"standing\":\"LAB_PROVEN\",\"supporting_observations\":[\"no action and no manufacturer supplies ORACLE_ENV_SET\"],\"unavailable_transition\":\"ORACLE_ENV_SET\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "gap:state_absent_action_no_manufacturer_no_sensor",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-staged",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:gapdiagnosed:state_command_exists_but_undocumented",
+      "type": "GapDiagnosed",
+      "time": "2026-09-04T00:23:03.581935+00:00",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "ACTION_DISCOVERY_GAP"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "NATIVE_ORACLES_BUILT"
+        },
+        {
+          "name": "missing_preconditions",
+          "value": "NATIVE_ORACLES_BUILT"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:47ac6bc2f50b73c496213383524bac4d459978b6cbcfca8c096f68b3438a9547"
+        },
+        {
+          "name": "diagnosis_json",
+          "value": "{\"explored_actions\":[\"git submodule update --init --recursive\",\"make sync\",\"make lint_truth\",\"cargo test --workspace\",\"mix test\",\"qualify\"],\"gap_type\":\"ACTION_DISCOVERY_GAP\",\"goal\":{\"MIX_TEST_GREEN\":true,\"QUALIFICATION_COMPLETE\":true},\"initial_world_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true,\"observed\":{\"failure_classes\":[\"System.EnvError RF3_ORACLE_BIN not set\",\"RuntimeError rf1-dfg-oracle binary not found\"],\"failures\":18,\"mix_test_exit\":2,\"mix_tests\":2393,\"skipped\":92}},\"missing_preconditions\":[\"NATIVE_ORACLES_BUILT\"],\"planner\":\"astar/staged-qualification\",\"receipt_digest\":\"sha256:47ac6bc2f50b73c496213383524bac4d459978b6cbcfca8c096f68b3438a9547\",\"rejected_actions\":[],\"standing\":\"LAB_PROVEN\",\"supporting_observations\":[\"repo-surface action 'cargo build --release' (source=shell-history, documented=False) supplies NATIVE_ORACLES_BUILT but is absent from domain\"],\"unavailable_transition\":\"NATIVE_ORACLES_BUILT\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "gap:state_command_exists_but_undocumented",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-staged",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:gapdiagnosed:state_command_only_in_ci",
+      "type": "GapDiagnosed",
+      "time": "2026-09-04T00:23:03.585324+00:00",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "ACTION_DISCOVERY_GAP"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "ORACLE_ENV_SET"
+        },
+        {
+          "name": "missing_preconditions",
+          "value": "ORACLE_ENV_SET"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:9ab0278bc5a5591f6400d82920273a18a15cf0930e7ddf0c77f3fdbf979a6157"
+        },
+        {
+          "name": "diagnosis_json",
+          "value": "{\"explored_actions\":[\"git submodule update --init --recursive\",\"make sync\",\"make lint_truth\",\"cargo test --workspace\",\"mix test\",\"qualify\"],\"gap_type\":\"ACTION_DISCOVERY_GAP\",\"goal\":{\"MIX_TEST_GREEN\":true,\"QUALIFICATION_COMPLETE\":true},\"initial_world_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true,\"observed\":{\"failure_classes\":[\"System.EnvError RF3_ORACLE_BIN not set\",\"RuntimeError rf1-dfg-oracle binary not found\"],\"failures\":18,\"mix_test_exit\":2,\"mix_tests\":2393,\"skipped\":92}},\"missing_preconditions\":[\"ORACLE_ENV_SET\"],\"planner\":\"astar/staged-qualification\",\"receipt_digest\":\"sha256:9ab0278bc5a5591f6400d82920273a18a15cf0930e7ddf0c77f3fdbf979a6157\",\"rejected_actions\":[],\"standing\":\"LAB_PROVEN\",\"supporting_observations\":[\"repo-surface action 'export RF3_ORACLE_BIN=native/rf3/target/release/rf3' (source=ci, documented=True) supplies ORACLE_ENV_SET but is absent from domain\"],\"unavailable_transition\":\"ORACLE_ENV_SET\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "gap:state_command_only_in_ci",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-staged",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:gapdiagnosed:state_command_only_in_generated_code",
+      "type": "GapDiagnosed",
+      "time": "2026-09-04T00:23:03.588835+00:00",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "ACTION_DISCOVERY_GAP"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "NATIVE_ORACLES_BUILT"
+        },
+        {
+          "name": "missing_preconditions",
+          "value": "NATIVE_ORACLES_BUILT"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:55505e1d6c7c0916d1c63922f10de6daa2382841b2ae6a5a61ae77693d7d9d26"
+        },
+        {
+          "name": "diagnosis_json",
+          "value": "{\"explored_actions\":[\"git submodule update --init --recursive\",\"make sync\",\"make lint_truth\",\"cargo test --workspace\",\"mix test\",\"qualify\"],\"gap_type\":\"ACTION_DISCOVERY_GAP\",\"goal\":{\"MIX_TEST_GREEN\":true,\"QUALIFICATION_COMPLETE\":true},\"initial_world_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true,\"observed\":{\"failure_classes\":[\"System.EnvError RF3_ORACLE_BIN not set\",\"RuntimeError rf1-dfg-oracle binary not found\"],\"failures\":18,\"mix_test_exit\":2,\"mix_tests\":2393,\"skipped\":92}},\"missing_preconditions\":[\"NATIVE_ORACLES_BUILT\"],\"planner\":\"astar/staged-qualification\",\"receipt_digest\":\"sha256:55505e1d6c7c0916d1c63922f10de6daa2382841b2ae6a5a61ae77693d7d9d26\",\"rejected_actions\":[],\"standing\":\"LAB_PROVEN\",\"supporting_observations\":[\"repo-surface action 'generated build.rs: build_oracle()' (source=generated, documented=True) supplies NATIVE_ORACLES_BUILT but is absent from domain\"],\"unavailable_transition\":\"NATIVE_ORACLES_BUILT\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "gap:state_command_only_in_generated_code",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-staged",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:gapdiagnosed:state_command_requires_credential",
+      "type": "GapDiagnosed",
+      "time": "2026-09-04T00:23:03.592503+00:00",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "AUTHORITY_GAP"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "ORACLE_ENV_SET"
+        },
+        {
+          "name": "missing_preconditions",
+          "value": "ORACLE_ENV_SET"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:3400312696cd0dfd7e37ce94d7961ff9c7826126ddbac2289203e2b177d0e744"
+        },
+        {
+          "name": "diagnosis_json",
+          "value": "{\"explored_actions\":[\"git submodule update --init --recursive\",\"make sync\",\"make lint_truth\",\"cargo test --workspace\",\"mix test\",\"qualify\"],\"gap_type\":\"AUTHORITY_GAP\",\"goal\":{\"MIX_TEST_GREEN\":true,\"QUALIFICATION_COMPLETE\":true},\"initial_world_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true,\"observed\":{\"failure_classes\":[\"System.EnvError RF3_ORACLE_BIN not set\",\"RuntimeError rf1-dfg-oracle binary not found\"],\"failures\":18,\"mix_test_exit\":2,\"mix_tests\":2393,\"skipped\":92}},\"missing_preconditions\":[\"ORACLE_ENV_SET\"],\"planner\":\"astar/staged-qualification\",\"receipt_digest\":\"sha256:3400312696cd0dfd7e37ce94d7961ff9c7826126ddbac2289203e2b177d0e744\",\"rejected_actions\":[],\"standing\":\"LAB_PROVEN\",\"supporting_observations\":[\"gh release download rf3-oracle requires credential 'GH_TOKEN' with no grant\"],\"unavailable_transition\":\"ORACLE_ENV_SET\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "gap:state_command_requires_credential",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-staged",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:gapdiagnosed:state_command_requires_credential_granted",
+      "type": "GapDiagnosed",
+      "time": "2026-09-04T00:23:03.596353+00:00",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "ACTION_DISCOVERY_GAP"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "ORACLE_ENV_SET"
+        },
+        {
+          "name": "missing_preconditions",
+          "value": "ORACLE_ENV_SET"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:1edf7e29b536e9e0439cb0d7f151a7352f0c7bfa5b41025d69b9b6611356458c"
+        },
+        {
+          "name": "diagnosis_json",
+          "value": "{\"explored_actions\":[\"git submodule update --init --recursive\",\"make sync\",\"make lint_truth\",\"cargo test --workspace\",\"mix test\",\"qualify\"],\"gap_type\":\"ACTION_DISCOVERY_GAP\",\"goal\":{\"MIX_TEST_GREEN\":true,\"QUALIFICATION_COMPLETE\":true},\"initial_world_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true,\"observed\":{\"failure_classes\":[\"System.EnvError RF3_ORACLE_BIN not set\",\"RuntimeError rf1-dfg-oracle binary not found\"],\"failures\":18,\"mix_test_exit\":2,\"mix_tests\":2393,\"skipped\":92}},\"missing_preconditions\":[\"ORACLE_ENV_SET\"],\"planner\":\"astar/staged-qualification\",\"receipt_digest\":\"sha256:1edf7e29b536e9e0439cb0d7f151a7352f0c7bfa5b41025d69b9b6611356458c\",\"rejected_actions\":[],\"standing\":\"LAB_PROVEN\",\"supporting_observations\":[\"repo-surface action 'gh release download rf3-oracle' (source=docs, documented=True) supplies ORACLE_ENV_SET but is absent from domain\"],\"unavailable_transition\":\"ORACLE_ENV_SET\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "gap:state_command_requires_credential_granted",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-staged",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:gapdiagnosed:state_goal_self_contradictory",
+      "type": "GapDiagnosed",
+      "time": "2026-09-04T00:23:03.600286+00:00",
+      "attributes": [
+        {
+          "name": "gap_type",
+          "value": "GOAL_IMPOSSIBLE"
+        },
+        {
+          "name": "unavailable_transition",
+          "value": "MIX_TEST_GREEN"
+        },
+        {
+          "name": "missing_preconditions",
+          "value": "MIX_TEST_GREEN"
+        },
+        {
+          "name": "receipt_digest",
+          "value": "sha256:b2636fc02b7f750824d1d86a5a175eb36c39faf5a27017a07572209d6d4a3495"
+        },
+        {
+          "name": "diagnosis_json",
+          "value": "{\"explored_actions\":[\"git submodule update --init --recursive\",\"make sync\",\"make lint_truth\",\"cargo test --workspace\",\"mix test\",\"qualify\"],\"gap_type\":\"GOAL_IMPOSSIBLE\",\"goal\":{\"MIX_TEST_GREEN\":true,\"NOT_MIX_TEST_GREEN\":true},\"initial_world_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true,\"observed\":{\"failure_classes\":[\"System.EnvError RF3_ORACLE_BIN not set\",\"RuntimeError rf1-dfg-oracle binary not found\"],\"failures\":18,\"mix_test_exit\":2,\"mix_tests\":2393,\"skipped\":92}},\"missing_preconditions\":[\"MIX_TEST_GREEN\"],\"planner\":\"astar/staged-qualification\",\"receipt_digest\":\"sha256:b2636fc02b7f750824d1d86a5a175eb36c39faf5a27017a07572209d6d4a3495\",\"rejected_actions\":[],\"standing\":\"LAB_PROVEN\",\"supporting_observations\":[\"goal asserts MIX_TEST_GREEN=True and NOT_MIX_TEST_GREEN=True simultaneously\"],\"unavailable_transition\":\"MIX_TEST_GREEN\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "gap:state_goal_self_contradictory",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-staged",
+          "qualifier": ""
+        }
+      ]
+    }
+  ]
+}

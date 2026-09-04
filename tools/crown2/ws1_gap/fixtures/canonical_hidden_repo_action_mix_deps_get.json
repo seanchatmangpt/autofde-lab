@@ -1,0 +1,169 @@
+{
+  "authority_policy": {
+    "credential_grants": [],
+    "forbid_destructive": true,
+    "forbidden_actions": [
+      "git push --force"
+    ]
+  },
+  "domain_actions": [
+    {
+      "name": "git submodule update --init --recursive",
+      "provides": [
+        "SUBMODULES_READY"
+      ],
+      "requires": []
+    },
+    {
+      "name": "make sync",
+      "provides": [
+        "SYNC_READY"
+      ],
+      "requires": [
+        "SUBMODULES_READY"
+      ]
+    },
+    {
+      "name": "make lint_truth",
+      "provides": [
+        "LINT_TRUTH_READY"
+      ],
+      "requires": [
+        "SYNC_READY"
+      ]
+    },
+    {
+      "name": "cargo test --workspace",
+      "provides": [
+        "RUST_TESTS_READY"
+      ],
+      "requires": [
+        "LINT_TRUTH_READY"
+      ]
+    },
+    {
+      "name": "mix test",
+      "provides": [
+        "MIX_TEST_GREEN"
+      ],
+      "requires": [
+        "MIX_TEST_RUNNABLE",
+        "NATIVE_ORACLES_BUILT",
+        "ORACLE_ENV_SET"
+      ]
+    },
+    {
+      "name": "qualify",
+      "provides": [
+        "QUALIFICATION_COMPLETE"
+      ],
+      "requires": [
+        "MIX_TEST_GREEN"
+      ]
+    }
+  ],
+  "expected_gap_type": "ACTION_DISCOVERY_GAP",
+  "manufacturers": [],
+  "name": "canonical_hidden_repo_action_mix_deps_get",
+  "no_plan": {
+    "explored_actions": [
+      "git submodule update --init --recursive",
+      "make sync",
+      "make lint_truth",
+      "cargo test --workspace",
+      "mix test",
+      "qualify"
+    ],
+    "goal": {
+      "MIX_TEST_GREEN": true,
+      "QUALIFICATION_COMPLETE": true
+    },
+    "initial_world_state": {
+      "ELIXIR_DEPS_READY": false,
+      "LINT_TRUTH_READY": true,
+      "MIX_TEST_GREEN": false,
+      "MIX_TEST_RUNNABLE": false,
+      "NATIVE_ORACLES_BUILT": false,
+      "ORACLE_ENV_SET": false,
+      "QUALIFICATION_COMPLETE": false,
+      "RUST_TESTS_READY": true,
+      "SUBMODULES_READY": true,
+      "SYNC_READY": true,
+      "observed": {
+        "mix_test_exit": 1,
+        "mix_test_stderr": "Unchecked dependencies ... run \"mix deps.get\"",
+        "rust_tests_passed": 1548
+      }
+    },
+    "invariants": [],
+    "missing_transition": {
+      "provides": "ELIXIR_DEPS_READY"
+    },
+    "planner": "astar/staged-qualification",
+    "rejected_actions": [],
+    "status": "NO_PLAN_FOUND"
+  },
+  "note": "run1: mix test EXIT:1 'Unchecked dependencies ... run mix deps.get'; deps.get is in the repo surface, not the domain",
+  "qualification_env": {
+    "available": true
+  },
+  "repo_surface_actions": [
+    {
+      "destructive": false,
+      "documented": true,
+      "dominated_by": null,
+      "name": "mix deps.get",
+      "provides": [
+        "ELIXIR_DEPS_READY"
+      ],
+      "requires_credential": false,
+      "source": "mix.exs+README"
+    }
+  ],
+  "sensors": [
+    {
+      "precondition": "SUBMODULES_READY",
+      "status": "fresh"
+    },
+    {
+      "precondition": "SYNC_READY",
+      "status": "fresh"
+    },
+    {
+      "precondition": "LINT_TRUTH_READY",
+      "status": "fresh"
+    },
+    {
+      "precondition": "RUST_TESTS_READY",
+      "status": "fresh"
+    },
+    {
+      "precondition": "ELIXIR_DEPS_READY",
+      "status": "fresh"
+    },
+    {
+      "precondition": "MIX_TEST_RUNNABLE",
+      "status": "fresh"
+    },
+    {
+      "precondition": "NATIVE_ORACLES_BUILT",
+      "status": "fresh"
+    },
+    {
+      "precondition": "ORACLE_ENV_SET",
+      "status": "fresh"
+    },
+    {
+      "precondition": "MIX_TEST_GREEN",
+      "status": "fresh"
+    },
+    {
+      "precondition": "QUALIFICATION_COMPLETE",
+      "status": "fresh"
+    }
+  ],
+  "tags": [
+    "canonical",
+    "dependency-declared-but-absent"
+  ]
+}

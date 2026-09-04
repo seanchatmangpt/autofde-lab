@@ -1,0 +1,166 @@
+{
+  "authority_policy": {
+    "credential_grants": [],
+    "forbid_destructive": true,
+    "forbidden_actions": [
+      "git push --force"
+    ]
+  },
+  "domain_actions": [
+    {
+      "name": "git submodule update --init --recursive",
+      "provides": [
+        "SUBMODULES_READY"
+      ],
+      "requires": []
+    },
+    {
+      "name": "make sync",
+      "provides": [
+        "SYNC_READY"
+      ],
+      "requires": [
+        "SUBMODULES_READY"
+      ]
+    },
+    {
+      "name": "make lint_truth",
+      "provides": [
+        "LINT_TRUTH_READY"
+      ],
+      "requires": [
+        "SYNC_READY"
+      ]
+    },
+    {
+      "name": "cargo test --workspace",
+      "provides": [
+        "RUST_TESTS_READY"
+      ],
+      "requires": [
+        "LINT_TRUTH_READY"
+      ]
+    },
+    {
+      "name": "mix test",
+      "provides": [
+        "MIX_TEST_GREEN"
+      ],
+      "requires": [
+        "MIX_TEST_RUNNABLE",
+        "NATIVE_ORACLES_BUILT",
+        "ORACLE_ENV_SET"
+      ]
+    },
+    {
+      "name": "qualify",
+      "provides": [
+        "QUALIFICATION_COMPLETE"
+      ],
+      "requires": [
+        "MIX_TEST_GREEN"
+      ]
+    }
+  ],
+  "expected_gap_type": "ACTION_GAP",
+  "manufacturers": [
+    {
+      "name": "ggen:envrc-generator",
+      "provides": [
+        "ORACLE_ENV_SET"
+      ]
+    }
+  ],
+  "name": "class_action_gap_manufacturer_registered",
+  "no_plan": {
+    "explored_actions": [
+      "git submodule update --init --recursive",
+      "make sync",
+      "make lint_truth",
+      "cargo test --workspace",
+      "mix test",
+      "qualify"
+    ],
+    "goal": {
+      "MIX_TEST_GREEN": true,
+      "QUALIFICATION_COMPLETE": true
+    },
+    "initial_world_state": {
+      "ELIXIR_DEPS_READY": true,
+      "LINT_TRUTH_READY": true,
+      "MIX_TEST_GREEN": false,
+      "MIX_TEST_RUNNABLE": true,
+      "NATIVE_ORACLES_BUILT": false,
+      "ORACLE_ENV_SET": false,
+      "QUALIFICATION_COMPLETE": false,
+      "RUST_TESTS_READY": true,
+      "SUBMODULES_READY": true,
+      "SYNC_READY": true,
+      "observed": {
+        "failure_classes": [
+          "System.EnvError RF3_ORACLE_BIN not set",
+          "RuntimeError rf1-dfg-oracle binary not found"
+        ],
+        "failures": 18,
+        "mix_test_exit": 2,
+        "mix_tests": 2393,
+        "skipped": 92
+      }
+    },
+    "invariants": [],
+    "missing_transition": {
+      "provides": "ORACLE_ENV_SET"
+    },
+    "planner": "astar/staged-qualification",
+    "rejected_actions": [],
+    "status": "NO_PLAN_FOUND"
+  },
+  "note": "nothing sets RF3_ORACLE_BIN; an env-wiring manufacturer (ggen envrc pack generator) is registered",
+  "qualification_env": {
+    "available": true
+  },
+  "repo_surface_actions": [],
+  "sensors": [
+    {
+      "precondition": "SUBMODULES_READY",
+      "status": "fresh"
+    },
+    {
+      "precondition": "SYNC_READY",
+      "status": "fresh"
+    },
+    {
+      "precondition": "LINT_TRUTH_READY",
+      "status": "fresh"
+    },
+    {
+      "precondition": "RUST_TESTS_READY",
+      "status": "fresh"
+    },
+    {
+      "precondition": "ELIXIR_DEPS_READY",
+      "status": "fresh"
+    },
+    {
+      "precondition": "MIX_TEST_RUNNABLE",
+      "status": "fresh"
+    },
+    {
+      "precondition": "NATIVE_ORACLES_BUILT",
+      "status": "fresh"
+    },
+    {
+      "precondition": "ORACLE_ENV_SET",
+      "status": "fresh"
+    },
+    {
+      "precondition": "MIX_TEST_GREEN",
+      "status": "fresh"
+    },
+    {
+      "precondition": "QUALIFICATION_COMPLETE",
+      "status": "fresh"
+    }
+  ],
+  "tags": []
+}
