@@ -4,7 +4,6 @@
  */
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
-#include "pybind11/pybind11.h"
 
 #include "pddl.hh"
 #include "parser/parser.hh"
