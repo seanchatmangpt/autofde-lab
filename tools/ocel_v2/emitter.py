@@ -169,6 +169,14 @@ OBJECT_TYPES: dict[str, list[dict[str, str]]] = {
         {"name": "sha256", "type": "string"},
         {"name": "parser", "type": "string"},
     ],
+    # WS3 (tools/crown2/ws3_resolve): one resolved ACTION_GAP. String attrs
+    # only so validate.py's object-attribute type map stays green.
+    "CapabilityResolution": [
+        {"name": "gap_label", "type": "string"},
+        {"name": "selected_kind", "type": "string"},
+        {"name": "selected_ref", "type": "string"},
+        {"name": "route_to_codegen", "type": "string"},  # always "false"
+    ],
 }
 
 # ---------------------------------------------------------------------------
@@ -274,6 +282,13 @@ EVENT_TYPES: dict[str, list[dict[str, str]]] = {
         {"name": "identity", "type": "string"},
         {"name": "check", "type": "string"},
         {"name": "reason", "type": "string"},
+    ],
+    # WS3 (tools/crown2/ws3_resolve): outcome of resolve(gap).
+    "CapabilityResolved": [
+        {"name": "selected_kind", "type": "string"},
+        {"name": "candidate_count", "type": "int"},
+        {"name": "dominated_count", "type": "int"},
+        {"name": "resolution_json", "type": "string:canonical-json"},
     ],
 }
 
