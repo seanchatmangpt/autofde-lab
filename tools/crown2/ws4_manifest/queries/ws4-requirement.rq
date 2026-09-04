@@ -1,0 +1,19 @@
+PREFIX ws4: <urn:crown2:ws4#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?req ?transition ?authority ?strategy ?gap ?observed ?desired
+       (GROUP_CONCAT(DISTINCT STR(?anchor); SEPARATOR="|") AS ?anchors)
+       (GROUP_CONCAT(DISTINCT ?pre; SEPARATOR="|") AS ?preconditions)
+       (GROUP_CONCAT(DISTINCT ?post; SEPARATOR="|") AS ?postconditions)
+WHERE {
+  ?req a ws4:CapabilityRequirement ;
+       ws4:neededTransition ?transition ;
+       ws4:authorityClass ?authority ;
+       ws4:qualificationStrategy ?strategy ;
+       ws4:semanticAnchor ?anchor ;
+       ws4:gap ?gap .
+  ?gap ws4:observedState ?observed ; ws4:desiredState ?desired .
+  OPTIONAL { ?req ws4:precondition ?pre }
+  OPTIONAL { ?req ws4:postcondition ?post }
+}
+GROUP BY ?req ?transition ?authority ?strategy ?gap ?observed ?desired
+ORDER BY ?req

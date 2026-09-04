@@ -1,0 +1,6 @@
+{
+  "schema": "crown2.ws4-requirement/1",
+  "requirements": [
+  {% for row in results %}{"requirement":"{{ row.req }}","transition":"{{ row.transition }}","authority":"{{ row.authority }}","strategy":"{{ row.strategy }}","gap":"{{ row.gap }}","observed":"{{ row.observed }}","desired":"{{ row.desired }}","anchors":"{{ row.anchors }}","preconditions":"{{ row.preconditions }}","postconditions":"{{ row.postconditions }}"}{% if not loop.last %},{% endif %}
+  {% endfor %}]
+}
