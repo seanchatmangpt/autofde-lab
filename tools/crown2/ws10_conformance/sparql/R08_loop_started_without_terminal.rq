@@ -1,0 +1,10 @@
+PREFIX ocel: <https://crown2.local/ocel#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+# Returns ?ev = violating event IRI (urn:ev:<id>)
+SELECT DISTINCT ?ev WHERE {
+  ?ev ocel:eventType "LoopStarted" ; ocel:time ?t ; ocel:episode ?ep .
+  FILTER NOT EXISTS {
+    ?x ocel:eventType ?xt ; ocel:episode ?ep ; ocel:time ?t2 .
+    FILTER(?xt IN ("LoopClosed","LoopBlocked") && ?t2 >= ?t)
+  }
+}

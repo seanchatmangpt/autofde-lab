@@ -1,0 +1,10 @@
+PREFIX ocel: <https://crown2.local/ocel#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+# Returns ?ev = violating event IRI (urn:ev:<id>)
+SELECT DISTINCT ?ev WHERE {
+  ?ev ocel:eventType "ActionStarted" ; ocel:time ?t ; ocel:relates ?a .
+  ?a ocel:objectType "Action" .
+  FILTER NOT EXISTS {
+    ?ae ocel:eventType "AuthorityEvaluated" ; ocel:relates ?a ; ocel:time ?t2 . FILTER(?t2 <= ?t)
+  }
+}

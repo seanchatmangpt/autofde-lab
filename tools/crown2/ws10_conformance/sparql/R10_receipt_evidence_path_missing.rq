@@ -1,0 +1,9 @@
+PREFIX ocel: <https://crown2.local/ocel#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+# Returns ?ev = violating event IRI (urn:ev:<id>)
+# ocel:evidenceExists is materialized by rdf_projection.py (filesystem check).
+SELECT DISTINCT ?ev WHERE {
+  ?ev ocel:eventType "ReceiptIssued" .
+  OPTIONAL { ?ev ocel:evidenceExists ?ex }
+  FILTER(!BOUND(?ex) || ?ex = false)
+}

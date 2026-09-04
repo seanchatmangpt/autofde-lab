@@ -177,6 +177,15 @@ OBJECT_TYPES: dict[str, list[dict[str, str]]] = {
         {"name": "selected_ref", "type": "string"},
         {"name": "route_to_codegen", "type": "string"},  # always "false"
     ],
+    # WS1 (tools/crown2/ws1_gap): a NO_PLAN_FOUND diagnosis. String attrs
+    # only so validate.py's object-attribute type map stays green.
+    "GapDiagnosis": [
+        {"name": "gap_type", "type": "string"},
+        {"name": "planner", "type": "string"},
+        {"name": "unavailable_transition", "type": "string"},
+        {"name": "standing", "type": "string"},
+        {"name": "receipt_digest", "type": "string"},
+    ],
 }
 
 # ---------------------------------------------------------------------------
@@ -289,6 +298,14 @@ EVENT_TYPES: dict[str, list[dict[str, str]]] = {
         {"name": "candidate_count", "type": "int"},
         {"name": "dominated_count", "type": "int"},
         {"name": "resolution_json", "type": "string:canonical-json"},
+    ],
+    # WS1 (tools/crown2/ws1_gap): NO_PLAN_FOUND interceptor emitted a diagnosis.
+    "GapDiagnosed": [
+        {"name": "gap_type", "type": "string"},
+        {"name": "unavailable_transition", "type": "string"},
+        {"name": "missing_preconditions", "type": "string"},
+        {"name": "receipt_digest", "type": "string"},
+        {"name": "diagnosis_json", "type": "string:canonical-json"},
     ],
 }
 
