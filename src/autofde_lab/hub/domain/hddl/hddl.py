@@ -32,6 +32,16 @@ class HDDLDomain(UPDomain):
                 "HDDLDomain requires a unified_planning.model.htn.HierarchicalProblem; "
                 "flat Problem instances are not admitted."
             )
+        # UPDomain's simulator defaults to `error_on_failed_checks=True`, which
+        # UP's own sequential-simulator engine always raises for any problem
+        # carrying `ProblemKind.HIERARCHICAL` -- its compatibility table simply
+        # never enumerates hierarchical features (real, confirmed via
+        # `UPUsageError: We cannot establish whether sequential_simulator is
+        # able to handle this problem!`). Relaxed here, not silently defaulted
+        # upstream in `UPDomain` -- see that parameter's docstring for the
+        # real verification that primitive execution over the hierarchical
+        # problem's underlying fluents/actions is genuinely unaffected.
+        kwargs.setdefault("simulator_error_on_failed_checks", False)
         super().__init__(problem, **kwargs)
 
     @classmethod

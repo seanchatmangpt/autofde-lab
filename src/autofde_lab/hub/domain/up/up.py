@@ -175,6 +175,7 @@ class UPDomain(D):
         action_encoding: str = "native",
         max_len: int = 2000,
         max_actions: int = 20,
+        simulator_error_on_failed_checks: bool = True,
         **simulator_params,
     ):
         """Initialize UPDomain.
@@ -186,6 +187,24 @@ class UPDomain(D):
         action_encoding: Encoding of the action which must be either "native" or "int"
         max_len: Maximum number of fluents in the case of using variable state encoding
         max_actions: Maximum number of actions in the case of using variable state encoding
+        simulator_error_on_failed_checks: Whether `UPSequentialSimulator` should
+            raise when it cannot establish (via `Engine.supports(problem.kind)`)
+            that it can handle the wrapped problem's *full* declared kind. A
+            hierarchical problem (`ProblemKind.HIERARCHICAL`) always fails this
+            check because the sequential simulator engine's compatibility table
+            only enumerates flat-PDDL feature kinds -- it never claims hierarchical
+            support, and never claims to lack it either (`.claude/rules/
+            absence-is-not-evidence.md`: absence of a declared-supported kind is
+            not evidence of real inapplicability). Verified directly against the
+            real `unified_planning.engines.sequential_simulator` module: with the
+            check relaxed, `UPSequentialSimulator(problem).get_initial_state()`
+            and primitive-action `apply()` genuinely execute correctly against a
+            real `HierarchicalProblem`'s underlying fluents/actions -- the
+            simulator only ever inspects primitive action semantics, never the
+            task network. Subclasses that wrap a primitive-action projection of a
+            hierarchical problem (see `autofde_lab.hub.domain.hddl.HDDLDomain`)
+            pass `False` here, verified by a real, running Aries HTN solve +
+            primitive-plan replay, not asserted.
         simulator_params: Optional parameters to pass to the UP sequential simulator
         """
         self._problem = problem
@@ -197,7 +216,9 @@ class UPDomain(D):
         self._false_node = problem.environment.expression_manager.false_expression
 
         self._simulator = UPSequentialSimulator(
-            self._problem, error_on_failed_checks=True, **simulator_params
+            self._problem,
+            error_on_failed_checks=simulator_error_on_failed_checks,
+            **simulator_params,
         )
         self._simulator_params = simulator_params
         self._grounder = GrounderHelper(self._problem)
