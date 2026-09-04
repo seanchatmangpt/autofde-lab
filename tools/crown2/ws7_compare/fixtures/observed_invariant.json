@@ -1,0 +1,7 @@
+{
+  "CREDO_CLEAN": true,
+  "DIALYZER_CLEAN": true,
+  "ELIXIR_DEPS_READY": false,
+  "MIX_COMPILE_CLEAN": true,
+  "MIX_TEST_GREEN": true
+}

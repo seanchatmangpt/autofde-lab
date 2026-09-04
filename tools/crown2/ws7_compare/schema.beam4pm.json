@@ -1,0 +1,23 @@
+{
+  "schema_id": "beam4pm.staged-booleans.v1",
+  "fields": {
+    "ELIXIR_DEPS_READY":     {"type": "boolean", "observable": true},
+    "MIX_COMPILE_CLEAN":     {"type": "boolean", "observable": true},
+    "MIX_TEST_GREEN":        {"type": "boolean", "observable": true},
+    "MIX_TEST_FAILURES":     {"type": "int",     "observable": true, "applicable_when": {"MIX_TEST_GREEN": false}},
+    "CREDO_CLEAN":           {"type": "boolean", "observable": true},
+    "DIALYZER_CLEAN":        {"type": "boolean", "observable": true},
+    "PROD_RELEASE_HEALTHY":  {"type": "boolean", "observable": false}
+  },
+  "transitions": [
+    {"name": "deps_fetched",  "field": "ELIXIR_DEPS_READY", "from": false, "to": true},
+    {"name": "compile_fixed", "field": "MIX_COMPILE_CLEAN", "from": false, "to": true},
+    {"name": "tests_greened", "field": "MIX_TEST_GREEN",    "from": false, "to": true},
+    {"name": "credo_fixed",   "field": "CREDO_CLEAN",       "from": false, "to": true},
+    {"name": "dialyzer_fixed","field": "DIALYZER_CLEAN",    "from": false, "to": true}
+  ],
+  "invariants": [
+    {"name": "deps_stay_ready",   "field": "ELIXIR_DEPS_READY", "value": true},
+    {"name": "compile_stays_clean","field": "MIX_COMPILE_CLEAN", "value": true}
+  ]
+}

@@ -1,0 +1,761 @@
+{
+  "objectTypes": [
+    {
+      "name": "Composition",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Repository",
+      "attributes": [
+        {
+          "name": "path",
+          "type": "string"
+        },
+        {
+          "name": "remote_url",
+          "type": "string"
+        },
+        {
+          "name": "default_branch",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Commit",
+      "attributes": [
+        {
+          "name": "sha",
+          "type": "string"
+        },
+        {
+          "name": "author",
+          "type": "string"
+        },
+        {
+          "name": "message",
+          "type": "string"
+        },
+        {
+          "name": "committed_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "Worktree",
+      "attributes": [
+        {
+          "name": "path",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "type": "string"
+        },
+        {
+          "name": "base_ref",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Domain",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "observed_at",
+          "type": "time"
+        },
+        {
+          "name": "state_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "SolverImplementation",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Policy",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "policy_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "Plan",
+      "attributes": [
+        {
+          "name": "summary",
+          "type": "string"
+        },
+        {
+          "name": "steps_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "cost_estimate",
+          "type": "float"
+        }
+      ]
+    },
+    {
+      "name": "PredictionReceipt",
+      "attributes": [
+        {
+          "name": "prediction_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "confidence",
+          "type": "float"
+        },
+        {
+          "name": "frozen_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityDecision",
+      "attributes": [
+        {
+          "name": "decision",
+          "type": "string"
+        },
+        {
+          "name": "rationale",
+          "type": "string"
+        },
+        {
+          "name": "decided_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "args_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "QualificationRun",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "result",
+          "type": "string"
+        },
+        {
+          "name": "metrics_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "Receipt",
+      "attributes": [
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "digest",
+          "type": "string"
+        },
+        {
+          "name": "issued_at",
+          "type": "time"
+        },
+        {
+          "name": "evidence_path",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ClaudeSession",
+      "attributes": [
+        {
+          "name": "session_url",
+          "type": "string"
+        },
+        {
+          "name": "model",
+          "type": "string"
+        },
+        {
+          "name": "started_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "ClaudeToolInvocation",
+      "attributes": [
+        {
+          "name": "tool_name",
+          "type": "string"
+        },
+        {
+          "name": "args_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "result_summary",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ClaudeSubagent",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "role",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ProcessEpisode",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "started_at",
+          "type": "time"
+        },
+        {
+          "name": "ended_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "CapabilityGraph",
+      "attributes": [
+        {
+          "name": "digest",
+          "type": "string"
+        },
+        {
+          "name": "capability_ids",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "eventTypes": [
+    {
+      "name": "CompositionCreated",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "WorldStateObserved",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "state_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "PlannerInvoked",
+      "attributes": [
+        {
+          "name": "solver_name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "PlanProduced",
+      "attributes": [
+        {
+          "name": "summary",
+          "type": "string"
+        },
+        {
+          "name": "cost_estimate",
+          "type": "float"
+        }
+      ]
+    },
+    {
+      "name": "PlanRefused",
+      "attributes": [
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "PredictionFrozen",
+      "attributes": [
+        {
+          "name": "confidence",
+          "type": "float"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityEvaluated",
+      "attributes": [
+        {
+          "name": "rationale",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityGranted",
+      "attributes": [
+        {
+          "name": "rationale",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityRefused",
+      "attributes": [
+        {
+          "name": "rationale",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionStarted",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionCompleted",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "result_summary",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionFailed",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "error",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionRefused",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "QualificationObserved",
+      "attributes": [
+        {
+          "name": "result",
+          "type": "string"
+        },
+        {
+          "name": "metrics_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "PredictionCompared",
+      "attributes": [
+        {
+          "name": "delta_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "verdict",
+          "type": "string"
+        },
+        {
+          "name": "digest",
+          "type": "string"
+        },
+        {
+          "name": "schema_digest",
+          "type": "string"
+        },
+        {
+          "name": "n_match",
+          "type": "int"
+        },
+        {
+          "name": "n_mismatch",
+          "type": "int"
+        },
+        {
+          "name": "n_unobservable",
+          "type": "int"
+        },
+        {
+          "name": "n_not_applicable",
+          "type": "int"
+        },
+        {
+          "name": "n_type_error",
+          "type": "int"
+        },
+        {
+          "name": "n_missing_prediction",
+          "type": "int"
+        },
+        {
+          "name": "n_missing_observation",
+          "type": "int"
+        },
+        {
+          "name": "n_expected_transition_happened",
+          "type": "int"
+        },
+        {
+          "name": "n_expected_transition_absent",
+          "type": "int"
+        },
+        {
+          "name": "n_unexpected_transition_happened",
+          "type": "int"
+        },
+        {
+          "name": "n_expected_invariant_violated",
+          "type": "int"
+        },
+        {
+          "name": "field_classes_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "transition_classes_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "ReceiptIssued",
+      "attributes": [
+        {
+          "name": "digest",
+          "type": "string"
+        },
+        {
+          "name": "evidence_path",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LoopStarted",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LoopClosed",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LoopBlocked",
+      "attributes": [
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "DomainProjected",
+      "attributes": [
+        {
+          "name": "graph_digest",
+          "type": "string"
+        },
+        {
+          "name": "domain_digest",
+          "type": "string"
+        },
+        {
+          "name": "action_count",
+          "type": "int"
+        },
+        {
+          "name": "actions_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "id": "ws7:invariant:prior",
+      "type": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "invariant/prior",
+          "time": "2026-09-04T00:21:41.418719+00:00"
+        },
+        {
+          "name": "observed_at",
+          "value": "2026-09-03T00:00:00+00:00",
+          "time": "2026-09-04T00:21:41.418719+00:00"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"CREDO_CLEAN\":false,\"DIALYZER_CLEAN\":false,\"ELIXIR_DEPS_READY\":true,\"MIX_COMPILE_CLEAN\":true,\"MIX_TEST_GREEN\":false}",
+          "time": "2026-09-04T00:21:41.418719+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ws7:invariant:observed",
+      "type": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "invariant/observed",
+          "time": "2026-09-04T00:21:41.457072+00:00"
+        },
+        {
+          "name": "observed_at",
+          "value": "2026-09-03T00:00:01+00:00",
+          "time": "2026-09-04T00:21:41.457072+00:00"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"CREDO_CLEAN\":true,\"DIALYZER_CLEAN\":true,\"ELIXIR_DEPS_READY\":false,\"MIX_COMPILE_CLEAN\":true,\"MIX_TEST_GREEN\":true}",
+          "time": "2026-09-04T00:21:41.457072+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ws7:invariant:prediction",
+      "type": "PredictionReceipt",
+      "attributes": [
+        {
+          "name": "confidence",
+          "value": 0.9,
+          "time": "2026-09-04T00:21:41.495486+00:00"
+        },
+        {
+          "name": "frozen_at",
+          "value": "2026-09-03T00:00:00+00:00",
+          "time": "2026-09-04T00:21:41.495486+00:00"
+        },
+        {
+          "name": "prediction_json",
+          "value": "{\"CREDO_CLEAN\":true,\"DIALYZER_CLEAN\":true,\"ELIXIR_DEPS_READY\":true,\"MIX_COMPILE_CLEAN\":true,\"MIX_TEST_GREEN\":true}",
+          "time": "2026-09-04T00:21:41.495486+00:00"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "ws7:invariant:compared",
+      "type": "PredictionCompared",
+      "time": "2026-09-04T00:21:41.534133+00:00",
+      "attributes": [
+        {
+          "name": "delta_json",
+          "value": "{\"counts\":{\"EXPECTED_INVARIANT_VIOLATED\":1,\"EXPECTED_TRANSITION_ABSENT\":0,\"EXPECTED_TRANSITION_HAPPENED\":3,\"MATCH\":4,\"MISMATCH\":1,\"MISSING_OBSERVATION\":0,\"MISSING_PREDICTION\":0,\"NOT_APPLICABLE\":1,\"NO_TRANSITION\":3,\"TYPE_ERROR\":0,\"UNEXPECTED_TRANSITION_HAPPENED\":0,\"UNOBSERVABLE\":1},\"digest\":\"941edec5ea6f0e7e3ccb18d2e4f4f9b451f0ccd5164df221854eb4c2e23ce300\",\"verdict\":\"REFUTED\"}"
+        },
+        {
+          "name": "digest",
+          "value": "941edec5ea6f0e7e3ccb18d2e4f4f9b451f0ccd5164df221854eb4c2e23ce300"
+        },
+        {
+          "name": "field_classes_json",
+          "value": "[{\"class\":\"MATCH\",\"detail\":\"\",\"field\":\"CREDO_CLEAN\",\"observed\":\"true\",\"predicted\":\"true\",\"type\":\"boolean\"},{\"class\":\"MATCH\",\"detail\":\"\",\"field\":\"DIALYZER_CLEAN\",\"observed\":\"true\",\"predicted\":\"true\",\"type\":\"boolean\"},{\"class\":\"MISMATCH\",\"detail\":\"predicted true observed false\",\"field\":\"ELIXIR_DEPS_READY\",\"observed\":\"false\",\"predicted\":\"true\",\"type\":\"boolean\"},{\"class\":\"MATCH\",\"detail\":\"\",\"field\":\"MIX_COMPILE_CLEAN\",\"observed\":\"true\",\"predicted\":\"true\",\"type\":\"boolean\"},{\"class\":\"NOT_APPLICABLE\",\"detail\":\"applicable_when {\\\"MIX_TEST_GREEN\\\":false} not met in observed\",\"field\":\"MIX_TEST_FAILURES\",\"observed\":\"<missing>\",\"predicted\":\"<missing>\",\"type\":\"int\"},{\"class\":\"MATCH\",\"detail\":\"\",\"field\":\"MIX_TEST_GREEN\",\"observed\":\"true\",\"predicted\":\"true\",\"type\":\"boolean\"},{\"class\":\"UNOBSERVABLE\",\"detail\":\"schema marks field unobservable\",\"field\":\"PROD_RELEASE_HEALTHY\",\"observed\":\"<missing>\",\"predicted\":\"<missing>\",\"type\":\"boolean\"}]"
+        },
+        {
+          "name": "n_expected_invariant_violated",
+          "value": 1
+        },
+        {
+          "name": "n_expected_transition_absent",
+          "value": 0
+        },
+        {
+          "name": "n_expected_transition_happened",
+          "value": 3
+        },
+        {
+          "name": "n_match",
+          "value": 4
+        },
+        {
+          "name": "n_mismatch",
+          "value": 1
+        },
+        {
+          "name": "n_missing_observation",
+          "value": 0
+        },
+        {
+          "name": "n_missing_prediction",
+          "value": 0
+        },
+        {
+          "name": "n_not_applicable",
+          "value": 1
+        },
+        {
+          "name": "n_type_error",
+          "value": 0
+        },
+        {
+          "name": "n_unexpected_transition_happened",
+          "value": 0
+        },
+        {
+          "name": "n_unobservable",
+          "value": 1
+        },
+        {
+          "name": "schema_digest",
+          "value": "ca7a7e5dbb807b2963f675c4f1908c05857c6cb5c625bac51efd32cf4c04a9e4"
+        },
+        {
+          "name": "transition_classes_json",
+          "value": "[{\"class\":\"NO_TRANSITION\",\"field\":\"ELIXIR_DEPS_READY\",\"from\":\"false\",\"kind\":\"transition\",\"name\":\"deps_fetched\",\"observed\":\"false\",\"predicted\":\"true\",\"prior\":\"true\",\"to\":\"true\"},{\"class\":\"NO_TRANSITION\",\"field\":\"MIX_COMPILE_CLEAN\",\"from\":\"false\",\"kind\":\"transition\",\"name\":\"compile_fixed\",\"observed\":\"true\",\"predicted\":\"true\",\"prior\":\"true\",\"to\":\"true\"},{\"class\":\"EXPECTED_TRANSITION_HAPPENED\",\"field\":\"MIX_TEST_GREEN\",\"from\":\"false\",\"kind\":\"transition\",\"name\":\"tests_greened\",\"observed\":\"true\",\"predicted\":\"true\",\"prior\":\"false\",\"to\":\"true\"},{\"class\":\"EXPECTED_TRANSITION_HAPPENED\",\"field\":\"CREDO_CLEAN\",\"from\":\"false\",\"kind\":\"transition\",\"name\":\"credo_fixed\",\"observed\":\"true\",\"predicted\":\"true\",\"prior\":\"false\",\"to\":\"true\"},{\"class\":\"EXPECTED_TRANSITION_HAPPENED\",\"field\":\"DIALYZER_CLEAN\",\"from\":\"false\",\"kind\":\"transition\",\"name\":\"dialyzer_fixed\",\"observed\":\"true\",\"predicted\":\"true\",\"prior\":\"false\",\"to\":\"true\"},{\"class\":\"EXPECTED_INVARIANT_VIOLATED\",\"field\":\"ELIXIR_DEPS_READY\",\"kind\":\"invariant\",\"name\":\"deps_stay_ready\",\"observed\":\"false\",\"predicted\":\"true\",\"prior\":\"true\",\"value\":\"true\"},{\"class\":\"NO_TRANSITION\",\"field\":\"MIX_COMPILE_CLEAN\",\"kind\":\"invariant\",\"name\":\"compile_stays_clean\",\"observed\":\"true\",\"predicted\":\"true\",\"prior\":\"true\",\"value\":\"true\"}]"
+        },
+        {
+          "name": "verdict",
+          "value": "REFUTED"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ws7:invariant:prior",
+          "qualifier": ""
+        },
+        {
+          "objectId": "ws7:invariant:observed",
+          "qualifier": ""
+        },
+        {
+          "objectId": "ws7:invariant:prediction",
+          "qualifier": ""
+        }
+      ]
+    }
+  ]
+}
