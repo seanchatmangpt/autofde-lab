@@ -1,0 +1,20 @@
+{
+  "claim_id": "crown-run-v2-happened",
+  "text": "crown-run-v2.ocel.json and the 82-record hook JSONL run exist",
+  "refs": [
+    {
+      "identity": "crown-run-v2.ocel",
+      "durable_path": "/Users/sac/crown-2-orthogonal/tools/crown2/ws9_evidence/fixtures/crown-run-v2.ocel.json",
+      "sha256": "06f97cbbd3c98fc30f084588501078b0de69ec2c7a1ed3c4adad2b3bdf00bbcb",
+      "parser": "ocel",
+      "receipt_path": "/Users/sac/crown-2-orthogonal/tools/crown2/ws9_evidence/fixtures/crown-run-v2.receipt.json"
+    },
+    {
+      "identity": "hook-run-82-tmp-only",
+      "durable_path": "/Users/sac/.cache/tmp/ws9-demo-hook.jsonl",
+      "sha256": "c8e098cdf0fb7e8c6e7c29377de9170fbc793b06818a3c5db535bf18e4497cdd",
+      "parser": "jsonl",
+      "receipt_path": null
+    }
+  ]
+}

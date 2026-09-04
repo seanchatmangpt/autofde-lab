@@ -1,0 +1,8 @@
+{
+  "issued_at": "2026-09-03T00:00:00+00:00",
+  "issuer": "ws9",
+  "receipt_id": "rcpt-ws9-fixture",
+  "subject_identity": "crown-run-v2.ocel",
+  "subject_sha256": "06f97cbbd3c98fc30f084588501078b0de69ec2c7a1ed3c4adad2b3bdf00bbcb",
+  "superseded_by": null
+}
