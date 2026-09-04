@@ -1,0 +1,1071 @@
+{
+  "objectTypes": [
+    {
+      "name": "Composition",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Repository",
+      "attributes": [
+        {
+          "name": "path",
+          "type": "string"
+        },
+        {
+          "name": "remote_url",
+          "type": "string"
+        },
+        {
+          "name": "default_branch",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Commit",
+      "attributes": [
+        {
+          "name": "sha",
+          "type": "string"
+        },
+        {
+          "name": "author",
+          "type": "string"
+        },
+        {
+          "name": "message",
+          "type": "string"
+        },
+        {
+          "name": "committed_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "Worktree",
+      "attributes": [
+        {
+          "name": "path",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "type": "string"
+        },
+        {
+          "name": "base_ref",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Domain",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "observed_at",
+          "type": "time"
+        },
+        {
+          "name": "state_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "SolverImplementation",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Policy",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "policy_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "Plan",
+      "attributes": [
+        {
+          "name": "summary",
+          "type": "string"
+        },
+        {
+          "name": "steps_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "cost_estimate",
+          "type": "float"
+        }
+      ]
+    },
+    {
+      "name": "PredictionReceipt",
+      "attributes": [
+        {
+          "name": "prediction_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "confidence",
+          "type": "float"
+        },
+        {
+          "name": "frozen_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityDecision",
+      "attributes": [
+        {
+          "name": "decision",
+          "type": "string"
+        },
+        {
+          "name": "rationale",
+          "type": "string"
+        },
+        {
+          "name": "decided_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "args_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "QualificationRun",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "result",
+          "type": "string"
+        },
+        {
+          "name": "metrics_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "Receipt",
+      "attributes": [
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "digest",
+          "type": "string"
+        },
+        {
+          "name": "issued_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "ClaudeSession",
+      "attributes": [
+        {
+          "name": "session_url",
+          "type": "string"
+        },
+        {
+          "name": "model",
+          "type": "string"
+        },
+        {
+          "name": "started_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "ClaudeToolInvocation",
+      "attributes": [
+        {
+          "name": "tool_name",
+          "type": "string"
+        },
+        {
+          "name": "args_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "result_summary",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ClaudeSubagent",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "role",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ProcessEpisode",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "started_at",
+          "type": "time"
+        },
+        {
+          "name": "ended_at",
+          "type": "time"
+        }
+      ]
+    }
+  ],
+  "eventTypes": [
+    {
+      "name": "CompositionCreated",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "WorldStateObserved",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "state_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "PlannerInvoked",
+      "attributes": [
+        {
+          "name": "solver_name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "PlanProduced",
+      "attributes": [
+        {
+          "name": "summary",
+          "type": "string"
+        },
+        {
+          "name": "cost_estimate",
+          "type": "float"
+        }
+      ]
+    },
+    {
+      "name": "PlanRefused",
+      "attributes": [
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "PredictionFrozen",
+      "attributes": [
+        {
+          "name": "confidence",
+          "type": "float"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityEvaluated",
+      "attributes": [
+        {
+          "name": "rationale",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityGranted",
+      "attributes": [
+        {
+          "name": "rationale",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityRefused",
+      "attributes": [
+        {
+          "name": "rationale",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionStarted",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionCompleted",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "result_summary",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionFailed",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "error",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionRefused",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "QualificationObserved",
+      "attributes": [
+        {
+          "name": "result",
+          "type": "string"
+        },
+        {
+          "name": "metrics_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "PredictionCompared",
+      "attributes": [
+        {
+          "name": "delta_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "ReceiptIssued",
+      "attributes": [
+        {
+          "name": "digest",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LoopStarted",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LoopClosed",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LoopBlocked",
+      "attributes": [
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "NativePlannerBootstrapStarted",
+      "attributes": [
+        {
+          "name": "worktree",
+          "type": "string"
+        },
+        {
+          "name": "sha",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "NativePlannerBootstrapCompleted",
+      "attributes": [
+        {
+          "name": "extension_path",
+          "type": "string"
+        },
+        {
+          "name": "solve_summary_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "NativePlannerBootstrapFailed",
+      "attributes": [
+        {
+          "name": "failing_step",
+          "type": "string"
+        },
+        {
+          "name": "error",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "id": "wt:autofde-compose",
+      "type": "Worktree",
+      "attributes": [
+        {
+          "name": "path",
+          "value": "/Users/sac/crown-2-integration/autofde-lab",
+          "time": "2026-09-04T00:35:41.273887+00:00"
+        },
+        {
+          "name": "branch",
+          "value": "crown-2/autofde-compose",
+          "time": "2026-09-04T00:35:41.273887+00:00"
+        },
+        {
+          "name": "base_ref",
+          "value": "main",
+          "time": "2026-09-04T00:35:41.273887+00:00"
+        }
+      ]
+    },
+    {
+      "id": "commit:4278b151a1e8",
+      "type": "Commit",
+      "attributes": [
+        {
+          "name": "sha",
+          "value": "4278b151a1e825f3316b7b948ea08c80b9591842",
+          "time": "2026-09-04T00:35:41.274967+00:00"
+        }
+      ]
+    },
+    {
+      "id": "solver:astar-native",
+      "type": "SolverImplementation",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "Astar",
+          "time": "2026-09-04T00:35:41.275684+00:00"
+        },
+        {
+          "name": "kind",
+          "value": "cpp:_AStarSolver_",
+          "time": "2026-09-04T00:35:41.275684+00:00"
+        },
+        {
+          "name": "version",
+          "value": "4278b151a1e8",
+          "time": "2026-09-04T00:35:41.275684+00:00"
+        }
+      ]
+    },
+    {
+      "id": "episode:native-bootstrap",
+      "type": "ProcessEpisode",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "NativePlannerBootstrap",
+          "time": "2026-09-04T00:35:41.276371+00:00"
+        },
+        {
+          "name": "started_at",
+          "value": "2026-09-04T00:35:41.276302+00:00",
+          "time": "2026-09-04T00:35:41.276371+00:00"
+        }
+      ]
+    },
+    {
+      "id": "action:01-submodules",
+      "type": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "submodules",
+          "time": "2026-09-04T00:35:41.277794+00:00"
+        },
+        {
+          "name": "kind",
+          "value": "bootstrap-step",
+          "time": "2026-09-04T00:35:41.277794+00:00"
+        },
+        {
+          "name": "args_json",
+          "value": "{}",
+          "time": "2026-09-04T00:35:41.277794+00:00"
+        }
+      ]
+    },
+    {
+      "id": "action:02-configure",
+      "type": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "configure",
+          "time": "2026-09-04T00:35:41.467023+00:00"
+        },
+        {
+          "name": "kind",
+          "value": "bootstrap-step",
+          "time": "2026-09-04T00:35:41.467023+00:00"
+        },
+        {
+          "name": "args_json",
+          "value": "{}",
+          "time": "2026-09-04T00:35:41.467023+00:00"
+        }
+      ]
+    },
+    {
+      "id": "action:03-cmake-build",
+      "type": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "cmake-build",
+          "time": "2026-09-04T00:35:41.470322+00:00"
+        },
+        {
+          "name": "kind",
+          "value": "bootstrap-step",
+          "time": "2026-09-04T00:35:41.470322+00:00"
+        },
+        {
+          "name": "args_json",
+          "value": "{}",
+          "time": "2026-09-04T00:35:41.470322+00:00"
+        }
+      ]
+    },
+    {
+      "id": "action:04-uv-sync",
+      "type": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "uv-sync",
+          "time": "2026-09-04T00:35:42.348188+00:00"
+        },
+        {
+          "name": "kind",
+          "value": "bootstrap-step",
+          "time": "2026-09-04T00:35:42.348188+00:00"
+        },
+        {
+          "name": "args_json",
+          "value": "{}",
+          "time": "2026-09-04T00:35:42.348188+00:00"
+        }
+      ]
+    },
+    {
+      "id": "action:05-import",
+      "type": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "import",
+          "time": "2026-09-04T00:38:07.724944+00:00"
+        },
+        {
+          "name": "kind",
+          "value": "bootstrap-step",
+          "time": "2026-09-04T00:38:07.724944+00:00"
+        },
+        {
+          "name": "args_json",
+          "value": "{}",
+          "time": "2026-09-04T00:38:07.724944+00:00"
+        }
+      ]
+    },
+    {
+      "id": "action:06-native-solve",
+      "type": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "native-solve",
+          "time": "2026-09-04T00:38:10.895757+00:00"
+        },
+        {
+          "name": "kind",
+          "value": "bootstrap-step",
+          "time": "2026-09-04T00:38:10.895757+00:00"
+        },
+        {
+          "name": "args_json",
+          "value": "{}",
+          "time": "2026-09-04T00:38:10.895757+00:00"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "ev:bootstrap-started",
+      "type": "NativePlannerBootstrapStarted",
+      "time": "2026-09-04T00:35:41.277076+00:00",
+      "attributes": [
+        {
+          "name": "worktree",
+          "value": "/Users/sac/crown-2-integration/autofde-lab"
+        },
+        {
+          "name": "sha",
+          "value": "4278b151a1e825f3316b7b948ea08c80b9591842"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "wt:autofde-compose",
+          "qualifier": ""
+        },
+        {
+          "objectId": "commit:4278b151a1e8",
+          "qualifier": ""
+        },
+        {
+          "objectId": "episode:native-bootstrap",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:01-submodules-started",
+      "type": "ActionStarted",
+      "time": "2026-09-04T00:35:41.278604+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "submodules"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action:01-submodules",
+          "qualifier": ""
+        },
+        {
+          "objectId": "episode:native-bootstrap",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:01-submodules-completed",
+      "type": "ActionCompleted",
+      "time": "2026-09-04T00:35:41.465826+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "submodules"
+        },
+        {
+          "name": "result_summary",
+          "value": "cpp/sdk populated: ['Catch2', 'PEGTL', 'backward-cpp', 'json', 'nng', 'nngpp', 'pybind11', 'spdlog'] (0.2s)"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action:01-submodules",
+          "qualifier": ""
+        },
+        {
+          "objectId": "episode:native-bootstrap",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:02-configure-started",
+      "type": "ActionStarted",
+      "time": "2026-09-04T00:35:41.467953+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "configure"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action:02-configure",
+          "qualifier": ""
+        },
+        {
+          "objectId": "episode:native-bootstrap",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:02-configure-completed",
+      "type": "ActionCompleted",
+      "time": "2026-09-04T00:35:41.469430+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "configure"
+        },
+        {
+          "name": "result_summary",
+          "value": "reused cpp/build CMakeCache {'BUILD_PYTHON_BINDING': 'OFF', 'CMAKE_BUILD_TYPE': 'Release', 'ONLY_PYTHON': 'OFF', 'CMAKE_GENERATOR': 'Unix Makefiles'} (0.0s)"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action:02-configure",
+          "qualifier": ""
+        },
+        {
+          "objectId": "episode:native-bootstrap",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:03-cmake-build-started",
+      "type": "ActionStarted",
+      "time": "2026-09-04T00:35:41.471249+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "cmake-build"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action:03-cmake-build",
+          "qualifier": ""
+        },
+        {
+          "objectId": "episode:native-bootstrap",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:03-cmake-build-completed",
+      "type": "ActionCompleted",
+      "time": "2026-09-04T00:35:42.346960+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "cmake-build"
+        },
+        {
+          "name": "result_summary",
+          "value": "cmake --build build -j4 exit=0; tail: [  0%] Built target backward\n[  0%] Built target backward_object\n[  2%] Built target spdlog\n[  4%] Built target libpotassco\n[ 19%] Built target nng\n[ 20%] Built target libreify\n[ 26%] Built target libclasp\n[ 31%] Built target libgringo\n[ 33%] Built target libclingo\n[ 66%] Built target highs\n[ 66%] Built target highs-bin\n[100%] Built target skdecide_pddl\n[100%] Built target skdecide (0.9s)"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action:03-cmake-build",
+          "qualifier": ""
+        },
+        {
+          "objectId": "episode:native-bootstrap",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:04-uv-sync-started",
+      "type": "ActionStarted",
+      "time": "2026-09-04T00:35:42.349188+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "uv-sync"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action:04-uv-sync",
+          "qualifier": ""
+        },
+        {
+          "objectId": "episode:native-bootstrap",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:04-uv-sync-completed",
+      "type": "ActionCompleted",
+      "time": "2026-09-04T00:38:07.723697+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "uv-sync"
+        },
+        {
+          "name": "result_summary",
+          "value": "uv sync --extra=all --frozen exit=0; tail:  + werkzeug==3.1.8\n + wheel==0.47.0\n + widgetsnbextension==4.0.15\n + wrapt==2.2.2\n + xxhash==3.7.0\n + yarl==1.24.2\n + z3-solver==4.16.0.0\n + zipp==4.1.0 (145.4s)"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action:04-uv-sync",
+          "qualifier": ""
+        },
+        {
+          "objectId": "episode:native-bootstrap",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:05-import-started",
+      "type": "ActionStarted",
+      "time": "2026-09-04T00:38:07.725963+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "import"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action:05-import",
+          "qualifier": ""
+        },
+        {
+          "objectId": "episode:native-bootstrap",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:05-import-completed",
+      "type": "ActionCompleted",
+      "time": "2026-09-04T00:38:10.894109+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "import"
+        },
+        {
+          "name": "result_summary",
+          "value": "imported /Users/sac/crown-2-integration/autofde-lab/.venv/lib/python3.13/site-packages/autofde_lab/hub/__autofde_lab_hub_cpp.cpython-313-darwin.so python=3.13.9 (3.2s)"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action:05-import",
+          "qualifier": ""
+        },
+        {
+          "objectId": "episode:native-bootstrap",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:06-native-solve-started",
+      "type": "ActionStarted",
+      "time": "2026-09-04T00:38:10.896956+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "native-solve"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action:06-native-solve",
+          "qualifier": ""
+        },
+        {
+          "objectId": "episode:native-bootstrap",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:06-native-solve-completed",
+      "type": "ActionCompleted",
+      "time": "2026-09-04T00:38:12.947156+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "native-solve"
+        },
+        {
+          "name": "result_summary",
+          "value": "{\"cost\": 18.0, \"expected_cost\": 18, \"expected_plan_len\": 18, \"extension_path\": \"/Users/sac/crown-2-integration/autofde-lab/.venv/lib/python3.13/site-packages/autofde_lab/hub/__autofde_lab_hub_cpp.cpython-313-darwin.so\", \"goal_reached\": true, \"ok\": true, \"plan_len\": 18, \"solver\": \"Astar(native _AStarSolver_)\"} (2.0s)"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action:06-native-solve",
+          "qualifier": ""
+        },
+        {
+          "objectId": "episode:native-bootstrap",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:bootstrap-completed",
+      "type": "NativePlannerBootstrapCompleted",
+      "time": "2026-09-04T00:38:12.948682+00:00",
+      "attributes": [
+        {
+          "name": "extension_path",
+          "value": "/Users/sac/crown-2-integration/autofde-lab/.venv/lib/python3.13/site-packages/autofde_lab/hub/__autofde_lab_hub_cpp.cpython-313-darwin.so"
+        },
+        {
+          "name": "solve_summary_json",
+          "value": "{\"cost\":18.0,\"expected_cost\":18,\"expected_plan_len\":18,\"extension_path\":\"/Users/sac/crown-2-integration/autofde-lab/.venv/lib/python3.13/site-packages/autofde_lab/hub/__autofde_lab_hub_cpp.cpython-313-darwin.so\",\"goal_reached\":true,\"ok\":true,\"plan_len\":18,\"solver\":\"Astar(native _AStarSolver_)\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:native-bootstrap",
+          "qualifier": ""
+        },
+        {
+          "objectId": "wt:autofde-compose",
+          "qualifier": ""
+        },
+        {
+          "objectId": "solver:astar-native",
+          "qualifier": ""
+        }
+      ]
+    }
+  ]
+}
