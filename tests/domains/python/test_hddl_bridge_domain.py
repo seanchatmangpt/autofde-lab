@@ -23,7 +23,6 @@ from autofde_lab.utils import (
     load_registered_solver,
 )
 
-
 HDDL_DOMAIN = """
 (define (domain delivery-htn)
   (:requirements :typing :hierarchy :negative-preconditions)

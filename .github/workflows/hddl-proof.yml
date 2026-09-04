@@ -28,7 +28,19 @@ jobs:
   hddl-execution:
     runs-on: ubuntu-latest
     steps:
+      # `uv sync --extra hddl` runs a real editable install, which triggers
+      # scikit-build-core's native C++ extension build -- that build's
+      # CMakeLists.txt ADD_SUBDIRECTORY()s cpp/sdk/{nng,pybind11,json,...},
+      # real git submodules. actions/checkout's default submodules: false
+      # left them empty, confirmed live on this exact PR: `CMake Error ...
+      # does not contain a CMakeLists.txt file` for every cpp/sdk/* path,
+      # `Unknown CMake command "PYBIND11_ADD_MODULE"` once pybind11's own
+      # CMake module was unavailable as a result. recursive is required,
+      # not just cpp/sdk/*, per this repo's other native-build workflows'
+      # own convention.
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.10.0"

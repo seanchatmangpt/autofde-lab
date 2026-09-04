@@ -12,7 +12,6 @@ from unified_planning.model.htn import HierarchicalProblem
 
 from autofde_lab.hub.domain.up import UPDomain
 
-
 Pathish = Union[str, PathLike[str]]
 
 
