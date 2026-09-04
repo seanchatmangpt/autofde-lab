@@ -1,0 +1,38 @@
+name: HDDL proof
+
+on:
+  pull_request:
+    paths:
+      - "pyproject.toml"
+      - "uv.lock"
+      - "src/autofde_lab/hub/domain/hddl/**"
+      - "src/autofde_lab/hub/solver/hddl/**"
+      - "tests/domains/python/test_hddl_bridge_domain.py"
+      - ".github/workflows/hddl-proof.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lock-consistency:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.0"
+      - name: Verify frozen dependency graph
+        run: uv lock --check
+
+  hddl-execution:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.0"
+      - name: Resolve HDDL execution capsule
+        run: uv sync --no-default-groups --extra hddl --group test
+      - name: Execute real HDDL parse, Aries solve, decomposition, and replay
+        run: uv run --no-default-groups --extra hddl --group test pytest tests/domains/python/test_hddl_bridge_domain.py -q
