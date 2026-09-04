@@ -1,0 +1,37 @@
+[
+  {
+    "name": "marker_file_action",
+    "description": "Trivial action: write MARKER.txt in the subject; expected QUALIFIED.",
+    "subject_kind": "fixture",
+    "subject_source": "fixtures/marker_subject",
+    "command": ["sh", "-c", "printf 'marker-ok\\n' > MARKER.txt && echo wrote-marker"],
+    "timeout_s": 10,
+    "postconditions": [
+      {"kind": "exit_code", "expected": 0},
+      {"kind": "file_exists", "path": "MARKER.txt", "expected": true},
+      {"kind": "output_regex", "stream": "stdout", "pattern": "^wrote-marker$"},
+      {"kind": "state_probe", "command": ["cat", "MARKER.txt"], "pattern": "^marker-ok$"}
+    ]
+  },
+  {
+    "name": "false_postcondition_action",
+    "description": "Action claims to write DONE.txt but only echoes; postcondition false; expected REJECTED.",
+    "subject_kind": "fixture",
+    "subject_source": "fixtures/marker_subject",
+    "command": ["sh", "-c", "echo 'claims DONE.txt written'"],
+    "timeout_s": 10,
+    "postconditions": [
+      {"kind": "exit_code", "expected": 0},
+      {"kind": "file_exists", "path": "DONE.txt", "expected": true}
+    ]
+  },
+  {
+    "name": "worktree_timeout_action",
+    "description": "Real git worktree subject; command exceeds timeout; expected INCONCLUSIVE.",
+    "subject_kind": "worktree",
+    "subject_source": "HEAD",
+    "command": ["sh", "-c", "sleep 5"],
+    "timeout_s": 1,
+    "postconditions": [{"kind": "exit_code", "expected": 0}]
+  }
+]

@@ -1,0 +1,906 @@
+{
+  "objectTypes": [
+    {
+      "name": "Composition",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Repository",
+      "attributes": [
+        {
+          "name": "path",
+          "type": "string"
+        },
+        {
+          "name": "remote_url",
+          "type": "string"
+        },
+        {
+          "name": "default_branch",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Commit",
+      "attributes": [
+        {
+          "name": "sha",
+          "type": "string"
+        },
+        {
+          "name": "author",
+          "type": "string"
+        },
+        {
+          "name": "message",
+          "type": "string"
+        },
+        {
+          "name": "committed_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "Worktree",
+      "attributes": [
+        {
+          "name": "path",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "type": "string"
+        },
+        {
+          "name": "base_ref",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Domain",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "observed_at",
+          "type": "time"
+        },
+        {
+          "name": "state_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "SolverImplementation",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Policy",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "policy_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "Plan",
+      "attributes": [
+        {
+          "name": "summary",
+          "type": "string"
+        },
+        {
+          "name": "steps_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "cost_estimate",
+          "type": "float"
+        }
+      ]
+    },
+    {
+      "name": "PredictionReceipt",
+      "attributes": [
+        {
+          "name": "prediction_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "confidence",
+          "type": "float"
+        },
+        {
+          "name": "frozen_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityDecision",
+      "attributes": [
+        {
+          "name": "decision",
+          "type": "string"
+        },
+        {
+          "name": "rationale",
+          "type": "string"
+        },
+        {
+          "name": "decided_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "args_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "QualificationRun",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "result",
+          "type": "string"
+        },
+        {
+          "name": "metrics_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "Receipt",
+      "attributes": [
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "digest",
+          "type": "string"
+        },
+        {
+          "name": "issued_at",
+          "type": "time"
+        },
+        {
+          "name": "evidence_path",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ClaudeSession",
+      "attributes": [
+        {
+          "name": "session_url",
+          "type": "string"
+        },
+        {
+          "name": "model",
+          "type": "string"
+        },
+        {
+          "name": "started_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "ClaudeToolInvocation",
+      "attributes": [
+        {
+          "name": "tool_name",
+          "type": "string"
+        },
+        {
+          "name": "args_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "result_summary",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ClaudeSubagent",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "role",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ProcessEpisode",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "started_at",
+          "type": "time"
+        },
+        {
+          "name": "ended_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "CapabilityGraph",
+      "attributes": [
+        {
+          "name": "digest",
+          "type": "string"
+        },
+        {
+          "name": "capability_ids",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "eventTypes": [
+    {
+      "name": "CompositionCreated",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "WorldStateObserved",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "state_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "PlannerInvoked",
+      "attributes": [
+        {
+          "name": "solver_name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "PlanProduced",
+      "attributes": [
+        {
+          "name": "summary",
+          "type": "string"
+        },
+        {
+          "name": "cost_estimate",
+          "type": "float"
+        }
+      ]
+    },
+    {
+      "name": "PlanRefused",
+      "attributes": [
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "PredictionFrozen",
+      "attributes": [
+        {
+          "name": "confidence",
+          "type": "float"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityEvaluated",
+      "attributes": [
+        {
+          "name": "rationale",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityGranted",
+      "attributes": [
+        {
+          "name": "rationale",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityRefused",
+      "attributes": [
+        {
+          "name": "rationale",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionStarted",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionCompleted",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "result_summary",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionFailed",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "error",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionRefused",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "QualificationObserved",
+      "attributes": [
+        {
+          "name": "result",
+          "type": "string"
+        },
+        {
+          "name": "metrics_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "PredictionCompared",
+      "attributes": [
+        {
+          "name": "delta_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "verdict",
+          "type": "string"
+        },
+        {
+          "name": "digest",
+          "type": "string"
+        },
+        {
+          "name": "schema_digest",
+          "type": "string"
+        },
+        {
+          "name": "n_match",
+          "type": "int"
+        },
+        {
+          "name": "n_mismatch",
+          "type": "int"
+        },
+        {
+          "name": "n_unobservable",
+          "type": "int"
+        },
+        {
+          "name": "n_not_applicable",
+          "type": "int"
+        },
+        {
+          "name": "n_type_error",
+          "type": "int"
+        },
+        {
+          "name": "n_missing_prediction",
+          "type": "int"
+        },
+        {
+          "name": "n_missing_observation",
+          "type": "int"
+        },
+        {
+          "name": "n_expected_transition_happened",
+          "type": "int"
+        },
+        {
+          "name": "n_expected_transition_absent",
+          "type": "int"
+        },
+        {
+          "name": "n_unexpected_transition_happened",
+          "type": "int"
+        },
+        {
+          "name": "n_expected_invariant_violated",
+          "type": "int"
+        },
+        {
+          "name": "field_classes_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "transition_classes_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "ReceiptIssued",
+      "attributes": [
+        {
+          "name": "digest",
+          "type": "string"
+        },
+        {
+          "name": "evidence_path",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LoopStarted",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LoopClosed",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LoopBlocked",
+      "attributes": [
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "DomainProjected",
+      "attributes": [
+        {
+          "name": "graph_digest",
+          "type": "string"
+        },
+        {
+          "name": "domain_digest",
+          "type": "string"
+        },
+        {
+          "name": "action_count",
+          "type": "int"
+        },
+        {
+          "name": "actions_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "id": "action_qr_2d5c9ab19591",
+      "type": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "marker_file_action",
+          "time": "2026-09-04T00:21:08.269605+00:00"
+        },
+        {
+          "name": "kind",
+          "value": "qualification_candidate",
+          "time": "2026-09-04T00:21:08.269605+00:00"
+        }
+      ]
+    },
+    {
+      "id": "qrun_qr_2d5c9ab19591",
+      "type": "QualificationRun",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "marker_file_action",
+          "time": "2026-09-04T00:21:08.270359+00:00"
+        },
+        {
+          "name": "result",
+          "value": "QUALIFIED",
+          "time": "2026-09-04T00:21:08.270359+00:00"
+        }
+      ]
+    },
+    {
+      "id": "receipt_qr_2d5c9ab19591",
+      "type": "Receipt",
+      "attributes": [
+        {
+          "name": "kind",
+          "value": "QualificationReceipt",
+          "time": "2026-09-04T00:21:08.271152+00:00"
+        },
+        {
+          "name": "digest",
+          "value": "efbc69038c2a2c13beb5ac335c59d36a7af5ae734f2c1c03458e697976cd46fe",
+          "time": "2026-09-04T00:21:08.271152+00:00"
+        },
+        {
+          "name": "issued_at",
+          "value": "2026-09-04T00:21:08.267394+00:00",
+          "time": "2026-09-04T00:21:08.271152+00:00"
+        }
+      ]
+    },
+    {
+      "id": "action_qr_6a495dd0438f",
+      "type": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "false_postcondition_action",
+          "time": "2026-09-04T00:21:08.280843+00:00"
+        },
+        {
+          "name": "kind",
+          "value": "qualification_candidate",
+          "time": "2026-09-04T00:21:08.280843+00:00"
+        }
+      ]
+    },
+    {
+      "id": "qrun_qr_6a495dd0438f",
+      "type": "QualificationRun",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "false_postcondition_action",
+          "time": "2026-09-04T00:21:08.281756+00:00"
+        },
+        {
+          "name": "result",
+          "value": "REJECTED",
+          "time": "2026-09-04T00:21:08.281756+00:00"
+        }
+      ]
+    },
+    {
+      "id": "receipt_qr_6a495dd0438f",
+      "type": "Receipt",
+      "attributes": [
+        {
+          "name": "kind",
+          "value": "QualificationReceipt",
+          "time": "2026-09-04T00:21:08.282630+00:00"
+        },
+        {
+          "name": "digest",
+          "value": "d2f97faa1d7ba3da6d745921576dd34fed83f795acc65e626b4c443ab5d5b939",
+          "time": "2026-09-04T00:21:08.282630+00:00"
+        },
+        {
+          "name": "issued_at",
+          "value": "2026-09-04T00:21:08.279799+00:00",
+          "time": "2026-09-04T00:21:08.282630+00:00"
+        }
+      ]
+    },
+    {
+      "id": "action_qr_98de5f6ee759",
+      "type": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "worktree_timeout_action",
+          "time": "2026-09-04T00:21:11.499410+00:00"
+        },
+        {
+          "name": "kind",
+          "value": "qualification_candidate",
+          "time": "2026-09-04T00:21:11.499410+00:00"
+        }
+      ]
+    },
+    {
+      "id": "qrun_qr_98de5f6ee759",
+      "type": "QualificationRun",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "worktree_timeout_action",
+          "time": "2026-09-04T00:21:11.500448+00:00"
+        },
+        {
+          "name": "result",
+          "value": "INCONCLUSIVE",
+          "time": "2026-09-04T00:21:11.500448+00:00"
+        }
+      ]
+    },
+    {
+      "id": "receipt_qr_98de5f6ee759",
+      "type": "Receipt",
+      "attributes": [
+        {
+          "name": "kind",
+          "value": "QualificationReceipt",
+          "time": "2026-09-04T00:21:11.501448+00:00"
+        },
+        {
+          "name": "digest",
+          "value": "60ba8df9afc5e489086d3fe9f3562081488a1751cd0fc99065041fecb9d04b07",
+          "time": "2026-09-04T00:21:11.501448+00:00"
+        },
+        {
+          "name": "issued_at",
+          "value": "2026-09-04T00:21:11.223132+00:00",
+          "time": "2026-09-04T00:21:11.501448+00:00"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "ev_qobs_qr_2d5c9ab19591",
+      "type": "QualificationObserved",
+      "time": "2026-09-04T00:21:08.271920+00:00",
+      "attributes": [
+        {
+          "name": "result",
+          "value": "QUALIFIED"
+        },
+        {
+          "name": "metrics_json",
+          "value": "{\"command\":[\"sh\",\"-c\",\"printf 'marker-ok\\\\n' > MARKER.txt && echo wrote-marker\"],\"elapsed_s\":0.0057,\"postconditions_declared\":4,\"postconditions_held\":4,\"subject_digest_after\":\"f6b2f5f7a562b7e5e9d7d52c35188a37a38d969fb075228dff6d3249df197451\",\"subject_digest_before\":\"57099d643b9f464c75ebcfd638bc2670b419d1bcaec7cff2266fae951fb5907d\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action_qr_2d5c9ab19591",
+          "qualifier": ""
+        },
+        {
+          "objectId": "qrun_qr_2d5c9ab19591",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev_rissued_qr_2d5c9ab19591",
+      "type": "ReceiptIssued",
+      "time": "2026-09-04T00:21:08.272743+00:00",
+      "attributes": [
+        {
+          "name": "digest",
+          "value": "efbc69038c2a2c13beb5ac335c59d36a7af5ae734f2c1c03458e697976cd46fe"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "qrun_qr_2d5c9ab19591",
+          "qualifier": ""
+        },
+        {
+          "objectId": "receipt_qr_2d5c9ab19591",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev_qobs_qr_6a495dd0438f",
+      "type": "QualificationObserved",
+      "time": "2026-09-04T00:21:08.283471+00:00",
+      "attributes": [
+        {
+          "name": "result",
+          "value": "REJECTED"
+        },
+        {
+          "name": "metrics_json",
+          "value": "{\"command\":[\"sh\",\"-c\",\"echo 'claims DONE.txt written'\"],\"elapsed_s\":0.0055,\"postconditions_declared\":2,\"postconditions_held\":1,\"subject_digest_after\":\"57099d643b9f464c75ebcfd638bc2670b419d1bcaec7cff2266fae951fb5907d\",\"subject_digest_before\":\"57099d643b9f464c75ebcfd638bc2670b419d1bcaec7cff2266fae951fb5907d\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action_qr_6a495dd0438f",
+          "qualifier": ""
+        },
+        {
+          "objectId": "qrun_qr_6a495dd0438f",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev_rissued_qr_6a495dd0438f",
+      "type": "ReceiptIssued",
+      "time": "2026-09-04T00:21:08.284402+00:00",
+      "attributes": [
+        {
+          "name": "digest",
+          "value": "d2f97faa1d7ba3da6d745921576dd34fed83f795acc65e626b4c443ab5d5b939"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "qrun_qr_6a495dd0438f",
+          "qualifier": ""
+        },
+        {
+          "objectId": "receipt_qr_6a495dd0438f",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev_qobs_qr_98de5f6ee759",
+      "type": "QualificationObserved",
+      "time": "2026-09-04T00:21:11.502374+00:00",
+      "attributes": [
+        {
+          "name": "result",
+          "value": "INCONCLUSIVE"
+        },
+        {
+          "name": "metrics_json",
+          "value": "{\"command\":[\"sh\",\"-c\",\"sleep 5\"],\"elapsed_s\":1.005,\"postconditions_declared\":1,\"postconditions_held\":0,\"subject_digest_after\":\"070250c25260d1cb77660b8dbeb0467590547bafc24b69680bbd437f42acdb0a\",\"subject_digest_before\":\"070250c25260d1cb77660b8dbeb0467590547bafc24b69680bbd437f42acdb0a\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action_qr_98de5f6ee759",
+          "qualifier": ""
+        },
+        {
+          "objectId": "qrun_qr_98de5f6ee759",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev_rissued_qr_98de5f6ee759",
+      "type": "ReceiptIssued",
+      "time": "2026-09-04T00:21:11.503309+00:00",
+      "attributes": [
+        {
+          "name": "digest",
+          "value": "60ba8df9afc5e489086d3fe9f3562081488a1751cd0fc99065041fecb9d04b07"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "qrun_qr_98de5f6ee759",
+          "qualifier": ""
+        },
+        {
+          "objectId": "receipt_qr_98de5f6ee759",
+          "qualifier": ""
+        }
+      ]
+    }
+  ]
+}
