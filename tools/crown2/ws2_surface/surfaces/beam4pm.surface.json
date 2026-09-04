@@ -1,0 +1,2872 @@
+{
+  "capabilities": [
+    {
+      "authority_class": "NETWORK_FETCH",
+      "command": "docker build -f Dockerfile --target builder .",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "pulls base image layers and writes an image"
+      ],
+      "evidence_source": "Dockerfile:24",
+      "help_excerpt": "",
+      "id": "cap:dockerfile:Dockerfile:build:builder:76feadbb6411",
+      "name": "Dockerfile:build:builder",
+      "notes": [
+        "stage=builder"
+      ],
+      "preconditions": [
+        "docker daemon running",
+        "base image pullable: hexpm/elixir:1.18.5-erlang-27.2.4-debian-bookworm-20260824"
+      ],
+      "qualification_strategy": "sandbox-fetch: execute with network permitted once, hash resulting lockfile/deps dir, assert exit 0; cache result, do not re-run per qualification",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "dockerfile"
+    },
+    {
+      "authority_class": "NETWORK_FETCH",
+      "command": "docker build -f Dockerfile .",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "pulls base image layers and writes an image"
+      ],
+      "evidence_source": "Dockerfile:152",
+      "help_excerpt": "",
+      "id": "cap:dockerfile:Dockerfile:build:feaf03cd7ab0",
+      "name": "Dockerfile:build",
+      "notes": [
+        "stage=final"
+      ],
+      "preconditions": [
+        "docker daemon running",
+        "base image pullable: hexpm/erlang:29.0-debian-bookworm-20260610-slim"
+      ],
+      "qualification_strategy": "sandbox-fetch: execute with network permitted once, hash resulting lockfile/deps dir, assert exit 0; cache result, do not re-run per qualification",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "dockerfile"
+    },
+    {
+      "authority_class": "CONSEQUENTIAL",
+      "command": "docker run --rm $(docker build -q -f Dockerfile .)",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "deletes a named file"
+      ],
+      "evidence_source": "Dockerfile:158",
+      "help_excerpt": "",
+      "id": "cap:dockerfile:Dockerfile:run:dfffc2fe096b",
+      "name": "Dockerfile:run",
+      "notes": [
+        "CMD [\"erl\", \"-noshell\", \"-pa\", \"/opt/beam4pm/ebin\", \"-eval\", \"beam4pm_demo:run()\", \"-s\", \"init\", \"stop\"]"
+      ],
+      "preconditions": [
+        "image built"
+      ],
+      "qualification_strategy": "dry-run-only: run the dry-run/plan variant if one exists; the real command requires an AuthorityDecision object in the OCEL log before ActionStarted",
+      "reversibility": "IRREVERSIBLE",
+      "source_kind": "dockerfile"
+    },
+    {
+      "authority_class": "READ",
+      "command": "@just --list",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [],
+      "evidence_source": "Justfile:4",
+      "help_excerpt": "",
+      "id": "cap:justfile:default:41d2766208c9",
+      "name": "default",
+      "notes": [
+        "invoke: just --justfile Justfile default"
+      ],
+      "preconditions": [
+        "`just` on PATH"
+      ],
+      "qualification_strategy": "run-and-capture: execute with timeout, assert exit 0, snapshot stdout; safe to auto-run",
+      "reversibility": "IDEMPOTENT",
+      "source_kind": "justfile"
+    },
+    {
+      "authority_class": "NETWORK_FETCH",
+      "command": "git submodule update --init --recursive",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "fetches git objects into the working tree"
+      ],
+      "evidence_source": "Justfile:8",
+      "help_excerpt": "",
+      "id": "cap:justfile:submodules:cc7d26827f05",
+      "name": "submodules",
+      "notes": [
+        "invoke: just --justfile Justfile submodules"
+      ],
+      "preconditions": [
+        "`just` on PATH"
+      ],
+      "qualification_strategy": "sandbox-fetch: execute with network permitted once, hash resulting lockfile/deps dir, assert exit 0; cache result, do not re-run per qualification",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "justfile"
+    },
+    {
+      "authority_class": "CONSEQUENTIAL",
+      "command": "rm -f ggen.lock\nggen sync run --dry-run\nggen sync run",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "deletes a named file",
+        "regenerates manufactured source files in the working tree"
+      ],
+      "evidence_source": "Justfile:12",
+      "help_excerpt": "",
+      "id": "cap:justfile:sync:6f810882bf45",
+      "name": "sync",
+      "notes": [
+        "invoke: just --justfile Justfile sync"
+      ],
+      "preconditions": [
+        "`just` on PATH"
+      ],
+      "qualification_strategy": "dry-run-only: run the dry-run/plan variant if one exists; the real command requires an AuthorityDecision object in the OCEL log before ActionStarted",
+      "reversibility": "IRREVERSIBLE",
+      "source_kind": "justfile"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "rebar3 eunit\nmix test",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "writes _build/"
+      ],
+      "evidence_source": "Justfile:18",
+      "help_excerpt": "",
+      "id": "cap:justfile:test:6edcbc366865",
+      "name": "test",
+      "notes": [
+        "invoke: just --justfile Justfile test"
+      ],
+      "preconditions": [
+        "`just` on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "justfile"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "bash scripts/gate_lint_truth.sh",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "runs a repo script (effects opaque without reading the script)"
+      ],
+      "evidence_source": "Justfile:24",
+      "help_excerpt": "",
+      "id": "cap:justfile:lint_truth:f1ac20ed0d75",
+      "name": "lint_truth",
+      "notes": [
+        "invoke: just --justfile Justfile lint_truth"
+      ],
+      "preconditions": [
+        "`just` on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "justfile"
+    },
+    {
+      "authority_class": "CONSEQUENTIAL",
+      "command": "just verify",
+      "cwd": ".",
+      "depends_on": [
+        "submodules",
+        "sync",
+        "lint_truth",
+        "test"
+      ],
+      "effects": [
+        "delegates to a build tool"
+      ],
+      "evidence_source": "Justfile:28",
+      "help_excerpt": "",
+      "id": "cap:justfile:verify:c27b0f52b739",
+      "name": "verify",
+      "notes": [
+        "invoke: just --justfile Justfile verify",
+        "authority_class inherited from dependency 'submodules'",
+        "authority_class inherited from dependency 'sync'"
+      ],
+      "preconditions": [
+        "`just` on PATH"
+      ],
+      "qualification_strategy": "dry-run-only: run the dry-run/plan variant if one exists; the real command requires an AuthorityDecision object in the OCEL log before ActionStarted",
+      "reversibility": "IRREVERSIBLE",
+      "source_kind": "justfile"
+    },
+    {
+      "authority_class": "NETWORK_FETCH",
+      "command": "git submodule update --init --recursive",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "fetches git objects into the working tree"
+      ],
+      "evidence_source": "Makefile:4",
+      "help_excerpt": "",
+      "id": "cap:makefile:submodules:46e68fe2eef9",
+      "name": "submodules",
+      "notes": [
+        "invoke: make -f Makefile submodules"
+      ],
+      "preconditions": [
+        "`make` on PATH"
+      ],
+      "qualification_strategy": "sandbox-fetch: execute with network permitted once, hash resulting lockfile/deps dir, assert exit 0; cache result, do not re-run per qualification",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "makefile"
+    },
+    {
+      "authority_class": "CONSEQUENTIAL",
+      "command": "rm -f ggen.lock\nggen sync run --dry-run\nggen sync run",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "deletes a named file",
+        "regenerates manufactured source files in the working tree"
+      ],
+      "evidence_source": "Makefile:8",
+      "help_excerpt": "",
+      "id": "cap:makefile:sync:6e26d160730c",
+      "name": "sync",
+      "notes": [
+        "invoke: make -f Makefile sync"
+      ],
+      "preconditions": [
+        "`make` on PATH"
+      ],
+      "qualification_strategy": "dry-run-only: run the dry-run/plan variant if one exists; the real command requires an AuthorityDecision object in the OCEL log before ActionStarted",
+      "reversibility": "IRREVERSIBLE",
+      "source_kind": "makefile"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "rebar3 eunit\nmix test",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "writes _build/"
+      ],
+      "evidence_source": "Makefile:14",
+      "help_excerpt": "",
+      "id": "cap:makefile:test:53d34e9fd569",
+      "name": "test",
+      "notes": [
+        "invoke: make -f Makefile test"
+      ],
+      "preconditions": [
+        "`make` on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "makefile"
+    },
+    {
+      "authority_class": "CONSEQUENTIAL",
+      "command": "make verify",
+      "cwd": ".",
+      "depends_on": [
+        "submodules",
+        "sync",
+        "test"
+      ],
+      "effects": [
+        "delegates to a build tool"
+      ],
+      "evidence_source": "Makefile:19",
+      "help_excerpt": "",
+      "id": "cap:makefile:verify:a360f01ef5e4",
+      "name": "verify",
+      "notes": [
+        "invoke: make -f Makefile verify",
+        "authority_class inherited from dependency 'submodules'",
+        "authority_class inherited from dependency 'sync'"
+      ],
+      "preconditions": [
+        "`make` on PATH"
+      ],
+      "qualification_strategy": "dry-run-only: run the dry-run/plan variant if one exists; the real command requires an AuthorityDecision object in the OCEL log before ActionStarted",
+      "reversibility": "IRREVERSIBLE",
+      "source_kind": "makefile"
+    },
+    {
+      "authority_class": "NETWORK_FETCH",
+      "command": "mix deps.get",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "writes deps/ and mix.lock"
+      ],
+      "evidence_source": "mix.exs:35",
+      "help_excerpt": "",
+      "id": "cap:mix_exs:deps.get:618b5b2d7a36",
+      "name": "deps.get",
+      "notes": [
+        "declared deps: ggen_igniter, ash, ash_ai, wasmex"
+      ],
+      "preconditions": [
+        "elixir + mix on PATH",
+        "hex + rebar archives installed (mix local.hex / local.rebar)",
+        "rust/cargo toolchain (NIF dependency compiles at deps.compile)"
+      ],
+      "qualification_strategy": "sandbox-fetch: execute with network permitted once, hash resulting lockfile/deps dir, assert exit 0; cache result, do not re-run per qualification",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "mix_exs"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "mix compile",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "writes _build/"
+      ],
+      "evidence_source": "mix.exs:35",
+      "help_excerpt": "",
+      "id": "cap:mix_exs:compile:58b87e21145e",
+      "name": "compile",
+      "notes": [],
+      "preconditions": [
+        "elixir + mix on PATH",
+        "hex + rebar archives installed (mix local.hex / local.rebar)",
+        "rust/cargo toolchain (NIF dependency compiles at deps.compile)",
+        "deps fetched"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "mix_exs"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "mix test",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "writes _build/"
+      ],
+      "evidence_source": "mix.exs:35",
+      "help_excerpt": "",
+      "id": "cap:mix_exs:test:dfcb37a99ead",
+      "name": "test",
+      "notes": [],
+      "preconditions": [
+        "elixir + mix on PATH",
+        "hex + rebar archives installed (mix local.hex / local.rebar)",
+        "rust/cargo toolchain (NIF dependency compiles at deps.compile)",
+        "deps fetched"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "mix_exs"
+    },
+    {
+      "authority_class": "CONSEQUENTIAL",
+      "command": "gh workflow run beam4pm-ci.yml",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "mutates GitHub state"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-ci.yml:1",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-ci.yml:dispatch:5ba5262c8df6",
+      "name": "beam4pm-ci.yml:dispatch",
+      "notes": [
+        "triggers: push, pull_request, workflow_dispatch"
+      ],
+      "preconditions": [
+        "gh authenticated",
+        "workflow_dispatch trigger declared"
+      ],
+      "qualification_strategy": "dry-run-only: run the dry-run/plan variant if one exists; the real command requires an AuthorityDecision object in the OCEL log before ActionStarted",
+      "reversibility": "IRREVERSIBLE",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "rebar3 eunit",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "writes _build/"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-ci.yml:51",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-ci.yml:test:rebar3 eunit:8f7035e17ca2",
+      "name": "beam4pm-ci.yml:test:rebar3 eunit",
+      "notes": [
+        "job=test step=4"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-latest",
+        "prior steps of job 'test' completed",
+        "uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+        "uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124",
+        "uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "# Real Rust subprocess oracles the RF1/RF2/RF3 Chicago tests spawn (thin\n# adapters over the real process_mining =0.6.2 function surface, no\n# algorithm re-implemented). ubuntu-latest ships a preinstalled\n# cargo/rustc, the same toolchain that already compiles ggen_igniter's\n# native/ggen_graph_nif rustler NIF at `mix test` time.\ncd native/rf1-dfg-oracle && cargo build --release && cd -\ncd native/rf2-conformance-oracle && cargo build --release && cd -\ncd native/rf3-ocel-oracle && cargo build --release && cd -",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-ci.yml:56",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-ci.yml:test:Build rust4pm-Reactor-validation oracle crates (RF1/RF2/RF3):8ca0efbc486f",
+      "name": "beam4pm-ci.yml:test:Build rust4pm-Reactor-validation oracle crates (RF1/RF2/RF3)",
+      "notes": [
+        "job=test step=5"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-latest",
+        "prior steps of job 'test' completed",
+        "uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+        "uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124",
+        "uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "NETWORK_FETCH",
+      "command": "mix deps.get",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "writes deps/ and mix.lock"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-ci.yml:75",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-ci.yml:test:mix deps.get:71f214b89b62",
+      "name": "beam4pm-ci.yml:test:mix deps.get",
+      "notes": [
+        "job=test step=7"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-latest",
+        "prior steps of job 'test' completed",
+        "uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124",
+        "uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830",
+        "uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830"
+      ],
+      "qualification_strategy": "sandbox-fetch: execute with network permitted once, hash resulting lockfile/deps dir, assert exit 0; cache result, do not re-run per qualification",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "bash scripts/gate_lint_truth.sh",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "runs a repo script (effects opaque without reading the script)"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-ci.yml:80",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-ci.yml:test:Static overclaiming-phrase lint (GATE LINT-TRUTH):12fa9bd0c979",
+      "name": "beam4pm-ci.yml:test:Static overclaiming-phrase lint (GATE LINT-TRUTH)",
+      "notes": [
+        "job=test step=8"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-latest",
+        "prior steps of job 'test' completed",
+        "uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124",
+        "uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830",
+        "uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "source scripts/env/rust4pm_reactor_env.sh\nmix test",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "unclassified command line (UNVERIFIED)",
+        "writes _build/"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-ci.yml:85",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-ci.yml:test:mix test:d13ac342b94c",
+      "name": "beam4pm-ci.yml:test:mix test",
+      "notes": [
+        "job=test step=9"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-latest",
+        "prior steps of job 'test' completed",
+        "uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124",
+        "uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830",
+        "uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cd gleam\ngleam test",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "writes build/"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-ci.yml:91",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-ci.yml:test:gleam test (gleam/ projection):03a378e257f6",
+      "name": "beam4pm-ci.yml:test:gleam test (gleam/ projection)",
+      "notes": [
+        "job=test step=10"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-latest",
+        "prior steps of job 'test' completed",
+        "uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124",
+        "uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830",
+        "uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "bash scripts/roundtrip_check.sh",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "runs a repo script (effects opaque without reading the script)"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-ci.yml:97",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-ci.yml:test:Cross-language wire identity (Erlang<->Elixir roundtrip):aacda555bfbf",
+      "name": "beam4pm-ci.yml:test:Cross-language wire identity (Erlang<->Elixir roundtrip)",
+      "notes": [
+        "job=test step=11"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-latest",
+        "prior steps of job 'test' completed",
+        "uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124",
+        "uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830",
+        "uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "CONSEQUENTIAL",
+      "command": "set -euo pipefail\nmkdir -p \"$HOME/.local/bin\"\narchive=\"$RUNNER_TEMP/ggen-x86_64-unknown-linux-gnu.tar.gz\"\ncurl --fail --location --silent --show-error --retry 3 \\\n--proto '=https' --tlsv1.2 \\\n-o \"$archive\" \\\nhttps://github.com/seanchatmangpt/ggen/releases/download/v26.8.28/ggen-x86_64-unknown-linux-gnu.tar.gz\necho 'ccb9fe78ef0c84d8b240b45beb6e73f47e2c930d5db3efcf9a0e58dfe071d313  '\"$archive\" | sha256sum --check --strict\ntar -xzf \"$archive\" -C \"$HOME/.local/bin\" ggen\nchmod +x \"$HOME/.local/bin/ggen\"\nexport PATH=\"$HOME/.local/bin:$PATH\"\nggen --version\nbash scripts/gate_m2_check.sh",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "unclassified command line (UNVERIFIED)",
+        "network I/O",
+        "changes system/permission state",
+        "runs a repo script (effects opaque without reading the script)"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-ci.yml:102",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-ci.yml:test:Determinism check -- regenerate via identity-verified GGen release and diff:86416c87c3a9",
+      "name": "beam4pm-ci.yml:test:Determinism check -- regenerate via identity-verified GGen release and diff",
+      "notes": [
+        "job=test step=12"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-latest",
+        "prior steps of job 'test' completed",
+        "uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124",
+        "uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830",
+        "uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830"
+      ],
+      "qualification_strategy": "dry-run-only: run the dry-run/plan variant if one exists; the real command requires an AuthorityDecision object in the OCEL log before ActionStarted",
+      "reversibility": "IRREVERSIBLE",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "set -euo pipefail\ntest \"$(git rev-parse HEAD)\" = \"$EXPECTED_HEAD\"\necho \"EXACT_HEAD_ALIVE=$EXPECTED_HEAD\"",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "unclassified command line (UNVERIFIED)"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-container-pr.yml:57",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-container-pr.yml:build:Prove exact subject identity:8777ec2f1d8c",
+      "name": "beam4pm-container-pr.yml:build:Prove exact subject identity",
+      "notes": [
+        "job=build step=2"
+      ],
+      "preconditions": [
+        "CI runner: ${{ matrix.runner }}",
+        "prior steps of job 'build' completed",
+        "uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "CONSEQUENTIAL",
+      "command": "gh workflow run beam4pm-container.yml",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "mutates GitHub state"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-container.yml:1",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-container.yml:dispatch:af12c0db6ca6",
+      "name": "beam4pm-container.yml:dispatch",
+      "notes": [
+        "triggers: push, workflow_dispatch"
+      ],
+      "preconditions": [
+        "gh authenticated",
+        "workflow_dispatch trigger declared"
+      ],
+      "qualification_strategy": "dry-run-only: run the dry-run/plan variant if one exists; the real command requires an AuthorityDecision object in the OCEL log before ActionStarted",
+      "reversibility": "IRREVERSIBLE",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "set -euo pipefail\nIMAGE=\"ghcr.io/${{ github.repository }}\"\ndocker buildx imagetools create \\\n-t \"${IMAGE}:sha-${{ github.sha }}\" \\\n-t \"${IMAGE}:latest\" \\\n\"${IMAGE}:sha-${{ github.sha }}-amd64\" \\\n\"${IMAGE}:sha-${{ github.sha }}-arm64\"\ndocker buildx imagetools inspect \"${IMAGE}:sha-${{ github.sha }}\"",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "unclassified command line (UNVERIFIED)"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-container.yml:115",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-container.yml:merge-manifest:Create and push multi-arch manifest:dcf6238f6ea9",
+      "name": "beam4pm-container.yml:merge-manifest:Create and push multi-arch manifest",
+      "notes": [
+        "job=merge-manifest step=2"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-24.04",
+        "prior steps of job 'merge-manifest' completed",
+        "uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "set -euo pipefail\nIMAGE=\"ghcr.io/${{ github.repository }}:sha-${{ github.sha }}\"\nDIGEST=$(docker buildx imagetools inspect \"${IMAGE}\" --format \"{{json .Manifest}}\" | jq -r '.digest')\necho \"Signing ${IMAGE}@${DIGEST} keylessly via GitHub OIDC (no signing key in this repo)\"\ncosign sign --yes \"ghcr.io/${{ github.repository }}@${DIGEST}\"",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "unclassified command line (UNVERIFIED)"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-container.yml:130",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-container.yml:merge-manifest:Sign multi-arch manifest keylessly (cosign + GitHub OIDC):0e64ac89ace7",
+      "name": "beam4pm-container.yml:merge-manifest:Sign multi-arch manifest keylessly (cosign + GitHub OIDC)",
+      "notes": [
+        "job=merge-manifest step=4"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-24.04",
+        "prior steps of job 'merge-manifest' completed",
+        "uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772",
+        "uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "CONSEQUENTIAL",
+      "command": "gh workflow run beam4pm-infra-validate.yml",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "mutates GitHub state"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-infra-validate.yml:1",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-infra-validate.yml:dispatch:ea96d5b5d9a6",
+      "name": "beam4pm-infra-validate.yml:dispatch",
+      "notes": [
+        "triggers: push, pull_request, workflow_dispatch"
+      ],
+      "preconditions": [
+        "gh authenticated",
+        "workflow_dispatch trigger declared"
+      ],
+      "qualification_strategy": "dry-run-only: run the dry-run/plan variant if one exists; the real command requires an AuthorityDecision object in the OCEL log before ActionStarted",
+      "reversibility": "IRREVERSIBLE",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "NETWORK_FETCH",
+      "command": "set -euo pipefail\nfor d in infra/gcp/cloudrun infra/terraform/github; do\nif [ ! -d \"$d\" ]; then\necho \"== skip (not present yet): $d ==\"\ncontinue\nfi\necho \"== terraform init/validate: $d ==\"\nterraform -chdir=\"$d\" init -backend=false -input=false\nterraform -chdir=\"$d\" validate\ndone",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "unclassified command line (UNVERIFIED)",
+        "downloads providers into .terraform/"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-infra-validate.yml:50",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-infra-validate.yml:validate:terraform init -backend=false + terraform validate (all infra/ Terraform modules):e8ca07a3582f",
+      "name": "beam4pm-infra-validate.yml:validate:terraform init -backend=false + terraform validate (all infra/ Terraform modules)",
+      "notes": [
+        "job=validate step=4"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-latest",
+        "prior steps of job 'validate' completed",
+        "uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+        "uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd",
+        "uses: hashicorp/setup-packer@ce93c3c08a6c2ff2275bf4b54ff0d9a75f6c9789"
+      ],
+      "qualification_strategy": "sandbox-fetch: execute with network permitted once, hash resulting lockfile/deps dir, assert exit 0; cache result, do not re-run per qualification",
+      "reversibility": "UNKNOWN",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "set -euo pipefail\npacker init infra/gcp/packer\npacker validate infra/gcp/packer",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "unclassified command line (UNVERIFIED)"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-infra-validate.yml:64",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-infra-validate.yml:validate:packer init + packer validate (infra/gcp/packer):7113b764856f",
+      "name": "beam4pm-infra-validate.yml:validate:packer init + packer validate (infra/gcp/packer)",
+      "notes": [
+        "job=validate step=5"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-latest",
+        "prior steps of job 'validate' completed",
+        "uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+        "uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd",
+        "uses: hashicorp/setup-packer@ce93c3c08a6c2ff2275bf4b54ff0d9a75f6c9789"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "CONSEQUENTIAL",
+      "command": "gh workflow run beam4pm-manufacture.yml",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "mutates GitHub state"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-manufacture.yml:1",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-manufacture.yml:dispatch:c999f8699262",
+      "name": "beam4pm-manufacture.yml:dispatch",
+      "notes": [
+        "triggers: push, pull_request, workflow_dispatch"
+      ],
+      "preconditions": [
+        "gh authenticated",
+        "workflow_dispatch trigger declared"
+      ],
+      "qualification_strategy": "dry-run-only: run the dry-run/plan variant if one exists; the real command requires an AuthorityDecision object in the OCEL log before ActionStarted",
+      "reversibility": "IRREVERSIBLE",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "set -euo pipefail\nsha=\"$(git rev-parse HEAD:vendor/ggen-marketplace)\"\n[[ \"$sha\" =~ ^[0-9a-f]{40}$ ]] || { echo \"REFUSED[NOT_A_GITLINK]:$sha\" >&2; exit 2; }\necho \"sha=$sha\" >> \"$GITHUB_OUTPUT\"\necho \"marketplace submodule pin: $sha\"",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "unclassified command line (UNVERIFIED)"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-manufacture.yml:60",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-manufacture.yml:resolve:Read vendor/ggen-marketplace gitlink at this exact commit:5213c25132f3",
+      "name": "beam4pm-manufacture.yml:resolve:Read vendor/ggen-marketplace gitlink at this exact commit",
+      "notes": [
+        "job=resolve step=2"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-24.04",
+        "prior steps of job 'resolve' completed",
+        "uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "set -euo pipefail\ntest \"$(git rev-parse HEAD)\" = \"$EXPECTED_HEAD\"\necho \"EXACT_HEAD_ALIVE=$EXPECTED_HEAD\"",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "unclassified command line (UNVERIFIED)"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-rust4pm-pr.yml:45",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-rust4pm-pr.yml:qualify:Prove exact subject identity:fa9e8b29ed77",
+      "name": "beam4pm-rust4pm-pr.yml:qualify:Prove exact subject identity",
+      "notes": [
+        "job=qualify step=2"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-24.04",
+        "prior steps of job 'qualify' completed",
+        "uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "NETWORK_FETCH",
+      "command": "mix deps.get",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "writes deps/ and mix.lock"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-rust4pm-pr.yml:59",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-rust4pm-pr.yml:qualify:Resolve Mix dependencies:fd23b800f3a9",
+      "name": "beam4pm-rust4pm-pr.yml:qualify:Resolve Mix dependencies",
+      "notes": [
+        "job=qualify step=4"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-24.04",
+        "prior steps of job 'qualify' completed",
+        "uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+        "uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124"
+      ],
+      "qualification_strategy": "sandbox-fetch: execute with network permitted once, hash resulting lockfile/deps dir, assert exit 0; cache result, do not re-run per qualification",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "set -euo pipefail\ncd native/rf1-dfg-oracle && cargo build --release && cd -\ncd native/rf2-conformance-oracle && cargo build --release && cd -\ncd native/rf3-ocel-oracle && cargo build --release && cd -\ncd native/rf4-oc-discovery-oracle && cargo build --release && cd -",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "unclassified command line (UNVERIFIED)",
+        "writes target/"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-rust4pm-pr.yml:63",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-rust4pm-pr.yml:qualify:Build RF1/RF2/RF3/RF4 native oracles:0b21be50815e",
+      "name": "beam4pm-rust4pm-pr.yml:qualify:Build RF1/RF2/RF3/RF4 native oracles",
+      "notes": [
+        "job=qualify step=5"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-24.04",
+        "prior steps of job 'qualify' completed",
+        "uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+        "uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "CONSEQUENTIAL",
+      "command": "set -euo pipefail\nmkdir -p \"$HOME/.local/bin\"\nprintf '%s\\n' \\\n'#!/usr/bin/env bash' \\\n'exec docker run --rm --user \"$(id -u):$(id -g)\" -v \"$PWD:/workspace\" -w /workspace ghcr.io/seanchatmangpt/ggen-ecosystem:v26.8.28 ggen \"$@\"' \\\n> \"$HOME/.local/bin/ggen\"\nchmod +x \"$HOME/.local/bin/ggen\"\nexport PATH=\"$HOME/.local/bin:$PATH\"\nsource scripts/env/rust4pm_reactor_env.sh\nggen --version\nbash scripts/gate_m2_check.sh",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "unclassified command line (UNVERIFIED)",
+        "deletes a named file",
+        "changes system/permission state",
+        "runs a repo script (effects opaque without reading the script)"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-rust4pm-pr.yml:72",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-rust4pm-pr.yml:qualify:Prove deterministic manufacture on canonical projections:5b8d6d0f5f7f",
+      "name": "beam4pm-rust4pm-pr.yml:qualify:Prove deterministic manufacture on canonical projections",
+      "notes": [
+        "job=qualify step=6"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-24.04",
+        "prior steps of job 'qualify' completed",
+        "uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+        "uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124"
+      ],
+      "qualification_strategy": "dry-run-only: run the dry-run/plan variant if one exists; the real command requires an AuthorityDecision object in the OCEL log before ActionStarted",
+      "reversibility": "IRREVERSIBLE",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "bash scripts/rust4pm_wasm_build.sh",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "runs a repo script (effects opaque without reading the script)"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-rust4pm-pr.yml:87",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-rust4pm-pr.yml:qualify:Build Rust4PM WASM engine:f56ba58aa4c1",
+      "name": "beam4pm-rust4pm-pr.yml:qualify:Build Rust4PM WASM engine",
+      "notes": [
+        "job=qualify step=7"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-24.04",
+        "prior steps of job 'qualify' completed",
+        "uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+        "uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "mix test test/beam4pm_rust4pm_ci_test.exs",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "writes _build/"
+      ],
+      "evidence_source": ".github/workflows/beam4pm-rust4pm-pr.yml:91",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:beam4pm-rust4pm-pr.yml:qualify:Execute portable WASM \u2194 RF4 differential court:271b37a59e89",
+      "name": "beam4pm-rust4pm-pr.yml:qualify:Execute portable WASM \u2194 RF4 differential court",
+      "notes": [
+        "job=qualify step=8"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-24.04",
+        "prior steps of job 'qualify' completed",
+        "uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+        "uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "CONSEQUENTIAL",
+      "command": "gh workflow run post-llm-runtime.yml",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "mutates GitHub state"
+      ],
+      "evidence_source": ".github/workflows/post-llm-runtime.yml:1",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:post-llm-runtime.yml:dispatch:1a47e8bccbbc",
+      "name": "post-llm-runtime.yml:dispatch",
+      "notes": [
+        "triggers: pull_request, push, workflow_dispatch"
+      ],
+      "preconditions": [
+        "gh authenticated",
+        "workflow_dispatch trigger declared"
+      ],
+      "qualification_strategy": "dry-run-only: run the dry-run/plan variant if one exists; the real command requires an AuthorityDecision object in the OCEL log before ActionStarted",
+      "reversibility": "IRREVERSIBLE",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "set -euo pipefail\ntest -s .ggen-evidence/github-sync-receipt.json\ntest -s .ggen-evidence/untracked-output.tar.gz\ntar -xzf .ggen-evidence/untracked-output.tar.gz",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "unclassified command line (UNVERIFIED)"
+      ],
+      "evidence_source": ".github/workflows/post-llm-runtime.yml:50",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:post-llm-runtime.yml:chicago:Materialize manufactured files:7f0bd50ed49a",
+      "name": "post-llm-runtime.yml:chicago:Materialize manufactured files",
+      "notes": [
+        "job=chicago step=3"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-24.04",
+        "prior steps of job 'chicago' completed",
+        "uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "set -euo pipefail\nroot=contracts/post-llm-runtime/generated/post_llm\ntest -s \"$root/runtime.ex\"\ntest -s \"$root/runtime_test.exs\"\ntest -s \"$root/README.md\"\nsha256sum \"$root/runtime.ex\" \"$root/runtime_test.exs\" \"$root/README.md\" | sort > .ggen-evidence/post-llm-generated.sha256",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "unclassified command line (UNVERIFIED)"
+      ],
+      "evidence_source": ".github/workflows/post-llm-runtime.yml:63",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:post-llm-runtime.yml:chicago:Prove generated surfaces and hash exact projection:f00c82011c30",
+      "name": "post-llm-runtime.yml:chicago:Prove generated surfaces and hash exact projection",
+      "notes": [
+        "job=chicago step=5"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-24.04",
+        "prior steps of job 'chicago' completed",
+        "uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+        "uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "set -euo pipefail\nroot=contracts/post-llm-runtime/generated/post_llm\nmkdir -p /tmp/post-llm-ebin\nelixirc --warnings-as-errors -o /tmp/post-llm-ebin \"$root/runtime.ex\"",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "unclassified command line (UNVERIFIED)"
+      ],
+      "evidence_source": ".github/workflows/post-llm-runtime.yml:72",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:post-llm-runtime.yml:chicago:Compile generated runtime with warnings as errors:8bd0b23f8fd0",
+      "name": "post-llm-runtime.yml:chicago:Compile generated runtime with warnings as errors",
+      "notes": [
+        "job=chicago step=6"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-24.04",
+        "prior steps of job 'chicago' completed",
+        "uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+        "uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "set -euo pipefail\nroot=contracts/post-llm-runtime/generated/post_llm\nelixir \"$root/runtime_test.exs\" | tee .ggen-evidence/post-llm-chicago.log\ngrep -Eq '[0-9]+ tests, 0 failures' .ggen-evidence/post-llm-chicago.log",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "unclassified command line (UNVERIFIED)",
+        "runs a repo script (effects opaque without reading the script)"
+      ],
+      "evidence_source": ".github/workflows/post-llm-runtime.yml:79",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:post-llm-runtime.yml:chicago:Execute generated Chicago witness:665fd686bcd8",
+      "name": "post-llm-runtime.yml:chicago:Execute generated Chicago witness",
+      "notes": [
+        "job=chicago step=7"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-24.04",
+        "prior steps of job 'chicago' completed",
+        "uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+        "uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "set -euo pipefail\nroot=contracts/post-llm-runtime/generated/post_llm\nexact_subject=\"$(elixir -r \"$root/runtime.ex\" -e 'IO.write(BeamPM.PostLLM.ExactSubject.subject().head)')\"\ntest -n \"$exact_subject\"\njq -n \\\n--arg source_sha \"$GITHUB_SHA\" \\\n--arg ggen_receipt_sha256 \"${{ needs.manufacture.outputs.receipt_sha256 }}\" \\\n--arg ggen_binary_sha256 \"${{ needs.manufacture.outputs.ggen_binary_sha256 }}\" \\\n--arg pack_sha \"783b44d585ae123f4ed805add5aab0ea97f76f0a\" \\\n--arg exact_subject \"$exact_subject\" \\\n'{\nstanding: \"ALIVE[POST_LLM_GOVERNED_RUNTIME]\",\nsource_sha: $source_sha,\nexact_subject: $exact_subject,\npack_sha: $pack_sha,\nggen_binary_sha256: $ggen_binary_sha256,\nggen_receipt_sha256: $ggen_receipt_sha256,\ngenerated_sha256_ledger: \"post-llm-generated.sha256\",\nexecuted: [\n\"exact_subject_positive_negative\",\n\"knowledge_hook_no_do\",\n\"capability_refusal_before_do\",\n\"select_construct_do_separation\",\n\"odrl_authority_admission\",\n\"real_filesystem_actuation\",\n\"deterministic_receipt_verification\",\n\"replay_manufactures_non_authorized_intent\",\n\"actuator_failure_receipted\",\n\"dfcm_reversible_option_ranking\",\n\"standing_evidence_dimensions\",\n\"event_envelope\",\n\"idempotency_key\",\n\"compensation_intent\"\n]\n}' > .ggen-evidence/post-llm-chicago-receipt.json\nsha256sum .ggen-evidence/post-llm-chicago-receipt.json",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "unclassified command line (UNVERIFIED)"
+      ],
+      "evidence_source": ".github/workflows/post-llm-runtime.yml:86",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:post-llm-runtime.yml:chicago:Bind execution receipt:78d4be37fb5b",
+      "name": "post-llm-runtime.yml:chicago:Bind execution receipt",
+      "notes": [
+        "job=chicago step=8"
+      ],
+      "preconditions": [
+        "CI runner: ubuntu-24.04",
+        "prior steps of job 'chicago' completed",
+        "uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+        "uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+        "uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "CONSEQUENTIAL",
+      "command": "gh workflow run scorecard.yml",
+      "cwd": ".",
+      "depends_on": [],
+      "effects": [
+        "mutates GitHub state"
+      ],
+      "evidence_source": ".github/workflows/scorecard.yml:1",
+      "help_excerpt": "",
+      "id": "cap:github_workflow:scorecard.yml:dispatch:7e8329950dd0",
+      "name": "scorecard.yml:dispatch",
+      "notes": [
+        "triggers: push, schedule, workflow_dispatch"
+      ],
+      "preconditions": [
+        "gh authenticated",
+        "workflow_dispatch trigger declared"
+      ],
+      "qualification_strategy": "dry-run-only: run the dry-run/plan variant if one exists; the real command requires an AuthorityDecision object in the OCEL log before ActionStarted",
+      "reversibility": "IRREVERSIBLE",
+      "source_kind": "github_workflow"
+    },
+    {
+      "authority_class": "NETWORK_FETCH",
+      "command": "terraform init",
+      "cwd": "infra/gcp/cloudrun",
+      "depends_on": [],
+      "effects": [
+        "downloads providers into .terraform/"
+      ],
+      "evidence_source": "infra/gcp/cloudrun/main.tf:1",
+      "help_excerpt": "",
+      "id": "cap:terraform:infra/gcp/cloudrun:init:f25e3d693a40",
+      "name": "infra/gcp/cloudrun:init",
+      "notes": [],
+      "preconditions": [
+        "terraform on PATH",
+        "providers: google"
+      ],
+      "qualification_strategy": "sandbox-fetch: execute with network permitted once, hash resulting lockfile/deps dir, assert exit 0; cache result, do not re-run per qualification",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "terraform"
+    },
+    {
+      "authority_class": "READ",
+      "command": "terraform validate",
+      "cwd": "infra/gcp/cloudrun",
+      "depends_on": [],
+      "effects": [],
+      "evidence_source": "infra/gcp/cloudrun/main.tf:1",
+      "help_excerpt": "",
+      "id": "cap:terraform:infra/gcp/cloudrun:validate:036d2d98503d",
+      "name": "infra/gcp/cloudrun:validate",
+      "notes": [],
+      "preconditions": [
+        "terraform on PATH",
+        "providers: google",
+        ".terraform/ initialized"
+      ],
+      "qualification_strategy": "run-and-capture: execute with timeout, assert exit 0, snapshot stdout; safe to auto-run",
+      "reversibility": "IDEMPOTENT",
+      "source_kind": "terraform"
+    },
+    {
+      "authority_class": "READ",
+      "command": "terraform plan",
+      "cwd": "infra/gcp/cloudrun",
+      "depends_on": [],
+      "effects": [
+        "reads cloud state (needs credentials), writes nothing"
+      ],
+      "evidence_source": "infra/gcp/cloudrun/main.tf:1",
+      "help_excerpt": "",
+      "id": "cap:terraform:infra/gcp/cloudrun:plan:d4e4b34505f1",
+      "name": "infra/gcp/cloudrun:plan",
+      "notes": [],
+      "preconditions": [
+        "terraform on PATH",
+        "providers: google",
+        "cloud credentials in env",
+        ".terraform/ initialized"
+      ],
+      "qualification_strategy": "run-and-capture: execute with timeout, assert exit 0, snapshot stdout; safe to auto-run",
+      "reversibility": "IDEMPOTENT",
+      "source_kind": "terraform"
+    },
+    {
+      "authority_class": "CONSEQUENTIAL",
+      "command": "terraform apply -auto-approve",
+      "cwd": "infra/gcp/cloudrun",
+      "depends_on": [],
+      "effects": [
+        "mutates cloud resources"
+      ],
+      "evidence_source": "infra/gcp/cloudrun/main.tf:1",
+      "help_excerpt": "",
+      "id": "cap:terraform:infra/gcp/cloudrun:apply:9d06c7ca4184",
+      "name": "infra/gcp/cloudrun:apply",
+      "notes": [],
+      "preconditions": [
+        "terraform on PATH",
+        "providers: google",
+        "cloud credentials in env",
+        ".terraform/ initialized"
+      ],
+      "qualification_strategy": "dry-run-only: run the dry-run/plan variant if one exists; the real command requires an AuthorityDecision object in the OCEL log before ActionStarted",
+      "reversibility": "IRREVERSIBLE",
+      "source_kind": "terraform"
+    },
+    {
+      "authority_class": "DESTRUCTIVE",
+      "command": "terraform destroy -auto-approve",
+      "cwd": "infra/gcp/cloudrun",
+      "depends_on": [],
+      "effects": [
+        "destroys cloud resources"
+      ],
+      "evidence_source": "infra/gcp/cloudrun/main.tf:1",
+      "help_excerpt": "",
+      "id": "cap:terraform:infra/gcp/cloudrun:destroy:e44acd7d199f",
+      "name": "infra/gcp/cloudrun:destroy",
+      "notes": [],
+      "preconditions": [
+        "terraform on PATH",
+        "providers: google",
+        "cloud credentials in env",
+        ".terraform/ initialized"
+      ],
+      "qualification_strategy": "never-auto-run: simulate on a throwaway copy only; real execution requires an explicit AuthorityGranted event naming this capability id",
+      "reversibility": "IRREVERSIBLE",
+      "source_kind": "terraform"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --workspace",
+      "cwd": "native/ferroplan",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan:build-workspace:15b41c87bc64",
+      "name": "ferroplan:build-workspace",
+      "notes": [
+        "members: crates/ferroplan, crates/ferroplan-cli, crates/ferroplan-bevy, crates/ferroplan-wasm, crates/ferroplan-mcp, crates/ferroplan-sat",
+        "exclude: crates/ferroplan-py, crucible"
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH",
+        "rust-toolchain pinned: native/ferroplan/rust-toolchain.toml"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test --workspace",
+      "cwd": "native/ferroplan",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan:test-workspace:c4c4c4f503d5",
+      "name": "ferroplan:test-workspace",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH",
+        "rust-toolchain pinned: native/ferroplan/rust-toolchain.toml"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build",
+      "cwd": "native/ferroplan/crates/ferroplan",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan:build:87676808a35f",
+      "name": "ferroplan:build",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test",
+      "cwd": "native/ferroplan/crates/ferroplan",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan:test:f234186fe64e",
+      "name": "ferroplan:test",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build",
+      "cwd": "native/ferroplan/crates/ferroplan-cli",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan-cli/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan-cli:build:29d9eb8f12e0",
+      "name": "ferroplan-cli:build",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test",
+      "cwd": "native/ferroplan/crates/ferroplan-cli",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan-cli/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan-cli:test:3a4793db061e",
+      "name": "ferroplan-cli:test",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --release",
+      "cwd": "native/ferroplan/crates/ferroplan-cli",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan-cli/Cargo.toml:15",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan-cli:build-release:c3bba89de7db",
+      "name": "ferroplan-cli:build-release",
+      "notes": [
+        "bins: ff, ferroplan-harvest, ferroplan-ppddl"
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build",
+      "cwd": "native/ferroplan/crates/ferroplan-bevy",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan-bevy/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan-bevy:build:0526965bdd8c",
+      "name": "ferroplan-bevy:build",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test",
+      "cwd": "native/ferroplan/crates/ferroplan-bevy",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan-bevy/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan-bevy:test:bd1bf8f5db94",
+      "name": "ferroplan-bevy:test",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --release",
+      "cwd": "native/ferroplan/crates/ferroplan-bevy",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan-bevy/Cargo.toml:12",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan-bevy:build-release:58a4aecb9c05",
+      "name": "ferroplan-bevy:build-release",
+      "notes": [
+        "bins: ferroplan-bevy"
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build",
+      "cwd": "native/ferroplan/crates/ferroplan-wasm",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan-wasm/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan-wasm:build:b5a7a614c197",
+      "name": "ferroplan-wasm:build",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test",
+      "cwd": "native/ferroplan/crates/ferroplan-wasm",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan-wasm/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan-wasm:test:366cc2dae3b8",
+      "name": "ferroplan-wasm:test",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --release --target wasm32-wasip1",
+      "cwd": "native/ferroplan/crates/ferroplan-wasm",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan-wasm/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan-wasm:build-wasm:5d817aa34b28",
+      "name": "ferroplan-wasm:build-wasm",
+      "notes": [
+        "cdylib crate-type (wasm/NIF candidate)"
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH",
+        "rustup target wasm32-wasip1 installed"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build",
+      "cwd": "native/ferroplan/crates/ferroplan-mcp",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan-mcp/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan-mcp:build:b68ccf128183",
+      "name": "ferroplan-mcp:build",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test",
+      "cwd": "native/ferroplan/crates/ferroplan-mcp",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan-mcp/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan-mcp:test:9c0da159b20e",
+      "name": "ferroplan-mcp:test",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --release",
+      "cwd": "native/ferroplan/crates/ferroplan-mcp",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan-mcp/Cargo.toml:20",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan-mcp:build-release:a75ec28b182c",
+      "name": "ferroplan-mcp:build-release",
+      "notes": [
+        "bins: ferroplan-mcp, ferroplan-mcp-plus"
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build",
+      "cwd": "native/ferroplan/crates/ferroplan-sat",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan-sat/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan-sat:build:a4cdb4a43685",
+      "name": "ferroplan-sat:build",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test",
+      "cwd": "native/ferroplan/crates/ferroplan-sat",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan-sat/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan-sat:test:97195964e1d6",
+      "name": "ferroplan-sat:test",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "CONSEQUENTIAL",
+      "command": "docker compose -f compose.cloud.yml up -d ppddl",
+      "cwd": "native/ferroplan",
+      "depends_on": [],
+      "effects": [
+        "starts/stops containers"
+      ],
+      "evidence_source": "native/ferroplan/compose.cloud.yml:2",
+      "help_excerpt": "",
+      "id": "cap:compose:compose.cloud.yml:ppddl:2af3df022e3a",
+      "name": "compose.cloud.yml:ppddl",
+      "notes": [],
+      "preconditions": [
+        "docker daemon running",
+        "docker compose plugin"
+      ],
+      "qualification_strategy": "dry-run-only: run the dry-run/plan variant if one exists; the real command requires an AuthorityDecision object in the OCEL log before ActionStarted",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "compose"
+    },
+    {
+      "authority_class": "READ",
+      "command": "@just --list",
+      "cwd": "native/ferroplan",
+      "depends_on": [],
+      "effects": [],
+      "evidence_source": "native/ferroplan/justfile:5",
+      "help_excerpt": "",
+      "id": "cap:justfile:default:41d2766208c9#1",
+      "name": "default",
+      "notes": [
+        "invoke: just --justfile native/ferroplan/justfile default"
+      ],
+      "preconditions": [
+        "`just` on PATH"
+      ],
+      "qualification_strategy": "run-and-capture: execute with timeout, assert exit 0, snapshot stdout; safe to auto-run",
+      "reversibility": "IDEMPOTENT",
+      "source_kind": "justfile"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --workspace",
+      "cwd": "native/ferroplan",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/justfile:9",
+      "help_excerpt": "",
+      "id": "cap:justfile:build:3956b019f3e9",
+      "name": "build",
+      "notes": [
+        "invoke: just --justfile native/ferroplan/justfile build"
+      ],
+      "preconditions": [
+        "`just` on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "justfile"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test --workspace\ncd plugins/chatman-ecosystem && uv run pytest tests/",
+      "cwd": "native/ferroplan",
+      "depends_on": [],
+      "effects": [
+        "writes target/",
+        "writes .pytest_cache/"
+      ],
+      "evidence_source": "native/ferroplan/justfile:13",
+      "help_excerpt": "",
+      "id": "cap:justfile:test:93b54865dd12",
+      "name": "test",
+      "notes": [
+        "invoke: just --justfile native/ferroplan/justfile test"
+      ],
+      "preconditions": [
+        "`just` on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "justfile"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cd plugins/chatman-ecosystem && uv run python3 scripts/doctor.py",
+      "cwd": "native/ferroplan",
+      "depends_on": [],
+      "effects": [
+        "runs a python entrypoint in the uv env (may write repo-local outputs)"
+      ],
+      "evidence_source": "native/ferroplan/justfile:19",
+      "help_excerpt": "",
+      "id": "cap:justfile:doctor:7a4945c90099",
+      "name": "doctor",
+      "notes": [
+        "invoke: just --justfile native/ferroplan/justfile doctor"
+      ],
+      "preconditions": [
+        "`just` on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "justfile"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cd plugins/chatman-ecosystem && uv run python3 scripts/planner_benchmark.py run \\\n--sample-size {{N}} --ocel /tmp/bench-$(date +%s).ocel.json",
+      "cwd": "native/ferroplan",
+      "depends_on": [],
+      "effects": [
+        "runs a python entrypoint in the uv env (may write repo-local outputs)",
+        "unclassified command line (UNVERIFIED)"
+      ],
+      "evidence_source": "native/ferroplan/justfile:23",
+      "help_excerpt": "",
+      "id": "cap:justfile:bench:6e8933300646",
+      "name": "bench",
+      "notes": [
+        "invoke: just --justfile native/ferroplan/justfile bench"
+      ],
+      "preconditions": [
+        "`just` on PATH",
+        "just recipe params: N=\"5\""
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "justfile"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cd {{scripts}} && python3 overnight_autonomics.py \\\n--max-cycles {{max_cycles}} --max-hours {{max_hours}} --cycle-pause-seconds 300",
+      "cwd": "native/ferroplan",
+      "depends_on": [],
+      "effects": [
+        "runs a repo script (effects opaque without reading the script)",
+        "unclassified command line (UNVERIFIED)"
+      ],
+      "evidence_source": "native/ferroplan/justfile:28",
+      "help_excerpt": "",
+      "id": "cap:justfile:overnight:190ad3bbfab7",
+      "name": "overnight",
+      "notes": [
+        "invoke: just --justfile native/ferroplan/justfile overnight"
+      ],
+      "preconditions": [
+        "`just` on PATH",
+        "just recipe params: max_cycles=\"40\" max_hours=\"8\""
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "UNKNOWN",
+      "source_kind": "justfile"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build",
+      "cwd": "native/ferroplan/crates/ferroplan-py",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan-py/Cargo.toml:4",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan-py:build:cb7c1ff98987",
+      "name": "ferroplan-py:build",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test",
+      "cwd": "native/ferroplan/crates/ferroplan-py",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan-py/Cargo.toml:4",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan-py:test:a6dfc8e478e5",
+      "name": "ferroplan-py:test",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --release --target wasm32-wasip1",
+      "cwd": "native/ferroplan/crates/ferroplan-py",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crates/ferroplan-py/Cargo.toml:4",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:ferroplan-py:build-wasm:520f5d2506df",
+      "name": "ferroplan-py:build-wasm",
+      "notes": [
+        "cdylib crate-type (wasm/NIF candidate)"
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH",
+        "rustup target wasm32-wasip1 installed"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --workspace",
+      "cwd": "native/ferroplan/crucible",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crucible/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:crucible:build-workspace:b59d798772c9",
+      "name": "crucible:build-workspace",
+      "notes": [
+        "members: crates/crucible-publish, crates/crucible-core, crates/crucible",
+        "exclude: "
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test --workspace",
+      "cwd": "native/ferroplan/crucible",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crucible/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:crucible:test-workspace:8b1da1069c5a",
+      "name": "crucible:test-workspace",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build",
+      "cwd": "native/ferroplan/crucible/crates/crucible-publish",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crucible/crates/crucible-publish/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:crucible-publish:build:c68cfb252212",
+      "name": "crucible-publish:build",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test",
+      "cwd": "native/ferroplan/crucible/crates/crucible-publish",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crucible/crates/crucible-publish/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:crucible-publish:test:d4480f63a216",
+      "name": "crucible-publish:test",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build",
+      "cwd": "native/ferroplan/crucible/crates/crucible-core",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crucible/crates/crucible-core/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:crucible-core:build:2bc21be20742",
+      "name": "crucible-core:build",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test",
+      "cwd": "native/ferroplan/crucible/crates/crucible-core",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crucible/crates/crucible-core/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:crucible-core:test:a3079f64d2a7",
+      "name": "crucible-core:test",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build",
+      "cwd": "native/ferroplan/crucible/crates/crucible",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crucible/crates/crucible/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:crucible:build:161be564545f",
+      "name": "crucible:build",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test",
+      "cwd": "native/ferroplan/crucible/crates/crucible",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crucible/crates/crucible/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:crucible:test:3eac534cfbd1",
+      "name": "crucible:test",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --release",
+      "cwd": "native/ferroplan/crucible/crates/crucible",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/ferroplan/crucible/crates/crucible/Cargo.toml:9",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:crucible:build-release:e35092e1f2e4",
+      "name": "crucible:build-release",
+      "notes": [
+        "bins: crucible"
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "NETWORK_FETCH",
+      "command": "docker build -f Dockerfile.ppddl --target builder .",
+      "cwd": "native/ferroplan/deploy",
+      "depends_on": [],
+      "effects": [
+        "pulls base image layers and writes an image"
+      ],
+      "evidence_source": "native/ferroplan/deploy/Dockerfile.ppddl:1",
+      "help_excerpt": "",
+      "id": "cap:dockerfile:Dockerfile.ppddl:build:builder:a6124029927d",
+      "name": "Dockerfile.ppddl:build:builder",
+      "notes": [
+        "stage=builder"
+      ],
+      "preconditions": [
+        "docker daemon running",
+        "base image pullable: rust:1.97.1-bookworm"
+      ],
+      "qualification_strategy": "sandbox-fetch: execute with network permitted once, hash resulting lockfile/deps dir, assert exit 0; cache result, do not re-run per qualification",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "dockerfile"
+    },
+    {
+      "authority_class": "NETWORK_FETCH",
+      "command": "docker build -f Dockerfile.ppddl --target runtime .",
+      "cwd": "native/ferroplan/deploy",
+      "depends_on": [],
+      "effects": [
+        "pulls base image layers and writes an image"
+      ],
+      "evidence_source": "native/ferroplan/deploy/Dockerfile.ppddl:11",
+      "help_excerpt": "",
+      "id": "cap:dockerfile:Dockerfile.ppddl:build:runtime:b188b4b4bcee",
+      "name": "Dockerfile.ppddl:build:runtime",
+      "notes": [
+        "stage=runtime"
+      ],
+      "preconditions": [
+        "docker daemon running",
+        "base image pullable: debian:bookworm-slim"
+      ],
+      "qualification_strategy": "sandbox-fetch: execute with network permitted once, hash resulting lockfile/deps dir, assert exit 0; cache result, do not re-run per qualification",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "dockerfile"
+    },
+    {
+      "authority_class": "CONSEQUENTIAL",
+      "command": "docker run --rm $(docker build -q -f Dockerfile.ppddl .)",
+      "cwd": "native/ferroplan/deploy",
+      "depends_on": [],
+      "effects": [
+        "deletes a named file"
+      ],
+      "evidence_source": "native/ferroplan/deploy/Dockerfile.ppddl:24",
+      "help_excerpt": "",
+      "id": "cap:dockerfile:Dockerfile.ppddl:run:c0c58a3e911b",
+      "name": "Dockerfile.ppddl:run",
+      "notes": [
+        "ENTRYPOINT [\"/usr/local/bin/ferroplan-ppddl\"]"
+      ],
+      "preconditions": [
+        "image built"
+      ],
+      "qualification_strategy": "dry-run-only: run the dry-run/plan variant if one exists; the real command requires an AuthorityDecision object in the OCEL log before ActionStarted",
+      "reversibility": "IRREVERSIBLE",
+      "source_kind": "dockerfile"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "python3 -m pytest",
+      "cwd": "native/ferroplan/plugins/chatman-ecosystem",
+      "depends_on": [],
+      "effects": [
+        "writes .pytest_cache/"
+      ],
+      "evidence_source": "native/ferroplan/plugins/chatman-ecosystem/pyproject.toml:18",
+      "help_excerpt": "",
+      "id": "cap:pyproject:pytest:f95535fd85ff",
+      "name": "pytest",
+      "notes": [],
+      "preconditions": [
+        "python >= 3.11",
+        "project installed in env (uv sync / pip install -e .)"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "pyproject"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build",
+      "cwd": "native/petgraph-wasm",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/petgraph-wasm/Cargo.toml:7",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:petgraph-wasm:build:a5a654a276c6",
+      "name": "petgraph-wasm:build",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test",
+      "cwd": "native/petgraph-wasm",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/petgraph-wasm/Cargo.toml:7",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:petgraph-wasm:test:820f9b5a1148",
+      "name": "petgraph-wasm:test",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --release",
+      "cwd": "native/petgraph-wasm",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/petgraph-wasm/Cargo.toml:23",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:petgraph-wasm:build-release:9c29ac86757e",
+      "name": "petgraph-wasm:build-release",
+      "notes": [
+        "profile.release declared"
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --release --target wasm32-wasip1",
+      "cwd": "native/petgraph-wasm",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/petgraph-wasm/Cargo.toml:7",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:petgraph-wasm:build-wasm:02186cab034b",
+      "name": "petgraph-wasm:build-wasm",
+      "notes": [
+        "cdylib crate-type (wasm/NIF candidate)"
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH",
+        "rustup target wasm32-wasip1 installed"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build",
+      "cwd": "native/rf1-dfg-oracle",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/rf1-dfg-oracle/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rf1-dfg-oracle:build:0992099b7a7a",
+      "name": "rf1-dfg-oracle:build",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test",
+      "cwd": "native/rf1-dfg-oracle",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/rf1-dfg-oracle/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rf1-dfg-oracle:test:2689ae30702b",
+      "name": "rf1-dfg-oracle:test",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --release",
+      "cwd": "native/rf1-dfg-oracle",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/rf1-dfg-oracle/Cargo.toml:8",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rf1-dfg-oracle:build-release:f897637fd4d1",
+      "name": "rf1-dfg-oracle:build-release",
+      "notes": [
+        "bins: rf1-dfg-oracle"
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build",
+      "cwd": "native/rf2-conformance-oracle",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/rf2-conformance-oracle/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rf2-conformance-oracle:build:31cda8514ea3",
+      "name": "rf2-conformance-oracle:build",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test",
+      "cwd": "native/rf2-conformance-oracle",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/rf2-conformance-oracle/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rf2-conformance-oracle:test:65105f0fecad",
+      "name": "rf2-conformance-oracle:test",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --release",
+      "cwd": "native/rf2-conformance-oracle",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/rf2-conformance-oracle/Cargo.toml:14",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rf2-conformance-oracle:build-release:0573f3cc38c0",
+      "name": "rf2-conformance-oracle:build-release",
+      "notes": [
+        "profile.release declared"
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build",
+      "cwd": "native/rf3-ocel-oracle",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/rf3-ocel-oracle/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rf3-ocel-oracle:build:315387160f72",
+      "name": "rf3-ocel-oracle:build",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test",
+      "cwd": "native/rf3-ocel-oracle",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/rf3-ocel-oracle/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rf3-ocel-oracle:test:efbc85f19946",
+      "name": "rf3-ocel-oracle:test",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --release",
+      "cwd": "native/rf3-ocel-oracle",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/rf3-ocel-oracle/Cargo.toml:20",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rf3-ocel-oracle:build-release:cd4c264330e4",
+      "name": "rf3-ocel-oracle:build-release",
+      "notes": [
+        "profile.release declared"
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build",
+      "cwd": "native/rf4-oc-discovery-oracle",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/rf4-oc-discovery-oracle/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rf4-oc-discovery-oracle:build:921cd0f2d1bf",
+      "name": "rf4-oc-discovery-oracle:build",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test",
+      "cwd": "native/rf4-oc-discovery-oracle",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/rf4-oc-discovery-oracle/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rf4-oc-discovery-oracle:test:80bc0c1f6844",
+      "name": "rf4-oc-discovery-oracle:test",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --release",
+      "cwd": "native/rf4-oc-discovery-oracle",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/rf4-oc-discovery-oracle/Cargo.toml:8",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rf4-oc-discovery-oracle:build-release:733456b851d8",
+      "name": "rf4-oc-discovery-oracle:build-release",
+      "notes": [
+        "bins: rf4-oc-discovery-oracle"
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build",
+      "cwd": "native/rust4pm-wasm",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/rust4pm-wasm/Cargo.toml:5",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rust4pm-wasm:build:67135cef591c",
+      "name": "rust4pm-wasm:build",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test",
+      "cwd": "native/rust4pm-wasm",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/rust4pm-wasm/Cargo.toml:5",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rust4pm-wasm:test:e8847bc78416",
+      "name": "rust4pm-wasm:test",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --release",
+      "cwd": "native/rust4pm-wasm",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/rust4pm-wasm/Cargo.toml:37",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rust4pm-wasm:build-release:6808cbceecf8",
+      "name": "rust4pm-wasm:build-release",
+      "notes": [
+        "profile.release declared"
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --release --target wasm32-wasip1",
+      "cwd": "native/rust4pm-wasm",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/rust4pm-wasm/Cargo.toml:5",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rust4pm-wasm:build-wasm:c8bfe7dbb25e",
+      "name": "rust4pm-wasm:build-wasm",
+      "notes": [
+        "cdylib crate-type (wasm/NIF candidate)"
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH",
+        "rustup target wasm32-wasip1 installed"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build",
+      "cwd": "native/tract-wasm",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/tract-wasm/Cargo.toml:7",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:tract-wasm:build:58cc4d86bcd2",
+      "name": "tract-wasm:build",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test",
+      "cwd": "native/tract-wasm",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/tract-wasm/Cargo.toml:7",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:tract-wasm:test:9fb7f9f62b5f",
+      "name": "tract-wasm:test",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --release",
+      "cwd": "native/tract-wasm",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/tract-wasm/Cargo.toml:21",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:tract-wasm:build-release:61a8ea828bff",
+      "name": "tract-wasm:build-release",
+      "notes": [
+        "profile.release declared"
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --release --target wasm32-wasip1",
+      "cwd": "native/tract-wasm",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "native/tract-wasm/Cargo.toml:7",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:tract-wasm:build-wasm:bc74156d96ab",
+      "name": "tract-wasm:build-wasm",
+      "notes": [
+        "cdylib crate-type (wasm/NIF candidate)"
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH",
+        "rustup target wasm32-wasip1 installed"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build",
+      "cwd": "qualification/rust4pm-oracle",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "qualification/rust4pm-oracle/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rust4pm-oracle:build:7668e9e3dcbf",
+      "name": "rust4pm-oracle:build",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo test",
+      "cwd": "qualification/rust4pm-oracle",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "qualification/rust4pm-oracle/Cargo.toml:1",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rust4pm-oracle:test:18f34826fd83",
+      "name": "rust4pm-oracle:test",
+      "notes": [],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    },
+    {
+      "authority_class": "REVERSIBLE_BUILD",
+      "command": "cargo build --release",
+      "cwd": "qualification/rust4pm-oracle",
+      "depends_on": [],
+      "effects": [
+        "writes target/"
+      ],
+      "evidence_source": "qualification/rust4pm-oracle/Cargo.toml:17",
+      "help_excerpt": "",
+      "id": "cap:cargo_toml:rust4pm-oracle:build-release:19493b595e98",
+      "name": "rust4pm-oracle:build-release",
+      "notes": [
+        "profile.release declared"
+      ],
+      "preconditions": [
+        "cargo + rustc on PATH"
+      ],
+      "qualification_strategy": "worktree-run: execute in an isolated worktree copy, assert exit 0 and declared artifact paths exist, rerun to check idempotence, diff tracked files == empty",
+      "reversibility": "REVERSIBLE",
+      "source_kind": "cargo_toml"
+    }
+  ],
+  "generated_at": "2026-09-04T00:27:05.134841+00:00",
+  "repo": "beam4pm",
+  "root": "/Users/sac/beam4pm",
+  "skipped_dirs": [
+    ".ggen-v2",
+    ".claude",
+    "_build",
+    "deps",
+    ".git",
+    "tmp_probe",
+    "tmp",
+    ".ggen",
+    ".ggen_igniter",
+    "vendor",
+    "gleam/build",
+    "infra/gcp/cloudrun/.terraform",
+    "native/ferroplan/.autonomic",
+    "native/ferroplan/.claude",
+    "native/ferroplan/.devcontainer",
+    "native/ferroplan/.chatmangpt",
+    "native/ferroplan/.claude-plugin",
+    "native/ferroplan/vendor",
+    "native/ferroplan/plugins/chatman-ecosystem/.claude-plugin",
+    "native/rf1-dfg-oracle/target",
+    "native/rf2-conformance-oracle/target",
+    "native/rf3-ocel-oracle/target",
+    "qualification/gym_bridge/.pytest_cache",
+    "qualification/gym_bridge/__pycache__"
+  ],
+  "sources": [
+    {
+      "kind": "dockerfile",
+      "path": "Dockerfile"
+    },
+    {
+      "kind": "justfile",
+      "path": "Justfile"
+    },
+    {
+      "kind": "makefile",
+      "path": "Makefile"
+    },
+    {
+      "kind": "mix_exs",
+      "path": "mix.exs"
+    },
+    {
+      "kind": "github_workflow",
+      "path": ".github/workflows/beam4pm-ci.yml"
+    },
+    {
+      "kind": "github_workflow",
+      "path": ".github/workflows/beam4pm-container-pr.yml"
+    },
+    {
+      "kind": "github_workflow",
+      "path": ".github/workflows/beam4pm-container.yml"
+    },
+    {
+      "kind": "github_workflow",
+      "path": ".github/workflows/beam4pm-infra-validate.yml"
+    },
+    {
+      "kind": "github_workflow",
+      "path": ".github/workflows/beam4pm-manufacture.yml"
+    },
+    {
+      "kind": "github_workflow",
+      "path": ".github/workflows/beam4pm-rust4pm-pr.yml"
+    },
+    {
+      "kind": "github_workflow",
+      "path": ".github/workflows/codeql.yml"
+    },
+    {
+      "kind": "github_workflow",
+      "path": ".github/workflows/post-llm-runtime.yml"
+    },
+    {
+      "kind": "github_workflow",
+      "path": ".github/workflows/scorecard.yml"
+    },
+    {
+      "kind": "terraform",
+      "path": "infra/gcp/cloudrun"
+    },
+    {
+      "kind": "cargo_toml",
+      "path": "native/ferroplan/Cargo.toml"
+    },
+    {
+      "kind": "compose",
+      "path": "native/ferroplan/compose.cloud.yml"
+    },
+    {
+      "kind": "justfile",
+      "path": "native/ferroplan/justfile"
+    },
+    {
+      "kind": "cargo_toml",
+      "path": "native/ferroplan/crates/ferroplan-py/Cargo.toml"
+    },
+    {
+      "kind": "pyproject",
+      "path": "native/ferroplan/crates/ferroplan-py/pyproject.toml"
+    },
+    {
+      "kind": "cargo_toml",
+      "path": "native/ferroplan/crucible/Cargo.toml"
+    },
+    {
+      "kind": "dockerfile",
+      "path": "native/ferroplan/deploy/Dockerfile.ppddl"
+    },
+    {
+      "kind": "pyproject",
+      "path": "native/ferroplan/plugins/chatman-ecosystem/pyproject.toml"
+    },
+    {
+      "kind": "cargo_toml",
+      "path": "native/petgraph-wasm/Cargo.toml"
+    },
+    {
+      "kind": "cargo_toml",
+      "path": "native/rf1-dfg-oracle/Cargo.toml"
+    },
+    {
+      "kind": "cargo_toml",
+      "path": "native/rf2-conformance-oracle/Cargo.toml"
+    },
+    {
+      "kind": "cargo_toml",
+      "path": "native/rf3-ocel-oracle/Cargo.toml"
+    },
+    {
+      "kind": "cargo_toml",
+      "path": "native/rf4-oc-discovery-oracle/Cargo.toml"
+    },
+    {
+      "kind": "cargo_toml",
+      "path": "native/rust4pm-wasm/Cargo.toml"
+    },
+    {
+      "kind": "cargo_toml",
+      "path": "native/tract-wasm/Cargo.toml"
+    },
+    {
+      "kind": "cargo_toml",
+      "path": "qualification/rust4pm-oracle/Cargo.toml"
+    }
+  ],
+  "summary": {
+    "by_authority_class": {
+      "CONSEQUENTIAL": 16,
+      "DESTRUCTIVE": 1,
+      "NETWORK_FETCH": 11,
+      "READ": 4,
+      "REVERSIBLE_BUILD": 88
+    },
+    "by_source_kind": {
+      "cargo_toml": 57,
+      "compose": 1,
+      "dockerfile": 6,
+      "github_workflow": 31,
+      "justfile": 12,
+      "makefile": 4,
+      "mix_exs": 3,
+      "pyproject": 1,
+      "terraform": 5
+    },
+    "capabilities": 120
+  }
+}
