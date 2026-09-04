@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:crown2:ws3:CapabilityResolution",
+  "title": "CapabilityResolution",
+  "type": "object",
+  "required": ["gap", "candidates", "selected", "rationale", "dominated", "route_to_codegen"],
+  "properties": {
+    "gap": {
+      "type": "object",
+      "required": ["keywords"],
+      "properties": {
+        "keywords": {"type": "array", "items": {"type": "string"}},
+        "current_facts": {"type": "array", "items": {"type": "string"}},
+        "needed_facts": {"type": "array", "items": {"type": "string"}},
+        "label": {"type": "string"}
+      }
+    },
+    "candidates": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/candidate"}},
+    "selected": {"$ref": "#/$defs/candidate"},
+    "dominated": {"type": "array", "items": {"$ref": "#/$defs/candidate"}},
+    "rationale": {"type": "string"},
+    "route_to_codegen": {"const": false}
+  },
+  "$defs": {
+    "candidate": {
+      "type": "object",
+      "required": ["kind", "ref", "score", "depth"],
+      "properties": {
+        "kind": {"enum": ["local_action", "marketplace_pack", "composable_chain", "ontology_capability", "MANUFACTURING_GAP"]},
+        "ref": {"type": "string"},
+        "score": {"type": "number", "minimum": 0, "maximum": 1},
+        "depth": {"type": "integer", "minimum": 0, "maximum": 3},
+        "matched_keywords": {"type": "array", "items": {"type": "string"}},
+        "evidence": {"type": "object"}
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "$comment": "WS3 capability-resolution rules. Source of truth for search order and thresholds; resolve.py loads this at import. Generation is deliberately absent from search_order: an ACTION_GAP resolves to an existing capability or to MANUFACTURING_GAP, never to code generation.",
+  "search_order": [
+    {"rank": 1, "kind": "local_action", "source": "caller-supplied project-local action list"},
+    {"rank": 2, "kind": "marketplace_pack", "source": "~/ggen-marketplace/packs/*/{pack,ggen}.toml name+description"},
+    {"rank": 3, "kind": "composable_chain", "source": "chains of local actions whose postconditions satisfy the next preconditions, depth<=max_chain_depth"},
+    {"rank": 4, "kind": "ontology_capability", "source": "<repo>/ontology/*.ttl individuals typed afl:Capability with afl:capabilityName"},
+    {"rank": 5, "kind": "MANUFACTURING_GAP", "source": "sentinel; schedule manufacturing work (new pack / ontology individual), route_to_codegen is always false"}
+  ],
+  "max_chain_depth": 3,
+  "min_keyword_score": 0.5,
+  "domination": "c1 dominates c2 iff rank(c1)<=rank(c2) and score(c1)>=score(c2) and depth(c1)<=depth(c2) with at least one strict; non-dominated candidates are all retained in candidates[]",
+  "stopwords": ["the", "a", "an", "of", "to", "and", "or", "for", "in", "on", "with", "by", "is", "be", "pack", "packs", "ggen"]
+}
