@@ -1,0 +1,794 @@
+{
+  "objectTypes": [
+    {
+      "name": "Composition",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Repository",
+      "attributes": [
+        {
+          "name": "path",
+          "type": "string"
+        },
+        {
+          "name": "remote_url",
+          "type": "string"
+        },
+        {
+          "name": "default_branch",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Commit",
+      "attributes": [
+        {
+          "name": "sha",
+          "type": "string"
+        },
+        {
+          "name": "author",
+          "type": "string"
+        },
+        {
+          "name": "message",
+          "type": "string"
+        },
+        {
+          "name": "committed_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "Worktree",
+      "attributes": [
+        {
+          "name": "path",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "type": "string"
+        },
+        {
+          "name": "base_ref",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Domain",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "observed_at",
+          "type": "time"
+        },
+        {
+          "name": "state_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "SolverImplementation",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Policy",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "policy_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "Plan",
+      "attributes": [
+        {
+          "name": "summary",
+          "type": "string"
+        },
+        {
+          "name": "steps_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "cost_estimate",
+          "type": "float"
+        }
+      ]
+    },
+    {
+      "name": "PredictionReceipt",
+      "attributes": [
+        {
+          "name": "prediction_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "confidence",
+          "type": "float"
+        },
+        {
+          "name": "frozen_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityDecision",
+      "attributes": [
+        {
+          "name": "decision",
+          "type": "string"
+        },
+        {
+          "name": "rationale",
+          "type": "string"
+        },
+        {
+          "name": "decided_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "args_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "QualificationRun",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "result",
+          "type": "string"
+        },
+        {
+          "name": "metrics_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "Receipt",
+      "attributes": [
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "digest",
+          "type": "string"
+        },
+        {
+          "name": "issued_at",
+          "type": "time"
+        },
+        {
+          "name": "evidence_path",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ClaudeSession",
+      "attributes": [
+        {
+          "name": "session_url",
+          "type": "string"
+        },
+        {
+          "name": "model",
+          "type": "string"
+        },
+        {
+          "name": "started_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "ClaudeToolInvocation",
+      "attributes": [
+        {
+          "name": "tool_name",
+          "type": "string"
+        },
+        {
+          "name": "args_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "result_summary",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ClaudeSubagent",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "role",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ProcessEpisode",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "started_at",
+          "type": "time"
+        },
+        {
+          "name": "ended_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "CapabilityGraph",
+      "attributes": [
+        {
+          "name": "digest",
+          "type": "string"
+        },
+        {
+          "name": "capability_ids",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "eventTypes": [
+    {
+      "name": "CompositionCreated",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "WorldStateObserved",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "state_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "PlannerInvoked",
+      "attributes": [
+        {
+          "name": "solver_name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "PlanProduced",
+      "attributes": [
+        {
+          "name": "summary",
+          "type": "string"
+        },
+        {
+          "name": "cost_estimate",
+          "type": "float"
+        }
+      ]
+    },
+    {
+      "name": "PlanRefused",
+      "attributes": [
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "PredictionFrozen",
+      "attributes": [
+        {
+          "name": "confidence",
+          "type": "float"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityEvaluated",
+      "attributes": [
+        {
+          "name": "rationale",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityGranted",
+      "attributes": [
+        {
+          "name": "rationale",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityRefused",
+      "attributes": [
+        {
+          "name": "rationale",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionStarted",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionCompleted",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "result_summary",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionFailed",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "error",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionRefused",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "QualificationObserved",
+      "attributes": [
+        {
+          "name": "result",
+          "type": "string"
+        },
+        {
+          "name": "metrics_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "PredictionCompared",
+      "attributes": [
+        {
+          "name": "delta_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "verdict",
+          "type": "string"
+        },
+        {
+          "name": "digest",
+          "type": "string"
+        },
+        {
+          "name": "schema_digest",
+          "type": "string"
+        },
+        {
+          "name": "n_match",
+          "type": "int"
+        },
+        {
+          "name": "n_mismatch",
+          "type": "int"
+        },
+        {
+          "name": "n_unobservable",
+          "type": "int"
+        },
+        {
+          "name": "n_not_applicable",
+          "type": "int"
+        },
+        {
+          "name": "n_type_error",
+          "type": "int"
+        },
+        {
+          "name": "n_missing_prediction",
+          "type": "int"
+        },
+        {
+          "name": "n_missing_observation",
+          "type": "int"
+        },
+        {
+          "name": "n_expected_transition_happened",
+          "type": "int"
+        },
+        {
+          "name": "n_expected_transition_absent",
+          "type": "int"
+        },
+        {
+          "name": "n_unexpected_transition_happened",
+          "type": "int"
+        },
+        {
+          "name": "n_expected_invariant_violated",
+          "type": "int"
+        },
+        {
+          "name": "field_classes_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "transition_classes_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "ReceiptIssued",
+      "attributes": [
+        {
+          "name": "digest",
+          "type": "string"
+        },
+        {
+          "name": "evidence_path",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LoopStarted",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LoopClosed",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LoopBlocked",
+      "attributes": [
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "DomainProjected",
+      "attributes": [
+        {
+          "name": "graph_digest",
+          "type": "string"
+        },
+        {
+          "name": "domain_digest",
+          "type": "string"
+        },
+        {
+          "name": "action_count",
+          "type": "int"
+        },
+        {
+          "name": "actions_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "id": "act-destructive",
+      "type": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "touch-marker",
+          "time": "2026-09-04T00:21:37.309963+00:00"
+        },
+        {
+          "name": "kind",
+          "value": "shell",
+          "time": "2026-09-04T00:21:37.309963+00:00"
+        },
+        {
+          "name": "args_json",
+          "value": "{\"argv\":[\"/usr/bin/touch\",\"<tmp>/MARKER\"],\"name\":\"touch-marker\"}",
+          "time": "2026-09-04T00:21:37.309963+00:00"
+        }
+      ]
+    },
+    {
+      "id": "act-destructive:decision:1",
+      "type": "AuthorityDecision",
+      "attributes": [
+        {
+          "name": "decision",
+          "value": "REFUSED:DESTRUCTIVE",
+          "time": "2026-09-04T00:21:37.311042+00:00"
+        },
+        {
+          "name": "rationale",
+          "value": "rule=destructive predicate=(req['blast_radius'] == 'DESTRUCTIVE') req={\"authority_requirement\": \"OWNER\", \"blast_radius\": \"DESTRUCTIVE\", \"evidence_confidence\": 0.9, \"min_confidence\": 0.5, \"reversibility\": \"IRREVERSIBLE\", \"standing\": 1.0, \"standing_threshold\": 0.8, \"subject_identity\": \"sac\"}",
+          "time": "2026-09-04T00:21:37.311042+00:00"
+        },
+        {
+          "name": "decided_at",
+          "value": "2026-09-04T00:21:37.309471+00:00",
+          "time": "2026-09-04T00:21:37.311042+00:00"
+        }
+      ]
+    },
+    {
+      "id": "act-granted",
+      "type": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "touch-marker",
+          "time": "2026-09-04T00:21:37.314504+00:00"
+        },
+        {
+          "name": "kind",
+          "value": "shell",
+          "time": "2026-09-04T00:21:37.314504+00:00"
+        },
+        {
+          "name": "args_json",
+          "value": "{\"argv\":[\"/usr/bin/touch\",\"<tmp>/MARKER\"],\"name\":\"touch-marker\"}",
+          "time": "2026-09-04T00:21:37.314504+00:00"
+        }
+      ]
+    },
+    {
+      "id": "act-granted:decision:1",
+      "type": "AuthorityDecision",
+      "attributes": [
+        {
+          "name": "decision",
+          "value": "GRANTED",
+          "time": "2026-09-04T00:21:37.315521+00:00"
+        },
+        {
+          "name": "rationale",
+          "value": "rule=reversible_non_consequential predicate=(True) req={\"authority_requirement\": \"NONE\", \"blast_radius\": \"LOCAL\", \"evidence_confidence\": 0.9, \"min_confidence\": 0.5, \"reversibility\": \"REVERSIBLE\", \"standing\": 1.0, \"standing_threshold\": 0.0, \"subject_identity\": \"sac\"}",
+          "time": "2026-09-04T00:21:37.315521+00:00"
+        },
+        {
+          "name": "decided_at",
+          "value": "2026-09-04T00:21:37.314339+00:00",
+          "time": "2026-09-04T00:21:37.315521+00:00"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "act-destructive:evaluated:1",
+      "type": "AuthorityEvaluated",
+      "time": "2026-09-04T00:21:37.312045+00:00",
+      "attributes": [
+        {
+          "name": "rationale",
+          "value": "rule=destructive predicate=(req['blast_radius'] == 'DESTRUCTIVE') req={\"authority_requirement\": \"OWNER\", \"blast_radius\": \"DESTRUCTIVE\", \"evidence_confidence\": 0.9, \"min_confidence\": 0.5, \"reversibility\": \"IRREVERSIBLE\", \"standing\": 1.0, \"standing_threshold\": 0.8, \"subject_identity\": \"sac\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "act-destructive",
+          "qualifier": ""
+        },
+        {
+          "objectId": "act-destructive:decision:1",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "act-destructive:refused:1",
+      "type": "AuthorityRefused",
+      "time": "2026-09-04T00:21:37.313029+00:00",
+      "attributes": [
+        {
+          "name": "rationale",
+          "value": "REFUSED:DESTRUCTIVE rule=destructive predicate=(req['blast_radius'] == 'DESTRUCTIVE') req={\"authority_requirement\": \"OWNER\", \"blast_radius\": \"DESTRUCTIVE\", \"evidence_confidence\": 0.9, \"min_confidence\": 0.5, \"reversibility\": \"IRREVERSIBLE\", \"standing\": 1.0, \"standing_threshold\": 0.8, \"subject_identity\": \"sac\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "act-destructive",
+          "qualifier": ""
+        },
+        {
+          "objectId": "act-destructive:decision:1",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "act-granted:evaluated:1",
+      "type": "AuthorityEvaluated",
+      "time": "2026-09-04T00:21:37.316521+00:00",
+      "attributes": [
+        {
+          "name": "rationale",
+          "value": "rule=reversible_non_consequential predicate=(True) req={\"authority_requirement\": \"NONE\", \"blast_radius\": \"LOCAL\", \"evidence_confidence\": 0.9, \"min_confidence\": 0.5, \"reversibility\": \"REVERSIBLE\", \"standing\": 1.0, \"standing_threshold\": 0.0, \"subject_identity\": \"sac\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "act-granted",
+          "qualifier": ""
+        },
+        {
+          "objectId": "act-granted:decision:1",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "act-granted:granted:1",
+      "type": "AuthorityGranted",
+      "time": "2026-09-04T00:21:37.317503+00:00",
+      "attributes": [
+        {
+          "name": "rationale",
+          "value": "rule=reversible_non_consequential predicate=(True) req={\"authority_requirement\": \"NONE\", \"blast_radius\": \"LOCAL\", \"evidence_confidence\": 0.9, \"min_confidence\": 0.5, \"reversibility\": \"REVERSIBLE\", \"standing\": 1.0, \"standing_threshold\": 0.0, \"subject_identity\": \"sac\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "act-granted",
+          "qualifier": ""
+        },
+        {
+          "objectId": "act-granted:decision:1",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "act-granted:started:1",
+      "type": "ActionStarted",
+      "time": "2026-09-04T00:21:37.321818+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "touch-marker"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "act-granted",
+          "qualifier": ""
+        }
+      ]
+    }
+  ]
+}
