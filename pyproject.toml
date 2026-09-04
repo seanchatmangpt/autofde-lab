@@ -211,7 +211,22 @@ ocpq = [
     # commit); until then, build the wheel locally with
     # `maturin build --release -m wasm4pm/crates/wasm4pm-bindings-py/Cargo.toml`
     # and install it into this project's venv.
-    "wasm4pm",
+    #
+    # The bare "wasm4pm" requirement below is commented out, 2026-09-04:
+    # confirmed live this session that it is not resolvable AT ALL by `uv
+    # lock` -- not just on one platform split, but on every split uv's
+    # universal resolver tries (first surfaced as
+    # `python_full_version >= '3.14' and platform_machine == 'x86_64' and
+    # sys_platform == 'darwin'`, then `python_full_version >= '3.12' and
+    # python_full_version < '3.14' and sys_platform == 'win32'` once that one
+    # was narrowed away) -- `wasm4pm was not found in the package registry`.
+    # Because `uv lock` is a universal resolver, an unresolvable requirement
+    # in ANY declared extra blocks `uv lock`/`uv lock --check` project-wide,
+    # regardless of whether that extra is requested. Restore this line (with
+    # a real `[tool.uv.sources]` git pin, once one is verified) rather than
+    # leaving it bare -- a bare PyPI name for a package that isn't published
+    # will always reproduce this exact failure.
+    # "wasm4pm",
 ]
 all = [
     # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
