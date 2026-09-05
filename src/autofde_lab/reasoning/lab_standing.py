@@ -36,7 +36,11 @@ from dataclasses import dataclass, fields
 from typing import Literal
 
 from autofde_lab.reasoning.exploration_payoff_bridge import ExplorationPayoffOutcome
-from autofde_lab.reasoning.laboratory import FalsificationResult, FalsificationStanding
+from autofde_lab.reasoning.laboratory import (
+    ExperimentReceipt,
+    FalsificationResult,
+    FalsificationStanding,
+)
 
 __all__ = [
     "LAB_SCOPE",
@@ -44,6 +48,7 @@ __all__ = [
     "REQUIRED_DOWNSTREAM_ADMISSION",
     "GraduationPacket",
     "LabResultStanding",
+    "experiment_receipt_production_claim",
     "exploration_payoff_production_claim",
     "graduation_packet",
     "production_technical_claim",
@@ -141,6 +146,49 @@ def exploration_payoff_production_claim(outcome: ExplorationPayoffOutcome) -> st
     """
     if not isinstance(outcome, ExplorationPayoffOutcome):
         raise TypeError("EXPLORATION_PAYOFF_CLAIM_REQUIRES_REAL_OUTCOME")
+    return PRODUCTION_CLAIM_REFUSAL
+
+
+def experiment_receipt_production_claim(receipt: ExperimentReceipt) -> str:
+    """What a real `laboratory.ExperimentReceipt` licenses as a production
+    technical claim: nothing -- the same law `production_technical_claim`
+    states for `LabResultStanding` and `exploration_payoff_production_claim`
+    states for `ExplorationPayoffOutcome`, applied to the third real
+    producer of lab-scoped evidence in this repo.
+
+    `ExperimentReceipt` is real observed consequence evidence *inside a
+    laboratory experiment* -- its own module docstring is explicit that it
+    must "never [be] equated with 'candidate says it works'". Its bare
+    `str` `standing` field can legitimately hold this repo's generic
+    cross-module success token `'ALIVE'` (real fixtures in
+    `tests/reasoning/test_laboratory_chicago.py` construct receipts with
+    `standing='ALIVE'`), and its `authority_standing` field is likewise an
+    unconstrained `str`. Neither field is typed to stop a future caller
+    from feeding either one into
+    `fabric.enterprise_standing.derive_enterprise_standing(technical_standing=...)`
+    as though it were observed production evidence -- it would not be: a
+    receipt's `standing='ALIVE'` records that the *lab's own* experiment
+    apparatus considered the observation well-formed, never that
+    `autofde` observed a production consequence. Per
+    `.claude/rules/absence-is-not-evidence.md` applied to standing itself:
+    a lab receipt not indicating a violation is not the same fact as
+    production having observed success.
+
+    Returns the exact same typed refusal `production_technical_claim` and
+    `exploration_payoff_production_claim` return, regardless of the
+    receipt's own `standing` or `authority_standing` values -- `'ALIVE'`
+    (including the most dangerous-looking case, an `'ALIVE'`-standing
+    receipt with `authority_standing='ALIVE'` and no violated
+    postconditions), `'UNKNOWN'` (the dataclass default), `'UNSUPPORTED'`,
+    or any other string a caller could construct all answer identically.
+    The boundary does not branch on `postconditions_observed`,
+    `postconditions_violated`, or `ocel_evidence_ref` either: this
+    function's job is to refuse a *category* of evidence (lab-experiment
+    consequence) from crossing into a production claim, not to grade the
+    experiment's own outcome.
+    """
+    if not isinstance(receipt, ExperimentReceipt):
+        raise TypeError("EXPERIMENT_RECEIPT_CLAIM_REQUIRES_REAL_RECEIPT")
     return PRODUCTION_CLAIM_REFUSAL
 
 
