@@ -28,16 +28,16 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from autofde_lab.reasoning.lab_standing import (
-    PRODUCTION_CLAIM_REFUSAL,
-    experiment_receipt_production_claim,
-    exploration_payoff_production_claim,
-)
 
 from autofde_lab.fabric.enterprise_standing import derive_enterprise_standing
 from autofde_lab.fabric.fde import parse_authority_turtle
 from autofde_lab.reasoning.exploration_payoff_bridge import (
     ExplorationPayoffOutcome,
+)
+from autofde_lab.reasoning.lab_standing import (
+    PRODUCTION_CLAIM_REFUSAL,
+    experiment_receipt_production_claim,
+    exploration_payoff_production_claim,
 )
 from autofde_lab.reasoning.laboratory import ExperimentReceipt
 
