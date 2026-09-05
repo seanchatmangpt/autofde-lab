@@ -49,7 +49,12 @@ def test_two_real_parameterizations_of_astar_both_produce_real_replayed_plans():
         },
     )
 
-    for spec in (zero_heuristic_spec, manhattan_heuristic_spec):
+    explored_states: dict[str, int] = {}
+    plans: dict[str, list] = {}
+    for label, spec in (
+        ("zero", zero_heuristic_spec),
+        ("manhattan", manhattan_heuristic_spec),
+    ):
         domain = _domain()
         result = instantiate_policy(spec, domain_factory=lambda d=domain: d)
         assert result.status == "INSTANTIATED", result
@@ -57,6 +62,21 @@ def test_two_real_parameterizations_of_astar_both_produce_real_replayed_plans():
         result.solver.solve()
         plan = list(result.solver.get_plan(domain.get_initial_state()))
         assert plan, "expected a real non-empty plan"
+        plans[label] = plan
+        explored_states[label] = result.solver.get_nb_explored_states()
+
+    # The adversarial refute pass on this PR found that, on this maze's
+    # unique shortest path, both heuristics happen to replay to the SAME
+    # final plan -- A* is optimal, so "plan is non-empty" alone does not
+    # demonstrate parameters is a real, outcome-affecting axis (a mock
+    # `dict(spec.parameters)` that was silently dropped would pass that
+    # assertion too). The axis that genuinely differs, real and measured,
+    # is search effort: the admissible Manhattan heuristic explores
+    # strictly fewer states than the zero heuristic. Assert on THAT real
+    # difference, not on an assertion the two configurations would satisfy
+    # identically either way.
+    assert explored_states["manhattan"] < explored_states["zero"], explored_states
+    assert plans["zero"] and plans["manhattan"]
 
 
 def test_identity_sha256_differs_between_the_two_real_parameterizations():
