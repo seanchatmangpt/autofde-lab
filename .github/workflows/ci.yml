@@ -192,7 +192,14 @@ jobs:
           chmod +x bin/minizinc.AppImage
           (cd bin && ./minizinc.AppImage --appimage-extract)
           echo "$GITHUB_WORKSPACE/bin/squashfs-root/usr/bin" >> "$GITHUB_PATH"
-          echo "LD_LIBRARY_PATH=$GITHUB_WORKSPACE/bin/squashfs-root/usr/lib" >> "$GITHUB_ENV"
+          # Do NOT export the AppImage's lib dir as a job-wide LD_LIBRARY_PATH:
+          # it shadows the runner's libpcre2 and breaks /usr/bin/git
+          # (`symbol lookup error: undefined symbol: pcre2_maketables_free_8`,
+          # exit 127) -- confirmed live on run 33942465338 once #110 made the
+          # next step clone git-sourced deps, and it even fails checkout's
+          # post-job `git version`. Publish the path and scope it to the two
+          # steps that actually run minizinc.
+          echo "MINIZINC_LIB=$GITHUB_WORKSPACE/bin/squashfs-root/usr/lib" >> "$GITHUB_ENV"
       - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
         with:
           version: "0.9.2"
@@ -218,9 +225,13 @@ jobs:
           uv pip install --system -r /tmp/autofde-lab-all.txt \
             "ortools!=9.15.6755" "llvmlite>=0.45"
           uv pip install --system --no-deps "$wheel"
-          minizinc --version
+          LD_LIBRARY_PATH="$MINIZINC_LIB" minizinc --version
       - name: Run integration partitions
         shell: bash
+        env:
+          # Scoped here (not job-wide) so the git-backed install step above
+          # keeps the runner's own libraries; see the MiniZinc step comment.
+          LD_LIBRARY_PATH: ${{ env.MINIZINC_LIB }}
         run: |
           set -euo pipefail
           pytest -vv tests/solvers/python \
