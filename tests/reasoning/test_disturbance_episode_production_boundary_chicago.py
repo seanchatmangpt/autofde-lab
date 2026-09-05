@@ -114,12 +114,8 @@ def test_falsified_and_unknown_standing_results_refuse_identically() -> None:
     )
     assert beyond_plan.standing is DisturbanceStanding.UNKNOWN, beyond_plan.reason
 
-    assert (
-        disturbance_episode_production_claim(falsified) == PRODUCTION_CLAIM_REFUSAL
-    )
-    assert (
-        disturbance_episode_production_claim(beyond_plan) == PRODUCTION_CLAIM_REFUSAL
-    )
+    assert disturbance_episode_production_claim(falsified) == PRODUCTION_CLAIM_REFUSAL
+    assert disturbance_episode_production_claim(beyond_plan) == PRODUCTION_CLAIM_REFUSAL
 
 
 def test_disturbance_claim_reuses_the_exact_same_refusal_object_as_the_other_boundaries() -> (
