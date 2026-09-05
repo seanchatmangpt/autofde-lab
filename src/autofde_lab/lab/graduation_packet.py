@@ -120,6 +120,15 @@ class PromotionGraduationPacket:
             raise ValueError("PROMOTION_GRADUATION_REQUIRES_NONEMPTY_BENCHMARK_CORPUS")
         if not self.promotion.requires_brce or self.promotion.direct_do_authority:
             raise ValueError("PROMOTION_GRADUATION_REQUIRES_BRCE_ONLY_PROMOTION")
+        # `PromotionCourt.evaluate` already refused a real promotion with
+        # fewer falsifiers/observations than it requires; a packet for a
+        # real promotion must therefore never carry empty evidence tuples.
+        # This is the structural backstop for the exhausted-iterable bug the
+        # adversarial refute pass found: even if a future caller passes a
+        # one-shot iterable again, an empty-but-"successful"-looking packet
+        # now fails loudly here instead of shipping silently.
+        if not self.observations or not self.falsifiers or not self.results:
+            raise ValueError("PROMOTION_GRADUATION_EVIDENCE_TUPLES_MUST_BE_NONEMPTY")
         if self.required_downstream_admission != REQUIRED_DOWNSTREAM_ADMISSION:
             raise ValueError(
                 "PROMOTION_GRADUATION_REQUIRES_AUTOFDE_ADMISSION:"
@@ -180,11 +189,23 @@ def build_promotion_graduation_packet(
     if not isinstance(policy, PolicySpec):
         raise TypeError("PROMOTION_GRADUATION_REQUIRES_REAL_POLICY_SPEC")
 
+    # `evidence` is declared `Iterable`, not `Sequence`, so a caller may
+    # legally pass a one-shot generator. Materialise it exactly once, up
+    # front, before anything consumes it -- the adversarial refute pass on
+    # this module found the earlier two-pass version (once inside
+    # `PromotionCourt.evaluate`, once in the loop below) silently building a
+    # packet whose `observations`/`falsifiers`/`results` were empty tuples
+    # while `promotion.evidence_ids` still showed every real id: no
+    # exception, a packet that "looks valid" but records nothing -- exactly
+    # the absence-is-not-evidence failure this module's own docstring claims
+    # to guard against.
+    evidence_list = list(evidence)
+
     active_court = court or PromotionCourt()
-    promotion = active_court.evaluate(hook, evidence)
+    promotion = active_court.evaluate(hook, evidence_list)
 
     unique: dict[str, EpisodeEvidence] = {}
-    for receipt in evidence:
+    for receipt in evidence_list:
         unique[receipt.evidence_id] = receipt
 
     observations = tuple(

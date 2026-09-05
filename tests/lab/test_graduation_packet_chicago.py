@@ -223,3 +223,30 @@ def test_packet_refuses_a_non_policy_spec() -> None:
             "astar-attacker",
             [_match()],  # type: ignore[arg-type]
         )
+
+
+def test_a_one_shot_generator_of_evidence_still_populates_the_packet() -> None:
+    # The adversarial refute pass on this module found that passing a
+    # generator (a legal `Iterable[EpisodeEvidence]`, matching the
+    # declared parameter type) instead of a list silently built a packet
+    # whose `observations`/`falsifiers`/`results` were all empty --
+    # `PromotionCourt.evaluate` consumed the generator first, real
+    # promotion succeeded, and the evidence-materialising loop then found
+    # nothing left, with no exception raised. Real reproduction: the same
+    # evidence, as a generator this time.
+    match = _match()
+    receipts = _evidence()
+
+    packet = build_promotion_graduation_packet(
+        _hook(), (r for r in receipts), _policy(), (m for m in [match])
+    )
+
+    assert packet.observations, "observations must not be silently empty"
+    assert packet.falsifiers, "falsifiers must not be silently empty"
+    assert packet.results, "results must not be silently empty"
+    assert {e.evidence_id for e in packet.observations + packet.falsifiers} == {
+        r.evidence_id for r in receipts
+    }
+    assert packet.promotion.evidence_ids == tuple(
+        sorted(r.evidence_id for r in receipts)
+    )
