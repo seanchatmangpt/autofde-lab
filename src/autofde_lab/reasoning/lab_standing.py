@@ -57,6 +57,13 @@ if TYPE_CHECKING:
     # `disturbance_episode_production_claim()` below instead.
     from autofde_lab.planner_league.disturbance_episode import DisturbanceEpisodeResult
 
+    # Same reason, same fix: `cross_play_world_schedule.py` also
+    # module-level-imports `world_admission.WORLD_DOMAIN_FACTORIES`.
+    # Deferred into `scheduled_match_payoff_production_claim()` below.
+    from autofde_lab.reasoning.cross_play_schedule_payoff import (
+        ScheduledMatchPayoffOutcome,
+    )
+
 __all__ = [
     "LAB_SCOPE",
     "PRODUCTION_CLAIM_REFUSAL",
@@ -69,6 +76,7 @@ __all__ = [
     "exploration_payoff_production_claim",
     "graduation_packet",
     "production_technical_claim",
+    "scheduled_match_payoff_production_claim",
 ]
 
 LAB_SCOPE: Literal["LAB"] = "LAB"
@@ -204,6 +212,52 @@ def dflss_solve_payoff_production_claim(outcome: DflssSolvePayoffOutcome) -> str
     """
     if not isinstance(outcome, DflssSolvePayoffOutcome):
         raise TypeError("DFLSS_SOLVE_PAYOFF_CLAIM_REQUIRES_REAL_OUTCOME")
+    return PRODUCTION_CLAIM_REFUSAL
+
+
+def scheduled_match_payoff_production_claim(
+    outcome: ScheduledMatchPayoffOutcome,
+) -> str:
+    """What a real `cross_play_schedule_payoff.ScheduledMatchPayoffOutcome`
+    licenses as a production technical claim: nothing -- the same law this
+    module already states for `DflssSolvePayoffOutcome`, applied to its
+    real sibling producer (`cross_play_schedule_payoff.py`'s own docstring:
+    reuses `dflss_solve_payoff_bridge`'s established `1.0 ALIVE / 0.0
+    otherwise` score contract, never re-derived).
+
+    `ScheduledMatchPayoffOutcome` is the real, per-match outcome of
+    real-solving both planners of one real scheduled `LeagueMatch`
+    produced by `cross_play_world_schedule.schedule_cross_play_for_world`,
+    then admitting a real `PayoffObservation` into a `PayoffHypergraph` via
+    `admit_cross_play_schedule_payoffs`. It carries this repo's generic
+    cross-module success token `'ALIVE'` in its own `standing` field when a
+    payoff was admitted -- correct and unchanged for what it is, but still
+    evidence about an experiment inside a `PlannerLeague`/`PayoffHypergraph`
+    gym-scored league match, never observed production evidence. Per
+    `.claude/rules/absence-is-not-evidence.md` applied to standing itself:
+    a real planner reaching a scheduled match's goal in the lab is not the
+    same fact as production having observed it succeed.
+
+    Returns the exact same typed refusal every other boundary function in
+    this module returns, regardless of `outcome.standing` -- `'ALIVE'`
+    (a payoff was admitted) or any other value a caller could construct
+    all answer identically. The boundary does not branch on
+    `outcome.match`, `outcome.left_outcome`, `outcome.right_outcome`, or
+    `outcome.observation` either: this function's job is to refuse a
+    *category* of evidence (scheduled-match consequence) from crossing
+    into a production claim, not to grade either planner's own outcome.
+    """
+    # Deferred (see the `TYPE_CHECKING` import above): importing
+    # `cross_play_schedule_payoff` at call time, not module load time,
+    # keeps this module importable without the full domain registry (and
+    # `gymnasium`) in a real, minimal-dependency CI job that never
+    # installs either.
+    from autofde_lab.reasoning.cross_play_schedule_payoff import (
+        ScheduledMatchPayoffOutcome as _ScheduledMatchPayoffOutcome,
+    )
+
+    if not isinstance(outcome, _ScheduledMatchPayoffOutcome):
+        raise TypeError("SCHEDULED_MATCH_PAYOFF_CLAIM_REQUIRES_REAL_OUTCOME")
     return PRODUCTION_CLAIM_REFUSAL
 
 
