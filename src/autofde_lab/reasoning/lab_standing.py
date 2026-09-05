@@ -111,13 +111,16 @@ def production_technical_claim(lab: LabResultStanding) -> str:
 class GraduationPacket:
     """Exact identities handed to the downstream admitter -- no standing.
 
-    Every field is a reference or a digest; none is a verdict. The lab
-    outcome travels as `lab_falsification_standing`, named for its scope so
-    it cannot be read as a production token by a careless consumer.
+    Every field is a reference, a digest, or the primary evidence object
+    itself; none is a verdict. The lab outcome travels as the real
+    `FalsificationResult` it came from, not as a copied string: a copy would
+    be a second bookkeeping location for the lab verdict that could drift
+    from the result it claims to summarise (`no-dual-bookkeeping.md`). The
+    scope-named `lab_falsification_standing` is a *query* over that object.
     """
 
     candidate_id: str
-    lab_falsification_standing: str
+    falsification: FalsificationResult
     world_ref_digest: str
     receipt_refs: tuple[str, ...]
     benchmark_refs: tuple[str, ...]
@@ -132,10 +135,21 @@ class GraduationPacket:
         present = forbidden & {f.name for f in fields(self)}
         if present:
             raise ValueError(f"GRADUATION_PACKET_CARRIES_STANDING:{sorted(present)}")
+        if not isinstance(self.falsification, FalsificationResult):
+            raise TypeError("GRADUATION_PACKET_REQUIRES_REAL_FALSIFICATION_RESULT")
+        if self.falsification.candidate_id != self.candidate_id:
+            raise ValueError(
+                f"GRADUATION_PACKET_CANDIDATE_MISMATCH:{self.candidate_id}!={self.falsification.candidate_id}"
+            )
         if self.required_downstream_admission != REQUIRED_DOWNSTREAM_ADMISSION:
             raise ValueError(
                 f"GRADUATION_REQUIRES_AUTOFDE_ADMISSION:{self.required_downstream_admission}"
             )
+
+    @property
+    def lab_falsification_standing(self) -> str:
+        """The lab verdict, read from the result it belongs to -- never stored."""
+        return self.falsification.standing.value
 
 
 def graduation_packet(
@@ -153,7 +167,7 @@ def graduation_packet(
     """
     return GraduationPacket(
         candidate_id=lab.candidate_id,
-        lab_falsification_standing=lab.lab_standing.value,
+        falsification=lab.falsification,
         world_ref_digest=lab.world_ref_digest,
         receipt_refs=tuple(lab.receipt_refs) + tuple(lab.falsification.receipt_refs),
         benchmark_refs=tuple(benchmark_refs),

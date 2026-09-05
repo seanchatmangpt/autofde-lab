@@ -11,6 +11,7 @@ uses. Assertions are on returned state only.
 
 from __future__ import annotations
 
+from dataclasses import fields
 from pathlib import Path
 
 import pytest
@@ -135,7 +136,11 @@ def test_graduation_packet_carries_identities_and_no_standing() -> None:
     assert hasattr(packet, "alive") is False
     assert packet.required_downstream_admission == "autofde"
     assert packet.candidate_id == "cand-1"
+    # The verdict is a query over the very object falsify_candidate returned,
+    # not a copied token that could drift from it.
+    assert packet.falsification is lab.falsification
     assert packet.lab_falsification_standing == "SURVIVES"
+    assert "lab_falsification_standing" not in {f.name for f in fields(packet)}
     assert packet.world_ref_digest == lab.world_ref_digest
     assert packet.receipt_refs == lab.receipt_refs + lab.falsification.receipt_refs
     assert packet.benchmark_refs == ("bench:checkout-2026-09",)
@@ -150,13 +155,41 @@ def test_graduation_packet_refuses_a_different_downstream_admitter() -> None:
     with pytest.raises(ValueError, match="GRADUATION_REQUIRES_AUTOFDE_ADMISSION"):
         GraduationPacket(
             candidate_id=packet.candidate_id,
-            lab_falsification_standing=packet.lab_falsification_standing,
+            falsification=packet.falsification,
             world_ref_digest=packet.world_ref_digest,
             receipt_refs=packet.receipt_refs,
             benchmark_refs=(),
             falsifier_refs=(),
             limits=(),
             required_downstream_admission="autofde-lab",  # type: ignore[arg-type]
+        )
+
+
+def test_graduation_packet_refuses_a_verdict_that_is_not_its_candidates() -> None:
+    packet = graduation_packet(_lab(_real_surviving_result()))
+
+    with pytest.raises(ValueError, match="GRADUATION_PACKET_CANDIDATE_MISMATCH"):
+        GraduationPacket(
+            candidate_id="someone-else",
+            falsification=packet.falsification,
+            world_ref_digest=packet.world_ref_digest,
+            receipt_refs=packet.receipt_refs,
+            benchmark_refs=(),
+            falsifier_refs=(),
+            limits=(),
+        )
+
+    with pytest.raises(
+        TypeError, match="GRADUATION_PACKET_REQUIRES_REAL_FALSIFICATION_RESULT"
+    ):
+        GraduationPacket(
+            candidate_id="cand-1",
+            falsification="SURVIVES",  # type: ignore[arg-type]
+            world_ref_digest=packet.world_ref_digest,
+            receipt_refs=(),
+            benchmark_refs=(),
+            falsifier_refs=(),
+            limits=(),
         )
 
 
