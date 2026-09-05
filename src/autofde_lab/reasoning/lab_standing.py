@@ -33,9 +33,8 @@ vocabularies happening not to be wired together.
 from __future__ import annotations
 
 from dataclasses import dataclass, fields
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
-from autofde_lab.planner_league.disturbance_episode import DisturbanceEpisodeResult
 from autofde_lab.reasoning.dflss_solve_payoff_bridge import DflssSolvePayoffOutcome
 from autofde_lab.reasoning.exploration_payoff_bridge import ExplorationPayoffOutcome
 from autofde_lab.reasoning.laboratory import (
@@ -43,6 +42,20 @@ from autofde_lab.reasoning.laboratory import (
     FalsificationResult,
     FalsificationStanding,
 )
+
+if TYPE_CHECKING:
+    # Deferred: `disturbance_episode.py` eagerly resolves
+    # `world_admission.WORLD_DOMAIN_FACTORIES` at import time, which
+    # transitively imports every registered domain (`maze`, `breach_clock`,
+    # ...) and, through them, `hub.space.gym` -> `gymnasium`. That chain has
+    # nothing to do with this module's actual job (refusing a category of
+    # evidence from crossing a boundary), and a real, minimal-dependency CI
+    # job (`payoff-bundle-qualification.yml`, which never installs
+    # `gymnasium`) imports `fabric.cli`, which imports this module -- a
+    # module-level import here would make merely importing `lab_standing`
+    # require the entire domain registry. Deferred into
+    # `disturbance_episode_production_claim()` below instead.
+    from autofde_lab.planner_league.disturbance_episode import DisturbanceEpisodeResult
 
 __all__ = [
     "LAB_SCOPE",
@@ -269,7 +282,15 @@ def disturbance_episode_production_claim(result: DisturbanceEpisodeResult) -> st
     of evidence (adversarial-episode consequence) from crossing into a
     production claim, not to grade the episode's own outcome.
     """
-    if not isinstance(result, DisturbanceEpisodeResult):
+    # Deferred (see the `TYPE_CHECKING` import above): importing
+    # `disturbance_episode` at call time, not module load time, keeps this
+    # module importable without the full domain registry (and `gymnasium`)
+    # in a real, minimal-dependency CI job that never installs either.
+    from autofde_lab.planner_league.disturbance_episode import (
+        DisturbanceEpisodeResult as _DisturbanceEpisodeResult,
+    )
+
+    if not isinstance(result, _DisturbanceEpisodeResult):
         raise TypeError("DISTURBANCE_EPISODE_CLAIM_REQUIRES_REAL_RESULT")
     return PRODUCTION_CLAIM_REFUSAL
 
