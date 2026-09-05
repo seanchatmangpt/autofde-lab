@@ -33,9 +33,9 @@ vocabularies happening not to be wired together.
 from __future__ import annotations
 
 from dataclasses import dataclass, fields
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
-from autofde_lab.planner_league.disturbance_episode import DisturbanceEpisodeResult
+from autofde_lab.reasoning.dflss_solve_payoff_bridge import DflssSolvePayoffOutcome
 from autofde_lab.reasoning.exploration_payoff_bridge import ExplorationPayoffOutcome
 from autofde_lab.reasoning.laboratory import (
     ExperimentReceipt,
@@ -43,12 +43,27 @@ from autofde_lab.reasoning.laboratory import (
     FalsificationStanding,
 )
 
+if TYPE_CHECKING:
+    # Deferred: `disturbance_episode.py` eagerly resolves
+    # `world_admission.WORLD_DOMAIN_FACTORIES` at import time, which
+    # transitively imports every registered domain (`maze`, `breach_clock`,
+    # ...) and, through them, `hub.space.gym` -> `gymnasium`. That chain has
+    # nothing to do with this module's actual job (refusing a category of
+    # evidence from crossing a boundary), and a real, minimal-dependency CI
+    # job (`payoff-bundle-qualification.yml`, which never installs
+    # `gymnasium`) imports `fabric.cli`, which imports this module -- a
+    # module-level import here would make merely importing `lab_standing`
+    # require the entire domain registry. Deferred into
+    # `disturbance_episode_production_claim()` below instead.
+    from autofde_lab.planner_league.disturbance_episode import DisturbanceEpisodeResult
+
 __all__ = [
     "LAB_SCOPE",
     "PRODUCTION_CLAIM_REFUSAL",
     "REQUIRED_DOWNSTREAM_ADMISSION",
     "GraduationPacket",
     "LabResultStanding",
+    "dflss_solve_payoff_production_claim",
     "disturbance_episode_production_claim",
     "experiment_receipt_production_claim",
     "exploration_payoff_production_claim",
@@ -151,6 +166,47 @@ def exploration_payoff_production_claim(outcome: ExplorationPayoffOutcome) -> st
     return PRODUCTION_CLAIM_REFUSAL
 
 
+def dflss_solve_payoff_production_claim(outcome: DflssSolvePayoffOutcome) -> str:
+    """What a real `dflss_solve_payoff_bridge.DflssSolvePayoffOutcome`
+    licenses as a production technical claim: nothing -- the same law this
+    module already states for `ExplorationPayoffOutcome`, applied to its
+    real sibling type (`dflss_solve_payoff_bridge.py`'s own docstring:
+    `DflssSolvePayoffOutcome` "mirrors `ExplorationPayoffOutcome`'s own
+    `(observation/standing/reason)` shape").
+
+    `DflssSolvePayoffOutcome` is the real, per-planner head-to-head
+    admission outcome of two real planners each independently attempting
+    `dflss_planner_solve.attempt_solve_dflss_curriculum`'s DMEDI-curriculum
+    PDDL problem. It carries this repo's generic cross-module success token
+    `'ALIVE'` in its own `standing` field when a payoff was admitted, and
+    that field is now real, externally visible CLI output: `fabric.cli`'s
+    `dmedi-solve-payoff` subcommand (added the same session `V2030.1.1`
+    capability 9's boundary was generalized) emits `result.standing`
+    directly as JSON, unwrapped. The token is correct and unchanged for
+    what it is -- the payoff edge was constructed and added to the
+    caller's `PayoffHypergraph` -- but it is still evidence about an
+    experiment inside a `PlannerLeague`/`PayoffHypergraph` gym-scored
+    league match, never observed production evidence. Per
+    `.claude/rules/absence-is-not-evidence.md` applied to standing itself:
+    two real planners both reaching the DMEDI-curriculum goal in the lab is
+    not the same fact as production having observed either succeed.
+
+    Returns the exact same typed refusal every other boundary function in
+    this module returns, regardless of `outcome.standing` -- `'ALIVE'`
+    (a payoff was admitted, including the honest tie both planners reach
+    on this deterministic domain), `'REFUSED'` (identity mismatch or no
+    receipt refs), or any other value a caller could construct all answer
+    identically. The boundary does not branch on `outcome.left_outcome`,
+    `outcome.right_outcome`, or `outcome.observation` either: this
+    function's job is to refuse a *category* of evidence (lab head-to-head
+    match consequence) from crossing into a production claim, not to grade
+    either planner's own outcome.
+    """
+    if not isinstance(outcome, DflssSolvePayoffOutcome):
+        raise TypeError("DFLSS_SOLVE_PAYOFF_CLAIM_REQUIRES_REAL_OUTCOME")
+    return PRODUCTION_CLAIM_REFUSAL
+
+
 def experiment_receipt_production_claim(receipt: ExperimentReceipt) -> str:
     """What a real `laboratory.ExperimentReceipt` licenses as a production
     technical claim: nothing -- the same law `production_technical_claim`
@@ -226,7 +282,15 @@ def disturbance_episode_production_claim(result: DisturbanceEpisodeResult) -> st
     of evidence (adversarial-episode consequence) from crossing into a
     production claim, not to grade the episode's own outcome.
     """
-    if not isinstance(result, DisturbanceEpisodeResult):
+    # Deferred (see the `TYPE_CHECKING` import above): importing
+    # `disturbance_episode` at call time, not module load time, keeps this
+    # module importable without the full domain registry (and `gymnasium`)
+    # in a real, minimal-dependency CI job that never installs either.
+    from autofde_lab.planner_league.disturbance_episode import (
+        DisturbanceEpisodeResult as _DisturbanceEpisodeResult,
+    )
+
+    if not isinstance(result, _DisturbanceEpisodeResult):
         raise TypeError("DISTURBANCE_EPISODE_CLAIM_REQUIRES_REAL_RESULT")
     return PRODUCTION_CLAIM_REFUSAL
 
