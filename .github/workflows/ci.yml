@@ -240,13 +240,25 @@ jobs:
         with:
           name: wheel-ubuntu-latest-3.10
           path: wheels
+      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          enable-cache: true
       - name: Install wheel and build documentation
         shell: bash
         run: |
           set -euo pipefail
           wheel=$(find wheels -maxdepth 1 -name 'autofde_lab*.whl' -print -quit)
           test -n "$wheel"
-          python -m pip install "${wheel}[all]"
+          # Plain `pip install` cannot resolve the `receipts` extra's
+          # wasm4pm-compat-pydantic dependency: it exists only via a
+          # uv-specific [tool.uv.sources] git redirect in pyproject.toml
+          # (not on PyPI, and not baked into the wheel's METADATA), so pip
+          # fails with "No matching distribution found" -- the same bug
+          # class already fixed for build-doc.yml's own install step in
+          # PR#107; this is a second, independent call site in this
+          # workflow's own inline `docs` job. `uv pip install` reads
+          # pyproject.toml's [tool.uv.sources] and resolves it.
+          uv pip install --python "$(python -c 'import sys; print(sys.executable)')" "${wheel}[all]"
           yarn install --frozen-lockfile
           yarn docs:build
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
