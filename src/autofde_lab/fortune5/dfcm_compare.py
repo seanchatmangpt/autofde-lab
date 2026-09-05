@@ -229,16 +229,54 @@ def _dominates(left: ScenarioAggregate, right: ScenarioAggregate) -> bool:
     )
 
 
-def _pareto_frontier(feasible: Sequence[ScenarioAggregate]) -> tuple[str, ...]:
+def _tradeoff_vector(item: ScenarioAggregate) -> tuple[float, float, float, float]:
+    return (item.cost, item.blast_radius, item.compliance_risk, item.reversibility)
+
+
+def _pareto_frontier(
+    feasible: Sequence[ScenarioAggregate],
+) -> tuple[tuple[str, int], ...]:
+    """Non-dominated DISTINCT tradeoff vectors, one representative id each.
+
+    Found by this capability's own adversarial refute pass: `FORTUNE5_SPACE`
+    has 14 axes but `_score` reads 7, so scenarios differing only in the
+    other 7 (enterprise/geography/environment/workload/traffic/identity/
+    runtime_ai) share an identical tradeoff vector -- equal vectors never
+    dominate each other by `_dominates`'s strict definition, so a
+    per-scenario-id frontier silently pads itself with exact duplicates
+    (measured: 144 "frontier" ids, only 12 distinct vectors). That directly
+    contradicts this capability's own PRD falsifier ("expose objective
+    tradeoffs instead of hiding them in one opaque aggregate") by a
+    different route -- padding hides real degeneracy behind an inflated
+    count instead of collapsing it into one aggregate.
+
+    Grouping by the real tradeoff vector first, then taking Pareto
+    dominance over the DISTINCT vectors, makes the frontier's size mean
+    what it claims: one entry per genuinely different tradeoff. Duplicate
+    count per vector is retained (see `ComparisonResult.tradeoff_group_sizes`)
+    so that degeneracy is visible, not silently discarded either.
+    """
+    groups: dict[tuple[float, float, float, float], list[str]] = {}
+    for item in feasible:
+        groups.setdefault(_tradeoff_vector(item), []).append(item.scenario_id)
+
+    representatives: dict[tuple[float, float, float, float], ScenarioAggregate] = {}
+    by_id = {item.scenario_id: item for item in feasible}
+    for vector, ids in groups.items():
+        representatives[vector] = by_id[min(ids)]
+
+    non_dominated = [
+        vector
+        for vector, candidate in representatives.items()
+        if not any(
+            other_vector != vector and _dominates(other, candidate)
+            for other_vector, other in representatives.items()
+        )
+    ]
     return tuple(
         sorted(
-            candidate.scenario_id
-            for candidate in feasible
-            if not any(
-                other.scenario_id != candidate.scenario_id
-                and _dominates(other, candidate)
-                for other in feasible
-            )
+            (representatives[vector].scenario_id, len(groups[vector]))
+            for vector in non_dominated
         )
     )
 
@@ -251,12 +289,21 @@ class ComparisonResult:
     compliance_risk, reversibility) vector for every frontier member so a
     caller sees the real tradeoffs instead of one collapsed scalar -- this is
     the PRD's own falsifier for capability 7.
+
+    ``pareto_scenario_ids`` names ONE representative scenario per distinct,
+    non-dominated tradeoff vector (the lexicographically smallest id sharing
+    that vector) -- not every scenario whose vector happens to be
+    non-dominated. ``tradeoff_group_sizes`` (parallel to ``pareto_scenario_ids``)
+    is how many feasible scenarios share each representative's exact
+    tradeoff vector, so degeneracy across unscored axes is visible rather
+    than silently inflating or silently collapsing the frontier.
     """
 
     space_digest: str
     scenario_count: int
     feasible_scenario_ids: tuple[str, ...]
     pareto_scenario_ids: tuple[str, ...]
+    tradeoff_group_sizes: tuple[int, ...]
     tradeoffs: tuple[tuple[str, tuple[float, float, float, float]], ...]
     digest: str
 
@@ -296,7 +343,9 @@ def compare_lawful_scenarios(
         )
 
     feasible = tuple(item for item in aggregates if item.feasible)
-    frontier_ids = _pareto_frontier(feasible)
+    frontier = _pareto_frontier(feasible)
+    frontier_ids = tuple(scenario_id for scenario_id, _count in frontier)
+    group_sizes = tuple(count for _scenario_id, count in frontier)
     by_id = {item.scenario_id: item for item in feasible}
     tradeoffs = tuple(
         (
@@ -319,6 +368,7 @@ def compare_lawful_scenarios(
             "scenario_digests": sorted(item.scenario_digest for item in aggregates),
             "feasible_scenario_ids": sorted(item.scenario_id for item in feasible),
             "pareto_scenario_ids": list(frontier_ids),
+            "tradeoff_group_sizes": list(group_sizes),
         }
     )
 
@@ -327,6 +377,7 @@ def compare_lawful_scenarios(
         scenario_count=len(aggregates),
         feasible_scenario_ids=tuple(sorted(item.scenario_id for item in feasible)),
         pareto_scenario_ids=frontier_ids,
+        tradeoff_group_sizes=group_sizes,
         tradeoffs=tradeoffs,
         digest=digest,
     )

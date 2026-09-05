@@ -51,6 +51,31 @@ def test_frontier_members_expose_real_tradeoffs_not_one_aggregate() -> None:
     )
     assert distinct_axis_found
 
+    # Found by this capability's own adversarial refute pass: `_score` only
+    # reads 7 of `FORTUNE5_SPACE`'s 14 axes, so scenarios differing only in
+    # the other 7 (enterprise/geography/environment/workload/traffic/
+    # identity/runtime_ai) share an identical tradeoff vector -- a
+    # per-scenario-id frontier padded itself with exact duplicates (measured
+    # live: 144 "frontier" ids, only 12 distinct vectors). Pin that every
+    # frontier vector is now genuinely distinct from every other.
+    assert len(set(vectors)) == len(vectors), (
+        "frontier must expose distinct tradeoffs, not duplicate vectors"
+    )
+
+
+def test_tradeoff_group_sizes_reveal_degeneracy_across_unscored_axes() -> None:
+    # The frontier collapses duplicate tradeoff vectors to one representative
+    # id; `tradeoff_group_sizes` is how that collapse stays honest instead of
+    # silently discarding the fact that many scenarios share one tradeoff.
+    result = compare_lawful_scenarios(space=FORTUNE5_SPACE, limit=20000)
+
+    assert len(result.tradeoff_group_sizes) == len(result.pareto_scenario_ids)
+    assert all(size >= 1 for size in result.tradeoff_group_sizes)
+    # On the real space, at least one distinct tradeoff vector is shared by
+    # more than one scenario (the 7 unscored axes vary freely) -- confirming
+    # this field carries real information, not a constant 1 everywhere.
+    assert max(result.tradeoff_group_sizes) > 1
+
 
 def test_digest_is_deterministic_over_space_limit_start() -> None:
     first = compare_lawful_scenarios(space=FORTUNE5_SPACE, limit=5000, start=0)
