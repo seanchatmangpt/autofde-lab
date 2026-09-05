@@ -35,17 +35,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from autofde_lab.reasoning.lab_standing import (
-    PRODUCTION_CLAIM_REFUSAL,
-    exploration_payoff_production_claim,
-)
-
 from autofde_lab.fabric.enterprise_standing import derive_enterprise_standing
 from autofde_lab.fabric.fde import parse_authority_turtle
 from autofde_lab.hub.domain.maze import Maze
 from autofde_lab.planner_league import PayoffHypergraph, PlannerLeague
 from autofde_lab.reasoning.exploration_payoff_bridge import (
     admit_exploration_candidate_payoff,
+)
+from autofde_lab.reasoning.lab_standing import (
+    PRODUCTION_CLAIM_REFUSAL,
+    exploration_payoff_production_claim,
 )
 from autofde_lab.reasoning.laboratory import (
     ExperimentReceipt,
