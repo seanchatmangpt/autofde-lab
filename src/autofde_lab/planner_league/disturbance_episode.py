@@ -29,8 +29,14 @@ Standing vocabulary (`.claude/rules/absence-is-not-evidence.md`):
 - `SURVIVES` -- the admitted goal is reached after the perturbation.
 - `FALSIFIED` -- the plan no longer reaches the goal; `failed_at_step`
   and `counterexample_state` are recorded.
-- `UNKNOWN` -- the solver produced no plan (planner not loadable, domain
-  refused, empty plan). Never coerced into either verdict.
+- `UNKNOWN` -- nothing was tested: the solver produced no plan (planner
+  not loadable, domain refused, empty plan), its plan had a shape this
+  replay does not interpret, or the disturbance could not be applied
+  (its transform raised, or produced a state the domain refuses). Never
+  coerced into either verdict, and never an uncaught exception either --
+  the adversarial refute pass on this module found `IDAstar`/`LRTAstar`
+  (bare-`Action` plans) crashing where `Astar`/`EHC` (state/action tuples)
+  did not; both shapes are now normalised in `_plan_shape`.
 
 Receipt boundary (`CLAUDE.md`, `.claude/rules/no-dual-bookkeeping.md`):
 this repo computes candidate plans and is never given receipt/admission/
@@ -154,6 +160,57 @@ def _trajectory_digest(
     ).hexdigest()
 
 
+class _PlanShapeUnknown(Exception):
+    """The registered solver's `get_plan()` returned something this replay
+    cannot interpret as a sequence of domain actions; carries the typed
+    `UNKNOWN:...` reason."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)
+        self.reason = reason
+
+
+def _plan_shape(
+    domain: Any, initial_state: Any, plan: list[Any]
+) -> tuple[list[Any], list[Any]]:
+    """Normalise the two real `get_plan()` shapes registered solvers return.
+
+    Real, measured on this repo's own solvers: `Astar`/`EHC` yield
+    `(state, action, value)` tuples; `IDAstar`/`LRTAstar` yield bare
+    `Action`s. Both are lawful plans. Returns `(actions, expected_after)`
+    where `expected_after[i]` is the state the constructor's plan expects
+    *after* step i (`None` for the final step, whose only expectation is
+    the domain's own `is_goal()`).
+
+    For tuple plans that expectation is the planner's own claim
+    (`plan[i + 1][0]`). For bare-action plans the planner makes no state
+    claim, so the expectation is the domain's own undisturbed replay of the
+    same actions -- the real transition model, not a second one. Anything
+    else (mixed shapes, an undisturbed replay the domain refuses) is
+    `UNKNOWN`: it is not coerced into an interpretation.
+    """
+    tupled = [isinstance(step, tuple) and len(step) >= 2 for step in plan]
+    if all(tupled):
+        actions = [step[1] for step in plan]
+        expected_after = [plan[i + 1][0] for i in range(len(plan) - 1)] + [None]
+        return actions, expected_after
+    if any(tupled):
+        raise _PlanShapeUnknown("UNKNOWN:PLAN_SHAPE_MIXED")
+    actions = list(plan)
+    expected_after: list[Any] = []
+    state = initial_state
+    try:
+        for action in actions[:-1]:
+            state = domain.get_next_state(state, action)
+            expected_after.append(state)
+    except Exception as exc:
+        raise _PlanShapeUnknown(
+            f"UNKNOWN:UNDISTURBED_PLAN_UNREPLAYABLE:{type(exc).__name__}"
+        ) from exc
+    expected_after.append(None)
+    return actions, expected_after
+
+
 def _unknown(
     world_id: str,
     constructor_planner_id: str,
@@ -260,43 +317,59 @@ def run_disturbance_episode(
             f"UNKNOWN:AT_STEP_BEYOND_PLAN:{disturbance.at_step}>={len(plan)}",
         )
 
-    actions = [step[1] for step in plan]
-    # The state the constructor's plan expects to be in *after* step i:
-    # plan[i + 1]'s state, or the goal (a planner-side claim, checked
-    # against the domain's own `is_goal()` below) for the final step.
-    expected_after = [plan[i + 1][0] for i in range(len(plan) - 1)] + [None]
+    try:
+        actions, expected_after = _plan_shape(domain, initial_state, plan)
+    except _PlanShapeUnknown as unknown:
+        return _unknown(world_id, constructor_planner_id, disturbance, unknown.reason)
 
     trajectory: list[tuple[Any, Any]] = []
     state = initial_state
-    for i in range(disturbance.at_step):
-        trajectory.append((state, actions[i]))
-        state = domain.get_next_state(state, actions[i])
-
-    state = disturbance.transform(state)
     standing = DisturbanceStanding.FALSIFIED
     reason = "FALSIFIED:GOAL_NOT_REACHED_AFTER_DISTURBANCE"
     failed_at_step: int | None = None
     counterexample_state: Any = None
-    if domain.is_goal(state):
-        standing = DisturbanceStanding.SURVIVES
-        reason = "SURVIVES:GOAL_REACHED_AFTER_DISTURBANCE"
-    for i in range(disturbance.at_step, len(plan)):
-        trajectory.append((state, actions[i]))
-        next_state = domain.get_next_state(state, actions[i])
-        expected = expected_after[i]
-        diverged = (
-            not domain.is_goal(next_state)
-            if expected is None
-            else next_state != expected
-        )
-        if diverged and failed_at_step is None:
-            failed_at_step = i
-            counterexample_state = state
-        state = next_state
+    try:
+        for i in range(disturbance.at_step):
+            trajectory.append((state, actions[i]))
+            state = domain.get_next_state(state, actions[i])
+
+        try:
+            state = disturbance.transform(state)
+        except Exception as exc:  # noqa: BLE001 -- a disturbance that cannot be applied tested nothing: UNKNOWN, named by type
+            return _unknown(
+                world_id,
+                constructor_planner_id,
+                disturbance,
+                f"UNKNOWN:DISTURBANCE_TRANSFORM_FAILED:{type(exc).__name__}",
+            )
+
         if domain.is_goal(state):
             standing = DisturbanceStanding.SURVIVES
             reason = "SURVIVES:GOAL_REACHED_AFTER_DISTURBANCE"
-            break
+        for i in range(disturbance.at_step, len(plan)):
+            trajectory.append((state, actions[i]))
+            next_state = domain.get_next_state(state, actions[i])
+            expected = expected_after[i]
+            diverged = (
+                not domain.is_goal(next_state)
+                if expected is None
+                else next_state != expected
+            )
+            if diverged and failed_at_step is None:
+                failed_at_step = i
+                counterexample_state = state
+            state = next_state
+            if domain.is_goal(state):
+                standing = DisturbanceStanding.SURVIVES
+                reason = "SURVIVES:GOAL_REACHED_AFTER_DISTURBANCE"
+                break
+    except Exception as exc:  # noqa: BLE001 -- the domain refused a replayed (possibly disturbed) state: no verdict was earned, so UNKNOWN, named by type
+        return _unknown(
+            world_id,
+            constructor_planner_id,
+            disturbance,
+            f"UNKNOWN:DISTURBED_STATE_REJECTED_BY_DOMAIN:{type(exc).__name__}",
+        )
     trajectory.append((state, None))
     if standing is DisturbanceStanding.SURVIVES:
         failed_at_step = None

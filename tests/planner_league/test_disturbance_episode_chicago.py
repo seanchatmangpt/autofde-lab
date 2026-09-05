@@ -40,11 +40,11 @@ GOAL_ADJACENT = State(11, 19)
 BEHIND_WALL = State(1, 19)
 
 
-def _plan_length() -> int:
+def _plan_length(constructor: str = CONSTRUCTOR) -> int:
     # A disturbance with at_step beyond the plan is UNKNOWN; derive the real
     # plan length from a real run so the tests below never guess it.
     probe = run_disturbance_episode(
-        WORLD_ID, CONSTRUCTOR, Disturbance("identity", 0, lambda s: s)
+        WORLD_ID, constructor, Disturbance("identity", 0, lambda s: s)
     )
     assert probe.standing is DisturbanceStanding.SURVIVES, probe.reason
     return probe.plan_length
@@ -230,3 +230,55 @@ def test_trajectory_digest_is_deterministic_and_sensitive_to_at_step() -> None:
     assert first.trajectory_digest == second.trajectory_digest
     assert len(first.trajectory_digest) == 64
     assert shifted.trajectory_digest != first.trajectory_digest
+
+
+# The adversarial refute pass found the bare-`Action` plan shape (IDAstar,
+# LRTAstar) crashing this module where the (state, action, value) shape
+# (Astar) did not. Both shapes are real registered solvers on the same
+# admitted world, so both must yield a verdict -- or a typed UNKNOWN.
+BARE_ACTION_CONSTRUCTOR = "IDAstar"
+
+
+def test_bare_action_plan_shape_is_replayed_not_crashed() -> None:
+    plan_length = _plan_length(BARE_ACTION_CONSTRUCTOR)
+    assert plan_length > 0
+    survived = run_disturbance_episode(
+        WORLD_ID,
+        BARE_ACTION_CONSTRUCTOR,
+        Disturbance(
+            "relocate-adjacent-to-goal", plan_length - 3, _relocate(GOAL_ADJACENT)
+        ),
+    )
+    assert survived.standing is DisturbanceStanding.SURVIVES, survived.reason
+    falsified = run_disturbance_episode(
+        WORLD_ID,
+        BARE_ACTION_CONSTRUCTOR,
+        Disturbance("relocate-behind-wall", plan_length - 1, _relocate(BEHIND_WALL)),
+    )
+    assert falsified.standing is DisturbanceStanding.FALSIFIED, falsified.reason
+    # Localisation comes from the domain's own undisturbed replay, so the
+    # failing step is still pinned exactly for a planner that claims no states.
+    assert falsified.failed_at_step == plan_length - 1
+    assert falsified.counterexample_state == BEHIND_WALL
+
+
+def test_disturbance_that_cannot_be_applied_is_unknown_never_a_verdict() -> None:
+    def explode(_state):
+        raise RuntimeError("transform exploded")
+
+    class Bogus:
+        pass
+
+    exploded = run_disturbance_episode(
+        WORLD_ID, CONSTRUCTOR, Disturbance("explode", 0, explode)
+    )
+    assert exploded.standing is DisturbanceStanding.UNKNOWN
+    assert exploded.reason == "UNKNOWN:DISTURBANCE_TRANSFORM_FAILED:RuntimeError"
+    assert exploded.trajectory == ()
+
+    rejected = run_disturbance_episode(
+        WORLD_ID, CONSTRUCTOR, Disturbance("bogus-state", 0, lambda _s: Bogus())
+    )
+    assert rejected.standing is DisturbanceStanding.UNKNOWN
+    assert rejected.reason.startswith("UNKNOWN:DISTURBED_STATE_REJECTED_BY_DOMAIN:")
+    assert rejected.trajectory == ()
