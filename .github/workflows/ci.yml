@@ -232,6 +232,22 @@ jobs:
           # Scoped here (not job-wide) so the git-backed install step above
           # keeps the runner's own libraries; see the MiniZinc step comment.
           LD_LIBRARY_PATH: ${{ env.MINIZINC_LIB }}
+          # Same fix the Justfile already documents and applies locally
+          # (see its own PYTHONPATH comment): Ray's spawned worker
+          # processes (this partition's tests/solvers/python/test_gnn_ray_rllib.py
+          # and the autoregressive sb3 suite) don't inherit pytest's
+          # in-process sys.path insertion when unpickling test-defined
+          # classes to reimport them by name in a separate process -- they
+          # only see the PYTHONPATH env var as set at worker launch.
+          # Confirmed live on run 33957629757 (first run in which this job
+          # ever got past the wheel-install step, since #110/#113 fixed
+          # that): every Ray-worker test failed with
+          # `ModuleNotFoundError: No module named 'solvers'`
+          # (`ray::GraphRolloutWorker.__init__()` -> RaySystemError). Not a
+          # regression from this session's own PRs (none touch tests/solvers
+          # or Ray config) -- the install had simply never succeeded far
+          # enough for this gap to be observable before.
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           set -euo pipefail
           pytest -vv tests/solvers/python \
