@@ -35,6 +35,7 @@ from __future__ import annotations
 from dataclasses import dataclass, fields
 from typing import Literal
 
+from autofde_lab.planner_league.disturbance_episode import DisturbanceEpisodeResult
 from autofde_lab.reasoning.exploration_payoff_bridge import ExplorationPayoffOutcome
 from autofde_lab.reasoning.laboratory import (
     ExperimentReceipt,
@@ -48,6 +49,7 @@ __all__ = [
     "REQUIRED_DOWNSTREAM_ADMISSION",
     "GraduationPacket",
     "LabResultStanding",
+    "disturbance_episode_production_claim",
     "experiment_receipt_production_claim",
     "exploration_payoff_production_claim",
     "graduation_packet",
@@ -189,6 +191,43 @@ def experiment_receipt_production_claim(receipt: ExperimentReceipt) -> str:
     """
     if not isinstance(receipt, ExperimentReceipt):
         raise TypeError("EXPERIMENT_RECEIPT_CLAIM_REQUIRES_REAL_RECEIPT")
+    return PRODUCTION_CLAIM_REFUSAL
+
+
+def disturbance_episode_production_claim(result: DisturbanceEpisodeResult) -> str:
+    """What a real `planner_league.disturbance_episode.DisturbanceEpisodeResult`
+    licenses as a production technical claim: nothing -- the same law this
+    module states for `LabResultStanding`, `ExplorationPayoffOutcome`, and
+    `ExperimentReceipt`, applied to the fourth real producer of lab-scoped
+    evidence in this repo.
+
+    `DisturbanceEpisodeResult` is the real outcome of replaying one
+    constructor plan against one admitted adversarial `Disturbance`
+    (`V2030.1.1-PRD-ARD.md` capability 6: adversarial/chaos/mutation
+    scenarios). Its `standing` field is a `DisturbanceStanding` --
+    `SURVIVES`, `FALSIFIED`, or `UNKNOWN` -- the same shape
+    `FalsificationStanding` already carries, and
+    `disturbance_episode.disturbance_result_to_payoff()` projects a
+    `SURVIVES` standing into a `PayoffObservation` tagged
+    `f"ALIVE:DISTURBANCE_PAYOFF:{result.standing.value}"`. That token
+    records that this repo's own red-team apparatus failed to falsify the
+    constructor plan against one disturbance in one gym world -- it is not
+    an observation of a production consequence. Per
+    `.claude/rules/absence-is-not-evidence.md` applied to standing itself:
+    a disturbance not falsifying a plan in the lab is not the same fact as
+    production having observed the plan survive.
+
+    Returns the exact same typed refusal `production_technical_claim`,
+    `exploration_payoff_production_claim`, and
+    `experiment_receipt_production_claim` return, regardless of
+    `result.standing` -- `SURVIVES`, `FALSIFIED`, and `UNKNOWN` all answer
+    identically. The boundary does not branch on `reason`, `plan_length`,
+    or `trajectory` either: this function's job is to refuse a *category*
+    of evidence (adversarial-episode consequence) from crossing into a
+    production claim, not to grade the episode's own outcome.
+    """
+    if not isinstance(result, DisturbanceEpisodeResult):
+        raise TypeError("DISTURBANCE_EPISODE_CLAIM_REQUIRES_REAL_RESULT")
     return PRODUCTION_CLAIM_REFUSAL
 
 
