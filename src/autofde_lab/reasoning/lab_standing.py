@@ -35,6 +35,7 @@ from __future__ import annotations
 from dataclasses import dataclass, fields
 from typing import Literal
 
+from autofde_lab.reasoning.exploration_payoff_bridge import ExplorationPayoffOutcome
 from autofde_lab.reasoning.laboratory import FalsificationResult, FalsificationStanding
 
 __all__ = [
@@ -43,6 +44,7 @@ __all__ = [
     "REQUIRED_DOWNSTREAM_ADMISSION",
     "GraduationPacket",
     "LabResultStanding",
+    "exploration_payoff_production_claim",
     "graduation_packet",
     "production_technical_claim",
 ]
@@ -104,6 +106,41 @@ def production_technical_claim(lab: LabResultStanding) -> str:
     """
     if lab.scope != LAB_SCOPE:
         raise ValueError(f"LAB_STANDING_SCOPE_NOT_LAB:{lab.scope}")
+    return PRODUCTION_CLAIM_REFUSAL
+
+
+def exploration_payoff_production_claim(outcome: ExplorationPayoffOutcome) -> str:
+    """What a real `exploration_payoff_bridge.ExplorationPayoffOutcome`
+    licenses as a production technical claim: nothing -- the same law
+    `production_technical_claim` already states for `LabResultStanding`,
+    applied to the second real producer of lab-scoped evidence in this repo.
+
+    `ExplorationPayoffOutcome` is the second real producer of lab-scoped
+    result standing (`laboratory.falsify_candidate` -> `LabResultStanding`
+    is the first, boundary already closed above). It carries this repo's
+    generic cross-module success token `'ALIVE'` in its own `standing` field
+    when a payoff was admitted -- that token is correct and unchanged
+    (`ALIVE:EXPLORATION_FALSIFICATION_PAYOFF_ADMITTED` means the payoff edge
+    was constructed and added to the caller's `PayoffHypergraph`, nothing
+    more) but it is still evidence about an experiment inside a
+    `PlannerLeague`/`PayoffHypergraph` gym-scored league match, never
+    observed production evidence. Per `.claude/rules/absence-is-not-evidence.md`
+    applied to standing itself: a lab experiment not being falsified inside
+    this repo is not the same fact as production having observed the
+    candidate succeed.
+
+    Returns the exact same typed refusal `production_technical_claim`
+    returns, regardless of `outcome.standing` -- `'ALIVE'` (a payoff was
+    admitted), `'REFUSED'` (identity mismatch, incompatible planner, or no
+    receipt refs), or any real `FalsificationStanding` value forwarded
+    unadmitted (`'UNKNOWN'`, `'UNSUPPORTED'`, `'REFUSED'`) all answer
+    identically. There is no exploration payoff outcome -- admitted or
+    not -- that could ever license a production claim, so the boundary does
+    not branch on `outcome.observation` either: a `None` observation and a
+    real `PayoffObservation` both refuse the same way.
+    """
+    if not isinstance(outcome, ExplorationPayoffOutcome):
+        raise TypeError("EXPLORATION_PAYOFF_CLAIM_REQUIRES_REAL_OUTCOME")
     return PRODUCTION_CLAIM_REFUSAL
 
 
