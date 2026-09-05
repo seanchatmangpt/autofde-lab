@@ -91,15 +91,23 @@ jobs:
         run: |
           set -euo pipefail
           python_version=${{ env.python-version }}
-          wheelfile=$(find wheels -maxdepth 1 -name "scikit_decide*-cp${python_version/./}-*manylinux*.whl" -print -quit)
+          # Package was renamed scikit-decide -> autofde-lab; the wheel is
+          # autofde_lab-*.whl (same stale-glob class PR#105 fixed in ci.yml).
+          wheelfile=$(find wheels -maxdepth 1 -name "autofde_lab*-cp${python_version/./}-*manylinux*.whl" -print -quit)
           test -n "$wheelfile"
-          # Plain `pip install` cannot resolve the `receipts` extra's
-          # wasm4pm-compat-pydantic dependency: it exists only via a
-          # uv-specific [tool.uv.sources] git redirect in pyproject.toml
-          # (not on PyPI, and not baked into the wheel's METADATA), so pip
-          # fails with "No matching distribution found". `uv pip install`
-          # reads pyproject.toml's [tool.uv.sources] and resolves it.
-          uv pip install --python "$(python -c 'import sys; print(sys.executable)')" "$wheelfile[all]"
+          # The `receipts` extra's wasm4pm-compat-pydantic (and `gymact`)
+          # exist only via [tool.uv.sources] git redirects in pyproject.toml,
+          # not on PyPI and not in the wheel's METADATA. uv honors those
+          # redirects only when resolving the *project* from its lock -- not
+          # for a prebuilt wheel path (PR#107's `uv pip install wheel[all]`
+          # was therefore a no-op fix; see ci.yml's docs job for the live
+          # run). Export the frozen lock's resolved set and install that;
+          # then the wheel with --no-deps.
+          py="$(python -c 'import sys; print(sys.executable)')"
+          uv export --frozen --format requirements-txt --extra all \
+            --no-dev --no-hashes --no-emit-project -o /tmp/autofde-lab-all.txt
+          uv pip install --python "$py" -r /tmp/autofde-lab-all.txt
+          uv pip install --python "$py" --no-deps "$wheelfile"
       - name: Run documentation prerequisites
         if: inputs.doc-prerequisites-cmdline != ''
         env:

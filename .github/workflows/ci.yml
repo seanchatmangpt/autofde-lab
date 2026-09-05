@@ -204,8 +204,20 @@ jobs:
           set -euo pipefail
           wheel=$(find wheels -maxdepth 1 -name 'autofde_lab*.whl' -print -quit)
           test -n "$wheel"
-          uv pip install --system "${wheel}[all]" --group test \
+          # uv honors pyproject.toml's [tool.uv.sources] git redirects
+          # (wasm4pm-compat-pydantic, gymact) only when resolving the
+          # *project* from its lock -- never when installing a prebuilt
+          # wheel path, whose METADATA carries bare names. Confirmed live
+          # after PR#108 (run 33939249689): `uv pip install wheel[all]`
+          # still fails with `No solution found ... wasm4pm-compat-pydantic
+          # was not found in the package registry`. So export the frozen
+          # lock's resolved requirement set (git URLs included, markers
+          # kept) and install that; then the wheel itself with --no-deps.
+          uv export --frozen --format requirements-txt --extra all --group test \
+            --no-dev --no-hashes --no-emit-project -o /tmp/autofde-lab-all.txt
+          uv pip install --system -r /tmp/autofde-lab-all.txt \
             "ortools!=9.15.6755" "llvmlite>=0.45"
+          uv pip install --system --no-deps "$wheel"
           minizinc --version
       - name: Run integration partitions
         shell: bash
@@ -249,16 +261,21 @@ jobs:
           set -euo pipefail
           wheel=$(find wheels -maxdepth 1 -name 'autofde_lab*.whl' -print -quit)
           test -n "$wheel"
-          # Plain `pip install` cannot resolve the `receipts` extra's
-          # wasm4pm-compat-pydantic dependency: it exists only via a
-          # uv-specific [tool.uv.sources] git redirect in pyproject.toml
-          # (not on PyPI, and not baked into the wheel's METADATA), so pip
-          # fails with "No matching distribution found" -- the same bug
-          # class already fixed for build-doc.yml's own install step in
-          # PR#107; this is a second, independent call site in this
-          # workflow's own inline `docs` job. `uv pip install` reads
-          # pyproject.toml's [tool.uv.sources] and resolves it.
-          uv pip install --python "$(python -c 'import sys; print(sys.executable)')" "${wheel}[all]"
+          # The `receipts` extra's wasm4pm-compat-pydantic (and `gymact`)
+          # exist only via [tool.uv.sources] git redirects in pyproject.toml,
+          # not on PyPI and not in the wheel's METADATA. uv honors those
+          # redirects only when resolving the *project* from its lock --
+          # not for a prebuilt wheel path, which is why PR#108's
+          # `uv pip install wheel[all]` still failed live (run 33939249689:
+          # `No solution found ... wasm4pm-compat-pydantic was not found in
+          # the package registry`). Export the frozen lock's resolved set
+          # (git URLs included, markers kept) and install that; then the
+          # wheel with --no-deps.
+          py="$(python -c 'import sys; print(sys.executable)')"
+          uv export --frozen --format requirements-txt --extra all \
+            --no-dev --no-hashes --no-emit-project -o /tmp/autofde-lab-all.txt
+          uv pip install --python "$py" -r /tmp/autofde-lab-all.txt
+          uv pip install --python "$py" --no-deps "$wheel"
           yarn install --frozen-lockfile
           yarn docs:build
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
