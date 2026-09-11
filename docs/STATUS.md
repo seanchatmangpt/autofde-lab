@@ -10,6 +10,9 @@ re-verified this pass** — this entry files the real PR/commit record only; no 
 list was executed this session, so no row claims `ALIVE`/`measured win` beyond what each PR's
 own CI gate already required to merge. Grouped by theme:
 
+<!-- pass 24 and pass 25 were both appended concurrently on divergent branches; keeping both, unmerged content, in original order -->
+
+
 - **CI hardening** (7 PRs): `#105` matched the renamed `autofde_lab` wheel glob in
   integration/docs jobs; `#106` moved the `agentic-fabric` `concurrency.group` inside the
   matrix job; `#107`/`#108` installed the docs wheel via `uv` (twice — `#107` for the
@@ -41,6 +44,95 @@ own CI gate already required to merge. Grouped by theme:
 Not verified in this pass: whether these 21 merges leave `just test` / `just test-full` green on
 current `master`, or whether the `planner_league` cap sequence (1, 3–10) is now complete against
 its own frozen manifest. Both are real, checkable next steps, not claimed here.
+
+Last update: **pass 25** (2026-09-02) — **OCEL production-history accounting restarted from
+manufacturing inputs, superseding the never-committed hand-edit approach.** A prior in-session
+pass hand-wrote `src/autofde_lab/ocel/production_model.py` + `tests/ocel/test_production_model.py`
+directly (20 passing Chicago-style tests, real, but never committed to `master`). That approach
+was retracted before being promoted: this repo's own manufacturing convention
+(`ggen.toml` + `queries/constitution/*.rq` + `templates/constitution_module.py.tera` →
+`src/autofde_lab/constitution/`, `ontology/CLAUDE.md`) requires vocabulary this reusable to be
+projected from `ontology/*.ttl`, not hand-maintained Python. The hand-written files were frozen
+as a **non-canonical differential oracle** at `/tmp/production_model.oracle.py` /
+`/tmp/test_production_model.oracle.py` (still present; discard only after the equivalence check
+below, which passed) and removed from the projection paths.
+
+Built for real: `ontology/ocel-production.ttl` (object/event-type vocabulary as OWL individuals,
+3 `Lifecycle` individuals declaring the Little's-Law start/complete activity pairs — only
+`PullRequest`/`Failure`/`Release` get one, matching the hand-written version's own deliberate
+refusal to guess a convention for `Requirement` — the `owns` ownership qualifier, and the
+manufacturing-history fixture scenario promoted to canonical RDF instance data: 16 objects, 8
+O2O links, 11 timestamped events with their touched-object sets). Two new SPARQL queries
+(`queries/ocel-production/vocabulary.rq`, `test-scenarios.rq`) and two new Tera templates
+(`templates/ocel_production_model.py.tera`, `_test.py.tera` — vocabulary/fixture data is
+templated from SPARQL rows, the graph algorithms and test assertions are a static Tera
+skeleton, matching this session's own architectural distinction: "ontology owns meaning, SPARQL
+owns selection/projection, Tera owns the reusable algorithmic skeleton"). Registered as two new
+`[[generation.rules]]` in `ggen.toml` (`ocel-production-model`, `ocel-production-tests`, both
+`mode = "Overwrite"`).
+
+Real `ggen sync run` (ggen 26.8.28) executed this session, twice:
+- First pass hit two real Turtle syntax defects in the ontology file (backslash line-continuation
+  inside quoted string literals, invalid Turtle -- fixed by collapsing each multi-line
+  `rdfs:comment` onto one line) — a real, session-caught error, not a hypothetical.
+- `ggen sync run --format json-pretty` → **`written: [...production_model.py, ...test_production_model.py]`**,
+  real files on disk.
+- `.venv/bin/python -m pytest tests/ocel/test_production_model.py -v` → **20 passed** (same 20
+  scenarios as the frozen oracle).
+- `grep -rn "unittest.mock\|Mock(\|MagicMock\|patch(\|monkeypatch"` on both manufactured files →
+  zero matches.
+- `.venv/bin/python -m pytest tests/ocel -q` (full-directory regression) → **106 passed, 4
+  skipped** (pre-existing `wasm4pm` binary gate, unrelated).
+- **Equivalence check**: `diff` between the frozen oracle and the manufactured
+  `production_model.py` shows differences ONLY in docstring prose and vocabulary-tuple
+  ordering (SPARQL's `ORDER BY` alphabetizes; the hand-written version used insertion order) —
+  every line of algorithm code (`CausalGraph`, `causal_depth`, `littles_law_summary`,
+  `conway_boundary_cost`, `sibling_branches`, `rework_ratio`, `closure_entropy`,
+  `marginal_closure_entropy`, ...) is **byte-identical**. Same result for the test file (fixture
+  data reordered by object-id sort, same 20 scenarios, same assertions).
+- **Idempotency**: ran `ggen sync run` a second time back-to-back — `diff` against the first
+  run's output → **zero bytes changed**, both files.
+- **Manual-edit-detection fence, verified live**: appended a comment line directly to the
+  manufactured `production_model.py`, re-ran `ggen sync run` (`mode = "Overwrite"`) → the manual
+  edit was silently discarded, confirming a hand-edit to the projection cannot survive a
+  regeneration (the CI-gate half of this — `git diff --exit-code` after `ggen sync run` failing
+  the build — is scoped as follow-up, not yet wired into `.github/workflows/`).
+- **Falsifiers exercised** (already present in the 20 manufactured tests, confirmed passing
+  post-manufacture): real cycle in the causal graph → `ValueError`, not infinite loop; an
+  object type with no declared `Lifecycle` (`OntologyConcept`) → `wip_at`/`littles_law_summary`
+  raise `ValueError` rather than guessing; overlapping semantic closures → marginal entropy on
+  the second, overlapping commit is strictly smaller than the first; a genuinely discarded
+  sibling branch (the failed repair) is correctly excluded from `ancestors()` while still
+  reachable via a shared `Failure` ancestor; a single-owner event crosses zero organizational
+  boundaries, a two-owner event crosses exactly one; `rework_ratio` on a zero-ancestor object
+  returns `0.0`, never divides by zero.
+
+**Real, out-of-scope side effect found, root-caused, and fixed this pass** (superseding the
+"flagged, not fixed" note this section originally carried): running `ggen sync run`
+regenerates every registered rule, not just the two new ones — it also touched
+`src/autofde_lab/planner_league/catalog.py` (tuple line-wrapping, dict-key single-line-vs-
+multi-line formatting). Root cause, confirmed by direct comparison: this was never a generator
+bug. `ggen`'s raw template output is deterministic and was already correct; the file committed
+to `master` is that raw output *plus* a `ruff format` pass — `.pre-commit-config.yaml` runs
+`ruff-format` (pinned `v0.14.0`) on generated source, so the committed byte content is
+post-formatting, not raw-projection. Verified: `cp` the committed file aside, run
+`ggen sync run`, then `uvx ruff@0.14.0 format src/autofde_lab/planner_league/catalog.py` →
+`diff` against the saved copy is **empty** (byte-identical). The same two-step (`ggen sync run`
+then `ruff format`) was then applied to the two OCEL projection paths as well
+(`src/autofde_lab/ocel/production_model.py`, `tests/ocel/test_production_model.py`) and
+re-verified: `.venv/bin/python -m pytest tests/ocel/test_production_model.py -v` → **20
+passed**; `grep -rn "unittest.mock\|Mock(\|MagicMock\|patch(\|monkeypatch"` on both files →
+zero matches (grep exit 1). **Consequence for step 9 (the CI fence, below)**: the regen-check
+command must be the pair `ggen sync run && ruff format <paths>`, never `ggen sync run` alone —
+a fence checking raw ggen output against the ruff-formatted committed file would false-positive
+on every regen, permanently.
+
+**Not done this pass, named so it isn't assumed**: the anti-regression CI fence (`ggen sync run`
++ `git diff --exit-code` on the two projection paths, wired into `.github/workflows/`) described
+as step 9 of the restart instruction — real future work, not yet executed. The `/tmp` oracle
+files are retained pending that fence landing, per the restart instruction's own "do not delete
+until manufacture passes equivalence" condition (equivalence passed; the fence has not yet
+landed, so the oracle stays).
 
 Prior update: **pass 23** (2026-09-02) — **Pass 22's zero-branching finding confirmed at true
 scale, not a small-sample artifact.** Measured the real total first: GraphQL commit-count query

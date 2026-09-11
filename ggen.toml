@@ -21,6 +21,7 @@ imports = [
     "ontology/gymact-certification.ttl",
     "ontology/autofde-lab-capabilities.ttl",
     "ontology/planner-league.ttl",
+    "ontology/ocel-production.ttl",
 ]
 base_iri = "urn:autofde-lab:"
 
@@ -126,6 +127,20 @@ name = "planner-league-catalog"
 query = { file = "queries/planner-league/catalog.rq" }
 template = { file = "templates/planner_league_catalog.py.tera" }
 output_file = "src/autofde_lab/planner_league/catalog.py"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "ocel-production-model"
+query = { file = "queries/ocel-production/vocabulary.rq" }
+template = { file = "templates/ocel_production_model.py.tera" }
+output_file = "src/autofde_lab/ocel/production_model.py"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "ocel-production-tests"
+query = { file = "queries/ocel-production/test-scenarios.rq" }
+template = { file = "templates/ocel_production_model_test.py.tera" }
+output_file = "tests/ocel/test_production_model.py"
 mode = "Overwrite"
 
 [sync]
