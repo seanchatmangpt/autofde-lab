@@ -267,6 +267,15 @@
     skdt:extrasMarker "domains" ;
     skdt:capabilityCount "0"^^xsd:integer .
 
+<urn:skdecide:capability:domain/ggen_cycle> a skdt:Domain ;
+    skdt:identifier "ggen_cycle" ;
+    skdt:entryPoint "autofde_lab.hub.domain.ggen_cycle.ggen_cycle:GgenGenerateValidateRepairCycle [domains]" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "imported autofde_lab.hub.domain.ggen_cycle.ggen_cycle.GgenGenerateValidateRepairCycle" ;
+    skdt:owningModule "autofde_lab.hub.domain.ggen_cycle.ggen_cycle" ;
+    skdt:extrasMarker "domains" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
 <urn:skdecide:capability:domain/k8s_goat_rbac_escalation> a skdt:Domain ;
     skdt:identifier "k8s_goat_rbac_escalation" ;
     skdt:entryPoint "autofde_lab.hub.domain.k8s_goat_rbac_escalation.k8s_goat_rbac_escalation:K8sGoatRBACEscalation [domains]" ;

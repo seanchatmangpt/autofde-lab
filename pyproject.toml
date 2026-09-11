@@ -273,6 +273,7 @@ k8s_goat_rbac_escalation = "autofde_lab.hub.domain.k8s_goat_rbac_escalation.k8s_
 azuregoat_privesc = "autofde_lab.hub.domain.azuregoat_privesc.azuregoat_privesc:AzureGoatPrivilegeEscalation [domains]"
 cloudgoat_iam_privesc = "autofde_lab.hub.domain.cloudgoat_iam_privesc.cloudgoat_iam_privesc:CloudGoatIamPrivescDomain [domains]"
 fix_git_recovery = "autofde_lab.hub.domain.fix_git.git_recovery:GitRecoveryDomain [domains]"
+ggen_cycle = "autofde_lab.hub.domain.ggen_cycle.ggen_cycle:GgenGenerateValidateRepairCycle [domains]"
 
 [project.entry-points."autofde_lab.solvers"]
 AOstar = "autofde_lab.hub.solver.aostar:AOstar [solvers]"
@@ -340,6 +341,7 @@ DSPyPolicy = "autofde_lab.hub.solver.dspy_policy:DSPyPolicy [dspy]"
 # registering here never imports this module ambiently.
 azuregoat_privesc = "autofde_lab.hub.domain.azuregoat_privesc.gymact_bridge:AzureGoatPrivescProvider"
 software_manufacturing = "autofde_lab.agent.software_manufacturing_gymact_bridge:SoftwareManufacturingProvider"
+ggen_cycle = "autofde_lab.hub.domain.ggen_cycle.gymact_bridge:GgenCycleProvider"
 
 [dependency-groups]
 dev = [
