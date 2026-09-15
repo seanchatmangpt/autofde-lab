@@ -1,8 +1,7 @@
-# Post-Chapman semantic-model manufacturing.
-# Install the project itself first, then this optional stack:
-#   uv pip install -e .
+# Post-Chapman semantic-model manufacture and deterministic verification.
+# Install the project itself first, then:
 #   uv pip install -r requirements-semantic-models.txt
-# Domain truth remains in ontology/SHACL; these packages manufacture or rank candidates only.
+# Training-only dependencies live in requirements-semantic-training.txt.
 
 pydantic>=2
 dspy
@@ -10,10 +9,4 @@ tpot>=1.1
 scikit-learn>=1.6
 rdflib
 pyshacl
-
-# Optional student-model manufacture. The pipeline imports these lazily.
-transformers
-accelerate
-datasets
-peft
-trl
+pytest>=8
