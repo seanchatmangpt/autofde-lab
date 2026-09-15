@@ -1,0 +1,55 @@
+name: Semantic model manufacturing court
+
+on:
+  pull_request:
+    paths:
+      - "src/autofde_lab/semantic_models/**"
+      - "tests/semantic_models/**"
+      - "ontology/semantic-model-manufacturing.ttl"
+      - "ontology/shapes/semantic-model-manufacturing.shacl.ttl"
+      - "examples/semantic_model_manufacturing.py"
+      - "requirements-semantic-models.txt"
+      - "requirements-semantic-training.txt"
+      - ".github/workflows/semantic-model-manufacturing.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  exact-head-court:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out literal pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 1
+
+      - name: Assert exact revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          observed="$(git rev-parse HEAD)"
+          expected="${{ github.event.pull_request.head.sha }}"
+          test "$observed" = "$expected"
+          printf 'exact_head=%s\n' "$observed"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install bounded semantic-model stack
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . --no-deps
+          python -m pip install -r requirements-semantic-models.txt
+
+      - name: Run deterministic semantic court
+        shell: bash
+        run: pytest tests/semantic_models/ -q
+
+      - name: Execute no-network manufacture example
+        shell: bash
+        run: python examples/semantic_model_manufacturing.py
