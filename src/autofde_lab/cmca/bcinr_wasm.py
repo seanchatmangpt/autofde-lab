@@ -192,7 +192,11 @@ def call_rank(request: dict, *, wasm_path: str | None = None) -> dict:
     """
     artifact = Path(wasm_path) if wasm_path else find_bcinr_wasm()
     if artifact is None:
-        raise BcinrWasmModuleMissing(
+        # No explicit $BCINR_CMCA_WASM (that case refuses as
+        # BcinrWasmModuleMissing inside find_bcinr_wasm) and no default
+        # artifact: plain unavailability, so the bridge may lawfully try
+        # the CLI transport instead of refusing.
+        raise BcinrWasmUnavailable(
             "no prebuilt 'bcinr_cmca_wasm.wasm' found (checked "
             "$BCINR_CMCA_WASM and wasm/artifacts/bcinr_cmca_wasm.wasm) -- "
             "build it per wasm/README.md, or force the CLI transport with "

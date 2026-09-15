@@ -21,9 +21,13 @@ from autofde_lab.agent.receipt_qualification import (
     VERDICT_EXPIRED_POINT_IN_TIME,
     VERDICT_QUALIFIED,
     VERDICT_REFUSED_STALE,
+    VERDICT_REFUSED_UNANCHORED,
     evaluate_receipt_document,
     resolve_current_head,
     verify_repo_receipts,
+)
+from autofde_lab.agent.receipt_qualification import (
+    main as guard_main,
 )
 
 _CURRENT = "a" * 40
@@ -114,3 +118,74 @@ class TestAFDE2603RepoReceipts:
             "receipts claiming current standing from a moved head: "
             + "; ".join(f"{v.document}: {v.detail}" for v in refused)
         )
+
+
+class TestHardenedGuardSemantics:
+    """Second-pass falsifiers: the audit showed the first guard was
+    fail-open -- omitting the anchor escaped, only two claim phrasings
+    were detected, and abbreviated anchors were falsely refused."""
+
+    def test_unanchored_standing_claim_is_refused_not_qualified(self, tmp_path):
+        """The live blind spot: '**Standing:** `ALIVE`' with no anchor."""
+        doc = _write(
+            tmp_path,
+            "# Receipt\n\n**Standing:** `ALIVE` -- observed this session.\n",
+        )
+        verdict = evaluate_receipt_document(doc, _CURRENT)
+        assert verdict.verdict == VERDICT_REFUSED_UNANCHORED
+
+    def test_bound_form_is_not_detected_as_unbound(self, tmp_path):
+        doc = _write(
+            tmp_path,
+            "# Receipt\n\n**Standing at qualified head `" + _OTHER + "`**: ALIVE\n",
+        )
+        verdict = evaluate_receipt_document(doc, _CURRENT)
+        assert verdict.verdict == VERDICT_EXPIRED_POINT_IN_TIME
+
+    def test_abbreviated_anchor_prefix_of_current_head_qualifies(self, tmp_path):
+        """A 12-char abbreviation that IS the head must not be refused."""
+        doc = _write(
+            tmp_path,
+            "# Receipt\n\n- **Exact Head Commit**: `" + _CURRENT[:12] + "`\n"
+            "- **Final Standing**: `ALIVE`\n",
+        )
+        verdict = evaluate_receipt_document(doc, _CURRENT)
+        assert verdict.verdict == VERDICT_QUALIFIED
+
+    def test_historical_ci_green_narration_is_not_a_current_claim(self, tmp_path):
+        """Past-tense narration ('re-pushed, CI green on retry') is lawful
+        history; only present-tense claims need anchors."""
+        doc = _write(
+            tmp_path,
+            "# Log\n\nRe-pushed, CI green on retry.\n",
+        )
+        verdict = evaluate_receipt_document(doc, "e" * 40)
+        assert verdict.verdict == VERDICT_QUALIFIED
+
+    def test_present_tense_ci_is_green_is_a_current_claim(self, tmp_path):
+        doc = _write(tmp_path, "# Doc\n\nCI is green.\n")
+        verdict = evaluate_receipt_document(doc, "c" * 40)
+        assert verdict.verdict == VERDICT_REFUSED_UNANCHORED
+
+    def test_cli_exits_nonzero_on_refusal(self, tmp_path, monkeypatch, capsys):
+        bad = tmp_path / "docs"
+        bad.mkdir()
+        (bad / "receipt-bad.md").write_text("**Standing:** `ALIVE`\n", encoding="utf-8")
+        monkeypatch.setattr(
+            "autofde_lab.agent.receipt_qualification.resolve_current_head",
+            lambda *a, **k: "d" * 40,
+        )
+        rc = guard_main(["--docs-root", str(bad)])
+        assert rc == 1
+        assert "REFUSED" in capsys.readouterr().out
+
+    def test_repo_wide_scan_covers_all_docs_not_receipt_names_only(self):
+        """Content-based: every docs/*.md is evaluated."""
+        import autofde_lab
+
+        repo_root = Path(autofde_lab.__file__).resolve().parents[2]
+        current = resolve_current_head(repo_root)
+        verdicts = verify_repo_receipts(repo_root / "docs", current)
+        total_md = sum(1 for _ in (repo_root / "docs").rglob("*.md"))
+        assert len(verdicts) == total_md
+        assert total_md > 100  # far more than receipt-named files

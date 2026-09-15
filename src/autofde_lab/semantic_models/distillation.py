@@ -131,7 +131,9 @@ def qualify_model_candidate(
             candidate,
             ex.expected_delta,
             known_predicates=known_predicates,
-            shacl_conforms=receipt.shacl_conforms or True,
+            # Fail-closed: an un-evaluated (None) or failed SHACL check
+            # must not silently collect the 0.20 shacl_pass weight bonus.
+            shacl_conforms=receipt.shacl_conforms is True,
         )
         if eval_metrics.graph_exactness == 1.0:
             exact_matches += 1

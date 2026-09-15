@@ -3,7 +3,7 @@
 **Date:** 2026-09-15
 **Repo/base:** `seanchatmangpt/autofde-lab`, branch `feat/semantic-model-manufacturing`
 **Commits:** `465616a3` (feat(cmca): WASM transport) + this receipt commit
-**Standing:** `ALIVE` — observed execution against the exact admitted subjects, this session.
+**Standing at qualified head `3e2067f9dc4702a3780abb5dfbe88f41ce820dd1`**: ALIVE — observed execution against the exact admitted subjects in that commit's session; per the AFDE-2603 guard this is a point-in-time claim that expires on head movement.
 
 ## Subject
 

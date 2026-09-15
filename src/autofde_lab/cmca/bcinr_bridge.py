@@ -26,7 +26,8 @@ Wire contract (stdin/stdout JSON, mirroring ``cmca_allocate_cli``'s
 conventions upstream): request
 ``{"candidates": [{"name": ..., "measures": [m0, m1, m2, m3]}]}``;
 response ``{"ranking": [{"name": ..., "share": ...}]}``; any refusal is an
-``{"error": ...}`` envelope on stdout with exit code 1. The CLI pads
+``{"error": ...}`` envelope on **stderr** with exit code 1 (stdout
+empty). The CLI pads
 sub-8 candidate sets with all-zero *phantom* candidates that absorb a
 real but negligible share, so this bridge renormalizes real-candidate
 shares back to sum 1.0 before handing fractions to the allocator. More
@@ -200,11 +201,20 @@ def _call_cli(request: dict, binary: str, timeout_s: float) -> dict:
 
     try:
         payload = json.loads(proc.stdout)
-    except json.JSONDecodeError as exc:
+    except json.JSONDecodeError:
+        # The CLI's error envelope is written to stderr (exit 1, stdout
+        # empty) -- surface it as a typed refusal, not "unparseable output".
+        if proc.returncode != 0 and proc.stderr.strip():
+            try:
+                err_payload = json.loads(proc.stderr)
+                message = err_payload.get("error", proc.stderr[:200])
+            except json.JSONDecodeError:
+                message = proc.stderr[:200]
+            raise BcinrProtocolError(f"cmca_rank_cli refused: {message}")
         raise BcinrProtocolError(
             f"cmca_rank_cli produced unparseable output (exit={proc.returncode}): "
             f"{proc.stdout[:200]!r} stderr={proc.stderr[:200]!r}"
-        ) from exc
+        )
 
     if proc.returncode != 0 or "error" in payload:
         message = payload.get("error", proc.stdout[:200])
@@ -237,8 +247,13 @@ def _dispatch_rank_request(
         )
     try:
         return bcinr_wasm.call_rank(request)
-    except (bcinr_wasm.BcinrWasmUnavailable, bcinr_wasm.BcinrWasmModuleMissing):
+    except bcinr_wasm.BcinrWasmUnavailable:
+        # No wasm artifact discoverable at all -> try the CLI transport.
         return _call_cli(request, cli or resolve_bcinr_cli(), timeout_s)
+    # BcinrWasmModuleMissing is deliberately NOT caught: $BCINR_CMCA_WASM
+    # explicitly names a missing file, and bcinr_wasm documents that as a
+    # mandatory refusal -- falling through to the CLI here would silently
+    # mask the operator's misconfiguration.
 
 
 def rank_candidates(

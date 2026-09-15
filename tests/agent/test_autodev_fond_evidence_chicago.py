@@ -176,3 +176,55 @@ class TestAFDE2601RecoveryThroughLoop:
         )
         assert result.is_success is True
         assert "cycle_receipted" in result.final_state.world
+
+
+class TestRefusedActuationPath:
+    """Falsifiers for the observation/refusal protocol gap: the env's
+    REFUSED branches must return a real-shape Observation (previously they
+    passed a nonexistent ``standing`` kwarg and raised pydantic
+    ValidationError), and the loop must stop on refusal without recording
+    the step as executed."""
+
+    def test_env_refusal_returns_real_observation_not_validation_error(self):
+        from gymact.models import ActuationIntent
+
+        domain = build_autodev_hddl_domain()
+        initial = ProductState(world=frozenset({"repo_clean"}), tau=("run_tests",))
+        env = AutoDevGymActEnvironment(domain=domain, initial_state=initial)
+        # run_tests is NOT admissible from repo_clean (needs code_modified)
+        bogus = ActuationIntent(
+            episode_id=env.episode_id,
+            capability="urn:autodev:capability:action:run_tests",
+        )
+        obs = env.actuate(bogus)
+        assert obs.state.get("refused") is True
+        assert obs.state.get("refusal") == "REFUSED_NOT_ADMISSIBLE"
+        # state did not advance on refusal
+        assert env.current_state.world == frozenset({"repo_clean"})
+
+    def test_loop_breaks_on_refusal_without_fabricating_trace(self):
+        """A cycle whose goal admits no decomposition must terminate without
+        recording phantom executed steps."""
+        from autofde_lab.agent.autodev_loop import run_autodev_cycle
+        from autofde_lab.ocel.lifecycle_pystackt import GitCommitRecord
+
+        # goal_task with an unsatisfiable method precondition: repair_defect
+        # requires test_failing, but the latest evidence is green.
+        result = run_autodev_cycle(
+            repo_name="refusal_probe",
+            commits=[
+                GitCommitRecord(
+                    commit_sha="cafe0001",
+                    author="dev",
+                    timestamp_iso="2026-09-15T00:00:00Z",
+                    message="ok",
+                    affected_files=("src/x.py",),
+                    verification_status="PASSED",
+                )
+            ],
+            goal_task="repair_defect",
+            max_steps=10,
+        )
+        assert result.is_success is False
+        # No capabilities were ever admissible -> no fabricated steps
+        assert len(result.executed_trace) == 0

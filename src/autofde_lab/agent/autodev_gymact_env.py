@@ -21,7 +21,6 @@ from gymact.models import (
     Consequence,
     MaterializationIntent,
     Observation,
-    Standing,
 )
 
 from autofde_lab.ocel.log import EventObjectLink, OcelEvent, OcelLog, OcelObject
@@ -128,6 +127,24 @@ class AutoDevGymActEnvironment:
 
         return tuple(caps)
 
+    def _refused_observation(self, message: str) -> Observation:
+        """A typed refusal observation in the real Observation shape.
+
+        gymact's Observation model has no ``standing`` field (episode_id /
+        state / state_digest only, extra=forbid), so refusals are encoded in
+        the state payload: callers check ``state["refused"]`` and must not
+        record the step as executed.
+        """
+        state = {"error": message, "refused": True, "refusal": "REFUSED_NOT_ADMISSIBLE"}
+        digest = hashlib.sha256(
+            json.dumps(state, sort_keys=True).encode("utf-8")
+        ).hexdigest()
+        return Observation(
+            episode_id=self.episode_id,
+            state=state,
+            state_digest=digest,
+        )
+
     def actuate(self, intent: ActuationIntent) -> Observation:
         """Advance the simulated state according to the selected intent."""
         self._step_counter += 1
@@ -142,9 +159,8 @@ class AutoDevGymActEnvironment:
             refinements = method_refinements(self.domain, self.current_state)
             matching = [r for r in refinements if r.method == method_name]
             if not matching:
-                return Observation(
-                    state={"error": f"Refinement {method_name} not admissible"},
-                    standing=Standing.REFUSED,
+                return self._refused_observation(
+                    f"Refinement {method_name} not admissible"
                 )
             self.current_state = matching[0].successor
         else:
@@ -152,10 +168,7 @@ class AutoDevGymActEnvironment:
             transitions = ready_action_transitions(self.domain, self.current_state)
             matching_trans = [t for t in transitions if t.action == action_name]
             if not matching_trans:
-                return Observation(
-                    state={"error": f"Action {action_name} not admissible"},
-                    standing=Standing.REFUSED,
-                )
+                return self._refused_observation(f"Action {action_name} not admissible")
             # Outcome selection for nondeterministic (FOND) actions is an
             # explicit, documented oracle -- not a hidden sort preference
             # (AFDE-2602: the fail successor must be reachable).

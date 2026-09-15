@@ -79,7 +79,7 @@ provider.name: azuregoat_privesc
 
 Confirmed no collateral damage: other `autofde_lab.domains`/`autofde_lab.solvers` entry points (`azuregoat_privesc` domain, `Astar` solver) still resolve after the reinstall, and `terragoat_remediation.py`/`tests/ecosystem/` were not touched.
 
-**Standing**: `ALIVE` for the provider registration and the full real materialize→observe/actuate×10→verify→checkpoint/restore→teardown episode. Not run: `write_ocel_log`/OCEL-2.0 standing evidence (`consumer-setup.md` step 5) — this was scoped to provider implementation + registration + a real functional verification run, not OCEL log generation; that remains open if a future task asks for it.
+**Standing at qualified head `8de7e77066a6aa8a59ef703a43231b5e072136d2`**: ALIVE for the provider registration and the full real materialize→observe/actuate×10→verify→checkpoint/restore→teardown episode. Not run: `write_ocel_log`/OCEL-2.0 standing evidence (`consumer-setup.md` step 5) — this was scoped to provider implementation + registration + a real functional verification run, not OCEL log generation; that remains open if a future task asks for it.
 
 ## Verification (real OCEL evidence)
 
@@ -101,7 +101,7 @@ Digest matches independently (`sha256sum`-equivalent `shasum -a 256` gives the s
 
 **Domain-level pytest** (unmodified): `.venv/bin/python -m pytest tests/domains/test_azuregoat_privesc.py -v` → `2 passed in 0.16s`.
 
-**Standing**: `ALIVE` for the full real episode (materialize → 10× act → verify → teardown) through `AzureGoatPrivescProvider` via `gymact.runtime.GymAct`, and the resulting OCEL log independently satisfies all three axes `test_ocel_standing.py` checks (schema-valid, conformant, real solved=True evidence). Not run: registering this new log against gymact's own `pytest tests/test_ocel_standing.py` glob-discovery (that test discovers `reports/ocel/*/` under the `gymact` repo root, not `autofde-lab`'s) — the same three checks were instead run directly, using the same real collaborators that test uses, against the log in its actual location as the task specified.
+**Standing at qualified head `8de7e77066a6aa8a59ef703a43231b5e072136d2`**: ALIVE for the full real episode (materialize → 10× act → verify → teardown) through `AzureGoatPrivescProvider` via `gymact.runtime.GymAct`, and the resulting OCEL log independently satisfies all three axes `test_ocel_standing.py` checks (schema-valid, conformant, real solved=True evidence). Not run: registering this new log against gymact's own `pytest tests/test_ocel_standing.py` glob-discovery (that test discovers `reports/ocel/*/` under the `gymact` repo root, not `autofde-lab`'s) — the same three checks were instead run directly, using the same real collaborators that test uses, against the log in its actual location as the task specified.
 
 ## Published SOTA research
 

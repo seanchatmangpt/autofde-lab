@@ -28,6 +28,6 @@ Chicago-style test suite (pure state assertions, real SQLite storage, zero test 
 
 ## Standing
 
-- **Case-Level Performance Mining**: `ALIVE` (verified against real SQLite database in `test_van_der_aalst_adversarial_errc.py`).
-- **Object-Centric Conformance Checking**: `ALIVE` (8 passing tests in `tests/ocel/test_van_der_aalst_adversarial_errc.py` and `tests/ocel/test_enhancement.py`).
+- **Case-Level Performance Mining**: ALIVE at qualified head `6e64ed3493bf1316cbe0248f55b60b3b269887e1` (verified against real SQLite database in `test_van_der_aalst_adversarial_errc.py`).
+- **Object-Centric Conformance Checking**: ALIVE at qualified head `6e64ed3493bf1316cbe0248f55b60b3b269887e1` (8 passing tests in `tests/ocel/test_van_der_aalst_adversarial_errc.py` and `tests/ocel/test_enhancement.py`).
 - **Ruff Lint & Format**: Clean pass (`uvx ruff check`, `uvx ruff format`).

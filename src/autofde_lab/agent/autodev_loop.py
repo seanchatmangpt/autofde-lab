@@ -16,18 +16,22 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from collections.abc import Sequence
 from dataclasses import dataclass
 
 from gymact.models import ActuationIntent
 
 from autofde_lab.agent.autodev_domain import (
+    HDDLDomain,
     build_autodev_hddl_domain,
     extract_initial_product_state,
 )
 from autofde_lab.agent.autodev_gymact_env import AutoDevGymActEnvironment
 from autofde_lab.cmca.cascade import MultifractalCascadeAllocator
 from autofde_lab.cmca.contracts import (
+    AllocationStanding,
+    BranchAllocation,
     CandidateBranch,
     CascadeAllocationPlan,
     ResourceBudget,
@@ -79,6 +83,75 @@ class AutoDevCycleResult:
     conformance_report: CounterfactualReport
     allocation_plan: CascadeAllocationPlan
     receipt: AutoDevCycleReceipt
+
+
+def _intended_activity_sequence(domain: HDDLDomain, goal_task: str) -> tuple[str, ...]:
+    """The domain-declared intended decomposition for a goal task.
+
+    Depth-first expansion of each compound task's first method, emitting
+    ``refine:{method}`` labels for decompositions and task names for
+    primitives -- the same label vocabulary the environment records, derived
+    from the domain model rather than from the executed trace.
+    """
+    out: list[str] = []
+
+    def expand(task: str) -> None:
+        if task in domain.actions:
+            out.append(task)
+            return
+        for method in domain.methods.get(task, ()):
+            out.append(f"refine:{method.name}")
+            for sub in method.subtasks:
+                expand(sub)
+            return
+
+    expand(goal_task)
+    return tuple(out)
+
+
+def _uniform_baseline_plan(
+    *,
+    plan_id: str,
+    budget: ResourceBudget,
+    candidates: Sequence[CandidateBranch],
+) -> CascadeAllocationPlan:
+    """An independently constructed uniform-allocation counterfactual baseline.
+
+    Represents the no-governance alternative (equal split across the
+    frontier, minimal verification depth) so Tier 2 compares two distinct
+    plans rather than the candidate plan against itself.
+    """
+    n = len(candidates)
+    if n == 0:
+        return CascadeAllocationPlan(
+            plan_id=plan_id,
+            parent_budget=budget,
+            allocations=(),
+            total_option_value_preserved=0.0,
+            entropy=0.0,
+        )
+    frac = 1.0 / n
+    allocations = tuple(
+        BranchAllocation(
+            branch_id=c.branch_id,
+            allocated_fraction=frac,
+            allocated_ticks=budget.total_ticks // n,
+            allocated_memory_bytes=budget.memory_bytes // n,
+            verification_depth=1,
+            standing=AllocationStanding.ADMITTED,
+            priority_lane=i % budget.concurrency_lanes,
+        )
+        for i, c in enumerate(sorted(candidates, key=lambda c: c.branch_id))
+    )
+    entropy = -n * frac * math.log(frac)
+    preserved = sum(c.option_entropy * frac for c in candidates)
+    return CascadeAllocationPlan(
+        plan_id=plan_id,
+        parent_budget=budget,
+        allocations=allocations,
+        total_option_value_preserved=preserved,
+        entropy=entropy,
+    )
 
 
 def run_autodev_cycle(
@@ -149,12 +222,18 @@ def run_autodev_cycle(
             break
         # Deterministically select first admissible capability
         selected_cap = caps[0]
-        env.actuate(
+        observation = env.actuate(
             ActuationIntent(
                 episode_id=env.episode_id,
                 capability=selected_cap.iri,
             )
         )
+        if observation.state.get("refused"):
+            # A refused actuation advanced nothing: do not record the step
+            # as executed (the trace feeds conformance checking) and stop
+            # the cycle instead of re-selecting the same capability until
+            # max_steps burns out.
+            break
         executed_trace.append(selected_cap.binding)
         step_count += 1
         # Stop once goal achieved (empty task network and cycle_receipted fact)
@@ -163,14 +242,23 @@ def run_autodev_cycle(
 
     execution_ocel = env.to_ocel_log()
 
-    # 6. Validate via Multi-Tier Conformance Checking
+    # 6. Validate via Multi-Tier Conformance Checking. The intended trace is
+    # derived from the DOMAIN's declared decomposition (independent of what
+    # was executed), and the Tier-2 baseline is an independently constructed
+    # uniform-allocation plan -- never the observed trace or the candidate
+    # plan itself, which would make every tier compare an object to itself.
     intended_trace = {
-        env.episode_id: executed_trace,
+        env.episode_id: _intended_activity_sequence(domain, goal_task),
     }
+    baseline_plan = _uniform_baseline_plan(
+        plan_id=f"cmca_baseline_{repo_name}",
+        budget=active_budget,
+        candidates=candidates,
+    )
     conformance = evaluate_counterfactual_execution(
         ocel_log=execution_ocel,
         intended_traces_by_object=intended_trace,
-        baseline_cmca_plan=cmca_plan,
+        baseline_cmca_plan=baseline_plan,
         candidate_cmca_plan=cmca_plan,
     )
 

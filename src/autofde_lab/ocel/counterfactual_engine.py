@@ -8,7 +8,12 @@ Orchestrates multi-layer counterfactual evaluation across:
 1. Tier 1: Control-Flow & Petri net alignment diagnostics (PM4Py / POWL).
 2. Tier 2: Resource Allocation salience & entropy loss (CMCA).
 3. Tier 3: Multi-Object concurrency and link crossing (OCEL 2.0 / OCPA).
-4. Tier 4: Consequence, Admission & Receipt Gate (BRCE / AGENTS.md).
+
+A fourth tier (consequence/admission gate) is NOT implemented: the
+REFUSED_UNADMITTED_ACTUATION evidence status fires only when a trace
+activity literally names the injected rogue action, which is a narrow
+syntactic check, not a semantic admission gate. Do not advertise Tier 4
+until it exists.
 """
 
 from __future__ import annotations
