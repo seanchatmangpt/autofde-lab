@@ -4,6 +4,7 @@
 #   uv pip install -r requirements-semantic-models.txt
 # Domain truth remains in ontology/SHACL; these packages manufacture or rank candidates only.
 
+pydantic>=2
 dspy
 tpot>=1.1
 scikit-learn>=1.6
