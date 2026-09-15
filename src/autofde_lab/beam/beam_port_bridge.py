@@ -21,7 +21,9 @@ from autofde_lab.cmca.contracts import (
 )
 
 
-def handle_request(req: dict[str, Any], allocator: MultifractalCascadeAllocator) -> dict[str, Any]:
+def handle_request(
+    req: dict[str, Any], allocator: MultifractalCascadeAllocator
+) -> dict[str, Any]:
     op = req.get("op")
     if op == "ping":
         return {"ok": True, "pong": True}
