@@ -131,7 +131,9 @@ class AutoDevGymActEnvironment:
             "tau": list(self.current_state.tau),
             "step": self._step_counter,
         }
-        digest = hashlib.sha256(json.dumps(state_dict, sort_keys=True).encode("utf-8")).hexdigest()
+        digest = hashlib.sha256(
+            json.dumps(state_dict, sort_keys=True).encode("utf-8")
+        ).hexdigest()
         return Observation(
             episode_id=self.episode_id,
             state=state_dict,

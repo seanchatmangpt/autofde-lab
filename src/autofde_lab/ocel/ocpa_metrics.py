@@ -62,7 +62,8 @@ def ocel_to_ocpa_object_centric_event_log(ocel_log: OcelLog) -> Any:
     from datetime import datetime, timezone
 
     obj_dict = {
-        obj.id: {"ocel:type": obj.object_type, "ocel:ovmap": {}} for obj in ocel_log.objects
+        obj.id: {"ocel:type": obj.object_type, "ocel:ovmap": {}}
+        for obj in ocel_log.objects
     }
     e_links: dict[str, list[str]] = {}
     for link in ocel_log.event_object_links:
