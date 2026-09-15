@@ -236,6 +236,8 @@ ocel-ecosystem = [
     "pystackt>=0.1.0",
     "polars>=1.0.0",
     "duckdb>=1.0.0",
+    "OPQL>=0.1.1",
+    "ocelescope>=0.7.0",
 ]
 all = [
     # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
