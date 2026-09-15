@@ -228,6 +228,9 @@ ocpq = [
     # will always reproduce this exact failure.
     # "wasm4pm",
 ]
+pm4py = [
+    "pm4py>=2.7.23",
+]
 all = [
     # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
     # "receipts" added back 2026-08-12: `uv sync --extra=all` was silently uninstalling
