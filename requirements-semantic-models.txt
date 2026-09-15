@@ -1,6 +1,8 @@
 # Post-Chapman semantic-model manufacturing.
+# Install the project itself first, then this optional stack:
+#   uv pip install -e .
+#   uv pip install -r requirements-semantic-models.txt
 # Domain truth remains in ontology/SHACL; these packages manufacture or rank candidates only.
--r requirements.txt
 
 dspy
 tpot>=1.1
