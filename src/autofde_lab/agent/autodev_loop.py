@@ -87,8 +87,15 @@ def run_autodev_cycle(
     goal_task: str = "deliver_feature",
     budget: ResourceBudget | None = None,
     max_steps: int = 15,
+    outcome_oracle: str = "reference",
 ) -> AutoDevCycleResult:
-    """Execute an end-to-end closed-loop auto-dev cycle."""
+    """Execute an end-to-end closed-loop auto-dev cycle.
+
+    ``outcome_oracle`` selects how nondeterministic (FOND) action successors
+    are resolved in simulation (AFDE-2602): "reference" prefers passing
+    outcomes, "adversarial" prefers failing ones (repair-path falsification),
+    "alternate" cycles through every declared outcome.
+    """
     # 1. Ingest repo lifecycle via pystackt extractor to OCEL 2.0
     initial_ocel = extract_git_lifecycle_to_ocel(repo_name, commits)
 
@@ -131,6 +138,7 @@ def run_autodev_cycle(
         domain=domain,
         initial_state=initial_state,
         episode_id=f"ep_autodev_{repo_name}",
+        outcome_oracle=outcome_oracle,
     )
 
     step_count = 0

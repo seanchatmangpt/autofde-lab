@@ -39,20 +39,66 @@ __all__ = [
 
 
 class AutoDevGymActEnvironment:
-    """A governed GymAct environment executing auto-dev software steps over ProductState."""
+    """A governed GymAct environment executing auto-dev software steps over ProductState.
+
+    Nondeterministic (FOND) actions such as ``run_tests`` declare multiple
+    successors; which one the simulator takes is governed by the explicit
+    ``outcome_oracle`` parameter (AFDE-2602) -- never a hidden preference:
+
+    - ``"reference"``: prefer the passing successor (deterministic happy-path
+      simulation; the historical behaviour, now explicit).
+    - ``"adversarial"``: prefer the failing successor (repair-path
+      falsification; the previously unreachable edge).
+    - ``"alternate"``: cycle through the declared successors in order, so
+      repeated execution reaches every declared outcome.
+    """
+
+    OUTCOME_ORACLES = ("reference", "adversarial", "alternate")
 
     def __init__(
         self,
         domain: HDDLDomain,
         initial_state: ProductState,
         episode_id: str | None = None,
+        outcome_oracle: str = "reference",
     ) -> None:
+        if outcome_oracle not in self.OUTCOME_ORACLES:
+            raise ValueError(
+                f"unknown outcome_oracle {outcome_oracle!r}; "
+                f"expected one of {self.OUTCOME_ORACLES}"
+            )
         self.domain = domain
         self.current_state = initial_state
         self.episode_id = episode_id or f"ep_{uuid.uuid4().hex[:8]}"
+        self.outcome_oracle = outcome_oracle
+        self._outcome_cycle: dict[str, int] = {}
         self._history: list[tuple[str, ProductState]] = [("init", initial_state)]
         self._recorded_events: list[OcelEvent] = []
         self._step_counter = 0
+
+    def _order_by_outcome_oracle(self, action_name, transitions):
+        """Order a FOND action's declared successors per the outcome oracle.
+
+        Stable over the domain's declared transition order, so each oracle's
+        choice is deterministic and replayable.
+        """
+        if self.outcome_oracle == "reference":
+            return sorted(
+                transitions,
+                key=lambda t: 0 if "tests_pass" in t.outcome.add else 1,
+            )
+        if self.outcome_oracle == "adversarial":
+            return sorted(
+                transitions,
+                key=lambda t: 1 if "tests_pass" in t.outcome.add else 0,
+            )
+        # alternate: cycle through the declared successors per action name
+        idx = self._outcome_cycle.get(action_name, 0)
+        self._outcome_cycle[action_name] = idx + 1
+        rotated = list(transitions[idx % len(transitions) :]) + list(
+            transitions[: idx % len(transitions)]
+        )
+        return rotated
 
     def capabilities(self) -> Sequence[Capability]:
         """List enabled capabilities based on current ProductState."""
@@ -110,12 +156,11 @@ class AutoDevGymActEnvironment:
                     state={"error": f"Action {action_name} not admissible"},
                     standing=Standing.REFUSED,
                 )
-            # Prefer successful outcome if available (e.g. tests_pass) for reference simulation
-            matching_trans = sorted(
-                matching_trans,
-                key=lambda t: 0 if "tests_pass" in t.outcome.add else 1,
-            )
-            self.current_state = matching_trans[0].successor
+            # Outcome selection for nondeterministic (FOND) actions is an
+            # explicit, documented oracle -- not a hidden sort preference
+            # (AFDE-2602: the fail successor must be reachable).
+            ordered = self._order_by_outcome_oracle(action_name, matching_trans)
+            self.current_state = ordered[0].successor
 
         self._history.append((action_name, self.current_state))
 

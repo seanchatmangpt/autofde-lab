@@ -160,16 +160,25 @@ def extract_initial_product_state(
 ) -> ProductState:
     """Extract initial ProductState (W, tau) from an OCEL 2.0 repository log.
 
-    Derives initial world facts from events:
-    - If recent ci_verification was failed -> 'test_failing'
-    - Otherwise -> 'repo_clean'
+    Derives initial world facts from the **latest** CI/test verification
+    evidence in the log (AFDE-2601): a failure anywhere in the history does
+    not poison the state forever -- only the most recent verification event
+    decides. With no verification evidence at all the repo is presumed clean
+    (absence of evidence is not failing evidence).
     """
     facts: set[str] = set()
 
-    # Inspect activities in the repository event log
-    activities = [e.activity for e in ocel_log.events]
-    if any("fail" in a.lower() for a in activities):
-        facts.add("test_failing")
+    verification_events = [
+        e for e in ocel_log.events if "ci_verification" in e.activity.lower()
+    ]
+    if verification_events:
+        # Latest evidence wins: max timestamp, stable tie-break on log order
+        # so replay is deterministic when timestamps collide.
+        latest = max(
+            enumerate(verification_events),
+            key=lambda pair: (pair[1].timestamp_ns, pair[0]),
+        )[1]
+        facts.add("test_failing" if "fail" in latest.activity.lower() else "repo_clean")
     else:
         facts.add("repo_clean")
 
