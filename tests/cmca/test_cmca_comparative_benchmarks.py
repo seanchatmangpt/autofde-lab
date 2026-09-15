@@ -74,7 +74,9 @@ def test_cmca_vs_greedy_on_salience_single_shot_tradeoff() -> None:
     ]
 
     # Compute explicit salience for each branch
-    saliences = {c.branch_id: allocator.calculate_branch_salience(c) for c in candidates}
+    saliences = {
+        c.branch_id: allocator.calculate_branch_salience(c) for c in candidates
+    }
 
     # 1. Fair baseline: Greedy on the exact same salience score CMCA uses
     greedy_choice = max(candidates, key=lambda c: saliences[c.branch_id])
