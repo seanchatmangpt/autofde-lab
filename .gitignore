@@ -63,3 +63,11 @@ vendor/bcinr/target/
 # live in wasm/artifacts/ and are added explicitly
 wasm/bcinr-cmca-wasm/target/
 vendor/bcinr/target/
+
+# LaTeX build byproducts
+*.aux
+*.fls
+*.fdb_latexmk
+*.out
+*.toc
+*.synctex.gz
