@@ -88,6 +88,12 @@ class SemanticAdmissionCourt:
             else None,
         )
 
+    def admit(
+        self, candidate: CandidateGraphDelta
+    ) -> tuple[AdmissionReceipt, str | None]:
+        decision = self.decide(candidate)
+        return decision.receipt, decision.canonical_ntriples
+
     @staticmethod
     def _to_graph(candidate: CandidateGraphDelta):
         try:
