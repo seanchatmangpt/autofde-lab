@@ -184,6 +184,7 @@ def test_tree_operator_compiles_without_sklearn():
 
 
 def test_fixed_point_parity():
+    pytest.importorskip("sklearn")
     from sklearn.linear_model import LogisticRegression
 
     X = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 1, 1]]
@@ -201,6 +202,7 @@ def test_fixed_point_parity():
 
 
 def test_quantized_semantic_standing_parity():
+    pytest.importorskip("sklearn")
     from sklearn.linear_model import LogisticRegression
 
     court = SemanticAdmissionCourt(known_predicates=KNOWN_IRIS + OUTPUT_IRIS)
