@@ -1,0 +1,7 @@
+# Optional student-model manufacture from ADMITTED semantic examples only.
+-r requirements-semantic-models.txt
+transformers
+accelerate
+datasets
+peft
+trl
