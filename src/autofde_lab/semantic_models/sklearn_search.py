@@ -49,11 +49,27 @@ def feature_matrix(
     ]
 
 
+MICRO_EXPORTABLE_CONFIG: dict[str, Any] = {
+    "sklearn.linear_model.LogisticRegression": {
+        "penalty": ["l2"],
+        "C": [0.1, 1.0, 10.0],
+        "solver": ["lbfgs"],
+    },
+    "sklearn.tree.DecisionTreeClassifier": {
+        "max_depth": [2, 3, 4],
+        "min_samples_split": [2, 5],
+    },
+    "sklearn.naive_bayes.ComplementNB": {
+        "alpha": [0.1, 1.0],
+    },
+}
+
+
 @dataclass(frozen=True)
 class TPOTSearchConfig:
     """Bounded, deterministic TPOT2 search configuration."""
 
-    search_space: str = "linear-light"
+    search_space: str = "micro-exportable"
     scorer: str = "roc_auc"
     cv: int = 5
     max_time_mins: float = 10.0
@@ -62,9 +78,9 @@ class TPOTSearchConfig:
     random_state: int = 42
 
     def __post_init__(self) -> None:
-        if self.search_space not in {"linear-light", "graph-light"}:
+        if self.search_space not in {"linear-light", "graph-light", "micro-exportable"}:
             raise ValueError(
-                "semantic candidate search is restricted to TPOT light search spaces"
+                "semantic candidate search is restricted to TPOT light or micro-exportable search spaces"
             )
 
 

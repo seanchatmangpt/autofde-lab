@@ -63,3 +63,28 @@ smm:manufacturesArtifact a owl:ObjectProperty ;
 
 smm:Admitted a owl:NamedIndividual ; rdfs:label "ADMITTED" .
 smm:Refused a owl:NamedIndividual ; rdfs:label "REFUSED" .
+
+smm:SemanticFeatureSchema a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Ontology-derived feature projection X = pi(O*)" .
+
+smm:TinySemanticOperator a owl:Class ;
+    rdfs:subClassOf smm:ModelArtifact ;
+    rdfs:label "Standalone quantized fixed-point semantic operator" .
+
+smm:OptimizationReceipt a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Cryptographic receipt binding optimizer, dataset, and model hash" .
+
+smm:AtomVMProjection a owl:Class ;
+    rdfs:subClassOf smm:ModelArtifact ;
+    rdfs:label "Generated AtomVM BEAM Erlang projection" .
+
+smm:teacherDependencyRate a owl:DatatypeProperty ;
+    rdfs:domain smm:TinySemanticOperator ;
+    rdfs:range xsd:float ;
+    rdfs:comment "Fraction of runtime inferences requiring teacher LLM calls; target is 0.0" .
+
+smm:parameterBytes a owl:DatatypeProperty ;
+    rdfs:domain smm:TinySemanticOperator ;
+    rdfs:range xsd:nonNegativeInteger .
