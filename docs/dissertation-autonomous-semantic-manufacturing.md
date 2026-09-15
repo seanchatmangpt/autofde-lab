@@ -1,9 +1,9 @@
 # The Mathematics of Autonomous Epistemic Manufacturing: Algebraic Category Boundaries, Differential Information Calculus, and Multifractal Foliations for Deterministic Consequence Governance at Fortune 5 Scale
 
-**Author:** Dr. AutoFDE Research Group / Airbus & Affiliates  
-**Date:** September 2026  
-**Document Classification:** Technical Monograph / Doctoral Dissertation  
-**Repository Anchor:** `seanchatmangpt/autofde-lab` (`v26.9.14` Capstone)  
+**Author:** Dr. AutoFDE Research Group / Airbus & Affiliates
+**Date:** September 2026
+**Document Classification:** Technical Monograph / Doctoral Dissertation
+**Repository Anchor:** `seanchatmangpt/autofde-lab` (`v26.9.14` Capstone)
 
 ---
 
