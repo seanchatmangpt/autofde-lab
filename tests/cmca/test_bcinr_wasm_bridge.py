@@ -98,7 +98,7 @@ def test_default_engine_end_to_end_through_wasm_conserves_prime_budget() -> None
     """The default ``bcinr`` engine, served by the WASM transport, must
     conserve discrete budgets exactly as the CLI path does (Theorem-1-style
     floor conservation, now over the certified kernel's shares)."""
-    allocator = MultifractalCascadeAllocator()  # engine="bcinr" default
+    allocator = MultifractalCascadeAllocator()  # measure: bcinr via wasm
     prime_ticks, prime_mem = 104729, 655363
     plan = allocator.allocate(
         plan_id="wasm_e2e",

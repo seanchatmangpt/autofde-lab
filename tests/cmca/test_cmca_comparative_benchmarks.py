@@ -4,14 +4,17 @@ Demonstrates honest single-shot trade-offs:
 1. Greedy-on-Salience concentrates 100% of resources on the single highest-salience
    candidate, maximizing peak single-branch option value (8.0), but collapses exploration
    breadth entirely (0% resources to secondary alternatives).
-2. CMCA intentionally diversifies allocation according to the escort/Gibbs distribution,
-   trading peak single-branch option value (fraction-weighted 4.70) to keep secondary
+2. CMCA intentionally diversifies allocation according to the vendored bcinr
+   allocator's compiled lens policy over the four quality axes (option
+   entropy, inverse cost, historical yield, salience), trading peak
+   single-branch option value (fraction-weighted 4.70) to keep secondary
    viable frontiers funded and prevent premature lock-in.
 3. CMCA pruning safely eliminates candidates below the preservation cutoff.
 """
 
 from __future__ import annotations
 
+from autofde_lab.cmca.bcinr_bridge import candidate_measures
 from autofde_lab.cmca.cascade import MultifractalCascadeAllocator
 from autofde_lab.cmca.contracts import (
     AllocationStanding,
@@ -38,9 +41,7 @@ def test_cmca_vs_greedy_on_salience_single_shot_tradeoff() -> None:
     - CMCA trades peak single-branch option value to maintain exploratory breadth (H > 0.5),
       admitting secondary hypotheses that Greedy completely starves.
     """
-    allocator = MultifractalCascadeAllocator(
-        default_tau=1.0, pruning_threshold=0.01, engine="reference-softmax"
-    )
+    allocator = MultifractalCascadeAllocator(pruning_threshold=0.01)
     budget = _make_budget()
 
     candidates = [
@@ -73,10 +74,9 @@ def test_cmca_vs_greedy_on_salience_single_shot_tradeoff() -> None:
         ),  # S = 0.20
     ]
 
-    # Compute explicit salience for each branch
-    saliences = {
-        c.branch_id: allocator.calculate_branch_salience(c) for c in candidates
-    }
+    # Compute explicit salience for each branch -- axis 4 of the exact
+    # feature vector the bridge sends the vendored allocator
+    saliences = {c.branch_id: candidate_measures(c)[3] for c in candidates}
 
     # 1. Fair baseline: Greedy on the exact same salience score CMCA uses
     greedy_choice = max(candidates, key=lambda c: saliences[c.branch_id])
@@ -88,7 +88,7 @@ def test_cmca_vs_greedy_on_salience_single_shot_tradeoff() -> None:
 
     # 2. CMCA allocates across the frontier
     plan = allocator.allocate(
-        plan_id="cmca_characterization", budget=budget, candidates=candidates, tau=1.0
+        plan_id="cmca_characterization", budget=budget, candidates=candidates
     )
     alloc_map = {a.branch_id: a for a in plan.allocations}
 
@@ -108,10 +108,17 @@ def test_cmca_vs_greedy_on_salience_single_shot_tradeoff() -> None:
 
 
 def test_cmca_pruning_filters_negligible_frontiers() -> None:
-    """Verifies that CMCA pruning cuts off branches falling below the threshold."""
-    allocator = MultifractalCascadeAllocator(
-        default_tau=1.0, pruning_threshold=0.10, engine="reference-softmax"
-    )
+    """Verifies that CMCA pruning cuts off branches falling below the threshold.
+
+    Calibrated to the compiled lens policy: its measure is far flatter than
+    the deleted reference softmax -- measured shares for this scenario are
+    b_promising 0.49, b_promising_alt 0.34, b_dead_end 0.17 (the blend's
+    coverage-leaning lenses fund every candidate with real mass), so the
+    cutoff must sit between the dead end and the viable pair to separate
+    them. 0.25 does; the projection law under test is that whatever falls
+    below the cutoff is zeroed and the survivors renormalize.
+    """
+    allocator = MultifractalCascadeAllocator(pruning_threshold=0.25)
     budget = _make_budget(ticks=10000)
 
     candidates = [
@@ -145,7 +152,7 @@ def test_cmca_pruning_filters_negligible_frontiers() -> None:
     ]
 
     plan = allocator.allocate(
-        plan_id="cmca_prune", budget=budget, candidates=candidates, tau=5.0
+        plan_id="cmca_prune", budget=budget, candidates=candidates
     )
     alloc_map = {a.branch_id: a for a in plan.allocations}
 

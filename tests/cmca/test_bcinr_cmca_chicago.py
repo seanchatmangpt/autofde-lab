@@ -18,9 +18,9 @@ Adversarial mutants proven:
 3. Non-finite features (NaN/Inf) are refused before reaching the wire --
    clamping would fabricate a different candidate.
 4. Absent transports: with every bcinr transport unavailable, the engine
-   refuses with a typed ``BcinrCliUnavailable`` -- never a silent fallback
-   to reference-softmax. (The CLI alone going missing no longer refuses:
-   the WASM transport legitimately serves the engine.)
+   refuses with a typed ``BcinrCliUnavailable`` -- there is no local
+   float measure left to silently degrade to (the reference-softmax
+   engine was deleted; tau/engine are structural TypeErrors now).
 5. Mass/budget conservation holds through the full projection.
 6. Provenance: the bridge's pin constant matches the vendored snapshot's
    recorded commit.
@@ -108,7 +108,6 @@ def test_bcinr_rank_is_deterministic_and_input_order_independent():
 
 def test_default_engine_replay_hash_is_stable_across_orderings():
     allocator = MultifractalCascadeAllocator()
-    assert allocator.engine == "bcinr"
     plan_a = allocator.allocate(
         plan_id="replay", budget=_budget(), candidates=_candidates()
     )
@@ -190,8 +189,8 @@ def test_non_finite_features_refused_before_the_wire():
 
 def test_all_transports_unavailable_is_typed_refusal_not_silent_fallback(monkeypatch):
     """With discovery forced empty on every transport, the bcinr engine must
-    refuse -- it may never quietly fall back to the reference-softmax
-    engine. (CLI alone going missing is served by the WASM transport; that
+    refuse -- there is no local float measure left to silently degrade to.
+    (CLI alone going missing is served by the WASM transport; that
     independence is pinned separately in
     test_bcinr_wasm_bridge.test_wasm_serves_rank_candidates_with_cli_unavailable.)"""
     monkeypatch.setattr("autofde_lab.cmca.bcinr_bridge.find_bcinr_cli", lambda: None)
@@ -205,13 +204,18 @@ def test_all_transports_unavailable_is_typed_refusal_not_silent_fallback(monkeyp
         )
 
 
-def test_tau_is_refused_under_bcinr_engine_not_silently_ignored():
-    allocator = MultifractalCascadeAllocator(default_tau=1.0)
-    with pytest.raises(ValueError, match="tau"):
+def test_tau_is_structurally_absent_not_silently_ignored():
+    """There is no temperature knob left to ignore: the local float engine
+    is deleted, so tau/engine/default_tau must be immediate TypeErrors --
+    structural enforcement against reintroducing a hidden softmax measure."""
+    allocator = MultifractalCascadeAllocator()
+    with pytest.raises(TypeError):
         allocator.allocate(
             plan_id="tau", budget=_budget(), candidates=_candidates(), tau=0.5
         )
-    with pytest.raises(ValueError, match="tau"):
+    with pytest.raises(TypeError):
+        MultifractalCascadeAllocator(engine="reference-softmax")
+    with pytest.raises(TypeError):
         MultifractalCascadeAllocator(default_tau=1.5)
 
 
@@ -240,19 +244,3 @@ def test_bridge_pin_matches_vendored_snapshot_record():
         Path(__file__).resolve().parents[2] / "vendor" / "bcinr" / "VENDORING.md"
     ).read_text(encoding="utf-8")
     assert f"`{VENDORED_BCINR_COMMIT}`" in vendoring
-
-
-def test_reference_engine_remains_selectable_and_replay_stable():
-    """The local float engine stays available under its explicit name and
-    keeps its own deterministic replay hash."""
-    allocator = MultifractalCascadeAllocator(
-        engine="reference-softmax", default_tau=1.0, pruning_threshold=0.01
-    )
-    plan_a = allocator.allocate(
-        plan_id="ref", budget=_budget(), candidates=_candidates()
-    )
-    plan_b = allocator.allocate(
-        plan_id="ref", budget=_budget(), candidates=list(reversed(_candidates()))
-    )
-    assert plan_a.plan_hash == plan_b.plan_hash
-    assert plan_a.tau_temperature == 1.0

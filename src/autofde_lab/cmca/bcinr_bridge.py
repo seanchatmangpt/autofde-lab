@@ -6,10 +6,10 @@ implementation in this ecosystem is the Rust crate ``bcinr-cmca``
 ``VENDORED_BCINR_COMMIT`` below -- see ``vendor/bcinr/VENDORING.md`` for
 provenance and refresh procedure). Its allocator is branchless ($CC=1$),
 allocation-free, and computes over Q16.16 fixed point with the compiled
-lens policy (``LENS_REGISTRY``/``LAMBDA``/``ETA``) -- the mathematics this
-repo's CMCA contract is supposed to delegate to, rather than the local
-float-softmax stand-in that now lives on as the explicitly-named
-``reference-softmax`` engine in :mod:`autofde_lab.cmca.cascade`.
+lens policy (``LENS_REGISTRY``/``LAMBDA``/``ETA``) -- the mathematics
+this repo's CMCA contract delegates to. The former local float-softmax
+stand-in (``reference-softmax``) has been deleted outright: every
+allocation measure flows through this bridge.
 
 This module never reimplements any of that mathematics: it converts
 :class:`~autofde_lab.cmca.contracts.CandidateBranch` features into the

@@ -3,7 +3,7 @@
 Directly attacks CMCA mathematical invariants and boundaries:
 1. Mutant 1: Degenerate numeric inputs (NaN, Inf, negative entropy, zero cost).
 2. Mutant 2: Starvation under extreme pruning thresholds and uniform distributions.
-3. Mutant 3: Pathological many-candidate budget conservation (127 branches, prime tick budget).
+3. Mutant 3: Full compiled-frontier budget conservation (8 branches, prime tick budget).
 4. Mutant 4: Injection & keyword escaping in AtomVM Erlang codegen.
 5. Mutant 5: Concurrency lane saturation and allocation priority inversion.
 """
@@ -40,7 +40,7 @@ def _make_budget(
 
 def test_falsify_cmca_zero_cost_does_not_divide_by_zero():
     """Branch with estimated_cost=0.0 must not trigger ZeroDivisionError or NaN."""
-    allocator = MultifractalCascadeAllocator(engine="reference-softmax")
+    allocator = MultifractalCascadeAllocator()
     budget = _make_budget()
     candidates = [
         CandidateBranch(
@@ -73,7 +73,7 @@ def test_falsify_cmca_zero_cost_does_not_divide_by_zero():
 
 def test_falsify_cmca_negative_entropy_clamped():
     """Branch with negative option_entropy must not yield negative salience or reverse-priority."""
-    allocator = MultifractalCascadeAllocator(engine="reference-softmax")
+    allocator = MultifractalCascadeAllocator()
     budget = _make_budget()
     candidates = [
         CandidateBranch(
@@ -110,15 +110,14 @@ def test_falsify_cmca_negative_entropy_clamped():
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def test_falsify_cmca_budget_ceiling_under_127_candidates():
+def test_falsify_cmca_budget_ceiling_under_full_compiled_frontier():
     """Conservation law must hold strictly: sum(ticks) <= budget.total_ticks and
-    sum(mem) <= budget.memory_bytes with 127 candidates and a prime budget.
+    sum(mem) <= budget.memory_bytes with the compiled allocator's full
+    N=8 frontier and a prime budget.
     """
-    allocator = MultifractalCascadeAllocator(
-        engine="reference-softmax", default_tau=1.5, pruning_threshold=0.005
-    )
+    allocator = MultifractalCascadeAllocator(pruning_threshold=0.005)
     # 9973 is a prime number, tests integer discretization rounding
-    budget = _make_budget(ticks=9973, mem=65521, lanes=16)
+    budget = _make_budget(ticks=9973, mem=65521, lanes=8)
 
     candidates = [
         CandidateBranch(
@@ -130,10 +129,12 @@ def test_falsify_cmca_budget_ceiling_under_127_candidates():
             estimated_cost=float((i * 7) % 11 + 1),
             historical_yield=float((i % 5) * 0.2 + 0.5),
         )
-        for i in range(127)
+        for i in range(8)
     ]
 
-    plan = allocator.allocate(plan_id="plan-127", budget=budget, candidates=candidates)
+    plan = allocator.allocate(
+        plan_id="plan-full-frontier", budget=budget, candidates=candidates
+    )
 
     total_ticks = sum(a.allocated_ticks for a in plan.allocations)
     total_mem = sum(a.allocated_memory_bytes for a in plan.allocations)
@@ -153,9 +154,7 @@ def test_falsify_cmca_total_starvation_recovery():
     """If pruning_threshold is set impossibly high (e.g. 0.999), allocator must
     prevent total starvation and preserve at least the top candidate.
     """
-    allocator = MultifractalCascadeAllocator(
-        engine="reference-softmax", default_tau=0.1, pruning_threshold=0.999
-    )
+    allocator = MultifractalCascadeAllocator(pruning_threshold=0.999)
     budget = _make_budget()
     candidates = [
         CandidateBranch(
@@ -166,7 +165,7 @@ def test_falsify_cmca_total_starvation_recovery():
             option_entropy=1.0,
             estimated_cost=1.0,
         )
-        for i in range(10)
+        for i in range(8)
     ]
 
     plan = allocator.allocate(
@@ -189,7 +188,7 @@ def test_falsify_atomvm_erlang_codegen_hostile_characters():
     """Branch IDs with quotes, newlines, or Erlang reserved tokens must not produce
     broken or malicious syntax.
     """
-    allocator = MultifractalCascadeAllocator(engine="reference-softmax")
+    allocator = MultifractalCascadeAllocator()
     budget = _make_budget()
     candidates = [
         CandidateBranch(

@@ -4,27 +4,33 @@ Deterministic governor dividing a finite resource budget across candidate
 exploration frontiers, preserving lawful future option value without
 premature single-branch collapse.
 
-Two engines compute the allocation *measure*; the budget projection
-(pruning, renormalization, anti-starvation fallback, discrete tick/memory/
-depth assignment, lanes) is shared:
+The allocation *measure* is delegated in full to the canonical Rust
+implementation, the vendored ``bcinr-cmca`` crate
+(:mod:`autofde_lab.cmca.bcinr_bridge`): its branchless Q16.16 fixed-point
+``allocator::allocate()`` applies the compiled lens policy
+(``LENS_REGISTRY``/``LAMBDA``/``ETA``), evaluated in-process through the
+prebuilt WASM cdylib (:mod:`autofde_lab.cmca.bcinr_wasm`) when the
+``wasmtime`` runtime and artifact are present, falling back to the
+``cmca_rank_cli`` subprocess otherwise. There is no local float
+reimplementation of the measure anywhere in this package: this module owns
+only the deterministic budget *projection* -- canonical candidate
+ordering, pruning, renormalization, anti-starvation fallback, discrete
+tick/memory/depth assignment, and concurrency lanes.
 
-- ``engine="bcinr"`` (default): delegates the measure to the canonical
-  Rust implementation, the vendored ``bcinr-cmca`` crate
-  (:mod:`autofde_lab.cmca.bcinr_bridge`) -- evaluated in-process through
-  the prebuilt WASM cdylib (:mod:`autofde_lab.cmca.bcinr_wasm`) when the
-  ``wasmtime`` runtime and artifact are present, falling back to the
-  ``cmca_rank_cli`` subprocess otherwise. ``tau`` is not a parameter of
-  this engine (the lens weighting is compiled upstream), so passing one is
-  refused rather than ignored.
-- ``engine="reference-softmax"``: the original local float engine --
-  salience soft-max at inverse temperature ``tau`` (thermodynamic
-  ``beta = 1 / (k_B * T)``; ``tau -> 0`` is high-temperature uniform
-  exploration, ``tau -> inf`` is zero-temperature greedy ground state).
-  Retained as an explicitly named reference (its temperature-asymptotics
-  are pinned by ``tests/cmca/test_cmca_mathematical_proofs.py``), not as a
-  silent fallback: if no bcinr transport resolves (neither the WASM
-  artifact nor the ``cmca_rank_cli`` binary), the bcinr engine refuses
-  with a typed :class:`~autofde_lab.cmca.bcinr_bridge.BcinrCliUnavailable`.
+Consequences of the single-measure law:
+
+- There is no ``tau`` parameter. The lens weighting is compiled upstream
+  in the vendored crate; a caller who needs different lens behaviour must
+  change the vendored policy (and rebuild the wasm artifact per
+  ``wasm/README.md``), not reach for a temperature knob.
+- The compiled allocator shape is ``N = 8`` (upstream CMCA-108): more
+  than 8 candidates is refused with a typed
+  :class:`~autofde_lab.cmca.bcinr_bridge.BcinrCardinalityRefusal` rather
+  than truncated, and never silently re-ranked locally.
+- If no transport resolves (neither the WASM artifact nor the CLI
+  binary), allocation refuses with a typed
+  :class:`~autofde_lab.cmca.bcinr_bridge.BcinrCliUnavailable` -- never a
+  silent fallback to a local measure.
 """
 
 from __future__ import annotations
@@ -41,8 +47,6 @@ from .contracts import (
     ResourceBudget,
 )
 
-ENGINES = ("bcinr", "reference-softmax")
-
 
 class MultifractalCascadeAllocator:
     """Deterministic governor for cascade resource allocation."""
@@ -50,32 +54,11 @@ class MultifractalCascadeAllocator:
     def __init__(
         self,
         *,
-        default_tau: float = 1.0,
         pruning_threshold: float = 0.01,
-        engine: str = "bcinr",
     ) -> None:
-        if default_tau <= 0.0:
-            raise ValueError("tau temperature must be strictly positive")
         if not (0.0 <= pruning_threshold < 1.0):
             raise ValueError("pruning_threshold must be in [0.0, 1.0)")
-        if engine not in ENGINES:
-            raise ValueError(f"unknown engine {engine!r}; expected one of {ENGINES}")
-        if engine == "bcinr" and default_tau != 1.0:
-            raise ValueError(
-                "tau is a reference-softmax parameter; the bcinr engine's "
-                "lens weighting is compiled upstream and ignores it -- "
-                "refusing rather than silently dropping the parameter"
-            )
-        self.default_tau = default_tau
         self.pruning_threshold = pruning_threshold
-        self.engine = engine
-
-    def calculate_branch_salience(self, branch: CandidateBranch) -> float:
-        """Score S(c_i) = Option Entropy * Historical Yield / Cost."""
-        cost = max(branch.estimated_cost, 1e-6)
-        # S(c_i) represents the option density per resource unit
-        salience = (branch.option_entropy * branch.historical_yield) / cost
-        return max(salience, 0.0)
 
     def allocate(
         self,
@@ -83,49 +66,32 @@ class MultifractalCascadeAllocator:
         plan_id: str,
         budget: ResourceBudget,
         candidates: Sequence[CandidateBranch],
-        tau: float | None = None,
     ) -> CascadeAllocationPlan:
-        """Deterministically divide finite budget across candidates via multifractal cascade."""
+        """Deterministically divide finite budget across candidates.
+
+        The measure comes from the vendored bcinr allocator (see the module
+        docstring); this method projects its shares onto the discrete
+        budget. Deterministic for identical inputs: candidates are ranked
+        in canonical ``candidate_hash`` order and both transports are
+        deterministic fixed-point built from the same vendored commit.
+        """
         budget.validate()
         if not candidates:
             return CascadeAllocationPlan(
                 plan_id=plan_id,
                 parent_budget=budget,
                 allocations=(),
-                tau_temperature=tau or self.default_tau,
                 total_option_value_preserved=0.0,
                 entropy=0.0,
             )
 
-        temperature = tau if tau is not None else self.default_tau
-        if temperature <= 0.0:
-            raise ValueError("tau temperature must be positive")
-
         # 1. Deterministic canonical sort to guarantee identical replay hash
         sorted_candidates = sorted(candidates, key=lambda c: c.candidate_hash)
 
-        # 2. Engine-specific measure -> per-candidate fractions.
-        if self.engine == "bcinr":
-            if tau is not None or self.default_tau != 1.0:
-                raise ValueError(
-                    "tau is a reference-softmax parameter; the bcinr engine's "
-                    "lens weighting is compiled upstream and ignores it -- "
-                    "refusing rather than silently dropping the parameter"
-                )
-            shares = rank_candidates(sorted_candidates)
-            raw_fractions = [shares[c.branch_id] for c in sorted_candidates]
-        else:
-            # 2a. Compute saliences
-            saliences = [self.calculate_branch_salience(c) for c in sorted_candidates]
-            max_salience = max(saliences) if saliences else 0.0
-
-            # 2b. Softmax / multifractal multiplier with numerical stability
-            exp_terms = [
-                math.exp(min(temperature * (s - max_salience), 50.0)) for s in saliences
-            ]
-            sum_exp = sum(exp_terms)
-
-            raw_fractions = [e / sum_exp for e in exp_terms]
+        # 2. The measure: per-candidate fractions from the vendored Rust
+        #    allocator (wasm-first, CLI fallback -- see bcinr_bridge).
+        raw_fractions_by_id = rank_candidates(sorted_candidates)
+        raw_fractions = [raw_fractions_by_id[c.branch_id] for c in sorted_candidates]
 
         # 3. Prune branches falling below preservation cutoff
         active_indices: list[int] = []
@@ -138,10 +104,7 @@ class MultifractalCascadeAllocator:
 
         # 4. Renormalize active fractions so total mass == 1.0 (or defer if all pruned)
         if not active_indices:
-            # Keep top candidate to prevent total starvation. Fraction (not
-            # salience) orders this: under the bcinr engine salience is only
-            # one of four measure axes, and for the reference engine softmax
-            # weight is monotone in salience, so this is equivalent there.
+            # Keep the top candidate to prevent total starvation.
             top_idx = max(range(len(raw_fractions)), key=lambda i: raw_fractions[i])
             active_indices = [top_idx]
             pruned_indices = [i for i in range(len(raw_fractions)) if i != top_idx]
@@ -209,7 +172,6 @@ class MultifractalCascadeAllocator:
             plan_id=plan_id,
             parent_budget=budget,
             allocations=tuple(allocations),
-            tau_temperature=temperature,
             total_option_value_preserved=total_preserved,
             entropy=total_entropy,
         )

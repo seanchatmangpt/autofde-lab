@@ -10,7 +10,7 @@ from .bcinr_bridge import (
     find_bcinr_cli,
     rank_candidates,
 )
-from .cascade import ENGINES, MultifractalCascadeAllocator
+from .cascade import MultifractalCascadeAllocator
 from .contracts import (
     AllocationReceipt,
     AllocationStanding,
@@ -26,6 +26,7 @@ from .dfcm_bridge import (
 from .scheduler import CMCAScheduler
 
 __all__ = [
+    "VENDORED_BCINR_COMMIT",
     "AllocationReceipt",
     "AllocationStanding",
     "BcinrCardinalityRefusal",
@@ -36,10 +37,8 @@ __all__ = [
     "CMCAScheduler",
     "CandidateBranch",
     "CascadeAllocationPlan",
-    "ENGINES",
     "MultifractalCascadeAllocator",
     "ResourceBudget",
-    "VENDORED_BCINR_COMMIT",
     "build_candidate_branches_from_dfcm",
     "compute_option_entropy",
     "find_bcinr_cli",

@@ -85,7 +85,6 @@ class CascadeAllocationPlan:
     plan_id: str
     parent_budget: ResourceBudget
     allocations: tuple[BranchAllocation, ...]
-    tau_temperature: float
     total_option_value_preserved: float
     entropy: float
 
@@ -93,7 +92,6 @@ class CascadeAllocationPlan:
     def plan_hash(self) -> str:
         payload = {
             "plan_id": self.plan_id,
-            "tau": self.tau_temperature,
             "preserved": self.total_option_value_preserved,
             "entropy": self.entropy,
             "allocations": [

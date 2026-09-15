@@ -2,10 +2,16 @@
 
 Speaks the standard BEAM port protocol:
 - in:  {"op": "ping"} -> {"ok": True, "pong": True}
-- in:  {"op": "cmca_allocate", "budget": {...}, "candidates": [...], "tau": float, "plan_id": str}
+- in:  {"op": "cmca_allocate", "budget": {...}, "candidates": [...], "plan_id": str}
        -> {"ok": True, "plan": {...}}
 - in:  {"op": "calculate_salience", "branch": {...}}
        -> {"ok": True, "salience": float}
+
+The CMCA measure is the vendored bcinr allocator's (wasm-first; no tau --
+the lens policy is compiled upstream, and an explicit tau is refused by
+the engine). "calculate_salience" reports the salience feature axis
+exactly as ``bcinr_bridge.candidate_measures`` encodes it for the wire;
+it is feature extraction, not a local allocation measure.
 """
 
 from __future__ import annotations
@@ -14,6 +20,7 @@ import json
 import sys
 from typing import Any
 
+from autofde_lab.cmca.bcinr_bridge import candidate_measures
 from autofde_lab.cmca.cascade import MultifractalCascadeAllocator
 from autofde_lab.cmca.contracts import (
     CandidateBranch,
@@ -53,21 +60,18 @@ def handle_request(
             for i, c in enumerate(raw_candidates)
         ]
 
-        tau = float(req["tau"]) if "tau" in req and req["tau"] is not None else None
         plan_id = str(req.get("plan_id", "beam_plan"))
 
         plan = allocator.allocate(
             plan_id=plan_id,
             budget=budget,
             candidates=candidates,
-            tau=tau,
         )
 
         return {
             "ok": True,
             "plan": {
                 "plan_id": plan.plan_id,
-                "tau_temperature": plan.tau_temperature,
                 "total_option_value_preserved": plan.total_option_value_preserved,
                 "entropy": plan.entropy,
                 "allocations": [
@@ -96,7 +100,7 @@ def handle_request(
             estimated_cost=float(b.get("estimated_cost", 10.0)),
             historical_yield=float(b.get("historical_yield", 1.0)),
         )
-        return {"ok": True, "salience": allocator.calculate_branch_salience(cand)}
+        return {"ok": True, "salience": candidate_measures(cand)[3]}
 
     return {"ok": False, "error": f"unknown_op: {op}"}
 
@@ -110,7 +114,10 @@ def main() -> None:
         try:
             req = json.loads(text)
             resp = handle_request(req, allocator)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 -- the port protocol requires
+            # every failure to become an {"ok": false} envelope line, never
+            # a dead port: the BEAM caller reads exactly one reply per
+            # request and cannot recover a crashed bridge process.
             resp = {"ok": False, "error": str(e), "exception_type": type(e).__name__}
         sys.stdout.write(json.dumps(resp) + "\n")
         sys.stdout.flush()

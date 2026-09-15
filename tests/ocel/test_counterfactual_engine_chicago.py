@@ -86,7 +86,7 @@ def sample_ocel() -> OcelLog:
 
 @pytest.fixture
 def cmca_baseline():
-    allocator = MultifractalCascadeAllocator(engine="reference-softmax")
+    allocator = MultifractalCascadeAllocator()
     budget = ResourceBudget(
         total_ticks=10000,
         memory_bytes=65536,

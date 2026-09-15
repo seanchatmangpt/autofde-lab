@@ -148,11 +148,9 @@ def run_ucb1_salience(steps: int, seed: int, c_param: float = 1.0) -> dict[str, 
     }
 
 
-def run_cmca_stochastic(steps: int, seed: int, tau: float = 1.0) -> dict[str, float]:
+def run_cmca_stochastic(steps: int, seed: int) -> dict[str, float]:
     env = DeceptiveFrontierEnv(seed)
-    allocator = MultifractalCascadeAllocator(
-        engine="reference-softmax", default_tau=tau, pruning_threshold=0.02
-    )
+    allocator = MultifractalCascadeAllocator(pruning_threshold=0.02)
     budget = ResourceBudget(
         total_ticks=1000,
         memory_bytes=10000,
@@ -182,7 +180,7 @@ def run_cmca_stochastic(steps: int, seed: int, tau: float = 1.0) -> dict[str, fl
         ]
 
         plan = allocator.allocate(
-            plan_id=f"p_{t}", budget=budget, candidates=candidates, tau=tau
+            plan_id=f"p_{t}", budget=budget, candidates=candidates
         )
         alloc_map = {a.branch_id: a.allocated_fraction for a in plan.allocations}
 
@@ -224,7 +222,7 @@ def test_repeated_rounds_stochastic_benchmark_distributions() -> None:
         results["greedy"].append(run_greedy_on_salience(steps, seed))
         results["egreedy"].append(run_epsilon_greedy(steps, seed, epsilon=0.15))
         results["ucb1"].append(run_ucb1_salience(steps, seed, c_param=0.8))
-        results["cmca"].append(run_cmca_stochastic(steps, seed, tau=1.0))
+        results["cmca"].append(run_cmca_stochastic(steps, seed))
 
     breakthrough_rates = {
         k: sum(r["breakthrough"] for r in v) / n_seeds for k, v in results.items()

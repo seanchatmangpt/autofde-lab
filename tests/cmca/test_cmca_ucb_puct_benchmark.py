@@ -89,13 +89,9 @@ def run_ucb1_simulation(
     }
 
 
-def run_cmca_simulation(
-    steps: int = 60, tau: float = 1.2, seed: int = 42
-) -> dict[str, float]:
+def run_cmca_simulation(steps: int = 60, seed: int = 42) -> dict[str, float]:
     sim = MultiArmedFrontierSimulation(seed=seed)
-    allocator = MultifractalCascadeAllocator(
-        engine="reference-softmax", default_tau=tau, pruning_threshold=0.05
-    )
+    allocator = MultifractalCascadeAllocator(pruning_threshold=0.05)
     budget = ResourceBudget(
         total_ticks=1000,
         memory_bytes=10000,
@@ -126,7 +122,7 @@ def run_cmca_simulation(
         ]
 
         plan = allocator.allocate(
-            plan_id=f"p_{t}", budget=budget, candidates=candidates, tau=tau
+            plan_id=f"p_{t}", budget=budget, candidates=candidates
         )
         alloc_map = {a.branch_id: a.allocated_fraction for a in plan.allocations}
 
@@ -169,7 +165,7 @@ def test_cmca_vs_ucb1_breakthrough_discovery_on_deceptive_frontier() -> None:
 
     for seed in range(100, 100 + trials):
         res_ucb = run_ucb1_simulation(steps=60, c_param=0.8, seed=seed)
-        res_cmca = run_cmca_simulation(steps=60, tau=1.0, seed=seed)
+        res_cmca = run_cmca_simulation(steps=60, seed=seed)
 
         ucb_breakthroughs += int(res_ucb["breakthrough_achieved"])
         cmca_breakthroughs += int(res_cmca["breakthrough_achieved"])

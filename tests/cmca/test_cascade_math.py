@@ -72,9 +72,7 @@ def _sample_candidates() -> list[CandidateBranch]:
 
 
 def test_cmca_budget_conservation():
-    allocator = MultifractalCascadeAllocator(
-        engine="reference-softmax", default_tau=1.0, pruning_threshold=0.02
-    )
+    allocator = MultifractalCascadeAllocator(pruning_threshold=0.02)
     budget = _sample_budget()
     candidates = _sample_candidates()
 
@@ -89,9 +87,7 @@ def test_cmca_budget_conservation():
 
 
 def test_cmca_non_collapse_and_entropy_preservation():
-    allocator = MultifractalCascadeAllocator(
-        engine="reference-softmax", default_tau=0.5, pruning_threshold=0.01
-    )
+    allocator = MultifractalCascadeAllocator(pruning_threshold=0.01)
     budget = _sample_budget()
     candidates = _sample_candidates()
 
@@ -106,9 +102,7 @@ def test_cmca_non_collapse_and_entropy_preservation():
 
 
 def test_cmca_deterministic_replay():
-    allocator = MultifractalCascadeAllocator(
-        engine="reference-softmax", default_tau=1.0
-    )
+    allocator = MultifractalCascadeAllocator()
     budget = _sample_budget()
     candidates = _sample_candidates()
 
@@ -125,10 +119,9 @@ def test_cmca_deterministic_replay():
 
 
 def test_cmca_pruning_boundary():
-    # Set high pruning threshold
-    allocator = MultifractalCascadeAllocator(
-        engine="reference-softmax", default_tau=2.0, pruning_threshold=0.15
-    )
+    # High pruning threshold: the smallest-share branch is projected out
+    # entirely (the measure itself lives in the vendored allocator).
+    allocator = MultifractalCascadeAllocator(pruning_threshold=0.15)
     budget = _sample_budget()
     candidates = _sample_candidates()
 
@@ -172,7 +165,7 @@ def test_dual_learning_loop2_payoff_update():
 
 
 def test_atomvm_erlang_scheduler_codegen():
-    allocator = MultifractalCascadeAllocator(engine="reference-softmax")
+    allocator = MultifractalCascadeAllocator()
     plan = allocator.allocate(
         plan_id="plan-atomvm", budget=_sample_budget(), candidates=_sample_candidates()
     )

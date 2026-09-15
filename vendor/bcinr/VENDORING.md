@@ -26,10 +26,12 @@ manifest above.
 (`docs/CMCA_EXPLANATION.md` in upstream bcinr: "Chatman Multifractal
 **Consequence** Allocation" is the one ecosystem-wide canonical expansion).
 autofde-lab's `src/autofde_lab/cmca/cascade.py` previously shipped a local
-float-softmax stand-in; it now delegates its allocation *measure* to this
-crate's certified, branchless (`CC=1`), Q16.16 fixed-point
-`allocator::allocate()` through `cmca_rank_cli`, and keeps the local
-softmax only as the explicitly-named `reference-softmax` engine.
+float-softmax stand-in; since 2026-09-15 that engine is deleted outright
+and every allocation *measure* flows through this crate's certified,
+branchless (`CC=1`), Q16.16 fixed-point `allocator::allocate()` -- via the
+prebuilt WASM cdylib in-process first (`wasm/artifacts/`), falling back to
+`cmca_rank_cli`. The vendored crates remain byte-for-byte snapshots; this
+prose section is authored, not vendored.
 
 ## Build
 

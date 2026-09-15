@@ -149,7 +149,6 @@ def mutate_resource_allocation_inversion(
         plan_id=f"mutated_inversion_{plan.plan_id}",
         parent_budget=plan.parent_budget,
         allocations=tuple(mutated_allocs),
-        tau_temperature=plan.tau_temperature,
         total_option_value_preserved=plan.total_option_value_preserved,
         entropy=plan.entropy,
     )
