@@ -37,16 +37,31 @@ correct way to silently drop a caller's candidate.
 
 Unlike :mod:`autofde_lab.ocel.wasm4pm_bridge` (async, via
 ``run_subprocess_bounded``, because its callers are coroutines), every
-caller of this bridge is synchronous, so it uses a plain timeout-bounded
-``subprocess.run`` -- the coroutine-unsafety called out in that module's
-docstring does not apply to a sync-only path.
+caller of this bridge is synchronous, so the CLI transport uses a plain
+timeout-bounded ``subprocess.run`` -- the coroutine-unsafety called out in
+that module's docstring does not apply to a sync-only path.
 
-Requires a built ``cmca_rank_cli`` binary discoverable via the
-``BCINR_CMCA_CLI`` environment variable, the repo-vendored build
-(``cargo build --release -p bcinr-cmca`` inside ``vendor/bcinr``), an
-upstream checkout at ``~/bcinr``, or ``PATH``; if none resolves, callers
-get :class:`BcinrCliUnavailable` -- this repo's ``UNSUPPORTED``-style
-typed refusal for an absent optional external tool, not a crash.
+## Transports
+
+Two transports reach the same vendored allocator, tried in a fixed order:
+
+1. **wasm** (default first): :mod:`autofde_lab.cmca.bcinr_wasm` loads the
+   prebuilt ``wasm/artifacts/bcinr_cmca_wasm.wasm`` cdylib (built from the
+   same ``VENDORED_BCINR_COMMIT`` snapshot) into ``wasmtime`` in-process --
+   no Rust toolchain, no subprocess, usable from any WASM-capable host.
+2. **cli**: a built ``cmca_rank_cli`` binary discovered via the
+   ``BCINR_CMCA_CLI`` environment variable, the repo-vendored build
+   (``cargo build --release -p bcinr-cmca`` inside ``vendor/bcinr``), an
+   upstream checkout at ``~/bcinr``, or ``PATH``.
+
+``$BCINR_CMCA_TRANSPORT`` forces one: ``wasm`` or ``cli`` (a forced-but-
+absent transport is a typed refusal, never a silent switch to the other;
+an unrecognized value refuses too). In the default order only
+*unavailability* (missing runtime package or artifact) falls through to
+the CLI -- a wasm protocol fault raises, since masking it would hide a
+real defect. If neither transport resolves, callers get
+:class:`BcinrCliUnavailable` -- this repo's ``UNSUPPORTED``-style typed
+refusal for an absent optional external tool, not a crash.
 """
 
 from __future__ import annotations
@@ -59,6 +74,7 @@ import subprocess
 from collections.abc import Sequence
 from pathlib import Path
 
+from . import bcinr_wasm
 from .contracts import CandidateBranch
 
 #: Upstream commit of the vendored ``vendor/bcinr`` snapshot this bridge is
@@ -169,35 +185,11 @@ def candidate_measures(branch: CandidateBranch) -> list[float]:
     return measures
 
 
-def rank_candidates(
-    candidates: Sequence[CandidateBranch],
-    *,
-    cli: str | None = None,
-    timeout_s: float = 15.0,
-) -> dict[str, float]:
-    """Rank candidates through the real bcinr allocator.
-
-    Returns ``{branch_id: share}`` with shares renormalized to sum 1.0 over
-    the real candidates (phantom padding absorbs a negligible share
-    upstream). Deterministic for identical inputs: candidates are sent in
-    canonical ``candidate_hash`` order and the allocator itself is
-    deterministic fixed-point.
-    """
-    if len(candidates) > MAX_BCINR_CANDIDATES:
-        raise BcinrCardinalityRefusal(
-            f"{len(candidates)} candidates exceeds the compiled N=8 allocator "
-            f"shape (upstream CMCA-108); refusing rather than truncating"
-        )
-
-    binary = cli or resolve_bcinr_cli()
-    canonical = sorted(candidates, key=lambda c: c.candidate_hash)
-    request = {
-        "candidates": [
-            {"name": c.branch_id, "measures": candidate_measures(c)} for c in canonical
-        ]
-    }
-
-    proc = subprocess.run(  # noqa: S603 -- binary resolved by discovery above
+def _call_cli(request: dict, binary: str, timeout_s: float) -> dict:
+    """One ``cmca_rank_cli`` subprocess round-trip: request dict in, parsed
+    response envelope out (typed refusal on unparseable output, nonzero
+    exit, or an ``{"error": ...}`` envelope)."""
+    proc = subprocess.run(
         [binary],
         input=json.dumps(request),
         capture_output=True,
@@ -217,6 +209,72 @@ def rank_candidates(
     if proc.returncode != 0 or "error" in payload:
         message = payload.get("error", proc.stdout[:200])
         raise BcinrProtocolError(f"cmca_rank_cli refused: {message}")
+    return payload
+
+
+def _dispatch_rank_request(
+    request: dict,
+    *,
+    cli: str | None = None,
+    timeout_s: float = 15.0,
+) -> dict:
+    """Pick a transport (see the module docstring's Transports section).
+
+    ``$BCINR_CMCA_TRANSPORT`` forces ``wasm`` or ``cli``; a forced-but-absent
+    transport refuses rather than silently switching, and an unrecognized
+    value refuses too. Default order: wasm first, falling through to the
+    CLI only on wasm *unavailability* -- a wasm protocol fault raises,
+    since masking it would hide a real defect behind a different engine.
+    """
+    forced = os.environ.get("BCINR_CMCA_TRANSPORT", "").strip().lower()
+    if forced == "cli":
+        return _call_cli(request, cli or resolve_bcinr_cli(), timeout_s)
+    if forced == "wasm":
+        return bcinr_wasm.call_rank(request)
+    if forced not in ("", "auto"):
+        raise BcinrProtocolError(
+            f"unknown BCINR_CMCA_TRANSPORT {forced!r}; expected 'wasm', 'cli', or unset"
+        )
+    try:
+        return bcinr_wasm.call_rank(request)
+    except (bcinr_wasm.BcinrWasmUnavailable, bcinr_wasm.BcinrWasmModuleMissing):
+        return _call_cli(request, cli or resolve_bcinr_cli(), timeout_s)
+
+
+def rank_candidates(
+    candidates: Sequence[CandidateBranch],
+    *,
+    cli: str | None = None,
+    timeout_s: float = 15.0,
+) -> dict[str, float]:
+    """Rank candidates through the real bcinr allocator (wasm-then-cli).
+
+    Returns ``{branch_id: share}`` with shares renormalized to sum 1.0 over
+    the real candidates (phantom padding absorbs a negligible share
+    upstream). Deterministic for identical inputs: candidates are sent in
+    canonical ``candidate_hash`` order and the allocator itself is
+    deterministic fixed-point -- identically so through both transports,
+    which are built from the same vendored commit.
+    """
+    if len(candidates) > MAX_BCINR_CANDIDATES:
+        raise BcinrCardinalityRefusal(
+            f"{len(candidates)} candidates exceeds the compiled N=8 allocator "
+            f"shape (upstream CMCA-108); refusing rather than truncating"
+        )
+
+    canonical = sorted(candidates, key=lambda c: c.candidate_hash)
+    request = {
+        "candidates": [
+            {"name": c.branch_id, "measures": candidate_measures(c)} for c in canonical
+        ]
+    }
+
+    payload = _dispatch_rank_request(request, cli=cli, timeout_s=timeout_s)
+
+    if "error" in payload:
+        raise BcinrProtocolError(
+            f"bcinr-cmca wasm transport refused: {payload['error']}"
+        )
 
     ranking = payload.get("ranking")
     if not isinstance(ranking, list):

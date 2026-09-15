@@ -248,6 +248,15 @@ ocel-ecosystem = [
     "OPQL>=0.1.1; python_version >= '3.11'",
     "ocelescope>=0.7.0; python_version >= '3.11'",
 ]
+bcinr-wasm = [
+    # In-process WASM transport for the vendored bcinr-cmca allocator
+    # (src/autofde_lab/cmca/bcinr_wasm.py over wasm/artifacts/
+    # bcinr_cmca_wasm.wasm -- see wasm/README.md). 48.0.0 is the version
+    # this transport was built and verified bit-identical to the vendored
+    # cmca_rank_cli against; absent the runtime, the bridge falls back to
+    # the CLI subprocess and the wasm tests skip-admit.
+    "wasmtime>=48",
+]
 all = [
     # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
     # "receipts" added back 2026-08-12: `uv sync --extra=all` was silently uninstalling

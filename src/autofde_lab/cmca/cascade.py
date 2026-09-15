@@ -10,18 +10,21 @@ depth assignment, lanes) is shared:
 
 - ``engine="bcinr"`` (default): delegates the measure to the canonical
   Rust implementation, the vendored ``bcinr-cmca`` crate
-  (:mod:`autofde_lab.cmca.bcinr_bridge`), whose branchless Q16.16
-  fixed-point ``allocator::allocate()`` applies the compiled lens policy.
-  ``tau`` is not a parameter of this engine (the lens weighting is
-  compiled upstream), so passing one is refused rather than ignored.
+  (:mod:`autofde_lab.cmca.bcinr_bridge`) -- evaluated in-process through
+  the prebuilt WASM cdylib (:mod:`autofde_lab.cmca.bcinr_wasm`) when the
+  ``wasmtime`` runtime and artifact are present, falling back to the
+  ``cmca_rank_cli`` subprocess otherwise. ``tau`` is not a parameter of
+  this engine (the lens weighting is compiled upstream), so passing one is
+  refused rather than ignored.
 - ``engine="reference-softmax"``: the original local float engine --
   salience soft-max at inverse temperature ``tau`` (thermodynamic
   ``beta = 1 / (k_B * T)``; ``tau -> 0`` is high-temperature uniform
   exploration, ``tau -> inf`` is zero-temperature greedy ground state).
   Retained as an explicitly named reference (its temperature-asymptotics
   are pinned by ``tests/cmca/test_cmca_mathematical_proofs.py``), not as a
-  silent fallback: if the bcinr binary is unavailable, the bcinr engine
-  refuses with a typed :class:`~autofde_lab.cmca.bcinr_bridge.BcinrCliUnavailable`.
+  silent fallback: if no bcinr transport resolves (neither the WASM
+  artifact nor the ``cmca_rank_cli`` binary), the bcinr engine refuses
+  with a typed :class:`~autofde_lab.cmca.bcinr_bridge.BcinrCliUnavailable`.
 """
 
 from __future__ import annotations

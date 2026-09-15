@@ -17,8 +17,10 @@ Adversarial mutants proven:
    truncated.
 3. Non-finite features (NaN/Inf) are refused before reaching the wire --
    clamping would fabricate a different candidate.
-4. Absent binary: the bcinr engine refuses with a typed
-   ``BcinrCliUnavailable`` -- never a silent fallback to reference-softmax.
+4. Absent transports: with every bcinr transport unavailable, the engine
+   refuses with a typed ``BcinrCliUnavailable`` -- never a silent fallback
+   to reference-softmax. (The CLI alone going missing no longer refuses:
+   the WASM transport legitimately serves the engine.)
 5. Mass/budget conservation holds through the full projection.
 6. Provenance: the bridge's pin constant matches the vendored snapshot's
    recorded commit.
@@ -39,13 +41,15 @@ from autofde_lab.cmca.bcinr_bridge import (
     rank_candidates,
     resolve_bcinr_cli,
 )
+from autofde_lab.cmca.bcinr_wasm import find_bcinr_wasm
 from autofde_lab.cmca.cascade import MultifractalCascadeAllocator
 from autofde_lab.cmca.contracts import CandidateBranch, ResourceBudget
 
 pytestmark = pytest.mark.skipif(
-    find_bcinr_cli() is None,
-    reason="no built 'cmca_rank_cli' binary found -- build with "
-    "'cargo build --release -p bcinr-cmca' inside vendor/bcinr",
+    find_bcinr_cli() is None and find_bcinr_wasm() is None,
+    reason="no bcinr transport available -- build the wasm artifact "
+    "(wasm/README.md) or the binary ('cargo build --release -p bcinr-cmca' "
+    "inside vendor/bcinr)",
 )
 
 
@@ -184,11 +188,16 @@ def test_non_finite_features_refused_before_the_wire():
             rank_candidates([poisoned, *_candidates(2)])
 
 
-def test_missing_binary_is_typed_refusal_not_silent_fallback(monkeypatch):
-    """With discovery forced empty, the bcinr engine must refuse -- it may
-    never quietly fall back to the reference-softmax engine."""
+def test_all_transports_unavailable_is_typed_refusal_not_silent_fallback(monkeypatch):
+    """With discovery forced empty on every transport, the bcinr engine must
+    refuse -- it may never quietly fall back to the reference-softmax
+    engine. (CLI alone going missing is served by the WASM transport; that
+    independence is pinned separately in
+    test_bcinr_wasm_bridge.test_wasm_serves_rank_candidates_with_cli_unavailable.)"""
     monkeypatch.setattr("autofde_lab.cmca.bcinr_bridge.find_bcinr_cli", lambda: None)
     monkeypatch.delenv("BCINR_CMCA_CLI", raising=False)
+    monkeypatch.setattr("autofde_lab.cmca.bcinr_wasm.find_bcinr_wasm", lambda: None)
+    monkeypatch.delenv("BCINR_CMCA_WASM", raising=False)
     allocator = MultifractalCascadeAllocator()
     with pytest.raises(BcinrCliUnavailable, match="cargo build"):
         allocator.allocate(
