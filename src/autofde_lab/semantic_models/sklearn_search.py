@@ -6,8 +6,8 @@ AutoML is allowed only to optimize prioritization/calibration inside that admitt
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from typing import Iterable, Sequence
 
 from .contracts import CandidateGraphDelta
 
@@ -42,7 +42,9 @@ def feature_matrix(
     *,
     known_predicates: set[str] | frozenset[str],
 ) -> list[list[float]]:
-    return [candidate_features(c, known_predicates=known_predicates) for c in candidates]
+    return [
+        candidate_features(c, known_predicates=known_predicates) for c in candidates
+    ]
 
 
 @dataclass(frozen=True)

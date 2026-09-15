@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
-from .contracts import AdmissionReceipt, AdmissionStanding, CandidateGraphDelta, SemanticExample
+from .contracts import (
+    AdmissionReceipt,
+    AdmissionStanding,
+    CandidateGraphDelta,
+    SemanticExample,
+)
 
 
 def example_from_admission(
@@ -33,7 +38,9 @@ def export_jsonl(examples: Iterable[SemanticExample], path: str | Path) -> Path:
     path = Path(path)
     ordered = sorted(examples, key=lambda item: item.admission_receipt_id)
     lines = [
-        json.dumps(example.model_dump(mode="json"), sort_keys=True, separators=(",", ":"))
+        json.dumps(
+            example.model_dump(mode="json"), sort_keys=True, separators=(",", ":")
+        )
         for example in ordered
     ]
     path.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")

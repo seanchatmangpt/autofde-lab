@@ -34,7 +34,7 @@ class SemanticTriple(BaseModel):
     language: str | None = None
 
     @model_validator(mode="after")
-    def validate_literal_metadata(self) -> "SemanticTriple":
+    def validate_literal_metadata(self) -> SemanticTriple:
         if self.object_kind == "iri" and (self.datatype or self.language):
             raise ValueError("IRI objects cannot carry datatype or language")
         if self.datatype and self.language:
@@ -89,7 +89,9 @@ class CandidateGraphDelta(BaseModel):
         }
 
     def canonical_json(self) -> str:
-        return json.dumps(self.canonical_payload(), sort_keys=True, separators=(",", ":"))
+        return json.dumps(
+            self.canonical_payload(), sort_keys=True, separators=(",", ":")
+        )
 
     @property
     def candidate_hash(self) -> str:

@@ -6,8 +6,8 @@ source of truth and its outputs still pass through SemanticAdmissionCourt.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 from .contracts import SemanticExample
 from .dataset import distillation_records
@@ -52,9 +52,7 @@ def train_lora_student(
         from peft import LoraConfig
         from trl import SFTConfig, SFTTrainer
     except ImportError as exc:  # pragma: no cover - optional dependency boundary
-        raise RuntimeError(
-            "LoRA distillation requires datasets, peft and trl"
-        ) from exc
+        raise RuntimeError("LoRA distillation requires datasets, peft and trl") from exc
 
     dataset = Dataset.from_list(
         [{"text": format_training_text(record)} for record in records]
