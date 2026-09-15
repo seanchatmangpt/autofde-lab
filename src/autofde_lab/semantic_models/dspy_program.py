@@ -5,8 +5,8 @@ DSPy optimizes the *proposal program*.  The output remains untrusted until admis
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 from .contracts import CandidateGraphDelta, SemanticExample
 from .evaluation import make_dspy_metric
@@ -69,7 +69,9 @@ def _to_dspy_examples(examples: Iterable[SemanticExample]):
     dspy = _require_dspy()
     result = []
     for example in examples:
-        allowed = sorted({triple.predicate for triple in example.expected_delta.triples})
+        allowed = sorted(
+            {triple.predicate for triple in example.expected_delta.triples}
+        )
         item = dspy.Example(
             observation=example.observation,
             ontology_context=example.ontology_context,

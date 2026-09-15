@@ -43,13 +43,16 @@ jobs:
         shell: bash
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e . --no-deps
           python -m pip install -r requirements-semantic-models.txt
 
       - name: Run deterministic semantic court
         shell: bash
+        env:
+          PYTHONPATH: src
         run: pytest tests/semantic_models/ -q
 
       - name: Execute no-network manufacture example
         shell: bash
+        env:
+          PYTHONPATH: src
         run: python examples/semantic_model_manufacturing.py

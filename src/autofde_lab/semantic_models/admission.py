@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 from .contracts import AdmissionReceipt, AdmissionStanding, CandidateGraphDelta
 
@@ -33,7 +33,9 @@ class SemanticAdmissionCourt:
         self._known_predicates = frozenset(known_predicates)
         self._shapes_turtle = shapes_turtle
         if not self._known_predicates:
-            raise ValueError("known_predicates must be non-empty; admission may not be open-world")
+            raise ValueError(
+                "known_predicates must be non-empty; admission may not be open-world"
+            )
 
     def decide(self, candidate: CandidateGraphDelta) -> AdmissionDecision:
         reasons: list[str] = []
@@ -74,7 +76,9 @@ class SemanticAdmissionCourt:
             else 0,
         }
         receipt_id = hashlib.sha256(
-            json.dumps(receipt_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            json.dumps(receipt_payload, sort_keys=True, separators=(",", ":")).encode(
+                "utf-8"
+            )
         ).hexdigest()
         receipt = AdmissionReceipt(receipt_id=receipt_id, **receipt_payload)
         return AdmissionDecision(

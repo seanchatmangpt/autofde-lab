@@ -80,9 +80,11 @@ def make_dspy_metric(*, known_predicates: set[str] | frozenset[str]):
     DSPy stays an optional boundary: importing this module never imports DSPy.
     """
 
-    def metric(example, prediction, trace=None) -> float:  # noqa: ARG001
+    def metric(example, prediction, trace=None) -> float:
         expected = CandidateGraphDelta.model_validate_json(example.expected_delta_json)
-        predicted = CandidateGraphDelta.model_validate_json(prediction.candidate_delta_json)
+        predicted = CandidateGraphDelta.model_validate_json(
+            prediction.candidate_delta_json
+        )
         evaluation = evaluate_candidate(
             predicted,
             expected,
