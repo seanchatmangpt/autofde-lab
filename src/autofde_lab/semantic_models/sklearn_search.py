@@ -6,10 +6,12 @@ AutoML is allowed only to optimize prioritization/calibration inside that admitt
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from typing import Any
 
-from .contracts import CandidateGraphDelta
+from .contracts import CandidateGraphDelta, OptimizationReceipt
 
 FEATURE_NAMES = (
     "triple_count",
@@ -130,3 +132,41 @@ def build_sklearn_baseline(*, random_state: int = 42):
             ),
         ]
     )
+
+
+def fit_and_receipt_baseline(
+    candidates: Sequence[CandidateGraphDelta],
+    labels: Sequence[int],
+    *,
+    known_predicates: set[str] | frozenset[str],
+    dataset_hash: str,
+    ontology_hash: str,
+    random_state: int = 42,
+) -> tuple[Any, OptimizationReceipt]:
+    """Fit a deterministic sklearn baseline ranker and manufacture an immutable OptimizationReceipt."""
+    pipeline = build_sklearn_baseline(random_state=random_state)
+    X = feature_matrix(candidates, known_predicates=known_predicates)
+    pipeline.fit(X, labels)
+
+    # In-sample accuracy metric
+    predictions = pipeline.predict(X)
+    correct = sum(p == y for p, y in zip(predictions, labels, strict=False))
+    accuracy = float(correct / len(labels)) if labels else 0.0
+
+    pipe_dump = repr(pipeline)
+    program_hash = hashlib.sha256(pipe_dump.encode("utf-8")).hexdigest()
+
+    receipt = OptimizationReceipt.manufacture(
+        dataset_hash=dataset_hash,
+        ontology_hash=ontology_hash,
+        optimizer_name="sklearn-logistic-baseline",
+        optimizer_config={
+            "scaler": "StandardScaler",
+            "classifier": "LogisticRegression",
+            "random_state": random_state,
+        },
+        metric_vector={"accuracy": accuracy, "sample_count": float(len(labels))},
+        program_hash=program_hash,
+        lm_identity="statistical_pipeline",
+    )
+    return pipeline, receipt

@@ -122,3 +122,84 @@ class SemanticExample(BaseModel):
     ontology_context: str
     expected_delta: CandidateGraphDelta
     admission_receipt_id: str
+
+
+class OptimizationReceipt(BaseModel):
+    """Immutable receipt binding dataset, ontology, optimizer and program digest."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    receipt_id: str
+    dataset_hash: str
+    ontology_hash: str
+    optimizer_name: str
+    optimizer_config: dict[str, Any]
+    metric_vector: dict[str, float]
+    program_hash: str
+    lm_identity: str | None = None
+
+    def canonical_payload(self) -> dict[str, Any]:
+        return {
+            "dataset_hash": self.dataset_hash,
+            "ontology_hash": self.ontology_hash,
+            "optimizer_name": self.optimizer_name,
+            "optimizer_config": self.optimizer_config,
+            "metric_vector": {
+                k: round(v, 6) for k, v in sorted(self.metric_vector.items())
+            },
+            "program_hash": self.program_hash,
+            "lm_identity": self.lm_identity,
+        }
+
+    def canonical_json(self) -> str:
+        return json.dumps(
+            self.canonical_payload(), sort_keys=True, separators=(",", ":")
+        )
+
+    @classmethod
+    def manufacture(
+        cls,
+        *,
+        dataset_hash: str,
+        ontology_hash: str,
+        optimizer_name: str,
+        optimizer_config: dict[str, Any],
+        metric_vector: dict[str, float],
+        program_hash: str,
+        lm_identity: str | None = None,
+    ) -> OptimizationReceipt:
+        payload = {
+            "dataset_hash": dataset_hash,
+            "ontology_hash": ontology_hash,
+            "optimizer_name": optimizer_name,
+            "optimizer_config": optimizer_config,
+            "metric_vector": {k: round(v, 6) for k, v in sorted(metric_vector.items())},
+            "program_hash": program_hash,
+            "lm_identity": lm_identity,
+        }
+        serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        receipt_id = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+        return cls(
+            receipt_id=receipt_id,
+            dataset_hash=dataset_hash,
+            ontology_hash=ontology_hash,
+            optimizer_name=optimizer_name,
+            optimizer_config=optimizer_config,
+            metric_vector=metric_vector,
+            program_hash=program_hash,
+            lm_identity=lm_identity,
+        )
+
+
+class ModelQualificationRecord(BaseModel):
+    """Comparative performance and admission conformance record for candidate models."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    candidate_id: str
+    model_role: Literal["teacher", "student", "statistical_pipeline"]
+    court_pass_rate: float
+    graph_exactness: float
+    p95_latency_ms: float
+    cost_per_1k_tokens: float
+    admissible: bool

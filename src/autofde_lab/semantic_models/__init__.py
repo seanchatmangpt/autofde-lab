@@ -10,17 +10,26 @@ from .contracts import (
     AdmissionReceipt,
     AdmissionStanding,
     CandidateGraphDelta,
+    ModelQualificationRecord,
+    OptimizationReceipt,
     SemanticExample,
     SemanticTriple,
 )
+from .dataset import ExperienceRecord, ManufacturedDataset, manufacture_dataset
 from .evaluation import EvaluationWeights, SemanticEvaluation, evaluate_candidate
+from .loop import ClosedManufacturingCycleResult, run_closed_manufacturing_cycle
 from .pipeline import SemanticModelPipeline, SemanticPipelineResult
 
 __all__ = [
     "AdmissionReceipt",
     "AdmissionStanding",
     "CandidateGraphDelta",
+    "ClosedManufacturingCycleResult",
     "EvaluationWeights",
+    "ExperienceRecord",
+    "ManufacturedDataset",
+    "ModelQualificationRecord",
+    "OptimizationReceipt",
     "SemanticAdmissionCourt",
     "SemanticEvaluation",
     "SemanticExample",
@@ -28,4 +37,6 @@ __all__ = [
     "SemanticPipelineResult",
     "SemanticTriple",
     "evaluate_candidate",
+    "manufacture_dataset",
+    "run_closed_manufacturing_cycle",
 ]

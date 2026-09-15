@@ -6,11 +6,19 @@ source of truth and its outputs still pass through SemanticAdmissionCourt.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+import time
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 
-from .contracts import SemanticExample
+from .admission import SemanticAdmissionCourt
+from .constrained import parse_candidate_json
+from .contracts import (
+    CandidateGraphDelta,
+    ModelQualificationRecord,
+    SemanticExample,
+)
 from .dataset import distillation_records
+from .evaluation import evaluate_candidate
 
 
 @dataclass(frozen=True)
@@ -82,3 +90,68 @@ def train_lora_student(
     trainer.train()
     trainer.save_model(config.output_dir)
     return trainer
+
+
+def qualify_model_candidate(
+    *,
+    candidate_id: str,
+    model_role: str,
+    producer: Callable[[str, str], CandidateGraphDelta | str],
+    eval_examples: Sequence[SemanticExample],
+    court: SemanticAdmissionCourt,
+    known_predicates: set[str] | frozenset[str],
+    cost_per_1k_tokens: float,
+    min_pass_rate: float = 0.95,
+) -> ModelQualificationRecord:
+    """Evaluate any model or pipeline variant under the exact same court and metric boundary."""
+    if not eval_examples:
+        raise ValueError("qualification requires at least one evaluation example")
+
+    passed_court = 0
+    exact_matches = 0
+    latencies: list[float] = []
+
+    for ex in eval_examples:
+        t0 = time.monotonic()
+        try:
+            raw = producer(ex.observation, ex.ontology_context)
+            candidate = parse_candidate_json(raw) if isinstance(raw, str) else raw
+        except Exception:  # noqa: BLE001 - evaluation boundary catches parsing/runtime failures
+            latencies.append(time.monotonic() - t0)
+            continue
+        latencies.append(time.monotonic() - t0)
+
+        # 1. Court evaluation
+        receipt, _ = court.admit(candidate)
+        if receipt.standing.value == "ADMITTED":
+            passed_court += 1
+
+        # 2. Objective semantic evaluation
+        eval_metrics = evaluate_candidate(
+            candidate,
+            ex.expected_delta,
+            known_predicates=known_predicates,
+            shacl_conforms=receipt.shacl_conforms or True,
+        )
+        if eval_metrics.graph_exactness == 1.0:
+            exact_matches += 1
+
+    total = len(eval_examples)
+    court_pass_rate = float(passed_court / total)
+    graph_exactness = float(exact_matches / total)
+
+    sorted_lat = sorted(latencies)
+    idx_p95 = int(len(sorted_lat) * 0.95)
+    p95_ms = float(sorted_lat[min(idx_p95, len(sorted_lat) - 1)] * 1000.0)
+
+    admissible = court_pass_rate >= min_pass_rate
+
+    return ModelQualificationRecord(
+        candidate_id=candidate_id,
+        model_role=model_role,  # type: ignore[arg-type]
+        court_pass_rate=court_pass_rate,
+        graph_exactness=graph_exactness,
+        p95_latency_ms=p95_ms,
+        cost_per_1k_tokens=cost_per_1k_tokens,
+        admissible=admissible,
+    )

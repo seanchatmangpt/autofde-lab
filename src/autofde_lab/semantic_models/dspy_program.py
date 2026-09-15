@@ -5,10 +5,11 @@ DSPy optimizes the *proposal program*.  The output remains untrusted until admis
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Iterable
 from dataclasses import dataclass
 
-from .contracts import CandidateGraphDelta, SemanticExample
+from .contracts import CandidateGraphDelta, OptimizationReceipt, SemanticExample
 from .evaluation import make_dspy_metric
 
 
@@ -125,3 +126,58 @@ def compile_semantic_extractor(
 def prediction_to_candidate(prediction) -> CandidateGraphDelta:
     """Convert DSPy output into the untrusted candidate contract."""
     return CandidateGraphDelta.model_validate_json(prediction.candidate_delta_json)
+
+
+def compile_and_receipt_extractor(
+    examples: Iterable[SemanticExample],
+    *,
+    known_predicates: set[str] | frozenset[str],
+    dataset_hash: str,
+    ontology_hash: str,
+    config: DSPyCompileConfig | None = None,
+    lm_identity: str | None = None,
+) -> tuple[object, OptimizationReceipt]:
+    """Compile a semantic extractor and manufacture an immutable OptimizationReceipt."""
+    config = config or DSPyCompileConfig()
+    compiled = compile_semantic_extractor(
+        examples, known_predicates=known_predicates, config=config
+    )
+    metric_fn = make_dspy_metric(known_predicates=known_predicates)
+
+    scores: list[float] = []
+    trainset = _to_dspy_examples(examples)
+    for ex in trainset:
+        try:
+            pred = compiled(
+                observation=ex.observation,
+                ontology_context=ex.ontology_context,
+                allowed_predicates=ex.allowed_predicates,
+                provenance_context=ex.provenance_context,
+            )
+            scores.append(metric_fn(ex, pred))
+        except Exception:  # noqa: BLE001 - evaluation boundary catches program execution failures
+            scores.append(0.0)
+
+    mean_score = sum(scores) / len(scores) if scores else 0.0
+    metric_vector = {
+        "mean_score": mean_score,
+        "sample_count": float(len(scores)),
+    }
+
+    prog_dump = repr(compiled)
+    program_hash = hashlib.sha256(prog_dump.encode("utf-8")).hexdigest()
+
+    receipt = OptimizationReceipt.manufacture(
+        dataset_hash=dataset_hash,
+        ontology_hash=ontology_hash,
+        optimizer_name=config.optimizer,
+        optimizer_config={
+            "auto": config.auto,
+            "max_bootstrapped_demos": config.max_bootstrapped_demos,
+            "max_labeled_demos": config.max_labeled_demos,
+        },
+        metric_vector=metric_vector,
+        program_hash=program_hash,
+        lm_identity=lm_identity,
+    )
+    return compiled, receipt
