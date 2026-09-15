@@ -231,6 +231,12 @@ ocpq = [
 pm4py = [
     "pm4py>=2.7.23",
 ]
+ocel-ecosystem = [
+    "ocpa>=1.1",
+    "pystackt>=0.1.0",
+    "polars>=1.0.0",
+    "duckdb>=1.0.0",
+]
 all = [
     # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
     # "receipts" added back 2026-08-12: `uv sync --extra=all` was silently uninstalling
