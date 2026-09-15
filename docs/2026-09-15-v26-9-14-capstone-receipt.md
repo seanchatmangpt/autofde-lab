@@ -1,6 +1,6 @@
 # Publication & Verification Receipt: AutoFDE Lab `v26.9.14`
 
-**Date:** 2026-09-15T07:15:00Z  
+**Date:** 2026-09-15T07:15:00Z (remediated 2026-09-15)
 **Standard:** `AGENTS.md` (Agent Operating Contract - Preserve → Fence → Calculus → Publication)
 
 ---
@@ -10,8 +10,8 @@
 - **Repository**: `seanchatmangpt/autofde-lab`
 - **Base Ref**: `master` (`8ed10fc286e9c5665747033436e7c3f8c8091738`)
 - **Purpose Branch**: `feat/semantic-model-manufacturing`
-- **Exact Head Commit**: `bb57f7273c4d1ca716d9cf8408c9b7cff5425bba`
-- **Exact Tree SHA**: `be3fb1e566896a7825170c32aaad0cda65685968`
+- **Exact Head Commit (capstone scope)**: `3755bf0dcef7f969b74cef06fd840f40283d0a07`
+- **Exact Tree SHA (capstone scope)**: `3266b2395016113ccf54ae869bfbad98c685ba51`
 - **Pull Request**: [#153 (Open)](https://github.com/seanchatmangpt/autofde-lab/pull/153)
 - **PR State**: Clean, rebaseable, zero merge conflicts, non-draft.
 
@@ -32,12 +32,19 @@
   6. `tests/ecosystem/test_gymact_cmca_semantic_runtime_ocel_chicago.py`: Full unmocked integration driving real `GymAct` episodes via CMCA allocations and tiny runtime predictions, recorded and verified in OCEL 2.0.
   7. `src/autofde_lab/agent/persistent_plan_cache.py`: Remediated concurrency descriptor leak and WAL opening retry logic.
   8. `docs/dissertation-autonomous-semantic-manufacturing.md`: Complete doctoral thesis monograph covering algebraic category boundaries, differential information calculus, and multifractal foliations for Fortune 5 scale.
+  9. `src/autofde_lab/ocel/pm4py_counterfactual.py`: PM4Py inductive Petri net discovery with dual-channel conformance (token replay + optimal alignments), committed `25024695`.
+  10. `src/autofde_lab/ocel/{columnar_polars,ocpa_metrics,lifecycle_pystackt,hddl_powl_ocel_bridge}.py`: OCPA synchronization metrics, Polars/DuckDB columnar ingestion, pystackt repository ETL, and HDDL→POWL conformance, committed `4cd9f309`.
+  11. `src/autofde_lab/ocel/{counterfactual_engine,counterfactual_mutators}.py`: Unified four-tier counterfactual validation engine and adversarial mutator battery, committed `7afe2548`.
+  12. `src/autofde_lab/ocel/opql_and_ocelescope_bridge.py`: OPQL declarative querying and Ocelescope schema validation, committed `1866321d`.
+  13. `src/autofde_lab/agent/{autodev_domain,autodev_gymact_env,autodev_loop}.py`: Closed-loop auto-dev engine (pystackt → FOND×HDDL → CMCA → GymAct → OCEL 2.0 conformance), committed `3755bf0d`.
 
 ---
 
-## 3. Remote Verification Ladder (Exact Head `bb57f727`)
+## 3. Remote Verification Ladder
 
-All 10 GitHub Actions checks passed on the exact published PR head:
+### 3.1 Historical green run (head `bb57f727`)
+
+All 10 GitHub Actions checks passed on head `bb57f727`:
 
 | Job / Workflow Name | Outcome | Run / Job Reference |
 | :--- | :--- | :--- |
@@ -51,6 +58,17 @@ All 10 GitHub Actions checks passed on the exact published PR head:
 | **Python 3.12 durability / stress / replay** | `PASS` | [Run 34940315439 / Job 104287281279](https://github.com/seanchatmangpt/autofde-lab/actions/runs/34940315439/job/104287281279) |
 | **Python 3.13 durability / stress / replay** | `PASS` | [Run 34940315439 / Job 104287281166](https://github.com/seanchatmangpt/autofde-lab/actions/runs/34940315439/job/104287281166) |
 | **SREGym kind live signature trial** | `SKIPPED` (Normal) | [Run 34940315582 / Job 104287319144](https://github.com/seanchatmangpt/autofde-lab/actions/runs/34940315582/job/104287319144) |
+
+### 3.2 CI regression at capstone head `3755bf0d` and remediation
+
+The five feature commits pushed after the green run (`25024695`, `4cd9f309`,
+`7afe2548`, `1866321d`, `3755bf0d`) were published without re-inspecting
+`gh pr checks`, and three checks failed at `3755bf0d`:
+
+- **`lock-consistency`** and **`hddl-execution`** ([Run 34999173871](https://github.com/seanchatmangpt/autofde-lab/actions/runs/34999173871)): the `ocel-ecosystem` extra's `pystackt>=0.1.0` declares `requires-python >=3.12` (and `pm4py`/`OPQL`/`ocelescope` declare `>=3.11`) against this project's `>=3.10`, making the dependency graph unsatisfiable; `uv.lock` had also not been regenerated.
+- **`Exact-head qualification`** ([Run 34999173929](https://github.com/seanchatmangpt/autofde-lab/actions/runs/34999173929)): trailing whitespace on this receipt's date line and `ruff-format` divergence in `autodev_gymact_env.py` and `ocpa_metrics.py` (authored with unpinned `uvx ruff` instead of the pre-commit-pinned `ruff v0.14.0`).
+
+Remediation commits (following this receipt, on the same purpose branch): python-version markers on the four affected extras entries (same pattern as the established `gymact` marker), `uv.lock` regenerated with the CI-pinned `uv 0.10.0` and sanitized, the two files reformatted with `ruff v0.14.0`, and this receipt re-anchored. The original green-run claim above is retained as the historical record of `bb57f727` only.
 
 ---
 
@@ -74,5 +92,5 @@ All 10 GitHub Actions checks passed on the exact published PR head:
 
 ## 5. Standing & Publication Assessment
 
-- **Final Standing**: `ALIVE` across all bounded subsystems.
-- **Publication State**: PR #153 is pushed, verified, green, and completely reconciled with base. In strict accordance with `AGENTS.md` ("intentional commit, non-force push, draft PR, no merge"), PR #153 remains open awaiting human merge actuation.
+- **Final Standing**: `ALIVE` across all bounded subsystems under local observed execution; remote CI standing at any given head is recorded in §3 and must be re-inspected after every push (the regression in §3.2 is the counterexample).
+- **Publication State**: PR #153 is pushed and completely reconciled with base. In strict accordance with `AGENTS.md` ("intentional commit, non-force push, draft PR, no merge"), PR #153 remains open awaiting human merge actuation.
