@@ -1,0 +1,16 @@
+# Post-Chapman semantic-model manufacturing.
+# Domain truth remains in ontology/SHACL; these packages manufacture or rank candidates only.
+-r requirements.txt
+
+dspy
+tpot>=1.1
+scikit-learn>=1.6
+rdflib
+pyshacl
+
+# Optional student-model manufacture. The pipeline imports these lazily.
+transformers
+accelerate
+datasets
+peft
+trl
