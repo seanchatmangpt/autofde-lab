@@ -370,7 +370,7 @@ gymact = { git = "https://github.com/seanchatmangpt/gymact.git", rev = "524d0bc8
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-ra -q"
+addopts = "-ra -q --basetemp=/tmp/autofde-lab-pytest-tmp"
 testpaths = ["tests"]
 # Deliberately NOT --import-mode=importlib here, global -- see
 # docs/STATUS.md Pass 6. importlib mode is the correct fix for two real
