@@ -12,7 +12,7 @@ really wraps a real `ReplayWorld` over the real checked-in August fixture
 Mirrors `~/gymact/tests/test_cube_counter.py`'s structure -- the reference
 pattern this repo's own AzureGoat bridge and this bridge both follow. Uses
 plain sync test functions wrapping `asyncio.run(...)`, matching
-`tests/agent/test_api.py`'s already-established convention in this repo
+`src/autofde_lab/gymact/tests/test_api.py`'s already-established convention in this repo
 (no `pytest-asyncio`/`anyio` test-plugin marker configured here).
 """
 
