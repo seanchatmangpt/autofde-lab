@@ -92,5 +92,5 @@ Remediation commits (following this receipt, on the same purpose branch): python
 
 ## 5. Standing & Publication Assessment
 
-- **Final Standing**: `ALIVE` across all bounded subsystems under local observed execution; remote CI standing at any given head is recorded in §3 and must be re-inspected after every push (the regression in §3.2 is the counterexample).
+- **Standing at qualified head `3755bf0dcef7f969b74cef06fd840f40283d0a07`**: `ALIVE` across all bounded subsystems under local observed execution. Per the AFDE-2603 receipt-qualification guard (`src/autofde_lab/agent/receipt_qualification.py`), this standing is a point-in-time claim bound to the qualified head above and **expires on head movement**: remote CI standing at any later head is recorded in §3 and must be re-inspected after every push (the regression in §3.2 is the counterexample).
 - **Publication State**: PR #153 is pushed and completely reconciled with base. In strict accordance with `AGENTS.md` ("intentional commit, non-force push, draft PR, no merge"), PR #153 remains open awaiting human merge actuation.

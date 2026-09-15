@@ -46,10 +46,10 @@ def allocator() -> MultifractalCascadeAllocator:
     )
 
 
-def test_theorem_1_strict_resource_conservation_under_prime_budgets(
+def test_guard_invariant_1_strict_resource_conservation_under_prime_budgets(
     allocator: MultifractalCascadeAllocator,
 ) -> None:
-    """Theorem 1: Discrete floor allocation guarantees sum(allocated) <= Budget for all arbitrary dimensions."""
+    """Guard invariant 1: Discrete floor allocation guarantees sum(allocated) <= Budget for all arbitrary dimensions."""
     # Large prime budgets to stress floor and integer remainder mechanics
     prime_ticks = 104729
     prime_mem = 2147483647
@@ -87,8 +87,10 @@ def test_theorem_1_strict_resource_conservation_under_prime_budgets(
     assert sum(a.allocated_fraction for a in admitted) == pytest.approx(1.0, rel=1e-6)
 
 
-def test_theorem_2_temperature_asymptotics_and_monotonic_entropy_decay() -> None:
-    """Theorem 2: dH/dtau <= 0. As tau -> 0, distribution is uniform; as tau -> inf, it collapses to argmax."""
+def test_guard_invariant_2_temperature_asymptotics_and_monotonic_entropy_decay() -> (
+    None
+):
+    """Guard invariant 2: dH/dtau <= 0. As tau -> 0, distribution is uniform; as tau -> inf, it collapses to argmax."""
     # Zero pruning threshold to evaluate pure Gibbs-Boltzmann entropy
     pure_allocator = MultifractalCascadeAllocator(
         engine="reference-softmax", default_tau=1.0, pruning_threshold=0.0
@@ -141,7 +143,10 @@ def test_theorem_2_temperature_asymptotics_and_monotonic_entropy_decay() -> None
 
     for tau in taus:
         plan = pure_allocator.allocate(
-            plan_id=f"plan_tau_{tau}", budget=budget, candidates=candidates, tau=tau
+            plan_id=f"plan_tau_{tau}",
+            budget=budget,
+            candidates=candidates,
+            tau=tau,
         )
         entropies.append(plan.entropy)
 
@@ -168,10 +173,10 @@ def test_theorem_2_temperature_asymptotics_and_monotonic_entropy_decay() -> None
     assert top_alloc.allocated_fraction == pytest.approx(1.0, rel=1e-4)
 
 
-def test_theorem_3_salience_ordering_monotonicity(
+def test_guard_invariant_3_salience_ordering_monotonicity(
     allocator: MultifractalCascadeAllocator,
 ) -> None:
-    """Theorem 3: Higher salience S(c_i) > S(c_j) strictly implies allocated_fraction(c_i) >= allocated_fraction(c_j)."""
+    """Guard invariant 3: Higher salience S(c_i) > S(c_j) strictly implies allocated_fraction(c_i) >= allocated_fraction(c_j)."""
     budget = _make_budget(ticks=10000, mem=100000, depth=5, lanes=4)
 
     candidates = [
@@ -232,10 +237,10 @@ def test_theorem_3_salience_ordering_monotonicity(
             assert alloc_map[b_low] < alloc_map[b_high]
 
 
-def test_theorem_4_permutation_invariance_and_hash_identity(
+def test_guard_invariant_4_permutation_invariance_and_hash_identity(
     allocator: MultifractalCascadeAllocator,
 ) -> None:
-    """Theorem 4: The allocation plan is strictly invariant under arbitrary permutations of the input candidate sequence."""
+    """Guard invariant 4: The allocation plan is strictly invariant under arbitrary permutations of the input candidate sequence."""
     budget = _make_budget(ticks=50000, mem=1048576, depth=6, lanes=8)
 
     base_candidates = [

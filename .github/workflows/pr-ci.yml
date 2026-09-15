@@ -153,7 +153,8 @@ jobs:
             tests/fabric/test_hot_path.py \
             tests/fabric/test_crown.py \
             tests/fabric/test_crown_evidence.py \
-            tests/fabric/test_crown_errc.py
+            tests/fabric/test_crown_errc.py \
+            tests/agent/test_receipt_qualification_guard_chicago.py
 
       - name: Fortune-5 runtime court / Python 3.12
         if: steps.routes.outputs.fortune5 == 'true'
