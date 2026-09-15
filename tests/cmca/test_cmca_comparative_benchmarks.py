@@ -1,10 +1,13 @@
-"""Comparative benchmark and empirical verification tests comparing CMCA against
-alternative allocation paradigms (Greedy, Epsilon-Greedy, Pure Softmax, Uniform).
+"""Characterization tests for CMCA allocation mechanics.
 
-Demonstrates:
-1. CMCA preserves option entropy where Greedy suffers complete collapse (H = 0).
-2. CMCA allocates proportionally to salience density without epsilon-greedy noise.
-3. CMCA maintains strict discrete conservation across finite prime budgets.
+Demonstrates honest single-shot trade-offs:
+1. Greedy-on-Salience concentrates 100% of resources on the single highest-salience
+   candidate, maximizing peak single-branch option value (8.0), but collapses exploration
+   breadth entirely (0% resources to secondary alternatives).
+2. CMCA intentionally diversifies allocation according to the escort/Gibbs distribution,
+   trading peak single-branch option value (fraction-weighted 4.70) to keep secondary
+   viable frontiers funded and prevent premature lock-in.
+3. CMCA pruning safely eliminates candidates below the preservation cutoff.
 """
 
 from __future__ import annotations
@@ -27,24 +30,29 @@ def _make_budget(ticks: int = 10000, mem: int = 65536) -> ResourceBudget:
     )
 
 
-def test_cmca_vs_greedy_option_entropy_preservation() -> None:
-    """Proves that CMCA prevents the catastrophic collapse of option entropy suffered by Greedy/Argmax."""
+def test_cmca_vs_greedy_on_salience_single_shot_tradeoff() -> None:
+    """Characterizes the fundamental single-shot trade-off between Greedy-on-Salience and CMCA.
+
+    In a single deterministic allocation with known parameters:
+    - Greedy-on-Salience achieves HIGHER peak option value on the top branch (8.0 > 4.70).
+    - CMCA trades peak single-branch option value to maintain exploratory breadth (H > 0.5),
+      admitting secondary hypotheses that Greedy completely starves.
+    """
     allocator = MultifractalCascadeAllocator(
         default_tau=1.0, pruning_threshold=0.01, engine="reference-softmax"
     )
     budget = _make_budget()
 
-    # Heterogeneous candidate set: Branch A has slightly higher yield, but Branch B has massive option entropy
     candidates = [
         CandidateBranch(
-            branch_id="b_immediate_yield",
+            branch_id="b_quick_win",
             operator_id="op",
             world_id="w",
             state_id="s1",
             option_entropy=1.0,
             historical_yield=0.95,
             estimated_cost=10.0,
-        ),  # Salience = 0.095
+        ),  # S = 0.095
         CandidateBranch(
             branch_id="b_high_option_entropy",
             operator_id="op",
@@ -53,7 +61,7 @@ def test_cmca_vs_greedy_option_entropy_preservation() -> None:
             option_entropy=8.0,
             historical_yield=0.85,
             estimated_cost=10.0,
-        ),  # Salience = 0.68
+        ),  # S = 0.68 (Top salience branch)
         CandidateBranch(
             branch_id="b_exploratory_alt",
             operator_id="op",
@@ -62,46 +70,48 @@ def test_cmca_vs_greedy_option_entropy_preservation() -> None:
             option_entropy=4.0,
             historical_yield=0.50,
             estimated_cost=10.0,
-        ),  # Salience = 0.20
+        ),  # S = 0.20
     ]
 
-    # 1. Greedy approach collapses 100% of resources onto single highest-scoring branch
-    greedy_choice = max(candidates, key=lambda c: c.historical_yield)
-    assert greedy_choice.branch_id == "b_immediate_yield"
-    # Greedy starves the branch with 8x higher option entropy entirely
-    greedy_preserved_entropy = greedy_choice.option_entropy
-    assert greedy_preserved_entropy == 1.0
+    # Compute explicit salience for each branch
+    saliences = {c.branch_id: allocator.calculate_branch_salience(c) for c in candidates}
 
-    # 2. CMCA allocates across the frontier weighted by option density
+    # 1. Fair baseline: Greedy on the exact same salience score CMCA uses
+    greedy_choice = max(candidates, key=lambda c: saliences[c.branch_id])
+    assert greedy_choice.branch_id == "b_high_option_entropy"
+    # Greedy puts 100% on the top branch, achieving peak single-branch option entropy (8.0)
+    # but starves all other alternatives (breadth = 0, H = 0.0)
+    greedy_top_entropy = greedy_choice.option_entropy
+    assert greedy_top_entropy == 8.0
+
+    # 2. CMCA allocates across the frontier
     plan = allocator.allocate(
-        plan_id="cmca_vs_greedy", budget=budget, candidates=candidates, tau=1.0
+        plan_id="cmca_characterization", budget=budget, candidates=candidates, tau=1.0
     )
-
-    # CMCA identifies that b_high_option_entropy preserves far more total option value
     alloc_map = {a.branch_id: a for a in plan.allocations}
-    assert alloc_map["b_high_option_entropy"].allocated_fraction > 0.40
-    assert (
-        alloc_map["b_high_option_entropy"].allocated_fraction
-        > alloc_map["b_immediate_yield"].allocated_fraction
-    )
-    # Crucially: other viable alternatives are NOT starved
-    assert alloc_map["b_immediate_yield"].standing == AllocationStanding.ADMITTED
-    assert alloc_map["b_exploratory_alt"].standing == AllocationStanding.ADMITTED
 
-    # Preserved option value under CMCA is substantially higher than greedy
-    assert plan.total_option_value_preserved > greedy_preserved_entropy
+    # Honest observation: CMCA fraction-weighted option value is lower than Greedy's 8.0
+    # because CMCA distributes mass across multiple active branches
+    assert plan.total_option_value_preserved < greedy_top_entropy
+    assert plan.total_option_value_preserved > 4.0
+
+    # The advantage of CMCA in this single-shot setting is preservation of exploratory breadth:
+    # Secondary viable alternatives remain admitted and funded
+    assert alloc_map["b_quick_win"].standing == AllocationStanding.ADMITTED
+    assert alloc_map["b_quick_win"].allocated_ticks > 0
+    assert alloc_map["b_exploratory_alt"].standing == AllocationStanding.ADMITTED
+    assert alloc_map["b_exploratory_alt"].allocated_ticks > 0
+    # Entropy is strictly positive (reflecting a non-collapsed distribution)
     assert plan.entropy > 0.5
 
 
-def test_cmca_vs_epsilon_greedy_directed_resource_concentration() -> None:
-    """Proves that CMCA directs exploratory allocation based on entropy density rather than uniform noise."""
-    # Pruning threshold set to 0.1 to prune negligible branches (< 10% mass)
+def test_cmca_pruning_filters_negligible_frontiers() -> None:
+    """Verifies that CMCA pruning cuts off branches falling below the threshold."""
     allocator = MultifractalCascadeAllocator(
         default_tau=1.0, pruning_threshold=0.10, engine="reference-softmax"
     )
     budget = _make_budget(ticks=10000)
 
-    # Candidate set with a clear dead-end branch
     candidates = [
         CandidateBranch(
             branch_id="b_promising",
@@ -133,15 +143,14 @@ def test_cmca_vs_epsilon_greedy_directed_resource_concentration() -> None:
     ]
 
     plan = allocator.allocate(
-        plan_id="cmca_vs_egreedy", budget=budget, candidates=candidates, tau=5.0
+        plan_id="cmca_prune", budget=budget, candidates=candidates, tau=5.0
     )
     alloc_map = {a.branch_id: a for a in plan.allocations}
 
-    # In epsilon-greedy, the dead-end branch receives epsilon/K (e.g. 5-10% of total compute)
-    # In CMCA, the dead-end branch is pruned or allocated negligible floor without wasting compute
+    # Dead end branch falls far below 10% threshold and is safely pruned
     assert alloc_map["b_dead_end"].standing == AllocationStanding.PRUNED
     assert alloc_map["b_dead_end"].allocated_ticks == 0
 
-    # Compute is concentrated purposefully into viable option frontiers
+    # Viable branches absorb the renormalized budget
     assert alloc_map["b_promising"].allocated_ticks > 5000
     assert alloc_map["b_promising_alt"].allocated_ticks > 1000
