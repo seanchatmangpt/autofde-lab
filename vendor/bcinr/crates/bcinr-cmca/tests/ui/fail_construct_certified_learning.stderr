@@ -1,0 +1,25 @@
+warning: use of deprecated struct `bcinr_cmca::allocator::CertifiedLearning`: CMCA-102/CMCA-114: authority chain pending Hoare-logic verification, do not use in production code
+ --> tests/ui/fail_construct_certified_learning.rs:1:28
+  |
+1 | use bcinr_cmca::allocator::CertifiedLearning;
+  |                            ^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated struct `bcinr_cmca::allocator::CertifiedLearning`: CMCA-102/CMCA-114: authority chain pending Hoare-logic verification, do not use in production code
+ --> tests/ui/fail_construct_certified_learning.rs:3:13
+  |
+3 |     let _ = CertifiedLearning { _sealed: () };
+  |             ^^^^^^^^^^^^^^^^^
+
+warning: use of deprecated field `bcinr_cmca::allocator::CertifiedLearning::_sealed`: CMCA-102/CMCA-114: authority chain pending Hoare-logic verification, do not use in production code
+ --> tests/ui/fail_construct_certified_learning.rs:3:33
+  |
+3 |     let _ = CertifiedLearning { _sealed: () };
+  |                                 ^^^^^^^^^^^
+
+error[E0451]: field `_sealed` of struct `bcinr_cmca::allocator::CertifiedLearning` is private
+ --> tests/ui/fail_construct_certified_learning.rs:3:33
+  |
+3 |     let _ = CertifiedLearning { _sealed: () };
+  |                                 ^^^^^^^ private field

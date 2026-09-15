@@ -41,7 +41,9 @@ def _make_budget(
 
 @pytest.fixture
 def allocator() -> MultifractalCascadeAllocator:
-    return MultifractalCascadeAllocator(default_tau=1.0, pruning_threshold=0.01)
+    return MultifractalCascadeAllocator(
+        engine="reference-softmax", default_tau=1.0, pruning_threshold=0.01
+    )
 
 
 def test_theorem_1_strict_resource_conservation_under_prime_budgets(
@@ -89,7 +91,7 @@ def test_theorem_2_temperature_asymptotics_and_monotonic_entropy_decay() -> None
     """Theorem 2: dH/dtau <= 0. As tau -> 0, distribution is uniform; as tau -> inf, it collapses to argmax."""
     # Zero pruning threshold to evaluate pure Gibbs-Boltzmann entropy
     pure_allocator = MultifractalCascadeAllocator(
-        default_tau=1.0, pruning_threshold=0.0
+        engine="reference-softmax", default_tau=1.0, pruning_threshold=0.0
     )
 
     budget = _make_budget(ticks=10000, mem=100000, depth=5, lanes=4)
@@ -289,7 +291,7 @@ def test_edge_case_zero_cost_and_anti_starvation() -> None:
     """Edge Case: Zero cost candidates are safely bounded by epsilon; hyper-aggressive pruning preserves top branch."""
     # Aggressive pruning: 95% threshold
     aggressive_allocator = MultifractalCascadeAllocator(
-        default_tau=1.0, pruning_threshold=0.95
+        engine="reference-softmax", default_tau=1.0, pruning_threshold=0.95
     )
 
     budget = _make_budget(ticks=1000, mem=10000, depth=3, lanes=2)

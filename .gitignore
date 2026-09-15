@@ -57,3 +57,4 @@ docs/ocel/sregym/*.ocel2.sqlite
 
 # Local secrets (GROQ_API_KEY etc.) -- never committed
 .env
+vendor/bcinr/target/

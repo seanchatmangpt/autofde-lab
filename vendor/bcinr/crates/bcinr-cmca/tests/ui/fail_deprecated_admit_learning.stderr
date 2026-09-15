@@ -1,0 +1,23 @@
+error: use of deprecated struct `bcinr_cmca::allocator::CertifiedLearning`: CMCA-102/CMCA-114: authority chain pending Hoare-logic verification, do not use in production code
+ --> tests/ui/fail_deprecated_admit_learning.rs:9:28
+  |
+9 | use bcinr_cmca::allocator::CertifiedLearning;
+  |                            ^^^^^^^^^^^^^^^^^
+  |
+note: the lint level is defined here
+ --> tests/ui/fail_deprecated_admit_learning.rs:7:9
+  |
+7 | #![deny(deprecated)]
+  |         ^^^^^^^^^^
+
+error: use of deprecated struct `bcinr_cmca::allocator::CertifiedLearning`: CMCA-102/CMCA-114: authority chain pending Hoare-logic verification, do not use in production code
+  --> tests/ui/fail_deprecated_admit_learning.rs:12:13
+   |
+12 |     let _ = CertifiedLearning::admit_learning();
+   |             ^^^^^^^^^^^^^^^^^
+
+error: use of deprecated associated function `bcinr_cmca::allocator::CertifiedLearning::admit_learning`: CMCA-102/CMCA-114: authority chain pending Hoare-logic verification, do not use in production code
+  --> tests/ui/fail_deprecated_admit_learning.rs:12:32
+   |
+12 |     let _ = CertifiedLearning::admit_learning();
+   |                                ^^^^^^^^^^^^^^

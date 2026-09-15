@@ -1,0 +1,20 @@
+# Trimmed workspace manifest for the vendored bcinr-cmca snapshot.
+#
+# This is NOT the upstream workspace manifest (see VENDORING.md): upstream
+# (github.com/seanchatmangpt/bcinr @ 2ae60cf0) is a 13-crate workspace whose
+# other members (bcinr-pddl, bcinr-powl, tools/*, ...) are out of scope for
+# autofde-lab's CMCA consumption. Only the two members needed to build
+# `cmca_rank_cli` are vendored: bcinr-cmca itself and its one path dependency
+# bcinr-logic. Nothing here is hand-modified crate code; the crates/ trees are
+# byte-for-byte copies from the pinned commit. Upstream's [patch.crates-io]
+# for encode_unicode is not needed: it is not in bcinr-cmca's dependency graph.
+[workspace]
+members = ["crates/bcinr-logic", "crates/bcinr-cmca"]
+resolver = "2"
+
+# Verbatim from upstream's workspace manifest so release binaries match
+# upstream's compiled characteristics.
+[profile.release]
+lto = "fat"
+codegen-units = 1
+panic = "abort"

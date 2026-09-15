@@ -28,7 +28,9 @@ def _escort_distribution_reference(masses: list[float], q: float) -> list[float]
 
 def test_cmca_gibbs_is_exact_exponential_escort_measure() -> None:
     """Verify that CMCA Gibbs allocation with temperature tau exactly matches bcinr-cmca escort distribution with lens q = tau."""
-    allocator = MultifractalCascadeAllocator(default_tau=1.0, pruning_threshold=0.0)
+    allocator = MultifractalCascadeAllocator(
+        engine="reference-softmax", default_tau=1.0, pruning_threshold=0.0
+    )
 
     budget = ResourceBudget(
         total_ticks=10000,

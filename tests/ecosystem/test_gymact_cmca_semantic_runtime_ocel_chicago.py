@@ -22,11 +22,13 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+import pytest
 from gymact.models import ActuationIntent, Standing
 
 from autofde_lab.agent.software_manufacturing_gymact_bridge import (
     SoftwareManufacturingProvider,
 )
+from autofde_lab.cmca.bcinr_bridge import find_bcinr_cli
 from autofde_lab.cmca.cascade import MultifractalCascadeAllocator
 from autofde_lab.cmca.contracts import CandidateBranch, ResourceBudget
 from autofde_lab.ocel.log import OcelLog
@@ -52,6 +54,15 @@ from autofde_lab.semantic_models.tiny_operator import (
     TinySemanticOperator,
 )
 from gymact import GymAct, MaterializationIntent
+
+# The default CMCA engine delegates to the vendored bcinr-cmca crate (see
+# src/autofde_lab/cmca/bcinr_bridge.py): this suite exercises that real
+# engine and therefore requires the built `cmca_rank_cli` binary.
+pytestmark = pytest.mark.skipif(
+    find_bcinr_cli() is None,
+    reason="no built 'cmca_rank_cli' binary found -- build with "
+    "'cargo build --release -p bcinr-cmca' inside vendor/bcinr",
+)
 
 _PLAN_FIXTURE = (
     Path(__file__).parents[2]
@@ -123,7 +134,7 @@ def test_gymact_cmca_tiny_runtime_ocel_loop(tmp_path: Path) -> None:
         consequence_risk_budget=0.2,
         concurrency_lanes=4,
     )
-    allocator = MultifractalCascadeAllocator(default_tau=1.5, pruning_threshold=0.01)
+    allocator = MultifractalCascadeAllocator(pruning_threshold=0.01)
 
     candidate_branches = [
         CandidateBranch(

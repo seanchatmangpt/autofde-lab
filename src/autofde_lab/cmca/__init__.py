@@ -1,7 +1,16 @@
 """CMCA (Chatman Multifractal Cascade Allocation) module for AutoFDE Lab Vision 2030."""
 
 from .atomvm_schedule import generate_atomvm_cmca_module
-from .cascade import MultifractalCascadeAllocator
+from .bcinr_bridge import (
+    VENDORED_BCINR_COMMIT,
+    BcinrCardinalityRefusal,
+    BcinrCliUnavailable,
+    BcinrFeatureRefusal,
+    BcinrProtocolError,
+    find_bcinr_cli,
+    rank_candidates,
+)
+from .cascade import ENGINES, MultifractalCascadeAllocator
 from .contracts import (
     AllocationReceipt,
     AllocationStanding,
@@ -19,13 +28,21 @@ from .scheduler import CMCAScheduler
 __all__ = [
     "AllocationReceipt",
     "AllocationStanding",
+    "BcinrCardinalityRefusal",
+    "BcinrCliUnavailable",
+    "BcinrFeatureRefusal",
+    "BcinrProtocolError",
     "BranchAllocation",
     "CMCAScheduler",
     "CandidateBranch",
     "CascadeAllocationPlan",
+    "ENGINES",
     "MultifractalCascadeAllocator",
     "ResourceBudget",
+    "VENDORED_BCINR_COMMIT",
     "build_candidate_branches_from_dfcm",
     "compute_option_entropy",
+    "find_bcinr_cli",
     "generate_atomvm_cmca_module",
+    "rank_candidates",
 ]

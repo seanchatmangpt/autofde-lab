@@ -1,8 +1,25 @@
 """Chatman Multifractal Cascade Allocation (CMCA) core engine.
 
-Calculates deterministic multifractal cascade distributions across candidate
-exploration frontiers, preserving lawful future option value under finite resource
-budgets without premature single-branch collapse.
+Deterministic governor dividing a finite resource budget across candidate
+exploration frontiers, preserving lawful future option value without
+premature single-branch collapse.
+
+Two engines compute the allocation *measure*; the budget projection
+(pruning, renormalization, anti-starvation fallback, discrete tick/memory/
+depth assignment, lanes) is shared:
+
+- ``engine="bcinr"`` (default): delegates the measure to the canonical
+  Rust implementation, the vendored ``bcinr-cmca`` crate
+  (:mod:`autofde_lab.cmca.bcinr_bridge`), whose branchless Q16.16
+  fixed-point ``allocator::allocate()`` applies the compiled lens policy.
+  ``tau`` is not a parameter of this engine (the lens weighting is
+  compiled upstream), so passing one is refused rather than ignored.
+- ``engine="reference-softmax"``: the original local float engine --
+  salience soft-max at temperature ``tau``. Retained as an explicitly
+  named reference (its temperature-asymptotics are pinned by
+  ``tests/cmca/test_cmca_mathematical_proofs.py``), not as a silent
+  fallback: if the bcinr binary is unavailable, the bcinr engine refuses
+  with a typed :class:`~autofde_lab.cmca.bcinr_bridge.BcinrCliUnavailable`.
 """
 
 from __future__ import annotations
@@ -10,6 +27,7 @@ from __future__ import annotations
 import math
 from collections.abc import Sequence
 
+from .bcinr_bridge import rank_candidates
 from .contracts import (
     AllocationStanding,
     BranchAllocation,
@@ -17,6 +35,8 @@ from .contracts import (
     CascadeAllocationPlan,
     ResourceBudget,
 )
+
+ENGINES = ("bcinr", "reference-softmax")
 
 
 class MultifractalCascadeAllocator:
@@ -27,13 +47,23 @@ class MultifractalCascadeAllocator:
         *,
         default_tau: float = 1.0,
         pruning_threshold: float = 0.01,
+        engine: str = "bcinr",
     ) -> None:
         if default_tau <= 0.0:
             raise ValueError("tau temperature must be strictly positive")
         if not (0.0 <= pruning_threshold < 1.0):
             raise ValueError("pruning_threshold must be in [0.0, 1.0)")
+        if engine not in ENGINES:
+            raise ValueError(f"unknown engine {engine!r}; expected one of {ENGINES}")
+        if engine == "bcinr" and default_tau != 1.0:
+            raise ValueError(
+                "tau is a reference-softmax parameter; the bcinr engine's "
+                "lens weighting is compiled upstream and ignores it -- "
+                "refusing rather than silently dropping the parameter"
+            )
         self.default_tau = default_tau
         self.pruning_threshold = pruning_threshold
+        self.engine = engine
 
     def calculate_branch_salience(self, branch: CandidateBranch) -> float:
         """Score S(c_i) = Option Entropy * Historical Yield / Cost."""
@@ -69,19 +99,30 @@ class MultifractalCascadeAllocator:
         # 1. Deterministic canonical sort to guarantee identical replay hash
         sorted_candidates = sorted(candidates, key=lambda c: c.candidate_hash)
 
-        # 2. Compute saliences
-        saliences = [self.calculate_branch_salience(c) for c in sorted_candidates]
-        max_salience = max(saliences) if saliences else 0.0
+        # 2. Engine-specific measure -> per-candidate fractions.
+        if self.engine == "bcinr":
+            if tau is not None or self.default_tau != 1.0:
+                raise ValueError(
+                    "tau is a reference-softmax parameter; the bcinr engine's "
+                    "lens weighting is compiled upstream and ignores it -- "
+                    "refusing rather than silently dropping the parameter"
+                )
+            shares = rank_candidates(sorted_candidates)
+            raw_fractions = [shares[c.branch_id] for c in sorted_candidates]
+        else:
+            # 2a. Compute saliences
+            saliences = [self.calculate_branch_salience(c) for c in sorted_candidates]
+            max_salience = max(saliences) if saliences else 0.0
 
-        # 3. Softmax / multifractal multiplier with numerical stability
-        exp_terms = [
-            math.exp(min(temperature * (s - max_salience), 50.0)) for s in saliences
-        ]
-        sum_exp = sum(exp_terms)
+            # 2b. Softmax / multifractal multiplier with numerical stability
+            exp_terms = [
+                math.exp(min(temperature * (s - max_salience), 50.0)) for s in saliences
+            ]
+            sum_exp = sum(exp_terms)
 
-        raw_fractions = [e / sum_exp for e in exp_terms]
+            raw_fractions = [e / sum_exp for e in exp_terms]
 
-        # 4. Prune branches falling below preservation cutoff
+        # 3. Prune branches falling below preservation cutoff
         active_indices: list[int] = []
         pruned_indices: list[int] = []
         for idx, frac in enumerate(raw_fractions):
@@ -90,19 +131,22 @@ class MultifractalCascadeAllocator:
             else:
                 active_indices.append(idx)
 
-        # 5. Renormalize active fractions so total mass == 1.0 (or defer if all pruned)
+        # 4. Renormalize active fractions so total mass == 1.0 (or defer if all pruned)
         if not active_indices:
-            # Keep top candidate to prevent total starvation
-            top_idx = max(range(len(saliences)), key=lambda i: saliences[i])
+            # Keep top candidate to prevent total starvation. Fraction (not
+            # salience) orders this: under the bcinr engine salience is only
+            # one of four measure axes, and for the reference engine softmax
+            # weight is monotone in salience, so this is equivalent there.
+            top_idx = max(range(len(raw_fractions)), key=lambda i: raw_fractions[i])
             active_indices = [top_idx]
-            pruned_indices = [i for i in range(len(saliences)) if i != top_idx]
+            pruned_indices = [i for i in range(len(raw_fractions)) if i != top_idx]
 
         active_sum = sum(raw_fractions[i] for i in active_indices)
         normalized_fractions = {
             i: (raw_fractions[i] / active_sum) for i in active_indices
         }
 
-        # 6. Assign concrete discrete resources
+        # 5. Assign concrete discrete resources
         allocations: list[BranchAllocation] = []
         total_entropy = 0.0
         total_preserved = 0.0

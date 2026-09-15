@@ -40,7 +40,7 @@ def _make_budget(
 
 def test_falsify_cmca_zero_cost_does_not_divide_by_zero():
     """Branch with estimated_cost=0.0 must not trigger ZeroDivisionError or NaN."""
-    allocator = MultifractalCascadeAllocator()
+    allocator = MultifractalCascadeAllocator(engine="reference-softmax")
     budget = _make_budget()
     candidates = [
         CandidateBranch(
@@ -73,7 +73,7 @@ def test_falsify_cmca_zero_cost_does_not_divide_by_zero():
 
 def test_falsify_cmca_negative_entropy_clamped():
     """Branch with negative option_entropy must not yield negative salience or reverse-priority."""
-    allocator = MultifractalCascadeAllocator()
+    allocator = MultifractalCascadeAllocator(engine="reference-softmax")
     budget = _make_budget()
     candidates = [
         CandidateBranch(
@@ -114,7 +114,9 @@ def test_falsify_cmca_budget_ceiling_under_127_candidates():
     """Conservation law must hold strictly: sum(ticks) <= budget.total_ticks and
     sum(mem) <= budget.memory_bytes with 127 candidates and a prime budget.
     """
-    allocator = MultifractalCascadeAllocator(default_tau=1.5, pruning_threshold=0.005)
+    allocator = MultifractalCascadeAllocator(
+        engine="reference-softmax", default_tau=1.5, pruning_threshold=0.005
+    )
     # 9973 is a prime number, tests integer discretization rounding
     budget = _make_budget(ticks=9973, mem=65521, lanes=16)
 
@@ -151,7 +153,9 @@ def test_falsify_cmca_total_starvation_recovery():
     """If pruning_threshold is set impossibly high (e.g. 0.999), allocator must
     prevent total starvation and preserve at least the top candidate.
     """
-    allocator = MultifractalCascadeAllocator(default_tau=0.1, pruning_threshold=0.999)
+    allocator = MultifractalCascadeAllocator(
+        engine="reference-softmax", default_tau=0.1, pruning_threshold=0.999
+    )
     budget = _make_budget()
     candidates = [
         CandidateBranch(
@@ -185,7 +189,7 @@ def test_falsify_atomvm_erlang_codegen_hostile_characters():
     """Branch IDs with quotes, newlines, or Erlang reserved tokens must not produce
     broken or malicious syntax.
     """
-    allocator = MultifractalCascadeAllocator()
+    allocator = MultifractalCascadeAllocator(engine="reference-softmax")
     budget = _make_budget()
     candidates = [
         CandidateBranch(

@@ -50,7 +50,6 @@ def test_beam_port_bridge_ping_and_allocate() -> None:
                     "estimated_cost": 20.0,
                 },
             ],
-            "tau": 1.5,
         }
         proc.stdin.write(json.dumps(req_alloc) + "\n")
         proc.stdin.flush()
@@ -60,7 +59,9 @@ def test_beam_port_bridge_ping_and_allocate() -> None:
         plan = resp_alloc.get("plan")
         assert plan["plan_id"] == "beam_test_plan"
         assert len(plan["allocations"]) == 2
-        top_alloc = next(a for a in plan["allocations"] if a["branch_id"] == "branch_alpha")
+        top_alloc = next(
+            a for a in plan["allocations"] if a["branch_id"] == "branch_alpha"
+        )
         assert top_alloc["allocated_fraction"] > 0.5
         assert top_alloc["standing"] == "ADMITTED"
 

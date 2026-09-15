@@ -13,9 +13,21 @@ Validates:
 
 from __future__ import annotations
 
+import pytest
+
 from autofde_lab.agent.autodev_loop import run_autodev_cycle
+from autofde_lab.cmca.bcinr_bridge import find_bcinr_cli
 from autofde_lab.cmca.contracts import ResourceBudget
 from autofde_lab.ocel.lifecycle_pystackt import GitCommitRecord
+
+# The default CMCA engine delegates to the vendored bcinr-cmca crate (see
+# src/autofde_lab/cmca/bcinr_bridge.py): this suite exercises that real
+# engine and therefore requires the built `cmca_rank_cli` binary.
+pytestmark = pytest.mark.skipif(
+    find_bcinr_cli() is None,
+    reason="no built 'cmca_rank_cli' binary found -- build with "
+    "'cargo build --release -p bcinr-cmca' inside vendor/bcinr",
+)
 
 
 def test_autodev_loop_feature_delivery():
