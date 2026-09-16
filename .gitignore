@@ -66,6 +66,7 @@ vendor/bcinr/target/
 
 # LaTeX build byproducts
 *.aux
+*.log
 *.fls
 *.fdb_latexmk
 *.out
