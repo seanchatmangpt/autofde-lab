@@ -23,7 +23,14 @@ permissions:
 
 jobs:
   exact-host:
-    runs-on: ubuntu-latest
+    # NOTE: intentionally left on the (nonexistent) 'ubuntu-slim' label,
+    # i.e. this job stays queued/dead. Un-queuing it (ubuntu-latest) exposes
+    # a real pre-existing failure: the committed integrations/openclaw/
+    # openclaw.plugin.json is a stale projection (key-reordered by the
+    # generator) and refreshing it requires a working node/TS build that
+    # this repo's CI-local toolchain could not reproduce (TS7006 errors
+    # locally). Fix the projection + build, then flip this label.
+    runs-on: ubuntu-slim
     timeout-minutes: 15
     env:
       OPENCLAW_STATE_DIR: ${{ github.workspace }}/.openclaw-ci/state
