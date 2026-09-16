@@ -57,3 +57,18 @@ docs/ocel/sregym/*.ocel2.sqlite
 
 # Local secrets (GROQ_API_KEY etc.) -- never committed
 .env
+vendor/bcinr/target/
+
+# Rust build trees (vendored bcinr CLI + wasm shim); committed artifacts
+# live in wasm/artifacts/ and are added explicitly
+wasm/bcinr-cmca-wasm/target/
+vendor/bcinr/target/
+
+# LaTeX build byproducts
+*.aux
+*.log
+*.fls
+*.fdb_latexmk
+*.out
+*.toc
+*.synctex.gz

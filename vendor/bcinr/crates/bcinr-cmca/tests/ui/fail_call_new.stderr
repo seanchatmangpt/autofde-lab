@@ -1,0 +1,24 @@
+warning: use of deprecated struct `bcinr_cmca::allocator::CertifiedLearning`: CMCA-102/CMCA-114: authority chain pending Hoare-logic verification, do not use in production code
+ --> tests/ui/fail_call_new.rs:1:28
+  |
+1 | use bcinr_cmca::allocator::CertifiedLearning;
+  |                            ^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated struct `bcinr_cmca::allocator::CertifiedLearning`: CMCA-102/CMCA-114: authority chain pending Hoare-logic verification, do not use in production code
+ --> tests/ui/fail_call_new.rs:3:13
+  |
+3 |     let _ = CertifiedLearning::new();
+  |             ^^^^^^^^^^^^^^^^^
+
+error[E0624]: associated function `new` is private
+ --> tests/ui/fail_call_new.rs:3:32
+  |
+3 |     let _ = CertifiedLearning::new();
+  |                                ^^^ private associated function
+  |
+ ::: src/allocator/mod.rs
+  |
+  |     pub(crate) const fn new() -> Self {
+  |     --------------------------------- private associated function defined here

@@ -4,12 +4,17 @@
 
 from importlib.metadata import PackageNotFoundError, version
 
-from autofde_lab import hub as hub
-from autofde_lab.caching import *
-from autofde_lab.core import *
-from autofde_lab.domains import *
-from autofde_lab.solvers import *
-from autofde_lab.utils import *
+try:
+    from autofde_lab import hub as hub
+    from autofde_lab.caching import *
+    from autofde_lab.core import *
+    from autofde_lab.domains import *
+    from autofde_lab.solvers import *
+    from autofde_lab.utils import *
+except ModuleNotFoundError:
+    # Allow minimal isolated submodules (e.g. semantic_models) to be imported
+    # in zero-framework courts without requiring wrapt or discrete-optimization.
+    pass
 
 try:
     __version__ = version("autofde-lab")
@@ -24,9 +29,7 @@ except PackageNotFoundError:
 #: pull the whole agent stack -- session, bridge, POWL executor, solvers -- into
 #: every ``import autofde_lab``, including the ones that only wanted ``core``. The
 #: cost lands on every consumer to save one line for a few.
-_LAZY_SUBMODULES = frozenset(
-    {"adapters", "agent", "fabric", "ocel", "powl"}
-)
+_LAZY_SUBMODULES = frozenset({"adapters", "agent", "fabric", "ocel", "powl"})
 
 
 def __getattr__(name: str):

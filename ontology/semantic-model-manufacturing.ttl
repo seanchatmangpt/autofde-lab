@@ -1,0 +1,90 @@
+@prefix smm: <urn:autofde-lab:semantic-model-manufacturing:> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:autofde-lab:ontology:semantic-model-manufacturing>
+    a owl:Ontology ;
+    rdfs:label "AutoFDE semantic model manufacturing" ;
+    rdfs:comment "Design vocabulary for O -> Candidate(O*) -> admission -> O*. Models and AutoML pipelines manufacture candidates only; they never grant standing." .
+
+smm:Observation a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Unstructured observation O" .
+
+smm:CandidateGraphDelta a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Untrusted Candidate(O*)" .
+
+smm:AdmissionReceipt a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Replayable semantic admission decision" .
+
+smm:AdmittedGraphDelta a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Admitted semantic delta O*" .
+
+smm:ModelArtifact a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:comment "DSPy program, sklearn/TPOT pipeline, or PEFT student manufactured from O*. Never semantic authority." .
+
+smm:ManufactureRun a owl:Class ;
+    rdfs:subClassOf prov:Activity .
+
+smm:standing a owl:DatatypeProperty ;
+    rdfs:domain smm:AdmissionReceipt ;
+    rdfs:range xsd:string .
+
+smm:candidateHash a owl:DatatypeProperty ;
+    rdfs:domain smm:AdmissionReceipt ;
+    rdfs:range xsd:string .
+
+smm:graphHash a owl:DatatypeProperty ;
+    rdfs:domain smm:AdmissionReceipt ;
+    rdfs:range xsd:string .
+
+smm:admittedTripleCount a owl:DatatypeProperty ;
+    rdfs:domain smm:AdmissionReceipt ;
+    rdfs:range xsd:nonNegativeInteger .
+
+smm:proposedBy a owl:ObjectProperty ;
+    rdfs:domain smm:CandidateGraphDelta ;
+    rdfs:range smm:ModelArtifact .
+
+smm:witnessesCandidate a owl:ObjectProperty ;
+    rdfs:domain smm:AdmissionReceipt ;
+    rdfs:range smm:CandidateGraphDelta .
+
+smm:manufacturesArtifact a owl:ObjectProperty ;
+    rdfs:domain smm:ManufactureRun ;
+    rdfs:range smm:ModelArtifact .
+
+smm:Admitted a owl:NamedIndividual ; rdfs:label "ADMITTED" .
+smm:Refused a owl:NamedIndividual ; rdfs:label "REFUSED" .
+
+smm:SemanticFeatureSchema a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Ontology-derived feature projection X = pi(O*)" .
+
+smm:TinySemanticOperator a owl:Class ;
+    rdfs:subClassOf smm:ModelArtifact ;
+    rdfs:label "Standalone quantized fixed-point semantic operator" .
+
+smm:OptimizationReceipt a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Cryptographic receipt binding optimizer, dataset, and model hash" .
+
+smm:AtomVMProjection a owl:Class ;
+    rdfs:subClassOf smm:ModelArtifact ;
+    rdfs:label "Generated AtomVM BEAM Erlang projection" .
+
+smm:teacherDependencyRate a owl:DatatypeProperty ;
+    rdfs:domain smm:TinySemanticOperator ;
+    rdfs:range xsd:float ;
+    rdfs:comment "Fraction of runtime inferences requiring teacher LLM calls; target is 0.0" .
+
+smm:parameterBytes a owl:DatatypeProperty ;
+    rdfs:domain smm:TinySemanticOperator ;
+    rdfs:range xsd:nonNegativeInteger .

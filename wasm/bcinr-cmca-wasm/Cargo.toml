@@ -1,0 +1,29 @@
+[package]
+name = "bcinr-cmca-wasm"
+version = "26.9.15"
+edition = "2021"
+description = "wasm32-wasip1 cdylib exposing bcinr-cmca's allocator::allocate as an in-process JSON ranking transport for autofde-lab"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Path dependency on the *vendored* snapshot (not ~/bcinr): the wasm artifact
+# must be built from exactly the commit recorded in
+# src/autofde_lab/cmca/bcinr_bridge.py::VENDORED_BCINR_COMMIT, so the
+# in-process wasm transport and the cmca_rank_cli subprocess transport
+# compute identical shares for identical requests. Cargo resolves the
+# vendored crate's own workspace (vendor/bcinr) for its path dependencies.
+bcinr-cmca = { path = "../../vendor/bcinr/crates/bcinr-cmca" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+# Match the vendored workspace's release profile characteristics
+# (vendor/bcinr/Cargo.toml) so the wasm build's compiled behaviour mirrors
+# the native CLI's as closely as the target allows.
+lto = "fat"
+codegen-units = 1
+panic = "abort"

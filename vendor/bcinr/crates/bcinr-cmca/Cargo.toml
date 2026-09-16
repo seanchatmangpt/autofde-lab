@@ -1,0 +1,45 @@
+[package]
+name = "bcinr-cmca"
+version = "26.9.15"
+edition = "2021"
+description = "CMCA-RDF deterministic substrate crate"
+license = "MIT OR Apache-2.0"
+rust-version = "1.70"
+repository = "https://github.com/seanchatmangpt/bcinr"
+keywords = ["cmca", "rdf", "deterministic", "algorithms"]
+categories = ["algorithms"]
+readme = "../../README.md"
+# Publishable as of 26.9.15 by operator release decision (2026-09-15).
+# The allocator authority subsystem remains fenced in-code -- #[deprecated]
+# + #[doc(hidden)] on the seven authority types (CMCA-102/CMCA-114, pending
+# Hoare-logic verification) -- so external consumers still get a compile-time
+# warning when constructing that chain. The in-code fence is the signal; the
+# manifest no longer blocks the whole crate.
+
+[dependencies]
+bcinr-logic = { path = "../bcinr-logic", version = "26.9.15" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[dev-dependencies]
+chicago-tdd-tools = { version = "26.7.1", features = ["ocel-generation"] }
+trybuild = "1.0"
+proptest = "1.2.0"
+
+[features]
+default = []
+alloc = []
+std = ["bcinr-logic/std", "alloc"]
+mutant_1 = []
+mutant_2 = []
+mutant_3 = []
+mutant_4 = []
+mutant_5 = []
+mutant_6 = []
+mutant_7 = []
+mutant_8 = []
+mutant_9 = []
+mutant_10 = []
+mutant_11 = []
+[lib]
+crate-type = ["rlib"]

@@ -1,0 +1,32 @@
+@prefix smm: <urn:autofde-lab:semantic-model-manufacturing:> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+smm:CandidateGraphDeltaShape
+    a sh:NodeShape ;
+    sh:targetClass smm:CandidateGraphDelta ;
+    sh:property [
+        sh:path prov:wasDerivedFrom ;
+        sh:minCount 1 ;
+        sh:nodeKind sh:IRI ;
+        sh:message "Candidate(O*) requires explicit provenance." ;
+    ] .
+
+smm:AdmissionReceiptShape
+    a sh:NodeShape ;
+    sh:targetClass smm:AdmissionReceipt ;
+    sh:property [
+        sh:path smm:standing ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in ( "ADMITTED" "REFUSED" ) ;
+    ] ;
+    sh:property [
+        sh:path smm:candidateHash ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:minLength 64 ;
+        sh:maxLength 64 ;
+    ] .

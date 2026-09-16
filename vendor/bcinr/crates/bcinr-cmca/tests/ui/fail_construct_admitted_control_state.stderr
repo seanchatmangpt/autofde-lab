@@ -1,0 +1,25 @@
+warning: use of deprecated struct `bcinr_cmca::allocator::AdmittedControlState`: CMCA-102/CMCA-114: authority chain pending Hoare-logic verification, do not use in production code
+ --> tests/ui/fail_construct_admitted_control_state.rs:1:28
+  |
+1 | use bcinr_cmca::allocator::AdmittedControlState;
+  |                            ^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated struct `bcinr_cmca::allocator::AdmittedControlState`: CMCA-102/CMCA-114: authority chain pending Hoare-logic verification, do not use in production code
+ --> tests/ui/fail_construct_admitted_control_state.rs:3:13
+  |
+3 |     let _ = AdmittedControlState { digest: 0 };
+  |             ^^^^^^^^^^^^^^^^^^^^
+
+warning: use of deprecated field `bcinr_cmca::allocator::AdmittedControlState::digest`: CMCA-102/CMCA-114: authority chain pending Hoare-logic verification, do not use in production code
+ --> tests/ui/fail_construct_admitted_control_state.rs:3:36
+  |
+3 |     let _ = AdmittedControlState { digest: 0 };
+  |                                    ^^^^^^^^^
+
+error[E0451]: field `digest` of struct `bcinr_cmca::allocator::AdmittedControlState` is private
+ --> tests/ui/fail_construct_admitted_control_state.rs:3:36
+  |
+3 |     let _ = AdmittedControlState { digest: 0 };
+  |                                    ^^^^^^ private field

@@ -1,5 +1,8 @@
 # Cloud-Security Planning Domain Standing (AzureGoat / TerraGoat / CloudGoat / Kubernetes-Goat)
 
+
+> Point-in-time record: standings below were measured at qualified head `8de7e77066a6aa8a59ef703a43231b5e072136d2` and expire on head movement (AFDE-2603 receipt-qualification guard).
+
 AzureGoat, TerraGoat, CloudGoat, and Kubernetes-Goat are real cloud pentest/misconfiguration
 benchmark vendors (deliberately-vulnerable Azure, Terraform, AWS, and Kubernetes environments
 respectively), wired here as sosa/PROV-style planning domains and solved with the real Astar

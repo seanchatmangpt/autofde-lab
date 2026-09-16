@@ -8,11 +8,9 @@ OFMF Utilities
 from __future__ import annotations
 
 import time
-from typing import Any, Dict, NamedTuple
+from typing import NamedTuple
 
-from rdflib import ConjunctiveGraph, Graph, Literal, Namespace, URIRef
-from rdflib.namespace import RDF, RDFS, XSD
-
+from rdflib import Graph, Namespace, URIRef
 
 # ---------- Namespaces ----------
 KH = Namespace("https://chatmangpt.com/kgc/hooks#")
@@ -21,11 +19,13 @@ KH = Namespace("https://chatmangpt.com/kgc/hooks#")
 # ---------- Exceptions ----------
 class OFMFError(Exception):
     """Base exception for OFMF errors."""
+
     pass
 
 
 class SHACLValidationError(OFMFError):
     """Raised when SHACL validation fails."""
+
     def __init__(self, message, report_graph, report_text):
         super().__init__(message)
         self.report_graph = report_graph
@@ -65,27 +65,59 @@ def claude_event_to_iri(event_name: str) -> URIRef:
 # ---------- Receipt Utilities ----------
 class ReceiptProofInfo(NamedTuple):
     """Receipt proof information."""
+
     pass
 
 
 class ReceiptMetaInfo(NamedTuple):
     """Receipt meta information."""
+
     pass
 
 
 def write_receipt_bundle(
     receipt_proof_info: ReceiptProofInfo,
     receipt_meta_info: ReceiptMetaInfo,
-    output_path: str
+    output_path: str,
 ):
-    """Write a receipt bundle."""
-    # This is a stub.
-    pass
+    """Write a receipt bundle as deterministic JSON.
+
+    Replaces a silent pass-body stub: a receipt bundle that was never
+    written could be claimed without evidence. Deterministic via sorted
+    keys, so the same inputs always produce the same bytes.
+    """
+    import json
+    from pathlib import Path as _Path
+
+    payload = {
+        "proof": dict(receipt_proof_info._asdict())
+        if hasattr(receipt_proof_info, "_asdict")
+        else {},
+        "meta": dict(receipt_meta_info._asdict())
+        if hasattr(receipt_meta_info, "_asdict")
+        else {},
+    }
+    _Path(output_path).write_text(
+        json.dumps(payload, sort_keys=True, indent=2), encoding="utf-8"
+    )
+
 
 def canonical_hash_rdf(g: Graph) -> str:
-    """Return the canonical hash of an RDF graph."""
-    # This is a stub.
-    return ""
+    """Return the canonical hash of an RDF graph.
+
+    Replaces a stub that returned "" -- an empty hash made every graph
+    claim the same identity. Uses rdflib's isomorphism-preserving
+    canonical graph, serialized to sorted N-Quads and SHA-256 hashed.
+    """
+    import hashlib
+
+    from rdflib.compare import to_isomorphic
+
+    canonical = to_isomorphic(g)
+    lines = sorted(
+        ln for ln in canonical.serialize(format="nt").splitlines() if ln.strip()
+    )
+    return hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest()
 
 
 # ---------- Hook Utilities ----------
@@ -102,11 +134,24 @@ def sparql_select(g: Graph, query: str) -> list:
 
 # ---------- SHACL Utilities ----------
 def shacl_gate(g: Graph, shapes_g: Graph) -> bool:
-    """Perform SHACL validation."""
-    # This is a stub.
-    return True
+    """Perform real SHACL validation via pyshacl.
+
+    Replaces a stub that returned True unconditionally -- a validation
+    gate that always passes silently. Raises the caller's ImportError if
+    pyshacl is absent rather than fabricating a pass.
+    """
+    import pyshacl
+
+    conforms, _graph, _text = pyshacl.validate(g, shacl_graph=shapes_g)
+    return bool(conforms)
+
 
 def enforce_shacl_gate(g: Graph, shapes_g: Graph):
-    """Enforce SHACL validation."""
-    # This is a stub.
-    pass
+    """Enforce SHACL validation: refuse loudly on non-conformance.
+
+    Replaces a pass-body stub (enforcement that did nothing).
+    """
+    if not shacl_gate(g, shapes_g):
+        raise OFMFError(
+            "REFUSED_SHACL_NONCONFORMANCE: graph fails its SHACL shapes gate"
+        )

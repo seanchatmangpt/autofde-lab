@@ -1,0 +1,12 @@
+# Post-Chapman semantic-model manufacture and deterministic verification.
+# Install the project itself first, then:
+#   uv pip install -r requirements-semantic-models.txt
+# Training-only dependencies live in requirements-semantic-training.txt.
+
+pydantic>=2
+dspy
+tpot>=1.1
+scikit-learn>=1.6
+rdflib
+pyshacl
+pytest>=8

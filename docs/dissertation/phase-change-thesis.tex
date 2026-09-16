@@ -1,0 +1,1284 @@
+\documentclass[12pt,oneside]{report}
+
+% ---------------------------------------------------------------------------
+% Governed Autonomy as a Manufactured Artifact — mathematical edition
+%
+% Design for Combinatorial Maximalism (DfCM), applied to the mathematics
+% itself: the formalism preserves every lawful structural layer (algebra,
+% geometry, calculus) and never enumerates what a bound can compress
+% (the sum-product discipline of Chapter 8). Every quantitative claim is
+% anchored to a measured artifact (Appendices A--C); the falsification
+% ledger (Chapter 10) includes a conjecture refuted live during the
+% writing of Chapter 5.
+%
+% Compile: latexmk -pdf phase-change-thesis.tex
+% ---------------------------------------------------------------------------
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=1.05in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage[hidelinks]{hyperref}
+
+\lstset{basicstyle=\ttfamily\small, breaklines=true, frame=single,
+        columns=fullflexible, keepspaces=true}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{openproblem}[theorem]{Open Problem}
+\theoremstyle{definition}
+\newtheorem{definitionx}[theorem]{Definition}
+\newtheorem{principle}[theorem]{Principle}
+\newtheorem{modelx}[theorem]{Model}
+\theoremstyle{remark}
+\newtheorem{remarkx}[theorem]{Remark}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\commit}[1]{\texttt{#1}}
+\newcommand{\daggerfootnote}{$\dagger$\ }
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\dyad}{\mathbb{D}}
+\newcommand{\floor}[1]{\left\lfloor #1\right\rfloor}
+\newcommand{\simplex}{\Delta}
+\newcommand{\sym}{\mathfrak{S}}
+\newcommand{\E}{\operatorname*{\mathbb{E}}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Ent}{\operatorname{H}}
+\newcommand{\KL}{D_{\mathrm{KL}}}
+\newcommand{\escort}[1]{L_{#1}}
+\newcommand{\shares}{\mathbf{s}}
+\newcommand{\mass}{\mathbf{m}}
+
+\title{\textbf{Governed Autonomy as a Manufactured Artifact}\\[6pt]
+\large A Mathematical Theory of Certified Allocation, Its Deletion of\\
+\large Implementation, and the Geometry of the Phase Transition\\
+\large it Induces in Autonomous Software Agents}
+\author{Sean Chatman\\
+\small AutoFDE Laboratory\\
+\small \texttt{sean@chatmangpt.com}}
+\date{September 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\noindent
+Autonomous agents must allocate finite resources across exploration
+options, and every classical policy family (greedy, $\varepsilon$-greedy,
+UCB1, PUCT) optimizes performance while remaining structurally incapable
+of governance: outputs are non-deterministic across platforms,
+non-conserving under discretization, silently degrading under failure,
+and invisible to audit. This dissertation develops, in full formal
+detail, the mathematics of the alternative demonstrated by the AutoFDE
+artifact chain: allocation as a \emph{certified, receipted, host-invariant
+artifact}.
+
+The mathematical contributions are layered. \emph{Algebra}: the escort
+cascade is developed through its partition function $Z(q)=\sum_i m_i^q$,
+R\'enyi dimensions $D_q$, and the Legendre duality between the lens
+exponent $q$ and the local H\"older spectrum $f(\alpha)$; the
+substitution of integer-lens powers $m^q$, $q\in\Z$, for the
+transcendental exponential $e^{\tau S}$ is proved to algebraize
+determinism---bit-identical replay across CPython and BEAM hosts becomes
+a theorem about the dyadic grid $\dyad_{16}=\Z/2^{16}$ rather than a
+hope about floating point. \emph{Geometry}: allocations live in the
+simplex $\simplex^{N-1}$; canonical hash-ordering exhibits the allocator
+as a function on the orbit space $\simplex^{N-1}/\sym_N$; the compiled
+policy is measured to have the exactly-uniform symmetric fixed point, to
+\emph{fund rarity} (a near-zero-mass candidate receives $0.1721$, more
+than the minimum strong share $0.1183$, via the rare lens $q=-1$), and
+to compress four orders of magnitude of mass ratio into a factor
+$3.4$ of share ratio. A conjectured coverage floor of
+$\Lambda_0/N = 5/32$ is \emph{refuted by measurement} (raw weak share
+$0.0837$), and the refutation is retained as a first-class result: the
+$\rho$-routed, multiplicatively-weighted cascade is not a barycenter of
+its lenses, and its sharp floor is stated as an open problem.
+\emph{Calculus}: the lens derivative $\frac{d}{dq}\log
+Z(q)=\E_{\escort{q}}[\log m]$ and the Gibbs identity
+$\frac{d\Ent}{d\tau}=-\tau\Var(S)$ are proved; the sum--product law of
+combinatorial maximalism is formalized (option graphs grow with the sum
+of alternatives while path cardinalities carry their product), giving
+the information-theoretic reason governance must preserve option
+entropy rather than maximize point yield. The phase transition itself
+is given quantitative form: per-implementation governance has integrity
+$(1-p)^H$, exponential in hosts $H$, while the single-kernel law
+replaces it with a fixture of constant cost---the availability
+argument of the transistor, transposed from components to hosts.
+
+The dissertation's method is its own subject: a falsification ledger in
+which the circular benchmark, the every-softmax ``theorems,'' the
+notational equivalence proof, the local reference implementation, and
+most recently the coverage-floor conjecture were each deleted or refuted
+with commit-anchored receipts. What survives is the governance envelope
+and its phase-change structure, argued with explicit disanalogies and
+falsifiers.
+\end{abstract}
+
+\tableofcontents
+
+% ===========================================================================
+\part{The Program}
+% ===========================================================================
+
+\chapter{Introduction}
+\label{ch:intro}
+
+\section{The problem}
+
+Let an autonomous agent face a finite frontier of candidate branches
+$c_1,\dots,c_N$, each characterized by option entropy $\Omega_i \ge 0$,
+historical yield $Y_i$, and cost $C_i > 0$, and let it hold a discrete
+budget $B=(B_{\mathrm{tick}}, B_{\mathrm{mem}}, B_{\mathrm{depth}},
+B_{\mathrm{risk}})$. The allocation problem is the map
+\begin{equation}
+A:\; (\text{features}, B) \;\longmapsto\; \shares \in \simplex^{N-1}
+\;\longmapsto\; \Z^N \cap B\!\cdot\!\simplex^{N-1},
+\label{eq:allocation-problem}
+\end{equation}
+from real-valued evidence to a point of the probability simplex and
+thence, by discretization, to integer allocations. Every classical
+policy instantiates \eqref{eq:allocation-problem}; none of them makes
+the \emph{decision artifact}---the output $\shares$ and its integer
+projection---auditable, replayable, or conserved. This dissertation
+develops the mathematics of the ones that do, and argues that doing so
+is a phase transition in the sense of Chapter~\ref{ch:phase-formal}.
+
+\section{The thesis statement}
+
+\begin{principle}[Thesis statement]
+When the map~\eqref{eq:allocation-problem} is manufactured as a single
+certified artifact---deterministic across hosts
+(Ch.~\ref{ch:arithmetic}), conserving by construction
+(Ch.~\ref{ch:geometry}), refusing by type rather than degrading
+(Ch.~\ref{ch:envelope-summary}), and emitting content-bound receipts
+into process event data (Ch.~\ref{ch:conformance})---the failure class
+of divergent, silent, unverifiable implementation is removed
+structurally, and composition across hosts and trust boundaries becomes
+arithmetically possible rather than merely permitted.
+\end{principle}
+
+\section{Contributions}
+
+\begin{enumerate}
+\item \textbf{Geometry (Ch.~\ref{ch:geometry})}: the orbit-space
+formulation of deterministic replay; the lattice geometry of the budget
+polytope with its Ehrhart count; and four apportionment theorems for
+the floor projection (feasibility, monotonicity, residual bound,
+permutation equivariance), connecting budget conservation to the
+classical apportionment problem of Balinski and Young.
+\item \textbf{Algebra and multifractal calculus
+(Ch.~\ref{ch:escort})}: the escort cascade through $Z(q)$, $D_q$,
+$\tau(q)$, and the Legendre duality with the H\"older spectrum; the
+lens derivative identity; the Gibbs entropy identity; and the
+identification of the escort family with the $\alpha$-geometry of
+information geometry.
+\item \textbf{Emergent policy geometry (Ch.~\ref{ch:blend})}: the
+exactly-uniform symmetric fixed point (verified), the rarity-funding
+phenomenon (measured), extreme mass-ratio compression (measured), and
+the refutation of the natural coverage-floor conjecture, with the sharp
+floor stated as an open problem.
+\item \textbf{Arithmetic determinism (Ch.~\ref{ch:arithmetic})}: the
+dyadic-grid model of Q16.16; the algebraization theorem replacing
+$e^{\tau S}$ by $m^q$ with $q \in \Z$; and the bit-identity theorem
+with its executed proof (the cross-host golden fixture).
+\item \textbf{Conformance geometry (Ch.~\ref{ch:conformance})}:
+alignments as geodesics of the synchronization product; the
+counterfactual battery as an adversarial neighborhood with a separation
+condition.
+\item \textbf{Combinatorial maximalism (Ch.~\ref{ch:dfcm})}: the
+sum--product law of option preservation; option entropy as log-volume;
+support invariants; and the Pareto-exposure discipline.
+\item \textbf{The phase transition, formally
+(Ch.~\ref{ch:phase-formal})}: availability functionals
+$(1-p)^H$ versus constant-cost verification; failure-class removal as
+language emptiness; the hand-written fraction as an order parameter
+with a monotone descent law.
+\item \textbf{The falsification ledger (Ch.~\ref{ch:ledger})},
+including a conjecture refuted during the writing of
+Chapter~\ref{ch:blend}.
+\end{enumerate}
+
+\section{Reading discipline}
+
+Theorems are proved, propositions are proved or verified exactly,
+measurements are labeled \emph{measured} and reproduced from
+Appendix~\ref{app:artifacts}, and model-level arguments (Bayesian
+hedging, availability asymptotics) are labeled \emph{model} and their
+assumptions stated. Nothing in Part~II is decoration: each formal object
+is the mathematical shadow of a deployed artifact, and where the
+formalism failed audit, the failure is printed.
+
+\chapter{Background and Related Work}
+\label{ch:background}
+
+\paragraph{Allocation under uncertainty.}
+UCB1's logarithmic regret~\cite{auer2002}, PUCT search~\cite{rosin2011},
+and the general theory~\cite{sutton2018} characterize the performance
+frontier under a trust model in which the policy's implementor is
+trusted absolutely. This dissertation inverts the trust model and asks
+what the decision artifact must satisfy for third-party replay.
+
+\paragraph{Information geometry and multifractal analysis.}
+The escort distributions $\escort{q}(i) \propto m_i^q$ originate in the
+multifractal formalism~\cite{halsey1986,renyi1970} and in nonextensive
+statistics~\cite{tsallis1988}; their geometric home is Amari's
+$\alpha$-geometry~\cite{amari2000}, which we connect to the lens
+parameter in \S\ref{sec:alpha-geometry}. Entropy variational principles
+follow Jaynes~\cite{jaynes1957} and Shannon~\cite{shannon1948};
+elementary facts follow Cover and Thomas~\cite{cover2006}.
+
+\paragraph{Apportionment.}
+Discretizing quotas onto integer budgets is the classical
+apportionment problem; the failures of naive rounding methods are
+catalogued by Balinski and Young~\cite{balinski1982}. The floor
+projection of Chapter~\ref{ch:geometry} is deliberately the simplest
+member of this family, and its theorems are the corresponding weakest
+(hence most robust) guarantees.
+
+\paragraph{Lattice geometry.}
+Counting lattice points in dilated polytopes is Ehrhart theory; the
+standard reference is Beck and Robins~\cite{beck2007}.
+
+\paragraph{Floating point.}
+IEEE~754 specifies correct rounding for $+,-,\times,\div$ and leaves
+transcendental functions to implementations; the consequences are
+classical~\cite{goldberg1991,ieee754}. Chapter~\ref{ch:arithmetic} turns
+this negative fact into the positive design decision that makes
+bit-identity purchasable.
+
+\paragraph{Object-centric process mining.}
+OCEL~2.0~\cite{ocel2,pm4py} and object-centric process
+querying~\cite{ocpq} supply the durable event substrate into which
+receipts are projected (Chapter~\ref{ch:conformance}).
+
+\paragraph{The industrial analogues.}
+Landes~\cite{landes1969}, Rosenberg~\cite{rosenberg1976},
+Mokyr~\cite{mokyr1990} establish the constraint-class-removal model of
+general-purpose transitions; Bardeen and Brattain~\cite{bardeen1948}
+and Moore~\cite{moore1965} supply the transistor instance;
+MacKenzie~\cite{mackenzie2001} the sociology of mechanized trust.
+
+% ===========================================================================
+\part{The Mathematical Development}
+% ===========================================================================
+
+\chapter{The Geometry of Governed Allocation}
+\label{ch:geometry}
+
+\section{The simplex, the symmetric group, and the orbit space}
+
+Fix the compiled shape $N \le 8$. Write
+\begin{equation}
+\simplex^{N-1} \;=\; \Bigl\{\, \shares=(s_1,\dots,s_N)\in\R_{\ge 0}^N
+\;:\; \textstyle\sum_i s_i = 1 \,\Bigr\}
+\end{equation}
+for the standard simplex, a compact convex polytope with $N$ vertices
+$e_1,\dots,e_N$. The symmetric group $\sym_N$ acts on
+$\simplex^{N-1}$ by permuting coordinates,
+$\sigma\cdot(s_1,\dots,s_N) = (s_{\sigma^{-1}(1)},\dots)$, and the
+physically meaningful state of an \emph{unordered} frontier is a point
+of the orbit space
+\begin{equation}
+\qquad \simplex^{N-1}/\sym_N \;=\; \bigl\{\, \text{nonincreasing
+rearrangements} \,\bigr\} \;=\; \bigl\{\, s_1\ge s_2 \ge \dots \ge
+s_N\ge 0,\ \sum s_i = 1 \,\bigr\},
+\end{equation}
+the \emph{Weyl chamber} of type $A_{N-1}$: a closed simplex glued from
+$N!/2$ fundamental domains along reflection walls.
+
+\begin{definitionx}[Canonical section]
+\label{def:canonical-section}
+The \emph{canonical hash section} is the map $\kappa$ assigning to each
+candidate $c_i$ the digest $\kappa(c_i) =
+\mathrm{SHA\text{-}256}(\mathrm{blob}(c_i))$ and ordering candidates by
+$(\kappa(c_i), c_i)$ lexicographically; the induced section
+$\sigma_\kappa : \simplex^{N-1}/\sym_N \to \simplex^{N-1}$ selects, in
+each orbit, the representative whose coordinates are indexed by
+canonical order.
+\end{definitionx}
+
+\begin{proposition}[Determinism as descent to the quotient]
+\label{prop:descent}
+Suppose the measure map $M: \mathcal{C}^N \to \simplex^{N-1}$ satisfies
+$M(c_{\sigma(1)},\dots,c_{\sigma(N)}) = \sigma\cdot
+M(c_1,\dots,c_N)$ ($\sym_N$-equivariance) and is computed by
+arithmetic that is exact on its value grid. Then
+$M \circ \sigma_\kappa$ is a well-defined function on the orbit space,
+and identical inputs yield bit-identical outputs.
+\end{proposition}
+
+\begin{proof}
+Equivariance means $M$ is constant on orbits up to the action; the
+section selects a unique representative; exactness on a totally ordered
+grid removes implementation latitude. Uniqueness of the representative
+forces uniqueness of the output bytes.
+\end{proof}
+
+\begin{remarkx}
+Proposition~\ref{prop:descent} is the formal content of the
+``canonical sort'' engineering rule: sorting by hash is not a
+convenience but the choice of a measurable section for a group action,
+and replay determinism is the statement that the composite descends.
+The golden fixture of \S\ref{sec:golden} is its executed proof.
+\end{remarkx}
+
+\section{The budget polytope and its lattice geometry}
+
+Discrete allocations live in the dilated simplex
+\begin{equation}
+B\!\cdot\!\simplex^{N-1} \;=\; \bigl\{\, x\in\R_{\ge0}^N : \textstyle\sum_i
+x_i \le B \,\bigr\}, \qquad B\in\N,
+\end{equation}
+and the feasible integer allocations are the lattice points
+$B\!\cdot\!\simplex^{N-1}\cap\Z^N$.
+
+\begin{proposition}[Ehrhart count of the budget simplex]
+\label{prop:ehrhart}
+$\bigl|B\!\cdot\!\simplex^{N-1}\cap\Z^N\bigr| = \binom{B+N}{N}$.
+\end{proposition}
+
+\begin{proof}
+Lattice points are weak compositions $x_1+\dots+x_N+x_{N+1}=B$ in $N+1$
+nonnegative parts (the slack variable absorbs the inequality); the count
+is stars and bars, the degree-$N$ Ehrhart polynomial of the simplex.
+\end{proof}
+
+\begin{remarkx}[Maximalism, first appearance]
+The policy does not and must not enumerate
+$\binom{B+N}{N}\sim B^N/N!$ allocations (for $B=9973$, $N=8$ this
+exceeds $10^{28}$); it selects one point of this lattice by a
+deterministic rule. Chapter~\ref{ch:dfcm} elevates the discipline:
+\emph{bounds, not enumerations}.
+\end{remarkx}
+
+\section{The floor projection: apportionment theorems}
+
+Let $\shares\in\simplex^{N-1}$ with active set
+$A=\{i: s_i\ge\theta\}$, $\sum_{i\in A}s_i=1$ after renormalization.
+The deployed projection assigns $\floor{s_i B}$ of each discrete
+budget dimension.
+
+\begin{theorem}[Floor apportionment]
+\label{thm:floor}
+The map $\Phi_B:\shares\mapsto(\floor{s_iB})_{i\in A}$ satisfies:
+\begin{enumerate}
+\item[(i)] \emph{(Feasibility)} $\sum_{i\in A}\floor{s_iB}\le B$;
+\item[(ii)] \emph{(Residual bound)}
+$B-\sum_{i\in A}\floor{s_iB} = \sum_{i\in A}\{s_iB\} < |A|$;
+\item[(iii)] \emph{(Monotonicity)} $s_i\ge s_j \Rightarrow
+\floor{s_iB}\ge\floor{s_jB}$;
+\item[(iv)] \emph{($\sym_N$-equivariance)}
+$\Phi_B(\sigma\cdot\shares)=\sigma\cdot\Phi_B(\shares)$.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+(i) Superadditivity of floor:
+$\sum\floor{s_iB}\le\floor{\sum s_iB}=\floor{B}=B$.
+(ii) $B-\sum\floor{s_iB}=\sum\bigl(s_iB-\floor{s_iB}\bigr)
+=\sum\{s_iB\}$, a sum of $|A|$ fractional parts.
+(iii) $x\mapsto\floor{xB}$ is nondecreasing.
+(iv) Coordinatewise application commutes with index permutation.
+\end{proof}
+
+\begin{remarkx}[Relation to classical apportionment]
+The Hamilton (largest-remainder) method redistributes the residual of
+(ii) to the largest fractional parts, achieving $\sum=B$ exactly; it
+pays with the Alabama paradox and population-monotonicity
+failures~\cite{balinski1982}. The deployed projection keeps the weaker
+guarantees (i)--(iv)---which are invariant under every monotone
+transformation of the inputs---and documents the residual rather than
+redistributing it. In the certified kernel the same discipline appears
+as \emph{one-sided} truncation: saturating fixed-point division and
+multiplication lose value, never manufacture it, so flow conservation
+residuals are nonnegative by construction and were additionally
+\emph{measured} across adversarial fixtures before being claimed.
+\end{remarkx}
+
+\section{Lanes, depth, and gauge structure}
+
+Priority lanes assign lane$(i) = \mathrm{rank}(s_i) \bmod L$: a
+monotone map into the cyclic group $\Z/L\Z$---an order-preserving
+projection of the Weyl chamber onto a cycle. Verification depth scales
+as $d_i = \min\bigl(D_{\max},\max(1,\mathrm{round}(D_{\max}(1+s_i)/2)\bigr)$,
+an affine gauge of share mass. Neither carries new mathematics; both are
+recorded to fix notation for the conformance chapter.
+
+\chapter{The Escort Cascade: Algebra and Multifractal Calculus}
+\label{ch:escort}
+
+\section{Masses and the partition function}
+
+Let each candidate carry masses
+$\mass^{(k)}=(m^{(k)}_1,\dots,m^{(k)}_N)\in\R_{\ge0}^N$ on $K=4$
+measure axes (option entropy, inverse cost, yield, salience
+\eqref{eq:salience-def} below). For a lens $q\in\R$ define the
+\emph{partition function}
+\begin{equation}
+Z_k(q) \;=\; \sum_{i=1}^{N} \bigl(m^{(k)}_i\bigr)^{q},
+\qquad q\in\R,
+\end{equation}
+finite for $q\ge 0$; for $q<0$ it is defined iff all masses are
+positive (zero mass under a negative lens is a typed refusal, mirroring
+the kernel's $\mathrm{ZeroMassUnderNegativeLens}$).
+
+\begin{equation}
+\escort{q}^{(k)}(i) \;=\; \frac{\bigl(m^{(k)}_i\bigr)^{q}}{Z_k(q)}.
+\label{eq:escort-def}
+\end{equation}
+
+\begin{proposition}[Limiting lenses]
+$\escort{0}$ is the uniform distribution (sibling-coverage convention:
+zero-mass siblings included); $\escort{1}$ is proportional allocation;
+as $q\to+\infty$, $\escort{q}\to e_{i^\ast}$ with
+$i^\ast=\arg\max m_i$ (exploitation); as $q\to-\infty$,
+$\escort{q}\to e_{i_\ast}$ with $i_\ast=\arg\min_{m_i>0} m_i$
+(rarity). The compiled vocabulary $q\in\{2,1,0,-1\}$ samples all four
+regimes with one exponent each.
+\end{proposition}
+
+\section{R\'enyi dimensions and the lens calculus}
+
+The R\'enyi entropy of order $q$ is
+$D_q(\mass) = \frac{1}{1-q}\log Z(q)$ (with $D_1$ the Shannon entropy
+by limit), and the multifractal scaling exponent is $\tau(q) =
+(q-1)D_q = \log Z(q) - \log Z(1)$ when $\sum m_i = 1$.
+
+\begin{proposition}[Lens derivative identity]
+\label{prop:lens-derivative}
+For $q$ in the interior of the convergence region and positive masses,
+\begin{equation}
+\frac{d}{dq}\log Z(q) \;=\; \E_{\escort{q}}\!\left[\log m\right],
+\qquad
+\frac{d^2}{dq^2}\log Z(q) \;=\; \Var_{\escort{q}}(\log m)\;\ge\;0 .
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Differentiate $\log Z = \log\sum m_i^q$:
+$\frac{d}{dq}\log Z = \frac{\sum m_i^q\log m_i}{Z} =
+\E_{\escort{q}}[\log m]$. The second derivative is the variance of
+$\log m$ under $\escort{q}$ (standard exponential-family identity;
+$\log Z$ is convex in $q$ by H\"older).
+\end{proof}
+
+\begin{corollary}[Monotone concentration]
+Along the lens line, increasing $q$ moves escort mass toward larger
+$\log m$ at a rate equal to its escort variance: the lens parameter is
+a concentration knob whose sensitivity is exactly the current
+dispersion of $\log m$. This is the quantitative form of the
+``exploitation'' direction.
+\end{corollary}
+
+\section{The Gibbs identity for the deleted reference engine}
+
+The deleted softmax was $p_i(\tau)\propto e^{\tau S_i}$ with salience
+\begin{equation}
+S_i \;=\; \frac{\Omega_i\,Y_i}{\max(C_i,\varepsilon)}.
+\label{eq:salience-def}
+\end{equation}
+We record for the ledger's historical chapter the identity that was
+once presented as a theorem:
+
+\begin{proposition}[Gibbs entropy identity]
+\label{prop:gibbs}
+For $p(\tau)\propto e^{\tau S}$ on a finite frontier,
+\begin{equation}
+\frac{d\Ent}{d\tau}\bigl(p(\tau)\bigr) \;=\; -\,\tau\,
+\Var_{p(\tau)}(S) \;\le\; 0 \quad (\tau\ge 0),
+\end{equation}
+with $\Ent(p)=-\sum_ip_i\log p_i$.
+\end{proposition}
+
+\begin{proof}
+$\frac{dp_i}{d\tau}=p_i\bigl(S_i-\E[S]\bigr)$; hence
+$\frac{d\Ent}{d\tau} = -\sum_i \frac{dp_i}{d\tau}(1+\log p_i) =
+-\sum_i p_i\bigl(S_i-\E[S]\bigr)\log p_i$; substituting
+$\log p_i = \tau S_i - \log Z$ and expanding gives
+$-\tau\Var(S)$.
+\end{proof}
+
+\begin{remarkx}[Ledger entry]
+Proposition~\ref{prop:gibbs} holds for \emph{every} Gibbs distribution
+over \emph{any} score vector; it is an exponential-family fact, not a
+property of salience~\eqref{eq:salience-def}. It is printed here once,
+proved, and marked: the earlier presentation of such identities as
+characteristic theorems of the allocator was an audit finding
+(Ch.~\ref{ch:ledger}).
+\end{remarkx}
+
+\section{Legendre duality: the H\"older spectrum}
+
+Multifractal analysis pairs the lens line with the spectrum of local
+exponents. Define, for $\alpha\in\R$,
+\begin{equation}
+f(\alpha) \;=\; \inf_{q\in\R}\,\bigl\{\, q\alpha - \tau(q) \,\bigr\},
+\qquad \alpha(q) = \frac{d\tau}{dq} = \E_{\escort{q}}[\log m] + 1
+\end{equation}
+(the additive constant absorbs normalization). Then $f$ is the Legendre--Fenchel
+transform of $\tau$; $f(\alpha)$ is the fractal dimension of the set of
+sites with local exponent $\alpha$, and $\tau$ is recovered by the
+inverse transform. For the finite frontier, $f$ is concave, supported
+on $[\log m_{\min},\log m_{\max}]$.
+
+\begin{remarkx}[Why this matters for policy]
+A lens policy $(q_0,\dots,q_D)$ per cascade level is a \emph{sampling
+of the $\tau$-curve}. The Legendre picture says which local structures
+each lens sees: $q>1$ sees the large-mass peaks ($\alpha$ small), $q<1$
+sees the rare support ($\alpha$ large), $q=0$ sees everything
+uniformly. A compiled vocabulary $\{2,1,0,-1\}$ is a four-point
+quadrature of the entire multifractal spectrum---which is why
+Chapter~\ref{ch:blend} finds the blended policy flat \emph{and}
+rarity-funding at once: the quadrature includes both endpoints.
+\end{remarkx}
+
+\section{Information geometry of the escort family}
+\label{sec:alpha-geometry}
+
+The map $q\mapsto\escort{q}$ traces a curve in
+$\simplex^{N-1}_{>0}$ through the statistical manifold of the frontier.
+Under the Fisher metric
+$g_{ij}=\E_{\escort{q}}\bigl[(\log m_i)(\log m_j)\bigr]-\E[\log
+m_i]\E[\log m_j]$ (the variance structure of
+Proposition~\ref{prop:lens-derivative}), the escort curve is a
+geodesic up to reparameterization of Amari's
+$\alpha$-family with $\alpha$ affine in $q$~\cite{amari2000,tsallis1988}:
+the lens line \emph{is} the $\alpha$-geometry of the frontier,
+traversed at unit speed proportional to escort variance. We do not fix
+the affine convention (authors differ); the structural statement is
+convention-free.
+
+\begin{remarkx}
+This is the precise sense in which the deleted softmax and the kept
+escort cascade are ``the same mathematics'': both traverse the same
+geodesic, one with continuous parameter $\tau$ (requiring $e^{\tau S}$,
+a transcendental), one with integer parameter $q$ (requiring only
+products $m^q$). Chapter~\ref{ch:arithmetic} proves that this
+difference in arithmetic is the entire difference in governability.
+\end{remarkx}
+
+\chapter{The Compiled Policy: Emergent Geometry of the Certified Blend}
+\label{ch:blend}
+
+The deployed measure is not a single lens but the certified kernel's
+blend over $K=4$ measures and $Q=4$ lenses with the compiled constants
+of Appendix~\ref{app:constants}: lens registry
+$\mathbf{q}=(2,1,0,-1)$ and mixture matrix
+\begin{equation}
+\Lambda \;=\;
+\begin{pmatrix}
+\tfrac25 & \tfrac3{10} & \tfrac15 & \tfrac1{10}\\[2pt]
+\tfrac1{10} & \tfrac15 & \tfrac3{10} & \tfrac25\\[2pt]
+\tfrac14 & \tfrac14 & \tfrac14 & \tfrac14\\[2pt]
+\tfrac12 & 0 & \tfrac12 & 0
+\end{pmatrix},
+\qquad \sum_{q}\Lambda_{kq}=1\ \ \forall k,
+\qquad \mathrm{ETA}=\tfrac12 .
+\label{eq:lambda}
+\end{equation}
+The kernel documents, and its correspondence tests pin, the blend
+identity
+\begin{equation}
+\mathrm{allocate} \;=\; \sum_{k,q}\,\Lambda_{kq}\cdot
+\mathrm{allocate\_single\_lens}(k,q),
+\label{eq:blend-identity}
+\end{equation}
+where each $\mathrm{allocate\_single\_lens}$ is itself a full cascade
+under lens $q$: two-path flow routing with per-node split $\rho_v$,
+multiplicatively-weighted routing updates, and saturating Q16.16
+arithmetic throughout. The interaction of these mechanisms makes the
+blend \emph{emergent}: it is not a barycenter of textbook escorts, and
+this chapter is the mathematical record of what that means---including
+one conjecture that died for it.
+
+\section{The symmetric fixed point}
+
+\begin{proposition}[Uniformity at symmetry]
+\label{prop:uniform}
+When all $N$ candidates present identical feature vectors, the kernel
+returns $s_i = 1/N$ exactly. \emph{Measured}: for $N=8$ and identical
+axes, each raw share is $0.125$, exactly representable in Q16.16
+($8192/65536$), with raw total mass $1.0$.
+\end{proposition}
+
+\begin{proof}[Verification status]
+Symmetry of inputs forces every per-lens cascade to a permutation-
+invariant output; uniqueness of the fixed point follows from the
+deterministic integer arithmetic; the uniform vector is the only
+permutation-invariant distribution. Executed numerically to exactness;
+a formal proof against the Rust source is future work
+(\S\ref{sec:open-floor}).
+\end{proof}
+
+\section{A conjectured coverage floor, refuted}
+
+The natural first model of the blend is the \emph{naive barycenter}:
+ignore routing and weights, treat each lens term as its pure escort
+$\pi_{kq}$, and read \eqref{eq:blend-identity} as
+$s=\sum\Lambda_{kq}\pi_{kq}$. Since every $\pi_{k,0}$ (coverage) is
+uniform over $N$, this model predicts a floor:
+
+\begin{conjecture}[Naive coverage floor]
+\label{conj:floor}
+$s_i \;\ge\; \frac{\Lambda_0}{N}$ for every candidate $i$, where
+$\Lambda_0=\sum_k\Lambda_{k,0} = \tfrac15+\tfrac3{10}+\tfrac14+\tfrac12
+= \tfrac54$; for $N=8$, $s_i\ge 5/32 = 0.15625$.
+\end{conjecture}
+
+\begin{theorem}[Refutation]
+Conjecture~\ref{conj:floor} is false for the deployed kernel.
+\emph{Measured}: with three real candidates
+$(5.0,\,0.1,\,0.8,\,0.4)$, $(3.0,\,0.1,\,0.7,\,0.21)$,
+$(0.01,\,0.01,\,0.01,\,10^{-6})$ and five phantom pads, the dead-end
+raw share is $0.083679 < 5/32$, and the raw total mass is $0.4962$,
+not $\sum_{k,q}\Lambda_{kq}=4$: the phantom candidates absorb half the
+mass, and the blend is not the naive barycenter.
+\end{theorem}
+
+\begin{remarkx}[What the refutation teaches]
+The $\rho$-routing and multiplicative-weight machinery couple the
+lenses: the coverage component's uniform baseline is \emph{routed}
+through the same flow splits as every other component and does not
+survive as an additive floor. The refutation is retained, per ledger
+discipline, as a first-class result: it delimits exactly which
+abstraction of the certified kernel is faithful (the blend identity
+\eqref{eq:blend-identity} as an internal correspondence) and which is
+not (componentwise escort additivity).
+\end{remarkx}
+
+\begin{openproblem}[Sharp floor of the certified cascade]
+\label{sec:open-floor}
+Derive $\inf_{\mass}\, s_i(\mass)$ over frontiers with $m_i\ge\varepsilon$,
+as a function of $(\Lambda,\mathbf{q},\rho,\mathrm{ETA})$, or prove no
+positive uniform floor exists once routing is coupled. A formalization
+of the kernel in a proof assistant, from which
+Proposition~\ref{prop:uniform} and the floor both follow, is the natural
+instrument.
+\end{openproblem}
+
+\section{Rarity funding: the measured anti-starvation mechanism}
+
+\begin{modelx}[Rarity funding, measured]
+With $N=8$ real candidates, seven at axes $(1.0,0.1,0.5,0.5)$ and one
+near-zero at $(0.001,0.001,0.001,10^{-9})$: the \emph{weak} candidate
+receives raw share $0.1721$, exceeding the minimum \emph{strong} share
+$0.1183$. With one dominant candidate
+$(10,1,2,20)$ against seven weak ones, all weak candidates receive
+$0.0958$ and the spike $0.3292$: four orders of magnitude of mass
+ratio compress to a share ratio of $3.4$.
+\end{modelx}
+
+The mechanism is the rare lens $q=-1$: under
+\eqref{eq:escort-def}, $m^{-1}$ amplifies small masses, so the blend's
+rare component concentrates on the weakest candidate---the compiled
+policy's built-in, quantitative anti-starvation. Together with extreme
+compression this gives the blend its measured character: \emph{flat in
+the middle, protective at the bottom, compressed at the top}---a
+log-scale policy, matching the Legendre reading of
+\S\ref{sec:alpha-geometry} (the quadrature includes both endpoints of
+the H\"older spectrum).
+
+\section{A decision-theoretic reading (model)}
+
+\begin{modelx}[Bayes hedging]
+Let the planner hold a Dirichlet posterior $\pi$ over which branch is
+ultimately viable, with full support. Any policy assigning $s_i=0$
+forges the option value $\E_\pi[v_i\mathbf{1}\{i\text{
+optimal}\}]>0$. A policy with the measured floor behavior hedges at
+posterior-dependent cost; the flatness the performance lens reads as
+waste, the governance lens reads as the price of never being
+categorically wrong. This is a model of the \emph{value} of the
+measured geometry, not a theorem about the kernel: the posterior, the
+value process, and the loss are assumptions.
+\end{modelx}
+
+\chapter{Arithmetic Determinism: Dyadic Rationals and the Transcendental Boundary}
+\label{ch:arithmetic}
+
+\section{The dyadic grid}
+
+Q16.16 arithmetic computes over the nonnegative dyadic grid
+\begin{equation}
+\dyad_{16} \;=\; \bigl\{\, k\,2^{-16} \;:\; k\in\{0,\dots,2^{32}-1\}
+\,\bigr\} \;\subset\; \Q,
+\end{equation}
+with saturating $+,-,\times$ and truncating $\div$ (floor toward zero).
+Every value is an exact rational; every operation is a total function
+on a finite totally ordered set; every result is bit-stable.
+
+\section{What IEEE 754 does and does not promise}
+
+IEEE~754~\cite{ieee754} specifies correctly-rounded $+,-,\times,\div$
+and (since 2008) $\sqrt{\,}$; it does \emph{not} specify
+transcendental functions, which may and do differ across
+libraries~\cite{goldberg1991}. A softmax requires $\exp$; therefore a
+float softmax is not bit-portable in principle, only
+platform-coincident in practice. This is not a tuning problem; it is a
+classification problem: $\exp$ is transcendental, and no rounding rule
+makes its implementations agree.
+
+\section{The algebraization theorem}
+
+\begin{theorem}[Algebraization of the exponential]
+\label{thm:algebraization}
+Let $m=e^{S}$ with $S$ in the additive group generated by the feature
+logs. The escort family $\{\escort{q}\}_{q\in\R}$ restricts on the
+integer sublattice $q\in\Z$ to maps computed from $\mass$ by finite
+products and one exact division:
+$\escort{q}(i)=m_i^{q}/\sum_jm_j^{q}$, $m_i^q$ by $|q|$ saturating
+multiplications (and one reciprocal for $q<0$). Consequently, on
+$\dyad_{16}$, every integer-lens escort is an algebraic function of
+the inputs---no transcendental is evaluated anywhere in the
+measure---whereas every non-integer lens (equivalently, every Gibbs
+softmax at $\tau\notin\{0,1\}$ relative to the log-mass grid) requires
+one.
+\end{theorem}
+
+\begin{proof}
+Immediate from $m^q$ for integer $q$ being a finite product; division
+is specified exact-by-truncation; saturation is a monotone clamp into
+$\dyad_{16}$. The converse holds because $m^q=e^{qS}$ with $qS$
+leaving the log-grid almost surely forces evaluation of $e^x$ at a
+non-grid point.
+\end{proof}
+
+\begin{theorem}[Bit-identity]
+\label{thm:bit-identity}
+Any two faithful implementations of the same integer-lens cascade on
+the same dyadic grid produce identical output bits for identical
+inputs. Hence host- and language-independence of outputs is a
+structural property of the arithmetic, not a testing accident.
+\end{theorem}
+
+\begin{proof}
+Each operation is a specified total function on a finite set;
+composition of specified total functions is a specified total
+function; there is no latitude for an implementation to differ.
+\end{proof}
+
+\section{The executed proof: the cross-host golden fixture}
+\label{sec:golden}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llll}
+\toprule
+Candidate & Axes $(\Omega,1/C,Y,S)$ & Share (exact) & Dyadic form \\
+\midrule
+beta  & $(2.0,0.2,0.8,1.6)^{\dagger}$ & $0.2135009765625$ &
+$13{,}983/65{,}536$\\
+alpha & $(4.0,0.5,0.5,2.0)^{\dagger}$ & $0.153564453125$ &
+$10{,}062/65{,}536$\\
+gamma & $(1.0,0.1,1.2,0.4)^{\dagger}$ & $0.1290130615234375$ &
+$8{,}452/65{,}536$\\
+\bottomrule
+\end{tabular}
+\caption{Golden fixture: one request through the identical artifact on
+native (CLI), CPython/\code{wasmtime}, and BEAM/\code{wasmex}; payloads
+byte-identical, values pinned in two languages. $^{\dagger}$Columns are
+$(\Omega, 1/C, Y, S)$ per the bridge's axis order.}
+\label{tab:golden}
+\end{table}
+
+Theorem~\ref{thm:bit-identity} predicts
+Table~\ref{tab:golden}; the table executes the prediction. The failure
+mode of the old regime---the same request answered differently by
+different hosts---is not mitigated; it is unsatisfiable.
+
+\section{Determinism of the section}
+
+The canonical section $\sigma_\kappa$
+(Definition~\ref{def:canonical-section}) supplies the second half of
+replay determinism: Proposition~\ref{prop:descent} (order-theoretic)
+plus Theorem~\ref{thm:bit-identity} (arithmetic) give end-to-end
+bit-identical replay from unordered inputs to receipted plan.
+
+\chapter{Conformance Geometry and Adversarial Separation}
+\label{ch:conformance}
+
+\section{Event data as typed multigraphs}
+
+An OCEL~2.0 log is a typed multigraph $G=(E\sqcup O, \ell)$ with events
+$E$, objects $O$, and typed incidence $\ell\subseteq
+E\times\mathrm{Qual}\times O$~\cite{ocel2}. Receipted allocations are
+events bound to plan/branch/world objects; the log is the durable
+state of the governance process.
+
+\section{Alignments as geodesics}
+
+Let $\mathcal{M}$ be a process model (e.g.\ a discovered Petri net) and
+$\sigma$ a trace. The synchronization product $\mathcal{S}(\sigma,
+\mathcal{M})$ is the weighted graph on pairs (log step, model step);
+the alignment cost
+\begin{equation}
+d(\sigma,\mathcal{M}) \;=\; \min_{\pi\in\Pi(\sigma,\mathcal{M})}
+\;\sum_{e\in\pi} w(e)
+\end{equation}
+is the shortest-path (geodesic) distance in $\mathcal{S}$, computed by
+$A^\ast$ search~\cite{pm4py}. Conformance is the statement
+$d\le\delta$; fitness the normalized ratio.
+
+\section{The counterfactual battery as adversarial neighborhood}
+
+Let $\mathcal{L}\subset\mathrm{Traces}$ be the lawful language and
+$\mu:\mathcal{L}\to\mathcal{L}$ a mutator (premature actuation,
+unadmitted injection, skipped teardown, subtask inversion, crossed
+object links, allocation inversion). Governance holds when the detectors
+separate the mutant neighborhood from the lawful set:
+
+\begin{equation}
+\inf_{\sigma\in\mathcal{L}}\; d\bigl(\mu(\sigma),\,\mathcal{M}\bigr)
+\;\ge\; \delta_\mu \;>\; \sup_{\sigma\in\mathcal{L}}
+d(\sigma,\mathcal{M}) .
+\label{eq:separation}
+\end{equation}
+
+Condition \eqref{eq:separation} is the metric form of fail-closed: a
+margin, not a verdict. The declared limitation stands: the mutator set
+is imagined by the same authors as the detectors
+(Ch.~\ref{ch:ledger}), so \eqref{eq:separation} is verified on a
+designed neighborhood, and the margin against unimagined adversaries is
+unknown.
+
+\chapter{Combinatorial Maximalism: The Sum--Product Law of Option Preservation}
+\label{ch:dfcm}
+
+\section{The sum--product law}
+
+Let a decision configuration be a graph whose nodes carry option sets
+$O_1,\dots,O_n$.
+
+\begin{principle}[Sum--product law]
+The configuration space grows with the \emph{sum} of alternatives,
+$|G|=\Theta(\sum_i|O_i|)$, while the path space carries their
+\emph{product}, $|\Pi|=\prod_i|O_i|$. A governed reasoner may hold all
+of $G$ and must never enumerate $\Pi$: selection among preserved
+options proceeds by bounds and sections, with every truncation
+declared.
+\end{principle}
+
+The Ehrhart count of Proposition~\ref{prop:ehrhart} is the arithmetic
+instance: the budget polytope's $\binom{B+N}{N}$ lattice points are
+bounded, never listed. The escort cascade is the dynamical instance:
+$N$ candidates are all retained as support of $\escort{q}$, and the
+lens line selects within them by a one-parameter family rather than by
+pruning to a singleton.
+
+\section{Option entropy as log-volume}
+
+Define the option state of a frontier as the pair
+$(\mathrm{supp}(\shares), \Ent(\shares))$. Since
+$\Ent(\shares)\le\log|\mathrm{supp}(\shares)|$ with equality iff
+uniform, entropy is the log-volume of the effective option set: the
+maximalist objective is precisely to keep log-volume of lawful
+alternatives bounded away from zero. Anti-starvation is the support
+invariant $|\mathrm{supp}|\ge1$ (projection law) and, in the compiled
+policy, the measured rarity-funding floor (\S\ref{ch:blend}): the
+two-level guarantee that the reasoner is never left with the empty
+product.
+
+\section{Pareto exposure, not argmax}
+
+An argmax returns one point of $\simplex^{N-1}$: a decision with no
+residual structure. A governed allocation returns a point \emph{with}
+its section (ordering), its lattice projection
+(Theorem~\ref{thm:floor}), its residual (declared), and its
+receipt---a full fiber of audit structure over the decision.
+Formally, the artifact exposes the map
+\begin{equation}
+\shares \;\longmapsto\; \bigl(\sigma_\kappa(\shares),\,
+\Phi_B(\shares),\, B-\textstyle\sum\Phi_B(\shares),\,
+\mathrm{SHA256}(\mathrm{canon}(\shares))\bigr),
+\end{equation}
+and every consumer composes with this exposure rather than with
+$\shares$ alone. This is the sum--product law at the interface level:
+the exposed structure grows additively with the laws enforced, while
+the space of compatible consumers grows multiplicatively.
+
+\section{Reversibility lattice}
+
+Options carry a partial order $a\sqsubseteq b$ (``$a$ is recoverable
+from $b$'s consequences''). The design rule---$\mathrm{COMPENSATABLE}
+\neq \mathrm{REVERSIBLE}$, and unknown reversibility is a fence---is
+the statement that the lattice's order structure, not its labels, is
+the decision input: preference goes to the change preserving the most
+lawful upper bounds.
+
+\chapter{The Phase Transition, Formally}
+\label{ch:phase-formal}
+
+\section{Availability functionals}
+
+\begin{modelx}[Integrity of multi-host agreement]
+\label{model:availability}
+Fix a per-host, per-change divergence probability $p$ (platform
+arithmetic, version drift, silent fallback) and $H$ hosts that must
+agree for an audit to pass. Per-implementation governance has integrity
+\begin{equation}
+I_{\mathrm{multi}}(H) \;=\; (1-p)^H \;\xrightarrow{H\to\infty}\; 0
+\qquad\text{(exponentially)},
+\end{equation}
+while the single-kernel law replaces the $H$-fold conjunction with one
+fixture of constant cost: $I_{\mathrm{kernel}}(H) =
+\mathbf{1}[\text{fixtures pass}]$, independent of $H$. This is the
+tube-reliability argument $r^n$ of integrated electronics, transposed
+from components to hosts. It is a model: $p$ is an assumed parameter,
+and independence across hosts is an assumption.
+\end{modelx}
+
+\section{Failure-class removal as language emptiness}
+
+Let $\mathcal{B}(S)$ be the set of observable behaviors of system $S$.
+Old regime: there exist executions in $\Phi_{\mathrm{silent}}$ (silent
+fallback), $\Phi_{\mathrm{diverge}}$ (cross-host disagreement),
+$\Phi_{\mathrm{unreceipted}}$ (actuation without content-bound trace),
+and these sets are nonempty and reached with positive probability.
+New regime: the executed language satisfies
+\begin{equation}
+\mathcal{B}(S)\;\cap\;\bigl(\Phi_{\mathrm{silent}}\cup
+\Phi_{\mathrm{diverge}}\cup\Phi_{\mathrm{unreceipted}}\bigr)
+\;=\;\varnothing ,
+\end{equation}
+by construction: refusals are typed, transport equality is pinned by
+fixture, receipts are content-bound. Removal, not mitigation: the
+transition of Chapter~\ref{ch:phase} in set-theoretic form.
+
+\section{The order parameter}
+
+Define $\mu(t)$ = fraction of delivered product-surface lines that are
+hand-written rather than manufactured. The operating contract imposes
+the monotone descent law $\mu(t)\le\mu(t-\Delta)$ per milestone; the
+session documented here moved $\mu$ discontinuously (the reference
+measure deleted outright), and the ledger
+(Ch.~\ref{ch:ledger}) is the trajectory of $\mu$ with receipts. In the
+variational analogy, $\mu$ plays free energy: every audit step must
+lower it, and no step may trade a temporary increase for a promised
+future decrease without a paydown plan committed in the same change
+(Jaynes' maximum-entropy calculus applied to the codebase: the
+macrostate is the law surface; the microstates are its lawful
+renderings~\cite{jaynes1957}).
+
+% ===========================================================================
+\part{Evidence and Argument}
+% ===========================================================================
+
+\chapter{The Governance Envelope, Summarized}
+\label{ch:envelope-summary}
+
+The envelope formalized across Part~II: \emph{deterministic replay}
+(Props.~\ref{prop:descent}, Thm.~\ref{thm:bit-identity},
+Table~\ref{tab:golden}); \emph{conservation by construction}
+(Thm.~\ref{thm:floor} and the kernel's measured one-sided residuals);
+\emph{typed refusal} (limiting lenses, saturation semantics, transport
+refusals; metric form \eqref{eq:separation}); \emph{receipt}
+(content-bound digests projected as OCEL~2.0 events). The mathematics
+is deliberately standard where it can be (escort families, Legendre
+duality, Ehrhart counting, apportionment) and novel exactly where the
+artifact is: the algebraization boundary
+(Thm.~\ref{thm:algebraization}), the executed bit-identity, and the
+emergent blend geometry with its refuted conjecture and open floor.
+
+\chapter{The Falsification Ledger}
+\label{ch:ledger}
+
+Deletion as a scholarly act: every claim adversarially audited; failed
+claims deleted with commit-anchored receipts; the hand-written surface
+monotone nonincreasing. The entries, in order of discovery:
+
+\begin{enumerate}
+\item \textbf{The circular benchmark}: comparator blind by
+construction to the evaluation metric, which was the allocator's own
+objective; one comparator arm existed only in comments. Deleted as
+evidence; reborn as a characterization test with measured thresholds.
+\item \textbf{The every-softmax theorems}: floor conservation,
+entropy monotonicity (Prop.~\ref{prop:gibbs}), order preservation,
+permutation invarism---true, elementary, non-discriminating. Test file
+deleted (\commit{c1d04ffc}).
+\item \textbf{The notational equivalence}: $m=e^S$ turns
+$m^q/\sum m^q$ into a softmax; numerical agreement to $10^{-6}$
+confirmed arithmetic, not a result. Deleted; replaced by the
+bit-identity fixture (real builds, real transports).
+\item \textbf{The reference implementation}: the local float-softmax
+engine and its $\tau$ plumbing, deleted outright once the single-kernel
+law held; reintroduction pinned as a structural type error.
+\item \textbf{The coverage-floor conjecture}
+(Conjecture~\ref{conj:floor}): refuted by measurement during the
+writing of Chapter~\ref{ch:blend} (raw weak share $0.0837<5/32$),
+retained here as a result about the limits of barycentric abstraction
+for $\rho$-routed cascades.
+\end{enumerate}
+
+The ledger converts the dissertation's central risk---that a
+governance claim is itself unaudited---into structure: dishonesty would
+have required surviving an audit that deleted five of its own claims,
+including one mid-writing.
+
+\chapter{The Phase-Change Analysis}
+\label{ch:phase}
+
+\section{A model of phase change}
+
+A technology undergoes a phase change when jointly: (1) a constraint
+\emph{class} of the old regime is removed structurally
+(\S\ref{ch:phase-formal}); (2) composition unlocks---assemblies of
+scale the old regime cannot reach at any price, because old failure
+rates grew with assembly size (Model~\ref{model:availability});
+(3) a standard interface compounds improvement effort (steam:
+standardized power and threads; transistor: the planar process; here:
+the committed artifact with its provenance tripwires).
+
+\subsection{Steam}
+Early engines were thermally poor and economic only at the minehead;
+the phase change was removal of the biological/geographical power
+class, the factory system as composition unlock, and standardization
+as the compounding interface~\cite{landes1969,rosenberg1976}.
+
+\subsection{The transistor}
+At demonstration, not faster than tubes; the initial win was removal
+of the filament failure class, making $r^n$ assemblies
+arithmetically feasible, with integration as the compounding
+interface~\cite{bardeen1948,moore1965}.
+
+\section{The mapping}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{0.26\textwidth}p{0.34\textwidth}p{0.34\textwidth}}
+\toprule
+ & \textbf{Old regime} & \textbf{This work} \\
+\midrule
+Constraint class removed & Divergent implementations; float
+non-portability; silent fallbacks; invisible decisions & One certified
+kernel; dyadic-grid replay (Thm.~\ref{thm:bit-identity}); typed
+refusal; receipted events \\
+Composition unlock & Audit integrity $(1-p)^H$ decays exponentially in
+hosts & Constant-cost fixture; any WASM host serves the identical law \\
+Compounding interface & Tuning forks across variants & Artifact refresh
+with pin/fixture tripwires; ontology-declared policy \\
+Legacy metric at transition & (Steam: efficiency; tubes: speed) &
+(Here: exploration sharpness---measured flatness and compression,
+Ch.~\ref{ch:blend}) \\
+\bottomrule
+\end{tabular}
+\caption{The structural mapping; the final row records the
+characteristic signature of transitions---worse on the old headline
+metric at the boundary.}
+\label{tab:mapping}
+\end{table}
+
+\section{Disanalogies, stated}
+
+\textbf{Scale}: one laboratory, not an economy; mechanism, not
+history. \textbf{Binding constraint}: that auditability (not
+performance) binds consequential autonomy is a prediction, not a
+measurement. \textbf{Size of kernel}: $N\le 8$ with a compiled lens
+vocabulary; scaling the pattern has named obstacles (lens-policy
+expressiveness, wasm artifact supply-chain governance, the
+known-mutation limitation of the battery).
+
+\section{Falsifiers}
+
+(i) per-implementation governance demonstrated to scale across
+heterogeneous hosts without a single-kernel discipline; (ii) surviving
+cross-host divergence of the certified kernel's outputs (the fixtures
+fail and cannot be repaired by pin refresh); (iii) deployment evidence
+that operators refuse the guarantee at consequence scales;
+(iv) verification of arbitrary float policies made free, removing the
+constraint class by other means.
+
+\chapter{Conclusion}
+\label{ch:conclusion}
+
+The mathematics of this dissertation is the shadow of a deletion. When
+the local softmax died, what remained was structure: a simplex and its
+orbit space, a dyadic grid and its algebra, an escort line and its
+Legendre dual, a blend whose floor is open, a fixture whose equality
+is exact, and a ledger that records the conjectures killed in passing.
+The phase-change claim is now the precise statement that removing the
+implementation failure class converts host-count from an exponential
+liability into a constant, and the honest statement that everything
+else---adoption, scale, history---is future work with named
+falsifiers. Governance is not a property an artifact has; it is a
+property of the process allowed to modify the artifact. This
+dissertation has tried to be an instance of its own theory about it.
+
+\appendix
+
+\chapter{Artifact and Verification Map}
+\label{app:artifacts}
+
+Repositories: \code{seanchatmangpt/autofde-lab} (branch
+\code{feat/semantic-model-manufacturing}); sibling \code{ash\_autofde}
+(local). Anchor commits: \commit{39d244a9} vendoring;
+\commit{465616a3} WASM transport; \commit{3e2067f9} verification
+receipt; \commit{c1d04ffc} reference deletion;
+\commit{11e0559}/\commit{1617520} BEAM host. Kernel vendored at
+\commit{2ae60cf0}; artifact \code{wasm/artifacts/
+bcinr\_cmca\_wasm.wasm} (421{,}988 bytes; ABI \code{cmca\_alloc},
+\code{cmca\_free}, \code{cmca\_rank\_json}). Measurements of
+Ch.~\ref{ch:blend} were taken through \code{bcinr\_wasm.call\_rank}
+over the committed artifact; suites: 35 tests (cmca, beam), consumer
+suites green, \code{mix test} $10{+}1$ green.
+
+\chapter{Compiled Constants}
+\label{app:constants}
+
+$N=8$, $K=4$, $Q=4$; $\mathrm{ETA}=1/2$; lens registry
+$\mathbf{q}=(2,1,0,-1)$ (exploitation, proportional, coverage, rare);
+$\Lambda$ as in \eqref{eq:lambda} with exact entries
+$\{2/5,3/10,1/5,1/10\}$, $\{1/10,1/5,3/10,2/5\}$, $\{1/4\}^4$,
+$\{1/2,0,1/2,0\}$; coverage column $\Lambda_0=5/4$. Values read from
+the vendored generated module at pin \commit{2ae60cf0}; the refuted
+floor used $\Lambda_0/N=5/32$.
+
+\chapter{Measured Fixtures}
+\label{app:fixtures}
+
+Raw kernel outputs (before bridge renormalization), Q16.16-exact where
+marked: symmetric $N{=}8$: $0.125=8192/65536$ each, total $1.0$. Three
+real (Ch.~\ref{ch:blend} refutation): $(0.243393,\,0.169144,\,
+0.083679)$, total $0.4962$. Seven strong $+$ one weak:
+weak $=0.172088623046875=11280/65536$, strong min
+$=0.1182708740234375=7750/65536$. One spike $+$ seven weak: weak
+$0.095825$ each, spike $0.329163$. Prime-budget conservation:
+$104{,}726\le104{,}729$ over the full $8$-branch frontier.
+
+\chapter{The Deleted Claims, For the Record}
+\label{app:deleted}
+
+The headlines that did not survive audit: ``mathematically rigorous and
+empirically sound'' (one-line properties of any softmax); ``proved and
+verified equivalence'' (a change of notation); ``empirical value
+analysis vs.\ alternatives'' (a comparator in comments); ``optimal
+collapse risk, maximal option preservation'' (assertion); ``every
+candidate retains mass $\ge\Lambda_0/N$'' (refuted live,
+Ch.~\ref{ch:blend}). Their deletion and refutation records are the
+citations. The reader is invited to distrust nothing less than
+everything else in this dissertation---and to check.
+
+\begin{thebibliography}{99}
+\small
+
+\bibitem{amari2000}
+S.-i.~Amari and H.~Nagaoka, \emph{Methods of Information Geometry}.
+AMS Translations of Mathematical Monographs 191, 2000.
+
+\bibitem{auer2002}
+P.~Auer, N.~Cesa-Bianchi, and P.~Fischer, ``Finite-time Analysis of
+the Multiarmed Bandit Problem,'' \emph{Machine Learning},
+47(2--4):235--256, 2002.
+
+\bibitem{balinski1982}
+M.~L.~Balinski and H.~P.~Young, \emph{Fair Representation: Meeting the
+Ideal of One Man, One Vote}. Yale University Press, 1982.
+
+\bibitem{bardeen1948}
+J.~Bardeen and W.~H.~Brattain, ``The Transistor, A Semi-Conductor
+Triode,'' \emph{Physical Review}, 74(2):230--231, 1948.
+
+\bibitem{beck2007}
+M.~Beck and S.~Robins, \emph{Computing the Continuous Discretely:
+Integer-Point Enumeration in Polytopes}. Springer, 2007.
+
+\bibitem{cover2006}
+T.~M.~Cover and J.~A.~Thomas, \emph{Elements of Information Theory},
+2nd edition. Wiley, 2006.
+
+\bibitem{goldberg1991}
+D.~Goldberg, ``What Every Computer Scientist Should Know About
+Floating-Point Arithmetic,'' \emph{ACM Computing Surveys},
+23(1):5--48, 1991.
+
+\bibitem{halsey1986}
+T.~C.~Halsey, M.~H.~Jensen, L.~P.~Kadanoff, I.~Procaccia, and
+B.~I.~Shraiman, ``Fractal Measures and Their Singularities: The
+Characterization of Strange Sets,'' \emph{Physical Review A},
+33(2):1141--1151, 1986. \daggerfootnote
+
+\bibitem{ieee754}
+IEEE, \emph{IEEE Standard for Floating-Point Arithmetic},
+IEEE~754-2008 (rev.\ 754-2019), 2008/2019.
+
+\bibitem{jaynes1957}
+E.~T.~Jaynes, ``Information Theory and Statistical Mechanics,''
+\emph{Physical Review}, 106(4):620--630, 1957.
+
+\bibitem{landes1969}
+D.~S.~Landes, \emph{The Unbound Prometheus}. Cambridge University
+Press, 1969.
+
+\bibitem{mackenzie2001}
+D.~MacKenzie, \emph{Mechanizing Proof: Computing, Risk, and Trust}.
+MIT Press, 2001.
+
+\bibitem{mokyr1990}
+J.~Mokyr, \emph{The Lever of Riches}. Oxford University Press, 1990.
+
+\bibitem{moore1965}
+G.~E.~Moore, ``Cramming More Components onto Integrated Circuits,''
+\emph{Electronics}, 38(8), 1965.
+
+\bibitem{ocel2}
+A.~F.~Ghahfarokhi, G.~Park, A.~Berti, and W.~M.~P.~van~der~Aalst,
+``OCEL (Object-Centric Event Log) 2.0,'' 2022. \daggerfootnote
+
+\bibitem{ocpq}
+K.~K\"usters and W.~M.~P.~van~der~Aalst, ``Object-Centric Process
+Querying,'' 2025. \daggerfootnote
+
+\bibitem{pm4py}
+A.~Berti, S.~J.~van~Zelst, and W.~M.~P.~van~der~Aalst, ``Process
+Mining for Python (PM4Py),'' 2019. \daggerfootnote
+
+\bibitem{renyi1970}
+A.~R\'enyi, \emph{Probability Theory}. North-Holland, 1970.
+
+\bibitem{rosenberg1976}
+N.~Rosenberg, \emph{Perspectives on Technology}. Cambridge University
+Press, 1976.
+
+\bibitem{rosin2011}
+C.~Rosin, ``Multi-Armed Bandits with Episode Context,''
+\emph{Annals of Mathematics and Artificial Intelligence},
+61(3):203--230, 2011. \daggerfootnote
+
+\bibitem{shannon1948}
+C.~E.~Shannon, ``A Mathematical Theory of Communication,'' \emph{Bell
+System Technical Journal}, 27:379--423, 623--656, 1948.
+
+\bibitem{sutton2018}
+R.~S.~Sutton and A.~G.~Barto, \emph{Reinforcement Learning: An
+Introduction}, 2nd edition. MIT Press, 2018.
+
+\bibitem{tsallis1988}
+C.~Tsallis, ``Possible Generalization of Boltzmann--Gibbs
+Statistics,'' \emph{Journal of Statistical Physics},
+52(1--2):479--487, 1988.
+
+\end{thebibliography}
+
+\begin{flushleft}
+\footnotesize
+\emph{Bibliographic note.} Entries marked $\dagger$ are provisional and
+must be verified against library records before deposit. Artifact
+citations (commits, constants, measurements) are exact and reproducible
+from the repository at the named commits.
+\end{flushleft}
+
+\end{document}
