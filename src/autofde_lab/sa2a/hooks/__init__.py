@@ -18,11 +18,16 @@ from .reactive_loop import (
     ReactiveSemanticLoop,
     ReactiveSemanticTrace,
 )
+from .synthesis import (
+    HookSynthesizer,
+    SynthesizedHookArtifact,
+)
 
 __all__ = [
     "HookEffectKind",
     "HookEventTrigger",
     "HookExecutionRecord",
+    "HookSynthesizer",
     "HookVerdict",
     "KnowledgeHookDefinition",
     "KnowledgeHookEngine",
@@ -30,4 +35,5 @@ __all__ = [
     "ReactiveSemanticLoop",
     "ReactiveSemanticTrace",
     "SemanticIntent",
+    "SynthesizedHookArtifact",
 ]
