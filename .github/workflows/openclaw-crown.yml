@@ -23,14 +23,13 @@ permissions:
 
 jobs:
   exact-host:
-    # NOTE: intentionally left on the (nonexistent) 'ubuntu-slim' label,
-    # i.e. this job stays queued/dead. Un-queuing it (ubuntu-latest) exposes
-    # a real pre-existing failure: the committed integrations/openclaw/
-    # openclaw.plugin.json is a stale projection (key-reordered by the
-    # generator) and refreshing it requires a working node/TS build that
-    # this repo's CI-local toolchain could not reproduce (TS7006 errors
-    # locally). Fix the projection + build, then flip this label.
-    runs-on: ubuntu-slim
+    # Un-queued 2026-09-16: 'ubuntu-slim' was resolving to a self-hosted
+    # pool that ran and failed on projection drift -- integrations/openclaw
+    # had no committed package-lock.json, so CI's unpinned 'npm install'
+    # resolved different generator versions than the committed projections
+    # were built with. The lockfile is now committed; parity verified
+    # locally (dist + plugin.json regenerate byte-identical).
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       OPENCLAW_STATE_DIR: ${{ github.workspace }}/.openclaw-ci/state
