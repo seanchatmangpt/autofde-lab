@@ -43,6 +43,10 @@ dependencies = [
     "gymact; python_version >= '3.11'",
 ]
 
+[project.scripts]
+autofde = "autofde_lab.cli:main"
+autofde-lab = "autofde_lab.cli:main"
+
 [project.urls]
 documentation = "https://seanchatmangpt.github.io/autofde-lab/"
 repository = "https://github.com/seanchatmangpt/autofde-lab"
