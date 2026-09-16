@@ -452,3 +452,14 @@ def hook_reflex(
     })
 
 
+@app.command("chicago")
+def chicago() -> None:
+    """Execute the Canonical Chicago Definition of Done (DoD) Court for v26.9.16."""
+    from scripts.verify_v26_9_16_chicago import run_chicago_court
+
+    receipt = run_chicago_court()
+    _emit(receipt)
+    if not receipt.get("all_gates_passed"):
+        raise typer.Exit(code=1)
+
+

@@ -51,6 +51,7 @@ class KnowledgeHookDefinition:
     reason: str | None = None
     priority: int = 0
     after: tuple[str, ...] = ()
+    parameters: Mapping[str, Any] = field(default_factory=dict)
 
     def to_turtle(self) -> str:
         """Serialize hook definition to Turtle for GraphLaw / ShEx validation."""

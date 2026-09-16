@@ -102,13 +102,16 @@ class KnowledgeHookEngine:
                 action_iri = hook.action_iri or f"{hook.iri}#action"
                 target_cap = hook.target_capability_iri or f"{action_iri}/capability"
                 goal = hook.goal_iri or f"{action_iri}/goal"
+                combined_params = dict(hook.parameters)
+                if params:
+                    combined_params.update(params)
                 intent = SemanticIntent(
                     intent_id=f"intent-{uuid.uuid4().hex[:12]}",
                     source_hook_iri=hook.iri,
                     action_iri=action_iri,
                     target_capability_iri=target_cap,
                     goal_iri=goal,
-                    parameters=dict(params),
+                    parameters=combined_params,
                     condition_hash=condition_hash,
                     causal_prior_digest=causal_prior_digest,
                     timestamp_ns=now_ns,

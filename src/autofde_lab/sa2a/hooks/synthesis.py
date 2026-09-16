@@ -47,6 +47,7 @@ class HookSynthesizer:
         reason: str = "Autonomic reflex compiled from Lab qualification",
         priority: int = 10,
         authorized_actor: str = "urn:agent:autonomic-controller",
+        parameters: Mapping[str, Any] | None = None,
     ) -> SynthesizedHookArtifact:
         """Synthesize a KnowledgeHookDefinition and matching GraphLaw rule from a verified resolution."""
         hook_iri = f"http://example.org/hook/{hook_name}"
@@ -61,6 +62,7 @@ class HookSynthesizer:
             goal_iri=goal_iri,
             reason=reason,
             priority=priority,
+            parameters=dict(parameters or {}),
         )
 
         # GraphLaw N3 Rule: when trigger_predicate matches trigger_value, infer intent requirement
