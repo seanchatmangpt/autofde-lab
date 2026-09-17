@@ -1,10 +1,21 @@
 # AFDE-2604: local admission fencing — wire `AdmissionPipeline` as the mandatory predecessor of the local Authority/BRCE DO path
 
 - **Status (2026-09-17, fail-secure closure pass — the breaking default-flip
-  previously named as undecided is now DECIDED and EXECUTED; 4 of the 7 gaps
-  named in the previous entry below now CLOSED: DW-1, DW-2, UE-2, and Lens 5
-  item (1). Remaining open: UE-3, Lens 4's R1/R2/R3 (deliberately unaffected —
-  see below), and Lens 5 item (2).** `ConsequenceBoundary.__init__`'s
+  previously named as undecided is now DECIDED and EXECUTED). Corrected count,
+  per an external review that caught this session's own bookkeeping error:
+  the 2026-09-16 adversarial round found 9 distinct named findings, not 7
+  (Lens 2: DW-1, DW-2 — 2; Lens 3: UE-2, UE-3 — 2; Lens 4: R1, R2, R3 — 3;
+  Lens 5: item (1) admission-identity evidence, item (2) parameters not
+  bound — 2; total 2+2+3+2=9). This session's own earlier "2 of 7" / "4 of 7"
+  phrasing (below) incorrectly folded Lens 5's two findings into "the 7"
+  Lens 2-4 findings actually name. Real, corrected tally across both closure
+  passes this session: 4 of 9 CLOSED — DW-2 and Lens 5 item (1) (prior pass,
+  below), DW-1 and UE-2 (this pass). 5 of 9 remain OPEN: UE-3, R1, R2, R3
+  (Lens 4, deliberately unaffected — see below), and Lens 5 item (2). Per
+  this repo's own docs/CLAUDE.md invariant ("retracted claim gets a
+  retraction note in place, with the corrected finding beside it"), the
+  original "7"-based phrasing below is left exactly as written, not edited
+  away — this note is the correction, not a silent fix.** `ConsequenceBoundary.__init__`'s
   `require_admission` class-level default flipped from `False` to `True`;
   `ReactiveSemanticLoop.__init__`'s `admission_pipeline`, when the parameter is
   OMITTED (not explicitly passed, including as `None`), now constructs a real

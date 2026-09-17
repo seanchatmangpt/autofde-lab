@@ -5,7 +5,16 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
-Last update: **pass 38** (2026-09-17) — **AFDE-2604 fail-secure closure: the
+Last update: **pass 38** (2026-09-17) — **AFDE-2604 fail-secure closure**
+(count correction, caught by an external review: pass 37's "2 of 7" below and
+this pass's original "4 of 7" both incorrectly folded Lens 5's 2 findings
+into Lens 2-4's 7 -- the 2026-09-16 round actually named **9** distinct
+findings (DW-1, DW-2, UE-2, UE-3, R1, R2, R3, Lens-5-item-1, Lens-5-item-2).
+Real tally: **4 of 9 CLOSED** (DW-2 + Lens-5-item-1, pass 37; DW-1 + UE-2,
+this pass), **5 of 9 OPEN** (UE-3, R1, R2, R3, Lens-5-item-2) -- see
+`docs/jira/v26.9.16/AFDE-2604-admission-fencing-local-closure.md`'s own
+correction note for the full account; pass 37's line below is left as
+written, not edited away, per this file's own retraction convention). **The
 breaking default-flip pass 37 below explicitly declined to attempt without a
 decision is now decided and executed. `ConsequenceBoundary.require_admission`
 default flipped False->True; `ReactiveSemanticLoop.admission_pipeline`, when
