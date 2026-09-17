@@ -5,6 +5,939 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
+Last update: **pass 33** (2026-09-16) — **4 remaining v26.9.16 tickets closed this run
+(AFDE-2606 cross-process determinism, AFDE-2607 MCP `initialize`-wording precision, AFDE-2605
+`ecosystem-standing.md` doctrine consistency, AFDE-2611 `authority:none` field), all four
+`fix_verified: true`; a full `tests/fabric/ + tests/sa2a/` regression is `ALIVE` at 829
+collected / 600 passed / 4 failed, with all 4 failures pre-existing and named — 3 are the
+identical `fabric` baseline failures on record since pass 30, and the 4th matches by name a
+previously-documented AFDE-2604 survived mutation from pass 32 (Lens 4/R2), not a new
+regression from this pass's edits; AFDE-2604 itself remains open by deliberate choice,
+untouched this pass per explicit instruction.** Per `.claude/rules/standing-law.md`, standing
+is scoped per ticket below; per `.claude/rules/no-dual-bookkeeping.md` this section is the one
+place these verdicts live — the run's own evidence object is not restated as a second,
+parallel structure.
+
+**AFDE-2606 (cross-process determinism of Law 6) — `ALIVE`, `fix_verified: true`.** New
+Chicago-style test file `tests/fabric/test_afde_2606_cross_process_determinism.py`
+(`TestLaw6CrossProcessDeterminism`, 2 tests) closes the one `UNKNOWN` gap the prior AFDE-2606
+closure session left open: identical admitted input + profile produces identical projection
+identity across genuinely separate OS processes. Both tests invoke the real
+`python -m autofde_lab.fabric.pddl_engine` CLI via two separate real `subprocess.run` calls
+against the real `tests/domains/python/pddl_domains/blocks` fixture (fresh interpreter each
+call) — one pair under default per-process-randomized `PYTHONHASHSEED`, one pair under two
+deliberately different explicit seeds (0 vs 424242) — and assert the resulting
+`.plan`/`.powl.ttl` files are both byte-identical (`Path.read_text()` equality) and
+independently SHA-256-hash-identical. `.venv/bin/python -m pytest
+tests/fabric/test_afde_2606_cross_process_determinism.py
+tests/fabric/test_afde_2606_projection_candidate_only_closure.py -v --tb=short
+-p no:cacheprovider` → **6 passed in 1.46s**; zero-mock grep on the new file → 2 matches, both
+the module docstring's own sentence naming the banned tokens to state none are used, zero
+executable occurrences. Falsifier scoped precisely: this exact domain/problem pair, this
+`Astar` solver path, this environment (Python 3.13.9, this machine), and this commit
+(`f5727fa9`) — not a general proof against every possible PDDL domain or future dependency
+version. No source in `fabric/pddl_engine.py` or `fabric/powl.py` was touched (read-only).
+
+**AFDE-2607 (MCP `initialize` instructions wording) — `ALIVE`, `fix_verified: true`.**
+`src/autofde_lab/openclaw_bridge.py`'s MCP `initialize` `instructions` string previously said
+only "Use registered subjects only; every call returns a receipt." with no qualifier
+distinguishing the SHA-256 call-integrity digest from an admission-grade guarantee, contrary
+to `src/autofde_lab/CLAUDE.md`'s Non-authority section. Appended: "(a SHA-256 call-integrity
+digest over input/output, not an admission or authority grant)." New test
+`test_initialize_instructions_qualify_receipt_as_call_integrity_only` added to
+`tests/test_openclaw_bridge.py` (no prior test asserted on this string's content, so a test
+was added rather than modifying an existing one). `.venv/bin/python -m pytest
+tests/test_openclaw_bridge.py tests/test_openclaw_bridge_aliases.py -o addopts="" -v` → **25
+passed in 1.17s** (6 in `test_openclaw_bridge.py` alone, including the new test, plus 19 in
+the aliases file); zero-mock grep on both test files → 0 matches. Scoped strictly local: this
+says nothing about, and cannot close, A2A-2607's cross-repo Dam closure, which remains
+`UNKNOWN` from this repo by construction per `.claude/rules/ecosystem-boundary.md`.
+
+**AFDE-2605 (`ecosystem-standing.md` doctrine consistency) — `ALIVE` (scoped narrowly to the
+documentation-accuracy fix), `fix_verified: true`.** Corrected the three stale
+`docs/ecosystem-standing.md` occurrences claiming `match_solvers(..., ranked=True)` "accepts
+the flag and ignores it" (`utils.py:126`) to match the real, current, environment-gated
+implementation already correctly documented in `.claude/rules/ecosystem-boundary.md` and
+`src/autofde_lab/CLAUDE.md` invariant 3 (commit `571e834f`, `src/autofde_lab/utils.py:407-474`,
+plus follow-ups `9cfbfdf7`/`a6dd0523`). All three spots preserved their surrounding conclusion
+verbatim, replacing only the stale premise underneath it, per `docs/CLAUDE.md` invariant 2
+(historical corrections stay visible, never edited away). `.venv/bin/python -m pytest
+tests/fabric/test_phi_dispatch_chicago.py -v` → **7 passed, 2 skipped** (both skips are the
+pre-existing, named `cmca_rank_cli`-binary-not-resolvable environment gate — unchanged shape
+from prior sessions). Real grep confirmed the stale claim is fully gone (`accepts the flag and
+ignores it` / `utils.py:126` → 0 matches) and the corrected commit citation landed in all 3
+spots (`571e834f` → 3 matches). No source file and no test was touched. This is a
+`technicalStanding` claim only per `.claude/rules/standing-law.md` and
+`.claude/rules/fde-authority-boundary.md`; it says nothing about and does not attempt to close
+AFDE-2605/A2A-2605 itself, which the ticket file itself states this repo cannot close.
+
+**AFDE-2611 (`authority:none` field) — `ALIVE`, `fix_verified: true`.** Added
+`authority: Literal["none"] = "none"` as the final field on the frozen `CandidateResolution`
+dataclass in `src/autofde_lab/sa2a/unknown/resolution.py` — purely additive with a default
+every existing real construction site (`sa2a/cli.py:100`,
+`tests/sa2a/test_unknown_bridge.py:166,181`) already satisfies via keyword-only construction,
+so no existing call site or test needed changing. Three new falsifier tests appended to
+`tests/fabric/test_afde_2611_shllm_bounded_tier_closure.py` prove: (1) the field is a genuine
+`Literal["none"]`-typed, frozen-dataclass default (raises `FrozenInstanceError` on mutation);
+(2) zero real code path in `src/autofde_lab/fabric/` (local-model integration) or any other
+real construction site in `src/`+`tests/` ever sets `authority` to anything but `"none"`,
+and the live `_default_admission_court` never references `"authority"` at all; (3) tampering
+`authority` via `dataclasses.replace()` on both a well-formed and a malformed candidate never
+changes `admit_candidate()`'s verdict/standing/assertion/reasons — the field cannot become an
+admission-bypass shortcut in either direction. `.venv/bin/python -m pytest
+tests/fabric/test_afde_2611_shllm_bounded_tier_closure.py -v` → **5 passed, 1 skipped** (skip
+= the named, pre-existing real `TurboFieldfareServer` binary/weights-absent environment gate);
+with `-o addopts=""` all 3 new tests show `PASSED` explicitly. Zero-mock grep on both changed
+files → 3 matches, all docstring prose naming the discipline, zero executable occurrences.
+Regression: `tests/sa2a/test_unknown_bridge.py` + `test_novelty_ingest.py` +
+`conformance/test_court_admission.py` + `conformance/test_mutation_admission.py` → **40
+passed** (identical count to the prior-pass baseline: 11+2+27); 5 `fabric` dspy/cli/protocol
+test files → **18 passed, 1 skipped** (pre-existing, unrelated `a2a-sdk` environment gate).
+One out-of-scope, honestly-recorded `UNKNOWN`: a full, unfiltered `tests/fabric -q` directory
+run exited 139 (SIGSEGV) partway through — native/RL-heavy tests this repo's own `Justfile`
+already excludes from its fast loop; not attributed to this change (no isolation performed),
+not claimed unrelated either, filed as `UNKNOWN` in the ticket doc, not swept under the rug.
+Ticket-level AFDE-2611 overall standing remains `PARTIAL_ALIVE` (unchanged label — only
+Definition-of-done item 3 flips to `[x]` this pass; item #1, the five-way result enum, and the
+live-model portions of Laws 1/2/3/5 and falsifiers 1/2 remain exactly where the prior pass
+left them: `NOT_FOUND` / `PARTIAL_ALIVE` / `UNSUPPORTED`).
+
+**Full regression — `ALIVE`.** `.venv/bin/python -m pytest tests/fabric/ tests/sa2a/ -v
+--basetemp=/tmp/afl_remaining_reg` → **829 collected, 600 passed, 4 failed**. All 4 failures
+are pre-existing and named, zero newly introduced by this pass's 4 ticket fixes:
+
+- 3 are the identical `fabric` baseline failures on record since pass 30, unchanged shape:
+  `test_mcp.py::test_mcp_projects_one_fabric`,
+  `test_platform_console_capability_plan_chicago.py::test_ocel_diff_cli_catches_a_deliberately_mismatched_effect`,
+  `::test_ocel_diff_cli_matches_real_plan_step_effect_against_fixture_snapshots`.
+- The 4th,
+  `tests/sa2a/conformance/test_afde_2604_toctou_residual_qualification.py::test_r2_grant_revoked_mid_actuation_with_wired_broker_raises_uncaught`,
+  matches by name the pass-32 5-lens finding "Lens 4 — R2: mid-actuation revocation makes
+  `ReceiptGrantValidationError` propagate uncaught out of `execute()` when the fix is wired
+  in" — a previously-documented AFDE-2604 survived mutation, not a new regression from this
+  pass's work. None of this pass's 4 ticket fixes touched `boundary.py`, `reactive_loop.py`,
+  `cli.py`, or `receipts.py`, confirmed via `git status --porcelain` showing those four files
+  unchanged from the session's starting git-status snapshot.
+
+**AFDE-2604 — remains open by deliberate choice, untouched this pass.** Per explicit
+instruction, `boundary.py`, `reactive_loop.py`, `cli.py`, and `receipts.py` were not opened,
+read as an edit target, or modified this pass; that admission-boundary work is a separate,
+paused decision, out of scope for this run entirely. Standing is unchanged from pass 32:
+`PARTIAL_ALIVE` at the ticket level, with **9 of 13 attempted adversarial mutations having
+survived** across 4 of the 5 lenses run last pass (default-wiring, unified-enforcement
+composition, receipt-store TOCTOU, and relational-binding content-precision) — the admission
+fence remains demonstrably bypassable, not just at the relational-binding level it was
+originally built to close. This pass generated no new evidence for or against AFDE-2604
+itself (the one regression-run correspondence noted above is a name-match against pass 32's
+own already-recorded finding, not a fresh independent re-verification). The decision named in
+pass 32 — a breaking fail-secure redesign vs. continued incremental patching — remains open
+and is deliberately deferred to a future pass, not resolved here.
+
+No `git commit`, `git push`, or PR/branch operation was performed this pass — local file edits
+and local test runs only, per instruction.
+
+Last update: **pass 32** (2026-09-16) — **5-lens adversarial re-verification of pass 31's
+admission-boundary architecture fix (`boundary.py`/`reactive_loop.py`/`cli.py`/`receipts.py`):
+13 mutations attempted, 4 defeated, **9 survived across 4 of the 5 lenses** — the fence is
+demonstrably bypassable at the default-wiring, unified-enforcement-composition,
+receipt-store-TOCTOU, and content-precision levels, not just the relational-binding level it was
+built to close; a skeptic pass independently reconfirmed both prior self-reports with zero
+discrepancies; final `sa2a` regression is clean; the AFDE-2604 ticket header was honestly
+rewritten to `PARTIAL_ALIVE`, quoting all 5 verdicts without softening.** Per
+`.claude/rules/standing-law.md`, standing is scoped per lens below; per
+`.claude/rules/no-dual-bookkeeping.md` this section is the one place these verdicts live — the
+run's own evidence object is not restated as a second, parallel structure.
+
+**Architecture fix — `ALIVE` for the three named gaps it targets, plus a scoped receipt-store
+fix (`fix_verified: true` on all four, self-reported and independently spot-checked by the
+skeptic pass below):**
+
+- **Relational binding** (`boundary.py`) — `_admission_covers_action_target()` now requires the
+  real, explicit triple `(action_iri, afl:targetResource, target_resource) in graph` (rdflib
+  `Graph.__contains__`), replacing prior node co-occurrence (`URIRef(...) in
+  graph.all_nodes()`), which Mutations D1/D2 had defeated.
+- **Unified enforcement** (`boundary.py`) — added `require_admission: bool = False` to
+  `ConsequenceBoundary.__init__` (default preserves all 43 pre-existing construction sites
+  byte-for-byte); extracted the admission gate into a shared `_enforce_admission_gate()`,
+  applied by both `execute()` (when `require_admission=True`) and `execute_admitted()`
+  (always).
+- **Default wiring** (`cli.py`, `reactive_loop.py`) — `hook_reflex` now constructs
+  `ConsequenceBoundary(require_admission=not skip_admission_check)` and
+  `ReactiveSemanticLoop(admission_pipeline=None if skip_admission_check else
+  AdmissionPipeline())` — secure by default, with an explicit, visible
+  `--skip-admission-check` opt-out. One adjacent defect was found and fixed while wiring this:
+  `run_reflex_cycle()` called `admission_pipeline.admit(current_event)` with no
+  `provenance_record`, which the pipeline's default policy always refuses regardless of
+  content — fixed by supplying a real `provenance_record={issuer, timestamp}`.
+- **Receipt store** (`receipts.py`, scoped `ALIVE`) — added `_validate_final_grant_id()`, called
+  from `save_final`, closing (1) zero grant validation on `save_final` and (2) the TOCTOU
+  window between `save_prepared` and `save_final`, via a fresh `AuthorityBroker.evaluate()`
+  re-check at commit time. Confirmed by grep this session that the fix is opt-in/broker-gated
+  only, and that the one real production `ConsequenceBoundary` construction site (`cli.py`)
+  never wires `authority_broker` into its default `ReceiptStore()` — a structural no-op on the
+  live production path (Lens 4, below).
+
+**5-lens adversarial result — 13 mutations attempted, 4 defeated, 9 survived (headline: the
+fence is not closed):**
+
+| Lens | Target | Attempted | Defeated | Survived |
+|---|---|---|---|---|
+| 1 | relational-binding bypass (blank-node indirection, RDF reification, `owl:sameAs` bridging) | 3 | 3 | 0 |
+| 2 | default-wiring / opt-out abuse (direct library construction; Typer `OptionInfo` sentinel default) | 2 | 0 | 2 |
+| 3 | unified-enforcement bypass (`execute()`/`execute_admitted()` divergence via loop composition and flag tampering) | 3 | 1 | 2 |
+| 4 | receipt-store TOCTOU residual (grant revocation mid-actuation; store-level concurrency race) | 3 | 0 | 3 |
+| 5 | fresh-eyes, no prior constraint (receipt-to-admission identity edge; parameter binding) | 2 | 0 | 2 |
+| **Total** | | **13** | **4** | **9** |
+
+Survived, named precisely (none patched, per instruction):
+
+- **Lens 2** — DW-1: constructing `ConsequenceBoundary`/`ReactiveSemanticLoop` directly with
+  bare library defaults (bypassing `cli.py` entirely) reaches real `EXECUTED` actuation with
+  zero admission ever computed. DW-2: calling the real `hook_reflex` function object directly
+  (bypassing Click/`CliRunner` dispatch) binds `skip_admission_check` to a truthy
+  `typer.models.OptionInfo` sentinel instead of literal `False`, silently reproducing the
+  fully-permissive `--skip-admission-check` path with **no flag named at all**.
+- **Lens 3** — UE-2: `ReactiveSemanticLoop.admission_pipeline` and
+  `ConsequenceBoundary.require_admission` are two independently-configured objects with no
+  invariant tying them together; `loop.consequence_boundary` is a plain public attribute
+  reachable directly for real, unfenced actuation. UE-3:
+  `ConsequenceBoundary._require_admission` is an unguarded mutable attribute; tampering it
+  makes `execute()` permissive while `execute_admitted()` on the same instance still refuses.
+- **Lens 4** — R1: the `receipts.py` `save_final` fix is a structural no-op on the only real
+  production path (`cli.py:445` never wires `authority_broker` into the boundary's default
+  `ReceiptStore()`). R2: mid-actuation revocation makes `ReceiptGrantValidationError`
+  propagate **uncaught** out of `execute()` when the fix *is* wired in — worse than the
+  original gap, since the actuation physically occurs but zero terminal receipt (not even
+  `REFUSED`) is durably persisted. R3: `ReceiptStore` has no locking; two genuinely concurrent
+  `execute()` calls on one idempotency token (real `threading.Thread`/`Event`, no sleeps) can
+  leave a durable `REFUSED` record for an actuation that really happened, or raise an uncaught
+  `ValueError`.
+- **Lens 5** — no durable receipt carries an identity edge back to the `AdmissionResult` that
+  gated it, failing this repo's own no-dual-bookkeeping crown-recomputation threshold;
+  `_admission_covers_action_target()` binds only `(action_iri, target_resource)`, never
+  `ExecutionEnvelope.parameters` — one admission is reusable across structurally different
+  actuation payloads within a reflex cycle.
+
+**Skeptic pass — `ALIVE`, 8 items spot-checked, 0 discrepancies.** Independently re-ran both
+self-reports' cited commands this session: `.venv/bin/python -m pytest tests/sa2a/ -v` → **315
+passed** (matching the arch self-report's 315 exactly); the receipt self-report's 4-file command
+→ **27 passed** (matching exactly); both zero-mock greps re-run, matching exactly
+(docstring-literal matches only, zero real mock usage); direct source inspection of the 8
+specific architectural claims in `boundary.py`/`cli.py`/`reactive_loop.py`/`receipts.py`
+confirmed each present exactly as described. No discrepancy found in either self-report.
+
+**Final `sa2a` regression — `ALIVE`, 328 passed, 0 failed**, run after all 5 lenses' new
+conformance test files were added (collected count rose 314→328 across the session, consistent
+with additive-only test files landing from concurrent lens work; zero failures at any point in
+the final run).
+
+**Ticket honest-rewrite outcome — `PARTIAL_ALIVE`.**
+`docs/jira/v26.9.16/AFDE-2604-admission-fencing-local-closure.md`'s Status/Standing header was
+rewritten (all historical sections below it left fully intact) to state the mixed result
+verbatim: Lens 1 holds (3/3 defeated); Lenses 2, 4, and 5 do not hold (0/2, 0/3, 0/2 defeated
+respectively); Lens 3 partially holds (1/3 defeated). Not classified `ALIVE` — the fence is
+demonstrably bypassable multiple ways; not `BLOCKED` — every gap is named and reproducible, and
+nothing prevents further work.
+
+No `git commit`, `git push`, PR, or branch operation was performed this pass — local file edits
+and local test runs only, per instruction.
+
+Last update: **pass 31** (2026-09-16) — **adversarial re-verification of pass 30's 3
+surviving mutations plus 5 further fixes (D/E/F/B2/C2) against the pass-29/30
+AFDE-2604/2608/2609/2612 ticket set: the 3 mutations are closed per Task A's own run and
+confirmed by the full `sa2a` regression (zero failures in that test file this run), though
+none of 3 fresh adversarial lenses directly re-attacked them by name — each instead found new,
+deeper, currently-unpatched bypasses (identity-binding co-occurrence, cross-actor replay
+reuse, stale-prepared-receipt substitution, cross-entry-point confused deputy); all 5 further
+fixes report `fix_verified: true`; split regression is `BUILD_BROKEN` (`sa2a`, 6 new
+adversarial failures, zero baseline regression), `ALIVE` (`fabric`, 3 known-baseline failures,
+unchanged), `BUILD_BROKEN` (`ecosystem`, 25 failed + 31 errors, a strict subset of the
+pass-30-cited 27+31 baseline, 2 newly fixed); a completeness critic named 31 still-open items
+across AFDE-2604/2608/2609/2612, none patched or ticket-edited this pass.** Per
+`.claude/rules/standing-law.md`, standing is scoped per boundary below; per
+`.claude/rules/no-dual-bookkeeping.md` this section is the one place these verdicts live — the
+run's own evidence object is not restated as a second, parallel structure.
+
+**Closure of pass 30's 3 surviving mutations (Task A, `ALIVE`, `fix_verified: true`)**:
+`boundary.py` gained `_admission_covers_action_target()` (closes mutation a, content-unbound
+admission reuse), a token action-identity check in `execute()` Step 1 (closes mutation b,
+cross-action idempotency-token substitution), and unconditional per-call admission gating in
+`execute_admitted()` (closes mutation c, admission-gate-bypass-on-replay). Task A's own run:
+`.venv/bin/python -m pytest tests/sa2a/ -v --basetemp=/tmp/afl_finishA` → **299 passed**,
+`test_afde_2604_fresh_mutations_qualification.py`'s 3 mutation tests among them (self-report).
+Per the task's own instruction, the 3 fresh adversarial lenses run this pass
+(identity-binding, replay/idempotency, confused-deputy) do **not** independently re-attack
+these exact 3 mutations by name — each explicitly scopes itself as distinct from them and
+treats their closure as a given premise (the identity lens's own text: "Mutation A (already
+fixed this session, per the sibling report)"), then finds different, deeper gaps on the same
+surface (listed under the completeness critic, below). The one piece of evidence for closure
+that is not merely the fix agent's self-report is the final full `tests/sa2a/` regression run
+(314 collected, 308 passed, 6 failed, all 3 lenses' new test files present in the same run):
+none of the 6 failures are in `test_afde_2604_fresh_mutations_qualification.py`, so the 3
+original mutation tests continued to pass in the environment shared with all 3 lenses' work.
+Per `.claude/rules/absence-is-not-evidence.md`, this is real, positive re-run evidence for
+those 3 tests specifically (executed and passing), not the stronger claim that the 3
+adversarial lenses attacked and failed to break the fix — no lens targeted them by name.
+
+**5 further fixes, `fix_verified` as each task's own explicit boolean:**
+
+- **D** (AFDE-2604, store-layer defense-in-depth) — `ALIVE (scoped)`, `fix_verified: true`.
+  `ReceiptStore.save_prepared` gained an opt-in, constructor-injected `authority_broker`
+  parameter; when configured, a forged/mismatched `grant_id` is refused with a new typed
+  `ReceiptGrantValidationError` before any disk mutation, verified on both `ReceiptStore` and
+  `DurableDiskReceiptStore`. `.venv/bin/python -m pytest
+  tests/sa2a/conformance/test_afde_2604_receipt_store_grant_validation.py
+  tests/sa2a/test_brce_replay.py tests/sa2a/conformance/test_court_replay.py
+  tests/sa2a/conformance/test_court_consequence.py -v` → **28 passed**. Named `UNSUPPORTED`:
+  ODRL-policy-derived synthetic `grant_id`s ("policy-grant-…") are not covered by this check;
+  `ConsequenceBoundary`'s own default internal receipt store remains broker-less
+  (`boundary.py` untouched by this task).
+- **E** (AFDE-2612, wire a synthesized hook's Turtle into the WASM verdict branch) —
+  `BLOCKED:UPSTREAM_PRAXIS_GRAPHLAW_LITERAL_DECODE`, `fix_verified: true` (the finding, not a
+  fix, is what was verified). Root-caused via a real, since-deleted `cargo test` probe in
+  `~/praxis` (repo confirmed clean afterward) to `hooks::parsing::clean_term` not stripping the
+  RDF 1.1 `^^<datatype>` suffix `TripleStore::from` bakes into decoded string literals, so
+  `validate_and_extract_hooks`'s exact-string match on `kh:on`/`kh:kind` fails for every hook
+  regardless of Turtle serialization — an upstream, pinned-artifact defect this repo must not
+  and cannot fix locally. No wiring change was forced; two new real-execution falsifiers were
+  added as permanent regression fixtures. `.venv/bin/python -m pytest tests/sa2a/ -k "hook or
+  synthesis or novelty or autonomic or afde_2612 or graphlaw" -v` → **53 passed, 248
+  deselected**; a full unfiltered `tests/sa2a/` run → **301 passed**, zero regressions. 100% of
+  real hook verdicts in this repo still come from the local Python fallback, never the WASM
+  branch.
+- **F** (AFDE-2609, close 2 named artifact-discipline gaps) — `ALIVE`, `fix_verified: true`.
+  Added a real `GraphLawUnadmittedImportError` falsifier via a parameterized admitted-imports
+  set, and wired `WasmComponentRef.artifact_sha256` from a live `GraphLawBridge` instance at
+  the one real call site that exists anywhere in the repo (a test fixture — grep found zero
+  `src/` production call sites for `WasmComponentRef(`, so that specific gap is reported
+  `PARTIAL_ALIVE`, not invented as fully closed). `.venv/bin/python -m pytest
+  tests/sa2a/test_graphlaw_bridge.py tests/sa2a/test_cross_runtime_falsifier.py -v` → **5
+  passed**.
+- **B2** (AFDE-2608, ontology regeneration — closes pass 30's Task C, previously
+  `BLOCKED:UV_EXTRA_ALL_BUILD_FAILURE_DM_TREE`) — `ALIVE`, `fix_verified: true`. Independently
+  re-verified the sibling's dm-tree/CMake venv fix (`ALL_IMPORTS_OK`), then regenerated
+  `ontology/autofde-lab-capabilities.ttl` in place (121 capabilities, 113 `ALIVE`, up from 96;
+  real diff exactly 36 insertions across 3 stanzas: `HDDLDomain`, `HTNDomain`, `HDDLSolver`).
+  `.venv/bin/python -m pytest tests/ecosystem/test_chatman_chain_chicago.py -k
+  TestOntologyIsGeneratedNotCurated -v` → **5 passed, 13 deselected** (up from the pass-30
+  baseline of 2 failed, 3 passed). Named gaps: `src/autofde_lab/constitution/`'s `mode=Create`
+  issue was untouched by this task (addressed separately by C2, below); cross-environment
+  byte-for-byte determinism against the exact commit-time environment remains `UNKNOWN`.
+- **C2** (AFDE-2608, `ggen.toml` constitution-world mode flip — closes pass 30's Task D,
+  previously `BLOCKED:CONSTITUTION_WORLD_DRIFT_FROM_MODE_CREATE`) — `ALIVE`,
+  `fix_verified: true`. Flipped only `constitution-world`'s rule `Create`→`Overwrite` (the
+  other 7 `constitution-*` rules confirmed still `mode=Create` via real dry-run decisions, left
+  untouched); `world.py`'s `AdmittedObservation` dataclass was replaced by a `StandingValue`
+  enum (5 members) to match the live merged ontology graph. Fixed the one known downstream call
+  site (`tests/test_constitution_world_chicago.py`) plus a second, independently discovered
+  call site (`scripts/verify_ggen_generation.py`'s `_verify_dataclass_projection`, which parsed
+  only the single-file `world.ttl` and missed the cross-file individual binding in
+  `world-transformation-taxonomy.ttl`). `.venv/bin/python -m pytest
+  tests/test_verify_ggen_generation_chicago.py tests/sa2a/test_construct.py -v` → **11
+  passed**; `scripts/verify_ggen_generation.py` → exit 0, all 12 checks match. Flagged, not
+  investigated: a real, unexplained concurrent write to
+  `ontology/autofde-lab-capabilities.ttl` (adding `HDDLDomain`/`HTNDomain`/`HDDLSolver`) was
+  observed on disk at session end, consistent with B2 running concurrently in the same working
+  tree — not caused by any command this task ran (`ggen.toml` has no rule targeting that path).
+
+**Split regression — `sa2a` / `fabric` / `ecosystem`, known baseline vs. new failure:**
+
+- **`sa2a`** — `BUILD_BROKEN` (nonzero exit). 314 collected, 308 passed, 6 failed:
+  `test_afde_2604_cross_entry_point_confused_deputy.py::test_mutation_cd1_reactive_loop_default_admission_pipeline_bypasses_fence_entirely`,
+  `::test_mutation_cd2_raw_execute_bypasses_execute_admitted_fence_on_same_instance`,
+  `test_afde_2604_identity_binding_bypass_qualification.py::test_mutation_d1_unrelated_comention_satisfies_content_binding`,
+  `::test_mutation_d2_cross_pair_substitution_satisfies_content_binding`,
+  `test_afde_2604_replay_idempotency_fresh_mutations.py::test_mutation_d_cross_actor_token_reuse_hands_actor_a_receipt_to_actor_b`,
+  `::test_mutation_e_stale_prepared_receipt_reused_across_action_substitution`. All 6 are in
+  test files marked `??` (untracked) at session start — none were part of the pass-30
+  288-passed baseline. Passed count rose 288→308 with zero previously-passing test
+  regressing. The 6 failures are real, currently-unpatched `ConsequenceBoundary` bypass
+  defects the 3 adversarial lenses found this pass (see the completeness-critic list below),
+  not fixed this session.
+- **`fabric`** — `ALIVE`. 496 collected, 268 passed, 3 failed:
+  `test_mcp.py::test_mcp_projects_one_fabric`,
+  `test_platform_console_capability_plan_chicago.py::test_ocel_diff_cli_matches_real_plan_step_effect_against_fixture_snapshots`,
+  `::test_ocel_diff_cli_catches_a_deliberately_mismatched_effect` — the identical 3 names
+  already on record from pass 30's baseline. Zero new failures.
+- **`ecosystem`** — `BUILD_BROKEN` (the split-verification task that measured it is itself
+  `ALIVE`: a real, fresh run, real output, real diff against the stated baseline). 336
+  collected, 268 passed, 56 failed (25 `FAILED` + 31 `ERROR`). Every failing/erroring nodeid
+  this run is a strict subset of the pass-30-cited sibling baseline's 27 `FAILED` + 31 `ERROR`
+  list — zero new regressions. Two tests newly fixed vs. that baseline (consistent with B2's
+  ontology regeneration):
+  `test_chatman_chain_chicago.py::TestOntologyIsGeneratedNotCurated::test_ontology_matches_live_registry_exactly`
+  and `::test_ontology_covers_every_declared_kind`, both now passing.
+
+**Completeness critic — all 31 still-open items named, none patched or ticket-edited this
+pass** (`tickets_updated: []`). The critic's own headline finding: AFDE-2604's own
+ticket-document header ("Fix implemented, verified this session … the three named gaps … are
+closed") is materially stale against real current repo state — the 3 fresh adversarial lenses
+added 4 new real test files documenting 8 distinct, currently-unfixed gaps in
+`ConsequenceBoundary`/`ReceiptStore` that appear nowhere in the ticket. Full still-open list,
+no omissions:
+
+*AFDE-2604 — 8 items, each confirmed against a real, currently-failing or currently-passing
+(vulnerability-confirming) test this session, none reflected in the ticket document:*
+
+1. Mutation CD-1 — `ReactiveSemanticLoop`'s default `admission_pipeline=None` (byte-identical
+   to `sa2a/cli.py`'s real "hook reflex" construction) lets real actuation proceed with zero
+   `AdmissionPipeline` ever consulted.
+   `tests/sa2a/conformance/test_afde_2604_cross_entry_point_confused_deputy.py`.
+2. Mutation CD-2 — `ConsequenceBoundary.execute()` called directly on the same instance that
+   correctly refuses via `execute_admitted()` fully actuates, zero admission binding. Same file.
+3. Mutation D1 — `_admission_covers_action_target()` (`boundary.py` ~lines 80–101) checks only
+   node co-occurrence in the admitted graph (`graph.all_nodes()`), never that any triple
+   relates `action_iri` to `target_resource`; two unrelated co-mentioned identifiers pass as
+   "bound". `tests/sa2a/conformance/test_afde_2604_identity_binding_bypass_qualification.py`.
+4. Mutation D2 — same root cause as D1, cross-pair substitution: `action1` legitimately bound
+   to `target1`, `action2` to `target2`; executing `action1`+`target2` passes. Same file.
+5. Mutation D (replay) — `PreparedReceipt.actor_id` is recorded but never checked during Step-1
+   token replay; any actor independently granted for the same action/target inherits the
+   original actor's cached receipt by presenting a shared token, zero independent actuation.
+   `tests/sa2a/conformance/test_afde_2604_replay_idempotency_fresh_mutations.py`.
+6. Mutation E (replay) — a stale `PreparedReceipt` from a prepared-but-not-finalized crash
+   window is reused verbatim on token replay even when the current envelope specifies a
+   completely different action/target; the `FinalReceipt`'s `prepared_receipt_digest`
+   describes an action that was never the one actually, physically actuated. Same file.
+7. `ReceiptStore.save_final` performs zero `grant_id` validation at all (`FinalReceipt` has no
+   `grant_id` field, no linkage check, no existence check) — a terminal `EXECUTED` receipt can
+   be durably persisted with no corresponding `PreparedReceipt` and no grant anywhere.
+   `tests/sa2a/conformance/test_afde_2604_receipt_store_grant_validation_mutations.py`
+   (currently-*passing* tests confirming the vulnerability, not failing tests).
+8. TOCTOU — a grant expiring between `save_prepared` and `save_final` leaves the terminal
+   commit completely unchecked (no re-evaluation at `save_final`); the same window exists in
+   `ConsequenceBoundary.execute()` itself (a single `evaluate()` call at Step 2, none at Step 7
+   `save_final`). Same file as item 7.
+
+*AFDE-2604 — 4 items already named in the ticket, still explicitly open:*
+
+9. `sa2a/cli.py`'s "hook reflex" command remains intentionally unwired to the admission fence
+   (deliberate scope decision, not fixed).
+10. Default/backward-compatible `execute()`/`run_reflex_cycle()` paths remain deliberately
+    unfenced by additive design (not a completed global migration).
+11. `UNSUPPORTED`: `ReceiptStore`'s `grant_id` validation (the `save_prepared` layer that *is*
+    implemented, per Task D above) does not cover ODRL-policy-derived synthetic `grant_id`s
+    (`"policy-grant-<policy>-<perm>"`); would incorrectly refuse them if any real call path
+    ever used a broker-configured store with one (none does today).
+12. `UNSUPPORTED`: `ConsequenceBoundary`'s own default internal receipt store remains
+    broker-less (`self._receipt_store = receipt_store or ReceiptStore()`) — the store-layer
+    `grant_id` defense (Task D) is not wired into the live boundary by default.
+
+*AFDE-2608 — 7 items:*
+
+13. 7 of 8 `constitution-*` `ggen.toml` rules (`constitution-lab`, `-planning`, `-process`,
+    `-authority`, `-evidence`, `-standing`, `-interop`) remain `mode="Create"` — confirmed this
+    session by direct read (only `constitution-world` was flipped to `Overwrite`).
+    Regeneration is a structural no-op for these 7; a hand patch would sit there silently.
+14. Cross-environment byte-for-byte determinism of `ontology/autofde-lab-capabilities.ttl`
+    against the exact commit-time environment (`d4c3d8c1`, 2026-08-07) remains `UNKNOWN` — only
+    within-session determinism (this session's own now-working `--extra=all` venv) was
+    confirmed.
+15. The `dm-tree`/`ray[rllib]` CMake-floor build fix itself was never independently
+    re-diagnosed by the pass that consumed it — only its claimed import-success consequence was
+    re-verified; durability across a fresh clone or a `uv.lock` change is untested.
+16. Falsifier 1's gap for `constitution/` (a same-dataclass-count content tamper, e.g. renaming
+    a field or rewriting a docstring while preserving counts) is still `NOT_FOUND` —
+    `scripts/verify_ggen_generation.py` is count-based only, no content-hash-level drift gate
+    exists for the 7 remaining `mode=Create` files.
+17. Falsifier 5 (a consumer cannot treat a generated artifact as fresh source without
+    re-admission) was never tested against `fabric/coverage.py::load_ontology` — explicitly
+    out of scope, still `UNKNOWN`.
+18. `tests/ecosystem/test_chatman_chain_chicago.py::TestIndependentVerificationNotSelfAttestation::test_at_least_one_verifier_admits_the_receipt`
+    remains a pre-existing, unrelated failure, untouched across every pass in this ticket's
+    history.
+19. The broader `tests/ecosystem/` suite carries a large pre-existing 27-failed/31-errors
+    baseline (per this pass's own split-regression check above: 25 failed + 31 errors this run,
+    a strict subset with zero new regressions plus 2 fixes) — not independently re-run by the
+    critic itself due to runtime; consistent across every documented pass in this ticket's
+    history, still real and still broken.
+
+*AFDE-2609 — 3 items:*
+
+20. `WasmComponentRef.artifact_sha256` auto-population has zero production (`src/`) call site
+    anywhere in the repo (confirmed by grep this session); only the one test fixture
+    (`test_cross_runtime_falsifier.py`) is wired to a real computed digest — if a `src/` call
+    site is ever added, nothing wires it automatically.
+21. A2A-2609's own Definition of Done (deterministic build recipe, pinned toolchain,
+    two-independent-host parity certification, artifact hash emitted/consumed by admission
+    receipts) remains entirely `UNKNOWN` from this repo, by construction — no praxis/ggen/unrdf
+    access, explicitly out of scope.
+22. Falsifier 3 (one fixture producing the same admitted/refused result under ≥2 independent
+    WASM hosts, per A2A-2609's own definition) was never run — would require praxis/ggen
+    access.
+
+*AFDE-2612 — 8 items:*
+
+23. Gap 2 from falsifier #2 ("no unified route registry exists") remains `NOT_FOUND`/unfixed —
+    `ConsequenceBoundary.execute()` never consults a hook engine at all; a caller must already
+    know to invoke `ReactiveSemanticLoop.run_reflex_cycle` specifically for the promoted hook to
+    ever fire.
+24. The WASM hook-admission path remains `BLOCKED:UPSTREAM_PRAXIS_GRAPHLAW_LITERAL_DECODE` (see
+    Task E above) — 100% of real hook verdicts in this repo still come from the local Python
+    fallback, never the WASM branch.
+25. `MachineExperienceCompiler.compile_candidate_experience`'s unconditional
+    `self._rule_registry[pattern] = rule` (`compilation.py:94`) silently overwrites a
+    conflicting re-compile of an existing pattern with no requalification event — real,
+    file:line-cited, but never executed as a falsifier in any session (Law 7 / Falsifier 5
+    remain `UNKNOWN`, not `ALIVE` and not fixed).
+26. `AuthorityBroker.revoke_grant(...)` still does not exist anywhere in `authority/broker.py`;
+    `KnowledgeHookEngine.unregister_hook` exists but has zero call sites anywhere in `src/` or
+    `tests/` outside its own definition — falsifier 6's "returns to `UNKNOWN`" half remains
+    `NOT_FOUND`.
+27. Law 4 (promotion must bind source evidence, generator identity, and verification result)
+    remains `NOT_FOUND` — `SynthesizedHookArtifact` and `ExperienceCompilationReceipt` still
+    carry no field binding back to the source `FinalReceipt`/`AdmissionReceipt`, no
+    generator/manufacturer version field, no verification-result field.
+28. Law 5 / Falsifier 4 (a promoted capability cannot widen authority relative to its admitted
+    contract) remains `NOT_FOUND` — no comparison logic exists anywhere in
+    `authority/broker.py` or `hooks/synthesis.py`.
+29. Falsifier 3 (tampered receipt evidence cannot be promoted) remains `UNKNOWN` —
+    `NoveltyIngestionGateway` type-checks `receipt.state` but performs no cryptographic or
+    replay-based authenticity check on receipt content before ingestion.
+30. `UnknownResolutionPipeline._default_admission_court`'s evidence check still accepts any
+    non-empty `evidence_payload` dict with no error/unsupported key (e.g. a hand-typed
+    `{"source": "synthetic_bench"}`) without requiring it derive from an actual `FinalReceipt`
+    — Law 1 gap, unresolved.
+
+*Cross-cutting — 1 item:*
+
+31. Repeated, independently reconfirmed evidence this session (`git status` showing `ggen.toml`,
+    `ontology/autofde-lab-capabilities.ttl`, `src/autofde_lab/constitution/world.py`,
+    `src/autofde_lab/sa2a/brce/{boundary.py,receipts.py}`,
+    `src/autofde_lab/sa2a/hooks/{engine.py,model.py,reactive_loop.py,synthesis.py}`,
+    `src/autofde_lab/sa2a/admission/graphlaw_bridge.py`, and several test files all modified,
+    plus 3 new untracked adversarial test dirs) that multiple independent agent passes were
+    concurrently editing this same working tree across this run and at least two prior runs —
+    none of it committed (`HEAD` unchanged; `git status --porcelain` shows only local
+    uncommitted edits; no commit/push/PR action taken by this pass either).
+
+No `git commit`, `git push`, PR, or branch operation was performed this pass — local file
+edits and local test runs only, per instruction.
+
+Last update: **pass 30** (2026-09-16) — **real fixes for 7 gaps a prior two-swarm pass found
+across the pass-29 AFDE-2604/2605/2608/2609/2611/2612 ticket set: 5 closed (`fix_verified:
+true`), 2 deliberately deferred `BLOCKED` (`fix_verified: false`); the AFDE-2604 fix was itself
+adversarially re-attacked with 3 fresh mutations, all 3 survived; full local regression re-run
+(1084 collected, 814 passed, 30 failed — the 3 pre-existing `tests/fabric/` failures
+name-matched exactly, 27 `tests/ecosystem/` failures + 31 errors not on the given list but
+evidenced pre-existing/environment-gated, not confirmed by a full stash-and-rerun); a 4-task
+skeptic spot-check reproduced every cited command with zero false claims.** Per
+`.claude/rules/standing-law.md`, standing is scoped per gap below; per
+`.claude/rules/no-dual-bookkeeping.md` this section is the one place these verdicts live — the
+run's own evidence object is not restated as a second, parallel structure.
+
+**7 gaps, 7 tasks (A–G) — `fix_verified` is each task's own explicit boolean, not a summary
+label:**
+
+- **AFDE-2604** (Task A, admission-fencing local closure) — `ALIVE`, `fix_verified: true`.
+  Closed three real gaps in `ExecutionEnvelope`/`ConsequenceBoundary.execute()`
+  (`src/autofde_lab/sa2a/brce/boundary.py`, `src/autofde_lab/sa2a/hooks/reactive_loop.py`): (1)
+  added `ExecutionEnvelope.admission_result: Optional[AdmissionResult]` plus a new strict
+  `execute_admitted()` entry point refusing `REFUSED_NOT_ADMITTED` before authority/actuation
+  when admission is absent or not `Standing.ADMITTED`; (2)+(3) unified idempotency-replay
+  re-authorization — a cached `EXECUTED` `FinalReceipt` now forces a fresh
+  `AuthorityBroker.evaluate()` for the *replaying* envelope's own identity (`grant_id=None`,
+  ignoring both the envelope's and the cached receipt's self-asserted `grant_id`), refusing with
+  a new typed `REFUSED_REPLAY_NOT_REAUTHORIZED` otherwise. `.venv/bin/python -m pytest
+  tests/sa2a/ -v --basetemp=/tmp/afl_fix_taskA` → **288 passed**. Zero-mock grep over the 4
+  touched/added test files: zero real matches, only docstring policy lines.
+- **AFDE-2612** (Task B, repeat-episode zero-inference closure) — `ALIVE`, `fix_verified: true`.
+  Root cause: `KnowledgeHookDefinition` carried no `trigger_predicate`/`trigger_value`, so every
+  synthesized hook's local-fallback `evaluate()` fired on any non-empty event delta regardless
+  of content — pass 29's own `law_held: false` finding. Fixed by adding both fields to
+  `hooks/model.py`, wiring them through `hooks/synthesis.py`, and adding a real
+  `_local_fallback_condition_matches()` gate in `hooks/engine.py`, scoped to the WASM-miss
+  branch only (WASM-hit branch untouched). New falsifier
+  `test_unrelated_event_does_not_fire_promoted_hook` (real `ReactiveSemanticLoop.run_reflex_cycle`,
+  unrelated event delta) asserts zero cascade steps, zero further synthesis calls, zero actuator
+  consequences. `.venv/bin/python -m pytest tests/sa2a/ -v --basetemp=/tmp/afl_fix_taskB_full` →
+  **285 passed**; the 3-test target file alone → **3 passed**. Zero-mock grep: 1 docstring match
+  naming the banned tokens, zero real usage.
+- **AFDE-2608** (Task C, ontology regeneration) — `BLOCKED:UV_EXTRA_ALL_BUILD_FAILURE_DM_TREE`,
+  `fix_verified: false`. A real scratch regen confirmed the drift (`HTNDomain`/`HDDLDomain`/
+  `HDDLSolver` missing from the committed ontology) but the real diff was 235 lines, not a clean
+  3-identifier addition — 11 unrelated domains/solvers flip `ALIVE`→`UNSUPPORTED` purely because
+  8 optional deps (`openap`, `unified_planning`, `pyRDDLGym`, `joblib`, `dspy`, `ray`,
+  `sb3_contrib`, `pyRDDLGym_gurobi`) are absent from this session's `.venv`. A real
+  `uv sync --extra=all -v` attempt to obtain a clean environment failed independently
+  (`dm-tree==0.1.8`'s vendored pybind11 `CMakeLists.txt` requires a `cmake_minimum_required`
+  floor this host's CMake no longer supports). Per the task's own explicit STOP condition, the
+  real tracked `ontology/autofde-lab-capabilities.ttl` was **not** written — confirmed
+  byte-identical throughout (`git diff --stat` / `git status --porcelain` both empty). The two
+  target drift tests remain failing, unchanged from baseline: **2 failed, 3 passed, 13
+  deselected**.
+- **AFDE-2608** (Task D, `ggen.toml` constitution-mode-flip investigation — named explicitly,
+  per instruction, as a deliberately deferred fix) —
+  `BLOCKED:CONSTITUTION_WORLD_DRIFT_FROM_MODE_CREATE`, `fix_verified: false`. A real scratch
+  `ggen.toml` (all 8 `constitution-*` rules flipped
+  `Create`→`Overwrite`) plus a real `ggen sync run` showed 7 of 8 outputs byte-identical to the
+  committed `src/autofde_lab/constitution/*.py` files, but `world.py` carries a real 33-line
+  structural diff (an `AdmittedObservation` dataclass vs. a `StandingValue` enum), root-caused to
+  `ontology/world-transformation-taxonomy.ttl` (commit `e0d82367`, 2026-08-11) typing 5 new
+  individuals against a class `world.py` was generated from three days earlier. Per the task's
+  own branching instruction this is a real, non-trivial content difference, so the real
+  `ggen.toml` was **not** modified — confirmed untouched before and after
+  (`git status --porcelain` / `git diff --stat` empty for `ggen.toml`,
+  `src/autofde_lab/constitution/`, `.ggen-v2/`). The mode flip was deliberately deferred as
+  `BLOCKED`, not force-applied.
+- **AFDE-2611** (Task E, SH-LLM bounded local tier) — `ALIVE`, `fix_verified: true`, scoped to
+  this session's assigned fix only; the live-model end-to-end path remains `UNSUPPORTED`
+  (environment gate: `dspy` and the TurboFieldfare binary/model absent from this `.venv`,
+  pre-existing, re-confirmed not introduced this session). Added a real, testable
+  `bounded_compile(compile_fn, job, catalog, *, max_attempts, timeout_seconds)` helper to
+  `fabric/dspy.py`, wired into `compile_request_text`'s sole local-compile call site,
+  constructing a typed `AllocationStanding.EXHAUSTED` result and raising a new
+  `RefusalCode.NATURAL_LANGUAGE_COMPILATION_EXHAUSTED` on exhaustion rather than raising
+  unbounded. Directly-relevant suite: **10 passed, 3 skipped** (pre-existing environment gates).
+  Full `tests/fabric` regression: **3 failed, 260 passed, 227 skipped**, the 3 failures
+  confirmed pre-existing via a real `git stash push` / rerun / `git stash pop` cycle (identical
+  failure set with the fix stashed out).
+- **AFDE-2605** (Task F, `match_solvers(ranked=True)` stale-doctrine correction) — `ALIVE`,
+  `fix_verified: true`. `.claude/rules/ecosystem-boundary.md` and `src/autofde_lab/CLAUDE.md`
+  both stated `ranked=True` is an ignored no-op, citing a stale `utils.py:126`; the real, current
+  function (`utils.py:407-474`, commit `571e834f`) computes 4 real class-level solver measures
+  and, when the optional `cmca_rank_cli` binary is resolvable, reorders matches by its returned
+  share. Both doctrine sentences corrected in place, confirmed on disk by real grep. Re-ran the
+  exact prior-session verification command: `.venv/bin/python -m pytest
+  tests/fabric/test_phi_dispatch_chicago.py -v` → **7 passed, 2 skipped**, identical to the
+  prior session's result (only wall-clock duration differs).
+- **AFDE-2609** (Task G, WASM artifact-discipline consumer seam) — `ALIVE`, `fix_verified:
+  true`. Added real SHA-256 + size + magic-prefix verification (`GraphLawArtifactIntegrityError`)
+  and a narrow ambient-import allowlist checked via a real Node.js subprocess
+  (`GraphLawUnadmittedImportError`, `ADMITTED_IMPORTS`) to `GraphLawBridge`, mirroring
+  `wasm/_runtime.py`'s `ArtifactImage.from_descriptor` pattern. Corrected the hardcoded, wrong
+  `artifact_sha256` fixture in `test_cross_runtime_falsifier.py` to the real confirmed digest
+  (`shasum -a 256`/`wc -c`, both re-confirmed this session). New tampered-artifact falsifier test
+  added. `.venv/bin/python -m pytest tests/sa2a/test_graphlaw_bridge.py
+  tests/sa2a/test_cross_runtime_falsifier.py -v` → **4 passed**; full `tests/sa2a/` → **284
+  passed**, zero regressions.
+
+**Adversarial re-attack on the AFDE-2604 fix** (Task A) — `PARTIAL_ALIVE`. 3 fresh mutations
+attempted, deliberately different from the sibling's own tests, **0 defeated by the fix, all 3
+survived** (real, unpatched gaps, per instruction not to patch them):
+
+1. `test_mutation_a_admission_content_not_bound_to_actuated_action_target` — `execute_admitted()`
+   (`boundary.py:429-467`) checks only `admission_result.standing == Standing.ADMITTED`, never
+   binding the admitted candidate's own digest/content to `envelope.action_iri`/
+   `target_resource`; an admission for one harmless candidate, reused verbatim on an envelope
+   for an unrelated, more-sensitive action with a matching grant, executed for real (actuator
+   called, real disk write). **FAILED** (`success` was `True`, expected `False`).
+2. `test_mutation_b_replay_reauthorized_for_different_action_returns_stale_receipt` — a
+   reauthorized replay under Task A's own new check still unconditionally returns the
+   *original* `existing_final` receipt for the token, never checking that receipt's action/
+   target identity against the *current* request; two different, independently-granted actions
+   under the same token yield a stale receipt for action1 while action2 is never actuated.
+   **FAILED** (`actuator.call_count` stayed at 1; the journal recorded only action1).
+3. `test_mutation_c_execute_admitted_admission_gate_bypassed_on_replay` — `execute_admitted()`
+   only checks `admission_result` when no final receipt yet exists for the token; once any final
+   receipt exists (including from a legitimate first call), every subsequent call through the
+   same "strict, admission-gated" entry point skips the admission check entirely. **FAILED**
+   (`success` was `True`, `refusal_code` was `None`, expected `REFUSED_NOT_ADMITTED`).
+
+Verdict: Task A's own three named gaps are genuinely closed — `.venv/bin/python -m pytest
+tests/sa2a/ --basetemp=/tmp/afl_full_sa2a_check6` → **3 failed, 288 passed** (the 3 failures are
+exactly the 3 new, deliberately-unpatched mutation tests above; the 288 matches Task A's own
+reported baseline). Three additional, real, precisely-named identity-binding gaps remain open on
+the same surface — found and evidenced this session, not patched, per instruction. Zero-mock
+grep over the new mutation file: 1 docstring line naming the banned tokens, zero real matches.
+
+**Full local regression** — `PARTIAL_ALIVE`. `1084` collected, `814` passed, `30` failed. The 3
+`tests/fabric/` failures are the exact 3 pre-existing known failures (name-matched):
+`test_mcp.py::test_mcp_projects_one_fabric`,
+`test_platform_console_capability_plan_chicago.py::test_ocel_diff_cli_matches_real_plan_step_effect_against_fixture_snapshots`,
+`test_platform_console_capability_plan_chicago.py::test_ocel_diff_cli_catches_a_deliberately_mismatched_effect`
+— confirmed pre-existing (not this session's) via Task E's real `git stash`/rerun/`stash pop`
+cycle. The remaining 27 failures + 31 errors, all in `tests/ecosystem/`, are **not** on the
+orchestrator's given 3-item list and were **not** independently confirmed pre-existing via a
+full stash-and-rerun of the whole suite (deliberately avoided, given concurrent-session-activity
+warnings on this shared working tree from Tasks B and F's own self-reports) — but same-session
+circumstantial evidence favors pre-existing/environment-gated over newly-introduced: the count
+(27 failed, 31 errors) exactly matches Task C's own independently-measured `tests/ecosystem/`
+baseline; a grep of every failing/erroring ecosystem test file plus the two underlying gym-
+procedure modules against all 8 of the 7 tasks' changed source files found zero references; and
+sampled tracebacks show unrelated causes (the optional `cube` vendor-gym extra absent from this
+`.venv`, a `KeyError` against `pyproject.toml`'s `[tool.uv.sources]` unrelated to this session's
+one-line `pythonpath` addition, a gym-domain self-inverse-action assertion). Per
+`.claude/rules/absence-is-not-evidence.md` this stays `UNKNOWN`-not-regression rather than a
+coerced clean bill.
+
+**Skeptic spot-check** — `complete`, 4 of 7 tasks independently re-executed (C required, plus B,
+E, G). All four self-reports held up under independent re-run; **zero false or fabricated
+claims found**. One explained discrepancy: Task B's cited `-k`-filtered command claimed `47
+passed, 238 deselected`; the independent re-run got `47 passed, 241 deselected` — the passed
+count matches exactly, the deselected count drifted because `tests/sa2a/conformance/` and
+`test_v26_9_16_falsification_court.py` were untracked files added by concurrent sibling sessions
+mid-run, growing the shared working tree's test pool after Task B's own report was written, not
+a Task B inaccuracy. Task E's full `tests/fabric` regression figure was not independently
+re-run this pass (time budget), though its directly-relevant subset and code presence both
+checked out. Tasks D and F were out of this spot-check's sampling scope.
+
+**Deferred as `BLOCKED`, not force-applied**: **Task C** (AFDE-2608 ontology regeneration,
+`BLOCKED:UV_EXTRA_ALL_BUILD_FAILURE_DM_TREE`) and **Task D** (AFDE-2608 `ggen.toml`
+constitution-mode-flip investigation, `BLOCKED:CONSTITUTION_WORLD_DRIFT_FROM_MODE_CREATE`) —
+both real STOP conditions the tasks' own instructions defined in advance (a non-clean regen
+diff; a real 33-line structural content difference in `world.py`), not blockers discovered and
+silently worked around. Neither the real tracked `ontology/autofde-lab-capabilities.ttl` nor the
+real `ggen.toml`/`src/autofde_lab/constitution/*.py` was modified this pass.
+
+No `git commit`, `git push`, PR, or branch operation was performed this pass — local file edits
+and local test runs only, per instruction.
+
+Last update: **pass 29** (2026-09-16) — **`docs/jira/v26.9.16/` written: README + 9
+autofde-lab-local ticket equivalents of ash_a2a A2A-2604..2612, 5 with a real local closure
+fixture run this session (law_held/defeated verdicts), 4 thin, one skeptic spot-check pass, full
+local suite re-verified (541 passed / 3 failed / 768 collected).** Per
+`.claude/rules/standing-law.md`, standing is scoped per boundary below. **A2A-2604..2612
+themselves are ash_a2a tickets owned by a different repo; nothing in this pass closes any of
+them** — per `.claude/rules/ecosystem-boundary.md` this repo can only construct and verify its
+own local AFDE-2604..2612 equivalents, scoped to what this repo actually owns.
+
+**`docs/jira/v26.9.16/` — 10 files written, all confirmed on disk this session**
+(`ls docs/jira/v26.9.16/` → `README.md` + 9 `AFDE-26{04..12}-*.md` tickets, 12.8KB–37.0KB each).
+No `git add`/`commit`/`push`/PR/branch action was taken.
+
+**5 real closures — a pinned Chicago-style pytest fixture was constructed and run this session
+against real local components for each, producing an explicit `law_held: true/false` verdict**
+(never a self-graded claim):
+
+- **AFDE-2604** (admission fencing) — `law_held: false`. Composing `AdmissionPipeline` +
+  `AuthorityBroker` + `ConsequenceBoundary` in one real end-to-end fixture closes only *half* the
+  fence: admitted-but-unauthorized is genuinely refused before DO (real `REFUSED_NO_GRANT`, zero
+  actuator calls, observed this session), but authorized-but-never-admitted is **not** refused —
+  `ExecutionEnvelope` (`src/autofde_lab/sa2a/brce/boundary.py:91-105`) has no field that can carry
+  a real `AdmissionResult`/`AdmissionReceipt` (confirmed via `dataclasses.fields(ExecutionEnvelope)`
+  against the exact field set this session), so a candidate the real `AdmissionPipeline` refuses
+  (`REFUSED_PARSE_FAILURE`) still reaches a real `EXECUTED` `FinalReceipt` once a valid
+  `AuthorityGrant` exists. Left unpatched per task scope.
+- **AFDE-2606** (recursive projection) — `law_held: true`, scoped: Law 4
+  (`fabric/pddl_engine.py`) and Law 6 (`fabric/powl.py`) hold at this repo's own local projection
+  seam; repo-wide epoch/residual-obligation/recursion vocabulary and a repo-wide recursive
+  bootstrap controller are `NOT_FOUND` in `src/autofde_lab/fabric/` (confirmed by source read +
+  grep + the repo's own passing regression asserting the controller's absence). Law 6 was verified
+  in-process only (one interpreter, one hash seed) — cross-process determinism named `UNKNOWN`,
+  not assumed.
+- **AFDE-2608** (projected/ephemeral ontology invariant) — `law_held: true` (`PARTIAL_ALIVE`
+  overall). A genuine pre-existing drift was found, not introduced this session: `HTNDomain` and
+  `HDDLDomain` are live registered domains absent from the committed
+  `ontology/autofde-lab-capabilities.ttl` (real grep, zero hits), which fails
+  `tests/ecosystem/test_chatman_chain_chicago.py::TestOntologyIsGeneratedNotCurated` today (**2
+  failed, 3 passed, 13 deselected**, re-run this session). The tracked ontology file was
+  deliberately never regenerated in place (scratch-only tamper strategy; cross-environment
+  byte-for-byte determinism is separately `UNKNOWN` per this ticket's own Law 4 finding), so the
+  likely repair via `generate()` is unattempted and unverified against the real file.
+- **AFDE-2611** (SH-LLM bounded local tier) — `law_held: false`, read as `UNSUPPORTED`
+  (environment/code gate), not `REFUSED`/`BLOCKED`. `src/autofde_lab/fabric/dspy.py:142` is the
+  sole local compile call site (re-confirmed by grep this session) and has no retry/timeout/budget
+  bound around it; `AllocationStanding.EXHAUSTED`
+  (`src/autofde_lab/sa2a/unknown/allocator.py:23`) is declared but constructed nowhere reachable
+  from `src/` or `tests/` (grep, zero matches) — no live local implementation exists for Law 4 to
+  hold or fail against.
+- **AFDE-2612** (machine-experience compile-back / zero-inference repeat episode) —
+  `law_held: false` (`PARTIAL_ALIVE`). Falsifier #2's literal claim — a matching second episode
+  makes zero LLM calls — held with real counted evidence on both real local routes
+  (`synthesizer.call_count` stayed at 1 across two episodes via both
+  `ReactiveSemanticLoop.run_reflex_cycle` and direct `ConsequenceBoundary.execute` resubmission).
+  But no genuine matching-episode detection exists locally: `KnowledgeHookEngine.evaluate`'s
+  Python fallback fires on any non-empty event delta regardless of content (confirmed by a real
+  run: an unrelated event still fired the hook), and the direct-resubmission route never touches
+  the hook engine at all, succeeding purely via `AuthorityBroker` exact-tuple grant match. The
+  zero-inference number is real; it holds incidentally via two content-blind mechanisms, not
+  genuine pattern recognition.
+
+**4 thin — standing established by grep, source read, and/or re-running an existing test this
+session, with no new closure fixture constructed** (the required local object either does not
+exist, or the ticket's own claim is scoped to a different owning repo, so a `law_held` verdict
+does not apply):
+
+- **AFDE-2605** (CMCA execution-tier selector) — the object A2A-2605 requires (a
+  `KNOWN_DETERMINISTIC`/`UNKNOWN_LOCAL`/`UNKNOWN_IDLE_ESTATE`/`UNKNOWN_FRONTIER`/`REFUSED`
+  execution-route selector) is `NOT_FOUND` anywhere in `src/`/`tests/` (real grep, zero hits).
+  This repo's unrelated, same-acronym CMCA module (a salience-weighted exploration-budget
+  allocator, not an execution-tier selector) is real and `PARTIAL_ALIVE` (18 passed this session).
+  Also found: `.claude/rules/ecosystem-boundary.md` and `src/autofde_lab/CLAUDE.md` both still
+  claim `match_solvers(ranked=True)` is a stale no-op; source and git log show it was implemented
+  for real on 2026-08-13 (commits `571e834f`/`9cfbfdf7`/`a6dd0523`) and is environment-gated here
+  (`cmca_rank_cli` binary absent → named skip, 7 passed/2 skipped this session) — that stale
+  doctrine was **not** edited (out of this ticket's scope), named as follow-up only.
+- **AFDE-2607** (cross-repo seam typing) — the code-level claim (neither `pddl_engine.py` nor
+  `openclaw_bridge.py`/`openclaw_runtime.py` claims admission/authority/admission-grade-receipt
+  semantics for itself) is `ALIVE`, real grep + full file reads, zero contradicting lines. Overall
+  ticket standing is `PARTIAL_ALIVE`, not `ALIVE`: `openclaw_bridge.py:162`'s MCP `initialize`
+  `instructions` string is sent to external MCP clients without the call-integrity-vs-admission
+  qualifier `src/autofde_lab/CLAUDE.md`'s Non-authority section requires be preserved — a wording
+  drift risk, not a code-level authority grant. A2A-2607 itself (the ash_a2a cross-repo closure)
+  is `UNKNOWN` from this repo by construction; this session touched no other owning repo.
+- **AFDE-2609** (WASM artifact-discipline consumer seam) — `PARTIAL_ALIVE`, scoped to this repo's
+  local seam. `GraphLawBridge` driving a real local `praxis-graphlaw-wasm` build is `ALIVE`
+  (`tests/sa2a/test_graphlaw_bridge.py`: 2 passed, this session). Two claims are `FALSE`: a
+  hardcoded `artifact_sha256` in `tests/sa2a/test_cross_runtime_falsifier.py:43` does not match
+  the real local artifact's actual SHA-256 (real, currently-silent mismatch); the real artifact
+  imports a host `getRandomValues` binding, i.e. `BLOCKED:UNADMITTED_IMPORT` locally, not
+  zero-import. A2A-2609's cross-repo closure (praxis/ggen/unrdf) is `UNKNOWN` from this repo by
+  construction.
+- **AFDE-2610** (idle-estate consumer seam) — scoped per boundary, no single claim. AtomVM /
+  idle-estate / host-lease / drain-deadline scheduling code is `NOT_FOUND` (real grep, zero
+  matches). A resource-envelope/lease/host-identity hook on the `Solver` base class is
+  `UNSUPPORTED` (architecture gap, not a bug, not externally blocked). The one real adjacent
+  primitive — OpenClaw's `run_bounded()` wall-clock `MAX_TIMEOUT_SECONDS=600.0` ceiling — is
+  `ALIVE`, evidenced by a real falsifier constructed and run this session against the real
+  function (no mock).
+
+**Skeptic spot-check** (5 of the 9 tickets, every cited command/grep re-run this session): 4 of
+5 reproduced exactly — AFDE-2604 (`tests/sa2a/conformance/test_afde_2604_admission_fencing_closure.py
+-v` → 1 passed), AFDE-2608 (3 passed; `tests/ecosystem/ -k TestOntologyIsGeneratedNotCurated` → 2
+failed/3 passed/13 deselected, same two named failures), AFDE-2612 (both named tests passed, 2
+passed), AFDE-2610 (all named greps and the `run_bounded()` falsifier matched exactly, `FALSIFIER
+HELD: code=TIMEOUT_LIMIT status=REFUSED:BOUND_EXCEEDED`). **1 of 5, AFDE-2609, had a confirmed
+real discrepancy**: the ticket's cited `grep -n "sha256\|hashlib\|artifact_sha\|hash(" ... →
+zero matches` does not reproduce — re-running it this session produces 2 real matches
+(`graph_hash(...)` lines, via the `hash(` alternation as a substring). `git blame` confirms
+`graph_hash` predates this ticket-writing pass (commit `c0931106`, 2026-09-16 01:07:21) and
+`git status --porcelain` on the file is clean, so this is not post-hoc drift — the ticket's
+quoted transcript is simply wrong as written; the underlying conclusion (no artifact-binary
+content-address verification exists) is not itself contradicted. No ticket file was edited to
+fix this. No git commit/push/PR/branch operation was performed during the skeptic pass.
+
+**Final full local suite this session**: **768 collected, 541 passed, 3 failed**:
+`tests/fabric/test_mcp.py::test_mcp_projects_one_fabric`,
+`tests/fabric/test_platform_console_capability_plan_chicago.py::test_ocel_diff_cli_matches_real_plan_step_effect_against_fixture_snapshots`,
+`tests/fabric/test_platform_console_capability_plan_chicago.py::test_ocel_diff_cli_catches_a_deliberately_mismatched_effect`.
+Run status as recorded this session: `completed_with_pre_existing_failures_and_unresolved_shutdown_anomaly`
+— named verbatim rather than re-characterized, since the 3 failures were not diagnosed further
+this pass. `grep -rn "unittest.mock\|Mock(\|MagicMock\|patch(\|monkeypatch"` over the 4 new test
+files added this session matches only docstring policy statements naming the banned tools
+(`test_afde_2606_projection_candidate_only_closure.py:40`,
+`test_afde_2608_projected_ephemeral_invariant.py:47-48`,
+`test_afde_2604_admission_fencing_closure.py:72`,
+`test_afde_2612_repeat_episode_zero_inference_closure.py:20`) — zero actual mock usage. No `git
+commit`, `git push`, PR, or branch operation was performed this pass — local file writes and
+local test runs only.
+
+**Bug fixed (`ALIVE`, target test)**:
+`tests/sa2a/conformance/test_ocel_queries.py::test_evaluate_ocel_log_object_integration` called
+`OcelExecutionTracer.record_event(event_type=..., actor_id=..., attributes=...)` and
+`tracer.export_log()` — neither matches the real class in
+`src/autofde_lab/sa2a/falsification/ocel_tracer.py` (real signature:
+`record_event(self, event_id, activity, related_objects, attributes=None, timestamp_ns=None)`;
+no `export_log` method, only a `.log` property and `export_ocel2_json(path)`). Fixed by editing
+only that one test file to use the real signature and the real `.log` property. Fixing the call
+surfaced a second, real, pre-existing, out-of-scope defect (confirmed by a live repro, not
+assumed): `OcelConformanceQueryEngine.p8_authority_precedes_actuation`
+(`src/autofde_lab/sa2a/conformance/ocel_queries.py:311`) unconditionally does
+`float(event.get("time", ...))` and `attrs.get("actor_id", ...)`, but a real
+`OcelLog.to_ocel2_json()` emits RFC 3339 string timestamps and list-of-`{"name","value"}` event
+attributes — so `engine.evaluate_ocel_log(real_ocel_log)` raises `ValueError: could not convert
+string to float: '...Z'` for any non-empty real log. Named, not fixed (task scope was the test
+file only); the test now asserts this real behavior via `pytest.raises(ValueError, match=...)`
+instead of a fictional passing path. `.venv/bin/python -m pytest
+tests/sa2a/conformance/test_ocel_queries.py -v` → **27 passed** (target test alone: **1 passed
+in 0.34s**).
+
+**3 new scripts, all run for real this session:**
+
+- `scripts/run_sa2a_benchmarks.py` — CLI wrapper around the existing `run_all_benchmarks()`.
+  `.venv/bin/python scripts/run_sa2a_benchmarks.py --iterations 3` → exit **1**, standing
+  `BUILD_BROKEN`, `passed_benchmarks=3/10`, `failed_benchmarks=7` (named errors: B1
+  `IdentityPolicy.__init__() got an unexpected keyword argument 'allowed_namespaces'`; B2
+  `'DatalogEngine' object has no attribute 'compute_closure'`; B6/B9/B10 `AttributeError`s on
+  `FinalReceipt.action_iri` / a tuple / `ReceiptStore.put_prepared`; B8 partial,
+  `tamper_detection_verified: false`). Wrote `reports/rfc_sa2a_002_benchmarks.json`, re-loaded
+  from disk and confirmed it matches stdout exactly. **The CLI wrapper itself is `ALIVE`**
+  (correct exit-code contract verified both ways — a passing `--benchmarks SA2A-B3,SA2A-B7`
+  subset exits 0); **the underlying SA2A-B1..B10 harness is `BUILD_BROKEN`**, 7 of 10
+  sub-benchmarks failing on HEAD `f5727fa9`, `harness.py` untouched per task scope.
+- `scripts/run_chicago_qualification.py` — CLI wrapper around `run_chicago_qualification()`.
+  `.venv/bin/python scripts/run_chicago_qualification.py` → exit **1**, real traceback:
+  `AttributeError: 'tuple' object has no attribute 'value'` at `src/autofde_lab/ocel/log.py:450`
+  (`to_ocel2()`), reached via `ocel_tracer.py:114` → `runner.py:919`. `runner.py`'s own receipt
+  write (lines 916-917) executes **before** that crash, so
+  `reports/rfc_sa2a_002_chicago_crown_receipt.json` was durably written despite it — re-read
+  from disk: `standing: "ALIVE"`, `all_gates_passed: true`, all 12/12 Chicago Crown gates true,
+  `exact_sha` matches real `git rev-parse HEAD` (`f5727fa970c8fd1060e662bc9e963c484aa5ed14`).
+  **Overall `PARTIAL_ALIVE`**: the CLI's own designed exit-0/print-JSON success path never ran,
+  but a bounded, real, independently-readable checkpoint (the 12/12-gate receipt) exists.
+  Neither `runner.py` nor `ocel/log.py` was edited, per task scope.
+- `scripts/verify_rfc_sa2a_002_qualification.py` — independent, stdlib-only fresh-consumer
+  verifier; zero import of `runner.py` or any court module (confirmed by grepping the file's own
+  imports). `.venv/bin/python scripts/verify_rfc_sa2a_002_qualification.py` → exit **0**,
+  `STANDING: ALIVE`, all 4 independent checks pass (`canonical_gates` all 12 true;
+  `gates_passed` exactly 12 entries, all true; `exact_sha` matches real `git rev-parse HEAD`;
+  `receipt_digest` recomputes to the stored value). Also mutation-tested on a scratch copy
+  (flipped one gate to `false`, corrupted `exact_sha`): checks 1/3/4 correctly flipped to `FAIL`,
+  exit 1 (check 2 correctly stayed `PASS`, untouched by that mutation) — not vacuous. The
+  `BLOCKED` path was also verified for real: a nonexistent receipt path prints `STANDING:
+  BLOCKED:RECEIPT_NOT_YET_PRODUCED` and exits 2. **Status: `ALIVE`.**
+
+**Compliance matrix**: `docs/rfcs/RFC-SA2A-002-compliance-matrix.md` — `total_requirements=283`,
+`mapped=135`, `gap=148` (135+148=283, matching; re-verified by grep against the on-disk file
+this session). The file itself is **`ALIVE`** as a written, internally-consistent artifact. Its
+*content* is not fully verified: an independent 10-row spot check found 8/10 held under
+re-execution, but **2/10 contained confirmed, real discrepancies** — §55/§56 (Extension
+Negotiation / Downgrade Prevention Courts) were marked GAP ("zero code or test found") when real
+code (`src/autofde_lab/sa2a/a2a_bridge/negotiation.py`, `downgrade_guard.py`) and real passing
+tests (`tests/sa2a/test_unknown_bridge.py`, rerun this session: 1 passed each) exist — this also
+falsifies the matrix's own `top_gaps` headline about those two courts; and §125 (SA2A-B2
+determinism) was marked MAPPED while independently reproducing the identical `'DatalogEngine'
+object has no attribute 'compute_closure'` `BUILD_BROKEN` crash the matrix's own §86 row already
+records for the same benchmark. So: the matrix's counts (135/148/283) are real and
+self-consistent; the matrix's row-level accuracy is **not** established beyond the spot-checked
+10 rows — 2 of those 10 are known-wrong and were not corrected in the file.
+
+**8 new mutation-falsifier test files** (RFC-SA2A-002 v26.9.16 courts, each stating in its own
+docstring why no mock is used) — 3 defeated the attack (court held, no defect found), 5 broke
+through (real, named gaps; source left unpatched per task scope, each pinned as a currently-
+failing-expectation fixture so a future fix regresses loudly rather than silently):
+
+- `tests/sa2a/conformance/test_mutation_identity.py` (IdentityCourt: `verify_git_sha`,
+  `verify_envelope_digest`, `verify_envelope_standing_escalation`) — **defeated**, no gap.
+- `tests/sa2a/conformance/test_mutation_admission.py` (AdmissionCourt identity/digest attacks) —
+  **defeated**, no behavior gap; one pre-existing test-coverage gap named
+  (`CHI_ADM_UNTRUSTED_ISSUER` had no wrapper method or test before this file — the underlying
+  gate itself works correctly, now pinned by a real test).
+- `tests/sa2a/conformance/test_mutation_authority.py` (AuthorityCourt /
+  `AuthorityBroker.evaluate` grant-identity binding) — **defeated**, no gap.
+- `tests/sa2a/conformance/test_mutation_consequence.py` (`ConsequenceBoundary.execute()`
+  idempotency-replay path) — **broke through**: a never-granted adversary actor presenting a
+  different, legitimately-granted actor's idempotency token receives that actor's cached
+  `FinalReceipt` (byte-identical digest) unchanged — `AuthorityBroker.evaluate()` proven (via a
+  real counting subclass) never re-invoked for the replay; `boundary.py`'s idempotency-token
+  lookup keys solely on the token string, never on the presenting actor's identity.
+- `tests/sa2a/conformance/test_mutation_logic_hook.py` (`LogicHookCourt.verify_hook_no_do`,
+  `run_full_court`) — **broke through**: neither method binds `HookExecutionRecord.hook_iri` to
+  any admitted `KnowledgeHookDefinition`; a record attributed to a foreign, never-registered
+  hook still reports CONFORMANT / `passed=True`.
+- `tests/sa2a/conformance/test_mutation_replay.py` (`ReplayCourt` / `ReplayEngine.verify_chain`)
+  — **broke through**: chain verification checks only that `prepared_receipt_digest` matches
+  *some* `PreparedReceipt` sharing the idempotency token, never that it describes the same
+  action/actor/grant as the `FinalReceipt` — a receipt can be re-bound to an unrelated,
+  independently-authorized `PreparedReceipt` and still verify `VALID` / `ALIVE`.
+- `tests/sa2a/conformance/test_mutation_cross_court_identity.py` (AuthorityCourt ↔
+  ConsequenceCourt) — **broke through**: no component binds a receipt's `grant_id` to a real
+  `AuthorityDecision` for that receipt's own action/target identity; `ConsequenceCourt`'s
+  `audit_idempotency_replay_refusal` gate (CHI-BRCE-04) reports `passed=True` for a forged
+  receipt whose claimed grant the real broker independently refused for that exact identity
+  moments earlier in the same test run.
+- `tests/sa2a/conformance/test_ocel_queries_falsifiers.py` (`OcelConformanceQueryEngine`) — **4
+  of 6 sub-cases broke through** (a dropped-event blindspot in `p8_authority_precedes_actuation`
+  for actors absent from one of the two per-type timestamp maps; a duplicate-event-id /
+  contradictory-activity case the independent query engine doesn't check even though the
+  separate `OcelLog.validate()` layer does; `p1_actuation_has_receipt` accepting a relationship
+  to a dangling/undeclared object id via case-insensitive substring match; `p7_schema_structure`
+  never checking an event's `type` against declared `eventTypes`); **2 confirmed robust, not a
+  gap** (`p8`'s per-actor min-timestamp tracking is genuinely ingestion-order independent;
+  `p10`'s digest check genuinely catches a reordered-ingestion log against a canonical-order
+  declared digest).
+
+None of the 5 broke-through court/engine source files were patched, per task instructions.
+
+**Final full local suite**: `.venv/bin/python -m pytest tests/sa2a/ -v --basetemp=/tmp/afl_wf_final`
+→ **280 passed, 0 failed**. `grep -rn "unittest.mock\|Mock(\|MagicMock\|patch(\|monkeypatch"`
+over `tests/sa2a/` matches only docstring policy statements naming the banned tools (13 lines,
+all narrative "No X anywhere in this file" sentences, confirmed by inspection) — zero actual
+mock usage. **Standing: `ALIVE`** for this exact command, at this exact commit. No `git commit`,
+`git push`, PR, or branch operation was performed this pass — local file writes and local
+test/script runs only.
+
 **Correction (2026-09-11, same day, different session key)**: pass 26/cap 11's
 `BLOCKED:ZAI_API_KEY_INVALID` below was itself wrong, in a precise, checkable way -- the key
 tested there was genuinely invalid (real 401, confirmed via `curl`), but a second, real key

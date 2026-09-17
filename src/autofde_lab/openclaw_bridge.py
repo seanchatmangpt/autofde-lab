@@ -159,7 +159,9 @@ def _mcp_response(request: Mapping[str, Any]) -> dict[str, Any] | None:
                 "capabilities": {"tools": {"listChanged": False}, "resources": {}},
                 "serverInfo": {"name": SERVER_NAME, "version": SERVER_VERSION},
                 "instructions": (
-                    "Use registered subjects only; every call returns a receipt."
+                    "Use registered subjects only; every call returns a receipt "
+                    "(a SHA-256 call-integrity digest over input/output, not an "
+                    "admission or authority grant)."
                 ),
             }
         elif method == "ping":

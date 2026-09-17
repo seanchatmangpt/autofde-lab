@@ -49,7 +49,7 @@ name = "constitution-world"
 query = { file = "queries/constitution/world.rq" }
 template = { file = "templates/constitution_module.py.tera" }
 output_file = "src/autofde_lab/constitution/world.py"
-mode = "Create"
+mode = "Overwrite"
 
 [[generation.rules]]
 name = "constitution-planning"

@@ -1,0 +1,231 @@
+@prefix cmca: <http://example.org/cmca#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Classes
+cmca:SemanticObject a rdfs:Class .
+cmca:MeasureHead a rdfs:Class .
+cmca:Lens a rdfs:Class .
+
+# Global Parameters (Modified for Generalization: eta = 0.3)
+cmca:GlobalConfig cmca:eta "0.3"^^xsd:decimal .
+
+# Measure Heads (K = 4)
+cmca:MeasureCache a cmca:MeasureHead .
+cmca:MeasureCache cmca:measure cmca:MeasureCache .
+cmca:MeasureSearch a cmca:MeasureHead .
+cmca:MeasureSearch cmca:measure cmca:MeasureSearch .
+cmca:MeasureRetrieval a cmca:MeasureHead .
+cmca:MeasureRetrieval cmca:measure cmca:MeasureRetrieval .
+cmca:MeasureScheduling a cmca:MeasureHead .
+cmca:MeasureScheduling cmca:measure cmca:MeasureScheduling .
+
+# Lenses (Q = 4)
+cmca:LensExploitation a cmca:Lens .
+cmca:LensExploitation cmca:lensExponent "2.0"^^xsd:decimal .
+cmca:LensExploitation cmca:lens cmca:LensExploitation .
+cmca:LensProportional a cmca:Lens .
+cmca:LensProportional cmca:lensExponent "1.0"^^xsd:decimal .
+cmca:LensProportional cmca:lens cmca:LensProportional .
+cmca:LensCoverage a cmca:Lens .
+cmca:LensCoverage cmca:lensExponent "0.0"^^xsd:decimal .
+cmca:LensCoverage cmca:lens cmca:LensCoverage .
+cmca:LensRare a cmca:Lens .
+cmca:LensRare cmca:lensExponent "-1.0"^^xsd:decimal .
+cmca:LensRare cmca:lens cmca:LensRare .
+
+# Lambda Matrix (K x Q = 4 x 4) - Modified weights for generalization case study
+cmca:Lambda_0_0 a cmca:LambdaCoefficient .
+cmca:Lambda_0_0 cmca:measure cmca:MeasureCache .
+cmca:Lambda_0_0 cmca:lens cmca:LensExploitation .
+cmca:Lambda_0_0 cmca:value "0.1"^^xsd:decimal .
+
+cmca:Lambda_0_1 a cmca:LambdaCoefficient .
+cmca:Lambda_0_1 cmca:measure cmca:MeasureCache .
+cmca:Lambda_0_1 cmca:lens cmca:LensProportional .
+cmca:Lambda_0_1 cmca:value "0.2"^^xsd:decimal .
+
+cmca:Lambda_0_2 a cmca:LambdaCoefficient .
+cmca:Lambda_0_2 cmca:measure cmca:MeasureCache .
+cmca:Lambda_0_2 cmca:lens cmca:LensCoverage .
+cmca:Lambda_0_2 cmca:value "0.3"^^xsd:decimal .
+
+cmca:Lambda_0_3 a cmca:LambdaCoefficient .
+cmca:Lambda_0_3 cmca:measure cmca:MeasureCache .
+cmca:Lambda_0_3 cmca:lens cmca:LensRare .
+cmca:Lambda_0_3 cmca:value "0.4"^^xsd:decimal .
+
+cmca:Lambda_1_0 a cmca:LambdaCoefficient .
+cmca:Lambda_1_0 cmca:measure cmca:MeasureSearch .
+cmca:Lambda_1_0 cmca:lens cmca:LensExploitation .
+cmca:Lambda_1_0 cmca:value "0.4"^^xsd:decimal .
+
+cmca:Lambda_1_1 a cmca:LambdaCoefficient .
+cmca:Lambda_1_1 cmca:measure cmca:MeasureSearch .
+cmca:Lambda_1_1 cmca:lens cmca:LensProportional .
+cmca:Lambda_1_1 cmca:value "0.3"^^xsd:decimal .
+
+cmca:Lambda_1_2 a cmca:LambdaCoefficient .
+cmca:Lambda_1_2 cmca:measure cmca:MeasureSearch .
+cmca:Lambda_1_2 cmca:lens cmca:LensCoverage .
+cmca:Lambda_1_2 cmca:value "0.2"^^xsd:decimal .
+
+cmca:Lambda_1_3 a cmca:LambdaCoefficient .
+cmca:Lambda_1_3 cmca:measure cmca:MeasureSearch .
+cmca:Lambda_1_3 cmca:lens cmca:LensRare .
+cmca:Lambda_1_3 cmca:value "0.1"^^xsd:decimal .
+
+cmca:Lambda_2_0 a cmca:LambdaCoefficient .
+cmca:Lambda_2_0 cmca:measure cmca:MeasureRetrieval .
+cmca:Lambda_2_0 cmca:lens cmca:LensExploitation .
+cmca:Lambda_2_0 cmca:value "0.2"^^xsd:decimal .
+
+cmca:Lambda_2_1 a cmca:LambdaCoefficient .
+cmca:Lambda_2_1 cmca:measure cmca:MeasureRetrieval .
+cmca:Lambda_2_1 cmca:lens cmca:LensProportional .
+cmca:Lambda_2_1 cmca:value "0.2"^^xsd:decimal .
+
+cmca:Lambda_2_2 a cmca:LambdaCoefficient .
+cmca:Lambda_2_2 cmca:measure cmca:MeasureRetrieval .
+cmca:Lambda_2_2 cmca:lens cmca:LensCoverage .
+cmca:Lambda_2_2 cmca:value "0.4"^^xsd:decimal .
+
+cmca:Lambda_2_3 a cmca:LambdaCoefficient .
+cmca:Lambda_2_3 cmca:measure cmca:MeasureRetrieval .
+cmca:Lambda_2_3 cmca:lens cmca:LensRare .
+cmca:Lambda_2_3 cmca:value "0.2"^^xsd:decimal .
+
+cmca:Lambda_3_0 a cmca:LambdaCoefficient .
+cmca:Lambda_3_0 cmca:measure cmca:MeasureScheduling .
+cmca:Lambda_3_0 cmca:lens cmca:LensExploitation .
+cmca:Lambda_3_0 cmca:value "0.2"^^xsd:decimal .
+
+cmca:Lambda_3_1 a cmca:LambdaCoefficient .
+cmca:Lambda_3_1 cmca:measure cmca:MeasureScheduling .
+cmca:Lambda_3_1 cmca:lens cmca:LensProportional .
+cmca:Lambda_3_1 cmca:value "0.2"^^xsd:decimal .
+
+cmca:Lambda_3_2 a cmca:LambdaCoefficient .
+cmca:Lambda_3_2 cmca:measure cmca:MeasureScheduling .
+cmca:Lambda_3_2 cmca:lens cmca:LensCoverage .
+cmca:Lambda_3_2 cmca:value "0.2"^^xsd:decimal .
+
+cmca:Lambda_3_3 a cmca:LambdaCoefficient .
+cmca:Lambda_3_3 cmca:measure cmca:MeasureScheduling .
+cmca:Lambda_3_3 cmca:lens cmca:LensRare .
+cmca:Lambda_3_3 cmca:value "0.4"^^xsd:decimal .
+
+
+# Case Study 4 (Generalization Objects with modified factors)
+cmca:GenArtifact_A a cmca:SemanticObject .
+cmca:GenArtifact_A cmca:recomputationCost "0.75"^^xsd:decimal .
+cmca:GenArtifact_A cmca:verificationCost "0.25"^^xsd:decimal .
+cmca:GenArtifact_A cmca:standing "1.0"^^xsd:decimal .
+cmca:GenArtifact_A cmca:validity "1.0"^^xsd:decimal .
+cmca:GenArtifact_A cmca:accessFrequency "0.6"^^xsd:decimal .
+cmca:GenArtifact_A cmca:searchDemand "0.1"^^xsd:decimal .
+cmca:GenArtifact_A cmca:retrievalDemand "0.1"^^xsd:decimal .
+cmca:GenArtifact_A cmca:schedulingDemand "0.1"^^xsd:decimal .
+cmca:GenArtifact_A cmca:businessValue "5.0"^^xsd:decimal .
+
+cmca:GenArtifact_B a cmca:SemanticObject .
+cmca:GenArtifact_B cmca:recomputationCost "0.25"^^xsd:decimal .
+cmca:GenArtifact_B cmca:verificationCost "0.75"^^xsd:decimal .
+cmca:GenArtifact_B cmca:standing "1.0"^^xsd:decimal .
+cmca:GenArtifact_B cmca:validity "1.0"^^xsd:decimal .
+cmca:GenArtifact_B cmca:accessFrequency "0.6"^^xsd:decimal .
+cmca:GenArtifact_B cmca:searchDemand "0.1"^^xsd:decimal .
+cmca:GenArtifact_B cmca:retrievalDemand "0.1"^^xsd:decimal .
+cmca:GenArtifact_B cmca:schedulingDemand "0.1"^^xsd:decimal .
+cmca:GenArtifact_B cmca:businessValue "5.0"^^xsd:decimal .
+
+cmca:GenObj_Single a cmca:SemanticObject .
+cmca:GenObj_Single cmca:recomputationCost "0.8"^^xsd:decimal .
+cmca:GenObj_Single cmca:verificationCost "0.2"^^xsd:decimal .
+cmca:GenObj_Single cmca:standing "1.0"^^xsd:decimal .
+cmca:GenObj_Single cmca:validity "1.0"^^xsd:decimal .
+cmca:GenObj_Single cmca:accessFrequency "0.7"^^xsd:decimal .
+cmca:GenObj_Single cmca:searchDemand "0.3"^^xsd:decimal .
+cmca:GenObj_Single cmca:retrievalDemand "0.7"^^xsd:decimal .
+cmca:GenObj_Single cmca:schedulingDemand "0.2"^^xsd:decimal .
+cmca:GenObj_Single cmca:businessValue "50.0"^^xsd:decimal .
+
+cmca:GenObj_Obligation a cmca:SemanticObject .
+cmca:GenObj_Obligation cmca:recomputationCost "0.4"^^xsd:decimal .
+cmca:GenObj_Obligation cmca:verificationCost "0.4"^^xsd:decimal .
+cmca:GenObj_Obligation cmca:standing "1.0"^^xsd:decimal .
+cmca:GenObj_Obligation cmca:validity "1.0"^^xsd:decimal .
+cmca:GenObj_Obligation cmca:accessFrequency "0.4"^^xsd:decimal .
+cmca:GenObj_Obligation cmca:searchDemand "0.4"^^xsd:decimal .
+cmca:GenObj_Obligation cmca:retrievalDemand "0.4"^^xsd:decimal .
+cmca:GenObj_Obligation cmca:schedulingDemand "0.4"^^xsd:decimal .
+cmca:GenObj_Obligation cmca:businessValue "0.0"^^xsd:decimal .
+cmca:GenObj_Obligation cmca:dependsOn cmca:GenObj_Activity .
+
+cmca:GenObj_Activity a cmca:SemanticObject .
+cmca:GenObj_Activity cmca:recomputationCost "0.4"^^xsd:decimal .
+cmca:GenObj_Activity cmca:verificationCost "0.4"^^xsd:decimal .
+cmca:GenObj_Activity cmca:standing "1.0"^^xsd:decimal .
+cmca:GenObj_Activity cmca:validity "1.0"^^xsd:decimal .
+cmca:GenObj_Activity cmca:accessFrequency "0.4"^^xsd:decimal .
+cmca:GenObj_Activity cmca:searchDemand "0.4"^^xsd:decimal .
+cmca:GenObj_Activity cmca:retrievalDemand "0.4"^^xsd:decimal .
+cmca:GenObj_Activity cmca:schedulingDemand "0.4"^^xsd:decimal .
+cmca:GenObj_Activity cmca:businessValue "0.0"^^xsd:decimal .
+cmca:GenObj_Activity cmca:dependsOn cmca:GenObj_Deployment .
+
+cmca:GenObj_Deployment a cmca:SemanticObject .
+cmca:GenObj_Deployment cmca:recomputationCost "0.4"^^xsd:decimal .
+cmca:GenObj_Deployment cmca:verificationCost "0.4"^^xsd:decimal .
+cmca:GenObj_Deployment cmca:standing "1.0"^^xsd:decimal .
+cmca:GenObj_Deployment cmca:validity "1.0"^^xsd:decimal .
+cmca:GenObj_Deployment cmca:accessFrequency "0.4"^^xsd:decimal .
+cmca:GenObj_Deployment cmca:searchDemand "0.4"^^xsd:decimal .
+cmca:GenObj_Deployment cmca:retrievalDemand "0.4"^^xsd:decimal .
+cmca:GenObj_Deployment cmca:schedulingDemand "0.4"^^xsd:decimal .
+cmca:GenObj_Deployment cmca:businessValue "0.0"^^xsd:decimal .
+cmca:GenObj_Deployment cmca:dependsOn cmca:GenObj_Outcome .
+
+cmca:GenObj_Outcome a cmca:SemanticObject .
+cmca:GenObj_Outcome cmca:recomputationCost "0.4"^^xsd:decimal .
+cmca:GenObj_Outcome cmca:verificationCost "0.4"^^xsd:decimal .
+cmca:GenObj_Outcome cmca:standing "1.0"^^xsd:decimal .
+cmca:GenObj_Outcome cmca:validity "1.0"^^xsd:decimal .
+cmca:GenObj_Outcome cmca:accessFrequency "0.4"^^xsd:decimal .
+cmca:GenObj_Outcome cmca:searchDemand "0.4"^^xsd:decimal .
+cmca:GenObj_Outcome cmca:retrievalDemand "0.4"^^xsd:decimal .
+cmca:GenObj_Outcome cmca:schedulingDemand "0.4"^^xsd:decimal .
+cmca:GenObj_Outcome cmca:businessValue "0.0"^^xsd:decimal .
+cmca:GenObj_Outcome cmca:dependsOn cmca:GenObj_Value .
+
+cmca:GenObj_Value a cmca:SemanticObject .
+cmca:GenObj_Value cmca:recomputationCost "0.4"^^xsd:decimal .
+cmca:GenObj_Value cmca:verificationCost "0.4"^^xsd:decimal .
+cmca:GenObj_Value cmca:standing "1.0"^^xsd:decimal .
+cmca:GenObj_Value cmca:validity "1.0"^^xsd:decimal .
+cmca:GenObj_Value cmca:accessFrequency "0.4"^^xsd:decimal .
+cmca:GenObj_Value cmca:searchDemand "0.4"^^xsd:decimal .
+cmca:GenObj_Value cmca:retrievalDemand "0.4"^^xsd:decimal .
+cmca:GenObj_Value cmca:schedulingDemand "0.4"^^xsd:decimal .
+cmca:GenObj_Value cmca:businessValue "500.0"^^xsd:decimal .
+# Generalization Proof Addition
+cmca:LensGeneralizationProof a cmca:Lens .
+cmca:LensGeneralizationProof cmca:lensExponent "1.5"^^xsd:decimal .
+
+cmca:MeasureGeneralizationProof a cmca:MeasureHead .
+
+cmca:Lambda_GP_0 a cmca:LambdaCoefficient .
+cmca:Lambda_GP_0 cmca:measure cmca:MeasureGeneralizationProof .
+cmca:Lambda_GP_0 cmca:lens cmca:LensGeneralizationProof .
+cmca:Lambda_GP_0 cmca:value "0.9"^^xsd:decimal .
+
+cmca:Obj_GeneralizationProof a cmca:SemanticObject .
+cmca:Obj_GeneralizationProof cmca:recomputationCost "0.1"^^xsd:decimal .
+cmca:Obj_GeneralizationProof cmca:verificationCost "0.2"^^xsd:decimal .
+cmca:Obj_GeneralizationProof cmca:standing "0.3"^^xsd:decimal .
+cmca:Obj_GeneralizationProof cmca:validity "0.4"^^xsd:decimal .
+cmca:Obj_GeneralizationProof cmca:accessFrequency "0.5"^^xsd:decimal .
+cmca:Obj_GeneralizationProof cmca:searchDemand "0.6"^^xsd:decimal .
+cmca:Obj_GeneralizationProof cmca:retrievalDemand "0.7"^^xsd:decimal .
+cmca:Obj_GeneralizationProof cmca:schedulingDemand "0.8"^^xsd:decimal .
+cmca:Obj_GeneralizationProof cmca:businessValue "50.0"^^xsd:decimal .

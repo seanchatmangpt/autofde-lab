@@ -460,8 +460,12 @@ domain. Measured over `CareerAdmission`, all 57 accounted for:
 | `failed` | 23 | `REQUIRES_OTHER_DOMAIN_TYPE` 8, `REQUIRES_CONFIGURATION` 7, `DID_NOT_CONVERGE` 5, `RUNTIME_ERROR` 3 |
 
 Applicability is derived (ontology requirements evaluated by `isinstance`), and comparison is
-**measured** — necessary because `match_solvers(..., ranked=True)` accepts the flag and
-ignores it, so an unmeasured "dominated" verdict would be an empty claim.
+**measured**, not delegated to `match_solvers(..., ranked=True)` — that call is real, not a
+no-op (commit `571e834f`, "feat(solvers): implement ranked=True via optional cmca_rank_cli
+governed ranking", 2026-08-13; `src/autofde_lab/utils.py:407-474`), but its real-CLI success
+path is environment-gated (`cmca_rank_cli` is not resolvable on this machine —
+`tests/fabric/test_phi_dispatch_chicago.py` names both skips), so an unmeasured "dominated"
+verdict here would still be an empty claim.
 
 **Limitation this surfaced.** `get_domain_requirements()` describes the *domain
 characteristics* a solver needs but says nothing about its *constructor* requirements. Seven
@@ -669,15 +673,23 @@ importing every one in this environment:
   `Solver.get_domain_requirements()` (`src/autofde_lab/solvers.py:85`) derives the requirement set
   from the solver's `T_domain` MRO, and `check_domain` (`solvers.py:123`) tests
   `all(isinstance(domain, req) ...)` plus the `_check_domain_additional` hook.
-  `match_solvers(domain, candidates, ranked)` (`src/autofde_lab/utils.py:126`) applies it across
-  the whole registry.
+  `match_solvers(domain, candidates, ranked)` (`src/autofde_lab/utils.py:407-474`) applies it
+  across the whole registry; as of commit `571e834f` (2026-08-13) `ranked=True` is real, not a
+  no-op — see the corrected finding immediately below.
 
 Two findings that constrain how a coverage report may be built:
 
-1. **`ranked` is accepted but ignored** — `utils.py:126` carries `# TODO: implement ranking
-   heuristic` and always returns a plain list. So "compare alternatives where several
-   capabilities solve the same subproblem" cannot be delegated to `match_solvers`; comparison
-   must be genuinely measured (run them, compare plans/costs) or the claim is empty.
+1. **`ranked=True` is implemented, not a no-op** — `utils.py:407-474` (commit `571e834f`,
+   "feat(solvers): implement ranked=True via optional cmca_rank_cli governed ranking",
+   2026-08-13; follow-up fixes `9cfbfdf7`, `a6dd0523` same day) scores matched solvers via 4
+   real class-level measures and, when the optional `cmca_rank_cli` binary is resolvable
+   (`BCINR_HOME`/`CMCA_RANK_CLI_BIN` convention), reorders the top 8 by its returned share;
+   otherwise it degrades to existing match order, never raising. The real-CLI success path is
+   environment-gated — `cmca_rank_cli` is not resolvable on this machine
+   (`tests/fabric/test_phi_dispatch_chicago.py` names both skips) — so "compare alternatives
+   where several capabilities solve the same subproblem" still cannot be safely delegated to
+   `match_solvers` in this environment; comparison must be genuinely measured (run them,
+   compare plans/costs) or the claim is empty.
 2. **Failed solver loads surface as `None`, never as an exception** —
    `_load_registered_entry` (`utils.py:94`) swallows and `logger.warning`s. A coverage report
    must therefore treat `None` as positive `UNSUPPORTED` evidence rather than as absence, or a

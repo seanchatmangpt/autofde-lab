@@ -1,0 +1,22 @@
+[package]
+name = "bcinr-logic"
+version = "26.9.15"
+edition = "2021"
+description = "BranchlessCInRust: Academic-grade branchless algorithm library"
+repository = "https://github.com/seanchatmangpt/bcinr"
+license = "MIT OR Apache-2.0"
+rust-version = "1.70"
+keywords = ["branchless", "simd", "performance"]
+categories = ["algorithms", "no-std"]
+
+readme = "../../README.md"
+[dependencies]
+criterion = { version = "0.5", optional = true }
+
+[dev-dependencies]
+proptest = "1.2.0"
+
+[features]
+bench = ["alloc", "dep:criterion"]
+alloc = []
+std = ["alloc"]

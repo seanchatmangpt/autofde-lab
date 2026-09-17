@@ -43,6 +43,10 @@ dependencies = [
     "gymact; python_version >= '3.11'",
 ]
 
+[project.scripts]
+autofde = "autofde_lab.cli:main"
+autofde-lab = "autofde_lab.cli:main"
+
 [project.urls]
 documentation = "https://seanchatmangpt.github.io/autofde-lab/"
 repository = "https://github.com/seanchatmangpt/autofde-lab"
@@ -228,6 +232,35 @@ ocpq = [
     # will always reproduce this exact failure.
     # "wasm4pm",
 ]
+pm4py = [
+    # pm4py 2.7.23 declares requires-python >=3.11 while this project declares
+    # >=3.10; the marker keeps uv's 3.10 split resolvable (same pattern as the
+    # gymact marker above). pm4py_counterfactual.py guards its import and the
+    # ecosystem tests skip-admit when the library is absent.
+    "pm4py>=2.7.23; python_version >= '3.11'",
+]
+ocel-ecosystem = [
+    # Markers added 2026-09-15: pystackt 0.1.0 requires >=3.12, pm4py/OPQL/
+    # ocelescope require >=3.11 (verified via PyPI metadata) while this project
+    # declares >=3.10. Without them `uv lock` is unsatisfiable for the 3.10/3.11
+    # splits (live CI failure on lock-consistency and hddl-execution at
+    # 3755bf0d). The bridge modules guard these imports behind AVAILABLE flags.
+    "ocpa>=1.1",
+    "pystackt>=0.1.0; python_version >= '3.12'",
+    "polars>=1.0.0",
+    "duckdb>=1.0.0",
+    "OPQL>=0.1.1; python_version >= '3.11'",
+    "ocelescope>=0.7.0; python_version >= '3.11'",
+]
+bcinr-wasm = [
+    # In-process WASM transport for the vendored bcinr-cmca allocator
+    # (src/autofde_lab/cmca/bcinr_wasm.py over wasm/artifacts/
+    # bcinr_cmca_wasm.wasm -- see wasm/README.md). 48.0.0 is the version
+    # this transport was built and verified bit-identical to the vendored
+    # cmca_rank_cli against; absent the runtime, the bridge falls back to
+    # the CLI subprocess and the wasm tests skip-admit.
+    "wasmtime>=48",
+]
 all = [
     # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
     # "receipts" added back 2026-08-12: `uv sync --extra=all` was silently uninstalling
@@ -372,6 +405,7 @@ gymact = { git = "https://github.com/seanchatmangpt/gymact.git", rev = "524d0bc8
 minversion = "6.0"
 addopts = "-ra -q"
 testpaths = ["tests"]
+pythonpath = ["src"]
 # Deliberately NOT --import-mode=importlib here, global -- see
 # docs/STATUS.md Pass 6. importlib mode is the correct fix for two real
 # collisions (tests/solvers/cpp/test_pomcp.py vs .../python/test_pomcp.py;

@@ -17,8 +17,13 @@ repos:
     rev: v3.2.0
     hooks:
     -   id: trailing-whitespace
-        exclude: "^(examples/discrete_optimization/data/|notebooks/.*\\.sm$|notebooks/data/)"
+        # vendor/bcinr excluded: the snapshot must stay byte-identical to the
+        # pinned upstream commit (see vendor/bcinr/VENDORING.md); upstream
+        # carries a small number of trailing-whitespace/EOF deviations that
+        # are provenance, not defects to normalize away on every refresh.
+        exclude: "^(examples/discrete_optimization/data/|notebooks/.*\\.sm$|notebooks/data/|vendor/bcinr/)"
     -   id: end-of-file-fixer
+        exclude: "^vendor/bcinr/"
     -   id: check-yaml
     -   id: check-added-large-files
         exclude: |

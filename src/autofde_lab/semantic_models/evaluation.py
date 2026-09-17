@@ -89,7 +89,17 @@ def make_dspy_metric(*, known_predicates: set[str] | frozenset[str]):
             predicted,
             expected,
             known_predicates=known_predicates,
-            shacl_conforms=True,
+            # SHACL is not evaluated inside this metric (no shapes context);
+            # zero its weight rather than fabricating a pass -- the axis
+            # contributes nothing instead of collecting a fake 0.20 bonus.
+            shacl_conforms=False,
+            weights=EvaluationWeights(
+                graph_exactness=0.30,
+                shacl_pass=0.0,
+                provenance=0.25,
+                recall=0.30,
+                unsupported_penalty=0.15,
+            ),
         )
         return evaluation.score
 

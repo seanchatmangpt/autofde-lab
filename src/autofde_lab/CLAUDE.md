@@ -41,9 +41,16 @@ CLI/MCP/A2A responses; `ontology/autofde-lab-capabilities.ttl` (generated).
    derives required domain characteristics from the `T_domain` MRO and says nothing about
    constructor requirements. 7 solvers are ontology-applicable yet not runnable with defaults
    (`REQUIRES_CONFIGURATION`).
-3. **`match_solvers(..., ranked=True)` accepts the flag and ignores it** (`utils.py:126`,
-   `# TODO: implement ranking heuristic`). Any dominance claim must be measured by running,
-   never delegated to that call.
+3. **`match_solvers(..., ranked=True)` is implemented, not a no-op** (`utils.py:407-474`,
+   commit `571e834f` "feat(solvers): implement ranked=True via optional cmca_rank_cli
+   governed ranking", 2026-08-13, with follow-up fixes `9cfbfdf7` and `a6dd0523` the same
+   day). It scores matched solvers via 4 real class-level measures and, when the optional
+   `cmca_rank_cli` binary is resolvable (`BCINR_HOME`/`CMCA_RANK_CLI_BIN` convention),
+   reorders the top 8 by its returned share; otherwise it degrades to existing match
+   order, never raising. The real-CLI success path is environment-gated — `cmca_rank_cli`
+   is not resolvable on this machine (`tests/fabric/test_phi_dispatch_chicago.py` names
+   both skips). Any dominance claim must still be measured by running, never delegated to
+   that call.
 4. **Failed solver loads surface as `None`, never as an exception** (`utils.py:94` logs a
    warning). Treat `None` as positive `UNSUPPORTED` evidence, not as absence.
 5. Abstract `raise NotImplementedError` in `builders/` are extension points by design, not WIP.

@@ -69,6 +69,24 @@
     skdt:extrasMarker "domains" ;
     skdt:capabilityCount "0"^^xsd:integer .
 
+<urn:skdecide:capability:domain/HDDLDomain> a skdt:Domain ;
+    skdt:identifier "HDDLDomain" ;
+    skdt:entryPoint "autofde_lab.hub.domain.hddl:HDDLDomain [hddl]" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "imported autofde_lab.hub.domain.hddl.hddl.HDDLDomain" ;
+    skdt:owningModule "autofde_lab.hub.domain.hddl.hddl" ;
+    skdt:extrasMarker "hddl" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
+<urn:skdecide:capability:domain/HTNDomain> a skdt:Domain ;
+    skdt:identifier "HTNDomain" ;
+    skdt:entryPoint "autofde_lab.hub.domain.htn:HTNDomain [domains]" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "imported autofde_lab.hub.domain.htn.domain.HTNDomain" ;
+    skdt:owningModule "autofde_lab.hub.domain.htn.domain" ;
+    skdt:extrasMarker "domains" ;
+    skdt:capabilityCount "0"^^xsd:integer .
+
 <urn:skdecide:capability:domain/MRCPSP> a skdt:Domain ;
     skdt:identifier "MRCPSP" ;
     skdt:entryPoint "autofde_lab.hub.domain.rcpsp:MRCPSP [domains]" ;
@@ -610,6 +628,24 @@
     skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Sequential> ;
     skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/SingleAgent> ;
     skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/UncertainInitialized> ;
+    skdt:capabilityCount "9"^^xsd:integer .
+
+<urn:skdecide:capability:solver/HDDLSolver> a skdt:Solver ;
+    skdt:identifier "HDDLSolver" ;
+    skdt:entryPoint "autofde_lab.hub.solver.hddl:HDDLSolver [hddl]" ;
+    skdt:standing "ALIVE" ;
+    skdt:evidence "imported autofde_lab.hub.solver.hddl.hddl.HDDLSolver" ;
+    skdt:owningModule "autofde_lab.hub.solver.hddl.hddl" ;
+    skdt:extrasMarker "hddl" ;
+    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Actions> ;
+    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/DeterministicInitialized> ;
+    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/DeterministicTransitions> ;
+    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/FullyObservable> ;
+    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Goals> ;
+    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Markovian> ;
+    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/PositiveCosts> ;
+    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Sequential> ;
+    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/SingleAgent> ;
     skdt:capabilityCount "9"^^xsd:integer .
 
 <urn:skdecide:capability:solver/HSVI> a skdt:Solver ;

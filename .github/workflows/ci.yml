@@ -4,6 +4,13 @@ on:
   push:
     branches: [master]
     tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+  # NOTE: do NOT add a pull_request trigger until the full suite is green
+  # on master again -- the "Full qualification and release" workflow has
+  # been failing on master since at least 2026-09-13 (run 34741790597:
+  # ray/GNN solver suites broken by 'No module named solvers' worker
+  # errors, SB3 autoregressive failures, a pcre2 symbol error, and a
+  # Deterministic quality failure). Gating PRs on a red-at-master job
+  # would block every PR on pre-existing rot.
   workflow_dispatch:
   schedule:
     - cron: "45 1 * * 3"

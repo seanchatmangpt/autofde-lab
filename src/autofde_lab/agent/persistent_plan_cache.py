@@ -32,8 +32,10 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+import time
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from autofde_lab.agent.continuous_planning import (
     PlanApplicability,
@@ -375,22 +377,38 @@ class SQLitePlanCache:
             os.chmod(self.path, 0o600)
 
     def _connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(
-            str(self.path),
-            timeout=30.0,
-            isolation_level=None,
-        )
-        connection.execute("PRAGMA busy_timeout = 30000")
-        connection.execute("PRAGMA journal_mode = WAL")
-        connection.execute("PRAGMA synchronous = FULL")
-        return connection
+        max_attempts = 5
+        for attempt in range(max_attempts):
+            try:
+                connection = sqlite3.connect(
+                    str(self.path),
+                    timeout=30.0,
+                    isolation_level=None,
+                )
+                connection.execute("PRAGMA busy_timeout = 30000")
+                connection.execute("PRAGMA journal_mode = WAL")
+                connection.execute("PRAGMA synchronous = FULL")
+                return connection
+            except sqlite3.OperationalError as exc:
+                if (
+                    "unable to open database file" in str(exc)
+                    and attempt < max_attempts - 1
+                ):
+                    time.sleep(0.01 * (attempt + 1))
+                    continue
+                raise
+        raise RuntimeError("UNREACHABLE")
 
     def _initialize(self) -> None:
-        with self._connect() as connection:
-            connection.execute("BEGIN IMMEDIATE")
-            _migrate_legacy_schema(connection)
-            _create_current_schema(connection)
-            connection.commit()
+        connection = self._connect()
+        try:
+            with connection:
+                connection.execute("BEGIN IMMEDIATE")
+                _migrate_legacy_schema(connection)
+                _create_current_schema(connection)
+                connection.commit()
+        finally:
+            connection.close()
 
     def _enforce_capacity(self, connection: sqlite3.Connection) -> None:
         row = connection.execute(
@@ -421,35 +439,39 @@ class SQLitePlanCache:
         artifact_json = canonical_json(payload)
         artifact_digest = sha256(payload)
         signature = plan.applicability.retrieval_signature
-        with self._connect() as connection:
-            connection.execute("BEGIN IMMEDIATE")
-            connection.execute(
-                """
-                INSERT INTO plan_artifacts (
-                    namespace,
-                    exact_key,
-                    retrieval_signature,
-                    artifact_json,
-                    artifact_digest,
-                    schema_version
-                ) VALUES (?, ?, ?, ?, ?, ?)
-                ON CONFLICT(namespace, exact_key) DO UPDATE SET
-                    retrieval_signature = excluded.retrieval_signature,
-                    artifact_json = excluded.artifact_json,
-                    artifact_digest = excluded.artifact_digest,
-                    schema_version = excluded.schema_version
-                """,
-                (
-                    self.namespace,
-                    key,
-                    signature,
-                    artifact_json,
-                    artifact_digest,
-                    _ARTIFACT_SCHEMA_VERSION,
-                ),
-            )
-            self._enforce_capacity(connection)
-            connection.commit()
+        connection = self._connect()
+        try:
+            with connection:
+                connection.execute("BEGIN IMMEDIATE")
+                connection.execute(
+                    """
+                    INSERT INTO plan_artifacts (
+                        namespace,
+                        exact_key,
+                        retrieval_signature,
+                        artifact_json,
+                        artifact_digest,
+                        schema_version
+                    ) VALUES (?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(namespace, exact_key) DO UPDATE SET
+                        retrieval_signature = excluded.retrieval_signature,
+                        artifact_json = excluded.artifact_json,
+                        artifact_digest = excluded.artifact_digest,
+                        schema_version = excluded.schema_version
+                    """,
+                    (
+                        self.namespace,
+                        key,
+                        signature,
+                        artifact_json,
+                        artifact_digest,
+                        _ARTIFACT_SCHEMA_VERSION,
+                    ),
+                )
+                self._enforce_capacity(connection)
+                connection.commit()
+        finally:
+            connection.close()
         return key
 
     def _decode_row(
@@ -477,7 +499,8 @@ class SQLitePlanCache:
         return plan
 
     def exact(self, key: str) -> PlanArtifact | None:
-        with self._connect() as connection:
+        connection = self._connect()
+        try:
             row = connection.execute(
                 """
                 SELECT exact_key, artifact_json, artifact_digest, schema_version
@@ -486,13 +509,16 @@ class SQLitePlanCache:
                 """,
                 (self.namespace, key),
             ).fetchone()
+        finally:
+            connection.close()
         if row is None:
             return None
         return self._decode_row(*row)
 
     def retrieve_candidates(self, context: PlanningContext) -> tuple[PlanArtifact, ...]:
         signature = _context_signature(context)
-        with self._connect() as connection:
+        connection = self._connect()
+        try:
             rows = connection.execute(
                 """
                 SELECT exact_key, artifact_json, artifact_digest, schema_version
@@ -502,13 +528,18 @@ class SQLitePlanCache:
                 """,
                 (self.namespace, signature),
             ).fetchall()
+        finally:
+            connection.close()
         return tuple(self._decode_row(*row) for row in rows)
 
     def count(self) -> int:
-        with self._connect() as connection:
+        connection = self._connect()
+        try:
             row = connection.execute(
                 "SELECT COUNT(*) FROM plan_artifacts WHERE namespace = ?",
                 (self.namespace,),
             ).fetchone()
+        finally:
+            connection.close()
         assert row is not None
         return int(row[0])

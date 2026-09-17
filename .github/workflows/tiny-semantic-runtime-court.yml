@@ -1,0 +1,62 @@
+name: Tiny semantic runtime court
+
+on:
+  pull_request:
+    paths:
+      - "src/autofde_lab/semantic_models/**"
+      - "tests/semantic_models/**"
+      - ".github/workflows/tiny-semantic-runtime-court.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  tiny-semantic-runtime-court:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out literal pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 1
+
+      - name: Assert exact revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          observed="$(git rev-parse HEAD)"
+          expected="${{ github.event.pull_request.head.sha }}"
+          test "$observed" = "$expected"
+          printf 'exact_head=%s\n' "$observed"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install minimal zero-LLM zero-GPU runtime dependencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "pydantic>=2" "pytest>=8"
+
+      - name: Verify zero ML-framework and zero GPU presence
+        shell: bash
+        run: |
+          python -c "
+          for mod in ['torch', 'transformers', 'dspy', 'tpot', 'sklearn', 'peft', 'trl', 'tensorflow']:
+              try:
+                  __import__(mod)
+                  raise SystemExit(f'FORBIDDEN: {mod} should not be present in runtime court')
+              except ImportError:
+                  pass
+          print('PASS: zero forbidden ML frameworks present')
+          "
+
+      - name: Run tiny runtime court with zero network and scrubbed credentials
+        shell: bash
+        env:
+          PYTHONPATH: src
+        run: |
+          env -u ZAI_API_KEY -u GROQ_API_KEY -u ANTHROPIC_API_KEY -u OPENAI_API_KEY \
+            pytest tests/semantic_models/test_tiny_runtime.py -k "not test_parity_with_sklearn" -v

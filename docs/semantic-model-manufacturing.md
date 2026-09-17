@@ -1,6 +1,6 @@
-# Semantic model manufacturing
+# Semantic model manufacturing (Semantic ML)
 
-AutoFDE Lab treats business language models as semantic codecs, not authorities.
+AutoFDE Lab treats machine learning and language models as **semantic codecs and proposal engines, not authorities**.
 
 The governing equation is:
 
@@ -12,35 +12,66 @@ A = mu(O*)
 model. `O*` is admitted semantic state. Artifacts, including trained models, are projections of
 `O*` and have no independent standing.
 
-## Pipeline
+## Semantic ML
 
+In AutoFDE, **Semantic ML** is defined as:
+
+$$\boxed{\text{Semantic ML} = \text{Machine learning whose inputs, outputs, features, training evidence, and qualification are bounded by } \mathcal{O}^*}$$
+
+Unlike traditional ML ($X \rightarrow f_\theta(X) \rightarrow Y$), Semantic ML enforces:
+
+$$\boxed{\pi(\mathcal{O}^*) \rightarrow f_\theta \rightarrow Candidate(\Delta \mathcal{O}^*) \rightarrow \text{Court} \rightarrow \mathcal{O}^{*'}}$$
+
+### The Four Invariants of Semantic ML
+1. **Ontology-derived feature space**: $X = \pi(\mathcal{O}^*)$ — Features are projections of admitted semantics, never arbitrary columns invented by AutoML.
+2. **Semantic output space**: $Y \subseteq \text{Language}(\mathcal{O}^*)$ — Outputs resolve back to canonical ontology identities rather than free-form text or ungrounded labels.
+3. **Standing is external to ML**: $\text{Prediction} \neq \text{Truth}$ — Every model output remains a candidate until the admission court admits it with a cryptographic receipt.
+4. **Models are disposable manufacture**: $M = \mu(\mathcal{O}^*, D, \text{Objective})$ — DSPy programs, GLM teachers, TPOT pipelines, scikit-learn models, and AtomVM Erlang projections can all be replaced without mutating the underlying semantic contract.
+
+### Limiting Trajectory (v26.9.14)
 ```text
-O
-  -> DSPy semantic extractor / distilled student
-  -> strict CandidateGraphDelta JSON
-  -> optional sklearn/TPOT2 advisory ranking
-  -> known-predicate + provenance + SHACL admission
-  -> ADMITTED | REFUSED receipt
-  -> O*
-  -> admitted SemanticExample corpus
-  -> DSPy optimization and/or TRL+PEFT LoRA manufacture
-  -> next candidate
+lim_{t -> inf} LLMRuntimeDependency(t) = 0
+lim_{t -> inf} GPURequirement(t) = 0
 ```
 
-The loop is deliberately asymmetric: optimization may manufacture candidates, but only the
-admission court may change `O*`.
+Where admitted semantics make natural language unnecessary, the steady-state path becomes:
+$$\mathcal{O}^* \rightarrow \text{Tiny Semantic Operator} \rightarrow \mathcal{O}^{*'}$$
+
+## Pipeline & Architecture
+
+```text
+MANUFACTURE TIME (Bootstrap Only)
+---------------------------------
+O -> DSPy (GLM-5.3-Flash teacher) -> Candidate(O*) -> Court -> O*
+     -> Manufactured Experience Dataset
+     -> Bounded TPOT / Sklearn / PEFT search
+     -> OptimizationReceipt
+
+RUNTIME (Zero LLM, Zero GPU, Zero Network)
+------------------------------------------
+pi(O*) -> SemanticFeatureSchema
+       -> TinySemanticOperator (Fixed-Point / AtomVM Erlang)
+       -> Candidate(Delta O*)
+       -> SemanticAdmissionCourt
+       -> AdmissionReceipt
+```
 
 ## Components
 
-- `contracts.py`: strict candidate, triple, example, and receipt contracts with canonical hashes.
+- `feature_schema.py`: deterministic `SemanticFeatureSchema` mapping admitted ontology IRIs to integer vectors $\mathbb{Z}^n$.
+- `tiny_operator.py`: standalone `TinySemanticOperator`, `TinyOperatorManifest`, and `TinyOperatorReceipt` requiring zero ML dependencies.
+- `portable_compiler.py`: pure-Python fixed-point quantization and tabular compilation for linear models and decision trees.
+- `atomvm_codegen.py`: compiles learned models into standalone AtomVM BEAM Erlang modules (`semantic_operator_v26_9_14.erl`).
+- `parity_court.py`: cross-runtime parity court asserting $Standing_1 = Standing_2 = Standing_3$ across CPU, portable, and AtomVM.
+- `contracts.py`: strict candidate, triple, example, and cryptographic receipts (`AdmissionReceipt`, `OptimizationReceipt`, `ModelQualificationRecord`).
 - `constrained.py`: JSON Schema for constrained vLLM/OpenAI-compatible generation and fail-closed parsing.
 - `admission.py`: known-predicate, provenance, and optional SHACL court; deterministic N-Triples and receipt hashes.
-- `evaluation.py`: graph exactness, precision/recall/F1, provenance coverage, unsupported-predicate rate, and the semantic optimization objective.
+- `evaluation.py`: graph exactness, precision/recall/F1, provenance coverage, unsupported-predicate rate, and Chapman objective.
 - `dspy_program.py`: typed DSPy extraction module plus MIPROv2, BootstrapFewShot, and GEPA compilation hooks.
-- `sklearn_search.py`: deterministic sklearn baseline and bounded TPOT2/current-TPOT light search. Predictions are advisory only.
-- `dataset.py`: only `ADMITTED` receipts can manufacture DSPy/distillation examples.
-- `distillation.py`: TRL + PEFT LoRA student manufacture from admitted examples.
-- `pipeline.py`: provider-neutral orchestration from observation to receipt.
+- `sklearn_search.py`: micro-exportable bounded search (`Ω_TPOT_MICRO`) and deterministic baseline ranking.
+- `dataset.py`: partitions experience into positive `gold_examples` and negative `contrastive_examples`.
+- `distillation.py`: PEFT/TRL LoRA student manufacture and comparative court qualification.
+- `loop.py`: orchestrates the closed manufacturing cycle with exact-head replay verification.
 
 The design vocabulary is in `ontology/semantic-model-manufacturing.ttl`; structural shapes live in
 `ontology/shapes/semantic-model-manufacturing.shacl.ttl`.

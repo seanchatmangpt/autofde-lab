@@ -1,0 +1,46 @@
+{
+  "schema": "https://spec.autofde.org/rfc-sa2a-002/appendix-e",
+  "receipt_id": "urn:uuid:b335cfb4-a717-420d-ae49-5218876736d8",
+  "protocol": "RFC-SA2A-002 v26.9.16",
+  "profile": "SA2A-PROFILE-v26.9.16",
+  "timestamp": "2026-09-16T20:36:49.678807+00:00",
+  "subject": "seanchatmangpt/autofde-lab @ f5727fa9",
+  "git_commit": "f5727fa970c8fd1060e662bc9e963c484aa5ed14",
+  "git_tag": "f5727fa970c8fd1060e662bc9e963c484aa5ed14",
+  "tag_equality": true,
+  "environment": {
+    "system": "Darwin",
+    "release": "25.2.0",
+    "machine": "arm64",
+    "python_version": "3.13.9",
+    "python_implementation": "CPython"
+  },
+  "certifications": {
+    "chicago_zero_mock_certified": true,
+    "anti_oracle_certified": true,
+    "zero_unittest_mock": true,
+    "real_plant_collaborators": true
+  },
+  "standing": "BUILD_BROKEN",
+  "all_passed": false,
+  "total_duration_ms": 0.045,
+  "aggregate_metrics": {
+    "total_benchmarks": 1,
+    "passed_benchmarks": 0,
+    "failed_benchmarks": 1,
+    "total_duration_ms": 0.045
+  },
+  "benchmarks": {
+    "SA2A-B2": {
+      "benchmark_id": "SA2A-B2",
+      "name": "Logic closure",
+      "passed": false,
+      "duration_ms": 0.0,
+      "standing": "BUILD_BROKEN",
+      "metrics": {},
+      "details": {},
+      "error": "'DatalogEngine' object has no attribute 'compute_closure'"
+    }
+  },
+  "receipt_digest": "f1bc9169ce47fb2810d6d47875786236cd4fc17878d892fb02672d0a03cf9e36"
+}

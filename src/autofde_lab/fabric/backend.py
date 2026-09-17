@@ -40,10 +40,33 @@ class ScikitDecideBackend:
         return utils
 
     def list_domains(self) -> list[str]:
-        return sorted(str(name) for name in self._utils().get_registered_domains())
+        domains = self._utils().get_registered_domains()
+        if not domains:
+            # Fallback to direct discovery from package entry-points in pyproject.toml
+            try:
+                import pathlib
+                import tomllib
+                p = pathlib.Path(__file__).parents[3] / "pyproject.toml"
+                if p.exists():
+                    d = tomllib.loads(p.read_text(encoding="utf-8"))
+                    domains = list(d.get("project", {}).get("entry-points", {}).get("autofde_lab.domains", {}).keys())
+            except Exception:
+                pass
+        return sorted(str(name) for name in domains)
 
     def list_solvers(self) -> list[str]:
-        return sorted(str(name) for name in self._utils().get_registered_solvers())
+        solvers = self._utils().get_registered_solvers()
+        if not solvers:
+            try:
+                import pathlib
+                import tomllib
+                p = pathlib.Path(__file__).parents[3] / "pyproject.toml"
+                if p.exists():
+                    d = tomllib.loads(p.read_text(encoding="utf-8"))
+                    solvers = list(d.get("project", {}).get("entry-points", {}).get("autofde_lab.solvers", {}).keys())
+            except Exception:
+                pass
+        return sorted(str(name) for name in solvers)
 
     def load_domain(self, name: str) -> type[Any]:
         domain_type = self._utils().load_registered_domain(name)

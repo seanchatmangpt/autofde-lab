@@ -28,6 +28,20 @@ Five real, independent checks:
    `src/autofde_lab/constitution/*.py` module (StandingValue-only files --
    i.e. every class is a SKOS vocabulary and none survives as a dataclass --
    count as zero real dataclasses, which is asserted too, not skipped).
+   The vocabulary-individual exclusion below is computed against the real
+   **merged** ontology graph (`ggen.toml`'s own `[ontology] source` +
+   `imports` list, read from the manifest itself, never hand-duplicated) --
+   not each concept's single `<name>.ttl` file in isolation -- because a
+   class can be declared in one file and have its individuals typed in a
+   *different* file (confirmed real case, 2026-09-16:
+   `ontology/world-transformation-taxonomy.ttl` types five individuals
+   against `afl:AdmittedObservation`, declared in `ontology/world.ttl`).
+   `ggen`'s own SPARQL queries run against that same merged graph, so a
+   single-file parse here would silently disagree with what `ggen sync run`
+   actually renders -- this was a real, confirmed bug in this script, fixed
+   in the same pass that flipped `constitution-world`'s `ggen.toml` mode to
+   `Overwrite` (see
+   `docs/jira/v26.9.16/AFDE-2608-projected-ephemeral-ontology-invariant.md`).
 3. **world-transformation-scenarios**: recompute the real
    `afl:WorldTransformationScenario` individual count in
    `ontology/world-transformation-taxonomy.ttl` and assert it equals the
@@ -48,6 +62,7 @@ from __future__ import annotations
 
 import json
 import re
+import tomllib
 from pathlib import Path
 
 try:
@@ -59,6 +74,8 @@ except ModuleNotFoundError as exc:  # pragma: no cover - environment gate
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 AFL = Namespace("urn:autofde-lab:")
+
+GGEN_TOML = REPO_ROOT / "ggen.toml"
 
 K8S_TAXONOMY_TTL = REPO_ROOT / "ontology" / "k8s-fault-taxonomy.ttl"
 K8S_UNIVERSES_PY = REPO_ROOT / "src" / "autofde_lab" / "reasoning" / "universes" / "k8s_fault_universes.py"
@@ -137,10 +154,30 @@ def _count_dataclasses(py_path: Path) -> int:
     return len(re.findall(r"^@dataclass", text, flags=re.MULTILINE))
 
 
-def _verify_dataclass_projection(*, check_name: str, ttl_path: Path, ontology_name: str, py_path: Path) -> dict:
-    graph = Graph()
-    graph.parse(ttl_path, format="turtle")
+def _load_merged_ontology_graph() -> Graph:
+    """Parse the exact same multi-file ontology graph `ggen sync run` compiles its
+    SPARQL queries against -- `ggen.toml`'s own real `[ontology] source` + `imports`
+    list, read directly from the manifest so this never hand-duplicates (and can
+    never drift from) the real generation scope.
 
+    A per-concept check that instead parsed only its own `<name>.ttl` file in
+    isolation could not see a cross-file individual binding (confirmed real case:
+    `ontology/world-transformation-taxonomy.ttl` types five individuals against
+    `afl:AdmittedObservation`, declared in `ontology/world.ttl`) and would silently
+    compute the wrong `expected_dataclass_count` for exactly that case -- this was a
+    real, confirmed bug, not a hypothetical one (see module docstring point 2).
+    """
+    manifest = tomllib.loads(GGEN_TOML.read_text(encoding="utf-8"))
+    ontology_cfg = manifest["ontology"]
+    ttl_relative_paths = [ontology_cfg["source"], *ontology_cfg.get("imports", [])]
+
+    graph = Graph()
+    for relative_path in ttl_relative_paths:
+        graph.parse(REPO_ROOT / relative_path, format="turtle")
+    return graph
+
+
+def _verify_dataclass_projection(*, check_name: str, graph: Graph, ontology_name: str, py_path: Path) -> dict:
     ontology_iri = AFL[f"ontology:{ontology_name}"]
     owl_class = Namespace("http://www.w3.org/2002/07/owl#")["Class"]
 
@@ -169,41 +206,43 @@ def _verify_dataclass_projection(*, check_name: str, ttl_path: Path, ontology_na
     }
 
 
-def _verify_constitution_file(name: str) -> dict:
+def _verify_constitution_file(name: str, graph: Graph) -> dict:
     return _verify_dataclass_projection(
         check_name=f"constitution-{name}",
-        ttl_path=REPO_ROOT / "ontology" / f"{name}.ttl",
+        graph=graph,
         ontology_name=name,
         py_path=REPO_ROOT / "src" / "autofde_lab" / "constitution" / f"{name}.py",
     )
 
 
-def _verify_togaf_artifacts() -> dict:
+def _verify_togaf_artifacts(graph: Graph) -> dict:
     return _verify_dataclass_projection(
         check_name="togaf-artifacts",
-        ttl_path=REPO_ROOT / "ontology" / "togaf-artifacts.ttl",
+        graph=graph,
         ontology_name="togaf-artifacts",
         py_path=REPO_ROOT / "src" / "autofde_lab" / "reasoning" / "togaf_artifacts.py",
     )
 
 
-def _verify_gymact_certification() -> dict:
+def _verify_gymact_certification(graph: Graph) -> dict:
     return _verify_dataclass_projection(
         check_name="gymact-certification",
-        ttl_path=REPO_ROOT / "ontology" / "gymact-certification.ttl",
+        graph=graph,
         ontology_name="gymact-certification",
         py_path=REPO_ROOT / "src" / "autofde_lab" / "reasoning" / "gymact_certification_types.py",
     )
 
 
 def main() -> int:
+    merged_graph = _load_merged_ontology_graph()
+
     results = [
         _verify_k8s_fault_universes(),
         _verify_world_transformation_scenarios(),
-        _verify_togaf_artifacts(),
-        _verify_gymact_certification(),
+        _verify_togaf_artifacts(merged_graph),
+        _verify_gymact_certification(merged_graph),
     ]
-    results.extend(_verify_constitution_file(name) for name in CONSTITUTION_FILES)
+    results.extend(_verify_constitution_file(name, merged_graph) for name in CONSTITUTION_FILES)
 
     all_match = all(r["match"] for r in results)
     receipt = {

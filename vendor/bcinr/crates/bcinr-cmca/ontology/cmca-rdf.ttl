@@ -1,0 +1,214 @@
+@prefix cmca: <http://example.org/cmca#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Classes
+cmca:SemanticObject a rdfs:Class .
+cmca:MeasureHead a rdfs:Class .
+cmca:Lens a rdfs:Class .
+
+# Global Parameters
+cmca:GlobalConfig cmca:eta "0.5"^^xsd:decimal .
+
+# Measure Heads (K = 4)
+cmca:MeasureCache a cmca:MeasureHead .
+cmca:MeasureCache cmca:measureIndex "0"^^xsd:integer .
+cmca:MeasureSearch a cmca:MeasureHead .
+cmca:MeasureSearch cmca:measureIndex "1"^^xsd:integer .
+cmca:MeasureRetrieval a cmca:MeasureHead .
+cmca:MeasureRetrieval cmca:measureIndex "2"^^xsd:integer .
+cmca:MeasureScheduling a cmca:MeasureHead .
+cmca:MeasureScheduling cmca:measureIndex "3"^^xsd:integer .
+
+# Lenses (Q = 4)
+cmca:LensExploitation a cmca:Lens .
+cmca:LensExploitation cmca:lensExponent "2.0"^^xsd:decimal .
+cmca:LensExploitation cmca:lensIndex "0"^^xsd:integer .
+cmca:LensProportional a cmca:Lens .
+cmca:LensProportional cmca:lensExponent "1.0"^^xsd:decimal .
+cmca:LensProportional cmca:lensIndex "1"^^xsd:integer .
+cmca:LensCoverage a cmca:Lens .
+cmca:LensCoverage cmca:lensExponent "0.0"^^xsd:decimal .
+cmca:LensCoverage cmca:lensIndex "2"^^xsd:integer .
+cmca:LensRare a cmca:Lens .
+cmca:LensRare cmca:lensExponent "-1.0"^^xsd:decimal .
+cmca:LensRare cmca:lensIndex "3"^^xsd:integer .
+
+# Lambda Matrix (K x Q = 4 x 4)
+cmca:Lambda_0_0 a cmca:LambdaCoefficient .
+cmca:Lambda_0_0 cmca:measureIndex "0"^^xsd:integer .
+cmca:Lambda_0_0 cmca:lensIndex "0"^^xsd:integer .
+cmca:Lambda_0_0 cmca:value "0.4"^^xsd:decimal .
+
+cmca:Lambda_0_1 a cmca:LambdaCoefficient .
+cmca:Lambda_0_1 cmca:measureIndex "0"^^xsd:integer .
+cmca:Lambda_0_1 cmca:lensIndex "1"^^xsd:integer .
+cmca:Lambda_0_1 cmca:value "0.3"^^xsd:decimal .
+
+cmca:Lambda_0_2 a cmca:LambdaCoefficient .
+cmca:Lambda_0_2 cmca:measureIndex "0"^^xsd:integer .
+cmca:Lambda_0_2 cmca:lensIndex "2"^^xsd:integer .
+cmca:Lambda_0_2 cmca:value "0.2"^^xsd:decimal .
+
+cmca:Lambda_0_3 a cmca:LambdaCoefficient .
+cmca:Lambda_0_3 cmca:measureIndex "0"^^xsd:integer .
+cmca:Lambda_0_3 cmca:lensIndex "3"^^xsd:integer .
+cmca:Lambda_0_3 cmca:value "0.1"^^xsd:decimal .
+
+cmca:Lambda_1_0 a cmca:LambdaCoefficient .
+cmca:Lambda_1_0 cmca:measureIndex "1"^^xsd:integer .
+cmca:Lambda_1_0 cmca:lensIndex "0"^^xsd:integer .
+cmca:Lambda_1_0 cmca:value "0.1"^^xsd:decimal .
+
+cmca:Lambda_1_1 a cmca:LambdaCoefficient .
+cmca:Lambda_1_1 cmca:measureIndex "1"^^xsd:integer .
+cmca:Lambda_1_1 cmca:lensIndex "1"^^xsd:integer .
+cmca:Lambda_1_1 cmca:value "0.2"^^xsd:decimal .
+
+cmca:Lambda_1_2 a cmca:LambdaCoefficient .
+cmca:Lambda_1_2 cmca:measureIndex "1"^^xsd:integer .
+cmca:Lambda_1_2 cmca:lensIndex "2"^^xsd:integer .
+cmca:Lambda_1_2 cmca:value "0.3"^^xsd:decimal .
+
+cmca:Lambda_1_3 a cmca:LambdaCoefficient .
+cmca:Lambda_1_3 cmca:measureIndex "1"^^xsd:integer .
+cmca:Lambda_1_3 cmca:lensIndex "3"^^xsd:integer .
+cmca:Lambda_1_3 cmca:value "0.4"^^xsd:decimal .
+
+cmca:Lambda_2_0 a cmca:LambdaCoefficient .
+cmca:Lambda_2_0 cmca:measureIndex "2"^^xsd:integer .
+cmca:Lambda_2_0 cmca:lensIndex "0"^^xsd:integer .
+cmca:Lambda_2_0 cmca:value "0.25"^^xsd:decimal .
+
+cmca:Lambda_2_1 a cmca:LambdaCoefficient .
+cmca:Lambda_2_1 cmca:measureIndex "2"^^xsd:integer .
+cmca:Lambda_2_1 cmca:lensIndex "1"^^xsd:integer .
+cmca:Lambda_2_1 cmca:value "0.25"^^xsd:decimal .
+
+cmca:Lambda_2_2 a cmca:LambdaCoefficient .
+cmca:Lambda_2_2 cmca:measureIndex "2"^^xsd:integer .
+cmca:Lambda_2_2 cmca:lensIndex "2"^^xsd:integer .
+cmca:Lambda_2_2 cmca:value "0.25"^^xsd:decimal .
+
+cmca:Lambda_2_3 a cmca:LambdaCoefficient .
+cmca:Lambda_2_3 cmca:measureIndex "2"^^xsd:integer .
+cmca:Lambda_2_3 cmca:lensIndex "3"^^xsd:integer .
+cmca:Lambda_2_3 cmca:value "0.25"^^xsd:decimal .
+
+cmca:Lambda_3_0 a cmca:LambdaCoefficient .
+cmca:Lambda_3_0 cmca:measureIndex "3"^^xsd:integer .
+cmca:Lambda_3_0 cmca:lensIndex "0"^^xsd:integer .
+cmca:Lambda_3_0 cmca:value "0.5"^^xsd:decimal .
+
+cmca:Lambda_3_1 a cmca:LambdaCoefficient .
+cmca:Lambda_3_1 cmca:measureIndex "3"^^xsd:integer .
+cmca:Lambda_3_1 cmca:lensIndex "1"^^xsd:integer .
+cmca:Lambda_3_1 cmca:value "0.0"^^xsd:decimal .
+
+cmca:Lambda_3_2 a cmca:LambdaCoefficient .
+cmca:Lambda_3_2 cmca:measureIndex "3"^^xsd:integer .
+cmca:Lambda_3_2 cmca:lensIndex "2"^^xsd:integer .
+cmca:Lambda_3_2 cmca:value "0.5"^^xsd:decimal .
+
+cmca:Lambda_3_3 a cmca:LambdaCoefficient .
+cmca:Lambda_3_3 cmca:measureIndex "3"^^xsd:integer .
+cmca:Lambda_3_3 cmca:lensIndex "3"^^xsd:integer .
+cmca:Lambda_3_3 cmca:value "0.0"^^xsd:decimal .
+
+
+# Case Study 1 (Cache Choice)
+cmca:Artifact_A a cmca:SemanticObject .
+cmca:Artifact_A cmca:recomputationCost "0.9"^^xsd:decimal .
+cmca:Artifact_A cmca:verificationCost "0.1"^^xsd:decimal .
+cmca:Artifact_A cmca:standing "1.0"^^xsd:decimal .
+cmca:Artifact_A cmca:validity "1.0"^^xsd:decimal .
+cmca:Artifact_A cmca:accessFrequency "0.5"^^xsd:decimal .
+cmca:Artifact_A cmca:searchDemand "0.0"^^xsd:decimal .
+cmca:Artifact_A cmca:retrievalDemand "0.0"^^xsd:decimal .
+cmca:Artifact_A cmca:schedulingDemand "0.0"^^xsd:decimal .
+cmca:Artifact_A cmca:businessValue "10.0"^^xsd:decimal .
+
+cmca:Artifact_B a cmca:SemanticObject .
+cmca:Artifact_B cmca:recomputationCost "0.1"^^xsd:decimal .
+cmca:Artifact_B cmca:verificationCost "0.9"^^xsd:decimal .
+cmca:Artifact_B cmca:standing "1.0"^^xsd:decimal .
+cmca:Artifact_B cmca:validity "1.0"^^xsd:decimal .
+cmca:Artifact_B cmca:accessFrequency "0.5"^^xsd:decimal .
+cmca:Artifact_B cmca:searchDemand "0.0"^^xsd:decimal .
+cmca:Artifact_B cmca:retrievalDemand "0.0"^^xsd:decimal .
+cmca:Artifact_B cmca:schedulingDemand "0.0"^^xsd:decimal .
+cmca:Artifact_B cmca:businessValue "10.0"^^xsd:decimal .
+
+
+# Case Study 2 (Single Object, Multiple Decisions)
+cmca:Obj_Single a cmca:SemanticObject .
+cmca:Obj_Single cmca:recomputationCost "0.8"^^xsd:decimal .
+cmca:Obj_Single cmca:verificationCost "0.8"^^xsd:decimal .
+cmca:Obj_Single cmca:standing "1.0"^^xsd:decimal .
+cmca:Obj_Single cmca:validity "1.0"^^xsd:decimal .
+cmca:Obj_Single cmca:accessFrequency "0.8"^^xsd:decimal .
+cmca:Obj_Single cmca:searchDemand "0.1"^^xsd:decimal .
+cmca:Obj_Single cmca:retrievalDemand "0.9"^^xsd:decimal .
+cmca:Obj_Single cmca:schedulingDemand "0.0"^^xsd:decimal .
+cmca:Obj_Single cmca:businessValue "100.0"^^xsd:decimal .
+
+
+# Case Study 3 (Consequence chain)
+cmca:Obj_Obligation a cmca:SemanticObject .
+cmca:Obj_Obligation cmca:recomputationCost "0.5"^^xsd:decimal .
+cmca:Obj_Obligation cmca:verificationCost "0.5"^^xsd:decimal .
+cmca:Obj_Obligation cmca:standing "1.0"^^xsd:decimal .
+cmca:Obj_Obligation cmca:validity "1.0"^^xsd:decimal .
+cmca:Obj_Obligation cmca:accessFrequency "0.5"^^xsd:decimal .
+cmca:Obj_Obligation cmca:searchDemand "0.5"^^xsd:decimal .
+cmca:Obj_Obligation cmca:retrievalDemand "0.5"^^xsd:decimal .
+cmca:Obj_Obligation cmca:schedulingDemand "0.5"^^xsd:decimal .
+cmca:Obj_Obligation cmca:businessValue "0.0"^^xsd:decimal .
+cmca:Obj_Obligation cmca:dependsOn cmca:Obj_Activity .
+
+cmca:Obj_Activity a cmca:SemanticObject .
+cmca:Obj_Activity cmca:recomputationCost "0.5"^^xsd:decimal .
+cmca:Obj_Activity cmca:verificationCost "0.5"^^xsd:decimal .
+cmca:Obj_Activity cmca:standing "1.0"^^xsd:decimal .
+cmca:Obj_Activity cmca:validity "1.0"^^xsd:decimal .
+cmca:Obj_Activity cmca:accessFrequency "0.5"^^xsd:decimal .
+cmca:Obj_Activity cmca:searchDemand "0.5"^^xsd:decimal .
+cmca:Obj_Activity cmca:retrievalDemand "0.5"^^xsd:decimal .
+cmca:Obj_Activity cmca:schedulingDemand "0.5"^^xsd:decimal .
+cmca:Obj_Activity cmca:businessValue "0.0"^^xsd:decimal .
+cmca:Obj_Activity cmca:dependsOn cmca:Obj_Deployment .
+
+cmca:Obj_Deployment a cmca:SemanticObject .
+cmca:Obj_Deployment cmca:recomputationCost "0.5"^^xsd:decimal .
+cmca:Obj_Deployment cmca:verificationCost "0.5"^^xsd:decimal .
+cmca:Obj_Deployment cmca:standing "1.0"^^xsd:decimal .
+cmca:Obj_Deployment cmca:validity "1.0"^^xsd:decimal .
+cmca:Obj_Deployment cmca:accessFrequency "0.5"^^xsd:decimal .
+cmca:Obj_Deployment cmca:searchDemand "0.5"^^xsd:decimal .
+cmca:Obj_Deployment cmca:retrievalDemand "0.5"^^xsd:decimal .
+cmca:Obj_Deployment cmca:schedulingDemand "0.5"^^xsd:decimal .
+cmca:Obj_Deployment cmca:businessValue "0.0"^^xsd:decimal .
+cmca:Obj_Deployment cmca:dependsOn cmca:Obj_Outcome .
+
+cmca:Obj_Outcome a cmca:SemanticObject .
+cmca:Obj_Outcome cmca:recomputationCost "0.5"^^xsd:decimal .
+cmca:Obj_Outcome cmca:verificationCost "0.5"^^xsd:decimal .
+cmca:Obj_Outcome cmca:standing "1.0"^^xsd:decimal .
+cmca:Obj_Outcome cmca:validity "1.0"^^xsd:decimal .
+cmca:Obj_Outcome cmca:accessFrequency "0.5"^^xsd:decimal .
+cmca:Obj_Outcome cmca:searchDemand "0.5"^^xsd:decimal .
+cmca:Obj_Outcome cmca:retrievalDemand "0.5"^^xsd:decimal .
+cmca:Obj_Outcome cmca:schedulingDemand "0.5"^^xsd:decimal .
+cmca:Obj_Outcome cmca:businessValue "0.0"^^xsd:decimal .
+cmca:Obj_Outcome cmca:dependsOn cmca:Obj_Value .
+
+cmca:Obj_Value a cmca:SemanticObject .
+cmca:Obj_Value cmca:recomputationCost "0.5"^^xsd:decimal .
+cmca:Obj_Value cmca:verificationCost "0.5"^^xsd:decimal .
+cmca:Obj_Value cmca:standing "1.0"^^xsd:decimal .
+cmca:Obj_Value cmca:validity "1.0"^^xsd:decimal .
+cmca:Obj_Value cmca:accessFrequency "0.5"^^xsd:decimal .
+cmca:Obj_Value cmca:searchDemand "0.5"^^xsd:decimal .
+cmca:Obj_Value cmca:retrievalDemand "0.5"^^xsd:decimal .
+cmca:Obj_Value cmca:schedulingDemand "0.5"^^xsd:decimal .
+cmca:Obj_Value cmca:businessValue "1000.0"^^xsd:decimal .
