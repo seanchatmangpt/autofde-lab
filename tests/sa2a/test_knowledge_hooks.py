@@ -234,7 +234,43 @@ def test_sa2a_cli_hook_evaluate_and_reflex():
     assert data_eval["records"][0]["intent"]["action_iri"] == "urn:action:test_eval"
 
     # 2. reflex
+    #
+    # AFDE-2604 architecture fix (default-wiring closure): `hook reflex` now requires
+    # admission by default (secure default -- see `.claude/rules` / the AFDE-2604
+    # closure doc), so the event content must independently reach Standing.ADMITTED
+    # AND explicitly bind this command's default action_iri/target_resource
+    # (urn:action:freeze_credit / urn:cap:credit:freeze) via the real
+    # `afl:targetResource` (urn:autofde-lab:targetResource) predicate before a real
+    # DO can occur. The extra triple below is that real content binding, not a test
+    # weakening -- it demonstrates the new secure default's legitimate happy path,
+    # not the old unconditionally-permissive one.
     res_reflex = runner.invoke(
+        app,
+        [
+            "hook",
+            "reflex",
+            "-b",
+            "@prefix ex: <http://example.org/> . ex:a ex:b 1 .",
+            "-e",
+            (
+                "@prefix ex: <http://example.org/> . ex:a ex:b 2 . "
+                "<urn:action:freeze_credit> <urn:autofde-lab:targetResource> "
+                "<urn:cap:credit:freeze> ."
+            ),
+        ],
+    )
+    assert res_reflex.exit_code == 0
+    data_reflex = json.loads(res_reflex.stdout)
+    assert data_reflex["ok"] is True
+    assert data_reflex["quiescence_reached"] is True
+    assert data_reflex["steps_count"] == 1
+    assert data_reflex["steps"][0]["receipt_states"] == ["EXECUTED"]
+
+    # AFDE-2604 regression check: the SAME command, WITHOUT the content-binding
+    # triple, is now genuinely refused by default (proving the fence is real, not
+    # merely documented) -- and `--skip-admission-check` explicitly restores the
+    # old, permissive behavior for a caller that names that intent.
+    res_unbound = runner.invoke(
         app,
         [
             "hook",
@@ -245,10 +281,23 @@ def test_sa2a_cli_hook_evaluate_and_reflex():
             "@prefix ex: <http://example.org/> . ex:a ex:b 2 .",
         ],
     )
-    assert res_reflex.exit_code == 0
-    data_reflex = json.loads(res_reflex.stdout)
-    assert data_reflex["ok"] is True
-    assert data_reflex["quiescence_reached"] is True
-    assert data_reflex["steps_count"] == 1
-    assert data_reflex["steps"][0]["receipt_states"] == ["EXECUTED"]
+    assert res_unbound.exit_code == 0
+    data_unbound = json.loads(res_unbound.stdout)
+    assert data_unbound["steps"][0]["receipt_states"] == ["REFUSED"]
+
+    res_skip = runner.invoke(
+        app,
+        [
+            "hook",
+            "reflex",
+            "-b",
+            "@prefix ex: <http://example.org/> . ex:a ex:b 1 .",
+            "-e",
+            "@prefix ex: <http://example.org/> . ex:a ex:b 2 .",
+            "--skip-admission-check",
+        ],
+    )
+    assert res_skip.exit_code == 0
+    data_skip = json.loads(res_skip.stdout)
+    assert data_skip["steps"][0]["receipt_states"] == ["EXECUTED"]
 

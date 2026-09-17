@@ -355,8 +355,36 @@ def hook_reflex(
     actor_id: str = typer.Option("urn:agent:autonomic-controller", "--actor-id", help="Actor ID"),
     action_iri: str = typer.Option("urn:action:freeze_credit", "--action-iri", help="Action IRI"),
     target_resource: str = typer.Option("urn:cap:credit:freeze", "--target-resource", help="Target resource IRI"),
+    skip_admission_check: bool = typer.Option(
+        False,
+        "--skip-admission-check",
+        help=(
+            "AFDE-2604 (default wiring closure): explicitly OPT OUT of the default "
+            "admission fence. By default this command requires the event content to "
+            "independently reach Standing.ADMITTED via a real AdmissionPipeline, with "
+            "a real <action_iri> <urn:autofde-lab:targetResource> <target_resource> . "
+            "triple in that content binding it to this exact action/target, before any "
+            "AuthorityBroker/BRCE dispatch. Pass this flag only when the old, "
+            "permissive candidate -> authority -> DO behavior is genuinely required -- "
+            "it is never the silent default."
+        ),
+    ),
 ) -> None:
-    """Run autonomic reflex cycle: Delta -> Hook -> Intent -> Authority -> BRCE -> Receipt -> Quiescence."""
+    """Run autonomic reflex cycle: Delta -> Hook -> Intent -> Authority -> BRCE -> Receipt -> Quiescence.
+
+    AFDE-2604 (local admission-fencing closure, default-wiring fix): SECURE BY DEFAULT.
+    Unless `--skip-admission-check` is passed, this command constructs a real
+    `AdmissionPipeline` for the `ReactiveSemanticLoop` and configures the
+    `ConsequenceBoundary` with `require_admission=True`, so `candidate -> ADMIT ->
+    SELECT -> CONSTRUCT -> authority grant -> DO` is enforced for every real intent
+    this command dispatches -- closing the previously-named, previously-shipped
+    `candidate -> authority -> DO` gap (see
+    `docs/jira/v26.9.16/AFDE-2604-admission-fencing-local-closure.md`, "cross-entry-
+    point confused deputy" qualification). `--skip-admission-check` restores the prior
+    permissive behavior explicitly, for a caller that genuinely needs it -- never
+    silently.
+    """
+    from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline
     from autofde_lab.sa2a.authority.broker import AuthorityBroker, AuthorityGrant
     from autofde_lab.sa2a.brce.boundary import ConsequenceBoundary
     from autofde_lab.sa2a.hooks.engine import KnowledgeHookEngine
@@ -418,6 +446,9 @@ def hook_reflex(
         authority_broker=broker,
         actuator=CliActuator(),
         verifier=CliVerifier(),
+        # AFDE-2604 default-wiring closure: secure by default -- require_admission is
+        # True unless the caller explicitly opts out via --skip-admission-check.
+        require_admission=not skip_admission_check,
     )
 
     loop = ReactiveSemanticLoop(
@@ -425,6 +456,11 @@ def hook_reflex(
         authority_broker=broker,
         consequence_boundary=boundary,
         max_cascade_depth=max_depth,
+        # AFDE-2604 default-wiring closure: a real AdmissionPipeline is wired by
+        # default so the fence is genuinely consulted, not merely configured on the
+        # boundary -- None (the old, permissive default) only when explicitly opted
+        # out via --skip-admission-check.
+        admission_pipeline=None if skip_admission_check else AdmissionPipeline(),
     )
 
     trace = loop.run_reflex_cycle(

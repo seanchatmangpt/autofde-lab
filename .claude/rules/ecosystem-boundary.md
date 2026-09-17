@@ -60,9 +60,17 @@ false ecosystem claim was made this session ("no POWL executor exists") from a
 search that had never looked at `~/bcinr`, which contains one. Any conclusion
 drawn from "whichever repos got inspected" is unsound by construction.
 
-Note `match_solvers(..., ranked=True)` accepts the flag and ignores it
-(`utils.py:126`, `# TODO: implement ranking heuristic`) — so any claim that one
-capability dominates another must be *measured*, not delegated.
+`match_solvers(..., ranked=True)` is implemented, not a no-op (as of commit
+`571e834f`, "feat(solvers): implement ranked=True via optional cmca_rank_cli
+governed ranking", 2026-08-13; see `src/autofde_lab/utils.py:407-474`): it
+scores matched solvers via 4 real class-level measures and, when the optional
+`cmca_rank_cli` binary is resolvable (`BCINR_HOME`/`CMCA_RANK_CLI_BIN`
+convention), reorders the top 8 by its returned share; otherwise it degrades
+to existing match order, never raising. The real-CLI success path is
+environment-gated — `cmca_rank_cli` is not resolvable on this machine
+(`tests/fabric/test_phi_dispatch_chicago.py` names both skips) — so any claim
+that one capability dominates another must still be *measured*, not
+delegated to that call.
 
 ## See also
 

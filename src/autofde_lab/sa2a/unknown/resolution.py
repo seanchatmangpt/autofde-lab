@@ -13,7 +13,7 @@ import uuid
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 
 from autofde_lab.sa2a.unknown.allocator import (
     CandidateAllocation,
@@ -55,6 +55,17 @@ class CandidateResolution:
     source_identity: str
     consumed_ticks: int
     consumed_tokens: int
+    # AFDE-2611 Law 2 (local instantiation): a candidate has no authority by
+    # construction. Previously this was true only by absence -- no
+    # `authority` field existed at all, so "candidate implies no authority"
+    # was an inference from a missing attribute rather than an inspectable
+    # fact (the exact "absence is not evidence" pattern
+    # `.claude/rules/absence-is-not-evidence.md` warns against). This field
+    # makes the invariant an explicit, always-present, always-"none" marker.
+    # It is documentation of the invariant, never a substitute for real
+    # admission: `_default_admission_court`/`admit_candidate` below never
+    # reads this field, and must never be changed to do so.
+    authority: Literal["none"] = "none"
 
     @property
     def candidate_hash(self) -> str:

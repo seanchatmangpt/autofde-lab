@@ -56,6 +56,16 @@ class HookSynthesizer:
             name=hook_name,
             on=HookEventTrigger.ASSERT,
             condition_kind="delta",
+            # AFDE-2612 local fix: previously trigger_predicate/trigger_value were
+            # only baked into the separate graphlaw_rule_ttl string below and never
+            # stored on the hook itself, so KnowledgeHookEngine's local fallback
+            # (engine.py) had no real field to check an event delta against and
+            # fired on any non-empty delta regardless of content. Storing them here
+            # makes the manufactured hook self-describing about its own trigger
+            # condition, independent of whether the WASM engine ever admits the
+            # GraphLaw rule.
+            trigger_predicate=trigger_predicate,
+            trigger_value=trigger_value,
             effect=HookEffectKind.GROUND_ACTION,
             action_iri=action_iri,
             target_capability_iri=target_capability_iri,

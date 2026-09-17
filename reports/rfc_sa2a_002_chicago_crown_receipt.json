@@ -1,0 +1,241 @@
+{
+  "all_gates_passed": true,
+  "appendix": "Appendix D",
+  "canonical_gates": {
+    "Gate01_ExactIdentityFenced": true,
+    "Gate02_ExecutableWorldAdmitted": true,
+    "Gate03_RealCollaboratorsZeroMocks": true,
+    "Gate04_PlanningCandidateOnly": true,
+    "Gate05_WholeBoundedPlanPreflighted": true,
+    "Gate06_AutonomousExecutionInsideEnvelope": true,
+    "Gate07_SoleDOBoundaryBRCE": true,
+    "Gate08_IndependentPostconditionObservation": true,
+    "Gate09_CompleteReceiptIdentityBinding": true,
+    "Gate10_ReplaySucceedsDeterministically": true,
+    "Gate11_FreshConsumerProofSucceeds": true,
+    "Gate12_ZeroRuntimeInferenceKnown": true
+  },
+  "court": "Canonical Chicago Definition of Done Court",
+  "cryptographic_binding": {
+    "action_iri": "urn:action:quarantine_compromised_node",
+    "actor_id": "urn:agent:autonomic-controller",
+    "final_receipt_digest": "77b7ae13eee78a68e40a643038438398655785de8e1a75ebfe979ec55fd75fbf",
+    "idempotency_token": "idemp-chicago-02a9340fbfac",
+    "payload_digest": "01003af0832e77302fe0723a6f0f3ebb990b6e2e6db2dbe346e87d5c63074e5d",
+    "prepared_receipt_digest": "77b7ae13eee78a68e40a643038438398655785de8e1a75ebfe979ec55fd75fbf",
+    "receipt_store_chain_valid": true,
+    "target_resource": "urn:cap:cluster:nodes"
+  },
+  "duration_ms": 188,
+  "exact_sha": "f5727fa970c8fd1060e662bc9e963c484aa5ed14",
+  "gates": [
+    {
+      "description": "Exact Git identity fenced to release tag",
+      "details": {
+        "exact_sha": "f5727fa970c8fd1060e662bc9e963c484aa5ed14",
+        "tag_equality": true,
+        "tag_sha": "f5727fa970c8fd1060e662bc9e963c484aa5ed14"
+      },
+      "duration_ms": 20.086050033569336,
+      "gate_id": "CHI-ID",
+      "gate_name": "Gate01_ExactIdentityFenced",
+      "passed": true
+    },
+    {
+      "description": "Executable world admitted to lab candidate frontier",
+      "details": {
+        "candidate_id": "novelty-5e247554a2ad"
+      },
+      "duration_ms": 0.041961669921875,
+      "gate_id": "CHI-WORLD",
+      "gate_name": "Gate02_ExecutableWorldAdmitted",
+      "passed": true
+    },
+    {
+      "description": "Real load-bearing collaborators with zero mocks",
+      "details": {
+        "actuator_digest": "actuator:disk_journal:chicago_consequence_journal.json",
+        "collusion_prevented": true,
+        "verifier_digest": "verifier:disk_journal:chicago_consequence_journal.json",
+        "zero_mock": true
+      },
+      "duration_ms": 0.09202957153320312,
+      "gate_id": "CHI-COLLAB",
+      "gate_name": "Gate03_RealCollaboratorsZeroMocks",
+      "passed": true
+    },
+    {
+      "description": "Planning candidate only; ungranted consequence refused",
+      "details": {
+        "refusal_code": "REFUSED_NO_GRANT",
+        "state": "REFUSED"
+      },
+      "duration_ms": 0.22792816162109375,
+      "gate_id": "CHI-PLAN",
+      "gate_name": "Gate04_PlanningCandidateOnly",
+      "passed": true
+    },
+    {
+      "description": "Whole bounded plan preflighted under CMCA budget",
+      "details": {
+        "allocations": 1,
+        "lab_tokens_spent": 2000,
+        "plan_id": "plan_chicago_crown_01"
+      },
+      "duration_ms": 0.09274482727050781,
+      "gate_id": "CHI-BUDGET",
+      "gate_name": "Gate05_WholeBoundedPlanPreflighted",
+      "passed": true
+    },
+    {
+      "description": "Autonomous reflex execution inside admitted envelope",
+      "details": {
+        "quiescence_reached": true,
+        "steps_count": 1
+      },
+      "duration_ms": 165.75121879577637,
+      "gate_id": "CHI-EXEC",
+      "gate_name": "Gate06_AutonomousExecutionInsideEnvelope",
+      "passed": true
+    },
+    {
+      "description": "Consequence traverses sole DO boundary (BRCE)",
+      "details": {
+        "disk_unmutated_before_grant": true,
+        "journal_exists": false
+      },
+      "duration_ms": 0.050067901611328125,
+      "gate_id": "CHI-BOUNDARY",
+      "gate_name": "Gate07_SoleDOBoundaryBRCE",
+      "passed": true
+    },
+    {
+      "description": "Independent postcondition observation on disk",
+      "details": {
+        "disk_entry_count": 1,
+        "postcondition_verified": true
+      },
+      "duration_ms": 0.1850128173828125,
+      "gate_id": "CHI-OBS",
+      "gate_name": "Gate08_IndependentPostconditionObservation",
+      "passed": true
+    },
+    {
+      "description": "Complete receipt identity binding",
+      "details": {
+        "actor_id": "urn:agent:autonomic-controller",
+        "prepared_id": "prep-d778d2469581",
+        "target_resource": "urn:cap:cluster:nodes"
+      },
+      "duration_ms": 0.04887580871582031,
+      "gate_id": "CHI-BIND",
+      "gate_name": "Gate09_CompleteReceiptIdentityBinding",
+      "passed": true
+    },
+    {
+      "description": "Deterministic offline replay verification",
+      "details": {
+        "standing": "ALIVE",
+        "verdict": "VALID"
+      },
+      "duration_ms": 0.12803077697753906,
+      "gate_id": "CHI-REPLAY",
+      "gate_name": "Gate10_ReplaySucceedsDeterministically",
+      "passed": true
+    },
+    {
+      "description": "Fresh-consumer out-of-process reconstruction proof",
+      "details": {
+        "standing": "ALIVE",
+        "verdict": "VALID"
+      },
+      "duration_ms": 0.07796287536621094,
+      "gate_id": "CHI-FRESH",
+      "gate_name": "Gate11_FreshConsumerProofSucceeds",
+      "passed": true
+    },
+    {
+      "description": "Standing typed ALIVE with zero runtime inference for known class",
+      "details": {
+        "lab_tokens_spent": 2000,
+        "runtime_inference_tokens": 0,
+        "standing": "ALIVE"
+      },
+      "duration_ms": 0.0019073486328125,
+      "gate_id": "CHI-KNOWN",
+      "gate_name": "Gate12_ZeroRuntimeInferenceKnown",
+      "passed": true
+    }
+  ],
+  "gates_passed": {
+    "CHI-BIND": true,
+    "CHI-BOUNDARY": true,
+    "CHI-BUDGET": true,
+    "CHI-COLLAB": true,
+    "CHI-EXEC": true,
+    "CHI-FRESH": true,
+    "CHI-ID": true,
+    "CHI-KNOWN": true,
+    "CHI-OBS": true,
+    "CHI-PLAN": true,
+    "CHI-REPLAY": true,
+    "CHI-WORLD": true
+  },
+  "issued_at_ms": 1789590125290,
+  "ocel_conformance": {
+    "activities": [
+      "CHI-BIND:CompleteReceiptIdentityBound",
+      "CHI-BOUNDARY:SoleDOEnforcement",
+      "CHI-BUDGET:PlanPreflighted",
+      "CHI-COLLAB:CollaboratorsInitialized",
+      "CHI-EXEC:AutonomousEnvelopeReflex",
+      "CHI-FRESH:FreshConsumerProofVerified",
+      "CHI-ID:ExactIdentityFenced",
+      "CHI-KNOWN:ZeroRuntimeInferenceVerified",
+      "CHI-OBS:IndependentPostconditionVerified",
+      "CHI-PLAN:CandidateRefusalEnforced",
+      "CHI-REPLAY:DeterministicReplayVerified",
+      "CHI-WORLD:NoveltyAdmitted"
+    ],
+    "all_objects_conform": true,
+    "object_types": [
+      "Actuator",
+      "AuthorityBroker",
+      "AuthorityGrant",
+      "AutonomousAgent",
+      "ConsequenceBoundary",
+      "ExecutionEnvelope",
+      "FinalReceipt",
+      "KnowledgeHook",
+      "NoveltyCandidate",
+      "NoveltyGateway",
+      "PlanAllocation",
+      "PreparedReceipt",
+      "ReleaseArtifact",
+      "ReplayEngine",
+      "Verifier"
+    ],
+    "ocpq_definition_2_valid": true,
+    "overall_fitness": 1.0,
+    "per_object_fitness": {
+      "idemp-chicago-02a9340fbfac": 1.0,
+      "urn:actuator:disk_journal": 1.0,
+      "urn:boundary:brce": 1.0,
+      "urn:engine:fresh_replay": 1.0,
+      "urn:engine:replay": 1.0,
+      "urn:release:v26.9.16": 1.0,
+      "urn:verifier:disk_journal": 1.0
+    },
+    "total_events": 12,
+    "total_objects": 16
+  },
+  "qualification_kind": "CHICAGO_CROWN",
+  "receipt_digest": "0f795d42967a6903e5f0d0db1a3413d3cd4fb25d8dfb4568b52a07dd4b6fea6b",
+  "receipt_id": "urn:receipt:standing:chicago:f5727fa970c8:idemp-chicago-02a9340fbfac",
+  "release": "v26.9.16",
+  "standard": "RFC-SA2A-002",
+  "standing": "ALIVE",
+  "subject": "seanchatmangpt/autofde-lab @ f5727fa9",
+  "tag_equality": true,
+  "tag_sha": "f5727fa970c8fd1060e662bc9e963c484aa5ed14"
+}

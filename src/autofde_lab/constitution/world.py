@@ -23,10 +23,15 @@ from enum import Enum
 
 
 
-@dataclass(frozen=True)
-class AdmittedObservation:
-    """An observation accepted for a bounded decision or experiment after its required admission checks."""
-    derived_from_observation: tuple[str, ...] = ()  #  (ref: Observation)
+class StandingValue(str, Enum):
+    """Status-vocabulary named individuals from this ontology file."""
+
+    obs_api_instance_count = "obs_api_instance_count"
+    obs_db_publicly_reachable = "obs_db_publicly_reachable"
+    obs_failure_budget_exhausted = "obs_failure_budget_exhausted"
+    obs_p95_latency_ms = "obs_p95_latency_ms"
+    obs_sql_primary_count = "obs_sql_primary_count"
+
 
 
 @dataclass(frozen=True)
@@ -58,7 +63,7 @@ class WorldState:
 
 
 __all__ = [
-    "AdmittedObservation",
+    "StandingValue",
     "Environment",
     "Observation",
     "ObservationAdmission",

@@ -7,9 +7,12 @@ RFC-SA2A-001 v26.9.16:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 import time
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any, Callable, Mapping, Optional, Sequence
 
+from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline, AdmissionResult
+from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import (
     AuthorityBroker,
     AuthorityDecision,
@@ -17,6 +20,7 @@ from autofde_lab.sa2a.authority.broker import (
     ConsequenceRequest,
 )
 from autofde_lab.sa2a.brce.boundary import (
+    REFUSED_NOT_ADMITTED,
     ConsequenceActuator,
     ConsequenceBoundary,
     ConsequenceVerifier,
@@ -56,7 +60,22 @@ class ReactiveSemanticTrace:
 
 
 class ReactiveSemanticLoop:
-    """Closed autonomic reflex loop driving Hook -> Intent -> Authority -> BRCE -> Delta."""
+    """Closed autonomic reflex loop driving Hook -> Intent -> Authority -> BRCE -> Delta.
+
+    AFDE-2604 (local closure of A2A-2604, "wire semantic admission into the live
+    consequence path"): accepts an OPTIONAL `admission_pipeline`. When configured, this
+    is the one real composed entry point that enforces
+    `candidate -> ADMIT -> SELECT -> CONSTRUCT -> authority grant -> DO` for the live
+    semantic-dispatch path -- the candidate content driving each reflex cycle is
+    admitted via a real `AdmissionPipeline.admit()` call, and the resulting
+    `AdmissionResult` gates every intent synthesized from it before
+    `AuthorityBroker.evaluate()` is ever consulted for that intent. Additive and
+    backward compatible: when `admission_pipeline` is omitted (the default), this
+    behaves exactly as before -- `candidate -> authority -> DO`, unchanged -- for every
+    existing caller (`sa2a/cli.py`'s `hook reflex` command included; see
+    `docs/jira/v26.9.16/AFDE-2604-admission-fencing-local-closure.md` for the named,
+    intentional scope of what this session wired vs. left admission-exempt).
+    """
 
     def __init__(
         self,
@@ -65,11 +84,13 @@ class ReactiveSemanticLoop:
         consequence_boundary: ConsequenceBoundary,
         *,
         max_cascade_depth: int = 5,
+        admission_pipeline: Optional[AdmissionPipeline] = None,
     ) -> None:
         self.hook_engine = hook_engine
         self.authority_broker = authority_broker
         self.consequence_boundary = consequence_boundary
         self.max_cascade_depth = max_cascade_depth
+        self.admission_pipeline = admission_pipeline
 
     def run_reflex_cycle(
         self,
@@ -103,8 +124,58 @@ class ReactiveSemanticLoop:
             receipts: list[FinalReceipt] = []
             next_delta_parts: list[str] = []
 
+            # AFDE-2604 admission fence (opt-in via `admission_pipeline`): the candidate
+            # content driving THIS cycle's intents must independently reach
+            # Standing.ADMITTED before any intent synthesized from it may reach
+            # AuthorityBroker.evaluate(). One admission call per cycle, bound onto every
+            # envelope constructed from it -- the same admitted (or refused) candidate
+            # identity, not a call this loop could route around per-intent. When
+            # `admission_pipeline` is None (default), this is a no-op and every existing
+            # caller's behavior is byte-for-byte unchanged.
+            #
+            # AFDE-2604 default-wiring closure: a real, minimal provenance_record
+            # (issuer=this cycle's real actor_id, timestamp=real wall-clock UTC) is
+            # supplied -- `AdmissionPipeline.admit()`'s default policy requires both
+            # (`require_issuer`/`require_timestamp`), so omitting this would refuse
+            # EVERY candidate with REFUSED_PROVENANCE_MISSING regardless of content,
+            # making the admission fence appear to work while actually just being
+            # permanently closed to legitimate content, never a real content-binding
+            # gate. `actor_id` is a real, already-authenticated-enough identity for
+            # this call graph (it is the same identity AuthorityBroker.evaluate() is
+            # about to check downstream); it is never treated as authority itself --
+            # admission stays authority-inert regardless (AFDE-2604 Laws #2).
+            admission_result: Optional[AdmissionResult] = None
+            if self.admission_pipeline is not None:
+                admission_result = self.admission_pipeline.admit(
+                    current_event,
+                    provenance_record={
+                        "issuer": actor_id,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    },
+                )
+
             # 2. For each intent, evaluate Authority and execute via BRCE
             for intent in intents:
+                if self.admission_pipeline is not None and (
+                    admission_result is None or admission_result.standing != Standing.ADMITTED
+                ):
+                    # Fenced: refused before AuthorityBroker.evaluate() is ever consulted.
+                    standing_repr = admission_result.standing.value if admission_result else None
+                    auth_decisions.append(
+                        AuthorityDecision(
+                            authorized=False,
+                            grant_id=None,
+                            refusal_code=REFUSED_NOT_ADMITTED,
+                            reason=(
+                                "AFDE-2604 admission fence: candidate content for this "
+                                f"reflex cycle was not Standing.ADMITTED (standing="
+                                f"{standing_repr!r}); refused before AuthorityBroker."
+                                "evaluate() was ever consulted for this intent."
+                            ),
+                        )
+                    )
+                    continue
+
                 req = ConsequenceRequest(
                     actor_id=actor_id,
                     action_iri=intent.action_iri,
@@ -122,8 +193,13 @@ class ReactiveSemanticLoop:
                         parameters=intent.parameters,
                         actor_id=actor_id,
                         grant_id=auth_decision.grant_id,
+                        admission_result=admission_result,
                     )
-                    res = self.consequence_boundary.execute(env)
+                    res = (
+                        self.consequence_boundary.execute_admitted(env)
+                        if self.admission_pipeline is not None
+                        else self.consequence_boundary.execute(env)
+                    )
                     if res.final_receipt is not None:
                         receipts.append(res.final_receipt)
 

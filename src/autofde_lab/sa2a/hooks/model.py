@@ -44,6 +44,19 @@ class KnowledgeHookDefinition:
     on: HookEventTrigger = HookEventTrigger.ASSERT
     condition_kind: str = "delta"
     condition_query: str = ""
+    # Real (predicate, literal-value) condition this hook's GraphLaw rule was
+    # compiled from (see HookSynthesizer.synthesize_from_resolution). AFDE-2612
+    # local fix: KnowledgeHookEngine.evaluate's local Python fallback (used
+    # whenever the WASM verdict lookup misses -- which is every synthesized
+    # hook today, since condition_query is never populated and no synthesized
+    # hook's GraphLaw rule is merged into the graph run_hooks() evaluates)
+    # checks these two fields against the real event delta before firing,
+    # instead of firing on any non-empty delta regardless of content. None on
+    # either field means "no explicit trigger condition configured" and
+    # preserves the pre-fix, content-blind-on-any-non-empty-delta behavior for
+    # hooks that were never given one (e.g. hand-constructed test/CLI hooks).
+    trigger_predicate: str | None = None
+    trigger_value: str | None = None
     effect: HookEffectKind = HookEffectKind.GROUND_ACTION
     action_iri: str | None = None
     target_capability_iri: str | None = None

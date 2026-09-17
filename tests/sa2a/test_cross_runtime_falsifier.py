@@ -7,6 +7,32 @@ Proves:
 3. Both independently enforce authority ceilings.
 4. Both produce receipts whose canonical graph hashes and execution seals
    mutually verify to the exact byte without application-level interpretation.
+
+AFDE-2609 fix note: `WasmComponentRef.artifact_sha256` below previously carried a
+hardcoded value (`34fe50b8...`) that did NOT match the real local
+praxis-graphlaw-wasm artifact bytes, and nothing in `GraphLawBridge` or this test
+ever checked it against the real file -- a false-green fixture by construction,
+per `.claude/rules/absence-is-not-evidence.md`. `GraphLawBridge.__init__` now
+computes the real SHA-256 of the loaded artifact at construction time and refuses
+(typed `GraphLawArtifactIntegrityError`) on mismatch, so this fixture's declared
+digest was first corrected to the real, confirmed literal value
+(`187688d9e7e33a575713d6911d75687adb38713ed37412e211af263dfcbe0c28`, via
+`shasum -a 256`).
+
+AFDE-2609 closure note (second pass): a hand-typed literal, even a correct one,
+is still not content-addressed identity -- it is a fact someone copied once and
+could drift again on the next artifact rebuild with no code path to catch it.
+Per grep across `src/` and `tests/` for `WasmComponentRef(`, this constructor
+call (below) is the one real call site in the repository that builds a concrete
+`WasmComponentRef` for the praxis-graphlaw-wasm artifact with real field values
+(the only other constructor call, `SemanticExchangePackage.from_json` in
+`sa2a/exchange/package.py`, is a generic deserializer over arbitrary JSON, not a
+site that constructs a ref "for this artifact"; no `src/` production call site
+constructs one at all). `artifact_sha256` below is therefore now sourced from
+`GraphLawBridge.artifact_sha256` -- the real, verified digest computed by a real
+`GraphLawBridge()` construction against the real artifact bytes this test run
+-- rather than a literal, so this fixture can no longer silently drift from the
+real artifact identity the way the original hardcoded value did.
 """
 
 from __future__ import annotations
@@ -35,12 +61,22 @@ ex:subject_01 rdf:type ex:Transaction ;
 ex:subject_01 ex:event "APPROVED" .
 """
 
+    # Construct the real bridge first: GraphLawBridge.__init__ computes the real
+    # SHA-256 of the real local artifact bytes and refuses (typed
+    # GraphLawArtifactIntegrityError) on mismatch, so a successfully constructed
+    # instance's `.artifact_sha256` is a verified, not merely asserted, digest.
+    py_bridge = GraphLawBridge()
+
     pkg = SemanticExchangePackage(
         package_id="urn:sa2a:pkg:falsifier-001",
         wasm_component=WasmComponentRef(
             engine="praxis-graphlaw-wasm",
             version="26.7.5",
-            artifact_sha256="34fe50b8539067f4d47af577722744094e98b372b8774a643756265ec6bc7123",
+            # AFDE-2609 closure: sourced from the real, verified digest exposed by
+            # the real GraphLawBridge instance above (not a hand-typed literal).
+            # See module docstring "closure note (second pass)" for why this test
+            # is the one real call site chosen for the wiring.
+            artifact_sha256=py_bridge.artifact_sha256,
         ),
         canonical_graph_ttl=base_ttl,
         transition_event_ttl=event_ttl,
@@ -53,7 +89,6 @@ ex:subject_01 ex:event "APPROVED" .
     )
 
     # 2. Runtime B: Python / Wasmtime execution
-    py_bridge = GraphLawBridge()
     py_graph_hash = py_bridge.graph_hash(pkg.canonical_graph_ttl)
     py_hooks = py_bridge.run_hooks(pkg.canonical_graph_ttl, pkg.transition_event_ttl)
 
@@ -104,3 +139,9 @@ ex:subject_01 ex:event "APPROVED" .
 
     # Invariant 3: Zero unreceipted state or application drift
     assert pkg.authority_contract.consequence_class == "ConsequenceClass_bounded_local"
+
+    # Invariant 4 (AFDE-2609 closure): the package's declared component identity
+    # is the real bridge's verified digest, not a value that could silently
+    # diverge from what was actually loaded and executed.
+    assert pkg.wasm_component.artifact_sha256 == py_bridge.artifact_sha256
+    assert len(pkg.wasm_component.artifact_sha256) == 64

@@ -159,3 +159,27 @@ def test_mcp_lifecycle_and_tool_call():
     structured = called["result"]["structuredContent"]
     assert structured["ok"] is True
     assert json.loads(called["result"]["content"][0]["text"])["status"] == "ALIVE"
+
+
+def test_initialize_instructions_qualify_receipt_as_call_integrity_only():
+    """AFDE-2607 wording finding: the MCP ``initialize`` response's
+    ``instructions`` string is sent verbatim to any external MCP client. A
+    bare "every call returns a receipt" carries no qualifier distinguishing
+    a call-integrity digest from an admission-grade guarantee -- exactly
+    the drift `src/autofde_lab/CLAUDE.md`'s Non-authority section warns
+    against ("Do not let the word 'receipt' in these modules drift into
+    admission semantics"). This asserts the real, live response text
+    carries that qualifier, not merely that a receipt is mentioned.
+    """
+    initialize = bridge._mcp_response(
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {"protocolVersion": bridge.MCP_PROTOCOL_VERSION},
+        }
+    )
+    instructions = initialize["result"]["instructions"]
+    assert "receipt" in instructions
+    assert "call-integrity digest" in instructions
+    assert "not an admission or authority grant" in instructions
