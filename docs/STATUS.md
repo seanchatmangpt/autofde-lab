@@ -5,6 +5,41 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
+Last update: **pass 40** (2026-09-17) — **AFDE-2613 continuation ("ultracode
+finish"): composition/release/discovery-router closure.** Continues pass 39 by
+closing 3 more items from that pass's own "Explicitly NOT done" list, real and
+Chicago-tested, same session. New: `sa2a/composition/` (`ExactSubject`/
+`SubjectResolver`, ARD §5.1/§6 -- fail-closed structural validation of a declared
+composition manifest, scoped per `.claude/rules/ecosystem-boundary.md` to never
+fetch a remote repo); `sa2a/release/` (`ReleaseState`/`ReleaseRun`, PRD §12's exact
+11-state sequence with typed exits and real transition validation, plus
+`fresh_consumer.py` -- a genuinely SEPARATE-PROCESS standing verifier porting
+`hub/domain/gym_procedure/standalone_verifier.py`'s explicit-typed-edge discipline
+to Episode1/Episode2 evidence, closing the single gap that pass's own audit called
+"the strongest reuse candidate" for ARD §45); `sa2a/unknown/router.py`
+(`DiscoveryRouter`, ARD §14-15 precedence-ordered engine selection, wired into
+`Episode1Runner` as an alternative to a raw `discover` callable). `crown` CLI
+upgraded to run the real `ReleaseRun` machine (subject fence + real replay + real
+subprocess fresh-consumer check) instead of ad hoc episode wiring. One real bug
+found and fixed while building this: `release/__init__.py`'s first draft
+re-exported `ReleaseRun` at package scope, which transitively imported episode1/
+episode2 into the "independent" fresh-consumer subprocess's own `sys.modules` --
+caught by that verifier's own `assert_no_runtime_imports()` self-check, not
+assumed safe; fixed by scoping the package `__init__` to `ReleaseState` only, now
+pinned by a regression test. Real evidence: a full crown run via the actual CLI
+(`typer.testing.CliRunner`) reaches `CROWNED` through all 11 states, real
+composition digest, real `frontier_clean=True`; falsifiers for a floating branch
+ref (REFUSED before SUBJECT_FENCED), a dirty-worktree subject (BLOCKED before
+Episode 1 ever runs, ARD §61), CROWNED-is-terminal, and DiscoveryRouter's
+exact-machinery-before-general-exploratory precedence all pass.
+`.venv/bin/python -m pytest tests/sa2a/ tests/agent/` -> **462 passed**, 0 failed
+(up from 439; delta is exactly this pass's 23 new tests). Mock-grep clean. Full
+account: `docs/jira/v26.9.17/AFDE-2613-machine-experience-episode-core.md`'s new
+§8. Still explicitly open, unchanged: cross-repo `CompositionCourt`/transport-
+failure taxonomy, `ash_a2a` integration, consolidating the pre-existing 3 duplicate
+Chicago-gate implementations, typed `Receipt` subclasses beyond `PreparedReceipt`/
+`FinalReceipt`, mutation-vacuousness tooling for the falsifier corpus.
+
 Last update: **pass 39** (2026-09-17) — **AFDE-2613: v26.9.17 MachineExperience /
 Episode core (local closure).** The user pasted a full v26.9.17 PRD + Architecture
 Requirements Document for a `UNKNOWN -> Episode1 -> MachineExperience -> Episode2 ->

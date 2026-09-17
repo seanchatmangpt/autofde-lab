@@ -528,23 +528,20 @@ def chicago() -> None:
 
 
 def _v26_9_17_crown_fixture(work_dir: Path) -> dict[str, Any]:
-    """Run the real, demonstrated v26.9.17 UNKNOWN -> MachineExperience -> KNOWN loop.
+    """Run the real v26.9.17 crown: SubjectResolver -> Episode1 -> Episode2 -> real
+    replay verification -> a real, SEPARATE-PROCESS fresh-consumer verification ->
+    CROWNED/typed-exit, via `ReleaseRun` (PRD §12; ARD §50 "crown = orchestration
+    only, no duplicated semantic logic").
 
     Scoped, honest demonstration: this fixture proves the mechanism end to end for
-    ONE semantic class (a port-requirement lookup), not an arbitrary composition --
-    a general DiscoveryRouter/ExactSubject/CompositionCourt is explicitly out of this
-    pass's scope (see docs/jira/v26.9.17/, the ticket this command's receipt cites).
+    ONE semantic class (a port-requirement lookup) under a synthetic, well-formed
+    composition manifest, not an arbitrary cross-repository composition -- a
+    CompositionCourt driving real sibling repositories is explicitly out of this
+    pass's scope (see docs/jira/v26.9.17/, the tickets this command's receipt cites).
     """
-    from autofde_lab.sa2a.episode.episode1 import Episode1Runner
-    from autofde_lab.sa2a.episode.episode2 import Episode2Runner
     from autofde_lab.sa2a.episode.equivalence import build_topic_equivalence_predicate
+    from autofde_lab.sa2a.release.run import ReleaseRun
     from autofde_lab.sa2a.unknown.resolution import CandidateResolution, UnknownQuery
-
-    state_dir = work_dir / "state"
-    journal_path = work_dir / "journal.json"
-    receipt_store_dir = work_dir / "receipts"
-
-    runner1 = Episode1Runner(state_dir=state_dir, journal_path=journal_path, receipt_store_dir=receipt_store_dir)
 
     def discover(query: UnknownQuery) -> CandidateResolution:
         return CandidateResolution(
@@ -557,65 +554,52 @@ def _v26_9_17_crown_fixture(work_dir: Path) -> dict[str, Any]:
             consumed_tokens=0,
         )
 
-    query = UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port")
-    predicate = build_topic_equivalence_predicate("requires-port")
+    manifest = {
+        "release_id": "v26.9.17-demo",
+        "repositories": [{"name": "autofde-lab-demo-subject", "exact_sha": "a" * 40}],
+        "artifacts": [{"artifact_id": "demo-artifact", "digest": "b" * 64}],
+        "root_manifest_digest": "c" * 64,
+        "semantic_profile": "SA2A-STRICT-DEMONSTRATION",
+        "court_revision": "v26.9.17",
+        "falsifier_corpus_digest": "d" * 64,
+        "query_set_digest": "e" * 64,
+        "environment_identity": "cli-crown-demo",
+    }
 
-    ep1 = runner1.run(
+    run = ReleaseRun(work_dir=work_dir)
+    result = run.run(
+        candidate_manifest=manifest,
         semantic_class_id="requires-port",
-        query=query,
-        discover=discover,
-        equivalence_predicate=predicate,
+        episode1_query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        episode1_discover=discover,
+        equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
         equivalence_predicate_id="pred-requires-port-v1",
         probe_input="requires-port",
         action_iri="urn:action:open-port",
-        target_resource="urn:cap:api-gateway",
-    )
-
-    experience_store = {ep1.machine_experience.experience_id: ep1.machine_experience}
-    runner2 = Episode2Runner(
-        state_dir=state_dir,
-        journal_path=journal_path,
-        receipt_store_dir=receipt_store_dir,
-        known_route_registry=runner1.routes,
-        artifact_registry=runner1.artifacts,
-        experience_store=experience_store,
-    )
-    fresh_candidate = CandidateResolution(
-        candidate_id="cand-ep2",
-        query_id="q-2-fresh",
-        proposed_assertion="service:billing-worker requires-port",
-        evidence_payload={"source": "fresh-request"},
-        source_identity="fresh-request",
-        consumed_ticks=0,
-        consumed_tokens=0,
-    )
-    ep2 = runner2.run(
-        semantic_class_id="requires-port",
-        fresh_candidate=fresh_candidate,
-        probe_input="requires-port",
-        action_iri="urn:action:open-port",
-        target_resource="urn:cap:billing-worker",
-    )
-
-    standing = "CONFORMANT" if (ep1.episode.classification == "KNOWN" and ep2.episode.frontier_clean) else "NONCONFORMANT"
-    return {
-        "release": "v26.9.17",
-        "profile": "SA2A-STRICT-DEMONSTRATION",
-        "episode_1": ep1.episode.to_dict(),
-        "machine_experience": {
-            "experience_id": ep1.machine_experience.experience_id,
-            "state": ep1.machine_experience.state.value,
-            "known_route_id": ep1.machine_experience.known_route_id,
-        },
-        "episode_2": ep2.episode.to_dict(),
-        "standing": standing,
-        "scope_note": (
-            "Demonstrates the real UNKNOWN->MachineExperience->KNOWN mechanism for one "
-            "semantic class. Cross-repository composition, a general DiscoveryRouter, "
-            "and ExactSubject/CompositionCourt are explicitly out of scope -- see "
-            "docs/jira/v26.9.17/ for the full accounting."
+        episode1_target_resource="urn:cap:api-gateway",
+        episode2_fresh_candidate=CandidateResolution(
+            candidate_id="cand-ep2",
+            query_id="q-2-fresh",
+            proposed_assertion="service:billing-worker requires-port",
+            evidence_payload={"source": "fresh-request"},
+            source_identity="fresh-request",
+            consumed_ticks=0,
+            consumed_tokens=0,
         ),
-    }
+        episode2_target_resource="urn:cap:billing-worker",
+    )
+
+    receipt = result.to_receipt()
+    receipt["release_state_history"] = [s.value for s in run.history]
+    receipt["scope_note"] = (
+        "Demonstrates the real UNKNOWN->MachineExperience->KNOWN mechanism end to end "
+        "through SubjectResolver, Episode1, Episode2, real ReplayEngine verification, "
+        "and a real separate-process fresh-consumer verifier, for one semantic class "
+        "under a synthetic composition manifest. A cross-repository CompositionCourt "
+        "driving real sibling repositories is explicitly out of scope -- see "
+        "docs/jira/v26.9.17/ for the full accounting."
+    )
+    return receipt
 
 
 @app.command("episode1")
@@ -651,10 +635,11 @@ def episode1(work_dir: Path = typer.Option(Path(".sa2a_v26_9_17_crown"), "--work
 
 @app.command("crown")
 def crown(work_dir: Path = typer.Option(Path(".sa2a_v26_9_17_crown"), "--work-dir")) -> None:
-    """Run the full v26.9.17 Episode 1 -> Episode 2 demonstration crown and emit standing."""
+    """Run the full v26.9.17 crown (subject fence -> Episode 1 -> Episode 2 -> replay
+    -> fresh-consumer verify) via ReleaseRun and emit its standing receipt."""
     receipt = _v26_9_17_crown_fixture(work_dir)
     _emit(receipt)
-    if receipt["standing"] != "CONFORMANT":
+    if receipt["standing"] != "CROWNED":
         raise typer.Exit(code=1)
 
 

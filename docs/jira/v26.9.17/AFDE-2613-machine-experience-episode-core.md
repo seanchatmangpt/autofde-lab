@@ -185,33 +185,164 @@ the one root-blocking gap and everything structurally downstream of it for ONE
 demonstrated semantic class. The following remain exactly as the audit found them —
 `MISSING` or `PARTIAL_ALIVE`, not touched by this pass:
 
-- **`ExactSubject`/`SubjectResolver`/composition digest** (PRD §6.1-6.2, ARD §5.1,
+- ~~**`ExactSubject`/`SubjectResolver`/composition digest** (PRD §6.1-6.2, ARD §5.1,
   §6-7) — no multi-repo/artifact composition identity fence exists. `crown` in this
   pass runs a hardcoded, honestly-scoped single-class demonstration, not an arbitrary
-  composition.
-- **`DiscoveryRouter`/Formal Machinery Router** (PRD §6.6, ARD §14-15) — `Episode1Runner`
+  composition.~~ **CLOSED, same-session continuation (§8 below):**
+  `sa2a/composition/` (`ExactSubject`, `SubjectResolver`) now real and wired into
+  `crown` via `ReleaseRun`. Still scoped: structural/format validation of a declared
+  manifest only, never a cross-repo fetch (per `.claude/rules/ecosystem-boundary.md`).
+- ~~**`DiscoveryRouter`/Formal Machinery Router** (PRD §6.6, ARD §14-15) — `Episode1Runner`
   takes a caller-supplied `discover` callable; it does not itself select among formal
-  search/local model/frontier model/DSPy/TPOT2/RL/GymAct.
+  search/local model/frontier model/DSPy/TPOT2/RL/GymAct.~~ **CLOSED, same-session
+  continuation (§8 below):** `sa2a/unknown/router.py`'s `DiscoveryRouter` is real,
+  precedence-ordered, and wired into `Episode1Runner` as an alternative to `discover`.
+  Still scoped: does not itself wrap `fabric.pddl_engine`/`match_solvers` — a caller
+  registers real engines.
 - **`CompositionCourt`/transport-failure taxonomy/cross-repo standing** (ARD §42-44) —
-  zero executable machinery; unrelated to this pass.
+  zero executable machinery; unrelated to this pass. **Still open.**
 - **`ash_a2a` Integration Boundary** (ARD §27) — no real dispatch adapter into that
-  runtime exists.
+  runtime exists. **Still open.**
 - **Consolidating the 3 duplicate Chicago-gate implementations** (ARD §50) — this pass
   reuses one of them (`consequence_court.py`'s real disk actuator/verifier/store) but
   does not collapse `ChicagoCrownQualificationRunner` /
   `scripts/verify_v26_9_16_chicago.py` / the courts' own inline gate logic into one.
-- **Release-level state machine** (PRD §12: `CREATED -> SUBJECT_FENCED -> ... ->
+  **Still open** — `ReleaseRun`'s own `CHICAGO_RUNNING` stage (§8 below) adds a
+  *fourth*, narrower real-replay-and-fresh-consumer check rather than collapsing the
+  existing three; named explicitly, not silently implied as a consolidation.
+- ~~**Release-level state machine** (PRD §12: `CREATED -> SUBJECT_FENCED -> ... ->
   CROWNED`) — `Episode`/`MachineExperience` each carry their own lifecycle; no
-  release-scoped wrapper state machine was built.
+  release-scoped wrapper state machine was built.~~ **CLOSED, same-session
+  continuation (§8 below):** `sa2a/release/state_machine.py`'s `ReleaseState` +
+  `ReleaseRun` implement the exact PRD §12 sequence with typed exits, real transition
+  validation (no skipped predecessor).
 - **Additional `Receipt` subtypes** (`AllocationReceipt`, `ManufacturingReceipt`,
   `QualificationReceipt`, `CompositionReceipt`, `VerificationReceipt` — ARD §30) — this
   pass's `qualification_receipt`/`receipt_id` fields are plain strings, not distinct
-  typed receipt classes.
+  typed receipt classes. **Still open.**
 - **Mutation-vacuousness tooling** for the falsifier corpus (PRD §6.25's own meta-check)
-  — not built.
+  — not built. **Still open.**
 - **A general-purpose `DiscoveryRouter`-selectable CLI** for arbitrary semantic classes
   — `episode1`/`crown` CLI commands are scoped to the one demonstrated class
   (`requires-port`), documented as such in their own docstrings/scope_note field.
+  **Still open** — `DiscoveryRouter` (§8 below) is real and wired into
+  `Episode1Runner`, but no CLI surface lets an operator register engines or pick a
+  different semantic class at the command line.
+- **ARD §45's exact `verify_standing(exact_subject, receipts, ocel, manifests,
+  postcondition_evidence) -> PASS|FAIL|INCOMPLETE` function signature** — **PARTIALLY
+  CLOSED, same-session continuation (§8 below):** a real, subprocess-isolated
+  fresh-consumer verifier now exists (`sa2a/release/fresh_consumer.py`), the single
+  strongest gap the original audit named ("ReplayCourt.verify_fresh_consumer_isolation
+  only does in-process `del`... not a subprocess boundary"). Its function/verdict
+  vocabulary (`CONFORMANT_EVIDENCE_RECONSTRUCTED` / `UNKNOWN:...`) differs from the
+  ARD's literal `verify_standing(...)`/`PASS|FAIL|INCOMPLETE` naming — a deliberate,
+  named divergence (this repo's own `standing-law.md` vocabulary), not an oversight.
+
+## 8. 2026-09-17 continuation ("ultracode finish") — composition, release state
+machine, real subprocess fresh-consumer verifier, DiscoveryRouter
+
+Same session, same branch, following the "ultracode finish" instruction to continue
+closing the §7 list above. Reuses everything §1-7 built without modification except
+one real bug found and fixed while building this continuation (see below).
+
+### New code
+
+```text
+src/autofde_lab/sa2a/composition/
+    exact_subject.py    ExactSubject (ARD §5.1) + composition_digest
+    resolver.py           SubjectResolver.resolve() (ARD §6), fail-closed on floating
+                          branch refs / missing digests / conflicting or ambiguous
+                          repository identity; resolve_self_identity() for this repo's
+                          own real, local git identity
+
+src/autofde_lab/sa2a/release/
+    state_machine.py     ReleaseState (PRD §12's exact 11-state sequence + 6 typed
+                          exits), validate_release_transition() enforced for real
+    fresh_consumer.py     A REAL, SEPARATE-PROCESS fresh-consumer verifier (ARD §45),
+                          porting hub/domain/gym_procedure/standalone_verifier.py's
+                          exact discipline (explicit typed O2O edges only, an
+                          assert_no_runtime_imports() self-check) to the Episode1/
+                          Episode2 checkpoint+OCEL evidence. frontier_clean is
+                          RE-DERIVED from raw counters and compared against the
+                          producer's stored value, never trusted.
+    run.py                 ReleaseRun: subject_fence -> preflight -> episode1 ->
+                          experience_admitted -> episode2 -> CHICAGO_RUNNING (real
+                          ReplayEngine.verify_chain() + a real subprocess call to
+                          fresh_consumer.py) -> EVIDENCE_VALIDATED -> CROWNED, or a
+                          typed exit at any stage. ARD §50-conformant: every stage
+                          calls an already-real component, computes no verdict itself.
+
+src/autofde_lab/sa2a/unknown/router.py   DiscoveryRouter (ARD §14-15): precedence-
+                          ordered engine selection (exact machinery -> composition ->
+                          formal planner/solver -> bounded local synthesis -> general
+                          exploratory intelligence), candidate-only by construction.
+
+src/autofde_lab/sa2a/episode/episode1.py   Episode1Runner.run() now accepts EITHER
+                          discover= OR discovery_router= (exactly one); a router with
+                          no matching engine ends the episode UNKNOWN, never crashes.
+src/autofde_lab/sa2a/episode/episode2.py   Real bug fixed: Episode2Runner never
+                          persisted a checkpoint JSON or OCEL evidence (only Episode1
+                          did) -- the fresh-consumer verifier needs both episodes'
+                          durable evidence, so this was a real, load-bearing gap this
+                          continuation found and closed, not a pre-existing known item.
+
+src/autofde_lab/sa2a/cli.py   `crown` upgraded to run the real ReleaseRun state
+                          machine (was: ad hoc Episode1Runner+Episode2Runner wiring
+                          with no subject fence, no replay check, no fresh-consumer
+                          check) -- a strict superset of the prior behavior.
+
+tests/sa2a/composition/test_subject_resolver_chicago.py    9 tests
+tests/sa2a/release/test_release_run_chicago.py               6 tests
+tests/sa2a/test_discovery_router_chicago.py                   5 tests
+tests/sa2a/episode/test_episode_two_step_chicago.py           +3 tests (DiscoveryRouter integration)
+```
+
+### A real bug found and fixed while building this continuation
+
+`release/__init__.py`'s first draft re-exported `ReleaseRun` at package scope. Since
+`python -m autofde_lab.sa2a.release.fresh_consumer` executes `release/__init__.py`
+*before* the `fresh_consumer` submodule itself, that import transitively pulled in
+`episode1`/`episode2` — so the "independent, separate-process" fresh-consumer
+verifier's own `assert_no_runtime_imports()` self-check correctly caught that it was
+NOT independent, even running as a genuine subprocess. Confirmed via direct
+reproduction (`RuntimeError: VERIFIER_NOT_INDEPENDENT: ... ['autofde_lab.sa2a.episode.
+episode1', ...]`) before fixing. Fix: `release/__init__.py` re-exports only
+`ReleaseState` (zero episode/experience imports); callers import `ReleaseRun` directly
+from `autofde_lab.sa2a.release.run`. `test_fresh_consumer_is_a_genuinely_separate_
+process_not_an_in_process_call` pins this regression.
+
+### Real, run-this-session evidence
+
+Full crown via the real CLI invocation path (`typer.testing.CliRunner`, matching this
+repo's existing test convention — `sa2a/cli.py` still has no `__main__` guard,
+pre-existing and unrelated):
+
+```text
+EXIT CODE: 0
+standing: CROWNED
+history: ['CREATED', 'SUBJECT_FENCED', 'PREFLIGHTED', 'EPISODE_1_RUNNING',
+  'EPISODE_1_VERIFIED', 'EXPERIENCE_ADMITTED', 'EPISODE_2_RUNNING',
+  'EPISODE_2_VERIFIED', 'CHICAGO_RUNNING', 'EVIDENCE_VALIDATED', 'CROWNED']
+composition_digest: 2103d014eb8c48c124a578f2bf9a218041d72b9a71c6bfe78716b5e787556b04
+episode_2 frontier_clean: True
+```
+
+Falsifiers, all real and passing: a manifest with a floating branch ref (`exact_sha:
+"main"`) REFUSES before `SUBJECT_FENCED`; a manifest pinning this repo at
+`dirty:<sha>` reaches `SUBJECT_FENCED` then BLOCKs at `PREFLIGHTED`, before Episode 1
+ever runs (ARD §61); `CROWNED` itself is verified terminal (cannot transition to
+`REFUSED`/`NONCONFORMANT` after the fact); `DiscoveryRouter` prefers
+`EXACT_REUSABLE_MACHINERY` over `GENERAL_EXPLORATORY_INTELLIGENCE` even when both are
+registered and both would answer, confirmed by asserting the general-exploratory
+callable is never invoked.
+
+`.venv/bin/python -m pytest tests/sa2a/composition/ tests/sa2a/release/
+tests/sa2a/test_discovery_router_chicago.py tests/sa2a/episode/ tests/sa2a/experience/`
+-> **37 passed, 0 failed**. Full regression `tests/sa2a/ tests/agent/` -> **462
+passed, 0 failed** (up from 439 at the start of this continuation; delta is exactly
+this section's 23 new tests). Mock-grep over every file touched this continuation ->
+zero matches. `py_compile` sanity pass -> clean (`ruff` remains `UNSUPPORTED` in this
+environment, unchanged from §6).
 
 ## See also
 

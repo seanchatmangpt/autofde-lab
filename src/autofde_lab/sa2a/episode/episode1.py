@@ -52,9 +52,11 @@ from autofde_lab.sa2a.unknown.allocator import CMCACandidateAllocator, Explorati
 from autofde_lab.sa2a.unknown.resolution import (
     AdmissionReceipt as UnknownAdmissionReceipt,
     CandidateResolution,
+    EpistemicState,
     UnknownQuery,
     UnknownResolutionPipeline,
 )
+from autofde_lab.sa2a.unknown.router import DiscoveryEngineKind, DiscoveryRouter
 
 def admit_target_binding(
     action_iri: str, target_resource: str, *, issuer: str, timestamp: str
@@ -120,7 +122,8 @@ class Episode1Runner:
         *,
         semantic_class_id: str,
         query: UnknownQuery,
-        discover: Callable[[UnknownQuery], CandidateResolution],
+        discover: Optional[Callable[[UnknownQuery], CandidateResolution]] = None,
+        discovery_router: Optional[DiscoveryRouter] = None,
         equivalence_predicate: Callable[[Any], bool],
         equivalence_predicate_id: str,
         probe_input: str,
@@ -142,12 +145,58 @@ class Episode1Runner:
         self.meter.record(episode_id, "explore_unknown", "invocations", 1)
         self._checkpoint(episode_id, "explore_unknown", {"semantic_class_id": semantic_class_id})
 
-        # --- discovery: produce ONE candidate (a real, if simple, formal/local
-        # engine supplied by the caller -- never general frontier inference unless
-        # the caller's own `discover` callable chooses to call one, in which case
-        # it is the caller's responsibility to also call self.meter.record(...)
-        # for "frontier"/"calls" -- this runner never fabricates that count).
-        candidate = discover(query)
+        # --- discovery: produce ONE candidate. Either a caller-supplied `discover`
+        # callable (never general frontier inference unless that callable chooses to
+        # call one, in which case it is the caller's responsibility to also call
+        # self.meter.record(...) for "frontier"/"calls" -- this runner never
+        # fabricates that count), or a real `DiscoveryRouter` selecting among
+        # registered engines in ARD §15 precedence order (formal-machinery-first).
+        # Exactly one of `discover`/`discovery_router` must be supplied.
+        if (discover is None) == (discovery_router is None):
+            raise ValueError("Episode1Runner.run() requires exactly one of discover= or discovery_router=")
+
+        if discovery_router is not None:
+            routing = discovery_router.route(query)
+            self._checkpoint(
+                episode_id, "discovery_routing",
+                {"selected_engine_id": routing.selected_engine_id, "attempted": list(routing.attempted_engine_ids)},
+            )
+            if routing.candidate is None:
+                episode = Episode(
+                    episode_id=episode_id, kind=EpisodeKind.UNKNOWN_DISCOVERY,
+                    exact_subject_digest=exact_subject_digest, fixture_id=fixture_id,
+                    semantic_class_id=semantic_class_id, request_identity=request_identity,
+                    actuation_identity=actuation_identity, classification="UNKNOWN",
+                    intelligence_usage=self.meter.usage_for(episode_id), standing="UNKNOWN",
+                )
+                self._checkpoint(episode_id, "complete", episode.to_dict())
+                return Episode1Result(
+                    episode=episode,
+                    machine_experience=MachineExperience(
+                        experience_id="", semantic_class_id=semantic_class_id, source_episode_id=episode_id,
+                        source_candidate_digest="", source_admission_receipt="",
+                        discovery_identity="", discovery_resource_receipt="",
+                        solution_candidate_digest="", solution_admission_receipt="",
+                        compiled_artifact_ids=(), equivalence_predicate_id=equivalence_predicate_id,
+                        state=ExperienceState.REFUSED, refusal_code="REFUSED_NO_DISCOVERY_ENGINE_PRODUCED_CANDIDATE",
+                    ),
+                    admission_receipt=UnknownAdmissionReceipt(
+                        receipt_id="", candidate_hash="", admitted=False,
+                        epistemic_standing=EpistemicState.REFUSED, reasons=("NO_ENGINE_PRODUCED_CANDIDATE",),
+                    ),
+                    boundary_result=None,
+                )
+            candidate = routing.candidate
+            if routing.selected_kind in (
+                DiscoveryEngineKind.FORMAL_PLANNER_OR_SOLVER, DiscoveryEngineKind.BOUNDED_LOCAL_SYNTHESIS,
+            ):
+                self.meter.record(episode_id, "exploratory_planner", "invocations", 1)
+            elif routing.selected_kind == DiscoveryEngineKind.GENERAL_EXPLORATORY_INTELLIGENCE:
+                self.meter.record(episode_id, "frontier", "calls", 1)
+        else:
+            assert discover is not None
+            candidate = discover(query)
+
         self.meter.record(episode_id, "local_discovery", "calls", 1)
         self.meter.record(episode_id, "local_discovery", "tokens", candidate.consumed_tokens)
         self._checkpoint(episode_id, "discovery", {"candidate_id": candidate.candidate_id})

@@ -28,6 +28,7 @@ v26.9.17 audit found:
 
 from __future__ import annotations
 
+import json
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
@@ -45,6 +46,7 @@ from autofde_lab.sa2a.episode.types import Episode, EpisodeKind, ExplorationMete
 from autofde_lab.sa2a.experience.compiler import ArtifactRegistry
 from autofde_lab.sa2a.experience.known_route import KnownRoute, KnownRouteRegistry
 from autofde_lab.sa2a.experience.types import MachineExperience
+from autofde_lab.sa2a.falsification.ocel_tracer import OcelExecutionTracer
 
 ExperienceStore = Mapping[str, MachineExperience]
 
@@ -78,6 +80,12 @@ class Episode2Runner:
         self.artifacts = artifact_registry
         self.experience_store = experience_store
         self.meter = exploration_meter or ExplorationMeter()
+        self._tracer = OcelExecutionTracer("episode2")
+
+    def _checkpoint(self, episode_id: str, stage: str, payload: Mapping[str, Any]) -> None:
+        path = self.state_dir / f"{episode_id}.json"
+        record = {"episode_id": episode_id, "last_completed_stage": stage, **payload}
+        path.write_text(json.dumps(record, indent=2, default=str), encoding="utf-8")
 
     def run(
         self,
@@ -98,6 +106,7 @@ class Episode2Runner:
         # --- classify: semantic-class + equivalence-predicate lookup only, no
         # UNKNOWN discovery router call anywhere in this path (ARD §20, §10).
         route = self.routes.lookup(semantic_class_id, fresh_candidate)
+        self._checkpoint(episode_id, "classify", {"classification": "KNOWN" if route else "UNKNOWN"})
         if route is None:
             episode = Episode(
                 episode_id=episode_id, kind=EpisodeKind.KNOWN_REPLAY,
@@ -106,6 +115,7 @@ class Episode2Runner:
                 actuation_identity=actuation_identity, classification="UNKNOWN",
                 intelligence_usage=self.meter.usage_for(episode_id), standing="UNKNOWN",
             )
+            self._checkpoint(episode_id, "complete", episode.to_dict())
             return Episode2Result(episode, None, None)
 
         # --- SELECT/CONSTRUCT: actually execute the compiled route against the
@@ -148,8 +158,23 @@ class Episode2Runner:
                 plan_digest=route.qualification_receipt, admission_result=admission_for_action,
             )
             boundary_result = boundary.execute(envelope)
+            self._checkpoint(
+                episode_id, "execute_consequence",
+                {"success": boundary_result.success, "state": boundary_result.state.value},
+            )
 
         success = bool(boundary_result and boundary_result.success)
+
+        self._tracer.declare_object(episode_id, "Episode", {"kind": "KNOWN_REPLAY"})
+        self._tracer.declare_object(route.experience_id, "MachineExperience", {})
+        self._tracer.declare_object(route.route_id, "KnownRoute", {"semantic_class_id": semantic_class_id})
+        self._tracer.record_event(
+            f"{episode_id}-e2-complete", "Episode2Completed",
+            related_objects=[episode_id, route.experience_id, route.route_id],
+            attributes={"success": success, "route_executed": route_executed, "authorized": decision.authorized},
+        )
+        ocel_path = self.state_dir / f"{episode_id}.ocel2.json"
+        self._tracer.export_ocel2_json(ocel_path)
 
         episode = Episode(
             episode_id=episode_id, kind=EpisodeKind.KNOWN_REPLAY,
@@ -160,9 +185,11 @@ class Episode2Runner:
             authority_grant_id=grant.grant_id if decision.authorized else None,
             prepared_receipt_digest=boundary_result.prepared_receipt.digest if boundary_result and boundary_result.prepared_receipt else "",
             final_receipt_digest=boundary_result.final_receipt.digest if boundary_result and boundary_result.final_receipt else "",
+            ocel_digest=self._tracer.log.digest(),
             intelligence_usage=self.meter.usage_for(episode_id),
             standing=boundary_result.state.value if boundary_result else ("REFUSED_AUTHORITY" if not decision.authorized else "REFUSED_ROUTE_NOT_EXECUTED"),
             known_route_id=route.route_id,
             experience_id=route.experience_id,
         )
+        self._checkpoint(episode_id, "complete", episode.to_dict())
         return Episode2Result(episode, route, boundary_result)

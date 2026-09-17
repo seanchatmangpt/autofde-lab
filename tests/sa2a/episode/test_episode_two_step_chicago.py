@@ -16,6 +16,7 @@ from autofde_lab.sa2a.episode.episode2 import Episode2Runner
 from autofde_lab.sa2a.episode.equivalence import build_topic_equivalence_predicate
 from autofde_lab.sa2a.episode.types import EpisodeKind
 from autofde_lab.sa2a.unknown.resolution import CandidateResolution, UnknownQuery
+from autofde_lab.sa2a.unknown.router import DiscoveryEngine, DiscoveryEngineKind, DiscoveryRouter
 
 
 def _discover_port_requirement(query: UnknownQuery) -> CandidateResolution:
@@ -158,3 +159,83 @@ def test_episode2_before_any_episode1_is_unknown_not_a_crash(tmp_path: Path) -> 
     assert ep2.episode.classification == "UNKNOWN"
     assert ep2.episode.route_executed is False
     assert ep2.boundary_result is None
+
+
+def test_episode1_run_requires_exactly_one_of_discover_or_discovery_router(tmp_path: Path) -> None:
+    runner1 = Episode1Runner(
+        state_dir=tmp_path / "state", journal_path=tmp_path / "journal.json", receipt_store_dir=tmp_path / "receipts"
+    )
+    kwargs = dict(
+        semantic_class_id="requires-port",
+        query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
+        equivalence_predicate_id="pred-1", probe_input="requires-port",
+        action_iri="urn:action:open-port", target_resource="urn:cap:api-gateway",
+    )
+    try:
+        runner1.run(**kwargs)  # neither discover nor discovery_router supplied
+        assert False, "must refuse when neither discover nor discovery_router is supplied"
+    except ValueError as exc:
+        assert "exactly one" in str(exc)
+
+    router = DiscoveryRouter()
+    router.register(
+        DiscoveryEngine("e1", DiscoveryEngineKind.EXACT_REUSABLE_MACHINERY, lambda q: _discover_port_requirement(q))
+    )
+    try:
+        runner1.run(discover=_discover_port_requirement, discovery_router=router, **kwargs)  # both supplied
+        assert False, "must refuse when both discover and discovery_router are supplied"
+    except ValueError as exc:
+        assert "exactly one" in str(exc)
+
+
+def test_episode1_via_discovery_router_prefers_exact_machinery_and_records_intelligence_usage(tmp_path: Path) -> None:
+    """ARD §14-15 integration: Episode1Runner routes through DiscoveryRouter instead
+    of a raw callable, real precedence-ordered selection, real accounting of which
+    engine kind answered."""
+    router = DiscoveryRouter()
+    calls: list[str] = []
+
+    def exact(query: UnknownQuery) -> CandidateResolution:
+        calls.append("exact")
+        return _discover_port_requirement(query)
+
+    def general(query: UnknownQuery) -> CandidateResolution:
+        calls.append("general")
+        return _discover_port_requirement(query)
+
+    router.register(DiscoveryEngine("general-1", DiscoveryEngineKind.GENERAL_EXPLORATORY_INTELLIGENCE, general))
+    router.register(DiscoveryEngine("exact-1", DiscoveryEngineKind.EXACT_REUSABLE_MACHINERY, exact))
+
+    runner1 = Episode1Runner(
+        state_dir=tmp_path / "state", journal_path=tmp_path / "journal.json", receipt_store_dir=tmp_path / "receipts"
+    )
+    result = runner1.run(
+        semantic_class_id="requires-port",
+        query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        discovery_router=router,
+        equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
+        equivalence_predicate_id="pred-1", probe_input="requires-port",
+        action_iri="urn:action:open-port", target_resource="urn:cap:api-gateway",
+    )
+    assert result.episode.classification == "KNOWN"
+    assert calls == ["exact"], "general exploratory intelligence must not be invoked when exact machinery already answered"
+    assert result.episode.intelligence_usage.frontier_model_calls == 0
+
+
+def test_episode1_via_discovery_router_with_no_matching_engine_is_unknown_not_a_crash(tmp_path: Path) -> None:
+    router = DiscoveryRouter()
+    router.register(DiscoveryEngine("e1", DiscoveryEngineKind.EXACT_REUSABLE_MACHINERY, lambda q: None))
+    runner1 = Episode1Runner(
+        state_dir=tmp_path / "state", journal_path=tmp_path / "journal.json", receipt_store_dir=tmp_path / "receipts"
+    )
+    result = runner1.run(
+        semantic_class_id="requires-port",
+        query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        discovery_router=router,
+        equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
+        equivalence_predicate_id="pred-1", probe_input="requires-port",
+        action_iri="urn:action:open-port", target_resource="urn:cap:api-gateway",
+    )
+    assert result.episode.classification == "UNKNOWN"
+    assert result.machine_experience.refusal_code == "REFUSED_NO_DISCOVERY_ENGINE_PRODUCED_CANDIDATE"
