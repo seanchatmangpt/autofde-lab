@@ -5,6 +5,43 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
+Last update: **pass 39** (2026-09-17) — **AFDE-2613: v26.9.17 MachineExperience /
+Episode core (local closure).** The user pasted a full v26.9.17 PRD + Architecture
+Requirements Document for a `UNKNOWN -> Episode1 -> MachineExperience -> Episode2 ->
+KNOWN` release, tagged `ultracode`. A 6-agent parallel gap-audit workflow
+(`wf_30a3d307-c20`) first measured the real `src/autofde_lab/sa2a/` subsystem
+(~15,784 lines) against all ~90 numbered PRD/ARD requirements with exact `file:line`
+evidence, and found the same root gap independently in every one of its 6 clusters:
+no `MachineExperience`/`KnownRoute` object and no `Episode1Runner`/`Episode2Runner`
+existed anywhere, blocking everything structurally downstream. This pass closes
+exactly that gap, reusing the extensive existing machinery the audit found
+(`AdmissionPipeline`, `CMCACandidateAllocator`, `UnknownResolutionPipeline`,
+`ConsequenceBoundary`, `AuthorityBroker`, the real disk actuator/verifier/
+receipt-store already built for the Chicago courts) rather than duplicating any of
+it. New: `src/autofde_lab/sa2a/experience/` (MachineExperience compile -> admit ->
+qualify -> KnownRoute lifecycle, real semantic-class + equivalence-predicate lookup,
+never digest/string identity) and `src/autofde_lab/sa2a/episode/`
+(Episode1Runner/Episode2Runner, IntelligenceUsage/ExplorationMeter, a real computed
+`frontier_clean` with its anti-vacuity guard). Real, run-this-session, end-to-end
+proof: Episode 1 solves a genuine UNKNOWN class and actuates a real lawful
+consequence through BRCE; a FRESH Episode 2 request (different actuation identity,
+different text, same semantic class) classifies KNOWN via the real equivalence
+predicate, executes the compiled route through fresh authority + fresh BRCE + a
+fresh receipt, and computes `frontier_clean=True` because the code path genuinely
+never touches the discovery router -- confirmed via `tests/sa2a/experience/` (7
+passed) and `tests/sa2a/episode/` (5 passed), including falsifiers for a
+non-equivalent candidate (correctly resolves `UNKNOWN`, never a false `KNOWN`) and
+dependency-digest invalidation. Full regression `tests/sa2a/ tests/agent/` -> **439
+passed, 0 failed** (up from the 425 baseline; delta includes this pass's 12 new
+tests plus 2 from an unrelated branch merged into this branch earlier the same
+turn). Mock-grep clean. `ruff` is `UNSUPPORTED` in this environment (not installed);
+`py_compile` used as a syntax floor instead. Explicitly NOT done, named rather than
+silently implied closed: `ExactSubject`/composition-digest identity fencing,
+`DiscoveryRouter`/formal-machinery routing, cross-repository `CompositionCourt`,
+`ash_a2a` integration, collapsing the 3 pre-existing duplicate Chicago-gate
+implementations, a release-level state machine, and a general (non-single-class)
+crown CLI. Full account: `docs/jira/v26.9.17/AFDE-2613-machine-experience-episode-core.md`.
+
 Last update: **pass 38** (2026-09-17) — **AFDE-2604 fail-secure closure**
 (count correction, caught by an external review: pass 37's "2 of 7" below and
 this pass's original "4 of 7" both incorrectly folded Lens 5's 2 findings

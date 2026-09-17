@@ -527,3 +527,134 @@ def chicago() -> None:
         raise typer.Exit(code=1)
 
 
+def _v26_9_17_crown_fixture(work_dir: Path) -> dict[str, Any]:
+    """Run the real, demonstrated v26.9.17 UNKNOWN -> MachineExperience -> KNOWN loop.
+
+    Scoped, honest demonstration: this fixture proves the mechanism end to end for
+    ONE semantic class (a port-requirement lookup), not an arbitrary composition --
+    a general DiscoveryRouter/ExactSubject/CompositionCourt is explicitly out of this
+    pass's scope (see docs/jira/v26.9.17/, the ticket this command's receipt cites).
+    """
+    from autofde_lab.sa2a.episode.episode1 import Episode1Runner
+    from autofde_lab.sa2a.episode.episode2 import Episode2Runner
+    from autofde_lab.sa2a.episode.equivalence import build_topic_equivalence_predicate
+    from autofde_lab.sa2a.unknown.resolution import CandidateResolution, UnknownQuery
+
+    state_dir = work_dir / "state"
+    journal_path = work_dir / "journal.json"
+    receipt_store_dir = work_dir / "receipts"
+
+    runner1 = Episode1Runner(state_dir=state_dir, journal_path=journal_path, receipt_store_dir=receipt_store_dir)
+
+    def discover(query: UnknownQuery) -> CandidateResolution:
+        return CandidateResolution(
+            candidate_id="cand-ep1",
+            query_id=query.query_id,
+            proposed_assertion="service:api-gateway requires-port",
+            evidence_payload={"source": "formal-port-probe"},
+            source_identity="formal-port-probe",
+            consumed_ticks=2,
+            consumed_tokens=0,
+        )
+
+    query = UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port")
+    predicate = build_topic_equivalence_predicate("requires-port")
+
+    ep1 = runner1.run(
+        semantic_class_id="requires-port",
+        query=query,
+        discover=discover,
+        equivalence_predicate=predicate,
+        equivalence_predicate_id="pred-requires-port-v1",
+        probe_input="requires-port",
+        action_iri="urn:action:open-port",
+        target_resource="urn:cap:api-gateway",
+    )
+
+    experience_store = {ep1.machine_experience.experience_id: ep1.machine_experience}
+    runner2 = Episode2Runner(
+        state_dir=state_dir,
+        journal_path=journal_path,
+        receipt_store_dir=receipt_store_dir,
+        known_route_registry=runner1.routes,
+        artifact_registry=runner1.artifacts,
+        experience_store=experience_store,
+    )
+    fresh_candidate = CandidateResolution(
+        candidate_id="cand-ep2",
+        query_id="q-2-fresh",
+        proposed_assertion="service:billing-worker requires-port",
+        evidence_payload={"source": "fresh-request"},
+        source_identity="fresh-request",
+        consumed_ticks=0,
+        consumed_tokens=0,
+    )
+    ep2 = runner2.run(
+        semantic_class_id="requires-port",
+        fresh_candidate=fresh_candidate,
+        probe_input="requires-port",
+        action_iri="urn:action:open-port",
+        target_resource="urn:cap:billing-worker",
+    )
+
+    standing = "CONFORMANT" if (ep1.episode.classification == "KNOWN" and ep2.episode.frontier_clean) else "NONCONFORMANT"
+    return {
+        "release": "v26.9.17",
+        "profile": "SA2A-STRICT-DEMONSTRATION",
+        "episode_1": ep1.episode.to_dict(),
+        "machine_experience": {
+            "experience_id": ep1.machine_experience.experience_id,
+            "state": ep1.machine_experience.state.value,
+            "known_route_id": ep1.machine_experience.known_route_id,
+        },
+        "episode_2": ep2.episode.to_dict(),
+        "standing": standing,
+        "scope_note": (
+            "Demonstrates the real UNKNOWN->MachineExperience->KNOWN mechanism for one "
+            "semantic class. Cross-repository composition, a general DiscoveryRouter, "
+            "and ExactSubject/CompositionCourt are explicitly out of scope -- see "
+            "docs/jira/v26.9.17/ for the full accounting."
+        ),
+    }
+
+
+@app.command("episode1")
+def episode1(work_dir: Path = typer.Option(Path(".sa2a_v26_9_17_crown"), "--work-dir")) -> None:
+    """Run Episode 1 (UNKNOWN -> admitted MachineExperience) for the demonstrated class."""
+    from autofde_lab.sa2a.episode.episode1 import Episode1Runner
+    from autofde_lab.sa2a.episode.equivalence import build_topic_equivalence_predicate
+    from autofde_lab.sa2a.unknown.resolution import CandidateResolution, UnknownQuery
+
+    state_dir = work_dir / "state"
+    runner1 = Episode1Runner(state_dir=state_dir, journal_path=work_dir / "journal.json", receipt_store_dir=work_dir / "receipts")
+
+    def discover(query: UnknownQuery) -> CandidateResolution:
+        return CandidateResolution(
+            candidate_id="cand-ep1", query_id=query.query_id,
+            proposed_assertion="service:api-gateway requires-port",
+            evidence_payload={"source": "formal-port-probe"}, source_identity="formal-port-probe",
+            consumed_ticks=2, consumed_tokens=0,
+        )
+
+    result = runner1.run(
+        semantic_class_id="requires-port",
+        query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        discover=discover,
+        equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
+        equivalence_predicate_id="pred-requires-port-v1",
+        probe_input="requires-port",
+        action_iri="urn:action:open-port",
+        target_resource="urn:cap:api-gateway",
+    )
+    _emit(result.episode.to_dict())
+
+
+@app.command("crown")
+def crown(work_dir: Path = typer.Option(Path(".sa2a_v26_9_17_crown"), "--work-dir")) -> None:
+    """Run the full v26.9.17 Episode 1 -> Episode 2 demonstration crown and emit standing."""
+    receipt = _v26_9_17_crown_fixture(work_dir)
+    _emit(receipt)
+    if receipt["standing"] != "CONFORMANT":
+        raise typer.Exit(code=1)
+
+
