@@ -22,6 +22,8 @@ from typing import Any, Mapping
 
 import pytest
 
+from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline
+from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import (
     AuthorityBroker,
     AuthorityGrant,
@@ -204,12 +206,35 @@ def test_canonical_chicago_v26_9_16_definition_of_done(tmp_path: Path) -> None:
     # -------------------------------------------------------------------------
     # Gate 1 & 2: Initial State: Novel Failure in Production -> Refused
     # -------------------------------------------------------------------------
+    # AFDE-2604 fail-secure closure: ConsequenceBoundary.__init__'s
+    # require_admission now defaults to True, so execute() enforces the SAME
+    # admission gate execute_admitted() always has, BEFORE AuthorityBroker is
+    # ever consulted. Admission is incidental to what THIS gate demonstrates
+    # (Gate 4 & 7: AuthorityBroker refusing an action with zero grants
+    # registered) -- wire a real, valid, ADMITTED AdmissionResult, explicitly
+    # bound (via the real <action_iri> afl:targetResource <target_cap> triple)
+    # to this exact action/target pair, onto the envelope so the admission
+    # gate passes and the boundary reaches the SAME AuthorityBroker refusal
+    # path this gate always exercised -- REFUSED_NO_GRANT, not
+    # REFUSED_NOT_ADMITTED. Gate 2's own name ("Executable World Admitted")
+    # already named this as part of the court's intent.
+    admission_pipeline = AdmissionPipeline()
+    cycle0_admission = admission_pipeline.admit(
+        f"@prefix afl: <urn:autofde-lab:> .\n<{action_iri}> afl:targetResource <{target_cap}> .",
+        provenance_record={
+            "issuer": "urn:issuer:chicago-dod-court",
+            "timestamp": "2026-09-17T00:00:00Z",
+        },
+    )
+    assert cycle0_admission.standing == Standing.ADMITTED
+
     req_envelope = ExecutionEnvelope(
         idempotency_token="idemp-chicago-incident-001",
         action_iri=action_iri,
         target_resource=target_cap,
         parameters=param_payload,
         actor_id=actor_id,
+        admission_result=cycle0_admission,
     )
 
     # Gate 4 & 7: Consequence boundary enforces authority; ungranted action refused
@@ -268,7 +293,24 @@ def test_canonical_chicago_v26_9_16_definition_of_done(tmp_path: Path) -> None:
     # Gate 6: Autonomous Execution Inside Envelope (Cycle 1 Autonomic Reflex)
     # -------------------------------------------------------------------------
     base_ttl = "@prefix ex: <http://example.org/> . ex:cluster ex:status 'OK' ."
-    event_delta_ttl = "@prefix ex: <http://example.org/> . ex:node ex:condition 'COMPROMISED' ."
+    # AFDE-2604 fail-secure closure: ReactiveSemanticLoop's admission_pipeline
+    # is omitted below, so it now constructs a real AdmissionPipeline() by
+    # default (instead of None) and admits THIS event delta each cycle before
+    # any intent it synthesizes may reach AuthorityBroker.evaluate(). The
+    # resulting ExecutionEnvelope is then run through
+    # ConsequenceBoundary.execute_admitted(), whose admission gate requires
+    # the admitted candidate graph to contain the real, explicit
+    # <action_iri> <urn:autofde-lab:targetResource> <target_cap> triple for
+    # THIS exact action/target pair -- so it must be present in the event
+    # content driving the cycle, not merely co-mentioned. The added triple is
+    # additive (the trigger_predicate/trigger_value match the hook engine
+    # checks via regex against "ex:condition 'COMPROMISED'" is untouched), so
+    # this remains the same "novel COMPROMISED node" event Gate 6 always
+    # exercised, now also carrying its own real admission binding.
+    event_delta_ttl = (
+        "@prefix ex: <http://example.org/> . ex:node ex:condition 'COMPROMISED' .\n"
+        f"<{action_iri}> <urn:autofde-lab:targetResource> <{target_cap}> ."
+    )
 
     loop = ReactiveSemanticLoop(
         hook_engine=hook_engine,

@@ -46,6 +46,7 @@ from typing import Any, Mapping
 
 from autofde_lab.sa2a.admission.pipeline import (
     REFUSED_PROVENANCE,
+    AdmissionPipeline,
     AdmissionResult,
 )
 from autofde_lab.sa2a.algebra import Standing
@@ -119,6 +120,46 @@ VALID_ADMITTED_TTL = """
 @prefix vocab: <http://example.org/vocab/> .
 afl:cluster_mutation_subject vocab:status 'ACTIVE' .
 """
+
+
+def _admit_action_target_binding(action_iri: str, target_resource: str) -> AdmissionResult:
+    """Real, ADMITTED AdmissionResult whose admitted graph binds EXACTLY the given
+    action_iri/target_resource via the real relational-binding triple
+    `<action_iri> afl:targetResource <target_resource> .` that
+    `ConsequenceBoundary._admission_covers_action_target()` (AFDE-2604) requires on
+    `ExecutionEnvelope.admission_result` before `execute()`'s admission fence (now
+    `require_admission=True` by default) will pass an envelope through to
+    AuthorityBroker/DO at all.
+
+    Uses a bare `AdmissionPipeline()` (not `AdmissionCourt().pipeline`) deliberately:
+    `AdmissionCourt`'s own pipeline is configured with a strict `IdentityPolicy`
+    (`allowed_subject_namespaces=("http://example.org/admitted/", "urn:autofde-lab:")`)
+    that would itself refuse a candidate graph whose subject is an `urn:action:...` or
+    `urn:resource:...` IRI -- those are this test file's own local action/target
+    identifiers, not `AdmissionCourt`'s admitted namespaces, and changing them would
+    touch identity strings this file's mutation tests are not about. A bare
+    `AdmissionPipeline()` has the unrestricted default `IdentityPolicy()`
+    (`allowed_subject_namespaces=()` => no namespace restriction), so it admits the
+    exact binding triple these tests need while still enforcing every other real
+    admission stage (parse, falsifiers, provenance, meta-admission) for real.
+    """
+    pipeline = AdmissionPipeline()
+    result = pipeline.admit(
+        f"@prefix afl: <urn:autofde-lab:> .\n"
+        f"<{action_iri}> afl:targetResource <{target_resource}> .\n",
+        provenance_record={
+            "issuer": "urn:issuer:mutation-admission-binding",
+            "timestamp": "2026-09-16T12:00:00Z",
+        },
+    )
+    assert result.is_admitted is True, (
+        f"Binding admission for action_iri={action_iri!r}, "
+        f"target_resource={target_resource!r} must itself be ADMITTED before it can "
+        f"anchor ConsequenceBoundary's admission gate; got standing={result.standing} "
+        f"refusal={result.refusal_code} reasons={result.reasons}"
+    )
+    assert result.standing == Standing.ADMITTED
+    return result
 
 
 # =============================================================================
@@ -253,6 +294,16 @@ def test_mutation_authority_actor_id_identity_swap(tmp_path: Path) -> None:
         )
     )
 
+    # AFDE-2604: ConsequenceBoundary now defaults to require_admission=True, so
+    # every envelope reaching execute() needs a real, bound Standing.ADMITTED
+    # AdmissionResult whose admitted content contains the real
+    # <action_iri> afl:targetResource <target_resource> . triple (per
+    # `_admission_covers_action_target()`). Admission is incidental to what this
+    # test actually probes (an actor-id authority-grant identity swap) -- both the
+    # legit and mutated envelope share the SAME action_iri/target_resource, so the
+    # SAME binding admission legitimately anchors both; only actor_id differs.
+    action_target_admission = _admit_action_target_binding(action_iri, target_resource)
+
     # --- Step 1: otherwise-complete, currently-valid baseline episode -----
     legit_envelope = ExecutionEnvelope(
         idempotency_token="idemp-mutation-legit-01",
@@ -260,6 +311,7 @@ def test_mutation_authority_actor_id_identity_swap(tmp_path: Path) -> None:
         target_resource=target_resource,
         parameters={"admission_digest": admit_res.digest},
         actor_id=legit_actor,
+        admission_result=action_target_admission,
     )
     legit_result = boundary.execute(legit_envelope)
     assert legit_result.success is True, (
@@ -281,6 +333,7 @@ def test_mutation_authority_actor_id_identity_swap(tmp_path: Path) -> None:
         target_resource=target_resource,  # unchanged
         parameters={"admission_digest": admit_res.digest},  # unchanged
         actor_id=rogue_actor,  # <-- the ONE mutated identity
+        admission_result=action_target_admission,  # unchanged: same action/target
     )
     mutated_result = boundary.execute(mutated_envelope)
 
@@ -382,6 +435,17 @@ def test_mutation_construction_receipt_digest_corruption(tmp_path: Path) -> None
         )
     )
 
+    # AFDE-2604: ConsequenceBoundary now defaults to require_admission=True, so
+    # every envelope reaching execute() needs a real, bound Standing.ADMITTED
+    # AdmissionResult whose admitted content contains the real
+    # <action_iri> afl:targetResource <target_resource> . triple (per
+    # `_admission_covers_action_target()`). Admission is incidental to what this
+    # test actually probes (a construction-receipt digest corruption); both the
+    # legit and mutated envelope share the SAME action_iri/target_resource, so the
+    # SAME binding admission legitimately anchors both -- only construction_receipt
+    # differs.
+    action_target_admission = _admit_action_target_binding(action_iri, target_resource)
+
     legit_envelope = ExecutionEnvelope(
         idempotency_token="idemp-mutation-construct-legit-01",
         action_iri=action_iri,
@@ -391,6 +455,7 @@ def test_mutation_construction_receipt_digest_corruption(tmp_path: Path) -> None
         artifact=artifact,
         construction_receipt=artifact.receipt,
         admitted_semantics=admitted_semantics,
+        admission_result=action_target_admission,
     )
     legit_result = boundary.execute(legit_envelope)
     assert legit_result.success is True, (
@@ -425,6 +490,7 @@ def test_mutation_construction_receipt_digest_corruption(tmp_path: Path) -> None
         artifact=artifact,  # unchanged
         construction_receipt=mutated_receipt,  # <-- the ONE mutated field
         admitted_semantics=admitted_semantics,  # unchanged
+        admission_result=action_target_admission,  # unchanged: same action/target
     )
     mutated_result = boundary.execute(mutated_envelope)
 

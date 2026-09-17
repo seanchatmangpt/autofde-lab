@@ -83,6 +83,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline
+from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import AuthorityBroker, AuthorityGrant
 from autofde_lab.sa2a.brce.boundary import (
     REFUSED_TOKEN_ACTION_MISMATCH,
@@ -126,12 +128,38 @@ def test_mutation_d_cross_actor_token_reuse_hands_actor_a_receipt_to_actor_b(
     DIFFERENT actor_b, even when actor_b is independently, validly granted for the
     exact same action/target -- actor_b presenting actor_a's token is not actor_b's own
     actuation, and handing back actor_a's receipt misrepresents whose consequence it is.
+
+    AFDE-2604 fail-secure closure (this session): `ConsequenceBoundary.__init__`'s
+    `require_admission` default flipped `False -> True`, so `_boundary()`'s bare-default
+    construction now makes every `execute()` call here enforce the same admission gate
+    `execute_admitted()` always has (`_enforce_admission_gate()`). Admission is
+    INCIDENTAL to what Mutation D actually probes (cross-actor idempotency-token
+    identity binding on the replay path, not the admission fence itself), so a real,
+    valid, `Standing.ADMITTED` `AdmissionResult` -- explicitly binding `action` to
+    `target` via the real `afl:targetResource` triple -- is wired onto BOTH envelopes
+    below (same action/target for actor_a and actor_b, so the SAME admission applies to
+    both), reaching the exact same actor-identity-binding code path this test has
+    always exercised, rather than disabling the gate via `require_admission=False`.
     """
     actor_a = "urn:agent:fresh-mut-d-actor-a"
     actor_b = "urn:agent:fresh-mut-d-actor-b"
     action = "urn:action:fresh-mut-d:read-secret"
     target = "urn:resource:fresh-mut-d:secret-vault"
     token = "idemp-fresh-mut-d-shared-token"
+
+    pipeline = AdmissionPipeline()
+    admitted = pipeline.admit(
+        f"""
+@prefix afl: <urn:autofde-lab:> .
+<{action}> a afl:Action ;
+    afl:targetResource <{target}> .
+""",
+        provenance_record={
+            "issuer": "urn:issuer:fresh-mut-d",
+            "timestamp": "2026-09-17T00:00:00Z",
+        },
+    )
+    assert admitted.standing == Standing.ADMITTED
 
     broker = AuthorityBroker()
     broker.register_grant(
@@ -154,7 +182,11 @@ def test_mutation_d_cross_actor_token_reuse_hands_actor_a_receipt_to_actor_b(
 
     first = boundary.execute(
         ExecutionEnvelope(
-            idempotency_token=token, action_iri=action, target_resource=target, actor_id=actor_a
+            idempotency_token=token,
+            action_iri=action,
+            target_resource=target,
+            actor_id=actor_a,
+            admission_result=admitted,
         )
     )
     assert first.success is True
@@ -165,10 +197,18 @@ def test_mutation_d_cross_actor_token_reuse_hands_actor_a_receipt_to_actor_b(
     assert prepared is not None and prepared.actor_id == actor_a
 
     # MUTATION: a COMPLETELY DIFFERENT actor, independently and validly granted for the
-    # exact SAME action/target, presents the SAME shared token.
+    # exact SAME action/target, presents the SAME shared token. The SAME admission
+    # (bound to the same action/target) is presented again -- admission is a property
+    # of the candidate content, not of which actor is replaying the token, so a
+    # legitimate replay from any actor for this exact action/target satisfies the same
+    # admission gate; the actor-identity mismatch below is the check under test.
     second = boundary.execute(
         ExecutionEnvelope(
-            idempotency_token=token, action_iri=action, target_resource=target, actor_id=actor_b
+            idempotency_token=token,
+            action_iri=action,
+            target_resource=target,
+            actor_id=actor_b,
+            admission_result=admitted,
         )
     )
 

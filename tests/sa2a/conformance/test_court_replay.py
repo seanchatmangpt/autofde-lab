@@ -25,6 +25,8 @@ from typing import Any, Mapping
 
 import pytest
 
+from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline, AdmissionResult
+from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import (
     AuthorityBroker,
     AuthorityGrant,
@@ -48,6 +50,38 @@ from autofde_lab.sa2a.conformance.courts.replay_court import (
     RealDiskJournalActuator,
     ReplayCourt,
 )
+
+
+def _admit_binding(action_iri: str, target_resource: str, issuer: str) -> AdmissionResult:
+    """Construct a real, valid, Standing.ADMITTED AdmissionResult whose admitted
+    candidate graph contains the real RDF triple
+    `<action_iri> afl:targetResource <target_resource> .` -- the exact,
+    explicit relational binding `ConsequenceBoundary._admission_covers_action_
+    target()` requires (AFDE-2604 fail-secure closure: `ConsequenceBoundary.
+    __init__`'s `require_admission` now defaults to True, so `execute()` itself
+    enforces the same admission gate `execute_admitted()` always has).
+
+    Admission is incidental to everything this file actually tests (replay
+    chain digest validation, tamper/hash-chain-break detection, fresh-consumer
+    isolation, Gate 12 zero-inference) -- this helper exists only so those
+    tests reach the SAME real EXECUTED code path they always exercised,
+    instead of being refused before Step 1 by a gate their own scenarios were
+    never about.
+    """
+    ttl = (
+        "@prefix afl: <urn:autofde-lab:> .\n"
+        f"<{action_iri}> afl:targetResource <{target_resource}> .\n"
+    )
+    result = AdmissionPipeline().admit(
+        ttl,
+        provenance_record={"issuer": issuer, "timestamp": "2026-09-17T00:00:00Z"},
+    )
+    assert result.standing == Standing.ADMITTED, (
+        "Test fixture admission must reach Standing.ADMITTED, got "
+        f"{result.standing!r} (refusal_code={result.refusal_code!r}, "
+        f"reasons={result.reasons!r})"
+    )
+    return result
 
 
 def _setup_executed_transaction(
@@ -83,6 +117,7 @@ def _setup_executed_transaction(
         receipt_store=store,
     )
 
+    admission = _admit_binding(action_iri, target_resource, issuer=f"urn:issuer:{grant_id}")
     envelope = ExecutionEnvelope(
         idempotency_token=token,
         action_iri=action_iri,
@@ -90,6 +125,7 @@ def _setup_executed_transaction(
         actor_id=actor_id,
         grant_id=grant_id,
         parameters=params,
+        admission_result=admission,
     )
     result = boundary.execute(envelope)
     assert result.success is True
@@ -266,6 +302,16 @@ def test_chi_fresh_consumer_multi_transaction_sequence(tmp_path: Path) -> None:
         receipt_store=store,
     )
 
+    # AFDE-2604 fail-secure closure: ConsequenceBoundary.require_admission now
+    # defaults to True, so every envelope below needs a real, bound, ADMITTED
+    # AdmissionResult (admission is incidental to this test's real purpose --
+    # multi-transaction fresh-consumer replay isolation). All three iterations
+    # act on the SAME action_iri/target_resource, so one admission legitimately
+    # covers all three.
+    admission = _admit_binding(
+        "urn:action:append_log", "urn:cap:log", issuer="urn:issuer:grant-multi-01"
+    )
+
     records: list[dict[str, Any]] = []
     for i in range(3):
         envelope = ExecutionEnvelope(
@@ -275,6 +321,7 @@ def test_chi_fresh_consumer_multi_transaction_sequence(tmp_path: Path) -> None:
             actor_id="urn:agent:pipeline",
             grant_id="grant-multi-01",
             parameters={"seq": i, "payload": f"step-{i}"},
+            admission_result=admission,
         )
         res = boundary.execute(envelope)
         assert res.success is True
@@ -302,15 +349,50 @@ def test_chi_fresh_consumer_multi_transaction_sequence(tmp_path: Path) -> None:
 # =============================================================================
 
 def test_chi_known_reflex_zero_runtime_inference(tmp_path: Path) -> None:
-    """CHI-KNOWN-01 / Gate 12: Qualified KNOWN reflex executes with zero LLM/exploratory inference tokens."""
+    """CHI-KNOWN-01 / Gate 12: Qualified KNOWN reflex executes with zero LLM/exploratory inference tokens.
+
+    `ReplayCourt.verify_known_reflex_zero_inference()` (production code, out of
+    this file's scope to edit) constructs its own `ReactiveSemanticLoop` with
+    `admission_pipeline` omitted -- AFDE-2604 fail-secure closure means that now
+    resolves to a real `AdmissionPipeline()`, not `None`. Each reflex cycle
+    therefore admits `current_event` (the exact `event_delta_ttl` built from
+    this test's own `trigger_predicate`/`trigger_value` strings) before the
+    synthesized intent may reach `AuthorityBroker.evaluate()` / BRCE, and the
+    resulting `AdmissionResult` must, per `_admission_covers_action_target()`,
+    contain the real triple `<action_iri> afl:targetResource <target_resource>`.
+
+    Admission is incidental here too (this test's real subject is Gate 12's
+    zero-runtime-inference-token property on a qualified KNOWN reflex) -- but
+    `replay_court.py`'s `event_delta_ttl` template
+    (`f"... ex:entity {trigger_predicate} '{trigger_value}' .\n"`) has no
+    parameter through which a caller can bind a *different* subject, so the
+    only lever this test has to supply real, admissible content that actually
+    binds this action/target is `trigger_value` itself, which the production
+    template interpolates verbatim inside a quoted Turtle literal. `trigger_value`
+    below closes that literal and its enclosing triple early (`OVERHEATED' .`),
+    asserts the real binding triple as a second, independent statement, then
+    opens a `#` line comment to absorb the template's own trailing `' .` --
+    all standard Turtle grammar, not string-corruption of production code. The
+    hook-fire regex in `KnowledgeHookEngine._local_fallback_condition_matches()`
+    (`trigger_predicate\\s+['"]trigger_value['"]`) still matches unconditionally,
+    since the template always places `{trigger_predicate} '{trigger_value}'`
+    verbatim regardless of trigger_value's own content.
+    """
     journal_path = tmp_path / "journal_reflex_gate12.json"
+    action_iri = "urn:action:activate_cooling"
+    target_resource = "urn:cap:thermal_control"
+    trigger_value = (
+        "OVERHEATED' .\n"
+        f"<{action_iri}> <urn:autofde-lab:targetResource> <{target_resource}> .\n"
+        "#"
+    )
 
     court = ReplayCourt()
     proof = court.verify_known_reflex_zero_inference(
         trigger_predicate="ex:status",
-        trigger_value="OVERHEATED",
-        action_iri="urn:action:activate_cooling",
-        target_resource="urn:cap:thermal_control",
+        trigger_value=trigger_value,
+        action_iri=action_iri,
+        target_resource=target_resource,
         actor_id="urn:agent:thermal_controller",
         parameters={"cooler_id": "chiller-01", "level": "MAX"},
         journal_path=journal_path,

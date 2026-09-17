@@ -142,6 +142,14 @@ class DurableDiskReceiptStore(ReceiptStore):
                     plan_digest=data["plan_digest"],
                     artifact_digest=data["artifact_digest"],
                     admitted_input_digest=data["admitted_input_digest"],
+                    # AFDE-2604 (durable admission-identity evidence): must be read back
+                    # from disk the same way every other digest-affecting field here is --
+                    # a real, necessary follow-up to admission_digest's addition to
+                    # PreparedReceipt.digest's body, or a fresh-consumer reload of a real
+                    # admitted receipt would silently recompute a MISMATCHED digest
+                    # (defaulting to "none" instead of the stored value). .get(...) tolerates
+                    # a durable record written before this field existed.
+                    admission_digest=data.get("admission_digest", "none"),
                     consequence_class=data["consequence_class"],
                     parameters=data.get("parameters", {}),
                     prepared_at_ms=data.get("prepared_at_ms", 0),
@@ -409,6 +417,19 @@ class ConsequenceCourt:
     3. CHI-BRCE-03-ANTI-COLLUSION: Anti-collusion (Actuator != Verifier)
     4. CHI-POST-01-INDEPENDENT-OBSERVATION: Independent disk state postcondition observation
     5. CHI-BRCE-04-IDEMPOTENCY-REPLAY-REFUSAL: Duplicate idempotency token replay refusal
+
+    Predates and is orthogonal to AFDE-2604's admission fencing (RFC-SA2A-002):
+    every gate here audits Zero-Unreceipted-Actuation/replay/authority/postcondition
+    properties of `ConsequenceBoundary` itself, never whether a candidate was
+    admitted. Every `ConsequenceBoundary(...)` this class constructs internally
+    therefore passes `require_admission=False` explicitly -- since
+    `ConsequenceBoundary`'s own class-level default flipped to `True` (AFDE-2604
+    fail-secure closure), omitting this here would refuse every gate's envelope at
+    the admission check before it ever reached the actuation/replay/postcondition
+    logic these gates exist to audit, masking the real property under test with an
+    unrelated one. This is an explicit, named, permanent opt-out for this court's
+    own scope -- not a silent bypass -- exactly the affirmative-choice pattern the
+    fail-secure closure requires of any caller that genuinely needs the old shape.
     """
 
     def __init__(self) -> None:
@@ -441,6 +462,7 @@ class ConsequenceCourt:
             actuator=actuator,
             verifier=verifier,
             receipt_store=receipt_store,
+            require_admission=False,  # see class docstring: this court predates admission fencing
         )
 
         envelope = ExecutionEnvelope(
@@ -528,6 +550,7 @@ class ConsequenceCourt:
             actuator=actuator,
             verifier=verifier,
             receipt_store=receipt_store,
+            require_admission=False,  # see class docstring: this court predates admission fencing
         )
 
         initial_journal_exists = journal_path.exists()
@@ -653,6 +676,7 @@ class ConsequenceCourt:
             authority_broker=broker,
             actuator=actuator,
             verifier=verifier,
+            require_admission=False,  # see class docstring: this court predates admission fencing
         )
 
         return CourtGateResult(
@@ -695,6 +719,7 @@ class ConsequenceCourt:
             actuator=legit_actuator,
             verifier=independent_verifier,
             receipt_store=receipt_store,
+            require_admission=False,  # see class docstring: this court predates admission fencing
         )
 
         envelope_legit = ExecutionEnvelope(
@@ -730,6 +755,7 @@ class ConsequenceCourt:
             actuator=deceptive_actuator,  # Lies that it succeeded!
             verifier=deceptive_verifier,  # Reads real disk
             receipt_store=receipt_store,
+            require_admission=False,  # see class docstring: this court predates admission fencing
         )
 
         token_deceptive = f"idemp-deceptive-{uuid.uuid4().hex[:6]}"
@@ -766,6 +792,7 @@ class ConsequenceCourt:
             actuator=corrupt_actuator,
             verifier=corrupt_verifier,
             receipt_store=receipt_store,
+            require_admission=False,  # see class docstring: this court predates admission fencing
         )
 
         token_corrupt = f"idemp-corrupt-{uuid.uuid4().hex[:6]}"
@@ -827,6 +854,7 @@ class ConsequenceCourt:
             actuator=actuator,
             verifier=verifier,
             receipt_store=receipt_store,
+            require_admission=False,  # see class docstring: this court predates admission fencing
         )
 
         envelope1 = ExecutionEnvelope(

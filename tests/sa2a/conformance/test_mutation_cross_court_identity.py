@@ -99,6 +99,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline
+from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import (
     REFUSED_NO_GRANT,
     AuthorityBroker,
@@ -355,6 +357,42 @@ def test_consequence_court_replay_gate_reports_conformant_for_mismatched_grant_c
     # --- Direct proof of the underlying fix: a fresh ConsequenceBoundary.execute()
     # call for this exact forged identity is REFUSED, not EXECUTED. This is what
     # `CourtGateResult` alone cannot show. ---
+    #
+    # AFDE-2604 fail-secure closure (unrelated later session, this repo):
+    # `ConsequenceBoundary.__init__`'s `require_admission` default flipped from
+    # `False` to `True`, so `execute()` itself now applies the same admission
+    # gate `execute_admitted()` always has (`_enforce_admission_gate()`), BEFORE
+    # Step 1's idempotency-replay re-authorization check below is ever reached.
+    # This test's own concern -- whether a forged, self-asserted `grant_id`
+    # claim on a cached EXECUTED receipt can smuggle a never-authorized
+    # actuation identity back out through a replay -- is orthogonal to the
+    # admission fence: closing the admission-default gap does not, by itself,
+    # close (or even touch) the receipt-forgery/replay-reauthorization gap this
+    # file exists to falsify. So a real, valid, `Standing.ADMITTED`
+    # `AdmissionResult` -- explicitly bound, via the real RDF triple
+    # `<FORGED_ACTION> afl:targetResource <FORGED_TARGET> .`, to the EXACT
+    # forged identity under audit -- is constructed and wired onto the
+    # envelope below, so this call reaches the SAME `REFUSED_REPLAY_
+    # NOT_REAUTHORIZED` code path it always tested, rather than being
+    # short-circuited earlier by `REFUSED_NOT_ADMITTED`. Verified below: the
+    # original finding (a fresh boundary call for the forged identity is
+    # refused, not executed) still reproduces once admission is honestly
+    # satisfied -- the admission fence and the replay-reauthorization fence are
+    # two independent, additive gates, not substitutes for one another.
+    forged_identity_admission = AdmissionPipeline().admit(
+        "@prefix afl: <urn:autofde-lab:> .\n"
+        f"<{FORGED_ACTION}> afl:targetResource <{FORGED_TARGET}> .",
+        provenance_record={
+            "issuer": "urn:issuer:test-mutation-cross-court-identity",
+            "timestamp": "2026-09-17T00:00:00Z",
+        },
+    )
+    assert forged_identity_admission.standing == Standing.ADMITTED, (
+        "Precondition: the admission itself must genuinely succeed so that any "
+        "subsequent refusal below is attributable to the replay-reauthorization "
+        "gate under test, never to a failed admission precondition."
+    )
+
     direct_boundary = ConsequenceBoundary(
         authority_broker=broker,
         actuator=RealDiskJournalActuator(tmp_path / "direct_journal.json"),
@@ -368,6 +406,7 @@ def test_consequence_court_replay_gate_reports_conformant_for_mismatched_grant_c
             target_resource=FORGED_TARGET,
             actor_id=LEGIT_ACTOR,
             parameters={},
+            admission_result=forged_identity_admission,
         )
     )
     assert direct_result.success is False, (

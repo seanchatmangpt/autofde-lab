@@ -5,6 +5,23 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
+Last update: **pass 38** (2026-09-17) — **AFDE-2604 fail-secure closure: the
+breaking default-flip pass 37 below explicitly declined to attempt without a
+decision is now decided and executed. `ConsequenceBoundary.require_admission`
+default flipped False->True; `ReactiveSemanticLoop.admission_pipeline`, when
+omitted, now constructs a real `AdmissionPipeline()` (a sentinel distinguishes
+"omitted" from an explicit `None` opt-out). This closes DW-1 and UE-2 (both
+`DEFEATED`, updated fix-forward), on top of pass 37's DW-2/Lens-5-item-1.
+R1/R2/R3 (TOCTOU) deliberately left `SURVIVED` and verified not accidentally
+masked; UE-3 and Lens 5 item (2) remain open. Real blast radius measured
+before deciding: 44 tests across 19 files broke; each triaged with real
+understanding (19 parallel agents + 2 direct fixes to shared
+`consequence_court.py` infrastructure one agent correctly flagged as
+out-of-scope and BLOCKED rather than hacking around).
+`.venv/bin/python -m pytest tests/sa2a/ tests/agent/` -> **425 passed**, 0
+failed. Full account: `docs/jira/v26.9.16/AFDE-2604-admission-fencing-local-
+closure.md`'s new 2026-09-17 fail-secure-closure status block.**
+
 Last update: **pass 37** (2026-09-17) — **AFDE-2604: 2 of 7 named-open adversarial
 gaps closed for real (DW-2, Lens 5 item 1), non-breaking, verified with real pytest
 runs — `.venv/bin/python -m pytest tests/sa2a/ tests/agent/` → 425 passed. DW-1,

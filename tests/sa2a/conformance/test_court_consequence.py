@@ -151,6 +151,11 @@ def test_strict_prepared_receipt_commitment_before_actuation(tmp_path: Path) -> 
         actuator=actuator,
         verifier=verifier,
         receipt_store=failing_store,
+        # AFDE-2604 fail-secure closure: this falsification check is about receipt-
+        # store commit failure (a real, orthogonal ZUA property), not admission --
+        # require_admission=False so envelope_fail still reaches the receipt-store
+        # commitment check instead of being refused earlier at the admission gate.
+        require_admission=False,
     )
 
     envelope_fail = ExecutionEnvelope(

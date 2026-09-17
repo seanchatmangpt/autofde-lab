@@ -34,6 +34,7 @@ from autofde_lab.sa2a.admission.pipeline import (
     REFUSED_PROVENANCE,
     REFUSED_SHACL,
     REFUSED_STRUCTURE,
+    AdmissionPipeline,
 )
 from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import AuthorityBroker, AuthorityGrant
@@ -683,6 +684,18 @@ def test_admission_court_zero_mock_consequence_gating(tmp_path: Path) -> None:
     - Real ConsequenceBoundary, AuthorityBroker, ReceiptStore.
     - If admission fails, disk probe is never touched.
     - If admission succeeds, admitted receipt digest can authorize downstream execution.
+
+    AFDE-2604 fail-secure closure note: `ConsequenceBoundary` now defaults to
+    `require_admission=True` (boundary.py), so `execute()` itself enforces the same
+    admission gate `execute_admitted()` always has. Admission is incidental to what
+    this test actually probes (real disk I/O, real authority grants, real receipts) --
+    the adversary step below reaches the SAME REFUSED-before-consequence outcome it
+    always did (now via the admission gate rather than only the authority gate, which
+    is a strictly earlier and equally correct refusal point), and the legitimate step
+    below now wires a real, valid, Standing.ADMITTED AdmissionResult -- bound via the
+    real RDF triple `<action_iri> afl:targetResource <target_resource>` -- onto
+    `legit_envelope` so the test still reaches the same real actuation/verification
+    path it always exercised.
     """
     probe_file = tmp_path / "real_disk_actuation.json"
     actuator = RealDiskProbeActuator(probe_file)
@@ -751,6 +764,37 @@ def test_admission_court_zero_mock_consequence_gating(tmp_path: Path) -> None:
         )
     )
 
+    # AFDE-2604 fail-secure closure: `boundary` above was constructed with the
+    # class-level default `require_admission=True`, so `boundary.execute()` now
+    # applies the same admission gate `execute_admitted()` always has -- a real,
+    # bound Standing.ADMITTED AdmissionResult must be present on the envelope
+    # BEFORE AuthorityBroker.evaluate() or actuation are reached
+    # (`_enforce_admission_gate()` / `_admission_covers_action_target()` in
+    # boundary.py). `legit_res` above admits a DIFFERENT candidate graph
+    # (`afl:legit_action` -> `afl:disk_target`) than the exact action_iri/
+    # target_resource this envelope actually executes (`urn:action:legit_write` ->
+    # `urn:resource:disk`), so it cannot be reused as-is: a Standing.ADMITTED
+    # verdict for one candidate is never, by itself, permission to actuate an
+    # unrelated action/target. A second, real admission run explicitly binds the
+    # exact action/target this envelope uses via the real RDF triple
+    # `<action_iri> afl:targetResource <target_resource>` -- a plain, unrestricted
+    # `AdmissionPipeline()` is used here (rather than `court.pipeline`, whose
+    # `identity_policy` only admits `http://example.org/admitted/` and
+    # `urn:autofde-lab:` subject namespaces, not `urn:action:`/`urn:resource:`)
+    # so this real admission call genuinely reaches Standing.ADMITTED for these
+    # exact identifiers rather than being refused on an unrelated namespace policy.
+    legit_binding_pipeline = AdmissionPipeline()
+    legit_binding_admission = legit_binding_pipeline.admit(
+        "@prefix afl: <urn:autofde-lab:> .\n"
+        "<urn:action:legit_write> afl:targetResource <urn:resource:disk> .",
+        provenance_record={
+            "issuer": "urn:issuer:trusted-authority",
+            "timestamp": "2026-09-16T12:00:00Z",
+        },
+    )
+    assert legit_binding_admission.is_admitted is True
+    assert legit_binding_admission.standing == Standing.ADMITTED
+
     # Legitimate actuation succeeds with real disk write and independent verification
     legit_envelope = ExecutionEnvelope(
         idempotency_token="idemp-legit-001",
@@ -758,6 +802,7 @@ def test_admission_court_zero_mock_consequence_gating(tmp_path: Path) -> None:
         target_resource="urn:resource:disk",
         parameters={"status": "INITIALIZED"},
         actor_id="urn:agent:admitted-worker",
+        admission_result=legit_binding_admission,
     )
     legit_exec_res = boundary.execute(legit_envelope)
     assert legit_exec_res.success is True

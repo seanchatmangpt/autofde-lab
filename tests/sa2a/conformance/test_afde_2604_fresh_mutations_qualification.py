@@ -249,6 +249,23 @@ def test_mutation_b_replay_reauthorized_for_different_action_returns_stale_recei
     independently, validly authorized. DEFEATED = TRUE: the caller never receives
     action1's stale receipt for an action2 request, and action2 is never actuated
     either.
+
+    AFDE-2604 fail-secure closure (this session, `ConsequenceBoundary.__init__`'s
+    `require_admission` default flipped False -> True): `_boundary()` no longer passes
+    `require_admission` explicitly, so BOTH `execute()` calls below now also run
+    through `_enforce_admission_gate()` first. Admission is incidental to what this
+    mutation actually probes (token/action-identity binding, not the admission fence
+    itself -- see Mutation A/C in this same file for that), so both envelopes below
+    are wired with a real, `Standing.ADMITTED` `AdmissionResult` whose admitted
+    content explicitly, relationally binds ITS OWN action/target (action1/target1 for
+    the first call, action2/target2 for the second) via the real
+    `<action> afl:targetResource <target> .` triple `_admission_covers_action_target()`
+    requires. This keeps the mutation's own adversarial construction intact: the
+    second call's admission is completely genuine and content-bound for action2/
+    target2 (it would pass `execute_admitted()` on its own), so `second`'s eventual
+    `REFUSED_TOKEN_ACTION_MISMATCH` is caused ONLY by the token/action-identity check
+    this test exists to exercise, never by a masking `REFUSED_NOT_ADMITTED` from the
+    now-mandatory admission gate.
     """
     actor = "urn:agent:fresh-mut-b-actor"
     action1 = "urn:action:fresh-mut-b:read-report"
@@ -256,6 +273,26 @@ def test_mutation_b_replay_reauthorized_for_different_action_returns_stale_recei
     action2 = "urn:action:fresh-mut-b:wire-transfer"
     target2 = "urn:resource:fresh-mut-b:treasury"
     token = "idemp-fresh-mut-b-shared-token"
+
+    pipeline = AdmissionPipeline()
+    admitted1 = pipeline.admit(
+        f"""
+@prefix afl: <urn:autofde-lab:> .
+<{action1}> a afl:Action ;
+    afl:targetResource <{target1}> .
+""",
+        provenance_record={"issuer": "urn:issuer:fresh-mut-b", "timestamp": "2026-09-16T00:00:00Z"},
+    )
+    assert admitted1.standing == Standing.ADMITTED
+    admitted2 = pipeline.admit(
+        f"""
+@prefix afl: <urn:autofde-lab:> .
+<{action2}> a afl:Action ;
+    afl:targetResource <{target2}> .
+""",
+        provenance_record={"issuer": "urn:issuer:fresh-mut-b", "timestamp": "2026-09-16T00:00:00Z"},
+    )
+    assert admitted2.standing == Standing.ADMITTED
 
     broker = AuthorityBroker()
     broker.register_grant(
@@ -278,7 +315,11 @@ def test_mutation_b_replay_reauthorized_for_different_action_returns_stale_recei
 
     first = boundary.execute(
         ExecutionEnvelope(
-            idempotency_token=token, action_iri=action1, target_resource=target1, actor_id=actor
+            idempotency_token=token,
+            action_iri=action1,
+            target_resource=target1,
+            actor_id=actor,
+            admission_result=admitted1,
         )
     )
     assert first.success is True
@@ -286,11 +327,17 @@ def test_mutation_b_replay_reauthorized_for_different_action_returns_stale_recei
     assert actuator.call_count == 1
 
     # MUTATION: replay the SAME token, but substitute action2/target2 -- an identity the
-    # actor is ALSO validly, independently granted for (so the reauth check itself
-    # correctly authorizes it).
+    # actor is ALSO validly, independently granted for AND genuinely, content-boundly
+    # admitted for (so both the reauth check AND the admission gate would, on their
+    # own, correctly let action2 through -- isolating the token/action-identity check
+    # as the only thing that can still refuse this call).
     second = boundary.execute(
         ExecutionEnvelope(
-            idempotency_token=token, action_iri=action2, target_resource=target2, actor_id=actor
+            idempotency_token=token,
+            action_iri=action2,
+            target_resource=target2,
+            actor_id=actor,
+            admission_result=admitted2,
         )
     )
 

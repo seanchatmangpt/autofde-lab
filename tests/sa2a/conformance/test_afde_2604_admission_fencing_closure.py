@@ -146,13 +146,36 @@ def test_composed_admission_authority_consequence_fence(tmp_path: Path) -> None:
     # Standing.ADMITTED under AdmissionCourt's real, default identity/ShEx/SHACL
     # policy in test_court_admission.py::test_admission_court_zero_mock_consequence_gating.
     # =================================================================================
-    admitted_ttl = """
+    # AFDE-2604 fail-secure closure (default-wiring flip, THIS session):
+    # ConsequenceBoundary.__init__'s `require_admission` class-level default flipped
+    # False -> True, so `execute()` on a bare-default instance (as `a_boundary` below
+    # always was) now applies the SAME admission gate `execute_admitted()` always has,
+    # BEFORE `AuthorityBroker.evaluate()` is ever reached. Admission is incidental to
+    # what part (a) is actually probing (that authority still fences an admitted-but-
+    # unauthorized candidate) -- so, per the fix-forward decision procedure, real
+    # admission is wired in properly (identity + relational content binding) rather
+    # than passing `require_admission=False`, so this part reaches the SAME authority
+    # -refusal code path it always tested. `a_action`/`a_target` are defined BEFORE the
+    # TTL so the TTL's real `afl:targetResource` triple can bind the EXACT action/target
+    # identity `a_envelope` below actuates against (`_admission_covers_action_target()`
+    # requires an exact triple match, not node co-occurrence -- see boundary.py). The
+    # subject namespace must fall under AdmissionCourt's default
+    # `allowed_subject_namespaces` ("urn:autofde-lab:" / "http://example.org/admitted/")
+    # for the identity-policy stage to admit it at all; only the subject/predicate
+    # namespaces are checked (`admission/pipeline.py::_check_identity_policy`), so
+    # `a_target`, as the triple's object, is unconstrained and keeps its original,
+    # descriptive `urn:resource:...` identity.
+    a_actor = "urn:agent:afde-2604-unauthorized-worker"
+    a_action = "urn:autofde-lab:afde-2604-part-a-admitted-action"
+    a_target = "urn:resource:afde-2604:admitted-no-authority-target"
+
+    admitted_ttl = f"""
     @prefix afl: <urn:autofde-lab:> .
     @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-    afl:afde_2604_part_a a afl:Action ;
+    <{a_action}> a afl:Action ;
         afl:actionId "afde-2604-part-a"^^xsd:string ;
-        afl:targetResource afl:disk_target .
+        afl:targetResource <{a_target}> .
     """
     admitted_result = admission_court.pipeline.admit(
         admitted_ttl,
@@ -179,15 +202,18 @@ def test_composed_admission_authority_consequence_fence(tmp_path: Path) -> None:
         receipt_store=a_receipt_store,
     )
 
-    a_actor = "urn:agent:afde-2604-unauthorized-worker"
-    a_action = "urn:action:afde-2604:admitted-no-authority"
-    a_target = "urn:resource:afde-2604:admitted-no-authority-target"
     a_envelope = ExecutionEnvelope(
         idempotency_token="idemp-afde-2604-part-a",
         action_iri=a_action,
         target_resource=a_target,
         actor_id=a_actor,
         parameters={"admitted_graph_digest": admitted_result.digest or ""},
+        # AFDE-2604 default-wiring closure: bind the real, ADMITTED AdmissionResult so
+        # this part still reaches the authority gate (REFUSED_NO_GRANT) instead of
+        # being turned away earlier by the now-mandatory admission gate for an
+        # unrelated reason (REFUSED_NOT_ADMITTED) -- the composed law under test here
+        # is specifically "admitted but unauthorized", not "unadmitted".
+        admission_result=admitted_result,
     )
     a_result = a_boundary.execute(a_envelope)
 

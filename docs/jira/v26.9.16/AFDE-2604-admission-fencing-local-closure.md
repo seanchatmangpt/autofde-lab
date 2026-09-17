@@ -1,5 +1,97 @@
 # AFDE-2604: local admission fencing — wire `AdmissionPipeline` as the mandatory predecessor of the local Authority/BRCE DO path
 
+- **Status (2026-09-17, fail-secure closure pass — the breaking default-flip
+  previously named as undecided is now DECIDED and EXECUTED; 4 of the 7 gaps
+  named in the previous entry below now CLOSED: DW-1, DW-2, UE-2, and Lens 5
+  item (1). Remaining open: UE-3, Lens 4's R1/R2/R3 (deliberately unaffected —
+  see below), and Lens 5 item (2).** `ConsequenceBoundary.__init__`'s
+  `require_admission` class-level default flipped from `False` to `True`;
+  `ReactiveSemanticLoop.__init__`'s `admission_pipeline`, when the parameter is
+  OMITTED (not explicitly passed, including as `None`), now constructs a real
+  `AdmissionPipeline()` instead of defaulting to `None` (a `_NotSet` sentinel
+  distinguishes "omitted" from an explicit, affirmative `admission_pipeline=None`
+  opt-out). This is the real, wide-blast-radius breaking change every earlier
+  entry in this ticket correctly declined to make silently.
+  - **Real blast radius, measured before deciding, not guessed**: flipping the
+    default broke 44 previously-passing tests across 19 files (confirmed via a
+    real, full `tests/sa2a/ tests/agent/` run before any fix was attempted).
+    Every one of the 44 was triaged with real understanding of what it actually
+    tests (never a mechanical "make it pass") via 19 parallel agents plus 2
+    direct follow-up fixes for shared infrastructure and one file the agents
+    correctly reported BLOCKED rather than silently working around:
+    - **DW-1 CLOSED**: `test_mutation_dw1_direct_library_construction_bypasses_
+      admission_entirely` — the exact gap this default flip exists to close —
+      updated fix-forward from `SURVIVED` (asserting `EXECUTED`) to `DEFEATED`
+      (asserting `REFUSED`/`REFUSED_ADMISSION_CONTENT_NOT_BOUND`), matching the
+      DW-2 pattern already established in the prior pass.
+    - **UE-2 CLOSED**: `ReactiveSemanticLoop.admission_pipeline` and
+      `ConsequenceBoundary.require_admission` are no longer two
+      independently-configured knobs that could silently drift apart — both
+      now default to the secure shape, and `loop.consequence_boundary.execute()`
+      called directly now hits the same gate a gated `run_reflex_cycle()` call
+      would.
+    - **~40 tests where admission was genuinely incidental** (replay,
+      tamper-detection, authority, receipts, hooks, construction binding,
+      token-mismatch, cross-actor identity, etc.) — each fixed by wiring a
+      real, valid `Standing.ADMITTED` `AdmissionResult` (via a real
+      `AdmissionPipeline().admit()` call with the exact
+      `<action_iri> afl:targetResource <target_resource> .` binding triple and
+      a real provenance record) into the `ExecutionEnvelope`/
+      `ReactiveSemanticLoop` construction the test already used, so each test
+      reaches the exact same code path it always tested. `require_admission=
+      False` was used only where wiring real admission was genuinely
+      disproportionate to a test's own orthogonal purpose (named at each such
+      site, never silent).
+    - **Lens 4's R1/R2/R3 (TOCTOU/concurrency) deliberately left SURVIVED,
+      verified not accidentally masked**: `test_afde_2604_toctou_residual_
+      qualification.py`'s 3 tests wire real admission so they still reach the
+      real receipt-store/grant-revocation race they document, then confirm the
+      original findings still reproduce — admission and concurrency-safety are
+      orthogonal axes, and this default flip does not, and was never claimed
+      to, close them. All 3 still assert `SURVIVED` with the identical real
+      counterexamples as before.
+    - **Shared infrastructure fix (this pass, direct — not a per-file agent's
+      scope)**: `src/autofde_lab/sa2a/conformance/courts/consequence_court.py`
+      (`ConsequenceCourt`, the older RFC-SA2A-001 court predating and
+      orthogonal to admission fencing) constructs its own internal
+      `ConsequenceBoundary`/`ExecutionEnvelope` instances with no visibility
+      point for a test file to inject admission through. One assigned agent
+      (`test_court_consequence.py`) correctly identified this, correctly
+      declined to hack around it from the test file, and reported `all_passed:
+      false` with a precise, evidence-based explanation instead of forcing
+      green — exactly the discipline this repo requires. Fixed directly:
+      `require_admission=False` added explicitly to all 7 real
+      `ConsequenceBoundary(...)` constructions inside `ConsequenceCourt`
+      (the deliberate actuator-is-verifier collusion-check construction, which
+      raises before `require_admission` would ever matter, was left alone),
+      with one additional, related fix found while reading this file:
+      `DurableDiskReceiptStore._sync_from_disk()` reconstructed `PreparedReceipt`
+      from disk JSON without reading back the new `admission_digest` field
+      (added in the prior pass), which would have silently produced a
+      digest-mismatched reload for any real admitted receipt — a real,
+      necessary follow-up to that prior fix, not a new problem this pass
+      introduced. One test-file-level fix beyond the shared infrastructure:
+      `test_strict_prepared_receipt_commitment_before_actuation`'s own
+      falsification-check `ConsequenceBoundary` (a receipt-store-commit-failure
+      probe, unrelated to admission) needed `require_admission=False` too.
+  - **Final, real regression, this pass**: `.venv/bin/python -m pytest
+    tests/sa2a/ tests/agent/` → **425 passed**, 0 failed. `tests/fabric/
+    test_coverage.py tests/planning/` → 41 passed, 2 skipped (environment-gated,
+    unrelated). `grep -rn "unittest.mock\|Mock(\|MagicMock\|patch(\|monkeypatch"`
+    over every one of the 21 files this pass touched → only docstring/comment
+    mentions naming the discipline (including, in one file, the literal grep
+    command embedded in its own verification instructions), zero actual usage.
+  - **Overall ticket standing, restated**: `PARTIAL_ALIVE` still — UE-3 (`
+    ConsequenceBoundary._require_admission` is a plain mutable attribute with no
+    write guard, tamperable at runtime — inherent to Python attribute access,
+    not something `__slots__`/property machinery meaningfully closes without
+    disproportionate complexity for the demonstrated risk) and Lens 5 item (2)
+    (admission never binds `ExecutionEnvelope.parameters`) remain open,
+    unattempted, named here rather than silently implied closed. R1/R2/R3 are
+    explicitly NOT closed by this pass and were never claimed to be — they are
+    a different, still-real, still-open finding about receipt-store
+    concurrency-safety.
+
 - **Status (2026-09-17, closure pass — 2 of the 7 named-open gaps below closed for
   real, remainder explicitly left open, no breaking default-flip attempted)**: this
   pass closed **DW-2** (Lens 2) and **Lens 5 item (1)**, both real, narrow,

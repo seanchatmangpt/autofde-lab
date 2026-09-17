@@ -129,7 +129,27 @@ def test_reactive_semantic_loop_closed_reflex_cycle():
     )
 
     base_ttl = "@prefix ex: <http://example.org/> . ex:acc ex:status 'ACTIVE' ."
-    initial_event_ttl = "@prefix ex: <http://example.org/> . ex:acc ex:status 'OVERDUE' ."
+    # AFDE-2604 fail-secure closure (this session): `ReactiveSemanticLoop`, when
+    # constructed without an explicit `admission_pipeline` (as here), now builds a
+    # real `AdmissionPipeline()` by default and admits `current_event` (this
+    # `initial_event_ttl` on cycle 1) before any intent synthesized from it may
+    # reach `AuthorityBroker.evaluate()`. Admission is incidental to what this test
+    # actually verifies (the full Delta -> Hook -> Intent -> Authority -> BRCE DO ->
+    # Receipt -> Quiescence reflex cycle), so the fix is to make the event content
+    # independently reach `Standing.ADMITTED` AND explicitly bind this hook's own
+    # `action_iri`/`target_capability_iri` (`urn:action:freeze_credit` /
+    # `urn:cap:credit:freeze`) via the real `afl:targetResource`
+    # (`urn:autofde-lab:targetResource`) predicate `ConsequenceBoundary`'s own
+    # `_admission_covers_action_target()` gate requires -- the same real
+    # content-binding pattern already used by this file's
+    # `test_sa2a_cli_hook_evaluate_and_reflex` (see its `res_reflex` case). This is
+    # not a test weakening: it demonstrates the new secure default's legitimate
+    # happy path (real admission wired in), not a bypass of it.
+    initial_event_ttl = (
+        "@prefix ex: <http://example.org/> . ex:acc ex:status 'OVERDUE' . "
+        "<urn:action:freeze_credit> <urn:autofde-lab:targetResource> "
+        "<urn:cap:credit:freeze> ."
+    )
 
     # Custom delta generator to stop loop on second cycle
     def delta_gen(final_receipt):

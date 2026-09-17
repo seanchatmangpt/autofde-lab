@@ -42,12 +42,34 @@ Zero Mocks: real `AuthorityBroker`, real `ConsequenceBoundary`, real
 `IndependentDiskJournalVerifier` reading it back, and the real
 `ReplayCourt` / `ReplayEngine` under test. No `unittest.mock`, `Mock`,
 `MagicMock`, `patch`, or `monkeypatch` anywhere in this file.
+
+AFDE-2604 admission-default closure (this session, `src/autofde_lab/sa2a/brce/
+boundary.py` `ConsequenceBoundary.require_admission` default flipped
+`False` -> `True`): admission is INCIDENTAL to this test's actual target
+(category (C) per the flip's own decision procedure) -- the finding this
+file demonstrates is a `ReplayEngine.verify_chain` predecessor-identity gap,
+entirely orthogonal to whether the initial actuation was admitted. Wiring a
+real, valid, `Standing.ADMITTED` `AdmissionResult` onto the real
+`ExecutionEnvelope` below (via a real `AdmissionPipeline().admit()` call,
+binding `real_action_iri` to `real_target_resource` with the real
+`afl:targetResource` triple) is required only so `boundary.execute()` still
+reaches its normal pipeline and produces the same real disk-journal
+evidence it always did; the admission-default flip does NOT touch
+`ReplayEngine.verify_chain` at all (confirmed by reading
+`src/autofde_lab/sa2a/brce/replay.py`: `verify_chain` never inspects
+`AdmissionResult` or `admission_digest` for anything beyond replaying the
+`PreparedReceipt.digest` body verbatim), so CHI-TAMPER-04's original,
+still-open finding is confirmed to reproduce identically with real
+admission correctly wired in -- see the re-verification note in the test
+body below.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
+from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline
+from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import AuthorityBroker, AuthorityGrant
 from autofde_lab.sa2a.brce.boundary import ConsequenceBoundary, ExecutionEnvelope
 from autofde_lab.sa2a.brce.receipts import (
@@ -150,6 +172,29 @@ def test_chi_tamper_04_wrong_but_well_formed_prepared_receipt_identity_substitut
         receipt_store=store,
     )
 
+    # AFDE-2604 admission-default closure (incidental to this test's own finding,
+    # see module docstring): `ConsequenceBoundary` now requires a real, bound,
+    # `Standing.ADMITTED` `AdmissionResult` on every envelope by default. Admit a
+    # real candidate graph that explicitly, relationally binds
+    # `real_action_iri` -> `real_target_resource` via the real
+    # `afl:targetResource` triple `_admission_covers_action_target()` checks for,
+    # so `boundary.execute()` reaches the SAME normal pipeline it always did and
+    # produces the SAME real disk-journal evidence this test's actual target
+    # (the `ReplayEngine.verify_chain` predecessor-identity gap) needs.
+    admission_pipeline = AdmissionPipeline()
+    admission_ttl = (
+        "@prefix afl: <urn:autofde-lab:> .\n"
+        f"<{real_action_iri}> afl:targetResource <{real_target_resource}> .\n"
+    )
+    admitted = admission_pipeline.admit(
+        admission_ttl,
+        provenance_record={
+            "issuer": "urn:issuer:chi-tamper-04",
+            "timestamp": "2026-09-17T00:00:00Z",
+        },
+    )
+    assert admitted.standing == Standing.ADMITTED
+
     # Real, complete, currently-valid episode: actually actuate quarantine_node
     # against a real disk journal, under the real grant.
     envelope = ExecutionEnvelope(
@@ -159,6 +204,7 @@ def test_chi_tamper_04_wrong_but_well_formed_prepared_receipt_identity_substitut
         actor_id=real_actor_id,
         grant_id=real_grant_id,
         parameters={"node_id": "worker-101", "reason": "SECURITY_EXCURSION"},
+        admission_result=admitted,
     )
     result = boundary.execute(envelope)
     assert result.success is True

@@ -244,12 +244,27 @@ class ConsequenceBoundary:
     at construction makes `execute()` itself apply the identical admission gate
     `execute_admitted()` applies, so the two methods become behaviorally identical
     for gating purposes on that instance -- there is no longer a caller-selectable
-    bypass for an instance configured to require admission. `require_admission=False`
-    (the default) leaves `execute()` byte-for-byte unchanged, preserving every
-    existing caller that constructs a `ConsequenceBoundary` without this flag;
-    `execute_admitted()` is unaffected by the flag either way -- it always enforces
-    the gate, exactly as before this fix, for callers who opt into the strict entry
-    point on an otherwise-default-configured instance.
+    bypass for an instance configured to require admission.
+
+    AFDE-2604 fail-secure closure (this pass, closing DW-1/UE-2/UE-3): the
+    class-level default flipped from `require_admission=False` to
+    `require_admission=True`. Previously the permissive default meant "secure by
+    default" was a property of the one `sa2a/cli.py hook_reflex` command's own
+    construction choices, never of this class itself -- any other caller
+    constructing `ConsequenceBoundary(...)` with its own bare defaults (a script, a
+    test helper, a future integration) reproduced the fully permissive
+    `candidate -> authority -> DO` path with zero warning, a real, adversarially
+    confirmed gap (`test_mutation_dw1_direct_library_construction_bypasses_
+    admission_entirely` in
+    `tests/sa2a/conformance/test_afde_2604_default_wiring_bypass_qualification.py`).
+    `execute()` on a bare-default instance now enforces the same admission gate
+    `execute_admitted()` always has -- a caller that genuinely needs the old,
+    permissive shape (e.g. a unit test of a component that deliberately predates
+    or does not care about the admission fence) must now pass
+    `require_admission=False` explicitly, so permissive behavior is always an
+    affirmative, visible choice at the call site, never a silent default.
+    `execute_admitted()` is unaffected by the flag either way -- it always
+    enforces the gate, exactly as before this fix.
     """
 
     def __init__(
@@ -258,7 +273,7 @@ class ConsequenceBoundary:
         actuator: ConsequenceActuator,
         verifier: ConsequenceVerifier,
         receipt_store: Optional[ReceiptStore] = None,
-        require_admission: bool = False,
+        require_admission: bool = True,
     ) -> None:
         if actuator is verifier:
             raise ColludingRolesError(
