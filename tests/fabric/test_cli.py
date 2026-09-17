@@ -1,62 +1,73 @@
 from __future__ import annotations
 
 import importlib
-from typing import Any
+import json
+from pathlib import Path
 
 import pytest
-
-from autofde_lab.fabric.service import DecisionFabric
 
 typer_testing = pytest.importorskip("typer.testing")
 app = importlib.import_module("autofde_lab.fabric.cli").app
 CliRunner = typer_testing.CliRunner
 runner = CliRunner()
 
-
-def test_catalog_and_match_project_shared_fabric(
-    fabric: DecisionFabric,
-    monkeypatch: Any,
-) -> None:
-    monkeypatch.setattr("autofde_lab.fabric.cli.get_fabric", lambda _path=None: fabric)
-
-    catalog = runner.invoke(app, ["catalog"])
-    match = runner.invoke(app, ["match", "Counter"])
-
-    assert catalog.exit_code == 0
-    assert '"Counter"' in catalog.stdout
-    assert match.exit_code == 0
-    assert '"CounterSolver"' in match.stdout
+# Chicago-style: these exercise the real Typer app against the real
+# ScikitDecideBackend entry-point registry and a real SQLite ERRC cache file
+# on disk (via the CLI's own --cache-path option). No factory is patched.
+# `Maze` / `Astar` are genuinely registered domain/solver entry points of this
+# package, so the CLI's production `get_fabric` path is what runs.
+_DOMAIN = "Maze"
+_SOLVER = "Astar"
 
 
-def test_solve_emits_receipt(fabric: DecisionFabric, monkeypatch: Any) -> None:
-    monkeypatch.setattr("autofde_lab.fabric.cli.get_fabric", lambda _path=None: fabric)
+def _cache_option(tmp_path: Path) -> list[str]:
+    return ["--cache-path", str(tmp_path / "errc-cache.sqlite3")]
 
+
+def test_catalog_and_match_use_the_real_registry(tmp_path: Path) -> None:
+    catalog = runner.invoke(app, ["catalog", *_cache_option(tmp_path)])
+    match = runner.invoke(app, ["match", _DOMAIN, *_cache_option(tmp_path)])
+
+    assert catalog.exit_code == 0, catalog.output
+    catalog_payload = json.loads(catalog.stdout)
+    assert _DOMAIN in catalog_payload["domains"]
+    assert _SOLVER in catalog_payload["solvers"]
+
+    assert match.exit_code == 0, match.output
+    match_payload = json.loads(match.stdout)
+    assert match_payload["domain"] == _DOMAIN
+    assert _SOLVER in match_payload["compatible_solvers"]
+
+    # The real cache file was created and written by the real CLI run.
+    assert (tmp_path / "errc-cache.sqlite3").exists()
+
+
+def test_solve_emits_receipt(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
         [
             "solve",
-            "Counter",
-            "--domain-arguments",
-            '{"limit":1}',
+            _DOMAIN,
+            "--solver",
+            _SOLVER,
             "--max-steps",
-            "2",
+            "100",
+            *_cache_option(tmp_path),
         ],
     )
 
-    assert result.exit_code == 0
-    assert '"receipt_sha256"' in result.stdout
-    assert '"SOLVED"' in result.stdout
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.stdout)
+    assert payload["standing"] == "SOLVED"
+    assert payload["solver"] == _SOLVER
+    assert len(payload["receipt_sha256"]) == 64
+    assert payload["steps"], "a solved rollout must record real transitions"
 
 
-def test_cli_rejects_non_object_json(
-    fabric: DecisionFabric,
-    monkeypatch: Any,
-) -> None:
-    monkeypatch.setattr("autofde_lab.fabric.cli.get_fabric", lambda _path=None: fabric)
-
+def test_cli_rejects_non_object_json(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
-        ["match", "Counter", "--domain-arguments", "[]"],
+        ["match", _DOMAIN, "--domain-arguments", "[]", *_cache_option(tmp_path)],
     )
 
     assert result.exit_code == 2

@@ -17,11 +17,26 @@ readers still recognise the superseded ones.
 
 from __future__ import annotations
 
-import os
-
 import pytest
 
 from autofde_lab import schema_ids
+
+
+def _point_home_at(monkeypatch, home):
+    """Move the *real* user home to `home` by setting the real env vars.
+
+    Chicago-style: the real `os.path.expanduser` runs, resolving '~' from the
+    environment it actually reads (`HOME` on POSIX, `USERPROFILE` on Windows).
+    Nothing in the stdlib is patched, so what the test exercises is the same
+    resolution path a real user gets.
+    """
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
+    # posixpath.expanduser prefers HOME; ntpath falls back to USERPROFILE, but
+    # will build HOMEDRIVE+HOMEPATH first if those are set -- clear them so the
+    # redirect is unambiguous on Windows too.
+    monkeypatch.delenv("HOMEDRIVE", raising=False)
+    monkeypatch.delenv("HOMEPATH", raising=False)
 
 
 class TestWritersEmitOnlyTheCurrentIdentifier:
@@ -139,8 +154,7 @@ class TestDataHomeResolutionPrefersExplicitThenLegacyThenNew:
         monkeypatch.delenv("SKDECIDE_DATA", raising=False)
         home = tmp_path / "home"
         (home / "skdecide_data").mkdir(parents=True)
-        monkeypatch.setenv("HOME", str(home))
-        monkeypatch.setattr(os.path, "expanduser", lambda p: p.replace("~", str(home)))
+        _point_home_at(monkeypatch, home)
         assert self._resolve() == str(home / "skdecide_data")
 
     def test_fresh_install_gets_the_new_directory(self, monkeypatch, tmp_path):
@@ -148,7 +162,7 @@ class TestDataHomeResolutionPrefersExplicitThenLegacyThenNew:
         monkeypatch.delenv("SKDECIDE_DATA", raising=False)
         home = tmp_path / "empty-home"
         home.mkdir()
-        monkeypatch.setattr(os.path, "expanduser", lambda p: p.replace("~", str(home)))
+        _point_home_at(monkeypatch, home)
         assert self._resolve() == "~/autofde_lab_data"
 
     def test_resolution_never_creates_or_moves_the_legacy_directory(
@@ -161,7 +175,7 @@ class TestDataHomeResolutionPrefersExplicitThenLegacyThenNew:
         legacy = home / "skdecide_data"
         legacy.mkdir(parents=True)
         (legacy / "marker.txt").write_text("real user data")
-        monkeypatch.setattr(os.path, "expanduser", lambda p: p.replace("~", str(home)))
+        _point_home_at(monkeypatch, home)
 
         self._resolve()
 
