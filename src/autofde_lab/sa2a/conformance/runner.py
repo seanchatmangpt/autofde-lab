@@ -304,8 +304,11 @@ class ChicagoCrownQualificationRunner:
         # Initialize OCEL 2.0 Execution Tracer for Chicago Crown Qualification
         tracer = OcelExecutionTracer(trace_id="chicago_crown_qualification_court")
 
-        # Runtime constants
-        release_tag = "v26.9.16"
+        # Runtime constants. release_tag names the git tag the CHI-ID fence
+        # certifies HEAD against; the fence itself never moves — cutting the tag
+        # is the operator's release act, not a runner concern.
+        release_tag = "v26.9.17"
+        release_urn = f"urn:release:{release_tag}"
         actor_id = "urn:agent:autonomic-controller"
         action_iri = "urn:action:quarantine_compromised_node"
         target_cap = "urn:cap:cluster:nodes"
@@ -313,7 +316,7 @@ class ChicagoCrownQualificationRunner:
         idempotency_token = f"idemp-chicago-{uuid.uuid4().hex[:12]}"
 
         # Register core objects in OCEL inventory
-        tracer.declare_object("urn:release:v26.9.16", "ReleaseArtifact", {"release": release_tag})
+        tracer.declare_object(release_urn, "ReleaseArtifact", {"release": release_tag})
         tracer.declare_object(actor_id, "AutonomousAgent", {"role": "autonomic_controller"})
         tracer.declare_object("urn:authority:broker", "AuthorityBroker", {"type": "ODRLBroker"})
         tracer.declare_object("urn:boundary:brce", "ConsequenceBoundary", {"type": "BRCEBoundary"})
@@ -346,7 +349,7 @@ class ChicagoCrownQualificationRunner:
         tracer.record_event(
             event_id="evt_gate_01_chi_id",
             activity="CHI-ID:ExactIdentityFenced",
-            related_objects=["urn:release:v26.9.16"],
+            related_objects=[release_urn],
             attributes={"exact_sha": exact_sha, "tag_sha": tag_sha, "tag_equality": tag_equality, "passed": g1_passed},
         )
         gate_records.append(
@@ -765,7 +768,7 @@ class ChicagoCrownQualificationRunner:
             tracer.record_event(
                 event_id="evt_gate_12_chi_known",
                 activity="CHI-KNOWN:ZeroRuntimeInferenceVerified",
-                related_objects=[actor_id, "urn:release:v26.9.16"],
+                related_objects=[actor_id, release_urn],
                 attributes={
                     "runtime_inference_tokens": runtime_inference_tokens,
                     "lab_tokens_spent": lab_tokens_spent,
@@ -799,7 +802,7 @@ class ChicagoCrownQualificationRunner:
             tracer.validate()
 
             intended_traces: dict[str, Sequence[str]] = {
-                "urn:release:v26.9.16": (
+                release_urn: (
                     "CHI-ID:ExactIdentityFenced",
                     "CHI-KNOWN:ZeroRuntimeInferenceVerified",
                 ),
