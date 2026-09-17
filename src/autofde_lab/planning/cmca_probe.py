@@ -119,9 +119,7 @@ def candidates_from_product_frontier(
         # Cost is a planning probe estimate, not runtime truth.  Nondeterministic
         # fan-out and known dead-end descendants increase verification effort.
         estimated_cost = (
-            1.0
-            + 0.25 * max(0, len(successors) - 1)
-            + 0.10 * len(dead_future)
+            1.0 + 0.25 * max(0, len(successors) - 1) + 0.10 * len(dead_future)
         )
 
         state_digest = hashlib.sha256(state_key.encode()).hexdigest()[:10]
