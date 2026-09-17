@@ -42,7 +42,6 @@ from autofde_lab.planning.cmca_probe import probe_product_frontier
 from autofde_lab.planning.fond_hddl_product import ProductState, build_fond_problem
 from autofde_lab.sa2a.unknown.compilation import MachineExperienceCompiler
 
-
 CROWN_SCHEMA = "autofde.cmca.dogfood-crown/v26.9.17"
 
 USE_CASE_TITLES: dict[str, str] = {
