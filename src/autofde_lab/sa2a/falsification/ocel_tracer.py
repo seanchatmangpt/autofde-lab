@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from autofde_lab.ocel.log import OcelLog
-from autofde_lab.ocel.model import OcelAttributeValue, OcelObject
+from autofde_lab.ocel.model import OcelAttribute, OcelAttributeValue, OcelObject
 
 
 class OcelExecutionTracer:
@@ -53,7 +53,7 @@ class OcelExecutionTracer:
                     val = OcelAttributeValue.integer(v)
                 else:
                     val = OcelAttributeValue.string(str(v))
-                attr_spec.append((k, val))
+                attr_spec.append(OcelAttribute(k, val))
 
         obj = OcelObject(
             id=object_id,
