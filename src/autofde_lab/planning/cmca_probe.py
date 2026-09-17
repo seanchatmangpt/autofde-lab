@@ -54,7 +54,7 @@ def _reachable_from(
     reachability: ProductReachability,
     seeds: frozenset[str],
 ) -> frozenset[str]:
-    """Return all product states reachable from ``seeds`` in the finite product graph."""
+    """Return all product states reachable from seeds in the finite product graph."""
     adjacency: dict[str, set[str]] = {}
     for (source, _action), targets in reachability.fond_problem.transitions.items():
         adjacency.setdefault(source, set()).update(targets)
@@ -92,7 +92,9 @@ def candidates_from_product_frontier(
             action,
             successors,
         )
-        for (source, action), successors in reachability.fond_problem.transitions.items()
+        for (source, action), successors in (
+            reachability.fond_problem.transitions.items()
+        )
         if source == state_key
     )
 
@@ -122,7 +124,8 @@ def candidates_from_product_frontier(
             + 0.10 * len(dead_future)
         )
 
-        branch_id = f"plan:{hashlib.sha256(state_key.encode()).hexdigest()[:10]}:{action}"
+        state_digest = hashlib.sha256(state_key.encode()).hexdigest()[:10]
+        branch_id = f"plan:{state_digest}:{action}"
         candidates.append(
             CandidateBranch(
                 branch_id=branch_id,

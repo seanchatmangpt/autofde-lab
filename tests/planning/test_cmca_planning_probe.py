@@ -23,8 +23,18 @@ def _two_method_domain() -> HDDLDomain:
         },
         methods={
             "root": (
-                Method(name="choose_left", task="root", preconditions=frozenset(), subtasks=("left",)),
-                Method(name="choose_right", task="root", preconditions=frozenset(), subtasks=("right",)),
+                Method(
+                    name="choose_left",
+                    task="root",
+                    preconditions=frozenset(),
+                    subtasks=("left",),
+                ),
+                Method(
+                    name="choose_right",
+                    task="root",
+                    preconditions=frozenset(),
+                    subtasks=("right",),
+                ),
             )
         },
         actions={
@@ -42,7 +52,8 @@ def _two_method_domain() -> HDDLDomain:
     )
 
 
-def test_cmca_planning_probe_preserves_lawful_frontier_when_budget_projection_prunes() -> None:
+def test_cmca_planning_probe_preserves_lawful_frontier_when_budget_projection_prunes(
+) -> None:
     domain = _two_method_domain()
     initial = ProductState(world=frozenset(), tau=("root",))
     reachability = build_fond_problem(

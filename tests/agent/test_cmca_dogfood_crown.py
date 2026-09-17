@@ -20,10 +20,13 @@ def test_demo_contracts_are_the_eight_repo_native_cmca_use_cases() -> None:
         "UC-7",
         "UC-8",
     ]
-    assert {contract["title"] for contract in contracts} == set(USE_CASE_TITLES.values())
+    assert {contract["title"] for contract in contracts} == set(
+        USE_CASE_TITLES.values()
+    )
 
 
-def test_two_episode_dogfood_crown_compiles_experience_and_replays_without_frontier() -> None:
+def test_two_episode_dogfood_crown_compiles_experience_and_replays_without_frontier(
+) -> None:
     crown = run_cmca_dogfood_crown()
 
     assert crown.is_alive is True

@@ -206,7 +206,9 @@ def demo_contracts() -> tuple[dict[str, Any], ...]:
         {
             "case_id": "UC-1",
             "title": USE_CASE_TITLES["UC-1"],
-            "budget": _base_budget(ticks=5000, memory=32768, depth=5, risk=0.2, lanes=4),
+            "budget": _base_budget(
+                ticks=5000, memory=32768, depth=5, risk=0.2, lanes=4
+            ),
         },
         {
             "case_id": "UC-2",
@@ -257,7 +259,9 @@ def demo_contracts() -> tuple[dict[str, Any], ...]:
         {
             "case_id": "UC-8",
             "title": USE_CASE_TITLES["UC-8"],
-            "budget": _base_budget(ticks=3000, memory=16384, depth=4, risk=0.2, lanes=3),
+            "budget": _base_budget(
+                ticks=3000, memory=16384, depth=4, risk=0.2, lanes=3
+            ),
             "candidates": ocel_candidates,
         },
     )
@@ -351,7 +355,9 @@ def _execute_uc1(contract: dict[str, Any]) -> dict[str, Any]:
 def _execute_uc2(contract: dict[str, Any]) -> dict[str, Any]:
     plan = _allocate_contract(contract, plan_id="dogfood_uc2_swarm")
     budget = _budget(contract["budget"])
-    admitted = [a for a in plan.allocations if a.standing == AllocationStanding.ADMITTED]
+    admitted = [
+        a for a in plan.allocations if a.standing == AllocationStanding.ADMITTED
+    ]
     verified = (
         len(plan.allocations) == 8
         and sum(a.allocated_ticks for a in plan.allocations) <= budget.total_ticks
@@ -443,7 +449,9 @@ def _execute_uc6(contract: dict[str, Any]) -> dict[str, Any]:
     budget = _budget(contract["budget"])
     ticks = sum(a.allocated_ticks for a in plan.allocations)
     memory = sum(a.allocated_memory_bytes for a in plan.allocations)
-    admitted = [a for a in plan.allocations if a.standing == AllocationStanding.ADMITTED]
+    admitted = [
+        a for a in plan.allocations if a.standing == AllocationStanding.ADMITTED
+    ]
     verified = (
         ticks <= budget.total_ticks
         and memory <= budget.memory_bytes
@@ -489,8 +497,12 @@ def _execute_uc8(contract: dict[str, Any]) -> dict[str, Any]:
     )
     links = (
         EventObjectLink(event_id="e_alloc", object_id="obj_plan", qualifier="governs"),
-        EventObjectLink(event_id="e_step_1", object_id="obj_branch", qualifier="executes"),
-        EventObjectLink(event_id="e_receipt", object_id="obj_plan", qualifier="certifies"),
+        EventObjectLink(
+            event_id="e_step_1", object_id="obj_branch", qualifier="executes"
+        ),
+        EventObjectLink(
+            event_id="e_receipt", object_id="obj_plan", qualifier="certifies"
+        ),
     )
     log = OcelLog(events=events, objects=objects, event_object_links=links)
     report = check_object_centric_conformance(
@@ -560,8 +572,12 @@ class DogfoodCrownResult:
         return {
             "schema": CROWN_SCHEMA,
             "standing": self.standing,
-            "frontier_resolution_calls_episode_1": self.frontier_resolution_calls_episode_1,
-            "frontier_resolution_calls_episode_2": self.frontier_resolution_calls_episode_2,
+            "frontier_resolution_calls_episode_1": (
+                self.frontier_resolution_calls_episode_1
+            ),
+            "frontier_resolution_calls_episode_2": (
+                self.frontier_resolution_calls_episode_2
+            ),
             "compiled_experience_rules": self.compiled_experience_rules,
             "replay_inference_avoidance_rate": self.replay_inference_avoidance_rate,
             "crown_receipt_hash": self.crown_receipt_hash,
@@ -660,9 +676,13 @@ def run_cmca_dogfood_crown() -> DogfoodCrownResult:
                 f"KNOWN replay for {contract['case_id']} attempted frontier resolution"
             )
 
-        encoded_contract = compiler.resolve(key, fallback_llm_inference=_forbidden_fallback)
+        encoded_contract = compiler.resolve(
+            key, fallback_llm_inference=_forbidden_fallback
+        )
         if not isinstance(encoded_contract, str):
-            raise AssertionError(f"compiled replay contract missing for {contract['case_id']}")
+            raise AssertionError(
+                f"compiled replay contract missing for {contract['case_id']}"
+            )
         replay_contract = json.loads(encoded_contract)
         replay_evidence = _EXECUTORS[str(contract["case_id"])](replay_contract)
         replay = _episode_receipt(
