@@ -1,0 +1,430 @@
+;; sa2a-v26.9.17-domain.hddl
+;;
+;; ============================================================================
+;; SCOPE BOUNDARY -- read before anything else, per this repo's
+;; .claude/rules/ecosystem-boundary.md and CLAUDE.md's `A = mu(O*)` law.
+;;
+;; The repo objects named below (ash-a2a, ash-r2rml, bcinr, ggen,
+;; ggen-igniter, xaas, affidavit, beam4pm, unrdf, wasm4pm) are OBJECTS INSIDE
+;; A FORMAL PLANNING MODEL, nothing more. This file, its paired problem file,
+;; and the hand-grounded FONDProblem/CandidatePolicy in
+;; src/autofde_lab/planning/sa2a_v26_9_17_policy.py compute and check a
+;; CANDIDATE POLICY over an ABSTRACT MODEL. Every predicate below --
+;; "verified", "admitted", "closed", "certified", "authority", "receipt" --
+;; is a fact about that candidate policy, never an observation, admission,
+;; actuation, or standing claim about any real sibling repository. This repo
+;; computes candidate plans; it does not actuate (CLAUDE.md, this repo).
+;; ============================================================================
+;;
+;; ============================================================================
+;; STANDING: UNSUPPORTED (per .claude/rules/standing-law.md -- stated
+;; plainly, not softened).
+;;
+;; This repo's real HDDL engine --
+;; `autofde_lab.hub.domain.hddl.hddl.HDDLDomain.from_files`, which calls
+;; `unified_planning.io.PDDLReader().parse_problem(...)` (confirmed by
+;; reading src/autofde_lab/hub/domain/hddl/hddl.py this session) -- does NOT
+;; support the `:non-deterministic` requirement or `oneof` effects used
+;; below. Two real, independent parse failures were reproduced this session
+;; by isolating each construct in a minimal two-predicate fixture and calling
+;; `HDDLDomain.from_files` on it directly:
+;;
+;;   `:non-deterministic` present in `:requirements`:
+;;     ParseException: Expected ')', found '('  (at char 35), (line:2, col:3)
+;;
+;;   `(oneof ...)` present in an `:effect` (with `:non-deterministic` removed
+;;   from `:requirements` so the failure isolates to the effect syntax
+;;   itself, not the requirements token):
+;;     SyntaxError: Not able to handle: (oneof (p ?o) (q ?o)) found at
+;;     line: 15, col 13 to line: 15, col 34
+;;
+;; So `HDDLDomain.from_files("sa2a-v26.9.17-domain.hddl",
+;; "sa2a-v26.9.17-problem.hddl")` in this repo raises before ever returning a
+;; domain object. Confirmed directly against these exact, real, on-disk
+;; fixture files this session (not just the isolated minimal repro above):
+;;
+;;   HDDLDomain.from_files("tests/domains/htn_fixtures/sa2a-v26.9.17-domain.hddl",
+;;                          "tests/domains/htn_fixtures/sa2a-v26.9.17-problem.hddl")
+;;   -> ParseException: Expected ')', found '.'  (at char 4903), (line:83, col:25)
+;;
+;; That failure lands on line 83, `(define (domain sa2a-v26.9.17)` -- this
+;; dialect's PDDL name-token grammar does not accept a bare `.` inside a
+;; domain name at all, a strictly earlier and more fundamental rejection than
+;; `:non-deterministic`/`oneof` ever get evaluated. This is itself real,
+;; additional UNSUPPORTED evidence, reported honestly rather than renaming
+;; the domain to dodge it and thereby understating how unsupported this
+;; specification is by this repo's engine.
+;;
+;; This pair of files is a HAND-ENCODED, non-literal structural rendering of
+;; the FOND/HDDL domain and problem the user supplied -- it is NOT an
+;; executable artifact this repo's HDDLDomain can load today, and it is NOT
+;; a byte-for-byte transcription of the user's own text. The user's actual
+;; verbatim pasted specification (recovered from this session's own
+;; transcript after an earlier context compaction) is checked into this
+;; same directory at `sa2a-v26.9.17-SOURCE.md` -- read that file for the
+;; literal source text; read this file only for a hand-typed illustrative
+;; encoding of it in real HDDL/PDDL syntax. Corrected provenance note,
+;; superseding an earlier, false claim that no raw source text was
+;; available this session (it was available the whole time -- the earlier
+;; grounding pass's own subagent prompts simply never asked for it; see
+;; sa2a_v26_9_17_policy.py's module docstring for the full account).
+;;
+;; The real, checked artifact for any FOND-validity claim about this domain
+;; is `src/autofde_lab/planning/sa2a_v26_9_17_policy.py`'s
+;; `FONDProblem`/`CandidatePolicy` pair, grounded action-by-action against
+;; `sa2a-v26.9.17-SOURCE.md` (not against this file), and verified against
+;; the real `check_candidate_policy()` in fond_policy.py -- see that module
+;; and tests/planning/test_sa2a_v26_9_17_policy.py for the checked claim
+;; this session actually produced evidence for.
+;;
+;; Known, disclosed divergence from the real source: this file names the
+;; domain `sa2a-v26.9.17` (a dotted token); the real source names it
+;; `sa2a-v26-9-17` (hyphenated -- see SOURCE.md line 6). That divergence is
+;; this fixture's own naming choice, not something present in the real
+;; source, and it is the proximate cause of the `ParseException: Expected
+;; ')', found '.'` failure recorded below -- a real, but self-inflicted,
+;; earlier rejection than `:non-deterministic`/`oneof` ever get evaluated.
+;; The underlying UNSUPPORTED finding (this repo's HDDL engine cannot load
+;; `:non-deterministic`/`oneof`) does not depend on this naming choice --
+;; it was independently reproduced above in a minimal two-predicate fixture
+;; using neither name.
+;; ============================================================================
+;;
+;; Provenance note: this file encodes, as real HDDL/PDDL syntax, the 5-phase
+;; top task (orient-release -> close-critical-repo-boundaries ->
+;; run-discovery-episode -> run-known-replay-episode -> certify-release),
+;; the 10 named non-deterministic actions (verify-boundary,
+;; observe-classification, admit-candidate, bound-allocation, manufacture,
+;; admit-authority, execute-command, close-receipt, prove-semantic-equivalence,
+;; admit-machine-experience), and the repair-on-build-broken /
+;; reroute-on-blocked / typed-stop-on-unsupported / explore-only-in-episode-1
+;; / replay-only-in-episode-2 policy shape -- but note, per
+;; sa2a_v26_9_17_policy.py's module docstring, that only `verify-boundary`
+;; and `admit-candidate` actually have a 3-or-4-way oneof in the real source;
+;; every other named action above has its own real 2-outcome oneof, and only
+;; `verify-boundary` has a defined repair/reroute recovery task. This file's
+;; generic `step` abstraction (below) does not distinguish those arities --
+;; it is illustrative HDDL syntax, not a source of arity truth. Arity truth
+;; lives in `sa2a-v26.9.17-SOURCE.md` and in `sa2a_v26_9_17_policy.py`.
+;;
+;; A generic `step` abstraction (rather than 10 separately duplicated
+;; nondeterministic actions) is used for the discovery/replay/boundary steps:
+;; each named step in the problem file is a distinct object of type
+;; `explore-step`, `replay-step`, or `boundary-step`; one generic
+;; `attempt-*-step` action per subtype carries the real `oneof` effect; one
+;; generic `RESOLVE-STEP-RESULT` task carries the real recursive
+;; repair/reroute/typed-stop loop. This is a structural simplification of
+;; this non-executable specification only -- the hand-grounded Python module
+;; grounds each of the 10 named actions as its own distinct real transition,
+;; not through this shared abstraction.
+
+(define (domain sa2a-v26.9.17)
+  (:requirements :hierarchy :typing :negative-preconditions :non-deterministic)
+
+  (:types
+    repo - object
+    capability - object
+    boundary-step - object
+    explore-step - object
+    replay-step - object
+  )
+
+  (:predicates
+    (release-oriented)
+    (boundary-pending ?r - repo ?c - capability)
+    (boundary-closed ?r - repo ?c - capability)
+    (all-critical-boundaries-closed)
+    (episode-1-active)
+    (episode-2-active)
+    (discovery-episode-complete)
+    (replay-episode-complete)
+    (release-certified)
+    (step-pending ?s - object)
+    (step-closed ?s - object)
+    (step-build-broken ?s - object)
+    (step-blocked ?s - object)
+    (step-unsupported ?s - object)
+    (step-typed-stopped ?s - object)
+  )
+
+  ;; ---- top task: the 5-phase orient -> close -> discover -> replay -> certify pipeline ----
+  (:task ORIENT-AND-CERTIFY-RELEASE
+    :parameters ()
+  )
+
+  (:method m-top-pipeline
+    :parameters ()
+    :task (ORIENT-AND-CERTIFY-RELEASE)
+    :precondition ()
+    :ordered-subtasks (and
+      (p1 (ORIENT-RELEASE))
+      (p2 (CLOSE-CRITICAL-REPO-BOUNDARIES))
+      (p3 (RUN-DISCOVERY-EPISODE))
+      (p4 (RUN-KNOWN-REPLAY-EPISODE))
+      (p5 (CERTIFY-RELEASE))
+    )
+  )
+
+  ;; ---- phase 1: orient-release (deterministic) ----
+  (:task ORIENT-RELEASE :parameters ())
+  (:method m-orient
+    :parameters ()
+    :task (ORIENT-RELEASE)
+    :precondition ()
+    :ordered-subtasks (and (t1 (orient-release)))
+  )
+  (:action orient-release
+    :parameters ()
+    :precondition ()
+    :effect (release-oriented)
+  )
+
+  ;; ---- phase 2: close-critical-repo-boundaries ----
+  ;; This dialect's totally-ordered HTN has no universally-quantified
+  ;; precondition over "however many repo/capability pairs the problem
+  ;; names" -- the problem file enumerates one CLOSE-CRITICAL-REPO-BOUNDARY
+  ;; task per grounded (repo, capability) pair explicitly, then a final
+  ;; confirm-all-boundaries-closed action. See the problem file's header for
+  ;; which pairs are grounded and why (2 of the real model's 9 named repos,
+  ;; per this session's explicit representative-grounding instruction).
+  (:task CLOSE-CRITICAL-REPO-BOUNDARIES :parameters ())
+  (:method m-close-boundaries-representative
+    :parameters ()
+    :task (CLOSE-CRITICAL-REPO-BOUNDARIES)
+    :precondition (release-oriented)
+    :ordered-subtasks (and
+      (b1 (CLOSE-ONE-REPO-BOUNDARY ash-a2a cap-orchestration verify-boundary-ash-a2a))
+      (b2 (CLOSE-ONE-REPO-BOUNDARY ggen cap-manufacture verify-boundary-ggen))
+      (b3 (confirm-all-boundaries-closed))
+    )
+  )
+
+  (:task CLOSE-ONE-REPO-BOUNDARY
+    :parameters (?r - repo ?c - capability ?s - boundary-step)
+  )
+  (:method m-close-one-boundary
+    :parameters (?r - repo ?c - capability ?s - boundary-step)
+    :task (CLOSE-ONE-REPO-BOUNDARY ?r ?c ?s)
+    :precondition (boundary-pending ?r ?c)
+    :ordered-subtasks (and
+      (t1 (RUN-BOUNDARY-STEP ?s))
+      (t2 (close-boundary-from-step ?r ?c ?s))
+    )
+  )
+
+  (:action confirm-all-boundaries-closed
+    :parameters ()
+    :precondition (and
+      (boundary-closed ash-a2a cap-orchestration)
+      (boundary-closed ggen cap-manufacture)
+    )
+    :effect (all-critical-boundaries-closed)
+  )
+
+  (:action close-boundary-from-step
+    :parameters (?r - repo ?c - capability ?s - boundary-step)
+    :precondition (step-closed ?s)
+    :effect (boundary-closed ?r ?c)
+  )
+
+  ;; ---- generic non-deterministic step machinery, reused across phases 2-4 ----
+  ;; This is the recursive repair/reroute/typed-stop loop the user's ASCII
+  ;; policy graph names: repair-on-build-broken, reroute-on-blocked,
+  ;; typed-stop-on-unsupported. The repair and reroute methods each
+  ;; re-invoke the SAME non-deterministic step action after a deterministic
+  ;; diagnose/repair or reroute step, then call RESOLVE-*-STEP-RESULT again
+  ;; on the new outcome -- a real cycle, which is exactly why the hand-ground
+  ;; check in sa2a_v26_9_17_policy.py must use PolicySemantics.STRONG_CYCLIC,
+  ;; not PolicySemantics.STRONG.
+
+  (:task RUN-BOUNDARY-STEP :parameters (?s - boundary-step))
+  (:method m-run-boundary-step
+    :parameters (?s - boundary-step)
+    :task (RUN-BOUNDARY-STEP ?s)
+    :precondition (step-pending ?s)
+    :ordered-subtasks (and (t1 (attempt-boundary-step ?s)) (t2 (RESOLVE-BOUNDARY-STEP-RESULT ?s)))
+  )
+  (:action attempt-boundary-step
+    :parameters (?s - boundary-step)
+    :precondition ()
+    :effect (oneof (step-closed ?s) (step-build-broken ?s) (step-blocked ?s) (step-unsupported ?s))
+  )
+  (:task RESOLVE-BOUNDARY-STEP-RESULT :parameters (?s - boundary-step))
+  (:method m-boundary-resolved
+    :parameters (?s - boundary-step) :task (RESOLVE-BOUNDARY-STEP-RESULT ?s)
+    :precondition (step-closed ?s) :ordered-subtasks (and)
+  )
+  (:method m-boundary-repair-on-build-broken
+    :parameters (?s - boundary-step) :task (RESOLVE-BOUNDARY-STEP-RESULT ?s)
+    :precondition (step-build-broken ?s)
+    :ordered-subtasks (and
+      (t1 (diagnose-boundary-step ?s)) (t2 (repair-boundary-step ?s))
+      (t3 (attempt-boundary-step ?s)) (t4 (RESOLVE-BOUNDARY-STEP-RESULT ?s))
+    )
+  )
+  (:method m-boundary-reroute-on-blocked
+    :parameters (?s - boundary-step) :task (RESOLVE-BOUNDARY-STEP-RESULT ?s)
+    :precondition (step-blocked ?s)
+    :ordered-subtasks (and
+      (t1 (reroute-boundary-step ?s)) (t2 (attempt-boundary-step ?s)) (t3 (RESOLVE-BOUNDARY-STEP-RESULT ?s))
+    )
+  )
+  (:method m-boundary-typed-stop-on-unsupported
+    :parameters (?s - boundary-step) :task (RESOLVE-BOUNDARY-STEP-RESULT ?s)
+    :precondition (step-unsupported ?s)
+    :ordered-subtasks (and (t1 (typed-stop-boundary-step ?s)))
+  )
+  (:action diagnose-boundary-step :parameters (?s - boundary-step) :precondition () :effect ())
+  (:action repair-boundary-step :parameters (?s - boundary-step) :precondition () :effect (not (step-build-broken ?s)))
+  (:action reroute-boundary-step :parameters (?s - boundary-step) :precondition () :effect (not (step-blocked ?s)))
+  (:action typed-stop-boundary-step
+    :parameters (?s - boundary-step)
+    :precondition (step-unsupported ?s)
+    :effect (step-typed-stopped ?s)
+    ;; real: terminal, disclosed refusal -- no further automated transition
+    ;; is defined from a typed-stopped boundary. Per this repo's
+    ;; absence-is-not-evidence.md, an honest typed stop is a result, not a
+    ;; gap papered over as success.
+  )
+
+  ;; ---- phase 3: run-discovery-episode (episode-1, explore-only) ----
+  (:task RUN-DISCOVERY-EPISODE :parameters ())
+  (:method m-run-discovery
+    :parameters ()
+    :task (RUN-DISCOVERY-EPISODE)
+    :precondition (all-critical-boundaries-closed)
+    :ordered-subtasks (and
+      (d0 (begin-episode-1))
+      (d1 (RUN-EXPLORE-STEP observe-classification))
+      (d2 (RUN-EXPLORE-STEP admit-candidate))
+      (d3 (RUN-EXPLORE-STEP bound-allocation))
+      (d4 (RUN-EXPLORE-STEP manufacture))
+      (d5 (RUN-EXPLORE-STEP admit-authority))
+      (d6 (RUN-EXPLORE-STEP execute-command))
+      (d7 (RUN-EXPLORE-STEP close-receipt))
+      (d8 (end-episode-1))
+    )
+  )
+  (:action begin-episode-1 :parameters () :precondition (all-critical-boundaries-closed) :effect (episode-1-active))
+  (:action end-episode-1 :parameters () :precondition (episode-1-active)
+    :effect (and (not (episode-1-active)) (discovery-episode-complete)))
+
+  (:task RUN-EXPLORE-STEP :parameters (?s - explore-step))
+  (:method m-run-explore-step
+    :parameters (?s - explore-step) :task (RUN-EXPLORE-STEP ?s)
+    :precondition (and (step-pending ?s) (episode-1-active))
+    :ordered-subtasks (and (t1 (attempt-explore-step ?s)) (t2 (RESOLVE-EXPLORE-STEP-RESULT ?s)))
+  )
+  ;; explore-only-in-episode-1: the real precondition tying this action to
+  ;; episode-1-active, not merely task-graph ordering.
+  (:action attempt-explore-step
+    :parameters (?s - explore-step)
+    :precondition (episode-1-active)
+    :effect (oneof (step-closed ?s) (step-build-broken ?s) (step-blocked ?s) (step-unsupported ?s))
+  )
+  (:task RESOLVE-EXPLORE-STEP-RESULT :parameters (?s - explore-step))
+  (:method m-explore-resolved
+    :parameters (?s - explore-step) :task (RESOLVE-EXPLORE-STEP-RESULT ?s)
+    :precondition (step-closed ?s) :ordered-subtasks (and)
+  )
+  (:method m-explore-repair-on-build-broken
+    :parameters (?s - explore-step) :task (RESOLVE-EXPLORE-STEP-RESULT ?s)
+    :precondition (step-build-broken ?s)
+    :ordered-subtasks (and
+      (t1 (diagnose-explore-step ?s)) (t2 (repair-explore-step ?s))
+      (t3 (attempt-explore-step ?s)) (t4 (RESOLVE-EXPLORE-STEP-RESULT ?s))
+    )
+  )
+  (:method m-explore-reroute-on-blocked
+    :parameters (?s - explore-step) :task (RESOLVE-EXPLORE-STEP-RESULT ?s)
+    :precondition (step-blocked ?s)
+    :ordered-subtasks (and
+      (t1 (reroute-explore-step ?s)) (t2 (attempt-explore-step ?s)) (t3 (RESOLVE-EXPLORE-STEP-RESULT ?s))
+    )
+  )
+  (:method m-explore-typed-stop-on-unsupported
+    :parameters (?s - explore-step) :task (RESOLVE-EXPLORE-STEP-RESULT ?s)
+    :precondition (step-unsupported ?s)
+    :ordered-subtasks (and (t1 (typed-stop-explore-step ?s)))
+  )
+  (:action diagnose-explore-step :parameters (?s - explore-step) :precondition () :effect ())
+  (:action repair-explore-step :parameters (?s - explore-step) :precondition () :effect (not (step-build-broken ?s)))
+  (:action reroute-explore-step :parameters (?s - explore-step) :precondition () :effect (not (step-blocked ?s)))
+  (:action typed-stop-explore-step
+    :parameters (?s - explore-step) :precondition (step-unsupported ?s) :effect (step-typed-stopped ?s))
+
+  ;; ---- phase 4: run-known-replay-episode (episode-2, replay-only) ----
+  (:task RUN-KNOWN-REPLAY-EPISODE :parameters ())
+  (:method m-run-replay
+    :parameters ()
+    :task (RUN-KNOWN-REPLAY-EPISODE)
+    :precondition (discovery-episode-complete)
+    :ordered-subtasks (and
+      (r0 (begin-episode-2))
+      (r1 (RUN-REPLAY-STEP prove-semantic-equivalence))
+      (r2 (RUN-REPLAY-STEP admit-machine-experience))
+      (r3 (end-episode-2))
+    )
+  )
+  (:action begin-episode-2 :parameters () :precondition (discovery-episode-complete) :effect (episode-2-active))
+  (:action end-episode-2 :parameters () :precondition (episode-2-active)
+    :effect (and (not (episode-2-active)) (replay-episode-complete)))
+
+  (:task RUN-REPLAY-STEP :parameters (?s - replay-step))
+  (:method m-run-replay-step
+    :parameters (?s - replay-step) :task (RUN-REPLAY-STEP ?s)
+    :precondition (and (step-pending ?s) (episode-2-active))
+    :ordered-subtasks (and (t1 (attempt-replay-step ?s)) (t2 (RESOLVE-REPLAY-STEP-RESULT ?s)))
+  )
+  ;; replay-only-in-episode-2: mirrors explore-only-in-episode-1's real
+  ;; episode-2-active precondition.
+  (:action attempt-replay-step
+    :parameters (?s - replay-step)
+    :precondition (episode-2-active)
+    :effect (oneof (step-closed ?s) (step-build-broken ?s) (step-blocked ?s) (step-unsupported ?s))
+  )
+  (:task RESOLVE-REPLAY-STEP-RESULT :parameters (?s - replay-step))
+  (:method m-replay-resolved
+    :parameters (?s - replay-step) :task (RESOLVE-REPLAY-STEP-RESULT ?s)
+    :precondition (step-closed ?s) :ordered-subtasks (and)
+  )
+  (:method m-replay-repair-on-build-broken
+    :parameters (?s - replay-step) :task (RESOLVE-REPLAY-STEP-RESULT ?s)
+    :precondition (step-build-broken ?s)
+    :ordered-subtasks (and
+      (t1 (diagnose-replay-step ?s)) (t2 (repair-replay-step ?s))
+      (t3 (attempt-replay-step ?s)) (t4 (RESOLVE-REPLAY-STEP-RESULT ?s))
+    )
+  )
+  (:method m-replay-reroute-on-blocked
+    :parameters (?s - replay-step) :task (RESOLVE-REPLAY-STEP-RESULT ?s)
+    :precondition (step-blocked ?s)
+    :ordered-subtasks (and
+      (t1 (reroute-replay-step ?s)) (t2 (attempt-replay-step ?s)) (t3 (RESOLVE-REPLAY-STEP-RESULT ?s))
+    )
+  )
+  (:method m-replay-typed-stop-on-unsupported
+    :parameters (?s - replay-step) :task (RESOLVE-REPLAY-STEP-RESULT ?s)
+    :precondition (step-unsupported ?s)
+    :ordered-subtasks (and (t1 (typed-stop-replay-step ?s)))
+  )
+  (:action diagnose-replay-step :parameters (?s - replay-step) :precondition () :effect ())
+  (:action repair-replay-step :parameters (?s - replay-step) :precondition () :effect (not (step-build-broken ?s)))
+  (:action reroute-replay-step :parameters (?s - replay-step) :precondition () :effect (not (step-blocked ?s)))
+  (:action typed-stop-replay-step
+    :parameters (?s - replay-step) :precondition (step-unsupported ?s) :effect (step-typed-stopped ?s))
+
+  ;; ---- phase 5: certify-release ----
+  (:task CERTIFY-RELEASE :parameters ())
+  (:method m-certify
+    :parameters ()
+    :task (CERTIFY-RELEASE)
+    :precondition (replay-episode-complete)
+    :ordered-subtasks (and (t1 (certify-release)))
+  )
+  (:action certify-release
+    :parameters ()
+    :precondition (replay-episode-complete)
+    :effect (release-certified)
+  )
+)

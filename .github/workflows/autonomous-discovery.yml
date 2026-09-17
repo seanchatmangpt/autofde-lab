@@ -21,12 +21,12 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout autofde-lab exact head
-        uses: actions/checkout@v4
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.13"
 
@@ -158,7 +158,7 @@ jobs:
 
       - name: Upload receipt
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: autonomous-discovery-receipt
           path: reports/autonomous-discovery/receipt.json

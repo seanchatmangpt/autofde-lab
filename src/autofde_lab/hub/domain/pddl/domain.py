@@ -537,11 +537,36 @@ class TPDDLDomain(DeterministicPlanningDomain, UnrestrictedActions):
         return ImplicitSpace(lambda s: self._sim.is_goal(s.to_cpp()))
 
     def _is_terminal(self, state: D.T_state) -> D.T_agent[D.T_predicate]:
-        if self._sim.is_goal(state.to_cpp()):
-            return True
-        actions = self._get_applicable_actions_from(state)
-        has_non_noop = any(a.kind != TPDDLAction.NOOP for a in actions.get_elements())
-        return not has_non_noop
+        """A PDDL+ state is terminal only at the goal.
+
+        Unlike ``PDDLDomain`` (a non-temporal domain, where "zero applicable
+        actions" is a genuine deadlock), ``TPDDLDomain`` always has at least
+        ``NOOP`` applicable -- ``_get_applicable_actions_from`` appends it
+        unconditionally -- so "no non-noop action is applicable right now"
+        is *not* a deadlock. It is the ordinary, expected state of a domain
+        with ``(:process ...)``/``(:event ...)`` constructs: an in-progress
+        process (e.g. water heating toward a temperature threshold) needs
+        further ``NOOP``/time-stepping before a later action (e.g.
+        ``makecoffee``) unlocks.
+
+        Treating that wait as terminal was a real, verified bug (found and
+        fixed this session): every registered search solver run against the
+        real Coffee PDDL+ domain (``cpp/tests/data/pddl+/Coffee/``) --
+        AOstar, Astar, EHC, LRTDP, MCTS, and 12 more -- reported "rollout
+        ended off-goal after 1 step(s)", because the old
+        ``not has_non_noop`` check fired immediately after the one instant
+        action (``heatwater``) available at ``t=0``, long before the
+        ``heating`` process could raise the temperature into
+        ``makecoffee``'s ``[60, 80]`` range (confirmed to need ~50-100
+        ``NOOP`` steps at ``dt=1.0``, matching
+        ``tests/domains/python/test_tpddl_domain.py``'s own
+        "Heat to boil (~50 steps)" comment). Verified directly: constructing
+        the real domain, taking ``heatwater``, the old code returned
+        ``_is_terminal() == True`` with ``is_goal() == False`` and only
+        ``(noop)`` applicable; a NOOP-driven rollout continuing past that
+        point reaches the real goal at ``t=101.0``.
+        """
+        return self._sim.is_goal(state.to_cpp())
 
     def _get_action_space_(self) -> D.T_agent[Space[D.T_event]]:
         return ImplicitSpace(lambda a: isinstance(a, TPDDLAction))

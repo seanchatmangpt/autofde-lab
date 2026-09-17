@@ -44,6 +44,9 @@ jobs:
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          # Reuse hook environments across hook-config revisions instead of
+          # rebuilding every pre-commit env from scratch on each bump.
+          restore-keys: pre-commit-${{ runner.os }}-
       - run: python -m pip install "pre-commit==4.6.1"
       - run: pre-commit run --show-diff-on-failure --color=always --all-files
 

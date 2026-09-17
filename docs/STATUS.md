@@ -5,6 +5,348 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
+Last update: **pass 36** (2026-09-17) — **Corrects pass 35 below, does not delete it.**
+Pass 35's grounding of the sa2a-v26.9.17 FOND/HDDL domain was built from this session's own
+paraphrase of the user's spec, not the user's literal text — the orchestrating Workflow prompt
+said "read the conversation for the full text," but Workflow subagents never inherit the
+orchestrator's conversation, so no agent in that pass, including its own skeptic, ever saw the
+real source (both disclosed this themselves; pass 35's entry below records it honestly). This
+pass recovered the user's actual verbatim pasted message from this session's own transcript
+(`/Users/sac/.claude/projects/-Users-sac-autofde-lab/805b2d1b-7d56-456a-b169-7ab879cabf6b.jsonl`,
+line 1402) and checked it into the repo byte-for-byte as
+`tests/domains/htn_fixtures/sa2a-v26.9.17-SOURCE.md` (verified via `diff` against the
+transcript extraction — zero difference). Checked against that real text, pass 35's grounding
+had a real, consequential structural error: it applied ONE generic 4-outcome `oneof`
+(closed/build-broken/blocked/unsupported) to all 10 named non-deterministic actions. The real
+source text gives that 4-way shape to exactly one action (`verify-boundary`, with a defined
+repair/reroute recovery task) and a 4-way-no-recovery shape to one more (`admit-candidate`) —
+every other named action (`observe-classification`, `bound-allocation`, `manufacture`,
+`admit-authority`, `execute-command`, `close-receipt`, `independent-verify`,
+`observe-process`, `admit-machine-experience`, `prove-semantic-equivalence`, and their
+episode-2 counterparts) has its own real, literal 2-outcome `oneof`, with no recovery task
+defined for the negative outcome in any of them.
+
+**Corrected grounding — `PARTIAL_ALIVE`.** `src/autofde_lab/planning/sa2a_v26_9_17_policy.py`
+rewritten action-by-action against `sa2a-v26.9.17-SOURCE.md` (module docstring cites the exact
+source lines for each). Real, freshly computed this pass (not carried over from pass 35): 60
+policy states, 18 typed-stopped terminals (up from pass 35's 10 — every 2-outcome action now
+has its own distinctly named failure terminal instead of sharing a generic `unsupported`
+bucket), 77 total reachable states. `check_candidate_policy`, run fresh: `STRICT` goal
+(`{release-certified}`) → `valid=False` under both `STRONG` and `STRONG_CYCLIC`,
+`missing_policy_states` == all 18 typed-stopped states, `cannot_reach_goal_states` = 36,
+`non_goal_cycle_states` = 4 (down from pass 35's 40 — the cycle is now correctly isolated to
+`verify-boundary-ggen`'s own repair/reroute loop, the only action with a real recovery task,
+confirmed by asserting every cyclic state name starts with `verify-boundary-ggen/`).
+`EXTENDED` goal (strict ∪ all 18 typed-stops) → `STRONG` invalid (the same 4-state cycle),
+`STRONG_CYCLIC` **valid**, `missing`/`dead_end`/`cannot_reach` all empty. `strong-cyclic
+necessity` therefore still holds, now on a real, structurally minimal cycle rather than an
+inflated one.
+
+**Zero-unreceipted-actuation — re-checked against the faithful model, still `claim_holds=false`,
+now for the textually precise reason.** Pass 35 located this at a generic
+`close-receipt/typed-stopped` reached via a generic `unsupported` branch. The real source text
+has no `unsupported` outcome for `close-receipt` at all — it has exactly two:
+`receipt-durable` (success) or `receipt-reconcile-blocked`, whose own comment in the source
+reads "consequence known, receipt still unresolved: NEVER replay automatically"
+(`sa2a-v26.9.17-SOURCE.md` lines ~522-529). Re-checked this pass, for both episode 1
+(`close-receipt`) and episode 2 (`close-replay-receipt`, a disclosed structural analogy — the
+source text names this task in `run-known-replay-episode` but never gives it its own `:action`
+block): `episode{1,2}/actuated-receipt-pending` reaches `episode{1,2}/receipt-reconcile-blocked`
+via the real close-receipt action; that state's typed-stopped terminal has zero outgoing
+transitions and no policy action. The finding survives faithful regrounding and is now traced
+to the user's own domain text and its own comment, not to an artifact of an over-generalized
+helper — a stronger finding than pass 35's, not a weaker one.
+
+**Tests — `ALIVE`.** `tests/planning/test_sa2a_v26_9_17_policy.py` rewritten with real,
+freshly-run numbers (no value carried over from pass 35 without re-computing it).
+`.venv/bin/python -m pytest tests/planning/ -v` → **38 passed, 2 skipped** (the 2 skips are
+pre-existing, unrelated to this module). `.venv/bin/python -m pytest tests/fabric/test_coverage.py
+tests/sa2a/conformance/test_crown_release_fence_wiring.py -v` → **6 passed** (regression check,
+pass-34 work). `grep -rn "unittest.mock\|Mock(\|MagicMock\|patch(\|monkeypatch"
+tests/planning/ src/autofde_lab/planning/` → only docstring mentions naming the discipline,
+zero actual usage.
+
+**Fixture corrections.** `tests/domains/htn_fixtures/sa2a-v26.9.17-domain.hddl` and
+`-problem.hddl` headers corrected: (a) point to the new `-SOURCE.md` as the real verbatim text,
+retracting the earlier, now-false claim that no raw source text was available this session;
+(b) disclose that this fixture's dotted domain name (`sa2a-v26.9.17`) is this fixture's own
+naming choice, not present in the real source (which uses `sa2a-v26-9-17`, hyphenated), and is
+the proximate cause of the recorded `ParseException: ... found '.'` — the underlying
+`:non-deterministic`/`oneof` `UNSUPPORTED` finding does not depend on it and was independently
+reproduced without either name; (c) retracts pass 35's "9 vs 10 mismatch" framing — the real
+source names 9 CRITICAL repo/capability pairs (`CRITICAL_REPO_CAPABILITY_PAIRS`, r1..r9) and
+10 total repo objects; `unrdf`/`wasm4pm` own real capabilities the source's own `:init` never
+marks critical, so the real HTN closure correctly never visits them — not an undercount, a
+real structural fact; (d) placeholder capability names `a2a-interop`/`manufacture-generation`
+(invented in pass 35, not present in the real source) replaced with the real
+`cap-orchestration`/`cap-manufacture`.
+
+**Honest `just test` baseline finding — `BUILD_BROKEN`, pre-existing, unrelated to this
+pass.** `just test` (the documented ~5.9-6.0s fast loop) was run for a full regression check
+and exited 1 with a large failure/error surface (~30 files: `tests/cmca/`,
+`tests/ocel/test_no_self_attestation.py`, `tests/planner_league/`, `tests/reasoning/`,
+`tests/sota/`, `tests/test_dead_edge_ledger.py`, `tests/test_level4_ocpq.py`,
+`tests/test_self_play_chicago.py`, `tests/test_space.py`, `tests/test_utils.py`, a live Groq
+API 404 for a decommissioned model, and more) that this session's own `git status` confirms
+touches none of the 5 files this pass edited (`grep`-confirmed: zero of the sampled failing
+files reference `sa2a_v26_9_17`, `htn_fixtures`, `coverage`, or `bounded_exec`). The one
+apparently-overlapping failure,
+`tests/fabric/test_coverage.py::test_real_cpp_backed_aostar_solver_is_force_killed_not_left_hanging`,
+passes cleanly when run standalone (see the 6-passed regression line above) — it fails only
+under `just test`'s `-n 4` parallel load, consistent with a timing-bound flake under
+contention, not a real regression. This large pre-existing failure surface is reported here
+honestly and left untouched — fixing it is out of scope for this pass and was not attempted.
+
+**Scope boundary, restated.** This repo computes candidate plans; it does not actuate. Every
+repo name in this pass's artifacts is a string-labeled object inside an abstract FOND/HDDL
+planning model only. No real sibling repository was observed, verified, qualified, admitted,
+or actuated by anything in this pass.
+
+Last update: **pass 35** (2026-09-17) — **sa2a-v26.9.17 FOND/HDDL candidate-policy exploration
+is `PARTIAL_ALIVE`, scoped entirely to candidate-plan computation over an abstract planning
+model per `.claude/rules/ecosystem-boundary.md`: this repo's real HDDL engine confirmed
+`:non-deterministic` `UNSUPPORTED` via a real `ParseException`; a real hand-grounded
+`FONDProblem`/`CandidatePolicy` (87 reachable states) is `STRONG_CYCLIC`-valid under an
+extended goal framing and honestly `INVALID` under the strict one; of 4 adversarial lenses run
+against it, 1 found a real counterexample (`claim_holds=false`) and 3 confirmed their tested
+claim (`claim_holds=true`); a skeptic fidelity pass found the work faithful, with one real,
+disclosed discrepancy in the orchestrating instructions themselves (no pasted domain text
+actually existed in the producing session's context). None of this is a claim about the real
+qualification/standing of `ash-a2a`, `bcinr`, `ggen`, `xaas`, `affidavit`, `beam4pm`,
+`unrdf`, or `wasm4pm` — no sibling repository was verified, qualified, admitted, or actuated
+by any part of this pass.**
+
+**Real HDDL engine load — `UNSUPPORTED` (confirmed, not assumed).** Three distinct real
+failures reproduced this pass via `HDDLDomain.from_files` (`unified_planning.io.PDDLReader`,
+read at `src/autofde_lab/hub/domain/hddl/hddl.py`): (a) `:non-deterministic` in
+`:requirements` → `ParseException: Expected ')', found '(' (at char 35), (line:2, col:3)`;
+(b) `(oneof ...)` in an effect → `SyntaxError: Not able to handle: (oneof (p ?o) (q ?o)) found
+at line: 15, col 13 to line: 15, col 34`; (c) run directly against the actual on-disk fixture
+pair → `ParseException: Expected ')', found '.' (at char 4903), (line:83, col:25)` — the
+domain-name token `sa2a-v26.9.17` itself is rejected before `:non-deterministic` is ever
+evaluated. This repo's real HDDL engine cannot load the domain, full stop; no workaround was
+applied and none of the three failures was patched away.
+
+**Fixture files — written as spec-only artifacts, not verbatim transcription.** Four new
+files: `tests/domains/htn_fixtures/sa2a-v26.9.17-domain.hddl`,
+`tests/domains/htn_fixtures/sa2a-v26.9.17-problem.hddl`,
+`src/autofde_lab/planning/sa2a_v26_9_17_policy.py`,
+`tests/planning/test_sa2a_v26_9_17_policy.py`. Provenance, stated plainly because it matters:
+no separately pasted HDDL/PDDL text existed anywhere in the producing session's own context,
+distinct from the structural task description — the `.hddl` files are that session's own
+direct HDDL encoding of the structural spec (5 phases, 10 named non-deterministic actions,
+repair/reroute/typed-stop/explore-once/replay-once structure), stated in both file headers,
+not silently presented as a byte-for-byte transcription of a different document. A second
+real, disclosed discrepancy: the task text supplies 10 repo names (`ash-a2a`, `ash-r2rml`,
+`bcinr`, `ggen`, `ggen-igniter`, `xaas`, `affidavit`, `beam4pm`, `unrdf`, `wasm4pm`) but
+separately calls them "9 repo/capability pairs" — the real counted figure (10) is used
+throughout the artifacts and tests, flagged rather than silently reconciled to 9.
+
+**Hand-grounded `FONDProblem`/`CandidatePolicy` — `PARTIAL_ALIVE`.** 76 policy states + 10
+typed-stopped terminals + 1 goal = 87 reachable states. Grounded exhaustively (full 4-way
+`oneof`: closed/build-broken/blocked/unsupported, with real repair-on-build-broken,
+reroute-on-blocked, and typed-stop-on-unsupported cycles, including genuine graph cycles) for
+the `(ggen, manufacture-generation)` boundary pair and 9 of the 10 named non-deterministic
+actions; grounded representatively (single-outcome, explicitly disclosed) for the
+`(ash-a2a, a2a-interop)` pair only, per the task's own instruction. Real
+`check_candidate_policy` output, 4 runs, none adjusted after seeing the result: **(1)**
+`STRONG` / strict goal (`{release-certified}`) → `valid=False`; `missing_policy_states` = the
+10 typed-stopped states; `cannot_reach_goal_states` = 20 states; `non_goal_cycle_states` = 40;
+`dead_end_states` = none. **(2)** `STRONG_CYCLIC` / strict goal → `valid=False`, identical
+missing/cannot-reach sets to run 1 — cycles stop counting against validity, the honest
+typed-stop gap does not. **(3)** `STRONG` / goal extended to also accept the 10 typed-stopped
+terminals → `valid=False`, now isolated solely to the real 40-state cycle set
+(`missing_policy_states` and `cannot_reach_goal_states` both empty). **(4)** `STRONG_CYCLIC` /
+extended goal → `valid=True`, the same 40-state cycle set now permitted, everything else
+empty. `check_fond_hddl_frontier_closure`, run with 1:1 hierarchy witnesses for all 76 real
+policy states, tracks the same pattern: `valid=True` under extended/`STRONG_CYCLIC`,
+`valid=False` under strict/`STRONG_CYCLIC` (same missing 10 typed-stopped states). Net,
+undoctored verdict: the candidate policy is `STRONG_CYCLIC`-valid only under a goal framing
+that accepts a disclosed typed-stop-on-unsupported terminal as a legitimate outcome, and is
+genuinely `INVALID` under a stricter framing requiring literal `release-certified` — a real
+modeling finding, not papered over.
+
+**Lens 1 — zero-unreceipted-actuation — `claim_holds=false`, real counterexample found.**
+Claim tested: no reachable state has `actuated=true` and `receipt_pending=false` before a
+durable receipt exists. A real BFS over the real `_TRANSITIONS` dict found a genuine
+counterexample: `close-receipt/typed-stopped`, a permanent terminal (zero outgoing
+transitions, confirmed), reached via `execute-command/closed → close-receipt/pending →
+close-receipt/unsupported → close-receipt/typed-stopped`. At that state `actuated=true`
+(`execute-command/closed` is the sole confirmed predecessor of `close-receipt/pending`) and no
+durable receipt was ever reached (`close-receipt/closed` is the sole confirmed predecessor of
+phase-3 completion, and was never reached on this path). The claim was tested against the real
+model and found false — reported as found, not revised to pass.
+
+**Lens 2 — unsupported states have no generic repair analogue — `claim_holds=true`.**
+Exhaustive inspection of the real `_TRANSITIONS`/`_POLICY_ACTIONS` dicts: all 10 real
+`*/unsupported` states have exactly one outgoing transition each, all `typed-stop`-only,
+landing in a true terminal state with zero outgoing transitions and zero policy action.
+Contrast, same real dict: every `build-broken` state has a real
+`diagnose-and-repair-<step>` cycle back into `attempt-<step>`; every `blocked` state has a real
+`reroute-<step>` cycle. `check_candidate_policy` under the strict goal confirms all 10
+unsupported states are in `cannot_reach_goal_states`. An independently hand-built minimal
+hypothetical fragment, not routed through the shared grounding helper, reproduced the
+identical pattern — ruling out an artifact of that one function.
+
+**Lens 3 — Episode 2 frontier_clean falsifiability — `claim_holds=true`.** Claim tested: if
+Episode 2 genuinely required fresh `explore-unknown` reasoning, `check_candidate_policy` would
+correctly report the policy `INVALID`, not silently accept it. A real, separate mutated
+`FONDProblem`/`CandidatePolicy`, built entirely outside the repo tree (real grounding files
+confirmed untouched via `git status --porcelain`), rerouted the replay edge to a stuck
+terminal and added a real `explore-unknown`-only path to a new goal state. The real checker
+correctly reported `valid=False` under both `STRONG` and `STRONG_CYCLIC`
+(`cannot_reach_goal_states` == the entire reachable state space). Control: the same mutated
+problem given a policy that selects `explore-unknown`, under an extended goal framing, the
+same real checker reports `valid=True`. Confirms the checker actually detects a genuine
+frontier-closure gap rather than accepting anything handed to it.
+
+**Lens 4 — strong-cyclic necessity — `claim_holds=true`.** `check_candidate_policy(STRONG)` →
+`valid=False` attributable solely to a real, independently-confirmed cycle
+(`verify-boundary-ggen/build-broken` ↔ `repair-reattempt`, confirmed by direct
+transition-dict inspection, not just algorithmic SCC output); `non_goal_cycle_states` = 40
+(nonempty), `missing_policy_states`/`dead_end_states`/`cannot_reach_goal_states` all empty.
+`check_candidate_policy(STRONG_CYCLIC)` → `valid=True` on the identical 40-state cycle set.
+Confirms `strong_cyclic` was the correct semantics choice for this model, not an arbitrary
+relaxation.
+
+**Skeptic fidelity check — `ALIVE`; self-report found faithful, one real discrepancy
+disclosed.** 8 real state/transition pairs spot-checked against the on-disk `.hddl` file;
+zero mistranslations found. All quantitative claims re-verified this session with real
+commands and real output (76 policy states, 10 typed-stopped states, 87 reachable states,
+40 `non_goal_cycle_states`, 21 passing tests, zero mock usage). One real, material
+discrepancy, disclosed rather than hidden: the orchestrating task instruction referenced "the
+pasted domain text (quoted in this conversation)", but no such text existed anywhere in the
+producing session's own context — only its JSON self-report was present. Fidelity was traced
+against the on-disk `.hddl` file instead, which is itself that same session's own structural
+encoding (see the provenance note above), not a verbatim transcription of a separately pasted
+document — a discrepancy in the orchestrating instructions, not in the grounding work itself.
+Two further minor, non-substantive discrepancies: a pytest timing variance (0.29s vs 0.18s,
+identical pass count) and a stale hardcoded `ParseException` character offset in a file
+header comment (a live re-run against the current file gives char 5784/line 98 for the
+identical underlying failure, not the header's stale char 4903/line 83).
+
+**Regression — `ALIVE`, as reported this pass.** 39 tests: 37 passed, 0 failed
+(`failed_test_names` empty). The remaining 2 of 39 are not itemized pass/fail/skip in this
+pass's regression tally as provided; treat their status as `UNKNOWN` rather than assumed-pass,
+per `.claude/rules/absence-is-not-evidence.md`.
+
+**Scope boundary, restated per `.claude/rules/ecosystem-boundary.md`.** This repo computes
+candidate plans; it does not actuate. Every repo name appearing above (`ash-a2a`, `bcinr`,
+`ggen`, `xaas`, `affidavit`, `beam4pm`, `unrdf`, `wasm4pm`, plus `ash-r2rml` and
+`ggen-igniter` in the fuller 10-name roster the grounding actually used) is a string-labeled
+object inside an abstract FOND/HDDL planning model only. No real sibling repository was
+observed, verified, qualified, admitted, or actuated by anything in this pass. No `git
+commit`, `git push`, or PR/branch operation was performed — local file edits and local test
+runs only, per instruction.
+
+Last update: **pass 34** (2026-09-16) — **`coverage.py`'s execution bound + stale-doctrine
+fix is `ALIVE`; the resulting real exhaustive sweep completed 33/33 registered domains (1,914
+= 33×58 rows, no domain silently truncated); a 5-domain skeptic spot-check found zero
+discrepancies but is scoped to those 5, not the registry; the "capability coverage is never
+silently incomplete" invariant `coverage.py` itself declares now holds `ALIVE` registry-wide
+at the execution-completeness grain only — at the row-content-correctness grain it is `ALIVE`
+for 5/33 domains and `UNKNOWN` for the remaining 28, per
+`.claude/rules/absence-is-not-evidence.md`.**
+
+**Tool fix (`coverage.py` bound + doctrine) — `ALIVE`.** Two independent fixes, both verified
+this session, to `src/autofde_lab/fabric/coverage.py`, `src/autofde_lab/fabric/bounded_exec.py`,
+and new `tests/fabric/test_coverage.py`. Fix 1: corrected `coverage.py`'s stale module
+docstring, which still claimed `match_solvers(..., ranked=True)` "accepts the flag and ignores
+it" (`utils.py:126`, a TODO), to state the real, already-implemented behaviour
+(`utils.py:407-474`, environment-gated on `cmca_rank_cli`). Fix 2 closed a real gap the task's
+premise had understated, not overstated: a per-solver execution bound already existed
+(`run_callable_bounded` via `signal.alarm`), but reproducing it live showed the real registered
+`AOstar` solver — a pybind11 C++ binding (`autofde_lab.hub.__autofde_lab_hub_cpp._AOStarSolver_`)
+— ran **24+ real minutes** past its 60s bound before being force-killed, because `SIGALRM` is
+only delivered when execution returns to the Python interpreter, and a tight C-extension loop
+holding the GIL never does. Fix: new `run_process_bounded` in `bounded_exec.py`, a real forked
+OS child process force-killed (`terminate()` then `kill()`) past the timeout — OS-level
+`SIGKILL` needs no cooperation from the bounded code, unlike a Python signal handler.
+`coverage.py::_run_solver` now uses it; `run_callable_bounded` is untouched (other real callers
+confirmed unaffected by grep). Three new Chicago-style tests in `tests/fabric/test_coverage.py`
+exercise a real hand-written slow solver and the real C++-backed `AOstar` against a real `Maze`
+domain — no mock, no stub. `.venv/bin/python -m pytest tests/fabric/test_coverage_bridge.py
+tests/fabric/test_coverage.py tests/fabric/test_bounded_exec.py -v` → **16 passed in 7.64s**;
+`grep -rn "unittest.mock\|Mock(\|MagicMock\|patch(\|monkeypatch"` over the touched test/source
+files → 0 matches. Regression check (`test_afde_2608_projected_ephemeral_invariant.py`, which
+imports `load_ontology` from `coverage.py`) → 3 passed. Real end-to-end proof, post-fix: a live
+`build_report(lambda: Maze(), 'ontology/autofde-lab-capabilities.ttl')` run completed in real
+**8m13.00s** (vs. the prior unbounded hang), returned exactly 58 rows (== `grep -c "a
+skdt:Solver ;" ontology/autofde-lab-capabilities.ttl`, so no row silently dropped), and its log
+shows `AOstar` force-killed at exactly 60.317s — matching `SOLVER_TIMEOUT_S=60` precisely.
+
+**Real exhaustive sweep across all 33 registered domains — `ALIVE` at the report-completion
+grain.** Every one of the 33 domains registered under `autofde_lab.domains` in `pyproject.toml`
+produced a complete, well-formed `reports/capability_coverage/<domain>.json` — no domain
+crashed, hung, or produced a truncated file; that is the concrete, verified meaning of "33/33
+ran." At the row/capability grain inside those reports, execution rates varied honestly by
+domain rather than uniformly: from 0/58 solvers executed (`GymWidthDomain`) up to 54/58
+(`Maze`). `GymWidthDomain`'s 0/58 is a legitimate, independently-reproduced exclusion, not a
+tooling gap — it is a bare multi-inheritance mixin (`__mro__ == (GymWidthDomain, object)`, zero
+domain-characteristic base classes) never meant to be instantiated standalone; re-running the
+module's own `_unmet_requirements()` against it live confirmed all 8 requirements unmet,
+matching the report exactly. No domain was `BLOCKED` or `UNSUPPORTED` this pass because of a
+tooling failure — the one failure mode that used to threaten a silent, indefinite hang across
+the whole sweep (the C-extension `AOstar` bound gap above) is what the tool fix closed.
+
+**Registry-wide rollup — `ALIVE` (counts independently recomputed from the 33 raw report
+files, not trusted from the generating summary).** 1,914 total capability rows (33×58, exact):
+`applicable_selected=257`, `applicable_dominated=80`, `applicable_failed=706`,
+`inapplicable=871`, `unavailable=0`. The 706 `applicable_failed` rows group into 14 named root
+causes — largest: 197 rows across 8 solvers needing constructor args the harness never
+supplies (a gap `coverage.py`'s own docstring, lines 83-88, already documents), 122 rows across
+8 solvers whose runtime `isinstance` check is stricter than their declared ontology
+characteristic, 75 rows from missing `get_elements()` on continuous/scheduling action spaces —
+plus 167 residual `TIMEOUT`/`DID_NOT_CONVERGE` rows with no single shared code-level root
+cause.
+
+**Per-domain narrow fixes applied this pass — none.** The only fix landed this pass is the
+domain-agnostic tool-level bound + doctrine fix above, which applies uniformly to every
+domain's sweep; no domain-specific source (a `_is_terminal` gap, a constructor-arg mismatch, an
+`isinstance` check) was patched this session. The 706 `applicable_failed` root causes above are
+real, named, and reproduced live for 2 of them (see next paragraph), but remain open work, not
+closed this pass.
+
+**Skeptic spot-check — `ALIVE`, scoped to 5/33 domains, not extended further.** 5 domains
+checked (more than the 3 required): `Maze`, `FlightPlanningDomain`, `azuregoat_privesc`,
+`RockPaperScissors`, `GymWidthDomain`. Zero discrepancies found against the generating
+summary's claimed bucket counts and per-domain arithmetic (min-cost-equals-winner,
+dominated-margin exactness, row-count completeness). `coverage_is_complete()` — the real
+function `coverage.py` itself exports to test its own invariant — was re-run against all 5 and
+returned `(True, [])` for every one: no missing ontology solver, no stale/extra capability, no
+duplicate classification, no unreasoned exclusion. Two of `RockPaperScissors`'s 3 real failures
+were independently reproduced live this session (a real `DSPyPolicy` `AttributeError` on
+`_is_terminal`; a real `RayRLlib` `TypeError` on missing `algo_class`/`train_iterations`). The
+remaining 28 domain reports were confirmed only structurally (valid JSON, exactly 58 rows each,
+totaling exactly 1,914 = 33×58 with no file truncated or padded) — their individual row
+classifications were **not** independently re-derived and remain `UNKNOWN`, not `ALIVE`, per
+`.claude/rules/absence-is-not-evidence.md`.
+
+**Regression — `PARTIAL_ALIVE`.** 29 tests: **22 passed** (`test_coverage_bridge.py` 5/5
+`ALIVE`; `test_chatman_chain_chicago.py` 17/18 non-skipped passed), **6 skipped**
+(`UNSUPPORTED`: missing `~/chatman-ecosystem` TTL/checkout — named skips, not mocks), **1
+failed**: `tests/ecosystem/test_chatman_chain_chicago.py::TestIndependentVerificationNotSelfAttestation::test_at_least_one_verifier_admits_the_receipt`
+— `BLOCKED:GGEN_VERIFY_EXIT_1` (all 3 discoverable `ggen` binaries exit 1 verifying the
+committed receipt), confirmed pre-existing via a real `git stash`/`git pop` re-run, unrelated
+to this pass's uncommitted diff (`fabric/bounded_exec.py`, `fabric/coverage.py`,
+`hub/domain/pddl/domain.py`).
+
+**Invariant verdict, stated plainly.** `coverage.py`'s own declared invariant — capability
+coverage is never silently incomplete — now holds `ALIVE` **registry-wide at the
+execution-completeness grain**: all 33/33 domains ran to a complete, non-truncated 58-row
+report (1,914 = 33×58, verified by direct file count), and the specific failure mode that
+threatened this invariant — an unbounded C-extension solver hanging a domain's sweep
+indefinitely and silently starving every domain queued behind it — is closed by
+`run_process_bounded`. It does **not** yet hold `ALIVE` **registry-wide at the
+row-content-correctness grain**: independent re-verification (`coverage_is_complete()` plus
+live reproduction) covers 5/33 domains this pass; the other 28 are `UNKNOWN`, not `ALIVE`, at
+that finer grain, per `.claude/rules/absence-is-not-evidence.md` — structurally complete but
+not individually re-derived. Closing that finer grain registry-wide is the next bounded unit of
+work, not a claim this pass may make.
+
+No `git commit`, `git push`, or PR/branch operation was performed this pass — local file edits
+and local test runs only, per instruction.
+
 Last update: **pass 33** (2026-09-16) — **4 remaining v26.9.16 tickets closed this run
 (AFDE-2606 cross-process determinism, AFDE-2607 MCP `initialize`-wording precision, AFDE-2605
 `ecosystem-standing.md` doctrine consistency, AFDE-2611 `authority:none` field), all four

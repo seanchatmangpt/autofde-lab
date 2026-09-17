@@ -2,9 +2,9 @@
 
 ## Prerequisites
 
-### Python 3.9+ environment
+### Python 3.10+ environment
 
-The use of a virtual environment for scikit-decide is recommended, and you will need to ensure that the environment use a Python version greater than 3.9.
+The use of a virtual environment for autofde-lab is recommended, and you will need to ensure that the environment use a Python version greater than or equal to 3.10.
 This can be achieved either by using [conda](https://docs.conda.io/en/latest/) or by using [pyenv](https://github.com/pyenv/pyenv) (or [pyenv-win](https://github.com/pyenv-win/pyenv-win) on windows)
 and [venv](https://docs.python.org/fr/3/library/venv.html) module, or by using [uv](https://docs.astral.sh/uv/).
 
@@ -33,11 +33,11 @@ uv venv autofde_lab-venv --python 3.12
 source autofde_lab-venv/bin/activate  # autofde_lab-venv\Scripts\activate on windows
 ```
 
-## Install scikit-decide library
+## Install autofde-lab library
 
 ### Full install
 
-Install scikit-decide library from PyPI with all dependencies required by domains/solvers in the hub (scikit-decide catalog).
+Install autofde-lab library from PyPI with all dependencies required by domains/solvers in the hub (autofde_lab catalog).
 
 You can use pip:
 ```shell
@@ -65,13 +65,13 @@ uv pip install autofde-lab
 
 ### Pygrib
 
-When installing [pygrib](https://jswhit.github.io/pygrib/index.html) on MacOS ARM (in dependencies of `scikit-decide[all]`),
+When installing [pygrib](https://jswhit.github.io/pygrib/index.html) on MacOS ARM (in dependencies of `autofde-lab[all]`),
 no wheel exists on PyPI and there is issues when pip tries to build it.
 You can overcome this by first installing `eccodes` which provides GRIB header files required to build the `pygrib` wheel:
 ```shell
 brew install eccodes
 ```
-Then, reinstall `scikit-decide[all]`.
+Then, reinstall `autofde-lab[all]`.
 
 If the issue persists, you can try to install the pygrib package available on conda-forge:
 ```shell

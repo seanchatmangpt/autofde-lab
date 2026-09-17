@@ -45,8 +45,8 @@ Two additive capabilities merged this cycle, per `docs/jira/v26.9.1/PLAN.md` (th
   [#95](https://github.com/seanchatmangpt/autofde-lab/pull/95), merge `d2242c39`.
 
 Both verified this session with real, currently-passing commands (Chicago-style — real
-collaborators, no mocks): `.venv/bin/python -m pytest tests/simulation/
-tests/test_aps_protocol_profile_chicago.py -v` → 11 passed; independent `pyshacl.validate()`
+collaborators, no mocks): `.venv/bin/python -m pytest tests/test_aps_protocol_profile_chicago.py
+-v` → 5 passed; independent `pyshacl.validate()`
 of the new ontology profile against its own shapes → `Conforms: True`.
 
 ## Documentation map

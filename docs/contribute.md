@@ -1,6 +1,6 @@
-# Contributing to scikit-decide
+# Contributing to autofde-lab
 
-We welcome all contributions to scikit-decide.
+We welcome all contributions to autofde-lab.
 
 You can help by:
 
@@ -28,7 +28,7 @@ This guide is organized as follows:
 
 > **Disclaimer**: The following process has only been tested on Linux/MacOS platforms.
 
-In order to install scikit-decide from the source so that your modification to the library are taken into account, we recommend using [uv](https://docs.astral.sh/uv/).
+In order to install autofde-lab from the source so that your modification to the library are taken into account, we recommend using [uv](https://docs.astral.sh/uv/).
 
 ####  Prerequisites for C++
 To build the  c++ part of the library,
@@ -56,13 +56,13 @@ export LDFLAGS="$LDFLAGS -Wl,-rpath,$OpenMP_ROOT/lib -L$OpenMP_ROOT/lib -lomp"
 
 Here are the steps to follow:
 
-- Clone the source and got to the "scikit-decide" root directory.
+- Clone the source and got to the "autofde-lab" root directory.
     ```shell
     git clone --recurse-submodules -j8 https://github.com/seanchatmangpt/autofde-lab.git
-    cd scikit-decide
+    cd autofde-lab
     ```
 
-- Set proper python version (e.g. 3.12) for the scikit-decide project.
+- Set proper python version (e.g. 3.12) for the autofde-lab project.
     ```shell
     echo 3.12 > .python-version
     ```
@@ -71,7 +71,7 @@ Here are the steps to follow:
 
 - Install uv (see [uv documentation](https://docs.astral.sh/uv/getting-started/installation/)).
 
-- Install (and build the c++ library) the scikit-decide library in editable mode
+- Install (and build the c++ library) the autofde-lab library in editable mode
   (it will take into account any code changes in python source), optionally with extra "all", and all dev dependencies (jupyter, pytest, ...)
 
   ```shell
@@ -124,7 +124,7 @@ but you still need to install the JavaScript ones (including VuePress).
 
 First, get Yarn (package manager) by following [these installation steps](https://yarnpkg.com/en/docs/install).
 
-Make sure you are in the "scikit-decide" root directory and install documentation dependencies:
+Make sure you are in the "autofde-lab" root directory and install documentation dependencies:
 
 ```shell
 yarn install
@@ -148,7 +148,7 @@ If `git` is missing or for some reason the commands fail, the github, binder, an
 
 #### Build the docs
 
-Make sure you are in the "scikit-decide" root directory,
+Make sure you are in the "autofde-lab" root directory,
 then generate and serve locally the documentation with:
 
 ```shell
@@ -158,7 +158,7 @@ uv run yarn docs:dev
 - The above command will call `python docs/autodoc.py` hence the use of `uv run`.
 
 
-Open your web browser to access the documentation (by default on [http://localhost:8080/scikit-decide/](http://localhost:8080/scikit-decide/)).
+Open your web browser to access the documentation (by default on [http://localhost:8080/autofde-lab/](http://localhost:8080/autofde-lab/)).
 
 ### Running unit tests
 
@@ -166,7 +166,7 @@ The unit tests are gathered in `tests/` folder and run with [pytest](https://doc
 Providing you installed the library in developer mode as described [above](#installing-from-source-in-developer-mode),
 pytest should have been already installed by uv.
 
-From the "scikit-decide" root directory, run unit tests with:
+From the "autofde-lab" root directory, run unit tests with:
 
  ```shell
  uv run pytest tests

@@ -1,0 +1,79 @@
+;; sa2a-v26.9.17-problem.hddl
+;;
+;; Pairs with sa2a-v26.9.17-domain.hddl. Read that file's header first: same
+;; SCOPE BOUNDARY (repo objects are candidate-model objects only, never a
+;; real-repo claim) and same UNSUPPORTED standing (this repo's
+;; HDDLDomain.from_files raises on `:non-deterministic`/`oneof` before it
+;; can load either file -- see the domain file's header for the two real,
+;; session-reproduced parse failures). This file is a hand-encoded
+;; illustrative rendering, not a byte-for-byte transcription -- the real
+;; verbatim source is `sa2a-v26.9.17-SOURCE.md` in this same directory; see
+;; the domain file's corrected provenance note for the full account.
+;;
+;; dogfood-v26-9-17 -- the real model's repo roster (candidate-model objects,
+;; never a real-repo claim, per the SCOPE BOUNDARY above) is 10 distinct
+;; names as given in SOURCE.md's `:objects` block: ash-a2a, ash-r2rml,
+;; bcinr, ggen, ggen-igniter, xaas, affidavit, beam4pm, unrdf, wasm4pm.
+;; Corrected count note, superseding an earlier, false "9 vs 10 mismatch"
+;; claim here: SOURCE.md's `m-close-critical-repo-boundaries` method names
+;; exactly 9 CRITICAL repo/capability pairs (r1..r9) -- there is no
+;; mismatch or undercount. `unrdf` and `wasm4pm` are real named objects
+;; that own real capabilities (cap-runtime, cap-portable-runtime), but
+;; SOURCE.md's own `:init` never marks either capability `critical`, so the
+;; real HTN closure never visits them. 10 named repo objects, 9 critical
+;; closure pairs, by the source's own design -- both real. This problem
+;; file grounds 2 of those 9 critical (repo, capability) pairs explicitly,
+;; per this session's representative-grounding instruction (the full
+;; 9-pair closure judged intractable to hand-ground exhaustively in one
+;; session; see sa2a_v26_9_17_policy.py's module docstring for the same
+;; scoping decision restated against the real, checked Python grounding,
+;; which DOES exhaustively ground every other named non-deterministic
+;; action in the discovery and replay episodes):
+;;
+;;   (ash-a2a, cap-orchestration)       -- representative "succeeds cleanly" pair
+;;   (ggen, cap-manufacture)            -- representative "build-broken-repair
+;;                                          cycle" pair, exercising the real
+;;                                          repair-on-build-broken /
+;;                                          reroute-on-blocked /
+;;                                          typed-stop-on-unsupported branches
+;;
+;; The remaining 7 named repos (ash-r2rml, bcinr, ggen-igniter, xaas,
+;; affidavit, beam4pm, unrdf, wasm4pm) are declared as objects below (so the
+;; real model roster is visible in this fixture) but are NOT given a
+;; CLOSE-ONE-REPO-BOUNDARY task in the initial task network -- grounding them
+;; is out of scope for this session, named here rather than silently omitted.
+
+(define (problem dogfood-v26-9-17)
+  (:domain sa2a-v26.9.17)
+
+  (:objects
+    ash-a2a ash-r2rml bcinr ggen ggen-igniter xaas affidavit beam4pm unrdf wasm4pm - repo
+    cap-orchestration cap-manufacture - capability
+    verify-boundary-ash-a2a verify-boundary-ggen - boundary-step
+    observe-classification admit-candidate bound-allocation manufacture
+      admit-authority execute-command close-receipt - explore-step
+    prove-semantic-equivalence admit-machine-experience - replay-step
+  )
+
+  (:htn
+    :ordered-subtasks (and
+      (top0 (ORIENT-AND-CERTIFY-RELEASE))
+    )
+  )
+
+  (:init
+    (boundary-pending ash-a2a cap-orchestration)
+    (boundary-pending ggen cap-manufacture)
+    (step-pending verify-boundary-ash-a2a)
+    (step-pending verify-boundary-ggen)
+    (step-pending observe-classification)
+    (step-pending admit-candidate)
+    (step-pending bound-allocation)
+    (step-pending manufacture)
+    (step-pending admit-authority)
+    (step-pending execute-command)
+    (step-pending close-receipt)
+    (step-pending prove-semantic-equivalence)
+    (step-pending admit-machine-experience)
+  )
+)

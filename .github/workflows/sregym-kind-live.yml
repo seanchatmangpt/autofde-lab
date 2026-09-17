@@ -105,7 +105,7 @@ jobs:
           sudo mv /tmp/kind /usr/local/bin/kind
           kind version
       - name: Install Helm
-        uses: azure/setup-helm@v4
+        uses: azure/setup-helm@bf6a7d304bc2fdb57e0331155b7ebf2c504acf0a # v4.3.0
       - name: Qualify Linux host for SREGym kind
         run: |
           sudo sysctl -w fs.inotify.max_user_instances=1024
@@ -154,7 +154,7 @@ jobs:
           kind export logs /tmp/kind-logs || true
       - name: Upload live evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: sregym-autofde-${{ inputs.problem || 'k8s_target_port-misconfig' }}
           path: |
