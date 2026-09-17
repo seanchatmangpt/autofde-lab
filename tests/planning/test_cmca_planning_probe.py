@@ -52,8 +52,9 @@ def _two_method_domain() -> HDDLDomain:
     )
 
 
-def test_cmca_planning_probe_preserves_lawful_frontier_when_budget_projection_prunes(
-) -> None:
+def test_cmca_planning_probe_preserves_lawful_frontier_when_budget_projection_prunes() -> (
+    None
+):
     domain = _two_method_domain()
     initial = ProductState(world=frozenset(), tau=("root",))
     reachability = build_fond_problem(
