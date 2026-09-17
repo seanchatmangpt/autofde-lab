@@ -383,7 +383,35 @@ def hook_reflex(
     point confused deputy" qualification). `--skip-admission-check` restores the prior
     permissive behavior explicitly, for a caller that genuinely needs it -- never
     silently.
+
+    AFDE-2604 closure (Mutation DW-2, adversarially found and fixed this pass): a
+    `typer.Option(False, ...)` default is not the literal Python default `False` in
+    this function's own signature -- it is a `typer.models.OptionInfo` sentinel
+    object, and `bool(OptionInfo(...))` is `True`. Click substitutes the real,
+    intended default only while parsing an actual CLI invocation; a caller that
+    imports and calls this function object directly (a script, a notebook, a test
+    helper, a future in-process wrapper -- never through `typer.testing.CliRunner` or
+    a real CLI dispatch) previously got `skip_admission_check` bound to that truthy
+    sentinel whenever they omitted the argument, silently flipping
+    `require_admission=not skip_admission_check` to `False` and
+    `admission_pipeline=None if skip_admission_check else AdmissionPipeline()` to
+    `None` -- the exact fully permissive `--skip-admission-check` configuration,
+    triggered by doing nothing, with no `--skip-admission-check` string anywhere in
+    the call. The explicit `isinstance` resolution below closes this: a non-`bool`
+    value here can only be Click's own unsubstituted `OptionInfo` sentinel (never a
+    real caller-supplied value, since Typer type-checks CLI input to `bool` before
+    binding it), so it is resolved to the sentinel's own configured default
+    (`False`, i.e. do not skip) rather than trusted as truthy. See
+    `tests/sa2a/conformance/test_afde_2604_default_wiring_bypass_qualification.py`'s
+    `test_mutation_dw2_...` for the regression fixture pinning this fix.
     """
+    if not isinstance(skip_admission_check, bool):
+        # A direct (non-CLI) call left Typer's OptionInfo sentinel unsubstituted.
+        # Resolve to the sentinel's own configured default, never to bool(sentinel)
+        # (always True for a non-empty object), so "argument omitted" means "use the
+        # documented default" and never "silently opt out of the admission fence".
+        skip_admission_check = bool(getattr(skip_admission_check, "default", False))
+
     from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline
     from autofde_lab.sa2a.authority.broker import AuthorityBroker, AuthorityGrant
     from autofde_lab.sa2a.brce.boundary import ConsequenceBoundary

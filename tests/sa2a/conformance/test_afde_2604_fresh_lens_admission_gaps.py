@@ -88,20 +88,28 @@ _FL1_BOUND_TTL = """
 
 
 def test_fresh_lens_1_receipt_carries_no_admission_identity_edge(tmp_path: Path) -> None:
-    """A real, genuinely ADMITTED `AdmissionResult` (real digest, real receipt_id) gates a
-    real `execute_admitted()` call that really actuates (real disk journal write) and mints
-    real `PreparedReceipt` + `FinalReceipt` objects, durably persisted via
-    `DurableDiskReceiptStore`. Neither receipt's `to_dict()` -- the durable, replayable
-    record this repo's own `no-dual-bookkeeping.md`/`level4-completion-law.md` require to
-    carry identity explicitly, never by adjacency or a live-only check -- contains the
-    admission's `digest` or `receipt.receipt_id` anywhere.
+    """CLOSED (closure pass, this repo): a real, genuinely ADMITTED `AdmissionResult`
+    (real digest, real receipt_id) gates a real `execute_admitted()` call that really
+    actuates (real disk journal write) and mints real `PreparedReceipt` +
+    `FinalReceipt` objects, durably persisted via `DurableDiskReceiptStore`.
+    `PreparedReceipt` now carries a new `admission_digest` field, bound to the exact
+    `AdmissionResult.digest` that gated this actuation via
+    `_enforce_admission_gate()`/`execute_admitted()` -- so the durable record this
+    repo's own `no-dual-bookkeeping.md`/`level4-completion-law.md` require to carry
+    identity explicitly, never by adjacency or a live-only check, now does.
 
-    Consequence: given ONLY the durable receipt-store artifacts (as
-    `no-dual-bookkeeping.md`'s crown threshold requires -- "load only the durable ...
-    artifacts, recompute the same standing"), there is no way to verify, after the fact,
-    which admitted candidate content (or whether ANY specific one) gated this actuation.
-    The admission gate is enforced live, in-memory, at call time
-    (`_enforce_admission_gate()`); its outcome is never written into the receipt it gates.
+    Scope, named honestly: only `AdmissionResult.digest` is bound (the strong,
+    content-addressed identity), not `admission.receipt.receipt_id` (a separate,
+    narrower internal admission-receipt label) -- consistent with how every other
+    identity edge already on `PreparedReceipt` (`plan_digest`, `artifact_digest`,
+    `admitted_input_digest`, `previous_receipt_digest`) is a digest, not a mutable
+    internal id. `FinalReceipt` still carries no admission identity of its own (it
+    never carried `actor_id`/`action_iri`/`target_resource` either, by design --
+    `receipts.py`'s own `_validate_final_grant_id` resolves those from the
+    corresponding `PreparedReceipt`); a reader recomputing standing from durable
+    evidence alone follows the SAME `idempotency_token` join `receipts.py`'s own
+    validation logic already uses to reach the `PreparedReceipt` and its
+    `admission_digest`.
     """
     pipeline = AdmissionPipeline()
     admitted = pipeline.admit(
@@ -150,32 +158,36 @@ def test_fresh_lens_1_receipt_carries_no_admission_identity_edge(tmp_path: Path)
     prepared_dict = result.prepared_receipt.to_dict() if result.prepared_receipt else {}
     final_dict = result.final_receipt.to_dict() if result.final_receipt else {}
 
-    prepared_blob = repr(prepared_dict)
-    final_blob = repr(final_dict)
-
-    admission_digest_present = admission_digest in prepared_blob or admission_digest in final_blob
-    admission_receipt_id_present = (
-        admission_receipt_id in prepared_blob or admission_receipt_id in final_blob
+    # CLOSED: the digest now IS present, on the PreparedReceipt specifically.
+    assert prepared_dict.get("admission_digest") == admission_digest, (
+        "FRESH LENS 1 REGRESSION (would mean the closure was undone): the durable "
+        f"PreparedReceipt does not carry the exact admission digest ({admission_digest!r}) "
+        f"that gated this actuation. prepared={prepared_dict!r}"
     )
-
-    assert not admission_digest_present and not admission_receipt_id_present, (
-        "FRESH LENS 1 EXPECTATION VIOLATED (would mean the gap is already closed): the "
-        f"durable PreparedReceipt/FinalReceipt DOES carry the admission digest "
-        f"({admission_digest!r}) or admission receipt_id ({admission_receipt_id!r}) "
-        f"somewhere in its serialized form. prepared={prepared_dict!r} final={final_dict!r}"
-    )
+    # Named, not attempted: only the digest is bound, not the admission's own
+    # internal receipt_id -- see this test's docstring for why.
+    assert admission_receipt_id not in repr(prepared_dict) and admission_receipt_id not in repr(
+        final_dict
+    ), "Unexpected: admission receipt_id leaked into a receipt dict -- this was never bound."
 
     # Re-load the SAME durable store fresh (new ReceiptStore-shaped read, not the live
-    # `boundary`/`envelope` objects) to confirm the gap is real from evidence alone, not an
-    # artifact of inspecting the in-process result object.
+    # `boundary`/`envelope` objects) to confirm the fix is real from durable evidence
+    # alone, not an artifact of inspecting the in-process result object.
+    reloaded_prepared = store.get_prepared("idemp-fresh-lens1")
+    assert reloaded_prepared is not None
+    assert reloaded_prepared.admission_digest == admission_digest, (
+        "FRESH LENS 1: reloading the PreparedReceipt fresh from the durable store must "
+        "still carry the same admission_digest -- confirms this is a property of the "
+        "persisted artifact itself, not merely the in-memory result object."
+    )
+
+    # FinalReceipt still carries no admission identity of its own, by design (see
+    # docstring) -- a reader joins via idempotency_token to the PreparedReceipt instead,
+    # exactly as receipts.py's own _validate_final_grant_id already does internally.
     reloaded_final = store.get_final("idemp-fresh-lens1")
     assert reloaded_final is not None
-    reloaded_blob = repr(reloaded_final.to_dict())
-    assert admission_digest not in reloaded_blob and admission_receipt_id not in reloaded_blob, (
-        "FRESH LENS 1: even reloading the FinalReceipt fresh from the durable store carries "
-        "no admission identity -- confirms this is a property of the persisted artifact "
-        "itself, not merely the in-memory result object."
-    )
+    reloaded_final_blob = repr(reloaded_final.to_dict())
+    assert admission_digest not in reloaded_final_blob and admission_receipt_id not in reloaded_final_blob
 
 
 # ---------------------------------------------------------------------------

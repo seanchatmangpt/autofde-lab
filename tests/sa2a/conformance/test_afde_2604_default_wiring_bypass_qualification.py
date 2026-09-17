@@ -88,27 +88,39 @@ a survived mutation here is reported, not fixed):
     `candidate -> authority -> DO` path with zero code changes required and zero
     warning at construction time.
 
-  MUTATION DW-2 -- SURVIVED (real, NOT previously disclosed anywhere in the
-    architecture-fix session's own notes or in `sa2a/cli.py`'s own docstrings/module
-    comments). Calling the real, shipped `hook_reflex` function object directly
-    (bypassing Click's own parameter-binding) silently reproduces the exact
+  MUTATION DW-2 -- SURVIVED when first found (real, not previously disclosed
+    anywhere in the architecture-fix session's own notes or in `sa2a/cli.py`'s own
+    docstrings/module comments); DEFEATED as of a later closure pass (see below).
+    Calling the real, shipped `hook_reflex` function object directly (bypassing
+    Click's own parameter-binding) used to silently reproduce the exact
     `--skip-admission-check` permissive configuration, even though the caller never
-    named that flag, never passed anything truthy for it, and has no way to discover
+    named that flag, never passed anything truthy for it, and had no way to discover
     from `hook_reflex`'s own Python-level signature that omitting an argument here
-    means "skip the fence" rather than "use its documented default." This is
-    precisely "an opt-out flag that is easier to trigger than intended" -- it is
-    triggered by DOING NOTHING, on the exact production code path, for any caller
-    (a test helper, a notebook, a future FastAPI/MCP wrapper that imports Typer
-    command functions directly instead of shelling out to the CLI) that does not
-    happen to go through `typer.testing.CliRunner` or a real subprocess invocation of
-    the CLI.
+    meant "skip the fence" rather than "use its documented default." This was
+    precisely "an opt-out flag that is easier to trigger than intended" -- triggered
+    by DOING NOTHING, on the exact production code path, for any caller (a test
+    helper, a notebook, a future FastAPI/MCP wrapper that imports Typer command
+    functions directly instead of shelling out to the CLI) that does not happen to go
+    through `typer.testing.CliRunner` or a real subprocess invocation of the CLI.
 
-Both are exercised here as regression fixtures for visibility, not as claims that
-either was silently reintroduced by this session's fix -- DW-1 was already named by
-the architecture-fix session; DW-2 is a genuinely new finding from this session's own
-adversarial pass. Neither `boundary.py`, `reactive_loop.py`, nor `cli.py` was modified
-to chase these -- per this task's explicit instruction, a survived mutation is
-reported, not patched.
+DW-1 is exercised here as a regression fixture for visibility, not as a claim that it
+was silently reintroduced by any later session -- it was already named by the
+architecture-fix session, and it remains an intentional, disclosed scope boundary
+(flipping `ConsequenceBoundary`'s/`ReactiveSemanticLoop`'s own class-level defaults
+to secure-by-default is a real, wider breaking change affecting every existing
+library-level call site, not attempted here or anywhere else in this repo without
+an explicit decision to make it).
+
+DW-2 closure (later pass, this repo): `sa2a/cli.py`'s `hook_reflex` now resolves
+`skip_admission_check` defensively at the top of its body -- a non-`bool` value there
+can only be Click's own unsubstituted `OptionInfo` sentinel (a real CLI invocation, or
+any caller passing a real bool, is unaffected), and is resolved to the sentinel's own
+configured default (`False`) rather than trusted as truthy. This is a narrow,
+non-breaking bug fix, not the wider DW-1 default-flip: it makes "argument omitted"
+mean "use the documented secure default" for THIS one parameter, on THIS one function,
+regardless of call style -- it does not change `ConsequenceBoundary`'s or
+`ReactiveSemanticLoop`'s own class-level defaults, and does not close DW-1.
+`test_mutation_dw2_...` below now asserts the corrected, refused outcome.
 """
 
 from __future__ import annotations
@@ -235,21 +247,28 @@ def test_mutation_dw1_direct_library_construction_bypasses_admission_entirely(
 def test_mutation_dw2_calling_real_hook_reflex_function_directly_defaults_to_skip(
     tmp_path: Path, capsys
 ) -> None:
-    """Calling the REAL, shipped `autofde_lab.sa2a.cli.hook_reflex` function object
-    directly (never through `typer.testing.CliRunner`, never through Click's own CLI
-    dispatch) with every parameter supplied EXCEPT `skip_admission_check` silently
-    reproduces the fully permissive `--skip-admission-check` configuration -- because
-    `hook_reflex`'s own Python-level default for that parameter is a truthy
-    `typer.models.OptionInfo` sentinel object, not the literal `False` the CLI
-    substitutes only during real Click argument parsing.
+    """DEFEATED (closure pass): calling the REAL, shipped
+    `autofde_lab.sa2a.cli.hook_reflex` function object directly (never through
+    `typer.testing.CliRunner`, never through Click's own CLI dispatch), with every
+    parameter supplied EXCEPT `skip_admission_check`, now correctly enforces the
+    admission fence rather than silently reproducing `--skip-admission-check`.
+
+    `hook_reflex`'s own Python-level *signature default* for `skip_admission_check`
+    is still a truthy `typer.models.OptionInfo` sentinel (confirmed live below,
+    unchanged -- that premise was never the bug, and Typer's decorator machinery
+    still needs it for real CLI argument parsing to work); what changed is that the
+    function body now resolves a non-`bool` value defensively to the sentinel's own
+    configured default (`False`) instead of trusting `bool(OptionInfo(...))`
+    (always `True`).
     """
     import typer
 
     from autofde_lab.sa2a.cli import hook_reflex
 
-    # Confirm the load-bearing premise for this mutation, live, before relying on it:
-    # the function's OWN real default for skip_admission_check is a truthy sentinel,
-    # never the boolean False a CLI invocation would supply.
+    # The load-bearing premise for this mutation is still real and unchanged: the
+    # function's OWN signature default for skip_admission_check is a truthy
+    # sentinel, never the boolean False a CLI invocation would supply. The fix is in
+    # the function BODY's runtime resolution of that sentinel, not in the signature.
     import inspect
 
     sig = inspect.signature(hook_reflex)
@@ -260,10 +279,10 @@ def test_mutation_dw2_calling_real_hook_reflex_function_directly_defaults_to_ski
         f"the real default), got {raw_default!r} of type {type(raw_default)!r}."
     )
     assert bool(raw_default) is True, (
-        "Expected the OptionInfo sentinel to be truthy (bool(OptionInfo(...)) is True "
-        "for this typer version) -- this is exactly what flips `not "
-        "skip_admission_check` to False and `None if skip_admission_check else ...` "
-        "to None when hook_reflex is called directly without this argument."
+        "Expected the OptionInfo sentinel to still be truthy (bool(OptionInfo(...)) "
+        "is True for this typer version) -- confirming the fix works by resolving "
+        "the sentinel explicitly in the function body, not by relying on its "
+        "truthiness changing."
     )
 
     action_iri = "urn:action:freeze_credit"
@@ -293,10 +312,10 @@ def test_mutation_dw2_calling_real_hook_reflex_function_directly_defaults_to_ski
     assert payload["steps_count"] == 1, f"Unexpected trace shape: {payload!r}"
     receipt_states = payload["steps"][0]["receipt_states"]
 
-    # SURVIVED: real EXECUTED actuation with unrelated/unbound event content, reached
-    # purely by calling the real production function directly and omitting an
-    # argument the caller never knew existed -- not by passing --skip-admission-check.
-    assert receipt_states == ["EXECUTED"], (
-        "MUTATION DW-2 DEFEATED (unexpected -- would mean calling hook_reflex "
-        f"directly without skip_admission_check now refuses by default): {payload!r}"
+    # DEFEATED: the unrelated/unbound event content is now correctly REFUSED --
+    # calling the real production function directly and omitting an argument the
+    # caller never knew existed no longer silently opts out of the admission fence.
+    assert receipt_states == ["REFUSED"], (
+        "MUTATION DW-2 SURVIVED (regression -- calling hook_reflex directly without "
+        f"skip_admission_check reproduced the permissive path again): {payload!r}"
     )

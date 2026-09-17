@@ -5,6 +5,28 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
+Last update: **pass 37** (2026-09-17) — **AFDE-2604: 2 of 7 named-open adversarial
+gaps closed for real (DW-2, Lens 5 item 1), non-breaking, verified with real pytest
+runs — `.venv/bin/python -m pytest tests/sa2a/ tests/agent/` → 425 passed. DW-1,
+UE-2, UE-3, Lens 4's R1/R2/R3, and Lens 5 item 2 remain explicitly open; the
+breaking default-flip that would close several of them at once (`ConsequenceBoundary`/
+`ReactiveSemanticLoop`'s own class-level permissive defaults) was deliberately not
+attempted in this entry — see the next pass for that work.** DW-2: `sa2a/cli.py`'s
+`hook_reflex` now resolves a non-`bool` `skip_admission_check` (Click's own
+unsubstituted `typer.models.OptionInfo` sentinel, reachable only via a direct,
+non-CLI function call) to the sentinel's own configured `False` default instead of
+trusting `bool(OptionInfo(...))` (always `True`) — closes a real silent-opt-out bug
+with no CLI flag, no argument, and no caller intent to skip anything. Lens 5 item 1:
+`PreparedReceipt` gains an additive `admission_digest` field bound to the exact
+`AdmissionResult.digest` that gated the actuation; `brce/replay.py`'s independent
+digest-verification recomputation was updated in lockstep (a real, necessary
+consequence of changing `PreparedReceipt.digest`'s body — caught by running the full
+regression, not assumed safe from the field being additive). Both pinned adversarial
+tests (`test_mutation_dw2_...`, `test_fresh_lens_1_...`) updated fix-forward to
+assert the corrected, closed behavior rather than left describing the old bug. Full
+account: `docs/jira/v26.9.16/AFDE-2604-admission-fencing-local-closure.md`'s new
+2026-09-17 status block.
+
 Last update: **pass 36** (2026-09-17) — **Corrects pass 35 below, does not delete it.**
 Pass 35's grounding of the sa2a-v26.9.17 FOND/HDDL domain was built from this session's own
 paraphrase of the user's spec, not the user's literal text — the orchestrating Workflow prompt

@@ -557,6 +557,13 @@ class ConsequenceBoundary:
         # Zero Unreceipted Actuation: Must exist in durable store before calling self._actuator.actuate
         existing_prep = self._receipt_store.get_prepared(envelope.idempotency_token)
         if existing_prep is None:
+            # AFDE-2604 (durable admission-identity evidence, closure pass): binds the
+            # exact AdmissionResult that gated this actuation (when present) onto the
+            # durable receipt itself, rather than leaving admission as an unrecorded
+            # upstream fact this receipt only implicitly depended on.
+            admission_digest: str = "none"
+            if envelope.admission_result is not None and envelope.admission_result.digest:
+                admission_digest = envelope.admission_result.digest
             prepared_receipt = PreparedReceipt(
                 prepared_id=f"prep-{uuid.uuid4().hex[:12]}",
                 idempotency_token=envelope.idempotency_token,
@@ -567,6 +574,7 @@ class ConsequenceBoundary:
                 plan_digest=envelope.plan_digest,
                 artifact_digest=artifact_digest,
                 admitted_input_digest=admitted_input_digest,
+                admission_digest=admission_digest,
                 consequence_class=envelope.consequence_class,
                 parameters=envelope.parameters,
                 previous_receipt_digest=self._receipt_store.last_receipt_digest(),

@@ -1,5 +1,58 @@
 # AFDE-2604: local admission fencing — wire `AdmissionPipeline` as the mandatory predecessor of the local Authority/BRCE DO path
 
+- **Status (2026-09-17, closure pass — 2 of the 7 named-open gaps below closed for
+  real, remainder explicitly left open, no breaking default-flip attempted)**: this
+  pass closed **DW-2** (Lens 2) and **Lens 5 item (1)**, both real, narrow,
+  non-breaking bug fixes verified with real pytest runs. It explicitly did **NOT**
+  attempt **DW-1**, **UE-2/UE-3** (Lens 3), **Lens 4**'s R1/R2/R3, or **Lens 5 item
+  (2)** — all of those require either flipping `ConsequenceBoundary`'s/
+  `ReactiveSemanticLoop`'s own class-level default to secure-by-default (a real,
+  wide-blast-radius breaking change affecting every existing library-level call
+  site, not something to do silently without an explicit decision to make it) or
+  adding real concurrency-control machinery (`ReceiptStore` has no locking of any
+  kind today) disproportionate to this repo's demonstrated single-process,
+  synchronous usage pattern. Named here rather than silently left implying "closed":
+  - **DW-2 CLOSED**: `sa2a/cli.py`'s `hook_reflex` now resolves
+    `skip_admission_check` defensively — a non-`bool` value (Click's own
+    unsubstituted `OptionInfo` sentinel, reachable only when the function is called
+    directly, never through real CLI dispatch) resolves to the sentinel's own
+    configured default (`False`) instead of being trusted as truthy. Verified:
+    `test_mutation_dw2_calling_real_hook_reflex_function_directly_defaults_to_skip`
+    (updated, fix-forward, to assert the corrected `REFUSED` outcome instead of the
+    formerly-documented `EXECUTED` survival) now passes.
+  - **Lens 5 item (1) CLOSED**: `PreparedReceipt` gains a new `admission_digest`
+    field (default `"none"`, additive), bound to the exact
+    `AdmissionResult.digest` that gated the actuation via
+    `_enforce_admission_gate()`/`execute_admitted()`, wherever an admission was
+    presented. `brce/replay.py`'s independent digest-verification recomputation
+    (the one that reads durable JSON with zero in-process trust, per
+    `no-dual-bookkeeping.md`'s crown threshold) was updated to include the new
+    field in its own recomputed body, or every real receipt would have started
+    failing replay verification the moment the digest formula changed — caught by
+    running the full regression suite before considering this closed, not assumed
+    safe from the additive field alone. Named honestly, narrower than a hypothetical
+    full fix: only `AdmissionResult.digest` is bound, not
+    `admission.receipt.receipt_id` (a separate, narrower internal label) — and
+    `FinalReceipt` still carries no admission identity of its own (a reader joins
+    via `idempotency_token` to the `PreparedReceipt`, the same join
+    `receipts.py`'s own `_validate_final_grant_id` already performs internally).
+    Verified: `test_fresh_lens_1_receipt_carries_no_admission_identity_edge`
+    (updated, fix-forward, to assert the closed shape) now passes; Lens 5 item (2)
+    (admission never binds `parameters`) is untouched and remains open.
+  - **Local execution, this pass**: `.venv/bin/python -m pytest tests/sa2a/ -v` →
+    **332 passed**, 0 failed, 0 errors. `grep -rn
+    "unittest.mock\|Mock(\|MagicMock\|patch(\|monkeypatch" src/autofde_lab/sa2a/brce/
+    tests/sa2a/conformance/test_afde_2604_fresh_lens_admission_gaps.py
+    tests/sa2a/conformance/test_afde_2604_default_wiring_bypass_qualification.py
+    src/autofde_lab/sa2a/cli.py` → only docstring mentions naming the discipline,
+    zero actual usage.
+  - **Overall ticket standing, restated**: still `PARTIAL_ALIVE`. Two real, narrow
+    gaps closed this pass; DW-1, UE-2, UE-3, R1, R2, R3, and Lens 5 item (2) remain
+    open, exactly as the 2026-09-16 status below already named them — this pass
+    does not upgrade the ticket to `ALIVE`, and the breaking-default-flip question
+    (the one change that would close DW-1/UE-2/UE-3/R1 at once) remains an explicit,
+    undecided architecture choice, not silently deferred.
+
 - **Status (2026-09-16, this session — 5-lens adversarial qualification round on top of
   the architecture fix)**: the architecture fix described below (relational binding via
   `_admission_covers_action_target()`, unified enforcement via `require_admission`/
