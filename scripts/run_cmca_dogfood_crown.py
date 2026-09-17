@@ -56,8 +56,7 @@ def main() -> int:
         )
         print(f"Compiled experience rules: {result.compiled_experience_rules}")
         print(
-            "Replay inference avoidance: "
-            f"{result.replay_inference_avoidance_rate:.0%}"
+            f"Replay inference avoidance: {result.replay_inference_avoidance_rate:.0%}"
         )
         print(f"Crown receipt: {result.crown_receipt_hash}")
         print(f"Standing: {result.standing}")
