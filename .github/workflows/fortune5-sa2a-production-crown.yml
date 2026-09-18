@@ -46,7 +46,7 @@ jobs:
           python-version: ${{ matrix.python }}
 
       - name: Install bounded test capsule
-        run: python -m pip install "pytest==8.4.2"
+        run: python -m pip install "pytest==8.4.2" "rdflib==7.2.1"
 
       - name: Execute real Chicago production-system court
         env:
