@@ -5,6 +5,62 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
+Last update: **pass 43** (2026-09-17) — **AFDE-2613: "ultracode implement all
+then validate ALIVE using act and kind."** Closes all 4 remaining pass-42
+`PARTIAL_ALIVE` items via a 2-agent file-disjoint parallel workflow: real
+`DiscoveryRouter` wired into `crown`/`episode1` (replacing the hardcoded
+`discover()` callable); a real fresh-instance candidate `generator.py` (not an
+LLM call — deterministic structural substitution, pinned by real tests
+including one against a real `KnownRouteRegistry.lookup()`); a standalone
+`CompositionReceipt` dataclass, independently digest-sensitive to both
+episodes' final-receipt/OCEL digests (confirmed via two independent `crown`
+runs: identical `composition_digest`, genuinely different
+`composition_receipt_digest`); and 14 real Chicago-court gate methods (5
+`ConsequenceCourt` + 9 `AuthorityCourt`) now invoked directly by `ReleaseRun`,
+plus a real 7-falsifier corpus (`falsifier_corpus.py`) with a demonstrated,
+tested ability to genuinely detect a survived falsifier (not hardcoded to
+always pass). All 5 headline claims independently re-verified by the
+orchestrator via a real `crown` CLI invocation and direct `grep` against
+`release/run.py`'s actual method calls — not trusted from either agent's
+self-report. `tests/sa2a/ tests/agent/` → **578 passed, 0 failed** (up from
+533). Mock-grep clean.
+**Corrected one agent's own report**: Agent 1 reported ARD-64 items 7/8
+(prove-routes-through-KNOWN, positively-execute-known-route) as
+`STILL_MISSING` from its own limited fresh-agent context (no access to the
+literal PRD/ARD text, which exists only as a conversation paste, not a repo
+file); both were already `ALIVE` per the pass-42 audit and independently
+re-confirmed this session directly against `episode2.py:108`/`:131` — the
+agent's report does not stand.
+**`kind` (Kubernetes-in-Docker): confirmed not applicable** — zero k8s
+dependency anywhere in `sa2a/` (`grep` confirmed every "kind" match is the
+generic `EnvelopeKind`/`NodeKind` discriminator-field convention); `kind` is
+real and used elsewhere in this repo's CI (`sregym-kind-live.yml`) but
+exclusively for the unrelated SREGym gym subsystem. Also ruled out
+`life-autonomic-case-study.yml`'s "Exact-head Chicago case study" job by
+reading it directly — unrelated subsystem, "Chicago" used generically.
+**`act`: genuinely attempted, `BLOCKED:ACT_CONTAINER_START_HANG`, real and
+reproduced 3 times** (default flags, `--pull=false`, `--container-architecture
+linux/amd64` + `--pull=false` — all hang indefinitely at `Start image=...`
+before container creation, 180s timeout each). Diagnosed, not assumed: a
+direct `docker pull` of the same tag resolved instantly (image already
+cached, 1.72GB) and a direct `docker run --rm` of the same image against the
+same `colima` daemon started and exited correctly in under a second — so the
+hang is specific to `act`'s own container-orchestration path on this
+colima/Apple-Virtualization-Framework/virtiofs setup, not Docker, not the
+image, not the network. Same class of real local-`act` friction `~/ash_a2a`
+already discloses in its own `bin/ci-local.sh` (different mechanism: theirs
+is post-container-start Elixir/OTP toolchain failure; this is `act` never
+starting the container at all) — that repo's own documented fallback is a
+real hosted GitHub Actions run on the same SHA as the authoritative
+local-parity signal, which was not triggered here (`git push` is a
+permission-gated actuation, not exercised this pass). No CI job in this
+repo is narrowly scoped to `tests/sa2a/` alone in any case — `ci.yml`'s only
+job reaching `tests/sa2a/` (`integration`) would fail on the already-known,
+unrelated ray/GNN breakage first, under `set -euo pipefail`, before ever
+reaching the sa2a step. Full account (all sections):
+`docs/jira/v26.9.17/AFDE-2613-machine-experience-episode-core.md` §10. No tag
+created, nothing pushed.
+
 Last update: **pass 42** (2026-09-17) — **AFDE-2613: tag-readiness audit — NOT
 ready to tag `v26.9.17` as product-complete, 2 real bugs found and fixed.** User
 asked "is this ready to tag? You can use ash_a2a as a chicago test oracle." A

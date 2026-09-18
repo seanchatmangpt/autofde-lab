@@ -210,16 +210,27 @@ demonstrated semantic class. The following remain exactly as the audit found the
   **Still open** — `ReleaseRun`'s own `CHICAGO_RUNNING` stage (§8 below) adds a
   *fourth*, narrower real-replay-and-fresh-consumer check rather than collapsing the
   existing three; named explicitly, not silently implied as a consolidation.
+  **Update, 2026-09-17 tag-readiness closure pass (§10 below):** `ReleaseRun`
+  now also invokes 14 real gate methods across `ConsequenceCourt`/`AuthorityCourt`
+  directly (`CHICAGO_COURT_GATES_WIRED`) — the previously-named gap ("the
+  pre-existing 12-gate Chicago court was never wired into `ReleaseRun`") is closed,
+  but this is still a **fifth** real invocation path, not a consolidation of the
+  existing three/four. Consolidation itself **remains open.**
 - ~~**Release-level state machine** (PRD §12: `CREATED -> SUBJECT_FENCED -> ... ->
   CROWNED`) — `Episode`/`MachineExperience` each carry their own lifecycle; no
   release-scoped wrapper state machine was built.~~ **CLOSED, same-session
   continuation (§8 below):** `sa2a/release/state_machine.py`'s `ReleaseState` +
   `ReleaseRun` implement the exact PRD §12 sequence with typed exits, real transition
   validation (no skipped predecessor).
-- **Additional `Receipt` subtypes** (`AllocationReceipt`, `ManufacturingReceipt`,
+- ~~**Additional `Receipt` subtypes** (`AllocationReceipt`, `ManufacturingReceipt`,
   `QualificationReceipt`, `CompositionReceipt`, `VerificationReceipt` — ARD §30) — this
   pass's `qualification_receipt`/`receipt_id` fields are plain strings, not distinct
-  typed receipt classes. **Still open.**
+  typed receipt classes.~~ **PARTIALLY CLOSED, 2026-09-17 tag-readiness closure pass
+  (§10 below):** `CompositionReceipt` is now a real standalone dataclass
+  (`sa2a/composition/receipt.py`), independently digest-sensitive to both episodes'
+  final-receipt and OCEL digests. `AllocationReceipt`/`ManufacturingReceipt`/
+  `QualificationReceipt`/`VerificationReceipt` remain plain fields, not distinct
+  typed classes. **Still open for the other 4.**
 - **Mutation-vacuousness tooling** for the falsifier corpus (PRD §6.25's own meta-check)
   — not built. **Still open.**
 - **A general-purpose `DiscoveryRouter`-selectable CLI** for arbitrary semantic classes
@@ -524,6 +535,174 @@ Mock-grep across every file touched in both rounds (`composition/`, `release/`,
 QUALIFICATION pass — 470 itself already included the earlier Round A fixes' 8
 tests; delta of 61 real new tests from Round B alone). `py_compile` unaffected;
 `ruff` remains `UNSUPPORTED` in this environment.
+
+## 10. 2026-09-17 tag-readiness closure pass ("ultracode implement all then validate ALIVE using act and kind")
+
+Continuation of the tag-readiness audit committed at `36eb50da` (that commit closed
+2 undocumented bugs found by the audit; this pass closes the audit's remaining
+5 PRD §14 + 3 ARD §64 `PARTIAL_ALIVE` items, all pre-scoped and named — never
+`MISSING`, always "mechanism real, demonstrated release candidate doesn't fully
+carry it yet"). Per the same audit (`commit-msg-tag-readiness.txt`, superseded by
+this section — kept on disk as raw audit evidence, not restated verbatim here):
+
+1. `crown` used a hardcoded `discover()` callable instead of the already-built,
+   Chicago-tested `DiscoveryRouter`.
+2. The pre-existing 12-gate Chicago court (`ConsequenceCourt`/`AuthorityCourt`) was
+   never invoked by `ReleaseRun`.
+3. No standalone `CompositionReceipt`/`ManufacturingReceipt` type existed — digests
+   were plain fields inside a combined JSON blob, not an independently verifiable
+   receipt object.
+4. No real fresh-instance *generator* existed for Episode 2's candidate — only an
+   equivalence *checker* (`episode/equivalence.py`).
+
+### 2-agent parallel workflow (`wf_wzw3ryfpi`-lineage, file-disjoint ownership, 0 errors)
+
+**Agent 1 (`discoveryAndGenerator`)** — `sa2a/episode/generator.py` (new):
+`generate_fresh_equivalent_candidate()`, a real deterministic structural
+substitution over an 8-entry subject pool (module docstring states explicitly: not
+an LLM call). `cli.py`'s `crown`/`episode1` commands now construct a real
+`DiscoveryRouter` with 2 real `DiscoveryEngine`s and pass it as
+`discovery_router=` to `Episode1Runner.run()`, replacing the hardcoded `discover()`
+callable. 12 new tests (`tests/sa2a/episode/test_generator_chicago.py`,
+`tests/sa2a/test_discovery_router_chicago.py` additions).
+
+**Agent 2 (`receiptChicagoFalsifiers`)** — `sa2a/composition/receipt.py` (new):
+`CompositionReceipt` dataclass + `build_composition_receipt()`, digest-sensitive to
+both episodes' final-receipt and OCEL digests independently of the shared
+`composition_digest`. `sa2a/admission/falsifier_corpus.py` (new):
+`run_falsifier_corpus()` composing the real 5-falsifier `FalsifierSuite` (5
+adversarial RDF fixtures) + 2 real `SubjectResolver` checks = 7 mandatory
+falsifiers, returning a `FalsifierCorpusVerdict` with a real `corpus_digest` and
+`survived_falsifier_ids`. `release/run.py`'s `CHICAGO_RUNNING` stage extended to
+call 14 real gate methods across 2 of the 6 real court classes (5 from
+`ConsequenceCourt`, 9 from `AuthorityCourt`) via `ReleaseRun.CHICAGO_COURT_GATES_WIRED`
+— composed by direct method call per ARD §50 ("crown = orchestration only, no
+duplicated semantic logic"), never reimplemented. A second registry,
+`CHICAGO_COURT_GATES_NOT_APPLICABLE`, names exactly why `IdentityCourt` (its git-SHA
+check would falsely `NONCONFORMANT` the demo's synthetic `"a"*40` fixture SHA
+against this checkout's real HEAD), `AdmissionCourt` (reused separately via the
+falsifier-corpus work instead), `LogicHookCourt`, and `ReplayCourt`'s own
+court-wrapper (its `__init__` always constructs a real `AuthorityBroker` that
+can't reproduce this crown's deliberate grant-id skip-semantics) were judged
+not-applicable — each with a real, source-verified reason, not a guess.
+
+### Independent re-verification (orchestrator, not the agents' self-report)
+
+- `tests/sa2a/ tests/agent/` — **578 passed, 0 failed** (up from 533 at the audit
+  commit). Mock-grep across all 10 touched/created files — zero matches.
+- A standalone script invoking the real `crown` CLI (`typer.testing.CliRunner`)
+  confirmed all 5 new claims live in one real run: `discovery_routing.
+  exact_reusable_machinery_selected: true` (not the fallback engine);
+  `episode2_generated_candidate` genuinely differs from the seed
+  (`candidate_id`/`proposed_assertion`/`source_identity` all distinct, topic token
+  preserved); `composition_receipt` present with a real computed
+  `composition_receipt_digest`; `falsifier_corpus.all_mandatory_caught: true`,
+  `survived_falsifier_ids: []`; all 14 `chicago_court_gates` entries `true`.
+- Ran `crown` twice independently: `composition_digest` identical across both runs,
+  `composition_receipt_digest` genuinely different (`457c095e...` vs
+  `0b8040d8...`) — the receipt is sensitive to per-run episode digests, not just
+  the shared composition identity, confirmed by observation rather than by
+  construction.
+- `grep`-confirmed `release/run.py` contains 14 real `.audit_*`/`.verify_*` method
+  calls against `ConsequenceCourt()`/`AuthorityCourt()` instances matching the 14
+  reported gate IDs exactly — not fabricated booleans.
+- `tests/sa2a/test_falsifier_corpus_chicago.py::test_all_mandatory_caught_is_false_when_any_trial_survived`
+  independently confirmed the corpus can genuinely detect and report a survived
+  falsifier (`assert verdict.survived_falsifier_ids == ("B",)`) — not hardcoded to
+  always pass.
+
+**Scope decision, named not silently dropped**: `cli.py`'s pre-existing hardcoded
+manifest field `falsifier_corpus_digest: "d" * 64` is deliberately not
+cross-validated against the new `compute_falsifier_corpus_digest()`'s real value —
+different identities (a declared corpus-revision claim on `ExactSubject` vs. this
+runner's own real corpus-content digest). Left open for a future pass.
+
+### Correction to Agent 1's own report (orchestrator finding, not an agent finding)
+
+Agent 1 reported ARD-64 items 7 ("prove instance routes through KNOWN") and 8
+("positively execute the known route") as `STILL_MISSING`, reasoning honestly from
+its own context limits — a fresh agent has no access to the literal PRD/ARD text,
+which exists only as a conversation paste, never a repo file. That report does not
+hold: both items were already scored `ALIVE` in the tag-readiness audit that
+produced `36eb50da`, and this session independently re-confirmed it directly
+against current source — `episode/episode2.py:108`
+(`self.routes.lookup(semantic_class_id, fresh_candidate)`, a real
+`KnownRouteRegistry.lookup()` call classifying KNOWN) and `episode2.py:131`
+(`artifact.evaluate(probe_input)`, real positive execution via
+`ConsequenceBoundary`). Recorded here so the agent's `STILL_MISSING` report does
+not stand uncorrected.
+
+### `act`/`kind` validation ("validate ALIVE using act and kind")
+
+Per instruction: use each tool "where it genuinely applies," report honestly if
+either doesn't, rather than forcing a use for it.
+
+**`kind`** (Kubernetes-in-Docker) — **does not apply**. `grep -rn
+"kubernetes|k8s|kind_cluster|KindCluster" src/autofde_lab/sa2a/ tests/sa2a/`: every
+match is the generic `EnvelopeKind`/`NodeKind`/`ValidatorKind`/`kh:kind`
+discriminator-field naming convention, zero Kubernetes usage. `kind` is real and
+used elsewhere in this repo's own CI (`.github/workflows/sregym-kind-live.yml`,
+confirmed: downloads its own `kind` binary and drives a disposable cluster via
+`kind/setup_kind_cluster.sh`), but exclusively for the unrelated SREGym gym
+subsystem — nothing built in this pass, or anywhere in `sa2a/`, has a k8s
+dependency. Also checked and ruled out: `.github/workflows/
+life-autonomic-case-study.yml`'s job is literally named "Exact-head Chicago case
+study" (`act -l | grep -i chicago` surfaces it) — read directly, it is scoped to
+`src/autofde_lab/agent/life_autonomic_case_study.py` and gymact/wasm4pm-compat SHA
+pins, using "Chicago" as this repo's generic testing-style term, not a reference to
+v26.9.17 sa2a.
+
+**`act`** (local GitHub Actions runner) — genuinely applicable, and run. No
+existing CI job is narrowly scoped to `tests/sa2a/` alone: `.github/workflows/
+ci.yml`'s only job that ever reaches `tests/sa2a/` is `integration`, via a broad
+final catch-all step preceded, under `set -euo pipefail`, by `pytest -vv
+tests/solvers/python` — the already-documented-broken ray/GNN suite — so running
+that job through `act` would reproduce a known, unrelated, pre-existing failure
+before ever reaching sa2a, not provide new signal. Instead, a scratch,
+never-committed workflow (`act-sa2a-validate.yml`, kept only in the session
+scratchpad) was authored: real `actions/checkout` + `actions/setup-python@5` +
+sa2a's actual runtime deps (`pydantic`, `typer`, `rdflib`, `pytest`, no heavy
+`--extra=all` matrix) + `pytest tests/sa2a/ -q`, run via `act workflow_dispatch -W
+<scratch-path> -P ubuntu-latest=catthehacker/ubuntu:act-latest` against the
+`colima` Docker context (confirmed live, native `linux/aarch64` — this machine's
+own architecture, so no `--container-architecture linux/amd64` emulation was
+needed, unlike `~/ash_a2a`'s documented Elixir/OTP-specific arm64 limitation,
+which does not apply to this pure-Python package).
+
+**Result: `BLOCKED:ACT_CONTAINER_START_HANG`, real and reproduced, not
+forced/faked around.** The run hung indefinitely at `🚀 Start image=...` —
+before container creation, before the pytest step ever ran — with zero further
+log output. Diagnosed rather than assumed: `docker images` confirmed
+`catthehacker/ubuntu:act-latest` was already fully cached (1.72GB, pulled
+weeks earlier), ruling out an image-pull stall; a direct `docker pull` of the
+same tag resolved instantly (registry reachable, not a network problem); a
+direct `timeout 30 docker run --rm catthehacker/ubuntu:act-latest echo ...`
+against the same `colima` daemon **started and exited correctly in under a
+second** — ruling out Docker/colima/the image itself as the cause. The hang is
+specific to `act`'s own container-creation orchestration (which does more
+than a plain `docker run` — network setup, workflow/action cache bind-mounts,
+capability probing) against this machine's colima + Apple Virtualization
+Framework + virtiofs backend. Reproduced 3 times with different mitigations,
+each timed out at 180s with the identical `context canceled` /
+`Start image=...`-then-silence signature: (1) default flags: hung 15+ minutes
+before being killed; (2) `--pull=false` (image already local): still hung;
+(3) `--container-architecture linux/amd64` (ash_a2a's own documented
+workaround) + `--pull=false`: still hung. This is a real, disclosed local
+`act` limitation on this machine — in the same class as `~/ash_a2a`'s own
+documented local-`act` friction (real friction exists on this machine class
+using `act`), though the specific mechanism differs (ash_a2a: an in-container
+Elixir/OTP toolchain failure after the container starts; here: `act` itself
+never gets the container started at all). Per `~/ash_a2a`'s own script
+comment, the correct fallback is the same one that repo already names: treat
+a real hosted GitHub Actions run on the same SHA as the authoritative
+local-parity signal, not a forced local workaround. No hosted run was
+triggered here — triggering CI is a `git push`-adjacent actuation gated by
+`.claude/rules/actuation-boundary.md`, and this pass did not push.
+
+### Verification
+
+`tests/sa2a/ tests/agent/` → 578 passed, 0 failed. Mock-grep clean. `py_compile`
+clean on all touched/created files.
 
 ## See also
 

@@ -6,6 +6,10 @@ engine callables. Zero mocks.
 
 from __future__ import annotations
 
+import json
+
+from typer.testing import CliRunner
+
 from autofde_lab.sa2a.unknown.resolution import CandidateResolution, UnknownQuery
 from autofde_lab.sa2a.unknown.router import DiscoveryEngine, DiscoveryEngineKind, DiscoveryRouter
 
@@ -141,3 +145,67 @@ def test_wrong_type_return_never_reaches_episode1runner_as_a_fake_candidate(tmp_
     )
     assert result.episode.classification == "UNKNOWN"
     assert result.machine_experience.refusal_code == "REFUSED_NO_DISCOVERY_ENGINE_PRODUCED_CANDIDATE"
+
+
+def test_cli_requires_port_router_prefers_exact_machinery_for_the_demonstrated_query() -> None:
+    """PRD §14 item 6 ('actual discovery execution'): `cli.py`'s real
+    `_build_requires_port_discovery_router()` (2 engines, 2 precedence tiers) must
+    select `EXACT_REUSABLE_MACHINERY` for the demonstrated `requires-port` query --
+    the `GENERAL_EXPLORATORY_INTELLIGENCE` fallback must never even be invoked,
+    proven by the real invocation log `route()` produces, not by construction."""
+    from autofde_lab.sa2a.cli import _build_requires_port_discovery_router
+
+    router, invocation_log = _build_requires_port_discovery_router()
+    result = router.route(UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"))
+
+    assert result.selected_engine_id == "exact-port-probe"
+    assert result.selected_kind == DiscoveryEngineKind.EXACT_REUSABLE_MACHINERY
+    assert not result.used_general_exploratory_intelligence
+    assert invocation_log == ["exact-port-probe"], "general fallback must not be invoked when exact machinery answers"
+
+
+def test_cli_requires_port_router_falls_back_to_general_for_an_unrecognized_topic() -> None:
+    """The same router genuinely falls through to GENERAL_EXPLORATORY_INTELLIGENCE
+    for a query the exact engine does not recognize -- proving the exact engine's
+    'not this one' answer is a real decision (returns None), not a stub that always
+    matches."""
+    from autofde_lab.sa2a.cli import _build_requires_port_discovery_router
+
+    router, invocation_log = _build_requires_port_discovery_router()
+    result = router.route(UnknownQuery(query_id="q-2", predicate_or_topic="service:x requires-replication-factor"))
+
+    assert result.selected_engine_id == "general-exploratory-fallback"
+    assert result.selected_kind == DiscoveryEngineKind.GENERAL_EXPLORATORY_INTELLIGENCE
+    assert invocation_log == ["exact-port-probe", "general-exploratory-fallback"]
+
+
+def test_crown_cli_command_actually_selects_exact_machinery_not_the_fallback(tmp_path) -> None:
+    """End-to-end, real CLI invocation (typer.testing.CliRunner, matching this
+    repo's existing test convention): the `crown` command's receipt carries the
+    real discovery-routing proof, and the demonstrated query resolves through
+    EXACT_REUSABLE_MACHINERY only."""
+    from autofde_lab.sa2a.cli import app
+
+    result = CliRunner().invoke(app, ["crown", "--work-dir", str(tmp_path / "crown")])
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["standing"] == "CROWNED"
+    assert payload["discovery_routing"]["engines_invoked"] == ["exact-port-probe"]
+    assert payload["discovery_routing"]["exact_reusable_machinery_selected"] is True
+    # Episode 2's candidate is machine-generated (ARD §64 item 6), not a second
+    # hand-typed literal -- distinct from Episode 1's seed candidate_id.
+    assert payload["episode2_generated_candidate"]["candidate_id"] != "cand-ep1"
+    assert payload["episode2_generated_candidate"]["generated_from_seed_candidate_id"] == "cand-ep1"
+
+
+def test_episode1_cli_command_actually_selects_exact_machinery_not_the_fallback(tmp_path) -> None:
+    """Same real-CLI proof for the standalone `episode1` command, which the audit
+    named as sharing the crown fixture's hardcoded-discover pattern."""
+    from autofde_lab.sa2a.cli import app
+
+    result = CliRunner().invoke(app, ["episode1", "--work-dir", str(tmp_path / "ep1")])
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["classification"] == "KNOWN"
+    assert payload["discovery_routing"]["engines_invoked"] == ["exact-port-probe"]
+    assert payload["discovery_routing"]["exact_reusable_machinery_selected"] is True
