@@ -18,18 +18,6 @@ given receipt, admission, or actuation semantics. Actuation runs through
 OpenClaw, never through BRCE (which belongs to other systems in the
 portfolio and has no role here).
 
-## Canonical flow
-
-```text
-parse -> route -> admit/refuse -> diagnose/repair -> construct -> bounded transition -> receipt -> replay -> standing
-```
-
-Planning and world transition are separated by explicit authority, not by
-pretending the laboratory never executes. GymAct may perform constrained
-benchmark/rehearsal transitions when the episode carries the required
-authority. That authority is scoped to the admitted subject and does not
-imply production authority.
-
 The same law applies to gyms. `vendor/gyms/` (sregym, devops-gym,
 enterprisebench, ...) are real, exact-pinned vendored checkouts for
 **reference only** — read their source, cite it, audit/materialize their
@@ -41,12 +29,6 @@ goes through it. See `.claude/rules/gym-actuation-boundary.md`.
 Repository: https://github.com/seanchatmangpt/autofde-lab | Upstream:
 https://github.com/airbus/scikit-decide | Docs:
 https://airbus.github.io/scikit-decide/
-
-Check `docs/KNOWN_FACTS.md` before re-implementing domain-construction fallback
-logic, re-deriving the actuation boundary, or manually re-running a "diff two
-runs" idempotency check — read it first, verify against its cited pointer if you
-need more, and add a dated entry if you learn something new that cost real
-re-derivation time.
 
 ## Always in force
 
@@ -149,68 +131,12 @@ page, so they stay inline.
    documentation: a false ecosystem claim was made in this repo's history
    from a search that had simply never looked at one of the repositories.
 
-## Invariants
-
-- Preserve reversible possibilities before irreversible selection.
-- Planner != policy != role != agent.
-- SELECT != CONSTRUCT != DO.
-- Raw input, planner/model output, proofs, hooks, and generated artifacts have no ambient execution authority.
-- Hooks manufacture intents; they do not directly perform world transitions.
-- A transition request may be typed `REFUSED`.
-- Acknowledgement != observed effect != verification != score.
-- `UNKNOWN` is not admitted fact; `UNSUPPORTED` is not `REFUSED`.
-- `ALIVE` requires observed execution against the exact admitted subject and the required verifier.
-- Generated projections are regenerated from canonical sources rather than hand-edited.
-
-## Planner federation
-
-Treat the planner catalog as a league. A planner supplies an algorithm. A role supplies objectives, observation/action projections, constraints, information partitions, costs, termination, and authority. A policy is an admitted composition of those elements.
-
-An LLM can be a compiler or novelty oracle at a boundary; it is not automatically the planner, player, policy, role, or authority source.
-
-## Evidence
-
-Use `UNKNOWN`, `PARTIAL_ALIVE`, `ALIVE`, `BLOCKED`, `BUILD_BROKEN`, `UNSUPPORTED`, and typed `REFUSED`. Track observed, admitted, executed, changed, verified, inferred, refused, blocked, and unsupported separately.
-
-Inspection is not execution. A workflow definition is not a successful run. A connector object is not a mounted tree. A named receipt is not automatically a valid receipt.
-
-## Source authority
-
-Respect ontology/ggen ownership. Where RDF, queries, and templates are
-canonical, ggen renders projections. Generated trees are not independent
-editing surfaces.
-
 ## Build
 
 `uv sync --extra=all -v`; `pre-commit run --all-files`.
 Python 3.10+ per `pyproject.toml`; the verified working dev environment is
 3.13.9 — treat 3.13 as current, not merely supported. CMake/C++20/pybind11
-for the compiled extension. The `cpp/sdk/*` git submodules (nng, pybind11,
-backward-cpp, json, PEGTL, spdlog, Catch2, nngpp) no longer need a manual
-`git submodule update --init --recursive` before this command: `cpp/CMakeLists.txt`
-auto-initializes them at configure time if missing, so `uv sync --extra=all -v`
-alone is sufficient from a fresh, submodule-uninitialized clone or worktree.
-`vendor/gyms/*` submodules are unaffected (reference-only, `update = none`,
-never required by the build).
-
-**Known first-sync race on a genuinely fresh clone: retry once, don't
-loop.** On a from-scratch clone (no prior `.venv`, no cached `uv.lock`
-resolution), the *first* `uv sync --extra=all` can fail with
-`AssertionError: Metadata mismatch in METADATA` raised from inside
-scikit-build-core. Root cause: `uv` rewrites `uv.lock` in place during that
-first sync (the lock has no cached resolution yet), and this repo's own
-package version is computed from git's VCS dirty-bit twice during that same
-sync (once for the sdist metadata, once for the wheel build) — the `uv.lock`
-rewrite flips the working tree from clean to dirty between those two
-computations, so the two metadata blocks disagree and scikit-build-core's
-consistency assertion trips. An immediately repeated, identical `uv sync
---extra=all` always succeeds, because `uv.lock` is now stable and the
-dirty-bit no longer flips mid-run. This is a real, reproducible one-time
-race (confirmed on two separate fresh clones), not flaky infra — if the
-first `uv sync --extra=all -v` fails with that exact assertion, re-run the
-same command once before treating it as a real failure. Do not paper over a
-*different* failure with a blind retry loop; this is a named, narrow
-exception for this specific error signature only.
+for the compiled extension.
 
 **Tests: use `.venv/bin/python -m pytest ...`, not `uv run pytest ...`.**
 `uv run` re-checks the native build on every invocation (a full CMake/Ninja
@@ -269,19 +195,6 @@ for a whole-suite check), **not** set as a `pyproject.toml` default — it's
 corrected history; re-verify before citing it, per that file's own
 instruction.
 
-## Verification
-
-Use the narrowest existing verifier first and expand as required: unit ->
-integration -> end-to-end -> chaos/stress/benchmark. Do not substitute
-queued CI, status metadata, mocks, or static inspection for requested
-execution evidence.
-
-## Documentation authority
-
-Current documentation starts at `docs/README.md`. The previous Markdown
-corpus is preserved under `archive/markdown/` as historical evidence.
-Historical wording remains auditable but is not present-tense authority.
-
 ## See also
 
 - `docs/ecosystem-standing.md` — cross-repository standing ledger: per-stage
@@ -298,9 +211,7 @@ Historical wording remains auditable but is not present-tense authority.
   `BLOCKED` — narrower than the standing law here; don't conflate them.
 - `docs/guide/chatman-clean-session.md` — `ChatmanCleanSessionDomain`;
   documents BRCE as the portfolio's actuation DO-boundary, not this repo's.
-- `docs/README.md` — the current documentation index (`docs/ARCHITECTURE.md`,
-  `docs/PLANNER_LEAGUE.md`, `docs/GYMACT.md`, `docs/STANDING.md`,
-  `docs/OPERATIONS.md`); the pre-2026-08-13 corpus is preserved under
-  `archive/markdown/` as historical evidence, not present-tense authority.
+- `docs/` (general) — explanation and projections; never an authority for
+  standing or proof claims.
 - `~/CLAUDE.md`, `~/.claude/CLAUDE.md`, `~/.claude/rules/*.md` — personal and
   global defaults that `.claude/rules/` restates in this repo's vocabulary.
