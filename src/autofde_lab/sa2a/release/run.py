@@ -209,6 +209,12 @@ class ReleaseRun:
         ep2 = runner2.run(
             semantic_class_id=semantic_class_id, fresh_candidate=episode2_fresh_candidate,
             probe_input=probe_input, action_iri=action_iri, target_resource=episode2_target_resource,
+            # Hardening (2026-09-17, tag-readiness audit): this call previously
+            # omitted exact_subject_digest even though Episode2Runner.run() accepts
+            # it -- confirmed live, Episode 2's own record carried "" while Episode
+            # 1's carried the real composition digest, weakening PRD §14 item 28
+            # ("one composition receipt binds the COMPLETE exact subject").
+            exact_subject_digest=exact_subject.composition_digest,
         )
         if ep2.episode.classification != "KNOWN" or not ep2.episode.frontier_clean:
             self._goto(ReleaseState.NONCONFORMANT)

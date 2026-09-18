@@ -5,6 +5,51 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
+Last update: **pass 42** (2026-09-17) — **AFDE-2613: tag-readiness audit — NOT
+ready to tag `v26.9.17` as product-complete, 2 real bugs found and fixed.** User
+asked "is this ready to tag? You can use ash_a2a as a chicago test oracle." A
+3-agent parallel workflow re-verified the current crown (HEAD `aafc64fc` at audit
+time) against the PRD's own literal §14 (28-item) acceptance criteria and the
+ARD's own literal §64 (16-item) Definition of Done — live-executed, not recalled:
+**PRD §14 = 23 ALIVE / 5 PARTIAL_ALIVE / 0 missing; ARD §64 = 13 ALIVE / 3
+PARTIAL_ALIVE / 0 missing.** Every PARTIAL_ALIVE item is a named, pre-scoped gap
+(crown demonstrates one hardcoded semantic class, not an arbitrary composition;
+the 12-gate Chicago court is never invoked by `ReleaseRun`; no standalone
+`CompositionReceipt`; no fresh-instance generator). Two **new, previously
+undocumented, real bugs** were found and independently confirmed by the
+orchestrator: `ReleaseRun.run()` never passed `exact_subject_digest=` to
+`Episode2Runner.run()` (Episode 1's record carried the real composition digest,
+Episode 2's silently carried `""` — weakens PRD item 28), and
+`Episode.manufacture_digest` was defined/serialized but had zero assignment
+sites anywhere in the codebase (weakens PRD item 12). Both fixed: `ReleaseRun`
+now threads the real digest through; both `Episode1Runner`/`Episode2Runner` now
+bind `manufacture_digest` to the real `CompiledDeterministicRule.fingerprint` they
+actually evaluate — live-verified via a real crown run (both episodes now carry
+the identical real digest, non-empty), 2 new regression tests. Also caught and
+corrected a doc drift (§8 claimed 5 tests for
+`test_discovery_router_chicago.py`; the real, live-collected count is 8).
+**`~/ash_a2a` confirmed real, accessible, and genuinely used as a cross-runtime
+oracle**: same input, both repos independently computed the identical
+`graph_hash` (`568886...`) while hosting the identical shared `praxis-graphlaw`
+WASM engine (SHA `187688d9...` matches on both sides) — real, zero-mock
+cross-runtime agreement, precisely scoped (proves execution-portability of the
+shared engine, not independent-rule correctness; no live integration exists yet
+at the authority/BRCE layer, which operates on a different domain on each side).
+**Independent blocker, unrelated to this work**: `.github/workflows/ci.yml`'s own
+committed comment states the tag-triggered ("Full qualification and release")
+workflow has been failing on `master` since 2026-09-13 (ray/GNN, SB3, pcre2,
+deterministic-quality failures) and is non-cancelable on tag pushes — pushing
+`v26.9.17` right now would kick off an already-red, un-cancelable job for
+reasons that have nothing to do with sa2a. No tag was created; nothing was
+pushed — both are permission-gated actuations per
+`.claude/rules/actuation-boundary.md`, and an unanswered `AskUserQuestion` does
+not constitute consent for either.
+`.venv/bin/python -m pytest tests/sa2a/ tests/agent/` -> **533 passed, 0
+failed** (up from 531). Mock-grep clean. Full account:
+`docs/jira/v26.9.17/AFDE-2613-machine-experience-episode-core.md` (fixes applied
+inline; a full tag-readiness section to follow if the user asks for one to be
+filed as its own dated section).
+
 Last update: **pass 41** (2026-09-17) — **AFDE-2613 QUALIFICATION pass ("ultracode
 harden, benchmark, stress test").** Two rounds against the pass-40 v26.9.17 crown
 code. Round A (direct): close reading found and fixed 5 real crash bugs where a

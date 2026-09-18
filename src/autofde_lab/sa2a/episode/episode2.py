@@ -176,12 +176,22 @@ class Episode2Runner:
         ocel_path = self.state_dir / f"{episode_id}.ocel2.json"
         self._tracer.export_ocel2_json(ocel_path)
 
+        # Hardening (2026-09-17, tag-readiness audit): same fix as episode1.py --
+        # bind Episode.manufacture_digest to the real artifact Episode 2 actually
+        # evaluated, rather than leaving it as a never-assigned empty string.
+        manufacture_digest = ""
+        if experience is not None and experience.compiled_artifact_ids:
+            manufactured_artifact = self.artifacts.get(experience.compiled_artifact_ids[0])
+            if manufactured_artifact is not None:
+                manufacture_digest = manufactured_artifact.fingerprint
+
         episode = Episode(
             episode_id=episode_id, kind=EpisodeKind.KNOWN_REPLAY,
             exact_subject_digest=exact_subject_digest, fixture_id=fixture_id,
             semantic_class_id=semantic_class_id, request_identity=request_identity,
             actuation_identity=actuation_identity, classification="KNOWN",
             route_executed=route_executed, required_postcondition_verified=success,
+            manufacture_digest=manufacture_digest,
             authority_grant_id=grant.grant_id if decision.authorized else None,
             prepared_receipt_digest=boundary_result.prepared_receipt.digest if boundary_result and boundary_result.prepared_receipt else "",
             final_receipt_digest=boundary_result.final_receipt.digest if boundary_result and boundary_result.final_receipt else "",

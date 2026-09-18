@@ -372,6 +372,18 @@ class Episode1Runner:
         ocel_path = self.state_dir / f"{episode_id}.ocel2.json"
         self._tracer.export_ocel2_json(ocel_path)
 
+        # Hardening (2026-09-17, tag-readiness audit): `Episode.manufacture_digest`
+        # (PRD §14 item 12 "real manufacture where required") was defined and
+        # serialized but never assigned anywhere -- confirmed live, every crown run
+        # emitted an empty string despite a real CompiledDeterministicRule genuinely
+        # being manufactured. Bind it to that artifact's own real fingerprint.
+        manufactured_artifact = (
+            self.artifacts.get(active_experience.compiled_artifact_ids[0])
+            if active_experience.compiled_artifact_ids
+            else None
+        )
+        manufacture_digest = manufactured_artifact.fingerprint if manufactured_artifact else ""
+
         episode = Episode(
             episode_id=episode_id, kind=EpisodeKind.UNKNOWN_DISCOVERY,
             exact_subject_digest=exact_subject_digest, fixture_id=fixture_id,
@@ -379,6 +391,7 @@ class Episode1Runner:
             actuation_identity=actuation_identity, classification="KNOWN" if boundary_result.success else "REFUSED",
             route_executed=boundary_result.success, required_postcondition_verified=boundary_result.success,
             plan_digest=active_experience.digest,
+            manufacture_digest=manufacture_digest,
             authority_grant_id=grant.grant_id,
             prepared_receipt_digest=boundary_result.prepared_receipt.digest if boundary_result.prepared_receipt else "",
             final_receipt_digest=boundary_result.final_receipt.digest if boundary_result.final_receipt else "",

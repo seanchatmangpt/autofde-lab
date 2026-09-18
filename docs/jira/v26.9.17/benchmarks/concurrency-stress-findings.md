@@ -10,19 +10,19 @@ Each thread constructs its OWN `Episode1Runner`/`Episode2Runner` (own `KnownRout
 
 | trial | duration_s | attempted_actuations | journal_records_on_disk | lost_journal_records | journal_parse_error |
 |---|---|---|---|---|---|
-| 0 | 0.055 | 13 | 4 | 9 | (none) |
-| 1 | 0.062 | 16 | 8 | 8 | (none) |
-| 2 | 0.053 | 14 | 5 | 9 | (none) |
-| 3 | 0.049 | 15 | 8 | 7 | (none) |
-| 4 | 0.032 | 13 | 5 | 8 | (none) |
+| 0 | 0.045 | 14 | 6 | 8 | (none) |
+| 1 | 0.041 | 14 | 6 | 8 | (none) |
+| 2 | 0.048 | 15 | 7 | 8 | (none) |
+| 3 | 0.041 | 14 | 7 | 7 | (none) |
+| 4 | 0.037 | 13 | 4 | 9 | (none) |
 
-**Real numbers across all 5 trials**: 71 total `boundary.execute()` calls that reached actuation (authority+admission passed, fresh idempotency token), 30 records actually present in the shared journal file afterward, **41 lost journal records** (5/5 trials showed at least one lost record).
+**Real numbers across all 5 trials**: 70 total `boundary.execute()` calls that reached actuation (authority+admission passed, fresh idempotency token), 30 records actually present in the shared journal file afterward, **40 lost journal records** (5/5 trials showed at least one lost record).
 
 **CONFIRMED, LIVE RACE**: `RealDiskJournalActuator.actuate()` (`src/autofde_lab/sa2a/conformance/courts/consequence_court.py`) performs an unsynchronized read-modify-write on the shared journal file: `records = json.loads(journal_path.read_text())` then `records.append(entry)` then atomic `os.replace()` of the whole file. The atomic `os.replace()` makes each INDIVIDUAL file write torn-write-safe (no partial/corrupt file is ever visible -- confirmed by `journal_parse_error` being empty in every trial above) but it does **not** make the READ-then-APPEND-then-WRITE sequence atomic as a whole. When two threads' `actuate()` calls interleave: both read the same N-record list, both independently append their own entry to their own in-memory copy, and whichever thread's `os.replace()` lands second silently overwrites the first thread's entry with a file that never contains it -- a classic lost-update race, invisible to both actuator calls (each returns `applied: True`, since neither ever inspects the other's write).
 
 **Consequence for correctness (not just availability)**: the LOST thread's own `IndependentDiskJournalVerifier.verify_postcondition()` call then reads the journal's `records[-1]` and finds a DIFFERENT thread's `action`/`target`/`payload_digest` there, so it correctly returns `False` -- the boundary reports `success=False` / `TerminalReceiptState.UNKNOWN_OUTCOME` for that thread's real, genuinely-happened actuation. This is fail-closed (no false `EXECUTED` was ever observed in these trials -- see the wrong-answer count below), but it is still a real defect: a durably-real disk mutation happened, and the system's own receipt for it reports a state that says it never verifiably happened, because the on-disk EVIDENCE of that mutation was overwritten by a concurrent writer before the verifier could observe it.
 
-**Per-episode outcome counts across 40 total thread-runs (5 trials x 8 threads)**: 31 reached Episode 1 KNOWN/EXECUTED; 9 attempted actuation but the boundary reported failure (the lost-journal-record consequence above, when nonzero); 0 raised an uncaught exception; 0 silent wrong-answer(s) (cross-episode receipt digest collision) observed.
+**Per-episode outcome counts across 40 total thread-runs (5 trials x 8 threads)**: 30 reached Episode 1 KNOWN/EXECUTED; 10 attempted actuation but the boundary reported failure (the lost-journal-record consequence above, when nonzero); 0 raised an uncaught exception; 0 silent wrong-answer(s) (cross-episode receipt digest collision) observed.
 
 ## 2. KnownRouteRegistry concurrent register_route()/lookup() stress
 

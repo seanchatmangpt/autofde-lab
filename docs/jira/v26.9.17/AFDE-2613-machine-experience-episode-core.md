@@ -293,7 +293,12 @@ src/autofde_lab/sa2a/cli.py   `crown` upgraded to run the real ReleaseRun state
 
 tests/sa2a/composition/test_subject_resolver_chicago.py    9 tests
 tests/sa2a/release/test_release_run_chicago.py               6 tests
-tests/sa2a/test_discovery_router_chicago.py                   5 tests
+tests/sa2a/test_discovery_router_chicago.py                   5 tests [CORRECTED 2026-09-17: real count
+                                                               is 8 -- 3 more tests were added to this
+                                                               file during the later §9 QUALIFICATION
+                                                               pass without this line being updated;
+                                                               caught by the tag-readiness audit's own
+                                                               `pytest --collect-only`, not self-reported]
 tests/sa2a/episode/test_episode_two_step_chicago.py           +3 tests (DiscoveryRouter integration)
 ```
 

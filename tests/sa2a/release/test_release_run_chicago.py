@@ -73,6 +73,34 @@ def test_full_crown_reaches_crowned_through_every_required_predecessor(tmp_path:
     assert result.fresh_consumer_standing is not None
     assert result.fresh_consumer_standing["verdict"] == "CONFORMANT_EVIDENCE_RECONSTRUCTED"
 
+
+def test_episode_2_receives_the_real_composition_digest_not_an_empty_string(tmp_path: Path) -> None:
+    """Regression (tag-readiness audit, 2026-09-17): ReleaseRun.run() used to omit
+    exact_subject_digest= on its Episode2Runner.run() call, even though
+    Episode2Runner.run() accepts it -- Episode 1's own record carried the real
+    composition digest while Episode 2's silently carried "". PRD §14 item 28
+    ("one composition receipt binds the COMPLETE exact subject") requires both."""
+    _, result = _run(tmp_path, _MANIFEST)
+    assert result.episode1 is not None and result.episode2 is not None
+    assert result.exact_subject is not None
+    assert result.episode1.episode.exact_subject_digest == result.exact_subject.composition_digest
+    assert result.episode2.episode.exact_subject_digest == result.exact_subject.composition_digest
+    assert result.episode2.episode.exact_subject_digest != ""
+
+
+def test_both_episodes_carry_a_real_manufacture_digest(tmp_path: Path) -> None:
+    """Regression (tag-readiness audit, 2026-09-17): Episode.manufacture_digest was
+    defined and serialized but had zero assignment sites anywhere -- every crown run
+    emitted an empty string for PRD §14 item 12 ("real manufacture where required")
+    despite a real CompiledDeterministicRule genuinely being manufactured and
+    evaluated by both episodes."""
+    _, result = _run(tmp_path, _MANIFEST)
+    assert result.episode1 is not None and result.episode2 is not None
+    assert result.episode1.episode.manufacture_digest != ""
+    assert result.episode2.episode.manufacture_digest != ""
+    # Both episodes evaluate the SAME compiled artifact Episode 1 manufactured.
+    assert result.episode1.episode.manufacture_digest == result.episode2.episode.manufacture_digest
+
     receipt = result.to_receipt()
     assert receipt["standing"] == "CROWNED"
     assert receipt["composition_digest"] == result.exact_subject.composition_digest
