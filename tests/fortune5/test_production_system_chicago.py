@@ -53,6 +53,7 @@ def test_world_generator_is_deterministic_and_general() -> None:
         assert len(first.services) == regions * templates
         assert len({service.service_id for service in first.services}) == len(first.services)
         assert all(not service.service_id.startswith("M") for service in first.services)
+        assert len(first.scenario_choices) == 14
 
 
 def test_formal_projection_is_deterministic_and_coherent() -> None:
@@ -215,3 +216,17 @@ def test_real_sa2a_core_refuses_content_unbound_to_exact_action_target() -> None
     assert not result.success
     assert result.refusal_code == REFUSED_ADMISSION_CONTENT_NOT_BOUND
     assert result.prepared_receipt is None
+
+
+def test_world_generator_rejects_non_catalog_coordinate() -> None:
+    try:
+        generate_world(
+            seed=23,
+            scale_profile="demo",
+            scenario_choices={"cloud": "not-a-cloud"},
+            horizon_rounds=12,
+        )
+    except ValueError as exc:
+        assert "REFUSED:UNKNOWN_OPTION:cloud:not-a-cloud" in str(exc)
+    else:
+        raise AssertionError("world generator admitted a non-catalog cloud option")
