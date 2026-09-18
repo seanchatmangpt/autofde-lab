@@ -8,6 +8,7 @@ from .artifacts import ArtifactStore, readiness_witness
 from .engine import ProductionSimulator, SimulationRun, run_simulation
 from .formal import FormalProjection, generate_formal_projection, verify_projection_coherence
 from .model import FaultEvent, SimulationSummary, WorldSpec
+from .native_sa2a import NativeSA2AExecution, execute_command_through_native_sa2a
 from .ocel import project_events_to_ocel2, verify_ocel2
 from .service import SimulationService
 from .world import SCALE_PROFILES, generate_world, with_faults
@@ -21,7 +22,9 @@ __all__ = [
     "SimulationRun",
     "SimulationService",
     "SimulationSummary",
+    "NativeSA2AExecution",
     "WorldSpec",
+    "execute_command_through_native_sa2a",
     "generate_formal_projection",
     "generate_world",
     "project_events_to_ocel2",
