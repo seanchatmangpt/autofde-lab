@@ -1,0 +1,90 @@
+name: Fortune-5 Semantic A2A production crown
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "src/autofde_lab/fortune5/production/**"
+      - "tests/fortune5/test_production_system_chicago.py"
+      - ".github/workflows/fortune5-sa2a-production-crown.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fortune5-sa2a-production-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  crown:
+    name: Exact-head Fortune-5 production simulation / Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Admit exact subject identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="${{ github.event.pull_request.head.sha || github.sha }}"
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$expected"
+          printf 'fortune5_sa2a_exact_head=%s\n' "$actual"
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install bounded test capsule
+        run: python -m pip install "pytest==8.4.2"
+
+      - name: Execute real Chicago production-system court
+        env:
+          PYTHONPATH: src
+        run: python -m pytest -vv tests/fortune5/test_production_system_chicago.py
+
+      - name: Execute Fortune-5 full-stack simulation
+        if: matrix.python == '3.12'
+        env:
+          PYTHONPATH: src
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/fortune5-sa2a
+          python -m autofde_lab.fortune5.production run \
+            --seed 7 \
+            --rounds 40 \
+            --scale fortune5 \
+            --artifacts artifacts/fortune5-sa2a \
+            | tee artifacts/fortune5-sa2a/crown.json
+          python -m json.tool artifacts/fortune5-sa2a/crown.json >/dev/null
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path("artifacts/fortune5-sa2a/crown.json").read_text())
+          assert p["ocel_court"]["ok"] is True, p["ocel_court"]
+          assert p["summary"]["unreconciled_actuations"] == 0
+          assert p["summary"]["authority_violations"] == 0
+          assert p["summary"]["duplicate_effects"] == 0
+          assert p["summary"]["known_route_hits"] > 0
+          assert p["readiness"]["technical_standing"] == "ALIVE", p["readiness"]
+          PY
+
+      - name: Retain crown evidence
+        if: always() && matrix.python == '3.12'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: fortune5-sa2a-production-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/fortune5-sa2a/
+          if-no-files-found: error
+          retention-days: 30
