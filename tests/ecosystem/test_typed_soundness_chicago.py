@@ -130,8 +130,30 @@ def test_toggle_switch_is_never_planned_twice(tmp_path):
         if eff is not None:
             assert eff.delta is None and eff.context_dependent, eff.describe()
         # And directly: applying the toggle twice returns its own switch.
+        #
+        # `toggles` is excluded from this equality on purpose, not loosened
+        # away: it is `switchboard`'s real, provider-side actuation counter
+        # (`self._toggles += 1` on every call, never reset -- see
+        # `gymact.gyms.switchboard.SwitchboardEnvironment.actuate`),
+        # genuinely monotonic and NOT self-inverse. That is exactly the
+        # asymmetry `typed_induction.py`'s self-inverse/derived-metric rule
+        # exists to keep: `required_on` (DERIVED from the booleans) must
+        # never carry a delta, while a real per-actuation counter like
+        # `toggles` legitimately does. Whole-dict equality here would demand
+        # the model make `toggles` self-inverse too, which is false of the
+        # real environment -- so the check is named and split: the switch
+        # itself returns exactly to its starting value, and `toggles`
+        # increases by exactly 2 (one per real toggle_switch actuation),
+        # never returning to its start.
         once = act.apply(initial)
-        assert act.apply(once) == initial, name
+        twice = act.apply(once)
+        without_toggles = lambda state: {k: v for k, v in state.items() if k != "toggles"}
+        assert without_toggles(twice) == without_toggles(initial), name
+        assert twice.get("toggles") == initial.get("toggles", 0) + 2, (
+            name,
+            twice.get("toggles"),
+            initial.get("toggles"),
+        )
 
 
 # ==========================================================================
