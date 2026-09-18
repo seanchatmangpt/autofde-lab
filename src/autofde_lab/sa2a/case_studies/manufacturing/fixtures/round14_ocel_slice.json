@@ -1,0 +1,329 @@
+{
+  "eventTypes": [
+    {
+      "attributes": [
+        {
+          "name": "below_target",
+          "type": "boolean"
+        },
+        {
+          "name": "uptime_fraction",
+          "type": "float"
+        }
+      ],
+      "name": "sosa:Observation"
+    },
+    {
+      "attributes": [
+        {
+          "name": "granted_energy_kwh",
+          "type": "float"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        },
+        {
+          "name": "remaining_budget_kwh",
+          "type": "float"
+        },
+        {
+          "name": "verdict",
+          "type": "string"
+        }
+      ],
+      "name": "odrl:Permission"
+    },
+    {
+      "attributes": [
+        {
+          "name": "applied",
+          "type": "boolean"
+        }
+      ],
+      "name": "sosa:Actuation"
+    }
+  ],
+  "events": [
+    {
+      "attributes": [
+        {
+          "name": "uptime_fraction",
+          "value": 0.8685264849458421
+        },
+        {
+          "name": "below_target",
+          "value": false
+        }
+      ],
+      "id": "obs-M1-r14",
+      "relationships": [
+        {
+          "objectId": "M1",
+          "qualifier": "sosa:hasFeatureOfInterest"
+        }
+      ],
+      "time": "1970-01-01T00:00:00.014000000Z",
+      "type": "sosa:Observation"
+    },
+    {
+      "attributes": [
+        {
+          "name": "uptime_fraction",
+          "value": 0.5780472940573389
+        },
+        {
+          "name": "below_target",
+          "value": false
+        }
+      ],
+      "id": "obs-M2-r14",
+      "relationships": [
+        {
+          "objectId": "M2",
+          "qualifier": "sosa:hasFeatureOfInterest"
+        }
+      ],
+      "time": "1970-01-01T00:00:00.014000001Z",
+      "type": "sosa:Observation"
+    },
+    {
+      "attributes": [
+        {
+          "name": "uptime_fraction",
+          "value": 0.4956005717840878
+        },
+        {
+          "name": "below_target",
+          "value": true
+        }
+      ],
+      "id": "obs-M3-r14",
+      "relationships": [
+        {
+          "objectId": "M3",
+          "qualifier": "sosa:hasFeatureOfInterest"
+        },
+        {
+          "objectId": "M3-r14-prop",
+          "qualifier": "prov:generated"
+        }
+      ],
+      "time": "1970-01-01T00:00:00.014000002Z",
+      "type": "sosa:Observation"
+    },
+    {
+      "attributes": [
+        {
+          "name": "uptime_fraction",
+          "value": 0.547539529392257
+        },
+        {
+          "name": "below_target",
+          "value": false
+        }
+      ],
+      "id": "obs-M4-r14",
+      "relationships": [
+        {
+          "objectId": "M4",
+          "qualifier": "sosa:hasFeatureOfInterest"
+        }
+      ],
+      "time": "1970-01-01T00:00:00.014000003Z",
+      "type": "sosa:Observation"
+    },
+    {
+      "attributes": [
+        {
+          "name": "verdict",
+          "value": "admitted"
+        },
+        {
+          "name": "granted_energy_kwh",
+          "value": 60.0
+        },
+        {
+          "name": "remaining_budget_kwh",
+          "value": 390.0
+        },
+        {
+          "name": "reason",
+          "value": "within budget and authority cap"
+        }
+      ],
+      "id": "evt-M3-r14-prop-decision",
+      "relationships": [
+        {
+          "objectId": "M3-r14-prop",
+          "qualifier": "prov:used"
+        },
+        {
+          "objectId": "M3",
+          "qualifier": "odrl:assignee"
+        }
+      ],
+      "time": "1970-01-01T00:00:00.014000000Z",
+      "type": "odrl:Permission"
+    },
+    {
+      "attributes": [
+        {
+          "name": "applied",
+          "value": true
+        }
+      ],
+      "id": "evt-actuation-M3-r14-prop",
+      "relationships": [
+        {
+          "objectId": "M3",
+          "qualifier": "sosa:actsOnProperty"
+        },
+        {
+          "objectId": "M3-r14-prop",
+          "qualifier": "prov:used"
+        },
+        {
+          "objectId": "receipt-M3-r14-prop",
+          "qualifier": "prov:generated"
+        }
+      ],
+      "time": "1970-01-01T00:00:00.014000000Z",
+      "type": "sosa:Actuation"
+    }
+  ],
+  "objectTypes": [
+    {
+      "attributes": [
+        {
+          "name": "duration_min",
+          "type": "float"
+        },
+        {
+          "name": "energy_kwh",
+          "type": "float"
+        }
+      ],
+      "name": "s4inma:ProductionEquipment"
+    },
+    {
+      "attributes": [],
+      "name": "prov:Plan"
+    },
+    {
+      "attributes": [
+        {
+          "name": "applied",
+          "type": "boolean"
+        },
+        {
+          "name": "post_state_hash",
+          "type": "string"
+        },
+        {
+          "name": "pre_state_hash",
+          "type": "string"
+        }
+      ],
+      "name": "Receipt"
+    }
+  ],
+  "objects": [
+    {
+      "attributes": [
+        {
+          "name": "duration_min",
+          "time": "1970-01-01T00:00:00.000000000Z",
+          "value": 20.0
+        },
+        {
+          "name": "energy_kwh",
+          "time": "1970-01-01T00:00:00.000000000Z",
+          "value": 100.0
+        }
+      ],
+      "id": "M1",
+      "relationships": [],
+      "type": "s4inma:ProductionEquipment"
+    },
+    {
+      "attributes": [
+        {
+          "name": "duration_min",
+          "time": "1970-01-01T00:00:00.000000000Z",
+          "value": 18.0
+        },
+        {
+          "name": "energy_kwh",
+          "time": "1970-01-01T00:00:00.000000000Z",
+          "value": 110.0
+        }
+      ],
+      "id": "M2",
+      "relationships": [],
+      "type": "s4inma:ProductionEquipment"
+    },
+    {
+      "attributes": [
+        {
+          "name": "duration_min",
+          "time": "1970-01-01T00:00:00.000000000Z",
+          "value": 15.0
+        },
+        {
+          "name": "energy_kwh",
+          "time": "1970-01-01T00:00:00.000000000Z",
+          "value": 120.0
+        }
+      ],
+      "id": "M3",
+      "relationships": [],
+      "type": "s4inma:ProductionEquipment"
+    },
+    {
+      "attributes": [
+        {
+          "name": "duration_min",
+          "time": "1970-01-01T00:00:00.000000000Z",
+          "value": 17.0
+        },
+        {
+          "name": "energy_kwh",
+          "time": "1970-01-01T00:00:00.000000000Z",
+          "value": 115.0
+        }
+      ],
+      "id": "M4",
+      "relationships": [],
+      "type": "s4inma:ProductionEquipment"
+    },
+    {
+      "attributes": [],
+      "id": "M3-r14-prop",
+      "relationships": [],
+      "type": "prov:Plan"
+    },
+    {
+      "attributes": [
+        {
+          "name": "pre_state_hash",
+          "time": "1970-01-01T00:00:00.000000000Z",
+          "value": "ced1f706263c4e5df48c33a88106bbe1e93cd40914883c1a40d29a37625a65b2"
+        },
+        {
+          "name": "post_state_hash",
+          "time": "1970-01-01T00:00:00.000000000Z",
+          "value": "ced1f706263c4e5df48c33a88106bbe1e93cd40914883c1a40d29a37625a65b2"
+        },
+        {
+          "name": "applied",
+          "time": "1970-01-01T00:00:00.000000000Z",
+          "value": true
+        }
+      ],
+      "id": "receipt-M3-r14-prop",
+      "relationships": [],
+      "type": "Receipt"
+    }
+  ]
+}

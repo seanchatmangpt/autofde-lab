@@ -5,6 +5,70 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
+Last update: **pass 44** (2026-09-18) — **MFG-01A: sa2a manufacturing case
+study admitted into the repo as a committed baseline (PARTIAL_ALIVE).**
+Migrates the independently-written sa2a-mfg-01 scratch prototype (six Python
+modules — `ocel_adapter.py`, `resource_agent.py`, `authority_agent.py`,
+`actuator.py`, `verifier.py`, `runtime.py` — previously at
+`.claude/scratch/sa2a-mfg-01/`, untracked) into a permanent package at
+`src/autofde_lab/sa2a/case_studies/manufacturing/`. This is phase MFG-01A of
+a four-phase roadmap (MFG-01A baseline → MFG-01B generative worlds
+`G(seed, theta) -> W` → MFG-01C generated HDDL/POWL/FOND closure → MFG-01D
+frontier falsification); **only MFG-01A is claimed here.** The migration was
+import-path fixes plus a new `__init__.py` re-export surface — every domain
+constant, decision rule, hashing rule, and clock rule is byte-identical to
+the scratch version, so the existing evidence (a real 200-round-bounded
+seeded multi-agent simulation over a fixed 4-machine M1-M4 plant, real OCEL
+2.0 output via `autofde_lab.ocel.log.OcelLog`, confirmed byte-for-byte replay
+determinism for a fixed seed, three invariants independently re-derived from
+durable OCEL JSON rather than trusted from runtime state) is preserved
+exactly, not improved. Real commands run this session:
+`.venv/bin/python -m autofde_lab.sa2a.case_studies.manufacturing.runtime 1
+<path>` and again for seed 2 — both produced valid OCEL 2.0 JSON;
+`cmp`-verified byte-identical output across two independent `seed=7` runs.
+An independent, from-scratch re-parse of the written JSON (plain `json.load`,
+never the runtime's internal counters) over seeds 1 and 2 found: 714 and 722
+`sosa:Actuation` events respectively, **0 unreceipted** in both, **0
+authority-closure violations** in both, and a maximum observed per-round
+granted-energy total of 222.5 kWh in both (budget 450.0 kWh, never
+approached let alone exceeded). New Chicago-style test suite,
+`tests/sa2a/case_studies/test_manufacturing_baseline_chicago.py` (7 tests,
+zero mocking — `grep -n "unittest.mock\|Mock(\|MagicMock\|patch(\|monkeypatch"`
+against this file returns no matches), re-derives zero-unreceipted-actuation,
+zero-authority-closure-violations, and energy<=450kWh/round independently
+from freshly-written, freshly-re-parsed OCEL JSON on disk, and asserts replay
+determinism as byte-equal files, not digest-only:
+`.venv/bin/python -m pytest tests/sa2a/case_studies/test_manufacturing_baseline_chicago.py -v`
+→ **7 passed in 7.62s**. Compact fixture
+(`fixtures/round14.mmd`, `fixtures/round14_e2o.mmd`, a new
+`fixtures/round14_ocel_slice.json` sliced from a fresh seed=1 run at
+migration time: 6 events, 6 objects) is committed; the three full ~1.8 MB
+per-seed logs originally in `.claude/scratch/sa2a-mfg-01/` are **not**
+committed — they are regenerable on demand by the test suite, so committing
+them would be exactly the dual-bookkeeping/drift risk
+`.claude/rules/no-dual-bookkeeping.md` warns against for derived artifacts.
+The scratch directory `.claude/scratch/sa2a-mfg-01/` (never tracked by git)
+was deleted once every file it held was confirmed present, byte-identical
+in logic, at its permanent destination.
+
+**Standing, by dimension (`.claude/rules/standing-law.md`):**
+
+| Claim | Standing | Evidence |
+|---|---|---|
+| Observed multi-agent execution (real, non-hardcoded seeded trajectories) | ALIVE | `runtime.run(seed=...)` / CLI executed this session for seeds 1, 2, 7 |
+| Real OCEL 2.0 output | ALIVE | `ocel_adapter.write_json` output independently re-parsed this session with plain `json.load` |
+| Replay determinism | ALIVE | byte-for-byte `cmp` across two independent CLI runs of seed=7, this session |
+| BRCE-adjacent invariants (zero unreceipted actuation, authority closure, energy budget) | ALIVE | re-derived from parsed JSON, not from runtime counters, this session, for seeds 1 and 2 |
+| Generative world model `G(seed, theta) -> W` beyond the fixed M1-M4 plant | UNSUPPORTED — not yet attempted (MFG-01B) | no code exists; not silently implied by this package's docstrings |
+| Generated HDDL/POWL/FOND projection from an admitted world model | UNSUPPORTED — not yet attempted (MFG-01C) | no code exists |
+| Frontier falsifier / UNKNOWN→KNOWN retirement loop | UNSUPPORTED — not yet attempted (MFG-01D) | no code exists |
+| `organizationalStanding` / `enterpriseStanding` | UNKNOWN | no accountable customer acceptance; not computed by anything in this repo per `.claude/rules/standing-law.md` |
+
+Nothing pushed, no PR opened, no tag created — this pass is local-checkout
+only, per the actuation boundary.
+
+---
+
 Last update: **pass 43** (2026-09-17) — **AFDE-2613: "ultracode implement all
 then validate ALIVE using act and kind."** Closes all 4 remaining pass-42
 `PARTIAL_ALIVE` items via a 2-agent file-disjoint parallel workflow: real

@@ -1,0 +1,24 @@
+%% SA2A-MFG-01 seed=1 round=14 (M3 first below-target: real E2O projection)
+flowchart LR
+    nM1["s4inma:ProductionEquipment<br/>M1"]
+    nM2["s4inma:ProductionEquipment<br/>M2"]
+    nM3["s4inma:ProductionEquipment<br/>M3"]
+    nM3_r14_prop["prov:Plan<br/>M3-r14-prop"]
+    nM4["s4inma:ProductionEquipment<br/>M4"]
+    nreceipt_M3_r14_prop["Receipt<br/>receipt-M3-r14-prop"]
+    nevt_M3_r14_prop_decision{"odrl:Permission<br/>evt-M3-r14-prop-decision<br/>verdict=admitted, granted_energy_kwh=60.0"}
+    nevt_M3_r14_prop_decision -->|"prov:used"| nM3_r14_prop
+    nevt_M3_r14_prop_decision -->|"odrl:assignee"| nM3
+    nevt_actuation_M3_r14_prop{"sosa:Actuation<br/>evt-actuation-M3-r14-prop<br/>applied=True"}
+    nevt_actuation_M3_r14_prop -->|"sosa:actsOnProperty"| nM3
+    nevt_actuation_M3_r14_prop -->|"prov:used"| nM3_r14_prop
+    nevt_actuation_M3_r14_prop -->|"prov:generated"| nreceipt_M3_r14_prop
+    nobs_M1_r14{"sosa:Observation<br/>obs-M1-r14<br/>uptime_fraction=0.8685264849458421, below_target=False"}
+    nobs_M1_r14 -->|"sosa:hasFeatureOfInterest"| nM1
+    nobs_M2_r14{"sosa:Observation<br/>obs-M2-r14<br/>uptime_fraction=0.5780472940573389, below_target=False"}
+    nobs_M2_r14 -->|"sosa:hasFeatureOfInterest"| nM2
+    nobs_M3_r14{"sosa:Observation<br/>obs-M3-r14<br/>uptime_fraction=0.4956005717840878, below_target=True"}
+    nobs_M3_r14 -->|"sosa:hasFeatureOfInterest"| nM3
+    nobs_M3_r14 -->|"prov:generated"| nM3_r14_prop
+    nobs_M4_r14{"sosa:Observation<br/>obs-M4-r14<br/>uptime_fraction=0.547539529392257, below_target=False"}
+    nobs_M4_r14 -->|"sosa:hasFeatureOfInterest"| nM4
