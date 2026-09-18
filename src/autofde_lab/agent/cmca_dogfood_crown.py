@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from typing import Any
 
@@ -567,8 +568,10 @@ class DogfoodCrownResult:
     def is_alive(self) -> bool:
         return self.standing == "ALIVE"
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
+    def to_dict(
+        self, *, subject_identity: Mapping[str, str] | None = None
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = {
             "schema": CROWN_SCHEMA,
             "standing": self.standing,
             "frontier_resolution_calls_episode_1": (
@@ -592,6 +595,13 @@ class DogfoodCrownResult:
                 for case in self.cases
             ],
         }
+        if subject_identity is not None:
+            payload["subject_identity"] = {
+                str(key): str(value)
+                for key, value in sorted(subject_identity.items())
+            }
+            payload["artifact_receipt_hash"] = _digest(payload)
+        return payload
 
 
 def _episode_receipt(
