@@ -6,6 +6,7 @@ import random
 from dataclasses import replace
 from typing import Mapping, Sequence
 
+from ..catalog import AXES, ONTOLOGY_IRI
 from .model import (
     AuthorityGrant,
     FaultEvent,
@@ -98,6 +99,28 @@ ACTION_SET = (
 )
 
 
+def _catalog_coordinate(
+    *, seed: int, provided: Mapping[str, str] | None
+) -> dict[str, str]:
+    """Resolve a complete coordinate from the existing ggen-generated Fortune-5 catalog."""
+    supplied = dict(provided or {})
+    admitted_axes = {axis.name: axis for axis in AXES}
+    unknown_axes = sorted(set(supplied) - set(admitted_axes))
+    if unknown_axes:
+        raise ValueError(
+            "REFUSED:UNKNOWN_FORTUNE5_AXIS:" + ",".join(unknown_axes)
+        )
+    rng = random.Random(seed ^ 0xF5A218)
+    coordinate: dict[str, str] = {}
+    for axis in AXES:
+        requested = supplied.get(axis.name)
+        if requested is None:
+            coordinate[axis.name] = axis.options[rng.randrange(len(axis.options))].name
+        else:
+            coordinate[axis.name] = axis.resolve(requested).name
+    return coordinate
+
+
 def _service_id(region_id: str, name: str) -> str:
     return f"{region_id}:{name}"
 
@@ -125,8 +148,8 @@ def generate_world(
 
     rng = random.Random(seed)
     region_count, template_count = SCALE_PROFILES[scale_profile]
-    scenario = dict(scenario_choices or {})
-    cloud_bias = scenario.get("cloud")
+    scenario = _catalog_coordinate(seed=seed, provided=scenario_choices)
+    cloud_bias = scenario["cloud"]
 
     regions: list[RegionSpec] = []
     for index in range(region_count):
@@ -143,7 +166,8 @@ def generate_world(
     selected_templates = SERVICE_TEMPLATES[:template_count]
     services: list[ServiceSpec] = []
     slos: list[SLOSpec] = []
-    data_class = scenario.get("data_class", "internal")
+    data_class = scenario["data_class"]
+    availability_profile = scenario["availability"]
     for region in regions:
         for name, layer, criticality, deps in selected_templates:
             defaults = LAYER_DEFAULTS[layer]
@@ -168,24 +192,37 @@ def generate_world(
             )
             services.append(service)
             mission = criticality == "mission-critical"
+            availability_target = (
+                0.9999
+                if availability_profile == "mission-critical"
+                else 0.999
+                if availability_profile == "ha"
+                else 0.995
+            )
+            if not mission:
+                availability_target = min(availability_target, 0.999)
             slos.append(
                 SLOSpec(
                     service_id=service.service_id,
-                    availability_target=0.999 if mission else 0.995,
+                    availability_target=availability_target,
                     latency_p95_ms=round(service.base_latency_ms * (2.4 if mission else 3.0), 6),
                     error_rate_max=0.01 if mission else 0.02,
                 )
             )
 
     layers = sorted({service.layer for service in services})
+    policy_profile = scenario["policy"]
+    grant_risk = (
+        0.60 if policy_profile == "zero-trust" else 0.72 if policy_profile == "restricted" else 0.85
+    )
     grants = tuple(
         AuthorityGrant(
-            grant_id=stable_id("grant", "sre", layer, ACTION_SET),
+            grant_id=stable_id("grant", "sre", layer, ACTION_SET, policy_profile),
             actor_role="sre",
             actions=ACTION_SET,
             subject_layer=layer,
-            max_risk=0.85,
-            max_change_units_per_round=48,
+            max_risk=grant_risk,
+            max_change_units_per_round=48 if policy_profile == "baseline" else 32,
         )
         for layer in layers
     )
@@ -207,6 +244,26 @@ def generate_world(
                 kind=kind,
                 severity=severity,
                 duration_rounds=duration,
+            )
+        )
+
+    catalog_fault = scenario["fault"].replace("-", "_")
+    if catalog_fault != "healthy" and services:
+        target = service_ids[(seed * 17) % len(service_ids)]
+        faults.append(
+            FaultEvent(
+                fault_id=stable_id("fault", seed, "catalog", catalog_fault, target),
+                round_index=min(2, max(0, horizon_rounds - 1)),
+                target_service=target,
+                kind=(
+                    catalog_fault
+                    if catalog_fault in FAULT_KINDS
+                    else "dependency_latency"
+                    if catalog_fault in {"dependency", "target_port", "ingress", "pvc", "image_pull"}
+                    else "config_drift"
+                ),
+                severity=0.60,
+                duration_rounds=min(3, horizon_rounds),
             )
         )
 
@@ -235,7 +292,26 @@ def generate_world(
             )
         )
 
-    base_traffic = 1200.0 * region_count * max(1, template_count / 8)
+    traffic_factor = {
+        "internal": 0.80,
+        "internet": 1.25,
+        "partner": 1.00,
+        "event-driven": 0.90,
+    }[scenario["traffic"]]
+    environment_factor = {
+        "dev": 0.25,
+        "test": 0.45,
+        "stage": 0.70,
+        "prod": 1.00,
+        "dr": 0.35,
+    }[scenario["environment"]]
+    base_traffic = (
+        1200.0
+        * region_count
+        * max(1, template_count / 8)
+        * traffic_factor
+        * environment_factor
+    )
     min_cost = sum(s.min_replicas * s.cost_per_replica_round for s in services)
     min_energy = sum(s.min_replicas * s.energy_kwh_per_replica_round for s in services)
     min_carbon = min_energy * 0.34
@@ -244,7 +320,7 @@ def generate_world(
         scenario_id=stable_id(
             "f5-world", seed, scale_profile, sorted((scenario_choices or {}).items())
         ),
-        ontology_version=ontology_version,
+        ontology_version=f"{ontology_version}|catalog={ONTOLOGY_IRI}",
         scale_profile=scale_profile,
         regions=tuple(regions),
         services=tuple(services),
@@ -255,7 +331,7 @@ def generate_world(
         cost_budget_per_round=round(min_cost * 1.75, 6),
         energy_budget_kwh_per_round=round(min_energy * 1.75, 6),
         carbon_budget_kg_per_round=round(min_carbon * 1.75, 6),
-        scenario_choices=tuple(sorted((scenario_choices or {}).items())),
+        scenario_choices=tuple(sorted(scenario.items())),
     )
 
 
