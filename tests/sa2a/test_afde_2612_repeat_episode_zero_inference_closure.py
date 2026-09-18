@@ -50,6 +50,10 @@ closure notes but never added as a pytest test) identified as missing.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
+from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline, AdmissionResult
+from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import AuthorityBroker
 from autofde_lab.sa2a.brce.boundary import (
     BoundaryExecutionResult,
@@ -61,6 +65,45 @@ from autofde_lab.sa2a.hooks.engine import KnowledgeHookEngine
 from autofde_lab.sa2a.hooks.reactive_loop import ReactiveSemanticLoop
 from autofde_lab.sa2a.hooks.synthesis import HookSynthesizer, SynthesizedHookArtifact
 from autofde_lab.sa2a.unknown.novelty_ingest import NoveltyIngestionGateway
+
+# AFDE-2604 fail-secure closure (2026-09-17, applied to this file): ConsequenceBoundary's
+# `require_admission` class-level default flipped False -> True, and
+# ReactiveSemanticLoop's `admission_pipeline` now defaults to a real, constructed
+# `AdmissionPipeline()` when omitted (see boundary.py/reactive_loop.py). Admission is
+# INCIDENTAL to what this file actually falsifies (repeat-episode zero-inference), so
+# every envelope/reflex-cycle below is wired with a real, valid, Standing.ADMITTED
+# AdmissionResult -- never `require_admission=False`/`admission_pipeline=None` -- so
+# each test still reaches the exact code path (grant check, hook firing, actuation) it
+# always exercised, now behind the real admission fence this repo actually enforces.
+
+
+def _admitted_result(action_iri: str, target_resource: str, actor_id: str) -> AdmissionResult:
+    """Construct a real, valid, Standing.ADMITTED AdmissionResult binding `action_iri`
+    to `target_resource` via the real `urn:autofde-lab:targetResource` predicate
+    `ConsequenceBoundary._admission_covers_action_target()` requires (boundary.py).
+
+    Real `AdmissionPipeline().admit()` call against real Turtle content -- not a mock:
+    the default pipeline's real Identity/Provenance/Meta-Admission stages all run for
+    real against this content, and a genuinely malformed/unbound candidate would be
+    genuinely REFUSED here (the `assert` below is a real check, not decoration).
+    """
+    pipeline = AdmissionPipeline()
+    ttl = (
+        "@prefix afl: <urn:autofde-lab:> .\n"
+        f"<{action_iri}> afl:targetResource <{target_resource}> .\n"
+    )
+    admitted = pipeline.admit(
+        ttl,
+        provenance_record={
+            "issuer": actor_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+    assert admitted.standing == Standing.ADMITTED, (
+        f"real AdmissionPipeline().admit() unexpectedly refused a well-formed "
+        f"targetResource-binding candidate: {admitted.refusal_code} {admitted.reasons}"
+    )
+    return admitted
 
 
 class RealClusterActuator:
@@ -141,6 +184,12 @@ def _run_first_episode_and_promote(
     existing closed-loop lifecycle test: refuse (no grant) -> ingest into the Lab
     candidate frontier -> synthesize a hook + grant. Returns the real artifact; the
     caller registers it into the production hook engine / authority broker.
+
+    AFDE-2604 fail-secure closure: `boundary` is constructed with the class default
+    `require_admission=True`, so this envelope carries a real, valid, Standing.ADMITTED
+    `AdmissionResult` binding `action_iri` to `target_cap` -- otherwise `boundary.execute`
+    would refuse `REFUSED_NOT_ADMITTED` before ever reaching the grant check this
+    episode is actually meant to exercise (no grant has been registered yet).
     """
     envelope = ExecutionEnvelope(
         idempotency_token=idempotency_token,
@@ -148,6 +197,7 @@ def _run_first_episode_and_promote(
         target_resource=target_cap,
         parameters={"pod_id": pod_id},
         actor_id=actor_id,
+        admission_result=_admitted_result(action_iri, target_cap, actor_id),
     )
     result: BoundaryExecutionResult = boundary.execute(envelope)
     assert result.success is False
@@ -233,7 +283,21 @@ def test_second_matching_episode_via_reflex_loop_makes_zero_further_synthesis_ca
     )
 
     base_ttl = "@prefix ex: <http://example.org/> . ex:cluster ex:status 'OK' ."
-    matching_event_ttl = "@prefix ex: <http://example.org/> . ex:pod ex:status 'CRASH_LOOP' ."
+    # AFDE-2604 fail-secure closure: `loop` was constructed with `admission_pipeline`
+    # omitted, so it now builds a real `AdmissionPipeline()` and admits THIS exact
+    # `current_event` content once per cascade depth (reactive_loop.py). The event
+    # delta must therefore carry BOTH the real trigger content the promoted hook's
+    # local-fallback content check requires (`ex:status 'CRASH_LOOP'`) AND the real
+    # `afl:targetResource` triple binding `action_iri` to `target_cap` that
+    # `ConsequenceBoundary.execute_admitted()`'s admission gate requires -- otherwise
+    # the second episode would be refused REFUSED_ADMISSION_CONTENT_NOT_BOUND before
+    # ever reaching the hook/synthesis machinery this test actually measures.
+    matching_event_ttl = (
+        "@prefix ex: <http://example.org/> .\n"
+        "@prefix afl: <urn:autofde-lab:> .\n"
+        "ex:pod ex:status 'CRASH_LOOP' .\n"
+        f"<{action_iri}> afl:targetResource <{target_cap}> .\n"
+    )
 
     trace = loop.run_reflex_cycle(
         base_ttl,
@@ -318,6 +382,11 @@ def test_second_matching_episode_via_original_entry_point_bypasses_hook_entirely
         target_resource=target_cap,
         parameters={"pod_id": "payment-api-pod-43"},
         actor_id=actor_id,
+        # AFDE-2604 fail-secure closure: `boundary` requires admission (class default
+        # `require_admission=True`); without a real, bound AdmissionResult here this
+        # second episode would be refused REFUSED_NOT_ADMITTED at Step 0, never
+        # reaching the AuthorityGrant-only code path this test is isolating.
+        admission_result=_admitted_result(action_iri, target_cap, actor_id),
     )
     result: BoundaryExecutionResult = boundary.execute(second_envelope)
 

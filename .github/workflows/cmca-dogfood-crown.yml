@@ -1,0 +1,80 @@
+name: CMCA Dogfood Crown
+
+on:
+  pull_request:
+    paths:
+      - "src/autofde_lab/cmca/**"
+      - "src/autofde_lab/planning/**"
+      - "src/autofde_lab/agent/**"
+      - "src/autofde_lab/beam/**"
+      - "src/autofde_lab/ocel/**"
+      - "src/autofde_lab/sa2a/unknown/**"
+      - "tests/agent/**"
+      - "tests/planning/**"
+      - "tests/benchmarks/test_cmca_eight_use_cases_benchmark.py"
+      - "scripts/run_cmca_dogfood_crown.py"
+      - ".github/workflows/cmca-dogfood-crown.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  crown:
+    name: eight-use-case two-episode crown
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: src
+
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+
+      - name: Assert exact subject identity
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          echo "exact_head=$EXPECTED_HEAD"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python court dependencies without native project build
+        run: |
+          uv sync --no-install-project --extra bcinr-wasm
+
+      - name: Planning-probe and dogfood Chicago tests
+        run: |
+          uv run --no-sync pytest -q \
+            tests/planning/test_cmca_planning_probe.py \
+            tests/agent/test_cmca_dogfood_crown.py
+
+      - name: Existing eight-use-case CMCA benchmark
+        run: |
+          uv run --no-sync pytest -q \
+            tests/benchmarks/test_cmca_eight_use_cases_benchmark.py
+
+      - name: Run Fortune-5 demo crown
+        run: |
+          uv run --no-sync python scripts/run_cmca_dogfood_crown.py \
+            --json-out artifacts/cmca-dogfood-crown.json
+
+      - name: Upload crown receipt
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cmca-dogfood-crown-receipt
+          path: artifacts/cmca-dogfood-crown.json
+          if-no-files-found: error

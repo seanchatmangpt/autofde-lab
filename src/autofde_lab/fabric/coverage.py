@@ -19,10 +19,14 @@ concrete domain instance with ``isinstance``. That is the same rule
 from the ontology file so the ontology genuinely drives the classification.
 
 Comparison is **measured, not delegated**: ``match_solvers(..., ranked=True)``
-accepts the flag and ignores it (``src/autofde_lab/utils.py:126`` carries
-``# TODO: implement ranking heuristic``), so a "dominated" verdict is only
-honest if the alternatives were actually run and their costs compared. This
-module runs them.
+is implemented, not a no-op (commit ``571e834f``; ``src/autofde_lab/utils.py:407-474``)
+-- it scores matched solvers via 4 real class-level measures and, when the
+optional ``cmca_rank_cli`` binary is resolvable, reorders the top 8 by its
+returned share, else degrades to existing match order. That real-CLI success
+path is environment-gated (``cmca_rank_cli`` is not resolvable on every
+machine) and, gated or not, scores candidates -- it never actually runs them.
+So a "dominated" verdict is only honest if the alternatives were actually run
+and their costs compared. This module runs them.
 
 Buckets are exhaustive and mutually exclusive:
 
@@ -40,16 +44,25 @@ import json
 from dataclasses import asdict, dataclass
 from typing import Dict, List, Optional, Tuple
 
-from autofde_lab.fabric.bounded_exec import run_callable_bounded
+from autofde_lab.fabric.bounded_exec import run_process_bounded
 from autofde_lab.fabric.ontology import SKD, parse_turtle
 
 MAX_ROLLOUT_STEPS = 200
-#: Wall-clock bound per solver, via `run_callable_bounded` (signal.alarm).
-#: No timeout existed here before this session: an RL-training solver
-#: (RayRLlib, StableBaseline, AugmentedRandomSearch, MaxentIRL, ...) could
-#: hang `_run_solver` indefinitely, confirmed as a real (not hypothetical)
-#: risk by a full-catalog MCP sweep that needed a timeout for 15/117 real
-#: domain x solver pairs (notebooks/18_mcp_user_simulation_ocel.ipynb).
+#: Wall-clock bound per solver, via `run_process_bounded` (a real forked OS
+#: process, force-killed on timeout). No timeout existed here at all before
+#: 2026-08-07: an RL-training solver (RayRLlib, StableBaseline,
+#: AugmentedRandomSearch, MaxentIRL, ...) could hang `_run_solver`
+#: indefinitely, confirmed as a real (not hypothetical) risk by a
+#: full-catalog MCP sweep that needed a timeout for 15/117 real domain x
+#: solver pairs (notebooks/18_mcp_user_simulation_ocel.ipynb). That fix
+#: first used `run_callable_bounded` (`signal.alarm`) -- confirmed
+#: insufficient this session: the real registered `AOstar` solver, a
+#: pybind11 C++ binding, ran 24+ real minutes past its 60s signal-based
+#: bound against the real `Maze` domain, because a tight C-extension loop
+#: never yields the GIL back to Python for the pending signal to be
+#: processed. `run_process_bounded` bounds it at the OS level instead,
+#: which needs no cooperation from the code being bounded. See
+#: `bounded_exec.py`'s module docstring for the full mechanism comparison.
 SOLVER_TIMEOUT_S = 60
 
 #: Machine-readable exclusion causes. A free-text reason alone would not be
@@ -156,22 +169,45 @@ def _unmet_requirements(domain, requirements: List[str]) -> List[str]:
     return unmet
 
 
-def _run_solver(solver_name: str, domain_factory) -> Tuple[Optional[float], str]:
+def _run_solver(
+    solver_name: str,
+    domain_factory,
+    *,
+    solver_class: Optional[type] = None,
+    timeout_s: float = SOLVER_TIMEOUT_S,
+) -> Tuple[Optional[float], str]:
     """Run one solver; return (total_cost, evidence). Never raises.
 
-    Bounded by `SOLVER_TIMEOUT_S` via `run_callable_bounded` (`signal.alarm`) --
-    `domain_factory` is an arbitrary caller-supplied closure (e.g.
-    ``lambda: CareerAdmission()``), not a registry name a subprocess could
-    reconstruct on its own, so subprocess isolation (used for the simpler
-    registry-name case in `scripts/mcp_solve_one_pair.py`) does not fit this
-    call site -- see `bounded_exec.py`'s module docstring for why these are
-    two different mechanisms, not one.
-    """
-    from autofde_lab import utils
+    Bounded by `timeout_s` (default `SOLVER_TIMEOUT_S`) via `run_process_bounded`
+    -- a real forked OS process, force-killed on timeout, chosen (over the
+    simpler `run_callable_bounded` `signal.alarm` mechanism) because several
+    real registered solvers are pybind11 C++ bindings whose `solve()` never
+    returns control to the Python interpreter, so a Python-level signal is
+    never processed; confirmed this session against the real `AOstar` solver,
+    which ran 24+ real minutes past a `signal.alarm` bound. `domain_factory`
+    is an arbitrary caller-supplied closure (e.g. ``lambda: CareerAdmission()``),
+    not a registry name an argv-based subprocess could reconstruct on its own
+    (the simpler registry-name case in `scripts/mcp_solve_one_pair.py`), which
+    is why `run_process_bounded` uses `fork` rather than `run_subprocess_bounded`
+    -- see `bounded_exec.py`'s module docstring for the full comparison of all
+    three mechanisms.
 
-    solver_class = utils.load_registered_solver(solver_name)
+    `solver_class`, when given, is used directly instead of the registry
+    lookup below -- the seam `tests/fabric/test_coverage.py` uses to inject a
+    real, hand-written solver-like object (a genuine implementation of the
+    same duck-typed interface: `__enter__`/`__exit__`/`solve()`/
+    `sample_action()`) that deliberately runs past `timeout_s`, so the bound
+    is exercised deterministically rather than depending on which registered
+    solver happens to be slow on a given machine. Per this repo's
+    `testing-chicago-style.md`, a real simple implementation of an interface
+    is not a mock.
+    """
     if solver_class is None:
-        return None, "load_registered_solver returned None"
+        from autofde_lab import utils
+
+        solver_class = utils.load_registered_solver(solver_name)
+        if solver_class is None:
+            return None, "load_registered_solver returned None"
 
     def _solve_and_rollout() -> Tuple[Optional[float], str]:
         domain = domain_factory()
@@ -196,7 +232,7 @@ def _run_solver(solver_name: str, domain_factory) -> Tuple[Optional[float], str]
             return total_cost, f"solved, {steps} step(s), cost {total_cost:g}"
 
     try:
-        return run_callable_bounded(_solve_and_rollout, timeout_s=SOLVER_TIMEOUT_S)
+        return run_process_bounded(_solve_and_rollout, timeout_s=timeout_s)
     except Exception as exc:  # noqa: BLE001 - failure is evidence, not a crash
         return None, f"{type(exc).__name__}: {exc}"
 
@@ -205,6 +241,7 @@ def build_report(
     domain_factory,
     ontology_path: str,
     run_applicable: bool = True,
+    solver_timeout_s: float = SOLVER_TIMEOUT_S,
 ) -> List[CoverageRow]:
     """Classify EVERY ontology-declared solver against a concrete domain."""
     solvers, _ = load_ontology(ontology_path)
@@ -255,7 +292,7 @@ def build_report(
     results: Dict[str, Tuple[Optional[float], str]] = {}
     if run_applicable:
         for name in applicable:
-            results[name] = _run_solver(name, domain_factory)
+            results[name] = _run_solver(name, domain_factory, timeout_s=solver_timeout_s)
     else:
         results = {name: (None, "not run: execution disabled") for name in applicable}
 

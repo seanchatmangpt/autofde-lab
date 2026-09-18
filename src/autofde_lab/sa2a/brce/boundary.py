@@ -244,12 +244,27 @@ class ConsequenceBoundary:
     at construction makes `execute()` itself apply the identical admission gate
     `execute_admitted()` applies, so the two methods become behaviorally identical
     for gating purposes on that instance -- there is no longer a caller-selectable
-    bypass for an instance configured to require admission. `require_admission=False`
-    (the default) leaves `execute()` byte-for-byte unchanged, preserving every
-    existing caller that constructs a `ConsequenceBoundary` without this flag;
-    `execute_admitted()` is unaffected by the flag either way -- it always enforces
-    the gate, exactly as before this fix, for callers who opt into the strict entry
-    point on an otherwise-default-configured instance.
+    bypass for an instance configured to require admission.
+
+    AFDE-2604 fail-secure closure (this pass, closing DW-1/UE-2/UE-3): the
+    class-level default flipped from `require_admission=False` to
+    `require_admission=True`. Previously the permissive default meant "secure by
+    default" was a property of the one `sa2a/cli.py hook_reflex` command's own
+    construction choices, never of this class itself -- any other caller
+    constructing `ConsequenceBoundary(...)` with its own bare defaults (a script, a
+    test helper, a future integration) reproduced the fully permissive
+    `candidate -> authority -> DO` path with zero warning, a real, adversarially
+    confirmed gap (`test_mutation_dw1_direct_library_construction_bypasses_
+    admission_entirely` in
+    `tests/sa2a/conformance/test_afde_2604_default_wiring_bypass_qualification.py`).
+    `execute()` on a bare-default instance now enforces the same admission gate
+    `execute_admitted()` always has -- a caller that genuinely needs the old,
+    permissive shape (e.g. a unit test of a component that deliberately predates
+    or does not care about the admission fence) must now pass
+    `require_admission=False` explicitly, so permissive behavior is always an
+    affirmative, visible choice at the call site, never a silent default.
+    `execute_admitted()` is unaffected by the flag either way -- it always
+    enforces the gate, exactly as before this fix.
     """
 
     def __init__(
@@ -258,7 +273,7 @@ class ConsequenceBoundary:
         actuator: ConsequenceActuator,
         verifier: ConsequenceVerifier,
         receipt_store: Optional[ReceiptStore] = None,
-        require_admission: bool = False,
+        require_admission: bool = True,
     ) -> None:
         if actuator is verifier:
             raise ColludingRolesError(
@@ -557,6 +572,13 @@ class ConsequenceBoundary:
         # Zero Unreceipted Actuation: Must exist in durable store before calling self._actuator.actuate
         existing_prep = self._receipt_store.get_prepared(envelope.idempotency_token)
         if existing_prep is None:
+            # AFDE-2604 (durable admission-identity evidence, closure pass): binds the
+            # exact AdmissionResult that gated this actuation (when present) onto the
+            # durable receipt itself, rather than leaving admission as an unrecorded
+            # upstream fact this receipt only implicitly depended on.
+            admission_digest: str = "none"
+            if envelope.admission_result is not None and envelope.admission_result.digest:
+                admission_digest = envelope.admission_result.digest
             prepared_receipt = PreparedReceipt(
                 prepared_id=f"prep-{uuid.uuid4().hex[:12]}",
                 idempotency_token=envelope.idempotency_token,
@@ -567,6 +589,7 @@ class ConsequenceBoundary:
                 plan_digest=envelope.plan_digest,
                 artifact_digest=artifact_digest,
                 admitted_input_digest=admitted_input_digest,
+                admission_digest=admission_digest,
                 consequence_class=envelope.consequence_class,
                 parameters=envelope.parameters,
                 previous_receipt_digest=self._receipt_store.last_receipt_digest(),

@@ -80,6 +80,27 @@ independent of whether `authority_broker` is wired into the store or not.
 
 None of these three findings is patched here -- reporting only, per this session's task.
 
+AFDE-2604 fail-secure closure (LATER session, admission-default flip -- category C per
+that session's own task framing): `ConsequenceBoundary.__init__`'s `require_admission`
+default flipped `False` -> `True` (boundary.py), so `execute()` on a bare-default
+instance (exactly what R1/R2/R3 below construct) now enforces
+`_enforce_admission_gate()` BEFORE Step 1, refusing with `REFUSED_NOT_ADMITTED` unless
+`envelope.admission_result` is a real, bound `Standing.ADMITTED` `AdmissionResult`. That
+gap is orthogonal to the receipt-store TOCTOU/concurrency residual documented above --
+admission answers "was this candidate content ever admitted", the three findings above
+are about "does a grant's real validity survive the actuation window" and "is
+`ReceiptStore.save_final()` safe under concurrent commits" -- so each test below now
+wires a real, valid, ADMITTED `AdmissionResult` (via `_make_bound_admission()`, a real
+`AdmissionPipeline().admit()` call with the exact binding triple
+`_admission_covers_action_target()` requires) onto its envelope, so `execute()` still
+reaches the SAME Step 1-7 pipeline it always did, instead of being refused earlier by
+the unrelated admission gate. Re-verified this session (see the class docstrings below
+and the real pytest output this session produced): all three findings STILL SURVIVE
+with real admission correctly wired in -- the admission-default fix does not, and was
+never claimed to, touch receipt-store concurrency safety or authority-revocation
+mid-actuation. None of the three findings' assertions were weakened to reach this
+result; only `admission_result=` was added to each envelope construction.
+
 Verification, this session:
     grep -n "unittest.mock\|Mock(\|MagicMock\|patch(\|monkeypatch" \
         tests/sa2a/conformance/test_afde_2604_toctou_residual_qualification.py
@@ -94,6 +115,8 @@ from typing import Any, Mapping, Optional
 
 import pytest
 
+from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline, AdmissionResult
+from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import AuthorityBroker, AuthorityGrant
 from autofde_lab.sa2a.brce.boundary import ConsequenceBoundary, ExecutionEnvelope
 from autofde_lab.sa2a.brce.receipts import ReceiptStore, TerminalReceiptState
@@ -174,6 +197,28 @@ class BlockingThenRevokingActuator:
         return "digest-blocking-then-revoking-actuator"
 
 
+def _make_bound_admission() -> AdmissionResult:
+    """Real, valid `Standing.ADMITTED` `AdmissionResult` binding ACTION_IRI to
+    TARGET_RESOURCE via the exact explicit RDF triple
+    `_admission_covers_action_target()` (boundary.py) requires -- a real
+    `AdmissionPipeline().admit()` call, not a synthetic/constructed `AdmissionResult`.
+    Admission is orthogonal to what R1/R2/R3 below actually probe (see module
+    docstring); this exists only so `ConsequenceBoundary.execute()` -- now
+    `require_admission=True` by default -- reaches its real Step 1-7 pipeline instead
+    of refusing earlier at the unrelated admission gate.
+    """
+    pipeline = AdmissionPipeline()
+    admitted = pipeline.admit(
+        f"@prefix afl: <urn:autofde-lab:> .\n<{ACTION_IRI}> afl:targetResource <{TARGET_RESOURCE}> .",
+        provenance_record={
+            "issuer": "urn:issuer:toctou-residual-qualification",
+            "timestamp": "2026-09-17T00:00:00Z",
+        },
+    )
+    assert admitted.standing == Standing.ADMITTED
+    return admitted
+
+
 def _make_grant(grant_id: str = "grant-toctou-1") -> AuthorityGrant:
     return AuthorityGrant(
         grant_id=grant_id,
@@ -218,6 +263,9 @@ def test_r1_grant_revoked_mid_actuation_default_receipt_store_survives() -> None
         target_resource=TARGET_RESOURCE,
         actor_id=ACTOR_ID,
         grant_id=grant.grant_id,
+        # Real, bound admission (see module docstring) -- orthogonal to this
+        # mutation, wired only so execute() reaches the real receipt-store path.
+        admission_result=_make_bound_admission(),
     )
 
     # Sanity: the grant is genuinely present and valid before execute() runs.
@@ -276,6 +324,9 @@ def test_r2_grant_revoked_mid_actuation_with_wired_broker_raises_uncaught() -> N
         target_resource=TARGET_RESOURCE,
         actor_id=ACTOR_ID,
         grant_id=grant.grant_id,
+        # Real, bound admission (see module docstring) -- orthogonal to this
+        # mutation, wired only so execute() reaches the real receipt-store path.
+        admission_result=_make_bound_admission(),
     )
 
     with pytest.raises(ReceiptGrantValidationError):
@@ -336,6 +387,11 @@ def test_r3_concurrent_execute_calls_same_token_race_past_final_commit() -> None
         target_resource=TARGET_RESOURCE,
         actor_id=ACTOR_ID,
         grant_id=grant.grant_id,
+        # Real, bound admission (see module docstring) -- orthogonal to this
+        # mutation, wired only so execute() reaches the real receipt-store path.
+        # Both threads A and B call execute() with this SAME envelope, so the
+        # same real admission binds every concurrent call.
+        admission_result=_make_bound_admission(),
     )
 
     results: dict[str, Any] = {}

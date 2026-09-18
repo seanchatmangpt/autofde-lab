@@ -141,6 +141,13 @@ class ReplayEngine:
                     "plan_digest": rec["plan_digest"],
                     "artifact_digest": rec["artifact_digest"],
                     "admitted_input_digest": rec["admitted_input_digest"],
+                    # AFDE-2604 (durable admission-identity evidence, closure pass):
+                    # PreparedReceipt.digest now includes admission_digest -- an
+                    # independent replay verifier must recompute the identical body or
+                    # every real receipt fails digest verification. .get(..., "none")
+                    # tolerates a durable record written before this field existed,
+                    # matching PreparedReceipt.admission_digest's own default.
+                    "admission_digest": rec.get("admission_digest", "none"),
                     "consequence_class": rec["consequence_class"],
                     "parameters": rec["parameters"],
                     "prepared_at_ms": rec["prepared_at_ms"],

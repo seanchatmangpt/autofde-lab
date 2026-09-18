@@ -27,9 +27,11 @@ import rdflib
 
 from autofde_lab.sa2a.admission.pipeline import (
     AdmissionPipeline,
+    AdmissionResult,
     IdentityPolicy,
     REFUSED_NAMESPACE,
 )
+from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import (
     AuthorityBroker,
     AuthorityGrant,
@@ -161,6 +163,42 @@ def get_tracer() -> OcelExecutionTracer:
     return _GLOBAL_TRACER
 
 
+def _admit_target_binding(
+    action_iri: str,
+    target_resource: str,
+    issuer: str = "urn:issuer:falsification-court",
+) -> AdmissionResult:
+    """Real, Standing.ADMITTED AdmissionResult whose admitted candidate graph
+    explicitly binds `action_iri` to `target_resource` via the real
+    `afl:targetResource` predicate `ConsequenceBoundary._admission_covers_action_
+    target()` requires (AFDE-2604 relational-binding closure).
+
+    AFDE-2604 fail-secure closure (this session): `ConsequenceBoundary.__init__`'s
+    `require_admission` class-level default flipped `False` -> `True`, so `execute()`
+    on a bare-default instance now enforces `_enforce_admission_gate()` -- the exact
+    gate `execute_admitted()` always applied. Every `ExecutionEnvelope` reaching
+    `ConsequenceBoundary.execute()` below this point in the file therefore needs a
+    real, bound, Standing.ADMITTED `AdmissionResult`, not merely a real
+    `AuthorityGrant`, to reach the invariant each test actually falsifies (authority,
+    replay, tamper-detection, fresh-consumer isolation) -- admission is incidental to
+    those invariants, so a real admission is wired in here rather than disabling the
+    fence with `require_admission=False`, per this session's own closure guidance to
+    prefer real admission wiring over reopening the gap for a test whose purpose
+    survives the flip.
+    """
+    pipeline = AdmissionPipeline()
+    ttl = (
+        "@prefix afl: <urn:autofde-lab:> .\n"
+        f"<{action_iri}> afl:targetResource <{target_resource}> .\n"
+    )
+    admitted = pipeline.admit(
+        ttl,
+        provenance_record={"issuer": issuer, "timestamp": "2026-09-17T00:00:00Z"},
+    )
+    assert admitted.standing == Standing.ADMITTED, admitted.reasons
+    return admitted
+
+
 # =============================================================================
 # INVARIANT 1: Unadmitted State Entering the Executable World
 # =============================================================================
@@ -275,6 +313,11 @@ def test_falsify_03_semantic_intent_lacks_implicit_authority(tmp_path: Path) -> 
 
     Falsification Hypothesis: SemanticIntent carries ambient or implicit authority.
     Expected Defense: ConsequenceBoundary rejects execution with REFUSED_NO_GRANT.
+
+    Admission is wired in deliberately (see `_admit_target_binding()`) so that a
+    real, bound, Standing.ADMITTED AdmissionResult is present -- proving the refusal
+    below is genuinely the AUTHORITY check this invariant targets, not merely
+    AFDE-2604's admission fence (REFUSED_NOT_ADMITTED) firing first and masking it.
     """
     tracer = get_tracer()
     journal = tmp_path / "falsify_03_journal.json"
@@ -283,12 +326,14 @@ def test_falsify_03_semantic_intent_lacks_implicit_authority(tmp_path: Path) -> 
     broker = AuthorityBroker()  # No grants registered for this intent
     boundary = ConsequenceBoundary(authority_broker=broker, actuator=actuator, verifier=verifier)
 
+    admission = _admit_target_binding("urn:action:kill_node", "urn:cap:nodes")
     envelope = ExecutionEnvelope(
         idempotency_token="idemp-falsify-03",
         action_iri="urn:action:kill_node",
         target_resource="urn:cap:nodes",
         parameters={"node_id": "worker-1"},
         actor_id="urn:agent:adversary",
+        admission_result=admission,
     )
 
     res = boundary.execute(envelope)
@@ -458,6 +503,13 @@ def test_falsify_07_tampered_receipt_digest_refused(tmp_path: Path) -> None:
 
     Falsification Hypothesis: Replay engine accepts a receipt whose digest or payload was modified.
     Expected Defense: ReplayEngine detects digest mismatch and refuses ALIVE standing.
+
+    Admission is incidental to this invariant (it is really about REPLAY tamper
+    detection), so a real, bound, Standing.ADMITTED AdmissionResult is wired onto
+    the envelope (`_admit_target_binding()`) so `boundary.execute()` reaches the
+    same authorized-execution path it always did under AFDE-2604's now-default
+    `require_admission=True`, rather than being refused earlier by the admission
+    fence for a reason unrelated to what this test falsifies.
     """
     tracer = get_tracer()
     journal = tmp_path / "falsify_07_journal.json"
@@ -480,12 +532,14 @@ def test_falsify_07_tampered_receipt_digest_refused(tmp_path: Path) -> None:
         receipt_store=receipt_store,
     )
 
+    admission = _admit_target_binding("urn:action:write", "urn:cap:disk")
     envelope = ExecutionEnvelope(
         idempotency_token="idemp-07",
         action_iri="urn:action:write",
         target_resource="urn:cap:disk",
         parameters={"key": "val"},
         actor_id="urn:agent:worker",
+        admission_result=admission,
     )
     res = boundary.execute(envelope)
     assert res.success is True
@@ -558,6 +612,16 @@ def test_falsify_09_fresh_consumer_isolation_verified(tmp_path: Path) -> None:
 
     Falsification Hypothesis: Consumer requires producer in-memory singleton/cache to replay.
     Expected Defense: A completely isolated ReplayEngine verifies the chain solely from serialized JSON.
+
+    Admission is incidental to this invariant (it is really about PRODUCER/CONSUMER
+    isolation across cold serialization, not admission), so a real, bound,
+    Standing.ADMITTED AdmissionResult is wired onto the producer-side envelope
+    (`_admit_target_binding()`) so the boundary's own `execute()` -- now enforcing
+    AFDE-2604's `require_admission=True` default -- actually reaches actuation,
+    producing the real prepared/final receipts this test then serializes and
+    cold-replays. `ReplayEngine.verify_chain()` operates on the serialized
+    PreparedReceipt/FinalReceipt digests, not on `ExecutionEnvelope.admission_result`
+    itself, so no change is needed on the fresh-consumer side.
     """
     tracer = get_tracer()
     journal = tmp_path / "falsify_09_journal.json"
@@ -580,12 +644,14 @@ def test_falsify_09_fresh_consumer_isolation_verified(tmp_path: Path) -> None:
         receipt_store=receipt_store,
     )
 
+    admission = _admit_target_binding("urn:action:publish", "urn:cap:channel")
     envelope = ExecutionEnvelope(
         idempotency_token="idemp-09-producer",
         action_iri="urn:action:publish",
         target_resource="urn:cap:channel",
         parameters={"msg": "cold payload"},
         actor_id="urn:agent:producer",
+        admission_result=admission,
     )
     res = boundary.execute(envelope)
     assert res.success is True
@@ -700,6 +766,20 @@ def test_falsify_11_known_class_zero_tokens_spent(tmp_path: Path) -> None:
 
     Falsification Hypothesis: Autonomic reflex execution invokes an LLM or planner.
     Expected Defense: Exactly 0 tokens and 0 planner invocations are expended during execution.
+
+    Admission is incidental to this invariant (it is really about ZERO-INFERENCE
+    reflex execution, not admission). `ReactiveSemanticLoop` and `ConsequenceBoundary`
+    are both constructed with bare defaults here, so under AFDE-2604's fail-secure
+    closure (`ConsequenceBoundary.require_admission` now defaults `True`;
+    `ReactiveSemanticLoop.admission_pipeline`, when omitted, now constructs a real
+    `AdmissionPipeline()`) this cycle's real admission fence is live, not disabled.
+    Rather than passing `admission_pipeline=None` to reopen the gap this session
+    closed, `initial_event_ttl` carries a real `afl:targetResource` binding triple
+    alongside the hook's own trigger condition, so the SAME content the loop admits
+    each cycle (`ReactiveSemanticLoop.run_reflex_cycle()`'s per-cycle `current_event`)
+    is both what fires the hook and what the admission gate's
+    `_admission_covers_action_target()` check requires -- reaching the real reflex
+    EXECUTED path this test actually measures for token cost.
     """
     tracer = get_tracer()
     journal = tmp_path / "falsify_11_journal.json"
@@ -744,7 +824,12 @@ def test_falsify_11_known_class_zero_tokens_spent(tmp_path: Path) -> None:
     tokens_consumed = 0
     trace = loop.run_reflex_cycle(
         base_ttl="",
-        initial_event_ttl="@prefix ex: <http://example.org/> . ex:node ex:condition 'COMPROMISED' .\n",
+        initial_event_ttl=(
+            "@prefix ex: <http://example.org/> .\n"
+            "@prefix afl: <urn:autofde-lab:> .\n"
+            "ex:node ex:condition 'COMPROMISED' .\n"
+            "<urn:action:quarantine> afl:targetResource <urn:cap:nodes> .\n"
+        ),
         actor_id="urn:agent:reflex",
         delta_generator=lambda r: "",
     )

@@ -15,6 +15,8 @@ from __future__ import annotations
 import pytest
 from typing import Any, Mapping, Optional
 
+from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline, AdmissionResult
+from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import (
     AuthorityBroker,
     AuthorityGrant,
@@ -45,6 +47,39 @@ from autofde_lab.sa2a.construct.constructor import (
     ArtifactManufacturer,
     TargetProfile,
 )
+
+
+def _admitted_binding(
+    action_iri: str,
+    target_resource: str,
+    issuer: str = "urn:issuer:test-brce-replay",
+) -> AdmissionResult:
+    """Construct a real, valid, Standing.ADMITTED AdmissionResult whose admitted graph
+    contains the exact `<action_iri> afl:targetResource <target_resource>` triple
+    `ConsequenceBoundary._admission_covers_action_target()` requires before Step 2
+    (AuthorityBroker) or actuation may be reached (AFDE-2604 admission fence,
+    `ConsequenceBoundary.__init__`'s `require_admission` default is now `True`).
+
+    Admission is incidental to every test in this file (their real purpose is Zero
+    Unreceipted Actuation, authority non-implication, idempotency/replay protection,
+    actuator-failure handling, and ReplayEngine chain/construction-binding
+    verification -- never the admission fence itself). Wiring a real, bound
+    AdmissionPipeline().admit() call here -- rather than passing
+    `require_admission=False` -- lets each test reach the exact same downstream BRCE
+    code path it always exercised, faithful to how this repo actually gates
+    `execute()` now.
+    """
+    pipeline = AdmissionPipeline()
+    ttl = (
+        "@prefix afl: <urn:autofde-lab:> .\n"
+        f"<{action_iri}> afl:targetResource <{target_resource}> ."
+    )
+    admitted = pipeline.admit(
+        ttl,
+        provenance_record={"issuer": issuer, "timestamp": "2026-09-17T00:00:00Z"},
+    )
+    assert admitted.standing == Standing.ADMITTED, admitted.reasons
+    return admitted
 
 
 class MockActuator:
@@ -135,6 +170,7 @@ class TestBrceBoundaryAndReceipts:
             actor_id="agent-alice",
             grant_id="grant-101",
             parameters={"value": 42.5},
+            admission_result=_admitted_binding("urn:action:write_sensor", "urn:res:sensor_42"),
         )
 
         res = boundary.execute(envelope)
@@ -175,6 +211,7 @@ class TestBrceBoundaryAndReceipts:
             target_resource="urn:res:db_primary",
             actor_id="agent-bob",
             grant_id="invalid-grant",
+            admission_result=_admitted_binding("urn:action:restricted_wipe", "urn:res:db_primary"),
         )
 
         res = boundary.execute(envelope)
@@ -212,6 +249,7 @@ class TestBrceBoundaryAndReceipts:
             actor_id="agent-alice",
             grant_id="grant-202",
             parameters={"version": "1.0.4"},
+            admission_result=_admitted_binding("urn:action:deploy", "urn:res:cluster"),
         )
 
         # First execution: executes actuator
@@ -250,6 +288,7 @@ class TestBrceBoundaryAndReceipts:
             target_resource="urn:res:device",
             actor_id="agent-alice",
             grant_id="grant-fail",
+            admission_result=_admitted_binding("urn:action:fragile", "urn:res:device"),
         )
 
         res = boundary.execute(envelope)
@@ -287,6 +326,7 @@ class TestReplayEngine:
             actor_id="agent-alice",
             grant_id="grant-replay-1",
             parameters={"msg": "hello world"},
+            admission_result=_admitted_binding("urn:action:write_log", "urn:res:system_log"),
         )
         res = boundary.execute(envelope)
         assert res.success is True
@@ -327,6 +367,7 @@ class TestReplayEngine:
             target_resource="urn:res:sec",
             actor_id="agent-alice",
             grant_id="grant-tamper",
+            admission_result=_admitted_binding("urn:action:audit", "urn:res:sec"),
         )
         boundary.execute(envelope)
 
@@ -380,6 +421,7 @@ class TestReplayEngine:
             artifact=artifact,
             construction_receipt=receipt,
             admitted_semantics=semantics,
+            admission_result=_admitted_binding("urn:action:calc", "urn:res:ledger"),
         )
         res = boundary.execute(envelope)
         assert res.success is True

@@ -22,12 +22,17 @@ jobs:
       cancel-in-progress: true
     strategy:
       fail-fast: false
+      # Python 3.10 removed 2026-09-17: the fabric surface imports
+      # enum.StrEnum (3.11+ only) and the gymact install below is
+      # marker-gated python_version >= '3.11', so the 3.10 leg always died
+      # in pytest collection with 8 import errors (run 35128324191) and can
+      # never pass. Restore only with a code-side 3.10 compatibility pass.
       matrix:
-        python-version: ["3.10", "3.12"]
+        python-version: ["3.12"]
 
     steps:
       - name: Check out exact candidate
-        uses: actions/checkout@v4
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 1
@@ -38,7 +43,7 @@ jobs:
         run: test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
 
       - name: Install Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip

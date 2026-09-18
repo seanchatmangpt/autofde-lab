@@ -216,6 +216,16 @@ def test_replay_under_different_never_granted_actor_is_refused(tmp_path: Path) -
     """A cached EXECUTED receipt cannot be handed to a distinct, never-granted actor_id
     replaying the SAME idempotency token; the legitimately granted actor's OWN replay
     still succeeds (re-verified, not merely cached).
+
+    Admission is incidental to this test's purpose (it exercises Step 1's replay
+    re-authorization, fixes (2)/(3), not the admission-default gap itself), so a
+    real, ADMITTED `AdmissionResult` -- binding this exact action/target, per the
+    same `AdmissionPipeline.admit()` pattern as
+    `test_execute_admitted_refuses_missing_and_refused_admission_but_allows_admitted`
+    above -- is threaded into every envelope below. `_admission_covers_action_target()`
+    binds on action_iri/target_resource only (never actor_id), so the SAME admitted
+    candidate legitimately covers all three envelopes here (same action/target,
+    different actor_id/token identity is exactly what this test is probing).
     """
     granted_actor = "urn:agent:fence2-granted"
     adversary_actor = "urn:agent:fence2-adversary"
@@ -234,9 +244,23 @@ def test_replay_under_different_never_granted_actor_is_refused(tmp_path: Path) -
     )
     boundary, actuator, _store, journal = _boundary(tmp_path, "fence2", broker)
 
+    pipeline = AdmissionPipeline()
+    admitted = pipeline.admit(
+        f"""
+@prefix afl: <urn:autofde-lab:> .
+<{action}> afl:targetResource <{target}> .
+""",
+        provenance_record={"issuer": "urn:issuer:fence2", "timestamp": "2026-09-17T00:00:00Z"},
+    )
+    assert admitted.standing == Standing.ADMITTED
+
     first = boundary.execute(
         ExecutionEnvelope(
-            idempotency_token=token, action_iri=action, target_resource=target, actor_id=granted_actor
+            idempotency_token=token,
+            action_iri=action,
+            target_resource=target,
+            actor_id=granted_actor,
+            admission_result=admitted,
         )
     )
     assert first.success is True
@@ -246,7 +270,11 @@ def test_replay_under_different_never_granted_actor_is_refused(tmp_path: Path) -
     # Legitimate same-actor replay: re-verified, still succeeds, zero new actuation.
     legit_replay = boundary.execute(
         ExecutionEnvelope(
-            idempotency_token=token, action_iri=action, target_resource=target, actor_id=granted_actor
+            idempotency_token=token,
+            action_iri=action,
+            target_resource=target,
+            actor_id=granted_actor,
+            admission_result=admitted,
         )
     )
     assert legit_replay.success is True
@@ -258,7 +286,11 @@ def test_replay_under_different_never_granted_actor_is_refused(tmp_path: Path) -
     # Adversary replay under a different, never-granted actor_id: refused.
     adversary_replay = boundary.execute(
         ExecutionEnvelope(
-            idempotency_token=token, action_iri=action, target_resource=target, actor_id=adversary_actor
+            idempotency_token=token,
+            action_iri=action,
+            target_resource=target,
+            actor_id=adversary_actor,
+            admission_result=admitted,
         )
     )
     assert adversary_replay.success is False
@@ -337,12 +369,41 @@ def test_forged_receipt_pair_is_refused_on_replay_despite_self_asserted_grant_id
         receipt_store=store,
     )
 
+    # Admission is incidental to this test's purpose (it exercises Step 1's
+    # forged-receipt-pair replay re-authorization, fix (3), not the admission-default
+    # gap itself), so real, ADMITTED `AdmissionResult`s -- one binding the forged
+    # action/target, one binding the legit action/target, per the same
+    # `AdmissionPipeline.admit()` pattern used elsewhere in this file -- are threaded
+    # into the envelopes below. Admitting the forged action/target does not grant it
+    # any authority: admission and authority remain orthogonal (§29, "Authority
+    # Non-Implications"), which is exactly why this test still proves what it always
+    # proved -- the forged receipt pair is refused by the real, fresh
+    # `AuthorityBroker.evaluate()` re-check in Step 1, not by the admission gate.
+    pipeline = AdmissionPipeline()
+    forged_admitted = pipeline.admit(
+        f"""
+@prefix afl: <urn:autofde-lab:> .
+<{forged_action}> afl:targetResource <{forged_target}> .
+""",
+        provenance_record={"issuer": "urn:issuer:fence3-forged", "timestamp": "2026-09-17T00:00:00Z"},
+    )
+    assert forged_admitted.standing == Standing.ADMITTED
+    legit_admitted = pipeline.admit(
+        f"""
+@prefix afl: <urn:autofde-lab:> .
+<{legit_action}> afl:targetResource <{legit_target}> .
+""",
+        provenance_record={"issuer": "urn:issuer:fence3-legit", "timestamp": "2026-09-17T00:00:00Z"},
+    )
+    assert legit_admitted.standing == Standing.ADMITTED
+
     replay_result = boundary.execute(
         ExecutionEnvelope(
             idempotency_token=token,
             action_iri=forged_action,
             target_resource=forged_target,
             actor_id=legit_actor,
+            admission_result=forged_admitted,
         )
     )
 
@@ -365,6 +426,7 @@ def test_forged_receipt_pair_is_refused_on_replay_despite_self_asserted_grant_id
             action_iri=legit_action,
             target_resource=legit_target,
             actor_id=legit_actor,
+            admission_result=legit_admitted,
         )
     )
     assert honest.success is True

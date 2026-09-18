@@ -112,6 +112,20 @@ class PreparedReceipt:
     parameters: Mapping[str, Any] = field(default_factory=dict)
     prepared_at_ms: int = field(default_factory=lambda: int(time.time() * 1000))
     previous_receipt_digest: str = "genesis:0" * 4
+    # AFDE-2604 (durable admission-identity evidence, closure pass): the exact
+    # AdmissionResult.digest that gated this actuation via
+    # ConsequenceBoundary.execute_admitted()/_enforce_admission_gate(), or "none" when
+    # no admission was required/presented (every existing caller that never
+    # constructs an admission-gated envelope is unaffected -- additive, defaulted).
+    # Before this field existed, a receipt carried no durable identity edge back to
+    # the specific AdmissionResult that authorized it: `admitted_input_digest` above
+    # is bound to `AdmittedSemantics`/`ConstructionReceipt` (the CONSTRUCT stage), a
+    # different object from `AdmissionResult` (the ADMIT stage) -- conflating them
+    # would lose information rather than close the gap. Per
+    # `.claude/rules/no-dual-bookkeeping.md`: "identity is explicit or it does not
+    # exist" -- a receipt that only implicitly relied on "admission happened
+    # upstream, trust me" carried no checkable relation to it at all.
+    admission_digest: str = "none"
 
     @property
     def digest(self) -> str:
@@ -126,6 +140,7 @@ class PreparedReceipt:
             "plan_digest": self.plan_digest,
             "artifact_digest": self.artifact_digest,
             "admitted_input_digest": self.admitted_input_digest,
+            "admission_digest": self.admission_digest,
             "consequence_class": self.consequence_class,
             "parameters": self.parameters,
             "prepared_at_ms": self.prepared_at_ms,
@@ -145,6 +160,7 @@ class PreparedReceipt:
             "plan_digest": self.plan_digest,
             "artifact_digest": self.artifact_digest,
             "admitted_input_digest": self.admitted_input_digest,
+            "admission_digest": self.admission_digest,
             "consequence_class": self.consequence_class,
             "parameters": dict(self.parameters),
             "prepared_at_ms": self.prepared_at_ms,

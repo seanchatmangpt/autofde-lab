@@ -40,4 +40,4 @@ This pack treats more than action sequence as a planning problem: problem formul
 
 ## Fortune 5 enterprise architecture extension
 
-See `fortune5/README.md`. The extension adds enterprise principles, viewpoints, governance gates, NFR tiers, control domains, operating model, portfolio model, planner-role matrix, ten enterprise stress scenarios, a dedicated enterprise-architecture PDDL domain, and eight executable enterprise problem subjects.
+See `fortune5/`. The extension adds enterprise principles, viewpoints, governance gates, NFR tiers, control domains, operating model, portfolio model, planner-role matrix, ten enterprise stress scenarios, a dedicated enterprise-architecture PDDL domain, and eight executable enterprise problem subjects.

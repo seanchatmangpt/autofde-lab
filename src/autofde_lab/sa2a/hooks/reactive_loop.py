@@ -31,6 +31,16 @@ from autofde_lab.sa2a.hooks.engine import KnowledgeHookEngine
 from autofde_lab.sa2a.hooks.model import HookExecutionRecord, HookVerdict, SemanticIntent
 
 
+class _NotSet:
+    """Sentinel distinguishing an omitted constructor argument from an explicit
+    `None` -- AFDE-2604 fail-secure closure needs to tell "caller said nothing"
+    (-> secure real `AdmissionPipeline()`) apart from "caller explicitly opted
+    out" (-> `None`, honored as-is), which a plain `= None` default cannot do."""
+
+
+_NOT_SET = _NotSet()
+
+
 @dataclass(frozen=True)
 class ReactiveCycleStep:
     """One discrete step of the autonomic semantic reaction loop."""
@@ -69,12 +79,20 @@ class ReactiveSemanticLoop:
     semantic-dispatch path -- the candidate content driving each reflex cycle is
     admitted via a real `AdmissionPipeline.admit()` call, and the resulting
     `AdmissionResult` gates every intent synthesized from it before
-    `AuthorityBroker.evaluate()` is ever consulted for that intent. Additive and
-    backward compatible: when `admission_pipeline` is omitted (the default), this
-    behaves exactly as before -- `candidate -> authority -> DO`, unchanged -- for every
-    existing caller (`sa2a/cli.py`'s `hook reflex` command included; see
-    `docs/jira/v26.9.16/AFDE-2604-admission-fencing-local-closure.md` for the named,
-    intentional scope of what this session wired vs. left admission-exempt).
+    `AuthorityBroker.evaluate()` is ever consulted for that intent.
+
+    AFDE-2604 fail-secure closure (this pass, closing UE-2 alongside
+    `ConsequenceBoundary`'s own default flip): a real `AdmissionPipeline()` is now
+    constructed by default when `admission_pipeline` is omitted, so this loop's own
+    gating (`run_reflex_cycle()`'s per-cycle `admit()` call, checked before
+    `AuthorityBroker.evaluate()` for every intent) and `ConsequenceBoundary`'s own
+    `require_admission` default are no longer two independently-configured knobs
+    that could silently drift apart (the real, adversarially confirmed UE-2 gap:
+    a loop constructed with its own bare defaults reached real actuation for
+    content an admission-configured sibling instance would have refused).
+    `admission_pipeline=None` explicitly, passed at construction, still restores the
+    old `candidate -> authority -> DO` behavior for a caller that genuinely needs
+    it -- an affirmative, visible choice, never a silent default.
     """
 
     def __init__(
@@ -84,13 +102,23 @@ class ReactiveSemanticLoop:
         consequence_boundary: ConsequenceBoundary,
         *,
         max_cascade_depth: int = 5,
-        admission_pipeline: Optional[AdmissionPipeline] = None,
+        admission_pipeline: Optional[AdmissionPipeline] | _NotSet = _NOT_SET,
     ) -> None:
         self.hook_engine = hook_engine
         self.authority_broker = authority_broker
         self.consequence_boundary = consequence_boundary
         self.max_cascade_depth = max_cascade_depth
-        self.admission_pipeline = admission_pipeline
+        # AFDE-2604 fail-secure closure: distinguishes "omitted" (-> secure real
+        # AdmissionPipeline()) from an explicit `admission_pipeline=None` (-> the
+        # caller's affirmative, visible opt-out) -- a plain `= None` default could
+        # not tell these apart. Constructed fresh here, never as a shared mutable
+        # default-argument instance.
+        resolved_admission_pipeline: Optional[AdmissionPipeline]
+        if isinstance(admission_pipeline, _NotSet):
+            resolved_admission_pipeline = AdmissionPipeline()
+        else:
+            resolved_admission_pipeline = admission_pipeline
+        self.admission_pipeline = resolved_admission_pipeline
 
     def run_reflex_cycle(
         self,

@@ -383,7 +383,35 @@ def hook_reflex(
     point confused deputy" qualification). `--skip-admission-check` restores the prior
     permissive behavior explicitly, for a caller that genuinely needs it -- never
     silently.
+
+    AFDE-2604 closure (Mutation DW-2, adversarially found and fixed this pass): a
+    `typer.Option(False, ...)` default is not the literal Python default `False` in
+    this function's own signature -- it is a `typer.models.OptionInfo` sentinel
+    object, and `bool(OptionInfo(...))` is `True`. Click substitutes the real,
+    intended default only while parsing an actual CLI invocation; a caller that
+    imports and calls this function object directly (a script, a notebook, a test
+    helper, a future in-process wrapper -- never through `typer.testing.CliRunner` or
+    a real CLI dispatch) previously got `skip_admission_check` bound to that truthy
+    sentinel whenever they omitted the argument, silently flipping
+    `require_admission=not skip_admission_check` to `False` and
+    `admission_pipeline=None if skip_admission_check else AdmissionPipeline()` to
+    `None` -- the exact fully permissive `--skip-admission-check` configuration,
+    triggered by doing nothing, with no `--skip-admission-check` string anywhere in
+    the call. The explicit `isinstance` resolution below closes this: a non-`bool`
+    value here can only be Click's own unsubstituted `OptionInfo` sentinel (never a
+    real caller-supplied value, since Typer type-checks CLI input to `bool` before
+    binding it), so it is resolved to the sentinel's own configured default
+    (`False`, i.e. do not skip) rather than trusted as truthy. See
+    `tests/sa2a/conformance/test_afde_2604_default_wiring_bypass_qualification.py`'s
+    `test_mutation_dw2_...` for the regression fixture pinning this fix.
     """
+    if not isinstance(skip_admission_check, bool):
+        # A direct (non-CLI) call left Typer's OptionInfo sentinel unsubstituted.
+        # Resolve to the sentinel's own configured default, never to bool(sentinel)
+        # (always True for a non-empty object), so "argument omitted" means "use the
+        # documented default" and never "silently opt out of the admission fence".
+        skip_admission_check = bool(getattr(skip_admission_check, "default", False))
+
     from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline
     from autofde_lab.sa2a.authority.broker import AuthorityBroker, AuthorityGrant
     from autofde_lab.sa2a.brce.boundary import ConsequenceBoundary
@@ -496,6 +524,216 @@ def chicago() -> None:
     receipt = run_chicago_court()
     _emit(receipt)
     if not receipt.get("all_gates_passed"):
+        raise typer.Exit(code=1)
+
+
+def _requires_port_seed_candidate(query_id: str = "q-1") -> "CandidateResolution":
+    """The real candidate the `exact-port-probe` `EXACT_REUSABLE_MACHINERY` engine
+    below deterministically produces for the demonstrated `requires-port` semantic
+    class -- also used, unmodified, as the seed `episode/generator.py`'s
+    `generate_fresh_equivalent_candidate()` substitutes from for Episode 2 (ARD §64
+    item 6), so the crown's two episodes are provably about the SAME discovered
+    candidate, never two independently hand-typed literals that happen to agree.
+    """
+    from autofde_lab.sa2a.unknown.resolution import CandidateResolution
+
+    return CandidateResolution(
+        candidate_id="cand-ep1",
+        query_id=query_id,
+        proposed_assertion="service:api-gateway requires-port",
+        evidence_payload={"source": "formal-port-probe"},
+        source_identity="formal-port-probe",
+        consumed_ticks=2,
+        consumed_tokens=0,
+    )
+
+
+def _build_requires_port_discovery_router() -> "tuple[Any, list[str]]":
+    """Real `DiscoveryRouter` for the demonstrated `requires-port` semantic class
+    (v26.9.17 PRD §14 item 6, "actual discovery execution" -- not a hardcoded
+    single-branch `discover()` callable). Registers two REAL, DISTINCT engines
+    spanning two different `DiscoveryEngineKind` precedence tiers (ARD §15):
+
+    - `exact-port-probe` (`EXACT_REUSABLE_MACHINERY`): deterministically recognizes
+      any query whose topic mentions "requires-port" and returns the real,
+      formal-probe-sourced seed candidate (`_requires_port_seed_candidate`).
+      Returns `None` (declines) for any other query, so the router precedence
+      logic -- not this function -- decides whether it is tried at all.
+    - `general-exploratory-fallback` (`GENERAL_EXPLORATORY_INTELLIGENCE`): answers
+      ANY query the exact engine did not recognize, standing in for the real
+      general-exploratory-intelligence tier a caller would wire in production.
+
+    Returns `(router, invocation_log)`. `invocation_log` records, in order, which
+    engine(s) `DiscoveryRouter.route()` actually CALLED -- the real, run-time proof
+    (not asserted by construction) that `EXACT_REUSABLE_MACHINERY` is selected for
+    the demonstrated query and the fallback is never invoked, per ARD §15's
+    precedence law: `DiscoveryRouter.route()` itself decides which engine(s) to
+    call, in precedence-tier order, stopping at the first non-`None` candidate.
+    """
+    from autofde_lab.sa2a.unknown.resolution import CandidateResolution, UnknownQuery
+    from autofde_lab.sa2a.unknown.router import DiscoveryEngine, DiscoveryEngineKind, DiscoveryRouter
+
+    invocation_log: list[str] = []
+
+    def exact_port_probe(query: "UnknownQuery"):
+        invocation_log.append("exact-port-probe")
+        if "requires-port" not in query.predicate_or_topic:
+            return None
+        return _requires_port_seed_candidate(query.query_id)
+
+    def general_exploratory_fallback(query: "UnknownQuery"):
+        invocation_log.append("general-exploratory-fallback")
+        return CandidateResolution(
+            candidate_id=f"cand-fallback-{query.query_id}",
+            query_id=query.query_id,
+            proposed_assertion=query.predicate_or_topic,
+            evidence_payload={"source": "general-exploratory-fallback"},
+            source_identity="general-exploratory-fallback",
+            consumed_ticks=32,
+            consumed_tokens=512,
+        )
+
+    router = DiscoveryRouter()
+    router.register(DiscoveryEngine("exact-port-probe", DiscoveryEngineKind.EXACT_REUSABLE_MACHINERY, exact_port_probe))
+    router.register(
+        DiscoveryEngine(
+            "general-exploratory-fallback",
+            DiscoveryEngineKind.GENERAL_EXPLORATORY_INTELLIGENCE,
+            general_exploratory_fallback,
+        )
+    )
+    return router, invocation_log
+
+
+def _v26_9_17_crown_fixture(work_dir: Path) -> dict[str, Any]:
+    """Run the real v26.9.17 crown: SubjectResolver -> Episode1 -> Episode2 -> real
+    replay verification -> a real, SEPARATE-PROCESS fresh-consumer verification ->
+    CROWNED/typed-exit, via `ReleaseRun` (PRD §12; ARD §50 "crown = orchestration
+    only, no duplicated semantic logic").
+
+    Scoped, honest demonstration: this fixture proves the mechanism end to end for
+    ONE semantic class (a port-requirement lookup) under a synthetic, well-formed
+    composition manifest, not an arbitrary cross-repository composition -- a
+    CompositionCourt driving real sibling repositories is explicitly out of this
+    pass's scope (see docs/jira/v26.9.17/, the tickets this command's receipt cites).
+
+    Episode 1's candidate is now discovered through a REAL `DiscoveryRouter` with
+    two real, distinct engines spanning two precedence tiers (PRD §14 item 6),
+    never a single hardcoded `discover()` callable; Episode 2's fresh candidate is
+    now machine-GENERATED from Episode 1's seed candidate by
+    `episode.generator.generate_fresh_equivalent_candidate()` (ARD §64 item 6),
+    never a second hand-typed literal.
+    """
+    from autofde_lab.sa2a.episode.equivalence import build_topic_equivalence_predicate
+    from autofde_lab.sa2a.episode.generator import generate_fresh_equivalent_candidate
+    from autofde_lab.sa2a.release.run import ReleaseRun
+    from autofde_lab.sa2a.unknown.resolution import UnknownQuery
+
+    router, invocation_log = _build_requires_port_discovery_router()
+    seed_candidate = _requires_port_seed_candidate("q-1")
+
+    # Machine-generated, not hand-typed: a genuinely different subject
+    # ("service:billing-worker" at index=0, given the real SUBJECT_POOL and the
+    # seed's own "service:api-gateway" subject excluded from selection) sharing
+    # the seed's exact topic token ("requires-port") -- see generator.py.
+    fresh_candidate = generate_fresh_equivalent_candidate(seed=seed_candidate, index=0)
+    generated_subject = fresh_candidate.proposed_assertion.split()[0]
+    resource_name = generated_subject.split(":", 1)[1] if ":" in generated_subject else generated_subject
+
+    manifest = {
+        "release_id": "v26.9.17-demo",
+        "repositories": [{"name": "autofde-lab-demo-subject", "exact_sha": "a" * 40}],
+        "artifacts": [{"artifact_id": "demo-artifact", "digest": "b" * 64}],
+        "root_manifest_digest": "c" * 64,
+        "semantic_profile": "SA2A-STRICT-DEMONSTRATION",
+        "court_revision": "v26.9.17",
+        "falsifier_corpus_digest": "d" * 64,
+        "query_set_digest": "e" * 64,
+        "environment_identity": "cli-crown-demo",
+    }
+
+    run = ReleaseRun(work_dir=work_dir)
+    result = run.run(
+        candidate_manifest=manifest,
+        semantic_class_id="requires-port",
+        episode1_query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        discovery_router=router,
+        equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
+        equivalence_predicate_id="pred-requires-port-v1",
+        probe_input="requires-port",
+        action_iri="urn:action:open-port",
+        episode1_target_resource="urn:cap:api-gateway",
+        episode2_fresh_candidate=fresh_candidate,
+        episode2_target_resource=f"urn:cap:{resource_name}",
+    )
+
+    receipt = result.to_receipt()
+    receipt["release_state_history"] = [s.value for s in run.history]
+    receipt["discovery_routing"] = {
+        "engines_registered": ["exact-port-probe", "general-exploratory-fallback"],
+        "engines_invoked": list(invocation_log),
+        "exact_reusable_machinery_selected": invocation_log == ["exact-port-probe"],
+    }
+    receipt["episode2_generated_candidate"] = {
+        "candidate_id": fresh_candidate.candidate_id,
+        "proposed_assertion": fresh_candidate.proposed_assertion,
+        "source_identity": fresh_candidate.source_identity,
+        "generated_from_seed_candidate_id": seed_candidate.candidate_id,
+        "generated_by": "autofde_lab.sa2a.episode.generator.generate_fresh_equivalent_candidate",
+    }
+    receipt["scope_note"] = (
+        "Demonstrates the real UNKNOWN->MachineExperience->KNOWN mechanism end to end "
+        "through SubjectResolver, a real DiscoveryRouter (2 engines, 2 precedence "
+        "tiers), Episode1, a machine-generated Episode2 fresh candidate, real "
+        "ReplayEngine verification, and a real separate-process fresh-consumer "
+        "verifier, for one semantic class under a synthetic composition manifest. A "
+        "cross-repository CompositionCourt driving real sibling repositories is "
+        "explicitly out of scope -- see docs/jira/v26.9.17/ for the full accounting."
+    )
+    return receipt
+
+
+@app.command("episode1")
+def episode1(work_dir: Path = typer.Option(Path(".sa2a_v26_9_17_crown"), "--work-dir")) -> None:
+    """Run Episode 1 (UNKNOWN -> admitted MachineExperience) for the demonstrated
+    class, via a REAL `DiscoveryRouter` (an `EXACT_REUSABLE_MACHINERY` engine plus a
+    `GENERAL_EXPLORATORY_INTELLIGENCE` fallback, PRD §14 item 6) -- never a single
+    hardcoded `discover()` callable that always returns the same candidate
+    regardless of query."""
+    from autofde_lab.sa2a.episode.episode1 import Episode1Runner
+    from autofde_lab.sa2a.episode.equivalence import build_topic_equivalence_predicate
+    from autofde_lab.sa2a.unknown.resolution import UnknownQuery
+
+    state_dir = work_dir / "state"
+    runner1 = Episode1Runner(state_dir=state_dir, journal_path=work_dir / "journal.json", receipt_store_dir=work_dir / "receipts")
+
+    router, invocation_log = _build_requires_port_discovery_router()
+
+    result = runner1.run(
+        semantic_class_id="requires-port",
+        query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        discovery_router=router,
+        equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
+        equivalence_predicate_id="pred-requires-port-v1",
+        probe_input="requires-port",
+        action_iri="urn:action:open-port",
+        target_resource="urn:cap:api-gateway",
+    )
+    payload = result.episode.to_dict()
+    payload["discovery_routing"] = {
+        "engines_invoked": list(invocation_log),
+        "exact_reusable_machinery_selected": invocation_log == ["exact-port-probe"],
+    }
+    _emit(payload)
+
+
+@app.command("crown")
+def crown(work_dir: Path = typer.Option(Path(".sa2a_v26_9_17_crown"), "--work-dir")) -> None:
+    """Run the full v26.9.17 crown (subject fence -> Episode 1 -> Episode 2 -> replay
+    -> fresh-consumer verify) via ReleaseRun and emit its standing receipt."""
+    receipt = _v26_9_17_crown_fixture(work_dir)
+    _emit(receipt)
+    if receipt["standing"] != "CROWNED":
         raise typer.Exit(code=1)
 
 

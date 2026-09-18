@@ -12,7 +12,11 @@ Proves:
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import pytest
+from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline
+from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import (
     AuthorityBroker,
     AuthorityGrant,
@@ -84,6 +88,26 @@ def test_autonomic_closed_loop_lifecycle():
         verifier=verifier,
     )
 
+    # AFDE-2604 fail-secure closure (this session): ConsequenceBoundary's
+    # `require_admission` class-level default flipped False -> True, so a
+    # bare-default `prod_boundary.execute()` now applies the same admission gate
+    # `execute_admitted()` always has, BEFORE AuthorityBroker.evaluate() is ever
+    # reached. Admission is incidental to what Cycle 0 is actually demonstrating
+    # (a novel incident is refused for lack of an authority GRANT, not for lack
+    # of admission) -- per the fix-forward decision procedure this wires in a
+    # real, valid, Standing.ADMITTED AdmissionResult (rather than passing
+    # `require_admission=False`) so the assertion below still reaches, and
+    # verifies, the exact REFUSED_NO_GRANT authority-refusal path it always did.
+    admission_pipeline = AdmissionPipeline()
+    cycle0_admission = admission_pipeline.admit(
+        f"@prefix afl: <urn:autofde-lab:> .\n<{action_iri}> afl:targetResource <{target_cap}> .",
+        provenance_record={
+            "issuer": actor_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+    assert cycle0_admission.standing == Standing.ADMITTED
+
     # Agent or subsystem attempts to actuate on novel failure
     req_envelope = ExecutionEnvelope(
         idempotency_token="idemp-incident-001",
@@ -91,11 +115,15 @@ def test_autonomic_closed_loop_lifecycle():
         target_resource=target_cap,
         parameters={"pod_id": "payment-api-pod-42"},
         actor_id=actor_id,
+        admission_result=cycle0_admission,
     )
 
     res_cycle0: BoundaryExecutionResult = prod_boundary.execute(req_envelope)
 
-    # Invariant: Zero unreceipted actuation & strict authority non-implications
+    # Invariant: Zero unreceipted actuation & strict authority non-implications.
+    # The candidate content WAS admitted (asserted above); the refusal below is
+    # a genuine authority refusal (no grant registered for this action/target
+    # yet), not an admission-fence refusal.
     assert res_cycle0.success is False
     assert res_cycle0.state == TerminalReceiptState.REFUSED
     assert res_cycle0.refusal_code == "REFUSED_NO_GRANT"
@@ -153,7 +181,25 @@ def test_autonomic_closed_loop_lifecycle():
     # CYCLE 1: IDENTICAL INCIDENT REOCCURS -> AUTONOMIC REFLEX
     # =========================================================================
     base_ttl = "@prefix ex: <http://example.org/> . ex:cluster ex:status 'OK' ."
-    event_delta_ttl = "@prefix ex: <http://example.org/> . ex:pod ex:status 'CRASH_LOOP' ."
+    # AFDE-2604 fail-secure closure (this session): ReactiveSemanticLoop's
+    # `admission_pipeline` parameter now constructs a real AdmissionPipeline()
+    # by default when omitted (below), so this cycle's event delta must itself
+    # carry the real `afl:targetResource` binding triple for the exact
+    # action_iri/target_capability_iri the synthesized hook grounds (`action_iri`
+    # / `target_cap` above) -- otherwise the loop's own per-cycle admission call
+    # would reach Standing.ADMITTED on content that does not relationally bind
+    # this action/target, and `_admission_covers_action_target()` would refuse
+    # with REFUSED_ADMISSION_CONTENT_NOT_BOUND before AuthorityBroker.evaluate()
+    # is ever consulted (see boundary.py). The trigger predicate/value the
+    # synthesized hook fires on ("ex:status" / "CRASH_LOOP") is matched by
+    # regex-search over the raw delta text (KnowledgeHookEngine's local
+    # fallback), so appending the binding triple does not disturb hook firing.
+    event_delta_ttl = (
+        "@prefix ex: <http://example.org/> .\n"
+        "@prefix afl: <urn:autofde-lab:> .\n"
+        "ex:pod ex:status 'CRASH_LOOP' .\n"
+        f"<{action_iri}> afl:targetResource <{target_cap}> .\n"
+    )
 
     loop = ReactiveSemanticLoop(
         hook_engine=hook_engine,

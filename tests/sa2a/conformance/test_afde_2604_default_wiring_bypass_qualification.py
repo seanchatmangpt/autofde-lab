@@ -66,49 +66,77 @@ Chicago Zero-Mock Standard (per `.claude/rules/testing-chicago-style.md`):
   for any collaborator under test) is used only to read the real JSON `hook_reflex`
   itself prints via `typer.echo`.
 
-RESULT (this session, reviewer lens -- NOT patched; per this task's own instruction,
-a survived mutation here is reported, not fixed):
+RESULT (this session, reviewer lens; DW-1 and DW-2 both now closed -- see the
+per-mutation closure notes below):
 
-  MUTATION DW-1 -- SURVIVED (real, disclosed-but-real gap). Real actuation reaches
+  MUTATION DW-1 -- SURVIVED when first found (real, disclosed-but-real gap, named by
+    the architecture-fix session itself as a deliberate scope boundary); DEFEATED as
+    of the fail-secure closure pass (see below). Real actuation used to reach
     `TerminalReceiptState.EXECUTED` for unrelated, unbound event content, with zero
     `AdmissionResult` ever computed, whenever `ReactiveSemanticLoop`/
-    `ConsequenceBoundary` are constructed directly with their own bare defaults. This
-    matches the sibling architecture-fix session's own stated scope note
+    `ConsequenceBoundary` were constructed directly with their own bare defaults.
+    This matched the sibling architecture-fix session's own stated scope note
     ("`ReactiveSemanticLoop`'s own class-level `admission_pipeline` default remains
     `None` for library-level backward compatibility... 7+ pre-existing call sites
-    rely on it") -- i.e. it is a NAMED, deliberate scope boundary, not something the
-    fix silently missed. Reported here because the task asked specifically to try
-    "a code path that constructs the loop without going through cli.py real command
-    wiring at all," and this is exactly that path, verified for real: "secure by
-    default" is a property of the one `sa2a/cli.py hook_reflex` command's own
-    construction choices, never of the underlying library classes themselves. Any
-    other command, script, test helper, or future integration that constructs
-    `ConsequenceBoundary`/`ReactiveSemanticLoop` directly (there is no dedicated
-    "secure" factory/classmethod exposed) reproduces the fully permissive
-    `candidate -> authority -> DO` path with zero code changes required and zero
-    warning at construction time.
+    rely on it") -- i.e. it was a NAMED, deliberate scope boundary, not something
+    the fix silently missed. Found because the task asked specifically to try "a
+    code path that constructs the loop without going through cli.py real command
+    wiring at all," and this was exactly that path, verified for real: "secure by
+    default" used to be a property of the one `sa2a/cli.py hook_reflex` command's
+    own construction choices, never of the underlying library classes themselves.
 
-  MUTATION DW-2 -- SURVIVED (real, NOT previously disclosed anywhere in the
-    architecture-fix session's own notes or in `sa2a/cli.py`'s own docstrings/module
-    comments). Calling the real, shipped `hook_reflex` function object directly
-    (bypassing Click's own parameter-binding) silently reproduces the exact
+  MUTATION DW-2 -- SURVIVED when first found (real, not previously disclosed
+    anywhere in the architecture-fix session's own notes or in `sa2a/cli.py`'s own
+    docstrings/module comments); DEFEATED as of a later closure pass (see below).
+    Calling the real, shipped `hook_reflex` function object directly (bypassing
+    Click's own parameter-binding) used to silently reproduce the exact
     `--skip-admission-check` permissive configuration, even though the caller never
-    named that flag, never passed anything truthy for it, and has no way to discover
+    named that flag, never passed anything truthy for it, and had no way to discover
     from `hook_reflex`'s own Python-level signature that omitting an argument here
-    means "skip the fence" rather than "use its documented default." This is
-    precisely "an opt-out flag that is easier to trigger than intended" -- it is
-    triggered by DOING NOTHING, on the exact production code path, for any caller
-    (a test helper, a notebook, a future FastAPI/MCP wrapper that imports Typer
-    command functions directly instead of shelling out to the CLI) that does not
-    happen to go through `typer.testing.CliRunner` or a real subprocess invocation of
-    the CLI.
+    meant "skip the fence" rather than "use its documented default." This was
+    precisely "an opt-out flag that is easier to trigger than intended" -- triggered
+    by DOING NOTHING, on the exact production code path, for any caller (a test
+    helper, a notebook, a future FastAPI/MCP wrapper that imports Typer command
+    functions directly instead of shelling out to the CLI) that does not happen to go
+    through `typer.testing.CliRunner` or a real subprocess invocation of the CLI.
 
-Both are exercised here as regression fixtures for visibility, not as claims that
-either was silently reintroduced by this session's fix -- DW-1 was already named by
-the architecture-fix session; DW-2 is a genuinely new finding from this session's own
-adversarial pass. Neither `boundary.py`, `reactive_loop.py`, nor `cli.py` was modified
-to chase these -- per this task's explicit instruction, a survived mutation is
-reported, not patched.
+DW-1 closure (this pass): `ConsequenceBoundary.__init__`'s `require_admission`
+class-level default flipped from `False` to `True`, and `ReactiveSemanticLoop.
+__init__`'s `admission_pipeline` default (when the parameter is OMITTED, not
+explicitly passed as `None`) now constructs a real `AdmissionPipeline()` instead of
+defaulting to `None` -- the exact wider breaking change this file previously flagged
+("flipping `ConsequenceBoundary`'s/`ReactiveSemanticLoop`'s own class-level defaults
+to secure-by-default is a real, wider breaking change... not attempted here or
+anywhere else in this repo without an explicit decision to make it") as the closure
+DW-1 required. That explicit decision was made and executed in this session
+(`src/autofde_lab/sa2a/brce/boundary.py`, `src/autofde_lab/sa2a/hooks/
+reactive_loop.py`). A caller constructing `ConsequenceBoundary`/`ReactiveSemanticLoop`
+with ONLY their own bare default arguments -- exactly this test's own setup,
+unchanged -- now reaches the SAME real admission fence an explicitly-wired strict
+caller always did: the loop's own per-cycle `AdmissionPipeline.admit()` call reaches
+`Standing.ADMITTED` for this test's well-formed-but-unrelated event content
+(admission is a content-well-formedness/provenance check, not a relational-binding
+check), the real `AuthorityBroker` grant authorizes the intent, and
+`ConsequenceBoundary`'s own `_enforce_admission_gate()` -- now applied
+unconditionally on this bare-default instance -- refuses with
+`REFUSED_ADMISSION_CONTENT_NOT_BOUND` because the ADMITTED candidate graph never
+asserts the real `<urn:action:freeze_credit> <urn:autofde-lab:targetResource>
+<urn:cap:credit:freeze>` binding triple. Zero real disk actuation occurs: the gate
+refuses BEFORE Step 1 (idempotency), BEFORE authority-gated actuation, and BEFORE
+the actuator/verifier are ever invoked -- confirmed live this session
+(`actuator.call_count == 0`, `verifier.verification_count == 0`, the journal file is
+never created). `test_mutation_dw1_...` below now asserts this corrected, refused
+outcome.
+
+DW-2 closure (earlier pass, this repo): `sa2a/cli.py`'s `hook_reflex` now resolves
+`skip_admission_check` defensively at the top of its body -- a non-`bool` value there
+can only be Click's own unsubstituted `OptionInfo` sentinel (a real CLI invocation, or
+any caller passing a real bool, is unaffected), and is resolved to the sentinel's own
+configured default (`False`) rather than trusted as truthy. This is a narrow,
+non-breaking bug fix, not the wider DW-1 default-flip: it makes "argument omitted"
+mean "use the documented secure default" for THIS one parameter, on THIS one function,
+regardless of call style. `test_mutation_dw2_...` below asserts the corrected,
+refused outcome.
 """
 
 from __future__ import annotations
@@ -116,6 +144,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline
 from autofde_lab.sa2a.authority.broker import AuthorityBroker, AuthorityGrant
 from autofde_lab.sa2a.brce.boundary import ConsequenceBoundary, ExecutionEnvelope
 from autofde_lab.sa2a.brce.receipts import TerminalReceiptState
@@ -137,12 +166,18 @@ from autofde_lab.sa2a.hooks.reactive_loop import ReactiveSemanticLoop
 def test_mutation_dw1_direct_library_construction_bypasses_admission_entirely(
     tmp_path: Path,
 ) -> None:
-    """`ReactiveSemanticLoop`/`ConsequenceBoundary` constructed with ONLY their own
-    bare default arguments -- no `require_admission=`, no `admission_pipeline=` --
-    reach real EXECUTED actuation for event content that binds nothing to the exact
-    action/target being actuated. `sa2a/cli.py` (`app`, `hook_reflex`) is never
-    imported or touched anywhere in this test: this is the library surface any
-    consumer of `autofde_lab.sa2a` sees, independent of any CLI wiring.
+    """DEFEATED (closure pass): `ReactiveSemanticLoop`/`ConsequenceBoundary`
+    constructed with ONLY their own bare default arguments -- no
+    `require_admission=`, no `admission_pipeline=` -- now correctly REFUSE real
+    actuation for event content that binds nothing to the exact action/target being
+    actuated, instead of silently reaching `TerminalReceiptState.EXECUTED`.
+    `sa2a/cli.py` (`app`, `hook_reflex`) is never imported or touched anywhere in
+    this test: this is the library surface any consumer of `autofde_lab.sa2a` sees,
+    independent of any CLI wiring -- exactly the surface DW-1 originally found
+    permissive by default. This test's own construction is byte-for-byte unchanged
+    from the SURVIVED version; what changed is that the fence now lives in the
+    class-level defaults themselves, not only in `sa2a/cli.py hook_reflex`'s own
+    construction choices.
     """
     action_iri = "urn:action:freeze_credit"
     target_resource = "urn:cap:credit:freeze"
@@ -163,15 +198,18 @@ def test_mutation_dw1_direct_library_construction_bypasses_admission_entirely(
     actuator = RealDiskJournalActuator(journal)
     verifier = IndependentDiskJournalVerifier(journal)
 
-    # No `require_admission=` passed -- this instance uses the class's own default.
+    # No `require_admission=` passed -- this instance uses the class's own default,
+    # which is now the fail-secure True (DW-1 closure: the class-level default
+    # flipped from False to True).
     boundary = ConsequenceBoundary(
         authority_broker=broker,
         actuator=actuator,
         verifier=verifier,
         receipt_store=store,
     )
-    assert boundary.require_admission is False, (
-        "Precondition: ConsequenceBoundary's own bare default is require_admission=False."
+    assert boundary.require_admission is True, (
+        "Precondition (DW-1 closure): ConsequenceBoundary's own bare default is "
+        "now the fail-secure require_admission=True."
     )
 
     engine = KnowledgeHookEngine()
@@ -187,20 +225,28 @@ def test_mutation_dw1_direct_library_construction_bypasses_admission_entirely(
         )
     )
 
-    # No `admission_pipeline=` passed -- this instance uses the class's own default.
+    # No `admission_pipeline=` passed -- this instance uses the class's own default,
+    # which is now a real, freshly-constructed AdmissionPipeline() (DW-1 closure:
+    # an omitted argument no longer resolves to None).
     loop = ReactiveSemanticLoop(
         hook_engine=engine,
         authority_broker=broker,
         consequence_boundary=boundary,
         max_cascade_depth=2,
     )
-    assert loop.admission_pipeline is None, (
-        "Precondition: ReactiveSemanticLoop's own bare default is admission_pipeline=None."
+    assert isinstance(loop.admission_pipeline, AdmissionPipeline), (
+        "Precondition (DW-1 closure): ReactiveSemanticLoop's own bare default is "
+        f"now a real AdmissionPipeline(), got {loop.admission_pipeline!r}."
     )
 
     # Event content is a real, unrelated triple -- it never asserts
-    # <action_iri> <urn:autofde-lab:targetResource> <target_resource> anywhere, and no
-    # AdmissionResult of any kind is ever computed on this path.
+    # <action_iri> <urn:autofde-lab:targetResource> <target_resource> anywhere.
+    # DW-1 closure: an AdmissionResult IS now computed on this path -- the loop's
+    # own per-cycle admission call reaches Standing.ADMITTED for this
+    # well-formed-but-unrelated content (admission checks provenance/
+    # well-formedness, not relational binding); the refusal below comes from
+    # ConsequenceBoundary's own separate _admission_covers_action_target()
+    # relational-binding check, confirmed live (see refusal_code assertion below).
     event_ttl = '<urn:test:unrelated_subject> <urn:test:unrelated_predicate> "unrelated_value" .'
 
     trace = loop.run_reflex_cycle(
@@ -215,16 +261,44 @@ def test_mutation_dw1_direct_library_construction_bypasses_admission_entirely(
     assert len(step.final_receipts) == 1, f"Expected exactly one final receipt, got {step!r}"
     final = step.final_receipts[0]
 
-    # SURVIVED: real actuation, real disk journal write, zero admission ever computed.
-    assert final.state == TerminalReceiptState.EXECUTED, (
-        "MUTATION DW-1 DEFEATED (unexpected -- would mean the library-level default "
-        f"itself now refuses without admission): final receipt was {final.to_dict()!r}"
+    # DEFEATED: the unrelated/unbound event content is now correctly REFUSED --
+    # constructing ReactiveSemanticLoop/ConsequenceBoundary with ONLY their own bare
+    # defaults no longer reaches real actuation. The real AuthorityBroker grant DOES
+    # authorize the intent (confirmed live this session:
+    # step.authority_decisions[0].authorized is True) -- the refusal is
+    # ConsequenceBoundary's own admission-content-binding gate, not an authority
+    # refusal, confirming the fence closed at exactly the layer this mutation
+    # targeted (the bare-default construction), not by coincidentally also breaking
+    # authority.
+    assert final.state == TerminalReceiptState.REFUSED, (
+        "MUTATION DW-1 SURVIVED (regression -- constructing ReactiveSemanticLoop/"
+        "ConsequenceBoundary with only their own bare default arguments reached real "
+        f"actuation again): final receipt was {final.to_dict()!r}"
     )
-    assert journal.exists(), (
-        "MUTATION DW-1 DEFEATED (unexpected): real disk actuation never occurred."
+    assert final.refusal_code == "REFUSED_ADMISSION_CONTENT_NOT_BOUND", (
+        "Expected the relational-binding gate (ConsequenceBoundary."
+        "_enforce_admission_gate() -> _admission_covers_action_target()) to be the "
+        f"exact refusal reached, not a different/earlier gate: final receipt was "
+        f"{final.to_dict()!r}"
     )
-    assert actuator.call_count == 1
-    assert verifier.verification_count >= 1
+    assert step.authority_decisions[0].authorized is True, (
+        "Precondition check: the real AuthorityBroker grant must still authorize "
+        "this intent on its own merits -- the refusal above must come from the "
+        f"admission gate, not from authority: {step.authority_decisions!r}"
+    )
+    assert not journal.exists(), (
+        "MUTATION DW-1 SURVIVED (regression -- real disk actuation occurred despite "
+        "the admission-content-binding gate): the journal file must never be "
+        "created when the gate refuses before Step 1 / DO."
+    )
+    assert actuator.call_count == 0, (
+        "MUTATION DW-1 SURVIVED (regression): the real actuator must never be "
+        "invoked once the admission-content-binding gate refuses."
+    )
+    assert verifier.verification_count == 0, (
+        "MUTATION DW-1 SURVIVED (regression): the real verifier must never be "
+        "invoked once the admission-content-binding gate refuses."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -235,21 +309,28 @@ def test_mutation_dw1_direct_library_construction_bypasses_admission_entirely(
 def test_mutation_dw2_calling_real_hook_reflex_function_directly_defaults_to_skip(
     tmp_path: Path, capsys
 ) -> None:
-    """Calling the REAL, shipped `autofde_lab.sa2a.cli.hook_reflex` function object
-    directly (never through `typer.testing.CliRunner`, never through Click's own CLI
-    dispatch) with every parameter supplied EXCEPT `skip_admission_check` silently
-    reproduces the fully permissive `--skip-admission-check` configuration -- because
-    `hook_reflex`'s own Python-level default for that parameter is a truthy
-    `typer.models.OptionInfo` sentinel object, not the literal `False` the CLI
-    substitutes only during real Click argument parsing.
+    """DEFEATED (closure pass): calling the REAL, shipped
+    `autofde_lab.sa2a.cli.hook_reflex` function object directly (never through
+    `typer.testing.CliRunner`, never through Click's own CLI dispatch), with every
+    parameter supplied EXCEPT `skip_admission_check`, now correctly enforces the
+    admission fence rather than silently reproducing `--skip-admission-check`.
+
+    `hook_reflex`'s own Python-level *signature default* for `skip_admission_check`
+    is still a truthy `typer.models.OptionInfo` sentinel (confirmed live below,
+    unchanged -- that premise was never the bug, and Typer's decorator machinery
+    still needs it for real CLI argument parsing to work); what changed is that the
+    function body now resolves a non-`bool` value defensively to the sentinel's own
+    configured default (`False`) instead of trusting `bool(OptionInfo(...))`
+    (always `True`).
     """
     import typer
 
     from autofde_lab.sa2a.cli import hook_reflex
 
-    # Confirm the load-bearing premise for this mutation, live, before relying on it:
-    # the function's OWN real default for skip_admission_check is a truthy sentinel,
-    # never the boolean False a CLI invocation would supply.
+    # The load-bearing premise for this mutation is still real and unchanged: the
+    # function's OWN signature default for skip_admission_check is a truthy
+    # sentinel, never the boolean False a CLI invocation would supply. The fix is in
+    # the function BODY's runtime resolution of that sentinel, not in the signature.
     import inspect
 
     sig = inspect.signature(hook_reflex)
@@ -260,10 +341,10 @@ def test_mutation_dw2_calling_real_hook_reflex_function_directly_defaults_to_ski
         f"the real default), got {raw_default!r} of type {type(raw_default)!r}."
     )
     assert bool(raw_default) is True, (
-        "Expected the OptionInfo sentinel to be truthy (bool(OptionInfo(...)) is True "
-        "for this typer version) -- this is exactly what flips `not "
-        "skip_admission_check` to False and `None if skip_admission_check else ...` "
-        "to None when hook_reflex is called directly without this argument."
+        "Expected the OptionInfo sentinel to still be truthy (bool(OptionInfo(...)) "
+        "is True for this typer version) -- confirming the fix works by resolving "
+        "the sentinel explicitly in the function body, not by relying on its "
+        "truthiness changing."
     )
 
     action_iri = "urn:action:freeze_credit"
@@ -293,10 +374,10 @@ def test_mutation_dw2_calling_real_hook_reflex_function_directly_defaults_to_ski
     assert payload["steps_count"] == 1, f"Unexpected trace shape: {payload!r}"
     receipt_states = payload["steps"][0]["receipt_states"]
 
-    # SURVIVED: real EXECUTED actuation with unrelated/unbound event content, reached
-    # purely by calling the real production function directly and omitting an
-    # argument the caller never knew existed -- not by passing --skip-admission-check.
-    assert receipt_states == ["EXECUTED"], (
-        "MUTATION DW-2 DEFEATED (unexpected -- would mean calling hook_reflex "
-        f"directly without skip_admission_check now refuses by default): {payload!r}"
+    # DEFEATED: the unrelated/unbound event content is now correctly REFUSED --
+    # calling the real production function directly and omitting an argument the
+    # caller never knew existed no longer silently opts out of the admission fence.
+    assert receipt_states == ["REFUSED"], (
+        "MUTATION DW-2 SURVIVED (regression -- calling hook_reflex directly without "
+        f"skip_admission_check reproduced the permissive path again): {payload!r}"
     )
