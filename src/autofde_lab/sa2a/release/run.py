@@ -30,6 +30,7 @@ from autofde_lab.sa2a.experience.compiler import ArtifactRegistry
 from autofde_lab.sa2a.experience.known_route import KnownRouteRegistry
 from autofde_lab.sa2a.release.state_machine import ReleaseState, validate_release_transition
 from autofde_lab.sa2a.unknown.resolution import CandidateResolution, UnknownQuery
+from autofde_lab.sa2a.unknown.router import DiscoveryRouter
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,7 +95,8 @@ class ReleaseRun:
         candidate_manifest: Mapping[str, Any],
         semantic_class_id: str,
         episode1_query: UnknownQuery,
-        episode1_discover: Callable[[UnknownQuery], CandidateResolution],
+        episode1_discover: Optional[Callable[[UnknownQuery], CandidateResolution]] = None,
+        discovery_router: Optional[DiscoveryRouter] = None,
         equivalence_predicate: Callable[[Any], bool],
         equivalence_predicate_id: str,
         probe_input: str,
@@ -103,6 +105,45 @@ class ReleaseRun:
         episode2_fresh_candidate: CandidateResolution,
         episode2_target_resource: str,
     ) -> ReleaseRunResult:
+        # Hardening (2026-09-17): `ReleaseRun` is single-run by design (one work_dir,
+        # one state/history sequence -- ARD §50). A second `.run()` call on the same
+        # already-CROWNED/REFUSED/... instance used to reach the first `self._goto()`
+        # inside this method and raise an uncaught `ValueError` from
+        # `validate_release_transition` ("cannot go from CROWNED to SUBJECT_FENCED"),
+        # since only `SubjectResolutionError` is caught below. Refusing outright here
+        # (rather than silently resetting `self.state`/`self.history`, which would
+        # erase the record of the first run -- a `no-dual-bookkeeping.md` violation)
+        # is the honest choice: construct a new `ReleaseRun` with a fresh `work_dir`
+        # for a second attempt.
+        if self.state != ReleaseState.CREATED:
+            return ReleaseRunResult(
+                self.state, None, None, None, None, None,
+                reason=(
+                    f"REFUSED:ALREADY_RUN: this ReleaseRun instance already reached "
+                    f"{self.state.value!r} (history={[s.value for s in self.history]}); "
+                    "ReleaseRun.run() is single-run by design -- construct a new "
+                    "ReleaseRun with a fresh work_dir for a second attempt."
+                ),
+            )
+
+        # Hardening (2026-09-17): `Episode1Runner.run()` requires EXACTLY one of
+        # `discover=`/`discovery_router=` and raises an uncaught `ValueError`
+        # otherwise -- but `ReleaseRun.run()` previously had no `discovery_router`
+        # parameter at all, so a caller passing `episode1_discover=None` (legal --
+        # nothing enforces the Callable type hint at runtime) had NO way to supply
+        # the other half and would crash mid-run, leaving `self.state` stuck at
+        # EPISODE_1_RUNNING (not a lawful terminal/exit state). Guarding here, before
+        # any state transition, turns that crash into the same typed REFUSED result
+        # every other misconfiguration in this method already produces.
+        if (episode1_discover is None) == (discovery_router is None):
+            return ReleaseRunResult(
+                self.state, None, None, None, None, None,
+                reason=(
+                    "REFUSED:DISCOVERY_CONFIGURATION: exactly one of episode1_discover= "
+                    "or discovery_router= must be supplied to ReleaseRun.run()"
+                ),
+            )
+
         state_dir = self.work_dir / "state"
         journal_path = self.work_dir / "journal.json"
         receipt_store_dir = self.work_dir / "receipts"
@@ -136,6 +177,7 @@ class ReleaseRun:
         )
         ep1 = runner1.run(
             semantic_class_id=semantic_class_id, query=episode1_query, discover=episode1_discover,
+            discovery_router=discovery_router,
             equivalence_predicate=equivalence_predicate, equivalence_predicate_id=equivalence_predicate_id,
             probe_input=probe_input, action_iri=action_iri, target_resource=episode1_target_resource,
             exact_subject_digest=exact_subject.composition_digest,
@@ -216,13 +258,27 @@ class ReleaseRun:
         return records
 
     @staticmethod
-    def _run_fresh_consumer(state_dir: Path, episode1_id: str, episode2_id: str) -> dict[str, Any]:
+    def _run_fresh_consumer(
+        state_dir: Path, episode1_id: str, episode2_id: str, *, timeout: float = 30.0
+    ) -> dict[str, Any]:
         """Invokes the fresh-consumer verifier as a REAL, SEPARATE process (ARD §45) --
-        never imported and called in-process, so producer in-memory state cannot leak."""
-        result = subprocess.run(
-            [sys.executable, "-m", "autofde_lab.sa2a.release.fresh_consumer", str(state_dir), episode1_id, episode2_id],
-            capture_output=True, text=True,
-        )
+        never imported and called in-process, so producer in-memory state cannot leak.
+
+        Hardening (2026-09-17): this call previously had no `timeout=` at all -- a
+        hung `fresh_consumer.py` subprocess (e.g. triggered by a pathological state
+        directory) would hang the entire `ReleaseRun.run()` call forever, since
+        nothing here or in the caller ever interrupts `subprocess.run()`.
+        `fresh_consumer.py` only does local file I/O (per its own docstring) so 30s is
+        a generous bound, not a tight one -- a real timeout, distinguished from the
+        already-handled `JSONDecodeError` path via its own typed verdict prefix.
+        """
+        try:
+            result = subprocess.run(
+                [sys.executable, "-m", "autofde_lab.sa2a.release.fresh_consumer", str(state_dir), episode1_id, episode2_id],
+                capture_output=True, text=True, timeout=timeout,
+            )
+        except subprocess.TimeoutExpired:
+            return {"verdict": f"UNKNOWN:SUBPROCESS_TIMEOUT:exceeded {timeout}s"}
         try:
             return json.loads(result.stdout)
         except json.JSONDecodeError:

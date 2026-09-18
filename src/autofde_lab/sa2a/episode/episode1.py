@@ -117,6 +117,47 @@ class Episode1Runner:
         record = {"episode_id": episode_id, "last_completed_stage": stage, **payload}
         path.write_text(json.dumps(record, indent=2, default=str), encoding="utf-8")
 
+    def _no_candidate_result(
+        self,
+        *,
+        episode_id: str,
+        request_identity: str,
+        actuation_identity: str,
+        semantic_class_id: str,
+        exact_subject_digest: str,
+        fixture_id: str,
+        equivalence_predicate_id: str,
+        refusal_code: str,
+        reason: str,
+    ) -> Episode1Result:
+        """Shared UNKNOWN/REFUSED result for 'no discovery mechanism produced a
+        candidate' -- whether because a DiscoveryRouter had no matching engine or a
+        caller-supplied `discover` callable raised (hardening, 2026-09-17)."""
+        episode = Episode(
+            episode_id=episode_id, kind=EpisodeKind.UNKNOWN_DISCOVERY,
+            exact_subject_digest=exact_subject_digest, fixture_id=fixture_id,
+            semantic_class_id=semantic_class_id, request_identity=request_identity,
+            actuation_identity=actuation_identity, classification="UNKNOWN",
+            intelligence_usage=self.meter.usage_for(episode_id), standing="UNKNOWN",
+        )
+        self._checkpoint(episode_id, "complete", episode.to_dict())
+        return Episode1Result(
+            episode=episode,
+            machine_experience=MachineExperience(
+                experience_id="", semantic_class_id=semantic_class_id, source_episode_id=episode_id,
+                source_candidate_digest="", source_admission_receipt="",
+                discovery_identity="", discovery_resource_receipt="",
+                solution_candidate_digest="", solution_admission_receipt="",
+                compiled_artifact_ids=(), equivalence_predicate_id=equivalence_predicate_id,
+                state=ExperienceState.REFUSED, refusal_code=refusal_code,
+            ),
+            admission_receipt=UnknownAdmissionReceipt(
+                receipt_id="", candidate_hash="", admitted=False,
+                epistemic_standing=EpistemicState.REFUSED, reasons=(reason,),
+            ),
+            boundary_result=None,
+        )
+
     def run(
         self,
         *,
@@ -159,32 +200,19 @@ class Episode1Runner:
             routing = discovery_router.route(query)
             self._checkpoint(
                 episode_id, "discovery_routing",
-                {"selected_engine_id": routing.selected_engine_id, "attempted": list(routing.attempted_engine_ids)},
+                {
+                    "selected_engine_id": routing.selected_engine_id,
+                    "attempted": list(routing.attempted_engine_ids),
+                    "errored": list(routing.errored_engine_ids),
+                },
             )
             if routing.candidate is None:
-                episode = Episode(
-                    episode_id=episode_id, kind=EpisodeKind.UNKNOWN_DISCOVERY,
-                    exact_subject_digest=exact_subject_digest, fixture_id=fixture_id,
-                    semantic_class_id=semantic_class_id, request_identity=request_identity,
-                    actuation_identity=actuation_identity, classification="UNKNOWN",
-                    intelligence_usage=self.meter.usage_for(episode_id), standing="UNKNOWN",
-                )
-                self._checkpoint(episode_id, "complete", episode.to_dict())
-                return Episode1Result(
-                    episode=episode,
-                    machine_experience=MachineExperience(
-                        experience_id="", semantic_class_id=semantic_class_id, source_episode_id=episode_id,
-                        source_candidate_digest="", source_admission_receipt="",
-                        discovery_identity="", discovery_resource_receipt="",
-                        solution_candidate_digest="", solution_admission_receipt="",
-                        compiled_artifact_ids=(), equivalence_predicate_id=equivalence_predicate_id,
-                        state=ExperienceState.REFUSED, refusal_code="REFUSED_NO_DISCOVERY_ENGINE_PRODUCED_CANDIDATE",
-                    ),
-                    admission_receipt=UnknownAdmissionReceipt(
-                        receipt_id="", candidate_hash="", admitted=False,
-                        epistemic_standing=EpistemicState.REFUSED, reasons=("NO_ENGINE_PRODUCED_CANDIDATE",),
-                    ),
-                    boundary_result=None,
+                return self._no_candidate_result(
+                    episode_id=episode_id, request_identity=request_identity, actuation_identity=actuation_identity,
+                    semantic_class_id=semantic_class_id, exact_subject_digest=exact_subject_digest,
+                    fixture_id=fixture_id, equivalence_predicate_id=equivalence_predicate_id,
+                    refusal_code="REFUSED_NO_DISCOVERY_ENGINE_PRODUCED_CANDIDATE",
+                    reason="NO_ENGINE_PRODUCED_CANDIDATE",
                 )
             candidate = routing.candidate
             if routing.selected_kind in (
@@ -195,7 +223,22 @@ class Episode1Runner:
                 self.meter.record(episode_id, "frontier", "calls", 1)
         else:
             assert discover is not None
-            candidate = discover(query)
+            # Hardening (2026-09-17): a caller-supplied `discover` callable that
+            # raises (a bug in the caller's own engine, a malformed query it did
+            # not expect) must not crash the whole episode -- it degrades to the
+            # same UNKNOWN outcome a DiscoveryRouter reports when no engine can
+            # answer, never an uncaught exception escaping run().
+            try:
+                candidate = discover(query)
+            except Exception as exc:
+                self._checkpoint(episode_id, "discovery", {"error": repr(exc)})
+                return self._no_candidate_result(
+                    episode_id=episode_id, request_identity=request_identity, actuation_identity=actuation_identity,
+                    semantic_class_id=semantic_class_id, exact_subject_digest=exact_subject_digest,
+                    fixture_id=fixture_id, equivalence_predicate_id=equivalence_predicate_id,
+                    refusal_code="REFUSED_DISCOVER_CALLABLE_RAISED",
+                    reason=f"discover() raised: {exc!r}",
+                )
 
         self.meter.record(episode_id, "local_discovery", "calls", 1)
         self.meter.record(episode_id, "local_discovery", "tokens", candidate.consumed_tokens)

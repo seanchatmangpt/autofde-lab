@@ -46,6 +46,32 @@ class ArtifactRegistry:
         self._artifacts: dict[str, CompiledDeterministicRule] = {}
 
     def store(self, artifact: CompiledDeterministicRule) -> str:
+        """Store `artifact` under its `rule_id`, refusing a genuine key collision.
+
+        Hardening (2026-09-17): `rule_id` is `sha256(candidate_id)[:12]` -- 48 bits
+        of a content-addressed digest, not a guaranteed-unique identity. Confirmed
+        live: two DIFFERENT `CompiledDeterministicRule` objects sharing the same
+        `rule_id` (an astronomically unlikely but real collision, or a caller bug
+        constructing an artifact with a hand-set `rule_id`) previously silently
+        overwrote whichever artifact was stored first -- with no detection, and no
+        trace that the overwrite ever happened. Downstream, `ExperienceQualifier`
+        re-reads an artifact by `rule_id` on every (re)qualification (ARD §19's real
+        probe step) and every referencing `MachineExperience.compiled_artifact_ids`
+        entry assumes it still points at the content it was admitted against -- a
+        silent overwrite would corrupt requalification for the FIRST experience
+        without ever refusing anything. Re-storing byte-identical content under the
+        same key (an idempotent retry of the same compile) is harmless and allowed;
+        storing genuinely different content under an already-occupied key is refused.
+        """
+        existing = self._artifacts.get(artifact.rule_id)
+        if existing is not None and existing != artifact:
+            raise ValueError(
+                f"ArtifactRegistry.store() refused: rule_id {artifact.rule_id!r} "
+                f"already holds a DIFFERENT artifact (existing fingerprint "
+                f"{existing.fingerprint!r} != new fingerprint {artifact.fingerprint!r}) "
+                "-- a silent overwrite would corrupt any experience already admitted "
+                "against the existing artifact"
+            )
         self._artifacts[artifact.rule_id] = artifact
         return artifact.rule_id
 
@@ -89,11 +115,32 @@ class ExperienceCompiler:
                 "ExperienceCompiler.compile() requires an ADMITTED admission_receipt; "
                 f"got admitted=False for candidate {admitted_solution.candidate_id}"
             )
-        if admission_receipt.candidate_hash != admitted_solution.candidate_hash:
+        # Hardening (2026-09-17): `CandidateResolution.candidate_hash` (owned by
+        # unknown/resolution.py, not this module) is a derived property that
+        # `json.dumps()`s `evidence_payload` -- a field typed `Mapping[str, Any]`
+        # with no JSON-serializability constraint of its own. Confirmed live: a
+        # candidate whose evidence_payload holds a `set` (or any other
+        # non-JSON-serializable value) makes `.candidate_hash` raise a raw,
+        # uncaught `TypeError` at THIS call site -- inside compile()'s own code,
+        # not merely before it. `compile()` already treats "this candidate's
+        # provenance doesn't check out" as its own refusal domain (the two
+        # ValueErrors immediately around this one), so a candidate whose hash
+        # can't even be computed gets the same typed-refusal treatment rather
+        # than an unguarded TypeError escaping from a property read deep in a
+        # dependency this module doesn't own.
+        try:
+            solution_hash = admitted_solution.candidate_hash
+        except TypeError as exc:
+            raise ValueError(
+                "ExperienceCompiler.compile() could not compute candidate_hash for "
+                f"candidate {admitted_solution.candidate_id!r}: evidence_payload is not "
+                f"JSON-serializable ({exc!r})"
+            ) from exc
+        if admission_receipt.candidate_hash != solution_hash:
             raise ValueError(
                 "admission_receipt does not correspond to admitted_solution "
                 f"(receipt hash {admission_receipt.candidate_hash} != candidate hash "
-                f"{admitted_solution.candidate_hash})"
+                f"{solution_hash})"
             )
 
         rule = CompiledDeterministicRule(
@@ -118,11 +165,11 @@ class ExperienceCompiler:
             experience_id=experience_id,
             semantic_class_id=semantic_class_id,
             source_episode_id=episode_evidence.episode_id,
-            source_candidate_digest=admitted_solution.candidate_hash,
+            source_candidate_digest=solution_hash,
             source_admission_receipt=admission_receipt.receipt_id,
             discovery_identity=episode_evidence.discovery_identity,
             discovery_resource_receipt=episode_evidence.discovery_resource_receipt,
-            solution_candidate_digest=admitted_solution.candidate_hash,
+            solution_candidate_digest=solution_hash,
             solution_admission_receipt=admission_receipt.receipt_id,
             compiled_artifact_ids=(artifact_id,),
             equivalence_predicate_id=equivalence_predicate_id,

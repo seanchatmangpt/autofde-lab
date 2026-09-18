@@ -25,6 +25,10 @@ from autofde_lab.sa2a.experience.types import ExperienceState, MachineExperience
 REFUSED_PREDICATE_UNBOUND = "REFUSED_EXPERIENCE_EQUIVALENCE_PREDICATE_UNBOUND"
 REFUSED_PROBE_FAILED = "REFUSED_EXPERIENCE_PROBE_FAILED"
 REFUSED_UNBOUNDED_RESOURCES = "REFUSED_EXPERIENCE_UNBOUNDED_RESOURCES"
+#: Hardening (2026-09-17): a second qualify() call on the same still-ADMITTED
+#: experience object (immutability means the state check alone can't catch this --
+#: see KnownRouteRegistry.register_route()'s docstring for the confirmed-live bug).
+REFUSED_ALREADY_QUALIFIED = "REFUSED_EXPERIENCE_ALREADY_QUALIFIED"
 
 
 @dataclass(frozen=True, slots=True)
@@ -118,7 +122,13 @@ class ExperienceQualifier:
             invalidation_set=dict(experience.invalidation_set),
             state="ACTIVE",
         )
-        self._routes.register_route(route)
+        try:
+            self._routes.register_route(route)
+        except ValueError as exc:
+            # Same-shaped typed refusal as every other clause above -- never let
+            # register_route()'s duplicate-registration guard escape as a raw,
+            # uncaught ValueError from this method.
+            return self._refuse(experience, REFUSED_ALREADY_QUALIFIED, (str(exc),))
 
         return QualificationResult(
             experience=active_experience,

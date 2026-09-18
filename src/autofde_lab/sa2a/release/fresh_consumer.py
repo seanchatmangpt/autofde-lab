@@ -37,7 +37,7 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, Optional, Union, cast
 
 #: Modules whose presence would mean this verifier is not independent.
 FORBIDDEN_RUNTIME_MODULES: tuple[str, ...] = (
@@ -75,11 +75,19 @@ class IndependentStanding:
     edges: tuple[Edge, ...]
     artifacts_seen: tuple[str, ...]
     artifacts_absent: tuple[str, ...]
+    #: Hardening pass (2026-09-17): a file that EXISTS but fails to parse (truncated
+    #: write from a crash mid-checkpoint, or genuine tampering) is a DIFFERENT failure
+    #: class from one that never existed -- conflating them would let real corruption
+    #: report as ordinary "not run yet" absence. Kept as its own tuple, not folded
+    #: into `artifacts_absent`.
+    artifacts_corrupt: tuple[str, ...] = ()
 
     def unestablished(self) -> list[str]:
         return [e.name for e in self.edges if not e.established]
 
     def verdict(self) -> str:
+        if self.artifacts_corrupt:
+            return f"UNKNOWN:ARTIFACTS_CORRUPT:{','.join(self.artifacts_corrupt)}"
         if self.artifacts_absent:
             return f"UNKNOWN:ARTIFACTS_ABSENT:{','.join(self.artifacts_absent)}"
         missing = self.unestablished()
@@ -102,20 +110,64 @@ class IndependentStanding:
             ],
             "artifacts_seen": list(self.artifacts_seen),
             "artifacts_absent": list(self.artifacts_absent),
+            "artifacts_corrupt": list(self.artifacts_corrupt),
         }
 
 
-def _load_json(path: Path) -> Optional[dict]:
-    return json.loads(path.read_text()) if path.is_file() else None
+class _Corrupt:
+    """Sentinel: the file exists but its content could not be parsed as JSON."""
+
+
+_CORRUPT = _Corrupt()
+
+
+def _load_json(path: Path) -> Union[dict, _Corrupt, None]:
+    """Returns the parsed dict, `_CORRUPT` if the file exists but fails to parse
+    (truncated write, tampering, non-JSON content), or `None` if it doesn't exist.
+    Never raises -- this verifier is the trust anchor and must degrade to a typed
+    UNKNOWN verdict on any malformed input, never crash.
+    """
+    if not path.is_file():
+        return None
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return _CORRUPT
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        return _CORRUPT
+    if not isinstance(data, dict):
+        return _CORRUPT
+    return data
 
 
 def _ocel_event_objects(ocel: dict, activity: str) -> list[list[str]]:
-    """Object ids referenced by every event of `activity` (real E2O links only)."""
+    """Object ids referenced by every event of `activity` (real E2O links only).
+
+    Mutation-hardening (2026-09-17): a malformed-but-valid-JSON OCEL file --
+    `events` not a list, an individual event not a dict, `relationships` not a
+    list, or an individual relationship not a dict -- must degrade to "this
+    edge cannot be established" (an empty/short object list, which the caller's
+    `any(...)` check correctly reads as no matching E2O link), never raise
+    inside this module. This is the trust-anchor verifier; every non-conforming
+    shape is skipped in place, not propagated as an exception. Confirmed live:
+    before this guard, `events: "not-a-list"` and `relationships: "oops"` both
+    raised `AttributeError: 'str' object has no attribute 'get'` out of
+    `verify()` itself -- exactly the crash this module's own docstring
+    (line ~128) says it must never do.
+    """
     out: list[list[str]] = []
-    for event in ocel.get("events", []) or []:
-        if event.get("type") == activity:
-            relationships = event.get("relationships", []) or []
-            out.append([r.get("objectId", "") for r in relationships])
+    events = ocel.get("events", []) or []
+    if not isinstance(events, list):
+        return out
+    for event in events:
+        if not isinstance(event, dict) or event.get("type") != activity:
+            continue
+        relationships = event.get("relationships", []) or []
+        if not isinstance(relationships, list):
+            relationships = []
+        out.append([r.get("objectId", "") for r in relationships if isinstance(r, dict)])
     return out
 
 
@@ -132,10 +184,20 @@ def verify(state_dir: Path, episode1_id: str, episode2_id: str) -> IndependentSt
     if absent:
         return IndependentStanding(str(state_dir), episode1_id, episode2_id, (), tuple(seen), tuple(absent))
 
-    ep1 = _load_json(paths["ep1_checkpoint"]) or {}
-    ep1_ocel = _load_json(paths["ep1_ocel"]) or {}
-    ep2 = _load_json(paths["ep2_checkpoint"]) or {}
-    ep2_ocel = _load_json(paths["ep2_ocel"]) or {}
+    loaded = {k: _load_json(p) for k, p in paths.items()}
+    corrupt = [k for k, v in loaded.items() if isinstance(v, _Corrupt)]
+    if corrupt:
+        return IndependentStanding(
+            str(state_dir), episode1_id, episode2_id, (), tuple(seen), (), artifacts_corrupt=tuple(corrupt)
+        )
+    # Every value is now a real dict (or None, handled by `or {}` below) -- `corrupt`
+    # being empty proves no `_Corrupt` sentinel survived, so this narrowing is safe.
+    checkpoints = cast(Dict[str, Optional[dict]], loaded)
+
+    ep1 = checkpoints["ep1_checkpoint"] or {}
+    ep1_ocel = checkpoints["ep1_ocel"] or {}
+    ep2 = checkpoints["ep2_checkpoint"] or {}
+    ep2_ocel = checkpoints["ep2_ocel"] or {}
 
     results: list[Edge] = []
 

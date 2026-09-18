@@ -5,6 +5,48 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
+Last update: **pass 41** (2026-09-17) — **AFDE-2613 QUALIFICATION pass ("ultracode
+harden, benchmark, stress test").** Two rounds against the pass-40 v26.9.17 crown
+code. Round A (direct): close reading found and fixed 5 real crash bugs where a
+malformed input or a raising caller-supplied collaborator (a bad manifest shape, a
+corrupt checkpoint file, a raising equivalence predicate/discovery engine/discover
+callable) propagated an uncaught exception instead of the typed refusal these
+fail-closed modules promise — `SubjectResolver`, `fresh_consumer.py`,
+`KnownRouteRegistry.lookup()`, `DiscoveryRouter.route()`, `Episode1Runner.run()`, 8
+new regression tests. Round B: a 6-agent parallel workflow (`wf_a24a0fed-45f`,
+1.58M tokens, 281 tool calls, 6/6 done, 0 errors) — 4 disjoint-file-ownership Harden
+agents plus 2 Stress/Benchmark agents — found and fixed 7 more real bugs (a
+conflicting-artifact-digest gap in `SubjectResolver`, an uncaught crash on a second
+`ReleaseRun.run()` call, no timeout on the fresh-consumer subprocess call, a crash
+on malformed-but-valid-JSON OCEL shapes in the trust-anchor verifier — reconfirmed
+via real **mutation testing of all 7 required evidence-chain edges** per
+`.claude/rules/level4-completion-law.md`'s Mutation law — a `DiscoveryRouter` type
+gap that let a misbehaving engine's wrong-type return crash downstream code, a
+silent `ArtifactRegistry` collision, and **zero synchronization in
+`KnownRouteRegistry`**, now a real `threading.RLock`). Found and left **deliberately
+open, named precisely, not silently absorbed**: a confirmed, live, reproducible
+lost-update race in the shared-across-5-modules `RealDiskJournalActuator` (real
+8-thread stress test: 42 of 67 concurrent actuations' journal records lost, fails
+closed — zero silent wrong answers, zero uncaught exceptions — independently
+re-run by the orchestrator with the identical 42/67 result), matching this repo's
+own AFDE-2604 Lens 4 R1/R2/R3 TOCTOU precedent for the same shared-infrastructure
+reason; a confirmed O(5·N) inefficiency in `DiscoveryRouter.route()` (not a
+correctness bug); and a confirmed O(N) `DurableDiskReceiptStore` construction cost
+(0.06ms→91.2ms across 0→1000 pre-existing files) — the single largest performance
+liability found in the whole crown for any long-running workload. Real measured
+numbers throughout (never estimated): full crown 449ms mean, of which the
+fresh-consumer subprocess spawn is 92%; `KnownRouteRegistry.lookup()` confirmed
+O(class-size) not O(all-routes) at 10,000 routes. Every Round-B finding
+independently re-verified by the orchestrator after the workflow completed (real
+commands re-run, real output re-observed, per `.claude/rules/no-dual-bookkeeping.md`
+— not taken on the agents' self-report alone).
+`.venv/bin/python -m pytest tests/sa2a/ tests/agent/` (clean `--basetemp`) ->
+**531 passed, 0 failed** (up from 470 at the start of this pass). Mock-grep clean
+across every file touched, independently re-run. Full account:
+`docs/jira/v26.9.17/AFDE-2613-machine-experience-episode-core.md` §9;
+`docs/jira/v26.9.17/benchmarks/concurrency-stress-findings.md` and
+`latency-and-scaling.md`.
+
 Last update: **pass 40** (2026-09-17) — **AFDE-2613 continuation ("ultracode
 finish"): composition/release/discovery-router closure.** Continues pass 39 by
 closing 3 more items from that pass's own "Explicitly NOT done" list, real and

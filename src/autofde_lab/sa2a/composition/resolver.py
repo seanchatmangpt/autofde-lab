@@ -3,8 +3,9 @@
 Structural/format validation only (see package docstring for the scope boundary).
 Refuses, with a named typed reason, on: a floating branch reference (not an exact
 40-hex SHA), a missing artifact digest, a missing root-manifest digest, an ambiguous
-repository identity (same logical name, no SHA at all), or a duplicate logical
-dependency asserted with two conflicting SHAs.
+repository identity (same logical name, no SHA at all), a duplicate logical
+repository dependency asserted with two conflicting SHAs, or a duplicate logical
+artifact asserted with two conflicting content digests.
 """
 
 from __future__ import annotations
@@ -24,6 +25,23 @@ REFUSED_MISSING_ARTIFACT_DIGEST = "REFUSED_MISSING_ARTIFACT_DIGEST"
 REFUSED_MISSING_ROOT_MANIFEST_DIGEST = "REFUSED_MISSING_ROOT_MANIFEST_DIGEST"
 REFUSED_AMBIGUOUS_REPOSITORY_IDENTITY = "REFUSED_AMBIGUOUS_REPOSITORY_IDENTITY"
 REFUSED_CONFLICTING_REPOSITORY_SHA = "REFUSED_CONFLICTING_REPOSITORY_SHA"
+#: Hardening pass (2026-09-17, QUALIFICATION): `_resolve_artifacts` accepted two
+#: entries sharing one `artifact_id` but carrying two different `digest` values --
+#: both were silently admitted into `ExactSubject.artifacts`, exactly the
+#: "duplicate logical identity, conflicting content" shape `_resolve_repositories`
+#: already refuses via `REFUSED_CONFLICTING_REPOSITORY_SHA`. An `ExactSubject` with
+#: two digests claimed for the same `artifact_id` cannot answer "which digest is
+#: this artifact's identity" -- the composition is not exact. Mirrors the
+#: repository check: identical duplicates (same id, same digest) are not an error.
+REFUSED_CONFLICTING_ARTIFACT_DIGEST = "REFUSED_CONFLICTING_ARTIFACT_DIGEST"
+#: Hardening pass (2026-09-17): a malformed manifest shape (e.g. `repositories` is a
+#: string instead of a list, or a list entry isn't a mapping) used to raise a raw
+#: `AttributeError`/`TypeError` instead of the typed refusal this fail-closed
+#: resolver promises everywhere else -- a caller catching only
+#: `SubjectResolutionError` (as every falsifier test in this repo does) would see an
+#: uncaught crash instead of a clean REFUSED verdict. Every such shape violation now
+#: surfaces as this one code.
+REFUSED_MALFORMED_MANIFEST = "REFUSED_MALFORMED_MANIFEST"
 
 
 class SubjectResolutionError(ValueError):
@@ -71,6 +89,25 @@ class SubjectResolver:
     """Resolves a candidate composition manifest into an ExactSubject, fail-closed."""
 
     def resolve(self, candidate_manifest: Mapping[str, Any]) -> ExactSubject:
+        """Resolve `candidate_manifest` into an `ExactSubject`, fail-closed.
+
+        Any shape violation (`candidate_manifest` itself not Mapping-like,
+        `repositories`/`artifacts` not iterable, an entry not Mapping-like) is
+        caught and re-raised as a typed `SubjectResolutionError(REFUSED_MALFORMED_
+        MANIFEST, ...)` rather than an arbitrary `AttributeError`/`TypeError` --
+        "fail closed" means every rejection is the one typed exception every caller
+        in this repo already catches, never a surprise exception type.
+        """
+        try:
+            return self._resolve_unguarded(candidate_manifest)
+        except SubjectResolutionError:
+            raise
+        except (AttributeError, TypeError, KeyError, ValueError) as exc:
+            raise SubjectResolutionError(
+                REFUSED_MALFORMED_MANIFEST, f"candidate_manifest has an unexpected shape: {exc!r}"
+            ) from exc
+
+    def _resolve_unguarded(self, candidate_manifest: Mapping[str, Any]) -> ExactSubject:
         release_id = str(candidate_manifest.get("release_id", "")).strip()
         if not release_id:
             raise SubjectResolutionError(
@@ -138,6 +175,7 @@ class SubjectResolver:
 
     @staticmethod
     def _resolve_artifacts(raw: Sequence[Mapping[str, Any]]) -> tuple[ArtifactRef, ...]:
+        by_id: dict[str, ArtifactRef] = {}
         refs: list[ArtifactRef] = []
         for entry in raw:
             artifact_id = str(entry.get("artifact_id", "")).strip()
@@ -147,5 +185,16 @@ class SubjectResolver:
                     REFUSED_MISSING_ARTIFACT_DIGEST,
                     f"artifact {artifact_id or '<unnamed>'!r} is missing a digest",
                 )
-            refs.append(ArtifactRef(artifact_id=artifact_id, digest=digest))
+            if artifact_id in by_id:
+                prior = by_id[artifact_id]
+                if prior.digest != digest:
+                    raise SubjectResolutionError(
+                        REFUSED_CONFLICTING_ARTIFACT_DIGEST,
+                        f"artifact {artifact_id!r} asserted with two conflicting "
+                        f"digests: {prior.digest!r} and {digest!r}",
+                    )
+                continue  # identical duplicate, not an error
+            ref = ArtifactRef(artifact_id=artifact_id, digest=digest)
+            by_id[artifact_id] = ref
+            refs.append(ref)
         return tuple(refs)

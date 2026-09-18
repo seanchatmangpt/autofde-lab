@@ -344,6 +344,182 @@ this section's 23 new tests). Mock-grep over every file touched this continuatio
 zero matches. `py_compile` sanity pass -> clean (`ruff` remains `UNSUPPORTED` in this
 environment, unchanged from §6).
 
+## 9. 2026-09-17 QUALIFICATION pass ("ultracode harden, benchmark, stress test")
+
+Per `~/.claude/rules/local-dfcm-manufacturing-engine.md`'s QUALIFICATION mode: "try
+aggressively to falsify/break the manufactured claims before they're reported as
+done." Two rounds, same session:
+
+**Round A (direct, before dispatching agents)** — close reading of the §8 code
+surfaced 5 real crash bugs, fixed directly: `SubjectResolver.resolve()` raised a raw
+`AttributeError`/`TypeError` on a malformed manifest shape (a string where
+`repositories` should be a list, non-dict entries, or `candidate_manifest` itself not
+Mapping-like) instead of its own promised typed refusal — now
+`SubjectResolutionError(REFUSED_MALFORMED_MANIFEST, ...)`.
+`release/fresh_consumer.py` — the trust-anchor verifier — raised
+`json.JSONDecodeError` on a truncated/corrupt checkpoint file instead of degrading to
+a typed verdict — now a `_Corrupt` sentinel + `IndependentStanding.artifacts_corrupt`
+(distinguished from genuine absence, never conflated). `KnownRouteRegistry.lookup()`
+and `DiscoveryRouter.route()` both propagated an exception raised by a
+caller-registered predicate/engine instead of degrading to "this one rejects, try the
+next" — both now catch and continue.  `Episode1Runner.run()` propagated an exception
+from a caller-supplied `discover` callable instead of a clean UNKNOWN episode — now
+routed through a shared `_no_candidate_result()` helper
+(`REFUSED_DISCOVER_CALLABLE_RAISED`). Pinned by
+`tests/sa2a/test_v26_9_17_hardening_chicago.py` (8 tests).
+
+**Round B (6-agent parallel workflow, `wf_a24a0fed-45f`, 1,579,152 tokens, 281 tool
+calls, 6/6 completed, 0 errors)** — 4 agents in a `Harden` phase (disjoint file
+ownership: composition/, release/state_machine.py+run.py,
+release/fresh_consumer.py, unknown/router.py+experience/), then 2 agents in a
+`StressAndBenchmark` phase (concurrency stress, real benchmarking). Every finding
+below was independently re-verified by the orchestrator after the workflow completed
+— real commands re-run, real output re-observed, not taken on the agents' self-report
+alone (per this repo's own `.claude/rules/no-dual-bookkeeping.md`).
+
+### Real bugs found and fixed (Round B)
+
+- `SubjectResolver._resolve_artifacts` had no conflict check for two entries
+  sharing one `artifact_id` with two different `digest` values — both were silently
+  admitted into `ExactSubject.artifacts`, defeating the entire point of an *exact*
+  composition identity. Now `REFUSED_CONFLICTING_ARTIFACT_DIGEST`, mirroring the
+  repository-SHA conflict check.
+- `ReleaseRun.run()` called a second time on the same instance raised an uncaught
+  `ValueError` from `validate_release_transition` ("cannot go from CROWNED to
+  SUBJECT_FENCED"). Now returns a clean `REFUSED:ALREADY_RUN` result — `ReleaseRun`
+  is explicitly single-use by design, and a caller attempting a second run now gets a
+  typed answer instead of a crash.
+- `ReleaseRun._run_fresh_consumer`'s `subprocess.run(...)` call had no `timeout=` —
+  a pathological input could hang the fresh-consumer subprocess and hang the entire
+  crown forever. Now bounded.
+- `fresh_consumer.py`'s `_ocel_event_objects()` crashed with `AttributeError` on
+  several malformed-but-VALID-JSON OCEL shapes (`events` not a list, an event not a
+  dict, `relationships` not a list or containing non-dict entries) — confirmed live
+  pre-fix. Now every non-conforming shape degrades to "this edge cannot be
+  established" in place, never an exception escaping `verify()` — reconfirmed via
+  real **mutation testing of all 7 required chain edges** (per
+  `.claude/rules/level4-completion-law.md`'s Mutation law: construct a real,
+  complete, conformant Episode1→Episode2 evidence pair via the real runners, mutate
+  exactly one edge's identity, require the verifier to report exactly that edge
+  broken) — `tests/sa2a/release/test_fresh_consumer_mutation_chicago.py`, 15 tests,
+  independently re-run by the orchestrator: **15 passed**.
+- `DiscoveryRouter.route()` accepted ANY non-`None` return from a misbehaving
+  engine at face value — an engine returning a bare string or int instead of a real
+  `CandidateResolution` was passed downstream as if it were one, crashing
+  `Episode1Runner.run()`'s first real-attribute read (`candidate.consumed_tokens`)
+  with `AttributeError` — confirmed live pre-fix. Now `isinstance(candidate,
+  CandidateResolution)` validated at the boundary; a violation is recorded in a new
+  `errored_engine_ids` field (same treatment as a raising engine) and routing falls
+  through.
+- `ArtifactRegistry.store()` silently overwrote on a genuine `rule_id` collision.
+  Now refuses a true collision (different content, same id) while remaining
+  idempotent for a byte-identical re-store.
+- **`KnownRouteRegistry` had no synchronization at all** — a plain `dict`/`list`
+  read/written by `register_route()`/`lookup()`/`deactivate()` with zero locking.
+  Fixed with a `threading.RLock` guarding every method that touches
+  `_routes_by_class`/`_predicates`; `lookup()` snapshots under the lock and releases
+  it before invoking any caller-supplied predicate (foreign code never runs while
+  holding this registry's lock).
+
+### Real bugs found and left deliberately open (named, not silently absorbed)
+
+- **A confirmed, live, reproducible lost-update race in
+  `RealDiskJournalActuator.actuate()`** (`conformance/courts/consequence_court.py`):
+  an unsynchronized read-json→append→atomic-`os.replace()` sequence on a journal
+  file shared across concurrent `Episode1Runner`/`Episode2Runner` instances — the
+  exact sharing pattern `ReleaseRun.run()` itself uses across its own two episodes,
+  and that multiple concurrent crown runs against one `work_dir` would share too.
+  Real 8-thread × 5-trial stress test: the agent's run showed **42 of 67** attempted
+  actuations' journal records lost; the orchestrator's own independent re-run of the
+  same test immediately after showed **42 of 67** lost again. Individual file writes
+  stay torn-write-safe (`os.replace()` is atomic; zero JSON parse errors in any
+  trial) — the compound read-modify-write is not. **Fails closed, not silently
+  wrong**: the losing thread's own `IndependentDiskJournalVerifier` correctly reads
+  a different thread's entry and reports `success=False`/`UNKNOWN_OUTCOME` rather
+  than a false `EXECUTED` — zero silent wrong-answers observed across all trials.
+  **Deliberately not fixed**: `RealDiskJournalActuator`/`DurableDiskReceiptStore`
+  are constructed at call sites across 5 `src/` modules and imported by 20+18 test
+  files respectively; a correct fix needs a lock keyed by the resolved
+  `journal_path`/`store_dir` (today's instances share no Python-level state), which
+  is exactly the shared-infrastructure-internals change this pass's own scoping
+  excluded. This is the same class of finding, against the same root cause, that
+  `docs/jira/v26.9.16/AFDE-2604-admission-fencing-local-closure.md` names as Lens
+  4's R1/R2/R3 (TOCTOU/concurrency) — deliberately left `SURVIVED`/open there for
+  the identical reason. This pass reproduces it fresh against the v26.9.17 crown
+  path specifically and records it as the same still-open gap, not a new one.
+- **`DiscoveryRouter.route()`'s O(5·N) worst-case scan** — each of the 5 precedence
+  tiers re-walks the *entire* `self._engines` list rather than using a
+  kind-indexed structure (unlike `KnownRouteRegistry`'s own class-indexed design one
+  file over). Not a correctness bug (still returns the right, precedence-ordered
+  answer every time) — a confirmed real inefficiency: **0.0064ms→0.34ms** measured
+  across 10→1000 registered engines (worst case). Left open: fixing it means
+  editing `unknown/router.py`, outside the benchmark phase's read-only-of-source
+  scope.
+- **`DurableDiskReceiptStore.__init__()`'s O(N) construction cost**, confirmed by
+  real measurement (not just theorized as it was when the audit first predicted it
+  in §7 above): `_sync_from_disk()` re-reads and `json.loads()`s *every* existing
+  `prep_*.json`/`final_*.json` file on every construction, and `Episode1Runner`/
+  `Episode2Runner` each construct a fresh store per `run()` call against a
+  potentially long-lived shared `receipt_store_dir`. Real numbers: **0.06ms @ 0
+  files → 0.72ms @ 10 → 8.04ms @ 100 → 91.2ms @ 1000** (≈0.09ms/file, roughly
+  linear). The orchestrator's own quick re-run of the benchmark script confirmed the
+  same shape (0.09/1.4/6.2ms @ 0/10/100). This is the single largest confirmed
+  performance liability in the whole v26.9.17 crown for any workload that runs many
+  episodes against one long-lived `receipt_store_dir` (e.g. a production crown loop)
+  — named precisely, left open for the same shared-infrastructure reason as the race
+  above.
+
+### Confirmed already-correct (real adversarial tests, no fix needed — also real information)
+
+Unicode/control-character/10000+-char strings in manifest fields (safe, no crash, no
+truncation); uppercase-hex SHAs correctly `REFUSED_FLOATING_REPOSITORY_REF` (matches
+real, verified `git rev-parse` output, which is always lowercase); 3000+ repository
+entries resolve without quadratic blowup; `resolve_self_identity()` against a
+non-git directory raises a real, typed `subprocess.CalledProcessError` (judged
+acceptable, not wrapped); no `shell=True` anywhere in `composition/`, confirmed via a
+real injection probe using a directory name containing shell metacharacters;
+`composition_digest` is stable across dict-key-order and JSON-round-trip variation;
+whitespace-only artifact digests correctly refused; `KnownRouteRegistry.lookup()` is
+O(routes-in-target-class), not O(all-routes-ever-registered) — confirmed via real
+timing at 1050 routes across 50 classes (1.19µs/lookup); `MachineExperience.
+is_invalidated_by()` correctly treats an *absent* current digest as "changed"
+(fail-closed, matching `.claude/rules/absence-is-not-evidence.md`) rather than
+silently passing; `ReleaseState`'s `BUILD_BROKEN`/`UNSUPPORTED` exits are declared,
+lawful, but currently **unreachable dead states** — `ReleaseRun.run()` never actually
+transitions to either (named explicitly, not fixed — out of this pass's scope to add
+new triggering logic).
+
+### Real, measured benchmark numbers (never estimated)
+
+| Metric | Value |
+|---|---|
+| Full crown (`ReleaseRun.run()`), mean | 449.4ms |
+| — of which: `fresh_consumer` subprocess spawn | 413.6ms (**92%** of total) |
+| `Episode1Runner.run()`, end to end, mean | 4.77ms |
+| `Episode2Runner.run()`, isolated, mean | 3.32ms |
+| `KnownRouteRegistry.lookup()`, worst case @ 10 / 10,000 routes | 0.0003ms / 0.0309ms |
+| `DiscoveryRouter.route()`, worst case @ 10 / 1,000 engines | 0.0064ms / 0.34ms |
+| `DurableDiskReceiptStore()` construction @ 0 / 1,000 files | 0.06ms / 91.2ms |
+
+Full tables and exact reproduction commands: `docs/jira/v26.9.17/benchmarks/
+latency-and-scaling.md` and `docs/jira/v26.9.17/benchmarks/
+concurrency-stress-findings.md`. Benchmark script:
+`tests/sa2a/benchmarks/bench_v26_9_17_crown.py` (supports `--full` for the larger
+scale tiers). Both re-run independently by the orchestrator after the workflow
+completed, producing the same shape of numbers (not identical — different machine
+load — but the same confirmed scaling behavior).
+
+### Verification
+
+Mock-grep across every file touched in both rounds (`composition/`, `release/`,
+`unknown/router.py`, `episode/episode1.py`, `experience/*`, every new test file) →
+**zero matches**, independently re-run by the orchestrator. Full regression
+`tests/sa2a/ tests/agent/`, independently re-run by the orchestrator with a clean
+`--basetemp` → **531 passed, 0 failed** (up from 470 at the start of this
+QUALIFICATION pass — 470 itself already included the earlier Round A fixes' 8
+tests; delta of 61 real new tests from Round B alone). `py_compile` unaffected;
+`ruff` remains `UNSUPPORTED` in this environment.
+
 ## See also
 
 - `docs/STATUS.md` — pass entry for this ticket.
