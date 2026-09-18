@@ -304,8 +304,10 @@ jobs:
           # exist only via [tool.uv.sources] git redirects in pyproject.toml,
           # not on PyPI and not in the wheel's METADATA. uv honors those
           # redirects only when resolving the *project* from its lock --
-          # not for a prebuilt wheel path, which is why PR#108's
-          # `uv pip install wheel[all]` still failed live (run 33939249689:
+          # not for a prebuilt wheel path, which is why the simpler
+          # `uv pip install wheel[all]` fix (same bug class already fixed
+          # for build-doc.yml's own install step in PR#107) still failed
+          # live in this workflow's own inline `docs` job (run 33939249689:
           # `No solution found ... wasm4pm-compat-pydantic was not found in
           # the package registry`). Export the frozen lock's resolved set
           # (git URLs included, markers kept) and install that; then the
