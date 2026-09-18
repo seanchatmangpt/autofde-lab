@@ -1,0 +1,48 @@
+# OpenTelemetry Collector config for MFG-01A.1's OTel court.
+#
+# Endpoint choice: exporters.otlphttp.endpoint uses `host.docker.internal:4900`,
+# not `localhost:4900` + `--network host`. Rationale:
+#   - This repo's CI and dev workflow targets colima / Docker Desktop on macOS
+#     (see CLAUDE.md build notes), where `--network host` is either unsupported
+#     (Docker Desktop for Mac never implements real host networking; the flag
+#     is silently a no-op) or requires an explicit experimental daemon flag
+#     (colima). `host.docker.internal` is resolved by both colima (as of the
+#     `k3s`/docker runtime profile) and Docker Desktop by default, with no
+#     extra daemon configuration.
+#   - `ocel_accumulator` is a sibling service (built by a parallel task) that
+#     listens on the Docker host's port 4900. From inside this collector's
+#     own container, the host is reached via `host.docker.internal`, never
+#     `localhost` (which would resolve to the collector container itself).
+#
+# ocel_accumulator's real receiving endpoint: POST /v1/traces on port 4900.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 512
+
+exporters:
+  otlphttp:
+    endpoint: http://host.docker.internal:4900
+    traces_endpoint: http://host.docker.internal:4900/v1/traces
+    tls:
+      insecure: true
+  # debug exporter kept for local diagnosis when the collector's own logs are
+  # inspected (act runs, CI runs) -- not required by ocel_accumulator itself.
+  debug:
+    verbosity: detailed
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp, debug]

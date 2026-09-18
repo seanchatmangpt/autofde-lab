@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import sys
 
-from autofde_lab.sa2a.case_studies.manufacturing import ocel_adapter
+from autofde_lab.sa2a.case_studies.manufacturing import ocel_adapter, telemetry
 from autofde_lab.sa2a.case_studies.manufacturing.actuator import Actuator
 from autofde_lab.sa2a.case_studies.manufacturing.authority_agent import (
     AuthorityAgent,
@@ -77,21 +77,14 @@ def run(seed: int, max_rounds: int = MAX_ROUNDS) -> dict:
     total_actuations = 0
     last_round_index = 0
 
+    tracer = telemetry.get_tracer()
+
     for round_index in range(max_rounds):
         last_round_index = round_index
 
-        observations: list[dict] = []
-        proposals: list[dict] = []
-        for rid in RESOURCE_IDS:
-            obs, prop = agents[rid].observe_and_decide(round_index)
-            observations.append(obs)
-            if prop is not None:
-                proposals.append(prop)
-
-        decisions = authority.decide_round(round_index, proposals)
-
-        proposals_by_id = {p["proposal_id"]: p for p in proposals}
-        actuations = actuator.apply_round(round_index, decisions, proposals_by_id)
+        observations, proposals, decisions, actuations = _run_round_traced(
+            tracer, round_index, seed, agents, authority, actuator
+        )
 
         snapshot = actuator.snapshot()
         stable = (len(proposals) == 0) and all(
@@ -136,6 +129,94 @@ def run(seed: int, max_rounds: int = MAX_ROUNDS) -> dict:
         ref, "max_rounds", last_round_index, actuator, summaries,
         total_proposals, total_admitted, total_refused, total_actuations,
     )
+
+
+def _run_round_traced(
+    tracer,
+    round_index: int,
+    seed: int,
+    agents: "dict[str, ResourceAgent]",
+    authority: "AuthorityAgent",
+    actuator: "Actuator",
+) -> "tuple[list[dict], list[dict], list[dict], list[dict]]":
+    """Execute exactly one round's real observe/propose/authorize/actuate/
+    receipt transitions, unchanged in order or content from the plain loop
+    body, wrapped in one real OpenTelemetry span tree per round.
+
+    Telemetry only: this function calls the exact same public methods on
+    the exact same agent/authority/actuator objects the un-instrumented
+    loop called, in the same order, and returns their real results
+    unmodified. `observe` -> `propose` -> `authorize` -> `actuate` ->
+    `receipt` are nested via `start_as_current_span`, which propagates
+    parent context automatically, so this is one real span tree per round
+    (not five disconnected root spans).
+    """
+    observations: list[dict] = []
+    proposals: list[dict] = []
+
+    with tracer.start_as_current_span(
+        telemetry.ACTIVITY_OBSERVE,
+        attributes={"round_index": round_index, "seed": seed},
+    ) as observe_span:
+        for rid in RESOURCE_IDS:
+            obs, prop = agents[rid].observe_and_decide(round_index)
+            observations.append(obs)
+            if prop is not None:
+                proposals.append(prop)
+        observe_span.set_attribute(
+            "resource_id", telemetry.join_ids([o["resource_id"] for o in observations])
+        )
+
+        with tracer.start_as_current_span(
+            telemetry.ACTIVITY_PROPOSE,
+            attributes={
+                "round_index": round_index,
+                "proposal_id": telemetry.join_ids([p["proposal_id"] for p in proposals]),
+                "resource_id": telemetry.join_ids([p["resource_id"] for p in proposals]),
+            },
+        ):
+            decisions = authority.decide_round(round_index, proposals)
+
+        with tracer.start_as_current_span(
+            telemetry.ACTIVITY_AUTHORIZE,
+            attributes={
+                "round_index": round_index,
+                "proposal_id": telemetry.join_ids([d["proposal_id"] for d in decisions]),
+                "verdict": telemetry.join_ids([d["verdict"] for d in decisions]),
+                "granted_energy_kwh": sum(d["granted_energy_kwh"] for d in decisions),
+            },
+        ):
+            proposals_by_id = {p["proposal_id"]: p for p in proposals}
+
+            with tracer.start_as_current_span(
+                telemetry.ACTIVITY_ACTUATE,
+                attributes={
+                    "round_index": round_index,
+                    "resource_id": telemetry.join_ids(
+                        [d["resource_id"] for d in decisions]
+                    ),
+                },
+            ):
+                actuations = actuator.apply_round(round_index, decisions, proposals_by_id)
+
+                with tracer.start_as_current_span(
+                    telemetry.ACTIVITY_RECEIPT,
+                    attributes={
+                        "round_index": round_index,
+                        "receipt_id": telemetry.join_ids(
+                            [a["receipt_id"] for a in actuations]
+                        ),
+                        "pre_state_hash": telemetry.join_ids(
+                            [a["pre_state_hash"] for a in actuations]
+                        ),
+                        "post_state_hash": telemetry.join_ids(
+                            [a["post_state_hash"] for a in actuations]
+                        ),
+                    },
+                ):
+                    pass
+
+    return observations, proposals, decisions, actuations
 
 
 def _finish(

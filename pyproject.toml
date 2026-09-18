@@ -41,6 +41,8 @@ dependencies = [
     # unsatisfiable and `uv run` failed. The marker excludes gymact from that
     # split rather than narrowing this project's own supported range.
     "gymact; python_version >= '3.11'",
+    "opentelemetry-sdk>=1.44.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.44.0",
 ]
 
 [project.scripts]

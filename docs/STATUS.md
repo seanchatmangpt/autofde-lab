@@ -5,6 +5,61 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
+Last update: **pass 45** (2026-09-18) — **MFG-01A.1: real OpenTelemetry
+instrumentation of the MFG-01A runtime; OTel Collector ingestion proven;
+OTLP→OCEL2 court BLOCKED on an upstream ggen-pack defect
+(PARTIAL_ALIVE).**
+
+Adds real `opentelemetry-sdk` + `opentelemetry-exporter-otlp-proto-http`
+instrumentation (`src/autofde_lab/sa2a/case_studies/manufacturing/telemetry.py`,
+new) wrapping the five real MFG-01A transitions (`observe`, `propose`,
+`authorize`, `actuate`, `receipt`) as one real parent-child span tree per
+round, span attributes carrying real domain identities (`resource_id`,
+`proposal_id`, `round_index`, `verdict`, `granted_energy_kwh`, `receipt_id`,
+`pre_state_hash`, `post_state_hash`). `runtime.py`'s round loop was edited
+to emit these spans around the *same* calls in the *same* order — no
+decision logic changed; the direct `OcelLog` writer path is untouched.
+`tests/sa2a/case_studies/test_manufacturing_baseline_chicago.py`: **7
+passed**, re-run twice, before and after.
+
+**Measured win** — real Collector ingestion: `docker run
+otel/opentelemetry-collector-contrib` with a real `otel-collector-config.yaml`
+(otlp receiver, batch processor, `otlphttp` exporter), instrumented runtime
+pointed at it via `OTEL_EXPORTER_OTLP_ENDPOINT`, seed=1, 40 rounds: real
+`POST /v1/traces` → `200`, 200 real spans logged by the collector's debug
+exporter (5 × 40 rounds), round-39 `authorize` span carrying the real
+`granted_energy_kwh: 222.5` value independently matching the direct-path
+baseline.
+
+**Recorded negative** — `BLOCKED:GENERATED_PACK_MISSING_CARGO_DEPS`.
+`~/ggen-marketplace/packs/otel-weaver-ocel-pack`'s generated
+`ocel_accumulator.rs` (the intended real OTLP→OCEL2 projector, chosen over
+hand-writing one per this repo's prior-art-first research-sources rule) uses
+`serde::{Deserialize,Serialize}` and `tiny_http` that its own generated
+`Cargo.toml` never declares — 13 real `E0432`/`E0433` compile errors,
+reproduced twice. Not hand-edited (file carries "GENERATED ... do not
+hand-edit"); fixing it is a ggen-marketplace-side defect, out of scope for
+this repo's own STATUS. This blocks the accumulator's `/v1/traces` and
+`/compact` endpoints, which blocks true OTLP-vs-direct-writer semantic
+equivalence — only self-consistency of the new
+`otel_equivalence_check.py` (direct doc vs. itself: 9/9 checks pass) was
+verifiable this session.
+
+**Recorded negative** — `BLOCKED:ACT_COLIMA_SOCKET_MOUNT_UNSUPPORTED`.
+`act workflow_dispatch -W .github/workflows/sa2a-mfg-otel-court.yml`
+(non-dryrun) fails before any job step runs: `act` tries to bind-mount
+colima's VZ-backed docker socket path as a directory, which colima's socket
+layout does not support (`mkdir .../docker.sock: operation not supported`).
+`--dryrun` succeeds trivially (skips step bodies) and is not evidence.
+Reproduced twice, both with default and explicit `DOCKER_HOST`.
+
+**Standing by boundary**: Python OTel instrumentation — `ALIVE`. Collector
+ingestion of real spans — `ALIVE`. `ocel_accumulator` build/run, `/compact`,
+cross-implementation OTLP-vs-direct equivalence — `BLOCKED` (named above).
+`act`-driven CI execution of the court workflow — `BLOCKED` (named above).
+This is **not** MFG-01B/C/D (generative worlds, HDDL/POWL/FOND, frontier
+falsifier) — none of those exist; not claimed here.
+
 Last update: **pass 44** (2026-09-18) — **MFG-01A: sa2a manufacturing case
 study admitted into the repo as a committed baseline (PARTIAL_ALIVE).**
 Migrates the independently-written sa2a-mfg-01 scratch prototype (six Python

@@ -1,0 +1,189 @@
+---
+# MFG-01A.1 OTel court: builds ocel_accumulator, runs a real OTel Collector
+# fed by an instrumented Python runtime, compacts the resulting trace into an
+# OCEL2 JSON document, and asserts on it. Deliberately plain docker
+# build/run/curl steps (no docker-compose) so the whole workflow stays
+# runnable under `act` without extra tooling.
+#
+# NAMED ASSUMPTION (documented per task instructions rather than failing
+# silently): this job assumes the following sibling-repo paths exist at
+# fixed, workspace-relative locations alongside this checkout of
+# autofde-lab:
+#   - /Users/sac/wasm4pm-compat
+#   - /Users/sac/ggen-marketplace/packs/otel-weaver-ocel-pack
+# In CI (GitHub-hosted runners), neither path exists by default -- there is
+# no `~/wasm4pm-compat` or `~/ggen-marketplace` checked out on a fresh
+# runner. This workflow does NOT check out or vendor those repos; it assumes
+# they are provided by the runner environment (self-hosted runner image,
+# `actions/checkout` of an additional repo, or local `act` invocation from a
+# workstation that already has both cloned as siblings of autofde-lab). If
+# the ocel_accumulator build step fails with a missing-path error, that is
+# this assumption failing, not a config bug -- see this comment before
+# debugging further.
+
+name: sa2a-mfg-otel-court
+
+on:
+  workflow_dispatch: {}
+
+env:
+  OCEL_ACCUMULATOR_IMAGE: ocel-accumulator:mfg-01a
+  COLLECTOR_IMAGE: otel/opentelemetry-collector-contrib:latest
+  OCEL_ACCUMULATOR_PORT: 4900
+  OTEL_COLLECTOR_GRPC_PORT: 4317
+  OTEL_COLLECTOR_HTTP_PORT: 4318
+
+jobs:
+  otel-court:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout autofde-lab
+        uses: actions/checkout@v4
+
+      - name: Verify sibling-repo assumption (see NAMED ASSUMPTION above)
+        run: |
+          set -eu
+          echo "Checking for sibling repos assumed by this job:"
+          for p in "$HOME/wasm4pm-compat" "$HOME/ggen-marketplace/packs/otel-weaver-ocel-pack"; do
+            if [ -d "$p" ]; then
+              echo "  FOUND: $p"
+            else
+              echo "  MISSING: $p (see workflow file header comment: NAMED ASSUMPTION)"
+            fi
+          done
+
+      - name: Build ocel_accumulator image
+        run: |
+          set -eu
+          # ocel_accumulator's Dockerfile is expected at this fixed,
+          # workspace-relative path per the sibling-repo layout at /Users/sac
+          # (documented in the NAMED ASSUMPTION comment at the top of this
+          # file). On a runner without that sibling checkout, this build is
+          # expected to fail with a clear "no such file or directory" on the
+          # Dockerfile path -- that is this assumption failing, not a hidden
+          # config bug.
+          docker build \
+            -t "${OCEL_ACCUMULATOR_IMAGE}" \
+            -f "$HOME/wasm4pm-compat/ocel_accumulator/Dockerfile" \
+            "$HOME/wasm4pm-compat/ocel_accumulator"
+
+      - name: Run ocel_accumulator container
+        run: |
+          set -eu
+          docker run -d \
+            --name ocel-accumulator \
+            -p "${OCEL_ACCUMULATOR_PORT}:${OCEL_ACCUMULATOR_PORT}" \
+            "${OCEL_ACCUMULATOR_IMAGE}"
+
+      - name: Wait for ocel_accumulator readiness
+        run: |
+          set -eu
+          for i in $(seq 1 30); do
+            if curl -fsS "http://localhost:${OCEL_ACCUMULATOR_PORT}/health" >/dev/null 2>&1; then
+              echo "ocel_accumulator is up"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "ocel_accumulator did not become ready in time" >&2
+          docker logs ocel-accumulator || true
+          exit 1
+
+      - name: Run OpenTelemetry Collector container
+        run: |
+          set -eu
+          docker run -d \
+            --name otel-collector \
+            --add-host=host.docker.internal:host-gateway \
+            -p "${OTEL_COLLECTOR_GRPC_PORT}:${OTEL_COLLECTOR_GRPC_PORT}" \
+            -p "${OTEL_COLLECTOR_HTTP_PORT}:${OTEL_COLLECTOR_HTTP_PORT}" \
+            -v "${GITHUB_WORKSPACE}/src/autofde_lab/sa2a/case_studies/manufacturing/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml" \
+            "${COLLECTOR_IMAGE}"
+
+      - name: Wait for collector readiness
+        run: |
+          set -eu
+          for i in $(seq 1 30); do
+            if docker logs otel-collector 2>&1 | grep -qi "Everything is ready"; then
+              echo "otel-collector is up"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "otel-collector did not report ready in time" >&2
+          docker logs otel-collector || true
+          exit 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install autofde-lab (with otel extras)
+        run: |
+          set -eu
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -e ".[all]" || python3 -m pip install -e .
+
+      - name: Run instrumented Python runtime against the collector
+        env:
+          OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:${{ env.OTEL_COLLECTOR_HTTP_PORT }}"
+          OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+          OTEL_SERVICE_NAME: "autofde-lab-mfg-01a"
+        run: |
+          set -eu
+          python3 -m autofde_lab.sa2a.case_studies.manufacturing.instrumented_runtime
+
+      - name: Give the collector a moment to flush the batch processor
+        run: sleep 6
+
+      - name: POST to ocel_accumulator's /compact
+        run: |
+          set -eu
+          curl -fsS -X POST \
+            -H "Content-Type: application/json" \
+            "http://localhost:${OCEL_ACCUMULATOR_PORT}/compact" \
+            -o /tmp/mfg-01a.ocel2.json
+          cat /tmp/mfg-01a.ocel2.json
+
+      - name: Assert on the resulting OCEL2 JSON
+        run: |
+          set -eu
+          python3 - <<'PYEOF'
+          import json
+          import sys
+
+          with open("/tmp/mfg-01a.ocel2.json") as f:
+              doc = json.load(f)
+
+          required_top_level = ("objectTypes", "eventTypes", "objects", "events")
+          missing = [k for k in required_top_level if k not in doc]
+          if missing:
+              print(f"OCEL2 document missing required top-level keys: {missing}", file=sys.stderr)
+              sys.exit(1)
+
+          if not doc.get("events"):
+              print("OCEL2 document has zero events -- the traced run produced no evidence", file=sys.stderr)
+              sys.exit(1)
+
+          print(f"OCEL2 assertions passed: {len(doc['events'])} events, {len(doc['objects'])} objects")
+          PYEOF
+
+      - name: Run equivalence-and-invariant check
+        run: |
+          set -eu
+          python3 src/autofde_lab/sa2a/case_studies/manufacturing/otel_equivalence_check.py \
+            --ocel /tmp/mfg-01a.ocel2.json
+
+      - name: Collect logs on failure
+        if: failure()
+        run: |
+          echo "--- ocel-accumulator logs ---"
+          docker logs ocel-accumulator || true
+          echo "--- otel-collector logs ---"
+          docker logs otel-collector || true
+
+      - name: Tear down containers
+        if: always()
+        run: |
+          docker rm -f ocel-accumulator otel-collector || true
