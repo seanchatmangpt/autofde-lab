@@ -22,8 +22,14 @@ from autofde_lab.fortune5.production import (
     verify_projection_coherence,
 )
 from autofde_lab.fortune5.production.ocel import project_events_to_ocel2
+from autofde_lab.fortune5.production.model import Command, stable_id
+from autofde_lab.fortune5.production.native_sa2a import (
+    execute_command_through_native_sa2a,
+    prove_unbound_admission_refuses,
+)
 from autofde_lab.fortune5.production.server import make_handler
 from autofde_lab.fortune5.production.world import SCALE_PROFILES
+from autofde_lab.sa2a.brce.boundary import REFUSED_ADMISSION_CONTENT_NOT_BOUND
 
 
 def _ocel(run):
@@ -168,3 +174,44 @@ def test_real_http_surface_runs_simulation() -> None:
         server.shutdown()
         server.server_close()
         thread.join(timeout=5)
+
+
+def _native_command(service_id: str) -> Command:
+    return Command(
+        command_id=stable_id("native-command", service_id, "scale_out"),
+        message_id=stable_id("native-message", service_id),
+        actor_id="agent:sre",
+        actor_role="sre",
+        action="scale_out",
+        target_service=service_id,
+        parameters=(("replicas", "2"),),
+        risk=0.30,
+        route_id=stable_id("native-route", "config_drift", service_id),
+        source="known",
+    )
+
+
+def test_real_sa2a_core_admission_construct_authority_brce_receipt_and_replay() -> None:
+    world = generate_world(seed=17, scale_profile="demo", horizon_rounds=12)
+    service = world.services[0]
+    command = _native_command(service.service_id)
+    execution = execute_command_through_native_sa2a(command, service)
+    assert execution.admission.is_admitted
+    assert execution.result.success
+    assert execution.result.prepared_receipt is not None
+    assert execution.result.final_receipt is not None
+    assert execution.result.final_receipt.postcondition_verified
+    assert execution.replay.success
+    assert execution.replay.replayed
+    assert execution.replay.final_receipt is execution.result.final_receipt
+    assert execution.actuator_calls == 1
+
+
+def test_real_sa2a_core_refuses_content_unbound_to_exact_action_target() -> None:
+    world = generate_world(seed=19, scale_profile="demo", horizon_rounds=12)
+    service = world.services[0]
+    command = _native_command(service.service_id)
+    result = prove_unbound_admission_refuses(command, service)
+    assert not result.success
+    assert result.refusal_code == REFUSED_ADMISSION_CONTENT_NOT_BOUND
+    assert result.prepared_receipt is None
