@@ -318,7 +318,7 @@ def generate_world(
     return WorldSpec(
         seed=seed,
         scenario_id=stable_id(
-            "f5-world", seed, scale_profile, sorted((scenario_choices or {}).items())
+            "f5-world", seed, scale_profile, sorted(scenario.items())
         ),
         ontology_version=f"{ontology_version}|catalog={ONTOLOGY_IRI}",
         scale_profile=scale_profile,
