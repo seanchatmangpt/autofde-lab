@@ -45,7 +45,9 @@ class FormalProjection:
 
 
 def _hddl(world: WorldSpec) -> str:
-    services = " ".join(service.service_id.replace(":", "_") for service in world.services)
+    services = " ".join(
+        service.service_id.replace(":", "_") for service in world.services
+    )
     workflow_actions = """
   (:action observe
     :parameters (?s - service)
@@ -116,7 +118,7 @@ def _hddl(world: WorldSpec) -> str:
 (define (problem fortune5-world-{world.world_digest[:16]})
   (:domain fortune5-sa2a)
   (:objects {services} - service)
-  (:htn :tasks (and {''.join(f'(stabilize-service {s.service_id.replace(":", "_")}) ' for s in world.services[:8])}))
+  (:htn :tasks (and {"".join(f"(stabilize-service {s.service_id.replace(':', '_')}) " for s in world.services[:8])}))
 )
 """
 
@@ -206,14 +208,20 @@ def generate_formal_projection(world: WorldSpec) -> FormalProjection:
     )
 
 
-def verify_projection_coherence(projection: FormalProjection) -> tuple[bool, tuple[str, ...]]:
+def verify_projection_coherence(
+    projection: FormalProjection,
+) -> tuple[bool, tuple[str, ...]]:
     violations: list[str] = []
     for action in projection.action_vocabulary:
         if f"(:action {action}" not in projection.hddl:
             violations.append(f"HDDL_MISSING_ACTION:{action}")
         if f"(:action {action}" not in projection.fond:
             violations.append(f"FOND_MISSING_ACTION:{action}")
-    order = {tuple(edge) for edge in projection.powl.get("order", []) if isinstance(edge, list)}
+    order = {
+        tuple(edge)
+        for edge in projection.powl.get("order", [])
+        if isinstance(edge, list)
+    }
     required_edges = {
         ("observe", "propose"),
         ("propose", "admit"),
