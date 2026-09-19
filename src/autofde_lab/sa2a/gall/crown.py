@@ -255,27 +255,41 @@ def run_known_replay(
     return output, result
 
 
-def write_bundle(
+
+def _write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.write_text(json.dumps(payload, sort_keys=True, indent=2), encoding="utf-8")
+
+
+def write_compile_bundle(
     out_dir: str | Path,
     manifest: GALLCompositionManifest,
     artifact: MachineExperienceArtifact,
     episode_1: GALLCrownResult,
-    episode_2: GALLCrownResult,
 ) -> None:
+    """Persist Episode 1 only.
+
+    Gate 12 is intentionally absent here. A compile process is not a fresh
+    KNOWN replay process and therefore cannot mint the replay/crown receipt.
+    """
+
     root = Path(out_dir)
     root.mkdir(parents=True, exist_ok=True)
-    (root / "gall-composition-manifest.json").write_text(
-        json.dumps(manifest.to_dict(), sort_keys=True, indent=2), encoding="utf-8"
-    )
-    (root / "machine-experience.json").write_text(
-        json.dumps(artifact.to_dict(), sort_keys=True, indent=2), encoding="utf-8"
-    )
-    (root / "episode-1-receipt.json").write_text(
-        json.dumps(episode_1.to_dict(), sort_keys=True, indent=2), encoding="utf-8"
-    )
-    (root / "episode-2-receipt.json").write_text(
-        json.dumps(episode_2.to_dict(), sort_keys=True, indent=2), encoding="utf-8"
-    )
+    _write_json(root / "gall-composition-manifest.json", manifest.to_dict())
+    _write_json(root / "machine-experience.json", artifact.to_dict())
+    _write_json(root / "episode-1-receipt.json", episode_1.to_dict())
+
+
+def write_replay_bundle(
+    out_dir: str | Path,
+    manifest: GALLCompositionManifest,
+    artifact: MachineExperienceArtifact,
+    episode_2: GALLCrownResult,
+) -> None:
+    """Persist Gate-12 evidence from the separately invoked replay process."""
+
+    root = Path(out_dir)
+    root.mkdir(parents=True, exist_ok=True)
+    _write_json(root / "episode-2-receipt.json", episode_2.to_dict())
     crown = {
         "schema": "autofde.gall.crown/v26.9.18",
         "composition_digest": manifest.digest,
@@ -290,6 +304,5 @@ def write_bundle(
         "cross_repo_standing": episode_2.standing,
     }
     crown["crown_receipt_digest"] = _digest(crown)
-    (root / "gall-005-crown-receipt.json").write_text(
-        json.dumps(crown, sort_keys=True, indent=2), encoding="utf-8"
-    )
+    _write_json(root / "gall-005-crown-receipt.json", crown)
+
