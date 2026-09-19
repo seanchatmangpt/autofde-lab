@@ -395,3 +395,53 @@ Do not bind profiler standing into the composition crown until the exact composi
 - clean hosted OTel court: `BLOCKED` by declared missing-sibling assumption unless provisioned;
 - Weaver live-check in current head: `UNKNOWN`;
 - cross-repository GALL-001..004 composition crown: `UNKNOWN`.
+
+## Four-hour conversation synthesis — cognition, learning and cross-runtime composition, 2026-09-18
+
+The last four hours clarify repository responsibility and prevent GALL-005 from swallowing the rest of the system.
+
+### Repository responsibility
+
+For this crown:
+
+- **autofde-lab** = cognition, planning, learning, qualification, UNKNOWN -> MachineExperience -> KNOWN;
+- **GymAct** = consequence runtime: admission/SHACL, reversible closure, authority, BRCE, receipts/replay, OCEL and runtime consequence handling;
+- **XaaS** = persistent BEAM application/manufacturing/control plane: durable Run/Epoch scheduling, Ash/Reactor/Oban, delegation and persistent receipts.
+
+GALL-005 composes evidence from those roles. It must not reimplement GymAct consequence execution or XaaS durable scheduling inside autofde-lab merely to make the crown self-contained.
+
+### Learned candidate plane
+
+autofde-lab PR #159 at exact head `e2909db1090a143ac7fcc8c2c8a8c8905f455db7` adds authority-fenced GraphSAGE candidate inference:
+
+`canonical RDF -> feature projection -> learned score -> Standing.CANDIDATE -> normal SA2A admission`.
+
+That is the template for GNN/ONNX integration in the crown. If a learned model influences selection, the exact composition must bind model identity, feature-projection identity, and relevant inference artifact as ordinary exact artifacts/evidence. The model does not become semantic authority.
+
+A future "galaxy" of ONNX/ML models may therefore be SELECT machinery. The crown is valid only if every selected candidate still crosses the same formal admission, authority, consequence and independent-verification boundaries.
+
+### Ticket graph joins the exact subject
+
+When the release is driven by semantic GALL tickets, the admitted work-order graph digest is part of the exact composition evidence. Markdown/WBPR/Vision projections cannot substitute for that graph identity.
+
+This makes the release crown answer both:
+
+`what code/receipts were composed?`
+
+and:
+
+`what admitted work order required that composition?`
+
+### Relationship to the broader GALL ladder
+
+The newly discussed GNN checkpoints and GALL-015..032 full-autonomics checkpoints are downstream/orthogonal qualification surfaces, not silent prerequisites for GALL-005. They enter this crown only when the candidate manifest explicitly includes their exact subjects/receipts.
+
+The eventual larger crown may prove:
+
+`disturbance -> observation -> diagnosis -> verified plan -> authority -> DO -> postcondition -> MachineExperience -> equivalent KNOWN replay`.
+
+GALL-005 remains the exact-subject composition/learning crown inside that larger loop.
+
+### Framework exclusion
+
+Jido, LangGraph, CrewAI and similar frameworks are competitive-intelligence specimens only. GALL-005 must not gain standing by importing their agent-loop state as a trusted planning or evidence substrate.
