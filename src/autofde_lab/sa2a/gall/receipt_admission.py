@@ -127,7 +127,22 @@ def _checkpoint_001(payload: dict[str, Any], reference: ReceiptReference) -> Adm
     if replay.get("status") != "PASS":
         raise ValueError("GALL-001 requires clean replay.status=PASS")
     _require_sha256(replay.get("source_receipt_sha256"), "replay.source_receipt_sha256")
-    _require_sha256(replay.get("replayed_receipt_sha256"), "replay.replayed_receipt_sha256")
+    _require_sha256(replay.get("reconstructed_receipt_sha256"), "replay.reconstructed_receipt_sha256")
+    identity = _require_mapping(replay.get("identity"), "replay.identity")
+    required_identity_fields = {
+        "schema", "spec", "engine", "subject", "dependencies", "composition",
+        "graph", "work_order", "admission", "consequences", "toolchain",
+        "environment", "standing",
+    }
+    if set(identity) != required_identity_fields:
+        raise ValueError(
+            "GALL-001 replay.identity must bind exactly the current recomputed identity field set"
+        )
+    for field in sorted(required_identity_fields):
+        witness = _require_mapping(identity.get(field), f"replay.identity.{field}")
+        _require_sha256(witness.get("sha256"), f"replay.identity.{field}.sha256")
+        if witness.get("equal") is not True:
+            raise ValueError(f"GALL-001 replay identity witness for {field} is not equal")
     if replay.get("court") != "ggen-engine::replay::verify_project_replay":
         raise ValueError("GALL-001 replay court identity mismatch")
 
