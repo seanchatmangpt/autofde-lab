@@ -21,12 +21,12 @@ from autofde_lab.fortune5.production import (
     verify_ocel2,
     verify_projection_coherence,
 )
-from autofde_lab.fortune5.production.ocel import project_events_to_ocel2
 from autofde_lab.fortune5.production.model import Command, stable_id
 from autofde_lab.fortune5.production.native_sa2a import (
     execute_command_through_native_sa2a,
     prove_unbound_admission_refuses,
 )
+from autofde_lab.fortune5.production.ocel import project_events_to_ocel2
 from autofde_lab.fortune5.production.server import make_handler
 from autofde_lab.fortune5.production.world import SCALE_PROFILES
 from autofde_lab.sa2a.brce.boundary import REFUSED_ADMISSION_CONTENT_NOT_BOUND
@@ -51,7 +51,9 @@ def test_world_generator_is_deterministic_and_general() -> None:
         assert first.canonical == second.canonical
         assert len(first.regions) == regions
         assert len(first.services) == regions * templates
-        assert len({service.service_id for service in first.services}) == len(first.services)
+        assert len({service.service_id for service in first.services}) == len(
+            first.services
+        )
         assert all(not service.service_id.startswith("M") for service in first.services)
         assert len(first.scenario_choices) == 14
 
@@ -90,9 +92,12 @@ def test_unknown_promotes_to_known_and_frontier_retires_for_repeat() -> None:
     assert run.summary.frontier_invocations > 0
     assert run.summary.known_routes > 0
     assert run.summary.known_route_hits > 0
-    promote_events = [event for event in run.events if event.event_type == "promote_known"]
+    promote_events = [
+        event for event in run.events if event.event_type == "promote_known"
+    ]
     known_proposals = [
-        event for event in run.events
+        event
+        for event in run.events
         if event.event_type == "propose"
         and dict(event.attributes).get("route_source") == "known"
     ]
@@ -139,8 +144,11 @@ def test_artifact_store_is_atomic_and_verifiable(tmp_path) -> None:
     assert verification["ok"], verification["failures"]
     run_dir = tmp_path / run.run_id.replace(":", "_")
     assert json.loads((run_dir / "ocel2.json").read_text())["events"]
-    assert json.loads((run_dir / "readiness.json").read_text())["technical_standing"] in {
-        "ALIVE", "PARTIAL_ALIVE",
+    assert json.loads((run_dir / "readiness.json").read_text())[
+        "technical_standing"
+    ] in {
+        "ALIVE",
+        "PARTIAL_ALIVE",
     }
 
 
