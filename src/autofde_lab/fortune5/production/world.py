@@ -11,8 +11,8 @@ from .model import (
     AuthorityGrant,
     FaultEvent,
     RegionSpec,
-    SLOSpec,
     ServiceSpec,
+    SLOSpec,
     WorldSpec,
     stable_id,
 )
@@ -107,9 +107,7 @@ def _catalog_coordinate(
     admitted_axes = {axis.name: axis for axis in AXES}
     unknown_axes = sorted(set(supplied) - set(admitted_axes))
     if unknown_axes:
-        raise ValueError(
-            "REFUSED:UNKNOWN_FORTUNE5_AXIS:" + ",".join(unknown_axes)
-        )
+        raise ValueError("REFUSED:UNKNOWN_FORTUNE5_AXIS:" + ",".join(unknown_axes))
     rng = random.Random(seed ^ 0xF5A218)
     coordinate: dict[str, str] = {}
     for axis in AXES:
@@ -125,7 +123,9 @@ def _service_id(region_id: str, name: str) -> str:
     return f"{region_id}:{name}"
 
 
-def _resolve_dependencies(region_id: str, dependency_names: Sequence[str]) -> tuple[str, ...]:
+def _resolve_dependencies(
+    region_id: str, dependency_names: Sequence[str]
+) -> tuple[str, ...]:
     return tuple(_service_id(region_id, name) for name in dependency_names)
 
 
@@ -205,7 +205,9 @@ def generate_world(
                 SLOSpec(
                     service_id=service.service_id,
                     availability_target=availability_target,
-                    latency_p95_ms=round(service.base_latency_ms * (2.4 if mission else 3.0), 6),
+                    latency_p95_ms=round(
+                        service.base_latency_ms * (2.4 if mission else 3.0), 6
+                    ),
                     error_rate_max=0.01 if mission else 0.02,
                 )
             )
@@ -213,7 +215,11 @@ def generate_world(
     layers = sorted({service.layer for service in services})
     policy_profile = scenario["policy"]
     grant_risk = (
-        0.60 if policy_profile == "zero-trust" else 0.72 if policy_profile == "restricted" else 0.85
+        0.60
+        if policy_profile == "zero-trust"
+        else 0.72
+        if policy_profile == "restricted"
+        else 0.85
     )
     grants = tuple(
         AuthorityGrant(
@@ -259,7 +265,8 @@ def generate_world(
                     catalog_fault
                     if catalog_fault in FAULT_KINDS
                     else "dependency_latency"
-                    if catalog_fault in {"dependency", "target_port", "ingress", "pvc", "image_pull"}
+                    if catalog_fault
+                    in {"dependency", "target_port", "ingress", "pvc", "image_pull"}
                     else "config_drift"
                 ),
                 severity=0.60,
@@ -269,7 +276,11 @@ def generate_world(
 
     if services and horizon_rounds >= 12:
         target_a = services[0].service_id
-        target_b = services[template_count].service_id if len(services) > template_count else target_a
+        target_b = (
+            services[template_count].service_id
+            if len(services) > template_count
+            else target_a
+        )
         repeated_kind = "config_drift"
         faults.extend(
             (
@@ -336,7 +347,9 @@ def generate_world(
 
 
 def with_faults(world: WorldSpec, faults: Sequence[FaultEvent]) -> WorldSpec:
-    return replace(world, faults=tuple(sorted(faults, key=lambda f: (f.round_index, f.fault_id))))
+    return replace(
+        world, faults=tuple(sorted(faults, key=lambda f: (f.round_index, f.fault_id)))
+    )
 
 
 __all__ = [
