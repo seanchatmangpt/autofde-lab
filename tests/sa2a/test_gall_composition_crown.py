@@ -175,7 +175,7 @@ def _fixture(tmp_path: Path) -> GALLCompositionManifest:
         "actuation_id": "act-003",
         "consequence": "change",
         "binding_digest": _sha("binding"),
-        "receipt_standing": "alive",
+        "receipt_standing": "durable",
         "terminal_status": "executed",
         "status": "completed",
         "replayed?": False,
