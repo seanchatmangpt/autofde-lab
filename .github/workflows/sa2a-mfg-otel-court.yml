@@ -28,7 +28,8 @@ on:
 
 env:
   OCEL_ACCUMULATOR_IMAGE: ocel-accumulator:mfg-01a
-  COLLECTOR_IMAGE: otel/opentelemetry-collector-contrib:latest
+  # Exact released collector subject. Floating :latest cannot be crown evidence.
+  COLLECTOR_IMAGE: otel/opentelemetry-collector-contrib:0.161.0
   OCEL_ACCUMULATOR_PORT: 4900
   OTEL_COLLECTOR_GRPC_PORT: 4317
   OTEL_COLLECTOR_HTTP_PORT: 4318
@@ -49,8 +50,13 @@ jobs:
               echo "  FOUND: $p"
             else
               echo "  MISSING: $p (see workflow file header comment: NAMED ASSUMPTION)"
+              missing=1
             fi
           done
+          if [ "${missing:-0}" -ne 0 ]; then
+            echo "BLOCKED: exact sibling subjects required by this court are not provisioned on this runner" >&2
+            exit 1
+          fi
 
       - name: Build ocel_accumulator image
         run: |
