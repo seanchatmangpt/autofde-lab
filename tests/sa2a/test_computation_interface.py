@@ -16,6 +16,11 @@ from autofde_lab.sa2a.computation import (
     order_formally_admitted,
     qualify_runtime_equivalence,
 )
+from autofde_lab.sa2a.graph_learning import (
+    SemanticFeatureGraph,
+    candidate_batch_from_scores,
+    candidate_batch_to_planning_advice,
+)
 
 
 def _artifact(runtime: ComputationRuntime = ComputationRuntime.ONNX) -> ComputationArtifact:
@@ -67,6 +72,36 @@ def test_model_advice_can_reorder_but_not_prune_or_enlarge_formal_frontier() -> 
     assert ordered == ("rollback", "failover", "restart", "scale-out")
     assert set(ordered) == {"restart", "rollback", "failover", "scale-out"}
     assert "not-formally-applicable" not in ordered
+    assert advice.standing is Standing.CANDIDATE
+    assert not advice.authorizes_actuation
+
+
+def test_graphsage_candidates_project_into_same_universal_advice_contract() -> None:
+    graph = SemanticFeatureGraph(
+        node_ids=("urn:a", "urn:b", "urn:c"),
+        features=((1.0, 0.0), (0.5, 0.5), (0.0, 1.0)),
+        edges=((0, 1),),
+        source_graph_identity="sha256:rdf",
+        feature_projection_identity="sha256:features",
+    )
+    batch = candidate_batch_from_scores(
+        graph=graph,
+        model_identity="sha256:graphsage",
+        predicate="urn:mayUse",
+        pairs=(("urn:a", "urn:c"),),
+        scores=(0.88,),
+    )
+
+    advice = candidate_batch_to_planning_advice(
+        batch,
+        planning_subject_identity="sha256:subject",
+        formal_projection_identity="sha256:fond-hddl",
+        kind=PlanningAdviceKind.FRONTIER,
+    )
+
+    assert advice.artifact.runtime is ComputationRuntime.PYTORCH
+    assert advice.artifact.artifact_identity == "sha256:graphsage"
+    assert advice.candidates[0].candidate_ref == batch.candidates[0].candidate_identity
     assert advice.standing is Standing.CANDIDATE
     assert not advice.authorizes_actuation
 
