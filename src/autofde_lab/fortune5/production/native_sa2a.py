@@ -16,6 +16,8 @@ from urllib.parse import quote
 from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline, AdmissionResult
 from autofde_lab.sa2a.authority.broker import (
     AuthorityBroker,
+)
+from autofde_lab.sa2a.authority.broker import (
     AuthorityGrant as CoreAuthorityGrant,
 )
 from autofde_lab.sa2a.brce.boundary import (
@@ -31,7 +33,6 @@ from autofde_lab.sa2a.construct.constructor import (
 )
 
 from .model import Command, ServiceSpec, digest
-
 
 _TARGET_PREDICATE = "urn:autofde-lab:targetResource"
 _ACTION_PREFIX = "urn:autofde-lab:fortune5:action:"
@@ -328,7 +329,9 @@ def prove_unbound_admission_refuses(
         )
     )
     if actuator.call_count:
-        raise AssertionError("native SA2A strict gate allowed unbound admission to reach DO")
+        raise AssertionError(
+            "native SA2A strict gate allowed unbound admission to reach DO"
+        )
     return result
 
 
