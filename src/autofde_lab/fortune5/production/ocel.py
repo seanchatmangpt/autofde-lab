@@ -123,6 +123,8 @@ def project_events_to_ocel2(
         "fault": "Fault",
     }
     for event in events:
+        if event.subject_id:
+            add_object(event.subject_id, "Entity", {"qualifier": "subject"})
         for object_id, qualifier in event.object_refs:
             add_object(
                 object_id, ref_type.get(qualifier, "Entity"), {"qualifier": qualifier}
@@ -146,7 +148,10 @@ def project_events_to_ocel2(
                 ],
                 "relationships": [
                     {"objectId": object_id, "qualifier": qualifier}
-                    for object_id, qualifier in sorted(event.object_refs)
+                    for object_id, qualifier in sorted(
+                        (*event.object_refs, (event.subject_id, "subject"))
+                    )
+                    if object_id
                 ],
             }
         )
@@ -273,7 +278,11 @@ def verify_ocel2(document: dict[str, object]) -> dict[str, object]:
         attrs = _event_attrs(event)
         refs = _event_refs(event)
         command_id = str(attrs.get("command_id", ""))
-        subject_id = str(event.get("subject_id", ""))
+        subject_refs = refs.get("subject", set())
+        subject_id = next(iter(subject_refs)) if len(subject_refs) == 1 else ""
+        if len(subject_refs) != 1:
+            receipt_binding_violations += 1
+            violations.append(f"ACTUATION_SUBJECT_CARDINALITY:{event_id}:{len(subject_refs)}")
 
         if not command_id:
             violations.append(f"ACTUATION_WITHOUT_COMMAND:{event_id}")
@@ -422,7 +431,10 @@ def verify_ocel2(document: dict[str, object]) -> dict[str, object]:
             for phase in phase_order
             for candidate in phases[phase]
         ]
-        if any(str(candidate.get("subject_id", "")) != subject_id for candidate in bound_events):
+        if any(
+            _event_refs(candidate).get("subject", set()) != {subject_id}
+            for candidate in bound_events
+        ):
             receipt_binding_violations += 1
             violations.append(f"COMMAND_SUBJECT_DRIFT:{command_id}")
 
