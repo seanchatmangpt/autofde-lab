@@ -313,6 +313,35 @@ def test_generic_hash_only_gall_001_payload_is_refused(tmp_path: Path) -> None:
         compile_verified_experience(manifest, deterministic_output={"x": 1})
 
 
+
+def test_multi_pack_gall_001_requires_explicit_subject_selection_proof(
+    tmp_path: Path,
+) -> None:
+    manifest = _fixture(tmp_path)
+    ref = manifest.receipts[0]
+    payload = json.loads(Path(ref.path).read_text())
+    payload["composition"]["resolved_packs"].append(
+        {
+            "name": "second-pack",
+            "version": "1.0.0",
+            "digest": _sha("second-pack"),
+        }
+    )
+    Path(ref.path).write_text(
+        json.dumps(payload, sort_keys=True),
+        encoding="utf-8",
+    )
+    changed = ReceiptReference.from_path(
+        checkpoint=ref.checkpoint,
+        repository=ref.repository,
+        repo_sha=ref.repo_sha,
+        path=ref.path,
+    )
+    manifest = replace(manifest, receipts=(changed, *manifest.receipts[1:]))
+
+    with pytest.raises(ValueError, match="multi-pack composition is ambiguous"):
+        compile_verified_experience(manifest, deterministic_output={"x": 1})
+
 def test_stale_gall_002_repo_sha_with_valid_receipt_is_refused(
     tmp_path: Path,
 ) -> None:
