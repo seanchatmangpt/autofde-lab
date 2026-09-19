@@ -188,12 +188,15 @@ class WorldSpec:
         for fault in self.faults:
             if fault.target_service not in known_services:
                 raise ValueError(f"REFUSED:FAULT_TARGET_UNKNOWN:{fault.target_service}")
-        if min(
-            self.base_traffic_rps,
-            self.cost_budget_per_round,
-            self.energy_budget_kwh_per_round,
-            self.carbon_budget_kg_per_round,
-        ) <= 0:
+        if (
+            min(
+                self.base_traffic_rps,
+                self.cost_budget_per_round,
+                self.energy_budget_kwh_per_round,
+                self.carbon_budget_kg_per_round,
+            )
+            <= 0
+        ):
             raise ValueError("REFUSED:INVALID_WORLD_BUDGET")
 
     @property
