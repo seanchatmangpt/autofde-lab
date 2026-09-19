@@ -132,3 +132,207 @@ The GALL-004 manifest edge MUST bind the exact beam4pm observer subject and the 
 Repository-local semantic consequence profiling from autofde-lab PR #157 is complementary evidence. Typed additive measures such as BEAM reductions or later AtomVM energy/radio measures remain observational. They MUST NOT substitute for authority, independent postcondition proof, or the GALL-004 observer receipt.
 
 MachineExperience compile-back MUST preserve the source evidence class and ceiling. A learned KNOWN path may reuse validated consequence knowledge without promoting that profile into stronger standing than its bound receipts support.
+
+## Implementation specifics — refined 2026-09-18
+
+Current docs-only PR head at this refinement: `aaa65ed5cf1f1718d7f59f1d03a56b67993dc2ba`.
+
+### Verified predecessor surfaces from PR #155
+
+Do not rewrite the repo-local crown. Extend these exact surfaces:
+
+- `src/autofde_lab/agent/cmca_dogfood_crown.py`
+  - existing eight-use-case Episode-1/Episode-2 dogfood crown.
+- `src/autofde_lab/planning/cmca_probe.py`
+  - CMCA planning/frontier probe used by the crown.
+- `src/autofde_lab/sa2a/unknown/compilation.py`
+  - `MachineExperienceCompiler`, the existing UNKNOWN -> compiled experience seam.
+- `src/autofde_lab/planning/fond_hddl_product.py`
+  - FOND/HDDL product machinery used by the operational crown.
+- `src/autofde_lab/cmca/cascade.py`
+  - bounded CMCA allocation.
+- `src/autofde_lab/ocel/object_centric_conformance.py`
+  - repo-local object-centric conformance used by UC-8.
+- `scripts/run_cmca_dogfood_crown.py`
+  - existing executable CLI/reporting surface.
+- `tests/agent/test_cmca_dogfood_crown.py`
+- `tests/planning/test_cmca_planning_probe.py`
+- `.github/workflows/cmca-dogfood-crown.yml`
+  - hosted persistence/receipt precedent.
+
+PR #155 at exact head `a72392f...` remains predecessor evidence only.
+
+### Smallest coherent new module set
+
+Add a narrow cross-repo composition package rather than expanding `cmca_dogfood_crown.py` into a multi-repo loader.
+
+Preferred files:
+
+```text
+src/autofde_lab/sa2a/gall/__init__.py
+src/autofde_lab/sa2a/gall/composition.py
+src/autofde_lab/sa2a/gall/receipt_admission.py
+scripts/run_gall_composition_crown.py
+tests/sa2a/test_gall_composition_crown.py
+```
+
+Responsibilities:
+
+#### `composition.py`
+
+Own one immutable `GALLCompositionManifest` representation with:
+
+```text
+schema
+ggen {repo_sha, receipt_digest}
+ggen_igniter {repo_sha, receipt_digest}
+ash_a2a {repo_sha, receipt_digest}
+beam4pm {repo_sha, receipt_digest}
+autofde_lab {repo_sha}
+planner_identity
+cmca_identity
+machine_experience_compiler_identity
+corpus_identity
+```
+
+The manifest is content-addressed by canonical SHA-256.
+
+No branch names count as identity.
+
+#### `receipt_admission.py`
+
+Parse each upstream receipt and verify:
+
+- expected repository;
+- exact SHA;
+- exact digest;
+- required standing for the claimed edge;
+- semantic-subject continuity;
+- predecessor linkage where present;
+- no missing required evidence field.
+
+This module does **admission**, not remote execution.
+
+It MUST NOT fabricate a missing GALL-001..004 receipt from source inspection.
+
+### Episode 1 execution contract
+
+For the initial crown, preserve the eight PR-155 use-case classes as the regression corpus, but add at least one **cross-repo SA2A composition case** whose verified evidence includes the exact GALL-001..004 receipts.
+
+The cross-repo case MUST prove:
+
+1. composition manifest admitted;
+2. repo-native planner/CMCA SELECT path executes only if the case is UNKNOWN;
+3. external consequence evidence is consumed from GALL-003 rather than performed by autofde-lab;
+4. independent postcondition/process evidence comes from GALL-004;
+5. MachineExperience is compiled only after receipt admission succeeds;
+6. the compiled experience binds the composition-manifest digest.
+
+### Episode 2 fresh-runtime contract
+
+Run Episode 2 in a new Python process, not merely a new object in the same test process.
+
+The runner MUST receive only:
+
+- immutable composition manifest;
+- compiled MachineExperience artifact;
+- explicitly admitted deterministic inputs.
+
+It MUST NOT receive:
+
+- live Episode-1 objects;
+- an in-memory planner instance;
+- cached frontier resolver closures;
+- open producer handles;
+- mutable singleton state.
+
+For the qualified cross-repo semantic class, record counters:
+
+```text
+frontier_resolution_calls
+llm_allocations
+planner_invocations
+machine_experience_hits
+reflex_executions
+```
+
+Pass condition:
+
+```text
+machine_experience_hits >= 1
+reflex_executions >= 1
+frontier_resolution_calls == 0
+llm_allocations == 0
+planner_invocations == 0   # only where the compiled reflex replaces equivalent planning
+```
+
+### New acceptance tests
+
+`tests/sa2a/test_gall_composition_crown.py` MUST include:
+
+1. exact four-upstream-receipt manifest admission;
+2. stale SHA with valid old receipt => refusal;
+3. valid SHA with tampered receipt digest => refusal;
+4. GALL-003 self-report substituted for GALL-004 observer receipt => refusal;
+5. PARTIAL/UNKNOWN observer evidence cannot compile an ALIVE MachineExperience relation;
+6. MachineExperience semantic key changes when composition identity changes;
+7. fresh-process Episode 2 uses compiled experience;
+8. qualified KNOWN route has zero frontier/LLM allocation;
+9. planner counter remains zero where the reflex replaces planning;
+10. GNN/GraphSAGE candidate input cannot self-promote beyond candidate standing.
+
+### Exact acceptance commands
+
+Use the repository's Python environment/tooling, then at minimum:
+
+```bash
+pytest -q tests/agent/test_cmca_dogfood_crown.py
+pytest -q tests/planning/test_cmca_planning_probe.py
+pytest -q tests/sa2a/test_gall_composition_crown.py
+python scripts/run_cmca_dogfood_crown.py --json
+python scripts/run_gall_composition_crown.py --json
+```
+
+Then trigger the hosted GALL composition workflow only after local exact-subject closure. Persist the manifest, MachineExperience artifact, stdout JSON, and crown receipt as hosted artifacts.
+
+### GALL-005 output artifact
+
+The crown emits one machine-readable bundle:
+
+```text
+gall-composition-manifest.json
+machine-experience.json
+episode-1-receipt.json
+episode-2-receipt.json
+gall-005-crown-receipt.json
+```
+
+The crown receipt MUST explicitly state:
+
+```text
+gates_1_10
+gate_11 = OPEN | PASS
+gate_12
+cross_repo_standing
+```
+
+Before GALL-006, `gate_11 = OPEN` and cross-repo standing cannot exceed `PARTIAL_ALIVE`.
+
+### Handoff to GALL-006
+
+GALL-006 receives only the immutable released bundle above plus public consumer instructions.
+
+It MUST NOT require access to the Python process that created the bundle.
+
+### Stop conditions
+
+Stop rather than filling gaps locally when:
+
+- any GALL-001..004 receipt is absent;
+- an upstream exact SHA moved;
+- a receipt digest does not match the manifest;
+- independent observer evidence is weaker than the requested MachineExperience standing;
+- Episode 2 can only succeed using Episode-1 process state;
+- a learned candidate source would need to be treated as authority.
+
+GALL-005 is an **aggregator and cognition-retirement court**, not a place to reproduce missing manufacturer, actuation, or observer implementations.
