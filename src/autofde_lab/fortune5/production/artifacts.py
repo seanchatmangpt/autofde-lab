@@ -8,7 +8,12 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from ..readiness import F5ReadinessVerifier, REQUIRED_GATES, build_submission, evidence_digest
+from ..readiness import (
+    REQUIRED_GATES,
+    F5ReadinessVerifier,
+    build_submission,
+    evidence_digest,
+)
 from .engine import SimulationRun
 from .model import canonical_json, digest
 from .ocel import project_events_to_ocel2, verify_ocel2
@@ -31,7 +36,9 @@ def readiness_witness(run: SimulationRun):
         or run.summary.energy_budget_violations
         or run.summary.carbon_budget_violations
     )
-    retirement_observed = run.summary.known_route_hits > 0 and run.summary.known_routes > 0
+    retirement_observed = (
+        run.summary.known_route_hits > 0 and run.summary.known_routes > 0
+    )
 
     facts = {
         "identity": run.world.world_digest == run.summary.world_digest,
@@ -44,17 +51,20 @@ def readiness_witness(run: SimulationRun):
         "security": court["authority_violations"] == 0,
         "transition": projection_ok,
         "production": run.summary.rounds > 0 and budgets_ok,
-        "actuation": court["unreceipted_actuations"] == 0 and court["duplicate_effects"] == 0,
+        "actuation": court["unreceipted_actuations"] == 0
+        and court["duplicate_effects"] == 0,
         "evidence": bool(court["ok"]) and retirement_observed,
     }
     evidence_by_gate = {
         gate: (
             "PASS" if facts.get(gate, False) else "FAIL",
-            evidence_digest({
-                "gate": gate,
-                "facts": facts,
-                "run": run.summary.canonical(),
-            }),
+            evidence_digest(
+                {
+                    "gate": gate,
+                    "facts": facts,
+                    "run": run.summary.canonical(),
+                }
+            ),
         )
         for gate in REQUIRED_GATES
     }
@@ -62,10 +72,12 @@ def readiness_witness(run: SimulationRun):
         benchmark_id="fortune5-sa2a-production-simulation",
         benchmark_version="v26.9.18",
         scenario_digest=run.world.world_digest,
-        admitted_observation_digest=digest({
-            "events": [event.canonical() for event in run.events],
-            "projection": run.projection.projection_digest,
-        }),
+        admitted_observation_digest=digest(
+            {
+                "events": [event.canonical() for event in run.events],
+                "projection": run.projection.projection_digest,
+            }
+        ),
         started_at_ns=0,
         submitted_at_ns=max((event.timestamp_ns for event in run.events), default=0),
         evidence_by_gate=evidence_by_gate,
@@ -151,9 +163,9 @@ class ArtifactStore:
             if actual != expected:
                 failures.append(f"DIGEST_MISMATCH:{name}")
         expected_bundle = manifest.get("bundle_digest")
-        actual_bundle = digest({
-            k: v for k, v in manifest.items() if k != "bundle_digest"
-        })
+        actual_bundle = digest(
+            {k: v for k, v in manifest.items() if k != "bundle_digest"}
+        )
         if expected_bundle != actual_bundle:
             failures.append("BUNDLE_DIGEST_MISMATCH")
         return {"ok": not failures, "failures": failures, "manifest": manifest}
