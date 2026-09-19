@@ -47,3 +47,28 @@ def test_two_episode_dogfood_crown_compiles_experience_and_replays_without_front
         assert case.discovery.contract_digest == case.replay.contract_digest
         assert case.discovery.evidence_digest == case.replay.evidence_digest
         assert len(case.experience_receipt_digest) == 64
+
+
+def test_hosted_receipt_binds_subject_identity_without_changing_semantic_crown() -> None:
+    crown = run_cmca_dogfood_crown()
+    identity = {
+        "repository": "seanchatmangpt/autofde-lab",
+        "head_sha": "a" * 40,
+        "workflow_run_id": "123",
+        "workflow_run_attempt": "1",
+        "runner_os": "Linux",
+        "runner_arch": "X64",
+        "python_version": "3.12.14",
+        "uv_version": "uv 0.12.15",
+    }
+
+    first = crown.to_dict(subject_identity=identity)
+    second = crown.to_dict(subject_identity=identity)
+    moved = crown.to_dict(subject_identity={**identity, "head_sha": "b" * 40})
+
+    assert first["crown_receipt_hash"] == crown.crown_receipt_hash
+    assert first["subject_identity"] == identity
+    assert len(first["artifact_receipt_hash"]) == 64
+    assert first["artifact_receipt_hash"] == second["artifact_receipt_hash"]
+    assert moved["crown_receipt_hash"] == crown.crown_receipt_hash
+    assert moved["artifact_receipt_hash"] != first["artifact_receipt_hash"]

@@ -26,6 +26,7 @@ jobs:
     timeout-minutes: 20
     env:
       PYTHONPATH: src
+      CROWN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
     steps:
       - name: Checkout exact PR head
@@ -35,11 +36,9 @@ jobs:
           fetch-depth: 1
 
       - name: Assert exact subject identity
-        env:
-          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          echo "exact_head=$EXPECTED_HEAD"
+          test "$(git rev-parse HEAD)" = "$CROWN_HEAD_SHA"
+          echo "exact_head=$CROWN_HEAD_SHA"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
@@ -50,6 +49,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Capture hosted toolchain identity
+        run: |
+          echo "CROWN_UV_VERSION=$(uv --version)" >> "$GITHUB_ENV"
 
       - name: Install Python court dependencies without native project build
         run: |
@@ -70,6 +73,33 @@ jobs:
         run: |
           uv run --no-sync python scripts/run_cmca_dogfood_crown.py \
             --json-out artifacts/cmca-dogfood-crown.json
+
+      - name: Verify hosted receipt identity and digest
+        run: |
+          uv run --no-sync python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path("artifacts/cmca-dogfood-crown.json")
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          claimed = payload.pop("artifact_receipt_hash")
+          expected = hashlib.sha256(
+              json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+          ).hexdigest()
+          identity = payload["subject_identity"]
+
+          assert claimed == expected
+          assert identity["repository"] == os.environ["GITHUB_REPOSITORY"]
+          assert identity["head_sha"] == os.environ["CROWN_HEAD_SHA"]
+          assert identity["workflow_run_id"] == os.environ["GITHUB_RUN_ID"]
+          assert identity["workflow_run_attempt"] == os.environ["GITHUB_RUN_ATTEMPT"]
+          assert identity["runner_os"] == os.environ["RUNNER_OS"]
+          assert identity["runner_arch"] == os.environ["RUNNER_ARCH"]
+          assert identity["uv_version"] == os.environ["CROWN_UV_VERSION"]
+          print(f"artifact_receipt_hash={claimed}")
+          PY
 
       - name: Upload crown receipt
         if: success()

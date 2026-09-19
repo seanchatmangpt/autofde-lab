@@ -5,9 +5,34 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import platform
 from pathlib import Path
 
 from autofde_lab.agent.cmca_dogfood_crown import run_cmca_dogfood_crown
+
+
+def _hosted_subject_identity() -> dict[str, str] | None:
+    head_sha = os.environ.get("CROWN_HEAD_SHA")
+    if not head_sha:
+        return None
+
+    identity = {
+        "repository": os.environ.get("GITHUB_REPOSITORY", ""),
+        "head_sha": head_sha,
+        "workflow_run_id": os.environ.get("GITHUB_RUN_ID", ""),
+        "workflow_run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT", ""),
+        "runner_os": os.environ.get("RUNNER_OS", ""),
+        "runner_arch": os.environ.get("RUNNER_ARCH", ""),
+        "python_version": platform.python_version(),
+        "uv_version": os.environ.get("CROWN_UV_VERSION", ""),
+    }
+    missing = sorted(key for key, value in identity.items() if not value)
+    if missing:
+        raise RuntimeError(
+            "hosted crown identity is incomplete: " + ", ".join(missing)
+        )
+    return identity
 
 
 def main() -> int:
@@ -28,7 +53,8 @@ def main() -> int:
     args = parser.parse_args()
 
     result = run_cmca_dogfood_crown()
-    payload = result.to_dict()
+    subject_identity = _hosted_subject_identity()
+    payload = result.to_dict(subject_identity=subject_identity)
     rendered = json.dumps(payload, sort_keys=True, indent=2)
 
     if args.json_out is not None:
@@ -59,6 +85,8 @@ def main() -> int:
             f"Replay inference avoidance: {result.replay_inference_avoidance_rate:.0%}"
         )
         print(f"Crown receipt: {result.crown_receipt_hash}")
+        if "artifact_receipt_hash" in payload:
+            print(f"Hosted artifact receipt: {payload['artifact_receipt_hash']}")
         print(f"Standing: {result.standing}")
 
     return 0 if result.is_alive else 1
