@@ -283,6 +283,7 @@ class ProductionSimulator:
             parameters=(("criticality", spec.criticality), ("layer", spec.layer)),
             ontology_version=self.world.ontology_version,
             observed_world_digest=self.world.world_digest,
+            observed_state_digest=self._state_digest(spec.service_id),
         )
 
     def _execute_command(
@@ -493,7 +494,9 @@ class ProductionSimulator:
                 refs=((message.message_id, "message"),),
             )
             admission = self.admission.admit(
-                message, current_world_digest=self.world.world_digest
+                message,
+                current_world_digest=self.world.world_digest,
+                current_state_digest=self._state_digest(spec.service_id),
             )
             admit_evt = self._emit(
                 round_index=round_index,
@@ -547,7 +550,11 @@ class ProductionSimulator:
                 route_id=route_id,
                 source=source,
             )
-            auth = self.authority.authorize(command, round_index=round_index)
+            auth = self.authority.authorize(
+                command,
+                round_index=round_index,
+                current_states=self.states,
+            )
             auth_refs = [(command.command_id, "command")]
             if auth.grant_id:
                 auth_refs.append((auth.grant_id, "permission"))
