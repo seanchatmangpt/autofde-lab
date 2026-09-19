@@ -22,6 +22,7 @@ GALL004_TELEMETRY = "GALL-004-TELEMETRY"
 LEARNED_CANDIDATE_CEILING = "CANDIDATE"
 
 _SHA256 = re.compile(r"^sha256:[0-9a-f]{64}$")
+_BINDING_DIGEST = re.compile(r"^(?:sha256|hmac-sha256):[0-9a-f]{64}$")
 _RAW_SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 
@@ -68,6 +69,12 @@ def _digest_value(value: Any) -> str:
 def _require_sha256(value: Any, field: str) -> str:
     if not isinstance(value, str) or not _SHA256.fullmatch(value):
         raise ValueError(f"{field} must be sha256:<64hex>, got {value!r}")
+    return value
+
+
+def _require_binding_digest(value: Any, field: str) -> str:
+    if not isinstance(value, str) or not _BINDING_DIGEST.fullmatch(value):
+        raise ValueError(f"{field} must be sha256: or hmac-sha256:<64hex>, got {value!r}")
     return value
 
 
@@ -242,8 +249,8 @@ def _checkpoint_003(payload: dict[str, Any], reference: ReceiptReference) -> Adm
     # This is AshA2A.Gall.CommandReceipt serialized to JSON, not a generic
     # {standing, handoff_digest} composition object.
     receipt_standing = str(payload.get("receipt_standing", "")).lower()
-    if receipt_standing != "alive":
-        raise ValueError("GALL-003 requires an alive durable command receipt")
+    if receipt_standing != "durable":
+        raise ValueError("GALL-003 requires receipt_standing=durable from the repository-native receipt store contract")
     terminal = str(payload.get("terminal_status", "")).lower()
     if terminal not in {"executed", "reconciled"}:
         raise ValueError("GALL-003 compilation requires executed or reconciled consequence evidence")
@@ -266,7 +273,7 @@ def _checkpoint_003(payload: dict[str, Any], reference: ReceiptReference) -> Adm
     _require_sha256(payload.get("command_fingerprint"), "command_fingerprint")
     _require_sha256(payload.get("authority_grant_digest"), "authority_grant_digest")
     _require_nonempty_string(payload.get("idempotency_key"), "idempotency_key")
-    _require_sha256(payload.get("binding_digest"), "binding_digest")
+    _require_binding_digest(payload.get("binding_digest"), "binding_digest")
     _require_sha256(payload.get("handoff_digest"), "handoff_digest")
 
     return AdmittedReceipt(
