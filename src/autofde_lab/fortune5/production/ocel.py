@@ -195,8 +195,18 @@ def _event_refs(event: dict[str, Any]) -> dict[str, set[str]]:
     return refs
 
 
+def _object_attrs(row: dict[str, Any]) -> dict[str, object]:
+    return {str(item["name"]): item["value"] for item in row.get("attributes", [])}
+
+
 def verify_ocel2(document: dict[str, object]) -> dict[str, object]:
-    """Re-derive authority, receipt, idempotency and causal invariants from OCEL only."""
+    """Re-derive execution invariants from OCEL only.
+
+    A permission reference is not sufficient evidence of authority.  For every
+    attempted DO the court requires one matching authorize event, one prepared
+    receipt, one final receipt, one verification event, exact subject/object
+    binding, and strict causal order.
+    """
     required = {"objectTypes", "eventTypes", "objects", "events"}
     missing = sorted(required - set(document))
     if missing:
@@ -207,83 +217,239 @@ def verify_ocel2(document: dict[str, object]) -> dict[str, object]:
             "unreceipted_actuations": 0,
             "authority_violations": 0,
             "duplicate_effects": 0,
+            "causal_violations": 0,
+            "receipt_binding_violations": 0,
         }
 
-    events = list(document.get("events", []))
+    events = [
+        event for event in document.get("events", []) if isinstance(event, dict)
+    ]
     objects = {
         str(row["id"]): row
         for row in document.get("objects", [])
         if isinstance(row, dict) and "id" in row
     }
+
     receipts_by_command: dict[str, set[str]] = defaultdict(set)
+    prepared_by_command: dict[str, set[str]] = defaultdict(set)
     for object_id, row in objects.items():
-        if row.get("type") != "Receipt":
-            continue
-        attrs = {str(item["name"]): item["value"] for item in row.get("attributes", [])}
+        attrs = _object_attrs(row)
         command_id = str(attrs.get("command_id", ""))
-        if command_id:
-            receipts_by_command[command_id].add(object_id)
-
-    actuation_commands: list[str] = []
-    unreceipted = 0
-    authority_violations = 0
-    violations: list[str] = []
-    for event in events:
-        if not isinstance(event, dict) or event.get("type") != "actuate":
-            continue
-        attrs = _event_attrs(event)
-        refs = _event_refs(event)
-        command_id = str(attrs.get("command_id", ""))
-        actuation_commands.append(command_id)
         if not command_id:
-            violations.append(f"ACTUATION_WITHOUT_COMMAND:{event.get('id')}")
-        if not refs.get("permission"):
-            authority_violations += 1
-            violations.append(f"ACTUATION_WITHOUT_PERMISSION:{event.get('id')}")
-        if not refs.get("prepared_receipt"):
-            unreceipted += 1
-            violations.append(f"ACTUATION_WITHOUT_PREPARED_RECEIPT:{event.get('id')}")
-        if not receipts_by_command.get(command_id):
-            unreceipted += 1
-            violations.append(f"ACTUATION_WITHOUT_FINAL_RECEIPT:{event.get('id')}")
+            continue
+        if row.get("type") == "Receipt":
+            receipts_by_command[command_id].add(object_id)
+        elif row.get("type") == "PreparedReceipt":
+            prepared_by_command[command_id].add(object_id)
 
+    by_command: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for event in events:
+        command_id = str(_event_attrs(event).get("command_id", ""))
+        if command_id:
+            by_command[command_id].append(event)
+
+    actuation_events = [event for event in events if event.get("type") == "actuate"]
+    actuation_commands = [
+        str(_event_attrs(event).get("command_id", "")) for event in actuation_events
+    ]
     duplicates = sum(
         count - 1 for count in Counter(actuation_commands).values() if count > 1
     )
+
+    violations: list[str] = []
+    unreceipted = 0
+    authority_violations = 0
+    causal_violations = 0
+    receipt_binding_violations = 0
+
     if duplicates:
         violations.append(f"DUPLICATE_EFFECTS:{duplicates}")
 
-    by_command: dict[str, list[tuple[int, str]]] = defaultdict(list)
-    for event in events:
-        if not isinstance(event, dict):
-            continue
+    phase_order = ("authorize", "prepare_receipt", "actuate", "receipt", "verify")
+    actuated_commands = {command_id for command_id in actuation_commands if command_id}
+
+    for event in actuation_events:
+        event_id = str(event.get("id", ""))
         attrs = _event_attrs(event)
+        refs = _event_refs(event)
         command_id = str(attrs.get("command_id", ""))
-        if command_id:
-            by_command[command_id].append(
-                (int(event.get("time", 0)), str(event.get("type", "")))
+        subject_id = str(event.get("subject_id", ""))
+
+        if not command_id:
+            violations.append(f"ACTUATION_WITHOUT_COMMAND:{event_id}")
+            authority_violations += 1
+            unreceipted += 1
+            continue
+
+        command_events = by_command.get(command_id, [])
+        phases: dict[str, list[dict[str, Any]]] = {
+            phase: [candidate for candidate in command_events if candidate.get("type") == phase]
+            for phase in phase_order
+        }
+
+        for phase in phase_order:
+            count = len(phases[phase])
+            if count != 1:
+                violations.append(
+                    f"COMMAND_PHASE_CARDINALITY:{command_id}:{phase}:{count}"
+                )
+                if phase == "authorize":
+                    authority_violations += 1
+                if phase in {"prepare_receipt", "receipt"}:
+                    unreceipted += 1
+                else:
+                    causal_violations += 1
+
+        authorize = phases["authorize"][0] if len(phases["authorize"]) == 1 else None
+        prepare = (
+            phases["prepare_receipt"][0]
+            if len(phases["prepare_receipt"]) == 1
+            else None
+        )
+        receipt_event = (
+            phases["receipt"][0] if len(phases["receipt"]) == 1 else None
+        )
+        verify = phases["verify"][0] if len(phases["verify"]) == 1 else None
+
+        permission_refs = refs.get("permission", set())
+        if not permission_refs:
+            authority_violations += 1
+            violations.append(f"ACTUATION_WITHOUT_PERMISSION:{event_id}")
+
+        if authorize is not None:
+            authorize_attrs = _event_attrs(authorize)
+            authorize_refs = _event_refs(authorize)
+            authorized_permissions = authorize_refs.get("permission", set())
+            if authorize_attrs.get("code") != "AUTHORIZED":
+                authority_violations += 1
+                violations.append(f"ACTUATION_WITHOUT_AUTHORIZED_DECISION:{command_id}")
+            if not authorized_permissions or permission_refs != authorized_permissions:
+                authority_violations += 1
+                violations.append(f"PERMISSION_BINDING_MISMATCH:{command_id}")
+            grant_id = str(authorize_attrs.get("grant_id", ""))
+            if grant_id and grant_id not in authorized_permissions:
+                authority_violations += 1
+                violations.append(f"GRANT_ID_NOT_IN_PERMISSION_REFS:{command_id}")
+
+        prepared_refs = refs.get("prepared_receipt", set())
+        if not prepared_refs:
+            unreceipted += 1
+            violations.append(f"ACTUATION_WITHOUT_PREPARED_RECEIPT:{event_id}")
+
+        command_prepared = prepared_by_command.get(command_id, set())
+        if len(command_prepared) != 1:
+            unreceipted += 1
+            receipt_binding_violations += 1
+            violations.append(
+                f"PREPARED_RECEIPT_CARDINALITY:{command_id}:{len(command_prepared)}"
             )
-    precedence = ("authorize", "prepare_receipt", "actuate", "receipt", "verify")
-    for command_id, rows in by_command.items():
-        rows.sort()
-        observed = [kind for _, kind in rows if kind in precedence]
-        if "actuate" in observed:
-            positions = {kind: observed.index(kind) for kind in observed}
-            for before, after in zip(precedence, precedence[1:]):
-                if (
-                    before in positions
-                    and after in positions
-                    and positions[before] > positions[after]
-                ):
-                    violations.append(f"CAUSAL_ORDER:{command_id}:{before}>{after}")
+        elif prepared_refs != command_prepared:
+            unreceipted += 1
+            receipt_binding_violations += 1
+            violations.append(f"PREPARED_RECEIPT_BINDING_MISMATCH:{command_id}")
+
+        if prepare is not None:
+            prepare_refs = _event_refs(prepare).get("prepared_receipt", set())
+            prepare_attrs = _event_attrs(prepare)
+            if prepare_refs != command_prepared:
+                receipt_binding_violations += 1
+                violations.append(f"PREPARE_EVENT_BINDING_MISMATCH:{command_id}")
+            declared = str(prepare_attrs.get("prepared_receipt_id", ""))
+            if declared and declared not in prepare_refs:
+                receipt_binding_violations += 1
+                violations.append(f"PREPARE_EVENT_ID_MISMATCH:{command_id}")
+
+        final_receipts = receipts_by_command.get(command_id, set())
+        if len(final_receipts) != 1:
+            unreceipted += 1
+            receipt_binding_violations += 1
+            violations.append(
+                f"FINAL_RECEIPT_CARDINALITY:{command_id}:{len(final_receipts)}"
+            )
+
+        if receipt_event is not None:
+            receipt_refs = _event_refs(receipt_event).get("receipt", set())
+            receipt_attrs = _event_attrs(receipt_event)
+            if receipt_refs != final_receipts:
+                receipt_binding_violations += 1
+                violations.append(f"FINAL_RECEIPT_BINDING_MISMATCH:{command_id}")
+            declared = str(receipt_attrs.get("receipt_id", ""))
+            if declared and declared not in receipt_refs:
+                receipt_binding_violations += 1
+                violations.append(f"FINAL_RECEIPT_EVENT_ID_MISMATCH:{command_id}")
+
+        if verify is not None and final_receipts:
+            verify_refs = _event_refs(verify).get("receipt", set())
+            if verify_refs != final_receipts:
+                receipt_binding_violations += 1
+                violations.append(f"VERIFY_RECEIPT_BINDING_MISMATCH:{command_id}")
+
+        if len(command_prepared) == 1 and len(final_receipts) == 1:
+            prepared_id = next(iter(command_prepared))
+            receipt_id = next(iter(final_receipts))
+            prepared_attrs = _object_attrs(objects[prepared_id])
+            receipt_attrs = _object_attrs(objects[receipt_id])
+            if str(prepared_attrs.get("command_id", "")) != command_id:
+                receipt_binding_violations += 1
+                violations.append(f"PREPARED_COMMAND_MISMATCH:{command_id}")
+            if str(receipt_attrs.get("command_id", "")) != command_id:
+                receipt_binding_violations += 1
+                violations.append(f"RECEIPT_COMMAND_MISMATCH:{command_id}")
+            if str(prepared_attrs.get("target_service", "")) != subject_id:
+                receipt_binding_violations += 1
+                violations.append(f"PREPARED_TARGET_MISMATCH:{command_id}")
+            if str(receipt_attrs.get("target_service", "")) != subject_id:
+                receipt_binding_violations += 1
+                violations.append(f"RECEIPT_TARGET_MISMATCH:{command_id}")
+            if prepared_attrs.get("pre_state_digest") != receipt_attrs.get(
+                "pre_state_digest"
+            ):
+                receipt_binding_violations += 1
+                violations.append(f"PRE_POST_CHAIN_MISMATCH:{command_id}")
+            if authorize is not None:
+                authorized_permissions = _event_refs(authorize).get("permission", set())
+                authority_grant_id = str(
+                    prepared_attrs.get("authority_grant_id", "")
+                )
+                if authority_grant_id not in authorized_permissions:
+                    authority_violations += 1
+                    violations.append(
+                        f"PREPARED_RECEIPT_AUTHORITY_MISMATCH:{command_id}"
+                    )
+
+        bound_events = [
+            candidate
+            for phase in phase_order
+            for candidate in phases[phase]
+        ]
+        if any(str(candidate.get("subject_id", "")) != subject_id for candidate in bound_events):
+            receipt_binding_violations += 1
+            violations.append(f"COMMAND_SUBJECT_DRIFT:{command_id}")
+
+        if all(len(phases[phase]) == 1 for phase in phase_order):
+            times = [int(phases[phase][0].get("time", 0)) for phase in phase_order]
+            if any(left >= right for left, right in zip(times, times[1:])):
+                causal_violations += 1
+                violations.append(f"CAUSAL_ORDER:{command_id}")
+
+    for command_id in sorted(receipts_by_command):
+        if command_id not in actuated_commands:
+            receipt_binding_violations += 1
+            violations.append(f"ORPHAN_FINAL_RECEIPT:{command_id}")
+    for command_id in sorted(prepared_by_command):
+        if command_id not in actuated_commands:
+            receipt_binding_violations += 1
+            violations.append(f"ORPHAN_PREPARED_RECEIPT:{command_id}")
 
     return {
         "ok": not violations,
         "violations": violations,
-        "actuations": len(actuation_commands),
+        "actuations": len(actuation_events),
         "unreceipted_actuations": unreceipted,
         "authority_violations": authority_violations,
         "duplicate_effects": duplicates,
+        "causal_violations": causal_violations,
+        "receipt_binding_violations": receipt_binding_violations,
         "objects": len(objects),
         "events": len(events),
     }
