@@ -169,7 +169,7 @@ _COMPONENTS = (
         python_name="ferroplan",
         repository="https://github.com/seanchatmangpt/ferroplan",
         branch="main",
-        revision="282fae46a7cf4f71ab473e33b5f3fdb4d73433c9",
+        revision="e90928d7b0687a959831553c4eacca3d75ca6c88",
         capability_class="planning-runtime",
     ),
 )
