@@ -29,6 +29,24 @@ class ArtifactRef:
 
 
 @dataclass(frozen=True, slots=True)
+class CheckpointRef:
+    """One exact upstream GALL checkpoint receipt identity.
+
+    receipt_digest is the SHA-256 of the durable receipt artifact bytes used
+    by the composition court. The checkpoint's standing/evidence class are
+    carried as bounded claims; they are never upgraded by composition.
+    """
+
+    checkpoint_id: str
+    repository: str
+    exact_sha: str
+    receipt_digest: str
+    standing: str
+    evidence_class: str
+    work_order_digest: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class ExactSubject:
     """The exact, immutable composition a crown run qualifies (ARD §5.1)."""
 
@@ -41,6 +59,8 @@ class ExactSubject:
     falsifier_corpus_digest: str
     query_set_digest: str
     environment_identity: str
+    checkpoints: tuple[CheckpointRef, ...] = ()
+    work_order_digest: str = ""
 
     @property
     def composition_digest(self) -> str:
@@ -63,6 +83,19 @@ class ExactSubject:
             "falsifier_corpus_digest": self.falsifier_corpus_digest,
             "query_set_digest": self.query_set_digest,
             "environment_identity": self.environment_identity,
+            "checkpoints": sorted(
+                (
+                    c.checkpoint_id,
+                    c.repository,
+                    c.exact_sha,
+                    c.receipt_digest,
+                    c.standing,
+                    c.evidence_class,
+                    c.work_order_digest,
+                )
+                for c in self.checkpoints
+            ),
+            "work_order_digest": self.work_order_digest,
         }
         dumped = json.dumps(payload, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(dumped.encode("utf-8")).hexdigest()
