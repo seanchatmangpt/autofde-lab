@@ -41,11 +41,11 @@ repos:
       - id: ruff-check
         name: ruff sort imports
         args: [ --fix, --select=I ]
-        exclude: ^\.validation/gymact-(base|head)/
+        exclude: ^(\.validation/gymact-(base|head)/|vendor/gyms/)
       - id: ruff-check
         name: ruff clean unused imports
         args: [ --fix, --select=F401 ]
-        exclude: ^\.validation/gymact-(base|head)/
+        exclude: ^(\.validation/gymact-(base|head)/|vendor/gyms/)
       # Run the formatter on authored source only.
       - id: ruff-format
         exclude: ^(cpp/|\.validation/gymact-(base|head)/)

@@ -93,7 +93,7 @@ rather than re-deriving the pattern here.
 `uv run pytest --nbmake notebooks -v`. For `pytest tests/...`, see
 `CLAUDE.md`'s Build section (`just test` / `just test-full`, and why
 `uv run pytest` is the wrong command for routine runs) — don't restate that
-guidance here, it drifts. Python 3.10+ per `pyproject.toml`; the verified
+guidance here, it drifts. Python 3.12+ per `pyproject.toml`; the verified
 working dev environment this session is 3.13.9 (pyproject.toml carries
 explicit 3.13 compatibility pins for numpy/pyRDDLGym-rl/ray) — treat 3.13 as
 current, not merely supported. CMake/C++20/pybind11 for the compiled

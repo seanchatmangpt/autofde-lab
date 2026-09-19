@@ -140,7 +140,7 @@ page, so they stay inline.
 ## Build
 
 `uv sync --extra=all -v`; `pre-commit run --all-files`.
-Python 3.10+ per `pyproject.toml`; the verified working dev environment is
+Python 3.12+ per `pyproject.toml`; the verified working dev environment is
 3.13.9 — treat 3.13 as current, not merely supported. CMake/C++20/pybind11
 for the compiled extension. The `cpp/sdk/*` git submodules (nng, pybind11,
 backward-cpp, json, PEGTL, spdlog, Catch2, nngpp) no longer need a manual

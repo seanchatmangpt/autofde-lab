@@ -89,6 +89,18 @@ if [[ "${first}" != "${second}" ]]; then
   exit 5
 fi
 
+# The pre-commit runner's own `python` (the CI job's bare interpreter, not
+# this repo's synced venv) has none of autofde_lab's runtime deps -- not
+# even pytest, and possibly an incompatible pre-existing `wrapt` (checking
+# mere importability isn't enough: an old wrapt imports fine but lacks
+# `lru_cache`, per src/autofde_lab/core.py's real usage). Install the exact
+# minimal, version-pinned set `autofde_lab/__init__.py` actually needs
+# (same set the CI "cache" job already installs for its own focused
+# subset) unconditionally -- idempotent and fast if already satisfied.
+python -m pip install --quiet --user \
+  "numpy" "pytest>=8" "wrapt>=2.2.1,<3" "pynng>=0.6.2" \
+  "pathos>=0.2.7" "discrete-optimization>=0.9.0"
+
 PYTHONPATH="${repo_root}/src" python -m pytest -q \
   "${project}/test_combinatorial_laws.py" \
   "${repo_root}/tests/sota_factory/test_combinatorial_maximalism_unit.py"

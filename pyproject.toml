@@ -26,7 +26,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dynamic = ["version"]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "pynng>=0.6.2",
     "pathos>=0.2.7",
@@ -36,11 +36,10 @@ dependencies = [
     # exact GitHub revision in `[tool.uv.sources]`, for
     # `autofde_lab.hub.domain.azuregoat_privesc.gymact_bridge`'s real
     # `EnvironmentProvider`/`Environment` implementation -- not faked.
-    # Marker added 2026-08-08: gymact declares requires-python >=3.11,<4.0 while
-    # this project declares >=3.10, so uv's 3.10 resolution split was
-    # unsatisfiable and `uv run` failed. The marker excludes gymact from that
-    # split rather than narrowing this project's own supported range.
-    "gymact; python_version >= '3.11'",
+    # gymact declares requires-python >=3.11,<4.0; unconditional now that
+    # this project's own floor is >=3.12 (bumped 2026-09-19, dropping the
+    # marker that previously worked around the 3.10 split).
+    "gymact",
     "opentelemetry-sdk>=1.44.0",
     "opentelemetry-exporter-otlp-proto-http>=1.44.0",
 ]
@@ -136,7 +135,9 @@ solvers = [
     # upper bound is no longer needed -- real PPO train+rollout verified on ray==2.52.1).
     "stable-baselines3>=2",
     "sb3_contrib>=2.3",
-    "up-tamer>=1.1.2; python_version < '3.12' and platform_machine == 'x86_64'",
+    # up-tamer dropped 2026-09-19: its own marker (python_version < '3.12')
+    # is permanently unsatisfiable now that this project's floor is >=3.12,
+    # and it was unused (no import anywhere in src/ or tests/).
     "up-fast-downward>=0.4.1",
     "up-enhsp>=0.0.25, <0.0.28",
     "up-pyperplan>=1.1.0",
@@ -148,7 +149,7 @@ solvers = [
     "torch>=2.3; sys_platform != 'darwin' or platform_machine != 'x86_64'",
     "torch>=2.2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
     "torch!=2.9.0,!=2.9.1,!=2.10, !=2.11.0, !=2.12.0, !=2.12.1; sys_platform == 'win32'",
-    "flax>=0.10.6; (sys_platform == 'linux' or sys_platform == 'win32') and python_version >= '3.12'",
+    "flax>=0.10.6; sys_platform == 'linux' or sys_platform == 'win32'",
     "openevolve>=0.2.11",
 ]
 pddl = [
@@ -235,24 +236,23 @@ ocpq = [
     # "wasm4pm",
 ]
 pm4py = [
-    # pm4py 2.7.23 declares requires-python >=3.11 while this project declares
-    # >=3.10; the marker keeps uv's 3.10 split resolvable (same pattern as the
-    # gymact marker above). pm4py_counterfactual.py guards its import and the
-    # ecosystem tests skip-admit when the library is absent.
-    "pm4py>=2.7.23; python_version >= '3.11'",
+    # pm4py 2.7.23 declares requires-python >=3.11 -- unconditional now that
+    # this project's own floor is >=3.12 (bumped 2026-09-19). pm4py_counterfactual.py
+    # guards its import and the ecosystem tests skip-admit when the library is absent.
+    "pm4py>=2.7.23",
 ]
 ocel-ecosystem = [
-    # Markers added 2026-09-15: pystackt 0.1.0 requires >=3.12, pm4py/OPQL/
-    # ocelescope require >=3.11 (verified via PyPI metadata) while this project
-    # declares >=3.10. Without them `uv lock` is unsatisfiable for the 3.10/3.11
-    # splits (live CI failure on lock-consistency and hddl-execution at
-    # 3755bf0d). The bridge modules guard these imports behind AVAILABLE flags.
+    # pystackt 0.1.0 requires >=3.12, pm4py/OPQL/ocelescope require >=3.11 --
+    # all unconditional now that this project's own floor is >=3.12 (bumped
+    # 2026-09-19, dropping the markers that previously worked around the
+    # 3.10/3.11 splits). The bridge modules guard these imports behind
+    # AVAILABLE flags regardless.
     "ocpa>=1.1",
-    "pystackt>=0.1.0; python_version >= '3.12'",
+    "pystackt>=0.1.0",
     "polars>=1.0.0",
     "duckdb>=1.0.0",
-    "OPQL>=0.1.1; python_version >= '3.11'",
-    "ocelescope>=0.7.0; python_version >= '3.11'",
+    "OPQL>=0.1.1",
+    "ocelescope>=0.7.0",
 ]
 bcinr-wasm = [
     # In-process WASM transport for the vendored bcinr-cmca allocator

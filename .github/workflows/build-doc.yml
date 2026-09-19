@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      python-version: "3.10"
+      python-version: "3.12"
     steps:
       - name: Set documentation link context
         env:

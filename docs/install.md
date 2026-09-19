@@ -2,9 +2,9 @@
 
 ## Prerequisites
 
-### Python 3.10+ environment
+### Python 3.12+ environment
 
-The use of a virtual environment for autofde-lab is recommended, and you will need to ensure that the environment use a Python version greater than or equal to 3.10.
+The use of a virtual environment for autofde-lab is recommended, and you will need to ensure that the environment use a Python version greater than or equal to 3.12.
 This can be achieved either by using [conda](https://docs.conda.io/en/latest/) or by using [pyenv](https://github.com/pyenv/pyenv) (or [pyenv-win](https://github.com/pyenv-win/pyenv-win) on windows)
 and [venv](https://docs.python.org/fr/3/library/venv.html) module, or by using [uv](https://docs.astral.sh/uv/).
 

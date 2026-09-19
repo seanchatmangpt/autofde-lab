@@ -66,15 +66,18 @@ on, not just free-floating kubectl syntax.
 
 from __future__ import annotations
 
-import concurrent.futures
 import asyncio
+import concurrent.futures
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Literal
 
 import dspy
 
-from autofde_lab.fabric.gymact_capability_gate import DEFAULT_MANIFEST_PATH, CapabilityGate
+from autofde_lab.fabric.gymact_capability_gate import (
+    DEFAULT_MANIFEST_PATH,
+    CapabilityGate,
+)
 from autofde_lab_planner.scanner.taxonomy import (
     INJECT_CONFIGMAP_DRIFT,
     INJECT_DUPLICATE_PVC_MOUNTS,
@@ -233,7 +236,9 @@ class ObserveClusterStage(dspy.Module):
         max_iters: int = 6,
     ) -> None:
         super().__init__()
-        tools = build_gated_observe_tools(environment, gate, capabilities, namespace=namespace)
+        tools = build_gated_observe_tools(
+            environment, gate, capabilities, namespace=namespace
+        )
         self.react = dspy.ReAct(ObserveCluster, tools=tools, max_iters=max_iters)
 
     def forward(self, namespace: str) -> Any:
@@ -246,17 +251,23 @@ class ObserveClusterStage(dspy.Module):
 
 
 class ClassifyAnomaly(dspy.Signature):
-    """Given a real observed cluster summary, propose candidate fault
+    (
+        """Given a real observed cluster summary, propose candidate fault
     labels. Choose ONLY from this repo's real, closed fault-label
     vocabulary (grepped from sregym's own inject_* fault-injector method
-    names, never invented): """ + _REAL_FAULT_LABELS_DESC + (
-        ". If no real evidence in the summary matches any of these labels, "
-        "return only 'UNCLASSIFIED' -- never fabricate a label outside "
-        "this list."
+    names, never invented): """
+        + _REAL_FAULT_LABELS_DESC
+        + (
+            ". If no real evidence in the summary matches any of these labels, "
+            "return only 'UNCLASSIFIED' -- never fabricate a label outside "
+            "this list."
+        )
     )
 
-    cluster_summary: str = dspy.InputField(desc="the real observed cluster state summary")
-    candidate_fault_labels: list[Literal[*REAL_FAULT_LABELS]] = dspy.OutputField(
+    cluster_summary: str = dspy.InputField(
+        desc="the real observed cluster state summary"
+    )
+    candidate_fault_labels: list[Literal[tuple(REAL_FAULT_LABELS)]] = dspy.OutputField(
         desc=(
             "one or more labels drawn strictly, verbatim, from this real "
             "closed enum -- never a paraphrase or invented label; "
@@ -277,14 +288,18 @@ class DiagnoseRootCause(dspy.Signature):
     reflect actual evidentiary support in `cluster_summary` -- never a
     default/round number chosen without real grounding."""
 
-    cluster_summary: str = dspy.InputField(desc="the real observed cluster state summary")
+    cluster_summary: str = dspy.InputField(
+        desc="the real observed cluster state summary"
+    )
     candidate_fault_labels: list[str] = dspy.InputField(
         desc="candidate fault labels from the ClassifyAnomaly stage, real taxonomy vocabulary"
     )
     diagnosis: str = dspy.OutputField(
         desc="free-text root-cause diagnosis grounded in cluster_summary and candidate_fault_labels"
     )
-    confidence: float = dspy.OutputField(desc="0.0-1.0, must reflect actual evidentiary support")
+    confidence: float = dspy.OutputField(
+        desc="0.0-1.0, must reflect actual evidentiary support"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -340,7 +355,9 @@ class SynthesizeMitigation(dspy.Signature):
     kubectl_command: str = dspy.OutputField(
         desc="ONE real, single, syntactically valid kubectl command string, no shell chaining"
     )
-    rationale: str = dspy.OutputField(desc="why this specific command addresses the diagnosed root cause")
+    rationale: str = dspy.OutputField(
+        desc="why this specific command addresses the diagnosed root cause"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -363,11 +380,15 @@ class VerifyMitigationOutcome(dspy.Signature):
     post_mitigation_cluster_summary: str = dspy.InputField(
         desc="a real cluster summary gathered AFTER a mitigation command was applied"
     )
-    original_diagnosis: str = dspy.InputField(desc="the diagnosis text the mitigation targeted")
+    original_diagnosis: str = dspy.InputField(
+        desc="the diagnosis text the mitigation targeted"
+    )
     outcome: Literal["fixed", "not_fixed", "unclear"] = dspy.OutputField(
         desc="advisory-only judgment; never the authoritative verified-consequence signal"
     )
-    evidence: str = dspy.OutputField(desc="the specific real evidence in the summary supporting `outcome`")
+    evidence: str = dspy.OutputField(
+        desc="the specific real evidence in the summary supporting `outcome`"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -412,14 +433,18 @@ class StagedGymActDiagnoser(dspy.Module):
         cluster_summary = str(getattr(observed, "cluster_summary", ""))
 
         classified = self.classify(cluster_summary=cluster_summary)
-        candidate_fault_labels = list(getattr(classified, "candidate_fault_labels", []) or [])
+        candidate_fault_labels = list(
+            getattr(classified, "candidate_fault_labels", []) or []
+        )
 
         diagnosed = self.diagnose(
             cluster_summary=cluster_summary,
             candidate_fault_labels=candidate_fault_labels,
         )
         try:
-            confidence = max(0.0, min(1.0, float(getattr(diagnosed, "confidence", 0.0))))
+            confidence = max(
+                0.0, min(1.0, float(getattr(diagnosed, "confidence", 0.0)))
+            )
         except (TypeError, ValueError):
             confidence = 0.0
 
@@ -552,7 +577,11 @@ async def run_staged_dspy_diagnosis(
         submit_cap = _capability(capabilities, "submit_diagnosis")
         gate.guard_capability(submit_cap)
         submit_response = await env.actuate(
-            submit_cap, {"diagnosis": staged["diagnosis"], "confidence": float(staged["confidence"])}
+            submit_cap,
+            {
+                "diagnosis": staged["diagnosis"],
+                "confidence": float(staged["confidence"]),
+            },
         )
 
         return StagedDiagnosisResult(
