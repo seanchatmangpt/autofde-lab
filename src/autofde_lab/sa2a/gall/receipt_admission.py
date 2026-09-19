@@ -152,6 +152,11 @@ def _checkpoint_001(payload: dict[str, Any], reference: ReceiptReference) -> Adm
         )
     if (pack, version, pack_digest) not in resolved_identities:
         raise ValueError("GALL-001 subject is not bound into the resolved pack composition")
+    if len(resolved_identities) != 1:
+        raise ValueError(
+            "GALL-001 current portable receipt selects subject via packs.first(); "
+            "multi-pack composition is ambiguous without an explicit subject-selection proof"
+        )
 
     graph = _require_mapping(payload.get("graph"), "graph")
     _require_nonempty_string(graph.get("canonical_digest"), "graph.canonical_digest")
