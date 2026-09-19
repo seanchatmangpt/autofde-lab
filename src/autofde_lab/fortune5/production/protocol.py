@@ -65,17 +65,33 @@ class SemanticAdmission:
         self._world = world
         self._services = {service.service_id: service for service in world.services}
 
-    def admit(self, message: SemanticMessage, *, current_world_digest: str) -> AdmissionDecision:
+    def admit(
+        self, message: SemanticMessage, *, current_world_digest: str
+    ) -> AdmissionDecision:
         if message.ontology_version != self._world.ontology_version:
-            return AdmissionDecision(False, "REFUSED:ONTOLOGY_VERSION_MISMATCH", "semantic version mismatch")
+            return AdmissionDecision(
+                False, "REFUSED:ONTOLOGY_VERSION_MISMATCH", "semantic version mismatch"
+            )
         if message.target_service not in self._services:
-            return AdmissionDecision(False, "REFUSED:UNKNOWN_TARGET", "target service is not in the admitted world")
+            return AdmissionDecision(
+                False,
+                "REFUSED:UNKNOWN_TARGET",
+                "target service is not in the admitted world",
+            )
         if message.intent != "stabilize":
-            return AdmissionDecision(False, "REFUSED:UNSUPPORTED_INTENT", "only stabilize is admitted")
+            return AdmissionDecision(
+                False, "REFUSED:UNSUPPORTED_INTENT", "only stabilize is admitted"
+            )
         if not message.fault_kind:
-            return AdmissionDecision(False, "REFUSED:MISSING_FAULT_KIND", "fault kind is required")
+            return AdmissionDecision(
+                False, "REFUSED:MISSING_FAULT_KIND", "fault kind is required"
+            )
         if message.observed_world_digest != current_world_digest:
-            return AdmissionDecision(False, "REFUSED:STALE_WORLD_IDENTITY", "message was observed against another world state")
+            return AdmissionDecision(
+                False,
+                "REFUSED:STALE_WORLD_IDENTITY",
+                "message was observed against another world state",
+            )
         return AdmissionDecision(True, "ADMITTED", "semantic message admitted")
 
 
@@ -135,7 +151,9 @@ class KnownRouteRegistry:
 class FrontierPlanner:
     """Bounded heuristic used only for previously UNKNOWN semantic classes."""
 
-    def choose(self, message: SemanticMessage, service: ServiceSpec) -> tuple[str, tuple[tuple[str, str], ...]]:
+    def choose(
+        self, message: SemanticMessage, service: ServiceSpec
+    ) -> tuple[str, tuple[tuple[str, str], ...]]:
         action = FAULT_TO_ACTION.get(message.fault_kind, "shed_load")
         if action == "scale_out":
             params = (("replicas", "2"),)
@@ -159,7 +177,9 @@ class AuthorityPolicy:
     def authorize(self, command: Command, *, round_index: int) -> AuthorityDecision:
         service = self._services.get(command.target_service)
         if service is None:
-            return AuthorityDecision(False, "REFUSED:UNKNOWN_TARGET", "target not present", None)
+            return AuthorityDecision(
+                False, "REFUSED:UNKNOWN_TARGET", "target not present", None
+            )
         candidates: Iterable[AuthorityGrant] = (
             grant
             for grant in self._world.authority_grants
@@ -169,9 +189,16 @@ class AuthorityPolicy:
         )
         grant = next(iter(candidates), None)
         if grant is None:
-            return AuthorityDecision(False, "REFUSED:NO_GRANT", "no grant covers actor/action/layer", None)
+            return AuthorityDecision(
+                False, "REFUSED:NO_GRANT", "no grant covers actor/action/layer", None
+            )
         if command.risk > grant.max_risk:
-            return AuthorityDecision(False, "REFUSED:RISK_EXCEEDS_GRANT", "risk exceeds grant envelope", grant.grant_id)
+            return AuthorityDecision(
+                False,
+                "REFUSED:RISK_EXCEEDS_GRANT",
+                "risk exceeds grant envelope",
+                grant.grant_id,
+            )
         units = _change_units(command)
         key = (round_index, grant.grant_id)
         used = self._used_units.get(key, 0)
@@ -183,7 +210,12 @@ class AuthorityPolicy:
                 grant.grant_id,
             )
         self._used_units[key] = used + units
-        return AuthorityDecision(True, "AUTHORIZED", "grant covers exact action and service layer", grant.grant_id)
+        return AuthorityDecision(
+            True,
+            "AUTHORIZED",
+            "grant covers exact action and service layer",
+            grant.grant_id,
+        )
 
 
 def build_command(
