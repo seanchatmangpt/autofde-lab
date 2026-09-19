@@ -15,6 +15,7 @@ from ..readiness import (
     evidence_digest,
 )
 from .engine import SimulationRun
+from .gap_lab import run_gap_court
 from .model import canonical_json, digest
 from .ocel import project_events_to_ocel2, verify_ocel2
 
@@ -30,6 +31,7 @@ def readiness_witness(run: SimulationRun):
         routes=tuple(run.known_routes),
     )
     court = verify_ocel2(ocel)
+    gap_court = run_gap_court(ocel)
     projection_ok = run.projection.world_digest == run.world.world_digest
     budgets_ok = not (
         run.summary.cost_budget_violations
@@ -53,7 +55,9 @@ def readiness_witness(run: SimulationRun):
         "production": run.summary.rounds > 0 and budgets_ok,
         "actuation": court["unreceipted_actuations"] == 0
         and court["duplicate_effects"] == 0,
-        "evidence": bool(court["ok"]) and retirement_observed,
+        "evidence": bool(court["ok"])
+        and bool(gap_court["all_detected"])
+        and retirement_observed,
     }
     evidence_by_gate = {
         gate: (
@@ -119,6 +123,7 @@ class ArtifactStore:
             routes=tuple(run.known_routes),
         )
         witness = readiness_witness(run)
+        gap_court = run_gap_court(ocel)
         files: dict[str, object] = {
             "world.json": run.world.canonical,
             "formal.json": run.projection.canonical(),
@@ -131,6 +136,7 @@ class ArtifactStore:
                 receipt.canonical() for receipt in run.final_receipts
             ],
             "ocel2.json": ocel,
+            "gap-court.json": gap_court,
             "summary.json": run.summary.canonical(),
             "readiness.json": witness.canonical(),
             "final-state.json": [
