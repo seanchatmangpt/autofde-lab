@@ -58,6 +58,19 @@ def _write_evidence(
     )
 
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _repo_head() -> str:
+    return subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=REPO_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
 def _fixture(tmp_path: Path) -> GALLCompositionManifest:
     shas = {
         "g1": "1" * 40,
@@ -591,38 +604,96 @@ def test_machine_experience_replay_rejects_evidence_identity_drift(
         )
 
 
-def test_fresh_python_process_can_execute_known_artifact(tmp_path: Path) -> None:
-    manifest = _fixture(tmp_path)
-    artifact, _ = compile_verified_experience(
-        manifest,
-        deterministic_output={"repair": "known"},
-    )
-
+def test_compile_cannot_mint_gate_12_and_fresh_replay_can(tmp_path: Path) -> None:
+    manifest = replace(_fixture(tmp_path), autofde_lab_sha=_repo_head())
     manifest_path = tmp_path / "manifest.json"
-    experience_path = tmp_path / "experience.json"
+    output_path = tmp_path / "output.json"
+    court_dir = tmp_path / "court"
     manifest_path.write_text(json.dumps(manifest.to_dict()), encoding="utf-8")
-    experience_path.write_text(json.dumps(artifact.to_dict()), encoding="utf-8")
+    output_path.write_text(json.dumps({"repair": "known"}), encoding="utf-8")
 
-    completed = subprocess.run(
+    compile_run = subprocess.run(
+        [
+            sys.executable,
+            "scripts/run_gall_composition_crown.py",
+            "compile",
+            "--manifest",
+            str(manifest_path),
+            "--output-json",
+            str(output_path),
+            "--out-dir",
+            str(court_dir),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
+        env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
+    )
+    compile_result = json.loads(compile_run.stdout)
+    assert compile_result["gate_12"] == "OPEN"
+    assert (court_dir / "machine-experience.json").is_file()
+    assert not (court_dir / "episode-2-receipt.json").exists()
+    assert not (court_dir / "gall-005-crown-receipt.json").exists()
+
+    replay_run = subprocess.run(
         [
             sys.executable,
             "scripts/run_gall_composition_crown.py",
             "replay",
             "--manifest",
-            str(manifest_path),
+            str(court_dir / "gall-composition-manifest.json"),
             "--experience",
-            str(experience_path),
+            str(court_dir / "machine-experience.json"),
             "--semantic-key",
             manifest.semantic_key,
+            "--out-dir",
+            str(court_dir),
         ],
         check=True,
         capture_output=True,
         text=True,
-        env=os.environ.copy(),
+        cwd=REPO_ROOT,
+        env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
     )
-    result = json.loads(completed.stdout)
+    result = json.loads(replay_run.stdout)
     assert result["machine_experience_hits"] == 1
     assert result["reflex_executions"] == 1
     assert result["frontier_resolution_calls"] == 0
     assert result["llm_allocations"] == 0
     assert result["planner_invocations"] == 0
+    assert (court_dir / "episode-2-receipt.json").is_file()
+    crown = json.loads((court_dir / "gall-005-crown-receipt.json").read_text())
+    assert crown["gate_12"] == "PASS"
+    assert crown["gate_11"] == "OPEN"
+    assert crown["cross_repo_standing"] == "PARTIAL_ALIVE"
+
+
+def test_runner_refuses_manifest_for_different_autofde_head(tmp_path: Path) -> None:
+    manifest = _fixture(tmp_path)
+    manifest_path = tmp_path / "manifest.json"
+    output_path = tmp_path / "output.json"
+    manifest_path.write_text(json.dumps(manifest.to_dict()), encoding="utf-8")
+    output_path.write_text(json.dumps({"repair": "known"}), encoding="utf-8")
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "scripts/run_gall_composition_crown.py",
+            "compile",
+            "--manifest",
+            str(manifest_path),
+            "--output-json",
+            str(output_path),
+            "--out-dir",
+            str(tmp_path / "court"),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
+        env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
+    )
+    assert completed.returncode == 65
+    assert "REFUSED_EXACT_HEAD" in completed.stderr
+
