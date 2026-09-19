@@ -336,3 +336,62 @@ Stop rather than filling gaps locally when:
 - a learned candidate source would need to be treated as authority.
 
 GALL-005 is an **aggregator and cognition-retirement court**, not a place to reproduce missing manufacturer, actuation, or observer implementations.
+
+## 2026-09-18 exact-head code review
+
+Reviewed source subject: `2ef0bb511908fa099a1edb55ea3a85c0e570c36c`.
+
+### Observed implementation
+
+The repository-local composition machinery is already mature:
+
+- `ExactSubject` is a frozen identity over exact repository SHAs, artifact digests, root manifest, semantic profile, court/falsifier/query revisions, and environment identity.
+- `SubjectResolver` has typed fail-closed refusals for floating refs, missing digests, conflicting repository/artifact identities, and malformed manifest shapes.
+- `CompositionReceipt` independently hashes the composition identity together with the specific Episode 1 / Episode 2 final-receipt and OCEL digests.
+- Chicago source tests exercise digest sensitivity and end-to-end crown binding.
+- `sa2a.release.fresh_consumer` already runs in a separate OS process over durable checkpoint/OCEL artifacts and independently re-derives several claims instead of trusting producer booleans.
+
+These are source/test surfaces observed at the reviewed head, not newly executed evidence.
+
+### Cross-repository gap
+
+The reviewed composition types are generic enough to carry upstream GALL artifacts, but the current `CompositionReceipt` fields bind Episode 1 / Episode 2 evidence; they do not themselves require or verify typed GALL-001..004 receipt identities.
+
+GALL-005 therefore still needs a release manifest schema/court that makes all upstream checkpoint subjects mandatory and independently verifies each upstream receipt before the composition can crown.
+
+A generic `ArtifactRef` carrying a digest is not enough unless the court also proves what artifact class that digest represents and which exact repository subject produced it.
+
+### OTel court is not exact-head crown evidence yet
+
+The reviewed `.github/workflows/sa2a-mfg-otel-court.yml` has two named sibling-repository assumptions:
+
+- `$HOME/wasm4pm-compat`;
+- `$HOME/ggen-marketplace/packs/otel-weaver-ocel-pack`.
+
+The workflow itself documents that a clean GitHub-hosted runner does not provide them. It also uses `otel/opentelemetry-collector-contrib:latest`, a floating runtime identity.
+
+It runs a collector + instrumented runtime + OCEL accumulator/equivalence check, but it does not invoke Weaver Live-check.
+
+Therefore this workflow cannot currently serve as exact-subject GALL-004/005 evidence on a clean hosted runner.
+
+### Semantic consequence profiler subject boundary
+
+The semantic consequence profiler exists in autofde-lab PR #157, but its `src/autofde_lab/sa2a/profiling/*` files are absent from this reviewed GALL-005 head. Treat PR #157 as external/staged evidence, not as a capability of the current GALL-005 subject.
+
+Do not bind profiler standing into the composition crown until the exact composition manifest names the profiler subject or the implementation is integrated.
+
+### Revised next action
+
+1. define typed mandatory upstream checkpoint references for GALL-001..004;
+2. independently verify their repository SHA + receipt digest + evidence class before crown construction;
+3. replace sibling-path assumptions with exact, provisioned subjects or report `BLOCKED`;
+4. pin OTel/Weaver runtime identities rather than `:latest`;
+5. require the beam4pm GALL-004 Weaver/observer receipt as a distinct upstream predicate;
+6. only then compile MachineExperience / KNOWN evidence from the closed composition.
+
+### Review standing
+
+- repository-local exact-subject/composition receipt machinery: `PARTIAL_ALIVE` by source inspection;
+- clean hosted OTel court: `BLOCKED` by declared missing-sibling assumption unless provisioned;
+- Weaver live-check in current head: `UNKNOWN`;
+- cross-repository GALL-001..004 composition crown: `UNKNOWN`.
