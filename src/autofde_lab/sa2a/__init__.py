@@ -14,6 +14,18 @@ from autofde_lab.sa2a.algebra import (
     validate_refusal,
     validate_transition,
 )
+from autofde_lab.sa2a.computation import (
+    ComputationArtifact,
+    ComputationRuntime,
+    EvidenceClass,
+    PlanningAdvice,
+    PlanningAdviceKind,
+    RuntimeEquivalence,
+    ScoredCandidate,
+    SemanticClaim,
+    order_formally_admitted,
+    qualify_runtime_equivalence,
+)
 from autofde_lab.sa2a.envelope import (
     AuthorityRequirement,
     EnvelopeBounds,
@@ -40,4 +52,14 @@ __all__ = [
     "EnvelopeBounds",
     "SemanticEnvelope",
     "RootManifest",
+    "ComputationArtifact",
+    "ComputationRuntime",
+    "EvidenceClass",
+    "PlanningAdvice",
+    "PlanningAdviceKind",
+    "RuntimeEquivalence",
+    "ScoredCandidate",
+    "SemanticClaim",
+    "order_formally_admitted",
+    "qualify_runtime_equivalence",
 ]
