@@ -7,13 +7,32 @@ import random
 from dataclasses import dataclass
 from typing import Iterable
 
-from .formal import FormalProjection, generate_formal_projection, verify_projection_coherence
+from .formal import (
+    FormalProjection,
+    generate_formal_projection,
+    verify_projection_coherence,
+)
 from .model import (
-    Command, EventRecord, FaultEvent, FinalReceipt, PreparedReceipt, SemanticMessage,
-    ServiceSpec, ServiceState, SimulationSummary, TelemetrySpan, WorldSpec, digest, stable_id,
+    Command,
+    EventRecord,
+    FaultEvent,
+    FinalReceipt,
+    PreparedReceipt,
+    SemanticMessage,
+    ServiceSpec,
+    ServiceState,
+    SimulationSummary,
+    TelemetrySpan,
+    WorldSpec,
+    digest,
+    stable_id,
 )
 from .protocol import (
-    AuthorityPolicy, FrontierPlanner, KnownRouteRegistry, SemanticAdmission, build_command,
+    AuthorityPolicy,
+    FrontierPlanner,
+    KnownRouteRegistry,
+    SemanticAdmission,
+    build_command,
 )
 
 
@@ -39,7 +58,10 @@ class ProductionSimulator:
         self.rng = random.Random(world.seed)
         self.services = {s.service_id: s for s in world.services}
         self.slos = {s.service_id: s for s in world.slos}
-        self.states = {s.service_id: ServiceState(s.service_id, s.min_replicas) for s in world.services}
+        self.states = {
+            s.service_id: ServiceState(s.service_id, s.min_replicas)
+            for s in world.services
+        }
         self.admission = SemanticAdmission(world)
         self.authority = AuthorityPolicy(world)
         self.routes = KnownRouteRegistry()
@@ -60,7 +82,9 @@ class ProductionSimulator:
         self._projection = generate_formal_projection(world)
         ok, violations = verify_projection_coherence(self._projection)
         if not ok:
-            raise ValueError("REFUSED:FORMAL_PROJECTION_INCOHERENT:" + ",".join(violations))
+            raise ValueError(
+                "REFUSED:FORMAL_PROJECTION_INCOHERENT:" + ",".join(violations)
+            )
         self.run_id = stable_id("run", world.world_digest, "fortune5-production")
 
     def _now(self, round_index: int) -> int:
@@ -68,43 +92,69 @@ class ProductionSimulator:
         return round_index * 1_000_000 + self._sequence
 
     def _emit(
-        self, *, round_index: int, event_type: str, actor_id: str, subject_id: str,
+        self,
+        *,
+        round_index: int,
+        event_type: str,
+        actor_id: str,
+        subject_id: str,
         attrs: dict[str, object] | None = None,
         refs: Iterable[tuple[str, str]] = (),
         parent_event_id: str | None = None,
     ) -> EventRecord:
         ts = self._now(round_index)
         event_id = stable_id(
-            "evt", self.run_id, round_index, self._sequence, event_type, actor_id, subject_id
+            "evt",
+            self.run_id,
+            round_index,
+            self._sequence,
+            event_type,
+            actor_id,
+            subject_id,
         )
         attributes = tuple(sorted((attrs or {}).items(), key=lambda x: x[0]))
         object_refs = tuple(sorted(refs))
         event = EventRecord(
-            event_id, event_type, round_index, ts, actor_id, subject_id, attributes, object_refs
+            event_id,
+            event_type,
+            round_index,
+            ts,
+            actor_id,
+            subject_id,
+            attributes,
+            object_refs,
         )
         self.events.append(event)
         self.spans.append(
             TelemetrySpan(
                 trace_id=stable_id("trace", self.run_id, round_index),
                 span_id=stable_id("span", event_id),
-                parent_span_id=stable_id("span", parent_event_id) if parent_event_id else None,
+                parent_span_id=stable_id("span", parent_event_id)
+                if parent_event_id
+                else None,
                 name=event_type,
                 start_time_unix_nano=ts,
                 end_time_unix_nano=ts + 100,
-                attributes=tuple(sorted({
-                    "event_id": event_id,
-                    "round_index": round_index,
-                    "actor_id": actor_id,
-                    "subject_id": subject_id,
-                    **(attrs or {}),
-                }.items())),
+                attributes=tuple(
+                    sorted(
+                        {
+                            "event_id": event_id,
+                            "round_index": round_index,
+                            "actor_id": actor_id,
+                            "subject_id": subject_id,
+                            **(attrs or {}),
+                        }.items()
+                    )
+                ),
             )
         )
         return event
 
     def _faults_for_round(self, round_index: int) -> tuple[FaultEvent, ...]:
         return tuple(
-            f for f in self.world.faults if f.round_index <= round_index <= f.ends_after_round
+            f
+            for f in self.world.faults
+            if f.round_index <= round_index <= f.ends_after_round
         )
 
     def _update_states(self, round_index: int) -> None:
@@ -113,13 +163,25 @@ class ProductionSimulator:
         for fault in active:
             faults_by_service.setdefault(fault.target_service, []).append(fault)
 
-        traffic_wave = 0.82 + 0.28 * (1 + math.sin((round_index + self.world.seed) / 3.0))
+        traffic_wave = 0.82 + 0.28 * (
+            1 + math.sin((round_index + self.world.seed) / 3.0)
+        )
         application_services = max(
             1,
             sum(
-                s.layer in {
-                    "edge", "identity", "application", "event", "worker", "data",
-                    "cache", "search", "stream", "ai", "agent",
+                s.layer
+                in {
+                    "edge",
+                    "identity",
+                    "application",
+                    "event",
+                    "worker",
+                    "data",
+                    "cache",
+                    "search",
+                    "stream",
+                    "ai",
+                    "agent",
                 }
                 for s in self.world.services
             ),
@@ -129,7 +191,8 @@ class ProductionSimulator:
         for service_id, spec in self.services.items():
             state = self.states[service_id]
             service_faults = [
-                f for f in faults_by_service.get(service_id, ())
+                f
+                for f in faults_by_service.get(service_id, ())
                 if f.fault_id not in state.cleared_fault_ids
             ]
             state.active_fault_ids = {f.fault_id for f in service_faults}
@@ -167,7 +230,8 @@ class ProductionSimulator:
                 dependency_penalty += dep_state.queue_depth * 0.02
             state.latency_ms = (
                 spec.base_latency_ms * (1.0 + overload * 5.0)
-                + latency_extra + dependency_penalty
+                + latency_extra
+                + dependency_penalty
             )
             state.error_rate = min(
                 0.95, spec.base_error_rate + error_extra + overload * 0.08
@@ -231,7 +295,10 @@ class ProductionSimulator:
                 event_type="replay",
                 actor_id=command.actor_id,
                 subject_id=command.target_service,
-                attrs={"command_id": command.command_id, "receipt_id": cached.receipt_id},
+                attrs={
+                    "command_id": command.command_id,
+                    "receipt_id": cached.receipt_id,
+                },
                 refs=((command.command_id, "command"), (cached.receipt_id, "receipt")),
                 parent_event_id=parent_event_id,
             )
@@ -287,7 +354,9 @@ class ProductionSimulator:
             pre != post or command.action in {"restart", "repair_dependency"}
         )
         final = FinalReceipt(
-            receipt_id=stable_id("receipt", command.command_id, pre, post, success, verified),
+            receipt_id=stable_id(
+                "receipt", command.command_id, pre, post, success, verified
+            ),
             prepared_receipt_id=prepared.receipt_id,
             command_id=command.command_id,
             target_service=command.target_service,
@@ -545,12 +614,14 @@ class ProductionSimulator:
         state_payload = tuple(
             (sid, self.states[sid].canonical()) for sid in sorted(self.states)
         )
-        replay_digest = digest({
-            "world": self.world.world_digest,
-            "projection": self._projection.projection_digest,
-            "events": [event.canonical() for event in self.events],
-            "final_state": list(state_payload),
-        })
+        replay_digest = digest(
+            {
+                "world": self.world.world_digest,
+                "projection": self._projection.projection_digest,
+                "events": [event.canonical() for event in self.events],
+                "final_state": list(state_payload),
+            }
+        )
         summary = SimulationSummary(
             run_id=self.run_id,
             world_digest=self.world.world_digest,
