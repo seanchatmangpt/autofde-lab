@@ -122,8 +122,26 @@ def _fixture(tmp_path: Path) -> GALLCompositionManifest:
         "replay": {
             "status": "PASS",
             "source_receipt_sha256": _sha("source-receipt"),
-            "replayed_receipt_sha256": _sha("replayed-receipt"),
+            "reconstructed_receipt_sha256": _sha("reconstructed-receipt"),
             "court": "ggen-engine::replay::verify_project_replay",
+            "identity": {
+                field: {"sha256": _sha(f"identity:{field}"), "equal": True}
+                for field in (
+                    "schema",
+                    "spec",
+                    "engine",
+                    "subject",
+                    "dependencies",
+                    "composition",
+                    "graph",
+                    "work_order",
+                    "admission",
+                    "consequences",
+                    "toolchain",
+                    "environment",
+                    "standing",
+                )
+            },
         },
         "standing": "ALIVE",
     }
@@ -300,6 +318,23 @@ def test_typed_upstream_receipts_compile_and_keep_evidence_predicates_separate(
     assert episode_2.planner_invocations == 0
     assert episode_2.machine_experience_hits == 1
     assert episode_2.reflex_executions == 1
+
+
+def test_gall_001_replay_requires_complete_recomputed_identity_witness(
+    tmp_path: Path,
+) -> None:
+    manifest = _fixture(tmp_path)
+    ref = manifest.receipts[0]
+    payload = json.loads(Path(ref.path).read_text())
+    payload["replay"]["identity"].pop("environment")
+    Path(ref.path).write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+    changed = ReceiptReference.from_path(
+        checkpoint=ref.checkpoint, repository=ref.repository, repo_sha=ref.repo_sha, path=ref.path
+    )
+    manifest = replace(manifest, receipts=(changed, *manifest.receipts[1:]))
+
+    with pytest.raises(ValueError, match="recomputed identity field set"):
+        compile_verified_experience(manifest, deterministic_output={"x": 1})
 
 
 def test_generic_hash_only_gall_001_payload_is_refused(tmp_path: Path) -> None:
