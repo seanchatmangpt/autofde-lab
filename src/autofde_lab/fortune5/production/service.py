@@ -83,7 +83,9 @@ class SimulationService:
 
     def list(self) -> tuple[dict[str, object], ...]:
         with self._lock:
-            return tuple(RunView(self._runs[key]).summary() for key in sorted(self._runs))
+            return tuple(
+                RunView(self._runs[key]).summary() for key in sorted(self._runs)
+            )
 
 
 __all__ = ["RunView", "SimulationService"]
