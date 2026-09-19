@@ -75,7 +75,15 @@ def _fixture(tmp_path: Path) -> GALLCompositionManifest:
     g1_payload = {
         "schema": "https://ggen.dev/receipt/pack/v1",
         "spec": "RFC-GPACK-001-v26.9.17",
-        "engine": {"name": "ggen-engine", "version": "6.0.0"},
+        "engine": {"name": "ggen", "version": "6.0.0"},
+        "toolchain": {"rustc": "rustc 1.91.0", "cargo": "cargo 1.91.0"},
+        "environment": {
+            "os": "linux",
+            "arch": "x86_64",
+            "family": "unix",
+            "variables_count": 3,
+            "variables_sha256": _sha("bounded-environment"),
+        },
         "subject": {
             "pack": "gall-pack",
             "version": "1.0.0",
@@ -314,7 +322,7 @@ def test_generic_hash_only_gall_001_payload_is_refused(tmp_path: Path) -> None:
 
 
 
-def test_multi_pack_gall_001_requires_explicit_subject_selection_proof(
+def test_multi_pack_gall_001_allows_one_exact_subject_match(
     tmp_path: Path,
 ) -> None:
     manifest = _fixture(tmp_path)
@@ -337,10 +345,93 @@ def test_multi_pack_gall_001_requires_explicit_subject_selection_proof(
         repo_sha=ref.repo_sha,
         path=ref.path,
     )
+    g2_ref = manifest.receipts[1]
+    g2_payload = json.loads(Path(g2_ref.path).read_text())
+    g2_payload["gall_001_receipt_digest"] = changed.receipt_digest
+    Path(g2_ref.path).write_text(
+        json.dumps(g2_payload, sort_keys=True),
+        encoding="utf-8",
+    )
+    changed_g2 = ReceiptReference.from_path(
+        checkpoint=g2_ref.checkpoint,
+        repository=g2_ref.repository,
+        repo_sha=g2_ref.repo_sha,
+        path=g2_ref.path,
+    )
+    manifest = replace(
+        manifest,
+        receipts=(changed, changed_g2, *manifest.receipts[2:]),
+    )
+
+    artifact, episode_1 = compile_verified_experience(
+        manifest,
+        deterministic_output={"x": 1},
+    )
+    assert artifact.source_receipts[0] == changed.receipt_digest
+    assert episode_1.standing == "PARTIAL_ALIVE"
+
+
+def test_duplicate_subject_identity_is_refused(tmp_path: Path) -> None:
+    manifest = _fixture(tmp_path)
+    ref = manifest.receipts[0]
+    payload = json.loads(Path(ref.path).read_text())
+    payload["composition"]["resolved_packs"].append(
+        {
+            "name": payload["subject"]["pack"],
+            "version": payload["subject"]["version"],
+            "digest": payload["subject"]["pack_digest"],
+        }
+    )
+    Path(ref.path).write_text(
+        json.dumps(payload, sort_keys=True),
+        encoding="utf-8",
+    )
+    changed = ReceiptReference.from_path(
+        checkpoint=ref.checkpoint,
+        repository=ref.repository,
+        repo_sha=ref.repo_sha,
+        path=ref.path,
+    )
     manifest = replace(manifest, receipts=(changed, *manifest.receipts[1:]))
 
-    with pytest.raises(ValueError, match="multi-pack composition is ambiguous"):
+    with pytest.raises(ValueError, match="exactly one matching member"):
         compile_verified_experience(manifest, deterministic_output={"x": 1})
+
+
+def test_durable_pending_gall_003_can_be_resolved_by_independent_gall_004(
+    tmp_path: Path,
+) -> None:
+    manifest = _fixture(tmp_path)
+    ref = manifest.receipts[2]
+    payload = json.loads(Path(ref.path).read_text())
+    payload["status"] = "pending"
+    payload["terminal_status"] = None
+    Path(ref.path).write_text(
+        json.dumps(payload, sort_keys=True),
+        encoding="utf-8",
+    )
+    changed = ReceiptReference.from_path(
+        checkpoint=ref.checkpoint,
+        repository=ref.repository,
+        repo_sha=ref.repo_sha,
+        path=ref.path,
+    )
+    manifest = replace(
+        manifest,
+        receipts=(
+            *manifest.receipts[:2],
+            changed,
+            manifest.receipts[3],
+        ),
+    )
+
+    _, episode_1 = compile_verified_experience(
+        manifest,
+        deterministic_output={"x": 1},
+    )
+    assert episode_1.process_valid is True
+    assert episode_1.postcondition_valid is True
+
 
 def test_stale_gall_002_repo_sha_with_valid_receipt_is_refused(
     tmp_path: Path,
