@@ -107,8 +107,7 @@ def operations_from_ocel(
             value = attributes.get(attribute_key)
             if value is None:
                 raise MissingProfileMeasure(
-                    f"event {event.id!r} is missing measure "
-                    f"attribute {attribute_key!r}"
+                    f"event {event.id!r} is missing measure attribute {attribute_key!r}"
                 )
             measures[measure_name] = _measure_value(
                 value,

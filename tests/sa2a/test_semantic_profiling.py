@@ -90,13 +90,8 @@ def test_semantic_responsibility_folds_across_sessions_and_conserves_weight():
     assert profile.weight_for(
         ("release v26.9.18", "diagnose authentication")
     ) == Decimal("300")
-    assert profile.weight_for(
-        ("release v26.9.18", "verify endpoint")
-    ) == Decimal("50")
-    assert (
-        sum((row.weight for row in profile.rows), Decimal(0))
-        == profile.total_weight
-    )
+    assert profile.weight_for(("release v26.9.18", "verify endpoint")) == Decimal("50")
+    assert sum((row.weight for row in profile.rows), Decimal(0)) == profile.total_weight
 
 
 def test_same_operations_replay_under_another_additive_measure():
@@ -109,9 +104,7 @@ def test_same_operations_replay_under_another_additive_measure():
     assert profile.weight_for(
         ("release v26.9.18", "diagnose authentication")
     ) == Decimal("50")
-    assert profile.weight_for(
-        ("release v26.9.18", "verify endpoint")
-    ) == Decimal("100")
+    assert profile.weight_for(("release v26.9.18", "verify endpoint")) == Decimal("100")
 
 
 def test_query_time_projection_uses_explicit_dimensions_without_rewriting():
