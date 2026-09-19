@@ -33,6 +33,13 @@ from autofde_lab.sa2a.envelope import (
     SemanticEnvelope,
     SemanticGraph,
 )
+from autofde_lab.sa2a.learning import (
+    LearnerQualification,
+    LearnerTier,
+    TrainingExample,
+    TrainingOrigin,
+    select_least_complex_qualifying,
+)
 from autofde_lab.sa2a.root_manifest import RootManifest
 
 __all__ = [
@@ -62,4 +69,9 @@ __all__ = [
     "SemanticClaim",
     "order_formally_admitted",
     "qualify_runtime_equivalence",
+    "LearnerQualification",
+    "LearnerTier",
+    "TrainingExample",
+    "TrainingOrigin",
+    "select_least_complex_qualifying",
 ]
