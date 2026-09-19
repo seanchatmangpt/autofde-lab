@@ -21,12 +21,23 @@ from autofde_lab.fortune5.production import (
     verify_ocel2,
     verify_projection_coherence,
 )
-from autofde_lab.fortune5.production.model import Command, stable_id
+from autofde_lab.fortune5.production.gap_lab import run_gap_court
+from autofde_lab.fortune5.production.model import (
+    Command,
+    SemanticMessage,
+    ServiceState,
+    digest,
+    stable_id,
+)
 from autofde_lab.fortune5.production.native_sa2a import (
     execute_command_through_native_sa2a,
     prove_unbound_admission_refuses,
 )
 from autofde_lab.fortune5.production.ocel import project_events_to_ocel2
+from autofde_lab.fortune5.production.protocol import (
+    AuthorityPolicy,
+    SemanticAdmission,
+)
 from autofde_lab.fortune5.production.server import make_handler
 from autofde_lab.fortune5.production.world import SCALE_PROFILES
 from autofde_lab.sa2a.brce.boundary import REFUSED_ADMISSION_CONTENT_NOT_BOUND
@@ -144,6 +155,7 @@ def test_artifact_store_is_atomic_and_verifiable(tmp_path) -> None:
     assert verification["ok"], verification["failures"]
     run_dir = tmp_path / run.run_id.replace(":", "_")
     assert json.loads((run_dir / "ocel2.json").read_text())["events"]
+    assert json.loads((run_dir / "gap-court.json").read_text())["all_detected"]
     assert json.loads((run_dir / "readiness.json").read_text())[
         "technical_standing"
     ] in {
@@ -238,3 +250,98 @@ def test_world_generator_rejects_non_catalog_coordinate() -> None:
         assert "REFUSED:UNKNOWN_OPTION:cloud:not-a-cloud" in str(exc)
     else:
         raise AssertionError("world generator admitted a non-catalog cloud option")
+
+
+
+def test_semantic_admission_refuses_cross_world_and_stale_state() -> None:
+    world = generate_world(seed=29, scale_profile="demo", horizon_rounds=12)
+    service = world.services[0]
+    state = ServiceState(service_id=service.service_id, replicas=service.min_replicas)
+    observed_state_digest = digest(state.canonical())
+    message = SemanticMessage(
+        message_id=stable_id("message", service.service_id, observed_state_digest),
+        sender_id="agent:observability",
+        sender_role="observability",
+        target_service=service.service_id,
+        intent="stabilize",
+        fault_kind="config_drift",
+        breach_kind="availability",
+        parameters=(("layer", service.layer),),
+        ontology_version=world.ontology_version,
+        observed_world_digest=world.world_digest,
+        observed_state_digest=observed_state_digest,
+    )
+    admission = SemanticAdmission(world)
+    admitted = admission.admit(
+        message,
+        current_world_digest=world.world_digest,
+        current_state_digest=observed_state_digest,
+    )
+    assert admitted.admitted
+
+    state.replicas += 1
+    stale = admission.admit(
+        message,
+        current_world_digest=world.world_digest,
+        current_state_digest=digest(state.canonical()),
+    )
+    assert not stale.admitted
+    assert stale.code == "REFUSED:STALE_OBSERVATION"
+
+    wrong_world = replace(
+        message,
+        observed_world_digest="0" * 64,
+        observed_state_digest=digest(state.canonical()),
+    )
+    cross_world = admission.admit(
+        wrong_world,
+        current_world_digest=world.world_digest,
+        current_state_digest=digest(state.canonical()),
+    )
+    assert not cross_world.admitted
+    assert cross_world.code == "REFUSED:WORLD_IDENTITY_MISMATCH"
+
+
+def test_authority_refuses_projected_budget_breach_before_do() -> None:
+    world = generate_world(seed=31, scale_profile="demo", horizon_rounds=12)
+    minimum_cost = sum(
+        service.min_replicas * service.cost_per_replica_round
+        for service in world.services
+    )
+    minimum_energy = sum(
+        service.min_replicas * service.energy_kwh_per_replica_round
+        for service in world.services
+    )
+    tight = replace(
+        world,
+        cost_budget_per_round=minimum_cost,
+        energy_budget_kwh_per_round=minimum_energy,
+        carbon_budget_kg_per_round=minimum_energy * 0.34,
+    )
+    target = tight.services[0]
+    states = {
+        service.service_id: ServiceState(
+            service_id=service.service_id,
+            replicas=service.min_replicas,
+        )
+        for service in tight.services
+    }
+    command = _native_command(target.service_id)
+    decision = AuthorityPolicy(tight).authorize(
+        command,
+        round_index=0,
+        current_states=states,
+    )
+    assert not decision.authorized
+    assert decision.code == "REFUSED:COST_BUDGET"
+
+
+def test_adversarial_gap_lab_proves_every_evidence_falsifier_can_fire() -> None:
+    run = run_simulation(
+        generate_world(seed=37, scale_profile="demo", horizon_rounds=20),
+        rounds=20,
+    )
+    result = run_gap_court(_ocel(run))
+    assert result["gap_count"] == 8
+    assert result["detected_count"] == result["gap_count"]
+    assert result["all_detected"]
