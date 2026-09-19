@@ -150,13 +150,32 @@ def _checkpoint_001(payload: dict[str, Any], reference: ReceiptReference) -> Adm
                 _require_sha256(item.get("digest"), f"resolved_packs[{index}].digest"),
             )
         )
-    if (pack, version, pack_digest) not in resolved_identities:
-        raise ValueError("GALL-001 subject is not bound into the resolved pack composition")
-    if len(resolved_identities) != 1:
+    subject_matches = sum(
+        1
+        for item in resolved
+        if isinstance(item, dict)
+        and (item.get("name"), item.get("version"), item.get("digest"))
+        == (pack, version, pack_digest)
+    )
+    if subject_matches != 1:
         raise ValueError(
-            "GALL-001 current portable receipt selects subject via packs.first(); "
-            "multi-pack composition is ambiguous without an explicit subject-selection proof"
+            "GALL-001 subject-selection proof requires exactly one matching member "
+            f"of composition.resolved_packs, observed {subject_matches}"
         )
+
+    engine = _require_mapping(payload.get("engine"), "engine")
+    if engine.get("name") != "ggen":
+        raise ValueError("GALL-001 engine.name must be ggen")
+    _require_nonempty_string(engine.get("version"), "engine.version")
+    toolchain = _require_mapping(payload.get("toolchain"), "toolchain")
+    _require_nonempty_string(toolchain.get("rustc"), "toolchain.rustc")
+    _require_nonempty_string(toolchain.get("cargo"), "toolchain.cargo")
+    environment = _require_mapping(payload.get("environment"), "environment")
+    for field in ("os", "arch", "family"):
+        _require_nonempty_string(environment.get(field), f"environment.{field}")
+    if not isinstance(environment.get("variables_count"), int) or environment["variables_count"] < 0:
+        raise ValueError("environment.variables_count must be a non-negative integer")
+    _require_sha256(environment.get("variables_sha256"), "environment.variables_sha256")
 
     graph = _require_mapping(payload.get("graph"), "graph")
     _require_nonempty_string(graph.get("canonical_digest"), "graph.canonical_digest")
@@ -256,9 +275,14 @@ def _checkpoint_003(payload: dict[str, Any], reference: ReceiptReference) -> Adm
     receipt_standing = str(payload.get("receipt_standing", "")).lower()
     if receipt_standing != "durable":
         raise ValueError("GALL-003 requires receipt_standing=durable from the repository-native receipt store contract")
-    terminal = str(payload.get("terminal_status", "")).lower()
-    if terminal not in {"executed", "reconciled"}:
-        raise ValueError("GALL-003 compilation requires executed or reconciled consequence evidence")
+    status = str(payload.get("status", "")).lower().lstrip(":")
+    terminal_raw = payload.get("terminal_status")
+    terminal = None if terminal_raw is None else str(terminal_raw).lower().lstrip(":")
+    if status == "pending":
+        if terminal not in {None, "none", "nil", ""}:
+            raise ValueError("GALL-003 pending crash-window anchor must not invent a terminal outcome")
+    elif terminal not in {"executed", "reconciled", "failed", "unknown_outcome"}:
+        raise ValueError("GALL-003 consequence terminal state is not repository-native evidence")
     consequence = str(payload.get("consequence", "")).lower().lstrip(":")
     if consequence not in {"change", "external_do"}:
         raise ValueError("GALL-003 receipt is not consequence-bearing")
@@ -286,7 +310,7 @@ def _checkpoint_003(payload: dict[str, Any], reference: ReceiptReference) -> Adm
         repository=reference.repository,
         repo_sha=reference.repo_sha,
         receipt_digest=reference.receipt_digest,
-        standing="ALIVE",
+        standing="DURABLE",
         semantic_subject_digest=manufacturer,
         telemetry_valid=None,
         process_valid=None,
