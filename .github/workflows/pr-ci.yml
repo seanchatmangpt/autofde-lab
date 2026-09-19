@@ -158,6 +158,7 @@ jobs:
             tests/fabric/test_differential_verification.py \
             tests/fabric/test_competitive_benchmark.py \
             tests/fabric/test_coverage_bridge.py \
+            tests/sa2a/test_semantic_profiling.py \
             tests/fabric/test_hot_path.py \
             tests/fabric/test_crown.py \
             tests/fabric/test_crown_evidence.py \
