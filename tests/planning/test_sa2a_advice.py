@@ -89,8 +89,8 @@ def test_model_orders_exact_product_frontier_without_redefining_it() -> None:
         kind=PlanningAdviceKind.METHOD_ORDER,
         candidates=(
             ScoredCandidate(candidate_ref="not-a-formal-method", score=1.0),
-            ScoredCandidate(candidate_ref="refine:failover-first", score=0.91),
-            ScoredCandidate(candidate_ref="refine:rollback-first", score=0.42),
+            ScoredCandidate(candidate_ref="refine:rollback-first", score=0.91),
+            ScoredCandidate(candidate_ref="refine:failover-first", score=0.42),
         ),
     )
 
@@ -107,8 +107,8 @@ def test_model_orders_exact_product_frontier_without_redefining_it() -> None:
         "refine:rollback-first",
     )
     assert result.ordered_action_refs == (
-        "refine:failover-first",
         "refine:rollback-first",
+        "refine:failover-first",
     )
     assert result.preserves_formal_frontier
     assert "not-a-formal-method" not in result.ordered_action_refs
