@@ -124,7 +124,9 @@ def project_events_to_ocel2(
     }
     for event in events:
         for object_id, qualifier in event.object_refs:
-            add_object(object_id, ref_type.get(qualifier, "Entity"), {"qualifier": qualifier})
+            add_object(
+                object_id, ref_type.get(qualifier, "Entity"), {"qualifier": qualifier}
+            )
 
     event_rows: list[dict[str, object]] = []
     event_types: dict[str, dict[str, str]] = {}
@@ -139,7 +141,8 @@ def project_events_to_ocel2(
                 "type": event.event_type,
                 "time": event.timestamp_ns,
                 "attributes": [
-                    {"name": key, "value": value} for key, value in sorted(attrs.items())
+                    {"name": key, "value": value}
+                    for key, value in sorted(attrs.items())
                 ],
                 "relationships": [
                     {"objectId": object_id, "qualifier": qualifier}
@@ -151,7 +154,9 @@ def project_events_to_ocel2(
     type_to_attrs: dict[str, dict[str, str]] = defaultdict(dict)
     for row in object_rows.values():
         for attr in row["attributes"]:
-            type_to_attrs[str(row["type"])][str(attr["name"])] = _attr_type(attr["value"])
+            type_to_attrs[str(row["type"])][str(attr["name"])] = _attr_type(
+                attr["value"]
+            )
 
     return {
         "objectTypes": [
@@ -214,9 +219,7 @@ def verify_ocel2(document: dict[str, object]) -> dict[str, object]:
     for object_id, row in objects.items():
         if row.get("type") != "Receipt":
             continue
-        attrs = {
-            str(item["name"]): item["value"] for item in row.get("attributes", [])
-        }
+        attrs = {str(item["name"]): item["value"] for item in row.get("attributes", [])}
         command_id = str(attrs.get("command_id", ""))
         if command_id:
             receipts_by_command[command_id].add(object_id)
@@ -239,9 +242,7 @@ def verify_ocel2(document: dict[str, object]) -> dict[str, object]:
             violations.append(f"ACTUATION_WITHOUT_PERMISSION:{event.get('id')}")
         if not refs.get("prepared_receipt"):
             unreceipted += 1
-            violations.append(
-                f"ACTUATION_WITHOUT_PREPARED_RECEIPT:{event.get('id')}"
-            )
+            violations.append(f"ACTUATION_WITHOUT_PREPARED_RECEIPT:{event.get('id')}")
         if not receipts_by_command.get(command_id):
             unreceipted += 1
             violations.append(f"ACTUATION_WITHOUT_FINAL_RECEIPT:{event.get('id')}")
@@ -274,9 +275,7 @@ def verify_ocel2(document: dict[str, object]) -> dict[str, object]:
                     and after in positions
                     and positions[before] > positions[after]
                 ):
-                    violations.append(
-                        f"CAUSAL_ORDER:{command_id}:{before}>{after}"
-                    )
+                    violations.append(f"CAUSAL_ORDER:{command_id}:{before}>{after}")
 
     return {
         "ok": not violations,
