@@ -265,6 +265,7 @@ class SemanticMessage:
     parameters: tuple[tuple[str, str], ...]
     ontology_version: str
     observed_world_digest: str
+    observed_state_digest: str
 
     def canonical(self) -> dict[str, object]:
         return {
@@ -278,6 +279,7 @@ class SemanticMessage:
             "parameters": [list(p) for p in self.parameters],
             "ontology_version": self.ontology_version,
             "observed_world_digest": self.observed_world_digest,
+            "observed_state_digest": self.observed_state_digest,
         }
 
 
