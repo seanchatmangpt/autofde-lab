@@ -6,7 +6,11 @@ authority over real production infrastructure.
 
 from .artifacts import ArtifactStore, readiness_witness
 from .engine import ProductionSimulator, SimulationRun, run_simulation
-from .formal import FormalProjection, generate_formal_projection, verify_projection_coherence
+from .formal import (
+    FormalProjection,
+    generate_formal_projection,
+    verify_projection_coherence,
+)
 from .model import FaultEvent, SimulationSummary, WorldSpec
 from .ocel import project_events_to_ocel2, verify_ocel2
 from .service import SimulationService
