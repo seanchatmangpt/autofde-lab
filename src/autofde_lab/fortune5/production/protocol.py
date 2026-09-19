@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Iterable, Mapping
 
 from .model import (
     AuthorityGrant,
@@ -11,6 +11,7 @@ from .model import (
     KnownRoute,
     SemanticMessage,
     ServiceSpec,
+    ServiceState,
     WorldSpec,
     stable_id,
 )
@@ -66,7 +67,11 @@ class SemanticAdmission:
         self._services = {service.service_id: service for service in world.services}
 
     def admit(
-        self, message: SemanticMessage, *, current_world_digest: str
+        self,
+        message: SemanticMessage,
+        *,
+        current_world_digest: str,
+        current_state_digest: str,
     ) -> AdmissionDecision:
         if message.ontology_version != self._world.ontology_version:
             return AdmissionDecision(
@@ -89,8 +94,14 @@ class SemanticAdmission:
         if message.observed_world_digest != current_world_digest:
             return AdmissionDecision(
                 False,
-                "REFUSED:STALE_WORLD_IDENTITY",
-                "message was observed against another world state",
+                "REFUSED:WORLD_IDENTITY_MISMATCH",
+                "message belongs to a different immutable world identity",
+            )
+        if message.observed_state_digest != current_state_digest:
+            return AdmissionDecision(
+                False,
+                "REFUSED:STALE_OBSERVATION",
+                "message no longer matches the target service state",
             )
         return AdmissionDecision(True, "ADMITTED", "semantic message admitted")
 
@@ -174,7 +185,13 @@ class AuthorityPolicy:
         self._services = {service.service_id: service for service in world.services}
         self._used_units: dict[tuple[int, str], int] = {}
 
-    def authorize(self, command: Command, *, round_index: int) -> AuthorityDecision:
+    def authorize(
+        self,
+        command: Command,
+        *,
+        round_index: int,
+        current_states: Mapping[str, ServiceState] | None = None,
+    ) -> AuthorityDecision:
         service = self._services.get(command.target_service)
         if service is None:
             return AuthorityDecision(
@@ -199,6 +216,15 @@ class AuthorityPolicy:
                 "risk exceeds grant envelope",
                 grant.grant_id,
             )
+        if current_states is not None:
+            budget_refusal = self._budget_refusal(command, current_states)
+            if budget_refusal is not None:
+                return AuthorityDecision(
+                    False,
+                    budget_refusal,
+                    "projected consequence exceeds an admitted enterprise budget",
+                    grant.grant_id,
+                )
         units = _change_units(command)
         key = (round_index, grant.grant_id)
         used = self._used_units.get(key, 0)
@@ -216,6 +242,40 @@ class AuthorityPolicy:
             "grant covers exact action and service layer",
             grant.grant_id,
         )
+
+    def _budget_refusal(
+        self,
+        command: Command,
+        current_states: Mapping[str, ServiceState],
+    ) -> str | None:
+        projected_replicas = {
+            service_id: state.replicas for service_id, state in current_states.items()
+        }
+        if command.action == "scale_out":
+            service = self._services[command.target_service]
+            delta = max(1, int(dict(command.parameters).get("replicas", "1")))
+            projected_replicas[command.target_service] = min(
+                service.max_replicas,
+                projected_replicas[command.target_service] + delta,
+            )
+
+        cost = sum(
+            projected_replicas[service.service_id] * service.cost_per_replica_round
+            for service in self._world.services
+        )
+        energy = sum(
+            projected_replicas[service.service_id]
+            * service.energy_kwh_per_replica_round
+            for service in self._world.services
+        )
+        carbon = energy * 0.34
+        if cost > self._world.cost_budget_per_round:
+            return "REFUSED:COST_BUDGET"
+        if energy > self._world.energy_budget_kwh_per_round:
+            return "REFUSED:ENERGY_BUDGET"
+        if carbon > self._world.carbon_budget_kg_per_round:
+            return "REFUSED:CARBON_BUDGET"
+        return None
 
 
 def build_command(
