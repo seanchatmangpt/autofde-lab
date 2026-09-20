@@ -69,30 +69,39 @@ def main() -> int:
     g4 = _copy(args.gall_004, evidence_dir / "GALL-004.json")
     weaver = _copy(args.weaver, evidence_dir / "GALL-004-TELEMETRY.json")
 
+    # Receipt paths are transport locators, but they participate in the
+    # composition manifest identity. Bind them relative to the exact
+    # autofde-lab checkout so replay is independent of runner workspace path.
+    g1_ref = g1.relative_to(repo_root)
+    g2_ref = g2.relative_to(repo_root)
+    g3_ref = g3.relative_to(repo_root)
+    g4_ref = g4.relative_to(repo_root)
+    weaver_ref = weaver.relative_to(repo_root)
+
     receipts = (
         ReceiptReference.from_path(
             checkpoint="GALL-001",
             repository="seanchatmangpt/ggen",
             repo_sha=args.gall_001_sha,
-            path=g1,
+            path=g1_ref,
         ),
         ReceiptReference.from_path(
             checkpoint="GALL-002",
             repository="seanchatmangpt/ggen_igniter",
             repo_sha=args.gall_002_sha,
-            path=g2,
+            path=g2_ref,
         ),
         ReceiptReference.from_path(
             checkpoint="GALL-003",
             repository="seanchatmangpt/ash_a2a",
             repo_sha=args.gall_003_sha,
-            path=g3,
+            path=g3_ref,
         ),
         ReceiptReference.from_path(
             checkpoint="GALL-004",
             repository="seanchatmangpt/beam4pm",
             repo_sha=args.gall_004_sha,
-            path=g4,
+            path=g4_ref,
         ),
     )
     supporting = (
@@ -100,7 +109,7 @@ def main() -> int:
             evidence_class="GALL-004-TELEMETRY",
             repository="seanchatmangpt/beam4pm",
             repo_sha=args.gall_004_sha,
-            path=weaver,
+            path=weaver_ref,
         ),
     )
 
