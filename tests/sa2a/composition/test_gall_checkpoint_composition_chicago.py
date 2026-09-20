@@ -14,6 +14,7 @@ from autofde_lab.sa2a.composition.gall_artifact import (
     verify_portable_artifact,
 )
 from autofde_lab.sa2a.composition.resolver import (
+    REFUSED_CHECKPOINT_RECEIPT_CONTRACT,
     REFUSED_CHECKPOINT_RECEIPT_DRIFT,
     SubjectResolutionError,
     SubjectResolver,
@@ -61,17 +62,13 @@ def _manifest(tmp_path: Path) -> dict:
     }
 
 
-def test_gall_subject_reads_and_verifies_all_four_real_receipt_files(tmp_path: Path) -> None:
+def test_gall_subject_refuses_hash_only_receipt_files(tmp_path: Path) -> None:
     manifest = _manifest(tmp_path)
-    subject = SubjectResolver().resolve_gall(manifest, base_dir=tmp_path)
 
-    assert [c.checkpoint_id for c in subject.checkpoints] == ["GALL-001", "GALL-002", "GALL-003", "GALL-004"]
-    assert subject.work_order_digest == "sha256:" + "f" * 64
+    with pytest.raises(SubjectResolutionError) as exc_info:
+        SubjectResolver().resolve_gall(manifest, base_dir=tmp_path)
 
-    artifact = build_portable_artifact(subject, standing="PARTIAL_ALIVE")
-    verified = verify_portable_artifact(artifact)
-    assert verified["composition_digest"] == subject.composition_digest
-    assert verified["authority"] == "none"
+    assert exc_info.value.code == REFUSED_CHECKPOINT_RECEIPT_CONTRACT
 
 
 def test_mutated_upstream_receipt_is_refused_before_composition(tmp_path: Path) -> None:
@@ -85,7 +82,7 @@ def test_mutated_upstream_receipt_is_refused_before_composition(tmp_path: Path) 
 
 
 def test_portable_artifact_tampering_is_refused_without_re_actuation(tmp_path: Path) -> None:
-    subject = SubjectResolver().resolve_gall(_manifest(tmp_path), base_dir=tmp_path)
+    subject = SubjectResolver().resolve(_manifest(tmp_path))
     artifact = build_portable_artifact(subject, standing="PARTIAL_ALIVE")
     artifact["standing"] = "ALIVE"
 
