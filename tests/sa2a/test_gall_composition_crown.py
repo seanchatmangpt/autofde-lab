@@ -10,6 +10,11 @@ from pathlib import Path
 
 import pytest
 
+from autofde_lab.sa2a.composition.resolver import (
+    REFUSED_CHECKPOINT_CHAIN_MISMATCH,
+    SubjectResolutionError,
+    SubjectResolver,
+)
 from autofde_lab.sa2a.gall.composition import (
     EvidenceReference,
     GALLCompositionManifest,
@@ -304,6 +309,84 @@ def _fixture(tmp_path: Path) -> GALLCompositionManifest:
         corpus_identity=_sha("corpus"),
         semantic_key="incident:known-class",
     )
+
+
+def _resolver_manifest(manifest: GALLCompositionManifest) -> dict:
+    standing = {
+        "GALL-001": "ALIVE",
+        "GALL-002": "ALIVE",
+        "GALL-003": "DURABLE",
+        "GALL-004": "ALIVE",
+    }
+    evidence_class = {
+        "GALL-001": "portable_replay",
+        "GALL-002": "project_manufacturer",
+        "GALL-003": "command_receipt",
+        "GALL-004": "independent_observer",
+    }
+    return {
+        "release_id": "v26.9.18-gall-crown",
+        "repositories": [
+            {"name": "autofde-lab", "exact_sha": manifest.autofde_lab_sha}
+        ],
+        "artifacts": [{"artifact_id": "crown", "digest": "b" * 64}],
+        "root_manifest_digest": "c" * 64,
+        "semantic_profile": "SA2A-GALL",
+        "court_revision": "v26.9.18",
+        "falsifier_corpus_digest": "d" * 64,
+        "query_set_digest": "e" * 64,
+        "environment_identity": "test-env",
+        "work_order_digest": _sha("work-order"),
+        "checkpoints": [
+            {
+                "checkpoint_id": ref.checkpoint,
+                "repository": ref.repository,
+                "exact_sha": ref.repo_sha,
+                "receipt_path": ref.path,
+                "receipt_digest": ref.receipt_digest,
+                "standing": standing[ref.checkpoint],
+                "evidence_class": evidence_class[ref.checkpoint],
+            }
+            for ref in manifest.receipts
+        ],
+    }
+
+
+def test_subject_resolver_admits_actual_typed_upstream_receipt_contracts(
+    tmp_path: Path,
+) -> None:
+    manifest = _fixture(tmp_path)
+
+    subject = SubjectResolver().resolve_gall(_resolver_manifest(manifest))
+
+    assert [item.checkpoint_id for item in subject.checkpoints] == [
+        "GALL-001",
+        "GALL-002",
+        "GALL-003",
+        "GALL-004",
+    ]
+
+
+def test_subject_resolver_refuses_cross_repo_receipt_chain_mismatch(
+    tmp_path: Path,
+) -> None:
+    manifest = _fixture(tmp_path)
+    ref = manifest.receipts[3]
+    payload = json.loads(Path(ref.path).read_text())
+    payload["command_fingerprint"] = _sha("different-command")
+    Path(ref.path).write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+    changed = ReceiptReference.from_path(
+        checkpoint=ref.checkpoint,
+        repository=ref.repository,
+        repo_sha=ref.repo_sha,
+        path=ref.path,
+    )
+    manifest = replace(manifest, receipts=(*manifest.receipts[:3], changed))
+
+    with pytest.raises(SubjectResolutionError) as exc_info:
+        SubjectResolver().resolve_gall(_resolver_manifest(manifest))
+
+    assert exc_info.value.code == REFUSED_CHECKPOINT_CHAIN_MISMATCH
 
 
 def test_typed_upstream_receipts_compile_and_keep_evidence_predicates_separate(
