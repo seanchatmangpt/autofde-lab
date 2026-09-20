@@ -47,8 +47,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install court dependency
-        run: python -m pip install "pytest==8.3.5"
+      - name: Install court dependencies
+        run: python -m pip install "pytest==8.3.5" "pydantic>=2,<3"
 
       - name: Run typed composition court
         env:
