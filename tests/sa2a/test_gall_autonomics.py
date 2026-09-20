@@ -55,6 +55,15 @@ def test_gall_008_semantic_telemetry_binds_layers_and_conserves_additive_measure
     assert conservation["attributed"] == 100
     assert conservation["residual"] == 0
     assert artifact.digest.startswith("sha256:")
+    receipt = artifact.evidence_receipt(producer_sha="c" * 40)
+    assert receipt["checkpoint"] == "GALL-008"
+    assert receipt["artifact_digest"] == artifact.digest
+    assert receipt["standing"] == "OBSERVED"
+    assert receipt["authority"] == "NONE"
+    assert receipt["receipt_digest"].startswith("sha256:")
+
+    with pytest.raises(ValueError, match="producer_sha"):
+        artifact.evidence_receipt(producer_sha="main")
 
     with pytest.raises(ValueError, match="secret"):
         SemanticTelemetryArtifact.admit(
