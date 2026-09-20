@@ -119,6 +119,29 @@ class SemanticTelemetryArtifact:
             }
         )
 
+    def evidence_receipt(self, *, producer_sha: str) -> dict[str, Any]:
+        """Emit a powerless GALL-008 receipt consumable by GALL-009 admission."""
+        if len(producer_sha) != 40 or any(
+            ch not in "0123456789abcdef" for ch in producer_sha
+        ):
+            raise ValueError("producer_sha must be an exact lowercase 40-hex commit SHA")
+
+        payload: dict[str, Any] = {
+            "schema": "autofde.gall.semantic-telemetry-receipt/1",
+            "checkpoint": "GALL-008",
+            "producer_sha": producer_sha,
+            "semantic_subject": self.semantic_subject,
+            "correlation_digest": self.measurements[0].correlation.digest,
+            "artifact_digest": self.digest,
+            "source_versions": dict(self.source_versions),
+            "standing": "OBSERVED",
+            "authority": "NONE",
+            "evidence_ceiling": (
+                "observational evidence only; GALL-009 admission and DO remain separate"
+            ),
+        }
+        return {**payload, "receipt_digest": _digest(payload)}
+
     def conservation(
         self,
         *,
