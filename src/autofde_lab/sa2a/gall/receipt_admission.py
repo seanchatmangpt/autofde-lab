@@ -400,6 +400,68 @@ def _checkpoint_004(payload: dict[str, Any], reference: ReceiptReference) -> Adm
     )
 
 
+
+def verify_receipt_chain(receipts: list[AdmittedReceipt]) -> None:
+    """Verify the typed cross-repository identity links for GALL-001..004.
+
+    Each checkpoint keeps its repository-native digest semantics:
+    GALL-002 binds the durable GALL-001 receipt bytes, GALL-003 binds the
+    manufacturer semantic subject, and GALL-004 binds the exact GALL-003
+    producer plus its repository-native handoff digest. This verifies
+    composition continuity without collapsing telemetry, process, or
+    postcondition predicates into one standing bit.
+    """
+
+    by_checkpoint: dict[str, AdmittedReceipt] = {}
+    for item in receipts:
+        if item.checkpoint in by_checkpoint:
+            raise ValueError(f"duplicate admitted checkpoint {item.checkpoint}")
+        by_checkpoint[item.checkpoint] = item
+
+    required = set(EXPECTED_REPOSITORIES)
+    observed = set(by_checkpoint)
+    if observed != required:
+        missing = sorted(required - observed)
+        extra = sorted(observed - required)
+        raise ValueError(
+            f"typed GALL receipt set mismatch: missing={missing}, extra={extra}"
+        )
+
+    gall1 = by_checkpoint["GALL-001"]
+    gall2 = by_checkpoint["GALL-002"]
+    gall3 = by_checkpoint["GALL-003"]
+    gall4 = by_checkpoint["GALL-004"]
+
+    if gall2.payload.get("gall_001_receipt_digest") != gall1.receipt_digest:
+        raise ValueError("GALL-002 does not bind the admitted GALL-001 receipt digest")
+
+    if gall2.semantic_subject_digest != gall3.semantic_subject_digest:
+        raise ValueError(
+            "GALL-002 manufacturer and GALL-003 semantic subject do not match"
+        )
+    semantic = gall3.payload["semantic_subject"]
+    if semantic.get("graph_digest") != gall2.payload.get("graph_digest"):
+        raise ValueError("GALL-002 graph and GALL-003 semantic graph do not match")
+    if semantic.get("projection_digest") != gall2.payload.get("projection_digest"):
+        raise ValueError(
+            "GALL-002 projection and GALL-003 semantic projection do not match"
+        )
+
+    if gall4.payload.get("producer_sha") != gall3.repo_sha:
+        raise ValueError(
+            "GALL-004 observer does not bind the exact admitted GALL-003 producer SHA"
+        )
+    if gall4.payload.get("gall_003_receipt_digest") != gall3.payload.get(
+        "handoff_digest"
+    ):
+        raise ValueError("GALL-004 does not bind the admitted GALL-003 handoff digest")
+    if gall4.payload.get("capability_id") != gall3.payload.get("capability_id"):
+        raise ValueError("GALL-004 capability identity does not match GALL-003")
+    if gall4.payload.get("command_fingerprint") != gall3.payload.get(
+        "command_fingerprint"
+    ):
+        raise ValueError("GALL-004 command fingerprint does not match GALL-003")
+
 _VALIDATORS = {
     "GALL-001": _checkpoint_001,
     "GALL-002": _checkpoint_002,
