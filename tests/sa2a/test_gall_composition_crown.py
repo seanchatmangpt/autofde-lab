@@ -713,7 +713,7 @@ def test_compile_cannot_mint_gate_12_and_fresh_replay_can(tmp_path: Path) -> Non
         capture_output=True,
         text=True,
         cwd=REPO_ROOT,
-        env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
+        env={**os.environ, "PYTHONPATH": str(REPO_ROOT / "src")},
     )
     compile_result = json.loads(compile_run.stdout)
     assert compile_result["gate_12"] == "OPEN"
@@ -739,7 +739,7 @@ def test_compile_cannot_mint_gate_12_and_fresh_replay_can(tmp_path: Path) -> Non
         capture_output=True,
         text=True,
         cwd=REPO_ROOT,
-        env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
+        env={**os.environ, "PYTHONPATH": str(REPO_ROOT / "src")},
     )
     result = json.loads(replay_run.stdout)
     assert result["machine_experience_hits"] == 1
@@ -777,7 +777,7 @@ def test_runner_refuses_manifest_for_different_autofde_head(tmp_path: Path) -> N
         capture_output=True,
         text=True,
         cwd=REPO_ROOT,
-        env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
+        env={**os.environ, "PYTHONPATH": str(REPO_ROOT / "src")},
     )
     assert completed.returncode == 65
     assert "REFUSED_EXACT_HEAD" in completed.stderr
