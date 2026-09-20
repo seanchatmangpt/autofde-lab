@@ -9,6 +9,12 @@ from dataclasses import asdict, dataclass
 from typing import Any
 
 CHECKPOINT_REPOSITORIES = {
+    "GALL-015": "seanchatmangpt/ex4pm",
+    "GALL-016": "seanchatmangpt/ex4pm",
+    "GALL-017": "seanchatmangpt/ex4pm",
+    "GALL-018": "seanchatmangpt/ex4pm",
+    "GALL-019": "seanchatmangpt/ex4pm",
+    "GALL-020": "seanchatmangpt/ex4pm",
     "GALL-021": "seanchatmangpt/wasm4pm",
     "GALL-022": "seanchatmangpt/wasm4pm",
     "GALL-023": "seanchatmangpt/wasm4pm",
@@ -63,7 +69,22 @@ class ProcessSpine:
             if not item.evidence_ceiling:
                 raise ValueError(f"{checkpoint} evidence_ceiling is required")
 
-        # Authority conservation: compute/observer checkpoints cannot claim DO.
+        # Authority conservation: reference/process-compute checkpoints cannot claim DO.
+        exact_ex4pm_ceilings = {
+            "GALL-015": "REFERENCE_CORPUS",
+            "GALL-016": "COMPILE_COMPUTE",
+            "GALL-017": "QUERY_COMPUTE",
+            "GALL-018": "DISCOVERY_CANDIDATE",
+            "GALL-019": "PREDICTION_CANDIDATE",
+            "GALL-020": "COMPUTE_ONLY",
+        }
+        for checkpoint, ceiling in exact_ex4pm_ceilings.items():
+            if by_id[checkpoint].evidence_ceiling != ceiling:
+                raise ValueError(
+                    f"{checkpoint} evidence ceiling must be {ceiling}, "
+                    f"got {by_id[checkpoint].evidence_ceiling}"
+                )
+
         for checkpoint in ("GALL-021", "GALL-022", "GALL-023"):
             if by_id[checkpoint].evidence_ceiling not in {"COMPUTE_ONLY", "COMPILE_COMPUTE", "QUERY_COMPUTE"}:
                 raise ValueError(f"{checkpoint} exceeded portable compute authority ceiling")
