@@ -131,6 +131,15 @@ jobs:
         shell: bash
         run: "! git grep -nE '^(<<<<<<<($| )|=======$|>>>>>>>($| ))' -- ':!uv.lock'"
 
+      - name: GALL-005 typed composition court / Python 3.12
+        if: steps.routes.outputs.python == 'true'
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q \
+            tests/sa2a/test_gall_composition_crown.py \
+            tests/sa2a/composition/test_gall_checkpoint_composition_chicago.py
+
       - name: Execute Crown kernel / Python 3.12
         if: steps.routes.outputs.python == 'true'
         env:
