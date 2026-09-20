@@ -34,7 +34,7 @@ def _spine() -> ProcessSpine:
             ProcessCheckpointReference(
                 checkpoint=checkpoint,
                 repository=repo,
-                repo_sha=str(index) * 40,
+                repo_sha=f"{index:x}" * 40,
                 evidence_digest=_digest(f"e{index}"),
                 subject_digest=_digest(f"s{index}"),
                 evidence_ceiling=ceilings[checkpoint],
