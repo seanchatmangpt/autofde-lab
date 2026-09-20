@@ -17,9 +17,9 @@ permissions:
 
 env:
   GALL001_SHA: e16f55fcaeca62943bd87edb8bc95ae780dd6fa9
-  GALL002_SHA: 5fa57fcbce1c6b0457d3e7fa9268a5b295d5d67b
-  GALL003_SHA: 75a79dea69dbd2c7ce7f6f6352a65fc97925f2bf
-  GALL004_SHA: a573e21b68c3fb574dd40ca9b11e8b6a0a6e5c12
+  GALL002_SHA: 30a000f4ddec9b510ce7d7436f20856d7c4c0147
+  GALL003_SHA: fb648896cc054eb7deb7f5141de271a90e4464f2
+  GALL004_SHA: 3c2ec7fe4faca37573cbe5eab84b5275fe7fc603
   EVIDENCE_DIR: ${{ github.workspace }}/evidence
   COURT_DIR: ${{ github.workspace }}/autofde/.gall/court
 
@@ -90,7 +90,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GALL002_SHA"
           mix deps.get
-          mix run scripts/gall_checkpoint_002_receipt.exs --             "$EVIDENCE_DIR/GALL-001.json"             "$EVIDENCE_DIR/GALL-002.json"
+          mix run scripts/gall_checkpoint_002_receipt.exs "$EVIDENCE_DIR/GALL-001.json"             "$EVIDENCE_DIR/GALL-002.json"
 
       - name: Checkout exact GALL-003 producer
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -114,7 +114,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GALL003_SHA"
           mix deps.get
-          mix run scripts/gall_checkpoint_003_receipt.exs --             "$EVIDENCE_DIR/GALL-002.json"             "$EVIDENCE_DIR/GALL-003"
+          mix run scripts/gall_checkpoint_003_receipt.exs "$EVIDENCE_DIR/GALL-002.json"             "$EVIDENCE_DIR/GALL-003"
 
       - name: Checkout exact GALL-004 producer
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -149,7 +149,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$GALL004_SHA"
           mix deps.get
           bash scripts/gall_checkpoint_004_weaver.sh
-          mix run scripts/gall_checkpoint_004_observer.exs --             "$EVIDENCE_DIR/GALL-003/gall-003-receipt.json"             "$EVIDENCE_DIR/GALL-003/post-state.json"             "$EVIDENCE_DIR/GALL-003/events.ocel.json"             "$EVIDENCE_DIR/GALL-004.json"
+          mix run scripts/gall_checkpoint_004_observer.exs "$EVIDENCE_DIR/GALL-003/gall-003-receipt.json"             "$EVIDENCE_DIR/GALL-003/post-state.json"             "$EVIDENCE_DIR/GALL-003/events.ocel.json"             "$EVIDENCE_DIR/GALL-004.json"
 
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
