@@ -308,6 +308,7 @@ def _checkpoint_003(payload: dict[str, Any], reference: ReceiptReference) -> Adm
     manufacturer = _require_sha256(
         semantic.get("manufacturer_digest"), "semantic_subject.manufacturer_digest"
     )
+    _require_sha256(payload.get("semantic_subject_digest"), "semantic_subject_digest")
     if payload.get("manufacturer_subject_digest") != manufacturer:
         raise ValueError("GALL-003 manufacturer_subject_digest disagrees with semantic_subject")
 
@@ -451,6 +452,10 @@ def verify_receipt_chain(receipts: list[AdmittedReceipt]) -> None:
         raise ValueError(
             "GALL-004 observer does not bind the exact admitted GALL-003 producer SHA"
         )
+    if gall4.payload.get("semantic_subject_digest") != gall3.payload.get(
+        "semantic_subject_digest"
+    ):
+        raise ValueError("GALL-004 semantic subject digest does not match GALL-003")
     if gall4.payload.get("gall_003_receipt_digest") != gall3.payload.get(
         "handoff_digest"
     ):
