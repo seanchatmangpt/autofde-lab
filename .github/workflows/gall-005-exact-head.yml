@@ -1,0 +1,59 @@
+name: GALL-005 exact-head composition court
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "src/autofde_lab/sa2a/gall/**"
+      - "src/autofde_lab/sa2a/composition/**"
+      - "scripts/run_gall_composition_crown.py"
+      - "tests/sa2a/test_gall_composition_crown.py"
+      - "tests/sa2a/composition/test_gall_checkpoint_composition_chicago.py"
+      - ".github/workflows/gall-005-exact-head.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gall-005-exact-head-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typed-composition:
+    name: Typed GALL-001..004 composition
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          submodules: false
+          persist-credentials: false
+
+      - name: Assert exact subject identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="${{ github.event.pull_request.head.sha || github.sha }}"
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$expected"
+          printf 'exact_head=%s\n' "$actual"
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Install court dependency
+        run: python -m pip install "pytest==8.3.5"
+
+      - name: Run typed composition court
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q \
+            tests/sa2a/test_gall_composition_crown.py \
+            tests/sa2a/composition/test_gall_checkpoint_composition_chicago.py
