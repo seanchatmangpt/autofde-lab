@@ -23,6 +23,11 @@ from autofde_lab.sa2a.composition.exact_subject import (
     ExactSubject,
     RepositoryRef,
 )
+from autofde_lab.sa2a.gall.composition import ReceiptReference
+from autofde_lab.sa2a.gall.receipt_admission import (
+    admit_receipt,
+    verify_receipt_chain,
+)
 
 _SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
@@ -51,6 +56,8 @@ REFUSED_MALFORMED_MANIFEST = "REFUSED_MALFORMED_MANIFEST"
 REFUSED_MISSING_GALL_CHECKPOINT = "REFUSED_MISSING_GALL_CHECKPOINT"
 REFUSED_INVALID_GALL_CHECKPOINT = "REFUSED_INVALID_GALL_CHECKPOINT"
 REFUSED_CHECKPOINT_RECEIPT_DRIFT = "REFUSED_CHECKPOINT_RECEIPT_DRIFT"
+REFUSED_CHECKPOINT_RECEIPT_CONTRACT = "REFUSED_CHECKPOINT_RECEIPT_CONTRACT"
+REFUSED_CHECKPOINT_CHAIN_MISMATCH = "REFUSED_CHECKPOINT_CHAIN_MISMATCH"
 
 _REQUIRED_GALL_CHECKPOINTS = ("GALL-001", "GALL-002", "GALL-003", "GALL-004")
 _DIGEST_RE = re.compile(r"^(?:sha256:)?[0-9a-f]{64}$")
@@ -122,15 +129,25 @@ class SubjectResolver:
     def resolve_gall(
         self, candidate_manifest: Mapping[str, Any], *, base_dir: Path | None = None
     ) -> ExactSubject:
-        """Resolve and independently verify the GALL-001..004 receipt set.
+        """Resolve and typed-verify the GALL-001..004 receipt set.
 
-        The receipt digest is over the durable file bytes, not a producer
-        boolean. A path is transport-only and does not enter ExactSubject;
-        only the verified digest and bounded claim do.
+        The outer receipt digest is necessary but not sufficient. Each durable
+        receipt is parsed with the repository-native checkpoint contract and the
+        cross-repository identity links are verified before the composition is
+        admitted. Telemetry/process/postcondition propositions remain separate;
+        this resolver verifies only the four checkpoint receipts and does not
+        manufacture a telemetry-valid claim from process/postcondition evidence.
         """
         subject = self.resolve(candidate_manifest)
-        by_id = {checkpoint.checkpoint_id: checkpoint for checkpoint in subject.checkpoints}
-        missing = [checkpoint for checkpoint in _REQUIRED_GALL_CHECKPOINTS if checkpoint not in by_id]
+        by_id = {
+            checkpoint.checkpoint_id: checkpoint
+            for checkpoint in subject.checkpoints
+        }
+        missing = [
+            checkpoint
+            for checkpoint in _REQUIRED_GALL_CHECKPOINTS
+            if checkpoint not in by_id
+        ]
         if missing:
             raise SubjectResolutionError(
                 REFUSED_MISSING_GALL_CHECKPOINT,
@@ -141,16 +158,20 @@ class SubjectResolver:
             "checkpoints", candidate_manifest.get("gall_checkpoints", ())
         )
         root = base_dir or Path.cwd()
+        admitted_by_id = {}
+
         for entry in raw_checkpoints:
             checkpoint_id = str(entry.get("checkpoint_id", "")).strip()
             if checkpoint_id not in _REQUIRED_GALL_CHECKPOINTS:
                 continue
+
             receipt_path = str(entry.get("receipt_path", "")).strip()
             if not receipt_path:
                 raise SubjectResolutionError(
                     REFUSED_INVALID_GALL_CHECKPOINT,
                     f"{checkpoint_id} has no receipt_path for independent verification",
                 )
+
             path = Path(receipt_path)
             if not path.is_absolute():
                 path = root / path
@@ -161,14 +182,55 @@ class SubjectResolver:
                     REFUSED_INVALID_GALL_CHECKPOINT,
                     f"{checkpoint_id} receipt is unreadable at {path}: {exc}",
                 ) from exc
-            observed = "sha256:" + hashlib.sha256(bytes_).hexdigest()
-            expected = by_id[checkpoint_id].receipt_digest
+
+            checkpoint = by_id[checkpoint_id]
+            expected = checkpoint.receipt_digest
             expected = expected if expected.startswith("sha256:") else "sha256:" + expected
+            observed = "sha256:" + hashlib.sha256(bytes_).hexdigest()
             if observed != expected:
                 raise SubjectResolutionError(
                     REFUSED_CHECKPOINT_RECEIPT_DRIFT,
                     f"{checkpoint_id} receipt digest mismatch: expected {expected}, observed {observed}",
                 )
+
+            reference = ReceiptReference(
+                checkpoint=checkpoint_id,
+                repository=checkpoint.repository,
+                repo_sha=checkpoint.exact_sha,
+                path=str(path),
+                receipt_digest=expected,
+            )
+            try:
+                admitted = admit_receipt(reference)
+            except (OSError, ValueError) as exc:
+                raise SubjectResolutionError(
+                    REFUSED_CHECKPOINT_RECEIPT_CONTRACT,
+                    f"{checkpoint_id} failed its repository-native receipt contract: {exc}",
+                ) from exc
+
+            if admitted.standing.upper() != checkpoint.standing.upper():
+                raise SubjectResolutionError(
+                    REFUSED_CHECKPOINT_RECEIPT_CONTRACT,
+                    f"{checkpoint_id} standing mismatch: manifest={checkpoint.standing!r}, "
+                    f"receipt={admitted.standing!r}",
+                )
+            admitted_by_id[checkpoint_id] = admitted
+
+        if set(admitted_by_id) != set(_REQUIRED_GALL_CHECKPOINTS):
+            missing = sorted(set(_REQUIRED_GALL_CHECKPOINTS) - set(admitted_by_id))
+            raise SubjectResolutionError(
+                REFUSED_MISSING_GALL_CHECKPOINT,
+                f"typed receipt admission is missing checkpoint(s): {', '.join(missing)}",
+            )
+
+        try:
+            verify_receipt_chain(list(admitted_by_id.values()))
+        except ValueError as exc:
+            raise SubjectResolutionError(
+                REFUSED_CHECKPOINT_CHAIN_MISMATCH,
+                f"typed GALL receipt chain is discontinuous: {exc}",
+            ) from exc
+
         return subject
 
     def _resolve_unguarded(self, candidate_manifest: Mapping[str, Any]) -> ExactSubject:
