@@ -89,6 +89,7 @@ def _fixture(tmp_path: Path) -> GALLCompositionManifest:
     projection_digest = _sha("projection")
     manufacturer_digest = _sha("manufacturer")
     command_fingerprint = _sha("command")
+    semantic_subject_digest = _sha("semantic-subject-erlang-term")
 
     g1_payload = {
         "schema": "https://ggen.dev/receipt/pack/v1",
@@ -214,6 +215,7 @@ def _fixture(tmp_path: Path) -> GALLCompositionManifest:
             "ephemeral?": False,
         },
         "manufacturer_subject_digest": manufacturer_digest,
+        "semantic_subject_digest": semantic_subject_digest,
         "authority_grant_digest": _sha("authority"),
         "idempotency_key": "idem-003",
         "actuation_id": "act-003",
@@ -239,7 +241,7 @@ def _fixture(tmp_path: Path) -> GALLCompositionManifest:
         "gall_003_receipt_digest": g3_payload["handoff_digest"],
         "producer_sha": shas["g3"],
         "work_order_digest": _sha("work-order"),
-        "semantic_subject_digest": _sha("semantic-subject-erlang-term"),
+        "semantic_subject_digest": semantic_subject_digest,
         "capability_id": g3_payload["capability_id"],
         "command_fingerprint": command_fingerprint,
         "independent_observer_id": "BeamPM.Gall.Observer004",
