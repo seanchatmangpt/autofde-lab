@@ -19,7 +19,7 @@ env:
   GALL001_SHA: e16f55fcaeca62943bd87edb8bc95ae780dd6fa9
   GALL002_SHA: d0006f3e088365683189784cd9531b1c40ec62d9
   GALL003_SHA: ebc07ffa3901eeeb75d94c66cca96bd235ebaef2
-  GALL004_SHA: 118c6f6b812f04baad915c5db54fd6429fdaf46d
+  GALL004_SHA: c97bf80bd860d38f995993532223e7c5f0ca43a8
   EVIDENCE_DIR: ${{ github.workspace }}/evidence
   COURT_DIR: ${{ github.workspace }}/autofde/.gall/court
 
