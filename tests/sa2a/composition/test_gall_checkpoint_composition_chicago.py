@@ -73,7 +73,9 @@ def test_gall_subject_refuses_hash_only_receipt_files(tmp_path: Path) -> None:
 
 def test_mutated_upstream_receipt_is_refused_before_composition(tmp_path: Path) -> None:
     manifest = _manifest(tmp_path)
-    (tmp_path / "receipts/GALL-003.json").write_text("tampered", encoding="utf-8")
+    # This fixture is intentionally contract-invalid. Mutate the first bound
+    # receipt so the falsifier isolates digest drift before contract admission.
+    (tmp_path / "receipts/GALL-001.json").write_text("tampered", encoding="utf-8")
 
     with pytest.raises(SubjectResolutionError) as exc_info:
         SubjectResolver().resolve_gall(manifest, base_dir=tmp_path)
