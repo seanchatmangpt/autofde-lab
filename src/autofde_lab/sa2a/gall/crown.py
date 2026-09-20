@@ -18,6 +18,7 @@ from .receipt_admission import (
     AdmittedReceipt,
     admit_evidence,
     admit_receipt,
+    verify_receipt_chain,
 )
 
 
@@ -93,36 +94,6 @@ class GALLCrownResult:
         return asdict(self)
 
 
-def _by_checkpoint(receipts: list[AdmittedReceipt], checkpoint: str) -> AdmittedReceipt:
-    return next(item for item in receipts if item.checkpoint == checkpoint)
-
-
-def _require_cross_repo_subject(receipts: list[AdmittedReceipt]) -> None:
-    gall1 = _by_checkpoint(receipts, "GALL-001")
-    gall2 = _by_checkpoint(receipts, "GALL-002")
-    gall3 = _by_checkpoint(receipts, "GALL-003")
-    gall4 = _by_checkpoint(receipts, "GALL-004")
-
-    if gall2.payload.get("gall_001_receipt_digest") != gall1.receipt_digest:
-        raise ValueError("GALL-002 does not bind the admitted GALL-001 receipt digest")
-
-    if gall2.semantic_subject_digest != gall3.semantic_subject_digest:
-        raise ValueError("GALL-002 manufacturer and GALL-003 semantic subject do not match")
-    semantic = gall3.payload["semantic_subject"]
-    if semantic.get("graph_digest") != gall2.payload.get("graph_digest"):
-        raise ValueError("GALL-002 graph and GALL-003 semantic graph do not match")
-    if semantic.get("projection_digest") != gall2.payload.get("projection_digest"):
-        raise ValueError("GALL-002 projection and GALL-003 semantic projection do not match")
-
-    if gall4.payload.get("producer_sha") != gall3.repo_sha:
-        raise ValueError("GALL-004 observer does not bind the exact admitted GALL-003 producer SHA")
-    if gall4.payload.get("gall_003_receipt_digest") != gall3.payload.get("handoff_digest"):
-        raise ValueError("GALL-004 does not bind the admitted GALL-003 handoff digest")
-    if gall4.payload.get("capability_id") != gall3.payload.get("capability_id"):
-        raise ValueError("GALL-004 capability identity does not match GALL-003")
-    if gall4.payload.get("command_fingerprint") != gall3.payload.get("command_fingerprint"):
-        raise ValueError("GALL-004 command fingerprint does not match GALL-003")
-
 
 def _require_evidence_predicates(
     receipts: list[AdmittedReceipt], evidence: list[AdmittedEvidence]
@@ -155,7 +126,7 @@ def compile_verified_experience(
     manifest.validate_shape()
     admitted = [admit_receipt(ref) for ref in manifest.receipts]
     supporting = [admit_evidence(ref) for ref in manifest.evidence]
-    _require_cross_repo_subject(admitted)
+    verify_receipt_chain(admitted)
     telemetry_valid, process_valid, postcondition_valid = _require_evidence_predicates(
         admitted, supporting
     )
