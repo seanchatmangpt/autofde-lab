@@ -94,11 +94,10 @@ class GALLCrownResult:
         return asdict(self)
 
 
-
 def _require_evidence_predicates(
     receipts: list[AdmittedReceipt], evidence: list[AdmittedEvidence]
 ) -> tuple[bool, bool, bool]:
-    gall4 = _by_checkpoint(receipts, "GALL-004")
+    gall4 = next(item for item in receipts if item.checkpoint == "GALL-004")
     process_valid = gall4.process_valid is True
     postcondition_valid = gall4.postcondition_valid is True
 
