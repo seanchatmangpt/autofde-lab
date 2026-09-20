@@ -17,6 +17,12 @@ def _digest(seed: str) -> str:
 
 def _spine() -> ProcessSpine:
     ceilings = {
+        "GALL-015": "REFERENCE_CORPUS",
+        "GALL-016": "COMPILE_COMPUTE",
+        "GALL-017": "QUERY_COMPUTE",
+        "GALL-018": "DISCOVERY_CANDIDATE",
+        "GALL-019": "PREDICTION_CANDIDATE",
+        "GALL-020": "COMPUTE_ONLY",
         "GALL-021": "COMPUTE_ONLY",
         "GALL-022": "COMPILE_COMPUTE",
         "GALL-023": "QUERY_COMPUTE",
@@ -74,4 +80,18 @@ def test_authority_cannot_leak_upstream_of_gall_030() -> None:
     bad = list(spine.checkpoints)
     bad[gall_029] = replace(bad[gall_029], evidence_ceiling="AUTHORIZED_DO")
     with pytest.raises(ValueError, match="candidate admission only"):
+        replace(spine, checkpoints=tuple(bad)).validate()
+
+
+def test_ex4pm_predecessor_chain_is_required_and_cannot_gain_do_authority() -> None:
+    spine = _spine()
+    ids = {item.checkpoint for item in spine.checkpoints}
+    assert {f"GALL-{index:03d}" for index in range(15, 21)} <= ids
+
+    gall_019 = next(
+        i for i, item in enumerate(spine.checkpoints) if item.checkpoint == "GALL-019"
+    )
+    bad = list(spine.checkpoints)
+    bad[gall_019] = replace(bad[gall_019], evidence_ceiling="AUTHORIZED_DO")
+    with pytest.raises(ValueError, match="PREDICTION_CANDIDATE"):
         replace(spine, checkpoints=tuple(bad)).validate()
