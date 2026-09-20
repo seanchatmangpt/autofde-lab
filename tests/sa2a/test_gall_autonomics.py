@@ -11,6 +11,7 @@ from autofde_lab.sa2a.autonomics.external_crown import (
     ExternalCrownEvidence,
 )
 from autofde_lab.sa2a.autonomics.falsifier import ActiveFalsifier, Invariant
+from autofde_lab.sa2a.autonomics.feedback import FeedbackAdmission, FeedbackFinding, FeedbackRule
 from autofde_lab.sa2a.autonomics.predictor import (
     MajorityBaseline,
     PredictionStanding,
@@ -70,6 +71,64 @@ def test_gall_008_semantic_telemetry_binds_layers_and_conserves_additive_measure
             ],
             source_versions={"profiler": "1"},
         )
+
+
+
+def test_gall_009_feedback_requires_explicit_rule_and_never_manufactures_authority() -> None:
+    subject = sha("subject")
+    source = sha("telemetry-receipt")
+    finding = FeedbackFinding(
+        semantic_subject_digest=subject,
+        source_receipt_digest=source,
+        finding_type="health-observation",
+        evidence_class="validated_telemetry",
+        facts={"service_healthy": False, "database_reachable": None},
+    )
+    rule = FeedbackRule(
+        rule_id="health-feedback-v1",
+        finding_type="health-observation",
+        evidence_class="validated_telemetry",
+        allowed_facts=("service_healthy", "database_reachable"),
+    )
+    admitted = FeedbackAdmission.admit(
+        finding, rule, expected_subject_digest=subject
+    )
+    assert admitted.admitted is True
+    assert admitted.normative is False
+    assert admitted.authorizes_actuation is False
+    assert admitted.receipt_digest.startswith("sha256:")
+
+    belief = BeliefState(
+        facts={"service_healthy": EpistemicValue.UNKNOWN},
+        observation_projection="ops:v1",
+        provenance_digest=source,
+    )
+    updated = admitted.apply(belief)
+    assert updated.facts["service_healthy"] is EpistemicValue.KNOWN_FALSE
+    assert updated.facts["database_reachable"] is EpistemicValue.UNKNOWN
+    assert updated.provenance_digest == admitted.receipt_digest
+
+    with pytest.raises(ValueError, match="unadmitted facts"):
+        FeedbackAdmission.admit(
+            FeedbackFinding(
+                semantic_subject_digest=subject,
+                source_receipt_digest=source,
+                finding_type="health-observation",
+                evidence_class="validated_telemetry",
+                facts={"repair_authorized": True},
+            ),
+            rule,
+            expected_subject_digest=subject,
+        )
+
+    with pytest.raises(ValueError, match="reserved"):
+        FeedbackFinding(
+            semantic_subject_digest=subject,
+            source_receipt_digest=source,
+            finding_type="health-observation",
+            evidence_class="validated_telemetry",
+            facts={"standing": True},
+        ).validate()
 
 
 def test_gall_010_unknown_is_not_coerced_and_yields_information_action() -> None:
