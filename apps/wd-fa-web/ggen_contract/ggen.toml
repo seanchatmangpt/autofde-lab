@@ -1,7 +1,7 @@
 [project]
 name = "wd-fa-zod-contract"
 [ontology]
-source = "../../../ggen/wd-fa/ontology.ttl"
+source = "ontology.ttl"
 
 [templates]
 dir = "templates"
