@@ -32,7 +32,8 @@ def run_demo() -> dict[str, object]:
 
     novel = cases["novel_x"]
     receipt = issue_receipt(
-        novel, results["novel_x"],
+        novel,
+        results["novel_x"],
         producer_id="autofde-wd-fa",
         verifier_id="wd-fa-independent-observer",
         observed_disposition="MODE-X-NOVEL",
