@@ -37,7 +37,9 @@ from .dflss_planner_solve import PlannerSolveOutcome
 __all__ = ["attempt_solve_domain"]
 
 
-def attempt_solve_domain(planner_id: str, domain: Any, *, step_limit: int = 60) -> PlannerSolveOutcome:
+def attempt_solve_domain(
+    planner_id: str, domain: Any, *, step_limit: int = 60
+) -> PlannerSolveOutcome:
     """Real attempt to solve `domain` (any real, already-constructed
     scikit-decide domain instance) with the real registered solver named
     `planner_id`. Mirrors `dflss_planner_solve.
@@ -51,16 +53,22 @@ def attempt_solve_domain(planner_id: str, domain: Any, *, step_limit: int = 60) 
 
     solver_type = utils.load_registered_solver(planner_id)
     if solver_type is None:
-        return PlannerSolveOutcome(planner_id, "UNSUPPORTED", "UNSUPPORTED:PLANNER_LOAD_FAILED")
+        return PlannerSolveOutcome(
+            planner_id, "UNSUPPORTED", "UNSUPPORTED:PLANNER_LOAD_FAILED"
+        )
 
     try:
         compatible = bool(solver_type.check_domain(domain))
     except Exception as exc:
         return PlannerSolveOutcome(
-            planner_id, "UNSUPPORTED", f"UNSUPPORTED:DOMAIN_CHECK_FAILED:{type(exc).__name__}"
+            planner_id,
+            "UNSUPPORTED",
+            f"UNSUPPORTED:DOMAIN_CHECK_FAILED:{type(exc).__name__}",
         )
     if not compatible:
-        return PlannerSolveOutcome(planner_id, "REFUSED", "REFUSED:DOMAIN_CONTRACT_MISMATCH")
+        return PlannerSolveOutcome(
+            planner_id, "REFUSED", "REFUSED:DOMAIN_CONTRACT_MISMATCH"
+        )
 
     try:
         with solver_type(domain_factory=lambda: domain) as solver:
@@ -77,10 +85,16 @@ def attempt_solve_domain(planner_id: str, domain: Any, *, step_limit: int = 60) 
             reached_goal = bool(domain.is_goal(obs))
     except Exception as exc:
         return PlannerSolveOutcome(
-            planner_id, "UNSUPPORTED", f"UNSUPPORTED:SOLVE_RAISED:{type(exc).__name__}:{exc}"
+            planner_id,
+            "UNSUPPORTED",
+            f"UNSUPPORTED:SOLVE_RAISED:{type(exc).__name__}:{exc}",
         )
 
     if not reached_goal:
-        return PlannerSolveOutcome(planner_id, "REFUSED", "REFUSED:GOAL_NOT_REACHED", plan_length=plan_length)
+        return PlannerSolveOutcome(
+            planner_id, "REFUSED", "REFUSED:GOAL_NOT_REACHED", plan_length=plan_length
+        )
 
-    return PlannerSolveOutcome(planner_id, "ALIVE", "ALIVE:GOAL_REACHED", plan_length=plan_length)
+    return PlannerSolveOutcome(
+        planner_id, "ALIVE", "ALIVE:GOAL_REACHED", plan_length=plan_length
+    )

@@ -13,7 +13,6 @@ from autofde_lab_planner.scanner import diff_engine, taxonomy
 from autofde_lab_planner.scanner.models import Anomaly
 from autofde_lab_planner.scanner.registry import scan
 
-
 # ---------------------------------------------------------------------------
 # One real fixture + assertion per relation-class (task requirement 5, part 1)
 # ---------------------------------------------------------------------------
@@ -27,13 +26,19 @@ def test_declared_vs_observed_relation_class_deployment_replica_mismatch():
                 "spec": {
                     "replicas": 3,
                     "selector": {"matchLabels": {"app": "billing-api"}},
-                    "template": {"spec": {"containers": [{"image": "billing-api:1.2.3"}]}},
+                    "template": {
+                        "spec": {"containers": [{"image": "billing-api:1.2.3"}]}
+                    },
                 },
             }
         ],
         "pods": [
             {
-                "metadata": {"name": "billing-api-1", "namespace": "prod", "labels": {"app": "billing-api"}},
+                "metadata": {
+                    "name": "billing-api-1",
+                    "namespace": "prod",
+                    "labels": {"app": "billing-api"},
+                },
                 "status": {"conditions": [{"type": "Ready", "status": "True"}]},
             }
         ],
@@ -58,7 +63,10 @@ def test_dangling_reference_relation_class_pvc_claim_mismatch():
                 "metadata": {"name": "billing-api-1", "namespace": "prod"},
                 "spec": {
                     "volumes": [
-                        {"name": "data", "persistentVolumeClaim": {"claimName": "billing-data-typo"}},
+                        {
+                            "name": "data",
+                            "persistentVolumeClaim": {"claimName": "billing-data-typo"},
+                        },
                     ]
                 },
             }
@@ -85,7 +93,13 @@ def test_insufficient_capability_relation_class_rbac_gap():
         "clusterrolebindings": [
             {
                 "roleRef": {"name": "reader"},
-                "subjects": [{"kind": "ServiceAccount", "name": "billing-sa", "namespace": "prod"}],
+                "subjects": [
+                    {
+                        "kind": "ServiceAccount",
+                        "name": "billing-sa",
+                        "namespace": "prod",
+                    }
+                ],
             }
         ],
         "pods": [
@@ -100,7 +114,9 @@ def test_insufficient_capability_relation_class_rbac_gap():
         ],
     }
     anomalies = scan(state)
-    rbac_anomalies = [a for a in anomalies if a.relation_class == "insufficient_capability"]
+    rbac_anomalies = [
+        a for a in anomalies if a.relation_class == "insufficient_capability"
+    ]
     assert len(rbac_anomalies) == 1
     a = rbac_anomalies[0]
     assert a.kind == "ServiceAccount"
@@ -124,7 +140,9 @@ def test_aggregate_threshold_relation_class_resourcequota_exhaustion():
         ],
     }
     anomalies = scan(state)
-    quota_anomalies = [a for a in anomalies if a.relation_class == "aggregate_threshold"]
+    quota_anomalies = [
+        a for a in anomalies if a.relation_class == "aggregate_threshold"
+    ]
     assert len(quota_anomalies) == 1
     a = quota_anomalies[0]
     assert a.kind == "ResourceQuota"
@@ -143,25 +161,45 @@ def test_all_anomalies_share_one_uniform_dataclass_type():
         "deployments": [
             {
                 "metadata": {"name": "d1", "namespace": "ns"},
-                "spec": {"replicas": 5, "selector": {"matchLabels": {"app": "d1"}}, "template": {"spec": {"containers": [{}]}}},
+                "spec": {
+                    "replicas": 5,
+                    "selector": {"matchLabels": {"app": "d1"}},
+                    "template": {"spec": {"containers": [{}]}},
+                },
             }
         ],
         "persistentvolumeclaims": [],
         "pods": [
             {
                 "metadata": {"name": "pd1", "namespace": "ns"},
-                "spec": {"volumes": [{"persistentVolumeClaim": {"claimName": "missing-pvc"}}]},
+                "spec": {
+                    "volumes": [{"persistentVolumeClaim": {"claimName": "missing-pvc"}}]
+                },
             }
         ],
-        "resourcequotas": [{"metadata": {"name": "q", "namespace": "ns"}, "spec": {"hard": {"pods": "0"}}}],
+        "resourcequotas": [
+            {
+                "metadata": {"name": "q", "namespace": "ns"},
+                "spec": {"hard": {"pods": "0"}},
+            }
+        ],
         "clusterroles": [{"metadata": {"name": "r"}, "rules": []}],
         "clusterrolebindings": [
-            {"roleRef": {"name": "r"}, "subjects": [{"kind": "ServiceAccount", "name": "sa", "namespace": "ns"}]}
+            {
+                "roleRef": {"name": "r"},
+                "subjects": [
+                    {"kind": "ServiceAccount", "name": "sa", "namespace": "ns"}
+                ],
+            }
         ],
     }
     state["pods"].append(
         {
-            "metadata": {"name": "pd2", "namespace": "ns", "annotations": {"required-rbac": "get:secrets"}},
+            "metadata": {
+                "name": "pd2",
+                "namespace": "ns",
+                "annotations": {"required-rbac": "get:secrets"},
+            },
             "spec": {"serviceAccountName": "sa"},
         }
     )
@@ -187,50 +225,93 @@ def test_coverage_missing_object_pvc():
         "pods": [
             {
                 "metadata": {"name": "app-1", "namespace": "ns"},
-                "spec": {"volumes": [{"persistentVolumeClaim": {"claimName": "nonexistent-pvc"}}]},
+                "spec": {
+                    "volumes": [
+                        {"persistentVolumeClaim": {"claimName": "nonexistent-pvc"}}
+                    ]
+                },
             }
         ],
     }
     anomalies = scan(state)
-    assert any(a.kind == "PersistentVolumeClaim" and a.relation_class == "dangling_reference" for a in anomalies)
+    assert any(
+        a.kind == "PersistentVolumeClaim" and a.relation_class == "dangling_reference"
+        for a in anomalies
+    )
 
 
 def test_coverage_missing_service_backend():
     """Abandoned IngressMisrouteFault (ingress_targetport.py)."""
     state = {
-        "services": [{"metadata": {"name": "real-svc"}, "spec": {"ports": [{"port": 80}]}}],
+        "services": [
+            {"metadata": {"name": "real-svc"}, "spec": {"ports": [{"port": 80}]}}
+        ],
         "ingresses": [
             {
                 "metadata": {"name": "ing1", "namespace": "ns"},
                 "spec": {
                     "rules": [
-                        {"http": {"paths": [{"backend": {"service": {"name": "typo-svc", "port": {"number": 80}}}}]}}
+                        {
+                            "http": {
+                                "paths": [
+                                    {
+                                        "backend": {
+                                            "service": {
+                                                "name": "typo-svc",
+                                                "port": {"number": 80},
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
                     ]
                 },
             }
         ],
     }
     anomalies = scan(state)
-    assert any(a.kind == "Ingress" and a.relation_class == "dangling_reference" for a in anomalies)
+    assert any(
+        a.kind == "Ingress" and a.relation_class == "dangling_reference"
+        for a in anomalies
+    )
 
 
 def test_coverage_target_port_mismatch():
     """Abandoned TargetPortFault (ingress_targetport.py)."""
     state = {
-        "services": [{"metadata": {"name": "real-svc"}, "spec": {"ports": [{"port": 8080}]}}],
+        "services": [
+            {"metadata": {"name": "real-svc"}, "spec": {"ports": [{"port": 8080}]}}
+        ],
         "ingresses": [
             {
                 "metadata": {"name": "ing1", "namespace": "ns"},
                 "spec": {
                     "rules": [
-                        {"http": {"paths": [{"backend": {"service": {"name": "real-svc", "port": {"number": 80}}}}]}}
+                        {
+                            "http": {
+                                "paths": [
+                                    {
+                                        "backend": {
+                                            "service": {
+                                                "name": "real-svc",
+                                                "port": {"number": 80},
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
                     ]
                 },
             }
         ],
     }
     anomalies = scan(state)
-    assert any(a.kind == "Ingress" and a.relation_class == "declared_vs_observed" for a in anomalies)
+    assert any(
+        a.kind == "Ingress" and a.relation_class == "declared_vs_observed"
+        for a in anomalies
+    )
 
 
 def test_coverage_cronjob_mutation():
@@ -238,13 +319,20 @@ def test_coverage_cronjob_mutation():
     state = {
         "cronjobs": [
             {
-                "metadata": {"name": "nightly", "namespace": "ns", "annotations": {"baseline-schedule": "0 2 * * *"}},
+                "metadata": {
+                    "name": "nightly",
+                    "namespace": "ns",
+                    "annotations": {"baseline-schedule": "0 2 * * *"},
+                },
                 "spec": {"schedule": "* * * * *"},
             }
         ]
     }
     anomalies = scan(state)
-    assert any(a.kind == "CronJob" and a.relation_class == "declared_vs_observed" for a in anomalies)
+    assert any(
+        a.kind == "CronJob" and a.relation_class == "declared_vs_observed"
+        for a in anomalies
+    )
 
 
 def test_coverage_coredns_fault_via_configmap_declared_vs_observed():
@@ -281,7 +369,11 @@ def test_coverage_workload_misconfig_image_drift():
         ],
         "pods": [
             {
-                "metadata": {"name": "app-1", "namespace": "ns", "labels": {"app": "app"}},
+                "metadata": {
+                    "name": "app-1",
+                    "namespace": "ns",
+                    "labels": {"app": "app"},
+                },
                 "status": {"conditions": [{"type": "Ready", "status": "True"}]},
             }
         ],
@@ -295,7 +387,11 @@ def test_coverage_dns_policy_override():
     state = {
         "pods": [
             {
-                "metadata": {"name": "app-1", "namespace": "ns", "annotations": {"baseline-dns-policy": "ClusterFirst"}},
+                "metadata": {
+                    "name": "app-1",
+                    "namespace": "ns",
+                    "annotations": {"baseline-dns-policy": "ClusterFirst"},
+                },
                 "spec": {"dnsPolicy": "None"},
             }
         ]
@@ -341,19 +437,35 @@ def test_coverage_probe_fault():
         ]
     }
     anomalies = scan(state)
-    assert any(a.kind == "Pod" and a.field == "probe.failureThreshold" for a in anomalies)
+    assert any(
+        a.kind == "Pod" and a.field == "probe.failureThreshold" for a in anomalies
+    )
 
 
 def test_coverage_rbac_misconfig():
     """Abandoned RBACMisconfigFault (rbac_misconfig.py) -- already exercised above."""
     state = {
-        "clusterroles": [{"metadata": {"name": "r"}, "rules": [{"resources": ["pods"], "verbs": ["get"]}]}],
+        "clusterroles": [
+            {
+                "metadata": {"name": "r"},
+                "rules": [{"resources": ["pods"], "verbs": ["get"]}],
+            }
+        ],
         "clusterrolebindings": [
-            {"roleRef": {"name": "r"}, "subjects": [{"kind": "ServiceAccount", "name": "sa", "namespace": "ns"}]}
+            {
+                "roleRef": {"name": "r"},
+                "subjects": [
+                    {"kind": "ServiceAccount", "name": "sa", "namespace": "ns"}
+                ],
+            }
         ],
         "pods": [
             {
-                "metadata": {"name": "p", "namespace": "ns", "annotations": {"required-rbac": "delete:pods"}},
+                "metadata": {
+                    "name": "p",
+                    "namespace": "ns",
+                    "annotations": {"required-rbac": "delete:pods"},
+                },
                 "spec": {"serviceAccountName": "sa"},
             }
         ],
@@ -385,9 +497,12 @@ def test_coverage_scheduling_deadlock_named_gap():
     NOT covered by any registered ObjectKindAnalyzer in this scanner. No Node/scheduling
     kind analyzer exists here. Honest gap, named per absence-is-not-evidence.md: this test
     documents the gap rather than forcing a false-positive fixture to claim coverage."""
-    assert "Node" not in __import__(
-        "autofde_lab_planner.scanner.registry", fromlist=["ANALYZERS"]
-    ).ANALYZERS
+    assert (
+        "Node"
+        not in __import__(
+            "autofde_lab_planner.scanner.registry", fromlist=["ANALYZERS"]
+        ).ANALYZERS
+    )
 
 
 # ---------------------------------------------------------------------------

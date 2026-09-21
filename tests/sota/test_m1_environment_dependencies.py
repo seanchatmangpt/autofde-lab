@@ -16,8 +16,9 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-import yaml
+
 import pytest
+import yaml
 
 SREGYM_ROOT = Path(__file__).resolve().parents[2] / "vendor" / "gyms" / "sregym"
 SREGYM_APPLICATIONS = SREGYM_ROOT / "SREGym-applications"
@@ -75,7 +76,9 @@ def test_registered_sregym_problems_count() -> None:
 
     registry = ProblemRegistry()
     problem_ids = registry.get_problem_ids(all=True)
-    assert len(problem_ids) == 123, f"Expected 123 registered problem IDs, got {len(problem_ids)}"
+    assert len(problem_ids) == 123, (
+        f"Expected 123 registered problem IDs, got {len(problem_ids)}"
+    )
 
 
 def test_all_123_sregym_problems_instantiate_without_chart_errors() -> None:
@@ -90,13 +93,18 @@ def test_all_123_sregym_problems_instantiate_without_chart_errors() -> None:
 
     for pid in problem_ids:
         factory = registry.PROBLEM_REGISTRY.get(pid)
-        assert factory is not None, f"Problem ID {pid} has no factory in PROBLEM_REGISTRY"
+        assert factory is not None, (
+            f"Problem ID {pid} has no factory in PROBLEM_REGISTRY"
+        )
         try:
             instance = factory()
             assert instance is not None, f"Problem instance for {pid} is None"
         except FileNotFoundError as e:
             err_msg = str(e)
-            if "Helm chart_path does not exist" in err_msg or "chart" in err_msg.lower():
+            if (
+                "Helm chart_path does not exist" in err_msg
+                or "chart" in err_msg.lower()
+            ):
                 chart_missing_errors.append((pid, err_msg))
             else:
                 instantiation_errors.append((pid, type(e).__name__, err_msg))
@@ -118,7 +126,11 @@ def test_required_vendored_helm_charts_exist_and_are_valid() -> None:
     required_charts = [
         (
             "astronomy-shop/charts/opentelemetry-demo",
-            SREGYM_APPLICATIONS / "astronomy-shop" / "charts" / "opentelemetry-demo" / "Chart.yaml",
+            SREGYM_APPLICATIONS
+            / "astronomy-shop"
+            / "charts"
+            / "opentelemetry-demo"
+            / "Chart.yaml",
             "opentelemetry-demo",
         ),
         (
@@ -143,20 +155,30 @@ def test_required_vendored_helm_charts_exist_and_are_valid() -> None:
             f"Helm chart missing for {label}: expected Chart.yaml at {chart_yaml_path}"
         )
         content = yaml.safe_load(chart_yaml_path.read_text())
-        assert isinstance(content, dict), f"Invalid Chart.yaml at {chart_yaml_path}: not a dict"
+        assert isinstance(content, dict), (
+            f"Invalid Chart.yaml at {chart_yaml_path}: not a dict"
+        )
         assert content.get("name") == expected_name, (
             f"Chart name mismatch for {label}: expected '{expected_name}', got '{content.get('name')}'"
         )
-        assert "apiVersion" in content, f"Chart.yaml at {chart_yaml_path} missing apiVersion"
+        assert "apiVersion" in content, (
+            f"Chart.yaml at {chart_yaml_path} missing apiVersion"
+        )
 
 
 def test_all_vendored_helm_chart_yaml_files_are_parseable() -> None:
     """Verify that all Chart.yaml files in SREGym-applications parse as valid Helm charts."""
     chart_files = list(SREGYM_APPLICATIONS.glob("**/Chart.yaml"))
-    assert len(chart_files) >= 4, f"Expected at least 4 Chart.yaml files, found {len(chart_files)}"
+    assert len(chart_files) >= 4, (
+        f"Expected at least 4 Chart.yaml files, found {len(chart_files)}"
+    )
 
     for chart_file in chart_files:
         data = yaml.safe_load(chart_file.read_text())
-        assert isinstance(data, dict), f"Chart.yaml at {chart_file} is not a valid YAML dictionary"
+        assert isinstance(data, dict), (
+            f"Chart.yaml at {chart_file} is not a valid YAML dictionary"
+        )
         assert "name" in data, f"Chart.yaml at {chart_file} missing 'name' field"
-        assert "apiVersion" in data, f"Chart.yaml at {chart_file} missing 'apiVersion' field"
+        assert "apiVersion" in data, (
+            f"Chart.yaml at {chart_file} missing 'apiVersion' field"
+        )

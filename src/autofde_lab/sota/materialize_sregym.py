@@ -252,11 +252,16 @@ def materialize_sregym_autofde_lab_planner_invocation(
             f"autofde_lab_planner planner identity; got {basis.planner.name!r}"
         )
     argv = [
-        ".venv/bin/python", "main.py",
-        "--agent", "autofde_lab_planner",
-        "--model", str(basis.extra.get("judge_model_id", "openai/gemma-4-26b-a4b-it")),
-        "--problem", str(basis.extra.get("problem_id", "misconfig_app_hotel_res")),
-        "--agent-timeout", str(basis.budget.wall_clock_timeout_s),
+        ".venv/bin/python",
+        "main.py",
+        "--agent",
+        "autofde_lab_planner",
+        "--model",
+        str(basis.extra.get("judge_model_id", "openai/gemma-4-26b-a4b-it")),
+        "--problem",
+        str(basis.extra.get("problem_id", "misconfig_app_hotel_res")),
+        "--agent-timeout",
+        str(basis.budget.wall_clock_timeout_s),
     ]
     env: dict[str, str] = {}
     judge_api_base = basis.extra.get("judge_api_base")
@@ -268,7 +273,9 @@ def materialize_sregym_autofde_lab_planner_invocation(
     return argv, env
 
 
-def materialize_sregym_invocation(basis: DecisionBasis) -> tuple[list[str], dict[str, str]]:
+def materialize_sregym_invocation(
+    basis: DecisionBasis,
+) -> tuple[list[str], dict[str, str]]:
     """The real, exact argv + env this DecisionBasis point runs as, for the `sregym`/`stratus`
     path -- the inverse of `current_sregym_stratus_basis()`: given a point in the search
     space, produce the real command that would exercise it.
@@ -286,11 +293,17 @@ def materialize_sregym_invocation(basis: DecisionBasis) -> tuple[list[str], dict
             f"got {basis.planner.name!r}"
         )
     argv = [
-        "uv", "run", "main.py",
-        "--agent", "stratus",
-        "--model", basis.model.id,
-        "--problem", basis.extra.get("problem_id", "misconfig_app_hotel_res"),
-        "--agent-timeout", str(basis.budget.wall_clock_timeout_s),
+        "uv",
+        "run",
+        "main.py",
+        "--agent",
+        "stratus",
+        "--model",
+        basis.model.id,
+        "--problem",
+        basis.extra.get("problem_id", "misconfig_app_hotel_res"),
+        "--agent-timeout",
+        str(basis.budget.wall_clock_timeout_s),
     ]
     env: dict[str, str] = {}
     if basis.model.api_base:

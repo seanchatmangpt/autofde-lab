@@ -53,22 +53,27 @@ def test_authority_required_provider_refused_without_ref_and_admitted_with_it() 
     uses)."""
     import asyncio
 
-    from gymact import AllowListAuthorityResolver, GymAct, MaterializationIntent
     from gymact.gyms.vendor_benchmarks import VendorBenchmarkProvider
+
+    from gymact import AllowListAuthorityResolver, GymAct, MaterializationIntent
 
     authority_ref = "urn:autofde-lab:level4-crown-authority"
 
     async def _without_ref() -> tuple[bool, str | None]:
         gym = GymAct(authority_resolver=AllowListAuthorityResolver({authority_ref}))
         gym.register_provider(VendorBenchmarkProvider("terragoat"))
-        m = await gym.materialize(MaterializationIntent(provider="terragoat", config={}))
+        m = await gym.materialize(
+            MaterializationIntent(provider="terragoat", config={})
+        )
         return m.accepted, (m.receipt.reason if m.receipt else None)
 
     async def _with_ref() -> bool:
         gym = GymAct(authority_resolver=AllowListAuthorityResolver({authority_ref}))
         gym.register_provider(VendorBenchmarkProvider("terragoat"))
         m = await gym.materialize(
-            MaterializationIntent(provider="terragoat", config={}, authority_ref=authority_ref)
+            MaterializationIntent(
+                provider="terragoat", config={}, authority_ref=authority_ref
+            )
         )
         return m.accepted
 
@@ -90,8 +95,12 @@ def test_fix_adds_no_provider_registry_entry_or_goal_predicate() -> None:
     `tests/domains/python/test_level4_memory_gym_chicago.py` -- not as a
     side effect of the authority-threading fix this test pins.)"""
     assert set(_PROVIDERS) == {
-        "cube_counter", "cube_container_counter", "switchboard",
-        "resource_flow", "lock_and_key", "memory",
+        "cube_counter",
+        "cube_container_counter",
+        "switchboard",
+        "resource_flow",
+        "lock_and_key",
+        "memory",
     }
 
 
@@ -101,7 +110,10 @@ def test_real_bridge_script_source_now_populates_authority_ref() -> None:
     from autofde_lab.hub.domain.gym_procedure.level4_crown import _EXECUTE_SCRIPT
     from autofde_lab.hub.domain.gym_procedure.level4_gymact_bridge import _BRIDGE_SCRIPT
 
-    for script_text, label in ((_BRIDGE_SCRIPT, "discovery"), (_EXECUTE_SCRIPT, "actuation")):
+    for script_text, label in (
+        (_BRIDGE_SCRIPT, "discovery"),
+        (_EXECUTE_SCRIPT, "actuation"),
+    ):
         assert "authority_ref=_AUTHORITY_REF" in script_text, (
             f"{label} bridge script no longer threads authority_ref through "
             "MaterializationIntent"

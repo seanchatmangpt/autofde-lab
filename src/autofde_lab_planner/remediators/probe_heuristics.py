@@ -38,5 +38,4 @@ def decide_probe_remediation_commands(
         )
         commands.append(restore_grace_cmd)
 
-
     return commands, affected_deployments

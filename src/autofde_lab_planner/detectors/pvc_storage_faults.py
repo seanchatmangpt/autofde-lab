@@ -78,7 +78,11 @@ def detect_pvc_claim_mismatches(
 
             # A dangling claimName: attempt to infer the pre-fault expected
             # name for the SREGym "-broken" suffix convention.
-            expected = claim_name[: -len("-broken")] if claim_name.endswith("-broken") else None
+            expected = (
+                claim_name[: -len("-broken")]
+                if claim_name.endswith("-broken")
+                else None
+            )
 
             faults.append(
                 PVCClaimMismatchFault(
@@ -88,7 +92,10 @@ def detect_pvc_claim_mismatches(
                     observed_claim_name=claim_name,
                     expected_claim_name=expected,
                     container_name=container_name,
-                    unready_replicas=max(desired_replicas - ready_replicas, unready_by_dep.get(dep_name, 0)),
+                    unready_replicas=max(
+                        desired_replicas - ready_replicas,
+                        unready_by_dep.get(dep_name, 0),
+                    ),
                     desired_replicas=desired_replicas,
                 )
             )
@@ -120,7 +127,10 @@ def detect_pvc_multi_attach_faults(
     for ev in event_items:
         reason = ev.get("reason", "")
         msg = ev.get("message") or ""
-        if reason in ("FailedAttachVolume", "FailedMount") or "Multi-Attach error" in msg:
+        if (
+            reason in ("FailedAttachVolume", "FailedMount")
+            or "Multi-Attach error" in msg
+        ):
             obj_name = (ev.get("involvedObject") or {}).get("name", "")
             events_by_pvc.setdefault(obj_name, []).append(msg or reason)
 
@@ -169,7 +179,9 @@ def detect_pvc_multi_attach_faults(
     return faults
 
 
-def _to_item_list(data: dict[str, Any] | list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+def _to_item_list(
+    data: dict[str, Any] | list[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
     if not data:
         return []
     if isinstance(data, dict):

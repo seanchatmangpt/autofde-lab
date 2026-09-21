@@ -114,7 +114,9 @@ from autofde_lab.receipts.wasm4pm_cognition import (
 # `cross_check_via_hearsay` deliberately lets propagate uncaught (see its
 # own docstring) without also importing from `receipts.wasm4pm_cognition`
 # directly.
-from autofde_lab.receipts.wasm4pm_cognition import NoEvidence as NoEvidence  # noqa: F401
+from autofde_lab.receipts.wasm4pm_cognition import (
+    NoEvidence as NoEvidence,  # noqa: F401
+)
 
 __all__ = [
     "AgreementOutcome",
@@ -294,7 +296,9 @@ async def cross_check_via_hearsay(
         return None
 
 
-def hypotheses_agree(*, hearsay_selected: str | None, committed_root_cause: str) -> AgreementOutcome:
+def hypotheses_agree(
+    *, hearsay_selected: str | None, committed_root_cause: str
+) -> AgreementOutcome:
     """Real, honest, approximate agreement check between the Hearsay
     breed's own real ``"hypothesis:<text>"`` selection and the DSPy-
     committed `root_cause` text.

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from autofde_lab.sa2a.algebra import RefusalCause, Standing
@@ -44,8 +45,12 @@ class ProvenanceRecord(BaseModel):
 
     issuer: str = Field(..., description="Identity of issuer/agent generating envelope")
     timestamp: str = Field(..., description="ISO 8601 timestamp")
-    signature: Optional[str] = Field(None, description="Cryptographic signature over envelope body")
-    parentEnvelopeId: Optional[str] = Field(None, description="ID of predecessor envelope if any")
+    signature: Optional[str] = Field(
+        None, description="Cryptographic signature over envelope body"
+    )
+    parentEnvelopeId: Optional[str] = Field(
+        None, description="ID of predecessor envelope if any"
+    )
 
 
 class AuthorityRequirement(BaseModel):
@@ -69,10 +74,14 @@ class EnvelopeBounds(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    maxComputeMs: Optional[int] = Field(None, description="Max compute milliseconds allowed")
+    maxComputeMs: Optional[int] = Field(
+        None, description="Max compute milliseconds allowed"
+    )
     maxTokens: Optional[int] = Field(None, description="Max tokens allowed")
     maxSteps: Optional[int] = Field(None, description="Max interaction steps allowed")
-    falsifierGuards: List[str] = Field(default_factory=list, description="Falsifier assertions")
+    falsifierGuards: List[str] = Field(
+        default_factory=list, description="Falsifier assertions"
+    )
 
 
 class SemanticEnvelope(BaseModel):
@@ -87,9 +96,15 @@ class SemanticEnvelope(BaseModel):
         default="SA2A-PROFILE-v26.9.16",
         description="Profile specification version",
     )
-    kind: str = Field(..., description="Envelope kind e.g. INTENT, PLAN, WARRANT, RECEIPT, ATT_PROOF")
-    envelopeId: str = Field(..., description="Unique content-addressed or UUID envelope identifier")
-    subjects: List[str] = Field(..., description="URIs or identifiers of primary subjects")
+    kind: str = Field(
+        ..., description="Envelope kind e.g. INTENT, PLAN, WARRANT, RECEIPT, ATT_PROOF"
+    )
+    envelopeId: str = Field(
+        ..., description="Unique content-addressed or UUID envelope identifier"
+    )
+    subjects: List[str] = Field(
+        ..., description="URIs or identifiers of primary subjects"
+    )
     standing: Standing = Field(
         default=Standing.CANDIDATE,
         description="Current standing of this envelope",
@@ -152,7 +167,10 @@ class SemanticEnvelope(BaseModel):
                 )
 
         if self.standing in {Standing.AUTHORIZED, Standing.PREPARED}:
-            if not self.authorityRequirement or not self.authorityRequirement.authorizedBy:
+            if (
+                not self.authorityRequirement
+                or not self.authorityRequirement.authorizedBy
+            ):
                 raise ValueError(
                     f"Standing {self.standing.value} requires authorizedBy in authorityRequirement (§11)"
                 )

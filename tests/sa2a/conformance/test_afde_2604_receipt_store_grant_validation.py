@@ -83,7 +83,9 @@ from autofde_lab.sa2a.brce.receipts import (
     ReceiptGrantValidationError,
     ReceiptStore,
 )
-from autofde_lab.sa2a.conformance.courts.consequence_court import DurableDiskReceiptStore
+from autofde_lab.sa2a.conformance.courts.consequence_court import (
+    DurableDiskReceiptStore,
+)
 
 GENESIS = "genesis:0" * 4
 
@@ -157,7 +159,9 @@ def test_in_memory_store_accepts_receipt_with_real_matching_grant() -> None:
     broker.register_grant(grant)
 
     store = ReceiptStore(authority_broker=broker)
-    receipt = _legit_prepared(idempotency_token="idemp-legit-memory-001", grant_id=grant.grant_id)
+    receipt = _legit_prepared(
+        idempotency_token="idemp-legit-memory-001", grant_id=grant.grant_id
+    )
 
     store.save_prepared(receipt)  # Must not raise.
 
@@ -180,12 +184,16 @@ def test_disk_store_accepts_receipt_with_real_matching_grant_and_writes_real_byt
 
     store_dir = tmp_path / "receipts_accepted"
     store = DurableDiskReceiptStore(store_dir, authority_broker=broker)
-    receipt = _legit_prepared(idempotency_token="idemp-legit-disk-001", grant_id=grant.grant_id)
+    receipt = _legit_prepared(
+        idempotency_token="idemp-legit-disk-001", grant_id=grant.grant_id
+    )
 
     store.save_prepared(receipt)  # Must not raise.
 
     disk_file = store_dir / f"prep_{receipt.idempotency_token}.json"
-    assert disk_file.exists(), "Legitimate receipt must be durably committed to real disk."
+    assert disk_file.exists(), (
+        "Legitimate receipt must be durably committed to real disk."
+    )
     assert disk_file.stat().st_size > 0
 
     persisted = store.get_prepared(receipt.idempotency_token)
@@ -222,7 +230,9 @@ def test_in_memory_store_refuses_forged_grant_id_when_broker_configured() -> Non
     assert honest_decision.refusal_code == REFUSED_NO_GRANT
 
     store = ReceiptStore(authority_broker=broker)
-    forged = _forged_prepared(idempotency_token="idemp-forged-memory-001", grant_id=grant.grant_id)
+    forged = _forged_prepared(
+        idempotency_token="idemp-forged-memory-001", grant_id=grant.grant_id
+    )
 
     with pytest.raises(ReceiptGrantValidationError) as excinfo:
         store.save_prepared(forged)
@@ -237,7 +247,9 @@ def test_in_memory_store_refuses_forged_grant_id_when_broker_configured() -> Non
     assert store.has_idempotency_token(forged.idempotency_token) is False
 
 
-def test_disk_store_refuses_forged_grant_id_with_zero_disk_mutation(tmp_path: Path) -> None:
+def test_disk_store_refuses_forged_grant_id_with_zero_disk_mutation(
+    tmp_path: Path,
+) -> None:
     """The disk-backed variant refuses the identical forged claim and, critically, never
     writes the forged receipt to physical disk -- the refusal happens in
     `ReceiptStore.save_prepared` (the base class), which `DurableDiskReceiptStore
@@ -251,7 +263,9 @@ def test_disk_store_refuses_forged_grant_id_with_zero_disk_mutation(tmp_path: Pa
 
     store_dir = tmp_path / "receipts_refused"
     store = DurableDiskReceiptStore(store_dir, authority_broker=broker)
-    forged = _forged_prepared(idempotency_token="idemp-forged-disk-001", grant_id=grant.grant_id)
+    forged = _forged_prepared(
+        idempotency_token="idemp-forged-disk-001", grant_id=grant.grant_id
+    )
 
     with pytest.raises(ReceiptGrantValidationError) as excinfo:
         store.save_prepared(forged)
@@ -274,7 +288,9 @@ def test_unregistered_grant_id_is_refused_not_a_lookup_error() -> None:
     """
     broker = AuthorityBroker()  # Zero grants registered.
     store = ReceiptStore(authority_broker=broker)
-    receipt = _legit_prepared(idempotency_token="idemp-no-such-grant-001", grant_id="grant-does-not-exist")
+    receipt = _legit_prepared(
+        idempotency_token="idemp-no-such-grant-001", grant_id="grant-does-not-exist"
+    )
 
     with pytest.raises(ReceiptGrantValidationError) as excinfo:
         store.save_prepared(receipt)
@@ -319,7 +335,9 @@ def test_disk_store_without_broker_behaves_exactly_as_before(tmp_path: Path) -> 
     new file's own regression guard, using this file's own fixtures.
     """
     store_dir = tmp_path / "receipts_no_broker"
-    store = DurableDiskReceiptStore(store_dir)  # No authority_broker -- the pre-existing API.
+    store = DurableDiskReceiptStore(
+        store_dir
+    )  # No authority_broker -- the pre-existing API.
     forged = _forged_prepared(
         idempotency_token="idemp-forged-no-broker-disk-001",
         grant_id="grant-any-string-at-all",
@@ -328,7 +346,9 @@ def test_disk_store_without_broker_behaves_exactly_as_before(tmp_path: Path) -> 
     store.save_prepared(forged)  # Must NOT raise -- zero validation without a broker.
 
     disk_file = store_dir / f"prep_{forged.idempotency_token}.json"
-    assert disk_file.exists(), "Without a broker, the store's pre-existing dumb, append-only persistence is unchanged."
+    assert disk_file.exists(), (
+        "Without a broker, the store's pre-existing dumb, append-only persistence is unchanged."
+    )
 
     persisted = store.get_prepared(forged.idempotency_token)
     assert persisted is not None

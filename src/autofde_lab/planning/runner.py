@@ -80,9 +80,7 @@ def probe_engine(cfg: EngineConfig, *, timeout_s: float = 10.0) -> EngineRunRece
     argv = [cfg.program, *cfg.version_args]
     start = time.monotonic()
     try:
-        proc = subprocess.run(
-            argv, capture_output=True, timeout=timeout_s, shell=False
-        )
+        proc = subprocess.run(argv, capture_output=True, timeout=timeout_s, shell=False)
     except FileNotFoundError:
         return EngineRunReceipt(
             role=cfg.role,
@@ -151,9 +149,7 @@ def run_engine(
 
     start = time.monotonic()
     try:
-        proc = subprocess.run(
-            argv, capture_output=True, timeout=timeout_s, shell=False
-        )
+        proc = subprocess.run(argv, capture_output=True, timeout=timeout_s, shell=False)
     except FileNotFoundError:
         return EngineRunReceipt(
             role=cfg.role,

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
 import json
-from pathlib import Path
 import shutil
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Mapping
 
 import pytest
@@ -85,10 +85,7 @@ def test_all_embedded_components_execute_self_test_alive() -> None:
     assert ecosystem.missing_artifacts() == ()
     for result in results:
         assert result.receipt["scope"] == "federation-adapter"
-        assert (
-            result.receipt["artifact"]["sha256"]
-            == result.component.artifact_sha256
-        )
+        assert result.receipt["artifact"]["sha256"] == result.component.artifact_sha256
         assert result.receipt["host"]["backend"] == "node-webassembly"
         assert result.output["semantic_execution"] is False
 

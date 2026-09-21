@@ -38,12 +38,15 @@ real artifact identity the way the original hardcoded value did.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
-import pytest
 from autofde_lab.sa2a.admission.graphlaw_bridge import GraphLawBridge
-from autofde_lab.sa2a.exchange.package import AuthorityContract, SemanticExchangePackage, WasmComponentRef
+from autofde_lab.sa2a.exchange.package import (
+    AuthorityContract,
+    SemanticExchangePackage,
+    WasmComponentRef,
+)
 
 
 def test_dual_runtime_falsifier_mutual_byte_verification():

@@ -31,7 +31,11 @@ def _ocel_modules():
 def test_the_ocel_package_has_modules_to_check():
     """Guard against the whole file passing because it found nothing."""
     names = {m.__name__ for m in _ocel_modules()}
-    assert {"autofde_lab.ocel.log", "autofde_lab.ocel.model", "autofde_lab.ocel.refusals"} <= names
+    assert {
+        "autofde_lab.ocel.log",
+        "autofde_lab.ocel.model",
+        "autofde_lab.ocel.refusals",
+    } <= names
 
 
 def test_no_ocel_module_imports_the_sink():
@@ -56,9 +60,9 @@ def test_no_loaded_ocel_module_grew_the_dependency_at_runtime():
     for module in _ocel_modules():
         names = [n for n in vars(module) if not n.startswith("__")]
         assert names, f"{module.__name__} has no globals at all"  # not vacuous
-        assert not [
-            n for n in names if "ocel_sink" in n or n == "agent"
-        ], f"{module.__name__} grew a producer dependency"
+        assert not [n for n in names if "ocel_sink" in n or n == "agent"], (
+            f"{module.__name__} grew a producer dependency"
+        )
 
 
 def test_the_check_would_catch_a_real_back_edge():
@@ -87,8 +91,6 @@ def test_validate_is_reachable_without_importing_the_sink_at_all():
         "assert 'autofde_lab.agent.ocel_sink' not in sys.modules\n"
         "print('OK')\n"
     )
-    out = subprocess.run(
-        [sys.executable, "-c", script], capture_output=True, text=True
-    )
+    out = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True)
     assert out.returncode == 0, out.stderr
     assert "OK" in out.stdout

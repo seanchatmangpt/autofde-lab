@@ -34,20 +34,33 @@ import time
 
 import pytest
 
-from autofde_lab.ocel.mcp_instrumentation import OcelSessionRecorder
-from autofde_lab.ocel.powl_replay import replay_structural_fires
-from autofde_lab.powl.algebra import Atom, ChoiceGraph, ChoiceGraphEdge, NodeId, OrderEdge, PartialOrder, Silent
-from autofde_lab.powl.bounds import ExecutionBound
-from autofde_lab.powl.executor import INITIAL_MARKING, DeadlockKind, classify_stall, enabled, fire
 from autofde_lab.fabric.gymact_capability_gate import (
     DEFAULT_MANIFEST_PATH,
     CapabilityGate,
     CapabilityRefused,
 )
+from autofde_lab.fabric.powl import parse_powl_turtle
+from autofde_lab.ocel.mcp_instrumentation import OcelSessionRecorder
+from autofde_lab.ocel.powl_replay import replay_structural_fires
+from autofde_lab.powl.algebra import (
+    Atom,
+    ChoiceGraph,
+    ChoiceGraphEdge,
+    NodeId,
+    OrderEdge,
+    PartialOrder,
+    Silent,
+)
+from autofde_lab.powl.bounds import ExecutionBound
+from autofde_lab.powl.executor import (
+    INITIAL_MARKING,
+    DeadlockKind,
+    classify_stall,
+    enabled,
+    fire,
+)
 from autofde_lab.powl.runner import (
-    ActuationBindingRefused,
     ALLOWED_ACTION_BINDING_LABELS,
-    ALLOWED_ACTUATION_BINDING_LABELS,
     CASE_HIT_LABEL,
     CASE_MISS_LABEL,
     CASE_RETAIN_LABEL,
@@ -66,15 +79,15 @@ from autofde_lab.powl.runner import (
     GYMACT_SUBMIT_MITIGATION_LABEL,
     GYMACT_VERIFY_LABEL,
     GYMACT_WAIT_FOR_DEPLOY_LABEL,
-    GatedCapabilityBinding,
     RECORD_LABEL,
+    ActuationBindingRefused,
+    GatedCapabilityBinding,
     build_pipeline_powl_node,
     build_pipeline_turtle,
     classify_pipeline_stall,
     run_pipeline,
 )
 from autofde_lab.powl.turtle_bridge import powl_model_to_node
-from autofde_lab.fabric.powl import parse_powl_turtle
 
 
 def test_turtle_bridge_produces_real_linear_prefix_from_real_turtle():
@@ -140,7 +153,12 @@ def test_pipeline_node_grafts_real_choicegraph_onto_turtle_sourced_atoms():
 
     choice = node.children[4]
     entry_labels = {c.label for c in choice.children if isinstance(c, Atom)}
-    assert entry_labels == {CASE_RETRIEVE_LABEL, CASE_HIT_LABEL, "case_miss", "cbr_retain"}
+    assert entry_labels == {
+        CASE_RETRIEVE_LABEL,
+        CASE_HIT_LABEL,
+        "case_miss",
+        "cbr_retain",
+    }
 
     observe_block = node.children[7]
     assert isinstance(observe_block, PartialOrder)
@@ -218,9 +236,13 @@ def test_run_pipeline_surfaces_classify_stall_on_bound_exhaustion_no_hang():
     a structural counter, never a wall-clock timeout -- when the executor's
     own bound stops the traversal short of `is_final`."""
     node = build_pipeline_powl_node()
-    tiny_bound = ExecutionBound(max_activity_fires=2, max_node_visits=4096, max_marking_states=8192)
+    tiny_bound = ExecutionBound(
+        max_activity_fires=2, max_node_visits=4096, max_marking_states=8192
+    )
 
-    log, result = run_pipeline(node, session_id="test-bound-exhausted", bound=tiny_bound)
+    log, result = run_pipeline(
+        node, session_id="test-bound-exhausted", bound=tiny_bound
+    )
 
     assert result.final is False
     assert result.stall == "BLOCKED:BOUND_EXHAUSTED"
@@ -241,7 +263,9 @@ def test_run_pipeline_refuses_action_binding_for_non_pipeline_label():
 
     invocations: list[str] = []
 
-    def _would_mutate_cluster(atom_attrs: dict) -> None:  # pragma: no cover - must never run
+    def _would_mutate_cluster(
+        atom_attrs: dict,
+    ) -> None:  # pragma: no cover - must never run
         invocations.append(atom_attrs["label"])
 
     try:
@@ -254,7 +278,9 @@ def test_run_pipeline_refuses_action_binding_for_non_pipeline_label():
     except ActuationBindingRefused:
         raised = True
 
-    assert raised, "run_pipeline must refuse an action_bindings key outside the known pipeline labels"
+    assert raised, (
+        "run_pipeline must refuse an action_bindings key outside the known pipeline labels"
+    )
     assert invocations == [], (
         f"the refused binding must never be invoked -- got invocations={invocations!r}"
     )
@@ -299,13 +325,17 @@ def test_run_pipeline_refuses_incomplete_action_bindings_by_default():
         raised = True
         error = exc
 
-    assert raised, "run_pipeline must refuse an incomplete action_bindings dict by default"
+    assert raised, (
+        "run_pipeline must refuse an incomplete action_bindings dict by default"
+    )
     assert invocations == [], (
         f"no Atom may fire before the completeness check runs -- got invocations={invocations!r}"
     )
     missing_expected = sorted(ALLOWED_ACTION_BINDING_LABELS - {"scan"})
     for label in missing_expected:
-        assert label in str(error), f"error message must name missing label {label!r}: {error}"
+        assert label in str(error), (
+            f"error message must name missing label {label!r}: {error}"
+        )
 
 
 def test_run_pipeline_allows_incomplete_action_bindings_when_opted_in():
@@ -331,9 +361,12 @@ def test_run_pipeline_allows_incomplete_action_bindings_when_opted_in():
     assert result.final is True
     assert invocations == ["scan"], "only the bound label was really invoked"
 
-    scan_event = next(e for e in log.events if e.activity == "powl_structural_fire" and any(
-        a.key == "detail" and a.value.value == "scan" for a in e.attributes
-    ))
+    scan_event = next(
+        e
+        for e in log.events
+        if e.activity == "powl_structural_fire"
+        and any(a.key == "detail" and a.value.value == "scan" for a in e.attributes)
+    )
     scan_attrs = {a.key: a.value.value for a in scan_event.attributes}
     assert "action_result" in scan_attrs
 
@@ -371,8 +404,12 @@ def test_run_pipeline_refuses_bare_callable_for_actuation_class_label():
         raised = True
         assert "UNGATED_ACTUATION_BINDING" in str(exc)
 
-    assert raised, "run_pipeline must refuse a bare callable for an actuation-class label"
-    assert invocations == [], f"the refused binding must never be invoked -- got {invocations!r}"
+    assert raised, (
+        "run_pipeline must refuse a bare callable for an actuation-class label"
+    )
+    assert invocations == [], (
+        f"the refused binding must never be invoked -- got {invocations!r}"
+    )
 
 
 def test_gated_capability_binding_construction_refuses_unlisted_capability():
@@ -428,7 +465,10 @@ def test_gated_capability_binding_wrapping_real_listed_capability_fires_through_
         e
         for e in log.events
         if e.activity == "powl_structural_fire"
-        and any(a.key == "detail" and a.value.value == GYMACT_CHECK_STATUS_LABEL for a in e.attributes)
+        and any(
+            a.key == "detail" and a.value.value == GYMACT_CHECK_STATUS_LABEL
+            for a in e.attributes
+        )
     )
     check_status_attrs = {a.key: a.value.value for a in check_status_event.attributes}
     assert check_status_attrs["action_result"] == "{'pods': 3}"
@@ -458,7 +498,9 @@ def test_run_pipeline_refuses_gated_binding_on_readonly_label():
         raised = True
         assert "ACTUATION_BINDING_ON_READONLY_LABEL" in str(exc)
 
-    assert raised, "run_pipeline must refuse a GatedCapabilityBinding on a read-only label"
+    assert raised, (
+        "run_pipeline must refuse a GatedCapabilityBinding on a read-only label"
+    )
 
 
 def _ce(a: int, b: int) -> ChoiceGraphEdge:
@@ -619,7 +661,9 @@ def _drive_to(node: PartialOrder, target_len: int, *, min_step: int = 0):
         live = sorted(enabled(node, marking))
         if len(live) >= target_len and step >= min_step:
             return marking
-        assert live, "structurally deadlocked before reaching the target block -- test setup bug"
+        assert live, (
+            "structurally deadlocked before reaching the target block -- test setup bug"
+        )
         marking = fire(node, marking, live[0])
         step += 1
 
@@ -646,7 +690,9 @@ def test_gymact_scan_anomalies_and_joins_all_five_checks():
 
     for i, path in enumerate(check_paths):
         live_before = enabled(node, marking)
-        assert (8,) not in live_before, f"gymact_scan_anomalies enabled too early, after {i} of 5 checks"
+        assert (8,) not in live_before, (
+            f"gymact_scan_anomalies enabled too early, after {i} of 5 checks"
+        )
         marking = fire(node, marking, path)
 
     # All 5 have now fired -- the AND-join is enabled, and ONLY it (the
@@ -680,16 +726,30 @@ def _thread_recording_binding(
             raise RuntimeError(f"real, named failure injected for {raise_for!r}")
         return {"label": atom_attrs["label"]}
 
-    return GatedCapabilityBinding(capability_name=capability_name, callable_=_target, gate=gate)
+    return GatedCapabilityBinding(
+        capability_name=capability_name, callable_=_target, gate=gate
+    )
 
 
-def _observe_block_bindings(calls: list[tuple[str, int]], *, raise_for: str | None = None) -> dict:
+def _observe_block_bindings(
+    calls: list[tuple[str, int]], *, raise_for: str | None = None
+) -> dict:
     return {
-        GYMACT_CHECK_STATUS_LABEL: _thread_recording_binding("observe_cluster_state", calls, raise_for=raise_for),
-        GYMACT_CHECK_NAMESPACE_LABEL: _thread_recording_binding("run_kubectl", calls, raise_for=raise_for),
-        GYMACT_CHECK_DEPLOYMENTS_LABEL: _thread_recording_binding("run_kubectl", calls, raise_for=raise_for),
-        GYMACT_CHECK_PODS_LABEL: _thread_recording_binding("run_kubectl", calls, raise_for=raise_for),
-        GYMACT_CHECK_SERVICES_LABEL: _thread_recording_binding("run_kubectl", calls, raise_for=raise_for),
+        GYMACT_CHECK_STATUS_LABEL: _thread_recording_binding(
+            "observe_cluster_state", calls, raise_for=raise_for
+        ),
+        GYMACT_CHECK_NAMESPACE_LABEL: _thread_recording_binding(
+            "run_kubectl", calls, raise_for=raise_for
+        ),
+        GYMACT_CHECK_DEPLOYMENTS_LABEL: _thread_recording_binding(
+            "run_kubectl", calls, raise_for=raise_for
+        ),
+        GYMACT_CHECK_PODS_LABEL: _thread_recording_binding(
+            "run_kubectl", calls, raise_for=raise_for
+        ),
+        GYMACT_CHECK_SERVICES_LABEL: _thread_recording_binding(
+            "run_kubectl", calls, raise_for=raise_for
+        ),
     }
 
 
@@ -713,7 +773,9 @@ def test_run_pipeline_fires_the_five_gymact_checks_concurrently_on_distinct_thre
     )
     elapsed = time.monotonic() - start
 
-    assert len(calls) == 5, f"all 5 real checks must have fired and recorded -- got {calls!r}"
+    assert len(calls) == 5, (
+        f"all 5 real checks must have fired and recorded -- got {calls!r}"
+    )
     assert {label for label, _ in calls} == {
         GYMACT_CHECK_STATUS_LABEL,
         GYMACT_CHECK_NAMESPACE_LABEL,
@@ -722,8 +784,12 @@ def test_run_pipeline_fires_the_five_gymact_checks_concurrently_on_distinct_thre
         GYMACT_CHECK_SERVICES_LABEL,
     }
     thread_ids = {tid for _, tid in calls}
-    assert len(thread_ids) > 1, f"expected >1 distinct real OS thread, got {thread_ids!r}"
-    assert elapsed < 0.2, f"expected real concurrent execution (<200ms), took {elapsed:.3f}s -- looks sequential"
+    assert len(thread_ids) > 1, (
+        f"expected >1 distinct real OS thread, got {thread_ids!r}"
+    )
+    assert elapsed < 0.2, (
+        f"expected real concurrent execution (<200ms), took {elapsed:.3f}s -- looks sequential"
+    )
 
 
 def test_run_pipeline_fires_the_five_gymact_checks_concurrently_on_distinct_threads_20x():
@@ -761,7 +827,9 @@ def test_ocel_recorder_is_only_ever_invoked_from_the_calling_thread_even_under_c
             return super().record(*args, **kwargs)
 
     def _factory(session_id: str) -> OcelSessionRecorder:
-        return _ThreadRecordingOcelSessionRecorder(session_id, server_name="powl-runner-test")
+        return _ThreadRecordingOcelSessionRecorder(
+            session_id, server_name="powl-runner-test"
+        )
 
     node = build_pipeline_powl_node()
     calls: list[tuple[str, int]] = []
@@ -786,7 +854,9 @@ def test_ocel_recorder_is_only_ever_invoked_from_the_calling_thread_even_under_c
     # recording stayed single-threaded DESPITE genuine binding concurrency,
     # not merely a run where nothing concurrent happened at all.
     binding_thread_ids = {tid for _, tid in calls}
-    assert len(binding_thread_ids) > 1, f"expected >1 real worker thread among bindings, got {binding_thread_ids!r}"
+    assert len(binding_thread_ids) > 1, (
+        f"expected >1 real worker thread among bindings, got {binding_thread_ids!r}"
+    )
 
 
 def test_one_of_five_concurrent_check_bindings_raising_fails_the_whole_pipeline_and_is_recorded():
@@ -828,14 +898,18 @@ def test_run_pipeline_handles_bound_exhaustion_mid_batch_honestly():
     real structural no-op) = 9, then `max_activity_fires=11` allows exactly
     2 of the 5-check batch to fire before the mid-batch `PowlError` stops it."""
     node = build_pipeline_powl_node()
-    straddling_bound = ExecutionBound(max_activity_fires=11, max_node_visits=4096, max_marking_states=8192)
+    straddling_bound = ExecutionBound(
+        max_activity_fires=11, max_node_visits=4096, max_marking_states=8192
+    )
     calls: list[tuple[str, int]] = []
     # No sleeps needed here -- this test is about fire-budget honesty, not
     # concurrency timing.
     action_bindings = {
         label: GatedCapabilityBinding(
             capability_name=cap,
-            callable_=lambda attrs, _calls=calls: _calls.append((attrs["label"], threading.get_ident())),
+            callable_=lambda attrs, _calls=calls: _calls.append(
+                (attrs["label"], threading.get_ident())
+            ),
             gate=_capability_gate(),
         )
         for label, cap in (
@@ -860,7 +934,9 @@ def test_run_pipeline_handles_bound_exhaustion_mid_batch_honestly():
     # Exactly 11 real fires total (8 prefix + wait_for_deploy + 2 of the 5-check batch).
     assert len(log.events) == 11
     # Only the atoms that actually fired got a binding invoked -- 2, not 5.
-    assert len(calls) == 2, f"expected exactly 2 real bindings invoked mid-batch, got {calls!r}"
+    assert len(calls) == 2, (
+        f"expected exactly 2 real bindings invoked mid-batch, got {calls!r}"
+    )
 
 
 def test_order_edge_between_checks_would_serialize_them_control_case():
@@ -875,18 +951,24 @@ def test_order_edge_between_checks_would_serialize_them_control_case():
         order=frozenset(),
     )
     live = enabled(unordered, INITIAL_MARKING)
-    assert live == {(0,), (1,)}, "the real control fixture must start genuinely concurrent"
+    assert live == {(0,), (1,)}, (
+        "the real control fixture must start genuinely concurrent"
+    )
 
     serialized = PartialOrder(
         children=(Atom(label="check_a"), Atom(label="check_b")),
         order=frozenset({OrderEdge(NodeId(0), NodeId(1))}),
     )
     live_serialized = enabled(serialized, INITIAL_MARKING)
-    assert live_serialized == {(0,)}, "a real order edge must serialize what was otherwise concurrent"
+    assert live_serialized == {(0,)}, (
+        "a real order edge must serialize what was otherwise concurrent"
+    )
 
     after_first = fire(serialized, INITIAL_MARKING, (0,))
     live_after = enabled(serialized, after_first)
-    assert live_after == {(1,)}, "only the second Atom becomes enabled after the first, never both at once"
+    assert live_after == {(1,)}, (
+        "only the second Atom becomes enabled after the first, never both at once"
+    )
 
 
 def test_remediate_recheck_block_is_independently_concurrent_from_observe_block():

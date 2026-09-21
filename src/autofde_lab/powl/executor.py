@@ -156,9 +156,7 @@ class Marking:
                 for k in self.completed
             ),
             "completed_paths": sorted(list(p) for p in self.completed_paths),
-            "cursor": sorted(
-                [list(p), c] for p, c in dict(self.cursor).items()
-            ),
+            "cursor": sorted([list(p), c] for p, c in dict(self.cursor).items()),
             "visits": sorted(
                 [list(p), i, n] for (p, i), n in dict(self.visits).items()
             ),
@@ -222,7 +220,9 @@ def _is_leaf(node: PowlNode) -> bool:
 # ── completion ──────────────────────────────────────────────────────────────
 
 
-def _purged(marking: Marking, root: NodePath, *, reset_root_rounds: bool = True) -> Marking:
+def _purged(
+    marking: Marking, root: NodePath, *, reset_root_rounds: bool = True
+) -> Marking:
     """``marking`` with all structural progress under ``root`` forgotten.
 
     Used when a choice graph (re-)enters a child: a cycle must be able to run a
@@ -273,8 +273,7 @@ def _body_complete(node: PowlNode, path: NodePath, marking: Marking) -> bool:
     """Whether *one* round of the composite at ``path`` has just finished."""
     if isinstance(node, PartialOrder):
         return all(
-            _is_complete(c, path + (i,), marking)
-            for i, c in enumerate(node.children)
+            _is_complete(c, path + (i,), marking) for i, c in enumerate(node.children)
         )
     if isinstance(node, ChoiceGraph):
         cur = dict(marking.cursor).get(path)

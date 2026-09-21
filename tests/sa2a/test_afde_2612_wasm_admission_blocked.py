@@ -91,7 +91,9 @@ from autofde_lab.sa2a.hooks.synthesis import HookSynthesizer
 _LOCAL_FALLBACK_EMPTY_CONDITION_HASH = hashlib.sha256(b"").hexdigest()
 
 
-def _wasm_admissible_hook_ttl(hook_iri: str, hook_name: str, trigger_predicate: str) -> str:
+def _wasm_admissible_hook_ttl(
+    hook_iri: str, hook_name: str, trigger_predicate: str
+) -> str:
     """Hand-build the most charitable possible ``kh:Hook`` Turtle for this hook --
     deliberately NOT ``KnowledgeHookDefinition.to_turtle()`` (which has its own,
     separate serialization gaps out of this ticket's scope: it never emits
@@ -128,10 +130,14 @@ def test_real_wasm_engine_never_schedules_a_wellformed_matching_hook():
 
     hook_iri = "http://example.org/hook/afde_2612_wasm_probe"
     hook_ttl = _wasm_admissible_hook_ttl(
-        hook_iri=hook_iri, hook_name="afde_2612_wasm_probe", trigger_predicate="ex:status"
+        hook_iri=hook_iri,
+        hook_name="afde_2612_wasm_probe",
+        trigger_predicate="ex:status",
     )
     # Genuinely matching event: asserts the exact predicate the hook's kh:var names.
-    matching_event_ttl = "@prefix ex: <http://example.org/> . ex:pod ex:status 'CRASH_LOOP' ."
+    matching_event_ttl = (
+        "@prefix ex: <http://example.org/> . ex:pod ex:status 'CRASH_LOOP' ."
+    )
 
     result = bridge.run_hooks(hook_ttl, matching_event_ttl)
 
@@ -180,8 +186,12 @@ def test_engine_evaluate_uses_local_fallback_not_wasm_even_when_hook_ttl_is_merg
         trigger_predicate="ex:status",
     )
 
-    matching_event_ttl = "@prefix ex: <http://example.org/> . ex:pod ex:status 'CRASH_LOOP' ."
-    matching_records = engine.evaluate(base_ttl=merged_base_ttl, event_ttl=matching_event_ttl)
+    matching_event_ttl = (
+        "@prefix ex: <http://example.org/> . ex:pod ex:status 'CRASH_LOOP' ."
+    )
+    matching_records = engine.evaluate(
+        base_ttl=merged_base_ttl, event_ttl=matching_event_ttl
+    )
 
     assert len(matching_records) == 1
     matching_record = matching_records[0]
@@ -196,7 +206,9 @@ def test_engine_evaluate_uses_local_fallback_not_wasm_even_when_hook_ttl_is_merg
     unrelated_event_ttl = (
         "@prefix ex: <http://example.org/> . ex:pod ex:otherthing 'UNRELATED_SIGNAL' ."
     )
-    nonmatching_records = engine.evaluate(base_ttl=merged_base_ttl, event_ttl=unrelated_event_ttl)
+    nonmatching_records = engine.evaluate(
+        base_ttl=merged_base_ttl, event_ttl=unrelated_event_ttl
+    )
     assert len(nonmatching_records) == 1
     nonmatching_record = nonmatching_records[0]
     assert nonmatching_record.verdict == HookVerdict.NOT_FIRED

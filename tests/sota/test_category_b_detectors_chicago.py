@@ -7,8 +7,8 @@ All tests exercise pure functions with real Python data structures.
 from __future__ import annotations
 
 import json
+
 from autofde_lab_planner.baselines.k8s_baselines import (
-    get_baseline_manifest,
     synthesize_configmap_manifest,
     synthesize_secret_manifest,
     synthesize_service_manifest,
@@ -28,19 +28,24 @@ from autofde_lab_planner.models import (
     FlagdDriftResult,
     FlagDriftItem,
     MissingObjectFault,
-    ParsedSpan,
     ProbeFault,
     TraceAnomalyResult,
 )
-from autofde_lab_planner.remediators.flagd_drift import decide_flagd_remediation_commands
-from autofde_lab_planner.remediators.object_reconstruction import decide_object_reconstruction_commands
+from autofde_lab_planner.remediators.flagd_drift import (
+    decide_flagd_remediation_commands,
+)
+from autofde_lab_planner.remediators.object_reconstruction import (
+    decide_object_reconstruction_commands,
+)
 from autofde_lab_planner.remediators.otel_trace import decide_otel_remediation_commands
-from autofde_lab_planner.remediators.probe_heuristics import decide_probe_remediation_commands
-
+from autofde_lab_planner.remediators.probe_heuristics import (
+    decide_probe_remediation_commands,
+)
 
 # =============================================================================
 # B4: Probe Heuristics & Liveness/Readiness Faults Tests
 # =============================================================================
+
 
 def test_b4_parse_container_probes_extracts_liveness_and_readiness():
     deployment = {
@@ -86,9 +91,14 @@ def test_b4_detect_probe_faults_identifies_invalid_endpoint():
                             "containers": [
                                 {
                                     "name": "cartservice",
-                                    "ports": [{"containerPort": 7070}],  # Container listens on 7070
+                                    "ports": [
+                                        {"containerPort": 7070}
+                                    ],  # Container listens on 7070
                                     "readinessProbe": {
-                                        "httpGet": {"path": "/healthz", "port": 8080},  # Invalid port 8080
+                                        "httpGet": {
+                                            "path": "/healthz",
+                                            "port": 8080,
+                                        },  # Invalid port 8080
                                         "initialDelaySeconds": 10,
                                         "periodSeconds": 10,
                                     },
@@ -154,10 +164,18 @@ def test_b4_decide_probe_remediation_commands_generates_valid_patches():
             observed_port=8080,
         )
     ]
-    commands, wait_deps = decide_probe_remediation_commands(faults, namespace="astronomy-shop")
+    commands, wait_deps = decide_probe_remediation_commands(
+        faults, namespace="astronomy-shop"
+    )
     assert len(commands) == 2
-    assert "kubectl patch deployment cartservice -n astronomy-shop --type=json" in commands[0]
-    assert '{"op": "remove", "path": "/spec/template/spec/containers/0/readinessProbe"}' in commands[0]
+    assert (
+        "kubectl patch deployment cartservice -n astronomy-shop --type=json"
+        in commands[0]
+    )
+    assert (
+        '{"op": "remove", "path": "/spec/template/spec/containers/0/readinessProbe"}'
+        in commands[0]
+    )
     assert "terminationGracePeriodSeconds" in commands[1]
     assert wait_deps == ["cartservice"]
 
@@ -165,6 +183,7 @@ def test_b4_decide_probe_remediation_commands_generates_valid_patches():
 # =============================================================================
 # B6: OTel Trace Diffing Tests
 # =============================================================================
+
 
 def test_b6_parse_jaeger_traces_json_handles_raw_payload():
     raw_jaeger_payload = {
@@ -187,7 +206,10 @@ def test_b6_parse_jaeger_traces_json_handles_raw_payload():
                         "processID": "p2",
                         "duration": 1500000,
                         "references": [{"refType": "CHILD_OF", "spanID": "s1"}],
-                        "tags": [{"key": "error", "value": True}, {"key": "rpc.grpc.status_code", "value": 14}],
+                        "tags": [
+                            {"key": "error", "value": True},
+                            {"key": "rpc.grpc.status_code", "value": 14},
+                        ],
                     },
                 ],
                 "processes": {
@@ -228,7 +250,10 @@ def test_b6_detect_otel_trace_anomalies_isolates_downstream_root_cause():
                                 "processID": "p2",
                                 "duration": 2400000,
                                 "references": [{"refType": "CHILD_OF", "spanID": "s1"}],
-                                "tags": [{"key": "error", "value": True}, {"key": "rpc.grpc.status_code", "value": 14}],
+                                "tags": [
+                                    {"key": "error", "value": True},
+                                    {"key": "rpc.grpc.status_code", "value": 14},
+                                ],
                             },
                         ],
                         "processes": {
@@ -253,14 +278,19 @@ def test_b6_decide_otel_remediation_commands_returns_rollout_undo():
         root_cause_service="paymentservice",
         affected_services=("frontend", "paymentservice"),
     )
-    commands, wait_deps = decide_otel_remediation_commands(anomaly_result, namespace="astronomy-shop")
-    assert commands == ["kubectl rollout undo deployment/paymentservice -n astronomy-shop"]
+    commands, wait_deps = decide_otel_remediation_commands(
+        anomaly_result, namespace="astronomy-shop"
+    )
+    assert commands == [
+        "kubectl rollout undo deployment/paymentservice -n astronomy-shop"
+    ]
     assert wait_deps == ["paymentservice"]
 
 
 # =============================================================================
 # B9: flagd Config Drift Tests
 # =============================================================================
+
 
 def test_b9_detect_flagd_config_drift_identifies_mutated_variant():
     cm_json = {
@@ -284,7 +314,10 @@ def test_b9_detect_flagd_config_drift_identifies_mutated_variant():
     assert drift_res.drifted_flags[0].current_variant == "on"
     assert drift_res.drifted_flags[0].target_deployments == ("ad",)
     assert drift_res.repaired_flagd_json is not None
-    assert '"adFailure": {\n      "state": "ENABLED",\n      "defaultVariant": "off"' in drift_res.repaired_flagd_json
+    assert (
+        '"adFailure": {\n      "state": "ENABLED",\n      "defaultVariant": "off"'
+        in drift_res.repaired_flagd_json
+    )
 
 
 def test_b9_detect_flagd_config_drift_returns_no_drift_when_clean():
@@ -309,7 +342,12 @@ def test_b9_decide_flagd_remediation_commands_generates_patch_and_rollouts():
         configmap_name="flagd-config",
         namespace="astronomy-shop",
         drifted_flags=(
-            FlagDriftItem(flag_name="adFailure", current_variant="on", canonical_variant="off", target_deployments=("ad",)),
+            FlagDriftItem(
+                flag_name="adFailure",
+                current_variant="on",
+                canonical_variant="off",
+                target_deployments=("ad",),
+            ),
         ),
         repaired_flagd_json='{"flags":{"adFailure":{"defaultVariant":"off"}}}',
     )
@@ -326,13 +364,17 @@ def test_b9_decide_flagd_remediation_commands_generates_patch_and_rollouts():
 # B13: Missing/Corrupted Object Reconstruction Tests
 # =============================================================================
 
+
 def test_b13_detect_missing_objects_identifies_missing_service():
     deployments = [
         {"metadata": {"name": "frontend", "namespace": "hotel-reservation"}},
         {"metadata": {"name": "profile", "namespace": "hotel-reservation"}},
     ]
     services = [
-        {"metadata": {"name": "frontend", "namespace": "hotel-reservation"}, "spec": {"selector": {"app": "frontend"}}}
+        {
+            "metadata": {"name": "frontend", "namespace": "hotel-reservation"},
+            "spec": {"selector": {"app": "frontend"}},
+        }
     ]
 
     faults = detect_missing_objects(
@@ -359,7 +401,12 @@ def test_b13_detect_missing_objects_identifies_missing_configmap_ref():
                                 "env": [
                                     {
                                         "name": "GEO_CONFIG",
-                                        "valueFrom": {"configMapKeyRef": {"name": "geo-config", "key": "GeoPort"}},
+                                        "valueFrom": {
+                                            "configMapKeyRef": {
+                                                "name": "geo-config",
+                                                "key": "GeoPort",
+                                            }
+                                        },
                                     }
                                 ],
                             }
@@ -380,7 +427,9 @@ def test_b13_detect_missing_objects_identifies_missing_configmap_ref():
 
 
 def test_b13_detect_missing_objects_identifies_corrupted_service_selector():
-    deployments = [{"metadata": {"name": "reservation", "namespace": "hotel-reservation"}}]
+    deployments = [
+        {"metadata": {"name": "reservation", "namespace": "hotel-reservation"}}
+    ]
     services = [
         {
             "metadata": {"name": "reservation", "namespace": "hotel-reservation"},
@@ -417,11 +466,15 @@ def test_b13_decide_object_reconstruction_commands_generates_apply_and_patch():
         ),
     ]
 
-    commands, wait_deps = decide_object_reconstruction_commands(faults, namespace="hotel-reservation")
+    commands, wait_deps = decide_object_reconstruction_commands(
+        faults, namespace="hotel-reservation"
+    )
     assert len(commands) == 4
     assert "echo '" in commands[0] and "kubectl apply -f -" in commands[0]
     assert "echo '" in commands[1] and "kubectl apply -f -" in commands[1]
-    assert "kubectl rollout restart deployment/profile -n hotel-reservation" in commands[2]
+    assert (
+        "kubectl rollout restart deployment/profile -n hotel-reservation" in commands[2]
+    )
     assert "kubectl rollout restart deployment/geo -n hotel-reservation" in commands[3]
     assert set(wait_deps) == {"profile", "geo"}
 
@@ -445,8 +498,11 @@ def test_b13_baselines_synthesize_valid_manifests():
 # CompositePlannerEngine Integration Tests
 # =============================================================================
 
+
 def test_composite_planner_engine_runs_diagnosis_and_mitigation():
-    engine = CompositePlannerEngine(namespace="astronomy-shop", app_name="Astronomy Shop")
+    engine = CompositePlannerEngine(
+        namespace="astronomy-shop", app_name="Astronomy Shop"
+    )
 
     deployments = [
         {

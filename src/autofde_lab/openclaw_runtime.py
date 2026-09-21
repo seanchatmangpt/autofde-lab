@@ -314,7 +314,9 @@ def run_bounded(arguments: Mapping[str, Any]) -> dict[str, Any]:
             check=False,
         )
     except subprocess.TimeoutExpired as exc:
-        raise BridgeFailure("EXECUTION_TIMEOUT", f"Execution exceeded {timeout}s") from exc
+        raise BridgeFailure(
+            "EXECUTION_TIMEOUT", f"Execution exceeded {timeout}s"
+        ) from exc
     if len(completed.stdout) + len(completed.stderr) > MAX_RESULT_BYTES:
         raise BridgeFailure(
             "RESULT_LIMIT",

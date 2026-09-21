@@ -85,9 +85,7 @@ def test_astar_solves_bountytasks_curl_hsts_bypass_recipe():
 def test_astar_solves_cloudfoxable_search1_recipe():
     """CloudFoxable 'Search 1': exposed OpenSearch domain -> flag, per the
     challenge's own cheatsheet.md and challenge.yml flag."""
-    domain, plan, obs = _solve_and_reach_goal(
-        RECIPES_DIR / "cloudfoxable_search1.json"
-    )
+    domain, plan, obs = _solve_and_reach_goal(RECIPES_DIR / "cloudfoxable_search1.json")
     assert plan == [
         "run_cloudfox_endpoints",
         "find_exposed_opensearch_domain",

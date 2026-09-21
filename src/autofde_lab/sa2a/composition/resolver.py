@@ -16,7 +16,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from autofde_lab.sa2a.composition.exact_subject import ArtifactRef, ExactSubject, RepositoryRef
+from autofde_lab.sa2a.composition.exact_subject import (
+    ArtifactRef,
+    ExactSubject,
+    RepositoryRef,
+)
 
 _SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
@@ -77,10 +81,18 @@ def resolve_self_identity(repo_root: Path | None = None) -> SelfIdentity:
     """
     cwd = repo_root or Path.cwd()
     sha = subprocess.run(
-        ["git", "rev-parse", "HEAD"], cwd=cwd, capture_output=True, text=True, check=True
+        ["git", "rev-parse", "HEAD"],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=True,
     ).stdout.strip()
     status = subprocess.run(
-        ["git", "status", "--porcelain"], cwd=cwd, capture_output=True, text=True, check=True
+        ["git", "status", "--porcelain"],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=True,
     ).stdout
     return SelfIdentity(sha=sha, dirty=bool(status.strip()))
 
@@ -104,7 +116,8 @@ class SubjectResolver:
             raise
         except (AttributeError, TypeError, KeyError, ValueError) as exc:
             raise SubjectResolutionError(
-                REFUSED_MALFORMED_MANIFEST, f"candidate_manifest has an unexpected shape: {exc!r}"
+                REFUSED_MALFORMED_MANIFEST,
+                f"candidate_manifest has an unexpected shape: {exc!r}",
             ) from exc
 
     def _resolve_unguarded(self, candidate_manifest: Mapping[str, Any]) -> ExactSubject:
@@ -114,10 +127,14 @@ class SubjectResolver:
                 REFUSED_FLOATING_REPOSITORY_REF, "release_id is empty"
             )
 
-        repositories = self._resolve_repositories(candidate_manifest.get("repositories", ()))
+        repositories = self._resolve_repositories(
+            candidate_manifest.get("repositories", ())
+        )
         artifacts = self._resolve_artifacts(candidate_manifest.get("artifacts", ()))
 
-        root_manifest_digest = str(candidate_manifest.get("root_manifest_digest", "")).strip()
+        root_manifest_digest = str(
+            candidate_manifest.get("root_manifest_digest", "")
+        ).strip()
         if not root_manifest_digest:
             raise SubjectResolutionError(
                 REFUSED_MISSING_ROOT_MANIFEST_DIGEST, "root_manifest_digest is empty"
@@ -130,13 +147,19 @@ class SubjectResolver:
             root_manifest_digest=root_manifest_digest,
             semantic_profile=str(candidate_manifest.get("semantic_profile", "")),
             court_revision=str(candidate_manifest.get("court_revision", "")),
-            falsifier_corpus_digest=str(candidate_manifest.get("falsifier_corpus_digest", "")),
+            falsifier_corpus_digest=str(
+                candidate_manifest.get("falsifier_corpus_digest", "")
+            ),
             query_set_digest=str(candidate_manifest.get("query_set_digest", "")),
-            environment_identity=str(candidate_manifest.get("environment_identity", "")),
+            environment_identity=str(
+                candidate_manifest.get("environment_identity", "")
+            ),
         )
 
     @staticmethod
-    def _resolve_repositories(raw: Sequence[Mapping[str, Any]]) -> tuple[RepositoryRef, ...]:
+    def _resolve_repositories(
+        raw: Sequence[Mapping[str, Any]],
+    ) -> tuple[RepositoryRef, ...]:
         by_name: dict[str, RepositoryRef] = {}
         refs: list[RepositoryRef] = []
         for entry in raw:

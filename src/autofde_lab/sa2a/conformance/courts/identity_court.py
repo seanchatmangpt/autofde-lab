@@ -26,14 +26,12 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
 
 from autofde_lab.sa2a.algebra import (
-    LAWFUL_TRANSITIONS,
-    RefusalCause,
     Standing,
     can_transition,
 )
-from autofde_lab.sa2a.authority.broker import AuthorityBroker, ConsequenceRequest
+from autofde_lab.sa2a.authority.broker import AuthorityBroker
 from autofde_lab.sa2a.construct.constructor import ExecutableArtifact
-from autofde_lab.sa2a.envelope import SemanticEnvelope, SemanticGraph
+from autofde_lab.sa2a.envelope import SemanticEnvelope
 from autofde_lab.sa2a.root_manifest import RootManifest
 
 # Formal Rule Identifiers (RFC-SA2A-002 Gate 1)
@@ -56,7 +54,9 @@ class IdentityVerdict(str, Enum):
 class IdentityCourtError(Exception):
     """Base exception for Gate 1 Identity & Root Manifest Court violations."""
 
-    def __init__(self, rule_id: str, message: str, details: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(
+        self, rule_id: str, message: str, details: Optional[Dict[str, Any]] = None
+    ) -> None:
         super().__init__(f"[{rule_id}] {message}")
         self.rule_id = rule_id
         self.message = message
@@ -204,15 +204,15 @@ class IdentityCourt:
         elif repo_path is not None:
             resolved_actual = self.resolve_git_sha(repo_path)
         else:
-            raise ValueError("Must provide either actual_sha or repo_path for Git SHA verification")
+            raise ValueError(
+                "Must provide either actual_sha or repo_path for Git SHA verification"
+            )
 
         expected_norm = expected_sha.strip().lower()
-        passed = (resolved_actual == expected_norm)
+        passed = resolved_actual == expected_norm
 
         if not passed:
-            err_msg = (
-                f"Git SHA mismatch: declared {expected_norm} != actual repository SHA {resolved_actual}"
-            )
+            err_msg = f"Git SHA mismatch: declared {expected_norm} != actual repository SHA {resolved_actual}"
             if fail_closed:
                 raise GitShaMismatchError(
                     err_msg,
@@ -243,7 +243,9 @@ class IdentityCourt:
         actual_digest: str
         if isinstance(artifact, ExecutableArtifact):
             # Calculate SHA-256 over raw artifact code and compare against declared artifact_digest
-            computed_from_code = hashlib.sha256(artifact.source_code.encode("utf-8")).hexdigest()
+            computed_from_code = hashlib.sha256(
+                artifact.source_code.encode("utf-8")
+            ).hexdigest()
             if artifact.artifact_digest.lower() != computed_from_code.lower():
                 err_msg = (
                     f"ExecutableArtifact internal digest corrupt: "
@@ -278,12 +280,10 @@ class IdentityCourt:
             raise TypeError(f"Unsupported artifact type: {type(artifact)}")
 
         expected_norm = expected_digest.strip().lower()
-        passed = (actual_digest.lower() == expected_norm)
+        passed = actual_digest.lower() == expected_norm
 
         if not passed:
-            err_msg = (
-                f"Artifact digest mismatch: declared {expected_norm} != computed {actual_digest}"
-            )
+            err_msg = f"Artifact digest mismatch: declared {expected_norm} != computed {actual_digest}"
             if fail_closed:
                 raise ArtifactDigestMismatchError(
                     err_msg,
@@ -294,7 +294,10 @@ class IdentityCourt:
                 passed=False,
                 verdict=IdentityVerdict.NON_CONFORMANT,
                 error_message=err_msg,
-                details={"expected_digest": expected_norm, "actual_digest": actual_digest},
+                details={
+                    "expected_digest": expected_norm,
+                    "actual_digest": actual_digest,
+                },
             )
 
         return IdentityCheckResult(
@@ -382,7 +385,9 @@ class IdentityCourt:
                     semantic_profile_versions=disk_data["semantic_profile_versions"],
                     canonicalization_algorithm=disk_data["canonicalization_algorithm"],
                     manufacturer_identities=disk_data["manufacturer_identities"],
-                    admitted_validator_identities=disk_data["admitted_validator_identities"],
+                    admitted_validator_identities=disk_data[
+                        "admitted_validator_identities"
+                    ],
                     authority_broker_identity=disk_data["authority_broker_identity"],
                     brce_contract=disk_data["brce_contract"],
                     receipt_law=disk_data["receipt_law"],
@@ -464,7 +469,11 @@ class IdentityCourt:
                 )
 
         # Admitted tags membership check
-        admitted_set = set(admitted_tags.keys()) if isinstance(admitted_tags, Mapping) else set(admitted_tags)
+        admitted_set = (
+            set(admitted_tags.keys())
+            if isinstance(admitted_tags, Mapping)
+            else set(admitted_tags)
+        )
         if tag_str not in admitted_set:
             err_msg = f"Refusal: Counterfeit or unadmitted tag '{tag_str}' rejected by identity court"
             if fail_closed:
@@ -501,7 +510,11 @@ class IdentityCourt:
         """
         # Extract standing
         current_standing: Standing
-        raw_standing = envelope.standing if isinstance(envelope, SemanticEnvelope) else envelope.get("standing")
+        raw_standing = (
+            envelope.standing
+            if isinstance(envelope, SemanticEnvelope)
+            else envelope.get("standing")
+        )
         try:
             current_standing = Standing(raw_standing)
         except (ValueError, KeyError) as exc:
@@ -525,14 +538,20 @@ class IdentityCourt:
                 if fail_closed:
                     raise StandingEscalationRefusalError(
                         err_msg,
-                        {"prior_standing": prior_standing.value, "target_standing": current_standing.value},
+                        {
+                            "prior_standing": prior_standing.value,
+                            "target_standing": current_standing.value,
+                        },
                     )
                 return IdentityCheckResult(
                     rule_id=SA2A_ENV_STANDING_ESCALATION,
                     passed=False,
                     verdict=IdentityVerdict.REFUSED,
                     error_message=err_msg,
-                    details={"prior_standing": prior_standing.value, "target_standing": current_standing.value},
+                    details={
+                        "prior_standing": prior_standing.value,
+                        "target_standing": current_standing.value,
+                    },
                 )
 
         # Extract attributes whether Pydantic or Mapping
@@ -547,13 +566,18 @@ class IdentityCourt:
             auth_req = None
             if auth_req_dict:
                 from autofde_lab.sa2a.envelope import AuthorityRequirement
+
                 auth_req = AuthorityRequirement(**auth_req_dict)
             prov_dict = envelope.get("provenance", {})
             actor_id = prov_dict.get("issuer", "urn:agent:unknown")
             refusal_cause = envelope.get("refusalCause")
 
         # 2. Refusal check: non-admissible standings must declare refusal cause
-        if current_standing in {Standing.REFUSED, Standing.BLOCKED, Standing.UNSUPPORTED}:
+        if current_standing in {
+            Standing.REFUSED,
+            Standing.BLOCKED,
+            Standing.UNSUPPORTED,
+        }:
             if not refusal_cause:
                 err_msg = f"Non-admissible standing {current_standing.value} lacks required refusalCause"
                 if fail_closed:
@@ -566,7 +590,11 @@ class IdentityCourt:
                 )
 
         # 3. Terminal/Executed standing requires receipts
-        if current_standing in {Standing.EXECUTED, Standing.RECEIPTED, Standing.ATTESTED}:
+        if current_standing in {
+            Standing.EXECUTED,
+            Standing.RECEIPTED,
+            Standing.ATTESTED,
+        }:
             if not receipts:
                 err_msg = (
                     f"Self-assertion refusal: Standing {current_standing.value} cannot be asserted "
@@ -622,7 +650,10 @@ class IdentityCourt:
                         passed=False,
                         verdict=IdentityVerdict.REFUSED,
                         error_message=err_msg,
-                        details={"actor_id": actor_id, "standing": current_standing.value},
+                        details={
+                            "actor_id": actor_id,
+                            "standing": current_standing.value,
+                        },
                     )
 
         return IdentityCheckResult(
@@ -639,7 +670,9 @@ class IdentityCourt:
     ) -> IdentityCheckResult:
         """Verify semantic graph digest integrity within envelope (SA2A-ENV-DIGEST-MISMATCH)."""
         if envelope.graph is not None:
-            computed_graph_digest = hashlib.sha256(envelope.graph.content.encode("utf-8")).hexdigest()
+            computed_graph_digest = hashlib.sha256(
+                envelope.graph.content.encode("utf-8")
+            ).hexdigest()
             if envelope.graph.digest.lower() != computed_graph_digest.lower():
                 err_msg = (
                     f"Envelope graph payload tamper: declared digest {envelope.graph.digest} "
@@ -755,6 +788,7 @@ Gate1IdentityCourt = IdentityCourt
 # In-module Test Procedures (Directly executable for court qualification)
 # =============================================================================
 
+
 def test_git_sha_mismatch_detection(court: Optional[IdentityCourt] = None) -> None:
     """Implement test for Git SHA mismatch detection (CHI-ID-GIT-SHA)."""
     c = court or IdentityCourt()
@@ -781,7 +815,9 @@ def test_git_sha_mismatch_detection(court: Optional[IdentityCourt] = None) -> No
     assert res.rule_id == CHI_ID_GIT_SHA
 
 
-def test_artifact_digest_mismatch_detection(court: Optional[IdentityCourt] = None) -> None:
+def test_artifact_digest_mismatch_detection(
+    court: Optional[IdentityCourt] = None,
+) -> None:
     """Implement test for Artifact digest mismatch detection (CHI-ID-ARTIFACT-DIGEST)."""
     c = court or IdentityCourt()
     content = "print('admitted safe operation')"
@@ -850,7 +886,9 @@ def test_root_manifest_tamper_detection(court: Optional[IdentityCourt] = None) -
     assert res.verdict == IdentityVerdict.CONFORMANT
 
 
-def test_counterfeit_tag_resolution_refusal(court: Optional[IdentityCourt] = None) -> None:
+def test_counterfeit_tag_resolution_refusal(
+    court: Optional[IdentityCourt] = None,
+) -> None:
     """Implement test for Counterfeit tag resolution refusal (CHI-ID-COUNTERFEIT-TAG)."""
     c = court or IdentityCourt()
     admitted = {"urn:tag:autofde:safe_consequence", "urn:tag:airbus:navigation"}
@@ -883,7 +921,9 @@ def test_counterfeit_tag_resolution_refusal(court: Optional[IdentityCourt] = Non
     assert spoofed, "Failed to refuse tag in unadmitted namespace"
 
 
-def test_envelope_standing_escalation_refusal(court: Optional[IdentityCourt] = None) -> None:
+def test_envelope_standing_escalation_refusal(
+    court: Optional[IdentityCourt] = None,
+) -> None:
     """Implement test for Semantic envelope standing escalation refusal (SA2A-ENV-STANDING-ESCALATION)."""
     c = court or IdentityCourt()
 
@@ -901,7 +941,9 @@ def test_envelope_standing_escalation_refusal(court: Optional[IdentityCourt] = N
         )
     except StandingEscalationRefusalError:
         refused_jump = True
-    assert refused_jump, "Failed to refuse unlawful transition jump from CANDIDATE to EXECUTED"
+    assert refused_jump, (
+        "Failed to refuse unlawful transition jump from CANDIDATE to EXECUTED"
+    )
 
     # 2. Self-asserted AUTHORIZED standing without valid broker grant
     broker = AuthorityBroker()
@@ -922,4 +964,6 @@ def test_envelope_standing_escalation_refusal(court: Optional[IdentityCourt] = N
         )
     except StandingEscalationRefusalError:
         refused_escalation = True
-    assert refused_escalation, "Failed to refuse self-asserted AUTHORIZED without broker grant"
+    assert refused_escalation, (
+        "Failed to refuse self-asserted AUTHORIZED without broker grant"
+    )

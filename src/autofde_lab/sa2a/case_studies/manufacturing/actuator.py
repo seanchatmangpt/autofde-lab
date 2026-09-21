@@ -19,6 +19,7 @@ never assuming a specific one.
 
 Only shared import allowed across builder modules, per contract: ocel_adapter.
 """
+
 from __future__ import annotations
 
 import copy

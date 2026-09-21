@@ -51,7 +51,9 @@ def test_classify_triz_contradiction_is_unsupported_for_every_uncovered_pair() -
     assert "no real matrix cell exists" in result.reason
 
 
-def test_generate_triz_candidates_emits_one_real_candidate_per_matched_principle() -> None:
+def test_generate_triz_candidates_emits_one_real_candidate_per_matched_principle() -> (
+    None
+):
     hypothesis = DesiredStateHypothesis(
         hypothesis_id="rule-based-v1",
         targets=({"kind": "latency_reduction"},),
@@ -75,7 +77,8 @@ def test_generate_triz_candidates_emits_one_real_candidate_per_matched_principle
         assert len(candidate.migration_actions) == 1
 
     principle_numbers = sorted(
-        int(c.assumptions[0].split("TRIZ principle ")[1].split(":")[0]) for c in candidates
+        int(c.assumptions[0].split("TRIZ principle ")[1].split(":")[0])
+        for c in candidates
     )
     assert principle_numbers == [1, 10, 28, 35]
 
@@ -116,8 +119,18 @@ def test_generate_triz_candidates_is_plural_across_multiple_hypotheses() -> None
     candidates = generate_triz_candidates(hypotheses, contradiction)
 
     assert len(candidates) == 8
-    assert {c.candidate_id for c in candidates} == {c.candidate_id for c in candidates}  # all present
-    hyp_1_targets = tuple(c for c in candidates if c.target_state_assertions == ("{'kind': 'latency_reduction'}",))
-    hyp_2_targets = tuple(c for c in candidates if c.target_state_assertions == ("{'kind': 'throughput_increase'}",))
+    assert {c.candidate_id for c in candidates} == {
+        c.candidate_id for c in candidates
+    }  # all present
+    hyp_1_targets = tuple(
+        c
+        for c in candidates
+        if c.target_state_assertions == ("{'kind': 'latency_reduction'}",)
+    )
+    hyp_2_targets = tuple(
+        c
+        for c in candidates
+        if c.target_state_assertions == ("{'kind': 'throughput_increase'}",)
+    )
     assert len(hyp_1_targets) == 4
     assert len(hyp_2_targets) == 4

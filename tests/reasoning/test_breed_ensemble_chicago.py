@@ -22,7 +22,10 @@ import pytest
 from autofde_lab.ocel.object_centric_conformance import check_object_centric_conformance
 from autofde_lab.powl.ocel_bridge import OcelExecutionRecorder
 from autofde_lab.reasoning.breed_ensemble import BreedEnsembleMember, run_breed_ensemble
-from autofde_lab.receipts.wasm4pm_cognition import Wasm4pmCognitionUnavailable, resolve_wpm_cognition_entry
+from autofde_lab.receipts.wasm4pm_cognition import (
+    Wasm4pmCognitionUnavailable,
+    resolve_wpm_cognition_entry,
+)
 
 
 def _hearsay_cli_available() -> bool:
@@ -45,14 +48,27 @@ requires_real_wasm4pm_cli = pytest.mark.skipif(
 _HEARSAY_INPUT = {
     "facts": [{"key": "fact", "value": "pod crashlooping"}],
     "rules": [
-        {"id": "r0", "premise": ["fact-hypotheses"], "conclusion": "hypothesis:oom kill", "certainty": 1.0},
+        {
+            "id": "r0",
+            "premise": ["fact-hypotheses"],
+            "conclusion": "hypothesis:oom kill",
+            "certainty": 1.0,
+        },
     ],
 }
 _IBE_INPUT = {
     "candidates": [{"id": "oom-kill", "score": 0.0, "eliminated": False}],
     "facts": [{"key": "evidence", "value": "pod_restarts_spike"}],
-    "rules": [{"id": "r0", "premise": ["oom-kill"], "conclusion": "pod_restarts_spike", "certainty": 1.0}],
+    "rules": [
+        {
+            "id": "r0",
+            "premise": ["oom-kill"],
+            "conclusion": "pod_restarts_spike",
+            "certainty": 1.0,
+        }
+    ],
 }
+
 
 def test_zero_members_raises_value_error() -> None:
     with pytest.raises(ValueError):
@@ -63,7 +79,9 @@ def test_zero_members_raises_value_error() -> None:
 def test_single_member_runs_directly_with_no_arbitration() -> None:
     """The real, explicitly-narrower degenerate case: `arbitrated` stays
     `None` even when the one member itself produced real evidence."""
-    result = run_breed_ensemble([BreedEnsembleMember(breed="hearsay", build_input=lambda: _HEARSAY_INPUT)])
+    result = run_breed_ensemble(
+        [BreedEnsembleMember(breed="hearsay", build_input=lambda: _HEARSAY_INPUT)]
+    )
     assert "hearsay" in result.member_evidence
     assert result.member_evidence["hearsay"].selected == "hypothesis:oom kill"
     assert result.arbitrated is None
@@ -119,7 +137,10 @@ def test_real_arbitration_resolves_a_genuine_disagreement() -> None:
     result = run_breed_ensemble(members, max_workers=2, timeout_s=20.0)
 
     assert set(result.member_evidence) == {"hearsay", "abductive_ibe"}
-    assert result.member_evidence["hearsay"].selected != result.member_evidence["abductive_ibe"].selected
+    assert (
+        result.member_evidence["hearsay"].selected
+        != result.member_evidence["abductive_ibe"].selected
+    )
     assert result.arbitrated is not None
     # abductive_ibe's real, non-zero derived confidence dominates hearsay's
     # real, honestly-zero one (hearsay's BreedOutput carries no populated
@@ -153,21 +174,27 @@ def test_resolution_threshold_is_a_real_caller_configurable_bar() -> None:
         BreedEnsembleMember(breed="hearsay", build_input=lambda: _HEARSAY_INPUT),
         BreedEnsembleMember(breed="abductive_ibe", build_input=lambda: _IBE_INPUT),
     ]
-    lenient = run_breed_ensemble(members, max_workers=2, resolution_threshold=0.1, timeout_s=20.0)
+    lenient = run_breed_ensemble(
+        members, max_workers=2, resolution_threshold=0.1, timeout_s=20.0
+    )
     # This fixture's real winning weight lands at ~1.0 (hearsay's generic
     # confidence derivation is honestly 0.0 here -- see the arbitration
     # test above), so an unreachable threshold (>1.0, real floating-point
     # rounding can otherwise push a ~1.0 ratio either side of a threshold
     # sitting right at the boundary) is what proves the bar is real and
     # caller-configurable without relying on float-boundary luck.
-    strict = run_breed_ensemble(members, max_workers=2, resolution_threshold=1.5, timeout_s=20.0)
+    strict = run_breed_ensemble(
+        members, max_workers=2, resolution_threshold=1.5, timeout_s=20.0
+    )
 
     assert lenient.resolved is True
     assert strict.resolved is False
 
 
 @requires_real_wasm4pm_cli
-def test_real_ocel_v2_trace_is_produced_when_a_recorder_is_supplied_and_conforms() -> None:
+def test_real_ocel_v2_trace_is_produced_when_a_recorder_is_supplied_and_conforms() -> (
+    None
+):
     """Closes the real gap the van der Aalst-style audit found: this real,
     admitted, concurrent POWL process ran with zero OCEL trace anywhere.
     Confirm a real OCEL 2.0 log is produced when a `recorder` is supplied,
@@ -178,13 +205,17 @@ def test_real_ocel_v2_trace_is_produced_when_a_recorder_is_supplied_and_conforms
         BreedEnsembleMember(breed="abductive_ibe", build_input=lambda: _IBE_INPUT),
     ]
 
-    result = run_breed_ensemble(members, max_workers=2, timeout_s=20.0, recorder=recorder)
+    result = run_breed_ensemble(
+        members, max_workers=2, timeout_s=20.0, recorder=recorder
+    )
     assert result.member_evidence  # real evidence was produced
 
     log = recorder.close()
     assert len(log.events) == 2
 
     intended = {"breed-ensemble-run-001": ("hearsay", "abductive_ibe")}
-    conformance = check_object_centric_conformance(log, intended_traces_by_object_id=intended)
+    conformance = check_object_centric_conformance(
+        log, intended_traces_by_object_id=intended
+    )
     assert conformance.all_conform is True
     assert conformance.overall_fitness == 1.0

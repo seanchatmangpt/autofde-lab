@@ -12,10 +12,10 @@ from __future__ import annotations
 from rdflib import Graph
 
 from autofde_lab.sa2a.admission.falsifier_corpus import (
-    FalsifierCorpusVerdict,
-    FalsifierTrialResult,
     _COMPOSITION_FENCE_FIXTURES,
     _SPARQL_FIXTURES,
+    FalsifierCorpusVerdict,
+    FalsifierTrialResult,
     compute_falsifier_corpus_digest,
     run_falsifier_corpus,
 )
@@ -88,8 +88,15 @@ class TestFalsifierCorpusVerdictAggregation:
         verdict = FalsifierCorpusVerdict(
             corpus_digest="irrelevant-for-this-check",
             trials=(
-                FalsifierTrialResult(falsifier_id="A", description="d", survived=False, detail="caught"),
-                FalsifierTrialResult(falsifier_id="B", description="d", survived=True, detail="NOT caught"),
+                FalsifierTrialResult(
+                    falsifier_id="A", description="d", survived=False, detail="caught"
+                ),
+                FalsifierTrialResult(
+                    falsifier_id="B",
+                    description="d",
+                    survived=True,
+                    detail="NOT caught",
+                ),
             ),
         )
         assert verdict.all_mandatory_caught is False
@@ -100,8 +107,12 @@ class TestFalsifierCorpusVerdictAggregation:
         verdict = FalsifierCorpusVerdict(
             corpus_digest="irrelevant-for-this-check",
             trials=(
-                FalsifierTrialResult(falsifier_id="A", description="d", survived=False, detail="caught"),
-                FalsifierTrialResult(falsifier_id="B", description="d", survived=False, detail="caught"),
+                FalsifierTrialResult(
+                    falsifier_id="A", description="d", survived=False, detail="caught"
+                ),
+                FalsifierTrialResult(
+                    falsifier_id="B", description="d", survived=False, detail="caught"
+                ),
             ),
         )
         assert verdict.all_mandatory_caught is True
@@ -115,8 +126,15 @@ class TestAdversarialFixturesAreGenuinelyAdversarial:
 
     def test_safe_consequence_action_with_authority_does_not_trigger(self) -> None:
         suite = FalsifierSuite(include_defaults=False)
-        fdef = FalsifierSuite(include_defaults=True).get_falsifier("FALSIFIER_CONSEQUENCE_WITHOUT_AUTHORITY")
-        suite.register(name=fdef.name, query=fdef.query, description=fdef.description, falsifier_id=fdef.falsifier_id)
+        fdef = FalsifierSuite(include_defaults=True).get_falsifier(
+            "FALSIFIER_CONSEQUENCE_WITHOUT_AUTHORITY"
+        )
+        suite.register(
+            name=fdef.name,
+            query=fdef.query,
+            description=fdef.description,
+            falsifier_id=fdef.falsifier_id,
+        )
         safe_ttl = (
             "@prefix afl: <urn:autofde-lab:> .\n"
             'afl:action-safe afl:consequenceClass "DESTRUCTIVE" ; afl:requiresAuthority afl:auth-safe .\n'
@@ -127,8 +145,15 @@ class TestAdversarialFixturesAreGenuinelyAdversarial:
 
     def test_safe_projection_without_canonical_claim_does_not_trigger(self) -> None:
         suite = FalsifierSuite(include_defaults=False)
-        fdef = FalsifierSuite(include_defaults=True).get_falsifier("FALSIFIER_PROJECTION_AS_CANONICAL")
-        suite.register(name=fdef.name, query=fdef.query, description=fdef.description, falsifier_id=fdef.falsifier_id)
+        fdef = FalsifierSuite(include_defaults=True).get_falsifier(
+            "FALSIFIER_PROJECTION_AS_CANONICAL"
+        )
+        suite.register(
+            name=fdef.name,
+            query=fdef.query,
+            description=fdef.description,
+            falsifier_id=fdef.falsifier_id,
+        )
         safe_ttl = "@prefix afl: <urn:autofde-lab:> .\nafl:projection-safe a afl:Projection .\n"
         graph = Graph()
         graph.parse(data=safe_ttl, format="turtle")

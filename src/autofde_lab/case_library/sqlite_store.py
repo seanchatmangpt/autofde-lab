@@ -75,7 +75,9 @@ def _initialize(connection: sqlite3.Connection) -> None:
         row["name"] for row in connection.execute("PRAGMA table_info(cases)").fetchall()
     }
     if "confirmed_via" not in existing_columns:
-        connection.execute("ALTER TABLE cases ADD COLUMN confirmed_via TEXT NOT NULL DEFAULT 'n/a'")
+        connection.execute(
+            "ALTER TABLE cases ADD COLUMN confirmed_via TEXT NOT NULL DEFAULT 'n/a'"
+        )
 
 
 @contextmanager

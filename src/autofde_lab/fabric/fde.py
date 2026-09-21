@@ -522,7 +522,9 @@ def _one_int(node, predicate: str, subject: str) -> int:
     return int(value)
 
 
-def _one_bool(node, predicate: str, subject: str, default: Optional[bool] = None) -> bool:
+def _one_bool(
+    node, predicate: str, subject: str, default: Optional[bool] = None
+) -> bool:
     terms = node.get(predicate, [])
     if not terms:
         if default is None:
@@ -660,7 +662,9 @@ def parse_authority_turtle(text: str) -> AuthorityModel:
             model.postconditions[subject] = Postcondition(
                 iri=subject,
                 identifier=_one_literal(node, FDET + "identifier", subject),
-                expression=_one_literal(node, FDET + "postconditionExpression", subject),
+                expression=_one_literal(
+                    node, FDET + "postconditionExpression", subject
+                ),
             )
         if has("AdoptionOwner"):
             model.adoption_owners[subject] = AdoptionOwner(
@@ -710,7 +714,9 @@ def parse_authority_turtle(text: str) -> AuthorityModel:
                 validity=_one_iri(node, FDET + "validity", subject),
                 consequence_bounds=_one_iri(node, FDET + "consequenceBounds", subject),
                 requires_verifier=_iri_values(node, FDET + "requiresVerifier"),
-                requires_postcondition=_iri_values(node, FDET + "requiresPostcondition"),
+                requires_postcondition=_iri_values(
+                    node, FDET + "requiresPostcondition"
+                ),
                 adoption_owner=_opt_iri(node, FDET + "adoptionOwner"),
                 sunset_authority=_opt_iri(node, FDET + "sunsetAuthority"),
                 delegation_allowed=_one_bool(
@@ -810,13 +816,21 @@ def validate_authority(model: AuthorityModel) -> AuthorityModel:
             )
 
     for label, iris, table in (
-        ("fdet:conveysDecisionRight", grant.conveys_decision_right, model.decision_rights),
+        (
+            "fdet:conveysDecisionRight",
+            grant.conveys_decision_right,
+            model.decision_rights,
+        ),
         ("fdet:authorizesCapability", grant.authorizes_capability, model.capabilities),
         ("fdet:authorizesOperation", grant.authorizes_operation, model.operations),
         ("fdet:resourceScope", grant.resource_scope, model.resource_scopes),
         ("fdet:environmentScope", grant.environment_scope, model.environment_scopes),
         ("fdet:requiresVerifier", grant.requires_verifier, model.verifiers),
-        ("fdet:requiresPostcondition", grant.requires_postcondition, model.postconditions),
+        (
+            "fdet:requiresPostcondition",
+            grant.requires_postcondition,
+            model.postconditions,
+        ),
     ):
         if not iris:
             raise AuthorityError(
@@ -1192,7 +1206,11 @@ def permits(
 
     bounds = model.bounds[grant.consequence_bounds]
     for actual, limit, what in (
-        (proposed.affected_resources, bounds.max_affected_resources, "affected resources"),
+        (
+            proposed.affected_resources,
+            bounds.max_affected_resources,
+            "affected resources",
+        ),
         (
             proposed.irreversible_actions,
             bounds.max_irreversible_actions,

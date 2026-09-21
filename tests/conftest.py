@@ -112,9 +112,7 @@ def real_turbo_fieldfare_server():
                 )
             time.sleep(1)
         else:
-            pytest.fail(
-                "Real TurboFieldfareServer did not report healthy within 60s."
-            )
+            pytest.fail("Real TurboFieldfareServer did not report healthy within 60s.")
         yield BASE_URL
     finally:
         process.terminate()
@@ -130,7 +128,9 @@ def real_dspy_lm(real_turbo_fieldfare_server):
 
     from autofde_lab.hub.solver.dspy_policy import DEFAULT_LM_MODEL
 
-    lm = dspy.LM(DEFAULT_LM_MODEL, api_base=f"{real_turbo_fieldfare_server}/v1", api_key="local")
+    lm = dspy.LM(
+        DEFAULT_LM_MODEL, api_base=f"{real_turbo_fieldfare_server}/v1", api_key="local"
+    )
     dspy.configure(lm=lm)
     return lm
 

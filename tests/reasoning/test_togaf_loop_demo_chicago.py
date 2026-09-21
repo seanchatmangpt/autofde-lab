@@ -29,11 +29,15 @@ def test_all_twenty_real_phases_fire_in_the_real_intended_order() -> None:
     assert conformance.all_conform is True
     assert conformance.overall_fitness == 1.0
 
-    execution_object = next(o for o in conformance.per_object if o.object_type == "TogafLoopExecution")
+    execution_object = next(
+        o for o in conformance.per_object if o.object_type == "TogafLoopExecution"
+    )
     assert execution_object.observed_trace == PHASE_SEQUENCE
 
 
-def test_reference_model_selection_atoms_expose_real_ggen_generated_vocabulary_never_a_fabricated_choice() -> None:
+def test_reference_model_selection_atoms_expose_real_ggen_generated_vocabulary_never_a_fabricated_choice() -> (
+    None
+):
     """Iteration 4 closed the phase_b/phase_c 'no reference-model-selection
     mechanism exists' gaps via real, ggen-generated
     togaf_artifacts.StandingValue vocabulary. Confirm both atoms name real
@@ -46,11 +50,16 @@ def test_reference_model_selection_atoms_expose_real_ggen_generated_vocabulary_n
     assert phase_b["selected"] is None
 
     phase_c = phase_results["phase_c_reference_model_selection"]
-    assert "IntegratedInfoInfrastructureReferenceModel" in phase_c["available_reference_models"]
+    assert (
+        "IntegratedInfoInfrastructureReferenceModel"
+        in phase_c["available_reference_models"]
+    )
     assert phase_c["selected"] is None
 
 
-def test_ggen_generated_togaf_artifacts_are_really_constructed_never_fabricating_approval() -> None:
+def test_ggen_generated_togaf_artifacts_are_really_constructed_never_fabricating_approval() -> (
+    None
+):
     """Iteration 3 closed 3 UNSUPPORTED gaps via real ggen generation
     (ontology/togaf-artifacts.ttl -> togaf_artifacts.py). Confirm the
     real generated types are actually constructed with real data, and
@@ -78,7 +87,9 @@ def test_unsupported_togaf_substeps_are_named_explicitly_not_silently_dropped() 
         assert reason, f"{substep} has no real stated reason"
 
 
-def test_architecture_candidate_and_falsification_are_really_wired_not_left_unused() -> None:
+def test_architecture_candidate_and_falsification_are_really_wired_not_left_unused() -> (
+    None
+):
     """Prior audit found laboratory.py's ArchitectureCandidate/
     falsify_candidate machinery real but completely unused by this
     module. Confirm it is now actually invoked, and that the honest
@@ -86,7 +97,10 @@ def test_architecture_candidate_and_falsification_are_really_wired_not_left_unus
     fabricated SURVIVES/FALSIFIED verdict."""
     _, phase_results, _ = run_full_togaf_loop_with_ocel()
 
-    assert phase_results["phase_a_architecture_vision_artifact"]["candidate_id"] == "checkout-latency-vision-v1"
+    assert (
+        phase_results["phase_a_architecture_vision_artifact"]["candidate_id"]
+        == "checkout-latency-vision-v1"
+    )
 
     falsification = phase_results["phase_f_prioritize_via_falsification"]
     assert falsification["falsification_standing"] == "UNSUPPORTED"
@@ -98,12 +112,16 @@ def test_phase_d_enumerates_the_real_documented_decision_points_it_refuses() -> 
     points being declined."""
     _, phase_results, _ = run_full_togaf_loop_with_ocel()
 
-    refused_points = phase_results["phase_d_delegated_to_gymact_boundary_refusal"]["refused_decision_points"]
+    refused_points = phase_results["phase_d_delegated_to_gymact_boundary_refusal"][
+        "refused_decision_points"
+    ]
     assert len(refused_points) == 9
     assert "develop_target_technology_architecture" in refused_points
 
 
-def test_phase_d_is_a_real_explicit_refusal_never_a_fabricated_technology_decision() -> None:
+def test_phase_d_is_a_real_explicit_refusal_never_a_fabricated_technology_decision() -> (
+    None
+):
     """The one place this module must stay honest: Phase D belongs to
     gymact, not this repo. Confirm the real recorded result names the
     refusal explicitly, rather than silently proceeding as if a real
@@ -126,7 +144,9 @@ def test_every_phase_produced_a_real_nonempty_computed_result() -> None:
         assert phase_results[label], f"{label}'s real result was empty"
 
 
-def test_phase_e_delta_and_candidate_match_the_real_deterministic_orchestrator() -> None:
+def test_phase_e_delta_and_candidate_match_the_real_deterministic_orchestrator() -> (
+    None
+):
     """Cross-check against the real world_transformation_orchestrator
     functions directly -- this module's Phase E must not silently drift
     from the already-tested rule-based selector."""
@@ -150,10 +170,15 @@ def test_phase_e_delta_and_candidate_match_the_real_deterministic_orchestrator()
     assert phase_e["candidate_label"] == expected_candidate.label
 
 
-def test_the_conformance_verdict_is_computed_by_the_real_independent_module_not_reimplemented_here() -> None:
+def test_the_conformance_verdict_is_computed_by_the_real_independent_module_not_reimplemented_here() -> (
+    None
+):
     """Confirm togaf_loop_demo imports and calls the real
     check_object_centric_conformance rather than reimplementing its own
     scoring -- a structural, no-dual-bookkeeping check."""
     import autofde_lab.reasoning.togaf_loop_demo as module
 
-    assert module.check_object_centric_conformance.__module__ == "autofde_lab.ocel.object_centric_conformance"
+    assert (
+        module.check_object_centric_conformance.__module__
+        == "autofde_lab.ocel.object_centric_conformance"
+    )

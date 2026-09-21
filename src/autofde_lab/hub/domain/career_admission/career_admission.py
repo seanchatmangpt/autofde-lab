@@ -154,8 +154,7 @@ class CareerAdmission(D):
         applicable = [
             fact.id
             for fact in self._facts.values()
-            if fact.id not in admitted
-            and set(fact.prerequisite_ids).issubset(admitted)
+            if fact.id not in admitted and set(fact.prerequisite_ids).issubset(admitted)
         ]
         return ListSpace(applicable)
 

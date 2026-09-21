@@ -14,7 +14,9 @@ from typing import Any
 
 
 def _digest(value: Any) -> str:
-    raw = json.dumps(value, default=asdict, sort_keys=True, separators=(",", ":")).encode()
+    raw = json.dumps(
+        value, default=asdict, sort_keys=True, separators=(",", ":")
+    ).encode()
     return hashlib.sha256(raw).hexdigest()
 
 
@@ -26,7 +28,15 @@ class SourceProvenance:
     content_digest: str
 
     def __post_init__(self) -> None:
-        if any(not x.strip() for x in (self.source_uri, self.revision, self.license_id, self.content_digest)):
+        if any(
+            not x.strip()
+            for x in (
+                self.source_uri,
+                self.revision,
+                self.license_id,
+                self.content_digest,
+            )
+        ):
             raise ValueError("INCOMPLETE_SOURCE_PROVENANCE_REFUSED")
 
 
@@ -40,7 +50,10 @@ class ProjectionContract:
     def __post_init__(self) -> None:
         if self.role not in {"world", "reasoning", "manufacture", "runtime"}:
             raise ValueError("UNKNOWN_PROJECTION_ROLE_REFUSED")
-        if any(not x.strip() for x in (self.projection_id, self.schema_ref, self.generator_ref)):
+        if any(
+            not x.strip()
+            for x in (self.projection_id, self.schema_ref, self.generator_ref)
+        ):
             raise ValueError("INCOMPLETE_PROJECTION_CONTRACT_REFUSED")
 
 
@@ -63,10 +76,22 @@ class DomainPack:
     projections: tuple[ProjectionContract, ...]
 
     def __post_init__(self) -> None:
-        if any(not x.strip() for x in (self.pack_id, self.version, self.ontology_ref, self.ontology_digest, self.state_model_ref)):
+        if any(
+            not x.strip()
+            for x in (
+                self.pack_id,
+                self.version,
+                self.ontology_ref,
+                self.ontology_digest,
+                self.state_model_ref,
+            )
+        ):
             raise ValueError("INCOMPLETE_DOMAIN_PACK_REFUSED")
         roles = [p.role for p in self.projections]
-        if set(roles) != {"world", "reasoning", "manufacture", "runtime"} or len(roles) != 4:
+        if (
+            set(roles) != {"world", "reasoning", "manufacture", "runtime"}
+            or len(roles) != 4
+        ):
             raise ValueError("DOMAIN_PACK_PROJECTION_CLOSURE_REFUSED")
         required_collections = (
             self.taxonomy_axes,

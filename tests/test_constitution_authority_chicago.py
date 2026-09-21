@@ -8,6 +8,7 @@ run` from `ontology/authority.ttl` (see the module's own docstring) -- this test
 the independently-runnable check that the generated shape still matches what the
 ontology committed to.
 """
+
 import dataclasses
 
 import pytest
@@ -143,4 +144,3 @@ def test_all_names_in___all___resolve_to_real_frozen_dataclasses():
         first_field_name = params[0].name
         with pytest.raises(dataclasses.FrozenInstanceError):
             setattr(instance, first_field_name, getattr(instance, first_field_name))
-

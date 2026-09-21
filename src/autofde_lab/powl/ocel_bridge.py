@@ -59,7 +59,7 @@ import uuid
 
 from autofde_lab.ocel.log import OcelLog
 from autofde_lab.ocel.model import OcelAttribute, OcelAttributeValue, OcelObject
-from autofde_lab.powl.algebra import Atom, PowlNode
+from autofde_lab.powl.algebra import PowlNode
 from autofde_lab.powl.guard_executor import (
     AtomInvoker,
     ExecutionContext,
@@ -104,7 +104,9 @@ class OcelExecutionRecorder:
         self.execution_id = execution_id or f"powl-exec-{uuid.uuid4().hex}"
         self._declared_activity_ids: set[str] = set()
         self._event_counter = itertools.count()
-        self._log = OcelLog.new().with_objects(OcelObject(self.execution_id, _EXECUTION_OBJECT_TYPE))
+        self._log = OcelLog.new().with_objects(
+            OcelObject(self.execution_id, _EXECUTION_OBJECT_TYPE)
+        )
 
     @property
     def log(self) -> OcelLog:
@@ -132,12 +134,16 @@ class OcelExecutionRecorder:
         walk -- never re-derived or guessed here.
         """
         if step.kind != "Atom":
-            raise ValueError(f"record_atom requires an Atom step, got kind={step.kind!r}")
+            raise ValueError(
+                f"record_atom requires an Atom step, got kind={step.kind!r}"
+            )
         label = step.label if step.label is not None else "<unlabeled>"
         activity_id = f"activity-{label}"
         self._ensure_activity_object(activity_id, label)
 
-        event_id = f"evt-{_ATOM_ACTIVITY}-{next(self._event_counter)}-{uuid.uuid4().hex[:8]}"
+        event_id = (
+            f"evt-{_ATOM_ACTIVITY}-{next(self._event_counter)}-{uuid.uuid4().hex[:8]}"
+        )
         self._log = self._log.append_event(
             event_id,
             _ATOM_ACTIVITY,

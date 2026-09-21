@@ -26,17 +26,13 @@ from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline
 from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import (
     AuthorityBroker,
-    AuthorityGrant,
-    ConsequenceRequest,
 )
 from autofde_lab.sa2a.brce.boundary import (
     ColludingRolesError,
     ConsequenceBoundary,
     ExecutionEnvelope,
-    UnreceiptedActuationAttemptError,
 )
 from autofde_lab.sa2a.brce.receipts import (
-    FinalReceipt,
     ReceiptStore,
     TerminalReceiptState,
 )
@@ -47,12 +43,6 @@ from autofde_lab.sa2a.brce.replay import (
     ReplayVerdict,
 )
 from autofde_lab.sa2a.hooks.engine import KnowledgeHookEngine
-from autofde_lab.sa2a.hooks.model import (
-    HookEffectKind,
-    HookEventTrigger,
-    KnowledgeHookDefinition,
-    SemanticIntent,
-)
 from autofde_lab.sa2a.hooks.reactive_loop import ReactiveSemanticLoop
 from autofde_lab.sa2a.hooks.synthesis import HookSynthesizer
 from autofde_lab.sa2a.unknown.allocator import (
@@ -261,9 +251,13 @@ def test_canonical_chicago_v26_9_16_definition_of_done(tmp_path: Path) -> None:
     assert candidate.item_id.startswith("novelty-")
 
     # Budget preflight (Gate 5)
-    budget = ExplorationBudget(max_compute_ticks=500, max_tokens=8000, max_experiments=3)
+    budget = ExplorationBudget(
+        max_compute_ticks=500, max_tokens=8000, max_experiments=3
+    )
     allocator = CMCACandidateAllocator()
-    plan = allocator.allocate(plan_id="plan_chicago_01", budget=budget, candidates=[candidate])
+    plan = allocator.allocate(
+        plan_id="plan_chicago_01", budget=budget, candidates=[candidate]
+    )
     assert len(plan.allocations) == 1
 
     # Lab cognitive exploration cost
@@ -365,7 +359,9 @@ def test_canonical_chicago_v26_9_16_definition_of_done(tmp_path: Path) -> None:
     # Gate 11: Fresh-Consumer Proof (Out-of-Process / Isolated Reconstruction)
     # -------------------------------------------------------------------------
     # Simulate a completely fresh consumer reading only serializable receipt records
-    raw_serialized_records = json.loads(json.dumps([prep_rec.to_dict(), final_rec.to_dict()]))
+    raw_serialized_records = json.loads(
+        json.dumps([prep_rec.to_dict(), final_rec.to_dict()])
+    )
 
     fresh_broker = AuthorityBroker()
     fresh_broker.register_grant(artifact.suggested_grant)
@@ -382,6 +378,8 @@ def test_canonical_chicago_v26_9_16_definition_of_done(tmp_path: Path) -> None:
     # -------------------------------------------------------------------------
     # Gate 12: Standing Typed ALIVE + Zero Runtime Inference for Known Class
     # -------------------------------------------------------------------------
-    runtime_tokens_cycle1 = 0  # Autonomic reflex executed deterministically with ZERO LLM calls!
+    runtime_tokens_cycle1 = (
+        0  # Autonomic reflex executed deterministically with ZERO LLM calls!
+    )
     assert runtime_tokens_cycle1 < lab_tokens_spent
     assert runtime_tokens_cycle1 == 0

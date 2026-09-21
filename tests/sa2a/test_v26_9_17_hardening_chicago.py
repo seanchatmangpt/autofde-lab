@@ -19,13 +19,25 @@ from autofde_lab.sa2a.composition.resolver import (
 )
 from autofde_lab.sa2a.episode.episode1 import Episode1Runner
 from autofde_lab.sa2a.episode.equivalence import build_topic_equivalence_predicate
-from autofde_lab.sa2a.experience.compiler import ArtifactRegistry, EpisodeEvidence, ExperienceCompiler
 from autofde_lab.sa2a.experience.admission import ExperienceAdmissionGate
+from autofde_lab.sa2a.experience.compiler import (
+    EpisodeEvidence,
+    ExperienceCompiler,
+)
 from autofde_lab.sa2a.experience.known_route import KnownRouteRegistry
 from autofde_lab.sa2a.experience.qualification import ExperienceQualifier
 from autofde_lab.sa2a.release.fresh_consumer import verify
-from autofde_lab.sa2a.unknown.resolution import AdmissionReceipt, CandidateResolution, EpistemicState, UnknownQuery
-from autofde_lab.sa2a.unknown.router import DiscoveryEngine, DiscoveryEngineKind, DiscoveryRouter
+from autofde_lab.sa2a.unknown.resolution import (
+    AdmissionReceipt,
+    CandidateResolution,
+    EpistemicState,
+    UnknownQuery,
+)
+from autofde_lab.sa2a.unknown.router import (
+    DiscoveryEngine,
+    DiscoveryEngineKind,
+    DiscoveryRouter,
+)
 
 _VALID_MANIFEST = {
     "release_id": "v26.9.17-hardening-test",
@@ -57,7 +69,9 @@ def test_subject_resolver_refuses_non_mapping_manifest() -> None:
         assert exc.code == REFUSED_MALFORMED_MANIFEST
 
 
-def test_fresh_consumer_reports_corrupt_not_absent_for_truncated_checkpoint(tmp_path: Path) -> None:
+def test_fresh_consumer_reports_corrupt_not_absent_for_truncated_checkpoint(
+    tmp_path: Path,
+) -> None:
     (tmp_path / "ep1.json").write_text(
         '{"episode_id": "ep1", "experience_id": "exp1", "known_route_id": "r1", '
         '"classification": "KNOWN", "actuation_identity": "a1"}'
@@ -73,7 +87,9 @@ def test_fresh_consumer_reports_corrupt_not_absent_for_truncated_checkpoint(tmp_
     assert standing.artifacts_absent == ()
 
 
-def test_fresh_consumer_reports_corrupt_for_json_that_is_not_an_object(tmp_path: Path) -> None:
+def test_fresh_consumer_reports_corrupt_for_json_that_is_not_an_object(
+    tmp_path: Path,
+) -> None:
     """A file that parses as valid JSON but isn't a dict (e.g. a bare list or
     number) is still not a usable checkpoint -- must not crash on the first
     `.get()` call downstream."""
@@ -90,16 +106,29 @@ def test_known_route_registry_lookup_survives_a_raising_predicate() -> None:
     routes = KnownRouteRegistry()
     compiler = ExperienceCompiler()
     candidate = CandidateResolution(
-        candidate_id="c1", query_id="q1", proposed_assertion="service:x requires-port",
-        evidence_payload={"source": "probe"}, source_identity="probe", consumed_ticks=1, consumed_tokens=0,
+        candidate_id="c1",
+        query_id="q1",
+        proposed_assertion="service:x requires-port",
+        evidence_payload={"source": "probe"},
+        source_identity="probe",
+        consumed_ticks=1,
+        consumed_tokens=0,
     )
     receipt = AdmissionReceipt(
-        receipt_id="r1", candidate_hash=candidate.candidate_hash, admitted=True,
-        epistemic_standing=EpistemicState.KNOWN, reasons=("OK",), admitted_assertion=candidate.proposed_assertion,
+        receipt_id="r1",
+        candidate_hash=candidate.candidate_hash,
+        admitted=True,
+        epistemic_standing=EpistemicState.KNOWN,
+        reasons=("OK",),
+        admitted_assertion=candidate.proposed_assertion,
     )
     experience = compiler.compile(
-        semantic_class_id="requires-port", admitted_solution=candidate, admission_receipt=receipt,
-        episode_evidence=EpisodeEvidence(episode_id="ep1", discovery_identity="probe", discovery_resource_receipt="r"),
+        semantic_class_id="requires-port",
+        admitted_solution=candidate,
+        admission_receipt=receipt,
+        episode_evidence=EpisodeEvidence(
+            episode_id="ep1", discovery_identity="probe", discovery_resource_receipt="r"
+        ),
         equivalence_predicate_id="raising-predicate",
     )
     admitted = ExperienceAdmissionGate(compiler.artifact_registry).admit(experience)
@@ -109,7 +138,11 @@ def test_known_route_registry_lookup_survives_a_raising_predicate() -> None:
         raise RuntimeError("this predicate is broken")
 
     qualifier = ExperienceQualifier(compiler.artifact_registry, routes)
-    result = qualifier.qualify(admitted.experience, equivalence_predicate=raising_predicate, probe_input="requires-port")
+    result = qualifier.qualify(
+        admitted.experience,
+        equivalence_predicate=raising_predicate,
+        probe_input="requires-port",
+    )
     assert result.qualified
 
     # lookup() must not propagate the predicate's RuntimeError -- it must
@@ -126,12 +159,25 @@ def test_discovery_router_survives_a_raising_engine_and_falls_through() -> None:
 
     def working(query: UnknownQuery) -> CandidateResolution:
         return CandidateResolution(
-            candidate_id="c1", query_id=query.query_id, proposed_assertion="resolved",
-            evidence_payload={}, source_identity="working-engine", consumed_ticks=1, consumed_tokens=0,
+            candidate_id="c1",
+            query_id=query.query_id,
+            proposed_assertion="resolved",
+            evidence_payload={},
+            source_identity="working-engine",
+            consumed_ticks=1,
+            consumed_tokens=0,
         )
 
-    router.register(DiscoveryEngine("broken-1", DiscoveryEngineKind.EXACT_REUSABLE_MACHINERY, broken))
-    router.register(DiscoveryEngine("working-1", DiscoveryEngineKind.FORMAL_PLANNER_OR_SOLVER, working))
+    router.register(
+        DiscoveryEngine(
+            "broken-1", DiscoveryEngineKind.EXACT_REUSABLE_MACHINERY, broken
+        )
+    )
+    router.register(
+        DiscoveryEngine(
+            "working-1", DiscoveryEngineKind.FORMAL_PLANNER_OR_SOLVER, working
+        )
+    )
 
     result = router.route(UnknownQuery(query_id="q1", predicate_or_topic="anything"))
     assert result.selected_engine_id == "working-1"
@@ -143,15 +189,21 @@ def test_episode1_runner_survives_a_raising_discover_callable(tmp_path: Path) ->
         raise RuntimeError("this discover callable is broken")
 
     runner = Episode1Runner(
-        state_dir=tmp_path / "state", journal_path=tmp_path / "journal.json", receipt_store_dir=tmp_path / "receipts"
+        state_dir=tmp_path / "state",
+        journal_path=tmp_path / "journal.json",
+        receipt_store_dir=tmp_path / "receipts",
     )
     result = runner.run(
         semantic_class_id="requires-port",
-        query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        query=UnknownQuery(
+            query_id="q-1", predicate_or_topic="service:api-gateway requires-port"
+        ),
         discover=broken_discover,
         equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
-        equivalence_predicate_id="pred-1", probe_input="requires-port",
-        action_iri="urn:action:open-port", target_resource="urn:cap:api-gateway",
+        equivalence_predicate_id="pred-1",
+        probe_input="requires-port",
+        action_iri="urn:action:open-port",
+        target_resource="urn:cap:api-gateway",
     )
     assert result.episode.classification == "UNKNOWN"
     assert result.machine_experience.refusal_code == "REFUSED_DISCOVER_CALLABLE_RAISED"

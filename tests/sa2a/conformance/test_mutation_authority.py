@@ -56,7 +56,6 @@ from autofde_lab.sa2a.conformance.courts.authority_court import (
     AuthorityVerdict,
 )
 
-
 # ---------------------------------------------------------------------------
 # Mutation 1: target_resource identity swap, actor_id + grant_id unchanged
 # ---------------------------------------------------------------------------

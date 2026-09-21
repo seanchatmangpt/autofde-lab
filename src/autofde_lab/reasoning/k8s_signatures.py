@@ -83,7 +83,9 @@ class DiagnoseKubernetesFault(dspy.Signature):
     root cause the evidence does not support -- state uncertainty
     explicitly in `confidence` rather than guessing."""
 
-    namespace: str = dspy.InputField(desc="the Kubernetes namespace under investigation")
+    namespace: str = dspy.InputField(
+        desc="the Kubernetes namespace under investigation"
+    )
     symptom_description: str = dspy.InputField(
         desc="a natural-language description of the observed symptom(s), "
         "e.g. 'checkout requests intermittently return 503'"
@@ -112,7 +114,9 @@ class ClassifyKubernetesAnomaly(dspy.Signature):
     hardcode -- callers that need a closed taxonomy should validate/map
     `anomaly_category` themselves."""
 
-    observed_state: str = dspy.InputField(desc="the real, currently-observed resource state")
+    observed_state: str = dspy.InputField(
+        desc="the real, currently-observed resource state"
+    )
     expected_state: str = dspy.InputField(
         desc="the expected/baseline resource state to compare against "
         "(a known-good manifest, a prior healthy snapshot, or a stated invariant)"
@@ -126,7 +130,9 @@ class ClassifyKubernetesAnomaly(dspy.Signature):
         "'image-baseline-mismatch', 'scaled-to-zero', 'missing-env-var'), "
         "or 'none' when is_anomalous is False"
     )
-    rationale: str = dspy.OutputField(desc="why observed_state was judged (an)omalous or not")
+    rationale: str = dspy.OutputField(
+        desc="why observed_state was judged (an)omalous or not"
+    )
 
 
 class ProposeKubernetesRemediation(dspy.Signature):

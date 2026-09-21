@@ -29,7 +29,9 @@ from typing import Mapping
 
 from autofde_lab.sa2a.experience.types import ExperienceState, MachineExperience
 from autofde_lab.sa2a.unknown.compilation import CompiledDeterministicRule
-from autofde_lab.sa2a.unknown.resolution import AdmissionReceipt as UnknownAdmissionReceipt
+from autofde_lab.sa2a.unknown.resolution import (
+    AdmissionReceipt as UnknownAdmissionReceipt,
+)
 from autofde_lab.sa2a.unknown.resolution import CandidateResolution
 
 

@@ -44,7 +44,9 @@ class DomainDecisionStability:
     produced the identical ``compatible_solvers`` set."""
 
 
-def compatible_solver_set_stability(conn: sqlite3.Connection) -> list[DomainDecisionStability]:
+def compatible_solver_set_stability(
+    conn: sqlite3.Connection,
+) -> list[DomainDecisionStability]:
     """Real per-domain compatible-solver-set determinism, from every
     ``decision_match`` event that carries a ``compatible_solvers`` attribute.
 

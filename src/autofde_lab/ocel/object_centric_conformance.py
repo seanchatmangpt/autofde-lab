@@ -114,7 +114,9 @@ def project_object_trace(log: OcelLog, object_id: str) -> tuple[str, ...]:
     `EventObjectLink`, sorted by `timestamp_ns` (ties broken by event id
     for determinism), mapped to its real, specific activity label -- the
     per-object control-flow view a flattened check cannot produce."""
-    linked_event_ids = {link.event_id for link in log.event_object_links if link.object_id == object_id}
+    linked_event_ids = {
+        link.event_id for link in log.event_object_links if link.object_id == object_id
+    }
     events = [e for e in log.events if e.id in linked_event_ids]
     events.sort(key=lambda e: (e.timestamp_ns, e.id))
     return tuple(_event_label(e) for e in events)
@@ -144,7 +146,9 @@ def check_object_centric_conformance(
     per_object: list[ObjectTraceFitness] = []
     for object_id, intended in intended_traces_by_object_id.items():
         if object_id not in known_object_ids:
-            raise KeyError(f"object_id {object_id!r} is not a real object declared in this OcelLog")
+            raise KeyError(
+                f"object_id {object_id!r} is not a real object declared in this OcelLog"
+            )
 
         observed = project_object_trace(log, object_id)
         intended_tuple = tuple(intended)
@@ -160,7 +164,9 @@ def check_object_centric_conformance(
             )
         )
 
-    overall_fitness = sum(o.fitness for o in per_object) / len(per_object) if per_object else 0.0
+    overall_fitness = (
+        sum(o.fitness for o in per_object) / len(per_object) if per_object else 0.0
+    )
     all_conform = bool(per_object) and all(o.conforms for o in per_object)
 
     return ObjectCentricConformanceResult(

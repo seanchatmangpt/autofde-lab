@@ -35,7 +35,8 @@ from .optimization_agent import (
 )
 from .planning_types import PlanStepOutcome
 from .receipt_store import ReceiptLedger
-from .replay import ReplayReport, verify as replay_verify
+from .replay import ReplayReport
+from .replay import verify as replay_verify
 
 __all__ = [
     "Digest",

@@ -20,9 +20,16 @@ import pytest
 
 from autofde_lab.sa2a.episode.equivalence import build_topic_equivalence_predicate
 from autofde_lab.sa2a.release.run import ReleaseRun, ReleaseRunResult
-from autofde_lab.sa2a.release.state_machine import LAWFUL_RELEASE_TRANSITIONS, ReleaseState
+from autofde_lab.sa2a.release.state_machine import (
+    LAWFUL_RELEASE_TRANSITIONS,
+    ReleaseState,
+)
 from autofde_lab.sa2a.unknown.resolution import CandidateResolution, UnknownQuery
-from autofde_lab.sa2a.unknown.router import DiscoveryEngine, DiscoveryEngineKind, DiscoveryRouter
+from autofde_lab.sa2a.unknown.router import (
+    DiscoveryEngine,
+    DiscoveryEngineKind,
+    DiscoveryRouter,
+)
 
 _MANIFEST = {
     "release_id": "v26.9.17-hardening-crown",
@@ -39,17 +46,25 @@ _MANIFEST = {
 
 def _discover(query: UnknownQuery) -> CandidateResolution:
     return CandidateResolution(
-        candidate_id="cand-ep1", query_id=query.query_id, proposed_assertion="service:api-gateway requires-port",
-        evidence_payload={"source": "formal-port-probe"}, source_identity="formal-port-probe",
-        consumed_ticks=2, consumed_tokens=0,
+        candidate_id="cand-ep1",
+        query_id=query.query_id,
+        proposed_assertion="service:api-gateway requires-port",
+        evidence_payload={"source": "formal-port-probe"},
+        source_identity="formal-port-probe",
+        consumed_ticks=2,
+        consumed_tokens=0,
     )
 
 
 def _episode2_candidate(query_id: str = "q-2-fresh") -> CandidateResolution:
     return CandidateResolution(
-        candidate_id="cand-ep2", query_id=query_id, proposed_assertion="service:billing-worker requires-port",
-        evidence_payload={"source": "fresh-request"}, source_identity="fresh-request",
-        consumed_ticks=0, consumed_tokens=0,
+        candidate_id="cand-ep2",
+        query_id=query_id,
+        proposed_assertion="service:billing-worker requires-port",
+        evidence_payload={"source": "fresh-request"},
+        source_identity="fresh-request",
+        consumed_ticks=0,
+        consumed_tokens=0,
     )
 
 
@@ -57,7 +72,9 @@ def _base_kwargs(manifest: dict) -> dict:
     return dict(
         candidate_manifest=manifest,
         semantic_class_id="requires-port",
-        episode1_query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        episode1_query=UnknownQuery(
+            query_id="q-1", predicate_or_topic="service:api-gateway requires-port"
+        ),
         equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
         equivalence_predicate_id="pred-requires-port-v1",
         probe_input="requires-port",
@@ -71,7 +88,9 @@ def _base_kwargs(manifest: dict) -> dict:
 # --- 1. Calling .run() twice on the same instance -------------------------------
 
 
-def test_second_run_call_on_same_crowned_instance_is_refused_not_crashed(tmp_path: Path) -> None:
+def test_second_run_call_on_same_crowned_instance_is_refused_not_crashed(
+    tmp_path: Path,
+) -> None:
     """Pre-fix, live behaviour: a second `.run()` call after CROWNED reached the
     first `self._goto(ReleaseState.SUBJECT_FENCED)` inside `run()` and raised an
     uncaught `ValueError` from `validate_release_transition` (only
@@ -84,20 +103,32 @@ def test_second_run_call_on_same_crowned_instance_is_refused_not_crashed(tmp_pat
     assert result1.state == ReleaseState.CROWNED
     history_after_first_run = list(run.history)
 
-    result2 = run.run(**_base_kwargs({**_MANIFEST, "release_id": "a-different-release"}), episode1_discover=_discover)
+    result2 = run.run(
+        **_base_kwargs({**_MANIFEST, "release_id": "a-different-release"}),
+        episode1_discover=_discover,
+    )
 
-    assert result2.state == ReleaseState.CROWNED  # unchanged -- reflects the FIRST run's real standing
+    assert (
+        result2.state == ReleaseState.CROWNED
+    )  # unchanged -- reflects the FIRST run's real standing
     assert "ALREADY_RUN" in result2.reason
-    assert result2.episode1 is None and result2.episode2 is None  # no second episode was ever attempted
+    assert (
+        result2.episode1 is None and result2.episode2 is None
+    )  # no second episode was ever attempted
     assert run.history == history_after_first_run  # history was not corrupted or reset
 
 
-def test_second_run_call_after_a_refused_first_run_is_also_refused_not_crashed(tmp_path: Path) -> None:
+def test_second_run_call_after_a_refused_first_run_is_also_refused_not_crashed(
+    tmp_path: Path,
+) -> None:
     """The same defect reproduced from a non-terminal-looking-but-actually-terminal
     exit (REFUSED), not only from CROWNED -- REFUSED has zero lawful outgoing
     transitions too (state_machine.py), so this hit the identical uncaught
     ValueError pre-fix."""
-    floating_manifest = {**_MANIFEST, "repositories": [{"name": "x", "exact_sha": "main"}]}
+    floating_manifest = {
+        **_MANIFEST,
+        "repositories": [{"name": "x", "exact_sha": "main"}],
+    }
     run = ReleaseRun(work_dir=tmp_path)
     result1 = run.run(**_base_kwargs(floating_manifest), episode1_discover=_discover)
     assert result1.state == ReleaseState.REFUSED
@@ -113,13 +144,39 @@ def test_second_run_call_after_a_refused_first_run_is_also_refused_not_crashed(t
 @pytest.mark.parametrize(
     "manifest",
     [
-        pytest.param({"release_id": "r1", "repositories": "not-a-list", "artifacts": [], "root_manifest_digest": "c" * 64}, id="repositories_is_a_string"),
-        pytest.param({"release_id": "r1", "repositories": [], "artifacts": [42], "root_manifest_digest": "c" * 64}, id="artifact_entry_not_a_mapping"),
-        pytest.param({"release_id": "r1", "repositories": [["a", "b"]], "artifacts": [], "root_manifest_digest": "c" * 64}, id="repository_entry_is_a_list"),
+        pytest.param(
+            {
+                "release_id": "r1",
+                "repositories": "not-a-list",
+                "artifacts": [],
+                "root_manifest_digest": "c" * 64,
+            },
+            id="repositories_is_a_string",
+        ),
+        pytest.param(
+            {
+                "release_id": "r1",
+                "repositories": [],
+                "artifacts": [42],
+                "root_manifest_digest": "c" * 64,
+            },
+            id="artifact_entry_not_a_mapping",
+        ),
+        pytest.param(
+            {
+                "release_id": "r1",
+                "repositories": [["a", "b"]],
+                "artifacts": [],
+                "root_manifest_digest": "c" * 64,
+            },
+            id="repository_entry_is_a_list",
+        ),
         pytest.param(None, id="candidate_manifest_is_none"),
     ],
 )
-def test_malformed_candidate_manifest_yields_clean_refused_result_not_uncaught_exception(tmp_path: Path, manifest) -> None:
+def test_malformed_candidate_manifest_yields_clean_refused_result_not_uncaught_exception(
+    tmp_path: Path, manifest
+) -> None:
     """Confirms `run.py`'s subject-fence `except SubjectResolutionError` really does
     catch every malformed-manifest shape the composition-layer's own fail-closed
     `SubjectResolver.resolve()` re-raises as that one typed exception -- run.py has
@@ -146,7 +203,9 @@ def test_run_signature_now_exposes_discovery_router() -> None:
     assert params["episode1_discover"].default is None  # now optional, not required
 
 
-def test_neither_discover_nor_discovery_router_is_refused_before_any_state_transition(tmp_path: Path) -> None:
+def test_neither_discover_nor_discovery_router_is_refused_before_any_state_transition(
+    tmp_path: Path,
+) -> None:
     """Pre-fix, live behaviour: passing `episode1_discover=None` with no way to
     supply a `discovery_router` (the parameter did not exist) crashed with an
     uncaught `ValueError` from `Episode1Runner.run()`'s own "exactly one of"
@@ -154,18 +213,26 @@ def test_neither_discover_nor_discovery_router_is_refused_before_any_state_trans
     terminal/exit state. Now this must be refused BEFORE subject fencing even
     starts (cheapest failure first, and no wasted SubjectResolver/episode work)."""
     run = ReleaseRun(work_dir=tmp_path)
-    result = run.run(**_base_kwargs(_MANIFEST), episode1_discover=None, discovery_router=None)
+    result = run.run(
+        **_base_kwargs(_MANIFEST), episode1_discover=None, discovery_router=None
+    )
     assert result.state == ReleaseState.CREATED  # no transition was attempted at all
     assert "DISCOVERY_CONFIGURATION" in result.reason
-    assert run.history == [ReleaseState.CREATED]  # untouched -- refused before subject fencing
+    assert run.history == [
+        ReleaseState.CREATED
+    ]  # untouched -- refused before subject fencing
 
 
-def test_both_discover_and_discovery_router_simultaneously_is_also_refused(tmp_path: Path) -> None:
+def test_both_discover_and_discovery_router_simultaneously_is_also_refused(
+    tmp_path: Path,
+) -> None:
     """The other half of Episode1Runner's 'exactly one of' invariant -- supplying
     BOTH must be refused the same clean way, not silently prefer one."""
     router = DiscoveryRouter()
     run = ReleaseRun(work_dir=tmp_path)
-    result = run.run(**_base_kwargs(_MANIFEST), episode1_discover=_discover, discovery_router=router)
+    result = run.run(
+        **_base_kwargs(_MANIFEST), episode1_discover=_discover, discovery_router=router
+    )
     assert result.state == ReleaseState.CREATED
     assert "DISCOVERY_CONFIGURATION" in result.reason
 
@@ -178,13 +245,23 @@ def test_discovery_router_alone_reaches_crowned_end_to_end(tmp_path: Path) -> No
 
     def _candidate(engine_id: str, query: UnknownQuery) -> CandidateResolution:
         return CandidateResolution(
-            candidate_id=f"cand-{engine_id}", query_id=query.query_id,
-            proposed_assertion="service:api-gateway requires-port", evidence_payload={"engine": engine_id},
-            source_identity=engine_id, consumed_ticks=1, consumed_tokens=0,
+            candidate_id=f"cand-{engine_id}",
+            query_id=query.query_id,
+            proposed_assertion="service:api-gateway requires-port",
+            evidence_payload={"engine": engine_id},
+            source_identity=engine_id,
+            consumed_ticks=1,
+            consumed_tokens=0,
         )
 
     router = DiscoveryRouter()
-    router.register(DiscoveryEngine("exact-1", DiscoveryEngineKind.EXACT_REUSABLE_MACHINERY, lambda q: _candidate("exact-1", q)))
+    router.register(
+        DiscoveryEngine(
+            "exact-1",
+            DiscoveryEngineKind.EXACT_REUSABLE_MACHINERY,
+            lambda q: _candidate("exact-1", q),
+        )
+    )
 
     run = ReleaseRun(work_dir=tmp_path)
     result = run.run(**_base_kwargs(_MANIFEST), discovery_router=router)
@@ -195,7 +272,9 @@ def test_discovery_router_alone_reaches_crowned_end_to_end(tmp_path: Path) -> No
 # --- 4. fresh_consumer subprocess timeout ----------------------------------------
 
 
-def test_fresh_consumer_subprocess_has_a_bounded_timeout_not_an_unbounded_hang(tmp_path: Path) -> None:
+def test_fresh_consumer_subprocess_has_a_bounded_timeout_not_an_unbounded_hang(
+    tmp_path: Path,
+) -> None:
     """Pre-fix, live behaviour: `_run_fresh_consumer`'s `subprocess.run(...)` call
     carried NO `timeout=` at all -- a hung subprocess would hang `ReleaseRun.run()`
     forever. This exercises the REAL subprocess machinery (a real
@@ -204,9 +283,13 @@ def test_fresh_consumer_subprocess_has_a_bounded_timeout_not_an_unbounded_hang(t
     exceeds it) to force the real `subprocess.TimeoutExpired` path deterministically,
     without needing to construct an artificial infinite hang."""
     t0 = time.monotonic()
-    standing = ReleaseRun._run_fresh_consumer(tmp_path / "state", "ep1-x", "ep2-x", timeout=0.0001)
+    standing = ReleaseRun._run_fresh_consumer(
+        tmp_path / "state", "ep1-x", "ep2-x", timeout=0.0001
+    )
     elapsed = time.monotonic() - t0
-    assert elapsed < 5.0, "the call must return promptly once the timeout fires, not hang"
+    assert elapsed < 5.0, (
+        "the call must return promptly once the timeout fires, not hang"
+    )
     assert standing["verdict"].startswith("UNKNOWN:SUBPROCESS_TIMEOUT")
 
 
@@ -221,14 +304,22 @@ def test_fresh_consumer_default_timeout_is_generous_not_tight() -> None:
 # --- 5. Two ReleaseRun instances with distinct work_dirs do not cross-contaminate
 
 
-def test_two_release_runs_with_distinct_work_dirs_do_not_cross_contaminate(tmp_path: Path) -> None:
+def test_two_release_runs_with_distinct_work_dirs_do_not_cross_contaminate(
+    tmp_path: Path,
+) -> None:
     work_dir_a = tmp_path / "run-a"
     work_dir_b = tmp_path / "run-b"
     run_a = ReleaseRun(work_dir=work_dir_a)
     run_b = ReleaseRun(work_dir=work_dir_b)
 
-    result_a = run_a.run(**_base_kwargs({**_MANIFEST, "release_id": "release-A"}), episode1_discover=_discover)
-    result_b = run_b.run(**_base_kwargs({**_MANIFEST, "release_id": "release-B"}), episode1_discover=_discover)
+    result_a = run_a.run(
+        **_base_kwargs({**_MANIFEST, "release_id": "release-A"}),
+        episode1_discover=_discover,
+    )
+    result_b = run_b.run(
+        **_base_kwargs({**_MANIFEST, "release_id": "release-B"}),
+        episode1_discover=_discover,
+    )
 
     assert result_a.state == ReleaseState.CROWNED
     assert result_b.state == ReleaseState.CROWNED
@@ -240,20 +331,37 @@ def test_two_release_runs_with_distinct_work_dirs_do_not_cross_contaminate(tmp_p
     state_a_names = {p.name for p in (work_dir_a / "state").glob("*.json")}
     state_b_names = {p.name for p in (work_dir_b / "state").glob("*.json")}
     ep1_id_b = result_b.episode1.episode.episode_id
-    assert not any(ep1_id_b in name for name in state_a_names), "work_dir A must not contain any trace of run B's episode"
-    assert run_a.history == run_b.history == [
-        ReleaseState.CREATED, ReleaseState.SUBJECT_FENCED, ReleaseState.PREFLIGHTED,
-        ReleaseState.EPISODE_1_RUNNING, ReleaseState.EPISODE_1_VERIFIED, ReleaseState.EXPERIENCE_ADMITTED,
-        ReleaseState.EPISODE_2_RUNNING, ReleaseState.EPISODE_2_VERIFIED, ReleaseState.CHICAGO_RUNNING,
-        ReleaseState.EVIDENCE_VALIDATED, ReleaseState.CROWNED,
-    ]
+    assert not any(ep1_id_b in name for name in state_a_names), (
+        "work_dir A must not contain any trace of run B's episode"
+    )
+    assert (
+        run_a.history
+        == run_b.history
+        == [
+            ReleaseState.CREATED,
+            ReleaseState.SUBJECT_FENCED,
+            ReleaseState.PREFLIGHTED,
+            ReleaseState.EPISODE_1_RUNNING,
+            ReleaseState.EPISODE_1_VERIFIED,
+            ReleaseState.EXPERIENCE_ADMITTED,
+            ReleaseState.EPISODE_2_RUNNING,
+            ReleaseState.EPISODE_2_VERIFIED,
+            ReleaseState.CHICAGO_RUNNING,
+            ReleaseState.EVIDENCE_VALIDATED,
+            ReleaseState.CROWNED,
+        ]
+    )
 
 
 # --- 6. LAWFUL_RELEASE_TRANSITIONS mutation-style completeness check ------------
 
 _SIX_TYPED_EXITS = {
-    ReleaseState.REFUSED, ReleaseState.BLOCKED, ReleaseState.BUILD_BROKEN,
-    ReleaseState.UNSUPPORTED, ReleaseState.NONCONFORMANT, ReleaseState.UNKNOWN,
+    ReleaseState.REFUSED,
+    ReleaseState.BLOCKED,
+    ReleaseState.BUILD_BROKEN,
+    ReleaseState.UNSUPPORTED,
+    ReleaseState.NONCONFORMANT,
+    ReleaseState.UNKNOWN,
 }
 
 
@@ -287,7 +395,9 @@ def test_crowned_and_every_exit_are_terminal_with_zero_outgoing_transitions() ->
         assert LAWFUL_RELEASE_TRANSITIONS[exit_state] == set()
 
 
-def test_named_finding_build_broken_and_unsupported_and_unknown_are_declared_but_dead_in_release_run() -> None:
+def test_named_finding_build_broken_and_unsupported_and_unknown_are_declared_but_dead_in_release_run() -> (
+    None
+):
     """NAMED FINDING (not fixed -- explicitly out of this pass's scope per the task):
     `ReleaseState.BUILD_BROKEN`, `ReleaseState.UNSUPPORTED`, and `ReleaseState.UNKNOWN`
     are declared as lawful exits in `state_machine.py` and are reachable in the
@@ -305,15 +415,28 @@ def test_named_finding_build_broken_and_unsupported_and_unknown_are_declared_but
     design decision left to a future pass, not a bug this adversarial pass fixes."""
     source = inspect.getsource(ReleaseRun.run)
     triggered = {
-        state for state in ReleaseState
+        state
+        for state in ReleaseState
         if f"self._goto(ReleaseState.{state.name})" in source
     }
     assert triggered == {
-        ReleaseState.SUBJECT_FENCED, ReleaseState.REFUSED, ReleaseState.BLOCKED,
-        ReleaseState.PREFLIGHTED, ReleaseState.EPISODE_1_RUNNING, ReleaseState.NONCONFORMANT,
-        ReleaseState.EPISODE_1_VERIFIED, ReleaseState.EXPERIENCE_ADMITTED, ReleaseState.EPISODE_2_RUNNING,
-        ReleaseState.EPISODE_2_VERIFIED, ReleaseState.CHICAGO_RUNNING, ReleaseState.EVIDENCE_VALIDATED,
+        ReleaseState.SUBJECT_FENCED,
+        ReleaseState.REFUSED,
+        ReleaseState.BLOCKED,
+        ReleaseState.PREFLIGHTED,
+        ReleaseState.EPISODE_1_RUNNING,
+        ReleaseState.NONCONFORMANT,
+        ReleaseState.EPISODE_1_VERIFIED,
+        ReleaseState.EXPERIENCE_ADMITTED,
+        ReleaseState.EPISODE_2_RUNNING,
+        ReleaseState.EPISODE_2_VERIFIED,
+        ReleaseState.CHICAGO_RUNNING,
+        ReleaseState.EVIDENCE_VALIDATED,
         ReleaseState.CROWNED,
     }
     dead_exits = _SIX_TYPED_EXITS - triggered
-    assert dead_exits == {ReleaseState.BUILD_BROKEN, ReleaseState.UNSUPPORTED, ReleaseState.UNKNOWN}
+    assert dead_exits == {
+        ReleaseState.BUILD_BROKEN,
+        ReleaseState.UNSUPPORTED,
+        ReleaseState.UNKNOWN,
+    }

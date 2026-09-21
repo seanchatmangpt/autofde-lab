@@ -72,4 +72,6 @@ def process_informed_hypotheses(
     """
     provider = SqliteProcessScienceProvider(db_path)
     process_observation = provider.request_process_observation(observation)
-    return infer_desired_state_hypotheses(metadata, process_observation=process_observation)
+    return infer_desired_state_hypotheses(
+        metadata, process_observation=process_observation
+    )

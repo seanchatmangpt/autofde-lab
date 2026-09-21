@@ -32,7 +32,9 @@ from gymact.authority import AllowListAuthorityResolver
 from gymact.providers import MemoryProvider
 from gymact.runtime import GymAct
 
-from autofde_lab.reasoning.gymact_world_experiment_provider import GymActWorldExperimentProvider
+from autofde_lab.reasoning.gymact_world_experiment_provider import (
+    GymActWorldExperimentProvider,
+)
 from autofde_lab.reasoning.laboratory import ExperimentIntent
 
 _PROPOSED_ACTIONS = (
@@ -41,7 +43,9 @@ _PROPOSED_ACTIONS = (
 )
 
 
-def test_no_authority_granted_is_a_real_honest_refusal_never_a_fabricated_success() -> None:
+def test_no_authority_granted_is_a_real_honest_refusal_never_a_fabricated_success() -> (
+    None
+):
     """Per `CLAUDE.md`'s law ("nothing here carries ambient authority to
     change the world") and gymact's own fail-closed default
     (`DenyAuthorityResolver`): a `GymActWorldExperimentProvider` constructed
@@ -76,7 +80,9 @@ def test_no_authority_granted_is_a_real_honest_refusal_never_a_fabricated_succes
     assert receipt.ocel_evidence_ref is not None
 
 
-def test_admitted_authority_drives_a_real_end_to_end_actuation_independently_verified() -> None:
+def test_admitted_authority_drives_a_real_end_to_end_actuation_independently_verified() -> (
+    None
+):
     """With a real `AllowListAuthorityResolver` admitting the exact
     reference the `ExperimentIntent` declares, every real `act()` call must
     actually change the real materialized world's state -- independently

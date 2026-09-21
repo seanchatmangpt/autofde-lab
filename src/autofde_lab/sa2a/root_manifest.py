@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import asdict, dataclass
-from typing import Any, Dict, List, Mapping
+from dataclasses import dataclass
+from typing import Any, Dict, List
 
 
 @dataclass(frozen=True)
@@ -40,7 +40,9 @@ class RootManifest:
             "cryptographic_algorithms": sorted(self.cryptographic_algorithms),
             "version_policy": self.version_policy,
         }
-        return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return json.dumps(
+            data, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        )
 
     def digest(self) -> str:
         """Compute SHA-256 digest of canonical root manifest JSON."""

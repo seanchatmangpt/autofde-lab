@@ -53,7 +53,12 @@ _EBL_FACTS = [
     {"key": "concave(obj1)", "value": "true"},
 ]
 _EBL_RULES = [
-    {"id": "r1", "premise": ["cup(?x)"], "conclusion": "drinkable(?x)", "certainty": 1.0},
+    {
+        "id": "r1",
+        "premise": ["cup(?x)"],
+        "conclusion": "drinkable(?x)",
+        "certainty": 1.0,
+    },
     {
         "id": "r2",
         "premise": ["has_handle(?y)", "concave(?y)"],
@@ -104,7 +109,9 @@ def test_tampered_receipt_fails_verification():
 
     real_evidence = asyncio.run(run())
 
-    forged_run_id = ("0" if real_evidence.run_id[0] != "0" else "1") + real_evidence.run_id[1:]
+    forged_run_id = (
+        "0" if real_evidence.run_id[0] != "0" else "1"
+    ) + real_evidence.run_id[1:]
     tampered = CognitionEvidence(
         breed=real_evidence.breed,
         run_id=forged_run_id,
@@ -124,7 +131,9 @@ def test_unknown_breed_raises_no_evidence_not_empty_default():
     quietly-empty/default :class:`CognitionEvidence`."""
 
     async def run():
-        await run_cognition("totally_not_a_real_breed", intent="", facts=[], rules=[], goals=[])
+        await run_cognition(
+            "totally_not_a_real_breed", intent="", facts=[], rules=[], goals=[]
+        )
 
     with pytest.raises(NoEvidence, match="totally_not_a_real_breed"):
         asyncio.run(run())
@@ -138,7 +147,9 @@ def test_domain_precondition_failure_raises_no_evidence():
     async def run():
         # Same facts/rules as the successful case, but no goal -- EBL's own
         # precondition ("EBL requires at least one goal") must reject this.
-        await run_cognition("ebl", intent="learn", facts=_EBL_FACTS, rules=_EBL_RULES, goals=[])
+        await run_cognition(
+            "ebl", intent="learn", facts=_EBL_FACTS, rules=_EBL_RULES, goals=[]
+        )
 
     with pytest.raises(NoEvidence, match="at least one goal"):
         asyncio.run(run())

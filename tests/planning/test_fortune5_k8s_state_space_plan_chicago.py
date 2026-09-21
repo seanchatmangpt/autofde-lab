@@ -28,7 +28,12 @@ from __future__ import annotations
 import os
 
 DOMAIN_DIR = os.path.join(
-    os.path.dirname(__file__), "..", "..", "docs", "planning", "fortune5-k8s-state-space"
+    os.path.dirname(__file__),
+    "..",
+    "..",
+    "docs",
+    "planning",
+    "fortune5-k8s-state-space",
 )
 DOMAIN_PATH = os.path.join(DOMAIN_DIR, "domain.pddl")
 PROBLEM_PATH = os.path.join(DOMAIN_DIR, "problem.pddl")
@@ -79,7 +84,9 @@ def test_astar_solves_fortune5_k8s_state_space_plan() -> None:
             outcome = domain.step(action)
             obs = outcome.observation
 
-        assert domain._goal_checker.is_goal(obs.to_cpp()), f"Astar did not reach the goal. Plan: {plan}"
+        assert domain._goal_checker.is_goal(obs.to_cpp()), (
+            f"Astar did not reach the goal. Plan: {plan}"
+        )
 
     assert len(plan) == 8, f"expected all 8 real actions in the plan, got: {plan}"
 
@@ -91,11 +98,17 @@ def test_astar_solves_fortune5_k8s_state_space_plan() -> None:
 
     assert index_of("build-schema-to-ontology-generator") < index_of("author-k8s-pack")
     assert index_of("loosen-dspy-pack-nesting-gate") < index_of("author-k8s-pack")
-    assert index_of("build-typed-k8s-object-schema") < index_of("index-hearsay-blackboard")
+    assert index_of("build-typed-k8s-object-schema") < index_of(
+        "index-hearsay-blackboard"
+    )
     assert index_of("index-hearsay-blackboard") < index_of("rescale-firing-budget")
     assert index_of("rescale-firing-budget") < index_of("build-k8s-state-encoder")
-    assert index_of("build-typed-k8s-object-schema") < index_of("build-k8s-state-encoder")
-    assert index_of("build-k8s-state-encoder") < index_of("integrate-with-autofde-cognition")
+    assert index_of("build-typed-k8s-object-schema") < index_of(
+        "build-k8s-state-encoder"
+    )
+    assert index_of("build-k8s-state-encoder") < index_of(
+        "integrate-with-autofde-cognition"
+    )
     assert index_of("author-k8s-pack") < index_of("integrate-with-autofde-cognition")
 
     # The goal-producing action is always last -- a structural sanity check

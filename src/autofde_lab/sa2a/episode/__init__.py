@@ -11,6 +11,11 @@ routed through KNOWN machinery with zero equivalent exploratory inference
 
 from __future__ import annotations
 
-from autofde_lab.sa2a.episode.types import Episode, EpisodeKind, IntelligenceUsage, ExplorationMeter
+from autofde_lab.sa2a.episode.types import (
+    Episode,
+    EpisodeKind,
+    ExplorationMeter,
+    IntelligenceUsage,
+)
 
 __all__ = ["Episode", "EpisodeKind", "IntelligenceUsage", "ExplorationMeter"]

@@ -20,9 +20,6 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from autofde_lab.sa2a.authority.broker import AuthorityBroker, ConsequenceRequest
 from autofde_lab.sa2a.brce.receipts import (
-    FinalReceipt,
-    PreparedReceipt,
-    ReceiptStore,
     TerminalReceiptState,
     compute_receipt_digest,
 )
@@ -122,11 +119,15 @@ class ReplayEngine:
             rec_digest = rec.get("digest")
 
             if not kind or not token or not rec_digest:
-                errors.append(f"Record {idx}: Missing required header fields (kind, idempotency_token, digest)")
+                errors.append(
+                    f"Record {idx}: Missing required header fields (kind, idempotency_token, digest)"
+                )
                 continue
 
             if rec_digest in seen_digests:
-                errors.append(f"Record {idx}: Duplicate receipt digest detected: {rec_digest}")
+                errors.append(
+                    f"Record {idx}: Duplicate receipt digest detected: {rec_digest}"
+                )
             seen_digests.add(rec_digest)
 
             if kind == "prepared":
@@ -155,7 +156,9 @@ class ReplayEngine:
                 }
                 computed = compute_receipt_digest({"kind": "prepared", "body": body})
                 if computed != rec_digest:
-                    errors.append(f"Record {idx}: PreparedReceipt digest mismatch: expected {computed}, got {rec_digest}")
+                    errors.append(
+                        f"Record {idx}: PreparedReceipt digest mismatch: expected {computed}, got {rec_digest}"
+                    )
 
                 prepared_map[token] = rec
 
@@ -175,16 +178,24 @@ class ReplayEngine:
                 }
                 computed = compute_receipt_digest({"kind": "final", "body": body})
                 if computed != rec_digest:
-                    errors.append(f"Record {idx}: FinalReceipt digest mismatch: expected {computed}, got {rec_digest}")
+                    errors.append(
+                        f"Record {idx}: FinalReceipt digest mismatch: expected {computed}, got {rec_digest}"
+                    )
 
                 final_map[token] = rec
             else:
                 errors.append(f"Record {idx}: Unknown receipt kind {kind}")
 
         # Re-verify Construction Binding if provided
-        if construction_receipt is not None and admitted_semantics is not None and artifact is not None:
+        if (
+            construction_receipt is not None
+            and admitted_semantics is not None
+            and artifact is not None
+        ):
             if not construction_receipt.verify(admitted_semantics, artifact):
-                errors.append("Construction receipt validation failed against admitted semantics and artifact")
+                errors.append(
+                    "Construction receipt validation failed against admitted semantics and artifact"
+                )
 
         # Now check pairs
         executed_count = 0
@@ -224,7 +235,10 @@ class ReplayEngine:
                         grant_id=prep_rec["grant_id"],
                     )
                     decision = self._authority_broker.evaluate(auth_req)
-                    if not decision.authorized and state == TerminalReceiptState.EXECUTED.value:
+                    if (
+                        not decision.authorized
+                        and state == TerminalReceiptState.EXECUTED.value
+                    ):
                         errors.append(
                             f"Action {prep_rec['action_iri']} was executed without valid authority grant!"
                         )

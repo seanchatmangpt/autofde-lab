@@ -24,7 +24,13 @@ except ModuleNotFoundError:
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ONTOLOGY = REPO_ROOT / "ontology" / "k8s-fault-taxonomy.ttl"
-SHAPES = REPO_ROOT / "packs" / "k8s-fault-taxonomy-pack" / "shapes" / "k8s-fault-taxonomy.shacl.ttl"
+SHAPES = (
+    REPO_ROOT
+    / "packs"
+    / "k8s-fault-taxonomy-pack"
+    / "shapes"
+    / "k8s-fault-taxonomy.shacl.ttl"
+)
 
 requires_pyshacl = pytest.mark.skipif(
     pyshacl is None,
@@ -54,7 +60,10 @@ def test_a_mutated_individual_missing_preflabel_is_caught_by_the_real_shape() ->
         'afl:Pod a afl:Component ; skos:inScheme afl:ComponentScheme ; skos:prefLabel "Pod" .',
         "afl:Pod a afl:Component ; skos:inScheme afl:ComponentScheme .",
     )
-    assert "prefLabel" not in broken_ontology.split("afl:Pod a afl:Component")[1].split("\n")[0]
+    assert (
+        "prefLabel"
+        not in broken_ontology.split("afl:Pod a afl:Component")[1].split("\n")[0]
+    )
 
     conforms, _, _ = pyshacl.validate(
         data_graph=broken_ontology,

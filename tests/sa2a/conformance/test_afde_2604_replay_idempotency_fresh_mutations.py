@@ -105,7 +105,10 @@ def _boundary(tmp_path: Path, name: str, broker: AuthorityBroker):
     actuator = RealDiskJournalActuator(journal)
     verifier = IndependentDiskJournalVerifier(journal)
     boundary = ConsequenceBoundary(
-        authority_broker=broker, actuator=actuator, verifier=verifier, receipt_store=store
+        authority_broker=broker,
+        actuator=actuator,
+        verifier=verifier,
+        receipt_store=store,
     )
     return boundary, actuator, store, journal
 
@@ -313,7 +316,10 @@ def test_mutation_e_stale_prepared_receipt_reused_across_action_substitution(
     # describes).
     result = boundary.execute(
         ExecutionEnvelope(
-            idempotency_token=token, action_iri=action2, target_resource=target2, actor_id=actor
+            idempotency_token=token,
+            action_iri=action2,
+            target_resource=target2,
+            actor_id=actor,
         )
     )
 

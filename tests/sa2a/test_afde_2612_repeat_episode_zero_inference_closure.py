@@ -77,7 +77,9 @@ from autofde_lab.sa2a.unknown.novelty_ingest import NoveltyIngestionGateway
 # always exercised, now behind the real admission fence this repo actually enforces.
 
 
-def _admitted_result(action_iri: str, target_resource: str, actor_id: str) -> AdmissionResult:
+def _admitted_result(
+    action_iri: str, target_resource: str, actor_id: str
+) -> AdmissionResult:
     """Construct a real, valid, Standing.ADMITTED AdmissionResult binding `action_iri`
     to `target_resource` via the real `urn:autofde-lab:targetResource` predicate
     `ConsequenceBoundary._admission_covers_action_target()` requires (boundary.py).
@@ -130,7 +132,11 @@ class RealClusterVerifier:
     """Real, independent postcondition verifier (distinct object from the actuator)."""
 
     def verify_postcondition(
-        self, action_iri: str, target_resource: str, parameters: dict, evidence: dict | None
+        self,
+        action_iri: str,
+        target_resource: str,
+        parameters: dict,
+        evidence: dict | None,
     ) -> bool:
         return evidence is not None and evidence.get("restarted") is True
 
@@ -254,7 +260,9 @@ def test_second_matching_episode_via_reflex_loop_makes_zero_further_synthesis_ca
     actuator = RealClusterActuator()
     verifier = RealClusterVerifier()
     broker = AuthorityBroker()
-    boundary = ConsequenceBoundary(authority_broker=broker, actuator=actuator, verifier=verifier)
+    boundary = ConsequenceBoundary(
+        authority_broker=broker, actuator=actuator, verifier=verifier
+    )
     gateway = NoveltyIngestionGateway()
     synthesizer = CountingHookSynthesizer()
 
@@ -353,7 +361,9 @@ def test_second_matching_episode_via_original_entry_point_bypasses_hook_entirely
     actuator = RealClusterActuator()
     verifier = RealClusterVerifier()
     broker = AuthorityBroker()
-    boundary = ConsequenceBoundary(authority_broker=broker, actuator=actuator, verifier=verifier)
+    boundary = ConsequenceBoundary(
+        authority_broker=broker, actuator=actuator, verifier=verifier
+    )
     gateway = NoveltyIngestionGateway()
     synthesizer = CountingHookSynthesizer()
 
@@ -443,7 +453,9 @@ def test_unrelated_event_does_not_fire_promoted_hook():
     actuator = RealClusterActuator()
     verifier = RealClusterVerifier()
     broker = AuthorityBroker()
-    boundary = ConsequenceBoundary(authority_broker=broker, actuator=actuator, verifier=verifier)
+    boundary = ConsequenceBoundary(
+        authority_broker=broker, actuator=actuator, verifier=verifier
+    )
     gateway = NoveltyIngestionGateway()
     synthesizer = CountingHookSynthesizer()
 

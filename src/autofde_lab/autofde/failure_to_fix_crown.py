@@ -64,7 +64,11 @@ def verify_failure_to_fix_crown(
             raise ValueError("DUPLICATE_CROWN_STAGE_REFUSED")
         by_stage[observation.stage] = observation
 
-    missing = tuple(stage for stage in REQUIRED_STAGES if stage not in by_stage or not by_stage[stage].observed)
+    missing = tuple(
+        stage
+        for stage in REQUIRED_STAGES
+        if stage not in by_stage or not by_stage[stage].observed
+    )
     subjects = {o.subject_digest for o in observations if o.observed}
     subject_digest = next(iter(subjects)) if len(subjects) == 1 else None
     elapsed = sum(o.elapsed_ms for o in observations if o.observed)

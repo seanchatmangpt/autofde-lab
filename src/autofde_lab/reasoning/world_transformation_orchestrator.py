@@ -136,7 +136,9 @@ def compute_delta(
         target = objective["threshold"]
 
         metric_name = _OBJECTIVE_KIND_TO_METRIC.get(kind)
-        current = metadata.observations.get(metric_name) if metric_name is not None else None
+        current = (
+            metadata.observations.get(metric_name) if metric_name is not None else None
+        )
 
         if current is None:
             violated: bool | None = None
@@ -153,12 +155,20 @@ def compute_delta(
             violated = None
 
         items.append(
-            DeltaItem(kind=kind, comparator=comparator, current=current, target=target, violated=violated)
+            DeltaItem(
+                kind=kind,
+                comparator=comparator,
+                current=current,
+                target=target,
+                violated=violated,
+            )
         )
     return tuple(items)
 
 
-def select_transformation(delta: tuple[DeltaItem, ...]) -> TransformationCandidate | None:
+def select_transformation(
+    delta: tuple[DeltaItem, ...],
+) -> TransformationCandidate | None:
     """Real selection of the single most-violated `DeltaItem` (by relative
     gap magnitude), mapped to a named transformation label. Returns `None`,
     never a fabricated candidate, when nothing is confirmed violated (every

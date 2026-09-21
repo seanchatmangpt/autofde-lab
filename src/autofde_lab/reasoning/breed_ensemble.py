@@ -157,14 +157,18 @@ def _derive_confidence(evidence: CognitionEvidence) -> float:
     return max(scores) if scores else 0.0
 
 
-def _run_one_member(member: BreedEnsembleMember, timeout_s: float) -> CognitionEvidence | None:
+def _run_one_member(
+    member: BreedEnsembleMember, timeout_s: float
+) -> CognitionEvidence | None:
     """Real single-member invocation. Returns `None` (never raises) for a
     genuinely unavailable breed or a run that produced no trustworthy
     evidence -- both are real, honest "this member contributed nothing"
     outcomes, not distinguished further here since either way this member
     is simply absent from the ensemble."""
     try:
-        evidence = _run_coroutine_sync(run_cognition(member.breed, timeout_s=timeout_s, **member.build_input()))
+        evidence = _run_coroutine_sync(
+            run_cognition(member.breed, timeout_s=timeout_s, **member.build_input())
+        )
     except (Wasm4pmCognitionUnavailable, NoEvidence):
         return None
     if evidence.selected is None:
@@ -197,7 +201,12 @@ def run_breed_ensemble(
     if len(members) == 1:
         evidence = _run_one_member(members[0], timeout_s)
         if evidence is None:
-            return BreedEnsembleResult(member_evidence={}, arbitrated=None, resolution_weight=None, resolved=False)
+            return BreedEnsembleResult(
+                member_evidence={},
+                arbitrated=None,
+                resolution_weight=None,
+                resolved=False,
+            )
         confidence = _derive_confidence(evidence)
         return BreedEnsembleResult(
             member_evidence={members[0].breed: evidence},
@@ -206,7 +215,9 @@ def run_breed_ensemble(
             resolved=confidence >= resolution_threshold,
         )
 
-    node = PartialOrder(children=tuple(Atom(label=m.breed, consequence="READ") for m in members))
+    node = PartialOrder(
+        children=tuple(Atom(label=m.breed, consequence="READ") for m in members)
+    )
     context = ExecutionContext()
 
     def atom_invoker(atom: Atom, ctx: ExecutionContext) -> None:
@@ -222,7 +233,8 @@ def run_breed_ensemble(
     if recorder is not None:
         execute_with_ocel(
             node,
-            guard_evaluator=lambda name, args: True,  # PartialOrder has no ChoiceGraph -- never consulted
+            guard_evaluator=lambda name,
+            args: True,  # PartialOrder has no ChoiceGraph -- never consulted
             atom_invoker=atom_invoker,
             max_choice_transitions=1,
             max_workers=max_workers or len(members),
@@ -232,7 +244,8 @@ def run_breed_ensemble(
     else:
         execute(
             node,
-            guard_evaluator=lambda name, args: True,  # PartialOrder has no ChoiceGraph -- never consulted
+            guard_evaluator=lambda name,
+            args: True,  # PartialOrder has no ChoiceGraph -- never consulted
             atom_invoker=atom_invoker,
             max_choice_transitions=1,
             max_workers=max_workers or len(members),
@@ -240,25 +253,43 @@ def run_breed_ensemble(
         )
 
     member_evidence: dict[str, CognitionEvidence] = {
-        m.breed: context.attributes[m.breed] for m in members if m.breed in context.attributes
+        m.breed: context.attributes[m.breed]
+        for m in members
+        if m.breed in context.attributes
     }
 
     if len(member_evidence) < 2:
-        return BreedEnsembleResult(member_evidence=member_evidence, arbitrated=None, resolution_weight=None, resolved=False)
+        return BreedEnsembleResult(
+            member_evidence=member_evidence,
+            arbitrated=None,
+            resolution_weight=None,
+            resolved=False,
+        )
 
     meta_facts = []
     total_confidence = 0.0
     for breed_id in member_evidence:
         conclusion = context.attributes[f"breed:{breed_id}:conclusion"]
         confidence = context.attributes[f"breed:{breed_id}:confidence"]
-        meta_facts.append({"key": f"breed:{breed_id}:conclusion", "value": str(conclusion)})
-        meta_facts.append({"key": f"breed:{breed_id}:confidence", "value": str(confidence)})
+        meta_facts.append(
+            {"key": f"breed:{breed_id}:conclusion", "value": str(conclusion)}
+        )
+        meta_facts.append(
+            {"key": f"breed:{breed_id}:confidence", "value": str(confidence)}
+        )
         total_confidence += confidence
 
     try:
-        arbitrated = _run_coroutine_sync(run_cognition("meta_reasoning", facts=meta_facts, timeout_s=timeout_s))
+        arbitrated = _run_coroutine_sync(
+            run_cognition("meta_reasoning", facts=meta_facts, timeout_s=timeout_s)
+        )
     except (Wasm4pmCognitionUnavailable, NoEvidence):
-        return BreedEnsembleResult(member_evidence=member_evidence, arbitrated=None, resolution_weight=None, resolved=False)
+        return BreedEnsembleResult(
+            member_evidence=member_evidence,
+            arbitrated=None,
+            resolution_weight=None,
+            resolved=False,
+        )
 
     winning_weight = 0.0
     for fact in arbitrated.raw_output.get("facts", []):
@@ -269,7 +300,9 @@ def run_breed_ensemble(
                 winning_weight = 0.0
             break
 
-    resolution_weight = (winning_weight / total_confidence) if total_confidence > 0 else 0.0
+    resolution_weight = (
+        (winning_weight / total_confidence) if total_confidence > 0 else 0.0
+    )
     return BreedEnsembleResult(
         member_evidence=member_evidence,
         arbitrated=arbitrated,

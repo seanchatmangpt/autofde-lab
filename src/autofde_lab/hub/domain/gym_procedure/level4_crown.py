@@ -60,17 +60,15 @@ from autofde_lab.hub.domain.gym_procedure.discovered_domain import (
     project_to_recipe,
     propose_discriminating_probe,
 )
-from autofde_lab.hub.domain.gym_procedure.gym_procedure import Recipe, Step
+from autofde_lab.hub.domain.gym_procedure.gym_procedure import Recipe
 from autofde_lab.hub.domain.gym_procedure.level4_gymact_bridge import (
     GYMACT,
     GYMACT_VENV_PYTHON,
     RealBlindEnvironment,
-    skip_reason,
 )
 from autofde_lab.hub.domain.gym_procedure.planner_federation import (
     CommonCandidateSet,
     PlannerAttempt,
-    UngovernedCandidateRefused,
     classify_registered_solvers,
     recipe_problem_digest,
     run_federation,
@@ -78,7 +76,6 @@ from autofde_lab.hub.domain.gym_procedure.planner_federation import (
     select_governed_candidate,
 )
 from autofde_lab.hub.domain.gym_procedure.state_typing import (
-    ProjectionResult,
     classify_observation,
     propositionalize,
 )
@@ -90,10 +87,14 @@ from autofde_lab.hub.domain.gym_procedure.typed_induction import (
 
 
 def _digest(obj: Any) -> str:
-    return hashlib.sha256(json.dumps(obj, sort_keys=True, default=str).encode()).hexdigest()[:16]
+    return hashlib.sha256(
+        json.dumps(obj, sort_keys=True, default=str).encode()
+    ).hexdigest()[:16]
 
 
-def _standing_from_bridge_result(result: dict, replay_rec: dict, expected_list: list) -> Standing:
+def _standing_from_bridge_result(
+    result: dict, replay_rec: dict, expected_list: list
+) -> Standing:
     """The real construction point for a live `Standing`, on the parent-
     process side of the `_EXECUTE_SCRIPT` subprocess boundary.
 
@@ -118,7 +119,9 @@ def _standing_from_bridge_result(result: dict, replay_rec: dict, expected_list: 
         head_digest=replay_payload["head_digest"],
         mismatches=tuple(str(m) for m in (replay_payload["mismatches"] or [])),
     )
-    postcondition_ref = f"final_expected_postcondition:{json.dumps(expected_list, sort_keys=True)}"
+    postcondition_ref = (
+        f"final_expected_postcondition:{json.dumps(expected_list, sort_keys=True)}"
+    )
     return standing_from_episode(
         result["ocel"],
         operations,
@@ -137,7 +140,9 @@ def _standing_from_bridge_result(result: dict, replay_rec: dict, expected_list: 
 class AdvisoryCritique:
     """Advisory output. Carries NO authority. Consumed only by validation."""
 
-    ranked_candidates: tuple[tuple[str, tuple[str, ...], float], ...]  # (planner, plan, score)
+    ranked_candidates: tuple[
+        tuple[str, tuple[str, ...], float], ...
+    ]  # (planner, plan, score)
     disagreement_detected: bool
     information_deficit: Optional[str]
     rationale: str
@@ -165,15 +170,21 @@ def _dspy_preferred_plan(
         return None
 
     numbered = {str(i + 1): plan for i, (_, plan) in enumerate(candidates)}
-    listing = "\n".join(f"{i}. {' -> '.join(p) or '(empty plan)'}" for i, p in numbered.items())
+    listing = "\n".join(
+        f"{i}. {' -> '.join(p) or '(empty plan)'}" for i, p in numbered.items()
+    )
 
     class _RankPlans(dspy.Signature):
         """Choose the single most plausible plan from a numbered list of
         candidate plans produced by independent planners. Reply with only
         the number of the chosen plan."""
 
-        candidate_plans: str = dspy.InputField(desc="numbered candidate plans, one per line")
-        choice: str = dspy.OutputField(desc="the number of the chosen plan, digits only")
+        candidate_plans: str = dspy.InputField(
+            desc="numbered candidate plans, one per line"
+        )
+        choice: str = dspy.OutputField(
+            desc="the number of the chosen plan, digits only"
+        )
 
     try:
         with dspy.context(lm=lm):
@@ -210,7 +221,11 @@ def critique_candidates(
     Either way the output is advisory -- the distinction changes ranking
     quality, never authority.
     """
-    candidates = [(a.planner_identity, a.candidate_plan) for a in attempts if a.outcome == "PLAN_CANDIDATE"]
+    candidates = [
+        (a.planner_identity, a.candidate_plan)
+        for a in attempts
+        if a.outcome == "PLAN_CANDIDATE"
+    ]
     distinct_plans = {tuple(p) for _, p in candidates}
     disagreement = len(distinct_plans) > 1
 
@@ -243,7 +258,7 @@ def critique_candidates(
         ranked_candidates=tuple(ranked),
         disagreement_detected=disagreement,
         information_deficit=deficit,
-        rationale=f"{len(candidates)} candidates from {len({p for p,_ in candidates})} planners; {len(distinct_plans)} distinct plans",
+        rationale=f"{len(candidates)} candidates from {len({p for p, _ in candidates})} planners; {len(distinct_plans)} distinct plans",
         source=source,
     )
 
@@ -295,7 +310,9 @@ class PowlCommitment:
     turtle: str
 
 
-def independently_validate(plan: tuple[str, ...], domain: DiscoveredDomain, problem: DiscoveredProblem) -> Optional[ValidatedPlan]:
+def independently_validate(
+    plan: tuple[str, ...], domain: DiscoveredDomain, problem: DiscoveredProblem
+) -> Optional[ValidatedPlan]:
     """Re-execute the candidate against the DISCOVERED model's own transition
     rule -- not the solver's internal search, and not the solver's claim.
     Catches representation loss inside a projection."""
@@ -309,7 +326,12 @@ def independently_validate(plan: tuple[str, ...], domain: DiscoveredDomain, prob
         state = (state - set(act.negative_effects)) | set(act.positive_effects)
     if not problem.goal <= state:
         return None
-    return ValidatedPlan(plan=tuple(plan), model_digest=_digest({k: sorted(v.preconditions) for k, v in domain.actions.items()}))
+    return ValidatedPlan(
+        plan=tuple(plan),
+        model_digest=_digest(
+            {k: sorted(v.preconditions) for k, v in domain.actions.items()}
+        ),
+    )
 
 
 def commit(validated: ValidatedPlan, trial_id: str) -> PowlCommitment:
@@ -323,8 +345,8 @@ def commit(validated: ValidatedPlan, trial_id: str) -> PowlCommitment:
         f"<urn:trial:{trial_id}> a powl:Commitment ;\n"
         f'    powl:planDigest "{plan_digest}" ;\n'
         f'    powl:modelDigest "{validated.model_digest}" ;\n'
-        f'    powl:planLength {len(validated.plan)} ;\n'
-        f'    powl:sequence ({" ".join(chr(34) + a + chr(34) for a in validated.plan)}) .\n'
+        f"    powl:planLength {len(validated.plan)} ;\n"
+        f"    powl:sequence ({' '.join(chr(34) + a + chr(34) for a in validated.plan)}) .\n"
     )
     return PowlCommitment(
         plan=validated.plan,
@@ -339,7 +361,7 @@ def commit(validated: ValidatedPlan, trial_id: str) -> PowlCommitment:
 # Actuation -- ONLY reachable with a PowlCommitment
 # --------------------------------------------------------------------------
 
-_EXECUTE_SCRIPT = '''
+_EXECUTE_SCRIPT = """
 _AUTHORITY_REF = "urn:autofde-lab:level4-crown-authority"
 _GOAL_CONSEQUENCE_EVENT_TYPE = "verify_goal_consequence"
 import asyncio, datetime, hashlib, importlib, inspect, json, sys
@@ -612,7 +634,7 @@ if __name__ == "__main__":
     out = asyncio.run(main(a[1], a[2], a[3], json.loads(a[4]), json.loads(a[5]),
                           json.loads(a[6]), json.loads(a[7]), a[8]))
     print(json.dumps(out, default=str))
-'''
+"""
 
 
 _COUNTER_DELTAS = {"increment": 1, "decrement": -1}
@@ -769,7 +791,9 @@ def predict_step_postconditions(
             step_payload = payloads[i] or decoded
             counter += int(step_payload.get("value", 0))
         else:
-            raise ValueError(f"UNSUPPORTED_ACTION_FOR_POSTCONDITION_PREDICTION:{action_id}")
+            raise ValueError(
+                f"UNSUPPORTED_ACTION_FOR_POSTCONDITION_PREDICTION:{action_id}"
+            )
         step_expected: dict = {"counter": counter}
         if target is not None:
             step_expected["solved"] = counter == int(target)
@@ -807,7 +831,9 @@ def _predict_switchboard(plan: tuple[str, ...], initial: dict) -> list[dict]:
             switches[0] = False
             switches[1] = False
         else:
-            raise ValueError(f"UNSUPPORTED_ACTION_FOR_POSTCONDITION_PREDICTION:{action_id}")
+            raise ValueError(
+                f"UNSUPPORTED_ACTION_FOR_POSTCONDITION_PREDICTION:{action_id}"
+            )
         step: dict = {f"switch_{i}": v for i, v in switches.items()}
         step["master"] = master
         step["toggles"] = toggles
@@ -849,7 +875,9 @@ def _predict_resource_flow(plan: tuple[str, ...], initial: dict) -> list[dict]:
             catalyst = False
             output_known = False  # bonus is hidden seeded state
         else:
-            raise ValueError(f"UNSUPPORTED_ACTION_FOR_POSTCONDITION_PREDICTION:{action_id}")
+            raise ValueError(
+                f"UNSUPPORTED_ACTION_FOR_POSTCONDITION_PREDICTION:{action_id}"
+            )
         step: dict = {"raw": raw, "refined": refined, "catalyst": catalyst}
         if output_known:
             step["output"] = output
@@ -891,7 +919,9 @@ def _predict_lock_and_key(plan: tuple[str, ...], initial: dict) -> list[dict]:
             held = -1
             jammed = True
         else:
-            raise ValueError(f"UNSUPPORTED_ACTION_FOR_POSTCONDITION_PREDICTION:{action_id}")
+            raise ValueError(
+                f"UNSUPPORTED_ACTION_FOR_POSTCONDITION_PREDICTION:{action_id}"
+            )
         out.append(
             {
                 "locks_open": locks_open,
@@ -923,15 +953,21 @@ def _predict_memory(plan: tuple[str, ...], initial: dict) -> list[dict]:
     counter_key = "counter"
     value = initial.get(counter_key, 0)
     if not isinstance(value, int) or isinstance(value, bool):
-        raise ValueError(f"UNPREDICTABLE_INITIAL_VALUE_FOR_MEMORY_ORACLE:{counter_key}={value!r}")
+        raise ValueError(
+            f"UNPREDICTABLE_INITIAL_VALUE_FOR_MEMORY_ORACLE:{counter_key}={value!r}"
+        )
     out: list[dict] = []
     for action_id in plan:
         binding, payload = decode_action(action_id)
         if binding != "increment" or payload.get("key") != counter_key:
-            raise ValueError(f"UNSUPPORTED_ACTION_FOR_POSTCONDITION_PREDICTION:{action_id}")
+            raise ValueError(
+                f"UNSUPPORTED_ACTION_FOR_POSTCONDITION_PREDICTION:{action_id}"
+            )
         amount = payload.get("amount", 1)
         if not isinstance(amount, int) or isinstance(amount, bool):
-            raise ValueError(f"UNPREDICTABLE_AMOUNT_FOR_POSTCONDITION_PREDICTION:{action_id}")
+            raise ValueError(
+                f"UNPREDICTABLE_AMOUNT_FOR_POSTCONDITION_PREDICTION:{action_id}"
+            )
         value += amount
         out.append({counter_key: value})
     return out
@@ -1001,7 +1037,9 @@ def commit_and_execute(
         if expected_list:
             expected_list[-1] = dict(expected)
     else:
-        raise TypeError(f"expected must be a dict or list[dict], got {type(expected).__name__}")
+        raise TypeError(
+            f"expected must be a dict or list[dict], got {type(expected).__name__}"
+        )
 
     evidence_dir.mkdir(parents=True, exist_ok=True)
     script = evidence_dir / "execute.py"
@@ -1011,14 +1049,26 @@ def commit_and_execute(
 
     completed = subprocess.run(
         [
-            str(GYMACT_VENV_PYTHON), str(script), module_path, class_name, provider_name,
-            json.dumps(config), json.dumps(list(plan)), json.dumps(expected_list),
-            json.dumps(payloads), str(ledger_path),
+            str(GYMACT_VENV_PYTHON),
+            str(script),
+            module_path,
+            class_name,
+            provider_name,
+            json.dumps(config),
+            json.dumps(list(plan)),
+            json.dumps(expected_list),
+            json.dumps(payloads),
+            str(ledger_path),
         ],
-        capture_output=True, text=True, cwd=str(GYMACT), timeout=300,
+        capture_output=True,
+        text=True,
+        cwd=str(GYMACT),
+        timeout=300,
     )
     if completed.returncode != 0:
-        raise RuntimeError(f"execute bridge failed:\nstdout={completed.stdout}\nstderr={completed.stderr}")
+        raise RuntimeError(
+            f"execute bridge failed:\nstdout={completed.stdout}\nstderr={completed.stderr}"
+        )
     result = json.loads(completed.stdout.strip().splitlines()[-1])
     if result.get("materialize_failed"):
         # A typed refusal from `_EXECUTE_SCRIPT`, not a crash -- surfaced as
@@ -1027,7 +1077,9 @@ def commit_and_execute(
         # trial that cannot be modelled is a FAILED trial with a named
         # reason, never an absent one" convention this module uses
         # everywhere else.
-        raise ActuationMaterializeRefused(str(result.get("reason") or "UNKNOWN_MATERIALIZE_REFUSAL"))
+        raise ActuationMaterializeRefused(
+            str(result.get("reason") or "UNKNOWN_MATERIALIZE_REFUSAL")
+        )
     # Write the CANONICAL bytes, not a pretty-printed rendering.
     #
     # `ocel_digest` is computed by gymact's `digest_ocel_log` over
@@ -1040,7 +1092,8 @@ def commit_and_execute(
     # `evidence_ref` requirement exists to prevent. `sha256sum` on this file
     # now reproduces `ocel_digest`.
     (evidence_dir / "episode.ocel.json").write_text(
-        json.dumps(result["ocel"], sort_keys=True, separators=(",", ":")), encoding="utf-8"
+        json.dumps(result["ocel"], sort_keys=True, separators=(",", ":")),
+        encoding="utf-8",
     )
     return result
 
@@ -1146,7 +1199,9 @@ class TrialReport:
             case UnknownEvidence() | BlockedEvidence() | UnsupportedEvidence():
                 return "UNKNOWN"
             case _:  # pragma: no cover - exhaustive over Standing's 6 variants
-                raise TypeError(f"UNHANDLED_STANDING_VARIANT:{type(self.standing).__name__}")
+                raise TypeError(
+                    f"UNHANDLED_STANDING_VARIANT:{type(self.standing).__name__}"
+                )
 
     def to_row(self) -> dict:
         """Scoreboard row. `standing` is serialized through
@@ -1155,7 +1210,11 @@ class TrialReport:
         real gymact pydantic models (`ConformanceResult`, `ReplayReport`)
         that `asdict` would leave un-converted rather than turn into plain,
         JSON-safe dicts."""
-        row = {f.name: getattr(self, f.name) for f in dataclasses_fields(self) if f.name != "standing"}
+        row = {
+            f.name: getattr(self, f.name)
+            for f in dataclasses_fields(self)
+            if f.name != "standing"
+        }
         row["standing"] = standing_to_dict(self.standing)
         return row
 
@@ -1173,7 +1232,9 @@ def _changed_dims(record: dict, non_metric_only: bool = False) -> set[str]:
     return changed
 
 
-def _discover_by_probing(env: RealBlindEnvironment, probe_budget: int) -> tuple[list[dict], int]:
+def _discover_by_probing(
+    env: RealBlindEnvironment, probe_budget: int
+) -> tuple[list[dict], int]:
     """Learn every action's effect without wrecking the episode.
 
     Replaces a loop that committed every applicable probe to history. That
@@ -1431,7 +1492,12 @@ def validate_federation_candidates(
             typed_domain, typed_initial, plan_t, goal_predicate
         )
         verdicts.append(
-            {"planner": planner, "plan": list(plan_t), "valid": bool(ok), "reason": reason}
+            {
+                "planner": planner,
+                "plan": list(plan_t),
+                "valid": bool(ok),
+                "reason": reason,
+            }
         )
         if ok and validated is None:
             validated = ValidatedPlan(
@@ -1476,7 +1542,9 @@ def run_real_trial(
     raw_records, n_probes = _discover_by_probing(env, probe_budget)
 
     # --- typed projection (losses recorded, never silently dropped) --------
-    observations = [_observation_from_facts(r.get("observed_pre_facts", [])) for r in raw_records]
+    observations = [
+        _observation_from_facts(r.get("observed_pre_facts", [])) for r in raw_records
+    ]
     dims = classify_observation([o for o in observations if o])
     losses: dict[str, str] = {}
 
@@ -1500,17 +1568,33 @@ def run_real_trial(
         encoding="utf-8",
     )
 
-    initial_facts = frozenset(probe_log[0]["observed_pre_facts"]) if probe_log else frozenset()
+    initial_facts = (
+        frozenset(probe_log[0]["observed_pre_facts"]) if probe_log else frozenset()
+    )
     goal = frozenset({"solved=True"})
     problem = DiscoveredProblem(initial_state=initial_facts, goal=goal)
 
-    def _plan_round(log: list[dict]) -> tuple[DiscoveredDomain, Recipe, list, AdvisoryCritique, list[str]]:
+    def _plan_round(
+        log: list[dict],
+    ) -> tuple[DiscoveredDomain, Recipe, list, AdvisoryCritique, list[str]]:
         domain = induce_discovered_domain(log)
-        recipe = project_to_recipe(domain, problem, gym=provider_key, task=f"seed{seed}", source_ref=f"realtrial:{run_id}")
+        recipe = project_to_recipe(
+            domain,
+            problem,
+            gym=provider_key,
+            task=f"seed{seed}",
+            source_ref=f"realtrial:{run_id}",
+        )
         classified = classify_registered_solvers(recipe)
         supported = [c.name for c in classified if c.status == "SUPPORTED"]
         attempts = run_federation(recipe, supported, timeout_s=planner_timeout_s)
-        return domain, recipe, attempts, critique_candidates(attempts, domain, lm=lm), supported
+        return (
+            domain,
+            recipe,
+            attempts,
+            critique_candidates(attempts, domain, lm=lm),
+            supported,
+        )
 
     base_probe = dict(
         seed=seed,
@@ -1597,10 +1681,14 @@ def run_real_trial(
     # Induced BEFORE `federation.json` is written, deliberately: `typed_search`
     # needs the typed model, and it is now a federated producer whose attempt
     # must appear in that file alongside every other planner's.
-    typed_records = [r for r in raw_records if "observed_pre" in r and "observed_post" in r]
+    typed_records = [
+        r for r in raw_records if "observed_pre" in r and "observed_post" in r
+    ]
     typed_domain: TypedDomain = induce_typed_domain(typed_records)
     typed_initial = dict(typed_records[0]["observed_pre"]) if typed_records else {}
-    goal_predicate, goal_expr = model_goal_predicate(provider_key, typed_initial, config)
+    goal_predicate, goal_expr = model_goal_predicate(
+        provider_key, typed_initial, config
+    )
     goal_predicate_description = (
         f"MODEL goal (base dimensions): {goal_expr}; "
         f"REAL goal: solved is True in the post-execution observation"
@@ -1623,14 +1711,21 @@ def run_real_trial(
     ]
     critique = critique_candidates(attempts, domain, lm=lm)
 
-    candidate_planners = tuple(sorted({a.planner_identity for a in attempts if a.outcome == "PLAN_CANDIDATE"}))
+    candidate_planners = tuple(
+        sorted({a.planner_identity for a in attempts if a.outcome == "PLAN_CANDIDATE"})
+    )
 
     (evidence_dir / "federation.json").write_text(
         json.dumps(
             [
-                {"planner": a.planner_identity, "representation": a.representation,
-                 "outcome": a.outcome, "plan": list(a.candidate_plan),
-                 "duration_s": a.planning_duration_s, "detail": a.detail}
+                {
+                    "planner": a.planner_identity,
+                    "representation": a.representation,
+                    "outcome": a.outcome,
+                    "plan": list(a.candidate_plan),
+                    "duration_s": a.planning_duration_s,
+                    "detail": a.detail,
+                }
                 for a in attempts
             ],
             indent=2,
@@ -1653,10 +1748,16 @@ def run_real_trial(
     )
 
     base = dict(
-        seed=seed, run_id=run_id, provider=provider_key, n_probes=n_probes,
-        n_planner_attempts=len(attempts), planners_producing_candidates=candidate_planners,
-        disagreement_detected=critique.disagreement_detected, evidence_dir=str(evidence_dir),
-        representation_losses=dict(losses), n_supported_solvers=n_supported,
+        seed=seed,
+        run_id=run_id,
+        provider=provider_key,
+        n_probes=n_probes,
+        n_planner_attempts=len(attempts),
+        planners_producing_candidates=candidate_planners,
+        disagreement_detected=critique.disagreement_detected,
+        evidence_dir=str(evidence_dir),
+        representation_losses=dict(losses),
+        n_supported_solvers=n_supported,
         discriminating_probe=discriminating,
     )
 
@@ -1667,7 +1768,10 @@ def run_real_trial(
         typed_derived_dimensions=typed_derived,
     )
     model_digest = _digest(
-        {a: sorted(e.describe() for e in act.effects.values()) for a, act in typed_domain.actions.items()}
+        {
+            a: sorted(e.describe() for e in act.effects.values())
+            for a, act in typed_domain.actions.items()
+        }
     )
 
     # EVERY federation candidate is validated, not just the ones ahead of the
@@ -1694,12 +1798,16 @@ def run_real_trial(
     )
     validated = (
         ValidatedPlan(
-            plan=selected.plan, model_digest=model_digest, validated_against="TypedDomain"
+            plan=selected.plan,
+            model_digest=model_digest,
+            validated_against="TypedDomain",
         )
         if selected is not None
         else None
     )
-    plan_source = f"federation:{selected.planner_identity}" if selected is not None else ""
+    plan_source = (
+        f"federation:{selected.planner_identity}" if selected is not None else ""
+    )
     rejected = sum(1 for v in candidate_verdicts if not v["valid"])
     (evidence_dir / "typed_validation.json").write_text(
         json.dumps(
@@ -1717,10 +1825,15 @@ def run_real_trial(
     # producer, so its candidate reaches this point through the common set.)
     if validated is None:
         return TrialReport(
-            standing=UnknownEvidence(missing="NO_TYPED_VALID_PLAN", episode_digest=None),
+            standing=UnknownEvidence(
+                missing="NO_TYPED_VALID_PLAN", episode_digest=None
+            ),
             ocel_ref_violations=(),
-            replay_mismatches=(), outcome="NO_TYPED_VALID_PLAN",
-            unsound_candidates_rejected=rejected, **typed_base, **base
+            replay_mismatches=(),
+            outcome="NO_TYPED_VALID_PLAN",
+            unsound_candidates_rejected=rejected,
+            **typed_base,
+            **base,
         )
 
     # SELECTION -- this candidate, for that goal, from that source. Recorded
@@ -1749,7 +1862,12 @@ def run_real_trial(
     )
     try:
         result = commit_and_execute(
-            commitment, provider_key, config, expected_steps, evidence_dir / "actuation", payloads
+            commitment,
+            provider_key,
+            config,
+            expected_steps,
+            evidence_dir / "actuation",
+            payloads,
         )
     except ActuationMaterializeRefused as exc:
         # A real, named blocker at the actuation stage -- discovery and
@@ -1779,14 +1897,20 @@ def run_real_trial(
     # and is never written as a refutation.
     _ledger_path = evidence_dir / "actuation" / "receipts.sqlite3"
     _final_act = journal.final_actuation_receipt_id(_ledger_path)
-    for _event in result["ocel"].get("events", []) if isinstance(result.get("ocel"), dict) else []:
+    for _event in (
+        result["ocel"].get("events", []) if isinstance(result.get("ocel"), dict) else []
+    ):
         if _event.get("type") != GOAL_CONSEQUENCE_EVENT_TYPE or _final_act is None:
             continue
         _attributes = {a["name"]: a["value"] for a in _event.get("attributes", [])}
         if "passed" not in _attributes or "verification_id" not in _attributes:
             continue
         _episode = next(
-            (r["objectId"] for r in _event.get("relationships", []) if r.get("qualifier") == "episode"),
+            (
+                r["objectId"]
+                for r in _event.get("relationships", [])
+                if r.get("qualifier") == "episode"
+            ),
             "",
         )
         journal.observe_goal_consequence(
@@ -1833,8 +1957,12 @@ def run_real_trial(
     # failure". Both are wrong to guess -- so the missing key is materialised
     # explicitly, with a named reason, before it is read.
     for required_key, absent_marker in (
-        ("ran", False), ("valid", False), ("mismatches", ["REPLAY_FIELD_ABSENT"]),
-        ("record_count", 0), ("error", None), ("head_digest", None),
+        ("ran", False),
+        ("valid", False),
+        ("mismatches", ["REPLAY_FIELD_ABSENT"]),
+        ("record_count", 0),
+        ("error", None),
+        ("head_digest", None),
     ):
         if required_key not in replay_rec:
             replay_rec[required_key] = absent_marker
@@ -1905,7 +2033,9 @@ def validate_ocel_referential_integrity(log: dict) -> list[str]:
 
     for obj in log["objects"]:
         if "type" not in obj or obj["type"] not in object_types:
-            violations.append(f"DANGLING_OBJECT_TYPE:{obj.get('id')}->{obj.get('type')}")
+            violations.append(
+                f"DANGLING_OBJECT_TYPE:{obj.get('id')}->{obj.get('type')}"
+            )
     for ev in log["events"]:
         if "type" not in ev or ev["type"] not in event_types:
             violations.append(f"DANGLING_EVENT_TYPE:{ev.get('id')}->{ev.get('type')}")
@@ -1917,5 +2047,7 @@ def validate_ocel_referential_integrity(log: dict) -> list[str]:
             continue
         for rel in ev["relationships"] or []:
             if "objectId" not in rel or rel["objectId"] not in object_ids:
-                violations.append(f"DANGLING_OBJECT_REFERENCE:{ev.get('id')}->{rel.get('objectId')}")
+                violations.append(
+                    f"DANGLING_OBJECT_REFERENCE:{ev.get('id')}->{rel.get('objectId')}"
+                )
     return violations

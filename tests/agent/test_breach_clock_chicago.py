@@ -333,9 +333,7 @@ def test_containment_epoch_records_one_choice_over_all_three_postures(run):
 
 def test_the_replan_supersedes_the_whole_prior_lineage(run):
     assert run.session.epochs[0].standing is EpochStanding.SUPERSEDED
-    assert all(
-        e.standing is EpochStanding.SUPERSEDED for e in run.session.epochs[:-1]
-    )
+    assert all(e.standing is EpochStanding.SUPERSEDED for e in run.session.epochs[:-1])
     assert run.session.epochs[-1].standing is EpochStanding.ALIVE
     assert run.session.epochs[-1].supersedes == tuple(run.epoch_ids[:-1])
 
@@ -406,9 +404,7 @@ def test_no_occurrence_key_repeats_unless_the_node_is_a_justified_redo(run):
     assert sorted(counts.values()) == [1, 2]
 
     # every activity that DID occur more than once beyond that is a justified redo
-    redo_activities = {
-        R.activity_of(node_at(POWL1, p)) for p in run.preserve_map.redo
-    }
+    redo_activities = {R.activity_of(node_at(POWL1, p)) for p in run.preserve_map.redo}
     for activity, count in {
         a: sum(1 for r in committed if r.activity_sha256 == a)
         for a in {r.activity_sha256 for r in committed}

@@ -48,7 +48,8 @@ def _trial_dirs() -> list[Path]:
 
 
 requires_wpm = pytest.mark.skipif(
-    not _wpm_present(), reason="BLOCKED:WPM_BINARY_ABSENT -- no built 'wpm' on this machine"
+    not _wpm_present(),
+    reason="BLOCKED:WPM_BINARY_ABSENT -- no built 'wpm' on this machine",
 )
 requires_trials = pytest.mark.skipif(
     not _trial_dirs(),
@@ -66,7 +67,7 @@ def test_committed_model_and_golden_log_are_on_disk() -> None:
     from autofde_lab.hub.domain.gym_procedure.level4_ocel import LEVEL4_EVENT_TYPES
 
     for activity in LEVEL4_EVENT_TYPES:
-        assert f'<text>{activity}</text>' in pnml, f"no transition for {activity}"
+        assert f"<text>{activity}</text>" in pnml, f"no transition for {activity}"
     assert "<finalmarkings>" in pnml and "<initialMarking>" in pnml
 
 
@@ -83,7 +84,9 @@ def test_golden_baseline_is_the_real_reachable_ceiling_and_is_not_one() -> None:
     assert report.avg_fitness == pytest.approx(0.8685, abs=1e-4)
     # Constant source/sink token artifact on every trace -- the reason fitness < 1.
     assert report.deviations, "expected the golden log itself to deviate"
-    assert all(d.tokens_missing == 2 and d.tokens_remaining == 3 for d in report.deviations)
+    assert all(
+        d.tokens_missing == 2 and d.tokens_remaining == 3 for d in report.deviations
+    )
     assert report.precision is not None and report.generalization is not None
 
 
@@ -142,7 +145,9 @@ def test_intra_receipt_ordering_is_unrecorded_wherever_actuation_happened() -> N
     for d in _trial_dirs():
         by_id = trial_activity_sequence(d, tie_break="id")
         by_chain = trial_activity_sequence(d, tie_break="chain")
-        assert sorted(by_id) == sorted(by_chain), "tie-break must permute, never add/drop"
+        assert sorted(by_id) == sorted(by_chain), (
+            "tie-break must permute, never add/drop"
+        )
         if "ActuationOpened" in by_id:
             assert by_id != by_chain, (
                 f"{d.name} actuated but the tie-break made no difference; intra-receipt "
@@ -150,7 +155,9 @@ def test_intra_receipt_ordering_is_unrecorded_wherever_actuation_happened() -> N
             )
             actuated_and_differs += 1
         else:
-            assert by_id == by_chain, f"{d.name} never actuated but ordering still moved"
+            assert by_id == by_chain, (
+                f"{d.name} never actuated but ordering still moved"
+            )
     assert actuated_and_differs == 3
 
 

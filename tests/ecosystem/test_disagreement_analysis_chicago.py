@@ -145,7 +145,9 @@ def test_model_defect_is_only_claimed_with_independent_mismatch_evidence(
     assert len(defects) == 5
     for hypothesis in defects:
         assert hypothesis.model_says_applicable is True
-        assert hypothesis.disputed_action not in (hypothesis.environment_applicable or ())
+        assert hypothesis.disputed_action not in (
+            hypothesis.environment_applicable or ()
+        )
         assert any(
             citation.field == "final_state_mismatches"
             for citation in hypothesis.citations
@@ -167,7 +169,9 @@ def test_probe_federation_conflict_names_the_real_contradicting_probe(classifica
 
     citation = next(c for c in hypothesis.citations if "probe_log[" in c.field)
     index = int(citation.field.split("[")[1].rstrip("]"))
-    probe_log = json.loads((REFERENCE / "typed_probe_log.json").read_text())["probe_log"]
+    probe_log = json.loads((REFERENCE / "typed_probe_log.json").read_text())[
+        "probe_log"
+    ]
     record = probe_log[index]
     assert record["action"] == "mine"
     assert record["applicable"] is True
@@ -186,7 +190,9 @@ def test_next_experiment_reuses_the_existing_probe_proposer():
     experiment = next_discriminating_experiment(REFERENCE)
     assert isinstance(experiment, NextExperiment), experiment
     assert experiment.cannot_distinguish is None
-    assert experiment.reused_proposer == "discovered_domain.propose_discriminating_probe"
+    assert (
+        experiment.reused_proposer == "discovered_domain.propose_discriminating_probe"
+    )
     assert experiment.experiment["kind"] == "PRECONDITION_DISCRIMINATION"
     assert experiment.experiment["action"] == "burn_catalyst"
     assert "MODEL_DEFECT" in experiment.distinguishes

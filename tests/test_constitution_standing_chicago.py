@@ -9,6 +9,7 @@ below is against the real `StandingValue` enum and the real frozen
 `Refusal` / `StandingAssertion` dataclasses as manufactured, and against the
 real six-status vocabulary defined in `.claude/rules/standing-law.md`.
 """
+
 from __future__ import annotations
 
 import dataclasses

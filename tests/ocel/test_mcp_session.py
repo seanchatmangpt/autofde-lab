@@ -32,7 +32,9 @@ def test_records_a_real_event_with_standing_and_relationships():
     assert len(log.events) == 1
     event = log.events[0]
     assert event.activity == "decision_solve"
-    linked = {link.object_id for link in log.event_object_links if link.event_id == "evt-1"}
+    linked = {
+        link.object_id for link in log.event_object_links if link.event_id == "evt-1"
+    }
     assert linked == {"session-1", "domain-Maze", "solver-Astar"}
 
 

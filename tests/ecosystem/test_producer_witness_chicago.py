@@ -140,12 +140,16 @@ def test_the_journal_states_each_relation_with_both_endpoints(executed_trial) ->
 
 def test_a_fresh_verifier_reconstructs_the_whole_chain(executed_trial) -> None:
     result = _verify(executed_trial)
-    assert "ALIVE_EVIDENCE_RECONSTRUCTED" in result.stdout, result.stdout + result.stderr
+    assert "ALIVE_EVIDENCE_RECONSTRUCTED" in result.stdout, (
+        result.stdout + result.stderr
+    )
     assert result.returncode == 0
     assert "INDEPENDENCE: no execution-runtime module imported" in result.stdout
 
 
-def test_the_goal_is_a_first_class_object_the_observation_relates_to(executed_trial) -> None:
+def test_the_goal_is_a_first_class_object_the_observation_relates_to(
+    executed_trial,
+) -> None:
     ocel = json.loads((executed_trial / "actuation" / "level4.ocel.json").read_text())
     types = {o["id"]: o["type"] for o in ocel["objects"]}
     edges = [
@@ -156,11 +160,17 @@ def test_the_goal_is_a_first_class_object_the_observation_relates_to(executed_tr
 
     def typed(qualifier: str, src: str, tgt: str) -> list[tuple[str, str, str]]:
         return [
-            e for e in edges if e[1] == qualifier and types.get(e[0]) == src and types.get(e[2]) == tgt
+            e
+            for e in edges
+            if e[1] == qualifier and types.get(e[0]) == src and types.get(e[2]) == tgt
         ]
 
-    assert typed("goal_of_task", "Goal", "Task"), "no admitted Goal object bound to the Task"
-    assert typed("targets_goal", "PlanCandidate", "Goal"), "selected plan not bound to the goal"
+    assert typed("goal_of_task", "Goal", "Task"), (
+        "no admitted Goal object bound to the Task"
+    )
+    assert typed("targets_goal", "PlanCandidate", "Goal"), (
+        "selected plan not bound to the goal"
+    )
 
     # Conformance and achievement are different claims: exactly one of the two
     # is emitted, and both are real checked observations of the SAME goal.

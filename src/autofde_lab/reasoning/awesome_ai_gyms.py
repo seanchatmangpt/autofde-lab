@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import csv
 import io
+import tomllib
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Literal
-
-import tomllib
 
 Compatibility = Literal["UNKNOWN", "COMPATIBLE", "REFUSED"]
 _REGISTRY_COLUMNS = (

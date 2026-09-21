@@ -210,8 +210,7 @@ class TestTheAuthorityArtifact:
         ):
             if manufactured in turtle:
                 failures.append(
-                    f"NO_MANUFACTURED_DECISION: positive fixture carries "
-                    f"{manufactured}"
+                    f"NO_MANUFACTURED_DECISION: positive fixture carries {manufactured}"
                 )
 
         assert not failures, "\n".join(failures)
@@ -403,7 +402,12 @@ class TestFalsifier02FdeClaimsCustomerAuthority:
         model = fixture("neg-02-fde-claims-customer-authority.ttl")
         grant = model.the_grant()
         _check(failures, "FIXTURE_GRANTOR", grant.granted_by, FDE_PARTY)
-        _check(failures, "FIXTURE_GRANTOR_IS_FDE", model.parties[grant.granted_by].is_fde, True)
+        _check(
+            failures,
+            "FIXTURE_GRANTOR_IS_FDE",
+            model.parties[grant.granted_by].is_fde,
+            True,
+        )
         assert not failures, "\n".join(failures)
 
 
@@ -629,9 +633,10 @@ class TestFalsifier11ResumedBeforeOrganizationalAdmission:
     """Parent resumes from technical completion, skipping adoption."""
 
     def test_artifact_level_refusal(self):
-        assert validation_code(
-            "neg-11-resumed-before-organizational-admission.ttl"
-        ) == fde.REFUSED_RESUMED_BEFORE_ORGANIZATIONAL_ADMISSION
+        assert (
+            validation_code("neg-11-resumed-before-organizational-admission.ttl")
+            == fde.REFUSED_RESUMED_BEFORE_ORGANIZATIONAL_ADMISSION
+        )
 
     def test_live_recursive_resume_cannot_be_exercised_yet(self):
         """BLOCKED: no component runs the blocked-parent resume loop.
@@ -705,9 +710,7 @@ class TestFalsifier13InformalEscalationInsteadOfChildWorkflow:
                 "child workflow from an organizational blocker; only the "
                 "artifact-level invariant is exercised"
             )
-        pytest.fail(
-            "a controller now exists -- exercise the live spawn here instead"
-        )
+        pytest.fail("a controller now exists -- exercise the live spawn here instead")
 
 
 class TestFalsifier14SunsetAgainstAnUnadoptedReplacement:
@@ -813,7 +816,10 @@ class TestRemainingTypedRefusals:
             fde.parse_authority_turtle("<urn:x> a fdet:AuthorityGrant ;")
         except AuthorityError as error:
             _check(
-                failures, "MALFORMED_ARTIFACT", error.code, fde.REFUSED_MALFORMED_ARTIFACT
+                failures,
+                "MALFORMED_ARTIFACT",
+                error.code,
+                fde.REFUSED_MALFORMED_ARTIFACT,
             )
         else:
             failures.append(

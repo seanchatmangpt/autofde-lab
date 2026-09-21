@@ -59,17 +59,26 @@ def test_the_real_untampered_log_conforms_per_object() -> None:
     log = _run_real_scenario_to_ocel()
 
     per_activity_intended = {
-        obj.id: (obj.attributes[0].value.value,)  # each PowlActivity's own single-event trace
+        obj.id: (
+            obj.attributes[0].value.value,
+        )  # each PowlActivity's own single-event trace
         for obj in log.objects
         if obj.object_type == "PowlActivity"
     }
-    intended = {_EXECUTION_OBJECT_ID: _INTENDED_EXECUTION_TRACE, **per_activity_intended}
+    intended = {
+        _EXECUTION_OBJECT_ID: _INTENDED_EXECUTION_TRACE,
+        **per_activity_intended,
+    }
 
-    result = check_object_centric_conformance(log, intended_traces_by_object_id=intended)
+    result = check_object_centric_conformance(
+        log, intended_traces_by_object_id=intended
+    )
 
     assert result.all_conform is True
     assert result.overall_fitness == 1.0
-    execution_fitness = next(o for o in result.per_object if o.object_id == _EXECUTION_OBJECT_ID)
+    execution_fitness = next(
+        o for o in result.per_object if o.object_id == _EXECUTION_OBJECT_ID
+    )
     assert execution_fitness.observed_trace == _INTENDED_EXECUTION_TRACE
 
 
@@ -77,7 +86,9 @@ def test_an_unknown_object_id_raises_rather_than_silently_scoring_zero() -> None
     log = _run_real_scenario_to_ocel()
 
     try:
-        check_object_centric_conformance(log, intended_traces_by_object_id={"not-a-real-object": ("x",)})
+        check_object_centric_conformance(
+            log, intended_traces_by_object_id={"not-a-real-object": ("x",)}
+        )
         raised = False
     except KeyError:
         raised = True
@@ -85,7 +96,9 @@ def test_an_unknown_object_id_raises_rather_than_silently_scoring_zero() -> None
     assert raised is True
 
 
-def test_a_crossed_object_identity_link_produces_a_real_detectable_gap_and_extra_event() -> None:
+def test_a_crossed_object_identity_link_produces_a_real_detectable_gap_and_extra_event() -> (
+    None
+):
     """Falsifiability check: re-link one real event (select_transformation)
     to point at a second, decoy PowlExecution object instead of the real
     one -- the exact 'dangling or crossed' failure mode
@@ -98,7 +111,8 @@ def test_a_crossed_object_identity_link_produces_a_real_detectable_gap_and_extra
         return next(str(a.value.value) for a in event.attributes if a.key == "label")
 
     crossed_event = next(
-        e for e in log.events
+        e
+        for e in log.events
         if any(
             link.object_id == _EXECUTION_OBJECT_ID
             for link in log.event_object_links
@@ -128,15 +142,26 @@ def test_a_crossed_object_identity_link_produces_a_real_detectable_gap_and_extra
         **per_activity_intended,
     }
 
-    result = check_object_centric_conformance(broken_log, intended_traces_by_object_id=intended)
+    result = check_object_centric_conformance(
+        broken_log, intended_traces_by_object_id=intended
+    )
 
-    execution_result = next(o for o in result.per_object if o.object_id == _EXECUTION_OBJECT_ID)
-    decoy_result = next(o for o in result.per_object if o.object_id == "decoy-execution")
+    execution_result = next(
+        o for o in result.per_object if o.object_id == _EXECUTION_OBJECT_ID
+    )
+    decoy_result = next(
+        o for o in result.per_object if o.object_id == "decoy-execution"
+    )
 
     assert execution_result.conforms is False
-    assert "select_transformation_checkout_latency_scenario_v_1" not in execution_result.observed_trace
+    assert (
+        "select_transformation_checkout_latency_scenario_v_1"
+        not in execution_result.observed_trace
+    )
     assert decoy_result.conforms is False
-    assert decoy_result.observed_trace == ("select_transformation_checkout_latency_scenario_v_1",)
+    assert decoy_result.observed_trace == (
+        "select_transformation_checkout_latency_scenario_v_1",
+    )
 
     # The concrete demonstration: a flattened, object-blind check over the
     # SAME broken log still reports the full intended sequence present

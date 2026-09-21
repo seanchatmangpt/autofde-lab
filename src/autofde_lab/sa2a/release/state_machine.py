@@ -10,6 +10,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Mapping, Set
 
+
 class ReleaseState(str, Enum):
     CREATED = "CREATED"
     SUBJECT_FENCED = "SUBJECT_FENCED"
@@ -63,7 +64,8 @@ LAWFUL_RELEASE_TRANSITIONS: Mapping[ReleaseState, Set[ReleaseState]] = {
     state: (
         set()
         if state is ReleaseState.CROWNED
-        else ({_MAIN_SEQUENCE[i + 1]} if i + 1 < len(_MAIN_SEQUENCE) else set()) | _LAWFUL_EXITS
+        else ({_MAIN_SEQUENCE[i + 1]} if i + 1 < len(_MAIN_SEQUENCE) else set())
+        | _LAWFUL_EXITS
     )
     for i, state in enumerate(_MAIN_SEQUENCE)
 }

@@ -26,11 +26,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from gymact import AllowListAuthorityResolver, GymAct, MaterializationIntent
 from gymact.models import ActuationIntent
 from gymact.ocel import write_ocel_log
 
-from autofde_lab.hub.domain.azuregoat_privesc.gymact_bridge import AzureGoatPrivescProvider
+from autofde_lab.hub.domain.azuregoat_privesc.gymact_bridge import (
+    AzureGoatPrivescProvider,
+)
+from gymact import AllowListAuthorityResolver, GymAct, MaterializationIntent
 
 AUTHORITY_REF = "urn:gymact:azuregoat-privesc:authority:lab-episode-run"
 LOG_PATH = (
@@ -72,20 +74,26 @@ async def main() -> None:
             raise RuntimeError(
                 f"act refused for {capability.iri}: {act_result.receipt.reason!r}"
             )
-        print(f"acted: {capability.iri} -> standing={act_result.receipt.standing.value}")
+        print(
+            f"acted: {capability.iri} -> standing={act_result.receipt.standing.value}"
+        )
         receipts.append(act_result.receipt)
 
     assert act_result is not None
 
     verification = await gym.verify(episode_id, {})
-    print(f"verify({{}}) -> passed={verification.passed} observed={verification.observed}")
+    print(
+        f"verify({{}}) -> passed={verification.passed} observed={verification.observed}"
+    )
 
     solved_marker = f"solved={verification.passed}"
     last_receipt = receipts[-1]
     receipt_with_solved = last_receipt.model_copy(
         update={
             "reason": (
-                f"{last_receipt.reason}; {solved_marker}" if last_receipt.reason else solved_marker
+                f"{last_receipt.reason}; {solved_marker}"
+                if last_receipt.reason
+                else solved_marker
             )
         }
     )

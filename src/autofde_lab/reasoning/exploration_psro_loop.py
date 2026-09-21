@@ -38,7 +38,11 @@ from dataclasses import dataclass
 from typing import Any, Sequence
 
 from autofde_lab.planner_league import PayoffHypergraph, PlannerLeague
-from autofde_lab.planner_league.psro import PolicySpaceResponseOracle, PsroState, PsroStep
+from autofde_lab.planner_league.psro import (
+    PolicySpaceResponseOracle,
+    PsroState,
+    PsroStep,
+)
 
 from .exploration_payoff_bridge import (
     ExplorationPayoffOutcome,
@@ -71,7 +75,9 @@ class ExplorationPsroRoundOutcome:
 
 
 def run_exploration_psro_round(
-    candidates_and_falsifications: Sequence[tuple[ArchitectureCandidate, FalsificationResult]],
+    candidates_and_falsifications: Sequence[
+        tuple[ArchitectureCandidate, FalsificationResult]
+    ],
     *,
     league: PlannerLeague,
     domain: Any,

@@ -16,10 +16,10 @@ from __future__ import annotations
 import pytest
 
 from autofde_lab.fabric.phi import (
+    _ENCODERS,
     PhiUnrepresentable,
     PhiUnrepresentableError,
     ReconcileDomain,
-    _ENCODERS,
     phi,
 )
 from autofde_lab.hub.domain.graph_domain.GraphDomain import GraphDomain
@@ -135,8 +135,7 @@ def test_aggregate_threshold_yields_real_rcpsp_domain_resource_sum_vs_limit():
     assert domain._get_original_quantity_resource("requests.memory") == 8192
     (task_id,) = domain.task_ids
     assert (
-        domain.tasks_modes_rcpsp[task_id].get_resource_need("requests.memory")
-        == 12288
+        domain.tasks_modes_rcpsp[task_id].get_resource_need("requests.memory") == 12288
     )
 
 

@@ -315,7 +315,9 @@ def _ground_admit_candidate_step(
     unsupported = "candidate/unsupported"
 
     transitions: dict[tuple[StateId, ActionId], frozenset[StateId]] = {
-        (pending, "admit-candidate"): frozenset({admitted, refused, blocked, unsupported}),
+        (pending, "admit-candidate"): frozenset(
+            {admitted, refused, blocked, unsupported}
+        ),
         (admitted, "proceed-after-candidate-admitted"): frozenset({on_success}),
     }
     policy: dict[StateId, ActionId] = {
@@ -343,21 +345,36 @@ _TWO_OUTCOME_STATE_NAMES: dict[str, tuple[str, str]] = {
     "bound-allocation": ("episode1/allocation-bounded", "episode1/allocation-blocked"),
     "manufacture": ("episode1/manufactured", "episode1/manufacture-failed"),
     "admit-authority": ("episode1/authority-admitted", "episode1/authority-refused"),
-    "execute-command": ("episode1/actuated-receipt-pending", "episode1/actuation-failed"),
+    "execute-command": (
+        "episode1/actuated-receipt-pending",
+        "episode1/actuation-failed",
+    ),
     "close-receipt": ("episode1/receipt-durable", "episode1/receipt-reconcile-blocked"),
     "independent-verify": ("episode1/verified", "episode1/verification-failed"),
-    "observe-process": ("episode1/process-conformant", "episode1/process-nonconformant"),
+    "observe-process": (
+        "episode1/process-conformant",
+        "episode1/process-nonconformant",
+    ),
     "admit-machine-experience": (
         "episode1/experience-admitted",
         "episode1/experience-admission-refused",
     ),
-    "prove-semantic-equivalence": ("episode2/equivalent", "episode2/equivalence-failed"),
-    "admit-authority-replay": ("episode2/authority-admitted", "episode2/authority-refused"),
+    "prove-semantic-equivalence": (
+        "episode2/equivalent",
+        "episode2/equivalence-failed",
+    ),
+    "admit-authority-replay": (
+        "episode2/authority-admitted",
+        "episode2/authority-refused",
+    ),
     "execute-replay-command": (
         "episode2/actuated-receipt-pending",
         "episode2/actuation-failed",
     ),
-    "close-replay-receipt": ("episode2/receipt-durable", "episode2/receipt-reconcile-blocked"),
+    "close-replay-receipt": (
+        "episode2/receipt-durable",
+        "episode2/receipt-reconcile-blocked",
+    ),
     "verify-replay": ("episode2/verified", "episode2/verification-failed"),
     "observe-replay-process": (
         "episode2/process-conformant",
@@ -403,9 +420,13 @@ def build_sa2a_v26_9_17_transitions_and_policy() -> tuple[
     # "succeeds cleanly" pair, single-outcome simplification (module docstring). ---
     pair_a_closed = "boundary/ash-a2a:cap-orchestration/closed"
     pair_b_pending = "boundary/ggen:cap-manufacture/pending"
-    transitions[(pair_a_pending, "verify-boundary-ash-a2a")] = frozenset({pair_a_closed})
+    transitions[(pair_a_pending, "verify-boundary-ash-a2a")] = frozenset(
+        {pair_a_closed}
+    )
     policy[pair_a_pending] = "verify-boundary-ash-a2a"
-    transitions[(pair_a_closed, "close-boundary-ash-a2a-and-advance")] = frozenset({pair_b_pending})
+    transitions[(pair_a_closed, "close-boundary-ash-a2a-and-advance")] = frozenset(
+        {pair_b_pending}
+    )
     policy[pair_a_closed] = "close-boundary-ash-a2a-and-advance"
 
     # --- phase 2, pair B (ggen, cap-manufacture) -- representative
@@ -413,18 +434,24 @@ def build_sa2a_v26_9_17_transitions_and_policy() -> tuple[
     all_boundaries_closed = "phase2/all-critical-boundaries-closed"
     _merge(
         *_ground_boundary_verification_step(
-            "verify-boundary-ggen", pending=pair_b_pending, on_success=all_boundaries_closed
+            "verify-boundary-ggen",
+            pending=pair_b_pending,
+            on_success=all_boundaries_closed,
         )
     )
 
     # --- phase 2 -> phase 3 bridge (begin-run-discovery-episode). ---
     e1_pending = "episode1/pending"
-    transitions[(all_boundaries_closed, "begin-run-discovery-episode")] = frozenset({e1_pending})
+    transitions[(all_boundaries_closed, "begin-run-discovery-episode")] = frozenset(
+        {e1_pending}
+    )
     policy[all_boundaries_closed] = "begin-run-discovery-episode"
 
     # --- e1: reconstruct-world (deterministic). ---
     world_reconstructed = "episode1/world-reconstructed"
-    transitions[(e1_pending, "reconstruct-world-episode1")] = frozenset({world_reconstructed})
+    transitions[(e1_pending, "reconstruct-world-episode1")] = frozenset(
+        {world_reconstructed}
+    )
     policy[e1_pending] = "reconstruct-world-episode1"
 
     # --- e2/e3: observe-classification (real 2-outcome oneof: known vs
@@ -432,7 +459,9 @@ def build_sa2a_v26_9_17_transitions_and_policy() -> tuple[
     known = "episode1/known"
     unknown = "episode1/unknown"
     problem_solved = "episode1/problem-solved"
-    transitions[(world_reconstructed, "observe-classification")] = frozenset({known, unknown})
+    transitions[(world_reconstructed, "observe-classification")] = frozenset(
+        {known, unknown}
+    )
     policy[world_reconstructed] = "observe-classification"
 
     transitions[(known, "proceed-known-problem")] = frozenset({problem_solved})
@@ -443,7 +472,11 @@ def build_sa2a_v26_9_17_transitions_and_policy() -> tuple[
     candidate_produced = "episode1/candidate-produced"
     transitions[(unknown, "explore-unknown")] = frozenset({candidate_produced})
     policy[unknown] = "explore-unknown"
-    _merge(*_ground_admit_candidate_step(pending=candidate_produced, on_success=problem_solved))
+    _merge(
+        *_ground_admit_candidate_step(
+            pending=candidate_produced, on_success=problem_solved
+        )
+    )
 
     # --- e4: construct-plan (deterministic). ---
     plan_built = "episode1/plan-built"
@@ -471,7 +504,9 @@ def build_sa2a_v26_9_17_transitions_and_policy() -> tuple[
         # admit-authority's success and execute-command's pending state.
         if step_name == "admit-authority":
             command_issued = "episode1/command-issued"
-            transitions[(current_pending, "dispatch-command")] = frozenset({command_issued})
+            transitions[(current_pending, "dispatch-command")] = frozenset(
+                {command_issued}
+            )
             policy[current_pending] = "dispatch-command"
             current_pending = command_issued
 
@@ -481,7 +516,9 @@ def build_sa2a_v26_9_17_transitions_and_policy() -> tuple[
     experience_created = "episode1/experience-created"
     transitions[(current_pending, "record-feedback")] = frozenset({feedback_recorded})
     policy[current_pending] = "record-feedback"
-    transitions[(feedback_recorded, "create-machine-experience")] = frozenset({experience_created})
+    transitions[(feedback_recorded, "create-machine-experience")] = frozenset(
+        {experience_created}
+    )
     policy[feedback_recorded] = "create-machine-experience"
     current_pending = experience_created
 
@@ -499,17 +536,23 @@ def build_sa2a_v26_9_17_transitions_and_policy() -> tuple[
 
     # e16: issue-affidavit (deterministic) -- discovery episode complete.
     discovery_complete = "phase3/discovery-episode-complete"
-    transitions[(success_state, "issue-affidavit-episode1")] = frozenset({discovery_complete})
+    transitions[(success_state, "issue-affidavit-episode1")] = frozenset(
+        {discovery_complete}
+    )
     policy[success_state] = "issue-affidavit-episode1"
 
     # --- phase 3 -> phase 4 bridge. ---
     e2_pending = "episode2/pending"
-    transitions[(discovery_complete, "end-discovery-begin-replay-episode")] = frozenset({e2_pending})
+    transitions[(discovery_complete, "end-discovery-begin-replay-episode")] = frozenset(
+        {e2_pending}
+    )
     policy[discovery_complete] = "end-discovery-begin-replay-episode"
 
     # --- k1: reconstruct-world, reused for episode 2 (deterministic). ---
     e2_world_reconstructed = "episode2/world-reconstructed"
-    transitions[(e2_pending, "reconstruct-world-episode2")] = frozenset({e2_world_reconstructed})
+    transitions[(e2_pending, "reconstruct-world-episode2")] = frozenset(
+        {e2_world_reconstructed}
+    )
     policy[e2_pending] = "reconstruct-world-episode2"
 
     # --- k2..k10: the 6 real replay-episode 2-outcome oneof steps, with
@@ -537,20 +580,26 @@ def build_sa2a_v26_9_17_transitions_and_policy() -> tuple[
             replayed_e2 = "episode2/replayed"
             transitions[(current_pending, "route-known-replay")] = frozenset({known_e2})
             policy[current_pending] = "route-known-replay"
-            transitions[(known_e2, "replay-known-transition")] = frozenset({replayed_e2})
+            transitions[(known_e2, "replay-known-transition")] = frozenset(
+                {replayed_e2}
+            )
             policy[known_e2] = "replay-known-transition"
             current_pending = replayed_e2
         elif step_name == "admit-authority-replay":
             # k6: dispatch-replay-command (deterministic; disclosed
             # structural analogy to dispatch-command -- see module docstring).
             command_issued_e2 = "episode2/command-issued"
-            transitions[(current_pending, "dispatch-replay-command")] = frozenset({command_issued_e2})
+            transitions[(current_pending, "dispatch-replay-command")] = frozenset(
+                {command_issued_e2}
+            )
             policy[current_pending] = "dispatch-replay-command"
             current_pending = command_issued_e2
 
     # k11: issue-affidavit, reused for episode 2 -- replay episode complete.
     replay_complete = "phase4/replay-episode-complete"
-    transitions[(current_pending, "issue-affidavit-episode2")] = frozenset({replay_complete})
+    transitions[(current_pending, "issue-affidavit-episode2")] = frozenset(
+        {replay_complete}
+    )
     policy[current_pending] = "issue-affidavit-episode2"
 
     # --- phase 5: certify-release (deterministic, single outcome, the goal). ---
@@ -560,7 +609,9 @@ def build_sa2a_v26_9_17_transitions_and_policy() -> tuple[
     return transitions, policy, frozenset(typed_stopped_states)
 
 
-_TRANSITIONS, _POLICY_ACTIONS, TYPED_STOPPED_STATES = build_sa2a_v26_9_17_transitions_and_policy()
+_TRANSITIONS, _POLICY_ACTIONS, TYPED_STOPPED_STATES = (
+    build_sa2a_v26_9_17_transitions_and_policy()
+)
 
 STRICT_GOAL_STATES: frozenset[StateId] = frozenset({"release-certified"})
 EXTENDED_GOAL_STATES: frozenset[StateId] = STRICT_GOAL_STATES | TYPED_STOPPED_STATES
@@ -585,7 +636,9 @@ def build_sa2a_v26_9_17_policy() -> CandidatePolicy:
     return CandidatePolicy(actions=dict(_POLICY_ACTIONS))
 
 
-def build_sa2a_v26_9_17_hierarchy_witnesses() -> dict[StateId, frozenset[HDDLProgressWitness]]:
+def build_sa2a_v26_9_17_hierarchy_witnesses() -> dict[
+    StateId, frozenset[HDDLProgressWitness]
+]:
     """Ground one HDDL task-network progress witness per reachable non-goal
     state, permitting exactly the primitive action this policy selects
     there. Real data, derived from the same real grounding above -- not a
@@ -595,6 +648,8 @@ def build_sa2a_v26_9_17_hierarchy_witnesses() -> dict[StateId, frozenset[HDDLPro
     """
 
     return {
-        state: frozenset({HDDLProgressWitness(f"{state}/progress", frozenset({action}))})
+        state: frozenset(
+            {HDDLProgressWitness(f"{state}/progress", frozenset({action}))}
+        )
         for state, action in _POLICY_ACTIONS.items()
     }

@@ -143,7 +143,12 @@ def _write_trial(
         )
         con.execute(
             "INSERT INTO receipt_evidence VALUES (?, ?)",
-            (2, json.dumps({"receipt_id": RECEIPT, "parent_receipt_ids": [RECEIPT_PARENT]})),
+            (
+                2,
+                json.dumps(
+                    {"receipt_id": RECEIPT, "parent_receipt_ids": [RECEIPT_PARENT]}
+                ),
+            ),
         )
         con.commit()
     finally:
@@ -165,7 +170,9 @@ ALL_EVIDENCE_TYPES = (
 # ── 1. a complete conforming episode yields Level4AliveEvidence ───────────
 
 
-def test_complete_conforming_episode_yields_level4_alive_evidence(tmp_path: Path) -> None:
+def test_complete_conforming_episode_yields_level4_alive_evidence(
+    tmp_path: Path,
+) -> None:
     trial = _write_trial(tmp_path / "trial-alive")
 
     standing = standing_from_trial_dir(trial)
@@ -216,7 +223,9 @@ def test_conformant_but_goal_unmet_is_a_real_result_and_cannot_be_coerced(
 # ── 3. Level4AliveEvidence is not constructible from booleans ─────────────
 
 
-def test_level4_alive_evidence_cannot_be_constructed_from_booleans(tmp_path: Path) -> None:
+def test_level4_alive_evidence_cannot_be_constructed_from_booleans(
+    tmp_path: Path,
+) -> None:
     trial = _write_trial(tmp_path / "trial-bool")
     alive = standing_from_trial_dir(trial)
     assert isinstance(alive, Level4AliveEvidence)
@@ -262,7 +271,9 @@ def test_no_evidence_type_defines_bool(tmp_path: Path) -> None:
     trial = _write_trial(tmp_path / "trial-nobool")
     alive = standing_from_trial_dir(trial)
     unmet = standing_from_trial_dir(
-        _write_trial(tmp_path / "trial-nobool-unmet", o2o=_o2o(goal_qualifier="refutes_goal"))
+        _write_trial(
+            tmp_path / "trial-nobool-unmet", o2o=_o2o(goal_qualifier="refutes_goal")
+        )
     )
     assert isinstance(alive, Level4AliveEvidence)
     assert isinstance(unmet, ConformantButGoalUnmetEvidence)
@@ -310,7 +321,9 @@ def test_absent_artifacts_yield_unknown_not_failure(tmp_path: Path) -> None:
     assert "ocel" in standing.relation
 
 
-def test_a_self_observing_object_cannot_reach_the_goal_leg_at_all(tmp_path: Path) -> None:
+def test_a_self_observing_object_cannot_reach_the_goal_leg_at_all(
+    tmp_path: Path,
+) -> None:
     """A durable graph in which the "observer" IS the actuation is refused
     upstream, and refused as UNKNOWN naming a relation -- never as a pass.
 
@@ -372,8 +385,10 @@ def test_goal_consequence_evidence_refuses_self_certified_identities(
         )
 
 
-def test_goal_unmet_evidence_refuses_to_be_built_from_an_absence(tmp_path: Path) -> None:
-    """"We did not observe the goal" must not be expressible as "the goal was
+def test_goal_unmet_evidence_refuses_to_be_built_from_an_absence(
+    tmp_path: Path,
+) -> None:
+    """ "We did not observe the goal" must not be expressible as "the goal was
     not reached"."""
     trial = _write_trial(tmp_path / "trial-absence")
     alive = standing_from_trial_dir(trial)

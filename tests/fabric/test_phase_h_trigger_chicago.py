@@ -62,7 +62,11 @@ from pathlib import Path
 
 import pytest
 
-from autofde_lab.fabric.phase_h_trigger import check_coverage_gap, check_drift, unattended_solve
+from autofde_lab.fabric.phase_h_trigger import (
+    check_coverage_gap,
+    check_drift,
+    unattended_solve,
+)
 from autofde_lab.reasoning.laboratory import FalsificationStanding
 
 # Same threshold as production (COVERAGE_GAP_THRESHOLD): skip while
@@ -117,7 +121,14 @@ def _write_stand_in_script(path: Path) -> None:
     )
 
 
-def _tick(*, state_file: Path, script: Path, log_file: Path, xaas_repo_root: Path, before_counts: dict) -> dict:
+def _tick(
+    *,
+    state_file: Path,
+    script: Path,
+    log_file: Path,
+    xaas_repo_root: Path,
+    before_counts: dict,
+) -> dict:
     return check_coverage_gap(
         xaas_repo_root=xaas_repo_root,
         state_file=state_file,
@@ -178,7 +189,9 @@ def test_forced_probe_breaks_chicken_and_egg_guard(tmp_path: Path) -> None:
         assert result["invoked"] is False
         assert result["detection_status"] == "stale_skip_using_prior_observation"
         assert result["skips_since_last_invoke"] == expected_skip_count
-        assert real_invocation_count() == 1, "guard must not invoke the real subprocess while skipping"
+        assert real_invocation_count() == 1, (
+            "guard must not invoke the real subprocess while skipping"
+        )
 
     # Real state file after MAX_SKIPS skips: skip counter really persisted
     # to disk (not just held in the returned dict of the last call).
@@ -199,12 +212,16 @@ def test_forced_probe_breaks_chicken_and_egg_guard(tmp_path: Path) -> None:
         "PlannerCacheHotsetRequest": 5,  # real external growth: gap becomes 3
     }
     result = tick(grown_gap_counts)
-    assert result["invoked"] is True, "forced probe must invoke even though last_gap <= threshold"
+    assert result["invoked"] is True, (
+        "forced probe must invoke even though last_gap <= threshold"
+    )
     assert "forced probe" in result["invoke_reason"]
     assert result["gap"] == 3
     assert result["detection_status"] == "verified_gap_open_this_tick"
     assert result["skips_since_last_invoke"] == 0
-    assert real_invocation_count() == 2, "the forced-probe tick must actually invoke the real subprocess"
+    assert real_invocation_count() == 2, (
+        "the forced-probe tick must actually invoke the real subprocess"
+    )
 
     # Self-correction: now that the real elevated gap has been
     # rediscovered, the ORIGINAL threshold guard resumes normal operation
@@ -216,7 +233,9 @@ def test_forced_probe_breaks_chicken_and_egg_guard(tmp_path: Path) -> None:
     assert real_invocation_count() == 3
 
 
-def test_healthy_steady_state_never_exceeds_max_skips_of_staleness(tmp_path: Path) -> None:
+def test_healthy_steady_state_never_exceeds_max_skips_of_staleness(
+    tmp_path: Path,
+) -> None:
     """Run far more ticks than MAX_SKIPS in a genuinely-healthy steady
     state (gap never actually changes) and prove two things from real
     state, not from trusting internal bookkeeping alone:
@@ -252,7 +271,9 @@ def test_healthy_steady_state_never_exceeds_max_skips_of_staleness(tmp_path: Pat
         )
         assert result["skips_since_last_invoke"] <= MAX_SKIPS
 
-    real_invocations = log_file.read_text().count("invoked\n") if log_file.exists() else 0
+    real_invocations = (
+        log_file.read_text().count("invoked\n") if log_file.exists() else 0
+    )
     # Real bound: one invocation every (MAX_SKIPS + 1) ticks at most, plus
     # the mandatory first-tick baseline invocation.
     expected_max_invocations = 1 + (total_ticks // (MAX_SKIPS + 1)) + 1
@@ -269,10 +290,14 @@ def test_module_constants_are_sane(has_prior_state: bool) -> None:
 
     assert mod.COVERAGE_GAP_THRESHOLD == 1
     assert mod.MAX_CONSECUTIVE_SKIPS_BEFORE_PROBE > 1
-    assert not has_prior_state  # parametrize placeholder for symmetry with other Chicago tests
+    assert (
+        not has_prior_state
+    )  # parametrize placeholder for symmetry with other Chicago tests
 
 
-def test_forced_probe_transient_failure_carries_detection_status_and_self_heals(tmp_path: Path) -> None:
+def test_forced_probe_transient_failure_carries_detection_status_and_self_heals(
+    tmp_path: Path,
+) -> None:
     """Adversarial case found during independent verification of the
     RPN=540 fix (2026-08-21): the module docstring/PR claim is that
     "every returned dict carries a `detection_status`" (the Detection=10
@@ -469,13 +494,17 @@ def test_check_drift_detects_real_hash_divergence(tmp_path: Path) -> None:
 
     watch_file.write_text("capability-v1: original ontology content\n")
     original_sha256 = hashlib.sha256(watch_file.read_bytes()).hexdigest()
-    baseline_file.write_text(json.dumps({"watch_file": str(watch_file), "sha256": original_sha256}))
+    baseline_file.write_text(
+        json.dumps({"watch_file": str(watch_file), "sha256": original_sha256})
+    )
 
     # Real drift injection: the watch file's real bytes change on disk, so
     # its real sha256 genuinely diverges from the stored baseline.
     watch_file.write_text("capability-v2: a real, different ontology content\n")
     changed_sha256 = hashlib.sha256(watch_file.read_bytes()).hexdigest()
-    assert changed_sha256 != original_sha256, "test setup must produce a real hash divergence"
+    assert changed_sha256 != original_sha256, (
+        "test setup must produce a real hash divergence"
+    )
 
     drift = check_drift(watch_file=watch_file, baseline_file=baseline_file)
 
@@ -485,7 +514,9 @@ def test_check_drift_detects_real_hash_divergence(tmp_path: Path) -> None:
     assert drift.watch_file == str(watch_file)
 
 
-def test_check_drift_and_run_once_not_triggered_shape_when_no_drift(tmp_path: Path) -> None:
+def test_check_drift_and_run_once_not_triggered_shape_when_no_drift(
+    tmp_path: Path,
+) -> None:
     """Negative path: no drift -> the trigger must not fire.
 
     First proves the real drift-decision primitive (`check_drift()`)
@@ -509,7 +540,9 @@ def test_check_drift_and_run_once_not_triggered_shape_when_no_drift(tmp_path: Pa
     content = "capability-v1: unchanged ontology content\n"
     watch_file.write_text(content)
     baseline_sha256 = hashlib.sha256(watch_file.read_bytes()).hexdigest()
-    baseline_file.write_text(json.dumps({"watch_file": str(watch_file), "sha256": baseline_sha256}))
+    baseline_file.write_text(
+        json.dumps({"watch_file": str(watch_file), "sha256": baseline_sha256})
+    )
 
     # No real edit to watch_file happens here -- the real on-disk content
     # is identical to what the real baseline snapshot recorded.

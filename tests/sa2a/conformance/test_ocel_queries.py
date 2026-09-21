@@ -12,19 +12,16 @@ from __future__ import annotations
 
 import hashlib
 import json
-import time
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 
 from autofde_lab.sa2a.conformance.ocel_queries import (
     OcelConformanceQueryEngine,
     OcelConformanceReport,
-    OcelQueryResult,
     query_actuation_receipt_coverage,
     query_schema_conformance,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helper: build a minimal OCEL 2.0 JSON structure
@@ -214,15 +211,19 @@ def test_p4_empty_objects_vacuously_passes() -> None:
 def test_p6_no_producer_refs_passes() -> None:
     """Fresh consumer event not referencing any producer object passes P6."""
     engine = OcelConformanceQueryEngine()
-    events = [{
-        "id": "fresh-001",
-        "type": "fresh_consumer_read",
-        "time": 1000.0,
-        "attributes": {},
-        "relationships": [{"objectId": "local-obj-001", "qualifier": "read"}],
-    }]
+    events = [
+        {
+            "id": "fresh-001",
+            "type": "fresh_consumer_read",
+            "time": 1000.0,
+            "attributes": {},
+            "relationships": [{"objectId": "local-obj-001", "qualifier": "read"}],
+        }
+    ]
     ocel = _make_ocel_log(events=events)
-    res = engine.p6_fresh_consumer_isolation(ocel, producer_object_ids={"producer-cache-001"})
+    res = engine.p6_fresh_consumer_isolation(
+        ocel, producer_object_ids={"producer-cache-001"}
+    )
     assert res.passed is True
     assert res.predicate_id == "SA2A-OCEL-P6"
 
@@ -230,15 +231,19 @@ def test_p6_no_producer_refs_passes() -> None:
 def test_p6_producer_ref_in_fresh_consumer_fails() -> None:
     """Fresh consumer event referencing producer object fails P6."""
     engine = OcelConformanceQueryEngine()
-    events = [{
-        "id": "fresh-001",
-        "type": "fresh_consumer_read",
-        "time": 1000.0,
-        "attributes": {},
-        "relationships": [{"objectId": "producer-cache-001", "qualifier": "read"}],
-    }]
+    events = [
+        {
+            "id": "fresh-001",
+            "type": "fresh_consumer_read",
+            "time": 1000.0,
+            "attributes": {},
+            "relationships": [{"objectId": "producer-cache-001", "qualifier": "read"}],
+        }
+    ]
     ocel = _make_ocel_log(events=events)
-    res = engine.p6_fresh_consumer_isolation(ocel, producer_object_ids={"producer-cache-001"})
+    res = engine.p6_fresh_consumer_isolation(
+        ocel, producer_object_ids={"producer-cache-001"}
+    )
     assert res.passed is False
     assert len(res.violations) > 0
 
@@ -301,13 +306,15 @@ def test_p9_clean_hook_events_pass() -> None:
 def test_p9_hook_actuate_event_fails() -> None:
     """Event that is simultaneously hook and actuation type fails P9."""
     engine = OcelConformanceQueryEngine()
-    events = [{
-        "id": "bad-hook-001",
-        "type": "hook_fired_brce_execute",  # Both hook and actuation markers
-        "time": 1000.0,
-        "attributes": {},
-        "relationships": [],
-    }]
+    events = [
+        {
+            "id": "bad-hook-001",
+            "type": "hook_fired_brce_execute",  # Both hook and actuation markers
+            "time": 1000.0,
+            "attributes": {},
+            "relationships": [],
+        }
+    ]
     ocel = _make_ocel_log(events=events)
     res = engine.p9_hook_no_do(ocel)
     assert res.passed is False
@@ -332,7 +339,9 @@ def test_p10_digest_matches_passes() -> None:
     ocel = _make_ocel_log()
     canonical = json.dumps(ocel, sort_keys=True, separators=(",", ":"))
     correct_digest = hashlib.sha256(canonical.encode()).hexdigest()
-    res = engine.p10_log_digest_stable(ocel, correct_digest, declared_digest=correct_digest)
+    res = engine.p10_log_digest_stable(
+        ocel, correct_digest, declared_digest=correct_digest
+    )
     assert res.passed is True
     assert res.predicate_id == "SA2A-OCEL-P10"
 
@@ -344,7 +353,9 @@ def test_p10_digest_mismatch_fails() -> None:
     canonical = json.dumps(ocel, sort_keys=True, separators=(",", ":"))
     correct_digest = hashlib.sha256(canonical.encode()).hexdigest()
     wrong_digest = "f" * 64
-    res = engine.p10_log_digest_stable(ocel, correct_digest, declared_digest=wrong_digest)
+    res = engine.p10_log_digest_stable(
+        ocel, correct_digest, declared_digest=wrong_digest
+    )
     assert res.passed is False
     assert len(res.violations) > 0
 
@@ -369,7 +380,9 @@ def test_evaluate_log_clean_setup_all_pass() -> None:
     engine = OcelConformanceQueryEngine()
     events = [
         _make_authority_event("auth-001", "urn:agent:actor", timestamp=500.0),
-        _make_actuation_event("act-001", "urn:agent:actor", with_receipt=True, timestamp=1000.0),
+        _make_actuation_event(
+            "act-001", "urn:agent:actor", with_receipt=True, timestamp=1000.0
+        ),
         _make_hook_event("hook-001", timestamp=700.0),
     ]
     objects = [{"id": "rcpt-001", "type": "Receipt", "attributes": {}}]
@@ -379,7 +392,12 @@ def test_evaluate_log_clean_setup_all_pass() -> None:
         {"name": "brce_execute", "attributes": []},
         {"name": "hook_fired", "attributes": []},
     ]
-    ocel = _make_ocel_log(events=events, objects=objects, object_types=object_types, event_types=event_types)
+    ocel = _make_ocel_log(
+        events=events,
+        objects=objects,
+        object_types=object_types,
+        event_types=event_types,
+    )
     canonical = json.dumps(ocel, sort_keys=True, separators=(",", ":"))
     declared_digest = hashlib.sha256(canonical.encode()).hexdigest()
 
@@ -388,7 +406,9 @@ def test_evaluate_log_clean_setup_all_pass() -> None:
     assert isinstance(report, OcelConformanceReport)
     assert report.total_queries > 0
     failed = [r for r in report.predicate_results if not r.passed]
-    assert len(failed) == 0, f"Failed predicates: {[(r.predicate_id, r.violations) for r in failed]}"
+    assert len(failed) == 0, (
+        f"Failed predicates: {[(r.predicate_id, r.violations) for r in failed]}"
+    )
 
 
 def test_evaluate_log_missing_receipt_fails() -> None:
@@ -397,7 +417,9 @@ def test_evaluate_log_missing_receipt_fails() -> None:
     events = [_make_actuation_event("act-001", with_receipt=False)]
     ocel = _make_ocel_log(events=events)
     report = engine.evaluate_log(ocel)
-    p1 = next((r for r in report.predicate_results if r.predicate_id == "SA2A-OCEL-P1"), None)
+    p1 = next(
+        (r for r in report.predicate_results if r.predicate_id == "SA2A-OCEL-P1"), None
+    )
     assert p1 is not None
     assert p1.passed is False
 
@@ -498,8 +520,12 @@ def test_evaluate_ocel_log_object_integration() -> None:
     assert isinstance(ocel_log, OcelLog)
     assert len(ocel_log.events) == 2
     assert {e.activity for e in ocel_log.events} == {"authority_grant", "brce_execute"}
-    actor_obj = next(o for o in ocel_log.objects if o.id == "urn:agent:integration-test")
-    assert actor_obj.object_type == "GenericEntity"  # tracer's real auto-declare fallback
+    actor_obj = next(
+        o for o in ocel_log.objects if o.id == "urn:agent:integration-test"
+    )
+    assert (
+        actor_obj.object_type == "GenericEntity"
+    )  # tracer's real auto-declare fallback
     assert tracer.validate() is ocel_log  # real OCPQ Definition 2 structural validation
 
     engine = OcelConformanceQueryEngine()

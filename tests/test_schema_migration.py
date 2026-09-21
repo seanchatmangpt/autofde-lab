@@ -91,8 +91,14 @@ class TestReadersAcceptSupersededIdentifiers:
 
     def test_every_current_identifier_is_in_its_own_accepted_set(self):
         for current, accepted in [
-            (schema_ids.EPOCH_RECEIPT_SCHEMA, schema_ids.ACCEPTED_EPOCH_RECEIPT_SCHEMAS),
-            (schema_ids.AGENT_OUTCOME_SCHEMA, schema_ids.ACCEPTED_AGENT_OUTCOME_SCHEMAS),
+            (
+                schema_ids.EPOCH_RECEIPT_SCHEMA,
+                schema_ids.ACCEPTED_EPOCH_RECEIPT_SCHEMAS,
+            ),
+            (
+                schema_ids.AGENT_OUTCOME_SCHEMA,
+                schema_ids.ACCEPTED_AGENT_OUTCOME_SCHEMAS,
+            ),
             (schema_ids.FABRIC_SCHEMA, schema_ids.ACCEPTED_FABRIC_SCHEMAS),
             (schema_ids.CACHE_SCHEMA, schema_ids.ACCEPTED_CACHE_SCHEMAS),
             (

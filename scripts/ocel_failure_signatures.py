@@ -195,7 +195,9 @@ def detect_signatures(trials: list[dict[str, Any]]) -> dict[str, Any]:
                 }
             )
 
-    def _finalize(groups: dict[str, list[dict[str, Any]]], min_count: int) -> list[dict[str, Any]]:
+    def _finalize(
+        groups: dict[str, list[dict[str, Any]]], min_count: int
+    ) -> list[dict[str, Any]]:
         out = []
         for signature, members in groups.items():
             if len(members) < min_count:
@@ -211,14 +213,20 @@ def detect_signatures(trials: list[dict[str, Any]]) -> dict[str, Any]:
         out.sort(key=lambda g: g["trial_count"], reverse=True)
         return out
 
-    zero_kubectl_report = [
-        {
-            "signature": "zero_kubectl_before_submit",
-            "trial_count": len(zero_kubectl_trials),
-            "problem_ids": [m["problem_id"] for m in zero_kubectl_trials],
-            "excerpt": zero_kubectl_trials[0]["excerpt"] if zero_kubectl_trials else "",
-        }
-    ] if zero_kubectl_trials else []
+    zero_kubectl_report = (
+        [
+            {
+                "signature": "zero_kubectl_before_submit",
+                "trial_count": len(zero_kubectl_trials),
+                "problem_ids": [m["problem_id"] for m in zero_kubectl_trials],
+                "excerpt": zero_kubectl_trials[0]["excerpt"]
+                if zero_kubectl_trials
+                else "",
+            }
+        ]
+        if zero_kubectl_trials
+        else []
+    )
 
     return {
         "kubectl_error_recurrences": _finalize(kubectl_error_groups, min_count=2),
@@ -258,15 +266,28 @@ def _print_report(report: dict[str, Any]) -> None:
         print("(no .ocel2.sqlite files yet -- report is empty, not an error)")
         return
 
-    _print_group("Recurring kubectl errors (same command + error class, >=2 trials)", report["kubectl_error_recurrences"])
-    _print_group("Recurring generic non-answers (>=2 trials)", report["generic_non_answer_recurrences"])
-    _print_group("Zero kubectl events before submit (each occurrence flagged)", report["zero_kubectl_before_submit"])
+    _print_group(
+        "Recurring kubectl errors (same command + error class, >=2 trials)",
+        report["kubectl_error_recurrences"],
+    )
+    _print_group(
+        "Recurring generic non-answers (>=2 trials)",
+        report["generic_non_answer_recurrences"],
+    )
+    _print_group(
+        "Zero kubectl events before submit (each occurrence flagged)",
+        report["zero_kubectl_before_submit"],
+    )
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dir", type=Path, default=DEFAULT_DIR, help="Directory of .ocel2.sqlite files")
-    parser.add_argument("--json", action="store_true", help="Print raw JSON instead of a table")
+    parser.add_argument(
+        "--dir", type=Path, default=DEFAULT_DIR, help="Directory of .ocel2.sqlite files"
+    )
+    parser.add_argument(
+        "--json", action="store_true", help="Print raw JSON instead of a table"
+    )
     args = parser.parse_args()
 
     report = build_report(args.dir)
