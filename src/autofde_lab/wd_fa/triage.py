@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from .domain import (
     CandidateTriage,
@@ -11,6 +12,9 @@ from .domain import (
     evidence_completeness,
 )
 from .synthetic import feature_frame
+
+if TYPE_CHECKING:
+    from .receipts import VerificationReceipt
 
 
 def triage(
@@ -68,11 +72,25 @@ def triage(
 
 def compile_experience(
     case: FailureCase,
+    source_triage: CandidateTriage,
+    receipt: "VerificationReceipt",
     *,
     mode_id: str,
-    verifier_id: str,
     next_action: str,
 ) -> MachineExperience:
+    from .receipts import candidate_digest, verify_receipt
+
+    if not verify_receipt(receipt):
+        raise ValueError("REFUSED:INVALID_RECEIPT")
+    if receipt.subject_id != case.case_id or source_triage.case_id != case.case_id:
+        raise ValueError("REFUSED:SUBJECT_BINDING")
+    if receipt.candidate_digest != candidate_digest(source_triage):
+        raise ValueError("REFUSED:CANDIDATE_BINDING")
+    if receipt.observed_disposition != mode_id:
+        raise ValueError("REFUSED:DISPOSITION_BINDING")
+    if source_triage.standing is not Standing.UNKNOWN:
+        raise ValueError("REFUSED:SOURCE_NOT_UNKNOWN")
+
     rule = FailureModeRule(
         mode_id=mode_id,
         applicability={
@@ -89,6 +107,6 @@ def compile_experience(
         experience_id=f"MX-{case.case_id}",
         source_case_id=case.case_id,
         mode=rule,
-        verifier_id=verifier_id,
+        verifier_id=receipt.verifier_id,
         exploratory_steps=3,
     )
