@@ -1,10 +1,10 @@
 # PRD v26.9.18 — GALL-032: External Process Autonomics Crown
 
-**Status:** DRAFT IMPLEMENTATION SPEC  
-**Release:** v26.9.18  
-**Repository:** `seanchatmangpt/autofde-lab`  
-**Owner:** autofde-lab composition lead; affidavit issues final standing  
-**Dependencies:** GALL-001..031 exact required receipts  
+**Status:** DRAFT IMPLEMENTATION SPEC
+**Release:** v26.9.18
+**Repository:** `seanchatmangpt/autofde-lab`
+**Owner:** autofde-lab composition lead; affidavit issues final standing
+**Dependencies:** GALL-001..031 exact required receipts
 **Authority ceiling:** ORCHESTRATE/QUALIFY only; all DO remains in ash_a2a
 
 ## Product outcome
