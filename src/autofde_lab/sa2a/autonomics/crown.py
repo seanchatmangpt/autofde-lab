@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Any
 
 from autofde_lab.sa2a.unknown.compilation import MachineExperienceCompiler
 
@@ -33,9 +32,13 @@ class AutonomicsCrown:
     standing: str
 
 
-def compile_verified_repair(repair: VerifiedRepair) -> tuple[MachineExperienceCompiler, str]:
+def compile_verified_repair(
+    repair: VerifiedRepair,
+) -> tuple[MachineExperienceCompiler, str]:
     if not repair.restored:
-        raise ValueError("unverified/unrestored repair cannot compile MachineExperience")
+        raise ValueError(
+            "unverified/unrestored repair cannot compile MachineExperience"
+        )
     if not repair.independent_postcondition_digest.startswith("sha256:"):
         raise ValueError("independent postcondition evidence is required")
     compiler = MachineExperienceCompiler()
