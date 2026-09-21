@@ -41,8 +41,9 @@ def run_demo() -> dict[str, object]:
     assert verify_receipt(receipt)
     experience = compile_experience(
         novel,
+        results["novel_x"],
+        receipt,
         mode_id="MODE-X-NOVEL",
-        verifier_id=receipt.verifier_id,
         next_action="repeat_verified_novel_x_procedure",
     )
     replay = triage(
