@@ -23,7 +23,9 @@ class GallArtifactError(ValueError):
 
 
 def _canonical_bytes(value: Any) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode("utf-8")
 
 
 def _sha256(value: Any) -> str:
@@ -37,17 +39,23 @@ def build_portable_artifact(subject: ExactSubject, *, standing: str) -> dict[str
             "checkpoint_id": c.checkpoint_id,
             "repository": c.repository,
             "exact_sha": c.exact_sha,
-            "receipt_digest": c.receipt_digest if c.receipt_digest.startswith("sha256:") else "sha256:" + c.receipt_digest,
+            "receipt_digest": c.receipt_digest
+            if c.receipt_digest.startswith("sha256:")
+            else "sha256:" + c.receipt_digest,
             "standing": c.standing,
             "evidence_class": c.evidence_class,
             "work_order_digest": c.work_order_digest,
         }
         for c in sorted(subject.checkpoints, key=lambda item: item.checkpoint_id)
     ]
-    ids = {c['checkpoint_id'] for c in checkpoints}
-    missing = [checkpoint for checkpoint in REQUIRED_CHECKPOINTS if checkpoint not in ids]
+    ids = {c["checkpoint_id"] for c in checkpoints}
+    missing = [
+        checkpoint for checkpoint in REQUIRED_CHECKPOINTS if checkpoint not in ids
+    ]
     if missing:
-        raise GallArtifactError("REFUSED_MISSING_GALL_CHECKPOINT", f"missing {missing!r}")
+        raise GallArtifactError(
+            "REFUSED_MISSING_GALL_CHECKPOINT", f"missing {missing!r}"
+        )
 
     payload: dict[str, Any] = {
         "schema": SCHEMA,
@@ -66,11 +74,15 @@ def verify_portable_artifact(value: Mapping[str, Any]) -> dict[str, Any]:
     """Verify integrity/shape without executing or re-actuating any producer."""
     payload = dict(value)
     recorded = str(payload.pop("artifact_digest", ""))
-    if payload.get('schema') != SCHEMA:
-        raise GallArtifactError("REFUSED_ARTIFACT_SCHEMA", "unsupported or missing schema")
+    if payload.get("schema") != SCHEMA:
+        raise GallArtifactError(
+            "REFUSED_ARTIFACT_SCHEMA", "unsupported or missing schema"
+        )
     observed = _sha256(payload)
     if recorded != observed:
-        raise GallArtifactError("REFUSED_ARTIFACT_DIGEST", f"expected {recorded!r}, observed {observed!r}")
+        raise GallArtifactError(
+            "REFUSED_ARTIFACT_DIGEST", f"expected {recorded!r}, observed {observed!r}"
+        )
 
     checkpoints = payload.get("checkpoints")
     if not isinstance(checkpoints, list):
@@ -78,14 +90,22 @@ def verify_portable_artifact(value: Mapping[str, Any]) -> dict[str, Any]:
     by_id: dict[str, Mapping[str, Any]] = {}
     for checkpoint in checkpoints:
         if not isinstance(checkpoint, Mapping):
-            raise GallArtifactError("REFUSED_ARTIFACT_SHAPE", "checkpoint must be an object")
+            raise GallArtifactError(
+                "REFUSED_ARTIFACT_SHAPE", "checkpoint must be an object"
+            )
         checkpoint_id = str(checkpoint.get("checkpoint_id", ""))
         if checkpoint_id in by_id:
-            raise GallArtifactError("REFUSED_ARTIFACT_SHAPE", f"duplicate checkpoint {checkpoint_id!r}")
+            raise GallArtifactError(
+                "REFUSED_ARTIFACT_SHAPE", f"duplicate checkpoint {checkpoint_id!r}"
+            )
         by_id[checkpoint_id] = checkpoint
-    missing = [checkpoint for checkpoint in REQUIRED_CHECKPOINTS if checkpoint not in by_id]
+    missing = [
+        checkpoint for checkpoint in REQUIRED_CHECKPOINTS if checkpoint not in by_id
+    ]
     if missing:
-        raise GallArtifactError("REFUSED_MISSING_GALL_CHECKPOINT", f"missing {missing!r}")
+        raise GallArtifactError(
+            "REFUSED_MISSING_GALL_CHECKPOINT", f"missing {missing!r}"
+        )
 
     return {
         "schema": SCHEMA,

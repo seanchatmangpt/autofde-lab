@@ -96,10 +96,18 @@ def resolve_self_identity(repo_root: Path | None = None) -> SelfIdentity:
     """
     cwd = repo_root or Path.cwd()
     sha = subprocess.run(
-        ["git", "rev-parse", "HEAD"], cwd=cwd, capture_output=True, text=True, check=True
+        ["git", "rev-parse", "HEAD"],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=True,
     ).stdout.strip()
     status = subprocess.run(
-        ["git", "status", "--porcelain"], cwd=cwd, capture_output=True, text=True, check=True
+        ["git", "status", "--porcelain"],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=True,
     ).stdout
     return SelfIdentity(sha=sha, dirty=bool(status.strip()))
 
@@ -123,7 +131,8 @@ class SubjectResolver:
             raise
         except (AttributeError, TypeError, KeyError, ValueError) as exc:
             raise SubjectResolutionError(
-                REFUSED_MALFORMED_MANIFEST, f"candidate_manifest has an unexpected shape: {exc!r}"
+                REFUSED_MALFORMED_MANIFEST,
+                f"candidate_manifest has an unexpected shape: {exc!r}",
             ) from exc
 
     def resolve_gall(
@@ -140,8 +149,7 @@ class SubjectResolver:
         """
         subject = self.resolve(candidate_manifest)
         by_id = {
-            checkpoint.checkpoint_id: checkpoint
-            for checkpoint in subject.checkpoints
+            checkpoint.checkpoint_id: checkpoint for checkpoint in subject.checkpoints
         }
         missing = [
             checkpoint
@@ -185,7 +193,9 @@ class SubjectResolver:
 
             checkpoint = by_id[checkpoint_id]
             expected = checkpoint.receipt_digest
-            expected = expected if expected.startswith("sha256:") else "sha256:" + expected
+            expected = (
+                expected if expected.startswith("sha256:") else "sha256:" + expected
+            )
             observed = "sha256:" + hashlib.sha256(bytes_).hexdigest()
             if observed != expected:
                 raise SubjectResolutionError(
@@ -240,13 +250,19 @@ class SubjectResolver:
                 REFUSED_FLOATING_REPOSITORY_REF, "release_id is empty"
             )
 
-        repositories = self._resolve_repositories(candidate_manifest.get("repositories", ()))
+        repositories = self._resolve_repositories(
+            candidate_manifest.get("repositories", ())
+        )
         artifacts = self._resolve_artifacts(candidate_manifest.get("artifacts", ()))
         checkpoints = self._resolve_checkpoints(
-            candidate_manifest.get("checkpoints", candidate_manifest.get("gall_checkpoints", ()))
+            candidate_manifest.get(
+                "checkpoints", candidate_manifest.get("gall_checkpoints", ())
+            )
         )
 
-        root_manifest_digest = str(candidate_manifest.get("root_manifest_digest", "")).strip()
+        root_manifest_digest = str(
+            candidate_manifest.get("root_manifest_digest", "")
+        ).strip()
         if not root_manifest_digest:
             raise SubjectResolutionError(
                 REFUSED_MISSING_ROOT_MANIFEST_DIGEST, "root_manifest_digest is empty"
@@ -259,15 +275,21 @@ class SubjectResolver:
             root_manifest_digest=root_manifest_digest,
             semantic_profile=str(candidate_manifest.get("semantic_profile", "")),
             court_revision=str(candidate_manifest.get("court_revision", "")),
-            falsifier_corpus_digest=str(candidate_manifest.get("falsifier_corpus_digest", "")),
+            falsifier_corpus_digest=str(
+                candidate_manifest.get("falsifier_corpus_digest", "")
+            ),
             query_set_digest=str(candidate_manifest.get("query_set_digest", "")),
-            environment_identity=str(candidate_manifest.get("environment_identity", "")),
+            environment_identity=str(
+                candidate_manifest.get("environment_identity", "")
+            ),
             checkpoints=checkpoints,
             work_order_digest=str(candidate_manifest.get("work_order_digest", "")),
         )
 
     @staticmethod
-    def _resolve_repositories(raw: Sequence[Mapping[str, Any]]) -> tuple[RepositoryRef, ...]:
+    def _resolve_repositories(
+        raw: Sequence[Mapping[str, Any]],
+    ) -> tuple[RepositoryRef, ...]:
         by_name: dict[str, RepositoryRef] = {}
         refs: list[RepositoryRef] = []
         for entry in raw:
@@ -330,9 +352,10 @@ class SubjectResolver:
             refs.append(ref)
         return tuple(refs)
 
-
     @staticmethod
-    def _resolve_checkpoints(raw: Sequence[Mapping[str, Any]]) -> tuple[CheckpointRef, ...]:
+    def _resolve_checkpoints(
+        raw: Sequence[Mapping[str, Any]],
+    ) -> tuple[CheckpointRef, ...]:
         by_id: dict[str, CheckpointRef] = {}
         refs: list[CheckpointRef] = []
         for entry in raw:
