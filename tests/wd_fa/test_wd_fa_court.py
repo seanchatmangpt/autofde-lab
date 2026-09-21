@@ -112,7 +112,9 @@ def test_tampered_receipt_fails_replay(candidate_model):
         observed_disposition="MODE-A-FIRMWARE",
     )
     assert verify_receipt(receipt)
+    assert receipt.authority_scope == "REPO_LOCAL_FIXTURE"
     assert not verify_receipt(replace(receipt, observed_disposition="TAMPERED"))
+    assert not verify_receipt(replace(receipt, authority_scope="EXTERNAL"))
 
 
 def test_machine_experience_reduces_future_intelligence(candidate_model):
