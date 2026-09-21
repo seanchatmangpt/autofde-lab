@@ -16,6 +16,7 @@ class VerificationReceipt:
     observed_disposition: str
     candidate_digest: str
     receipt_digest: str
+    authority_scope: str = "REPO_LOCAL_FIXTURE"
 
 
 def _canonical(payload: object) -> bytes:
@@ -45,6 +46,7 @@ def issue_receipt(
         "verifier_id": verifier_id,
         "observed_disposition": observed_disposition,
         "candidate_digest": candidate_digest(triage),
+        "authority_scope": "REPO_LOCAL_FIXTURE",
     }
     digest = hashlib.sha256(_canonical(core)).hexdigest()
     return VerificationReceipt(
@@ -55,6 +57,7 @@ def issue_receipt(
         observed_disposition=observed_disposition,
         candidate_digest=core["candidate_digest"],
         receipt_digest=digest,
+        authority_scope=core["authority_scope"],
     )
 
 
@@ -66,8 +69,10 @@ def verify_receipt(receipt: VerificationReceipt) -> bool:
         "verifier_id": receipt.verifier_id,
         "observed_disposition": receipt.observed_disposition,
         "candidate_digest": receipt.candidate_digest,
+        "authority_scope": receipt.authority_scope,
     }
     return (
         receipt.producer_id != receipt.verifier_id
+        and receipt.authority_scope == "REPO_LOCAL_FIXTURE"
         and hashlib.sha256(_canonical(core)).hexdigest() == receipt.receipt_digest
     )
