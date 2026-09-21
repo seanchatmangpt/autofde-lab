@@ -74,7 +74,9 @@ def _require_sha256(value: Any, field: str) -> str:
 
 def _require_binding_digest(value: Any, field: str) -> str:
     if not isinstance(value, str) or not _BINDING_DIGEST.fullmatch(value):
-        raise ValueError(f"{field} must be sha256: or hmac-sha256:<64hex>, got {value!r}")
+        raise ValueError(
+            f"{field} must be sha256: or hmac-sha256:<64hex>, got {value!r}"
+        )
     return value
 
 
@@ -115,7 +117,9 @@ def _load_and_bind(path: str, expected_digest: str, label: str) -> dict[str, Any
     return payload
 
 
-def _checkpoint_001(payload: dict[str, Any], reference: ReceiptReference) -> AdmittedReceipt:
+def _checkpoint_001(
+    payload: dict[str, Any], reference: ReceiptReference
+) -> AdmittedReceipt:
     if payload.get("schema") != "https://ggen.dev/receipt/pack/v1":
         raise ValueError("GALL-001 requires the ggen portable receipt schema")
     if payload.get("spec") != "RFC-GPACK-001-v26.9.17":
@@ -127,12 +131,25 @@ def _checkpoint_001(payload: dict[str, Any], reference: ReceiptReference) -> Adm
     if replay.get("status") != "PASS":
         raise ValueError("GALL-001 requires clean replay.status=PASS")
     _require_sha256(replay.get("source_receipt_sha256"), "replay.source_receipt_sha256")
-    _require_sha256(replay.get("reconstructed_receipt_sha256"), "replay.reconstructed_receipt_sha256")
+    _require_sha256(
+        replay.get("reconstructed_receipt_sha256"),
+        "replay.reconstructed_receipt_sha256",
+    )
     identity = _require_mapping(replay.get("identity"), "replay.identity")
     required_identity_fields = {
-        "schema", "spec", "engine", "subject", "dependencies", "composition",
-        "graph", "work_order", "admission", "consequences", "toolchain",
-        "environment", "standing",
+        "schema",
+        "spec",
+        "engine",
+        "subject",
+        "dependencies",
+        "composition",
+        "graph",
+        "work_order",
+        "admission",
+        "consequences",
+        "toolchain",
+        "environment",
+        "standing",
     }
     if set(identity) != required_identity_fields:
         raise ValueError(
@@ -142,7 +159,9 @@ def _checkpoint_001(payload: dict[str, Any], reference: ReceiptReference) -> Adm
         witness = _require_mapping(identity.get(field), f"replay.identity.{field}")
         _require_sha256(witness.get("sha256"), f"replay.identity.{field}.sha256")
         if witness.get("equal") is not True:
-            raise ValueError(f"GALL-001 replay identity witness for {field} is not equal")
+            raise ValueError(
+                f"GALL-001 replay identity witness for {field} is not equal"
+            )
     if replay.get("court") != "ggen-engine::replay::verify_project_replay":
         raise ValueError("GALL-001 replay court identity mismatch")
 
@@ -160,8 +179,12 @@ def _checkpoint_001(payload: dict[str, Any], reference: ReceiptReference) -> Adm
         item = _require_mapping(item, f"composition.resolved_packs[{index}]")
         resolved_identities.add(
             (
-                _require_nonempty_string(item.get("name"), f"resolved_packs[{index}].name"),
-                _require_nonempty_string(item.get("version"), f"resolved_packs[{index}].version"),
+                _require_nonempty_string(
+                    item.get("name"), f"resolved_packs[{index}].name"
+                ),
+                _require_nonempty_string(
+                    item.get("version"), f"resolved_packs[{index}].version"
+                ),
                 _require_sha256(item.get("digest"), f"resolved_packs[{index}].digest"),
             )
         )
@@ -188,7 +211,10 @@ def _checkpoint_001(payload: dict[str, Any], reference: ReceiptReference) -> Adm
     environment = _require_mapping(payload.get("environment"), "environment")
     for field in ("os", "arch", "family"):
         _require_nonempty_string(environment.get(field), f"environment.{field}")
-    if not isinstance(environment.get("variables_count"), int) or environment["variables_count"] < 0:
+    if (
+        not isinstance(environment.get("variables_count"), int)
+        or environment["variables_count"] < 0
+    ):
         raise ValueError("environment.variables_count must be a non-negative integer")
     _require_sha256(environment.get("variables_sha256"), "environment.variables_sha256")
 
@@ -221,7 +247,9 @@ def _checkpoint_001(payload: dict[str, Any], reference: ReceiptReference) -> Adm
         item = _require_mapping(item, f"consequences[{index}]")
         _require_nonempty_string(item.get("target"), f"consequences[{index}].target")
         if item.get("operation") not in {"MANAGED_WRITE", "MANAGED_INJECT"}:
-            raise ValueError(f"consequences[{index}].operation is not a ggen managed consequence")
+            raise ValueError(
+                f"consequences[{index}].operation is not a ggen managed consequence"
+            )
         _require_raw_sha256(item.get("sha256"), f"consequences[{index}].sha256")
 
     return AdmittedReceipt(
@@ -238,21 +266,29 @@ def _checkpoint_001(payload: dict[str, Any], reference: ReceiptReference) -> Adm
     )
 
 
-def _checkpoint_002(payload: dict[str, Any], reference: ReceiptReference) -> AdmittedReceipt:
+def _checkpoint_002(
+    payload: dict[str, Any], reference: ReceiptReference
+) -> AdmittedReceipt:
     # GgenIgniter's checkpoint contract defines this exact handoff rather than
     # a generic envelope. It is derived from the durable GgenIgniter.Receipt
     # plus ProjectManufacturer identity and therefore keeps both identities.
     if str(payload.get("standing", "")).upper() != "ALIVE":
         raise ValueError("GALL-002 requires standing ALIVE")
     if payload.get("repo_sha") != reference.repo_sha:
-        raise ValueError("GALL-002 handoff repo_sha does not match the exact referenced producer")
+        raise ValueError(
+            "GALL-002 handoff repo_sha does not match the exact referenced producer"
+        )
 
     graph_digest = _require_sha256(payload.get("graph_digest"), "graph_digest")
-    manufacturer = _require_sha256(payload.get("manufacturer_digest"), "manufacturer_digest")
+    manufacturer = _require_sha256(
+        payload.get("manufacturer_digest"), "manufacturer_digest"
+    )
     projection = _require_sha256(payload.get("projection_digest"), "projection_digest")
     post_run = _require_sha256(payload.get("post_run_hash"), "post_run_hash")
     if projection != post_run:
-        raise ValueError("GALL-002 projection_digest must equal the durable receipt post_run_hash")
+        raise ValueError(
+            "GALL-002 projection_digest must equal the durable receipt post_run_hash"
+        )
     _require_sha256(payload.get("attestation_digest"), "attestation_digest")
     _require_sha256(payload.get("mix_lock_digest"), "mix_lock_digest")
     _require_sha256(payload.get("gall_001_receipt_digest"), "gall_001_receipt_digest")
@@ -260,7 +296,11 @@ def _checkpoint_002(payload: dict[str, Any], reference: ReceiptReference) -> Adm
     _require_mapping(payload.get("manifest_identity"), "manifest_identity")
     _require_nonempty_string(payload.get("profile"), "profile")
     tasks = payload.get("generator_tasks")
-    if not isinstance(tasks, list) or not tasks or not all(isinstance(x, str) and x for x in tasks):
+    if (
+        not isinstance(tasks, list)
+        or not tasks
+        or not all(isinstance(x, str) and x for x in tasks)
+    ):
         raise ValueError("GALL-002 generator_tasks must be a non-empty string list")
     _require_mapping(payload.get("toolchain"), "toolchain")
     files = payload.get("generated_files")
@@ -284,33 +324,45 @@ def _checkpoint_002(payload: dict[str, Any], reference: ReceiptReference) -> Adm
     )
 
 
-def _checkpoint_003(payload: dict[str, Any], reference: ReceiptReference) -> AdmittedReceipt:
+def _checkpoint_003(
+    payload: dict[str, Any], reference: ReceiptReference
+) -> AdmittedReceipt:
     # This is AshA2A.Gall.CommandReceipt serialized to JSON, not a generic
     # {standing, handoff_digest} composition object.
     receipt_standing = str(payload.get("receipt_standing", "")).lower()
     if receipt_standing != "durable":
-        raise ValueError("GALL-003 requires receipt_standing=durable from the repository-native receipt store contract")
+        raise ValueError(
+            "GALL-003 requires receipt_standing=durable from the repository-native receipt store contract"
+        )
     status = str(payload.get("status", "")).lower().lstrip(":")
     terminal_raw = payload.get("terminal_status")
     terminal = None if terminal_raw is None else str(terminal_raw).lower().lstrip(":")
     if status == "pending":
         if terminal not in {None, "none", "nil", ""}:
-            raise ValueError("GALL-003 pending crash-window anchor must not invent a terminal outcome")
+            raise ValueError(
+                "GALL-003 pending crash-window anchor must not invent a terminal outcome"
+            )
     elif terminal not in {"executed", "reconciled", "failed", "unknown_outcome"}:
-        raise ValueError("GALL-003 consequence terminal state is not repository-native evidence")
+        raise ValueError(
+            "GALL-003 consequence terminal state is not repository-native evidence"
+        )
     consequence = str(payload.get("consequence", "")).lower().lstrip(":")
     if consequence not in {"change", "external_do"}:
         raise ValueError("GALL-003 receipt is not consequence-bearing")
 
     semantic = _require_mapping(payload.get("semantic_subject"), "semantic_subject")
     _require_sha256(semantic.get("graph_digest"), "semantic_subject.graph_digest")
-    _require_sha256(semantic.get("projection_digest"), "semantic_subject.projection_digest")
+    _require_sha256(
+        semantic.get("projection_digest"), "semantic_subject.projection_digest"
+    )
     manufacturer = _require_sha256(
         semantic.get("manufacturer_digest"), "semantic_subject.manufacturer_digest"
     )
     _require_sha256(payload.get("semantic_subject_digest"), "semantic_subject_digest")
     if payload.get("manufacturer_subject_digest") != manufacturer:
-        raise ValueError("GALL-003 manufacturer_subject_digest disagrees with semantic_subject")
+        raise ValueError(
+            "GALL-003 manufacturer_subject_digest disagrees with semantic_subject"
+        )
 
     _require_nonempty_string(payload.get("receipt_id"), "receipt_id")
     _require_nonempty_string(payload.get("command_id"), "command_id")
@@ -335,9 +387,13 @@ def _checkpoint_003(payload: dict[str, Any], reference: ReceiptReference) -> Adm
     )
 
 
-def _checkpoint_004(payload: dict[str, Any], reference: ReceiptReference) -> AdmittedReceipt:
+def _checkpoint_004(
+    payload: dict[str, Any], reference: ReceiptReference
+) -> AdmittedReceipt:
     if payload.get("schema") != "beam4pm.gall.observer/v26.9.18":
-        raise ValueError("GALL-004 requires the beam4pm independent observer receipt schema")
+        raise ValueError(
+            "GALL-004 requires the beam4pm independent observer receipt schema"
+        )
     if payload.get("standing") != "ALIVE":
         raise ValueError("GALL-004 requires independent observer standing ALIVE")
     if payload.get("authority") != "none":
@@ -351,7 +407,9 @@ def _checkpoint_004(payload: dict[str, Any], reference: ReceiptReference) -> Adm
     )
     _require_nonempty_string(payload.get("capability_id"), "capability_id")
     _require_sha256(payload.get("command_fingerprint"), "command_fingerprint")
-    _require_nonempty_string(payload.get("independent_observer_id"), "independent_observer_id")
+    _require_nonempty_string(
+        payload.get("independent_observer_id"), "independent_observer_id"
+    )
     _require_sha256(payload.get("post_state_digest"), "post_state_digest")
     _require_sha256(payload.get("ocel_digest"), "ocel_digest")
     _require_sha256(payload.get("observer_receipt_digest"), "observer_receipt_digest")
@@ -360,7 +418,9 @@ def _checkpoint_004(payload: dict[str, Any], reference: ReceiptReference) -> Adm
     if source in {None, "actuator_reply", "command_bus_reply"}:
         raise ValueError("GALL-004 post-state is not independent")
     if payload.get("occurrence_count") != 1:
-        raise ValueError("GALL-004 requires exactly one independently observed consequence")
+        raise ValueError(
+            "GALL-004 requires exactly one independently observed consequence"
+        )
 
     witnesses = payload.get("ordering_witnesses")
     required_witnesses = {
@@ -375,7 +435,9 @@ def _checkpoint_004(payload: dict[str, Any], reference: ReceiptReference) -> Adm
         if isinstance(item, dict)
     }
     if not required_witnesses.issubset(observed_witnesses):
-        raise ValueError("GALL-004 is missing required prepared/DO/post-state ordering witnesses")
+        raise ValueError(
+            "GALL-004 is missing required prepared/DO/post-state ordering witnesses"
+        )
 
     required_falsifiers = {
         "actuator_self_report_only",
@@ -384,8 +446,12 @@ def _checkpoint_004(payload: dict[str, Any], reference: ReceiptReference) -> Adm
         "double_consequence",
     }
     falsifiers = payload.get("falsifiers_attempted")
-    if not isinstance(falsifiers, list) or not required_falsifiers.issubset(set(falsifiers)):
-        raise ValueError("GALL-004 observer receipt is missing required falsifier witnesses")
+    if not isinstance(falsifiers, list) or not required_falsifiers.issubset(
+        set(falsifiers)
+    ):
+        raise ValueError(
+            "GALL-004 observer receipt is missing required falsifier witnesses"
+        )
 
     return AdmittedReceipt(
         checkpoint=reference.checkpoint,
@@ -399,7 +465,6 @@ def _checkpoint_004(payload: dict[str, Any], reference: ReceiptReference) -> Adm
         postcondition_valid=True,
         payload=payload,
     )
-
 
 
 def verify_receipt_chain(receipts: list[AdmittedReceipt]) -> None:
@@ -467,6 +532,7 @@ def verify_receipt_chain(receipts: list[AdmittedReceipt]) -> None:
     ):
         raise ValueError("GALL-004 command fingerprint does not match GALL-003")
 
+
 _VALIDATORS = {
     "GALL-001": _checkpoint_001,
     "GALL-002": _checkpoint_002,
@@ -475,24 +541,34 @@ _VALIDATORS = {
 }
 
 
-def _gall004_telemetry(payload: dict[str, Any], reference: EvidenceReference) -> AdmittedEvidence:
+def _gall004_telemetry(
+    payload: dict[str, Any], reference: EvidenceReference
+) -> AdmittedEvidence:
     if reference.repository != "seanchatmangpt/beam4pm":
-        raise ValueError("GALL-004 telemetry evidence must come from seanchatmangpt/beam4pm")
+        raise ValueError(
+            "GALL-004 telemetry evidence must come from seanchatmangpt/beam4pm"
+        )
     if payload.get("schema") != "beam4pm.gall.weaver-court/v26.9.18":
         raise ValueError("GALL-004 telemetry requires the beam4pm Weaver court schema")
     if payload.get("standing") != "PARTIAL_ALIVE":
-        raise ValueError("GALL-004 Weaver qualification receipt requires PARTIAL_ALIVE standing")
+        raise ValueError(
+            "GALL-004 Weaver qualification receipt requires PARTIAL_ALIVE standing"
+        )
     if payload.get("authority") != "none":
         raise ValueError("GALL-004 Weaver evidence must not carry authority")
     if "0.26.1" not in str(payload.get("weaver_version", "")):
         raise ValueError("GALL-004 telemetry requires exact Weaver v0.26.1 identity")
     _require_sha256(payload.get("registry_manifest_digest"), "registry_manifest_digest")
-    _require_sha256(payload.get("registry_definition_digest"), "registry_definition_digest")
+    _require_sha256(
+        payload.get("registry_definition_digest"), "registry_definition_digest"
+    )
     _require_sha256(payload.get("live_check_report_digest"), "live_check_report_digest")
     if payload.get("otlp_round_trip") is not True:
         raise ValueError("GALL-004 telemetry requires an observed OTLP round trip")
     if payload.get("negative_unknown_authority_attribute_refused") is not True:
-        raise ValueError("GALL-004 telemetry requires the authority-secret negative falsifier")
+        raise ValueError(
+            "GALL-004 telemetry requires the authority-secret negative falsifier"
+        )
 
     claimed = _require_sha256(payload.get("receipt_digest"), "receipt_digest")
     body = dict(payload)
@@ -526,26 +602,40 @@ def admit_receipt(reference: ReceiptReference) -> AdmittedReceipt:
         )
     _require_git_sha(reference.repo_sha, f"{reference.checkpoint}.repo_sha")
     _require_sha256(reference.receipt_digest, f"{reference.checkpoint}.receipt_digest")
-    payload = _load_and_bind(reference.path, reference.receipt_digest, reference.checkpoint)
+    payload = _load_and_bind(
+        reference.path, reference.receipt_digest, reference.checkpoint
+    )
 
     # Learned/model output is never a substitute for a GALL receipt. This is
     # the composition-side fence corresponding to Standing.CANDIDATE in #159.
-    if str(payload.get("standing", "")).upper() == LEARNED_CANDIDATE_CEILING or payload.get(
-        "authorizes_actuation"
-    ) is True:
-        raise ValueError("learned GNN/ONNX evidence remains CANDIDATE and cannot satisfy GALL admission")
+    if (
+        str(payload.get("standing", "")).upper() == LEARNED_CANDIDATE_CEILING
+        or payload.get("authorizes_actuation") is True
+    ):
+        raise ValueError(
+            "learned GNN/ONNX evidence remains CANDIDATE and cannot satisfy GALL admission"
+        )
 
     return _VALIDATORS[reference.checkpoint](payload, reference)
 
 
 def admit_evidence(reference: EvidenceReference) -> AdmittedEvidence:
     _require_git_sha(reference.repo_sha, f"{reference.evidence_class}.repo_sha")
-    _require_sha256(reference.receipt_digest, f"{reference.evidence_class}.receipt_digest")
-    payload = _load_and_bind(reference.path, reference.receipt_digest, reference.evidence_class)
-    if str(payload.get("standing", "")).upper() == LEARNED_CANDIDATE_CEILING or payload.get(
-        "authorizes_actuation"
-    ) is True:
-        raise ValueError("learned GNN/ONNX evidence remains CANDIDATE and cannot satisfy GALL admission")
+    _require_sha256(
+        reference.receipt_digest, f"{reference.evidence_class}.receipt_digest"
+    )
+    payload = _load_and_bind(
+        reference.path, reference.receipt_digest, reference.evidence_class
+    )
+    if (
+        str(payload.get("standing", "")).upper() == LEARNED_CANDIDATE_CEILING
+        or payload.get("authorizes_actuation") is True
+    ):
+        raise ValueError(
+            "learned GNN/ONNX evidence remains CANDIDATE and cannot satisfy GALL admission"
+        )
     if reference.evidence_class == GALL004_TELEMETRY:
         return _gall004_telemetry(payload, reference)
-    raise ValueError(f"unsupported supporting evidence class {reference.evidence_class}")
+    raise ValueError(
+        f"unsupported supporting evidence class {reference.evidence_class}"
+    )
