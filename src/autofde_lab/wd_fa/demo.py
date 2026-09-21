@@ -85,7 +85,11 @@ def main() -> int:
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
     payload = run_demo()
-    print(json.dumps(payload, None if args.json else 2, sort_keys=True, default=str))
+    print(
+        json.dumps(
+            payload, indent=None if args.json else 2, sort_keys=True, default=str
+        )
+    )
     return 0
 
 
