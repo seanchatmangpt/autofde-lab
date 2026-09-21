@@ -1,0 +1,10 @@
+[project]
+name = "wd-fa-zod-contract"
+version = "26.9.21"
+
+[ontology]
+source = "../../../ggen/wd-fa/ontology.ttl"
+
+[packs]
+shacl-projection-pack = { git = "https://github.com/seanchatmangpt/ggen-marketplace.git", version = "1eeeafe3dd42fd86ea224f96cfb5e5055a2baf3c", subdir = "packs/shacl-projection-pack" }
+shacl-to-zod-pack = { git = "https://github.com/seanchatmangpt/ggen-marketplace.git", version = "1eeeafe3dd42fd86ea224f96cfb5e5055a2baf3c", subdir = "packs/shacl-to-zod-pack" }
