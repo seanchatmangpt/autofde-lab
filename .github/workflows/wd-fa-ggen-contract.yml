@@ -30,26 +30,25 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
 
-      - name: Checkout exact ggen constructor
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          repository: seanchatmangpt/ggen
-          ref: ddfa602bfbab57b7ed5150f61b0acac7a41e3020
-          path: .constructor/ggen
-          persist-credentials: false
-
-      - uses: dtolnay/rust-toolchain@nightly
-        with:
-          toolchain: nightly-2026-06-22
-
-      - name: Build exact ggen constructor
-        run: cargo +nightly-2026-06-22 build --release -p ggen-cli-lib --bin ggen --manifest-path .constructor/ggen/Cargo.toml
+      - name: Install digest-verified ggen v26.9.12
+        shell: bash
+        env:
+          GGEN_URL: https://github.com/seanchatmangpt/ggen/releases/download/v26.9.12/ggen-x86_64-unknown-linux-gnu.tar.gz
+          GGEN_SHA256: ef51c03acc70752446d2147b255ee508ea1471862db45a6bdf5da3fdf62ff430
+        run: |
+          set -euo pipefail
+          curl --fail --location "$GGEN_URL" --output /tmp/ggen.tar.gz
+          echo "$GGEN_SHA256  /tmp/ggen.tar.gz" | sha256sum --check -
+          mkdir -p .constructor/ggen-bin
+          tar -xzf /tmp/ggen.tar.gz -C .constructor/ggen-bin
+          test -x .constructor/ggen-bin/ggen
+          .constructor/ggen-bin/ggen --version
 
       - name: Manufacture Pydantic contract from marketplace
         working-directory: src/autofde_lab/wd_fa/ggen_contract
         run: |
           set -euo pipefail
-          ../../../../.constructor/ggen/target/release/ggen sync run
+          ../../../../.constructor/ggen-bin/ggen sync run
           test -s src/shacl_pydantic_models.py
           echo "=== PYDANTIC GENERATED ==="
           cat src/shacl_pydantic_models.py
@@ -58,7 +57,7 @@ jobs:
         working-directory: apps/wd-fa-web/ggen_contract
         run: |
           set -euo pipefail
-          ../../../.constructor/ggen/target/release/ggen sync run
+          ../../../.constructor/ggen-bin/ggen sync run
           test -s src/shacl_zod_schemas.js
           echo "=== ZOD GENERATED ==="
           cat src/shacl_zod_schemas.js
