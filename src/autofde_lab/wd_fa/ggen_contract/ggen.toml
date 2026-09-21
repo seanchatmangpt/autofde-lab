@@ -1,7 +1,5 @@
 [project]
 name = "wd-fa-pydantic-contract"
-version = "26.9.21"
-
 [ontology]
 source = "../../../../ggen/wd-fa/ontology.ttl"
 
