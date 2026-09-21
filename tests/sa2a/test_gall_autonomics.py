@@ -33,7 +33,9 @@ def sha(seed: str) -> str:
     return "sha256:" + hashlib.sha256(seed.encode()).hexdigest()
 
 
-def test_gall_008_semantic_telemetry_binds_layers_and_conserves_additive_measure() -> None:
+def test_gall_008_semantic_telemetry_binds_layers_and_conserves_additive_measure() -> (
+    None
+):
     correlation = SemanticCorrelation(
         semantic_subject=sha("subject"),
         capability_id="Example.Resource.repair",
@@ -99,20 +101,24 @@ def test_gall_010_unknown_is_not_coerced_and_yields_information_action() -> None
         "unknown(database_reachable)",
         "known_false(service_healthy)",
     )
-    assert belief.information_actions(
-        {"database_reachable": True}
-    )[0].action_id == "observe:database_reachable"
+    assert (
+        belief.information_actions({"database_reachable": True})[0].action_id
+        == "observe:database_reachable"
+    )
 
     observed = belief.observe("database_reachable", True)
-    assert observed.require(
-        {"service_healthy": False, "database_reachable": True}
-    ) == (True, ())
+    assert observed.require({"service_healthy": False, "database_reachable": True}) == (
+        True,
+        (),
+    )
 
 
 def test_gall_011_active_falsifier_finds_and_minimizes_counterexample() -> None:
     invariant = Invariant[int](
         "never-two-consecutive-do",
-        lambda trace: not any(left == right == 1 for left, right in zip(trace, trace[1:])),
+        lambda trace: not any(
+            left == right == 1 for left, right in zip(trace, trace[1:])
+        ),
     )
     result = ActiveFalsifier[int](budget=10).search(
         invariant,
@@ -127,7 +133,9 @@ def test_gall_011_active_falsifier_finds_and_minimizes_counterexample() -> None:
     assert bounded.standing == "NO_COUNTEREXAMPLE_WITHIN_BUDGET"
 
 
-def test_gall_012_prediction_remains_candidate_and_split_has_no_subject_leakage() -> None:
+def test_gall_012_prediction_remains_candidate_and_split_has_no_subject_leakage() -> (
+    None
+):
     train, validation, test = split_subjects(["a", "b", "c", "d", "e"])
     assert not (set(train) & set(validation))
     assert not (set(train) & set(test))
@@ -182,7 +190,9 @@ def test_gall_013_repair_selector_preserves_unknown_and_falsifier_boundaries() -
     assert request.idempotency_key.startswith("sha256:")
 
 
-def test_gall_014_verified_repair_compiles_known_path_without_reusing_authority() -> None:
+def test_gall_014_verified_repair_compiles_known_path_without_reusing_authority() -> (
+    None
+):
     belief = BeliefState(
         facts={"fault_confirmed": EpistemicValue.KNOWN_TRUE},
         observation_projection="ops:v1",
@@ -264,9 +274,7 @@ def test_gall_031_prediction_is_not_promotion_and_canary_is_bounded() -> None:
 
 
 def test_gall_032_requires_every_predecessor_and_fresh_known_execution() -> None:
-    receipts = {
-        f"GALL-{index:03d}": sha(f"receipt-{index}") for index in range(1, 32)
-    }
+    receipts = {f"GALL-{index:03d}": sha(f"receipt-{index}") for index in range(1, 32)}
     manifest = ExternalAutonomicsManifest(
         receipts=receipts,
         disturbance_class="service-latency-regression",
