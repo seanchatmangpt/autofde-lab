@@ -128,8 +128,9 @@ def test_machine_experience_reduces_future_intelligence(candidate_model):
     assert verify_receipt(receipt)
     experience = compile_experience(
         cases["novel_x"],
+        first,
+        receipt,
         mode_id="MODE-X-NOVEL",
-        verifier_id=receipt.verifier_id,
         next_action="repeat_verified_novel_x_procedure",
     )
     replay = triage(
