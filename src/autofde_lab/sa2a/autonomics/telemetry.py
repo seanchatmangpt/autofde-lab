@@ -72,7 +72,9 @@ class Measurement:
             raise ValueError("measurement uncertainty cannot be negative")
         keys = {str(key).lower() for key in self.metadata}
         if keys & _SECRET_KEYS:
-            raise ValueError("authority secret/credential keys are forbidden in telemetry")
+            raise ValueError(
+                "authority secret/credential keys are forbidden in telemetry"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,7 +96,9 @@ class SemanticTelemetryArtifact:
             measurement.validate()
         correlations = {measurement.correlation.digest for measurement in admitted}
         if len(correlations) != 1:
-            raise ValueError("telemetry layers do not bind the same semantic consequence")
+            raise ValueError(
+                "telemetry layers do not bind the same semantic consequence"
+            )
         if not source_versions:
             raise ValueError("telemetry source/tool versions are required")
         return cls(admitted, dict(source_versions))
@@ -124,7 +128,9 @@ class SemanticTelemetryArtifact:
         if len(producer_sha) != 40 or any(
             ch not in "0123456789abcdef" for ch in producer_sha
         ):
-            raise ValueError("producer_sha must be an exact lowercase 40-hex commit SHA")
+            raise ValueError(
+                "producer_sha must be an exact lowercase 40-hex commit SHA"
+            )
 
         payload: dict[str, Any] = {
             "schema": "autofde.gall.semantic-telemetry-receipt/1",
