@@ -44,6 +44,13 @@ jobs:
           test -x .constructor/ggen-bin/ggen
           .constructor/ggen-bin/ggen --version
 
+      - name: Stage single-source WD contract ontology
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ggen/wd-fa/ontology.ttl src/autofde_lab/wd_fa/ggen_contract/ontology.ttl
+          cp ggen/wd-fa/ontology.ttl apps/wd-fa-web/ggen_contract/ontology.ttl
+
       - name: Manufacture Pydantic contract from marketplace
         working-directory: src/autofde_lab/wd_fa/ggen_contract
         run: |
