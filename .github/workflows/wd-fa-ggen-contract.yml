@@ -1,0 +1,147 @@
+name: WD FA ggen marketplace contract court
+
+on:
+  pull_request:
+    paths:
+      - "ggen/wd-fa/**"
+      - "src/autofde_lab/wd_fa/ggen_contract/**"
+      - "apps/wd-fa-web/ggen_contract/**"
+      - ".github/workflows/wd-fa-ggen-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  manufacture:
+    name: Exact-head marketplace contract manufacture
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact consumer head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Admit exact consumer head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
+
+      - name: Checkout exact ggen constructor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: seanchatmangpt/ggen
+          ref: ddfa602bfbab57b7ed5150f61b0acac7a41e3020
+          path: .constructor/ggen
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          toolchain: nightly-2026-06-22
+
+      - name: Build exact ggen constructor
+        run: cargo +nightly-2026-06-22 build --release -p ggen-cli-lib --bin ggen --manifest-path .constructor/ggen/Cargo.toml
+
+      - name: Manufacture Pydantic contract from marketplace
+        working-directory: src/autofde_lab/wd_fa/ggen_contract
+        run: |
+          set -euo pipefail
+          ../../../../.constructor/ggen/target/release/ggen sync run
+          test -s src/shacl_pydantic_models.py
+          echo "=== PYDANTIC GENERATED ==="
+          cat src/shacl_pydantic_models.py
+
+      - name: Manufacture Zod contract from marketplace
+        working-directory: apps/wd-fa-web/ggen_contract
+        run: |
+          set -euo pipefail
+          ../../../.constructor/ggen/target/release/ggen sync run
+          test -s src/shacl_zod_schemas.js
+          echo "=== ZOD GENERATED ==="
+          cat src/shacl_zod_schemas.js
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+
+      - name: Execute generated Pydantic contract
+        run: |
+          python -m pip install "pydantic>=2.9,<3"
+          PYTHONPATH=src python - <<'PY'
+          from autofde_lab.wd_fa.ggen_contract.src.shacl_pydantic_models import (
+              TriageRequestGenerated,
+              TriageResponseGenerated,
+          )
+          TriageRequestGenerated(case_name="known_a")
+          TriageResponseGenerated(
+              case_id="KNOWN-A",
+              standing="ALIVE",
+              admitted_mode="MODE-A-FIRMWARE",
+              next_action="run_firmware_regression",
+              authority="SELECT_ONLY",
+          )
+          try:
+              TriageRequestGenerated(case_name="not_admitted")
+          except Exception:
+              pass
+          else:
+              raise SystemExit("request enum admission leaked")
+          try:
+              TriageResponseGenerated(
+                  case_id="X",
+                  standing="ALIVE",
+                  admitted_mode=None,
+                  next_action="x",
+                  authority="DO",
+              )
+          except Exception:
+              pass
+          else:
+              raise SystemExit("authority enum admission leaked")
+          print("WD_FA_GGEN_PYDANTIC_ALIVE")
+          PY
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: "22"
+
+      - name: Execute generated Zod contract
+        working-directory: apps/wd-fa-web
+        run: |
+          npm install --ignore-scripts
+          node --input-type=module - <<'JS'
+          import {
+            TriageRequestGeneratedSchema,
+            TriageResponseGeneratedSchema,
+          } from "./ggen_contract/src/shacl_zod_schemas.js";
+
+          TriageRequestGeneratedSchema.parse({ case_name: "known_a" });
+          TriageResponseGeneratedSchema.parse({
+            case_id: "KNOWN-A",
+            standing: "ALIVE",
+            admitted_mode: "MODE-A-FIRMWARE",
+            next_action: "run_firmware_regression",
+            authority: "SELECT_ONLY",
+          });
+          if (TriageRequestGeneratedSchema.safeParse({ case_name: "not_admitted" }).success) process.exit(31);
+          if (TriageResponseGeneratedSchema.safeParse({
+            case_id: "X",
+            standing: "ALIVE",
+            admitted_mode: null,
+            next_action: "x",
+            authority: "DO",
+          }).success) process.exit(32);
+          console.log("WD_FA_GGEN_ZOD_ALIVE");
+          JS
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: wd-fa-ggen-contract-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            src/autofde_lab/wd_fa/ggen_contract/src/shacl_pydantic_models.py
+            apps/wd-fa-web/ggen_contract/src/shacl_zod_schemas.js
+          if-no-files-found: error
+          retention-days: 30
