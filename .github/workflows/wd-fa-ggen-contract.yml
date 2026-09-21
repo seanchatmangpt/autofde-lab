@@ -30,6 +30,28 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
 
+      - name: Checkout exact marketplace producer closure
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: seanchatmangpt/ggen-marketplace
+          ref: 1eeeafe3dd42fd86ea224f96cfb5e5055a2baf3c
+          path: .marketplace
+          persist-credentials: false
+          lfs: false
+          sparse-checkout: |
+            packs/shacl-projection-pack
+            packs/shacl-to-pydantic-pack
+            packs/shacl-to-zod-pack
+
+      - name: Admit exact marketplace producer
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C .marketplace rev-parse HEAD)" = "1eeeafe3dd42fd86ea224f96cfb5e5055a2baf3c"
+          test -f .marketplace/packs/shacl-projection-pack/pack.toml
+          test -f .marketplace/packs/shacl-to-pydantic-pack/pack.toml
+          test -f .marketplace/packs/shacl-to-zod-pack/pack.toml
+
       - name: Install digest-verified ggen v26.9.12
         shell: bash
         env:
