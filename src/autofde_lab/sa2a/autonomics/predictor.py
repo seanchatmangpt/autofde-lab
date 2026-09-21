@@ -30,16 +30,24 @@ def split_subjects(
 ) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
     unique = tuple(sorted(set(subject_ids)))
     if len(unique) < 3:
-        raise ValueError("semantic predictor qualification requires at least three subjects")
+        raise ValueError(
+            "semantic predictor qualification requires at least three subjects"
+        )
     train_end = max(1, int(len(unique) * train_fraction))
-    val_end = max(train_end + 1, int(len(unique) * (train_fraction + validation_fraction)))
+    val_end = max(
+        train_end + 1, int(len(unique) * (train_fraction + validation_fraction))
+    )
     train = unique[:train_end]
     validation = unique[train_end:val_end]
     test = unique[val_end:]
     if not test:
         test = (validation[-1],)
         validation = validation[:-1]
-    if set(train) & set(validation) or set(train) & set(test) or set(validation) & set(test):
+    if (
+        set(train) & set(validation)
+        or set(train) & set(test)
+        or set(validation) & set(test)
+    ):
         raise ValueError("semantic subject leakage across train/validation/test")
     return train, validation, test
 
@@ -58,9 +66,10 @@ class MajorityBaseline:
         if not counts:
             raise ValueError("baseline training labels are empty")
         self.label = min(counts, key=lambda key: (-counts[key], key))
-        self.model_digest = "sha256:" + hashlib.sha256(
-            json.dumps(counts, sort_keys=True).encode()
-        ).hexdigest()
+        self.model_digest = (
+            "sha256:"
+            + hashlib.sha256(json.dumps(counts, sort_keys=True).encode()).hexdigest()
+        )
         return self
 
     def predict(self, subject_id: str) -> PredictionCandidate:
@@ -77,12 +86,18 @@ class MajorityBaseline:
 class OptionalGraphSage:
     """Minimal GraphSAGE adapter; unavailable runtimes fail typed, never fall back semantically."""
 
-    def __init__(self, in_channels: int, hidden_channels: int, out_channels: int) -> None:
+    def __init__(
+        self, in_channels: int, hidden_channels: int, out_channels: int
+    ) -> None:
         try:
             import torch
             from torch_geometric.nn import SAGEConv
-        except ImportError as exc:  # pragma: no cover - depends on optional solver extra
-            raise RuntimeError("UNSUPPORTED(torch-geometric GraphSAGE runtime)") from exc
+        except (
+            ImportError
+        ) as exc:  # pragma: no cover - depends on optional solver extra
+            raise RuntimeError(
+                "UNSUPPORTED(torch-geometric GraphSAGE runtime)"
+            ) from exc
 
         class _Model(torch.nn.Module):
             def __init__(self) -> None:
@@ -96,7 +111,9 @@ class OptionalGraphSage:
         self.torch = torch
         self.model = _Model()
 
-    def candidate(self, subject_id: str, x: Any, edge_index: Any) -> PredictionCandidate:
+    def candidate(
+        self, subject_id: str, x: Any, edge_index: Any
+    ) -> PredictionCandidate:
         with self.torch.no_grad():
             logits = self.model(x, edge_index)
             pooled = logits.mean(dim=0)
@@ -105,9 +122,10 @@ class OptionalGraphSage:
             key: value.detach().cpu().tolist()
             for key, value in sorted(self.model.state_dict().items())
         }
-        model_digest = "sha256:" + hashlib.sha256(
-            json.dumps(state, sort_keys=True).encode()
-        ).hexdigest()
+        model_digest = (
+            "sha256:"
+            + hashlib.sha256(json.dumps(state, sort_keys=True).encode()).hexdigest()
+        )
         return PredictionCandidate(
             subject_id=subject_id,
             predicted_label=str(int(index)),
