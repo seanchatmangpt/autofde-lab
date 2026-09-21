@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: seanchatmangpt/ggen-marketplace
-          ref: 1eeeafe3dd42fd86ea224f96cfb5e5055a2baf3c
+          ref: 1e9bb23bc584cf7abddd467328a54283b8f73ddb
           path: .marketplace
           persist-credentials: false
           lfs: false
@@ -47,7 +47,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C .marketplace rev-parse HEAD)" = "1eeeafe3dd42fd86ea224f96cfb5e5055a2baf3c"
+          test "$(git -C .marketplace rev-parse HEAD)" = "1e9bb23bc584cf7abddd467328a54283b8f73ddb"
           test -f .marketplace/packs/shacl-projection-pack/pack.toml
           test -f .marketplace/packs/shacl-to-pydantic-pack/pack.toml
           test -f .marketplace/packs/shacl-to-zod-pack/pack.toml
