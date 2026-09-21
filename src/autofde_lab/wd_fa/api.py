@@ -9,7 +9,9 @@ from .triage import triage
 
 
 class TriageRequest(BaseModel):
-    case_name: str = Field(description="Synthetic case key for the bounded case-study court")
+    case_name: str = Field(
+        description="Synthetic case key for the bounded case-study court"
+    )
 
 
 class TriageResponse(BaseModel):
