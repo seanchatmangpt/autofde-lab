@@ -1,10 +1,10 @@
 # ARD v26.9.18 — GALL-005: SA2A Composition / MachineExperience Crown
 
-**Status:** DRAFT ARCHITECTURE SPEC  
-**Release:** v26.9.18  
-**Repository:** `seanchatmangpt/autofde-lab`  
-**Owner:** autofde-lab  
-**Dependencies:** GALL-001, GALL-002, GALL-003, GALL-004  
+**Status:** DRAFT ARCHITECTURE SPEC
+**Release:** v26.9.18
+**Repository:** `seanchatmangpt/autofde-lab`
+**Owner:** autofde-lab
+**Dependencies:** GALL-001, GALL-002, GALL-003, GALL-004
 **Authority ceiling:** planning/selection/qualification only
 
 ## Architectural objective
