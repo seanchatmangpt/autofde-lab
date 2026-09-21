@@ -1,0 +1,69 @@
+@prefix wd:      <urn:wd-fa:> .
+@prefix sp:      <http://seanchatmangpt.github.io/packs/shacl-projection#> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+
+wd:TriageRequestShape a sh:NodeShape ;
+    sh:property [
+        sh:path wd:case_name ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:in ( "known_a" "known_b_misleading" "incomplete_a" "novel_x" "novel_x_replay" ) ;
+        sh:description "Bounded synthetic failure case key" ;
+        sp:isPrimaryOutput true
+    ] .
+
+wd:TriageResponseShape a sh:NodeShape ;
+    sh:property [
+        sh:path wd:case_id ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:description "Failure case identifier" ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:standing ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:in ( "UNKNOWN" "PARTIAL_ALIVE" "ALIVE" "BLOCKED" "REFUSED" ) ;
+        sh:description "Evidence bounded standing" ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:admitted_mode ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:description "Deterministically admitted failure mode when present" ;
+        sp:nullable true ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:next_action ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:description "Bounded next analytical action" ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:authority ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:in ( "SELECT_ONLY" ) ;
+        sh:description "Authority ceiling for this surface" ;
+        sp:isPrimaryOutput true
+    ] .
+
+wd:TriageRequestPydantic a sp:PydanticModel ;
+    sp:derivedFromShape wd:TriageRequestShape ;
+    sp:className "TriageRequestGenerated" ;
+    dcterms:description "Generated request contract for bounded WD failure analysis" .
+
+wd:TriageResponsePydantic a sp:PydanticModel ;
+    sp:derivedFromShape wd:TriageResponseShape ;
+    sp:className "TriageResponseGenerated" ;
+    dcterms:description "Generated response contract for bounded WD failure analysis" .
+
+wd:TriageRequestZod a sp:ZodSchema ;
+    sp:derivedFromShape wd:TriageRequestShape ;
+    sp:schemaName "TriageRequestGeneratedSchema" .
+
+wd:TriageResponseZod a sp:ZodSchema ;
+    sp:derivedFromShape wd:TriageResponseShape ;
+    sp:schemaName "TriageResponseGeneratedSchema" .
