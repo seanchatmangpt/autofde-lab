@@ -1,0 +1,83 @@
+name: WD FA exact-head court
+
+on:
+  pull_request:
+    paths:
+      - "src/autofde_lab/wd_fa/**"
+      - "tests/wd_fa/**"
+      - "apps/wd-fa-web/**"
+      - ".github/workflows/wd-fa-court.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wd-fa:
+    name: OCEL → POWL → TPOT → AutoFDE candidate court
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+
+      - name: Bind exact published head
+        shell: bash
+        run: |
+          set -euo pipefail
+          observed="$(git rev-parse HEAD)"
+          test "$observed" = "${{ github.event.pull_request.head.sha || github.sha }}"
+          echo "EXACT_HEAD=$observed" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+
+      - name: Install focused Python court
+        run: |
+          python -m pip install \
+            "pytest>=8.3,<9" \
+            "httpx>=0.27,<1" \
+            "fastapi>=0.115,<1" \
+            "pm4py==2.7.23" \
+            "TPOT==1.1.0"
+
+      - name: Execute focused court
+        env:
+          PYTHONPATH: src
+        run: python -m pytest -q tests/wd_fa/test_wd_fa_court.py
+
+      - name: Execute working-backwards demonstration
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m autofde_lab.wd_fa.demo --json | tee wd-fa-receipt.json
+          python - <<'PY'
+          import json
+          payload = json.load(open("wd-fa-receipt.json"))
+          assert payload["standing"] == "ALIVE"
+          assert payload["authority"] == "SELECT_CONSTRUCT_ONLY"
+          assert payload["cases"]["novel_x"]["standing"] == "UNKNOWN"
+          assert payload["replay"]["standing"] == "ALIVE"
+          assert payload["receipt_valid"] is True
+          assert payload["ocel_roundtrip"]["is_ocel20"] is True
+          PY
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: wd-fa-exact-head-receipt
+          path: wd-fa-receipt.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: "22"
+
+      - name: Build Next.js projection
+        working-directory: apps/wd-fa-web
+        run: |
+          npm install --ignore-scripts
+          npm run check
+          npm run build
