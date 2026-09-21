@@ -41,6 +41,8 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from autofde_lab.beam.beam_port_bridge import handle_request as beam_handle_request
+from autofde_lab.cmca.cascade import MultifractalCascadeAllocator
 from autofde_lab.fabric.solve_and_falsify import solve_and_falsify
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -173,12 +175,36 @@ def unattended_solve() -> dict:
     blocksworld fixture, and returns both the real trajectory receipt AND
     a real falsification standing -- the automatic trigger path now closes
     both halves of the loop (solve, then check the solve) in one call.
+
+    After `falsify_candidate()` has returned (inside `solve_and_falsify`),
+    the real falsification standing is additionally submitted to the real
+    BEAM port bridge's `sa2a_admit` op (`beam.beam_port_bridge.handle_request`,
+    in-process -- same calling convention as
+    `agent.cmca_dogfood_crown._execute_uc3`), so the outer autonomic loop
+    itself is now a real, non-test-fixture caller of `sa2a_admit`, not only
+    its own test file and the dogfood crown's fixture-shaped UC3.
     """
     domain_arguments = {"domain_path": str(FIXTURE_DOMAIN), "problem_path": str(FIXTURE_PROBLEM)}
     result, falsification = solve_and_falsify(
         domain="PDDLDomain",
         domain_arguments=domain_arguments,
         solver="Astar",
+    )
+    sa2a_admit_response = beam_handle_request(
+        {
+            "op": "sa2a_admit",
+            "candidate_id": falsification.candidate_id,
+            "query_id": f"phase-h-drift-trigger:{result.trajectory_sha256[:16]}",
+            "assertion": "PDDLDomain bounded rollout reaches a terminal state",
+            "source": "phase-h-trigger",
+            "evidence": {
+                "trajectory_sha256": result.trajectory_sha256,
+                "falsification_standing": falsification.standing.value,
+                "receipt_refs": list(falsification.receipt_refs),
+                "violated_constraints": list(falsification.violated_constraints),
+            },
+        },
+        MultifractalCascadeAllocator(),
     )
     return {
         "domain": "PDDLDomain",
@@ -193,6 +219,7 @@ def unattended_solve() -> dict:
             "receipt_refs": falsification.receipt_refs,
             "violated_constraints": falsification.violated_constraints,
         },
+        "sa2a_admit": sa2a_admit_response,
     }
 
 
