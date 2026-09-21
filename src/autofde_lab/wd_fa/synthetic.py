@@ -7,7 +7,6 @@ import pandas as pd
 
 from .domain import EvidenceArtifact, FailureCase, FailureModeRule
 
-
 RULES = (
     FailureModeRule(
         mode_id="MODE-A-FIRMWARE",
@@ -79,45 +78,96 @@ def named_cases() -> dict[str, FailureCase]:
     return {
         "known_a": make_case(
             "KNOWN-A",
-            symptom_code=1, firmware=1, supplier=1, station=4,
-            lot_risk=0.15, rework_count=0, vibration=0.22,
+            symptom_code=1,
+            firmware=1,
+            supplier=1,
+            station=4,
+            lot_risk=0.15,
+            rework_count=0,
+            vibration=0.22,
             kinds=("test", "waveform"),
-            process=("drive_built", "firmware_loaded", "test_failed", "evidence_collected"),
+            process=(
+                "drive_built",
+                "firmware_loaded",
+                "test_failed",
+                "evidence_collected",
+            ),
         ),
         "known_b_misleading": make_case(
             "KNOWN-B",
-            symptom_code=1, firmware=1, supplier=2, station=4,
-            lot_risk=0.82, rework_count=1, vibration=0.24,
+            symptom_code=1,
+            firmware=1,
+            supplier=2,
+            station=4,
+            lot_risk=0.82,
+            rework_count=1,
+            vibration=0.24,
             kinds=("test", "lot_trace"),
-            process=("drive_built", "test_failed", "drive_reworked", "test_failed", "evidence_collected"),
+            process=(
+                "drive_built",
+                "test_failed",
+                "drive_reworked",
+                "test_failed",
+                "evidence_collected",
+            ),
         ),
         "incomplete_a": make_case(
             "PARTIAL-A",
-            symptom_code=1, firmware=1, supplier=1, station=4,
-            lot_risk=0.16, rework_count=0, vibration=0.23,
+            symptom_code=1,
+            firmware=1,
+            supplier=1,
+            station=4,
+            lot_risk=0.16,
+            rework_count=0,
+            vibration=0.23,
             kinds=("test",),
             process=("drive_built", "firmware_loaded", "test_failed"),
         ),
         "novel_x": make_case(
             "NOVEL-X",
-            symptom_code=7, firmware=3, supplier=4, station=12,
-            lot_risk=0.47, rework_count=2, vibration=0.91,
+            symptom_code=7,
+            firmware=3,
+            supplier=4,
+            station=12,
+            lot_risk=0.47,
+            rework_count=2,
+            vibration=0.91,
             kinds=("test", "waveform", "lot_trace"),
-            process=("drive_built", "test_failed", "drive_reworked", "evidence_collected"),
+            process=(
+                "drive_built",
+                "test_failed",
+                "drive_reworked",
+                "evidence_collected",
+            ),
         ),
         "novel_x_replay": make_case(
             "NOVEL-X-REPLAY",
-            symptom_code=7, firmware=3, supplier=4, station=12,
-            lot_risk=0.48, rework_count=2, vibration=0.90,
+            symptom_code=7,
+            firmware=3,
+            supplier=4,
+            station=12,
+            lot_risk=0.48,
+            rework_count=2,
+            vibration=0.90,
             kinds=("test", "waveform", "lot_trace"),
-            process=("drive_built", "test_failed", "drive_reworked", "evidence_collected"),
+            process=(
+                "drive_built",
+                "test_failed",
+                "drive_reworked",
+                "evidence_collected",
+            ),
         ),
     }
 
 
 FEATURE_COLUMNS = (
-    "symptom_code", "firmware", "supplier", "station",
-    "lot_risk", "rework_count", "vibration",
+    "symptom_code",
+    "firmware",
+    "supplier",
+    "station",
+    "lot_risk",
+    "rework_count",
+    "vibration",
 )
 
 
@@ -125,20 +175,51 @@ def training_frame() -> tuple[pd.DataFrame, pd.Series]:
     rows: list[dict[str, float | int]] = []
     labels: list[str] = []
     for idx in range(18):
-        rows.append({"symptom_code":1, "firmware":1, "supplier":1, "station":4,
-                     "lot_risk":0.08 + idx * 0.008, "rework_count":idx % 2, "vibration":0.18 + idx * 0.004})
+        rows.append(
+            {
+                "symptom_code": 1,
+                "firmware": 1,
+                "supplier": 1,
+                "station": 4,
+                "lot_risk": 0.08 + idx * 0.008,
+                "rework_count": idx % 2,
+                "vibration": 0.18 + idx * 0.004,
+            }
+        )
         labels.append("MODE-A-FIRMWARE")
-        rows.append({"symptom_code":1, "firmware":1 + (idx % 3 == 0), "supplier":2, "station":4,
-                     "lot_risk":0.72 + idx * 0.009, "rework_count":1 + idx % 2, "vibration":0.20 + idx * 0.004})
+        rows.append(
+            {
+                "symptom_code": 1,
+                "firmware": 1 + (idx % 3 == 0),
+                "supplier": 2,
+                "station": 4,
+                "lot_risk": 0.72 + idx * 0.009,
+                "rework_count": 1 + idx % 2,
+                "vibration": 0.20 + idx * 0.004,
+            }
+        )
         labels.append("MODE-B-SUPPLIER")
-        rows.append({"symptom_code":3, "firmware":2, "supplier":1, "station":9,
-                     "lot_risk":0.22 + idx * 0.006, "rework_count":idx % 2, "vibration":0.58 + idx * 0.006})
+        rows.append(
+            {
+                "symptom_code": 3,
+                "firmware": 2,
+                "supplier": 1,
+                "station": 9,
+                "lot_risk": 0.22 + idx * 0.006,
+                "rework_count": idx % 2,
+                "vibration": 0.58 + idx * 0.006,
+            }
+        )
         labels.append("MODE-C-SERVO")
-    return pd.DataFrame(rows, columns=FEATURE_COLUMNS), pd.Series(labels, name="failure_mode")
+    return pd.DataFrame(rows, columns=FEATURE_COLUMNS), pd.Series(
+        labels, name="failure_mode"
+    )
 
 
 def feature_frame(case: FailureCase) -> pd.DataFrame:
-    return pd.DataFrame([{name: case.facts[name] for name in FEATURE_COLUMNS}], columns=FEATURE_COLUMNS)
+    return pd.DataFrame(
+        [{name: case.facts[name] for name in FEATURE_COLUMNS}], columns=FEATURE_COLUMNS
+    )
 
 
 def event_rows(case: FailureCase) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -155,7 +236,9 @@ def event_rows(case: FailureCase) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFr
     for idx, activity in enumerate(case.process):
         eid = f"{case.case_id}:E{idx:02d}"
         timestamp = base + timedelta(minutes=idx)
-        event_records.append({"ocel:eid": eid, "ocel:activity": activity, "ocel:timestamp": timestamp})
+        event_records.append(
+            {"ocel:eid": eid, "ocel:activity": activity, "ocel:timestamp": timestamp}
+        )
         related = (
             (case.drive_id, "Drive", "subject"),
             (case.case_id, "FailureCase", "case"),
@@ -164,8 +247,18 @@ def event_rows(case: FailureCase) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFr
             (f"STATION-{case.facts['station']}", "TestStation", "context"),
         )
         for oid, otype, qualifier in related:
-            relations.append({
-                "ocel:eid": eid, "ocel:activity": activity, "ocel:timestamp": timestamp,
-                "ocel:oid": oid, "ocel:type": otype, "ocel:qualifier": qualifier,
-            })
-    return pd.DataFrame(event_records), pd.DataFrame(object_records), pd.DataFrame(relations)
+            relations.append(
+                {
+                    "ocel:eid": eid,
+                    "ocel:activity": activity,
+                    "ocel:timestamp": timestamp,
+                    "ocel:oid": oid,
+                    "ocel:type": otype,
+                    "ocel:qualifier": qualifier,
+                }
+            )
+    return (
+        pd.DataFrame(event_records),
+        pd.DataFrame(object_records),
+        pd.DataFrame(relations),
+    )
