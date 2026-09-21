@@ -1,0 +1,677 @@
+{
+  "eventTypes": [
+    {
+      "name": "DISCOVER_ATLASSIAN_CONTRACT",
+      "attributes": []
+    },
+    {
+      "name": "RECONSTRUCT_CANONICAL_ONTOLOGY",
+      "attributes": []
+    },
+    {
+      "name": "ADMIT_SHACL_COURT",
+      "attributes": []
+    },
+    {
+      "name": "ROUTE_SA2A_CAPABILITY",
+      "attributes": []
+    },
+    {
+      "name": "PLAN_WORK_GRAPH",
+      "attributes": []
+    },
+    {
+      "name": "MANUFACTURE_ASH_RESOURCE",
+      "attributes": []
+    },
+    {
+      "name": "EXECUTE_WORK_ORDER",
+      "attributes": []
+    },
+    {
+      "name": "VERIFY_CONSEQUENCE",
+      "attributes": []
+    },
+    {
+      "name": "RECEIPT_CLOSE_LOOP",
+      "attributes": []
+    }
+  ],
+  "objectTypes": [
+    {
+      "name": "PowlSession",
+      "attributes": []
+    },
+    {
+      "name": "WorkOrder",
+      "attributes": []
+    },
+    {
+      "name": "GymactEpisode",
+      "attributes": []
+    },
+    {
+      "name": "SourceContract",
+      "attributes": []
+    },
+    {
+      "name": "CanonicalOntology",
+      "attributes": []
+    },
+    {
+      "name": "SHACLAdmission",
+      "attributes": []
+    },
+    {
+      "name": "Sa2aCapability",
+      "attributes": []
+    },
+    {
+      "name": "WorkPlan",
+      "attributes": []
+    },
+    {
+      "name": "GeneratedArtifact",
+      "attributes": []
+    },
+    {
+      "name": "ExecutionResult",
+      "attributes": []
+    },
+    {
+      "name": "VerificationResult",
+      "attributes": []
+    },
+    {
+      "name": "ReplayReceipt",
+      "attributes": []
+    }
+  ],
+  "events": [
+    {
+      "id": "e0",
+      "type": "DISCOVER_ATLASSIAN_CONTRACT",
+      "time": "2026-09-21T19:47:22.094565+00:00",
+      "attributes": [
+        {
+          "name": "stage",
+          "value": "discover"
+        },
+        {
+          "name": "dcm_graph_digest",
+          "value": "a145160236f200bc398d07b199430e6d67789705a5875051faff55988d6f265b"
+        },
+        {
+          "name": "dcm_admitted",
+          "value": "True"
+        },
+        {
+          "name": "state_digest",
+          "value": "e2545369693af7602fd7012621ac5f44fe16aa6ec18bc3464e2588aa870f368b"
+        },
+        {
+          "name": "verification_passed",
+          "value": "True"
+        },
+        {
+          "name": "workorder:standing",
+          "value": "DISCOVERED"
+        },
+        {
+          "name": "source_contract",
+          "value": "jira-cloud-rest-v3#/components/schemas/IssueType"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "urn:zhf:session:issuetype-schema-migration",
+          "qualifier": "PowlSession"
+        },
+        {
+          "objectId": "urn:zhf:workorder:issuetype-schema-migration",
+          "qualifier": "WorkOrder"
+        },
+        {
+          "objectId": "urn:zhf:episode:c40121de0fc948259777120d01832d46",
+          "qualifier": "GymactEpisode"
+        },
+        {
+          "objectId": "urn:zhf:source-contract:jira-issuetype",
+          "qualifier": "SourceContract"
+        }
+      ]
+    },
+    {
+      "id": "e1",
+      "type": "RECONSTRUCT_CANONICAL_ONTOLOGY",
+      "time": "2026-09-21T19:47:22.128624+00:00",
+      "attributes": [
+        {
+          "name": "stage",
+          "value": "reconstruct"
+        },
+        {
+          "name": "dcm_graph_digest",
+          "value": "06a9031116a657c2f2a346119bf062b414044ac6bc261a72651a7f5b3fa0e92b"
+        },
+        {
+          "name": "dcm_admitted",
+          "value": "True"
+        },
+        {
+          "name": "state_digest",
+          "value": "1f3f0dd5233ee1124c501fe882dc3e32ceec654427d689733ba99635313fc303"
+        },
+        {
+          "name": "verification_passed",
+          "value": "True"
+        },
+        {
+          "name": "workorder:standing",
+          "value": "RECONSTRUCTED"
+        },
+        {
+          "name": "ontology_candidate",
+          "value": "issuetype->skos:Concept+oslc_cm:ChangeRequest"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "urn:zhf:session:issuetype-schema-migration",
+          "qualifier": "PowlSession"
+        },
+        {
+          "objectId": "urn:zhf:workorder:issuetype-schema-migration",
+          "qualifier": "WorkOrder"
+        },
+        {
+          "objectId": "urn:zhf:episode:df891b6d5e2b46aba1c403936f1cc8ea",
+          "qualifier": "GymactEpisode"
+        },
+        {
+          "objectId": "urn:zhf:ontology:issuetype-candidate",
+          "qualifier": "CanonicalOntology"
+        }
+      ]
+    },
+    {
+      "id": "e2",
+      "type": "ADMIT_SHACL_COURT",
+      "time": "2026-09-21T19:47:22.162398+00:00",
+      "attributes": [
+        {
+          "name": "stage",
+          "value": "admit"
+        },
+        {
+          "name": "dcm_graph_digest",
+          "value": "978cb0677f762259a2c8c3a19237b5d63e45b38895ca99e3959ab7f9c04c49f6"
+        },
+        {
+          "name": "dcm_admitted",
+          "value": "True"
+        },
+        {
+          "name": "state_digest",
+          "value": "3dcd3c3b5fbdae5454506f2d91609d0c336b7cb77bb8d41b538629ca5552ba74"
+        },
+        {
+          "name": "verification_passed",
+          "value": "True"
+        },
+        {
+          "name": "workorder:standing",
+          "value": "ADMITTED"
+        },
+        {
+          "name": "shacl_conforms",
+          "value": "True"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "urn:zhf:session:issuetype-schema-migration",
+          "qualifier": "PowlSession"
+        },
+        {
+          "objectId": "urn:zhf:workorder:issuetype-schema-migration",
+          "qualifier": "WorkOrder"
+        },
+        {
+          "objectId": "urn:zhf:episode:61fc7c17a59747c9b2a3484f356c56cd",
+          "qualifier": "GymactEpisode"
+        },
+        {
+          "objectId": "urn:zhf:shacl-admission:issuetype",
+          "qualifier": "SHACLAdmission"
+        }
+      ]
+    },
+    {
+      "id": "e3",
+      "type": "ROUTE_SA2A_CAPABILITY",
+      "time": "2026-09-21T19:47:22.198409+00:00",
+      "attributes": [
+        {
+          "name": "stage",
+          "value": "route"
+        },
+        {
+          "name": "dcm_graph_digest",
+          "value": "10a07851fd9a89c0d22cb314aa22044d4b551a23f6eecc658e045872af2b9ea2"
+        },
+        {
+          "name": "dcm_admitted",
+          "value": "True"
+        },
+        {
+          "name": "state_digest",
+          "value": "c9c7dd946bb78bbf39362aa30b03cf2745b00b7bdb1d22957d6801ec5bb96635"
+        },
+        {
+          "name": "verification_passed",
+          "value": "True"
+        },
+        {
+          "name": "workorder:standing",
+          "value": "ROUTED"
+        },
+        {
+          "name": "capability_ref",
+          "value": "urn:zhf:capability:sa2a_admit"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "urn:zhf:session:issuetype-schema-migration",
+          "qualifier": "PowlSession"
+        },
+        {
+          "objectId": "urn:zhf:workorder:issuetype-schema-migration",
+          "qualifier": "WorkOrder"
+        },
+        {
+          "objectId": "urn:zhf:episode:a54faf0e55bd4402b04fe5dec813f9c4",
+          "qualifier": "GymactEpisode"
+        },
+        {
+          "objectId": "urn:zhf:capability:sa2a_admit",
+          "qualifier": "Sa2aCapability"
+        }
+      ]
+    },
+    {
+      "id": "e4",
+      "type": "PLAN_WORK_GRAPH",
+      "time": "2026-09-21T19:47:22.233423+00:00",
+      "attributes": [
+        {
+          "name": "stage",
+          "value": "plan"
+        },
+        {
+          "name": "dcm_graph_digest",
+          "value": "9c5f03e810f408dd87510cb6e8e6398c825f8ebdb18843a27ab60cff67924f88"
+        },
+        {
+          "name": "dcm_admitted",
+          "value": "True"
+        },
+        {
+          "name": "state_digest",
+          "value": "123575c1ae0974f56f53aea268f138c1ec33e56907ca17dd160c96375855305a"
+        },
+        {
+          "name": "verification_passed",
+          "value": "True"
+        },
+        {
+          "name": "workorder:standing",
+          "value": "PLANNED"
+        },
+        {
+          "name": "plan_hash",
+          "value": "pending-real-sa2a-plan"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "urn:zhf:session:issuetype-schema-migration",
+          "qualifier": "PowlSession"
+        },
+        {
+          "objectId": "urn:zhf:workorder:issuetype-schema-migration",
+          "qualifier": "WorkOrder"
+        },
+        {
+          "objectId": "urn:zhf:episode:4ac41995cc5c4bddb3f12bed7207ec2e",
+          "qualifier": "GymactEpisode"
+        },
+        {
+          "objectId": "urn:zhf:workplan:issuetype-migration",
+          "qualifier": "WorkPlan"
+        }
+      ]
+    },
+    {
+      "id": "e5",
+      "type": "MANUFACTURE_ASH_RESOURCE",
+      "time": "2026-09-21T19:47:22.269278+00:00",
+      "attributes": [
+        {
+          "name": "stage",
+          "value": "manufacture"
+        },
+        {
+          "name": "dcm_graph_digest",
+          "value": "580613480e44fc56fa881aca16ec3fb005ac15e259d9a7e5dfca8c9e0c60c55f"
+        },
+        {
+          "name": "dcm_admitted",
+          "value": "True"
+        },
+        {
+          "name": "state_digest",
+          "value": "15a12c61a651c5d489b70866f0eccaef6aa6e92d4af2438fc1fa28de02f382ec"
+        },
+        {
+          "name": "verification_passed",
+          "value": "True"
+        },
+        {
+          "name": "workorder:standing",
+          "value": "MANUFACTURED"
+        },
+        {
+          "name": "generated_artifact",
+          "value": "lib/xaas/generated/ash_atlassian/issue_type.ex"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "urn:zhf:session:issuetype-schema-migration",
+          "qualifier": "PowlSession"
+        },
+        {
+          "objectId": "urn:zhf:workorder:issuetype-schema-migration",
+          "qualifier": "WorkOrder"
+        },
+        {
+          "objectId": "urn:zhf:episode:069481c9445a49c1b6d494bbb9e17210",
+          "qualifier": "GymactEpisode"
+        },
+        {
+          "objectId": "urn:zhf:artifact:issue_type.ex",
+          "qualifier": "GeneratedArtifact"
+        }
+      ]
+    },
+    {
+      "id": "e6",
+      "type": "EXECUTE_WORK_ORDER",
+      "time": "2026-09-21T19:47:22.304137+00:00",
+      "attributes": [
+        {
+          "name": "stage",
+          "value": "execute"
+        },
+        {
+          "name": "dcm_graph_digest",
+          "value": "604b75c948fbc33b86e902aa79f3da3a6a8151bbfc0fb6c2cf09739358364f4e"
+        },
+        {
+          "name": "dcm_admitted",
+          "value": "True"
+        },
+        {
+          "name": "state_digest",
+          "value": "591f871b947b75e35582950cea209598e26d31ab13e4acf35eab8921b3d9eff0"
+        },
+        {
+          "name": "verification_passed",
+          "value": "True"
+        },
+        {
+          "name": "workorder:standing",
+          "value": "EXECUTED"
+        },
+        {
+          "name": "result",
+          "value": "issue-type-resource-written"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "urn:zhf:session:issuetype-schema-migration",
+          "qualifier": "PowlSession"
+        },
+        {
+          "objectId": "urn:zhf:workorder:issuetype-schema-migration",
+          "qualifier": "WorkOrder"
+        },
+        {
+          "objectId": "urn:zhf:episode:c4ae3a30a5ed4dd7b6db4d93f3d52333",
+          "qualifier": "GymactEpisode"
+        },
+        {
+          "objectId": "urn:zhf:execution:issuetype-migration",
+          "qualifier": "ExecutionResult"
+        }
+      ]
+    },
+    {
+      "id": "e7",
+      "type": "VERIFY_CONSEQUENCE",
+      "time": "2026-09-21T19:47:22.340343+00:00",
+      "attributes": [
+        {
+          "name": "stage",
+          "value": "verify"
+        },
+        {
+          "name": "dcm_graph_digest",
+          "value": "d75f77d4551ec854ea83989dc259f0f298e3b0888d70d64c582f03f5bc5f8646"
+        },
+        {
+          "name": "dcm_admitted",
+          "value": "True"
+        },
+        {
+          "name": "state_digest",
+          "value": "29a2980bbba1044079c4d875563c3e4df1d82f636c6ac2de5bce914bb2f65650"
+        },
+        {
+          "name": "verification_passed",
+          "value": "True"
+        },
+        {
+          "name": "workorder:standing",
+          "value": "VERIFIED"
+        },
+        {
+          "name": "postcondition_met",
+          "value": "True"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "urn:zhf:session:issuetype-schema-migration",
+          "qualifier": "PowlSession"
+        },
+        {
+          "objectId": "urn:zhf:workorder:issuetype-schema-migration",
+          "qualifier": "WorkOrder"
+        },
+        {
+          "objectId": "urn:zhf:episode:4f6cf2b4f73641388255515cb43cf878",
+          "qualifier": "GymactEpisode"
+        },
+        {
+          "objectId": "urn:zhf:verification:issuetype-migration",
+          "qualifier": "VerificationResult"
+        }
+      ]
+    },
+    {
+      "id": "e8",
+      "type": "RECEIPT_CLOSE_LOOP",
+      "time": "2026-09-21T19:47:22.374719+00:00",
+      "attributes": [
+        {
+          "name": "stage",
+          "value": "receipt"
+        },
+        {
+          "name": "dcm_graph_digest",
+          "value": "31d937066d3edd3d02adbaf6230422f48a6dba6cbb25c60a8bdc465cdd48546c"
+        },
+        {
+          "name": "dcm_admitted",
+          "value": "True"
+        },
+        {
+          "name": "state_digest",
+          "value": "fd0dd9e2ae8f73f39b09403766a1e5e714f4e9068856c3dc0923ab5ea2f49ce3"
+        },
+        {
+          "name": "verification_passed",
+          "value": "True"
+        },
+        {
+          "name": "workorder:standing",
+          "value": "RECEIPTED"
+        },
+        {
+          "name": "replay_verified",
+          "value": "True"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "urn:zhf:session:issuetype-schema-migration",
+          "qualifier": "PowlSession"
+        },
+        {
+          "objectId": "urn:zhf:workorder:issuetype-schema-migration",
+          "qualifier": "WorkOrder"
+        },
+        {
+          "objectId": "urn:zhf:episode:b902540785d645edbd1ca67fe71e8c3d",
+          "qualifier": "GymactEpisode"
+        },
+        {
+          "objectId": "urn:zhf:receipt:issuetype-migration",
+          "qualifier": "ReplayReceipt"
+        }
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "id": "urn:zhf:session:issuetype-schema-migration",
+      "type": "PowlSession",
+      "attributes": [
+        {
+          "name": "server",
+          "value": "zero-human-factory-simulation",
+          "time": "2026-09-21T19:47:22.003669+00:00"
+        }
+      ]
+    },
+    {
+      "id": "urn:zhf:workorder:issuetype-schema-migration",
+      "type": "WorkOrder",
+      "attributes": []
+    },
+    {
+      "id": "urn:zhf:episode:c40121de0fc948259777120d01832d46",
+      "type": "GymactEpisode",
+      "attributes": []
+    },
+    {
+      "id": "urn:zhf:source-contract:jira-issuetype",
+      "type": "SourceContract",
+      "attributes": []
+    },
+    {
+      "id": "urn:zhf:episode:df891b6d5e2b46aba1c403936f1cc8ea",
+      "type": "GymactEpisode",
+      "attributes": []
+    },
+    {
+      "id": "urn:zhf:ontology:issuetype-candidate",
+      "type": "CanonicalOntology",
+      "attributes": []
+    },
+    {
+      "id": "urn:zhf:episode:61fc7c17a59747c9b2a3484f356c56cd",
+      "type": "GymactEpisode",
+      "attributes": []
+    },
+    {
+      "id": "urn:zhf:shacl-admission:issuetype",
+      "type": "SHACLAdmission",
+      "attributes": []
+    },
+    {
+      "id": "urn:zhf:episode:a54faf0e55bd4402b04fe5dec813f9c4",
+      "type": "GymactEpisode",
+      "attributes": []
+    },
+    {
+      "id": "urn:zhf:capability:sa2a_admit",
+      "type": "Sa2aCapability",
+      "attributes": []
+    },
+    {
+      "id": "urn:zhf:episode:4ac41995cc5c4bddb3f12bed7207ec2e",
+      "type": "GymactEpisode",
+      "attributes": []
+    },
+    {
+      "id": "urn:zhf:workplan:issuetype-migration",
+      "type": "WorkPlan",
+      "attributes": []
+    },
+    {
+      "id": "urn:zhf:episode:069481c9445a49c1b6d494bbb9e17210",
+      "type": "GymactEpisode",
+      "attributes": []
+    },
+    {
+      "id": "urn:zhf:artifact:issue_type.ex",
+      "type": "GeneratedArtifact",
+      "attributes": []
+    },
+    {
+      "id": "urn:zhf:episode:c4ae3a30a5ed4dd7b6db4d93f3d52333",
+      "type": "GymactEpisode",
+      "attributes": []
+    },
+    {
+      "id": "urn:zhf:execution:issuetype-migration",
+      "type": "ExecutionResult",
+      "attributes": []
+    },
+    {
+      "id": "urn:zhf:episode:4f6cf2b4f73641388255515cb43cf878",
+      "type": "GymactEpisode",
+      "attributes": []
+    },
+    {
+      "id": "urn:zhf:verification:issuetype-migration",
+      "type": "VerificationResult",
+      "attributes": []
+    },
+    {
+      "id": "urn:zhf:episode:b902540785d645edbd1ca67fe71e8c3d",
+      "type": "GymactEpisode",
+      "attributes": []
+    },
+    {
+      "id": "urn:zhf:receipt:issuetype-migration",
+      "type": "ReplayReceipt",
+      "attributes": []
+    }
+  ]
+}
