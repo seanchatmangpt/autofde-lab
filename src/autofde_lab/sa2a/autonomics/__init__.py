@@ -11,7 +11,7 @@ from .crown import AutonomicsCrown, VerifiedRepair
 from .external_crown import ExternalAutonomicsManifest, ExternalCrownEvidence
 from .falsifier import ActiveFalsifier, FalsifierResult, Invariant
 from .predictor import PredictionCandidate, PredictionStanding
-from .redesign import CanaryEvidence, CanaryEnvelope, RedesignCandidate
+from .redesign import CanaryEnvelope, CanaryEvidence, RedesignCandidate
 from .repair import InterventionRequest, RepairCandidate, RepairSelector
 from .telemetry import Measurement, SemanticCorrelation, SemanticTelemetryArtifact
 
