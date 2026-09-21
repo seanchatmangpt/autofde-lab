@@ -7,5 +7,5 @@ source = "ontology.ttl"
 dir = "templates"
 
 [packs]
-shacl-projection-pack = { git = "https://github.com/seanchatmangpt/ggen-marketplace.git", version = "1eeeafe3dd42fd86ea224f96cfb5e5055a2baf3c", subdir = "packs/shacl-projection-pack" }
-shacl-to-pydantic-pack = { git = "https://github.com/seanchatmangpt/ggen-marketplace.git", version = "1eeeafe3dd42fd86ea224f96cfb5e5055a2baf3c", subdir = "packs/shacl-to-pydantic-pack" }
+shacl-projection-pack = { path = "../../../../.marketplace/packs/shacl-projection-pack" }
+shacl-to-pydantic-pack = { path = "../../../../.marketplace/packs/shacl-to-pydantic-pack" }
