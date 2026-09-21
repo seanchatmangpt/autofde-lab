@@ -1,10 +1,10 @@
 # ARD v26.9.18 — GALL-031: Process Redesign Canary
 
-**Status:** DRAFT ARCHITECTURE SPEC  
-**Release:** v26.9.18  
-**Repository:** `seanchatmangpt/autofde-lab`  
-**Owner:** autofde-lab lead; ex4pm models, ash_a2a actuates, beam4pm observes  
-**Dependencies:** GALL-016 POWL, GALL-019 predictor, GALL-026..030 feedback/intervention  
+**Status:** DRAFT ARCHITECTURE SPEC
+**Release:** v26.9.18
+**Repository:** `seanchatmangpt/autofde-lab`
+**Owner:** autofde-lab lead; ex4pm models, ash_a2a actuates, beam4pm observes
+**Dependencies:** GALL-016 POWL, GALL-019 predictor, GALL-026..030 feedback/intervention
 **Authority ceiling:** PROPOSE/SELECT; canary DO delegated to GALL-030
 
 ## Architecture objective
