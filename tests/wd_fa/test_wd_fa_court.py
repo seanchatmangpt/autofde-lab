@@ -144,6 +144,36 @@ def test_machine_experience_reduces_future_intelligence(candidate_model):
     assert replay.exploratory_steps < first.exploratory_steps
 
 
+
+def test_machine_experience_refuses_unbound_receipts(candidate_model):
+    cases = named_cases()
+    first = triage(cases["novel_x"], RULES, candidate_model=candidate_model)
+    receipt = issue_receipt(
+        cases["novel_x"],
+        first,
+        producer_id="candidate-producer",
+        verifier_id="independent-verifier",
+        observed_disposition="MODE-X-NOVEL",
+    )
+    with pytest.raises(ValueError, match="INVALID_RECEIPT"):
+        compile_experience(
+            cases["novel_x"],
+            first,
+            replace(receipt, receipt_digest="tampered"),
+            mode_id="MODE-X-NOVEL",
+            next_action="repeat_verified_novel_x_procedure",
+        )
+    with pytest.raises(ValueError, match="DISPOSITION_BINDING"):
+        compile_experience(
+            cases["novel_x"],
+            first,
+            receipt,
+            mode_id="MODE-WRONG",
+            next_action="repeat_verified_novel_x_procedure",
+        )
+
+
+
 def test_fastapi_and_sa2a_are_candidate_surfaces_only():
     client = TestClient(create_app())
     health = client.get("/health")
