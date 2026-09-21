@@ -43,7 +43,8 @@ jobs:
             "fastapi>=0.115,<1" \
             "pm4py==2.7.23" \
             "setuptools<82" \
-            "TPOT==1.1.0"
+            "TPOT==1.1.0" \
+            "uvicorn>=0.30,<1"
 
       - name: Execute focused court
         env:
@@ -79,7 +80,37 @@ jobs:
 
       - name: Build Next.js projection
         working-directory: apps/wd-fa-web
+        env:
+          NEXT_PUBLIC_WD_FA_API_BASE_URL: http://127.0.0.1:8000
         run: |
           npm install --ignore-scripts
           npm run check
           npm run build
+
+      - name: Install browser court
+        working-directory: apps/wd-fa-web
+        run: npx playwright install --with-deps chromium
+
+      - name: Execute served browser → FastAPI court
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python -m uvicorn autofde_lab.wd_fa.api:app --host 127.0.0.1 --port 8000 > /tmp/wd-fa-api.log 2>&1 &
+          api_pid=$!
+          (cd apps/wd-fa-web && npm start -- --hostname 127.0.0.1 --port 3000 > /tmp/wd-fa-web.log 2>&1) &
+          web_pid=$!
+          trap 'kill "$api_pid" "$web_pid" 2>/dev/null || true' EXIT
+
+          for url in http://127.0.0.1:8000/health http://127.0.0.1:3000; do
+            for attempt in $(seq 1 60); do
+              if curl --fail --silent "$url" >/dev/null; then break; fi
+              if [ "$attempt" -eq 60 ]; then
+                cat /tmp/wd-fa-api.log /tmp/wd-fa-web.log
+                exit 1
+              fi
+              sleep 1
+            done
+          done
+
+          (cd apps/wd-fa-web && npm run court:e2e)
