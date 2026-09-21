@@ -3,7 +3,11 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 from .domain import (
-    CandidateTriage, FailureCase, FailureModeRule, MachineExperience, Standing,
+    CandidateTriage,
+    FailureCase,
+    FailureModeRule,
+    MachineExperience,
+    Standing,
     evidence_completeness,
 )
 from .synthetic import feature_frame
@@ -18,7 +22,8 @@ def triage(
     rules = tuple(rules)
     model_ranking = candidate_model.rank(feature_frame(case)) if candidate_model else ()
     applicable = tuple(
-        rule for rule in rules
+        rule
+        for rule in rules
         if rule.applies(case.facts) and not rule.falsified_by(case.facts)
     )
     if not applicable:
