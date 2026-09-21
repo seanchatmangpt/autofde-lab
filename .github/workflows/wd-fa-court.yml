@@ -42,6 +42,7 @@ jobs:
             "httpx>=0.27,<1" \
             "fastapi>=0.115,<1" \
             "pm4py==2.7.23" \
+            "setuptools<82" \
             "TPOT==1.1.0"
 
       - name: Execute focused court
