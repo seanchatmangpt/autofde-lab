@@ -146,7 +146,6 @@ def test_machine_experience_reduces_future_intelligence(candidate_model):
     assert replay.exploratory_steps < first.exploratory_steps
 
 
-
 def test_machine_experience_refuses_unbound_receipts(candidate_model):
     cases = named_cases()
     first = triage(cases["novel_x"], RULES, candidate_model=candidate_model)
@@ -173,7 +172,6 @@ def test_machine_experience_refuses_unbound_receipts(candidate_model):
             mode_id="MODE-WRONG",
             next_action="repeat_verified_novel_x_procedure",
         )
-
 
 
 def test_fastapi_and_sa2a_are_candidate_surfaces_only():
