@@ -100,6 +100,9 @@ OBJECT_TYPES: dict[str, list[dict[str, str]]] = {
         {"name": "name", "type": "string"},
         {"name": "kind", "type": "string"},
         {"name": "version", "type": "string"},
+        # Crown-2 attempt 2: explicit nativeness assertion ('native' | 'python'),
+        # append-only extension; the falsifier keys on implementation == 'native'.
+        {"name": "implementation", "type": "string"},
     ],
     "Policy": [
         {"name": "name", "type": "string"},
@@ -153,6 +156,11 @@ OBJECT_TYPES: dict[str, list[dict[str, str]]] = {
         {"name": "label", "type": "string"},
         {"name": "started_at", "type": "time"},
         {"name": "ended_at", "type": "time"},
+    ],
+    # Crown-2 Task H: hook-to-ocel.py relates every Claude.* event to a
+    # Machine:<hostname> object; declared here so those relationships resolve.
+    "Machine": [
+        {"name": "hostname", "type": "string"},
     ],
 }
 
@@ -238,6 +246,36 @@ EVENT_TYPES: dict[str, list[dict[str, str]]] = {
     "NativePlannerBootstrapFailed": [
         {"name": "failing_step", "type": "string"},
         {"name": "error", "type": "string"},
+    ],
+    # Crown-2 Task H: control-heartbeat episode (validate.py over the growing
+    # sink every 10s). Never carries production semantics.
+    "HeartbeatObserved": [
+        {"name": "seq", "type": "int"},
+        {"name": "monotonic_seconds", "type": "float"},
+        {"name": "events_so_far", "type": "int"},
+        {"name": "validate_json", "type": "string:canonical-json"},
+    ],
+    # Crown-2 Task H: Claude Code hook events, built by the real
+    # ~/.claude/scripts/hook-to-ocel.py build_ocel_event(payload). Nested
+    # tool_input/tool_response ride on canonical-json attributes; hook_event_id
+    # is the adapter's own uuid so the two records are cross-referenceable.
+    "Claude.PreToolUse": [
+        {"name": "hook_event_id", "type": "string"},
+        {"name": "hook_event_name", "type": "string"},
+        {"name": "tool_name", "type": "string"},
+        {"name": "cwd", "type": "string"},
+        {"name": "permission_mode", "type": "string"},
+        {"name": "tool_input", "type": "string:canonical-json"},
+    ],
+    "Claude.PostToolUse": [
+        {"name": "hook_event_id", "type": "string"},
+        {"name": "hook_event_name", "type": "string"},
+        {"name": "tool_name", "type": "string"},
+        {"name": "cwd", "type": "string"},
+        {"name": "permission_mode", "type": "string"},
+        {"name": "tool_input", "type": "string:canonical-json"},
+        {"name": "tool_response", "type": "string:canonical-json"},
+        {"name": "is_error", "type": "boolean"},
     ],
 }
 
@@ -382,7 +420,10 @@ def add_event(
     event_id: str,
     attrs: dict[str, Any],
     related_object_ids: list[str],
+    qualifiers: dict[str, str] | None = None,
 ) -> dict[str, Any]:
+    """qualifiers: optional {object_id: qualifier}; ids absent from it keep the
+    historical empty qualifier, so every prior caller is unchanged."""
     log = _read(out_path)
     schema = _attr_schema_for(EVENT_TYPES, event_type)
 
@@ -405,7 +446,8 @@ def add_event(
     for name, value in attrs.items():
         wrapped_attrs.append({"name": name, "value": _validate_and_wrap_value(name, schema[name], value)})
 
-    relationships = [{"objectId": oid, "qualifier": ""} for oid in related_object_ids]
+    qualifiers = qualifiers or {}
+    relationships = [{"objectId": oid, "qualifier": qualifiers.get(oid, "")} for oid in related_object_ids]
 
     log["events"].append(
         {

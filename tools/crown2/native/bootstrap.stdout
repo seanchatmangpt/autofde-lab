@@ -1,0 +1,2 @@
+{"status": "ALIVE", "ocel": "/Users/sac/crown-2-integration/autofde-lab/tools/crown2/native/native-bootstrap.ocel.json", "log": "/Users/sac/crown-2-integration/autofde-lab/tools/crown2/native/native-bootstrap.log", "validate": {"strict_type_mismatches": 0, "duplicate_ids": 0, "dangling_refs": 0}}
+EXIT=0

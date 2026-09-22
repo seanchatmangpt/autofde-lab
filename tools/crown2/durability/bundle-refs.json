@@ -1,0 +1,110 @@
+[
+ {
+  "name": "autofde-cmake-build.log",
+  "path": "/Users/sac/autofde-lab/docs/evidence/crown2/attempt1/autofde-cmake-build.log",
+  "sha256": "312209db3efd9ca733393bad085166f7ec58a9c9d2a9d4a61aa72c1d6b64acf3",
+  "parser": "text"
+ },
+ {
+  "name": "autofde-cmake-configure.log",
+  "path": "/Users/sac/autofde-lab/docs/evidence/crown2/attempt1/autofde-cmake-configure.log",
+  "sha256": "80ae044cb7f53b3a444599b6c3bc6ed685ec4ef68055622261050b880cf6c961",
+  "parser": "text"
+ },
+ {
+  "name": "beam4pm-mixdeps.log",
+  "path": "/Users/sac/autofde-lab/docs/evidence/crown2/attempt1/beam4pm-mixdeps.log",
+  "sha256": "54b102d5577199626ba7a5028c091eb95998a074d559d6db354a4609ba67ad68",
+  "parser": "text"
+ },
+ {
+  "name": "beam4pm-verify.log",
+  "path": "/Users/sac/autofde-lab/docs/evidence/crown2/attempt1/beam4pm-verify.log",
+  "sha256": "91ee9332824b7e965744828317dd9f8c9c4062cdbca1e6ad00a7e9bd0653f76c",
+  "parser": "text"
+ },
+ {
+  "name": "beam4pm-verify2.log",
+  "path": "/Users/sac/autofde-lab/docs/evidence/crown2/attempt1/beam4pm-verify2.log",
+  "sha256": "299956f0059e05591e74e0084bbd3901c6331b230b89b960a911b0f599993c08",
+  "parser": "text"
+ },
+ {
+  "name": "composition-receipt.json",
+  "path": "/Users/sac/autofde-lab/docs/evidence/crown2/attempt1/composition-receipt.json",
+  "sha256": "2aa4c3c6f355da2c9fc018aebac883eebe06a405d5cb3bc2a0357a54822e0859",
+  "parser": "json"
+ },
+ {
+  "name": "crown-report.md",
+  "path": "/Users/sac/autofde-lab/docs/evidence/crown2/attempt1/crown-report.md",
+  "sha256": "eb41ca960aabe51b6a2010c351c243b620a30191e3885ee2cd90fea32845aab8",
+  "parser": "markdown"
+ },
+ {
+  "name": "crown-run-v3.ocel.json",
+  "path": "/Users/sac/autofde-lab/docs/evidence/crown2/attempt1/crown-run-v3.ocel.json",
+  "sha256": "6cc4c2744eba29289a1cfdcbd82e91d93a0b95a8f84169c4dd607754a741580e",
+  "parser": "ocel"
+ },
+ {
+  "name": "crown-run-v3.sha256",
+  "path": "/Users/sac/autofde-lab/docs/evidence/crown2/attempt1/crown-run-v3.sha256",
+  "sha256": "4857d77a0904e4c6530dbd678f517054e6cf8282bb9e890313a116e83e577354",
+  "parser": "sha256"
+ },
+ {
+  "name": "crown-validation.json",
+  "path": "/Users/sac/autofde-lab/docs/evidence/crown2/attempt1/crown-validation.json",
+  "sha256": "8e260fd375a84afd8140c7a2b8710e38b33d625fd0283e3dd96e2cee0e93b8f7",
+  "parser": "json"
+ },
+ {
+  "name": "falsifier-result.json",
+  "path": "/Users/sac/autofde-lab/docs/evidence/crown2/attempt1/falsifier-result.json",
+  "sha256": "7fce26bd9548b158461fbd8f7397e9a750c0245dcfda32bcea46259c4de0e538",
+  "parser": "json"
+ },
+ {
+  "name": "native-bootstrap.ocel.json",
+  "path": "/Users/sac/autofde-lab/docs/evidence/crown2/attempt1/native-bootstrap.ocel.json",
+  "sha256": "d173f31c062b5315a96a8264994b7a90354638107c21bce4e47697e50accdd30",
+  "parser": "ocel"
+ },
+ {
+  "name": "run-logs/action-001-01-cargo.log",
+  "path": "/Users/sac/autofde-lab/docs/evidence/crown2/attempt1/run-logs/action-001-01-cargo.log",
+  "sha256": "4feff27318823b11b622dd703d398055e492276f312df45c23ba48b1fd8bfe3c",
+  "parser": "text"
+ },
+ {
+  "name": "run-logs/action-001-02-set.log",
+  "path": "/Users/sac/autofde-lab/docs/evidence/crown2/attempt1/run-logs/action-001-02-set.log",
+  "sha256": "0842d636fabf4cffa4cc06d57c11cc84a8aed57399ddbd7b330f4c6bcb4c2426",
+  "parser": "text"
+ },
+ {
+  "name": "run-logs/beam4pm-verify.log",
+  "path": "/Users/sac/autofde-lab/docs/evidence/crown2/attempt1/run-logs/beam4pm-verify.log",
+  "sha256": "91ee9332824b7e965744828317dd9f8c9c4062cdbca1e6ad00a7e9bd0653f76c",
+  "parser": "text"
+ },
+ {
+  "name": "run-logs/beam4pm-verify2.log",
+  "path": "/Users/sac/autofde-lab/docs/evidence/crown2/attempt1/run-logs/beam4pm-verify2.log",
+  "sha256": "c98a50edde48089946e30d0b02f5d3dfd5ff589454f24bcb2402fdda5f394fd2",
+  "parser": "text"
+ },
+ {
+  "name": "timing-receipt.json",
+  "path": "/Users/sac/autofde-lab/docs/evidence/crown2/attempt1/timing-receipt.json",
+  "sha256": "c2d771162748aa263d310655b5e474b371ea272c1d27706ca63b5b63594eb6ca",
+  "parser": "json"
+ },
+ {
+  "name": "evidence-gate-result.json",
+  "path": "/Users/sac/autofde-lab/docs/evidence/crown2/attempt1/evidence-gate-result.json",
+  "sha256": "bee9f98f985197fb6955d5b9b704ea814c11c1c3900414c48f99900138478fc7",
+  "parser": "json"
+ }
+]

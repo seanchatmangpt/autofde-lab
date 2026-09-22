@@ -1,0 +1,2470 @@
+git submodule update --init --recursive
+Cloning into '/Users/sac/crown-2-integration/beam4pm/native/ferroplan'...
+Cloning into '/Users/sac/crown-2-integration/beam4pm/vendor/ggen-marketplace'...
+Cloning into '/Users/sac/crown-2-integration/beam4pm/vendor/rust4pm-powl'...
+Submodule path 'native/ferroplan': checked out '4b41ae2a971976c1f9ac48724cde0f81f66c6e7a'
+Submodule path 'vendor/ggen-marketplace': checked out 'f6783b05ab2b11ebad318a85679180f3cce809f3'
+Submodule path 'vendor/rust4pm-powl': checked out '2803959fc801fdc1d70f3be35495026f09194cbd'
+rm -f ggen.lock
+ggen sync run --dry-run
+2026-09-04T00:09:24.360457Z  INFO ggen.cli{command=sync run --dry-run version="26.8.28"}:pipeline.emit{operation.name="pipeline.emit" operation.type="pipeline" pipeline.stage="emit" pipeline.duration_ms=25 pipeline.files_generated=0}: ggen_engine::sync: close time.busy=25.6ms time.idle=12.3µs
+2026-09-04T00:09:24.360565Z  INFO ggen.cli{command=sync run --dry-run version="26.8.28"}:pipeline.generate{operation.name="pipeline.generate" operation.type="pipeline" pipeline.stage="generate" pipeline.duration_ms=6055}: ggen_engine::sync: close time.busy=6.06s time.idle=25.7ms
+2026-09-04T00:09:24.360575Z  INFO ggen.cli{command=sync run --dry-run version="26.8.28"}:pipeline.validate{operation.name="pipeline.validate" operation.type="pipeline" pipeline.stage="validate" pipeline.duration_ms=38}: ggen_engine::sync: close time.busy=38.4ms time.idle=6.09s
+2026-09-04T00:09:24.360579Z  INFO ggen.cli{command=sync run --dry-run version="26.8.28"}:pipeline.extract{operation.name="pipeline.extract" operation.type="pipeline" pipeline.stage="extract" pipeline.duration_ms=0}: ggen_engine::sync: close time.busy=459ns time.idle=6.13s
+2026-09-04T00:09:24.361568Z  INFO ggen.cli{command=sync run --dry-run version="26.8.28"}:pipeline.load{operation.name="pipeline.load" operation.type="pipeline" pipeline.stage="load" pipeline.duration_ms=100}: ggen_engine::sync: close time.busy=101ms time.idle=6.13s
+{
+  "written": [],
+  "skipped": [
+    [
+      "@template/vendor/ggen-marketplace/packs/github-actions-pack/templates/composite_action.yml.tmpl",
+      "for_each (implicit row fan-out) produced 0 rows (/workspace/vendor/ggen-marketplace/packs/github-actions-pack/templates/composite_action.yml.tmpl)"
+    ],
+    [
+      "src/beam4pm_ai_contracts.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_ai_contracts.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "src/beam4pm_ai_contracts_codec.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_ai_contracts_codec.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_ai_contracts_codec_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_ai_contracts_codec_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "schema/beam4pm_ai_contracts.schema.json",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_ai_contracts_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_ai_contracts_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "src/beam4pm_billing.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_billing.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_billing_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_billing_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "src/beam4pm_entitlement.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_entitlement.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_entitlement_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_entitlement_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "infra/gcp/cloudrun/main.tf",
+      "unchanged: content identical"
+    ],
+    [
+      "infra/gcp/cloudrun/outputs.tf",
+      "unchanged: content identical"
+    ],
+    [
+      "infra/gcp/cloudrun/README.md",
+      "unchanged: content identical"
+    ],
+    [
+      "infra/gcp/cloudrun/variables.tf",
+      "unchanged: content identical"
+    ],
+    [
+      "infra/gcp/packer/beam4pm-image.pkr.hcl",
+      "unchanged: content identical"
+    ],
+    [
+      "infra/gcp/packer/README.md",
+      "unchanged: content identical"
+    ],
+    [
+      "infra/gcp/packer/setup.sh",
+      "unchanged: content identical"
+    ],
+    [
+      "infra/gcp/packer/variables.pkr.hcl",
+      "unchanged: content identical"
+    ],
+    [
+      "src/beam4pm_codec.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_codec.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_codec_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_codec_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "src/beam4pm_discovery.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_discovery.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "gleam/src/beam4pm/discovery.gleam",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_discovery_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_discovery_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "gleam/test/beam4pm_test.gleam",
+      "unchanged: content identical"
+    ],
+    [
+      "gleam/src/beam4pm.gleam",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_pi3_falsifier_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_pi3_falsifier_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "src/beam4pm_precision.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_precision.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "gleam/src/beam4pm/precision.gleam",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_precision_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "gleam/test/beam4pm_precision_test.gleam",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_precision_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "src/beam4pm_roundtrip.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_roundtrip.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "src/beam4pm_types.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_types.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "gleam/src/beam4pm/types.gleam",
+      "unchanged: content identical"
+    ],
+    [
+      "schema/beam4pm_types.schema.json",
+      "unchanged: content identical"
+    ],
+    [
+      "src/beam4pm_types_manifest.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_types_manifest.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_types_manifest_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_types_manifest_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "docs/reference/beam4pm_types_reference.md",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_types_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/test_helper.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_types_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "gleam/gleam.toml",
+      "unchanged: content identical"
+    ],
+    [
+      ".github/workflows/beam4pm-ci.yml",
+      "unchanged: content identical"
+    ],
+    [
+      ".github/workflows/beam4pm-container.yml",
+      "unchanged: content identical"
+    ],
+    [
+      ".github/workflows/beam4pm-infra-validate.yml",
+      "unchanged: content identical"
+    ]
+  ],
+  "graph_hash_hex": "61614eb744ada860942f43fcc672304ab576dd6f6b311d2dae1a6d928db742f7",
+  "decisions": {
+    ".github/workflows/beam4pm-ci.yml": "skipped: unchanged: content identical",
+    ".github/workflows/beam4pm-container.yml": "skipped: unchanged: content identical",
+    ".github/workflows/beam4pm-infra-validate.yml": "skipped: unchanged: content identical",
+    "@template/vendor/ggen-marketplace/packs/github-actions-pack/templates/composite_action.yml.tmpl": "skipped: for_each (implicit row fan-out) produced 0 rows (/workspace/vendor/ggen-marketplace/packs/github-actions-pack/templates/composite_action.yml.tmpl)",
+    "docs/reference/beam4pm_types_reference.md": "skipped: unchanged: content identical",
+    "gleam/gleam.toml": "skipped: unchanged: content identical",
+    "gleam/src/beam4pm.gleam": "skipped: unchanged: content identical",
+    "gleam/src/beam4pm/discovery.gleam": "skipped: unchanged: content identical",
+    "gleam/src/beam4pm/precision.gleam": "skipped: unchanged: content identical",
+    "gleam/src/beam4pm/types.gleam": "skipped: unchanged: content identical",
+    "gleam/test/beam4pm_precision_test.gleam": "skipped: unchanged: content identical",
+    "gleam/test/beam4pm_test.gleam": "skipped: unchanged: content identical",
+    "infra/gcp/cloudrun/README.md": "skipped: unchanged: content identical",
+    "infra/gcp/cloudrun/main.tf": "skipped: unchanged: content identical",
+    "infra/gcp/cloudrun/outputs.tf": "skipped: unchanged: content identical",
+    "infra/gcp/cloudrun/variables.tf": "skipped: unchanged: content identical",
+    "infra/gcp/packer/README.md": "skipped: unchanged: content identical",
+    "infra/gcp/packer/beam4pm-image.pkr.hcl": "skipped: unchanged: content identical",
+    "infra/gcp/packer/setup.sh": "skipped: unchanged: content identical",
+    "infra/gcp/packer/variables.pkr.hcl": "skipped: unchanged: content identical",
+    "lib/beam4pm_ai_contracts.ex": "skipped: unchanged: content identical",
+    "lib/beam4pm_ai_contracts_codec.ex": "skipped: unchanged: content identical",
+    "lib/beam4pm_billing.ex": "skipped: unchanged: content identical",
+    "lib/beam4pm_codec.ex": "skipped: unchanged: content identical",
+    "lib/beam4pm_discovery.ex": "skipped: unchanged: content identical",
+    "lib/beam4pm_entitlement.ex": "skipped: unchanged: content identical",
+    "lib/beam4pm_precision.ex": "skipped: unchanged: content identical",
+    "lib/beam4pm_roundtrip.ex": "skipped: unchanged: content identical",
+    "lib/beam4pm_types.ex": "skipped: unchanged: content identical",
+    "lib/beam4pm_types_manifest.ex": "skipped: unchanged: content identical",
+    "schema/beam4pm_ai_contracts.schema.json": "skipped: unchanged: content identical",
+    "schema/beam4pm_types.schema.json": "skipped: unchanged: content identical",
+    "src/beam4pm_ai_contracts.erl": "skipped: unchanged: content identical",
+    "src/beam4pm_ai_contracts_codec.erl": "skipped: unchanged: content identical",
+    "src/beam4pm_billing.erl": "skipped: unchanged: content identical",
+    "src/beam4pm_codec.erl": "skipped: unchanged: content identical",
+    "src/beam4pm_discovery.erl": "skipped: unchanged: content identical",
+    "src/beam4pm_entitlement.erl": "skipped: unchanged: content identical",
+    "src/beam4pm_precision.erl": "skipped: unchanged: content identical",
+    "src/beam4pm_roundtrip.erl": "skipped: unchanged: content identical",
+    "src/beam4pm_types.erl": "skipped: unchanged: content identical",
+    "src/beam4pm_types_manifest.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_ai_contracts_codec_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_ai_contracts_codec_tests.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_ai_contracts_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_ai_contracts_tests.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_billing_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_billing_tests.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_codec_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_codec_tests.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_discovery_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_discovery_tests.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_entitlement_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_entitlement_tests.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_pi3_falsifier_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_pi3_falsifier_tests.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_precision_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_precision_tests.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_types_manifest_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_types_manifest_tests.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_types_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_types_tests.erl": "skipped: unchanged: content identical",
+    "test/test_helper.exs": "skipped: unchanged: content identical"
+  },
+  "packs": {
+    "beam4pm-ai-contracts": "6e2e0fed73ef0c75e4a73ef6ba8a808fa26529acdf931661e5532ce11c84628f",
+    "beam4pm-pro-entitlement": "9a15eca16d8eda823e55eddb56ff930b0e1834cd44306b5bc836cd61d8d3caee",
+    "beam4pm-pro-infra": "53743e55c57597e81a6ec23e88ecdbb37c78e0b16429235cd17b016de317cd77",
+    "beam4pm-process-model": "2109b265f5795598c67a90d975dae87ea502833e3619d2205669f9969a77dcb9",
+    "github-actions-pack": "5e05f3b85ca34f7678a647253a199346c4917a6f9149177a13971a3991579f27"
+  },
+  "closure": {
+    "actuator": "ggen@26.8.28",
+    "ggen.toml": "f3966a771f065dde406dc0df8147d708479f7b107483eb97f5f6f35afbfa5020",
+    "ontology.ttl": "bdc31e11a9bc3ee832eb0598c5bd0a4591efc8185e05d4f9ccdeb356698f410d",
+    "policy:frontmatter-projection-limits": "max_query_rows=4096;max_outputs=8192;             max_total_rendered_bytes=67108864;             max_output_bytes=10485760",
+    "project": "beam4pm",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/gates/010_required.rq": "5948433ff8b1525996b21ed7fb3f7296c046d00f7dc5584c4d52288cc13524bf",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/gates/020_field_type_enum.rq": "1c40e69a42142a13b58a49f83f19dce1fa9b5d934f0e8e6c859f75f48037e737",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/ontology.ttl": "e767a26e2d77674d2f47f627a54d4d9e3fb1a87af5d5b8f71c6649b5f4237700",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/templates/beam4pm_ai_contracts.erl.tmpl": "5f74551a2147f465b026b9a0dc46db6ef676aa59e139b3a6539052adf7a30601",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/templates/beam4pm_ai_contracts.ex.tmpl": "2e6b13bd60241ab369b038b0e21b79f30a52006379c7184b49263ea44ade05d6",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/templates/beam4pm_ai_contracts_codec.erl.tmpl": "efbf4727fc0bb2a13577cc3f96f8aed92a7310f53591ac8ba78ffccc83000c19",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/templates/beam4pm_ai_contracts_codec.ex.tmpl": "b547b46150a410acdff2d580c4be56250d1092c45b5430aa1cda0a1a1225277c",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/templates/beam4pm_ai_contracts_codec_test.exs.tmpl": "033edfa14beceef77f175eaf8d31cfb4180bc5ba9fa394b9c86659c6b0f89bf3",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/templates/beam4pm_ai_contracts_codec_tests.erl.tmpl": "c75aa4dfda6a3fae4dcb004b1c5c343ea0b172b4b2c184afcf46b520e172b0a9",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/templates/beam4pm_ai_contracts_schema.json.tmpl": "088b59f992eb6671ab27aa61ff202ae17f636fbbe7c5217ee32809adda8f0eda",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/templates/beam4pm_ai_contracts_test.exs.tmpl": "1b8ca6e551c7c5894669d464ac620427e9068337a6b85fe9eac04e07ea1014db",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/templates/beam4pm_ai_contracts_tests.erl.tmpl": "c2c488994c02553299c1924894925e98fbb6f45dc916b7adb64ab15b10d6a9cd",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-entitlement-pack/ontology.ttl": "25d21fda440bd807b5481c849fcc52e11ed925b82aa551ffc738fb3897833f70",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-entitlement-pack/templates/beam4pm_billing.erl.tmpl": "a2b8d96e42a1050097a0f29969f6be2eb135463c32bc6bcb3d8a620cc447933a",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-entitlement-pack/templates/beam4pm_billing.ex.tmpl": "39d30860e8a677760f71be17c4095833dc26bfe6d7f868545cc1af7c632b822b",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-entitlement-pack/templates/beam4pm_billing_test.exs.tmpl": "6c0bfea623be2de4379bd3de9693ee6c1d62ca0315f4af34146f3cce56e65df9",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-entitlement-pack/templates/beam4pm_billing_tests.erl.tmpl": "445bbab69354e655a53addb43c6bc9f4ade2782adfc855296beb2fbab0ca2825",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-entitlement-pack/templates/beam4pm_entitlement.erl.tmpl": "c4e255c89adc1014b2a392837198996e8670d7ca96d0b451160e71c4a30e1695",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-entitlement-pack/templates/beam4pm_entitlement.ex.tmpl": "546a51b0085bc2dc641106fe9a87dc36d524914407aec54dd1b5e934db87579d",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-entitlement-pack/templates/beam4pm_entitlement_test.exs.tmpl": "d975e2b1f996a306cf67d8455ff35fb5411427286b0bd5fc61efd8f24cc67f10",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-entitlement-pack/templates/beam4pm_entitlement_tests.erl.tmpl": "19ca372523cef8c4de1f5e329a22f819822110a62ca02637a7316d7c00ae521d",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/gates/005_class_asserted.rq": "50f94b42113f42e5b2dd065ef540ab3e3e84cbb55ccec8cf26cf0a64aa2955dc",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/gates/010_required.rq": "79e3ededfa50050cfc6a8eabed0385c6cfdb51def1aec15baa8169bbbaf28792",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/gates/020_packerimage_required.rq": "c64e126d05ad052bd2f155411e65af076ea2dc0d01e09ad794de14c3afd3296c",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/ontology.ttl": "bb8400f251e40c287f4ed59e15502ca91372b81aa001e68aaa164d67fab22853",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/templates/cloudrun_main_tf.tmpl": "d9079da18d1ec51f78aa6a29564b5cf8603b5d82c99a24f14ed17f8f8abac135",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/templates/cloudrun_outputs_tf.tmpl": "a77d3711e62fc7ab3be2257692295711324fa40d189e76679159eec1ddcd6451",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/templates/cloudrun_readme.tmpl": "7d12a1f3edc80e639a9d375ae7c56f94901c03d320040522f9379ba34a234e8f",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/templates/cloudrun_variables_tf.tmpl": "17f4b04d5ebd0fe3b3fdcb2e315194b0998892fa70f7f954f22c0c2eddb83fbf",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/templates/packer-beam4pm-image.pkr.hcl.tmpl": "5117f6206233147114476e046e3894b34b1576e04b8bd1f7f8646d53a248574c",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/templates/packer-readme.md.tmpl": "351624cbec149e7683299822a5888a8e42cb19797436f20c8ca23d6649ee404b",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/templates/packer-setup.sh.tmpl": "dbbdedc639df7ba7bbb986f7da14b38b4de4ef27a876405256bb6e454bda7d6b",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/templates/packer-variables.pkr.hcl.tmpl": "8bafde2f05fb42579940ef93070a1e3e3aed277762e42870e7295df5bedc65d2",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/gates/010_required.rq": "d2d5ad1a2414800651ae0ba5396e7557bf0b0a111642826ec01e5c5db7d1c233",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/gates/020_field_type_enum.rq": "08385e0d70ed29455096997410222a8566b6d6cc4bb0cbaeebfa785a34a1430d",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/gates/030_field_type_cardinality.rq": "466bf27c3376ee920f66ae1e9ae03ff90cf6efeb50a65e36b751c538b6b7bde3",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/ontology.ttl": "312b10615afbfdb598371983ca553b585d499006971edd76d6a20122a6ce8ab6",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_codec.erl.tmpl": "b4d0d522e04520ff2de2799b4a65a4362ec3b6b4cf1108494d63147a3e9e3583",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_codec.ex.tmpl": "9c62c1674df28948bf668e68129dd2f752706f4845c51223c37d1f685820ea69",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_codec_test.exs.tmpl": "bd3b3b3dd61397cb493a28320220d000b7f6d17abf5bc29d23b5823cf328393c",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_codec_tests.erl.tmpl": "d6e2a7f8cecffed017d996cb68b1e5ab74254fb7bff1961eb4f31dcbfb110f72",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_discovery.erl.tmpl": "da42278d1762a83248caa5ba9df3bf2e8786ffe7d689adc9fe554dba5f89cc91",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_discovery.ex.tmpl": "fb15aebe519ad9d6b875dc2475a74c04ab7a1ff595bc9dd9b10c0b92a58d4732",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_discovery.gleam.tmpl": "40dd3a26e4746daf468dba3cd439795097cda689ca8e807bb8174070b5a7395d",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_discovery_test.exs.tmpl": "edb8bdf64d69b19c4d813dd9e2e7341af57992da1c845a2996d1aebef4388507",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_discovery_tests.erl.tmpl": "5aea4e386ddd919c3b5b916db4686443b110aa6446278fd79cc7100f6c2c5019",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_gleam_test.tmpl": "19a98cf8adba3ed1a396acf69ba8b50a636a71419f0d4e89c9c109d18aa6812f",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_main.gleam.tmpl": "5da0fd847961d0fc74118d6993a905b86a3e372c92cefe0f3fc2453b9994e89c",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_pi3_falsifier_test.exs.tmpl": "8b05abb631950da41339f2edaa9c95eecbfc6b0381432b95c1fcf51dc8df796e",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_pi3_falsifier_tests.erl.tmpl": "2ada97ec29dd4b8d5b86e7f4ed208fb90635e79c2bb4fcada2c8d3f1277f0688",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_precision.erl.tmpl": "4e7776d6f88fef5b14af56c19bf52206ee38a1223974179895268ee7ad774a4a",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_precision.ex.tmpl": "31e7dd200fe4e42c36526399526fd7a25c25da7d2c3830cedbcafc1c20dd4850",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_precision.gleam.tmpl": "43e215dd92926bb60b4e2189ec096e6516199fb3bcccc35ab552790fd74890e8",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_precision_test.exs.tmpl": "9ff2f169e43642a05b2c8d708e35f3f71873176c69069d9f0c71a0468965c324",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_precision_test.gleam.tmpl": "f1a5d3377fadc28a23e2306f00cf3504d3327e55061106d19d65f88d04061dd9",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_precision_tests.erl.tmpl": "dd27936df96050da51583604145e34a72ac3b9b4d757ce0dbadbf21474bd0daf",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_roundtrip.erl.tmpl": "4ebcb9472712461a9e49e80606903d0a065cf2827a2841be7104d6b1418262eb",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_roundtrip.ex.tmpl": "2f1723b45d858fbe387bde5906a56d98996cdecdd20b0df13f54f4d21a53ae55",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types.erl.tmpl": "d640c6e4225038521e7047520910ff759e13e0f6b4a5eca26c9a75014680594a",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types.ex.tmpl": "8ea3e24377ee475941ffc9067f916b77c39d38675b478806189430c3d8dfb33c",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types.gleam.tmpl": "c6af1f84e4dd54128989d40b9ce56b4b30ed93cc1abf77a377b2dd8d708223bc",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types.schema.json.tmpl": "6bcfb6592bb944020e472c3472c4d8df3bd1cbf34f79df7d877b5c1e99c96872",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types_manifest.erl.tmpl": "a59ee25997078b695dd9054070bbfdb8b34d8d41a382386e950829f7a985f086",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types_manifest.ex.tmpl": "ba81687bb1ff2d165fdc0df5af3943b5a97a49a3c36a2926b5ff706d6ca43904",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types_manifest_test.exs.tmpl": "f0defb5d1c00ea4cba87488c6f3e385688cf713bf4c39c580619f48c91580387",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types_manifest_tests.erl.tmpl": "b8db59626463e02dfb5fa30c18d451c13bf6cfd142ec38e1825c91a0fcde5507",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types_reference.md.tmpl": "67f54ffb68175257a7575afeec405cc542d23dc0c0904c0080c40853777373eb",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types_test.exs.tmpl": "9bd1179657164e0131fde027d70136a737183b90cc6c554aa04fc386ea21a250",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types_test_helper.exs.tmpl": "0cdc3adc83f9a840972f628954e1278bc83fb308e88fe4f2d22362a8decf09aa",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types_tests.erl.tmpl": "7b56ad95f04b13c2100ab64b2a298d9571550af4c35c9d5356eeb59e15ba712a",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/gleam_toml.tmpl": "a3b9a046406869a486e5604d64d3fda496783cc992277bff3bcbb57b5c68c85e",
+    "vendor/ggen-marketplace/packs/github-actions-pack/gates/010_required.rq": "466c403efc057109f079fb569ab6da753db02f7db0f70a6ac6bf846f7d095b69",
+    "vendor/ggen-marketplace/packs/github-actions-pack/gates/020_security.rq": "c5fd757160955dbb073fbf971e3e8efeb1ccd722c0be439ddcd48fa0865caf1c",
+    "vendor/ggen-marketplace/packs/github-actions-pack/gates/030_push_trigger_required.rq": "9b4061ce3dfc128de5bd92a47784b5f10ca2162033957304733955c6c45e9588",
+    "vendor/ggen-marketplace/packs/github-actions-pack/ontology.ttl": "2eac3610d206c75b46a6ee2fe7ad0a087bd5215d312ff6f555e873bd70a28566",
+    "vendor/ggen-marketplace/packs/github-actions-pack/templates/composite_action.yml.tmpl": "3400485c4aeba6987a39ae96a88ccc314441a48d8a07dd3be980f54370372ef6",
+    "vendor/ggen-marketplace/packs/github-actions-pack/templates/workflow.yml.tmpl": "2ff8d1942088077c78c02ac8b529707529adf2fbcdb3fec571abfd3ed1ca2c08"
+  }
+}
+2026-09-04T00:09:24.361792Z  INFO ggen.cli{command=sync run --dry-run version="26.8.28"}: ggen_cli_lib: close time.busy=6.24s time.idle=1.58µs
+ggen sync run
+2026-09-04T00:09:31.010992Z  INFO ggen.cli{command=sync run version="26.8.28"}:pipeline.emit{operation.name="pipeline.emit" operation.type="pipeline" pipeline.stage="emit" pipeline.duration_ms=15 pipeline.files_generated=0}: ggen_engine::sync: close time.busy=15.3ms time.idle=40.5ms
+2026-09-04T00:09:31.011059Z  INFO ggen.cli{command=sync run version="26.8.28"}:pipeline.generate{operation.name="pipeline.generate" operation.type="pipeline" pipeline.stage="generate" pipeline.duration_ms=6253}: ggen_engine::sync: close time.busy=6.25s time.idle=55.9ms
+2026-09-04T00:09:31.011064Z  INFO ggen.cli{command=sync run version="26.8.28"}:pipeline.validate{operation.name="pipeline.validate" operation.type="pipeline" pipeline.stage="validate" pipeline.duration_ms=42}: ggen_engine::sync: close time.busy=42.2ms time.idle=6.32s
+2026-09-04T00:09:31.011066Z  INFO ggen.cli{command=sync run version="26.8.28"}:pipeline.extract{operation.name="pipeline.extract" operation.type="pipeline" pipeline.stage="extract" pipeline.duration_ms=0}: ggen_engine::sync: close time.busy=1.08µs time.idle=6.36s
+2026-09-04T00:09:31.011951Z  INFO ggen.cli{command=sync run version="26.8.28"}:pipeline.load{operation.name="pipeline.load" operation.type="pipeline" pipeline.stage="load" pipeline.duration_ms=93}: ggen_engine::sync: close time.busy=93.1ms time.idle=6.36s
+2026-09-04T00:09:31.012191Z  INFO ggen.cli{command=sync run version="26.8.28"}: ggen_cli_lib: close time.busy=6.46s time.idle=1.62µs
+{
+  "written": [],
+  "skipped": [
+    [
+      "@template/vendor/ggen-marketplace/packs/github-actions-pack/templates/composite_action.yml.tmpl",
+      "for_each (implicit row fan-out) produced 0 rows (/workspace/vendor/ggen-marketplace/packs/github-actions-pack/templates/composite_action.yml.tmpl)"
+    ],
+    [
+      "src/beam4pm_ai_contracts.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_ai_contracts.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "src/beam4pm_ai_contracts_codec.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_ai_contracts_codec.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_ai_contracts_codec_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_ai_contracts_codec_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "schema/beam4pm_ai_contracts.schema.json",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_ai_contracts_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_ai_contracts_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "src/beam4pm_billing.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_billing.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_billing_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_billing_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "src/beam4pm_entitlement.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_entitlement.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_entitlement_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_entitlement_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "infra/gcp/cloudrun/main.tf",
+      "unchanged: content identical"
+    ],
+    [
+      "infra/gcp/cloudrun/outputs.tf",
+      "unchanged: content identical"
+    ],
+    [
+      "infra/gcp/cloudrun/README.md",
+      "unchanged: content identical"
+    ],
+    [
+      "infra/gcp/cloudrun/variables.tf",
+      "unchanged: content identical"
+    ],
+    [
+      "infra/gcp/packer/beam4pm-image.pkr.hcl",
+      "unchanged: content identical"
+    ],
+    [
+      "infra/gcp/packer/README.md",
+      "unchanged: content identical"
+    ],
+    [
+      "infra/gcp/packer/setup.sh",
+      "unchanged: content identical"
+    ],
+    [
+      "infra/gcp/packer/variables.pkr.hcl",
+      "unchanged: content identical"
+    ],
+    [
+      "src/beam4pm_codec.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_codec.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_codec_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_codec_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "src/beam4pm_discovery.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_discovery.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "gleam/src/beam4pm/discovery.gleam",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_discovery_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_discovery_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "gleam/test/beam4pm_test.gleam",
+      "unchanged: content identical"
+    ],
+    [
+      "gleam/src/beam4pm.gleam",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_pi3_falsifier_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_pi3_falsifier_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "src/beam4pm_precision.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_precision.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "gleam/src/beam4pm/precision.gleam",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_precision_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "gleam/test/beam4pm_precision_test.gleam",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_precision_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "src/beam4pm_roundtrip.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_roundtrip.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "src/beam4pm_types.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_types.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "gleam/src/beam4pm/types.gleam",
+      "unchanged: content identical"
+    ],
+    [
+      "schema/beam4pm_types.schema.json",
+      "unchanged: content identical"
+    ],
+    [
+      "src/beam4pm_types_manifest.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "lib/beam4pm_types_manifest.ex",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_types_manifest_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_types_manifest_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "docs/reference/beam4pm_types_reference.md",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_types_test.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/test_helper.exs",
+      "unchanged: content identical"
+    ],
+    [
+      "test/beam4pm_types_tests.erl",
+      "unchanged: content identical"
+    ],
+    [
+      "gleam/gleam.toml",
+      "unchanged: content identical"
+    ],
+    [
+      ".github/workflows/beam4pm-ci.yml",
+      "unchanged: content identical"
+    ],
+    [
+      ".github/workflows/beam4pm-container.yml",
+      "unchanged: content identical"
+    ],
+    [
+      ".github/workflows/beam4pm-infra-validate.yml",
+      "unchanged: content identical"
+    ]
+  ],
+  "graph_hash_hex": "61614eb744ada860942f43fcc672304ab576dd6f6b311d2dae1a6d928db742f7",
+  "decisions": {
+    ".github/workflows/beam4pm-ci.yml": "skipped: unchanged: content identical",
+    ".github/workflows/beam4pm-container.yml": "skipped: unchanged: content identical",
+    ".github/workflows/beam4pm-infra-validate.yml": "skipped: unchanged: content identical",
+    "@template/vendor/ggen-marketplace/packs/github-actions-pack/templates/composite_action.yml.tmpl": "skipped: for_each (implicit row fan-out) produced 0 rows (/workspace/vendor/ggen-marketplace/packs/github-actions-pack/templates/composite_action.yml.tmpl)",
+    "docs/reference/beam4pm_types_reference.md": "skipped: unchanged: content identical",
+    "gleam/gleam.toml": "skipped: unchanged: content identical",
+    "gleam/src/beam4pm.gleam": "skipped: unchanged: content identical",
+    "gleam/src/beam4pm/discovery.gleam": "skipped: unchanged: content identical",
+    "gleam/src/beam4pm/precision.gleam": "skipped: unchanged: content identical",
+    "gleam/src/beam4pm/types.gleam": "skipped: unchanged: content identical",
+    "gleam/test/beam4pm_precision_test.gleam": "skipped: unchanged: content identical",
+    "gleam/test/beam4pm_test.gleam": "skipped: unchanged: content identical",
+    "infra/gcp/cloudrun/README.md": "skipped: unchanged: content identical",
+    "infra/gcp/cloudrun/main.tf": "skipped: unchanged: content identical",
+    "infra/gcp/cloudrun/outputs.tf": "skipped: unchanged: content identical",
+    "infra/gcp/cloudrun/variables.tf": "skipped: unchanged: content identical",
+    "infra/gcp/packer/README.md": "skipped: unchanged: content identical",
+    "infra/gcp/packer/beam4pm-image.pkr.hcl": "skipped: unchanged: content identical",
+    "infra/gcp/packer/setup.sh": "skipped: unchanged: content identical",
+    "infra/gcp/packer/variables.pkr.hcl": "skipped: unchanged: content identical",
+    "lib/beam4pm_ai_contracts.ex": "skipped: unchanged: content identical",
+    "lib/beam4pm_ai_contracts_codec.ex": "skipped: unchanged: content identical",
+    "lib/beam4pm_billing.ex": "skipped: unchanged: content identical",
+    "lib/beam4pm_codec.ex": "skipped: unchanged: content identical",
+    "lib/beam4pm_discovery.ex": "skipped: unchanged: content identical",
+    "lib/beam4pm_entitlement.ex": "skipped: unchanged: content identical",
+    "lib/beam4pm_precision.ex": "skipped: unchanged: content identical",
+    "lib/beam4pm_roundtrip.ex": "skipped: unchanged: content identical",
+    "lib/beam4pm_types.ex": "skipped: unchanged: content identical",
+    "lib/beam4pm_types_manifest.ex": "skipped: unchanged: content identical",
+    "schema/beam4pm_ai_contracts.schema.json": "skipped: unchanged: content identical",
+    "schema/beam4pm_types.schema.json": "skipped: unchanged: content identical",
+    "src/beam4pm_ai_contracts.erl": "skipped: unchanged: content identical",
+    "src/beam4pm_ai_contracts_codec.erl": "skipped: unchanged: content identical",
+    "src/beam4pm_billing.erl": "skipped: unchanged: content identical",
+    "src/beam4pm_codec.erl": "skipped: unchanged: content identical",
+    "src/beam4pm_discovery.erl": "skipped: unchanged: content identical",
+    "src/beam4pm_entitlement.erl": "skipped: unchanged: content identical",
+    "src/beam4pm_precision.erl": "skipped: unchanged: content identical",
+    "src/beam4pm_roundtrip.erl": "skipped: unchanged: content identical",
+    "src/beam4pm_types.erl": "skipped: unchanged: content identical",
+    "src/beam4pm_types_manifest.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_ai_contracts_codec_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_ai_contracts_codec_tests.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_ai_contracts_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_ai_contracts_tests.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_billing_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_billing_tests.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_codec_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_codec_tests.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_discovery_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_discovery_tests.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_entitlement_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_entitlement_tests.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_pi3_falsifier_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_pi3_falsifier_tests.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_precision_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_precision_tests.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_types_manifest_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_types_manifest_tests.erl": "skipped: unchanged: content identical",
+    "test/beam4pm_types_test.exs": "skipped: unchanged: content identical",
+    "test/beam4pm_types_tests.erl": "skipped: unchanged: content identical",
+    "test/test_helper.exs": "skipped: unchanged: content identical"
+  },
+  "packs": {
+    "beam4pm-ai-contracts": "6e2e0fed73ef0c75e4a73ef6ba8a808fa26529acdf931661e5532ce11c84628f",
+    "beam4pm-pro-entitlement": "9a15eca16d8eda823e55eddb56ff930b0e1834cd44306b5bc836cd61d8d3caee",
+    "beam4pm-pro-infra": "53743e55c57597e81a6ec23e88ecdbb37c78e0b16429235cd17b016de317cd77",
+    "beam4pm-process-model": "2109b265f5795598c67a90d975dae87ea502833e3619d2205669f9969a77dcb9",
+    "github-actions-pack": "5e05f3b85ca34f7678a647253a199346c4917a6f9149177a13971a3991579f27"
+  },
+  "closure": {
+    "actuator": "ggen@26.8.28",
+    "ggen.toml": "f3966a771f065dde406dc0df8147d708479f7b107483eb97f5f6f35afbfa5020",
+    "ontology.ttl": "bdc31e11a9bc3ee832eb0598c5bd0a4591efc8185e05d4f9ccdeb356698f410d",
+    "policy:frontmatter-projection-limits": "max_query_rows=4096;max_outputs=8192;             max_total_rendered_bytes=67108864;             max_output_bytes=10485760",
+    "project": "beam4pm",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/gates/010_required.rq": "5948433ff8b1525996b21ed7fb3f7296c046d00f7dc5584c4d52288cc13524bf",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/gates/020_field_type_enum.rq": "1c40e69a42142a13b58a49f83f19dce1fa9b5d934f0e8e6c859f75f48037e737",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/ontology.ttl": "e767a26e2d77674d2f47f627a54d4d9e3fb1a87af5d5b8f71c6649b5f4237700",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/templates/beam4pm_ai_contracts.erl.tmpl": "5f74551a2147f465b026b9a0dc46db6ef676aa59e139b3a6539052adf7a30601",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/templates/beam4pm_ai_contracts.ex.tmpl": "2e6b13bd60241ab369b038b0e21b79f30a52006379c7184b49263ea44ade05d6",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/templates/beam4pm_ai_contracts_codec.erl.tmpl": "efbf4727fc0bb2a13577cc3f96f8aed92a7310f53591ac8ba78ffccc83000c19",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/templates/beam4pm_ai_contracts_codec.ex.tmpl": "b547b46150a410acdff2d580c4be56250d1092c45b5430aa1cda0a1a1225277c",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/templates/beam4pm_ai_contracts_codec_test.exs.tmpl": "033edfa14beceef77f175eaf8d31cfb4180bc5ba9fa394b9c86659c6b0f89bf3",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/templates/beam4pm_ai_contracts_codec_tests.erl.tmpl": "c75aa4dfda6a3fae4dcb004b1c5c343ea0b172b4b2c184afcf46b520e172b0a9",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/templates/beam4pm_ai_contracts_schema.json.tmpl": "088b59f992eb6671ab27aa61ff202ae17f636fbbe7c5217ee32809adda8f0eda",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/templates/beam4pm_ai_contracts_test.exs.tmpl": "1b8ca6e551c7c5894669d464ac620427e9068337a6b85fe9eac04e07ea1014db",
+    "vendor/ggen-marketplace/packs/beam4pm-ai-contracts-pack/templates/beam4pm_ai_contracts_tests.erl.tmpl": "c2c488994c02553299c1924894925e98fbb6f45dc916b7adb64ab15b10d6a9cd",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-entitlement-pack/ontology.ttl": "25d21fda440bd807b5481c849fcc52e11ed925b82aa551ffc738fb3897833f70",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-entitlement-pack/templates/beam4pm_billing.erl.tmpl": "a2b8d96e42a1050097a0f29969f6be2eb135463c32bc6bcb3d8a620cc447933a",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-entitlement-pack/templates/beam4pm_billing.ex.tmpl": "39d30860e8a677760f71be17c4095833dc26bfe6d7f868545cc1af7c632b822b",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-entitlement-pack/templates/beam4pm_billing_test.exs.tmpl": "6c0bfea623be2de4379bd3de9693ee6c1d62ca0315f4af34146f3cce56e65df9",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-entitlement-pack/templates/beam4pm_billing_tests.erl.tmpl": "445bbab69354e655a53addb43c6bc9f4ade2782adfc855296beb2fbab0ca2825",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-entitlement-pack/templates/beam4pm_entitlement.erl.tmpl": "c4e255c89adc1014b2a392837198996e8670d7ca96d0b451160e71c4a30e1695",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-entitlement-pack/templates/beam4pm_entitlement.ex.tmpl": "546a51b0085bc2dc641106fe9a87dc36d524914407aec54dd1b5e934db87579d",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-entitlement-pack/templates/beam4pm_entitlement_test.exs.tmpl": "d975e2b1f996a306cf67d8455ff35fb5411427286b0bd5fc61efd8f24cc67f10",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-entitlement-pack/templates/beam4pm_entitlement_tests.erl.tmpl": "19ca372523cef8c4de1f5e329a22f819822110a62ca02637a7316d7c00ae521d",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/gates/005_class_asserted.rq": "50f94b42113f42e5b2dd065ef540ab3e3e84cbb55ccec8cf26cf0a64aa2955dc",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/gates/010_required.rq": "79e3ededfa50050cfc6a8eabed0385c6cfdb51def1aec15baa8169bbbaf28792",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/gates/020_packerimage_required.rq": "c64e126d05ad052bd2f155411e65af076ea2dc0d01e09ad794de14c3afd3296c",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/ontology.ttl": "bb8400f251e40c287f4ed59e15502ca91372b81aa001e68aaa164d67fab22853",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/templates/cloudrun_main_tf.tmpl": "d9079da18d1ec51f78aa6a29564b5cf8603b5d82c99a24f14ed17f8f8abac135",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/templates/cloudrun_outputs_tf.tmpl": "a77d3711e62fc7ab3be2257692295711324fa40d189e76679159eec1ddcd6451",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/templates/cloudrun_readme.tmpl": "7d12a1f3edc80e639a9d375ae7c56f94901c03d320040522f9379ba34a234e8f",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/templates/cloudrun_variables_tf.tmpl": "17f4b04d5ebd0fe3b3fdcb2e315194b0998892fa70f7f954f22c0c2eddb83fbf",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/templates/packer-beam4pm-image.pkr.hcl.tmpl": "5117f6206233147114476e046e3894b34b1576e04b8bd1f7f8646d53a248574c",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/templates/packer-readme.md.tmpl": "351624cbec149e7683299822a5888a8e42cb19797436f20c8ca23d6649ee404b",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/templates/packer-setup.sh.tmpl": "dbbdedc639df7ba7bbb986f7da14b38b4de4ef27a876405256bb6e454bda7d6b",
+    "vendor/ggen-marketplace/packs/beam4pm-pro-infra-pack/templates/packer-variables.pkr.hcl.tmpl": "8bafde2f05fb42579940ef93070a1e3e3aed277762e42870e7295df5bedc65d2",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/gates/010_required.rq": "d2d5ad1a2414800651ae0ba5396e7557bf0b0a111642826ec01e5c5db7d1c233",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/gates/020_field_type_enum.rq": "08385e0d70ed29455096997410222a8566b6d6cc4bb0cbaeebfa785a34a1430d",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/gates/030_field_type_cardinality.rq": "466bf27c3376ee920f66ae1e9ae03ff90cf6efeb50a65e36b751c538b6b7bde3",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/ontology.ttl": "312b10615afbfdb598371983ca553b585d499006971edd76d6a20122a6ce8ab6",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_codec.erl.tmpl": "b4d0d522e04520ff2de2799b4a65a4362ec3b6b4cf1108494d63147a3e9e3583",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_codec.ex.tmpl": "9c62c1674df28948bf668e68129dd2f752706f4845c51223c37d1f685820ea69",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_codec_test.exs.tmpl": "bd3b3b3dd61397cb493a28320220d000b7f6d17abf5bc29d23b5823cf328393c",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_codec_tests.erl.tmpl": "d6e2a7f8cecffed017d996cb68b1e5ab74254fb7bff1961eb4f31dcbfb110f72",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_discovery.erl.tmpl": "da42278d1762a83248caa5ba9df3bf2e8786ffe7d689adc9fe554dba5f89cc91",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_discovery.ex.tmpl": "fb15aebe519ad9d6b875dc2475a74c04ab7a1ff595bc9dd9b10c0b92a58d4732",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_discovery.gleam.tmpl": "40dd3a26e4746daf468dba3cd439795097cda689ca8e807bb8174070b5a7395d",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_discovery_test.exs.tmpl": "edb8bdf64d69b19c4d813dd9e2e7341af57992da1c845a2996d1aebef4388507",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_discovery_tests.erl.tmpl": "5aea4e386ddd919c3b5b916db4686443b110aa6446278fd79cc7100f6c2c5019",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_gleam_test.tmpl": "19a98cf8adba3ed1a396acf69ba8b50a636a71419f0d4e89c9c109d18aa6812f",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_main.gleam.tmpl": "5da0fd847961d0fc74118d6993a905b86a3e372c92cefe0f3fc2453b9994e89c",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_pi3_falsifier_test.exs.tmpl": "8b05abb631950da41339f2edaa9c95eecbfc6b0381432b95c1fcf51dc8df796e",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_pi3_falsifier_tests.erl.tmpl": "2ada97ec29dd4b8d5b86e7f4ed208fb90635e79c2bb4fcada2c8d3f1277f0688",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_precision.erl.tmpl": "4e7776d6f88fef5b14af56c19bf52206ee38a1223974179895268ee7ad774a4a",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_precision.ex.tmpl": "31e7dd200fe4e42c36526399526fd7a25c25da7d2c3830cedbcafc1c20dd4850",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_precision.gleam.tmpl": "43e215dd92926bb60b4e2189ec096e6516199fb3bcccc35ab552790fd74890e8",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_precision_test.exs.tmpl": "9ff2f169e43642a05b2c8d708e35f3f71873176c69069d9f0c71a0468965c324",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_precision_test.gleam.tmpl": "f1a5d3377fadc28a23e2306f00cf3504d3327e55061106d19d65f88d04061dd9",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_precision_tests.erl.tmpl": "dd27936df96050da51583604145e34a72ac3b9b4d757ce0dbadbf21474bd0daf",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_roundtrip.erl.tmpl": "4ebcb9472712461a9e49e80606903d0a065cf2827a2841be7104d6b1418262eb",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_roundtrip.ex.tmpl": "2f1723b45d858fbe387bde5906a56d98996cdecdd20b0df13f54f4d21a53ae55",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types.erl.tmpl": "d640c6e4225038521e7047520910ff759e13e0f6b4a5eca26c9a75014680594a",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types.ex.tmpl": "8ea3e24377ee475941ffc9067f916b77c39d38675b478806189430c3d8dfb33c",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types.gleam.tmpl": "c6af1f84e4dd54128989d40b9ce56b4b30ed93cc1abf77a377b2dd8d708223bc",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types.schema.json.tmpl": "6bcfb6592bb944020e472c3472c4d8df3bd1cbf34f79df7d877b5c1e99c96872",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types_manifest.erl.tmpl": "a59ee25997078b695dd9054070bbfdb8b34d8d41a382386e950829f7a985f086",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types_manifest.ex.tmpl": "ba81687bb1ff2d165fdc0df5af3943b5a97a49a3c36a2926b5ff706d6ca43904",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types_manifest_test.exs.tmpl": "f0defb5d1c00ea4cba87488c6f3e385688cf713bf4c39c580619f48c91580387",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types_manifest_tests.erl.tmpl": "b8db59626463e02dfb5fa30c18d451c13bf6cfd142ec38e1825c91a0fcde5507",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types_reference.md.tmpl": "67f54ffb68175257a7575afeec405cc542d23dc0c0904c0080c40853777373eb",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types_test.exs.tmpl": "9bd1179657164e0131fde027d70136a737183b90cc6c554aa04fc386ea21a250",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types_test_helper.exs.tmpl": "0cdc3adc83f9a840972f628954e1278bc83fb308e88fe4f2d22362a8decf09aa",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/beam4pm_types_tests.erl.tmpl": "7b56ad95f04b13c2100ab64b2a298d9571550af4c35c9d5356eeb59e15ba712a",
+    "vendor/ggen-marketplace/packs/beam4pm-process-model-pack/templates/gleam_toml.tmpl": "a3b9a046406869a486e5604d64d3fda496783cc992277bff3bcbb57b5c68c85e",
+    "vendor/ggen-marketplace/packs/github-actions-pack/gates/010_required.rq": "466c403efc057109f079fb569ab6da753db02f7db0f70a6ac6bf846f7d095b69",
+    "vendor/ggen-marketplace/packs/github-actions-pack/gates/020_security.rq": "c5fd757160955dbb073fbf971e3e8efeb1ccd722c0be439ddcd48fa0865caf1c",
+    "vendor/ggen-marketplace/packs/github-actions-pack/gates/030_push_trigger_required.rq": "9b4061ce3dfc128de5bd92a47784b5f10ca2162033957304733955c6c45e9588",
+    "vendor/ggen-marketplace/packs/github-actions-pack/ontology.ttl": "2eac3610d206c75b46a6ee2fe7ad0a087bd5215d312ff6f555e873bd70a28566",
+    "vendor/ggen-marketplace/packs/github-actions-pack/templates/composite_action.yml.tmpl": "3400485c4aeba6987a39ae96a88ccc314441a48d8a07dd3be980f54370372ef6",
+    "vendor/ggen-marketplace/packs/github-actions-pack/templates/workflow.yml.tmpl": "2ff8d1942088077c78c02ac8b529707529adf2fbcdb3fec571abfd3ed1ca2c08"
+  }
+}
+bash scripts/gate_lint_truth.sh
+== GATE LINT-TRUTH: scanning hand-authored docs/source for banned overclaiming phrases ==
+scanning 48 hand-authored files
+GATE LINT-TRUTH: PASS -- 48 hand-authored files scanned, 0 findings
+rebar3 eunit
+[0;32m===> Verifying dependencies...
+[0m[0;32m===> Analyzing applications...
+[0m[0;32m===> Compiling beam4pm
+[0m[0;32m===> Performing EUnit tests...
+[0m======================== EUnit ========================
+file "beam4pm.app"
+  application 'beam4pm'
+    module 'beam4pm_ai_contracts'
+      module 'beam4pm_ai_contracts_tests'
+        beam4pm_ai_contracts_tests: admission_decision_ok_test...ok
+        beam4pm_ai_contracts_tests: admission_decision_missing_field_test...ok
+        beam4pm_ai_contracts_tests: candidate_claim_ok_test...ok
+        beam4pm_ai_contracts_tests: candidate_claim_missing_field_test...ok
+        beam4pm_ai_contracts_tests: evidence_envelope_ok_test...ok
+        beam4pm_ai_contracts_tests: evidence_envelope_missing_field_test...ok
+        beam4pm_ai_contracts_tests: evidence_hit_ok_test...ok
+        beam4pm_ai_contracts_tests: evidence_hit_missing_field_test...ok
+        beam4pm_ai_contracts_tests: model_call_receipt_ok_test...ok
+        beam4pm_ai_contracts_tests: model_call_receipt_missing_field_test...ok
+        beam4pm_ai_contracts_tests: research_task_ok_test...ok
+        beam4pm_ai_contracts_tests: research_task_missing_field_test...ok
+        beam4pm_ai_contracts_tests: tool_intent_ok_test...ok
+        beam4pm_ai_contracts_tests: tool_intent_missing_field_test...ok
+        [done in 0.042 s]
+      [done in 0.042 s]
+    module 'beam4pm_ai_contracts_codec'
+      module 'beam4pm_ai_contracts_codec_tests'
+        beam4pm_ai_contracts_codec_tests: admission_decision_map_roundtrip_test...ok
+        beam4pm_ai_contracts_codec_tests: admission_decision_json_roundtrip_test...[0.002 s] ok
+        beam4pm_ai_contracts_codec_tests: candidate_claim_map_roundtrip_test...ok
+        beam4pm_ai_contracts_codec_tests: candidate_claim_json_roundtrip_test...ok
+        beam4pm_ai_contracts_codec_tests: evidence_envelope_map_roundtrip_test...ok
+        beam4pm_ai_contracts_codec_tests: evidence_envelope_json_roundtrip_test...ok
+        beam4pm_ai_contracts_codec_tests: evidence_hit_map_roundtrip_test...ok
+        beam4pm_ai_contracts_codec_tests: evidence_hit_json_roundtrip_test...ok
+        beam4pm_ai_contracts_codec_tests: model_call_receipt_map_roundtrip_test...ok
+        beam4pm_ai_contracts_codec_tests: model_call_receipt_json_roundtrip_test...ok
+        beam4pm_ai_contracts_codec_tests: research_task_map_roundtrip_test...ok
+        beam4pm_ai_contracts_codec_tests: research_task_json_roundtrip_test...ok
+        beam4pm_ai_contracts_codec_tests: tool_intent_map_roundtrip_test...ok
+        beam4pm_ai_contracts_codec_tests: tool_intent_json_roundtrip_test...ok
+        beam4pm_ai_contracts_codec_tests: unknown_record_test...ok
+        beam4pm_ai_contracts_codec_tests: missing_field_test...ok
+        beam4pm_ai_contracts_codec_tests: invalid_json_test...ok
+        [done in 0.053 s]
+      [done in 0.053 s]
+    module 'beam4pm_billing'
+      module 'beam4pm_billing_tests'
+        beam4pm_billing_tests: triple_repeat_dedup_test...ok
+        beam4pm_billing_tests: five_times_repeat_dedup_test...ok
+        beam4pm_billing_tests: reverse_order_same_total_test...ok
+        beam4pm_billing_tests: distinct_groups_never_summed_test...ok
+        beam4pm_billing_tests: shuffled_duplicated_mixed_groups_test...ok
+        beam4pm_billing_tests: empty_list_no_crash_test...ok
+        beam4pm_billing_tests: cross_period_double_bill_prevented_test...ok
+        beam4pm_billing_tests: new_usage_event_ok_test...ok
+        beam4pm_billing_tests: new_usage_event_missing_field_test...ok
+        beam4pm_billing_tests: new_billing_reconciliation_ok_test...ok
+        beam4pm_billing_tests: new_billing_reconciliation_missing_field_test...ok
+        [done in 0.033 s]
+      [done in 0.033 s]
+    module 'beam4pm_codec'
+      module 'beam4pm_codec_tests'
+        beam4pm_codec_tests: account_discovery_map_roundtrip_test...[0.004 s] ok
+        beam4pm_codec_tests: account_discovery_json_roundtrip_test...ok
+        beam4pm_codec_tests: account_master_match_map_roundtrip_test...ok
+        beam4pm_codec_tests: account_master_match_json_roundtrip_test...ok
+        beam4pm_codec_tests: account_parent_scope_map_roundtrip_test...ok
+        beam4pm_codec_tests: account_parent_scope_json_roundtrip_test...ok
+        beam4pm_codec_tests: account_value_realization_map_roundtrip_test...ok
+        beam4pm_codec_tests: account_value_realization_json_roundtrip_test...ok
+        beam4pm_codec_tests: action_pin_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: action_pin_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: activation_event_map_roundtrip_test...ok
+        beam4pm_codec_tests: activation_event_json_roundtrip_test...ok
+        beam4pm_codec_tests: add_on_bundle_map_roundtrip_test...ok
+        beam4pm_codec_tests: add_on_bundle_json_roundtrip_test...ok
+        beam4pm_codec_tests: adoption_milestone_map_roundtrip_test...ok
+        beam4pm_codec_tests: adoption_milestone_json_roundtrip_test...ok
+        beam4pm_codec_tests: alignment_move_map_roundtrip_test...ok
+        beam4pm_codec_tests: alignment_move_json_roundtrip_test...ok
+        beam4pm_codec_tests: annual_subscription_map_roundtrip_test...ok
+        beam4pm_codec_tests: annual_subscription_json_roundtrip_test...ok
+        beam4pm_codec_tests: approval_separation_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: approval_separation_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: architecture_readiness_map_roundtrip_test...ok
+        beam4pm_codec_tests: architecture_readiness_json_roundtrip_test...ok
+        beam4pm_codec_tests: architecture_review_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: architecture_review_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: artifact_digest_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: artifact_digest_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: attestation_verification_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: attestation_verification_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: audit_chain_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: audit_chain_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: availability_observation_map_roundtrip_test...ok
+        beam4pm_codec_tests: availability_observation_json_roundtrip_test...ok
+        beam4pm_codec_tests: availability_slo_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: availability_slo_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: backup_restore_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: backup_restore_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: baseline_metric_map_roundtrip_test...ok
+        beam4pm_codec_tests: baseline_metric_json_roundtrip_test...ok
+        beam4pm_codec_tests: beneficial_owner_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: beneficial_owner_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: billable_usage_identity_map_roundtrip_test...ok
+        beam4pm_codec_tests: billable_usage_identity_json_roundtrip_test...ok
+        beam4pm_codec_tests: billing_account_map_roundtrip_test...ok
+        beam4pm_codec_tests: billing_account_json_roundtrip_test...ok
+        beam4pm_codec_tests: billing_reconciliation_map_roundtrip_test...ok
+        beam4pm_codec_tests: billing_reconciliation_json_roundtrip_test...ok
+        beam4pm_codec_tests: booking_readiness_map_roundtrip_test...ok
+        beam4pm_codec_tests: booking_readiness_json_roundtrip_test...ok
+        beam4pm_codec_tests: brce_actuation_receipt_map_roundtrip_test...ok
+        beam4pm_codec_tests: brce_actuation_receipt_json_roundtrip_test...ok
+        beam4pm_codec_tests: brce_actuation_request_map_roundtrip_test...ok
+        beam4pm_codec_tests: brce_actuation_request_json_roundtrip_test...ok
+        beam4pm_codec_tests: budget_period_alignment_map_roundtrip_test...ok
+        beam4pm_codec_tests: budget_period_alignment_json_roundtrip_test...ok
+        beam4pm_codec_tests: business_continuity_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: business_continuity_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: business_outcome_measurement_map_roundtrip_test...ok
+        beam4pm_codec_tests: business_outcome_measurement_json_roundtrip_test...ok
+        beam4pm_codec_tests: buying_committee_map_roundtrip_test...ok
+        beam4pm_codec_tests: buying_committee_json_roundtrip_test...ok
+        beam4pm_codec_tests: canary_decision_map_roundtrip_test...ok
+        beam4pm_codec_tests: canary_decision_json_roundtrip_test...ok
+        beam4pm_codec_tests: canary_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: canary_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: capability_bundle_map_roundtrip_test...ok
+        beam4pm_codec_tests: capability_bundle_json_roundtrip_test...ok
+        beam4pm_codec_tests: capability_gap_map_roundtrip_test...ok
+        beam4pm_codec_tests: capability_gap_json_roundtrip_test...ok
+        beam4pm_codec_tests: capsule_identity_map_roundtrip_test...ok
+        beam4pm_codec_tests: capsule_identity_json_roundtrip_test...ok
+        beam4pm_codec_tests: case_stats_map_roundtrip_test...ok
+        beam4pm_codec_tests: case_stats_json_roundtrip_test...ok
+        beam4pm_codec_tests: catalog_release_map_roundtrip_test...ok
+        beam4pm_codec_tests: catalog_release_json_roundtrip_test...ok
+        beam4pm_codec_tests: change_control_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: change_control_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: change_order_authority_map_roundtrip_test...ok
+        beam4pm_codec_tests: change_order_authority_json_roundtrip_test...ok
+        beam4pm_codec_tests: channel_agreement_map_roundtrip_test...ok
+        beam4pm_codec_tests: channel_agreement_json_roundtrip_test...ok
+        beam4pm_codec_tests: chargeback_rule_map_roundtrip_test...ok
+        beam4pm_codec_tests: chargeback_rule_json_roundtrip_test...ok
+        beam4pm_codec_tests: cluster_quorum_state_map_roundtrip_test...ok
+        beam4pm_codec_tests: cluster_quorum_state_json_roundtrip_test...ok
+        beam4pm_codec_tests: commercial_approval_map_roundtrip_test...ok
+        beam4pm_codec_tests: commercial_approval_json_roundtrip_test...ok
+        beam4pm_codec_tests: commercial_artifact_crown_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: commercial_artifact_crown_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: commercial_exception_map_roundtrip_test...ok
+        beam4pm_codec_tests: commercial_exception_json_roundtrip_test...ok
+        beam4pm_codec_tests: commercial_execution_receipt_map_roundtrip_test...ok
+        beam4pm_codec_tests: commercial_execution_receipt_json_roundtrip_test...ok
+        beam4pm_codec_tests: commercial_forecast_map_roundtrip_test...ok
+        beam4pm_codec_tests: commercial_forecast_json_roundtrip_test...ok
+        beam4pm_codec_tests: commercial_outcome_map_roundtrip_test...ok
+        beam4pm_codec_tests: commercial_outcome_json_roundtrip_test...ok
+        beam4pm_codec_tests: commercial_quote_map_roundtrip_test...ok
+        beam4pm_codec_tests: commercial_quote_json_roundtrip_test...ok
+        beam4pm_codec_tests: commercial_quote_line_map_roundtrip_test...ok
+        beam4pm_codec_tests: commercial_quote_line_json_roundtrip_test...ok
+        beam4pm_codec_tests: commercial_value_realization_map_roundtrip_test...ok
+        beam4pm_codec_tests: commercial_value_realization_json_roundtrip_test...ok
+        beam4pm_codec_tests: committed_spend_map_roundtrip_test...ok
+        beam4pm_codec_tests: committed_spend_json_roundtrip_test...ok
+        beam4pm_codec_tests: committed_spend_admission_map_roundtrip_test...ok
+        beam4pm_codec_tests: committed_spend_admission_json_roundtrip_test...ok
+        beam4pm_codec_tests: compatibility_contract_map_roundtrip_test...ok
+        beam4pm_codec_tests: compatibility_contract_json_roundtrip_test...ok
+        beam4pm_codec_tests: configuration_export_map_roundtrip_test...ok
+        beam4pm_codec_tests: configuration_export_json_roundtrip_test...ok
+        beam4pm_codec_tests: configuration_import_map_roundtrip_test...ok
+        beam4pm_codec_tests: configuration_import_json_roundtrip_test...ok
+        beam4pm_codec_tests: conformance_result_map_roundtrip_test...ok
+        beam4pm_codec_tests: conformance_result_json_roundtrip_test...ok
+        beam4pm_codec_tests: consumption_pool_map_roundtrip_test...ok
+        beam4pm_codec_tests: consumption_pool_json_roundtrip_test...ok
+        beam4pm_codec_tests: consumption_subscription_map_roundtrip_test...ok
+        beam4pm_codec_tests: consumption_subscription_json_roundtrip_test...ok
+        beam4pm_codec_tests: contracting_entity_identity_map_roundtrip_test...ok
+        beam4pm_codec_tests: contracting_entity_identity_json_roundtrip_test...ok
+        beam4pm_codec_tests: cost_to_serve_measurement_map_roundtrip_test...ok
+        beam4pm_codec_tests: cost_to_serve_measurement_json_roundtrip_test...ok
+        beam4pm_codec_tests: crash_recovery_receipt_map_roundtrip_test...ok
+        beam4pm_codec_tests: crash_recovery_receipt_json_roundtrip_test...ok
+        beam4pm_codec_tests: credit_risk_admission_map_roundtrip_test...ok
+        beam4pm_codec_tests: credit_risk_admission_json_roundtrip_test...ok
+        beam4pm_codec_tests: cross_sell_fit_map_roundtrip_test...ok
+        beam4pm_codec_tests: cross_sell_fit_json_roundtrip_test...ok
+        beam4pm_codec_tests: customer_health_map_roundtrip_test...ok
+        beam4pm_codec_tests: customer_health_json_roundtrip_test...ok
+        beam4pm_codec_tests: customer_managed_key_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: customer_managed_key_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: data_egress_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: data_egress_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: data_migration_scope_admission_map_roundtrip_test...ok
+        beam4pm_codec_tests: data_migration_scope_admission_json_roundtrip_test...ok
+        beam4pm_codec_tests: data_processing_addendum_state_map_roundtrip_test...ok
+        beam4pm_codec_tests: data_processing_addendum_state_json_roundtrip_test...ok
+        beam4pm_codec_tests: data_readiness_map_roundtrip_test...ok
+        beam4pm_codec_tests: data_readiness_json_roundtrip_test...ok
+        beam4pm_codec_tests: data_residency_policy_map_roundtrip_test...ok
+        beam4pm_codec_tests: data_residency_policy_json_roundtrip_test...ok
+        beam4pm_codec_tests: deal_desk_packet_map_roundtrip_test...ok
+        beam4pm_codec_tests: deal_desk_packet_json_roundtrip_test...ok
+        beam4pm_codec_tests: deletion_proof_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: deletion_proof_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: demo_run_map_roundtrip_test...ok
+        beam4pm_codec_tests: demo_run_json_roundtrip_test...ok
+        beam4pm_codec_tests: demo_scenario_map_roundtrip_test...ok
+        beam4pm_codec_tests: demo_scenario_json_roundtrip_test...ok
+        beam4pm_codec_tests: dependency_inventory_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: dependency_inventory_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: deployment_entitlement_map_roundtrip_test...ok
+        beam4pm_codec_tests: deployment_entitlement_json_roundtrip_test...ok
+        beam4pm_codec_tests: developer_readiness_map_roundtrip_test...ok
+        beam4pm_codec_tests: developer_readiness_json_roundtrip_test...ok
+        beam4pm_codec_tests: dfg_edge_map_roundtrip_test...ok
+        beam4pm_codec_tests: dfg_edge_json_roundtrip_test...ok
+        beam4pm_codec_tests: disaster_recovery_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: disaster_recovery_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: discount_schedule_map_roundtrip_test...ok
+        beam4pm_codec_tests: discount_schedule_json_roundtrip_test...ok
+        beam4pm_codec_tests: discovery_hypothesis_map_roundtrip_test...ok
+        beam4pm_codec_tests: discovery_hypothesis_json_roundtrip_test...ok
+        beam4pm_codec_tests: edition_definition_map_roundtrip_test...ok
+        beam4pm_codec_tests: edition_definition_json_roundtrip_test...ok
+        beam4pm_codec_tests: enterprise_order_map_roundtrip_test...ok
+        beam4pm_codec_tests: enterprise_order_json_roundtrip_test...ok
+        beam4pm_codec_tests: enterprise_order_line_map_roundtrip_test...ok
+        beam4pm_codec_tests: enterprise_order_line_json_roundtrip_test...ok
+        beam4pm_codec_tests: entitlement_denial_receipt_map_roundtrip_test...ok
+        beam4pm_codec_tests: entitlement_denial_receipt_json_roundtrip_test...ok
+        beam4pm_codec_tests: entitlement_event_map_roundtrip_test...ok
+        beam4pm_codec_tests: entitlement_event_json_roundtrip_test...ok
+        beam4pm_codec_tests: entitlement_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: entitlement_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: entitlement_grant_map_roundtrip_test...ok
+        beam4pm_codec_tests: entitlement_grant_json_roundtrip_test...ok
+        beam4pm_codec_tests: entitlement_revocation_map_roundtrip_test...ok
+        beam4pm_codec_tests: entitlement_revocation_json_roundtrip_test...ok
+        beam4pm_codec_tests: entitlement_runtime_check_map_roundtrip_test...ok
+        beam4pm_codec_tests: entitlement_runtime_check_json_roundtrip_test...ok
+        beam4pm_codec_tests: entitlement_state_map_roundtrip_test...ok
+        beam4pm_codec_tests: entitlement_state_json_roundtrip_test...ok
+        beam4pm_codec_tests: environment_identity_map_roundtrip_test...ok
+        beam4pm_codec_tests: environment_identity_json_roundtrip_test...ok
+        beam4pm_codec_tests: environment_profile_map_roundtrip_test...ok
+        beam4pm_codec_tests: environment_profile_json_roundtrip_test...ok
+        beam4pm_codec_tests: error_budget_state_map_roundtrip_test...ok
+        beam4pm_codec_tests: error_budget_state_json_roundtrip_test...ok
+        beam4pm_codec_tests: event_log_map_roundtrip_test...ok
+        beam4pm_codec_tests: event_log_json_roundtrip_test...ok
+        beam4pm_codec_tests: event_type_map_roundtrip_test...ok
+        beam4pm_codec_tests: event_type_json_roundtrip_test...ok
+        beam4pm_codec_tests: evidence_freshness_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: evidence_freshness_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: exception_authority_map_roundtrip_test...ok
+        beam4pm_codec_tests: exception_authority_json_roundtrip_test...ok
+        beam4pm_codec_tests: executive_business_review_map_roundtrip_test...ok
+        beam4pm_codec_tests: executive_business_review_json_roundtrip_test...ok
+        beam4pm_codec_tests: executive_sponsor_map_roundtrip_test...ok
+        beam4pm_codec_tests: executive_sponsor_json_roundtrip_test...ok
+        beam4pm_codec_tests: expansion_opportunity_map_roundtrip_test...ok
+        beam4pm_codec_tests: expansion_opportunity_json_roundtrip_test...ok
+        beam4pm_codec_tests: expansion_option_map_roundtrip_test...ok
+        beam4pm_codec_tests: expansion_option_json_roundtrip_test...ok
+        beam4pm_codec_tests: expansion_receipt_map_roundtrip_test...ok
+        beam4pm_codec_tests: expansion_receipt_json_roundtrip_test...ok
+        beam4pm_codec_tests: expansion_signal_map_roundtrip_test...ok
+        beam4pm_codec_tests: expansion_signal_json_roundtrip_test...ok
+        beam4pm_codec_tests: forged_receipt_refusal_map_roundtrip_test...ok
+        beam4pm_codec_tests: forged_receipt_refusal_json_roundtrip_test...ok
+        beam4pm_codec_tests: funding_approval_chain_map_roundtrip_test...ok
+        beam4pm_codec_tests: funding_approval_chain_json_roundtrip_test...ok
+        beam4pm_codec_tests: heuristic_arc_map_roundtrip_test...ok
+        beam4pm_codec_tests: heuristic_arc_json_roundtrip_test...ok
+        beam4pm_codec_tests: implementation_fee_admission_map_roundtrip_test...ok
+        beam4pm_codec_tests: implementation_fee_admission_json_roundtrip_test...ok
+        beam4pm_codec_tests: incident_acknowledgement_map_roundtrip_test...ok
+        beam4pm_codec_tests: incident_acknowledgement_json_roundtrip_test...ok
+        beam4pm_codec_tests: incident_detection_event_map_roundtrip_test...ok
+        beam4pm_codec_tests: incident_detection_event_json_roundtrip_test...ok
+        beam4pm_codec_tests: incident_response_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: incident_response_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: indemnity_scope_admission_map_roundtrip_test...ok
+        beam4pm_codec_tests: indemnity_scope_admission_json_roundtrip_test...ok
+        beam4pm_codec_tests: insurance_requirement_map_roundtrip_test...ok
+        beam4pm_codec_tests: insurance_requirement_json_roundtrip_test...ok
+        beam4pm_codec_tests: integration_readiness_map_roundtrip_test...ok
+        beam4pm_codec_tests: integration_readiness_json_roundtrip_test...ok
+        beam4pm_codec_tests: integration_scope_admission_map_roundtrip_test...ok
+        beam4pm_codec_tests: integration_scope_admission_json_roundtrip_test...ok
+        beam4pm_codec_tests: invoice_entity_identity_map_roundtrip_test...ok
+        beam4pm_codec_tests: invoice_entity_identity_json_roundtrip_test...ok
+        beam4pm_codec_tests: invoice_schedule_map_roundtrip_test...ok
+        beam4pm_codec_tests: invoice_schedule_json_roundtrip_test...ok
+        beam4pm_codec_tests: k8s_object_ref_map_roundtrip_test...ok
+        beam4pm_codec_tests: k8s_object_ref_json_roundtrip_test...ok
+        beam4pm_codec_tests: latency_budget_observation_map_roundtrip_test...ok
+        beam4pm_codec_tests: latency_budget_observation_json_roundtrip_test...ok
+        beam4pm_codec_tests: least_authority_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: least_authority_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: legal_blocker_map_roundtrip_test...ok
+        beam4pm_codec_tests: legal_blocker_json_roundtrip_test...ok
+        beam4pm_codec_tests: liability_cap_admission_map_roundtrip_test...ok
+        beam4pm_codec_tests: liability_cap_admission_json_roundtrip_test...ok
+        beam4pm_codec_tests: license_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: license_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: log_trace_map_roundtrip_test...ok
+        beam4pm_codec_tests: log_trace_json_roundtrip_test...ok
+        beam4pm_codec_tests: master_service_agreement_state_map_roundtrip_test...ok
+        beam4pm_codec_tests: master_service_agreement_state_json_roundtrip_test...ok
+        beam4pm_codec_tests: metered_usage_sample_map_roundtrip_test...ok
+        beam4pm_codec_tests: metered_usage_sample_json_roundtrip_test...ok
+        beam4pm_codec_tests: migration_contract_map_roundtrip_test...ok
+        beam4pm_codec_tests: migration_contract_json_roundtrip_test...ok
+        beam4pm_codec_tests: migration_readiness_map_roundtrip_test...ok
+        beam4pm_codec_tests: migration_readiness_json_roundtrip_test...ok
+        beam4pm_codec_tests: minimum_term_admission_map_roundtrip_test...ok
+        beam4pm_codec_tests: minimum_term_admission_json_roundtrip_test...ok
+        beam4pm_codec_tests: multiarch_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: multiarch_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: mutable_identity_refusal_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: mutable_identity_refusal_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: node_failover_event_map_roundtrip_test...ok
+        beam4pm_codec_tests: node_failover_event_json_roundtrip_test...ok
+        beam4pm_codec_tests: object_attribute_change_map_roundtrip_test...ok
+        beam4pm_codec_tests: object_attribute_change_json_roundtrip_test...ok
+        beam4pm_codec_tests: object_type_map_roundtrip_test...ok
+        beam4pm_codec_tests: object_type_json_roundtrip_test...ok
+        beam4pm_codec_tests: objection_map_roundtrip_test...ok
+        beam4pm_codec_tests: objection_json_roundtrip_test...ok
+        beam4pm_codec_tests: objection_resolution_map_roundtrip_test...ok
+        beam4pm_codec_tests: objection_resolution_json_roundtrip_test...ok
+        beam4pm_codec_tests: oc_declare_constraint_map_roundtrip_test...ok
+        beam4pm_codec_tests: oc_declare_constraint_json_roundtrip_test...ok
+        beam4pm_codec_tests: ocel_attribute_map_roundtrip_test...ok
+        beam4pm_codec_tests: ocel_attribute_json_roundtrip_test...ok
+        beam4pm_codec_tests: ocel_event_map_roundtrip_test...ok
+        beam4pm_codec_tests: ocel_event_json_roundtrip_test...ok
+        beam4pm_codec_tests: ocel_object_map_roundtrip_test...ok
+        beam4pm_codec_tests: ocel_object_json_roundtrip_test...ok
+        beam4pm_codec_tests: ocel_relationship_map_roundtrip_test...ok
+        beam4pm_codec_tests: ocel_relationship_json_roundtrip_test...ok
+        beam4pm_codec_tests: oci_manifest_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: oci_manifest_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: offline_bundle_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: offline_bundle_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: operator_readiness_map_roundtrip_test...ok
+        beam4pm_codec_tests: operator_readiness_json_roundtrip_test...ok
+        beam4pm_codec_tests: opportunity_currency_contract_map_roundtrip_test...ok
+        beam4pm_codec_tests: opportunity_currency_contract_json_roundtrip_test...ok
+        beam4pm_codec_tests: opportunity_value_range_map_roundtrip_test...ok
+        beam4pm_codec_tests: opportunity_value_range_json_roundtrip_test...ok
+        beam4pm_codec_tests: order_form_admission_map_roundtrip_test...ok
+        beam4pm_codec_tests: order_form_admission_json_roundtrip_test...ok
+        beam4pm_codec_tests: overage_policy_map_roundtrip_test...ok
+        beam4pm_codec_tests: overage_policy_json_roundtrip_test...ok
+        beam4pm_codec_tests: paid_workload_outcome_receipt_map_roundtrip_test...ok
+        beam4pm_codec_tests: paid_workload_outcome_receipt_json_roundtrip_test...ok
+        beam4pm_codec_tests: path_schema_map_roundtrip_test...ok
+        beam4pm_codec_tests: path_schema_json_roundtrip_test...ok
+        beam4pm_codec_tests: path_schema_query_map_roundtrip_test...ok
+        beam4pm_codec_tests: path_schema_query_json_roundtrip_test...ok
+        beam4pm_codec_tests: payment_terms_map_roundtrip_test...ok
+        beam4pm_codec_tests: payment_terms_json_roundtrip_test...ok
+        beam4pm_codec_tests: payment_terms_admission_map_roundtrip_test...ok
+        beam4pm_codec_tests: payment_terms_admission_json_roundtrip_test...ok
+        beam4pm_codec_tests: performance_slo_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: performance_slo_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: petri_arc_map_roundtrip_test...ok
+        beam4pm_codec_tests: petri_arc_json_roundtrip_test...ok
+        beam4pm_codec_tests: petri_place_map_roundtrip_test...ok
+        beam4pm_codec_tests: petri_place_json_roundtrip_test...ok
+        beam4pm_codec_tests: petri_transition_map_roundtrip_test...ok
+        beam4pm_codec_tests: petri_transition_json_roundtrip_test...ok
+        beam4pm_codec_tests: planning_action_map_roundtrip_test...ok
+        beam4pm_codec_tests: planning_action_json_roundtrip_test...ok
+        beam4pm_codec_tests: planning_state_map_roundtrip_test...ok
+        beam4pm_codec_tests: planning_state_json_roundtrip_test...ok
+        beam4pm_codec_tests: poc_exit_criteria_map_roundtrip_test...ok
+        beam4pm_codec_tests: poc_exit_criteria_json_roundtrip_test...ok
+        beam4pm_codec_tests: poc_risk_map_roundtrip_test...ok
+        beam4pm_codec_tests: poc_risk_json_roundtrip_test...ok
+        beam4pm_codec_tests: poc_scope_map_roundtrip_test...ok
+        beam4pm_codec_tests: poc_scope_json_roundtrip_test...ok
+        beam4pm_codec_tests: poc_timeline_map_roundtrip_test...ok
+        beam4pm_codec_tests: poc_timeline_json_roundtrip_test...ok
+        beam4pm_codec_tests: policy_decision_map_roundtrip_test...ok
+        beam4pm_codec_tests: policy_decision_json_roundtrip_test...ok
+        beam4pm_codec_tests: powl_choice_graph_edge_map_roundtrip_test...ok
+        beam4pm_codec_tests: powl_choice_graph_edge_json_roundtrip_test...ok
+        beam4pm_codec_tests: powl_freq_map_roundtrip_test...ok
+        beam4pm_codec_tests: powl_freq_json_roundtrip_test...ok
+        beam4pm_codec_tests: powl_leaf_map_roundtrip_test...ok
+        beam4pm_codec_tests: powl_leaf_json_roundtrip_test...ok
+        beam4pm_codec_tests: powl_partial_order_edge_map_roundtrip_test...ok
+        beam4pm_codec_tests: powl_partial_order_edge_json_roundtrip_test...ok
+        beam4pm_codec_tests: pricing_basis_contract_map_roundtrip_test...ok
+        beam4pm_codec_tests: pricing_basis_contract_json_roundtrip_test...ok
+        beam4pm_codec_tests: privacy_classification_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: privacy_classification_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: private_offer_map_roundtrip_test...ok
+        beam4pm_codec_tests: private_offer_json_roundtrip_test...ok
+        beam4pm_codec_tests: private_registry_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: private_registry_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: process_variant_map_roundtrip_test...ok
+        beam4pm_codec_tests: process_variant_json_roundtrip_test...ok
+        beam4pm_codec_tests: procurement_acceptance_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: procurement_acceptance_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: procurement_blocker_map_roundtrip_test...ok
+        beam4pm_codec_tests: procurement_blocker_json_roundtrip_test...ok
+        beam4pm_codec_tests: procurement_channel_selection_map_roundtrip_test...ok
+        beam4pm_codec_tests: procurement_channel_selection_json_roundtrip_test...ok
+        beam4pm_codec_tests: procurement_readiness_map_roundtrip_test...ok
+        beam4pm_codec_tests: procurement_readiness_json_roundtrip_test...ok
+        beam4pm_codec_tests: production_readiness_map_roundtrip_test...ok
+        beam4pm_codec_tests: production_readiness_json_roundtrip_test...ok
+        beam4pm_codec_tests: proof_of_value_budget_map_roundtrip_test...ok
+        beam4pm_codec_tests: proof_of_value_budget_json_roundtrip_test...ok
+        beam4pm_codec_tests: proof_of_value_exit_gate_map_roundtrip_test...ok
+        beam4pm_codec_tests: proof_of_value_exit_gate_json_roundtrip_test...ok
+        beam4pm_codec_tests: provenance_binding_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: provenance_binding_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: purchase_order_binding_map_roundtrip_test...ok
+        beam4pm_codec_tests: purchase_order_binding_json_roundtrip_test...ok
+        beam4pm_codec_tests: purchase_order_requirement_map_roundtrip_test...ok
+        beam4pm_codec_tests: purchase_order_requirement_json_roundtrip_test...ok
+        beam4pm_codec_tests: purchasing_entity_identity_map_roundtrip_test...ok
+        beam4pm_codec_tests: purchasing_entity_identity_json_roundtrip_test...ok
+        beam4pm_codec_tests: queue_snapshot_map_roundtrip_test...ok
+        beam4pm_codec_tests: queue_snapshot_json_roundtrip_test...ok
+        beam4pm_codec_tests: quota_policy_map_roundtrip_test...ok
+        beam4pm_codec_tests: quota_policy_json_roundtrip_test...ok
+        beam4pm_codec_tests: ramp_commitment_map_roundtrip_test...ok
+        beam4pm_codec_tests: ramp_commitment_json_roundtrip_test...ok
+        beam4pm_codec_tests: receipt_replay_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: receipt_replay_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: receipt_replay_request_map_roundtrip_test...ok
+        beam4pm_codec_tests: receipt_replay_request_json_roundtrip_test...ok
+        beam4pm_codec_tests: receipt_signature_map_roundtrip_test...ok
+        beam4pm_codec_tests: receipt_signature_json_roundtrip_test...ok
+        beam4pm_codec_tests: receipt_subject_binding_map_roundtrip_test...ok
+        beam4pm_codec_tests: receipt_subject_binding_json_roundtrip_test...ok
+        beam4pm_codec_tests: receipt_verification_map_roundtrip_test...ok
+        beam4pm_codec_tests: receipt_verification_json_roundtrip_test...ok
+        beam4pm_codec_tests: recovery_plan_map_roundtrip_test...ok
+        beam4pm_codec_tests: recovery_plan_json_roundtrip_test...ok
+        beam4pm_codec_tests: recovery_point_receipt_map_roundtrip_test...ok
+        beam4pm_codec_tests: recovery_point_receipt_json_roundtrip_test...ok
+        beam4pm_codec_tests: recovery_time_receipt_map_roundtrip_test...ok
+        beam4pm_codec_tests: recovery_time_receipt_json_roundtrip_test...ok
+        beam4pm_codec_tests: remediation_sla_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: remediation_sla_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: renewal_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: renewal_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: renewal_health_map_roundtrip_test...ok
+        beam4pm_codec_tests: renewal_health_json_roundtrip_test...ok
+        beam4pm_codec_tests: renewal_option_map_roundtrip_test...ok
+        beam4pm_codec_tests: renewal_option_json_roundtrip_test...ok
+        beam4pm_codec_tests: renewal_risk_map_roundtrip_test...ok
+        beam4pm_codec_tests: renewal_risk_json_roundtrip_test...ok
+        beam4pm_codec_tests: renewal_term_admission_map_roundtrip_test...ok
+        beam4pm_codec_tests: renewal_term_admission_json_roundtrip_test...ok
+        beam4pm_codec_tests: replay_environment_identity_map_roundtrip_test...ok
+        beam4pm_codec_tests: replay_environment_identity_json_roundtrip_test...ok
+        beam4pm_codec_tests: reproducible_build_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: reproducible_build_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: reseller_authorization_map_roundtrip_test...ok
+        beam4pm_codec_tests: reseller_authorization_json_roundtrip_test...ok
+        beam4pm_codec_tests: residency_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: residency_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: resource_allocation_map_roundtrip_test...ok
+        beam4pm_codec_tests: resource_allocation_json_roundtrip_test...ok
+        beam4pm_codec_tests: retention_policy_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: retention_policy_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: revenue_attribution_map_roundtrip_test...ok
+        beam4pm_codec_tests: revenue_attribution_json_roundtrip_test...ok
+        beam4pm_codec_tests: revenue_contract_admission_map_roundtrip_test...ok
+        beam4pm_codec_tests: revenue_contract_admission_json_roundtrip_test...ok
+        beam4pm_codec_tests: revenue_schedule_assumption_map_roundtrip_test...ok
+        beam4pm_codec_tests: revenue_schedule_assumption_json_roundtrip_test...ok
+        beam4pm_codec_tests: rfp_response_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: rfp_response_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: rollback_checkpoint_map_roundtrip_test...ok
+        beam4pm_codec_tests: rollback_checkpoint_json_roundtrip_test...ok
+        beam4pm_codec_tests: rollback_decision_map_roundtrip_test...ok
+        beam4pm_codec_tests: rollback_decision_json_roundtrip_test...ok
+        beam4pm_codec_tests: rollback_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: rollback_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: rolling_upgrade_plan_map_roundtrip_test...ok
+        beam4pm_codec_tests: rolling_upgrade_plan_json_roundtrip_test...ok
+        beam4pm_codec_tests: runtime_policy_decision_map_roundtrip_test...ok
+        beam4pm_codec_tests: runtime_policy_decision_json_roundtrip_test...ok
+        beam4pm_codec_tests: sanctions_screening_result_map_roundtrip_test...ok
+        beam4pm_codec_tests: sanctions_screening_result_json_roundtrip_test...ok
+        beam4pm_codec_tests: sbom_inventory_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: sbom_inventory_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: secret_boundary_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: secret_boundary_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: security_addendum_state_map_roundtrip_test...ok
+        beam4pm_codec_tests: security_addendum_state_json_roundtrip_test...ok
+        beam4pm_codec_tests: security_blocker_map_roundtrip_test...ok
+        beam4pm_codec_tests: security_blocker_json_roundtrip_test...ok
+        beam4pm_codec_tests: security_readiness_map_roundtrip_test...ok
+        beam4pm_codec_tests: security_readiness_json_roundtrip_test...ok
+        beam4pm_codec_tests: service_credit_map_roundtrip_test...ok
+        beam4pm_codec_tests: service_credit_json_roundtrip_test...ok
+        beam4pm_codec_tests: service_credit_admission_map_roundtrip_test...ok
+        beam4pm_codec_tests: service_credit_admission_json_roundtrip_test...ok
+        beam4pm_codec_tests: service_health_snapshot_map_roundtrip_test...ok
+        beam4pm_codec_tests: service_health_snapshot_json_roundtrip_test...ok
+        beam4pm_codec_tests: service_level_objective_map_roundtrip_test...ok
+        beam4pm_codec_tests: service_level_objective_json_roundtrip_test...ok
+        beam4pm_codec_tests: service_slo_contract_map_roundtrip_test...ok
+        beam4pm_codec_tests: service_slo_contract_json_roundtrip_test...ok
+        beam4pm_codec_tests: service_span_map_roundtrip_test...ok
+        beam4pm_codec_tests: service_span_json_roundtrip_test...ok
+        beam4pm_codec_tests: showback_allocation_map_roundtrip_test...ok
+        beam4pm_codec_tests: showback_allocation_json_roundtrip_test...ok
+        beam4pm_codec_tests: signature_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: signature_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: sku_definition_map_roundtrip_test...ok
+        beam4pm_codec_tests: sku_definition_json_roundtrip_test...ok
+        beam4pm_codec_tests: sla_offer_admission_map_roundtrip_test...ok
+        beam4pm_codec_tests: sla_offer_admission_json_roundtrip_test...ok
+        beam4pm_codec_tests: sojourn_time_map_roundtrip_test...ok
+        beam4pm_codec_tests: sojourn_time_json_roundtrip_test...ok
+        beam4pm_codec_tests: solution_fit_map_roundtrip_test...ok
+        beam4pm_codec_tests: solution_fit_json_roundtrip_test...ok
+        beam4pm_codec_tests: stakeholder_map_map_roundtrip_test...ok
+        beam4pm_codec_tests: stakeholder_map_json_roundtrip_test...ok
+        beam4pm_codec_tests: stale_receipt_refusal_map_roundtrip_test...ok
+        beam4pm_codec_tests: stale_receipt_refusal_json_roundtrip_test...ok
+        beam4pm_codec_tests: stale_subject_refusal_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: stale_subject_refusal_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: success_plan_map_roundtrip_test...ok
+        beam4pm_codec_tests: success_plan_json_roundtrip_test...ok
+        beam4pm_codec_tests: supervisor_restart_policy_map_roundtrip_test...ok
+        beam4pm_codec_tests: supervisor_restart_policy_json_roundtrip_test...ok
+        beam4pm_codec_tests: support_contract_map_roundtrip_test...ok
+        beam4pm_codec_tests: support_contract_json_roundtrip_test...ok
+        beam4pm_codec_tests: support_diagnostic_bundle_map_roundtrip_test...ok
+        beam4pm_codec_tests: support_diagnostic_bundle_json_roundtrip_test...ok
+        beam4pm_codec_tests: support_escalation_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: support_escalation_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: support_readiness_map_roundtrip_test...ok
+        beam4pm_codec_tests: support_readiness_json_roundtrip_test...ok
+        beam4pm_codec_tests: support_sla_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: support_sla_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: support_tier_admission_map_roundtrip_test...ok
+        beam4pm_codec_tests: support_tier_admission_json_roundtrip_test...ok
+        beam4pm_codec_tests: support_window_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: support_window_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: sync_time_map_roundtrip_test...ok
+        beam4pm_codec_tests: sync_time_json_roundtrip_test...ok
+        beam4pm_codec_tests: target_metric_map_roundtrip_test...ok
+        beam4pm_codec_tests: target_metric_json_roundtrip_test...ok
+        beam4pm_codec_tests: tax_jurisdiction_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: tax_jurisdiction_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: technical_blocker_map_roundtrip_test...ok
+        beam4pm_codec_tests: technical_blocker_json_roundtrip_test...ok
+        beam4pm_codec_tests: tenant_account_map_roundtrip_test...ok
+        beam4pm_codec_tests: tenant_account_json_roundtrip_test...ok
+        beam4pm_codec_tests: tenant_data_partition_map_roundtrip_test...ok
+        beam4pm_codec_tests: tenant_data_partition_json_roundtrip_test...ok
+        beam4pm_codec_tests: tenant_key_scope_map_roundtrip_test...ok
+        beam4pm_codec_tests: tenant_key_scope_json_roundtrip_test...ok
+        beam4pm_codec_tests: tenant_project_map_roundtrip_test...ok
+        beam4pm_codec_tests: tenant_project_json_roundtrip_test...ok
+        beam4pm_codec_tests: tenant_resource_quota_map_roundtrip_test...ok
+        beam4pm_codec_tests: tenant_resource_quota_json_roundtrip_test...ok
+        beam4pm_codec_tests: tenant_runtime_boundary_map_roundtrip_test...ok
+        beam4pm_codec_tests: tenant_runtime_boundary_json_roundtrip_test...ok
+        beam4pm_codec_tests: term_subscription_map_roundtrip_test...ok
+        beam4pm_codec_tests: term_subscription_json_roundtrip_test...ok
+        beam4pm_codec_tests: termination_right_admission_map_roundtrip_test...ok
+        beam4pm_codec_tests: termination_right_admission_json_roundtrip_test...ok
+        beam4pm_codec_tests: time_to_value_map_roundtrip_test...ok
+        beam4pm_codec_tests: time_to_value_json_roundtrip_test...ok
+        beam4pm_codec_tests: toolchain_identity_map_roundtrip_test...ok
+        beam4pm_codec_tests: toolchain_identity_json_roundtrip_test...ok
+        beam4pm_codec_tests: training_readiness_map_roundtrip_test...ok
+        beam4pm_codec_tests: training_readiness_json_roundtrip_test...ok
+        beam4pm_codec_tests: training_scope_admission_map_roundtrip_test...ok
+        beam4pm_codec_tests: training_scope_admission_json_roundtrip_test...ok
+        beam4pm_codec_tests: true_up_policy_map_roundtrip_test...ok
+        beam4pm_codec_tests: true_up_policy_json_roundtrip_test...ok
+        beam4pm_codec_tests: type_edge_map_roundtrip_test...ok
+        beam4pm_codec_tests: type_edge_json_roundtrip_test...ok
+        beam4pm_codec_tests: unsupported_capability_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: unsupported_capability_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: upgrade_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: upgrade_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: upsell_readiness_map_roundtrip_test...ok
+        beam4pm_codec_tests: upsell_readiness_json_roundtrip_test...ok
+        beam4pm_codec_tests: usage_event_map_roundtrip_test...ok
+        beam4pm_codec_tests: usage_event_json_roundtrip_test...ok
+        beam4pm_codec_tests: usage_plan_map_roundtrip_test...ok
+        beam4pm_codec_tests: usage_plan_json_roundtrip_test...ok
+        beam4pm_codec_tests: usage_reconciliation_receipt_map_roundtrip_test...ok
+        beam4pm_codec_tests: usage_reconciliation_receipt_json_roundtrip_test...ok
+        beam4pm_codec_tests: usage_signal_map_roundtrip_test...ok
+        beam4pm_codec_tests: usage_signal_json_roundtrip_test...ok
+        beam4pm_codec_tests: value_baseline_map_roundtrip_test...ok
+        beam4pm_codec_tests: value_baseline_json_roundtrip_test...ok
+        beam4pm_codec_tests: value_driver_map_roundtrip_test...ok
+        beam4pm_codec_tests: value_driver_json_roundtrip_test...ok
+        beam4pm_codec_tests: value_realization_map_roundtrip_test...ok
+        beam4pm_codec_tests: value_realization_json_roundtrip_test...ok
+        beam4pm_codec_tests: value_telemetry_sample_map_roundtrip_test...ok
+        beam4pm_codec_tests: value_telemetry_sample_json_roundtrip_test...ok
+        beam4pm_codec_tests: vendor_registration_state_map_roundtrip_test...ok
+        beam4pm_codec_tests: vendor_registration_state_json_roundtrip_test...ok
+        beam4pm_codec_tests: vendor_risk_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: vendor_risk_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: version_lifecycle_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: version_lifecycle_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: volume_tier_admission_map_roundtrip_test...ok
+        beam4pm_codec_tests: volume_tier_admission_json_roundtrip_test...ok
+        beam4pm_codec_tests: vulnerability_scan_evidence_map_roundtrip_test...ok
+        beam4pm_codec_tests: vulnerability_scan_evidence_json_roundtrip_test...ok
+        beam4pm_codec_tests: workload_backpressure_signal_map_roundtrip_test...ok
+        beam4pm_codec_tests: workload_backpressure_signal_json_roundtrip_test...ok
+        beam4pm_codec_tests: workload_cancellation_receipt_map_roundtrip_test...ok
+        beam4pm_codec_tests: workload_cancellation_receipt_json_roundtrip_test...ok
+        beam4pm_codec_tests: workload_execution_identity_map_roundtrip_test...ok
+        beam4pm_codec_tests: workload_execution_identity_json_roundtrip_test...ok
+        beam4pm_codec_tests: workload_idempotency_key_map_roundtrip_test...ok
+        beam4pm_codec_tests: workload_idempotency_key_json_roundtrip_test...ok
+        beam4pm_codec_tests: workload_queue_depth_map_roundtrip_test...ok
+        beam4pm_codec_tests: workload_queue_depth_json_roundtrip_test...ok
+        beam4pm_codec_tests: workload_retry_policy_map_roundtrip_test...ok
+        beam4pm_codec_tests: workload_retry_policy_json_roundtrip_test...ok
+        beam4pm_codec_tests: workload_timeout_budget_map_roundtrip_test...ok
+        beam4pm_codec_tests: workload_timeout_budget_json_roundtrip_test...ok
+        beam4pm_codec_tests: unknown_record_test...ok
+        beam4pm_codec_tests: missing_field_test...ok
+        beam4pm_codec_tests: invalid_json_test...ok
+        [done in 1.756 s]
+      [done in 1.756 s]
+    module 'beam4pm_discovery'
+      module 'beam4pm_discovery_tests'
+        beam4pm_discovery_tests: traces_exact_test...ok
+        beam4pm_discovery_tests: missing_case_attribute_skipped_test...ok
+        beam4pm_discovery_tests: dfg_exact_test...ok
+        beam4pm_discovery_tests: conformance_fitting_trace_test...[0.001 s] ok
+        beam4pm_discovery_tests: conformance_half_fitting_trace_test...ok
+        beam4pm_discovery_tests: variants_exact_test...ok
+        beam4pm_discovery_tests: variants_groups_identical_sequences_test...ok
+        beam4pm_discovery_tests: variants_empty_traces_test...ok
+        beam4pm_discovery_tests: conformance_single_activity_trace_test...ok
+        [done in 0.028 s]
+      [done in 0.028 s]
+    module 'beam4pm_entitlement'
+      module 'beam4pm_entitlement_tests'
+        beam4pm_entitlement_tests: entitlement_event_ok_test...ok
+        beam4pm_entitlement_tests: entitlement_event_missing_field_test...ok
+        beam4pm_entitlement_tests: entitlement_state_ok_test...ok
+        beam4pm_entitlement_tests: entitlement_state_missing_field_test...ok
+        beam4pm_entitlement_tests: apply_twice_is_idempotent_test...ok
+        beam4pm_entitlement_tests: order_independence_a_then_b_wins_test...ok
+        beam4pm_entitlement_tests: order_independence_b_then_a_wins_test...ok
+        beam4pm_entitlement_tests: duplicate_create_is_noop_test...ok
+        beam4pm_entitlement_tests: cancel_after_suspend_then_duplicate_cancel_test...ok
+        beam4pm_entitlement_tests: wrong_partition_is_refused_test...ok
+        beam4pm_entitlement_tests: unknown_event_type_is_refused_test...ok
+        [done in 0.033 s]
+      [done in 0.033 s]
+    module 'beam4pm_ferroplan'
+    module 'beam4pm_petgraph'
+    module 'beam4pm_precision'
+      module 'beam4pm_precision_tests'
+        beam4pm_precision_tests: dfg_shape_test...ok
+        beam4pm_precision_tests: c1_perfectly_fitting_but_imprecise_test...ok
+        beam4pm_precision_tests: c2_agrees_with_c1_test...ok
+        beam4pm_precision_tests: c3_shorter_trace_test...ok
+        beam4pm_precision_tests: deviant_trace_is_zero_precision_test...ok
+        beam4pm_precision_tests: short_trace_is_one_precision_test...ok
+        beam4pm_precision_tests: empty_model_is_one_precision_test...ok
+        beam4pm_precision_tests: alpha_smoothing_test...ok
+        [done in 0.024 s]
+      [done in 0.024 s]
+    module 'beam4pm_roundtrip'
+    module 'beam4pm_rust4pm'
+    module 'beam4pm_tract'
+    module 'beam4pm_types'
+      module 'beam4pm_types_tests'
+        beam4pm_types_tests: account_discovery_ok_test...ok
+        beam4pm_types_tests: account_discovery_missing_field_test...ok
+        beam4pm_types_tests: account_master_match_ok_test...ok
+        beam4pm_types_tests: account_master_match_missing_field_test...ok
+        beam4pm_types_tests: account_parent_scope_ok_test...ok
+        beam4pm_types_tests: account_parent_scope_missing_field_test...ok
+        beam4pm_types_tests: account_value_realization_ok_test...ok
+        beam4pm_types_tests: account_value_realization_missing_field_test...ok
+        beam4pm_types_tests: action_pin_evidence_ok_test...ok
+        beam4pm_types_tests: action_pin_evidence_missing_field_test...ok
+        beam4pm_types_tests: activation_event_ok_test...ok
+        beam4pm_types_tests: activation_event_missing_field_test...ok
+        beam4pm_types_tests: add_on_bundle_ok_test...ok
+        beam4pm_types_tests: add_on_bundle_missing_field_test...ok
+        beam4pm_types_tests: adoption_milestone_ok_test...ok
+        beam4pm_types_tests: adoption_milestone_missing_field_test...ok
+        beam4pm_types_tests: alignment_move_ok_test...ok
+        beam4pm_types_tests: alignment_move_missing_field_test...ok
+        beam4pm_types_tests: annual_subscription_ok_test...ok
+        beam4pm_types_tests: annual_subscription_missing_field_test...ok
+        beam4pm_types_tests: approval_separation_evidence_ok_test...ok
+        beam4pm_types_tests: approval_separation_evidence_missing_field_test...ok
+        beam4pm_types_tests: architecture_readiness_ok_test...ok
+        beam4pm_types_tests: architecture_readiness_missing_field_test...ok
+        beam4pm_types_tests: architecture_review_evidence_ok_test...ok
+        beam4pm_types_tests: architecture_review_evidence_missing_field_test...ok
+        beam4pm_types_tests: artifact_digest_evidence_ok_test...ok
+        beam4pm_types_tests: artifact_digest_evidence_missing_field_test...ok
+        beam4pm_types_tests: attestation_verification_evidence_ok_test...ok
+        beam4pm_types_tests: attestation_verification_evidence_missing_field_test...ok
+        beam4pm_types_tests: audit_chain_evidence_ok_test...ok
+        beam4pm_types_tests: audit_chain_evidence_missing_field_test...ok
+        beam4pm_types_tests: availability_observation_ok_test...ok
+        beam4pm_types_tests: availability_observation_missing_field_test...ok
+        beam4pm_types_tests: availability_slo_evidence_ok_test...ok
+        beam4pm_types_tests: availability_slo_evidence_missing_field_test...ok
+        beam4pm_types_tests: backup_restore_evidence_ok_test...ok
+        beam4pm_types_tests: backup_restore_evidence_missing_field_test...ok
+        beam4pm_types_tests: baseline_metric_ok_test...ok
+        beam4pm_types_tests: baseline_metric_missing_field_test...ok
+        beam4pm_types_tests: beneficial_owner_evidence_ok_test...ok
+        beam4pm_types_tests: beneficial_owner_evidence_missing_field_test...ok
+        beam4pm_types_tests: billable_usage_identity_ok_test...ok
+        beam4pm_types_tests: billable_usage_identity_missing_field_test...ok
+        beam4pm_types_tests: billing_account_ok_test...ok
+        beam4pm_types_tests: billing_account_missing_field_test...ok
+        beam4pm_types_tests: billing_reconciliation_ok_test...ok
+        beam4pm_types_tests: billing_reconciliation_missing_field_test...ok
+        beam4pm_types_tests: booking_readiness_ok_test...ok
+        beam4pm_types_tests: booking_readiness_missing_field_test...ok
+        beam4pm_types_tests: brce_actuation_receipt_ok_test...ok
+        beam4pm_types_tests: brce_actuation_receipt_missing_field_test...ok
+        beam4pm_types_tests: brce_actuation_request_ok_test...ok
+        beam4pm_types_tests: brce_actuation_request_missing_field_test...ok
+        beam4pm_types_tests: budget_period_alignment_ok_test...ok
+        beam4pm_types_tests: budget_period_alignment_missing_field_test...ok
+        beam4pm_types_tests: business_continuity_evidence_ok_test...ok
+        beam4pm_types_tests: business_continuity_evidence_missing_field_test...ok
+        beam4pm_types_tests: business_outcome_measurement_ok_test...ok
+        beam4pm_types_tests: business_outcome_measurement_missing_field_test...ok
+        beam4pm_types_tests: buying_committee_ok_test...ok
+        beam4pm_types_tests: buying_committee_missing_field_test...ok
+        beam4pm_types_tests: canary_decision_ok_test...ok
+        beam4pm_types_tests: canary_decision_missing_field_test...ok
+        beam4pm_types_tests: canary_evidence_ok_test...ok
+        beam4pm_types_tests: canary_evidence_missing_field_test...ok
+        beam4pm_types_tests: capability_bundle_ok_test...ok
+        beam4pm_types_tests: capability_bundle_missing_field_test...ok
+        beam4pm_types_tests: capability_gap_ok_test...ok
+        beam4pm_types_tests: capability_gap_missing_field_test...ok
+        beam4pm_types_tests: capsule_identity_ok_test...ok
+        beam4pm_types_tests: capsule_identity_missing_field_test...ok
+        beam4pm_types_tests: case_stats_ok_test...ok
+        beam4pm_types_tests: case_stats_missing_field_test...ok
+        beam4pm_types_tests: catalog_release_ok_test...ok
+        beam4pm_types_tests: catalog_release_missing_field_test...ok
+        beam4pm_types_tests: change_control_evidence_ok_test...ok
+        beam4pm_types_tests: change_control_evidence_missing_field_test...ok
+        beam4pm_types_tests: change_order_authority_ok_test...ok
+        beam4pm_types_tests: change_order_authority_missing_field_test...ok
+        beam4pm_types_tests: channel_agreement_ok_test...ok
+        beam4pm_types_tests: channel_agreement_missing_field_test...ok
+        beam4pm_types_tests: chargeback_rule_ok_test...ok
+        beam4pm_types_tests: chargeback_rule_missing_field_test...ok
+        beam4pm_types_tests: cluster_quorum_state_ok_test...ok
+        beam4pm_types_tests: cluster_quorum_state_missing_field_test...ok
+        beam4pm_types_tests: commercial_approval_ok_test...ok
+        beam4pm_types_tests: commercial_approval_missing_field_test...ok
+        beam4pm_types_tests: commercial_artifact_crown_evidence_ok_test...ok
+        beam4pm_types_tests: commercial_artifact_crown_evidence_missing_field_test...ok
+        beam4pm_types_tests: commercial_exception_ok_test...ok
+        beam4pm_types_tests: commercial_exception_missing_field_test...ok
+        beam4pm_types_tests: commercial_execution_receipt_ok_test...ok
+        beam4pm_types_tests: commercial_execution_receipt_missing_field_test...ok
+        beam4pm_types_tests: commercial_forecast_ok_test...ok
+        beam4pm_types_tests: commercial_forecast_missing_field_test...ok
+        beam4pm_types_tests: commercial_outcome_ok_test...ok
+        beam4pm_types_tests: commercial_outcome_missing_field_test...ok
+        beam4pm_types_tests: commercial_quote_ok_test...ok
+        beam4pm_types_tests: commercial_quote_missing_field_test...ok
+        beam4pm_types_tests: commercial_quote_line_ok_test...ok
+        beam4pm_types_tests: commercial_quote_line_missing_field_test...ok
+        beam4pm_types_tests: commercial_value_realization_ok_test...ok
+        beam4pm_types_tests: commercial_value_realization_missing_field_test...ok
+        beam4pm_types_tests: committed_spend_ok_test...ok
+        beam4pm_types_tests: committed_spend_missing_field_test...ok
+        beam4pm_types_tests: committed_spend_admission_ok_test...ok
+        beam4pm_types_tests: committed_spend_admission_missing_field_test...ok
+        beam4pm_types_tests: compatibility_contract_ok_test...ok
+        beam4pm_types_tests: compatibility_contract_missing_field_test...ok
+        beam4pm_types_tests: configuration_export_ok_test...ok
+        beam4pm_types_tests: configuration_export_missing_field_test...ok
+        beam4pm_types_tests: configuration_import_ok_test...ok
+        beam4pm_types_tests: configuration_import_missing_field_test...ok
+        beam4pm_types_tests: conformance_result_ok_test...ok
+        beam4pm_types_tests: conformance_result_missing_field_test...ok
+        beam4pm_types_tests: consumption_pool_ok_test...ok
+        beam4pm_types_tests: consumption_pool_missing_field_test...ok
+        beam4pm_types_tests: consumption_subscription_ok_test...ok
+        beam4pm_types_tests: consumption_subscription_missing_field_test...ok
+        beam4pm_types_tests: contracting_entity_identity_ok_test...ok
+        beam4pm_types_tests: contracting_entity_identity_missing_field_test...ok
+        beam4pm_types_tests: cost_to_serve_measurement_ok_test...ok
+        beam4pm_types_tests: cost_to_serve_measurement_missing_field_test...ok
+        beam4pm_types_tests: crash_recovery_receipt_ok_test...ok
+        beam4pm_types_tests: crash_recovery_receipt_missing_field_test...ok
+        beam4pm_types_tests: credit_risk_admission_ok_test...ok
+        beam4pm_types_tests: credit_risk_admission_missing_field_test...ok
+        beam4pm_types_tests: cross_sell_fit_ok_test...ok
+        beam4pm_types_tests: cross_sell_fit_missing_field_test...ok
+        beam4pm_types_tests: customer_health_ok_test...ok
+        beam4pm_types_tests: customer_health_missing_field_test...ok
+        beam4pm_types_tests: customer_managed_key_evidence_ok_test...ok
+        beam4pm_types_tests: customer_managed_key_evidence_missing_field_test...ok
+        beam4pm_types_tests: data_egress_evidence_ok_test...ok
+        beam4pm_types_tests: data_egress_evidence_missing_field_test...ok
+        beam4pm_types_tests: data_migration_scope_admission_ok_test...ok
+        beam4pm_types_tests: data_migration_scope_admission_missing_field_test...ok
+        beam4pm_types_tests: data_processing_addendum_state_ok_test...ok
+        beam4pm_types_tests: data_processing_addendum_state_missing_field_test...ok
+        beam4pm_types_tests: data_readiness_ok_test...ok
+        beam4pm_types_tests: data_readiness_missing_field_test...ok
+        beam4pm_types_tests: data_residency_policy_ok_test...ok
+        beam4pm_types_tests: data_residency_policy_missing_field_test...ok
+        beam4pm_types_tests: deal_desk_packet_ok_test...ok
+        beam4pm_types_tests: deal_desk_packet_missing_field_test...ok
+        beam4pm_types_tests: deletion_proof_evidence_ok_test...ok
+        beam4pm_types_tests: deletion_proof_evidence_missing_field_test...ok
+        beam4pm_types_tests: demo_run_ok_test...ok
+        beam4pm_types_tests: demo_run_missing_field_test...ok
+        beam4pm_types_tests: demo_scenario_ok_test...ok
+        beam4pm_types_tests: demo_scenario_missing_field_test...ok
+        beam4pm_types_tests: dependency_inventory_evidence_ok_test...ok
+        beam4pm_types_tests: dependency_inventory_evidence_missing_field_test...ok
+        beam4pm_types_tests: deployment_entitlement_ok_test...ok
+        beam4pm_types_tests: deployment_entitlement_missing_field_test...ok
+        beam4pm_types_tests: developer_readiness_ok_test...ok
+        beam4pm_types_tests: developer_readiness_missing_field_test...ok
+        beam4pm_types_tests: dfg_edge_ok_test...ok
+        beam4pm_types_tests: dfg_edge_missing_field_test...ok
+        beam4pm_types_tests: disaster_recovery_evidence_ok_test...ok
+        beam4pm_types_tests: disaster_recovery_evidence_missing_field_test...ok
+        beam4pm_types_tests: discount_schedule_ok_test...ok
+        beam4pm_types_tests: discount_schedule_missing_field_test...ok
+        beam4pm_types_tests: discovery_hypothesis_ok_test...ok
+        beam4pm_types_tests: discovery_hypothesis_missing_field_test...ok
+        beam4pm_types_tests: edition_definition_ok_test...ok
+        beam4pm_types_tests: edition_definition_missing_field_test...ok
+        beam4pm_types_tests: enterprise_order_ok_test...ok
+        beam4pm_types_tests: enterprise_order_missing_field_test...ok
+        beam4pm_types_tests: enterprise_order_line_ok_test...ok
+        beam4pm_types_tests: enterprise_order_line_missing_field_test...ok
+        beam4pm_types_tests: entitlement_denial_receipt_ok_test...ok
+        beam4pm_types_tests: entitlement_denial_receipt_missing_field_test...ok
+        beam4pm_types_tests: entitlement_event_ok_test...ok
+        beam4pm_types_tests: entitlement_event_missing_field_test...ok
+        beam4pm_types_tests: entitlement_evidence_ok_test...ok
+        beam4pm_types_tests: entitlement_evidence_missing_field_test...ok
+        beam4pm_types_tests: entitlement_grant_ok_test...ok
+        beam4pm_types_tests: entitlement_grant_missing_field_test...ok
+        beam4pm_types_tests: entitlement_revocation_ok_test...ok
+        beam4pm_types_tests: entitlement_revocation_missing_field_test...ok
+        beam4pm_types_tests: entitlement_runtime_check_ok_test...ok
+        beam4pm_types_tests: entitlement_runtime_check_missing_field_test...ok
+        beam4pm_types_tests: entitlement_state_ok_test...ok
+        beam4pm_types_tests: entitlement_state_missing_field_test...ok
+        beam4pm_types_tests: environment_identity_ok_test...ok
+        beam4pm_types_tests: environment_identity_missing_field_test...ok
+        beam4pm_types_tests: environment_profile_ok_test...ok
+        beam4pm_types_tests: environment_profile_missing_field_test...ok
+        beam4pm_types_tests: error_budget_state_ok_test...ok
+        beam4pm_types_tests: error_budget_state_missing_field_test...ok
+        beam4pm_types_tests: event_log_ok_test...ok
+        beam4pm_types_tests: event_log_missing_field_test...ok
+        beam4pm_types_tests: event_type_ok_test...ok
+        beam4pm_types_tests: event_type_missing_field_test...ok
+        beam4pm_types_tests: evidence_freshness_evidence_ok_test...ok
+        beam4pm_types_tests: evidence_freshness_evidence_missing_field_test...ok
+        beam4pm_types_tests: exception_authority_ok_test...ok
+        beam4pm_types_tests: exception_authority_missing_field_test...ok
+        beam4pm_types_tests: executive_business_review_ok_test...ok
+        beam4pm_types_tests: executive_business_review_missing_field_test...ok
+        beam4pm_types_tests: executive_sponsor_ok_test...ok
+        beam4pm_types_tests: executive_sponsor_missing_field_test...ok
+        beam4pm_types_tests: expansion_opportunity_ok_test...ok
+        beam4pm_types_tests: expansion_opportunity_missing_field_test...ok
+        beam4pm_types_tests: expansion_option_ok_test...ok
+        beam4pm_types_tests: expansion_option_missing_field_test...ok
+        beam4pm_types_tests: expansion_receipt_ok_test...ok
+        beam4pm_types_tests: expansion_receipt_missing_field_test...ok
+        beam4pm_types_tests: expansion_signal_ok_test...ok
+        beam4pm_types_tests: expansion_signal_missing_field_test...ok
+        beam4pm_types_tests: forged_receipt_refusal_ok_test...ok
+        beam4pm_types_tests: forged_receipt_refusal_missing_field_test...ok
+        beam4pm_types_tests: funding_approval_chain_ok_test...ok
+        beam4pm_types_tests: funding_approval_chain_missing_field_test...ok
+        beam4pm_types_tests: heuristic_arc_ok_test...ok
+        beam4pm_types_tests: heuristic_arc_missing_field_test...ok
+        beam4pm_types_tests: implementation_fee_admission_ok_test...ok
+        beam4pm_types_tests: implementation_fee_admission_missing_field_test...ok
+        beam4pm_types_tests: incident_acknowledgement_ok_test...ok
+        beam4pm_types_tests: incident_acknowledgement_missing_field_test...ok
+        beam4pm_types_tests: incident_detection_event_ok_test...ok
+        beam4pm_types_tests: incident_detection_event_missing_field_test...ok
+        beam4pm_types_tests: incident_response_evidence_ok_test...ok
+        beam4pm_types_tests: incident_response_evidence_missing_field_test...ok
+        beam4pm_types_tests: indemnity_scope_admission_ok_test...ok
+        beam4pm_types_tests: indemnity_scope_admission_missing_field_test...ok
+        beam4pm_types_tests: insurance_requirement_ok_test...ok
+        beam4pm_types_tests: insurance_requirement_missing_field_test...ok
+        beam4pm_types_tests: integration_readiness_ok_test...ok
+        beam4pm_types_tests: integration_readiness_missing_field_test...ok
+        beam4pm_types_tests: integration_scope_admission_ok_test...ok
+        beam4pm_types_tests: integration_scope_admission_missing_field_test...ok
+        beam4pm_types_tests: invoice_entity_identity_ok_test...ok
+        beam4pm_types_tests: invoice_entity_identity_missing_field_test...ok
+        beam4pm_types_tests: invoice_schedule_ok_test...ok
+        beam4pm_types_tests: invoice_schedule_missing_field_test...ok
+        beam4pm_types_tests: k8s_object_ref_ok_test...ok
+        beam4pm_types_tests: k8s_object_ref_missing_field_test...ok
+        beam4pm_types_tests: latency_budget_observation_ok_test...ok
+        beam4pm_types_tests: latency_budget_observation_missing_field_test...ok
+        beam4pm_types_tests: least_authority_evidence_ok_test...ok
+        beam4pm_types_tests: least_authority_evidence_missing_field_test...ok
+        beam4pm_types_tests: legal_blocker_ok_test...ok
+        beam4pm_types_tests: legal_blocker_missing_field_test...ok
+        beam4pm_types_tests: liability_cap_admission_ok_test...ok
+        beam4pm_types_tests: liability_cap_admission_missing_field_test...ok
+        beam4pm_types_tests: license_evidence_ok_test...ok
+        beam4pm_types_tests: license_evidence_missing_field_test...ok
+        beam4pm_types_tests: log_trace_ok_test...ok
+        beam4pm_types_tests: log_trace_missing_field_test...ok
+        beam4pm_types_tests: master_service_agreement_state_ok_test...ok
+        beam4pm_types_tests: master_service_agreement_state_missing_field_test...ok
+        beam4pm_types_tests: metered_usage_sample_ok_test...ok
+        beam4pm_types_tests: metered_usage_sample_missing_field_test...ok
+        beam4pm_types_tests: migration_contract_ok_test...ok
+        beam4pm_types_tests: migration_contract_missing_field_test...ok
+        beam4pm_types_tests: migration_readiness_ok_test...ok
+        beam4pm_types_tests: migration_readiness_missing_field_test...ok
+        beam4pm_types_tests: minimum_term_admission_ok_test...ok
+        beam4pm_types_tests: minimum_term_admission_missing_field_test...ok
+        beam4pm_types_tests: multiarch_evidence_ok_test...ok
+        beam4pm_types_tests: multiarch_evidence_missing_field_test...ok
+        beam4pm_types_tests: mutable_identity_refusal_evidence_ok_test...ok
+        beam4pm_types_tests: mutable_identity_refusal_evidence_missing_field_test...ok
+        beam4pm_types_tests: node_failover_event_ok_test...ok
+        beam4pm_types_tests: node_failover_event_missing_field_test...ok
+        beam4pm_types_tests: object_attribute_change_ok_test...ok
+        beam4pm_types_tests: object_attribute_change_missing_field_test...ok
+        beam4pm_types_tests: object_type_ok_test...ok
+        beam4pm_types_tests: object_type_missing_field_test...ok
+        beam4pm_types_tests: objection_ok_test...ok
+        beam4pm_types_tests: objection_missing_field_test...ok
+        beam4pm_types_tests: objection_resolution_ok_test...ok
+        beam4pm_types_tests: objection_resolution_missing_field_test...ok
+        beam4pm_types_tests: oc_declare_constraint_ok_test...ok
+        beam4pm_types_tests: oc_declare_constraint_missing_field_test...ok
+        beam4pm_types_tests: ocel_attribute_ok_test...ok
+        beam4pm_types_tests: ocel_attribute_missing_field_test...ok
+        beam4pm_types_tests: ocel_event_ok_test...ok
+        beam4pm_types_tests: ocel_event_missing_field_test...ok
+        beam4pm_types_tests: ocel_object_ok_test...ok
+        beam4pm_types_tests: ocel_object_missing_field_test...ok
+        beam4pm_types_tests: ocel_relationship_ok_test...ok
+        beam4pm_types_tests: ocel_relationship_missing_field_test...ok
+        beam4pm_types_tests: oci_manifest_evidence_ok_test...ok
+        beam4pm_types_tests: oci_manifest_evidence_missing_field_test...ok
+        beam4pm_types_tests: offline_bundle_evidence_ok_test...ok
+        beam4pm_types_tests: offline_bundle_evidence_missing_field_test...ok
+        beam4pm_types_tests: operator_readiness_ok_test...ok
+        beam4pm_types_tests: operator_readiness_missing_field_test...ok
+        beam4pm_types_tests: opportunity_currency_contract_ok_test...ok
+        beam4pm_types_tests: opportunity_currency_contract_missing_field_test...ok
+        beam4pm_types_tests: opportunity_value_range_ok_test...ok
+        beam4pm_types_tests: opportunity_value_range_missing_field_test...ok
+        beam4pm_types_tests: order_form_admission_ok_test...ok
+        beam4pm_types_tests: order_form_admission_missing_field_test...ok
+        beam4pm_types_tests: overage_policy_ok_test...ok
+        beam4pm_types_tests: overage_policy_missing_field_test...ok
+        beam4pm_types_tests: paid_workload_outcome_receipt_ok_test...ok
+        beam4pm_types_tests: paid_workload_outcome_receipt_missing_field_test...ok
+        beam4pm_types_tests: path_schema_ok_test...ok
+        beam4pm_types_tests: path_schema_missing_field_test...ok
+        beam4pm_types_tests: path_schema_query_ok_test...ok
+        beam4pm_types_tests: path_schema_query_missing_field_test...ok
+        beam4pm_types_tests: payment_terms_ok_test...ok
+        beam4pm_types_tests: payment_terms_missing_field_test...ok
+        beam4pm_types_tests: payment_terms_admission_ok_test...ok
+        beam4pm_types_tests: payment_terms_admission_missing_field_test...ok
+        beam4pm_types_tests: performance_slo_evidence_ok_test...ok
+        beam4pm_types_tests: performance_slo_evidence_missing_field_test...ok
+        beam4pm_types_tests: petri_arc_ok_test...ok
+        beam4pm_types_tests: petri_arc_missing_field_test...ok
+        beam4pm_types_tests: petri_place_ok_test...ok
+        beam4pm_types_tests: petri_place_missing_field_test...ok
+        beam4pm_types_tests: petri_transition_ok_test...ok
+        beam4pm_types_tests: petri_transition_missing_field_test...ok
+        beam4pm_types_tests: planning_action_ok_test...ok
+        beam4pm_types_tests: planning_action_missing_field_test...ok
+        beam4pm_types_tests: planning_state_ok_test...ok
+        beam4pm_types_tests: planning_state_missing_field_test...ok
+        beam4pm_types_tests: poc_exit_criteria_ok_test...ok
+        beam4pm_types_tests: poc_exit_criteria_missing_field_test...ok
+        beam4pm_types_tests: poc_risk_ok_test...ok
+        beam4pm_types_tests: poc_risk_missing_field_test...ok
+        beam4pm_types_tests: poc_scope_ok_test...ok
+        beam4pm_types_tests: poc_scope_missing_field_test...ok
+        beam4pm_types_tests: poc_timeline_ok_test...ok
+        beam4pm_types_tests: poc_timeline_missing_field_test...ok
+        beam4pm_types_tests: policy_decision_ok_test...ok
+        beam4pm_types_tests: policy_decision_missing_field_test...ok
+        beam4pm_types_tests: powl_choice_graph_edge_ok_test...ok
+        beam4pm_types_tests: powl_choice_graph_edge_missing_field_test...ok
+        beam4pm_types_tests: powl_freq_ok_test...ok
+        beam4pm_types_tests: powl_freq_missing_field_test...ok
+        beam4pm_types_tests: powl_leaf_ok_test...ok
+        beam4pm_types_tests: powl_leaf_missing_field_test...ok
+        beam4pm_types_tests: powl_partial_order_edge_ok_test...ok
+        beam4pm_types_tests: powl_partial_order_edge_missing_field_test...ok
+        beam4pm_types_tests: pricing_basis_contract_ok_test...ok
+        beam4pm_types_tests: pricing_basis_contract_missing_field_test...ok
+        beam4pm_types_tests: privacy_classification_evidence_ok_test...ok
+        beam4pm_types_tests: privacy_classification_evidence_missing_field_test...ok
+        beam4pm_types_tests: private_offer_ok_test...ok
+        beam4pm_types_tests: private_offer_missing_field_test...ok
+        beam4pm_types_tests: private_registry_evidence_ok_test...ok
+        beam4pm_types_tests: private_registry_evidence_missing_field_test...ok
+        beam4pm_types_tests: process_variant_ok_test...ok
+        beam4pm_types_tests: process_variant_missing_field_test...ok
+        beam4pm_types_tests: procurement_acceptance_evidence_ok_test...ok
+        beam4pm_types_tests: procurement_acceptance_evidence_missing_field_test...ok
+        beam4pm_types_tests: procurement_blocker_ok_test...ok
+        beam4pm_types_tests: procurement_blocker_missing_field_test...ok
+        beam4pm_types_tests: procurement_channel_selection_ok_test...ok
+        beam4pm_types_tests: procurement_channel_selection_missing_field_test...ok
+        beam4pm_types_tests: procurement_readiness_ok_test...ok
+        beam4pm_types_tests: procurement_readiness_missing_field_test...ok
+        beam4pm_types_tests: production_readiness_ok_test...ok
+        beam4pm_types_tests: production_readiness_missing_field_test...ok
+        beam4pm_types_tests: proof_of_value_budget_ok_test...ok
+        beam4pm_types_tests: proof_of_value_budget_missing_field_test...ok
+        beam4pm_types_tests: proof_of_value_exit_gate_ok_test...ok
+        beam4pm_types_tests: proof_of_value_exit_gate_missing_field_test...ok
+        beam4pm_types_tests: provenance_binding_evidence_ok_test...ok
+        beam4pm_types_tests: provenance_binding_evidence_missing_field_test...ok
+        beam4pm_types_tests: purchase_order_binding_ok_test...ok
+        beam4pm_types_tests: purchase_order_binding_missing_field_test...ok
+        beam4pm_types_tests: purchase_order_requirement_ok_test...ok
+        beam4pm_types_tests: purchase_order_requirement_missing_field_test...ok
+        beam4pm_types_tests: purchasing_entity_identity_ok_test...ok
+        beam4pm_types_tests: purchasing_entity_identity_missing_field_test...ok
+        beam4pm_types_tests: queue_snapshot_ok_test...ok
+        beam4pm_types_tests: queue_snapshot_missing_field_test...ok
+        beam4pm_types_tests: quota_policy_ok_test...ok
+        beam4pm_types_tests: quota_policy_missing_field_test...ok
+        beam4pm_types_tests: ramp_commitment_ok_test...ok
+        beam4pm_types_tests: ramp_commitment_missing_field_test...ok
+        beam4pm_types_tests: receipt_replay_evidence_ok_test...ok
+        beam4pm_types_tests: receipt_replay_evidence_missing_field_test...ok
+        beam4pm_types_tests: receipt_replay_request_ok_test...ok
+        beam4pm_types_tests: receipt_replay_request_missing_field_test...ok
+        beam4pm_types_tests: receipt_signature_ok_test...ok
+        beam4pm_types_tests: receipt_signature_missing_field_test...ok
+        beam4pm_types_tests: receipt_subject_binding_ok_test...ok
+        beam4pm_types_tests: receipt_subject_binding_missing_field_test...ok
+        beam4pm_types_tests: receipt_verification_ok_test...ok
+        beam4pm_types_tests: receipt_verification_missing_field_test...ok
+        beam4pm_types_tests: recovery_plan_ok_test...ok
+        beam4pm_types_tests: recovery_plan_missing_field_test...ok
+        beam4pm_types_tests: recovery_point_receipt_ok_test...ok
+        beam4pm_types_tests: recovery_point_receipt_missing_field_test...ok
+        beam4pm_types_tests: recovery_time_receipt_ok_test...ok
+        beam4pm_types_tests: recovery_time_receipt_missing_field_test...ok
+        beam4pm_types_tests: remediation_sla_evidence_ok_test...ok
+        beam4pm_types_tests: remediation_sla_evidence_missing_field_test...ok
+        beam4pm_types_tests: renewal_evidence_ok_test...ok
+        beam4pm_types_tests: renewal_evidence_missing_field_test...ok
+        beam4pm_types_tests: renewal_health_ok_test...ok
+        beam4pm_types_tests: renewal_health_missing_field_test...ok
+        beam4pm_types_tests: renewal_option_ok_test...ok
+        beam4pm_types_tests: renewal_option_missing_field_test...ok
+        beam4pm_types_tests: renewal_risk_ok_test...ok
+        beam4pm_types_tests: renewal_risk_missing_field_test...ok
+        beam4pm_types_tests: renewal_term_admission_ok_test...ok
+        beam4pm_types_tests: renewal_term_admission_missing_field_test...ok
+        beam4pm_types_tests: replay_environment_identity_ok_test...ok
+        beam4pm_types_tests: replay_environment_identity_missing_field_test...ok
+        beam4pm_types_tests: reproducible_build_evidence_ok_test...ok
+        beam4pm_types_tests: reproducible_build_evidence_missing_field_test...ok
+        beam4pm_types_tests: reseller_authorization_ok_test...ok
+        beam4pm_types_tests: reseller_authorization_missing_field_test...ok
+        beam4pm_types_tests: residency_evidence_ok_test...ok
+        beam4pm_types_tests: residency_evidence_missing_field_test...ok
+        beam4pm_types_tests: resource_allocation_ok_test...ok
+        beam4pm_types_tests: resource_allocation_missing_field_test...ok
+        beam4pm_types_tests: retention_policy_evidence_ok_test...ok
+        beam4pm_types_tests: retention_policy_evidence_missing_field_test...ok
+        beam4pm_types_tests: revenue_attribution_ok_test...ok
+        beam4pm_types_tests: revenue_attribution_missing_field_test...ok
+        beam4pm_types_tests: revenue_contract_admission_ok_test...ok
+        beam4pm_types_tests: revenue_contract_admission_missing_field_test...ok
+        beam4pm_types_tests: revenue_schedule_assumption_ok_test...ok
+        beam4pm_types_tests: revenue_schedule_assumption_missing_field_test...ok
+        beam4pm_types_tests: rfp_response_evidence_ok_test...ok
+        beam4pm_types_tests: rfp_response_evidence_missing_field_test...ok
+        beam4pm_types_tests: rollback_checkpoint_ok_test...ok
+        beam4pm_types_tests: rollback_checkpoint_missing_field_test...ok
+        beam4pm_types_tests: rollback_decision_ok_test...ok
+        beam4pm_types_tests: rollback_decision_missing_field_test...ok
+        beam4pm_types_tests: rollback_evidence_ok_test...ok
+        beam4pm_types_tests: rollback_evidence_missing_field_test...ok
+        beam4pm_types_tests: rolling_upgrade_plan_ok_test...ok
+        beam4pm_types_tests: rolling_upgrade_plan_missing_field_test...ok
+        beam4pm_types_tests: runtime_policy_decision_ok_test...ok
+        beam4pm_types_tests: runtime_policy_decision_missing_field_test...ok
+        beam4pm_types_tests: sanctions_screening_result_ok_test...ok
+        beam4pm_types_tests: sanctions_screening_result_missing_field_test...ok
+        beam4pm_types_tests: sbom_inventory_evidence_ok_test...ok
+        beam4pm_types_tests: sbom_inventory_evidence_missing_field_test...ok
+        beam4pm_types_tests: secret_boundary_evidence_ok_test...ok
+        beam4pm_types_tests: secret_boundary_evidence_missing_field_test...ok
+        beam4pm_types_tests: security_addendum_state_ok_test...ok
+        beam4pm_types_tests: security_addendum_state_missing_field_test...ok
+        beam4pm_types_tests: security_blocker_ok_test...ok
+        beam4pm_types_tests: security_blocker_missing_field_test...ok
+        beam4pm_types_tests: security_readiness_ok_test...ok
+        beam4pm_types_tests: security_readiness_missing_field_test...ok
+        beam4pm_types_tests: service_credit_ok_test...ok
+        beam4pm_types_tests: service_credit_missing_field_test...ok
+        beam4pm_types_tests: service_credit_admission_ok_test...ok
+        beam4pm_types_tests: service_credit_admission_missing_field_test...ok
+        beam4pm_types_tests: service_health_snapshot_ok_test...ok
+        beam4pm_types_tests: service_health_snapshot_missing_field_test...ok
+        beam4pm_types_tests: service_level_objective_ok_test...ok
+        beam4pm_types_tests: service_level_objective_missing_field_test...ok
+        beam4pm_types_tests: service_slo_contract_ok_test...ok
+        beam4pm_types_tests: service_slo_contract_missing_field_test...ok
+        beam4pm_types_tests: service_span_ok_test...ok
+        beam4pm_types_tests: service_span_missing_field_test...ok
+        beam4pm_types_tests: showback_allocation_ok_test...ok
+        beam4pm_types_tests: showback_allocation_missing_field_test...ok
+        beam4pm_types_tests: signature_evidence_ok_test...ok
+        beam4pm_types_tests: signature_evidence_missing_field_test...ok
+        beam4pm_types_tests: sku_definition_ok_test...ok
+        beam4pm_types_tests: sku_definition_missing_field_test...ok
+        beam4pm_types_tests: sla_offer_admission_ok_test...ok
+        beam4pm_types_tests: sla_offer_admission_missing_field_test...ok
+        beam4pm_types_tests: sojourn_time_ok_test...ok
+        beam4pm_types_tests: sojourn_time_missing_field_test...ok
+        beam4pm_types_tests: solution_fit_ok_test...ok
+        beam4pm_types_tests: solution_fit_missing_field_test...ok
+        beam4pm_types_tests: stakeholder_map_ok_test...ok
+        beam4pm_types_tests: stakeholder_map_missing_field_test...ok
+        beam4pm_types_tests: stale_receipt_refusal_ok_test...ok
+        beam4pm_types_tests: stale_receipt_refusal_missing_field_test...ok
+        beam4pm_types_tests: stale_subject_refusal_evidence_ok_test...ok
+        beam4pm_types_tests: stale_subject_refusal_evidence_missing_field_test...ok
+        beam4pm_types_tests: success_plan_ok_test...ok
+        beam4pm_types_tests: success_plan_missing_field_test...ok
+        beam4pm_types_tests: supervisor_restart_policy_ok_test...ok
+        beam4pm_types_tests: supervisor_restart_policy_missing_field_test...ok
+        beam4pm_types_tests: support_contract_ok_test...ok
+        beam4pm_types_tests: support_contract_missing_field_test...ok
+        beam4pm_types_tests: support_diagnostic_bundle_ok_test...ok
+        beam4pm_types_tests: support_diagnostic_bundle_missing_field_test...ok
+        beam4pm_types_tests: support_escalation_evidence_ok_test...ok
+        beam4pm_types_tests: support_escalation_evidence_missing_field_test...ok
+        beam4pm_types_tests: support_readiness_ok_test...ok
+        beam4pm_types_tests: support_readiness_missing_field_test...ok
+        beam4pm_types_tests: support_sla_evidence_ok_test...ok
+        beam4pm_types_tests: support_sla_evidence_missing_field_test...ok
+        beam4pm_types_tests: support_tier_admission_ok_test...ok
+        beam4pm_types_tests: support_tier_admission_missing_field_test...ok
+        beam4pm_types_tests: support_window_evidence_ok_test...ok
+        beam4pm_types_tests: support_window_evidence_missing_field_test...ok
+        beam4pm_types_tests: sync_time_ok_test...ok
+        beam4pm_types_tests: sync_time_missing_field_test...ok
+        beam4pm_types_tests: target_metric_ok_test...ok
+        beam4pm_types_tests: target_metric_missing_field_test...ok
+        beam4pm_types_tests: tax_jurisdiction_evidence_ok_test...ok
+        beam4pm_types_tests: tax_jurisdiction_evidence_missing_field_test...ok
+        beam4pm_types_tests: technical_blocker_ok_test...ok
+        beam4pm_types_tests: technical_blocker_missing_field_test...ok
+        beam4pm_types_tests: tenant_account_ok_test...ok
+        beam4pm_types_tests: tenant_account_missing_field_test...ok
+        beam4pm_types_tests: tenant_data_partition_ok_test...ok
+        beam4pm_types_tests: tenant_data_partition_missing_field_test...ok
+        beam4pm_types_tests: tenant_key_scope_ok_test...ok
+        beam4pm_types_tests: tenant_key_scope_missing_field_test...ok
+        beam4pm_types_tests: tenant_project_ok_test...ok
+        beam4pm_types_tests: tenant_project_missing_field_test...ok
+        beam4pm_types_tests: tenant_resource_quota_ok_test...ok
+        beam4pm_types_tests: tenant_resource_quota_missing_field_test...ok
+        beam4pm_types_tests: tenant_runtime_boundary_ok_test...ok
+        beam4pm_types_tests: tenant_runtime_boundary_missing_field_test...ok
+        beam4pm_types_tests: term_subscription_ok_test...ok
+        beam4pm_types_tests: term_subscription_missing_field_test...ok
+        beam4pm_types_tests: termination_right_admission_ok_test...ok
+        beam4pm_types_tests: termination_right_admission_missing_field_test...ok
+        beam4pm_types_tests: time_to_value_ok_test...ok
+        beam4pm_types_tests: time_to_value_missing_field_test...ok
+        beam4pm_types_tests: toolchain_identity_ok_test...ok
+        beam4pm_types_tests: toolchain_identity_missing_field_test...ok
+        beam4pm_types_tests: training_readiness_ok_test...ok
+        beam4pm_types_tests: training_readiness_missing_field_test...ok
+        beam4pm_types_tests: training_scope_admission_ok_test...ok
+        beam4pm_types_tests: training_scope_admission_missing_field_test...ok
+        beam4pm_types_tests: true_up_policy_ok_test...ok
+        beam4pm_types_tests: true_up_policy_missing_field_test...ok
+        beam4pm_types_tests: type_edge_ok_test...ok
+        beam4pm_types_tests: type_edge_missing_field_test...ok
+        beam4pm_types_tests: unsupported_capability_evidence_ok_test...ok
+        beam4pm_types_tests: unsupported_capability_evidence_missing_field_test...ok
+        beam4pm_types_tests: upgrade_evidence_ok_test...ok
+        beam4pm_types_tests: upgrade_evidence_missing_field_test...ok
+        beam4pm_types_tests: upsell_readiness_ok_test...ok
+        beam4pm_types_tests: upsell_readiness_missing_field_test...ok
+        beam4pm_types_tests: usage_event_ok_test...ok
+        beam4pm_types_tests: usage_event_missing_field_test...ok
+        beam4pm_types_tests: usage_plan_ok_test...ok
+        beam4pm_types_tests: usage_plan_missing_field_test...ok
+        beam4pm_types_tests: usage_reconciliation_receipt_ok_test...ok
+        beam4pm_types_tests: usage_reconciliation_receipt_missing_field_test...ok
+        beam4pm_types_tests: usage_signal_ok_test...ok
+        beam4pm_types_tests: usage_signal_missing_field_test...ok
+        beam4pm_types_tests: value_baseline_ok_test...ok
+        beam4pm_types_tests: value_baseline_missing_field_test...ok
+        beam4pm_types_tests: value_driver_ok_test...ok
+        beam4pm_types_tests: value_driver_missing_field_test...ok
+        beam4pm_types_tests: value_realization_ok_test...ok
+        beam4pm_types_tests: value_realization_missing_field_test...ok
+        beam4pm_types_tests: value_telemetry_sample_ok_test...ok
+        beam4pm_types_tests: value_telemetry_sample_missing_field_test...ok
+        beam4pm_types_tests: vendor_registration_state_ok_test...ok
+        beam4pm_types_tests: vendor_registration_state_missing_field_test...ok
+        beam4pm_types_tests: vendor_risk_evidence_ok_test...ok
+        beam4pm_types_tests: vendor_risk_evidence_missing_field_test...ok
+        beam4pm_types_tests: version_lifecycle_evidence_ok_test...ok
+        beam4pm_types_tests: version_lifecycle_evidence_missing_field_test...ok
+        beam4pm_types_tests: volume_tier_admission_ok_test...ok
+        beam4pm_types_tests: volume_tier_admission_missing_field_test...ok
+        beam4pm_types_tests: vulnerability_scan_evidence_ok_test...ok
+        beam4pm_types_tests: vulnerability_scan_evidence_missing_field_test...ok
+        beam4pm_types_tests: workload_backpressure_signal_ok_test...ok
+        beam4pm_types_tests: workload_backpressure_signal_missing_field_test...ok
+        beam4pm_types_tests: workload_cancellation_receipt_ok_test...ok
+        beam4pm_types_tests: workload_cancellation_receipt_missing_field_test...ok
+        beam4pm_types_tests: workload_execution_identity_ok_test...ok
+        beam4pm_types_tests: workload_execution_identity_missing_field_test...ok
+        beam4pm_types_tests: workload_idempotency_key_ok_test...ok
+        beam4pm_types_tests: workload_idempotency_key_missing_field_test...ok
+        beam4pm_types_tests: workload_queue_depth_ok_test...ok
+        beam4pm_types_tests: workload_queue_depth_missing_field_test...ok
+        beam4pm_types_tests: workload_retry_policy_ok_test...ok
+        beam4pm_types_tests: workload_retry_policy_missing_field_test...ok
+        beam4pm_types_tests: workload_timeout_budget_ok_test...ok
+        beam4pm_types_tests: workload_timeout_budget_missing_field_test...ok
+        [done in 1.742 s]
+      [done in 1.742 s]
+    module 'beam4pm_types_manifest'
+      module 'beam4pm_types_manifest_tests'
+        beam4pm_types_manifest_tests: record_names_count_test...ok
+        beam4pm_types_manifest_tests: account_discovery_fields_test...ok
+        beam4pm_types_manifest_tests: account_master_match_fields_test...ok
+        beam4pm_types_manifest_tests: account_parent_scope_fields_test...ok
+        beam4pm_types_manifest_tests: account_value_realization_fields_test...ok
+        beam4pm_types_manifest_tests: action_pin_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: activation_event_fields_test...ok
+        beam4pm_types_manifest_tests: add_on_bundle_fields_test...ok
+        beam4pm_types_manifest_tests: adoption_milestone_fields_test...ok
+        beam4pm_types_manifest_tests: alignment_move_fields_test...ok
+        beam4pm_types_manifest_tests: annual_subscription_fields_test...ok
+        beam4pm_types_manifest_tests: approval_separation_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: architecture_readiness_fields_test...ok
+        beam4pm_types_manifest_tests: architecture_review_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: artifact_digest_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: attestation_verification_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: audit_chain_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: availability_observation_fields_test...ok
+        beam4pm_types_manifest_tests: availability_slo_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: backup_restore_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: baseline_metric_fields_test...ok
+        beam4pm_types_manifest_tests: beneficial_owner_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: billable_usage_identity_fields_test...ok
+        beam4pm_types_manifest_tests: billing_account_fields_test...ok
+        beam4pm_types_manifest_tests: billing_reconciliation_fields_test...ok
+        beam4pm_types_manifest_tests: booking_readiness_fields_test...ok
+        beam4pm_types_manifest_tests: brce_actuation_receipt_fields_test...ok
+        beam4pm_types_manifest_tests: brce_actuation_request_fields_test...ok
+        beam4pm_types_manifest_tests: budget_period_alignment_fields_test...ok
+        beam4pm_types_manifest_tests: business_continuity_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: business_outcome_measurement_fields_test...ok
+        beam4pm_types_manifest_tests: buying_committee_fields_test...ok
+        beam4pm_types_manifest_tests: canary_decision_fields_test...ok
+        beam4pm_types_manifest_tests: canary_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: capability_bundle_fields_test...ok
+        beam4pm_types_manifest_tests: capability_gap_fields_test...ok
+        beam4pm_types_manifest_tests: capsule_identity_fields_test...ok
+        beam4pm_types_manifest_tests: case_stats_fields_test...ok
+        beam4pm_types_manifest_tests: catalog_release_fields_test...ok
+        beam4pm_types_manifest_tests: change_control_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: change_order_authority_fields_test...ok
+        beam4pm_types_manifest_tests: channel_agreement_fields_test...ok
+        beam4pm_types_manifest_tests: chargeback_rule_fields_test...ok
+        beam4pm_types_manifest_tests: cluster_quorum_state_fields_test...ok
+        beam4pm_types_manifest_tests: commercial_approval_fields_test...ok
+        beam4pm_types_manifest_tests: commercial_artifact_crown_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: commercial_exception_fields_test...ok
+        beam4pm_types_manifest_tests: commercial_execution_receipt_fields_test...ok
+        beam4pm_types_manifest_tests: commercial_forecast_fields_test...ok
+        beam4pm_types_manifest_tests: commercial_outcome_fields_test...ok
+        beam4pm_types_manifest_tests: commercial_quote_fields_test...ok
+        beam4pm_types_manifest_tests: commercial_quote_line_fields_test...ok
+        beam4pm_types_manifest_tests: commercial_value_realization_fields_test...ok
+        beam4pm_types_manifest_tests: committed_spend_fields_test...ok
+        beam4pm_types_manifest_tests: committed_spend_admission_fields_test...ok
+        beam4pm_types_manifest_tests: compatibility_contract_fields_test...ok
+        beam4pm_types_manifest_tests: configuration_export_fields_test...ok
+        beam4pm_types_manifest_tests: configuration_import_fields_test...ok
+        beam4pm_types_manifest_tests: conformance_result_fields_test...ok
+        beam4pm_types_manifest_tests: consumption_pool_fields_test...ok
+        beam4pm_types_manifest_tests: consumption_subscription_fields_test...ok
+        beam4pm_types_manifest_tests: contracting_entity_identity_fields_test...ok
+        beam4pm_types_manifest_tests: cost_to_serve_measurement_fields_test...ok
+        beam4pm_types_manifest_tests: crash_recovery_receipt_fields_test...ok
+        beam4pm_types_manifest_tests: credit_risk_admission_fields_test...ok
+        beam4pm_types_manifest_tests: cross_sell_fit_fields_test...ok
+        beam4pm_types_manifest_tests: customer_health_fields_test...ok
+        beam4pm_types_manifest_tests: customer_managed_key_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: data_egress_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: data_migration_scope_admission_fields_test...ok
+        beam4pm_types_manifest_tests: data_processing_addendum_state_fields_test...ok
+        beam4pm_types_manifest_tests: data_readiness_fields_test...ok
+        beam4pm_types_manifest_tests: data_residency_policy_fields_test...ok
+        beam4pm_types_manifest_tests: deal_desk_packet_fields_test...ok
+        beam4pm_types_manifest_tests: deletion_proof_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: demo_run_fields_test...ok
+        beam4pm_types_manifest_tests: demo_scenario_fields_test...ok
+        beam4pm_types_manifest_tests: dependency_inventory_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: deployment_entitlement_fields_test...ok
+        beam4pm_types_manifest_tests: developer_readiness_fields_test...ok
+        beam4pm_types_manifest_tests: dfg_edge_fields_test...ok
+        beam4pm_types_manifest_tests: disaster_recovery_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: discount_schedule_fields_test...ok
+        beam4pm_types_manifest_tests: discovery_hypothesis_fields_test...ok
+        beam4pm_types_manifest_tests: edition_definition_fields_test...ok
+        beam4pm_types_manifest_tests: enterprise_order_fields_test...ok
+        beam4pm_types_manifest_tests: enterprise_order_line_fields_test...ok
+        beam4pm_types_manifest_tests: entitlement_denial_receipt_fields_test...ok
+        beam4pm_types_manifest_tests: entitlement_event_fields_test...ok
+        beam4pm_types_manifest_tests: entitlement_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: entitlement_grant_fields_test...ok
+        beam4pm_types_manifest_tests: entitlement_revocation_fields_test...ok
+        beam4pm_types_manifest_tests: entitlement_runtime_check_fields_test...ok
+        beam4pm_types_manifest_tests: entitlement_state_fields_test...ok
+        beam4pm_types_manifest_tests: environment_identity_fields_test...ok
+        beam4pm_types_manifest_tests: environment_profile_fields_test...ok
+        beam4pm_types_manifest_tests: error_budget_state_fields_test...ok
+        beam4pm_types_manifest_tests: event_log_fields_test...ok
+        beam4pm_types_manifest_tests: event_type_fields_test...ok
+        beam4pm_types_manifest_tests: evidence_freshness_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: exception_authority_fields_test...ok
+        beam4pm_types_manifest_tests: executive_business_review_fields_test...ok
+        beam4pm_types_manifest_tests: executive_sponsor_fields_test...ok
+        beam4pm_types_manifest_tests: expansion_opportunity_fields_test...ok
+        beam4pm_types_manifest_tests: expansion_option_fields_test...ok
+        beam4pm_types_manifest_tests: expansion_receipt_fields_test...ok
+        beam4pm_types_manifest_tests: expansion_signal_fields_test...ok
+        beam4pm_types_manifest_tests: forged_receipt_refusal_fields_test...ok
+        beam4pm_types_manifest_tests: funding_approval_chain_fields_test...ok
+        beam4pm_types_manifest_tests: heuristic_arc_fields_test...ok
+        beam4pm_types_manifest_tests: implementation_fee_admission_fields_test...ok
+        beam4pm_types_manifest_tests: incident_acknowledgement_fields_test...ok
+        beam4pm_types_manifest_tests: incident_detection_event_fields_test...ok
+        beam4pm_types_manifest_tests: incident_response_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: indemnity_scope_admission_fields_test...ok
+        beam4pm_types_manifest_tests: insurance_requirement_fields_test...ok
+        beam4pm_types_manifest_tests: integration_readiness_fields_test...ok
+        beam4pm_types_manifest_tests: integration_scope_admission_fields_test...ok
+        beam4pm_types_manifest_tests: invoice_entity_identity_fields_test...ok
+        beam4pm_types_manifest_tests: invoice_schedule_fields_test...ok
+        beam4pm_types_manifest_tests: k8s_object_ref_fields_test...ok
+        beam4pm_types_manifest_tests: latency_budget_observation_fields_test...ok
+        beam4pm_types_manifest_tests: least_authority_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: legal_blocker_fields_test...ok
+        beam4pm_types_manifest_tests: liability_cap_admission_fields_test...ok
+        beam4pm_types_manifest_tests: license_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: log_trace_fields_test...ok
+        beam4pm_types_manifest_tests: master_service_agreement_state_fields_test...ok
+        beam4pm_types_manifest_tests: metered_usage_sample_fields_test...ok
+        beam4pm_types_manifest_tests: migration_contract_fields_test...ok
+        beam4pm_types_manifest_tests: migration_readiness_fields_test...ok
+        beam4pm_types_manifest_tests: minimum_term_admission_fields_test...ok
+        beam4pm_types_manifest_tests: multiarch_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: mutable_identity_refusal_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: node_failover_event_fields_test...ok
+        beam4pm_types_manifest_tests: object_attribute_change_fields_test...ok
+        beam4pm_types_manifest_tests: object_type_fields_test...ok
+        beam4pm_types_manifest_tests: objection_fields_test...ok
+        beam4pm_types_manifest_tests: objection_resolution_fields_test...ok
+        beam4pm_types_manifest_tests: oc_declare_constraint_fields_test...ok
+        beam4pm_types_manifest_tests: ocel_attribute_fields_test...ok
+        beam4pm_types_manifest_tests: ocel_event_fields_test...ok
+        beam4pm_types_manifest_tests: ocel_object_fields_test...ok
+        beam4pm_types_manifest_tests: ocel_relationship_fields_test...ok
+        beam4pm_types_manifest_tests: oci_manifest_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: offline_bundle_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: operator_readiness_fields_test...ok
+        beam4pm_types_manifest_tests: opportunity_currency_contract_fields_test...ok
+        beam4pm_types_manifest_tests: opportunity_value_range_fields_test...ok
+        beam4pm_types_manifest_tests: order_form_admission_fields_test...ok
+        beam4pm_types_manifest_tests: overage_policy_fields_test...ok
+        beam4pm_types_manifest_tests: paid_workload_outcome_receipt_fields_test...ok
+        beam4pm_types_manifest_tests: path_schema_fields_test...ok
+        beam4pm_types_manifest_tests: path_schema_query_fields_test...ok
+        beam4pm_types_manifest_tests: payment_terms_fields_test...ok
+        beam4pm_types_manifest_tests: payment_terms_admission_fields_test...ok
+        beam4pm_types_manifest_tests: performance_slo_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: petri_arc_fields_test...ok
+        beam4pm_types_manifest_tests: petri_place_fields_test...ok
+        beam4pm_types_manifest_tests: petri_transition_fields_test...ok
+        beam4pm_types_manifest_tests: planning_action_fields_test...ok
+        beam4pm_types_manifest_tests: planning_state_fields_test...ok
+        beam4pm_types_manifest_tests: poc_exit_criteria_fields_test...ok
+        beam4pm_types_manifest_tests: poc_risk_fields_test...ok
+        beam4pm_types_manifest_tests: poc_scope_fields_test...ok
+        beam4pm_types_manifest_tests: poc_timeline_fields_test...ok
+        beam4pm_types_manifest_tests: policy_decision_fields_test...ok
+        beam4pm_types_manifest_tests: powl_choice_graph_edge_fields_test...ok
+        beam4pm_types_manifest_tests: powl_freq_fields_test...ok
+        beam4pm_types_manifest_tests: powl_leaf_fields_test...ok
+        beam4pm_types_manifest_tests: powl_partial_order_edge_fields_test...ok
+        beam4pm_types_manifest_tests: pricing_basis_contract_fields_test...ok
+        beam4pm_types_manifest_tests: privacy_classification_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: private_offer_fields_test...ok
+        beam4pm_types_manifest_tests: private_registry_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: process_variant_fields_test...ok
+        beam4pm_types_manifest_tests: procurement_acceptance_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: procurement_blocker_fields_test...ok
+        beam4pm_types_manifest_tests: procurement_channel_selection_fields_test...ok
+        beam4pm_types_manifest_tests: procurement_readiness_fields_test...ok
+        beam4pm_types_manifest_tests: production_readiness_fields_test...ok
+        beam4pm_types_manifest_tests: proof_of_value_budget_fields_test...ok
+        beam4pm_types_manifest_tests: proof_of_value_exit_gate_fields_test...ok
+        beam4pm_types_manifest_tests: provenance_binding_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: purchase_order_binding_fields_test...ok
+        beam4pm_types_manifest_tests: purchase_order_requirement_fields_test...ok
+        beam4pm_types_manifest_tests: purchasing_entity_identity_fields_test...ok
+        beam4pm_types_manifest_tests: queue_snapshot_fields_test...ok
+        beam4pm_types_manifest_tests: quota_policy_fields_test...ok
+        beam4pm_types_manifest_tests: ramp_commitment_fields_test...ok
+        beam4pm_types_manifest_tests: receipt_replay_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: receipt_replay_request_fields_test...ok
+        beam4pm_types_manifest_tests: receipt_signature_fields_test...ok
+        beam4pm_types_manifest_tests: receipt_subject_binding_fields_test...ok
+        beam4pm_types_manifest_tests: receipt_verification_fields_test...ok
+        beam4pm_types_manifest_tests: recovery_plan_fields_test...ok
+        beam4pm_types_manifest_tests: recovery_point_receipt_fields_test...ok
+        beam4pm_types_manifest_tests: recovery_time_receipt_fields_test...ok
+        beam4pm_types_manifest_tests: remediation_sla_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: renewal_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: renewal_health_fields_test...ok
+        beam4pm_types_manifest_tests: renewal_option_fields_test...ok
+        beam4pm_types_manifest_tests: renewal_risk_fields_test...ok
+        beam4pm_types_manifest_tests: renewal_term_admission_fields_test...ok
+        beam4pm_types_manifest_tests: replay_environment_identity_fields_test...ok
+        beam4pm_types_manifest_tests: reproducible_build_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: reseller_authorization_fields_test...ok
+        beam4pm_types_manifest_tests: residency_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: resource_allocation_fields_test...ok
+        beam4pm_types_manifest_tests: retention_policy_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: revenue_attribution_fields_test...ok
+        beam4pm_types_manifest_tests: revenue_contract_admission_fields_test...ok
+        beam4pm_types_manifest_tests: revenue_schedule_assumption_fields_test...ok
+        beam4pm_types_manifest_tests: rfp_response_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: rollback_checkpoint_fields_test...ok
+        beam4pm_types_manifest_tests: rollback_decision_fields_test...ok
+        beam4pm_types_manifest_tests: rollback_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: rolling_upgrade_plan_fields_test...ok
+        beam4pm_types_manifest_tests: runtime_policy_decision_fields_test...ok
+        beam4pm_types_manifest_tests: sanctions_screening_result_fields_test...ok
+        beam4pm_types_manifest_tests: sbom_inventory_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: secret_boundary_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: security_addendum_state_fields_test...ok
+        beam4pm_types_manifest_tests: security_blocker_fields_test...ok
+        beam4pm_types_manifest_tests: security_readiness_fields_test...ok
+        beam4pm_types_manifest_tests: service_credit_fields_test...ok
+        beam4pm_types_manifest_tests: service_credit_admission_fields_test...ok
+        beam4pm_types_manifest_tests: service_health_snapshot_fields_test...ok
+        beam4pm_types_manifest_tests: service_level_objective_fields_test...ok
+        beam4pm_types_manifest_tests: service_slo_contract_fields_test...ok
+        beam4pm_types_manifest_tests: service_span_fields_test...ok
+        beam4pm_types_manifest_tests: showback_allocation_fields_test...ok
+        beam4pm_types_manifest_tests: signature_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: sku_definition_fields_test...ok
+        beam4pm_types_manifest_tests: sla_offer_admission_fields_test...ok
+        beam4pm_types_manifest_tests: sojourn_time_fields_test...ok
+        beam4pm_types_manifest_tests: solution_fit_fields_test...ok
+        beam4pm_types_manifest_tests: stakeholder_map_fields_test...ok
+        beam4pm_types_manifest_tests: stale_receipt_refusal_fields_test...ok
+        beam4pm_types_manifest_tests: stale_subject_refusal_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: success_plan_fields_test...ok
+        beam4pm_types_manifest_tests: supervisor_restart_policy_fields_test...ok
+        beam4pm_types_manifest_tests: support_contract_fields_test...ok
+        beam4pm_types_manifest_tests: support_diagnostic_bundle_fields_test...ok
+        beam4pm_types_manifest_tests: support_escalation_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: support_readiness_fields_test...ok
+        beam4pm_types_manifest_tests: support_sla_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: support_tier_admission_fields_test...ok
+        beam4pm_types_manifest_tests: support_window_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: sync_time_fields_test...ok
+        beam4pm_types_manifest_tests: target_metric_fields_test...ok
+        beam4pm_types_manifest_tests: tax_jurisdiction_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: technical_blocker_fields_test...ok
+        beam4pm_types_manifest_tests: tenant_account_fields_test...ok
+        beam4pm_types_manifest_tests: tenant_data_partition_fields_test...ok
+        beam4pm_types_manifest_tests: tenant_key_scope_fields_test...ok
+        beam4pm_types_manifest_tests: tenant_project_fields_test...ok
+        beam4pm_types_manifest_tests: tenant_resource_quota_fields_test...ok
+        beam4pm_types_manifest_tests: tenant_runtime_boundary_fields_test...ok
+        beam4pm_types_manifest_tests: term_subscription_fields_test...ok
+        beam4pm_types_manifest_tests: termination_right_admission_fields_test...ok
+        beam4pm_types_manifest_tests: time_to_value_fields_test...ok
+        beam4pm_types_manifest_tests: toolchain_identity_fields_test...ok
+        beam4pm_types_manifest_tests: training_readiness_fields_test...ok
+        beam4pm_types_manifest_tests: training_scope_admission_fields_test...ok
+        beam4pm_types_manifest_tests: true_up_policy_fields_test...ok
+        beam4pm_types_manifest_tests: type_edge_fields_test...ok
+        beam4pm_types_manifest_tests: unsupported_capability_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: upgrade_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: upsell_readiness_fields_test...ok
+        beam4pm_types_manifest_tests: usage_event_fields_test...ok
+        beam4pm_types_manifest_tests: usage_plan_fields_test...ok
+        beam4pm_types_manifest_tests: usage_reconciliation_receipt_fields_test...ok
+        beam4pm_types_manifest_tests: usage_signal_fields_test...ok
+        beam4pm_types_manifest_tests: value_baseline_fields_test...ok
+        beam4pm_types_manifest_tests: value_driver_fields_test...ok
+        beam4pm_types_manifest_tests: value_realization_fields_test...ok
+        beam4pm_types_manifest_tests: value_telemetry_sample_fields_test...ok
+        beam4pm_types_manifest_tests: vendor_registration_state_fields_test...ok
+        beam4pm_types_manifest_tests: vendor_risk_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: version_lifecycle_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: volume_tier_admission_fields_test...ok
+        beam4pm_types_manifest_tests: vulnerability_scan_evidence_fields_test...ok
+        beam4pm_types_manifest_tests: workload_backpressure_signal_fields_test...ok
+        beam4pm_types_manifest_tests: workload_cancellation_receipt_fields_test...ok
+        beam4pm_types_manifest_tests: workload_execution_identity_fields_test...ok
+        beam4pm_types_manifest_tests: workload_idempotency_key_fields_test...ok
+        beam4pm_types_manifest_tests: workload_queue_depth_fields_test...ok
+        beam4pm_types_manifest_tests: workload_retry_policy_fields_test...ok
+        beam4pm_types_manifest_tests: workload_timeout_budget_fields_test...ok
+        [done in 0.870 s]
+      [done in 0.870 s]
+    [done in 4.631 s]
+  [done in 4.631 s]
+module 'beam4pm_pi3_falsifier_tests'
+  beam4pm_pi3_falsifier_tests: seeded_fixture_is_adversarial_test...ok
+  beam4pm_pi3_falsifier_tests: known_process_traces_exact_test...ok
+  beam4pm_pi3_falsifier_tests: known_process_edge_set_exact_test...ok
+  beam4pm_pi3_falsifier_tests: known_process_edge_frequencies_exact_test...ok
+  beam4pm_pi3_falsifier_tests: discovery_order_independent_test...ok
+  beam4pm_pi3_falsifier_tests: bounded_confidence_all_seeded_cases_fit_test...ok
+  beam4pm_pi3_falsifier_tests: branch_point_precision_test...ok
+  beam4pm_pi3_falsifier_tests: false_adjacency_not_promoted_test...ok
+  beam4pm_pi3_falsifier_tests: concurrent_streams_interleave_test...ok
+  beam4pm_pi3_falsifier_tests: concurrent_streams_edges_exact_test...ok
+  beam4pm_pi3_falsifier_tests: concurrent_streams_zero_cross_case_edges_test...ok
+  beam4pm_pi3_falsifier_tests: shared_activity_name_close_test...ok
+  beam4pm_pi3_falsifier_tests: shared_activity_name_pay_test...ok
+  beam4pm_pi3_falsifier_tests: stress_fixture_shape_test...[0.001 s] ok
+  beam4pm_pi3_falsifier_tests: stress_long_traces_exact_test...[0.002 s] ok
+  beam4pm_pi3_falsifier_tests: stress_fragments_inert_test...[0.001 s] ok
+  beam4pm_pi3_falsifier_tests: stress_order_independent_test...[0.001 s] ok
+  beam4pm_pi3_falsifier_tests: lockstep_arrival_order_test...ok
+  beam4pm_pi3_falsifier_tests: lockstep_partitions_correctly_test...ok
+  beam4pm_pi3_falsifier_tests: lockstep_no_self_loops_test...ok
+  beam4pm_pi3_falsifier_tests: lockstep_exact_frequencies_test...ok
+  beam4pm_pi3_falsifier_tests: case_id_activity_name_collision_test...ok
+  beam4pm_pi3_falsifier_tests: large_scale_exact_edge_test...[0.015 s] ok
+  beam4pm_pi3_falsifier_tests: large_scale_order_independent_test...[0.020 s] ok
+  beam4pm_pi3_falsifier_tests: non_vacuousness_edge_removed_truth_test...ok
+  beam4pm_pi3_falsifier_tests: record_conformance_result_backs_pi3_test...ok
+  beam4pm_pi3_falsifier_tests: record_dfg_edge_backs_pi3_test...ok
+  beam4pm_pi3_falsifier_tests: record_log_trace_backs_pi3_test...ok
+  beam4pm_pi3_falsifier_tests: record_ocel_event_backs_pi3_test...ok
+  [done in 0.127 s]
+=======================================================
+  All 1548 tests passed.
+mix test
+Unchecked dependencies for environment test:
+* ggen_igniter (Hex package)
+  the dependency is not available, run "mix deps.get"
+* ash (Hex package)
+  the dependency is not available, run "mix deps.get"
+* ash_ai (Hex package)
+  the dependency is not available, run "mix deps.get"
+* wasmex (Hex package)
+  the dependency is not available, run "mix deps.get"
+** (Mix) Can't continue due to errors on dependencies
+error: recipe `test` failed on line 20 with exit code 1
+EXIT:1

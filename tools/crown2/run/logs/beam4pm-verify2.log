@@ -1,0 +1,2131 @@
+$ (cd /Users/sac/crown-2-integration/beam4pm && mix test)
+Running ExUnit with seed: 691985, max_cases: 32
+
+.................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+17:45:51.296 [debug] Creating BeamPM.Ash.Resources.OpportunityCurrencyContract:
+
+Setting %{id: "f15b5cf8-80c7-4dbc-a5e6-1ca66e57a69a",
+ opportunity_id: "sample_opportunity_id", currency_code: "sample_currency_code",
+ fx_basis_id: "sample_fx_basis_id"}
+
+.
+17:45:51.330 [debug] Creating BeamPM.Ash.Resources.ProofOfValueBudget:
+
+Setting %{id: "ccc02bf4-0f95-457a-a2b0-966db733d45c",
+ opportunity_id: "sample_opportunity_id", decision: "sample_decision",
+ budget_id: "sample_budget_id"}
+
+.
+17:45:51.332 [debug] Creating BeamPM.Ash.Resources.LatencyBudgetObservation:
+
+Setting %{id: "e00d44f8-7a20-4309-ba9e-5766b61b5178", tenant_id: "sample_tenant_id",
+ observation_hash: "sample_observation_hash", workload_id: "sample_workload_id"}
+
+.
+17:45:51.334 [debug] Creating BeamPM.Ash.Resources.AvailabilityObservation:
+
+Setting %{id: "aebdfb63-b150-46af-8dad-26b7412bf19d", tenant_id: "sample_tenant_id",
+ slo_id: "sample_slo_id", observation_hash: "sample_observation_hash"}
+
+.
+17:45:51.336 [debug] Creating BeamPM.Ash.Resources.ToolchainIdentity:
+
+Setting %{id: "66ba159b-163b-4f08-a7f6-20fccdf57c2b", tenant_id: "sample_tenant_id",
+ identity_hash: "sample_identity_hash", toolchain_id: "sample_toolchain_id"}
+
+.
+17:45:51.339 [debug] Creating BeamPM.Ash.Resources.RevenueScheduleAssumption:
+
+Setting %{id: "04144b4a-f501-4c72-8aca-ba086f10e302",
+ opportunity_id: "sample_opportunity_id", schedule_id: "sample_schedule_id",
+ assumption_evidence_hash: "sample_assumption_evidence_hash"}
+
+.
+17:45:51.341 [debug] Creating BeamPM.Ash.Resources.CapsuleIdentity:
+
+Setting %{id: "e71c7adb-046b-453b-a372-f19813827ab5", tenant_id: "sample_tenant_id",
+ identity_hash: "sample_identity_hash", capsule_id: "sample_capsule_id"}
+
+.
+17:45:51.343 [debug] Creating BeamPM.Ash.Resources.ResourceAllocation:
+
+Setting %{id: "019d7ae9-69c6-4038-8231-f2f47a4c5c12", event_id: "sample_event_id",
+ resource_id: "sample_resource_id", activity: "sample_activity"}
+
+.
+17:45:51.347 [debug] Creating BeamPM.Ash.Resources.EntitlementEvidence:
+
+Setting %{id: "6f727f48-7d77-4d10-8289-82acf328f7a8",
+ entitlement_id: "sample_entitlement_id", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom}
+
+.
+17:45:51.352 [debug] Creating BeamPM.Ash.Resources.PowlChoiceGraphEdge:
+
+Setting %{id: "98c727c3-c69f-4ef7-968c-039620f42199", from_kind: :sample_atom,
+ from_child_index: 42, to_kind: :sample_atom, to_child_index: 42}
+
+.
+17:45:51.358 [debug] Creating BeamPM.Ash.Resources.EvidenceFreshnessEvidence:
+
+Setting %{id: "74432927-76ce-42f5-8de6-867d7926cc3f", evidence_id: "sample_evidence_id",
+ observed_at: ~U[2026-08-29 12:00:00Z], subject_sha: "sample_subject_sha",
+ observed_result: :sample_atom}
+
+.
+17:45:51.363 [debug] Creating BeamPM.Ash.Resources.TargetMetric:
+
+Setting %{id: "52ed70d0-13fd-4909-bdf5-0cddd92f4ab6",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ target_metric_id: "sample_target_metric_id", target_value: 3.5}
+
+.*...
+17:45:51.367 [debug] Creating BeamPM.Ash.Resources.VolumeTierAdmission:
+
+Setting %{id: "da619967-cd8d-45f2-912c-00d0cca0e490",
+ opportunity_id: "sample_opportunity_id", decision: "sample_decision",
+ volume_tier_id: "sample_volume_tier_id"}
+
+.
+17:45:51.369 [debug] Creating BeamPM.Ash.Resources.TrainingScopeAdmission:
+
+Setting %{id: "8fed9791-c125-4d0a-bb7e-8fec1abd838d",
+ opportunity_id: "sample_opportunity_id", decision: "sample_decision",
+ training_scope_id: "sample_training_scope_id"}
+
+.
+17:45:51.371 [debug] Creating BeamPM.Ash.Resources.TermSubscription:
+
+Setting %{id: "78011670-5c32-42c5-a372-deffb84d38d0",
+ subscription_id: "sample_subscription_id", sku: "sample_sku",
+ starts_at: ~U[2026-08-29 12:00:00Z], ends_at: ~U[2026-08-29 12:00:00Z]}
+
+.
+17:45:51.373 [debug] Creating BeamPM.Ash.Resources.SecurityBlocker:
+
+Setting %{id: "b6a929b6-b1e6-439b-a71c-ccff83b5fea3",
+ opportunity_id: "sample_opportunity_id", blocker_id: "sample_blocker_id",
+ refusal_code: "sample_refusal_code"}
+
+.
+17:45:51.375 [debug] Creating BeamPM.Ash.Resources.UpgradeEvidence:
+
+Setting %{id: "d89c6e5a-b95a-47c6-b304-566b8f17ec68", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ from_version: "sample_from_version"}
+
+.
+17:45:51.379 [debug] Creating BeamPM.Ash.Resources.DataResidencyPolicy:
+
+Setting %{id: "81fd9779-5f90-4f80-9ef3-ac43f9a877c7", status: :sample_atom,
+ policy_id: "sample_policy_id", tenant_id: "sample_tenant_id",
+ allowed_regions: ["alpha", "beta"]}
+
+.
+17:45:51.381 [debug] Creating BeamPM.Ash.Resources.RenewalRisk:
+
+Setting %{id: "c2b02b28-9a30-431c-9a39-046c30ceefc3",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ renewal_risk_id: "sample_renewal_risk_id", renewal_risk_score: 3.5}
+
+.
+17:45:51.383 [debug] Creating BeamPM.Ash.Resources.DiscountSchedule:
+
+Setting %{id: "d91f31a4-3ca1-4532-b05a-804e1cb643e0", currency: "sample_currency",
+ threshold: 3.5, schedule_id: "sample_schedule_id", discount_percent: 3.5}
+
+.
+17:45:51.385 [debug] Creating BeamPM.Ash.Resources.DiscoveryHypothesis:
+
+Setting %{id: "3c6b5da5-25c6-42c5-9290-c4f9b921ecc5",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ discovery_hypothesis_id: "sample_discovery_hypothesis_id",
+ expected_value: "sample_expected_value"}
+
+.
+17:45:51.387 [debug] Creating BeamPM.Ash.Resources.ProcurementAcceptanceEvidence:
+
+Setting %{id: "1b4d48cb-95a3-41f4-9b08-2510536af135", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ acceptance_decision: "sample_acceptance_decision"}
+
+.
+17:45:51.389 [debug] Creating BeamPM.Ash.Resources.TenantResourceQuota:
+
+Setting %{id: "832aa60d-7248-4f59-9362-afe27936f3cc", tenant_id: "sample_tenant_id",
+ quota_id: "sample_quota_id", utilization_hash: "sample_utilization_hash"}
+
+.
+17:45:51.391 [debug] Creating BeamPM.Ash.Resources.BillableUsageIdentity:
+
+Setting %{id: "8e81c1eb-154e-47b0-9fd2-da26415b4aae", tenant_id: "sample_tenant_id",
+ billable_usage_id: "sample_billable_usage_id",
+ identity_hash: "sample_identity_hash"}
+
+......
+17:45:51.943 [debug] Creating BeamPM.Ash.Resources.ResidencyEvidence:
+
+Setting %{id: "19fcbfc9-2511-4725-b87c-26f8e2be56ad", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ region: "sample_region"}
+
+.
+17:45:51.947 [debug] Creating BeamPM.Ash.Resources.CanaryEvidence:
+
+Setting %{id: "c03c76da-fb82-46bd-b0b6-bede5329a332", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ canary_percentage: 3.5}
+
+.
+17:45:51.950 [debug] Creating BeamPM.Ash.Resources.DemoRun:
+
+Setting %{id: "797d93d0-3a1b-40be-b0f6-272f4fcc1c55",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest", demo_run_id: "sample_demo_run_id",
+ demo_result: "sample_demo_result"}
+
+.
+17:45:51.953 [debug] Creating BeamPM.Ash.Resources.RecoveryPlan:
+
+Setting %{id: "4f859a9b-3b8a-4b99-93e1-ee2f6f2f1280",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ recovery_plan_id: "sample_recovery_plan_id", recovery_time_hours: 3.5}
+
+.**********
+17:45:51.956 [debug] Creating BeamPM.Ash.Resources.InvoiceSchedule:
+
+Setting %{id: "be731d87-854d-42c7-9ef4-c1f2ed37c298",
+ billing_account_id: "sample_billing_account_id",
+ schedule_id: "sample_schedule_id", cadence: :sample_atom,
+ next_invoice_at: ~U[2026-08-29 12:00:00Z]}
+
+.***********
+17:45:51.958 [debug] Creating BeamPM.Ash.Resources.PurchaseOrderBinding:
+
+Setting %{id: "59dbddae-c610-4701-a627-1f6c5501d7bc", status: :sample_atom,
+ order_id: "sample_order_id", binding_id: "sample_binding_id",
+ purchase_order_number: "sample_purchase_order_number"}
+
+.*
+17:45:51.961 [debug] Creating BeamPM.Ash.Resources.PowlPartialOrderEdge:
+
+Setting %{id: "14d6bbd4-6c38-4ff4-b02f-ed64b13873fd", from_index: 42, to_index: 42}
+
+.
+17:45:51.963 [debug] Creating BeamPM.Ash.Resources.EnterpriseOrderLine:
+
+Setting %{id: "12886e2d-c83b-4d4f-864a-6ed15fdfcb6d", quantity: 42, sku: "sample_sku",
+ unit_price: 3.5, order_id: "sample_order_id"}
+
+.
+17:45:51.966 [debug] Creating BeamPM.Ash.Resources.SignatureEvidence:
+
+Setting %{id: "20f9c03c-8b72-45b1-9eb6-253f598ad2d9", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ signature_identity: "sample_signature_identity"}
+
+.
+17:45:51.968 [debug] Creating BeamPM.Ash.Resources.UsageEvent:
+
+Setting %{id: "e93f9fe5-ca64-413d-bf53-fe618925926e",
+ entitlement_id: "sample_entitlement_id", metric_name: "sample_metric_name",
+ event_id: "sample_event_id", quantity: 3.5,
+ occurred_at: ~U[2026-08-29 12:00:00Z]}
+
+.
+17:45:51.970 [debug] Creating BeamPM.Ash.Resources.PocRisk:
+
+Setting %{id: "5539af62-e4ad-402e-a632-4da98c204c9a",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest", poc_risk_id: "sample_poc_risk_id",
+ risk_score: 3.5}
+
+.
+17:45:51.972 [debug] Creating BeamPM.Ash.Resources.TerminationRightAdmission:
+
+Setting %{id: "a61bb241-4a30-4b4a-b4b6-b0f033f678a3",
+ opportunity_id: "sample_opportunity_id", decision: "sample_decision",
+ termination_right_id: "sample_termination_right_id"}
+
+.
+17:45:51.975 [debug] Creating BeamPM.Ash.Resources.SupportEscalationEvidence:
+
+Setting %{id: "22bde653-5c51-4356-8ecf-2d148ea17787", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ escalation_owner: "sample_escalation_owner"}
+
+.
+17:45:51.977 [debug] Creating BeamPM.Ash.Resources.ReplayEnvironmentIdentity:
+
+Setting %{id: "65eee99f-0aca-4091-b5fe-c83dbb719b13", tenant_id: "sample_tenant_id",
+ identity_hash: "sample_identity_hash", environment_id: "sample_environment_id"}
+
+.
+17:45:51.979 [debug] Creating BeamPM.Ash.Resources.IncidentAcknowledgement:
+
+Setting %{id: "ede29ad4-e7f2-467d-84f6-de13a9d7965d", tenant_id: "sample_tenant_id",
+ incident_id: "sample_incident_id",
+ acknowledgement_hash: "sample_acknowledgement_hash"}
+
+.
+17:45:51.982 [debug] Creating BeamPM.Ash.Resources.UnsupportedCapabilityEvidence:
+
+Setting %{id: "b2eacdd8-49ef-41ab-abf7-103e3bea42b3", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ capability_name: "sample_capability_name"}
+
+.
+17:45:51.984 [debug] Creating BeamPM.Ash.Resources.PerformanceSloEvidence:
+
+Setting %{id: "d2adcc5c-7926-4531-912b-f767a938eb00", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ latency_p95_ms: 42}
+
+.
+17:45:51.986 [debug] Creating BeamPM.Ash.Resources.TenantRuntimeBoundary:
+
+Setting %{id: "7ff10c8a-622f-4514-a9ff-311bb23e9e5c", tenant_id: "sample_tenant_id",
+ evidence_hash: "sample_evidence_hash", boundary_id: "sample_boundary_id"}
+
+.
+17:45:51.988 [debug] Creating BeamPM.Ash.Resources.CommittedSpendAdmission:
+
+Setting %{id: "45162e9a-451e-4d9c-ba75-c6a55577479f",
+ opportunity_id: "sample_opportunity_id", decision: "sample_decision",
+ commitment_id: "sample_commitment_id"}
+
+.
+17:45:51.990 [debug] Creating BeamPM.Ash.Resources.MeteredUsageSample:
+
+Setting %{id: "5dea857d-6dc4-4e14-bdf6-d31a8f1db178", tenant_id: "sample_tenant_id",
+ usage_sample_id: "sample_usage_sample_id", sample_hash: "sample_sample_hash"}
+
+.
+17:45:51.992 [debug] Creating BeamPM.Ash.Resources.UsageReconciliationReceipt:
+
+Setting %{id: "958117c2-a297-4b0f-8458-9c807dcd8477", tenant_id: "sample_tenant_id",
+ billing_period_id: "sample_billing_period_id",
+ reconciliation_hash: "sample_reconciliation_hash"}
+
+.
+17:45:51.995 [debug] Creating BeamPM.Ash.Resources.SolutionFit:
+
+Setting %{id: "728cbc8c-149b-41d6-854a-cccbef5065c0",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ solution_fit_id: "sample_solution_fit_id", fit_score: 3.5}
+
+.
+17:45:51.997 [debug] Creating BeamPM.Ash.Resources.OfflineBundleEvidence:
+
+Setting %{id: "ce1cae2d-f6eb-4ba4-ad07-49ffd9672223", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ bundle_digest: "sample_bundle_digest"}
+
+.
+17:45:51.999 [debug] Creating BeamPM.Ash.Resources.ErrorBudgetState:
+
+Setting %{id: "06c57523-cdb5-43b1-be66-6bdaa69af9fa", tenant_id: "sample_tenant_id",
+ slo_id: "sample_slo_id", state_hash: "sample_state_hash"}
+
+.
+17:45:52.001 [debug] Creating BeamPM.Ash.Resources.AccountDiscovery:
+
+Setting %{id: "cbc44dca-aeb6-45b8-8726-c80d5a61dd5d",
+ observed_at: ~U[2026-08-29 12:00:00Z],
+ account_discovery_id: "sample_account_discovery_id",
+ account_id: "sample_account_id", discovery_score: 3.5,
+ evidence_digest: "sample_evidence_digest"}
+
+.
+17:45:52.003 [debug] Creating BeamPM.Ash.Resources.EnvironmentProfile:
+
+Setting %{id: "8f3eb647-e9fb-48c3-877d-4be44035fefa",
+ configuration_hash: "sample_configuration_hash",
+ profile_id: "sample_profile_id", environment: :sample_atom,
+ region: "sample_region"}
+
+.
+17:45:52.005 [debug] Creating BeamPM.Ash.Resources.ImplementationFeeAdmission:
+
+Setting %{id: "a8fe7b04-b91e-4f8c-84e9-67e5f073a7e8",
+ opportunity_id: "sample_opportunity_id", decision: "sample_decision",
+ fee_id: "sample_fee_id"}
+
+.
+17:45:52.007 [debug] Creating BeamPM.Ash.Resources.AccountParentScope:
+
+Setting %{id: "29829056-c08e-471b-9e1e-6e22f229bfcf", account_id: "sample_account_id",
+ parent_account_id: "sample_parent_account_id",
+ scope_evidence_hash: "sample_scope_evidence_hash"}
+
+.
+17:45:52.009 [debug] Creating BeamPM.Ash.Resources.EntitlementRevocation:
+
+Setting %{id: "a2a485e4-55df-42ee-b4ed-e2cac7cb342e", reason: "sample_reason",
+ grant_id: "sample_grant_id", revocation_id: "sample_revocation_id",
+ revoked_at: ~U[2026-08-29 12:00:00Z]}
+
+.
+17:45:52.011 [debug] Creating BeamPM.Ash.Resources.AuditChainEvidence:
+
+Setting %{id: "2cd5d4c8-9435-4e12-a566-b37d8703931a", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ previous_receipt_hash: "sample_previous_receipt_hash"}
+
+.
+17:45:52.013 [debug] Creating BeamPM.Ash.Resources.CommercialQuote:
+
+Setting %{id: "dc7127de-c86f-48ea-ac2b-dc3421327ee2", status: :sample_atom,
+ currency: "sample_currency", account_id: "sample_account_id",
+ quote_id: "sample_quote_id"}
+
+.
+17:45:52.015 [debug] Creating BeamPM.Ash.Resources.RenewalOption:
+
+Setting %{id: "d087a257-1cbe-4dff-969c-eb0c7b6dfbbf",
+ subscription_id: "sample_subscription_id", option_id: "sample_option_id",
+ term_months: 42, notice_by: ~U[2026-08-29 12:00:00Z]}
+
+.
+17:45:52.017 [debug] Creating BeamPM.Ash.Resources.ServiceCreditAdmission:
+
+Setting %{id: "5ab766f8-40e9-4e74-909e-8af7d7915985",
+ opportunity_id: "sample_opportunity_id", decision: "sample_decision",
+ service_credit_id: "sample_service_credit_id"}
+
+.
+17:45:52.019 [debug] Creating BeamPM.Ash.Resources.PrivateOffer:
+
+Setting %{id: "ee7ab080-b60f-4dcb-8f9e-d509eb376576",
+ expires_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ offer_id: "sample_offer_id", total_price: 3.5}
+
+.
+17:45:52.021 [debug] Creating BeamPM.Ash.Resources.ReceiptSubjectBinding:
+
+Setting %{id: "5c07179f-e75c-4189-8466-626a2f9a9923", tenant_id: "sample_tenant_id",
+ workload_id: "sample_workload_id", binding_hash: "sample_binding_hash"}
+
+.
+17:45:52.023 [debug] Creating BeamPM.Ash.Resources.CatalogRelease:
+
+Setting %{id: "3e24682b-fc31-464f-b8f5-fe73af9b7457", version: "sample_version",
+ effective_at: ~U[2026-08-29 12:00:00Z], release_id: "sample_release_id",
+ sku_ids: ["alpha", "beta"]}
+
+.
+17:45:52.025 [debug] Creating BeamPM.Ash.Resources.ForgedReceiptRefusal:
+
+Setting %{id: "7e16805d-235e-4cfe-8643-a0abd1c57435", tenant_id: "sample_tenant_id",
+ receipt_id: "sample_receipt_id", refusal_hash: "sample_refusal_hash"}
+
+.
+17:45:52.027 [debug] Creating BeamPM.Ash.Resources.ArchitectureReviewEvidence:
+
+Setting %{id: "5010307a-3fd9-49d8-ad2e-86dd6e3efca7", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ review_decision: "sample_review_decision"}
+
+.
+17:45:52.029 [debug] Creating BeamPM.Ash.Resources.SyncTime:
+
+Setting %{id: "0890fd75-2ed3-4e3c-99f6-05941ef3a01c", seconds: 3.5,
+ object_id: "sample_object_id", delaying_object_id: "sample_delaying_object_id"}
+
+.
+17:45:52.032 [debug] Creating BeamPM.Ash.Resources.SupportReadiness:
+
+Setting %{id: "4c54f6b7-507e-4352-b842-2e4f04cbafa4",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ support_readiness_id: "sample_support_readiness_id",
+ support_readiness_score: 3.5}
+
+.
+17:45:52.034 [debug] Creating BeamPM.Ash.Resources.DataEgressEvidence:
+
+Setting %{id: "1fba698f-f939-4cf3-b2db-900bb39e9c16", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ egress_bytes: 42}
+
+.
+17:45:52.036 [debug] Creating BeamPM.Ash.Resources.EntitlementState:
+
+Setting %{id: "6cb02423-3d2c-4da1-89e4-0aea52bab4d0", status: "sample_status",
+ entitlement_id: "sample_entitlement_id",
+ last_applied_event_id: "sample_last_applied_event_id",
+ updated_at: ~U[2026-08-29 12:00:00Z]}
+
+.
+17:45:52.038 [debug] Creating BeamPM.Ash.Resources.BillingAccount:
+
+Setting %{id: "90da6b09-ab8e-4c80-93c6-140236a613eb", currency: "sample_currency",
+ account_id: "sample_account_id",
+ billing_account_id: "sample_billing_account_id",
+ invoice_profile: "sample_invoice_profile"}
+
+.
+17:45:52.040 [debug] Creating BeamPM.Ash.Resources.InsuranceRequirement:
+
+Setting %{id: "0da18646-8819-4188-bcad-f4840ffb385d",
+ evidence_hash: "sample_evidence_hash", opportunity_id: "sample_opportunity_id",
+ coverage_id: "sample_coverage_id"}
+
+.
+17:45:52.042 [debug] Creating BeamPM.Ash.Resources.AccountMasterMatch:
+
+Setting %{id: "baaa7553-38df-4e18-8321-62e352f895ac",
+ source_account_id: "sample_source_account_id",
+ canonical_account_id: "sample_canonical_account_id",
+ match_evidence_hash: "sample_match_evidence_hash"}
+
+.
+17:45:52.044 [debug] Creating BeamPM.Ash.Resources.ArchitectureReadiness:
+
+Setting %{id: "41fe7ef6-097c-496a-b61c-a14e2342a75b",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ architecture_readiness_id: "sample_architecture_readiness_id",
+ architecture_score: 3.5}
+
+.
+17:45:52.046 [debug] Creating BeamPM.Ash.Resources.StaleReceiptRefusal:
+
+Setting %{id: "d9da124e-33c8-4dfa-bd93-8466348cb8fc", tenant_id: "sample_tenant_id",
+ receipt_id: "sample_receipt_id", refusal_hash: "sample_refusal_hash"}
+
+.........
+17:45:52.150 [debug] Creating BeamPM.Ash.Resources.DeploymentEntitlement:
+
+Setting %{id: "1e1dd608-62fa-4e8c-a345-be009a518232",
+ entitlement_id: "sample_entitlement_id", tenant_id: "sample_tenant_id",
+ valid_until: ~U[2026-08-29 12:00:00Z], profile_id: "sample_profile_id"}
+
+.
+17:45:52.153 [debug] Creating BeamPM.Ash.Resources.VendorRiskEvidence:
+
+Setting %{id: "1c600b7e-8319-44f6-a12a-ead3fb0a6e3a", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ risk_score: 3.5}
+
+.
+17:45:52.156 [debug] Creating BeamPM.Ash.Resources.ExpansionReceipt:
+
+Setting %{id: "f5424486-54fb-4e2b-aa57-f2a5b1ffc210",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ expansion_receipt_id: "sample_expansion_receipt_id", receipt_value: 3.5}
+
+.
+17:45:52.158 [debug] Creating BeamPM.Ash.Resources.ArtifactDigestEvidence:
+
+Setting %{id: "c5180461-a131-4037-b1ec-9ab13f7323fc", digest: "sample_digest",
+ evidence_id: "sample_evidence_id", subject_sha: "sample_subject_sha",
+ observed_result: :sample_atom}
+
+.
+17:45:52.161 [debug] Creating BeamPM.Ash.Resources.UsageSignal:
+
+Setting %{id: "c7486fd5-5e54-4af6-b125-199f04a8b5de",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ usage_signal_id: "sample_usage_signal_id", active_user_count: 42}
+
+.
+17:45:52.163 [debug] Creating BeamPM.Ash.Resources.OperatorReadiness:
+
+Setting %{id: "7c110dae-556c-4df6-a104-f475204d3aeb",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ operator_readiness_id: "sample_operator_readiness_id",
+ operator_readiness_score: 3.5}
+
+.
+17:45:52.165 [debug] Creating BeamPM.Ash.Resources.ExceptionAuthority:
+
+Setting %{id: "729d9f29-f8bc-40d2-8ca5-99ce62828711", decision: "sample_decision",
+ authority_id: "sample_authority_id", exception_id: "sample_exception_id"}
+
+.
+17:45:52.168 [debug] Creating BeamPM.Ash.Resources.LicenseEvidence:
+
+Setting %{id: "f24a6d7d-bca1-474c-a3d7-b4e668db716e", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ license_expression: "sample_license_expression"}
+
+.
+17:45:52.170 [debug] Creating BeamPM.Ash.Resources.ServiceHealthSnapshot:
+
+Setting %{id: "682e6948-5b68-4052-88b6-8c5d36c53c14", tenant_id: "sample_tenant_id",
+ service_id: "sample_service_id", snapshot_hash: "sample_snapshot_hash"}
+
+.
+17:45:52.173 [debug] Creating BeamPM.Ash.Resources.ServiceCredit:
+
+Setting %{id: "63fbb926-0e4f-4b57-bcb8-ddf8965a179a", currency: "sample_currency",
+ slo_id: "sample_slo_id", amount: 3.5, credit_id: "sample_credit_id"}
+
+.
+17:45:52.175 [debug] Creating BeamPM.Ash.Resources.SuccessPlan:
+
+Setting %{id: "f78e4cdb-1dfe-48ab-aa7f-aa3440f8e981",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ success_plan_id: "sample_success_plan_id",
+ success_target: "sample_success_target"}
+
+.
+17:45:52.178 [debug] Creating BeamPM.Ash.Resources.PurchaseOrderRequirement:
+
+Setting %{id: "a4f19af1-35ef-4f5c-9f6c-589e3a8ca4a5",
+ evidence_hash: "sample_evidence_hash", opportunity_id: "sample_opportunity_id",
+ requirement_id: "sample_requirement_id"}
+
+.
+17:45:52.180 [debug] Creating BeamPM.Ash.Resources.ProcurementChannelSelection:
+
+Setting %{id: "df766f15-7c79-4134-9daf-bee3017c22c1",
+ opportunity_id: "sample_opportunity_id", channel_id: "sample_channel_id",
+ selection_evidence_hash: "sample_selection_evidence_hash"}
+
+.
+17:45:52.182 [debug] Creating BeamPM.Ash.Resources.QuotaPolicy:
+
+Setting %{id: "e5785852-6720-4b4e-9a92-922153f55cfc", limit: 3.5,
+ metric_name: "sample_metric_name", quota_id: "sample_quota_id",
+ window: :sample_atom}
+
+......
+17:45:52.361 [debug] Creating BeamPM.Ash.Resources.TrueUpPolicy:
+
+Setting %{id: "f767dfdf-eb62-46b0-bd4c-748da35a21d9", policy_id: "sample_policy_id",
+ commitment_id: "sample_commitment_id", cadence: :sample_atom,
+ shortfall_behavior: :sample_atom}
+
+.
+17:45:52.364 [debug] Creating BeamPM.Ash.Resources.CommercialArtifactCrownEvidence:
+
+Setting %{id: "a77197a1-023d-49f5-8684-be6e2b5a1789", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ artifact_digest: "sample_artifact_digest"}
+
+.
+17:45:52.367 [debug] Creating BeamPM.Ash.Resources.ProofOfValueExitGate:
+
+Setting %{id: "fcb89492-6674-4b2f-969b-3305a3d39513", decision: "sample_decision",
+ pov_id: "sample_pov_id", exit_gate_id: "sample_exit_gate_id"}
+
+.
+17:45:52.370 [debug] Creating BeamPM.Ash.Resources.FundingApprovalChain:
+
+Setting %{id: "df506395-1ea8-4499-b137-46f0a9a3356a",
+ evidence_hash: "sample_evidence_hash", opportunity_id: "sample_opportunity_id",
+ approval_chain_id: "sample_approval_chain_id"}
+
+.
+17:45:52.373 [debug] Creating BeamPM.Ash.Resources.DataReadiness:
+
+Setting %{id: "a3281880-28e5-4f19-accb-824cb797d4db",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ data_readiness_id: "sample_data_readiness_id", data_quality_score: 3.5}
+
+.
+17:45:52.375 [debug] Creating BeamPM.Ash.Resources.LegalBlocker:
+
+Setting %{id: "04bdafb2-40d8-4da2-aa74-d5404bd31d01",
+ opportunity_id: "sample_opportunity_id", blocker_id: "sample_blocker_id",
+ refusal_code: "sample_refusal_code"}
+
+.
+17:45:52.378 [debug] Creating BeamPM.Ash.Resources.ReceiptVerification:
+
+Setting %{id: "59f09695-2813-49d5-83e9-bae3d960934d", tenant_id: "sample_tenant_id",
+ receipt_id: "sample_receipt_id", verification_hash: "sample_verification_hash"}
+
+.
+17:45:52.380 [debug] Creating BeamPM.Ash.Resources.ClusterQuorumState:
+
+Setting %{id: "95d6d896-aa09-42db-9a18-03d49483f2c8", tenant_id: "sample_tenant_id",
+ cluster_id: "sample_cluster_id", quorum_hash: "sample_quorum_hash"}
+
+.
+17:45:52.382 [debug] Creating BeamPM.Ash.Resources.SecurityAddendumState:
+
+Setting %{id: "a6707dd4-60eb-4de9-9441-4d5da4871110",
+ opportunity_id: "sample_opportunity_id", addendum_id: "sample_addendum_id",
+ addendum_state: "sample_addendum_state"}
+
+.
+17:45:52.384 [debug] Creating BeamPM.Ash.Resources.SupportContract:
+
+Setting %{id: "1544c17d-5762-41a3-81b7-072d26a673e0", account_id: "sample_account_id",
+ valid_until: ~U[2026-08-29 12:00:00Z], contract_id: "sample_contract_id",
+ tier: :sample_atom}
+
+.
+17:45:52.387 [debug] Creating BeamPM.Ash.Resources.SupportDiagnosticBundle:
+
+Setting %{id: "01884175-f1fe-42b2-bc35-f32cef0e812e", tenant_id: "sample_tenant_id",
+ incident_id: "sample_incident_id", bundle_hash: "sample_bundle_hash"}
+
+.
+17:45:52.389 [debug] Creating BeamPM.Ash.Resources.EntitlementRuntimeCheck:
+
+Setting %{id: "b885c15c-0eea-44da-9ee3-834de2440c55",
+ entitlement_id: "sample_entitlement_id", tenant_id: "sample_tenant_id",
+ check_hash: "sample_check_hash"}
+
+.
+17:45:52.391 [debug] Creating BeamPM.Ash.Resources.ObjectionResolution:
+
+Setting %{id: "56e62784-c3d2-4396-9e35-8efa766e0c57",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ objection_resolution_id: "sample_objection_resolution_id",
+ resolution_status: "sample_resolution_status"}
+
+.
+17:45:52.394 [debug] Creating BeamPM.Ash.Resources.ServiceSloContract:
+
+Setting %{id: "5bb93991-7f8f-48ec-88bb-f40d61d109b3", tenant_id: "sample_tenant_id",
+ slo_id: "sample_slo_id", contract_hash: "sample_contract_hash"}
+
+.
+17:45:52.396 [debug] Creating BeamPM.Ash.Resources.ChannelAgreement:
+
+Setting %{id: "244bf32c-7223-46f6-8961-800eaddb1035",
+ agreement_id: "sample_agreement_id", partner_id: "sample_partner_id",
+ territory: "sample_territory", valid_until: ~U[2026-08-29 12:00:00Z]}
+
+.
+17:45:52.398 [debug] Creating BeamPM.Ash.Resources.MigrationContract:
+
+Setting %{id: "081e04cf-7cca-44df-b10d-396e74104761",
+ migration_id: "sample_migration_id", from_version: "sample_from_version",
+ to_version: "sample_to_version", rollback_plan: "sample_rollback_plan"}
+
+.
+17:45:52.400 [debug] Creating BeamPM.Ash.Resources.ConsumptionSubscription:
+
+Setting %{id: "d0aa76c0-1fcb-4d2f-9414-e5cb096a9a4d", status: :sample_atom,
+ account_id: "sample_account_id", subscription_id: "sample_subscription_id",
+ plan_id: "sample_plan_id"}
+
+.
+17:45:52.402 [debug] Creating BeamPM.Ash.Resources.UsagePlan:
+
+Setting %{id: "4014d8ed-693e-481d-a013-bca4e5ef3148", unit: "sample_unit",
+ metric_name: "sample_metric_name", plan_id: "sample_plan_id",
+ billing_mode: :sample_atom}
+
+.
+17:45:52.405 [debug] Creating BeamPM.Ash.Resources.ApprovalSeparationEvidence:
+
+Setting %{id: "91cf9b90-67f2-444a-8ed4-9bbf92fc7bda", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ approver_identity: "sample_approver_identity"}
+
+.
+17:45:52.407 [debug] Creating BeamPM.Ash.Resources.OveragePolicy:
+
+Setting %{id: "879f2f7a-3231-49ee-b6b2-230451ff45c9", behavior: :sample_atom,
+ policy_id: "sample_policy_id", unit_price: 3.5, quota_id: "sample_quota_id"}
+
+.
+17:45:52.409 [debug] Creating BeamPM.Ash.Resources.StakeholderMap:
+
+Setting %{id: "4cc8219f-4bab-47fb-aa56-705f4e0491d7",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ stakeholder_map_id: "sample_stakeholder_map_id", stakeholder_count: 42}
+
+.
+17:45:52.411 [debug] Creating BeamPM.Ash.Resources.WorkloadCancellationReceipt:
+
+Setting %{id: "c54eac32-9577-4c0f-8c87-0ab3662e34cd", tenant_id: "sample_tenant_id",
+ receipt_hash: "sample_receipt_hash", execution_id: "sample_execution_id"}
+
+.
+17:45:52.413 [debug] Creating BeamPM.Ash.Resources.ValueRealization:
+
+Setting %{id: "7bcbb954-60cf-4f37-b2e3-632046805a84",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest", realized_value: 3.5,
+ value_realization_id: "sample_value_realization_id"}
+
+.
+17:45:52.415 [debug] Creating BeamPM.Ash.Resources.CompatibilityContract:
+
+Setting %{id: "8b17a93f-1d64-48a5-8bc8-648f3535b457",
+ schema_version: "sample_schema_version", contract_id: "sample_contract_id",
+ product_version: "sample_product_version", api_version: "sample_api_version"}
+
+.
+17:45:52.417 [debug] Creating BeamPM.Ash.Resources.RollbackCheckpoint:
+
+Setting %{id: "6549b067-b888-43c0-8be5-f4c710c3727f", tenant_id: "sample_tenant_id",
+ state_hash: "sample_state_hash", checkpoint_id: "sample_checkpoint_id"}
+
+.
+17:45:52.419 [debug] Creating BeamPM.Ash.Resources.MultiarchEvidence:
+
+Setting %{id: "dde9b130-d977-4d14-8e06-21f0478369a1", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ platforms: ["alpha", "beta"]}
+
+.
+17:45:52.421 [debug] Creating BeamPM.Ash.Resources.ActionPinEvidence:
+
+Setting %{id: "e07fde4b-d0d3-438c-9c51-fe2d82d57ebe", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", action_sha: "sample_action_sha",
+ observed_result: :sample_atom}
+
+.********
+17:45:52.423 [debug] Creating BeamPM.Ash.Resources.DealDeskPacket:
+
+Setting %{id: "415c1ed1-41d5-414c-8e56-c3e9d4c171a7",
+ evidence_hash: "sample_evidence_hash", opportunity_id: "sample_opportunity_id",
+ packet_id: "sample_packet_id"}
+
+.
+17:45:52.426 [debug] Creating BeamPM.Ash.Resources.BusinessOutcomeMeasurement:
+
+Setting %{id: "e28d48de-b817-465f-83d6-bb9b4f7b8a8f", tenant_id: "sample_tenant_id",
+ outcome_id: "sample_outcome_id", measurement_hash: "sample_measurement_hash"}
+
+.
+17:45:52.428 [debug] Creating BeamPM.Ash.Resources.CrashRecoveryReceipt:
+
+Setting %{id: "7858c9a2-04a1-41f6-90de-2a065d8700e3", tenant_id: "sample_tenant_id",
+ receipt_hash: "sample_receipt_hash", crash_id: "sample_crash_id"}
+
+.
+17:45:52.430 [debug] Creating BeamPM.Ash.Resources.RecoveryPointReceipt:
+
+Setting %{id: "35339220-c654-4180-aaf9-d361a9538ec0", tenant_id: "sample_tenant_id",
+ incident_id: "sample_incident_id", recovery_hash: "sample_recovery_hash"}
+
+.
+17:45:52.432 [debug] Creating BeamPM.Ash.Resources.ValueDriver:
+
+Setting %{id: "6c27ca08-2294-4da5-8ef4-4beeb4aa759c",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ value_driver_id: "sample_value_driver_id", annual_value: 3.5}
+
+.
+17:45:52.434 [debug] Creating BeamPM.Ash.Resources.LeastAuthorityEvidence:
+
+Setting %{id: "0c056f72-f6e8-4cab-a1fe-43a049dad12a", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ granted_permissions: ["alpha", "beta"]}
+
+.
+17:45:52.436 [debug] Creating BeamPM.Ash.Resources.MasterServiceAgreementState:
+
+Setting %{id: "572e566e-b1e3-4271-a62e-a916c6275070",
+ opportunity_id: "sample_opportunity_id", agreement_id: "sample_agreement_id",
+ agreement_state: "sample_agreement_state"}
+
+.
+17:45:52.438 [debug] Creating BeamPM.Ash.Resources.LiabilityCapAdmission:
+
+Setting %{id: "ad10c985-a0cb-411b-a2ea-ae84c21eaa9c",
+ opportunity_id: "sample_opportunity_id", decision: "sample_decision",
+ liability_cap_id: "sample_liability_cap_id"}
+
+.
+17:45:52.440 [debug] Creating BeamPM.Ash.Resources.EventType:
+
+Setting %{id: "ba9f1b87-0069-4db9-97fb-95462ec29604", type_name: "sample_type_name",
+ attribute_names: ["alpha", "beta"]}
+
+.
+17:45:52.442 [debug] Creating BeamPM.Ash.Resources.ConfigurationExport:
+
+Setting %{id: "0a306d0f-b691-422b-b859-b24752c07d61", tenant_id: "sample_tenant_id",
+ export_id: "sample_export_id", configuration_hash: "sample_configuration_hash",
+ exported_at: ~U[2026-08-29 12:00:00Z]}
+
+.
+17:45:52.444 [debug] Creating BeamPM.Ash.Resources.RecoveryTimeReceipt:
+
+Setting %{id: "c4d2ad4e-a2c3-4971-b6b8-3e01729648e7", tenant_id: "sample_tenant_id",
+ incident_id: "sample_incident_id", recovery_hash: "sample_recovery_hash"}
+
+.
+17:45:52.446 [debug] Creating BeamPM.Ash.Resources.DeletionProofEvidence:
+
+Setting %{id: "56391214-533b-4cf0-b329-299e7bc6ca4e", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ deletion_receipt_id: "sample_deletion_receipt_id"}
+
+.
+17:45:52.448 [debug] Creating BeamPM.Ash.Resources.CreditRiskAdmission:
+
+Setting %{id: "69a6cf88-9570-401b-915a-df2f0991d4ab", account_id: "sample_account_id",
+ decision: "sample_decision", risk_band: "sample_risk_band"}
+
+.
+17:45:52.450 [debug] Creating BeamPM.Ash.Resources.ChangeControlEvidence:
+
+Setting %{id: "19fdcdc3-c8b2-471a-8267-09dc0bea4601", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ change_request_id: "sample_change_request_id"}
+
+.
+17:45:52.452 [debug] Creating BeamPM.Ash.Resources.CommercialQuoteLine:
+
+Setting %{id: "0fc79200-8a49-4a88-a31d-7e8379e50454", quantity: 42, sku: "sample_sku",
+ quote_id: "sample_quote_id", unit_price: 3.5}
+
+.
+17:45:52.454 [debug] Creating BeamPM.Ash.Resources.PetriPlace:
+
+Setting %{id: "eecd81e0-000f-4c55-985d-77f1beb7171a", tokens: 42,
+ place_id: "sample_place_id"}
+
+.
+17:45:52.456 [debug] Creating BeamPM.Ash.Resources.OrderFormAdmission:
+
+Setting %{id: "69a1ea4f-b00b-436a-b4ce-3057fc543c3c",
+ opportunity_id: "sample_opportunity_id", decision: "sample_decision",
+ order_form_id: "sample_order_form_id"}
+
+.
+17:45:52.458 [debug] Creating BeamPM.Ash.Resources.AccountValueRealization:
+
+Setting %{id: "a168752b-2241-4147-85a1-08848c22582d", tenant_id: "sample_tenant_id",
+ account_id: "sample_account_id", realization_hash: "sample_realization_hash"}
+
+.
+17:45:52.460 [debug] Creating BeamPM.Ash.Resources.Objection:
+
+Setting %{id: "eedac477-5a7a-4457-af2d-adbc6e8b58e3",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest", objection_id: "sample_objection_id",
+ objection_type: "sample_objection_type"}
+
+.
+17:45:52.462 [debug] Creating BeamPM.Ash.Resources.PricingBasisContract:
+
+Setting %{id: "9c26e8d2-04f5-430c-95b3-9f270eee87c1",
+ evidence_hash: "sample_evidence_hash", opportunity_id: "sample_opportunity_id",
+ pricing_basis_id: "sample_pricing_basis_id"}
+
+.
+17:45:52.464 [debug] Creating BeamPM.Ash.Resources.VendorRegistrationState:
+
+Setting %{id: "ee567124-7324-4ddd-ac82-28e2058824b8", account_id: "sample_account_id",
+ registration_id: "sample_registration_id",
+ registration_state: "sample_registration_state"}
+
+.
+17:45:52.466 [debug] Creating BeamPM.Ash.Resources.CustomerHealth:
+
+Setting %{id: "29454c10-8780-4dd6-84a3-f943e95bd298",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ customer_health_id: "sample_customer_health_id", health_score: 3.5}
+
+.
+17:45:52.468 [debug] Creating BeamPM.Ash.Resources.ProcurementBlocker:
+
+Setting %{id: "88c9a507-99e5-43a8-a618-958317f3f1fe",
+ opportunity_id: "sample_opportunity_id", blocker_id: "sample_blocker_id",
+ refusal_code: "sample_refusal_code"}
+
+.
+17:45:52.470 [debug] Creating BeamPM.Ash.Resources.PrivacyClassificationEvidence:
+
+Setting %{id: "579d0e33-b62a-4d98-9599-293b32231f91", evidence_id: "sample_evidence_id",
+ privacy_class: "sample_privacy_class", subject_sha: "sample_subject_sha",
+ observed_result: :sample_atom}
+
+.
+17:45:52.472 [debug] Creating BeamPM.Ash.Resources.BookingReadiness:
+
+Setting %{id: "c50524af-e2f6-442d-9dde-9d4f8d61e0aa",
+ opportunity_id: "sample_opportunity_id", readiness_id: "sample_readiness_id",
+ decision: "sample_decision"}
+
+.
+17:45:52.473 [debug] Creating BeamPM.Ash.Resources.RemediationSlaEvidence:
+
+Setting %{id: "54824afb-dd24-44e9-ada9-375511ccdd41", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ remediation_due_at: ~U[2026-08-29 12:00:00Z]}
+
+.
+17:45:52.475 [debug] Creating BeamPM.Ash.Resources.RetentionPolicyEvidence:
+
+Setting %{id: "90040775-f7a6-49d9-8a61-5c22f06d2048", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ retention_days: 42}
+
+.
+17:45:52.478 [debug] Creating BeamPM.Ash.Resources.BaselineMetric:
+
+Setting %{id: "c079be37-0989-4497-8bb8-aa70e85577ae",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ baseline_metric_id: "sample_baseline_metric_id", baseline_value: 3.5}
+
+.
+17:45:52.480 [debug] Creating BeamPM.Ash.Resources.DisasterRecoveryEvidence:
+
+Setting %{id: "8a35c433-7410-47ec-85dd-b798744bf8ed", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ recovered_at: ~U[2026-08-29 12:00:00Z]}
+
+.
+17:45:52.482 [debug] Creating BeamPM.Ash.Resources.EnterpriseOrder:
+
+Setting %{id: "74c5567e-7153-42dd-83d7-edfe67407ca1", status: :sample_atom,
+ account_id: "sample_account_id", quote_id: "sample_quote_id",
+ order_id: "sample_order_id"}
+
+.
+17:45:52.484 [debug] Creating BeamPM.Ash.Resources.PathSchemaQuery:
+
+Setting %{id: "2353c60e-59ec-4a2b-8fd3-9eb745b79e18", max_length: 42,
+ source_type: "sample_source_type", target_type: "sample_target_type"}
+
+.
+17:45:52.486 [debug] Creating BeamPM.Ash.Resources.ExpansionOpportunity:
+
+Setting %{id: "5b878fa5-6371-4837-8d54-321f28b97cd0",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ expansion_opportunity_id: "sample_expansion_opportunity_id",
+ expansion_value: 3.5}
+
+.
+17:45:52.488 [debug] Creating BeamPM.Ash.Resources.IntegrationReadiness:
+
+Setting %{id: "eb2bf4aa-d3a1-4910-8dea-ba1b7852a495",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ integration_readiness_id: "sample_integration_readiness_id",
+ integration_score: 3.5}
+
+.
+17:45:52.490 [debug] Creating BeamPM.Ash.Resources.CapabilityBundle:
+
+Setting %{id: "952e7930-0155-444b-be08-e356fca5f87b", name: "sample_name",
+ version: "sample_version", capability_ids: ["alpha", "beta"],
+ bundle_id: "sample_bundle_id"}
+
+.
+17:45:52.492 [debug] Creating BeamPM.Ash.Resources.WorkloadIdempotencyKey:
+
+Setting %{id: "f126413d-0b6a-40dc-83cd-c49de8c36395", tenant_id: "sample_tenant_id",
+ idempotency_key: "sample_idempotency_key", execution_id: "sample_execution_id"}
+
+.
+17:45:52.495 [debug] Creating BeamPM.Ash.Resources.K8sObjectRef:
+
+Setting %{id: "430142f5-c8ff-41cf-9821-7e0e1cc6b03f", name: "sample_name",
+ kind: "sample_kind", namespace: "sample_namespace"}
+
+.
+17:45:52.497 [debug] Creating BeamPM.Ash.Resources.RampCommitment:
+
+Setting %{id: "f4965998-6a2a-4cd5-bd44-cb752aff1bfd", phase: 42,
+ effective_at: ~U[2026-08-29 12:00:00Z], ramp_id: "sample_ramp_id",
+ committed_amount: 3.5}
+
+.
+17:45:52.499 [debug] Creating BeamPM.Ash.Resources.DeveloperReadiness:
+
+Setting %{id: "b35667a3-fb75-49ce-9b55-d503a5f7afc4",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ developer_readiness_id: "sample_developer_readiness_id",
+ developer_readiness_score: 3.5}
+
+.
+17:45:52.501 [debug] Creating BeamPM.Ash.Resources.ReproducibleBuildEvidence:
+
+Setting %{id: "00b76887-300b-4fd2-b613-cccb30bb8a62", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ build_digest: "sample_build_digest"}
+
+.
+17:45:52.503 [debug] Creating BeamPM.Ash.Resources.StaleSubjectRefusalEvidence:
+
+Setting %{id: "f1cca107-577f-49ec-87dc-cea9af64e506", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ stale_sha: "sample_stale_sha"}
+
+.
+17:45:52.505 [debug] Creating BeamPM.Ash.Resources.ProcessVariant:
+
+Setting %{id: "0a412581-4c9a-4ce3-873a-6e2301f8d9b5",
+ activity_sequence: ["alpha", "beta"], frequency: 42,
+ variant_id: "sample_variant_id"}
+
+.
+17:45:52.507 [debug] Creating BeamPM.Ash.Resources.CommercialValueRealization:
+
+Setting %{id: "129a1e4e-9655-4cc2-ba54-5d345cdb460a",
+ realization_id: "sample_realization_id", baseline_id: "sample_baseline_id",
+ realized_value: 3.5, measured_at: ~U[2026-08-29 12:00:00Z]}
+
+.
+17:45:52.509 [debug] Creating BeamPM.Ash.Resources.AttestationVerificationEvidence:
+
+Setting %{id: "97e1992e-25fa-46a5-ba84-b429142f4267", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ predicate_type: "sample_predicate_type"}
+
+.
+17:45:52.511 [debug] Creating BeamPM.Ash.Resources.DataProcessingAddendumState:
+
+Setting %{id: "9b344edf-e4db-466c-aec9-64f9a529544c",
+ opportunity_id: "sample_opportunity_id", addendum_id: "sample_addendum_id",
+ addendum_state: "sample_addendum_state"}
+
+.
+17:45:52.513 [debug] Creating BeamPM.Ash.Resources.PaymentTerms:
+
+Setting %{id: "530dab04-19d6-4f10-9e0b-7bddb4221c87", status: :sample_atom,
+ terms_id: "sample_terms_id", net_days: 42, late_policy: "sample_late_policy"}
+
+.
+17:45:52.515 [debug] Creating BeamPM.Ash.Resources.PolicyDecision:
+
+Setting %{id: "1a6a4c8c-79dd-456f-a45d-eabb02763d53", reason: "sample_reason",
+ decision_id: "sample_decision_id", verdict: :sample_atom}
+
+.
+17:45:52.517 [debug] Creating BeamPM.Ash.Resources.PocScope:
+
+Setting %{id: "2847c553-35da-4fd2-8a0d-2ee20f20fd7c",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest", poc_scope_id: "sample_poc_scope_id",
+ use_case_count: 42}
+
+.
+17:45:52.519 [debug] Creating BeamPM.Ash.Resources.IntegrationScopeAdmission:
+
+Setting %{id: "37764eca-2f1a-44d1-8f76-e93ef1e05113",
+ opportunity_id: "sample_opportunity_id", decision: "sample_decision",
+ integration_scope_id: "sample_integration_scope_id"}
+
+.*************
+17:45:52.523 [debug] Creating BeamPM.Ash.Resources.AnnualSubscription:
+
+Setting %{id: "15f895ae-5e0f-4d27-9320-30b7e1a3552a",
+ subscription_id: "sample_subscription_id", sku: "sample_sku", seat_count: 42,
+ renews_at: ~U[2026-08-29 12:00:00Z]}
+
+.
+17:45:52.525 [debug] Creating BeamPM.Ash.Resources.VulnerabilityScanEvidence:
+
+Setting %{id: "a9eb901a-a394-4c0b-ac7b-4cbe5189cee9", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ vulnerability_count: 42}
+
+.
+17:45:52.527 [debug] Creating BeamPM.Ash.Resources.SecurityReadiness:
+
+Setting %{id: "84bed602-0c2a-498c-b87b-f1ea45f27200",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ security_readiness_id: "sample_security_readiness_id", control_coverage: 3.5}
+
+.
+17:45:52.529 [debug] Creating BeamPM.Ash.Resources.ReceiptSignature:
+
+Setting %{id: "76d93e2c-9a76-4444-88ac-fca70e40c21b", tenant_id: "sample_tenant_id",
+ receipt_id: "sample_receipt_id", signature_hash: "sample_signature_hash"}
+
+.
+17:45:52.531 [debug] Creating BeamPM.Ash.Resources.PocTimeline:
+
+Setting %{id: "c1d2134f-aaa3-4743-9603-58d40434654b",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ poc_timeline_id: "sample_poc_timeline_id", days_to_value: 42}
+
+.
+17:45:52.533 [debug] Creating BeamPM.Ash.Resources.PathSchema:
+
+Setting %{id: "fbc45e9c-d134-41c8-a202-8c626eea637f", schema_id: "sample_schema_id",
+ source_type: "sample_source_type", target_type: "sample_target_type",
+ support: 42}
+
+.
+17:45:52.535 [debug] Creating BeamPM.Ash.Resources.DataMigrationScopeAdmission:
+
+Setting %{id: "8623cd42-e04a-451f-888d-d5c00870fb85",
+ opportunity_id: "sample_opportunity_id", decision: "sample_decision",
+ migration_scope_id: "sample_migration_scope_id"}
+
+.
+17:45:52.537 [debug] Creating BeamPM.Ash.Resources.OciManifestEvidence:
+
+Setting %{id: "b4a44fe3-7299-4a28-9726-ab547656ca30", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ manifest_digest: "sample_manifest_digest"}
+
+.
+17:45:52.539 [debug] Creating BeamPM.Ash.Resources.WorkloadTimeoutBudget:
+
+Setting %{id: "15b4dc8c-fddd-4a96-a6fc-0b0c7ad435fc", tenant_id: "sample_tenant_id",
+ budget_id: "sample_budget_id", budget_hash: "sample_budget_hash"}
+
+.
+17:45:52.541 [debug] Creating BeamPM.Ash.Resources.BeneficialOwnerEvidence:
+
+Setting %{id: "55c41d26-8025-4a6b-8d9c-ce55a8453cc7", account_id: "sample_account_id",
+ owner_id: "sample_owner_id", evidence_hash: "sample_evidence_hash"}
+
+.
+17:45:52.543 [debug] Creating BeamPM.Ash.Resources.PetriArc:
+
+Setting %{id: "2b9d2ccd-4386-4190-893c-a9b49c415bff", weight: 42,
+ source_id: "sample_source_id", target_id: "sample_target_id"}
+
+.
+17:45:52.545 [debug] Creating BeamPM.Ash.Resources.SupportWindowEvidence:
+
+Setting %{id: "8b72bbb4-d23e-4a4a-86a0-9e0bef098e9d", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ support_channel: "sample_support_channel"}
+
+.
+17:45:52.547 [debug] Creating BeamPM.Ash.Resources.ProvenanceBindingEvidence:
+
+Setting %{id: "78fd0648-0c9e-4d86-9a3a-d495a0ea2f0c", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ builder_identity: "sample_builder_identity"}
+
+.
+17:45:52.552 [debug] Creating BeamPM.Ash.Resources.EntitlementEvent:
+
+Setting %{id: "60efca51-8707-49ab-aea9-427991f5cb06",
+ entitlement_id: "sample_entitlement_id", event_type: "sample_event_type",
+ event_id: "sample_event_id", effective_at: ~U[2026-08-29 12:00:00Z],
+ payload: %{"k" => "v"}}
+
+.
+17:45:52.554 [debug] Creating BeamPM.Ash.Resources.OcelObject:
+
+Setting %{attributes: %{"k" => "v"}, id: "1c4a6b09-edb8-48f0-bc75-69cca4e39257",
+ object_type: "sample_object_type", object_id: "sample_object_id"}
+
+.
+17:45:52.556 [debug] Creating BeamPM.Ash.Resources.TenantKeyScope:
+
+Setting %{id: "b56f191d-6371-4e92-93f8-b62ab99b2085", tenant_id: "sample_tenant_id",
+ key_scope_id: "sample_key_scope_id",
+ key_attestation_hash: "sample_key_attestation_hash"}
+
+.
+17:45:52.558 [debug] Creating BeamPM.Ash.Resources.CapabilityGap:
+
+Setting %{id: "d8208892-523b-45df-ace1-bc8f4ae4ebd0",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ capability_gap_id: "sample_capability_gap_id",
+ gap_severity: "sample_gap_severity"}
+
+.
+17:45:52.561 [debug] Creating BeamPM.Ash.Resources.WorkloadExecutionIdentity:
+
+Setting %{id: "de2b53b8-037f-46f4-8d57-a36de5392128", tenant_id: "sample_tenant_id",
+ execution_id: "sample_execution_id", subject_digest: "sample_subject_digest"}
+
+.
+17:45:52.563 [debug] Creating BeamPM.Ash.Resources.MigrationReadiness:
+
+Setting %{id: "9edd1a75-c186-4481-ab64-8c5f8d759eb5",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ migration_readiness_id: "sample_migration_readiness_id",
+ migration_effort_days: 42}
+
+.
+17:45:52.565 [debug] Creating BeamPM.Ash.Resources.PowlFreq:
+
+Setting %{id: "125ee724-63be-4741-878f-6ec8453cd335", min_freq: 42, max_freq: 42}
+
+.
+17:45:52.567 [debug] Creating BeamPM.Ash.Resources.CommittedSpend:
+
+Setting %{id: "e79fd350-2b6a-4145-a6a5-cc1084a87056", currency: "sample_currency",
+ expires_at: ~U[2026-08-29 12:00:00Z], amount: 3.5,
+ commitment_id: "sample_commitment_id"}
+
+.
+17:45:52.569 [debug] Creating BeamPM.Ash.Resources.PetriTransition:
+
+Setting %{id: "f5d6ec38-8ee1-4530-b3ea-c5e96878c27c", label: "sample_label",
+ transition_id: "sample_transition_id"}
+
+.
+17:45:52.571 [debug] Creating BeamPM.Ash.Resources.TaxJurisdictionEvidence:
+
+Setting %{id: "d51bfcd6-da71-4b29-b29b-ce60f7a6c2b9",
+ evidence_hash: "sample_evidence_hash",
+ contracting_entity_id: "sample_contracting_entity_id",
+ tax_jurisdiction: "sample_tax_jurisdiction"}
+
+.
+17:45:52.573 [debug] Creating BeamPM.Ash.Resources.PocExitCriteria:
+
+Setting %{id: "07ff6a91-ecfa-46c1-bb57-939c34adfcb0",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ poc_exit_criteria_id: "sample_poc_exit_criteria_id", criteria_pass_rate: 3.5}
+
+.**********
+17:45:52.575 [debug] Creating BeamPM.Ash.Resources.ObjectAttributeChange:
+
+Setting %{id: "ac4e5aa4-4f5c-46be-b8a6-c1594a6d73e7", new_value: "sample_new_value",
+ object_id: "sample_object_id", attribute_name: "sample_attribute_name",
+ old_value: "sample_old_value", changed_at: ~U[2026-08-29 12:00:00Z]}
+
+.
+17:45:52.577 [debug] Creating BeamPM.Ash.Resources.SlaOfferAdmission:
+
+Setting %{id: "091e3a15-d7a7-4b21-9e18-27306abc2c39",
+ opportunity_id: "sample_opportunity_id", decision: "sample_decision",
+ sla_offer_id: "sample_sla_offer_id"}
+
+.
+17:45:52.579 [debug] Creating BeamPM.Ash.Resources.SojournTime:
+
+Setting %{id: "7bc5dc68-5a5e-4d88-9e01-342e5a5b6863", seconds: 3.5,
+ event_type: "sample_event_type", object_id: "sample_object_id"}
+
+.
+17:45:52.582 [debug] Creating BeamPM.Ash.Resources.DependencyInventoryEvidence:
+
+Setting %{id: "ff554b88-2b71-490e-8c30-00a2ad82be28", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ dependency_count: 42}
+
+.
+17:45:52.584 [debug] Creating BeamPM.Ash.Resources.AlignmentMove:
+
+Setting %{id: "56fccadb-bc3f-4825-bdf6-d274b8c138f3", move_type: :sample_atom, cost: 42}
+
+.
+17:45:52.586 [debug] Creating BeamPM.Ash.Resources.OcelAttribute:
+
+Setting %{id: "912c9cef-47f6-4fdd-9f59-0f93c9d8c827",
+ attribute_name: "sample_attribute_name",
+ attribute_value: "sample_attribute_value",
+ recorded_at: ~U[2026-08-29 12:00:00Z]}
+
+.
+17:45:52.588 [debug] Creating BeamPM.Ash.Resources.ActivationEvent:
+
+Setting %{id: "e048566a-8f87-49f3-a256-1009b7480bee",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ activation_event_id: "sample_activation_event_id",
+ activation_type: "sample_activation_type"}
+
+.
+17:45:52.590 [debug] Creating BeamPM.Ash.Resources.IncidentResponseEvidence:
+
+Setting %{id: "8a0ec440-fc7d-44f7-a5cf-6ba552180055", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ incident_id: "sample_incident_id"}
+
+.
+17:45:52.593 [debug] Creating BeamPM.Ash.Resources.PowlLeaf:
+
+Setting %{id: "5f967054-5b4c-4f01-aa10-f3b054bc34c2", min_freq: 42, max_freq: 42,
+ activity_label: "sample_activity_label", is_tau: true}
+
+.
+17:45:52.595 [debug] Creating BeamPM.Ash.Resources.ConformanceResult:
+
+Setting %{id: "0471589c-d68c-4833-a230-805479ff49c3", precision: 3.5,
+ trace_id: "sample_trace_id", fitness: 3.5}
+
+.
+17:45:52.597 [debug] Creating BeamPM.Ash.Resources.RollbackDecision:
+
+Setting %{id: "358fd7f3-d14a-4b44-b2c7-13f8588fd29e",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ rollback_decision_id: "sample_rollback_decision_id",
+ rollback_result: "sample_rollback_result"}
+
+.
+17:45:52.599 [debug] Creating BeamPM.Ash.Resources.DfgEdge:
+
+Setting %{id: "d5fb32c8-c035-4fa9-a305-2c25cf746038",
+ source_activity: "sample_source_activity",
+ target_activity: "sample_target_activity", frequency: 42}
+
+.
+17:45:52.602 [debug] Creating BeamPM.Ash.Resources.ProductionReadiness:
+
+Setting %{id: "1328a748-9fe5-4d83-bca9-92da73fee90f",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ production_readiness_id: "sample_production_readiness_id",
+ production_readiness_score: 3.5}
+
+.
+17:45:52.604 [debug] Creating BeamPM.Ash.Resources.TenantProject:
+
+Setting %{id: "bfb3884e-94e7-4090-a490-4bab4e6491f0", status: :sample_atom,
+ tenant_id: "sample_tenant_id", cost_center: "sample_cost_center",
+ project_id: "sample_project_id"}
+
+.
+17:45:52.605 [debug] Creating BeamPM.Ash.Resources.WorkloadQueueDepth:
+
+Setting %{id: "dfafc9f4-eb86-45c0-bed2-e0c8232de59f", tenant_id: "sample_tenant_id",
+ measurement_hash: "sample_measurement_hash", queue_id: "sample_queue_id"}
+
+.
+17:45:52.608 [debug] Creating BeamPM.Ash.Resources.OcDeclareConstraint:
+
+Setting %{id: "fabb5866-2092-4658-8064-5e16c0db6f96",
+ source_activity: "sample_source_activity",
+ target_activity: "sample_target_activity",
+ constraint_id: "sample_constraint_id", constraint_type: :sample_atom}
+
+.
+17:45:52.610 [debug] Creating BeamPM.Ash.Resources.BrceActuationReceipt:
+
+Setting %{id: "cc136d08-7bfb-4940-928e-9bc1bf91d640", request_id: "sample_request_id",
+ tenant_id: "sample_tenant_id", receipt_hash: "sample_receipt_hash"}
+
+.
+17:45:52.612 [debug] Creating BeamPM.Ash.Resources.TechnicalBlocker:
+
+Setting %{id: "6152103d-2362-47b9-8326-81bce54471c0",
+ opportunity_id: "sample_opportunity_id", blocker_id: "sample_blocker_id",
+ refusal_code: "sample_refusal_code"}
+
+.
+17:45:52.614 [debug] Creating BeamPM.Ash.Resources.RevenueAttribution:
+
+Setting %{id: "fd460ae2-b52d-48df-8144-efbcea4f8448",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ revenue_attribution_id: "sample_revenue_attribution_id",
+ attributed_revenue: 3.5}
+
+.
+17:45:52.616 [debug] Creating BeamPM.Ash.Resources.CommercialForecast:
+
+Setting %{id: "e01764a0-c74d-4415-a205-2a1c062db3b1", confidence: 3.5,
+ account_id: "sample_account_id", forecast_id: "sample_forecast_id",
+ amount: 3.5}
+
+.
+17:45:52.618 [debug] Creating BeamPM.Ash.Resources.RenewalTermAdmission:
+
+Setting %{id: "744c7461-d67e-4145-ae91-9e178b32cd86",
+ opportunity_id: "sample_opportunity_id", decision: "sample_decision",
+ renewal_term: "sample_renewal_term"}
+
+.
+17:45:52.620 [debug] Creating BeamPM.Ash.Resources.SupportSlaEvidence:
+
+Setting %{id: "d005875a-45b5-4dae-bae3-0d69373d82a3", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ response_minutes: 42}
+
+.
+17:45:52.622 [debug] Creating BeamPM.Ash.Resources.CommercialException:
+
+Setting %{id: "97bebe08-6863-425c-85be-dd2b1854e4a5",
+ opportunity_id: "sample_opportunity_id", exception_id: "sample_exception_id",
+ exception_state: "sample_exception_state"}
+
+.
+17:45:52.624 [debug] Creating BeamPM.Ash.Resources.EnvironmentIdentity:
+
+Setting %{id: "3067c7c0-b2c5-4a4f-ae3f-c4588e146f54", tenant_id: "sample_tenant_id",
+ identity_hash: "sample_identity_hash", environment_id: "sample_environment_id"}
+
+.
+17:45:52.626 [debug] Creating BeamPM.Ash.Resources.NodeFailoverEvent:
+
+Setting %{id: "1f4c09ee-e5c5-4806-940c-a14304bf3c33", tenant_id: "sample_tenant_id",
+ node_id: "sample_node_id", failover_hash: "sample_failover_hash"}
+
+.
+17:45:52.628 [debug] Creating BeamPM.Ash.Resources.TenantAccount:
+
+Setting %{id: "740a85f0-e793-4f81-a8df-4a431cc6d05b", tenant_id: "sample_tenant_id",
+ account_id: "sample_account_id", edition_id: "sample_edition_id",
+ home_region: "sample_home_region"}
+
+.
+17:45:52.630 [debug] Creating BeamPM.Ash.Resources.RuntimePolicyDecision:
+
+Setting %{id: "27e1f175-51ae-4c3b-8fcc-2dd053b94a28", decision_id: "sample_decision_id",
+ tenant_id: "sample_tenant_id", policy_hash: "sample_policy_hash"}
+
+.
+17:45:52.632 [debug] Creating BeamPM.Ash.Resources.CommercialExecutionReceipt:
+
+Setting %{id: "8310b135-2cee-4e45-bd4d-2289ac80b0e1", subject_id: "sample_subject_id",
+ evidence_hash: "sample_evidence_hash", receipt_id: "sample_receipt_id",
+ operation: "sample_operation"}
+
+.
+17:45:52.634 [debug] Creating BeamPM.Ash.Resources.CaseStats:
+
+Setting %{id: "a9064742-4a6a-430b-8f54-e3b54da618fd", case_id: "sample_case_id",
+ event_count: 42, duration_seconds: 3.5}
+
+.
+17:45:52.636 [debug] Creating BeamPM.Ash.Resources.VersionLifecycleEvidence:
+
+Setting %{id: "42b73c3b-f8a0-4d99-9f1b-3af5a058b4bb", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ supported_until: ~U[2026-08-29 12:00:00Z]}
+
+.
+17:45:52.638 [debug] Creating BeamPM.Ash.Resources.ConsumptionPool:
+
+Setting %{id: "f916e870-b916-447b-a7e8-b984237fd9db", unit: "sample_unit",
+ account_id: "sample_account_id", pool_id: "sample_pool_id",
+ remaining_quantity: 3.5}
+
+.
+17:45:52.640 [debug] Creating BeamPM.Ash.Resources.RollingUpgradePlan:
+
+Setting %{id: "332327b5-d2e3-4b0d-81d8-c0a228f03ea5", tenant_id: "sample_tenant_id",
+ upgrade_id: "sample_upgrade_id", plan_hash: "sample_plan_hash"}
+
+.
+17:45:52.642 [debug] Creating BeamPM.Ash.Resources.PlanningState:
+
+Setting %{id: "84ab0179-88c7-4fa2-af86-fcd77a8e8273", state_id: "sample_state_id",
+ facts: ["alpha", "beta"]}
+
+.
+17:45:52.644 [debug] Creating BeamPM.Ash.Resources.ValueBaseline:
+
+Setting %{id: "0dcb8b36-5fed-40c6-a449-e214920edbca", metric_name: "sample_metric_name",
+ account_id: "sample_account_id", baseline_value: 3.5,
+ baseline_id: "sample_baseline_id"}
+
+.
+17:45:52.646 [debug] Creating BeamPM.Ash.Resources.BudgetPeriodAlignment:
+
+Setting %{id: "cbae9d73-33a3-4eca-a2f6-b024c6af398e",
+ opportunity_id: "sample_opportunity_id", budget_period: "sample_budget_period",
+ alignment_result: "sample_alignment_result"}
+
+.
+17:45:52.648 [debug] Creating BeamPM.Ash.Resources.TenantDataPartition:
+
+Setting %{id: "3cab06f3-0a12-4c7f-9263-d1be5f52c385", tenant_id: "sample_tenant_id",
+ partition_id: "sample_partition_id", isolation_hash: "sample_isolation_hash"}
+
+.
+17:45:52.650 [debug] Creating BeamPM.Ash.Resources.ValueTelemetrySample:
+
+Setting %{id: "a4b53216-a0d6-4b43-8c03-9bedf0a918a0", tenant_id: "sample_tenant_id",
+ outcome_id: "sample_outcome_id", telemetry_hash: "sample_telemetry_hash"}
+
+.
+17:45:52.652 [debug] Creating BeamPM.Ash.Resources.AdoptionMilestone:
+
+Setting %{id: "79b6bf04-e262-46f4-9efa-4b7db69c0173",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ adoption_milestone_id: "sample_adoption_milestone_id",
+ milestone_name: "sample_milestone_name"}
+
+.
+17:45:52.654 [debug] Creating BeamPM.Ash.Resources.EventLog:
+
+Setting %{id: "00bb5e18-a5e2-4ba5-939c-312fb3b09e44", name: "sample_name",
+ description: "sample_description", log_id: "sample_log_id"}
+
+.......****************
+17:45:52.658 [debug] Creating BeamPM.Ash.Resources.ChargebackRule:
+
+Setting %{id: "0e107142-a730-415f-a90f-a4c10b59c43a", metric_name: "sample_metric_name",
+ rule_id: "sample_rule_id", cost_center: "sample_cost_center", rate: 3.5}
+
+.
+17:45:52.660 [debug] Creating BeamPM.Ash.Resources.IndemnityScopeAdmission:
+
+Setting %{id: "a7a813ae-0c6f-4daa-9bd2-813f7544052e",
+ opportunity_id: "sample_opportunity_id", decision: "sample_decision",
+ indemnity_scope_id: "sample_indemnity_scope_id"}
+
+.*******
+17:45:52.662 [debug] Creating BeamPM.Ash.Resources.BackupRestoreEvidence:
+
+Setting %{id: "bda04bc6-f68f-4351-aeec-c3a8662fb2fd", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ backup_digest: "sample_backup_digest"}
+
+.
+17:45:52.664 [debug] Creating BeamPM.Ash.Resources.AvailabilitySloEvidence:
+
+Setting %{id: "6454243b-49f6-4b4a-b34e-23440f49ee2b", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ availability_percent: 3.5}
+
+.
+17:45:52.666 [debug] Creating BeamPM.Ash.Resources.PlanningAction:
+
+Setting %{id: "73809c15-f0cb-4ee7-a578-7fc7d9b283c5", action_name: "sample_action_name",
+ preconditions: ["alpha", "beta"], effects: ["alpha", "beta"]}
+
+.
+17:45:52.668 [debug] Creating BeamPM.Ash.Resources.SkuDefinition:
+
+Setting %{id: "210acc1c-dc34-4ebd-be7f-0326af2d9490", status: :sample_atom,
+ sku: "sample_sku", edition_id: "sample_edition_id",
+ billing_model: :sample_atom}
+
+.
+17:45:52.671 [debug] Creating BeamPM.Ash.Resources.RenewalEvidence:
+
+Setting %{id: "93da50ee-fe71-4e57-8c1f-ee1c88d5a195",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ renewal_evidence_id: "sample_renewal_evidence_id", renewal_value: 3.5}
+
+.
+17:45:52.673 [debug] Creating BeamPM.Ash.Resources.AddOnBundle:
+
+Setting %{id: "91b9128f-9bc5-49e3-9bc4-edf0a4aa3d97", name: "sample_name",
+ status: :sample_atom, add_on_id: "sample_add_on_id",
+ capability_ids: ["alpha", "beta"]}
+
+.
+17:45:52.675 [debug] Creating BeamPM.Ash.Resources.ConfigurationImport:
+
+Setting %{id: "a0e65477-68ea-42b2-8bec-3aaeb938960d", status: :sample_atom,
+ tenant_id: "sample_tenant_id", configuration_hash: "sample_configuration_hash",
+ import_id: "sample_import_id"}
+
+.
+17:45:52.677 [debug] Creating BeamPM.Ash.Resources.TimeToValue:
+
+Setting %{id: "e1cfcb3a-7f0d-4c4a-bb61-326e941c4002",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ time_to_value_id: "sample_time_to_value_id", verified_days: 42}
+
+.
+17:45:52.679 [debug] Creating BeamPM.Ash.Resources.IncidentDetectionEvent:
+
+Setting %{id: "7d756e51-af7f-403f-accf-8ced0168d583", tenant_id: "sample_tenant_id",
+ incident_id: "sample_incident_id", detection_hash: "sample_detection_hash"}
+
+.
+17:45:52.681 [debug] Creating BeamPM.Ash.Resources.BusinessContinuityEvidence:
+
+Setting %{id: "df3955ba-36fe-4764-ac02-b94fc2263dda", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ continuity_mode: "sample_continuity_mode"}
+
+.
+17:45:52.683 [debug] Creating BeamPM.Ash.Resources.ContractingEntityIdentity:
+
+Setting %{id: "77cac8a6-dc3e-41e8-83b8-152898d816cc",
+ opportunity_id: "sample_opportunity_id",
+ contracting_entity_id: "sample_contracting_entity_id",
+ identity_evidence_hash: "sample_identity_evidence_hash"}
+
+.
+17:45:52.685 [debug] Creating BeamPM.Ash.Resources.MinimumTermAdmission:
+
+Setting %{id: "c5888d07-c515-4c18-87ab-59cf04d9e2b2",
+ opportunity_id: "sample_opportunity_id", decision: "sample_decision",
+ minimum_term: "sample_minimum_term"}
+
+.
+17:45:52.687 [debug] Creating BeamPM.Ash.Resources.BuyingCommittee:
+
+Setting %{id: "e3c9ebea-a5a6-4503-8ef2-87e8a04e9248",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ buying_committee_id: "sample_buying_committee_id", committee_coverage: 3.5}
+
+.
+17:45:52.689 [debug] Creating BeamPM.Ash.Resources.CommercialApproval:
+
+Setting %{id: "a694041d-9d05-47a1-959f-4f448dbb43d6", status: :sample_atom,
+ approval_id: "sample_approval_id", quote_id: "sample_quote_id",
+ authority: "sample_authority"}
+
+.
+17:45:52.692 [debug] Creating BeamPM.Ash.Resources.ShowbackAllocation:
+
+Setting %{id: "dd9f647c-ec81-4c74-bf32-5f706114f23f", metric_name: "sample_metric_name",
+ quantity: 3.5, allocation_id: "sample_allocation_id",
+ project_id: "sample_project_id"}
+
+.
+17:45:52.694 [debug] Creating BeamPM.Ash.Resources.ReceiptReplayEvidence:
+
+Setting %{id: "7c5fbefb-6574-4d5e-a35b-ac1fc99055d8", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ replay_result_hash: "sample_replay_result_hash"}
+
+.
+17:45:52.696 [debug] Creating BeamPM.Ash.Resources.OcelRelationship:
+
+Setting %{id: "7884eb67-21ef-4b25-8e39-9c2d077cdd3e", object_id: "sample_object_id",
+ qualifier: "sample_qualifier"}
+
+.
+17:45:52.699 [debug] Creating BeamPM.Ash.Resources.LogTrace:
+
+Setting %{id: "0fdf88ce-0161-45cc-86d4-a1be9894f425", case_id: "sample_case_id",
+ activity_sequence: ["alpha", "beta"]}
+
+.........
+17:45:53.213 [debug] Creating BeamPM.Ash.Resources.ServiceLevelObjective:
+
+Setting %{id: "20b086a4-3d44-4cb1-9320-41026dc8600d", slo_id: "sample_slo_id",
+ contract_id: "sample_contract_id", target_percent: 3.5,
+ measurement_window: :sample_atom}
+
+.
+17:45:53.216 [debug] Creating BeamPM.Ash.Resources.OcelEvent:
+
+Setting %{attributes: %{"k" => "v"}, id: "1cd68ea5-9eb6-4ff4-8bb3-9e492d0f398a",
+ event_type: "sample_event_type", event_id: "sample_event_id",
+ event_time: ~U[2026-08-29 12:00:00Z]}
+
+.
+17:45:53.219 [debug] Creating BeamPM.Ash.Resources.CanaryDecision:
+
+Setting %{id: "b52a2c05-1a6f-4983-8a7c-11a4865e3d61",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ canary_decision_id: "sample_canary_decision_id",
+ canary_result: "sample_canary_result"}
+
+.
+17:45:53.221 [debug] Creating BeamPM.Ash.Resources.RevenueContractAdmission:
+
+Setting %{id: "e11c61c4-5603-4402-ba59-f92304395afe",
+ opportunity_id: "sample_opportunity_id", contract_id: "sample_contract_id",
+ admission_receipt_hash: "sample_admission_receipt_hash"}
+
+.
+17:45:53.223 [debug] Creating BeamPM.Ash.Resources.RfpResponseEvidence:
+
+Setting %{id: "6e7d7b8a-6f90-45b9-bbbc-018c75ae0309", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ answer_set_hash: "sample_answer_set_hash"}
+
+.
+17:45:53.226 [debug] Creating BeamPM.Ash.Resources.ServiceSpan:
+
+Setting %{id: "58bdbb22-3079-46aa-b0e2-89d677304c58", span_id: "sample_span_id",
+ service_name: "sample_service_name", duration_ms: 42,
+ parent_span_id: "sample_parent_span_id"}
+
+.
+17:45:53.228 [debug] Creating BeamPM.Ash.Resources.TypeEdge:
+
+Setting %{id: "7edeed04-a206-4d88-a28c-23bbaf91c9ed", direction: :sample_atom,
+ qualifier: "sample_qualifier", source_type: "sample_source_type",
+ target_type: "sample_target_type"}
+
+.
+17:45:53.230 [debug] Creating BeamPM.Ash.Resources.PurchasingEntityIdentity:
+
+Setting %{id: "e002d0f5-c5d5-4934-b64d-86ea774b2ad0",
+ opportunity_id: "sample_opportunity_id",
+ identity_evidence_hash: "sample_identity_evidence_hash",
+ purchasing_entity_id: "sample_purchasing_entity_id"}
+
+.
+17:45:53.233 [debug] Creating BeamPM.Ash.Resources.ExecutiveSponsor:
+
+Setting %{id: "d1b1b91c-a9b0-4831-aced-27a0d31ef863",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ executive_sponsor_id: "sample_executive_sponsor_id",
+ sponsor_commitment: "sample_sponsor_commitment"}
+
+.
+17:45:53.235 [debug] Creating BeamPM.Ash.Resources.UpsellReadiness:
+
+Setting %{id: "1b91f00f-3cc8-418c-b881-6afd8ead1dd8",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ upsell_readiness_id: "sample_upsell_readiness_id", upsell_score: 3.5}
+
+.
+17:45:53.237 [debug] Creating BeamPM.Ash.Resources.ChangeOrderAuthority:
+
+Setting %{id: "c2bbfcc2-8038-479d-a848-e49999c4bb6e",
+ evidence_hash: "sample_evidence_hash", opportunity_id: "sample_opportunity_id",
+ authority_id: "sample_authority_id"}
+
+.
+17:45:53.240 [debug] Creating BeamPM.Ash.Resources.OpportunityValueRange:
+
+Setting %{id: "84bd452a-e2a7-49f1-a5d2-ccadb43ee43d",
+ opportunity_id: "sample_opportunity_id", minimum_value: "sample_minimum_value",
+ maximum_value: "sample_maximum_value"}
+
+.
+17:45:53.242 [debug] Creating BeamPM.Ash.Resources.BrceActuationRequest:
+
+Setting %{id: "3c989754-9e40-46f2-8385-d19bad1887fd", request_id: "sample_request_id",
+ tenant_id: "sample_tenant_id", authority_hash: "sample_authority_hash"}
+
+.
+17:45:53.244 [debug] Creating BeamPM.Ash.Resources.PrivateRegistryEvidence:
+
+Setting %{id: "bbb357f2-efb6-47b2-b797-e155a2365dd2", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ registry_digest: "sample_registry_digest"}
+
+.
+17:45:53.247 [debug] Creating BeamPM.Ash.Resources.SecretBoundaryEvidence:
+
+Setting %{id: "1faa7d2c-4b87-4833-a20b-0d1375555bbc", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ secret_source: "sample_secret_source"}
+
+.
+17:45:53.249 [debug] Creating BeamPM.Ash.Resources.RenewalHealth:
+
+Setting %{id: "9bd90ea6-0961-4c12-8e7f-3879f5d4fc37",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ renewal_health_id: "sample_renewal_health_id", renewal_health_score: 3.5}
+
+.
+17:45:53.251 [debug] Creating BeamPM.Ash.Resources.CustomerManagedKeyEvidence:
+
+Setting %{id: "3e98777b-00b8-40be-bb5f-876048cd3d0e", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ key_identifier: "sample_key_identifier"}
+
+.
+17:45:53.254 [debug] Creating BeamPM.Ash.Resources.InvoiceEntityIdentity:
+
+Setting %{id: "e652b75e-9e34-4cdf-8b80-7aee2b0d0679",
+ opportunity_id: "sample_opportunity_id",
+ identity_evidence_hash: "sample_identity_evidence_hash",
+ invoice_entity_id: "sample_invoice_entity_id"}
+
+.
+17:45:53.256 [debug] Creating BeamPM.Ash.Resources.CrossSellFit:
+
+Setting %{id: "0947308c-9b39-4559-ab30-207d6b41a8c5",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ cross_sell_fit_id: "sample_cross_sell_fit_id", cross_sell_score: 3.5}
+
+.
+17:45:53.259 [debug] Creating BeamPM.Ash.Resources.TrainingReadiness:
+
+Setting %{id: "3bfd5b0d-19d4-4cd4-acb8-392153c33f00",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ training_readiness_id: "sample_training_readiness_id",
+ training_completion_rate: 3.5}
+
+.........
+17:45:53.642 [debug] Creating BeamPM.Ash.Resources.RollbackEvidence:
+
+Setting %{id: "8d791a8a-9b41-4ab5-beb4-71d20a5a51d6", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ rollback_digest: "sample_rollback_digest"}
+
+.***
+17:45:53.645 [debug] Creating BeamPM.Ash.Resources.SanctionsScreeningResult:
+
+Setting %{id: "36cf2894-1609-4d77-a479-d7948fa462e6", account_id: "sample_account_id",
+ screening_id: "sample_screening_id",
+ screening_result: "sample_screening_result"}
+
+.
+17:45:53.647 [debug] Creating BeamPM.Ash.Resources.SbomInventoryEvidence:
+
+Setting %{id: "e592cb8e-06d2-4ca8-a189-9a7a4703bb5d", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ component_count: 42}
+
+.
+17:45:53.650 [debug] Creating BeamPM.Ash.Resources.ObjectType:
+
+Setting %{id: "053d8411-e7df-4452-ae4d-c7e37a78909d", type_name: "sample_type_name",
+ attribute_names: ["alpha", "beta"]}
+
+.
+17:45:53.652 [debug] Creating BeamPM.Ash.Resources.PaidWorkloadOutcomeReceipt:
+
+Setting %{id: "cdfe4008-7c92-4fb5-83fc-4ce6a2840c37", tenant_id: "sample_tenant_id",
+ workload_id: "sample_workload_id",
+ outcome_receipt_hash: "sample_outcome_receipt_hash"}
+
+.
+17:45:53.655 [debug] Creating BeamPM.Ash.Resources.EntitlementDenialReceipt:
+
+Setting %{id: "38aa0fd0-8e4b-42f1-a692-f0df2cc1d068",
+ entitlement_id: "sample_entitlement_id", tenant_id: "sample_tenant_id",
+ denial_hash: "sample_denial_hash"}
+
+.
+17:45:53.657 [debug] Creating BeamPM.Ash.Resources.ExecutiveBusinessReview:
+
+Setting %{id: "8e8e5fb9-3d56-42c0-8ed3-7c1830ec278c",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ executive_business_review_id: "sample_executive_business_review_id",
+ executive_outcome: "sample_executive_outcome"}
+
+.
+17:45:53.659 [debug] Creating BeamPM.Ash.Resources.ExpansionSignal:
+
+Setting %{id: "b464b682-af42-4320-827a-391e0b148b18",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ expansion_signal_id: "sample_expansion_signal_id", expansion_signal_score: 3.5}
+
+.
+17:45:53.662 [debug] Creating BeamPM.Ash.Resources.SupportTierAdmission:
+
+Setting %{id: "7c78ba15-b14e-4ac9-847a-431fcf0735ed",
+ opportunity_id: "sample_opportunity_id", decision: "sample_decision",
+ support_tier_id: "sample_support_tier_id"}
+
+.
+17:45:53.664 [debug] Creating BeamPM.Ash.Resources.WorkloadRetryPolicy:
+
+Setting %{id: "8db031f3-cec9-4a1f-8fb6-253acb43a564", policy_id: "sample_policy_id",
+ tenant_id: "sample_tenant_id", policy_hash: "sample_policy_hash"}
+
+.
+17:45:53.667 [debug] Creating BeamPM.Ash.Resources.ResellerAuthorization:
+
+Setting %{id: "609dfd4d-dd29-49b1-a17a-e4b2610ea6b6", status: :sample_atom,
+ sku: "sample_sku", authorization_id: "sample_authorization_id",
+ reseller_id: "sample_reseller_id"}
+
+.
+17:45:53.669 [debug] Creating BeamPM.Ash.Resources.EntitlementGrant:
+
+Setting %{id: "fca38190-00e7-40ba-9bd2-8312debcfccb", tenant_id: "sample_tenant_id",
+ valid_until: ~U[2026-08-29 12:00:00Z], grant_id: "sample_grant_id",
+ capability_id: "sample_capability_id"}
+
+.
+17:45:53.672 [debug] Creating BeamPM.Ash.Resources.MutableIdentityRefusalEvidence:
+
+Setting %{id: "ac574cf9-ba7a-48e4-a5ab-b36b5dcfeedd", evidence_id: "sample_evidence_id",
+ subject_sha: "sample_subject_sha", observed_result: :sample_atom,
+ mutable_reference: "sample_mutable_reference"}
+
+.
+17:45:53.674 [debug] Creating BeamPM.Ash.Resources.HeuristicArc:
+
+Setting %{id: "d594e08a-eaf1-4d9d-83c4-d9ef158f9ce9",
+ source_activity: "sample_source_activity",
+ target_activity: "sample_target_activity", dependency_measure: 3.5}
+
+.
+17:45:53.677 [debug] Creating BeamPM.Ash.Resources.ReceiptReplayRequest:
+
+Setting %{id: "86557d54-58e8-4bc0-86ee-44bb4ada6f22", tenant_id: "sample_tenant_id",
+ receipt_id: "sample_receipt_id",
+ replay_request_hash: "sample_replay_request_hash"}
+
+.
+17:45:53.679 [debug] Creating BeamPM.Ash.Resources.WorkloadBackpressureSignal:
+
+Setting %{id: "1bb8e5ef-7ecd-4d5a-a94a-93d4f0acba7e", tenant_id: "sample_tenant_id",
+ measurement_hash: "sample_measurement_hash", signal_id: "sample_signal_id"}
+
+.
+17:45:53.682 [debug] Creating BeamPM.Ash.Resources.SupervisorRestartPolicy:
+
+Setting %{id: "b0bc61e6-5041-4319-8b81-be530fbcb2e0", tenant_id: "sample_tenant_id",
+ policy_hash: "sample_policy_hash", supervisor_id: "sample_supervisor_id"}
+
+...........
+17:45:54.714 [debug] Creating BeamPM.Ash.Resources.PaymentTermsAdmission:
+
+Setting %{id: "04d4bd82-684b-466d-8d51-94ae302e9a27",
+ payment_terms: "sample_payment_terms", opportunity_id: "sample_opportunity_id",
+ authority_evidence_hash: "sample_authority_evidence_hash"}
+
+.
+17:45:54.716 [debug] Creating BeamPM.Ash.Resources.ExpansionOption:
+
+Setting %{id: "2535ec61-1bd0-4bf5-b7bf-146c733d9bed", account_id: "sample_account_id",
+ sku: "sample_sku", option_id: "sample_option_id", max_quantity: 42}
+
+.
+17:45:54.719 [debug] Creating BeamPM.Ash.Resources.DemoScenario:
+
+Setting %{id: "6bbde631-ba64-4123-9848-06894c80f3a3",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ demo_scenario_id: "sample_demo_scenario_id",
+ scenario_name: "sample_scenario_name"}
+
+.
+17:45:54.721 [debug] Creating BeamPM.Ash.Resources.QueueSnapshot:
+
+Setting %{id: "eb3483a9-12c4-4a43-b565-912e5bfa8f0a", depth: 42,
+ observed_at: ~U[2026-08-29 12:00:00Z], queue_name: "sample_queue_name"}
+
+.
+17:45:54.724 [debug] Creating BeamPM.Ash.Resources.CostToServeMeasurement:
+
+Setting %{id: "b8470da6-0fa5-4213-bdd0-5370f2c1cab1", tenant_id: "sample_tenant_id",
+ measurement_hash: "sample_measurement_hash",
+ billing_period_id: "sample_billing_period_id"}
+
+.
+17:45:54.726 [debug] Creating BeamPM.Ash.Resources.EditionDefinition:
+
+Setting %{id: "6ff34cfc-5e72-469e-9651-f44fe0bb7b72", name: "sample_name",
+ edition_id: "sample_edition_id", bundle_ids: ["alpha", "beta"],
+ support_tier: "sample_support_tier"}
+
+.
+17:45:54.729 [debug] Creating BeamPM.Ash.Resources.BillingReconciliation:
+
+Setting %{id: "c214ee7c-1797-4670-b2af-5be8136f88ea",
+ entitlement_id: "sample_entitlement_id", metric_name: "sample_metric_name",
+ total_quantity: 3.5, applied_event_ids: ["alpha", "beta"],
+ period_start: ~U[2026-08-29 12:00:00Z], period_end: ~U[2026-08-29 12:00:00Z]}
+
+.
+17:45:54.732 [debug] Creating BeamPM.Ash.Resources.ProcurementReadiness:
+
+Setting %{id: "5452b6d2-c5ea-425f-99c3-18d41d56275d",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ procurement_readiness_id: "sample_procurement_readiness_id",
+ procurement_stage: "sample_procurement_stage"}
+
+.......
+17:45:54.841 [debug] Creating BeamPM.Ash.Resources.CommercialOutcome:
+
+Setting %{id: "dd382a0f-e11d-41ab-bc6e-ce82e496fd14",
+ observed_at: ~U[2026-08-29 12:00:00Z], account_id: "sample_account_id",
+ evidence_digest: "sample_evidence_digest",
+ commercial_outcome_id: "sample_commercial_outcome_id", outcome_value: 3.5}
+
+.************
+Finished in 15.1 seconds (11.4s async, 3.6s sync)
+2393 tests, 0 failures, 92 skipped
+
+[rust4pm] warning: skipping object: Duplicate object id: order-1
+[rust4pm] warning: dropping O2O reference to unknown object id "item-99"
+[rust4pm] warning: skipping object: Duplicate object id: order-1
+[rust4pm] warning: skipping object: Duplicate object id: order-1
+/bin/sh: /Users/sac/crown-2-integration/beam4pm/tmp/BeamPM.Rf2ConformanceTest/test-compensate-2--an-oracle-crash-never-produces-a-silent-failure-a-nonexistent-oracle-binary-path-is-refused-with-a-real-receipt,-not-a-crash-98eff457/definitely_not_a_real_oracle_binary: No such file or directory
+Started Alpha+++ Discovery
+Adding start/end acts took: 0s
+Using Loop Log Repair with df_threshold of 176
+#Added for loop: 0
+Log Skip/Loop Repair took: 0.0000s
+Act count: [1283, 41, 7, 26, 27, 45, 20, 18, 1434, 1416, 8, 39, 44, 1307, 6, 32, 1368, 55, 20, 6, 1, 39, 5, 8, 2, 20, 1300, 1434, 1434, 1226, 1321, 1191, 1299]
+Acts: [("T10 Determine necessity to stop indication", 1283), ("T12 Check document X request unlicensed", 41), ("T09-1 Process or receive external advice from party 1", 7), ("T17 Check report Y to stop indication", 26), ("T07-5 Draft intern advice aspect 5", 27), ("T07-1 Draft intern advice aspect 1", 45), ("T16 Report reasons to hold request", 20), ("T08 Draft and send request for advice", 18), ("Confirmation of receipt", 1434), ("T06 Determine necessity of stop advice", 1416), ("T07-3 Draft intern advice hold for aspect 3", 8), ("T15 Print document X request unlicensed", 39), ("T11 Create document X request unlicensed", 44), ("T04 Determine confirmation of receipt", 1307), ("T07-4 Draft internal advice to hold for type 4", 6), ("T07-2 Draft intern advice aspect 2", 32), ("T02 Check confirmation of receipt", 1368), ("T03 Adjust confirmation of receipt", 55), ("T20 Print report Y to stop indication", 20), ("T18 Adjust report Y to stop indicition", 6), ("T09-2 Process or receive external advice from party 2", 1), ("T14 Determine document X request unlicensed", 39), ("T09-4 Process or receive external advice from party 4", 5), ("T09-3 Process or receive external advice from party 3", 8), ("T13 Adjust document X request unlicensed", 2), ("T19 Determine report Y to stop indication", 20), ("T05 Print and send confirmation of receipt", 1300), ("__START", 1434), ("__END", 1434), ("__SILENT__skip_after_T10 Determine necessity to stop indication", 1226), ("__SILENT__skip_after_T02 Check confirmation of receipt", 1321), ("__SILENT__skip_after_T05 Print and send confirmation of receipt", 1191), ("__SILENT__skip_after_T04 Determine confirmation of receipt", 1299)]
+#Added for skip: 4
+Filtered DFG (aDFG) #Edges: 43, Weight Sum: 14840
+Filtering DFG took: 0.0000s
+DF #43
+Built candidates 405
+Building candidates took: 0.0000s
+After balance: 118
+After fitness: 42
+After maximal (sel): 22
+Final pruned candidates: 22
+Pruning candidates took: 0.0000s
+Building PN took: 0.0000s
+
+====
+Whole Discovery took: 0.0000s
+Started Alpha+++ Discovery
+Adding start/end acts took: 0s
+Using Loop Log Repair with df_threshold of 176
+#Added for loop: 0
+Log Skip/Loop Repair took: 0.0000s
+Act count: [1368, 55, 1300, 8, 6, 26, 1307, 41, 1434, 18, 45, 20, 5, 8, 32, 39, 27, 6, 1416, 1, 7, 39, 1283, 44, 2, 20, 20, 1434, 1434, 1191, 1321, 1299, 1226]
+Acts: [("T02 Check confirmation of receipt", 1368), ("T03 Adjust confirmation of receipt", 55), ("T05 Print and send confirmation of receipt", 1300), ("T09-3 Process or receive external advice from party 3", 8), ("T18 Adjust report Y to stop indicition", 6), ("T17 Check report Y to stop indication", 26), ("T04 Determine confirmation of receipt", 1307), ("T12 Check document X request unlicensed", 41), ("Confirmation of receipt", 1434), ("T08 Draft and send request for advice", 18), ("T07-1 Draft intern advice aspect 1", 45), ("T16 Report reasons to hold request", 20), ("T09-4 Process or receive external advice from party 4", 5), ("T07-3 Draft intern advice hold for aspect 3", 8), ("T07-2 Draft intern advice aspect 2", 32), ("T14 Determine document X request unlicensed", 39), ("T07-5 Draft intern advice aspect 5", 27), ("T07-4 Draft internal advice to hold for type 4", 6), ("T06 Determine necessity of stop advice", 1416), ("T09-2 Process or receive external advice from party 2", 1), ("T09-1 Process or receive external advice from party 1", 7), ("T15 Print document X request unlicensed", 39), ("T10 Determine necessity to stop indication", 1283), ("T11 Create document X request unlicensed", 44), ("T13 Adjust document X request unlicensed", 2), ("T19 Determine report Y to stop indication", 20), ("T20 Print report Y to stop indication", 20), ("__START", 1434), ("__END", 1434), ("__SILENT__skip_after_T05 Print and send confirmation of receipt", 1191), ("__SILENT__skip_after_T02 Check confirmation of receipt", 1321), ("__SILENT__skip_after_T04 Determine confirmation of receipt", 1299), ("__SILENT__skip_after_T10 Determine necessity to stop indication", 1226)]
+#Added for skip: 4
+Filtered DFG (aDFG) #Edges: 43, Weight Sum: 14840
+Filtering DFG took: 0.0000s
+DF #43
+Built candidates 405
+Building candidates took: 0.0000s
+After balance: 118
+After fitness: 42
+After maximal (sel): 22
+Final pruned candidates: 22
+Pruning candidates took: 0.0000s
+Building PN took: 0.0000s
+
+====
+Whole Discovery took: 0.0000s
+Started Alpha+++ Discovery
+Adding start/end acts took: 0s
+Using Loop Log Repair with df_threshold of 176
+#Added for loop: 0
+Log Skip/Loop Repair took: 0.0000s
+Act count: [26, 20, 1283, 1434, 18, 41, 7, 27, 6, 32, 20, 6, 2, 55, 1307, 1368, 39, 39, 5, 1300, 8, 45, 1, 8, 44, 1416, 20, 1434, 1434, 1226, 1299, 1321, 1191]
+Acts: [("T17 Check report Y to stop indication", 26), ("T20 Print report Y to stop indication", 20), ("T10 Determine necessity to stop indication", 1283), ("Confirmation of receipt", 1434), ("T08 Draft and send request for advice", 18), ("T12 Check document X request unlicensed", 41), ("T09-1 Process or receive external advice from party 1", 7), ("T07-5 Draft intern advice aspect 5", 27), ("T07-4 Draft internal advice to hold for type 4", 6), ("T07-2 Draft intern advice aspect 2", 32), ("T19 Determine report Y to stop indication", 20), ("T18 Adjust report Y to stop indicition", 6), ("T13 Adjust document X request unlicensed", 2), ("T03 Adjust confirmation of receipt", 55), ("T04 Determine confirmation of receipt", 1307), ("T02 Check confirmation of receipt", 1368), ("T14 Determine document X request unlicensed", 39), ("T15 Print document X request unlicensed", 39), ("T09-4 Process or receive external advice from party 4", 5), ("T05 Print and send confirmation of receipt", 1300), ("T09-3 Process or receive external advice from party 3", 8), ("T07-1 Draft intern advice aspect 1", 45), ("T09-2 Process or receive external advice from party 2", 1), ("T07-3 Draft intern advice hold for aspect 3", 8), ("T11 Create document X request unlicensed", 44), ("T06 Determine necessity of stop advice", 1416), ("T16 Report reasons to hold request", 20), ("__START", 1434), ("__END", 1434), ("__SILENT__skip_after_T10 Determine necessity to stop indication", 1226), ("__SILENT__skip_after_T04 Determine confirmation of receipt", 1299), ("__SILENT__skip_after_T02 Check confirmation of receipt", 1321), ("__SILENT__skip_after_T05 Print and send confirmation of receipt", 1191)]
+#Added for skip: 4
+Filtered DFG (aDFG) #Edges: 43, Weight Sum: 14840
+Filtering DFG took: 0.0000s
+DF #43
+Built candidates 405
+Building candidates took: 0.0000s
+After balance: 118
+After fitness: 42
+After maximal (sel): 22
+Final pruned candidates: 22
+Pruning candidates took: 0.0000s
+Building PN took: 0.0000s
+
+====
+Whole Discovery took: 0.0000s
+Started Alpha+++ Discovery
+Adding start/end acts took: 0s
+Using Loop Log Repair with df_threshold of 176
+#Added for loop: 0
+Log Skip/Loop Repair took: 0.0000s
+Act count: [1300, 20, 26, 18, 1, 45, 20, 55, 1307, 41, 39, 7, 20, 1283, 5, 39, 8, 1416, 1434, 1368, 44, 27, 6, 32, 2, 8, 6, 1434, 1434, 1299, 1321, 1226, 1191]
+Acts: [("T05 Print and send confirmation of receipt", 1300), ("T16 Report reasons to hold request", 20), ("T17 Check report Y to stop indication", 26), ("T08 Draft and send request for advice", 18), ("T09-2 Process or receive external advice from party 2", 1), ("T07-1 Draft intern advice aspect 1", 45), ("T19 Determine report Y to stop indication", 20), ("T03 Adjust confirmation of receipt", 55), ("T04 Determine confirmation of receipt", 1307), ("T12 Check document X request unlicensed", 41), ("T15 Print document X request unlicensed", 39), ("T09-1 Process or receive external advice from party 1", 7), ("T20 Print report Y to stop indication", 20), ("T10 Determine necessity to stop indication", 1283), ("T09-4 Process or receive external advice from party 4", 5), ("T14 Determine document X request unlicensed", 39), ("T07-3 Draft intern advice hold for aspect 3", 8), ("T06 Determine necessity of stop advice", 1416), ("Confirmation of receipt", 1434), ("T02 Check confirmation of receipt", 1368), ("T11 Create document X request unlicensed", 44), ("T07-5 Draft intern advice aspect 5", 27), ("T07-4 Draft internal advice to hold for type 4", 6), ("T07-2 Draft intern advice aspect 2", 32), ("T13 Adjust document X request unlicensed", 2), ("T09-3 Process or receive external advice from party 3", 8), ("T18 Adjust report Y to stop indicition", 6), ("__START", 1434), ("__END", 1434), ("__SILENT__skip_after_T04 Determine confirmation of receipt", 1299), ("__SILENT__skip_after_T02 Check confirmation of receipt", 1321), ("__SILENT__skip_after_T10 Determine necessity to stop indication", 1226), ("__SILENT__skip_after_T05 Print and send confirmation of receipt", 1191)]
+#Added for skip: 4
+Filtered DFG (aDFG) #Edges: 43, Weight Sum: 14840
+Filtering DFG took: 0.0000s
+DF #43
+Built candidates 405
+Building candidates took: 0.0000s
+After balance: 118
+After fitness: 42
+After maximal (sel): 22
+Final pruned candidates: 22
+Pruning candidates took: 0.0000s
+Building PN took: 0.0000s
+
+====
+Whole Discovery took: 0.0000s
+
+EXIT:0

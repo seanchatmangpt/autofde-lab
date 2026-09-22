@@ -1,0 +1,4 @@
+$ (cd /Users/sac/crown-2-integration/beam4pm && export RF2_CLEAN_XES="/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/receipt.xes" RF2_MUTATED_XES="/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/mutated_receipt.xes" RF2_ORACLE_BIN="/Users/sac/crown-2-integration/beam4pm/native/rf2-conformance-oracle/target/release/rf2-conformance-oracle" RF3_N05_FIXTURE="/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n05-o2o-dangling.ocel.json" RF3_N13_FIXTURE="/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n13-duplicate-object-id.ocel.json" RF3_N14_FIXTURE="/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n14-undeclared-event-type.ocel.json" RF3_ORACLE_BIN="/Users/sac/crown-2-integration/beam4pm/native/rf3-ocel-oracle/target/release/rf3-ocel-oracle" RF3_POSITIVE_FIXTURE="/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/positive-self-authored.ocel.json")
+
+
+EXIT:0

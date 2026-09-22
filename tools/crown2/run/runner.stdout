@@ -1,0 +1,78 @@
+pwd=/Users/sac/crown-2-integration/autofde-lab runner=/Users/sac/crown-2-integration/autofde-lab/tools/crown2/run/crown2_runner.py sink=/Users/sac/crown-2-integration/autofde-lab/tools/crown2/run/crown-run-v3.ocel.json
+{
+  "counts": {
+    "actions": 3,
+    "actions_completed": 3,
+    "actions_failed": 0,
+    "actions_refused": 0,
+    "claude_hook_events": 6,
+    "heartbeat_events": 31,
+    "loops_blocked": 0,
+    "loops_closed": 13,
+    "plan_refusals": 0,
+    "plans_produced": 1,
+    "prediction_comparisons": 3,
+    "prediction_matches": 3,
+    "predictions_frozen": 3,
+    "world_states_observed": 16
+  },
+  "elapsed_monotonic_seconds": 300.00986679201014,
+  "ended_utc": "2026-09-04T00:48:57.715739+00:00",
+  "errors": [],
+  "events": 95,
+  "events_by_type": {
+    "ActionCompleted": 3,
+    "ActionStarted": 3,
+    "AuthorityEvaluated": 3,
+    "AuthorityGranted": 3,
+    "Claude.PostToolUse": 3,
+    "Claude.PreToolUse": 3,
+    "CompositionCreated": 1,
+    "HeartbeatObserved": 31,
+    "LoopClosed": 13,
+    "LoopStarted": 1,
+    "PlanProduced": 1,
+    "PlannerInvoked": 1,
+    "PredictionCompared": 3,
+    "PredictionFrozen": 3,
+    "QualificationObserved": 4,
+    "ReceiptIssued": 3,
+    "WorldStateObserved": 16
+  },
+  "final_env_oracle_vars": {
+    "RF2_CLEAN_XES": "/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/receipt.xes",
+    "RF2_MUTATED_XES": "/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/mutated_receipt.xes",
+    "RF2_ORACLE_BIN": "/Users/sac/crown-2-integration/beam4pm/native/rf2-conformance-oracle/target/release/rf2-conformance-oracle",
+    "RF3_N05_FIXTURE": "/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n05-o2o-dangling.ocel.json",
+    "RF3_N13_FIXTURE": "/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n13-duplicate-object-id.ocel.json",
+    "RF3_N14_FIXTURE": "/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n14-undeclared-event-type.ocel.json",
+    "RF3_ORACLE_BIN": "/Users/sac/crown-2-integration/beam4pm/native/rf3-ocel-oracle/target/release/rf3-ocel-oracle",
+    "RF3_POSITIVE_FIXTURE": "/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/positive-self-authored.ocel.json"
+  },
+  "floor_seconds": 300.0,
+  "heartbeat_production_event_leak": [],
+  "monotonic_end": 204751.054554708,
+  "monotonic_start": 204451.044687916,
+  "native_planner": {
+    "alive": true,
+    "detail": {
+      "cost": 18.0,
+      "expected_cost": 18,
+      "expected_plan_len": 18,
+      "extension_path": "/Users/sac/crown-2-integration/autofde-lab/.venv/lib/python3.13/site-packages/autofde_lab/hub/__autofde_lab_hub_cpp.cpython-313-darwin.so",
+      "goal_reached": true,
+      "ok": true,
+      "plan_len": 18,
+      "solver": "Astar(native _AStarSolver_)"
+    }
+  },
+  "objects": 53,
+  "sink": "/Users/sac/crown-2-integration/autofde-lab/tools/crown2/run/crown-run-v3.ocel.json",
+  "started_utc": "2026-09-04T00:43:57.700871+00:00",
+  "validate": {
+    "dangling_refs": 0,
+    "duplicate_ids": 0,
+    "strict_type_mismatches": 0
+  }
+}
+EXIT=0

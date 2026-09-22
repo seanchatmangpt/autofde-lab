@@ -1,0 +1,4450 @@
+{
+  "objectTypes": [
+    {
+      "name": "Composition",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Repository",
+      "attributes": [
+        {
+          "name": "path",
+          "type": "string"
+        },
+        {
+          "name": "remote_url",
+          "type": "string"
+        },
+        {
+          "name": "default_branch",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Commit",
+      "attributes": [
+        {
+          "name": "sha",
+          "type": "string"
+        },
+        {
+          "name": "author",
+          "type": "string"
+        },
+        {
+          "name": "message",
+          "type": "string"
+        },
+        {
+          "name": "committed_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "Worktree",
+      "attributes": [
+        {
+          "name": "path",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "type": "string"
+        },
+        {
+          "name": "base_ref",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Domain",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "observed_at",
+          "type": "time"
+        },
+        {
+          "name": "state_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "SolverImplementation",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Policy",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "policy_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "Plan",
+      "attributes": [
+        {
+          "name": "summary",
+          "type": "string"
+        },
+        {
+          "name": "steps_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "cost_estimate",
+          "type": "float"
+        }
+      ]
+    },
+    {
+      "name": "PredictionReceipt",
+      "attributes": [
+        {
+          "name": "prediction_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "confidence",
+          "type": "float"
+        },
+        {
+          "name": "frozen_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityDecision",
+      "attributes": [
+        {
+          "name": "decision",
+          "type": "string"
+        },
+        {
+          "name": "rationale",
+          "type": "string"
+        },
+        {
+          "name": "decided_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "args_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "QualificationRun",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "result",
+          "type": "string"
+        },
+        {
+          "name": "metrics_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "Receipt",
+      "attributes": [
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "digest",
+          "type": "string"
+        },
+        {
+          "name": "issued_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "ClaudeSession",
+      "attributes": [
+        {
+          "name": "session_url",
+          "type": "string"
+        },
+        {
+          "name": "model",
+          "type": "string"
+        },
+        {
+          "name": "started_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "ClaudeToolInvocation",
+      "attributes": [
+        {
+          "name": "tool_name",
+          "type": "string"
+        },
+        {
+          "name": "args_json",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "result_summary",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ClaudeSubagent",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "role",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ProcessEpisode",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "started_at",
+          "type": "time"
+        },
+        {
+          "name": "ended_at",
+          "type": "time"
+        }
+      ]
+    },
+    {
+      "name": "Machine",
+      "attributes": [
+        {
+          "name": "hostname",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "eventTypes": [
+    {
+      "name": "CompositionCreated",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "WorldStateObserved",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "state_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "PlannerInvoked",
+      "attributes": [
+        {
+          "name": "solver_name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "PlanProduced",
+      "attributes": [
+        {
+          "name": "summary",
+          "type": "string"
+        },
+        {
+          "name": "cost_estimate",
+          "type": "float"
+        }
+      ]
+    },
+    {
+      "name": "PlanRefused",
+      "attributes": [
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "PredictionFrozen",
+      "attributes": [
+        {
+          "name": "confidence",
+          "type": "float"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityEvaluated",
+      "attributes": [
+        {
+          "name": "rationale",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityGranted",
+      "attributes": [
+        {
+          "name": "rationale",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityRefused",
+      "attributes": [
+        {
+          "name": "rationale",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionStarted",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionCompleted",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "result_summary",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionFailed",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "error",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ActionRefused",
+      "attributes": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "QualificationObserved",
+      "attributes": [
+        {
+          "name": "result",
+          "type": "string"
+        },
+        {
+          "name": "metrics_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "PredictionCompared",
+      "attributes": [
+        {
+          "name": "delta_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "ReceiptIssued",
+      "attributes": [
+        {
+          "name": "digest",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LoopStarted",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LoopClosed",
+      "attributes": [
+        {
+          "name": "label",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "LoopBlocked",
+      "attributes": [
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "NativePlannerBootstrapStarted",
+      "attributes": [
+        {
+          "name": "worktree",
+          "type": "string"
+        },
+        {
+          "name": "sha",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "NativePlannerBootstrapCompleted",
+      "attributes": [
+        {
+          "name": "extension_path",
+          "type": "string"
+        },
+        {
+          "name": "solve_summary_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "NativePlannerBootstrapFailed",
+      "attributes": [
+        {
+          "name": "failing_step",
+          "type": "string"
+        },
+        {
+          "name": "error",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "HeartbeatObserved",
+      "attributes": [
+        {
+          "name": "seq",
+          "type": "int"
+        },
+        {
+          "name": "monotonic_seconds",
+          "type": "float"
+        },
+        {
+          "name": "events_so_far",
+          "type": "int"
+        },
+        {
+          "name": "validate_json",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "Claude.PreToolUse",
+      "attributes": [
+        {
+          "name": "hook_event_id",
+          "type": "string"
+        },
+        {
+          "name": "hook_event_name",
+          "type": "string"
+        },
+        {
+          "name": "tool_name",
+          "type": "string"
+        },
+        {
+          "name": "cwd",
+          "type": "string"
+        },
+        {
+          "name": "permission_mode",
+          "type": "string"
+        },
+        {
+          "name": "tool_input",
+          "type": "string:canonical-json"
+        }
+      ]
+    },
+    {
+      "name": "Claude.PostToolUse",
+      "attributes": [
+        {
+          "name": "hook_event_id",
+          "type": "string"
+        },
+        {
+          "name": "hook_event_name",
+          "type": "string"
+        },
+        {
+          "name": "tool_name",
+          "type": "string"
+        },
+        {
+          "name": "cwd",
+          "type": "string"
+        },
+        {
+          "name": "permission_mode",
+          "type": "string"
+        },
+        {
+          "name": "tool_input",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "tool_response",
+          "type": "string:canonical-json"
+        },
+        {
+          "name": "is_error",
+          "type": "boolean"
+        }
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "id": "composition:crown-2",
+      "type": "Composition",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "crown-2",
+          "time": "2026-09-04T00:43:57.703238+00:00"
+        },
+        {
+          "name": "version",
+          "value": "1.0",
+          "time": "2026-09-04T00:43:57.703238+00:00"
+        },
+        {
+          "name": "description",
+          "value": "CompositionReceipt created_at_utc=2026-09-04T00:03:56Z; beam4pm: base=6fb0992d9f2a6d9447bf48b476c9b8e9fa390716 pr#47=baf4a73a56e42e29defac247147a4f45bf4677e8 composed=d21838c057f0c02fea5ad6b7bbbe20fa827dfb50; autofde-lab: base=e5c4aef788600bf3e44abe396fcb1e0668fbcc43 pr#103=add8fba6d9cbb567c3bdf4953ddfb42774d5ca58 composed=1d11067ac24b7cfa3e7c8874adf81426954f9065",
+          "time": "2026-09-04T00:43:57.703238+00:00"
+        }
+      ]
+    },
+    {
+      "id": "repo:beam4pm",
+      "type": "Repository",
+      "attributes": [
+        {
+          "name": "path",
+          "value": "/Users/sac/beam4pm",
+          "time": "2026-09-04T00:43:57.704212+00:00"
+        },
+        {
+          "name": "remote_url",
+          "value": "https://github.com/seanchatmangpt/beam4pm",
+          "time": "2026-09-04T00:43:57.704212+00:00"
+        },
+        {
+          "name": "default_branch",
+          "value": "main",
+          "time": "2026-09-04T00:43:57.704212+00:00"
+        }
+      ]
+    },
+    {
+      "id": "wt:crown-2/beam4pm-compose",
+      "type": "Worktree",
+      "attributes": [
+        {
+          "name": "path",
+          "value": "/Users/sac/crown-2-integration/beam4pm",
+          "time": "2026-09-04T00:43:57.705117+00:00"
+        },
+        {
+          "name": "branch",
+          "value": "crown-2/beam4pm-compose",
+          "time": "2026-09-04T00:43:57.705117+00:00"
+        },
+        {
+          "name": "base_ref",
+          "value": "6fb0992d9f2a6d9447bf48b476c9b8e9fa390716",
+          "time": "2026-09-04T00:43:57.705117+00:00"
+        }
+      ]
+    },
+    {
+      "id": "commit:beam4pm:6fb0992d9f2a",
+      "type": "Commit",
+      "attributes": [
+        {
+          "name": "sha",
+          "value": "6fb0992d9f2a6d9447bf48b476c9b8e9fa390716",
+          "time": "2026-09-04T00:43:57.706030+00:00"
+        },
+        {
+          "name": "message",
+          "value": "base of beam4pm (PR #47); merge_strategy=git merge --no-ff --no-edit (ort strategy), local branch only, never pushed",
+          "time": "2026-09-04T00:43:57.706030+00:00"
+        }
+      ]
+    },
+    {
+      "id": "commit:beam4pm:baf4a73a56e4",
+      "type": "Commit",
+      "attributes": [
+        {
+          "name": "sha",
+          "value": "baf4a73a56e42e29defac247147a4f45bf4677e8",
+          "time": "2026-09-04T00:43:57.706931+00:00"
+        },
+        {
+          "name": "message",
+          "value": "pr-head of beam4pm (PR #47); merge_strategy=git merge --no-ff --no-edit (ort strategy), local branch only, never pushed",
+          "time": "2026-09-04T00:43:57.706931+00:00"
+        }
+      ]
+    },
+    {
+      "id": "commit:beam4pm:d21838c057f0",
+      "type": "Commit",
+      "attributes": [
+        {
+          "name": "sha",
+          "value": "d21838c057f0c02fea5ad6b7bbbe20fa827dfb50",
+          "time": "2026-09-04T00:43:57.707825+00:00"
+        },
+        {
+          "name": "message",
+          "value": "composed of beam4pm (PR #47); merge_strategy=git merge --no-ff --no-edit (ort strategy), local branch only, never pushed",
+          "time": "2026-09-04T00:43:57.707825+00:00"
+        }
+      ]
+    },
+    {
+      "id": "repo:autofde-lab",
+      "type": "Repository",
+      "attributes": [
+        {
+          "name": "path",
+          "value": "/Users/sac/autofde-lab",
+          "time": "2026-09-04T00:43:57.708809+00:00"
+        },
+        {
+          "name": "remote_url",
+          "value": "https://github.com/seanchatmangpt/autofde-lab",
+          "time": "2026-09-04T00:43:57.708809+00:00"
+        },
+        {
+          "name": "default_branch",
+          "value": "main",
+          "time": "2026-09-04T00:43:57.708809+00:00"
+        }
+      ]
+    },
+    {
+      "id": "wt:crown-2/autofde-compose",
+      "type": "Worktree",
+      "attributes": [
+        {
+          "name": "path",
+          "value": "/Users/sac/crown-2-integration/autofde-lab",
+          "time": "2026-09-04T00:43:57.709741+00:00"
+        },
+        {
+          "name": "branch",
+          "value": "crown-2/autofde-compose",
+          "time": "2026-09-04T00:43:57.709741+00:00"
+        },
+        {
+          "name": "base_ref",
+          "value": "e5c4aef788600bf3e44abe396fcb1e0668fbcc43",
+          "time": "2026-09-04T00:43:57.709741+00:00"
+        }
+      ]
+    },
+    {
+      "id": "commit:autofde-lab:e5c4aef78860",
+      "type": "Commit",
+      "attributes": [
+        {
+          "name": "sha",
+          "value": "e5c4aef788600bf3e44abe396fcb1e0668fbcc43",
+          "time": "2026-09-04T00:43:57.710662+00:00"
+        },
+        {
+          "name": "message",
+          "value": "base of autofde-lab (PR #103); merge_strategy=git merge --no-ff --no-edit (ort strategy), local branch only, never pushed",
+          "time": "2026-09-04T00:43:57.710662+00:00"
+        }
+      ]
+    },
+    {
+      "id": "commit:autofde-lab:add8fba6d9cb",
+      "type": "Commit",
+      "attributes": [
+        {
+          "name": "sha",
+          "value": "add8fba6d9cbb567c3bdf4953ddfb42774d5ca58",
+          "time": "2026-09-04T00:43:57.711509+00:00"
+        },
+        {
+          "name": "message",
+          "value": "pr-head of autofde-lab (PR #103); merge_strategy=git merge --no-ff --no-edit (ort strategy), local branch only, never pushed",
+          "time": "2026-09-04T00:43:57.711509+00:00"
+        }
+      ]
+    },
+    {
+      "id": "commit:autofde-lab:1d11067ac24b",
+      "type": "Commit",
+      "attributes": [
+        {
+          "name": "sha",
+          "value": "1d11067ac24b7cfa3e7c8874adf81426954f9065",
+          "time": "2026-09-04T00:43:57.712353+00:00"
+        },
+        {
+          "name": "message",
+          "value": "composed of autofde-lab (PR #103); merge_strategy=git merge --no-ff --no-edit (ort strategy), local branch only, never pushed",
+          "time": "2026-09-04T00:43:57.712353+00:00"
+        }
+      ]
+    },
+    {
+      "id": "commit:beam4pm:live:d21838c057f0",
+      "type": "Commit",
+      "attributes": [
+        {
+          "name": "sha",
+          "value": "d21838c057f0c02fea5ad6b7bbbe20fa827dfb50",
+          "time": "2026-09-04T00:43:57.720696+00:00"
+        },
+        {
+          "name": "message",
+          "value": "HEAD of /Users/sac/crown-2-integration/beam4pm at runner start",
+          "time": "2026-09-04T00:43:57.720696+00:00"
+        },
+        {
+          "name": "committed_at",
+          "value": "2026-09-04T00:43:57.700871+00:00",
+          "time": "2026-09-04T00:43:57.720696+00:00"
+        }
+      ]
+    },
+    {
+      "id": "commit:autofde-lab:live:e950e155efbc",
+      "type": "Commit",
+      "attributes": [
+        {
+          "name": "sha",
+          "value": "e950e155efbc681d9b87af2b3a9bc3ba912ec68c",
+          "time": "2026-09-04T00:43:57.728606+00:00"
+        },
+        {
+          "name": "message",
+          "value": "HEAD of /Users/sac/crown-2-integration/autofde-lab at runner start",
+          "time": "2026-09-04T00:43:57.728606+00:00"
+        },
+        {
+          "name": "committed_at",
+          "value": "2026-09-04T00:43:57.700871+00:00",
+          "time": "2026-09-04T00:43:57.728606+00:00"
+        }
+      ]
+    },
+    {
+      "id": "policy:crown2",
+      "type": "Policy",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "crown2-reversible-only",
+          "time": "2026-09-04T00:43:57.729671+00:00"
+        },
+        {
+          "name": "policy_json",
+          "value": "{\"denylist_tokens\":[\"git push\",\"git merge\",\"git reset\",\"git rebase\",\"rm -rf\",\"sudo\",\"ggen sync run\"],\"grant_if\":\"action.reversible and not action.consequential and no denylist token in command\",\"name\":\"crown2-reversible-only\",\"note\":\"refused actions are physically not executed; runner emits AuthorityRefused + ActionRefused + LoopBlocked\"}",
+          "time": "2026-09-04T00:43:57.729671+00:00"
+        }
+      ]
+    },
+    {
+      "id": "domain:beam4pm",
+      "type": "Domain",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "beam4pm",
+          "time": "2026-09-04T00:43:57.730633+00:00"
+        },
+        {
+          "name": "description",
+          "value": "beam4pm verify chain staged domain (Task A)",
+          "time": "2026-09-04T00:43:57.730633+00:00"
+        }
+      ]
+    },
+    {
+      "id": "Machine:Mac.lan",
+      "type": "Machine",
+      "attributes": [
+        {
+          "name": "hostname",
+          "value": "Mac.lan",
+          "time": "2026-09-04T00:43:57.731574+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ClaudeSession:crown2-runner-d4610913bda0",
+      "type": "ClaudeSession",
+      "attributes": [
+        {
+          "name": "session_url",
+          "value": "runner://crown2-runner-d4610913bda0",
+          "time": "2026-09-04T00:43:57.732516+00:00"
+        },
+        {
+          "name": "model",
+          "value": "crown2_runner.py (synthetic hook payloads, real hook-to-ocel.py mapping)",
+          "time": "2026-09-04T00:43:57.732516+00:00"
+        },
+        {
+          "name": "started_at",
+          "value": "2026-09-04T00:43:57.700871+00:00",
+          "time": "2026-09-04T00:43:57.732516+00:00"
+        }
+      ]
+    },
+    {
+      "id": "episode:control-heartbeat",
+      "type": "ProcessEpisode",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "control-heartbeat",
+          "time": "2026-09-04T00:43:58.015513+00:00"
+        },
+        {
+          "name": "started_at",
+          "value": "2026-09-04T00:43:58.015164+00:00",
+          "time": "2026-09-04T00:43:58.015513+00:00"
+        }
+      ]
+    },
+    {
+      "id": "episode:beam4pm-production",
+      "type": "ProcessEpisode",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "beam4pm-production",
+          "time": "2026-09-04T00:43:58.017342+00:00"
+        },
+        {
+          "name": "started_at",
+          "value": "2026-09-04T00:43:58.015283+00:00",
+          "time": "2026-09-04T00:43:58.017342+00:00"
+        }
+      ]
+    },
+    {
+      "id": "solver:astar-native-hub",
+      "type": "SolverImplementation",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "Astar",
+          "time": "2026-09-04T00:43:58.020120+00:00"
+        },
+        {
+          "name": "kind",
+          "value": "cpp:_AStarSolver_",
+          "time": "2026-09-04T00:43:58.020120+00:00"
+        },
+        {
+          "name": "version",
+          "value": "/Users/sac/crown-2-integration/autofde-lab/.venv/lib/python3.13/site-packages/autofde_lab/hub/__autofde_lab_hub_cpp.cpython-313-darwin.so",
+          "time": "2026-09-04T00:43:58.020120+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ws:001:pre-plan",
+      "type": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "pre-plan",
+          "time": "2026-09-04T00:43:59.079596+00:00"
+        },
+        {
+          "name": "observed_at",
+          "value": "2026-09-04T00:43:59.079397+00:00",
+          "time": "2026-09-04T00:43:59.079596+00:00"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"evidence\":{\"ELIXIR_DEPS_READY\":{\"detail\":\"67 locked, missing=[]\",\"kind\":\"probe\",\"source\":\"mix.lock keys vs deps/<name>/\"},\"LINT_TRUTH_READY\":{\"detail\":\"rc=0: GATE LINT-TRUTH: PASS -- 48 hand-authored files scanned, 0 findings\",\"kind\":\"probe\",\"source\":\"bash scripts/gate_lint_truth.sh\"},\"MIX_TEST_GREEN\":{\"detail\":\"beam4pm-verify2.log:5173 '2393 tests, 18 failures, 92 skipped'\",\"kind\":\"log\",\"source\":\"beam4pm-verify2.log:5173\"},\"MIX_TEST_RUNNABLE\":{\"detail\":\"built=True; log beam4pm-verify2.log:5173 '2393 tests, 18 failures, 92 skipped'\",\"kind\":\"probe\",\"source\":\"test -d _build/test/lib\"},\"NATIVE_ORACLES_BUILT\":{\"detail\":\"crates=['rf1-dfg-oracle', 'rf2-conformance-oracle', 'rf3-ocel-oracle', 'rf4-oc-discovery-oracle'], absent=['rf1-dfg-oracle', 'rf2-conformance-oracle', 'rf3-ocel-oracle', 'rf4-oc-discovery-oracle']\",\"kind\":\"probe\",\"source\":\"native/*/Cargo.toml -> target/release/<name>\"},\"ORACLE_ENV_SET\":{\"detail\":\"required=['RF2_CLEAN_XES', 'RF2_MUTATED_XES', 'RF2_ORACLE_BIN', 'RF3_N05_FIXTURE', 'RF3_N13_FIXTURE', 'RF3_N14_FIXTURE', 'RF3_ORACLE_BIN', 'RF3_POSITIVE_FIXTURE'], unset=['RF2_CLEAN_XES', 'RF2_MUTATED_XES', 'RF2_ORACLE_BIN', 'RF3_N05_FIXTURE', 'RF3_N13_FIXTURE', 'RF3_N14_FIXTURE', 'RF3_ORACLE_BIN', 'RF3_POSITIVE_FIXTURE']\",\"kind\":\"probe\",\"source\":\"test/*.exs System.fetch_env! vs os.environ\"},\"QUALIFICATION_COMPLETE\":{\"detail\":\"['NATIVE_ORACLES_BUILT', 'ORACLE_ENV_SET', 'MIX_TEST_GREEN', 'QUALIFICATION_COMPLETE']\",\"kind\":\"probe\",\"source\":\"conjunction of all other stages\"},\"RUST_TESTS_READY\":{\"detail\":\"All 1548 tests passed.\",\"kind\":\"log\",\"source\":\"beam4pm-verify.log:2457\"},\"SUBMODULES_READY\":{\"detail\":\"3 submodules, rc=0\",\"kind\":\"probe\",\"source\":\"git submodule status\"},\"SYNC_READY\":{\"detail\":\"exists=True; log beam4pm-verify.log:430 'ggen sync run'\",\"kind\":\"probe\",\"source\":\"test -f /Users/sac/crown-2-integration/beam4pm/ggen.lock\"}},\"repo\":\"/Users/sac/crown-2-integration/beam4pm\",\"stages\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}}",
+          "time": "2026-09-04T00:43:59.079596+00:00"
+        }
+      ]
+    },
+    {
+      "id": "qual:001",
+      "type": "QualificationRun",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "staged-qualification-001",
+          "time": "2026-09-04T00:43:59.082543+00:00"
+        },
+        {
+          "name": "result",
+          "value": "partial:NATIVE_ORACLES_BUILT,ORACLE_ENV_SET,MIX_TEST_GREEN,QUALIFICATION_COMPLETE",
+          "time": "2026-09-04T00:43:59.082543+00:00"
+        },
+        {
+          "name": "metrics_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}",
+          "time": "2026-09-04T00:43:59.082543+00:00"
+        }
+      ]
+    },
+    {
+      "id": "plan:001",
+      "type": "Plan",
+      "attributes": [
+        {
+          "name": "summary",
+          "value": "cargo build --release (oracles) -> set oracle env -> mix test",
+          "time": "2026-09-04T00:43:59.362920+00:00"
+        },
+        {
+          "name": "steps_json",
+          "value": "{\"native\":{\"cost\":3.0,\"expanded_steps\":3,\"extension_path\":\"/Users/sac/crown-2-integration/autofde-lab/.venv/lib/python3.13/site-packages/autofde_lab/hub/__autofde_lab_hub_cpp.cpython-313-darwin.so\",\"goal_reached\":true,\"implementation\":\"native\",\"plan\":[\"cargo build --release (oracles)\",\"set oracle env\",\"mix test\"],\"solver\":\"Astar(native _AStarSolver_)\"},\"steps\":[{\"command\":\"(cd native/rf1-dfg-oracle && cargo build --release) && (cd native/rf2-conformance-oracle && cargo build --release) && (cd native/rf3-ocel-oracle && cargo build --release) && (cd native/rf4-oc-discovery-oracle && cargo build --release)\",\"consequential\":false,\"cwd\":\"/Users/sac/crown-2-integration/beam4pm\",\"env\":{},\"name\":\"cargo build --release (oracles)\",\"postconditions\":{\"NATIVE_ORACLES_BUILT\":true},\"preconditions\":{\"MIX_TEST_RUNNABLE\":true},\"reversible\":true,\"source\":\"native/rf1-dfg-oracle/Cargo.toml:2; native/rf2-conformance-oracle/Cargo.toml:2; native/rf3-ocel-oracle/Cargo.toml:2; native/rf4-oc-discovery-oracle/Cargo.toml:2\"},{\"command\":\"export RF2_CLEAN_XES=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/receipt.xes\\\" RF2_MUTATED_XES=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/mutated_receipt.xes\\\" RF2_ORACLE_BIN=\\\"/Users/sac/crown-2-integration/beam4pm/native/rf2-conformance-oracle/target/release/rf2-conformance-oracle\\\" RF3_N05_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n05-o2o-dangling.ocel.json\\\" RF3_N13_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n13-duplicate-object-id.ocel.json\\\" RF3_N14_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n14-undeclared-event-type.ocel.json\\\" RF3_ORACLE_BIN=\\\"/Users/sac/crown-2-integration/beam4pm/native/rf3-ocel-oracle/target/release/rf3-ocel-oracle\\\" RF3_POSITIVE_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/positive-self-authored.ocel.json\\\"\",\"consequential\":false,\"cwd\":\"/Users/sac/crown-2-integration/beam4pm\",\"env\":{\"RF2_CLEAN_XES\":\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/receipt.xes\",\"RF2_MUTATED_XES\":\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/mutated_receipt.xes\",\"RF2_ORACLE_BIN\":\"/Users/sac/crown-2-integration/beam4pm/native/rf2-conformance-oracle/target/release/rf2-conformance-oracle\",\"RF3_N05_FIXTURE\":\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n05-o2o-dangling.ocel.json\",\"RF3_N13_FIXTURE\":\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n13-duplicate-object-id.ocel.json\",\"RF3_N14_FIXTURE\":\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n14-undeclared-event-type.ocel.json\",\"RF3_ORACLE_BIN\":\"/Users/sac/crown-2-integration/beam4pm/native/rf3-ocel-oracle/target/release/rf3-ocel-oracle\",\"RF3_POSITIVE_FIXTURE\":\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/positive-self-authored.ocel.json\"},\"name\":\"set oracle env\",\"postconditions\":{\"ORACLE_ENV_SET\":true},\"preconditions\":{\"NATIVE_ORACLES_BUILT\":true},\"reversible\":true,\"source\":\"test/beam4pm_rf2_conformance_test.exs:12 -> scripts/env/rust4pm_reactor_env.sh:18; test/beam4pm_rf2_conformance_test.exs:13 -> scripts/env/rust4pm_reactor_env.sh:19; test/beam4pm_rf2_conformance_test.exs:11 -> scripts/env/rust4pm_reactor_env.sh:17; test/beam4pm_rf3_ocel_test.exs:23 -> scripts/env/rust4pm_reactor_env.sh:25; test/beam4pm_rf3_ocel_test.exs:21 -> scripts/env/rust4pm_reactor_env.sh:23; test/beam4pm_rf3_ocel_test.exs:22 -> scripts/env/rust4pm_reactor_env.sh:24; test/beam4pm_rf3_ocel_test.exs:19 -> scripts/env/rust4pm_reactor_env.sh:21; test/beam4pm_rf3_ocel_test.exs:20 -> scripts/env/rust4pm_reactor_env.sh:22\"},{\"command\":\"mix test\",\"consequential\":false,\"cwd\":\"/Users/sac/crown-2-integration/beam4pm\",\"env\":{},\"name\":\"mix test\",\"postconditions\":{\"MIX_TEST_GREEN\":true,\"QUALIFICATION_COMPLETE\":true},\"preconditions\":{\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"RUST_TESTS_READY\":true},\"reversible\":true,\"source\":\"justfile:18\"}]}",
+          "time": "2026-09-04T00:43:59.362920+00:00"
+        },
+        {
+          "name": "cost_estimate",
+          "value": 3.0,
+          "time": "2026-09-04T00:43:59.362920+00:00"
+        }
+      ]
+    },
+    {
+      "id": "action:001:01",
+      "type": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "cargo build --release (oracles)",
+          "time": "2026-09-04T00:43:59.366635+00:00"
+        },
+        {
+          "name": "kind",
+          "value": "reversible",
+          "time": "2026-09-04T00:43:59.366635+00:00"
+        },
+        {
+          "name": "args_json",
+          "value": "{\"command\":\"(cd native/rf1-dfg-oracle && cargo build --release) && (cd native/rf2-conformance-oracle && cargo build --release) && (cd native/rf3-ocel-oracle && cargo build --release) && (cd native/rf4-oc-discovery-oracle && cargo build --release)\",\"cwd\":\"/Users/sac/crown-2-integration/beam4pm\",\"env\":{},\"source\":\"native/rf1-dfg-oracle/Cargo.toml:2; native/rf2-conformance-oracle/Cargo.toml:2; native/rf3-ocel-oracle/Cargo.toml:2; native/rf4-oc-discovery-oracle/Cargo.toml:2\"}",
+          "time": "2026-09-04T00:43:59.366635+00:00"
+        }
+      ]
+    },
+    {
+      "id": "prediction:001:01",
+      "type": "PredictionReceipt",
+      "attributes": [
+        {
+          "name": "prediction_json",
+          "value": "{\"path\":\"/Users/sac/crown-2-integration/autofde-lab/tools/crown2/run/predictions/001-01-abb5a56222c2.json\",\"predicted_post_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true},\"sha256\":\"abb5a56222c2f29bd05e0e723c8a0efcf9685d6d50ea26c3d820e867caa02cd6\"}",
+          "time": "2026-09-04T00:43:59.368431+00:00"
+        },
+        {
+          "name": "confidence",
+          "value": 1.0,
+          "time": "2026-09-04T00:43:59.368431+00:00"
+        },
+        {
+          "name": "frozen_at",
+          "value": "2026-09-04T00:43:59.367953+00:00",
+          "time": "2026-09-04T00:43:59.368431+00:00"
+        }
+      ]
+    },
+    {
+      "id": "authority:00007",
+      "type": "AuthorityDecision",
+      "attributes": [
+        {
+          "name": "decision",
+          "value": "GRANTED",
+          "time": "2026-09-04T00:43:59.371245+00:00"
+        },
+        {
+          "name": "rationale",
+          "value": "reversible=True consequential=False denylist_hits=[] -> GRANTED under crown2-reversible-only",
+          "time": "2026-09-04T00:43:59.371245+00:00"
+        },
+        {
+          "name": "decided_at",
+          "value": "2026-09-04T00:43:59.371093+00:00",
+          "time": "2026-09-04T00:43:59.371245+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ClaudeToolInvocation:toolu_9e787bd4f0d74cf5",
+      "type": "ClaudeToolInvocation",
+      "attributes": [
+        {
+          "name": "tool_name",
+          "value": "Bash",
+          "time": "2026-09-04T00:43:59.375554+00:00"
+        },
+        {
+          "name": "args_json",
+          "value": "{\"command\":\"(cd native/rf1-dfg-oracle && cargo build --release) && (cd native/rf2-conformance-oracle && cargo build --release) && (cd native/rf3-ocel-oracle && cargo build --release) && (cd native/rf4-oc-discovery-oracle && cargo build --release)\",\"description\":\"crown2 cycle 1 step 1: cargo build --release (oracles)\"}",
+          "time": "2026-09-04T00:43:59.375554+00:00"
+        },
+        {
+          "name": "result_summary",
+          "value": "pending",
+          "time": "2026-09-04T00:43:59.375554+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ws:001:post-cargo",
+      "type": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "post-cargo",
+          "time": "2026-09-04T00:45:34.879750+00:00"
+        },
+        {
+          "name": "observed_at",
+          "value": "2026-09-04T00:45:34.879302+00:00",
+          "time": "2026-09-04T00:45:34.879750+00:00"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"evidence\":{\"ELIXIR_DEPS_READY\":{\"detail\":\"67 locked, missing=[]\",\"kind\":\"probe\",\"source\":\"mix.lock keys vs deps/<name>/\"},\"LINT_TRUTH_READY\":{\"detail\":\"rc=0: GATE LINT-TRUTH: PASS -- 48 hand-authored files scanned, 0 findings\",\"kind\":\"probe\",\"source\":\"bash scripts/gate_lint_truth.sh\"},\"MIX_TEST_GREEN\":{\"detail\":\"beam4pm-verify2.log:5173 '2393 tests, 18 failures, 92 skipped'\",\"kind\":\"log\",\"source\":\"beam4pm-verify2.log:5173\"},\"MIX_TEST_RUNNABLE\":{\"detail\":\"built=True; log beam4pm-verify2.log:5173 '2393 tests, 18 failures, 92 skipped'\",\"kind\":\"probe\",\"source\":\"test -d _build/test/lib\"},\"NATIVE_ORACLES_BUILT\":{\"detail\":\"crates=['rf1-dfg-oracle', 'rf2-conformance-oracle', 'rf3-ocel-oracle', 'rf4-oc-discovery-oracle'], absent=[]\",\"kind\":\"probe\",\"source\":\"native/*/Cargo.toml -> target/release/<name>\"},\"ORACLE_ENV_SET\":{\"detail\":\"required=['RF2_CLEAN_XES', 'RF2_MUTATED_XES', 'RF2_ORACLE_BIN', 'RF3_N05_FIXTURE', 'RF3_N13_FIXTURE', 'RF3_N14_FIXTURE', 'RF3_ORACLE_BIN', 'RF3_POSITIVE_FIXTURE'], unset=['RF2_CLEAN_XES', 'RF2_MUTATED_XES', 'RF2_ORACLE_BIN', 'RF3_N05_FIXTURE', 'RF3_N13_FIXTURE', 'RF3_N14_FIXTURE', 'RF3_ORACLE_BIN', 'RF3_POSITIVE_FIXTURE']\",\"kind\":\"probe\",\"source\":\"test/*.exs System.fetch_env! vs os.environ\"},\"QUALIFICATION_COMPLETE\":{\"detail\":\"['ORACLE_ENV_SET', 'MIX_TEST_GREEN', 'QUALIFICATION_COMPLETE']\",\"kind\":\"probe\",\"source\":\"conjunction of all other stages\"},\"RUST_TESTS_READY\":{\"detail\":\"All 1548 tests passed.\",\"kind\":\"log\",\"source\":\"beam4pm-verify.log:2457\"},\"SUBMODULES_READY\":{\"detail\":\"3 submodules, rc=0\",\"kind\":\"probe\",\"source\":\"git submodule status\"},\"SYNC_READY\":{\"detail\":\"exists=True; log beam4pm-verify.log:430 'ggen sync run'\",\"kind\":\"probe\",\"source\":\"test -f /Users/sac/crown-2-integration/beam4pm/ggen.lock\"}},\"repo\":\"/Users/sac/crown-2-integration/beam4pm\",\"stages\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}}",
+          "time": "2026-09-04T00:45:34.879750+00:00"
+        }
+      ]
+    },
+    {
+      "id": "receipt:001:01",
+      "type": "Receipt",
+      "attributes": [
+        {
+          "name": "kind",
+          "value": "prediction-comparison",
+          "time": "2026-09-04T00:45:34.888115+00:00"
+        },
+        {
+          "name": "digest",
+          "value": "704f1ddfd6d249880482d61f3711598733f8c4bfa654a780ceca4314ef6a4c78",
+          "time": "2026-09-04T00:45:34.888115+00:00"
+        },
+        {
+          "name": "issued_at",
+          "value": "2026-09-04T00:45:34.887889+00:00",
+          "time": "2026-09-04T00:45:34.888115+00:00"
+        }
+      ]
+    },
+    {
+      "id": "action:001:02",
+      "type": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "set oracle env",
+          "time": "2026-09-04T00:45:34.891947+00:00"
+        },
+        {
+          "name": "kind",
+          "value": "reversible",
+          "time": "2026-09-04T00:45:34.891947+00:00"
+        },
+        {
+          "name": "args_json",
+          "value": "{\"command\":\"export RF2_CLEAN_XES=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/receipt.xes\\\" RF2_MUTATED_XES=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/mutated_receipt.xes\\\" RF2_ORACLE_BIN=\\\"/Users/sac/crown-2-integration/beam4pm/native/rf2-conformance-oracle/target/release/rf2-conformance-oracle\\\" RF3_N05_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n05-o2o-dangling.ocel.json\\\" RF3_N13_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n13-duplicate-object-id.ocel.json\\\" RF3_N14_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n14-undeclared-event-type.ocel.json\\\" RF3_ORACLE_BIN=\\\"/Users/sac/crown-2-integration/beam4pm/native/rf3-ocel-oracle/target/release/rf3-ocel-oracle\\\" RF3_POSITIVE_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/positive-self-authored.ocel.json\\\"\",\"cwd\":\"/Users/sac/crown-2-integration/beam4pm\",\"env\":{\"RF2_CLEAN_XES\":\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/receipt.xes\",\"RF2_MUTATED_XES\":\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/mutated_receipt.xes\",\"RF2_ORACLE_BIN\":\"/Users/sac/crown-2-integration/beam4pm/native/rf2-conformance-oracle/target/release/rf2-conformance-oracle\",\"RF3_N05_FIXTURE\":\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n05-o2o-dangling.ocel.json\",\"RF3_N13_FIXTURE\":\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n13-duplicate-object-id.ocel.json\",\"RF3_N14_FIXTURE\":\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n14-undeclared-event-type.ocel.json\",\"RF3_ORACLE_BIN\":\"/Users/sac/crown-2-integration/beam4pm/native/rf3-ocel-oracle/target/release/rf3-ocel-oracle\",\"RF3_POSITIVE_FIXTURE\":\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/positive-self-authored.ocel.json\"},\"source\":\"test/beam4pm_rf2_conformance_test.exs:12 -> scripts/env/rust4pm_reactor_env.sh:18; test/beam4pm_rf2_conformance_test.exs:13 -> scripts/env/rust4pm_reactor_env.sh:19; test/beam4pm_rf2_conformance_test.exs:11 -> scripts/env/rust4pm_reactor_env.sh:17; test/beam4pm_rf3_ocel_test.exs:23 -> scripts/env/rust4pm_reactor_env.sh:25; test/beam4pm_rf3_ocel_test.exs:21 -> scripts/env/rust4pm_reactor_env.sh:23; test/beam4pm_rf3_ocel_test.exs:22 -> scripts/env/rust4pm_reactor_env.sh:24; test/beam4pm_rf3_ocel_test.exs:19 -> scripts/env/rust4pm_reactor_env.sh:21; test/beam4pm_rf3_ocel_test.exs:20 -> scripts/env/rust4pm_reactor_env.sh:22\"}",
+          "time": "2026-09-04T00:45:34.891947+00:00"
+        }
+      ]
+    },
+    {
+      "id": "prediction:001:02",
+      "type": "PredictionReceipt",
+      "attributes": [
+        {
+          "name": "prediction_json",
+          "value": "{\"path\":\"/Users/sac/crown-2-integration/autofde-lab/tools/crown2/run/predictions/001-02-5215f1890c13.json\",\"predicted_post_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true},\"sha256\":\"5215f1890c13bfbcd4e7878723da9abc2f5d77d713f999193e6299a9d806b72d\"}",
+          "time": "2026-09-04T00:45:34.894184+00:00"
+        },
+        {
+          "name": "confidence",
+          "value": 1.0,
+          "time": "2026-09-04T00:45:34.894184+00:00"
+        },
+        {
+          "name": "frozen_at",
+          "value": "2026-09-04T00:45:34.893670+00:00",
+          "time": "2026-09-04T00:45:34.894184+00:00"
+        }
+      ]
+    },
+    {
+      "id": "authority:00017",
+      "type": "AuthorityDecision",
+      "attributes": [
+        {
+          "name": "decision",
+          "value": "GRANTED",
+          "time": "2026-09-04T00:45:34.898431+00:00"
+        },
+        {
+          "name": "rationale",
+          "value": "reversible=True consequential=False denylist_hits=[] -> GRANTED under crown2-reversible-only",
+          "time": "2026-09-04T00:45:34.898431+00:00"
+        },
+        {
+          "name": "decided_at",
+          "value": "2026-09-04T00:45:34.898192+00:00",
+          "time": "2026-09-04T00:45:34.898431+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ClaudeToolInvocation:toolu_8d3f0205b7244fd2",
+      "type": "ClaudeToolInvocation",
+      "attributes": [
+        {
+          "name": "tool_name",
+          "value": "Bash",
+          "time": "2026-09-04T00:45:34.904734+00:00"
+        },
+        {
+          "name": "args_json",
+          "value": "{\"command\":\"export RF2_CLEAN_XES=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/receipt.xes\\\" RF2_MUTATED_XES=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/mutated_receipt.xes\\\" RF2_ORACLE_BIN=\\\"/Users/sac/crown-2-integration/beam4pm/native/rf2-conformance-oracle/target/release/rf2-conformance-oracle\\\" RF3_N05_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n05-o2o-dangling.ocel.json\\\" RF3_N13_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n13-duplicate-object-id.ocel.json\\\" RF3_N14_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n14-undeclared-event-type.ocel.json\\\" RF3_ORACLE_BIN=\\\"/Users/sac/crown-2-integration/beam4pm/native/rf3-ocel-oracle/target/release/rf3-ocel-oracle\\\" RF3_POSITIVE_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/positive-self-authored.ocel.json\\\"\",\"description\":\"crown2 cycle 1 step 2: set oracle env\"}",
+          "time": "2026-09-04T00:45:34.904734+00:00"
+        },
+        {
+          "name": "result_summary",
+          "value": "pending",
+          "time": "2026-09-04T00:45:34.904734+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ws:001:post-set",
+      "type": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "post-set",
+          "time": "2026-09-04T00:45:35.944928+00:00"
+        },
+        {
+          "name": "observed_at",
+          "value": "2026-09-04T00:45:35.944535+00:00",
+          "time": "2026-09-04T00:45:35.944928+00:00"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"evidence\":{\"ELIXIR_DEPS_READY\":{\"detail\":\"67 locked, missing=[]\",\"kind\":\"probe\",\"source\":\"mix.lock keys vs deps/<name>/\"},\"LINT_TRUTH_READY\":{\"detail\":\"rc=0: GATE LINT-TRUTH: PASS -- 48 hand-authored files scanned, 0 findings\",\"kind\":\"probe\",\"source\":\"bash scripts/gate_lint_truth.sh\"},\"MIX_TEST_GREEN\":{\"detail\":\"beam4pm-verify2.log:5173 '2393 tests, 18 failures, 92 skipped'\",\"kind\":\"log\",\"source\":\"beam4pm-verify2.log:5173\"},\"MIX_TEST_RUNNABLE\":{\"detail\":\"built=True; log beam4pm-verify2.log:5173 '2393 tests, 18 failures, 92 skipped'\",\"kind\":\"probe\",\"source\":\"test -d _build/test/lib\"},\"NATIVE_ORACLES_BUILT\":{\"detail\":\"crates=['rf1-dfg-oracle', 'rf2-conformance-oracle', 'rf3-ocel-oracle', 'rf4-oc-discovery-oracle'], absent=[]\",\"kind\":\"probe\",\"source\":\"native/*/Cargo.toml -> target/release/<name>\"},\"ORACLE_ENV_SET\":{\"detail\":\"required=['RF2_CLEAN_XES', 'RF2_MUTATED_XES', 'RF2_ORACLE_BIN', 'RF3_N05_FIXTURE', 'RF3_N13_FIXTURE', 'RF3_N14_FIXTURE', 'RF3_ORACLE_BIN', 'RF3_POSITIVE_FIXTURE'], unset=[]\",\"kind\":\"probe\",\"source\":\"test/*.exs System.fetch_env! vs os.environ\"},\"QUALIFICATION_COMPLETE\":{\"detail\":\"['MIX_TEST_GREEN', 'QUALIFICATION_COMPLETE']\",\"kind\":\"probe\",\"source\":\"conjunction of all other stages\"},\"RUST_TESTS_READY\":{\"detail\":\"All 1548 tests passed.\",\"kind\":\"log\",\"source\":\"beam4pm-verify.log:2457\"},\"SUBMODULES_READY\":{\"detail\":\"3 submodules, rc=0\",\"kind\":\"probe\",\"source\":\"git submodule status\"},\"SYNC_READY\":{\"detail\":\"exists=True; log beam4pm-verify.log:430 'ggen sync run'\",\"kind\":\"probe\",\"source\":\"test -f /Users/sac/crown-2-integration/beam4pm/ggen.lock\"}},\"repo\":\"/Users/sac/crown-2-integration/beam4pm\",\"stages\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}}",
+          "time": "2026-09-04T00:45:35.944928+00:00"
+        }
+      ]
+    },
+    {
+      "id": "receipt:001:02",
+      "type": "Receipt",
+      "attributes": [
+        {
+          "name": "kind",
+          "value": "prediction-comparison",
+          "time": "2026-09-04T00:45:35.954385+00:00"
+        },
+        {
+          "name": "digest",
+          "value": "60d6053d6bb58b578bb32c464b3453bc462b0a8ddd3af2b43c5a74292cd81752",
+          "time": "2026-09-04T00:45:35.954385+00:00"
+        },
+        {
+          "name": "issued_at",
+          "value": "2026-09-04T00:45:35.954115+00:00",
+          "time": "2026-09-04T00:45:35.954385+00:00"
+        }
+      ]
+    },
+    {
+      "id": "action:001:03",
+      "type": "Action",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "mix test",
+          "time": "2026-09-04T00:45:35.958972+00:00"
+        },
+        {
+          "name": "kind",
+          "value": "reversible",
+          "time": "2026-09-04T00:45:35.958972+00:00"
+        },
+        {
+          "name": "args_json",
+          "value": "{\"command\":\"mix test\",\"cwd\":\"/Users/sac/crown-2-integration/beam4pm\",\"env\":{},\"source\":\"justfile:18\"}",
+          "time": "2026-09-04T00:45:35.958972+00:00"
+        }
+      ]
+    },
+    {
+      "id": "prediction:001:03",
+      "type": "PredictionReceipt",
+      "attributes": [
+        {
+          "name": "prediction_json",
+          "value": "{\"path\":\"/Users/sac/crown-2-integration/autofde-lab/tools/crown2/run/predictions/001-03-947113f987d7.json\",\"predicted_post_state\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true},\"sha256\":\"947113f987d771320a2eaa9b859fdd4d89630ea5f39b4112146543914cc5173f\"}",
+          "time": "2026-09-04T00:45:35.961551+00:00"
+        },
+        {
+          "name": "confidence",
+          "value": 1.0,
+          "time": "2026-09-04T00:45:35.961551+00:00"
+        },
+        {
+          "name": "frozen_at",
+          "value": "2026-09-04T00:45:35.961083+00:00",
+          "time": "2026-09-04T00:45:35.961551+00:00"
+        }
+      ]
+    },
+    {
+      "id": "authority:00027",
+      "type": "AuthorityDecision",
+      "attributes": [
+        {
+          "name": "decision",
+          "value": "GRANTED",
+          "time": "2026-09-04T00:45:35.966506+00:00"
+        },
+        {
+          "name": "rationale",
+          "value": "reversible=True consequential=False denylist_hits=[] -> GRANTED under crown2-reversible-only",
+          "time": "2026-09-04T00:45:35.966506+00:00"
+        },
+        {
+          "name": "decided_at",
+          "value": "2026-09-04T00:45:35.966214+00:00",
+          "time": "2026-09-04T00:45:35.966506+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ClaudeToolInvocation:toolu_87b6f0c13cd5463f",
+      "type": "ClaudeToolInvocation",
+      "attributes": [
+        {
+          "name": "tool_name",
+          "value": "Bash",
+          "time": "2026-09-04T00:45:35.973912+00:00"
+        },
+        {
+          "name": "args_json",
+          "value": "{\"command\":\"mix test\",\"description\":\"crown2 cycle 1 step 3: mix test\"}",
+          "time": "2026-09-04T00:45:35.973912+00:00"
+        },
+        {
+          "name": "result_summary",
+          "value": "pending",
+          "time": "2026-09-04T00:45:35.973912+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ws:001:post-mix",
+      "type": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "post-mix",
+          "time": "2026-09-04T00:45:55.850704+00:00"
+        },
+        {
+          "name": "observed_at",
+          "value": "2026-09-04T00:45:55.850293+00:00",
+          "time": "2026-09-04T00:45:55.850704+00:00"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"evidence\":{\"ELIXIR_DEPS_READY\":{\"detail\":\"67 locked, missing=[]\",\"kind\":\"probe\",\"source\":\"mix.lock keys vs deps/<name>/\"},\"LINT_TRUTH_READY\":{\"detail\":\"rc=0: GATE LINT-TRUTH: PASS -- 48 hand-authored files scanned, 0 findings\",\"kind\":\"probe\",\"source\":\"bash scripts/gate_lint_truth.sh\"},\"MIX_TEST_GREEN\":{\"detail\":\"beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"log\",\"source\":\"beam4pm-verify2.log:2035\"},\"MIX_TEST_RUNNABLE\":{\"detail\":\"built=True; log beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"probe\",\"source\":\"test -d _build/test/lib\"},\"NATIVE_ORACLES_BUILT\":{\"detail\":\"crates=['rf1-dfg-oracle', 'rf2-conformance-oracle', 'rf3-ocel-oracle', 'rf4-oc-discovery-oracle'], absent=[]\",\"kind\":\"probe\",\"source\":\"native/*/Cargo.toml -> target/release/<name>\"},\"ORACLE_ENV_SET\":{\"detail\":\"required=['RF2_CLEAN_XES', 'RF2_MUTATED_XES', 'RF2_ORACLE_BIN', 'RF3_N05_FIXTURE', 'RF3_N13_FIXTURE', 'RF3_N14_FIXTURE', 'RF3_ORACLE_BIN', 'RF3_POSITIVE_FIXTURE'], unset=[]\",\"kind\":\"probe\",\"source\":\"test/*.exs System.fetch_env! vs os.environ\"},\"QUALIFICATION_COMPLETE\":{\"detail\":\"[]\",\"kind\":\"probe\",\"source\":\"conjunction of all other stages\"},\"RUST_TESTS_READY\":{\"detail\":\"All 1548 tests passed.\",\"kind\":\"log\",\"source\":\"beam4pm-verify.log:2457\"},\"SUBMODULES_READY\":{\"detail\":\"3 submodules, rc=0\",\"kind\":\"probe\",\"source\":\"git submodule status\"},\"SYNC_READY\":{\"detail\":\"exists=True; log beam4pm-verify.log:430 'ggen sync run'\",\"kind\":\"probe\",\"source\":\"test -f /Users/sac/crown-2-integration/beam4pm/ggen.lock\"}},\"repo\":\"/Users/sac/crown-2-integration/beam4pm\",\"stages\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}}",
+          "time": "2026-09-04T00:45:55.850704+00:00"
+        }
+      ]
+    },
+    {
+      "id": "receipt:001:03",
+      "type": "Receipt",
+      "attributes": [
+        {
+          "name": "kind",
+          "value": "prediction-comparison",
+          "time": "2026-09-04T00:45:55.861780+00:00"
+        },
+        {
+          "name": "digest",
+          "value": "8413475a318d28be0e446068066b5b23300d03c4eb76479b94d9742fbbfc9255",
+          "time": "2026-09-04T00:45:55.861780+00:00"
+        },
+        {
+          "name": "issued_at",
+          "value": "2026-09-04T00:45:55.861453+00:00",
+          "time": "2026-09-04T00:45:55.861780+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ws:002:steady",
+      "type": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady",
+          "time": "2026-09-04T00:45:56.839319+00:00"
+        },
+        {
+          "name": "observed_at",
+          "value": "2026-09-04T00:45:56.838859+00:00",
+          "time": "2026-09-04T00:45:56.839319+00:00"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"evidence\":{\"ELIXIR_DEPS_READY\":{\"detail\":\"67 locked, missing=[]\",\"kind\":\"probe\",\"source\":\"mix.lock keys vs deps/<name>/\"},\"LINT_TRUTH_READY\":{\"detail\":\"rc=0: GATE LINT-TRUTH: PASS -- 48 hand-authored files scanned, 0 findings\",\"kind\":\"probe\",\"source\":\"bash scripts/gate_lint_truth.sh\"},\"MIX_TEST_GREEN\":{\"detail\":\"beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"log\",\"source\":\"beam4pm-verify2.log:2035\"},\"MIX_TEST_RUNNABLE\":{\"detail\":\"built=True; log beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"probe\",\"source\":\"test -d _build/test/lib\"},\"NATIVE_ORACLES_BUILT\":{\"detail\":\"crates=['rf1-dfg-oracle', 'rf2-conformance-oracle', 'rf3-ocel-oracle', 'rf4-oc-discovery-oracle'], absent=[]\",\"kind\":\"probe\",\"source\":\"native/*/Cargo.toml -> target/release/<name>\"},\"ORACLE_ENV_SET\":{\"detail\":\"required=['RF2_CLEAN_XES', 'RF2_MUTATED_XES', 'RF2_ORACLE_BIN', 'RF3_N05_FIXTURE', 'RF3_N13_FIXTURE', 'RF3_N14_FIXTURE', 'RF3_ORACLE_BIN', 'RF3_POSITIVE_FIXTURE'], unset=[]\",\"kind\":\"probe\",\"source\":\"test/*.exs System.fetch_env! vs os.environ\"},\"QUALIFICATION_COMPLETE\":{\"detail\":\"[]\",\"kind\":\"probe\",\"source\":\"conjunction of all other stages\"},\"RUST_TESTS_READY\":{\"detail\":\"All 1548 tests passed.\",\"kind\":\"log\",\"source\":\"beam4pm-verify.log:2457\"},\"SUBMODULES_READY\":{\"detail\":\"3 submodules, rc=0\",\"kind\":\"probe\",\"source\":\"git submodule status\"},\"SYNC_READY\":{\"detail\":\"exists=True; log beam4pm-verify.log:430 'ggen sync run'\",\"kind\":\"probe\",\"source\":\"test -f /Users/sac/crown-2-integration/beam4pm/ggen.lock\"}},\"repo\":\"/Users/sac/crown-2-integration/beam4pm\",\"stages\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}}",
+          "time": "2026-09-04T00:45:56.839319+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ws:003:steady",
+      "type": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady",
+          "time": "2026-09-04T00:46:12.902214+00:00"
+        },
+        {
+          "name": "observed_at",
+          "value": "2026-09-04T00:46:12.901753+00:00",
+          "time": "2026-09-04T00:46:12.902214+00:00"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"evidence\":{\"ELIXIR_DEPS_READY\":{\"detail\":\"67 locked, missing=[]\",\"kind\":\"probe\",\"source\":\"mix.lock keys vs deps/<name>/\"},\"LINT_TRUTH_READY\":{\"detail\":\"rc=0: GATE LINT-TRUTH: PASS -- 48 hand-authored files scanned, 0 findings\",\"kind\":\"probe\",\"source\":\"bash scripts/gate_lint_truth.sh\"},\"MIX_TEST_GREEN\":{\"detail\":\"beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"log\",\"source\":\"beam4pm-verify2.log:2035\"},\"MIX_TEST_RUNNABLE\":{\"detail\":\"built=True; log beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"probe\",\"source\":\"test -d _build/test/lib\"},\"NATIVE_ORACLES_BUILT\":{\"detail\":\"crates=['rf1-dfg-oracle', 'rf2-conformance-oracle', 'rf3-ocel-oracle', 'rf4-oc-discovery-oracle'], absent=[]\",\"kind\":\"probe\",\"source\":\"native/*/Cargo.toml -> target/release/<name>\"},\"ORACLE_ENV_SET\":{\"detail\":\"required=['RF2_CLEAN_XES', 'RF2_MUTATED_XES', 'RF2_ORACLE_BIN', 'RF3_N05_FIXTURE', 'RF3_N13_FIXTURE', 'RF3_N14_FIXTURE', 'RF3_ORACLE_BIN', 'RF3_POSITIVE_FIXTURE'], unset=[]\",\"kind\":\"probe\",\"source\":\"test/*.exs System.fetch_env! vs os.environ\"},\"QUALIFICATION_COMPLETE\":{\"detail\":\"[]\",\"kind\":\"probe\",\"source\":\"conjunction of all other stages\"},\"RUST_TESTS_READY\":{\"detail\":\"All 1548 tests passed.\",\"kind\":\"log\",\"source\":\"beam4pm-verify.log:2457\"},\"SUBMODULES_READY\":{\"detail\":\"3 submodules, rc=0\",\"kind\":\"probe\",\"source\":\"git submodule status\"},\"SYNC_READY\":{\"detail\":\"exists=True; log beam4pm-verify.log:430 'ggen sync run'\",\"kind\":\"probe\",\"source\":\"test -f /Users/sac/crown-2-integration/beam4pm/ggen.lock\"}},\"repo\":\"/Users/sac/crown-2-integration/beam4pm\",\"stages\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}}",
+          "time": "2026-09-04T00:46:12.902214+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ws:004:steady",
+      "type": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady",
+          "time": "2026-09-04T00:46:28.946264+00:00"
+        },
+        {
+          "name": "observed_at",
+          "value": "2026-09-04T00:46:28.945784+00:00",
+          "time": "2026-09-04T00:46:28.946264+00:00"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"evidence\":{\"ELIXIR_DEPS_READY\":{\"detail\":\"67 locked, missing=[]\",\"kind\":\"probe\",\"source\":\"mix.lock keys vs deps/<name>/\"},\"LINT_TRUTH_READY\":{\"detail\":\"rc=0: GATE LINT-TRUTH: PASS -- 48 hand-authored files scanned, 0 findings\",\"kind\":\"probe\",\"source\":\"bash scripts/gate_lint_truth.sh\"},\"MIX_TEST_GREEN\":{\"detail\":\"beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"log\",\"source\":\"beam4pm-verify2.log:2035\"},\"MIX_TEST_RUNNABLE\":{\"detail\":\"built=True; log beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"probe\",\"source\":\"test -d _build/test/lib\"},\"NATIVE_ORACLES_BUILT\":{\"detail\":\"crates=['rf1-dfg-oracle', 'rf2-conformance-oracle', 'rf3-ocel-oracle', 'rf4-oc-discovery-oracle'], absent=[]\",\"kind\":\"probe\",\"source\":\"native/*/Cargo.toml -> target/release/<name>\"},\"ORACLE_ENV_SET\":{\"detail\":\"required=['RF2_CLEAN_XES', 'RF2_MUTATED_XES', 'RF2_ORACLE_BIN', 'RF3_N05_FIXTURE', 'RF3_N13_FIXTURE', 'RF3_N14_FIXTURE', 'RF3_ORACLE_BIN', 'RF3_POSITIVE_FIXTURE'], unset=[]\",\"kind\":\"probe\",\"source\":\"test/*.exs System.fetch_env! vs os.environ\"},\"QUALIFICATION_COMPLETE\":{\"detail\":\"[]\",\"kind\":\"probe\",\"source\":\"conjunction of all other stages\"},\"RUST_TESTS_READY\":{\"detail\":\"All 1548 tests passed.\",\"kind\":\"log\",\"source\":\"beam4pm-verify.log:2457\"},\"SUBMODULES_READY\":{\"detail\":\"3 submodules, rc=0\",\"kind\":\"probe\",\"source\":\"git submodule status\"},\"SYNC_READY\":{\"detail\":\"exists=True; log beam4pm-verify.log:430 'ggen sync run'\",\"kind\":\"probe\",\"source\":\"test -f /Users/sac/crown-2-integration/beam4pm/ggen.lock\"}},\"repo\":\"/Users/sac/crown-2-integration/beam4pm\",\"stages\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}}",
+          "time": "2026-09-04T00:46:28.946264+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ws:005:steady",
+      "type": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady",
+          "time": "2026-09-04T00:46:45.045874+00:00"
+        },
+        {
+          "name": "observed_at",
+          "value": "2026-09-04T00:46:45.045375+00:00",
+          "time": "2026-09-04T00:46:45.045874+00:00"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"evidence\":{\"ELIXIR_DEPS_READY\":{\"detail\":\"67 locked, missing=[]\",\"kind\":\"probe\",\"source\":\"mix.lock keys vs deps/<name>/\"},\"LINT_TRUTH_READY\":{\"detail\":\"rc=0: GATE LINT-TRUTH: PASS -- 48 hand-authored files scanned, 0 findings\",\"kind\":\"probe\",\"source\":\"bash scripts/gate_lint_truth.sh\"},\"MIX_TEST_GREEN\":{\"detail\":\"beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"log\",\"source\":\"beam4pm-verify2.log:2035\"},\"MIX_TEST_RUNNABLE\":{\"detail\":\"built=True; log beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"probe\",\"source\":\"test -d _build/test/lib\"},\"NATIVE_ORACLES_BUILT\":{\"detail\":\"crates=['rf1-dfg-oracle', 'rf2-conformance-oracle', 'rf3-ocel-oracle', 'rf4-oc-discovery-oracle'], absent=[]\",\"kind\":\"probe\",\"source\":\"native/*/Cargo.toml -> target/release/<name>\"},\"ORACLE_ENV_SET\":{\"detail\":\"required=['RF2_CLEAN_XES', 'RF2_MUTATED_XES', 'RF2_ORACLE_BIN', 'RF3_N05_FIXTURE', 'RF3_N13_FIXTURE', 'RF3_N14_FIXTURE', 'RF3_ORACLE_BIN', 'RF3_POSITIVE_FIXTURE'], unset=[]\",\"kind\":\"probe\",\"source\":\"test/*.exs System.fetch_env! vs os.environ\"},\"QUALIFICATION_COMPLETE\":{\"detail\":\"[]\",\"kind\":\"probe\",\"source\":\"conjunction of all other stages\"},\"RUST_TESTS_READY\":{\"detail\":\"All 1548 tests passed.\",\"kind\":\"log\",\"source\":\"beam4pm-verify.log:2457\"},\"SUBMODULES_READY\":{\"detail\":\"3 submodules, rc=0\",\"kind\":\"probe\",\"source\":\"git submodule status\"},\"SYNC_READY\":{\"detail\":\"exists=True; log beam4pm-verify.log:430 'ggen sync run'\",\"kind\":\"probe\",\"source\":\"test -f /Users/sac/crown-2-integration/beam4pm/ggen.lock\"}},\"repo\":\"/Users/sac/crown-2-integration/beam4pm\",\"stages\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}}",
+          "time": "2026-09-04T00:46:45.045874+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ws:006:steady",
+      "type": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady",
+          "time": "2026-09-04T00:47:01.147807+00:00"
+        },
+        {
+          "name": "observed_at",
+          "value": "2026-09-04T00:47:01.147249+00:00",
+          "time": "2026-09-04T00:47:01.147807+00:00"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"evidence\":{\"ELIXIR_DEPS_READY\":{\"detail\":\"67 locked, missing=[]\",\"kind\":\"probe\",\"source\":\"mix.lock keys vs deps/<name>/\"},\"LINT_TRUTH_READY\":{\"detail\":\"rc=0: GATE LINT-TRUTH: PASS -- 48 hand-authored files scanned, 0 findings\",\"kind\":\"probe\",\"source\":\"bash scripts/gate_lint_truth.sh\"},\"MIX_TEST_GREEN\":{\"detail\":\"beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"log\",\"source\":\"beam4pm-verify2.log:2035\"},\"MIX_TEST_RUNNABLE\":{\"detail\":\"built=True; log beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"probe\",\"source\":\"test -d _build/test/lib\"},\"NATIVE_ORACLES_BUILT\":{\"detail\":\"crates=['rf1-dfg-oracle', 'rf2-conformance-oracle', 'rf3-ocel-oracle', 'rf4-oc-discovery-oracle'], absent=[]\",\"kind\":\"probe\",\"source\":\"native/*/Cargo.toml -> target/release/<name>\"},\"ORACLE_ENV_SET\":{\"detail\":\"required=['RF2_CLEAN_XES', 'RF2_MUTATED_XES', 'RF2_ORACLE_BIN', 'RF3_N05_FIXTURE', 'RF3_N13_FIXTURE', 'RF3_N14_FIXTURE', 'RF3_ORACLE_BIN', 'RF3_POSITIVE_FIXTURE'], unset=[]\",\"kind\":\"probe\",\"source\":\"test/*.exs System.fetch_env! vs os.environ\"},\"QUALIFICATION_COMPLETE\":{\"detail\":\"[]\",\"kind\":\"probe\",\"source\":\"conjunction of all other stages\"},\"RUST_TESTS_READY\":{\"detail\":\"All 1548 tests passed.\",\"kind\":\"log\",\"source\":\"beam4pm-verify.log:2457\"},\"SUBMODULES_READY\":{\"detail\":\"3 submodules, rc=0\",\"kind\":\"probe\",\"source\":\"git submodule status\"},\"SYNC_READY\":{\"detail\":\"exists=True; log beam4pm-verify.log:430 'ggen sync run'\",\"kind\":\"probe\",\"source\":\"test -f /Users/sac/crown-2-integration/beam4pm/ggen.lock\"}},\"repo\":\"/Users/sac/crown-2-integration/beam4pm\",\"stages\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}}",
+          "time": "2026-09-04T00:47:01.147807+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ws:007:steady",
+      "type": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady",
+          "time": "2026-09-04T00:47:17.214057+00:00"
+        },
+        {
+          "name": "observed_at",
+          "value": "2026-09-04T00:47:17.213443+00:00",
+          "time": "2026-09-04T00:47:17.214057+00:00"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"evidence\":{\"ELIXIR_DEPS_READY\":{\"detail\":\"67 locked, missing=[]\",\"kind\":\"probe\",\"source\":\"mix.lock keys vs deps/<name>/\"},\"LINT_TRUTH_READY\":{\"detail\":\"rc=0: GATE LINT-TRUTH: PASS -- 48 hand-authored files scanned, 0 findings\",\"kind\":\"probe\",\"source\":\"bash scripts/gate_lint_truth.sh\"},\"MIX_TEST_GREEN\":{\"detail\":\"beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"log\",\"source\":\"beam4pm-verify2.log:2035\"},\"MIX_TEST_RUNNABLE\":{\"detail\":\"built=True; log beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"probe\",\"source\":\"test -d _build/test/lib\"},\"NATIVE_ORACLES_BUILT\":{\"detail\":\"crates=['rf1-dfg-oracle', 'rf2-conformance-oracle', 'rf3-ocel-oracle', 'rf4-oc-discovery-oracle'], absent=[]\",\"kind\":\"probe\",\"source\":\"native/*/Cargo.toml -> target/release/<name>\"},\"ORACLE_ENV_SET\":{\"detail\":\"required=['RF2_CLEAN_XES', 'RF2_MUTATED_XES', 'RF2_ORACLE_BIN', 'RF3_N05_FIXTURE', 'RF3_N13_FIXTURE', 'RF3_N14_FIXTURE', 'RF3_ORACLE_BIN', 'RF3_POSITIVE_FIXTURE'], unset=[]\",\"kind\":\"probe\",\"source\":\"test/*.exs System.fetch_env! vs os.environ\"},\"QUALIFICATION_COMPLETE\":{\"detail\":\"[]\",\"kind\":\"probe\",\"source\":\"conjunction of all other stages\"},\"RUST_TESTS_READY\":{\"detail\":\"All 1548 tests passed.\",\"kind\":\"log\",\"source\":\"beam4pm-verify.log:2457\"},\"SUBMODULES_READY\":{\"detail\":\"3 submodules, rc=0\",\"kind\":\"probe\",\"source\":\"git submodule status\"},\"SYNC_READY\":{\"detail\":\"exists=True; log beam4pm-verify.log:430 'ggen sync run'\",\"kind\":\"probe\",\"source\":\"test -f /Users/sac/crown-2-integration/beam4pm/ggen.lock\"}},\"repo\":\"/Users/sac/crown-2-integration/beam4pm\",\"stages\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}}",
+          "time": "2026-09-04T00:47:17.214057+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ws:008:steady",
+      "type": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady",
+          "time": "2026-09-04T00:47:33.291640+00:00"
+        },
+        {
+          "name": "observed_at",
+          "value": "2026-09-04T00:47:33.291104+00:00",
+          "time": "2026-09-04T00:47:33.291640+00:00"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"evidence\":{\"ELIXIR_DEPS_READY\":{\"detail\":\"67 locked, missing=[]\",\"kind\":\"probe\",\"source\":\"mix.lock keys vs deps/<name>/\"},\"LINT_TRUTH_READY\":{\"detail\":\"rc=0: GATE LINT-TRUTH: PASS -- 48 hand-authored files scanned, 0 findings\",\"kind\":\"probe\",\"source\":\"bash scripts/gate_lint_truth.sh\"},\"MIX_TEST_GREEN\":{\"detail\":\"beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"log\",\"source\":\"beam4pm-verify2.log:2035\"},\"MIX_TEST_RUNNABLE\":{\"detail\":\"built=True; log beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"probe\",\"source\":\"test -d _build/test/lib\"},\"NATIVE_ORACLES_BUILT\":{\"detail\":\"crates=['rf1-dfg-oracle', 'rf2-conformance-oracle', 'rf3-ocel-oracle', 'rf4-oc-discovery-oracle'], absent=[]\",\"kind\":\"probe\",\"source\":\"native/*/Cargo.toml -> target/release/<name>\"},\"ORACLE_ENV_SET\":{\"detail\":\"required=['RF2_CLEAN_XES', 'RF2_MUTATED_XES', 'RF2_ORACLE_BIN', 'RF3_N05_FIXTURE', 'RF3_N13_FIXTURE', 'RF3_N14_FIXTURE', 'RF3_ORACLE_BIN', 'RF3_POSITIVE_FIXTURE'], unset=[]\",\"kind\":\"probe\",\"source\":\"test/*.exs System.fetch_env! vs os.environ\"},\"QUALIFICATION_COMPLETE\":{\"detail\":\"[]\",\"kind\":\"probe\",\"source\":\"conjunction of all other stages\"},\"RUST_TESTS_READY\":{\"detail\":\"All 1548 tests passed.\",\"kind\":\"log\",\"source\":\"beam4pm-verify.log:2457\"},\"SUBMODULES_READY\":{\"detail\":\"3 submodules, rc=0\",\"kind\":\"probe\",\"source\":\"git submodule status\"},\"SYNC_READY\":{\"detail\":\"exists=True; log beam4pm-verify.log:430 'ggen sync run'\",\"kind\":\"probe\",\"source\":\"test -f /Users/sac/crown-2-integration/beam4pm/ggen.lock\"}},\"repo\":\"/Users/sac/crown-2-integration/beam4pm\",\"stages\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}}",
+          "time": "2026-09-04T00:47:33.291640+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ws:009:steady",
+      "type": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady",
+          "time": "2026-09-04T00:47:49.324523+00:00"
+        },
+        {
+          "name": "observed_at",
+          "value": "2026-09-04T00:47:49.323921+00:00",
+          "time": "2026-09-04T00:47:49.324523+00:00"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"evidence\":{\"ELIXIR_DEPS_READY\":{\"detail\":\"67 locked, missing=[]\",\"kind\":\"probe\",\"source\":\"mix.lock keys vs deps/<name>/\"},\"LINT_TRUTH_READY\":{\"detail\":\"rc=0: GATE LINT-TRUTH: PASS -- 48 hand-authored files scanned, 0 findings\",\"kind\":\"probe\",\"source\":\"bash scripts/gate_lint_truth.sh\"},\"MIX_TEST_GREEN\":{\"detail\":\"beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"log\",\"source\":\"beam4pm-verify2.log:2035\"},\"MIX_TEST_RUNNABLE\":{\"detail\":\"built=True; log beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"probe\",\"source\":\"test -d _build/test/lib\"},\"NATIVE_ORACLES_BUILT\":{\"detail\":\"crates=['rf1-dfg-oracle', 'rf2-conformance-oracle', 'rf3-ocel-oracle', 'rf4-oc-discovery-oracle'], absent=[]\",\"kind\":\"probe\",\"source\":\"native/*/Cargo.toml -> target/release/<name>\"},\"ORACLE_ENV_SET\":{\"detail\":\"required=['RF2_CLEAN_XES', 'RF2_MUTATED_XES', 'RF2_ORACLE_BIN', 'RF3_N05_FIXTURE', 'RF3_N13_FIXTURE', 'RF3_N14_FIXTURE', 'RF3_ORACLE_BIN', 'RF3_POSITIVE_FIXTURE'], unset=[]\",\"kind\":\"probe\",\"source\":\"test/*.exs System.fetch_env! vs os.environ\"},\"QUALIFICATION_COMPLETE\":{\"detail\":\"[]\",\"kind\":\"probe\",\"source\":\"conjunction of all other stages\"},\"RUST_TESTS_READY\":{\"detail\":\"All 1548 tests passed.\",\"kind\":\"log\",\"source\":\"beam4pm-verify.log:2457\"},\"SUBMODULES_READY\":{\"detail\":\"3 submodules, rc=0\",\"kind\":\"probe\",\"source\":\"git submodule status\"},\"SYNC_READY\":{\"detail\":\"exists=True; log beam4pm-verify.log:430 'ggen sync run'\",\"kind\":\"probe\",\"source\":\"test -f /Users/sac/crown-2-integration/beam4pm/ggen.lock\"}},\"repo\":\"/Users/sac/crown-2-integration/beam4pm\",\"stages\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}}",
+          "time": "2026-09-04T00:47:49.324523+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ws:010:steady",
+      "type": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady",
+          "time": "2026-09-04T00:48:05.373211+00:00"
+        },
+        {
+          "name": "observed_at",
+          "value": "2026-09-04T00:48:05.372560+00:00",
+          "time": "2026-09-04T00:48:05.373211+00:00"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"evidence\":{\"ELIXIR_DEPS_READY\":{\"detail\":\"67 locked, missing=[]\",\"kind\":\"probe\",\"source\":\"mix.lock keys vs deps/<name>/\"},\"LINT_TRUTH_READY\":{\"detail\":\"rc=0: GATE LINT-TRUTH: PASS -- 48 hand-authored files scanned, 0 findings\",\"kind\":\"probe\",\"source\":\"bash scripts/gate_lint_truth.sh\"},\"MIX_TEST_GREEN\":{\"detail\":\"beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"log\",\"source\":\"beam4pm-verify2.log:2035\"},\"MIX_TEST_RUNNABLE\":{\"detail\":\"built=True; log beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"probe\",\"source\":\"test -d _build/test/lib\"},\"NATIVE_ORACLES_BUILT\":{\"detail\":\"crates=['rf1-dfg-oracle', 'rf2-conformance-oracle', 'rf3-ocel-oracle', 'rf4-oc-discovery-oracle'], absent=[]\",\"kind\":\"probe\",\"source\":\"native/*/Cargo.toml -> target/release/<name>\"},\"ORACLE_ENV_SET\":{\"detail\":\"required=['RF2_CLEAN_XES', 'RF2_MUTATED_XES', 'RF2_ORACLE_BIN', 'RF3_N05_FIXTURE', 'RF3_N13_FIXTURE', 'RF3_N14_FIXTURE', 'RF3_ORACLE_BIN', 'RF3_POSITIVE_FIXTURE'], unset=[]\",\"kind\":\"probe\",\"source\":\"test/*.exs System.fetch_env! vs os.environ\"},\"QUALIFICATION_COMPLETE\":{\"detail\":\"[]\",\"kind\":\"probe\",\"source\":\"conjunction of all other stages\"},\"RUST_TESTS_READY\":{\"detail\":\"All 1548 tests passed.\",\"kind\":\"log\",\"source\":\"beam4pm-verify.log:2457\"},\"SUBMODULES_READY\":{\"detail\":\"3 submodules, rc=0\",\"kind\":\"probe\",\"source\":\"git submodule status\"},\"SYNC_READY\":{\"detail\":\"exists=True; log beam4pm-verify.log:430 'ggen sync run'\",\"kind\":\"probe\",\"source\":\"test -f /Users/sac/crown-2-integration/beam4pm/ggen.lock\"}},\"repo\":\"/Users/sac/crown-2-integration/beam4pm\",\"stages\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}}",
+          "time": "2026-09-04T00:48:05.373211+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ws:011:steady",
+      "type": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady",
+          "time": "2026-09-04T00:48:21.451699+00:00"
+        },
+        {
+          "name": "observed_at",
+          "value": "2026-09-04T00:48:21.451057+00:00",
+          "time": "2026-09-04T00:48:21.451699+00:00"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"evidence\":{\"ELIXIR_DEPS_READY\":{\"detail\":\"67 locked, missing=[]\",\"kind\":\"probe\",\"source\":\"mix.lock keys vs deps/<name>/\"},\"LINT_TRUTH_READY\":{\"detail\":\"rc=0: GATE LINT-TRUTH: PASS -- 48 hand-authored files scanned, 0 findings\",\"kind\":\"probe\",\"source\":\"bash scripts/gate_lint_truth.sh\"},\"MIX_TEST_GREEN\":{\"detail\":\"beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"log\",\"source\":\"beam4pm-verify2.log:2035\"},\"MIX_TEST_RUNNABLE\":{\"detail\":\"built=True; log beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"probe\",\"source\":\"test -d _build/test/lib\"},\"NATIVE_ORACLES_BUILT\":{\"detail\":\"crates=['rf1-dfg-oracle', 'rf2-conformance-oracle', 'rf3-ocel-oracle', 'rf4-oc-discovery-oracle'], absent=[]\",\"kind\":\"probe\",\"source\":\"native/*/Cargo.toml -> target/release/<name>\"},\"ORACLE_ENV_SET\":{\"detail\":\"required=['RF2_CLEAN_XES', 'RF2_MUTATED_XES', 'RF2_ORACLE_BIN', 'RF3_N05_FIXTURE', 'RF3_N13_FIXTURE', 'RF3_N14_FIXTURE', 'RF3_ORACLE_BIN', 'RF3_POSITIVE_FIXTURE'], unset=[]\",\"kind\":\"probe\",\"source\":\"test/*.exs System.fetch_env! vs os.environ\"},\"QUALIFICATION_COMPLETE\":{\"detail\":\"[]\",\"kind\":\"probe\",\"source\":\"conjunction of all other stages\"},\"RUST_TESTS_READY\":{\"detail\":\"All 1548 tests passed.\",\"kind\":\"log\",\"source\":\"beam4pm-verify.log:2457\"},\"SUBMODULES_READY\":{\"detail\":\"3 submodules, rc=0\",\"kind\":\"probe\",\"source\":\"git submodule status\"},\"SYNC_READY\":{\"detail\":\"exists=True; log beam4pm-verify.log:430 'ggen sync run'\",\"kind\":\"probe\",\"source\":\"test -f /Users/sac/crown-2-integration/beam4pm/ggen.lock\"}},\"repo\":\"/Users/sac/crown-2-integration/beam4pm\",\"stages\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}}",
+          "time": "2026-09-04T00:48:21.451699+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ws:012:steady",
+      "type": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady",
+          "time": "2026-09-04T00:48:37.503394+00:00"
+        },
+        {
+          "name": "observed_at",
+          "value": "2026-09-04T00:48:37.502748+00:00",
+          "time": "2026-09-04T00:48:37.503394+00:00"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"evidence\":{\"ELIXIR_DEPS_READY\":{\"detail\":\"67 locked, missing=[]\",\"kind\":\"probe\",\"source\":\"mix.lock keys vs deps/<name>/\"},\"LINT_TRUTH_READY\":{\"detail\":\"rc=0: GATE LINT-TRUTH: PASS -- 48 hand-authored files scanned, 0 findings\",\"kind\":\"probe\",\"source\":\"bash scripts/gate_lint_truth.sh\"},\"MIX_TEST_GREEN\":{\"detail\":\"beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"log\",\"source\":\"beam4pm-verify2.log:2035\"},\"MIX_TEST_RUNNABLE\":{\"detail\":\"built=True; log beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"probe\",\"source\":\"test -d _build/test/lib\"},\"NATIVE_ORACLES_BUILT\":{\"detail\":\"crates=['rf1-dfg-oracle', 'rf2-conformance-oracle', 'rf3-ocel-oracle', 'rf4-oc-discovery-oracle'], absent=[]\",\"kind\":\"probe\",\"source\":\"native/*/Cargo.toml -> target/release/<name>\"},\"ORACLE_ENV_SET\":{\"detail\":\"required=['RF2_CLEAN_XES', 'RF2_MUTATED_XES', 'RF2_ORACLE_BIN', 'RF3_N05_FIXTURE', 'RF3_N13_FIXTURE', 'RF3_N14_FIXTURE', 'RF3_ORACLE_BIN', 'RF3_POSITIVE_FIXTURE'], unset=[]\",\"kind\":\"probe\",\"source\":\"test/*.exs System.fetch_env! vs os.environ\"},\"QUALIFICATION_COMPLETE\":{\"detail\":\"[]\",\"kind\":\"probe\",\"source\":\"conjunction of all other stages\"},\"RUST_TESTS_READY\":{\"detail\":\"All 1548 tests passed.\",\"kind\":\"log\",\"source\":\"beam4pm-verify.log:2457\"},\"SUBMODULES_READY\":{\"detail\":\"3 submodules, rc=0\",\"kind\":\"probe\",\"source\":\"git submodule status\"},\"SYNC_READY\":{\"detail\":\"exists=True; log beam4pm-verify.log:430 'ggen sync run'\",\"kind\":\"probe\",\"source\":\"test -f /Users/sac/crown-2-integration/beam4pm/ggen.lock\"}},\"repo\":\"/Users/sac/crown-2-integration/beam4pm\",\"stages\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}}",
+          "time": "2026-09-04T00:48:37.503394+00:00"
+        }
+      ]
+    },
+    {
+      "id": "ws:013:steady",
+      "type": "WorldState",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady",
+          "time": "2026-09-04T00:48:53.533599+00:00"
+        },
+        {
+          "name": "observed_at",
+          "value": "2026-09-04T00:48:53.532892+00:00",
+          "time": "2026-09-04T00:48:53.533599+00:00"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"evidence\":{\"ELIXIR_DEPS_READY\":{\"detail\":\"67 locked, missing=[]\",\"kind\":\"probe\",\"source\":\"mix.lock keys vs deps/<name>/\"},\"LINT_TRUTH_READY\":{\"detail\":\"rc=0: GATE LINT-TRUTH: PASS -- 48 hand-authored files scanned, 0 findings\",\"kind\":\"probe\",\"source\":\"bash scripts/gate_lint_truth.sh\"},\"MIX_TEST_GREEN\":{\"detail\":\"beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"log\",\"source\":\"beam4pm-verify2.log:2035\"},\"MIX_TEST_RUNNABLE\":{\"detail\":\"built=True; log beam4pm-verify2.log:2035 '2393 tests, 0 failures, 92 skipped'\",\"kind\":\"probe\",\"source\":\"test -d _build/test/lib\"},\"NATIVE_ORACLES_BUILT\":{\"detail\":\"crates=['rf1-dfg-oracle', 'rf2-conformance-oracle', 'rf3-ocel-oracle', 'rf4-oc-discovery-oracle'], absent=[]\",\"kind\":\"probe\",\"source\":\"native/*/Cargo.toml -> target/release/<name>\"},\"ORACLE_ENV_SET\":{\"detail\":\"required=['RF2_CLEAN_XES', 'RF2_MUTATED_XES', 'RF2_ORACLE_BIN', 'RF3_N05_FIXTURE', 'RF3_N13_FIXTURE', 'RF3_N14_FIXTURE', 'RF3_ORACLE_BIN', 'RF3_POSITIVE_FIXTURE'], unset=[]\",\"kind\":\"probe\",\"source\":\"test/*.exs System.fetch_env! vs os.environ\"},\"QUALIFICATION_COMPLETE\":{\"detail\":\"[]\",\"kind\":\"probe\",\"source\":\"conjunction of all other stages\"},\"RUST_TESTS_READY\":{\"detail\":\"All 1548 tests passed.\",\"kind\":\"log\",\"source\":\"beam4pm-verify.log:2457\"},\"SUBMODULES_READY\":{\"detail\":\"3 submodules, rc=0\",\"kind\":\"probe\",\"source\":\"git submodule status\"},\"SYNC_READY\":{\"detail\":\"exists=True; log beam4pm-verify.log:430 'ggen sync run'\",\"kind\":\"probe\",\"source\":\"test -f /Users/sac/crown-2-integration/beam4pm/ggen.lock\"}},\"repo\":\"/Users/sac/crown-2-integration/beam4pm\",\"stages\":{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}}",
+          "time": "2026-09-04T00:48:53.533599+00:00"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "ev:composition-created",
+      "type": "CompositionCreated",
+      "time": "2026-09-04T00:43:57.733542+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "crown-2"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "composition:crown-2",
+          "qualifier": "composition"
+        },
+        {
+          "objectId": "commit:beam4pm:6fb0992d9f2a",
+          "qualifier": ""
+        },
+        {
+          "objectId": "commit:beam4pm:baf4a73a56e4",
+          "qualifier": ""
+        },
+        {
+          "objectId": "commit:beam4pm:d21838c057f0",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:beam4pm",
+          "qualifier": ""
+        },
+        {
+          "objectId": "wt:crown-2/beam4pm-compose",
+          "qualifier": ""
+        },
+        {
+          "objectId": "commit:autofde-lab:e5c4aef78860",
+          "qualifier": ""
+        },
+        {
+          "objectId": "commit:autofde-lab:add8fba6d9cb",
+          "qualifier": ""
+        },
+        {
+          "objectId": "commit:autofde-lab:1d11067ac24b",
+          "qualifier": ""
+        },
+        {
+          "objectId": "repo:autofde-lab",
+          "qualifier": ""
+        },
+        {
+          "objectId": "wt:crown-2/autofde-compose",
+          "qualifier": ""
+        },
+        {
+          "objectId": "commit:beam4pm:live:d21838c057f0",
+          "qualifier": ""
+        },
+        {
+          "objectId": "commit:autofde-lab:live:e950e155efbc",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0001",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:43:58.018890+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 1
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 0.31784820900065824
+        },
+        {
+          "name": "events_so_far",
+          "value": 1
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:loop-started:00001",
+      "type": "LoopStarted",
+      "time": "2026-09-04T00:43:58.021312+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "cycle-001"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:observed:00002",
+      "type": "WorldStateObserved",
+      "time": "2026-09-04T00:43:59.081328+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "pre-plan"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ws:001:pre-plan",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "domain:beam4pm",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:qualification:00003",
+      "type": "QualificationObserved",
+      "time": "2026-09-04T00:43:59.083763+00:00",
+      "attributes": [
+        {
+          "name": "result",
+          "value": "partial:NATIVE_ORACLES_BUILT,ORACLE_ENV_SET,MIX_TEST_GREEN,QUALIFICATION_COMPLETE"
+        },
+        {
+          "name": "metrics_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":false,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "qual:001",
+          "qualifier": "qualification"
+        },
+        {
+          "objectId": "ws:001:pre-plan",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:planner:00004",
+      "type": "PlannerInvoked",
+      "time": "2026-09-04T00:43:59.095994+00:00",
+      "attributes": [
+        {
+          "name": "solver_name",
+          "value": "Astar(native _AStarSolver_) via native_plan.py"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "solver:astar-native-hub",
+          "qualifier": "solver"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "domain:beam4pm",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:plan-produced:00005",
+      "type": "PlanProduced",
+      "time": "2026-09-04T00:43:59.365080+00:00",
+      "attributes": [
+        {
+          "name": "summary",
+          "value": "cargo build --release (oracles) -> set oracle env -> mix test"
+        },
+        {
+          "name": "cost_estimate",
+          "value": 3.0
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "plan:001",
+          "qualifier": "plan"
+        },
+        {
+          "objectId": "solver:astar-native-hub",
+          "qualifier": "solver"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "ws:001:pre-plan",
+          "qualifier": "from"
+        }
+      ]
+    },
+    {
+      "id": "ev:prediction-frozen:00006",
+      "type": "PredictionFrozen",
+      "time": "2026-09-04T00:43:59.369854+00:00",
+      "attributes": [
+        {
+          "name": "confidence",
+          "value": 1.0
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "prediction:001:01",
+          "qualifier": "prediction"
+        },
+        {
+          "objectId": "action:001:01",
+          "qualifier": "predicts"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:authority-evaluated:00008",
+      "type": "AuthorityEvaluated",
+      "time": "2026-09-04T00:43:59.372634+00:00",
+      "attributes": [
+        {
+          "name": "rationale",
+          "value": "reversible=True consequential=False denylist_hits=[] -> GRANTED under crown2-reversible-only"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "authority:00007",
+          "qualifier": "decision"
+        },
+        {
+          "objectId": "action:001:01",
+          "qualifier": "subject"
+        },
+        {
+          "objectId": "policy:crown2",
+          "qualifier": "policy"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:authority-decided:00009",
+      "type": "AuthorityGranted",
+      "time": "2026-09-04T00:43:59.374014+00:00",
+      "attributes": [
+        {
+          "name": "rationale",
+          "value": "reversible=True consequential=False denylist_hits=[] -> GRANTED under crown2-reversible-only"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "authority:00007",
+          "qualifier": "decision"
+        },
+        {
+          "objectId": "action:001:01",
+          "qualifier": "subject"
+        },
+        {
+          "objectId": "policy:crown2",
+          "qualifier": "policy"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:hook:f5410be1-2000-4a86-adfe-930a88e732fa",
+      "type": "Claude.PreToolUse",
+      "time": "2026-09-04T00:43:59.377024+00:00",
+      "attributes": [
+        {
+          "name": "hook_event_id",
+          "value": "f5410be1-2000-4a86-adfe-930a88e732fa"
+        },
+        {
+          "name": "hook_event_name",
+          "value": "PreToolUse"
+        },
+        {
+          "name": "tool_name",
+          "value": "Bash"
+        },
+        {
+          "name": "cwd",
+          "value": "/Users/sac/crown-2-integration/beam4pm"
+        },
+        {
+          "name": "permission_mode",
+          "value": "default"
+        },
+        {
+          "name": "tool_input",
+          "value": "{\"command\":\"(cd native/rf1-dfg-oracle && cargo build --release) && (cd native/rf2-conformance-oracle && cargo build --release) && (cd native/rf3-ocel-oracle && cargo build --release) && (cd native/rf4-oc-discovery-oracle && cargo build --release)\",\"description\":\"crown2 cycle 1 step 1: cargo build --release (oracles)\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ClaudeSession:crown2-runner-d4610913bda0",
+          "qualifier": "session"
+        },
+        {
+          "objectId": "ClaudeToolInvocation:toolu_9e787bd4f0d74cf5",
+          "qualifier": "tool_invocation[Bash][id_source=payload]"
+        },
+        {
+          "objectId": "Machine:Mac.lan",
+          "qualifier": "machine"
+        },
+        {
+          "objectId": "action:001:01",
+          "qualifier": "invokes"
+        }
+      ]
+    },
+    {
+      "id": "ev:action-started:00010",
+      "type": "ActionStarted",
+      "time": "2026-09-04T00:43:59.378509+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "cargo build --release (oracles)"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action:001:01",
+          "qualifier": "action"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0002",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:44:08.027316+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 2
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 10.32605100001092
+        },
+        {
+          "name": "events_so_far",
+          "value": 12
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0003",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:44:18.031836+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 3
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 20.33047970899497
+        },
+        {
+          "name": "events_so_far",
+          "value": 13
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0004",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:44:28.037193+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 4
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 30.33568675001152
+        },
+        {
+          "name": "events_so_far",
+          "value": 14
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0005",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:44:38.043364+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 5
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 40.34171962499386
+        },
+        {
+          "name": "events_so_far",
+          "value": 15
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0006",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:44:48.051144+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 6
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 50.34933108399855
+        },
+        {
+          "name": "events_so_far",
+          "value": 16
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0007",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:44:58.055073+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 7
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 60.35315216699382
+        },
+        {
+          "name": "events_so_far",
+          "value": 17
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0008",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:45:08.062794+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 8
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 70.36072279198561
+        },
+        {
+          "name": "events_so_far",
+          "value": 18
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0009",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:45:18.070725+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 9
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 80.36852733400883
+        },
+        {
+          "name": "events_so_far",
+          "value": 19
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0010",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:45:28.078392+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 10
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 90.37606954199146
+        },
+        {
+          "name": "events_so_far",
+          "value": 20
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:action-completed:00011",
+      "type": "ActionCompleted",
+      "time": "2026-09-04T00:45:33.202055+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "cargo build --release (oracles)"
+        },
+        {
+          "name": "result_summary",
+          "value": "exit=0 in 93.8s; log=action-001-01-cargo.log; tail:    Compiling serde_with_macros v3.22.0\n   Compiling schemars v1.2.2\n   Compiling serde_with v3.22.0\n   Compiling process_mining v0.6.2\n   Compiling rf4-oc-discovery-oracle v0.1.0 (/Users/sac/crown-2-integration/beam4pm/native/rf4-oc-discovery-oracle)\n    Finished `release` profile [optimized] target(s) in 19.25s"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action:001:01",
+          "qualifier": "action"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:hook:dbac5fbe-ab7e-473d-a94e-ff0e0fddbc87",
+      "type": "Claude.PostToolUse",
+      "time": "2026-09-04T00:45:33.204247+00:00",
+      "attributes": [
+        {
+          "name": "hook_event_id",
+          "value": "dbac5fbe-ab7e-473d-a94e-ff0e0fddbc87"
+        },
+        {
+          "name": "hook_event_name",
+          "value": "PostToolUse"
+        },
+        {
+          "name": "tool_name",
+          "value": "Bash"
+        },
+        {
+          "name": "cwd",
+          "value": "/Users/sac/crown-2-integration/beam4pm"
+        },
+        {
+          "name": "permission_mode",
+          "value": "default"
+        },
+        {
+          "name": "tool_input",
+          "value": "{\"command\":\"(cd native/rf1-dfg-oracle && cargo build --release) && (cd native/rf2-conformance-oracle && cargo build --release) && (cd native/rf3-ocel-oracle && cargo build --release) && (cd native/rf4-oc-discovery-oracle && cargo build --release)\",\"description\":\"crown2 cycle 1 step 1: cargo build --release (oracles)\"}"
+        },
+        {
+          "name": "tool_response",
+          "value": "{\"exit_code\":0,\"is_error\":false,\"stderr\":\" v1.0.229\\n   Compiling zmij v1.0.23\\n   Compiling strsim v0.11.1\\n   Compiling crossbeam-epoch v0.9.20\\n   Compiling ident_case v1.0.1\\n   Compiling core-foundation-sys v0.8.7\\n   Compiling serde_json v1.0.151\\n   Compiling ref-cast v1.0.27\\n   Compiling crossbeam-deque v0.8.7\\n   Compiling itoa v1.0.18\\n   Compiling iana-time-zone v0.1.65\\n   Compiling num-traits v0.2.19\\n   Compiling crc32fast v1.5.1\\n   Compiling rayon-core v1.13.0\\n   Compiling equivalent v1.0.2\\n   Compiling foldhash v0.2.0\\n   Compiling allocator-api2 v0.2.21\\n   Compiling rustix v1.1.4\\n   Compiling hashbrown v0.17.1\\n   Compiling either v1.18.0\\n   Compiling dyn-clone v1.0.20\\n   Compiling foldhash v0.1.5\\n   Compiling bitflags v2.13.1\\n   Compiling simd-adler32 v0.3.10\\n   Compiling adler2 v2.0.1\\n   Compiling hashbrown v0.15.5\\n   Compiling indexmap v2.14.1\\n   Compiling miniz_oxide v0.9.1\\n   Compiling csv-core v0.1.13\\n   Compiling fixedbitset v0.5.7\\n   Compiling once_cell v1.21.4\\n   Compiling fastrand v2.5.0\\n   Compiling ryu v1.0.23\\n   Compiling petgraph v0.8.3\\n   Compiling itertools v0.14.0\\n   Compiling quick-xml v0.37.5\\n   Compiling syn v3.0.4\\n   Compiling syn v2.0.119\\n   Compiling rustc-hash v2.1.3\\n   Compiling serde_derive_internals v0.30.0\\n   Compiling serde_derive v1.0.229\\n   Compiling ref-cast-impl v1.0.27\\n   Compiling schemars_derive v1.2.2\\n   Compiling darling_core v0.23.0\\n   Compiling macros_process_mining v0.6.2\\n   Compiling errno v0.3.14\\n   Compiling uuid v1.26.0\\n   Compiling csv v1.4.0\\n   Compiling flate2 v1.1.10\\n   Compiling ordered-float v5.5.0\\n   Compiling rayon v1.12.0\\n   Compiling darling_macro v0.23.0\\n   Compiling darling v0.23.0\\n   Compiling tempfile v3.27.0\\n   Compiling chrono v0.4.45\\n   Compiling serde_with_macros v3.22.0\\n   Compiling schemars v1.2.2\\n   Compiling serde_with v3.22.0\\n   Compiling process_mining v0.6.2\\n   Compiling rf4-oc-discovery-oracle v0.1.0 (/Users/sac/crown-2-integration/beam4pm/native/rf4-oc-discovery-oracle)\\n    Finished `release` profile [optimized] target(s) in 19.25s\\n\",\"stdout\":\"\"}"
+        },
+        {
+          "name": "is_error",
+          "value": false
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ClaudeSession:crown2-runner-d4610913bda0",
+          "qualifier": "session"
+        },
+        {
+          "objectId": "ClaudeToolInvocation:toolu_9e787bd4f0d74cf5",
+          "qualifier": "tool_invocation[Bash][id_source=payload]"
+        },
+        {
+          "objectId": "Machine:Mac.lan",
+          "qualifier": "machine"
+        },
+        {
+          "objectId": "action:001:01",
+          "qualifier": "invokes"
+        }
+      ]
+    },
+    {
+      "id": "ev:observed:00012",
+      "type": "WorldStateObserved",
+      "time": "2026-09-04T00:45:34.882242+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "post-cargo"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ws:001:post-cargo",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "domain:beam4pm",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:qualification:00013",
+      "type": "QualificationObserved",
+      "time": "2026-09-04T00:45:34.884242+00:00",
+      "attributes": [
+        {
+          "name": "result",
+          "value": "partial:ORACLE_ENV_SET,MIX_TEST_GREEN,QUALIFICATION_COMPLETE"
+        },
+        {
+          "name": "metrics_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":false,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "qual:001",
+          "qualifier": "qualification"
+        },
+        {
+          "objectId": "ws:001:post-cargo",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:prediction-compared:00014",
+      "type": "PredictionCompared",
+      "time": "2026-09-04T00:45:34.886142+00:00",
+      "attributes": [
+        {
+          "name": "delta_json",
+          "value": "{\"delta\":{},\"match\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "prediction:001:01",
+          "qualifier": "prediction"
+        },
+        {
+          "objectId": "ws:001:post-cargo",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "action:001:01",
+          "qualifier": "action"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:receipt-issued:00015",
+      "type": "ReceiptIssued",
+      "time": "2026-09-04T00:45:34.890045+00:00",
+      "attributes": [
+        {
+          "name": "digest",
+          "value": "704f1ddfd6d249880482d61f3711598733f8c4bfa654a780ceca4314ef6a4c78"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "receipt:001:01",
+          "qualifier": "receipt"
+        },
+        {
+          "objectId": "prediction:001:01",
+          "qualifier": "prediction"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:prediction-frozen:00016",
+      "type": "PredictionFrozen",
+      "time": "2026-09-04T00:45:34.896353+00:00",
+      "attributes": [
+        {
+          "name": "confidence",
+          "value": 1.0
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "prediction:001:02",
+          "qualifier": "prediction"
+        },
+        {
+          "objectId": "action:001:02",
+          "qualifier": "predicts"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:authority-evaluated:00018",
+      "type": "AuthorityEvaluated",
+      "time": "2026-09-04T00:45:34.900500+00:00",
+      "attributes": [
+        {
+          "name": "rationale",
+          "value": "reversible=True consequential=False denylist_hits=[] -> GRANTED under crown2-reversible-only"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "authority:00017",
+          "qualifier": "decision"
+        },
+        {
+          "objectId": "action:001:02",
+          "qualifier": "subject"
+        },
+        {
+          "objectId": "policy:crown2",
+          "qualifier": "policy"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:authority-decided:00019",
+      "type": "AuthorityGranted",
+      "time": "2026-09-04T00:45:34.902519+00:00",
+      "attributes": [
+        {
+          "name": "rationale",
+          "value": "reversible=True consequential=False denylist_hits=[] -> GRANTED under crown2-reversible-only"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "authority:00017",
+          "qualifier": "decision"
+        },
+        {
+          "objectId": "action:001:02",
+          "qualifier": "subject"
+        },
+        {
+          "objectId": "policy:crown2",
+          "qualifier": "policy"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:hook:1804d9f8-930c-4da5-9892-9bf8f8833180",
+      "type": "Claude.PreToolUse",
+      "time": "2026-09-04T00:45:34.906831+00:00",
+      "attributes": [
+        {
+          "name": "hook_event_id",
+          "value": "1804d9f8-930c-4da5-9892-9bf8f8833180"
+        },
+        {
+          "name": "hook_event_name",
+          "value": "PreToolUse"
+        },
+        {
+          "name": "tool_name",
+          "value": "Bash"
+        },
+        {
+          "name": "cwd",
+          "value": "/Users/sac/crown-2-integration/beam4pm"
+        },
+        {
+          "name": "permission_mode",
+          "value": "default"
+        },
+        {
+          "name": "tool_input",
+          "value": "{\"command\":\"export RF2_CLEAN_XES=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/receipt.xes\\\" RF2_MUTATED_XES=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/mutated_receipt.xes\\\" RF2_ORACLE_BIN=\\\"/Users/sac/crown-2-integration/beam4pm/native/rf2-conformance-oracle/target/release/rf2-conformance-oracle\\\" RF3_N05_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n05-o2o-dangling.ocel.json\\\" RF3_N13_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n13-duplicate-object-id.ocel.json\\\" RF3_N14_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n14-undeclared-event-type.ocel.json\\\" RF3_ORACLE_BIN=\\\"/Users/sac/crown-2-integration/beam4pm/native/rf3-ocel-oracle/target/release/rf3-ocel-oracle\\\" RF3_POSITIVE_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/positive-self-authored.ocel.json\\\"\",\"description\":\"crown2 cycle 1 step 2: set oracle env\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ClaudeSession:crown2-runner-d4610913bda0",
+          "qualifier": "session"
+        },
+        {
+          "objectId": "ClaudeToolInvocation:toolu_8d3f0205b7244fd2",
+          "qualifier": "tool_invocation[Bash][id_source=payload]"
+        },
+        {
+          "objectId": "Machine:Mac.lan",
+          "qualifier": "machine"
+        },
+        {
+          "objectId": "action:001:02",
+          "qualifier": "invokes"
+        }
+      ]
+    },
+    {
+      "id": "ev:action-started:00020",
+      "type": "ActionStarted",
+      "time": "2026-09-04T00:45:34.908961+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "set oracle env"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action:001:02",
+          "qualifier": "action"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:action-completed:00021",
+      "type": "ActionCompleted",
+      "time": "2026-09-04T00:45:34.922452+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "set oracle env"
+        },
+        {
+          "name": "result_summary",
+          "value": "exit=0 in 0.0s; log=action-001-02-set.log; tail: "
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action:001:02",
+          "qualifier": "action"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:hook:b37a1831-8fae-430d-bf7f-aede28120b0f",
+      "type": "Claude.PostToolUse",
+      "time": "2026-09-04T00:45:34.924939+00:00",
+      "attributes": [
+        {
+          "name": "hook_event_id",
+          "value": "b37a1831-8fae-430d-bf7f-aede28120b0f"
+        },
+        {
+          "name": "hook_event_name",
+          "value": "PostToolUse"
+        },
+        {
+          "name": "tool_name",
+          "value": "Bash"
+        },
+        {
+          "name": "cwd",
+          "value": "/Users/sac/crown-2-integration/beam4pm"
+        },
+        {
+          "name": "permission_mode",
+          "value": "default"
+        },
+        {
+          "name": "tool_input",
+          "value": "{\"command\":\"export RF2_CLEAN_XES=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/receipt.xes\\\" RF2_MUTATED_XES=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/mutated_receipt.xes\\\" RF2_ORACLE_BIN=\\\"/Users/sac/crown-2-integration/beam4pm/native/rf2-conformance-oracle/target/release/rf2-conformance-oracle\\\" RF3_N05_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n05-o2o-dangling.ocel.json\\\" RF3_N13_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n13-duplicate-object-id.ocel.json\\\" RF3_N14_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/n14-undeclared-event-type.ocel.json\\\" RF3_ORACLE_BIN=\\\"/Users/sac/crown-2-integration/beam4pm/native/rf3-ocel-oracle/target/release/rf3-ocel-oracle\\\" RF3_POSITIVE_FIXTURE=\\\"/Users/sac/crown-2-integration/beam4pm/qualification/fixtures/positive-self-authored.ocel.json\\\"\",\"description\":\"crown2 cycle 1 step 2: set oracle env\"}"
+        },
+        {
+          "name": "tool_response",
+          "value": "{\"exit_code\":0,\"is_error\":false,\"stderr\":\"\",\"stdout\":\"\"}"
+        },
+        {
+          "name": "is_error",
+          "value": false
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ClaudeSession:crown2-runner-d4610913bda0",
+          "qualifier": "session"
+        },
+        {
+          "objectId": "ClaudeToolInvocation:toolu_8d3f0205b7244fd2",
+          "qualifier": "tool_invocation[Bash][id_source=payload]"
+        },
+        {
+          "objectId": "Machine:Mac.lan",
+          "qualifier": "machine"
+        },
+        {
+          "objectId": "action:001:02",
+          "qualifier": "invokes"
+        }
+      ]
+    },
+    {
+      "id": "ev:observed:00022",
+      "type": "WorldStateObserved",
+      "time": "2026-09-04T00:45:35.947473+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "post-set"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ws:001:post-set",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "domain:beam4pm",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:qualification:00023",
+      "type": "QualificationObserved",
+      "time": "2026-09-04T00:45:35.949801+00:00",
+      "attributes": [
+        {
+          "name": "result",
+          "value": "partial:MIX_TEST_GREEN,QUALIFICATION_COMPLETE"
+        },
+        {
+          "name": "metrics_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":false,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":false,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "qual:001",
+          "qualifier": "qualification"
+        },
+        {
+          "objectId": "ws:001:post-set",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:prediction-compared:00024",
+      "type": "PredictionCompared",
+      "time": "2026-09-04T00:45:35.952079+00:00",
+      "attributes": [
+        {
+          "name": "delta_json",
+          "value": "{\"delta\":{},\"match\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "prediction:001:02",
+          "qualifier": "prediction"
+        },
+        {
+          "objectId": "ws:001:post-set",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "action:001:02",
+          "qualifier": "action"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:receipt-issued:00025",
+      "type": "ReceiptIssued",
+      "time": "2026-09-04T00:45:35.956680+00:00",
+      "attributes": [
+        {
+          "name": "digest",
+          "value": "60d6053d6bb58b578bb32c464b3453bc462b0a8ddd3af2b43c5a74292cd81752"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "receipt:001:02",
+          "qualifier": "receipt"
+        },
+        {
+          "objectId": "prediction:001:02",
+          "qualifier": "prediction"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:prediction-frozen:00026",
+      "type": "PredictionFrozen",
+      "time": "2026-09-04T00:45:35.964068+00:00",
+      "attributes": [
+        {
+          "name": "confidence",
+          "value": 1.0
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "prediction:001:03",
+          "qualifier": "prediction"
+        },
+        {
+          "objectId": "action:001:03",
+          "qualifier": "predicts"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:authority-evaluated:00028",
+      "type": "AuthorityEvaluated",
+      "time": "2026-09-04T00:45:35.968939+00:00",
+      "attributes": [
+        {
+          "name": "rationale",
+          "value": "reversible=True consequential=False denylist_hits=[] -> GRANTED under crown2-reversible-only"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "authority:00027",
+          "qualifier": "decision"
+        },
+        {
+          "objectId": "action:001:03",
+          "qualifier": "subject"
+        },
+        {
+          "objectId": "policy:crown2",
+          "qualifier": "policy"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:authority-decided:00029",
+      "type": "AuthorityGranted",
+      "time": "2026-09-04T00:45:35.971370+00:00",
+      "attributes": [
+        {
+          "name": "rationale",
+          "value": "reversible=True consequential=False denylist_hits=[] -> GRANTED under crown2-reversible-only"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "authority:00027",
+          "qualifier": "decision"
+        },
+        {
+          "objectId": "action:001:03",
+          "qualifier": "subject"
+        },
+        {
+          "objectId": "policy:crown2",
+          "qualifier": "policy"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:hook:03b96969-dd55-41b7-b2f9-b3bc648ca048",
+      "type": "Claude.PreToolUse",
+      "time": "2026-09-04T00:45:35.976365+00:00",
+      "attributes": [
+        {
+          "name": "hook_event_id",
+          "value": "03b96969-dd55-41b7-b2f9-b3bc648ca048"
+        },
+        {
+          "name": "hook_event_name",
+          "value": "PreToolUse"
+        },
+        {
+          "name": "tool_name",
+          "value": "Bash"
+        },
+        {
+          "name": "cwd",
+          "value": "/Users/sac/crown-2-integration/beam4pm"
+        },
+        {
+          "name": "permission_mode",
+          "value": "default"
+        },
+        {
+          "name": "tool_input",
+          "value": "{\"command\":\"mix test\",\"description\":\"crown2 cycle 1 step 3: mix test\"}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ClaudeSession:crown2-runner-d4610913bda0",
+          "qualifier": "session"
+        },
+        {
+          "objectId": "ClaudeToolInvocation:toolu_87b6f0c13cd5463f",
+          "qualifier": "tool_invocation[Bash][id_source=payload]"
+        },
+        {
+          "objectId": "Machine:Mac.lan",
+          "qualifier": "machine"
+        },
+        {
+          "objectId": "action:001:03",
+          "qualifier": "invokes"
+        }
+      ]
+    },
+    {
+      "id": "ev:action-started:00030",
+      "type": "ActionStarted",
+      "time": "2026-09-04T00:45:35.978882+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "mix test"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action:001:03",
+          "qualifier": "action"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0011",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:45:38.082122+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 11
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 100.37945183398551
+        },
+        {
+          "name": "events_so_far",
+          "value": 43
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0012",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:45:48.091887+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 12
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 110.38915612499113
+        },
+        {
+          "name": "events_so_far",
+          "value": 44
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:action-completed:00031",
+      "type": "ActionCompleted",
+      "time": "2026-09-04T00:45:54.858940+00:00",
+      "attributes": [
+        {
+          "name": "name",
+          "value": "mix test"
+        },
+        {
+          "name": "result_summary",
+          "value": "exit=0 in 18.9s; log=beam4pm-verify2.log; tail: Final pruned candidates: 22\nPruning candidates took: 0.0000s\nBuilding PN took: 0.0000s\n\n====\nWhole Discovery took: 0.0000s"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "action:001:03",
+          "qualifier": "action"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:hook:2ae0693d-e3f5-4be0-a52b-0fff0c5f43e4",
+      "type": "Claude.PostToolUse",
+      "time": "2026-09-04T00:45:54.861930+00:00",
+      "attributes": [
+        {
+          "name": "hook_event_id",
+          "value": "2ae0693d-e3f5-4be0-a52b-0fff0c5f43e4"
+        },
+        {
+          "name": "hook_event_name",
+          "value": "PostToolUse"
+        },
+        {
+          "name": "tool_name",
+          "value": "Bash"
+        },
+        {
+          "name": "cwd",
+          "value": "/Users/sac/crown-2-integration/beam4pm"
+        },
+        {
+          "name": "permission_mode",
+          "value": "default"
+        },
+        {
+          "name": "tool_input",
+          "value": "{\"command\":\"mix test\",\"description\":\"crown2 cycle 1 step 3: mix test\"}"
+        },
+        {
+          "name": "tool_response",
+          "value": "{\"exit_code\":0,\"is_error\":false,\"stderr\":\"send confirmation of receipt\\\", 1300), (\\\"T16 Report reasons to hold request\\\", 20), (\\\"T17 Check report Y to stop indication\\\", 26), (\\\"T08 Draft and send request for advice\\\", 18), (\\\"T09-2 Process or receive external advice from party 2\\\", 1), (\\\"T07-1 Draft intern advice aspect 1\\\", 45), (\\\"T19 Determine report Y to stop indication\\\", 20), (\\\"T03 Adjust confirmation of receipt\\\", 55), (\\\"T04 Determine confirmation of receipt\\\", 1307), (\\\"T12 Check document X request unlicensed\\\", 41), (\\\"T15 Print document X request unlicensed\\\", 39), (\\\"T09-1 Process or receive external advice from party 1\\\", 7), (\\\"T20 Print report Y to stop indication\\\", 20), (\\\"T10 Determine necessity to stop indication\\\", 1283), (\\\"T09-4 Process or receive external advice from party 4\\\", 5), (\\\"T14 Determine document X request unlicensed\\\", 39), (\\\"T07-3 Draft intern advice hold for aspect 3\\\", 8), (\\\"T06 Determine necessity of stop advice\\\", 1416), (\\\"Confirmation of receipt\\\", 1434), (\\\"T02 Check confirmation of receipt\\\", 1368), (\\\"T11 Create document X request unlicensed\\\", 44), (\\\"T07-5 Draft intern advice aspect 5\\\", 27), (\\\"T07-4 Draft internal advice to hold for type 4\\\", 6), (\\\"T07-2 Draft intern advice aspect 2\\\", 32), (\\\"T13 Adjust document X request unlicensed\\\", 2), (\\\"T09-3 Process or receive external advice from party 3\\\", 8), (\\\"T18 Adjust report Y to stop indicition\\\", 6), (\\\"__START\\\", 1434), (\\\"__END\\\", 1434), (\\\"__SILENT__skip_after_T04 Determine confirmation of receipt\\\", 1299), (\\\"__SILENT__skip_after_T02 Check confirmation of receipt\\\", 1321), (\\\"__SILENT__skip_after_T10 Determine necessity to stop indication\\\", 1226), (\\\"__SILENT__skip_after_T05 Print and send confirmation of receipt\\\", 1191)]\\n#Added for skip: 4\\nFiltered DFG (aDFG) #Edges: 43, Weight Sum: 14840\\nFiltering DFG took: 0.0000s\\nDF #43\\nBuilt candidates 405\\nBuilding candidates took: 0.0000s\\nAfter balance: 118\\nAfter fitness: 42\\nAfter maximal (sel): 22\\nFinal pruned candidates: 22\\nPruning candidates took: 0.0000s\\nBuilding PN took: 0.0000s\\n\\n====\\nWhole Discovery took: 0.0000s\\n\",\"stdout\":\"ample_account_id\\\",\\n evidence_digest: \\\"sample_evidence_digest\\\",\\n demo_scenario_id: \\\"sample_demo_scenario_id\\\",\\n scenario_name: \\\"sample_scenario_name\\\"}\\n\\n.\\n17:45:54.721 [debug] Creating BeamPM.Ash.Resources.QueueSnapshot:\\n\\nSetting %{id: \\\"eb3483a9-12c4-4a43-b565-912e5bfa8f0a\\\", depth: 42,\\n observed_at: ~U[2026-08-29 12:00:00Z], queue_name: \\\"sample_queue_name\\\"}\\n\\n.\\n17:45:54.724 [debug] Creating BeamPM.Ash.Resources.CostToServeMeasurement:\\n\\nSetting %{id: \\\"b8470da6-0fa5-4213-bdd0-5370f2c1cab1\\\", tenant_id: \\\"sample_tenant_id\\\",\\n measurement_hash: \\\"sample_measurement_hash\\\",\\n billing_period_id: \\\"sample_billing_period_id\\\"}\\n\\n.\\n17:45:54.726 [debug] Creating BeamPM.Ash.Resources.EditionDefinition:\\n\\nSetting %{id: \\\"6ff34cfc-5e72-469e-9651-f44fe0bb7b72\\\", name: \\\"sample_name\\\",\\n edition_id: \\\"sample_edition_id\\\", bundle_ids: [\\\"alpha\\\", \\\"beta\\\"],\\n support_tier: \\\"sample_support_tier\\\"}\\n\\n.\\n17:45:54.729 [debug] Creating BeamPM.Ash.Resources.BillingReconciliation:\\n\\nSetting %{id: \\\"c214ee7c-1797-4670-b2af-5be8136f88ea\\\",\\n entitlement_id: \\\"sample_entitlement_id\\\", metric_name: \\\"sample_metric_name\\\",\\n total_quantity: 3.5, applied_event_ids: [\\\"alpha\\\", \\\"beta\\\"],\\n period_start: ~U[2026-08-29 12:00:00Z], period_end: ~U[2026-08-29 12:00:00Z]}\\n\\n.\\n17:45:54.732 [debug] Creating BeamPM.Ash.Resources.ProcurementReadiness:\\n\\nSetting %{id: \\\"5452b6d2-c5ea-425f-99c3-18d41d56275d\\\",\\n observed_at: ~U[2026-08-29 12:00:00Z], account_id: \\\"sample_account_id\\\",\\n evidence_digest: \\\"sample_evidence_digest\\\",\\n procurement_readiness_id: \\\"sample_procurement_readiness_id\\\",\\n procurement_stage: \\\"sample_procurement_stage\\\"}\\n\\n.......\\n17:45:54.841 [debug] Creating BeamPM.Ash.Resources.CommercialOutcome:\\n\\nSetting %{id: \\\"dd382a0f-e11d-41ab-bc6e-ce82e496fd14\\\",\\n observed_at: ~U[2026-08-29 12:00:00Z], account_id: \\\"sample_account_id\\\",\\n evidence_digest: \\\"sample_evidence_digest\\\",\\n commercial_outcome_id: \\\"sample_commercial_outcome_id\\\", outcome_value: 3.5}\\n\\n.************\\nFinished in 15.1 seconds (11.4s async, 3.6s sync)\\n2393 tests, 0 failures, 92 skipped\\n\"}"
+        },
+        {
+          "name": "is_error",
+          "value": false
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ClaudeSession:crown2-runner-d4610913bda0",
+          "qualifier": "session"
+        },
+        {
+          "objectId": "ClaudeToolInvocation:toolu_87b6f0c13cd5463f",
+          "qualifier": "tool_invocation[Bash][id_source=payload]"
+        },
+        {
+          "objectId": "Machine:Mac.lan",
+          "qualifier": "machine"
+        },
+        {
+          "objectId": "action:001:03",
+          "qualifier": "invokes"
+        }
+      ]
+    },
+    {
+      "id": "ev:observed:00032",
+      "type": "WorldStateObserved",
+      "time": "2026-09-04T00:45:55.853602+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "post-mix"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ws:001:post-mix",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "domain:beam4pm",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:qualification:00033",
+      "type": "QualificationObserved",
+      "time": "2026-09-04T00:45:55.856328+00:00",
+      "attributes": [
+        {
+          "name": "result",
+          "value": "QUALIFICATION_COMPLETE"
+        },
+        {
+          "name": "metrics_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "qual:001",
+          "qualifier": "qualification"
+        },
+        {
+          "objectId": "ws:001:post-mix",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:prediction-compared:00034",
+      "type": "PredictionCompared",
+      "time": "2026-09-04T00:45:55.859049+00:00",
+      "attributes": [
+        {
+          "name": "delta_json",
+          "value": "{\"delta\":{},\"match\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "prediction:001:03",
+          "qualifier": "prediction"
+        },
+        {
+          "objectId": "ws:001:post-mix",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "action:001:03",
+          "qualifier": "action"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:receipt-issued:00035",
+      "type": "ReceiptIssued",
+      "time": "2026-09-04T00:45:55.864508+00:00",
+      "attributes": [
+        {
+          "name": "digest",
+          "value": "8413475a318d28be0e446068066b5b23300d03c4eb76479b94d9742fbbfc9255"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "receipt:001:03",
+          "qualifier": "receipt"
+        },
+        {
+          "objectId": "prediction:001:03",
+          "qualifier": "prediction"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:loop-closed:00036",
+      "type": "LoopClosed",
+      "time": "2026-09-04T00:45:55.867233+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "goal"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "ws:001:post-mix",
+          "qualifier": "observed"
+        }
+      ]
+    },
+    {
+      "id": "ev:observed:00037",
+      "type": "WorldStateObserved",
+      "time": "2026-09-04T00:45:56.842553+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ws:002:steady",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "domain:beam4pm",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:loop-closed:00038",
+      "type": "LoopClosed",
+      "time": "2026-09-04T00:45:56.845420+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "ws:002:steady",
+          "qualifier": "observed"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0013",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:45:58.105789+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 13
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 120.39958379199379
+        },
+        {
+          "name": "events_so_far",
+          "value": 54
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0014",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:46:08.118659+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 14
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 130.4150941669941
+        },
+        {
+          "name": "events_so_far",
+          "value": 55
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:observed:00039",
+      "type": "WorldStateObserved",
+      "time": "2026-09-04T00:46:12.905430+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ws:003:steady",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "domain:beam4pm",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:loop-closed:00040",
+      "type": "LoopClosed",
+      "time": "2026-09-04T00:46:12.908468+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "ws:003:steady",
+          "qualifier": "observed"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0015",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:46:18.131322+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 15
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 140.42812029199558
+        },
+        {
+          "name": "events_so_far",
+          "value": 58
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0016",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:46:28.136363+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 16
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 150.43300195899792
+        },
+        {
+          "name": "events_so_far",
+          "value": 59
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:observed:00041",
+      "type": "WorldStateObserved",
+      "time": "2026-09-04T00:46:28.949618+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ws:004:steady",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "domain:beam4pm",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:loop-closed:00042",
+      "type": "LoopClosed",
+      "time": "2026-09-04T00:46:28.952727+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "ws:004:steady",
+          "qualifier": "observed"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0017",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:46:38.149033+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 17
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 160.44420224998612
+        },
+        {
+          "name": "events_so_far",
+          "value": 62
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:observed:00043",
+      "type": "WorldStateObserved",
+      "time": "2026-09-04T00:46:45.049439+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ws:005:steady",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "domain:beam4pm",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:loop-closed:00044",
+      "type": "LoopClosed",
+      "time": "2026-09-04T00:46:45.052833+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "ws:005:steady",
+          "qualifier": "observed"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0018",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:46:48.164449+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 18
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 170.4605082499911
+        },
+        {
+          "name": "events_so_far",
+          "value": 65
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0019",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:46:58.180742+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 19
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 180.47660733398516
+        },
+        {
+          "name": "events_so_far",
+          "value": 66
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:observed:00045",
+      "type": "WorldStateObserved",
+      "time": "2026-09-04T00:47:01.151560+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ws:006:steady",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "domain:beam4pm",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:loop-closed:00046",
+      "type": "LoopClosed",
+      "time": "2026-09-04T00:47:01.154985+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "ws:006:steady",
+          "qualifier": "observed"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0020",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:47:08.195231+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 20
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 190.48972633399535
+        },
+        {
+          "name": "events_so_far",
+          "value": 69
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:observed:00047",
+      "type": "WorldStateObserved",
+      "time": "2026-09-04T00:47:17.217913+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ws:007:steady",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "domain:beam4pm",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:loop-closed:00048",
+      "type": "LoopClosed",
+      "time": "2026-09-04T00:47:17.221440+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "ws:007:steady",
+          "qualifier": "observed"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0021",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:47:18.213121+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 21
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 200.5081914170005
+        },
+        {
+          "name": "events_so_far",
+          "value": 72
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0022",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:47:28.231359+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 22
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 210.52614150001318
+        },
+        {
+          "name": "events_so_far",
+          "value": 73
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:observed:00049",
+      "type": "WorldStateObserved",
+      "time": "2026-09-04T00:47:33.295443+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ws:008:steady",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "domain:beam4pm",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:loop-closed:00050",
+      "type": "LoopClosed",
+      "time": "2026-09-04T00:47:33.299003+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "ws:008:steady",
+          "qualifier": "observed"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0023",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:47:38.249196+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 23
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 220.54296070899
+        },
+        {
+          "name": "events_so_far",
+          "value": 76
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0024",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:47:48.266859+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 24
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 230.5622135839949
+        },
+        {
+          "name": "events_so_far",
+          "value": 77
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:observed:00051",
+      "type": "WorldStateObserved",
+      "time": "2026-09-04T00:47:49.328631+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ws:009:steady",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "domain:beam4pm",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:loop-closed:00052",
+      "type": "LoopClosed",
+      "time": "2026-09-04T00:47:49.332354+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "ws:009:steady",
+          "qualifier": "observed"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0025",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:47:58.282182+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 25
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 240.57625974999974
+        },
+        {
+          "name": "events_so_far",
+          "value": 80
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:observed:00053",
+      "type": "WorldStateObserved",
+      "time": "2026-09-04T00:48:05.377349+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ws:010:steady",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "domain:beam4pm",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:loop-closed:00054",
+      "type": "LoopClosed",
+      "time": "2026-09-04T00:48:05.381180+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "ws:010:steady",
+          "qualifier": "observed"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0026",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:48:08.303566+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 26
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 250.59815191698726
+        },
+        {
+          "name": "events_so_far",
+          "value": 83
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0027",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:48:18.322945+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 27
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 260.61601762499777
+        },
+        {
+          "name": "events_so_far",
+          "value": 84
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:observed:00055",
+      "type": "WorldStateObserved",
+      "time": "2026-09-04T00:48:21.456092+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ws:011:steady",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "domain:beam4pm",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:loop-closed:00056",
+      "type": "LoopClosed",
+      "time": "2026-09-04T00:48:21.460047+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "ws:011:steady",
+          "qualifier": "observed"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0028",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:48:28.348882+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 28
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 270.64115187499556
+        },
+        {
+          "name": "events_so_far",
+          "value": 87
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:observed:00057",
+      "type": "WorldStateObserved",
+      "time": "2026-09-04T00:48:37.508044+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ws:012:steady",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "domain:beam4pm",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:loop-closed:00058",
+      "type": "LoopClosed",
+      "time": "2026-09-04T00:48:37.512027+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "ws:012:steady",
+          "qualifier": "observed"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0029",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:48:38.371137+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 29
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 280.66373729199404
+        },
+        {
+          "name": "events_so_far",
+          "value": 90
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0030",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:48:48.386304+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 30
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 290.6808064589859
+        },
+        {
+          "name": "events_so_far",
+          "value": 91
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    },
+    {
+      "id": "ev:observed:00059",
+      "type": "WorldStateObserved",
+      "time": "2026-09-04T00:48:53.538246+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        },
+        {
+          "name": "state_json",
+          "value": "{\"ELIXIR_DEPS_READY\":true,\"LINT_TRUTH_READY\":true,\"MIX_TEST_GREEN\":true,\"MIX_TEST_RUNNABLE\":true,\"NATIVE_ORACLES_BUILT\":true,\"ORACLE_ENV_SET\":true,\"QUALIFICATION_COMPLETE\":true,\"RUST_TESTS_READY\":true,\"SUBMODULES_READY\":true,\"SYNC_READY\":true}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "ws:013:steady",
+          "qualifier": "observed"
+        },
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "domain:beam4pm",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "ev:loop-closed:00060",
+      "type": "LoopClosed",
+      "time": "2026-09-04T00:48:53.542392+00:00",
+      "attributes": [
+        {
+          "name": "label",
+          "value": "steady"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:beam4pm-production",
+          "qualifier": "episode"
+        },
+        {
+          "objectId": "ws:013:steady",
+          "qualifier": "observed"
+        }
+      ]
+    },
+    {
+      "id": "ev:heartbeat:0031",
+      "type": "HeartbeatObserved",
+      "time": "2026-09-04T00:48:57.710702+00:00",
+      "attributes": [
+        {
+          "name": "seq",
+          "value": 31
+        },
+        {
+          "name": "monotonic_seconds",
+          "value": 300.00522391698905
+        },
+        {
+          "name": "events_so_far",
+          "value": 94
+        },
+        {
+          "name": "validate_json",
+          "value": "{\"dangling_refs\":0,\"duplicate_ids\":0,\"strict_type_mismatches\":0}"
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "episode:control-heartbeat",
+          "qualifier": "episode"
+        }
+      ]
+    }
+  ]
+}

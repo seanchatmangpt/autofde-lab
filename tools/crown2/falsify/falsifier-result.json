@@ -1,0 +1,154 @@
+{
+  "closures": {
+    "claude_telemetry": {
+      "evidence_event_ids": [
+        "ev:action-completed:00011",
+        "ev:action-completed:00021",
+        "ev:action-completed:00031",
+        "ev:hook:03b96969-dd55-41b7-b2f9-b3bc648ca048",
+        "ev:hook:1804d9f8-930c-4da5-9892-9bf8f8833180",
+        "ev:hook:2ae0693d-e3f5-4be0-a52b-0fff0c5f43e4",
+        "ev:hook:b37a1831-8fae-430d-bf7f-aede28120b0f",
+        "ev:hook:dbac5fbe-ab7e-473d-a94e-ff0e0fddbc87",
+        "ev:hook:f5410be1-2000-4a86-adfe-930a88e732fa"
+      ],
+      "notes": [
+        "claude_invocations_linked_to_completed_actions=6",
+        "pairs=[['ev:hook:f5410be1-2000-4a86-adfe-930a88e732fa', 'ClaudeToolInvocation:toolu_9e787bd4f0d74cf5', 'action:001:01', 'ev:action-completed:00011'], ['ev:hook:dbac5fbe-ab7e-473d-a94e-ff0e0fddbc87', 'ClaudeToolInvocation:toolu_9e787bd4f0d74cf5', 'action:001:01', 'ev:action-completed:00011'], ['ev:hook:1804d9f8-930c-4da5-9892-9bf8f8833180', 'ClaudeToolInvocation:toolu_8d3f0205b7244fd2', 'action:001:02', 'ev:action-completed:00021'], ['ev:hook:b37a1831-8fae-430d-bf7f-aede28120b0f', 'ClaudeToolInvocation:toolu_8d3f0205b7244fd2', 'action:001:02', 'ev:action-completed:00021'], ['ev:hook:03b96969-dd55-41b7-b2f9-b3bc648ca048', 'ClaudeToolInvocation:toolu_87b6f0c13cd5463f', 'action:001:03', 'ev:action-completed:00031'], ['ev:hook:2ae0693d-e3f5-4be0-a52b-0fff0c5f43e4', 'ClaudeToolInvocation:toolu_87b6f0c13cd5463f', 'action:001:03', 'ev:action-completed:00031']]"
+      ],
+      "status": "ALIVE"
+    },
+    "control_invariant": {
+      "evidence_event_ids": [
+        "ev:heartbeat:0001",
+        "ev:heartbeat:0002",
+        "ev:heartbeat:0003",
+        "ev:heartbeat:0004",
+        "ev:heartbeat:0005",
+        "ev:heartbeat:0006",
+        "ev:heartbeat:0007",
+        "ev:heartbeat:0008",
+        "ev:heartbeat:0009",
+        "ev:heartbeat:0010",
+        "ev:heartbeat:0011",
+        "ev:heartbeat:0012",
+        "ev:heartbeat:0013",
+        "ev:heartbeat:0014",
+        "ev:heartbeat:0015",
+        "ev:heartbeat:0016",
+        "ev:heartbeat:0017",
+        "ev:heartbeat:0018",
+        "ev:heartbeat:0019",
+        "ev:heartbeat:0020",
+        "ev:heartbeat:0021",
+        "ev:heartbeat:0022",
+        "ev:heartbeat:0023",
+        "ev:heartbeat:0024",
+        "ev:heartbeat:0025",
+        "ev:heartbeat:0026",
+        "ev:heartbeat:0027",
+        "ev:heartbeat:0028",
+        "ev:heartbeat:0029",
+        "ev:heartbeat:0030",
+        "ev:heartbeat:0031"
+      ],
+      "notes": [
+        "heartbeats=31 (min 25)",
+        "heartbeat_span_s=299.692 (min 300)",
+        "failed_checks=[]",
+        "production_types_in_heartbeat_episode=[]"
+      ],
+      "status": "BLOCKED[HEARTBEAT_SPAN_LT_300S]"
+    },
+    "native_bootstrap": {
+      "evidence_event_ids": [
+        "ev:bootstrap-completed",
+        "ev:planner:00004"
+      ],
+      "notes": [
+        "solver_objects={'solver:astar-native-hub': {'implementation': None, 'kind': 'cpp:_AStarSolver_', 'name': 'Astar'}}",
+        "production_PlannerInvoked=1 referenced_solvers=['solver:astar-native-hub'] implementation=native=[] kind=cpp:*=['solver:astar-native-hub']",
+        "native_bootstrap_validate={'strict_type_mismatches': 0, 'duplicate_ids': 0, 'dangling_refs': 0}",
+        "bootstrap={'event': 'ev:bootstrap-completed', 'ok': True, 'goal_reached': True, 'solver': 'Astar(native _AStarSolver_)'}",
+        "SolverImplementation lacks attribute implementation='native'; only kind='cpp:*' asserts nativeness"
+      ],
+      "status": "BLOCKED[SOLVER_IMPLEMENTATION_ATTR_MISSING]"
+    },
+    "planner_loop": {
+      "evidence_event_ids": [
+        "ev:action-completed:00011",
+        "ev:action-completed:00021",
+        "ev:action-completed:00031",
+        "ev:action-started:00010",
+        "ev:action-started:00020",
+        "ev:action-started:00030",
+        "ev:authority-evaluated:00008",
+        "ev:authority-evaluated:00018",
+        "ev:authority-evaluated:00028",
+        "ev:loop-closed:00036",
+        "ev:observed:00002",
+        "ev:observed:00012",
+        "ev:observed:00022",
+        "ev:observed:00032",
+        "ev:plan-produced:00005",
+        "ev:planner:00004",
+        "ev:prediction-compared:00014",
+        "ev:prediction-compared:00024",
+        "ev:prediction-compared:00034",
+        "ev:prediction-frozen:00006",
+        "ev:prediction-frozen:00016",
+        "ev:prediction-frozen:00026",
+        "ev:qualification:00003",
+        "ev:qualification:00013",
+        "ev:qualification:00023",
+        "ev:qualification:00033",
+        "ev:receipt-issued:00015",
+        "ev:receipt-issued:00025",
+        "ev:receipt-issued:00035"
+      ],
+      "notes": [
+        "full_chains_found=3 valid=3 actions=['action:001:01', 'action:001:02', 'action:001:03']",
+        "PlanRefused=0 GapDiagnosed=0 AuthorityRefused=0 refusal_path_present=False",
+        "authority_refused_then_action_started=[]",
+        "qualification_progress={'first': 'ev:qualification:00003', 'last': 'ev:qualification:00033', 'true_gates_first': 6, 'true_gates_last': 10, 'result_first': 'partial:NATIVE_ORACLES_BUILT,ORACLE_ENV_SET,MIX_TEST_GREEN,QUALIFICATION_COMPLETE', 'result_last': 'QUALIFICATION_COMPLETE', 'progressed': True}"
+      ],
+      "status": "BLOCKED[NO_TYPED_REFUSAL_PATH]"
+    }
+  },
+  "elapsed_seconds": 299.977,
+  "event_count": 95,
+  "failed_gates": [
+    "planner_loop",
+    "native_bootstrap",
+    "elapsed_ge_300"
+  ],
+  "first_event": "ev:composition-created",
+  "global_gates": [
+    {
+      "gate": "planner_loop",
+      "passed": false
+    },
+    {
+      "gate": "native_bootstrap",
+      "passed": false
+    },
+    {
+      "gate": "validate_0_0_0",
+      "passed": true
+    },
+    {
+      "gate": "elapsed_ge_300",
+      "passed": false
+    }
+  ],
+  "global_status": "BLOCKED[NO_TYPED_REFUSAL_PATH]",
+  "last_event": "ev:heartbeat:0031",
+  "native_bootstrap_file": "/Users/sac/crown-2-integration/autofde-lab/tools/crown2/native/native-bootstrap.ocel.json",
+  "object_count": 53,
+  "run_file": "/Users/sac/crown-2-integration/autofde-lab/tools/crown2/run/crown-run-v3.ocel.json",
+  "validate": {
+    "dangling_refs": 0,
+    "duplicate_ids": 0,
+    "strict_type_mismatches": 0
+  }
+}
