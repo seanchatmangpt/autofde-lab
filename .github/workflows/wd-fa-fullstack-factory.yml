@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 env:
-  PRODUCER_SHA: 87d208d09f0c5c3ef1a0d58f9526843f86a7ef21
+  PRODUCER_SHA: d31cfa0e592b9d336d3006556b6f72c489fe6860
 
 jobs:
   fullstack:
