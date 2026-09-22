@@ -1,0 +1,166 @@
+name: Phase H unattended trigger
+
+# AFDE-26922-09: the unattended-trigger hop of the SA2A/SJIRA chain.
+# phase_h_trigger.py's own docstring records (and phase_h_trigger.py:120
+# recorded before this workflow existed) that no cron/launchd/workflow
+# invoked run_once. This schedule closes that gap: one real Phase H tick
+# per day against the exact master head.
+#
+# All tick state (drift-absorbing baseline, coverage-guard skip counter)
+# is written OUTSIDE the tracked tree, under PHASE_H_STATE_DIR, and the
+# tick's JSON receipt is uploaded as an artifact named by github.sha.
+
+on:
+  schedule:
+    # Daily at 03:17 UTC, off the hour to dodge the cron rush.
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase-h-trigger-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  phase-h-tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      BOOST_DIR: 3rdparty/boost
+      BOOST_VERSION: "1.85.0"
+      PHASE_H_STATE_DIR: /tmp/phase-h-state
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.sha }}
+          # setuptools_scm derives the wheel build's version from the git
+          # tag graph; a shallow clone would break the build below.
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Assert exact subject
+        env:
+          EXPECTED_HEAD: ${{ github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+
+      - name: Install Python 3.12
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - uses: jwlawson/actions-setup-cmake@0d6a7d60b009d01c9e7523be22153ff8f19460d3 # v2
+        with:
+          cmake-version: "4.0.3"
+
+      - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        id: boost-cache
+        with:
+          path: ${{ env.BOOST_DIR }}
+          key: boost-${{ env.BOOST_VERSION }}
+
+      - name: Install Boost headers
+        if: steps.boost-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "$BOOST_DIR"
+          curl --fail --silent --show-error --location \
+            "https://archives.boost.io/release/$BOOST_VERSION/source/boost_${BOOST_VERSION//./_}.tar.bz2" \
+            | tar jxf - -C "$BOOST_DIR" --strip-components=1 \
+              "boost_${BOOST_VERSION//./_}/boost"
+
+      - name: Install focused Phase H runtime
+        run: |
+          python -m pip install --disable-pip-version-check \
+            "pytest>=8,<8.4" \
+            "numpy>=2" \
+            "wrapt>=2.2.1" \
+            "pynng>=0.6.2" \
+            "pathos>=0.2.7" \
+            "discrete-optimization>=0.9.0" \
+            "rdflib" \
+            "gymnasium>=0.29.1,<2" \
+            "gymact @ git+https://github.com/seanchatmangpt/gymact.git@524d0bc8633d8534f500d67f27384ce9368c0863 ; python_version >= '3.11'"
+
+      - name: Build compiled hub and materialize it into the src tree
+        env:
+          CMAKE_GENERATOR: Ninja
+        run: |
+          set -euo pipefail
+          # unattended_solve() solves the real blocksworld PDDLDomain through
+          # the compiled scikit-decide hub extension, so the tick needs the
+          # same built-from-exact-subject hub the fabric court builds.
+          python -m pip install --disable-pip-version-check "build==1.2.2"
+          export Boost_ROOT="$GITHUB_WORKSPACE/$BOOST_DIR"
+          python -m build --wheel
+          python - <<'PY'
+          import glob
+          import pathlib
+          import zipfile
+
+          wheels = glob.glob("dist/*.whl")
+          assert wheels, "no wheel was produced by python -m build"
+          dest = pathlib.Path("src/autofde_lab/hub")
+          copied = 0
+          for wheel in wheels:
+              with zipfile.ZipFile(wheel) as zf:
+                  for name in zf.namelist():
+                      if name.startswith("autofde_lab/hub/") and name.endswith(".so"):
+                          target = dest / pathlib.PurePosixPath(name).name
+                          target.write_bytes(zf.read(name))
+                          copied += 1
+          assert copied >= 1, "compiled hub module missing from the built wheel"
+          print(f"materialized {copied} compiled hub module(s) into src/")
+          PY
+
+      - name: Run one Phase H tick (state outside the tracked tree)
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          mkdir -p "$PHASE_H_STATE_DIR"
+          # Seed the drift baseline from the tracked one when present, so the
+          # tick measures real ontology drift since the last recorded
+          # baseline rather than reporting "no baseline" forever.
+          if [ -f src/autofde_lab/fabric/.phase_h_baseline.json ]; then
+            cp src/autofde_lab/fabric/.phase_h_baseline.json \
+               "$PHASE_H_STATE_DIR/.phase_h_baseline.json"
+          fi
+          python - <<'PY' > "phase-h-receipt.json"
+          import json
+
+          from pathlib import Path
+
+          import os
+
+          from autofde_lab.fabric.phase_h_trigger import (
+              DEFAULT_WATCH_FILE,
+              run_once,
+          )
+
+          state_dir = Path(os.environ["PHASE_H_STATE_DIR"])
+          result = run_once(
+              watch_file=DEFAULT_WATCH_FILE,
+              baseline_file=state_dir / ".phase_h_baseline.json",
+              coverage_state_file=state_dir / ".phase_h_coverage_state.json",
+          )
+          print(json.dumps(result, indent=2, sort_keys=True))
+          PY
+          python -c "import json; json.load(open('phase-h-receipt.json')); print('receipt JSON valid')"
+
+      - name: Prove the tracked tree stayed clean
+        run: |
+          set -euo pipefail
+          dirty=$(git status --porcelain src/autofde_lab/fabric | wc -l)
+          echo "porcelain lines in src/autofde_lab/fabric: $dirty"
+          test "$dirty" -eq 0
+
+      - name: Upload Phase H receipt named by subject SHA
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: phase-h-receipt-${{ github.sha }}
+          path: phase-h-receipt.json
+          if-no-files-found: warn
+          retention-days: 30
