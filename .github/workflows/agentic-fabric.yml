@@ -16,7 +16,7 @@ permissions:
 jobs:
   exact-head-fabric:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
     concurrency:
       group: agentic-fabric-${{ github.event.pull_request.number || github.ref }}-${{ matrix.python-version }}
       cancel-in-progress: true
@@ -30,12 +30,19 @@ jobs:
       matrix:
         python-version: ["3.12"]
 
+    env:
+      # Same Boost staging the ci.yml wheel job uses; the hub build needs it.
+      BOOST_DIR: 3rdparty/boost
+      BOOST_VERSION: "1.85.0"
+
     steps:
       - name: Check out exact candidate
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 1
+          # The compiled hub build (below) needs cpp/sdk/* (pybind11, nng, ...).
+          submodules: recursive
 
       - name: Assert exact head
         env:
@@ -49,6 +56,25 @@ jobs:
           cache: pip
           cache-dependency-path: requirements-agentic.txt
 
+      - uses: jwlawson/actions-setup-cmake@0d6a7d60b009d01c9e7523be22153ff8f19460d3 # v2
+        with:
+          cmake-version: "4.0.3"
+
+      - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        id: boost-cache
+        with:
+          path: ${{ env.BOOST_DIR }}
+          key: boost-${{ env.BOOST_VERSION }}
+
+      - name: Install Boost headers
+        if: steps.boost-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "$BOOST_DIR"
+          curl --fail --silent --show-error --location \
+            "https://archives.boost.io/release/$BOOST_VERSION/source/boost_${BOOST_VERSION//./_}.tar.bz2" \
+            | tar jxf - -C "$BOOST_DIR" --strip-components=1 \
+              "boost_${BOOST_VERSION//./_}/boost"
+
       - name: Install focused fabric runtime
         run: |
           python -m pip install --disable-pip-version-check \
@@ -59,9 +85,46 @@ jobs:
             "pathos>=0.2.7" \
             "discrete-optimization>=0.9.0" \
             "rdflib" \
+            "gymnasium>=0.29.1,<2" \
             "wasm4pm-compat-pydantic @ git+https://github.com/seanchatmangpt/wasm4pm-compat.git@577e2d1d8bdfe27d96f61c63f3ea120994e8bfda#subdirectory=python" \
             "gymact @ git+https://github.com/seanchatmangpt/gymact.git@524d0bc8633d8534f500d67f27384ce9368c0863 ; python_version >= '3.11'" \
             -r requirements-agentic.txt
+
+      - name: Build compiled hub and materialize it into the src tree
+        env:
+          CMAKE_GENERATOR: Ninja
+        run: |
+          set -euo pipefail
+          # tests/fabric's Chicago courts spawn real subprocesses
+          # (autofde_lab-classical-engine via fabric.pddl_engine, ...) that
+          # import the compiled scikit-decide hub extension. This court runs
+          # pytest with PYTHONPATH=src at the exact candidate head, so the
+          # extension must exist inside the src tree -- no wheel is installed
+          # here. Build it from the exact candidate (same scikit-build-core
+          # path as the ci.yml wheel job) and copy the produced modules into
+          # src/autofde_lab/hub where the shadowed import expects them.
+          python -m pip install --disable-pip-version-check "build==1.2.2"
+          export Boost_ROOT="$GITHUB_WORKSPACE/$BOOST_DIR"
+          python -m build --wheel
+          python - <<'PY'
+          import glob
+          import pathlib
+          import zipfile
+
+          wheels = glob.glob("dist/*.whl")
+          assert wheels, "no wheel was produced by python -m build"
+          dest = pathlib.Path("src/autofde_lab/hub")
+          copied = 0
+          for wheel in wheels:
+              with zipfile.ZipFile(wheel) as zf:
+                  for name in zf.namelist():
+                      if name.startswith("autofde_lab/hub/") and name.endswith(".so"):
+                          target = dest / pathlib.PurePosixPath(name).name
+                          target.write_bytes(zf.read(name))
+                          copied += 1
+                          print(f"materialized {name} -> {target}")
+          assert copied >= 1, "compiled hub module missing from the built wheel"
+          PY
 
       - name: Compile authored fabric surfaces
         run: |
