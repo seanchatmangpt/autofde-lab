@@ -62,7 +62,11 @@ from pathlib import Path
 
 import pytest
 
-from autofde_lab.fabric.phase_h_trigger import check_coverage_gap, check_drift, unattended_solve
+from autofde_lab.fabric.phase_h_trigger import (
+    check_coverage_gap,
+    check_drift,
+    unattended_solve,
+)
 from autofde_lab.reasoning.laboratory import FalsificationStanding
 
 # Same threshold as production (COVERAGE_GAP_THRESHOLD): skip while
@@ -117,7 +121,14 @@ def _write_stand_in_script(path: Path) -> None:
     )
 
 
-def _tick(*, state_file: Path, script: Path, log_file: Path, xaas_repo_root: Path, before_counts: dict) -> dict:
+def _tick(
+    *,
+    state_file: Path,
+    script: Path,
+    log_file: Path,
+    xaas_repo_root: Path,
+    before_counts: dict,
+) -> dict:
     return check_coverage_gap(
         xaas_repo_root=xaas_repo_root,
         state_file=state_file,
@@ -178,7 +189,9 @@ def test_forced_probe_breaks_chicken_and_egg_guard(tmp_path: Path) -> None:
         assert result["invoked"] is False
         assert result["detection_status"] == "stale_skip_using_prior_observation"
         assert result["skips_since_last_invoke"] == expected_skip_count
-        assert real_invocation_count() == 1, "guard must not invoke the real subprocess while skipping"
+        assert real_invocation_count() == 1, (
+            "guard must not invoke the real subprocess while skipping"
+        )
 
     # Real state file after MAX_SKIPS skips: skip counter really persisted
     # to disk (not just held in the returned dict of the last call).
@@ -199,12 +212,16 @@ def test_forced_probe_breaks_chicken_and_egg_guard(tmp_path: Path) -> None:
         "PlannerCacheHotsetRequest": 5,  # real external growth: gap becomes 3
     }
     result = tick(grown_gap_counts)
-    assert result["invoked"] is True, "forced probe must invoke even though last_gap <= threshold"
+    assert result["invoked"] is True, (
+        "forced probe must invoke even though last_gap <= threshold"
+    )
     assert "forced probe" in result["invoke_reason"]
     assert result["gap"] == 3
     assert result["detection_status"] == "verified_gap_open_this_tick"
     assert result["skips_since_last_invoke"] == 0
-    assert real_invocation_count() == 2, "the forced-probe tick must actually invoke the real subprocess"
+    assert real_invocation_count() == 2, (
+        "the forced-probe tick must actually invoke the real subprocess"
+    )
 
     # Self-correction: now that the real elevated gap has been
     # rediscovered, the ORIGINAL threshold guard resumes normal operation
@@ -216,7 +233,9 @@ def test_forced_probe_breaks_chicken_and_egg_guard(tmp_path: Path) -> None:
     assert real_invocation_count() == 3
 
 
-def test_healthy_steady_state_never_exceeds_max_skips_of_staleness(tmp_path: Path) -> None:
+def test_healthy_steady_state_never_exceeds_max_skips_of_staleness(
+    tmp_path: Path,
+) -> None:
     """Run far more ticks than MAX_SKIPS in a genuinely-healthy steady
     state (gap never actually changes) and prove two things from real
     state, not from trusting internal bookkeeping alone:
@@ -252,7 +271,9 @@ def test_healthy_steady_state_never_exceeds_max_skips_of_staleness(tmp_path: Pat
         )
         assert result["skips_since_last_invoke"] <= MAX_SKIPS
 
-    real_invocations = log_file.read_text().count("invoked\n") if log_file.exists() else 0
+    real_invocations = (
+        log_file.read_text().count("invoked\n") if log_file.exists() else 0
+    )
     # Real bound: one invocation every (MAX_SKIPS + 1) ticks at most, plus
     # the mandatory first-tick baseline invocation.
     expected_max_invocations = 1 + (total_ticks // (MAX_SKIPS + 1)) + 1
@@ -269,10 +290,14 @@ def test_module_constants_are_sane(has_prior_state: bool) -> None:
 
     assert mod.COVERAGE_GAP_THRESHOLD == 1
     assert mod.MAX_CONSECUTIVE_SKIPS_BEFORE_PROBE > 1
-    assert not has_prior_state  # parametrize placeholder for symmetry with other Chicago tests
+    assert (
+        not has_prior_state
+    )  # parametrize placeholder for symmetry with other Chicago tests
 
 
-def test_forced_probe_transient_failure_carries_detection_status_and_self_heals(tmp_path: Path) -> None:
+def test_forced_probe_transient_failure_carries_detection_status_and_self_heals(
+    tmp_path: Path,
+) -> None:
     """Adversarial case found during independent verification of the
     RPN=540 fix (2026-08-21): the module docstring/PR claim is that
     "every returned dict carries a `detection_status`" (the Detection=10
@@ -447,6 +472,88 @@ def test_unattended_solve_returns_real_trajectory_and_falsification_standing() -
     assert len(falsification["receipt_refs"]) == 1
 
 
+def test_unattended_solve_submits_real_sa2a_admit_from_real_solve() -> None:
+    """Regression for the sa2a-real-caller closure: `unattended_solve()`
+    now also submits the real falsification standing to the real BEAM port
+    bridge's `sa2a_admit` op (`beam.beam_port_bridge.handle_request`,
+    called in-process, the SAME calling convention as
+    `agent.cmca_dogfood_crown._execute_uc3`).
+
+    Prior to this closure the only callers of `sa2a_admit`/
+    `beam_port_bridge.handle_request` were its own test file
+    (`tests/beam/test_sa2a_port_ops_chicago.py`) and the dogfood crown's
+    fixture-shaped UC3 (`agent/cmca_dogfood_crown.py::_execute_uc3`) -- both
+    test-fixture-shaped. This test proves the real outer autonomic-loop
+    caller (`fabric/phase_h_trigger.py::unattended_solve`) drives the exact
+    SAME real `UnknownResolutionPipeline`/`_sa2a_admit` admission-court
+    logic against fields taken from a real Astar solve + real
+    `falsify_candidate()` call -- no mocking of `handle_request`,
+    `solve_and_falsify`, or `falsify_candidate` anywhere in this test.
+    """
+    result = unattended_solve()
+
+    assert "sa2a_admit" in result
+    sa2a_admit = result["sa2a_admit"]
+    assert isinstance(sa2a_admit, dict)
+
+    # Real UnknownResolutionPipeline.admit_candidate() response shape --
+    # see beam_port_bridge.py's _sa2a_admit and sa2a/unknown/resolution.py's
+    # AdmissionReceipt/_default_admission_court.
+    assert set(sa2a_admit.keys()) == {
+        "ok",
+        "receipt_id",
+        "candidate_hash",
+        "standing",
+        "reasons",
+        "admitted_assertion",
+    }
+
+    # The real, non-empty assertion and real (dict, not "error"/"unsupported"
+    # marker) evidence payload built from the real solve must clear the
+    # real fail-closed admission court -- proving this is a real admitted
+    # candidate, not a refused one.
+    assert sa2a_admit["ok"] is True
+    assert sa2a_admit["standing"] == "KNOWN"
+    assert sa2a_admit["reasons"] == ["CONFORMS_TO_SPEC"]
+    assert (
+        sa2a_admit["admitted_assertion"]
+        == "PDDLDomain bounded rollout reaches a terminal state"
+    )
+    assert isinstance(sa2a_admit["receipt_id"], str) and sa2a_admit[
+        "receipt_id"
+    ].startswith("rec-")
+    assert (
+        isinstance(sa2a_admit["candidate_hash"], str)
+        and len(sa2a_admit["candidate_hash"]) == 64
+    )
+    assert re.fullmatch(r"[0-9a-f]{64}", sa2a_admit["candidate_hash"])
+
+    # candidate_hash (`CandidateResolution.candidate_hash`, resolution.py)
+    # is a pure sha256 over the real request fields -- deterministic for
+    # identical input. A second, fully independent real call against the
+    # same fixture (same real Astar solve, same real falsify_candidate())
+    # must reproduce the identical candidate_hash -- proving the closure
+    # feeds REAL, reproducible solve-derived fields (candidate_id,
+    # trajectory hash, falsification standing/refs) into the bridge
+    # request, not a placeholder or per-call-random value. receipt_id, by
+    # contrast, is freshly uuid4-generated by the admission court on every
+    # real call (resolution.py's `_default_admission_court`), so it must
+    # legitimately differ -- asserting the two fields' independent (dis)
+    # agreement is itself evidence this is the real pipeline object, not a
+    # stub that fabricates both.
+    second_result = unattended_solve()
+    second_sa2a_admit = second_result["sa2a_admit"]
+    assert second_sa2a_admit["candidate_hash"] == sa2a_admit["candidate_hash"], (
+        "candidate_hash must be reproducible from real deterministic "
+        "solve+falsify fields across independent real calls"
+    )
+    assert second_sa2a_admit["receipt_id"] != sa2a_admit["receipt_id"], (
+        "receipt_id is freshly generated per real admission-court call; "
+        "identical receipt_ids across two independent calls would indicate "
+        "a cached/faked response instead of a real second admission"
+    )
+
+
 def test_unattended_solve_is_deterministic_across_real_reinvocation() -> None:
     """A second, independent real call against the same fixture must
     produce the same real trajectory hash -- proves the receipt is a real
@@ -469,13 +576,17 @@ def test_check_drift_detects_real_hash_divergence(tmp_path: Path) -> None:
 
     watch_file.write_text("capability-v1: original ontology content\n")
     original_sha256 = hashlib.sha256(watch_file.read_bytes()).hexdigest()
-    baseline_file.write_text(json.dumps({"watch_file": str(watch_file), "sha256": original_sha256}))
+    baseline_file.write_text(
+        json.dumps({"watch_file": str(watch_file), "sha256": original_sha256})
+    )
 
     # Real drift injection: the watch file's real bytes change on disk, so
     # its real sha256 genuinely diverges from the stored baseline.
     watch_file.write_text("capability-v2: a real, different ontology content\n")
     changed_sha256 = hashlib.sha256(watch_file.read_bytes()).hexdigest()
-    assert changed_sha256 != original_sha256, "test setup must produce a real hash divergence"
+    assert changed_sha256 != original_sha256, (
+        "test setup must produce a real hash divergence"
+    )
 
     drift = check_drift(watch_file=watch_file, baseline_file=baseline_file)
 
@@ -485,7 +596,9 @@ def test_check_drift_detects_real_hash_divergence(tmp_path: Path) -> None:
     assert drift.watch_file == str(watch_file)
 
 
-def test_check_drift_and_run_once_not_triggered_shape_when_no_drift(tmp_path: Path) -> None:
+def test_check_drift_and_run_once_not_triggered_shape_when_no_drift(
+    tmp_path: Path,
+) -> None:
     """Negative path: no drift -> the trigger must not fire.
 
     First proves the real drift-decision primitive (`check_drift()`)
@@ -509,7 +622,9 @@ def test_check_drift_and_run_once_not_triggered_shape_when_no_drift(tmp_path: Pa
     content = "capability-v1: unchanged ontology content\n"
     watch_file.write_text(content)
     baseline_sha256 = hashlib.sha256(watch_file.read_bytes()).hexdigest()
-    baseline_file.write_text(json.dumps({"watch_file": str(watch_file), "sha256": baseline_sha256}))
+    baseline_file.write_text(
+        json.dumps({"watch_file": str(watch_file), "sha256": baseline_sha256})
+    )
 
     # No real edit to watch_file happens here -- the real on-disk content
     # is identical to what the real baseline snapshot recorded.
