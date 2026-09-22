@@ -236,6 +236,41 @@ jobs:
             "ortools!=9.15.6755" "llvmlite>=0.45"
           uv pip install --system --no-deps "$wheel"
           LD_LIBRARY_PATH="$MINIZINC_LIB" minizinc --version
+      - name: Materialize compiled hub into the src tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          # pyproject.toml's [tool.pytest.ini_options] pythonpath=["src"]
+          # prepends the checkout's src/ tree to sys.path for every pytest
+          # invocation, so the pure-Python autofde_lab package shadows the
+          # installed wheel -- and the compiled scikit-decide hub extension
+          # (__autofde_lab_hub_cpp) exists only inside that wheel. Every
+          # master push since the hub landed failed the first hub import in
+          # this partition (test_pomcp: ModuleNotFoundError
+          # autofde_lab.hub.__autofde_lab_hub_cpp, run 35674417846 among
+          # many). Copy the compiled module out of the installed wheel into
+          # the src tree so the shadowed layout is complete: same files, one
+          # origin (the exact-SHA wheel built by this workflow), no test
+          # weakening. This step's env has no PYTHONPATH override, so
+          # importing autofde_lab here resolves to the installed wheel --
+          # exactly the artifact the copy must come from.
+          python - <<'PY'
+          import pathlib
+          import shutil
+
+          import autofde_lab.hub as hub
+
+          installed = pathlib.Path(hub.__file__).resolve().parent
+          dest = pathlib.Path("src/autofde_lab/hub")
+          compiled = sorted(installed.glob("*.so"))
+          assert compiled, (
+              "no compiled hub module found in the installed wheel at "
+              f"{installed}; the wheel build must produce it"
+          )
+          for so in compiled:
+              shutil.copy2(so, dest / so.name)
+              print(f"materialized {so.name} -> {dest}")
+          PY
       - name: Run integration partitions
         shell: bash
         env:
