@@ -18,7 +18,6 @@ import sys
 sys.path.insert(0, "/Users/sac/gymact/src")
 
 from gymact.cli import _materialize_request  # noqa: E402
-from gymact.dcm_runtime import DCMDecisionCourt, DecisionCourtRequest  # noqa: E402
 from gymact.combinatorial import (  # noqa: E402
     DecisionPhase,
     MorphismKind,
@@ -28,6 +27,7 @@ from gymact.combinatorial import (  # noqa: E402
     PossibilityObjectKind,
     ReversalClass,
 )
+from gymact.dcm_runtime import DCMDecisionCourt, DecisionCourtRequest  # noqa: E402
 from gymact.powl.ocel_bridge import GymactOcelSessionRecorder  # noqa: E402
 
 SUBJECT = "issuetype-schema-migration"
@@ -93,17 +93,40 @@ async def memory_episode(stage_id: str, state: dict) -> dict:
 
 
 STAGES = [
-    ("discover", {"workorder:standing": "DISCOVERED",
-                   "source_contract": "jira-cloud-rest-v3#/components/schemas/IssueType"}),
-    ("reconstruct", {"workorder:standing": "RECONSTRUCTED",
-                      "ontology_candidate": "issuetype->skos:Concept+oslc_cm:ChangeRequest"}),
+    (
+        "discover",
+        {
+            "workorder:standing": "DISCOVERED",
+            "source_contract": "jira-cloud-rest-v3#/components/schemas/IssueType",
+        },
+    ),
+    (
+        "reconstruct",
+        {
+            "workorder:standing": "RECONSTRUCTED",
+            "ontology_candidate": "issuetype->skos:Concept+oslc_cm:ChangeRequest",
+        },
+    ),
     ("admit", {"workorder:standing": "ADMITTED", "shacl_conforms": True}),
-    ("route", {"workorder:standing": "ROUTED",
-               "capability_ref": "urn:zhf:capability:sa2a_admit"}),
+    (
+        "route",
+        {
+            "workorder:standing": "ROUTED",
+            "capability_ref": "urn:zhf:capability:sa2a_admit",
+        },
+    ),
     ("plan", {"workorder:standing": "PLANNED", "plan_hash": "pending-real-sa2a-plan"}),
-    ("manufacture", {"workorder:standing": "MANUFACTURED",
-                      "generated_artifact": "lib/xaas/generated/ash_atlassian/issue_type.ex"}),
-    ("execute", {"workorder:standing": "EXECUTED", "result": "issue-type-resource-written"}),
+    (
+        "manufacture",
+        {
+            "workorder:standing": "MANUFACTURED",
+            "generated_artifact": "lib/xaas/generated/ash_atlassian/issue_type.ex",
+        },
+    ),
+    (
+        "execute",
+        {"workorder:standing": "EXECUTED", "result": "issue-type-resource-written"},
+    ),
     ("verify", {"workorder:standing": "VERIFIED", "postcondition_met": True}),
     ("receipt", {"workorder:standing": "RECEIPTED", "replay_verified": True}),
 ]
@@ -171,14 +194,22 @@ async def main() -> None:
     ) as f:
         json.dump(log, f, indent=2)
 
-    print(json.dumps({
-        "digest": digest,
-        "event_count": len(log["events"]),
-        "object_count": len(log["objects"]),
-        "event_types": [t["name"] for t in log["eventTypes"]],
-        "object_types": [t["name"] for t in log["objectTypes"]],
-        "per_stage_admitted": {k: v["admission"]["exploration"]["evaluations"][0]["admitted"] for k, v in results.items()},
-    }, indent=2))
+    print(
+        json.dumps(
+            {
+                "digest": digest,
+                "event_count": len(log["events"]),
+                "object_count": len(log["objects"]),
+                "event_types": [t["name"] for t in log["eventTypes"]],
+                "object_types": [t["name"] for t in log["objectTypes"]],
+                "per_stage_admitted": {
+                    k: v["admission"]["exploration"]["evaluations"][0]["admitted"]
+                    for k, v in results.items()
+                },
+            },
+            indent=2,
+        )
+    )
 
 
 asyncio.run(main())

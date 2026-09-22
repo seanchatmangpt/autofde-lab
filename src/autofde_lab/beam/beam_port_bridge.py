@@ -148,20 +148,32 @@ def _sa2a_validate(req: dict[str, Any]) -> dict[str, Any]:
         SA2A_PROFILE_V26_9_16,
         create_default_sa2a_agent_card,
     )
-    from autofde_lab.sa2a.a2a_bridge.downgrade_guard import DowngradeGuard, UnsupportedProfileError
+    from autofde_lab.sa2a.a2a_bridge.downgrade_guard import (
+        DowngradeGuard,
+        UnsupportedProfileError,
+    )
 
     profile = str(req.get("profile") or SA2A_PROFILE_V26_9_16)
     guard = DowngradeGuard()
     try:
         guard.assert_supported_profile(profile)
     except UnsupportedProfileError as exc:
-        return {"ok": False, "error": str(exc), "code": exc.code, "profile": exc.profile}
+        return {
+            "ok": False,
+            "error": str(exc),
+            "code": exc.code,
+            "profile": exc.profile,
+        }
 
     card_path = req.get("card_path")
     if card_path:
         p = Path(card_path)
         if not p.exists():
-            return {"ok": False, "error": f"Card file not found: {card_path}", "code": "NOT_FOUND"}
+            return {
+                "ok": False,
+                "error": f"Card file not found: {card_path}",
+                "code": "NOT_FOUND",
+            }
         raw = json.loads(p.read_text(encoding="utf-8"))
         profiles = raw.get("supported_profiles", [])
         if profile not in profiles:
@@ -179,7 +191,10 @@ def _sa2a_validate(req: dict[str, Any]) -> dict[str, Any]:
 
 def _sa2a_admit(req: dict[str, Any]) -> dict[str, Any]:
     """Wraps ``autofde_lab.sa2a.cli.admit``'s body."""
-    from autofde_lab.sa2a.unknown.resolution import CandidateResolution, UnknownResolutionPipeline
+    from autofde_lab.sa2a.unknown.resolution import (
+        CandidateResolution,
+        UnknownResolutionPipeline,
+    )
 
     cand = CandidateResolution(
         candidate_id=str(req.get("candidate_id", "")),
@@ -232,7 +247,9 @@ def _sa2a_plan(req: dict[str, Any]) -> dict[str, Any]:
 
     allocator = CMCACandidateAllocator()
     allocation_plan = allocator.allocate(
-        plan_id=str(req.get("plan_id", "frontier_plan_0")), budget=budget, candidates=cands
+        plan_id=str(req.get("plan_id", "frontier_plan_0")),
+        budget=budget,
+        candidates=cands,
     )
 
     return {
@@ -264,9 +281,13 @@ def _sa2a_execute(req: dict[str, Any]) -> dict[str, Any]:
     compiled_rules = req.get("compiled_rules")
     if compiled_rules:
         items = [(r[0], r[1], None) for r in compiled_rules]
-        compiler.compile_candidate_experience(receipt_id="port_exec_rec", resolved_items=items)
+        compiler.compile_candidate_experience(
+            receipt_id="port_exec_rec", resolved_items=items
+        )
 
-    resolved = compiler.resolve(query, fallback_llm_inference=lambda: f"FALLBACK_INFERENCE_FOR({query})")
+    resolved = compiler.resolve(
+        query, fallback_llm_inference=lambda: f"FALLBACK_INFERENCE_FOR({query})"
+    )
 
     return {
         "ok": True,
