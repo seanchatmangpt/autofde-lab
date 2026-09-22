@@ -1,6 +1,9 @@
 name: GALL-015..030 Process Spine Court
 
 on:
+  push:
+    branches:
+      - gall/dfcm-integrate-015-030-process-spine
   pull_request:
     branches:
       - gall/integrate-021-030-process-spine
