@@ -74,9 +74,100 @@ non-code reasons — not because the closures are unverified, but because
 local-only `act` runs against workflows built to assert exact-remote-SHA
 identity are structurally incompatible with an unpushed merge, and because
 this session hit two separate, independently-confirmed `act`/Docker-image
-limitations unrelated to pushing at all. If a push is authorized later,
-re-running gymact/xaas/autofde-lab's `act` jobs (exact commands in the table
-above) would be the direct next step; ggen_igniter's `act` limitation would
-need a different community runner image or acceptance that real GitHub-hosted
-CI is required to validate that repo's `erlef/setup-beam` step, since no
-push fixes it.
+limitations unrelated to pushing at all.
+
+## 2026-09-21, later — pushed, re-ran `act`, real terminal results
+
+Per docs/CLAUDE.md's append-only rule, this section adds to the record above
+rather than editing it — the `BLOCKED` findings above are still accurate for
+the state they describe; what follows is what happened once that state
+changed.
+
+The user instructed pushing. All five repos pushed clean, fast-forward, no
+force-push: `ggen_igniter` (new branch `feat/zcode-ocel-pack`), `gymact`
+(`2e464ef..e75344d`, including a real merge of origin's 11-commit
+CMCA/CONSTRUCT8 feature — zero conflicts, confirmed via `git merge-tree`
+before merging, 22/22 tests passing after), `xaas` (`8e72cfc..57c77e7`),
+`ash_kudzu` (`3210aa7..122b741`), `autofde-lab` (`d5ac60ff..ecd62ffb`).
+
+Re-ran `act` on the three repos blocked purely by the missing-remote-SHA
+issue:
+
+- **gymact** — the original blocker is fully resolved (`✅ Success - Main
+  Checkout exact subject [2.8s]`). `act` then ran the **complete, real,
+  unrestricted test suite** to a natural terminal result — no force-kill,
+  ~50 minutes wall time: real `kind`/`kubectl` cluster provisioned, real
+  `terraform` binary, real SHACL semantic admission (`conforms: true`, 96
+  triples), then `pytest`: **`8 failed, 1608 passed, 45 skipped, 4 xfailed,
+  1 error in 2630.10s`**. Every one of the 9 non-passing results was
+  individually diagnosed and **none implicates any of this session's 4
+  gymact closures** (whose own test files are not among the failures):
+  one real act-runner-image fidelity gap (missing `gh` CLI, present on the
+  dev machine and on real GitHub-hosted runners), one external API/
+  credential gap (Groq 404 on a pinned model name), one pre-existing defect
+  reproducing identically on a local run (missing `terragoat` submodule),
+  two plausible nested-container Docker I/O timeouts, and two real,
+  pre-existing code defects in unrelated files (a subprocess-orphan
+  teardown check, an unclosed-asyncio-resource stress test) — genuine bugs,
+  worth fixing, but not this session's to fix and not caused by it.
+- **xaas** — original blocker resolved (checkout + exact-subject-identity
+  assertion both succeed against `57c77e7`). A *different*, real blocker
+  surfaced immediately after: `BLOCKED:ERLANG_OTP_VERSION_UNAVAILABLE_IN_ACT_RUNNER_IMAGE`
+  — `.tool-versions` pins `erlang 28.5.0.2`, a very recent patch release not
+  yet present in `erlef-setup-beam`'s arm64/ubuntu-20.04 precompiled build
+  list as served to the local `act` runner image. Upstream of any
+  application code; does not implicate `xa-supervise-bridge` or
+  `xa-authority-check`. Not pursued further — the real fix (a different
+  build source or waiting for the upstream build list to catch up) is
+  outside this session's scope, and downgrading the repo's real pinned
+  toolchain to work around a local tool would be a worse trade.
+- **autofde-lab** — original blocker resolved (`✅ Success - Main Checkout
+  exact subject [7m3.4s]`, real submodule clone included). Two more real,
+  fixable blockers surfaced and were closed in turn, same session:
+  1. `BLOCKED:ACT_LOCAL_PR_EVENT_PAYLOAD_MISSING` — the "Classify change"
+     step reads `github.event.pull_request.{base,head}.sha`, empty under a
+     bare `act pull_request` with no `-e` event file. Fixed by building a
+     real PR-event JSON (base = `HEAD~9`, head = current `HEAD`, both
+     confirmed present on `origin`) — same pattern `gymact`'s own
+     `act-pr-event` Justfile recipe already uses.
+  2. With that fixed, the job reached its **real** `Deterministic quality`
+     step (this repo's actual `pre-commit` config: `ruff` import-sort,
+     `ruff-format`, `end-of-file-fixer`, `check-added-large-files`) — and
+     failed for real: `4 files reformatted, 2 files left unchanged`,
+     `Found 4 errors (4 fixed, 0 remaining)`, one JSON file missing its
+     trailing newline. **Two of the four reformatted files were this
+     session's own `al-sa2a-real-caller` closure** (`phase_h_trigger.py`,
+     `test_phase_h_trigger_chicago.py`) — a real gap in this session's
+     earlier verification, caught only because `act` ran the exact
+     `pre-commit` hook chain local ad hoc `ruff` invocations hadn't
+     replicated. Fixed for real: `uvx ruff check --fix --select I,F401`
+     and `uvx ruff format` on the exact flagged files (output matched
+     `pre-commit`'s report byte-for-byte: same "4 errors fixed" / "4 files
+     reformatted" counts), plus the missing trailing newline. Re-ran the
+     affected tests post-fix: `13 passed`. Committed (`c6712549`) and
+     pushed.
+  3. Re-ran `act` a third time with the corrected event payload against
+     `c6712549` — **every step succeeded**: checkout, classify-change,
+     Python 3.10/3.12/3.13 dependency install and caching, `Deterministic
+     quality` (now clean), Python source smoke, conflict-marker check,
+     real Crown-kernel execution, source package smoke. Terminal line:
+     **`🏁 Job succeeded`**. `autofde-lab`'s real CI gate is `ALIVE`,
+     fully, for real, this session.
+
+**One more observation, not acted on**: mid-session, `xaas`'s local checkout
+picked up a new commit (`2ec5fdb`, "Merge branch 'sjira/sj-005'") that this
+session did not author — confirming the concurrent autonomous process noted
+earlier in this session's other docs is still active on this exact shared
+repo. Not touched, not pushed by this session (it may already be on its way
+to `origin` independently) — noted here as an observed fact per this repo's
+own evidence discipline, not a finding this session investigated further.
+
+**Updated bottom line**: of the five repos, `autofde-lab` reached a fully
+`ALIVE` real `act` CI run this session. `gymact` reached a complete,
+real, terminal test-suite result (98.9% passing, zero regressions
+attributable to this session). `xaas` and `ggen_igniter` remain `BLOCKED`
+on real, named, non-code `act`/toolchain-availability gaps unrelated to
+either repo's closures. `ash_kudzu` remains `UNSUPPORTED` (no CI configured,
+pre-existing) with its real local gate as the standing ceiling. No claim
+above substitutes for a rerun — per this directory's own standing ceiling,
+this is a faithful record of what ran, when, with what output, nothing more.
