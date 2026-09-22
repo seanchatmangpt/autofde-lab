@@ -56,9 +56,8 @@ class TriageResponse(BaseModel):
 
 
 def _response(case: FailureCase, result: CandidateTriage) -> TriageResponse:
-    # UNSUPPORTED(generator-capability:collection-valued-projection):
-    # marketplace SHACL projections manufacture the scalar envelope today; ranked
-    # hypotheses and evidence collections remain explicit runtime adapter residue.
+    # The canonical SHACL graph owns both scalar and rich collection contracts.
+    # This function maps admitted domain values into that manufactured contract surface.
     by_id = {item.evidence_id: item for item in case.evidence}
     evidence = [
         by_id[evidence_id]

@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: seanchatmangpt/ggen-marketplace
-          ref: 1e9bb23bc584cf7abddd467328a54283b8f73ddb
+          ref: 8d861d494a82b30a577afff10b7548c6265034ed
           path: .marketplace
           persist-credentials: false
           lfs: false
@@ -47,7 +47,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C .marketplace rev-parse HEAD)" = "1e9bb23bc584cf7abddd467328a54283b8f73ddb"
+          test "$(git -C .marketplace rev-parse HEAD)" = "8d861d494a82b30a577afff10b7548c6265034ed"
           test -f .marketplace/packs/shacl-projection-pack/pack.toml
           test -f .marketplace/packs/shacl-to-pydantic-pack/pack.toml
           test -f .marketplace/packs/shacl-to-zod-pack/pack.toml
@@ -110,13 +110,42 @@ jobs:
           TriageRequestGenerated = module.TriageRequestGenerated
           TriageResponseGenerated = module.TriageResponseGenerated
           TriageRequestGenerated(case_name="known_a")
-          TriageResponseGenerated(
+          rich = TriageResponseGenerated(
               case_id="KNOWN-A",
               standing="ALIVE",
               admitted_mode="MODE-A-FIRMWARE",
+              ranked_hypotheses=[{
+                  "mode_id": "MODE-A-FIRMWARE",
+                  "candidate_score": 1.0,
+                  "score_basis": "STRUCTURAL_SIMILARITY",
+                  "structural_similarity": 1.0,
+                  "deterministic_match": True,
+                  "evidence_completeness": 1.0,
+                  "prior_case_ids": ["SYNTH-FA-A-001"],
+                  "evidence_ids": ["KNOWN-A:test"],
+                  "owning_team": "firmware_analysis",
+                  "action_type": "TEST",
+                  "next_action": "run_firmware_regression",
+              }],
+              closest_prior_cases=["SYNTH-FA-A-001"],
+              supporting_evidence=[{
+                  "evidence_id": "KNOWN-A:test",
+                  "kind": "test",
+                  "modality": "structured_test_result",
+                  "source_ref": "fixture://datalake/test-results/KNOWN-A",
+                  "digest": "sha256:" + "0" * 64,
+              }],
               next_action="run_firmware_regression",
+              action_type="TEST",
+              owning_team="firmware_analysis",
+              evidence_completeness=1.0,
+              confidence_basis="DETERMINISTIC_RULE_AND_REQUIRED_EVIDENCE",
+              human_gate="ENGINEER_DISPOSITION_REQUIRED",
+              trace_id="sha256:" + "1" * 64,
               authority="SELECT_ONLY",
           )
+          assert rich.ranked_hypotheses[0].mode_id == "MODE-A-FIRMWARE"
+          assert rich.supporting_evidence[0].source_ref.startswith("fixture://")
           try:
               TriageRequestGenerated(case_name="not_admitted")
           except Exception:
@@ -128,7 +157,16 @@ jobs:
                   case_id="X",
                   standing="ALIVE",
                   admitted_mode=None,
+                  ranked_hypotheses=[],
+                  closest_prior_cases=[],
+                  supporting_evidence=[],
                   next_action="x",
+                  action_type="ESCALATE",
+                  owning_team="failure_analysis",
+                  evidence_completeness=0.0,
+                  confidence_basis="invalid",
+                  human_gate="ENGINEER_DISPOSITION_REQUIRED",
+                  trace_id="sha256:" + "2" * 64,
                   authority="DO",
               )
           except Exception:
@@ -153,19 +191,57 @@ jobs:
           } from "./ggen_contract/src/shacl_zod_schemas.js";
 
           TriageRequestGeneratedSchema.parse({ case_name: "known_a" });
-          TriageResponseGeneratedSchema.parse({
+          const rich = TriageResponseGeneratedSchema.parse({
             case_id: "KNOWN-A",
             standing: "ALIVE",
             admitted_mode: "MODE-A-FIRMWARE",
+            ranked_hypotheses: [{
+              mode_id: "MODE-A-FIRMWARE",
+              candidate_score: 1,
+              score_basis: "STRUCTURAL_SIMILARITY",
+              structural_similarity: 1,
+              deterministic_match: true,
+              evidence_completeness: 1,
+              prior_case_ids: ["SYNTH-FA-A-001"],
+              evidence_ids: ["KNOWN-A:test"],
+              owning_team: "firmware_analysis",
+              action_type: "TEST",
+              next_action: "run_firmware_regression",
+            }],
+            closest_prior_cases: ["SYNTH-FA-A-001"],
+            supporting_evidence: [{
+              evidence_id: "KNOWN-A:test",
+              kind: "test",
+              modality: "structured_test_result",
+              source_ref: "fixture://datalake/test-results/KNOWN-A",
+              digest: "sha256:" + "0".repeat(64),
+            }],
             next_action: "run_firmware_regression",
+            action_type: "TEST",
+            owning_team: "firmware_analysis",
+            evidence_completeness: 1,
+            confidence_basis: "DETERMINISTIC_RULE_AND_REQUIRED_EVIDENCE",
+            human_gate: "ENGINEER_DISPOSITION_REQUIRED",
+            trace_id: "sha256:" + "1".repeat(64),
             authority: "SELECT_ONLY",
           });
+          if (rich.ranked_hypotheses[0].mode_id !== "MODE-A-FIRMWARE") process.exit(33);
+          if (!rich.supporting_evidence[0].source_ref.startsWith("fixture://")) process.exit(34);
           if (TriageRequestGeneratedSchema.safeParse({ case_name: "not_admitted" }).success) process.exit(31);
           if (TriageResponseGeneratedSchema.safeParse({
             case_id: "X",
             standing: "ALIVE",
             admitted_mode: null,
+            ranked_hypotheses: [],
+            closest_prior_cases: [],
+            supporting_evidence: [],
             next_action: "x",
+            action_type: "ESCALATE",
+            owning_team: "failure_analysis",
+            evidence_completeness: 0,
+            confidence_basis: "invalid",
+            human_gate: "ENGINEER_DISPOSITION_REQUIRED",
+            trace_id: "sha256:" + "2".repeat(64),
             authority: "DO",
           }).success) process.exit(32);
           console.log("WD_FA_GGEN_ZOD_ALIVE");

@@ -1,8 +1,7 @@
 import { z } from "zod";
 
-// UNSUPPORTED(generator-capability:collection-valued-projection):
-// the marketplace generator owns the scalar SHACL envelope; these collection-valued
-// evidence/ranking extensions remain explicit adapter residue until that pack can project them.
+// Runtime-facing validation mirrors the canonical SHACL contract. The equivalent nested and
+// repeated Pydantic/Zod structures are independently manufactured and executed in the ggen court.
 export const HypothesisResponseSchema = z.object({
   mode_id: z.string().min(1),
   candidate_score: z.number(),

@@ -16,6 +16,95 @@ wd:TriageRequestShape a sh:NodeShape ;
         sp:isPrimaryOutput true
     ] .
 
+wd:HypothesisResponseShape a sh:NodeShape ;
+    sp:projectionName "HypothesisResponseGenerated" ;
+    sh:property [
+        sh:path wd:mode_id ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:candidate_score ;
+        sh:datatype xsd:double ;
+        sh:minCount 1 ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:score_basis ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:in ( "TPOT_CANDIDATE_SCORE" "STRUCTURAL_SIMILARITY" ) ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:structural_similarity ;
+        sh:datatype xsd:double ;
+        sh:minCount 1 ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:deterministic_match ;
+        sh:datatype xsd:boolean ;
+        sh:minCount 1 ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:evidence_completeness ;
+        sh:datatype xsd:double ;
+        sh:minCount 1 ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:prior_case_ids ;
+        sh:datatype xsd:string ;
+        sp:collection true ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:evidence_ids ;
+        sh:datatype xsd:string ;
+        sp:collection true ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:owning_team ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:action_type ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:next_action ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sp:isPrimaryOutput true
+    ] .
+
+wd:EvidenceReferenceShape a sh:NodeShape ;
+    sp:projectionName "EvidenceReferenceGenerated" ;
+    sh:property [
+        sh:path wd:evidence_id ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:kind ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:modality ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:source_ref ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:digest ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sp:isPrimaryOutput true
+    ] .
+
 wd:TriageResponseShape a sh:NodeShape ;
     sh:property [
         sh:path wd:case_id ;
@@ -38,10 +127,65 @@ wd:TriageResponseShape a sh:NodeShape ;
         sp:nullable true ;
         sp:isPrimaryOutput true
     ], [
+        sh:path wd:ranked_hypotheses ;
+        sh:node wd:HypothesisResponseShape ;
+        sp:collection true ;
+        sh:description "Ranked candidate hypotheses; ranking is not admission authority" ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:closest_prior_cases ;
+        sh:datatype xsd:string ;
+        sp:collection true ;
+        sh:description "Closest admitted prior failure-analysis case identities" ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:supporting_evidence ;
+        sh:node wd:EvidenceReferenceShape ;
+        sp:collection true ;
+        sh:description "Source-bound evidence references" ;
+        sp:isPrimaryOutput true
+    ], [
         sh:path wd:next_action ;
         sh:datatype xsd:string ;
         sh:minCount 1 ;
         sh:description "Bounded next analytical action" ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:action_type ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:description "TEST, TEARDOWN, ANALYZE, PROCEDURE, or ESCALATE" ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:owning_team ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:description "Bounded owning-team route" ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:evidence_completeness ;
+        sh:datatype xsd:double ;
+        sh:minCount 1 ;
+        sh:description "Deterministic required-evidence completeness" ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:confidence_basis ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:description "Evidence/admission basis, not a free-form model probability" ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:human_gate ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:in ( "ENGINEER_DISPOSITION_REQUIRED" ) ;
+        sh:description "Consequential disposition remains with the FA engineer" ;
+        sp:isPrimaryOutput true
+    ], [
+        sh:path wd:trace_id ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:description "Digest binding the returned candidate triage payload" ;
         sp:isPrimaryOutput true
     ], [
         sh:path wd:authority ;
@@ -53,7 +197,7 @@ wd:TriageResponseShape a sh:NodeShape ;
     ] .
 
 wd:GroundedTriageDetailShape a sh:NodeShape ;
-    rdfs:comment "Runtime extension for ranked and traceable WD triage. UNSUPPORTED(generator-capability:collection-valued-projection): current marketplace Pydantic/Zod projection packs manufacture scalar fields only, so this shape remains canonical semantic law while collection-valued adapters are handwritten residue." ;
+    rdfs:comment "Legacy flattened grounded-triage view retained for trace compatibility. Rich ranked hypotheses and evidence are now projected through nested SHACL shapes above." ;
     sh:property [
         sh:path wd:candidate_mode ;
         sh:datatype xsd:string ;
@@ -233,3 +377,22 @@ wd:AdmitNovelXExperience a sf:Transition ;
     sf:fromScenario "novel_x" ;
     sf:toScenario "novel_x_verified" ;
     sf:triggerLabel "Admit independently verified MachineExperience" .
+
+
+wd:HypothesisResponsePydantic a sp:PydanticModel ;
+    sp:derivedFromShape wd:HypothesisResponseShape ;
+    sp:className "HypothesisResponseGenerated" ;
+    dcterms:description "Generated ranked hypothesis contract; candidate ranking is non-authoritative" .
+
+wd:EvidenceReferencePydantic a sp:PydanticModel ;
+    sp:derivedFromShape wd:EvidenceReferenceShape ;
+    sp:className "EvidenceReferenceGenerated" ;
+    dcterms:description "Generated source-bound evidence reference contract" .
+
+wd:HypothesisResponseZod a sp:ZodSchema ;
+    sp:derivedFromShape wd:HypothesisResponseShape ;
+    sp:schemaName "HypothesisResponseGenerated" .
+
+wd:EvidenceReferenceZod a sp:ZodSchema ;
+    sp:derivedFromShape wd:EvidenceReferenceShape ;
+    sp:schemaName "EvidenceReferenceGenerated" .
