@@ -11,7 +11,7 @@
   },
   "local_constitution": "AGENTS.md",
   "project_profile": "semantic/engineering-standards-profile.ttl",
-  "standing": "UNKNOWN",
+  "standing": "ALIVE",
   "generator_identity": "engineering-standards/scripts/render-repository-adoption.py@5a3bb6446aeaee2255a7523d4d8cebf6042960c3",
   "non_claims": [
     "root adoption does not prove local runtime behavior",
