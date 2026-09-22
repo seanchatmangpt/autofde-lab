@@ -1,0 +1,13 @@
+# probe log 2026-09-04T01:09:23Z pwd=/Users/sac/crown-2-orthogonal HEAD=5c4517414720808d1dd8d64501a039dc6b28d3dc
+$ uv sync --extra=all --frozen  (started 01:09:23, log build_uv_sync.log)
+exit=1
+$ .venv/bin/python -c "import autofde_lab.hub.__autofde_lab_hub_cpp as m, autofde_lab; print(m.__file__); print(sorted(n for n in dir(m) if n.endswith(\"Solver_\")))"
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import autofde_lab.hub.__autofde_lab_hub_cpp as m, autofde_lab; print(m.__file__); print(sorted(n for n in dir(m) if n.endswith("Solver_")))
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'autofde_lab'
+exit=
+$ git submodule update --init --recursive cpp/sdk  (01:10:09)
+  (killed: unscoped recursive submodule init was fetching vendor/*; rescoped)
+$ git submodule update --init cpp/sdk/nng cpp/sdk/nngpp cpp/sdk/pybind11 cpp/sdk/spdlog cpp/sdk/json cpp/sdk/Catch2 cpp/sdk/PEGTL cpp/sdk/backward-cpp  (01:11:35)

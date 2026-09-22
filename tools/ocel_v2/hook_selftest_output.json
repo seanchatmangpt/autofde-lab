@@ -1,0 +1,101 @@
+{
+  "input_payload": {
+    "session_id": "sess_selftest_8f3a1c2e",
+    "transcript_path": "/Users/sac/.claude/projects/-Users-sac-crown-2-integration-autofde-lab/sess_selftest_8f3a1c2e.jsonl",
+    "cwd": "/Users/sac/crown-2-integration/autofde-lab/tools/ocel_v2",
+    "hook_event_name": "PostToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "pytest -q tests/test_ocel_adapter.py",
+      "description": "Run OCEL adapter self-test suite"
+    },
+    "tool_response": {
+      "stdout": "1 passed in 0.42s\n",
+      "stderr": "",
+      "is_error": false
+    },
+    "permission_mode": "default"
+  },
+  "claude_session_object": {
+    "id": "ClaudeSession:sess_selftest_8f3a1c2e",
+    "type": "ClaudeSession",
+    "attributes": [
+      {
+        "name": "session_id",
+        "value": "sess_selftest_8f3a1c2e"
+      },
+      {
+        "name": "cwd",
+        "value": "/Users/sac/crown-2-integration/autofde-lab/tools/ocel_v2"
+      }
+    ]
+  },
+  "claude_tool_invocation_relationship": {
+    "objectId": "ClaudeToolInvocation:6a5ffa10997f22c7",
+    "objectType": "ClaudeToolInvocation",
+    "qualifier": "tool_invocation[Bash][id_source=synthetic]"
+  },
+  "ocel_event": {
+    "id": "abd13314-aed7-4c55-8077-b741dc04831e",
+    "type": "Claude.PostToolUse",
+    "time": "2026-09-04T00:23:07.951145Z",
+    "attributes": [
+      {
+        "name": "hook_event_name",
+        "value": "PostToolUse"
+      },
+      {
+        "name": "transcript_path",
+        "value": "/Users/sac/.claude/projects/-Users-sac-crown-2-integration-autofde-lab/sess_selftest_8f3a1c2e.jsonl"
+      },
+      {
+        "name": "cwd",
+        "value": "/Users/sac/crown-2-integration/autofde-lab/tools/ocel_v2"
+      },
+      {
+        "name": "tool_name",
+        "value": "Bash"
+      },
+      {
+        "name": "permission_mode",
+        "value": "default"
+      },
+      {
+        "name": "tool_input",
+        "value": {
+          "command": "pytest -q tests/test_ocel_adapter.py",
+          "description": "Run OCEL adapter self-test suite"
+        }
+      },
+      {
+        "name": "tool_response",
+        "value": {
+          "stdout": "1 passed in 0.42s\n",
+          "stderr": "",
+          "is_error": false
+        }
+      },
+      {
+        "name": "is_error",
+        "value": false
+      }
+    ],
+    "relationships": [
+      {
+        "objectId": "ClaudeSession:sess_selftest_8f3a1c2e",
+        "objectType": "ClaudeSession",
+        "qualifier": "session"
+      },
+      {
+        "objectId": "ClaudeToolInvocation:6a5ffa10997f22c7",
+        "objectType": "ClaudeToolInvocation",
+        "qualifier": "tool_invocation[Bash][id_source=synthetic]"
+      },
+      {
+        "objectId": "Machine:Mac.lan",
+        "objectType": "Machine",
+        "qualifier": "machine"
+      }
+    ]
+  }
+}

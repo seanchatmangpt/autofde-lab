@@ -1,0 +1,74 @@
+{
+  "objectTypes": [
+    {
+      "name": "order",
+      "attributes": [
+        {
+          "name": "priority",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "item",
+      "attributes": [
+        {
+          "name": "quantity",
+          "type": "integer"
+        }
+      ]
+    }
+  ],
+  "eventTypes": [
+    {
+      "name": "place order",
+      "attributes": []
+    }
+  ],
+  "objects": [
+    {
+      "id": "o1",
+      "type": "order",
+      "attributes": [
+        {
+          "name": "priority",
+          "value": "high",
+          "time": "2026-01-01T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "i1",
+      "type": "item",
+      "attributes": [
+        {
+          "name": "quantity",
+          "value": 3,
+          "time": "2026-01-01T00:00:00Z"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "e1",
+      "type": "place order",
+      "time": "2026-01-01T00:00:01Z",
+      "attributes": [],
+      "relationships": [
+        {
+          "objectId": "o1",
+          "qualifier": "order"
+        },
+        {
+          "objectId": "i1",
+          "qualifier": "item"
+        },
+        {
+          "objectId": "nonexistent",
+          "qualifier": "ghost"
+        }
+      ]
+    }
+  ]
+}

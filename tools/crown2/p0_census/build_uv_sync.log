@@ -1,0 +1,199 @@
+   Building autofde-lab @ file:///Users/sac/crown-2-orthogonal
+  × Failed to build `autofde-lab @ file:///Users/sac/crown-2-orthogonal`
+  ├─▶ The build backend returned an error
+  ╰─▶ Call to `scikit_build_core.build.build_editable` failed (exit status: 1)
+
+      [stdout]
+      *** scikit-build-core 0.12.2 using CMake 4.1.2 (editable)
+      *** Configuring CMake...
+      loading initial cache file
+      build/cp313-cp313-macosx_26_0_arm64/CMakeInit.txt
+      -- The C compiler identification is AppleClang 17.0.0.17000603
+      -- The CXX compiler identification is AppleClang 17.0.0.17000603
+      -- Detecting C compiler ABI info
+      -- Detecting C compiler ABI info - done
+      -- Check for working C compiler: /usr/bin/cc - skipped
+      -- Detecting C compile features
+      -- Detecting C compile features - done
+      -- Detecting CXX compiler ABI info
+      -- Detecting CXX compiler ABI info - done
+      -- Check for working CXX compiler: /usr/bin/c++ - skipped
+      -- Detecting CXX compile features
+      -- Detecting CXX compile features - done
+      -- Could NOT find OpenMP_C (missing: OpenMP_C_FLAGS OpenMP_C_LIB_NAMES)
+      -- Could NOT find OpenMP_CXX (missing: OpenMP_CXX_FLAGS
+      OpenMP_CXX_LIB_NAMES)
+      -- Could NOT find OpenMP (missing: OpenMP_C_FOUND OpenMP_CXX_FOUND)
+      -- Found Boost: /opt/homebrew/lib/cmake/Boost-1.90.0/BoostConfig.cmake
+      (found version "1.90.0")
+      -- HIGHS version: 1.10.0
+      -- Git hash: fd866539
+      -- Build C++ library: ON
+      -- Build Fortran: OFF
+      -- Build CSharp: OFF
+      -- Build Python: OFF
+      -- Build all tests: OFF
+      -- ZLIB: ON
+      -- Build pdlp with GPU: OFF
+      -- Use FindCUDAConf: OFF
+      -- Build type: Release
+      -- Looking for C++ include sys/types.h
+      -- Looking for C++ include sys/types.h - found
+      -- Looking for C++ include stdint.h
+      -- Looking for C++ include stdint.h - found
+      -- Looking for C++ include stddef.h
+      -- Looking for C++ include stddef.h - found
+      -- Check size of long
+      -- Check size of long - done
+      -- Found long size: 8
+      -- Check size of long long
+      -- Check size of long long - done
+      -- Found long long size: 8
+      -- Check size of int64_t
+      -- Check size of int64_t - done
+      -- Found int64_t size: 8
+      -- Check size of unsigned long
+      -- Check size of unsigned long - done
+      -- Found unsigned long size: 8
+      -- Check size of unsigned long long
+      -- Check size of unsigned long long - done
+      -- Found unsigned long long size: 8
+      -- Check size of uint64_t
+      -- Check size of uint64_t - done
+      -- Found uint64_t size: 8
+      -- Check size of int *
+      -- Check size of int * - done
+      -- Found int * size: 8
+      -- IPO / LTO supported by compiler: YES
+      -- IPO / LTO: disabled by default when building a static library; set
+      CMAKE_INTERPROCEDURAL_OPTIMIZATION=ON to enable
+      -- Performing Test HIGHS_HAVE_MM_PAUSE
+      -- Performing Test HIGHS_HAVE_MM_PAUSE - Failed
+      -- Performing Test HIGHS_HAVE_BUILTIN_CLZ
+      -- Performing Test HIGHS_HAVE_BUILTIN_CLZ - Success
+      -- Found ZLIB:
+      /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libz.tbd
+      (found suitable version "1.2.12", minimum required is "1.2.3")
+      -- FAST_BUILD set to on.
+      -- Build examples: OFF
+      -- Build C++ example: OFF
+      -- Build CSharp example: OFF
+      -- Build dotnet package: OFF
+      -- No CSharp support
+      -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+      -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+      -- Found Threads: TRUE
+      -- Performing Test COMPILER_HAS_HIDDEN_VISIBILITY
+      -- Performing Test COMPILER_HAS_HIDDEN_VISIBILITY - Success
+      -- Performing Test COMPILER_HAS_HIDDEN_INLINE_VISIBILITY
+      -- Performing Test COMPILER_HAS_HIDDEN_INLINE_VISIBILITY - Success
+      -- Performing Test COMPILER_HAS_DEPRECATED_ATTR
+      -- Performing Test COMPILER_HAS_DEPRECATED_ATTR - Success
+      -- .Net: Use .Net Framework 2.1 support: ON
+      -- HiGHS built from source (static linking)
+      -- Found Python: /Users/sac/.cache/uv/builds-v0/.tmptIUHoK/bin/python
+      (found suitable version "3.13.9", minimum required is "3.6") found
+      components: Interpreter
+      -- Could NOT find BISON: Found unsuitable version "2.3", but required is
+      at least "2.5" (found /usr/bin/bison)
+      -- Could NOT find RE2C (missing: RE2C_EXECUTABLE) (Required is at least
+      version "0.101")
+      -- Performing Test CLASP_HAS_WORKING_LIBATOMIC
+      -- Performing Test CLASP_HAS_WORKING_LIBATOMIC - Success
+      -- Potassco is not installed - using local copy
+      -- Found Doxygen: /opt/homebrew/bin/doxygen (found version "1.15.0")
+      found components: doxygen dot
+      -- Clingo built from source (static linking)
+      -- Found Python: /Users/sac/.cache/uv/builds-v0/.tmptIUHoK/bin/python
+      (found version "3.13.9") found components: Interpreter
+      Development.Module
+      -- Configuring incomplete, errors occurred!
+
+      [stderr]
+      2026-09-03 18:09:24,783 - scikit_build_core - INFO - RUN:
+      /opt/homebrew/bin/cmake -E capabilities
+      2026-09-03 18:09:24,791 - scikit_build_core - INFO - CMake version:
+      4.1.2
+      2026-09-03 18:09:24,792 - scikit_build_core - INFO - Implementation:
+      cpython darwin on arm64
+      2026-09-03 18:09:24,795 - scikit_build_core - INFO - Build directory:
+      /Users/sac/crown-2-orthogonal/build/cp313-cp313-macosx_26_0_arm64
+      2026-09-03 18:09:24,822 - scikit_build_core - INFO - RUN:
+      /opt/homebrew/bin/ninja --version
+      2026-09-03 18:09:24,825 - scikit_build_core - INFO - Ninja version:
+      1.13.1
+      2026-09-03 18:09:24,826 - scikit_build_core
+      - INFO - RUN: /opt/homebrew/bin/cmake -Scpp
+      -Bbuild/cp313-cp313-macosx_26_0_arm64 -DCMAKE_BUILD_TYPE:STRING=Release
+      -Cbuild/cp313-cp313-macosx_26_0_arm64/CMakeInit.txt
+      -DCMAKE_INSTALL_PREFIX=/Users/sac/.cache/tmp/tmpjsdklb6a/wheel/platlib/autofde_lab/hub
+      -DCMAKE_MAKE_PROGRAM=/opt/homebrew/bin/ninja -DONLY_PYTHON=TRUE
+      /!/ OpenMP multi-threading support not found: providing only
+      single-threaded algorithms
+      CMake Error at CMakeLists.txt:70 (ADD_SUBDIRECTORY):
+        The source directory
+
+          /Users/sac/crown-2-orthogonal/cpp/sdk/backward-cpp
+
+        does not contain a CMakeLists.txt file.
+
+
+      CMake Error at CMakeLists.txt:75 (ADD_SUBDIRECTORY):
+        The source directory
+
+          /Users/sac/crown-2-orthogonal/cpp/sdk/json
+
+        does not contain a CMakeLists.txt file.
+
+
+      CMake Error at CMakeLists.txt:81 (ADD_SUBDIRECTORY):
+        The source directory
+
+          /Users/sac/crown-2-orthogonal/cpp/sdk/PEGTL
+
+        does not contain a CMakeLists.txt file.
+
+
+      CMake Error at CMakeLists.txt:85 (ADD_SUBDIRECTORY):
+        The source directory
+
+          /Users/sac/crown-2-orthogonal/cpp/sdk/spdlog
+
+        does not contain a CMakeLists.txt file.
+
+
+      CMake Warning (dev) at CMakeLists.txt:91 (FIND_PACKAGE):
+        Policy CMP0167 is not set: The FindBoost module is removed.  Run
+      "cmake
+        --help-policy CMP0167" for policy details.  Use the cmake_policy
+      command to
+        set the policy and suppress this warning.
+
+      This warning is for project developers.  Use -Wno-dev to suppress it.
+
+      CMake Error at CMakeLists.txt:145 (ADD_SUBDIRECTORY):
+        The source directory
+
+          /Users/sac/crown-2-orthogonal/cpp/sdk/nng
+
+        does not contain a CMakeLists.txt file.
+
+
+      CMake Error at CMakeLists.txt:154 (ADD_SUBDIRECTORY):
+        The source directory
+
+          /Users/sac/crown-2-orthogonal/cpp/sdk/pybind11
+
+        does not contain a CMakeLists.txt file.
+
+
+      CMake Error at src/hub/CMakeLists.txt:6 (PYBIND11_ADD_MODULE):
+        Unknown CMake command "PYBIND11_ADD_MODULE".
+
+
+
+      *** CMake configuration failed
+
+      hint: This usually indicates a problem with the package or the build
+      environment.
+uv sync --extra=all --frozen  6.66s user 4.18s system 40% cpu 26.725 total
