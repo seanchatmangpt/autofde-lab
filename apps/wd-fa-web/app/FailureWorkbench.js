@@ -40,13 +40,44 @@ export default function FailureWorkbench() {
         {error && <p className="error">{error}</p>}
         {!error && !result && <p>No candidate result yet.</p>}
         {result && (
-          <dl>
-            <div><dt>Case</dt><dd>{result.case_id}</dd></div>
-            <div><dt>Standing</dt><dd>{result.standing}</dd></div>
-            <div><dt>Admitted mode</dt><dd>{result.admitted_mode || "—"}</dd></div>
-            <div><dt>Next action</dt><dd>{result.next_action}</dd></div>
-            <div><dt>Authority</dt><dd>{result.authority}</dd></div>
-          </dl>
+          <>
+            <dl>
+              <div><dt>Case</dt><dd>{result.case_id}</dd></div>
+              <div><dt>Standing</dt><dd>{result.standing}</dd></div>
+              <div><dt>Admitted mode</dt><dd>{result.admitted_mode || "—"}</dd></div>
+              <div><dt>Next action</dt><dd>{result.next_action}</dd></div>
+              <div><dt>Action type</dt><dd>{result.action_type}</dd></div>
+              <div><dt>Owning team</dt><dd>{result.owning_team}</dd></div>
+              <div><dt>Evidence completeness</dt><dd>{Math.round(result.evidence_completeness * 100)}%</dd></div>
+              <div><dt>Confidence basis</dt><dd>{result.confidence_basis}</dd></div>
+              <div><dt>Human gate</dt><dd>{result.human_gate}</dd></div>
+              <div><dt>Authority</dt><dd>{result.authority}</dd></div>
+              <div><dt>Trace</dt><dd><code>{result.trace_id}</code></dd></div>
+            </dl>
+
+            <h2>Ranked hypotheses</h2>
+            <ol>
+              {result.ranked_hypotheses.map((item) => (
+                <li key={item.mode_id}>
+                  <strong>{item.mode_id}</strong> — {item.score_basis}: {item.candidate_score.toFixed(3)}
+                  {" · "}evidence {Math.round(item.evidence_completeness * 100)}%
+                  {" · "}{item.deterministic_match ? "rule admitted candidate" : "candidate only"}
+                </li>
+              ))}
+            </ol>
+
+            <h2>Closest prior FA fixtures</h2>
+            <p>{result.closest_prior_cases.join(", ") || "None admitted"}</p>
+
+            <h2>Supporting evidence</h2>
+            <ul>
+              {result.supporting_evidence.map((item) => (
+                <li key={item.evidence_id}>
+                  <strong>{item.kind}</strong> ({item.modality}) — <code>{item.source_ref}</code>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </div>
     </section>

@@ -18,6 +18,8 @@ class EvidenceArtifact:
     evidence_id: str
     kind: str
     digest: str
+    source_ref: str = ""
+    modality: str = "unknown"
 
 
 @dataclass(frozen=True)
@@ -27,6 +29,9 @@ class FailureModeRule:
     falsifiers: Mapping[str, object]
     required_evidence_kinds: frozenset[str]
     next_action: str
+    prior_case_ids: tuple[str, ...] = ()
+    owning_team: str = "failure_analysis"
+    action_type: str = "ANALYZE"
 
     def applies(self, facts: Mapping[str, object]) -> bool:
         return all(facts.get(key) == value for key, value in self.applicability.items())
@@ -46,6 +51,21 @@ class FailureCase:
 
 
 @dataclass(frozen=True)
+class CandidateHypothesis:
+    mode_id: str
+    candidate_score: float
+    score_basis: str
+    structural_similarity: float
+    deterministic_match: bool
+    evidence_completeness: float
+    prior_case_ids: tuple[str, ...]
+    evidence_ids: tuple[str, ...]
+    owning_team: str
+    action_type: str
+    next_action: str
+
+
+@dataclass(frozen=True)
 class CandidateTriage:
     case_id: str
     standing: Standing
@@ -56,6 +76,13 @@ class CandidateTriage:
     evidence_completeness: float
     exploratory_steps: int
     reason: str
+    ranked_hypotheses: tuple[CandidateHypothesis, ...] = ()
+    supporting_evidence_ids: tuple[str, ...] = ()
+    closest_prior_case_ids: tuple[str, ...] = ()
+    action_type: str = "ANALYZE"
+    owning_team: str = "failure_analysis"
+    confidence_basis: str = "UNSPECIFIED"
+    human_gate: str = "ENGINEER_DISPOSITION_REQUIRED"
 
 
 @dataclass(frozen=True)
@@ -76,6 +103,9 @@ class WorkOrder:
     hypotheses: tuple[str, ...]
     next_action: str
     acceptance: tuple[str, ...]
+    action_type: str
+    owning_team: str
+    human_gate: str
     authority: str = "SELECT_ONLY"
 
 
@@ -95,8 +125,12 @@ def make_work_order(triage: CandidateTriage, case: FailureCase) -> WorkOrder:
         work_order_id=f"WO-{case.case_id}",
         subject_case_id=case.case_id,
         standing=triage.standing,
-        evidence_ids=tuple(item.evidence_id for item in case.evidence),
+        evidence_ids=triage.supporting_evidence_ids
+        or tuple(item.evidence_id for item in case.evidence),
         hypotheses=triage.candidate_modes,
         next_action=triage.next_action,
         acceptance=("independent-verifier-confirms", "receipt-replays"),
+        action_type=triage.action_type,
+        owning_team=triage.owning_team,
+        human_gate=triage.human_gate,
     )

@@ -2,6 +2,7 @@
 @prefix sp:      <http://seanchatmangpt.github.io/packs/shacl-projection#> .
 @prefix sh:      <http://www.w3.org/ns/shacl#> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
 
 wd:TriageRequestShape a sh:NodeShape ;
@@ -50,6 +51,60 @@ wd:TriageResponseShape a sh:NodeShape ;
         sp:isPrimaryOutput true
     ] .
 
+wd:GroundedTriageDetailShape a sh:NodeShape ;
+    rdfs:comment "Runtime extension for ranked and traceable WD triage. UNSUPPORTED(generator-capability:collection-valued-projection): current marketplace Pydantic/Zod projection packs manufacture scalar fields only, so this shape remains canonical semantic law while collection-valued adapters are handwritten residue." ;
+    sh:property [
+        sh:path wd:candidate_mode ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:description "Ranked candidate failure mode; candidate ranking is not admission"
+    ], [
+        sh:path wd:closest_prior_case ;
+        sh:datatype xsd:string ;
+        sh:description "Prior FA case identity associated with a ranked candidate"
+    ], [
+        sh:path wd:supporting_evidence_id ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:description "Evidence identifier bound to the recommendation"
+    ], [
+        sh:path wd:evidence_source_ref ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:description "Traceable source locator for normalized evidence"
+    ], [
+        sh:path wd:evidence_modality ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:description "Normalized evidence modality such as plot or structured test result"
+    ], [
+        sh:path wd:owning_team ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:description "Bounded routing target for the recommended next analytical action"
+    ], [
+        sh:path wd:action_type ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:description "TEST, TEARDOWN, ANALYZE, PROCEDURE, or ESCALATE"
+    ], [
+        sh:path wd:confidence_basis ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:description "Human-readable basis of the confidence signal; not a free-form LLM probability"
+    ], [
+        sh:path wd:human_gate ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:in ( "ENGINEER_DISPOSITION_REQUIRED" ) ;
+        sh:description "Consequential disposition remains with the FA engineer"
+    ], [
+        sh:path wd:trace_id ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:description "Digest binding the returned candidate triage payload"
+    ] .
+
 wd:TriageRequestPydantic a sp:PydanticModel ;
     sp:derivedFromShape wd:TriageRequestShape ;
     sp:className "TriageRequestGenerated" ;
@@ -58,7 +113,7 @@ wd:TriageRequestPydantic a sp:PydanticModel ;
 wd:TriageResponsePydantic a sp:PydanticModel ;
     sp:derivedFromShape wd:TriageResponseShape ;
     sp:className "TriageResponseGenerated" ;
-    dcterms:description "Generated response contract for bounded WD failure analysis" .
+    dcterms:description "Generated scalar response envelope for bounded WD failure analysis" .
 
 wd:TriageRequestZod a sp:ZodSchema ;
     sp:derivedFromShape wd:TriageRequestShape ;

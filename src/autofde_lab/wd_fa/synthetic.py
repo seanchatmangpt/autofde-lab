@@ -14,6 +14,9 @@ RULES = (
         falsifiers={"firmware": 2},
         required_evidence_kinds=frozenset({"test", "waveform"}),
         next_action="run_firmware_regression",
+        prior_case_ids=("SYNTH-FA-A-001", "SYNTH-FA-A-002"),
+        owning_team="firmware_analysis",
+        action_type="TEST",
     ),
     FailureModeRule(
         mode_id="MODE-B-SUPPLIER",
@@ -21,6 +24,9 @@ RULES = (
         falsifiers={"supplier": 1},
         required_evidence_kinds=frozenset({"test", "lot_trace"}),
         next_action="inspect_supplier_lot",
+        prior_case_ids=("SYNTH-FA-B-001",),
+        owning_team="supplier_quality",
+        action_type="TEARDOWN",
     ),
     FailureModeRule(
         mode_id="MODE-C-SERVO",
@@ -28,6 +34,9 @@ RULES = (
         falsifiers={"station": 4},
         required_evidence_kinds=frozenset({"test", "servo_trace"}),
         next_action="run_servo_calibration",
+        prior_case_ids=("SYNTH-FA-C-001", "SYNTH-FA-C-002"),
+        owning_team="servo_analysis",
+        action_type="TEST",
     ),
 )
 
@@ -37,8 +46,26 @@ def _digest(value: str) -> str:
 
 
 def evidence(case_id: str, kinds: tuple[str, ...]) -> tuple[EvidenceArtifact, ...]:
+    modalities = {
+        "test": "structured_test_result",
+        "waveform": "plot",
+        "lot_trace": "structured_provenance",
+        "servo_trace": "plot",
+    }
+    refs = {
+        "test": f"fixture://datalake/test-results/{case_id}",
+        "waveform": f"fixture://fa-report/{case_id}#waveform",
+        "lot_trace": f"fixture://datalake/lot-provenance/{case_id}",
+        "servo_trace": f"fixture://fa-report/{case_id}#servo-trace",
+    }
     return tuple(
-        EvidenceArtifact(f"{case_id}:{kind}", kind, _digest(f"{case_id}:{kind}"))
+        EvidenceArtifact(
+            evidence_id=f"{case_id}:{kind}",
+            kind=kind,
+            digest=_digest(f"{case_id}:{kind}"),
+            source_ref=refs[kind],
+            modality=modalities[kind],
+        )
         for kind in kinds
     )
 
@@ -68,6 +95,12 @@ def make_case(
             "lot_risk": lot_risk,
             "rework_count": rework_count,
             "vibration": vibration,
+            "serial_number": f"SERIAL-{case_id}",
+            "lot_id": f"LOT-{supplier}",
+            "supplier_id": f"SUPPLIER-{supplier}",
+            "bom_revision": f"BOM-{1 + supplier % 3}",
+            "firmware_revision": f"FW-{firmware}",
+            "test_station_id": f"STATION-{station}",
         },
         evidence=evidence(case_id, kinds),
         process=process,
@@ -228,9 +261,11 @@ def event_rows(case: FailureCase) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFr
     object_records = [
         {"ocel:oid": case.drive_id, "ocel:type": "Drive"},
         {"ocel:oid": case.case_id, "ocel:type": "FailureCase"},
-        {"ocel:oid": f"LOT-{case.facts['supplier']}", "ocel:type": "Lot"},
-        {"ocel:oid": f"FW-{case.facts['firmware']}", "ocel:type": "FirmwareRevision"},
-        {"ocel:oid": f"STATION-{case.facts['station']}", "ocel:type": "TestStation"},
+        {"ocel:oid": case.facts["lot_id"], "ocel:type": "Lot"},
+        {"ocel:oid": case.facts["supplier_id"], "ocel:type": "Supplier"},
+        {"ocel:oid": case.facts["bom_revision"], "ocel:type": "BOMRevision"},
+        {"ocel:oid": case.facts["firmware_revision"], "ocel:type": "FirmwareRevision"},
+        {"ocel:oid": case.facts["test_station_id"], "ocel:type": "TestStation"},
     ]
     relations = []
     for idx, activity in enumerate(case.process):
@@ -242,9 +277,11 @@ def event_rows(case: FailureCase) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFr
         related = (
             (case.drive_id, "Drive", "subject"),
             (case.case_id, "FailureCase", "case"),
-            (f"LOT-{case.facts['supplier']}", "Lot", "context"),
-            (f"FW-{case.facts['firmware']}", "FirmwareRevision", "context"),
-            (f"STATION-{case.facts['station']}", "TestStation", "context"),
+            (case.facts["lot_id"], "Lot", "provenance"),
+            (case.facts["supplier_id"], "Supplier", "provenance"),
+            (case.facts["bom_revision"], "BOMRevision", "configuration"),
+            (case.facts["firmware_revision"], "FirmwareRevision", "configuration"),
+            (case.facts["test_station_id"], "TestStation", "provenance"),
         )
         for oid, otype, qualifier in related:
             relations.append(
