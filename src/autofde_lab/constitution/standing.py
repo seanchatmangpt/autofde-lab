@@ -46,7 +46,7 @@ class Refusal:
 class StandingAssertion:
     """A derived, scoped statement about a subject's standing."""
     derived_from_witness: tuple[str, ...] = ()  #  (ref: EvidenceWitness)
-    standing_subject: str | None = None  # 
+    standing_subject: str | None = None  #
     standing_value: str | None = None  #  (ref: StandingValue)
 
 

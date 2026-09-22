@@ -572,13 +572,13 @@ class HookPackLoader:
     def _gate_pack(self, pack: ConjunctiveGraph) -> None:
         """
         Constitutional guards: reject forbidden predicates and action types.
-        
+
         This enforces the safety-critical constraint that hook packs cannot
         execute arbitrary commands or use unallowlisted action types.
-        
+
         Args:
             pack: Hook pack dataset to validate
-            
+
         Raises:
             RuntimeError: If pack contains forbidden predicates or unallowlisted action types
         """
@@ -586,7 +586,7 @@ class HookPackLoader:
         pack_g = Graph()
         for ctx in pack.contexts():
             pack_g += ctx
-        
+
         # Forbidden predicates (if they exist in ontology)
         # Note: These predicates may not exist yet, but we check for them defensively
         FORBIDDEN_PREDICATES: Set[URIRef] = set()
@@ -597,7 +597,7 @@ class HookPackLoader:
                 # Check if it's in the KH namespace
                 if p_str.startswith(str(KH)):
                     FORBIDDEN_PREDICATES.add(p)
-        
+
         # Reject forbidden predicates
         for s, p, o in pack_g.triples((None, None, None)):
             if p in FORBIDDEN_PREDICATES:
@@ -605,7 +605,7 @@ class HookPackLoader:
                     f"Forbidden predicate in pack: {p}. "
                     f"Hook packs cannot execute arbitrary commands."
                 )
-        
+
         # Ensure all actions are allowlisted
         # Existing action types are already allowlisted (SparqlConstructAction, EmitBpmnAction, etc.)
         # This is a future-proofing guard for any new action types that might be added
@@ -615,7 +615,7 @@ class HookPackLoader:
             KH.EmitEventAction,
             KH.RouteToBpmnAction,
         }
-        
+
         for action in pack_g.subjects(RDF.type, KH.Action):
             action_type = pack_g.value(action, KH.actionType)
             if action_type is not None:
@@ -629,7 +629,7 @@ class HookPackLoader:
                             # Skip the base kh:Action class, only check specific subclasses
                             action_rdf_type = rdf_type
                             break
-                    
+
                     if action_rdf_type and action_rdf_type not in ALLOWED_ACTION_TYPES:
                         raise RuntimeError(
                             f"Action type not allowed: {action_rdf_type}. "
@@ -650,7 +650,7 @@ class HookPackLoader:
                                 f"Action type not allowed: {rdf_type}. "
                                 f"Allowed types: {ALLOWED_ACTION_TYPES}"
                             )
-                
+
                 # If action has only kh:Action (base class) and no specific type, that's OK
                 # (it will be validated by SHACL shapes)
 
@@ -741,10 +741,10 @@ class DialectSuite:
     def shex_validate(self, data_g: Graph, schema_text: str, focus_nodes: List[str]) -> bool:
         """
         Uses pyshex Python API to validate focus nodes against schema.
-        
+
         Hard requirement: `pyshex` module is installed.
         TPS jidoka: crashes hard if module not found (no graceful degradation).
-        
+
         Note: Python 3.13 compatibility handled via _pyshex_compat wrapper.
         """
         # Load schema from text (not file path)
@@ -783,7 +783,7 @@ class DialectSuite:
         N3 rule execution via EYE reasoner.
         Hard requirement: `eye` executable exists.
         TPS jidoka: crashes hard if executable not found (no graceful degradation).
-        
+
         Process:
         1. Write data in N3 format and load rules
         2. Concatenate data + rules into single N3 file (EYE works better this way)
@@ -801,13 +801,13 @@ class DialectSuite:
         try:
             # Serialize data in N3 format (not Turtle) for better EYE compatibility
             data_n3 = data_g.serialize(format="n3")
-            
+
             # Load rules text
             rules_text = n3_rules_path.read_text(encoding="utf-8")
             # Ensure rules_text is a string (not URIRef or other type)
             if not isinstance(rules_text, str):
                 rules_text = str(rules_text)
-            
+
             # Check if the ASK pattern already exists in the original data
             # If it does, we don't need to run EYE
             res_original = data_g.query(ask_query_text)
@@ -838,15 +838,15 @@ class DialectSuite:
                 stderr=subprocess.PIPE,
                 check=False,
             )
-            
+
             if proc.returncode != 0:
                 raise OFMFError(
                     f"EYE failed (code {proc.returncode}). stderr:\n{proc.stderr.decode('utf-8', errors='replace')}"
                 )
-            
+
             n3_output = proc.stdout.decode("utf-8", errors="strict")
             n3_stderr = proc.stderr.decode("utf-8", errors="replace")
-            
+
             # Check stderr for entailment count (ent=X)
             # If ent > 0, EYE computed entailments
             import re
@@ -857,10 +857,10 @@ class DialectSuite:
             entailed = Graph()
             if n3_output.strip():
                 # Filter out comment lines before parsing
-                lines = [l for l in n3_output.split("\n") 
+                lines = [l for l in n3_output.split("\n")
                         if l.strip() and not l.strip().startswith("#")]
                 filtered_output = "\n".join(lines)
-                
+
                 if filtered_output.strip():
                     try:
                         entailed.parse(data=filtered_output, format="n3")
@@ -889,8 +889,8 @@ class DialectSuite:
                 # Check if query returns any results
                 for _ in res:
                     return True
-            
-            # If no results in output but EYE computed entailments, 
+
+            # If no results in output but EYE computed entailments,
             # manually check if the rules would infer the pattern
             # This is a workaround for EYE not outputting inferred triples
             # Check if EYE computed entailments (ent > 0) and we didn't find the pattern in output
@@ -928,7 +928,7 @@ class DialectSuite:
                                             # Premise pattern exists in data, and rules would infer the conclusion
                                             # Since EYE computed entailments, assume the pattern is inferred
                                             return True
-            
+
             return False
         finally:
             for f in tmp_dir.glob("*"):
@@ -1016,7 +1016,7 @@ class BpmnEmitter:
 
     def emit_bpmn_xml(self, ds: ConjunctiveGraph, bpmn_graph_iri: URIRef) -> bytes:
         g = ds.get_context(bpmn_graph_iri)
-        
+
         # If named graph is empty, check default graph (for Turtle-loaded hook packs)
         if len(list(g.triples((None, None, None)))) == 0:
             # Try default graph
@@ -1861,14 +1861,14 @@ class OFMFEngine:
     def _find_action_node(self, hook: KnowledgeHook, action: HookAction) -> URIRef:
         """
         Find the action node URI in the hook pack for a given action.
-        
+
         Args:
             hook: KnowledgeHook instance
             action: HookAction instance
-        
+
         Returns:
             URIRef of the action node
-        
+
         Raises:
             RuntimeError: If action node not found
         """
@@ -1876,7 +1876,7 @@ class OFMFEngine:
         for act_node in self.hook_pack_ds.objects(hook.iri, KH.action):
             if not isinstance(act_node, (URIRef, BNode)):
                 continue
-            
+
             # Check if this is the right action type
             if action.kind == "route_to_bpmn" and (act_node, RDF.type, KH.RouteToBpmnAction) in self.hook_pack_ds:
                 # Verify bpmnGraph matches
@@ -1895,7 +1895,7 @@ class OFMFEngine:
                 construct_query = self.hook_pack_ds.value(act_node, KH.constructQuery)
                 if construct_query == action.ref:
                     return act_node
-        
+
         raise RuntimeError(f"Action node not found for hook {hook.hook_id}, action kind {action.kind}, ref {action.ref}")
 
     def _dependency_batches(self, hooks: List[KnowledgeHook]) -> List[List[KnowledgeHook]]:
@@ -1952,10 +1952,10 @@ class OFMFEngine:
     def _detect_priority_ties(self, hooks: List[KnowledgeHook]) -> None:
         """
         Validate Λ ≺-total order: no priority ties allowed.
-        
+
         Args:
             hooks: List of hooks to validate
-            
+
         Raises:
             RuntimeError: If any two hooks have the same priority
         """

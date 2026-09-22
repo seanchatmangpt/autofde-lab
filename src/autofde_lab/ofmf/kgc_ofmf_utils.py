@@ -88,7 +88,7 @@ def require_module(modname: str, install_hint: str = "") -> Any:
 def require_executable(exe: str, install_hint: str = "") -> None:
     """
     Executable-or-die (for external engines).
-    
+
     For automated installation, run:
         uv run python scripts/install-external-executables.py
     """
@@ -1011,12 +1011,12 @@ def n3_reason_with_eye_hard(
 ) -> str:
     """
     N3 reasoning via EYE (external engine).
-    
+
     Args:
         n3_text: N3 text to pass via stdin (only used if flags is None)
         eye_exe: Path to eye executable (default: "eye")
         flags: List of command-line flags (if provided, n3_text is ignored)
-    
+
     Returns:
         EYE output as string (N3/Turtle format)
     """
@@ -1041,7 +1041,7 @@ def n3_reason_with_eye_hard(
             stderr=subprocess.PIPE,
             check=False,
         )
-    
+
     if proc.returncode != 0:
         raise OFMFError(
             f"EYE failed (code {proc.returncode}). stderr:\n{proc.stderr.decode('utf-8', errors='replace')}"
@@ -1103,13 +1103,13 @@ _CLAUDE_EVENT_MAP: Dict[str, URIRef] = {
 def claude_event_to_iri(event_name: str) -> URIRef:
     """
     Maps Claude Code event name to knowledge hook event IRI.
-    
+
     Args:
         event_name: Claude event name (e.g., "PostToolUse", "SessionStart")
-    
+
     Returns:
         URIRef for the corresponding kh:Event individual
-    
+
     Raises:
         OFMFError: If event_name is not recognized
     """
@@ -1122,11 +1122,11 @@ def claude_event_to_iri(event_name: str) -> URIRef:
 def select_hooks_by_event(event_iri: URIRef, pack_graph: Graph) -> List[URIRef]:
     """
     Selects hooks from a pack graph that match the given event.
-    
+
     Args:
         event_iri: kh:Event IRI to match (e.g., KH.PostToolUse)
         pack_graph: Graph containing hook pack definitions
-    
+
     Returns:
         List of hook URIRefs whose triggers have matching kh:event
     """
@@ -1145,10 +1145,10 @@ def select_hooks_by_event(event_iri: URIRef, pack_graph: Graph) -> List[URIRef]:
 def validate_pack_events(pack_graph: Graph) -> List[URIRef]:
     """
     Extracts required events declared in a hook pack.
-    
+
     Args:
         pack_graph: Graph containing hook pack definitions
-    
+
     Returns:
         List of kh:Event IRIs that the pack requires
     """
