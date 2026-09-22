@@ -124,7 +124,9 @@ def create_app() -> FastAPI:
     def triage_case(request: TriageRequest) -> TriageResponse:
         cases = named_cases()
         if request.case_name not in cases:
-            raise HTTPException(status_code=404, detail="REFUSED:UNKNOWN_SYNTHETIC_SUBJECT")
+            raise HTTPException(
+                status_code=404, detail="REFUSED:UNKNOWN_SYNTHETIC_SUBJECT"
+            )
         case = cases[request.case_name]
         return _response(case, triage(case, RULES))
 
