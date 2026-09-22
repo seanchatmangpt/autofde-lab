@@ -32,7 +32,9 @@ def _manifest(tmp_path: Path) -> dict:
         relative = f"receipts/{checkpoint_id}.json"
         path = tmp_path / relative
         path.parent.mkdir(parents=True, exist_ok=True)
-        raw = json.dumps({"checkpoint": checkpoint_id, "standing": "PARTIAL_ALIVE"}, sort_keys=True).encode()
+        raw = json.dumps(
+            {"checkpoint": checkpoint_id, "standing": "PARTIAL_ALIVE"}, sort_keys=True
+        ).encode()
         path.write_bytes(raw)
         checkpoints.append(
             {
@@ -83,7 +85,9 @@ def test_mutated_upstream_receipt_is_refused_before_composition(tmp_path: Path) 
     assert exc_info.value.code == REFUSED_CHECKPOINT_RECEIPT_DRIFT
 
 
-def test_portable_artifact_tampering_is_refused_without_re_actuation(tmp_path: Path) -> None:
+def test_portable_artifact_tampering_is_refused_without_re_actuation(
+    tmp_path: Path,
+) -> None:
     subject = SubjectResolver().resolve(_manifest(tmp_path))
     artifact = build_portable_artifact(subject, standing="PARTIAL_ALIVE")
     artifact["standing"] = "ALIVE"

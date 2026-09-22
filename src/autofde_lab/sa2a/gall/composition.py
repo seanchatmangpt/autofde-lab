@@ -28,7 +28,9 @@ def _sha256(value: bytes) -> str:
     return "sha256:" + hashlib.sha256(value).hexdigest()
 
 
-def _validate_reference_identity(*, label: str, repository: str, repo_sha: str, digest: str) -> None:
+def _validate_reference_identity(
+    *, label: str, repository: str, repo_sha: str, digest: str
+) -> None:
     if not repository:
         raise ValueError(f"{label} repository is required")
     if not _GIT_SHA.fullmatch(repo_sha):
@@ -173,7 +175,10 @@ class GALLCompositionManifest:
         for field, value in (
             ("planner_identity", self.planner_identity),
             ("cmca_identity", self.cmca_identity),
-            ("machine_experience_compiler_identity", self.machine_experience_compiler_identity),
+            (
+                "machine_experience_compiler_identity",
+                self.machine_experience_compiler_identity,
+            ),
             ("semantic_key", self.semantic_key),
         ):
             if not value:

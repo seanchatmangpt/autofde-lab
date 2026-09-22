@@ -6,7 +6,7 @@ import hashlib
 import json
 import re
 from dataclasses import asdict, dataclass
-from typing import Any
+from typing import Any, Mapping
 
 CHECKPOINT_REPOSITORIES = {
     "GALL-015": "seanchatmangpt/ex4pm",
@@ -95,6 +95,53 @@ class ProcessSpine:
             raise ValueError("GALL-029 must remain candidate admission only")
         if by_id["GALL-030"].evidence_ceiling != "AUTHORIZED_DO":
             raise ValueError("GALL-030 is the sole bounded DO checkpoint in this spine")
+
+    def verify_exact_evidence(self, evidence: Mapping[str, bytes]) -> None:
+        """Bind every manifest entry to independently hashed canonical evidence.
+
+        Evidence is JSON and must name the exact checkpoint, repository, producer
+        SHA, subject digest and authority ceiling represented by the manifest.
+        GALL-030 additionally requires an explicit independent-authority witness
+        and CommandBus-only route. Evidence is still evidence: this method does
+        not execute a producer or manufacture cross-repository standing.
+        (Carried over from gall/integrate-021-030-process-spine: strictly
+        additive evidence binding on top of this spine's authority model.)
+        """
+        self.validate()
+        by_id = {item.checkpoint: item for item in self.checkpoints}
+        if set(evidence) != set(REQUIRED):
+            raise ValueError("exact evidence requires one receipt for every GALL-015..030 checkpoint")
+
+        for checkpoint in REQUIRED:
+            item = by_id[checkpoint]
+            raw = evidence[checkpoint]
+            actual = "sha256:" + hashlib.sha256(raw).hexdigest()
+            if item.evidence_digest != actual:
+                raise ValueError(f"{checkpoint} evidence digest mismatch")
+
+            try:
+                receipt = json.loads(raw)
+            except (TypeError, json.JSONDecodeError) as exc:
+                raise ValueError(f"{checkpoint} evidence must be JSON") from exc
+            expected = {
+                "checkpoint": checkpoint,
+                "repository": item.repository,
+                "repo_sha": item.repo_sha,
+                "subject_digest": item.subject_digest,
+                "evidence_ceiling": item.evidence_ceiling,
+            }
+            for field, value in expected.items():
+                if receipt.get(field) != value:
+                    raise ValueError(f"{checkpoint} evidence {field} mismatch")
+
+            if checkpoint != "GALL-030":
+                if receipt.get("authority", "NONE") != "NONE":
+                    raise ValueError(f"{checkpoint} evidence cannot manufacture authority")
+            else:
+                if receipt.get("authority_source") != "INDEPENDENT":
+                    raise ValueError("GALL-030 requires independently supplied authority")
+                if receipt.get("do_route") != "AshA2A.CommandBus":
+                    raise ValueError("GALL-030 DO must route only through AshA2A.CommandBus")
 
     @property
     def digest(self) -> str:
