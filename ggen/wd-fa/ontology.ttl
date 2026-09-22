@@ -4,6 +4,7 @@
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix sf:      <https://ggen.dev/ontology/semantic-fullstack#> .
 
 wd:TriageRequestShape a sh:NodeShape ;
     sh:property [
@@ -122,3 +123,113 @@ wd:TriageRequestZod a sp:ZodSchema ;
 wd:TriageResponseZod a sp:ZodSchema ;
     sp:derivedFromShape wd:TriageResponseShape ;
     sp:schemaName "TriageResponseGeneratedSchema" .
+
+
+# DfCM full-stack projection profile.
+# The same canonical graph that manufactures the scalar Pydantic/Zod contract
+# also supplies the deterministic FastAPI/Next.js reference projection.
+# These are bounded repository-local fixture states, not WD production facts.
+
+wd:CaseStudy2Application a sf:Application ;
+    sf:appName "WD Semantic Failure Analysis — Generated Projection" ;
+    sf:pageTitle "WD Case Study 2 — Semantic Failure Analysis" ;
+    sf:apiBasePath "/api" ;
+    sf:defaultScenario "known_a" ;
+    sf:runtimeIntelligence "NONE" ;
+    sf:manufactureMode "DETERMINISTIC" .
+
+wd:KnownAScenario a sf:Scenario ;
+    sf:scenarioId "known_a" ;
+    sf:title "Known firmware failure" ;
+    sf:classification "KNOWN" ;
+    sf:standing "ALIVE" ;
+    sf:candidateMode "MODE-A-FIRMWARE" ;
+    sf:admittedMode "MODE-A-FIRMWARE" ;
+    sf:confidenceBasis "DETERMINISTIC_RULE_AND_REQUIRED_EVIDENCE" ;
+    sf:nextAction "run_firmware_regression" ;
+    sf:owningTeam "firmware_analysis" ;
+    sf:humanGate "ENGINEER_DISPOSITION_REQUIRED" ;
+    sf:authority "SELECT_CONSTRUCT_ONLY" ;
+    sf:evidenceCsv "KNOWN-A:test|KNOWN-A:waveform" ;
+    sf:missingEvidenceCsv "" ;
+    sf:priorCasesCsv "SYNTH-FA-A-001|SYNTH-FA-A-002" ;
+    sf:exposed true ;
+    sf:order 1 .
+
+wd:KnownBMisleadingScenario a sf:Scenario ;
+    sf:scenarioId "known_b_misleading" ;
+    sf:title "Known supplier failure despite misleading similarity" ;
+    sf:classification "KNOWN" ;
+    sf:standing "ALIVE" ;
+    sf:candidateMode "MODE-B-SUPPLIER" ;
+    sf:admittedMode "MODE-B-SUPPLIER" ;
+    sf:confidenceBasis "DETERMINISTIC_RULE_AND_REQUIRED_EVIDENCE" ;
+    sf:nextAction "inspect_supplier_lot" ;
+    sf:owningTeam "supplier_quality" ;
+    sf:humanGate "ENGINEER_DISPOSITION_REQUIRED" ;
+    sf:authority "SELECT_CONSTRUCT_ONLY" ;
+    sf:evidenceCsv "KNOWN-B:test|KNOWN-B:lot_trace" ;
+    sf:missingEvidenceCsv "" ;
+    sf:priorCasesCsv "SYNTH-FA-B-001" ;
+    sf:exposed true ;
+    sf:order 2 .
+
+wd:IncompleteAScenario a sf:Scenario ;
+    sf:scenarioId "incomplete_a" ;
+    sf:title "Applicable firmware prior with incomplete evidence" ;
+    sf:classification "PARTIAL" ;
+    sf:standing "PARTIAL_ALIVE" ;
+    sf:candidateMode "MODE-A-FIRMWARE" ;
+    sf:admittedMode "NONE" ;
+    sf:confidenceBasis "DETERMINISTIC_RULE_INCOMPLETE_EVIDENCE" ;
+    sf:nextAction "run_firmware_regression" ;
+    sf:owningTeam "firmware_analysis" ;
+    sf:humanGate "ENGINEER_DISPOSITION_REQUIRED" ;
+    sf:authority "SELECT_CONSTRUCT_ONLY" ;
+    sf:evidenceCsv "PARTIAL-A:test" ;
+    sf:missingEvidenceCsv "waveform" ;
+    sf:priorCasesCsv "SYNTH-FA-A-001|SYNTH-FA-A-002" ;
+    sf:exposed true ;
+    sf:order 3 .
+
+wd:NovelXScenario a sf:Scenario ;
+    sf:scenarioId "novel_x" ;
+    sf:title "Novel failure signature" ;
+    sf:classification "UNKNOWN" ;
+    sf:standing "UNKNOWN" ;
+    sf:candidateMode "MODE-X-CANDIDATE" ;
+    sf:admittedMode "NONE" ;
+    sf:confidenceBasis "NO_RULE_ADMISSION_CANDIDATE_RANKING_NON_AUTHORITATIVE" ;
+    sf:nextAction "open_novel_failure_investigation" ;
+    sf:owningTeam "failure_analysis" ;
+    sf:humanGate "ENGINEER_DISPOSITION_REQUIRED" ;
+    sf:authority "SELECT_CONSTRUCT_ONLY" ;
+    sf:evidenceCsv "NOVEL-X:test|NOVEL-X:waveform|NOVEL-X:lot_trace" ;
+    sf:missingEvidenceCsv "" ;
+    sf:priorCasesCsv "" ;
+    sf:exposed true ;
+    sf:order 4 .
+
+wd:NovelXVerifiedScenario a sf:Scenario ;
+    sf:scenarioId "novel_x_verified" ;
+    sf:title "Novel failure after independently verified disposition" ;
+    sf:classification "KNOWN" ;
+    sf:standing "ALIVE" ;
+    sf:candidateMode "MODE-X-NOVEL" ;
+    sf:admittedMode "MODE-X-NOVEL" ;
+    sf:confidenceBasis "DETERMINISTIC_RULE_AND_REQUIRED_EVIDENCE" ;
+    sf:nextAction "repeat_verified_novel_x_procedure" ;
+    sf:owningTeam "failure_analysis" ;
+    sf:humanGate "ENGINEER_DISPOSITION_REQUIRED" ;
+    sf:authority "SELECT_CONSTRUCT_ONLY" ;
+    sf:evidenceCsv "NOVEL-X-REPLAY:test|NOVEL-X-REPLAY:waveform|NOVEL-X-REPLAY:lot_trace" ;
+    sf:missingEvidenceCsv "" ;
+    sf:priorCasesCsv "NOVEL-X" ;
+    sf:exposed false ;
+    sf:order 5 .
+
+wd:AdmitNovelXExperience a sf:Transition ;
+    sf:transitionId "admit_verified_machine_experience" ;
+    sf:fromScenario "novel_x" ;
+    sf:toScenario "novel_x_verified" ;
+    sf:triggerLabel "Admit independently verified MachineExperience" .
