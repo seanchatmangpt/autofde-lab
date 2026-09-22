@@ -7,7 +7,6 @@ from autofde_lab.fabric.gall import (
     to_hddl_problem,
 )
 
-
 BASE = dict(
     repository="seanchatmangpt/xaas",
     base_sha="b" * 40,

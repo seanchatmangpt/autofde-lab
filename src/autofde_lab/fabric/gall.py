@@ -8,8 +8,8 @@ XaaS lease and never treats a plan as execution.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import re
+from dataclasses import dataclass
 from typing import Iterable, Sequence
 
 _SHA = re.compile(r"^[0-9a-f]{40}$")
@@ -88,7 +88,10 @@ class MachineExperience:
     def __post_init__(self) -> None:
         if not set(self.admitted_actions).issubset(self.available_actions):
             raise ValueError("admitted_actions must be a subset of available_actions")
-        if self.selected_action is not None and self.selected_action not in self.admitted_actions:
+        if (
+            self.selected_action is not None
+            and self.selected_action not in self.admitted_actions
+        ):
             raise ValueError("selected_action must be admitted before selection")
 
 
@@ -97,7 +100,11 @@ def frontier(checkpoints: Iterable[Checkpoint]) -> tuple[Checkpoint, ...]:
 
     return tuple(
         sorted(
-            (checkpoint for checkpoint in checkpoints if checkpoint.admissible_frontier_member),
+            (
+                checkpoint
+                for checkpoint in checkpoints
+                if checkpoint.admissible_frontier_member
+            ),
             key=lambda checkpoint: checkpoint.iri,
         )
     )
@@ -117,10 +124,15 @@ def to_hddl_problem(
     """
 
     selected = frontier(checkpoints)
-    aliases = {checkpoint.iri: f"checkpoint_{index}" for index, checkpoint in enumerate(selected)}
+    aliases = {
+        checkpoint.iri: f"checkpoint_{index}"
+        for index, checkpoint in enumerate(selected)
+    }
 
     objects = " ".join(aliases.values())
-    init = "\n".join(f"    (admissible {aliases[checkpoint.iri]})" for checkpoint in selected)
+    init = "\n".join(
+        f"    (admissible {aliases[checkpoint.iri]})" for checkpoint in selected
+    )
     tasks = "\n".join(
         f"      (task_{index} (solve {aliases[checkpoint.iri]}))"
         for index, checkpoint in enumerate(selected)
@@ -128,7 +140,9 @@ def to_hddl_problem(
 
     objects_section = f"  (:objects {objects} - checkpoint)\n" if objects else ""
     init_section = f"  (:init\n{init}\n  )\n" if init else "  (:init)\n"
-    tasks_section = f"    :tasks (and\n{tasks}\n    )\n" if tasks else "    :tasks (and)\n"
+    tasks_section = (
+        f"    :tasks (and\n{tasks}\n    )\n" if tasks else "    :tasks (and)\n"
+    )
 
     return (
         f"(define (problem {problem_name})\n"
