@@ -41,11 +41,15 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from autofde_lab.beam.beam_port_bridge import handle_request as beam_handle_request
+from autofde_lab.cmca.cascade import MultifractalCascadeAllocator
 from autofde_lab.fabric.solve_and_falsify import solve_and_falsify
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_WATCH_FILE = REPO_ROOT / "ontology" / "autofde-lab-capabilities.ttl"
-DEFAULT_BASELINE_FILE = REPO_ROOT / "src" / "autofde_lab" / "fabric" / ".phase_h_baseline.json"
+DEFAULT_BASELINE_FILE = (
+    REPO_ROOT / "src" / "autofde_lab" / "fabric" / ".phase_h_baseline.json"
+)
 
 XAAS_REPO_ROOT = Path.home() / "xaas"
 DEFAULT_COVERAGE_STATE_FILE = (
@@ -118,9 +122,23 @@ COVERAGE_GAP_THRESHOLD = 1
 # invocations of this function itself is the only real, available signal.
 MAX_CONSECUTIVE_SKIPS_BEFORE_PROBE = 5
 
-FIXTURE_DOMAIN = REPO_ROOT / "tests" / "domains" / "python" / "pddl_domains" / "blocks" / "domain.pddl"
+FIXTURE_DOMAIN = (
+    REPO_ROOT
+    / "tests"
+    / "domains"
+    / "python"
+    / "pddl_domains"
+    / "blocks"
+    / "domain.pddl"
+)
 FIXTURE_PROBLEM = (
-    REPO_ROOT / "tests" / "domains" / "python" / "pddl_domains" / "blocks" / "probBLOCKS-3-0.pddl"
+    REPO_ROOT
+    / "tests"
+    / "domains"
+    / "python"
+    / "pddl_domains"
+    / "blocks"
+    / "probBLOCKS-3-0.pddl"
 )
 
 
@@ -143,10 +161,14 @@ def read_baseline(baseline_file: Path = DEFAULT_BASELINE_FILE) -> str | None:
     return json.loads(baseline_file.read_text())["sha256"]
 
 
-def write_baseline(watch_file: Path = DEFAULT_WATCH_FILE, baseline_file: Path = DEFAULT_BASELINE_FILE) -> str:
+def write_baseline(
+    watch_file: Path = DEFAULT_WATCH_FILE, baseline_file: Path = DEFAULT_BASELINE_FILE
+) -> str:
     """Snapshot the current hash of watch_file as the new baseline."""
     digest = _sha256_of(watch_file)
-    baseline_file.write_text(json.dumps({"watch_file": str(watch_file), "sha256": digest}, indent=2))
+    baseline_file.write_text(
+        json.dumps({"watch_file": str(watch_file), "sha256": digest}, indent=2)
+    )
     return digest
 
 
@@ -173,12 +195,39 @@ def unattended_solve() -> dict:
     blocksworld fixture, and returns both the real trajectory receipt AND
     a real falsification standing -- the automatic trigger path now closes
     both halves of the loop (solve, then check the solve) in one call.
+
+    After `falsify_candidate()` has returned (inside `solve_and_falsify`),
+    the real falsification standing is additionally submitted to the real
+    BEAM port bridge's `sa2a_admit` op (`beam.beam_port_bridge.handle_request`,
+    in-process -- same calling convention as
+    `agent.cmca_dogfood_crown._execute_uc3`), so the outer autonomic loop
+    itself is now a real, non-test-fixture caller of `sa2a_admit`, not only
+    its own test file and the dogfood crown's fixture-shaped UC3.
     """
-    domain_arguments = {"domain_path": str(FIXTURE_DOMAIN), "problem_path": str(FIXTURE_PROBLEM)}
+    domain_arguments = {
+        "domain_path": str(FIXTURE_DOMAIN),
+        "problem_path": str(FIXTURE_PROBLEM),
+    }
     result, falsification = solve_and_falsify(
         domain="PDDLDomain",
         domain_arguments=domain_arguments,
         solver="Astar",
+    )
+    sa2a_admit_response = beam_handle_request(
+        {
+            "op": "sa2a_admit",
+            "candidate_id": falsification.candidate_id,
+            "query_id": f"phase-h-drift-trigger:{result.trajectory_sha256[:16]}",
+            "assertion": "PDDLDomain bounded rollout reaches a terminal state",
+            "source": "phase-h-trigger",
+            "evidence": {
+                "trajectory_sha256": result.trajectory_sha256,
+                "falsification_standing": falsification.standing.value,
+                "receipt_refs": list(falsification.receipt_refs),
+                "violated_constraints": list(falsification.violated_constraints),
+            },
+        },
+        MultifractalCascadeAllocator(),
     )
     return {
         "domain": "PDDLDomain",
@@ -193,6 +242,7 @@ def unattended_solve() -> dict:
             "receipt_refs": falsification.receipt_refs,
             "violated_constraints": falsification.violated_constraints,
         },
+        "sa2a_admit": sa2a_admit_response,
     }
 
 
@@ -202,7 +252,9 @@ def _read_coverage_state(state_file: Path = DEFAULT_COVERAGE_STATE_FILE) -> dict
     return json.loads(state_file.read_text())
 
 
-def _write_coverage_state(state: dict, state_file: Path = DEFAULT_COVERAGE_STATE_FILE) -> None:
+def _write_coverage_state(
+    state: dict, state_file: Path = DEFAULT_COVERAGE_STATE_FILE
+) -> None:
     state_file.write_text(json.dumps(state, indent=2, sort_keys=True))
 
 
@@ -228,7 +280,11 @@ def _parse_coverage_gap_output(stdout: str) -> dict:
         stdout,
     )
     closed = closed_match is not None
-    gap = (max(before_counts.values()) - min(before_counts.values())) if before_counts else 0
+    gap = (
+        (max(before_counts.values()) - min(before_counts.values()))
+        if before_counts
+        else 0
+    )
     result = {
         "before_counts": before_counts,
         "gap": gap,
@@ -288,10 +344,17 @@ def check_coverage_gap(
     """
     last_state = _read_coverage_state(state_file)
     last_gap = last_state.get("gap") if last_state else None
-    skips_since_last_invoke = last_state.get("skips_since_last_invoke", 0) if last_state else 0
+    skips_since_last_invoke = (
+        last_state.get("skips_since_last_invoke", 0) if last_state else 0
+    )
 
-    guard_would_skip = last_state is not None and last_gap is not None and last_gap <= threshold
-    forced_probe = guard_would_skip and skips_since_last_invoke >= max_consecutive_skips_before_probe
+    guard_would_skip = (
+        last_state is not None and last_gap is not None and last_gap <= threshold
+    )
+    forced_probe = (
+        guard_would_skip
+        and skips_since_last_invoke >= max_consecutive_skips_before_probe
+    )
 
     if guard_would_skip and not forced_probe and last_state is not None:
         next_skip_count = skips_since_last_invoke + 1
@@ -324,7 +387,9 @@ def check_coverage_gap(
 
     try:
         proc = subprocess.run(
-            list(command) if command is not None else ["mix", "xaas.close_coverage_gap"],
+            list(command)
+            if command is not None
+            else ["mix", "xaas.close_coverage_gap"],
             cwd=str(xaas_repo_root),
             capture_output=True,
             text=True,
@@ -354,7 +419,9 @@ def check_coverage_gap(
     parsed["skips_since_last_invoke"] = 0
     parsed["invoke_reason"] = invoke_reason
     parsed["detection_status"] = (
-        "verified_healthy_this_tick" if parsed["gap"] <= threshold else "verified_gap_open_this_tick"
+        "verified_healthy_this_tick"
+        if parsed["gap"] <= threshold
+        else "verified_gap_open_this_tick"
     )
     _write_coverage_state(parsed, state_file)
     return parsed
@@ -399,7 +466,9 @@ def run_once(
 
     coverage = check_coverage_gap()
     result["coverage_gap"] = coverage
-    result["coverage_triggered"] = bool(coverage.get("invoked") and coverage.get("closed"))
+    result["coverage_triggered"] = bool(
+        coverage.get("invoked") and coverage.get("closed")
+    )
     return result
 
 
