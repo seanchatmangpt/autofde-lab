@@ -10,6 +10,7 @@ from .belief import BeliefState, EpistemicValue, InformationAction
 from .crown import AutonomicsCrown, VerifiedRepair
 from .external_crown import ExternalAutonomicsManifest, ExternalCrownEvidence
 from .falsifier import ActiveFalsifier, FalsifierResult, Invariant
+from .feedback import AdmittedFeedback, FeedbackAdmission, FeedbackFinding, FeedbackRule
 from .predictor import PredictionCandidate, PredictionStanding
 from .redesign import CanaryEnvelope, CanaryEvidence, RedesignCandidate
 from .repair import InterventionRequest, RepairCandidate, RepairSelector
@@ -17,6 +18,7 @@ from .telemetry import Measurement, SemanticCorrelation, SemanticTelemetryArtifa
 
 __all__ = [
     "ActiveFalsifier",
+    "AdmittedFeedback",
     "AutonomicsCrown",
     "BeliefState",
     "CanaryEnvelope",
@@ -25,6 +27,9 @@ __all__ = [
     "ExternalAutonomicsManifest",
     "ExternalCrownEvidence",
     "FalsifierResult",
+    "FeedbackAdmission",
+    "FeedbackFinding",
+    "FeedbackRule",
     "InformationAction",
     "InterventionRequest",
     "Invariant",
