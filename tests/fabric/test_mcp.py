@@ -44,6 +44,11 @@ def test_mcp_projects_one_fabric(fabric: DecisionFabric) -> None:
         "decision_catalog",
         "decision_match",
         "decision_solve",
+        # Live registry surface (d703bad7): the issue-reasoning tools are
+        # registered unconditionally by create_server alongside the decision
+        # tools; the expected set must name the server's real surface.
+        "issue_reasoning_catalog",
+        "issue_reason",
     }
     assert catalog_result.structured_content["domains"] == ["Counter"]
     assert solve_result.structured_content["standing"] == "SOLVED"
