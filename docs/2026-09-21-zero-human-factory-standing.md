@@ -64,3 +64,20 @@ plausible narrow test gap — came back `ALIVE` with a real passing Chicago-styl
 already in place, so no fabricated closure was attempted (per this document's own
 governing plan). The `~/ggen_igniter` open-PR-stack / `v26.9.20` tag question from
 earlier this session is unrelated and remains parked separately.
+
+---
+
+## Addendum — v26.9.22 wave deltas (2026-09-22, lane L4)
+
+Grounded deltas to the per-claim table above, each verified this wave:
+
+| Claim | Standing | Evidence |
+|---|---|---|
+| SA2A benchmark suite (RFC-SA2A-002 Appendix E) | **ALIVE** (was: SA2A-B2 BUILD_BROKEN) | `reports/rfc_sa2a_002_benchmarks.json` regenerated: `all_passed: true`, `standing: ALIVE`, all 10 benchmarks B1..B10 pass. Root cause of the standing BUILD_BROKEN was never B2 alone: the v26.9.16 runner crashed at the missing `DatalogEngine.compute_closure` before evaluating the rest; the repair (commit 2a204f27) fixed the call plus five latent harness-vs-source drifts unmasked by it (DatalogAtom varargs, IdentityPolicy/ProvenancePolicy fields, ExplorationBudget lanes, AFDE-2604 require_admission defaults, FinalReceipt evidence identity). |
+| Phase H unattended trigger | **ALIVE** (was: BLOCKED:NO_SCHEDULER) | `.github/workflows/phase-h-trigger.yml` (daily cron + dispatch) runs `phase_h_trigger.run_once` against the exact subject; all tick state is redirected outside the tracked tree (`run_once` gained the additive `coverage_state_file` parameter); a local run at release SHA d4faeff9 fired a real solve-and-falsify and left `git status --porcelain src/autofde_lab/fabric` at 0. |
+| SA2A receipts bound to an exact subject | **PARTIAL_ALIVE → ALIVE at refresh** | Qualification receipts regenerated at the exact v26.9.22 subject by the same wave (see `reports/` + `receipts/v26.9.22/`). |
+| SJ-006 folded into this repo's ledger | **ALIVE** | `docs/ecosystem-standing.md` Pass 5 (commit 455cc7b5, merged to master by this wave) now names SA2A/XaaS/zcode/ggen_igniter/Semantic Jira; the row citing the mixed `~/xaas-worktrees/sjira/sj-006` run was rewritten to cite a run inside this repo at the merged SHA. The claim above ("none of them appear in this ledger by name") is therefore historical as of this wave. |
+
+Not claimed: any new external actuation authority. The unattended tick's
+coverage-gap leg stays fail-safe (no ~/xaas on the runner → transient-error
+report, no state persisted, no invocation).

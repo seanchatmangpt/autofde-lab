@@ -1,0 +1,11 @@
+[project]
+name = "wd-fa-semantic-fullstack"
+
+[ontology]
+source = "ontology.ttl"
+
+[templates]
+dir = "templates"
+
+[packs]
+semantic-fullstack-factory-pack = { path = "../../../.marketplace/packs/semantic-fullstack-factory-pack" }
