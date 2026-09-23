@@ -8,7 +8,6 @@ from autofde_lab.fabric.gall import (
     to_hddl_problem,
 )
 
-
 BASE = dict(
     repository="seanchatmangpt/xaas",
     base_sha="b" * 40,
@@ -140,4 +139,6 @@ def test_execution_descriptor_refuses_generic_alive_without_receipt_identity():
     except ValueError as error:
         assert "exact receipt identity" in str(error)
     else:
-        raise AssertionError("generic ALIVE adjacency cannot satisfy XaaS execution admission")
+        raise AssertionError(
+            "generic ALIVE adjacency cannot satisfy XaaS execution admission"
+        )
