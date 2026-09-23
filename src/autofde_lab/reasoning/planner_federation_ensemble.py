@@ -104,7 +104,10 @@ def federate_concurrently(
 
     def _solve_one(name: str) -> Optional[PartialOrder]:
         candidate = solve_with_one_solver(
-            solver_name=name, domain_path=domain_path, problem_path=problem_path, timeout_s=timeout_s,
+            solver_name=name,
+            domain_path=domain_path,
+            problem_path=problem_path,
+            timeout_s=timeout_s,
         )
         if candidate is None:
             return None
@@ -113,7 +116,9 @@ def federate_concurrently(
         except PowlError:
             _LOGGER.warning(
                 "solver %r produced a PartialOrder that failed validate_model; "
-                "excluding it rather than admitting it", name, exc_info=True,
+                "excluding it rather than admitting it",
+                name,
+                exc_info=True,
             )
             return None
         return candidate
@@ -121,7 +126,9 @@ def federate_concurrently(
     if len(solver_names) < 2:
         return {solver_names[0]: _solve_one(solver_names[0])} if solver_names else {}
 
-    node = PartialOrder(children=tuple(Atom(label=name, consequence="READ") for name in solver_names))
+    node = PartialOrder(
+        children=tuple(Atom(label=name, consequence="READ") for name in solver_names)
+    )
     context = ExecutionContext()
 
     def atom_invoker(atom: Atom, ctx: ExecutionContext) -> None:
@@ -131,7 +138,8 @@ def federate_concurrently(
     if recorder is not None:
         trace: ExecutionTrace = execute_with_ocel(
             node,
-            guard_evaluator=lambda name, args: True,  # PartialOrder has no ChoiceGraph -- never consulted
+            guard_evaluator=lambda name,
+            args: True,  # PartialOrder has no ChoiceGraph -- never consulted
             atom_invoker=atom_invoker,
             max_choice_transitions=1,
             max_workers=real_max_workers,
@@ -142,7 +150,8 @@ def federate_concurrently(
     else:
         execute(
             node,
-            guard_evaluator=lambda name, args: True,  # PartialOrder has no ChoiceGraph -- never consulted
+            guard_evaluator=lambda name,
+            args: True,  # PartialOrder has no ChoiceGraph -- never consulted
             atom_invoker=atom_invoker,
             max_choice_transitions=1,
             max_workers=real_max_workers,

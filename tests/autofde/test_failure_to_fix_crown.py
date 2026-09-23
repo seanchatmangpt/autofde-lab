@@ -10,7 +10,9 @@ from autofde_lab.autofde.failure_to_fix_crown import (
 
 
 def observations(*, subject: str = "subject:1", elapsed_ms: float = 10.0):
-    return tuple(StageObservation(stage, elapsed_ms, subject) for stage in REQUIRED_STAGES)
+    return tuple(
+        StageObservation(stage, elapsed_ms, subject) for stage in REQUIRED_STAGES
+    )
 
 
 def test_crown_is_alive_only_with_complete_same_subject_under_budget() -> None:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
+
 from autofde_lab_planner.models import ProbeFault
 
 
@@ -21,7 +22,9 @@ def _to_item_list(data: Any) -> list[dict[str, Any]]:
     return []
 
 
-def parse_container_probes(deployment_item: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
+def parse_container_probes(
+    deployment_item: dict[str, Any] | None,
+) -> dict[str, dict[str, Any]]:
     """Extracts container probes and ports from a Deployment dict."""
     containers_info: dict[str, dict[str, Any]] = {}
     if not isinstance(deployment_item, dict):
@@ -43,8 +46,12 @@ def parse_container_probes(deployment_item: dict[str, Any] | None) -> dict[str, 
             if isinstance(p, dict) and "containerPort" in p
         ]
         containers_info[c_name] = {
-            "livenessProbe": c.get("livenessProbe") if isinstance(c.get("livenessProbe"), dict) else None,
-            "readinessProbe": c.get("readinessProbe") if isinstance(c.get("readinessProbe"), dict) else None,
+            "livenessProbe": c.get("livenessProbe")
+            if isinstance(c.get("livenessProbe"), dict)
+            else None,
+            "readinessProbe": c.get("readinessProbe")
+            if isinstance(c.get("readinessProbe"), dict)
+            else None,
             "ports": ports,
             "index": c_idx,
         }
@@ -77,7 +84,10 @@ def detect_probe_faults(
             for cs in c_statuses
         )
         ready = (
-            all((cs.get("ready", False) if isinstance(cs, dict) else False) for cs in c_statuses)
+            all(
+                (cs.get("ready", False) if isinstance(cs, dict) else False)
+                for cs in c_statuses
+            )
             if c_statuses
             else False
         )
@@ -111,8 +121,16 @@ def detect_probe_faults(
                 if not probe or not isinstance(probe, dict):
                     continue
 
-                http_get = probe.get("httpGet") if isinstance(probe.get("httpGet"), dict) else None
-                tcp_socket = probe.get("tcpSocket") if isinstance(probe.get("tcpSocket"), dict) else None
+                http_get = (
+                    probe.get("httpGet")
+                    if isinstance(probe.get("httpGet"), dict)
+                    else None
+                )
+                tcp_socket = (
+                    probe.get("tcpSocket")
+                    if isinstance(probe.get("tcpSocket"), dict)
+                    else None
+                )
                 initial_delay = probe.get("initialDelaySeconds")
                 period_seconds = probe.get("periodSeconds")
                 failure_threshold = probe.get("failureThreshold")
@@ -141,9 +159,18 @@ def detect_probe_faults(
 
                 # Flag endpoint mismatch if probe path is /healthz and port is 8080,
                 # or if specified probe port does not match container exposed ports
-                if observed_path == "/healthz" and observed_port == 8080 and 8080 not in ports:
+                if (
+                    observed_path == "/healthz"
+                    and observed_port == 8080
+                    and 8080 not in ports
+                ):
                     is_invalid_endpoint = True
-                elif observed_port is not None and isinstance(observed_port, int) and ports and observed_port not in ports:
+                elif (
+                    observed_port is not None
+                    and isinstance(observed_port, int)
+                    and ports
+                    and observed_port not in ports
+                ):
                     is_invalid_endpoint = True
 
                 # Determine if pod metrics indicate fault (unready replicas or restarts)
@@ -192,4 +219,3 @@ def detect_probe_faults(
                     )
 
     return faults
-

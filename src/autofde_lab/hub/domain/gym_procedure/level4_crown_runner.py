@@ -322,7 +322,11 @@ class CrownStanding:
             f"(ALIVE={sorted(self.alive_set())} "
             f"UNKNOWN={sorted(self.unknown_set())} "
             f"NOT_ALIVE={sorted(self.not_alive_set())}"
-            + (f" FOREIGN={sorted(self.foreign_identities())}" if self.foreign_identities() else "")
+            + (
+                f" FOREIGN={sorted(self.foreign_identities())}"
+                if self.foreign_identities()
+                else ""
+            )
             + ")"
         )
 

@@ -80,7 +80,9 @@ def test_astar_computes_cost_optimal_prerequisite_order(career_domain):
             f"cheaper (cost=1.0) equivalent. Plan: {plan}"
         )
         total_cost = sum(facts_by_id[fact_id].cost for fact_id in plan)
-        known_optimal_cost = 1.0 + 1.0 + 1.0  # intuit_automl + agentic_orchestration + intuit_ml_governance
+        known_optimal_cost = (
+            1.0 + 1.0 + 1.0
+        )  # intuit_automl + agentic_orchestration + intuit_ml_governance
         assert total_cost == pytest.approx(known_optimal_cost), (
             f"Plan cost {total_cost} != known-optimal cost {known_optimal_cost}. Plan: {plan}"
         )

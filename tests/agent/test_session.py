@@ -19,13 +19,13 @@ from typing import Any
 
 import pytest
 
+from autofde_lab.agent.epoch import DecisionEpoch
 from autofde_lab.agent.models import EpochStanding
 from autofde_lab.agent.refusals import (
     BLOCKED_ACTION_NODE_UNRESOLVED,
     AgentRefusal,
     AgentRefusalCode,
 )
-from autofde_lab.agent.epoch import DecisionEpoch
 from autofde_lab.agent.session import AgentSession
 from autofde_lab.hub.domain.maze import Maze
 from autofde_lab.hub.domain.maze.maze import Action
@@ -107,6 +107,7 @@ def test_the_receipt_digest_is_reproducible_and_covers_the_bound():
     """Collapses two former items. Reproducibility without bound-sensitivity is
     a constant function and bound-sensitivity without reproducibility is noise,
     so the two halves are asserted against the same fixed ``session_id``."""
+
     def run(bound: ExecutionBound):
         session = _session(
             [Action.up, Action.right], bound=bound, session_id="fixed-session"
@@ -118,7 +119,9 @@ def test_the_receipt_digest_is_reproducible_and_covers_the_bound():
     default, again = run(ExecutionBound()), run(ExecutionBound())
     tighter = run(ExecutionBound(max_activity_fires=4))
 
-    assert default.receipt_sha256 == again.receipt_sha256, "the digest is not reproducible"
+    assert default.receipt_sha256 == again.receipt_sha256, (
+        "the digest is not reproducible"
+    )
     assert default.epochs[0].trace == tighter.epochs[0].trace  # same observed run
     assert default.input_sha256 != tighter.input_sha256
     assert default.receipt_sha256 != tighter.receipt_sha256
@@ -255,9 +258,9 @@ def test_a_superseded_epoch_enables_nothing_and_that_is_a_gate_not_a_mutation():
     superseded = session.epochs[0]
     assert superseded.standing is EpochStanding.SUPERSEDED
     assert superseded.enabled() == frozenset()
-    assert (
-        EpochStanding.SUPERSEDED in DecisionEpoch.TERMINAL_STANDINGS
-    ), "SUPERSEDED must be a terminal standing, not a label"
+    assert EpochStanding.SUPERSEDED in DecisionEpoch.TERMINAL_STANDINGS, (
+        "SUPERSEDED must be a terminal standing, not a label"
+    )
     # the new epoch is unaffected
     assert session.epochs[-1].enabled()
 

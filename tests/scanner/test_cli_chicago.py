@@ -27,14 +27,24 @@ def test_cli_reports_real_replica_mismatch_anomaly():
         "deployments": [
             {
                 "metadata": {"name": "checkout", "namespace": "prod"},
-                "spec": {"replicas": 3, "selector": {"matchLabels": {"app": "checkout"}}},
+                "spec": {
+                    "replicas": 3,
+                    "selector": {"matchLabels": {"app": "checkout"}},
+                },
                 "status": {"readyReplicas": 1},
             }
         ],
         "pods": [
             {
-                "metadata": {"name": "checkout-abc", "namespace": "prod", "labels": {"app": "checkout"}},
-                "status": {"phase": "Running", "conditions": [{"type": "Ready", "status": "True"}]},
+                "metadata": {
+                    "name": "checkout-abc",
+                    "namespace": "prod",
+                    "labels": {"app": "checkout"},
+                },
+                "status": {
+                    "phase": "Running",
+                    "conditions": [{"type": "Ready", "status": "True"}],
+                },
             }
         ],
     }

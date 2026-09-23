@@ -25,13 +25,16 @@ class Frequency:
 
     def __post_init__(self) -> None:
         if not isinstance(self.min, int) or isinstance(self.min, bool):
-            raise PowlError(PowlRefusal.INVALID_FREQUENCY, f"min must be int, got {self.min!r}")
+            raise PowlError(
+                PowlRefusal.INVALID_FREQUENCY, f"min must be int, got {self.min!r}"
+            )
         if self.min < 0:
             raise PowlError(PowlRefusal.INVALID_FREQUENCY, f"min={self.min} < 0")
         if self.max is not None:
             if not isinstance(self.max, int) or isinstance(self.max, bool):
                 raise PowlError(
-                    PowlRefusal.INVALID_FREQUENCY, f"max must be int or None, got {self.max!r}"
+                    PowlRefusal.INVALID_FREQUENCY,
+                    f"max must be int or None, got {self.max!r}",
                 )
             if self.max < self.min:
                 raise PowlError(

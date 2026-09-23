@@ -26,8 +26,8 @@ def test_abstract_raw_case_extracts_deployment_and_namespace_into_placeholders()
     )
     raw_mitigation_commands = (
         "kubectl patch deployment social-network-backend -n social-network "
-        "-p '{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":"
-        "\"backend\",\"readinessProbe\":{\"initialDelaySeconds\":30}}]}}}}'",
+        '-p \'{"spec":{"template":{"spec":{"containers":[{"name":'
+        '"backend","readinessProbe":{"initialDelaySeconds":30}}]}}}}\'',
     )
     observed_symptoms = frozenset(
         {"deployment.replicas_ready=0", "probe.readiness=failing"}
@@ -50,9 +50,7 @@ def test_abstract_raw_case_extracts_deployment_and_namespace_into_placeholders()
     # No trace of the original concrete names anywhere in the template.
     assert "social-network-backend" not in case.diagnosis_template
     assert "social-network-backend" not in "\n".join(case.mitigation_template)
-    assert "social-network" not in case.diagnosis_template.replace(
-        "{{namespace}}", ""
-    )
+    assert "social-network" not in case.diagnosis_template.replace("{{namespace}}", "")
 
     # Placeholders present instead.
     assert "{{deployment}}" in case.diagnosis_template
@@ -78,9 +76,7 @@ def test_abstract_raw_case_abstracts_space_separated_service_reference():
         "service billing-api in namespace payments is not receiving traffic; "
         "endpoints list is empty."
     )
-    raw_mitigation_commands = (
-        "kubectl describe service billing-api -n payments",
-    )
+    raw_mitigation_commands = ("kubectl describe service billing-api -n payments",)
     observed_symptoms = frozenset({"service.endpoints=empty"})
 
     case = abstract_raw_case(
@@ -118,8 +114,7 @@ def test_rebind_template_substitutes_new_bindings_for_a_different_app():
     template_case = AbstractCase(
         symptom_signature=frozenset({"deployment.replicas_ready=0"}),
         diagnosis_template=(
-            "deployment/{{deployment}} in namespace {{namespace}} has 0 "
-            "replicas ready."
+            "deployment/{{deployment}} in namespace {{namespace}} has 0 replicas ready."
         ),
         mitigation_template=(
             "kubectl rollout restart deployment/{{deployment}} -n {{namespace}}",
@@ -220,8 +215,8 @@ def _readiness_case() -> AbstractCase:
         ),
         mitigation_template=(
             "kubectl patch deployment {{deployment}} -n {{namespace}} "
-            "--type=json -p '[{\"op\":\"replace\",\"path\":\"/spec/template/spec/"
-            "containers/0/readinessProbe/initialDelaySeconds\",\"value\":30}]'",
+            '--type=json -p \'[{"op":"replace","path":"/spec/template/spec/'
+            'containers/0/readinessProbe/initialDelaySeconds","value":30}]\'',
         ),
         placeholder_bindings_schema={
             "deployment": "k8s_object_name",

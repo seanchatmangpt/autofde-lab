@@ -58,7 +58,11 @@ from autofde_lab.planner_league import (
     PolicySpec,
 )
 
-from .laboratory import ArchitectureCandidate, FalsificationResult, FalsificationStanding
+from .laboratory import (
+    ArchitectureCandidate,
+    FalsificationResult,
+    FalsificationStanding,
+)
 
 __all__ = [
     "ExplorationPayoffOutcome",
@@ -186,7 +190,9 @@ def admit_exploration_candidate_payoff(
             reason=f"constructor:{constructor_compat.reason}",
         )
 
-    falsifier_compat = league.compatibility(domain, falsifier_planner_id, opponent_role_id)
+    falsifier_compat = league.compatibility(
+        domain, falsifier_planner_id, opponent_role_id
+    )
     if not falsifier_compat.compatible:
         return ExplorationPayoffOutcome(
             observation=None,
@@ -239,12 +245,16 @@ def admit_exploration_candidate_payoff(
 
     left_score, right_score = scores
     try:
-        observation = PayoffObservation(match, left_score, right_score, receipt_id=receipt_id)
+        observation = PayoffObservation(
+            match, left_score, right_score, receipt_id=receipt_id
+        )
     except ValueError as exc:
         # Defensive only -- see docstring. Never bypassed: this is the same
         # real PayoffObservation.__post_init__ fail-closed check, not a
         # re-derived copy of its logic.
-        return ExplorationPayoffOutcome(observation=None, standing="REFUSED", reason=str(exc))
+        return ExplorationPayoffOutcome(
+            observation=None, standing="REFUSED", reason=str(exc)
+        )
 
     hypergraph.add(observation)
     return ExplorationPayoffOutcome(

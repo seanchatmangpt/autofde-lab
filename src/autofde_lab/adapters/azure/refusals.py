@@ -66,7 +66,9 @@ class Refusal:
         if not self.methods_used:
             raise ValueError("Refusal.methods_used must be non-empty.")
         if not self.missing_prerequisite:
-            raise ValueError("Refusal.missing_prerequisite must name the exact absent thing.")
+            raise ValueError(
+                "Refusal.missing_prerequisite must name the exact absent thing."
+            )
 
     @property
     def granted(self) -> None:

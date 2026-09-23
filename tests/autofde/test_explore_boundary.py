@@ -23,8 +23,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from project_identity import PYTHON_NAMESPACE  # noqa: E402
 from pathlib import Path
+
+from project_identity import PYTHON_NAMESPACE  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC = REPO_ROOT / "src" / "autofde_lab"

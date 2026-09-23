@@ -17,10 +17,10 @@ in this file.
 
 from __future__ import annotations
 
-import pytest
-
 import threading
 import time
+
+import pytest
 
 from autofde_lab.powl.algebra import (
     Atom,
@@ -86,10 +86,17 @@ def test_causal_closure_branch_reached_immediately() -> None:
         calls.append(atom.label)
         return "ok"
 
-    trace = execute(graph, guard_evaluator=evaluator, atom_invoker=invoker, max_choice_transitions=10)
+    trace = execute(
+        graph,
+        guard_evaluator=evaluator,
+        atom_invoker=invoker,
+        max_choice_transitions=10,
+    )
 
     assert calls == ["commit"]
-    assert trace.choice_transitions_taken == 3  # Start->decide, decide->commit, commit->End
+    assert (
+        trace.choice_transitions_taken == 3
+    )  # Start->decide, decide->commit, commit->End
 
 
 def test_overdetermined_and_underdetermined_both_route_to_discriminate() -> None:
@@ -98,7 +105,9 @@ def test_overdetermined_and_underdetermined_both_route_to_discriminate() -> None
         calls: list[str] = []
         rounds = {"n": 0}
 
-        def evaluator(name: str, _args: dict, predicate: str = predicate, rounds: dict = rounds) -> bool:
+        def evaluator(
+            name: str, _args: dict, predicate: str = predicate, rounds: dict = rounds
+        ) -> bool:
             # Discriminate once, then close, proving the loop-back to
             # "decide" (not Start) really re-enters the choice.
             if rounds["n"] == 0:
@@ -111,7 +120,12 @@ def test_overdetermined_and_underdetermined_both_route_to_discriminate() -> None
                 rounds["n"] += 1
             return "ok"
 
-        execute(graph, guard_evaluator=evaluator, atom_invoker=invoker, max_choice_transitions=10)
+        execute(
+            graph,
+            guard_evaluator=evaluator,
+            atom_invoker=invoker,
+            max_choice_transitions=10,
+        )
 
         assert calls == ["discriminate", "commit"], f"failed for predicate={predicate}"
 
@@ -132,7 +146,12 @@ def test_exhausted_branch_loops_back_and_eventually_closes() -> None:
             rounds["n"] += 1
         return "ok"
 
-    execute(graph, guard_evaluator=evaluator, atom_invoker=invoker, max_choice_transitions=10)
+    execute(
+        graph,
+        guard_evaluator=evaluator,
+        atom_invoker=invoker,
+        max_choice_transitions=10,
+    )
 
     assert calls == ["regenerate", "commit"]
 
@@ -152,7 +171,12 @@ def test_no_guard_matched_and_no_else_edge_refuses() -> None:
         return "ok"
 
     with pytest.raises(PowlError) as excinfo:
-        execute(graph, guard_evaluator=evaluator, atom_invoker=invoker, max_choice_transitions=10)
+        execute(
+            graph,
+            guard_evaluator=evaluator,
+            atom_invoker=invoker,
+            max_choice_transitions=10,
+        )
 
     assert excinfo.value.refusal == PowlRefusal.NO_GUARD_MATCHED
 
@@ -167,7 +191,12 @@ def test_transition_budget_exhausted_refuses_rather_than_hanging() -> None:
         return "ok"
 
     with pytest.raises(PowlError) as excinfo:
-        execute(graph, guard_evaluator=evaluator, atom_invoker=invoker, max_choice_transitions=5)
+        execute(
+            graph,
+            guard_evaluator=evaluator,
+            atom_invoker=invoker,
+            max_choice_transitions=5,
+        )
 
     assert excinfo.value.refusal == PowlRefusal.TRANSITION_BUDGET_EXHAUSTED
 
@@ -198,7 +227,12 @@ def test_execute_refuses_an_unadmitted_model_before_walking_anything() -> None:
         raise AssertionError("atom_invoker must not be called for an unadmitted model")
 
     with pytest.raises(PowlError) as excinfo:
-        execute(graph, guard_evaluator=lambda n, a: True, atom_invoker=never_call, max_choice_transitions=10)
+        execute(
+            graph,
+            guard_evaluator=lambda n, a: True,
+            atom_invoker=never_call,
+            max_choice_transitions=10,
+        )
 
     assert excinfo.value.refusal == PowlRefusal.AMBIGUOUS_CHOICE_GUARD
 
@@ -213,7 +247,9 @@ def test_partial_order_walks_in_a_real_deterministic_topological_order() -> None
 
     node = PartialOrder(
         children=(Atom(label="a"), Atom(label="b"), Atom(label="c")),
-        order=frozenset([OrderEdge(NodeId(0), NodeId(1)), OrderEdge(NodeId(1), NodeId(2))]),
+        order=frozenset(
+            [OrderEdge(NodeId(0), NodeId(1)), OrderEdge(NodeId(1), NodeId(2))]
+        ),
     )
     calls: list[str] = []
 
@@ -221,7 +257,12 @@ def test_partial_order_walks_in_a_real_deterministic_topological_order() -> None
         calls.append(atom.label)
         return "ok"
 
-    execute(node, guard_evaluator=lambda n, a: True, atom_invoker=invoker, max_choice_transitions=10)
+    execute(
+        node,
+        guard_evaluator=lambda n, a: True,
+        atom_invoker=invoker,
+        max_choice_transitions=10,
+    )
 
     assert calls == ["a", "b", "c"]
 
@@ -235,7 +276,10 @@ def test_atom_consequence_is_visible_to_the_invoker_and_in_the_trace() -> None:
     from autofde_lab.powl.algebra import OrderEdge
 
     node = PartialOrder(
-        children=(Atom(label="read_step", consequence="READ"), Atom(label="do_step", consequence="DO")),
+        children=(
+            Atom(label="read_step", consequence="READ"),
+            Atom(label="do_step", consequence="DO"),
+        ),
         order=frozenset([OrderEdge(NodeId(0), NodeId(1))]),
     )
     seen_consequences: list[str] = []
@@ -244,7 +288,12 @@ def test_atom_consequence_is_visible_to_the_invoker_and_in_the_trace() -> None:
         seen_consequences.append(atom.consequence)
         return "ok"
 
-    trace = execute(node, guard_evaluator=lambda n, a: True, atom_invoker=invoker, max_choice_transitions=10)
+    trace = execute(
+        node,
+        guard_evaluator=lambda n, a: True,
+        atom_invoker=invoker,
+        max_choice_transitions=10,
+    )
 
     assert seen_consequences == ["READ", "DO"]
     atom_steps = [s for s in trace.steps if s.kind == "Atom"]
@@ -270,10 +319,17 @@ def test_mandatory_minimum_repetitions_run_without_a_repeat_evaluator() -> None:
         calls.append(atom.label)
         return "ok"
 
-    trace = execute(node, guard_evaluator=lambda n, a: True, atom_invoker=invoker, max_choice_transitions=10)
+    trace = execute(
+        node,
+        guard_evaluator=lambda n, a: True,
+        atom_invoker=invoker,
+        max_choice_transitions=10,
+    )
 
     assert calls == ["a", "b", "a", "b"]
-    labels_and_reps = [(s.label, s.repetition_index) for s in trace.steps if s.kind == "Atom"]
+    labels_and_reps = [
+        (s.label, s.repetition_index) for s in trace.steps if s.kind == "Atom"
+    ]
     assert labels_and_reps == [("a", 0), ("b", 0), ("a", 1), ("b", 1)]
 
 
@@ -311,7 +367,9 @@ def test_repeat_evaluator_decides_optional_repetitions_beyond_the_minimum() -> N
 # ---------------------------------------------------------------------------
 
 
-def test_max_workers_greater_than_one_runs_a_ready_set_on_real_distinct_threads() -> None:
+def test_max_workers_greater_than_one_runs_a_ready_set_on_real_distinct_threads() -> (
+    None
+):
     """Two atoms with no order edge between them are one real ready set --
     with `max_workers=2` they run on two genuinely distinct OS threads
     (proven by real `threading.get_ident()` values captured inside the real
@@ -326,7 +384,13 @@ def test_max_workers_greater_than_one_runs_a_ready_set_on_real_distinct_threads(
             thread_ids[atom.label] = threading.get_ident()
         return "ok"
 
-    trace = execute(node, guard_evaluator=lambda n, a: True, atom_invoker=invoker, max_choice_transitions=10, max_workers=2)
+    trace = execute(
+        node,
+        guard_evaluator=lambda n, a: True,
+        atom_invoker=invoker,
+        max_choice_transitions=10,
+        max_workers=2,
+    )
 
     assert len(thread_ids) == 2
     assert thread_ids["a"] != thread_ids["b"]
@@ -343,7 +407,12 @@ def test_max_workers_default_of_one_matches_the_original_serial_behavior() -> No
         thread_ids.add(threading.get_ident())
         return "ok"
 
-    execute(node, guard_evaluator=lambda n, a: True, atom_invoker=invoker, max_choice_transitions=10)
+    execute(
+        node,
+        guard_evaluator=lambda n, a: True,
+        atom_invoker=invoker,
+        max_choice_transitions=10,
+    )
 
     assert thread_ids == {threading.get_ident()}  # ran on the caller's own thread
 
@@ -353,7 +422,9 @@ def test_max_workers_default_of_one_matches_the_original_serial_behavior() -> No
 # ---------------------------------------------------------------------------
 
 
-def test_atom_invocation_failure_is_a_typed_chained_refusal_with_a_real_partial_trace() -> None:
+def test_atom_invocation_failure_is_a_typed_chained_refusal_with_a_real_partial_trace() -> (
+    None
+):
     node = PartialOrder(
         children=(Atom(label="a"), Atom(label="b")),
         order=frozenset([OrderEdge(NodeId(0), NodeId(1))]),
@@ -365,7 +436,12 @@ def test_atom_invocation_failure_is_a_typed_chained_refusal_with_a_real_partial_
         return "ok"
 
     with pytest.raises(PowlError) as excinfo:
-        execute(node, guard_evaluator=lambda n, a: True, atom_invoker=invoker, max_choice_transitions=10)
+        execute(
+            node,
+            guard_evaluator=lambda n, a: True,
+            atom_invoker=invoker,
+            max_choice_transitions=10,
+        )
 
     assert excinfo.value.refusal == PowlRefusal.ATOM_INVOCATION_FAILED
     assert isinstance(excinfo.value.__cause__, RuntimeError)  # chained, never swallowed
@@ -385,7 +461,9 @@ def test_atom_invocation_failure_is_a_typed_chained_refusal_with_a_real_partial_
 def test_resume_from_checkpoint_skips_already_completed_top_level_children() -> None:
     node = PartialOrder(
         children=(Atom(label="a"), Atom(label="b"), Atom(label="c")),
-        order=frozenset([OrderEdge(NodeId(0), NodeId(1)), OrderEdge(NodeId(1), NodeId(2))]),
+        order=frozenset(
+            [OrderEdge(NodeId(0), NodeId(1)), OrderEdge(NodeId(1), NodeId(2))]
+        ),
     )
     checkpoints = []
     first_calls: list[str] = []
@@ -428,13 +506,24 @@ def test_resume_from_checkpoint_skips_already_completed_top_level_children() -> 
     # never-attempted "c" run for real on this second call.
     assert second_calls == ["b", "c"]
     labels = [s.label for s in trace.steps if s.kind == "Atom"]
-    assert labels == ["a", "b", "b", "c"]  # full audit trail: original a, failed b, resumed b, c
+    assert labels == [
+        "a",
+        "b",
+        "b",
+        "c",
+    ]  # full audit trail: original a, failed b, resumed b, c
 
 
 def test_resume_against_a_structurally_different_node_is_refused() -> None:
     node = PartialOrder(children=(Atom(label="a"), Atom(label="b")))
     checkpoints = []
-    execute(node, guard_evaluator=lambda n, a: True, atom_invoker=lambda a: "ok", max_choice_transitions=10, on_step=checkpoints.append)
+    execute(
+        node,
+        guard_evaluator=lambda n, a: True,
+        atom_invoker=lambda a: "ok",
+        max_choice_transitions=10,
+        on_step=checkpoints.append,
+    )
     checkpoint = checkpoints[-1]
 
     different_node = PartialOrder(children=(Atom(label="x"), Atom(label="y")))
@@ -459,7 +548,12 @@ def test_resume_against_a_structurally_different_node_is_refused() -> None:
 def test_execution_context_is_threaded_through_to_context_aware_callbacks() -> None:
     node = ChoiceGraph(
         children=(Start(), End(), Atom(label="commit")),
-        edges=frozenset([ChoiceGraphEdge(NodeId(0), NodeId(2), guard=Guard("go")), ChoiceGraphEdge(NodeId(2), NodeId(1))]),
+        edges=frozenset(
+            [
+                ChoiceGraphEdge(NodeId(0), NodeId(2), guard=Guard("go")),
+                ChoiceGraphEdge(NodeId(2), NodeId(1)),
+            ]
+        ),
         start=0,
         end=1,
     )
@@ -472,7 +566,13 @@ def test_execution_context_is_threaded_through_to_context_aware_callbacks() -> N
     def invoker(atom: Atom, ctx: ExecutionContext) -> str:
         return f"round={ctx.attributes['round']}"
 
-    trace = execute(node, guard_evaluator=evaluator, atom_invoker=invoker, max_choice_transitions=10, context=context)
+    trace = execute(
+        node,
+        guard_evaluator=evaluator,
+        atom_invoker=invoker,
+        max_choice_transitions=10,
+        context=context,
+    )
 
     assert context.attributes["round"] == 1
     atom_step = next(s for s in trace.steps if s.kind == "Atom")
@@ -481,7 +581,9 @@ def test_execution_context_is_threaded_through_to_context_aware_callbacks() -> N
     assert [s.label for s in context.history if s.kind == "Atom"] == ["commit"]
 
 
-def test_existing_two_and_one_arg_callbacks_are_unaffected_by_an_unused_context() -> None:
+def test_existing_two_and_one_arg_callbacks_are_unaffected_by_an_unused_context() -> (
+    None
+):
     """Backward compatibility: a caller that supplies `context` but keeps
     2-arg/1-arg callbacks (arity not extended) is never forced to accept it."""
     node = PartialOrder(children=(Atom(label="a"), Atom(label="b")))
@@ -495,6 +597,12 @@ def test_existing_two_and_one_arg_callbacks_are_unaffected_by_an_unused_context(
         calls.append(atom.label)
         return "ok"
 
-    execute(node, guard_evaluator=evaluator, atom_invoker=invoker, max_choice_transitions=10, context=context)
+    execute(
+        node,
+        guard_evaluator=evaluator,
+        atom_invoker=invoker,
+        max_choice_transitions=10,
+        context=context,
+    )
 
     assert calls == ["a", "b"]

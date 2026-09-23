@@ -77,9 +77,11 @@ def test_missing_source_refuses_construction():
 
 
 def test_observed_true_without_evidence_ref_refuses_construction():
-    """"Why is replay_valid true?" must answer with an artifact, not a bool."""
+    """ "Why is replay_valid true?" must answer with an artifact, not a bool."""
     with pytest.raises(ValueError, match="OBSERVED_TRUE_FACTOR_REQUIRES_EVIDENCE_REF"):
-        CrownFactor(name="replay_valid", state=FactorState.OBSERVED_TRUE, source="ledger")
+        CrownFactor(
+            name="replay_valid", state=FactorState.OBSERVED_TRUE, source="ledger"
+        )
 
 
 def test_non_evidence_states_must_say_why():
@@ -112,7 +114,11 @@ def test_factor_omitted_from_record_is_not_satisfied():
 
     conj = FactorConjunction(required=LEVEL4_REQUIRED_FACTORS, factors=factors)
     assert conj.is_alive() is False
-    assert set(conj.missing()) == {"replay_ran", "replay_valid", "zero_replay_mismatches"}
+    assert set(conj.missing()) == {
+        "replay_ran",
+        "replay_valid",
+        "zero_replay_mismatches",
+    }
     # And the omission is legible in the report rather than silently absent.
     assert any("ABSENT" in line for line in conj.report())
 

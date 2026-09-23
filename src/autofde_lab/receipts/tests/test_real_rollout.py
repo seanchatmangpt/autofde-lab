@@ -19,9 +19,10 @@ from autofde_lab.builders.domain import UnrestrictedActions
 from autofde_lab.hub.solver.p_astar import Astar
 from autofde_lab.hub.space.gym import EnumSpace, ListSpace
 from autofde_lab.receipts.admission import admit_typed
-from autofde_lab.receipts.broker import Actuator, Broker, PostconditionVerifier
+from autofde_lab.receipts.broker import Broker, PostconditionVerifier
 from autofde_lab.receipts.planning_types import PlanStepOutcome
-from autofde_lab.receipts.replay import GallStatus, verify as replay_verify
+from autofde_lab.receipts.replay import GallStatus
+from autofde_lab.receipts.replay import verify as replay_verify
 from autofde_lab.standing import Blocked
 from autofde_lab.utils import rollout
 
@@ -115,8 +116,13 @@ def _solve_and_rollout() -> list:
         solver.solve()
         domain = _domain_factory()
         episodes = rollout(
-            domain, solver, from_memory=START, max_steps=20, render=False,
-            verbose=False, return_episodes=True,
+            domain,
+            solver,
+            from_memory=START,
+            max_steps=20,
+            render=False,
+            verbose=False,
+            return_episodes=True,
         )
     return episodes[0]
 

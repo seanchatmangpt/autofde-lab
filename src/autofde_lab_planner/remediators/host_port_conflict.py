@@ -28,7 +28,9 @@ def decide_host_port_conflict_remediation_commands(
             f'-p=\'[{{"op": "remove", "path": "{path}"}}]\''
         )
         commands.append(cmd)
-        commands.append(f"kubectl rollout restart deployment {f.deployment_name} -n {ns}")
+        commands.append(
+            f"kubectl rollout restart deployment {f.deployment_name} -n {ns}"
+        )
 
         if f.deployment_name not in affected_deployments:
             affected_deployments.append(f.deployment_name)

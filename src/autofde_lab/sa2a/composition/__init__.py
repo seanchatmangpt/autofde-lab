@@ -12,8 +12,15 @@ the SHA/digest the caller declares, not independently verifying it over the netw
 
 from __future__ import annotations
 
-from autofde_lab.sa2a.composition.exact_subject import ArtifactRef, ExactSubject, RepositoryRef
-from autofde_lab.sa2a.composition.resolver import SubjectResolutionError, SubjectResolver
+from autofde_lab.sa2a.composition.exact_subject import (
+    ArtifactRef,
+    ExactSubject,
+    RepositoryRef,
+)
+from autofde_lab.sa2a.composition.resolver import (
+    SubjectResolutionError,
+    SubjectResolver,
+)
 
 __all__ = [
     "ArtifactRef",

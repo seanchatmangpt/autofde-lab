@@ -26,7 +26,7 @@ into the same PDDL text a human would have written by hand.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import rdflib
 from rdflib import Graph
@@ -200,7 +200,9 @@ def _literal_str(graph: Graph, subj, pred) -> str:
     return str(val)
 
 
-def _parse_ordered(graph: Graph, subj, list_pred, index_pred, name_pred, type_pred, type_names):
+def _parse_ordered(
+    graph: Graph, subj, list_pred, index_pred, name_pred, type_pred, type_names
+):
     """Parse an ordered pd:hasParameter-style list off `subj`."""
     entries = []
     for node in graph.objects(subj, list_pred):
@@ -256,8 +258,13 @@ def parse_domain(graph: Graph, domain_iri) -> Domain:
     for pnode in graph.objects(domain_iri, PD.hasPredicate):
         pname = _literal_str(graph, pnode, PD.predicateName)
         params = _parse_ordered(
-            graph, pnode, PD.hasParameter, PD.parameterIndex,
-            PD.parameterName, PD.parameterType, type_names,
+            graph,
+            pnode,
+            PD.hasParameter,
+            PD.parameterIndex,
+            PD.parameterName,
+            PD.parameterType,
+            type_names,
         )
         predicates.append(
             PredicateDecl(
@@ -272,8 +279,13 @@ def parse_domain(graph: Graph, domain_iri) -> Domain:
     for anode in graph.objects(domain_iri, PD.hasAction):
         aname = _literal_str(graph, anode, PD.actionName)
         params = _parse_ordered(
-            graph, anode, PD.hasParameter, PD.parameterIndex,
-            PD.parameterName, PD.parameterType, type_names,
+            graph,
+            anode,
+            PD.hasParameter,
+            PD.parameterIndex,
+            PD.parameterName,
+            PD.parameterType,
+            type_names,
         )
         actions.append(
             ActionDecl(

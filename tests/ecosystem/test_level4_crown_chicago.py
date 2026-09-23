@@ -117,7 +117,9 @@ def real_execution_result(tmp_path_factory) -> dict:
 
 
 @requires_gymact
-def test_typed_state_preserves_continuous_dimension_as_unrepresentable(real_probe_record):
+def test_typed_state_preserves_continuous_dimension_as_unrepresentable(
+    real_probe_record,
+):
     observation = _observation_from_facts(real_probe_record["observed_pre_facts"])
     # The REAL observation shape, not an invented one.
     assert set(observation) == {"counter", "target", "reward", "solved"}, observation
@@ -161,7 +163,9 @@ def test_causal_refinement_recovers_minimal_precondition():
     assert domain.actions["unlock"].unresolved_semantics is True
 
     # Probe 1: hold {B, C}, drop A -> still succeeds => A is not causal.
-    domain = refine_from_probe(domain, "unlock", frozenset({"B", "C"}), "A", succeeded=True)
+    domain = refine_from_probe(
+        domain, "unlock", frozenset({"B", "C"}), "A", succeeded=True
+    )
     assert domain.actions["unlock"].preconditions == frozenset({"B", "C"})
 
     # Probe 2: hold {B}, drop C -> still succeeds => C is not causal.
@@ -216,13 +220,21 @@ def test_planner_federation_classifies_real_registered_solvers():
 
 def test_multiple_planners_independently_agree():
     recipe = _counter_recipe()
-    supported = {c.name for c in classify_registered_solvers(recipe) if c.status == "SUPPORTED"}
-    names = [n for n in ("Astar", "AOstar", "LRTAstar", "ILAOstar", "IDAstar") if n in supported]
+    supported = {
+        c.name for c in classify_registered_solvers(recipe) if c.status == "SUPPORTED"
+    }
+    names = [
+        n
+        for n in ("Astar", "AOstar", "LRTAstar", "ILAOstar", "IDAstar")
+        if n in supported
+    ]
     assert "Astar" in names and len(names) >= 3, sorted(supported)
 
     attempts = run_federation(recipe, names, timeout_s=20.0)
     candidates = [a for a in attempts if a.outcome == "PLAN_CANDIDATE"]
-    assert len(candidates) >= 3, [(a.planner_identity, a.outcome, a.detail) for a in attempts]
+    assert len(candidates) >= 3, [
+        (a.planner_identity, a.outcome, a.detail) for a in attempts
+    ]
 
     plans: dict[tuple[str, ...], int] = {}
     for a in candidates:
@@ -262,7 +274,11 @@ def test_multiple_planners_independently_agree():
 def test_advisory_output_cannot_actuate(advisory, tmp_path: Path):
     with pytest.raises(AdvisoryAuthorityRefused) as excinfo:
         commit_and_execute(
-            advisory, "cube_counter", {"target": 3}, {"counter": 3}, tmp_path / "actuation"
+            advisory,
+            "cube_counter",
+            {"target": 3},
+            {"counter": 3},
+            tmp_path / "actuation",
         )
     assert "ADVISORY_AUTHORITY_USED_AS_BEARER" in str(excinfo.value)
     # Refusal happened before any actuation artifact was created.
@@ -288,13 +304,17 @@ def test_dangling_ocel_object_reference_is_detected():
         ],
     }
     violations = validate_ocel_referential_integrity(log)
-    assert any(v.startswith("DANGLING_OBJECT_REFERENCE:") for v in violations), violations
+    assert any(v.startswith("DANGLING_OBJECT_REFERENCE:") for v in violations), (
+        violations
+    )
     assert "ep-MISSING" in " ".join(violations)
 
 
 @requires_gymact
 def test_real_ocel_log_has_zero_referential_violations(real_execution_result):
-    assert real_execution_result["ocel_valid"] is True, real_execution_result.get("ocel_error")
+    assert real_execution_result["ocel_valid"] is True, real_execution_result.get(
+        "ocel_error"
+    )
     violations = validate_ocel_referential_integrity(real_execution_result["ocel"])
     assert violations == [], violations
     assert real_execution_result["n_receipts"] > 0

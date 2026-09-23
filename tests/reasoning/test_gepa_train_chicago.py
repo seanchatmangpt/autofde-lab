@@ -44,12 +44,22 @@ def test_build_trainset_never_reuses_the_real_vendored_names() -> None:
     """The anti-memorization property this module exists to provide: no
     real sregym service/app name from the cited vendored source appears in
     the generated trainset's text."""
-    real_vendored_names = ("geo", "hotel_reservation", "social_network", "astronomy_shop", "product-catalog")
+    real_vendored_names = (
+        "geo",
+        "hotel_reservation",
+        "social_network",
+        "astronomy_shop",
+        "product-catalog",
+    )
     trainset = build_trainset(seed=2, n_per_template=2)
 
     for example in trainset:
         haystack = " ".join(
-            [example.symptom_description, example.observed_resource_state, example.faked_component]
+            [
+                example.symptom_description,
+                example.observed_resource_state,
+                example.faked_component,
+            ]
         ).lower()
         for real_name in real_vendored_names:
             assert real_name.replace("_", "-") not in haystack.replace("_", "-")
@@ -60,7 +70,9 @@ def test_build_trainset_is_deterministic_given_the_same_seed() -> None:
     second = build_trainset(seed=7, n_per_template=1)
 
     assert [ex.faked_component for ex in first] == [ex.faked_component for ex in second]
-    assert [ex.observed_resource_state for ex in first] == [ex.observed_resource_state for ex in second]
+    assert [ex.observed_resource_state for ex in first] == [
+        ex.observed_resource_state for ex in second
+    ]
 
 
 def test_build_trainset_different_seeds_produce_different_names() -> None:
@@ -99,7 +111,9 @@ def test_metric_scores_partial_marks_and_names_missing_terms() -> None:
         fault_id=template.fault_id,
         diagnostic_keywords=template.diagnostic_keywords,
     )
-    prediction = dspy.Prediction(root_cause="Pods are stuck in a crashloop for unknown reasons.")
+    prediction = dspy.Prediction(
+        root_cause="Pods are stuck in a crashloop for unknown reasons."
+    )
 
     result = metric_with_feedback(example, prediction)
 
@@ -113,7 +127,9 @@ def test_metric_never_rewards_copying_the_faked_component_name_alone() -> None:
     the metric grades diagnostic content, not name-matching."""
     trainset = build_trainset(seed=3, n_per_template=1)
     example = trainset[0]
-    prediction = dspy.Prediction(root_cause=f"Something is wrong with {example.faked_component}.")
+    prediction = dspy.Prediction(
+        root_cause=f"Something is wrong with {example.faked_component}."
+    )
 
     result = metric_with_feedback(example, prediction)
 
@@ -154,7 +170,9 @@ def test_metric_with_feedback_is_reusable_against_reasoning_only_prediction() ->
     Prediction shaped exactly like SreTroubleshootingReasoningOnly.forward()'s
     real return value, not DiagnoseKubernetesFault's."""
     template = next(t for t in FAULT_TEMPLATES if t.fault_id == "incorrect_image")
-    example = dspy.Example(fault_id=template.fault_id, diagnostic_keywords=template.diagnostic_keywords)
+    example = dspy.Example(
+        fault_id=template.fault_id, diagnostic_keywords=template.diagnostic_keywords
+    )
     prediction = dspy.Prediction(
         root_cause="the deployment pulls a non-existent image tag causing ImagePullBackOff",
         confidence=80,
@@ -208,7 +226,9 @@ def test_live_gepa_compile_produces_a_real_dspy_module() -> None:
     task model and the reflection model. Kept deliberately tiny
     (n_per_template=1, auto='light') to bound real API cost."""
     task_lm = dspy.LM("groq/openai/gpt-oss-20b", api_key=_GROQ_API_KEY, cache=False)
-    reflection_lm = dspy.LM("groq/openai/gpt-oss-20b", api_key=_GROQ_API_KEY, cache=False, temperature=1.0)
+    reflection_lm = dspy.LM(
+        "groq/openai/gpt-oss-20b", api_key=_GROQ_API_KEY, cache=False, temperature=1.0
+    )
 
     compiled = run_gepa_optimization(
         seed=5,
@@ -228,9 +248,15 @@ def test_live_gepa_compile_for_troubleshooting_pipeline_produces_real_module() -
     """Real, small, bounded end-to-end: a real dspy.GEPA pass compiles the
     multi-stage SreTroubleshootingReasoningOnly program against the same
     real offline trainset. Kept tiny (n_per_template=1, auto='light')."""
-    task_lm = dspy.LM("groq/openai/gpt-oss-120b", api_key=_GROQ_API_KEY, cache=False, max_tokens=16000)
+    task_lm = dspy.LM(
+        "groq/openai/gpt-oss-120b", api_key=_GROQ_API_KEY, cache=False, max_tokens=16000
+    )
     reflection_lm = dspy.LM(
-        "groq/openai/gpt-oss-120b", api_key=_GROQ_API_KEY, cache=False, temperature=1.0, max_tokens=16000
+        "groq/openai/gpt-oss-120b",
+        api_key=_GROQ_API_KEY,
+        cache=False,
+        temperature=1.0,
+        max_tokens=16000,
     )
 
     compiled = run_gepa_optimization_for_troubleshooting_pipeline(

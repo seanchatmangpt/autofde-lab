@@ -120,7 +120,9 @@ def test_2_context_dependent_dimension_is_refused_not_claimed(typed_domain):
 
     # And it is genuinely NOT applied: one increment from the real initial
     # state leaves `solved` exactly as observed, never flipped to True.
-    stepped = typed_domain.actions["increment"].apply({"counter": 0, "target": TARGET, "solved": False})
+    stepped = typed_domain.actions["increment"].apply(
+        {"counter": 0, "target": TARGET, "solved": False}
+    )
     assert stepped["counter"] == 1
     assert stepped["solved"] is False
 
@@ -169,7 +171,9 @@ def test_4_discovery_surface_exposes_action_names_only(tmp_path: Path):
     leaked = [
         k
         for k in record
-        if any(t in k.lower() for t in ("precond", "effect", "cost", "goal", "capabilit"))
+        if any(
+            t in k.lower() for t in ("precond", "effect", "cost", "goal", "capabilit")
+        )
     ]
     assert leaked == [], f"discovery leaked declared semantics: {leaked}"
     # What IS returned is observation only -- real typed pre/post state.
@@ -256,7 +260,11 @@ def test_7_advisory_output_cannot_actuate(advisory, tmp_path: Path):
     assert not isinstance(advisory, PowlCommitment)
     with pytest.raises(AdvisoryAuthorityRefused) as excinfo:
         commit_and_execute(
-            advisory, "cube_counter", {"target": TARGET}, {"counter": TARGET}, tmp_path / "act"
+            advisory,
+            "cube_counter",
+            {"target": TARGET},
+            {"counter": TARGET},
+            tmp_path / "act",
         )
     assert "ADVISORY_AUTHORITY_USED_AS_BEARER" in str(excinfo.value)
     assert not (tmp_path / "act" / "receipts.sqlite3").exists()
@@ -300,7 +308,9 @@ def test_10_load_detects_a_tampered_manifest(tmp_path: Path):
     assert "CROWN_MANIFEST_TAMPERED" in str(excinfo.value)
 
 
-def test_11_verify_manifest_flags_suppressed_trials_and_denominator_change(tmp_path: Path):
+def test_11_verify_manifest_flags_suppressed_trials_and_denominator_change(
+    tmp_path: Path,
+):
     crown = freeze_crown(10, ["cube_counter"], _config_for, tmp_path / "m.json")
     assert verify_manifest(crown, list(crown.seeds)) == []
 
@@ -336,7 +346,11 @@ def test_12_crown_run_retains_every_attempt_in_order(tmp_path: Path):
             for i, s in enumerate(crown.seeds)
         ]
 
-    run.record(CrownAttempt(attempt_index=1, results=_results(8), repair_note="typed induction"))
+    run.record(
+        CrownAttempt(
+            attempt_index=1, results=_results(8), repair_note="typed induction"
+        )
+    )
     assert run.is_complete() is False
     run.record(CrownAttempt(attempt_index=2, results=_results(10)))
     assert run.is_complete() is True
@@ -369,7 +383,9 @@ def test_13a_dangling_ocel_object_reference_is_flagged():
         ],
     }
     violations = validate_ocel_referential_integrity(log)
-    assert any(v.startswith("DANGLING_OBJECT_REFERENCE:") for v in violations), violations
+    assert any(v.startswith("DANGLING_OBJECT_REFERENCE:") for v in violations), (
+        violations
+    )
     assert "ep-GONE" in " ".join(violations)
 
 
@@ -488,7 +504,9 @@ def test_f0e_replay_report_has_no_admitted_field_upstream():
     change back: gymact's ReplayReport exposes `valid`, never `admitted`."""
     import subprocess
 
-    from autofde_lab.hub.domain.gym_procedure.level4_gymact_bridge import GYMACT_VENV_PYTHON
+    from autofde_lab.hub.domain.gym_procedure.level4_gymact_bridge import (
+        GYMACT_VENV_PYTHON,
+    )
 
     out = subprocess.run(
         [

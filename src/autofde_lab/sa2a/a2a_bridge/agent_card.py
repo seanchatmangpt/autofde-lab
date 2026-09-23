@@ -69,16 +69,19 @@ def create_default_sa2a_agent_card(
     capabilities: Sequence[SemanticCapability] | None = None,
 ) -> SemanticAgentCard:
     """Create standard RFC-SA2A-001 v26.9.16 agent card."""
-    caps = tuple(capabilities or (
-        SemanticCapability(
-            capability_iri="urn:autofde:sa2a:capability:unknown-allocation",
-            description="CMCA resource allocation for UNKNOWN candidate frontier",
-        ),
-        SemanticCapability(
-            capability_iri="urn:autofde:sa2a:capability:experience-compilation",
-            description="Deterministic machine experience rule compilation",
-        ),
-    ))
+    caps = tuple(
+        capabilities
+        or (
+            SemanticCapability(
+                capability_iri="urn:autofde:sa2a:capability:unknown-allocation",
+                description="CMCA resource allocation for UNKNOWN candidate frontier",
+            ),
+            SemanticCapability(
+                capability_iri="urn:autofde:sa2a:capability:experience-compilation",
+                description="Deterministic machine experience rule compilation",
+            ),
+        )
+    )
     return SemanticAgentCard(
         agent_id=agent_id,
         name=name,

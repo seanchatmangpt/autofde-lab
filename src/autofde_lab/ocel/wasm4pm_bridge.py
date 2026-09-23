@@ -170,7 +170,11 @@ def resolve_wpm_binary() -> str:
 
 
 def _string_attr(key: str, value: str) -> dict:
-    return {"key": key, "value": {"type": "String", "content": value}, "own_attributes": None}
+    return {
+        "key": key,
+        "value": {"type": "String", "content": value},
+        "own_attributes": None,
+    }
 
 
 def session_traces_to_wasm4pm_json(
@@ -237,8 +241,16 @@ async def discover_petri_net(
     """Run ``wpm mining discover --algo ilp-petri-net`` for real."""
     binary = wpm_binary or resolve_wpm_binary()
     outcome = await run_subprocess_bounded(
-        [binary, "mining", "discover", str(log_json_path), "--algo", "ilp-petri-net",
-         "-o", str(output_path)],
+        [
+            binary,
+            "mining",
+            "discover",
+            str(log_json_path),
+            "--algo",
+            "ilp-petri-net",
+            "-o",
+            str(output_path),
+        ],
         timeout_s=timeout_s,
     )
     if outcome.standing != "SOLVED":
@@ -274,8 +286,16 @@ async def detect_drift(
     doesn't call ``wasm4pm::prediction_drift::detect_drift`` directly."""
     binary = wpm_binary or resolve_wpm_binary()
     outcome = await run_subprocess_bounded(
-        [binary, "mining", "drift", str(log_json_path),
-         "-k", activity_key, "--window-size", str(window_size)],
+        [
+            binary,
+            "mining",
+            "drift",
+            str(log_json_path),
+            "-k",
+            activity_key,
+            "--window-size",
+            str(window_size),
+        ],
         timeout_s=timeout_s,
     )
     if outcome.standing != "SOLVED":
@@ -308,9 +328,18 @@ async def predict_remaining_duration(
     why this doesn't call ``wasm4pm::prediction_remaining_time`` directly."""
     binary = wpm_binary or resolve_wpm_binary()
     outcome = await run_subprocess_bounded(
-        [binary, "mining", "predict-duration", str(log_json_path),
-         "--prefix", ",".join(prefix), "-k", activity_key,
-         "--timestamp-key", timestamp_key],
+        [
+            binary,
+            "mining",
+            "predict-duration",
+            str(log_json_path),
+            "--prefix",
+            ",".join(prefix),
+            "-k",
+            activity_key,
+            "--timestamp-key",
+            timestamp_key,
+        ],
         timeout_s=timeout_s,
     )
     if outcome.standing != "SOLVED":
@@ -366,7 +395,9 @@ async def check_conformance(
         total_cases=int(total_str.strip()),
         deviations=deviations,
         precision=float(metrics["Precision"]) if "Precision" in metrics else None,
-        generalization=float(metrics["Generalization"]) if "Generalization" in metrics else None,
+        generalization=float(metrics["Generalization"])
+        if "Generalization" in metrics
+        else None,
     )
 
 

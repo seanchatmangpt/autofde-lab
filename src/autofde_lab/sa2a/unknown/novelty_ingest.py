@@ -72,7 +72,9 @@ class NoveltyIngestionGateway:
         candidate_id = f"novelty-{packet_hash[:12]}"
 
         # Higher entropy estimate for unclassified/un-granted actions
-        entropy = 1.5 if refusal_code in ("REFUSED_NO_GRANT", "REFUSED_NOVELTY") else 1.0
+        entropy = (
+            1.5 if refusal_code in ("REFUSED_NO_GRANT", "REFUSED_NOVELTY") else 1.0
+        )
 
         return UnknownCandidate(
             item_id=candidate_id,

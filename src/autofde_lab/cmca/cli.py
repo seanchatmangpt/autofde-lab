@@ -32,13 +32,17 @@ def _emit(payload: dict[str, Any]) -> None:
 
 @app.command("allocate")
 def allocate(
-    candidates_json: str = typer.Argument(..., help="JSON array of candidate branches or file path"),
+    candidates_json: str = typer.Argument(
+        ..., help="JSON array of candidate branches or file path"
+    ),
     plan_id: str = typer.Option("cmca_plan", help="Unique allocation plan ID"),
     total_ticks: int = typer.Option(10000, help="Total execution ticks budget"),
     memory_bytes: int = typer.Option(65536, help="Memory budget in bytes"),
     max_verification_depth: int = typer.Option(6, help="Max verification depth"),
     concurrency_lanes: int = typer.Option(8, help="Number of concurrency lanes"),
-    pruning_threshold: float = typer.Option(0.01, help="Pruning threshold for non-viable candidates"),
+    pruning_threshold: float = typer.Option(
+        0.01, help="Pruning threshold for non-viable candidates"
+    ),
 ) -> None:
     """Allocate budget across candidate branches using the certified multifractal cascade."""
     # Check if candidates_json is a path
@@ -49,10 +53,14 @@ def allocate(
         try:
             candidates_raw = json.loads(candidates_json)
         except json.JSONDecodeError as exc:
-            raise typer.BadParameter(f"candidates_json must be valid JSON: {exc}") from exc
+            raise typer.BadParameter(
+                f"candidates_json must be valid JSON: {exc}"
+            ) from exc
 
     if not isinstance(candidates_raw, list):
-        raise typer.BadParameter("candidates_json must decode to a JSON array of candidates")
+        raise typer.BadParameter(
+            "candidates_json must decode to a JSON array of candidates"
+        )
 
     candidates = [
         CandidateBranch(
@@ -104,7 +112,9 @@ def allocate(
 
 @app.command("salience")
 def salience(
-    branch_json: str = typer.Argument(..., help="JSON object of a single candidate branch"),
+    branch_json: str = typer.Argument(
+        ..., help="JSON object of a single candidate branch"
+    ),
 ) -> None:
     """Calculate the exact Q16.16 salience measure for a candidate branch."""
     try:
@@ -122,12 +132,14 @@ def salience(
         historical_yield=float(b.get("historical_yield", 1.0)),
     )
     measures = candidate_measures(cand)
-    _emit({
-        "ok": True,
-        "measures": {
-            "option_entropy": measures[0],
-            "inverse_cost": measures[1],
-            "historical_yield": measures[2],
-            "salience": measures[3],
+    _emit(
+        {
+            "ok": True,
+            "measures": {
+                "option_entropy": measures[0],
+                "inverse_cost": measures[1],
+                "historical_yield": measures[2],
+                "salience": measures[3],
+            },
         }
-    })
+    )

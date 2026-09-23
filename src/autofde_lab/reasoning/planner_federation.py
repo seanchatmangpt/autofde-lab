@@ -153,7 +153,9 @@ def solve_with_one_solver(
         domain = PDDLDomain(domain_path, problem_path)
     except Exception:
         _LOGGER.warning(
-            "domain construction failed for %r/%r", domain_path, problem_path,
+            "domain construction failed for %r/%r",
+            domain_path,
+            problem_path,
             exc_info=True,
         )
         return None
@@ -167,7 +169,9 @@ def solve_with_one_solver(
             except concurrent.futures.TimeoutError:
                 _LOGGER.warning(
                     "solver %r exceeded timeout_s=%s on %r",
-                    solver_name, timeout_s, problem_path,
+                    solver_name,
+                    timeout_s,
+                    problem_path,
                 )
                 return None
             except Exception:
@@ -187,7 +191,8 @@ def solve_with_one_solver(
             if not domain._goal_checker.is_goal(final_obs.to_cpp()):
                 _LOGGER.warning(
                     "solver %r did not reach the goal within %d rollout steps",
-                    solver_name, MAX_ROLLOUT_STEPS,
+                    solver_name,
+                    MAX_ROLLOUT_STEPS,
                 )
                 return None
     except Exception:
@@ -242,7 +247,8 @@ def federate(
                 _LOGGER.warning(
                     "solver %r produced a PartialOrder that failed "
                     "validate_model; excluding it rather than admitting it",
-                    name, exc_info=True,
+                    name,
+                    exc_info=True,
                 )
                 candidate = None
         results[name] = candidate

@@ -20,10 +20,26 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-app.add_typer(fabric_app, name="fabric", help="Decision fabric domains and solvers catalog, match, and solve.")
-app.add_typer(cmca_app, name="cmca", help="CMCA multifractal consequence allocation and Q16.16 ranking.")
-app.add_typer(ocel_app, name="ocel", help="OCEL 2.0 log validation, digests, and object-centric conformance.")
-app.add_typer(sa2a_app, name="sa2a", help="Semantic Agent-to-Agent (SA2A) RFC-SA2A-001 v26.9.16 protocol and frontier governor.")
+app.add_typer(
+    fabric_app,
+    name="fabric",
+    help="Decision fabric domains and solvers catalog, match, and solve.",
+)
+app.add_typer(
+    cmca_app,
+    name="cmca",
+    help="CMCA multifractal consequence allocation and Q16.16 ranking.",
+)
+app.add_typer(
+    ocel_app,
+    name="ocel",
+    help="OCEL 2.0 log validation, digests, and object-centric conformance.",
+)
+app.add_typer(
+    sa2a_app,
+    name="sa2a",
+    help="Semantic Agent-to-Agent (SA2A) RFC-SA2A-001 v26.9.16 protocol and frontier governor.",
+)
 
 
 @app.command("beam-bridge")

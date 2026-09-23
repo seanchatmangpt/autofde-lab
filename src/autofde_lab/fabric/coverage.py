@@ -45,7 +45,7 @@ from dataclasses import asdict, dataclass
 from typing import Dict, List, Optional, Tuple
 
 from autofde_lab.fabric.bounded_exec import run_process_bounded
-from autofde_lab.fabric.ontology import SKD, parse_turtle
+from autofde_lab.fabric.ontology import parse_turtle
 
 MAX_ROLLOUT_STEPS = 200
 #: Wall-clock bound per solver, via `run_process_bounded` (a real forked OS
@@ -120,11 +120,7 @@ def _characteristic_classes() -> Dict[str, type]:
     """Map characteristic names to classes for isinstance evaluation."""
     import autofde_lab.builders.domain as builders
 
-    return {
-        name: obj
-        for name, obj in vars(builders).items()
-        if isinstance(obj, type)
-    }
+    return {name: obj for name, obj in vars(builders).items() if isinstance(obj, type)}
 
 
 def load_ontology(path: str) -> Tuple[Dict[str, dict], Dict[str, dict]]:
@@ -292,7 +288,9 @@ def build_report(
     results: Dict[str, Tuple[Optional[float], str]] = {}
     if run_applicable:
         for name in applicable:
-            results[name] = _run_solver(name, domain_factory, timeout_s=solver_timeout_s)
+            results[name] = _run_solver(
+                name, domain_factory, timeout_s=solver_timeout_s
+            )
     else:
         results = {name: (None, "not run: execution disabled") for name in applicable}
 

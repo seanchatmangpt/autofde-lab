@@ -33,11 +33,9 @@ from __future__ import annotations
 
 from enum import Enum
 from math import sqrt
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
-import pytest
-
-from autofde_lab import DeterministicPlanningDomain, ImplicitSpace, Space, Value
+from autofde_lab import DeterministicPlanningDomain, ImplicitSpace, Value
 from autofde_lab.builders.domain import UnrestrictedActions
 from autofde_lab.hub.space.gym import EnumSpace, MultiDiscreteSpace
 from autofde_lab.utils import load_registered_solver

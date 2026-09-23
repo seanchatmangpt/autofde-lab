@@ -22,25 +22,8 @@ Verifies:
 """
 
 import time
-import pytest
 
 from autofde_lab.sa2a.authority import (
-    Asset,
-    AuthorityBroker,
-    AuthorityDecision,
-    AuthorityGrant,
-    ConsequenceRequest,
-    ConfusedDeputyGuard,
-    Constraint,
-    DelegationHop,
-    Duty,
-    InvocationContext,
-    OdrlAction,
-    OdrlOperator,
-    Party,
-    Permission,
-    Policy,
-    Prohibition,
     REFUSED_AGENT_IS_NOT_AUTHORITY,
     REFUSED_CAPABILITY_IS_NOT_AUTHORITY,
     REFUSED_CONFUSED_DEPUTY,
@@ -50,14 +33,27 @@ from autofde_lab.sa2a.authority import (
     REFUSED_PLAN_IS_NOT_AUTHORITY,
     REFUSED_PROHIBITED,
     REFUSED_PROOF_IS_NOT_AUTHORITY,
-    REFUSED_UNAUTHORIZED_DELEGATION,
     REFUSED_UNFULFILLED_DUTY,
+    Asset,
+    AuthorityBroker,
+    AuthorityGrant,
+    ConfusedDeputyGuard,
+    ConsequenceRequest,
+    Constraint,
+    DelegationHop,
+    InvocationContext,
+    OdrlAction,
+    OdrlOperator,
+    Party,
+    Permission,
+    Policy,
+    Prohibition,
 )
-
 
 # ==============================================================================
 # Authority Non-Implications Tests (§29)
 # ==============================================================================
+
 
 def test_agent_is_not_authority():
     """Agent != Authority: Possessing an agent identity or asserting ambient authority is refused."""
@@ -71,7 +67,10 @@ def test_agent_is_not_authority():
     decision = broker.evaluate(req)
     assert not decision.authorized
     assert decision.grant_id is None
-    assert decision.refusal_code in (REFUSED_AGENT_IS_NOT_AUTHORITY, REFUSED_CONFUSED_DEPUTY)
+    assert decision.refusal_code in (
+        REFUSED_AGENT_IS_NOT_AUTHORITY,
+        REFUSED_CONFUSED_DEPUTY,
+    )
 
 
 def test_capability_is_not_authority():
@@ -113,7 +112,11 @@ def test_proof_is_not_authority():
         actor_id="agent-dave",
         action_iri=OdrlAction.DELETE.value,
         target_resource="urn:resource:cluster:node-1",
-        asserted_proof={"formal_check": "VALID", "signature": "0xdeadbeef", "receipt": "rcpt-123"},
+        asserted_proof={
+            "formal_check": "VALID",
+            "signature": "0xdeadbeef",
+            "receipt": "rcpt-123",
+        },
     )
     decision = broker.evaluate(req)
     assert not decision.authorized
@@ -125,6 +128,7 @@ def test_proof_is_not_authority():
 # ==============================================================================
 # Grant Evaluation & ODRL Mapping Tests (§28)
 # ==============================================================================
+
 
 def test_explicit_grant_authorization_success():
     """Valid explicit authority grant authorizes consequence execution."""
@@ -229,7 +233,9 @@ def test_odrl_policy_permission_and_prohibition():
         action=OdrlAction.EXECUTE,
         target=Asset(uid="urn:job:compute"),
         assignee=Party(uid="agent-worker"),
-        constraints=[Constraint(left_operand="load", operator=OdrlOperator.LT, right_operand=80)],
+        constraints=[
+            Constraint(left_operand="load", operator=OdrlOperator.LT, right_operand=80)
+        ],
     )
     policy = Policy(uid="policy-compute", permissions=[perm])
     broker = AuthorityBroker(policies=[policy])
@@ -262,9 +268,17 @@ def test_odrl_policy_permission_and_prohibition():
         action=OdrlAction.EXECUTE,
         target=Asset(uid="urn:job:compute"),
         assignee=Party(uid="agent-worker"),
-        constraints=[Constraint(left_operand="maintenance_window", operator=OdrlOperator.EQ, right_operand=True)],
+        constraints=[
+            Constraint(
+                left_operand="maintenance_window",
+                operator=OdrlOperator.EQ,
+                right_operand=True,
+            )
+        ],
     )
-    policy_with_prohib = Policy(uid="policy-compute-2", permissions=[perm], prohibitions=[prohib])
+    policy_with_prohib = Policy(
+        uid="policy-compute-2", permissions=[perm], prohibitions=[prohib]
+    )
     broker_with_prohib = AuthorityBroker(policies=[policy_with_prohib])
 
     req_maintenance = ConsequenceRequest(
@@ -281,6 +295,7 @@ def test_odrl_policy_permission_and_prohibition():
 # ==============================================================================
 # Confused Deputy Prevention Guard Tests (§54)
 # ==============================================================================
+
 
 def test_confused_deputy_ambient_authority_refusal():
     """Confused Deputy Guard refuses ambient authority usage when requested by another peer."""
@@ -315,14 +330,20 @@ def test_confused_deputy_broken_delegation_chain():
     guard = ConfusedDeputyGuard()
 
     # Broken chain: first hop does not match initiator
-    hop1 = DelegationHop(caller_id="intruder", target_agent_id="deputy-agent", delegated_grant_id="grant-1")
+    hop1 = DelegationHop(
+        caller_id="intruder",
+        target_agent_id="deputy-agent",
+        delegated_grant_id="grant-1",
+    )
     ctx_broken = InvocationContext(
         actor_id="deputy-agent",
         initiator_id="client-alice",
         grant_id="grant-1",
         delegation_chain=[hop1],
     )
-    res_broken = guard.inspect_invocation(ctx_broken, action="read", target_resource="secrets")
+    res_broken = guard.inspect_invocation(
+        ctx_broken, action="read", target_resource="secrets"
+    )
     assert not res_broken.allowed
     assert res_broken.refusal_code == REFUSED_CONFUSED_DEPUTY
     assert "does not match initiator" in res_broken.reason
@@ -330,8 +351,14 @@ def test_confused_deputy_broken_delegation_chain():
 
 def test_confused_deputy_valid_delegation():
     """Confused Deputy Guard allows valid delegation with explicit authorized grant and chain."""
-    guard = ConfusedDeputyGuard(authorized_delegations={"grant-del-42": ["client-alice", "deputy-agent"]})
-    hop = DelegationHop(caller_id="client-alice", target_agent_id="deputy-agent", delegated_grant_id="grant-del-42")
+    guard = ConfusedDeputyGuard(
+        authorized_delegations={"grant-del-42": ["client-alice", "deputy-agent"]}
+    )
+    hop = DelegationHop(
+        caller_id="client-alice",
+        target_agent_id="deputy-agent",
+        delegated_grant_id="grant-del-42",
+    )
     ctx_valid = InvocationContext(
         actor_id="deputy-agent",
         initiator_id="client-alice",

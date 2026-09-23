@@ -221,7 +221,9 @@ class ConformantExecutionEvidence:
             by_name[edge.name] = edge
         for name, _question in REQUIRED_CHAIN:
             if name not in by_name:
-                raise EvidenceConstructionError(f"CONFORMANT_EVIDENCE_MISSING_RELATION:{name}")
+                raise EvidenceConstructionError(
+                    f"CONFORMANT_EVIDENCE_MISSING_RELATION:{name}"
+                )
             if not by_name[name].established:
                 raise EvidenceConstructionError(
                     f"CONFORMANT_EVIDENCE_RELATION_NOT_ESTABLISHED:{name}: "
@@ -264,7 +266,9 @@ class GoalConsequenceEvidence:
             )
         for field_name in ("task_id", "goal_id", "actuation_id", "observation_id"):
             if not getattr(self, field_name):
-                raise EvidenceConstructionError(f"GOAL_EVIDENCE_REQUIRES_IDENTITY:{field_name}")
+                raise EvidenceConstructionError(
+                    f"GOAL_EVIDENCE_REQUIRES_IDENTITY:{field_name}"
+                )
         if self.observation_id == self.actuation_id:
             raise EvidenceConstructionError(
                 "SELF_CERTIFIED_POSTCONDITION: the observer identity is the actuation "
@@ -273,7 +277,9 @@ class GoalConsequenceEvidence:
         by_name = {e.name: e for e in self.goal_edges}
         for name, _question in REQUIRED_GOAL_CHAIN:
             if name not in by_name:
-                raise EvidenceConstructionError(f"GOAL_EVIDENCE_MISSING_RELATION:{name}")
+                raise EvidenceConstructionError(
+                    f"GOAL_EVIDENCE_MISSING_RELATION:{name}"
+                )
             if not by_name[name].established:
                 raise EvidenceConstructionError(
                     f"GOAL_EVIDENCE_RELATION_NOT_ESTABLISHED:{name}: {by_name[name].basis}"
@@ -412,7 +418,9 @@ def _edge(name: str, found: list[tuple[str, str, str]], ok: str, no: str) -> Edg
     )
 
 
-def _observation_and_actuation(standing: IndependentStanding) -> Optional[tuple[str, str]]:
+def _observation_and_actuation(
+    standing: IndependentStanding,
+) -> Optional[tuple[str, str]]:
     """The observation/actuation identities the verifier already carried
     forward through commitment AND authority. Anchoring the goal leg to these
     is what stops a goal edge hanging off some unrelated actuation."""
@@ -482,7 +490,9 @@ def goal_consequence_from_artifacts(
         "admitted goal",
     )
     if not candidate_edge.established:
-        return UnknownRelationEvidence("goal->plan_candidate", candidate_edge.basis, ref)
+        return UnknownRelationEvidence(
+            "goal->plan_candidate", candidate_edge.basis, ref
+        )
     targeted_goals = {t for _, _, t in to_goal}
 
     # The refutation is checked FIRST and on its own terms: an explicitly
@@ -570,7 +580,9 @@ def standing_from_trial_dir(trial_dir: Path) -> Level4Standing:
     unestablished = standing.unestablished()
     if unestablished:
         first = next(e for e in standing.edges if e.name == unestablished[0])
-        return UnknownRelationEvidence(relation=first.name, basis=first.basis, episode_ref=ref)
+        return UnknownRelationEvidence(
+            relation=first.name, basis=first.basis, episode_ref=ref
+        )
 
     ocel_path = trial_dir / "actuation" / "level4.ocel.json"
     if not ocel_path.is_file():

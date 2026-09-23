@@ -138,7 +138,9 @@ def test_astar_recovers_lost_commit_onto_master(fix_git_repo):
 
     # (a) the solver's symbolic plan reaches the domain's own goal predicate
     assert domain._is_goal(obs), f"Astar did not reach the goal. Plan: {plan}"
-    assert obs == State(current_branch="master", recovery_branch_exists=True, merged=True)
+    assert obs == State(
+        current_branch="master", recovery_branch_exists=True, merged=True
+    )
 
     # (b) it found the same 3-step shape as the task's own solution.sh
     assert plan == ["checkout_recovery", "checkout_master", "merge_recovery"]
@@ -149,7 +151,9 @@ def test_astar_recovers_lost_commit_onto_master(fix_git_repo):
     real_state = None
     for action in plan:
         real_state = domain.execute_action(action)
-    assert real_state == State(current_branch="master", recovery_branch_exists=True, merged=True)
+    assert real_state == State(
+        current_branch="master", recovery_branch_exists=True, merged=True
+    )
 
     # (d) real state, real filesystem: master's working tree now matches
     # the task's own documented success condition byte for byte -- the
@@ -160,5 +164,7 @@ def test_astar_recovers_lost_commit_onto_master(fix_git_repo):
     assert layout_after == (PATCH_FILES_DIR / "default.html").read_text()
 
     # (e) the recovered commit really is reachable from master now
-    merge_base = _run_git(repo_dir, "merge-base", "--is-ancestor", lost_commit, "master")
+    merge_base = _run_git(
+        repo_dir, "merge-base", "--is-ancestor", lost_commit, "master"
+    )
     assert merge_base.returncode == 0

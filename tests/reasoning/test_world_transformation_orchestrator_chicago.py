@@ -76,15 +76,35 @@ def test_select_transformation_picks_the_real_violated_objective() -> None:
     assert "780" in candidate.rationale and "250" in candidate.rationale
 
 
-def test_select_transformation_returns_none_when_nothing_is_confirmed_violated() -> None:
-    all_unknown = (DeltaItem(kind="AvailabilityTarget", comparator="GreaterThanOrEqual", current=None, target=99.9, violated=None),)
+def test_select_transformation_returns_none_when_nothing_is_confirmed_violated() -> (
+    None
+):
+    all_unknown = (
+        DeltaItem(
+            kind="AvailabilityTarget",
+            comparator="GreaterThanOrEqual",
+            current=None,
+            target=99.9,
+            violated=None,
+        ),
+    )
     assert select_transformation(all_unknown) is None
 
-    all_met = (DeltaItem(kind="LatencySLO", comparator="LessThan", current=100.0, target=250.0, violated=False),)
+    all_met = (
+        DeltaItem(
+            kind="LatencySLO",
+            comparator="LessThan",
+            current=100.0,
+            target=250.0,
+            violated=False,
+        ),
+    )
     assert select_transformation(all_met) is None
 
 
-def test_run_world_transformation_pipeline_admits_first_then_chains_through_real_values() -> None:
+def test_run_world_transformation_pipeline_admits_first_then_chains_through_real_values() -> (
+    None
+):
     graph = scenario_checkout_latency_scenario_v_1()
     metadata = ScenarioMetadata_checkout_latency_scenario_v_1()
 
@@ -95,19 +115,30 @@ def test_run_world_transformation_pipeline_admits_first_then_chains_through_real
     assert result["transformation_candidate"].label == "scale_out_api_instances"
 
 
-def test_run_world_transformation_pipeline_refuses_an_unadmittable_graph_before_inferring() -> None:
+def test_run_world_transformation_pipeline_refuses_an_unadmittable_graph_before_inferring() -> (
+    None
+):
     """A structurally invalid graph -- constructible, but with an
     unreachable node -- must be refused by validate_model before
     infer/plan ever runs. Reachability/co-reachability is checked by the
     validator, not at construction time (per ChoiceGraph's own docstring),
     so this is a real test of the admission gate itself, not of
     dataclass __post_init__."""
-    from autofde_lab.powl.algebra import Atom, ChoiceGraph, ChoiceGraphEdge, End, NodeId, Start
+    from autofde_lab.powl.algebra import (
+        Atom,
+        ChoiceGraph,
+        ChoiceGraphEdge,
+        End,
+        NodeId,
+        Start,
+    )
 
     orphan = Atom(label="unreachable_orphan", consequence="READ")
     invalid_graph = ChoiceGraph(
         children=(Start(), End(), orphan),
-        edges=frozenset([ChoiceGraphEdge(NodeId(0), NodeId(1))]),  # Start->End directly; orphan connects to nothing
+        edges=frozenset(
+            [ChoiceGraphEdge(NodeId(0), NodeId(1))]
+        ),  # Start->End directly; orphan connects to nothing
         start=0,
         end=1,
     )

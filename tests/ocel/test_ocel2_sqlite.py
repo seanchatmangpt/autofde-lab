@@ -86,12 +86,17 @@ def test_round_trip_preserves_all_value_kinds():
                     OcelAttribute(
                         "l",
                         OcelAttributeValue.listing(
-                            [OcelAttributeValue.integer(1), OcelAttributeValue.integer(2)]
+                            [
+                                OcelAttributeValue.integer(1),
+                                OcelAttributeValue.integer(2),
+                            ]
                         ),
                     ),
                     OcelAttribute(
                         "m",
-                        OcelAttributeValue.mapping({"k": OcelAttributeValue.string("v")}),
+                        OcelAttributeValue.mapping(
+                            {"k": OcelAttributeValue.string("v")}
+                        ),
                     ),
                 ),
             )
@@ -143,5 +148,7 @@ def test_object_change_with_no_timestamp_reads_back_as_a_static_attribute():
 
     assert degraded.object_changes == ()
     order = next(o for o in degraded.objects if o.id == "order-1")
-    assert OcelAttribute("label", OcelAttributeValue.string("untimed")) in order.attributes
+    assert (
+        OcelAttribute("label", OcelAttributeValue.string("untimed")) in order.attributes
+    )
     assert degraded != log

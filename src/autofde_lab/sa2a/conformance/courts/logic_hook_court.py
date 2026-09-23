@@ -19,13 +19,15 @@ from __future__ import annotations
 import hashlib
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence
 
-from autofde_lab.sa2a.admission.datalog_layer import DatalogAtom, DatalogEngine, DatalogRule
-from autofde_lab.sa2a.hooks.engine import KnowledgeHookEngine
+from autofde_lab.sa2a.admission.datalog_layer import (
+    DatalogAtom,
+    DatalogEngine,
+    DatalogRule,
+)
 from autofde_lab.sa2a.hooks.model import (
     HookEffectKind,
-    HookEventTrigger,
     HookExecutionRecord,
     KnowledgeHookDefinition,
 )
@@ -33,9 +35,11 @@ from autofde_lab.sa2a.hooks.model import (
 # HookEffectKind real values: EMIT_DELTA, GROUND_ACTION, REFUSE
 # For conformance testing, a hook that attempts to self-actuate via REFUSE-bypass is adversarial.
 # The court checks that hooks do NOT set effect to a meta-bypass pattern.
-# Real SA2A-002 §44: hooks MUST only manufacture intents (EMIT_DELTA / GROUND_ACTION), 
+# Real SA2A-002 §44: hooks MUST only manufacture intents (EMIT_DELTA / GROUND_ACTION),
 # never self-bypass authority (REFUSE used to escape the authority gate is adversarial).
-_FORBIDDEN_EFFECTS: frozenset = frozenset()  # All current HookEffectKinds are legal manufacturing effects
+_FORBIDDEN_EFFECTS: frozenset = (
+    frozenset()
+)  # All current HookEffectKinds are legal manufacturing effects
 
 # ---------------------------------------------------------------------------
 # Rule IDs
@@ -56,7 +60,10 @@ CHI_AUTO_BOUNDED_EXECUTION = "CHI-AUTO-BOUNDED-EXECUTION"
 
 class LogicHookCourtError(Exception):
     """Base error for Logic/Hook Court violations."""
-    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None, rule_id: str = "") -> None:
+
+    def __init__(
+        self, message: str, details: Optional[Dict[str, Any]] = None, rule_id: str = ""
+    ) -> None:
         super().__init__(message)
         self.message = message
         self.details = details or {}
@@ -97,6 +104,7 @@ class LogicHookCheckResult:
 @dataclass
 class LogicHookCourtReport:
     """Aggregated report from all Logic/Hook court checks."""
+
     gate_results: List[LogicHookCheckResult] = field(default_factory=list)
     passed: bool = True
     total_checks: int = 0
@@ -130,7 +138,9 @@ class LogicHookCourt:
     8. Autonomous bounded execution — execution must complete within fuel budget.
     """
 
-    def __init__(self, max_cascade_depth: int = 5, max_datalog_iterations: int = 1000) -> None:
+    def __init__(
+        self, max_cascade_depth: int = 5, max_datalog_iterations: int = 1000
+    ) -> None:
         self.max_cascade_depth = max_cascade_depth
         self.max_datalog_iterations = max_datalog_iterations
 
@@ -148,21 +158,31 @@ class LogicHookCourt:
 
         A non-terminating ruleset violates SA2A-LOGIC-SAFE-TERMINATION and MUST be refused.
         """
-        engine = DatalogEngine(rules=list(rules), max_iterations=self.max_datalog_iterations)
+        engine = DatalogEngine(
+            rules=list(rules), max_iterations=self.max_datalog_iterations
+        )
         start = time.perf_counter()
         try:
-            derived_facts, iterations = engine.execute_fixpoint([])  # Empty EDB; rules are in engine
+            derived_facts, iterations = engine.execute_fixpoint(
+                []
+            )  # Empty EDB; rules are in engine
             elapsed_ms = (time.perf_counter() - start) * 1000
             return LogicHookCheckResult(
                 rule_id=SA2A_LOGIC_SAFE_TERMINATION,
                 passed=True,
                 verdict=LogicHookVerdict.CONFORMANT,
-                details={"derived_count": len(derived_facts), "iterations": iterations, "elapsed_ms": round(elapsed_ms, 3)},
+                details={
+                    "derived_count": len(derived_facts),
+                    "iterations": iterations,
+                    "elapsed_ms": round(elapsed_ms, 3),
+                },
             )
         except RuntimeError as exc:
             err_msg = f"Datalog fixpoint did not terminate: {exc}"
             if fail_closed:
-                raise DatalogUnsafeTerminationError(err_msg, rule_id=SA2A_LOGIC_SAFE_TERMINATION) from exc
+                raise DatalogUnsafeTerminationError(
+                    err_msg, rule_id=SA2A_LOGIC_SAFE_TERMINATION
+                ) from exc
             return LogicHookCheckResult(
                 rule_id=SA2A_LOGIC_SAFE_TERMINATION,
                 passed=False,
@@ -184,13 +204,17 @@ class LogicHookCourt:
 
         The closure is complete if every required_atom is derived from the ruleset.
         """
-        engine = DatalogEngine(rules=list(rules), max_iterations=self.max_datalog_iterations)
+        engine = DatalogEngine(
+            rules=list(rules), max_iterations=self.max_datalog_iterations
+        )
         try:
             derived, _iters = engine.execute_fixpoint([])  # Empty EDB; rules in engine
         except RuntimeError as exc:
             err_msg = f"Datalog closure failed (non-termination): {exc}"
             if fail_closed:
-                raise DatalogUnsafeTerminationError(err_msg, rule_id=SA2A_LOGIC_CLOSURE_COMPLETENESS) from exc
+                raise DatalogUnsafeTerminationError(
+                    err_msg, rule_id=SA2A_LOGIC_CLOSURE_COMPLETENESS
+                ) from exc
             return LogicHookCheckResult(
                 rule_id=SA2A_LOGIC_CLOSURE_COMPLETENESS,
                 passed=False,
@@ -225,7 +249,10 @@ class LogicHookCourt:
             rule_id=SA2A_LOGIC_CLOSURE_COMPLETENESS,
             passed=True,
             verdict=LogicHookVerdict.CONFORMANT,
-            details={"derived_count": len(derived), "required_count": len(required_atoms)},
+            details={
+                "derived_count": len(derived),
+                "required_count": len(required_atoms),
+            },
         )
 
     # ------------------------------------------------------------------
@@ -267,7 +294,11 @@ class LogicHookCourt:
                     f"keys {sorted(found)} — logic must not self-grant execution"
                 )
                 if fail_closed:
-                    raise LogicHookCourtError(err_msg, {"forbidden_keys": sorted(found)}, rule_id=SA2A_LOGIC_N3_NON_AUTHORITY)
+                    raise LogicHookCourtError(
+                        err_msg,
+                        {"forbidden_keys": sorted(found)},
+                        rule_id=SA2A_LOGIC_N3_NON_AUTHORITY,
+                    )
                 return LogicHookCheckResult(
                     rule_id=SA2A_LOGIC_N3_NON_AUTHORITY,
                     passed=False,
@@ -340,14 +371,20 @@ class LogicHookCourt:
         A hook with an unrecognized or phantom effect kind MUST be refused.
         All valid HookEffectKind values (EMIT_DELTA, GROUND_ACTION, REFUSE) are manufacturing effects.
         """
-        admitted_effects = {HookEffectKind.EMIT_DELTA, HookEffectKind.GROUND_ACTION, HookEffectKind.REFUSE}
+        admitted_effects = {
+            HookEffectKind.EMIT_DELTA,
+            HookEffectKind.GROUND_ACTION,
+            HookEffectKind.REFUSE,
+        }
         if hook.effect not in admitted_effects:
             err_msg = (
                 f"SA2A-HOOK-EFFECT-KIND violation: hook '{hook.iri}' declares unrecognized "
                 f"effect '{hook.effect}' — effect MUST be an admitted manufacturing kind (§42, §44)"
             )
             if fail_closed:
-                raise HookPerformsDOError(err_msg, {"effect": str(hook.effect)}, rule_id=SA2A_HOOK_EFFECT_KIND)
+                raise HookPerformsDOError(
+                    err_msg, {"effect": str(hook.effect)}, rule_id=SA2A_HOOK_EFFECT_KIND
+                )
             return LogicHookCheckResult(
                 rule_id=SA2A_HOOK_EFFECT_KIND,
                 passed=False,
@@ -379,7 +416,12 @@ class LogicHookCourt:
         Records with phantom/unknown verdict strings indicate an adversarial bypass attempt.
         """
         from autofde_lab.sa2a.hooks.model import HookVerdict
-        admitted_verdicts = {HookVerdict.FIRED, HookVerdict.NOT_FIRED, HookVerdict.GATED}
+
+        admitted_verdicts = {
+            HookVerdict.FIRED,
+            HookVerdict.NOT_FIRED,
+            HookVerdict.GATED,
+        }
         violations: List[str] = []
         for record in execution_records:
             if record.verdict not in admitted_verdicts:
@@ -391,7 +433,9 @@ class LogicHookCourt:
                 f"verdict: {violations[:3]} — hooks MUST only produce admitted CANDIDATE verdicts"
             )
             if fail_closed:
-                raise HookPerformsDOError(err_msg, {"violations": violations}, rule_id=SA2A_HOOK_NO_DO)
+                raise HookPerformsDOError(
+                    err_msg, {"violations": violations}, rule_id=SA2A_HOOK_NO_DO
+                )
             return LogicHookCheckResult(
                 rule_id=SA2A_HOOK_NO_DO,
                 passed=False,
@@ -449,7 +493,11 @@ class LogicHookCourt:
             rule_id=SA2A_HOOK_CASCADE_DEPTH,
             passed=True,
             verdict=LogicHookVerdict.CONFORMANT,
-            details={"actual_depth": actual_depth, "d_max": d_max, "record_count": len(execution_records)},
+            details={
+                "actual_depth": actual_depth,
+                "d_max": d_max,
+                "record_count": len(execution_records),
+            },
         )
 
     # ------------------------------------------------------------------
@@ -488,7 +536,11 @@ class LogicHookCourt:
             if fail_closed:
                 raise AutoBoundedExecutionError(
                     err_msg,
-                    {"fuel": actual_fuel, "budget": fuel_budget, "elapsed_ms": elapsed_ms},
+                    {
+                        "fuel": actual_fuel,
+                        "budget": fuel_budget,
+                        "elapsed_ms": elapsed_ms,
+                    },
                     rule_id=CHI_AUTO_BOUNDED_EXECUTION,
                 )
             return LogicHookCheckResult(
@@ -496,14 +548,22 @@ class LogicHookCourt:
                 passed=False,
                 verdict=LogicHookVerdict.REFUSED,
                 error_message=err_msg,
-                details={"fuel": actual_fuel, "budget": fuel_budget, "elapsed_ms": elapsed_ms},
+                details={
+                    "fuel": actual_fuel,
+                    "budget": fuel_budget,
+                    "elapsed_ms": elapsed_ms,
+                },
             )
 
         return LogicHookCheckResult(
             rule_id=CHI_AUTO_BOUNDED_EXECUTION,
             passed=True,
             verdict=LogicHookVerdict.CONFORMANT,
-            details={"fuel": actual_fuel, "budget": fuel_budget, "elapsed_ms": round(elapsed_ms, 3)},
+            details={
+                "fuel": actual_fuel,
+                "budget": fuel_budget,
+                "elapsed_ms": round(elapsed_ms, 3),
+            },
         )
 
     # ------------------------------------------------------------------
@@ -531,18 +591,32 @@ class LogicHookCourt:
             self.verify_datalog_safe_termination(datalog_rules, fail_closed=fail_closed)
         )
         results.append(
-            self.verify_datalog_closure_completeness(datalog_rules, required_atoms, fail_closed=fail_closed)
+            self.verify_datalog_closure_completeness(
+                datalog_rules, required_atoms, fail_closed=fail_closed
+            )
         )
         if n3_output is not None:
-            results.append(self.verify_n3_non_authority(n3_output, fail_closed=fail_closed))
+            results.append(
+                self.verify_n3_non_authority(n3_output, fail_closed=fail_closed)
+            )
 
         # SA2A-HOOK-*
         for hook in hooks:
-            results.append(self.verify_hook_meta_admission(hook, admitted_hook_namespaces, fail_closed=fail_closed))
+            results.append(
+                self.verify_hook_meta_admission(
+                    hook, admitted_hook_namespaces, fail_closed=fail_closed
+                )
+            )
             results.append(self.verify_hook_effect_kind(hook, fail_closed=fail_closed))
 
-        results.append(self.verify_hook_no_do(hook_execution_records, fail_closed=fail_closed))
-        results.append(self.verify_hook_cascade_depth(hook_execution_records, fail_closed=fail_closed))
+        results.append(
+            self.verify_hook_no_do(hook_execution_records, fail_closed=fail_closed)
+        )
+        results.append(
+            self.verify_hook_cascade_depth(
+                hook_execution_records, fail_closed=fail_closed
+            )
+        )
 
         # CHI-AUTO-*
         results.append(
@@ -584,6 +658,7 @@ def test_hook_no_do_violation(court: Optional[LogicHookCourt] = None) -> None:
 
     # Inject a phantom effect via object replacement to simulate an adversarial hook
     from dataclasses import replace as _replace
+
     bad_hook = _replace(hook, effect="PHANTOM_ACTUATE_BYPASS")  # type: ignore[arg-type]
 
     refused = False
@@ -611,7 +686,9 @@ def test_hook_meta_admission_refusal(court: Optional[LogicHookCourt] = None) -> 
     # admitted namespace is urn:hook:autofde: — does NOT match http://example.org/hook/
     refused = False
     try:
-        c.verify_hook_meta_admission(hook, admitted_namespaces=["urn:hook:autofde:"], fail_closed=True)
+        c.verify_hook_meta_admission(
+            hook, admitted_namespaces=["urn:hook:autofde:"], fail_closed=True
+        )
     except LogicHookCourtError:
         refused = True
     assert refused, "Hook with unadmitted IRI must be refused"

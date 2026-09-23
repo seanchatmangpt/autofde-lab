@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+
 from autofde_lab_planner.baselines.k8s_baselines import (
     KNOWN_CONFIGMAP_BASELINES,
     KNOWN_SECRET_BASELINES,
@@ -45,12 +46,17 @@ def decide_object_reconstruction_commands(
             apply_cmd = f"echo '{manifest_json}' | kubectl apply -f -"
             commands.append(apply_cmd)
         else:
-            manifest = get_baseline_manifest(kind=kind, object_name=obj_name, namespace=ns)
+            manifest = get_baseline_manifest(
+                kind=kind, object_name=obj_name, namespace=ns
+            )
             manifest_json = json.dumps(manifest).replace("'", "'\\''")
             apply_cmd = f"echo '{manifest_json}' | kubectl apply -f -"
             commands.append(apply_cmd)
 
-        if f.associated_deployment and f.associated_deployment not in deployments_to_restart:
+        if (
+            f.associated_deployment
+            and f.associated_deployment not in deployments_to_restart
+        ):
             deployments_to_restart.append(f.associated_deployment)
         elif kind == "Service" and obj_name not in deployments_to_restart:
             deployments_to_restart.append(obj_name)
@@ -59,4 +65,3 @@ def decide_object_reconstruction_commands(
         commands.append(f"kubectl rollout restart deployment/{dep} -n {namespace}")
 
     return commands, deployments_to_restart
-

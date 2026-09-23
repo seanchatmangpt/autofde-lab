@@ -18,6 +18,7 @@ projection (planned MFG-01C), and no frontier falsifier (planned MFG-01D)
 exist in this package. `organizationalStanding` and `enterpriseStanding` are
 UNKNOWN -- not computed by anything in this repo.
 """
+
 from __future__ import annotations
 
 from autofde_lab.sa2a.case_studies.manufacturing.actuator import Actuator

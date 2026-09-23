@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping
 
 
 class HookEventTrigger(str, Enum):
@@ -76,7 +76,7 @@ class KnowledgeHookDefinition:
             f'    kh:on "{self.on.value}" ;',
             f'    kh:kind "{self.condition_kind}" ;',
             f'    kh:effect "{self.effect.value}" ;',
-            f'    kh:priority {self.priority} ;',
+            f"    kh:priority {self.priority} ;",
         ]
         if self.action_iri:
             lines.append(f"    kh:action <{self.action_iri}> ;")

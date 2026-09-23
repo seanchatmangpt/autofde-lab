@@ -119,12 +119,8 @@ def test_launch_requires_both_role_swap_and_keypair(domain):
         domain._get_initial_state_(), Action.enumerate_profiles_and_roles
     )
 
-    only_role = domain._get_next_state(
-        enumerated, Action.swap_admin_role_onto_profile
-    )
-    assert not domain.applicable(
-        only_role, Action.launch_ec2_with_keypair_and_profile
-    )
+    only_role = domain._get_next_state(enumerated, Action.swap_admin_role_onto_profile)
+    assert not domain.applicable(only_role, Action.launch_ec2_with_keypair_and_profile)
 
     only_keypair = domain._get_next_state(enumerated, Action.create_keypair)
     assert not domain.applicable(

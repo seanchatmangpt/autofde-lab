@@ -24,13 +24,13 @@ import logging
 from collections import OrderedDict
 from typing import Any, Callable, Optional
 
-import numpy  # noqa: F401 -- must be imported before dspy: dspy's lazy numpy
 # loader (dspy.utils.lazy_import) recurses infinitely (RecursionError) if
 # numpy is not already a real, fully-loaded module in sys.modules at the
 # point dspy is first imported -- reproduced under pytest's import order,
 # not present when dspy happens to be imported first in a fresh interpreter.
 import dspy
 import gymnasium as gym
+import numpy  # noqa: F401 -- must be imported before dspy: dspy's lazy numpy
 
 from autofde_lab import Domain
 from autofde_lab.builders.domain import (
@@ -50,7 +50,9 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_LM_MODEL = "openai/gemma-4-26b-a4b-it"
 DEFAULT_LM_API_BASE = "http://127.0.0.1:8080/v1"
-DEFAULT_LM_API_KEY = "local"  # ignored by TurboFieldfare; required by the OpenAI client shape
+DEFAULT_LM_API_KEY = (
+    "local"  # ignored by TurboFieldfare; required by the OpenAI client shape
+)
 
 
 def default_lm(
@@ -104,7 +106,9 @@ class D(
     pass
 
 
-def _describe_gym_dict_of_discrete_schema(gym_space: gym.Space) -> tuple[str, list[str]]:
+def _describe_gym_dict_of_discrete_schema(
+    gym_space: gym.Space,
+) -> tuple[str, list[str]]:
     """Build a short textual schema description for a gymnasium action space,
     for use as the `action_schema` field fed to `GenerateStructuredAction`.
 
@@ -194,7 +198,9 @@ class DSPyPolicy(DeterministicPolicySolver):
         self._domain = None
 
     @classmethod
-    def _check_single_action_space_additional(cls, domain: D, action_space: Any) -> bool:
+    def _check_single_action_space_additional(
+        cls, domain: D, action_space: Any
+    ) -> bool:
         """Real per-agent check for the three action-resolution strategies
         documented on the class: return True as soon as one of them is real
         and available for this `action_space`/`domain` pair.
@@ -256,7 +262,9 @@ class DSPyPolicy(DeterministicPolicySolver):
             # an arbitrary move. Try a case-insensitive/substring match
             # before giving up, since models often add stray punctuation.
             lowered = chosen_text.lower()
-            candidates = [m for name, m in legal_by_name.items() if name.lower() in lowered]
+            candidates = [
+                m for name, m in legal_by_name.items() if name.lower() in lowered
+            ]
             if len(candidates) != 1:
                 # Real observed failure mode (multi-line `Action` reprs,
                 # e.g. RCPSP/MRCPSP's scheduling actions, or UPDomain's

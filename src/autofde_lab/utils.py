@@ -258,12 +258,18 @@ def _resolve_cmca_rank_cli_bin() -> Optional[str]:
     """
     explicit = os.environ.get(CMCA_RANK_CLI_BIN_ENVVARNAME)
     if explicit:
-        return explicit if os.path.isfile(explicit) and os.access(explicit, os.X_OK) else None
+        return (
+            explicit
+            if os.path.isfile(explicit) and os.access(explicit, os.X_OK)
+            else None
+        )
 
     from autofde_lab.adapters.base import resolve_home
     from autofde_lab.adapters.bcinr import BcinrSchedulerAdapter
 
-    root = resolve_home(BcinrSchedulerAdapter.env_var, BcinrSchedulerAdapter.default_root)
+    root = resolve_home(
+        BcinrSchedulerAdapter.env_var, BcinrSchedulerAdapter.default_root
+    )
     candidate = os.path.join(root, _CMCA_RANK_CLI_RELATIVE_PATH)
     if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
         return candidate
@@ -339,7 +345,9 @@ def _rank_via_cmca_rank_cli(
     try:
         parsed = json.loads(result.stdout)
         ranking = parsed["ranking"]
-        ranked_pairs = [(name_by_key[entry["name"]], entry["share"]) for entry in ranking]
+        ranked_pairs = [
+            (name_by_key[entry["name"]], entry["share"]) for entry in ranking
+        ]
     except (json.JSONDecodeError, KeyError, TypeError) as exc:
         _fallback(f"could not parse cmca_rank_cli output ({exc!r})")
         return None

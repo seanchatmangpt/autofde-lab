@@ -49,7 +49,9 @@ def _make_repo(root: Path, module_name: str, body: str = "VALUE = 1\n") -> Path:
     _run(root, "git", "init", "-q", "-b", "main")
     _run(root, "git", "config", "user.email", "test@example.invalid")
     _run(root, "git", "config", "user.name", "Test")
-    _run(root, "git", "remote", "add", "origin", "https://example.invalid/real-repo.git")
+    _run(
+        root, "git", "remote", "add", "origin", "https://example.invalid/real-repo.git"
+    )
     _run(root, "git", "add", "-A")
     _run(root, "git", "commit", "-q", "-m", "initial")
     return root
@@ -86,7 +88,9 @@ def importable(tmp_path: Path):
 def test_uv_sources_discovered_from_the_real_pyproject() -> None:
     sources = declared_uv_sources()
     assert set(sources) == {"wasm4pm-compat-pydantic", "gymact"}
-    assert sources["wasm4pm-compat-pydantic"]["path"] == "/Users/sac/wasm4pm-compat/python"
+    assert (
+        sources["wasm4pm-compat-pydantic"]["path"] == "/Users/sac/wasm4pm-compat/python"
+    )
     assert sources["gymact"]["path"] == "/Users/sac/gymact"
     assert (REPO_ROOT / "pyproject.toml").exists()
 
@@ -100,7 +104,11 @@ def test_declaration_set_covers_every_uv_source_plus_the_wpm_binaries() -> None:
         "wpm::target/debug/wpm",
         "wpm::target/release/wpm",
     }
-    editable = {d.package_identity for d in declared if d.kind is DependencyKind.EDITABLE_PYTHON_PACKAGE}
+    editable = {
+        d.package_identity
+        for d in declared
+        if d.kind is DependencyKind.EDITABLE_PYTHON_PACKAGE
+    }
     assert editable == set(declared_uv_sources())
 
 
@@ -109,7 +117,9 @@ def test_gymact_declaration_records_its_real_module_level_import_site() -> None:
     text = kernel.read_text(encoding="utf-8")
     assert "from gymact.models import ActuationIntent" in text
     assert "from gymact.runtime import GymAct" in text
-    decl = next(d for d in level4_dependency_declarations() if d.package_identity == "gymact")
+    decl = next(
+        d for d in level4_dependency_declarations() if d.package_identity == "gymact"
+    )
     assert decl.import_identity == "gymact"
 
 
@@ -154,7 +164,10 @@ def test_clean_matching_checkout_is_admitted(tmp_path: Path, importable) -> None
     real_head = _run(repo, "git", "rev-parse", "HEAD")
     assert admission.recorded_revision == real_head
     assert admission.imported is not None
-    assert admission.imported.module_file == (repo / "src" / "depadm_real" / "__init__.py").resolve()
+    assert (
+        admission.imported.module_file
+        == (repo / "src" / "depadm_real" / "__init__.py").resolve()
+    )
 
 
 # --------------------------------------------------------------------------
@@ -167,7 +180,14 @@ def test_hostile_same_name_different_repository_is_never_admitted(
     tmp_path: Path, importable
 ) -> None:
     impostor = _make_repo(tmp_path / "impostor", "depadm_real", body="VALUE = 999\n")
-    _run(impostor, "git", "remote", "set-url", "origin", "https://example.invalid/OTHER.git")
+    _run(
+        impostor,
+        "git",
+        "remote",
+        "set-url",
+        "origin",
+        "https://example.invalid/OTHER.git",
+    )
     importable(impostor)
 
     decl = DependencyDeclaration(

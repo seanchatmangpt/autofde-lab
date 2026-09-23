@@ -86,9 +86,14 @@ def _run_gymact_native_validation() -> dict:
                 [cli_path, command_name], capture_output=True, text=True, timeout=30
             )
         except (subprocess.TimeoutExpired, OSError) as exc:
-            result[command_name] = {"error": f"real subprocess failure: {type(exc).__name__}: {exc}"}
+            result[command_name] = {
+                "error": f"real subprocess failure: {type(exc).__name__}: {exc}"
+            }
             continue
-        entry: dict = {"exit_code": completed.returncode, "stdout": completed.stdout.strip()}
+        entry: dict = {
+            "exit_code": completed.returncode,
+            "stdout": completed.stdout.strip(),
+        }
         if completed.stderr.strip():
             entry["stderr"] = completed.stderr.strip()
         try:
@@ -112,7 +117,9 @@ def _discover_provider_classes() -> list[tuple[str, type]]:
         try:
             module = importlib.import_module(module_name)
         except Exception as exc:  # noqa: BLE001 -- a real, reportable import failure
-            print(f"[sweep] {module_name}: real import failure: {type(exc).__name__}: {exc}")
+            print(
+                f"[sweep] {module_name}: real import failure: {type(exc).__name__}: {exc}"
+            )
             continue
         for name, obj in inspect.getmembers(module, inspect.isclass):
             if obj.__module__ != module_name:
@@ -123,7 +130,9 @@ def _discover_provider_classes() -> list[tuple[str, type]]:
 
 
 async def _run_sweep() -> list[dict]:
-    from autofde_lab.reasoning.gymact_certification_checker import check_environment_provider_conformance
+    from autofde_lab.reasoning.gymact_certification_checker import (
+        check_environment_provider_conformance,
+    )
 
     manifests: list[dict] = []
     for module_name, provider_cls in _discover_provider_classes():
@@ -150,7 +159,11 @@ async def _run_sweep() -> list[dict]:
                 "conformance_level": manifest.manifest_conformance_level_ref,
                 "check_count": len(results),
                 "checks": [
-                    {"check": r.result_check_ref, "passed": r.result_passed, "detail": r.result_detail}
+                    {
+                        "check": r.result_check_ref,
+                        "passed": r.result_passed,
+                        "detail": r.result_detail,
+                    }
                     for r in results
                 ],
             }
@@ -163,7 +176,11 @@ def main() -> int:
     native_validation = _run_gymact_native_validation()
     print(
         json.dumps(
-            {"gymact_certification_sweep": manifests, "gymact_native_validation": native_validation}, indent=2
+            {
+                "gymact_certification_sweep": manifests,
+                "gymact_native_validation": native_validation,
+            },
+            indent=2,
         )
     )
     return 0

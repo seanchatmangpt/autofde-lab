@@ -99,8 +99,12 @@ def test_diagnosis_and_mitigation_loops_are_genuinely_distinct_real_atoms():
     node = build_claudecode_agent_powl_node()
     diagnosis_loop = node.children[3]
     mitigation_loop = node.children[5]
-    diagnosis_tool_atom = next(c for c in diagnosis_loop.children if hasattr(c, "label"))
-    mitigation_tool_atom = next(c for c in mitigation_loop.children if hasattr(c, "label"))
+    diagnosis_tool_atom = next(
+        c for c in diagnosis_loop.children if hasattr(c, "label")
+    )
+    mitigation_tool_atom = next(
+        c for c in mitigation_loop.children if hasattr(c, "label")
+    )
     assert diagnosis_tool_atom.label == CLAUDECODE_DIAGNOSIS_TOOL_CALL_LABEL
     assert mitigation_tool_atom.label == CLAUDECODE_MITIGATION_TOOL_CALL_LABEL
     assert diagnosis_tool_atom.label != mitigation_tool_atom.label
@@ -140,7 +144,9 @@ def test_tool_use_loop_really_permits_real_repeated_tool_calls_traced_against_ex
     # Enter the loop, real repeat x3, then real exit.
     for _ in range(3):
         live = enabled(diagnosis_loop, m)
-        assert (2,) in live, f"tool-call atom must remain enabled for a real repeat, got {sorted(live)}"
+        assert (2,) in live, (
+            f"tool-call atom must remain enabled for a real repeat, got {sorted(live)}"
+        )
         m = fire(diagnosis_loop, m, (2,))
     live_after_three = enabled(diagnosis_loop, m)
     assert live_after_three == frozenset({(1,), (2,)}), (
@@ -169,19 +175,29 @@ def test_full_model_reaches_a_real_final_marking_via_structural_replay():
         return _binding
 
     action_bindings = {
-        CLAUDECODE_WAIT_FOR_READY_STAGE_LABEL: record(CLAUDECODE_WAIT_FOR_READY_STAGE_LABEL),
+        CLAUDECODE_WAIT_FOR_READY_STAGE_LABEL: record(
+            CLAUDECODE_WAIT_FOR_READY_STAGE_LABEL
+        ),
         CLAUDECODE_GET_APP_INFO_LABEL: record(CLAUDECODE_GET_APP_INFO_LABEL),
         CLAUDECODE_BUILD_INSTRUCTION_LABEL: record(CLAUDECODE_BUILD_INSTRUCTION_LABEL),
-        CLAUDECODE_DIAGNOSIS_TOOL_CALL_LABEL: record(CLAUDECODE_DIAGNOSIS_TOOL_CALL_LABEL),
+        CLAUDECODE_DIAGNOSIS_TOOL_CALL_LABEL: record(
+            CLAUDECODE_DIAGNOSIS_TOOL_CALL_LABEL
+        ),
         CLAUDECODE_SUBMIT_DIAGNOSIS_LABEL: record(CLAUDECODE_SUBMIT_DIAGNOSIS_LABEL),
-        CLAUDECODE_MITIGATION_TOOL_CALL_LABEL: record(CLAUDECODE_MITIGATION_TOOL_CALL_LABEL),
+        CLAUDECODE_MITIGATION_TOOL_CALL_LABEL: record(
+            CLAUDECODE_MITIGATION_TOOL_CALL_LABEL
+        ),
         CLAUDECODE_SUBMIT_MITIGATION_LABEL: record(CLAUDECODE_SUBMIT_MITIGATION_LABEL),
         CLAUDECODE_SAVE_RESULTS_LABEL: record(CLAUDECODE_SAVE_RESULTS_LABEL),
-        CLAUDECODE_GENERATE_TRAJECTORY_LABEL: record(CLAUDECODE_GENERATE_TRAJECTORY_LABEL),
+        CLAUDECODE_GENERATE_TRAJECTORY_LABEL: record(
+            CLAUDECODE_GENERATE_TRAJECTORY_LABEL
+        ),
     }
 
     log = replay_structural_fires(
-        node, session_id="test-claudecode-reference-model", action_bindings=action_bindings
+        node,
+        session_id="test-claudecode-reference-model",
+        action_bindings=action_bindings,
     )
 
     assert invocations[0] == CLAUDECODE_WAIT_FOR_READY_STAGE_LABEL
@@ -217,7 +233,9 @@ def test_a_real_log_the_model_itself_produced_conforms_to_itself():
     a ChoiceGraph with its own real Silent entry/exit nodes -- reusing a
     real produced log sidesteps that class of authoring error entirely)."""
     node = build_claudecode_agent_powl_node()
-    log = replay_structural_fires(node, session_id="test-claudecode-conformance-positive")
+    log = replay_structural_fires(
+        node, session_id="test-claudecode-conformance-positive"
+    )
 
     result = check_ocel_conformance(node, log.events)
     assert result.conforms is True
@@ -233,10 +251,14 @@ def test_dropping_the_real_submit_diagnosis_event_is_a_real_detected_divergence(
     enabled once `submit_diagnosis` has actually fired, so replay must
     diverge exactly there."""
     node = build_claudecode_agent_powl_node()
-    log = replay_structural_fires(node, session_id="test-claudecode-conformance-negative")
+    log = replay_structural_fires(
+        node, session_id="test-claudecode-conformance-negative"
+    )
 
     def detail_of(event) -> str | None:
-        return next((a.value.value for a in event.attributes if a.key == "detail"), None)
+        return next(
+            (a.value.value for a in event.attributes if a.key == "detail"), None
+        )
 
     labels = [detail_of(e) for e in log.events]
     submit_diagnosis_index = labels.index(CLAUDECODE_SUBMIT_DIAGNOSIS_LABEL)

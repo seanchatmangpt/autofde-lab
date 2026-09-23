@@ -13,7 +13,7 @@ from __future__ import annotations
 import pytest
 
 from autofde_lab.receipts.admission import admit_typed
-from autofde_lab.receipts.wasm4pm_types import ConformanceVerdict, OcelEvent, Receipt
+from autofde_lab.receipts.wasm4pm_types import OcelEvent, Receipt
 from autofde_lab.standing import Blocked
 
 
@@ -45,9 +45,10 @@ def test_admit_typed_digest_is_stable_across_key_order() -> None:
         "type": "solve-blocks",
         "id": "e1",
     }
-    assert admit_typed(a, model=OcelEvent).observation_digest == admit_typed(
-        b, model=OcelEvent
-    ).observation_digest
+    assert (
+        admit_typed(a, model=OcelEvent).observation_digest
+        == admit_typed(b, model=OcelEvent).observation_digest
+    )
 
 
 def test_admit_typed_accepts_a_well_formed_receipt() -> None:
@@ -71,7 +72,11 @@ def test_admit_typed_refuses_receipt_with_wrong_shaped_nested_verdict() -> None:
 
 
 def test_admit_typed_refuses_missing_required_field_with_named_reason() -> None:
-    observation = {"id": "e1", "attributes": [], "relationships": []}  # no `type`, `time`
+    observation = {
+        "id": "e1",
+        "attributes": [],
+        "relationships": [],
+    }  # no `type`, `time`
     with pytest.raises(Blocked, match="failed OcelEvent validation"):
         admit_typed(observation, model=OcelEvent)
 

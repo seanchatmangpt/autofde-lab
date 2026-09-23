@@ -149,7 +149,9 @@ def _ocel_evidence_digest(ocel_log: dict[str, Any]) -> str:
     `gymact.runtime.GymAct.episode_ocel_log` returns -- a reference,
     per `.claude/rules/no-dual-bookkeeping.md`, never a duplicated copy of
     the log itself."""
-    return hashlib.sha256(json.dumps(ocel_log, sort_keys=True).encode("utf-8")).hexdigest()[:16]
+    return hashlib.sha256(
+        json.dumps(ocel_log, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:16]
 
 
 async def _submit_experiment_async(
@@ -170,7 +172,9 @@ async def _submit_experiment_async(
     runtime = _RealGymAct(authority_resolver=authority_resolver)
     runtime.register_provider(MemoryProvider())
 
-    authority_ref = intent.authority_requirements[0] if intent.authority_requirements else None
+    authority_ref = (
+        intent.authority_requirements[0] if intent.authority_requirements else None
+    )
     receipt_refs: list[str] = []
 
     materialization = await runtime.materialize(
@@ -213,9 +217,15 @@ async def _submit_experiment_async(
         receipt_refs.append(act_result.receipt.receipt_id)
 
     verify_keys = intent.expected_postconditions or intent.proposed_actions
-    verification = await runtime.verify(real_episode_id, {key: True for key in verify_keys})
-    postconditions_observed = tuple(key for key in verify_keys if verification.observed.get(key) is True)
-    postconditions_violated = tuple(key for key in verify_keys if verification.observed.get(key) is not True)
+    verification = await runtime.verify(
+        real_episode_id, {key: True for key in verify_keys}
+    )
+    postconditions_observed = tuple(
+        key for key in verify_keys if verification.observed.get(key) is True
+    )
+    postconditions_violated = tuple(
+        key for key in verify_keys if verification.observed.get(key) is not True
+    )
 
     # `episode_ocel_log` reads accumulated Receipts, which teardown does not
     # clear (see `gymact.kernel.GymAct.episode_ocel_log`'s own docstring) --
@@ -225,7 +235,9 @@ async def _submit_experiment_async(
     ocel_log = runtime.episode_ocel_log(real_episode_id)
     ocel_evidence_ref = _ocel_evidence_digest(ocel_log)
 
-    teardown_receipt = await runtime.teardown(real_episode_id, authority_ref=authority_ref)
+    teardown_receipt = await runtime.teardown(
+        real_episode_id, authority_ref=authority_ref
+    )
     receipt_refs.append(teardown_receipt.receipt_id)
 
     standing = (
@@ -263,5 +275,7 @@ class GymActWorldExperimentProvider:
 
     def submit_experiment(self, intent: ExperimentIntent) -> ExperimentReceipt:
         return _run_coroutine_sync(
-            _submit_experiment_async(intent, authority_resolver=self._authority_resolver)
+            _submit_experiment_async(
+                intent, authority_resolver=self._authority_resolver
+            )
         )

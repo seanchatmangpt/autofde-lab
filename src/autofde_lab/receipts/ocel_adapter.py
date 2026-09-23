@@ -40,7 +40,9 @@ def trajectory_to_ocel_log(steps: list[PlanStepOutcome], run_id: str) -> OcelLog
         for step in steps
     ]
     plan_run_object = OcelObject(id=run_id, type="PlanRun", attributes=[])
-    return OcelLog(events=events, objects=[plan_run_object], eventTypes=[], objectTypes=[])
+    return OcelLog(
+        events=events, objects=[plan_run_object], eventTypes=[], objectTypes=[]
+    )
 
 
 __all__ = ["trajectory_to_ocel_log"]

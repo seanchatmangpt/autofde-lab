@@ -701,4 +701,3 @@ ex:problem-irreversible-refused a pd:Problem ;
     pd:goal
         [ a pd:NegatedAtom ; pd:ofPredicate "org-exists" ;
           pd:hasArgument [ pd:argument "res3" ; pd:argumentIndex 0 ] ] .
-

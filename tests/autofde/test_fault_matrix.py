@@ -37,16 +37,26 @@ O = FaultOutcome
 FAULT_CASES: tuple[tuple[int, FaultObservation, FaultOutcome], ...] = (
     (1, FaultObservation(K.DUPLICATE_OBSERVATION, already_committed=True), O.CONTINUE),
     (2, FaultObservation(K.OUT_OF_ORDER_OBSERVATION), O.REPAIR),
-    (3, FaultObservation(K.DOWNSTREAM_TIMEOUT, attempt=1, retry_bound=3), O.RETRY_WITHIN_BOUND),
+    (
+        3,
+        FaultObservation(K.DOWNSTREAM_TIMEOUT, attempt=1, retry_bound=3),
+        O.RETRY_WITHIN_BOUND,
+    ),
     (4, FaultObservation(K.NOTIFICATION_REJECTED), O.REPAIR),
-    (5, FaultObservation(K.EVIDENCE_SINK_UNAVAILABLE, attempt=1, retry_bound=3), O.RETRY_WITHIN_BOUND),
+    (
+        5,
+        FaultObservation(K.EVIDENCE_SINK_UNAVAILABLE, attempt=1, retry_bound=3),
+        O.RETRY_WITHIN_BOUND,
+    ),
     (6, FaultObservation(K.IDENTITY_FORBIDDEN), O.REQUEST_NEW_AUTHORITY),
     (7, FaultObservation(K.AUTHORITY_EXPIRED), O.REQUEST_NEW_AUTHORITY),
     (8, FaultObservation(K.POPULATION_EXPANDED), O.REPLAN),
     (9, FaultObservation(K.POSTCONDITION_UNCONFIRMED), O.UNKNOWN),
     (
         10,
-        FaultObservation(K.LABEL_CONTEXT_COLLISION, keys_compared=True, context_diverged=True),
+        FaultObservation(
+            K.LABEL_CONTEXT_COLLISION, keys_compared=True, context_diverged=True
+        ),
         O.REPLAN,
     ),
     (11, FaultObservation(K.TORN_FIRE, torn=True), O.REFUSE),
@@ -88,10 +98,16 @@ def test_every_fault_kind_has_a_classification() -> None:
             unclassified.append(f"{kind.value}: raised {type(exc).__name__}: {exc}")
             continue
         if not isinstance(result.outcome, FaultOutcome):
-            unclassified.append(f"{kind.value}: returned non-outcome {result.outcome!r}")
+            unclassified.append(
+                f"{kind.value}: returned non-outcome {result.outcome!r}"
+            )
         if result.kind is not kind:
-            unclassified.append(f"{kind.value}: verdict carries kind {result.kind.value}")
-    assert not unclassified, "unclassified FaultKind members:\n  " + "\n  ".join(unclassified)
+            unclassified.append(
+                f"{kind.value}: verdict carries kind {result.kind.value}"
+            )
+    assert not unclassified, "unclassified FaultKind members:\n  " + "\n  ".join(
+        unclassified
+    )
 
 
 def test_classification_is_pure_and_deterministic() -> None:
@@ -111,7 +127,9 @@ def test_classification_is_pure_and_deterministic() -> None:
         # a rebuilt-but-equal observation must classify identically too
         clone = FaultObservation(**{f: getattr(obs, f) for f in obs.__slots__})
         if classify(clone).outcome is not first.outcome:
-            drift.append(f"fault {number} ({obs.kind.value}) depends on identity, not value")
+            drift.append(
+                f"fault {number} ({obs.kind.value}) depends on identity, not value"
+            )
     assert not drift, "determinism violations:\n  " + "\n  ".join(drift)
 
 
@@ -124,9 +142,8 @@ def test_fault_11_torn_ledger_refuses_resume_by_name() -> None:
     The session must refuse by name. It must never guess: assume it committed
     and an action is lost; assume it did not and the action double-fires.
     """
-    from autofde_lab.hub.domain.maze import Maze
-
     from autofde_lab.agent.session import AgentSession
+    from autofde_lab.hub.domain.maze import Maze
 
     torn = OccurrenceLedger()
     torn.intend((0,), "ctx-before-crash", activity_sha256="a" * 64, detail="PRE_ACT")
@@ -225,7 +242,9 @@ def test_retry_within_bound_is_refused_once_exhausted() -> None:
     problems: list[str] = []
     for kind in RETRYABLE:
         for attempt in (1, 2):
-            got = classify(FaultObservation(kind, attempt=attempt, retry_bound=3)).outcome
+            got = classify(
+                FaultObservation(kind, attempt=attempt, retry_bound=3)
+            ).outcome
             if got is not O.RETRY_WITHIN_BOUND:
                 problems.append(f"{kind.value} attempt {attempt}/3: got {got.value}")
         for attempt in (3, 4, 99):
@@ -237,14 +256,19 @@ def test_retry_within_bound_is_refused_once_exhausted() -> None:
             elif verdict.refusal_code is not AgentRefusalCode.BOUND_EXHAUSTED:
                 problems.append(f"{kind.value} attempt {attempt}/3: wrong refusal code")
         # a bound of 1 means: do not retry at all
-        if classify(FaultObservation(kind, attempt=1, retry_bound=1)).outcome is not O.REFUSE:
+        if (
+            classify(FaultObservation(kind, attempt=1, retry_bound=1)).outcome
+            is not O.REFUSE
+        ):
             problems.append(f"{kind.value}: retry_bound=1 must not permit a retry")
     assert not problems, "unbounded-retry violations:\n  " + "\n  ".join(problems)
 
 
 def test_unknown_is_reachable_and_never_means_probably_fine() -> None:
     """``unknown`` is a real outcome, and no fault silently continues."""
-    unknowns = {c.kind for _, obs, _ in FAULT_CASES if (c := classify(obs)).outcome is O.UNKNOWN}
+    unknowns = {
+        c.kind for _, obs, _ in FAULT_CASES if (c := classify(obs)).outcome is O.UNKNOWN
+    }
     assert K.POSTCONDITION_UNCONFIRMED in unknowns, "unknown must be reachable"
 
     # `continue` is reachable by exactly one fault, and only with evidence
@@ -252,7 +276,11 @@ def test_unknown_is_reachable_and_never_means_probably_fine() -> None:
     assert continues == {K.DUPLICATE_OBSERVATION}
 
     # and no fault classified with *no* supporting field defaults to continue
-    lax = [k.value for k in FaultKind if classify(FaultObservation(k)).outcome is O.CONTINUE]
+    lax = [
+        k.value
+        for k in FaultKind
+        if classify(FaultObservation(k)).outcome is O.CONTINUE
+    ]
     assert lax == [], f"faults defaulting to continue on an empty observation: {lax}"
 
 

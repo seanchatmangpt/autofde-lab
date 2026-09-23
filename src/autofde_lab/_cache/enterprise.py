@@ -167,9 +167,7 @@ class EnterpriseCacheGateway:
         prefix = self.config.reserved_metadata_prefix
         metadata = dict(supplied or {})
         guarded = (prefix, *LEGACY_RESERVED_METADATA_PREFIXES)
-        collisions = sorted(
-            key for key in metadata if str(key).startswith(guarded)
-        )
+        collisions = sorted(key for key in metadata if str(key).startswith(guarded))
         if collisions:
             raise ValueError(
                 "reserved enterprise metadata cannot be supplied by callers: "

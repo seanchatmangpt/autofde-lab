@@ -12,10 +12,9 @@ import hashlib
 import json
 import re
 import subprocess
+import tomllib
 from pathlib import Path
 from typing import Any
-
-import tomllib
 
 SHA1 = re.compile(r"^[0-9a-f]{40}$")
 

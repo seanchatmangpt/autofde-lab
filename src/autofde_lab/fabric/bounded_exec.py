@@ -142,15 +142,15 @@ def run_callable_bounded(fn: Callable[[], T], *, timeout_s: float) -> T:
     previous_handler = signal.signal(
         signal.SIGALRM, lambda _signum, _frame: (_ for _ in ()).throw(_AlarmTimeout())
     )
-    previous_alarm = signal.alarm(0)  # cancel any pending alarm, read its remaining time
+    previous_alarm = signal.alarm(
+        0
+    )  # cancel any pending alarm, read its remaining time
     try:
         signal.alarm(max(1, int(timeout_s)))
         try:
             return fn()
         except _AlarmTimeout as exc:
-            raise TimeoutError(
-                f"exceeded {timeout_s:g}s wall-clock bound"
-            ) from exc
+            raise TimeoutError(f"exceeded {timeout_s:g}s wall-clock bound") from exc
     finally:
         signal.alarm(0)
         signal.signal(signal.SIGALRM, previous_handler)

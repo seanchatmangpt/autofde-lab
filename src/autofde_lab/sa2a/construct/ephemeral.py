@@ -10,8 +10,6 @@ Fundamental Theorem of Semantic Manufacture:
 
 from __future__ import annotations
 
-import copy
-import dataclasses
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable
@@ -19,7 +17,6 @@ from typing import Any, Callable
 from .constructor import (
     AdmittedSemantics,
     ArtifactManufacturer,
-    ConstructionReceipt,
     ExecutableArtifact,
     TargetProfile,
     compute_digest,
@@ -96,7 +93,10 @@ class EphemeralProjectionWrapper:
         # For PYTHON_EPHEMERAL target, compile in isolated namespace
         if self._artifact.target_profile == TargetProfile.PYTHON_EPHEMERAL:
             ns: dict[str, Any] = {}
-            exec(compile(self._artifact.source_code, "<ephemeral_projection>", "exec"), ns)
+            exec(
+                compile(self._artifact.source_code, "<ephemeral_projection>", "exec"),
+                ns,
+            )
             fn = ns.get(self._artifact.entrypoint)
             if fn is None or not callable(fn):
                 raise ValueError(
@@ -114,7 +114,11 @@ class EphemeralProjectionWrapper:
 
     def verify(self) -> bool:
         """Verify C_t against ConstructionReceipt and canonical O*."""
-        if self._state not in (EphemeralState.COMPILED, EphemeralState.GENERATED, EphemeralState.TAMPERED):
+        if self._state not in (
+            EphemeralState.COMPILED,
+            EphemeralState.GENERATED,
+            EphemeralState.TAMPERED,
+        ):
             raise RuntimeError(f"Cannot verify from state {self._state}")
 
         # Check integrity of source code against receipt
@@ -124,7 +128,9 @@ class EphemeralProjectionWrapper:
             return False
 
         # Verify receipt binds O*
-        is_valid = self._artifact.receipt.verify(self._canonical_semantics, self._artifact)
+        is_valid = self._artifact.receipt.verify(
+            self._canonical_semantics, self._artifact
+        )
         if not is_valid:
             self._state = EphemeralState.TAMPERED
             return False
@@ -135,21 +141,28 @@ class EphemeralProjectionWrapper:
     def execute(self, *args: Any, **kwargs: Any) -> ExecutionResult:
         """Run verified ephemeral code."""
         if self._state == EphemeralState.TAMPERED:
-            raise RuntimeError("Integrity verification failed: projection was tampered.")
+            raise RuntimeError(
+                "Integrity verification failed: projection was tampered."
+            )
 
         if self._state != EphemeralState.VERIFIED:
             # Auto-verify if compiled, or compile & verify
             if self._state == EphemeralState.GENERATED:
                 self.compile()
             if not self.verify():
-                raise RuntimeError("Integrity verification failed; execution forbidden.")
+                raise RuntimeError(
+                    "Integrity verification failed; execution forbidden."
+                )
 
         assert self._compiled_callable is not None
         output = self._compiled_callable(*args, **kwargs)
         self._state = EphemeralState.EXECUTED
 
         # Assert canonical semantics were not mutated
-        if self._canonical_semantics.canonical_digest() != self._initial_canonical_digest:
+        if (
+            self._canonical_semantics.canonical_digest()
+            != self._initial_canonical_digest
+        ):
             raise ProjectionMutationForbiddenError(
                 "Violation of §27: Projection execution attempted to mutate canonical O*!"
             )
@@ -184,7 +197,10 @@ class EphemeralProjectionWrapper:
         )
 
         # Check that O* is unchanged
-        assert self._canonical_semantics.canonical_digest() == self._initial_canonical_digest
+        assert (
+            self._canonical_semantics.canonical_digest()
+            == self._initial_canonical_digest
+        )
         return tampered_artifact
 
 

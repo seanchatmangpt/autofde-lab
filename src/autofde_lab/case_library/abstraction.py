@@ -153,7 +153,11 @@ def abstract_raw_case(
         sub_all(deployment_name, "deployment")
         bindings_schema["deployment"] = "k8s_object_name"
 
-    if service_name and service_name != namespace_name and service_name != deployment_name:
+    if (
+        service_name
+        and service_name != namespace_name
+        and service_name != deployment_name
+    ):
         sub_all(service_name, "service")
         bindings_schema["service"] = "k8s_object_name"
 

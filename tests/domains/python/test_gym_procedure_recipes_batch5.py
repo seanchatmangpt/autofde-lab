@@ -24,8 +24,6 @@ law forbids.
 
 from pathlib import Path
 
-import pytest
-
 from autofde_lab import utils
 from autofde_lab.hub.domain.gym_procedure import GymProcedureDomain, load_recipe
 
@@ -96,6 +94,8 @@ def test_osworld_has_no_vendored_gold_trajectories_directory():
     JSONs reference one by relative path.
     """
     osworld_root = Path(__file__).resolve().parents[3] / "vendor" / "gyms" / "osworld"
-    assert osworld_root.is_dir(), f"expected vendored osworld checkout at {osworld_root}"
+    assert osworld_root.is_dir(), (
+        f"expected vendored osworld checkout at {osworld_root}"
+    )
     trajectory_dirs = [p for p in osworld_root.rglob("trajector*") if p.is_dir()]
     assert trajectory_dirs == []

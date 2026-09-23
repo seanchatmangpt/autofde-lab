@@ -147,7 +147,9 @@ def test_wellformed_models_are_accepted():
             end=2,
         ),
         "nesting at max depth": deep,
-        "ZERO_OR_MORE frequency": PartialOrder((A, B), frozenset(), frequency=ZERO_OR_MORE),
+        "ZERO_OR_MORE frequency": PartialOrder(
+            (A, B), frozenset(), frequency=ZERO_OR_MORE
+        ),
     }
 
     failures = Failures()
@@ -174,69 +176,157 @@ def test_every_structural_defect_raises_its_own_refusal():
         ("partial-order arity", _raw_po((A,)), R.INVALID_PARTIAL_ORDER_ARITY, ""),
         ("choice-graph arity", _raw_cg((A,)), R.INVALID_CHOICE_ARITY, ""),
         # partial order relation laws
-        ("order not irreflexive", _raw_po((A, B), {OrderEdge(0, 0)}),
-         R.CYCLIC_PARTIAL_ORDER, ""),
-        ("order cyclic", _raw_po(
-            (A, B, C), {OrderEdge(0, 1), OrderEdge(1, 2), OrderEdge(2, 0)}),
-         R.CYCLIC_PARTIAL_ORDER, ""),
-        ("closure not antisymmetric", _raw_po(
-            (A, B), order=frozenset(), closure={OrderEdge(0, 1), OrderEdge(1, 0)}),
-         R.CYCLIC_PARTIAL_ORDER, ""),
-        ("closure not irreflexive", _raw_po(
-            (A, B), order=frozenset(), closure={OrderEdge(1, 1)}),
-         R.CYCLIC_PARTIAL_ORDER, ""),
+        (
+            "order not irreflexive",
+            _raw_po((A, B), {OrderEdge(0, 0)}),
+            R.CYCLIC_PARTIAL_ORDER,
+            "",
+        ),
+        (
+            "order cyclic",
+            _raw_po((A, B, C), {OrderEdge(0, 1), OrderEdge(1, 2), OrderEdge(2, 0)}),
+            R.CYCLIC_PARTIAL_ORDER,
+            "",
+        ),
+        (
+            "closure not antisymmetric",
+            _raw_po(
+                (A, B), order=frozenset(), closure={OrderEdge(0, 1), OrderEdge(1, 0)}
+            ),
+            R.CYCLIC_PARTIAL_ORDER,
+            "",
+        ),
+        (
+            "closure not irreflexive",
+            _raw_po((A, B), order=frozenset(), closure={OrderEdge(1, 1)}),
+            R.CYCLIC_PARTIAL_ORDER,
+            "",
+        ),
         # stored order is the closure, not the reduction: refuse the wire form
-        ("order not transitively reduced", _raw_po(
-            (A, B, C), {OrderEdge(0, 1), OrderEdge(1, 2), OrderEdge(0, 2)}),
-         R.NOT_TRANSITIVELY_REDUCED, ""),
-        ("closure not transitive", _raw_po(
-            (A, B, C),
-            order={OrderEdge(0, 1), OrderEdge(1, 2)},
-            closure={OrderEdge(0, 1), OrderEdge(1, 2)}),  # missing 0->2
-         R.NOT_TRANSITIVELY_REDUCED, ""),
+        (
+            "order not transitively reduced",
+            _raw_po((A, B, C), {OrderEdge(0, 1), OrderEdge(1, 2), OrderEdge(0, 2)}),
+            R.NOT_TRANSITIVELY_REDUCED,
+            "",
+        ),
+        (
+            "closure not transitive",
+            _raw_po(
+                (A, B, C),
+                order={OrderEdge(0, 1), OrderEdge(1, 2)},
+                closure={OrderEdge(0, 1), OrderEdge(1, 2)},
+            ),  # missing 0->2
+            R.NOT_TRANSITIVELY_REDUCED,
+            "",
+        ),
         # dangling references
-        ("dangling order edge", _raw_po((A, B), {OrderEdge(0, 7)}),
-         R.DANGLING_REFERENCE, ""),
-        ("dangling choice-graph edge", _raw_cg((A, B), {ChoiceGraphEdge(0, 9)}),
-         R.DANGLING_REFERENCE, ""),
-        ("dangling start index", _raw_cg((A, B), frozenset(), start=5, end=1),
-         R.DANGLING_REFERENCE, ""),
-        ("dangling end index", _raw_cg((A, B), frozenset(), start=0, end=-1),
-         R.DANGLING_REFERENCE, ""),
+        (
+            "dangling order edge",
+            _raw_po((A, B), {OrderEdge(0, 7)}),
+            R.DANGLING_REFERENCE,
+            "",
+        ),
+        (
+            "dangling choice-graph edge",
+            _raw_cg((A, B), {ChoiceGraphEdge(0, 9)}),
+            R.DANGLING_REFERENCE,
+            "",
+        ),
+        (
+            "dangling start index",
+            _raw_cg((A, B), frozenset(), start=5, end=1),
+            R.DANGLING_REFERENCE,
+            "",
+        ),
+        (
+            "dangling end index",
+            _raw_cg((A, B), frozenset(), start=0, end=-1),
+            R.DANGLING_REFERENCE,
+            "",
+        ),
         # edge types
-        ("choice edge in a partial order", _raw_po((A, B), {ChoiceGraphEdge(0, 1)}),
-         R.EDGE_TYPE_MISMATCH, ""),
-        ("order edge in a choice graph", _raw_cg((A, B), {OrderEdge(0, 1)}),
-         R.EDGE_TYPE_MISMATCH, ""),
+        (
+            "choice edge in a partial order",
+            _raw_po((A, B), {ChoiceGraphEdge(0, 1)}),
+            R.EDGE_TYPE_MISMATCH,
+            "",
+        ),
+        (
+            "order edge in a choice graph",
+            _raw_cg((A, B), {OrderEdge(0, 1)}),
+            R.EDGE_TYPE_MISMATCH,
+            "",
+        ),
         # choice-graph boundary
-        ("start has an incoming edge", _raw_cg(
-            (A, B, C), {ChoiceGraphEdge(2, 0), ChoiceGraphEdge(0, 1)}, start=0, end=1),
-         R.MULTI_BOUNDARY_CHOICE_GRAPH, ""),
-        ("end has an outgoing edge", _raw_cg(
-            (A, B, C), {ChoiceGraphEdge(0, 1), ChoiceGraphEdge(1, 2)}, start=0, end=1),
-         R.MULTI_BOUNDARY_CHOICE_GRAPH, ""),
-        ("start equals end", _raw_cg((A, B), frozenset(), start=1, end=1),
-         R.MULTI_BOUNDARY_CHOICE_GRAPH, ""),
+        (
+            "start has an incoming edge",
+            _raw_cg(
+                (A, B, C),
+                {ChoiceGraphEdge(2, 0), ChoiceGraphEdge(0, 1)},
+                start=0,
+                end=1,
+            ),
+            R.MULTI_BOUNDARY_CHOICE_GRAPH,
+            "",
+        ),
+        (
+            "end has an outgoing edge",
+            _raw_cg(
+                (A, B, C),
+                {ChoiceGraphEdge(0, 1), ChoiceGraphEdge(1, 2)},
+                start=0,
+                end=1,
+            ),
+            R.MULTI_BOUNDARY_CHOICE_GRAPH,
+            "",
+        ),
+        (
+            "start equals end",
+            _raw_cg((A, B), frozenset(), start=1, end=1),
+            R.MULTI_BOUNDARY_CHOICE_GRAPH,
+            "",
+        ),
         # connectivity — the detail string is the only thing separating these two
-        ("node unreachable from start", ChoiceGraph(
-            (A, B, C), frozenset({ChoiceGraphEdge(0, 1)}), start=0, end=1),
-         R.CHOICE_GRAPH_DISCONNECTED, "not reachable from start"),
-        ("node does not co-reach end", ChoiceGraph(
-            (A, B, C),
-            frozenset({ChoiceGraphEdge(0, 1), ChoiceGraphEdge(0, 2)}),
-            start=0, end=1),
-         R.CHOICE_GRAPH_DISCONNECTED, "co-reach"),
+        (
+            "node unreachable from start",
+            ChoiceGraph((A, B, C), frozenset({ChoiceGraphEdge(0, 1)}), start=0, end=1),
+            R.CHOICE_GRAPH_DISCONNECTED,
+            "not reachable from start",
+        ),
+        (
+            "node does not co-reach end",
+            ChoiceGraph(
+                (A, B, C),
+                frozenset({ChoiceGraphEdge(0, 1), ChoiceGraphEdge(0, 2)}),
+                start=0,
+                end=1,
+            ),
+            R.CHOICE_GRAPH_DISCONNECTED,
+            "co-reach",
+        ),
         # depth
         ("height 9", _raw_po((legal_depth_8, Atom("y"))), R.DEPTH_EXCEEDED, ""),
         # frequency
-        ("frequency wrong type", _raw_po((A, B), frequency="often"),
-         R.INVALID_FREQUENCY, ""),
-        ("frequency max below min", _raw_cg(
-            (A, B), {ChoiceGraphEdge(0, 1)}, frequency=_raw(Frequency, min=3, max=1)),
-         R.INVALID_FREQUENCY, ""),
-        ("frequency negative min", _raw_po(
-            (A, B), frequency=_raw(Frequency, min=-1, max=None)),
-         R.INVALID_FREQUENCY, ""),
+        (
+            "frequency wrong type",
+            _raw_po((A, B), frequency="often"),
+            R.INVALID_FREQUENCY,
+            "",
+        ),
+        (
+            "frequency max below min",
+            _raw_cg(
+                (A, B), {ChoiceGraphEdge(0, 1)}, frequency=_raw(Frequency, min=3, max=1)
+            ),
+            R.INVALID_FREQUENCY,
+            "",
+        ),
+        (
+            "frequency negative min",
+            _raw_po((A, B), frequency=_raw(Frequency, min=-1, max=None)),
+            R.INVALID_FREQUENCY,
+            "",
+        ),
         # prohibited node kinds
         ("POWL 1.0 Xor at the root", _Xor((A, B)), R.PROHIBITED_NODE_KIND, ""),
     ]

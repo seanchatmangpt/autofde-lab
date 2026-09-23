@@ -75,9 +75,7 @@ class PlanPerformanceAgent:
         if not candidates:
             raise Blocked("no candidate OCEL logs were supplied to optimize over")
 
-        scores = tuple(
-            score_log(run_id, log) for run_id, log in candidates.items()
-        )
+        scores = tuple(score_log(run_id, log) for run_id, log in candidates.items())
         goal_reaching = [s for s in scores if s.reached_goal]
         if not goal_reaching:
             raise Blocked(

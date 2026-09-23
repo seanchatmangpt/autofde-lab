@@ -21,6 +21,7 @@ Exit codes:
           necessarily a blocking error -- but distinguishable for automation)
     2  -- usage / fetch / manifest error
 """
+
 import json
 import subprocess
 import sys
@@ -90,9 +91,7 @@ def main() -> int:
         default_branch = repo_entry.get("default_branch")
         sources = repo_entry.get("sources", [])
 
-        head_sources = [
-            s for s in sources if is_head_claiming_source(s.get("id", ""))
-        ]
+        head_sources = [s for s in sources if is_head_claiming_source(s.get("id", ""))]
         if not head_sources:
             continue
 
@@ -162,14 +161,18 @@ def main() -> int:
             print(f"[ERROR] {e}")
 
     if not checked and not errors:
-        print("No sources[] entries with id ending in '-main-head' or "
-              "'-default-branch-head' were found in this manifest.")
+        print(
+            "No sources[] entries with id ending in '-main-head' or "
+            "'-default-branch-head' were found in this manifest."
+        )
         return 0
 
     n_match = sum(1 for c in checked if c["status"] == "MATCH")
     n_drift = sum(1 for c in checked if c["status"] == "DRIFT")
-    print(f"checked: {len(checked)}  match: {n_match}  drift: {n_drift}  "
-          f"errors: {len(errors)}")
+    print(
+        f"checked: {len(checked)}  match: {n_match}  drift: {n_drift}  "
+        f"errors: {len(errors)}"
+    )
 
     if errors:
         return 2
@@ -183,8 +186,10 @@ def main() -> int:
         )
         return 1
 
-    print("\nAll HEAD-claiming sources MATCH the real, current "
-          "default-branch HEAD. No drift detected.")
+    print(
+        "\nAll HEAD-claiming sources MATCH the real, current "
+        "default-branch HEAD. No drift detected."
+    )
     return 0
 
 

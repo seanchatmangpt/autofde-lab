@@ -36,7 +36,9 @@ import hashlib
 from dataclasses import dataclass
 
 from autofde_lab.planner_league import LeagueMatch, PayoffHypergraph, PayoffObservation
-from autofde_lab.planner_league.cross_play_world_schedule import CrossPlayScheduleOutcome
+from autofde_lab.planner_league.cross_play_world_schedule import (
+    CrossPlayScheduleOutcome,
+)
 
 from .dflss_planner_solve import PlannerSolveOutcome
 from .dflss_solve_payoff_bridge import _outcome_score
@@ -107,7 +109,9 @@ def admit_cross_play_schedule_payoffs(
         left_score = _outcome_score(left_outcome)
         right_score = _outcome_score(right_outcome)
         try:
-            observation = PayoffObservation(match, left_score, right_score, receipt_id=receipt_id)
+            observation = PayoffObservation(
+                match, left_score, right_score, receipt_id=receipt_id
+            )
         except ValueError as exc:
             # Defensive only -- receipt_id is always real and non-empty
             # above. Never bypassed: the same real

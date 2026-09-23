@@ -27,6 +27,7 @@ reported separately as drift candidates (a TTL individual referencing a
 capability that no longer exists in code, or whose surface name doesn't
 match).
 """
+
 from __future__ import annotations
 
 import json
@@ -37,14 +38,18 @@ from pathlib import Path
 
 import rdflib
 
-TTL_PATH = Path("/Users/sac/chatman-ecosystem/ontology/platform-console-capabilities.ttl")
+TTL_PATH = Path(
+    "/Users/sac/chatman-ecosystem/ontology/platform-console-capabilities.ttl"
+)
 APP_ROOT = Path("/Users/sac/chatman-ecosystem/platform-console/app")
 APPROVAL_WORKFLOW_TS = APP_ROOT / "lib" / "approval-workflow.ts"
 CASTLE_TS = APP_ROOT / "lib" / "castle.ts"
 K8S_TS = APP_ROOT / "lib" / "k8s.ts"
 API_ROOT = APP_ROOT / "app" / "api"
 
-CE = rdflib.Namespace("https://seanchatmangpt.github.io/chatman-ecosystem/ontology/capabilities#")
+CE = rdflib.Namespace(
+    "https://seanchatmangpt.github.io/chatman-ecosystem/ontology/capabilities#"
+)
 DCTERMS = rdflib.Namespace("http://purl.org/dc/terms/")
 
 
@@ -72,7 +77,9 @@ def parse_approval_actions(ts_path: Path) -> list[str]:
         re.DOTALL,
     )
     if not m:
-        raise RuntimeError("could not locate ACTIONS_REQUIRING_APPROVAL array in " + str(ts_path))
+        raise RuntimeError(
+            "could not locate ACTIONS_REQUIRING_APPROVAL array in " + str(ts_path)
+        )
     body = m.group(1)
     # Real array entries are lines of the form `  "action.name",` -- strip
     # `//`-comment lines first so quoted strings inside explanatory prose
@@ -96,7 +103,9 @@ def parse_castle_verbs(ts_path: Path) -> list[str]:
     text = ts_path.read_text()
     m = re.search(r"export type AllowedCastleVerbId\s*=\s*(.*?);", text, re.DOTALL)
     if not m:
-        raise RuntimeError("could not locate AllowedCastleVerbId union in " + str(ts_path))
+        raise RuntimeError(
+            "could not locate AllowedCastleVerbId union in " + str(ts_path)
+        )
     return re.findall(r'"([a-zA-Z0-9_.\-]+)"', m.group(1))
 
 
@@ -113,14 +122,21 @@ def discover_mutating_k8s_functions(k8s_ts_path: Path) -> set[str]:
     return {n for n in names if n.lower().startswith(mutating_prefixes)}
 
 
-def discover_mutating_routes(api_root: Path, mutating_k8s_fns: set[str]) -> dict[str, list[str]]:
+def discover_mutating_routes(
+    api_root: Path, mutating_k8s_fns: set[str]
+) -> dict[str, list[str]]:
     """Return {route_relpath: [mutating fn names it calls, or 'castle-verb-actuation']}
     restricted to routes that (a) define a POST/PUT/DELETE handler and
     (b) call at least one real mutating k8s function -- either directly,
     or via lib/castle.ts's runCastleVerb/deployCastle/sunsetCastle (which
     themselves wrap k8sRequest to create/delete real batch/v1 Jobs and
     ConfigMaps -- see lib/castle.ts header comment)."""
-    castle_actuators = {"runCastleVerb", "deployCastle", "sunsetCastle", "scheduleCastleVerb"}
+    castle_actuators = {
+        "runCastleVerb",
+        "deployCastle",
+        "sunsetCastle",
+        "scheduleCastleVerb",
+    }
     hits: dict[str, list[str]] = {}
     for route in sorted(api_root.rglob("route.ts")):
         text = route.read_text()
@@ -130,7 +146,9 @@ def discover_mutating_routes(api_root: Path, mutating_k8s_fns: set[str]) -> dict
         mutating_hits = sorted(called & mutating_k8s_fns)
         castle_hits = sorted(called & castle_actuators)
         if mutating_hits or castle_hits:
-            hits[str(route.relative_to(api_root.parent.parent))] = mutating_hits + castle_hits
+            hits[str(route.relative_to(api_root.parent.parent))] = (
+                mutating_hits + castle_hits
+            )
     return hits
 
 
@@ -156,14 +174,18 @@ class CoverageReport:
 
     @property
     def surface_names(self) -> set[str]:
-        return set(self.approval_actions) | set(self.castle_verbs) | set(self.route_names)
+        return (
+            set(self.approval_actions) | set(self.castle_verbs) | set(self.route_names)
+        )
 
     def to_dict(self) -> dict:
         surface = self.surface_names
         ttl_set = set(self.ttl_titles)
         modeled = ttl_set & surface
         unmodeled = sorted(surface - ttl_set)
-        drift = sorted(ttl_set - surface)  # TTL individuals with no matching real capability
+        drift = sorted(
+            ttl_set - surface
+        )  # TTL individuals with no matching real capability
         return {
             "ttl_path": str(TTL_PATH),
             "ttl_individual_count": len(self.ttl_titles),
@@ -203,14 +225,23 @@ def main() -> int:
     print(json.dumps(report, indent=2))
     print("\n--- SUMMARY ---", file=sys.stderr)
     print(f"TTL individuals: {report['ttl_individual_count']}", file=sys.stderr)
-    print(f"Total real DO-capability surface: {report['total_real_do_capability_surface']}", file=sys.stderr)
+    print(
+        f"Total real DO-capability surface: {report['total_real_do_capability_surface']}",
+        file=sys.stderr,
+    )
     print(f"Modeled in TTL: {report['modeled_in_ttl_count']}", file=sys.stderr)
     print(f"Coverage ratio: {report['coverage_ratio']:.1%}", file=sys.stderr)
-    print(f"Unmodeled capabilities ({len(report['unmodeled_capabilities'])}):", file=sys.stderr)
+    print(
+        f"Unmodeled capabilities ({len(report['unmodeled_capabilities'])}):",
+        file=sys.stderr,
+    )
     for name in report["unmodeled_capabilities"]:
         print(f"  - {name}", file=sys.stderr)
     if report["ttl_drift_candidates_no_real_referent"]:
-        print(f"TTL drift candidates (no real referent) ({len(report['ttl_drift_candidates_no_real_referent'])}):", file=sys.stderr)
+        print(
+            f"TTL drift candidates (no real referent) ({len(report['ttl_drift_candidates_no_real_referent'])}):",
+            file=sys.stderr,
+        )
         for name in report["ttl_drift_candidates_no_real_referent"]:
             print(f"  - {name}", file=sys.stderr)
     return 0

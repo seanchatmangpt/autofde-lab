@@ -76,6 +76,7 @@ Deviations from a literal reading of CONTRACT.md
    Section 5 defines, rather than requiring the caller to also pass
    per-round event lists.
 """
+
 from __future__ import annotations
 
 import re
@@ -86,9 +87,9 @@ from autofde_lab.sa2a.case_studies.manufacturing.ocel_adapter import (
     EVT_ACTUATION,
     EVT_PERMISSION,
     EVT_PROHIBITION,
-    LogRef,
     OBJ_RECEIPT,
     QUAL_GENERATED,
+    LogRef,
 )
 
 ENERGY_BUDGET_PER_ROUND_KWH = 450.0
@@ -122,7 +123,7 @@ def _attr(event_or_object: Any, key: str, default: Any = None) -> Any:
 @dataclass
 class RoundViolation:
     round_index: int
-    invariant: str          # "unreceipted_actuation" | "energy_budget" | "authority_closure"
+    invariant: str  # "unreceipted_actuation" | "energy_budget" | "authority_closure"
     event_id: str | None
     detail: str
 
@@ -207,7 +208,9 @@ class VerifierAgent:
 
     # -- invariant 1: zero unreceipted actuation ---------------------------
 
-    def _check_actuations(self, round_index: int, events: list, report: RoundReport) -> None:
+    def _check_actuations(
+        self, round_index: int, events: list, report: RoundReport
+    ) -> None:
         for ev in events:
             if ev.activity != EVT_ACTUATION:
                 continue
@@ -268,8 +271,12 @@ class VerifierAgent:
 
     # -- invariants 2 & 3: energy budget + authority closure --------------
 
-    def _check_decisions(self, round_index: int, events: list, report: RoundReport) -> None:
-        decisions = [ev for ev in events if ev.activity in (EVT_PERMISSION, EVT_PROHIBITION)]
+    def _check_decisions(
+        self, round_index: int, events: list, report: RoundReport
+    ) -> None:
+        decisions = [
+            ev for ev in events if ev.activity in (EVT_PERMISSION, EVT_PROHIBITION)
+        ]
         remaining_before = self._budget
         for ev in decisions:
             report.checked_decisions += 1
@@ -341,7 +348,9 @@ class VerifierAgent:
                             f"remaining_before={remaining_before} remaining_after={remaining_after}",
                         )
                     )
-                self._check_refusal_justified(round_index, ev, verdict, reason, remaining_before, report)
+                self._check_refusal_justified(
+                    round_index, ev, verdict, reason, remaining_before, report
+                )
             else:
                 report.violations.append(
                     RoundViolation(
@@ -369,7 +378,9 @@ class VerifierAgent:
             if m is None:
                 report.violations.append(
                     RoundViolation(
-                        round_index, "authority_closure", ev.id,
+                        round_index,
+                        "authority_closure",
+                        ev.id,
                         f"unparseable_reason for refused_budget: {reason!r}",
                     )
                 )
@@ -378,7 +389,9 @@ class VerifierAgent:
             if requested <= remaining_before + _TOLERANCE:
                 report.violations.append(
                     RoundViolation(
-                        round_index, "authority_closure", ev.id,
+                        round_index,
+                        "authority_closure",
+                        ev.id,
                         f"refused_budget but requested={requested} did not exceed "
                         f"remaining_before={remaining_before}",
                     )
@@ -388,7 +401,9 @@ class VerifierAgent:
             if m is None:
                 report.violations.append(
                     RoundViolation(
-                        round_index, "authority_closure", ev.id,
+                        round_index,
+                        "authority_closure",
+                        ev.id,
                         f"unparseable_reason for refused_authority: {reason!r}",
                     )
                 )
@@ -398,7 +413,9 @@ class VerifierAgent:
             if requested <= cap + _TOLERANCE:
                 report.violations.append(
                     RoundViolation(
-                        round_index, "authority_closure", ev.id,
+                        round_index,
+                        "authority_closure",
+                        ev.id,
                         f"refused_authority but requested={requested} did not exceed "
                         f"cap={cap} (max_share={self._max_share} of remaining_before={remaining_before})",
                     )
@@ -406,7 +423,9 @@ class VerifierAgent:
             if requested > remaining_before + _TOLERANCE:
                 report.violations.append(
                     RoundViolation(
-                        round_index, "authority_closure", ev.id,
+                        round_index,
+                        "authority_closure",
+                        ev.id,
                         f"refused_authority but requested={requested} also exceeds "
                         f"remaining_before={remaining_before} -- should have been refused_budget",
                     )

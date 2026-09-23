@@ -58,7 +58,10 @@ def _events_for_command(
 ) -> list[dict[str, object]]:
     result: list[dict[str, object]] = []
     for event in document.get("events", []):
-        if isinstance(event, dict) and str(_attrs(event).get("command_id", "")) == command_id:
+        if (
+            isinstance(event, dict)
+            and str(_attrs(event).get("command_id", "")) == command_id
+        ):
             result.append(event)
     return result
 
@@ -85,8 +88,7 @@ def _strip_permission(document: dict[str, object]) -> dict[str, object]:
         relation
         for relation in actuation.get("relationships", [])
         if not (
-            isinstance(relation, dict)
-            and relation.get("qualifier") == "permission"
+            isinstance(relation, dict) and relation.get("qualifier") == "permission"
         )
     ]
     return mutated
@@ -261,9 +263,7 @@ def run_gap_court(document: dict[str, object]) -> dict[str, object]:
             {
                 "gap_id": case.gap_id,
                 "detected": detected,
-                "expected_violation_prefixes": list(
-                    case.expected_violation_prefixes
-                ),
+                "expected_violation_prefixes": list(case.expected_violation_prefixes),
                 "violations": list(violations),
             }
         )

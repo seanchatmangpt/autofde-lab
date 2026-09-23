@@ -61,9 +61,7 @@ class ChatmanCleanSessionDomain(D):
         self.task = task
         self.routes = tuple(routes)
         if not self.routes:
-            raise ValueError(
-                "at least one environment-manufacturing route is required"
-            )
+            raise ValueError("at least one environment-manufacturing route is required")
         route_names = [route.name for route in self.routes]
         if len(route_names) != len(set(route_names)):
             raise ValueError("route names must be unique")
@@ -175,9 +173,7 @@ class ChatmanCleanSessionDomain(D):
             key=lambda route: (route.cost, route.name),
         )
         if successful:
-            route_actions = (
-                SessionAction(ActionKind.TRY_ROUTE, successful[0].name),
-            )
+            route_actions = (SessionAction(ActionKind.TRY_ROUTE, successful[0].name),)
         else:
             route_actions = tuple(
                 SessionAction(ActionKind.TRY_ROUTE, route.name)

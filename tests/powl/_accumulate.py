@@ -26,7 +26,11 @@ class Failures(list):
             self.append(message)
 
     def expect_refusal(
-        self, name: str, build: Callable[[], object], expected: PowlRefusal, detail: str = ""
+        self,
+        name: str,
+        build: Callable[[], object],
+        expected: PowlRefusal,
+        detail: str = "",
     ) -> None:
         """Record a failure unless ``build()`` refuses with exactly ``expected``."""
         try:

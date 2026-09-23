@@ -54,4 +54,3 @@ ONE shared `KnownRouteRegistry` instance per trial, N=8 threads each registering
 ```bash
 .venv/bin/python -m pytest tests/sa2a/test_v26_9_17_concurrency_stress_chicago.py -v
 ```
-

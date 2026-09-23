@@ -28,7 +28,11 @@ from autofde_lab.sa2a.composition.resolver import (
 _VALID_MANIFEST = {
     "release_id": "v26.9.17-test",
     "repositories": [
-        {"name": "autofde-lab", "exact_sha": "a" * 40, "remote_url": "https://example.invalid/a"}
+        {
+            "name": "autofde-lab",
+            "exact_sha": "a" * 40,
+            "remote_url": "https://example.invalid/a",
+        }
     ],
     "artifacts": [{"artifact_id": "artifact-1", "digest": "b" * 64}],
     "root_manifest_digest": "c" * 64,
@@ -58,7 +62,9 @@ def test_release_id_leading_trailing_whitespace_is_trimmed_not_a_bug() -> None:
     before becoming identity-bearing, so surrounding whitespace/CRLF is trimmed,
     not preserved as a distinct identity. Pinning this so a future change to the
     trim behavior is a deliberate, tested decision rather than silent drift."""
-    subject = SubjectResolver().resolve({**_VALID_MANIFEST, "release_id": "release\nid\r\n"})
+    subject = SubjectResolver().resolve(
+        {**_VALID_MANIFEST, "release_id": "release\nid\r\n"}
+    )
     assert subject.release_id == "release\nid"
 
 
@@ -85,12 +91,20 @@ def test_uppercase_hex_sha_is_refused_not_a_bug() -> None:
     hand-typed or corrupted ref), not a false refusal of a legitimate value -- left
     unchanged."""
     real_sha = subprocess.run(
-        ["git", "rev-parse", "HEAD"], cwd=Path(__file__).resolve().parents[3],
-        capture_output=True, text=True, check=True,
+        ["git", "rev-parse", "HEAD"],
+        cwd=Path(__file__).resolve().parents[3],
+        capture_output=True,
+        text=True,
+        check=True,
     ).stdout.strip()
-    assert real_sha == real_sha.lower(), "real git SHA output is lowercase, confirming the regex's assumption"
+    assert real_sha == real_sha.lower(), (
+        "real git SHA output is lowercase, confirming the regex's assumption"
+    )
 
-    manifest = {**_VALID_MANIFEST, "repositories": [{"name": "x", "exact_sha": "A" * 40}]}
+    manifest = {
+        **_VALID_MANIFEST,
+        "repositories": [{"name": "x", "exact_sha": "A" * 40}],
+    }
     try:
         SubjectResolver().resolve(manifest)
         assert False, "uppercase-hex SHA must still be refused (non-canonical form)"
@@ -108,7 +122,9 @@ def test_large_unique_repository_list_resolves_in_linear_time() -> None:
     subject = SubjectResolver().resolve(manifest)
     elapsed = time.perf_counter() - start
     assert len(subject.repositories) == 3000
-    assert elapsed < 2.0, f"3000 unique repositories took {elapsed:.3f}s -- possible O(n^2) regression"
+    assert elapsed < 2.0, (
+        f"3000 unique repositories took {elapsed:.3f}s -- possible O(n^2) regression"
+    )
     # composition_digest also must not blow up (it sorts every repo/artifact tuple)
     start = time.perf_counter()
     _ = subject.composition_digest
@@ -122,13 +138,17 @@ def test_large_duplicate_repository_list_dedupes_without_quadratic_blowup() -> N
     subject = SubjectResolver().resolve(manifest)
     elapsed = time.perf_counter() - start
     assert len(subject.repositories) == 1
-    assert elapsed < 2.0, f"5000 identical duplicates took {elapsed:.3f}s -- possible O(n^2) regression"
+    assert elapsed < 2.0, (
+        f"5000 identical duplicates took {elapsed:.3f}s -- possible O(n^2) regression"
+    )
 
 
 # --- 4. resolve_self_identity() on a non-git directory -------------------------
 
 
-def test_resolve_self_identity_on_non_git_dir_raises_named_subprocess_error(tmp_path: Path) -> None:
+def test_resolve_self_identity_on_non_git_dir_raises_named_subprocess_error(
+    tmp_path: Path,
+) -> None:
     """CONFIRMED finding, not changed: `resolve_self_identity` on a directory with no
     `.git` raises `subprocess.CalledProcessError` (returncode 128, a real, typed,
     standard-library exception carrying git's own stderr). This is consistent with
@@ -151,7 +171,9 @@ def test_resolve_self_identity_on_non_git_dir_raises_named_subprocess_error(tmp_
 
 def test_resolver_module_never_uses_shell_true() -> None:
     source = Path(
-        __import__("autofde_lab.sa2a.composition.resolver", fromlist=["__file__"]).__file__
+        __import__(
+            "autofde_lab.sa2a.composition.resolver", fromlist=["__file__"]
+        ).__file__
     ).read_text()
     assert "shell=True" not in source
 
@@ -168,7 +190,9 @@ def test_subprocess_calls_use_list_args_and_resist_shell_metacharacters_in_cwd(
     evil_dir = tmp_path / "repo$(touch pwned)`touch pwned2`;touch pwned3;"
     evil_dir.mkdir()
     subprocess.run(["git", "init", "-q"], cwd=evil_dir, check=True)
-    subprocess.run(["git", "config", "user.email", "t@example.invalid"], cwd=evil_dir, check=True)
+    subprocess.run(
+        ["git", "config", "user.email", "t@example.invalid"], cwd=evil_dir, check=True
+    )
     subprocess.run(["git", "config", "user.name", "t"], cwd=evil_dir, check=True)
     (evil_dir / "f.txt").write_text("x")
     subprocess.run(["git", "add", "."], cwd=evil_dir, check=True)
@@ -187,7 +211,9 @@ def test_subprocess_calls_use_list_args_and_resist_shell_metacharacters_in_cwd(
 
 def test_dict_key_order_does_not_change_composition_digest() -> None:
     reordered = {k: _VALID_MANIFEST[k] for k in reversed(list(_VALID_MANIFEST.keys()))}
-    reordered["repositories"] = [dict(reversed(list(_VALID_MANIFEST["repositories"][0].items())))]
+    reordered["repositories"] = [
+        dict(reversed(list(_VALID_MANIFEST["repositories"][0].items())))
+    ]
     subject_a = SubjectResolver().resolve(_VALID_MANIFEST)
     subject_b = SubjectResolver().resolve(reordered)
     assert subject_a.composition_digest == subject_b.composition_digest
@@ -205,10 +231,15 @@ def test_json_round_trip_does_not_change_composition_digest() -> None:
 
 def test_whitespace_only_artifact_digest_is_refused() -> None:
     for whitespace_digest in (" ", "   ", "\t\n"):
-        manifest = {**_VALID_MANIFEST, "artifacts": [{"artifact_id": "a1", "digest": whitespace_digest}]}
+        manifest = {
+            **_VALID_MANIFEST,
+            "artifacts": [{"artifact_id": "a1", "digest": whitespace_digest}],
+        }
         try:
             SubjectResolver().resolve(manifest)
-            assert False, f"whitespace-only digest {whitespace_digest!r} must be refused"
+            assert False, (
+                f"whitespace-only digest {whitespace_digest!r} must be refused"
+            )
         except SubjectResolutionError as exc:
             assert exc.code == REFUSED_MISSING_ARTIFACT_DIGEST
 

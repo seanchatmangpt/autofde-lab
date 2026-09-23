@@ -82,8 +82,7 @@ This is a named workaround, not a silent downgrade.
 from __future__ import annotations
 
 import asyncio
-import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable, Literal
 from uuid import uuid4
 
@@ -96,7 +95,11 @@ from autofde_lab.case_library import (
     ScoredCase,
     retrieve_best_match,
 )
-from autofde_lab.case_library.outcome_predicate import ConfirmedVia, OracleVerdict, OutcomeVerdict
+from autofde_lab.case_library.outcome_predicate import (
+    ConfirmedVia,
+    OracleVerdict,
+    OutcomeVerdict,
+)
 
 __all__ = [
     "Anomaly",
@@ -212,7 +215,9 @@ def symptom_signature_from_anomaly(anomaly: Anomaly) -> ProblemSignature:
 def describe_anomaly(anomaly: Anomaly) -> str:
     """Render a real :class:`Anomaly` as the free-text symptom description
     fed into every DSPy signature below."""
-    expected = anomaly.expected if anomaly.expected is not None else "<no baseline recorded>"
+    expected = (
+        anomaly.expected if anomaly.expected is not None else "<no baseline recorded>"
+    )
     return (
         f"kind={anomaly.kind} object={anomaly.object_name} namespace={anomaly.namespace} "
         f"relation_class={anomaly.relation_class} field={anomaly.field} "
@@ -231,7 +236,9 @@ class DiagnoseFault(dspy.Signature):
     root cause the tools have not evidenced."""
 
     symptom_description: str = dspy.InputField()
-    diagnosis: str = dspy.OutputField(desc="free-text root-cause diagnosis grounded in tool output")
+    diagnosis: str = dspy.OutputField(
+        desc="free-text root-cause diagnosis grounded in tool output"
+    )
 
 
 class TaxonomyClassification(dspy.Signature):
@@ -303,7 +310,9 @@ def build_sregym_react_tools(environment: Any) -> list[Callable[..., str]]:
     """
     from gymact.gyms.sregym import SREGYM_CAPABILITIES
 
-    capabilities_by_binding = {capability.binding: capability for capability in SREGYM_CAPABILITIES}
+    capabilities_by_binding = {
+        capability.binding: capability for capability in SREGYM_CAPABILITIES
+    }
 
     def run_kubectl(command: str) -> str:
         """Execute a real kubectl command through sregym's real kubectl-mcp server."""
@@ -329,7 +338,9 @@ def build_sregym_submission_fns(
     terminal actions, not exploratory ones)."""
     from gymact.gyms.sregym import SREGYM_CAPABILITIES
 
-    capabilities_by_binding = {capability.binding: capability for capability in SREGYM_CAPABILITIES}
+    capabilities_by_binding = {
+        capability.binding: capability for capability in SREGYM_CAPABILITIES
+    }
 
     def submit_diagnosis(diagnosis: str, category: str) -> str:
         capability = capabilities_by_binding["submit_diagnosis"]
@@ -395,7 +406,9 @@ async def oracle_verdict_from_environment(
     return OracleVerdict(present=True, passed=bool(passed))
 
 
-def build_oracle_verdict_fn(environment: Any) -> Callable[[dict[str, Any]], OracleVerdict]:
+def build_oracle_verdict_fn(
+    environment: Any,
+) -> Callable[[dict[str, Any]], OracleVerdict]:
     """Synchronous wrapper around :func:`oracle_verdict_from_environment`,
     matching the synchronous style of :func:`build_sregym_submission_fns`
     (``dspy``/plain callers invoke this synchronously; the real
@@ -544,7 +557,9 @@ class SregymDiagnosisPipeline(dspy.Module):
 
         symptom_description = describe_anomaly(anomaly)
         if self._diagnose_react is not None:
-            react_prediction = self._diagnose_react(symptom_description=symptom_description)
+            react_prediction = self._diagnose_react(
+                symptom_description=symptom_description
+            )
             diagnosis_text = str(react_prediction.diagnosis)
         else:
             diagnosis_text = symptom_description

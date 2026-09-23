@@ -71,7 +71,9 @@ def _solve_and_reach_goal(domain: GymProcedureDomain, max_steps: int = 20) -> li
 def test_agentbench_knowledgegraph_relation_path_recipe_reaches_answer():
     """Real gold `actions` trajectory from AgentBench's KG task (dev.json,
     qid=4300563004000_grailqa) drives an A* plan to `answer_found`."""
-    domain = GymProcedureDomain.from_json(RECIPES_DIR / "agentbench_kg_relation_path.json")
+    domain = GymProcedureDomain.from_json(
+        RECIPES_DIR / "agentbench_kg_relation_path.json"
+    )
     plan = _solve_and_reach_goal(domain)
     # the real gold trajectory has 7 actions; our two independent branches
     # (via #0 and via m.0j50kb6) may interleave differently under A*, but both

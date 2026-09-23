@@ -207,7 +207,8 @@ class CrownReconstruction:
         return frozenset(
             t.identity
             for t in self.trials
-            if not t.reconstructed_alive() and not t.verifier_verdict.startswith("UNKNOWN")
+            if not t.reconstructed_alive()
+            and not t.verifier_verdict.startswith("UNKNOWN")
         )
 
     def missing_identities(self) -> frozenset[int]:
@@ -257,7 +258,10 @@ def reconstruct_crown(manifest_path: Path, evidence_root: Path) -> CrownReconstr
 
 def main(argv: list[str]) -> int:
     if len(argv) != 3:
-        print("usage: crown_reconstruct.py <crown_manifest.json> <evidence_root>", file=sys.stderr)
+        print(
+            "usage: crown_reconstruct.py <crown_manifest.json> <evidence_root>",
+            file=sys.stderr,
+        )
         return 2
     result = reconstruct_crown(Path(argv[1]), Path(argv[2]))
     out = Path(argv[2]) / "reconstruction.json"

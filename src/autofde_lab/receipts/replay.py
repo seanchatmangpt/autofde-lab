@@ -64,9 +64,13 @@ def verify(records: list[dict]) -> ReplayReport:
         open_record, close_record = records[i], records[i + 1]
 
         if open_record.get("kind") != "open":
-            raise ReplayError(f"record {i}: expected kind=open, got {open_record.get('kind')!r}")
+            raise ReplayError(
+                f"record {i}: expected kind=open, got {open_record.get('kind')!r}"
+            )
         if close_record.get("kind") != "close":
-            raise ReplayError(f"record {i + 1}: expected kind=close, got {close_record.get('kind')!r}")
+            raise ReplayError(
+                f"record {i + 1}: expected kind=close, got {close_record.get('kind')!r}"
+            )
 
         open_digest = _recompute_digest(open_record)
         close_digest = _recompute_digest(close_record)

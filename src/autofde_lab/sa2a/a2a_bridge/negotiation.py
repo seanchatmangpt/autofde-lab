@@ -10,10 +10,15 @@ import hashlib
 import json
 import uuid
 from dataclasses import dataclass
-from typing import Sequence
 
-from autofde_lab.sa2a.a2a_bridge.agent_card import SA2A_PROFILE_V26_9_16, SemanticAgentCard
-from autofde_lab.sa2a.a2a_bridge.downgrade_guard import DowngradeGuard, UnsupportedProfileError
+from autofde_lab.sa2a.a2a_bridge.agent_card import (
+    SA2A_PROFILE_V26_9_16,
+    SemanticAgentCard,
+)
+from autofde_lab.sa2a.a2a_bridge.downgrade_guard import (
+    DowngradeGuard,
+    UnsupportedProfileError,
+)
 
 
 @dataclass(frozen=True, slots=True)

@@ -190,7 +190,8 @@ def pools_and_lanes_choice_shape() -> ChoiceGraph:
     pay = Atom(label="pay")
     prepare_coffee = Atom(label="prepare_coffee")
     pay_then_prepare = PartialOrder(
-        children=(pay, prepare_coffee), order=frozenset([OrderEdge(NodeId(0), NodeId(1))])
+        children=(pay, prepare_coffee),
+        order=frozenset([OrderEdge(NodeId(0), NodeId(1))]),
     )
     serve_coffee = Atom(label="serve_coffee")
 
@@ -205,7 +206,9 @@ def pools_and_lanes_choice_shape() -> ChoiceGraph:
         edges=frozenset(
             [
                 ChoiceGraphEdge(NodeId(0), NodeId(2)),
-                ChoiceGraphEdge(NodeId(2), NodeId(3), guard=Guard("wants_to_pay_first")),
+                ChoiceGraphEdge(
+                    NodeId(2), NodeId(3), guard=Guard("wants_to_pay_first")
+                ),
                 ChoiceGraphEdge(NodeId(2), NodeId(4)),  # else edge: straight to serve
                 ChoiceGraphEdge(NodeId(3), NodeId(4)),
                 ChoiceGraphEdge(NodeId(4), NodeId(1)),

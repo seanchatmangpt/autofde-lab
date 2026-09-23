@@ -58,7 +58,9 @@ import dspy
 from faker import Faker
 
 from autofde_lab.reasoning.k8s_signatures import DiagnoseKubernetesFault
-from autofde_lab.reasoning.sre_troubleshooting_pipeline import SreTroubleshootingPipeline
+from autofde_lab.reasoning.sre_troubleshooting_pipeline import (
+    SreTroubleshootingPipeline,
+)
 
 __all__ = [
     "FaultTemplate",
@@ -312,7 +314,9 @@ class SreTroubleshootingReasoningOnly(dspy.Module):
             system_context=f"namespace={namespace}",
             capability_catalog=capability_catalog,
         )
-        normalize_pred = self._pipeline.normalize(raw_evidence=observed_resource_state, prior_facts="none")
+        normalize_pred = self._pipeline.normalize(
+            raw_evidence=observed_resource_state, prior_facts="none"
+        )
         hypothesize_pred = self._pipeline.hypothesize(
             admitted_facts=normalize_pred.admitted_facts, prior_hypotheses="none"
         )

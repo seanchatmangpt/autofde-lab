@@ -75,9 +75,13 @@ def emit_turtle(graph: PhaseGraph = AUTOFDE_PHASE_GRAPH) -> str:
     """Render ``graph``'s A-Box as Turtle, in the hand-authored T-Box's vocabulary."""
     lines: list[str] = [_HEADER]
 
-    lines.append("\n########################################################################")
+    lines.append(
+        "\n########################################################################"
+    )
     lines.append("# A-Box -- phases")
-    lines.append("########################################################################\n")
+    lines.append(
+        "########################################################################\n"
+    )
     for phase in graph.phases:
         lines.append(f"afde:{phase.phase_id} a afde:Phase ;")
         lines.append(f'    afde:nodeId "{_turtle_string(phase.phase_id)}" ;')
@@ -89,9 +93,13 @@ def emit_turtle(graph: PhaseGraph = AUTOFDE_PHASE_GRAPH) -> str:
             lines.append(f"afde:{pred_id} afde:phasePrecedes afde:{phase.phase_id} .")
     lines.append("")
 
-    lines.append("########################################################################")
+    lines.append(
+        "########################################################################"
+    )
     lines.append("# A-Box -- work items")
-    lines.append("########################################################################\n")
+    lines.append(
+        "########################################################################\n"
+    )
     for item in graph.items:
         if item.kind not in _KNOWN_CLASSIFICATIONS:
             raise ValueError(
@@ -119,7 +127,9 @@ def emit_turtle(graph: PhaseGraph = AUTOFDE_PHASE_GRAPH) -> str:
         lines.append(f"    afde:occurrence {item.occurrence} .")
     lines.append("")
 
-    lines.append("# --- work precedence ---------------------------------------------------\n")
+    lines.append(
+        "# --- work precedence ---------------------------------------------------\n"
+    )
     for item in graph.items:
         for req in item.requires:
             lines.append(f"afde:{req} afde:precedes afde:{item.node_id} .")
@@ -134,6 +144,10 @@ def generate(output_path: str, graph: PhaseGraph = AUTOFDE_PHASE_GRAPH) -> None:
 
 
 if __name__ == "__main__":
-    target = sys.argv[1] if len(sys.argv) > 1 else "ontology/autofde-phase-graph-instances.ttl"
+    target = (
+        sys.argv[1]
+        if len(sys.argv) > 1
+        else "ontology/autofde-phase-graph-instances.ttl"
+    )
     generate(target)
     print(f"wrote {target}")

@@ -78,8 +78,7 @@ def default_similarity(a: str, b: str) -> bool:
 
 def _tokenize(text: str) -> list[str]:
     return [
-        "".join(ch for ch in token if ch.isalnum())
-        for token in text.lower().split()
+        "".join(ch for ch in token if ch.isalnum()) for token in text.lower().split()
     ]
 
 

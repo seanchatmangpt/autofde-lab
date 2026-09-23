@@ -34,6 +34,7 @@ Behavior:
     this machine, the test is skipped -- named and visible, never a
     silent pass.
 """
+
 from __future__ import annotations
 
 import sys
@@ -96,7 +97,9 @@ def known_gaps() -> dict[str, str]:
     return parse_known_gaps(KNOWN_GAPS_PATH)
 
 
-def test_known_gaps_file_entries_are_real_allowlist_lines(known_gaps: dict[str, str]) -> None:
+def test_known_gaps_file_entries_are_real_allowlist_lines(
+    known_gaps: dict[str, str],
+) -> None:
     # Sanity on the allowlist parse itself: every kept key is non-empty and
     # not a comment/blank leaking through.
     for name in known_gaps:

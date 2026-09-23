@@ -147,7 +147,10 @@ def _boundary(tmp_path: Path, name: str, broker: AuthorityBroker):
     actuator = RealDiskJournalActuator(journal)
     verifier = IndependentDiskJournalVerifier(journal)
     boundary = ConsequenceBoundary(
-        authority_broker=broker, actuator=actuator, verifier=verifier, receipt_store=store
+        authority_broker=broker,
+        actuator=actuator,
+        verifier=verifier,
+        receipt_store=store,
     )
     return boundary, actuator, store, journal
 
@@ -157,7 +160,9 @@ def _boundary(tmp_path: Path, name: str, broker: AuthorityBroker):
 # ---------------------------------------------------------------------------
 
 
-def test_mutation_a_admission_content_not_bound_to_actuated_action_target(tmp_path: Path) -> None:
+def test_mutation_a_admission_content_not_bound_to_actuated_action_target(
+    tmp_path: Path,
+) -> None:
     """A real ADMITTED AdmissionResult for a harmless, unrelated candidate must not
     authorize execution of a completely different, more sensitive action/target that
     the admitted candidate never described.
@@ -174,7 +179,10 @@ def test_mutation_a_admission_content_not_bound_to_actuated_action_target(tmp_pa
     pipeline = AdmissionPipeline()
     admitted = pipeline.admit(
         _HARMLESS_ADMITTABLE_TTL,
-        provenance_record={"issuer": "urn:issuer:any", "timestamp": "2026-09-16T00:00:00Z"},
+        provenance_record={
+            "issuer": "urn:issuer:any",
+            "timestamp": "2026-09-16T00:00:00Z",
+        },
     )
     assert admitted.standing == Standing.ADMITTED
 
@@ -218,8 +226,12 @@ def test_mutation_a_admission_content_not_bound_to_actuated_action_target(tmp_pa
         f"Expected the precise Mutation-A refusal code, got {result.refusal_code!r}: "
         f"{result.reason}"
     )
-    assert actuator.call_count == 0, "Zero real actuation for a content-unbound admission."
-    assert journal.exists() is False, "Zero disk mutation for a content-unbound admission."
+    assert actuator.call_count == 0, (
+        "Zero real actuation for a content-unbound admission."
+    )
+    assert journal.exists() is False, (
+        "Zero disk mutation for a content-unbound admission."
+    )
     assert result.final_receipt is not None
     assert result.final_receipt.refusal_code == REFUSED_ADMISSION_CONTENT_NOT_BOUND
 
@@ -281,7 +293,10 @@ def test_mutation_b_replay_reauthorized_for_different_action_returns_stale_recei
 <{action1}> a afl:Action ;
     afl:targetResource <{target1}> .
 """,
-        provenance_record={"issuer": "urn:issuer:fresh-mut-b", "timestamp": "2026-09-16T00:00:00Z"},
+        provenance_record={
+            "issuer": "urn:issuer:fresh-mut-b",
+            "timestamp": "2026-09-16T00:00:00Z",
+        },
     )
     assert admitted1.standing == Standing.ADMITTED
     admitted2 = pipeline.admit(
@@ -290,7 +305,10 @@ def test_mutation_b_replay_reauthorized_for_different_action_returns_stale_recei
 <{action2}> a afl:Action ;
     afl:targetResource <{target2}> .
 """,
-        provenance_record={"issuer": "urn:issuer:fresh-mut-b", "timestamp": "2026-09-16T00:00:00Z"},
+        provenance_record={
+            "issuer": "urn:issuer:fresh-mut-b",
+            "timestamp": "2026-09-16T00:00:00Z",
+        },
     )
     assert admitted2.standing == Standing.ADMITTED
 
@@ -366,14 +384,20 @@ def test_mutation_b_replay_reauthorized_for_different_action_returns_stale_recei
 
     # Precise, current-fix assertions (tightened from the disjunction above, now that
     # the exact fix behavior -- refuse, never substitute-actuate -- is known):
-    assert second.success is False, "The substituted-action replay must be refused outright."
+    assert second.success is False, (
+        "The substituted-action replay must be refused outright."
+    )
     assert second.state == TerminalReceiptState.REFUSED
     assert second.refusal_code == REFUSED_TOKEN_ACTION_MISMATCH, (
         f"Expected the precise Mutation-B refusal code, got {second.refusal_code!r}: "
         f"{second.reason}"
     )
-    assert not action2_actually_actuated, "action2 must never be actuated via this token."
-    assert actuator.call_count == 1, "No new actuation for the refused cross-action replay."
+    assert not action2_actually_actuated, (
+        "action2 must never be actuated via this token."
+    )
+    assert actuator.call_count == 1, (
+        "No new actuation for the refused cross-action replay."
+    )
     assert second.final_receipt is not None
     assert second.final_receipt.digest != first.final_receipt.digest, (
         "The refusal receipt must never be byte-identical to action1's original receipt."
@@ -391,7 +415,9 @@ def test_mutation_b_replay_reauthorized_for_different_action_returns_stale_recei
 # ---------------------------------------------------------------------------
 
 
-def test_mutation_c_execute_admitted_admission_gate_bypassed_on_replay(tmp_path: Path) -> None:
+def test_mutation_c_execute_admitted_admission_gate_bypassed_on_replay(
+    tmp_path: Path,
+) -> None:
     """execute_admitted() must require a bound Standing.ADMITTED admission_result on
     EVERY call through it -- not merely the first call under a given idempotency token.
 
@@ -412,7 +438,10 @@ def test_mutation_c_execute_admitted_admission_gate_bypassed_on_replay(tmp_path:
     pipeline = AdmissionPipeline()
     admitted = pipeline.admit(
         _MUT_C_BOUND_TTL,
-        provenance_record={"issuer": "urn:issuer:any", "timestamp": "2026-09-16T00:00:00Z"},
+        provenance_record={
+            "issuer": "urn:issuer:any",
+            "timestamp": "2026-09-16T00:00:00Z",
+        },
     )
     assert admitted.standing == Standing.ADMITTED
 
@@ -472,7 +501,9 @@ def test_mutation_c_execute_admitted_admission_gate_bypassed_on_replay(tmp_path:
         "authority but never checks admission again."
     )
     assert second.state == TerminalReceiptState.REFUSED
-    assert actuator.call_count == 1, "No new actuation for the admission-gate-refused replay."
+    assert actuator.call_count == 1, (
+        "No new actuation for the admission-gate-refused replay."
+    )
     assert second.final_receipt is not None
     assert second.final_receipt.digest != first.final_receipt.digest, (
         "The refusal receipt must never be byte-identical to the original EXECUTED receipt."
