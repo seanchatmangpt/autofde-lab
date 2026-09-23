@@ -9,7 +9,13 @@ import pytest
 typer_testing = pytest.importorskip("typer.testing")
 app = importlib.import_module("autofde_lab.fabric.cli").app
 CliRunner = typer_testing.CliRunner
-runner = CliRunner()
+# mix_stderr=False keeps the JSON payload assertions on stdout pure: the
+# catalog/match/solve commands legitimately log diagnostics (missing
+# optional-dependency warnings from the live entry-point probe) to stderr
+# while the full registry is installed, and the default CliRunner merges
+# both streams into .stdout. The gate itself (exit 0 + valid JSON payload)
+# is unchanged.
+runner = CliRunner(mix_stderr=False)
 
 # Chicago-style: these exercise the real Typer app against the real
 # ScikitDecideBackend entry-point registry and a real SQLite ERRC cache file
