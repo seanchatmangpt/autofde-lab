@@ -11,6 +11,8 @@
 iec:RepositorySubject a owl:Class .
 iec:ArtifactRecord a owl:Class .
 iec:Observation a owl:Class .
+iec:SemanticNode a owl:Class .
+iec:SemanticEdge a owl:Class .
 iec:SemanticClaim a owl:Class .
 iec:AdmittedClaim a owl:Class ;
     rdfs:subClassOf iec:SemanticClaim .
@@ -56,6 +58,8 @@ iec:contentDigest a owl:DatatypeProperty ;
     rdfs:range xsd:string .
 iec:evidenceKind a owl:DatatypeProperty ;
     rdfs:range xsd:string .
+iec:evidenceId a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
 iec:claimCeiling a owl:DatatypeProperty ;
     rdfs:range xsd:string .
 iec:standing a owl:DatatypeProperty ;
@@ -75,6 +79,20 @@ iec:falsifier a owl:DatatypeProperty ;
 iec:unknownReason a owl:DatatypeProperty ;
     rdfs:range xsd:string .
 iec:relation a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:predicate a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:value a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:artifactClass a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:producer a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:nodeKind a owl:DatatypeProperty ;
+    rdfs:domain iec:SemanticNode ;
+    rdfs:range xsd:string .
+iec:nodeKey a owl:DatatypeProperty ;
+    rdfs:domain iec:SemanticNode ;
     rdfs:range xsd:string .
 
 iec:observedAt a owl:ObjectProperty ;
@@ -112,6 +130,12 @@ iec:promotesToRepository a owl:DatatypeProperty ;
     rdfs:range xsd:string .
 iec:requiresAuthority a owl:ObjectProperty ;
     rdfs:range iec:AuthorityBoundary .
+iec:source a owl:ObjectProperty ;
+    rdfs:domain iec:SemanticEdge ;
+    rdfs:range iec:SemanticNode .
+iec:target a owl:ObjectProperty ;
+    rdfs:domain iec:SemanticEdge ;
+    rdfs:range iec:SemanticNode .
 
 iec:Observed a owl:NamedIndividual .
 iec:DerivedDeterministic a owl:NamedIndividual .
