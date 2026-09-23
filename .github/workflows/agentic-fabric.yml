@@ -59,9 +59,11 @@ jobs:
           #    diff plan-step effects through the Rust example binary of the
           #    SAME pinned wasm4pm-compat commit the pip dependency uses.
           #    The suite resolves it at <repo-parent>/wasm4pm-compat.
+          #    Anchor at wasm4pm-compat's pushed main tip (the example was
+          #    added long after the python/ pip-pin commit).
           compat_dir="$(dirname "$GITHUB_WORKSPACE")/wasm4pm-compat"
           git clone --quiet https://github.com/seanchatmangpt/wasm4pm-compat.git "$compat_dir"
-          git -C "$compat_dir" checkout --quiet 577e2d1d8bdfe27d96f61c63f3ea120994e8bfda
+          git -C "$compat_dir" checkout --quiet c4fadd8e7d56a853632b740ff903ff6181150480
           (cd "$compat_dir" && cargo build --release --quiet --example ocel_diff_cli)
 
       - name: Install Python ${{ matrix.python-version }}
