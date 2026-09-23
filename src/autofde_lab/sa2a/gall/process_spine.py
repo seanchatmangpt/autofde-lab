@@ -63,9 +63,13 @@ class ProcessSpine:
             if not _GIT_SHA.fullmatch(item.repo_sha):
                 raise ValueError(f"{checkpoint} repo_sha must be exact 40-hex")
             if not _DIGEST.fullmatch(item.evidence_digest):
-                raise ValueError(f"{checkpoint} evidence_digest must be content-addressed")
+                raise ValueError(
+                    f"{checkpoint} evidence_digest must be content-addressed"
+                )
             if not _DIGEST.fullmatch(item.subject_digest):
-                raise ValueError(f"{checkpoint} subject_digest must be content-addressed")
+                raise ValueError(
+                    f"{checkpoint} subject_digest must be content-addressed"
+                )
             if not item.evidence_ceiling:
                 raise ValueError(f"{checkpoint} evidence_ceiling is required")
 
@@ -86,8 +90,14 @@ class ProcessSpine:
                 )
 
         for checkpoint in ("GALL-021", "GALL-022", "GALL-023"):
-            if by_id[checkpoint].evidence_ceiling not in {"COMPUTE_ONLY", "COMPILE_COMPUTE", "QUERY_COMPUTE"}:
-                raise ValueError(f"{checkpoint} exceeded portable compute authority ceiling")
+            if by_id[checkpoint].evidence_ceiling not in {
+                "COMPUTE_ONLY",
+                "COMPILE_COMPUTE",
+                "QUERY_COMPUTE",
+            }:
+                raise ValueError(
+                    f"{checkpoint} exceeded portable compute authority ceiling"
+                )
         for checkpoint in ("GALL-024", "GALL-025", "GALL-026", "GALL-027", "GALL-028"):
             if by_id[checkpoint].evidence_ceiling in {"DO", "AUTHORIZED_DO"}:
                 raise ValueError(f"{checkpoint} observer evidence cannot grant DO")
@@ -110,7 +120,9 @@ class ProcessSpine:
         self.validate()
         by_id = {item.checkpoint: item for item in self.checkpoints}
         if set(evidence) != set(REQUIRED):
-            raise ValueError("exact evidence requires one receipt for every GALL-015..030 checkpoint")
+            raise ValueError(
+                "exact evidence requires one receipt for every GALL-015..030 checkpoint"
+            )
 
         for checkpoint in REQUIRED:
             item = by_id[checkpoint]
@@ -136,12 +148,18 @@ class ProcessSpine:
 
             if checkpoint != "GALL-030":
                 if receipt.get("authority", "NONE") != "NONE":
-                    raise ValueError(f"{checkpoint} evidence cannot manufacture authority")
+                    raise ValueError(
+                        f"{checkpoint} evidence cannot manufacture authority"
+                    )
             else:
                 if receipt.get("authority_source") != "INDEPENDENT":
-                    raise ValueError("GALL-030 requires independently supplied authority")
+                    raise ValueError(
+                        "GALL-030 requires independently supplied authority"
+                    )
                 if receipt.get("do_route") != "AshA2A.CommandBus":
-                    raise ValueError("GALL-030 DO must route only through AshA2A.CommandBus")
+                    raise ValueError(
+                        "GALL-030 DO must route only through AshA2A.CommandBus"
+                    )
 
     @property
     def digest(self) -> str:
@@ -149,7 +167,8 @@ class ProcessSpine:
         payload: dict[str, Any] = {
             "schema": self.schema,
             "checkpoints": [
-                asdict(item) for item in sorted(self.checkpoints, key=lambda item: item.checkpoint)
+                asdict(item)
+                for item in sorted(self.checkpoints, key=lambda item: item.checkpoint)
             ],
         }
         raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()

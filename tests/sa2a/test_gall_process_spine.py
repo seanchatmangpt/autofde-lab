@@ -47,7 +47,9 @@ def _spine() -> ProcessSpine:
                 subject_digest=_digest(f"s{index}"),
                 evidence_ceiling=ceilings[checkpoint],
             )
-            for index, (checkpoint, repo) in enumerate(CHECKPOINT_REPOSITORIES.items(), start=1)
+            for index, (checkpoint, repo) in enumerate(
+                CHECKPOINT_REPOSITORIES.items(), start=1
+            )
         ),
     )
 
@@ -140,7 +142,9 @@ def test_exact_evidence_binds_sha_digest_subject_repository_and_authority() -> N
     stale = json.loads(evidence[item.checkpoint])
     stale["repo_sha"] = "f" * 40
     tampered = dict(evidence)
-    tampered[item.checkpoint] = json.dumps(stale, sort_keys=True, separators=(",", ":")).encode()
+    tampered[item.checkpoint] = json.dumps(
+        stale, sort_keys=True, separators=(",", ":")
+    ).encode()
     with pytest.raises(ValueError, match="evidence digest mismatch"):
         spine.verify_exact_evidence(tampered)
 
