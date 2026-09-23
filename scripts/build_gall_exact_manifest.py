@@ -35,10 +35,18 @@ def _copy(source: str, destination: Path) -> Path:
     return destination
 
 
-def _corpus_identity(receipts: tuple[ReceiptReference, ...], evidence: tuple[EvidenceReference, ...]) -> str:
+def _corpus_identity(
+    receipts: tuple[ReceiptReference, ...], evidence: tuple[EvidenceReference, ...]
+) -> str:
     payload = [
-        *(f"{r.checkpoint}|{r.repository}|{r.repo_sha}|{r.receipt_digest}" for r in receipts),
-        *(f"{e.evidence_class}|{e.repository}|{e.repo_sha}|{e.receipt_digest}" for e in evidence),
+        *(
+            f"{r.checkpoint}|{r.repository}|{r.repo_sha}|{r.receipt_digest}"
+            for r in receipts
+        ),
+        *(
+            f"{e.evidence_class}|{e.repository}|{e.repo_sha}|{e.receipt_digest}"
+            for e in evidence
+        ),
     ]
     encoded = "\n".join(sorted(payload)).encode()
     return "sha256:" + hashlib.sha256(encoded).hexdigest()
@@ -128,7 +136,9 @@ def main() -> int:
     manifest.validate_shape()
 
     manifest_path = out_dir / "gall-composition-manifest.json"
-    manifest_path.write_text(json.dumps(manifest.to_dict(), indent=2, sort_keys=True) + "\n")
+    manifest_path.write_text(
+        json.dumps(manifest.to_dict(), indent=2, sort_keys=True) + "\n"
+    )
     (out_dir / "deterministic-output.json").write_text(
         json.dumps(
             {
@@ -140,7 +150,12 @@ def main() -> int:
         )
         + "\n"
     )
-    print(json.dumps({"composition_digest": manifest.digest, "semantic_key": SEMANTIC_KEY}, sort_keys=True))
+    print(
+        json.dumps(
+            {"composition_digest": manifest.digest, "semantic_key": SEMANTIC_KEY},
+            sort_keys=True,
+        )
+    )
     return 0
 
 
