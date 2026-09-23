@@ -15,7 +15,6 @@ Chicago Definition-of-Done Qualification Standard:
 
 from __future__ import annotations
 
-import copy
 import hashlib
 import json
 import time
@@ -23,13 +22,12 @@ from pathlib import Path
 from typing import Any, Mapping
 
 import pytest
-import rdflib
 
 from autofde_lab.sa2a.admission.pipeline import (
+    REFUSED_NAMESPACE,
     AdmissionPipeline,
     AdmissionResult,
     IdentityPolicy,
-    REFUSED_NAMESPACE,
 )
 from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import (
@@ -41,11 +39,9 @@ from autofde_lab.sa2a.brce.boundary import (
     ColludingRolesError,
     ConsequenceBoundary,
     ExecutionEnvelope,
-    UnreceiptedActuationAttemptError,
 )
 from autofde_lab.sa2a.brce.receipts import (
     FinalReceipt,
-    PreparedReceipt,
     ReceiptStore,
     TerminalReceiptState,
 )
@@ -57,9 +53,6 @@ from autofde_lab.sa2a.brce.replay import (
 from autofde_lab.sa2a.falsification.ocel_tracer import OcelExecutionTracer
 from autofde_lab.sa2a.hooks.engine import KnowledgeHookEngine
 from autofde_lab.sa2a.hooks.model import (
-    HookEffectKind,
-    HookEventTrigger,
-    KnowledgeHookDefinition,
     SemanticIntent,
 )
 from autofde_lab.sa2a.hooks.reactive_loop import ReactiveSemanticLoop
@@ -68,7 +61,6 @@ from autofde_lab.sa2a.unknown.allocator import (
     CMCACandidateAllocator,
     ExplorationBudget,
 )
-from autofde_lab.sa2a.unknown.novelty_ingest import NoveltyIngestionGateway
 
 
 class RealDiskJournalActuator:
@@ -226,8 +218,12 @@ def test_falsify_01_unadmitted_state_refused(tmp_path: Path) -> None:
     res = pipeline.admit(unadmitted_ttl)
     t1 = time.time_ns()
 
-    tracer.declare_object("sub:falsify-01", "ExecutableSubject", {"name": "UnadmittedStateAttack"})
-    tracer.declare_object("bound:admission", "ControlBoundary", {"stage": "IdentityPolicy"})
+    tracer.declare_object(
+        "sub:falsify-01", "ExecutableSubject", {"name": "UnadmittedStateAttack"}
+    )
+    tracer.declare_object(
+        "bound:admission", "ControlBoundary", {"stage": "IdentityPolicy"}
+    )
     tracer.record_event(
         event_id=f"evt-falsify-01-{t1}",
         activity="ADMISSION_ATTEMPT",
@@ -295,8 +291,12 @@ def test_falsify_02_hook_cannot_perform_or_bypass_do(tmp_path: Path) -> None:
     # the unreceipted disk write is strictly prevented.
     assert not journal.exists()
 
-    tracer.declare_object("sub:falsify-02", "ExecutableSubject", {"name": "HookBypassDoAttack"})
-    tracer.declare_object("bound:brce", "ControlBoundary", {"type": "ZeroUnreceiptedActuation"})
+    tracer.declare_object(
+        "sub:falsify-02", "ExecutableSubject", {"name": "HookBypassDoAttack"}
+    )
+    tracer.declare_object(
+        "bound:brce", "ControlBoundary", {"type": "ZeroUnreceiptedActuation"}
+    )
     tracer.record_event(
         event_id=f"evt-falsify-02-{time.time_ns()}",
         activity="BYPASS_DO_ATTEMPT",
@@ -324,7 +324,9 @@ def test_falsify_03_semantic_intent_lacks_implicit_authority(tmp_path: Path) -> 
     actuator = RealDiskJournalActuator(journal)
     verifier = IndependentDiskJournalVerifier(journal)
     broker = AuthorityBroker()  # No grants registered for this intent
-    boundary = ConsequenceBoundary(authority_broker=broker, actuator=actuator, verifier=verifier)
+    boundary = ConsequenceBoundary(
+        authority_broker=broker, actuator=actuator, verifier=verifier
+    )
 
     admission = _admit_target_binding("urn:action:kill_node", "urn:cap:nodes")
     envelope = ExecutionEnvelope(
@@ -338,7 +340,9 @@ def test_falsify_03_semantic_intent_lacks_implicit_authority(tmp_path: Path) -> 
 
     res = boundary.execute(envelope)
 
-    tracer.declare_object("sub:falsify-03", "ExecutableSubject", {"name": "ImplicitAuthorityAttack"})
+    tracer.declare_object(
+        "sub:falsify-03", "ExecutableSubject", {"name": "ImplicitAuthorityAttack"}
+    )
     tracer.record_event(
         event_id=f"evt-falsify-03-{time.time_ns()}",
         activity="AUTHORITY_CHECK",
@@ -368,7 +372,9 @@ def test_falsify_04_planner_output_cannot_acquire_authority() -> None:
     """
     tracer = get_tracer()
     allocator = CMCACandidateAllocator()
-    budget = ExplorationBudget(max_compute_ticks=100, max_tokens=1000, max_experiments=1)
+    budget = ExplorationBudget(
+        max_compute_ticks=100, max_tokens=1000, max_experiments=1
+    )
     plan = allocator.allocate(plan_id="plan_adversary", budget=budget, candidates=[])
 
     broker = AuthorityBroker()
@@ -383,16 +389,24 @@ def test_falsify_04_planner_output_cannot_acquire_authority() -> None:
     # Evaluate broker with asserted plan
     decision = broker.evaluate(req)
 
-    tracer.declare_object("sub:falsify-04", "ExecutableSubject", {"name": "PlannerAuthorityAttack"})
+    tracer.declare_object(
+        "sub:falsify-04", "ExecutableSubject", {"name": "PlannerAuthorityAttack"}
+    )
     tracer.record_event(
         event_id=f"evt-falsify-04-{time.time_ns()}",
         activity="PLAN_AUTHORIZATION_ATTEMPT",
         related_objects=[("sub:falsify-04", "target")],
-        attributes={"authorized": decision.authorized, "refusal_code": decision.refusal_code or ""},
+        attributes={
+            "authorized": decision.authorized,
+            "refusal_code": decision.refusal_code or "",
+        },
     )
 
     assert decision.authorized is False
-    assert decision.refusal_code in ("REFUSED_PLAN_IS_NOT_AUTHORITY", "REFUSED_NO_GRANT")
+    assert decision.refusal_code in (
+        "REFUSED_PLAN_IS_NOT_AUTHORITY",
+        "REFUSED_NO_GRANT",
+    )
 
 
 # =============================================================================
@@ -430,6 +444,7 @@ def test_falsify_05_actuation_strictly_after_prepared_receipt(tmp_path: Path) ->
     token = "idemp-05-unique"
     # Pre-populate receipt store with a completed final receipt for this token (replay collision)
     from autofde_lab.sa2a.brce.receipts import FinalReceipt
+
     receipt_store.save_final(
         FinalReceipt(
             receipt_id="rec-final-preexisting",
@@ -452,7 +467,9 @@ def test_falsify_05_actuation_strictly_after_prepared_receipt(tmp_path: Path) ->
     # Attempt execution with colliding idempotency token -> duplicate execution blocked
     res = boundary.execute(envelope)
 
-    tracer.declare_object("sub:falsify-05", "ExecutableSubject", {"name": "PreActuationPreparedReceipt"})
+    tracer.declare_object(
+        "sub:falsify-05", "ExecutableSubject", {"name": "PreActuationPreparedReceipt"}
+    )
     tracer.record_event(
         event_id=f"evt-falsify-05-{time.time_ns()}",
         activity="DUPLICATE_IDEMPOTENCY_ATTEMPT",
@@ -486,7 +503,9 @@ def test_falsify_06_actuator_self_attestation_forbidden(tmp_path: Path) -> None:
             verifier=actuator,  # Self-attesting colluder!
         )
 
-    tracer.declare_object("sub:falsify-06", "ExecutableSubject", {"name": "ColludingActuatorVerifier"})
+    tracer.declare_object(
+        "sub:falsify-06", "ExecutableSubject", {"name": "ColludingActuatorVerifier"}
+    )
     tracer.record_event(
         event_id=f"evt-falsify-06-{time.time_ns()}",
         activity="COLLUDING_ROLES_DETECTED",
@@ -555,7 +574,9 @@ def test_falsify_07_tampered_receipt_digest_refused(tmp_path: Path) -> None:
     replay = ReplayEngine(authority_broker=broker)
     report = replay.verify_chain([prep.to_dict(), tampered_final_dict])
 
-    tracer.declare_object("sub:falsify-07", "ExecutableSubject", {"name": "ReceiptDigestTampering"})
+    tracer.declare_object(
+        "sub:falsify-07", "ExecutableSubject", {"name": "ReceiptDigestTampering"}
+    )
     tracer.record_event(
         event_id=f"evt-falsify-07-{time.time_ns()}",
         activity="REPLAY_TAMPERING_CHECK",
@@ -591,7 +612,9 @@ def test_falsify_08_broken_causal_chain_refused(tmp_path: Path) -> None:
 
     report = replay.verify_chain([orphan_final.to_dict()])
 
-    tracer.declare_object("sub:falsify-08", "ExecutableSubject", {"name": "BrokenCausalChain"})
+    tracer.declare_object(
+        "sub:falsify-08", "ExecutableSubject", {"name": "BrokenCausalChain"}
+    )
     tracer.record_event(
         event_id=f"evt-falsify-08-{time.time_ns()}",
         activity="REPLAY_CAUSAL_CONTINUITY_CHECK",
@@ -673,7 +696,9 @@ def test_falsify_09_fresh_consumer_isolation_verified(tmp_path: Path) -> None:
 
     report = fresh_replay.verify_chain(deserialized_records)
 
-    tracer.declare_object("sub:falsify-09", "ExecutableSubject", {"name": "FreshConsumerIsolation"})
+    tracer.declare_object(
+        "sub:falsify-09", "ExecutableSubject", {"name": "FreshConsumerIsolation"}
+    )
     tracer.record_event(
         event_id=f"evt-falsify-09-{time.time_ns()}",
         activity="COLD_REPLAY_VERIFICATION",
@@ -741,7 +766,9 @@ def test_falsify_10_cascade_depth_strictly_bounded(tmp_path: Path) -> None:
         delta_generator=lambda r: "@prefix ex: <http://example.org/> . ex:node ex:status 'PING' .\n",
     )
 
-    tracer.declare_object("sub:falsify-10", "ExecutableSubject", {"name": "UnboundedCascadeAttack"})
+    tracer.declare_object(
+        "sub:falsify-10", "ExecutableSubject", {"name": "UnboundedCascadeAttack"}
+    )
     tracer.record_event(
         event_id=f"evt-falsify-10-{time.time_ns()}",
         activity="REACTIVE_CASCADE_BOUND_CHECK",
@@ -834,7 +861,9 @@ def test_falsify_11_known_class_zero_tokens_spent(tmp_path: Path) -> None:
         delta_generator=lambda r: "",
     )
 
-    tracer.declare_object("sub:falsify-11", "ExecutableSubject", {"name": "KnownClassZeroInference"})
+    tracer.declare_object(
+        "sub:falsify-11", "ExecutableSubject", {"name": "KnownClassZeroInference"}
+    )
     tracer.record_event(
         event_id=f"evt-falsify-11-{time.time_ns()}",
         activity="AUTONOMIC_REFLEX_MEASUREMENT",
@@ -872,6 +901,7 @@ def test_falsify_12_exact_subject_mismatch_fails_closed() -> None:
 
     # Counterfeit execution claiming to use grant-12 by an unauthorized adversary actor
     from autofde_lab.sa2a.brce.receipts import PreparedReceipt
+
     prep = PreparedReceipt(
         prepared_id="prep-12",
         idempotency_token="idemp-12",
@@ -894,7 +924,9 @@ def test_falsify_12_exact_subject_mismatch_fails_closed() -> None:
 
     report = replay.verify_chain([prep.to_dict(), final.to_dict()])
 
-    tracer.declare_object("sub:falsify-12", "ExecutableSubject", {"name": "ExactSubjectIdentityMismatch"})
+    tracer.declare_object(
+        "sub:falsify-12", "ExecutableSubject", {"name": "ExactSubjectIdentityMismatch"}
+    )
     tracer.record_event(
         event_id=f"evt-falsify-12-{time.time_ns()}",
         activity="IDENTITY_BINDING_CHECK",
@@ -905,4 +937,3 @@ def test_falsify_12_exact_subject_mismatch_fails_closed() -> None:
     assert report.verdict == ReplayVerdict.INVALID_HASH_CHAIN
     assert report.standing == ReplayStanding.BUILD_BROKEN
     assert any("executed without valid authority grant" in err for err in report.errors)
-

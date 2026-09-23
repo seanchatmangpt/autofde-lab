@@ -7,9 +7,9 @@ transition events, and authority contracts into an immutable content-addressed p
 
 from __future__ import annotations
 
-import json
-from dataclasses import asdict, dataclass, field
 import hashlib
+import json
+from dataclasses import dataclass, field
 from typing import Any, Mapping
 
 

@@ -34,16 +34,22 @@ def check_and_invalidate(
     an experience that never reached ACTIVE has no live route to deactivate.
     """
     if experience.state != ExperienceState.ACTIVE:
-        return InvalidationCheckResult(experience=experience, invalidated=False, changed_dependencies=())
+        return InvalidationCheckResult(
+            experience=experience, invalidated=False, changed_dependencies=()
+        )
 
     invalidated, changed = experience.is_invalidated_by(current_digests)
     if not invalidated:
-        return InvalidationCheckResult(experience=experience, invalidated=False, changed_dependencies=())
+        return InvalidationCheckResult(
+            experience=experience, invalidated=False, changed_dependencies=()
+        )
 
     if experience.known_route_id:
         route_registry.deactivate(experience.known_route_id)
 
     invalidated_experience = experience.with_state(ExperienceState.INVALIDATED)
     return InvalidationCheckResult(
-        experience=invalidated_experience, invalidated=True, changed_dependencies=changed
+        experience=invalidated_experience,
+        invalidated=True,
+        changed_dependencies=changed,
     )

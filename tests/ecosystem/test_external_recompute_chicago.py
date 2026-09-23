@@ -91,7 +91,9 @@ def scratch_trial(recomputable_trial: pathlib.Path, tmp_path) -> pathlib.Path:
 
 
 def _ocel(trial: pathlib.Path) -> dict:
-    return json.loads((trial / "actuation" / "level4.ocel.json").read_text(encoding="utf-8"))
+    return json.loads(
+        (trial / "actuation" / "level4.ocel.json").read_text(encoding="utf-8")
+    )
 
 
 def _write_ocel(trial: pathlib.Path, document: dict) -> None:
@@ -123,7 +125,9 @@ def test_complete_artifact_set_is_externally_recomputable(recomputable_trial) ->
 
 
 @pytest.mark.parametrize("artifact", REQUIRED_ARTIFACTS)
-def test_deleting_any_one_artifact_yields_unknown_naming_it(scratch_trial, artifact) -> None:
+def test_deleting_any_one_artifact_yields_unknown_naming_it(
+    scratch_trial, artifact
+) -> None:
     (scratch_trial / "actuation" / artifact).unlink()
     standing = recompute(scratch_trial)
 
@@ -151,10 +155,14 @@ def test_receipt_parents_fails_without_typed_caused_by_edges(scratch_trial) -> N
     doc = _ocel(scratch_trial)
     removed = 0
     for obj in doc["objects"]:
-        keep = [r for r in obj.get("relationships", []) if r.get("qualifier") != "caused_by"]
+        keep = [
+            r for r in obj.get("relationships", []) if r.get("qualifier") != "caused_by"
+        ]
         removed += len(obj.get("relationships", [])) - len(keep)
         obj["relationships"] = keep
-    assert removed > 0, "fixture carried no caused_by edges, so this test proves nothing"
+    assert removed > 0, (
+        "fixture carried no caused_by edges, so this test proves nothing"
+    )
     _write_ocel(scratch_trial, doc)
 
     standing = recompute(scratch_trial)
@@ -166,22 +174,32 @@ def test_receipt_parents_fails_without_typed_caused_by_edges(scratch_trial) -> N
     # The tokens are still there -- proving the failure is about the edge, not
     # about the ids having gone missing. Parent ids come from the real ledger.
     raw = (scratch_trial / "actuation" / "level4.ocel.json").read_text(encoding="utf-8")
-    con = sqlite3.connect(f"file:{scratch_trial / 'actuation' / 'receipts.sqlite3'}?mode=ro", uri=True)
+    con = sqlite3.connect(
+        f"file:{scratch_trial / 'actuation' / 'receipts.sqlite3'}?mode=ro", uri=True
+    )
     try:
         rows = con.execute("SELECT receipt_json FROM receipt_evidence").fetchall()
     finally:
         con.close()
-    parent_ids = {p for (rj,) in rows for p in (json.loads(rj).get("parent_receipt_ids") or [])}
+    parent_ids = {
+        p for (rj,) in rows for p in (json.loads(rj).get("parent_receipt_ids") or [])
+    }
     assert parent_ids
     for parent_id in parent_ids:
         assert parent_id in raw, f"{parent_id} vanished; this test would prove nothing"
 
 
-def test_authority_actuation_fails_without_typed_authorized_by_edge(scratch_trial) -> None:
+def test_authority_actuation_fails_without_typed_authorized_by_edge(
+    scratch_trial,
+) -> None:
     doc = _ocel(scratch_trial)
     removed = 0
     for obj in doc["objects"]:
-        keep = [r for r in obj.get("relationships", []) if r.get("qualifier") != "authorized_by"]
+        keep = [
+            r
+            for r in obj.get("relationships", [])
+            if r.get("qualifier") != "authorized_by"
+        ]
         removed += len(obj.get("relationships", [])) - len(keep)
         obj["relationships"] = keep
     assert removed > 0
@@ -192,7 +210,9 @@ def test_authority_actuation_fails_without_typed_authorized_by_edge(scratch_tria
     assert result.detail.startswith("0/")
 
 
-def test_postcondition_fails_when_it_observes_a_different_actuation(scratch_trial) -> None:
+def test_postcondition_fails_when_it_observes_a_different_actuation(
+    scratch_trial,
+) -> None:
     """Observing *some* actuation is not observing THIS one."""
     doc = _ocel(scratch_trial)
     retargeted = 0
@@ -237,9 +257,13 @@ def test_commitment_episode_fails_on_a_plan_digest_disagreement(scratch_trial) -
     turtle = ttl_path.read_text(encoding="utf-8")
     doc = _ocel(scratch_trial)
     (commitment,) = [o for o in doc["objects"] if o["type"] == "POWLCommitment"]
-    real_digest = next(a["value"] for a in commitment["attributes"] if a["name"] == "plan_digest")
+    real_digest = next(
+        a["value"] for a in commitment["attributes"] if a["name"] == "plan_digest"
+    )
     assert real_digest in turtle
-    ttl_path.write_text(turtle.replace(real_digest, "f" * len(real_digest)), encoding="utf-8")
+    ttl_path.write_text(
+        turtle.replace(real_digest, "f" * len(real_digest)), encoding="utf-8"
+    )
 
     result = _join(recompute(scratch_trial), "commitment->episode")
     assert not result.established, result.detail

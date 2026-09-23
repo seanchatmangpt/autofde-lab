@@ -139,6 +139,7 @@ def decode_action(action_id: str) -> tuple[str, dict]:
             payload[key] = raw
     return binding, payload
 
+
 #: Admitted by the AllowListAuthorityResolver below. A real ref through a
 #: real resolver -- an unadmitted ref is still refused.
 _AUTHORITY_REF = "urn:autofde-lab:level4-crown-authority"
@@ -360,8 +361,12 @@ class RealBlindEnvironment:
         # with itself. Passing someone else's claim does not help: the
         # lockfile is still on disk, so any genuinely different trial that
         # tries to claim the same directory is still refused.
-        self._claim = claim if claim is not None else acquire_exclusive_evidence_dir(
-            self._evidence_dir, owner=f"RealBlindEnvironment:{provider_key}"
+        self._claim = (
+            claim
+            if claim is not None
+            else acquire_exclusive_evidence_dir(
+                self._evidence_dir, owner=f"RealBlindEnvironment:{provider_key}"
+            )
         )
         self._log_path = self._evidence_dir / "probes.jsonl"
         self._bridge_script = self._evidence_dir / "bridge.py"

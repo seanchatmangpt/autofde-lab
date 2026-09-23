@@ -8,10 +8,6 @@ Provides:
 """
 
 from autofde_lab.sa2a.authority.broker import (
-    AuthorityBroker,
-    AuthorityDecision,
-    AuthorityGrant,
-    ConsequenceRequest,
     REFUSED_AGENT_IS_NOT_AUTHORITY,
     REFUSED_CAPABILITY_IS_NOT_AUTHORITY,
     REFUSED_CONSTRAINT_VIOLATION,
@@ -21,14 +17,18 @@ from autofde_lab.sa2a.authority.broker import (
     REFUSED_PROHIBITED,
     REFUSED_PROOF_IS_NOT_AUTHORITY,
     REFUSED_UNFULFILLED_DUTY,
+    AuthorityBroker,
+    AuthorityDecision,
+    AuthorityGrant,
+    ConsequenceRequest,
 )
 from autofde_lab.sa2a.authority.confused_deputy import (
+    REFUSED_CONFUSED_DEPUTY,
+    REFUSED_UNAUTHORIZED_DELEGATION,
     ConfusedDeputyGuard,
     DelegationHop,
     DeputyGuardResult,
     InvocationContext,
-    REFUSED_CONFUSED_DEPUTY,
-    REFUSED_UNAUTHORIZED_DELEGATION,
 )
 from autofde_lab.sa2a.authority.odrl import (
     Asset,

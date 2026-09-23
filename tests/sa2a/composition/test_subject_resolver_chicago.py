@@ -5,7 +5,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from autofde_lab.sa2a.composition.exact_subject import ArtifactRef, ExactSubject, RepositoryRef
+from autofde_lab.sa2a.composition.exact_subject import (
+    ArtifactRef,
+    ExactSubject,
+    RepositoryRef,
+)
 from autofde_lab.sa2a.composition.resolver import (
     REFUSED_AMBIGUOUS_REPOSITORY_IDENTITY,
     REFUSED_CONFLICTING_REPOSITORY_SHA,
@@ -19,7 +23,13 @@ from autofde_lab.sa2a.composition.resolver import (
 
 _VALID_MANIFEST = {
     "release_id": "v26.9.17-test",
-    "repositories": [{"name": "autofde-lab", "exact_sha": "a" * 40, "remote_url": "https://example.invalid/a"}],
+    "repositories": [
+        {
+            "name": "autofde-lab",
+            "exact_sha": "a" * 40,
+            "remote_url": "https://example.invalid/a",
+        }
+    ],
     "artifacts": [{"artifact_id": "artifact-1", "digest": "b" * 64}],
     "root_manifest_digest": "c" * 64,
     "semantic_profile": "SA2A-STRICT",
@@ -45,7 +55,9 @@ def test_resolve_produces_deterministic_composition_digest() -> None:
     assert subject.repositories[0] == RepositoryRef(
         name="autofde-lab", exact_sha="a" * 40, remote_url="https://example.invalid/a"
     )
-    assert subject.artifacts[0] == ArtifactRef(artifact_id="artifact-1", digest="b" * 64)
+    assert subject.artifacts[0] == ArtifactRef(
+        artifact_id="artifact-1", digest="b" * 64
+    )
 
     again = SubjectResolver().resolve(_VALID_MANIFEST)
     assert subject.composition_digest == again.composition_digest
@@ -88,7 +100,9 @@ def test_refuses_ambiguous_remote_for_identically_pinned_repository() -> None:
     }
     try:
         SubjectResolver().resolve(manifest)
-        assert False, "must refuse the same pinned commit claiming two different remotes"
+        assert False, (
+            "must refuse the same pinned commit claiming two different remotes"
+        )
     except SubjectResolutionError as exc:
         assert exc.code == REFUSED_AMBIGUOUS_REPOSITORY_IDENTITY
 
@@ -127,6 +141,9 @@ def test_dirty_prefixed_sha_is_exact_but_distinguishable_from_clean() -> None:
     """A dirty worktree is an exact, non-floating identity (not REFUSED here) --
     ARD §61's dirty-worktree gate is a separate, later PREFLIGHT check
     (`ReleaseRun`), not this resolver's concern."""
-    manifest = {**_VALID_MANIFEST, "repositories": [{"name": "x", "exact_sha": f"dirty:{'a' * 40}"}]}
+    manifest = {
+        **_VALID_MANIFEST,
+        "repositories": [{"name": "x", "exact_sha": f"dirty:{'a' * 40}"}],
+    }
     subject = SubjectResolver().resolve(manifest)
     assert subject.repositories[0].exact_sha == f"dirty:{'a' * 40}"

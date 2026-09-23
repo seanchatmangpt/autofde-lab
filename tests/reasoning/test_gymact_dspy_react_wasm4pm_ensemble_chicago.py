@@ -21,7 +21,10 @@ from autofde_lab.reasoning.gymact_dspy_react import (
     Wasm4pmEnsembleCrossCheckOutcome,
     _hypotheses_to_abductive_ibe_input,
 )
-from autofde_lab.receipts.wasm4pm_cognition import Wasm4pmCognitionUnavailable, resolve_wpm_cognition_entry
+from autofde_lab.receipts.wasm4pm_cognition import (
+    Wasm4pmCognitionUnavailable,
+    resolve_wpm_cognition_entry,
+)
 
 
 def _wasm4pm_cli_available() -> bool:
@@ -47,7 +50,9 @@ requires_real_wasm4pm_cli = pytest.mark.skipif(
 # ---------------------------------------------------------------------------
 
 
-def test_abductive_ibe_translator_links_a_hypothesis_only_to_facts_it_shares_words_with() -> None:
+def test_abductive_ibe_translator_links_a_hypothesis_only_to_facts_it_shares_words_with() -> (
+    None
+):
     result = _hypotheses_to_abductive_ibe_input(
         admitted_facts="- pod restarts spike\n- dmesg oom event",
         hypothesis_portfolio="- oom kill memory exhaustion - supported\n- disk pressure - unknown",
@@ -56,7 +61,10 @@ def test_abductive_ibe_translator_links_a_hypothesis_only_to_facts_it_shares_wor
         {"id": "hypothesis-0", "score": 0.0, "eliminated": False},
         {"id": "hypothesis-1", "score": 0.0, "eliminated": False},
     ]
-    assert {f["value"] for f in result["facts"]} == {"pod restarts spike", "dmesg oom event"}
+    assert {f["value"] for f in result["facts"]} == {
+        "pod restarts spike",
+        "dmesg oom event",
+    }
     # "oom kill memory exhaustion" shares "exhaustion"... actually shares no word >3 chars with
     # "dmesg oom event" bar "oom" (3 chars, excluded) -- real overlap only via shared words.
     # Assert real conclusions are always real fact text, real premises always the hypothesis id.
@@ -65,8 +73,12 @@ def test_abductive_ibe_translator_links_a_hypothesis_only_to_facts_it_shares_wor
         assert rule["premise"] in (["hypothesis-0"], ["hypothesis-1"])
 
 
-def test_abductive_ibe_translator_empty_inputs_produce_no_candidates_facts_or_rules() -> None:
-    result = _hypotheses_to_abductive_ibe_input(admitted_facts="none", hypothesis_portfolio="none")
+def test_abductive_ibe_translator_empty_inputs_produce_no_candidates_facts_or_rules() -> (
+    None
+):
+    result = _hypotheses_to_abductive_ibe_input(
+        admitted_facts="none", hypothesis_portfolio="none"
+    )
     assert result == {"candidates": [], "facts": [], "rules": []}
 
 
@@ -91,11 +103,16 @@ def test_ensemble_confirms_closure_genuinely_checks_via_two_real_breeds() -> Non
     # With only one real hypothesis supplied, both breeds see the same
     # single real candidate -- a real, genuine ensemble call was made
     # (never UNAVAILABLE, since the CLI is confirmed present).
-    assert stage["outcome"] in (Wasm4pmEnsembleCrossCheckOutcome.CHECKED, Wasm4pmEnsembleCrossCheckOutcome.NO_EVIDENCE)
+    assert stage["outcome"] in (
+        Wasm4pmEnsembleCrossCheckOutcome.CHECKED,
+        Wasm4pmEnsembleCrossCheckOutcome.NO_EVIDENCE,
+    )
 
 
 @requires_real_wasm4pm_cli
-def test_ensemble_confirms_closure_records_no_evidence_honestly_never_fabricated_agreement() -> None:
+def test_ensemble_confirms_closure_records_no_evidence_honestly_never_fabricated_agreement() -> (
+    None
+):
     """Empty facts/hypotheses -- both breeds' real preconditions refuse (no
     knowledge source), so `member_evidence` is real and empty; this must be
     recorded as a real, honest outcome, never silently treated as
@@ -107,6 +124,9 @@ def test_ensemble_confirms_closure_records_no_evidence_honestly_never_fabricated
     result = backend._wasm4pm_ensemble_confirms_closure(state, trajectory)
 
     stage = trajectory["stages"][-1]
-    assert stage["outcome"] in (Wasm4pmEnsembleCrossCheckOutcome.UNAVAILABLE, Wasm4pmEnsembleCrossCheckOutcome.NO_EVIDENCE)
+    assert stage["outcome"] in (
+        Wasm4pmEnsembleCrossCheckOutcome.UNAVAILABLE,
+        Wasm4pmEnsembleCrossCheckOutcome.NO_EVIDENCE,
+    )
     if stage["outcome"] == Wasm4pmEnsembleCrossCheckOutcome.NO_EVIDENCE:
         assert result is False

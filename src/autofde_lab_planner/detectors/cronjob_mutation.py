@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import json
 from typing import Any
+
 from autofde_lab_planner.models import CronJobMutationFault
 
 
@@ -28,17 +28,23 @@ def detect_cronjob_mutations(
     }
 
     # Find victim deployment with squeezed memory limits (e.g. <= 16Mi)
-    squeezed_victims: dict[str, tuple[str, str, int]] = {}  # dep_name -> (mem_limit, container_name, container_index)
+    squeezed_victims: dict[
+        str, tuple[str, str, int]
+    ] = {}  # dep_name -> (mem_limit, container_name, container_index)
     for dep in dep_items:
         d_name = (dep.get("metadata") or {}).get("name", "")
-        containers = (((dep.get("spec") or {}).get("template") or {}).get("spec") or {}).get("containers") or []
+        containers = (
+            ((dep.get("spec") or {}).get("template") or {}).get("spec") or {}
+        ).get("containers") or []
         for c_idx, c in enumerate(containers):
             if not isinstance(c, dict):
                 continue
             c_name = c.get("name", "")
             limits = (c.get("resources") or {}).get("limits") or {}
             mem_limit = limits.get("memory", "")
-            if mem_limit and (_parse_memory_to_mb(mem_limit) <= 16 or mem_limit == "4Mi"):
+            if mem_limit and (
+                _parse_memory_to_mb(mem_limit) <= 16 or mem_limit == "4Mi"
+            ):
                 squeezed_victims[d_name] = (mem_limit, c_name, c_idx)
 
     for cj in cj_items:
@@ -56,12 +62,11 @@ def detect_cronjob_mutations(
 
         # Check containers / command / envFrom
         pod_spec = (
-            ((((cj.get("spec") or {})
-              .get("jobTemplate") or {})
-              .get("spec") or {})
-              .get("template") or {})
-              .get("spec") or {}
-        )
+            (((cj.get("spec") or {}).get("jobTemplate") or {}).get("spec") or {}).get(
+                "template"
+            )
+            or {}
+        ).get("spec") or {}
         containers = pod_spec.get("containers") or []
 
         for c in containers:
@@ -137,7 +142,9 @@ def _parse_memory_to_mb(mem_str: str) -> float:
         return 0.0
 
 
-def _to_item_list(data: dict[str, Any] | list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+def _to_item_list(
+    data: dict[str, Any] | list[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
     if not data:
         return []
     if isinstance(data, dict):
@@ -151,4 +158,3 @@ def _to_item_list(data: dict[str, Any] | list[dict[str, Any]] | None) -> list[di
     else:
         return []
     return [i for i in items if isinstance(i, dict)]
-

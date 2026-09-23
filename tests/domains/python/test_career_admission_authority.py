@@ -45,9 +45,7 @@ from autofde_lab.hub.domain.career_admission.career_admission import (
 
 def _require_authority() -> str:
     if not os.path.isfile(DEFAULT_AUTHORITY_PATH):
-        pytest.skip(
-            f"BLOCKED:GGEN_LEGACY_ONTOLOGY_ABSENT: {DEFAULT_AUTHORITY_PATH}"
-        )
+        pytest.skip(f"BLOCKED:GGEN_LEGACY_ONTOLOGY_ABSENT: {DEFAULT_AUTHORITY_PATH}")
     return DEFAULT_AUTHORITY_PATH
 
 
@@ -161,9 +159,7 @@ def test_default_facts_fixture_has_no_reachable_blocked_state():
                 seen.add(nxt)
                 frontier.append(nxt)
 
-    assert not blocked, (
-        f"DEFAULT_FACTS unexpectedly reaches blocked states: {blocked}"
-    )
+    assert not blocked, f"DEFAULT_FACTS unexpectedly reaches blocked states: {blocked}"
     assert blocked_prerequisites(DEFAULT_FACTS) == {}, (
         "DEFAULT_FACTS has a dangling prerequisite"
     )

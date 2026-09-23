@@ -163,7 +163,9 @@ def test_git_sha_swap_between_two_real_commits_is_rejected(tmp_path: Path) -> No
 # =============================================================================
 
 
-def test_envelope_graph_digest_corruption_after_valid_construction_is_rejected() -> None:
+def test_envelope_graph_digest_corruption_after_valid_construction_is_rejected() -> (
+    None
+):
     """Mutation: construct a fully valid `SemanticEnvelope` (graph digest genuinely
     matches its content -- pydantic's own `model_validator` proves this at
     construction time), then corrupt EXACTLY the `graph.content` field in place,
@@ -214,7 +216,9 @@ def test_envelope_graph_digest_corruption_after_valid_construction_is_rejected()
 
     # Mutation: corrupt EXACTLY the content field on the real, already-constructed
     # object, bypassing the frozen guard -- the digest field is left untouched.
-    object.__setattr__(envelope.graph, "content", "TAMPERED graph payload -- injected consequence")
+    object.__setattr__(
+        envelope.graph, "content", "TAMPERED graph payload -- injected consequence"
+    )
     assert envelope.graph.digest == digest  # only ONE field was mutated
 
     with pytest.raises(EnvelopeDigestMismatchError) as exc_info:
@@ -281,7 +285,10 @@ def test_envelope_actor_id_swap_against_genuine_grant_is_rejected() -> None:
     envelope_mutated = dict(envelope_valid)
     envelope_mutated["provenance"] = {"issuer": actor_b}
     assert envelope_mutated["standing"] == envelope_valid["standing"]
-    assert envelope_mutated["authorityRequirement"] == envelope_valid["authorityRequirement"]
+    assert (
+        envelope_mutated["authorityRequirement"]
+        == envelope_valid["authorityRequirement"]
+    )
 
     with pytest.raises(StandingEscalationRefusalError) as exc_info:
         court.verify_envelope_standing_escalation(

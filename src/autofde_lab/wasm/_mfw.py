@@ -7,12 +7,12 @@ execute the receipt-bound ``admit`` operation; no action is executed here.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
 import json
 import re
 import shutil
 import subprocess
+from dataclasses import dataclass
 from typing import Any, Mapping, Protocol
 
 INTEROP_SCHEMA = "chatman.mfw-wasm4pm.planning.v1"
@@ -86,9 +86,7 @@ def validate_mfw_envelope(
             "SOURCE_IDENTITY_MISMATCH",
             "source pins do not match the registry",
         )
-    if not _SHA_RE.fullmatch(mfw_revision) or not _SHA_RE.fullmatch(
-        wasm4pm_revision
-    ):
+    if not _SHA_RE.fullmatch(mfw_revision) or not _SHA_RE.fullmatch(wasm4pm_revision):
         raise MfwInteropError(
             "SOURCE_IDENTITY_INVALID",
             "registry revisions must be exact SHAs",
@@ -127,10 +125,9 @@ def validate_mfw_envelope(
     receipt = value.get("receipt")
     if not isinstance(receipt, Mapping) or receipt.get("schema") != RECEIPT_SCHEMA:
         raise MfwInteropError("RECEIPT_MISSING", "versioned receipt is required")
-    if (
-        receipt.get("standing") != value.get("status")
-        or receipt.get("authority") != value.get("authority")
-    ):
+    if receipt.get("standing") != value.get("status") or receipt.get(
+        "authority"
+    ) != value.get("authority"):
         raise MfwInteropError(
             "RECEIPT_MISMATCH",
             "receipt consequence does not match envelope",

@@ -32,7 +32,9 @@ def decide_dns_policy_remediation_commands(
         commands.append(
             f"kubectl patch deployment {f.deployment_name} -n {ns} --type json -p '{patch}'"
         )
-        commands.append(f"kubectl rollout restart deployment {f.deployment_name} -n {ns}")
+        commands.append(
+            f"kubectl rollout restart deployment {f.deployment_name} -n {ns}"
+        )
 
         if f.deployment_name not in affected_deployments:
             affected_deployments.append(f.deployment_name)

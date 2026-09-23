@@ -37,7 +37,9 @@ class KnownRoute:
     resource_envelope: Mapping[str, int]
     qualification_receipt: str
     invalidation_set: Mapping[str, str] = field(default_factory=dict)
-    state: str = "ACTIVE"  # mirrors the owning MachineExperience.state at registration time
+    state: str = (
+        "ACTIVE"  # mirrors the owning MachineExperience.state at registration time
+    )
 
 
 class KnownRouteRegistry:
@@ -78,7 +80,9 @@ class KnownRouteRegistry:
         # honest, un-overclaimed account of what was and was not observed.
         self._lock = threading.RLock()
 
-    def register_predicate(self, predicate_id: str, predicate: Callable[[object], bool]) -> None:
+    def register_predicate(
+        self, predicate_id: str, predicate: Callable[[object], bool]
+    ) -> None:
         with self._lock:
             self._predicates[predicate_id] = predicate
 

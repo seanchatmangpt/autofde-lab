@@ -12,28 +12,23 @@ Verifies:
 
 from __future__ import annotations
 
-import pytest
 from typing import Any, Mapping, Optional
+
+import pytest
 
 from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline, AdmissionResult
 from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import (
+    REFUSED_NO_GRANT,
     AuthorityBroker,
     AuthorityGrant,
-    REFUSED_NO_GRANT,
 )
 from autofde_lab.sa2a.brce.boundary import (
-    BoundaryExecutionResult,
     ColludingRolesError,
-    ConsequenceActuator,
     ConsequenceBoundary,
-    ConsequenceVerifier,
     ExecutionEnvelope,
-    UnreceiptedActuationAttemptError,
 )
 from autofde_lab.sa2a.brce.receipts import (
-    FinalReceipt,
-    PreparedReceipt,
     ReceiptStore,
     TerminalReceiptState,
 )
@@ -96,12 +91,14 @@ class MockActuator:
         self._store_to_probe = store
         self._token_to_probe = token
 
-    def actuate(self, action_iri: str, target_resource: str, parameters: Mapping[str, Any]) -> Mapping[str, Any]:
+    def actuate(
+        self, action_iri: str, target_resource: str, parameters: Mapping[str, Any]
+    ) -> Mapping[str, Any]:
         self.call_count += 1
         # Check if prepared receipt already exists in store at the exact instant of actuation
         if hasattr(self, "_store_to_probe"):
-            self.prepared_receipt_present_at_actuation = self._store_to_probe.has_idempotency_token(
-                self._token_to_probe
+            self.prepared_receipt_present_at_actuation = (
+                self._store_to_probe.has_idempotency_token(self._token_to_probe)
             )
 
         if self.should_fail:
@@ -158,7 +155,9 @@ class TestBrceBoundaryAndReceipts:
 
         actuator = MockActuator()
         verifier = MockVerifier(satisfy=True)
-        boundary = ConsequenceBoundary(authority_broker=broker, actuator=actuator, verifier=verifier)
+        boundary = ConsequenceBoundary(
+            authority_broker=broker, actuator=actuator, verifier=verifier
+        )
 
         token = "token-order-check-001"
         actuator.bind_store_probe(boundary.receipt_store, token)
@@ -170,7 +169,9 @@ class TestBrceBoundaryAndReceipts:
             actor_id="agent-alice",
             grant_id="grant-101",
             parameters={"value": 42.5},
-            admission_result=_admitted_binding("urn:action:write_sensor", "urn:res:sensor_42"),
+            admission_result=_admitted_binding(
+                "urn:action:write_sensor", "urn:res:sensor_42"
+            ),
         )
 
         res = boundary.execute(envelope)
@@ -189,7 +190,9 @@ class TestBrceBoundaryAndReceipts:
     def test_colluding_actuator_and_verifier_refused(self):
         """Actuator and Verifier sharing the exact same instance is refused at boundary creation (§30)."""
         broker = AuthorityBroker()
-        actuator_verifier = MockActuator()  # Same object implementing both or duck typed
+        actuator_verifier = (
+            MockActuator()
+        )  # Same object implementing both or duck typed
         # Note: in Python an object can implement both protocols
         with pytest.raises(ColludingRolesError):
             ConsequenceBoundary(
@@ -203,7 +206,9 @@ class TestBrceBoundaryAndReceipts:
         broker = AuthorityBroker()
         actuator = MockActuator()
         verifier = MockVerifier()
-        boundary = ConsequenceBoundary(authority_broker=broker, actuator=actuator, verifier=verifier)
+        boundary = ConsequenceBoundary(
+            authority_broker=broker, actuator=actuator, verifier=verifier
+        )
 
         envelope = ExecutionEnvelope(
             idempotency_token="token-unauthorized-001",
@@ -211,7 +216,9 @@ class TestBrceBoundaryAndReceipts:
             target_resource="urn:res:db_primary",
             actor_id="agent-bob",
             grant_id="invalid-grant",
-            admission_result=_admitted_binding("urn:action:restricted_wipe", "urn:res:db_primary"),
+            admission_result=_admitted_binding(
+                "urn:action:restricted_wipe", "urn:res:db_primary"
+            ),
         )
 
         res = boundary.execute(envelope)
@@ -239,7 +246,9 @@ class TestBrceBoundaryAndReceipts:
 
         actuator = MockActuator()
         verifier = MockVerifier(satisfy=True)
-        boundary = ConsequenceBoundary(authority_broker=broker, actuator=actuator, verifier=verifier)
+        boundary = ConsequenceBoundary(
+            authority_broker=broker, actuator=actuator, verifier=verifier
+        )
 
         token = "idemp-deploy-token-999"
         envelope = ExecutionEnvelope(
@@ -280,7 +289,9 @@ class TestBrceBoundaryAndReceipts:
 
         actuator = MockActuator(should_fail=True)
         verifier = MockVerifier(satisfy=False)
-        boundary = ConsequenceBoundary(authority_broker=broker, actuator=actuator, verifier=verifier)
+        boundary = ConsequenceBoundary(
+            authority_broker=broker, actuator=actuator, verifier=verifier
+        )
 
         envelope = ExecutionEnvelope(
             idempotency_token="token-fail-1",
@@ -317,7 +328,12 @@ class TestReplayEngine:
         actuator = MockActuator()
         verifier = MockVerifier(satisfy=True)
         store = ReceiptStore()
-        boundary = ConsequenceBoundary(authority_broker=broker, actuator=actuator, verifier=verifier, receipt_store=store)
+        boundary = ConsequenceBoundary(
+            authority_broker=broker,
+            actuator=actuator,
+            verifier=verifier,
+            receipt_store=store,
+        )
 
         envelope = ExecutionEnvelope(
             idempotency_token="token-replay-test",
@@ -326,7 +342,9 @@ class TestReplayEngine:
             actor_id="agent-alice",
             grant_id="grant-replay-1",
             parameters={"msg": "hello world"},
-            admission_result=_admitted_binding("urn:action:write_log", "urn:res:system_log"),
+            admission_result=_admitted_binding(
+                "urn:action:write_log", "urn:res:system_log"
+            ),
         )
         res = boundary.execute(envelope)
         assert res.success is True
@@ -359,7 +377,12 @@ class TestReplayEngine:
         actuator = MockActuator()
         verifier = MockVerifier()
         store = ReceiptStore()
-        boundary = ConsequenceBoundary(authority_broker=broker, actuator=actuator, verifier=verifier, receipt_store=store)
+        boundary = ConsequenceBoundary(
+            authority_broker=broker,
+            actuator=actuator,
+            verifier=verifier,
+            receipt_store=store,
+        )
 
         envelope = ExecutionEnvelope(
             idempotency_token="token-tamper",
@@ -410,7 +433,12 @@ class TestReplayEngine:
         actuator = MockActuator()
         verifier = MockVerifier()
         store = ReceiptStore()
-        boundary = ConsequenceBoundary(authority_broker=broker, actuator=actuator, verifier=verifier, receipt_store=store)
+        boundary = ConsequenceBoundary(
+            authority_broker=broker,
+            actuator=actuator,
+            verifier=verifier,
+            receipt_store=store,
+        )
 
         envelope = ExecutionEnvelope(
             idempotency_token="token-construction-test",

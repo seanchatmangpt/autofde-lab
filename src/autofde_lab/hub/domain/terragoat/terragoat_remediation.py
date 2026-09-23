@@ -26,7 +26,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, NamedTuple, Optional
+from typing import NamedTuple, Optional
 
 from autofde_lab import D, DeterministicPlanningDomain, Space, Value
 from autofde_lab.hub.space.gym import ListSpace
@@ -97,7 +97,9 @@ def parse_findings(
     list[Finding]: findings in file order (files processed in the order
         given), each with a unique id ``"<resource_type>.<resource_name>#<n>"``.
     """
-    files = [terraform_file] if isinstance(terraform_file, Path) else list(terraform_file)
+    files = (
+        [terraform_file] if isinstance(terraform_file, Path) else list(terraform_file)
+    )
     findings: list[Finding] = []
     for f in files:
         findings.extend(_parse_findings_from_text(f.read_text()))

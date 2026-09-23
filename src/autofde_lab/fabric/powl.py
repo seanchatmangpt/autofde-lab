@@ -55,8 +55,7 @@ XSD = "http://www.w3.org/2001/XMLSchema#"
 #: misleading "dangling reference" -- a refusal naming the wrong cause sends
 #: the reader down a false path, which is worse than a generic message.
 UNSUPPORTED_NODE_TYPES: Dict[str, str] = {
-    POWL2
-    + "SilentLeaf": (
+    POWL2 + "SilentLeaf": (
         "this projector emits and parses the total-order projection only; "
         "silent transitions are not modelled"
     ),
@@ -99,9 +98,7 @@ def blake3_digest(path: str) -> str:
         check=False,
     )
     if result.returncode != 0:
-        raise DigestUnavailable(
-            f"b3sum failed on {path}: {result.stderr.strip()}"
-        )
+        raise DigestUnavailable(f"b3sum failed on {path}: {result.stderr.strip()}")
     return f"blake3:{result.stdout.strip()}"
 
 
@@ -167,9 +164,7 @@ def project_plan_to_powl(
     root.append('    mfwp:projection "total-order" ;')
     for index in range(len(steps)):
         root.append(f"    powl2:hasChild <{plan_iri}/binding-slot/{index}> ;")
-    root.append(
-        f'    mfwp:activityCount "{len(steps)}"^^xsd:integer .'
-    )
+    root.append(f'    mfwp:activityCount "{len(steps)}"^^xsd:integer .')
     out.extend(root)
     out.append("")
 
@@ -187,9 +182,7 @@ def project_plan_to_powl(
             ]
         )
         for arg_index in range(len(arguments)):
-            out.append(
-                f"    mfwp:bindsParameter <{step_iri}/binding/{arg_index}> ;"
-            )
+            out.append(f"    mfwp:bindsParameter <{step_iri}/binding/{arg_index}> ;")
         out.append(f'    mfwp:planOrdinal "{index}"^^xsd:integer .')
         out.append("")
 
@@ -502,7 +495,9 @@ def _parse_term(token: str, prefixes: Dict[str, str]) -> Tuple[str, str, Optiona
     raise PowlDecodeError(f"unrecognised term {token!r}")
 
 
-def _parse_graph(text: str) -> Dict[str, Dict[str, List[Tuple[str, str, Optional[str]]]]]:
+def _parse_graph(
+    text: str,
+) -> Dict[str, Dict[str, List[Tuple[str, str, Optional[str]]]]]:
     """Parse the subset into ``{subject: {predicate: [terms]}}``."""
     prefixes: Dict[str, str] = {}
     graph: Dict[str, Dict[str, List[Tuple[str, str, Optional[str]]]]] = {}
@@ -536,7 +531,9 @@ def _parse_graph(text: str) -> Dict[str, Dict[str, List[Tuple[str, str, Optional
     for statement in blocks:
         statement = statement.rstrip()[:-1].strip()  # drop terminating '.'
         if not statement.startswith("<") and ":" not in statement.split(" ")[0]:
-            raise PowlDecodeError(f"statement does not begin with a subject: {statement[:80]!r}")
+            raise PowlDecodeError(
+                f"statement does not begin with a subject: {statement[:80]!r}"
+            )
         if not statement.startswith("<"):
             raise PowlDecodeError(
                 f"subject must be an absolute IRI in <>, got {statement.split(' ')[0]!r}"
@@ -591,7 +588,9 @@ def _parse_graph(text: str) -> Dict[str, Dict[str, List[Tuple[str, str, Optional
 # --- model construction ----------------------------------------------------
 
 
-def _iris(terms: List[Tuple[str, str, Optional[str]]], predicate: str, subject: str) -> List[str]:
+def _iris(
+    terms: List[Tuple[str, str, Optional[str]]], predicate: str, subject: str
+) -> List[str]:
     values = []
     for kind, value, _ in terms:
         if kind != "iri":
@@ -618,7 +617,9 @@ def _one_integer(
     try:
         return int(value)
     except ValueError as exc:  # pragma: no cover - datatype check precedes
-        raise PowlDecodeError(f"<{subject}> {predicate}: {value!r} is not an integer") from exc
+        raise PowlDecodeError(
+            f"<{subject}> {predicate}: {value!r} is not an integer"
+        ) from exc
 
 
 def _one_string(
@@ -703,9 +704,13 @@ def parse_powl_turtle(text: str) -> PowlModel:
                 )
         if POWL2 + "ChildBinding" in types:
             if POWL2 + "childIndex" not in node:
-                raise PowlDecodeError(f"<{subject}>: powl2:childIndex missing (minCount 1)")
+                raise PowlDecodeError(
+                    f"<{subject}>: powl2:childIndex missing (minCount 1)"
+                )
             if POWL2 + "childModel" not in node:
-                raise PowlDecodeError(f"<{subject}>: powl2:childModel missing (minCount 1)")
+                raise PowlDecodeError(
+                    f"<{subject}>: powl2:childModel missing (minCount 1)"
+                )
             children[subject] = ChildBinding(
                 iri=subject,
                 child_index=_one_integer(

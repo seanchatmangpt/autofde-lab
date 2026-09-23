@@ -44,9 +44,7 @@ from autofde_lab.hub.domain.gym_procedure.level4_gymact_bridge import (
     skip_reason,
 )
 
-pytestmark = pytest.mark.skipif(
-    skip_reason() is not None, reason=str(skip_reason())
-)
+pytestmark = pytest.mark.skipif(skip_reason() is not None, reason=str(skip_reason()))
 
 
 def _env(tmp_path: Path, name: str, provider: str = "cube_counter", config=None):
@@ -277,9 +275,7 @@ def test_concurrent_bridges_never_share_evidence_or_state(tmp_path: Path):
     n = 8
 
     def run(i: int) -> tuple[int, int, Path, str]:
-        bridge = ResilientBridge(
-            _env(tmp_path, f"par{i}", config={"target": i + 1})
-        )
+        bridge = ResilientBridge(_env(tmp_path, f"par{i}", config={"target": i + 1}))
         bridge.available_actions()
         last = None
         for _ in range(i + 1):

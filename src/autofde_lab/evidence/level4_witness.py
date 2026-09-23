@@ -126,9 +126,7 @@ def _receipt_digest(receipts_db: Path, receipt_id: str) -> str:
     finally:
         con.close()
     if row is None:
-        raise Level4WitnessGap(
-            f"receipt {receipt_id!r} not found in {receipts_db}"
-        )
+        raise Level4WitnessGap(f"receipt {receipt_id!r} not found in {receipts_db}")
     return row[0]
 
 
@@ -219,13 +217,17 @@ def project_trial_to_witness(
     if authority_id is None:
         raise Level4WitnessGap(f"Actuation {actuation_id!r} has no authorizedBy edge")
     if commitment_id is None:
-        raise Level4WitnessGap(f"Actuation {actuation_id!r} has no actuates_commitment edge")
+        raise Level4WitnessGap(
+            f"Actuation {actuation_id!r} has no actuates_commitment edge"
+        )
 
     # Cross-check: the actuation's committed plan must be the SAME commitment
     # commitment.ttl describes -- explicit identity, not adjacency.
     commitment_obj = objs.get(commitment_id)
     if commitment_obj is None:
-        raise Level4WitnessGap(f"commitment object {commitment_id!r} not found in OCEL log")
+        raise Level4WitnessGap(
+            f"commitment object {commitment_id!r} not found in OCEL log"
+        )
 
     # -- Identities, all deterministic, all derived from real data --
     trial = AFL[f"trial/{trial_uuid}"]
@@ -297,9 +299,21 @@ def project_trial_to_witness(
     g.add((actuation, AFL.belongsToTrial, trial))
     g.add((actuation, PROV.wasAssociatedWith, _ACTOR))
     if capability_id:
-        g.add((actuation, AFL.exercisesCapability, AFL["capability/" + capability_id.rsplit(":", 1)[-1]]))
+        g.add(
+            (
+                actuation,
+                AFL.exercisesCapability,
+                AFL["capability/" + capability_id.rsplit(":", 1)[-1]],
+            )
+        )
     if environment_id:
-        g.add((actuation, AFL.actsOnEnvironment, AFL["environment/" + environment_id.rsplit(":", 1)[-1]]))
+        g.add(
+            (
+                actuation,
+                AFL.actsOnEnvironment,
+                AFL["environment/" + environment_id.rsplit(":", 1)[-1]],
+            )
+        )
 
     g.add((observation, RDF.type, AFL.PostconditionObservation))
     g.add((observation, AFL.observesActuation, actuation))

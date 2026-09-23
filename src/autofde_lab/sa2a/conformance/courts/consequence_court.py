@@ -27,16 +27,13 @@ import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Mapping, Optional, Sequence
+from typing import Any, Mapping, Optional
 
 from autofde_lab.sa2a.authority.broker import (
     AuthorityBroker,
     AuthorityGrant,
-    ConsequenceRequest,
-    REFUSED_NO_GRANT,
 )
 from autofde_lab.sa2a.brce.boundary import (
-    BoundaryExecutionResult,
     ColludingRolesError,
     ConsequenceActuator,
     ConsequenceBoundary,
@@ -121,7 +118,9 @@ class DurableDiskReceiptStore(ReceiptStore):
     constructing this class with only `store_dir` and is completely unaffected.
     """
 
-    def __init__(self, store_dir: Path, authority_broker: Optional[AuthorityBroker] = None) -> None:
+    def __init__(
+        self, store_dir: Path, authority_broker: Optional[AuthorityBroker] = None
+    ) -> None:
         super().__init__(authority_broker=authority_broker)
         self._store_dir = store_dir
         self._store_dir.mkdir(parents=True, exist_ok=True)
@@ -153,7 +152,9 @@ class DurableDiskReceiptStore(ReceiptStore):
                     consequence_class=data["consequence_class"],
                     parameters=data.get("parameters", {}),
                     prepared_at_ms=data.get("prepared_at_ms", 0),
-                    previous_receipt_digest=data.get("previous_receipt_digest", "genesis:0" * 4),
+                    previous_receipt_digest=data.get(
+                        "previous_receipt_digest", "genesis:0" * 4
+                    ),
                 )
                 self._prepared_by_token[receipt.idempotency_token] = receipt
                 self._receipts_by_digest[receipt.digest] = receipt
@@ -170,7 +171,9 @@ class DurableDiskReceiptStore(ReceiptStore):
                     prepared_receipt_digest=data["prepared_receipt_digest"],
                     idempotency_token=data["idempotency_token"],
                     state=TerminalReceiptState(data["state"]),
-                    postcondition_verified=bool(data.get("postcondition_verified", False)),
+                    postcondition_verified=bool(
+                        data.get("postcondition_verified", False)
+                    ),
                     evidence=data.get("evidence", {}),
                     refusal_code=data.get("refusal_code"),
                     reason=data.get("reason", ""),
@@ -188,7 +191,9 @@ class DurableDiskReceiptStore(ReceiptStore):
         super().save_prepared(receipt)
         target = self._store_dir / f"prep_{receipt.idempotency_token}.json"
         tmp_target = self._store_dir / f".tmp_prep_{uuid.uuid4().hex}"
-        content = json.dumps(receipt.to_dict(), indent=2, sort_keys=True).encode("utf-8")
+        content = json.dumps(receipt.to_dict(), indent=2, sort_keys=True).encode(
+            "utf-8"
+        )
         with open(tmp_target, "wb") as f:
             f.write(content)
             f.flush()
@@ -199,7 +204,9 @@ class DurableDiskReceiptStore(ReceiptStore):
         super().save_final(receipt)
         target = self._store_dir / f"final_{receipt.idempotency_token}.json"
         tmp_target = self._store_dir / f".tmp_final_{uuid.uuid4().hex}"
-        content = json.dumps(receipt.to_dict(), indent=2, sort_keys=True).encode("utf-8")
+        content = json.dumps(receipt.to_dict(), indent=2, sort_keys=True).encode(
+            "utf-8"
+        )
         with open(tmp_target, "wb") as f:
             f.write(content)
             f.flush()
@@ -296,7 +303,9 @@ class GuardedDiskJournalActuator(RealDiskJournalActuator):
                     r_dict.get("action_iri") == action_iri
                     and r_dict.get("target_resource") == target_resource
                 ):
-                    matching_prep = self._receipt_store.get_prepared(r_dict["idempotency_token"])
+                    matching_prep = self._receipt_store.get_prepared(
+                        r_dict["idempotency_token"]
+                    )
                     break
 
         if matching_prep is None:
@@ -315,7 +324,9 @@ class DeceptiveDiskActuator:
 
     def __init__(self, journal_path: Path, mode: str = "phantom") -> None:
         self._journal_path = journal_path
-        self._mode = mode  # 'phantom' (never writes to disk), 'corrupt' (writes bogus digest)
+        self._mode = (
+            mode  # 'phantom' (never writes to disk), 'corrupt' (writes bogus digest)
+        )
         self._actuator_id = f"actuator:deceptive:{mode}:{journal_path.name}"
         self.call_count = 0
 
@@ -326,13 +337,17 @@ class DeceptiveDiskActuator:
         fake_digest = hashlib.sha256(b"fake_payload_evidence").hexdigest()
 
         if self._mode == "corrupt":
-            corrupt_record = [{
-                "action": action_iri,
-                "target": target_resource,
-                "parameters": dict(parameters),
-                "payload_digest": "corrupted_garbage_digest",
-            }]
-            self._journal_path.write_text(json.dumps(corrupt_record, indent=2), encoding="utf-8")
+            corrupt_record = [
+                {
+                    "action": action_iri,
+                    "target": target_resource,
+                    "parameters": dict(parameters),
+                    "payload_digest": "corrupted_garbage_digest",
+                }
+            ]
+            self._journal_path.write_text(
+                json.dumps(corrupt_record, indent=2), encoding="utf-8"
+            )
 
         # In 'phantom' mode, we do NOT write to disk at all!
         return {
@@ -376,7 +391,10 @@ class IndependentDiskJournalVerifier:
                 return False
 
             latest = records[-1]
-            if latest.get("action") != action_iri or latest.get("target") != target_resource:
+            if (
+                latest.get("action") != action_iri
+                or latest.get("target") != target_resource
+            ):
                 return False
 
             param_dict = dict(sorted(parameters.items()))
@@ -483,7 +501,9 @@ class ConsequenceCourt:
                 gate_id=CHI_BRCE_01_PREPARED_COMMIT,
                 verdict=GateVerdict.FAILED,
                 passed=False,
-                evidence={"error": "PreparedReceipt was not found in store after execution"},
+                evidence={
+                    "error": "PreparedReceipt was not found in store after execution"
+                },
                 reason="Durable PreparedReceipt was missing from store.",
             )
 
@@ -506,7 +526,9 @@ class ConsequenceCourt:
                 passed=False,
                 evidence={
                     "prep_digest": prep_rec.digest,
-                    "final_linked_digest": final_rec.prepared_receipt_digest if final_rec else None,
+                    "final_linked_digest": final_rec.prepared_receipt_digest
+                    if final_rec
+                    else None,
                 },
                 reason="Final receipt did not bind the exact PreparedReceipt digest.",
             )
@@ -741,12 +763,17 @@ class ConsequenceCourt:
                 gate_id=CHI_POST_01_INDEPENDENT_OBSERVATION,
                 verdict=GateVerdict.FAILED,
                 passed=False,
-                evidence={"legit_success": res_legit.success, "legit_state": res_legit.state.value},
+                evidence={
+                    "legit_success": res_legit.success,
+                    "legit_state": res_legit.state.value,
+                },
                 reason="Independent verifier failed to verify genuine disk consequence.",
             )
 
         # Sub-check B: Deceptive Actuator (lies about success, but disk not written)
-        deceptive_journal = journal_path.parent / f"phantom_journal_{uuid.uuid4().hex[:6]}.json"
+        deceptive_journal = (
+            journal_path.parent / f"phantom_journal_{uuid.uuid4().hex[:6]}.json"
+        )
         deceptive_actuator = DeceptiveDiskActuator(deceptive_journal, mode="phantom")
         deceptive_verifier = IndependentDiskJournalVerifier(deceptive_journal)
 
@@ -772,7 +799,10 @@ class ConsequenceCourt:
         if (
             res_deceptive.success is True
             or res_deceptive.state == TerminalReceiptState.EXECUTED
-            or (res_deceptive.final_receipt and res_deceptive.final_receipt.postcondition_verified)
+            or (
+                res_deceptive.final_receipt
+                and res_deceptive.final_receipt.postcondition_verified
+            )
         ):
             return CourtGateResult(
                 gate_id=CHI_POST_01_INDEPENDENT_OBSERVATION,
@@ -783,7 +813,9 @@ class ConsequenceCourt:
             )
 
         # Sub-check C: Corrupted disk state -> verifier detects hash mismatch
-        corrupt_journal = journal_path.parent / f"corrupt_journal_{uuid.uuid4().hex[:6]}.json"
+        corrupt_journal = (
+            journal_path.parent / f"corrupt_journal_{uuid.uuid4().hex[:6]}.json"
+        )
         corrupt_actuator = DeceptiveDiskActuator(corrupt_journal, mode="corrupt")
         corrupt_verifier = IndependentDiskJournalVerifier(corrupt_journal)
 
@@ -805,9 +837,9 @@ class ConsequenceCourt:
         )
 
         res_corrupt = boundary_corrupt.execute(envelope_corrupt)
-        if (
-            res_corrupt.success is True
-            or (res_corrupt.final_receipt and res_corrupt.final_receipt.postcondition_verified)
+        if res_corrupt.success is True or (
+            res_corrupt.final_receipt
+            and res_corrupt.final_receipt.postcondition_verified
         ):
             return CourtGateResult(
                 gate_id=CHI_POST_01_INDEPENDENT_OBSERVATION,
@@ -823,8 +855,10 @@ class ConsequenceCourt:
             passed=True,
             evidence={
                 "legitimate_verification": True,
-                "phantom_actuation_caught": res_deceptive.state == TerminalReceiptState.UNKNOWN_OUTCOME,
-                "corrupt_disk_caught": res_corrupt.state == TerminalReceiptState.UNKNOWN_OUTCOME,
+                "phantom_actuation_caught": res_deceptive.state
+                == TerminalReceiptState.UNKNOWN_OUTCOME,
+                "corrupt_disk_caught": res_corrupt.state
+                == TerminalReceiptState.UNKNOWN_OUTCOME,
                 "disk_records_verified_bytes": True,
             },
             reason="Independent disk state observation verified across genuine, phantom, and corrupted cases.",
@@ -1111,7 +1145,9 @@ def verify_anti_collusion(
     actuator: ConsequenceActuator,
     verifier: ConsequenceVerifier,
 ) -> CourtGateResult:
-    return court.audit_anti_collusion(broker=broker, actuator=actuator, verifier=verifier)
+    return court.audit_anti_collusion(
+        broker=broker, actuator=actuator, verifier=verifier
+    )
 
 
 def verify_independent_postcondition_observation(

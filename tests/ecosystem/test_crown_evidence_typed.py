@@ -21,7 +21,6 @@ materialize/act/teardown/receipt/OCEL/replay chain.
 from __future__ import annotations
 
 import asyncio
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -42,13 +41,18 @@ from autofde_lab.hub.domain.gym_procedure.crown_evidence import (
 
 gymact = pytest.importorskip("gymact")
 
-from gymact import AllowListAuthorityResolver, GymAct, MaterializationIntent  # noqa: E402
 from gymact.gyms.switchboard import SwitchboardProvider  # noqa: E402
 from gymact.models import ActuationIntent, Operation  # noqa: E402
 from gymact.ocel import receipts_to_ocel  # noqa: E402
 from gymact.process import ConformanceChecker  # noqa: E402
 from gymact.replay import ReplayExpectation, ReplayMode, replay_ledger  # noqa: E402
 from gymact.sqlite_ledger import SQLiteReceiptLedger  # noqa: E402
+
+from gymact import (  # noqa: E402
+    AllowListAuthorityResolver,
+    GymAct,
+    MaterializationIntent,
+)
 
 _AUTH = "urn:autofde-lab:test-crown-evidence"
 
@@ -62,12 +66,21 @@ def _run_real_episode(tmp_path: Path) -> dict:
 
     async def _run() -> dict:
         ledger = SQLiteReceiptLedger(str(tmp_path / "receipts.sqlite3"))
-        gym = GymAct(receipt_ledger=ledger, authority_resolver=AllowListAuthorityResolver({_AUTH}))
+        gym = GymAct(
+            receipt_ledger=ledger,
+            authority_resolver=AllowListAuthorityResolver({_AUTH}),
+        )
         gym.register_provider(SwitchboardProvider())
-        m = await gym.materialize(MaterializationIntent(provider="switchboard", config={}))
+        m = await gym.materialize(
+            MaterializationIntent(provider="switchboard", config={})
+        )
         episode_id = m.episode.episode_id
         cap = gym.capabilities(episode_id)[0]
-        await gym.act(ActuationIntent(episode_id=episode_id, capability=cap.iri, authority_ref=_AUTH))
+        await gym.act(
+            ActuationIntent(
+                episode_id=episode_id, capability=cap.iri, authority_ref=_AUTH
+            )
+        )
         await gym.teardown(episode_id)
         receipts = gym.episode_receipts(episode_id)
         log = receipts_to_ocel(receipts)
@@ -77,7 +90,12 @@ def _run_real_episode(tmp_path: Path) -> dict:
             mode=ReplayMode.EVIDENCE_REPLAY,
             expected=ReplayExpectation(subject_ref=m.episode.environment_id),
         )
-        return {"log": log, "operations": operations, "receipts": receipts, "replay": replay}
+        return {
+            "log": log,
+            "operations": operations,
+            "receipts": receipts,
+            "replay": replay,
+        }
 
     return asyncio.run(_run())
 
@@ -105,7 +123,9 @@ def _with_goal_consequence_event(log: dict, *, episode_id: str, passed: bool) ->
     import uuid
 
     def _digest(obj: object) -> str:
-        return hashlib.sha256(json.dumps(obj, sort_keys=True, default=str).encode()).hexdigest()
+        return hashlib.sha256(
+            json.dumps(obj, sort_keys=True, default=str).encode()
+        ).hexdigest()
 
     out = copy.deepcopy(log)
     out["events"].append(
@@ -125,7 +145,10 @@ def _with_goal_consequence_event(log: dict, *, episode_id: str, passed: bool) ->
     )
     if not any(et["name"] == GOAL_CONSEQUENCE_EVENT_TYPE for et in out["eventTypes"]):
         out["eventTypes"].append(
-            {"name": GOAL_CONSEQUENCE_EVENT_TYPE, "attributes": [{"name": "passed", "type": "string"}]}
+            {
+                "name": GOAL_CONSEQUENCE_EVENT_TYPE,
+                "attributes": [{"name": "passed", "type": "string"}],
+            }
         )
     return out
 
@@ -136,7 +159,9 @@ def _with_goal_consequence_event(log: dict, *, episode_id: str, passed: bool) ->
 # ---------------------------------------------------------------------------
 
 
-def test_real_episode_is_genuinely_valid_conformant_and_replayable(real_episode: dict) -> None:
+def test_real_episode_is_genuinely_valid_conformant_and_replayable(
+    real_episode: dict,
+) -> None:
     """Ground the premise before relying on it below: the real chain this
     fixture produces really is clean, real evidence -- not hand-fabricated."""
     from gymact.ocel import validate_ocel_log
@@ -151,7 +176,9 @@ def test_standing_from_episode_returns_level4_alive_evidence_with_real_fields(
     real_episode: dict,
 ) -> None:
     episode_id = real_episode["receipts"][0].episode_id
-    log_with_goal = _with_goal_consequence_event(real_episode["log"], episode_id=episode_id, passed=True)
+    log_with_goal = _with_goal_consequence_event(
+        real_episode["log"], episode_id=episode_id, passed=True
+    )
 
     standing = standing_from_episode(
         log_with_goal,
@@ -168,7 +195,10 @@ def test_standing_from_episode_returns_level4_alive_evidence_with_real_fields(
     assert standing.conformant.replay is real_episode["replay"]
     assert standing.conformant.replay.valid is True
     assert standing.conformant.receipt_id == str(real_episode["receipts"][0].receipt_id)
-    assert standing.conformant.postcondition_ref == "urn:test:postcondition:switchboard-toggle"
+    assert (
+        standing.conformant.postcondition_ref
+        == "urn:test:postcondition:switchboard-toggle"
+    )
     assert isinstance(standing.goal, GoalConsequenceEvidence)
     assert standing.goal.passed is True
     assert standing.goal.verification_id
@@ -183,7 +213,9 @@ def test_standing_from_episode_returns_level4_alive_evidence_with_real_fields(
 # ---------------------------------------------------------------------------
 
 
-def test_clean_process_with_no_goal_event_is_conformant_but_goal_unmet(real_episode: dict) -> None:
+def test_clean_process_with_no_goal_event_is_conformant_but_goal_unmet(
+    real_episode: dict,
+) -> None:
     """The real switchboard episode's own OCEL log (no goal-consequence
     event projected at all -- exactly what `gymact.ocel.receipts_to_ocel`
     produces on its own, before `level4_crown.py`'s bridge adds one)."""
@@ -204,7 +236,9 @@ def test_clean_process_with_no_goal_event_is_conformant_but_goal_unmet(real_epis
     assert standing.reason == "GOAL_CONSEQUENCE_ABSENT_FROM_OCEL_GRAPH"
 
 
-def test_clean_process_with_failed_goal_event_is_conformant_but_goal_unmet(real_episode: dict) -> None:
+def test_clean_process_with_failed_goal_event_is_conformant_but_goal_unmet(
+    real_episode: dict,
+) -> None:
     """Every process check is real and clean AND a real goal-consequence
     event is present -- it just independently reports `passed=False`. This
     must not be indistinguishable from "we never checked"."""
@@ -274,7 +308,10 @@ def test_nonconformant_operations_returns_unknown_not_alive(real_episode: dict) 
 
 def test_invalid_replay_returns_unknown_not_alive(real_episode: dict) -> None:
     real_but_invalid_replay = real_episode["replay"].model_copy(
-        update={"valid": False, "mismatches": ("REAL_MISMATCH:head_digest_disagreement",)}
+        update={
+            "valid": False,
+            "mismatches": ("REAL_MISMATCH:head_digest_disagreement",),
+        }
     )
 
     standing = standing_from_episode(
@@ -289,7 +326,9 @@ def test_invalid_replay_returns_unknown_not_alive(real_episode: dict) -> None:
     assert "REAL_MISMATCH:head_digest_disagreement" in standing.missing
 
 
-def test_missing_postcondition_ref_returns_unknown_not_alive(real_episode: dict) -> None:
+def test_missing_postcondition_ref_returns_unknown_not_alive(
+    real_episode: dict,
+) -> None:
     standing = standing_from_episode(
         real_episode["log"],
         real_episode["operations"],
@@ -315,7 +354,9 @@ def test_empty_receipts_returns_unknown_not_alive(real_episode: dict) -> None:
     assert standing.missing == "RECEIPTS_EMPTY"
 
 
-def test_standing_from_episode_never_takes_a_boolean_success_shortcut(real_episode: dict) -> None:
+def test_standing_from_episode_never_takes_a_boolean_success_shortcut(
+    real_episode: dict,
+) -> None:
     """`standing_from_episode` has no `success: bool` parameter at all --
     the only way for a caller to force `Level4AliveEvidence` is to supply
     real passing process AND goal-consequence evidence."""
@@ -334,14 +375,25 @@ def test_standing_from_episode_never_takes_a_boolean_success_shortcut(real_episo
 
 
 _SAMPLE_CONFORMANT = ConformantExecutionEvidence(
-    episode_digest="d", conformance=object(), replay=object(),
-    receipt_id="r", postcondition_ref="p",
+    episode_digest="d",
+    conformance=object(),
+    replay=object(),
+    receipt_id="r",
+    postcondition_ref="p",
 )
 _SAMPLE_GOAL_MET = GoalConsequenceEvidence(
-    verification_id="v", passed=True, expected_digest="e", observed_digest="o", state_digest="s",
+    verification_id="v",
+    passed=True,
+    expected_digest="e",
+    observed_digest="o",
+    state_digest="s",
 )
 _SAMPLE_GOAL_UNMET = GoalConsequenceEvidence(
-    verification_id="v2", passed=False, expected_digest="e", observed_digest="o", state_digest="s",
+    verification_id="v2",
+    passed=False,
+    expected_digest="e",
+    observed_digest="o",
+    state_digest="s",
 )
 
 
@@ -351,7 +403,9 @@ _SAMPLE_GOAL_UNMET = GoalConsequenceEvidence(
         _SAMPLE_CONFORMANT,
         Level4AliveEvidence(conformant=_SAMPLE_CONFORMANT, goal=_SAMPLE_GOAL_MET),
         ConformantButGoalUnmetEvidence(
-            conformant=_SAMPLE_CONFORMANT, goal=_SAMPLE_GOAL_UNMET, reason="GOAL_CONSEQUENCE_REPORTED_FALSE:x"
+            conformant=_SAMPLE_CONFORMANT,
+            goal=_SAMPLE_GOAL_UNMET,
+            reason="GOAL_CONSEQUENCE_REPORTED_FALSE:x",
         ),
         UnknownEvidence(missing="X"),
         RefusedEvidence(reason="LIVE_AUTHORITY_REQUIRED", subject="cube_counter"),

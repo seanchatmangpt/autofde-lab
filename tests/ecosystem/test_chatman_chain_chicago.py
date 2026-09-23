@@ -29,7 +29,6 @@ repair plan for each, is recorded in ``docs/ecosystem-standing.md``.
 from __future__ import annotations
 
 import json
-
 import shutil
 import subprocess
 import sys
@@ -127,8 +126,7 @@ class TestEngineSatisfiesMfwClassicalContract:
             failures.append(f"OUTPUT_MODE_FILE: {plan} was not written")
         if "(unstack" in produced.stdout:
             failures.append(
-                "OUTPUT_MODE_FILE: plan content leaked to stdout under "
-                "output_mode=file"
+                "OUTPUT_MODE_FILE: plan content leaked to stdout under output_mode=file"
             )
 
         missing = run_engine(
@@ -151,9 +149,7 @@ class TestEngineSatisfiesMfwClassicalContract:
         genuine committed Fast Downward output.
         """
         if not MFW_TICKET10_PLAN.exists():
-            pytest.skip(
-                f"BLOCKED:MFW_ARTIFACT_ABSENT: {MFW_TICKET10_PLAN} not present"
-            )
+            pytest.skip(f"BLOCKED:MFW_ARTIFACT_ABSENT: {MFW_TICKET10_PLAN} not present")
         reference = MFW_TICKET10_PLAN.read_text()
         assert reference.strip().splitlines()[0].startswith("(")
         assert "; cost =" in reference
@@ -161,9 +157,7 @@ class TestEngineSatisfiesMfwClassicalContract:
         plan = tmp_path / "out.plan"
         run_engine(str(BLOCKS_DOMAIN), str(BLOCKS_PROBLEM), str(plan))
         produced = plan.read_text()
-        action_lines = [
-            line for line in produced.splitlines() if line.startswith("(")
-        ]
+        action_lines = [line for line in produced.splitlines() if line.startswith("(")]
         assert action_lines, "no ground action lines emitted"
         assert all(line.endswith(")") for line in action_lines)
         assert "; cost =" in produced, (
@@ -186,13 +180,9 @@ class TestSilentWrongAnswerIsRefused:
 
     def test_unimplemented_requirements_are_refused_not_planned(self, tmp_path):
         if not GL_CORE_DOMAIN.exists():
-            pytest.skip(
-                f"BLOCKED:GGEN_LEGACY_CORPUS_ABSENT: {GL_CORE_DOMAIN} missing"
-            )
+            pytest.skip(f"BLOCKED:GGEN_LEGACY_CORPUS_ABSENT: {GL_CORE_DOMAIN} missing")
         plan = tmp_path / "gl.plan"
-        result = run_engine(
-            str(GL_CORE_DOMAIN), str(GL_GOVERNANCE_PROBLEM), str(plan)
-        )
+        result = run_engine(str(GL_CORE_DOMAIN), str(GL_GOVERNANCE_PROBLEM), str(plan))
         assert result.returncode == EXIT_REFUSED, (
             "engine must REFUSE a domain whose declared requirements it "
             "cannot implement, rather than emit a wrong plan"
@@ -279,9 +269,7 @@ class TestPowlProjection:
     def test_vocabulary_agrees_with_mfw_committed_artifact(self):
         """Terms we emit must actually appear in mfw's real POWL output."""
         if not MFW_TICKET10_POWL.exists():
-            pytest.skip(
-                f"BLOCKED:MFW_ARTIFACT_ABSENT: {MFW_TICKET10_POWL} missing"
-            )
+            pytest.skip(f"BLOCKED:MFW_ARTIFACT_ABSENT: {MFW_TICKET10_POWL} missing")
         reference = MFW_TICKET10_POWL.read_text()
         for term in (
             "powl2:Model",
@@ -780,7 +768,9 @@ def test_recursive_bootstrap_controller_is_absent_across_ecosystem():
     fails and forces the standing doc to be updated rather than letting the
     claim drift.
     """
-    controller = REPO_ROOT / "src" / "autofde_lab" / "fabric" / "recursive_controller.py"
+    controller = (
+        REPO_ROOT / "src" / "autofde_lab" / "fabric" / "recursive_controller.py"
+    )
     assert not controller.exists(), (
         "A recursive bootstrap controller now exists. Update "
         "docs/ecosystem-standing.md: this stage is no longer UNSUPPORTED."

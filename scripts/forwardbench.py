@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, json, sys
+
+import argparse
+import json
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,6 +19,12 @@ plan.add_argument("subject")
 a = p.parse_args()
 r = ForwardBenchRegistry(a.registry)
 if a.cmd == "list":
-    print(json.dumps([s.__dict__ | {"observed_standing": s.observed_standing} for s in r.list()], indent=2, sort_keys=True))
+    print(
+        json.dumps(
+            [s.__dict__ | {"observed_standing": s.observed_standing} for s in r.list()],
+            indent=2,
+            sort_keys=True,
+        )
+    )
 else:
     print(json.dumps(r.plan(a.subject).__dict__, indent=2, sort_keys=True))

@@ -22,7 +22,6 @@ from typing import Any, Mapping
 
 from autofde_lab.sa2a.authority.broker import AuthorityBroker
 from autofde_lab.sa2a.brce.boundary import (
-    ColludingRolesError,
     ConsequenceBoundary,
     ExecutionEnvelope,
 )
@@ -49,8 +48,14 @@ class DiskJournalActuator:
     def __init__(self, path: Path) -> None:
         self._path = path
 
-    def actuate(self, action_iri: str, target_resource: str, parameters: Mapping[str, Any]) -> Mapping[str, Any]:
-        records = json.loads(self._path.read_text(encoding="utf-8")) if self._path.exists() else []
+    def actuate(
+        self, action_iri: str, target_resource: str, parameters: Mapping[str, Any]
+    ) -> Mapping[str, Any]:
+        records = (
+            json.loads(self._path.read_text(encoding="utf-8"))
+            if self._path.exists()
+            else []
+        )
         entry = {
             "action": action_iri,
             "target": target_resource,
@@ -61,7 +66,11 @@ class DiskJournalActuator:
         }
         records.append(entry)
         self._path.write_text(json.dumps(records, indent=2), encoding="utf-8")
-        return {"applied": True, "count": len(records), "last_digest": entry["payload_digest"]}
+        return {
+            "applied": True,
+            "count": len(records),
+            "last_digest": entry["payload_digest"],
+        }
 
     def actuator_digest(self) -> str:
         return f"actuator:disk:{self._path.name}"
@@ -72,7 +81,11 @@ class IndependentDiskVerifier:
         self._path = path
 
     def verify_postcondition(
-        self, action_iri: str, target_resource: str, parameters: Mapping[str, Any], evidence: Mapping[str, Any] | None
+        self,
+        action_iri: str,
+        target_resource: str,
+        parameters: Mapping[str, Any],
+        evidence: Mapping[str, Any] | None,
     ) -> bool:
         if not self._path.exists():
             return False
@@ -84,7 +97,10 @@ class IndependentDiskVerifier:
             expected_digest = hashlib.sha256(
                 json.dumps(dict(sorted(parameters.items()))).encode("utf-8")
             ).hexdigest()
-            return latest["payload_digest"] == expected_digest and evidence.get("last_digest") == expected_digest
+            return (
+                latest["payload_digest"] == expected_digest
+                and evidence.get("last_digest") == expected_digest
+            )
         except Exception:
             return False
 
@@ -97,9 +113,13 @@ def run_chicago_court() -> dict[str, Any]:
     gates: dict[str, bool] = {}
 
     # Gate 1: Exact Identity Fenced
-    rev = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
+    rev = subprocess.run(
+        ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+    )
     exact_sha = rev.stdout.strip()
-    tag_rev = subprocess.run(["git", "rev-list", "-n", "1", "v26.9.16"], capture_output=True, text=True)
+    tag_rev = subprocess.run(
+        ["git", "rev-list", "-n", "1", "v26.9.16"], capture_output=True, text=True
+    )
     tag_sha = tag_rev.stdout.strip() if tag_rev.returncode == 0 else "unreleased"
     gates["Gate01_ExactIdentityFenced"] = bool(exact_sha and (exact_sha == tag_sha))
 
@@ -122,7 +142,7 @@ def run_chicago_court() -> dict[str, Any]:
             verifier=verifier,
             receipt_store=receipt_store,
         )
-        gates["Gate03_RealCollaboratorsZeroMocks"] = (actuator is not verifier)
+        gates["Gate03_RealCollaboratorsZeroMocks"] = actuator is not verifier
 
         # Gate 4 & 7: Sole DO Boundary (BRCE) & Authority Enforcement
         envelope = ExecutionEnvelope(
@@ -133,7 +153,9 @@ def run_chicago_court() -> dict[str, Any]:
             actor_id=actor_id,
         )
         res0 = boundary.execute(envelope)
-        gates["Gate04_PlanningCandidateOnly"] = (res0.state == TerminalReceiptState.REFUSED)
+        gates["Gate04_PlanningCandidateOnly"] = (
+            res0.state == TerminalReceiptState.REFUSED
+        )
         gates["Gate07_SoleDOBoundaryBRCE"] = not journal.exists()
 
         # Gate 2: Ingest into Lab Candidate Frontier
@@ -145,13 +167,19 @@ def run_chicago_court() -> dict[str, Any]:
             observed_state_ttl="@prefix ex: <http://example.org/> . ex:node ex:condition 'CRITICAL' .",
             parameters=params,
         )
-        gates["Gate02_ExecutableWorldAdmitted"] = bool(candidate.item_id.startswith("novelty-"))
+        gates["Gate02_ExecutableWorldAdmitted"] = bool(
+            candidate.item_id.startswith("novelty-")
+        )
 
         # Gate 5: Bounded Plan Preflighted
-        budget = ExplorationBudget(max_compute_ticks=500, max_tokens=5000, max_experiments=2)
+        budget = ExplorationBudget(
+            max_compute_ticks=500, max_tokens=5000, max_experiments=2
+        )
         allocator = CMCACandidateAllocator()
-        plan = allocator.allocate(plan_id="plan_chicago_live", budget=budget, candidates=[candidate])
-        gates["Gate05_WholeBoundedPlanPreflighted"] = (len(plan.allocations) == 1)
+        plan = allocator.allocate(
+            plan_id="plan_chicago_live", budget=budget, candidates=[candidate]
+        )
+        gates["Gate05_WholeBoundedPlanPreflighted"] = len(plan.allocations) == 1
 
         lab_tokens_spent = 2000
 
@@ -173,7 +201,9 @@ def run_chicago_court() -> dict[str, Any]:
 
         # Gate 6: Autonomous Execution Inside Envelope
         base_ttl = "@prefix ex: <http://example.org/> . ex:cluster ex:status 'OK' ."
-        event_ttl = "@prefix ex: <http://example.org/> . ex:node ex:condition 'CRITICAL' ."
+        event_ttl = (
+            "@prefix ex: <http://example.org/> . ex:node ex:condition 'CRITICAL' ."
+        )
         loop = ReactiveSemanticLoop(
             hook_engine=hook_engine,
             authority_broker=broker,
@@ -192,7 +222,9 @@ def run_chicago_court() -> dict[str, Any]:
 
         # Gate 8: Independent Postcondition Observation
         final_rec = trace.steps[0].final_receipts[0]
-        disk_data = json.loads(journal.read_text(encoding="utf-8")) if journal.exists() else []
+        disk_data = (
+            json.loads(journal.read_text(encoding="utf-8")) if journal.exists() else []
+        )
         gates["Gate08_IndependentPostconditionObservation"] = (
             final_rec.postcondition_verified and len(disk_data) == 1
         )
@@ -209,7 +241,8 @@ def run_chicago_court() -> dict[str, Any]:
             receipt_records=[prep_rec.to_dict(), final_rec.to_dict()],  # type: ignore
         )
         gates["Gate10_ReplaySucceedsDeterministically"] = (
-            replay_report.verdict == ReplayVerdict.VALID and replay_report.standing == ReplayStanding.ALIVE
+            replay_report.verdict == ReplayVerdict.VALID
+            and replay_report.standing == ReplayStanding.ALIVE
         )
 
         # Gate 11: Fresh-Consumer Proof Succeeds
@@ -219,12 +252,15 @@ def run_chicago_court() -> dict[str, Any]:
         fresh_engine = ReplayEngine(authority_broker=fresh_broker)
         fresh_report = fresh_engine.verify_chain(receipt_records=raw_receipts)
         gates["Gate11_FreshConsumerProofSucceeds"] = (
-            fresh_report.verdict == ReplayVerdict.VALID and fresh_report.standing == ReplayStanding.ALIVE
+            fresh_report.verdict == ReplayVerdict.VALID
+            and fresh_report.standing == ReplayStanding.ALIVE
         )
 
         # Gate 12: Standing Typed ALIVE + Zero Runtime Inference for Known Class
         runtime_tokens_cycle1 = 0
-        gates["Gate12_ZeroRuntimeInferenceKnown"] = (runtime_tokens_cycle1 < lab_tokens_spent and runtime_tokens_cycle1 == 0)
+        gates["Gate12_ZeroRuntimeInferenceKnown"] = (
+            runtime_tokens_cycle1 < lab_tokens_spent and runtime_tokens_cycle1 == 0
+        )
 
     duration_ms = int((time.time() - t0) * 1000)
     all_passed = all(gates.values())

@@ -23,7 +23,9 @@ def _canonical(value: Any) -> bytes:
             return list(obj)
         raise TypeError(type(obj).__name__)
 
-    return json.dumps(value, default=default, sort_keys=True, separators=(",", ":")).encode()
+    return json.dumps(
+        value, default=default, sort_keys=True, separators=(",", ":")
+    ).encode()
 
 
 def digest(value: Any) -> str:
@@ -38,7 +40,11 @@ class EvidenceBinding:
     admitted: bool = True
 
     def __post_init__(self) -> None:
-        if not self.ref.strip() or not self.kind.strip() or not self.subject_digest.strip():
+        if (
+            not self.ref.strip()
+            or not self.kind.strip()
+            or not self.subject_digest.strip()
+        ):
             raise ValueError("INCOMPLETE_EVIDENCE_BINDING_REFUSED")
 
 

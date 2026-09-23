@@ -238,7 +238,9 @@ def _assign_positions(
         if missing:
             parts.append(f"missing occurrence(s) {dict(sorted(missing.items()))}")
         if extra:
-            parts.append(f"unexpected/duplicate occurrence(s) {dict(sorted(extra.items()))}")
+            parts.append(
+                f"unexpected/duplicate occurrence(s) {dict(sorted(extra.items()))}"
+            )
         return "multiset mismatch: " + "; ".join(parts)
 
     # Slots for each label, ordered by a topological order of the children, so

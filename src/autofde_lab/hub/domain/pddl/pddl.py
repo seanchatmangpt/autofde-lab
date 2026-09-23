@@ -91,22 +91,34 @@ __all__ = [
 try:
     from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_ as PDDL
     from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_Action_ as Action
-    from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_AddExpression_ as AddExpression
-    from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_AlwaysFormula_ as AlwaysFormula
+    from autofde_lab.hub.__autofde_lab_hub_cpp import (
+        _PDDL_AddExpression_ as AddExpression,
+    )
+    from autofde_lab.hub.__autofde_lab_hub_cpp import (
+        _PDDL_AlwaysFormula_ as AlwaysFormula,
+    )
     from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_AlwaysWithinFormula_ as AlwaysWithinFormula,
     )
-    from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_AssignEffect_ as AssignEffect
+    from autofde_lab.hub.__autofde_lab_hub_cpp import (
+        _PDDL_AssignEffect_ as AssignEffect,
+    )
     from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_AtEndEffect_ as AtEndEffect
-    from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_AtEndFormula_ as AtEndFormula
+    from autofde_lab.hub.__autofde_lab_hub_cpp import (
+        _PDDL_AtEndFormula_ as AtEndFormula,
+    )
     from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_AtMostOnceFormula_ as AtMostOnceFormula,
     )
-    from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_AtStartEffect_ as AtStartEffect
+    from autofde_lab.hub.__autofde_lab_hub_cpp import (
+        _PDDL_AtStartEffect_ as AtStartEffect,
+    )
     from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_AtStartFormula_ as AtStartFormula,
     )
-    from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_AtTimeEffect_ as AtTimeEffect
+    from autofde_lab.hub.__autofde_lab_hub_cpp import (
+        _PDDL_AtTimeEffect_ as AtTimeEffect,
+    )
     from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_Class_ as Class
     from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_ConditionalEffect_ as ConditionalEffect,
@@ -129,7 +141,9 @@ try:
     from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_DisjunctionFormula_ as DisjunctionFormula,
     )
-    from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_DivExpression_ as DivExpression
+    from autofde_lab.hub.__autofde_lab_hub_cpp import (
+        _PDDL_DivExpression_ as DivExpression,
+    )
     from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_Domain_ as Domain
     from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_DurationEffect_ as DurationEffect,
@@ -176,11 +190,15 @@ try:
     from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_HoldDuringFormula_ as HoldDuringFormula,
     )
-    from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_ImplyFormula_ as ImplyFormula
+    from autofde_lab.hub.__autofde_lab_hub_cpp import (
+        _PDDL_ImplyFormula_ as ImplyFormula,
+    )
     from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_IncreaseEffect_ as IncreaseEffect,
     )
-    from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_LessEqFormula_ as LessEqFormula
+    from autofde_lab.hub.__autofde_lab_hub_cpp import (
+        _PDDL_LessEqFormula_ as LessEqFormula,
+    )
     from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_LessFormula_ as LessFormula
     from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_MaximizeExpression_ as MaximizeExpression,
@@ -191,7 +209,9 @@ try:
     from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_MinusExpression_ as MinusExpression,
     )
-    from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_MulExpression_ as MulExpression
+    from autofde_lab.hub.__autofde_lab_hub_cpp import (
+        _PDDL_MulExpression_ as MulExpression,
+    )
     from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_NegationEffect_ as NegationEffect,
     )
@@ -219,14 +239,18 @@ try:
     )
     from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_Problem_ as Problem
     from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_Process_ as Process
-    from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_Requirements_ as Requirements
+    from autofde_lab.hub.__autofde_lab_hub_cpp import (
+        _PDDL_Requirements_ as Requirements,
+    )
     from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_RewardExpression_ as RewardExpression,
     )
     from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_ScaleDownEffect_ as ScaleDownEffect,
     )
-    from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_ScaleUpEffect_ as ScaleUpEffect
+    from autofde_lab.hub.__autofde_lab_hub_cpp import (
+        _PDDL_ScaleUpEffect_ as ScaleUpEffect,
+    )
     from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_SometimeAfterFormula_ as SometimeAfterFormula,
     )
@@ -236,7 +260,9 @@ try:
     from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_SometimeFormula_ as SometimeFormula,
     )
-    from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_SubExpression_ as SubExpression
+    from autofde_lab.hub.__autofde_lab_hub_cpp import (
+        _PDDL_SubExpression_ as SubExpression,
+    )
     from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_Term_ as Term
     from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_TimeExpression_ as TimeExpression,
@@ -258,7 +284,9 @@ try:
     from autofde_lab.hub.__autofde_lab_hub_cpp import (
         _PDDL_ViolationExpression_ as ViolationExpression,
     )
-    from autofde_lab.hub.__autofde_lab_hub_cpp import _PDDL_WithinFormula_ as WithinFormula
+    from autofde_lab.hub.__autofde_lab_hub_cpp import (
+        _PDDL_WithinFormula_ as WithinFormula,
+    )
 except ImportError:
     print(
         'Scikit-decide C++ hub library not found. Please check it is installed in "autofde_lab/hub".'

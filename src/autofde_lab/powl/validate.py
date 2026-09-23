@@ -106,7 +106,8 @@ def _validate_frequency(freq: object, where: str) -> None:
         )
     if not isinstance(freq.min, int) or isinstance(freq.min, bool) or freq.min < 0:
         raise PowlError(
-            PowlRefusal.INVALID_FREQUENCY, f"{where}: min={freq.min!r} is not a natural number"
+            PowlRefusal.INVALID_FREQUENCY,
+            f"{where}: min={freq.min!r} is not a natural number",
         )
     if freq.max is not None:
         if not isinstance(freq.max, int) or isinstance(freq.max, bool):
@@ -116,7 +117,8 @@ def _validate_frequency(freq: object, where: str) -> None:
             )
         if freq.max < freq.min:
             raise PowlError(
-                PowlRefusal.INVALID_FREQUENCY, f"{where}: max={freq.max} < min={freq.min}"
+                PowlRefusal.INVALID_FREQUENCY,
+                f"{where}: max={freq.max} < min={freq.min}",
             )
 
 

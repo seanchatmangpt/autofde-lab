@@ -14,7 +14,13 @@ import sys
 import pytest
 
 from autofde_lab import adapters
-from autofde_lab.adapters import ADAPTERS, AdapterProbe, AdapterStatus, available, probe_all
+from autofde_lab.adapters import (
+    ADAPTERS,
+    AdapterProbe,
+    AdapterStatus,
+    available,
+    probe_all,
+)
 
 ADAPTER_DIR = pathlib.Path(adapters.__file__).parent
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]

@@ -31,7 +31,9 @@ class TestRunCallableBounded:
         with pytest.raises(TimeoutError, match="wall-clock bound"):
             run_callable_bounded(lambda: time.sleep(3), timeout_s=1)
         elapsed = time.monotonic() - started
-        assert 0.9 <= elapsed < 2.5, f"alarm did not fire near the requested bound: {elapsed}s"
+        assert 0.9 <= elapsed < 2.5, (
+            f"alarm did not fire near the requested bound: {elapsed}s"
+        )
 
     def test_callable_exception_propagates_normally(self):
         def boom():

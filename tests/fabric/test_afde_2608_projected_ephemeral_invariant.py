@@ -157,7 +157,9 @@ class TestAFDE2608ProjectedEphemeralOntologyInvariant:
         # cosmetic whitespace that a coarser check might not notice.
         text = scratch.read_text(encoding="utf-8")
         needle = 'skdt:identifier "ChatmanCleanSession"'
-        assert text.count(needle) == 1, "fixture assumption broke: identifier line moved"
+        assert text.count(needle) == 1, (
+            "fixture assumption broke: identifier line moved"
+        )
         tampered_text = text.replace(needle, 'skdt:identifier "XhatmanCleanSession"', 1)
         assert tampered_text != text
         assert sum(a != b for a, b in zip(text, tampered_text)) == 1, (

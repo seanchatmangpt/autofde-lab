@@ -29,9 +29,7 @@ def _hosted_subject_identity() -> dict[str, str] | None:
     }
     missing = sorted(key for key, value in identity.items() if not value)
     if missing:
-        raise RuntimeError(
-            "hosted crown identity is incomplete: " + ", ".join(missing)
-        )
+        raise RuntimeError("hosted crown identity is incomplete: " + ", ".join(missing))
     return identity
 
 

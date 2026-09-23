@@ -73,7 +73,9 @@ class NormalizeSreEvidence(dspy.Signature):
     resolving them. Every admitted fact must trace to something present in
     raw_evidence -- never invent a fact raw_evidence does not support."""
 
-    raw_evidence: str = dspy.InputField(desc="real, raw observation/tool output collected so far")
+    raw_evidence: str = dspy.InputField(
+        desc="real, raw observation/tool output collected so far"
+    )
     prior_facts: str = dspy.InputField(
         desc="facts already admitted from earlier normalization rounds, or 'none' on the first round"
     )
@@ -120,8 +122,12 @@ class ProposeDiscriminatingObservation(dspy.Signature):
     surface to actually execute it."""
 
     admitted_facts: str = dspy.InputField(desc="the current, real O* facts")
-    hypothesis_portfolio: str = dspy.InputField(desc="the current, real hypothesis portfolio")
-    capability_catalog: str = dspy.InputField(desc="the real, admitted READ capability names available")
+    hypothesis_portfolio: str = dspy.InputField(
+        desc="the current, real hypothesis portfolio"
+    )
+    capability_catalog: str = dspy.InputField(
+        desc="the real, admitted READ capability names available"
+    )
     probe_intent: str = dspy.OutputField(
         desc="one concrete, real observation request, precise enough to translate into exactly one "
         "real READ capability call -- never a DO, never vague"
@@ -143,10 +149,18 @@ class CommitSreDiagnosis(dspy.Signature):
     must reflect actual evidentiary support, never generic certainty."""
 
     admitted_facts: str = dspy.InputField(desc="the current, real O* facts")
-    hypothesis_portfolio: str = dspy.InputField(desc="the current, real hypothesis portfolio")
-    symptom: str = dspy.OutputField(desc="the real, observed symptom this diagnosis explains")
-    mechanism: str = dspy.OutputField(desc="the real causal mechanism connecting root_cause to symptom")
-    root_cause: str = dspy.OutputField(desc="the committed root cause, grounded in admitted_facts")
+    hypothesis_portfolio: str = dspy.InputField(
+        desc="the current, real hypothesis portfolio"
+    )
+    symptom: str = dspy.OutputField(
+        desc="the real, observed symptom this diagnosis explains"
+    )
+    mechanism: str = dspy.OutputField(
+        desc="the real causal mechanism connecting root_cause to symptom"
+    )
+    root_cause: str = dspy.OutputField(
+        desc="the committed root cause, grounded in admitted_facts"
+    )
     evidence_refs: str = dspy.OutputField(
         desc="the specific admitted_facts entries that justify root_cause over every other surviving hypothesis"
     )
@@ -168,7 +182,9 @@ class ConstructSreMitigation(dspy.Signature):
     relevant_resource_spec: str = dspy.InputField(
         desc="the current real spec/state of the resource(s) the mitigation would change"
     )
-    capability_catalog: str = dspy.InputField(desc="the real, admitted DO capability names available")
+    capability_catalog: str = dspy.InputField(
+        desc="the real, admitted DO capability names available"
+    )
     mitigation_intent: str = dspy.OutputField(
         desc="a concrete, real mitigation request, precise enough to translate into exactly one real "
         "DO capability call -- never vague, never a placeholder"

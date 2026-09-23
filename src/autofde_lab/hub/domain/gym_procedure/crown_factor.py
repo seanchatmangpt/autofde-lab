@@ -118,7 +118,11 @@ class CrownFactor(Generic[T]):
     def is_evidence(self) -> bool:
         """Whether anything was actually checked (true or false), as opposed to
         the factor simply never having been established."""
-        return self.state in (FactorState.OBSERVED_TRUE, FactorState.OBSERVED_FALSE, FactorState.REFUSED)
+        return self.state in (
+            FactorState.OBSERVED_TRUE,
+            FactorState.OBSERVED_FALSE,
+            FactorState.REFUSED,
+        )
 
     def describe(self) -> str:
         detail = self.refusal or self.unknown_reason or ""
@@ -132,18 +136,34 @@ class CrownFactor(Generic[T]):
     # type surface is one fewer way to recreate the same bug under a new name.
 
     @classmethod
-    def observed_true(cls, name: str, source: str, evidence_ref: str, value: Any = True) -> "CrownFactor":
-        return cls(name=name, state=FactorState.OBSERVED_TRUE, source=source,
-                   evidence_ref=evidence_ref, observed=value)
+    def observed_true(
+        cls, name: str, source: str, evidence_ref: str, value: Any = True
+    ) -> "CrownFactor":
+        return cls(
+            name=name,
+            state=FactorState.OBSERVED_TRUE,
+            source=source,
+            evidence_ref=evidence_ref,
+            observed=value,
+        )
 
     @classmethod
-    def observed_false(cls, name: str, source: str, evidence_ref: str, value: Any = False) -> "CrownFactor":
-        return cls(name=name, state=FactorState.OBSERVED_FALSE, source=source,
-                   evidence_ref=evidence_ref, observed=value)
+    def observed_false(
+        cls, name: str, source: str, evidence_ref: str, value: Any = False
+    ) -> "CrownFactor":
+        return cls(
+            name=name,
+            state=FactorState.OBSERVED_FALSE,
+            source=source,
+            evidence_ref=evidence_ref,
+            observed=value,
+        )
 
     @classmethod
     def unknown(cls, name: str, source: str, reason: str) -> "CrownFactor":
-        return cls(name=name, state=FactorState.UNKNOWN, source=source, unknown_reason=reason)
+        return cls(
+            name=name, state=FactorState.UNKNOWN, source=source, unknown_reason=reason
+        )
 
     @classmethod
     def refused(cls, name: str, source: str, refusal: str) -> "CrownFactor":
@@ -151,11 +171,18 @@ class CrownFactor(Generic[T]):
 
     @classmethod
     def blocked(cls, name: str, source: str, reason: str) -> "CrownFactor":
-        return cls(name=name, state=FactorState.BLOCKED, source=source, unknown_reason=reason)
+        return cls(
+            name=name, state=FactorState.BLOCKED, source=source, unknown_reason=reason
+        )
 
     @classmethod
     def unsupported(cls, name: str, source: str, reason: str) -> "CrownFactor":
-        return cls(name=name, state=FactorState.UNSUPPORTED, source=source, unknown_reason=reason)
+        return cls(
+            name=name,
+            state=FactorState.UNSUPPORTED,
+            source=source,
+            unknown_reason=reason,
+        )
 
     # -- serialization ------------------------------------------------------
 
@@ -183,7 +210,9 @@ class CrownFactor(Generic[T]):
             observed=payload["observed"] if "observed" in payload else None,
             evidence_ref=payload["evidence_ref"] if "evidence_ref" in payload else None,
             refusal=payload["refusal"] if "refusal" in payload else None,
-            unknown_reason=payload["unknown_reason"] if "unknown_reason" in payload else None,
+            unknown_reason=payload["unknown_reason"]
+            if "unknown_reason" in payload
+            else None,
         )
 
 
@@ -205,14 +234,18 @@ class FactorConjunction:
 
     def unsatisfied(self) -> list[str]:
         out = list(self.missing())
-        out += [n for n in self.required if n in self.factors and not self.factors[n].holds]
+        out += [
+            n for n in self.required if n in self.factors and not self.factors[n].holds
+        ]
         return out
 
     def never_checked(self) -> list[str]:
         """Required factors that were never actually established either way --
         the ones a boolean scoreboard would have silently counted as passing."""
         return [n for n in self.required if n not in self.factors] + [
-            n for n in self.required if n in self.factors and not self.factors[n].is_evidence()
+            n
+            for n in self.required
+            if n in self.factors and not self.factors[n].is_evidence()
         ]
 
     def is_alive(self) -> bool:
@@ -236,7 +269,10 @@ class FactorConjunction:
         return "NOT_ALIVE"
 
     def report(self) -> list[str]:
-        lines = [f.describe() for f in (self.factors[n] for n in self.required if n in self.factors)]
+        lines = [
+            f.describe()
+            for f in (self.factors[n] for n in self.required if n in self.factors)
+        ]
         lines += [f"{n}=ABSENT (no factor recorded)" for n in self.missing()]
         return lines
 
@@ -296,20 +332,36 @@ def factors_from_row(row: dict) -> dict[str, CrownFactor]:
         if key not in row:
             factors[factor_name] = CrownFactor.unknown(factor_name, src, reason)
             return
-        ctor = CrownFactor.observed_true if row[key] is True else CrownFactor.observed_false
+        ctor = (
+            CrownFactor.observed_true
+            if row[key] is True
+            else CrownFactor.observed_false
+        )
         factors[factor_name] = ctor(factor_name, src, _ref(key), row[key])
 
-    _from_bool("real_goal_attained", "real_goal_attained", "LEGACY_ROW_LACKS_real_goal_attained")
-    _from_bool("independently_verified", "independently_verified", "LEGACY_ROW_LACKS_independently_verified")
+    _from_bool(
+        "real_goal_attained",
+        "real_goal_attained",
+        "LEGACY_ROW_LACKS_real_goal_attained",
+    )
+    _from_bool(
+        "independently_verified",
+        "independently_verified",
+        "LEGACY_ROW_LACKS_independently_verified",
+    )
     _from_bool("ocel_valid", "ocel_valid", "LEGACY_ROW_LACKS_ocel_valid")
 
     name = "ocel_referential_integrity"
     if "ocel_ref_violations" not in row:
-        factors[name] = CrownFactor.unknown(name, src, "LEGACY_ROW_LACKS_ocel_ref_violations")
+        factors[name] = CrownFactor.unknown(
+            name, src, "LEGACY_ROW_LACKS_ocel_ref_violations"
+        )
     else:
         clean = not row["ocel_ref_violations"]
         ctor = CrownFactor.observed_true if clean else CrownFactor.observed_false
-        factors[name] = ctor(name, src, _ref("ocel_ref_violations"), list(row["ocel_ref_violations"]))
+        factors[name] = ctor(
+            name, src, _ref("ocel_ref_violations"), list(row["ocel_ref_violations"])
+        )
 
     _from_bool("replay_ran", "replay_ran", "REPLAY_NOT_CHECKED_IN_THIS_ATTEMPT")
     _from_bool("replay_valid", "replay_valid", "REPLAY_NOT_CHECKED_IN_THIS_ATTEMPT")
@@ -317,7 +369,9 @@ def factors_from_row(row: dict) -> dict[str, CrownFactor]:
     name = "zero_replay_mismatches"
     if "replay_ran" not in row or "replay_mismatches" not in row:
         factors[name] = CrownFactor.unknown(
-            name, src, "MISMATCH_TUPLE_WITHOUT_A_REPLAY_THAT_RAN_IS_ABSENCE_NOT_CLEANLINESS"
+            name,
+            src,
+            "MISMATCH_TUPLE_WITHOUT_A_REPLAY_THAT_RAN_IS_ABSENCE_NOT_CLEANLINESS",
         )
     elif row["replay_ran"] is not True:
         factors[name] = CrownFactor.unknown(
@@ -326,7 +380,9 @@ def factors_from_row(row: dict) -> dict[str, CrownFactor]:
     else:
         clean = not row["replay_mismatches"]
         ctor = CrownFactor.observed_true if clean else CrownFactor.observed_false
-        factors[name] = ctor(name, src, _ref("replay_mismatches"), list(row["replay_mismatches"]))
+        factors[name] = ctor(
+            name, src, _ref("replay_mismatches"), list(row["replay_mismatches"])
+        )
 
     return factors
 

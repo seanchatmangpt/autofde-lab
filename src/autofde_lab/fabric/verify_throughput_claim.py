@@ -48,7 +48,9 @@ def _load_results_json(log_path: Path) -> dict:
     remainder = text[idx + len(_RESULTS_JSON_MARKER) :]
     match = re.search(r"\{.*\}", remainder, re.DOTALL)
     if not match:
-        raise ValueError(f"no JSON object found after {_RESULTS_JSON_MARKER!r} marker in {log_path}")
+        raise ValueError(
+            f"no JSON object found after {_RESULTS_JSON_MARKER!r} marker in {log_path}"
+        )
     return json.loads(match.group(0))
 
 
@@ -59,7 +61,9 @@ def real_logged_solves_per_sec(log_path: Path, domain_key: str) -> float:
     log -- never returns a fabricated default."""
     results = _load_results_json(log_path)
     if domain_key not in results:
-        raise KeyError(f"domain {domain_key!r} not present in {log_path}'s real RESULTS_JSON")
+        raise KeyError(
+            f"domain {domain_key!r} not present in {log_path}'s real RESULTS_JSON"
+        )
     return float(results[domain_key]["solves_per_sec"])
 
 
@@ -113,8 +117,12 @@ def receipt_from_throughput_claim(
         intent_id=intent_id,
         observed_outcome_refs=(f"throughput-log:{log_path}:{domain_key}",),
         authority_standing="ADMITTED",
-        postconditions_observed=("throughput-claim-matches-real-log",) if survives else (),
-        postconditions_violated=() if survives else ("throughput-claim-matches-real-log",),
+        postconditions_observed=("throughput-claim-matches-real-log",)
+        if survives
+        else (),
+        postconditions_violated=()
+        if survives
+        else ("throughput-claim-matches-real-log",),
         ocel_evidence_ref=None,
         standing="OBSERVED",
     )

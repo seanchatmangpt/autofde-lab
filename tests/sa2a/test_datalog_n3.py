@@ -2,19 +2,17 @@
 
 import pytest
 import rdflib
-from rdflib import URIRef, Literal, Namespace
+from rdflib import Namespace
 
 from autofde_lab.sa2a.admission.datalog_layer import (
     DatalogAtom,
-    DatalogRule,
     DatalogEngine,
+    DatalogRule,
 )
 from autofde_lab.sa2a.admission.n3_layer import (
     N3ImplicationRule,
     N3RuleEngine,
-    CandidateDerivation,
 )
-
 
 EX = Namespace("http://example.org/")
 
@@ -26,13 +24,13 @@ def test_datalog_range_restriction_guard():
         DatalogRule(
             head=DatalogAtom("reaches", "?X", "?Y"),
             body=(DatalogAtom("edge", "?X", "node_a"),),
-            name="unsafe_rule"
+            name="unsafe_rule",
         )
 
 
 def test_datalog_deterministic_least_fixpoint_transitive_reachability():
     """Test deterministic least-fixpoint closure over transitive reachability.
-    
+
     Graph: a -> b -> c -> d
     Base rule: Reaches(X, Y) :- Edge(X, Y)
     Transitive rule: Reaches(X, Y) :- Reaches(X, Z), Edge(Z, Y)
@@ -43,7 +41,7 @@ def test_datalog_deterministic_least_fixpoint_transitive_reachability():
     rule_base = DatalogRule(
         head=DatalogAtom("reaches", "?X", "?Y"),
         body=(DatalogAtom("edge", "?X", "?Y"),),
-        name="reach_base"
+        name="reach_base",
     )
 
     # Rule 2: reaches(X, Y) :- reaches(X, Z), edge(Z, Y)
@@ -53,7 +51,7 @@ def test_datalog_deterministic_least_fixpoint_transitive_reachability():
             DatalogAtom("reaches", "?X", "?Z"),
             DatalogAtom("edge", "?Z", "?Y"),
         ),
-        name="reach_transitive"
+        name="reach_transitive",
     )
 
     engine.add_rule(rule_base)
@@ -70,18 +68,20 @@ def test_datalog_deterministic_least_fixpoint_transitive_reachability():
 
     # Check termination
     assert iterations >= 3
-    assert len(facts) == 3 + 6  # 3 edges + 6 reachability pairs (ab, bc, cd, ac, bd, ad)
+    assert (
+        len(facts) == 3 + 6
+    )  # 3 edges + 6 reachability pairs (ab, bc, cd, ac, bd, ad)
 
     expected_pairs = {
-        ("a", "b"), ("b", "c"), ("c", "d"),
-        ("a", "c"), ("b", "d"), ("a", "d")
+        ("a", "b"),
+        ("b", "c"),
+        ("c", "d"),
+        ("a", "c"),
+        ("b", "d"),
+        ("a", "d"),
     }
 
-    derived_reach = {
-        (f.args[0], f.args[1])
-        for f in facts
-        if f.predicate == "reaches"
-    }
+    derived_reach = {(f.args[0], f.args[1]) for f in facts if f.predicate == "reaches"}
 
     assert derived_reach == expected_pairs
 
@@ -122,13 +122,13 @@ def test_datalog_cyclic_graph_termination():
     engine.add_rule(
         DatalogRule(
             head=DatalogAtom("reaches", "?X", "?Y"),
-            body=(DatalogAtom("edge", "?X", "?Y"),)
+            body=(DatalogAtom("edge", "?X", "?Y"),),
         )
     )
     engine.add_rule(
         DatalogRule(
             head=DatalogAtom("reaches", "?X", "?Y"),
-            body=(DatalogAtom("reaches", "?X", "?Z"), DatalogAtom("edge", "?Z", "?Y"))
+            body=(DatalogAtom("reaches", "?X", "?Z"), DatalogAtom("edge", "?Z", "?Y")),
         )
     )
 
@@ -150,9 +150,9 @@ def test_n3_rule_engine_standing_and_zero_do():
     # Rule: { ?agent ex:hasRole ex:Admin } => { ?agent ex:hasPermission ex:Write }
     n3_rule = N3ImplicationRule(
         rule_id="role_permission_rule",
-        body_patterns=(( "?A", EX["hasRole"], EX["Admin"] ),),
-        head_patterns=(( "?A", EX["hasPermission"], EX["Write"] ),),
-        description="Admin grants write permission candidate"
+        body_patterns=(("?A", EX["hasRole"], EX["Admin"]),),
+        head_patterns=(("?A", EX["hasPermission"], EX["Write"]),),
+        description="Admin grants write permission candidate",
     )
 
     engine = N3RuleEngine([n3_rule])
@@ -181,6 +181,6 @@ def test_n3_range_restriction_guard():
     with pytest.raises(ValueError, match="Range-restriction violation"):
         N3ImplicationRule(
             rule_id="invalid_n3",
-            body_patterns=(( "?A", EX["hasRole"], EX["Admin"] ),),
-            head_patterns=(( "?A", EX["grantsTo"], "?UnboundTarget" ),),
+            body_patterns=(("?A", EX["hasRole"], EX["Admin"]),),
+            head_patterns=(("?A", EX["grantsTo"], "?UnboundTarget"),),
         )

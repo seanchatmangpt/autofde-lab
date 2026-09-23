@@ -156,7 +156,11 @@ async def execute_and_submit_mitigation(
         }
     )
 
-    translate = translator if translator is not None else dspy.Predict(TranslateMitigationStepToKubectlCommand)
+    translate = (
+        translator
+        if translator is not None
+        else dspy.Predict(TranslateMitigationStepToKubectlCommand)
+    )
 
     run_kubectl_cap = _capability(capabilities, "run_kubectl")
     executed_commands: list[str] = []
@@ -169,7 +173,9 @@ async def execute_and_submit_mitigation(
         if atom.consequence == "VERIFY":
             # Intent only -- the real, authoritative verification stays
             # environment.verify(...), never duplicated here.
-            trajectory["stages"].append({"stage": "verify_intent", "description": atom.label})
+            trajectory["stages"].append(
+                {"stage": "verify_intent", "description": atom.label}
+            )
             continue
 
         prediction = translate(
@@ -205,7 +211,11 @@ async def execute_and_submit_mitigation(
         executed_commands.append(command)
         kubectl_responses.append(response)
         trajectory["stages"].append(
-            {"stage": "executed_step", "description": atom.label, "kubectl_command": command}
+            {
+                "stage": "executed_step",
+                "description": atom.label,
+                "kubectl_command": command,
+            }
         )
         if recorder is not None:
             recorder.record_atom(
@@ -228,7 +238,9 @@ async def execute_and_submit_mitigation(
             "executed_commands": executed_commands,
         },
     )
-    trajectory["stages"].append({"stage": "submit_mitigation", "executed_command_count": len(executed_commands)})
+    trajectory["stages"].append(
+        {"stage": "submit_mitigation", "executed_command_count": len(executed_commands)}
+    )
 
     return MitigationExecutionResult(
         attempted=True,

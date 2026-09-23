@@ -25,11 +25,11 @@ from pathlib import Path
 
 import pytest
 
+from autofde_lab.hub.domain.gym_procedure.level4_generator import Trial
 from autofde_lab.hub.domain.gym_procedure.level4_gymact_bridge import (
     RealBlindEnvironment,
     skip_reason,
 )
-from autofde_lab.hub.domain.gym_procedure.level4_generator import Trial
 from autofde_lab.hub.domain.gym_procedure.trial_isolation import (
     EvidenceDirContention,
     acquire_exclusive_evidence_dir,
@@ -89,7 +89,9 @@ def test_four_concurrent_real_trials_stay_isolated(tmp_path: Path) -> None:
         target = r["target"]
         log = r["evidence_dir"] / "probes.jsonl"
         assert log.is_file()
-        lines = [ln for ln in log.read_text(encoding="utf-8").splitlines() if ln.strip()]
+        lines = [
+            ln for ln in log.read_text(encoding="utf-8").splitlines() if ln.strip()
+        ]
 
         # --- only this trial's probes, by count AND by content ----------
         assert len(lines) == target, (target, lines)

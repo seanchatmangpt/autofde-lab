@@ -141,5 +141,7 @@ def empty_environment_fingerprint() -> tuple[str, ...]:
     fingerprint = [
         f"{var}={'set' if os.environ.get(var) else 'unset'}" for var in locators
     ]
-    fingerprint.append(f"PATH_entries={len([p for p in os.environ.get('PATH', '').split(os.pathsep) if p])}")
+    fingerprint.append(
+        f"PATH_entries={len([p for p in os.environ.get('PATH', '').split(os.pathsep) if p])}"
+    )
     return tuple(fingerprint)

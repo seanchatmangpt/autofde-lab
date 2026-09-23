@@ -75,7 +75,9 @@ def test_terminal_bench_pro_cmake_build_recipe_loads_from_real_json():
 
 def test_astar_solves_terminal_bench_pro_cmake_build_recipe_in_documented_order():
     """A* must recover instruction.md's write -> configure -> build -> run/verify order."""
-    domain = GymProcedureDomain.from_json(RECIPES_DIR / "terminal_bench_pro_cmake_build.json")
+    domain = GymProcedureDomain.from_json(
+        RECIPES_DIR / "terminal_bench_pro_cmake_build.json"
+    )
     plan, obs = _solve_and_collect_plan(domain)
 
     assert domain._is_goal(obs), f"A* did not reach the goal. Plan: {plan}"
@@ -100,7 +102,9 @@ def test_toolsandbox_remove_contact_by_phone_recipe_loads_from_real_json():
 
 def test_astar_solves_toolsandbox_remove_contact_by_phone_recipe_in_milestone_order():
     """A* must recover the scenario's own Milestone ordering: search -> remove -> reply."""
-    domain = GymProcedureDomain.from_json(RECIPES_DIR / "toolsandbox_remove_contact_by_phone.json")
+    domain = GymProcedureDomain.from_json(
+        RECIPES_DIR / "toolsandbox_remove_contact_by_phone.json"
+    )
     plan, obs = _solve_and_collect_plan(domain)
 
     assert domain._is_goal(obs), f"A* did not reach the goal. Plan: {plan}"

@@ -1,0 +1,10 @@
+{
+  "wo": "AFDE-26922-02",
+  "title": "Fix SA2A-B2 BUILD_BROKEN (compute_closure) and unmasked drift",
+  "base_sha": "f5cc664bac7598d5cf53cab399876df300bb6b14",
+  "commit": "2a204f27",
+  "command": ".venv/bin/python scripts/run_sa2a_benchmarks.py && python3 -c \"assert d['all_passed']\"",
+  "exit": 0,
+  "output_excerpt": "reports/rfc_sa2a_002_benchmarks.json: all_passed=true, standing=ALIVE, SA2A-B1..B10 all pass (was: runner crash at missing DatalogEngine.compute_closure masking 5 more harness drifts). ruff format --check + ruff check clean on harness.py; mock grep: only the file's own zero-mock documentation lines.",
+  "standing": "ALIVE"
+}

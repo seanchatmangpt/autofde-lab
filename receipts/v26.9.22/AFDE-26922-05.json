@@ -1,0 +1,9 @@
+{
+  "wo": "AFDE-26922-05",
+  "title": "Land #171, #170, #157, #159; delete superseded gnn v1 branch",
+  "base_sha": "f5cc664bac7598d5cf53cab399876df300bb6b14",
+  "command": "gh pr merge --merge (171, 157, 159); ruff-format fix pushed to #170 branch (2fa77313); git push origin --delete feat/sa2a-gnn-candidate-inference",
+  "exit": 0,
+  "output_excerpt": "#171 ab4436fc MERGED, #157 a0a79f01 MERGED, #159 5d7ec093 MERGED (exact-head CI green at merge time). #170: ruff-format api.py fixed; master-merge cured the kernel file-set failure; all checks pass; MERGED after this receipt was drafted (see landing report for merge SHA). gnn v1 remote branch deleted, ls-remote count 0.",
+  "standing": "ALIVE"
+}

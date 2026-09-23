@@ -151,7 +151,15 @@ def _read_results(results_graph) -> tuple[ShaclViolation, ...]:
             message=message,
             severity=severity,
         )
-        for index, (focus, path, shape, component, value, message, severity) in enumerate(rows)
+        for index, (
+            focus,
+            path,
+            shape,
+            component,
+            value,
+            message,
+            severity,
+        ) in enumerate(rows)
     )
 
 

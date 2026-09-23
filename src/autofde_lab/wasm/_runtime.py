@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import base64
-from collections.abc import Mapping
-from dataclasses import dataclass
 import hashlib
 import importlib.util
 import json
-from pathlib import Path
 import shutil
 import subprocess
+from collections.abc import Mapping
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Protocol
 
 from ._abi import ALLOC_EXPORT, DEALLOC_EXPORT, INVOKE_EXPORT, MEMORY_EXPORT
@@ -42,7 +42,9 @@ class ArtifactImage:
     data: bytes
 
     @classmethod
-    def from_descriptor(cls, descriptor: ComponentDescriptor, data: bytes) -> "ArtifactImage":
+    def from_descriptor(
+        cls, descriptor: ComponentDescriptor, data: bytes
+    ) -> "ArtifactImage":
         digest = hashlib.sha256(data).hexdigest()
         if digest != descriptor.artifact_sha256:
             raise ArtifactIntegrityError(
@@ -53,18 +55,21 @@ class ArtifactImage:
                 f"{descriptor.name} artifact size mismatch: expected {descriptor.artifact_size}, observed {len(data)}"
             )
         if not data.startswith(b"\x00asm\x01\x00\x00\x00"):
-            raise ArtifactIntegrityError(f"{descriptor.name} is not a WebAssembly v1 module")
+            raise ArtifactIntegrityError(
+                f"{descriptor.name} is not a WebAssembly v1 module"
+            )
         return cls(filename=descriptor.artifact, sha256=digest, data=data)
 
 
 class ArtifactStore(Protocol):
-    def load(self, descriptor: ComponentDescriptor) -> ArtifactImage:
-        ...
+    def load(self, descriptor: ComponentDescriptor) -> ArtifactImage: ...
 
 
 class EmbeddedArtifactStore:
     def load(self, descriptor: ComponentDescriptor) -> ArtifactImage:
-        return ArtifactImage.from_descriptor(descriptor, artifact_for(descriptor.name).bytes())
+        return ArtifactImage.from_descriptor(
+            descriptor, artifact_for(descriptor.name).bytes()
+        )
 
 
 class DirectoryArtifactStore:
@@ -83,8 +88,7 @@ class DirectoryArtifactStore:
 class Backend(Protocol):
     name: str
 
-    def invoke(self, artifact: ArtifactImage, request: bytes) -> bytes:
-        ...
+    def invoke(self, artifact: ArtifactImage, request: bytes) -> bytes: ...
 
 
 _NODE_RUNNER = r"""
@@ -148,9 +152,13 @@ class NodeBackend:
                 check=False,
             )
         except (OSError, subprocess.TimeoutExpired) as exc:
-            raise RuntimeDependencyUnavailable("Node.js WebAssembly execution failed") from exc
+            raise RuntimeDependencyUnavailable(
+                "Node.js WebAssembly execution failed"
+            ) from exc
         if result.returncode != 0:
-            raise AbiViolation(result.stderr.strip() or "Node.js rejected the Wasm adapter")
+            raise AbiViolation(
+                result.stderr.strip() or "Node.js rejected the Wasm adapter"
+            )
         try:
             return base64.b64decode(result.stdout, validate=True)
         except ValueError as exc:
@@ -190,7 +198,9 @@ class WasmtimeBackend:
             except KeyError:
                 deallocate = None
         except (KeyError, TypeError) as exc:
-            raise AbiViolation("component is missing a required Chatman ABI export") from exc
+            raise AbiViolation(
+                "component is missing a required Chatman ABI export"
+            ) from exc
         request_ptr = int(allocate(store, len(request)))
         memory.write(store, request, request_ptr)
         packed = int(invoke(store, request_ptr, len(request)))
@@ -220,7 +230,9 @@ class AutoBackend:
 
 
 class ComponentBinding:
-    def __init__(self, descriptor: ComponentDescriptor, store: ArtifactStore, backend: Backend) -> None:
+    def __init__(
+        self, descriptor: ComponentDescriptor, store: ArtifactStore, backend: Backend
+    ) -> None:
         self.descriptor = descriptor
         self.store = store
         self.backend = backend
@@ -257,7 +269,9 @@ class ComponentBinding:
         except WasmBindingError:
             raise
         except (OSError, ValueError, TypeError) as exc:
-            raise AbiViolation(f"{self.descriptor.name} failed the receipt-bound ABI") from exc
+            raise AbiViolation(
+                f"{self.descriptor.name} failed the receipt-bound ABI"
+            ) from exc
         receipt = dict(guest.receipt)
         receipt["artifact"] = {
             "filename": artifact.filename,
@@ -279,8 +293,12 @@ class ComponentBinding:
     def describe(self) -> InvocationResult:
         return self.invoke("describe", authority={"actuation": "none"})
 
-    def admit(self, payload: Mapping[str, Any], *, authority: Mapping[str, Any] | None = None) -> InvocationResult:
-        return self.invoke("admit", payload, authority=authority or {"actuation": "none"})
+    def admit(
+        self, payload: Mapping[str, Any], *, authority: Mapping[str, Any] | None = None
+    ) -> InvocationResult:
+        return self.invoke(
+            "admit", payload, authority=authority or {"actuation": "none"}
+        )
 
 
 class ChatmanEcosystem:
@@ -295,7 +313,11 @@ class ChatmanEcosystem:
         if artifact_root is not None and store is not None:
             raise ValueError("provide artifact_root or store, not both")
         self.registry = registry or ComponentRegistry.default()
-        self.store = store or (DirectoryArtifactStore(artifact_root) if artifact_root is not None else EmbeddedArtifactStore())
+        self.store = store or (
+            DirectoryArtifactStore(artifact_root)
+            if artifact_root is not None
+            else EmbeddedArtifactStore()
+        )
         self.backend = backend or AutoBackend()
         self._bindings: dict[str, ComponentBinding] = {}
 
@@ -327,7 +349,11 @@ class ChatmanEcosystem:
 
     def self_test_all(self) -> tuple[InvocationResult, ...]:
         results = tuple(binding.self_test() for binding in self)
-        failures = [result.component.name for result in results if result.status != "ALIVE"]
+        failures = [
+            result.component.name for result in results if result.status != "ALIVE"
+        ]
         if failures:
-            raise AbiViolation(f"component self-test did not reach ALIVE: {', '.join(failures)}")
+            raise AbiViolation(
+                f"component self-test did not reach ALIVE: {', '.join(failures)}"
+            )
         return results

@@ -250,7 +250,9 @@ def test_chi_tamper_04_wrong_but_well_formed_prepared_receipt_identity_substitut
         execution_duration_ms=final_real.execution_duration_ms,
     )
     assert mutated_final.prepared_receipt_digest == wrong_prepared.digest
-    assert mutated_final.digest != final_real.digest  # a genuinely different, but self-consistent, record
+    assert (
+        mutated_final.digest != final_real.digest
+    )  # a genuinely different, but self-consistent, record
 
     # Submit the forged record pair -- real evidence, wrong predecessor -- to
     # the real court.

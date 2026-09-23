@@ -81,9 +81,7 @@ MATERIALIZE_REFUSED = "MATERIALIZE_REFUSED"
 TRANSIENT_KINDS = frozenset({BRIDGE_TIMEOUT})
 
 #: Real answers from the provider. Retrying any of these is forbidden.
-REFUSAL_KINDS = frozenset(
-    {PROVIDER_REFUSED, UNKNOWN_CAPABILITY, MATERIALIZE_REFUSED}
-)
+REFUSAL_KINDS = frozenset({PROVIDER_REFUSED, UNKNOWN_CAPABILITY, MATERIALIZE_REFUSED})
 
 
 def _text(raw: Any) -> str:

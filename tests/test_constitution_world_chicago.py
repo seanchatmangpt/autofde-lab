@@ -27,6 +27,7 @@ and its `derived_from_observation` field no longer exist in the manufactured mod
 file was updated to assert the new, real `StandingValue` enum shape rather than pin the
 now-superseded dataclass shape.
 """
+
 from __future__ import annotations
 
 import dataclasses

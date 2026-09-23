@@ -113,7 +113,9 @@ def solve_recipe(recipe: Recipe, solver_name: str, step_bound: Optional[int] = N
         return SOLVER_ERROR, (), f"{type(exc).__name__}: {exc}"[:300]
 
 
-def _worker(path_str: str, solver_name: str, queue) -> None:  # pragma: no cover - child process
+def _worker(
+    path_str: str, solver_name: str, queue
+) -> None:  # pragma: no cover - child process
     try:
         recipe = load_recipe(Path(path_str))
     except Exception as exc:  # noqa: BLE001
@@ -146,7 +148,18 @@ def run_corpus(
         for solver_name in solver_names:
             if load_detail is not None:
                 results.append(
-                    RecipeResult(path.stem, "", "", 0, solver_name, LOAD_ERROR, 0, (), 0.0, load_detail)
+                    RecipeResult(
+                        path.stem,
+                        "",
+                        "",
+                        0,
+                        solver_name,
+                        LOAD_ERROR,
+                        0,
+                        (),
+                        0.0,
+                        load_detail,
+                    )
                 )
                 continue
             queue = ctx.Queue()
@@ -159,8 +172,15 @@ def run_corpus(
                 proc.join(5)
                 results.append(
                     RecipeResult(
-                        path.stem, meta[0], meta[1], meta[2], solver_name, TIMEOUT,
-                        0, (), time.monotonic() - start,
+                        path.stem,
+                        meta[0],
+                        meta[1],
+                        meta[2],
+                        solver_name,
+                        TIMEOUT,
+                        0,
+                        (),
+                        time.monotonic() - start,
                         f"exceeded timeout_s={timeout_s}",
                     )
                 )
@@ -170,12 +190,22 @@ def run_corpus(
                 outcome, plan, detail = queue.get_nowait()
             except Exception:  # noqa: BLE001 - child died without reporting
                 outcome, plan, detail = (
-                    SOLVER_ERROR, (), f"child exited with code {proc.exitcode} and no result",
+                    SOLVER_ERROR,
+                    (),
+                    f"child exited with code {proc.exitcode} and no result",
                 )
             results.append(
                 RecipeResult(
-                    path.stem, meta[0], meta[1], meta[2], solver_name,
-                    outcome, len(plan), tuple(plan), duration, detail,
+                    path.stem,
+                    meta[0],
+                    meta[1],
+                    meta[2],
+                    solver_name,
+                    outcome,
+                    len(plan),
+                    tuple(plan),
+                    duration,
+                    detail,
                 )
             )
     return results
@@ -184,7 +214,9 @@ def run_corpus(
 def format_table(results: Sequence[RecipeResult]) -> str:
     """Plain-text table of real results -- no rounding of failures into successes."""
     w = max((len(r.recipe_id) for r in results), default=10)
-    lines = [f"{'recipe':<{w}}  {'steps':>5}  {'solver':<10}  {'outcome':<14}  {'plan':>4}  {'sec':>6}  detail"]
+    lines = [
+        f"{'recipe':<{w}}  {'steps':>5}  {'solver':<10}  {'outcome':<14}  {'plan':>4}  {'sec':>6}  detail"
+    ]
     for r in results:
         lines.append(
             f"{r.recipe_id:<{w}}  {r.n_steps:>5}  {r.solver:<10}  {r.outcome:<14}  "
@@ -194,7 +226,10 @@ def format_table(results: Sequence[RecipeResult]) -> str:
     for r in results:
         counts[r.outcome] = counts.get(r.outcome, 0) + 1
     lines.append("")
-    lines.append(f"TOTAL {len(results)}: " + ", ".join(f"{k}={v}" for k, v in sorted(counts.items())))
+    lines.append(
+        f"TOTAL {len(results)}: "
+        + ", ".join(f"{k}={v}" for k, v in sorted(counts.items()))
+    )
     return "\n".join(lines)
 
 

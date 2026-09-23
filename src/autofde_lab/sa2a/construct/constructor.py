@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Mapping, Sequence
 
@@ -25,7 +25,9 @@ def compute_digest(data: str | bytes | Mapping[str, Any] | Sequence[Any]) -> str
     elif isinstance(data, str):
         payload = data.encode("utf-8")
     else:
-        payload = json.dumps(data, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        payload = json.dumps(data, sort_keys=True, separators=(",", ":")).encode(
+            "utf-8"
+        )
     return hashlib.sha256(payload).hexdigest()
 
 
@@ -113,7 +115,9 @@ class ConstructionReceipt:
             receipt_id=receipt_id,
         )
 
-    def verify(self, semantics: AdmittedSemantics, artifact: ExecutableArtifact) -> bool:
+    def verify(
+        self, semantics: AdmittedSemantics, artifact: ExecutableArtifact
+    ) -> bool:
         """Verify that this receipt strictly binds the given O* and manufactured artifact."""
         if self.admitted_input_digest != semantics.canonical_digest():
             return False
@@ -215,9 +219,9 @@ class ArtifactManufacturer:
                 f"# Canonical Input Digest: {input_digest}\n"
                 f"# Generated Code != Semantic Truth; canonical authority resides strictly in O*.\n\n"
                 f"CANONICAL_TRIPLES = {triples_repr}\n"
-                f"CANONICAL_INPUT_DIGEST = \"{input_digest}\"\n\n"
+                f'CANONICAL_INPUT_DIGEST = "{input_digest}"\n\n'
                 f"def run(inputs=None):\n"
-                f"    \"\"\"Execute projection against inputs using canonical triple rules.\"\"\"\n"
+                f'    """Execute projection against inputs using canonical triple rules."""\n'
                 f"    return {{\n"
                 f"        'status': 'ALIVE',\n"
                 f"        'digest': CANONICAL_INPUT_DIGEST,\n"
@@ -234,7 +238,10 @@ class ArtifactManufacturer:
                 "type": "object",
                 "properties": {
                     "admitted_digest": {"const": input_digest},
-                    "triples": {"type": "array", "default": sorted(admitted.canonical_triples)},
+                    "triples": {
+                        "type": "array",
+                        "default": sorted(admitted.canonical_triples),
+                    },
                 },
                 "required": ["admitted_digest"],
             }
@@ -253,11 +260,13 @@ class ArtifactManufacturer:
                 f"%% Ephemeral AtomVM Erlang module\n"
                 f"-module(ephemeral_projection).\n"
                 f"-export([run/0, digest/0]).\n\n"
-                f"digest() -> <<\"{input_digest}\">>.\n"
+                f'digest() -> <<"{input_digest}">>.\n'
                 f"run() -> {{alive, {len(admitted.canonical_triples)}}}.\n"
             )
             return source, "run"
 
         else:
-            source = f"// Projection for {target.value}\nconst DIGEST = \"{input_digest}\";\n"
+            source = (
+                f'// Projection for {target.value}\nconst DIGEST = "{input_digest}";\n'
+            )
             return source, "default"

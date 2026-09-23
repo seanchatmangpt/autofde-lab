@@ -54,7 +54,8 @@ from autofde_lab.hub.domain.gym_procedure.typed_induction import (
 
 REPO = Path(__file__).resolve().parents[2]
 RECIPE_PATH = (
-    REPO / "src/autofde_lab/hub/domain/gym_procedure/recipes/cube_standard_container_counter.json"
+    REPO
+    / "src/autofde_lab/hub/domain/gym_procedure/recipes/cube_standard_container_counter.json"
 )
 
 #: The typed outcome vocabulary EVERY producer's record must draw from.
@@ -113,7 +114,9 @@ def probe_records(recipe):
             pre_facts = set(obs.facts)
             pre = {f: f in pre_facts for f in universe}
             if action not in legal:
-                records.append({"action": action, "applicable": False, "observed_pre": pre})
+                records.append(
+                    {"action": action, "applicable": False, "observed_pre": pre}
+                )
                 continue
             probe_domain = GymProcedureDomain(recipe)
             probe_domain.reset()
@@ -150,7 +153,11 @@ def typed(recipe, probe_records):
 def typed_search_attempt(recipe, typed):
     typed_domain, initial, goal_predicate = typed
     return run_typed_search_attempt(
-        typed_domain, initial, goal_predicate, recipe_problem_digest(recipe), timeout_s=10.0
+        typed_domain,
+        initial,
+        goal_predicate,
+        recipe_problem_digest(recipe),
+        timeout_s=10.0,
     )
 
 
@@ -172,7 +179,9 @@ def test_typed_search_produces_a_real_planner_attempt(typed_search_attempt, reci
     assert a.representation == "typed_model"
 
 
-def test_typed_search_really_reaches_the_goal_on_this_recipe(typed, typed_search_attempt):
+def test_typed_search_really_reaches_the_goal_on_this_recipe(
+    typed, typed_search_attempt
+):
     """The capability that must NOT be regressed by the governance fix."""
     typed_domain, initial, goal_predicate = typed
     a = typed_search_attempt
@@ -184,7 +193,9 @@ def test_typed_search_really_reaches_the_goal_on_this_recipe(typed, typed_search
     assert ok, reason
 
 
-def test_typed_search_appears_in_federation_output_beside_its_peers(recipe, typed_search_attempt):
+def test_typed_search_appears_in_federation_output_beside_its_peers(
+    recipe, typed_search_attempt
+):
     """REAL federation over REAL registered solvers; typed_search is in the list.
 
     This is the before/after fact: `federation.json` previously could not
@@ -228,7 +239,9 @@ def test_typed_search_is_classified_like_any_other_registered_producer(recipe):
 # --------------------------------------------------------------------------
 
 
-def test_typed_search_candidate_enters_the_common_set_like_any_other(recipe, typed_search_attempt):
+def test_typed_search_candidate_enters_the_common_set_like_any_other(
+    recipe, typed_search_attempt
+):
     peers = run_federation(recipe, PEER_PLANNERS, timeout_s=10.0)
     common = CommonCandidateSet(recipe_problem_digest(recipe))
     admitted = common.admit_all(peers + [typed_search_attempt])
@@ -236,7 +249,9 @@ def test_typed_search_candidate_enters_the_common_set_like_any_other(recipe, typ
     assert "typed_search" in by_planner
     # Peers that really produced candidates are in there too -- the common set
     # is common, not a rename of the typed_search path.
-    peer_candidates = {a.planner_identity for a in peers if a.outcome == "PLAN_CANDIDATE"}
+    peer_candidates = {
+        a.planner_identity for a in peers if a.outcome == "PLAN_CANDIDATE"
+    }
     assert peer_candidates <= by_planner
     assert peer_candidates, "expected at least one real peer candidate on this recipe"
 
@@ -337,7 +352,9 @@ def test_forged_governed_candidate_is_refused(recipe, typed_search_attempt):
         other.require_governed(real.plan, real.planner_identity)
 
 
-def test_admission_digests_are_not_predictable_across_sets(recipe, typed_search_attempt):
+def test_admission_digests_are_not_predictable_across_sets(
+    recipe, typed_search_attempt
+):
     a = CommonCandidateSet(recipe_problem_digest(recipe))
     b = CommonCandidateSet(recipe_problem_digest(recipe))
     ca = a.admit(typed_search_attempt)
@@ -360,12 +377,10 @@ def test_crown_no_longer_calls_search_plan_typed_outside_the_contract():
     before `commit(` -- is what makes the enforcement structural rather than
     a convention someone can re-break by adding one line.
     """
-    src = (
-        REPO / "src/autofde_lab/hub/domain/gym_procedure/level4_crown.py"
-    ).read_text(encoding="utf-8")
-    code = [
-        line for line in src.splitlines() if not line.lstrip().startswith("#")
-    ]
+    src = (REPO / "src/autofde_lab/hub/domain/gym_procedure/level4_crown.py").read_text(
+        encoding="utf-8"
+    )
+    code = [line for line in src.splitlines() if not line.lstrip().startswith("#")]
     assert not [ln for ln in code if "search_plan_typed(" in ln], (
         "level4_crown calls search_plan_typed directly again -- that is the "
         "bypass this module exists to prevent"
@@ -373,5 +388,7 @@ def test_crown_no_longer_calls_search_plan_typed_outside_the_contract():
     assert "run_typed_search_attempt(" in src
     assert "common.require_governed(" in src
     gate = next(i for i, ln in enumerate(code) if "common.require_governed(" in ln)
-    commit_line = next(i for i, ln in enumerate(code) if ln.strip().startswith("commitment = commit("))
+    commit_line = next(
+        i for i, ln in enumerate(code) if ln.strip().startswith("commitment = commit(")
+    )
     assert gate < commit_line, "the governance gate must precede commitment"

@@ -24,7 +24,9 @@ def decide_limitrange_remediation_commands(
             # No safe default is knowable without the LimitRange's own default;
             # request the LimitRange's minimum as the floor value observed elsewhere,
             # falling back to a conservative baseline request.
-            target_value = f.bound_value or ("100m" if f.resource_name == "cpu" else "128Mi")
+            target_value = f.bound_value or (
+                "100m" if f.resource_name == "cpu" else "128Mi"
+            )
         else:
             continue
 

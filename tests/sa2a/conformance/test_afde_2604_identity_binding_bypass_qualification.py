@@ -94,7 +94,10 @@ def _boundary(tmp_path: Path, name: str, broker: AuthorityBroker):
     actuator = RealDiskJournalActuator(journal)
     verifier = IndependentDiskJournalVerifier(journal)
     boundary = ConsequenceBoundary(
-        authority_broker=broker, actuator=actuator, verifier=verifier, receipt_store=store
+        authority_broker=broker,
+        actuator=actuator,
+        verifier=verifier,
+        receipt_store=store,
     )
     return boundary, actuator, store, journal
 
@@ -111,7 +114,9 @@ _UNRELATED_COMENTION_TTL = """
 """
 
 
-def test_mutation_d1_unrelated_comention_satisfies_content_binding(tmp_path: Path) -> None:
+def test_mutation_d1_unrelated_comention_satisfies_content_binding(
+    tmp_path: Path,
+) -> None:
     """A real ADMITTED AdmissionResult whose graph mentions the sensitive action_iri and
     target_resource in two UNRELATED triples (no predicate ever connects them) must not
     satisfy `_admission_covers_action_target` -- the admitted content never actually
@@ -125,7 +130,10 @@ def test_mutation_d1_unrelated_comention_satisfies_content_binding(tmp_path: Pat
     pipeline = AdmissionPipeline()
     admitted = pipeline.admit(
         _UNRELATED_COMENTION_TTL,
-        provenance_record={"issuer": "urn:issuer:any", "timestamp": "2026-09-16T00:00:00Z"},
+        provenance_record={
+            "issuer": "urn:issuer:any",
+            "timestamp": "2026-09-16T00:00:00Z",
+        },
     )
     assert admitted.standing == Standing.ADMITTED
 
@@ -170,8 +178,12 @@ def test_mutation_d1_unrelated_comention_satisfies_content_binding(tmp_path: Pat
     )
     assert result.state == TerminalReceiptState.REFUSED
     assert result.refusal_code == REFUSED_ADMISSION_CONTENT_NOT_BOUND
-    assert actuator.call_count == 0, "Zero real actuation for an unrelated-co-mention admission."
-    assert journal.exists() is False, "Zero disk mutation for an unrelated-co-mention admission."
+    assert actuator.call_count == 0, (
+        "Zero real actuation for an unrelated-co-mention admission."
+    )
+    assert journal.exists() is False, (
+        "Zero disk mutation for an unrelated-co-mention admission."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -187,7 +199,9 @@ _CROSS_PAIR_TTL = """
 """
 
 
-def test_mutation_d2_cross_pair_substitution_satisfies_content_binding(tmp_path: Path) -> None:
+def test_mutation_d2_cross_pair_substitution_satisfies_content_binding(
+    tmp_path: Path,
+) -> None:
     """A single admitted candidate legitimately, explicitly binds action1->target1 AND
     action2->target2 (each via its own real `afl:targetResource` triple). Executing the
     CROSS combination action1+target2 -- a pairing the admitted graph never asserts
@@ -202,7 +216,10 @@ def test_mutation_d2_cross_pair_substitution_satisfies_content_binding(tmp_path:
     pipeline = AdmissionPipeline()
     admitted = pipeline.admit(
         _CROSS_PAIR_TTL,
-        provenance_record={"issuer": "urn:issuer:any", "timestamp": "2026-09-16T00:00:00Z"},
+        provenance_record={
+            "issuer": "urn:issuer:any",
+            "timestamp": "2026-09-16T00:00:00Z",
+        },
     )
     assert admitted.standing == Standing.ADMITTED
 
@@ -249,5 +266,9 @@ def test_mutation_d2_cross_pair_substitution_satisfies_content_binding(tmp_path:
     )
     assert result.state == TerminalReceiptState.REFUSED
     assert result.refusal_code == REFUSED_ADMISSION_CONTENT_NOT_BOUND
-    assert actuator.call_count == 0, "Zero real actuation for a cross-pair-substituted admission."
-    assert journal.exists() is False, "Zero disk mutation for a cross-pair-substituted admission."
+    assert actuator.call_count == 0, (
+        "Zero real actuation for a cross-pair-substituted admission."
+    )
+    assert journal.exists() is False, (
+        "Zero disk mutation for a cross-pair-substituted admission."
+    )

@@ -107,15 +107,31 @@ from typing import Any, Callable, Mapping, Protocol
 
 import dspy
 
-from autofde_lab.fabric.gymact_capability_gate import DEFAULT_MANIFEST_PATH, CapabilityGate
-from autofde_lab.powl.algebra import ChoiceGraph, ChoiceGraphEdge, End, Guard, NodeId, Silent, Start
+from autofde_lab.fabric.gymact_capability_gate import (
+    DEFAULT_MANIFEST_PATH,
+    CapabilityGate,
+)
 from autofde_lab.powl.algebra import Atom as PowlAtom
+from autofde_lab.powl.algebra import (
+    ChoiceGraph,
+    ChoiceGraphEdge,
+    End,
+    Guard,
+    NodeId,
+    Silent,
+    Start,
+)
 from autofde_lab.powl.guard_executor import execute as execute_powl
 from autofde_lab.powl.ocel_bridge import OcelExecutionRecorder, execute_with_ocel
 from autofde_lab.reasoning.breed_ensemble import BreedEnsembleMember, run_breed_ensemble
-from autofde_lab.reasoning.hearsay_cross_check import _bullet_lines, hypotheses_to_breed_input
+from autofde_lab.reasoning.hearsay_cross_check import (
+    _bullet_lines,
+    hypotheses_to_breed_input,
+)
 from autofde_lab.reasoning.k8s_signatures import DiagnoseKubernetesFault
-from autofde_lab.reasoning.sre_troubleshooting_pipeline import SreTroubleshootingPipeline
+from autofde_lab.reasoning.sre_troubleshooting_pipeline import (
+    SreTroubleshootingPipeline,
+)
 from autofde_lab_planner.engine import CompositePlannerEngine
 
 __all__ = [
@@ -301,10 +317,18 @@ class DiagnoseClusterFault(dspy.Signature):
     Kept only as a stable import path for callers that referenced this
     exact name; ``GymActReActDiagnoser`` no longer uses it."""
 
-    problem_id: str = dspy.InputField(desc="the sregym benchmark problem id under diagnosis")
-    namespace: str = dspy.InputField(desc="the real Kubernetes namespace the target app deploys into")
-    diagnosis: str = dspy.OutputField(desc="free-text root-cause diagnosis grounded in real tool output")
-    confidence: float = dspy.OutputField(desc="0.0-1.0, must reflect actual evidentiary support from tool calls")
+    problem_id: str = dspy.InputField(
+        desc="the sregym benchmark problem id under diagnosis"
+    )
+    namespace: str = dspy.InputField(
+        desc="the real Kubernetes namespace the target app deploys into"
+    )
+    diagnosis: str = dspy.OutputField(
+        desc="free-text root-cause diagnosis grounded in real tool output"
+    )
+    confidence: float = dspy.OutputField(
+        desc="0.0-1.0, must reflect actual evidentiary support from tool calls"
+    )
 
 
 def build_gated_react_tools(
@@ -395,7 +419,9 @@ def build_gated_react_tools(
             # silently discarding real data into an empty result.
             return result if isinstance(result, (dict, list)) else None
         if raw.strip().startswith("Command Rejected:"):
-            raise RuntimeError(f"real kubectl command rejected by sregym: {raw.strip()}")
+            raise RuntimeError(
+                f"real kubectl command rejected by sregym: {raw.strip()}"
+            )
         try:
             return json.loads(raw)
         except (json.JSONDecodeError, TypeError):
@@ -449,9 +475,13 @@ def build_gated_react_tools(
         # namespace="kube-system")` call, which reads from the very same
         # list the flagd detector does, not a second, separate field.
         app_configmaps = _kubectl_get_json("configmaps", resource_namespace=namespace)
-        kube_system_configmaps = _kubectl_get_json("configmaps", resource_namespace="kube-system")
+        kube_system_configmaps = _kubectl_get_json(
+            "configmaps", resource_namespace="kube-system"
+        )
         app_cm_items = (
-            app_configmaps.get("items", []) if isinstance(app_configmaps, dict) else (app_configmaps or [])
+            app_configmaps.get("items", [])
+            if isinstance(app_configmaps, dict)
+            else (app_configmaps or [])
         )
         kube_cm_items = (
             kube_system_configmaps.get("items", [])
@@ -463,7 +493,8 @@ def build_gated_react_tools(
             (
                 cm
                 for cm in app_cm_items
-                if isinstance(cm, dict) and (cm.get("metadata") or {}).get("name") == "flagd-config"
+                if isinstance(cm, dict)
+                and (cm.get("metadata") or {}).get("name") == "flagd-config"
             ),
             None,
         )
@@ -471,7 +502,10 @@ def build_gated_react_tools(
         engine = CompositePlannerEngine(namespace=namespace)
         diagnosis = engine.run_diagnosis(**fetched)
         mitigation = engine.run_mitigation(diagnosis)
-        return json.dumps({"diagnosis": asdict(diagnosis), "mitigation": asdict(mitigation)}, default=str)
+        return json.dumps(
+            {"diagnosis": asdict(diagnosis), "mitigation": asdict(mitigation)},
+            default=str,
+        )
 
     return [run_kubectl, observe_cluster_state, run_composite_diagnosis]
 
@@ -624,7 +658,9 @@ def _count_hypothesis_labels(hypothesis_portfolio: str) -> dict[str, int]:
     counts = {"supported": 0, "refuted": 0, "unknown": 0}
     for raw_line in hypothesis_portfolio.splitlines():
         stripped = raw_line.strip().lstrip("*").strip()
-        is_bullet = raw_line.strip().startswith(("-", "*")) or (stripped[:1].isdigit() and "." in stripped[:4])
+        is_bullet = raw_line.strip().startswith(("-", "*")) or (
+            stripped[:1].isdigit() and "." in stripped[:4]
+        )
         if not is_bullet:
             continue
         lowered = stripped.lower()
@@ -639,7 +675,9 @@ def _count_hypothesis_labels(hypothesis_portfolio: str) -> dict[str, int]:
     return counts
 
 
-def _hypotheses_to_abductive_ibe_input(*, admitted_facts: str, hypothesis_portfolio: str) -> dict[str, Any]:
+def _hypotheses_to_abductive_ibe_input(
+    *, admitted_facts: str, hypothesis_portfolio: str
+) -> dict[str, Any]:
     """Real, deterministic, LLM-free translation into wasm4pm's real
     `abductive_ibe` (Thagard ECHO) wire format -- reuses
     `hearsay_cross_check._bullet_lines` directly (the same real bullet-line
@@ -663,7 +701,10 @@ def _hypotheses_to_abductive_ibe_input(*, admitted_facts: str, hypothesis_portfo
     fact_lines = _bullet_lines(admitted_facts) if has_facts else []
     hyp_lines = _bullet_lines(hypothesis_portfolio) if has_hypotheses else []
 
-    candidates = [{"id": f"hypothesis-{i}", "score": 0.0, "eliminated": False} for i in range(len(hyp_lines))]
+    candidates = [
+        {"id": f"hypothesis-{i}", "score": 0.0, "eliminated": False}
+        for i in range(len(hyp_lines))
+    ]
     facts = [{"key": "evidence", "value": line} for line in fact_lines]
 
     rules: list[dict[str, Any]] = []
@@ -673,7 +714,12 @@ def _hypotheses_to_abductive_ibe_input(*, admitted_facts: str, hypothesis_portfo
             fact_words = {w for w in fact.lower().split() if len(w) > 3}
             if hyp_words & fact_words:
                 rules.append(
-                    {"id": f"rule-{i}-{j}", "premise": [f"hypothesis-{i}"], "conclusion": fact, "certainty": 1.0}
+                    {
+                        "id": f"rule-{i}-{j}",
+                        "premise": [f"hypothesis-{i}"],
+                        "conclusion": fact,
+                        "certainty": 1.0,
+                    }
                 )
 
     return {"candidates": candidates, "facts": facts, "rules": rules}
@@ -775,20 +821,32 @@ class SreTroubleshootingDecisionBackend:
                     ChoiceGraphEdge(NodeId(0), NodeId(2)),
                     ChoiceGraphEdge(NodeId(2), NodeId(3)),
                     ChoiceGraphEdge(NodeId(3), NodeId(4)),
-                    ChoiceGraphEdge(NodeId(4), NodeId(5), guard=Guard("causal_closure")),
-                    ChoiceGraphEdge(NodeId(4), NodeId(6), guard=Guard("overdetermined")),
-                    ChoiceGraphEdge(NodeId(4), NodeId(6), guard=Guard("underdetermined")),
+                    ChoiceGraphEdge(
+                        NodeId(4), NodeId(5), guard=Guard("causal_closure")
+                    ),
+                    ChoiceGraphEdge(
+                        NodeId(4), NodeId(6), guard=Guard("overdetermined")
+                    ),
+                    ChoiceGraphEdge(
+                        NodeId(4), NodeId(6), guard=Guard("underdetermined")
+                    ),
                     ChoiceGraphEdge(NodeId(4), NodeId(7), guard=Guard("exhausted")),
                     ChoiceGraphEdge(NodeId(5), NodeId(1)),
-                    ChoiceGraphEdge(NodeId(6), NodeId(2)),  # loop back to normalize, not Start
-                    ChoiceGraphEdge(NodeId(7), NodeId(3)),  # loop back to hypothesize, not Start
+                    ChoiceGraphEdge(
+                        NodeId(6), NodeId(2)
+                    ),  # loop back to normalize, not Start
+                    ChoiceGraphEdge(
+                        NodeId(7), NodeId(3)
+                    ),  # loop back to hypothesize, not Start
                 ]
             ),
             start=0,
             end=1,
         )
 
-    def _wasm4pm_ensemble_confirms_closure(self, state: dict[str, Any], trajectory: dict[str, Any]) -> bool:
+    def _wasm4pm_ensemble_confirms_closure(
+        self, state: dict[str, Any], trajectory: dict[str, Any]
+    ) -> bool:
         """Real, additive cross-check on the ``causal_closure`` guard, via
         a real, multi-breed ``~/wasm4pm`` ensemble
         (``breed_ensemble.run_breed_ensemble``: real concurrent Hearsay-II +
@@ -816,14 +874,20 @@ class SreTroubleshootingDecisionBackend:
         trajectory -- never silently indistinguishable from agreement.
         """
         hearsay_input = hypotheses_to_breed_input(
-            admitted_facts=state["admitted_facts"], hypothesis_portfolio=state["hypothesis_portfolio"]
+            admitted_facts=state["admitted_facts"],
+            hypothesis_portfolio=state["hypothesis_portfolio"],
         )
         ibe_input = _hypotheses_to_abductive_ibe_input(
-            admitted_facts=state["admitted_facts"], hypothesis_portfolio=state["hypothesis_portfolio"]
+            admitted_facts=state["admitted_facts"],
+            hypothesis_portfolio=state["hypothesis_portfolio"],
         )
         members = [
-            BreedEnsembleMember(breed="hearsay", build_input=lambda hi=hearsay_input: hi),
-            BreedEnsembleMember(breed="abductive_ibe", build_input=lambda ii=ibe_input: ii),
+            BreedEnsembleMember(
+                breed="hearsay", build_input=lambda hi=hearsay_input: hi
+            ),
+            BreedEnsembleMember(
+                breed="abductive_ibe", build_input=lambda ii=ibe_input: ii
+            ),
         ]
         result = run_breed_ensemble(members, resolution_threshold=0.5, timeout_s=15.0)
 
@@ -835,7 +899,10 @@ class SreTroubleshootingDecisionBackend:
             # already satisfied, so closure is not withheld on the strength
             # of an environment gap.
             trajectory["stages"].append(
-                {"stage": "wasm4pm_ensemble_cross_check", "outcome": Wasm4pmEnsembleCrossCheckOutcome.UNAVAILABLE}
+                {
+                    "stage": "wasm4pm_ensemble_cross_check",
+                    "outcome": Wasm4pmEnsembleCrossCheckOutcome.UNAVAILABLE,
+                }
             )
             return True
 
@@ -875,7 +942,10 @@ class SreTroubleshootingDecisionBackend:
         recorder: OcelExecutionRecorder | None = None,
     ) -> DecisionOutcome:
         capability_catalog = _capability_catalog_text(tools)
-        observe_tool = next((t for t in tools if getattr(t, "__name__", "") == "observe_cluster_state"), None)
+        observe_tool = next(
+            (t for t in tools if getattr(t, "__name__", "") == "observe_cluster_state"),
+            None,
+        )
 
         trajectory: dict[str, Any] = {"stages": []}
 
@@ -884,7 +954,9 @@ class SreTroubleshootingDecisionBackend:
             system_context=f"namespace={namespace}; {observed_resource_state}",
             capability_catalog=capability_catalog,
         )
-        trajectory["stages"].append({"stage": "orient", "system_boundary": orient_pred.system_boundary})
+        trajectory["stages"].append(
+            {"stage": "orient", "system_boundary": orient_pred.system_boundary}
+        )
 
         state: dict[str, Any] = {
             "raw_evidence": observed_resource_state,
@@ -893,7 +965,9 @@ class SreTroubleshootingDecisionBackend:
             "commit_pred": None,
         }
 
-        def guard_evaluator(predicate_name: str, _predicate_args: Mapping[str, Any]) -> bool:
+        def guard_evaluator(
+            predicate_name: str, _predicate_args: Mapping[str, Any]
+        ) -> bool:
             counts = _count_hypothesis_labels(state["hypothesis_portfolio"])
             supported, unknown = counts["supported"], counts["unknown"]
             # causal_closure does NOT require unknown == 0. A real, honest
@@ -923,26 +997,36 @@ class SreTroubleshootingDecisionBackend:
         def atom_invoker(atom: PowlAtom) -> Any:
             if atom.label == "normalize":
                 pred = self._pipeline.normalize(
-                    raw_evidence=state["raw_evidence"], prior_facts=state["admitted_facts"]
+                    raw_evidence=state["raw_evidence"],
+                    prior_facts=state["admitted_facts"],
                 )
                 state["admitted_facts"] = pred.admitted_facts
-                trajectory["stages"].append({"stage": "normalize", "admitted_facts": pred.admitted_facts})
+                trajectory["stages"].append(
+                    {"stage": "normalize", "admitted_facts": pred.admitted_facts}
+                )
                 return pred
             if atom.label == "hypothesize":
                 pred = self._pipeline.hypothesize(
-                    admitted_facts=state["admitted_facts"], prior_hypotheses=state["hypothesis_portfolio"]
+                    admitted_facts=state["admitted_facts"],
+                    prior_hypotheses=state["hypothesis_portfolio"],
                 )
                 state["hypothesis_portfolio"] = pred.hypothesis_portfolio
                 trajectory["stages"].append(
-                    {"stage": "hypothesize", "hypothesis_portfolio": pred.hypothesis_portfolio}
+                    {
+                        "stage": "hypothesize",
+                        "hypothesis_portfolio": pred.hypothesis_portfolio,
+                    }
                 )
                 return pred
             if atom.label == "commit_diagnosis":
                 pred = self._pipeline.commit_diagnosis(
-                    admitted_facts=state["admitted_facts"], hypothesis_portfolio=state["hypothesis_portfolio"]
+                    admitted_facts=state["admitted_facts"],
+                    hypothesis_portfolio=state["hypothesis_portfolio"],
                 )
                 state["commit_pred"] = pred
-                trajectory["stages"].append({"stage": "commit_diagnosis", "root_cause": pred.root_cause})
+                trajectory["stages"].append(
+                    {"stage": "commit_diagnosis", "root_cause": pred.root_cause}
+                )
                 return pred
             if atom.label == "construct_discriminator":
                 probe_pred = self._pipeline.select_probe(
@@ -955,13 +1039,19 @@ class SreTroubleshootingDecisionBackend:
                     state["raw_evidence"] = str(observe_tool())
                     executed = True
                 trajectory["stages"].append(
-                    {"stage": "probe", "probe_intent": probe_pred.probe_intent, "executed": executed}
+                    {
+                        "stage": "probe",
+                        "probe_intent": probe_pred.probe_intent,
+                        "executed": executed,
+                    }
                 )
                 return probe_pred
             if atom.label == "regenerate_hypotheses":
                 trajectory["stages"].append({"stage": "regenerate_hypotheses"})
                 return None
-            raise AssertionError(f"unreachable: unknown atom label {atom.label!r}")  # pragma: no cover
+            raise AssertionError(
+                f"unreachable: unknown atom label {atom.label!r}"
+            )  # pragma: no cover
 
         graph = self._build_investigation_graph()
         # The straight-line happy path alone (Start->normalize->hypothesize
@@ -992,7 +1082,9 @@ class SreTroubleshootingDecisionBackend:
             )
 
         commit_pred = state["commit_pred"]
-        assert commit_pred is not None, "unreachable: End only reached via commit_diagnosis"
+        assert commit_pred is not None, (
+            "unreachable: End only reached via commit_diagnosis"
+        )
 
         try:
             confidence_pct = float(getattr(commit_pred, "confidence", 0))
@@ -1006,7 +1098,10 @@ class SreTroubleshootingDecisionBackend:
             capability_catalog=capability_catalog,
         )
         trajectory["stages"].append(
-            {"stage": "select_mitigation", "safe_to_actuate": mitigation_pred.safe_to_actuate}
+            {
+                "stage": "select_mitigation",
+                "safe_to_actuate": mitigation_pred.safe_to_actuate,
+            }
         )
 
         return DecisionOutcome(
@@ -1043,9 +1138,13 @@ class GymActReActDiagnoser(dspy.Module):
         decision_backend: DiagnosisDecisionBackend | None = None,
     ) -> None:
         super().__init__()
-        self._tools = build_gated_react_tools(environment, gate, capabilities, namespace=namespace)
+        self._tools = build_gated_react_tools(
+            environment, gate, capabilities, namespace=namespace
+        )
         self._max_iters = max_iters
-        self._decision_backend: DiagnosisDecisionBackend = decision_backend or DspyReActDecisionBackend()
+        self._decision_backend: DiagnosisDecisionBackend = (
+            decision_backend or DspyReActDecisionBackend()
+        )
 
     def forward(self, problem_id: str, namespace: str) -> DecisionOutcome:
         symptom_description = (
@@ -1206,7 +1305,9 @@ async def run_dspy_diagnosis(
 
         mitigation_response: Any | None = None
         if attempt_mitigation:
-            from autofde_lab.reasoning.gymact_mitigation_actuation import execute_and_submit_mitigation
+            from autofde_lab.reasoning.gymact_mitigation_actuation import (
+                execute_and_submit_mitigation,
+            )
 
             # A fresh, real observe_cluster_state read -- the diagnosis
             # ReAct loop's own observations live inside its internal
@@ -1227,11 +1328,17 @@ async def run_dspy_diagnosis(
                 capabilities,
                 root_cause=diagnosis_text,
                 relevant_resource_spec=str(observed_state),
-                capability_catalog="\n".join(f"- {cap.binding}" for cap in capabilities),
+                capability_catalog="\n".join(
+                    f"- {cap.binding}" for cap in capabilities
+                ),
                 namespace=namespace,
             )
             mitigation_response = mitigation_result.submit_mitigation_response
-            trajectory = dict(trajectory) if isinstance(trajectory, dict) else {"trajectory": trajectory}
+            trajectory = (
+                dict(trajectory)
+                if isinstance(trajectory, dict)
+                else {"trajectory": trajectory}
+            )
             trajectory["mitigation_execution"] = {
                 "attempted": mitigation_result.attempted,
                 "reason": mitigation_result.reason,

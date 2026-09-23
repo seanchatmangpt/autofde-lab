@@ -22,8 +22,14 @@ import json
 
 import pytest
 
-from autofde_lab.ocel.wasm4pm_bridge import Wasm4pmUnavailable, detect_drift, resolve_wpm_binary
-from autofde_lab.reasoning.drift_architecture_change_trigger import architecture_change_trigger_from_drift
+from autofde_lab.ocel.wasm4pm_bridge import (
+    Wasm4pmUnavailable,
+    detect_drift,
+    resolve_wpm_binary,
+)
+from autofde_lab.reasoning.drift_architecture_change_trigger import (
+    architecture_change_trigger_from_drift,
+)
 
 
 def _require_wpm() -> str:
@@ -37,7 +43,11 @@ def _write_event_log_json(path, traces: list[list[tuple[str, int]]]) -> None:
     """Same real fixture shape as `tests/ocel/test_wasm4pm_bridge.py::_write_event_log_json`."""
 
     def _string_attr(key: str, value: str) -> dict:
-        return {"key": key, "value": {"type": "String", "content": value}, "own_attributes": None}
+        return {
+            "key": key,
+            "value": {"type": "String", "content": value},
+            "own_attributes": None,
+        }
 
     doc = {
         "attributes": [],
@@ -48,7 +58,11 @@ def _write_event_log_json(path, traces: list[list[tuple[str, int]]]) -> None:
                     {
                         "attributes": [
                             _string_attr("concept:name", name),
-                            {"key": "time:timestamp", "value": {"type": "Int", "content": ts}, "own_attributes": None},
+                            {
+                                "key": "time:timestamp",
+                                "value": {"type": "Int", "content": ts},
+                                "own_attributes": None,
+                            },
                         ]
                     }
                     for name, ts in trace
@@ -97,7 +111,9 @@ def test_real_vocabulary_shift_drift_produces_a_real_firing_trigger(tmp_path) ->
         tuple(points), affected_requirement_refs=("req-latency",)
     )
 
-    assert trigger.confidence == pytest.approx(max(points[0].jaccard_distance, points[0].tv_distance))
+    assert trigger.confidence == pytest.approx(
+        max(points[0].jaccard_distance, points[0].tv_distance)
+    )
     assert trigger.confidence == pytest.approx(1.0)
     assert trigger.fires is True
     assert len(trigger.evidence_refs) == 1

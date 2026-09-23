@@ -1,24 +1,24 @@
 """Unit tests for SA2A Foundation & Algebra (RFC-SA2A-001 v26.9.16)."""
 
 import hashlib
+
 import pytest
 from pydantic import ValidationError
 
 from autofde_lab.sa2a.algebra import (
-    Standing,
     RefusalCause,
+    Standing,
     can_transition,
-    validate_transition,
-    validate_refusal,
-    is_terminal,
     is_admissible,
+    is_terminal,
+    validate_refusal,
+    validate_transition,
 )
 from autofde_lab.sa2a.envelope import (
+    AuthorityRequirement,
+    ProvenanceRecord,
     SemanticEnvelope,
     SemanticGraph,
-    ProvenanceRecord,
-    AuthorityRequirement,
-    EnvelopeBounds,
 )
 from autofde_lab.sa2a.root_manifest import RootManifest
 
@@ -157,7 +157,9 @@ def test_semantic_envelope_non_self_assertion_of_standing():
     )
 
     # Cannot self-assert EXECUTED without receipts
-    with pytest.raises(ValidationError, match="cannot be self-asserted without receipts"):
+    with pytest.raises(
+        ValidationError, match="cannot be self-asserted without receipts"
+    ):
         SemanticEnvelope(
             kind="ACTION",
             envelopeId="env-executed-without-receipt",
@@ -177,7 +179,9 @@ def test_semantic_envelope_non_self_assertion_of_standing():
         )
 
     # Cannot assert AUTHORIZED without authorizedBy in authorityRequirement
-    with pytest.raises(ValidationError, match="requires authorizedBy in authorityRequirement"):
+    with pytest.raises(
+        ValidationError, match="requires authorizedBy in authorityRequirement"
+    ):
         SemanticEnvelope(
             kind="ACTION",
             envelopeId="env-authorized-no-broker",

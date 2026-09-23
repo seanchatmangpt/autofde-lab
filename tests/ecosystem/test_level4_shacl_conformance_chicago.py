@@ -63,12 +63,20 @@ def _conforming_log() -> OcelLog:
         OcelObject(ENV, "Environment"),
         OcelObject(CAP, "Capability"),
         OcelObject(PROBE, "Probe"),
-        OcelObject(COMMITMENT, "POWLCommitment", (OcelAttribute("plan_digest", _s(RECEIPT_DIGEST)),)),
+        OcelObject(
+            COMMITMENT,
+            "POWLCommitment",
+            (OcelAttribute("plan_digest", _s(RECEIPT_DIGEST)),),
+        ),
         OcelObject(ENVELOPE, "AuthorityEnvelope"),
         OcelObject(ACTUATION, "Actuation"),
         OcelObject(OBSERVATION, "PostconditionObservation"),
-        OcelObject(RECEIPT, "Receipt", (OcelAttribute("receipt_digest", _s(RECEIPT_DIGEST)),)),
-        OcelObject(REPLAY, "Replay", (OcelAttribute("head_digest", _s(RECEIPT_DIGEST)),)),
+        OcelObject(
+            RECEIPT, "Receipt", (OcelAttribute("receipt_digest", _s(RECEIPT_DIGEST)),)
+        ),
+        OcelObject(
+            REPLAY, "Replay", (OcelAttribute("head_digest", _s(RECEIPT_DIGEST)),)
+        ),
     ]
     o2o = [
         ObjectObjectLink(ACTUATION, COMMITMENT, "actuates_commitment"),
@@ -174,7 +182,9 @@ def test_replay_referencing_a_nonexistent_receipt_is_refused() -> None:
         log.events,
         log.event_object_links,
         tuple(
-            ObjectObjectLink(REPLAY, "urn:level4:receipt:does-not-exist", "replays_receipt")
+            ObjectObjectLink(
+                REPLAY, "urn:level4:receipt:does-not-exist", "replays_receipt"
+            )
             if link.qualifier == "replays_receipt"
             else link
             for link in log.object_object_links
@@ -184,7 +194,9 @@ def test_replay_referencing_a_nonexistent_receipt_is_refused() -> None:
     assert result.status == "VIOLATED"
     components = _components(result)
     assert "ClassConstraintComponent" in components
-    assert any(v.value_node == "urn:level4:receipt:does-not-exist" for v in result.violations)
+    assert any(
+        v.value_node == "urn:level4:receipt:does-not-exist" for v in result.violations
+    )
     assert "exactly one existing Receipt" in _messages(result)
     # The digest-identity SPARQL join is *silent* here, and that is the
     # correct semantics, not a gap being papered over: a nonexistent receipt
@@ -241,7 +253,10 @@ def test_receipt_without_a_postcondition_observation_is_refused() -> None:
         tuple(
             link
             for link in log.object_object_links
-            if not (link.source_id == OBSERVATION and link.qualifier == "evidenced_by_receipt")
+            if not (
+                link.source_id == OBSERVATION
+                and link.qualifier == "evidenced_by_receipt"
+            )
         ),
     )
     result = _validate(stripped)

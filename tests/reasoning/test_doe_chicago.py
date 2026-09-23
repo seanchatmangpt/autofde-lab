@@ -45,7 +45,12 @@ def test_generate_full_factorial_design_emits_exactly_four_real_points() -> None
         assert authority_level.factor == DOEFactor.AUTHORITY_NEEDS
 
     combos = {(p.levels[0].level_id, p.levels[1].level_id) for p in design}
-    assert combos == {("LOW", "LOW"), ("LOW", "HIGH"), ("HIGH", "LOW"), ("HIGH", "HIGH")}
+    assert combos == {
+        ("LOW", "LOW"),
+        ("LOW", "HIGH"),
+        ("HIGH", "LOW"),
+        ("HIGH", "HIGH"),
+    }
 
     # run_id is a real, deterministic digest -- distinct per combination
     assert len({p.run_id for p in design}) == 4

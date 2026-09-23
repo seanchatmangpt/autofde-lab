@@ -9,8 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Sequence
-
+from typing import Any, Dict, Optional, Sequence
 
 # Standard ODRL 2.2 Namespace IRIs
 ODRL_NS = "http://www.w3.org/ns/odrl/2/"
@@ -18,6 +17,7 @@ ODRL_NS = "http://www.w3.org/ns/odrl/2/"
 
 class OdrlAction(str, Enum):
     """Common ODRL and Semantic A2A Action IRIs."""
+
     USE = "http://www.w3.org/ns/odrl/2/use"
     EXECUTE = "http://www.w3.org/ns/odrl/2/execute"
     TRANSFER = "http://www.w3.org/ns/odrl/2/transfer"
@@ -31,6 +31,7 @@ class OdrlAction(str, Enum):
 
 class OdrlOperator(str, Enum):
     """ODRL Constraint Operators."""
+
     EQ = "http://www.w3.org/ns/odrl/2/eq"
     NEQ = "http://www.w3.org/ns/odrl/2/neq"
     LT = "http://www.w3.org/ns/odrl/2/lt"
@@ -44,6 +45,7 @@ class OdrlOperator(str, Enum):
 @dataclass(frozen=True)
 class Party:
     """ODRL Party representing an assigner or assignee."""
+
     uid: str
     role: str = "http://www.w3.org/ns/odrl/2/assignee"  # assignee or assigner
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -52,6 +54,7 @@ class Party:
 @dataclass(frozen=True)
 class Asset:
     """ODRL Asset representing the target resource of a policy."""
+
     uid: str
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -59,6 +62,7 @@ class Asset:
 @dataclass(frozen=True)
 class Constraint:
     """ODRL Constraint restricting a rule."""
+
     left_operand: str
     operator: OdrlOperator | str
     right_operand: Any
@@ -74,7 +78,11 @@ class Constraint:
         if left_val is None:
             return False
 
-        op = self.operator.value if isinstance(self.operator, OdrlOperator) else self.operator
+        op = (
+            self.operator.value
+            if isinstance(self.operator, OdrlOperator)
+            else self.operator
+        )
 
         if op in (OdrlOperator.EQ, OdrlOperator.EQ.value, "eq", "=="):
             return left_val == self.right_operand
@@ -98,6 +106,7 @@ class Constraint:
 @dataclass(frozen=True)
 class Duty:
     """ODRL Duty representing an obligation that must be fulfilled."""
+
     uid: str
     action: OdrlAction | str
     target: Optional[Asset | str] = None
@@ -109,6 +118,7 @@ class Duty:
 @dataclass(frozen=True)
 class Permission:
     """ODRL Permission representing an action an assignee is permitted to perform on an asset."""
+
     uid: str
     action: OdrlAction | str
     target: Asset | str
@@ -121,6 +131,7 @@ class Permission:
 @dataclass(frozen=True)
 class Prohibition:
     """ODRL Prohibition representing an action an assignee is prohibited from performing."""
+
     uid: str
     action: OdrlAction | str
     target: Asset | str
@@ -132,6 +143,7 @@ class Prohibition:
 @dataclass(frozen=True)
 class Policy:
     """ODRL Policy container holding Permissions, Prohibitions, and Duties."""
+
     uid: str
     profile: str = "http://www.w3.org/ns/odrl/2/core"
     permissions: Sequence[Permission] = field(default_factory=tuple)

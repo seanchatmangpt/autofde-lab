@@ -109,6 +109,7 @@ def unsupported_requirements(domain_path: str, problem_path: str) -> List[str]:
         if getattr(requirements, accessor)()
     ]
 
+
 USAGE = f"""\
 {VERSION_WITNESS_PREFIX} {PROG} <domain.pddl> <problem.pddl> <plan-file>
 
@@ -118,9 +119,7 @@ Writes a VAL-consumable plan file; exits 0 plan found, 1 no plan, 2 refused,
 """
 
 
-def _write_plan(
-    plan_path: str, actions: Sequence[object], total_cost: float
-) -> None:
+def _write_plan(plan_path: str, actions: Sequence[object], total_cost: float) -> None:
     """Serialize a plan in the standard VAL-consumable format.
 
     One ground action per line as ``(name arg1 arg2)`` followed by a cost
@@ -277,9 +276,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     domain_path, problem_path, plan_path = argv[:3]
     powl_path = argv[3] if len(argv) == 4 else None
-    return solve_to_plan_file(
-        domain_path, problem_path, plan_path, powl_path=powl_path
-    )
+    return solve_to_plan_file(domain_path, problem_path, plan_path, powl_path=powl_path)
 
 
 if __name__ == "__main__":

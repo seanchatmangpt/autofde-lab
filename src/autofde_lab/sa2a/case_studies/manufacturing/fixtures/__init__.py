@@ -7,4 +7,3 @@ from -- every object/event whose timestamp_ns falls in round 14 (14_000_000
 migration time. Committed because it is small (a few KB); the full
 200-round per-seed logs are not committed -- see MIGRATION_PLAN.md Section 3.
 """
-

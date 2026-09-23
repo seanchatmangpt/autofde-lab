@@ -107,16 +107,22 @@ def schedule_cross_play_for_world(
     factory = domain_factories.get(world_id)
     if factory is None:
         return CrossPlayScheduleOutcome(
-            matches=(), standing="UNSUPPORTED", reason=f"UNSUPPORTED:NO_DOMAIN_FOR_WORLD:{world_id}"
+            matches=(),
+            standing="UNSUPPORTED",
+            reason=f"UNSUPPORTED:NO_DOMAIN_FOR_WORLD:{world_id}",
         )
 
     domain = factory()
     left_results = league.population_compatibility(domain, left_role_id)
     right_results = league.population_compatibility(domain, right_role_id)
 
-    if not any(r.compatible for r in left_results) or not any(r.compatible for r in right_results):
+    if not any(r.compatible for r in left_results) or not any(
+        r.compatible for r in right_results
+    ):
         return CrossPlayScheduleOutcome(
-            matches=(), standing="UNSUPPORTED", reason=f"UNSUPPORTED:NO_COMPATIBLE_PLANNERS:{world_id}"
+            matches=(),
+            standing="UNSUPPORTED",
+            reason=f"UNSUPPORTED:NO_COMPATIBLE_PLANNERS:{world_id}",
         )
 
     matches = PlannerLeague.cover_cross_play(

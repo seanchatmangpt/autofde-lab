@@ -137,8 +137,13 @@ def _astar_optimal_steps() -> list[PlanStepOutcome]:
         solver.solve()
         domain = _domain_factory()
         observations, actions, values = rollout(
-            domain, solver, from_memory=START, max_steps=20, render=False,
-            verbose=False, return_episodes=True,
+            domain,
+            solver,
+            from_memory=START,
+            max_steps=20,
+            render=False,
+            verbose=False,
+            return_episodes=True,
         )[0]
     return _steps_from_episode(observations, actions, values)
 
@@ -150,7 +155,13 @@ def _naive_worse_steps() -> list[PlanStepOutcome]:
     fabricated numbers."""
     domain = _domain_factory()
     domain.reset()
-    action_sequence = [Action.right, Action.down, Action.down, Action.right, Action.right]
+    action_sequence = [
+        Action.right,
+        Action.down,
+        Action.down,
+        Action.right,
+        Action.right,
+    ]
     observations = [START]
     values = []
     for action in action_sequence:

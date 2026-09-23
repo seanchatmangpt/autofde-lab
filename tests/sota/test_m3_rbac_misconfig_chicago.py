@@ -17,7 +17,9 @@ from __future__ import annotations
 from autofde_lab_planner.detectors.rbac_misconfig import detect_rbac_misconfigurations
 from autofde_lab_planner.engine import CompositePlannerEngine
 from autofde_lab_planner.models import RBACMisconfigFault
-from autofde_lab_planner.remediators.rbac_misconfig import decide_rbac_remediation_commands
+from autofde_lab_planner.remediators.rbac_misconfig import (
+    decide_rbac_remediation_commands,
+)
 
 
 def _base_deployment(sa_name: str = "checkout-rbac-sa") -> dict:
@@ -54,10 +56,13 @@ def _base_deployment(sa_name: str = "checkout-rbac-sa") -> dict:
 # Detector: missing_rbac_permission (the real sregym mechanism)
 # =============================================================================
 
+
 def test_detects_missing_configmaps_permission_matching_sregym_injector():
     deployments = {"items": [_base_deployment()]}
     service_accounts = {
-        "items": [{"metadata": {"name": "checkout-rbac-sa", "namespace": "hotel-reservation"}}]
+        "items": [
+            {"metadata": {"name": "checkout-rbac-sa", "namespace": "hotel-reservation"}}
+        ]
     }
     cluster_roles = {
         "items": [
@@ -118,7 +123,9 @@ def test_detects_missing_configmaps_permission_matching_sregym_injector():
 def test_no_fault_when_configmaps_permission_present():
     deployments = {"items": [_base_deployment()]}
     service_accounts = {
-        "items": [{"metadata": {"name": "checkout-rbac-sa", "namespace": "hotel-reservation"}}]
+        "items": [
+            {"metadata": {"name": "checkout-rbac-sa", "namespace": "hotel-reservation"}}
+        ]
     }
     cluster_roles = {
         "items": [
@@ -159,6 +166,7 @@ def test_no_fault_when_configmaps_permission_present():
 # Detector: missing_service_account
 # =============================================================================
 
+
 def test_detects_missing_service_account():
     deployments = {"items": [_base_deployment(sa_name="ghost-sa")]}
     faults = detect_rbac_misconfigurations(
@@ -177,9 +185,12 @@ def test_detects_missing_service_account():
 # Detector: missing_role_binding
 # =============================================================================
 
+
 def test_detects_missing_role_binding():
     deployments = {"items": [_base_deployment(sa_name="orphan-sa")]}
-    service_accounts = {"items": [{"metadata": {"name": "orphan-sa", "namespace": "hotel-reservation"}}]}
+    service_accounts = {
+        "items": [{"metadata": {"name": "orphan-sa", "namespace": "hotel-reservation"}}]
+    }
     faults = detect_rbac_misconfigurations(
         deployments_json=deployments,
         service_accounts_json=service_accounts,
@@ -196,6 +207,7 @@ def test_detects_missing_role_binding():
 # Remediator
 # =============================================================================
 
+
 def test_remediation_commands_for_missing_permission():
     fault = RBACMisconfigFault(
         deployment_name="checkout",
@@ -209,7 +221,9 @@ def test_remediation_commands_for_missing_permission():
         details="missing configmaps permission",
     )
 
-    cmds, deps = decide_rbac_remediation_commands([fault], namespace="hotel-reservation")
+    cmds, deps = decide_rbac_remediation_commands(
+        [fault], namespace="hotel-reservation"
+    )
 
     assert any("kubectl patch clusterrole checkout-rbac-role" in c for c in cmds)
     assert any('"resources": ["configmaps"]' in c for c in cmds)
@@ -225,8 +239,12 @@ def test_remediation_commands_for_missing_service_account():
         fault_kind="missing_service_account",
         details="sa missing",
     )
-    cmds, deps = decide_rbac_remediation_commands([fault], namespace="hotel-reservation")
-    assert any("kubectl create serviceaccount ghost-sa -n hotel-reservation" in c for c in cmds)
+    cmds, deps = decide_rbac_remediation_commands(
+        [fault], namespace="hotel-reservation"
+    )
+    assert any(
+        "kubectl create serviceaccount ghost-sa -n hotel-reservation" in c for c in cmds
+    )
     assert deps == ["checkout"]
 
 
@@ -238,8 +256,12 @@ def test_remediation_commands_for_missing_role_binding():
         fault_kind="missing_role_binding",
         details="no binding",
     )
-    cmds, deps = decide_rbac_remediation_commands([fault], namespace="hotel-reservation")
-    assert any("kubectl create clusterrolebinding" in c and "orphan-sa" in c for c in cmds)
+    cmds, deps = decide_rbac_remediation_commands(
+        [fault], namespace="hotel-reservation"
+    )
+    assert any(
+        "kubectl create clusterrolebinding" in c and "orphan-sa" in c for c in cmds
+    )
     assert deps == ["checkout"]
 
 
@@ -247,12 +269,15 @@ def test_remediation_commands_for_missing_role_binding():
 # Engine wiring (CompositePlannerEngine)
 # =============================================================================
 
+
 def test_engine_diagnosis_and_mitigation_include_rbac_misconfig():
     engine = CompositePlannerEngine(namespace="hotel-reservation")
 
     deployments = {"items": [_base_deployment()]}
     service_accounts = {
-        "items": [{"metadata": {"name": "checkout-rbac-sa", "namespace": "hotel-reservation"}}]
+        "items": [
+            {"metadata": {"name": "checkout-rbac-sa", "namespace": "hotel-reservation"}}
+        ]
     }
     cluster_roles = {
         "items": [
@@ -285,5 +310,7 @@ def test_engine_diagnosis_and_mitigation_include_rbac_misconfig():
     assert "checkout-rbac-sa" in diagnosis.diagnosis_text
 
     mitigation = engine.run_mitigation(diagnosis)
-    assert any("kubectl patch clusterrole checkout-rbac-role" in c for c in mitigation.commands)
+    assert any(
+        "kubectl patch clusterrole checkout-rbac-role" in c for c in mitigation.commands
+    )
     assert "checkout" in mitigation.rollout_wait_deployments

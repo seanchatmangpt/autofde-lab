@@ -81,8 +81,9 @@ KNOWN_SECRET_BASELINES: dict[str, dict[str, str]] = {
 }
 
 
-
-def synthesize_service_manifest(service_name: str, namespace: str, target_port: int = 8080) -> dict[str, Any]:
+def synthesize_service_manifest(
+    service_name: str, namespace: str, target_port: int = 8080
+) -> dict[str, Any]:
     """Synthesizes a valid Kubernetes Service manifest for missing microservice endpoints."""
     return {
         "apiVersion": "v1",
@@ -111,7 +112,9 @@ def synthesize_configmap_manifest(
     configmap_name: str, namespace: str, data: dict[str, str] | None = None
 ) -> dict[str, Any]:
     """Synthesizes a valid Kubernetes ConfigMap manifest."""
-    final_data = data or KNOWN_CONFIGMAP_BASELINES.get(configmap_name, {"default.key": "default.value"})
+    final_data = data or KNOWN_CONFIGMAP_BASELINES.get(
+        configmap_name, {"default.key": "default.value"}
+    )
     return {
         "apiVersion": "v1",
         "kind": "ConfigMap",
@@ -127,7 +130,9 @@ def synthesize_secret_manifest(
     secret_name: str, namespace: str, data: dict[str, str] | None = None
 ) -> dict[str, Any]:
     """Synthesizes a valid Kubernetes Secret manifest."""
-    final_data = data or KNOWN_SECRET_BASELINES.get(secret_name, {"password": "cGFzc3dvcmQ="})
+    final_data = data or KNOWN_SECRET_BASELINES.get(
+        secret_name, {"password": "cGFzc3dvcmQ="}
+    )
     return {
         "apiVersion": "v1",
         "kind": "Secret",
@@ -140,7 +145,9 @@ def synthesize_secret_manifest(
     }
 
 
-def get_baseline_manifest(kind: str, object_name: str, namespace: str) -> dict[str, Any]:
+def get_baseline_manifest(
+    kind: str, object_name: str, namespace: str
+) -> dict[str, Any]:
     """Returns baseline manifest dictionary for requested resource kind."""
     if kind == "Service":
         return synthesize_service_manifest(object_name, namespace)

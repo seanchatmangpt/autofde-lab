@@ -58,7 +58,9 @@ def linked_trial(tmp_path_factory) -> pathlib.Path:
         3979297810, "resource_flow", {"target": 3, "capacity": 4, "mine_rate": 1}, root
     )
     if report.outcome != "EXECUTED":
-        pytest.skip(f"UNSUPPORTED: trial did not reach actuation (outcome={report.outcome})")
+        pytest.skip(
+            f"UNSUPPORTED: trial did not reach actuation (outcome={report.outcome})"
+        )
     trial_dir = pathlib.Path(report.evidence_dir)
 
     built = build_level4_ocel(trial_dir)
@@ -143,16 +145,22 @@ def test_severed_governs_candidate_is_refused(baseline_graph: rdflib.Graph) -> N
     """planning.shacl.ttl's GovernedCandidate shape: `governsCandidate` is
     minCount 1 / maxCount 1 / sh:class PlanCandidate."""
     g = _clone(baseline_graph)
-    governed = _one(g, AFL.governedCandidate, subject=_one(g, RDF.type, obj=AFL.Level4Witness))
+    governed = _one(
+        g, AFL.governedCandidate, subject=_one(g, RDF.type, obj=AFL.Level4Witness)
+    )
     _sever(g, governed, AFL.governsCandidate)
     result = verify_witness_graph(g)
     assert result.conforms is False, result.report_text
     assert "exactly one PlanCandidate" in _messages(result)
 
 
-def test_severed_admitted_from_candidate_set_is_refused(baseline_graph: rdflib.Graph) -> None:
+def test_severed_admitted_from_candidate_set_is_refused(
+    baseline_graph: rdflib.Graph,
+) -> None:
     g = _clone(baseline_graph)
-    governed = _one(g, AFL.governedCandidate, subject=_one(g, RDF.type, obj=AFL.Level4Witness))
+    governed = _one(
+        g, AFL.governedCandidate, subject=_one(g, RDF.type, obj=AFL.Level4Witness)
+    )
     _sever(g, governed, AFL.admittedFromCandidateSet)
     result = verify_witness_graph(g)
     assert result.conforms is False, result.report_text
@@ -163,7 +171,9 @@ def test_severed_commits_to_is_refused(baseline_graph: rdflib.Graph) -> None:
     """planning.shacl.ttl's POWLCommitment shape: `commitsTo` requires a
     GovernedCandidate, not a raw PlanCandidate."""
     g = _clone(baseline_graph)
-    commitment = _one(g, AFL.commitment, subject=_one(g, RDF.type, obj=AFL.Level4Witness))
+    commitment = _one(
+        g, AFL.commitment, subject=_one(g, RDF.type, obj=AFL.Level4Witness)
+    )
     _sever(g, commitment, AFL.commitsTo)
     result = verify_witness_graph(g)
     assert result.conforms is False, result.report_text
@@ -172,7 +182,9 @@ def test_severed_commits_to_is_refused(baseline_graph: rdflib.Graph) -> None:
 
 def test_severed_committed_process_is_refused(baseline_graph: rdflib.Graph) -> None:
     g = _clone(baseline_graph)
-    commitment = _one(g, AFL.commitment, subject=_one(g, RDF.type, obj=AFL.Level4Witness))
+    commitment = _one(
+        g, AFL.commitment, subject=_one(g, RDF.type, obj=AFL.Level4Witness)
+    )
     _sever(g, commitment, AFL.committedProcess)
     result = verify_witness_graph(g)
     assert result.conforms is False, result.report_text
@@ -198,7 +210,9 @@ def test_severed_authorized_by_is_refused(baseline_graph: rdflib.Graph) -> None:
     assert "explicit AuthorityEnvelope" in _messages(result)
 
 
-def test_severed_actuation_belongs_to_trial_is_refused(baseline_graph: rdflib.Graph) -> None:
+def test_severed_actuation_belongs_to_trial_is_refused(
+    baseline_graph: rdflib.Graph,
+) -> None:
     g = _clone(baseline_graph)
     actuation = _one(g, AFL.actuation, subject=_one(g, RDF.type, obj=AFL.Level4Witness))
     _sever(g, actuation, AFL.belongsToTrial)
@@ -224,7 +238,9 @@ def test_severed_top_level_manifest_is_refused(baseline_graph: rdflib.Graph) -> 
     assert result.conforms is False, result.report_text
 
 
-def test_manifest_missing_one_bound_entity_is_refused(baseline_graph: rdflib.Graph) -> None:
+def test_manifest_missing_one_bound_entity_is_refused(
+    baseline_graph: rdflib.Graph,
+) -> None:
     """level4.shacl.ttl's SPARQL closure requires the manifest to bind
     *every* entity on the causal chain -- dropping exactly one (the
     AuthorityEnvelope) must still fail the joined-witness check even though
@@ -239,7 +255,9 @@ def test_manifest_missing_one_bound_entity_is_refused(baseline_graph: rdflib.Gra
     assert "one joined witness" in _messages(result)
 
 
-def test_actuation_repointed_at_a_decoy_commitment_is_refused(baseline_graph: rdflib.Graph) -> None:
+def test_actuation_repointed_at_a_decoy_commitment_is_refused(
+    baseline_graph: rdflib.Graph,
+) -> None:
     """The load-bearing identity falsifier: adjacency is preserved (the
     `realizesCommitment` edge still points at *a* real, well-typed
     `POWLCommitment`), only the *identity* is wrong -- a decoy commitment
@@ -285,7 +303,9 @@ def test_self_certified_observation_is_refused(baseline_graph: rdflib.Graph) -> 
     assert "one joined witness" in _messages(result)
 
 
-def test_standing_alive_without_a_witness_is_refused(baseline_graph: rdflib.Graph) -> None:
+def test_standing_alive_without_a_witness_is_refused(
+    baseline_graph: rdflib.Graph,
+) -> None:
     """The `AliveStanding` shape: a `StandingAssertion` claiming
     `afl:ALIVE` must be `derivedFromWitness` an actual `Level4Witness`."""
     g = _clone(baseline_graph)

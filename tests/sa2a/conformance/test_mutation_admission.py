@@ -107,7 +107,10 @@ class IndependentDiskProbeVerifier:
             return False
         try:
             data = json.loads(self._probe_path.read_text(encoding="utf-8"))
-            return data.get("action") == action_iri and data.get("target") == target_resource
+            return (
+                data.get("action") == action_iri
+                and data.get("target") == target_resource
+            )
         except Exception:
             return False
 
@@ -122,7 +125,9 @@ afl:cluster_mutation_subject vocab:status 'ACTIVE' .
 """
 
 
-def _admit_action_target_binding(action_iri: str, target_resource: str) -> AdmissionResult:
+def _admit_action_target_binding(
+    action_iri: str, target_resource: str
+) -> AdmissionResult:
     """Real, ADMITTED AdmissionResult whose admitted graph binds EXACTLY the given
     action_iri/target_resource via the real relational-binding triple
     `<action_iri> afl:targetResource <target_resource> .` that

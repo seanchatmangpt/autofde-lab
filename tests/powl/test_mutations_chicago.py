@@ -91,7 +91,9 @@ def test_delete_node_removes_child_and_remaps_order():
     # b's edges dropped, no dangling reference; a and c no longer related
     for e in result.order:
         assert 0 <= e.src < 2 and 0 <= e.dst < 2
-    assert OrderEdge(NodeId(0), NodeId(1)) not in result.order  # (a->c relation not re-created)
+    assert (
+        OrderEdge(NodeId(0), NodeId(1)) not in result.order
+    )  # (a->c relation not re-created)
 
 
 def test_delete_node_refuses_below_minimum_arity():
@@ -234,7 +236,9 @@ def test_relax_guard_removes_guard_from_edge():
 
     validate_model(relaxed)
     assert ChoiceGraphEdge(NodeId(0), NodeId(2), guard=None) in relaxed.edges
-    assert not any(e.src == 0 and e.dst == 2 and e.guard is not None for e in relaxed.edges)
+    assert not any(
+        e.src == 0 and e.dst == 2 and e.guard is not None for e in relaxed.edges
+    )
 
 
 def test_relax_guard_refuses_when_no_guarded_edge_exists():

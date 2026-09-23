@@ -69,7 +69,9 @@ class OcelSessionRecorder:
     recorder per session, never share one across sessions.
     """
 
-    def __init__(self, session_id: str, *, server_name: str = "scikit-decide-fabric") -> None:
+    def __init__(
+        self, session_id: str, *, server_name: str = "scikit-decide-fabric"
+    ) -> None:
         self._session_id = session_id
         self._declared_object_ids: set[str] = {session_id}
         self._event_counter = itertools.count()
@@ -214,7 +216,9 @@ def _outcome_from_result(result: Any, elapsed_s: float) -> dict:
             # whether a domain's compatible-solver set is deterministic across
             # matches (the count alone can't distinguish "always these same 3
             # solvers" from "3 different solvers each time").
-            outcome["compatible_solvers"] = sorted(str(s) for s in result["compatible_solvers"])
+            outcome["compatible_solvers"] = sorted(
+                str(s) for s in result["compatible_solvers"]
+            )
         if isinstance(result.get("steps"), (list, tuple)):
             outcome["steps"] = len(result["steps"])
     return outcome

@@ -86,7 +86,9 @@ def test_a_longer_cycle_through_transitivity_is_also_refused() -> None:
     assert excinfo.value.refusal == PowlRefusal.CYCLIC_PARTIAL_ORDER
 
 
-def test_a_genuinely_acyclic_relation_is_accepted_and_its_closure_is_transitive() -> None:
+def test_a_genuinely_acyclic_relation_is_accepted_and_its_closure_is_transitive() -> (
+    None
+):
     """0->1->2 (no cycle): must be accepted, and the resulting closure must
     itself satisfy transitivity (0->2 present) -- the positive control
     proving the adversarial cases above aren't refusing everything."""
@@ -127,7 +129,9 @@ def test_a_redundant_non_reduced_partial_order_is_refused_by_validate_model() ->
 # ---------------------------------------------------------------------------
 
 
-def test_multiple_conceptual_start_nodes_cannot_be_expressed_our_start_is_a_single_index() -> None:
+def test_multiple_conceptual_start_nodes_cannot_be_expressed_our_start_is_a_single_index() -> (
+    None
+):
     """Lean's `IndexedGraph.HasBoundaries` only requires `starts != [] and
     ends != []` -- a real formal spec that would admit multiple start
     nodes. Our own `ChoiceGraph.start`/`.end` are single `int` fields by
@@ -138,7 +142,12 @@ def test_multiple_conceptual_start_nodes_cannot_be_expressed_our_start_is_a_sing
     validate.py rule that happens to reject a wider shape."""
     model = ChoiceGraph(
         children=(Start(), End(), Atom(label="a")),
-        edges=frozenset([ChoiceGraphEdge(NodeId(0), NodeId(2)), ChoiceGraphEdge(NodeId(2), NodeId(1))]),
+        edges=frozenset(
+            [
+                ChoiceGraphEdge(NodeId(0), NodeId(2)),
+                ChoiceGraphEdge(NodeId(2), NodeId(1)),
+            ]
+        ),
         start=0,
         end=1,
     )
@@ -153,13 +162,17 @@ def test_multiple_conceptual_start_nodes_cannot_be_expressed_our_start_is_a_sing
     # (confirmed this session: `~/POWL`'s own `ChoiceGraph` does).
 
 
-def test_start_and_end_coinciding_is_refused_even_though_lean_would_permit_nonempty_overlap() -> None:
+def test_start_and_end_coinciding_is_refused_even_though_lean_would_permit_nonempty_overlap() -> (
+    None
+):
     """`MULTI_BOUNDARY_CHOICE_GRAPH` on `start == end` -- Lean's
     `HasBoundaries` says nothing about start/end overlap at all (only
     nonemptiness of each set), so a Lean-legal model could have identical
     start and end sets; ours refuses the single-index case outright."""
     with pytest.raises(PowlError) as excinfo:
-        ChoiceGraph(children=(Start(), Atom(label="a")), edges=frozenset(), start=0, end=0)
+        ChoiceGraph(
+            children=(Start(), Atom(label="a")), edges=frozenset(), start=0, end=0
+        )
     assert excinfo.value.refusal == PowlRefusal.MULTI_BOUNDARY_CHOICE_GRAPH
 
 
@@ -179,7 +192,12 @@ def test_a_node_unreachable_from_start_violates_boundary_connectedness() -> None
     succeeds and `validate_model` is what must raise."""
     model = ChoiceGraph(
         children=(Start(), End(), Atom(label="a"), Atom(label="unreachable")),
-        edges=frozenset([ChoiceGraphEdge(NodeId(0), NodeId(2)), ChoiceGraphEdge(NodeId(2), NodeId(1))]),
+        edges=frozenset(
+            [
+                ChoiceGraphEdge(NodeId(0), NodeId(2)),
+                ChoiceGraphEdge(NodeId(2), NodeId(1)),
+            ]
+        ),
         start=0,
         end=1,
     )
