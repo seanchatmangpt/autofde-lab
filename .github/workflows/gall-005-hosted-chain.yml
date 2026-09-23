@@ -1,0 +1,217 @@
+name: GALL-005 hosted exact-chain crown
+
+on:
+  pull_request:
+    branches:
+      - gall/checkpoint-005-composition-crown
+    paths:
+      - "scripts/build_gall_exact_manifest.py"
+      - ".github/workflows/gall-005-hosted-chain.yml"
+      - "src/autofde_lab/sa2a/gall/**"
+      - "src/autofde_lab/sa2a/composition/**"
+      - "scripts/run_gall_composition_crown.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GALL001_SHA: e16f55fcaeca62943bd87edb8bc95ae780dd6fa9
+  GALL002_SHA: 30a000f4ddec9b510ce7d7436f20856d7c4c0147
+  GALL003_SHA: fb648896cc054eb7deb7f5141de271a90e4464f2
+  GALL004_SHA: 9230d103e5c92d27c56133f4514096c32abe3aa2
+  EVIDENCE_DIR: ${{ github.workspace }}/evidence
+  COURT_DIR: ${{ github.workspace }}/autofde/.gall/court
+
+jobs:
+  exact-chain:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact autofde-lab subject
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: autofde
+          persist-credentials: false
+
+      - name: Assert exact autofde-lab head
+        working-directory: autofde
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
+
+      - name: Checkout exact GALL-001 producer
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: seanchatmangpt/ggen
+          ref: ${{ env.GALL001_SHA }}
+          path: ggen
+          persist-credentials: false
+
+      - name: Set up exact GALL-001 Rust court
+        uses: ./ggen/.github/actions/setup-ggen-build
+        with:
+          cache-key-suffix: gall-005-chain-${{ env.GALL001_SHA }}
+
+      - name: Bridge ggen path dependencies into bounded workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          for repo in lsp-max lsp-types-max wasm4pm wasm4pm-compat; do
+            ln -sfn "$GITHUB_WORKSPACE/../$repo" "$GITHUB_WORKSPACE/$repo"
+          done
+
+      - name: Manufacture exact GALL-001 replay receipt
+        working-directory: ggen
+        env:
+          GALL001_REPLAY_RECEIPT_OUT: ${{ env.EVIDENCE_DIR }}/GALL-001.json
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
+          test "$(git rev-parse HEAD)" = "$GALL001_SHA"
+          cargo test -p ggen-engine --test gall_checkpoint_001_replay_e2e -- --nocapture
+
+      - name: Checkout exact GALL-002 producer
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: seanchatmangpt/ggen_igniter
+          ref: ${{ env.GALL002_SHA }}
+          path: ggen_igniter
+          persist-credentials: false
+
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          elixir-version: "1.18.4"
+          otp-version: "27.2.4"
+          rebar3-version: "3.24.0"
+
+      - name: Manufacture exact GALL-002 receipt
+        working-directory: ggen_igniter
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GALL002_SHA"
+          mix deps.get
+          mix run scripts/gall_checkpoint_002_receipt.exs "$EVIDENCE_DIR/GALL-001.json"             "$EVIDENCE_DIR/GALL-002.json"
+
+      - name: Checkout exact GALL-003 producer
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: seanchatmangpt/ash_a2a
+          ref: ${{ env.GALL003_SHA }}
+          path: ash_a2a
+          persist-credentials: false
+
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          elixir-version: "1.19.0"
+          otp-version: "28.0.2"
+          rebar3-version: "3.24.0"
+
+      - name: Manufacture exact durable GALL-003 receipt
+        working-directory: ash_a2a
+        env:
+          MIX_ENV: test
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GALL003_SHA"
+          mix deps.get
+          mix run scripts/gall_checkpoint_003_receipt.exs "$EVIDENCE_DIR/GALL-002.json"             "$EVIDENCE_DIR/GALL-003"
+
+      - name: Checkout exact GALL-004 producer
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: seanchatmangpt/beam4pm
+          ref: ${{ env.GALL004_SHA }}
+          path: beam4pm
+          persist-credentials: false
+
+      - name: Install exact Weaver v0.26.1
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 -LsSf             https://github.com/open-telemetry/weaver/releases/download/v0.26.1/weaver-installer.sh             -o "$RUNNER_TEMP/weaver-installer.sh"
+          bash "$RUNNER_TEMP/weaver-installer.sh" --no-modify-path
+          for candidate in "$HOME/.cargo/bin" "$HOME/.local/bin" "$HOME/bin"; do
+            if [[ -x "$candidate/weaver" ]]; then
+              echo "$candidate" >> "$GITHUB_PATH"
+              "$candidate/weaver" --version
+              exit 0
+            fi
+          done
+          command -v weaver
+          weaver --version
+
+      - name: Manufacture GALL-004 telemetry and observer receipts
+        working-directory: beam4pm
+        env:
+          GALL004_WEAVER_STATE_DIR: ${{ env.EVIDENCE_DIR }}/GALL-004-WEAVER
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GALL004_SHA"
+          mix deps.get
+          bash scripts/gall_checkpoint_004_weaver.sh
+          mix run scripts/gall_checkpoint_004_observer.exs "$EVIDENCE_DIR/GALL-003/gall-003-receipt.json"             "$EVIDENCE_DIR/GALL-003/post-state.json"             "$EVIDENCE_DIR/GALL-003/events.ocel.json"             "$EVIDENCE_DIR/GALL-004.json"
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Install minimal GALL-005 Python admission closure
+        run: python -m pip install "pydantic>=2,<3" "rdflib>=7,<8" "pyshacl>=0.30,<1"
+
+      - name: Build immutable exact-chain manifest
+        working-directory: autofde
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python scripts/build_gall_exact_manifest.py             --gall-001 "$EVIDENCE_DIR/GALL-001.json" --gall-001-sha "$GALL001_SHA"             --gall-002 "$EVIDENCE_DIR/GALL-002.json" --gall-002-sha "$GALL002_SHA"             --gall-003 "$EVIDENCE_DIR/GALL-003/gall-003-receipt.json" --gall-003-sha "$GALL003_SHA"             --gall-004 "$EVIDENCE_DIR/GALL-004.json" --gall-004-sha "$GALL004_SHA"             --weaver "$EVIDENCE_DIR/GALL-004-WEAVER/weaver-court-receipt.json"             --out-dir "$COURT_DIR"
+
+      - name: UNKNOWN to verified evidence to MachineExperience
+        working-directory: autofde
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python scripts/run_gall_composition_crown.py compile             --manifest "$COURT_DIR/gall-composition-manifest.json"             --output-json "$COURT_DIR/deterministic-output.json"             --out-dir "$COURT_DIR"
+
+      - name: Fresh KNOWN replay
+        working-directory: autofde
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          python scripts/run_gall_composition_crown.py replay             --manifest "$COURT_DIR/gall-composition-manifest.json"             --experience "$COURT_DIR/machine-experience.json"             --semantic-key "sa2a:gall:v26.9.18:exact-chain"             --out-dir "$COURT_DIR"
+
+      - name: Assert evidence predicates remain separate and positive
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          root = Path(r"${{ env.COURT_DIR }}")
+          episode1 = json.loads((root / "episode-1-receipt.json").read_text())
+          episode2 = json.loads((root / "episode-2-receipt.json").read_text())
+          crown = json.loads((root / "gall-005-crown-receipt.json").read_text())
+          for receipt in (episode1, episode2):
+              assert receipt["telemetry_valid"] is True
+              assert receipt["process_valid"] is True
+              assert receipt["postcondition_valid"] is True
+          assert episode1["gate_12"] == "OPEN"
+          assert episode2["gate_12"] == "PASS"
+          assert episode2["frontier_resolution_calls"] == 0
+          assert episode2["llm_allocations"] == 0
+          assert episode2["planner_invocations"] == 0
+          assert crown["cross_repo_standing"] == "PARTIAL_ALIVE"
+          print(json.dumps({
+              "standing": crown["cross_repo_standing"],
+              "telemetry_valid": episode2["telemetry_valid"],
+              "process_valid": episode2["process_valid"],
+              "postcondition_valid": episode2["postcondition_valid"],
+              "gate_12": episode2["gate_12"],
+          }, sort_keys=True))
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: gall-005-exact-chain-${{ github.event.pull_request.head.sha || github.sha }}
+          path: autofde/.gall/court
+          if-no-files-found: error
+          retention-days: 14
