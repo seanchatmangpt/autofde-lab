@@ -64,6 +64,16 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=DEFAULT_OCEL_PATH,
         help=f"Path to write the OCEL 2.0 execution trace (default: {DEFAULT_OCEL_PATH}).",
     )
+    parser.add_argument(
+        "--release-tag",
+        default=None,
+        help=(
+            "Git tag the CHI-ID exact-identity fence certifies HEAD against "
+            "(default: the court's pinned v26.9.17). A release wave cuts its "
+            "own tag and names it here; the fence still fail-closes unless "
+            "HEAD is exactly that tag."
+        ),
+    )
     return parser
 
 
@@ -74,6 +84,7 @@ def main(argv: list[str] | None = None) -> int:
         workspace_root=args.workspace_root,
         receipt_path=args.receipt_path,
         ocel_path=args.ocel_path,
+        release_tag=args.release_tag,
     )
 
     receipt_dict = receipt.to_dict()
