@@ -1,0 +1,216 @@
+name: WD FA semantic full-stack manufacture
+
+on:
+  pull_request:
+    paths:
+      - "ggen/wd-fa/**"
+      - "src/autofde_lab/wd_fa/**"
+      - ".github/workflows/wd-fa-fullstack-factory.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PRODUCER_SHA: 8d861d494a82b30a577afff10b7548c6265034ed
+
+jobs:
+  fullstack:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact consumer head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Admit exact consumer head
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
+
+      - name: Checkout exact generic factory producer
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: seanchatmangpt/ggen-marketplace
+          ref: ${{ env.PRODUCER_SHA }}
+          path: .marketplace
+          persist-credentials: false
+          sparse-checkout: |
+            packs/semantic-fullstack-factory-pack
+
+      - name: Admit exact generic producer
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C .marketplace rev-parse HEAD)" = "$PRODUCER_SHA"
+          test -f .marketplace/packs/semantic-fullstack-factory-pack/pack.toml
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: "22"
+
+      - name: Install focused parity dependencies
+        run: |
+          python -m pip install \
+            "pytest>=8.3,<9" \
+            "httpx>=0.27,<1" \
+            "fastapi>=0.115,<1" \
+            "pandas>=2.2,<3" \
+            "uvicorn>=0.30,<1"
+
+      - name: Install digest-verified ggen v26.9.12
+        shell: bash
+        env:
+          GGEN_URL: https://github.com/seanchatmangpt/ggen/releases/download/v26.9.12/ggen-x86_64-unknown-linux-gnu.tar.gz
+          GGEN_SHA256: ef51c03acc70752446d2147b255ee508ea1471862db45a6bdf5da3fdf62ff430
+        run: |
+          set -euo pipefail
+          curl --fail --location "$GGEN_URL" --output /tmp/ggen.tar.gz
+          echo "$GGEN_SHA256  /tmp/ggen.tar.gz" | sha256sum --check -
+          mkdir -p .constructor
+          tar -xzf /tmp/ggen.tar.gz -C .constructor
+          test -x .constructor/ggen
+          .constructor/ggen --version
+
+      - name: Stage the canonical WD ontology and manufacture
+        working-directory: ggen/wd-fa/fullstack
+        run: |
+          set -euo pipefail
+          cp ../ontology.ttl ontology.ttl
+          rm -rf generated
+          ../../../.constructor/ggen sync run
+          test -s generated/backend/app.py
+          test -s generated/frontend/app/page.js
+          test -s generated/frontend/e2e/semantic-generated.spec.cjs
+
+      - name: Execute generated backend court
+        working-directory: ggen/wd-fa/fullstack/generated/backend
+        run: python -m pytest -q
+
+      - name: Prove semantic parity with the authored WD kernel
+        env:
+          PYTHONPATH: src
+        run: |
+          python - <<'PY'
+          import importlib.util
+          import sys
+          from pathlib import Path
+
+          from fastapi.testclient import TestClient
+          from autofde_lab.wd_fa.receipts import issue_receipt
+          from autofde_lab.wd_fa.synthetic import RULES, named_cases
+          from autofde_lab.wd_fa.triage import compile_experience, triage
+
+          backend = Path("ggen/wd-fa/fullstack/generated/backend")
+          sys.path.insert(0, str(backend))
+          spec = importlib.util.spec_from_file_location("wd_fa_generated_app", backend / "app.py")
+          assert spec is not None and spec.loader is not None
+          generated = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(generated)
+          client = TestClient(generated.app)
+
+          cases = named_cases()
+          for name in ("known_a", "known_b_misleading", "incomplete_a", "novel_x"):
+              authored = triage(cases[name], RULES)
+              response = client.get(f"/api/scenarios/{name}")
+              assert response.status_code == 200, (name, response.text)
+              projected = response.json()
+              assert projected["standing"] == authored.standing.value
+              assert projected["admitted_mode"] == authored.admitted_mode
+              assert projected["next_action"] == authored.next_action
+              assert projected["owning_team"] == authored.owning_team
+              assert projected["confidence_basis"] == authored.confidence_basis
+              assert projected["human_gate"] == authored.human_gate
+              assert projected["authority"] == "SELECT_CONSTRUCT_ONLY"
+
+          first = triage(cases["novel_x"], RULES)
+          receipt = issue_receipt(
+              cases["novel_x"],
+              first,
+              producer_id="candidate-producer",
+              verifier_id="independent-verifier",
+              observed_disposition="MODE-X-NOVEL",
+          )
+          experience = compile_experience(
+              cases["novel_x"],
+              first,
+              receipt,
+              mode_id="MODE-X-NOVEL",
+              next_action="repeat_verified_novel_x_procedure",
+          )
+          replay = triage(cases["novel_x_replay"], (*RULES, experience.mode))
+          transition = client.get(
+              "/api/scenarios/novel_x?transition=admit_verified_machine_experience"
+          )
+          assert transition.status_code == 200
+          projected_replay = transition.json()
+          assert projected_replay["standing"] == replay.standing.value
+          assert projected_replay["admitted_mode"] == replay.admitted_mode
+          assert projected_replay["next_action"] == replay.next_action
+          assert projected_replay["owning_team"] == replay.owning_team
+          assert projected_replay["confidence_basis"] == replay.confidence_basis
+          assert projected_replay["authority"] == "SELECT_CONSTRUCT_ONLY"
+          print("WD_FA_DFCM_SEMANTIC_PARITY_ALIVE")
+          PY
+
+      - name: Start generated FastAPI
+        working-directory: ggen/wd-fa/fullstack/generated/backend
+        run: |
+          uvicorn app:app --host 127.0.0.1 --port 8000 > /tmp/wd-fa-generated-api.log 2>&1 &
+          for attempt in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:8000/health >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/wd-fa-generated-api.log
+          exit 1
+
+      - name: Build generated Next.js projection
+        working-directory: ggen/wd-fa/fullstack/generated/frontend
+        env:
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:8000
+        run: |
+          npm install --ignore-scripts
+          npm run build
+          npx playwright install --with-deps chromium
+
+      - name: Start generated Next.js projection
+        working-directory: ggen/wd-fa/fullstack/generated/frontend
+        env:
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:8000
+        run: |
+          npm run start -- -H 127.0.0.1 -p 3000 > /tmp/wd-fa-generated-web.log 2>&1 &
+          for attempt in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:3000 >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/wd-fa-generated-web.log
+          exit 1
+
+      - name: Execute generated Playwright court
+        working-directory: ggen/wd-fa/fullstack/generated/frontend
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
+          SEMANTIC_API_URL: http://127.0.0.1:8000
+        run: npx playwright test
+
+      - name: Refuse hidden intelligence and ambient DO
+        working-directory: ggen/wd-fa/fullstack/generated
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -RniE 'openai|anthropic|ollama|langchain|litellm|DO_AUTHORITY|authority.*DO' backend frontend
+          grep -R "SELECT_CONSTRUCT_ONLY" backend frontend
+          grep -R "ENGINEER_DISPOSITION_REQUIRED" backend frontend
+          echo "WD_FA_ZERO_LLM_RUNTIME_AND_NO_AMBIENT_DO_OBSERVED"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: wd-fa-generated-fullstack-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ggen/wd-fa/fullstack/generated
+          if-no-files-found: error
+          retention-days: 30

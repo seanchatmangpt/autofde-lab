@@ -125,6 +125,13 @@ jobs:
                           print(f"materialized {name} -> {target}")
           assert copied >= 1, "compiled hub module missing from the built wheel"
           PY
+          # Register the project's entry points (autofde_lab.solvers etc.):
+          # load_registered_solver resolves Astar through
+          # importlib.metadata, which only sees an INSTALLED distribution.
+          # The cross-process determinism courts spawn the classical-engine
+          # subprocess that loads Astar this way; without the install the
+          # solver group is empty ('NoneType' object is not callable).
+          python -m pip install --no-deps --disable-pip-version-check dist/*.whl
 
       - name: Compile authored fabric surfaces
         run: |
