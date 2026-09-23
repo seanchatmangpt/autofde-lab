@@ -1,0 +1,10 @@
+{
+  "wo": "AFDE-26922-01",
+  "title": "Land SJ-006: merge sjira/sj-006 into master",
+  "base_sha": "f5cc664bac7598d5cf53cab399876df300bb6b14",
+  "merge_sha_release": "11cd0040cd145d265fd300d843fd2c0bf491e4ef",
+  "command": "git merge --no-ff sjira/sj-006 && .venv/bin/python -m pytest tests/beam -q",
+  "exit": 0,
+  "output_excerpt": "4 passed (tests/beam at release merge 11cd0040; bc70785a merges 455cc7b5 cleanly, 27 insertions in docs/ecosystem-standing.md). Pass 5 row rewrite deferred to the master-landing commit so it can cite the actual ~/autofde-lab merged SHA.",
+  "standing": "PARTIAL_ALIVE"
+}

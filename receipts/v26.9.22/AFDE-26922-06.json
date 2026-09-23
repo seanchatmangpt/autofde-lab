@@ -1,0 +1,9 @@
+{
+  "wo": "AFDE-26922-06",
+  "title": "Frontier-to-descriptor stack #163 then #167",
+  "base_sha": "f5cc664bac7598d5cf53cab399876df300bb6b14",
+  "command": "merge origin/master into both branches; pre-commit run --files; pytest test_gall_semantic_work; gh pr merge bottom-up",
+  "exit": null,
+  "output_excerpt": "#163 merge result vs master = fabric/gall.py (frontier(), to_hddl_problem, MachineExperience) + tests/fabric/test_gall_semantic_work.py only; beam_port_bridge.py and phase_h_trigger.py untouched by the merge. Exact-head qualification pass after pre-commit fixes (64ababed). Decision: #167 landed (operator stack list #160-#171); feat/v26.9.19-work-envelope-v2 superseded (divergent 2-commit alternative, no PR); local feat/gall-swf-v26.9.18 select_frontier superseded by #163's frontier() \u2014 recorded as failed-edge alternative.",
+  "standing": "IN_PROGRESS"
+}
