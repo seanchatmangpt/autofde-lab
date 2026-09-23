@@ -23,7 +23,6 @@ registered* solver entry points and calls each one's real `check_domain(domain)`
 
 from __future__ import annotations
 
-
 import pytest
 
 from autofde_lab import utils as autofde_lab_utils

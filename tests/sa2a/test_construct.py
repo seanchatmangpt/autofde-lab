@@ -10,7 +10,6 @@ Validates:
 
 from __future__ import annotations
 
-
 import pytest
 
 from autofde_lab.sa2a.construct.constructor import (

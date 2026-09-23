@@ -31,7 +31,6 @@ Assigned gyms and outcome, investigated for real this session:
 
 from pathlib import Path
 
-
 from autofde_lab import utils
 from autofde_lab.hub.domain.gym_procedure import GymProcedureDomain
 

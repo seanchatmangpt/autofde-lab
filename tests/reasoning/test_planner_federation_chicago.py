@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import os
 
-
 from autofde_lab.powl.validate import validate_model
 from autofde_lab.reasoning.planner_federation import (
     SOLVER_NAMES,

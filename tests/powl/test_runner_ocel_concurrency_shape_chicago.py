@@ -43,7 +43,6 @@ from __future__ import annotations
 
 import time
 
-
 from autofde_lab.fabric.gymact_capability_gate import (
     DEFAULT_MANIFEST_PATH,
     CapabilityGate,

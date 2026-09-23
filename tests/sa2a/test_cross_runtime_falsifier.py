@@ -41,7 +41,6 @@ import json
 import subprocess
 from pathlib import Path
 
-
 from autofde_lab.sa2a.admission.graphlaw_bridge import GraphLawBridge
 from autofde_lab.sa2a.exchange.package import (
     AuthorityContract,

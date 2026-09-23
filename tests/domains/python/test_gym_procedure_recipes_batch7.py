@@ -22,7 +22,6 @@ per-gym report in the calling session for the precise
 
 from pathlib import Path
 
-
 from autofde_lab import utils
 from autofde_lab.hub.domain.gym_procedure import GymProcedureDomain, load_recipe
 

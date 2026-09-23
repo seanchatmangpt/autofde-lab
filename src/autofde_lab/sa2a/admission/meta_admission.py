@@ -15,7 +15,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, Optional, Union
 
-
 from autofde_lab.sa2a.algebra import RefusalCause, Standing
 from autofde_lab.sa2a.root_manifest import RootManifest
 

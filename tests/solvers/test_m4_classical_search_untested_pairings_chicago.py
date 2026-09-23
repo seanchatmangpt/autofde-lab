@@ -35,7 +35,6 @@ from enum import Enum
 from math import sqrt
 from typing import NamedTuple
 
-
 from autofde_lab import DeterministicPlanningDomain, ImplicitSpace, Value
 from autofde_lab.builders.domain import UnrestrictedActions
 from autofde_lab.hub.space.gym import EnumSpace, MultiDiscreteSpace

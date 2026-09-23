@@ -23,7 +23,6 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
-
 from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline, AdmissionResult
 from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import (

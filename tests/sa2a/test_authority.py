@@ -23,7 +23,6 @@ Verifies:
 
 import time
 
-
 from autofde_lab.sa2a.authority import (
     REFUSED_AGENT_IS_NOT_AUTHORITY,
     REFUSED_CAPABILITY_IS_NOT_AUTHORITY,

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 from autofde_lab.sa2a.authority.broker import AuthorityBroker, AuthorityGrant
 from autofde_lab.sa2a.brce.boundary import (
     ConsequenceBoundary,

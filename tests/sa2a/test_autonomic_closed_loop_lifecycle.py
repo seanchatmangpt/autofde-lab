@@ -14,7 +14,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-
 from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline
 from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import (
