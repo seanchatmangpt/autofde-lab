@@ -1,0 +1,257 @@
+name: WD FA ggen marketplace contract court
+
+on:
+  pull_request:
+    paths:
+      - "ggen/wd-fa/**"
+      - "src/autofde_lab/wd_fa/ggen_contract/**"
+      - "apps/wd-fa-web/ggen_contract/**"
+      - ".github/workflows/wd-fa-ggen-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  manufacture:
+    name: Exact-head marketplace contract manufacture
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact consumer head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Admit exact consumer head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
+
+      - name: Checkout exact marketplace producer closure
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: seanchatmangpt/ggen-marketplace
+          ref: 8d861d494a82b30a577afff10b7548c6265034ed
+          path: .marketplace
+          persist-credentials: false
+          lfs: false
+          sparse-checkout: |
+            packs/shacl-projection-pack
+            packs/shacl-to-pydantic-pack
+            packs/shacl-to-zod-pack
+
+      - name: Admit exact marketplace producer
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C .marketplace rev-parse HEAD)" = "8d861d494a82b30a577afff10b7548c6265034ed"
+          test -f .marketplace/packs/shacl-projection-pack/pack.toml
+          test -f .marketplace/packs/shacl-to-pydantic-pack/pack.toml
+          test -f .marketplace/packs/shacl-to-zod-pack/pack.toml
+
+      - name: Install digest-verified ggen v26.9.12
+        shell: bash
+        env:
+          GGEN_URL: https://github.com/seanchatmangpt/ggen/releases/download/v26.9.12/ggen-x86_64-unknown-linux-gnu.tar.gz
+          GGEN_SHA256: ef51c03acc70752446d2147b255ee508ea1471862db45a6bdf5da3fdf62ff430
+        run: |
+          set -euo pipefail
+          curl --fail --location "$GGEN_URL" --output /tmp/ggen.tar.gz
+          echo "$GGEN_SHA256  /tmp/ggen.tar.gz" | sha256sum --check -
+          mkdir -p .constructor/ggen-bin
+          tar -xzf /tmp/ggen.tar.gz -C .constructor/ggen-bin
+          test -x .constructor/ggen-bin/ggen
+          .constructor/ggen-bin/ggen --version
+
+      - name: Stage single-source WD contract ontology
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ggen/wd-fa/ontology.ttl src/autofde_lab/wd_fa/ggen_contract/ontology.ttl
+          cp ggen/wd-fa/ontology.ttl apps/wd-fa-web/ggen_contract/ontology.ttl
+
+      - name: Manufacture Pydantic contract from marketplace
+        working-directory: src/autofde_lab/wd_fa/ggen_contract
+        run: |
+          set -euo pipefail
+          ../../../../.constructor/ggen-bin/ggen sync run
+          test -s src/shacl_pydantic_models.py
+          echo "=== PYDANTIC GENERATED ==="
+          cat src/shacl_pydantic_models.py
+
+      - name: Manufacture Zod contract from marketplace
+        working-directory: apps/wd-fa-web/ggen_contract
+        run: |
+          set -euo pipefail
+          ../../../.constructor/ggen-bin/ggen sync run
+          test -s src/shacl_zod_schemas.js
+          echo "=== ZOD GENERATED ==="
+          cat src/shacl_zod_schemas.js
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+
+      - name: Execute generated Pydantic contract
+        run: |
+          python -m pip install "pydantic>=2.9,<3"
+          PYTHONPATH=src python - <<'PY'
+          import importlib.util
+          from pathlib import Path
+
+          generated = Path("src/autofde_lab/wd_fa/ggen_contract/src/shacl_pydantic_models.py")
+          spec = importlib.util.spec_from_file_location("wd_fa_generated_contract", generated)
+          assert spec is not None and spec.loader is not None
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          TriageRequestGenerated = module.TriageRequestGenerated
+          TriageResponseGenerated = module.TriageResponseGenerated
+          TriageRequestGenerated(case_name="known_a")
+          rich = TriageResponseGenerated(
+              case_id="KNOWN-A",
+              standing="ALIVE",
+              admitted_mode="MODE-A-FIRMWARE",
+              ranked_hypotheses=[{
+                  "mode_id": "MODE-A-FIRMWARE",
+                  "candidate_score": 1.0,
+                  "score_basis": "STRUCTURAL_SIMILARITY",
+                  "structural_similarity": 1.0,
+                  "deterministic_match": True,
+                  "evidence_completeness": 1.0,
+                  "prior_case_ids": ["SYNTH-FA-A-001"],
+                  "evidence_ids": ["KNOWN-A:test"],
+                  "owning_team": "firmware_analysis",
+                  "action_type": "TEST",
+                  "next_action": "run_firmware_regression",
+              }],
+              closest_prior_cases=["SYNTH-FA-A-001"],
+              supporting_evidence=[{
+                  "evidence_id": "KNOWN-A:test",
+                  "kind": "test",
+                  "modality": "structured_test_result",
+                  "source_ref": "fixture://datalake/test-results/KNOWN-A",
+                  "digest": "sha256:" + "0" * 64,
+              }],
+              next_action="run_firmware_regression",
+              action_type="TEST",
+              owning_team="firmware_analysis",
+              evidence_completeness=1.0,
+              confidence_basis="DETERMINISTIC_RULE_AND_REQUIRED_EVIDENCE",
+              human_gate="ENGINEER_DISPOSITION_REQUIRED",
+              trace_id="sha256:" + "1" * 64,
+              authority="SELECT_ONLY",
+          )
+          assert rich.ranked_hypotheses[0].mode_id == "MODE-A-FIRMWARE"
+          assert rich.supporting_evidence[0].source_ref.startswith("fixture://")
+          try:
+              TriageRequestGenerated(case_name="not_admitted")
+          except Exception:
+              pass
+          else:
+              raise SystemExit("request enum admission leaked")
+          try:
+              TriageResponseGenerated(
+                  case_id="X",
+                  standing="ALIVE",
+                  admitted_mode=None,
+                  ranked_hypotheses=[],
+                  closest_prior_cases=[],
+                  supporting_evidence=[],
+                  next_action="x",
+                  action_type="ESCALATE",
+                  owning_team="failure_analysis",
+                  evidence_completeness=0.0,
+                  confidence_basis="invalid",
+                  human_gate="ENGINEER_DISPOSITION_REQUIRED",
+                  trace_id="sha256:" + "2" * 64,
+                  authority="DO",
+              )
+          except Exception:
+              pass
+          else:
+              raise SystemExit("authority enum admission leaked")
+          print("WD_FA_GGEN_PYDANTIC_ALIVE")
+          PY
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: "22"
+
+      - name: Execute generated Zod contract
+        working-directory: apps/wd-fa-web
+        run: |
+          npm install --ignore-scripts
+          node --input-type=module - <<'JS'
+          import {
+            TriageRequestGeneratedSchema,
+            TriageResponseGeneratedSchema,
+          } from "./ggen_contract/src/shacl_zod_schemas.js";
+
+          TriageRequestGeneratedSchema.parse({ case_name: "known_a" });
+          const rich = TriageResponseGeneratedSchema.parse({
+            case_id: "KNOWN-A",
+            standing: "ALIVE",
+            admitted_mode: "MODE-A-FIRMWARE",
+            ranked_hypotheses: [{
+              mode_id: "MODE-A-FIRMWARE",
+              candidate_score: 1,
+              score_basis: "STRUCTURAL_SIMILARITY",
+              structural_similarity: 1,
+              deterministic_match: true,
+              evidence_completeness: 1,
+              prior_case_ids: ["SYNTH-FA-A-001"],
+              evidence_ids: ["KNOWN-A:test"],
+              owning_team: "firmware_analysis",
+              action_type: "TEST",
+              next_action: "run_firmware_regression",
+            }],
+            closest_prior_cases: ["SYNTH-FA-A-001"],
+            supporting_evidence: [{
+              evidence_id: "KNOWN-A:test",
+              kind: "test",
+              modality: "structured_test_result",
+              source_ref: "fixture://datalake/test-results/KNOWN-A",
+              digest: "sha256:" + "0".repeat(64),
+            }],
+            next_action: "run_firmware_regression",
+            action_type: "TEST",
+            owning_team: "firmware_analysis",
+            evidence_completeness: 1,
+            confidence_basis: "DETERMINISTIC_RULE_AND_REQUIRED_EVIDENCE",
+            human_gate: "ENGINEER_DISPOSITION_REQUIRED",
+            trace_id: "sha256:" + "1".repeat(64),
+            authority: "SELECT_ONLY",
+          });
+          if (rich.ranked_hypotheses[0].mode_id !== "MODE-A-FIRMWARE") process.exit(33);
+          if (!rich.supporting_evidence[0].source_ref.startsWith("fixture://")) process.exit(34);
+          if (TriageRequestGeneratedSchema.safeParse({ case_name: "not_admitted" }).success) process.exit(31);
+          if (TriageResponseGeneratedSchema.safeParse({
+            case_id: "X",
+            standing: "ALIVE",
+            admitted_mode: null,
+            ranked_hypotheses: [],
+            closest_prior_cases: [],
+            supporting_evidence: [],
+            next_action: "x",
+            action_type: "ESCALATE",
+            owning_team: "failure_analysis",
+            evidence_completeness: 0,
+            confidence_basis: "invalid",
+            human_gate: "ENGINEER_DISPOSITION_REQUIRED",
+            trace_id: "sha256:" + "2".repeat(64),
+            authority: "DO",
+          }).success) process.exit(32);
+          console.log("WD_FA_GGEN_ZOD_ALIVE");
+          JS
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: wd-fa-ggen-contract-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            src/autofde_lab/wd_fa/ggen_contract/src/shacl_pydantic_models.py
+            apps/wd-fa-web/ggen_contract/src/shacl_zod_schemas.js
+          if-no-files-found: error
+          retention-days: 30

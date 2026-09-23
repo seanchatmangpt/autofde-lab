@@ -189,9 +189,7 @@ def _fixture(tmp_path: Path) -> GALLCompositionManifest:
         "projection_digest": projection_digest,
         "post_run_hash": projection_digest,
         "attestation_digest": _sha("attestation"),
-        "generated_files": [
-            {"path": "lib/generated.ex", "digest": projection_digest}
-        ],
+        "generated_files": [{"path": "lib/generated.ex", "digest": projection_digest}],
         "regeneration": "PASS",
         "standing": "ALIVE",
     }
@@ -285,13 +283,16 @@ def _fixture(tmp_path: Path) -> GALLCompositionManifest:
             "and independent postcondition remain separate courts"
         ),
     }
-    weaver_payload["receipt_digest"] = "sha256:" + hashlib.sha256(
-        json.dumps(
-            weaver_payload,
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode()
-    ).hexdigest()
+    weaver_payload["receipt_digest"] = (
+        "sha256:"
+        + hashlib.sha256(
+            json.dumps(
+                weaver_payload,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
+        ).hexdigest()
+    )
     telemetry = _write_evidence(
         tmp_path / "g4-weaver.json",
         "GALL-004-TELEMETRY",
@@ -427,7 +428,10 @@ def test_gall_001_replay_requires_complete_recomputed_identity_witness(
     payload["replay"]["identity"].pop("environment")
     Path(ref.path).write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
     changed = ReceiptReference.from_path(
-        checkpoint=ref.checkpoint, repository=ref.repository, repo_sha=ref.repo_sha, path=ref.path
+        checkpoint=ref.checkpoint,
+        repository=ref.repository,
+        repo_sha=ref.repo_sha,
+        path=ref.path,
     )
     manifest = replace(manifest, receipts=(changed, *manifest.receipts[1:]))
 
@@ -452,7 +456,6 @@ def test_generic_hash_only_gall_001_payload_is_refused(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="portable receipt schema"):
         compile_verified_experience(manifest, deterministic_output={"x": 1})
-
 
 
 def test_multi_pack_gall_001_allows_one_exact_subject_match(
@@ -781,4 +784,3 @@ def test_runner_refuses_manifest_for_different_autofde_head(tmp_path: Path) -> N
     )
     assert completed.returncode == 65
     assert "REFUSED_EXACT_HEAD" in completed.stderr
-

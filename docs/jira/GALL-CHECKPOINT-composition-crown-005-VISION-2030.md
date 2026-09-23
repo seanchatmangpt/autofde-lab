@@ -39,10 +39,10 @@ The system gets operationally less dependent on intelligence as it learns.
 The 2030 ontology preserves:
 
 [
-Planner 
-eq Policy 
-eq Role 
-eq Agent 
+Planner
+eq Policy
+eq Role
+eq Agent
 eq Authority
 ]
 

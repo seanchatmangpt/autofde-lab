@@ -153,7 +153,8 @@ def compile_verified_experience(
             item.receipt_digest for item in sorted(admitted, key=lambda x: x.checkpoint)
         ),
         source_evidence=tuple(
-            item.receipt_digest for item in sorted(supporting, key=lambda x: x.evidence_class)
+            item.receipt_digest
+            for item in sorted(supporting, key=lambda x: x.evidence_class)
         ),
     )
 
@@ -176,7 +177,9 @@ def compile_verified_experience(
         standing="PARTIAL_ALIVE",
     )
     if compilation.compiled_rule_count != 1:
-        raise AssertionError("MachineExperience compiler did not compile exactly one rule")
+        raise AssertionError(
+            "MachineExperience compiler did not compile exactly one rule"
+        )
     return artifact, result
 
 
@@ -193,15 +196,21 @@ def run_known_replay(
         raise KeyError("semantic key is not qualified KNOWN for this artifact")
 
     expected_receipts = tuple(
-        ref.receipt_digest for ref in sorted(manifest.receipts, key=lambda x: x.checkpoint)
+        ref.receipt_digest
+        for ref in sorted(manifest.receipts, key=lambda x: x.checkpoint)
     )
     expected_evidence = tuple(
-        ref.receipt_digest for ref in sorted(manifest.evidence, key=lambda x: x.evidence_class)
+        ref.receipt_digest
+        for ref in sorted(manifest.evidence, key=lambda x: x.evidence_class)
     )
     if artifact.source_receipts != expected_receipts:
-        raise ValueError("MachineExperience source receipt identities do not match manifest")
+        raise ValueError(
+            "MachineExperience source receipt identities do not match manifest"
+        )
     if artifact.source_evidence != expected_evidence:
-        raise ValueError("MachineExperience supporting evidence identities do not match manifest")
+        raise ValueError(
+            "MachineExperience supporting evidence identities do not match manifest"
+        )
 
     output = dict(artifact.deterministic_output)
     result = GALLCrownResult(
@@ -223,7 +232,6 @@ def run_known_replay(
         standing="PARTIAL_ALIVE",
     )
     return output, result
-
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -275,4 +283,3 @@ def write_replay_bundle(
     }
     crown["crown_receipt_digest"] = _digest(crown)
     _write_json(root / "gall-005-crown-receipt.json", crown)
-
