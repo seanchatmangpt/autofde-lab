@@ -8,10 +8,12 @@ from pathlib import Path
 from typing import Sequence
 
 from .anti_unification import AntiUnifier
+from .brce_reference import brce_reference_system
 from .ggen_create_adapter import GgenCreateAdapter
 from .model import RepositorySubject, canonical_json
 from .runner import PassiveCorpusRunner, RepositoryInput
 from .structural import StructuralParserRegistry
+from .tla_projection import render_tla
 
 
 def _subject(args: argparse.Namespace) -> RepositorySubject:
@@ -105,6 +107,21 @@ def _ggen_create_plan(args: argparse.Namespace) -> int:
     return 0
 
 
+def _brce_tla(args: argparse.Namespace) -> int:
+    projection = render_tla(brce_reference_system())
+    payload = {
+        "projection_id": projection.projection_id,
+        "source_system_id": projection.source_system_id,
+        "module_name": projection.module_name,
+        "tla": projection.tla,
+        "cfg": projection.cfg,
+        "verification": "NOT_RUN",
+        "authority": "NONE",
+    }
+    print(canonical_json(payload))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m autofde_lab.iec",
@@ -150,6 +167,12 @@ def build_parser() -> argparse.ArgumentParser:
     plan.add_argument("--generator", required=True)
     plan.add_argument("--include", action="append", required=True)
     plan.set_defaults(func=_ggen_create_plan)
+
+    tla = subparsers.add_parser(
+        "brce-tla",
+        help="render BRCE reference TLA+ without executing a model checker",
+    )
+    tla.set_defaults(func=_brce_tla)
 
     return parser
 
