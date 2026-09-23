@@ -56,6 +56,12 @@ jobs:
           cache: pip
           cache-dependency-path: requirements-agentic.txt
 
+      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          version: "0.9.2"
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+
       - uses: jwlawson/actions-setup-cmake@0d6a7d60b009d01c9e7523be22153ff8f19460d3 # v2
         with:
           cmake-version: "4.0.3"
@@ -75,20 +81,28 @@ jobs:
             | tar jxf - -C "$BOOST_DIR" --strip-components=1 \
               "boost_${BOOST_VERSION//./_}/boost"
 
-      - name: Install focused fabric runtime
+      - name: Install fabric runtime from the frozen lock
+        shell: bash
         run: |
-          python -m pip install --disable-pip-version-check \
-            "pytest>=8,<8.4" \
-            "numpy>=2" \
-            "wrapt>=2.2.1" \
-            "pynng>=0.6.2" \
-            "pathos>=0.2.7" \
-            "discrete-optimization>=0.9.0" \
-            "rdflib" \
-            "gymnasium>=0.29.1,<2" \
+          set -euo pipefail
+          # The fabric suite is no longer install-light: the tracked
+          # ontology/autofde-lab-capabilities.ttl is the canonical
+          # regeneration from a FULL environment (test_afde_2608 asserts
+          # byte-identity against generate()'s live import-probe output),
+          # and the cross-process courts load solvers through registered
+          # entry points. Both require the project's own declared
+          # dependency set, so use the exact recipe the ci.yml integration
+          # job uses: export the frozen lock (extras + test group) and
+          # install that. requirements-agentic.txt is installed on top for
+          # the decision-fabric surfaces the focused list used to carry.
+          uv export --frozen --format requirements-txt --extra all --group test \
+            --no-dev --no-hashes --no-emit-project -o /tmp/autofde-lab-all.txt
+          uv pip install --system -r /tmp/autofde-lab-all.txt \
+            "ortools!=9.15.6755" "llvmlite>=0.45"
+          uv pip install --system --no-deps \
             "wasm4pm-compat-pydantic @ git+https://github.com/seanchatmangpt/wasm4pm-compat.git@577e2d1d8bdfe27d96f61c63f3ea120994e8bfda#subdirectory=python" \
-            "gymact @ git+https://github.com/seanchatmangpt/gymact.git@524d0bc8633d8534f500d67f27384ce9368c0863 ; python_version >= '3.11'" \
-            -r requirements-agentic.txt
+            "gymact @ git+https://github.com/seanchatmangpt/gymact.git@524d0bc8633d8534f500d67f27384ce9368c0863 ; python_version >= '3.11'"
+          python -m pip install --disable-pip-version-check -r requirements-agentic.txt
 
       - name: Build compiled hub and materialize it into the src tree
         env:
@@ -125,6 +139,13 @@ jobs:
                           print(f"materialized {name} -> {target}")
           assert copied >= 1, "compiled hub module missing from the built wheel"
           PY
+          # Register the project's entry points (autofde_lab.solvers etc.):
+          # load_registered_solver resolves Astar through
+          # importlib.metadata, which only sees an INSTALLED distribution.
+          # The cross-process determinism courts spawn the classical-engine
+          # subprocess that loads Astar this way; without the install the
+          # solver group is empty ('NoneType' object is not callable).
+          python -m pip install --no-deps --disable-pip-version-check dist/*.whl
 
       - name: Compile authored fabric surfaces
         run: |
