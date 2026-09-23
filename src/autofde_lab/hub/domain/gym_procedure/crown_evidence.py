@@ -70,7 +70,6 @@ from dataclasses import dataclass
 from typing import Union
 
 import jsonschema
-
 from gymact.ocel import digest_ocel_log, validate_ocel_log
 from gymact.process import ConformanceChecker, ConformanceResult
 from gymact.replay import ReplayReport
@@ -197,7 +196,9 @@ Standing = Union[
 ]
 
 
-def _conformant_execution_evidence_to_dict(evidence: ConformantExecutionEvidence) -> dict:
+def _conformant_execution_evidence_to_dict(
+    evidence: ConformantExecutionEvidence,
+) -> dict:
     return {
         "episode_digest": evidence.episode_digest,
         "conformance": {
@@ -218,7 +219,9 @@ def _conformant_execution_evidence_to_dict(evidence: ConformantExecutionEvidence
     }
 
 
-def _conformant_execution_evidence_from_dict(payload: dict) -> ConformantExecutionEvidence:
+def _conformant_execution_evidence_from_dict(
+    payload: dict,
+) -> ConformantExecutionEvidence:
     from gymact.process import ConformanceResult
     from gymact.replay import ReplayMode, ReplayReport
 
@@ -233,7 +236,9 @@ def _conformant_execution_evidence_from_dict(payload: dict) -> ConformantExecuti
     )
 
 
-def _goal_consequence_evidence_to_dict(goal: GoalConsequenceEvidence | None) -> dict | None:
+def _goal_consequence_evidence_to_dict(
+    goal: GoalConsequenceEvidence | None,
+) -> dict | None:
     if goal is None:
         return None
     return {
@@ -245,7 +250,9 @@ def _goal_consequence_evidence_to_dict(goal: GoalConsequenceEvidence | None) -> 
     }
 
 
-def _goal_consequence_evidence_from_dict(payload: dict | None) -> GoalConsequenceEvidence | None:
+def _goal_consequence_evidence_from_dict(
+    payload: dict | None,
+) -> GoalConsequenceEvidence | None:
     if payload is None:
         return None
     return GoalConsequenceEvidence(
@@ -281,7 +288,11 @@ def standing_to_dict(standing: Standing) -> dict:
             "episode_digest": standing.episode_digest,
         }
     if isinstance(standing, RefusedEvidence):
-        return {"variant": "RefusedEvidence", "reason": standing.reason, "subject": standing.subject}
+        return {
+            "variant": "RefusedEvidence",
+            "reason": standing.reason,
+            "subject": standing.subject,
+        }
     if isinstance(standing, BlockedEvidence):
         return {"variant": "BlockedEvidence", "reason": standing.reason}
     if isinstance(standing, UnsupportedEvidence):
@@ -319,7 +330,9 @@ def standing_from_dict(payload: dict) -> Standing:
             reason=payload["reason"],
         )
     if variant == "UnknownEvidence":
-        return UnknownEvidence(missing=payload["missing"], episode_digest=payload["episode_digest"])
+        return UnknownEvidence(
+            missing=payload["missing"], episode_digest=payload["episode_digest"]
+        )
     if variant == "RefusedEvidence":
         return RefusedEvidence(reason=payload["reason"], subject=payload["subject"])
     if variant == "BlockedEvidence":
@@ -415,7 +428,9 @@ def standing_from_episode(
     try:
         validate_ocel_log(log)
     except jsonschema.ValidationError as exc:
-        return UnknownEvidence(missing=f"OCEL_SCHEMA_INVALID:{exc.message}", episode_digest=None)
+        return UnknownEvidence(
+            missing=f"OCEL_SCHEMA_INVALID:{exc.message}", episode_digest=None
+        )
 
     episode_digest = digest_ocel_log(log)
 
@@ -427,16 +442,24 @@ def standing_from_episode(
         )
 
     if not replay.valid:
-        mismatches = "; ".join(replay.mismatches) or "REPLAY_REPORTED_INVALID_NO_MISMATCH_DETAIL"
-        return UnknownEvidence(missing=f"REPLAY_INVALID:{mismatches}", episode_digest=episode_digest)
+        mismatches = (
+            "; ".join(replay.mismatches) or "REPLAY_REPORTED_INVALID_NO_MISMATCH_DETAIL"
+        )
+        return UnknownEvidence(
+            missing=f"REPLAY_INVALID:{mismatches}", episode_digest=episode_digest
+        )
 
     if postcondition_ref is None:
-        return UnknownEvidence(missing="POSTCONDITION_REF_ABSENT", episode_digest=episode_digest)
+        return UnknownEvidence(
+            missing="POSTCONDITION_REF_ABSENT", episode_digest=episode_digest
+        )
 
     if not receipts:
         return UnknownEvidence(missing="RECEIPTS_EMPTY", episode_digest=episode_digest)
 
-    resolved_receipt_id = receipt_id if receipt_id is not None else str(receipts[0].receipt_id)
+    resolved_receipt_id = (
+        receipt_id if receipt_id is not None else str(receipts[0].receipt_id)
+    )
 
     conformant = ConformantExecutionEvidence(
         episode_digest=episode_digest,
@@ -455,4 +478,6 @@ def standing_from_episode(
         if goal is None
         else f"GOAL_CONSEQUENCE_REPORTED_FALSE:verification_id={goal.verification_id}"
     )
-    return ConformantButGoalUnmetEvidence(conformant=conformant, goal=goal, reason=reason)
+    return ConformantButGoalUnmetEvidence(
+        conformant=conformant, goal=goal, reason=reason
+    )

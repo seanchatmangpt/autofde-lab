@@ -38,7 +38,9 @@ def test_actuation_intent_round_trips_through_dump_and_validate() -> None:
     assert dumped["operation"] == "act"
 
 
-def test_actuation_intent_missing_required_field_raises_named_validation_error() -> None:
+def test_actuation_intent_missing_required_field_raises_named_validation_error() -> (
+    None
+):
     with pytest.raises(pydantic.ValidationError) as excinfo:
         ActuationIntent.model_validate({"operation": "act"})
 

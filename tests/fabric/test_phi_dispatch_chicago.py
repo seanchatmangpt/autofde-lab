@@ -23,7 +23,6 @@ registered* solver entry points and calls each one's real `check_domain(domain)`
 
 from __future__ import annotations
 
-import os
 
 import pytest
 
@@ -99,7 +98,9 @@ def test_fixture_covers_every_closed_relation_class():
 
 
 @pytest.mark.parametrize(
-    "relation_class", sorted(_REPRESENTABLE_ANOMALIES), ids=sorted(_REPRESENTABLE_ANOMALIES)
+    "relation_class",
+    sorted(_REPRESENTABLE_ANOMALIES),
+    ids=sorted(_REPRESENTABLE_ANOMALIES),
 )
 def test_phi_output_dispatches_to_a_real_nonempty_compatible_solver_set(relation_class):
     """For each phi()-produced real domain instance, match_solvers() is non-empty.
@@ -252,7 +253,9 @@ class TestMatchSolversRanked:
         # (a) real pre-filter reduces to <=8 before the subprocess call.
         top, rest = autofde_lab_utils._prefilter_top_for_ranking(unranked)
         assert len(top) == autofde_lab_utils._CMCA_RANK_CLI_MAX_CANDIDATES
-        assert len(rest) == len(unranked) - autofde_lab_utils._CMCA_RANK_CLI_MAX_CANDIDATES
+        assert (
+            len(rest) == len(unranked) - autofde_lab_utils._CMCA_RANK_CLI_MAX_CANDIDATES
+        )
         assert set(top) | set(rest) == set(unranked)
 
         # (b) the real subprocess call on the pre-filtered <=8 succeeds --

@@ -33,16 +33,32 @@ def _build_log() -> OcelLog:
             OcelObject(
                 "session-1",
                 "MCPSession",
-                (OcelAttribute("server", OcelAttributeValue.string("scikit-decide-fabric")),),
+                (
+                    OcelAttribute(
+                        "server", OcelAttributeValue.string("scikit-decide-fabric")
+                    ),
+                ),
             ),
-            OcelObject("domain-Maze", "Domain", (OcelAttribute("name", OcelAttributeValue.string("Maze")),)),
+            OcelObject(
+                "domain-Maze",
+                "Domain",
+                (OcelAttribute("name", OcelAttributeValue.string("Maze")),),
+            ),
             OcelObject(
                 "domain-MasterMind",
                 "Domain",
                 (OcelAttribute("name", OcelAttributeValue.string("MasterMind")),),
             ),
-            OcelObject("solver-Astar", "Solver", (OcelAttribute("name", OcelAttributeValue.string("Astar")),)),
-            OcelObject("solver-MCTS", "Solver", (OcelAttribute("name", OcelAttributeValue.string("MCTS")),)),
+            OcelObject(
+                "solver-Astar",
+                "Solver",
+                (OcelAttribute("name", OcelAttributeValue.string("Astar")),),
+            ),
+            OcelObject(
+                "solver-MCTS",
+                "Solver",
+                (OcelAttribute("name", OcelAttributeValue.string("MCTS")),),
+            ),
         ]
     )
 
@@ -177,10 +193,16 @@ def test_session_event_order(conn: sqlite3.Connection) -> None:
     assert rows[0]["activity"] == "decision_match"
     assert set(rows[0]["object_ids"]) == {"session-1", "domain-Maze"}
     assert rows[-1]["event_id"] == "evt-solve-mastermind-astar-1"
-    assert set(rows[-1]["object_ids"]) == {"session-1", "domain-MasterMind", "solver-Astar"}
+    assert set(rows[-1]["object_ids"]) == {
+        "session-1",
+        "domain-MasterMind",
+        "solver-Astar",
+    }
 
 
-def test_session_event_order_unknown_session_returns_empty(conn: sqlite3.Connection) -> None:
+def test_session_event_order_unknown_session_returns_empty(
+    conn: sqlite3.Connection,
+) -> None:
     assert session_event_order(conn, "no-such-session") == []
 
 

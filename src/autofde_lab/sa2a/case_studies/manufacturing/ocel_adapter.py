@@ -24,6 +24,7 @@ real ``OcelLog.append_event`` / ``with_objects`` / ``validate`` /
 ``to_ocel2_json`` / ``digest`` signatures verified against
 ``src/autofde_lab/ocel/log.py`` match the contract's sketch exactly.
 """
+
 from __future__ import annotations
 
 import json
@@ -68,7 +69,9 @@ EVT_PROHIBITION = "odrl:Prohibition"
 EVT_ACTUATION = "sosa:Actuation"
 
 QUAL_HAS_FEATURE_OF_INTEREST = "sosa:hasFeatureOfInterest"  # Observation -> Equipment
-QUAL_GENERATED = "prov:generated"  # Observation -> Plan (on proposal); Actuation -> Receipt
+QUAL_GENERATED = (
+    "prov:generated"  # Observation -> Plan (on proposal); Actuation -> Receipt
+)
 QUAL_USED = "prov:used"  # Permission/Prohibition -> Plan; Actuation -> Plan
 QUAL_ASSIGNEE = "odrl:assignee"  # Permission/Prohibition -> Equipment
 QUAL_ACTS_ON = "sosa:actsOnProperty"  # Actuation -> Equipment
@@ -189,8 +192,12 @@ def record_actuation(
             id=receipt_id,
             object_type=OBJ_RECEIPT,
             attributes=(
-                OcelAttribute("pre_state_hash", OcelAttributeValue.string(pre_state_hash)),
-                OcelAttribute("post_state_hash", OcelAttributeValue.string(post_state_hash)),
+                OcelAttribute(
+                    "pre_state_hash", OcelAttributeValue.string(pre_state_hash)
+                ),
+                OcelAttribute(
+                    "post_state_hash", OcelAttributeValue.string(post_state_hash)
+                ),
                 OcelAttribute("applied", OcelAttributeValue.boolean(applied)),
             ),
         )

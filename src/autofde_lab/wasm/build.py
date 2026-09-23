@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+from pathlib import Path
 from typing import Any
 
 from ._abi import BUILD_REPORT_SCHEMA, WIT
@@ -16,7 +16,7 @@ from ._model import canonical_json_bytes
 from ._registry import ComponentRegistry
 from ._runtime import ChatmanEcosystem
 
-_C_TEMPLATE = r'''
+_C_TEMPLATE = r"""
 typedef unsigned char u8;
 typedef unsigned int u32;
 typedef unsigned long long u64;
@@ -47,7 +47,7 @@ __attribute__((visibility("default"))) u64 chatman_invoke(u32 ptr, u32 len) {
   puts1("},\"receipt\":{\"schema\":\"chatman.ecosystem.receipt.v1\",\"scope\":\"federation-adapter\",\"subject\":{\"component\":\""); puts1(COMPONENT); puts1("\",\"source_revision\":\""); puts1(REVISION); puts1("\"},\"execution\":{\"runtime\":\"wasm32-core\",\"operation\":\""); puts1(found ? operation : ""); puts1("\",\"request_len\":"); putn(len); puts1("},\"standing\":\""); puts1(admitted ? "ALIVE" : "REFUSED"); puts1("\"}}");
   return (((u64)(u32)(u64)response) << 32) | (u64)response_len;
 }
-'''
+"""
 
 
 def emit_contract(output: Path, registry: ComponentRegistry) -> tuple[Path, Path]:
@@ -59,7 +59,9 @@ def emit_contract(output: Path, registry: ComponentRegistry) -> tuple[Path, Path
     return wit_path, manifest_path
 
 
-def materialize(output: Path, registry: ComponentRegistry | None = None) -> dict[str, Any]:
+def materialize(
+    output: Path, registry: ComponentRegistry | None = None
+) -> dict[str, Any]:
     registry = registry or ComponentRegistry.default()
     wit, manifest = emit_contract(output, registry)
     artifacts = []
@@ -165,7 +167,11 @@ def rebuild_verify(output: Path, compiler: str | None = None) -> dict[str, Any]:
                     "output": completed.stdout,
                 }
             )
-    standing = "ALIVE" if all(item["status"] == "ALIVE" for item in results) else "BUILD_BROKEN"
+    standing = (
+        "ALIVE"
+        if all(item["status"] == "ALIVE" for item in results)
+        else "BUILD_BROKEN"
+    )
     report = {
         "schema": "chatman.ecosystem.rebuild-report.v1",
         "status": standing,

@@ -68,7 +68,9 @@ def test_predict_memory_oracle_matches_actuate_arithmetic() -> None:
     for step in predict_step_postconditions(plan, "memory", {"counter": 0}):
         assert "solved" not in step
 
-    with pytest.raises(ValueError, match="UNSUPPORTED_ACTION_FOR_POSTCONDITION_PREDICTION"):
+    with pytest.raises(
+        ValueError, match="UNSUPPORTED_ACTION_FOR_POSTCONDITION_PREDICTION"
+    ):
         predict_step_postconditions(("decrement",), "memory", {"counter": 0})
 
 
@@ -77,7 +79,9 @@ def test_predict_memory_is_dispatched_explicitly_not_via_generic_fallback() -> N
     must route through the dedicated `_predict_memory` branch, never fall
     through to the generic `_COUNTER_DELTAS` tail (which would attach a
     `solved` key the real environment never publishes)."""
-    result = predict_step_postconditions(("increment[amount=1,key=counter]",), "memory", {"counter": 0})
+    result = predict_step_postconditions(
+        ("increment[amount=1,key=counter]",), "memory", {"counter": 0}
+    )
     assert result == [{"counter": 1}]
     assert "solved" not in result[0]
 
@@ -86,9 +90,13 @@ def test_predict_memory_is_dispatched_explicitly_not_via_generic_fallback() -> N
 def memory_trial(tmp_path_factory) -> pathlib.Path:
     """One real, executed `memory` trial -- the 6th Level 4 tracer bullet."""
     root = tmp_path_factory.mktemp("level4_memory_gym")
-    report = run_real_trial(4102, "memory", {"initial": {"counter": 0}, "target": 2}, root)
+    report = run_real_trial(
+        4102, "memory", {"initial": {"counter": 0}, "target": 2}, root
+    )
     if report.outcome != "EXECUTED":
-        pytest.skip(f"UNSUPPORTED: trial did not reach actuation (outcome={report.outcome})")
+        pytest.skip(
+            f"UNSUPPORTED: trial did not reach actuation (outcome={report.outcome})"
+        )
     return report
 
 
@@ -170,7 +178,9 @@ def test_memory_gym_witness_is_non_vacuous_severed_edge_flips_to_false(
 
     g = projection.graph
     targets = list(g.triples((None, AFL.derivedByVerifier, None)))
-    assert len(targets) == 1, "expected exactly one derivedByVerifier edge on the real witness"
+    assert len(targets) == 1, (
+        "expected exactly one derivedByVerifier edge on the real witness"
+    )
     s, p, o = targets[0]
 
     mutant = rdflib.Graph()
@@ -179,8 +189,12 @@ def test_memory_gym_witness_is_non_vacuous_severed_edge_flips_to_false(
     for triple in g:
         mutant.add(triple)
     mutant.remove((s, p, o))
-    mutant.add((s, p, rdflib.URIRef("urn:autofde-lab:VerifierRun:wrong-identity-deadbeef")))
+    mutant.add(
+        (s, p, rdflib.URIRef("urn:autofde-lab:VerifierRun:wrong-identity-deadbeef"))
+    )
 
     mutated = verify_witness_graph(mutant)
     assert mutated.conforms is False
-    assert "afl:VerifierRun" in mutated.report_text or "VerifierRun" in mutated.report_text
+    assert (
+        "afl:VerifierRun" in mutated.report_text or "VerifierRun" in mutated.report_text
+    )

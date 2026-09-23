@@ -20,10 +20,14 @@ from __future__ import annotations
 from pathlib import Path
 
 from autofde_lab.reasoning.gymact_certification_types import StandingValue
-from autofde_lab.reasoning.sregym_oracle_contract_scan import scan_sregym_oracle_contracts
+from autofde_lab.reasoning.sregym_oracle_contract_scan import (
+    scan_sregym_oracle_contracts,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-REAL_SREGYM_ORACLES_DIR = REPO_ROOT / "vendor" / "gyms" / "sregym" / "sregym" / "conductor" / "oracles"
+REAL_SREGYM_ORACLES_DIR = (
+    REPO_ROOT / "vendor" / "gyms" / "sregym" / "sregym" / "conductor" / "oracles"
+)
 
 
 def test_all_five_real_shapes_are_classified_from_real_fixture_files(tmp_path) -> None:
@@ -54,7 +58,10 @@ def test_all_five_real_shapes_are_classified_from_real_fixture_files(tmp_path) -
     assert result.unparseable_files == ()
     assert len(result.findings) == 5
 
-    shapes_by_class = {f.finding_oracle_class_name: f.finding_evaluate_arg_shape_ref for f in result.findings}
+    shapes_by_class = {
+        f.finding_oracle_class_name: f.finding_evaluate_arg_shape_ref
+        for f in result.findings
+    }
     assert shapes_by_class["NoArgsOracle"] == StandingValue.NO_ARGS.value
     assert shapes_by_class["SolutionOnlyOracle"] == StandingValue.SOLUTION_ONLY.value
     assert shapes_by_class["VarargsOracle"] == StandingValue.VARARGS.value
@@ -62,7 +69,10 @@ def test_all_five_real_shapes_are_classified_from_real_fixture_files(tmp_path) -
         shapes_by_class["SolutionTraceDurationOptionalOracle"]
         == StandingValue.SOLUTION_TRACE_DURATION_OPTIONAL.value
     )
-    assert shapes_by_class["SolutionDurationNoTraceOracle"] == StandingValue.SOLUTION_DURATION_NO_TRACE.value
+    assert (
+        shapes_by_class["SolutionDurationNoTraceOracle"]
+        == StandingValue.SOLUTION_DURATION_NO_TRACE.value
+    )
 
 
 def test_real_return_type_annotation_mismatch_is_detected() -> None:
@@ -76,7 +86,7 @@ def test_real_return_type_annotation_mismatch_is_detected() -> None:
         (directory / "wrong_annotation_oracle.py").write_text(
             "class WrongAnnotationOracle:\n"
             "    def evaluate(self) -> bool:\n"
-            "        return {\"success\": True}\n"
+            '        return {"success": True}\n'
         )
         result = scan_sregym_oracle_contracts(directory)
 
@@ -86,7 +96,9 @@ def test_real_return_type_annotation_mismatch_is_detected() -> None:
     assert finding.finding_return_type_annotation_mismatch is True
 
 
-def test_real_mismatch_via_variable_tracking_matches_the_real_vendored_defect(tmp_path) -> None:
+def test_real_mismatch_via_variable_tracking_matches_the_real_vendored_defect(
+    tmp_path,
+) -> None:
     """The real, motivating case: `results = {}` built up via subscript
     assignment, then `return results`, annotated `-> bool` -- exactly
     `ingress_misroute_oracle.py`'s real shape. A naive `return {...}`-only
@@ -96,7 +108,7 @@ def test_real_mismatch_via_variable_tracking_matches_the_real_vendored_defect(tm
         "class IngressStyleOracle:\n"
         "    def evaluate(self) -> bool:\n"
         "        results = {}\n"
-        "        results[\"success\"] = True\n"
+        '        results["success"] = True\n'
         "        return results\n"
     )
     result = scan_sregym_oracle_contracts(tmp_path)
@@ -113,7 +125,9 @@ def test_correct_annotation_is_never_flagged_as_mismatch(tmp_path) -> None:
 
 
 def test_unparseable_file_is_named_never_silently_dropped(tmp_path) -> None:
-    (tmp_path / "broken_syntax.py").write_text("class Broken(:\n    def evaluate(self\n")
+    (tmp_path / "broken_syntax.py").write_text(
+        "class Broken(:\n    def evaluate(self\n"
+    )
     (tmp_path / "real_oracle.py").write_text(
         "class RealOracle:\n    def evaluate(self) -> dict:\n        return {}\n"
     )
@@ -141,12 +155,16 @@ def test_real_exhaustive_scan_against_the_actual_vendored_oracles_directory() ->
     scanner is exhaustive over the real corpus, not just hand-picked
     fixtures. Reads real source text only; never imports anything from
     `vendor.gyms.sregym`."""
-    assert REAL_SREGYM_ORACLES_DIR.is_dir(), f"expected real directory at {REAL_SREGYM_ORACLES_DIR}"
+    assert REAL_SREGYM_ORACLES_DIR.is_dir(), (
+        f"expected real directory at {REAL_SREGYM_ORACLES_DIR}"
+    )
 
     result = scan_sregym_oracle_contracts(REAL_SREGYM_ORACLES_DIR)
 
     assert result.files_scanned > 30  # this session's own agent found ~57 real files
-    assert len(result.findings) > 30  # real, non-trivial number of real evaluate() methods found
+    assert (
+        len(result.findings) > 30
+    )  # real, non-trivial number of real evaluate() methods found
     assert result.unparseable_files == ()  # every real vendored file parses cleanly
 
     # Every finding's shape is a real, valid StandingValue member -- never
@@ -158,7 +176,9 @@ def test_real_exhaustive_scan_against_the_actual_vendored_oracles_directory() ->
         StandingValue.SOLUTION_TRACE_DURATION_OPTIONAL.value,
         StandingValue.SOLUTION_DURATION_NO_TRACE.value,
     }
-    assert all(f.finding_evaluate_arg_shape_ref in valid_shapes for f in result.findings)
+    assert all(
+        f.finding_evaluate_arg_shape_ref in valid_shapes for f in result.findings
+    )
 
     # Real, known positive: the base Oracle ABC's own evaluate() (solution,
     # trace, duration -- all required, no defaults) is real and present in
@@ -166,12 +186,20 @@ def test_real_exhaustive_scan_against_the_actual_vendored_oracles_directory() ->
     # in the same class-shape as the concrete subclasses -- confirm at
     # least the NO_ARGS shape (the real majority pattern found by this
     # session's own exhaustive grep) is well represented.
-    no_args_count = sum(1 for f in result.findings if f.finding_evaluate_arg_shape_ref == StandingValue.NO_ARGS.value)
+    no_args_count = sum(
+        1
+        for f in result.findings
+        if f.finding_evaluate_arg_shape_ref == StandingValue.NO_ARGS.value
+    )
     assert no_args_count > 10
 
     # Real, known positive for the return-type-annotation-mismatch heuristic:
     # ingress_misroute_oracle.py's real IngressMisrouteMitigationOracle
     # (evaluate(self) -> bool, real body builds and returns a dict via
     # results = {}; results["success"] = ...; return results).
-    mismatches = {f.finding_oracle_class_name for f in result.findings if f.finding_return_type_annotation_mismatch}
+    mismatches = {
+        f.finding_oracle_class_name
+        for f in result.findings
+        if f.finding_return_type_annotation_mismatch
+    }
     assert "IngressMisrouteMitigationOracle" in mismatches

@@ -32,9 +32,7 @@ class ReceiptLedger:
         if not path.exists():
             return cls.empty()
         records = [
-            json.loads(line)
-            for line in path.read_text().splitlines()
-            if line.strip()
+            json.loads(line) for line in path.read_text().splitlines() if line.strip()
         ]
         return cls(records=records)
 
@@ -58,7 +56,9 @@ class ReceiptLedger:
             # Must match Certificate.certificate_digest() exactly: hashes only
             # {kind, body}, not the full record (schema_version/issued_at_ms/digest
             # are metadata, not digest input).
-            recomputed = str(Digest.of_json({"kind": record["kind"], "body": record["body"]}))
+            recomputed = str(
+                Digest.of_json({"kind": record["kind"], "body": record["body"]})
+            )
             body = record.get("body", {})
             sequence = body.get("sequence")
             if record.get("digest") != recomputed:

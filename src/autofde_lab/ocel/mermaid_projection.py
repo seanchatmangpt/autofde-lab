@@ -106,7 +106,9 @@ def ocel_to_mermaid(log: dict, title: str = "") -> str:
     for obj in sorted(objects, key=sort_key):
         oid = obj.get("id", "")
         otype = obj.get("type", "?")
-        lines.append(f'    {_node_id(oid)}["{_label(otype)}<br/>{_label(_short(oid))}"]')
+        lines.append(
+            f'    {_node_id(oid)}["{_label(otype)}<br/>{_label(_short(oid))}"]'
+        )
 
     edge_count = 0
     for obj in sorted(objects, key=sort_key):
@@ -131,7 +133,9 @@ def ocel_to_mermaid(log: dict, title: str = "") -> str:
     return "\n".join(lines)
 
 
-def federation_to_mermaid(federation: list[dict], committed_plan: list[str] | None = None) -> str:
+def federation_to_mermaid(
+    federation: list[dict], committed_plan: list[str] | None = None
+) -> str:
     """Project a real federation.json into a Mermaid flowchart.
 
     Shows every planner that actually ran and its real typed outcome -- the
@@ -141,7 +145,9 @@ def federation_to_mermaid(federation: list[dict], committed_plan: list[str] | No
     lines = ["flowchart TD", '    D["DiscoveredDomain"]']
     committed = tuple(committed_plan or ())
     for i, attempt in enumerate(federation):
-        planner = attempt.get("planner") or attempt.get("planner_identity") or f"planner{i}"
+        planner = (
+            attempt.get("planner") or attempt.get("planner_identity") or f"planner{i}"
+        )
         outcome = attempt.get("outcome", "UNKNOWN")
         plan = tuple(attempt.get("plan") or attempt.get("candidate_plan") or ())
         pid = _node_id(f"p{planner}")
@@ -163,7 +169,9 @@ def mermaid_for_trial(trial_dir: Path) -> str:
     for name in ("level4.ocel.json", "episode.ocel.json"):
         path = act / name
         if path.is_file():
-            return ocel_to_mermaid(json.loads(path.read_text()), title=f"{trial_dir.name} ({name})")
+            return ocel_to_mermaid(
+                json.loads(path.read_text()), title=f"{trial_dir.name} ({name})"
+            )
     return (
         "%% NO OCEL LOG ON DISK for "
         f"{trial_dir.name} -- nothing to project. Absence is not an empty graph;\n"

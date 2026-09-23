@@ -33,18 +33,24 @@ pytestmark = pytest.mark.skipif(skip_reason() is not None, reason=str(skip_reaso
 
 def test_predict_step_postconditions_counter_arithmetic() -> None:
     assert predict_step_postconditions(
-        ("increment", "increment", "increment"), "cube_counter", {"counter": 0, "target": 3}
+        ("increment", "increment", "increment"),
+        "cube_counter",
+        {"counter": 0, "target": 3},
     ) == [
         {"counter": 1, "solved": False},
         {"counter": 2, "solved": False},
         {"counter": 3, "solved": True},
     ]
     assert predict_step_postconditions(
-        ("increment_by", "decrement"), "cube_counter", {"counter": 0, "target": 1},
+        ("increment_by", "decrement"),
+        "cube_counter",
+        {"counter": 0, "target": 1},
         payloads=[{"value": 2}, {}],
     ) == [{"counter": 2, "solved": False}, {"counter": 1, "solved": True}]
 
-    with pytest.raises(ValueError, match="UNSUPPORTED_PROVIDER_FOR_POSTCONDITION_PREDICTION"):
+    with pytest.raises(
+        ValueError, match="UNSUPPORTED_PROVIDER_FOR_POSTCONDITION_PREDICTION"
+    ):
         predict_step_postconditions(("increment",), "not_a_provider", {"counter": 0})
 
 
@@ -52,7 +58,9 @@ def test_every_step_of_a_multi_step_plan_is_alive_and_verified(tmp_path) -> None
     """The repair: broadcasting one terminal expectation made intermediate
     steps REFUSED. Per-step postconditions must leave all three ALIVE."""
     plan = ("increment",) * 3
-    expected = predict_step_postconditions(plan, "cube_counter", {"counter": 0, "target": 3})
+    expected = predict_step_postconditions(
+        plan, "cube_counter", {"counter": 0, "target": 3}
+    )
     commitment = commit(ValidatedPlan(plan=plan, model_digest="d"), "trial-perstep")
 
     result = commit_and_execute(
@@ -73,7 +81,11 @@ def test_single_dict_expected_stays_backward_compatible(tmp_path) -> None:
     commitment = commit(ValidatedPlan(plan=plan, model_digest="d"), "trial-compat")
 
     result = commit_and_execute(
-        commitment, "cube_counter", {"target": 3}, {"counter": 3, "solved": True}, tmp_path / "compat"
+        commitment,
+        "cube_counter",
+        {"target": 3},
+        {"counter": 3, "solved": True},
+        tmp_path / "compat",
     )
 
     assert [t["standing"] for t in result["transitions"]] == ["ALIVE", "ALIVE", "ALIVE"]
@@ -81,8 +93,12 @@ def test_single_dict_expected_stays_backward_compatible(tmp_path) -> None:
 
 
 def test_advisory_candidate_still_refused_at_the_actuation_boundary(tmp_path) -> None:
-    with pytest.raises(AdvisoryAuthorityRefused, match="ADVISORY_AUTHORITY_USED_AS_BEARER"):
-        commit_and_execute(("increment",), "cube_counter", {"target": 3}, {}, tmp_path / "refused")
+    with pytest.raises(
+        AdvisoryAuthorityRefused, match="ADVISORY_AUTHORITY_USED_AS_BEARER"
+    ):
+        commit_and_execute(
+            ("increment",), "cube_counter", {"target": 3}, {}, tmp_path / "refused"
+        )
 
 
 def test_run_real_trial_end_to_end(tmp_path) -> None:

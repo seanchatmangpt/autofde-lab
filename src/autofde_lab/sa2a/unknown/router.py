@@ -79,7 +79,9 @@ class DiscoveryRoutingResult:
 
     @property
     def used_general_exploratory_intelligence(self) -> bool:
-        return self.selected_kind == DiscoveryEngineKind.GENERAL_EXPLORATORY_INTELLIGENCE
+        return (
+            self.selected_kind == DiscoveryEngineKind.GENERAL_EXPLORATORY_INTELLIGENCE
+        )
 
 
 class DiscoveryRouter:
@@ -127,16 +129,25 @@ class DiscoveryRouter:
                 except Exception:
                     errored.append(engine.engine_id)
                     continue
-                if candidate is not None and not isinstance(candidate, CandidateResolution):
+                if candidate is not None and not isinstance(
+                    candidate, CandidateResolution
+                ):
                     errored.append(engine.engine_id)
                     continue
                 if candidate is not None:
                     return DiscoveryRoutingResult(
-                        query_id=query.query_id, selected_engine_id=engine.engine_id,
-                        selected_kind=kind, candidate=candidate, attempted_engine_ids=tuple(attempted),
+                        query_id=query.query_id,
+                        selected_engine_id=engine.engine_id,
+                        selected_kind=kind,
+                        candidate=candidate,
+                        attempted_engine_ids=tuple(attempted),
                         errored_engine_ids=tuple(errored),
                     )
         return DiscoveryRoutingResult(
-            query_id=query.query_id, selected_engine_id=None, selected_kind=None,
-            candidate=None, attempted_engine_ids=tuple(attempted), errored_engine_ids=tuple(errored),
+            query_id=query.query_id,
+            selected_engine_id=None,
+            selected_kind=None,
+            candidate=None,
+            attempted_engine_ids=tuple(attempted),
+            errored_engine_ids=tuple(errored),
         )

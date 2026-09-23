@@ -15,26 +15,29 @@ import json
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
-import rdflib
 from rdflib import Graph, URIRef
 
-from autofde_lab.sa2a.admission.canonicalizer import canonicalize_graph, compute_graph_digest
-from autofde_lab.sa2a.admission.datalog_layer import DatalogEngine, DatalogRule
-from autofde_lab.sa2a.admission.n3_layer import CandidateDerivation, N3ImplicationRule, N3RuleEngine
+from autofde_lab.sa2a.admission.canonicalizer import (
+    canonicalize_graph,
+    compute_graph_digest,
+)
+from autofde_lab.sa2a.admission.datalog_layer import DatalogEngine
+from autofde_lab.sa2a.admission.n3_layer import (
+    N3RuleEngine,
+)
 from autofde_lab.sa2a.admission.shacl_layer import ShaclValidator
-from autofde_lab.sa2a.admission.shex_layer import ShexValidator, StructuralShape
+from autofde_lab.sa2a.admission.shex_layer import ShexValidator
 from autofde_lab.sa2a.algebra import RefusalCause, Standing
 from autofde_lab.sa2a.envelope import SemanticEnvelope
-
 
 # Refusal codes conforming to RFC-SA2A-001 §13, §19, §42, §62
 REFUSED_PARSE_FAILURE = "REFUSED_PARSE_FAILURE"
 REFUSED_IDENTITY = RefusalCause.REFUSED_IDENTITY.value
 REFUSED_NAMESPACE = RefusalCause.REFUSED_NAMESPACE.value
 REFUSED_STRUCTURE = RefusalCause.REFUSED_STRUCTURE.value  # ShEx violation
-REFUSED_SHACL = RefusalCause.REFUSED_SHACL.value          # SHACL violation
+REFUSED_SHACL = RefusalCause.REFUSED_SHACL.value  # SHACL violation
 REFUSED_DATALOG_FAILURE = "REFUSED_DATALOG_FAILURE"
 REFUSED_N3_FAILURE = "REFUSED_N3_FAILURE"
 REFUSED_FALSIFIER = RefusalCause.REFUSED_FALSIFIER.value  # SPARQL falsifier matched
@@ -71,7 +74,9 @@ class AdmissionReceipt:
             "timestamp": self.timestamp,
             "metadata": self.metadata,
         }
-        return json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        return json.dumps(
+            payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        )
 
     @property
     def receipt_hash(self) -> str:
@@ -206,7 +211,9 @@ class AdmissionPipeline:
                 refusal_code=code,
                 reasons=tuple(reasons),
                 stages_passed=tuple(stages_passed),
-                metadata={"failed_stage": stages_passed[-1] if stages_passed else "entry"},
+                metadata={
+                    "failed_stage": stages_passed[-1] if stages_passed else "entry"
+                },
             )
             return AdmissionResult(
                 standing=Standing.REFUSED,
@@ -226,33 +233,48 @@ class AdmissionPipeline:
                 parsed_graph = candidate
             elif isinstance(candidate, SemanticEnvelope):
                 if candidate.provenance:
-                    envelope_meta.update({
-                        "issuer": candidate.provenance.issuer,
-                        "timestamp": candidate.provenance.timestamp,
-                        "signature": candidate.provenance.signature,
-                    })
+                    envelope_meta.update(
+                        {
+                            "issuer": candidate.provenance.issuer,
+                            "timestamp": candidate.provenance.timestamp,
+                            "signature": candidate.provenance.signature,
+                        }
+                    )
                 if candidate.graph:
                     g = Graph()
-                    g.parse(data=candidate.graph.content, format=candidate.graph.mediaType)
+                    g.parse(
+                        data=candidate.graph.content, format=candidate.graph.mediaType
+                    )
                     parsed_graph = g
                 else:
-                    return _refusal(REFUSED_PARSE_FAILURE, "SemanticEnvelope contains no graph content")
+                    return _refusal(
+                        REFUSED_PARSE_FAILURE,
+                        "SemanticEnvelope contains no graph content",
+                    )
             elif isinstance(candidate, dict):
                 if "graph" in candidate and isinstance(candidate["graph"], dict):
                     g = Graph()
                     c_format = candidate["graph"].get("mediaType", format)
                     g.parse(data=candidate["graph"].get("content", ""), format=c_format)
                     parsed_graph = g
-                    if "provenance" in candidate and isinstance(candidate["provenance"], dict):
+                    if "provenance" in candidate and isinstance(
+                        candidate["provenance"], dict
+                    ):
                         envelope_meta.update(candidate["provenance"])
                 else:
-                    return _refusal(REFUSED_PARSE_FAILURE, "Dict candidate missing valid 'graph' field")
+                    return _refusal(
+                        REFUSED_PARSE_FAILURE,
+                        "Dict candidate missing valid 'graph' field",
+                    )
             elif isinstance(candidate, (str, bytes)):
                 g = Graph()
                 g.parse(data=candidate, format=format)
                 parsed_graph = g
             else:
-                return _refusal(REFUSED_PARSE_FAILURE, f"Unsupported candidate type: {type(candidate).__name__}")
+                return _refusal(
+                    REFUSED_PARSE_FAILURE,
+                    f"Unsupported candidate type: {type(candidate).__name__}",
+                )
         except Exception as exc:
             return _refusal(REFUSED_PARSE_FAILURE, f"Graph parsing failed: {exc}")
 
@@ -263,7 +285,11 @@ class AdmissionPipeline:
         # -------------------------------------------------------------
         ident_errs = self._check_identity_policy(parsed_graph)
         if ident_errs:
-            code = REFUSED_NAMESPACE if any("namespace" in e.lower() for e in ident_errs) else REFUSED_IDENTITY
+            code = (
+                REFUSED_NAMESPACE
+                if any("namespace" in e.lower() for e in ident_errs)
+                else REFUSED_IDENTITY
+            )
             return _refusal(code, *ident_errs)
 
         stages_passed.append("IDENTITY_POLICY")
@@ -294,9 +320,13 @@ class AdmissionPipeline:
         working_graph = parsed_graph
         if self.datalog_engine is not None:
             try:
-                working_graph, _ = self.datalog_engine.execute_graph_fixpoint(working_graph)
+                working_graph, _ = self.datalog_engine.execute_graph_fixpoint(
+                    working_graph
+                )
             except Exception as exc:
-                return _refusal(REFUSED_DATALOG_FAILURE, f"Datalog closure evaluation failed: {exc}")
+                return _refusal(
+                    REFUSED_DATALOG_FAILURE, f"Datalog closure evaluation failed: {exc}"
+                )
 
         stages_passed.append("DATALOG_CLOSURE")
 
@@ -307,7 +337,9 @@ class AdmissionPipeline:
             try:
                 _, working_graph, _ = self.n3_engine.apply_implications(working_graph)
             except Exception as exc:
-                return _refusal(REFUSED_N3_FAILURE, f"N3 derivation evaluation failed: {exc}")
+                return _refusal(
+                    REFUSED_N3_FAILURE, f"N3 derivation evaluation failed: {exc}"
+                )
 
         stages_passed.append("N3_DERIVATION")
 
@@ -373,7 +405,9 @@ class AdmissionPipeline:
         if isinstance(candidate, Graph):
             return compute_graph_digest(candidate)
         if isinstance(candidate, SemanticEnvelope):
-            content = candidate.graph.content if candidate.graph else candidate.envelopeId
+            content = (
+                candidate.graph.content if candidate.graph else candidate.envelopeId
+            )
             return hashlib.sha256(content.encode("utf-8")).hexdigest()
         if isinstance(candidate, bytes):
             return hashlib.sha256(candidate).hexdigest()
@@ -397,13 +431,17 @@ class AdmissionPipeline:
             # Check allowed subject namespaces
             if policy.allowed_subject_namespaces and isinstance(s, URIRef):
                 s_str = str(s)
-                if not any(s_str.startswith(ns) for ns in policy.allowed_subject_namespaces):
+                if not any(
+                    s_str.startswith(ns) for ns in policy.allowed_subject_namespaces
+                ):
                     errs.append(f"Subject namespace not admitted: <{s}>")
 
             # Check allowed predicate namespaces
             if policy.allowed_predicate_namespaces and isinstance(p, URIRef):
                 p_str = str(p)
-                if not any(p_str.startswith(ns) for ns in policy.allowed_predicate_namespaces):
+                if not any(
+                    p_str.startswith(ns) for ns in policy.allowed_predicate_namespaces
+                ):
                     errs.append(f"Predicate namespace not admitted: <{p}>")
 
         return errs
@@ -416,15 +454,23 @@ class AdmissionPipeline:
                 # If ASK query
                 if res.type == "ASK":
                     if bool(res.askAnswer):
-                        msg = falsifier.description or f"Falsifier {falsifier.falsifier_id} matched"
+                        msg = (
+                            falsifier.description
+                            or f"Falsifier {falsifier.falsifier_id} matched"
+                        )
                         violations.append(msg)
                 # If SELECT query
                 elif res.type == "SELECT":
                     if len(list(res)) > 0:
-                        msg = falsifier.description or f"Falsifier {falsifier.falsifier_id} produced bindings"
+                        msg = (
+                            falsifier.description
+                            or f"Falsifier {falsifier.falsifier_id} produced bindings"
+                        )
                         violations.append(msg)
             except Exception as exc:
-                violations.append(f"Falsifier {falsifier.falsifier_id} execution error: {exc}")
+                violations.append(
+                    f"Falsifier {falsifier.falsifier_id} execution error: {exc}"
+                )
 
         return violations
 

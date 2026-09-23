@@ -29,42 +29,74 @@ def _build_log() -> OcelLog:
             OcelObject(
                 "session-1",
                 "MCPSession",
-                (OcelAttribute("server", OcelAttributeValue.string("scikit-decide-fabric")),),
+                (
+                    OcelAttribute(
+                        "server", OcelAttributeValue.string("scikit-decide-fabric")
+                    ),
+                ),
             ),
             OcelObject(
                 "session-2",
                 "MCPSession",
-                (OcelAttribute("server", OcelAttributeValue.string("scikit-decide-fabric")),),
+                (
+                    OcelAttribute(
+                        "server", OcelAttributeValue.string("scikit-decide-fabric")
+                    ),
+                ),
             ),
         ]
     )
 
     # session-1: catalog (fast) -> match (SLOW: 10_000_000ns gap) -> solve
     log = append_tool_call_event(
-        log, event_id="s1-catalog", activity="decision_catalog",
-        object_ids=["session-1"], outcome={"standing": "OK"}, timestamp_ns=0,
+        log,
+        event_id="s1-catalog",
+        activity="decision_catalog",
+        object_ids=["session-1"],
+        outcome={"standing": "OK"},
+        timestamp_ns=0,
     )
     log = append_tool_call_event(
-        log, event_id="s1-match", activity="decision_match",
-        object_ids=["session-1"], outcome={"standing": "MATCHED"}, timestamp_ns=1_000,
+        log,
+        event_id="s1-match",
+        activity="decision_match",
+        object_ids=["session-1"],
+        outcome={"standing": "MATCHED"},
+        timestamp_ns=1_000,
     )
     log = append_tool_call_event(
-        log, event_id="s1-solve", activity="decision_solve",
-        object_ids=["session-1"], outcome={"standing": "SOLVED"}, timestamp_ns=10_001_000,
+        log,
+        event_id="s1-solve",
+        activity="decision_solve",
+        object_ids=["session-1"],
+        outcome={"standing": "SOLVED"},
+        timestamp_ns=10_001_000,
     )
 
     # session-2: catalog (fast) -> match (SLOW again) -> solve
     log = append_tool_call_event(
-        log, event_id="s2-catalog", activity="decision_catalog",
-        object_ids=["session-2"], outcome={"standing": "OK"}, timestamp_ns=0,
+        log,
+        event_id="s2-catalog",
+        activity="decision_catalog",
+        object_ids=["session-2"],
+        outcome={"standing": "OK"},
+        timestamp_ns=0,
     )
     log = append_tool_call_event(
-        log, event_id="s2-match", activity="decision_match",
-        object_ids=["session-2"], outcome={"standing": "MATCHED"}, timestamp_ns=500,
+        log,
+        event_id="s2-match",
+        activity="decision_match",
+        object_ids=["session-2"],
+        outcome={"standing": "MATCHED"},
+        timestamp_ns=500,
     )
     log = append_tool_call_event(
-        log, event_id="s2-solve", activity="decision_solve",
-        object_ids=["session-2"], outcome={"standing": "SOLVED"}, timestamp_ns=9_000_500,
+        log,
+        event_id="s2-solve",
+        activity="decision_solve",
+        object_ids=["session-2"],
+        outcome={"standing": "SOLVED"},
+        timestamp_ns=9_000_500,
     )
 
     return log
@@ -99,7 +131,9 @@ def test_activity_durations_real_gap_stats(conn: sqlite3.Connection) -> None:
     assert "decision_solve" not in rows
 
 
-def test_bottleneck_ranking_surfaces_the_real_slow_step(conn: sqlite3.Connection) -> None:
+def test_bottleneck_ranking_surfaces_the_real_slow_step(
+    conn: sqlite3.Connection,
+) -> None:
     ranking = bottleneck_ranking(conn)
 
     assert ranking[0].activity == "decision_match"

@@ -56,11 +56,15 @@ def _build_two_case_log() -> tuple[sqlite3.Connection, list[str]]:
     from autofde_lab.ocel.model import EventObjectLink, OcelEvent, OcelObject
 
     sessions = ["s1", "s2"]
-    objects = [OcelObject(id=s, object_type="MCPSession", attributes=()) for s in sessions]
+    objects = [
+        OcelObject(id=s, object_type="MCPSession", attributes=()) for s in sessions
+    ]
     events = []
     links = []
     for s_idx, session in enumerate(sessions):
-        for e_idx, activity in enumerate(["decision_catalog", "decision_match", "decision_solve"]):
+        for e_idx, activity in enumerate(
+            ["decision_catalog", "decision_match", "decision_solve"]
+        ):
             event_id = f"{session}-e{e_idx}"
             events.append(
                 OcelEvent(
@@ -70,7 +74,9 @@ def _build_two_case_log() -> tuple[sqlite3.Connection, list[str]]:
                     attributes=(),
                 )
             )
-            links.append(EventObjectLink(event_id=event_id, object_id=session, qualifier=None))
+            links.append(
+                EventObjectLink(event_id=event_id, object_id=session, qualifier=None)
+            )
 
     log = OcelLog(
         objects=tuple(objects),
@@ -82,9 +88,11 @@ def _build_two_case_log() -> tuple[sqlite3.Connection, list[str]]:
     log.validate()
     conn = sqlite3.connect(":memory:")
     conn.row_factory = sqlite3.Row
-    sqlite_store.to_sqlite(log, ":memory:")  # smoke-check to_sqlite doesn't raise on this shape
-    import tempfile
+    sqlite_store.to_sqlite(
+        log, ":memory:"
+    )  # smoke-check to_sqlite doesn't raise on this shape
     import os
+    import tempfile
 
     fd, path = tempfile.mkstemp(suffix=".sqlite")
     os.close(fd)
@@ -107,7 +115,9 @@ def test_session_traces_to_wasm4pm_json_shape():
 def test_real_discover_and_conformance_round_trip():
     _require_wpm()
     conn, session_ids = _build_two_case_log()
-    discovery, conformance = asyncio.run(discover_and_check(conn, session_ids, timeout_s=30))
+    discovery, conformance = asyncio.run(
+        discover_and_check(conn, session_ids, timeout_s=30)
+    )
 
     assert isinstance(discovery, DiscoveryResult)
     assert discovery.places > 0
@@ -140,7 +150,9 @@ def test_real_conformance_against_mcp_user_simulation_log(tmp_path):
     ]
     assert session_ids, "expected at least one real MCPSession object in the fixture"
 
-    discovery, conformance = asyncio.run(discover_and_check(conn, session_ids, timeout_s=60))
+    discovery, conformance = asyncio.run(
+        discover_and_check(conn, session_ids, timeout_s=60)
+    )
 
     # Real payoff: a Petri net mined from real session data, replayed against
     # that same data with a real (non-1.0, non-trivial) fitness measurement,

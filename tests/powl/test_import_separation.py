@@ -33,14 +33,13 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from project_identity import PYTHON_NAMESPACE  # noqa: E402
-
 import pytest
+from project_identity import PYTHON_NAMESPACE  # noqa: E402
 
 _NS = PYTHON_NAMESPACE  # a rename updates this one import, not four literals below
 _FORBIDDEN = (f"{_NS}.powl.executor", f"{_NS}.powl.semantics")
 
-_PROBE = '''
+_PROBE = """
 import importlib, importlib.util, json, os, sys, types
 
 FORBIDDEN = {forbidden!r}
@@ -63,12 +62,16 @@ sys.modules[NS + ".powl"] = stub
 sys.meta_path.insert(0, _Blocker())
 importlib.import_module({module!r})
 print(json.dumps(sorted(m for m in sys.modules if m.startswith(NS + ".powl"))))
-'''
+"""
 
 
 def _loaded_powl_modules(module: str) -> list[str]:
     proc = subprocess.run(
-        [sys.executable, "-c", _PROBE.format(module=module, forbidden=_FORBIDDEN, ns=_NS)],
+        [
+            sys.executable,
+            "-c",
+            _PROBE.format(module=module, forbidden=_FORBIDDEN, ns=_NS),
+        ],
         capture_output=True,
         text=True,
     )

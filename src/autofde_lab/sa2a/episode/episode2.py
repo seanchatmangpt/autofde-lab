@@ -34,8 +34,16 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Optional
 
-from autofde_lab.sa2a.authority.broker import AuthorityBroker, AuthorityGrant, ConsequenceRequest
-from autofde_lab.sa2a.brce.boundary import BoundaryExecutionResult, ConsequenceBoundary, ExecutionEnvelope
+from autofde_lab.sa2a.authority.broker import (
+    AuthorityBroker,
+    AuthorityGrant,
+    ConsequenceRequest,
+)
+from autofde_lab.sa2a.brce.boundary import (
+    BoundaryExecutionResult,
+    ConsequenceBoundary,
+    ExecutionEnvelope,
+)
 from autofde_lab.sa2a.conformance.courts.consequence_court import (
     DurableDiskReceiptStore,
     IndependentDiskJournalVerifier,
@@ -82,7 +90,9 @@ class Episode2Runner:
         self.meter = exploration_meter or ExplorationMeter()
         self._tracer = OcelExecutionTracer("episode2")
 
-    def _checkpoint(self, episode_id: str, stage: str, payload: Mapping[str, Any]) -> None:
+    def _checkpoint(
+        self, episode_id: str, stage: str, payload: Mapping[str, Any]
+    ) -> None:
         path = self.state_dir / f"{episode_id}.json"
         record = {"episode_id": episode_id, "last_completed_stage": stage, **payload}
         path.write_text(json.dumps(record, indent=2, default=str), encoding="utf-8")
@@ -101,19 +111,28 @@ class Episode2Runner:
     ) -> Episode2Result:
         episode_id = f"ep2-{uuid.uuid4().hex[:12]}"
         request_identity = f"req-{uuid.uuid4().hex[:12]}"
-        actuation_identity = f"act-{uuid.uuid4().hex[:12]}"  # FRESH -- never episode 1's
+        actuation_identity = (
+            f"act-{uuid.uuid4().hex[:12]}"  # FRESH -- never episode 1's
+        )
 
         # --- classify: semantic-class + equivalence-predicate lookup only, no
         # UNKNOWN discovery router call anywhere in this path (ARD §20, §10).
         route = self.routes.lookup(semantic_class_id, fresh_candidate)
-        self._checkpoint(episode_id, "classify", {"classification": "KNOWN" if route else "UNKNOWN"})
+        self._checkpoint(
+            episode_id, "classify", {"classification": "KNOWN" if route else "UNKNOWN"}
+        )
         if route is None:
             episode = Episode(
-                episode_id=episode_id, kind=EpisodeKind.KNOWN_REPLAY,
-                exact_subject_digest=exact_subject_digest, fixture_id=fixture_id,
-                semantic_class_id=semantic_class_id, request_identity=request_identity,
-                actuation_identity=actuation_identity, classification="UNKNOWN",
-                intelligence_usage=self.meter.usage_for(episode_id), standing="UNKNOWN",
+                episode_id=episode_id,
+                kind=EpisodeKind.KNOWN_REPLAY,
+                exact_subject_digest=exact_subject_digest,
+                fixture_id=fixture_id,
+                semantic_class_id=semantic_class_id,
+                request_identity=request_identity,
+                actuation_identity=actuation_identity,
+                classification="UNKNOWN",
+                intelligence_usage=self.meter.usage_for(episode_id),
+                standing="UNKNOWN",
             )
             self._checkpoint(episode_id, "complete", episode.to_dict())
             return Episode2Result(episode, None, None)
@@ -134,12 +153,19 @@ class Episode2Runner:
         # --- authority: a FRESH AuthorityBroker.evaluate() call, never a reused
         # Episode 1 AuthorityDecision (ARD §55-56).
         grant = AuthorityGrant(
-            grant_id=f"grant-{uuid.uuid4().hex[:8]}", subject_id=actor_id,
-            action_iri=action_iri, target_resource_iri=target_resource,
+            grant_id=f"grant-{uuid.uuid4().hex[:8]}",
+            subject_id=actor_id,
+            action_iri=action_iri,
+            target_resource_iri=target_resource,
         )
         broker = AuthorityBroker(grants=[grant])
         decision = broker.evaluate(
-            ConsequenceRequest(actor_id=actor_id, action_iri=action_iri, target_resource=target_resource, grant_id=grant.grant_id)
+            ConsequenceRequest(
+                actor_id=actor_id,
+                action_iri=action_iri,
+                target_resource=target_resource,
+                grant_id=grant.grant_id,
+            )
         )
 
         boundary_result: Optional[BoundaryExecutionResult] = None
@@ -150,28 +176,46 @@ class Episode2Runner:
             boundary = ConsequenceBoundary(broker, actuator, verifier, receipt_store)
 
             admission_for_action = admit_target_binding(
-                action_iri, target_resource, issuer=actor_id, timestamp="2026-09-17T00:00:01Z"
+                action_iri,
+                target_resource,
+                issuer=actor_id,
+                timestamp="2026-09-17T00:00:01Z",
             )
             envelope = ExecutionEnvelope(
-                idempotency_token=actuation_identity, action_iri=action_iri,
-                target_resource=target_resource, actor_id=actor_id, grant_id=grant.grant_id,
-                plan_digest=route.qualification_receipt, admission_result=admission_for_action,
+                idempotency_token=actuation_identity,
+                action_iri=action_iri,
+                target_resource=target_resource,
+                actor_id=actor_id,
+                grant_id=grant.grant_id,
+                plan_digest=route.qualification_receipt,
+                admission_result=admission_for_action,
             )
             boundary_result = boundary.execute(envelope)
             self._checkpoint(
-                episode_id, "execute_consequence",
-                {"success": boundary_result.success, "state": boundary_result.state.value},
+                episode_id,
+                "execute_consequence",
+                {
+                    "success": boundary_result.success,
+                    "state": boundary_result.state.value,
+                },
             )
 
         success = bool(boundary_result and boundary_result.success)
 
         self._tracer.declare_object(episode_id, "Episode", {"kind": "KNOWN_REPLAY"})
         self._tracer.declare_object(route.experience_id, "MachineExperience", {})
-        self._tracer.declare_object(route.route_id, "KnownRoute", {"semantic_class_id": semantic_class_id})
+        self._tracer.declare_object(
+            route.route_id, "KnownRoute", {"semantic_class_id": semantic_class_id}
+        )
         self._tracer.record_event(
-            f"{episode_id}-e2-complete", "Episode2Completed",
+            f"{episode_id}-e2-complete",
+            "Episode2Completed",
             related_objects=[episode_id, route.experience_id, route.route_id],
-            attributes={"success": success, "route_executed": route_executed, "authorized": decision.authorized},
+            attributes={
+                "success": success,
+                "route_executed": route_executed,
+                "authorized": decision.authorized,
+            },
         )
         ocel_path = self.state_dir / f"{episode_id}.ocel2.json"
         self._tracer.export_ocel2_json(ocel_path)
@@ -181,23 +225,40 @@ class Episode2Runner:
         # evaluated, rather than leaving it as a never-assigned empty string.
         manufacture_digest = ""
         if experience is not None and experience.compiled_artifact_ids:
-            manufactured_artifact = self.artifacts.get(experience.compiled_artifact_ids[0])
+            manufactured_artifact = self.artifacts.get(
+                experience.compiled_artifact_ids[0]
+            )
             if manufactured_artifact is not None:
                 manufacture_digest = manufactured_artifact.fingerprint
 
         episode = Episode(
-            episode_id=episode_id, kind=EpisodeKind.KNOWN_REPLAY,
-            exact_subject_digest=exact_subject_digest, fixture_id=fixture_id,
-            semantic_class_id=semantic_class_id, request_identity=request_identity,
-            actuation_identity=actuation_identity, classification="KNOWN",
-            route_executed=route_executed, required_postcondition_verified=success,
+            episode_id=episode_id,
+            kind=EpisodeKind.KNOWN_REPLAY,
+            exact_subject_digest=exact_subject_digest,
+            fixture_id=fixture_id,
+            semantic_class_id=semantic_class_id,
+            request_identity=request_identity,
+            actuation_identity=actuation_identity,
+            classification="KNOWN",
+            route_executed=route_executed,
+            required_postcondition_verified=success,
             manufacture_digest=manufacture_digest,
             authority_grant_id=grant.grant_id if decision.authorized else None,
-            prepared_receipt_digest=boundary_result.prepared_receipt.digest if boundary_result and boundary_result.prepared_receipt else "",
-            final_receipt_digest=boundary_result.final_receipt.digest if boundary_result and boundary_result.final_receipt else "",
+            prepared_receipt_digest=boundary_result.prepared_receipt.digest
+            if boundary_result and boundary_result.prepared_receipt
+            else "",
+            final_receipt_digest=boundary_result.final_receipt.digest
+            if boundary_result and boundary_result.final_receipt
+            else "",
             ocel_digest=self._tracer.log.digest(),
             intelligence_usage=self.meter.usage_for(episode_id),
-            standing=boundary_result.state.value if boundary_result else ("REFUSED_AUTHORITY" if not decision.authorized else "REFUSED_ROUTE_NOT_EXECUTED"),
+            standing=boundary_result.state.value
+            if boundary_result
+            else (
+                "REFUSED_AUTHORITY"
+                if not decision.authorized
+                else "REFUSED_ROUTE_NOT_EXECUTED"
+            ),
             known_route_id=route.route_id,
             experience_id=route.experience_id,
         )

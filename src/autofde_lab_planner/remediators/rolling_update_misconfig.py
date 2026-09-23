@@ -23,7 +23,7 @@ def decide_workload_remediation_commands(
             c_idx = getattr(f, "container_index", 0)
             patch_cmd = (
                 f"kubectl patch deployment {dep_name} -n {ns} --type=json "
-                f'-p=\'[{{\"op\": \"remove\", \"path\": \"/spec/template/spec/containers/{c_idx}/resources/requests\"}}]\''
+                f'-p=\'[{{"op": "remove", "path": "/spec/template/spec/containers/{c_idx}/resources/requests"}}]\''
             )
             commands.append(patch_cmd)
 
@@ -37,13 +37,15 @@ def decide_workload_remediation_commands(
             commands.append(strategy_patch)
 
             # 2. Strip hanging init containers ONLY if hanging_init container was detected
-            if "hanging_init=True" in f.details or "hanging_init=true" in f.details.lower():
+            if (
+                "hanging_init=True" in f.details
+                or "hanging_init=true" in f.details.lower()
+            ):
                 init_patch = (
                     f"kubectl patch deployment {dep_name} -n {ns} --type=json "
                     '-p=\'[{"op": "remove", "path": "/spec/template/spec/initContainers"}]\''
                 )
                 commands.append(init_patch)
-
 
         if dep_name not in deployments_to_restart:
             deployments_to_restart.append(dep_name)

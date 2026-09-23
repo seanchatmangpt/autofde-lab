@@ -72,16 +72,16 @@ require_standing(
     ),
 )
 
-from gymact import (
-    AllowListAuthorityResolver,
-    GymAct,
-    MaterializationIntent,
-)
 from gymact.gyms.sregym import SREGYM_CAPABILITIES
 from gymact.models import ActuationIntent
 
 from autofde_lab.sota.materialize_sregym import (
     current_sregym_autofde_lab_planner_basis,
+)
+from gymact import (
+    AllowListAuthorityResolver,
+    GymAct,
+    MaterializationIntent,
 )
 
 AUTHORITY = "urn:test:sregym-crown-receipt-live"

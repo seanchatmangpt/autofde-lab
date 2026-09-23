@@ -16,11 +16,10 @@ import hashlib
 import json
 import subprocess
 from pathlib import Path
-from typing import Any, Dict
 
 import pytest
 
-from autofde_lab.sa2a.algebra import RefusalCause, Standing
+from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import AuthorityBroker, AuthorityGrant
 from autofde_lab.sa2a.conformance.courts.identity_court import (
     CHI_ID_ARTIFACT_DIGEST,
@@ -48,7 +47,6 @@ from autofde_lab.sa2a.construct.constructor import (
     TargetProfile,
 )
 from autofde_lab.sa2a.envelope import (
-    AuthorityRequirement,
     ProvenanceRecord,
     SemanticEnvelope,
     SemanticGraph,
@@ -59,27 +57,64 @@ from autofde_lab.sa2a.root_manifest import RootManifest
 def _init_real_git_repo(repo_dir: Path) -> str:
     """Initialize a genuine git repository on physical disk and create a real initial commit."""
     repo_dir.mkdir(parents=True, exist_ok=True)
-    subprocess.run(["git", "init", "-b", "main"], cwd=str(repo_dir), check=True, capture_output=True)
-    subprocess.run(["git", "config", "user.name", "Chicago Test Agent"], cwd=str(repo_dir), check=True, capture_output=True)
-    subprocess.run(["git", "config", "user.email", "agent@autofde.org"], cwd=str(repo_dir), check=True, capture_output=True)
+    subprocess.run(
+        ["git", "init", "-b", "main"],
+        cwd=str(repo_dir),
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Chicago Test Agent"],
+        cwd=str(repo_dir),
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "agent@autofde.org"],
+        cwd=str(repo_dir),
+        check=True,
+        capture_output=True,
+    )
 
     dummy_file = repo_dir / "README.md"
     dummy_file.write_text("# AutoFDE Lab Real Git Tree\n", encoding="utf-8")
-    subprocess.run(["git", "add", "README.md"], cwd=str(repo_dir), check=True, capture_output=True)
-    subprocess.run(["git", "commit", "-m", "Initial root commit"], cwd=str(repo_dir), check=True, capture_output=True)
+    subprocess.run(
+        ["git", "add", "README.md"], cwd=str(repo_dir), check=True, capture_output=True
+    )
+    subprocess.run(
+        ["git", "commit", "-m", "Initial root commit"],
+        cwd=str(repo_dir),
+        check=True,
+        capture_output=True,
+    )
 
-    res = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(repo_dir), check=True, capture_output=True, text=True)
+    res = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=str(repo_dir),
+        check=True,
+        capture_output=True,
+        text=True,
+    )
     return res.stdout.strip().lower()
 
 
 def _make_sample_root_manifest() -> RootManifest:
     """Manufacture a real RootManifest instance."""
     return RootManifest(
-        admitted_ontology_roots=["https://autofde.org/ontology/core/v1", "https://airbus.com/ontology/flight/v2"],
+        admitted_ontology_roots=[
+            "https://autofde.org/ontology/core/v1",
+            "https://airbus.com/ontology/flight/v2",
+        ],
         semantic_profile_versions=["v26.9.16", "v26.9.15"],
         canonicalization_algorithm="C14N-JSON",
-        manufacturer_identities=["urn:manufacturer:autofde:core", "urn:manufacturer:airbus:certified"],
-        admitted_validator_identities=["urn:validator:airbus:qa", "urn:validator:formal:audit"],
+        manufacturer_identities=[
+            "urn:manufacturer:autofde:core",
+            "urn:manufacturer:airbus:certified",
+        ],
+        admitted_validator_identities=[
+            "urn:validator:airbus:qa",
+            "urn:validator:formal:audit",
+        ],
         authority_broker_identity="urn:broker:authority:primary",
         brce_contract="BRCE-LEVEL4-STRICT",
         receipt_law="APPEND_ONLY_CRYPTOGRAPHIC_CHAIN",
@@ -91,6 +126,7 @@ def _make_sample_root_manifest() -> RootManifest:
 # =============================================================================
 # 1. Git SHA Mismatch Detection (CHI-ID-GIT-SHA)
 # =============================================================================
+
 
 def test_git_sha_live_repo_match_passes(tmp_path: Path) -> None:
     """Verify that a genuine commit in a real git repository on disk matches successfully."""
@@ -157,6 +193,7 @@ def test_git_sha_invalid_repo_path_raises(tmp_path: Path) -> None:
 # 2. Artifact Digest Mismatch Detection (CHI-ID-ARTIFACT-DIGEST)
 # =============================================================================
 
+
 def test_artifact_digest_real_disk_file_integrity(tmp_path: Path) -> None:
     """Verify artifact digest checking on a real file written to physical disk."""
     artifact_file = tmp_path / "projection_worker.py"
@@ -187,6 +224,7 @@ def test_artifact_digest_real_disk_file_integrity(tmp_path: Path) -> None:
 def test_artifact_digest_executable_artifact_dataclass() -> None:
     """Verify ExecutableArtifact projection integrity check and corruption detection."""
     from autofde_lab.sa2a.construct.constructor import ConstructionReceipt
+
     code = "def run(): return 42"
     real_digest = hashlib.sha256(code.encode("utf-8")).hexdigest()
     receipt = ConstructionReceipt.create(
@@ -236,7 +274,6 @@ def test_artifact_digest_executable_artifact_dataclass() -> None:
         )
 
 
-
 def test_artifact_digest_missing_file_raises(tmp_path: Path) -> None:
     """Verify attempting to verify a missing artifact file raises ArtifactDigestMismatchError."""
     court = IdentityCourt()
@@ -251,6 +288,7 @@ def test_artifact_digest_missing_file_raises(tmp_path: Path) -> None:
 # =============================================================================
 # 3. Root Manifest Tamper Detection (CHI-ID-ROOT-MANIFEST)
 # =============================================================================
+
 
 def test_root_manifest_canonical_digest_matches() -> None:
     """Verify genuine root manifest canonical digest passes conformance check."""
@@ -344,6 +382,7 @@ def test_root_manifest_canonical_json_payload_tamper_detected() -> None:
 # 4. Counterfeit Tag Resolution Refusal (CHI-ID-COUNTERFEIT-TAG)
 # =============================================================================
 
+
 def test_tag_resolution_admitted_tag_passes() -> None:
     """Verify registered tag in admitted namespace passes resolution."""
     admitted = {
@@ -410,6 +449,7 @@ def test_tag_resolution_empty_tag_refused() -> None:
 # =============================================================================
 # 5. Semantic Envelope Standing Escalation Refusal (SA2A-ENV-STANDING-ESCALATION)
 # =============================================================================
+
 
 def test_envelope_unlawful_transition_jump_refused() -> None:
     """Verify that an envelope attempting an illegal standing transition jump is refused."""
@@ -499,7 +539,9 @@ def test_envelope_executed_standing_without_receipts_refused() -> None:
             fail_closed=True,
         )
     assert exc_info.value.rule_id == SA2A_ENV_STANDING_ESCALATION
-    assert "cannot be asserted without verifiable execution receipts" in str(exc_info.value)
+    assert "cannot be asserted without verifiable execution receipts" in str(
+        exc_info.value
+    )
 
 
 def test_envelope_executed_standing_with_receipts_passes() -> None:
@@ -534,7 +576,9 @@ def test_envelope_non_admissible_without_refusal_cause_rejected() -> None:
 
 def test_envelope_pydantic_model_verification() -> None:
     """Verify SemanticEnvelope Pydantic model works cleanly with the court."""
-    graph_content = "<http://example.org/s> <http://example.org/p> <http://example.org/o> ."
+    graph_content = (
+        "<http://example.org/s> <http://example.org/p> <http://example.org/o> ."
+    )
     graph_digest = hashlib.sha256(graph_content.encode("utf-8")).hexdigest()
 
     envelope = SemanticEnvelope(
@@ -569,6 +613,7 @@ def test_envelope_pydantic_model_verification() -> None:
 # =============================================================================
 # 6. Full Gate 1 Adjudication Adjudicator (Composite Suite)
 # =============================================================================
+
 
 def test_full_gate1_adjudication_all_conformant(tmp_path: Path) -> None:
     """Verify complete Gate 1 adjudication succeeds when all 5 identity checks pass."""
@@ -654,6 +699,7 @@ def test_full_gate1_adjudication_reports_refusal_on_tamper(tmp_path: Path) -> No
 # =============================================================================
 # 7. In-module Direct Test Runners Qualification
 # =============================================================================
+
 
 def test_in_module_test_helpers_execute_cleanly() -> None:
     """Verify that all standalone test functions in identity_court.py run and succeed."""

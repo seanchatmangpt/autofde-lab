@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import json
 import re
+from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any, Mapping
 
@@ -200,9 +200,7 @@ class InvocationResult:
                 "receipt component identity does not match the invoked component"
             )
         if subject.get("source_revision") != component.revision:
-            raise ValueError(
-                "receipt source revision does not match the registry pin"
-            )
+            raise ValueError("receipt source revision does not match the registry pin")
         output = decoded.get("output")
         status, receipt = _normalize_legacy_refusal(
             str(decoded.get("status", "UNKNOWN")), output, receipt

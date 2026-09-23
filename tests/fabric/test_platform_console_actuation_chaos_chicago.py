@@ -51,7 +51,12 @@ import httpx
 import pytest
 from gymact.kernel import GymAct
 from gymact.limits import RuntimeLimits
-from gymact.models import ActuationIntent, Capability, Consequence, MaterializationIntent
+from gymact.models import (
+    ActuationIntent,
+    Capability,
+    Consequence,
+    MaterializationIntent,
+)
 
 from autofde_lab.fabric import pddl_engine
 from autofde_lab.fabric.rdf_domain import RdfDomainError, compile_rdf_to_pddl_files
@@ -97,15 +102,21 @@ class RaisingChaosEnvironment:
     async def observe(self) -> dict[str, object]:
         return dict(self._state)
 
-    async def actuate(self, capability: Capability, payload: dict[str, object]) -> dict[str, object]:
+    async def actuate(
+        self, capability: Capability, payload: dict[str, object]
+    ) -> dict[str, object]:
         del capability, payload
         self._actuate_was_called = True
         # Deliberately never mutates self._state before raising -- a real
         # provider crash mid-actuation, not a partial write followed by a
         # fabricated success.
-        raise RuntimeError("chaos-injected: OntologyDrivenProvider.actuate() failed mid-plan")
+        raise RuntimeError(
+            "chaos-injected: OntologyDrivenProvider.actuate() failed mid-plan"
+        )
 
-    async def verify(self, expected: dict[str, object]) -> tuple[bool, dict[str, object]]:
+    async def verify(
+        self, expected: dict[str, object]
+    ) -> tuple[bool, dict[str, object]]:
         observed = await self.observe()
         return all(observed.get(k) == v for k, v in expected.items()), observed
 
@@ -129,11 +140,15 @@ class HangingChaosEnvironment(RaisingChaosEnvironment):
         self.environment_id = "urn:gymact:chaos:environment:hanging"
         self._sleep_seconds = sleep_seconds
 
-    async def actuate(self, capability: Capability, payload: dict[str, object]) -> dict[str, object]:
+    async def actuate(
+        self, capability: Capability, payload: dict[str, object]
+    ) -> dict[str, object]:
         del capability, payload
         self._actuate_was_called = True
         await anyio.sleep(self._sleep_seconds)
-        raise AssertionError("unreachable: the real timeout must fire before this returns")
+        raise AssertionError(
+            "unreachable: the real timeout must fire before this returns"
+        )
 
 
 class _ChaosProvider:
@@ -150,7 +165,9 @@ class _ChaosProvider:
 async def _materialize_and_act(gym: GymAct, provider) -> tuple[str, object]:
     gym.register_provider(provider)
     materialization = await gym.materialize(
-        MaterializationIntent(provider=provider.name, config={}, principal="urn:prov:agent:chaos-test")
+        MaterializationIntent(
+            provider=provider.name, config={}, principal="urn:prov:agent:chaos-test"
+        )
     )
     assert materialization.accepted, materialization.receipt.reason
     episode_id = materialization.episode.episode_id
@@ -275,14 +292,20 @@ def test_unreachable_capability_state_snapshot_route_fails_closed_with_a_real_co
 # ---------------------------------------------------------------------------
 
 
-def test_syntactically_malformed_turtle_fails_closed_through_the_real_compiler(tmp_path):
+def test_syntactically_malformed_turtle_fails_closed_through_the_real_compiler(
+    tmp_path,
+):
     malformed = tmp_path / "malformed.ttl"
-    malformed.write_text("@prefix pd: <urn:autofde-lab:planning-domain:> .\nex:domain a pd:Domain [ this is not valid turtle @@@")
+    malformed.write_text(
+        "@prefix pd: <urn:autofde-lab:planning-domain:> .\nex:domain a pd:Domain [ this is not valid turtle @@@"
+    )
 
     domain_p = str(tmp_path / "domain.pddl")
     problem_p = str(tmp_path / "problem.pddl")
 
-    with pytest.raises(Exception):  # real rdflib parser exception, un-narrowed by design
+    with pytest.raises(
+        Exception
+    ):  # real rdflib parser exception, un-narrowed by design
         compile_rdf_to_pddl_files(str(malformed), domain_p, problem_p)
 
     # Fail closed: no partial/stale PDDL files were written by the failed
@@ -301,7 +324,7 @@ def test_semantically_empty_turtle_with_no_domain_fails_closed_not_silently(tmp_
     empty.write_text(
         "@prefix pd: <urn:autofde-lab:planning-domain:> .\n"
         "@prefix ex: <urn:autofde-lab:planning-domain:platform-console:> .\n"
-        "ex:not-a-domain a pd:Predicate ; pd:predicateName \"unrelated\" .\n"
+        'ex:not-a-domain a pd:Predicate ; pd:predicateName "unrelated" .\n'
     )
 
     domain_p = str(tmp_path / "domain.pddl")
@@ -323,7 +346,9 @@ def test_semantically_empty_turtle_with_no_domain_fails_closed_not_silently(tmp_
 # ---------------------------------------------------------------------------
 
 
-def test_pipeline_never_claims_a_plan_effect_happened_when_actuation_really_failed(tmp_path):
+def test_pipeline_never_claims_a_plan_effect_happened_when_actuation_really_failed(
+    tmp_path,
+):
     # Real Phase 3 solve, unmodified and unmutated -- establishes a real
     # plan with a real declared first-step effect.
     domain_p = str(tmp_path / "domain.pddl")
@@ -353,7 +378,9 @@ def test_pipeline_never_claims_a_plan_effect_happened_when_actuation_really_fail
     # actuation step that was supposed to produce it really failed.
     assert result.accepted is False
     declared_effect_claimed_true = (
-        result.accepted and result.observation is not None and result.observation.state.get("scheduled") is True
+        result.accepted
+        and result.observation is not None
+        and result.observation.state.get("scheduled") is True
     )
     assert declared_effect_claimed_true is False, (
         "the pipeline must never report a plan step's declared effect as "

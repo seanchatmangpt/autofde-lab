@@ -108,21 +108,63 @@ def _fixture_guard_evaluator(fixture: str):
     return evaluator
 
 
-def _run_once(node: PowlNode, invoker, max_workers: int, *, guard_evaluator, max_choice_transitions: int) -> float:
+def _run_once(
+    node: PowlNode,
+    invoker,
+    max_workers: int,
+    *,
+    guard_evaluator,
+    max_choice_transitions: int,
+) -> float:
     start = time.perf_counter()
-    execute(node, guard_evaluator=guard_evaluator, atom_invoker=invoker, max_choice_transitions=max_choice_transitions, max_workers=max_workers)
+    execute(
+        node,
+        guard_evaluator=guard_evaluator,
+        atom_invoker=invoker,
+        max_choice_transitions=max_choice_transitions,
+        max_workers=max_workers,
+    )
     return time.perf_counter() - start
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--workload", choices=["io", "cpu"], default="io")
-    parser.add_argument("--work-seconds", type=float, default=0.05, help="io workload: real sleep per atom")
-    parser.add_argument("--cpu-iterations", type=int, default=2_000_000, help="cpu workload: real busy-loop iterations per atom")
-    parser.add_argument("--ready-width", type=int, default=16, help="number of independent atoms in the one ready set (synthetic fixture only)")
-    parser.add_argument("--fixture", choices=["synthetic", *_FIXTURE_BUILDERS], default="synthetic", help="use a real hand-ported ~/POWL-shaped fixture instead of a synthetic flat ready set")
-    parser.add_argument("--max-workers", type=int, nargs="+", default=[1, 2, 4, 8, 16, 32, 64])
-    parser.add_argument("--repeats", type=int, default=3, help="real repeats per max_workers value; report the median")
+    parser.add_argument(
+        "--work-seconds",
+        type=float,
+        default=0.05,
+        help="io workload: real sleep per atom",
+    )
+    parser.add_argument(
+        "--cpu-iterations",
+        type=int,
+        default=2_000_000,
+        help="cpu workload: real busy-loop iterations per atom",
+    )
+    parser.add_argument(
+        "--ready-width",
+        type=int,
+        default=16,
+        help="number of independent atoms in the one ready set (synthetic fixture only)",
+    )
+    parser.add_argument(
+        "--fixture",
+        choices=["synthetic", *_FIXTURE_BUILDERS],
+        default="synthetic",
+        help="use a real hand-ported ~/POWL-shaped fixture instead of a synthetic flat ready set",
+    )
+    parser.add_argument(
+        "--max-workers", type=int, nargs="+", default=[1, 2, 4, 8, 16, 32, 64]
+    )
+    parser.add_argument(
+        "--repeats",
+        type=int,
+        default=3,
+        help="real repeats per max_workers value; report the median",
+    )
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
 
@@ -135,13 +177,23 @@ def main() -> None:
         guard_evaluator = _fixture_guard_evaluator(args.fixture)
         max_choice_transitions = 20
 
-    invoker = _io_invoker(args.work_seconds) if args.workload == "io" else _cpu_invoker(args.cpu_iterations)
+    invoker = (
+        _io_invoker(args.work_seconds)
+        if args.workload == "io"
+        else _cpu_invoker(args.cpu_iterations)
+    )
 
     results: list[dict[str, object]] = []
     baseline: float | None = None
     for mw in args.max_workers:
         samples = sorted(
-            _run_once(node, invoker, mw, guard_evaluator=guard_evaluator, max_choice_transitions=max_choice_transitions)
+            _run_once(
+                node,
+                invoker,
+                mw,
+                guard_evaluator=guard_evaluator,
+                max_choice_transitions=max_choice_transitions,
+            )
             for _ in range(args.repeats)
         )
         median = samples[len(samples) // 2]
@@ -152,7 +204,9 @@ def main() -> None:
                 "max_workers": mw,
                 "median_seconds": round(median, 6),
                 "samples_seconds": [round(s, 6) for s in samples],
-                "speedup_vs_max_workers_1": round(baseline / median, 3) if median > 0 else float("inf"),
+                "speedup_vs_max_workers_1": round(baseline / median, 3)
+                if median > 0
+                else float("inf"),
             }
         )
 
@@ -180,7 +234,9 @@ def main() -> None:
     print(f"{'max_workers':>12}  {'median_s':>10}  {'speedup':>8}  samples_s")
     for r in results:
         samples = ", ".join(f"{s:.4f}" for s in r["samples_seconds"])  # type: ignore[union-attr]
-        print(f"{r['max_workers']:>12}  {r['median_seconds']:>10.4f}  {r['speedup_vs_max_workers_1']:>7.2f}x  [{samples}]")
+        print(
+            f"{r['max_workers']:>12}  {r['median_seconds']:>10.4f}  {r['speedup_vs_max_workers_1']:>7.2f}x  [{samples}]"
+        )
 
 
 if __name__ == "__main__":

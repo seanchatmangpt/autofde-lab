@@ -19,6 +19,7 @@ algorithm (state-space A* over achieved-predicate sets, vs. castle's
 WitnessPlanner which only topologically orders a fixed witness_transitions
 list by data dependency), and a real JSON contract both sides honor.
 """
+
 from __future__ import annotations
 
 import heapq
@@ -41,7 +42,9 @@ def astar_plan(rules: list[dict[str, Any]], goal_predicate: str) -> list[str] | 
 
     # frontier entries: (g_cost, tie_breaker, state, path_of_rule_ids)
     counter = 0
-    frontier: list[tuple[float, int, frozenset[str], tuple[str, ...]]] = [(0.0, counter, start, ())]
+    frontier: list[tuple[float, int, frozenset[str], tuple[str, ...]]] = [
+        (0.0, counter, start, ())
+    ]
     best_cost: dict[frozenset[str], float] = {start: 0.0}
 
     while frontier:
@@ -65,21 +68,27 @@ def astar_plan(rules: list[dict[str, Any]], goal_predicate: str) -> list[str] | 
             if new_g < best_cost.get(new_state, float("inf")):
                 best_cost[new_state] = new_g
                 counter += 1
-                heapq.heappush(frontier, (new_g, counter, new_state, path + (rule["id"],)))
+                heapq.heappush(
+                    frontier, (new_g, counter, new_state, path + (rule["id"],))
+                )
     return None
 
 
-def build_candidate(planner_id: str, goal_id: str, plan_rule_ids: list[str]) -> dict[str, Any]:
+def build_candidate(
+    planner_id: str, goal_id: str, plan_rule_ids: list[str]
+) -> dict[str, Any]:
     activities = []
     prev_activity_id: str | None = None
     for rule_id in plan_rule_ids:
         activity_id = f"activity:{rule_id}"
         predecessors = [prev_activity_id] if prev_activity_id else []
-        activities.append({
-            "id": activity_id,
-            "transition_id": rule_id,
-            "predecessors": predecessors,
-        })
+        activities.append(
+            {
+                "id": activity_id,
+                "transition_id": rule_id,
+                "predecessors": predecessors,
+            }
+        )
         prev_activity_id = activity_id
     process_id = f"powl:astar:{goal_id}:{len(plan_rule_ids)}"
     return {
@@ -96,7 +105,9 @@ def main() -> None:
     plan_rule_ids = astar_plan(rules, goal["predicate"])
     candidates: list[dict[str, Any]] = []
     if plan_rule_ids is not None and plan_rule_ids:
-        candidates.append(build_candidate("autofde-lab-astar", goal["id"], plan_rule_ids))
+        candidates.append(
+            build_candidate("autofde-lab-astar", goal["id"], plan_rule_ids)
+        )
     json.dump(candidates, sys.stdout)
 
 

@@ -149,9 +149,7 @@ ATTACK_STEPS: tuple[AttackStep, ...] = (
     ),
     AttackStep(
         id="list_resources_for_principal_id",
-        description=(
-            "az resource list (locate the VM's name and principal ID)"
-        ),
+        description=("az resource list (locate the VM's name and principal ID)"),
         manual_step="Step 3",
         preconditions=frozenset({"has_managed_identity_context"}),
         establishes="knows_vm_principal_id",

@@ -23,7 +23,6 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
-import pytest
 
 from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline, AdmissionResult
 from autofde_lab.sa2a.algebra import Standing
@@ -37,7 +36,6 @@ from autofde_lab.sa2a.brce.boundary import (
 )
 from autofde_lab.sa2a.brce.receipts import (
     FinalReceipt,
-    PreparedReceipt,
     ReceiptStore,
     TerminalReceiptState,
 )
@@ -52,7 +50,9 @@ from autofde_lab.sa2a.conformance.courts.replay_court import (
 )
 
 
-def _admit_binding(action_iri: str, target_resource: str, issuer: str) -> AdmissionResult:
+def _admit_binding(
+    action_iri: str, target_resource: str, issuer: str
+) -> AdmissionResult:
     """Construct a real, valid, Standing.ADMITTED AdmissionResult whose admitted
     candidate graph contains the real RDF triple
     `<action_iri> afl:targetResource <target_resource> .` -- the exact,
@@ -117,7 +117,9 @@ def _setup_executed_transaction(
         receipt_store=store,
     )
 
-    admission = _admit_binding(action_iri, target_resource, issuer=f"urn:issuer:{grant_id}")
+    admission = _admit_binding(
+        action_iri, target_resource, issuer=f"urn:issuer:{grant_id}"
+    )
     envelope = ExecutionEnvelope(
         idempotency_token=token,
         action_iri=action_iri,
@@ -139,6 +141,7 @@ def _setup_executed_transaction(
 # CHI-REPLAY-*: Replay Chain Digest Validation Without External Actuation
 # =============================================================================
 
+
 def test_chi_replay_digest_validation_without_actuation(tmp_path: Path) -> None:
     """CHI-REPLAY-01: Replay chain digest validation occurs strictly without external actuation."""
     broker, store, actuator, journal_path = _setup_executed_transaction(
@@ -152,7 +155,9 @@ def test_chi_replay_digest_validation_without_actuation(tmp_path: Path) -> None:
     records = [prep.to_dict(), final.to_dict()]
 
     court = ReplayCourt(authority_broker=broker)
-    res = court.verify_replay_chain_without_actuation(records, journal_path=journal_path)
+    res = court.verify_replay_chain_without_actuation(
+        records, journal_path=journal_path
+    )
 
     # Invariant: Must be valid ALIVE standing
     assert res.is_valid is True
@@ -171,6 +176,7 @@ def test_chi_replay_digest_validation_without_actuation(tmp_path: Path) -> None:
 # =============================================================================
 # CHI-TAMPER-*: Tampered Receipt Detection & Hash Chain Break Refusal
 # =============================================================================
+
 
 def test_chi_tamper_payload_detection_and_refusal(tmp_path: Path) -> None:
     """CHI-TAMPER-01: Detection of mutated evidence in final receipt with unchanged digest."""
@@ -234,7 +240,9 @@ def test_chi_tamper_prepared_digest_mismatch_refusal(tmp_path: Path) -> None:
     )
 
     court = ReplayCourt(authority_broker=broker)
-    res = court.verify_tampered_receipt_refusal([prep.to_dict(), counterfeit_final.to_dict()])
+    res = court.verify_tampered_receipt_refusal(
+        [prep.to_dict(), counterfeit_final.to_dict()]
+    )
 
     assert res.is_valid is False
     assert res.report.verdict == ReplayVerdict.INVALID_HASH_CHAIN
@@ -245,6 +253,7 @@ def test_chi_tamper_prepared_digest_mismatch_refusal(tmp_path: Path) -> None:
 # =============================================================================
 # CHI-FRESH-*: Fresh-Consumer Proof with Zero Memory Leakage
 # =============================================================================
+
 
 def test_chi_fresh_consumer_isolation_strictly_from_json(tmp_path: Path) -> None:
     """CHI-FRESH-01: Verify chain strictly from cold serialized JSON with zero memory leakage."""
@@ -347,6 +356,7 @@ def test_chi_fresh_consumer_multi_transaction_sequence(tmp_path: Path) -> None:
 # =============================================================================
 # CHI-KNOWN-*: Gate 12: Zero Runtime Exploratory Inference on Known Reflex Class
 # =============================================================================
+
 
 def test_chi_known_reflex_zero_runtime_inference(tmp_path: Path) -> None:
     """CHI-KNOWN-01 / Gate 12: Qualified KNOWN reflex executes with zero LLM/exploratory inference tokens.

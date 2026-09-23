@@ -11,11 +11,10 @@ against the Root Manifest before it is permitted to participate in admission or 
 from __future__ import annotations
 
 import hashlib
-import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Sequence, Set, Union
-import rdflib
+from typing import Dict, Optional, Union
+
 
 from autofde_lab.sa2a.algebra import RefusalCause, Standing
 from autofde_lab.sa2a.root_manifest import RootManifest
@@ -153,9 +152,9 @@ class MetaAdmissionRegistry:
             )
 
         # 4. Check issuer identity against Root Manifest admitted validators / manufacturers
-        admitted_authorities = set(self._root_manifest.admitted_validator_identities) | set(
-            self._root_manifest.manufacturer_identities
-        )
+        admitted_authorities = set(
+            self._root_manifest.admitted_validator_identities
+        ) | set(self._root_manifest.manufacturer_identities)
         if issuer_identity not in admitted_authorities:
             return MetaAdmissionDecision(
                 admitted=False,
@@ -191,7 +190,9 @@ class MetaAdmissionRegistry:
         """Check whether a validator has standing to validate."""
         return validator_id in self._admitted_validators
 
-    def get_validator_provenance(self, validator_id: str) -> Optional[ValidatorProvenance]:
+    def get_validator_provenance(
+        self, validator_id: str
+    ) -> Optional[ValidatorProvenance]:
         """Retrieve admitted validator provenance record."""
         return self._admitted_validators.get(validator_id)
 

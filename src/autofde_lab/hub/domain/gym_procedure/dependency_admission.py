@@ -241,7 +241,11 @@ def probe_checkout(path: Path, remote_name: str = "origin") -> CheckoutIdentity:
     rc_head, head = _git(path, "rev-parse", "HEAD")
     rc_remote, remote = _git(path, "remote", "get-url", remote_name)
     rc_status, status = _git(path, "status", "--porcelain")
-    dirty = tuple(line for line in status.splitlines() if line.strip()) if rc_status == 0 else ()
+    dirty = (
+        tuple(line for line in status.splitlines() if line.strip())
+        if rc_status == 0
+        else ()
+    )
 
     return CheckoutIdentity(
         path=path,

@@ -72,11 +72,23 @@ FORBIDDEN_RUNTIME_MODULES: tuple[str, ...] = (
 #: (edge_name, human question). An edge is established only by an explicit
 #: typed relationship in the durable evidence.
 REQUIRED_CHAIN: tuple[tuple[str, str], ...] = (
-    ("plan_candidate->commitment", "was the committed procedure the one that was selected?"),
-    ("commitment->actuation", "was this actuation the realization of that exact commitment?"),
-    ("authority->actuation", "was this exact actuation authorized by this exact envelope?"),
+    (
+        "plan_candidate->commitment",
+        "was the committed procedure the one that was selected?",
+    ),
+    (
+        "commitment->actuation",
+        "was this actuation the realization of that exact commitment?",
+    ),
+    (
+        "authority->actuation",
+        "was this exact actuation authorized by this exact envelope?",
+    ),
     ("actuation->postcondition", "was THIS actuation independently observed?"),
-    ("postcondition->independent", "was the observer identity distinct from the actuator?"),
+    (
+        "postcondition->independent",
+        "was the observer identity distinct from the actuator?",
+    ),
     ("receipt->dag", "is the receipt ancestry an explicit edge, not a shared token?"),
     ("replay->receipt", "did a replay bind the exact source receipt?"),
 )
@@ -112,7 +124,10 @@ class IndependentStanding:
         return "ALIVE_EVIDENCE_RECONSTRUCTED"
 
     def report(self) -> list[str]:
-        return [f"{'OK ' if e.established else '-- '}{e.name}: {e.basis}" for e in self.edges]
+        return [
+            f"{'OK ' if e.established else '-- '}{e.name}: {e.basis}"
+            for e in self.edges
+        ]
 
 
 def _load_json(path: Path) -> Optional[dict]:
@@ -157,7 +172,11 @@ def verify(trial_dir: Path) -> IndependentStanding:
         "ledger": act / "receipts.sqlite3",
     }
     ocel = _load_json(candidates["ocel"]) or _load_json(candidates["ocel_legacy"])
-    ttl = candidates["commitment"].read_text() if candidates["commitment"].is_file() else None
+    ttl = (
+        candidates["commitment"].read_text()
+        if candidates["commitment"].is_file()
+        else None
+    )
     ledger = candidates["ledger"] if candidates["ledger"].is_file() else None
 
     seen = [k for k, p in candidates.items() if p.is_file()]
@@ -182,7 +201,9 @@ def verify(trial_dir: Path) -> IndependentStanding:
 
     obj_types = {o.get("id"): o.get("type") for o in ocel.get("objects", []) or []}
 
-    def typed_edge(qualifier: str, src_type: str, tgt_type: str) -> list[tuple[str, str, str]]:
+    def typed_edge(
+        qualifier: str, src_type: str, tgt_type: str
+    ) -> list[tuple[str, str, str]]:
         return [
             (s, q, t)
             for s, q, t in by_qualifier.get(qualifier, [])
@@ -191,7 +212,9 @@ def verify(trial_dir: Path) -> IndependentStanding:
 
     results: list[Edge] = []
 
-    def add(name: str, question: str, found: list, basis_ok: str, basis_no: str) -> None:
+    def add(
+        name: str, question: str, found: list, basis_ok: str, basis_no: str
+    ) -> None:
         results.append(
             Edge(
                 name,
@@ -203,9 +226,9 @@ def verify(trial_dir: Path) -> IndependentStanding:
         )
 
     # Each of these demands an EXPLICIT typed O2O edge. No token matching.
-    pc = typed_edge("realizes_candidate", "POWLCommitment", "PlanCandidate") or typed_edge(
-        "commits_candidate", "POWLCommitment", "PlanCandidate"
-    )
+    pc = typed_edge(
+        "realizes_candidate", "POWLCommitment", "PlanCandidate"
+    ) or typed_edge("commits_candidate", "POWLCommitment", "PlanCandidate")
     add(
         "plan_candidate->commitment",
         REQUIRED_CHAIN[0][1],
@@ -252,7 +275,9 @@ def verify(trial_dir: Path) -> IndependentStanding:
     # The observation must observe an actuation that is committed AND authorized.
     ap = [
         (s_, q_, t_)
-        for s_, q_, t_ in typed_edge("observes_actuation", "PostconditionObservation", "Actuation")
+        for s_, q_, t_ in typed_edge(
+            "observes_actuation", "PostconditionObservation", "Actuation"
+        )
         if t_ in authorized_actuations
     ]
     add(

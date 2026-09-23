@@ -21,12 +21,12 @@ admitted"); anything else is a typed refusal, not a silent load.
 from __future__ import annotations
 
 import base64
-from dataclasses import dataclass
 import hashlib
 import json
-from pathlib import Path
 import shutil
 import subprocess
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 PRAXIS_WASMPKG_DIR = Path("/Users/sac/praxis/crates/praxis-graphlaw-wasm/pkg")
@@ -36,7 +36,9 @@ PRAXIS_WASMPKG_DIR = Path("/Users/sac/praxis/crates/praxis-graphlaw-wasm/pkg")
 # session (see docs/jira/v26.9.16/AFDE-2609-wasm-artifact-discipline-consumer-seam.md
 # "Local closure work"). A mismatch means the bytes at PRAXIS_WASMPKG_DIR are not
 # the artifact this bridge was built to drive -- refuse, do not silently load.
-EXPECTED_ARTIFACT_SHA256 = "187688d9e7e33a575713d6911d75687adb38713ed37412e211af263dfcbe0c28"
+EXPECTED_ARTIFACT_SHA256 = (
+    "187688d9e7e33a575713d6911d75687adb38713ed37412e211af263dfcbe0c28"
+)
 EXPECTED_ARTIFACT_SIZE = 3249361
 
 # The WASM v1 magic prefix, per the spec -- same check as wasm/_runtime.py.
@@ -332,4 +334,3 @@ class GraphLawBridge:
         if "error" in data:
             raise RuntimeError(f"GraphLaw run_hooks error: {data['error']}")
         return data
-

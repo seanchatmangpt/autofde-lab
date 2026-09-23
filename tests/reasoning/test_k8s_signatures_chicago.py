@@ -44,17 +44,25 @@ _FORBIDDEN_VOCABULARY = ("sregym", "gymact", "problem_id", "conductor", "benchma
 
 def test_every_signature_is_a_real_dspy_signature_subclass():
     for sig in ALL_SIGNATURES:
-        assert issubclass(sig, dspy.Signature), f"{sig.__name__} must subclass dspy.Signature"
+        assert issubclass(sig, dspy.Signature), (
+            f"{sig.__name__} must subclass dspy.Signature"
+        )
 
 
 def test_every_signature_has_at_least_one_input_and_one_output_field():
     for sig in ALL_SIGNATURES:
         fields = sig.model_fields
         input_fields = [
-            name for name, f in fields.items() if f.json_schema_extra and f.json_schema_extra.get("__dspy_field_type") == "input"
+            name
+            for name, f in fields.items()
+            if f.json_schema_extra
+            and f.json_schema_extra.get("__dspy_field_type") == "input"
         ]
         output_fields = [
-            name for name, f in fields.items() if f.json_schema_extra and f.json_schema_extra.get("__dspy_field_type") == "output"
+            name
+            for name, f in fields.items()
+            if f.json_schema_extra
+            and f.json_schema_extra.get("__dspy_field_type") == "output"
         ]
         assert input_fields, f"{sig.__name__} must declare at least one InputField"
         assert output_fields, f"{sig.__name__} must declare at least one OutputField"
@@ -67,9 +75,15 @@ def test_no_signature_leaks_caller_specific_vocabulary_into_field_descriptions()
     for sig in ALL_SIGNATURES:
         docstring = (sig.__doc__ or "").lower()
         for banned in _FORBIDDEN_VOCABULARY:
-            assert banned not in docstring, f"{sig.__name__}'s docstring leaks {banned!r}"
+            assert banned not in docstring, (
+                f"{sig.__name__}'s docstring leaks {banned!r}"
+            )
         for field_name, field in sig.model_fields.items():
-            desc = str(field.json_schema_extra.get("desc", "") if field.json_schema_extra else "").lower()
+            desc = str(
+                field.json_schema_extra.get("desc", "")
+                if field.json_schema_extra
+                else ""
+            ).lower()
             for banned in _FORBIDDEN_VOCABULARY:
                 assert banned not in desc, (
                     f"{sig.__name__}.{field_name}'s description leaks {banned!r}: {desc!r}"

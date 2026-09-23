@@ -31,7 +31,6 @@ Assigned gyms and outcome, investigated for real this session:
 
 from pathlib import Path
 
-import pytest
 
 from autofde_lab import utils
 from autofde_lab.hub.domain.gym_procedure import GymProcedureDomain
@@ -49,7 +48,9 @@ RECIPES_DIR = (
 
 def test_astar_solves_real_tua_bench_create_mail_folders_recipe():
     """A* must recover the real solve.sh's own ordering to create both local folders."""
-    domain = GymProcedureDomain.from_json(RECIPES_DIR / "tua_bench_create_mail_folders.json")
+    domain = GymProcedureDomain.from_json(
+        RECIPES_DIR / "tua_bench_create_mail_folders.json"
+    )
     Astar = utils.load_registered_solver("Astar")
     with Astar(domain_factory=lambda: domain) as solver:
         solver.solve()

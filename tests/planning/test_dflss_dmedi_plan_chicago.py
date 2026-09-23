@@ -100,9 +100,13 @@ def test_astar_solves_dflss_dmedi_curriculum_plan() -> None:
             outcome = domain.step(action)
             obs = outcome.observation
 
-        assert domain._goal_checker.is_goal(obs.to_cpp()), f"Astar did not reach the goal. Plan: {plan}"
+        assert domain._goal_checker.is_goal(obs.to_cpp()), (
+            f"Astar did not reach the goal. Plan: {plan}"
+        )
 
-    assert len(plan) == 52, f"expected all 52 real actions in the plan, got {len(plan)}: {plan}"
+    assert len(plan) == 52, (
+        f"expected all 52 real actions in the plan, got {len(plan)}: {plan}"
+    )
     assert set(plan[:6]) == _ZERO_PRECONDITION_ACTIONS, (
         "the 6 real zero-precondition Define modules must be the first 6 actions taken "
         f"(nothing else is applicable from the empty :init); got: {plan[:6]}"
@@ -145,10 +149,18 @@ def test_astar_solves_dflss_dmedi_curriculum_plan() -> None:
         assert index_of("conduct-measure-tollgate-review") < index_of(module)
         assert index_of(module) < index_of("conduct-explore-tollgate-review")
 
-    assert index_of("complete-concept-generation") < index_of("complete-triz-for-new-product-design")
-    assert index_of("complete-concept-generation") < index_of("complete-transactional-triz")
-    assert index_of("complete-triz-for-new-product-design") < index_of("conduct-explore-tollgate-review")
-    assert index_of("complete-transactional-triz") < index_of("conduct-explore-tollgate-review")
+    assert index_of("complete-concept-generation") < index_of(
+        "complete-triz-for-new-product-design"
+    )
+    assert index_of("complete-concept-generation") < index_of(
+        "complete-transactional-triz"
+    )
+    assert index_of("complete-triz-for-new-product-design") < index_of(
+        "conduct-explore-tollgate-review"
+    )
+    assert index_of("complete-transactional-triz") < index_of(
+        "conduct-explore-tollgate-review"
+    )
 
     # ---- Explore tollgate gates every real Develop module; the real DOE
     # progression additionally chains Intro -> Full-Factorial ->
@@ -169,8 +181,12 @@ def test_astar_solves_dflss_dmedi_curriculum_plan() -> None:
         assert index_of(module) < index_of("conduct-develop-tollgate-review")
 
     assert index_of("complete-intro-to-doe") < index_of("complete-full-factorial-doe")
-    assert index_of("complete-full-factorial-doe") < index_of("complete-doe-with-curvature")
-    assert index_of("complete-full-factorial-doe") < index_of("complete-doe-catapult-simulation")
+    assert index_of("complete-full-factorial-doe") < index_of(
+        "complete-doe-with-curvature"
+    )
+    assert index_of("complete-full-factorial-doe") < index_of(
+        "complete-doe-catapult-simulation"
+    )
     assert index_of("complete-doe-with-curvature") < index_of("complete-robust-design")
     for module in (
         "complete-full-factorial-doe",

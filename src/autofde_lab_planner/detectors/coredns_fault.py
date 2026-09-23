@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from typing import Any
+
 from autofde_lab_planner.models import CoreDNSFault
 
 # Pattern matching the injected NXDOMAIN template block in Corefile
@@ -34,7 +35,10 @@ def detect_coredns_faults(
         if not corefile:
             continue
 
-        if "template ANY ANY svc.cluster.local" in corefile or "rcode NXDOMAIN" in corefile:
+        if (
+            "template ANY ANY svc.cluster.local" in corefile
+            or "rcode NXDOMAIN" in corefile
+        ):
             # Strip out the injected template block
             repaired_corefile = NXDOMAIN_TEMPLATE_PATTERN.sub("\n", corefile)
             # If regex didn't catch it due to subtle formatting, do fallback string cleaning
@@ -65,7 +69,9 @@ def detect_coredns_faults(
     return faults
 
 
-def _to_item_list(data: dict[str, Any] | list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+def _to_item_list(
+    data: dict[str, Any] | list[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
     if not data:
         return []
     if isinstance(data, dict):
@@ -79,4 +85,3 @@ def _to_item_list(data: dict[str, Any] | list[dict[str, Any]] | None) -> list[di
     else:
         return []
     return [i for i in items if isinstance(i, dict)]
-

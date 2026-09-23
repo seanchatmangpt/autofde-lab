@@ -113,7 +113,9 @@ def attempt_solve_dflss_curriculum(
             f"UNSUPPORTED:DOMAIN_CHECK_FAILED:{type(exc).__name__}",
         )
     if not compatible:
-        return PlannerSolveOutcome(planner_id, "REFUSED", "REFUSED:DOMAIN_CONTRACT_MISMATCH")
+        return PlannerSolveOutcome(
+            planner_id, "REFUSED", "REFUSED:DOMAIN_CONTRACT_MISMATCH"
+        )
 
     try:
         with solver_type(domain_factory=lambda: domain) as solver:

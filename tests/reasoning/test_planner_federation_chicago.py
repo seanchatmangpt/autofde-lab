@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import os
 
-import pytest
 
 from autofde_lab.powl.validate import validate_model
 from autofde_lab.reasoning.planner_federation import (
@@ -30,10 +29,22 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(_HERE))
 
 # The toy 2-action/1-object blocksworld fixture named in this task's context.
 BLOCKS1_DOMAIN = os.path.join(
-    _REPO_ROOT, "src", "autofde_lab", "planning", "tests", "fixtures", "blocks-domain.pddl"
+    _REPO_ROOT,
+    "src",
+    "autofde_lab",
+    "planning",
+    "tests",
+    "fixtures",
+    "blocks-domain.pddl",
 )
 BLOCKS1_PROBLEM = os.path.join(
-    _REPO_ROOT, "src", "autofde_lab", "planning", "tests", "fixtures", "blocks-problem.pddl"
+    _REPO_ROOT,
+    "src",
+    "autofde_lab",
+    "planning",
+    "tests",
+    "fixtures",
+    "blocks-problem.pddl",
 )
 
 # The richer, real 3-block blocksworld fixture already used by
@@ -77,6 +88,7 @@ def test_solve_with_one_solver_astar_admits_ordered_partial_order():
     validate_model(result)
 
     labels = [atom.label for atom in result.children]
+
     # Goal is (ON B C); real dependency order requires B to be picked up
     # only after it is unstacked/put down, and stacked only after that.
     def index_of(fragment: str) -> int:

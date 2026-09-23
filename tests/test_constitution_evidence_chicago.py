@@ -11,6 +11,7 @@ assertions check the real constructed instance's real field values (not merely
 that construction succeeded), and frozen-ness is verified by provoking a real
 `dataclasses.FrozenInstanceError` on attempted mutation.
 """
+
 from __future__ import annotations
 
 import dataclasses
@@ -116,7 +117,9 @@ def test_evidence_witness_real_fields_round_trip():
     assert instance.derived_by_verifier == "urn:example:verifierrun:1"
     assert instance.governed_candidate == "urn:example:governedcandidate:1"
     assert instance.manifest == "urn:example:artifactmanifest:1"
-    assert instance.postcondition_observation == "urn:example:postconditionobservation:1"
+    assert (
+        instance.postcondition_observation == "urn:example:postconditionobservation:1"
+    )
     assert instance.receipt_dag == "urn:example:receiptdag:1"
     assert instance.replay == "urn:example:replay:1"
     assert instance.witness_for == "urn:example:trial:1"
@@ -151,7 +154,10 @@ def test_receipt_dag_real_fields_round_trip():
     instance = cls(
         contains_receipt=("urn:example:receipt:1", "urn:example:receipt:2"),
     )
-    assert instance.contains_receipt == ("urn:example:receipt:1", "urn:example:receipt:2")
+    assert instance.contains_receipt == (
+        "urn:example:receipt:1",
+        "urn:example:receipt:2",
+    )
 
 
 def test_replay_real_fields_round_trip():

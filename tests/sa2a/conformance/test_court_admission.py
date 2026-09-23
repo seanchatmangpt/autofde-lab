@@ -21,7 +21,6 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
-import pytest
 import rdflib
 from rdflib import Graph
 
@@ -44,7 +43,6 @@ from autofde_lab.sa2a.conformance.courts.admission_court import (
     AdmissionCourt,
     AdmissionFalsificationCode,
     CanonicalSemanticStore,
-    CanonicalStateDirectUpdateRefusedError,
     FalsificationVerdict,
 )
 
@@ -63,7 +61,9 @@ class RealDiskProbeActuator:
             "action": action_iri,
             "target": target_resource,
             "parameters": dict(parameters),
-            "digest": hashlib.sha256(json.dumps(dict(sorted(parameters.items()))).encode("utf-8")).hexdigest(),
+            "digest": hashlib.sha256(
+                json.dumps(dict(sorted(parameters.items()))).encode("utf-8")
+            ).hexdigest(),
         }
         self._probe_path.write_text(json.dumps(data), encoding="utf-8")
         return {"applied": True, "path": str(self._probe_path)}
@@ -89,7 +89,10 @@ class IndependentDiskProbeVerifier:
             return False
         try:
             data = json.loads(self._probe_path.read_text(encoding="utf-8"))
-            return data.get("action") == action_iri and data.get("target") == target_resource
+            return (
+                data.get("action") == action_iri
+                and data.get("target") == target_resource
+            )
         except Exception:
             return False
 
@@ -100,6 +103,7 @@ class IndependentDiskProbeVerifier:
 # =============================================================================
 # Category 1: CHI-ADM-* (Admission & Namespace Invariant Falsifiers)
 # =============================================================================
+
 
 def test_chi_adm_001_unadmitted_subject_namespace(tmp_path: Path) -> None:
     """CHI-ADM-001: Attempting to admit unadmitted rogue subject namespace fails closed."""
@@ -116,7 +120,10 @@ def test_chi_adm_001_unadmitted_subject_namespace(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.CHI_ADM_UNADMITTED_SUBJECT_NS.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.CHI_ADM_UNADMITTED_SUBJECT_NS.value
+    )
     assert verdict.actual_refusal_code == REFUSED_NAMESPACE
     assert verdict.standing == Standing.REFUSED
     assert not consequence_probe.exists()
@@ -137,7 +144,10 @@ def test_chi_adm_002_unadmitted_predicate_namespace(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.CHI_ADM_UNADMITTED_PREDICATE_NS.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.CHI_ADM_UNADMITTED_PREDICATE_NS.value
+    )
     assert verdict.actual_refusal_code == REFUSED_NAMESPACE
     assert verdict.standing == Standing.REFUSED
     assert not consequence_probe.exists()
@@ -158,7 +168,10 @@ def test_chi_adm_003_forbidden_disallowed_iri(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.CHI_ADM_FORBIDDEN_DISALLOWED_IRI.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.CHI_ADM_FORBIDDEN_DISALLOWED_IRI.value
+    )
     assert verdict.actual_refusal_code == REFUSED_IDENTITY
     assert verdict.standing == Standing.REFUSED
     assert not consequence_probe.exists()
@@ -175,7 +188,10 @@ def test_chi_adm_004_syntax_parse_failure(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.CHI_ADM_PARSE_FAILURE_SYNTAX.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.CHI_ADM_PARSE_FAILURE_SYNTAX.value
+    )
     assert verdict.actual_refusal_code == REFUSED_PARSE_FAILURE
     assert verdict.standing == Standing.REFUSED
     assert not consequence_probe.exists()
@@ -191,7 +207,10 @@ def test_chi_adm_005_empty_candidate_graph(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.CHI_ADM_EMPTY_CANDIDATE_GRAPH.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.CHI_ADM_EMPTY_CANDIDATE_GRAPH.value
+    )
     assert verdict.actual_refusal_code == REFUSED_META_RIGOR
     assert verdict.standing == Standing.REFUSED
     assert not consequence_probe.exists()
@@ -212,7 +231,10 @@ def test_chi_adm_006_missing_provenance_issuer(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.CHI_ADM_MISSING_PROVENANCE_ISSUER.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.CHI_ADM_MISSING_PROVENANCE_ISSUER.value
+    )
     assert verdict.actual_refusal_code == REFUSED_PROVENANCE
     assert verdict.standing == Standing.REFUSED
     assert not consequence_probe.exists()
@@ -221,6 +243,7 @@ def test_chi_adm_006_missing_provenance_issuer(tmp_path: Path) -> None:
 # =============================================================================
 # Category 2: SA2A-SHEX-* (Structural ShEx Shape Falsifiers)
 # =============================================================================
+
 
 def test_sa2a_shex_001_node_kind_mismatch(tmp_path: Path) -> None:
     """SA2A-SHEX-001: Target resource is blank node where IRI required by ShEx."""
@@ -241,7 +264,10 @@ def test_sa2a_shex_001_node_kind_mismatch(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.SA2A_SHEX_NODE_KIND_MISMATCH.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.SA2A_SHEX_NODE_KIND_MISMATCH.value
+    )
     assert verdict.actual_refusal_code == REFUSED_STRUCTURE
     assert verdict.standing == Standing.REFUSED
     assert any("violates node_kind" in detail for detail in verdict.details)
@@ -266,7 +292,9 @@ def test_sa2a_shex_002_missing_required_type(tmp_path: Path) -> None:
     validator = court.shex_validator
     g = Graph()
     g.parse(data=bad_shex_ttl, format="turtle")
-    rep = validator.validate(g, target_nodes={"ActionShape": [rdflib.URIRef("urn:autofde-lab:action_002")]})
+    rep = validator.validate(
+        g, target_nodes={"ActionShape": [rdflib.URIRef("urn:autofde-lab:action_002")]}
+    )
 
     assert rep.conforms is False
     assert any("missing required rdf:type" in v for v in rep.violations)
@@ -290,7 +318,10 @@ def test_sa2a_shex_003_predicate_min_count(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.SA2A_SHEX_PREDICATE_MIN_COUNT.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.SA2A_SHEX_PREDICATE_MIN_COUNT.value
+    )
     assert verdict.actual_refusal_code == REFUSED_STRUCTURE
     assert verdict.standing == Standing.REFUSED
     assert any("minCount violation" in detail for detail in verdict.details)
@@ -317,7 +348,10 @@ def test_sa2a_shex_004_predicate_max_count(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.SA2A_SHEX_PREDICATE_MAX_COUNT.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.SA2A_SHEX_PREDICATE_MAX_COUNT.value
+    )
     assert verdict.actual_refusal_code == REFUSED_STRUCTURE
     assert verdict.standing == Standing.REFUSED
     assert any("maxCount violation" in detail for detail in verdict.details)
@@ -343,7 +377,10 @@ def test_sa2a_shex_005_datatype_mismatch(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.SA2A_SHEX_DATATYPE_MISMATCH.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.SA2A_SHEX_DATATYPE_MISMATCH.value
+    )
     assert verdict.actual_refusal_code == REFUSED_STRUCTURE
     assert verdict.standing == Standing.REFUSED
     assert any("violates datatype" in detail for detail in verdict.details)
@@ -370,7 +407,10 @@ def test_sa2a_shex_006_closed_shape_unpermitted_predicate(tmp_path: Path) -> Non
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.SA2A_SHEX_CLOSED_SHAPE_UNPERMITTED_PREDICATE.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.SA2A_SHEX_CLOSED_SHAPE_UNPERMITTED_PREDICATE.value
+    )
     assert verdict.actual_refusal_code == REFUSED_STRUCTURE
     assert verdict.standing == Standing.REFUSED
     assert any("unpermitted predicate" in detail for detail in verdict.details)
@@ -380,6 +420,7 @@ def test_sa2a_shex_006_closed_shape_unpermitted_predicate(tmp_path: Path) -> Non
 # =============================================================================
 # Category 3: SA2A-SHACL-* (Semantic SHACL Shape Falsifiers)
 # =============================================================================
+
 
 def test_sa2a_shacl_001_unreceipted_do_action(tmp_path: Path) -> None:
     """SA2A-SHACL-001: DO action candidate missing requiresReceipt constraint."""
@@ -399,7 +440,10 @@ def test_sa2a_shacl_001_unreceipted_do_action(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.SA2A_SHACL_UNRECEIPTED_DO_ACTION.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.SA2A_SHACL_UNRECEIPTED_DO_ACTION.value
+    )
     assert verdict.actual_refusal_code == REFUSED_SHACL
     assert verdict.standing == Standing.REFUSED
     assert any("requiresReceipt" in detail for detail in verdict.details)
@@ -424,7 +468,10 @@ def test_sa2a_shacl_002_missing_authority_consequence(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.SA2A_SHACL_MISSING_AUTHORITY_CONSEQUENCE.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.SA2A_SHACL_MISSING_AUTHORITY_CONSEQUENCE.value
+    )
     assert verdict.actual_refusal_code == REFUSED_SHACL
     assert verdict.standing == Standing.REFUSED
     assert any("requiresAuthority" in detail for detail in verdict.details)
@@ -451,7 +498,10 @@ def test_sa2a_shacl_003_undeclared_capability(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.SA2A_SHACL_UNDECLARED_CAPABILITY.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.SA2A_SHACL_UNDECLARED_CAPABILITY.value
+    )
     assert verdict.actual_refusal_code == REFUSED_SHACL
     assert verdict.standing == Standing.REFUSED
     assert any("Capability" in detail for detail in verdict.details)
@@ -475,7 +525,10 @@ def test_sa2a_shacl_004_projection_claiming_canonical(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.SA2A_SHACL_PROJECTION_CLAIMING_CANONICAL.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.SA2A_SHACL_PROJECTION_CLAIMING_CANONICAL.value
+    )
     assert verdict.actual_refusal_code == REFUSED_SHACL
     assert verdict.standing == Standing.REFUSED
     assert any("isCanonical" in detail for detail in verdict.details)
@@ -513,6 +566,7 @@ def test_sa2a_shacl_005_severity_range_violation(tmp_path: Path) -> None:
 # Category 4: SA2A-SPARQL-* (SPARQL Invariant Falsifiers & Canonical State Refusal)
 # =============================================================================
 
+
 def test_sa2a_sparql_001_consequence_without_authority(tmp_path: Path) -> None:
     """SA2A-SPARQL-001: SPARQL ASK falsifier catches consequential action without authority."""
     consequence_probe = tmp_path / "probe_sparql_001.json"
@@ -529,7 +583,10 @@ def test_sa2a_sparql_001_consequence_without_authority(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.SA2A_SPARQL_CONSEQUENCE_WITHOUT_AUTH.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.SA2A_SPARQL_CONSEQUENCE_WITHOUT_AUTH.value
+    )
     assert verdict.actual_refusal_code == REFUSED_FALSIFIER
     assert verdict.standing == Standing.REFUSED
     assert not consequence_probe.exists()
@@ -551,7 +608,10 @@ def test_sa2a_sparql_002_do_without_receipt(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.SA2A_SPARQL_DO_WITHOUT_RECEIPT.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.SA2A_SPARQL_DO_WITHOUT_RECEIPT.value
+    )
     assert verdict.actual_refusal_code == REFUSED_FALSIFIER
     assert verdict.standing == Standing.REFUSED
     assert not consequence_probe.exists()
@@ -576,7 +636,10 @@ def test_sa2a_sparql_003_unknown_capability_in_plan(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.SA2A_SPARQL_UNKNOWN_CAPABILITY_PLAN.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.SA2A_SPARQL_UNKNOWN_CAPABILITY_PLAN.value
+    )
     assert verdict.actual_refusal_code == REFUSED_FALSIFIER
     assert verdict.standing == Standing.REFUSED
     assert not consequence_probe.exists()
@@ -599,7 +662,10 @@ def test_sa2a_sparql_004_projection_as_canonical(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.SA2A_SPARQL_PROJECTION_AS_CANONICAL.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.SA2A_SPARQL_PROJECTION_AS_CANONICAL.value
+    )
     assert verdict.actual_refusal_code == REFUSED_FALSIFIER
     assert verdict.standing == Standing.REFUSED
     assert not consequence_probe.exists()
@@ -625,7 +691,10 @@ def test_sa2a_sparql_005_llm_direct_admitted(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.SA2A_SPARQL_LLM_DIRECT_ADMITTED.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.SA2A_SPARQL_LLM_DIRECT_ADMITTED.value
+    )
     assert verdict.actual_refusal_code == REFUSED_FALSIFIER
     assert verdict.standing == Standing.REFUSED
     assert not consequence_probe.exists()
@@ -662,7 +731,10 @@ def test_sa2a_sparql_006_direct_state_update_refusal(tmp_path: Path) -> None:
     )
 
     assert verdict.passed is True
-    assert verdict.falsifier_code == AdmissionFalsificationCode.SA2A_SPARQL_DIRECT_STATE_UPDATE_REFUSAL.value
+    assert (
+        verdict.falsifier_code
+        == AdmissionFalsificationCode.SA2A_SPARQL_DIRECT_STATE_UPDATE_REFUSAL.value
+    )
     assert verdict.actual_refusal_code == "REFUSED_CANONICAL_MUTATION"
     assert verdict.standing == Standing.REFUSED
     assert verdict.refused_before_consequence is True
@@ -675,6 +747,7 @@ def test_sa2a_sparql_006_direct_state_update_refusal(tmp_path: Path) -> None:
 # =============================================================================
 # Zero-Mock Real Consequence Gating Test
 # =============================================================================
+
 
 def test_admission_court_zero_mock_consequence_gating(tmp_path: Path) -> None:
     """Proves the full pipeline gates a genuine BRCE Consequence Boundary with real disk I/O.

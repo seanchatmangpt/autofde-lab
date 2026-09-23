@@ -87,7 +87,7 @@ from autofde_lab.powl.executor import (
     is_final,
 )
 from autofde_lab.powl.refusals import PowlError
-from autofde_lab.powl.runner import classify_pipeline_stall, run_pipeline
+from autofde_lab.powl.runner import run_pipeline
 
 
 def _ce(a: int, b: int) -> ChoiceGraphEdge:
@@ -111,7 +111,9 @@ def test_max_marking_states_exhausts_mid_concurrent_batch_traced_against_executo
     bound = ExecutionBound(max_marking_states=2)
 
     live0 = enabled(model, INITIAL_MARKING, bound)
-    assert live0 == frozenset({(0,), (1,), (2,)}), "all 3 siblings must start genuinely concurrent"
+    assert live0 == frozenset({(0,), (1,), (2,)}), (
+        "all 3 siblings must start genuinely concurrent"
+    )
 
     m = fire(model, INITIAL_MARKING, (0,), bound=bound)
     assert m.completed_paths == frozenset({(0,)})
@@ -123,7 +125,9 @@ def test_max_marking_states_exhausts_mid_concurrent_batch_traced_against_executo
         fire(model, m, (2,), bound=bound)
     except PowlError as exc:
         raised = exc
-    assert raised is not None, "the 3rd fire must be refused once max_marking_states=2 is full"
+    assert raised is not None, (
+        "the 3rd fire must be refused once max_marking_states=2 is full"
+    )
     assert "BOUND_EXHAUSTED" in str(raised)
     assert "max_marking_states" in str(raised)
 
@@ -144,17 +148,16 @@ def test_run_pipeline_handles_max_marking_states_exhaustion_mid_concurrent_batch
     model = PartialOrder(children=(Atom("a"), Atom("b"), Atom("c")), order=frozenset())
     bound = ExecutionBound(max_marking_states=2)
 
-    log, result = run_pipeline(model, session_id="test-marking-states-mid-batch", bound=bound)
+    log, result = run_pipeline(
+        model, session_id="test-marking-states-mid-batch", bound=bound
+    )
 
     assert result.final is False
     assert result.stall == "BLOCKED:BOUND_EXHAUSTED"
     # Only the 2 real fires that fit under the cap were ever recorded.
     assert len(log.events) == 2
     fired_labels = sorted(
-        a.value.value
-        for e in log.events
-        for a in e.attributes
-        if a.key == "detail"
+        a.value.value for e in log.events for a in e.attributes if a.key == "detail"
     )
     assert fired_labels == ["a", "b"], (
         f"only the 2 siblings that fit under max_marking_states may have fired -- got {fired_labels!r}"
@@ -174,7 +177,8 @@ def test_run_pipeline_max_marking_states_bindings_only_invoked_for_paths_that_ac
     bindings must borrow real pipeline labels rather than inventing new
     ones."""
     model = PartialOrder(
-        children=(Atom("scan"), Atom("phi_encode"), Atom("dispatch_solve")), order=frozenset()
+        children=(Atom("scan"), Atom("phi_encode"), Atom("dispatch_solve")),
+        order=frozenset(),
     )
     bound = ExecutionBound(max_marking_states=2)
 
@@ -249,17 +253,25 @@ def test_visit_cap_removes_the_redo_hop_traced_against_executor_first():
 
     m = fire(model, INITIAL_MARKING, (0,), bound=bound)  # enter the loop
     live1 = enabled(model, m, bound)
-    assert live1 == frozenset({(1, 0), (1, 1)}), "round 1's body must start genuinely concurrent"
+    assert live1 == frozenset({(1, 0), (1, 1)}), (
+        "round 1's body must start genuinely concurrent"
+    )
     m = fire(model, m, (1, 0), bound=bound)
     m = fire(model, m, (1, 1), bound=bound)
 
     live_after_round1 = sorted(enabled(model, m, bound))
-    assert live_after_round1 == [(2,), (3,)], "both redo and exit must be real, live alternatives"
+    assert live_after_round1 == [(2,), (3,)], (
+        "both redo and exit must be real, live alternatives"
+    )
     m = fire(model, m, (2,), bound=bound)  # take the redo hop (round 1 -> round 2)
-    assert dict(m.visits)[((), 2)] == 1, "the redo hop's own visit counter must have incremented"
+    assert dict(m.visits)[((), 2)] == 1, (
+        "the redo hop's own visit counter must have incremented"
+    )
 
     live2 = enabled(model, m, bound)
-    assert live2 == frozenset({(1, 0), (1, 1)}), "round 2's body must again be genuinely concurrent"
+    assert live2 == frozenset({(1, 0), (1, 1)}), (
+        "round 2's body must again be genuinely concurrent"
+    )
     m = fire(model, m, (1, 0), bound=bound)
     m = fire(model, m, (1, 1), bound=bound)
     m = fire(model, m, (2,), bound=bound)  # 2nd redo -- fills the cap
@@ -288,7 +300,9 @@ def test_run_pipeline_max_node_visits_stalls_a_repeated_concurrent_block_honestl
     model, _body = _cyclic_concurrent_model()
     bound = ExecutionBound(max_node_visits=2)
 
-    log, result = run_pipeline(model, session_id="test-visit-cap-concurrent-loop", bound=bound)
+    log, result = run_pipeline(
+        model, session_id="test-visit-cap-concurrent-loop", bound=bound
+    )
 
     assert result.final is False
     assert result.stall == "BLOCKED:BOUND_EXHAUSTED"
@@ -315,7 +329,9 @@ def test_run_pipeline_max_node_visits_generous_bound_lets_the_same_model_exit_cl
     # THIS bound first instead.
     bound = ExecutionBound(max_node_visits=1000, max_activity_fires=3)
 
-    log, result = run_pipeline(model, session_id="test-visit-cap-vs-fire-cap-independent", bound=bound)
+    log, result = run_pipeline(
+        model, session_id="test-visit-cap-vs-fire-cap-independent", bound=bound
+    )
 
     assert result.final is False
     assert result.stall == "BLOCKED:BOUND_EXHAUSTED"
@@ -324,7 +340,9 @@ def test_run_pipeline_max_node_visits_generous_bound_lets_the_same_model_exit_cl
     fired_labels = sorted(
         a.value.value for e in log.events for a in e.attributes if a.key == "detail"
     )
-    assert "p" in fired_labels and "q" in fired_labels, "round 1's real concurrent body must have fired"
+    assert "p" in fired_labels and "q" in fired_labels, (
+        "round 1's real concurrent body must have fired"
+    )
 
 
 # ── 3. a real structural DEADLOCK discovered right after a real batch ──────
@@ -343,7 +361,10 @@ def _dead_end_after_concurrent_batch_model() -> ChoiceGraph:
     # run_pipeline-level test below may bind real callables to them.
     body = PartialOrder(children=(Atom("scan"), Atom("phi_encode")), order=frozenset())
     return ChoiceGraph(
-        children=(Silent(), Silent(), body), edges=frozenset({_ce(0, 2)}), start=0, end=1
+        children=(Silent(), Silent(), body),
+        edges=frozenset({_ce(0, 2)}),
+        start=0,
+        end=1,
     )
 
 
@@ -357,7 +378,9 @@ def test_deadlock_after_concurrent_batch_traced_against_executor_first():
 
     m = fire(model, INITIAL_MARKING, (0,))
     live = enabled(model, m)
-    assert live == frozenset({(2, 0), (2, 1)}), "the real body must be genuinely concurrent"
+    assert live == frozenset({(2, 0), (2, 1)}), (
+        "the real body must be genuinely concurrent"
+    )
 
     m = fire(model, m, (2, 0))
     # Deadlock is not yet reached -- only one of the two concurrent siblings (scan) fired.
@@ -429,13 +452,17 @@ def test_run_pipeline_zero_of_a_concurrent_batch_fires_when_the_fire_budget_is_a
         "the real batch behind the spent budget must genuinely be a >1 concurrent set"
     )
 
-    log, result = run_pipeline(model, session_id="test-zero-of-batch-fires", bound=bound)
+    log, result = run_pipeline(
+        model, session_id="test-zero-of-batch-fires", bound=bound
+    )
 
     assert result.final is False
     assert result.stall == "BLOCKED:BOUND_EXHAUSTED"
     # Only x's single fire -- neither a nor b ever fired.
     assert len(log.events) == 1
-    fired_labels = [a.value.value for e in log.events for a in e.attributes if a.key == "detail"]
+    fired_labels = [
+        a.value.value for e in log.events for a in e.attributes if a.key == "detail"
+    ]
     assert fired_labels == ["x"]
 
 
@@ -455,10 +482,16 @@ def test_run_pipeline_exactly_one_of_a_concurrent_batch_fires_at_the_marking_sta
         fire(model, m, (1,), bound=bound)
     except PowlError as exc:
         raised = exc
-    assert raised is not None, "the 2nd fire must already be refused when max_marking_states=1"
+    assert raised is not None, (
+        "the 2nd fire must already be refused when max_marking_states=1"
+    )
 
-    log, result = run_pipeline(model, session_id="test-exactly-one-of-batch-fires", bound=bound)
+    log, result = run_pipeline(
+        model, session_id="test-exactly-one-of-batch-fires", bound=bound
+    )
 
     assert result.final is False
     assert result.stall == "BLOCKED:BOUND_EXHAUSTED"
-    assert len(log.events) == 1, "exactly 1 of the 3-member concurrent batch may have fired"
+    assert len(log.events) == 1, (
+        "exactly 1 of the 3-member concurrent batch may have fired"
+    )

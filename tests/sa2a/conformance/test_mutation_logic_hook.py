@@ -60,13 +60,17 @@ from dataclasses import replace as dataclass_replace
 from typing import List
 
 from autofde_lab.sa2a.conformance.courts.logic_hook_court import (
+    SA2A_HOOK_NO_DO,
     LogicHookCourt,
     LogicHookCourtReport,
     LogicHookVerdict,
-    SA2A_HOOK_NO_DO,
 )
 from autofde_lab.sa2a.hooks.engine import KnowledgeHookEngine
-from autofde_lab.sa2a.hooks.model import HookExecutionRecord, HookVerdict, KnowledgeHookDefinition
+from autofde_lab.sa2a.hooks.model import (
+    HookExecutionRecord,
+    HookVerdict,
+    KnowledgeHookDefinition,
+)
 from autofde_lab.sa2a.hooks.synthesis import HookSynthesizer
 
 # ---------------------------------------------------------------------------
@@ -138,15 +142,23 @@ def test_hook_iri_identity_swap_is_wrongly_accepted_by_verify_hook_no_do() -> No
 
     hook_admitted = _make_hook("mutation_hook_admitted")
     hook_foreign = _make_hook("mutation_hook_foreign")
-    assert hook_admitted.iri != hook_foreign.iri, "precondition: two distinct real hook identities"
+    assert hook_admitted.iri != hook_foreign.iri, (
+        "precondition: two distinct real hook identities"
+    )
 
     records = _run_hook_engine(hook_admitted)
-    assert len(records) >= 1, "precondition: real engine evaluation produced at least one record"
-    real_record = records[0]
-    assert real_record.hook_iri == hook_admitted.iri, "precondition: record truthfully names its producing hook"
-    assert real_record.verdict in (HookVerdict.FIRED, HookVerdict.NOT_FIRED, HookVerdict.GATED), (
-        "precondition: record carries an admitted HookVerdict before mutation"
+    assert len(records) >= 1, (
+        "precondition: real engine evaluation produced at least one record"
     )
+    real_record = records[0]
+    assert real_record.hook_iri == hook_admitted.iri, (
+        "precondition: record truthfully names its producing hook"
+    )
+    assert real_record.verdict in (
+        HookVerdict.FIRED,
+        HookVerdict.NOT_FIRED,
+        HookVerdict.GATED,
+    ), "precondition: record carries an admitted HookVerdict before mutation"
 
     # Baseline: the real, unmutated episode is CONFORMANT — proves the setup
     # is otherwise-complete and currently-valid before the single mutation.
@@ -159,15 +171,21 @@ def test_hook_iri_identity_swap_is_wrongly_accepted_by_verify_hook_no_do() -> No
     # real but foreign, never-admitted, never-executed hook's IRI.
     mutated_record = dataclass_replace(real_record, hook_iri=hook_foreign.iri)
     assert mutated_record.hook_iri == hook_foreign.iri
-    assert mutated_record.verdict == real_record.verdict, "only hook_iri identity was mutated"
+    assert mutated_record.verdict == real_record.verdict, (
+        "only hook_iri identity was mutated"
+    )
 
     # DEFECT DEMONSTRATION: the court SHOULD reject this (typed refusal /
     # non-CONFORMANT verdict, per SA2A-HOOK-NO-DO + the Mutation law), but
     # the real, unmodified implementation currently does not check hook_iri
     # provenance at all, so it silently accepts the foreign identity.
     result = court.verify_hook_no_do([mutated_record], fail_closed=True)
-    assert result.passed is True  # WRONG: a foreign, never-admitted hook identity must not pass.
-    assert result.verdict == LogicHookVerdict.CONFORMANT  # WRONG: should be REFUSED / NON_CONFORMANT.
+    assert (
+        result.passed is True
+    )  # WRONG: a foreign, never-admitted hook identity must not pass.
+    assert (
+        result.verdict == LogicHookVerdict.CONFORMANT
+    )  # WRONG: should be REFUSED / NON_CONFORMANT.
     assert result.rule_id == SA2A_HOOK_NO_DO
 
 
@@ -176,7 +194,9 @@ def test_hook_iri_identity_swap_is_wrongly_accepted_by_verify_hook_no_do() -> No
 # ---------------------------------------------------------------------------
 
 
-def test_run_full_court_wrongly_reports_passed_with_foreign_hook_iri_in_records() -> None:
+def test_run_full_court_wrongly_reports_passed_with_foreign_hook_iri_in_records() -> (
+    None
+):
     """GAP: run_full_court's aggregate report does not cross-reference
     hook_execution_records' hook_iri against the hooks admitted into the
     same episode, so a foreign-identity record still yields an all-CONFORMANT,
@@ -255,10 +275,20 @@ def test_run_full_court_wrongly_reports_passed_with_foreign_hook_iri_in_records(
         fail_closed=False,
     )
     assert isinstance(mutated_report, LogicHookCourtReport)
-    assert mutated_report.passed is True  # WRONG: a foreign-identity record must not yield a clean report.
-    assert mutated_report.failed_checks == 0  # WRONG: SA2A-HOOK-NO-DO (at least) should have failed.
+    assert (
+        mutated_report.passed is True
+    )  # WRONG: a foreign-identity record must not yield a clean report.
+    assert (
+        mutated_report.failed_checks == 0
+    )  # WRONG: SA2A-HOOK-NO-DO (at least) should have failed.
 
-    no_do_results = [r for r in mutated_report.gate_results if r.rule_id == SA2A_HOOK_NO_DO]
+    no_do_results = [
+        r for r in mutated_report.gate_results if r.rule_id == SA2A_HOOK_NO_DO
+    ]
     assert len(no_do_results) == 1
-    assert no_do_results[0].passed is True  # WRONG: same gap as the unit-level test, reached via the full sweep.
-    assert no_do_results[0].verdict == LogicHookVerdict.CONFORMANT  # WRONG: should be REFUSED / NON_CONFORMANT.
+    assert (
+        no_do_results[0].passed is True
+    )  # WRONG: same gap as the unit-level test, reached via the full sweep.
+    assert (
+        no_do_results[0].verdict == LogicHookVerdict.CONFORMANT
+    )  # WRONG: should be REFUSED / NON_CONFORMANT.

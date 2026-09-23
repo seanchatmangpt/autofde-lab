@@ -146,4 +146,6 @@ def falsify_exploration_candidate_via_gymact(
     )
     receipt = active_provider.submit_experiment(intent)
     falsification = falsify_candidate(candidate, receipts=(receipt,))
-    return ExplorationGymactOutcome(intent=intent, receipt=receipt, falsification=falsification)
+    return ExplorationGymactOutcome(
+        intent=intent, receipt=receipt, falsification=falsification
+    )

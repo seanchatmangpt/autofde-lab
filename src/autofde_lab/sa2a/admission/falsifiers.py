@@ -13,11 +13,10 @@ Standard falsifiers:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional, Sequence, Union
-import rdflib
-from rdflib import Graph
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Union
 
+from rdflib import Graph
 
 # Standard SPARQL prefixes commonly used across autofde-lab and SA2A
 STANDARD_PREFIXES = """
@@ -34,7 +33,9 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 # §18 Standard Falsifier Queries
 
 # 1. Action with consequence class but no authority requirement or authorization
-FALSIFIER_CONSEQUENCE_WITHOUT_AUTHORITY = STANDARD_PREFIXES + """
+FALSIFIER_CONSEQUENCE_WITHOUT_AUTHORITY = (
+    STANDARD_PREFIXES
+    + """
 ASK {
     {
         ?action afl:consequenceClass ?cc .
@@ -55,9 +56,12 @@ ASK {
     }
 }
 """
+)
 
 # 2. DO action without prepared receipt requirement
-FALSIFIER_DO_WITHOUT_RECEIPT_REQUIREMENT = STANDARD_PREFIXES + """
+FALSIFIER_DO_WITHOUT_RECEIPT_REQUIREMENT = (
+    STANDARD_PREFIXES
+    + """
 ASK {
     {
         ?action a ?type .
@@ -85,9 +89,12 @@ ASK {
     }
 }
 """
+)
 
 # 3. Plan referencing undeclared capability
-FALSIFIER_UNKNOWN_CAPABILITY_IN_PLAN = STANDARD_PREFIXES + """
+FALSIFIER_UNKNOWN_CAPABILITY_IN_PLAN = (
+    STANDARD_PREFIXES
+    + """
 ASK {
     {
         ?plan a ?planType .
@@ -106,9 +113,12 @@ ASK {
     }
 }
 """
+)
 
 # 4. Projection claiming canonical authority
-FALSIFIER_PROJECTION_AS_CANONICAL = STANDARD_PREFIXES + """
+FALSIFIER_PROJECTION_AS_CANONICAL = (
+    STANDARD_PREFIXES
+    + """
 ASK {
     {
         ?entity a ?projType .
@@ -193,9 +203,12 @@ ASK {
     }
 }
 """
+)
 
 # 5. Triples originating directly from LLM asserting ADMITTED
-FALSIFIER_LLM_DIRECT_ADMITTED = STANDARD_PREFIXES + """
+FALSIFIER_LLM_DIRECT_ADMITTED = (
+    STANDARD_PREFIXES
+    + """
 ASK {
     {
         ?triple prov:wasAttributedTo ?agent .
@@ -247,6 +260,7 @@ ASK {
     }
 }
 """
+)
 
 
 @dataclass(frozen=True)

@@ -62,9 +62,18 @@ from typing import Any, Optional
 #: standing to be recomputable externally. Each is a question a third party
 #: must be able to answer without the runtime.
 REQUIRED_JOINS: tuple[tuple[str, str], ...] = (
-    ("commitment->episode", "was this actuation the realization of this exact commitment?"),
-    ("authority->actuation", "was this exact actuation authorized by this exact authority envelope?"),
-    ("postcondition->actuation", "did an independent observation of THIS actuation occur?"),
+    (
+        "commitment->episode",
+        "was this actuation the realization of this exact commitment?",
+    ),
+    (
+        "authority->actuation",
+        "was this exact actuation authorized by this exact authority envelope?",
+    ),
+    (
+        "postcondition->actuation",
+        "did an independent observation of THIS actuation occur?",
+    ),
     ("receipt->parents", "can the receipt DAG be reconstructed?"),
     ("replay->receipt", "did the replay bind the exact source receipt?"),
 )
@@ -102,7 +111,9 @@ class ArtifactSet:
             trial_dir=Path(trial_dir),
             episode_ocel=maybe_json("episode.ocel.json"),
             level4_ocel=maybe_json("level4.ocel.json"),
-            commitment_turtle=ttl_path.read_text(encoding="utf-8") if ttl_path.is_file() else None,
+            commitment_turtle=ttl_path.read_text(encoding="utf-8")
+            if ttl_path.is_file()
+            else None,
             ledger_path=ledger if ledger.is_file() else None,
         )
 
@@ -152,7 +163,8 @@ class RecomputedStanding:
 
     def report(self) -> list[str]:
         return [
-            f"{'OK ' if j.established else '-- '}{j.join}: {j.detail}" for j in self.joins
+            f"{'OK ' if j.established else '-- '}{j.join}: {j.detail}"
+            for j in self.joins
         ]
 
 
@@ -188,7 +200,9 @@ class _ObjectIndex:
 
     @classmethod
     def of(cls, document: dict) -> "_ObjectIndex":
-        return cls({o["id"]: o for o in document.get("objects", []) if isinstance(o, dict)})
+        return cls(
+            {o["id"]: o for o in document.get("objects", []) if isinstance(o, dict)}
+        )
 
     def typed(self, object_type: str) -> list[dict]:
         return [o for o in self.by_id.values() if o.get("type") == object_type]
@@ -214,7 +228,9 @@ class _ObjectIndex:
         return [
             r["objectId"]
             for r in obj.get("relationships", []) or []
-            if isinstance(r, dict) and r.get("qualifier") == qualifier and r.get("objectId")
+            if isinstance(r, dict)
+            and r.get("qualifier") == qualifier
+            and r.get("objectId")
         ]
 
 
@@ -330,8 +346,7 @@ def recompute(trial_dir: Path) -> RecomputedStanding:
     for r in verify_receipts:
         vid = r.get("verification_id")
         parents = {
-            f"urn:level4:actuation:{p}"
-            for p in (r.get("parent_receipt_ids") or [])
+            f"urn:level4:actuation:{p}" for p in (r.get("parent_receipt_ids") or [])
         }
         post_id = f"urn:level4:postcondition:{vid}"
         if parents and set(idx.edges(post_id, "observes_actuation")) & parents:
@@ -357,7 +372,9 @@ def recompute(trial_dir: Path) -> RecomputedStanding:
         if p in {x.get("receipt_id") for x in receipts}
     }
     reconstructed = {
-        (child, parent) for child, parent in ledger_edges if parent in idx.edges(child, "caused_by")
+        (child, parent)
+        for child, parent in ledger_edges
+        if parent in idx.edges(child, "caused_by")
     }
     results.append(
         JoinResult(
@@ -381,7 +398,9 @@ def recompute(trial_dir: Path) -> RecomputedStanding:
     chain_head = receipts[-1]["_receipt_digest"] if receipts else None
     replays = idx.typed("Replay")
     bound = [
-        rp["id"] for rp in replays if chain_head and idx.attr(rp["id"], "head_digest") == chain_head
+        rp["id"]
+        for rp in replays
+        if chain_head and idx.attr(rp["id"], "head_digest") == chain_head
     ]
     results.append(
         JoinResult(

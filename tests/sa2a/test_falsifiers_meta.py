@@ -37,17 +37,13 @@ from autofde_lab.sa2a.admission.falsifiers import (
     FALSIFIER_PROJECTION_AS_CANONICAL,
     FALSIFIER_UNKNOWN_CAPABILITY_IN_PLAN,
     FalsifierSuite,
-    TriggeredFalsifier,
 )
 from autofde_lab.sa2a.admission.meta_admission import (
-    MetaAdmissionDecision,
     MetaAdmissionRegistry,
     ValidatorKind,
-    ValidatorProvenance,
 )
 from autofde_lab.sa2a.algebra import RefusalCause, Standing
 from autofde_lab.sa2a.root_manifest import RootManifest
-
 
 # ==============================================================================
 # 1. SPARQL ASK Falsifiers Engine Tests (§18, §61)
@@ -301,8 +297,14 @@ def test_root_manifest() -> RootManifest:
         ],
         semantic_profile_versions=["SA2A-PROFILE-v26.9.16"],
         canonicalization_algorithm="C14N-RDF-SHA256",
-        manufacturer_identities=["urn:manufacturer:chatman-prime", "urn:agent:autofde-lab"],
-        admitted_validator_identities=["urn:validator:root-shacl", "urn:validator:meta-admission-court"],
+        manufacturer_identities=[
+            "urn:manufacturer:chatman-prime",
+            "urn:agent:autofde-lab",
+        ],
+        admitted_validator_identities=[
+            "urn:validator:root-shacl",
+            "urn:validator:meta-admission-court",
+        ],
         authority_broker_identity="urn:authority:root-broker",
         brce_contract="urn:contract:brce-v1",
         receipt_law="CONSEQUENTIAL_DO_ZERO_UNRECEIPTED",
@@ -370,7 +372,9 @@ class TestMetaAdmission:
         assert decision.refusal_cause == RefusalCause.REFUSED_IDENTITY
         assert not registry.is_admitted("urn:shape:untrusted-issuer")
 
-    def test_validator_with_non_admissible_claimed_standing_is_refused(self, test_root_manifest):
+    def test_validator_with_non_admissible_claimed_standing_is_refused(
+        self, test_root_manifest
+    ):
         """A validator claiming standing other than ADMITTED cannot validate."""
         registry = MetaAdmissionRegistry(test_root_manifest)
         decision = registry.admit_validator(
@@ -396,7 +400,9 @@ class TestMetaAdmission:
         afl:TestShape a sh:NodeShape ;
             sh:targetClass afl:Actuation .
         """
-        receipt_hash = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+        receipt_hash = (
+            "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+        )
 
         decision = registry.admit_validator(
             validator_id="urn:shape:actuation-authority",

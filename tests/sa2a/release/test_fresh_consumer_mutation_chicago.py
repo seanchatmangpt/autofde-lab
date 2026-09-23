@@ -69,9 +69,13 @@ _MANIFEST = {
 
 def _discover(query: UnknownQuery) -> CandidateResolution:
     return CandidateResolution(
-        candidate_id="cand-ep1", query_id=query.query_id, proposed_assertion="service:api-gateway requires-port",
-        evidence_payload={"source": "formal-port-probe"}, source_identity="formal-port-probe",
-        consumed_ticks=2, consumed_tokens=0,
+        candidate_id="cand-ep1",
+        query_id=query.query_id,
+        proposed_assertion="service:api-gateway requires-port",
+        evidence_payload={"source": "formal-port-probe"},
+        source_identity="formal-port-probe",
+        consumed_ticks=2,
+        consumed_tokens=0,
     )
 
 
@@ -84,7 +88,9 @@ def _build_conformant_pair(work_dir: Path) -> tuple[Path, str, str]:
     result = run.run(
         candidate_manifest=_MANIFEST,
         semantic_class_id="requires-port",
-        episode1_query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        episode1_query=UnknownQuery(
+            query_id="q-1", predicate_or_topic="service:api-gateway requires-port"
+        ),
         episode1_discover=_discover,
         equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
         equivalence_predicate_id="pred-requires-port-v1",
@@ -92,13 +98,19 @@ def _build_conformant_pair(work_dir: Path) -> tuple[Path, str, str]:
         action_iri="urn:action:open-port",
         episode1_target_resource="urn:cap:api-gateway",
         episode2_fresh_candidate=CandidateResolution(
-            candidate_id="cand-ep2", query_id="q-2-fresh", proposed_assertion="service:billing-worker requires-port",
-            evidence_payload={"source": "fresh-request"}, source_identity="fresh-request",
-            consumed_ticks=0, consumed_tokens=0,
+            candidate_id="cand-ep2",
+            query_id="q-2-fresh",
+            proposed_assertion="service:billing-worker requires-port",
+            evidence_payload={"source": "fresh-request"},
+            source_identity="fresh-request",
+            consumed_ticks=0,
+            consumed_tokens=0,
         ),
         episode2_target_resource="urn:cap:billing-worker",
     )
-    assert result.episode1 is not None and result.episode2 is not None, "prerequisite real crown run did not reach Episode 2"
+    assert result.episode1 is not None and result.episode2 is not None, (
+        "prerequisite real crown run did not reach Episode 2"
+    )
     state_dir = work_dir / "state"
     ep1_id = result.episode1.episode.episode_id
     ep2_id = result.episode2.episode.episode_id
@@ -121,8 +133,16 @@ def _run_subprocess_verify(state_dir: Path, ep1_id: str, ep2_id: str) -> dict[st
     """Invokes fresh_consumer exactly as `ReleaseRun._run_fresh_consumer` does in
     production: a real, separate OS process, never an in-process import."""
     proc = subprocess.run(
-        [sys.executable, "-m", "autofde_lab.sa2a.release.fresh_consumer", str(state_dir), ep1_id, ep2_id],
-        capture_output=True, text=True,
+        [
+            sys.executable,
+            "-m",
+            "autofde_lab.sa2a.release.fresh_consumer",
+            str(state_dir),
+            ep1_id,
+            ep2_id,
+        ],
+        capture_output=True,
+        text=True,
     )
     assert proc.stdout, f"subprocess produced no stdout; stderr={proc.stderr!r}"
     return json.loads(proc.stdout)
@@ -158,7 +178,9 @@ def test_real_conformant_pair_verifies_via_real_subprocess(tmp_path: Path) -> No
 # --------------------------------------------------------------------------------------
 
 
-def test_edge0_episode1_to_experience_mutated_via_classification(tmp_path: Path) -> None:
+def test_edge0_episode1_to_experience_mutated_via_classification(
+    tmp_path: Path,
+) -> None:
     """Mutate episode1's own claim of having produced an ACTIVE experience (flip
     `classification` away from KNOWN) -- confirmed CAUGHT ON THE FIRST ATTEMPT, no fix
     needed. See module docstring: this legitimately cascades into
@@ -181,12 +203,17 @@ def test_edge0_episode1_to_experience_mutated_via_classification(tmp_path: Path)
     )
     still_established = {e.name for e in standing.edges if e.established}
     assert still_established == {
-        "episode1_ocel->experience", "episode2_ocel->route",
-        "episode2->fresh_identity", "episode2->frontier_clean_recomputed", "episode2->anti_vacuity",
+        "episode1_ocel->experience",
+        "episode2_ocel->route",
+        "episode2->fresh_identity",
+        "episode2->frontier_clean_recomputed",
+        "episode2->anti_vacuity",
     }
 
 
-def test_edge1_episode1_ocel_to_experience_mutated_via_ocel_relationship_swap(tmp_path: Path) -> None:
+def test_edge1_episode1_ocel_to_experience_mutated_via_ocel_relationship_swap(
+    tmp_path: Path,
+) -> None:
     """Mutate ONLY episode1's own OCEL relationships (swap the experience_id linked
     by the real Episode1Completed event for a forged different id) -- checkpoint files
     untouched. Confirmed CAUGHT ON THE FIRST ATTEMPT, no fix needed: this is the exact
@@ -207,7 +234,9 @@ def test_edge1_episode1_ocel_to_experience_mutated_via_ocel_relationship_swap(tm
             if rel["objectId"] == real_experience_id:
                 rel["objectId"] = "exp-FORGED-DIFFERENT-ID"
                 swapped += 1
-    assert swapped == 1, "fixture assumption broke: expected exactly one experience_id relationship to swap"
+    assert swapped == 1, (
+        "fixture assumption broke: expected exactly one experience_id relationship to swap"
+    )
     _save(ocel_path, ocel)
 
     in_process = fc.verify(state_dir, ep1_id, ep2_id)
@@ -215,12 +244,17 @@ def test_edge1_episode1_ocel_to_experience_mutated_via_ocel_relationship_swap(tm
     assert in_process.unestablished() == ["episode1_ocel->experience"]
 
     via_subprocess = _run_subprocess_verify(state_dir, ep1_id, ep2_id)
-    assert via_subprocess["verdict"] == "UNKNOWN:CHAIN_INCOMPLETE:episode1_ocel->experience"
+    assert (
+        via_subprocess["verdict"]
+        == "UNKNOWN:CHAIN_INCOMPLETE:episode1_ocel->experience"
+    )
     broken = [e["name"] for e in via_subprocess["edges"] if not e["established"]]
     assert broken == ["episode1_ocel->experience"]
 
 
-def test_edge2_episode2_same_route_mutated_via_experience_id_mismatch(tmp_path: Path) -> None:
+def test_edge2_episode2_same_route_mutated_via_experience_id_mismatch(
+    tmp_path: Path,
+) -> None:
     """Mutate ONLY episode2's own claimed `experience_id` (leave `known_route_id`
     intact, so `episode2_ocel->route` -- which reads only `known_route_id` -- is
     unaffected). Confirmed CAUGHT ON THE FIRST ATTEMPT, no fix needed; fully isolated."""
@@ -236,7 +270,9 @@ def test_edge2_episode2_same_route_mutated_via_experience_id_mismatch(tmp_path: 
     assert standing.unestablished() == ["episode2->same_route"]
 
 
-def test_edge3_episode2_ocel_to_route_mutated_via_ocel_relationship_swap(tmp_path: Path) -> None:
+def test_edge3_episode2_ocel_to_route_mutated_via_ocel_relationship_swap(
+    tmp_path: Path,
+) -> None:
     """Mutate ONLY episode2's own OCEL relationships (swap the route_id linked by the
     real Episode2Completed event) -- checkpoint files untouched. Confirmed CAUGHT ON
     THE FIRST ATTEMPT, no fix needed; fully isolated."""
@@ -255,7 +291,9 @@ def test_edge3_episode2_ocel_to_route_mutated_via_ocel_relationship_swap(tmp_pat
             if rel["objectId"] == real_route_id:
                 rel["objectId"] = "route-FORGED-DIFFERENT-ID"
                 swapped += 1
-    assert swapped == 1, "fixture assumption broke: expected exactly one route_id relationship to swap"
+    assert swapped == 1, (
+        "fixture assumption broke: expected exactly one route_id relationship to swap"
+    )
     _save(ocel_path, ocel)
 
     standing = fc.verify(state_dir, ep1_id, ep2_id)
@@ -263,7 +301,9 @@ def test_edge3_episode2_ocel_to_route_mutated_via_ocel_relationship_swap(tmp_pat
     assert standing.unestablished() == ["episode2_ocel->route"]
 
 
-def test_edge4_episode2_fresh_identity_mutated_via_actuation_identity_reuse(tmp_path: Path) -> None:
+def test_edge4_episode2_fresh_identity_mutated_via_actuation_identity_reuse(
+    tmp_path: Path,
+) -> None:
     """Mutate episode2's `actuation_identity` to REUSE episode1's -- the exact PRD
     §6.11 violation `Episode2Runner`'s own docstring names as the thing a fresh
     actuation identity structurally rules out. Confirmed CAUGHT ON THE FIRST ATTEMPT,
@@ -282,7 +322,9 @@ def test_edge4_episode2_fresh_identity_mutated_via_actuation_identity_reuse(tmp_
     assert standing.unestablished() == ["episode2->fresh_identity"]
 
 
-def test_edge5_frontier_clean_recomputed_mutated_via_stored_value_flip(tmp_path: Path) -> None:
+def test_edge5_frontier_clean_recomputed_mutated_via_stored_value_flip(
+    tmp_path: Path,
+) -> None:
     """Mutate ONLY the STORED `frontier_clean` boolean on episode2's checkpoint (flip
     it away from what the raw `intelligence_usage` counters actually recompute to),
     leaving every counter and every other field untouched. Confirmed CAUGHT ON THE
@@ -296,13 +338,20 @@ def test_edge5_frontier_clean_recomputed_mutated_via_stored_value_flip(tmp_path:
     _save(ep2_path, ep2)
 
     standing = fc.verify(state_dir, ep1_id, ep2_id)
-    assert standing.verdict() == "UNKNOWN:CHAIN_INCOMPLETE:episode2->frontier_clean_recomputed"
+    assert (
+        standing.verdict()
+        == "UNKNOWN:CHAIN_INCOMPLETE:episode2->frontier_clean_recomputed"
+    )
     assert standing.unestablished() == ["episode2->frontier_clean_recomputed"]
-    edge = next(e for e in standing.edges if e.name == "episode2->frontier_clean_recomputed")
+    edge = next(
+        e for e in standing.edges if e.name == "episode2->frontier_clean_recomputed"
+    )
     assert "MISMATCH" in edge.basis
 
 
-def test_edge6_anti_vacuity_mutated_via_blanked_final_receipt_digest(tmp_path: Path) -> None:
+def test_edge6_anti_vacuity_mutated_via_blanked_final_receipt_digest(
+    tmp_path: Path,
+) -> None:
     """Mutate ONLY episode2's `final_receipt_digest` (blank it), leaving
     classification/route_executed/required_postcondition_verified/frontier_clean
     untouched -- simulating a route that classified KNOWN and claims execution but
@@ -346,7 +395,10 @@ def test_malformed_shape_experience_id_is_a_list_not_a_string(tmp_path: Path) ->
     standing = fc.verify(state_dir, ep1_id, ep2_id)  # must not raise
     assert standing.verdict() != "CONFORMANT_EVIDENCE_RECONSTRUCTED"
     assert standing.verdict().startswith("UNKNOWN:CHAIN_INCOMPLETE:")
-    assert set(standing.unestablished()) == {"episode1_ocel->experience", "episode2->same_route"}
+    assert set(standing.unestablished()) == {
+        "episode1_ocel->experience",
+        "episode2->same_route",
+    }
 
 
 def test_malformed_shape_intelligence_usage_missing_entirely(tmp_path: Path) -> None:
@@ -364,7 +416,10 @@ def test_malformed_shape_intelligence_usage_missing_entirely(tmp_path: Path) -> 
     _save(ep2_path, ep2)
 
     standing = fc.verify(state_dir, ep1_id, ep2_id)  # must not raise
-    assert standing.verdict() == "UNKNOWN:CHAIN_INCOMPLETE:episode2->frontier_clean_recomputed"
+    assert (
+        standing.verdict()
+        == "UNKNOWN:CHAIN_INCOMPLETE:episode2->frontier_clean_recomputed"
+    )
     assert standing.unestablished() == ["episode2->frontier_clean_recomputed"]
 
 
@@ -375,7 +430,9 @@ def test_malformed_shape_intelligence_usage_missing_entirely(tmp_path: Path) -> 
         pytest.param([1, 2, 3], id="events_is_a_list_of_non_dict_items"),
     ],
 )
-def test_malformed_shape_ocel_events_wrong_type(tmp_path: Path, corrupt_events: Any) -> None:
+def test_malformed_shape_ocel_events_wrong_type(
+    tmp_path: Path, corrupt_events: Any
+) -> None:
     """A real bug found and fixed by this pass: `_ocel_event_objects()` previously
     called `.get(...)` directly on every item of `events` and every item of an event's
     `relationships` with no type check, so a valid-JSON-but-wrong-shape `events` field
@@ -392,7 +449,9 @@ def test_malformed_shape_ocel_events_wrong_type(tmp_path: Path, corrupt_events: 
     ocel["events"] = corrupt_events
     _save(ocel_path, ocel)
 
-    standing = fc.verify(state_dir, ep1_id, ep2_id)  # must not raise (this is the regression)
+    standing = fc.verify(
+        state_dir, ep1_id, ep2_id
+    )  # must not raise (this is the regression)
     assert standing.verdict() != "CONFORMANT_EVIDENCE_RECONSTRUCTED"
     assert standing.verdict().startswith("UNKNOWN:CHAIN_INCOMPLETE:")
     assert "episode1_ocel->experience" in standing.unestablished()
@@ -404,7 +463,9 @@ def test_malformed_shape_ocel_events_wrong_type(tmp_path: Path, corrupt_events: 
     assert via_subprocess["verdict"].startswith("UNKNOWN:CHAIN_INCOMPLETE:")
 
 
-def test_malformed_shape_ocel_relationships_is_a_string_not_a_list(tmp_path: Path) -> None:
+def test_malformed_shape_ocel_relationships_is_a_string_not_a_list(
+    tmp_path: Path,
+) -> None:
     """A third malformed-but-valid-JSON shape: an individual event's `relationships`
     field is a string instead of a list. Same class of bug as the parametrized `events`
     case above (`for r in relationships: r.get(...)` would iterate over characters and
@@ -415,7 +476,9 @@ def test_malformed_shape_ocel_relationships_is_a_string_not_a_list(tmp_path: Pat
     ocel["events"][0]["relationships"] = "oops-not-a-list"
     _save(ocel_path, ocel)
 
-    standing = fc.verify(state_dir, ep1_id, ep2_id)  # must not raise (this is the regression)
+    standing = fc.verify(
+        state_dir, ep1_id, ep2_id
+    )  # must not raise (this is the regression)
     assert standing.verdict() != "CONFORMANT_EVIDENCE_RECONSTRUCTED"
     assert standing.verdict().startswith("UNKNOWN:CHAIN_INCOMPLETE:")
     assert "episode1_ocel->experience" in standing.unestablished()
@@ -426,7 +489,9 @@ def test_malformed_shape_ocel_relationships_is_a_string_not_a_list(tmp_path: Pat
 # --------------------------------------------------------------------------------------
 
 
-def test_same_episode_id_passed_for_both_arguments_degrades_sensibly(tmp_path: Path) -> None:
+def test_same_episode_id_passed_for_both_arguments_degrades_sensibly(
+    tmp_path: Path,
+) -> None:
     """What happens if a caller passes the SAME episode id as both `episode1_id` and
     `episode2_id`? Confirmed live, no crash: `verify()` reads episode1's own checkpoint
     and OCEL file under BOTH roles. `episode2->same_route` reports established=True --
@@ -448,7 +513,9 @@ def test_same_episode_id_passed_for_both_arguments_degrades_sensibly(tmp_path: P
     assert standing.verdict().startswith("UNKNOWN:CHAIN_INCOMPLETE:")
     unestablished = set(standing.unestablished())
     assert "episode2->fresh_identity" in unestablished, "reused identity must be caught"
-    assert "episode2_ocel->route" in unestablished, "episode1's OCEL has no Episode2Completed event"
+    assert "episode2_ocel->route" in unestablished, (
+        "episode1's OCEL has no Episode2Completed event"
+    )
     # episode1's own genuine edges (which don't depend on which id was passed as
     # "episode2") remain correctly established -- this is not a wholesale crash or a
     # blanket refusal, it is the specific edges that legitimately cannot hold.

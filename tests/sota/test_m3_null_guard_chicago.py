@@ -8,13 +8,21 @@ from __future__ import annotations
 
 from autofde_lab_planner.detectors.coredns_fault import detect_coredns_faults
 from autofde_lab_planner.detectors.cronjob_mutation import detect_cronjob_mutations
-from autofde_lab_planner.detectors.ingress_targetport import detect_ingress_and_targetport_faults
+from autofde_lab_planner.detectors.ingress_targetport import (
+    detect_ingress_and_targetport_faults,
+)
 from autofde_lab_planner.detectors.object_reconstruction import detect_missing_objects
 from autofde_lab_planner.detectors.probe_heuristics import detect_probe_faults
-from autofde_lab_planner.detectors.rolling_update_misconfig import detect_workload_and_rolling_update_misconfigs
-from autofde_lab_planner.detectors.scheduling_deadlock import detect_scheduling_deadlocks
+from autofde_lab_planner.detectors.rolling_update_misconfig import (
+    detect_workload_and_rolling_update_misconfigs,
+)
+from autofde_lab_planner.detectors.scheduling_deadlock import (
+    detect_scheduling_deadlocks,
+)
 from autofde_lab_planner.models import WorkloadMisconfigFault
-from autofde_lab_planner.remediators.rolling_update_misconfig import decide_workload_remediation_commands
+from autofde_lab_planner.remediators.rolling_update_misconfig import (
+    decide_workload_remediation_commands,
+)
 
 
 def test_null_metadata_across_all_detectors():
@@ -24,12 +32,18 @@ def test_null_metadata_across_all_detectors():
     ing_null_meta = {"items": [{"metadata": None, "spec": None}]}
     cm_null_meta = {"items": [{"metadata": None, "data": None}]}
     pod_null_meta = {"items": [{"metadata": None, "status": None}]}
-    ev_null_meta = {"items": [{"metadata": None, "message": None, "involvedObject": None}]}
+    ev_null_meta = {
+        "items": [{"metadata": None, "message": None, "involvedObject": None}]
+    }
 
-    res1 = detect_missing_objects(dep_null_meta, svc_null_meta, cm_null_meta, None, pod_null_meta)
+    res1 = detect_missing_objects(
+        dep_null_meta, svc_null_meta, cm_null_meta, None, pod_null_meta
+    )
     assert isinstance(res1, list)
 
-    ing_res, tp_res = detect_ingress_and_targetport_faults(ing_null_meta, svc_null_meta, dep_null_meta)
+    ing_res, tp_res = detect_ingress_and_targetport_faults(
+        ing_null_meta, svc_null_meta, dep_null_meta
+    )
     assert isinstance(ing_res, list) and isinstance(tp_res, list)
 
     res3 = detect_cronjob_mutations(cm_null_meta, dep_null_meta, cm_null_meta)
@@ -41,7 +55,9 @@ def test_null_metadata_across_all_detectors():
     res5 = detect_coredns_faults(cm_null_meta)
     assert isinstance(res5, list)
 
-    res6 = detect_workload_and_rolling_update_misconfigs(dep_null_meta, pod_null_meta, ev_null_meta)
+    res6 = detect_workload_and_rolling_update_misconfigs(
+        dep_null_meta, pod_null_meta, ev_null_meta
+    )
     assert isinstance(res6, list)
 
     res7 = detect_probe_faults(dep_null_meta, pod_null_meta, ev_null_meta)
@@ -59,7 +75,9 @@ def test_probe_heuristics_null_guards_and_crash_prevention():
     assert isinstance(res2, list) and len(res2) == 0
 
     # Scenario 3: deployment spec is None
-    res3 = detect_probe_faults({"items": [{"metadata": {"name": "test"}, "spec": None}]})
+    res3 = detect_probe_faults(
+        {"items": [{"metadata": {"name": "test"}, "spec": None}]}
+    )
     assert isinstance(res3, list) and len(res3) == 0
 
     # Scenario 4: pods list contains None
@@ -109,9 +127,18 @@ def test_null_spec_data_status_subdicts():
 
 def test_malformed_payload_items_primitives_and_nulls():
     """Verify _to_item_list filters out primitives, strings, numbers, and null list items."""
-    malformed_items = [123, "not_a_dict", None, True, [], {"metadata": {"name": "valid-dep"}}]
+    malformed_items = [
+        123,
+        "not_a_dict",
+        None,
+        True,
+        [],
+        {"metadata": {"name": "valid-dep"}},
+    ]
 
-    res_recon = detect_missing_objects(malformed_items, live_services_json=malformed_items)
+    res_recon = detect_missing_objects(
+        malformed_items, live_services_json=malformed_items
+    )
     assert isinstance(res_recon, list)
 
     ing_res, tp_res = detect_ingress_and_targetport_faults(
@@ -123,7 +150,9 @@ def test_malformed_payload_items_primitives_and_nulls():
     res_cj = detect_cronjob_mutations(cronjobs_json=malformed_items)
     assert isinstance(res_cj, list)
 
-    res_sd = detect_scheduling_deadlocks(deployments_json=malformed_items, events_json=malformed_items)
+    res_sd = detect_scheduling_deadlocks(
+        deployments_json=malformed_items, events_json=malformed_items
+    )
     assert isinstance(res_sd, list)
 
 
@@ -136,11 +165,15 @@ def test_conditional_init_container_patch_generation():
         fault_kind="rolling_update_misconfigured",
         details="Rolling update strategy misconfiguration (maxUnavailable=100%, maxSurge=0%, hanging_init=False) on frontend",
     )
-    cmds_no_init, _ = decide_workload_remediation_commands([fault_no_init], namespace="astronomy-shop")
+    cmds_no_init, _ = decide_workload_remediation_commands(
+        [fault_no_init], namespace="astronomy-shop"
+    )
     init_patches_no_init = [c for c in cmds_no_init if "initContainers" in c]
     strategy_patches_no_init = [c for c in cmds_no_init if "spec/strategy" in c]
     assert len(strategy_patches_no_init) == 1
-    assert len(init_patches_no_init) == 0, "Do NOT issue initContainers removal patch when initContainers is absent"
+    assert len(init_patches_no_init) == 0, (
+        "Do NOT issue initContainers removal patch when initContainers is absent"
+    )
 
     # Case B: Strategy misconfig WITH hanging init container
     fault_with_init = WorkloadMisconfigFault(
@@ -149,8 +182,12 @@ def test_conditional_init_container_patch_generation():
         fault_kind="rolling_update_misconfigured",
         details="Rolling update strategy misconfiguration (maxUnavailable=100%, maxSurge=0%, hanging_init=True) on frontend",
     )
-    cmds_with_init, _ = decide_workload_remediation_commands([fault_with_init], namespace="astronomy-shop")
+    cmds_with_init, _ = decide_workload_remediation_commands(
+        [fault_with_init], namespace="astronomy-shop"
+    )
     init_patches_with_init = [c for c in cmds_with_init if "initContainers" in c]
     strategy_patches_with_init = [c for c in cmds_with_init if "spec/strategy" in c]
     assert len(strategy_patches_with_init) == 1
-    assert len(init_patches_with_init) == 1, "Emit initContainers removal patch when hanging init container is detected"
+    assert len(init_patches_with_init) == 1, (
+        "Emit initContainers removal patch when hanging init container is detected"
+    )

@@ -32,7 +32,9 @@ from autofde_lab.reasoning.exploration_gymact_falsification import (
     experiment_intent_for_candidate,
     falsify_exploration_candidate_via_gymact,
 )
-from autofde_lab.reasoning.gymact_world_experiment_provider import GymActWorldExperimentProvider
+from autofde_lab.reasoning.gymact_world_experiment_provider import (
+    GymActWorldExperimentProvider,
+)
 from autofde_lab.reasoning.laboratory import (
     DesiredStateHypothesis,
     FalsificationStanding,
@@ -62,7 +64,9 @@ def _triz_candidate():
 def test_experiment_intent_for_candidate_maps_real_fields_directly() -> None:
     candidate = _triz_candidate()
     intent = experiment_intent_for_candidate(
-        candidate, target_world_ref="generic_enterprise", initial_state_evidence_ref="obs-1"
+        candidate,
+        target_world_ref="generic_enterprise",
+        initial_state_evidence_ref="obs-1",
     )
     assert intent.candidate_id == candidate.candidate_id
     assert intent.target_world_ref == "generic_enterprise"
@@ -73,16 +77,22 @@ def test_experiment_intent_for_candidate_maps_real_fields_directly() -> None:
     assert intent.authority_requirements == candidate.authority_needs
 
 
-def test_falsify_via_gymact_with_default_fail_closed_provider_falsifies_a_real_triz_candidate() -> None:
+def test_falsify_via_gymact_with_default_fail_closed_provider_falsifies_a_real_triz_candidate() -> (
+    None
+):
     """Confirmed live this session: a real TRIZ candidate's own migration
     action, submitted with no authority admitted (gymact's real
     `DenyAuthorityResolver` default), is refused at real `act()`/`verify()`
     time -- real `FALSIFIED`, not a fixture."""
     candidate = _triz_candidate()
-    assert candidate.authority_needs == ()  # real, as generated -- no authority requested
+    assert (
+        candidate.authority_needs == ()
+    )  # real, as generated -- no authority requested
 
     outcome = falsify_exploration_candidate_via_gymact(
-        candidate, target_world_ref="generic_enterprise", initial_state_evidence_ref="obs-1"
+        candidate,
+        target_world_ref="generic_enterprise",
+        initial_state_evidence_ref="obs-1",
     )
 
     assert isinstance(outcome, ExplorationGymactOutcome)
@@ -99,7 +109,9 @@ def test_falsify_via_gymact_with_default_fail_closed_provider_falsifies_a_real_t
     assert outcome.falsification.receipt_refs == (outcome.intent.intent_id,)
 
 
-def test_falsify_via_gymact_with_admitted_authority_lets_a_real_triz_candidate_survive() -> None:
+def test_falsify_via_gymact_with_admitted_authority_lets_a_real_triz_candidate_survive() -> (
+    None
+):
     """Confirmed live this session: the same candidate, with
     `authority_needs` naming a real reference and `expected_effects` set to
     its own migration action, driven through a `GymActWorldExperimentProvider`
@@ -149,7 +161,9 @@ def test_falsify_via_gymact_handles_a_real_doe_candidate_too() -> None:
     assert candidate.provenance == "doe-v1"
 
     outcome = falsify_exploration_candidate_via_gymact(
-        candidate, target_world_ref="generic_enterprise", initial_state_evidence_ref="obs-1"
+        candidate,
+        target_world_ref="generic_enterprise",
+        initial_state_evidence_ref="obs-1",
     )
 
     assert outcome.intent.candidate_id == candidate.candidate_id

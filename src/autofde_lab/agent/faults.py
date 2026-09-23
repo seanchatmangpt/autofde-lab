@@ -160,7 +160,9 @@ class FaultClassification:
             "kind": self.kind.value,
             "outcome": self.outcome.value,
             "reason": self.reason,
-            "refusal_code": None if self.refusal_code is None else self.refusal_code.value,
+            "refusal_code": None
+            if self.refusal_code is None
+            else self.refusal_code.value,
             "mechanism_backed": self.mechanism_backed,
         }
 

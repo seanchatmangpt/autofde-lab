@@ -40,9 +40,7 @@ def _random_unordered_partial_order(rng: random.Random, index: int) -> PartialOr
     return PartialOrder(children=children, order=frozenset())
 
 
-def _fire_all_children_in_order(
-    model: PowlNode, permutation: list[int]
-) -> Marking:
+def _fire_all_children_in_order(model: PowlNode, permutation: list[int]) -> Marking:
     """Fire every leaf child of the top-level PartialOrder in ``permutation`` order."""
     marking = INITIAL_MARKING
     for child_index in permutation:

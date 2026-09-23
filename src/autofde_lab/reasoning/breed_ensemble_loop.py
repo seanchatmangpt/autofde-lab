@@ -26,11 +26,24 @@ from typing import Any, Callable, Sequence
 
 import dspy
 
-from autofde_lab.powl.algebra import Atom, ChoiceGraph, ChoiceGraphEdge, End, Guard, NodeId, Silent, Start
+from autofde_lab.powl.algebra import (
+    Atom,
+    ChoiceGraph,
+    ChoiceGraphEdge,
+    End,
+    Guard,
+    NodeId,
+    Silent,
+    Start,
+)
 from autofde_lab.powl.guard_executor import execute
 from autofde_lab.powl.ocel_bridge import OcelExecutionRecorder, execute_with_ocel
 from autofde_lab.powl.refusals import PowlError, PowlRefusal
-from autofde_lab.reasoning.breed_ensemble import BreedEnsembleMember, BreedEnsembleResult, run_breed_ensemble
+from autofde_lab.reasoning.breed_ensemble import (
+    BreedEnsembleMember,
+    BreedEnsembleResult,
+    run_breed_ensemble,
+)
 
 __all__ = ["InterpretBreedEnsemble", "run_breed_ensemble_until_resolved"]
 
@@ -44,16 +57,22 @@ class InterpretBreedEnsemble(dspy.Signature):
     wording, an added discriminating fact) -- it never invents new breed
     opinions itself."""
 
-    task_context: str = dspy.InputField(desc="free-text description of what's being decided this round")
+    task_context: str = dspy.InputField(
+        desc="free-text description of what's being decided this round"
+    )
     member_evidence_summary: str = dspy.InputField(
         desc="one line per real member: breed, conclusion, confidence"
     )
     arbitrated_conclusion: str = dspy.InputField(
         desc="meta_reasoning's real winning conclusion, or 'none' if fewer than 2 members produced usable evidence"
     )
-    resolution_weight: str = dspy.InputField(desc="the real normalized winning weight, or 'n/a'")
+    resolution_weight: str = dspy.InputField(
+        desc="the real normalized winning weight, or 'n/a'"
+    )
     round_index: int = dspy.InputField()
-    interpretation: str = dspy.OutputField(desc="a plain-language, real read of why this round did or didn't resolve")
+    interpretation: str = dspy.OutputField(
+        desc="a plain-language, real read of why this round did or didn't resolve"
+    )
     next_round_task_context: str = dspy.OutputField(
         desc="the reframed task_context to use for the next round's build_members call"
     )
@@ -61,11 +80,18 @@ class InterpretBreedEnsemble(dspy.Signature):
 
 def _summarize_evidence(result: BreedEnsembleResult) -> tuple[str, str, str]:
     lines = [
-        f"{breed}: {evidence.selected!r}" for breed, evidence in result.member_evidence.items()
+        f"{breed}: {evidence.selected!r}"
+        for breed, evidence in result.member_evidence.items()
     ]
     member_evidence_summary = "\n".join(lines) if lines else "none"
-    arbitrated_conclusion = result.arbitrated.selected if result.arbitrated is not None else "none"
-    resolution_weight = f"{result.resolution_weight:.4f}" if result.resolution_weight is not None else "n/a"
+    arbitrated_conclusion = (
+        result.arbitrated.selected if result.arbitrated is not None else "none"
+    )
+    resolution_weight = (
+        f"{result.resolution_weight:.4f}"
+        if result.resolution_weight is not None
+        else "n/a"
+    )
     return member_evidence_summary, arbitrated_conclusion or "none", resolution_weight
 
 
@@ -87,8 +113,12 @@ def _build_loop_graph() -> ChoiceGraph:
                 ChoiceGraphEdge(NodeId(0), NodeId(2)),
                 ChoiceGraphEdge(NodeId(2), NodeId(3)),
                 ChoiceGraphEdge(NodeId(3), NodeId(1), guard=Guard("ensemble_resolved")),
-                ChoiceGraphEdge(NodeId(3), NodeId(4)),  # else: not resolved -- interpret and retry
-                ChoiceGraphEdge(NodeId(4), NodeId(2)),  # loop back to run_ensemble, never Start
+                ChoiceGraphEdge(
+                    NodeId(3), NodeId(4)
+                ),  # else: not resolved -- interpret and retry
+                ChoiceGraphEdge(
+                    NodeId(4), NodeId(2)
+                ),  # loop back to run_ensemble, never Start
             ]
         ),
         start=0,
@@ -124,7 +154,11 @@ def run_breed_ensemble_until_resolved(
     `dspy.Prediction` produced along the way, for a caller that wants to
     inspect why each round didn't resolve.
     """
-    interpreter = interpret if interpret is not None else dspy.ChainOfThought(InterpretBreedEnsemble)
+    interpreter = (
+        interpret
+        if interpret is not None
+        else dspy.ChainOfThought(InterpretBreedEnsemble)
+    )
 
     state: dict[str, Any] = {
         "task_context": initial_task_context,
@@ -142,11 +176,15 @@ def run_breed_ensemble_until_resolved(
     def atom_invoker(atom: Atom) -> None:
         if atom.label == "run_ensemble":
             members = build_members(state["task_context"])
-            state["last_result"] = run_breed_ensemble(members, resolution_threshold=resolution_threshold)
+            state["last_result"] = run_breed_ensemble(
+                members, resolution_threshold=resolution_threshold
+            )
             return
         if atom.label == "interpret_via_dspy":
             last_result: BreedEnsembleResult = state["last_result"]
-            member_evidence_summary, arbitrated_conclusion, resolution_weight = _summarize_evidence(last_result)
+            member_evidence_summary, arbitrated_conclusion, resolution_weight = (
+                _summarize_evidence(last_result)
+            )
             prediction = interpreter(
                 task_context=state["task_context"],
                 member_evidence_summary=member_evidence_summary,
@@ -158,7 +196,9 @@ def run_breed_ensemble_until_resolved(
             state["task_context"] = prediction.next_round_task_context
             state["round_index"] += 1
             return
-        raise AssertionError(f"unreachable: unknown atom label {atom.label!r}")  # pragma: no cover
+        raise AssertionError(
+            f"unreachable: unknown atom label {atom.label!r}"
+        )  # pragma: no cover
 
     graph = _build_loop_graph()
     # Each round is 2 real transitions (run_ensemble->decide, decide->interpret_via_dspy

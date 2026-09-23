@@ -35,7 +35,9 @@ def _run_verifier() -> tuple[int, dict]:
     return completed.returncode, json.loads(completed.stdout)
 
 
-def test_verifier_reports_alive_and_exits_zero_against_the_real_committed_generation() -> None:
+def test_verifier_reports_alive_and_exits_zero_against_the_real_committed_generation() -> (
+    None
+):
     returncode, receipt = _run_verifier()
 
     assert returncode == 0
@@ -43,10 +45,14 @@ def test_verifier_reports_alive_and_exits_zero_against_the_real_committed_genera
     assert all(r["match"] for r in receipt["results"])
 
 
-def test_verifier_recomputes_the_real_378_cell_k8s_cross_product_independently_of_ggen() -> None:
+def test_verifier_recomputes_the_real_378_cell_k8s_cross_product_independently_of_ggen() -> (
+    None
+):
     _, receipt = _run_verifier()
 
-    k8s_result = next(r for r in receipt["results"] if r["check"] == "k8s-fault-universes")
+    k8s_result = next(
+        r for r in receipt["results"] if r["check"] == "k8s-fault-universes"
+    )
     assert k8s_result["axis_counts"] == {
         "Component": 6,
         "FailureMode": 7,
@@ -57,10 +63,14 @@ def test_verifier_recomputes_the_real_378_cell_k8s_cross_product_independently_o
     assert k8s_result["actual_universe_count"] == 378
 
 
-def test_verifier_recomputes_the_real_world_transformation_scenario_count_independently_of_ggen() -> None:
+def test_verifier_recomputes_the_real_world_transformation_scenario_count_independently_of_ggen() -> (
+    None
+):
     _, receipt = _run_verifier()
 
-    scenario_result = next(r for r in receipt["results"] if r["check"] == "world-transformation-scenarios")
+    scenario_result = next(
+        r for r in receipt["results"] if r["check"] == "world-transformation-scenarios"
+    )
     assert scenario_result["expected_scenario_count"] == 1
     assert scenario_result["actual_scenario_count"] == 1
     assert scenario_result["match"] is True
@@ -69,7 +79,9 @@ def test_verifier_recomputes_the_real_world_transformation_scenario_count_indepe
 def test_verifier_checks_every_one_of_the_eight_constitution_modules() -> None:
     _, receipt = _run_verifier()
 
-    constitution_checks = {r["check"] for r in receipt["results"] if r["check"].startswith("constitution-")}
+    constitution_checks = {
+        r["check"] for r in receipt["results"] if r["check"].startswith("constitution-")
+    }
     assert constitution_checks == {
         "constitution-lab",
         "constitution-world",

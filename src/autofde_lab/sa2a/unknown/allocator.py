@@ -146,8 +146,14 @@ class CMCACandidateAllocator:
         # 2. Compute salience measures S = option_entropy * historical_yield / max(cost, 1e-6)
         saliences: list[float] = []
         for c in sorted_candidates:
-            if math.isnan(c.option_entropy) or math.isnan(c.estimated_cost) or math.isnan(c.historical_yield):
-                raise ValueError(f"Candidate {c.item_id} carries non-finite feature values")
+            if (
+                math.isnan(c.option_entropy)
+                or math.isnan(c.estimated_cost)
+                or math.isnan(c.historical_yield)
+            ):
+                raise ValueError(
+                    f"Candidate {c.item_id} carries non-finite feature values"
+                )
             cost = max(c.estimated_cost, 1e-6)
             entropy = max(c.option_entropy, 0.0)
             yield_score = max(c.historical_yield, 0.0)
@@ -252,7 +258,11 @@ class CMCACandidateAllocator:
         additional budget without an external administrative re-allocation raises
         AutonomousBudgetExpansionRefused.
         """
-        if requested_additional_ticks < 0 or requested_additional_tokens < 0 or requested_additional_experiments < 0:
+        if (
+            requested_additional_ticks < 0
+            or requested_additional_tokens < 0
+            or requested_additional_experiments < 0
+        ):
             raise ValueError("Requested additional resource amounts cannot be negative")
 
         has_expansion_request = (
@@ -262,7 +272,13 @@ class CMCACandidateAllocator:
         )
 
         if has_expansion_request:
-            if caller_authority.lower() in ("model", "candidate", "planner", "subagent", "untrusted"):
+            if caller_authority.lower() in (
+                "model",
+                "candidate",
+                "planner",
+                "subagent",
+                "untrusted",
+            ):
                 raise AutonomousBudgetExpansionRefused(
                     f"Authority '{caller_authority}' attempted autonomous budget expansion on item '{allocation.item_id}'. "
                     f"Enforcement §38 & §73: models cannot grant themselves more budget."

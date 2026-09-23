@@ -43,9 +43,11 @@ from __future__ import annotations
 
 import time
 
-import pytest
 
-from autofde_lab.fabric.gymact_capability_gate import DEFAULT_MANIFEST_PATH, CapabilityGate
+from autofde_lab.fabric.gymact_capability_gate import (
+    DEFAULT_MANIFEST_PATH,
+    CapabilityGate,
+)
 from autofde_lab.ocel.log import OcelLog
 from autofde_lab.powl.runner import (
     GYMACT_CHECK_DEPLOYMENTS_LABEL,
@@ -61,6 +63,7 @@ from autofde_lab.powl.runner import (
 
 def _capability_gate() -> CapabilityGate:
     return CapabilityGate.from_toml(DEFAULT_MANIFEST_PATH)
+
 
 # real gymact capability name each observe-block label is gated against --
 # transcribed from `test_runner_pipeline_chicago.py::_observe_block_bindings`.
@@ -137,18 +140,34 @@ def test_concurrent_batch_object_ids_are_real_distinct_and_resolve_to_real_objec
     )
 
     events = _observe_block_events(log)
-    assert len(events) == 5, f"expected exactly 5 real observe-block fires, got {len(events)}"
+    assert len(events) == 5, (
+        f"expected exactly 5 real observe-block fires, got {len(events)}"
+    )
 
     declared_object_ids = {obj.id for obj in log.objects}
     event_object_ids: list[str] = []
     for event in events:
-        linked = [link.object_id for link in log.event_object_links if link.event_id == event.id]
+        linked = [
+            link.object_id
+            for link in log.event_object_links
+            if link.event_id == event.id
+        ]
         # session object + exactly one real PowlNode object per fire.
-        assert len(linked) == 2, f"expected session+node links for {event.id!r}, got {linked!r}"
-        real_node_ids = [oid for oid in linked if oid.startswith("test-concurrency-shape-object-ids-node-")]
-        assert len(real_node_ids) == 1, f"expected exactly one real PowlNode object id for {event.id!r}"
+        assert len(linked) == 2, (
+            f"expected session+node links for {event.id!r}, got {linked!r}"
+        )
+        real_node_ids = [
+            oid
+            for oid in linked
+            if oid.startswith("test-concurrency-shape-object-ids-node-")
+        ]
+        assert len(real_node_ids) == 1, (
+            f"expected exactly one real PowlNode object id for {event.id!r}"
+        )
         object_id = real_node_ids[0]
-        assert object_id in declared_object_ids, f"{object_id!r} must be a really-declared OcelObject"
+        assert object_id in declared_object_ids, (
+            f"{object_id!r} must be a really-declared OcelObject"
+        )
         event_object_ids.append(object_id)
 
     assert len(event_object_ids) == len(set(event_object_ids)), (
@@ -246,7 +265,9 @@ def test_concurrent_batch_event_timestamps_are_monotonic_non_decreasing_in_log_o
         allow_partial_bindings=True,
     )
     assert result.final is True
-    assert len(log.events) > 5, "expected more than just the 5 observe-block fires in the full pipeline"
+    assert len(log.events) > 5, (
+        "expected more than just the 5 observe-block fires in the full pipeline"
+    )
 
     timestamps = [event.timestamp_ns for event in log.events]
     for i in range(1, len(timestamps)):

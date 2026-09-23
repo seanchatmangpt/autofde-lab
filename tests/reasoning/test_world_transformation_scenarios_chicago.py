@@ -24,7 +24,9 @@ from autofde_lab.reasoning.scenarios.world_transformation_scenarios import (
 
 def test_scenario_builder_returns_a_choicegraph_that_passes_validate_model() -> None:
     graph = scenario_checkout_latency_scenario_v_1()
-    validate_model(graph)  # raises PowlError on failure -- no exception is the assertion
+    validate_model(
+        graph
+    )  # raises PowlError on failure -- no exception is the assertion
 
 
 def test_scenario_has_the_real_seven_node_seven_edge_wider_frame_shape() -> None:
@@ -69,18 +71,27 @@ def test_scenario_metadata_threads_the_real_user_supplied_numbers() -> None:
     assert metadata.observations["api_instance_count"] == 3.0
     assert metadata.observations["db_publicly_reachable"] == 1.0
 
-    latency_objective = next(o for o in metadata.objectives if o["kind"] == "LatencySLO")
+    latency_objective = next(
+        o for o in metadata.objectives if o["kind"] == "LatencySLO"
+    )
     assert latency_objective["comparator"] == "LessThan"
     assert latency_objective["threshold"] == 250.0
     assert latency_objective["unit"] == "ms"
 
-    cost_constraint = next(c for c in metadata.constraints if c["kind"] == "CostCeiling")
+    cost_constraint = next(
+        c for c in metadata.constraints if c["kind"] == "CostCeiling"
+    )
     assert cost_constraint["comparator"] == "LessThan"
     assert cost_constraint["threshold"] == 18000.0
     assert cost_constraint["unit"] == "usd_per_month"
 
-    residency_notes = {c["note"] for c in metadata.constraints if c["kind"] == "DataResidency"}
-    assert residency_notes == {"customer data must remain private", "no cross-region requirement"}
+    residency_notes = {
+        c["note"] for c in metadata.constraints if c["kind"] == "DataResidency"
+    }
+    assert residency_notes == {
+        "customer data must remain private",
+        "no cross-region requirement",
+    }
 
 
 def test_scenario_never_touches_actuation_atoms_are_inert() -> None:
@@ -89,8 +100,12 @@ def test_scenario_never_touches_actuation_atoms_are_inert() -> None:
     caller-supplied atom_invoker, exactly like every other ggen-generated
     scenario in this repo (k8s_fault_universes.py's `remediate` step)."""
     graph = scenario_checkout_latency_scenario_v_1()
-    manufacture_atom = next(c for c in graph.children if getattr(c, "label", "").startswith("manufacture_"))
-    verify_atom = next(c for c in graph.children if getattr(c, "label", "").startswith("verify_"))
+    manufacture_atom = next(
+        c for c in graph.children if getattr(c, "label", "").startswith("manufacture_")
+    )
+    verify_atom = next(
+        c for c in graph.children if getattr(c, "label", "").startswith("verify_")
+    )
 
     assert manufacture_atom.consequence == "DO"
     assert verify_atom.consequence == "VERIFY"

@@ -11,6 +11,7 @@ every assertion below reads the real constructed instance's real field values
 ``ontology/interop.ttl`` (manufactured by ``ggen sync run`` per the module's
 own docstring and PR #37).
 """
+
 from __future__ import annotations
 
 import dataclasses
@@ -112,14 +113,14 @@ def test_projection_real_fields() -> None:
         projects_representation=("urn:example:externalrepresentation:1",),
     )
     assert instance.produced_by_adapter == ("urn:example:interopadapter:1",)
-    assert instance.projects_representation == (
-        "urn:example:externalrepresentation:1",
-    )
+    assert instance.projects_representation == ("urn:example:externalrepresentation:1",)
     field_names = {f.name for f in dataclasses.fields(instance)}
     assert field_names == {"produced_by_adapter", "projects_representation"}
 
 
-def test_all_names_in_dunder_all_are_constructible_dataclasses_with_real_values() -> None:
+def test_all_names_in_dunder_all_are_constructible_dataclasses_with_real_values() -> (
+    None
+):
     """Generic sweep over every name in __all__: getattr the class, build a
     representative kwargs dict from its real dataclasses.fields() (tuple[str, ...]
     fields get a real non-empty tuple of representative reference strings), construct

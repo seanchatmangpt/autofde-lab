@@ -140,7 +140,9 @@ class SreTroubleshootingPipeline(dspy.Module):
         self.normalize_stage = dspy.ChainOfThought(NormalizeSreEvidence)
 
         self._hypothesize_draft = dspy.ChainOfThought(HypothesizeSreCauses)
-        self._hypothesize_compare = dspy.MultiChainComparison(HypothesizeSreCauses, M=ensemble_n)
+        self._hypothesize_compare = dspy.MultiChainComparison(
+            HypothesizeSreCauses, M=ensemble_n
+        )
 
         self._propose_probe = dspy.ChainOfThought(ProposeDiscriminatingObservation)
         self.select_probe_stage = dspy.BestOfN(
@@ -151,7 +153,9 @@ class SreTroubleshootingPipeline(dspy.Module):
         )
 
         self._commit_diagnosis_draft = dspy.ChainOfThought(CommitSreDiagnosis)
-        self._commit_diagnosis_compare = dspy.MultiChainComparison(CommitSreDiagnosis, M=ensemble_n)
+        self._commit_diagnosis_compare = dspy.MultiChainComparison(
+            CommitSreDiagnosis, M=ensemble_n
+        )
 
         self._construct_mitigation = dspy.ChainOfThought(ConstructSreMitigation)
         self.select_mitigation_stage = dspy.BestOfN(
@@ -161,23 +165,33 @@ class SreTroubleshootingPipeline(dspy.Module):
             threshold=0.0,
         )
 
-    def orient(self, *, episode_goal: str, system_context: str, capability_catalog: str) -> dspy.Prediction:
+    def orient(
+        self, *, episode_goal: str, system_context: str, capability_catalog: str
+    ) -> dspy.Prediction:
         return self.orient_stage(
             episode_goal=episode_goal,
             system_context=system_context,
             capability_catalog=capability_catalog,
         )
 
-    def normalize(self, *, raw_evidence: str, prior_facts: str = "none") -> dspy.Prediction:
+    def normalize(
+        self, *, raw_evidence: str, prior_facts: str = "none"
+    ) -> dspy.Prediction:
         return self.normalize_stage(raw_evidence=raw_evidence, prior_facts=prior_facts)
 
-    def hypothesize(self, *, admitted_facts: str, prior_hypotheses: str = "none") -> dspy.Prediction:
+    def hypothesize(
+        self, *, admitted_facts: str, prior_hypotheses: str = "none"
+    ) -> dspy.Prediction:
         completions = [
-            self._hypothesize_draft(admitted_facts=admitted_facts, prior_hypotheses=prior_hypotheses)
+            self._hypothesize_draft(
+                admitted_facts=admitted_facts, prior_hypotheses=prior_hypotheses
+            )
             for _ in range(self.ensemble_n)
         ]
         return self._hypothesize_compare(
-            completions, admitted_facts=admitted_facts, prior_hypotheses=prior_hypotheses
+            completions,
+            admitted_facts=admitted_facts,
+            prior_hypotheses=prior_hypotheses,
         )
 
     def select_probe(
@@ -189,7 +203,9 @@ class SreTroubleshootingPipeline(dspy.Module):
             capability_catalog=capability_catalog,
         )
 
-    def commit_diagnosis(self, *, admitted_facts: str, hypothesis_portfolio: str) -> dspy.Prediction:
+    def commit_diagnosis(
+        self, *, admitted_facts: str, hypothesis_portfolio: str
+    ) -> dspy.Prediction:
         completions = [
             self._commit_diagnosis_draft(
                 admitted_facts=admitted_facts, hypothesis_portfolio=hypothesis_portfolio
@@ -197,7 +213,9 @@ class SreTroubleshootingPipeline(dspy.Module):
             for _ in range(self.ensemble_n)
         ]
         return self._commit_diagnosis_compare(
-            completions, admitted_facts=admitted_facts, hypothesis_portfolio=hypothesis_portfolio
+            completions,
+            admitted_facts=admitted_facts,
+            hypothesis_portfolio=hypothesis_portfolio,
         )
 
     def select_mitigation(

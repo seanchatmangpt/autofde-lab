@@ -20,7 +20,10 @@ from autofde_lab.sa2a.a2a_bridge.agent_card import (
     SA2A_PROFILE_V26_9_16,
     create_default_sa2a_agent_card,
 )
-from autofde_lab.sa2a.a2a_bridge.downgrade_guard import DowngradeGuard, UnsupportedProfileError
+from autofde_lab.sa2a.a2a_bridge.downgrade_guard import (
+    DowngradeGuard,
+    UnsupportedProfileError,
+)
 from autofde_lab.sa2a.unknown.allocator import (
     CMCACandidateAllocator,
     ExplorationBudget,
@@ -45,51 +48,75 @@ def _emit(payload: dict[str, Any]) -> None:
 
 @app.command("validate")
 def validate(
-    card_path: str = typer.Option(None, "--card-path", "-c", help="Path to JSON Agent Card file"),
-    profile: str = typer.Option(SA2A_PROFILE_V26_9_16, "--profile", "-p", help="Target profile to validate"),
+    card_path: str = typer.Option(
+        None, "--card-path", "-c", help="Path to JSON Agent Card file"
+    ),
+    profile: str = typer.Option(
+        SA2A_PROFILE_V26_9_16, "--profile", "-p", help="Target profile to validate"
+    ),
 ) -> None:
     """Validate Semantic Agent Card capability declarations and profile compliance (§10, §76)."""
     guard = DowngradeGuard()
     try:
         guard.assert_supported_profile(profile)
     except UnsupportedProfileError as exc:
-        _emit({"ok": False, "error": str(exc), "code": exc.code, "profile": exc.profile})
+        _emit(
+            {"ok": False, "error": str(exc), "code": exc.code, "profile": exc.profile}
+        )
         raise typer.Exit(code=1) from exc
 
     if card_path:
         p = Path(card_path)
         if not p.exists():
-            _emit({"ok": False, "error": f"Card file not found: {card_path}", "code": "NOT_FOUND"})
+            _emit(
+                {
+                    "ok": False,
+                    "error": f"Card file not found: {card_path}",
+                    "code": "NOT_FOUND",
+                }
+            )
             raise typer.Exit(code=1)
         raw = json.loads(p.read_text(encoding="utf-8"))
         profiles = raw.get("supported_profiles", [])
         if profile not in profiles:
-            _emit({
-                "ok": False,
-                "error": f"Agent card does not declare support for profile {profile}",
-                "code": "UNSUPPORTED_PROFILE",
-            })
+            _emit(
+                {
+                    "ok": False,
+                    "error": f"Agent card does not declare support for profile {profile}",
+                    "code": "UNSUPPORTED_PROFILE",
+                }
+            )
             raise typer.Exit(code=1)
         card_id = raw.get("agent_id", "unknown")
     else:
         default_card = create_default_sa2a_agent_card()
         card_id = default_card.agent_id
 
-    _emit({
-        "ok": True,
-        "agent_id": card_id,
-        "profile": profile,
-        "status": "VALID",
-    })
+    _emit(
+        {
+            "ok": True,
+            "agent_id": card_id,
+            "profile": profile,
+            "status": "VALID",
+        }
+    )
 
 
 @app.command("admit")
 def admit(
-    candidate_id: str = typer.Option(..., "--candidate-id", "-i", help="Candidate identifier"),
+    candidate_id: str = typer.Option(
+        ..., "--candidate-id", "-i", help="Candidate identifier"
+    ),
     query_id: str = typer.Option("q0", "--query-id", "-q", help="Query identifier"),
-    assertion: str = typer.Option(..., "--assertion", "-a", help="Proposed assertion to admit"),
-    source: str = typer.Option("discovery-engine", "--source", "-s", help="Source agent/engine identity"),
-    evidence_json: str = typer.Option("{}", "--evidence", "-e", help="JSON evidence payload"),
+    assertion: str = typer.Option(
+        ..., "--assertion", "-a", help="Proposed assertion to admit"
+    ),
+    source: str = typer.Option(
+        "discovery-engine", "--source", "-s", help="Source agent/engine identity"
+    ),
+    evidence_json: str = typer.Option(
+        "{}", "--evidence", "-e", help="JSON evidence payload"
+    ),
 ) -> None:
     """Subject a candidate assertion to admission court (§64) to become KNOWN (O*)."""
     try:
@@ -110,23 +137,31 @@ def admit(
     pipeline = UnknownResolutionPipeline()
     receipt = pipeline.admit_candidate(cand)
 
-    _emit({
-        "ok": receipt.admitted,
-        "receipt_id": receipt.receipt_id,
-        "candidate_hash": receipt.candidate_hash,
-        "standing": receipt.epistemic_standing.value,
-        "reasons": list(receipt.reasons),
-        "admitted_assertion": receipt.admitted_assertion,
-    })
+    _emit(
+        {
+            "ok": receipt.admitted,
+            "receipt_id": receipt.receipt_id,
+            "candidate_hash": receipt.candidate_hash,
+            "standing": receipt.epistemic_standing.value,
+            "reasons": list(receipt.reasons),
+            "admitted_assertion": receipt.admitted_assertion,
+        }
+    )
 
 
 @app.command("plan")
 def plan(
-    candidates_json: str = typer.Argument(..., help="JSON array of UNKNOWN frontier candidates or path to JSON file"),
-    plan_id: str = typer.Option("frontier_plan_0", "--plan-id", help="Allocation plan ID"),
+    candidates_json: str = typer.Argument(
+        ..., help="JSON array of UNKNOWN frontier candidates or path to JSON file"
+    ),
+    plan_id: str = typer.Option(
+        "frontier_plan_0", "--plan-id", help="Allocation plan ID"
+    ),
     ticks: int = typer.Option(1000, "--ticks", help="Total compute ticks budget"),
     tokens: int = typer.Option(50000, "--tokens", help="Total tokens budget"),
-    experiments: int = typer.Option(10, "--experiments", help="Total experiments budget"),
+    experiments: int = typer.Option(
+        10, "--experiments", help="Total experiments budget"
+    ),
 ) -> None:
     """Allocate exploration budget to UNKNOWN candidate frontier using CMCA cascade (§38)."""
     p = Path(candidates_json)
@@ -136,7 +171,9 @@ def plan(
         try:
             raw_candidates = json.loads(candidates_json)
         except json.JSONDecodeError as exc:
-            raise typer.BadParameter(f"candidates_json must be valid JSON: {exc}") from exc
+            raise typer.BadParameter(
+                f"candidates_json must be valid JSON: {exc}"
+            ) from exc
 
     if not isinstance(raw_candidates, list):
         raise typer.BadParameter("candidates_json must be a JSON array")
@@ -159,55 +196,69 @@ def plan(
     )
 
     allocator = CMCACandidateAllocator()
-    allocation_plan = allocator.allocate(plan_id=plan_id, budget=budget, candidates=cands)
+    allocation_plan = allocator.allocate(
+        plan_id=plan_id, budget=budget, candidates=cands
+    )
 
-    _emit({
-        "ok": True,
-        "plan_id": allocation_plan.plan_id,
-        "plan_hash": allocation_plan.plan_hash,
-        "total_entropy_preserved": allocation_plan.total_entropy_preserved,
-        "allocations": [
-            {
-                "item_id": a.item_id,
-                "fraction": a.allocated_fraction,
-                "ticks": a.allocated_ticks,
-                "tokens": a.allocated_tokens,
-                "experiments": a.allocated_experiments,
-                "lane": a.priority_lane,
-                "standing": a.standing.value,
-            }
-            for a in allocation_plan.allocations
-        ],
-    })
+    _emit(
+        {
+            "ok": True,
+            "plan_id": allocation_plan.plan_id,
+            "plan_hash": allocation_plan.plan_hash,
+            "total_entropy_preserved": allocation_plan.total_entropy_preserved,
+            "allocations": [
+                {
+                    "item_id": a.item_id,
+                    "fraction": a.allocated_fraction,
+                    "ticks": a.allocated_ticks,
+                    "tokens": a.allocated_tokens,
+                    "experiments": a.allocated_experiments,
+                    "lane": a.priority_lane,
+                    "standing": a.standing.value,
+                }
+                for a in allocation_plan.allocations
+            ],
+        }
+    )
 
 
 @app.command("execute")
 def execute(
     query: str = typer.Argument(..., help="Query string to resolve"),
-    compiled_rule_json: str = typer.Option(None, "--rules", "-r", help="JSON array of compiled [pattern, output] rules"),
+    compiled_rule_json: str = typer.Option(
+        None, "--rules", "-r", help="JSON array of compiled [pattern, output] rules"
+    ),
 ) -> None:
     """Execute query with deterministic machine experience compilation (§39, §65)."""
     compiler = MachineExperienceCompiler()
     if compiled_rule_json:
         rules_data = json.loads(compiled_rule_json)
         items = [(r[0], r[1], None) for r in rules_data]
-        compiler.compile_candidate_experience(receipt_id="cli_exec_rec", resolved_items=items)
+        compiler.compile_candidate_experience(
+            receipt_id="cli_exec_rec", resolved_items=items
+        )
 
     # Resolution executes compiled deterministic rules first
-    resolved = compiler.resolve(query, fallback_llm_inference=lambda: f"FALLBACK_INFERENCE_FOR({query})")
+    resolved = compiler.resolve(
+        query, fallback_llm_inference=lambda: f"FALLBACK_INFERENCE_FOR({query})"
+    )
 
-    _emit({
-        "ok": True,
-        "query": query,
-        "result": resolved,
-        "llm_avoidance_ratio": compiler.inference_avoidance_ratio,
-    })
+    _emit(
+        {
+            "ok": True,
+            "query": query,
+            "result": resolved,
+            "llm_avoidance_ratio": compiler.inference_avoidance_ratio,
+        }
+    )
 
 
 @app.command("replay")
 def replay(
     manifest_json: str = typer.Argument(..., help="Manifest or plan JSON string"),
-    expected_hash: str = typer.Option(..., "--expected-hash", "-h", help="Expected cryptographic digest"),
+    expected_hash: str = typer.Option(
+        ..., "--expected-hash", "-h", help="Expected cryptographic digest"
+    ),
 ) -> None:
     """Verify cryptographic receipt or plan hash deterministically (§38, §64)."""
     try:
@@ -216,26 +267,35 @@ def replay(
         raise typer.BadParameter(f"manifest_json must be valid JSON: {exc}") from exc
 
     import hashlib
+
     # Canonical re-serialization
     dumped = json.dumps(data, sort_keys=True, separators=(",", ":"))
     computed_hash = hashlib.sha256(dumped.encode("utf-8")).hexdigest()
 
-    matches = (computed_hash == expected_hash)
-    _emit({
-        "ok": matches,
-        "computed_hash": computed_hash,
-        "expected_hash": expected_hash,
-        "verified": matches,
-    })
+    matches = computed_hash == expected_hash
+    _emit(
+        {
+            "ok": matches,
+            "computed_hash": computed_hash,
+            "expected_hash": expected_hash,
+            "verified": matches,
+        }
+    )
     if not matches:
         raise typer.Exit(code=1)
 
 
 @app.command("graphlaw")
 def graphlaw(
-    action: str = typer.Argument(..., help="GraphLaw action: 'validate', 'hash', or 'hooks'"),
-    ttl: str = typer.Option("", "--ttl", "-t", help="Turtle content or path to Turtle file"),
-    event_ttl: str = typer.Option("", "--event-ttl", "-e", help="Event Turtle content for hooks"),
+    action: str = typer.Argument(
+        ..., help="GraphLaw action: 'validate', 'hash', or 'hooks'"
+    ),
+    ttl: str = typer.Option(
+        "", "--ttl", "-t", help="Turtle content or path to Turtle file"
+    ),
+    event_ttl: str = typer.Option(
+        "", "--event-ttl", "-e", help="Event Turtle content for hooks"
+    ),
     profile_ttl: str = typer.Option("", "--profile-ttl", help="Profile Turtle content"),
     shacl_shapes: str = typer.Option("", "--shacl", help="SHACL shapes Turtle content"),
     shex_schema: str = typer.Option("", "--shex", help="ShEx schema content"),
@@ -266,23 +326,25 @@ def graphlaw(
             shex_schema=shex_schema,
             shex_shape_map=shex_shape_map,
         )
-        _emit({
-            "ok": res.conforms,
-            "action": "validate",
-            "graph_hash": res.graph_hash,
-            "profile_hash": res.profile_hash,
-            "conforms": res.conforms,
-            "replay_status": res.replay_status,
-            "dialects": [
-                {
-                    "dialect": d.dialect,
-                    "status": d.status,
-                    "detail": d.detail,
-                    "triples_out": d.triples_out,
-                }
-                for d in res.dialects
-            ],
-        })
+        _emit(
+            {
+                "ok": res.conforms,
+                "action": "validate",
+                "graph_hash": res.graph_hash,
+                "profile_hash": res.profile_hash,
+                "conforms": res.conforms,
+                "replay_status": res.replay_status,
+                "dialects": [
+                    {
+                        "dialect": d.dialect,
+                        "status": d.status,
+                        "detail": d.detail,
+                        "triples_out": d.triples_out,
+                    }
+                    for d in res.dialects
+                ],
+            }
+        )
     elif action == "hooks":
         hooks_res = bridge.run_hooks(content, event_content)
         _emit({"ok": True, "action": "hooks", "result": hooks_res})
@@ -291,25 +353,47 @@ def graphlaw(
         raise typer.Exit(code=1)
 
 
-hook_app = typer.Typer(name="hook", help="Knowledge Hooks and reactive semantic networks (§4.5-§4.8).")
+hook_app = typer.Typer(
+    name="hook", help="Knowledge Hooks and reactive semantic networks (§4.5-§4.8)."
+)
 app.add_typer(hook_app, name="hook")
 
 
 @hook_app.command("evaluate")
 def hook_evaluate(
-    base_ttl: str = typer.Option(..., "--base-ttl", "-b", help="Base graph Turtle string or file path"),
-    event_ttl: str = typer.Option(..., "--event-ttl", "-e", help="Delta/Event Turtle string or file path"),
+    base_ttl: str = typer.Option(
+        ..., "--base-ttl", "-b", help="Base graph Turtle string or file path"
+    ),
+    event_ttl: str = typer.Option(
+        ..., "--event-ttl", "-e", help="Delta/Event Turtle string or file path"
+    ),
     hook_name: str = typer.Option("default_hook", "--hook-name", help="Hook name"),
-    action_iri: str = typer.Option("urn:action:default", "--action-iri", help="Action IRI to synthesize"),
-    target_resource: str = typer.Option("urn:res:default", "--target-resource", help="Target resource IRI"),
+    action_iri: str = typer.Option(
+        "urn:action:default", "--action-iri", help="Action IRI to synthesize"
+    ),
+    target_resource: str = typer.Option(
+        "urn:res:default", "--target-resource", help="Target resource IRI"
+    ),
     goal_iri: str = typer.Option("urn:goal:default", "--goal-iri", help="Goal IRI"),
 ) -> None:
     """Evaluate Knowledge Hooks against a graph transition without executing DO (§4.5)."""
     from autofde_lab.sa2a.hooks.engine import KnowledgeHookEngine
-    from autofde_lab.sa2a.hooks.model import HookEffectKind, HookEventTrigger, KnowledgeHookDefinition
+    from autofde_lab.sa2a.hooks.model import (
+        HookEffectKind,
+        HookEventTrigger,
+        KnowledgeHookDefinition,
+    )
 
-    base_content = Path(base_ttl).read_text(encoding="utf-8") if Path(base_ttl).exists() else base_ttl
-    event_content = Path(event_ttl).read_text(encoding="utf-8") if Path(event_ttl).exists() else event_ttl
+    base_content = (
+        Path(base_ttl).read_text(encoding="utf-8")
+        if Path(base_ttl).exists()
+        else base_ttl
+    )
+    event_content = (
+        Path(event_ttl).read_text(encoding="utf-8")
+        if Path(event_ttl).exists()
+        else event_ttl
+    )
 
     engine = KnowledgeHookEngine()
     engine.register_hook(
@@ -325,36 +409,50 @@ def hook_evaluate(
     )
 
     records = engine.evaluate(base_content, event_content)
-    _emit({
-        "ok": True,
-        "evaluated_hooks_count": len(records),
-        "records": [
-            {
-                "hook_name": r.hook_name,
-                "verdict": r.verdict.value,
-                "condition_hash": r.condition_hash,
-                "intent": {
-                    "intent_id": r.intent.intent_id,
-                    "action_iri": r.intent.action_iri,
-                    "target_capability_iri": r.intent.target_capability_iri,
-                    "intent_digest": r.intent.intent_digest,
+    _emit(
+        {
+            "ok": True,
+            "evaluated_hooks_count": len(records),
+            "records": [
+                {
+                    "hook_name": r.hook_name,
+                    "verdict": r.verdict.value,
+                    "condition_hash": r.condition_hash,
+                    "intent": {
+                        "intent_id": r.intent.intent_id,
+                        "action_iri": r.intent.action_iri,
+                        "target_capability_iri": r.intent.target_capability_iri,
+                        "intent_digest": r.intent.intent_digest,
+                    }
+                    if r.intent
+                    else None,
                 }
-                if r.intent
-                else None,
-            }
-            for r in records
-        ],
-    })
+                for r in records
+            ],
+        }
+    )
 
 
 @hook_app.command("reflex")
 def hook_reflex(
-    base_ttl: str = typer.Option(..., "--base-ttl", "-b", help="Base graph Turtle string or file path"),
-    event_ttl: str = typer.Option(..., "--event-ttl", "-e", help="Delta/Event Turtle string or file path"),
-    max_depth: int = typer.Option(3, "--max-depth", "-d", help="Max cascade depth bound"),
-    actor_id: str = typer.Option("urn:agent:autonomic-controller", "--actor-id", help="Actor ID"),
-    action_iri: str = typer.Option("urn:action:freeze_credit", "--action-iri", help="Action IRI"),
-    target_resource: str = typer.Option("urn:cap:credit:freeze", "--target-resource", help="Target resource IRI"),
+    base_ttl: str = typer.Option(
+        ..., "--base-ttl", "-b", help="Base graph Turtle string or file path"
+    ),
+    event_ttl: str = typer.Option(
+        ..., "--event-ttl", "-e", help="Delta/Event Turtle string or file path"
+    ),
+    max_depth: int = typer.Option(
+        3, "--max-depth", "-d", help="Max cascade depth bound"
+    ),
+    actor_id: str = typer.Option(
+        "urn:agent:autonomic-controller", "--actor-id", help="Actor ID"
+    ),
+    action_iri: str = typer.Option(
+        "urn:action:freeze_credit", "--action-iri", help="Action IRI"
+    ),
+    target_resource: str = typer.Option(
+        "urn:cap:credit:freeze", "--target-resource", help="Target resource IRI"
+    ),
     skip_admission_check: bool = typer.Option(
         False,
         "--skip-admission-check",
@@ -416,11 +514,23 @@ def hook_reflex(
     from autofde_lab.sa2a.authority.broker import AuthorityBroker, AuthorityGrant
     from autofde_lab.sa2a.brce.boundary import ConsequenceBoundary
     from autofde_lab.sa2a.hooks.engine import KnowledgeHookEngine
-    from autofde_lab.sa2a.hooks.model import HookEffectKind, HookEventTrigger, KnowledgeHookDefinition
+    from autofde_lab.sa2a.hooks.model import (
+        HookEffectKind,
+        HookEventTrigger,
+        KnowledgeHookDefinition,
+    )
     from autofde_lab.sa2a.hooks.reactive_loop import ReactiveSemanticLoop
 
-    base_content = Path(base_ttl).read_text(encoding="utf-8") if Path(base_ttl).exists() else base_ttl
-    event_content = Path(event_ttl).read_text(encoding="utf-8") if Path(event_ttl).exists() else event_ttl
+    base_content = (
+        Path(base_ttl).read_text(encoding="utf-8")
+        if Path(base_ttl).exists()
+        else base_ttl
+    )
+    event_content = (
+        Path(event_ttl).read_text(encoding="utf-8")
+        if Path(event_ttl).exists()
+        else event_ttl
+    )
 
     engine = KnowledgeHookEngine()
     engine.register_hook(
@@ -498,22 +608,24 @@ def hook_reflex(
         delta_generator=lambda r: "",  # Quiesce after reflex step
     )
 
-    _emit({
-        "ok": True,
-        "steps_count": len(trace.steps),
-        "quiescence_reached": trace.quiescence_reached,
-        "total_receipts": trace.total_receipts,
-        "steps": [
-            {
-                "depth": s.depth,
-                "triggered_hooks": list(s.triggered_hooks),
-                "intents_count": len(s.intents_synthesized),
-                "receipts_count": len(s.final_receipts),
-                "receipt_states": [r.state.value for r in s.final_receipts],
-            }
-            for s in trace.steps
-        ],
-    })
+    _emit(
+        {
+            "ok": True,
+            "steps_count": len(trace.steps),
+            "quiescence_reached": trace.quiescence_reached,
+            "total_receipts": trace.total_receipts,
+            "steps": [
+                {
+                    "depth": s.depth,
+                    "triggered_hooks": list(s.triggered_hooks),
+                    "intents_count": len(s.intents_synthesized),
+                    "receipts_count": len(s.final_receipts),
+                    "receipt_states": [r.state.value for r in s.final_receipts],
+                }
+                for s in trace.steps
+            ],
+        }
+    )
 
 
 @app.command("chicago")
@@ -571,7 +683,11 @@ def _build_requires_port_discovery_router() -> "tuple[Any, list[str]]":
     call, in precedence-tier order, stopping at the first non-`None` candidate.
     """
     from autofde_lab.sa2a.unknown.resolution import CandidateResolution, UnknownQuery
-    from autofde_lab.sa2a.unknown.router import DiscoveryEngine, DiscoveryEngineKind, DiscoveryRouter
+    from autofde_lab.sa2a.unknown.router import (
+        DiscoveryEngine,
+        DiscoveryEngineKind,
+        DiscoveryRouter,
+    )
 
     invocation_log: list[str] = []
 
@@ -594,7 +710,13 @@ def _build_requires_port_discovery_router() -> "tuple[Any, list[str]]":
         )
 
     router = DiscoveryRouter()
-    router.register(DiscoveryEngine("exact-port-probe", DiscoveryEngineKind.EXACT_REUSABLE_MACHINERY, exact_port_probe))
+    router.register(
+        DiscoveryEngine(
+            "exact-port-probe",
+            DiscoveryEngineKind.EXACT_REUSABLE_MACHINERY,
+            exact_port_probe,
+        )
+    )
     router.register(
         DiscoveryEngine(
             "general-exploratory-fallback",
@@ -638,7 +760,11 @@ def _v26_9_17_crown_fixture(work_dir: Path) -> dict[str, Any]:
     # the seed's exact topic token ("requires-port") -- see generator.py.
     fresh_candidate = generate_fresh_equivalent_candidate(seed=seed_candidate, index=0)
     generated_subject = fresh_candidate.proposed_assertion.split()[0]
-    resource_name = generated_subject.split(":", 1)[1] if ":" in generated_subject else generated_subject
+    resource_name = (
+        generated_subject.split(":", 1)[1]
+        if ":" in generated_subject
+        else generated_subject
+    )
 
     manifest = {
         "release_id": "v26.9.17-demo",
@@ -656,7 +782,9 @@ def _v26_9_17_crown_fixture(work_dir: Path) -> dict[str, Any]:
     result = run.run(
         candidate_manifest=manifest,
         semantic_class_id="requires-port",
-        episode1_query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        episode1_query=UnknownQuery(
+            query_id="q-1", predicate_or_topic="service:api-gateway requires-port"
+        ),
         discovery_router=router,
         equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
         equivalence_predicate_id="pred-requires-port-v1",
@@ -694,7 +822,9 @@ def _v26_9_17_crown_fixture(work_dir: Path) -> dict[str, Any]:
 
 
 @app.command("episode1")
-def episode1(work_dir: Path = typer.Option(Path(".sa2a_v26_9_17_crown"), "--work-dir")) -> None:
+def episode1(
+    work_dir: Path = typer.Option(Path(".sa2a_v26_9_17_crown"), "--work-dir"),
+) -> None:
     """Run Episode 1 (UNKNOWN -> admitted MachineExperience) for the demonstrated
     class, via a REAL `DiscoveryRouter` (an `EXACT_REUSABLE_MACHINERY` engine plus a
     `GENERAL_EXPLORATORY_INTELLIGENCE` fallback, PRD §14 item 6) -- never a single
@@ -705,13 +835,19 @@ def episode1(work_dir: Path = typer.Option(Path(".sa2a_v26_9_17_crown"), "--work
     from autofde_lab.sa2a.unknown.resolution import UnknownQuery
 
     state_dir = work_dir / "state"
-    runner1 = Episode1Runner(state_dir=state_dir, journal_path=work_dir / "journal.json", receipt_store_dir=work_dir / "receipts")
+    runner1 = Episode1Runner(
+        state_dir=state_dir,
+        journal_path=work_dir / "journal.json",
+        receipt_store_dir=work_dir / "receipts",
+    )
 
     router, invocation_log = _build_requires_port_discovery_router()
 
     result = runner1.run(
         semantic_class_id="requires-port",
-        query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        query=UnknownQuery(
+            query_id="q-1", predicate_or_topic="service:api-gateway requires-port"
+        ),
         discovery_router=router,
         equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
         equivalence_predicate_id="pred-requires-port-v1",
@@ -728,12 +864,12 @@ def episode1(work_dir: Path = typer.Option(Path(".sa2a_v26_9_17_crown"), "--work
 
 
 @app.command("crown")
-def crown(work_dir: Path = typer.Option(Path(".sa2a_v26_9_17_crown"), "--work-dir")) -> None:
+def crown(
+    work_dir: Path = typer.Option(Path(".sa2a_v26_9_17_crown"), "--work-dir"),
+) -> None:
     """Run the full v26.9.17 crown (subject fence -> Episode 1 -> Episode 2 -> replay
     -> fresh-consumer verify) via ReleaseRun and emit its standing receipt."""
     receipt = _v26_9_17_crown_fixture(work_dir)
     _emit(receipt)
     if receipt["standing"] != "CROWNED":
         raise typer.Exit(code=1)
-
-

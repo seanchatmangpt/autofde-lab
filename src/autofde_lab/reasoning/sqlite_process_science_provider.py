@@ -66,7 +66,9 @@ class SqliteProcessScienceProvider:
     def __init__(self, db_path: str | Path) -> None:
         self._db_path = Path(db_path)
 
-    def request_process_observation(self, observation: EnterpriseObservation) -> ProcessObservation:
+    def request_process_observation(
+        self, observation: EnterpriseObservation
+    ) -> ProcessObservation:
         # `observation` is accepted for Protocol conformance but not
         # consulted -- this provider is scoped to one real, already-
         # materialized sqlite db path fixed at construction (see module
@@ -116,7 +118,8 @@ class SqliteProcessScienceProvider:
             for b in bottlenecks
         )
         object_centric_relation_refs = tuple(
-            f"handover:{h.from_solver}->{h.to_solver}:count={h.count}" for h in handovers
+            f"handover:{h.from_solver}->{h.to_solver}:count={h.count}"
+            for h in handovers
         )
 
         real_signal_found = bool(durations or bottlenecks or handovers or stability)

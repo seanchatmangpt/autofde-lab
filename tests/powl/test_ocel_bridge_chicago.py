@@ -18,7 +18,18 @@ in this file.
 from __future__ import annotations
 
 from autofde_lab.ocel.model import OcelValueKind
-from autofde_lab.powl.algebra import Atom, ChoiceGraph, ChoiceGraphEdge, End, Guard, NodeId, OrderEdge, PartialOrder, Silent, Start
+from autofde_lab.powl.algebra import (
+    Atom,
+    ChoiceGraph,
+    ChoiceGraphEdge,
+    End,
+    Guard,
+    NodeId,
+    OrderEdge,
+    PartialOrder,
+    Silent,
+    Start,
+)
 from autofde_lab.powl.guard_executor import execute
 from autofde_lab.powl.ocel_bridge import OcelExecutionRecorder, execute_with_ocel
 
@@ -72,9 +83,14 @@ def test_execute_with_ocel_records_one_event_per_real_atom_visited_in_order() ->
     log = recorder.close()
     assert len(log.events) == 3
     # Real execution order preserved in the real event stream.
-    assert [e.activity for e in log.events] == ["AtomInvoked", "AtomInvoked", "AtomInvoked"]
+    assert [e.activity for e in log.events] == [
+        "AtomInvoked",
+        "AtomInvoked",
+        "AtomInvoked",
+    ]
     labels_in_order = [
-        next(a.value.value for a in e.attributes if a.key == "label") for e in log.events
+        next(a.value.value for a in e.attributes if a.key == "label")
+        for e in log.events
     ]
     assert labels_in_order == ["fetch_state", "compute_plan", "actuate_gate"]
 
@@ -104,13 +120,19 @@ def test_events_carry_real_object_types_and_attributes() -> None:
     assert execution_objects[0].id == recorder.execution_id
 
     activity_objects = {o.id: o for o in log.objects if o.object_type == "PowlActivity"}
-    assert set(activity_objects) == {"activity-fetch_state", "activity-compute_plan", "activity-actuate_gate"}
+    assert set(activity_objects) == {
+        "activity-fetch_state",
+        "activity-compute_plan",
+        "activity-actuate_gate",
+    }
     for expected_label, obj_id in (
         ("fetch_state", "activity-fetch_state"),
         ("compute_plan", "activity-compute_plan"),
         ("actuate_gate", "activity-actuate_gate"),
     ):
-        label_attr = next(a for a in activity_objects[obj_id].attributes if a.key == "label")
+        label_attr = next(
+            a for a in activity_objects[obj_id].attributes if a.key == "label"
+        )
         assert label_attr.value.kind is OcelValueKind.STRING
         assert label_attr.value.value == expected_label
 
@@ -128,7 +150,11 @@ def test_events_carry_real_object_types_and_attributes() -> None:
 
     # Each event links the one execution object and its one activity object.
     for event in log.events:
-        linked = {link.object_id for link in log.event_object_links if link.event_id == event.id}
+        linked = {
+            link.object_id
+            for link in log.event_object_links
+            if link.event_id == event.id
+        }
         assert recorder.execution_id in linked
         assert len(linked) == 2
 
@@ -148,11 +174,19 @@ def test_events_are_e2o_linked_to_activity_objects_matching_visitation_order() -
 
     ordered_activity_ids = []
     for event in log.events:
-        linked = [link.object_id for link in log.event_object_links if link.event_id == event.id]
+        linked = [
+            link.object_id
+            for link in log.event_object_links
+            if link.event_id == event.id
+        ]
         activity_id = next(oid for oid in linked if oid != recorder.execution_id)
         ordered_activity_ids.append(activity_id)
 
-    assert ordered_activity_ids == ["activity-fetch_state", "activity-compute_plan", "activity-actuate_gate"]
+    assert ordered_activity_ids == [
+        "activity-fetch_state",
+        "activity-compute_plan",
+        "activity-actuate_gate",
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -185,7 +219,9 @@ def test_execute_with_ocel_trace_is_identical_to_plain_execute_trace() -> None:
     assert plain_trace == wrapped_trace
 
 
-def test_execute_with_ocel_over_a_real_choice_graph_preserves_transition_count() -> None:
+def test_execute_with_ocel_over_a_real_choice_graph_preserves_transition_count() -> (
+    None
+):
     """A real, guarded `ChoiceGraph` -- same shape as `test_guard_executor_chicago.py`'s
     fixtures -- proving the bridge also works over the choice-graph walk, not
     only the partial-order walk, and that `choice_transitions_taken` is
@@ -222,8 +258,13 @@ def test_execute_with_ocel_over_a_real_choice_graph_preserves_transition_count()
     )
 
     assert calls == ["commit"]
-    assert trace.choice_transitions_taken == 3  # Start->decide, decide->commit, commit->End
+    assert (
+        trace.choice_transitions_taken == 3
+    )  # Start->decide, decide->commit, commit->End
 
     log = recorder.close()
     assert len(log.events) == 1
-    assert next(a.value.value for a in log.events[0].attributes if a.key == "label") == "commit"
+    assert (
+        next(a.value.value for a in log.events[0].attributes if a.key == "label")
+        == "commit"
+    )

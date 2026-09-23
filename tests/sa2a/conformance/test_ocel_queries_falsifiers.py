@@ -59,7 +59,6 @@ from autofde_lab.ocel.model import (
 from autofde_lab.ocel.refusals import OcelError, OcelRefusal
 from autofde_lab.sa2a.conformance.ocel_queries import OcelConformanceQueryEngine
 
-
 # ---------------------------------------------------------------------------
 # Local helper -- deliberately NOT imported from test_ocel_queries.py, which
 # a separate agent is concurrently fixing. Kept minimal and self-contained.
@@ -76,8 +75,12 @@ def _ocel_shell(
     return {
         "ocel:version": "2.0",
         "ocel:ordering": "timestamp",
-        "eventTypes": event_types if event_types is not None else [{"name": "test_event", "attributes": []}],
-        "objectTypes": object_types if object_types is not None else [{"name": "Receipt", "attributes": []}],
+        "eventTypes": event_types
+        if event_types is not None
+        else [{"name": "test_event", "attributes": []}],
+        "objectTypes": object_types
+        if object_types is not None
+        else [{"name": "Receipt", "attributes": []}],
         "events": events or [],
         "objects": objects or [],
     }
@@ -90,7 +93,9 @@ def _ocel_shell(
 # ---------------------------------------------------------------------------
 
 
-def test_falsifier_dropped_authority_event_p8_vacuous_pass_on_unauthorized_actuation() -> None:
+def test_falsifier_dropped_authority_event_p8_vacuous_pass_on_unauthorized_actuation() -> (
+    None
+):
     """RFC gate 138 class: dropped events.
 
     An actuation event fires for actor ``urn:agent:dropped-auth``. The
@@ -145,7 +150,9 @@ def test_falsifier_dropped_authority_event_p8_vacuous_pass_on_unauthorized_actua
 # ---------------------------------------------------------------------------
 
 
-def test_falsifier_duplicated_events_identity_corruption_evaluate_log_silently_passes() -> None:
+def test_falsifier_duplicated_events_identity_corruption_evaluate_log_silently_passes() -> (
+    None
+):
     """RFC gate 138 class: duplicated events (corrupted entity identity).
 
     Builds a real ``OcelLog`` (real dataclasses, not a mock) containing two
@@ -206,10 +213,14 @@ def test_falsifier_duplicated_events_identity_corruption_evaluate_log_silently_p
         activity="hook_fired",
         timestamp_ns=2_000_000_000,
         attributes=(
-            OcelAttribute("hook_iri", OcelAttributeValue.string("http://example.org/hook/dup")),
+            OcelAttribute(
+                "hook_iri", OcelAttributeValue.string("http://example.org/hook/dup")
+            ),
         ),
     )
-    link = EventObjectLink(event_id="evt-dup-001", object_id="urn:agent:dup-test", qualifier=None)
+    link = EventObjectLink(
+        event_id="evt-dup-001", object_id="urn:agent:dup-test", qualifier=None
+    )
 
     corrupted_log = OcelLog.new(
         objects=(actor,),
@@ -229,7 +240,9 @@ def test_falsifier_duplicated_events_identity_corruption_evaluate_log_silently_p
         corrupted_log.validate()
     except OcelError as exc:
         raised = exc
-    assert raised is not None, "expected OcelLog.validate() to refuse a duplicate event id"
+    assert raised is not None, (
+        "expected OcelLog.validate() to refuse a duplicate event id"
+    )
     assert raised.refusal is OcelRefusal.DUPLICATE_ENTITY_ID
 
     # Part 2: the identical corruption expressed as a literal OCEL 2.0 JSON
@@ -247,7 +260,10 @@ def test_falsifier_duplicated_events_identity_corruption_evaluate_log_silently_p
             "id": "evt-dup-001",
             "type": "brce_execute",
             "time": 1.0,
-            "attributes": {"actor_id": "urn:agent:dup-test", "prepared_receipt_id": "rcpt-v1"},
+            "attributes": {
+                "actor_id": "urn:agent:dup-test",
+                "prepared_receipt_id": "rcpt-v1",
+            },
             "relationships": [],
         },
         {
@@ -277,7 +293,9 @@ def test_falsifier_duplicated_events_identity_corruption_evaluate_log_silently_p
 # ---------------------------------------------------------------------------
 
 
-def test_falsifier_corrupted_relationship_identity_p1_accepts_dangling_receipt_ref() -> None:
+def test_falsifier_corrupted_relationship_identity_p1_accepts_dangling_receipt_ref() -> (
+    None
+):
     """RFC gate 138 class: corrupted relationship identity.
 
     An actuation event's ``relationships`` list references an
@@ -377,7 +395,9 @@ def test_falsifier_unknown_event_type_p7_schema_check_does_not_validate_it() -> 
 # ---------------------------------------------------------------------------
 
 
-def test_falsifier_out_of_order_ingestion_p8_is_order_robust_not_list_position() -> None:
+def test_falsifier_out_of_order_ingestion_p8_is_order_robust_not_list_position() -> (
+    None
+):
     """RFC gate 138 class: out-of-order ingestion (P8 side).
 
     The actuation event (t=1000) is appended to the ``events`` list
@@ -415,7 +435,10 @@ def test_falsifier_out_of_order_ingestion_p8_is_order_robust_not_list_position()
             "id": "auth-ooo-001",
             "type": "authority_grant",
             "time": 500.0,
-            "attributes": {"actor_id": "urn:agent:ooo-test", "grant_id": "grant-ooo-001"},
+            "attributes": {
+                "actor_id": "urn:agent:ooo-test",
+                "grant_id": "grant-ooo-001",
+            },
             "relationships": [],
         },
     ]
@@ -457,16 +480,25 @@ def test_falsifier_out_of_order_ingestion_p10_digest_detects_reordering() -> Non
         "id": "act-ord-001",
         "type": "brce_execute",
         "time": 1000.0,
-        "attributes": {"actor_id": "urn:agent:ord-test", "prepared_receipt_id": "rcpt-ord-001"},
+        "attributes": {
+            "actor_id": "urn:agent:ord-test",
+            "prepared_receipt_id": "rcpt-ord-001",
+        },
         "relationships": [],
     }
 
     canonical_order = _ocel_shell(events=[event_a, event_b])
-    canonical_json_str = json.dumps(canonical_order, sort_keys=True, separators=(",", ":"))
+    canonical_json_str = json.dumps(
+        canonical_order, sort_keys=True, separators=(",", ":")
+    )
     declared_digest = hashlib.sha256(canonical_json_str.encode()).hexdigest()
 
-    reingested_out_of_order = _ocel_shell(events=[event_b, event_a])  # swapped list order
-    reingested_json_str = json.dumps(reingested_out_of_order, sort_keys=True, separators=(",", ":"))
+    reingested_out_of_order = _ocel_shell(
+        events=[event_b, event_a]
+    )  # swapped list order
+    reingested_json_str = json.dumps(
+        reingested_out_of_order, sort_keys=True, separators=(",", ":")
+    )
     computed_digest = hashlib.sha256(reingested_json_str.encode()).hexdigest()
 
     # Confirm the corruption is real: same event content, different list

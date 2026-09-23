@@ -64,11 +64,9 @@ from autofde_lab.hub.domain.gym_procedure.discovered_domain import (
 )
 from autofde_lab.hub.domain.gym_procedure.dogfood import (
     MIN_EPISODES_FOR_RANKING,
-    CandidateComparison,
     ModelObservationDivergence,
     Unknown,
     _absent,
-    _read_commitment,
     _typed_records,
     compare_candidates_vs_committed,
     compare_discovered_model_vs_observed,
@@ -931,9 +929,9 @@ def next_discriminating_experiment(
 
     action, n_disputes = disputed.most_common(1)[0]
     targeted = [h for h in classification.hypotheses if h.disputed_action == action]
-    target_causes = tuple(sorted({h.cause for h in targeted} | {
-        c for h in targeted for c in h.competing
-    }))
+    target_causes = tuple(
+        sorted({h.cause for h in targeted} | {c for h in targeted for c in h.competing})
+    )
 
     discovered = induce_discovered_domain(probe_log)
     probe: Optional[Probe] = propose_discriminating_probe(discovered, action)

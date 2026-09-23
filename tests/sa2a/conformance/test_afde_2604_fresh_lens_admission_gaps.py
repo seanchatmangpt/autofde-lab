@@ -71,7 +71,10 @@ def _boundary(tmp_path: Path, name: str, broker: AuthorityBroker):
     actuator = RealDiskJournalActuator(journal)
     verifier = IndependentDiskJournalVerifier(journal)
     boundary = ConsequenceBoundary(
-        authority_broker=broker, actuator=actuator, verifier=verifier, receipt_store=store
+        authority_broker=broker,
+        actuator=actuator,
+        verifier=verifier,
+        receipt_store=store,
     )
     return boundary, actuator, store, journal
 
@@ -87,7 +90,9 @@ _FL1_BOUND_TTL = """
 """
 
 
-def test_fresh_lens_1_receipt_carries_no_admission_identity_edge(tmp_path: Path) -> None:
+def test_fresh_lens_1_receipt_carries_no_admission_identity_edge(
+    tmp_path: Path,
+) -> None:
     """CLOSED (closure pass, this repo): a real, genuinely ADMITTED `AdmissionResult`
     (real digest, real receipt_id) gates a real `execute_admitted()` call that really
     actuates (real disk journal write) and mints real `PreparedReceipt` +
@@ -114,13 +119,20 @@ def test_fresh_lens_1_receipt_carries_no_admission_identity_edge(tmp_path: Path)
     pipeline = AdmissionPipeline()
     admitted = pipeline.admit(
         _FL1_BOUND_TTL,
-        provenance_record={"issuer": "urn:issuer:fresh-lens1", "timestamp": "2026-09-16T00:00:00Z"},
+        provenance_record={
+            "issuer": "urn:issuer:fresh-lens1",
+            "timestamp": "2026-09-16T00:00:00Z",
+        },
     )
     assert admitted.standing == Standing.ADMITTED
     admission_digest = admitted.digest
     admission_receipt_id = admitted.receipt.receipt_id
-    assert admission_digest, "Sanity: a real ADMITTED result must carry a real graph digest."
-    assert admission_receipt_id, "Sanity: a real ADMITTED result must carry a real receipt_id."
+    assert admission_digest, (
+        "Sanity: a real ADMITTED result must carry a real graph digest."
+    )
+    assert admission_receipt_id, (
+        "Sanity: a real ADMITTED result must carry a real receipt_id."
+    )
 
     actor = "urn:agent:fresh-lens1-actor"
     action = "urn:action:fresh-lens1:export-dataset"
@@ -150,7 +162,9 @@ def test_fresh_lens_1_receipt_carries_no_admission_identity_edge(tmp_path: Path)
     # Sanity: this is a genuinely successful, real actuation -- not itself a refusal --
     # so the finding below is about a SUCCEEDING, correctly-gated episode, not a side effect
     # of a refusal path that never reached DO.
-    assert result.success is True, f"Sanity failed: expected real EXECUTED, got {result.state!r}/{result.reason!r}"
+    assert result.success is True, (
+        f"Sanity failed: expected real EXECUTED, got {result.state!r}/{result.reason!r}"
+    )
     assert result.state == TerminalReceiptState.EXECUTED
     assert actuator.call_count == 1
     assert journal.exists() is True
@@ -166,9 +180,11 @@ def test_fresh_lens_1_receipt_carries_no_admission_identity_edge(tmp_path: Path)
     )
     # Named, not attempted: only the digest is bound, not the admission's own
     # internal receipt_id -- see this test's docstring for why.
-    assert admission_receipt_id not in repr(prepared_dict) and admission_receipt_id not in repr(
-        final_dict
-    ), "Unexpected: admission receipt_id leaked into a receipt dict -- this was never bound."
+    assert admission_receipt_id not in repr(
+        prepared_dict
+    ) and admission_receipt_id not in repr(final_dict), (
+        "Unexpected: admission receipt_id leaked into a receipt dict -- this was never bound."
+    )
 
     # Re-load the SAME durable store fresh (new ReceiptStore-shaped read, not the live
     # `boundary`/`envelope` objects) to confirm the fix is real from durable evidence
@@ -187,7 +203,10 @@ def test_fresh_lens_1_receipt_carries_no_admission_identity_edge(tmp_path: Path)
     reloaded_final = store.get_final("idemp-fresh-lens1")
     assert reloaded_final is not None
     reloaded_final_blob = repr(reloaded_final.to_dict())
-    assert admission_digest not in reloaded_final_blob and admission_receipt_id not in reloaded_final_blob
+    assert (
+        admission_digest not in reloaded_final_blob
+        and admission_receipt_id not in reloaded_final_blob
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -202,7 +221,9 @@ _FL2_BOUND_TTL = """
 """
 
 
-def test_fresh_lens_2_admission_never_binds_actuation_parameters(tmp_path: Path) -> None:
+def test_fresh_lens_2_admission_never_binds_actuation_parameters(
+    tmp_path: Path,
+) -> None:
     """A single, real `Standing.ADMITTED` admission for
     (action=wire-transfer, target=treasury-account) -- exactly the shape
     `ReactiveSemanticLoop.run_reflex_cycle()` computes ONCE per cycle and reuses, unchanged,
@@ -228,7 +249,10 @@ def test_fresh_lens_2_admission_never_binds_actuation_parameters(tmp_path: Path)
     pipeline = AdmissionPipeline()
     admitted = pipeline.admit(
         _FL2_BOUND_TTL,
-        provenance_record={"issuer": "urn:issuer:fresh-lens2", "timestamp": "2026-09-16T00:00:00Z"},
+        provenance_record={
+            "issuer": "urn:issuer:fresh-lens2",
+            "timestamp": "2026-09-16T00:00:00Z",
+        },
     )
     assert admitted.standing == Standing.ADMITTED
 
@@ -250,7 +274,10 @@ def test_fresh_lens_2_admission_never_binds_actuation_parameters(tmp_path: Path)
     boundary, actuator, store, journal = _boundary(tmp_path, "fresh_lens2", broker)
 
     benign_params = {"amount_usd": 10, "destination": "urn:acct:payroll"}
-    dangerous_params = {"amount_usd": 999_999_999, "destination": "urn:acct:attacker-controlled"}
+    dangerous_params = {
+        "amount_usd": 999_999_999,
+        "destination": "urn:acct:attacker-controlled",
+    }
 
     envelope_1 = ExecutionEnvelope(
         idempotency_token="idemp-fresh-lens2-benign",
@@ -288,7 +315,9 @@ def test_fresh_lens_2_admission_never_binds_actuation_parameters(tmp_path: Path)
         f"(state={result_2.state!r}, refusal_code={result_2.refusal_code!r}, "
         f"reason={result_2.reason!r}) rather than reaching DO."
     )
-    assert actuator.call_count == 2, "Both envelopes must have reached the real actuator."
+    assert actuator.call_count == 2, (
+        "Both envelopes must have reached the real actuator."
+    )
 
     # Independent confirmation via the disk journal (not the actuator's own claim): the
     # SECOND, dangerous parameter payload was really, physically written to disk under the
@@ -297,7 +326,10 @@ def test_fresh_lens_2_admission_never_binds_actuation_parameters(tmp_path: Path)
 
     records = _json.loads(journal.read_text(encoding="utf-8"))
     assert len(records) == 2
-    assert records[0]["parameters"] == {k: benign_params[k] for k in sorted(benign_params)} or True
+    assert (
+        records[0]["parameters"] == {k: benign_params[k] for k in sorted(benign_params)}
+        or True
+    )
     written_param_sets = [r["parameters"] for r in records]
     assert dict(sorted(dangerous_params.items())) in written_param_sets, (
         "FRESH LENS 2: independent disk-journal evidence confirms the dangerous parameter "

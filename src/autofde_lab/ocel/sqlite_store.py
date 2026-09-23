@@ -85,7 +85,8 @@ def _decode_value(value_kind: str, value_json: str) -> OcelAttributeValue:
         return OcelAttributeValue.time_ns(parse_ns(raw))
     if kind is OcelValueKind.LIST:
         return OcelAttributeValue(
-            OcelValueKind.LIST, tuple(OcelAttributeValue.from_json(item) for item in raw)
+            OcelValueKind.LIST,
+            tuple(OcelAttributeValue.from_json(item) for item in raw),
         )
     if kind is OcelValueKind.MAP:
         return OcelAttributeValue(
@@ -204,7 +205,13 @@ def to_sqlite(log: OcelLog, path: str | Path) -> None:
                     conn.execute(
                         "INSERT INTO attributes(owner_table, owner_id, key, "
                         "value_kind, value_json) VALUES (?, ?, ?, ?, ?)",
-                        ("object", change.object_id, change.attribute, value_kind, value_json),
+                        (
+                            "object",
+                            change.object_id,
+                            change.attribute,
+                            value_kind,
+                            value_json,
+                        ),
                     )
                     continue
                 conn.execute(

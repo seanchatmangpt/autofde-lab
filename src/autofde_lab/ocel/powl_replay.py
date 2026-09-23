@@ -46,7 +46,8 @@ from __future__ import annotations
 
 import uuid
 from collections import Counter
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeoutError
 from typing import Any, Callable, Sequence
 
 from autofde_lab.ocel.log import OcelLog
@@ -124,7 +125,8 @@ def plan_lines_to_powl_node(plan_lines: Sequence[str]) -> PowlNode:
 
     children = tuple(Atom(label=line) for line in plan_lines)
     order = frozenset(
-        OrderEdge(i, i + 1) for i in range(len(children) - 1)  # type: ignore[arg-type]
+        OrderEdge(i, i + 1)
+        for i in range(len(children) - 1)  # type: ignore[arg-type]
     )
     return PartialOrder(children=children, order=order)
 
@@ -225,9 +227,7 @@ def replay_structural_fires(
             )
 
         collided = sorted(
-            label
-            for label in action_bindings
-            if label_counts.get(label, 0) > 1
+            label for label in action_bindings if label_counts.get(label, 0) > 1
         )
         if collided:
             raise ValueError(

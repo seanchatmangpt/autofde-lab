@@ -35,7 +35,9 @@ def _canonical_digest(payload: Dict[str, Any]) -> str:
     `sort_keys` + compact separators neutralize key-order/whitespace variation so the
     digest is a function of content alone.
     """
-    dumped = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    dumped = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
     return hashlib.sha256(dumped.encode("utf-8")).hexdigest()
 
 

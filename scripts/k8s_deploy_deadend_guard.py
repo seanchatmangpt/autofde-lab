@@ -127,7 +127,9 @@ def check_namespace_for_dead_end(
         if reason in DEAD_END_REASONS:
             counts[reason] = counts.get(reason, 0) + 1
     dead = {k: v for k, v in counts.items() if v >= min_repeats}
-    return GuardResult(namespace=namespace, dead_end_reasons=dead, raw_event_count=len(events))
+    return GuardResult(
+        namespace=namespace, dead_end_reasons=dead, raw_event_count=len(events)
+    )
 
 
 def wait_or_fail_fast(

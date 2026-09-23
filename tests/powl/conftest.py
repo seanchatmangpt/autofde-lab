@@ -21,6 +21,8 @@ import os
 
 import autofde_lab.powl as _powl_pkg
 
-_worktree_powl_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "src", "autofde_lab", "powl"))
+_worktree_powl_dir = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "src", "autofde_lab", "powl")
+)
 if _worktree_powl_dir not in _powl_pkg.__path__:
     _powl_pkg.__path__.insert(0, _worktree_powl_dir)

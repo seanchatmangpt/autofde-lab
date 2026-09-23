@@ -26,7 +26,10 @@ No `unittest.mock` / `Mock` / `patch` / `monkeypatch` anywhere in this file.
 from __future__ import annotations
 
 from autofde_lab.ocel.powl_replay import replay_structural_fires
-from autofde_lab.powl.conformance import check_ocel_conformance, observed_labels_from_events
+from autofde_lab.powl.conformance import (
+    check_ocel_conformance,
+    observed_labels_from_events,
+)
 from autofde_lab.powl.runner import build_pipeline_powl_node
 
 
@@ -96,7 +99,9 @@ def test_swapping_two_really_ordered_events_is_a_real_detected_divergence():
     labels = observed_labels_from_events(log.events)
     scan_index = labels.index("scan")
     phi_index = labels.index("phi_encode")
-    assert phi_index == scan_index + 1, "scan and phi_encode must be adjacent in the real log"
+    assert phi_index == scan_index + 1, (
+        "scan and phi_encode must be adjacent in the real log"
+    )
 
     events = list(log.events)
     events[scan_index], events[phi_index] = events[phi_index], events[scan_index]

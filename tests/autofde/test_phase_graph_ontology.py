@@ -28,7 +28,7 @@ _TRIPLE_RE = re.compile(
     r"afde:([\w-]+)\s+afde:(phasePrecedes|precedes|supersedes)\s+afde:([\w-]+)\s*\."
 )
 _PHASE_BLOCK_RE = re.compile(
-    r'afde:([\w-]+) a afde:Phase\s*;\s*'
+    r"afde:([\w-]+) a afde:Phase\s*;\s*"
     r'afde:nodeId "([^"]*)"\s*;\s*'
     r'afde:title "([^"]*)"\s*;\s*'
     r'afde:dueDate "([^"]*)"\s*\.',
@@ -63,7 +63,9 @@ def _item_facts(text: str) -> frozenset[tuple[str, str, str, str]]:
 
 def test_the_committed_generated_file_matches_a_fresh_regeneration():
     """The file in the repo must be exactly what generating it now produces."""
-    assert GENERATED.exists(), f"missing {GENERATED} -- run `python -m autofde_lab.autofde.ontology`"
+    assert GENERATED.exists(), (
+        f"missing {GENERATED} -- run `python -m autofde_lab.autofde.ontology`"
+    )
     committed = GENERATED.read_text()
     fresh = emit_turtle(AUTOFDE_PHASE_GRAPH)
     assert committed == fresh, (
@@ -122,7 +124,9 @@ def test_every_work_item_kind_is_a_declared_classification():
 
     from autofde_lab.autofde.phase_graph import PhaseGraph
 
-    bad_item = replace(AUTOFDE_PHASE_GRAPH.items[0], node_id="zz-test-only", kind="NotARealKind")
+    bad_item = replace(
+        AUTOFDE_PHASE_GRAPH.items[0], node_id="zz-test-only", kind="NotARealKind"
+    )
     bad_graph = PhaseGraph(
         phases=AUTOFDE_PHASE_GRAPH.phases,
         items=AUTOFDE_PHASE_GRAPH.items + (bad_item,),

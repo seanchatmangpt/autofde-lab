@@ -84,7 +84,13 @@ def test_an_absence_claim_must_carry_its_search_boundary():
     rendered = str(found)
     bad = [
         part
-        for part in ("NOT_FOUND:", "azurerm_sentinel_*", "searched=", "methods=", "a319ad1")
+        for part in (
+            "NOT_FOUND:",
+            "azurerm_sentinel_*",
+            "searched=",
+            "methods=",
+            "a319ad1",
+        )
         if part not in rendered
     ]
     assert not bad, f"missing from rendering: {bad} -- got {rendered!r}"

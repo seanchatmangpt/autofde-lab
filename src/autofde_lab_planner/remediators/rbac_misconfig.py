@@ -27,7 +27,9 @@ def decide_rbac_remediation_commands(
 
         elif kind == "missing_role_binding":
             role_name = f.cluster_role_name or f"{f.service_account_name}-role"
-            binding_name = f.cluster_role_binding_name or f"{f.service_account_name}-binding"
+            binding_name = (
+                f.cluster_role_binding_name or f"{f.service_account_name}-binding"
+            )
             commands.append(
                 f"kubectl create clusterrolebinding {binding_name} "
                 f"--clusterrole={role_name} "
@@ -38,11 +40,13 @@ def decide_rbac_remediation_commands(
         elif kind == "missing_rbac_permission":
             role_name = f.cluster_role_name or f"{f.service_account_name}-role"
             for resource in f.missing_resources:
-                verbs_json = ", ".join(f'"{v}"' for v in (f.missing_verbs or ("get", "list", "watch")))
+                verbs_json = ", ".join(
+                    f'"{v}"' for v in (f.missing_verbs or ("get", "list", "watch"))
+                )
                 patch = (
                     f"kubectl patch clusterrole {role_name} --type=json "
-                    f"-p='[{{\"op\": \"add\", \"path\": \"/rules/-\", "
-                    f"\"value\": {{\"apiGroups\": [\"\"], "
+                    f'-p=\'[{{"op": "add", "path": "/rules/-", '
+                    f'"value": {{"apiGroups": [""], '
                     f'"resources": ["{resource}"], "verbs": [{verbs_json}]}}}}]\''
                 )
                 commands.append(patch)

@@ -52,7 +52,9 @@ def test_detects_host_port_added_to_existing_container_port():
         ]
     }
 
-    faults = detect_host_port_conflicts(deployments_json=deployments, namespace="hotel-reservation")
+    faults = detect_host_port_conflicts(
+        deployments_json=deployments, namespace="hotel-reservation"
+    )
 
     assert len(faults) == 1
     f = faults[0]
@@ -76,7 +78,9 @@ def test_no_fault_when_no_container_declares_host_port():
         ]
     }
 
-    faults = detect_host_port_conflicts(deployments_json=deployments, namespace="hotel-reservation")
+    faults = detect_host_port_conflicts(
+        deployments_json=deployments, namespace="hotel-reservation"
+    )
 
     assert faults == []
 
@@ -84,11 +88,15 @@ def test_no_fault_when_no_container_declares_host_port():
 def test_no_fault_when_container_has_no_ports_declared_at_all():
     deployments = {
         "items": [
-            _deployment("profile", "hotel-reservation", containers=[{"name": "profile"}]),
+            _deployment(
+                "profile", "hotel-reservation", containers=[{"name": "profile"}]
+            ),
         ]
     }
 
-    faults = detect_host_port_conflicts(deployments_json=deployments, namespace="hotel-reservation")
+    faults = detect_host_port_conflicts(
+        deployments_json=deployments, namespace="hotel-reservation"
+    )
 
     assert faults == []
 
@@ -113,7 +121,9 @@ def test_detects_host_port_on_second_container_at_correct_indices():
         ]
     }
 
-    faults = detect_host_port_conflicts(deployments_json=deployments, namespace="hotel-reservation")
+    faults = detect_host_port_conflicts(
+        deployments_json=deployments, namespace="hotel-reservation"
+    )
 
     assert len(faults) == 1
     f = faults[0]

@@ -26,61 +26,52 @@ Chicago Zero-Mock Standard:
 from __future__ import annotations
 
 import copy
-from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
 import hashlib
 import json
 import math
-import os
-from pathlib import Path
 import platform
 import subprocess
 import sys
 import tempfile
 import time
 import tracemalloc
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 import uuid
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
-import rdflib
-from rdflib import Graph, Literal, Namespace, URIRef
-from rdflib.namespace import RDF, RDFS, XSD
+from rdflib import Graph, Namespace
 
-from autofde_lab.sa2a.admission.canonicalizer import canonicalize_graph, compute_graph_digest
-from autofde_lab.sa2a.admission.datalog_layer import DatalogAtom, DatalogEngine, DatalogRule
-from autofde_lab.sa2a.admission.n3_layer import CandidateDerivation, N3ImplicationRule, N3RuleEngine
+from autofde_lab.sa2a.admission.canonicalizer import (
+    canonicalize_graph,
+    compute_graph_digest,
+)
+from autofde_lab.sa2a.admission.datalog_layer import (
+    DatalogAtom,
+    DatalogEngine,
+    DatalogRule,
+)
 from autofde_lab.sa2a.admission.pipeline import (
     REFUSED_NAMESPACE,
-    REFUSED_PARSE_FAILURE,
     AdmissionPipeline,
-    AdmissionReceipt,
-    AdmissionResult,
     IdentityPolicy,
-    MetaAdmissionPolicy,
     ProvenancePolicy,
 )
-from autofde_lab.sa2a.algebra import RefusalCause, Standing
+from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import (
     REFUSED_NO_GRANT,
     AuthorityBroker,
     AuthorityGrant,
-    ConsequenceRequest,
 )
 from autofde_lab.sa2a.brce.boundary import (
-    BoundaryExecutionResult,
-    ColludingRolesError,
-    ConsequenceActuator,
     ConsequenceBoundary,
-    ConsequenceVerifier,
     ExecutionEnvelope,
-    UnreceiptedActuationAttemptError,
 )
 from autofde_lab.sa2a.brce.receipts import (
     FinalReceipt,
-    PreparedReceipt,
     ReceiptStore,
     TerminalReceiptState,
-    compute_receipt_digest,
 )
 from autofde_lab.sa2a.brce.replay import (
     ReplayEngine,
@@ -94,9 +85,11 @@ from autofde_lab.sa2a.hooks.model import (
     HookEventTrigger,
     HookVerdict,
     KnowledgeHookDefinition,
-    SemanticIntent,
 )
-from autofde_lab.sa2a.hooks.reactive_loop import ReactiveSemanticLoop, ReactiveSemanticTrace
+from autofde_lab.sa2a.hooks.reactive_loop import (
+    ReactiveSemanticLoop,
+    ReactiveSemanticTrace,
+)
 from autofde_lab.sa2a.unknown.allocator import (
     CMCACandidateAllocator,
     ExplorationBudget,
@@ -160,6 +153,7 @@ def _percentile(values: Sequence[float], p: float) -> float:
 # -----------------------------------------------------------------------------
 # Real Plant Consequence Collaborators (Chicago Zero-Mock Standard)
 # -----------------------------------------------------------------------------
+
 
 class RealDiskJournalActuator:
     """Genuine consequence actuator writing entries to a physical disk journal.
@@ -242,7 +236,11 @@ class IndependentDiskJournalVerifier:
             if latest["payload_digest"] != expected_digest:
                 return False
 
-            return evidence is not None and evidence.get("applied") is True and evidence.get("last_digest") == expected_digest
+            return (
+                evidence is not None
+                and evidence.get("applied") is True
+                and evidence.get("last_digest") == expected_digest
+            )
         except Exception:
             return False
 
@@ -253,6 +251,7 @@ class IndependentDiskJournalVerifier:
 # -----------------------------------------------------------------------------
 # Benchmark Data Models
 # -----------------------------------------------------------------------------
+
 
 @dataclass
 class BenchmarkMetric:
@@ -353,6 +352,7 @@ class EnvironmentReceipt:
 # Benchmark Harness Implementation
 # -----------------------------------------------------------------------------
 
+
 class BenchmarkHarness:
     """Benchmark execution harness measuring RFC-SA2A-002 SA2A-B1..B10.
 
@@ -385,7 +385,12 @@ class BenchmarkHarness:
         """Measure admission latency and throughput across valid and fail-closed inputs."""
         n = iterations or self.default_iterations
         pipeline = AdmissionPipeline(
-            identity_policy=IdentityPolicy(allowed_namespaces={"http://example.org/", "https://spec.autofde.org/sa2a#"}),
+            identity_policy=IdentityPolicy(
+                allowed_namespaces={
+                    "http://example.org/",
+                    "https://spec.autofde.org/sa2a#",
+                }
+            ),
             provenance_policy=ProvenancePolicy(require_provenance=False),
         )
 
@@ -422,7 +427,10 @@ class BenchmarkHarness:
         # Verify fail-closed behavior on invalid candidate
         invalid_ttl = "@prefix ex: <http://disallowed.com/> . ex:bad a ex:Bad ."
         res_invalid = pipeline.admit(invalid_ttl, format="turtle")
-        fail_closed_verified = (res_invalid.standing == Standing.REFUSED and res_invalid.refusal_code == REFUSED_NAMESPACE)
+        fail_closed_verified = (
+            res_invalid.standing == Standing.REFUSED
+            and res_invalid.refusal_code == REFUSED_NAMESPACE
+        )
 
         mean_ms = sum(latencies_ms) / len(latencies_ms) if latencies_ms else 0.0
         p50_ms = _percentile(latencies_ms, 50)
@@ -477,10 +485,7 @@ class BenchmarkHarness:
         engine = DatalogEngine(rules=[r_trans])
 
         # Base facts: chain of 8 capability implications
-        facts = [
-            DatalogAtom("implies", (f"cap_{i}", f"cap_{i+1}"))
-            for i in range(8)
-        ]
+        facts = [DatalogAtom("implies", (f"cap_{i}", f"cap_{i + 1}")) for i in range(8)]
 
         latencies_ms: List[float] = []
         total_derived = 0
@@ -517,7 +522,7 @@ class BenchmarkHarness:
         # In 8-step chain, transitive closure yields 8*9/2 = 36 facts
         expected_facts_count = 36
         actual_facts_count = len(first_closure_facts) if first_closure_facts else 0
-        closure_complete = (actual_facts_count == expected_facts_count)
+        closure_complete = actual_facts_count == expected_facts_count
 
         inferences_per_sec = total_derived / total_time_s if total_time_s > 0 else 0.0
 
@@ -565,7 +570,9 @@ class BenchmarkHarness:
         engine.register_hook(hook)
 
         base_ttl = "@prefix ex: <http://example.org/> . ex:host ex:state 'NORMAL' ."
-        delta_ttl = "@prefix ex: <http://example.org/> . ex:host ex:state 'COMPROMISED' ."
+        delta_ttl = (
+            "@prefix ex: <http://example.org/> . ex:host ex:state 'COMPROMISED' ."
+        )
 
         latencies_ms: List[float] = []
         intents_generated = 0
@@ -603,7 +610,7 @@ class BenchmarkHarness:
             "zero_do_verified": True,
         }
 
-        passed = (intents_generated == n)
+        passed = intents_generated == n
 
         return BenchmarkResult(
             benchmark_id=SA2A_B3_HOOK_REFLEX,
@@ -618,11 +625,15 @@ class BenchmarkHarness:
     # =========================================================================
     # B4: Planning Projection & Preflight
     # =========================================================================
-    def run_b4_planning_projection(self, iterations: Optional[int] = None) -> BenchmarkResult:
+    def run_b4_planning_projection(
+        self, iterations: Optional[int] = None
+    ) -> BenchmarkResult:
         """Measure planning projection derivation and preflight budget checking."""
         n = iterations or self.default_iterations
         allocator = CMCACandidateAllocator()
-        budget = ExplorationBudget(max_compute_ticks=1000, max_tokens=10000, max_experiments=5)
+        budget = ExplorationBudget(
+            max_compute_ticks=1000, max_tokens=10000, max_experiments=5
+        )
 
         candidates = [
             UnknownCandidate(
@@ -659,7 +670,9 @@ class BenchmarkHarness:
         mean_ms = sum(latencies_ms) / len(latencies_ms) if latencies_ms else 0.0
         p50_ms = _percentile(latencies_ms, 50)
         p95_ms = _percentile(latencies_ms, 95)
-        candidates_per_sec = (n * len(candidates)) / total_time_s if total_time_s > 0 else 0.0
+        candidates_per_sec = (
+            (n * len(candidates)) / total_time_s if total_time_s > 0 else 0.0
+        )
 
         metrics = {
             "iterations": n,
@@ -688,7 +701,9 @@ class BenchmarkHarness:
     # =========================================================================
     # B5: Authority & BRCE Consequence Latency
     # =========================================================================
-    def run_b5_consequence_latency(self, iterations: Optional[int] = None) -> BenchmarkResult:
+    def run_b5_consequence_latency(
+        self, iterations: Optional[int] = None
+    ) -> BenchmarkResult:
         """Measure AuthorityBroker + BRCE ConsequenceBoundary latency with real disk I/O."""
         n = iterations or self.default_iterations
         work_dir, tmp_obj = self._get_work_dir()
@@ -759,13 +774,19 @@ class BenchmarkHarness:
                 and unauth_res.refusal_code == REFUSED_NO_GRANT
             )
 
-            disk_records = json.loads(journal_path.read_text(encoding="utf-8")) if journal_path.exists() else []
-            disk_verified = (len(disk_records) == successful_executions)
+            disk_records = (
+                json.loads(journal_path.read_text(encoding="utf-8"))
+                if journal_path.exists()
+                else []
+            )
+            disk_verified = len(disk_records) == successful_executions
 
             mean_ms = sum(latencies_ms) / len(latencies_ms) if latencies_ms else 0.0
             p50_ms = _percentile(latencies_ms, 50)
             p95_ms = _percentile(latencies_ms, 95)
-            ops_per_sec = successful_executions / total_time_s if total_time_s > 0 else 0.0
+            ops_per_sec = (
+                successful_executions / total_time_s if total_time_s > 0 else 0.0
+            )
 
             metrics = {
                 "iterations": n,
@@ -780,7 +801,11 @@ class BenchmarkHarness:
                 "independent_verifier_observed": disk_verified,
             }
 
-            passed = (successful_executions == n) and zero_unreceipted_verified and disk_verified
+            passed = (
+                (successful_executions == n)
+                and zero_unreceipted_verified
+                and disk_verified
+            )
 
             return BenchmarkResult(
                 benchmark_id=SA2A_B5_CONSEQUENCE_LATENCY,
@@ -868,7 +893,9 @@ class BenchmarkHarness:
                 max_cascade_depth=cascade_depth,
             )
 
-            base_ttl = "@prefix ex: <http://example.org/> . ex:node ex:health 'HEALTHY' ."
+            base_ttl = (
+                "@prefix ex: <http://example.org/> . ex:node ex:health 'HEALTHY' ."
+            )
             event_ttl = "@prefix ex: <http://example.org/> . ex:node ex:alert 'INCIDENT_DETECTED' ."
 
             # Delta generator creates secondary event on step 1, then quiesces on step 2
@@ -894,7 +921,9 @@ class BenchmarkHarness:
             quiescence_reached = trace.quiescence_reached
             steps_count = len(trace.steps)
             total_receipts = trace.total_receipts
-            latency_per_step_ms = (total_time_s * 1000.0) / steps_count if steps_count > 0 else 0.0
+            latency_per_step_ms = (
+                (total_time_s * 1000.0) / steps_count if steps_count > 0 else 0.0
+            )
 
             metrics = {
                 "cascade_steps_executed": steps_count,
@@ -980,7 +1009,7 @@ class BenchmarkHarness:
         # Verify idempotence: canonicalize(canonicalize(G)) yields identical digest
         canonical_nt = canonicalize_graph(g1)
         re_canonical_digest = compute_graph_digest(canonical_nt)
-        idempotence_verified = (re_canonical_digest == digests[0])
+        idempotence_verified = re_canonical_digest == digests[0]
 
         mean_ms = sum(latencies_ms) / len(latencies_ms) if latencies_ms else 0.0
         p50_ms = _percentile(latencies_ms, 50)
@@ -1068,12 +1097,17 @@ class BenchmarkHarness:
             report = replay_engine.verify_chain(receipt_records=receipt_records)
             valid_dur_ms = (time.perf_counter() - t0) * 1000.0
 
-            chain_valid = (report.verdict == ReplayVerdict.VALID and report.standing == ReplayStanding.ALIVE)
+            chain_valid = (
+                report.verdict == ReplayVerdict.VALID
+                and report.standing == ReplayStanding.ALIVE
+            )
 
             # Measure tamper detection latency
             tampered_records = copy.deepcopy(receipt_records)
             # Mutate prepared receipt digest in second pair
-            tampered_records[0]["candidate_payload_digest"] = "bad_tampered_digest_00000000000000"
+            tampered_records[0]["candidate_payload_digest"] = (
+                "bad_tampered_digest_00000000000000"
+            )
 
             t_tamper_0 = time.perf_counter()
             tamper_report = replay_engine.verify_chain(receipt_records=tampered_records)
@@ -1085,7 +1119,9 @@ class BenchmarkHarness:
             )
 
             total_receipts = len(receipt_records)
-            throughput = total_receipts / (valid_dur_ms / 1000.0) if valid_dur_ms > 0 else 0.0
+            throughput = (
+                total_receipts / (valid_dur_ms / 1000.0) if valid_dur_ms > 0 else 0.0
+            )
 
             metrics = {
                 "receipts_in_chain": total_receipts,
@@ -1105,7 +1141,10 @@ class BenchmarkHarness:
                 passed=passed,
                 duration_ms=valid_dur_ms + tamper_dur_ms,
                 metrics=metrics,
-                details={"verdict": report.verdict.value, "tamper_verdict": tamper_report.verdict.value},
+                details={
+                    "verdict": report.verdict.value,
+                    "tamper_verdict": tamper_report.verdict.value,
+                },
                 standing="ALIVE" if passed else "BUILD_BROKEN",
             )
         finally:
@@ -1124,10 +1163,18 @@ class BenchmarkHarness:
             tracer = OcelExecutionTracer(trace_id="b9_benchmark_tracer")
 
             # Declare genuine runtime entities
-            tracer.declare_object("boundary_01", "ConsequenceBoundary", {"version": "26.9.16"})
-            tracer.declare_object("broker_01", "AuthorityBroker", {"profile": "SA2A-PROFILE-v26.9.16"})
-            tracer.declare_object("actuator_01", "DiskJournalActuator", {"plant": "real_disk"})
-            tracer.declare_object("verifier_01", "IndependentVerifier", {"plant": "real_disk"})
+            tracer.declare_object(
+                "boundary_01", "ConsequenceBoundary", {"version": "26.9.16"}
+            )
+            tracer.declare_object(
+                "broker_01", "AuthorityBroker", {"profile": "SA2A-PROFILE-v26.9.16"}
+            )
+            tracer.declare_object(
+                "actuator_01", "DiskJournalActuator", {"plant": "real_disk"}
+            )
+            tracer.declare_object(
+                "verifier_01", "IndependentVerifier", {"plant": "real_disk"}
+            )
 
             record_latencies_us: List[float] = []
 
@@ -1137,13 +1184,21 @@ class BenchmarkHarness:
                 obj_envelope = f"env_{i}"
                 obj_receipt = f"rec_{i}"
                 tracer.declare_object(obj_envelope, "ExecutionEnvelope", {"seq": i})
-                tracer.declare_object(obj_receipt, "FinalReceipt", {"state": "EXECUTED"})
+                tracer.declare_object(
+                    obj_receipt, "FinalReceipt", {"state": "EXECUTED"}
+                )
 
                 ev_t0 = time.perf_counter()
                 tracer.record_event(
                     event_id=f"ev_b9_{i}",
                     activity="EXECUTE_CONSEQUENCE",
-                    related_objects=["boundary_01", "broker_01", "actuator_01", obj_envelope, obj_receipt],
+                    related_objects=[
+                        "boundary_01",
+                        "broker_01",
+                        "actuator_01",
+                        obj_envelope,
+                        obj_receipt,
+                    ],
                     attributes={"step": i, "verified": True, "consequence_class": "DO"},
                 )
                 ev_dur_us = (time.perf_counter() - ev_t0) * 1_000_000.0
@@ -1158,21 +1213,31 @@ class BenchmarkHarness:
 
             file_size_bytes = ocel_file.stat().st_size if ocel_file.exists() else 0
             bytes_per_event = file_size_bytes / event_count if event_count > 0 else 0.0
-            mean_us = sum(record_latencies_us) / len(record_latencies_us) if record_latencies_us else 0.0
+            mean_us = (
+                sum(record_latencies_us) / len(record_latencies_us)
+                if record_latencies_us
+                else 0.0
+            )
 
             # Verify OCPQ Definition 2 laws: log validates with no dangling links
             validated_log = tracer.validate()
-            ocpq_valid = (len(validated_log.events) == event_count)
+            ocpq_valid = len(validated_log.events) == event_count
 
             metrics = {
                 "events_recorded": event_count,
                 "mean_event_recording_us": round(mean_us, 2),
-                "p50_event_recording_us": round(_percentile(record_latencies_us, 50), 2),
-                "p95_event_recording_us": round(_percentile(record_latencies_us, 95), 2),
+                "p50_event_recording_us": round(
+                    _percentile(record_latencies_us, 50), 2
+                ),
+                "p95_event_recording_us": round(
+                    _percentile(record_latencies_us, 95), 2
+                ),
                 "export_latency_ms": round(export_duration_ms, 3),
                 "log_file_bytes": file_size_bytes,
                 "bytes_per_event": round(bytes_per_event, 2),
-                "events_per_sec": round(event_count / record_duration_s if record_duration_s > 0 else 0.0, 2),
+                "events_per_sec": round(
+                    event_count / record_duration_s if record_duration_s > 0 else 0.0, 2
+                ),
                 "ocpq_def2_verified": ocpq_valid,
             }
 
@@ -1194,7 +1259,9 @@ class BenchmarkHarness:
     # =========================================================================
     # B10: Recovery & Reconciliation
     # =========================================================================
-    def run_b10_recovery_reconciliation(self, operations_count: int = 10) -> BenchmarkResult:
+    def run_b10_recovery_reconciliation(
+        self, operations_count: int = 10
+    ) -> BenchmarkResult:
         """Measure recovery from interrupted state, receipt reconciliation, and idempotency."""
         work_dir, tmp_obj = self._get_work_dir()
 
@@ -1293,22 +1360,28 @@ class BenchmarkHarness:
             idempotency_latency_ms = (time.perf_counter() - t_idemp_0) * 1000.0
 
             disk_records_after = json.loads(journal_path.read_text(encoding="utf-8"))
-            zero_duplicate_entries = (len(disk_records_after) == initial_count)
+            zero_duplicate_entries = len(disk_records_after) == initial_count
 
             # Reconciliation rate is 100% if state remained strictly consistent
-            reconciliation_rate = 1.0 if (zero_duplicate_entries and duplicate_actuation_prevented) else 0.0
+            reconciliation_rate = (
+                1.0
+                if (zero_duplicate_entries and duplicate_actuation_prevented)
+                else 0.0
+            )
 
             metrics = {
                 "operations_count": operations_count,
                 "recovery_latency_ms": round(recovery_latency_ms, 3),
                 "idempotency_latency_ms": round(idempotency_latency_ms, 3),
-                "total_reconciliation_time_ms": round(recovery_latency_ms + idempotency_latency_ms, 3),
+                "total_reconciliation_time_ms": round(
+                    recovery_latency_ms + idempotency_latency_ms, 3
+                ),
                 "reconciliation_rate": reconciliation_rate,
                 "duplicate_actuation_prevented": duplicate_actuation_prevented,
                 "journal_consistency_preserved": zero_duplicate_entries,
             }
 
-            passed = (reconciliation_rate == 1.0)
+            passed = reconciliation_rate == 1.0
 
             return BenchmarkResult(
                 benchmark_id=SA2A_B10_RECOVERY_RECONCILIATION,
@@ -1316,7 +1389,10 @@ class BenchmarkHarness:
                 passed=passed,
                 duration_ms=recovery_latency_ms + idempotency_latency_ms,
                 metrics=metrics,
-                details={"initial_entries": initial_count, "final_entries": len(disk_records_after)},
+                details={
+                    "initial_entries": initial_count,
+                    "final_entries": len(disk_records_after),
+                },
                 standing="ALIVE" if passed else "BUILD_BROKEN",
             )
         finally:
@@ -1340,8 +1416,12 @@ class BenchmarkHarness:
             SA2A_B1_ADMISSION: lambda: self.run_b1_admission(iterations),
             SA2A_B2_LOGIC_CLOSURE: lambda: self.run_b2_logic_closure(iterations),
             SA2A_B3_HOOK_REFLEX: lambda: self.run_b3_hook_reflex(iterations),
-            SA2A_B4_PLANNING_PROJECTION: lambda: self.run_b4_planning_projection(iterations),
-            SA2A_B5_CONSEQUENCE_LATENCY: lambda: self.run_b5_consequence_latency(iterations),
+            SA2A_B4_PLANNING_PROJECTION: lambda: self.run_b4_planning_projection(
+                iterations
+            ),
+            SA2A_B5_CONSEQUENCE_LATENCY: lambda: self.run_b5_consequence_latency(
+                iterations
+            ),
             SA2A_B6_REACTIVE_CASCADE: lambda: self.run_b6_reactive_cascade(),
             SA2A_B7_PORTABILITY: lambda: self.run_b7_portability(iterations),
             SA2A_B8_REPLAY_VERIFICATION: lambda: self.run_b8_replay_verification(),
@@ -1374,12 +1454,18 @@ class BenchmarkHarness:
         git_tag = "unreleased"
         tag_equality = False
         try:
-            rev = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
+            rev = subprocess.run(
+                ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+            )
             git_commit = rev.stdout.strip()
-            tag_rev = subprocess.run(["git", "rev-list", "-n", "1", "v26.9.16"], capture_output=True, text=True)
+            tag_rev = subprocess.run(
+                ["git", "rev-list", "-n", "1", "v26.9.16"],
+                capture_output=True,
+                text=True,
+            )
             if tag_rev.returncode == 0 and tag_rev.stdout.strip():
                 git_tag = tag_rev.stdout.strip()
-                tag_equality = (git_commit == git_tag)
+                tag_equality = git_commit == git_tag
             else:
                 git_tag = "v26.9.16"
         except Exception:

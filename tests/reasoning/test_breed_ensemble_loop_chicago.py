@@ -26,8 +26,14 @@ from autofde_lab.powl.ocel_bridge import OcelExecutionRecorder
 from autofde_lab.powl.refusals import PowlError, PowlRefusal
 from autofde_lab.powl.validate import validate_model
 from autofde_lab.reasoning.breed_ensemble import BreedEnsembleMember
-from autofde_lab.reasoning.breed_ensemble_loop import _build_loop_graph, run_breed_ensemble_until_resolved
-from autofde_lab.receipts.wasm4pm_cognition import Wasm4pmCognitionUnavailable, resolve_wpm_cognition_entry
+from autofde_lab.reasoning.breed_ensemble_loop import (
+    _build_loop_graph,
+    run_breed_ensemble_until_resolved,
+)
+from autofde_lab.receipts.wasm4pm_cognition import (
+    Wasm4pmCognitionUnavailable,
+    resolve_wpm_cognition_entry,
+)
 
 
 def _hearsay_cli_available() -> bool:
@@ -50,13 +56,25 @@ requires_real_wasm4pm_cli = pytest.mark.skipif(
 _HEARSAY_INPUT = {
     "facts": [{"key": "fact", "value": "pod crashlooping"}],
     "rules": [
-        {"id": "r0", "premise": ["fact-hypotheses"], "conclusion": "hypothesis:oom kill", "certainty": 1.0},
+        {
+            "id": "r0",
+            "premise": ["fact-hypotheses"],
+            "conclusion": "hypothesis:oom kill",
+            "certainty": 1.0,
+        },
     ],
 }
 _IBE_INPUT = {
     "candidates": [{"id": "oom-kill", "score": 0.0, "eliminated": False}],
     "facts": [{"key": "evidence", "value": "pod_restarts_spike"}],
-    "rules": [{"id": "r0", "premise": ["oom-kill"], "conclusion": "pod_restarts_spike", "certainty": 1.0}],
+    "rules": [
+        {
+            "id": "r0",
+            "premise": ["oom-kill"],
+            "conclusion": "pod_restarts_spike",
+            "certainty": 1.0,
+        }
+    ],
 }
 
 
@@ -76,7 +94,9 @@ def test_loop_back_edge_targets_run_ensemble_never_start() -> None:
     edge from `interpret_via_dspy` must target `run_ensemble` (index 2),
     never `Start` (index 0)."""
     graph = _build_loop_graph()
-    loop_back_edges = [e for e in graph.edges if e.src == 4]  # interpret_via_dspy's outgoing edge
+    loop_back_edges = [
+        e for e in graph.edges if e.src == 4
+    ]  # interpret_via_dspy's outgoing edge
     assert len(loop_back_edges) == 1
     assert loop_back_edges[0].dst == 2  # run_ensemble, not Start
 
@@ -95,7 +115,9 @@ def test_single_round_resolves_immediately_when_the_ensemble_already_resolves() 
 
     def never_called_interpret(**kwargs):
         call_count["interpret"] += 1
-        raise AssertionError("interpret must not be called when round 1 already resolves")
+        raise AssertionError(
+            "interpret must not be called when round 1 already resolves"
+        )
 
     def build_members(_task_context: str):
         return [
@@ -117,7 +139,9 @@ def test_single_round_resolves_immediately_when_the_ensemble_already_resolves() 
 
 
 @requires_real_wasm4pm_cli
-def test_real_ocel_v2_trace_is_produced_when_a_recorder_is_supplied_and_conforms() -> None:
+def test_real_ocel_v2_trace_is_produced_when_a_recorder_is_supplied_and_conforms() -> (
+    None
+):
     """Closes the real gap the van der Aalst-style audit found: this real,
     admitted, cyclic-`ChoiceGraph` process ran with zero OCEL trace
     anywhere. Confirm a real OCEL 2.0 log is produced when a `recorder` is
@@ -143,10 +167,14 @@ def test_real_ocel_v2_trace_is_produced_when_a_recorder_is_supplied_and_conforms
     assert trajectory == []  # resolved round 1 -- interpret_via_dspy never ran
 
     log = recorder.close()
-    assert len(log.events) == 1  # only the real Atom "run_ensemble" -- decide is Silent, never an event
+    assert (
+        len(log.events) == 1
+    )  # only the real Atom "run_ensemble" -- decide is Silent, never an event
 
     intended = {"breed-ensemble-loop-run-001": ("run_ensemble",)}
-    conformance = check_object_centric_conformance(log, intended_traces_by_object_id=intended)
+    conformance = check_object_centric_conformance(
+        log, intended_traces_by_object_id=intended
+    )
     assert conformance.all_conform is True
     assert conformance.overall_fitness == 1.0
 
@@ -162,7 +190,9 @@ def test_real_two_round_loop_interprets_an_inconclusive_first_round() -> None:
     def build_members(_task_context: str):
         calls["n"] += 1
         if calls["n"] == 1:
-            return [BreedEnsembleMember(breed="hearsay", build_input=lambda: _HEARSAY_INPUT)]
+            return [
+                BreedEnsembleMember(breed="hearsay", build_input=lambda: _HEARSAY_INPUT)
+            ]
         return [
             BreedEnsembleMember(breed="hearsay", build_input=lambda: _HEARSAY_INPUT),
             BreedEnsembleMember(breed="abductive_ibe", build_input=lambda: _IBE_INPUT),
@@ -172,7 +202,9 @@ def test_real_two_round_loop_interprets_an_inconclusive_first_round() -> None:
         # A real, hand-written callable standing in for a live LM --
         # asserts it received the real round-1 data, then produces a real
         # reframed context for round 2.
-        assert kwargs["arbitrated_conclusion"] == "none"  # round 1 had <2 usable members
+        assert (
+            kwargs["arbitrated_conclusion"] == "none"
+        )  # round 1 had <2 usable members
         assert kwargs["round_index"] == 0
         return dspy.Prediction(
             interpretation="round 1 had only one usable member; widening the ensemble",
@@ -193,17 +225,23 @@ def test_real_two_round_loop_interprets_an_inconclusive_first_round() -> None:
     assert result.arbitrated is not None
 
 
-def test_exhausting_max_rounds_without_resolving_is_a_typed_refusal_not_a_silent_guess() -> None:
+def test_exhausting_max_rounds_without_resolving_is_a_typed_refusal_not_a_silent_guess() -> (
+    None
+):
     """A real `interpret` that never produces a resolvable ensemble (the
     real `build_members` always returns a single, never-usable breed name)
     must raise `TRANSITION_BUDGET_EXHAUSTED`, never silently return a
     fabricated result."""
 
     def build_members(_task_context: str):
-        return [BreedEnsembleMember(breed="not-a-real-breed-name", build_input=lambda: {})]
+        return [
+            BreedEnsembleMember(breed="not-a-real-breed-name", build_input=lambda: {})
+        ]
 
     def real_interpret(**kwargs) -> dspy.Prediction:
-        return dspy.Prediction(interpretation="still nothing", next_round_task_context="try again")
+        return dspy.Prediction(
+            interpretation="still nothing", next_round_task_context="try again"
+        )
 
     with pytest.raises(PowlError) as excinfo:
         run_breed_ensemble_until_resolved(
@@ -241,14 +279,18 @@ def test_live_interpret_via_dspy_reframes_an_inconclusive_round() -> None:
     call (real Groq LM) interprets it and produces a real
     `next_round_task_context`; round 2's real two-member ensemble
     resolves."""
-    lm = dspy.LM("groq/openai/gpt-oss-120b", api_key=_GROQ_API_KEY, cache=False, max_tokens=8000)
+    lm = dspy.LM(
+        "groq/openai/gpt-oss-120b", api_key=_GROQ_API_KEY, cache=False, max_tokens=8000
+    )
 
     calls = {"n": 0}
 
     def build_members(_task_context: str):
         calls["n"] += 1
         if calls["n"] == 1:
-            return [BreedEnsembleMember(breed="hearsay", build_input=lambda: _HEARSAY_INPUT)]
+            return [
+                BreedEnsembleMember(breed="hearsay", build_input=lambda: _HEARSAY_INPUT)
+            ]
         return [
             BreedEnsembleMember(breed="hearsay", build_input=lambda: _HEARSAY_INPUT),
             BreedEnsembleMember(breed="abductive_ibe", build_input=lambda: _IBE_INPUT),

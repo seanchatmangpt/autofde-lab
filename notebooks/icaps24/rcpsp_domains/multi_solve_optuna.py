@@ -17,7 +17,11 @@ import logging
 
 from autofde_lab import rollout
 from autofde_lab.builders.domain.scheduling.scheduling_domains import SingleModeRCPSP
-from autofde_lab.hub.solver.do_solver import BasePolicyMethod, DOSolver, PolicyMethodParams
+from autofde_lab.hub.solver.do_solver import (
+    BasePolicyMethod,
+    DOSolver,
+    PolicyMethodParams,
+)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s:%(levelname)s:%(message)s")

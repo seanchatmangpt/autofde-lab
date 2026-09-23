@@ -10,22 +10,18 @@ Validates:
 
 from __future__ import annotations
 
-import copy
+
 import pytest
 
 from autofde_lab.sa2a.construct.constructor import (
     AdmittedSemantics,
     ArtifactManufacturer,
-    ConstructionReceipt,
-    ExecutableArtifact,
     TargetProfile,
-    compute_digest,
 )
 from autofde_lab.sa2a.construct.ephemeral import (
     EphemeralLifecycleRunner,
     EphemeralProjectionWrapper,
     EphemeralState,
-    ExecutionResult,
 )
 
 
@@ -45,26 +41,39 @@ def sample_admitted_semantics() -> AdmittedSemantics:
     )
 
 
-def test_deterministic_manufacture(sample_admitted_semantics: AdmittedSemantics) -> None:
+def test_deterministic_manufacture(
+    sample_admitted_semantics: AdmittedSemantics,
+) -> None:
     r"""Test that manufacturing A = \mu(O*) is completely deterministic."""
     manufacturer = ArtifactManufacturer(
         manufacturer_identity="urn:autofde:sa2a:constructor",
         manufacturer_version="26.9.16",
     )
 
-    artifact_1 = manufacturer.manufacture(sample_admitted_semantics, TargetProfile.PYTHON_EPHEMERAL)
-    artifact_2 = manufacturer.manufacture(sample_admitted_semantics, TargetProfile.PYTHON_EPHEMERAL)
+    artifact_1 = manufacturer.manufacture(
+        sample_admitted_semantics, TargetProfile.PYTHON_EPHEMERAL
+    )
+    artifact_2 = manufacturer.manufacture(
+        sample_admitted_semantics, TargetProfile.PYTHON_EPHEMERAL
+    )
 
     assert artifact_1.artifact_digest == artifact_2.artifact_digest
     assert artifact_1.source_code == artifact_2.source_code
     assert artifact_1.receipt.receipt_id == artifact_2.receipt.receipt_id
-    assert artifact_1.receipt.admitted_input_digest == sample_admitted_semantics.canonical_digest()
+    assert (
+        artifact_1.receipt.admitted_input_digest
+        == sample_admitted_semantics.canonical_digest()
+    )
 
 
-def test_construction_receipt_binding(sample_admitted_semantics: AdmittedSemantics) -> None:
+def test_construction_receipt_binding(
+    sample_admitted_semantics: AdmittedSemantics,
+) -> None:
     """Validate that ConstructionReceipt binds admitted input, manufacturer, profile, and artifact."""
     manufacturer = ArtifactManufacturer()
-    artifact = manufacturer.manufacture(sample_admitted_semantics, TargetProfile.PYTHON_EPHEMERAL)
+    artifact = manufacturer.manufacture(
+        sample_admitted_semantics, TargetProfile.PYTHON_EPHEMERAL
+    )
 
     receipt = artifact.receipt
     assert receipt.admitted_input_digest == sample_admitted_semantics.canonical_digest()
@@ -80,7 +89,9 @@ def test_construction_receipt_binding(sample_admitted_semantics: AdmittedSemanti
     assert receipt.verify(different_semantics, artifact) is False
 
 
-def test_different_target_profiles(sample_admitted_semantics: AdmittedSemantics) -> None:
+def test_different_target_profiles(
+    sample_admitted_semantics: AdmittedSemantics,
+) -> None:
     """Test manufacturing projections across different target profiles."""
     manufacturer = ArtifactManufacturer()
 
@@ -92,7 +103,9 @@ def test_different_target_profiles(sample_admitted_semantics: AdmittedSemantics)
     ]
 
     for profile in profiles:
-        artifact = manufacturer.manufacture(sample_admitted_semantics, target_profile=profile)
+        artifact = manufacturer.manufacture(
+            sample_admitted_semantics, target_profile=profile
+        )
         assert artifact.target_profile == profile
         assert artifact.receipt.verify(sample_admitted_semantics, artifact) is True
         assert len(artifact.source_code) > 0
@@ -101,7 +114,9 @@ def test_different_target_profiles(sample_admitted_semantics: AdmittedSemantics)
 def test_ephemeral_lifecycle(sample_admitted_semantics: AdmittedSemantics) -> None:
     """Validate full ephemeral software lifecycle (§27): O* -> G -> C_t -> Verify -> Run -> Discard."""
     manufacturer = ArtifactManufacturer()
-    artifact = manufacturer.manufacture(sample_admitted_semantics, TargetProfile.PYTHON_EPHEMERAL)
+    artifact = manufacturer.manufacture(
+        sample_admitted_semantics, TargetProfile.PYTHON_EPHEMERAL
+    )
 
     wrapper = EphemeralProjectionWrapper(sample_admitted_semantics, artifact)
     assert wrapper.state == EphemeralState.GENERATED
@@ -128,10 +143,14 @@ def test_ephemeral_lifecycle(sample_admitted_semantics: AdmittedSemantics) -> No
         wrapper.compile()
 
 
-def test_ephemeral_lifecycle_runner(sample_admitted_semantics: AdmittedSemantics) -> None:
+def test_ephemeral_lifecycle_runner(
+    sample_admitted_semantics: AdmittedSemantics,
+) -> None:
     """Validate end-to-end EphemeralLifecycleRunner helper."""
     runner = EphemeralLifecycleRunner()
-    res = runner.run_lifecycle(sample_admitted_semantics, TargetProfile.PYTHON_EPHEMERAL, {"key": "val"})
+    res = runner.run_lifecycle(
+        sample_admitted_semantics, TargetProfile.PYTHON_EPHEMERAL, {"key": "val"}
+    )
 
     assert res.verified is True
     assert res.output["status"] == "ALIVE"
@@ -148,12 +167,16 @@ def test_projection_cannot_mutate_canonical_semantics(
     2. Leaves canonical O* completely untouched.
     """
     manufacturer = ArtifactManufacturer()
-    artifact = manufacturer.manufacture(sample_admitted_semantics, TargetProfile.PYTHON_EPHEMERAL)
+    artifact = manufacturer.manufacture(
+        sample_admitted_semantics, TargetProfile.PYTHON_EPHEMERAL
+    )
     original_digest = sample_admitted_semantics.canonical_digest()
 
     wrapper = EphemeralProjectionWrapper(sample_admitted_semantics, artifact)
 
-    tampered_code = artifact.source_code.replace("'status': 'ALIVE'", "'status': 'MUTATED_AUTHORITY'")
+    tampered_code = artifact.source_code.replace(
+        "'status': 'ALIVE'", "'status': 'MUTATED_AUTHORITY'"
+    )
     tampered_artifact = wrapper.mutate_code_attempt(tampered_code)
 
     # Canonical semantics O* remains strictly unchanged
@@ -161,7 +184,9 @@ def test_projection_cannot_mutate_canonical_semantics(
     assert wrapper.canonical_semantics.canonical_digest() == original_digest
 
     # Tampered artifact fails receipt verification
-    tampered_wrapper = EphemeralProjectionWrapper(sample_admitted_semantics, tampered_artifact)
+    tampered_wrapper = EphemeralProjectionWrapper(
+        sample_admitted_semantics, tampered_artifact
+    )
     tampered_wrapper.compile()
     assert tampered_wrapper.verify() is False
     assert tampered_wrapper.state == EphemeralState.TAMPERED

@@ -15,20 +15,20 @@ Conforms strictly to Chicago Zero-Mock Standard:
 
 from __future__ import annotations
 
-import hashlib
-import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import List, Optional, Sequence, Tuple
 
 import rdflib
-from rdflib import Graph, Literal, Namespace, URIRef
-from rdflib.namespace import RDF, RDFS, XSD
+from rdflib import Graph, Namespace
+from rdflib.namespace import RDF, XSD
 
-from autofde_lab.sa2a.admission.canonicalizer import canonicalize_graph, compute_graph_digest
+from autofde_lab.sa2a.admission.canonicalizer import (
+    canonicalize_graph,
+    compute_graph_digest,
+)
 from autofde_lab.sa2a.admission.falsifiers import (
-    STANDARD_PREFIXES,
     FALSIFIER_CONSEQUENCE_WITHOUT_AUTHORITY,
     FALSIFIER_DO_WITHOUT_RECEIPT_REQUIREMENT,
     FALSIFIER_LLM_DIRECT_ADMITTED,
@@ -46,8 +46,6 @@ from autofde_lab.sa2a.admission.pipeline import (
     REFUSED_SHACL,
     REFUSED_STRUCTURE,
     AdmissionPipeline,
-    AdmissionReceipt,
-    AdmissionResult,
     IdentityPolicy,
     MetaAdmissionPolicy,
     ProvenancePolicy,
@@ -60,12 +58,7 @@ from autofde_lab.sa2a.admission.shex_layer import (
     ShexValidator,
     StructuralShape,
 )
-from autofde_lab.sa2a.algebra import RefusalCause, Standing
-from autofde_lab.sa2a.authority.broker import AuthorityBroker, AuthorityGrant
-from autofde_lab.sa2a.brce.boundary import ConsequenceBoundary, ExecutionEnvelope
-from autofde_lab.sa2a.brce.receipts import ReceiptStore, TerminalReceiptState
-from autofde_lab.sa2a.construct.constructor import AdmittedSemantics
-
+from autofde_lab.sa2a.algebra import Standing
 
 # Common Namespaces
 AFL = Namespace("urn:autofde-lab:")
@@ -153,7 +146,17 @@ class CanonicalSemanticStore:
         or verified BRCE postcondition observation.
         """
         clean_update = sparql_update.strip().upper()
-        mutation_keywords = ("INSERT", "DELETE", "CLEAR", "DROP", "LOAD", "CREATE", "COPY", "MOVE", "ADD")
+        mutation_keywords = (
+            "INSERT",
+            "DELETE",
+            "CLEAR",
+            "DROP",
+            "LOAD",
+            "CREATE",
+            "COPY",
+            "MOVE",
+            "ADD",
+        )
         if any(kw in clean_update for kw in mutation_keywords):
             raise CanonicalStateDirectUpdateRefusedError(
                 f"Direct SPARQL update against canonical state O* is strictly forbidden: {sparql_update.strip()[:60]}..."
@@ -323,7 +326,10 @@ class AdmissionCourt:
     def __init__(
         self,
         *,
-        allowed_subject_namespaces: Sequence[str] = ("http://example.org/admitted/", "urn:autofde-lab:"),
+        allowed_subject_namespaces: Sequence[str] = (
+            "http://example.org/admitted/",
+            "urn:autofde-lab:",
+        ),
         allowed_predicate_namespaces: Sequence[str] = (
             "http://example.org/vocab/",
             "urn:autofde-lab:",
@@ -342,8 +348,12 @@ class AdmissionCourt:
             allowed_predicate_namespaces=tuple(allowed_predicate_namespaces),
             disallowed_iris=tuple(disallowed_iris),
         )
-        self.shex_validator = shex_validator or create_standard_conformance_shex_validator()
-        self.shacl_validator = ShaclValidator(shapes=shacl_shapes_ttl or STANDARD_CONFORMANCE_SHACL_SHAPES)
+        self.shex_validator = (
+            shex_validator or create_standard_conformance_shex_validator()
+        )
+        self.shacl_validator = ShaclValidator(
+            shapes=shacl_shapes_ttl or STANDARD_CONFORMANCE_SHACL_SHAPES
+        )
         self.falsifier_suite = FalsifierSuite(include_defaults=True)
 
         # Convert standard falsifiers to SparqlFalsifier instances for AdmissionPipeline
@@ -366,7 +376,10 @@ class AdmissionCourt:
             sparql_falsifiers=sparql_falsifiers,
             provenance_policy=ProvenancePolicy(
                 require_issuer=True,
-                trusted_issuers=("urn:issuer:trusted-authority", "urn:issuer:pipeline-admin"),
+                trusted_issuers=(
+                    "urn:issuer:trusted-authority",
+                    "urn:issuer:pipeline-admin",
+                ),
                 require_timestamp=True,
                 require_signature=False,
             ),

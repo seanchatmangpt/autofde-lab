@@ -14,24 +14,19 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import pytest
+
 from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline
 from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import (
     AuthorityBroker,
-    AuthorityGrant,
-    ConsequenceRequest,
 )
 from autofde_lab.sa2a.brce.boundary import (
     BoundaryExecutionResult,
-    ConsequenceActuator,
     ConsequenceBoundary,
-    ConsequenceVerifier,
     ExecutionEnvelope,
 )
 from autofde_lab.sa2a.brce.receipts import FinalReceipt, TerminalReceiptState
 from autofde_lab.sa2a.hooks.engine import KnowledgeHookEngine
-from autofde_lab.sa2a.hooks.model import HookVerdict
 from autofde_lab.sa2a.hooks.reactive_loop import ReactiveSemanticLoop
 from autofde_lab.sa2a.hooks.synthesis import HookSynthesizer
 from autofde_lab.sa2a.unknown.allocator import (
@@ -56,7 +51,11 @@ class MockClusterActuator:
 
 class MockClusterVerifier:
     def verify_postcondition(
-        self, action_iri: str, target_resource: str, parameters: dict, evidence: dict | None
+        self,
+        action_iri: str,
+        target_resource: str,
+        parameters: dict,
+        evidence: dict | None,
     ) -> bool:
         return evidence is not None and evidence.get("restarted") is True
 
@@ -147,9 +146,13 @@ def test_autonomic_closed_loop_lifecycle():
     assert candidate.item_id.startswith("novelty-")
 
     # 2. CMCA allocates bounded exploration budget
-    budget = ExplorationBudget(max_compute_ticks=1000, max_tokens=10000, max_experiments=5)
+    budget = ExplorationBudget(
+        max_compute_ticks=1000, max_tokens=10000, max_experiments=5
+    )
     allocator = CMCACandidateAllocator()
-    plan = allocator.allocate(plan_id="lab_plan_001", budget=budget, candidates=[candidate])
+    plan = allocator.allocate(
+        plan_id="lab_plan_001", budget=budget, candidates=[candidate]
+    )
     assert len(plan.allocations) == 1
     assert plan.allocations[0].allocated_tokens > 0
 

@@ -39,11 +39,15 @@ from __future__ import annotations
 
 import pytest
 
-from autofde_lab.fabric.powl import PowlDecodeError, parse_powl_turtle, project_plan_to_powl
+from autofde_lab.fabric.powl import (
+    PowlDecodeError,
+    parse_powl_turtle,
+    project_plan_to_powl,
+)
 from autofde_lab.powl.algebra import Atom, PartialOrder
 from autofde_lab.powl.executor import INITIAL_MARKING, enabled, fire, is_final
 from autofde_lab.powl.runner import build_pipeline_powl_node, build_pipeline_turtle
-from autofde_lab.powl.turtle_bridge import BridgeError, powl_model_to_node
+from autofde_lab.powl.turtle_bridge import powl_model_to_node
 
 BASE_IRI = "urn:autofde-lab:turtle-bridge-runner-integration-test"
 
@@ -103,13 +107,18 @@ def test_subject_iri_missing_closing_bracket_is_now_refused_by_name():
     ignored"). ``src/autofde_lab/fabric/powl.py``'s ``_parse_graph`` now
     checks for ``">"`` before indexing and raises a named
     ``PowlDecodeError`` instead."""
-    text = "@prefix powl2: <https://truex.io/ontology/powl2#> .\n" "<urn:x a powl2:Model .\n"
+    text = (
+        "@prefix powl2: <https://truex.io/ontology/powl2#> .\n<urn:x a powl2:Model .\n"
+    )
     with pytest.raises(PowlDecodeError, match="never closes"):
         parse_powl_turtle(text)
 
 
 def test_subject_not_an_absolute_iri_is_refused_by_name():
-    text = "@prefix powl2: <https://truex.io/ontology/powl2#> .\n" "powl2:notAnIri a powl2:Model .\n"
+    text = (
+        "@prefix powl2: <https://truex.io/ontology/powl2#> .\n"
+        "powl2:notAnIri a powl2:Model .\n"
+    )
     with pytest.raises(PowlDecodeError, match="subject must be an absolute IRI"):
         parse_powl_turtle(text)
 
@@ -145,8 +154,13 @@ def test_blank_node_construct_is_refused_by_name_not_silently_dropped():
 
 
 def test_zero_model_roots_is_refused_by_name():
-    text = "@prefix powl2: <https://truex.io/ontology/powl2#> .\n" "<urn:x> a powl2:PartialOrder .\n"
-    with pytest.raises(PowlDecodeError, match=r"expected exactly 1 powl2:Model root, found 0"):
+    text = (
+        "@prefix powl2: <https://truex.io/ontology/powl2#> .\n"
+        "<urn:x> a powl2:PartialOrder .\n"
+    )
+    with pytest.raises(
+        PowlDecodeError, match=r"expected exactly 1 powl2:Model root, found 0"
+    ):
         parse_powl_turtle(text)
 
 
@@ -156,7 +170,9 @@ def test_two_model_roots_is_refused_by_name():
         "<urn:x> a powl2:Model ; powl2:derivedFrom <urn:d> .\n"
         "<urn:y> a powl2:Model ; powl2:derivedFrom <urn:d> .\n"
     )
-    with pytest.raises(PowlDecodeError, match=r"expected exactly 1 powl2:Model root, found 2"):
+    with pytest.raises(
+        PowlDecodeError, match=r"expected exactly 1 powl2:Model root, found 2"
+    ):
         parse_powl_turtle(text)
 
 
@@ -243,7 +259,10 @@ def test_missing_was_derived_from_is_refused_by_name():
 
 def test_activity_count_mismatch_is_refused_by_name():
     text = _real_turtle(["(a)", "(b)"])
-    mutated = text.replace('mfwp:activityCount "2"^^xsd:integer .', 'mfwp:activityCount "99"^^xsd:integer .')
+    mutated = text.replace(
+        'mfwp:activityCount "2"^^xsd:integer .',
+        'mfwp:activityCount "99"^^xsd:integer .',
+    )
     assert mutated != text
     with pytest.raises(PowlDecodeError, match="mfwp:activityCount"):
         parse_powl_turtle(mutated)
@@ -311,12 +330,16 @@ def test_pipeline_node_linear_prefix_agrees_byte_identically_with_reparsed_turtl
     assert isinstance(reparsed_linear, PartialOrder)
     reparsed_labels = [c.label for c in reparsed_linear.children]
 
-    assert grafted_linear_labels == reparsed_labels == [
-        "scan",
-        "phi_encode",
-        "dispatch_solve",
-        "solve",
-    ]
+    assert (
+        grafted_linear_labels
+        == reparsed_labels
+        == [
+            "scan",
+            "phi_encode",
+            "dispatch_solve",
+            "solve",
+        ]
+    )
 
     # Same real order relation, not just the same labels: both must agree the
     # steps are a strict total order 0->1->2->3.

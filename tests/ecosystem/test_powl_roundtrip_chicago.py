@@ -185,9 +185,7 @@ class TestShaclConformance:
 
     def test_rust_emitter_agrees_on_the_terms_we_emit(self):
         if not MFW_RUST_EMITTER.exists():
-            pytest.skip(
-                f"BLOCKED:MFW_SOURCE_ABSENT: {MFW_RUST_EMITTER} not present"
-            )
+            pytest.skip(f"BLOCKED:MFW_SOURCE_ABSENT: {MFW_RUST_EMITTER} not present")
         rust = MFW_RUST_EMITTER.read_text()
         for term in (
             "mfwp:implementsAction",
@@ -271,9 +269,7 @@ class TestRealMfwArtifact:
     @pytest.fixture
     def reference(self) -> str:
         if not MFW_TICKET10_POWL.exists():
-            pytest.skip(
-                f"BLOCKED:MFW_ARTIFACT_ABSENT: {MFW_TICKET10_POWL} not present"
-            )
+            pytest.skip(f"BLOCKED:MFW_ARTIFACT_ABSENT: {MFW_TICKET10_POWL} not present")
         return MFW_TICKET10_POWL.read_text()
 
     def test_decoder_accepts_mfws_committed_output(self, reference):
@@ -325,9 +321,7 @@ def _mutate(turtle: str, old: str, new: str) -> str:
 
 class TestRejections:
     def test_missing_implements_action_is_refused(self, turtle):
-        broken = _mutate(
-            turtle, f"    mfwp:implementsAction <{BASE}/unstack> ;\n", ""
-        )
+        broken = _mutate(turtle, f"    mfwp:implementsAction <{BASE}/unstack> ;\n", "")
         with pytest.raises(PowlDecodeError, match="implementsAction"):
             parse_powl_turtle(broken)
 
@@ -343,7 +337,9 @@ class TestRejections:
 
     def test_duplicate_child_index_is_refused(self, turtle):
         broken = _mutate(
-            turtle, '    powl2:childIndex "1"^^xsd:integer ;', '    powl2:childIndex "0"^^xsd:integer ;'
+            turtle,
+            '    powl2:childIndex "1"^^xsd:integer ;',
+            '    powl2:childIndex "0"^^xsd:integer ;',
         )
         with pytest.raises(PowlDecodeError, match="childIndex"):
             parse_powl_turtle(broken)
@@ -372,9 +368,7 @@ class TestRejections:
         with pytest.raises(PowlDecodeError, match="dangling"):
             parse_powl_turtle(broken)
 
-    def test_silent_leaf_is_refused_by_name_not_as_a_dangling_reference(
-        self, turtle
-    ):
+    def test_silent_leaf_is_refused_by_name_not_as_a_dangling_reference(self, turtle):
         """A powl2:SilentLeaf child must be refused as an unsupported construct.
 
         Before this test the document was refused only *incidentally*: the
@@ -388,9 +382,7 @@ class TestRejections:
             turtle,
             f"    powl2:childModel <{BASE}/plan/step/0> .",
             f"    powl2:childModel <{BASE}/plan/step/tau> .",
-        ) + (
-            f"\n<{BASE}/plan/step/tau> a powl2:SilentLeaf .\n"
-        )
+        ) + (f"\n<{BASE}/plan/step/tau> a powl2:SilentLeaf .\n")
         with pytest.raises(PowlDecodeError) as excinfo:
             parse_powl_turtle(broken)
         message = str(excinfo.value)
@@ -423,9 +415,7 @@ class TestRejections:
             parse_powl_turtle(broken)
 
     def test_undeclared_prefix_is_refused(self, turtle):
-        broken = _mutate(
-            turtle, "    mfwp:projection", "    nosuch:projection"
-        )
+        broken = _mutate(turtle, "    mfwp:projection", "    nosuch:projection")
         with pytest.raises(PowlDecodeError, match="undeclared prefix"):
             parse_powl_turtle(broken)
 

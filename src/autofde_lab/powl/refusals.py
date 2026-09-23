@@ -18,7 +18,9 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:  # pragma: no cover -- type-checking only, avoids a real circular import
+if (
+    TYPE_CHECKING
+):  # pragma: no cover -- type-checking only, avoids a real circular import
     from autofde_lab.powl.guard_executor import ExecutionTrace
 
 __all__ = ["PowlRefusal", "PowlError"]
@@ -59,7 +61,13 @@ class PowlError(ValueError):
     (:attr:`detail`).
     """
 
-    def __init__(self, refusal: PowlRefusal, detail: str = "", *, partial_trace: "ExecutionTrace | None" = None) -> None:
+    def __init__(
+        self,
+        refusal: PowlRefusal,
+        detail: str = "",
+        *,
+        partial_trace: "ExecutionTrace | None" = None,
+    ) -> None:
         self.refusal: PowlRefusal = refusal
         self.detail: str = detail
         #: For ATOM_INVOCATION_FAILED only: the real
@@ -70,4 +78,6 @@ class PowlError(ValueError):
         #: low-level refusals module into `guard_executor`; the real value is
         #: always an `ExecutionTrace` when set.
         self.partial_trace = partial_trace
-        super().__init__(f"POWL refused: {refusal.value}" + (f" ({detail})" if detail else ""))
+        super().__init__(
+            f"POWL refused: {refusal.value}" + (f" ({detail})" if detail else "")
+        )

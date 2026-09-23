@@ -104,7 +104,9 @@ class DiagnosisRecord(BaseModel):
     immediate_mechanism: str
     root_cause: str
     supporting_evidence: str
-    confidence: str = Field(description="e.g. 'high'/'medium'/'low', the human's own real assessment")
+    confidence: str = Field(
+        description="e.g. 'high'/'medium'/'low', the human's own real assessment"
+    )
 
 
 class MitigationRecord(BaseModel):
@@ -114,8 +116,13 @@ class MitigationRecord(BaseModel):
     the fix actually being applied)."""
 
     action: str = Field(description="the real, concrete remediation constructed")
-    authorized: bool = Field(description="was this actuation admitted through a real authority boundary")
-    applied: bool = Field(default=False, description="was this action actually executed, not just proposed")
+    authorized: bool = Field(
+        description="was this actuation admitted through a real authority boundary"
+    )
+    applied: bool = Field(
+        default=False,
+        description="was this action actually executed, not just proposed",
+    )
 
 
 class VerificationRecord(BaseModel):
@@ -160,14 +167,17 @@ class HumanEpisodeReceipt(BaseModel):
     typed field, not free prose."""
 
     episode_id: str
-    scenario_namespace: str = Field(description="the real namespace investigated (known ahead of time)")
+    scenario_namespace: str = Field(
+        description="the real namespace investigated (known ahead of time)"
+    )
     started_at: datetime
     completed_at: datetime | None = None
 
     baseline: BaselineHealth
     manifestation: ManifestationCheck
     observations: list[str] = Field(
-        default_factory=list, description="real, ordered raw observations collected (Phase 4-5)"
+        default_factory=list,
+        description="real, ordered raw observations collected (Phase 4-5)",
     )
     normalized_facts: list[str] = Field(
         default_factory=list,

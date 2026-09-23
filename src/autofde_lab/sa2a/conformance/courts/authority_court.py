@@ -63,7 +63,10 @@ CHI_PLAN_AUTH_TOKEN_REBINDING = "CHI-PLAN-AUTH-TOKEN-REBINDING"
 
 class AuthorityCourtError(Exception):
     """Base error for Authority Court violations."""
-    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None, rule_id: str = "") -> None:
+
+    def __init__(
+        self, message: str, details: Optional[Dict[str, Any]] = None, rule_id: str = ""
+    ) -> None:
         super().__init__(message)
         self.message = message
         self.details = details or {}
@@ -105,6 +108,7 @@ class AuthorityCheckResult:
 @dataclass
 class AuthorityCourtReport:
     """Aggregated report from all Authority court checks."""
+
     gate_results: List[AuthorityCheckResult] = field(default_factory=list)
     passed: bool = True
     total_checks: int = 0
@@ -211,7 +215,8 @@ class AuthorityCourt:
             actor_id=actor_id,
             action_iri=action_iri,
             target_resource=target_resource,
-            asserted_plan=fake_plan or {"steps": ["initialize", "execute", "terminate"]},
+            asserted_plan=fake_plan
+            or {"steps": ["initialize", "execute", "terminate"]},
         )
         decision = broker.evaluate(request)
 
@@ -263,7 +268,8 @@ class AuthorityCourt:
             actor_id=actor_id,
             action_iri=action_iri,
             target_resource=target_resource,
-            asserted_proof=fake_proof or {"type": "shacl_validation", "result": "conformant"},
+            asserted_proof=fake_proof
+            or {"type": "shacl_validation", "result": "conformant"},
         )
         decision = broker.evaluate(request)
 
@@ -437,7 +443,10 @@ class AuthorityCourt:
             if fail_closed:
                 raise ConfusedDeputyViolationError(
                     err_msg,
-                    {"impersonator": impersonating_actor_id, "grant_id": grant.grant_id},
+                    {
+                        "impersonator": impersonating_actor_id,
+                        "grant_id": grant.grant_id,
+                    },
                     rule_id=SA2A_AUTH_CONFUSED_DEPUTY,
                 )
             return AuthorityCheckResult(
@@ -652,11 +661,51 @@ class AuthorityCourt:
 
         # Non-implication checks (all with empty broker)
         empty_broker = AuthorityBroker()
-        results.append(self.verify_agent_not_authority(empty_broker, actor_id, action_iri, target_resource, fail_closed=fail_closed))
-        results.append(self.verify_plan_not_authority(AuthorityBroker(), actor_id, action_iri, target_resource, fail_closed=fail_closed))
-        results.append(self.verify_proof_not_authority(AuthorityBroker(), actor_id, action_iri, target_resource, fail_closed=fail_closed))
-        results.append(self.verify_capability_not_authority(AuthorityBroker(), actor_id, action_iri, target_resource, fail_closed=fail_closed))
-        results.append(self.verify_grant_required_for_authorized(AuthorityBroker(), actor_id, action_iri, target_resource, fail_closed=fail_closed))
+        results.append(
+            self.verify_agent_not_authority(
+                empty_broker,
+                actor_id,
+                action_iri,
+                target_resource,
+                fail_closed=fail_closed,
+            )
+        )
+        results.append(
+            self.verify_plan_not_authority(
+                AuthorityBroker(),
+                actor_id,
+                action_iri,
+                target_resource,
+                fail_closed=fail_closed,
+            )
+        )
+        results.append(
+            self.verify_proof_not_authority(
+                AuthorityBroker(),
+                actor_id,
+                action_iri,
+                target_resource,
+                fail_closed=fail_closed,
+            )
+        )
+        results.append(
+            self.verify_capability_not_authority(
+                AuthorityBroker(),
+                actor_id,
+                action_iri,
+                target_resource,
+                fail_closed=fail_closed,
+            )
+        )
+        results.append(
+            self.verify_grant_required_for_authorized(
+                AuthorityBroker(),
+                actor_id,
+                action_iri,
+                target_resource,
+                fail_closed=fail_closed,
+            )
+        )
 
         # Confused deputy and token rebinding (need real grants)
         if legitimate_grant is not None:
@@ -686,13 +735,19 @@ class AuthorityCourt:
             )
             # Positive control
             pos_broker = AuthorityBroker()
-            results.append(self.verify_legitimate_grant_authorized(pos_broker, legitimate_grant, fail_closed=fail_closed))
+            results.append(
+                self.verify_legitimate_grant_authorized(
+                    pos_broker, legitimate_grant, fail_closed=fail_closed
+                )
+            )
 
         # Planner non-authority
-        results.append(self.verify_planner_non_authority(
-            {"steps": ["plan_step_1"], "goal": "urn:goal:test"},
-            fail_closed=fail_closed,
-        ))
+        results.append(
+            self.verify_planner_non_authority(
+                {"steps": ["plan_step_1"], "goal": "urn:goal:test"},
+                fail_closed=fail_closed,
+            )
+        )
 
         return AuthorityCourtReport(gate_results=results)
 
@@ -707,7 +762,11 @@ def test_agent_not_authority(court: Optional[AuthorityCourt] = None) -> None:
     c = court or AuthorityCourt()
     broker = AuthorityBroker()
     res = c.verify_agent_not_authority(
-        broker, "urn:agent:test", "urn:action:test", "urn:resource:test", fail_closed=True
+        broker,
+        "urn:agent:test",
+        "urn:action:test",
+        "urn:resource:test",
+        fail_closed=True,
     )
     assert not res.passed or res.decision is not None  # Refusal expected
     # More precisely: ambient authority must be refused

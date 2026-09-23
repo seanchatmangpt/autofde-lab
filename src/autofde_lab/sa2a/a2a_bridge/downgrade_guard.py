@@ -19,7 +19,9 @@ class UnsupportedProfileError(ValueError):
 class DowngradeGuard:
     """Strict guard asserting admitted profile standards (§76)."""
 
-    def __init__(self, admitted_profiles: tuple[str, ...] = ("SA2A-PROFILE-v26.9.16",)) -> None:
+    def __init__(
+        self, admitted_profiles: tuple[str, ...] = ("SA2A-PROFILE-v26.9.16",)
+    ) -> None:
         self.admitted_profiles = frozenset(admitted_profiles)
 
     def assert_supported_profile(self, profile: str) -> None:
@@ -31,9 +33,14 @@ class DowngradeGuard:
                 profile=profile,
             )
 
-    def check_downgrade(self, proposed_profile: str, minimum_profile: str = "SA2A-PROFILE-v26.9.16") -> None:
+    def check_downgrade(
+        self, proposed_profile: str, minimum_profile: str = "SA2A-PROFILE-v26.9.16"
+    ) -> None:
         """Disallow any downgrade below minimum required profile."""
-        if proposed_profile != minimum_profile and proposed_profile not in self.admitted_profiles:
+        if (
+            proposed_profile != minimum_profile
+            and proposed_profile not in self.admitted_profiles
+        ):
             raise UnsupportedProfileError(
                 f"Profile downgrade to '{proposed_profile}' blocked (§76). Minimum required: '{minimum_profile}'.",
                 profile=proposed_profile,

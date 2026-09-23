@@ -226,9 +226,7 @@ def verify_ocel2(document: dict[str, object]) -> dict[str, object]:
             "receipt_binding_violations": 0,
         }
 
-    events = [
-        event for event in document.get("events", []) if isinstance(event, dict)
-    ]
+    events = [event for event in document.get("events", []) if isinstance(event, dict)]
     objects = {
         str(row["id"]): row
         for row in document.get("objects", [])
@@ -282,7 +280,9 @@ def verify_ocel2(document: dict[str, object]) -> dict[str, object]:
         subject_id = next(iter(subject_refs)) if len(subject_refs) == 1 else ""
         if len(subject_refs) != 1:
             receipt_binding_violations += 1
-            violations.append(f"ACTUATION_SUBJECT_CARDINALITY:{event_id}:{len(subject_refs)}")
+            violations.append(
+                f"ACTUATION_SUBJECT_CARDINALITY:{event_id}:{len(subject_refs)}"
+            )
 
         if not command_id:
             violations.append(f"ACTUATION_WITHOUT_COMMAND:{event_id}")
@@ -292,7 +292,11 @@ def verify_ocel2(document: dict[str, object]) -> dict[str, object]:
 
         command_events = by_command.get(command_id, [])
         phases: dict[str, list[dict[str, Any]]] = {
-            phase: [candidate for candidate in command_events if candidate.get("type") == phase]
+            phase: [
+                candidate
+                for candidate in command_events
+                if candidate.get("type") == phase
+            ]
             for phase in phase_order
         }
 
@@ -315,9 +319,7 @@ def verify_ocel2(document: dict[str, object]) -> dict[str, object]:
             if len(phases["prepare_receipt"]) == 1
             else None
         )
-        receipt_event = (
-            phases["receipt"][0] if len(phases["receipt"]) == 1 else None
-        )
+        receipt_event = phases["receipt"][0] if len(phases["receipt"]) == 1 else None
         verify = phases["verify"][0] if len(phases["verify"]) == 1 else None
 
         permission_refs = refs.get("permission", set())
@@ -417,9 +419,7 @@ def verify_ocel2(document: dict[str, object]) -> dict[str, object]:
                 violations.append(f"PRE_POST_CHAIN_MISMATCH:{command_id}")
             if authorize is not None:
                 authorized_permissions = _event_refs(authorize).get("permission", set())
-                authority_grant_id = str(
-                    prepared_attrs.get("authority_grant_id", "")
-                )
+                authority_grant_id = str(prepared_attrs.get("authority_grant_id", ""))
                 if authority_grant_id not in authorized_permissions:
                     authority_violations += 1
                     violations.append(
@@ -427,9 +427,7 @@ def verify_ocel2(document: dict[str, object]) -> dict[str, object]:
                     )
 
         bound_events = [
-            candidate
-            for phase in phase_order
-            for candidate in phases[phase]
+            candidate for phase in phase_order for candidate in phases[phase]
         ]
         if any(
             _event_refs(candidate).get("subject", set()) != {subject_id}

@@ -92,7 +92,9 @@ def _objects() -> list[OcelObject]:
         OcelObject(ENV, "Environment"),
         OcelObject(CAP, "Capability"),
         OcelObject(PROBE, "Probe"),
-        OcelObject(CANDIDATE, "PlanCandidate", (OcelAttribute("plan_digest", _s(DIGEST)),)),
+        OcelObject(
+            CANDIDATE, "PlanCandidate", (OcelAttribute("plan_digest", _s(DIGEST)),)
+        ),
         OcelObject(
             COMMITMENT, "POWLCommitment", (OcelAttribute("plan_digest", _s(DIGEST)),)
         ),
@@ -106,7 +108,9 @@ def _objects() -> list[OcelObject]:
         OcelObject(ACTUATION0, "Actuation"),
         OcelObject(OBSERVATION0, "PostconditionObservation"),
         OcelObject(
-            RECEIPT_PARENT, "Receipt", (OcelAttribute("receipt_digest", _s("0000parent0000")),)
+            RECEIPT_PARENT,
+            "Receipt",
+            (OcelAttribute("receipt_digest", _s("0000parent0000")),),
         ),
         OcelObject(RECEIPT, "Receipt", (OcelAttribute("receipt_digest", _s(DIGEST)),)),
         OcelObject(REPLAY, "Replay", (OcelAttribute("head_digest", _s(DIGEST)),)),
@@ -187,7 +191,11 @@ def _drop_object(objects: list[OcelObject], object_id: str) -> list[OcelObject]:
 
 
 def _repoint(
-    o2o: list[ObjectObjectLink], qualifier: str, *, source: str | None = None, target: str
+    o2o: list[ObjectObjectLink],
+    qualifier: str,
+    *,
+    source: str | None = None,
+    target: str,
 ) -> list[ObjectObjectLink]:
     """Redirect an existing edge at a different object -- identity broken,
     adjacency (the edge, its qualifier, its cardinality) untouched."""
@@ -206,7 +214,9 @@ def _drop_edge(
     return [
         link
         for link in o2o
-        if not (link.qualifier == qualifier and (source is None or link.source_id == source))
+        if not (
+            link.qualifier == qualifier and (source is None or link.source_id == source)
+        )
     ]
 
 
@@ -258,7 +268,8 @@ def test_A_commitment_object_absent_is_refused() -> None:
     assert {v.focus_node for v in result.violations} == {ACTUATION, ACTUATION0}
     assert any(v.value_node == COMMITMENT for v in result.violations)
     assert any(
-        v.result_path == "urn:autofde:ocel:o2o/actuates_commitment" for v in result.violations
+        v.result_path == "urn:autofde:ocel:o2o/actuates_commitment"
+        for v in result.violations
     )
 
 
@@ -350,7 +361,9 @@ def test_J_correct_activity_order_with_wrong_object_identity_is_refused() -> Non
         "ActuationOpened",
         "PostconditionObserved",
     ]
-    assert [e.timestamp_ns for e in log.events] == sorted(e.timestamp_ns for e in log.events)
+    assert [e.timestamp_ns for e in log.events] == sorted(
+        e.timestamp_ns for e in log.events
+    )
 
     result = _validate(log)
     assert result.status == "VIOLATED", result.report_text
@@ -372,7 +385,11 @@ def test_L_missing_ocel_object_refuses_regardless_of_any_python_summary() -> Non
     over the evidence graph, never a field somebody set
     (`.claude/rules/no-dual-bookkeeping.md`).
     """
-    python_summary = {"status": "SUCCESS", "receipts_written": 2, "replay_verified": True}
+    python_summary = {
+        "status": "SUCCESS",
+        "receipts_written": 2,
+        "replay_verified": True,
+    }
 
     objects = _drop_object(_objects(), RECEIPT)
     result = _validate(_log(objects=objects))
@@ -407,7 +424,9 @@ def test_L2_a_non_actuating_receipt_is_refused_by_the_committed_shape() -> None:
     """
     bare = "urn:level4:receipt:plan-only"
     objects = _objects() + [
-        OcelObject(bare, "Receipt", (OcelAttribute("receipt_digest", _s("aaaaaaaaaaaaaaaa")),))
+        OcelObject(
+            bare, "Receipt", (OcelAttribute("receipt_digest", _s("aaaaaaaaaaaaaaaa")),)
+        )
     ]
     result = _validate(_log(objects=objects))
     assert result.status == "VIOLATED", result.report_text
@@ -564,7 +583,11 @@ def test_K_wrong_plancandidate_to_commitment_relation_is_NOT_refused_today() -> 
     """
     other = "urn:level4:plancandidate:pc2"
     objects = _objects() + [
-        OcelObject(other, "PlanCandidate", (OcelAttribute("plan_digest", _s("ffffffffffffffff")),))
+        OcelObject(
+            other,
+            "PlanCandidate",
+            (OcelAttribute("plan_digest", _s("ffffffffffffffff")),),
+        )
     ]
     o2o = _repoint(_o2o(), "commits_candidate", target=other)
     result = _validate(_log(objects=objects, o2o=o2o))
@@ -583,7 +606,9 @@ def test_K_wrong_plancandidate_to_commitment_relation_is_NOT_refused_today() -> 
             "J: order correct, subject identity wrong",
             lambda: _log(
                 objects=_objects() + [OcelObject(ENV2, "Environment")],
-                o2o=_repoint(_o2o(), "observes_subject", source=OBSERVATION, target=ENV2),
+                o2o=_repoint(
+                    _o2o(), "observes_subject", source=OBSERVATION, target=ENV2
+                ),
             ),
         ),
         (

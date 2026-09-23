@@ -64,7 +64,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from autofde_lab.hub.domain.gym_procedure.level4_ocel import Level4Ocel, build_level4_ocel
+from autofde_lab.hub.domain.gym_procedure.level4_ocel import (
+    Level4Ocel,
+    build_level4_ocel,
+)
 
 __all__ = [
     "OCPQ_SCOPE_OBJECT_TYPE",
@@ -87,7 +90,7 @@ OCPQ_SCOPE_OBJECT_TYPE = "Task"
 #: ``ActuationOpened`` event must be followed, later in that trial's real
 #: event sequence, by a ``PostconditionObserved`` event.
 OCPQ_POSTCONDITION_FOLLOWS_ACTUATION_QUERY = (
-    'REQUIRE PostconditionObserved AFTER ActuationOpened '
+    "REQUIRE PostconditionObserved AFTER ActuationOpened "
     f'ON SAME OBJECT OF TYPE "{OCPQ_SCOPE_OBJECT_TYPE}"'
 )
 
@@ -144,7 +147,7 @@ class ActuationPostconditionVerdict:
         ids: list[str] = []
         for v in self.violations:
             if v.startswith("Object "):
-                rest = v[len("Object "):]
+                rest = v[len("Object ") :]
                 obj_id, _, _ = rest.partition(" - ")
                 if obj_id and obj_id not in ids:
                     ids.append(obj_id)

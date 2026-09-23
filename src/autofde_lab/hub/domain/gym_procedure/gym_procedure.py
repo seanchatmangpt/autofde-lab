@@ -50,7 +50,9 @@ class Step:
     establishes: frozenset[str] = field(default_factory=frozenset)
     removes: frozenset[str] = field(default_factory=frozenset)
     cost: float = 1.0
-    source: str = ""  # e.g. "README.md step 3" / "solve.sh line 12" — provenance, not behavior
+    source: str = (
+        ""  # e.g. "README.md step 3" / "solve.sh line 12" — provenance, not behavior
+    )
 
 
 @dataclass(frozen=True)
@@ -86,20 +88,22 @@ class Recipe:
             raise ValueError(f"Recipe {self.gym!r}/{self.task!r} has no goal_facts")
         ids = [s.id for s in self.steps]
         if len(ids) != len(set(ids)):
-            raise ValueError(f"Recipe {self.gym!r}/{self.task!r} has duplicate step ids: {ids}")
+            raise ValueError(
+                f"Recipe {self.gym!r}/{self.task!r} has duplicate step ids: {ids}"
+            )
 
 
 def load_recipe(path: Path) -> Recipe:
     """Load a :class:`Recipe` from a JSON file with the shape::
 
-        {
-          "gym": "...", "task": "...", "source_ref": "...",
-          "initial_facts": ["..."], "goal_facts": ["..."],
-          "steps": [
-            {"id": "...", "description": "...", "preconditions": ["..."],
-             "establishes": ["..."], "removes": [], "cost": 1.0, "source": "..."}
-          ]
-        }
+    {
+      "gym": "...", "task": "...", "source_ref": "...",
+      "initial_facts": ["..."], "goal_facts": ["..."],
+      "steps": [
+        {"id": "...", "description": "...", "preconditions": ["..."],
+         "establishes": ["..."], "removes": [], "cost": 1.0, "source": "..."}
+      ]
+    }
     """
     data = json.loads(Path(path).read_text())
     steps = tuple(

@@ -86,6 +86,7 @@ def _sha256(path: Path) -> str:
 def _check_gate_fires(domain_path: Path, problem_path: Path) -> bool:
     """True iff the live gate (re-imported fresh) names :derived-predicates."""
     import importlib
+
     import autofde_lab.fabric.pddl_engine as pddl_engine
 
     importlib.reload(pddl_engine)
@@ -136,6 +137,7 @@ def main() -> int:
             finally:
                 GATE_FILE.write_bytes(original_bytes)
                 import importlib
+
                 import autofde_lab.fabric.pddl_engine as pddl_engine
 
                 importlib.reload(pddl_engine)
@@ -149,8 +151,10 @@ def main() -> int:
                     file=sys.stderr,
                 )
                 return 1
-            print(f"RESTORED: {GATE_FILE} byte-identical to before mutation "
-                  f"(sha256 {restored_hash}).")
+            print(
+                f"RESTORED: {GATE_FILE} byte-identical to before mutation "
+                f"(sha256 {restored_hash})."
+            )
 
         except Exception:
             # Any failure mid-mutation must still restore the source before

@@ -86,7 +86,9 @@ def test_intend_writes_before_commit_and_the_digest_moves_at_every_step():
     # the occurrence index rises per activity across further round trips
     keys = [key]
     for step in (1, 2):
-        keys.append(ledger.commit(ledger.intend((step,), "ctx"), activity_sha256="a" * 64))
+        keys.append(
+            ledger.commit(ledger.intend((step,), "ctx"), activity_sha256="a" * 64)
+        )
     assert [k.occurrence_index for k in keys] == [0, 1, 2]
 
 
@@ -100,9 +102,8 @@ def test_an_outstanding_intent_makes_the_ledger_unresumable_everywhere():
     guarantee hold in one place and silently not in another, so all four are
     still checked here.
     """
-    from autofde_lab.hub.domain.maze import Maze
-
     from autofde_lab.agent.session import AgentSession
+    from autofde_lab.hub.domain.maze import Maze
 
     ledger = OccurrenceLedger()
     ledger.intend((0,), "ctx")  # crash right here: acted? did not act? UNKNOWN
@@ -183,8 +184,12 @@ def test_the_wal_projects_onto_the_read_view_without_promoting_intent():
     intended_view = Ledger.from_occurrence_ledger(intended_wal)
     assert [e.status for e in intended_view.entries] == [OccurrenceStatus.INTENDED]
     assert intended_view.entries[0].key.activity_sha256 == activity
-    assert intended_view.completed_count(activity) == 0, "an intent was counted as completion"
-    assert Ledger.from_occurrence_ledger(intended_wal, committed_only=True).entries == ()
+    assert intended_view.completed_count(activity) == 0, (
+        "an intent was counted as completion"
+    )
+    assert (
+        Ledger.from_occurrence_ledger(intended_wal, committed_only=True).entries == ()
+    )
 
     assert isinstance(as_ledger(wal), Ledger)
     already = Ledger(())

@@ -22,11 +22,16 @@ from autofde_lab.ocel.log import OcelLog
 from autofde_lab.ocel.mcp_session import append_tool_call_event
 from autofde_lab.ocel.model import OcelAttribute, OcelAttributeValue, OcelObject
 from autofde_lab.ocel.sqlite_store import to_sqlite
-from autofde_lab.reasoning.laboratory import EnterpriseObservation, infer_desired_state_hypotheses
+from autofde_lab.reasoning.laboratory import (
+    EnterpriseObservation,
+    infer_desired_state_hypotheses,
+)
 from autofde_lab.reasoning.scenarios.world_transformation_scenarios import (
     ScenarioMetadata_checkout_latency_scenario_v_1,
 )
-from autofde_lab.reasoning.sqlite_process_science_provider import SqliteProcessScienceProvider
+from autofde_lab.reasoning.sqlite_process_science_provider import (
+    SqliteProcessScienceProvider,
+)
 
 
 def _build_real_log() -> OcelLog:
@@ -40,36 +45,54 @@ def _build_real_log() -> OcelLog:
     log = OcelLog.new(
         objects=[
             OcelObject(
-                "session-1", "MCPSession",
-                (OcelAttribute("server", OcelAttributeValue.string("scikit-decide-fabric")),),
+                "session-1",
+                "MCPSession",
+                (
+                    OcelAttribute(
+                        "server", OcelAttributeValue.string("scikit-decide-fabric")
+                    ),
+                ),
             ),
-            OcelObject("domain-Maze", "Domain", (OcelAttribute("name", OcelAttributeValue.string("Maze")),)),
             OcelObject(
-                "domain-MasterMind", "Domain",
+                "domain-Maze",
+                "Domain",
+                (OcelAttribute("name", OcelAttributeValue.string("Maze")),),
+            ),
+            OcelObject(
+                "domain-MasterMind",
+                "Domain",
                 (OcelAttribute("name", OcelAttributeValue.string("MasterMind")),),
             ),
         ]
     )
     log = append_tool_call_event(
-        log, event_id="match-maze-0", activity="decision_match",
+        log,
+        event_id="match-maze-0",
+        activity="decision_match",
         object_ids=["session-1", "domain-Maze"],
         outcome={"standing": "MATCHED", "compatible_solvers": ["Astar", "MCTS"]},
         timestamp_ns=0,
     )
     log = append_tool_call_event(
-        log, event_id="match-maze-1", activity="decision_match",
+        log,
+        event_id="match-maze-1",
+        activity="decision_match",
         object_ids=["session-1", "domain-Maze"],
         outcome={"standing": "MATCHED", "compatible_solvers": ["MCTS", "Astar"]},
         timestamp_ns=1_000,
     )
     log = append_tool_call_event(
-        log, event_id="match-mastermind-0", activity="decision_match",
+        log,
+        event_id="match-mastermind-0",
+        activity="decision_match",
         object_ids=["session-1", "domain-MasterMind"],
         outcome={"standing": "MATCHED", "compatible_solvers": ["Astar"]},
         timestamp_ns=2_000,
     )
     log = append_tool_call_event(
-        log, event_id="match-mastermind-1", activity="decision_match",
+        log,
+        event_id="match-mastermind-1",
+        activity="decision_match",
         object_ids=["session-1", "domain-MasterMind"],
         outcome={"standing": "MATCHED", "compatible_solvers": ["Astar", "BFWS"]},
         timestamp_ns=3_000,
@@ -85,7 +108,9 @@ def test_real_sqlite_backed_process_observation_carries_real_signal(tmp_path) ->
     provider = SqliteProcessScienceProvider(db_path)
     observation = provider.request_process_observation(
         EnterpriseObservation(
-            ontology_graph_ref="ontology:test", source_provenance_ref="test", enterprise_world_ref="test-world"
+            ontology_graph_ref="ontology:test",
+            source_provenance_ref="test",
+            enterprise_world_ref="test-world",
         )
     )
 
@@ -94,10 +119,22 @@ def test_real_sqlite_backed_process_observation_carries_real_signal(tmp_path) ->
     # gap row; compatible_solver_set_stability produces 2 real
     # decision-stability rows, sharing this bucket per the module's own
     # documented "no dedicated field" convention.
-    assert any(ref.startswith("activity_duration:decision_match:") for ref in observation.performance_metric_refs)
-    assert any(ref.startswith("decision_stability:domain-Maze:") for ref in observation.performance_metric_refs)
-    assert any(ref.startswith("decision_stability:domain-MasterMind:") for ref in observation.performance_metric_refs)
-    assert any(ref.startswith("bottleneck:decision_match:") for ref in observation.bottleneck_refs)
+    assert any(
+        ref.startswith("activity_duration:decision_match:")
+        for ref in observation.performance_metric_refs
+    )
+    assert any(
+        ref.startswith("decision_stability:domain-Maze:")
+        for ref in observation.performance_metric_refs
+    )
+    assert any(
+        ref.startswith("decision_stability:domain-MasterMind:")
+        for ref in observation.performance_metric_refs
+    )
+    assert any(
+        ref.startswith("bottleneck:decision_match:")
+        for ref in observation.bottleneck_refs
+    )
     # No Solver-linked events in this fixture -- handover_of_work is
     # honestly empty, never fabricated.
     assert observation.object_centric_relation_refs == ()
@@ -108,7 +145,9 @@ def test_missing_sqlite_db_is_a_real_honest_unsupported_never_a_crash(tmp_path) 
     provider = SqliteProcessScienceProvider(tmp_path / "does-not-exist.sqlite")
     observation = provider.request_process_observation(
         EnterpriseObservation(
-            ontology_graph_ref="ontology:test", source_provenance_ref="test", enterprise_world_ref="test-world"
+            ontology_graph_ref="ontology:test",
+            source_provenance_ref="test",
+            enterprise_world_ref="test-world",
         )
     )
 
@@ -134,13 +173,19 @@ def test_real_process_observation_activates_the_previously_dead_process_informed
     provider = SqliteProcessScienceProvider(db_path)
     observation = provider.request_process_observation(
         EnterpriseObservation(
-            ontology_graph_ref="ontology:test", source_provenance_ref="test", enterprise_world_ref="test-world"
+            ontology_graph_ref="ontology:test",
+            source_provenance_ref="test",
+            enterprise_world_ref="test-world",
         )
     )
-    assert observation.evidence_standing == "OBSERVED"  # precondition for the branch to fire
+    assert (
+        observation.evidence_standing == "OBSERVED"
+    )  # precondition for the branch to fire
 
     metadata = ScenarioMetadata_checkout_latency_scenario_v_1()
-    hypotheses = infer_desired_state_hypotheses(metadata, process_observation=observation)
+    hypotheses = infer_desired_state_hypotheses(
+        metadata, process_observation=observation
+    )
 
     assert len(hypotheses) == 2
     assert hypotheses[0].hypothesis_id == "rule-based-v1"
@@ -148,7 +193,9 @@ def test_real_process_observation_activates_the_previously_dead_process_informed
     assert hypotheses[1].uncertainty == 0.2
     # The process-informed hypothesis's evidence includes the real
     # performance_metric_refs this test's own provider call just produced.
-    assert any(ref.startswith("activity_duration:") for ref in hypotheses[1].evidence_used_refs)
+    assert any(
+        ref.startswith("activity_duration:") for ref in hypotheses[1].evidence_used_refs
+    )
 
 
 def test_sqlite3_connection_reused_across_calls_is_never_left_open() -> None:
@@ -161,7 +208,9 @@ def test_sqlite3_connection_reused_across_calls_is_never_left_open() -> None:
     for _ in range(3):
         observation = provider.request_process_observation(
             EnterpriseObservation(
-                ontology_graph_ref="ontology:test", source_provenance_ref="test", enterprise_world_ref="test-world"
+                ontology_graph_ref="ontology:test",
+                source_provenance_ref="test",
+                enterprise_world_ref="test-world",
             )
         )
         assert observation.evidence_standing == "UNSUPPORTED"

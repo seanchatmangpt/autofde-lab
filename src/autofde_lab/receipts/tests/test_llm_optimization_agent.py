@@ -18,12 +18,11 @@ import pytest
 
 from autofde_lab.receipts.llm_agent import LLMOptimizationAgent, is_server_available
 from autofde_lab.receipts.ocel_adapter import trajectory_to_ocel_log
-from autofde_lab.standing import Blocked
-
 from autofde_lab.receipts.tests.test_ocel_optimization_agent import (
     _astar_optimal_steps,
     _naive_worse_steps,
 )
+from autofde_lab.standing import Blocked
 
 pytestmark = pytest.mark.skipif(
     not is_server_available(),

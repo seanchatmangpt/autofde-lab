@@ -82,7 +82,8 @@ def test_every_sample_is_in_the_language():
     ):
         for trace in sample_linearizations(node, samples=samples, seed=seed):
             failures.check(
-                trace_in_language(node, trace), f"{name}: sampled {trace!r} is not in the language"
+                trace_in_language(node, trace),
+                f"{name}: sampled {trace!r} is not in the language",
             )
     assert not failures, failures.report()
 
@@ -103,18 +104,33 @@ def test_counting_is_exact_where_it_can_be_and_None_where_it_cannot():
     flat6 = PartialOrder(children=tuple(Atom(f"a{i}") for i in range(6)))
     cases = [
         ("diamond", lambda: count_linearizations(_diamond()), 2),
-        ("unordered 4 is 4!",
-         lambda: count_linearizations(PartialOrder(children=tuple(Atom(c) for c in "abcd"))),
-         math.factorial(4)),
-        ("past the exact limit -> None",
-         lambda: count_linearizations(flat6, exact_limit=4), None),
-        ("within the exact limit -> 6!",
-         lambda: count_linearizations(flat6, exact_limit=10), math.factorial(6)),
+        (
+            "unordered 4 is 4!",
+            lambda: count_linearizations(
+                PartialOrder(children=tuple(Atom(c) for c in "abcd"))
+            ),
+            math.factorial(4),
+        ),
+        (
+            "past the exact limit -> None",
+            lambda: count_linearizations(flat6, exact_limit=4),
+            None,
+        ),
+        (
+            "within the exact limit -> 6!",
+            lambda: count_linearizations(flat6, exact_limit=10),
+            math.factorial(6),
+        ),
         ("choice graph -> None", lambda: count_linearizations(_cyclic_choice()), None),
-        ("composite child -> None",
-         lambda: count_linearizations(PartialOrder(
-             children=(Atom("a"), PartialOrder(children=(Atom("x"), Atom("y")))))),
-         None),
+        (
+            "composite child -> None",
+            lambda: count_linearizations(
+                PartialOrder(
+                    children=(Atom("a"), PartialOrder(children=(Atom("x"), Atom("y"))))
+                )
+            ),
+            None,
+        ),
     ]
     failures = Failures()
     for name, run, expected in cases:

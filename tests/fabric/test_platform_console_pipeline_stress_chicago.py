@@ -87,7 +87,8 @@ def _compile_and_solve_once(tmp_path, idx: int) -> tuple[int, str]:
 def test_many_concurrent_astar_solves_all_produce_the_identical_real_plan(tmp_path):
     with ThreadPoolExecutor(max_workers=N_CONCURRENT) as pool:
         futures = [
-            pool.submit(_compile_and_solve_once, tmp_path, i) for i in range(N_CONCURRENT)
+            pool.submit(_compile_and_solve_once, tmp_path, i)
+            for i in range(N_CONCURRENT)
         ]
         results = [f.result() for f in as_completed(futures)]
 
@@ -117,7 +118,9 @@ def test_many_concurrent_astar_solves_all_produce_the_identical_real_plan(tmp_pa
 # ---------------------------------------------------------------------------
 
 
-def _solve_shared_files(domain_p: str, problem_p: str, tmp_path, idx: int) -> tuple[int, str]:
+def _solve_shared_files(
+    domain_p: str, problem_p: str, tmp_path, idx: int
+) -> tuple[int, str]:
     plan_p = str(tmp_path / f"stress-shared-{idx}-plan.txt")
     rc = pddl_engine.solve_to_plan_file(domain_p, problem_p, plan_p)
     plan_text = open(plan_p, encoding="utf-8").read() if os.path.exists(plan_p) else ""
@@ -155,7 +158,9 @@ def test_many_concurrent_solves_against_one_shared_compiled_domain_agree(tmp_pat
 # ---------------------------------------------------------------------------
 
 
-async def _run_one_episode(gym: GymAct, episode_index: int, results: dict[int, object]) -> None:
+async def _run_one_episode(
+    gym: GymAct, episode_index: int, results: dict[int, object]
+) -> None:
     """One real, fully independent gymact episode: its own real
     MemoryProvider (a fresh real MemoryEnvironment underneath), its own real
     materialization, and one real `increment` actuation whose amount is
@@ -225,7 +230,9 @@ def test_many_concurrent_gymact_episodes_show_no_cross_episode_state_bleed():
             "evidence of cross-episode state bleed between concurrently "
             "materialized real MemoryEnvironment instances"
         )
-        assert unique_amount not in seen_amounts, "duplicate unique_amount -- test setup bug"
+        assert unique_amount not in seen_amounts, (
+            "duplicate unique_amount -- test setup bug"
+        )
         seen_amounts.add(unique_amount)
 
     # Every one of the N real, independently materialized environments
@@ -268,7 +275,9 @@ def _run_episode_in_own_loop(episode_index: int) -> tuple[bool, int, int]:
         )
         assert materialization.accepted, materialization.receipt.reason
         episode_id = materialization.episode.episode_id
-        increment_capability = next(c for c in MEMORY_CAPABILITIES if c.binding == "increment")
+        increment_capability = next(
+            c for c in MEMORY_CAPABILITIES if c.binding == "increment"
+        )
         unique_amount = 2000 + episode_index
         result = await gym.act(
             ActuationIntent(
@@ -278,7 +287,9 @@ def _run_episode_in_own_loop(episode_index: int) -> tuple[bool, int, int]:
                 payload={"key": "counter", "amount": unique_amount},
             )
         )
-        observed = result.observation.state.get("counter") if result.observation else None
+        observed = (
+            result.observation.state.get("counter") if result.observation else None
+        )
         return result.accepted, unique_amount, observed
 
     return anyio.run(_inner)

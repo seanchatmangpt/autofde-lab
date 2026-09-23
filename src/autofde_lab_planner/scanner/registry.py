@@ -64,10 +64,15 @@ def scan_deployments(state: ClusterState) -> tuple[Anomaly, ...]:
             if pod.get("metadata", {}).get("namespace") != namespace:
                 continue
             pod_labels = pod.get("metadata", {}).get("labels", {})
-            if not selector or not all(pod_labels.get(k) == v for k, v in selector.items()):
+            if not selector or not all(
+                pod_labels.get(k) == v for k, v in selector.items()
+            ):
                 continue
             conditions = pod.get("status", {}).get("conditions", [])
-            if any(c.get("type") == "Ready" and c.get("status") == "True" for c in conditions):
+            if any(
+                c.get("type") == "Ready" and c.get("status") == "True"
+                for c in conditions
+            ):
                 ready_count += 1
         anomaly = diff_engine.compare_declared_vs_observed(
             kind="Deployment",
@@ -81,7 +86,13 @@ def scan_deployments(state: ClusterState) -> tuple[Anomaly, ...]:
         if anomaly is not None:
             anomalies.append(anomaly)
 
-        image = dep.get("spec", {}).get("template", {}).get("spec", {}).get("containers", [{}])[0].get("image")
+        image = (
+            dep.get("spec", {})
+            .get("template", {})
+            .get("spec", {})
+            .get("containers", [{}])[0]
+            .get("image")
+        )
         observed_image = dep.get("status", {}).get("observedImage", image)
         if observed_image != image and observed_image is not None:
             anomalies.append(
@@ -115,7 +126,10 @@ def scan_services(state: ClusterState) -> tuple[Anomaly, ...]:
             pod.get("metadata", {}).get("name", "")
             for pod in pods
             if pod.get("metadata", {}).get("namespace") == namespace
-            and all(pod.get("metadata", {}).get("labels", {}).get(k) == v for k, v in selector.items())
+            and all(
+                pod.get("metadata", {}).get("labels", {}).get(k) == v
+                for k, v in selector.items()
+            )
         }
         anomaly = diff_engine.find_dangling_reference(
             kind="Service",
@@ -149,7 +163,10 @@ def scan_services(state: ClusterState) -> tuple[Anomaly, ...]:
 
 def scan_persistentvolumeclaims(state: ClusterState) -> tuple[Anomaly, ...]:
     anomalies: list[Anomaly] = []
-    pvc_names = {pvc.get("metadata", {}).get("name") for pvc in _items(state.get("persistentvolumeclaims"))}
+    pvc_names = {
+        pvc.get("metadata", {}).get("name")
+        for pvc in _items(state.get("persistentvolumeclaims"))
+    }
     for pod in _items(state.get("pods")):
         pod_name = pod.get("metadata", {}).get("name", "<unknown>")
         namespace = pod.get("metadata", {}).get("namespace", "default")
@@ -242,7 +259,8 @@ def _rules_to_verb_resource_set(rules: list[dict[str, Any]]) -> set[str]:
 def scan_rbac(state: ClusterState) -> tuple[Anomaly, ...]:
     anomalies: list[Anomaly] = []
     cluster_roles_by_name: dict[str, dict[str, Any]] = {
-        cr.get("metadata", {}).get("name"): cr for cr in _items(state.get("clusterroles"))
+        cr.get("metadata", {}).get("name"): cr
+        for cr in _items(state.get("clusterroles"))
     }
     bindings = _items(state.get("clusterrolebindings"))
 
@@ -250,7 +268,12 @@ def scan_rbac(state: ClusterState) -> tuple[Anomaly, ...]:
         pod_name = pod.get("metadata", {}).get("name", "<unknown>")
         namespace = pod.get("metadata", {}).get("namespace", "default")
         sa_name = pod.get("spec", {}).get("serviceAccountName", "default")
-        required = set(pod.get("metadata", {}).get("annotations", {}).get("required-rbac", "").split(",")) - {""}
+        required = set(
+            pod.get("metadata", {})
+            .get("annotations", {})
+            .get("required-rbac", "")
+            .split(",")
+        ) - {""}
         if not required:
             continue
 
@@ -258,7 +281,9 @@ def scan_rbac(state: ClusterState) -> tuple[Anomaly, ...]:
             b.get("roleRef", {}).get("name")
             for b in bindings
             if any(
-                s.get("kind") == "ServiceAccount" and s.get("name") == sa_name and s.get("namespace") == namespace
+                s.get("kind") == "ServiceAccount"
+                and s.get("name") == sa_name
+                and s.get("namespace") == namespace
                 for s in b.get("subjects", [])
             )
         }
@@ -296,7 +321,9 @@ def scan_resourcequotas(state: ClusterState) -> tuple[Anomaly, ...]:
         hard = rq.get("spec", {}).get("hard", {})
         pod_limit = hard.get("pods")
         if pod_limit is not None:
-            observed_count = sum(1 for p in pods if p.get("metadata", {}).get("namespace") == namespace)
+            observed_count = sum(
+                1 for p in pods if p.get("metadata", {}).get("namespace") == namespace
+            )
             anomaly = diff_engine.find_aggregate_threshold_violation(
                 kind="ResourceQuota",
                 object_name=name,
@@ -309,7 +336,6 @@ def scan_resourcequotas(state: ClusterState) -> tuple[Anomaly, ...]:
             if anomaly is not None:
                 anomalies.append(anomaly)
     return tuple(anomalies)
-
 
 
 # ---------------------------------------------------------------------------
@@ -355,7 +381,9 @@ def scan_pods(state: ClusterState) -> tuple[Anomaly, ...]:
         pod_name = pod.get("metadata", {}).get("name", "<unknown>")
         namespace = pod.get("metadata", {}).get("namespace", "default")
 
-        baseline_dns_policy = pod.get("metadata", {}).get("annotations", {}).get("baseline-dns-policy")
+        baseline_dns_policy = (
+            pod.get("metadata", {}).get("annotations", {}).get("baseline-dns-policy")
+        )
         observed_dns_policy = pod.get("spec", {}).get("dnsPolicy", "ClusterFirst")
         if baseline_dns_policy is not None:
             anomaly = diff_engine.compare_declared_vs_observed(
@@ -420,7 +448,8 @@ def scan_pods(state: ClusterState) -> tuple[Anomaly, ...]:
 def scan_ingresses(state: ClusterState) -> tuple[Anomaly, ...]:
     anomalies: list[Anomaly] = []
     services_by_name: dict[str, dict[str, Any]] = {
-        svc.get("metadata", {}).get("name"): svc for svc in _items(state.get("services"))
+        svc.get("metadata", {}).get("name"): svc
+        for svc in _items(state.get("services"))
     }
     for ing in _items(state.get("ingresses")):
         name = ing.get("metadata", {}).get("name", "<unknown>")
@@ -444,7 +473,9 @@ def scan_ingresses(state: ClusterState) -> tuple[Anomaly, ...]:
                     anomalies.append(anomaly)
                     continue
                 declared_port = backend.get("port", {}).get("number")
-                observed_ports = {p.get("port") for p in svc.get("spec", {}).get("ports", [])}
+                observed_ports = {
+                    p.get("port") for p in svc.get("spec", {}).get("ports", [])
+                }
                 if declared_port is not None and declared_port not in observed_ports:
                     anomalies.append(
                         Anomaly(

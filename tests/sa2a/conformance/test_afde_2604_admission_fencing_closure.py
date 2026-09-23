@@ -223,8 +223,12 @@ def test_composed_admission_authority_consequence_fence(tmp_path: Path) -> None:
     )
     assert a_result.state == TerminalReceiptState.REFUSED
     assert a_result.refusal_code == REFUSED_NO_GRANT
-    assert a_actuator.call_count == 0, "Actuator must never be invoked for an unauthorized request."
-    assert a_journal.exists() is False, "Zero disk mutation for an unauthorized request."
+    assert a_actuator.call_count == 0, (
+        "Actuator must never be invoked for an unauthorized request."
+    )
+    assert a_journal.exists() is False, (
+        "Zero disk mutation for an unauthorized request."
+    )
     assert a_result.final_receipt is not None
     assert a_result.final_receipt.state == TerminalReceiptState.REFUSED
 
@@ -235,7 +239,9 @@ def test_composed_admission_authority_consequence_fence(tmp_path: Path) -> None:
     # closure.md), driven here through the real AdmissionCourt/AdmissionPipeline
     # instead of a standalone script.
     # =================================================================================
-    never_admitted_candidate = "the sky is blue and this sentence is not RDF in any serialization"
+    never_admitted_candidate = (
+        "the sky is blue and this sentence is not RDF in any serialization"
+    )
     refused_result = admission_court.pipeline.admit(never_admitted_candidate)
 
     assert refused_result.is_admitted is False
@@ -269,7 +275,9 @@ def test_composed_admission_authority_consequence_fence(tmp_path: Path) -> None:
     # Interface-level state check: the sole input type ConsequenceBoundary.execute()
     # accepts now DOES carry a field that binds this actuation attempt to
     # refused_result. UPDATED: `admission_result` exists (AFDE-2604 fix, additive).
-    envelope_field_names = frozenset(f.name for f in dataclasses.fields(ExecutionEnvelope))
+    envelope_field_names = frozenset(
+        f.name for f in dataclasses.fields(ExecutionEnvelope)
+    )
     assert envelope_field_names == _EXECUTION_ENVELOPE_FIELD_NAMES
     assert "admission_result" in envelope_field_names, (
         "AFDE-2604 fix: ExecutionEnvelope must carry a field able to bind a real "
@@ -291,7 +299,9 @@ def test_composed_admission_authority_consequence_fence(tmp_path: Path) -> None:
         action_iri=b_action,
         target_resource=b_target,
         actor_id=b_actor,
-        parameters={"never_admitted_candidate_digest": refused_result.receipt.candidate_digest},
+        parameters={
+            "never_admitted_candidate_digest": refused_result.receipt.candidate_digest
+        },
         # AFDE-2604 fix: the real, REFUSED AdmissionResult for this exact candidate is
         # bound directly onto the envelope -- the fix under test.
         admission_result=refused_result,
@@ -375,7 +385,11 @@ def test_composed_admission_authority_consequence_fence(tmp_path: Path) -> None:
     # law_held = True. Both halves of the composed law now hold under a genuine
     # three-court composition, and a valid grant cannot repair a refused admission.
     # =================================================================================
-    law_held = (a_result.success is False) and (b_result.success is False) and (c_result.success is False)
+    law_held = (
+        (a_result.success is False)
+        and (b_result.success is False)
+        and (c_result.success is False)
+    )
     assert law_held is True, (
         "AFDE-2604 composed law now holds: part (a) admitted-but-unauthorized IS "
         "refused before DO, part (b) authorized-but-never-admitted IS refused before "
