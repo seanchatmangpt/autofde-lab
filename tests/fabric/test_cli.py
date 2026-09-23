@@ -29,25 +29,12 @@ def test_catalog_and_match_use_the_real_registry(tmp_path: Path) -> None:
     match = runner.invoke(app, ["match", _DOMAIN, *_cache_option(tmp_path)])
 
     assert catalog.exit_code == 0, catalog.output
-
-    def _payload_json(stream: str, what: str) -> dict:
-        # Temporary AFDE-26922-08 diagnostic: on the CI runner the payload
-        # stream occasionally arrives with a non-JSON prefix and the bare
-        # json error hides its content. Fail with the stream visible.
-        try:
-            return json.loads(stream)
-        except json.JSONDecodeError as error:
-            raise AssertionError(
-                f"{what} payload is not JSON ({error}): "
-                f"first 300 chars: {stream[:300]!r}"
-            ) from error
-
-    catalog_payload = _payload_json(catalog.stdout, "catalog")
+    catalog_payload = json.loads(catalog.stdout)
     assert _DOMAIN in catalog_payload["domains"]
     assert _SOLVER in catalog_payload["solvers"]
 
     assert match.exit_code == 0, match.output
-    match_payload = _payload_json(match.stdout, "match")
+    match_payload = json.loads(match.stdout)
     assert match_payload["domain"] == _DOMAIN
     assert _SOLVER in match_payload["compatible_solvers"]
 
@@ -70,7 +57,7 @@ def test_solve_emits_receipt(tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0, result.output
-    payload = _payload_json(result.stdout, "solve")
+    payload = json.loads(result.stdout)
     assert payload["standing"] == "SOLVED"
     assert payload["solver"] == _SOLVER
     assert len(payload["receipt_sha256"]) == 64
