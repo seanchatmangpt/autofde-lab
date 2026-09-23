@@ -34,7 +34,9 @@ DEFAULT_DIR = REPO_ROOT / "docs" / "ocel" / "sregym"
 
 
 def _events_with_attrs(conn: sqlite3.Connection) -> list[dict]:
-    rows = conn.execute("SELECT id, activity, timestamp_ns FROM events ORDER BY timestamp_ns").fetchall()
+    rows = conn.execute(
+        "SELECT id, activity, timestamp_ns FROM events ORDER BY timestamp_ns"
+    ).fetchall()
     out = []
     for event_id, activity, ts_ns in rows:
         attr_rows = conn.execute(
@@ -42,7 +44,9 @@ def _events_with_attrs(conn: sqlite3.Connection) -> list[dict]:
             (event_id,),
         ).fetchall()
         attrs = {key: json.loads(value_json) for key, value_json in attr_rows}
-        out.append({"id": event_id, "activity": activity, "timestamp_ns": ts_ns, **attrs})
+        out.append(
+            {"id": event_id, "activity": activity, "timestamp_ns": ts_ns, **attrs}
+        )
     return out
 
 
@@ -81,7 +85,9 @@ def build_report(ocel_dir: Path) -> dict:
         )
 
         for e in events:
-            activity_elapsed.setdefault(e["activity"], []).append(float(e.get("elapsed_s", 0.0)))
+            activity_elapsed.setdefault(e["activity"], []).append(
+                float(e.get("elapsed_s", 0.0))
+            )
             standing = str(e.get("standing", "UNKNOWN"))
             activity_standings.setdefault(e["activity"], {}).setdefault(standing, 0)
             activity_standings[e["activity"]][standing] += 1
@@ -116,7 +122,9 @@ def _print_report(report: dict) -> None:
         return
 
     print("Per-problem:")
-    print(f"  {'problem_id':45s} {'events':>7s} {'kubectl_s':>10s} {'errors':>7s} {'submitted':>10s}")
+    print(
+        f"  {'problem_id':45s} {'events':>7s} {'kubectl_s':>10s} {'errors':>7s} {'submitted':>10s}"
+    )
     for row in report["per_problem"]:
         print(
             f"  {row['problem_id']:45s} {row['event_count']:7d} "
@@ -124,17 +132,27 @@ def _print_report(report: dict) -> None:
             f"{'yes' if row['submitted'] else 'no':>10s}"
         )
 
-    print("\nBottleneck ranking (slowest activity by mean elapsed_s, across the whole batch):")
+    print(
+        "\nBottleneck ranking (slowest activity by mean elapsed_s, across the whole batch):"
+    )
     print(f"  {'activity':20s} {'count':>7s} {'mean_s':>9s} {'max_s':>9s}  standings")
     for row in report["bottleneck_ranking"]:
-        standings_str = ", ".join(f"{k}={v}" for k, v in sorted(row["standings"].items()))
-        print(f"  {row['activity']:20s} {row['count']:7d} {row['mean_elapsed_s']:9.3f} {row['max_elapsed_s']:9.3f}  {standings_str}")
+        standings_str = ", ".join(
+            f"{k}={v}" for k, v in sorted(row["standings"].items())
+        )
+        print(
+            f"  {row['activity']:20s} {row['count']:7d} {row['mean_elapsed_s']:9.3f} {row['max_elapsed_s']:9.3f}  {standings_str}"
+        )
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dir", type=Path, default=DEFAULT_DIR, help="Directory of .ocel2.sqlite files")
-    parser.add_argument("--json", action="store_true", help="Print raw JSON instead of a table")
+    parser.add_argument(
+        "--dir", type=Path, default=DEFAULT_DIR, help="Directory of .ocel2.sqlite files"
+    )
+    parser.add_argument(
+        "--json", action="store_true", help="Print raw JSON instead of a table"
+    )
     args = parser.parse_args()
 
     report = build_report(args.dir)

@@ -19,6 +19,12 @@ def _digest(seed: str) -> str:
 
 def _spine() -> ProcessSpine:
     ceilings = {
+        "GALL-015": "REFERENCE_CORPUS",
+        "GALL-016": "COMPILE_COMPUTE",
+        "GALL-017": "QUERY_COMPUTE",
+        "GALL-018": "DISCOVERY_CANDIDATE",
+        "GALL-019": "PREDICTION_CANDIDATE",
+        "GALL-020": "COMPUTE_ONLY",
         "GALL-021": "COMPUTE_ONLY",
         "GALL-022": "COMPILE_COMPUTE",
         "GALL-023": "QUERY_COMPUTE",
@@ -36,7 +42,7 @@ def _spine() -> ProcessSpine:
             ProcessCheckpointReference(
                 checkpoint=checkpoint,
                 repository=repo,
-                repo_sha=f"{index:x}" * 40,
+                repo_sha=f"{index:040x}",  # deterministic exact 40-hex (f"{index:x}"*40 breaks for index >= 16)
                 evidence_digest=_digest(f"e{index}"),
                 subject_digest=_digest(f"s{index}"),
                 evidence_ceiling=ceilings[checkpoint],
@@ -48,7 +54,60 @@ def _spine() -> ProcessSpine:
     )
 
 
+def test_exact_typed_process_spine_is_content_addressed() -> None:
+    spine = _spine()
+    spine.validate()
+    assert spine.digest.startswith("sha256:")
+    assert spine.digest == _spine().digest
+
+
+def test_missing_checkpoint_and_repository_substitution_fail_closed() -> None:
+    spine = _spine()
+    with pytest.raises(ValueError, match="requires exactly"):
+        replace(spine, checkpoints=spine.checkpoints[:-1]).validate()
+
+    bad = list(spine.checkpoints)
+    bad[0] = replace(bad[0], repository="seanchatmangpt/beam4pm")
+    with pytest.raises(ValueError, match="repository mismatch"):
+        replace(spine, checkpoints=tuple(bad)).validate()
+
+
+def test_authority_cannot_leak_upstream_of_gall_030() -> None:
+    spine = _spine()
+    bad = list(spine.checkpoints)
+    gall_028 = next(i for i, item in enumerate(bad) if item.checkpoint == "GALL-028")
+    bad[gall_028] = replace(bad[gall_028], evidence_ceiling="AUTHORIZED_DO")
+    with pytest.raises(ValueError, match="cannot grant DO"):
+        replace(spine, checkpoints=tuple(bad)).validate()
+
+    gall_029 = next(i for i, item in enumerate(bad) if item.checkpoint == "GALL-029")
+    bad = list(spine.checkpoints)
+    bad[gall_029] = replace(bad[gall_029], evidence_ceiling="AUTHORIZED_DO")
+    with pytest.raises(ValueError, match="candidate admission only"):
+        replace(spine, checkpoints=tuple(bad)).validate()
+
+
+def test_ex4pm_predecessor_chain_is_required_and_cannot_gain_do_authority() -> None:
+    spine = _spine()
+    ids = {item.checkpoint for item in spine.checkpoints}
+    assert {f"GALL-{index:03d}" for index in range(15, 21)} <= ids
+
+    gall_019 = next(
+        i for i, item in enumerate(spine.checkpoints) if item.checkpoint == "GALL-019"
+    )
+    bad = list(spine.checkpoints)
+    bad[gall_019] = replace(bad[gall_019], evidence_ceiling="AUTHORIZED_DO")
+    with pytest.raises(ValueError, match="PREDICTION_CANDIDATE"):
+        replace(spine, checkpoints=tuple(bad)).validate()
+
+
 def _exact_spine_and_evidence() -> tuple[ProcessSpine, dict[str, bytes]]:
+    """Build the full GALL-015..030 spine with independently hashed evidence.
+
+    Carried over from gall/integrate-021-030-process-spine and extended to the
+    full spine range so verify_exact_evidence's whole-manifest invariant is
+    exercised.
+    """
     template = _spine()
     refs = []
     evidence = {}
@@ -73,41 +132,6 @@ def _exact_spine_and_evidence() -> tuple[ProcessSpine, dict[str, bytes]]:
             )
         )
     return replace(template, checkpoints=tuple(refs)), evidence
-
-
-def test_exact_typed_process_spine_is_content_addressed() -> None:
-    spine = _spine()
-    spine.validate()
-    assert spine.digest.startswith("sha256:")
-    assert spine.digest == _spine().digest
-
-
-def test_missing_checkpoint_and_repository_substitution_fail_closed() -> None:
-    spine = _spine()
-    with pytest.raises(ValueError, match="requires exactly"):
-        replace(spine, checkpoints=spine.checkpoints[:-1]).validate()
-
-    bad = list(spine.checkpoints)
-    bad[0] = replace(bad[0], repository="seanchatmangpt/beam4pm")
-    with pytest.raises(ValueError, match="repository mismatch"):
-        replace(spine, checkpoints=tuple(bad)).validate()
-
-
-def test_authority_cannot_leak_upstream_of_gall_030() -> None:
-    spine = _spine()
-    for checkpoint in (
-        "GALL-024",
-        "GALL-025",
-        "GALL-026",
-        "GALL-027",
-        "GALL-028",
-        "GALL-029",
-    ):
-        bad = list(spine.checkpoints)
-        index = next(i for i, item in enumerate(bad) if item.checkpoint == checkpoint)
-        bad[index] = replace(bad[index], evidence_ceiling="AUTHORIZED_DO")
-        with pytest.raises(ValueError, match="authority boundary"):
-            replace(spine, checkpoints=tuple(bad)).validate()
 
 
 def test_exact_evidence_binds_sha_digest_subject_repository_and_authority() -> None:

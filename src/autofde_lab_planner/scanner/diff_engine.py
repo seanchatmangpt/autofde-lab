@@ -66,7 +66,8 @@ def find_dangling_reference(
         field=field,
         observed=referenced_name,
         expected=None,
-        detail=detail or f"{field} references {referenced_name!r}, not found among {sorted(available_names)}",
+        detail=detail
+        or f"{field} references {referenced_name!r}, not found among {sorted(available_names)}",
     )
 
 
@@ -128,5 +129,6 @@ def find_aggregate_threshold_violation(
         field=field,
         observed=f"{total_observed}{unit}",
         expected=f"<= {limit}{unit}",
-        detail=detail or f"{field} total {total_observed}{unit} exceeds limit {limit}{unit}",
+        detail=detail
+        or f"{field} total {total_observed}{unit} exceeds limit {limit}{unit}",
     )

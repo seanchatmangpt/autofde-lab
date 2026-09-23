@@ -49,9 +49,7 @@ def make_domain(*routes: RouteSpec) -> ChatmanCleanSessionDomain:
         ),
         routes=routes
         or (
-            RouteSpec(
-                "exact_sha_sparse_tree", cost=1.0, outcome=RouteOutcome.SUCCESS
-            ),
+            RouteSpec("exact_sha_sparse_tree", cost=1.0, outcome=RouteOutcome.SUCCESS),
         ),
     )
 
@@ -102,9 +100,7 @@ def test_failed_edge_is_topology_when_another_route_closes() -> None:
 
 def test_zero_unreceipted_actuation() -> None:
     domain = make_domain()
-    receipt = execute_actions(
-        domain, domain.canonical_completion_plan(), broker=None
-    )
+    receipt = execute_actions(domain, domain.canonical_completion_plan(), broker=None)
 
     assert receipt.standing == "REFUSED:MISSING_BRCE_BROKER"
     assert not receipt.broker_receipts
@@ -160,9 +156,7 @@ def test_generic_route_failure_remains_partial_not_blocked() -> None:
             reason="transport returned a non-terminal failure",
         )
     )
-    receipt = execute_actions(
-        domain, domain.canonical_completion_plan(), broker=None
-    )
+    receipt = execute_actions(domain, domain.canonical_completion_plan(), broker=None)
     assert receipt.standing == "PARTIAL_ALIVE"
 
 

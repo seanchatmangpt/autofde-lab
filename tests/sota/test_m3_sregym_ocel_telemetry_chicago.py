@@ -26,7 +26,9 @@ SREGYM_ROOT = REPO_ROOT / "vendor" / "gyms" / "sregym"
 DRIVER_PATH = SREGYM_ROOT / "clients" / "autofde_lab_planner" / "driver.py"
 
 
-def _mcp_server_reachable(host: str = "127.0.0.1", port: int = 9954, timeout: float = 2.0) -> bool:
+def _mcp_server_reachable(
+    host: str = "127.0.0.1", port: int = 9954, timeout: float = 2.0
+) -> bool:
     try:
         with socket.create_connection((host, port), timeout=timeout):
             return True
@@ -44,14 +46,23 @@ def test_record_and_flush_writes_a_real_queryable_sqlite_log(tmp_path):
     from autofde_lab.ocel.mcp_instrumentation import OcelSessionRecorder
     from autofde_lab.ocel.sqlite_store import from_sqlite
 
-    recorder = OcelSessionRecorder("session-ocel-telemetry-test", server_name="sregym-autofde-lab-planner")
+    recorder = OcelSessionRecorder(
+        "session-ocel-telemetry-test", server_name="sregym-autofde-lab-planner"
+    )
     db_path = tmp_path / "problem-x.ocel2.sqlite"
 
     record_and_flush(
         recorder,
         activity="kubectl get",
-        objects=[("problem-misconfig_app_hotel_res", "Problem"), ("namespace-hotel-reservation", "Namespace")],
-        outcome={"standing": "COMPLETED", "elapsed_s": 0.42, "detail": "kubectl get deployments -n hotel-reservation"},
+        objects=[
+            ("problem-misconfig_app_hotel_res", "Problem"),
+            ("namespace-hotel-reservation", "Namespace"),
+        ],
+        outcome={
+            "standing": "COMPLETED",
+            "elapsed_s": 0.42,
+            "detail": "kubectl get deployments -n hotel-reservation",
+        },
         path=db_path,
     )
 
@@ -90,7 +101,11 @@ def test_record_and_flush_accumulates_across_multiple_calls_real_time(tmp_path):
         assert len(reloaded.events) == i + 1
 
     final = from_sqlite(db_path)
-    assert [e.activity for e in final.events] == ["kubectl step-0", "kubectl step-1", "kubectl step-2"]
+    assert [e.activity for e in final.events] == [
+        "kubectl step-0",
+        "kubectl step-1",
+        "kubectl step-2",
+    ]
 
 
 def test_record_and_flush_on_a_real_error_outcome_is_still_valid_ocel(tmp_path):
@@ -104,14 +119,19 @@ def test_record_and_flush_on_a_real_error_outcome_is_still_valid_ocel(tmp_path):
         recorder,
         activity="kubectl patch",
         objects=[("problem-z", "Problem")],
-        outcome={"standing": "ERROR", "elapsed_s": 1.5, "detail": "ConnectionError: real transport failure"},
+        outcome={
+            "standing": "ERROR",
+            "elapsed_s": 1.5,
+            "detail": "ConnectionError: real transport failure",
+        },
         path=db_path,
     )
 
     log = recorder.close()  # raises on any OCPQ Definition 2 structural violation
     doc = log.to_ocel2_json()
     standings = [
-        next(a["value"] for a in e["attributes"] if a["name"] == "standing") for e in doc["events"]
+        next(a["value"] for a in e["attributes"] if a["name"] == "standing")
+        for e in doc["events"]
     ]
     assert standings == ["ERROR"]
 
@@ -166,7 +186,9 @@ def test_call_kubectl_emits_a_real_ocel_event_against_the_live_cluster(tmp_path)
     import subprocess
 
     script = _LIVE_CHECK_SCRIPT.format(
-        sregym_root=str(SREGYM_ROOT), driver_dir=str(DRIVER_PATH.parent), driver_path=str(DRIVER_PATH)
+        sregym_root=str(SREGYM_ROOT),
+        driver_dir=str(DRIVER_PATH.parent),
+        driver_path=str(DRIVER_PATH),
     )
     env = dict(os.environ)
     env["AUTOFDE_OCEL_DIR"] = str(tmp_path)

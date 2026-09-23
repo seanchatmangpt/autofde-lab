@@ -173,7 +173,11 @@ class Level4FitnessResult:
 
 
 def _string_attr(key: str, value: str) -> dict:
-    return {"key": key, "value": {"type": "String", "content": value}, "own_attributes": None}
+    return {
+        "key": key,
+        "value": {"type": "String", "content": value},
+        "own_attributes": None,
+    }
 
 
 def level4_trace_to_wasm4pm_json(cases: Sequence[tuple[str, Sequence[str]]]) -> dict:
@@ -232,7 +236,9 @@ def trial_activity_sequence(
     return [e.activity for e in ordered]
 
 
-async def _conformance_of(cases: Sequence[tuple[str, Sequence[str]]], *, timeout_s: float) -> ConformanceReport:
+async def _conformance_of(
+    cases: Sequence[tuple[str, Sequence[str]]], *, timeout_s: float
+) -> ConformanceReport:
     with tempfile.TemporaryDirectory(prefix="level4_fitness_") as tmp:
         log_path = Path(tmp) / "log.json"
         log_path.write_text(json.dumps(level4_trace_to_wasm4pm_json(cases)))
@@ -251,7 +257,9 @@ async def golden_baseline(*, timeout_s: float = 60.0) -> ConformanceReport:
         raise FileNotFoundError(f"NO_COMMITTED_MODEL: {INTENDED_MODEL_PATH}")
     if not GOLDEN_LOG_PATH.is_file():
         raise FileNotFoundError(f"NO_GOLDEN_LOG: {GOLDEN_LOG_PATH}")
-    return await check_conformance(GOLDEN_LOG_PATH, INTENDED_MODEL_PATH, timeout_s=timeout_s)
+    return await check_conformance(
+        GOLDEN_LOG_PATH, INTENDED_MODEL_PATH, timeout_s=timeout_s
+    )
 
 
 async def check_trial_fitness(
@@ -274,7 +282,9 @@ async def check_trial_fitness(
         d = Path(d)
         cases.append((d.name, trial_activity_sequence(d, tie_break=tie_break)))
     if not cases:
-        raise ValueError("NO_EVIDENCE_DIRS: refusing to report conformance over zero cases")
+        raise ValueError(
+            "NO_EVIDENCE_DIRS: refusing to report conformance over zero cases"
+        )
 
     report = await _conformance_of(cases, timeout_s=timeout_s)
     baseline = await golden_baseline(timeout_s=timeout_s)
@@ -286,7 +296,9 @@ async def check_trial_fitness(
     )
 
 
-async def golden_model_metric_swap_witness(*, timeout_s: float = 60.0) -> tuple[float, float]:
+async def golden_model_metric_swap_witness(
+    *, timeout_s: float = 60.0
+) -> tuple[float, float]:
     """Witness defect 1: ``discover``'s "Simplicity" IS ``conformance``'s avg fitness.
 
     Returns ``(discover_simplicity_row, conformance_avg_fitness)`` from two real ``wpm``

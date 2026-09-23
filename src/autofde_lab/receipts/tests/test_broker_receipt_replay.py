@@ -26,7 +26,8 @@ from autofde_lab.receipts.broker import (
     TokenAlreadyConsumed,
 )
 from autofde_lab.receipts.receipt_store import ReceiptChainError, ReceiptLedger
-from autofde_lab.receipts.replay import GallStatus, ReplayError, verify as replay_verify
+from autofde_lab.receipts.replay import GallStatus, ReplayError
+from autofde_lab.receipts.replay import verify as replay_verify
 from autofde_lab.standing import Blocked, Unsupported
 
 RECEIPT_SCHEMA = json.loads(
@@ -51,7 +52,15 @@ class RunEngineActuator:
         cfg = EngineConfig(
             role="classical",
             program=sys.executable,
-            args=(str(FAKE_ENGINE), "--mode", self.mode, "--plan-file", "{plan}", "{domain}", "{problem}"),
+            args=(
+                str(FAKE_ENGINE),
+                "--mode",
+                self.mode,
+                "--plan-file",
+                "{plan}",
+                "{domain}",
+                "{problem}",
+            ),
             output_mode=OutputMode.FILE,
         )
         receipt = run_engine(cfg, domain=DOMAIN, problem=PROBLEM, plan=self.plan_path)
@@ -124,7 +133,9 @@ def test_admission_refuses_empty_shape_as_unsupported() -> None:
 
 
 def test_admission_refuses_wrong_typed_value_with_named_reason() -> None:
-    with pytest.raises(Blocked, match=r"observation\['id'\] has type int, expected str"):
+    with pytest.raises(
+        Blocked, match=r"observation\['id'\] has type int, expected str"
+    ):
         admit({"action": {}, "id": 123}, shape={"action": dict, "id": str})
 
 
@@ -324,7 +335,9 @@ def test_reloaded_ledger_detects_on_disk_tampering(tmp_path: Path) -> None:
     # Tamper the file on disk directly (not the in-memory `ledger` object).
     lines = ledger_path.read_text().splitlines()
     second = json.loads(lines[1])
-    second["body"]["postcondition_satisfied"] = not second["body"]["postcondition_satisfied"]
+    second["body"]["postcondition_satisfied"] = not second["body"][
+        "postcondition_satisfied"
+    ]
     lines[1] = json.dumps(second)
     ledger_path.write_text("\n".join(lines) + "\n")
 

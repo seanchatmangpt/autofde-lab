@@ -95,7 +95,9 @@ def detect_host_port_conflicts(
     return faults
 
 
-def _to_item_list(data: dict[str, Any] | list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+def _to_item_list(
+    data: dict[str, Any] | list[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
     if not data:
         return []
     if isinstance(data, dict):

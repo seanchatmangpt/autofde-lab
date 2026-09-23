@@ -1,0 +1,10 @@
+{
+  "wo": "AFDE-26922-08",
+  "title": "First green master ci.yml: hub importable in integration partition + regenerated #169",
+  "base_sha": "f5cc664bac7598d5cf53cab399876df300bb6b14",
+  "commit": "a090ca00 (pushed to origin/master inside ebd51475)",
+  "command": "gh run view --log-failed diagnosis + ci.yml/agentic-fabric.yml repair + push",
+  "exit": 0,
+  "output_excerpt": "Root cause proven from run 35791445157 logs: pyproject pytest pythonpath=['src'] shadows the installed wheel, so the compiled __autofde_lab_hub_cpp never resolves (test_pomcp collection error). Fix: materialize the .so from the exact-SHA wheel into src/autofde_lab/hub before the partition runs; same build for agentic-fabric court. Baseline honesty: master ci.yml was 0/306 green BEFORE this lane (pre-existing). #169 regeneration and the first green run are pending.",
+  "standing": "PARTIAL_ALIVE"
+}

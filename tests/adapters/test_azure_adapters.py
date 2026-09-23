@@ -50,11 +50,31 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 OPERATIONS = (
     (AzureIncidentIngress(), "inject_synthetic_incident", {"correlation_id": "c1"}),
     (AzureSentinel(), "read_incident_observation", {"correlation_id": "c1"}),
-    (AzureLogicApps(), "submit_candidate_action", {"correlation_id": "c1", "action_name": "isolate_host"}),
-    (AzureIdentity(), "request_authority", {"correlation_id": "c1", "scope": "Incident.Write"}),
-    (AzureNotificationCapture(), "capture_notification_draft", {"correlation_id": "c1", "channel": "teams", "subject": "s"}),
-    (AzureEvidenceSink(), "record_execution_evidence", {"correlation_id": "c1", "described_by": "mfw"}),
-    (AzureSentinel(), "read_postcondition", {"correlation_id": "c1", "predicate": "host_isolated"}),
+    (
+        AzureLogicApps(),
+        "submit_candidate_action",
+        {"correlation_id": "c1", "action_name": "isolate_host"},
+    ),
+    (
+        AzureIdentity(),
+        "request_authority",
+        {"correlation_id": "c1", "scope": "Incident.Write"},
+    ),
+    (
+        AzureNotificationCapture(),
+        "capture_notification_draft",
+        {"correlation_id": "c1", "channel": "teams", "subject": "s"},
+    ),
+    (
+        AzureEvidenceSink(),
+        "record_execution_evidence",
+        {"correlation_id": "c1", "described_by": "mfw"},
+    ),
+    (
+        AzureSentinel(),
+        "read_postcondition",
+        {"correlation_id": "c1", "predicate": "host_isolated"},
+    ),
 )
 
 
@@ -64,7 +84,12 @@ def _empty_environment(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("HOME", str(empty))
     monkeypatch.setenv("USERPROFILE", str(empty))
     monkeypatch.setenv("PATH", str(tmp_path / "empty-bin"))
-    for var in ("AZURE_SUBSCRIPTION_ID", "AZURE_TENANT_ID", "AZURE_CLIENT_ID", "AZURE_CONFIG_DIR"):
+    for var in (
+        "AZURE_SUBSCRIPTION_ID",
+        "AZURE_TENANT_ID",
+        "AZURE_CLIENT_ID",
+        "AZURE_CONFIG_DIR",
+    ):
         monkeypatch.delenv(var, raising=False)
 
 
@@ -111,7 +136,9 @@ def test_probe_states_a_method_not_merely_a_path():
         assert "path" in joined or "environ" in joined, (name, probe.methods_used)
 
 
-def test_empty_home_and_path_yields_unavailable_and_raises_nothing(tmp_path, monkeypatch):
+def test_empty_home_and_path_yields_unavailable_and_raises_nothing(
+    tmp_path, monkeypatch
+):
     _empty_environment(tmp_path, monkeypatch)
     results = probe_azure_surfaces()  # must not raise
     assert set(results) == {a.name for a in AZURE_SURFACE_ADAPTERS}
@@ -122,7 +149,9 @@ def test_empty_home_and_path_yields_unavailable_and_raises_nothing(tmp_path, mon
         assert probe.searched and probe.environment, name
 
 
-def test_registered_azure_adapter_is_unavailable_under_empty_environment(tmp_path, monkeypatch):
+def test_registered_azure_adapter_is_unavailable_under_empty_environment(
+    tmp_path, monkeypatch
+):
     _empty_environment(tmp_path, monkeypatch)
     probe = adapters.AzureIncidentAdapter().probe()
     assert probe.status is AdapterStatus.UNAVAILABLE
@@ -150,7 +179,9 @@ def test_azure_probe_requires_every_boundary_field():
     accepted: list[str] = []
     for label, blank in cases.items():
         try:
-            AzureProbe(status=AdapterStatus.UNAVAILABLE, detail="nope", **{**full, **blank})
+            AzureProbe(
+                status=AdapterStatus.UNAVAILABLE, detail="nope", **{**full, **blank}
+            )
         except ValueError:
             continue
         accepted.append(label)
@@ -158,7 +189,10 @@ def test_azure_probe_requires_every_boundary_field():
 
 
 def test_unknown_maps_down_to_unavailable_never_up():
-    assert azure_pkg.to_adapter_status(AzureProbeStatus.UNKNOWN) is AdapterStatus.UNAVAILABLE
+    assert (
+        azure_pkg.to_adapter_status(AzureProbeStatus.UNKNOWN)
+        is AdapterStatus.UNAVAILABLE
+    )
 
 
 # --------------------------------------------------------------------------
@@ -224,7 +258,9 @@ def test_operations_do_not_raise_under_an_empty_environment(tmp_path, monkeypatc
 
 
 def test_request_authority_requests_and_cannot_grant():
-    result = AzureIdentity().request_authority(correlation_id="c1", scope="Incident.Write")
+    result = AzureIdentity().request_authority(
+        correlation_id="c1", scope="Incident.Write"
+    )
     assert result.granted is None
     assert result.code is RefusalCode.NO_IDENTITY_PROVIDER
     assert "never" in result.detail.lower()
@@ -255,7 +291,10 @@ def test_refusal_requires_a_named_missing_prerequisite():
 def test_no_result_or_detail_carries_a_bearer_credential():
     """No secret material may appear in any result or detail string."""
     banned = ("secret", "password", "bearer ", "client_secret", "sas=", "access_token")
-    blobs = [p.detail + " ".join(p.evidence) + " ".join(p.environment) for p in probe_azure_surfaces().values()]
+    blobs = [
+        p.detail + " ".join(p.evidence) + " ".join(p.environment)
+        for p in probe_azure_surfaces().values()
+    ]
     blobs += [getattr(a, op)(**kw).detail for a, op, kw in OPERATIONS]
     for blob in blobs:
         low = blob.lower()
@@ -303,7 +342,11 @@ def test_no_azure_sdk_is_imported_at_module_level_or_lazily(tmp_path):
         "print('OK', len(r), len(core))"
     )
     proc = subprocess.run(
-        [sys.executable, "-c", code], env=env, capture_output=True, text=True, cwd=str(tmp_path)
+        [sys.executable, "-c", code],
+        env=env,
+        capture_output=True,
+        text=True,
+        cwd=str(tmp_path),
     )
     assert proc.returncode == 0, f"stdout={proc.stdout!r} stderr={proc.stderr!r}"
     assert proc.stdout.startswith("OK")

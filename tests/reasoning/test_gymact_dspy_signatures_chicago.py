@@ -97,7 +97,9 @@ class _FakeSregymEnvironment:
         if capability.binding == "submit_diagnosis":
             self.last_diagnosis_payload = dict(payload)
             return {"after": {"diagnosis": payload.get("diagnosis")}}
-        raise AssertionError(f"unexpected real actuate() call for binding={capability.binding!r}")
+        raise AssertionError(
+            f"unexpected real actuate() call for binding={capability.binding!r}"
+        )
 
     async def teardown(self) -> None:
         self.torn_down = True
@@ -137,7 +139,9 @@ def test_build_gated_observe_tools_refuses_unlisted_capability(tmp_path) -> None
     )
     gate = CapabilityGate.from_toml(manifest)
     env = _FakeSregymEnvironment()
-    tools = build_gated_observe_tools(env, gate, _FAKE_CAPABILITIES, namespace="social-network")
+    tools = build_gated_observe_tools(
+        env, gate, _FAKE_CAPABILITIES, namespace="social-network"
+    )
     run_kubectl = next(t for t in tools if t.__name__ == "run_kubectl")
 
     with pytest.raises(CapabilityRefused):
@@ -154,7 +158,9 @@ def test_build_gated_observe_tools_run_kubectl_calls_real_actuate(tmp_path) -> N
     )
     gate = CapabilityGate.from_toml(manifest)
     env = _FakeSregymEnvironment()
-    tools = build_gated_observe_tools(env, gate, _FAKE_CAPABILITIES, namespace="social-network")
+    tools = build_gated_observe_tools(
+        env, gate, _FAKE_CAPABILITIES, namespace="social-network"
+    )
     run_kubectl = next(t for t in tools if t.__name__ == "run_kubectl")
 
     result_text = run_kubectl("get pods -o json")
@@ -211,7 +217,9 @@ def test_live_groq_diagnose_root_cause_produces_real_bounded_confidence() -> Non
 
 
 @requires_real_groq_key
-def test_live_groq_synthesize_mitigation_for_wrong_dns_policy_produces_real_kubectl_command() -> None:
+def test_live_groq_synthesize_mitigation_for_wrong_dns_policy_produces_real_kubectl_command() -> (
+    None
+):
     """The one real, currently-nonexistent piece: given a real diagnosed
     wrong-DNS-policy root cause, the real LM call must synthesize a single,
     plausible kubectl command -- proving grounding, not generic filler."""
@@ -230,8 +238,12 @@ def test_live_groq_synthesize_mitigation_for_wrong_dns_policy_produces_real_kube
 
     command = result.kubectl_command.strip()
     assert command, "real LM call must produce a non-empty kubectl command"
-    assert command.startswith("kubectl"), f"synthesized command must be real kubectl syntax, got: {command!r}"
-    assert "social-network" in command, "synthesized command must target the real given namespace"
+    assert command.startswith("kubectl"), (
+        f"synthesized command must be real kubectl syntax, got: {command!r}"
+    )
+    assert "social-network" in command, (
+        "synthesized command must target the real given namespace"
+    )
     assert result.rationale
 
 
@@ -298,7 +310,9 @@ def test_live_groq_staged_diagnosis_full_pipeline_against_fake_environment() -> 
 
 
 @requires_real_groq_key
-def test_live_groq_staged_diagnosis_with_mitigation_actually_calls_gated_run_kubectl() -> None:
+def test_live_groq_staged_diagnosis_with_mitigation_actually_calls_gated_run_kubectl() -> (
+    None
+):
     """attempt_mitigation=True must really call the gated run_kubectl
     capability with the SynthesizeMitigation stage's real derived command
     -- proving this is real actuation, not a dry-run."""
@@ -328,7 +342,9 @@ def test_live_groq_staged_diagnosis_with_mitigation_actually_calls_gated_run_kub
     assert "submit_mitigation" not in env.call_log
 
 
-def test_run_staged_dspy_diagnosis_refuses_run_kubectl_when_not_in_manifest(tmp_path) -> None:
+def test_run_staged_dspy_diagnosis_refuses_run_kubectl_when_not_in_manifest(
+    tmp_path,
+) -> None:
     """Structural, no-LLM-call proof that the mitigation-actuation path is
     really gated: a manifest missing run_kubectl must refuse the call
     before it ever reaches env.actuate(), regardless of what the LM (never

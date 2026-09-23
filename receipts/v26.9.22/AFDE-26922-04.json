@@ -1,0 +1,10 @@
+{
+  "wo": "AFDE-26922-04",
+  "title": "agentic-fabric.yml: install gymnasium",
+  "base_sha": "f5cc664bac7598d5cf53cab399876df300bb6b14",
+  "commit": "bde04bde (pushed to origin/master, fast-forward)",
+  "command": "git push origin afde-26922-04-fabric-gymnasium:master",
+  "exit": 0,
+  "output_excerpt": "f5cc664b..bde04bde master -> master. Exact-head-fabric collection gap removed; remaining fabric failures were the hub build gap, fixed under AFDE-26922-08 (a090ca00).",
+  "standing": "ALIVE"
+}

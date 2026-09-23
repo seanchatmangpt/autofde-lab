@@ -89,9 +89,7 @@ FIXTURE = os.path.join(
     "ontology",
     "platform-console-domain.ttl",
 )
-DOMAIN_IRI = rdflib.URIRef(
-    "urn:autofde-lab:planning-domain:platform-console:domain"
-)
+DOMAIN_IRI = rdflib.URIRef("urn:autofde-lab:planning-domain:platform-console:domain")
 
 GYMACT_ROOT = Path.home() / "gymact"
 WASM4PM_ROOT = Path.home() / "wasm4pm-compat"
@@ -264,7 +262,13 @@ def _synthetic_problem(domain: Domain, action_name: str) -> Problem:
         if not p.negated
     )
     first_effect = action.effects[0]
-    goal = (Literal_(predicate=first_effect.predicate, arguments=(obj,), negated=first_effect.negated),)
+    goal = (
+        Literal_(
+            predicate=first_effect.predicate,
+            arguments=(obj,),
+            negated=first_effect.negated,
+        ),
+    )
     return Problem(
         name=f"platform-console-{action_name}",
         domain_name=domain.name,
@@ -375,7 +379,9 @@ def _action_inapplicable_without(
     return not any(str(a).split()[0].lstrip("(") == action_name for a in applicable)
 
 
-def _compile_and_solve(tmp_path, domain: Domain, action_name: str, *, omit_predicate=None):
+def _compile_and_solve(
+    tmp_path, domain: Domain, action_name: str, *, omit_predicate=None
+):
     problem = _synthetic_problem(domain, action_name)
     if omit_predicate is not None:
         problem = Problem(
@@ -427,8 +433,7 @@ def test_reversible_capability_real_plan_found(tmp_path, domain, facts_by_title,
         # parser limitation (see `_action_applicable_at_init`'s docstring),
         # so this branch checks real applicability directly instead.
         assert _action_applicable_at_init(tmp_path, domain, action_name), (
-            f"{title} ({action_name}) not applicable given its own real "
-            "preconditions"
+            f"{title} ({action_name}) not applicable given its own real preconditions"
         )
         return
 
@@ -460,7 +465,10 @@ def test_irreversible_capability_domain_level_refusal_where_modeled(
     make the real Astar solve return EXIT_NO_PLAN."""
     fact = facts_by_title[title]
     action_name = TITLE_TO_ACTION[title]
-    if fact.reversible or action_name not in IRREVERSIBLE_ACTIONS_WITH_DOMAIN_APPROVAL_GATE:
+    if (
+        fact.reversible
+        or action_name not in IRREVERSIBLE_ACTIONS_WITH_DOMAIN_APPROVAL_GATE
+    ):
         pytest.skip(
             f"{title} ({action_name}) has no `approved` PDDL precondition in "
             "this domain fixture -- see module docstring's reconciliation "
@@ -485,7 +493,6 @@ def test_irreversible_capability_authority_refusal(facts_by_title, title):
         pytest.skip(f"{title} is REVERSIBLE -- not part of the refusal set")
 
     import anyio
-
     from gymact.agent import AllowListCapabilityScope
     from gymact.gyms.ontology_gym import capability_iri
     from gymact.gyms.platform_console_ontology_provider import (
@@ -596,7 +603,9 @@ def _fetch_console_snapshot(org: str) -> dict:
         return json.loads(resp.read())
 
 
-def _run_ocel_diff_cli(before: dict, after: dict, expected_effect: dict, tmp_path) -> dict:
+def _run_ocel_diff_cli(
+    before: dict, after: dict, expected_effect: dict, tmp_path
+) -> dict:
     """The real cross-language bridge: writes the three real snapshots to
     disk as JSON, then invokes the real, freshly-added Rust
     `examples/ocel_diff_cli.rs` binary via `cargo run --example
@@ -634,7 +643,10 @@ def _run_ocel_diff_cli(before: dict, after: dict, expected_effect: dict, tmp_pat
 
 
 @pytest.mark.skipif(not _live_tenant_configured(), reason=_LIVE_TENANT_REASON)
-@pytest.mark.skipif(CARGO_BIN is None, reason="cargo not found on PATH -- cannot invoke the real ocel_diff_cli bridge")
+@pytest.mark.skipif(
+    CARGO_BIN is None,
+    reason="cargo not found on PATH -- cannot invoke the real ocel_diff_cli bridge",
+)
 @pytest.mark.parametrize("title", sorted(TITLE_TO_ACTION))
 def test_reversible_capability_live_actuate_and_diff_validate(
     tmp_path, facts_by_title, title
@@ -650,7 +662,6 @@ def test_reversible_capability_live_actuate_and_diff_validate(
         pytest.skip(f"{title} is IRREVERSIBLE -- never live-actuated")
 
     import anyio
-
     from gymact.agent import AllowListCapabilityScope
     from gymact.gyms.ontology_gym import capability_iri
     from gymact.gyms.platform_console_ontology_provider import (
@@ -715,7 +726,9 @@ def test_reversible_capability_live_actuate_and_diff_validate(
     assert actuation["accepted"], actuation
 
     after = _fetch_console_snapshot(CONSOLE_TEST_ORG)
-    expected_effect = {k: v for k, v in actuation["effect"].items()} if actuation["effect"] else {}
+    expected_effect = (
+        {k: v for k, v in actuation["effect"].items()} if actuation["effect"] else {}
+    )
 
     diff_and_match = _run_ocel_diff_cli(before, after, expected_effect, tmp_path)
     assert "diff" in diff_and_match and "match_result" in diff_and_match

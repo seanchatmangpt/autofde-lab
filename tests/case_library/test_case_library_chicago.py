@@ -42,9 +42,9 @@ _STORED_CASE = Case(
     diagnosis="Readiness probe path misconfigured on the payments Deployment.",
     mitigation_commands=(
         "kubectl -n payments patch deployment payments-api "
-        "--type=json -p='[{\"op\":\"replace\",\"path\":"
-        "\"/spec/template/spec/containers/0/readinessProbe/httpGet/path\","
-        "\"value\":\"/healthz\"}]'",
+        '--type=json -p=\'[{"op":"replace","path":'
+        '"/spec/template/spec/containers/0/readinessProbe/httpGet/path",'
+        '"value":"/healthz"}]\'',
     ),
     outcome=True,
 )
@@ -161,7 +161,9 @@ def test_sqlite_store_persists_and_reloads_a_case_bit_for_bit(tmp_path: Path) ->
     assert db_path.stat().st_size > 0
 
 
-def test_sqlite_store_round_trips_outcome_none_as_none_not_false(tmp_path: Path) -> None:
+def test_sqlite_store_round_trips_outcome_none_as_none_not_false(
+    tmp_path: Path,
+) -> None:
     unknown_outcome_case = Case(
         case_id="trial-unknown",
         signature=_NON_MATCH_QUERY,

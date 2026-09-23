@@ -198,7 +198,13 @@ class GitRecoveryDomain(D_):
         if not self.recovery_branch_exists_on_disk():
             return False
         result = subprocess.run(
-            ["git", "merge-base", "--is-ancestor", self.target_commit, self.base_branch],
+            [
+                "git",
+                "merge-base",
+                "--is-ancestor",
+                self.target_commit,
+                self.base_branch,
+            ],
             cwd=self.repo_dir,
             capture_output=True,
             text=True,

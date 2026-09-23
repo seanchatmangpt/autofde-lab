@@ -156,8 +156,6 @@ def test_check_soundness_transport_unavailable_when_binary_missing() -> None:
     )
 
     with pytest.raises(SoundnessBridgeError) as excinfo:
-        check_soundness(
-            request, executable="/nonexistent/path/to/soundness_cli_binary"
-        )
+        check_soundness(request, executable="/nonexistent/path/to/soundness_cli_binary")
 
     assert excinfo.value.code in ("TRANSPORT_FAILED", "TRANSPORT_UNAVAILABLE")

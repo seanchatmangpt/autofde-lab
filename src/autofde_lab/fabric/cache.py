@@ -30,10 +30,8 @@ from typing import Any, Iterator
 from autofde_lab.fabric.canonical import canonical_json
 
 # Persisted envelope identifier -- see autofde_lab.schema_ids.
-from autofde_lab.schema_ids import (  # noqa: E402
-    ACCEPTED_CACHE_SCHEMAS,
+from autofde_lab.schema_ids import (
     CACHE_SCHEMA as _CACHE_SCHEMA,
-    LEGACY_CACHE_SCHEMAS,
 )
 
 

@@ -39,9 +39,9 @@ from pathlib import Path
 import pytest
 
 from autofde_lab.hub.domain.gym_procedure.level4_crown import (
+    _EXECUTE_SCRIPT,
     GYMACT,
     GYMACT_VENV_PYTHON,
-    _EXECUTE_SCRIPT,
 )
 
 pytestmark = pytest.mark.skipif(
@@ -61,14 +61,21 @@ def test_execute_script_reports_typed_refusal_not_a_crash(tmp_path: Path) -> Non
 
     completed = subprocess.run(
         [
-            str(GYMACT_VENV_PYTHON), str(script),
-            "gymact.gyms.cube_counter", "CubeCounterProvider",
+            str(GYMACT_VENV_PYTHON),
+            str(script),
+            "gymact.gyms.cube_counter",
+            "CubeCounterProvider",
             "WRONG-NAME-NOT-REGISTERED",  # deterministic refusal trigger
-            json.dumps({"target": 3}), json.dumps(["increment"]),
-            json.dumps([{"counter": 1, "solved": False}]), json.dumps([{}]),
+            json.dumps({"target": 3}),
+            json.dumps(["increment"]),
+            json.dumps([{"counter": 1, "solved": False}]),
+            json.dumps([{}]),
             str(ledger_path),
         ],
-        capture_output=True, text=True, cwd=str(GYMACT), timeout=60,
+        capture_output=True,
+        text=True,
+        cwd=str(GYMACT),
+        timeout=60,
     )
 
     assert completed.returncode == 0, (

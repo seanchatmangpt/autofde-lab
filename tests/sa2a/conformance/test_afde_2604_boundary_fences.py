@@ -86,15 +86,18 @@ _ADMITTABLE_TTL = """
 _UNPARSEABLE_CANDIDATE = "not RDF at all, in any serialization"
 
 
-def _boundary(tmp_path: Path, name: str, broker: AuthorityBroker) -> tuple[
-    ConsequenceBoundary, RealDiskJournalActuator, DurableDiskReceiptStore, Path
-]:
+def _boundary(
+    tmp_path: Path, name: str, broker: AuthorityBroker
+) -> tuple[ConsequenceBoundary, RealDiskJournalActuator, DurableDiskReceiptStore, Path]:
     journal = tmp_path / name / "journal.json"
     store = DurableDiskReceiptStore(tmp_path / name / "receipts")
     actuator = RealDiskJournalActuator(journal)
     verifier = IndependentDiskJournalVerifier(journal)
     boundary = ConsequenceBoundary(
-        authority_broker=broker, actuator=actuator, verifier=verifier, receipt_store=store
+        authority_broker=broker,
+        actuator=actuator,
+        verifier=verifier,
+        receipt_store=store,
     )
     return boundary, actuator, store, journal
 
@@ -128,7 +131,9 @@ def test_execute_admitted_refuses_missing_and_refused_admission_but_allows_admit
             target_resource_iri="urn:resource:fence-a",
         )
     )
-    boundary_a, actuator_a, _store_a, journal_a = _boundary(tmp_path, "fence_a", broker_a)
+    boundary_a, actuator_a, _store_a, journal_a = _boundary(
+        tmp_path, "fence_a", broker_a
+    )
     envelope_a = ExecutionEnvelope(
         idempotency_token="idemp-fence-a",
         action_iri=action,
@@ -156,7 +161,9 @@ def test_execute_admitted_refuses_missing_and_refused_admission_but_allows_admit
             target_resource_iri="urn:resource:fence-b",
         )
     )
-    boundary_b, actuator_b, _store_b, journal_b = _boundary(tmp_path, "fence_b", broker_b)
+    boundary_b, actuator_b, _store_b, journal_b = _boundary(
+        tmp_path, "fence_b", broker_b
+    )
     envelope_b = ExecutionEnvelope(
         idempotency_token="idemp-fence-b",
         action_iri=action,
@@ -174,7 +181,10 @@ def test_execute_admitted_refuses_missing_and_refused_admission_but_allows_admit
     # --- (1c) A real, ADMITTED AdmissionResult with a real grant: genuinely executes. ---
     admitted = pipeline.admit(
         _ADMITTABLE_TTL,
-        provenance_record={"issuer": "urn:issuer:any", "timestamp": "2026-09-16T00:00:00Z"},
+        provenance_record={
+            "issuer": "urn:issuer:any",
+            "timestamp": "2026-09-16T00:00:00Z",
+        },
     )
     assert admitted.standing == Standing.ADMITTED
 
@@ -187,7 +197,9 @@ def test_execute_admitted_refuses_missing_and_refused_admission_but_allows_admit
             target_resource_iri="urn:resource:fence-c",
         )
     )
-    boundary_c, actuator_c, _store_c, journal_c = _boundary(tmp_path, "fence_c", broker_c)
+    boundary_c, actuator_c, _store_c, journal_c = _boundary(
+        tmp_path, "fence_c", broker_c
+    )
     envelope_c = ExecutionEnvelope(
         idempotency_token="idemp-fence-c",
         action_iri=action,
@@ -250,7 +262,10 @@ def test_replay_under_different_never_granted_actor_is_refused(tmp_path: Path) -
 @prefix afl: <urn:autofde-lab:> .
 <{action}> afl:targetResource <{target}> .
 """,
-        provenance_record={"issuer": "urn:issuer:fence2", "timestamp": "2026-09-17T00:00:00Z"},
+        provenance_record={
+            "issuer": "urn:issuer:fence2",
+            "timestamp": "2026-09-17T00:00:00Z",
+        },
     )
     assert admitted.standing == Standing.ADMITTED
 
@@ -281,7 +296,9 @@ def test_replay_under_different_never_granted_actor_is_refused(tmp_path: Path) -
     assert legit_replay.replayed is True
     assert legit_replay.final_receipt is not None
     assert legit_replay.final_receipt.digest == first.final_receipt.digest
-    assert actuator.call_count == 1, "No new actuation for a legitimate same-actor replay."
+    assert actuator.call_count == 1, (
+        "No new actuation for a legitimate same-actor replay."
+    )
 
     # Adversary replay under a different, never-granted actor_id: refused.
     adversary_replay = boundary.execute(
@@ -299,8 +316,12 @@ def test_replay_under_different_never_granted_actor_is_refused(tmp_path: Path) -
     assert adversary_replay.replayed is True
     assert adversary_replay.final_receipt is not None
     assert adversary_replay.final_receipt.digest != first.final_receipt.digest
-    assert actuator.call_count == 1, "No new actuation for a refused adversary replay either."
-    assert journal.read_text(encoding="utf-8")  # unchanged, still just the one real entry
+    assert actuator.call_count == 1, (
+        "No new actuation for a refused adversary replay either."
+    )
+    assert journal.read_text(
+        encoding="utf-8"
+    )  # unchanged, still just the one real entry
 
 
 # ---------------------------------------------------------------------------
@@ -385,7 +406,10 @@ def test_forged_receipt_pair_is_refused_on_replay_despite_self_asserted_grant_id
 @prefix afl: <urn:autofde-lab:> .
 <{forged_action}> afl:targetResource <{forged_target}> .
 """,
-        provenance_record={"issuer": "urn:issuer:fence3-forged", "timestamp": "2026-09-17T00:00:00Z"},
+        provenance_record={
+            "issuer": "urn:issuer:fence3-forged",
+            "timestamp": "2026-09-17T00:00:00Z",
+        },
     )
     assert forged_admitted.standing == Standing.ADMITTED
     legit_admitted = pipeline.admit(
@@ -393,7 +417,10 @@ def test_forged_receipt_pair_is_refused_on_replay_despite_self_asserted_grant_id
 @prefix afl: <urn:autofde-lab:> .
 <{legit_action}> afl:targetResource <{legit_target}> .
 """,
-        provenance_record={"issuer": "urn:issuer:fence3-legit", "timestamp": "2026-09-17T00:00:00Z"},
+        provenance_record={
+            "issuer": "urn:issuer:fence3-legit",
+            "timestamp": "2026-09-17T00:00:00Z",
+        },
     )
     assert legit_admitted.standing == Standing.ADMITTED
 

@@ -1,0 +1,9 @@
+{
+  "wo": "AFDE-26922-07",
+  "title": "GALL-005 stacks: #161->#166, #160->#164/#165->#168",
+  "base_sha": "f5cc664bac7598d5cf53cab399876df300bb6b14",
+  "command": "merge origin/master into all 6 stack branches; resolve #168 CONFLICTING vs #165; add rdflib+pyshacl to qualification installs; gh pr merge bottom-up",
+  "exit": null,
+  "output_excerpt": "#168 conflict resolved (8c8afbda): #168's authority model kept, #165's verify_exact_evidence carried forward; latent test-helper repo_sha bug fixed (f'{index:x}'*40 -> f'{index:040x}'). 23 passed locally for test_gall_process_spine + test_gall_composition_crown. rdflib/pyshacl install fix pushed to all 7 gall/fabric branches. Merges pending CI.",
+  "standing": "IN_PROGRESS"
+}

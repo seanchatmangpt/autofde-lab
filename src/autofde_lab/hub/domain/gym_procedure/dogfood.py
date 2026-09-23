@@ -50,16 +50,16 @@ import json
 import re
 import sqlite3
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Optional, Sequence
 
-from autofde_lab.ocel.log import OcelLog
-from autofde_lab.ocel.refusals import OcelError
 from autofde_lab.hub.domain.gym_procedure.typed_induction import (
     TypedDomain,
     induce_typed_domain,
 )
+from autofde_lab.ocel.log import OcelLog
+from autofde_lab.ocel.refusals import OcelError
 
 __all__ = [
     "MIN_EPISODES_FOR_RANKING",
@@ -120,7 +120,9 @@ class Unknown:
 
 
 def _absent(question: str, paths: Sequence[Path | str], detail: str) -> Unknown:
-    return Unknown(question=question, absent=tuple(str(p) for p in paths), detail=detail)
+    return Unknown(
+        question=question, absent=tuple(str(p) for p in paths), detail=detail
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -495,7 +497,9 @@ def compare_discovered_model_vs_observed(
     if act_receipts:
         sources.append(str(trial / "actuation" / "receipts.sqlite3"))
     else:
-        unresolved.append(str(trial / "actuation" / "receipts.sqlite3") + "::act receipts")
+        unresolved.append(
+            str(trial / "actuation" / "receipts.sqlite3") + "::act receipts"
+        )
 
     per_action: list[ActionDivergence] = []
     state = dict(initial)
@@ -536,9 +540,7 @@ def compare_discovered_model_vs_observed(
                 f"(claimed dimensions={sorted(effect)})"
             )
         if not effect and world_changed is True:
-            divergences.append(
-                "MODEL_CLAIMED_NO_EFFECT_RECEIPT_SAYS_WORLD_CHANGED"
-            )
+            divergences.append("MODEL_CLAIMED_NO_EFFECT_RECEIPT_SAYS_WORLD_CHANGED")
         if receipt is None:
             divergences.append(
                 "NO_ACT_RECEIPT_FOR_THIS_STEP (absent, not observed-as-failed)"
@@ -676,7 +678,9 @@ class CandidateComparison:
             "candidates": [c.as_dict() for c in self.candidates],
             "agreeing_planners": list(self.agreeing_planners),
             "disagreeing_planners": list(self.disagreeing_planners),
-            "distinct_candidate_plans": [list(p) for p in self.distinct_candidate_plans],
+            "distinct_candidate_plans": [
+                list(p) for p in self.distinct_candidate_plans
+            ],
             "outcome_counts": dict(sorted(self.outcome_counts.items())),
             "sources": list(self.sources),
             "unresolved": list(self.unresolved),
@@ -935,7 +939,9 @@ class AdvisorySignals:
             "planner_agreement_counts": self.planner_agreement_counts,
             "planner_ranking": list(self.planner_ranking),
             "planner_failure_modes": dict(sorted(self.planner_failure_modes.items())),
-            "model_divergence_counts": dict(sorted(self.model_divergence_counts.items())),
+            "model_divergence_counts": dict(
+                sorted(self.model_divergence_counts.items())
+            ),
             "context_dependent_dimensions": dict(
                 sorted(self.context_dependent_dimensions.items())
             ),

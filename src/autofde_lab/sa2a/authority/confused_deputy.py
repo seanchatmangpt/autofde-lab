@@ -14,8 +14,7 @@ Enforces:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence
-
+from typing import Any, Dict, Optional, Sequence
 
 REFUSED_CONFUSED_DEPUTY = "REFUSED_CONFUSED_DEPUTY"
 REFUSED_UNAUTHORIZED_DELEGATION = "REFUSED_UNAUTHORIZED_DELEGATION"
@@ -24,6 +23,7 @@ REFUSED_UNAUTHORIZED_DELEGATION = "REFUSED_UNAUTHORIZED_DELEGATION"
 @dataclass(frozen=True)
 class DelegationHop:
     """A single hop in an A2A delegation chain."""
+
     caller_id: str
     target_agent_id: str
     delegated_grant_id: Optional[str] = None
@@ -34,6 +34,7 @@ class DelegationHop:
 @dataclass(frozen=True)
 class InvocationContext:
     """Context accompanying an action execution request across peers."""
+
     actor_id: str  # The immediate actor attempting actuation
     initiator_id: str  # The original principal initiating the request
     delegation_chain: Sequence[DelegationHop] = field(default_factory=tuple)
@@ -49,6 +50,7 @@ class InvocationContext:
 @dataclass(frozen=True)
 class DeputyGuardResult:
     """Outcome of evaluating confused deputy prevention rules."""
+
     allowed: bool
     refusal_code: Optional[str] = None
     reason: str = ""
@@ -57,7 +59,9 @@ class DeputyGuardResult:
 class ConfusedDeputyGuard:
     """Guard (§54) preventing confused deputy vulnerability in agent-to-agent interactions."""
 
-    def __init__(self, authorized_delegations: Optional[Dict[str, Sequence[str]]] = None):
+    def __init__(
+        self, authorized_delegations: Optional[Dict[str, Sequence[str]]] = None
+    ):
         """
         Args:
             authorized_delegations: Optional map of grant_id -> list of allowed delegating caller IDs.
@@ -106,7 +110,10 @@ class ConfusedDeputyGuard:
             # Check if grant is specifically authorized for delegation if mapping is configured
             if context.grant_id in self.authorized_delegations:
                 allowed_callers = self.authorized_delegations[context.grant_id]
-                if context.initiator_id not in allowed_callers and context.actor_id not in allowed_callers:
+                if (
+                    context.initiator_id not in allowed_callers
+                    and context.actor_id not in allowed_callers
+                ):
                     return DeputyGuardResult(
                         allowed=False,
                         refusal_code=REFUSED_UNAUTHORIZED_DELEGATION,

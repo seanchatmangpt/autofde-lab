@@ -69,43 +69,86 @@ def test_construction_refuses_every_malformed_shape_with_its_own_refusal():
     assert node_depth(deep) == MAX_POWL_DEPTH
 
     cases = [
-        ("partial-order arity", lambda: PartialOrder(atoms(1)),
-         PowlRefusal.INVALID_PARTIAL_ORDER_ARITY),
-        ("choice-graph arity", lambda: ChoiceGraph(atoms(1)),
-         PowlRefusal.INVALID_CHOICE_ARITY),
-        ("cycle 0<->1", lambda: PartialOrder(atoms(3), E((0, 1), (1, 0))),
-         PowlRefusal.CYCLIC_PARTIAL_ORDER),
-        ("self-loop 0->0", lambda: PartialOrder(atoms(3), E((0, 0))),
-         PowlRefusal.CYCLIC_PARTIAL_ORDER),
-        ("3-cycle", lambda: PartialOrder(atoms(3), E((0, 1), (1, 2), (2, 0))),
-         PowlRefusal.CYCLIC_PARTIAL_ORDER),
-        ("dangling order index", lambda: PartialOrder(atoms(2), E((0, 5))),
-         PowlRefusal.DANGLING_REFERENCE),
-        ("start has an incoming edge", lambda: ChoiceGraph(
-            atoms(3),
-            frozenset({ChoiceGraphEdge(0, 2), ChoiceGraphEdge(2, 0)}),
-            start=0, end=1),
-         PowlRefusal.MULTI_BOUNDARY_CHOICE_GRAPH),
-        ("end has an outgoing edge", lambda: ChoiceGraph(
-            atoms(3),
-            frozenset({ChoiceGraphEdge(0, 1), ChoiceGraphEdge(1, 2)}),
-            start=0, end=1),
-         PowlRefusal.MULTI_BOUNDARY_CHOICE_GRAPH),
-        ("depth 9", lambda: PartialOrder((deep, Atom("x"))),
-         PowlRefusal.DEPTH_EXCEEDED),
-        ("OrderEdge inside a choice graph", lambda: ChoiceGraph(
-            atoms(2), frozenset({OrderEdge(0, 1)}), start=0, end=1),
-         PowlRefusal.EDGE_TYPE_MISMATCH),
-        ("ChoiceGraphEdge inside a partial order", lambda: PartialOrder(
-            atoms(2), frozenset({ChoiceGraphEdge(0, 1)})),
-         PowlRefusal.EDGE_TYPE_MISMATCH),
-        ("bare tuple is not an edge", lambda: PartialOrder(
-            atoms(2), frozenset({(0, 1)})),
-         PowlRefusal.EDGE_TYPE_MISMATCH),
-        ("frequency min > max", lambda: Frequency(min=3, max=2),
-         PowlRefusal.INVALID_FREQUENCY),
-        ("frequency negative min", lambda: Frequency(min=-1),
-         PowlRefusal.INVALID_FREQUENCY),
+        (
+            "partial-order arity",
+            lambda: PartialOrder(atoms(1)),
+            PowlRefusal.INVALID_PARTIAL_ORDER_ARITY,
+        ),
+        (
+            "choice-graph arity",
+            lambda: ChoiceGraph(atoms(1)),
+            PowlRefusal.INVALID_CHOICE_ARITY,
+        ),
+        (
+            "cycle 0<->1",
+            lambda: PartialOrder(atoms(3), E((0, 1), (1, 0))),
+            PowlRefusal.CYCLIC_PARTIAL_ORDER,
+        ),
+        (
+            "self-loop 0->0",
+            lambda: PartialOrder(atoms(3), E((0, 0))),
+            PowlRefusal.CYCLIC_PARTIAL_ORDER,
+        ),
+        (
+            "3-cycle",
+            lambda: PartialOrder(atoms(3), E((0, 1), (1, 2), (2, 0))),
+            PowlRefusal.CYCLIC_PARTIAL_ORDER,
+        ),
+        (
+            "dangling order index",
+            lambda: PartialOrder(atoms(2), E((0, 5))),
+            PowlRefusal.DANGLING_REFERENCE,
+        ),
+        (
+            "start has an incoming edge",
+            lambda: ChoiceGraph(
+                atoms(3),
+                frozenset({ChoiceGraphEdge(0, 2), ChoiceGraphEdge(2, 0)}),
+                start=0,
+                end=1,
+            ),
+            PowlRefusal.MULTI_BOUNDARY_CHOICE_GRAPH,
+        ),
+        (
+            "end has an outgoing edge",
+            lambda: ChoiceGraph(
+                atoms(3),
+                frozenset({ChoiceGraphEdge(0, 1), ChoiceGraphEdge(1, 2)}),
+                start=0,
+                end=1,
+            ),
+            PowlRefusal.MULTI_BOUNDARY_CHOICE_GRAPH,
+        ),
+        (
+            "depth 9",
+            lambda: PartialOrder((deep, Atom("x"))),
+            PowlRefusal.DEPTH_EXCEEDED,
+        ),
+        (
+            "OrderEdge inside a choice graph",
+            lambda: ChoiceGraph(atoms(2), frozenset({OrderEdge(0, 1)}), start=0, end=1),
+            PowlRefusal.EDGE_TYPE_MISMATCH,
+        ),
+        (
+            "ChoiceGraphEdge inside a partial order",
+            lambda: PartialOrder(atoms(2), frozenset({ChoiceGraphEdge(0, 1)})),
+            PowlRefusal.EDGE_TYPE_MISMATCH,
+        ),
+        (
+            "bare tuple is not an edge",
+            lambda: PartialOrder(atoms(2), frozenset({(0, 1)})),
+            PowlRefusal.EDGE_TYPE_MISMATCH,
+        ),
+        (
+            "frequency min > max",
+            lambda: Frequency(min=3, max=2),
+            PowlRefusal.INVALID_FREQUENCY,
+        ),
+        (
+            "frequency negative min",
+            lambda: Frequency(min=-1),
+            PowlRefusal.INVALID_FREQUENCY,
+        ),
     ]
 
     failures = Failures()
@@ -243,10 +286,16 @@ def test_node_id_is_stable_where_it_must_be_and_sensitive_where_it_must_be():
     plain = PartialOrder(atoms(3), E((0, 1), (1, 2)))
 
     same = [
-        ("edge-input order", PartialOrder(atoms(n), frozenset(sorted(edges))),
-         PartialOrder(atoms(n), frozenset(sorted(edges, reverse=True)))),
-        ("closure vs reduction input", PartialOrder(atoms(n), frozenset(sorted(edges))),
-         PartialOrder(atoms(n), transitive_closure(edges, n))),
+        (
+            "edge-input order",
+            PartialOrder(atoms(n), frozenset(sorted(edges))),
+            PartialOrder(atoms(n), frozenset(sorted(edges, reverse=True))),
+        ),
+        (
+            "closure vs reduction input",
+            PartialOrder(atoms(n), frozenset(sorted(edges))),
+            PartialOrder(atoms(n), transitive_closure(edges, n)),
+        ),
         ("explicit shortcut edge", shortcut, plain),
     ]
     different = [

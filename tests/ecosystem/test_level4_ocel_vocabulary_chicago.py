@@ -101,12 +101,12 @@ def test_every_chain_event_and_object_type_is_backed_by_real_data(linked_trial) 
 
     # Populated + absent must partition the declared vocabulary. A term that
     # is in neither would be a silently dropped one.
-    assert set(report.populated_object_types) | {n for n, _ in report.absent_object_types} == set(
-        LEVEL4_OBJECT_TYPES
-    )
-    assert set(report.populated_event_types) | {n for n, _ in report.absent_event_types} == set(
-        LEVEL4_EVENT_TYPES
-    )
+    assert set(report.populated_object_types) | {
+        n for n, _ in report.absent_object_types
+    } == set(LEVEL4_OBJECT_TYPES)
+    assert set(report.populated_event_types) | {
+        n for n, _ in report.absent_event_types
+    } == set(LEVEL4_EVENT_TYPES)
 
     assert report.populated_object_types == LEVEL4_OBJECT_TYPES, (
         f"absent object types: {report.absent_object_types}"
@@ -134,7 +134,9 @@ def test_authority_envelope_carries_the_ref_and_omits_the_absent_evidence_ref(
     rows = _receipts(linked_trial)
     with_ref = [r for r in rows if r.get("authority_ref")]
     with_evidence = [r for r in rows if r.get("authority_evidence_ref")]
-    assert with_ref, "ledger carries no authority_ref at all; the premise of this test is gone"
+    assert with_ref, (
+        "ledger carries no authority_ref at all; the premise of this test is gone"
+    )
 
     built = build_level4_ocel(linked_trial)
     envelopes = [o for o in built.log.objects if o.object_type == "AuthorityEnvelope"]
@@ -180,11 +182,15 @@ def test_rebinding_a_commitment_to_a_different_episode_is_refused(linked_trial) 
     path = linked_trial / "actuation" / "commitment.ttl"
     before = path.read_text(encoding="utf-8")
     with pytest.raises(ValueError, match="COMMITMENT_ALREADY_BOUND"):
-        link_commitment_ttl(path, episode_id="a-different-episode", environment_id="urn:other")
+        link_commitment_ttl(
+            path, episode_id="a-different-episode", environment_id="urn:other"
+        )
     assert path.read_text(encoding="utf-8") == before, "a refused rebind must not write"
 
 
-def test_committed_sequence_and_actuated_capabilities_are_now_comparable(linked_trial) -> None:
+def test_committed_sequence_and_actuated_capabilities_are_now_comparable(
+    linked_trial,
+) -> None:
     """The conformance question itself, answered from the log alone.
 
     This is the payoff: with the join in place, the committed action sequence
@@ -202,7 +208,10 @@ def test_committed_sequence_and_actuated_capabilities_are_now_comparable(linked_
         if event.activity != "ActuationOpened":
             continue
         for link in built.log.event_object_links:
-            if link.event_id == event.id and by_id[link.object_id].object_type == "Capability":
+            if (
+                link.event_id == event.id
+                and by_id[link.object_id].object_type == "Capability"
+            ):
                 actuated.append(link.object_id)
 
     # Every committed action name appears in some exercised capability ref.
@@ -231,9 +240,13 @@ def test_o2o_edges_absent_from_the_gymact_export_are_present_here(linked_trial) 
     # parent references, so none is dropped and none invented.
     rows = _receipts(linked_trial)
     ids = {r["receipt_id"] for r in rows}
-    expected = sum(1 for r in rows for p in (r.get("parent_receipt_ids") or []) if p in ids)
+    expected = sum(
+        1 for r in rows for p in (r.get("parent_receipt_ids") or []) if p in ids
+    )
     assert expected > 0, "ledger records no parent_receipt_ids; premise gone"
-    actual = sum(1 for link in built.log.object_object_links if link.qualifier == "caused_by")
+    actual = sum(
+        1 for link in built.log.object_object_links if link.qualifier == "caused_by"
+    )
     assert actual == expected
 
     # The old gymact export, on the same trial, has no O2O table at all.
@@ -267,7 +280,9 @@ def test_roundtrip_through_ocel2_json_is_digest_stable(linked_trial) -> None:
     assert again.digest() == log.digest()
 
 
-def test_emitted_document_validates_against_the_published_ocel2_schema(linked_trial) -> None:
+def test_emitted_document_validates_against_the_published_ocel2_schema(
+    linked_trial,
+) -> None:
     jsonschema = pytest.importorskip(
         "jsonschema", reason="UNSUPPORTED: jsonschema not installed"
     )
@@ -286,8 +301,12 @@ def test_emitted_document_validates_against_the_published_ocel2_schema(linked_tr
     # stringifying real typed attributes, i.e. weakening the data to please a
     # test; asserting "only this error class" is the honest, and strictly
     # stronger-than-nothing, check -- any structural schema error still fails.
-    unexpected = [e for e in errors if not e.message.endswith("is not of type 'string'")]
-    assert not unexpected, "\n".join(f"{list(e.path)}: {e.message}" for e in unexpected[:10])
+    unexpected = [
+        e for e in errors if not e.message.endswith("is not of type 'string'")
+    ]
+    assert not unexpected, "\n".join(
+        f"{list(e.path)}: {e.message}" for e in unexpected[:10]
+    )
 
     # Every remaining error must sit on an attribute value whose declared type
     # is a non-string OCEL type -- not on an id, activity, timestamp or
@@ -331,7 +350,8 @@ def test_a_trial_without_a_ledger_reports_absence_not_emptiness(tmp_path) -> Non
     trial = tmp_path / "realtrial_7_deadbeef-0000-0000-0000-000000000000"
     trial.mkdir()
     (trial / "typed_probe_log.json").write_text(
-        json.dumps({"probe_log": [{"action": "mine", "applicable": True}]}), encoding="utf-8"
+        json.dumps({"probe_log": [{"action": "mine", "applicable": True}]}),
+        encoding="utf-8",
     )
 
     built = build_level4_ocel(trial)
@@ -340,7 +360,13 @@ def test_a_trial_without_a_ledger_reports_absence_not_emptiness(tmp_path) -> Non
     assert "Probe" in report.populated_object_types
 
     absent = {name: reason for name, reason in report.absent_object_types}
-    for name in ("Receipt", "Actuation", "Replay", "POWLCommitment", "AuthorityEnvelope"):
+    for name in (
+        "Receipt",
+        "Actuation",
+        "Replay",
+        "POWLCommitment",
+        "AuthorityEnvelope",
+    ):
         assert name in absent, f"{name} silently omitted rather than reported absent"
         assert absent[name], f"{name} absent with no reason given"
 

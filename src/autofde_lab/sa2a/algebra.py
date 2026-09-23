@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Mapping, Sequence, Set
+from typing import Mapping, Set
 
 
 class Standing(str, Enum):
@@ -167,10 +167,21 @@ def validate_refusal(standing: Standing, cause: RefusalCause | None) -> None:
     """Validate that non-admissible standings carry a valid RefusalCause (§42, §60)."""
     if standing in {Standing.REFUSED, Standing.BLOCKED, Standing.UNSUPPORTED}:
         if cause is None:
-            raise ValueError(f"Standing {standing.value} requires a specific RefusalCause (§42)")
+            raise ValueError(
+                f"Standing {standing.value} requires a specific RefusalCause (§42)"
+            )
         if standing == Standing.BLOCKED and not cause.value.startswith("BLOCKED_"):
-            raise ValueError(f"Standing BLOCKED requires a BLOCKED_* cause, got {cause.value}")
-        if standing == Standing.UNSUPPORTED and cause != RefusalCause.UNSUPPORTED_PROFILE:
-            raise ValueError(f"Standing UNSUPPORTED requires UNSUPPORTED_* cause, got {cause.value}")
+            raise ValueError(
+                f"Standing BLOCKED requires a BLOCKED_* cause, got {cause.value}"
+            )
+        if (
+            standing == Standing.UNSUPPORTED
+            and cause != RefusalCause.UNSUPPORTED_PROFILE
+        ):
+            raise ValueError(
+                f"Standing UNSUPPORTED requires UNSUPPORTED_* cause, got {cause.value}"
+            )
         if standing == Standing.REFUSED and not cause.value.startswith("REFUSED_"):
-            raise ValueError(f"Standing REFUSED requires a REFUSED_* cause, got {cause.value}")
+            raise ValueError(
+                f"Standing REFUSED requires a REFUSED_* cause, got {cause.value}"
+            )

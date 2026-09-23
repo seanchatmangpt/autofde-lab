@@ -99,7 +99,9 @@ def test_real_policy_reaches_the_full_grounded_state_space() -> None:
     policy = build_sa2a_v26_9_17_policy()
     problem = build_sa2a_v26_9_17_problem(goal_states=EXTENDED_GOAL_STATES)
 
-    check = check_candidate_policy(problem, policy, semantics=PolicySemantics.STRONG_CYCLIC)
+    check = check_candidate_policy(
+        problem, policy, semantics=PolicySemantics.STRONG_CYCLIC
+    )
 
     # Real, exact reachable-state count for this real, corrected grounding --
     # computed by actually running check_candidate_policy() this session.
@@ -110,7 +112,9 @@ def test_real_policy_reaches_the_full_grounded_state_space() -> None:
         assert typed_stopped in check.reachable_states
 
 
-def test_strong_semantics_rejects_the_real_repair_cycle_that_strong_cyclic_accepts() -> None:
+def test_strong_semantics_rejects_the_real_repair_cycle_that_strong_cyclic_accepts() -> (
+    None
+):
     """Isolates the real cycle: same graph, extended (typed-stop-accepting)
     goal set so missing/cannot-reach-goal are both empty either way -- the
     STRONG vs STRONG_CYCLIC difference below is caused by the repair/reroute
@@ -124,7 +128,9 @@ def test_strong_semantics_rejects_the_real_repair_cycle_that_strong_cyclic_accep
     problem = build_sa2a_v26_9_17_problem(goal_states=EXTENDED_GOAL_STATES)
 
     strong = check_candidate_policy(problem, policy, semantics=PolicySemantics.STRONG)
-    strong_cyclic = check_candidate_policy(problem, policy, semantics=PolicySemantics.STRONG_CYCLIC)
+    strong_cyclic = check_candidate_policy(
+        problem, policy, semantics=PolicySemantics.STRONG_CYCLIC
+    )
 
     assert not strong.missing_policy_states
     assert not strong.cannot_reach_goal_states
@@ -138,14 +144,19 @@ def test_strong_semantics_rejects_the_real_repair_cycle_that_strong_cyclic_accep
     # Every cyclic state belongs to verify-boundary-ggen's real
     # repair/reroute loop -- confirms the cycle is not spread across
     # unrelated steps.
-    assert all(state.startswith("verify-boundary-ggen/") for state in strong.non_goal_cycle_states)
+    assert all(
+        state.startswith("verify-boundary-ggen/")
+        for state in strong.non_goal_cycle_states
+    )
     assert "verify-boundary-ggen/build-broken" in strong.non_goal_cycle_states
     assert "verify-boundary-ggen/repair-reattempt" in strong.non_goal_cycle_states
     assert "verify-boundary-ggen/blocked" in strong.non_goal_cycle_states
     assert "verify-boundary-ggen/reroute-reattempt" in strong.non_goal_cycle_states
 
 
-def test_strict_goal_honestly_reports_typed_stop_states_as_unreachable_to_goal() -> None:
+def test_strict_goal_honestly_reports_typed_stop_states_as_unreachable_to_goal() -> (
+    None
+):
     """The real, unmodified check_candidate_policy() result under the strict
     goal framing (only "release-certified" counts as done). This pins the
     real, honest, negative result -- not adjusted to force validity."""
@@ -153,7 +164,9 @@ def test_strict_goal_honestly_reports_typed_stop_states_as_unreachable_to_goal()
     policy = build_sa2a_v26_9_17_policy()
     problem = build_sa2a_v26_9_17_problem(goal_states=STRICT_GOAL_STATES)
 
-    check = check_candidate_policy(problem, policy, semantics=PolicySemantics.STRONG_CYCLIC)
+    check = check_candidate_policy(
+        problem, policy, semantics=PolicySemantics.STRONG_CYCLIC
+    )
 
     assert not check.valid
     assert check.missing_policy_states == TYPED_STOPPED_STATES
@@ -162,7 +175,9 @@ def test_strict_goal_honestly_reports_typed_stop_states_as_unreachable_to_goal()
     assert check.dead_end_states == frozenset()
 
 
-def test_extended_goal_accepting_typed_stop_as_a_real_terminal_is_strong_cyclic_valid() -> None:
+def test_extended_goal_accepting_typed_stop_as_a_real_terminal_is_strong_cyclic_valid() -> (
+    None
+):
     """Same real graph, same real policy -- only the goal-state framing
     changes (typed-stop terminals are additionally accepted as a done
     state, matching this repo's absence-is-not-evidence.md: an honest,
@@ -172,7 +187,9 @@ def test_extended_goal_accepting_typed_stop_as_a_real_terminal_is_strong_cyclic_
     policy = build_sa2a_v26_9_17_policy()
     problem = build_sa2a_v26_9_17_problem(goal_states=EXTENDED_GOAL_STATES)
 
-    check = check_candidate_policy(problem, policy, semantics=PolicySemantics.STRONG_CYCLIC)
+    check = check_candidate_policy(
+        problem, policy, semantics=PolicySemantics.STRONG_CYCLIC
+    )
 
     assert check.valid
     assert check.missing_policy_states == frozenset()
@@ -188,15 +205,28 @@ def test_ash_a2a_representative_pair_closes_cleanly_without_repair() -> None:
 
     policy = build_sa2a_v26_9_17_policy()
     problem = build_sa2a_v26_9_17_problem(goal_states=EXTENDED_GOAL_STATES)
-    check = check_candidate_policy(problem, policy, semantics=PolicySemantics.STRONG_CYCLIC)
+    check = check_candidate_policy(
+        problem, policy, semantics=PolicySemantics.STRONG_CYCLIC
+    )
 
     assert "boundary/ash-a2a:cap-orchestration/pending" in check.reachable_states
     assert "boundary/ash-a2a:cap-orchestration/closed" in check.reachable_states
-    for suffix in ("build-broken", "blocked", "unsupported", "typed-stopped", "repair-reattempt", "reroute-reattempt"):
-        assert f"boundary/ash-a2a:cap-orchestration/{suffix}" not in check.reachable_states
+    for suffix in (
+        "build-broken",
+        "blocked",
+        "unsupported",
+        "typed-stopped",
+        "repair-reattempt",
+        "reroute-reattempt",
+    ):
+        assert (
+            f"boundary/ash-a2a:cap-orchestration/{suffix}" not in check.reachable_states
+        )
 
 
-def test_zero_unreceipted_actuation_still_fails_under_the_real_faithful_grounding() -> None:
+def test_zero_unreceipted_actuation_still_fails_under_the_real_faithful_grounding() -> (
+    None
+):
     """The adversarial finding from the superseded grounding
     (claim_holds=False: an actuated command's receipt-closing step can
     itself terminally fail) is re-checked here against the real,
@@ -215,7 +245,9 @@ def test_zero_unreceipted_actuation_still_fails_under_the_real_faithful_groundin
     # policy action -- that would silently hide this exact finding. STRICT
     # goal states are the framing that lets missing_policy_states show it.
     problem = build_sa2a_v26_9_17_problem(goal_states=STRICT_GOAL_STATES)
-    check = check_candidate_policy(problem, policy, semantics=PolicySemantics.STRONG_CYCLIC)
+    check = check_candidate_policy(
+        problem, policy, semantics=PolicySemantics.STRONG_CYCLIC
+    )
 
     # episode 2 reuses close-receipt's real predicates under the task's own
     # "-replay"-prefixed action name (close-replay-receipt) -- see the
@@ -276,7 +308,10 @@ def test_fond_hddl_frontier_closes_under_the_extended_goal_framing() -> None:
     witnesses = build_sa2a_v26_9_17_hierarchy_witnesses()
 
     check = check_fond_hddl_frontier_closure(
-        problem, policy, semantics=PolicySemantics.STRONG_CYCLIC, hierarchy_witnesses=witnesses
+        problem,
+        policy,
+        semantics=PolicySemantics.STRONG_CYCLIC,
+        hierarchy_witnesses=witnesses,
     )
 
     assert check.valid
@@ -287,7 +322,9 @@ def test_fond_hddl_frontier_closes_under_the_extended_goal_framing() -> None:
     assert check.claim_ceiling == "candidate_fond_hddl_frontier_only"
 
 
-def test_fond_hddl_frontier_carries_the_same_real_gap_under_the_strict_goal_framing() -> None:
+def test_fond_hddl_frontier_carries_the_same_real_gap_under_the_strict_goal_framing() -> (
+    None
+):
     """The frontier check cannot promote an invalid FOND policy (per
     fond_hddl.py's own docstring); confirms that against this real
     grounding's real strict-goal gap, not just the synthetic fixtures in
@@ -298,7 +335,10 @@ def test_fond_hddl_frontier_carries_the_same_real_gap_under_the_strict_goal_fram
     witnesses = build_sa2a_v26_9_17_hierarchy_witnesses()
 
     check = check_fond_hddl_frontier_closure(
-        problem, policy, semantics=PolicySemantics.STRONG_CYCLIC, hierarchy_witnesses=witnesses
+        problem,
+        policy,
+        semantics=PolicySemantics.STRONG_CYCLIC,
+        hierarchy_witnesses=witnesses,
     )
 
     assert not check.valid

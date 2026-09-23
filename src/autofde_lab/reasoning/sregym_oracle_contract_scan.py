@@ -42,7 +42,10 @@ import ast
 from dataclasses import dataclass
 from pathlib import Path
 
-from autofde_lab.reasoning.gymact_certification_types import OracleContractFinding, StandingValue
+from autofde_lab.reasoning.gymact_certification_types import (
+    OracleContractFinding,
+    StandingValue,
+)
 
 __all__ = ["OracleContractScanResult", "scan_sregym_oracle_contracts"]
 
@@ -83,7 +86,9 @@ def _classify_arg_shape(func: ast.FunctionDef | ast.AsyncFunctionDef) -> Standin
     # buckets. Closest-match reporting stays in `finding_source_file_ref`'s
     # sibling detail (the real positional arg list) rather than a fabricated
     # StandingValue member.
-    return StandingValue.VARARGS if (has_varargs or has_kwargs) else StandingValue.NO_ARGS
+    return (
+        StandingValue.VARARGS if (has_varargs or has_kwargs) else StandingValue.NO_ARGS
+    )
 
 
 def _returns_dict_literal(func: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
@@ -130,7 +135,9 @@ def _annotation_says_non_dict(func: ast.FunctionDef | ast.AsyncFunctionDef) -> b
     return "dict" not in annotation_text.lower()
 
 
-def _find_evaluate_methods(tree: ast.Module) -> list[tuple[str, ast.FunctionDef | ast.AsyncFunctionDef]]:
+def _find_evaluate_methods(
+    tree: ast.Module,
+) -> list[tuple[str, ast.FunctionDef | ast.AsyncFunctionDef]]:
     """Real, exhaustive walk: every `(class_name, evaluate_function_node)`
     pair for every class body containing a real `evaluate` method,
     anywhere in the module (including nested classes)."""
@@ -139,7 +146,10 @@ def _find_evaluate_methods(tree: ast.Module) -> list[tuple[str, ast.FunctionDef 
         if not isinstance(node, ast.ClassDef):
             continue
         for item in node.body:
-            if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) and item.name == "evaluate":
+            if (
+                isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and item.name == "evaluate"
+            ):
                 found.append((node.name, item))
     return found
 
@@ -169,7 +179,9 @@ def scan_sregym_oracle_contracts(oracles_dir: Path) -> OracleContractScanResult:
 
         for class_name, evaluate_func in _find_evaluate_methods(tree):
             arg_shape = _classify_arg_shape(evaluate_func)
-            mismatch = _annotation_says_non_dict(evaluate_func) and _returns_dict_literal(evaluate_func)
+            mismatch = _annotation_says_non_dict(
+                evaluate_func
+            ) and _returns_dict_literal(evaluate_func)
             findings.append(
                 OracleContractFinding(
                     finding_oracle_class_name=class_name,

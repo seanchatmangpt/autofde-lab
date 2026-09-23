@@ -94,7 +94,9 @@ def resolve_enabled_node(epoch: DecisionEpoch, action: Any) -> NodePath:
     ]
     if len(matches) == 1:
         return matches[0]
-    reason = "no enabled node matches" if not matches else "action->node is not injective"
+    reason = (
+        "no enabled node matches" if not matches else "action->node is not injective"
+    )
     raise AgentRefusal(
         AgentRefusalCode.ACTION_NODE_UNRESOLVED,
         f"{reason}; the node is never inferred from the action",

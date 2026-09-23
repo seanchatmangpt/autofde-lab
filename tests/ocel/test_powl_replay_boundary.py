@@ -67,7 +67,9 @@ assert "action_bindings" in inspect.signature(_rsf).parameters, (
 )
 
 
-def _assert_clean_interpreter_never_imports_forbidden_modules(extra_stmt: str = "") -> None:
+def _assert_clean_interpreter_never_imports_forbidden_modules(
+    extra_stmt: str = "",
+) -> None:
     """Run a real, fresh Python subprocess and inspect *its* ``sys.modules``.
 
     ``sys.modules`` is process-global mutable state. Checking it in-process
@@ -151,9 +153,7 @@ def test_replay_structural_fires_produces_ordered_ocel_trace() -> None:
     # The log validates cleanly (OCPQ Definition 2 structural laws).
     validated = log.validate()
 
-    fire_events = [
-        e for e in validated.events if e.activity == "powl_structural_fire"
-    ]
+    fire_events = [e for e in validated.events if e.activity == "powl_structural_fire"]
     assert len(fire_events) == len(plan_lines), (
         f"expected {len(plan_lines)} structural fires, got {len(fire_events)}"
     )
@@ -213,14 +213,10 @@ def test_replay_without_action_bindings_is_zero_actuation_by_default() -> None:
     model = plan_lines_to_powl_node(plan_lines)
 
     # No action_bindings supplied -- the default call shape.
-    log = replay_structural_fires(
-        model, session_id="test-session-no-action-bindings"
-    )
+    log = replay_structural_fires(model, session_id="test-session-no-action-bindings")
     validated = log.validate()
 
-    fire_events = [
-        e for e in validated.events if e.activity == "powl_structural_fire"
-    ]
+    fire_events = [e for e in validated.events if e.activity == "powl_structural_fire"]
     assert len(fire_events) == len(plan_lines), (
         f"expected {len(plan_lines)} structural fires, got {len(fire_events)}"
     )
@@ -301,9 +297,7 @@ def test_replay_action_bindings_are_scoped_to_exact_atom_label_no_leak() -> None
 
     # Structural replay still fires all four Atoms regardless of bindings --
     # bindings gate actuation, never structural advancement.
-    fire_events = [
-        e for e in validated.events if e.activity == "powl_structural_fire"
-    ]
+    fire_events = [e for e in validated.events if e.activity == "powl_structural_fire"]
     assert len(fire_events) == len(plan_lines)
 
     # The real, load-bearing assertion: exactly the bound label was

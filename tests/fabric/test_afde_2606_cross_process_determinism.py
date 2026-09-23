@@ -209,9 +209,7 @@ class TestLaw6CrossProcessDeterminism:
         plan_a, powl_a = run_a / "d.plan", run_a / "d.powl.ttl"
         plan_b, powl_b = run_b / "d.plan", run_b / "d.powl.ttl"
 
-        result_a = _run_engine_in_fresh_subprocess(
-            plan_a, powl_a, pythonhashseed="0"
-        )
+        result_a = _run_engine_in_fresh_subprocess(plan_a, powl_a, pythonhashseed="0")
         result_b = _run_engine_in_fresh_subprocess(
             plan_b, powl_b, pythonhashseed="424242"
         )

@@ -5,6 +5,7 @@ downgrade guard, and SA2A CLI (RFC-SA2A-001 v26.9.16).
 from __future__ import annotations
 
 import json
+
 import pytest
 from typer.testing import CliRunner
 
@@ -12,7 +13,6 @@ from autofde_lab.cli import app as root_cli_app
 from autofde_lab.sa2a.a2a_bridge.agent_card import (
     SA2A_PROFILE_V26_9_16,
     SemanticAgentCard,
-    SemanticCapability,
     create_default_sa2a_agent_card,
 )
 from autofde_lab.sa2a.a2a_bridge.downgrade_guard import (
@@ -35,7 +35,6 @@ from autofde_lab.sa2a.unknown.resolution import (
     UnknownQuery,
     UnknownResolutionPipeline,
 )
-
 
 runner = CliRunner()
 
@@ -289,7 +288,9 @@ def test_sa2a_cli_validate() -> None:
     assert data["status"] == "VALID"
 
     # Downgraded profile refusal
-    refusal_result = runner.invoke(sa2a_app, ["validate", "--profile", "v0.0-unsupported"])
+    refusal_result = runner.invoke(
+        sa2a_app, ["validate", "--profile", "v0.0-unsupported"]
+    )
     assert refusal_result.exit_code != 0
     refusal_data = json.loads(refusal_result.output)
     assert refusal_data["ok"] is False
@@ -297,10 +298,12 @@ def test_sa2a_cli_validate() -> None:
 
 
 def test_sa2a_cli_plan() -> None:
-    candidates_json = json.dumps([
-        {"item_id": "cand_x", "option_entropy": 2.0, "estimated_cost": 5.0},
-        {"item_id": "cand_y", "option_entropy": 1.0, "estimated_cost": 10.0},
-    ])
+    candidates_json = json.dumps(
+        [
+            {"item_id": "cand_x", "option_entropy": 2.0, "estimated_cost": 5.0},
+            {"item_id": "cand_y", "option_entropy": 1.0, "estimated_cost": 10.0},
+        ]
+    )
     result = runner.invoke(sa2a_app, ["plan", candidates_json, "--ticks", "500"])
     assert result.exit_code == 0
     data = json.loads(result.output)
@@ -311,13 +314,20 @@ def test_sa2a_cli_plan() -> None:
 
 def test_sa2a_cli_admit_and_execute() -> None:
     # Test admit
-    admit_result = runner.invoke(sa2a_app, [
-        "admit",
-        "-i", "cand_exec",
-        "-a", "ResourceBound <= 1024",
-        "-s", "engine_test",
-        "-e", '{"proof": "observed_pass"}',
-    ])
+    admit_result = runner.invoke(
+        sa2a_app,
+        [
+            "admit",
+            "-i",
+            "cand_exec",
+            "-a",
+            "ResourceBound <= 1024",
+            "-s",
+            "engine_test",
+            "-e",
+            '{"proof": "observed_pass"}',
+        ],
+    )
     assert admit_result.exit_code == 0
     data = json.loads(admit_result.output)
     assert data["ok"] is True
@@ -325,7 +335,9 @@ def test_sa2a_cli_admit_and_execute() -> None:
 
     # Test execute with compiled rule
     rules_json = json.dumps([["query_alpha", "ResultAlpha"]])
-    exec_result = runner.invoke(sa2a_app, ["execute", "query_alpha", "--rules", rules_json])
+    exec_result = runner.invoke(
+        sa2a_app, ["execute", "query_alpha", "--rules", rules_json]
+    )
     assert exec_result.exit_code == 0
     exec_data = json.loads(exec_result.output)
     assert exec_data["ok"] is True

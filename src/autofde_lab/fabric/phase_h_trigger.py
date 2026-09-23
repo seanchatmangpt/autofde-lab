@@ -430,8 +430,15 @@ def check_coverage_gap(
 def run_once(
     watch_file: Path = DEFAULT_WATCH_FILE,
     baseline_file: Path = DEFAULT_BASELINE_FILE,
+    coverage_state_file: Path = DEFAULT_COVERAGE_STATE_FILE,
 ) -> dict:
     """The Phase H tick: check drift; if triggered, solve unattended.
+
+    ``baseline_file`` and ``coverage_state_file`` let an unattended caller
+    (the scheduled phase-h-trigger workflow) keep ALL tick state outside the
+    tracked tree: the drift-absorbing baseline rewrite and the coverage-guard
+    skip counter are run artifacts, not source. Defaults preserve the
+    historical in-tree behavior exactly.
 
     Returns a dict describing what happened -- always includes the drift
     result; includes the solve receipt only if the trigger actually fired.
@@ -446,6 +453,10 @@ def run_once(
             "current_sha256": drift.current_sha256,
         },
         "triggered": False,
+        "state_files": {
+            "baseline_file": str(baseline_file),
+            "coverage_state_file": str(coverage_state_file),
+        },
     }
     if drift.drifted:
         receipt = unattended_solve()
@@ -464,7 +475,7 @@ def run_once(
         # unresolved drift does not re-trigger on the next tick.
         write_baseline(watch_file, baseline_file)
 
-    coverage = check_coverage_gap()
+    coverage = check_coverage_gap(state_file=coverage_state_file)
     result["coverage_gap"] = coverage
     result["coverage_triggered"] = bool(
         coverage.get("invoked") and coverage.get("closed")

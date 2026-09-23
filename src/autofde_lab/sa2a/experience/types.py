@@ -73,13 +73,17 @@ LAWFUL_EXPERIENCE_TRANSITIONS: Mapping[ExperienceState, Set[ExperienceState]] = 
 }
 
 
-def can_transition_experience(current: ExperienceState, target: ExperienceState) -> bool:
+def can_transition_experience(
+    current: ExperienceState, target: ExperienceState
+) -> bool:
     if current == target:
         return True
     return target in LAWFUL_EXPERIENCE_TRANSITIONS.get(current, set())
 
 
-def validate_experience_transition(current: ExperienceState, target: ExperienceState) -> None:
+def validate_experience_transition(
+    current: ExperienceState, target: ExperienceState
+) -> None:
     if not can_transition_experience(current, target):
         raise ValueError(
             f"Unlawful MachineExperience transition: cannot go from {current.value} to {target.value}"
@@ -133,14 +137,22 @@ class MachineExperience:
         return dataclasses.replace(
             self,
             state=new_state,
-            known_route_id=known_route_id if known_route_id is not None else self.known_route_id,
+            known_route_id=known_route_id
+            if known_route_id is not None
+            else self.known_route_id,
             qualification_receipt=(
-                qualification_receipt if qualification_receipt is not None else self.qualification_receipt
+                qualification_receipt
+                if qualification_receipt is not None
+                else self.qualification_receipt
             ),
-            refusal_code=refusal_code if refusal_code is not None else self.refusal_code,
+            refusal_code=refusal_code
+            if refusal_code is not None
+            else self.refusal_code,
         )
 
-    def is_invalidated_by(self, current_digests: Mapping[str, str]) -> tuple[bool, tuple[str, ...]]:
+    def is_invalidated_by(
+        self, current_digests: Mapping[str, str]
+    ) -> tuple[bool, tuple[str, ...]]:
         """Check every tracked dependency against its current digest (ARD §12).
 
         Returns (invalidated, changed_keys). A dependency this experience never

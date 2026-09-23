@@ -38,7 +38,11 @@ import os
 import rdflib
 
 from autofde_lab.fabric import pddl_engine
-from autofde_lab.fabric.rdf_domain import PD, compile_rdf_to_pddl, compile_rdf_to_pddl_files
+from autofde_lab.fabric.rdf_domain import (
+    PD,
+    compile_rdf_to_pddl,
+    compile_rdf_to_pddl_files,
+)
 
 FIXTURE = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
@@ -149,7 +153,10 @@ def test_reversible_capability_quota_override_solves(tmp_path):
     # Both quota-override and patch-resource-quota-hard achieve
     # quota-hard-set(res1); either is a valid real Astar plan for this
     # goal, so accept whichever the real solver found.
-    assert "quota-override res1" in plan_text or "patch-resource-quota-hard res1" in plan_text
+    assert (
+        "quota-override res1" in plan_text
+        or "patch-resource-quota-hard res1" in plan_text
+    )
 
 
 def test_approval_gated_capability_castle_schedule_solves(tmp_path):

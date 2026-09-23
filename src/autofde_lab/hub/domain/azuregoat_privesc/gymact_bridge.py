@@ -52,7 +52,12 @@ from gymact.models import Capability, Consequence
 
 from autofde_lab import utils
 
-from .azuregoat_privesc import ATTACK_STEPS, GOAL_FACT, AzureGoatPrivilegeEscalation, State
+from .azuregoat_privesc import (
+    ATTACK_STEPS,
+    GOAL_FACT,
+    AzureGoatPrivilegeEscalation,
+    State,
+)
 
 AZUREGOAT_PRIVESC_CAPABILITIES: tuple[Capability, ...] = tuple(
     Capability(
@@ -119,7 +124,9 @@ class AzureGoatPrivescEnvironment:
         self._ensure_open()
         return {"facts": sorted(self._state.facts)}
 
-    async def actuate(self, capability: Capability, payload: dict[str, Any]) -> dict[str, Any]:
+    async def actuate(
+        self, capability: Capability, payload: dict[str, Any]
+    ) -> dict[str, Any]:
         del payload
         self._ensure_open()
         step_id = capability.binding
@@ -140,7 +147,11 @@ class AzureGoatPrivescEnvironment:
                 f"{sorted(step.preconditions)!r} unmet, or already established)"
             )
 
-        expected_next = self._plan[self._plan_cursor] if self._plan_cursor < len(self._plan) else None
+        expected_next = (
+            self._plan[self._plan_cursor]
+            if self._plan_cursor < len(self._plan)
+            else None
+        )
         if step_id != expected_next:
             raise ActuationRefused(
                 f"refused: {step_id!r} is applicable but is not the real solved "

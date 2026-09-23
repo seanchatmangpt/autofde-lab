@@ -38,7 +38,9 @@ def _load_driver_module():
     without needing sregym's own package machinery (fastmcp/requests are real third-party
     deps available in this repo's own venv too, so the module body itself imports cleanly
     even though the pure functions below never touch those imports at call time)."""
-    spec = importlib.util.spec_from_file_location("autofde_lab_planner_driver", DRIVER_PATH)
+    spec = importlib.util.spec_from_file_location(
+        "autofde_lab_planner_driver", DRIVER_PATH
+    )
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     # driver.py inserts sregym's own root onto sys.path at import time (for `from logger import
@@ -57,7 +59,9 @@ def driver():
 
 def test_parse_deployment_list_handles_real_kubectl_jsonpath_output(driver):
     # Real shape kubectl produces for `-o jsonpath='{.items[*].metadata.name}'`.
-    assert driver.parse_deployment_list("frontend geo profile rate  reservation \n") == [
+    assert driver.parse_deployment_list(
+        "frontend geo profile rate  reservation \n"
+    ) == [
         "frontend",
         "geo",
         "profile",
@@ -118,7 +122,16 @@ _REAL_DEPLOYMENT_LIST = [
     "search",
     "user",
 ]
-_REAL_MICROSERVICE_NAMES = ["frontend", "geo", "profile", "rate", "recommendation", "reservation", "search", "user"]
+_REAL_MICROSERVICE_NAMES = [
+    "frontend",
+    "geo",
+    "profile",
+    "rate",
+    "recommendation",
+    "reservation",
+    "search",
+    "user",
+]
 
 
 def test_filter_traced_application_deployments_excludes_real_infra_sidecars(driver):
@@ -131,14 +144,24 @@ def test_filter_traced_application_deployments_excludes_real_infra_sidecars(driv
     lists many other deployments (consul, jaeger, mongodb, etc.) as being part of the
     mismatch/fault.') -- independent, convergent confirmation of the manually-diagnosed root
     cause. Real deployment list observed live this session (results/0809_0128)."""
-    in_scope = driver.filter_traced_application_deployments(_REAL_DEPLOYMENT_LIST, traced_services=[])
+    in_scope = driver.filter_traced_application_deployments(
+        _REAL_DEPLOYMENT_LIST, traced_services=[]
+    )
 
     assert set(in_scope) == set(_REAL_MICROSERVICE_NAMES)
-    for infra in ("consul", "jaeger", "memcached-profile", "mongodb-geo", "mongodb-user"):
+    for infra in (
+        "consul",
+        "jaeger",
+        "memcached-profile",
+        "mongodb-geo",
+        "mongodb-user",
+    ):
         assert infra not in in_scope
 
 
-def test_filter_traced_application_deployments_does_not_exclude_the_real_fault_when_tracing_is_incomplete(driver):
+def test_filter_traced_application_deployments_does_not_exclude_the_real_fault_when_tracing_is_incomplete(
+    driver,
+):
     """Regression test #2 for a second real defect this session's SECOND live trial exposed:
     an interim version of this driver used Jaeger's `get_services()` output as the sole
     ALLOW-list. Immediately after a fresh deployment, before the workload generator has
@@ -148,19 +171,27 @@ def test_filter_traced_application_deployments_does_not_exclude_the_real_fault_w
     that missed the real fault entirely. The fix: the deny-list (known infra product
     names) is the primary signal, deterministic and available immediately; a genuinely
     traced name is only ever used to ALLOW, never to exclude."""
-    incomplete_traced_services = ["reservation"]  # the real, live, incomplete signal observed
+    incomplete_traced_services = [
+        "reservation"
+    ]  # the real, live, incomplete signal observed
 
-    in_scope = driver.filter_traced_application_deployments(_REAL_DEPLOYMENT_LIST, incomplete_traced_services)
+    in_scope = driver.filter_traced_application_deployments(
+        _REAL_DEPLOYMENT_LIST, incomplete_traced_services
+    )
 
     assert "geo" in in_scope
     assert set(in_scope) == set(_REAL_MICROSERVICE_NAMES)
 
 
-def test_filter_traced_application_deployments_allows_a_traced_name_even_if_it_looks_like_infra(driver):
+def test_filter_traced_application_deployments_allows_a_traced_name_even_if_it_looks_like_infra(
+    driver,
+):
     """A deployment that has genuinely emitted traces is real, observed evidence of being
     application code and must be included even if its name happens to contain a generic
     infra-product token -- the traced signal is a real ALLOW override, not decoration."""
-    in_scope = driver.filter_traced_application_deployments(["redis-cache-service"], ["redis-cache-service"])
+    in_scope = driver.filter_traced_application_deployments(
+        ["redis-cache-service"], ["redis-cache-service"]
+    )
     assert in_scope == ["redis-cache-service"]
 
 
@@ -170,7 +201,9 @@ def test_find_mismatched_deployments_reports_none_when_everything_matches(driver
     assert driver.find_mismatched_deployments(observed, canonical) == []
 
 
-def test_build_diagnosis_text_never_leaks_a_fault_injectors_hardcoded_root_cause(driver):
+def test_build_diagnosis_text_never_leaks_a_fault_injectors_hardcoded_root_cause(
+    driver,
+):
     """Integrity check: the diagnosis text is built ONLY from the observed_images/canonical
     values passed in -- assert the real vendor fault-injector's own hardcoded root-cause
     vocabulary (verbatim strings from misconfig_app.py's real root_cause text) is absent
@@ -178,7 +211,10 @@ def test_build_diagnosis_text_never_leaks_a_fault_injectors_hardcoded_root_cause
     canonical = "ghcr.io/sregym/hotel-reservation:latest"
     observed = {"geo": "yinfangchen/geo:app3"}
     text = driver.build_diagnosis_text(
-        mismatched=["geo"], observed_images=observed, canonical_image=canonical, namespace="hotel-reservation"
+        mismatched=["geo"],
+        observed_images=observed,
+        canonical_image=canonical,
+        namespace="hotel-reservation",
     )
     assert "geo" in text
     assert "yinfangchen/geo:app3" in text
@@ -191,7 +227,10 @@ def test_build_diagnosis_text_never_leaks_a_fault_injectors_hardcoded_root_cause
 def test_build_diagnosis_text_reports_a_clean_scan_honestly(driver):
     canonical = "ghcr.io/sregym/hotel-reservation:latest"
     text = driver.build_diagnosis_text(
-        mismatched=[], observed_images={"geo": canonical}, canonical_image=canonical, namespace="hotel-reservation"
+        mismatched=[],
+        observed_images={"geo": canonical},
+        canonical_image=canonical,
+        namespace="hotel-reservation",
     )
     assert "No image misconfiguration detected" in text
 
@@ -210,9 +249,15 @@ def test_decide_mitigation_commands_builds_the_exact_real_kubectl_fix(driver):
 
 
 def test_decide_mitigation_commands_is_empty_when_nothing_is_mismatched(driver):
-    assert driver.decide_mitigation_commands(
-        mismatched=[], container_names={}, canonical_image="x", namespace="hotel-reservation"
-    ) == []
+    assert (
+        driver.decide_mitigation_commands(
+            mismatched=[],
+            container_names={},
+            canonical_image="x",
+            namespace="hotel-reservation",
+        )
+        == []
+    )
 
 
 # --- Generalization: revision-based anomaly detection for tiers with no known-correct image ---
@@ -237,21 +282,35 @@ def test_parse_revision_defaults_to_baseline_on_missing_annotation(driver):
 
 def test_find_deployments_with_elevated_revision_flags_only_real_divergence(driver):
     revisions = {"consul": 1, "mongodb-geo": 2, "jaeger": 1, "mongodb-rate": 3}
-    assert driver.find_deployments_with_elevated_revision(revisions) == ["mongodb-geo", "mongodb-rate"]
+    assert driver.find_deployments_with_elevated_revision(revisions) == [
+        "mongodb-geo",
+        "mongodb-rate",
+    ]
 
 
-def test_find_deployments_with_elevated_revision_reports_none_when_nothing_moved(driver):
-    assert driver.find_deployments_with_elevated_revision({"consul": 1, "jaeger": 1}) == []
+def test_find_deployments_with_elevated_revision_reports_none_when_nothing_moved(
+    driver,
+):
+    assert (
+        driver.find_deployments_with_elevated_revision({"consul": 1, "jaeger": 1}) == []
+    )
 
 
 def test_decide_rollback_commands_builds_the_exact_real_kubectl_undo_command(driver):
-    assert driver.decide_rollback_commands(anomalous_infra=["mongodb-geo"], namespace="hotel-reservation") == [
-        "kubectl rollout undo deployment/mongodb-geo -n hotel-reservation"
-    ]
-    assert driver.decide_rollback_commands(anomalous_infra=[], namespace="hotel-reservation") == []
+    assert driver.decide_rollback_commands(
+        anomalous_infra=["mongodb-geo"], namespace="hotel-reservation"
+    ) == ["kubectl rollout undo deployment/mongodb-geo -n hotel-reservation"]
+    assert (
+        driver.decide_rollback_commands(
+            anomalous_infra=[], namespace="hotel-reservation"
+        )
+        == []
+    )
 
 
-def test_build_diagnosis_text_reports_infra_anomalies_as_a_distinct_secondary_signal(driver):
+def test_build_diagnosis_text_reports_infra_anomalies_as_a_distinct_secondary_signal(
+    driver,
+):
     canonical = "ghcr.io/sregym/hotel-reservation:latest"
     text = driver.build_diagnosis_text(
         mismatched=[],
@@ -265,7 +324,9 @@ def test_build_diagnosis_text_reports_infra_anomalies_as_a_distinct_secondary_si
     assert "elevated deployment.kubernetes.io/revision" in text
 
 
-def test_canonical_hotel_reservation_image_matches_the_apps_own_real_source_constant(driver):
+def test_canonical_hotel_reservation_image_matches_the_apps_own_real_source_constant(
+    driver,
+):
     """Cross-checks against the real, checked-out `hotel_reservation.py` constant directly --
     not a duplicated/hand-copied string, avoiding this repo's own no-dual-bookkeeping trap.
 
@@ -276,14 +337,19 @@ def test_canonical_hotel_reservation_image_matches_the_apps_own_real_source_cons
     this repo's own `.venv` used for routine `just test` runs -- an environment gate
     (`UNSUPPORTED`, not incomplete work), named precisely rather than silently xfailed."""
     try:
-        from sregym.service.apps.hotel_reservation import HOTEL_RESERVATION_APPLICATION_IMAGE
+        from sregym.service.apps.hotel_reservation import (
+            HOTEL_RESERVATION_APPLICATION_IMAGE,
+        )
     except ModuleNotFoundError as e:
         pytest.skip(
             f"UNSUPPORTED:SREGYM_OWN_VENV_REQUIRED: {e} -- re-run with "
             f"{SREGYM_ROOT}/.venv/bin/python to exercise this import for real"
         )
 
-    assert driver.canonical_hotel_reservation_image() == HOTEL_RESERVATION_APPLICATION_IMAGE
+    assert (
+        driver.canonical_hotel_reservation_image()
+        == HOTEL_RESERVATION_APPLICATION_IMAGE
+    )
 
 
 # --- App-agnostic generalization: dynamic namespace + per-app canonical image ------------
@@ -296,9 +362,9 @@ def test_canonical_hotel_reservation_image_matches_the_apps_own_real_source_cons
 
 
 def test_parse_app_info_extracts_the_real_namespace(driver):
-    assert driver.parse_app_info({"app_name": "Social Network", "namespace": "social-network"}) == (
-        "social-network"
-    )
+    assert driver.parse_app_info(
+        {"app_name": "Social Network", "namespace": "social-network"}
+    ) == ("social-network")
 
 
 def test_parse_app_info_falls_back_to_the_module_default_on_missing_field(driver):
@@ -307,14 +373,19 @@ def test_parse_app_info_falls_back_to_the_module_default_on_missing_field(driver
 
 def test_canonical_image_for_app_knows_hotel_reservation(driver):
     try:
-        from sregym.service.apps.hotel_reservation import HOTEL_RESERVATION_APPLICATION_IMAGE
+        from sregym.service.apps.hotel_reservation import (
+            HOTEL_RESERVATION_APPLICATION_IMAGE,
+        )
     except ModuleNotFoundError as e:
         pytest.skip(
             f"UNSUPPORTED:SREGYM_OWN_VENV_REQUIRED: {e} -- re-run with "
             f"{SREGYM_ROOT}/.venv/bin/python to exercise this import for real"
         )
 
-    assert driver.canonical_image_for_app("Hotel Reservation") == HOTEL_RESERVATION_APPLICATION_IMAGE
+    assert (
+        driver.canonical_image_for_app("Hotel Reservation")
+        == HOTEL_RESERVATION_APPLICATION_IMAGE
+    )
 
 
 def test_canonical_image_for_app_is_honestly_none_for_an_unknown_app(driver):
@@ -339,7 +410,7 @@ def test_parse_replica_counts_handles_the_real_omitted_zero_quirk(driver):
 
 def test_parse_has_node_selector_detects_presence(driver):
     assert driver.parse_has_node_selector("") is False
-    assert driver.parse_has_node_selector('map[extra-node:true]') is True
+    assert driver.parse_has_node_selector("map[extra-node:true]") is True
 
 
 def test_find_deployments_with_unschedulable_pods_requires_both_real_signals(driver):
@@ -347,19 +418,21 @@ def test_find_deployments_with_unschedulable_pods_requires_both_real_signals(dri
     up) nor a nodeSelector alone (could be legitimately healthy on dedicated nodes) is
     sufficient -- only both together are flagged."""
     replica_counts = {
-        "user-service": (3, 0),   # unhealthy + has selector -> flagged
-        "geo": (3, 3),            # healthy + has selector -> not flagged
-        "starting-up": (3, 1),    # unhealthy, no selector -> not flagged
+        "user-service": (3, 0),  # unhealthy + has selector -> flagged
+        "geo": (3, 3),  # healthy + has selector -> not flagged
+        "starting-up": (3, 1),  # unhealthy, no selector -> not flagged
     }
     has_node_selector = {"user-service": True, "geo": True, "starting-up": False}
-    assert driver.find_deployments_with_unschedulable_pods(replica_counts, has_node_selector) == [
-        "user-service"
-    ]
+    assert driver.find_deployments_with_unschedulable_pods(
+        replica_counts, has_node_selector
+    ) == ["user-service"]
 
 
 def test_decide_remove_node_selector_commands_builds_the_exact_real_json_patch(driver):
-    assert driver.decide_remove_node_selector_commands(["user-service"], "social-network") == [
-        'kubectl patch deployment user-service -n social-network --type=json '
+    assert driver.decide_remove_node_selector_commands(
+        ["user-service"], "social-network"
+    ) == [
+        "kubectl patch deployment user-service -n social-network --type=json "
         '-p=\'[{"op": "remove", "path": "/spec/template/spec/nodeSelector"}]\''
     ]
     assert driver.decide_remove_node_selector_commands([], "social-network") == []
@@ -401,6 +474,7 @@ def test_agents_yaml_registers_the_new_planner_with_container_isolation_disabled
 # B1-extended: pod anti-affinity deadlock detection and remediation
 # -------------------------------------------------------------------------
 
+
 def test_parse_has_anti_affinity_returns_false_for_empty_output(driver):
     """An absent podAntiAffinity field prints nothing -- kubectl jsonpath behaviour for
     missing optional fields. parse_has_anti_affinity must return False for that signal."""
@@ -411,25 +485,32 @@ def test_parse_has_anti_affinity_returns_false_for_empty_output(driver):
 def test_parse_has_anti_affinity_returns_true_for_set_field(driver):
     """A live, real podAntiAffinity rule kubectl-jsonpath-encodes as a non-empty map string."""
     assert driver.parse_has_anti_affinity("map[requiredDuringScheduling:[...]]") is True
-    assert driver.parse_has_anti_affinity("{\"requiredDuringScheduling\":[]}") is True
+    assert driver.parse_has_anti_affinity('{"requiredDuringScheduling":[]}') is True
 
 
-def test_find_deployments_with_anti_affinity_deadlock_detects_pending_with_affinity(driver):
+def test_find_deployments_with_anti_affinity_deadlock_detects_pending_with_affinity(
+    driver,
+):
     """Only the deployment with BOTH fewer ready replicas AND an anti-affinity constraint
     should be flagged -- a deployment that is healthy (spec==ready) with anti-affinity must
     NOT be flagged, and a deployment with fewer readyReplicas but NO anti-affinity must
     NOT be flagged either (it is a capacity problem, not a constraint-removal target)."""
     replica_counts = {
-        "user-service": (2, 0),   # unready, has anti-affinity -> deadlocked
-        "geo": (2, 2),            # healthy, has anti-affinity -> NOT flagged
-        "profile": (1, 0),        # unready, no anti-affinity  -> NOT flagged (different issue)
+        "user-service": (2, 0),  # unready, has anti-affinity -> deadlocked
+        "geo": (2, 2),  # healthy, has anti-affinity -> NOT flagged
+        "profile": (
+            1,
+            0,
+        ),  # unready, no anti-affinity  -> NOT flagged (different issue)
     }
     has_anti_affinity = {
         "user-service": True,
         "geo": True,
         "profile": False,
     }
-    result = driver.find_deployments_with_anti_affinity_deadlock(replica_counts, has_anti_affinity)
+    result = driver.find_deployments_with_anti_affinity_deadlock(
+        replica_counts, has_anti_affinity
+    )
     assert result == ["user-service"]
 
 
@@ -437,9 +518,13 @@ def test_decide_remove_anti_affinity_commands_builds_exact_json_patch(driver):
     """The `podAntiAffinity` removal uses a JSON-patch `remove` op on the exact Kubernetes
     spec path -- same mechanism as nodeSelector removal, but targeting the `.affinity.podAntiAffinity`
     sub-field."""
-    cmds = driver.decide_remove_anti_affinity_commands(["user-service"], "social-network")
+    cmds = driver.decide_remove_anti_affinity_commands(
+        ["user-service"], "social-network"
+    )
     assert len(cmds) == 1
-    assert "kubectl patch deployment user-service -n social-network --type=json" in cmds[0]
+    assert (
+        "kubectl patch deployment user-service -n social-network --type=json" in cmds[0]
+    )
     assert "/spec/template/spec/affinity/podAntiAffinity" in cmds[0]
     assert driver.decide_remove_anti_affinity_commands([], "social-network") == []
 

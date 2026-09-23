@@ -116,7 +116,9 @@ def _read_violations(results_graph) -> tuple[str, ...]:
     )
 
 
-def verify_trial(trial_dir: Path, *, repo_root: Path | None = None) -> Level4VerificationResult:
+def verify_trial(
+    trial_dir: Path, *, repo_root: Path | None = None
+) -> Level4VerificationResult:
     """Project a real trial directory to a witness graph, then verify it.
 
     Imports `level4_witness` lazily -- see module docstring -- so callers
@@ -132,7 +134,9 @@ def verify_trial(trial_dir: Path, *, repo_root: Path | None = None) -> Level4Ver
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if len(argv) != 1:
-        print("usage: python -m autofde_lab.evidence.verify <trial_dir>", file=sys.stderr)
+        print(
+            "usage: python -m autofde_lab.evidence.verify <trial_dir>", file=sys.stderr
+        )
         return 2
     trial_dir = Path(argv[0])
     result = verify_trial(trial_dir)

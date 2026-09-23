@@ -112,7 +112,12 @@ class GymActKernel:
         return self._runtime.episode_ocel_log(real_id)
 
     def _log(
-        self, *, operation: str, subject: str, episode_id: str, attributes: dict[str, Any]
+        self,
+        *,
+        operation: str,
+        subject: str,
+        episode_id: str,
+        attributes: dict[str, Any],
     ) -> None:
         self.event_log.append(
             episode_id=episode_id,
@@ -139,7 +144,9 @@ class GymActKernel:
             episode_id=episode_id,
             attributes=log_attributes if log_attributes is not None else (result or {}),
         )
-        observation = Observation(episode_id=episode_id, subject=subject, result=result or {})
+        observation = Observation(
+            episode_id=episode_id, subject=subject, result=result or {}
+        )
         return ActuationResult(
             accepted=accepted,
             standing=standing,
@@ -244,7 +251,10 @@ class GymActKernel:
             standing=result.standing,
             result=state,
             receipt=result.receipt.receipt_id,
-            log_attributes={"standing": result.standing.value, "reason": result.receipt.reason},
+            log_attributes={
+                "standing": result.standing.value,
+                "reason": result.receipt.reason,
+            },
         )
 
     def observe(self, *, subject: str, episode_id: str) -> ActuationResult:
@@ -276,9 +286,13 @@ class GymActKernel:
         capability = payload.pop("capability", None)
         if capability is None:
             capabilities = self._runtime.capabilities(real_id)
-            do_capabilities = [c for c in capabilities if c.consequence is _RealConsequence.DO]
+            do_capabilities = [
+                c for c in capabilities if c.consequence is _RealConsequence.DO
+            ]
             capability = do_capabilities[0].iri if do_capabilities else ""
-        intent = _RealActuationIntent(episode_id=real_id, capability=capability, payload=payload)
+        intent = _RealActuationIntent(
+            episode_id=real_id, capability=capability, payload=payload
+        )
         result = _run_async(self._runtime.act(intent))
         state = result.observation.state if result.observation else {}
         return self._local_result(
@@ -289,7 +303,10 @@ class GymActKernel:
             standing=result.standing,
             result=state,
             receipt=result.receipt.receipt_id,
-            log_attributes={"standing": result.standing.value, "reason": result.receipt.reason},
+            log_attributes={
+                "standing": result.standing.value,
+                "reason": result.receipt.reason,
+            },
         )
 
     def verify(self, *, subject: str, episode_id: str) -> ActuationResult:
@@ -347,7 +364,10 @@ class GymActKernel:
             standing=receipt.standing,
             result=checkpoint,
             receipt=receipt.receipt_id,
-            log_attributes={"standing": receipt.standing.value, "reason": receipt.reason},
+            log_attributes={
+                "standing": receipt.standing.value,
+                "reason": receipt.reason,
+            },
         )
 
     def teardown(self, *, subject: str, episode_id: str) -> ActuationResult:
@@ -366,5 +386,8 @@ class GymActKernel:
             standing=receipt.standing,
             result=None,
             receipt=receipt.receipt_id,
-            log_attributes={"standing": receipt.standing.value, "reason": receipt.reason},
+            log_attributes={
+                "standing": receipt.standing.value,
+                "reason": receipt.reason,
+            },
         )

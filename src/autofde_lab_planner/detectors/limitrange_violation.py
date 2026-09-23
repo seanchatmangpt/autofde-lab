@@ -47,7 +47,11 @@ def detect_limitrange_violations(
 
         limits_spec = (lr.get("spec") or {}).get("limits") or []
         container_limit = next(
-            (item for item in limits_spec if isinstance(item, dict) and item.get("type") == "Container"),
+            (
+                item
+                for item in limits_spec
+                if isinstance(item, dict) and item.get("type") == "Container"
+            ),
             None,
         )
         if not container_limit:
@@ -84,8 +88,13 @@ def detect_limitrange_violations(
                     observed = requests.get(resource_name) or limits.get(resource_name)
 
                     if observed is None:
-                        has_default = resource_name in defaults or resource_name in default_requests
-                        if not has_default and (min_bound is not None or max_bound is not None):
+                        has_default = (
+                            resource_name in defaults
+                            or resource_name in default_requests
+                        )
+                        if not has_default and (
+                            min_bound is not None or max_bound is not None
+                        ):
                             faults.append(
                                 LimitRangeViolationFault(
                                     limitrange_name=lr_name,
@@ -177,7 +186,9 @@ def _parse_quantity(value: Any) -> float | None:
         return None
 
 
-def _to_item_list(data: dict[str, Any] | list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+def _to_item_list(
+    data: dict[str, Any] | list[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
     if not data:
         return []
     if isinstance(data, dict):

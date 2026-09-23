@@ -21,16 +21,16 @@ from __future__ import annotations
 import pytest
 
 from autofde_lab import D, DeterministicPlanningDomain, ImplicitSpace, Space, Value
-from autofde_lab.hub.domain.graph_domain.GraphDomain import (
-    ActionSpace,
-    GraphDomain,
-    GraphDomainUncertain,
-)
 from autofde_lab.hub.domain.graph_domain.graph_domain_builders.DFSExploration import (
     DFSExploration,
 )
 from autofde_lab.hub.domain.graph_domain.graph_domain_builders.FullSpaceExploration import (
     FullSpaceExploration,
+)
+from autofde_lab.hub.domain.graph_domain.GraphDomain import (
+    ActionSpace,
+    GraphDomain,
+    GraphDomainUncertain,
 )
 
 
@@ -294,6 +294,4 @@ class TestDFSExploration:
             transition_extractor=lambda s, a, s_prime: {"weight": 42.0},
             verbose=False,
         )
-        assert (
-            graph_domain.next_state_attributes[0]["right"]["weight"] == 42.0
-        )
+        assert graph_domain.next_state_attributes[0]["right"]["weight"] == 42.0

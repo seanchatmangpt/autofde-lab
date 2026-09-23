@@ -257,5 +257,3 @@ def test_choice_graph_shape_is_refused_by_name_not_silently_flattened():
         assert "UNSUPPORTED_NODE_SHAPE" in str(exc)
     else:  # pragma: no cover
         raise AssertionError("expected BridgeError for a ChoiceGraph")
-
-

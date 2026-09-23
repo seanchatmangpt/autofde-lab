@@ -75,11 +75,16 @@ def test_materialize_matches_the_real_command_this_session_actually_ran() -> Non
     argv, env = materialize_harbor_invocation(basis)
 
     assert argv == [
-        "harbor", "run",
-        "--agent", "terminus-2",
-        "--model", "hosted_vllm/gemma-4-26b-a4b-it",
-        "--path", "examples/tasks/hello-world",
-        "--ak", "api_base=http://127.0.0.1:8080/v1",
+        "harbor",
+        "run",
+        "--agent",
+        "terminus-2",
+        "--model",
+        "hosted_vllm/gemma-4-26b-a4b-it",
+        "--path",
+        "examples/tasks/hello-world",
+        "--ak",
+        "api_base=http://127.0.0.1:8080/v1",
         "--ak",
         'model_info={"max_input_tokens":32768,"max_output_tokens":4096,'
         '"input_cost_per_token":0,"output_cost_per_token":0}',
@@ -91,7 +96,9 @@ def test_materialize_refuses_an_unknown_planner_identity() -> None:
     from dataclasses import replace
 
     basis = current_harbor_terminus2_basis()
-    wrong = replace(basis, planner=replace(basis.planner, name="sregym:stratus:mitigation_agent"))
+    wrong = replace(
+        basis, planner=replace(basis.planner, name="sregym:stratus:mitigation_agent")
+    )
     with pytest.raises(ValueError, match="terminus-2 planner identity"):
         materialize_harbor_invocation(wrong)
 

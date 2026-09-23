@@ -147,7 +147,9 @@ def _seq(left: Iterable[Trace], right: Language, max_traces: int) -> Language:
     return frozenset(out)
 
 
-def _bounded_power(body: Language, freq: Frequency, max_traces: int, max_unrolls: int) -> Language:
+def _bounded_power(
+    body: Language, freq: Frequency, max_traces: int, max_unrolls: int
+) -> Language:
     """``boundedPower body frequency``, with ``max = None`` capped at ``max_unrolls``.
 
     A finite explicit upper bound greater than ``max_unrolls`` is a refusal
@@ -182,7 +184,9 @@ def _bounded_power(body: Language, freq: Frequency, max_traces: int, max_unrolls
 # ── PartialOrder: symbol-level merge respecting the closure ─────────────────
 
 
-def _merges(traces: tuple[Trace, ...], preds: tuple[frozenset[int], ...]) -> Iterator[Trace]:
+def _merges(
+    traces: tuple[Trace, ...], preds: tuple[frozenset[int], ...]
+) -> Iterator[Trace]:
     """Yield every merge of ``traces`` in which each child's symbols stay in
     order and, for every closure edge ``p -> i``, child ``p`` is *fully*
     consumed before any symbol of child ``i`` is emitted.
@@ -215,7 +219,9 @@ def _merges(traces: tuple[Trace, ...], preds: tuple[frozenset[int], ...]) -> Ite
     yield from rec()
 
 
-def _partial_order_body(node: PartialOrder, max_traces: int, max_unrolls: int) -> Language:
+def _partial_order_body(
+    node: PartialOrder, max_traces: int, max_unrolls: int
+) -> Language:
     n = len(node.children)
     preds = tuple(
         frozenset(e.src for e in node.closure if e.dst == i) for i in range(n)
@@ -263,9 +269,12 @@ def _walks(node: ChoiceGraph, max_unrolls: int) -> Iterator[tuple[int, ...]]:
     yield from rec(node.start)
 
 
-def _choice_graph_body(node: ChoiceGraph, max_traces: int, max_unrolls: int) -> Language:
+def _choice_graph_body(
+    node: ChoiceGraph, max_traces: int, max_unrolls: int
+) -> Language:
     child_langs = [
-        language(c, max_traces=max_traces, max_unrolls=max_unrolls) for c in node.children
+        language(c, max_traces=max_traces, max_unrolls=max_unrolls)
+        for c in node.children
     ]
     out: set[Trace] = set()
     for walk in _walks(node, max_unrolls):
@@ -367,9 +376,7 @@ def enabled_labels(node: PowlNode) -> frozenset[str]:
         if node.frequency.max == 0:
             return frozenset()
         n = len(node.children)
-        preds = [
-            frozenset(e.src for e in node.closure if e.dst == i) for i in range(n)
-        ]
+        preds = [frozenset(e.src for e in node.closure if e.dst == i) for i in range(n)]
         out: set[str] = set()
         for i in range(n):
             if all(_nullable(node.children[p]) for p in preds[i]):

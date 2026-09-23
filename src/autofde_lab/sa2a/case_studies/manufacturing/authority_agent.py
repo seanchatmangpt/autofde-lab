@@ -8,6 +8,7 @@ round", or global stopping — that is `runtime.py`'s job alone, per §2/§7.
 
 Only shared import allowed across builder modules, per §4: ocel_adapter.
 """
+
 from __future__ import annotations
 
 from autofde_lab.sa2a.case_studies.manufacturing.ocel_adapter import (

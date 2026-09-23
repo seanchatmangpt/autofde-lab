@@ -120,7 +120,9 @@ def check_canonical_gates(receipt: dict) -> tuple[bool, str]:
     if missing:
         return False, f"missing canonical_gates keys: {missing}"
 
-    not_true = [name for name in CANONICAL_GATE_NAMES if canonical_gates.get(name) is not True]
+    not_true = [
+        name for name in CANONICAL_GATE_NAMES if canonical_gates.get(name) is not True
+    ]
     if not_true:
         return False, f"canonical_gates not True for: {not_true}"
 
@@ -147,7 +149,10 @@ def check_gates_passed(receipt: dict) -> tuple[bool, str]:
     if not_true:
         return False, f"gates_passed not True for: {not_true}"
 
-    return True, f"gates_passed has exactly 12 entries, all true (keys={sorted(gates_passed.keys())})"
+    return (
+        True,
+        f"gates_passed has exactly 12 entries, all true (keys={sorted(gates_passed.keys())})",
+    )
 
 
 def check_exact_sha(receipt: dict, repo_root: Path) -> tuple[bool, str]:
@@ -171,17 +176,26 @@ def check_exact_sha(receipt: dict, repo_root: Path) -> tuple[bool, str]:
         return False, f"'git rev-parse HEAD' subprocess failed: {exc}"
 
     if result.returncode != 0:
-        return False, f"'git rev-parse HEAD' exited {result.returncode}: stderr={result.stderr.strip()!r}"
+        return (
+            False,
+            f"'git rev-parse HEAD' exited {result.returncode}: stderr={result.stderr.strip()!r}",
+        )
 
     current_head = result.stdout.strip()
     if receipt_sha == current_head:
-        return True, f"exact_sha {receipt_sha} == current 'git rev-parse HEAD' {current_head}"
+        return (
+            True,
+            f"exact_sha {receipt_sha} == current 'git rev-parse HEAD' {current_head}",
+        )
 
     # No prefix/short-SHA leniency: the receipt's top-level exact_sha field
     # is documented in runner.py as the full 40-char SHA. A lenient partial
     # match would silently paper over a stale receipt -- exactly the
     # confident-wrong-result absence-is-not-evidence.md warns against.
-    return False, f"exact_sha MISMATCH: receipt={receipt_sha!r} current HEAD={current_head!r}"
+    return (
+        False,
+        f"exact_sha MISMATCH: receipt={receipt_sha!r} current HEAD={current_head!r}",
+    )
 
 
 def _compute_receipt_digest(data: object) -> str:
@@ -259,14 +273,22 @@ def main(argv: list[str]) -> int:
         return 2
 
     if not isinstance(receipt, dict):
-        print(f"STANDING: BLOCKED:RECEIPT_NOT_A_JSON_OBJECT (top-level type={type(receipt).__name__})")
+        print(
+            f"STANDING: BLOCKED:RECEIPT_NOT_A_JSON_OBJECT (top-level type={type(receipt).__name__})"
+        )
         return 2
 
     checks = [
         ("1. canonical_gates: all 12 present and true", check_canonical_gates(receipt)),
         ("2. gates_passed: exactly 12 entries, all true", check_gates_passed(receipt)),
-        ("3. exact_sha matches real 'git rev-parse HEAD'", check_exact_sha(receipt, repo_root)),
-        ("4. receipt_digest recomputes to the stored value", check_receipt_digest(receipt)),
+        (
+            "3. exact_sha matches real 'git rev-parse HEAD'",
+            check_exact_sha(receipt, repo_root),
+        ),
+        (
+            "4. receipt_digest recomputes to the stored value",
+            check_receipt_digest(receipt),
+        ),
     ]
 
     print("-" * 78)
@@ -282,7 +304,9 @@ def main(argv: list[str]) -> int:
     if all_passed:
         print("STANDING: ALIVE")
         print("(all 4 independent checks passed against the stored receipt, recomputed")
-        print(" this session from stdlib only, with zero import of the producer module)")
+        print(
+            " this session from stdlib only, with zero import of the producer module)"
+        )
         return 0
 
     print("STANDING: BUILD_BROKEN")

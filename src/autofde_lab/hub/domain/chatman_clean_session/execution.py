@@ -105,9 +105,7 @@ def _invoke_broker(broker: Broker, intent: ActuationIntent) -> BrokerReceipt:
     return observed
 
 
-def _refusal_state(
-    state: SessionState, standing: str, reason: str
-) -> SessionState:
+def _refusal_state(state: SessionState, standing: str, reason: str) -> SessionState:
     return replace(
         state,
         stage=Stage.STANDING,
@@ -156,9 +154,7 @@ def execute_actions(
             executed.append(action)
 
     if state.stage is not Stage.STANDING:
-        raise ValueError(
-            f"plan ended before standing at stage {state.stage.value}"
-        )
+        raise ValueError(f"plan ended before standing at stage {state.stage.value}")
 
     return ExecutionReceipt.issue(
         task=domain.task,
@@ -201,9 +197,7 @@ def replay_execution(
                     "MISSING_BRCE_BROKER",
                 )
                 break
-            intent = domain.make_actuation_intent(
-                state, replay_of=prior.receipt_id
-            )
+            intent = domain.make_actuation_intent(state, replay_of=prior.receipt_id)
             receipt = _invoke_broker(broker, intent)
             broker_receipts.append(receipt)
             standing, reason = _admit_broker_standing(receipt)
@@ -217,9 +211,7 @@ def replay_execution(
             executed.append(action)
 
     if state.stage is not Stage.STANDING:
-        raise ValueError(
-            f"replay ended before standing at stage {state.stage.value}"
-        )
+        raise ValueError(f"replay ended before standing at stage {state.stage.value}")
 
     return ExecutionReceipt.issue(
         task=domain.task,

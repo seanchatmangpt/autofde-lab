@@ -23,7 +23,10 @@ import uuid
 from dataclasses import dataclass
 from typing import Optional
 
-from autofde_lab.sa2a.admission.meta_admission import MetaAdmissionRegistry, ValidatorKind
+from autofde_lab.sa2a.admission.meta_admission import (
+    MetaAdmissionRegistry,
+    ValidatorKind,
+)
 from autofde_lab.sa2a.experience.compiler import ArtifactRegistry
 from autofde_lab.sa2a.experience.types import ExperienceState, MachineExperience
 
@@ -84,7 +87,11 @@ class ExperienceAdmissionGate:
 
         # Stage 2: artifact integrity -- every referenced compiled artifact must
         # actually exist in the registry the compiler wrote it into.
-        missing = [aid for aid in experience.compiled_artifact_ids if self._artifacts.get(aid) is None]
+        missing = [
+            aid
+            for aid in experience.compiled_artifact_ids
+            if self._artifacts.get(aid) is None
+        ]
         if missing:
             return self._refuse(
                 experience,

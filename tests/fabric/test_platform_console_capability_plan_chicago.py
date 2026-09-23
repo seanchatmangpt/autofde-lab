@@ -73,7 +73,9 @@ def _find_ocel_diff_cli() -> str | None:
     ``release``, falls back to ``debug`` (both are real `cargo build`
     products, never a stub)."""
     for profile in ("release", "debug"):
-        candidate = os.path.join(WASM4PM_COMPAT_DIR, "target", profile, "examples", "ocel_diff_cli")
+        candidate = os.path.join(
+            WASM4PM_COMPAT_DIR, "target", profile, "examples", "ocel_diff_cli"
+        )
         if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
             return candidate
     return None
@@ -132,7 +134,9 @@ def _solve_real_plan(tmp_path) -> list[str]:
 
     graph = rdflib.Graph()
     graph.parse(FIXTURE, format="turtle")
-    assert list(graph.subjects(rdflib.RDF.type, PD.Domain)), "fixture must declare a pd:Domain"
+    assert list(graph.subjects(rdflib.RDF.type, PD.Domain)), (
+        "fixture must declare a pd:Domain"
+    )
 
     compile_rdf_to_pddl_files(FIXTURE, domain_p, problem_p)
     rc = pddl_engine.solve_to_plan_file(domain_p, problem_p, plan_p)
@@ -147,7 +151,9 @@ def _solve_real_plan(tmp_path) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-def test_ocel_diff_cli_matches_real_plan_step_effect_against_fixture_snapshots(tmp_path):
+def test_ocel_diff_cli_matches_real_plan_step_effect_against_fixture_snapshots(
+    tmp_path,
+):
     """Two hand-written fixture snapshots, shaped exactly like Phase 2's
     real ``CapabilityStateSnapshot.facts`` response type (``deployedCastle``,
     ``frozenOrg``, ``freezeOverrideApprovedOrg``, ``jobComplete``), plus the
@@ -178,7 +184,11 @@ def test_ocel_diff_cli_matches_real_plan_step_effect_against_fixture_snapshots(t
     result = _run_ocel_diff_cli(before, after, expected_effect, tmp_path)
 
     assert result["diff"]["changed"] == [
-        {"predicate": "freezeOverrideApprovedOrg", "old_value": False, "new_value": True}
+        {
+            "predicate": "freezeOverrideApprovedOrg",
+            "old_value": False,
+            "new_value": True,
+        }
     ]
     assert result["diff"]["added"] == {}
     assert result["match_result"]["matches"] is True
@@ -191,13 +201,19 @@ def test_ocel_diff_cli_catches_a_deliberately_mismatched_effect(tmp_path):
     assert the real Rust binary reports the real mismatch rather than
     silently passing."""
     before = {"jobComplete": {"inventory-components": None}}
-    after = {"jobComplete": {"inventory-components": None}}  # unchanged -- job never ran
-    expected_effect = {"jobComplete": {"inventory-components": True}}  # falsely declared as run
+    after = {
+        "jobComplete": {"inventory-components": None}
+    }  # unchanged -- job never ran
+    expected_effect = {
+        "jobComplete": {"inventory-components": True}
+    }  # falsely declared as run
 
     result = _run_ocel_diff_cli(before, after, expected_effect, tmp_path)
 
     assert result["match_result"]["matches"] is False
-    assert result["match_result"]["discrepancies"], "a real mismatch must be reported, not swallowed"
+    assert result["match_result"]["discrepancies"], (
+        "a real mismatch must be reported, not swallowed"
+    )
     assert any(
         "jobComplete" in d and "expected fact not present" in d
         for d in result["match_result"]["discrepancies"]
@@ -227,10 +243,11 @@ def test_real_plan_pre_snapshot_actuation_post_snapshot_and_diff_end_to_end(tmp_
     """
     import anyio
     import httpx
-
     from gymact.agent import AllowListCapabilityScope
     from gymact.gyms.ontology_gym import TieredAuthorityResolver
-    from gymact.gyms.platform_console_ontology_provider import build_platform_console_ontology_provider
+    from gymact.gyms.platform_console_ontology_provider import (
+        build_platform_console_ontology_provider,
+    )
     from gymact.kernel import GymAct
     from gymact.models import ActuationIntent, MaterializationIntent
 
@@ -275,7 +292,10 @@ def test_real_plan_pre_snapshot_actuation_post_snapshot_and_diff_end_to_end(tmp_
 
         from gymact.gyms.ontology_gym import capability_iri
 
-        task_iris = {t.identifier: capability_iri(provider_name=provider.name, task=t) for t in provider.tasks()}
+        task_iris = {
+            t.identifier: capability_iri(provider_name=provider.name, task=t)
+            for t in provider.tasks()
+        }
 
         gym = GymAct(
             authority_resolver=TieredAuthorityResolver(
@@ -283,12 +303,16 @@ def test_real_plan_pre_snapshot_actuation_post_snapshot_and_diff_end_to_end(tmp_
                 standard_ref=standard_ref,
                 elevated_ref=elevated_ref,
             ),
-            capability_scope=AllowListCapabilityScope({principal: frozenset(task_iris.values())}),
+            capability_scope=AllowListCapabilityScope(
+                {principal: frozenset(task_iris.values())}
+            ),
         )
         gym.register_provider(provider)
 
         materialization = await gym.materialize(
-            MaterializationIntent(provider=provider.name, config={}, principal=principal)
+            MaterializationIntent(
+                provider=provider.name, config={}, principal=principal
+            )
         )
         assert materialization.accepted, materialization.receipt.reason
         episode_id = materialization.episode.episode_id
@@ -302,7 +326,9 @@ def test_real_plan_pre_snapshot_actuation_post_snapshot_and_diff_end_to_end(tmp_
                 principal=principal,
             )
         )
-        assert results["freeze-override"].accepted, results["freeze-override"].receipt.reason
+        assert results["freeze-override"].accepted, results[
+            "freeze-override"
+        ].receipt.reason
 
         for verb_key, identifier in (
             ("v-inventory-components", "castle.verb.inventory-components"),
@@ -324,7 +350,9 @@ def test_real_plan_pre_snapshot_actuation_post_snapshot_and_diff_end_to_end(tmp_
 
     actuation_results = anyio.run(actuate_plan)
     for step_name, result in actuation_results.items():
-        assert result.accepted, f"plan step {step_name} did not actuate: {result.receipt.reason}"
+        assert result.accepted, (
+            f"plan step {step_name} did not actuate: {result.receipt.reason}"
+        )
 
     post_facts = fetch_snapshot()
 
@@ -334,4 +362,6 @@ def test_real_plan_pre_snapshot_actuation_post_snapshot_and_diff_end_to_end(tmp_
     expected_effect = {"freezeOverrideApprovedOrg": True}
     diff_result = _run_ocel_diff_cli(pre_facts, post_facts, expected_effect, tmp_path)
 
-    assert diff_result["match_result"]["matches"], diff_result["match_result"]["discrepancies"]
+    assert diff_result["match_result"]["matches"], diff_result["match_result"][
+        "discrepancies"
+    ]

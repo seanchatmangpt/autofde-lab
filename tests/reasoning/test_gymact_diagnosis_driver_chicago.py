@@ -42,7 +42,7 @@ import asyncio
 import json
 import time
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import pytest
 
@@ -113,7 +113,11 @@ _SERVICES: dict = {"items": []}
 _PODS_RECOVERED = {
     "items": [
         {
-            "metadata": {"name": f"api-{i}", "namespace": "social-network", "labels": {"app": "api"}},
+            "metadata": {
+                "name": f"api-{i}",
+                "namespace": "social-network",
+                "labels": {"app": "api"},
+            },
             "status": {"conditions": [{"type": "Ready", "status": "True"}]},
         }
         for i in range(2)
@@ -184,7 +188,9 @@ class _FakeSregymEnvironment:
             return {"after": {"diagnosis": payload.get("diagnosis")}}
         if capability.binding == "submit_mitigation":
             return {"after": {"mitigation": payload.get("mitigation")}}
-        raise AssertionError(f"unexpected real actuate() call for binding={capability.binding!r}")
+        raise AssertionError(
+            f"unexpected real actuate() call for binding={capability.binding!r}"
+        )
 
     async def verify(self, expected: dict) -> tuple[bool, dict]:
         self.call_log.append("verify")
@@ -257,7 +263,9 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
     remediate_phase = fake_env.call_log[8:11]
     suffix = fake_env.call_log[11:14]
 
-    assert prefix == ["verify"], "gymact_wait_for_deploy must fire before the observe block"
+    assert prefix == ["verify"], (
+        "gymact_wait_for_deploy must fire before the observe block"
+    )
 
     assert Counter(observe_phase) == Counter(
         {
@@ -280,7 +288,9 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
             "run_kubectl:pods": 1,
             "run_kubectl:services": 1,
         }
-    ), f"expected exactly the three distinct remediate-recheck reads, got {remediate_phase!r}"
+    ), (
+        f"expected exactly the three distinct remediate-recheck reads, got {remediate_phase!r}"
+    )
 
     assert suffix == ["submit_mitigation", "verify", "teardown"]
 
@@ -315,7 +325,9 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
         GYMACT_SUBMIT_MITIGATION_LABEL,
         GYMACT_VERIFY_LABEL,
     }
-    gymact_labels_in_fire_order = [label for label in fired_labels if label in gymact_all_labels]
+    gymact_labels_in_fire_order = [
+        label for label in fired_labels if label in gymact_all_labels
+    ]
     assert len(gymact_labels_in_fire_order) == 14
 
     assert gymact_labels_in_fire_order[0] == GYMACT_WAIT_FOR_DEPLOY_LABEL, (
@@ -332,7 +344,10 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
             GYMACT_CHECK_SERVICES_LABEL: 1,
         }
     )
-    assert gymact_labels_in_fire_order[6:8] == [GYMACT_SCAN_ANOMALIES_LABEL, GYMACT_SUBMIT_DIAGNOSIS_LABEL]
+    assert gymact_labels_in_fire_order[6:8] == [
+        GYMACT_SCAN_ANOMALIES_LABEL,
+        GYMACT_SUBMIT_DIAGNOSIS_LABEL,
+    ]
 
     remediate_block_labels = gymact_labels_in_fire_order[8:11]
     assert Counter(remediate_block_labels) == Counter(
@@ -382,7 +397,9 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
     # (mcp_server/kubectl_server_helper/kubectl_cmd_runner.py). Every real
     # command this driver ever sent (deployments/pods/services scan reads,
     # the remediate re-read) must now carry that literal prefix.
-    assert fake_env.kubectl_commands, "expected at least one real kubectl call to have fired"
+    assert fake_env.kubectl_commands, (
+        "expected at least one real kubectl call to have fired"
+    )
     for real_command in fake_env.kubectl_commands:
         assert real_command.startswith("kubectl "), (
             f"real command {real_command!r} is missing the literal 'kubectl' prefix the "
@@ -394,8 +411,12 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
     # only a field on the Python dataclass this function returns -- proven
     # here by reading it straight off `result.ocel_log`, never off
     # `result.verdict` (which the fix under test does not touch).
-    verdict_events = [e for e in result.ocel_log.events if e.activity == "gymact_verdict_computed"]
-    assert len(verdict_events) == 1, "expected exactly one real verdict-recording OCEL event"
+    verdict_events = [
+        e for e in result.ocel_log.events if e.activity == "gymact_verdict_computed"
+    ]
+    assert len(verdict_events) == 1, (
+        "expected exactly one real verdict-recording OCEL event"
+    )
     verdict_event = verdict_events[0]
     verdict_attrs = {a.key: a.value.value for a in verdict_event.attributes}
     assert verdict_attrs["standing"] == "CONFIRMED"
@@ -405,7 +426,9 @@ def test_run_gymact_mediated_diagnosis_is_driven_by_run_pipeline_structural_repl
     # no real object-centric relationship to the rest of the log.
     session_object_id = f"gymact-mediated-{result.problem_id}"
     linked_object_ids = {
-        link.object_id for link in result.ocel_log.event_object_links if link.event_id == verdict_event.id
+        link.object_id
+        for link in result.ocel_log.event_object_links
+        if link.event_id == verdict_event.id
     }
     assert session_object_id in linked_object_ids
 
@@ -423,7 +446,9 @@ class _FakeSregymEnvironmentRejectingKubectl(_FakeSregymEnvironment):
             self.kubectl_commands.append(payload.get("command", ""))
             return {
                 "result_text": [
-                    {"text": "Command Rejected: Only kubectl commands are allowed. Please check the command and try again."}
+                    {
+                        "text": "Command Rejected: Only kubectl commands are allowed. Please check the command and try again."
+                    }
                 ]
             }
         return await super().actuate(capability, payload)
@@ -455,7 +480,9 @@ def test_a_real_command_rejection_response_raises_rather_than_being_silently_abs
     # carries the real "kubectl " prefix, and that at least one really was
     # issued and rejected (the rejection is what makes the whole run raise,
     # asserted above via `pytest.raises`).
-    assert fake_env.kubectl_commands, "expected at least one real kubectl call to have fired"
+    assert fake_env.kubectl_commands, (
+        "expected at least one real kubectl call to have fired"
+    )
     for real_command in fake_env.kubectl_commands:
         assert real_command.startswith("kubectl "), (
             f"real command {real_command!r} is missing the literal 'kubectl' prefix"
@@ -484,7 +511,7 @@ class _FakeSregymEnvironmentRejectingOnlyNamespaceCheck(_FakeSregymEnvironment):
                     "result_text": [
                         {
                             "text": (
-                                'Command Rejected: Error executing kubectl command:\n'
+                                "Command Rejected: Error executing kubectl command:\n"
                                 'Error from server (NotFound): namespaces "does-not-exist" not found'
                             )
                         }
@@ -615,7 +642,9 @@ def test_teardown_failure_does_not_discard_an_already_computed_result():
     # already-computed CONFIRMED verdict.
     assert isinstance(result, GymactMediatedDiagnosisResult)
     assert result.verdict == OutcomeVerdict.CONFIRMED
-    assert fake_env.torn_down is True, "teardown was still attempted, just its failure didn't mask the result"
+    assert fake_env.torn_down is True, (
+        "teardown was still attempted, just its failure didn't mask the result"
+    )
 
 
 def test_namespace_is_resolved_from_the_real_problem_id_when_not_given_explicitly():
@@ -649,7 +678,9 @@ def test_namespace_is_resolved_from_the_real_problem_id_when_not_given_explicitl
         )
     )
 
-    real_deployments_command = next(c for c in fake_env.kubectl_commands if "deployments" in c)
+    real_deployments_command = next(
+        c for c in fake_env.kubectl_commands if "deployments" in c
+    )
     assert "-n hotel-reservation" in real_deployments_command, (
         f"real command {real_deployments_command!r} should have scanned the real "
         "hotel-reservation namespace, not the old hardcoded social-network default"

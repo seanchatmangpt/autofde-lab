@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 from typing import Any
+
 from autofde_lab_planner.models import MissingObjectFault
 
 # Services that are expected to exist per deployment (1:1 name-matched) across known apps.
 # When this is None (default), the detector uses revision evidence to narrow the search;
 # when provided explicitly (e.g. from a known-service-topology), it's used directly.
-_APPS_WITH_SERVICE_PER_DEPLOYMENT: frozenset[str] = frozenset({
-    "hotel-reservation",
-    "social-network",
-})
+_APPS_WITH_SERVICE_PER_DEPLOYMENT: frozenset[str] = frozenset(
+    {
+        "hotel-reservation",
+        "social-network",
+    }
+)
 
 
 def detect_missing_objects(
@@ -34,7 +37,9 @@ def detect_missing_objects(
     """
     # Import baselines inside function to avoid circular imports
     try:
-        from autofde_lab_planner.baselines.k8s_baselines import KNOWN_CONFIGMAP_BASELINES
+        from autofde_lab_planner.baselines.k8s_baselines import (
+            KNOWN_CONFIGMAP_BASELINES,
+        )
     except ImportError:
         KNOWN_CONFIGMAP_BASELINES = {}  # type: ignore[assignment]
     dep_items = _to_item_list(deployments_json)
@@ -81,7 +86,8 @@ def detect_missing_objects(
         # the diagnosis with false positives for apps (hotel-reservation, social-network) where
         # many deployments legitimately do not have a 1:1 Service.
         should_check_service = (
-            elevated_revision_deployments is None  # no hint => check all (legacy behaviour)
+            elevated_revision_deployments
+            is None  # no hint => check all (legacy behaviour)
             or dep_name in elevated_revision_deployments  # real anomaly evidence
         )
         if should_check_service:
@@ -250,7 +256,9 @@ def detect_missing_objects(
     dep_by_secret_mount: dict[str, str] = {}
     for dep in dep_items:
         d_name = (dep.get("metadata") or {}).get("name", "")
-        vols = (((dep.get("spec") or {}).get("template") or {}).get("spec") or {}).get("volumes") or []
+        vols = (((dep.get("spec") or {}).get("template") or {}).get("spec") or {}).get(
+            "volumes"
+        ) or []
         for v in vols:
             if not isinstance(v, dict):
                 continue
@@ -329,8 +337,9 @@ def detect_missing_objects(
     return faults
 
 
-
-def _to_item_list(data: dict[str, Any] | list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+def _to_item_list(
+    data: dict[str, Any] | list[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
     if not data:
         return []
     if isinstance(data, dict):
@@ -344,4 +353,3 @@ def _to_item_list(data: dict[str, Any] | list[dict[str, Any]] | None) -> list[di
     else:
         return []
     return [i for i in items if isinstance(i, dict)]
-

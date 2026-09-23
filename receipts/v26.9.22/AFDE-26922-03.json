@@ -1,0 +1,9 @@
+{
+  "wo": "AFDE-26922-03",
+  "title": "Refresh SA2A qualification receipts at exact subject",
+  "base_sha": "pending master landing",
+  "command": ".venv/bin/python scripts/run_chicago_qualification.py && .venv/bin/python scripts/verify_rfc_sa2a_002_qualification.py",
+  "exit": null,
+  "output_excerpt": "Deferred to the master landing merge so the receipts name the final exact subject SHA.",
+  "standing": "PENDING"
+}

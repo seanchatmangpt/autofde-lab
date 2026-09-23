@@ -60,7 +60,9 @@ def solver_timeout_rates(conn: sqlite3.Connection) -> list[dict]:
     ]
 
 
-def domain_refusal_rate(conn: sqlite3.Connection, since_ns: int | None = None) -> list[dict]:
+def domain_refusal_rate(
+    conn: sqlite3.Connection, since_ns: int | None = None
+) -> list[dict]:
     """Per-``Domain`` object: ``REFUSED`` fraction across ``decision_match``/``decision_solve``.
 
     Optionally windowed to events with ``timestamp_ns >= since_ns``.

@@ -91,6 +91,7 @@ def test_get_next_action_with_explicit_domain_argument(recipe):
         explicit = solver.get_next_action(observation, domain=external_domain)
 
     assert implicit == explicit
-    assert implicit in external_domain._get_applicable_actions_from(
-        observation
-    ).get_elements()
+    assert (
+        implicit
+        in external_domain._get_applicable_actions_from(observation).get_elements()
+    )

@@ -16,7 +16,10 @@ from pathlib import Path
 import pytest
 
 from autofde_lab.sa2a.episode.episode1 import Episode1Runner
-from autofde_lab.sa2a.episode.equivalence import build_topic_equivalence_predicate, topic_of
+from autofde_lab.sa2a.episode.equivalence import (
+    build_topic_equivalence_predicate,
+    topic_of,
+)
 from autofde_lab.sa2a.episode.generator import generate_fresh_equivalent_candidate
 from autofde_lab.sa2a.unknown.resolution import CandidateResolution, UnknownQuery
 
@@ -33,7 +36,9 @@ def _seed_candidate() -> CandidateResolution:
     )
 
 
-def test_generated_candidate_is_genuinely_different_from_seed_in_every_required_field() -> None:
+def test_generated_candidate_is_genuinely_different_from_seed_in_every_required_field() -> (
+    None
+):
     """ARD §64 item 6: candidate_id, subject text, source_identity, and
     evidence_payload must all differ from the seed -- not a trivial no-op edit."""
     seed = _seed_candidate()
@@ -48,7 +53,10 @@ def test_generated_candidate_is_genuinely_different_from_seed_in_every_required_
     seed_subject = seed.proposed_assertion.rsplit(" ", 1)[0]
     generated_subject = generated.proposed_assertion.rsplit(" ", 1)[0]
     assert seed_subject != generated_subject
-    assert len(generated_subject) - len(seed_subject) != 0 or generated_subject != seed_subject
+    assert (
+        len(generated_subject) - len(seed_subject) != 0
+        or generated_subject != seed_subject
+    )
 
 
 def test_generated_candidate_preserves_exact_topic_token() -> None:
@@ -69,7 +77,11 @@ def test_two_consecutive_different_indices_produce_different_text_same_topic() -
 
     assert first.proposed_assertion != second.proposed_assertion
     assert first.candidate_id != second.candidate_id
-    assert topic_of(first.proposed_assertion) == topic_of(second.proposed_assertion) == "requires-port"
+    assert (
+        topic_of(first.proposed_assertion)
+        == topic_of(second.proposed_assertion)
+        == "requires-port"
+    )
 
 
 def test_generation_is_deterministic_for_the_same_seed_and_index() -> None:
@@ -80,7 +92,9 @@ def test_generation_is_deterministic_for_the_same_seed_and_index() -> None:
     assert a.candidate_id == b.candidate_id
 
 
-def test_generator_never_reselects_the_seeds_own_subject_across_the_whole_pool() -> None:
+def test_generator_never_reselects_the_seeds_own_subject_across_the_whole_pool() -> (
+    None
+):
     """Real coverage sweep: no index, across a full pool cycle, ever reproduces the
     seed's own subject text -- the exclusion in generator.py is load-bearing, not
     merely likely to hold by chance."""
@@ -94,8 +108,13 @@ def test_generator_never_reselects_the_seeds_own_subject_across_the_whole_pool()
 
 def test_malformed_single_token_assertion_is_refused_not_silently_mangled() -> None:
     seed = CandidateResolution(
-        candidate_id="cand-malformed", query_id="q-malformed", proposed_assertion="onlyonetoken",
-        evidence_payload={}, source_identity="x", consumed_ticks=0, consumed_tokens=0,
+        candidate_id="cand-malformed",
+        query_id="q-malformed",
+        proposed_assertion="onlyonetoken",
+        evidence_payload={},
+        source_identity="x",
+        consumed_ticks=0,
+        consumed_tokens=0,
     )
     with pytest.raises(ValueError):
         generate_fresh_equivalent_candidate(seed=seed, index=0)
@@ -109,7 +128,9 @@ def test_generated_candidate_genuinely_resolves_known_via_real_known_route_regis
     `Episode1Runner` run) and confirm it genuinely resolves KNOWN via the real
     equivalence predicate -- observed by actually running it, not by construction."""
     runner1 = Episode1Runner(
-        state_dir=tmp_path / "state", journal_path=tmp_path / "journal.json", receipt_store_dir=tmp_path / "receipts"
+        state_dir=tmp_path / "state",
+        journal_path=tmp_path / "journal.json",
+        receipt_store_dir=tmp_path / "receipts",
     )
 
     def discover(query: UnknownQuery) -> CandidateResolution:
@@ -117,7 +138,9 @@ def test_generated_candidate_genuinely_resolves_known_via_real_known_route_regis
 
     ep1 = runner1.run(
         semantic_class_id="requires-port",
-        query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        query=UnknownQuery(
+            query_id="q-1", predicate_or_topic="service:api-gateway requires-port"
+        ),
         discover=discover,
         equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
         equivalence_predicate_id="pred-requires-port-v1",
@@ -135,7 +158,9 @@ def test_generated_candidate_genuinely_resolves_known_via_real_known_route_regis
     assert generated.proposed_assertion != "service:api-gateway requires-port"
 
     resolved_route = runner1.routes.lookup("requires-port", generated)
-    assert resolved_route is not None, "generated candidate must resolve KNOWN via the real equivalence predicate"
+    assert resolved_route is not None, (
+        "generated candidate must resolve KNOWN via the real equivalence predicate"
+    )
     assert resolved_route.route_id == ep1.machine_experience.known_route_id
 
 
@@ -146,7 +171,9 @@ def test_generated_candidate_from_a_different_semantic_class_seed_still_only_mat
     route's semantic class must not resolve KNOWN merely because SOME route
     exists (PRD §6.9/§6.10, mirroring the existing episode2 non-equivalent test)."""
     runner1 = Episode1Runner(
-        state_dir=tmp_path / "state", journal_path=tmp_path / "journal.json", receipt_store_dir=tmp_path / "receipts"
+        state_dir=tmp_path / "state",
+        journal_path=tmp_path / "journal.json",
+        receipt_store_dir=tmp_path / "receipts",
     )
 
     def discover(query: UnknownQuery) -> CandidateResolution:
@@ -154,7 +181,9 @@ def test_generated_candidate_from_a_different_semantic_class_seed_still_only_mat
 
     ep1 = runner1.run(
         semantic_class_id="requires-port",
-        query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        query=UnknownQuery(
+            query_id="q-1", predicate_or_topic="service:api-gateway requires-port"
+        ),
         discover=discover,
         equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
         equivalence_predicate_id="pred-requires-port-v1",
@@ -165,12 +194,21 @@ def test_generated_candidate_from_a_different_semantic_class_seed_still_only_mat
     assert ep1.episode.classification == "KNOWN"
 
     unrelated_seed = CandidateResolution(
-        candidate_id="cand-unrelated-seed", query_id="q-unrelated",
+        candidate_id="cand-unrelated-seed",
+        query_id="q-unrelated",
         proposed_assertion="service:database-cluster requires-replication-factor",
-        evidence_payload={}, source_identity="unrelated", consumed_ticks=0, consumed_tokens=0,
+        evidence_payload={},
+        source_identity="unrelated",
+        consumed_ticks=0,
+        consumed_tokens=0,
     )
-    generated_unrelated = generate_fresh_equivalent_candidate(seed=unrelated_seed, index=0)
-    assert topic_of(generated_unrelated.proposed_assertion) == "requires-replication-factor"
+    generated_unrelated = generate_fresh_equivalent_candidate(
+        seed=unrelated_seed, index=0
+    )
+    assert (
+        topic_of(generated_unrelated.proposed_assertion)
+        == "requires-replication-factor"
+    )
 
     resolved = runner1.routes.lookup("requires-port", generated_unrelated)
     assert resolved is None

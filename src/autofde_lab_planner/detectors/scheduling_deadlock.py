@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
+
 from autofde_lab_planner.models import SchedulingDeadlockFault
 
 
@@ -59,7 +60,9 @@ def detect_scheduling_deadlocks(
 
         pod_spec = ((dep.get("spec") or {}).get("template") or {}).get("spec") or {}
         affinity = pod_spec.get("affinity") or {}
-        has_anti_affinity = bool(affinity and isinstance(affinity, dict) and affinity.get("podAntiAffinity"))
+        has_anti_affinity = bool(
+            affinity and isinstance(affinity, dict) and affinity.get("podAntiAffinity")
+        )
         has_node_selector = bool(pod_spec.get("nodeSelector"))
 
         if is_unready and (has_anti_affinity or has_node_selector):
@@ -86,12 +89,18 @@ def detect_scheduling_deadlocks(
 def _is_pod_ready(pod: dict[str, Any]) -> bool:
     conditions = (pod.get("status") or {}).get("conditions") or []
     for cond in conditions:
-        if isinstance(cond, dict) and cond.get("type") == "Ready" and cond.get("status") == "True":
+        if (
+            isinstance(cond, dict)
+            and cond.get("type") == "Ready"
+            and cond.get("status") == "True"
+        ):
             return True
     return False
 
 
-def _to_item_list(data: dict[str, Any] | list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+def _to_item_list(
+    data: dict[str, Any] | list[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
     if not data:
         return []
     if isinstance(data, dict):
@@ -105,4 +114,3 @@ def _to_item_list(data: dict[str, Any] | list[dict[str, Any]] | None) -> list[di
     else:
         return []
     return [i for i in items if isinstance(i, dict)]
-

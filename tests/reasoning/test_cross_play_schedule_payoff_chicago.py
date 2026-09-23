@@ -28,7 +28,9 @@ from __future__ import annotations
 
 from autofde_lab.hub.domain.breach_clock import BreachClockDomain
 from autofde_lab.planner_league import PayoffHypergraph, PlannerLeague
-from autofde_lab.planner_league.cross_play_world_schedule import schedule_cross_play_for_world
+from autofde_lab.planner_league.cross_play_world_schedule import (
+    schedule_cross_play_for_world,
+)
 from autofde_lab.reasoning.cross_play_schedule_payoff import (
     ScheduledMatchPayoffOutcome,
     admit_cross_play_schedule_payoffs,
@@ -38,7 +40,10 @@ from autofde_lab.reasoning.cross_play_schedule_payoff import (
 def _real_schedule():
     league = PlannerLeague()
     return schedule_cross_play_for_world(
-        league, "cyber_incident", left_role_id="plan_constructor", right_role_id="plan_falsifier"
+        league,
+        "cyber_incident",
+        left_role_id="plan_constructor",
+        right_role_id="plan_falsifier",
     )
 
 
@@ -47,14 +52,19 @@ def test_admits_real_payoffs_for_a_bounded_subset_of_a_real_schedule() -> None:
     domain = BreachClockDomain()
     hypergraph = PayoffHypergraph()
 
-    outcomes = admit_cross_play_schedule_payoffs(schedule, domain, hypergraph=hypergraph, limit=3)
+    outcomes = admit_cross_play_schedule_payoffs(
+        schedule, domain, hypergraph=hypergraph, limit=3
+    )
 
     assert len(outcomes) == 3
     assert all(isinstance(o, ScheduledMatchPayoffOutcome) for o in outcomes)
     assert len(hypergraph.observations) == 3
     # Real, deterministic first-3 matches from cover_cross_play's own
     # covering order.
-    assert [(o.match.left_policy.planner_id, o.match.right_policy.planner_id) for o in outcomes] == [
+    assert [
+        (o.match.left_policy.planner_id, o.match.right_policy.planner_id)
+        for o in outcomes
+    ] == [
         ("AOstar", "AOstar"),
         ("AOstar", "Astar"),
         ("AOstar", "BFWS"),
@@ -70,7 +80,9 @@ def test_real_both_alive_match_scores_a_real_tie() -> None:
     domain = BreachClockDomain()
     hypergraph = PayoffHypergraph()
 
-    outcomes = admit_cross_play_schedule_payoffs(schedule, domain, hypergraph=hypergraph, limit=1)
+    outcomes = admit_cross_play_schedule_payoffs(
+        schedule, domain, hypergraph=hypergraph, limit=1
+    )
     outcome = outcomes[0]
 
     assert outcome.admitted
@@ -90,7 +102,9 @@ def test_real_unsupported_planner_scores_a_real_loss_never_a_crash() -> None:
     domain = BreachClockDomain()
     hypergraph = PayoffHypergraph()
 
-    outcomes = admit_cross_play_schedule_payoffs(schedule, domain, hypergraph=hypergraph, limit=3)
+    outcomes = admit_cross_play_schedule_payoffs(
+        schedule, domain, hypergraph=hypergraph, limit=3
+    )
     third = outcomes[2]
 
     assert third.match.right_policy.planner_id == "BFWS"
@@ -109,7 +123,9 @@ def test_refuses_a_non_positive_limit() -> None:
 
     for bad_limit in (0, -1):
         try:
-            admit_cross_play_schedule_payoffs(schedule, domain, hypergraph=hypergraph, limit=bad_limit)
+            admit_cross_play_schedule_payoffs(
+                schedule, domain, hypergraph=hypergraph, limit=bad_limit
+            )
             assert False, f"expected ValueError for limit={bad_limit}"
         except ValueError as exc:
             assert str(exc) == "REFUSED:LIMIT_MUST_BE_POSITIVE"
@@ -123,8 +139,12 @@ def test_receipt_ids_are_real_and_deterministic_across_independent_runs() -> Non
     hypergraph_a = PayoffHypergraph()
     hypergraph_b = PayoffHypergraph()
 
-    outcomes_a = admit_cross_play_schedule_payoffs(schedule, domain_a, hypergraph=hypergraph_a, limit=3)
-    outcomes_b = admit_cross_play_schedule_payoffs(schedule, domain_b, hypergraph=hypergraph_b, limit=3)
+    outcomes_a = admit_cross_play_schedule_payoffs(
+        schedule, domain_a, hypergraph=hypergraph_a, limit=3
+    )
+    outcomes_b = admit_cross_play_schedule_payoffs(
+        schedule, domain_b, hypergraph=hypergraph_b, limit=3
+    )
 
     receipt_ids_a = [o.observation.receipt_id for o in outcomes_a]
     receipt_ids_b = [o.observation.receipt_id for o in outcomes_b]

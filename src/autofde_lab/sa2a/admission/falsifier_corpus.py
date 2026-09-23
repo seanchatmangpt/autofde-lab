@@ -38,16 +38,18 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Tuple
+from typing import Any, Dict, Tuple
 
 from rdflib import Graph
 
 from autofde_lab.sa2a.admission.falsifiers import FalsifierSuite
-from autofde_lab.sa2a.composition.resolver import SubjectResolutionError, SubjectResolver
+from autofde_lab.sa2a.composition.resolver import (
+    SubjectResolutionError,
+    SubjectResolver,
+)
 
 _TTL_PREFIXES = (
-    "@prefix afl: <urn:autofde-lab:> .\n"
-    "@prefix prov: <http://www.w3.org/ns/prov#> .\n"
+    "@prefix afl: <urn:autofde-lab:> .\n@prefix prov: <http://www.w3.org/ns/prov#> .\n"
 )
 
 # --- Real adversarial RDF fixtures, one per default SPARQL ASK falsifier in
@@ -171,7 +173,9 @@ def _corpus_content_spec() -> Tuple[Tuple[str, str], ...]:
         assert fdef is not None, f"corpus references unknown default falsifier {name!r}"
         entries.append((name, fdef.query))
     for name, manifest in _COMPOSITION_FENCE_FIXTURES.items():
-        entries.append((name, json.dumps(manifest, sort_keys=True, separators=(",", ":"))))
+        entries.append(
+            (name, json.dumps(manifest, sort_keys=True, separators=(",", ":")))
+        )
     return tuple(sorted(entries))
 
 
@@ -180,7 +184,9 @@ def compute_falsifier_corpus_digest() -> str:
     never a run outcome). Stable across runs of the same code, changes whenever a
     falsifier query or fence fixture actually changes."""
     payload = {"entries": _corpus_content_spec()}
-    dumped = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    dumped = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
     return hashlib.sha256(dumped.encode("utf-8")).hexdigest()
 
 
@@ -192,7 +198,12 @@ def _run_sparql_trial(falsifier_id: str, fixture_ttl: str) -> FalsifierTrialResu
     defaults = FalsifierSuite(include_defaults=True)
     fdef = defaults.get_falsifier(falsifier_id)
     assert fdef is not None
-    suite.register(name=fdef.name, query=fdef.query, description=fdef.description, falsifier_id=fdef.falsifier_id)
+    suite.register(
+        name=fdef.name,
+        query=fdef.query,
+        description=fdef.description,
+        falsifier_id=fdef.falsifier_id,
+    )
 
     graph = Graph()
     graph.parse(data=fixture_ttl, format="turtle")
@@ -210,7 +221,9 @@ def _run_sparql_trial(falsifier_id: str, fixture_ttl: str) -> FalsifierTrialResu
     )
 
 
-def _run_composition_fence_trial(falsifier_id: str, bad_manifest: Dict[str, Any]) -> FalsifierTrialResult:
+def _run_composition_fence_trial(
+    falsifier_id: str, bad_manifest: Dict[str, Any]
+) -> FalsifierTrialResult:
     """Run exactly one composition-identity-fence trial: a deliberately malformed
     candidate manifest MUST be refused by the real `SubjectResolver` -- reused
     directly, never re-derived."""

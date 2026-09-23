@@ -59,9 +59,7 @@ def test_unknown_tool_is_still_refused():
     assert payload["status"] == "REFUSED:UNKNOWN_TOOL"
 
 
-@pytest.mark.parametrize(
-    "uri", ["autofde-lab://catalog", "skdecide://catalog"]
-)
+@pytest.mark.parametrize("uri", ["autofde-lab://catalog", "skdecide://catalog"])
 def test_both_catalog_uris_read(uri):
     response = bridge._mcp_response(
         {
@@ -100,10 +98,14 @@ def test_both_catalog_uris_are_advertised():
 
 @pytest.mark.parametrize("suffix", ["catalog", "describe"])
 def test_legacy_and_current_calls_produce_the_same_result_payload(suffix):
-    args = {"kind": "domains"} if suffix == "catalog" else {
-        "kind": "domain",
-        "name": "Maze",
-    }
+    args = (
+        {"kind": "domains"}
+        if suffix == "catalog"
+        else {
+            "kind": "domain",
+            "name": "Maze",
+        }
+    )
     legacy = bridge.execute_tool(runtime.LEGACY_TOOL_NAME_PREFIX + suffix, args)
     current = bridge.execute_tool(runtime.TOOL_NAME_PREFIX + suffix, args)
     assert legacy["ok"] is True

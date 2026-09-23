@@ -91,7 +91,9 @@ def test_force_latch_refusal_evidence_is_actively_sought_and_never_stacked(tmp_p
         "active experimentation found no refusal for force_latch; without it "
         "the action is modelled as unconditionally repeatable"
     )
-    assert act.repeatability_unknown is True, [e.describe() for e in act.effects.values()]
+    assert act.repeatability_unknown is True, [
+        e.describe() for e in act.effects.values()
+    ]
 
     # The mechanism really fires on the REAL induced model: a second
     # force_latch is inapplicable, so no such plan can ever be validated.
@@ -147,7 +149,9 @@ def test_toggle_switch_is_never_planned_twice(tmp_path):
         # never returning to its start.
         once = act.apply(initial)
         twice = act.apply(once)
-        without_toggles = lambda state: {k: v for k, v in state.items() if k != "toggles"}
+        without_toggles = lambda state: {
+            k: v for k, v in state.items() if k != "toggles"
+        }
         assert without_toggles(twice) == without_toggles(initial), name
         assert twice.get("toggles") == initial.get("toggles", 0) + 2, (
             name,
@@ -167,7 +171,9 @@ def test_burn_catalyst_is_never_planned_twice(tmp_path):
     domain, initial = _discover("resource_flow", config, tmp_path)
     act = domain.actions["burn_catalyst"]
     assert act.n_refusals >= 1, "no refusal evidence found for burn_catalyst"
-    assert act.repeatability_unknown is True, [e.describe() for e in act.effects.values()]
+    assert act.repeatability_unknown is True, [
+        e.describe() for e in act.effects.values()
+    ]
     assert domain.simulate(initial, ("burn_catalyst", "burn_catalyst")) is None
 
     goal, _expr = model_goal_predicate("resource_flow", initial, config)
@@ -192,7 +198,9 @@ def test_cube_counter_still_finds_three_increments(tmp_path):
     domain, initial = _discover("cube_counter", config, tmp_path)
     inc = domain.actions["increment"]
     assert inc.n_distinct_success_states >= 2, inc
-    assert inc.repeatability_unknown is False, [e.describe() for e in inc.effects.values()]
+    assert inc.repeatability_unknown is False, [
+        e.describe() for e in inc.effects.values()
+    ]
 
     goal, _expr = model_goal_predicate("cube_counter", initial, config)
     plan = search_plan_typed(domain, initial, goal, max_len=8)

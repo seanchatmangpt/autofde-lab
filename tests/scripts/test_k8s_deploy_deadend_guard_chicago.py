@@ -54,12 +54,21 @@ pytestmark = pytest.mark.skipif(
 @pytest.fixture
 def real_throwaway_namespace():
     ns = f"deadend-guard-test-{uuid.uuid4().hex[:8]}"
-    subprocess.run(["kubectl", "create", "namespace", ns], check=True, capture_output=True)
+    subprocess.run(
+        ["kubectl", "create", "namespace", ns], check=True, capture_output=True
+    )
     try:
         yield ns
     finally:
         subprocess.run(
-            ["kubectl", "delete", "namespace", ns, "--ignore-not-found", "--wait=false"],
+            [
+                "kubectl",
+                "delete",
+                "namespace",
+                ns,
+                "--ignore-not-found",
+                "--wait=false",
+            ],
             capture_output=True,
         )
 
@@ -70,7 +79,9 @@ def test_no_dead_end_on_a_namespace_with_no_pods(real_throwaway_namespace):
     assert result.dead_end_reasons == {}
 
 
-def test_real_unsatisfiable_node_selector_is_detected_as_a_dead_end(real_throwaway_namespace):
+def test_real_unsatisfiable_node_selector_is_detected_as_a_dead_end(
+    real_throwaway_namespace,
+):
     """A real pod requesting a node label that exists nowhere on this
     cluster reproduces the exact live failure mode observed this session
     (`FailedScheduling`) -- real kubectl apply, real event, real detection."""
@@ -108,7 +119,9 @@ spec:
     assert "FailedScheduling" in result.dead_end_reasons
 
 
-def test_wait_or_fail_fast_raises_dead_end_detected_not_timeout(real_throwaway_namespace):
+def test_wait_or_fail_fast_raises_dead_end_detected_not_timeout(
+    real_throwaway_namespace,
+):
     """The real, load-bearing behavior this module exists for: given a
     doomed deploy, wait_or_fail_fast must raise DeadEndDetected well before
     max_wait_s elapses -- proving it does NOT block for the full blind

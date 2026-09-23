@@ -27,9 +27,7 @@ subprocess.run(["unzip", "-o", "release.zip"])
 
 # get proper wheel name according to python version used
 wheel_pythonversion_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
-wheel_path = glob.glob(f"dist/autofde_lab*{wheel_pythonversion_tag}*manylinux*.whl")[
-    0
-]
+wheel_path = glob.glob(f"dist/autofde_lab*{wheel_pythonversion_tag}*manylinux*.whl")[0]
 
 skdecide_pip_spec = f"{wheel_path}[all]"
 

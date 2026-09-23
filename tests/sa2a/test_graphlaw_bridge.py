@@ -6,6 +6,7 @@ import hashlib
 import shutil
 
 import pytest
+
 from autofde_lab.sa2a.admission.graphlaw_bridge import (
     EXPECTED_ARTIFACT_SHA256,
     PRAXIS_WASMPKG_DIR,
@@ -53,7 +54,11 @@ def _build_minimal_wasm_with_import(module_name: str, field_name: str) -> bytes:
     type_section = b"\x01" + uleb128(len(type_content)) + type_content
     # Import section: one function import of type index 0.
     import_content = (
-        uleb128(1) + encoded_name(module_name) + encoded_name(field_name) + b"\x00" + uleb128(0)
+        uleb128(1)
+        + encoded_name(module_name)
+        + encoded_name(field_name)
+        + b"\x00"
+        + uleb128(0)
     )
     import_section = b"\x02" + uleb128(len(import_content)) + import_content
     return magic + type_section + import_section

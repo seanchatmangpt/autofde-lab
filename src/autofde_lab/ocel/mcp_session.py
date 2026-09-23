@@ -54,13 +54,17 @@ def append_tool_call_event(
         "standing": OcelAttributeValue.string(str(outcome["standing"])),
     }
     if "elapsed_s" in outcome:
-        attrs["elapsed_s"] = OcelAttributeValue.floating(round(float(outcome["elapsed_s"]), 3))
+        attrs["elapsed_s"] = OcelAttributeValue.floating(
+            round(float(outcome["elapsed_s"]), 3)
+        )
     for steps_key in ("steps_taken", "steps"):
         if steps_key in outcome:
             attrs["steps_taken"] = OcelAttributeValue.integer(int(outcome[steps_key]))
             break
     if outcome.get("receipt_sha256"):
-        attrs["receipt_sha256"] = OcelAttributeValue.string(str(outcome["receipt_sha256"]))
+        attrs["receipt_sha256"] = OcelAttributeValue.string(
+            str(outcome["receipt_sha256"])
+        )
     for detail_key in ("detail", "error"):
         if outcome.get(detail_key):
             attrs["detail"] = OcelAttributeValue.string(str(outcome[detail_key])[:500])

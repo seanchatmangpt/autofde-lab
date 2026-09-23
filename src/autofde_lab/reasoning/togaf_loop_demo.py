@@ -50,7 +50,14 @@ from autofde_lab.ocel.object_centric_conformance import (
     ObjectCentricConformanceResult,
     check_object_centric_conformance,
 )
-from autofde_lab.powl.algebra import Atom, ChoiceGraph, ChoiceGraphEdge, End, NodeId, Start
+from autofde_lab.powl.algebra import (
+    Atom,
+    ChoiceGraph,
+    ChoiceGraphEdge,
+    End,
+    NodeId,
+    Start,
+)
 from autofde_lab.powl.guard_executor import ExecutionContext, execute
 from autofde_lab.powl.validate import validate_model
 from autofde_lab.reasoning.laboratory import (
@@ -68,7 +75,11 @@ from autofde_lab.reasoning.togaf_artifacts import (
     StandingValue,
     StatementOfArchitectureWork,
 )
-from autofde_lab.reasoning.world_transformation_orchestrator import compute_delta, infer_desired_state, select_transformation
+from autofde_lab.reasoning.world_transformation_orchestrator import (
+    compute_delta,
+    infer_desired_state,
+    select_transformation,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -182,7 +193,9 @@ def _build_graph() -> ChoiceGraph:
     return ChoiceGraph(children=children, edges=frozenset(edges), start=0, end=1)
 
 
-def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCentricConformanceResult]:
+def run_full_togaf_loop_with_ocel() -> tuple[
+    OcelLog, dict[str, Any], ObjectCentricConformanceResult
+]:
     """Execute the real 20-phase TOGAF chain, emit one real OCEL 2.0 log,
     and self-check it with `check_object_centric_conformance`.
 
@@ -201,8 +214,15 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
         label = atom.label
         if label == "preliminary_identify_architecture_principles":
             rules_dir = REPO_ROOT / ".claude" / "rules"
-            principle_files = sorted(p.stem for p in rules_dir.glob("*.md")) if rules_dir.is_dir() else []
-            phase_results[label] = {"principle_count": len(principle_files), "principle_names": principle_files[:10]}
+            principle_files = (
+                sorted(p.stem for p in rules_dir.glob("*.md"))
+                if rules_dir.is_dir()
+                else []
+            )
+            phase_results[label] = {
+                "principle_count": len(principle_files),
+                "principle_names": principle_files[:10],
+            }
 
         elif label == "requirements_document_specification":
             hypotheses = infer_desired_state_hypotheses(metadata)
@@ -214,14 +234,21 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
             phase_results["_hypotheses"] = hypotheses
 
         elif label == "phase_a_confirm_constraints":
-            phase_results[label] = {"constraint_kinds": [c["kind"] for c in metadata.constraints]}
+            phase_results[label] = {
+                "constraint_kinds": [c["kind"] for c in metadata.constraints]
+            }
 
         elif label == "phase_a_architecture_vision_artifact":
             desired = infer_desired_state(metadata)
             candidate = ArchitectureCandidate(
                 candidate_id="checkout-latency-vision-v1",
-                target_state_assertions=tuple(f"{t['kind']} {t['comparator']} {t['threshold']}" for t in desired.targets),
-                requirement_satisfaction_claims=tuple(t["kind"] for t in desired.targets),
+                target_state_assertions=tuple(
+                    f"{t['kind']} {t['comparator']} {t['threshold']}"
+                    for t in desired.targets
+                ),
+                requirement_satisfaction_claims=tuple(
+                    t["kind"] for t in desired.targets
+                ),
                 provenance="rule-based",
                 generator_identity="world_transformation_orchestrator.infer_desired_state",
             )
@@ -240,7 +267,9 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
             # PendingHumanApproval, per fde-authority-boundary.md.
             candidate = phase_results.get("_architecture_candidate")
             sow = StatementOfArchitectureWork(
-                sow_scope=candidate.target_state_assertions if candidate is not None else (),
+                sow_scope=candidate.target_state_assertions
+                if candidate is not None
+                else (),
                 sow_approval_status=StandingValue.PendingHumanApproval.value,
             )
             phase_results[label] = {
@@ -280,8 +309,15 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
 
         elif label == "phase_c_data_and_application_model":
             constitution_dir = REPO_ROOT / "src" / "autofde_lab" / "constitution"
-            module_count = len(list(constitution_dir.glob("*.py"))) if constitution_dir.is_dir() else 0
-            phase_results[label] = {"ocel_object_model": "OcelObject/OcelEvent/EventObjectLink", "constitution_module_count": module_count}
+            module_count = (
+                len(list(constitution_dir.glob("*.py")))
+                if constitution_dir.is_dir()
+                else 0
+            )
+            phase_results[label] = {
+                "ocel_object_model": "OcelObject/OcelEvent/EventObjectLink",
+                "constitution_module_count": module_count,
+            }
 
         elif label == "phase_c_reference_model_selection":
             # Same real vocabulary as phase_b_reference_model_selection --
@@ -312,14 +348,19 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
             }
 
         elif label == "phase_e_business_constraints":
-            phase_results[label] = {"implementation_constraints": [c["kind"] for c in metadata.constraints]}
+            phase_results[label] = {
+                "implementation_constraints": [c["kind"] for c in metadata.constraints]
+            }
 
         elif label == "phase_e_consolidate_gap_analysis":
             desired = phase_results["_desired_state"]
             delta = compute_delta(metadata, desired)
             phase_results[label] = {
                 "delta_kinds": [d.kind for d in delta],
-                "delta_violated": [bool(d.violated) if d.violated is not None else "UNKNOWN" for d in delta],
+                "delta_violated": [
+                    bool(d.violated) if d.violated is not None else "UNKNOWN"
+                    for d in delta
+                ],
             }
 
         elif label == "phase_e_compute_delta_and_select_transformation":
@@ -339,7 +380,9 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
                 "node_count": len(graph.children),
                 "edge_count": len(graph.edges),
                 "phase_sequence": PHASE_SEQUENCE,
-                "selected_transformation": candidate.label if candidate is not None else "NONE",
+                "selected_transformation": candidate.label
+                if candidate is not None
+                else "NONE",
             }
 
         elif label == "phase_f_prioritize_via_falsification":
@@ -357,7 +400,11 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
                 candidate_id=arch_candidate.candidate_id,
                 target_world_ref="world:checkout-latency-v1",
                 initial_state_evidence_ref="scenario:checkout-latency-v1",
-                proposed_actions=(phase_results.get("phase_e_compute_delta_and_select_transformation", {}).get("candidate_label", "NONE"),),
+                proposed_actions=(
+                    phase_results.get(
+                        "phase_e_compute_delta_and_select_transformation", {}
+                    ).get("candidate_label", "NONE"),
+                ),
             )
             receipt = provider.submit_experiment(intent)
             falsification = falsify_candidate(arch_candidate, receipts=(receipt,))
@@ -387,8 +434,12 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
             # real work this construction does not perform.
             candidate = phase_results.get("_architecture_candidate")
             contract = ArchitectureContract(
-                contract_scope=candidate.target_state_assertions if candidate is not None else (),
-                contract_criterion=candidate.verification_criteria if candidate is not None else (),
+                contract_scope=candidate.target_state_assertions
+                if candidate is not None
+                else (),
+                contract_criterion=candidate.verification_criteria
+                if candidate is not None
+                else (),
                 contract_governance_role=(StandingValue.ArchitectureBoard.value,),
             )
             phase_results[label] = {
@@ -410,12 +461,18 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
             delta = compute_delta(metadata, phase_results["_desired_state"])
             violated_kinds = tuple(d.kind for d in delta if d.violated is True)
             change = ChangeRequest(
-                change_description=(f"address {len(violated_kinds)} violated objective(s)",) if violated_kinds else (),
+                change_description=(
+                    f"address {len(violated_kinds)} violated objective(s)",
+                )
+                if violated_kinds
+                else (),
                 change_affected_requirement=violated_kinds,
                 change_approval_status=StandingValue.PendingHumanApproval.value,
             )
             phase_results[label] = {
-                "change_affected_requirement_count": len(change.change_affected_requirement),
+                "change_affected_requirement_count": len(
+                    change.change_affected_requirement
+                ),
                 "change_approval_status": change.change_approval_status,
             }
 
@@ -431,7 +488,9 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
     # Build the real OCEL log by hand (not execute_with_ocel's fixed
     # label/consequence-only schema) so each event can carry its own real,
     # phase-specific computed attributes.
-    log = OcelLog.new().with_objects(OcelObject(_EXECUTION_OBJECT_ID, _EXECUTION_OBJECT_TYPE))
+    log = OcelLog.new().with_objects(
+        OcelObject(_EXECUTION_OBJECT_ID, _EXECUTION_OBJECT_TYPE)
+    )
     for i, label in enumerate(PHASE_SEQUENCE):
         activity_id = f"activity-{label}"
         log = log.with_objects(_activity_object(activity_id, label))
@@ -449,7 +508,9 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
     log = log.validate()
 
     intended = {_EXECUTION_OBJECT_ID: PHASE_SEQUENCE}
-    conformance = check_object_centric_conformance(log, intended_traces_by_object_id=intended)
+    conformance = check_object_centric_conformance(
+        log, intended_traces_by_object_id=intended
+    )
 
     return log, phase_results, conformance
 
@@ -457,7 +518,11 @@ def run_full_togaf_loop_with_ocel() -> tuple[OcelLog, dict[str, Any], ObjectCent
 def _activity_object(activity_id: str, label: str) -> OcelObject:
     from autofde_lab.ocel.model import OcelAttribute
 
-    return OcelObject(activity_id, _ACTIVITY_OBJECT_TYPE, (OcelAttribute("label", OcelAttributeValue.string(label)),))
+    return OcelObject(
+        activity_id,
+        _ACTIVITY_OBJECT_TYPE,
+        (OcelAttribute("label", OcelAttributeValue.string(label)),),
+    )
 
 
 def _to_attribute_value(value: Any) -> OcelAttributeValue:

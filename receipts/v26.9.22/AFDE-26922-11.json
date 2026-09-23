@@ -1,0 +1,10 @@
+{
+  "wo": "AFDE-26922-11",
+  "title": "Hygiene: docs/jira, submodule dirt, worktrees, standing doc",
+  "base_sha": "f5cc664bac7598d5cf53cab399876df300bb6b14",
+  "commit": "468cba43, landed to origin/master inside e329a6c5",
+  "command": "submodule preserve branches + restore; docs/jira commits; standing doc addendum; worktree removals",
+  "exit": 0,
+  "output_excerpt": "7 submodules preserved on preserve/v26922-local-mods and restored to recorded SHAs. Deferred environment artifacts (recorded in ticket 004): enterprisebench workflow.png case-collision on case-insensitive macOS; sregym nested SREGym-applications generated-thrift churn. Worktree removals pending at landing.",
+  "standing": "PARTIAL_ALIVE"
+}

@@ -53,7 +53,6 @@ from __future__ import annotations
 
 import json
 import os
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -62,7 +61,10 @@ from autofde_lab.ocel.object_centric_conformance import (
     check_object_centric_conformance,
     flattened_trace,
 )
-from autofde_lab.ocel.powl_replay import plan_lines_to_powl_node, replay_structural_fires
+from autofde_lab.ocel.powl_replay import (
+    plan_lines_to_powl_node,
+    replay_structural_fires,
+)
 from autofde_lab.ocel.wasm4pm_bridge import (
     Wasm4pmUnavailable,
     _string_attr,
@@ -71,11 +73,19 @@ from autofde_lab.ocel.wasm4pm_bridge import (
     resolve_wpm_binary,
 )
 from autofde_lab.powl.algebra import Atom, PowlNode
-from autofde_lab.powl.conformance import check_ocel_conformance, observed_labels_from_events
+from autofde_lab.powl.conformance import (
+    check_ocel_conformance,
+    observed_labels_from_events,
+)
 from autofde_lab.powl.validate import validate_model
 
 DOMAIN_DIR = os.path.join(
-    os.path.dirname(__file__), "..", "..", "docs", "planning", "fortune5-k8s-state-space"
+    os.path.dirname(__file__),
+    "..",
+    "..",
+    "docs",
+    "planning",
+    "fortune5-k8s-state-space",
 )
 DOMAIN_PATH = os.path.join(DOMAIN_DIR, "domain.pddl")
 PROBLEM_PATH = os.path.join(DOMAIN_DIR, "problem.pddl")
@@ -90,8 +100,8 @@ def plan() -> list[str]:
     """A real `Astar` solve of the real k8s-state-space domain. Same
     rollout shape as the existing, trusted test for this domain -- not
     re-derived, reused."""
-    from autofde_lab.hub.domain.pddl import PDDLDomain
     from autofde_lab import utils
+    from autofde_lab.hub.domain.pddl import PDDLDomain
 
     domain = PDDLDomain(DOMAIN_PATH, PROBLEM_PATH)
     Astar = utils.load_registered_solver("Astar")
@@ -188,7 +198,9 @@ def replayed(plan: list[str]):
     return tree, log
 
 
-def test_ocel_replay_produces_a_valid_log_matching_the_plan(replayed, plan: list[str]) -> None:
+def test_ocel_replay_produces_a_valid_log_matching_the_plan(
+    replayed, plan: list[str]
+) -> None:
     _tree, log = replayed
     fire_events = [e for e in log.events if e.activity == "powl_structural_fire"]
     assert len(fire_events) == len(plan)
@@ -214,7 +226,9 @@ def test_self_conformance_the_ocel_log_is_a_legal_complete_trace_of_the_powl_mod
 # ── Stage 5: object-centric conformance, honestly scoped ───────────────────
 
 
-def test_object_centric_conformance_is_computed_honestly(replayed, plan: list[str]) -> None:
+def test_object_centric_conformance_is_computed_honestly(
+    replayed, plan: list[str]
+) -> None:
     """This plan is a single, linear, uncontested action sequence -- there is
     no crossed object identity for object-centric conformance to catch here.
     What this test proves instead: the real per-object projection machinery
@@ -268,13 +282,18 @@ def test_object_centric_conformance_is_computed_honestly(replayed, plan: list[st
 
     assert list(flattened_trace(bridge_log)) == plan
 
-    activity_object_ids = [obj.id for obj in bridge_log.objects if obj.object_type == "PowlActivity"]
+    activity_object_ids = [
+        obj.id for obj in bridge_log.objects if obj.object_type == "PowlActivity"
+    ]
     assert len(activity_object_ids) == len(plan)
 
     intended = {
-        obj_id: (label,) for obj_id, label in zip(activity_object_ids, plan, strict=True)
+        obj_id: (label,)
+        for obj_id, label in zip(activity_object_ids, plan, strict=True)
     }
-    result = check_object_centric_conformance(bridge_log, intended_traces_by_object_id=intended)
+    result = check_object_centric_conformance(
+        bridge_log, intended_traces_by_object_id=intended
+    )
 
     assert result.all_conform is True
     assert result.overall_fitness == 1.0
@@ -305,8 +324,13 @@ def test_real_external_discovery_and_quality_dimensions_via_wasm4pm(
         "attributes": [],
         "traces": [
             {
-                "attributes": [_string_attr("concept:name", "fortune5-k8s-state-space-plan")],
-                "events": [{"attributes": [_string_attr("concept:name", label)]} for label in labels],
+                "attributes": [
+                    _string_attr("concept:name", "fortune5-k8s-state-space-plan")
+                ],
+                "events": [
+                    {"attributes": [_string_attr("concept:name", label)]}
+                    for label in labels
+                ],
             }
         ],
         "extensions": None,
@@ -321,7 +345,9 @@ def test_real_external_discovery_and_quality_dimensions_via_wasm4pm(
     import asyncio
 
     discovery = asyncio.run(
-        discover_petri_net(log_path, output_path=model_path, wpm_binary=binary, timeout_s=30)
+        discover_petri_net(
+            log_path, output_path=model_path, wpm_binary=binary, timeout_s=30
+        )
     )
     assert discovery.places > 0
     assert discovery.transitions > 0

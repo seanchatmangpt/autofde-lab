@@ -22,10 +22,10 @@ from autofde_lab_planner.remediators.pvc_storage_faults import (
     decide_pvc_multi_attach_commands,
 )
 
-
 # =============================================================================
 # Storage-1: PVC Claim Mismatch (dangling claimName)
 # =============================================================================
+
 
 def test_pvc_claim_mismatch_detection_and_remediation():
     deployments = {
@@ -40,7 +40,9 @@ def test_pvc_claim_mismatch_detection_and_remediation():
                             "volumes": [
                                 {
                                     "name": "cart-volume",
-                                    "persistentVolumeClaim": {"claimName": "cart-service-pvc-broken"},
+                                    "persistentVolumeClaim": {
+                                        "claimName": "cart-service-pvc-broken"
+                                    },
                                 }
                             ],
                         }
@@ -65,7 +67,10 @@ def test_pvc_claim_mismatch_detection_and_remediation():
     pods = {
         "items": [
             {
-                "metadata": {"name": "cart-service-abc12", "labels": {"app": "cart-service"}},
+                "metadata": {
+                    "name": "cart-service-abc12",
+                    "labels": {"app": "cart-service"},
+                },
                 "status": {"phase": "Pending"},
             }
         ]
@@ -91,7 +96,9 @@ def test_pvc_claim_mismatch_detection_and_remediation():
     assert fault.desired_replicas == 2
 
     cmds, deps = decide_pvc_claim_mismatch_commands([fault], namespace="astronomy-shop")
-    assert any("persistentVolumeClaim/claimName" in c and "cart-service-pvc" in c for c in cmds)
+    assert any(
+        "persistentVolumeClaim/claimName" in c and "cart-service-pvc" in c for c in cmds
+    )
     assert any(c.endswith('"value": "cart-service-pvc"}]\'') for c in cmds)
     assert any("kubectl rollout restart deployment/cart-service" in c for c in cmds)
     assert deps == ["cart-service"]
@@ -110,7 +117,9 @@ def test_pvc_claim_mismatch_no_inferrable_expected_name_recreates_pvc():
                             "volumes": [
                                 {
                                     "name": "data",
-                                    "persistentVolumeClaim": {"claimName": "checkout-data-claim"},
+                                    "persistentVolumeClaim": {
+                                        "claimName": "checkout-data-claim"
+                                    },
                                 }
                             ],
                         }
@@ -123,7 +132,9 @@ def test_pvc_claim_mismatch_no_inferrable_expected_name_recreates_pvc():
     # No PVC exists at all, and the claimName doesn't carry the "-broken" suffix
     # convention, so we cannot infer the pre-fault name -- the remediator must
     # instead re-create the missing PVC.
-    faults = detect_pvc_claim_mismatches(deployments_json=deployments, pvcs_json=None, namespace="default")
+    faults = detect_pvc_claim_mismatches(
+        deployments_json=deployments, pvcs_json=None, namespace="default"
+    )
 
     assert len(faults) == 1
     fault = faults[0]
@@ -131,7 +142,9 @@ def test_pvc_claim_mismatch_no_inferrable_expected_name_recreates_pvc():
     assert fault.expected_claim_name is None
 
     cmds, deps = decide_pvc_claim_mismatch_commands([fault], namespace="default")
-    assert any("kind: PersistentVolumeClaim" in c and "checkout-data-claim" in c for c in cmds)
+    assert any(
+        "kind: PersistentVolumeClaim" in c and "checkout-data-claim" in c for c in cmds
+    )
     assert deps == ["checkout-service"]
 
 
@@ -146,7 +159,12 @@ def test_pvc_claim_mismatch_matching_claim_produces_no_fault():
                         "spec": {
                             "containers": [{"name": "app"}],
                             "volumes": [
-                                {"name": "data", "persistentVolumeClaim": {"claimName": "healthy-pvc"}}
+                                {
+                                    "name": "data",
+                                    "persistentVolumeClaim": {
+                                        "claimName": "healthy-pvc"
+                                    },
+                                }
                             ],
                         }
                     },
@@ -155,15 +173,22 @@ def test_pvc_claim_mismatch_matching_claim_produces_no_fault():
             }
         ]
     }
-    pvcs = {"items": [{"metadata": {"name": "healthy-pvc", "namespace": "default"}, "spec": {}}]}
+    pvcs = {
+        "items": [
+            {"metadata": {"name": "healthy-pvc", "namespace": "default"}, "spec": {}}
+        ]
+    }
 
-    faults = detect_pvc_claim_mismatches(deployments_json=deployments, pvcs_json=pvcs, namespace="default")
+    faults = detect_pvc_claim_mismatches(
+        deployments_json=deployments, pvcs_json=pvcs, namespace="default"
+    )
     assert faults == []
 
 
 # =============================================================================
 # Storage-2: PVC Multi-Attach (shared ReadWriteOnce volume across replicas)
 # =============================================================================
+
 
 def test_pvc_multi_attach_detection_and_remediation():
     deployments = {
@@ -177,7 +202,9 @@ def test_pvc_multi_attach_detection_and_remediation():
                             "volumes": [
                                 {
                                     "name": "shipping-volume",
-                                    "persistentVolumeClaim": {"claimName": "shipping-service-pvc"},
+                                    "persistentVolumeClaim": {
+                                        "claimName": "shipping-service-pvc"
+                                    },
                                 }
                             ],
                             "affinity": {
@@ -197,7 +224,10 @@ def test_pvc_multi_attach_detection_and_remediation():
     pvcs = {
         "items": [
             {
-                "metadata": {"name": "shipping-service-pvc", "namespace": "astronomy-shop"},
+                "metadata": {
+                    "name": "shipping-service-pvc",
+                    "namespace": "astronomy-shop",
+                },
                 "spec": {"accessModes": ["ReadWriteOnce"]},
             }
         ]
@@ -207,8 +237,11 @@ def test_pvc_multi_attach_detection_and_remediation():
         "items": [
             {
                 "reason": "FailedAttachVolume",
-                "message": "Multi-Attach error for volume \"pvc-abc\" Volume is already exclusively attached to one node",
-                "involvedObject": {"name": "shipping-service-pvc", "kind": "PersistentVolumeClaim"},
+                "message": 'Multi-Attach error for volume "pvc-abc" Volume is already exclusively attached to one node',
+                "involvedObject": {
+                    "name": "shipping-service-pvc",
+                    "kind": "PersistentVolumeClaim",
+                },
             }
         ]
     }
@@ -232,7 +265,10 @@ def test_pvc_multi_attach_detection_and_remediation():
     assert "Multi-Attach error" in fault.multi_attach_events[0]
 
     cmds, deps = decide_pvc_multi_attach_commands([fault], namespace="astronomy-shop")
-    assert any("kubectl scale deployment shipping-service -n astronomy-shop --replicas=1" in c for c in cmds)
+    assert any(
+        "kubectl scale deployment shipping-service -n astronomy-shop --replicas=1" in c
+        for c in cmds
+    )
     assert any("/spec/template/spec/affinity/podAntiAffinity" in c for c in cmds)
     assert any("kubectl rollout restart deployment/shipping-service" in c for c in cmds)
     assert deps == ["shipping-service"]
@@ -248,7 +284,12 @@ def test_pvc_multi_attach_single_replica_no_fault():
                     "template": {
                         "spec": {
                             "volumes": [
-                                {"name": "vol", "persistentVolumeClaim": {"claimName": "single-pvc"}}
+                                {
+                                    "name": "vol",
+                                    "persistentVolumeClaim": {
+                                        "claimName": "single-pvc"
+                                    },
+                                }
                             ]
                         }
                     },
@@ -256,9 +297,18 @@ def test_pvc_multi_attach_single_replica_no_fault():
             }
         ]
     }
-    pvcs = {"items": [{"metadata": {"name": "single-pvc"}, "spec": {"accessModes": ["ReadWriteOnce"]}}]}
+    pvcs = {
+        "items": [
+            {
+                "metadata": {"name": "single-pvc"},
+                "spec": {"accessModes": ["ReadWriteOnce"]},
+            }
+        ]
+    }
 
-    faults = detect_pvc_multi_attach_faults(deployments_json=deployments, pvcs_json=pvcs, namespace="default")
+    faults = detect_pvc_multi_attach_faults(
+        deployments_json=deployments, pvcs_json=pvcs, namespace="default"
+    )
     assert faults == []
 
 
@@ -272,7 +322,12 @@ def test_pvc_multi_attach_readwritemany_no_fault():
                     "template": {
                         "spec": {
                             "volumes": [
-                                {"name": "vol", "persistentVolumeClaim": {"claimName": "shared-pvc"}}
+                                {
+                                    "name": "vol",
+                                    "persistentVolumeClaim": {
+                                        "claimName": "shared-pvc"
+                                    },
+                                }
                             ]
                         }
                     },
@@ -281,15 +336,25 @@ def test_pvc_multi_attach_readwritemany_no_fault():
         ]
     }
     # ReadWriteMany legitimately supports concurrent multi-node attach.
-    pvcs = {"items": [{"metadata": {"name": "shared-pvc"}, "spec": {"accessModes": ["ReadWriteMany"]}}]}
+    pvcs = {
+        "items": [
+            {
+                "metadata": {"name": "shared-pvc"},
+                "spec": {"accessModes": ["ReadWriteMany"]},
+            }
+        ]
+    }
 
-    faults = detect_pvc_multi_attach_faults(deployments_json=deployments, pvcs_json=pvcs, namespace="default")
+    faults = detect_pvc_multi_attach_faults(
+        deployments_json=deployments, pvcs_json=pvcs, namespace="default"
+    )
     assert faults == []
 
 
 # =============================================================================
 # Composite engine integration
 # =============================================================================
+
 
 def test_composite_engine_storage_fault_integration():
     deployments = {
@@ -304,7 +369,9 @@ def test_composite_engine_storage_fault_integration():
                             "volumes": [
                                 {
                                     "name": "vol",
-                                    "persistentVolumeClaim": {"claimName": "payment-service-pvc-broken"},
+                                    "persistentVolumeClaim": {
+                                        "claimName": "payment-service-pvc-broken"
+                                    },
                                 }
                             ],
                         }
@@ -321,7 +388,9 @@ def test_composite_engine_storage_fault_integration():
                             "volumes": [
                                 {
                                     "name": "vol",
-                                    "persistentVolumeClaim": {"claimName": "review-service-pvc"},
+                                    "persistentVolumeClaim": {
+                                        "claimName": "review-service-pvc"
+                                    },
                                 }
                             ]
                         }
@@ -334,11 +403,17 @@ def test_composite_engine_storage_fault_integration():
     pvcs = {
         "items": [
             {
-                "metadata": {"name": "payment-service-pvc", "namespace": "astronomy-shop"},
+                "metadata": {
+                    "name": "payment-service-pvc",
+                    "namespace": "astronomy-shop",
+                },
                 "spec": {"accessModes": ["ReadWriteOnce"]},
             },
             {
-                "metadata": {"name": "review-service-pvc", "namespace": "astronomy-shop"},
+                "metadata": {
+                    "name": "review-service-pvc",
+                    "namespace": "astronomy-shop",
+                },
                 "spec": {"accessModes": ["ReadWriteOnce"]},
             },
         ]
@@ -358,6 +433,8 @@ def test_composite_engine_storage_fault_integration():
 
     mitigation = engine.run_mitigation(diagnosis)
     assert any("payment-service-pvc" in c for c in mitigation.commands)
-    assert any("kubectl scale deployment review-service" in c for c in mitigation.commands)
+    assert any(
+        "kubectl scale deployment review-service" in c for c in mitigation.commands
+    )
     assert "payment-service" in mitigation.rollout_wait_deployments
     assert "review-service" in mitigation.rollout_wait_deployments

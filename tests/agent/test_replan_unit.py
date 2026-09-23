@@ -12,17 +12,15 @@ rather than only the first. Each case remains a distinct named falsifier with
 its own constructed defect.
 """
 
-import pytest
-
 from autofde_lab.agent.replan import (
     Epoch,
     Ledger,
     LedgerEntry,
     OccurrenceStatus,
     PreserveMap,
+    ReplanError,
     ReplanningMode,
     ReplanRefusal,
-    ReplanError,
     activity_of,
     infer_preserve_map,
     redo_occurrence_key,
@@ -63,8 +61,15 @@ def _ledger(model, paths, epoch=0, status=OccurrenceStatus.COMPLETED, resumable=
 
 def test_modes_are_the_nine_named():
     assert {m.value for m in ReplanningMode} == {
-        "Continue", "Repair", "Replan", "Reschedule", "UpdatePolicy",
-        "LearnModel", "SpawnChild", "Terminate", "Refuse",
+        "Continue",
+        "Repair",
+        "Replan",
+        "Reschedule",
+        "UpdatePolicy",
+        "LearnModel",
+        "SpawnChild",
+        "Terminate",
+        "Refuse",
     }
 
 
@@ -88,7 +93,9 @@ def test_inference_maps_the_unambiguous_case_and_refuses_to_guess_the_ambiguous_
     guessed = infer_preserve_map(
         Epoch(0, ambiguous_before), _ledger(ambiguous_before, [(0,)]), ambiguous_after
     )
-    assert guessed.entries == {}, "an ambiguous match was guessed rather than left unmapped"
+    assert guessed.entries == {}, (
+        "an ambiguous match was guessed rather than left unmapped"
+    )
 
 
 def test_every_named_preserve_map_refusal_fires_on_its_own_constructed_defect():
@@ -157,7 +164,9 @@ def test_every_named_preserve_map_refusal_fires_on_its_own_constructed_defect():
                 failures[name] = f"refused as {exc.refusal!r}, expected {expected!r}"
         else:
             failures[name] = f"ACCEPTED, expected refusal {expected!r}"
-    assert not failures, f"{len(failures)}/{len(cases)} preserve-map falsifiers lost: {failures}"
+    assert not failures, (
+        f"{len(failures)}/{len(cases)} preserve-map falsifiers lost: {failures}"
+    )
 
     # control for the torn case: a *resumable* torn fire is admissible, so the
     # refusal above is about resumability and not about TORN as such
@@ -184,10 +193,13 @@ def test_redo_is_legal_and_gets_a_fresh_rising_occurrence_index():
     assert fresh != prior
 
     # and the executor, seeded with the prior key, derives the same index
-    seeded = seed_marking(m1, PreserveMap(entries={(1,): OccurrenceKey(
-        activity_of(m1.children[1]), 0, "")}))
+    seeded = seed_marking(
+        m1,
+        PreserveMap(entries={(1,): OccurrenceKey(activity_of(m1.children[1]), 0, "")}),
+    )
     # seed_marking only carries what is preserved; add the prior key by hand
     from dataclasses import replace as _replace
+
     seeded = _replace(seeded, completed=seeded.completed | {prior})
     after = fire(m1, seeded, (0,))
     got = [k for k in after.completed if k.activity_sha256 == act]

@@ -31,18 +31,16 @@ Two groups:
 from __future__ import annotations
 
 import os
+from typing import Any
 
-import numpy  # noqa: F401  (import before dspy avoids a real, reproducible
 # circular-import failure in this venv's numpy/dspy interaction -- see the
 # session's own debugging: `import dspy` before `import numpy` inside a
 # process that also imports `autofde_lab.core` raises `ImportError: cannot
 # import name 'NDArray' from partially initialized module 'numpy._typing'`.
 # Importing numpy first here is a real, reproducible workaround, not a mock.
-
 import dspy
+import numpy  # noqa: F401  (import before dspy avoids a real, reproducible
 import pytest
-
-from typing import Any
 
 from autofde_lab.case_library import Case, CaseLibraryStore, ProblemSignature
 from autofde_lab.case_library.outcome_predicate import OracleVerdict
@@ -77,7 +75,9 @@ def _matching_case() -> Case:
         case_id="trial-001",
         signature=symptom_signature_from_anomaly(_ANOMALY),
         diagnosis="Deployment payments-api scaled to zero by a bad rollout.",
-        mitigation_commands=("kubectl -n payments scale deployment payments-api --replicas=3",),
+        mitigation_commands=(
+            "kubectl -n payments scale deployment payments-api --replicas=3",
+        ),
         outcome=True,
     )
 
@@ -169,7 +169,9 @@ def test_case_library_hit_short_circuits_before_any_lm_call() -> None:
 
     assert result.source == "case_library"
     assert result.case_id == "trial-001"
-    assert result.diagnosis == "Deployment payments-api scaled to zero by a bad rollout."
+    assert (
+        result.diagnosis == "Deployment payments-api scaled to zero by a bad rollout."
+    )
     assert result.mitigation_commands == (
         "kubectl -n payments scale deployment payments-api --replicas=3",
     )
@@ -188,7 +190,9 @@ def test_case_library_miss_routes_past_short_circuit_into_reasoning_branch() -> 
     store.put(_non_matching_case())
     pipeline = SregymDiagnosisPipeline(store, environment=None, ensemble_n=2)
 
-    assert dspy.settings.lm is None  # precondition: no LM configured anywhere in this process
+    assert (
+        dspy.settings.lm is None
+    )  # precondition: no LM configured anywhere in this process
 
     with pytest.raises(AttributeError):
         pipeline(_ANOMALY)
@@ -215,7 +219,10 @@ def test_retain_persists_only_on_confirmed_or_disputed_verdict() -> None:
     so this test proves the pipeline's ``retain`` wiring, not just its own
     understanding of the enum.
     """
-    from autofde_lab.case_library.outcome_predicate import OracleVerdict, evaluate_outcome
+    from autofde_lab.case_library.outcome_predicate import (
+        OracleVerdict,
+        evaluate_outcome,
+    )
     from autofde_lab.reasoning.sregym_pipeline import PipelineResult
 
     store = CaseLibraryStore(":memory:")
@@ -536,7 +543,9 @@ def test_oracle_verdict_from_environment_degrades_on_real_raising_verify() -> No
             raise TimeoutError("real simulated conductor poll timeout")
 
     verdict = asyncio.run(
-        oracle_verdict_from_environment(_RealAlwaysRaisingVerifyTarget(), {"stage": "x"})
+        oracle_verdict_from_environment(
+            _RealAlwaysRaisingVerifyTarget(), {"stage": "x"}
+        )
     )
 
     assert verdict.present is False
@@ -626,7 +635,9 @@ def test_retain_never_partially_writes_when_case_construction_fails() -> None:
         pipeline.retain(
             _MalformedAnomaly(),  # type: ignore[arg-type]
             result,
-            mitigation_commands=("kubectl -n payments scale deployment payments-api --replicas=3",),
+            mitigation_commands=(
+                "kubectl -n payments scale deployment payments-api --replicas=3",
+            ),
             verdict=OutcomeVerdict.CONFIRMED,
             confirmed_via="structural_only",
         )

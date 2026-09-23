@@ -127,7 +127,9 @@ def test_divergence_hook_invalidates_a_plan_that_had_already_drafted(domain):
     assert diverged.scope is Scope.PARTIAL
     # delivering now would notify the wrong set -- so it is no longer applicable
     assert not domain.applicable(diverged, Action.deliver_notification)
-    assert not domain._is_goal(domain._get_next_state(diverged, Action.deliver_notification))
+    assert not domain._is_goal(
+        domain._get_next_state(diverged, Action.deliver_notification)
+    )
     # and the hook is pure
     assert s.populations == domain._get_initial_state_().populations
 

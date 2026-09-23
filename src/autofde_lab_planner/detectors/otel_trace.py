@@ -7,10 +7,17 @@ import json
 from collections import defaultdict
 from typing import Any
 
-from autofde_lab_planner.models import ParsedSpan, ServiceMetrics, TraceAnomalyResult, TraceTree
+from autofde_lab_planner.models import (
+    ParsedSpan,
+    ServiceMetrics,
+    TraceAnomalyResult,
+    TraceTree,
+)
 
 
-def parse_jaeger_traces_json(raw_json: str | list[Any] | dict[str, Any]) -> list[TraceTree]:
+def parse_jaeger_traces_json(
+    raw_json: str | list[Any] | dict[str, Any],
+) -> list[TraceTree]:
     """Parses Jaeger trace payloads into typed TraceTree structures."""
     if isinstance(raw_json, str):
         raw_str = raw_json.strip()
@@ -53,7 +60,9 @@ def parse_jaeger_traces_json(raw_json: str | list[Any] | dict[str, Any]) -> list
             span_id = str(s.get("spanID", ""))
             process_id = str(s.get("processID", ""))
             process = processes_raw.get(process_id, {})
-            service_name = process.get("serviceName") or s.get("serviceName") or "unknown"
+            service_name = (
+                process.get("serviceName") or s.get("serviceName") or "unknown"
+            )
 
             op_name = str(s.get("operationName", ""))
             # duration in microseconds -> convert to ms
@@ -76,7 +85,9 @@ def parse_jaeger_traces_json(raw_json: str | list[Any] | dict[str, Any]) -> list
                             has_error = True
                         if k in ("http.status_code", "rpc.grpc.status_code"):
                             status_code = str(v)
-                            if k == "http.status_code" and str(v).startswith(("4", "5")):
+                            if k == "http.status_code" and str(v).startswith(
+                                ("4", "5")
+                            ):
                                 has_error = True
                             elif k == "rpc.grpc.status_code" and str(v) != "0":
                                 has_error = True
@@ -136,7 +147,9 @@ def detect_otel_trace_anomalies(
         all_trees.extend(parsed)
 
     if not all_trees:
-        return TraceAnomalyResult(has_anomaly=False, reasoning="No valid Jaeger trace trees parsed.")
+        return TraceAnomalyResult(
+            has_anomaly=False, reasoning="No valid Jaeger trace trees parsed."
+        )
 
     # Aggregate per-service metrics & build call graph (parent_svc -> child_svc)
     service_spans: dict[str, list[ParsedSpan]] = defaultdict(list)
@@ -195,12 +208,18 @@ def detect_otel_trace_anomalies(
         # Fallback to service with highest error rate or highest max duration
         root_cause = max(
             failing_services,
-            key=lambda s: (metrics_by_service[s].error_rate, metrics_by_service[s].max_duration_ms),
+            key=lambda s: (
+                metrics_by_service[s].error_rate,
+                metrics_by_service[s].max_duration_ms,
+            ),
         )
     else:
         root_cause = max(
             root_candidates,
-            key=lambda s: (metrics_by_service[s].error_rate, metrics_by_service[s].max_duration_ms),
+            key=lambda s: (
+                metrics_by_service[s].error_rate,
+                metrics_by_service[s].max_duration_ms,
+            ),
         )
 
     m = metrics_by_service[root_cause]

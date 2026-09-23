@@ -107,7 +107,10 @@ def _boundary(tmp_path: Path, name: str, broker: AuthorityBroker):
     actuator = RealDiskJournalActuator(journal)
     verifier = IndependentDiskJournalVerifier(journal)
     boundary = ConsequenceBoundary(
-        authority_broker=broker, actuator=actuator, verifier=verifier, receipt_store=store
+        authority_broker=broker,
+        actuator=actuator,
+        verifier=verifier,
+        receipt_store=store,
     )
     return boundary, actuator, store, journal
 
@@ -124,7 +127,9 @@ _:mid afl:targetResource <urn:resource:fresh-mut-r1:prod-cluster> .
 """
 
 
-def test_mutation_r1_blank_node_intermediary_satisfies_content_binding(tmp_path: Path) -> None:
+def test_mutation_r1_blank_node_intermediary_satisfies_content_binding(
+    tmp_path: Path,
+) -> None:
     """A real ADMITTED AdmissionResult whose graph connects action_iri to
     target_resource ONLY via a two-hop chain through an intermediate blank node
     (`<action> afl:targetResource _:mid . _:mid afl:targetResource <target> .`) must
@@ -138,7 +143,10 @@ def test_mutation_r1_blank_node_intermediary_satisfies_content_binding(tmp_path:
     pipeline = AdmissionPipeline()
     admitted = pipeline.admit(
         _BLANK_NODE_INDIRECTION_TTL,
-        provenance_record={"issuer": "urn:issuer:any", "timestamp": "2026-09-16T00:00:00Z"},
+        provenance_record={
+            "issuer": "urn:issuer:any",
+            "timestamp": "2026-09-16T00:00:00Z",
+        },
     )
     assert admitted.standing == Standing.ADMITTED
 
@@ -181,8 +189,12 @@ def test_mutation_r1_blank_node_intermediary_satisfies_content_binding(tmp_path:
     )
     assert result.state == TerminalReceiptState.REFUSED
     assert result.refusal_code == REFUSED_ADMISSION_CONTENT_NOT_BOUND
-    assert actuator.call_count == 0, "Zero real actuation for a blank-node-indirected admission."
-    assert journal.exists() is False, "Zero disk mutation for a blank-node-indirected admission."
+    assert actuator.call_count == 0, (
+        "Zero real actuation for a blank-node-indirected admission."
+    )
+    assert journal.exists() is False, (
+        "Zero disk mutation for a blank-node-indirected admission."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -221,7 +233,10 @@ def test_mutation_r2_reified_relation_satisfies_content_binding(tmp_path: Path) 
     pipeline = AdmissionPipeline()
     admitted = pipeline.admit(
         _REIFIED_NEVER_ASSERTED_TTL,
-        provenance_record={"issuer": "urn:issuer:any", "timestamp": "2026-09-16T00:00:00Z"},
+        provenance_record={
+            "issuer": "urn:issuer:any",
+            "timestamp": "2026-09-16T00:00:00Z",
+        },
     )
     assert admitted.standing == Standing.ADMITTED
 
@@ -282,7 +297,9 @@ _SAMEAS_BRIDGE_TTL = """
 """
 
 
-def test_mutation_r3_sameas_bridged_pair_satisfies_content_binding(tmp_path: Path) -> None:
+def test_mutation_r3_sameas_bridged_pair_satisfies_content_binding(
+    tmp_path: Path,
+) -> None:
     """A single admitted candidate legitimately, directly binds action1 to
     target_alias via a real `afl:targetResource` triple, and separately, also
     legitimately and directly, asserts `target_alias owl:sameAs target_real` (a
@@ -303,7 +320,10 @@ def test_mutation_r3_sameas_bridged_pair_satisfies_content_binding(tmp_path: Pat
     pipeline = AdmissionPipeline()
     admitted = pipeline.admit(
         _SAMEAS_BRIDGE_TTL,
-        provenance_record={"issuer": "urn:issuer:any", "timestamp": "2026-09-16T00:00:00Z"},
+        provenance_record={
+            "issuer": "urn:issuer:any",
+            "timestamp": "2026-09-16T00:00:00Z",
+        },
     )
     assert admitted.standing == Standing.ADMITTED
 
@@ -348,5 +368,9 @@ def test_mutation_r3_sameas_bridged_pair_satisfies_content_binding(tmp_path: Pat
     )
     assert result.state == TerminalReceiptState.REFUSED
     assert result.refusal_code == REFUSED_ADMISSION_CONTENT_NOT_BOUND
-    assert actuator.call_count == 0, "Zero real actuation for a sameAs-bridged admission."
-    assert journal.exists() is False, "Zero disk mutation for a sameAs-bridged admission."
+    assert actuator.call_count == 0, (
+        "Zero real actuation for a sameAs-bridged admission."
+    )
+    assert journal.exists() is False, (
+        "Zero disk mutation for a sameAs-bridged admission."
+    )

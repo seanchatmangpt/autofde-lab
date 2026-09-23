@@ -27,18 +27,22 @@ if _ORIGINAL_PREFIX != _WORKTREE_PREFIX:
         if isinstance(known_source_files, dict):
             for mod_name, path in list(known_source_files.items()):
                 if isinstance(path, str) and path.startswith(_ORIGINAL_PREFIX):
-                    known_source_files[mod_name] = _WORKTREE_PREFIX + path[len(_ORIGINAL_PREFIX):]
+                    known_source_files[mod_name] = (
+                        _WORKTREE_PREFIX + path[len(_ORIGINAL_PREFIX) :]
+                    )
         search_locations = getattr(finder, "submodule_search_locations", None)
         if isinstance(search_locations, dict):
             for mod_name, locs in list(search_locations.items()):
                 new_locs = set()
                 for loc in locs:
                     if isinstance(loc, str) and loc.startswith(_ORIGINAL_PREFIX):
-                        new_locs.add(_WORKTREE_PREFIX + loc[len(_ORIGINAL_PREFIX):])
+                        new_locs.add(_WORKTREE_PREFIX + loc[len(_ORIGINAL_PREFIX) :])
                     else:
                         new_locs.add(loc)
                 search_locations[mod_name] = new_locs
         # Drop any already-imported autofde_lab modules so they get
         # re-resolved against the patched maps.
-        for mod_name in [m for m in sys.modules if m == "autofde_lab" or m.startswith("autofde_lab.")]:
+        for mod_name in [
+            m for m in sys.modules if m == "autofde_lab" or m.startswith("autofde_lab.")
+        ]:
             del sys.modules[mod_name]

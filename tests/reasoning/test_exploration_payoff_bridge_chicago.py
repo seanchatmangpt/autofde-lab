@@ -25,13 +25,16 @@ below for the real incompatible-planner refusal path.
 from __future__ import annotations
 
 from autofde_lab.hub.domain.maze import Maze
-from autofde_lab.planner_league import PayoffHypergraph, PayoffObservation, PlannerLeague
+from autofde_lab.planner_league import (
+    PayoffHypergraph,
+    PayoffObservation,
+    PlannerLeague,
+)
 from autofde_lab.reasoning.exploration_payoff_bridge import (
     admit_exploration_candidate_payoff,
     falsification_to_payoff_scores,
 )
 from autofde_lab.reasoning.laboratory import (
-    ArchitectureCandidate,
     DesiredStateHypothesis,
     ExperimentReceipt,
     FalsificationResult,
@@ -55,7 +58,9 @@ def _hypothesis() -> DesiredStateHypothesis:
     )
 
 
-def test_falsification_to_payoff_scores_maps_the_three_real_scoreable_standings() -> None:
+def test_falsification_to_payoff_scores_maps_the_three_real_scoreable_standings() -> (
+    None
+):
     assert falsification_to_payoff_scores(FalsificationStanding.SURVIVES) == (1.0, 0.0)
     assert falsification_to_payoff_scores(FalsificationStanding.FALSIFIED) == (0.0, 1.0)
     assert falsification_to_payoff_scores(FalsificationStanding.PARTIAL) == (0.5, 0.5)

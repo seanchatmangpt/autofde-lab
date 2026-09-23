@@ -66,7 +66,9 @@ def is_server_available(base_url: str = DEFAULT_BASE_URL, timeout: float = 2.0) 
         return False
 
 
-def _post_chat_completion(base_url: str, model: str, scores: list[OcelPerformanceScore]) -> dict:
+def _post_chat_completion(
+    base_url: str, model: str, scores: list[OcelPerformanceScore]
+) -> dict:
     payload = {
         "model": model,
         "messages": [
@@ -161,4 +163,9 @@ class LLMOptimizationAgent:
         )
 
 
-__all__ = ["LLMOptimizationAgent", "is_server_available", "DEFAULT_BASE_URL", "DEFAULT_MODEL"]
+__all__ = [
+    "LLMOptimizationAgent",
+    "is_server_available",
+    "DEFAULT_BASE_URL",
+    "DEFAULT_MODEL",
+]

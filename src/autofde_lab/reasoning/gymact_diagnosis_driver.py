@@ -102,10 +102,18 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
-from autofde_lab.case_library.outcome_predicate import OracleVerdict, OutcomeVerdict, evaluate_outcome
-from autofde_lab.fabric.gymact_capability_gate import DEFAULT_MANIFEST_PATH, CapabilityGate
-from autofde_lab.ocel.log import OcelLog
-from autofde_lab.ocel.mcp_session import append_tool_call_event
+from gymact.powl.runner import PipelineStallResult, run_pipeline
+from gymact.powl.spec import GatedCapabilityBinding
+
+from autofde_lab.case_library.outcome_predicate import (
+    OracleVerdict,
+    OutcomeVerdict,
+    evaluate_outcome,
+)
+from autofde_lab.fabric.gymact_capability_gate import (
+    DEFAULT_MANIFEST_PATH,
+    CapabilityGate,
+)
 from autofde_lab.fabric.gymact_pipeline import (
     GYMACT_CHECK_DEPLOYMENTS_LABEL,
     GYMACT_CHECK_NAMESPACE_LABEL,
@@ -125,8 +133,8 @@ from autofde_lab.fabric.gymact_pipeline import (
     build_pipeline_powl_node,
     ocel_dict_to_log,
 )
-from gymact.powl.runner import PipelineStallResult, run_pipeline
-from gymact.powl.spec import GatedCapabilityBinding
+from autofde_lab.ocel.log import OcelLog
+from autofde_lab.ocel.mcp_session import append_tool_call_event
 from autofde_lab_planner.scanner.registry import ClusterState, scan
 from autofde_lab_planner.scanner.taxonomy import classify
 
@@ -484,7 +492,9 @@ async def run_gymact_mediated_diagnosis(
         # real cluster state -- a real, serious finding, not just a syntax
         # fix. Prefixing every command with "kubectl " here closes it at
         # the single real call site all kubectl commands go through.
-        full_command = command if command.strip().startswith("kubectl") else f"kubectl {command}"
+        full_command = (
+            command if command.strip().startswith("kubectl") else f"kubectl {command}"
+        )
         result = await env.actuate(cap, {"command": full_command})
         text_blocks = result.get("result_text", []) if isinstance(result, dict) else []
         raw = "".join(b.get("text", "") for b in text_blocks if isinstance(b, dict))
@@ -497,7 +507,9 @@ async def run_gymact_mediated_diagnosis(
         # exactly the false-anomaly-detection risk this cycle's
         # investigation surfaced.
         if raw.strip().startswith("Command Rejected:"):
-            raise RuntimeError(f"real kubectl command rejected by sregym: {raw.strip()}")
+            raise RuntimeError(
+                f"real kubectl command rejected by sregym: {raw.strip()}"
+            )
         try:
             return json.loads(raw)
         except (json.JSONDecodeError, TypeError):
@@ -639,7 +651,11 @@ async def run_gymact_mediated_diagnosis(
             diagnosis_state["top_anomaly"] = None
             diagnosis_state["label"] = "no_anomaly_detected"
         status = diagnosis_state.get("check_status")
-        return {"status": status, "anomaly_count": len(anomalies), "label": diagnosis_state["label"]}
+        return {
+            "status": status,
+            "anomaly_count": len(anomalies),
+            "label": diagnosis_state["label"],
+        }
 
     async def _submit_diagnosis() -> Any:
         cap = _capability(SREGYM_CAPABILITIES, "submit_diagnosis")
@@ -737,7 +753,10 @@ async def run_gymact_mediated_diagnosis(
     async def _submit_mitigation() -> Any:
         cap = _capability(SREGYM_CAPABILITIES, "submit_mitigation")
         gate.guard_capability(cap)
-        payload = {"mitigation": "not_attempted", "reason": "no_automated_command_synthesis_yet"}
+        payload = {
+            "mitigation": "not_attempted",
+            "reason": "no_automated_command_synthesis_yet",
+        }
         return await env.actuate(cap, payload)
 
     async def _verify() -> dict[str, Any]:
@@ -761,7 +780,9 @@ async def run_gymact_mediated_diagnosis(
         diagnosis_state["verify_attempted"] = True
         passed, observed = await env.verify({"stage": "done"})
         diagnosis_state["verify_passed"] = passed
-        diagnosis_state["verify_observed"] = observed if isinstance(observed, dict) else {"raw": observed}
+        diagnosis_state["verify_observed"] = (
+            observed if isinstance(observed, dict) else {"raw": observed}
+        )
         return {"passed": passed, "observed": diagnosis_state["verify_observed"]}
 
     def _binding(coro_factory: Callable[[], Any]) -> Callable[[dict[str, Any]], Any]:
@@ -865,7 +886,9 @@ async def run_gymact_mediated_diagnosis(
         # is the honest, absence-is-not-evidence-correct answer when no real
         # independent recheck ran.
         structural_recheck_ran = "structural_recheck_passed" in diagnosis_state
-        structural_passed = bool(diagnosis_state.get("structural_recheck_passed", verify_passed))
+        structural_passed = bool(
+            diagnosis_state.get("structural_recheck_passed", verify_passed)
+        )
         recheck_anomaly_count = diagnosis_state.get("structural_recheck_anomaly_count")
         # Real, second instance of the same class of defect the DISPUTED fix
         # above closed: `oracle=OracleVerdict(present=True, ...)` was
@@ -883,7 +906,10 @@ async def run_gymact_mediated_diagnosis(
         verify_attempted = bool(diagnosis_state.get("verify_attempted", False))
         verdict, confirmed_via = evaluate_outcome(
             structural_passed=structural_passed,
-            oracle=OracleVerdict(present=verify_attempted, passed=verify_passed if verify_attempted else None),
+            oracle=OracleVerdict(
+                present=verify_attempted,
+                passed=verify_passed if verify_attempted else None,
+            ),
         )
 
         # Real dual-bookkeeping gap found and fixed forward this cycle
@@ -931,8 +957,12 @@ async def run_gymact_mediated_diagnosis(
             verdict=verdict,
             confirmed_via=confirmed_via,
             verify_observed=verify_observed,
-            structural_recheck_anomaly_count=recheck_anomaly_count if structural_recheck_ran else None,
-            submit_diagnosis_stage_wait_passed=diagnosis_state.get("submit_diagnosis_stage_wait_passed"),
+            structural_recheck_anomaly_count=recheck_anomaly_count
+            if structural_recheck_ran
+            else None,
+            submit_diagnosis_stage_wait_passed=diagnosis_state.get(
+                "submit_diagnosis_stage_wait_passed"
+            ),
         )
     finally:
         # Real bug found and fixed forward this session: `finally:

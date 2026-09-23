@@ -11,21 +11,27 @@ No mocking anywhere in this file (verified by grep in CI and by hand): every
 test exercises the real `autofde_lab.sa2a.case_studies.manufacturing.runtime.run`
 function against real, freshly-written, freshly-re-parsed OCEL JSON on disk.
 """
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-from autofde_lab.sa2a.case_studies.manufacturing import ocel_adapter
-from autofde_lab.sa2a.case_studies.manufacturing import runtime
+from autofde_lab.sa2a.case_studies.manufacturing import ocel_adapter, runtime
 from autofde_lab.sa2a.case_studies.manufacturing.authority_agent import (
     AUTHORITY_MAX_SHARE_OF_REMAINING_BUDGET,
     ENERGY_BUDGET_PER_ROUND_KWH,
 )
 
-FIXTURES_DIR = Path(__file__).resolve().parents[2].joinpath(
-    "..", "src", "autofde_lab", "sa2a", "case_studies", "manufacturing", "fixtures"
-).resolve()
+FIXTURES_DIR = (
+    Path(__file__)
+    .resolve()
+    .parents[2]
+    .joinpath(
+        "..", "src", "autofde_lab", "sa2a", "case_studies", "manufacturing", "fixtures"
+    )
+    .resolve()
+)
 
 
 def test_runtime_run_executes_and_produces_valid_ocel_log() -> None:
@@ -57,9 +63,13 @@ def test_zero_unreceipted_actuation_from_real_ocel_json(tmp_path: Path) -> None:
             for rel in ev["relationships"]
             if rel["qualifier"] == "prov:generated"
         ]
-        assert len(generated) == 1, f"event {ev['id']} has {len(generated)} prov:generated links"
+        assert len(generated) == 1, (
+            f"event {ev['id']} has {len(generated)} prov:generated links"
+        )
         receipt = objects_by_id.get(generated[0])
-        assert receipt is not None, f"receipt {generated[0]!r} missing from objects table"
+        assert receipt is not None, (
+            f"receipt {generated[0]!r} missing from objects table"
+        )
         assert receipt["type"] == "Receipt"
 
         event_applied = next(
@@ -72,10 +82,14 @@ def test_zero_unreceipted_actuation_from_real_ocel_json(tmp_path: Path) -> None:
 
         if not event_applied:
             pre = next(
-                a["value"] for a in receipt["attributes"] if a["name"] == "pre_state_hash"
+                a["value"]
+                for a in receipt["attributes"]
+                if a["name"] == "pre_state_hash"
             )
             post = next(
-                a["value"] for a in receipt["attributes"] if a["name"] == "post_state_hash"
+                a["value"]
+                for a in receipt["attributes"]
+                if a["name"] == "post_state_hash"
             )
             assert pre == post
 
@@ -108,7 +122,9 @@ def test_zero_authority_violations_from_real_ocel_json(tmp_path: Path) -> None:
         remaining_after = next(
             a["value"] for a in ev["attributes"] if a["name"] == "remaining_budget_kwh"
         )
-        remaining_before = remaining_by_round.get(round_index, ENERGY_BUDGET_PER_ROUND_KWH)
+        remaining_before = remaining_by_round.get(
+            round_index, ENERGY_BUDGET_PER_ROUND_KWH
+        )
 
         assert remaining_after >= -1e-6, f"round {round_index} went negative"
         if ev["type"] == "odrl:Permission":
@@ -193,5 +209,9 @@ def test_fixture_round14_slice_matches_a_fresh_run() -> None:
 
     assert len(fresh_events) == len(fixture_doc["events"])
     assert len(fresh_objects) == len(fixture_doc["objects"])
-    assert {e["type"] for e in fresh_events} == {e["type"] for e in fixture_doc["events"]}
-    assert {o["type"] for o in fresh_objects} == {o["type"] for o in fixture_doc["objects"]}
+    assert {e["type"] for e in fresh_events} == {
+        e["type"] for e in fixture_doc["events"]
+    }
+    assert {o["type"] for o in fresh_objects} == {
+        o["type"] for o in fixture_doc["objects"]
+    }

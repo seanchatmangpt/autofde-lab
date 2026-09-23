@@ -1,0 +1,10 @@
+{
+  "wo": "AFDE-26922-10",
+  "title": "gymact Receipt schema drift (planning_provenance_digest extra_forbidden)",
+  "base_sha": "ebd51475 (origin/master at branch time)",
+  "commit": "ec733ea5, merged to release",
+  "command": ".venv/bin/python -m pytest tests/domains/python/test_level4_crown_real_trial_chicago.py -q",
+  "exit": 0,
+  "output_excerpt": "6 passed (was 4 passed/2 failed). Boundary adapter tolerates None-valued unknown fields from the live 26.8.23 producer, refuses populated unknown fields loudly naming the promotion policy; the 26.8.8 pin itself does not move (ecosystem/autofde-rust-handoff.toml policy).",
+  "standing": "ALIVE"
+}

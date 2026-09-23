@@ -248,14 +248,18 @@ def _remap_choice_edges(
     for e in edges:
         if e.src not in remap or e.dst not in remap:
             continue
-        out.add(ChoiceGraphEdge(NodeId(remap[e.src]), NodeId(remap[e.dst]), guard=e.guard))
+        out.add(
+            ChoiceGraphEdge(NodeId(remap[e.src]), NodeId(remap[e.dst]), guard=e.guard)
+        )
     return frozenset(out)
 
 
 # ── mutations ────────────────────────────────────────────────────────────
 
 
-def insert_atom(node: PowlNode, *, parent_path: NodePath, index: int, atom: Atom) -> PowlNode:
+def insert_atom(
+    node: PowlNode, *, parent_path: NodePath, index: int, atom: Atom
+) -> PowlNode:
     """Insert ``atom`` as a new child of the ``PartialOrder`` at
     ``parent_path``, at position ``index`` (0-based, may equal
     ``len(children)`` to append). The new atom is inserted with no order
@@ -266,7 +270,8 @@ def insert_atom(node: PowlNode, *, parent_path: NodePath, index: int, atom: Atom
     n = len(parent.children)
     if not (0 <= index <= n):
         raise PowlError(
-            PowlRefusal.DANGLING_REFERENCE, f"insert index {index} outside range(0, {n + 1})"
+            PowlRefusal.DANGLING_REFERENCE,
+            f"insert index {index} outside range(0, {n + 1})",
         )
     new_children = parent.children[:index] + (atom,) + parent.children[index:]
 
@@ -274,7 +279,9 @@ def insert_atom(node: PowlNode, *, parent_path: NodePath, index: int, atom: Atom
     remap = {i: (i if i < index else i + 1) for i in range(n)}
     new_order = _remap_order_edges(parent.order, remap)
 
-    result = _rebuild_with_child_replaced(node, parent_path, new_children, order=new_order)
+    result = _rebuild_with_child_replaced(
+        node, parent_path, new_children, order=new_order
+    )
     validate_model(result)
     return result
 
@@ -300,7 +307,9 @@ def delete_node(node: PowlNode, *, path: NodePath) -> PowlNode:
         )
     n = len(parent.children)
     if not (0 <= idx < n):
-        raise PowlError(PowlRefusal.DANGLING_REFERENCE, f"index {idx} outside range(0, {n})")
+        raise PowlError(
+            PowlRefusal.DANGLING_REFERENCE, f"index {idx} outside range(0, {n})"
+        )
     if n - 1 < 2:
         raise PowlError(
             PowlRefusal.INVALID_PARTIAL_ORDER_ARITY
@@ -321,7 +330,9 @@ def delete_node(node: PowlNode, *, path: NodePath) -> PowlNode:
 
     if isinstance(parent, PartialOrder):
         new_order = _remap_order_edges(parent.order, remap)
-        result = _rebuild_with_child_replaced(node, parent_path, new_children, order=new_order)
+        result = _rebuild_with_child_replaced(
+            node, parent_path, new_children, order=new_order
+        )
     else:
         if idx == parent.start or idx == parent.end:
             raise PowlError(
@@ -341,7 +352,9 @@ def delete_node(node: PowlNode, *, path: NodePath) -> PowlNode:
     return result
 
 
-def reorder(node: PowlNode, *, parent_path: NodePath, index_a: int, index_b: int) -> PowlNode:
+def reorder(
+    node: PowlNode, *, parent_path: NodePath, index_a: int, index_b: int
+) -> PowlNode:
     """Swap the positions of children ``index_a`` and ``index_b`` inside the
     ``PartialOrder`` at ``parent_path``.
 
@@ -356,7 +369,9 @@ def reorder(node: PowlNode, *, parent_path: NodePath, index_a: int, index_b: int
     n = len(parent.children)
     for label, idx in (("index_a", index_a), ("index_b", index_b)):
         if not (0 <= idx < n):
-            raise PowlError(PowlRefusal.DANGLING_REFERENCE, f"{label}={idx} outside range(0, {n})")
+            raise PowlError(
+                PowlRefusal.DANGLING_REFERENCE, f"{label}={idx} outside range(0, {n})"
+            )
     if index_a == index_b:
         raise PowlError(
             PowlRefusal.DANGLING_REFERENCE, "reorder requires index_a != index_b"
@@ -371,7 +386,10 @@ def reorder(node: PowlNode, *, parent_path: NodePath, index_a: int, index_b: int
         )
 
     new_children = list(parent.children)
-    new_children[index_a], new_children[index_b] = new_children[index_b], new_children[index_a]
+    new_children[index_a], new_children[index_b] = (
+        new_children[index_b],
+        new_children[index_a],
+    )
 
     remap = {i: i for i in range(n)}
     remap[index_a], remap[index_b] = index_b, index_a
@@ -384,7 +402,9 @@ def reorder(node: PowlNode, *, parent_path: NodePath, index_a: int, index_b: int
     return result
 
 
-def parallelize(node: PowlNode, *, parent_path: NodePath, index_a: int, index_b: int) -> PowlNode:
+def parallelize(
+    node: PowlNode, *, parent_path: NodePath, index_a: int, index_b: int
+) -> PowlNode:
     """Remove the direct order edge between ``index_a`` and ``index_b`` in
     the ``PartialOrder`` at ``parent_path``, so they run in parallel.
 
@@ -399,7 +419,9 @@ def parallelize(node: PowlNode, *, parent_path: NodePath, index_a: int, index_b:
     n = len(parent.children)
     for label, idx in (("index_a", index_a), ("index_b", index_b)):
         if not (0 <= idx < n):
-            raise PowlError(PowlRefusal.DANGLING_REFERENCE, f"{label}={idx} outside range(0, {n})")
+            raise PowlError(
+                PowlRefusal.DANGLING_REFERENCE, f"{label}={idx} outside range(0, {n})"
+            )
 
     forward = OrderEdge(NodeId(index_a), NodeId(index_b))
     backward = OrderEdge(NodeId(index_b), NodeId(index_a))
@@ -414,12 +436,16 @@ def parallelize(node: PowlNode, *, parent_path: NodePath, index_a: int, index_b:
         )
 
     new_order = frozenset(e for e in parent.order if e != removed)
-    result = _rebuild_with_child_replaced(node, parent_path, parent.children, order=new_order)
+    result = _rebuild_with_child_replaced(
+        node, parent_path, parent.children, order=new_order
+    )
     validate_model(result)
     return result
 
 
-def serialize(node: PowlNode, *, parent_path: NodePath, index_a: int, index_b: int) -> PowlNode:
+def serialize(
+    node: PowlNode, *, parent_path: NodePath, index_a: int, index_b: int
+) -> PowlNode:
     """Add a real order edge ``index_a -> index_b`` in the ``PartialOrder``
     at ``parent_path``, making two currently-parallel children sequential.
 
@@ -432,9 +458,13 @@ def serialize(node: PowlNode, *, parent_path: NodePath, index_a: int, index_b: i
     n = len(parent.children)
     for label, idx in (("index_a", index_a), ("index_b", index_b)):
         if not (0 <= idx < n):
-            raise PowlError(PowlRefusal.DANGLING_REFERENCE, f"{label}={idx} outside range(0, {n})")
+            raise PowlError(
+                PowlRefusal.DANGLING_REFERENCE, f"{label}={idx} outside range(0, {n})"
+            )
     if index_a == index_b:
-        raise PowlError(PowlRefusal.DANGLING_REFERENCE, "serialize requires index_a != index_b")
+        raise PowlError(
+            PowlRefusal.DANGLING_REFERENCE, "serialize requires index_a != index_b"
+        )
 
     closure_pairs = {(e.src, e.dst) for e in parent.closure}
     if (index_a, index_b) in closure_pairs or (index_b, index_a) in closure_pairs:
@@ -445,7 +475,9 @@ def serialize(node: PowlNode, *, parent_path: NodePath, index_a: int, index_b: i
         )
 
     new_order = frozenset(parent.order) | {OrderEdge(NodeId(index_a), NodeId(index_b))}
-    result = _rebuild_with_child_replaced(node, parent_path, parent.children, order=new_order)
+    result = _rebuild_with_child_replaced(
+        node, parent_path, parent.children, order=new_order
+    )
     validate_model(result)
     return result
 
@@ -506,7 +538,9 @@ def relax_guard(
     """
     parent = _require_choice_graph(node, choice_graph_path)
     guarded = [
-        e for e in parent.edges if e.src == edge_src and e.dst == edge_dst and e.guard is not None
+        e
+        for e in parent.edges
+        if e.src == edge_src and e.dst == edge_dst and e.guard is not None
     ]
     if not guarded:
         raise PowlError(

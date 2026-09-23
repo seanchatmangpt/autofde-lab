@@ -7,9 +7,10 @@ and value constraints.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Optional, Sequence, Union
+from typing import Optional, Sequence, Union
+
 import rdflib
 from rdflib.namespace import RDF
 
@@ -104,9 +105,7 @@ class ShexValidator:
     """
 
     def __init__(self, shapes: Sequence[StructuralShape] = ()) -> None:
-        self.shapes_by_name: dict[str, StructuralShape] = {
-            s.name: s for s in shapes
-        }
+        self.shapes_by_name: dict[str, StructuralShape] = {s.name: s for s in shapes}
 
     def add_shape(self, shape: StructuralShape) -> None:
         """Register a structural shape."""
@@ -159,7 +158,10 @@ class ShexValidator:
                         f"expected {pc.node_kind.value}"
                     )
                 if pc.datatype is not None:
-                    if not isinstance(obj, rdflib.Literal) or obj.datatype != pc.datatype:
+                    if (
+                        not isinstance(obj, rdflib.Literal)
+                        or obj.datatype != pc.datatype
+                    ):
                         violations.append(
                             f"Node <{node}> object <{obj}> for <{pc.predicate}> violates datatype: "
                             f"expected {pc.datatype}, found {getattr(obj, 'datatype', None)}"
@@ -169,7 +171,10 @@ class ShexValidator:
                         violations.append(
                             f"Node <{node}> object <{obj}> for <{pc.predicate}> not in allowed values"
                         )
-                if pc.value_shape_name is not None and pc.value_shape_name in self.shapes_by_name:
+                if (
+                    pc.value_shape_name is not None
+                    and pc.value_shape_name in self.shapes_by_name
+                ):
                     sub_violations = self.validate_node(
                         graph, obj, self.shapes_by_name[pc.value_shape_name]
                     )
@@ -217,7 +222,9 @@ class ShexValidator:
         if target_nodes:
             for shape_name, nodes in target_nodes.items():
                 if shape_name not in self.shapes_by_name:
-                    all_violations.append(f"Referenced shape '{shape_name}' not defined in validator.")
+                    all_violations.append(
+                        f"Referenced shape '{shape_name}' not defined in validator."
+                    )
                     continue
                 shape = self.shapes_by_name[shape_name]
                 for node in nodes:
@@ -226,7 +233,9 @@ class ShexValidator:
         # Validate shapes with target_class
         for shape in self.shapes_by_name.values():
             if shape.target_class:
-                matching_nodes = list(target_graph.subjects(RDF.type, shape.target_class))
+                matching_nodes = list(
+                    target_graph.subjects(RDF.type, shape.target_class)
+                )
                 for node in matching_nodes:
                     all_violations.extend(self.validate_node(target_graph, node, shape))
 

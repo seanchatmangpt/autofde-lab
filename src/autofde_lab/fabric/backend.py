@@ -46,10 +46,16 @@ class ScikitDecideBackend:
             try:
                 import pathlib
                 import tomllib
+
                 p = pathlib.Path(__file__).parents[3] / "pyproject.toml"
                 if p.exists():
                     d = tomllib.loads(p.read_text(encoding="utf-8"))
-                    domains = list(d.get("project", {}).get("entry-points", {}).get("autofde_lab.domains", {}).keys())
+                    domains = list(
+                        d.get("project", {})
+                        .get("entry-points", {})
+                        .get("autofde_lab.domains", {})
+                        .keys()
+                    )
             except Exception:
                 pass
         return sorted(str(name) for name in domains)
@@ -60,10 +66,16 @@ class ScikitDecideBackend:
             try:
                 import pathlib
                 import tomllib
+
                 p = pathlib.Path(__file__).parents[3] / "pyproject.toml"
                 if p.exists():
                     d = tomllib.loads(p.read_text(encoding="utf-8"))
-                    solvers = list(d.get("project", {}).get("entry-points", {}).get("autofde_lab.solvers", {}).keys())
+                    solvers = list(
+                        d.get("project", {})
+                        .get("entry-points", {})
+                        .get("autofde_lab.solvers", {})
+                        .keys()
+                    )
             except Exception:
                 pass
         return sorted(str(name) for name in solvers)

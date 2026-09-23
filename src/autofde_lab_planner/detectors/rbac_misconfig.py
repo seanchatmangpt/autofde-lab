@@ -86,7 +86,9 @@ def detect_rbac_misconfigurations(
         dep_ns = dep_meta.get("namespace") or namespace
 
         pod_spec = ((dep.get("spec") or {}).get("template") or {}).get("spec") or {}
-        sa_name = pod_spec.get("serviceAccountName") or pod_spec.get("serviceAccount") or ""
+        sa_name = (
+            pod_spec.get("serviceAccountName") or pod_spec.get("serviceAccount") or ""
+        )
 
         if not sa_name:
             continue
@@ -149,7 +151,11 @@ def detect_rbac_misconfigurations(
                 for res in rule.get("resources") or []:
                     granted_resources.add(res)
 
-        missing = sorted(r for r in needed_resources if r not in granted_resources and "*" not in granted_resources)
+        missing = sorted(
+            r
+            for r in needed_resources
+            if r not in granted_resources and "*" not in granted_resources
+        )
         if missing:
             faults.append(
                 RBACMisconfigFault(
@@ -160,7 +166,9 @@ def detect_rbac_misconfigurations(
                     missing_resources=tuple(missing),
                     missing_verbs=("get",),
                     cluster_role_name=role_names_used[0] if role_names_used else None,
-                    cluster_role_binding_name=binding_names_used[0] if binding_names_used else None,
+                    cluster_role_binding_name=binding_names_used[0]
+                    if binding_names_used
+                    else None,
                     details=(
                         f"ServiceAccount {sa_name} bound via ClusterRole(s) "
                         f"{', '.join(role_names_used) or '<none>'} is missing get/list/watch "
@@ -174,7 +182,9 @@ def detect_rbac_misconfigurations(
 
 def _extract_needed_resources(pod_spec: dict[str, Any]) -> set[str]:
     needed: set[str] = set()
-    all_containers = list(pod_spec.get("initContainers") or []) + list(pod_spec.get("containers") or [])
+    all_containers = list(pod_spec.get("initContainers") or []) + list(
+        pod_spec.get("containers") or []
+    )
     for c in all_containers:
         if not isinstance(c, dict):
             continue
@@ -188,7 +198,9 @@ def _extract_needed_resources(pod_spec: dict[str, Any]) -> set[str]:
     return needed
 
 
-def _to_item_list(data: dict[str, Any] | list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+def _to_item_list(
+    data: dict[str, Any] | list[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
     if not data:
         return []
     if isinstance(data, dict):

@@ -26,7 +26,12 @@ from dataclasses import dataclass
 
 from autofde_lab.case_library.model import Case, ProblemSignature
 
-__all__ = ["ScoredCase", "jaccard_similarity", "retrieve_similar_cases", "retrieve_best_match"]
+__all__ = [
+    "ScoredCase",
+    "jaccard_similarity",
+    "retrieve_similar_cases",
+    "retrieve_best_match",
+]
 
 
 def jaccard_similarity(left: ProblemSignature, right: ProblemSignature) -> float:

@@ -8,27 +8,26 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-import time
-from typing import Any, Callable, Mapping, Optional, Sequence
+from typing import Callable, Optional
 
 from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline, AdmissionResult
 from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import (
     AuthorityBroker,
     AuthorityDecision,
-    AuthorityGrant,
     ConsequenceRequest,
 )
 from autofde_lab.sa2a.brce.boundary import (
     REFUSED_NOT_ADMITTED,
-    ConsequenceActuator,
     ConsequenceBoundary,
-    ConsequenceVerifier,
     ExecutionEnvelope,
 )
-from autofde_lab.sa2a.brce.receipts import FinalReceipt, TerminalReceiptState
+from autofde_lab.sa2a.brce.receipts import FinalReceipt
 from autofde_lab.sa2a.hooks.engine import KnowledgeHookEngine
-from autofde_lab.sa2a.hooks.model import HookExecutionRecord, HookVerdict, SemanticIntent
+from autofde_lab.sa2a.hooks.model import (
+    HookVerdict,
+    SemanticIntent,
+)
 
 
 class _NotSet:
@@ -185,10 +184,13 @@ class ReactiveSemanticLoop:
             # 2. For each intent, evaluate Authority and execute via BRCE
             for intent in intents:
                 if self.admission_pipeline is not None and (
-                    admission_result is None or admission_result.standing != Standing.ADMITTED
+                    admission_result is None
+                    or admission_result.standing != Standing.ADMITTED
                 ):
                     # Fenced: refused before AuthorityBroker.evaluate() is ever consulted.
-                    standing_repr = admission_result.standing.value if admission_result else None
+                    standing_repr = (
+                        admission_result.standing.value if admission_result else None
+                    )
                     auth_decisions.append(
                         AuthorityDecision(
                             authorized=False,
@@ -237,7 +239,7 @@ class ReactiveSemanticLoop:
                     else:
                         next_delta = (
                             f"@prefix ex: <http://example.org/> .\n"
-                            f"<{intent.action_iri}> ex:receiptState \"{res.final_receipt.state.value}\" .\n"
+                            f'<{intent.action_iri}> ex:receiptState "{res.final_receipt.state.value}" .\n'
                         )
                     next_delta_parts.append(next_delta)
 

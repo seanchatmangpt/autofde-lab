@@ -98,11 +98,17 @@ def test_materialize_matches_the_real_command_this_session_actually_ran() -> Non
     argv, env = materialize_sregym_invocation(basis)
 
     assert argv == [
-        "uv", "run", "main.py",
-        "--agent", "stratus",
-        "--model", "openai/gemma-4-26b-a4b-it",
-        "--problem", "misconfig_app_hotel_res",
-        "--agent-timeout", "900",
+        "uv",
+        "run",
+        "main.py",
+        "--agent",
+        "stratus",
+        "--model",
+        "openai/gemma-4-26b-a4b-it",
+        "--problem",
+        "misconfig_app_hotel_res",
+        "--agent-timeout",
+        "900",
     ]
     assert env == {
         "AGENT_API_BASE": "http://127.0.0.1:8080/v1",
@@ -172,7 +178,9 @@ def test_override_knobs_are_real_cli_level_overrides_not_vendor_config_edits() -
 # aggregate comparison needs this driver run across a representative problem sample.
 
 
-def test_autofde_lab_planner_driver_is_registered_but_deliberately_absent_from_the_live_tree() -> None:
+def test_autofde_lab_planner_driver_is_registered_but_deliberately_absent_from_the_live_tree() -> (
+    None
+):
     """`autofde_lab_planner` is registered in the real, checked-out `agents.yaml` (its
     `kickoff_command` names `clients.autofde_lab_planner.driver`), but
     `AUTOFDE_LAB_PLANNER_DRIVER_PATH` itself is deliberately NOT a file in this checkout.
@@ -191,9 +199,14 @@ def test_autofde_lab_planner_driver_is_registered_but_deliberately_absent_from_t
     import yaml
 
     agents_yaml = SREGYM_ROOT / "agents.yaml"
-    registered = {a["name"]: a for a in yaml.safe_load(agents_yaml.read_text())["agents"]}
+    registered = {
+        a["name"]: a for a in yaml.safe_load(agents_yaml.read_text())["agents"]
+    }
     assert "autofde_lab_planner" in registered
-    assert "clients.autofde_lab_planner.driver" in registered["autofde_lab_planner"]["kickoff_command"]
+    assert (
+        "clients.autofde_lab_planner.driver"
+        in registered["autofde_lab_planner"]["kickoff_command"]
+    )
     assert not AUTOFDE_LAB_PLANNER_DRIVER_PATH.is_file(), (
         "the orphaned driver.py appears to have been restored to the live vendored tree -- "
         "see .claude/rules/gym-actuation-boundary.md before doing this: it documents an "
@@ -214,18 +227,25 @@ def test_current_sregym_autofde_lab_planner_basis_has_no_agent_model() -> None:
     assert basis.extra["judge_model_id"] == "openai/gemma-4-26b-a4b-it"
 
 
-def test_materialize_autofde_lab_planner_matches_the_real_command_this_session_ran() -> None:
+def test_materialize_autofde_lab_planner_matches_the_real_command_this_session_ran() -> (
+    None
+):
     """Cross-checked against the exact real command this session's real, final (run4, clean
     PASS) trial used."""
     basis = current_sregym_autofde_lab_planner_basis(wall_clock_timeout_s=600)
     argv, env = materialize_sregym_autofde_lab_planner_invocation(basis)
 
     assert argv == [
-        ".venv/bin/python", "main.py",
-        "--agent", "autofde_lab_planner",
-        "--model", "openai/gemma-4-26b-a4b-it",
-        "--problem", "misconfig_app_hotel_res",
-        "--agent-timeout", "600",
+        ".venv/bin/python",
+        "main.py",
+        "--agent",
+        "autofde_lab_planner",
+        "--model",
+        "openai/gemma-4-26b-a4b-it",
+        "--problem",
+        "misconfig_app_hotel_res",
+        "--agent-timeout",
+        "600",
     ]
     assert env == {
         "AGENT_API_BASE": "http://127.0.0.1:8080/v1",
@@ -237,7 +257,9 @@ def test_materialize_autofde_lab_planner_refuses_the_stratus_identity() -> None:
     from dataclasses import replace
 
     basis = current_sregym_autofde_lab_planner_basis()
-    wrong = replace(basis, planner=replace(basis.planner, name="sregym:stratus:mitigation_agent"))
+    wrong = replace(
+        basis, planner=replace(basis.planner, name="sregym:stratus:mitigation_agent")
+    )
     with pytest.raises(ValueError, match="autofde_lab_planner planner identity"):
         materialize_sregym_autofde_lab_planner_invocation(wrong)
 
@@ -273,7 +295,9 @@ def test_real_run4_result_csv_matches_this_basis_verification_oracle() -> None:
     assert basis.extra["problem_id"] == row["problem_id"]
 
 
-def test_real_faulty_image_correlated_result_confirms_generalization_with_zero_code_changes() -> None:
+def test_real_faulty_image_correlated_result_confirms_generalization_with_zero_code_changes() -> (
+    None
+):
     """`faulty_image_correlated` (same real IncorrectImageMitigationOracle class, same real
     HotelReservation app, but the injected fault hits ALL 8 real microservices simultaneously
     rather than just `geo`) was run this session against the exact same driver code as
@@ -304,7 +328,9 @@ def test_real_faulty_image_correlated_result_confirms_generalization_with_zero_c
     assert float(row["Diagnosis.composite_score"]) == 1.0
 
 
-def test_real_assign_to_non_existent_node_confirms_the_general_app_agnostic_architecture() -> None:
+def test_real_assign_to_non_existent_node_confirms_the_general_app_agnostic_architecture() -> (
+    None
+):
     """`assign_to_non_existent_node` is a genuinely different app (SocialNetwork, not
     HotelReservation) and a genuinely different fault category (a real, standard Kubernetes
     node-scheduling constraint -- unready replicas + a nodeSelector -- not an image mismatch)
@@ -338,7 +364,9 @@ def test_real_assign_to_non_existent_node_confirms_the_general_app_agnostic_arch
     assert float(row["Diagnosis.composite_score"]) == 1.0
 
 
-def test_real_configmap_drift_result_is_an_honest_documented_fail_not_a_hidden_regression() -> None:
+def test_real_configmap_drift_result_is_an_honest_documented_fail_not_a_hidden_regression() -> (
+    None
+):
     """`configmap_drift_hotel_reservation` is a real, honest FAIL, not silently swallowed:
     `kubectl rollout undo` (this driver's only remediation for a revision-elevated, non-
     image-mismatched deployment) reverts the Deployment's pod-template spec but cannot

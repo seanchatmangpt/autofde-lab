@@ -252,7 +252,6 @@ def test_world_generator_rejects_non_catalog_coordinate() -> None:
         raise AssertionError("world generator admitted a non-catalog cloud option")
 
 
-
 def test_semantic_admission_refuses_cross_world_and_stale_state() -> None:
     world = generate_world(seed=29, scale_profile="demo", horizon_rounds=12)
     service = world.services[0]

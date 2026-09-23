@@ -300,9 +300,6 @@ class CGPWrapper(Solver, DeterministicPolicies):
         flat_action_space = list(flatten(action_space))
         flat_observation_space = list(flatten(observation_space))
 
-        print(flat_action_space)
-        print(flat_observation_space)
-
         valide_action_space = True
         for x in flat_action_space:
             valide_action_space = isinstance(
