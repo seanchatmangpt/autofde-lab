@@ -92,6 +92,41 @@ def _digest(obj: Any) -> str:
     ).hexdigest()[:16]
 
 
+def _receipt_from_live_bridge_payload(payload: dict):
+    """Reconstruct the pinned-schema `Receipt` from a live-gymact producer payload.
+
+    The level4 bridge subprocess runs ``~/gymact``'s own interpreter (the LIVE
+    gymact, 26.8.23 today), while this repo PINS gymact 26.8.8 in
+    ``pyproject.toml`` -- and that pin may only move through the recorded
+    promotion policy in ``ecosystem/autofde-rust-handoff.toml``. The two
+    builds' Receipt schemas have drifted: the live producer now emits
+    ``planning_provenance_digest`` (None-valued today), which the pinned
+    schema forbids as an extra input.
+
+    Boundary policy (explicit, not a silent shim):
+    - extra keys whose value is None are schema-neutral additions and are
+      tolerated -- they carry no information the pinned schema could consume;
+    - extra keys carrying a REAL value refuse loudly, naming the drift, so a
+      populated new field forces the recorded pin-promotion flow instead of
+      being dropped (no silent data loss) or accepted into a schema that
+      cannot see it (no dual bookkeeping).
+    """
+    from gymact.models import Receipt
+
+    model_fields = Receipt.model_fields
+    unknown = {key: value for key, value in payload.items() if key not in model_fields}
+    populated = {key: value for key, value in unknown.items() if value is not None}
+    if populated:
+        raise ValueError(
+            "live gymact producer emitted fields unknown to this repo's pinned "
+            f"gymact schema with non-null values: {sorted(populated)}; the gymact "
+            "pin must move through the recorded promotion policy "
+            "(ecosystem/autofde-rust-handoff.toml) before these can be consumed"
+        )
+    known = {key: value for key, value in payload.items() if key in model_fields}
+    return Receipt.model_validate(known)
+
+
 def _standing_from_bridge_result(
     result: dict, replay_rec: dict, expected_list: list
 ) -> Standing:
@@ -105,10 +140,10 @@ def _standing_from_bridge_result(
     `model_validate` -- never re-derived or approximated -- and calls the
     ONE real constructor, `standing_from_episode`, with them.
     """
-    from gymact.models import Operation, Receipt
+    from gymact.models import Operation
     from gymact.replay import ReplayMode, ReplayReport
 
-    receipts = [Receipt.model_validate(r) for r in result["receipts_json"]]
+    receipts = [_receipt_from_live_bridge_payload(r) for r in result["receipts_json"]]
     operations = [Operation(o) for o in result["operations_json"]]
     replay_payload = dict(replay_rec)
     replay_mode = ReplayMode(replay_payload.pop("mode"))

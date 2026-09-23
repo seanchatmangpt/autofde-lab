@@ -26,22 +26,22 @@ Chicago Zero-Mock Standard:
 from __future__ import annotations
 
 import copy
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 import hashlib
 import json
 import math
+from pathlib import Path
 import platform
 import subprocess
 import sys
 import tempfile
 import time
 import tracemalloc
-import uuid
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
+import uuid
 
-from rdflib import Graph, Namespace
+from rdflib import Graph
 
 from autofde_lab.sa2a.admission.canonicalizer import (
     canonicalize_graph,
@@ -195,6 +195,11 @@ class RealDiskJournalActuator:
             "entry_count": len(records),
             "last_digest": payload_digest,
             "journal_file": str(self._journal_path),
+            # Action identity in the receipt evidence: the FinalReceipt is the
+            # only object downstream cascade consumers (B6 delta generator)
+            # see, so the actuator binds which action it actually applied.
+            "action": action_iri,
+            "target": target_resource,
         }
 
     def actuator_digest(self) -> str:
@@ -386,12 +391,14 @@ class BenchmarkHarness:
         n = iterations or self.default_iterations
         pipeline = AdmissionPipeline(
             identity_policy=IdentityPolicy(
-                allowed_namespaces={
+                allowed_subject_namespaces=(
                     "http://example.org/",
                     "https://spec.autofde.org/sa2a#",
-                }
+                )
             ),
-            provenance_policy=ProvenancePolicy(require_provenance=False),
+            provenance_policy=ProvenancePolicy(
+                require_issuer=False, require_timestamp=False
+            ),
         )
 
         candidate_template = """
@@ -471,21 +478,21 @@ class BenchmarkHarness:
     def run_b2_logic_closure(self, iterations: Optional[int] = None) -> BenchmarkResult:
         """Measure logic closure under safe finite Datalog and N3 rules."""
         n = iterations or self.default_iterations
-        ex = Namespace("http://example.org/")
 
         # Safe Datalog rule: transitive capability hierarchy
         # implies(?a, ?b) & implies(?b, ?c) -> implies(?a, ?c)
+        # NOTE: DatalogAtom takes varargs terms, not a single args tuple.
         r_trans = DatalogRule(
-            head=DatalogAtom("implies", ("?a", "?c")),
+            head=DatalogAtom("implies", "?a", "?c"),
             body=(
-                DatalogAtom("implies", ("?a", "?b")),
-                DatalogAtom("implies", ("?b", "?c")),
+                DatalogAtom("implies", "?a", "?b"),
+                DatalogAtom("implies", "?b", "?c"),
             ),
         )
         engine = DatalogEngine(rules=[r_trans])
 
         # Base facts: chain of 8 capability implications
-        facts = [DatalogAtom("implies", (f"cap_{i}", f"cap_{i + 1}")) for i in range(8)]
+        facts = [DatalogAtom("implies", f"cap_{i}", f"cap_{i + 1}") for i in range(8)]
 
         latencies_ms: List[float] = []
         total_derived = 0
@@ -495,7 +502,7 @@ class BenchmarkHarness:
 
         for _ in range(n):
             it_t0 = time.perf_counter()
-            closure = engine.compute_closure(facts)
+            closure, _fixpoint_iterations = engine.execute_fixpoint(facts)
             dur_ms = (time.perf_counter() - it_t0) * 1000.0
             latencies_ms.append(dur_ms)
             total_derived += len(closure)
@@ -632,7 +639,12 @@ class BenchmarkHarness:
         n = iterations or self.default_iterations
         allocator = CMCACandidateAllocator()
         budget = ExplorationBudget(
-            max_compute_ticks=1000, max_tokens=10000, max_experiments=5
+            max_compute_ticks=1000,
+            max_tokens=10000,
+            max_experiments=5,
+            # 10 candidates below must all allocate; the Chatman-constant
+            # default of 8 lanes would refuse the frontier outright.
+            concurrency_lanes=10,
         )
 
         candidates = [
@@ -720,6 +732,13 @@ class BenchmarkHarness:
                 actuator=actuator,
                 verifier=verifier,
                 receipt_store=receipt_store,
+                # B5 measures the authority broker + BRCE boundary, not the
+                # admission fence (AFDE-2604 flipped the default to True and
+                # these envelopes carry no admission_result). Permissive
+                # behavior is an affirmative, visible choice at this call
+                # site; the unauthorized-request refusal below still proves
+                # the authority gate fails closed.
+                require_admission=False,
             )
 
             actor_id = "urn:agent:benchmark-runner"
@@ -839,6 +858,11 @@ class BenchmarkHarness:
                 actuator=actuator,
                 verifier=verifier,
                 receipt_store=receipt_store,
+                # Same scope as B5: the reflex cascade exercises authority +
+                # BRCE, not the admission fence (no admission pipeline is
+                # wired into this loop). Explicit permissive choice at the
+                # call site per the AFDE-2604 fail-secure default.
+                require_admission=False,
             )
 
             engine = KnowledgeHookEngine()
@@ -846,6 +870,10 @@ class BenchmarkHarness:
 
             # Register multi-depth hooks
             # Hook 1 triggers on 'INCIDENT_DETECTED' -> grounds isolate_node -> emits 'CONTAINMENT_ACTIVE'
+            # trigger_predicate/trigger_value make the local fallback verdict
+            # content-driven (AFDE-2612): without them a hand-constructed
+            # ASSERT hook fires on ANY non-empty delta, which collapses the
+            # two-step cascade into a single step.
             hook1 = KnowledgeHookDefinition(
                 iri="http://example.org/hook/cascade_1",
                 name="cascade_hook_1",
@@ -854,6 +882,8 @@ class BenchmarkHarness:
                 action_iri="urn:action:isolate_node",
                 target_capability_iri="urn:cap:node:isolate",
                 goal_iri="urn:goal:containment",
+                trigger_predicate="ex:alert",
+                trigger_value="INCIDENT_DETECTED",
             )
             # Hook 2 triggers on 'CONTAINMENT_ACTIVE' -> grounds sanitize_node -> quiescence
             hook2 = KnowledgeHookDefinition(
@@ -864,6 +894,8 @@ class BenchmarkHarness:
                 action_iri="urn:action:sanitize_node",
                 target_capability_iri="urn:cap:node:sanitize",
                 goal_iri="urn:goal:sanitized",
+                trigger_predicate="ex:state",
+                trigger_value="CONTAINMENT_ACTIVE",
             )
             engine.register_hook(hook1)
             engine.register_hook(hook2)
@@ -891,6 +923,13 @@ class BenchmarkHarness:
                 authority_broker=broker,
                 consequence_boundary=boundary,
                 max_cascade_depth=cascade_depth,
+                # B6's subject is the hook -> intent -> authority -> BRCE
+                # reflex cascade, not semantic admission. AFDE-2604 makes a
+                # bare-construction loop wire a real AdmissionPipeline by
+                # default; opting out here is the documented, affirmative,
+                # visible choice that restores the candidate -> authority ->
+                # DO shape this benchmark has always measured.
+                admission_pipeline=None,
             )
 
             base_ttl = (
@@ -900,7 +939,8 @@ class BenchmarkHarness:
 
             # Delta generator creates secondary event on step 1, then quiesces on step 2
             def cascade_delta(receipt: FinalReceipt) -> str:
-                if "isolate_node" in receipt.action_iri:
+                applied_action = str((receipt.evidence or {}).get("action", ""))
+                if "isolate_node" in applied_action:
                     return "@prefix ex: <http://example.org/> . ex:node ex:state 'CONTAINMENT_ACTIVE' ."
                 return ""  # Quiesces
 
@@ -1058,6 +1098,11 @@ class BenchmarkHarness:
                 actuator=actuator,
                 verifier=verifier,
                 receipt_store=receipt_store,
+                # Benchmarks measure the authority + BRCE boundary, not the
+                # admission fence (AFDE-2604 flipped the default to True and
+                # these envelopes carry no admission_result). Permissive
+                # behavior is an affirmative, visible choice at this call site.
+                require_admission=False,
             )
 
             actor_id = "urn:agent:replay-tester"
@@ -1104,10 +1149,11 @@ class BenchmarkHarness:
 
             # Measure tamper detection latency
             tampered_records = copy.deepcopy(receipt_records)
-            # Mutate prepared receipt digest in second pair
-            tampered_records[0]["candidate_payload_digest"] = (
-                "bad_tampered_digest_00000000000000"
-            )
+            # Mutate a real digest-covered field of the first prepared receipt:
+            # verify_chain re-computes each record's digest from its actual
+            # body, so tampering must land on a field the digest binds
+            # (PreparedReceipt has no candidate_payload_digest field).
+            tampered_records[0]["action_iri"] = "urn:action:tampered_action"
 
             t_tamper_0 = time.perf_counter()
             tamper_report = replay_engine.verify_chain(receipt_records=tampered_records)
@@ -1277,6 +1323,11 @@ class BenchmarkHarness:
                 actuator=actuator,
                 verifier=verifier,
                 receipt_store=receipt_store,
+                # Benchmarks measure the authority + BRCE boundary, not the
+                # admission fence (AFDE-2604 flipped the default to True and
+                # these envelopes carry no admission_result). Permissive
+                # behavior is an affirmative, visible choice at this call site.
+                require_admission=False,
             )
 
             actor_id = "urn:agent:recovery-manager"
@@ -1328,13 +1379,20 @@ class BenchmarkHarness:
             for tok in tokens:
                 prep = receipt_store.get_prepared(tok)
                 if prep:
-                    fresh_store.put_prepared(prep)
+                    fresh_store.save_prepared(prep)
+                fin = receipt_store.get_final(tok)
+                if fin:
+                    fresh_store.save_final(fin)
 
             fresh_boundary = ConsequenceBoundary(
                 authority_broker=fresh_broker,
                 actuator=actuator,
                 verifier=verifier,
                 receipt_store=fresh_store,
+                # Same scope as the primary boundary above: replay/recovery
+                # verification, not admission gating. Explicit permissive
+                # choice at this call site.
+                require_admission=False,
             )
             recovery_latency_ms = (time.perf_counter() - t_rec_0) * 1000.0
 
@@ -1352,9 +1410,12 @@ class BenchmarkHarness:
                 )
                 # Should be caught by receipt store replay guard
                 replay_res = fresh_boundary.execute(replay_env)
-                # Invariant: Must not re-execute or duplicate in journal
-                if replay_res.success is True and replay_res.refusal_code is None:
-                    # If it succeeded without refusal, it would mean it re-executed
+                # Invariant: the token must resolve as a REPLAY of the cached
+                # idempotent response (replayed=True), never as fresh DO. A
+                # cached EXECUTED response legitimately reports success=True
+                # with refusal_code=None (§55 idempotent-response); what must
+                # never happen is a NEW actuation for the replayed token.
+                if replay_res.replayed is not True:
                     duplicate_actuation_prevented = False
 
             idempotency_latency_ms = (time.perf_counter() - t_idemp_0) * 1000.0
