@@ -49,6 +49,21 @@ jobs:
           EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
 
+      - name: Build local Rust artifacts the fabric courts exercise
+        run: |
+          set -euo pipefail
+          # 1) cmca_rank_cli: the vendored bcinr allocator CLI behind the
+          #    fabric match path (vendor/bcinr ships in this checkout).
+          (cd vendor/bcinr && cargo build --release --quiet)
+          # 2) ocel_diff_cli: the platform-console capability-plan courts
+          #    diff plan-step effects through the Rust example binary of the
+          #    SAME pinned wasm4pm-compat commit the pip dependency uses.
+          #    The suite resolves it at <repo-parent>/wasm4pm-compat.
+          compat_dir="$(dirname "$GITHUB_WORKSPACE")/wasm4pm-compat"
+          git clone --quiet https://github.com/seanchatmangpt/wasm4pm-compat.git "$compat_dir"
+          git -C "$compat_dir" checkout --quiet 577e2d1d8bdfe27d96f61c63f3ea120994e8bfda
+          (cd "$compat_dir" && cargo build --release --quiet --example ocel_diff_cli)
+
       - name: Install Python ${{ matrix.python-version }}
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
