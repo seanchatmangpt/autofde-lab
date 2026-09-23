@@ -52,7 +52,9 @@ class ComposedRoute:
         return digest(
             {
                 "requirement_id": self.requirement_id,
-                "capabilities": tuple(capability.identity for capability in self.capabilities),
+                "capabilities": tuple(
+                    capability.identity for capability in self.capabilities
+                ),
                 "total_cost": self.total_cost,
                 "failure": self.failure,
             }
@@ -113,13 +115,21 @@ class CapabilityComposer:
                 )
             )
 
-        queue: list[tuple[int, int, str, tuple[GeneratorCapability, ...]]] = [
-            (0, 0, requirement.input_kind, ())
+        queue: list[
+            tuple[
+                int,
+                int,
+                str,
+                tuple[str, ...],
+                tuple[GeneratorCapability, ...],
+            ]
+        ] = [
+            (0, 0, requirement.input_kind, (), ())
         ]
         best: dict[tuple[str, int], int] = {(requirement.input_kind, 0): 0}
 
         while queue:
-            cost, hops, current_kind, path = heapq.heappop(queue)
+            cost, hops, current_kind, path_key, path = heapq.heappop(queue)
             if current_kind == requirement.output_kind:
                 return ComposedRoute(
                     requirement_id=requirement.requirement_id,
@@ -133,16 +143,19 @@ class CapabilityComposer:
                 next_kind = capability.output_kind
                 next_hops = hops + 1
                 next_cost = cost + self.policy.cost(capability)
+                next_path_key = path_key + (capability.capability_id,)
                 state = (next_kind, next_hops)
-                if next_cost >= best.get(state, 2**63 - 1):
+                if next_cost > best.get(state, 2**63 - 1):
                     continue
-                best[state] = next_cost
+                if next_cost < best.get(state, 2**63 - 1):
+                    best[state] = next_cost
                 heapq.heappush(
                     queue,
                     (
                         next_cost,
                         next_hops,
                         next_kind,
+                        next_path_key,
                         path + (capability,),
                     ),
                 )
