@@ -347,6 +347,7 @@ class ChicagoCrownQualificationRunner:
         self,
         receipt_path: Path | str | None = None,
         ocel_path: Path | str | None = None,
+        release_tag: str | None = None,
     ) -> StandingReceipt:
         """Execute all 12 Chicago Crown Gates and issue official StandingReceipt."""
         t0 = time.time()
@@ -357,9 +358,12 @@ class ChicagoCrownQualificationRunner:
 
         # Runtime constants. release_tag names the git tag the CHI-ID fence
         # certifies HEAD against; the fence itself never moves — cutting the tag
-        # is the operator's release act, not a runner concern.
-        release_tag = "v26.9.17"
-        release_urn = f"urn:release:{release_tag}"
+        # is the operator's release act, not a runner concern. The pinned default
+        # stays at the tag the court was minted for (v26.9.17); a later release
+        # wave names its own tag explicitly at the invocation, and the fence
+        # still fail-closes unless HEAD is exactly that tag.
+        fence_tag = release_tag or "v26.9.17"
+        release_urn = f"urn:release:{fence_tag}"
         actor_id = "urn:agent:autonomic-controller"
         action_iri = "urn:action:quarantine_compromised_node"
         target_cap = "urn:cap:cluster:nodes"
@@ -367,7 +371,7 @@ class ChicagoCrownQualificationRunner:
         idempotency_token = f"idemp-chicago-{uuid.uuid4().hex[:12]}"
 
         # Register core objects in OCEL inventory
-        tracer.declare_object(release_urn, "ReleaseArtifact", {"release": release_tag})
+        tracer.declare_object(release_urn, "ReleaseArtifact", {"release": fence_tag})
         tracer.declare_object(
             actor_id, "AutonomousAgent", {"role": "autonomic_controller"}
         )
@@ -399,7 +403,7 @@ class ChicagoCrownQualificationRunner:
         )
         exact_sha = rev.stdout.strip()
         tag_rev = subprocess.run(
-            ["git", "rev-list", "-n", "1", release_tag],
+            ["git", "rev-list", "-n", "1", fence_tag],
             cwd=self.workspace_root,
             capture_output=True,
             text=True,
@@ -1068,7 +1072,7 @@ class ChicagoCrownQualificationRunner:
                 "standard": "RFC-SA2A-002",
                 "appendix": "Appendix D",
                 "court": "Canonical Chicago Definition of Done Court",
-                "release": release_tag,
+                "release": fence_tag,
                 "qualification_kind": "CHICAGO_CROWN",
                 "subject": f"seanchatmangpt/autofde-lab @ {exact_sha[:8]}",
                 "exact_sha": exact_sha,
@@ -1091,7 +1095,7 @@ class ChicagoCrownQualificationRunner:
                 standard="RFC-SA2A-002",
                 appendix="Appendix D",
                 court="Canonical Chicago Definition of Done Court",
-                release=release_tag,
+                release=fence_tag,
                 qualification_kind="CHICAGO_CROWN",
                 subject=f"seanchatmangpt/autofde-lab @ {exact_sha[:8]}",
                 exact_sha=exact_sha,
@@ -1136,7 +1140,10 @@ def run_chicago_qualification(
     workspace_root: Path | str | None = None,
     receipt_path: Path | str | None = None,
     ocel_path: Path | str | None = None,
+    release_tag: str | None = None,
 ) -> StandingReceipt:
     """Convenience helper executing Chicago Crown qualification and returning StandingReceipt."""
     runner = ChicagoCrownQualificationRunner(workspace_root=workspace_root)
-    return runner.run(receipt_path=receipt_path, ocel_path=ocel_path)
+    return runner.run(
+        receipt_path=receipt_path, ocel_path=ocel_path, release_tag=release_tag
+    )
