@@ -10,13 +10,24 @@ artifact asserted with two conflicting content digests.
 
 from __future__ import annotations
 
+import hashlib
 import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from autofde_lab.sa2a.composition.exact_subject import ArtifactRef, ExactSubject, RepositoryRef
+from autofde_lab.sa2a.composition.exact_subject import (
+    ArtifactRef,
+    CheckpointRef,
+    ExactSubject,
+    RepositoryRef,
+)
+from autofde_lab.sa2a.gall.composition import ReceiptReference
+from autofde_lab.sa2a.gall.receipt_admission import (
+    admit_receipt,
+    verify_receipt_chain,
+)
 
 _SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
@@ -42,6 +53,14 @@ REFUSED_CONFLICTING_ARTIFACT_DIGEST = "REFUSED_CONFLICTING_ARTIFACT_DIGEST"
 #: uncaught crash instead of a clean REFUSED verdict. Every such shape violation now
 #: surfaces as this one code.
 REFUSED_MALFORMED_MANIFEST = "REFUSED_MALFORMED_MANIFEST"
+REFUSED_MISSING_GALL_CHECKPOINT = "REFUSED_MISSING_GALL_CHECKPOINT"
+REFUSED_INVALID_GALL_CHECKPOINT = "REFUSED_INVALID_GALL_CHECKPOINT"
+REFUSED_CHECKPOINT_RECEIPT_DRIFT = "REFUSED_CHECKPOINT_RECEIPT_DRIFT"
+REFUSED_CHECKPOINT_RECEIPT_CONTRACT = "REFUSED_CHECKPOINT_RECEIPT_CONTRACT"
+REFUSED_CHECKPOINT_CHAIN_MISMATCH = "REFUSED_CHECKPOINT_CHAIN_MISMATCH"
+
+_REQUIRED_GALL_CHECKPOINTS = ("GALL-001", "GALL-002", "GALL-003", "GALL-004")
+_DIGEST_RE = re.compile(r"^(?:sha256:)?[0-9a-f]{64}$")
 
 
 class SubjectResolutionError(ValueError):
@@ -77,10 +96,18 @@ def resolve_self_identity(repo_root: Path | None = None) -> SelfIdentity:
     """
     cwd = repo_root or Path.cwd()
     sha = subprocess.run(
-        ["git", "rev-parse", "HEAD"], cwd=cwd, capture_output=True, text=True, check=True
+        ["git", "rev-parse", "HEAD"],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=True,
     ).stdout.strip()
     status = subprocess.run(
-        ["git", "status", "--porcelain"], cwd=cwd, capture_output=True, text=True, check=True
+        ["git", "status", "--porcelain"],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=True,
     ).stdout
     return SelfIdentity(sha=sha, dirty=bool(status.strip()))
 
@@ -104,8 +131,117 @@ class SubjectResolver:
             raise
         except (AttributeError, TypeError, KeyError, ValueError) as exc:
             raise SubjectResolutionError(
-                REFUSED_MALFORMED_MANIFEST, f"candidate_manifest has an unexpected shape: {exc!r}"
+                REFUSED_MALFORMED_MANIFEST,
+                f"candidate_manifest has an unexpected shape: {exc!r}",
             ) from exc
+
+    def resolve_gall(
+        self, candidate_manifest: Mapping[str, Any], *, base_dir: Path | None = None
+    ) -> ExactSubject:
+        """Resolve and typed-verify the GALL-001..004 receipt set.
+
+        The outer receipt digest is necessary but not sufficient. Each durable
+        receipt is parsed with the repository-native checkpoint contract and the
+        cross-repository identity links are verified before the composition is
+        admitted. Telemetry/process/postcondition propositions remain separate;
+        this resolver verifies only the four checkpoint receipts and does not
+        manufacture a telemetry-valid claim from process/postcondition evidence.
+        """
+        subject = self.resolve(candidate_manifest)
+        by_id = {
+            checkpoint.checkpoint_id: checkpoint for checkpoint in subject.checkpoints
+        }
+        missing = [
+            checkpoint
+            for checkpoint in _REQUIRED_GALL_CHECKPOINTS
+            if checkpoint not in by_id
+        ]
+        if missing:
+            raise SubjectResolutionError(
+                REFUSED_MISSING_GALL_CHECKPOINT,
+                f"composition is missing required checkpoint(s): {', '.join(missing)}",
+            )
+
+        raw_checkpoints = candidate_manifest.get(
+            "checkpoints", candidate_manifest.get("gall_checkpoints", ())
+        )
+        root = base_dir or Path.cwd()
+        admitted_by_id = {}
+
+        for entry in raw_checkpoints:
+            checkpoint_id = str(entry.get("checkpoint_id", "")).strip()
+            if checkpoint_id not in _REQUIRED_GALL_CHECKPOINTS:
+                continue
+
+            receipt_path = str(entry.get("receipt_path", "")).strip()
+            if not receipt_path:
+                raise SubjectResolutionError(
+                    REFUSED_INVALID_GALL_CHECKPOINT,
+                    f"{checkpoint_id} has no receipt_path for independent verification",
+                )
+
+            path = Path(receipt_path)
+            if not path.is_absolute():
+                path = root / path
+            try:
+                bytes_ = path.read_bytes()
+            except OSError as exc:
+                raise SubjectResolutionError(
+                    REFUSED_INVALID_GALL_CHECKPOINT,
+                    f"{checkpoint_id} receipt is unreadable at {path}: {exc}",
+                ) from exc
+
+            checkpoint = by_id[checkpoint_id]
+            expected = checkpoint.receipt_digest
+            expected = (
+                expected if expected.startswith("sha256:") else "sha256:" + expected
+            )
+            observed = "sha256:" + hashlib.sha256(bytes_).hexdigest()
+            if observed != expected:
+                raise SubjectResolutionError(
+                    REFUSED_CHECKPOINT_RECEIPT_DRIFT,
+                    f"{checkpoint_id} receipt digest mismatch: expected {expected}, observed {observed}",
+                )
+
+            reference = ReceiptReference(
+                checkpoint=checkpoint_id,
+                repository=checkpoint.repository,
+                repo_sha=checkpoint.exact_sha,
+                path=str(path),
+                receipt_digest=expected,
+            )
+            try:
+                admitted = admit_receipt(reference)
+            except (OSError, ValueError) as exc:
+                raise SubjectResolutionError(
+                    REFUSED_CHECKPOINT_RECEIPT_CONTRACT,
+                    f"{checkpoint_id} failed its repository-native receipt contract: {exc}",
+                ) from exc
+
+            if admitted.standing.upper() != checkpoint.standing.upper():
+                raise SubjectResolutionError(
+                    REFUSED_CHECKPOINT_RECEIPT_CONTRACT,
+                    f"{checkpoint_id} standing mismatch: manifest={checkpoint.standing!r}, "
+                    f"receipt={admitted.standing!r}",
+                )
+            admitted_by_id[checkpoint_id] = admitted
+
+        if set(admitted_by_id) != set(_REQUIRED_GALL_CHECKPOINTS):
+            missing = sorted(set(_REQUIRED_GALL_CHECKPOINTS) - set(admitted_by_id))
+            raise SubjectResolutionError(
+                REFUSED_MISSING_GALL_CHECKPOINT,
+                f"typed receipt admission is missing checkpoint(s): {', '.join(missing)}",
+            )
+
+        try:
+            verify_receipt_chain(list(admitted_by_id.values()))
+        except ValueError as exc:
+            raise SubjectResolutionError(
+                REFUSED_CHECKPOINT_CHAIN_MISMATCH,
+                f"typed GALL receipt chain is discontinuous: {exc}",
+            ) from exc
+
+        return subject
 
     def _resolve_unguarded(self, candidate_manifest: Mapping[str, Any]) -> ExactSubject:
         release_id = str(candidate_manifest.get("release_id", "")).strip()
@@ -114,10 +250,19 @@ class SubjectResolver:
                 REFUSED_FLOATING_REPOSITORY_REF, "release_id is empty"
             )
 
-        repositories = self._resolve_repositories(candidate_manifest.get("repositories", ()))
+        repositories = self._resolve_repositories(
+            candidate_manifest.get("repositories", ())
+        )
         artifacts = self._resolve_artifacts(candidate_manifest.get("artifacts", ()))
+        checkpoints = self._resolve_checkpoints(
+            candidate_manifest.get(
+                "checkpoints", candidate_manifest.get("gall_checkpoints", ())
+            )
+        )
 
-        root_manifest_digest = str(candidate_manifest.get("root_manifest_digest", "")).strip()
+        root_manifest_digest = str(
+            candidate_manifest.get("root_manifest_digest", "")
+        ).strip()
         if not root_manifest_digest:
             raise SubjectResolutionError(
                 REFUSED_MISSING_ROOT_MANIFEST_DIGEST, "root_manifest_digest is empty"
@@ -130,13 +275,21 @@ class SubjectResolver:
             root_manifest_digest=root_manifest_digest,
             semantic_profile=str(candidate_manifest.get("semantic_profile", "")),
             court_revision=str(candidate_manifest.get("court_revision", "")),
-            falsifier_corpus_digest=str(candidate_manifest.get("falsifier_corpus_digest", "")),
+            falsifier_corpus_digest=str(
+                candidate_manifest.get("falsifier_corpus_digest", "")
+            ),
             query_set_digest=str(candidate_manifest.get("query_set_digest", "")),
-            environment_identity=str(candidate_manifest.get("environment_identity", "")),
+            environment_identity=str(
+                candidate_manifest.get("environment_identity", "")
+            ),
+            checkpoints=checkpoints,
+            work_order_digest=str(candidate_manifest.get("work_order_digest", "")),
         )
 
     @staticmethod
-    def _resolve_repositories(raw: Sequence[Mapping[str, Any]]) -> tuple[RepositoryRef, ...]:
+    def _resolve_repositories(
+        raw: Sequence[Mapping[str, Any]],
+    ) -> tuple[RepositoryRef, ...]:
         by_name: dict[str, RepositoryRef] = {}
         refs: list[RepositoryRef] = []
         for entry in raw:
@@ -197,4 +350,53 @@ class SubjectResolver:
             ref = ArtifactRef(artifact_id=artifact_id, digest=digest)
             by_id[artifact_id] = ref
             refs.append(ref)
+        return tuple(refs)
+
+    @staticmethod
+    def _resolve_checkpoints(
+        raw: Sequence[Mapping[str, Any]],
+    ) -> tuple[CheckpointRef, ...]:
+        by_id: dict[str, CheckpointRef] = {}
+        refs: list[CheckpointRef] = []
+        for entry in raw:
+            checkpoint_id = str(entry.get("checkpoint_id", "")).strip()
+            repository = str(entry.get("repository", "")).strip()
+            exact_sha = str(entry.get("exact_sha", "")).strip()
+            receipt_digest = str(entry.get("receipt_digest", "")).strip()
+            standing = str(entry.get("standing", "")).strip()
+            evidence_class = str(entry.get("evidence_class", "")).strip()
+            work_order_digest = str(entry.get("work_order_digest", "")).strip()
+
+            if (
+                not checkpoint_id
+                or not repository
+                or not _is_exact_sha(exact_sha)
+                or not _DIGEST_RE.match(receipt_digest)
+                or not standing
+                or not evidence_class
+                or (work_order_digest and not _DIGEST_RE.match(work_order_digest))
+            ):
+                raise SubjectResolutionError(
+                    REFUSED_INVALID_GALL_CHECKPOINT,
+                    f"invalid GALL checkpoint identity for {checkpoint_id or '<unnamed>'!r}",
+                )
+
+            ref = CheckpointRef(
+                checkpoint_id=checkpoint_id,
+                repository=repository,
+                exact_sha=exact_sha,
+                receipt_digest=receipt_digest,
+                standing=standing,
+                evidence_class=evidence_class,
+                work_order_digest=work_order_digest,
+            )
+            prior = by_id.get(checkpoint_id)
+            if prior is not None and prior != ref:
+                raise SubjectResolutionError(
+                    REFUSED_INVALID_GALL_CHECKPOINT,
+                    f"{checkpoint_id} is asserted with conflicting identities",
+                )
+            if prior is None:
+                by_id[checkpoint_id] = ref
+                refs.append(ref)
         return tuple(refs)
