@@ -11,7 +11,11 @@ from autofde_lab.sa2a.autonomics.external_crown import (
     ExternalCrownEvidence,
 )
 from autofde_lab.sa2a.autonomics.falsifier import ActiveFalsifier, Invariant
-from autofde_lab.sa2a.autonomics.feedback import FeedbackAdmission, FeedbackFinding, FeedbackRule
+from autofde_lab.sa2a.autonomics.feedback import (
+    FeedbackAdmission,
+    FeedbackFinding,
+    FeedbackRule,
+)
 from autofde_lab.sa2a.autonomics.predictor import (
     MajorityBaseline,
     PredictionStanding,
@@ -84,8 +88,9 @@ def test_gall_008_semantic_telemetry_binds_layers_and_conserves_additive_measure
         )
 
 
-
-def test_gall_009_feedback_requires_explicit_rule_and_never_manufactures_authority() -> None:
+def test_gall_009_feedback_requires_explicit_rule_and_never_manufactures_authority() -> (
+    None
+):
     subject = sha("subject")
     source = sha("telemetry-receipt")
     finding = FeedbackFinding(
@@ -101,9 +106,7 @@ def test_gall_009_feedback_requires_explicit_rule_and_never_manufactures_authori
         evidence_class="validated_telemetry",
         allowed_facts=("service_healthy", "database_reachable"),
     )
-    admitted = FeedbackAdmission.admit(
-        finding, rule, expected_subject_digest=subject
-    )
+    admitted = FeedbackAdmission.admit(finding, rule, expected_subject_digest=subject)
     assert admitted.admitted is True
     assert admitted.normative is False
     assert admitted.authorizes_actuation is False

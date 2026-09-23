@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Mapping
 
 from .belief import BeliefState, EpistemicValue
@@ -27,9 +27,14 @@ _FORBIDDEN_FACTS = {
 
 
 def _digest(value: object) -> str:
-    return "sha256:" + hashlib.sha256(
-        json.dumps(value, sort_keys=True, separators=(",", ":"), default=str).encode()
-    ).hexdigest()
+    return (
+        "sha256:"
+        + hashlib.sha256(
+            json.dumps(
+                value, sort_keys=True, separators=(",", ":"), default=str
+            ).encode()
+        ).hexdigest()
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,7 +56,9 @@ class FeedbackFinding:
             if not key or key.lower() in _FORBIDDEN_FACTS:
                 raise ValueError(f"feedback cannot assert reserved fact {key!r}")
             if value not in (True, False, None):
-                raise ValueError(f"feedback fact {key!r} must be true, false, or unknown")
+                raise ValueError(
+                    f"feedback fact {key!r} must be true, false, or unknown"
+                )
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,8 +75,12 @@ class FeedbackRule:
             raise ValueError("feedback rule must admit at least one fact")
         if len(set(self.allowed_facts)) != len(self.allowed_facts):
             raise ValueError("feedback rule contains duplicate fact identities")
-        if any(not fact or fact.lower() in _FORBIDDEN_FACTS for fact in self.allowed_facts):
-            raise ValueError("feedback rule attempts to admit a reserved authority/standing fact")
+        if any(
+            not fact or fact.lower() in _FORBIDDEN_FACTS for fact in self.allowed_facts
+        ):
+            raise ValueError(
+                "feedback rule attempts to admit a reserved authority/standing fact"
+            )
 
     @property
     def digest(self) -> str:
@@ -114,7 +125,9 @@ class AdmittedFeedback:
 
     def apply(self, belief: BeliefState) -> BeliefState:
         if belief.provenance_digest != self.source_receipt_digest:
-            raise ValueError("feedback receipt does not match belief provenance boundary")
+            raise ValueError(
+                "feedback receipt does not match belief provenance boundary"
+            )
         facts = dict(belief.facts)
         facts.update(self.fact_updates)
         return BeliefState(
@@ -135,7 +148,9 @@ class FeedbackAdmission:
         finding.validate()
         rule.validate()
         if finding.semantic_subject_digest != expected_subject_digest:
-            raise ValueError("feedback semantic subject does not match admitted subject")
+            raise ValueError(
+                "feedback semantic subject does not match admitted subject"
+            )
         if finding.finding_type != rule.finding_type:
             raise ValueError("feedback finding type is not admitted by this rule")
         if finding.evidence_class != rule.evidence_class:
