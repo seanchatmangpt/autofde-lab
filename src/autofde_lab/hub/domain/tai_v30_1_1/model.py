@@ -203,10 +203,14 @@ def refusal_reason(
         return RefusalReason.ENTERPRISE_NOT_COMPILED
     if action == TaiAction.manufacture_keys and not state.public_model_admitted:
         return RefusalReason.PUBLIC_MODEL_NOT_ADMITTED
-    if action in {
-        TaiAction.validate_local_conformance,
-        TaiAction.refuse_local_conformance,
-    } and not state.keys_manufactured:
+    if (
+        action
+        in {
+            TaiAction.validate_local_conformance,
+            TaiAction.refuse_local_conformance,
+        }
+        and not state.keys_manufactured
+    ):
         return RefusalReason.KEYS_NOT_MANUFACTURED
     if action == TaiAction.validate_local_conformance and not local_conformance:
         return RefusalReason.LOCAL_CONFORMANCE_FALSIFIED

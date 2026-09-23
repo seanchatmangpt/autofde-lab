@@ -52,7 +52,9 @@ def test_fabricated_claim_not_in_real_log_is_falsified() -> None:
     fabricated_claim = 50_000.0  # no real solve loop in this repo hit this
 
     real_value = real_logged_solves_per_sec(REAL_LOG_PATH, "maze")
-    assert abs(fabricated_claim - real_value) / real_value > 0.05  # sanity: really is fabricated
+    assert (
+        abs(fabricated_claim - real_value) / real_value > 0.05
+    )  # sanity: really is fabricated
 
     assert verify_throughput_claim(fabricated_claim, REAL_LOG_PATH, "maze") is False
 
@@ -64,7 +66,10 @@ def test_fabricated_claim_not_in_real_log_is_falsified() -> None:
 
     # And running it through the real falsify_candidate machinery reports
     # a real FALSIFIED standing, not merely a bare bool.
-    from autofde_lab.reasoning.laboratory import ArchitectureCandidate, falsify_candidate
+    from autofde_lab.reasoning.laboratory import (
+        ArchitectureCandidate,
+        falsify_candidate,
+    )
 
     candidate = ArchitectureCandidate(
         candidate_id="fabricated-throughput-claim",
@@ -78,7 +83,10 @@ def test_fabricated_claim_not_in_real_log_is_falsified() -> None:
 def test_missing_log_file_is_falsified_not_unknown() -> None:
     """A claim checked against a log that doesn't exist is falsified --
     never silently treated as passing."""
-    assert verify_throughput_claim(199.8, Path("/nonexistent/no-such.log"), "maze") is False
+    assert (
+        verify_throughput_claim(199.8, Path("/nonexistent/no-such.log"), "maze")
+        is False
+    )
 
 
 def test_domain_not_present_in_real_log_is_falsified() -> None:

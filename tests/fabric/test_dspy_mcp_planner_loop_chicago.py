@@ -102,9 +102,7 @@ async def _run(real_dspy_lm) -> None:
         )
 
         with dspy.context(lm=real_dspy_lm):
-            compiled = await client.call_tool(
-                "decision_compile", {"job": job_text}
-            )
+            compiled = await client.call_tool("decision_compile", {"job": job_text})
 
         request = compiled.data
         assert request["domain"] == "Maze", (
@@ -132,6 +130,5 @@ async def _run(real_dspy_lm) -> None:
         ):
             digest = payload[digest_key]
             assert isinstance(digest, str) and len(digest) == 64, (
-                f"{digest_key} does not look like a real sha256 hex digest: "
-                f"{digest!r}"
+                f"{digest_key} does not look like a real sha256 hex digest: {digest!r}"
             )

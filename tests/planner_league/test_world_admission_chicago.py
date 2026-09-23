@@ -42,29 +42,41 @@ def test_admit_planner_role_world_is_compatible_for_every_real_world() -> None:
     league = PlannerLeague()
     for world_id in WORLD_CLASSES:
         result = admit_planner_role_world(league, "Astar", "plan_constructor", world_id)
-        assert result.standing == CompatibilityStanding.COMPATIBLE, (world_id, result.reason)
+        assert result.standing == CompatibilityStanding.COMPATIBLE, (
+            world_id,
+            result.reason,
+        )
         assert result.compatible
         assert result.planner_id == "Astar"
         assert result.role_id == "plan_constructor"
 
 
-def test_admit_planner_role_world_refuses_incompatible_planner_for_every_real_world() -> None:
+def test_admit_planner_role_world_refuses_incompatible_planner_for_every_real_world() -> (
+    None
+):
     league = PlannerLeague()
     for world_id in WORLD_CLASSES:
         result = admit_planner_role_world(league, "CIDual", "plan_falsifier", world_id)
-        assert result.standing == CompatibilityStanding.REFUSED, (world_id, result.reason)
+        assert result.standing == CompatibilityStanding.REFUSED, (
+            world_id,
+            result.reason,
+        )
         assert result.reason == "REFUSED:DOMAIN_CONTRACT_MISMATCH"
         assert not result.compatible
 
 
 def test_admit_planner_role_world_refuses_unknown_world() -> None:
     league = PlannerLeague()
-    result = admit_planner_role_world(league, "Astar", "plan_constructor", "not_a_real_world")
+    result = admit_planner_role_world(
+        league, "Astar", "plan_constructor", "not_a_real_world"
+    )
     assert result.standing == CompatibilityStanding.REFUSED
     assert result.reason == "REFUSED:UNKNOWN_WORLD:not_a_real_world"
 
 
-def test_admit_planner_role_world_reports_unsupported_for_a_registered_world_missing_a_factory() -> None:
+def test_admit_planner_role_world_reports_unsupported_for_a_registered_world_missing_a_factory() -> (
+    None
+):
     league = PlannerLeague()
     reduced_factories = {
         world_id: factory
@@ -72,7 +84,11 @@ def test_admit_planner_role_world_reports_unsupported_for_a_registered_world_mis
         if world_id != "cyber_incident"
     }
     result = admit_planner_role_world(
-        league, "Astar", "plan_constructor", "cyber_incident", domain_factories=reduced_factories
+        league,
+        "Astar",
+        "plan_constructor",
+        "cyber_incident",
+        domain_factories=reduced_factories,
     )
     assert result.standing == CompatibilityStanding.UNSUPPORTED
     assert result.reason == "UNSUPPORTED:NO_DOMAIN_FOR_WORLD:cyber_incident"
@@ -93,13 +109,17 @@ def test_compute_admission_matrix_is_real_and_complete_over_the_full_axes() -> N
 
     # Astar compatible for every (role, world) triple -> 2 * 4 = 8 real wins.
     astar_compatible = [
-        e for e in matrix.entries if e.result.planner_id == "Astar" and e.result.compatible
+        e
+        for e in matrix.entries
+        if e.result.planner_id == "Astar" and e.result.compatible
     ]
     assert len(astar_compatible) == 2 * len(WORLD_CLASSES)
 
     # CIDual refused for every triple -> zero compatible entries.
     cidual_compatible = [
-        e for e in matrix.entries if e.result.planner_id == "CIDual" and e.result.compatible
+        e
+        for e in matrix.entries
+        if e.result.planner_id == "CIDual" and e.result.compatible
     ]
     assert cidual_compatible == []
 

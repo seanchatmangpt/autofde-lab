@@ -23,6 +23,7 @@ subprocess-per-request: the runtime module (and the domain/solver
 registry `catalog()` reads via `importlib.metadata.entry_points`) is
 already imported once at process start, same as the stdio server.
 """
+
 from __future__ import annotations
 
 import json

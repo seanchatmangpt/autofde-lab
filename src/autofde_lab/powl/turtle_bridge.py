@@ -98,7 +98,9 @@ def powl_model_to_node(model: PowlModel) -> PowlNode:
     """
     ordered = model.ordered_children()
     if not ordered:
-        raise BridgeError("EMPTY_MODEL: powl2:Model has zero powl2:ChildBinding children")
+        raise BridgeError(
+            "EMPTY_MODEL: powl2:Model has zero powl2:ChildBinding children"
+        )
 
     index_of_child_iri: Dict[str, int] = {
         child.iri: position for position, child in enumerate(ordered)
@@ -125,7 +127,11 @@ def powl_model_to_node(model: PowlModel) -> PowlNode:
                 )
             bindings[str(binding.binding_index)] = binding.bound_object
         atoms.append(
-            Atom(label=leaf.activity_label, action=leaf.implements_action, bindings=bindings)
+            Atom(
+                label=leaf.activity_label,
+                action=leaf.implements_action,
+                bindings=bindings,
+            )
         )
 
     order_edges: set[OrderEdge] = set()
@@ -137,7 +143,9 @@ def powl_model_to_node(model: PowlModel) -> PowlNode:
                     f"DANGLING_PRECEDES: <{child.iri}> powl2:precedes "
                     f"<{target_iri}> is not one of this model's child bindings"
                 )
-            order_edges.add(OrderEdge(NodeId(src), NodeId(index_of_child_iri[target_iri])))
+            order_edges.add(
+                OrderEdge(NodeId(src), NodeId(index_of_child_iri[target_iri]))
+            )
 
     if len(atoms) == 1:
         return atoms[0]
@@ -174,7 +182,9 @@ def powl_node_to_model(
     if isinstance(node, Atom):
         atoms: Tuple[Atom, ...] = (node,)
         precedes_by_index: Dict[int, Tuple[int, ...]] = {0: ()}
-    elif isinstance(node, PartialOrder) and all(isinstance(c, Atom) for c in node.children):
+    elif isinstance(node, PartialOrder) and all(
+        isinstance(c, Atom) for c in node.children
+    ):
         atoms = node.children  # type: ignore[assignment]
         by_src: Dict[int, List[int]] = {i: [] for i in range(len(atoms))}
         for edge in node.closure:
@@ -199,7 +209,9 @@ def powl_node_to_model(
         step_iri = f"{plan_iri}/step/{index}"
         slot_iri = f"{plan_iri}/binding-slot/{index}"
         implements_action = (
-            atom.action if isinstance(atom.action, str) and atom.action else f"{base_iri}/{atom.label}"
+            atom.action
+            if isinstance(atom.action, str) and atom.action
+            else f"{base_iri}/{atom.label}"
         )
 
         binds_parameter: List[str] = []
@@ -223,7 +235,8 @@ def powl_node_to_model(
         )
 
         precedes_iris = tuple(
-            f"{plan_iri}/binding-slot/{target}" for target in precedes_by_index.get(index, ())
+            f"{plan_iri}/binding-slot/{target}"
+            for target in precedes_by_index.get(index, ())
         )
         children[slot_iri] = ChildBinding(
             iri=slot_iri,
@@ -311,7 +324,11 @@ def model_to_turtle(model: PowlModel) -> str:
         root.append(f'    mfwp:projection "{model.projection}" ;')
     for iri in model.has_child:
         root.append(f"    powl2:hasChild <{iri}> ;")
-    activity_count = model.activity_count if model.activity_count is not None else len(model.children)
+    activity_count = (
+        model.activity_count
+        if model.activity_count is not None
+        else len(model.children)
+    )
     root.append(f'    mfwp:activityCount "{activity_count}"^^xsd:integer .')
     out.extend(root)
     out.append("")

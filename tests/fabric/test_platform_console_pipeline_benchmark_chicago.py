@@ -111,7 +111,11 @@ def test_benchmark_compile_rdf_to_pddl_files_real_wallclock(tmp_path):
         problem_p = str(tmp_path / f"compile-bench-{i}-problem.pddl")
         t0 = time.perf_counter()
         compile_rdf_to_pddl_files(
-            FIXTURE, domain_p, problem_p, domain_iri=DOMAIN_IRI, problem_iri=PROBLEM_GATED
+            FIXTURE,
+            domain_p,
+            problem_p,
+            domain_iri=DOMAIN_IRI,
+            problem_iri=PROBLEM_GATED,
         )
         t1 = time.perf_counter()
         assert os.path.exists(domain_p)
@@ -155,7 +159,9 @@ def test_benchmark_solve_to_plan_file_real_astar_and_powl2_projection(tmp_path):
         t1 = time.perf_counter()
         assert rc == pddl_engine.EXIT_PLAN_FOUND
         assert os.path.exists(plan_p)
-        assert os.path.exists(powl_p), "real POWL2 projection file must be written by solve_to_plan_file"
+        assert os.path.exists(powl_p), (
+            "real POWL2 projection file must be written by solve_to_plan_file"
+        )
         samples_ms.append((t1 - t0) * 1000.0)
 
     # Every real solve over the identical compiled domain/problem must
@@ -164,10 +170,13 @@ def test_benchmark_solve_to_plan_file_real_astar_and_powl2_projection(tmp_path):
     first_plan = open(str(tmp_path / "solve-bench-0-plan.txt"), encoding="utf-8").read()
     for i in range(1, N_RUNS):
         assert (
-            open(str(tmp_path / f"solve-bench-{i}-plan.txt"), encoding="utf-8").read() == first_plan
+            open(str(tmp_path / f"solve-bench-{i}-plan.txt"), encoding="utf-8").read()
+            == first_plan
         )
 
-    stats = _report("solve_to_plan_file (real Astar + real POWL2 projection)", samples_ms)
+    stats = _report(
+        "solve_to_plan_file (real Astar + real POWL2 projection)", samples_ms
+    )
     assert stats["p95"] < 3000.0, (
         f"solve_to_plan_file p95 regressed to {stats['p95']:.2f}ms over the "
         "real 'problem-gated' fixture problem"
@@ -192,9 +201,15 @@ def test_benchmark_end_to_end_pipeline_real_wallclock(tmp_path):
 
         t0 = time.perf_counter()
         compile_rdf_to_pddl_files(
-            FIXTURE, domain_p, problem_p, domain_iri=DOMAIN_IRI, problem_iri=PROBLEM_GATED
+            FIXTURE,
+            domain_p,
+            problem_p,
+            domain_iri=DOMAIN_IRI,
+            problem_iri=PROBLEM_GATED,
         )
-        rc = pddl_engine.solve_to_plan_file(domain_p, problem_p, plan_p, powl_path=powl_p)
+        rc = pddl_engine.solve_to_plan_file(
+            domain_p, problem_p, plan_p, powl_path=powl_p
+        )
         t1 = time.perf_counter()
 
         assert rc == pddl_engine.EXIT_PLAN_FOUND
@@ -220,7 +235,9 @@ def test_benchmark_end_to_end_pipeline_real_wallclock(tmp_path):
 PROBLEM_REVERSIBLE = NS + "problem-reversible"
 
 
-def test_benchmark_relative_cost_stays_same_order_of_magnitude_across_real_problems(tmp_path):
+def test_benchmark_relative_cost_stays_same_order_of_magnitude_across_real_problems(
+    tmp_path,
+):
     def _median_solve_ms(problem_iri: str, tag: str) -> float:
         domain_p = str(tmp_path / f"{tag}-domain.pddl")
         problem_p = str(tmp_path / f"{tag}-problem.pddl")

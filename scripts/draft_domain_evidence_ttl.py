@@ -143,25 +143,37 @@ def draft_ttl(module_path: str, class_name: str) -> str:
 
     lines: list[str] = []
     lines.append(f"afl:domain_{slug} a afl:DomainEvidenceSpec ;")
-    lines.append(f'    afl:domainName "{domain_name_guess}" ;  # {REVIEW}: confirm this matches the intended afl:domainName convention')
+    lines.append(
+        f'    afl:domainName "{domain_name_guess}" ;  # {REVIEW}: confirm this matches the intended afl:domainName convention'
+    )
     lines.append(f'    afl:pythonModulePath "{module_path}" ;')
     lines.append(f'    afl:domainClassName "{class_name}" ;')
-    lines.append(f'    afl:bridgeModulePath "" ;  # {REVIEW}: fill in only if a gymact bridge module applies')
-    lines.append(f'    afl:bridgeClassName "" ;  # {REVIEW}: fill in only if a gymact bridge class applies')
+    lines.append(
+        f'    afl:bridgeModulePath "" ;  # {REVIEW}: fill in only if a gymact bridge module applies'
+    )
+    lines.append(
+        f'    afl:bridgeClassName "" ;  # {REVIEW}: fill in only if a gymact bridge class applies'
+    )
     goal_line = f'    afl:goalCheckExpr "{goal_expr}" ;'
     if not goal_confident:
         goal_line += f"  # {REVIEW}: low-confidence extraction, verify against _get_goals_/_is_terminal source"
     lines.append(goal_line)
-    lines.append(f'    afl:verifyMode "fresh-instance-replay" ;  # {REVIEW}: confirm this domain actually supports fresh-instance replay verification')
+    lines.append(
+        f'    afl:verifyMode "fresh-instance-replay" ;  # {REVIEW}: confirm this domain actually supports fresh-instance replay verification'
+    )
     lines.append(
         f'    afl:evidenceOutPath "docs/evidence/{domain_name_guess}/domain-evidence-episode.ocel.json" ;'
         f"  # {REVIEW}: confirm target evidence path"
     )
     if caps:
-        cap_refs = " , ".join(f"afl:domain_{slug}_cap_{i+1}" for i in range(len(caps)))
+        cap_refs = " , ".join(
+            f"afl:domain_{slug}_cap_{i + 1}" for i in range(len(caps))
+        )
         lines.append(f"    afl:hasCapability {cap_refs} .")
     else:
-        lines.append(f"    afl:hasCapability afl:domain_{slug}_cap_1 .  # {REVIEW}: no capabilities drafted")
+        lines.append(
+            f"    afl:hasCapability afl:domain_{slug}_cap_1 .  # {REVIEW}: no capabilities drafted"
+        )
     lines.append("")
 
     for i, cap in enumerate(caps, start=1):
@@ -171,7 +183,9 @@ def draft_ttl(module_path: str, class_name: str) -> str:
         lines.append(f'    afl:capabilityConsequence "{cap["consequence"]}" ;')
         lines.append(f'    afl:capabilityPrecondition "{cap["precondition"]}" .')
         if not caps_confident:
-            lines.append(f"    # {REVIEW}: capability extraction was low-confidence, verify against _get_applicable_actions_from source")
+            lines.append(
+                f"    # {REVIEW}: capability extraction was low-confidence, verify against _get_applicable_actions_from source"
+            )
         lines.append("")
 
     return "\n".join(lines)
@@ -179,8 +193,17 @@ def draft_ttl(module_path: str, class_name: str) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--module", required=True, help="Python module path, e.g. autofde_lab.hub.domain.azuregoat_privesc.azuregoat_privesc")
-    parser.add_argument("--class", dest="class_name", required=True, help="Class name, e.g. AzureGoatPrivilegeEscalation")
+    parser.add_argument(
+        "--module",
+        required=True,
+        help="Python module path, e.g. autofde_lab.hub.domain.azuregoat_privesc.azuregoat_privesc",
+    )
+    parser.add_argument(
+        "--class",
+        dest="class_name",
+        required=True,
+        help="Class name, e.g. AzureGoatPrivilegeEscalation",
+    )
     args = parser.parse_args()
 
     domain_name_guess = args.module.rsplit(".", 1)[-1]
@@ -199,7 +222,7 @@ def main() -> int:
 
     print(f"# --- DRAFTED Turtle for {args.module}.{args.class_name} ---")
     print(f"# NOTE: this is a DRAFT ONLY. It was NOT written to {ONTOLOGY_PATH}.")
-    print(f"# Every field flagged \"{REVIEW}\" must be confirmed by a human before")
+    print(f'# Every field flagged "{REVIEW}" must be confirmed by a human before')
     print("# this is added to the committed ontology.")
     print()
     print(ttl)

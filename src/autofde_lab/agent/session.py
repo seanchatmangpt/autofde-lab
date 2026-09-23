@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import random
 from dataclasses import replace
-from typing import Any, Optional, Sequence
+from typing import Any, Sequence
 
 from autofde_lab.agent.bridge import (
     IntentRegisteringPolicies,
@@ -36,7 +36,6 @@ from autofde_lab.agent.models import (
     EpochReceipt,
     EpochStanding,
 )
-from autofde_lab.schema_ids import DECISION_RESULT_SCHEMA
 from autofde_lab.agent.refusals import (
     BLOCKED_ACTION_NODE_UNRESOLVED,
     CLAIM_CEILING,
@@ -54,17 +53,19 @@ from autofde_lab.fabric.models import (
 from autofde_lab.powl.algebra import Atom, PowlNode
 from autofde_lab.powl.bounds import DEFAULT_BOUND, ExecutionBound
 from autofde_lab.powl.executor import (
-    INITIAL_MARKING,
     ChoiceRecord,
     Marking,
     NodePath,
-    enabled as _enabled,
     fire,
     node_at,
     trace_of,
 )
-from autofde_lab.powl.refusals import PowlError, PowlRefusal
+from autofde_lab.powl.executor import (
+    enabled as _enabled,
+)
 from autofde_lab.powl.identity import OccurrenceKey, activity_sha256, node_id
+from autofde_lab.powl.refusals import PowlError, PowlRefusal
+from autofde_lab.schema_ids import DECISION_RESULT_SCHEMA
 from autofde_lab.solvers import Solver
 from autofde_lab.utils import rollout
 
@@ -98,7 +99,9 @@ class AgentSession:
         self._session_id = session_id or sha256(
             {
                 "domain": implementation_identity(type(domain)),
-                "solver": None if solver is None else implementation_identity(type(solver)),
+                "solver": None
+                if solver is None
+                else implementation_identity(type(solver)),
                 "bound_sha256": bound.sha256(),
             }
         )
@@ -151,9 +154,7 @@ class AgentSession:
         does not compute that seed and never infers one.
         """
         if self._closed:
-            raise AgentRefusal(
-                AgentRefusalCode.SESSION_CLOSED, "session is closed"
-            )
+            raise AgentRefusal(AgentRefusalCode.SESSION_CLOSED, "session is closed")
         supersedes = tuple(supersedes or ())
         preserves = tuple(preserves or ())
         known = {e.epoch_id for e in self._epochs}
@@ -207,9 +208,7 @@ class AgentSession:
 
     def _current(self) -> DecisionEpoch:
         if not self._epochs:
-            raise AgentRefusal(
-                AgentRefusalCode.NO_OPEN_EPOCH, "no epoch is open"
-            )
+            raise AgentRefusal(AgentRefusalCode.NO_OPEN_EPOCH, "no epoch is open")
         return self._epochs[-1]
 
     # ── intent plumbing (called by the bridge, not by users) ───────────────
@@ -319,12 +318,8 @@ class AgentSession:
             decided_by=decided_by or self._decided_by(),
             context_sha256=context,
         )
-        self._epochs[-1] = epoch.advanced(
-            marking, record, EpochStanding.PARTIAL_ALIVE
-        )
-        key = self._ledger.commit(
-            token, activity_sha256=activity, detail="POST_STEP"
-        )
+        self._epochs[-1] = epoch.advanced(marking, record, EpochStanding.PARTIAL_ALIVE)
+        key = self._ledger.commit(token, activity_sha256=activity, detail="POST_STEP")
         return record, key
 
     def seal_epoch(self) -> EpochReceipt:

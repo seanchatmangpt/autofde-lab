@@ -97,10 +97,10 @@ def _rcpsp_instance(relative_path: str) -> str:
     return instance_file
 
 
-PDDL_DOMAIN_FILE = "cpp/tests/data/pddl/ipc-1998/domains/gripper-round-1-strips/domain.pddl"
-PDDL_INSTANCE_FILE = (
-    "cpp/tests/data/pddl/ipc-1998/domains/gripper-round-1-strips/instances/instance-1.pddl"
+PDDL_DOMAIN_FILE = (
+    "cpp/tests/data/pddl/ipc-1998/domains/gripper-round-1-strips/domain.pddl"
 )
+PDDL_INSTANCE_FILE = "cpp/tests/data/pddl/ipc-1998/domains/gripper-round-1-strips/instances/instance-1.pddl"
 
 
 @requires_real_turbo_fieldfare_binary_and_model
@@ -222,9 +222,7 @@ def test_real_dspy_policy_solves_real_updomain_robot_moves_problem(real_dspy_lm)
     def build_problem() -> Problem:
         location = up.UserType("Location")
         robot_at = Fluent("robot_at", up.BoolType(), l=location)
-        connected = Fluent(
-            "connected", up.BoolType(), l_from=location, l_to=location
-        )
+        connected = Fluent("connected", up.BoolType(), l_from=location, l_to=location)
         move = InstantaneousAction("move", l_from=location, l_to=location)
         l_from, l_to = move.parameter("l_from"), move.parameter("l_to")
         move.add_precondition(connected(l_from, l_to))

@@ -29,49 +29,89 @@ def _build_log() -> OcelLog:
             OcelObject(
                 "session-1",
                 "MCPSession",
-                (OcelAttribute("server", OcelAttributeValue.string("scikit-decide-fabric")),),
+                (
+                    OcelAttribute(
+                        "server", OcelAttributeValue.string("scikit-decide-fabric")
+                    ),
+                ),
             ),
             OcelObject(
                 "session-2",
                 "MCPSession",
-                (OcelAttribute("server", OcelAttributeValue.string("scikit-decide-fabric")),),
+                (
+                    OcelAttribute(
+                        "server", OcelAttributeValue.string("scikit-decide-fabric")
+                    ),
+                ),
             ),
-            OcelObject("domain-Maze", "Domain", (OcelAttribute("name", OcelAttributeValue.string("Maze")),)),
-            OcelObject("solver-Astar", "Solver", (OcelAttribute("name", OcelAttributeValue.string("Astar")),)),
-            OcelObject("solver-MCTS", "Solver", (OcelAttribute("name", OcelAttributeValue.string("MCTS")),)),
+            OcelObject(
+                "domain-Maze",
+                "Domain",
+                (OcelAttribute("name", OcelAttributeValue.string("Maze")),),
+            ),
+            OcelObject(
+                "solver-Astar",
+                "Solver",
+                (OcelAttribute("name", OcelAttributeValue.string("Astar")),),
+            ),
+            OcelObject(
+                "solver-MCTS",
+                "Solver",
+                (OcelAttribute("name", OcelAttributeValue.string("MCTS")),),
+            ),
         ]
     )
 
     # session-1: catalog (no solver) -> solve/Astar -> solve/MCTS (retry) -> real handover.
     log = append_tool_call_event(
-        log, event_id="s1-catalog", activity="decision_catalog",
-        object_ids=["session-1"], outcome={"standing": "OK"}, timestamp_ns=0,
+        log,
+        event_id="s1-catalog",
+        activity="decision_catalog",
+        object_ids=["session-1"],
+        outcome={"standing": "OK"},
+        timestamp_ns=0,
     )
     log = append_tool_call_event(
-        log, event_id="s1-solve-astar", activity="decision_solve",
+        log,
+        event_id="s1-solve-astar",
+        activity="decision_solve",
         object_ids=["session-1", "domain-Maze", "solver-Astar"],
-        outcome={"standing": "TIMEOUT"}, timestamp_ns=1_000,
+        outcome={"standing": "TIMEOUT"},
+        timestamp_ns=1_000,
     )
     log = append_tool_call_event(
-        log, event_id="s1-solve-mcts", activity="decision_solve",
+        log,
+        event_id="s1-solve-mcts",
+        activity="decision_solve",
         object_ids=["session-1", "domain-Maze", "solver-MCTS"],
-        outcome={"standing": "SOLVED"}, timestamp_ns=2_000,
+        outcome={"standing": "SOLVED"},
+        timestamp_ns=2_000,
     )
 
     # session-2: catalog (no solver) -> solve/Astar -> solve/Astar again -> no handover.
     log = append_tool_call_event(
-        log, event_id="s2-catalog", activity="decision_catalog",
-        object_ids=["session-2"], outcome={"standing": "OK"}, timestamp_ns=0,
+        log,
+        event_id="s2-catalog",
+        activity="decision_catalog",
+        object_ids=["session-2"],
+        outcome={"standing": "OK"},
+        timestamp_ns=0,
     )
     log = append_tool_call_event(
-        log, event_id="s2-solve-astar-0", activity="decision_solve",
+        log,
+        event_id="s2-solve-astar-0",
+        activity="decision_solve",
         object_ids=["session-2", "domain-Maze", "solver-Astar"],
-        outcome={"standing": "BOUNDED"}, timestamp_ns=1_000,
+        outcome={"standing": "BOUNDED"},
+        timestamp_ns=1_000,
     )
     log = append_tool_call_event(
-        log, event_id="s2-solve-astar-1", activity="decision_solve",
+        log,
+        event_id="s2-solve-astar-1",
+        activity="decision_solve",
         object_ids=["session-2", "domain-Maze", "solver-Astar"],
-        outcome={"standing": "SOLVED"}, timestamp_ns=2_000,
+        outcome={"standing": "SOLVED"},
+        timestamp_ns=2_000,
     )
 
     return log
@@ -90,7 +130,9 @@ def conn(tmp_path) -> sqlite3.Connection:
         connection.close()
 
 
-def test_handover_of_work_reports_the_real_solver_switch(conn: sqlite3.Connection) -> None:
+def test_handover_of_work_reports_the_real_solver_switch(
+    conn: sqlite3.Connection,
+) -> None:
     edges = handover_of_work(conn)
 
     assert edges == [
@@ -102,7 +144,8 @@ def test_handover_of_work_ignores_same_solver_retries(conn: sqlite3.Connection) 
     edges = handover_of_work(conn)
 
     # session-2's Astar -> Astar retry must not appear as a handover edge.
-    assert not any(
-        edge.from_solver == edge.to_solver for edge in edges
+    assert not any(edge.from_solver == edge.to_solver for edge in edges)
+    assert (
+        HandoverEdge(from_solver="solver-Astar", to_solver="solver-Astar", count=1)
+        not in edges
     )
-    assert HandoverEdge(from_solver="solver-Astar", to_solver="solver-Astar", count=1) not in edges

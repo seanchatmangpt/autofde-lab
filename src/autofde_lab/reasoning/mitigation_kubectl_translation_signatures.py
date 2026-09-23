@@ -74,8 +74,8 @@ class TranslateMitigationStepToKubectlCommand(dspy.Signature):
     kubectl_command: str = dspy.OutputField(
         desc="one real, literal, directly-executable kubectl command, starting with the exact "
         "text 'kubectl ' -- e.g. 'kubectl patch deployment geo -n hotel-reservation "
-        "-p '{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"geo\","
-        "\"resources\":{\"limits\":{\"memory\":\"512Mi\"}}}]}}}}'' -- never free text, "
+        '-p \'{"spec":{"template":{"spec":{"containers":[{"name":"geo",'
+        '"resources":{"limits":{"memory":"512Mi"}}}]}}}}\'\' -- never free text, '
         "never a placeholder, never omitting the resource/namespace it targets"
     )
     is_safe_readonly_or_reversible: bool = dspy.OutputField(

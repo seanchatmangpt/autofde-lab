@@ -11,6 +11,7 @@ declared field explicitly filled with representative, non-default values, and
 every assertion below is a state-based assertion on the real constructed
 instance's real field values -- never an interaction/fakery assertion.
 """
+
 from __future__ import annotations
 
 import dataclasses
@@ -38,7 +39,10 @@ def test_import_succeeds_and_all_is_exactly_the_ten_known_classes() -> None:
 def test_candidate_set_fields() -> None:
     cls = getattr(planning, "CandidateSet")
     instance = cls(
-        contains_candidate=("urn:example:plan-candidate-1", "urn:example:plan-candidate-2"),
+        contains_candidate=(
+            "urn:example:plan-candidate-1",
+            "urn:example:plan-candidate-2",
+        ),
         records_disagreement=("urn:example:disagreement-1",),
     )
     assert instance.contains_candidate == (
@@ -71,7 +75,10 @@ def test_governed_candidate_fields() -> None:
     cls = getattr(planning, "GovernedCandidate")
     instance = cls(
         admitted_from_candidate_set=("urn:example:candidate-set-1",),
-        governs_candidate=("urn:example:plan-candidate-1", "urn:example:plan-candidate-3"),
+        governs_candidate=(
+            "urn:example:plan-candidate-1",
+            "urn:example:plan-candidate-3",
+        ),
     )
     assert instance.admitted_from_candidate_set == ("urn:example:candidate-set-1",)
     assert instance.governs_candidate == (
@@ -83,7 +90,10 @@ def test_governed_candidate_fields() -> None:
 def test_plan_candidate_fields() -> None:
     cls = getattr(planning, "PlanCandidate")
     instance = cls(candidate_for_trial=("urn:example:trial-1", "urn:example:trial-2"))
-    assert instance.candidate_for_trial == ("urn:example:trial-1", "urn:example:trial-2")
+    assert instance.candidate_for_trial == (
+        "urn:example:trial-1",
+        "urn:example:trial-2",
+    )
 
 
 def test_planner_has_no_fields_but_constructs_a_real_instance() -> None:
@@ -151,7 +161,9 @@ def test_every_dataclass_in_all_is_frozen() -> None:
         cls = getattr(planning, name)
         fields = dataclasses.fields(cls)
         if fields:
-            kwargs = {f.name: (f"urn:example:{name.lower()}-{f.name}-frozen",) for f in fields}
+            kwargs = {
+                f.name: (f"urn:example:{name.lower()}-{f.name}-frozen",) for f in fields
+            }
             instance = cls(**kwargs)
             target_field = fields[0].name
         else:
@@ -164,7 +176,9 @@ def test_every_dataclass_in_all_is_frozen() -> None:
             except dataclasses.FrozenInstanceError:
                 pass
             else:
-                raise AssertionError(f"{name} is not frozen: mutation of {target_field} succeeded")
+                raise AssertionError(
+                    f"{name} is not frozen: mutation of {target_field} succeeded"
+                )
         else:
             # No real field to mutate on this class; still prove frozen-ness
             # by attempting to set an attribute that isn't declared at all.
@@ -173,7 +187,9 @@ def test_every_dataclass_in_all_is_frozen() -> None:
             except dataclasses.FrozenInstanceError:
                 pass
             else:
-                raise AssertionError(f"{name} is not frozen: setattr of a new attribute succeeded")
+                raise AssertionError(
+                    f"{name} is not frozen: setattr of a new attribute succeeded"
+                )
 
 
 def test_candidate_set_is_frozen_dataclasses_frozen_instance_error() -> None:
@@ -189,7 +205,9 @@ def test_candidate_set_is_frozen_dataclasses_frozen_instance_error() -> None:
     except dataclasses.FrozenInstanceError:
         pass
     else:
-        raise AssertionError("CandidateSet.contains_candidate mutation should have raised")
+        raise AssertionError(
+            "CandidateSet.contains_candidate mutation should have raised"
+        )
 
     # Real state is unchanged after the raised mutation attempt.
     assert instance.contains_candidate == ("urn:example:plan-candidate-1",)

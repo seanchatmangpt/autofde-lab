@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
+
 from autofde_lab_planner.models import WorkloadMisconfigFault
 
 
@@ -52,7 +53,9 @@ def detect_workload_and_rolling_update_misconfigs(
             requests = (c.get("resources") or {}).get("requests") or {}
             mem_req = requests.get("memory", "")
             cpu_req = requests.get("cpu", "")
-            if (mem_req and _parse_memory_to_gb(mem_req) >= 32.0) or (cpu_req and _parse_cpu_cores(cpu_req) >= 32.0):
+            if (mem_req and _parse_memory_to_gb(mem_req) >= 32.0) or (
+                cpu_req and _parse_cpu_cores(cpu_req) >= 32.0
+            ):
                 has_large_request = True
                 target_cname = c_name
                 target_cidx = c_idx
@@ -89,7 +92,11 @@ def detect_workload_and_rolling_update_misconfigs(
                 continue
             ic_name = ic.get("name", "")
             ic_cmd = " ".join((ic.get("command") or []) + (ic.get("args") or []))
-            if ic_name == "hang-init" or "sleep infinity" in ic_cmd or "sleep 9999" in ic_cmd:
+            if (
+                ic_name == "hang-init"
+                or "sleep infinity" in ic_cmd
+                or "sleep 9999" in ic_cmd
+            ):
                 has_hanging_init = True
 
         if (is_zero_surge and is_full_unavailable) or has_hanging_init:
@@ -142,7 +149,9 @@ def _parse_cpu_cores(cpu_str: str) -> float:
         return 0.0
 
 
-def _to_item_list(data: dict[str, Any] | list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+def _to_item_list(
+    data: dict[str, Any] | list[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
     if not data:
         return []
     if isinstance(data, dict):
@@ -156,4 +165,3 @@ def _to_item_list(data: dict[str, Any] | list[dict[str, Any]] | None) -> list[di
     else:
         return []
     return [i for i in items if isinstance(i, dict)]
-

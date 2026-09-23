@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+
 from autofde_lab.sa2a.brce.receipts import FinalReceipt, TerminalReceiptState
 from autofde_lab.sa2a.unknown.allocator import UnknownCandidate
 from autofde_lab.sa2a.unknown.novelty_ingest import NoveltyIngestionGateway

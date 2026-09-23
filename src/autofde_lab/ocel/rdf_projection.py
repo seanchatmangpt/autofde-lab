@@ -128,7 +128,7 @@ def _iri(value: str) -> str:
 
 
 def _dt(ns: int):
-    from rdflib import Literal, XSD
+    from rdflib import XSD, Literal
 
     seconds, remainder = divmod(int(ns), 1_000_000_000)
     moment = datetime.fromtimestamp(seconds, tz=timezone.utc).replace(
@@ -138,7 +138,7 @@ def _dt(ns: int):
 
 
 def _literal(value: OcelAttributeValue):
-    from rdflib import Literal, XSD
+    from rdflib import XSD, Literal
 
     kind = value.kind
     if kind is OcelValueKind.INTEGER:
@@ -178,14 +178,18 @@ def _add_attributes(graph, subject, attributes: tuple[OcelAttribute, ...]) -> No
 
     for attribute in attributes:
         graph.add(
-            (subject, URIRef(ATTR_NS + quote(attribute.key, safe="")), _literal(attribute.value))
+            (
+                subject,
+                URIRef(ATTR_NS + quote(attribute.key, safe="")),
+                _literal(attribute.value),
+            )
         )
 
 
 def project_log_to_graph(log: OcelLog) -> RdfProjection:
     """Project a normalized :class:`OcelLog` into a real ``rdflib.Graph``."""
     from rdflib import DCTERMS as DCT
-    from rdflib import Graph, Literal, Namespace, RDF, URIRef
+    from rdflib import RDF, Graph, Literal, Namespace, URIRef
 
     prov = Namespace(PROV)
     graph = Graph()
@@ -200,7 +204,9 @@ def project_log_to_graph(log: OcelLog) -> RdfProjection:
     for obj in log.objects:
         node = URIRef(_iri(obj.id))
         graph.add((node, RDF.type, prov.Entity))
-        graph.add((node, RDF.type, URIRef(OBJECT_TYPE_NS + quote(obj.object_type, safe=""))))
+        graph.add(
+            (node, RDF.type, URIRef(OBJECT_TYPE_NS + quote(obj.object_type, safe="")))
+        )
         graph.add((node, DCT.type, Literal(obj.object_type)))
         graph.add((node, DCT.identifier, Literal(obj.id)))
         _add_attributes(graph, node, obj.attributes)
@@ -208,11 +214,19 @@ def project_log_to_graph(log: OcelLog) -> RdfProjection:
     for event in log.events:
         node = URIRef(_iri(event.id))
         graph.add((node, RDF.type, prov.Activity))
-        graph.add((node, RDF.type, URIRef(ACTIVITY_NS + quote(event.activity, safe=""))))
+        graph.add(
+            (node, RDF.type, URIRef(ACTIVITY_NS + quote(event.activity, safe="")))
+        )
         graph.add((node, DCT.type, Literal(event.activity)))
         graph.add((node, DCT.identifier, Literal(event.id)))
         graph.add((node, prov.startedAtTime, _dt(event.timestamp_ns)))
-        graph.add((node, URIRef(OCEL_NS + "timestampNs"), Literal(format_ns(event.timestamp_ns))))
+        graph.add(
+            (
+                node,
+                URIRef(OCEL_NS + "timestampNs"),
+                Literal(format_ns(event.timestamp_ns)),
+            )
+        )
         _add_attributes(graph, node, event.attributes)
 
     for link in log.event_object_links:
@@ -232,7 +246,11 @@ def project_log_to_graph(log: OcelLog) -> RdfProjection:
     for change in log.object_changes:
         node = URIRef(_iri(change.object_id))
         graph.add(
-            (node, URIRef(ATTR_NS + quote(change.attribute, safe="")), _literal(change.value))
+            (
+                node,
+                URIRef(ATTR_NS + quote(change.attribute, safe="")),
+                _literal(change.value),
+            )
         )
 
     return RdfProjection(

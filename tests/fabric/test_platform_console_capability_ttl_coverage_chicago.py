@@ -22,6 +22,7 @@ means either the capability was renamed/removed in code and the TTL
 was never updated, or the TTL individual was authored with the wrong
 name to begin with -- both are real bugs this test is designed to catch.
 """
+
 from __future__ import annotations
 
 import sys
@@ -36,7 +37,9 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 import ttl_capability_coverage as cov  # noqa: E402
 
 TTL_AVAILABLE = cov.TTL_PATH.exists()
-PLATFORM_CONSOLE_AVAILABLE = cov.APPROVAL_WORKFLOW_TS.exists() and cov.CASTLE_TS.exists() and cov.K8S_TS.exists()
+PLATFORM_CONSOLE_AVAILABLE = (
+    cov.APPROVAL_WORKFLOW_TS.exists() and cov.CASTLE_TS.exists() and cov.K8S_TS.exists()
+)
 
 pytestmark = pytest.mark.skipif(
     not (TTL_AVAILABLE and PLATFORM_CONSOLE_AVAILABLE),

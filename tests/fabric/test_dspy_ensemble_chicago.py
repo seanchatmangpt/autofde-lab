@@ -49,9 +49,7 @@ class ArithmeticClaim(dspy.Signature):
     """Answer a simple arithmetic question with a short claim sentence."""
 
     question: str = dspy.InputField()
-    answer: str = dspy.OutputField(
-        desc="one short sentence stating the numeric answer"
-    )
+    answer: str = dspy.OutputField(desc="one short sentence stating the numeric answer")
 
 
 @pytest.fixture(scope="module")
@@ -181,7 +179,9 @@ class TestMergePredictionsPureLogic:
                 prediction=None,
             ),
             EnsemblePrediction(
-                index=2, output="the ingress target port is misconfigured", prediction=None
+                index=2,
+                output="the ingress target port is misconfigured",
+                prediction=None,
             ),
             EnsemblePrediction(
                 index=3,

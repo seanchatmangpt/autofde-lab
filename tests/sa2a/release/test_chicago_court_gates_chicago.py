@@ -34,9 +34,13 @@ _MANIFEST = {
 
 def _discover(query: UnknownQuery) -> CandidateResolution:
     return CandidateResolution(
-        candidate_id="cand-ep1", query_id=query.query_id, proposed_assertion="service:api-gateway requires-port",
-        evidence_payload={"source": "formal-port-probe"}, source_identity="formal-port-probe",
-        consumed_ticks=2, consumed_tokens=0,
+        candidate_id="cand-ep1",
+        query_id=query.query_id,
+        proposed_assertion="service:api-gateway requires-port",
+        evidence_payload={"source": "formal-port-probe"},
+        source_identity="formal-port-probe",
+        consumed_ticks=2,
+        consumed_tokens=0,
     )
 
 
@@ -45,7 +49,9 @@ def _run_crown(tmp_path: Path):
     return run.run(
         candidate_manifest=_MANIFEST,
         semantic_class_id="requires-port",
-        episode1_query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        episode1_query=UnknownQuery(
+            query_id="q-1", predicate_or_topic="service:api-gateway requires-port"
+        ),
         episode1_discover=_discover,
         equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
         equivalence_predicate_id="pred-requires-port-v1",
@@ -53,9 +59,13 @@ def _run_crown(tmp_path: Path):
         action_iri="urn:action:open-port",
         episode1_target_resource="urn:cap:api-gateway",
         episode2_fresh_candidate=CandidateResolution(
-            candidate_id="cand-ep2", query_id="q-2-fresh", proposed_assertion="service:billing-worker requires-port",
-            evidence_payload={"source": "fresh-request"}, source_identity="fresh-request",
-            consumed_ticks=0, consumed_tokens=0,
+            candidate_id="cand-ep2",
+            query_id="q-2-fresh",
+            proposed_assertion="service:billing-worker requires-port",
+            evidence_payload={"source": "fresh-request"},
+            source_identity="fresh-request",
+            consumed_ticks=0,
+            consumed_tokens=0,
         ),
         episode2_target_resource="urn:cap:billing-worker",
     )
@@ -72,7 +82,9 @@ class TestChicagoCourtGatesWiredForReal:
             assert isinstance(gate_result, (CourtGateResult, AuthorityCheckResult))
             assert gate_result.passed is True, f"{gate_id} did not pass: {gate_result}"
 
-    def test_wired_gate_registry_matches_what_a_real_crown_run_actually_produces(self, tmp_path: Path) -> None:
+    def test_wired_gate_registry_matches_what_a_real_crown_run_actually_produces(
+        self, tmp_path: Path
+    ) -> None:
         """Structural drift guard: `ReleaseRun.CHICAGO_COURT_GATES_WIRED` (the named
         scope record) must name EXACTLY the gate ids a real crown run produces --
         catches the class attribute silently drifting from the real code."""
@@ -123,7 +135,9 @@ class TestChicagoCourtGatesWiredForReal:
         assert set(payload.keys()) == set(result.chicago_court_gates.keys())
         assert all(v is True for v in payload.values())
 
-    def test_consequence_court_gates_do_not_disturb_the_crowns_own_real_receipts(self, tmp_path: Path) -> None:
+    def test_consequence_court_gates_do_not_disturb_the_crowns_own_real_receipts(
+        self, tmp_path: Path
+    ) -> None:
         """The audit gates append their OWN, distinctly-identified receipts to the
         SAME real receipt store/journal the crown's Episode 1/Episode 2 used -- this
         must never mutate or shadow the episodes' own real final-receipt digests."""
@@ -131,4 +145,7 @@ class TestChicagoCourtGatesWiredForReal:
         assert result.state == ReleaseState.CROWNED, result.reason
         assert result.episode1.episode.final_receipt_digest
         assert result.episode2.episode.final_receipt_digest
-        assert result.episode1.episode.final_receipt_digest != result.episode2.episode.final_receipt_digest
+        assert (
+            result.episode1.episode.final_receipt_digest
+            != result.episode2.episode.final_receipt_digest
+        )

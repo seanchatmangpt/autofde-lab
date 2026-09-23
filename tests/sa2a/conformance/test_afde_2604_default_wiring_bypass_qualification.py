@@ -146,7 +146,7 @@ from pathlib import Path
 
 from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline
 from autofde_lab.sa2a.authority.broker import AuthorityBroker, AuthorityGrant
-from autofde_lab.sa2a.brce.boundary import ConsequenceBoundary, ExecutionEnvelope
+from autofde_lab.sa2a.brce.boundary import ConsequenceBoundary
 from autofde_lab.sa2a.brce.receipts import TerminalReceiptState
 from autofde_lab.sa2a.conformance.courts.consequence_court import (
     DurableDiskReceiptStore,
@@ -154,9 +154,12 @@ from autofde_lab.sa2a.conformance.courts.consequence_court import (
     RealDiskJournalActuator,
 )
 from autofde_lab.sa2a.hooks.engine import KnowledgeHookEngine
-from autofde_lab.sa2a.hooks.model import HookEffectKind, HookEventTrigger, KnowledgeHookDefinition
+from autofde_lab.sa2a.hooks.model import (
+    HookEffectKind,
+    HookEventTrigger,
+    KnowledgeHookDefinition,
+)
 from autofde_lab.sa2a.hooks.reactive_loop import ReactiveSemanticLoop
-
 
 # ---------------------------------------------------------------------------
 # MUTATION DW-1: direct-library-construction bypass (no cli.py involved at all)
@@ -256,9 +259,13 @@ def test_mutation_dw1_direct_library_construction_bypasses_admission_entirely(
         delta_generator=lambda r: "",
     )
 
-    assert len(trace.steps) == 1, f"Expected exactly one reflex step, got {trace.steps!r}"
+    assert len(trace.steps) == 1, (
+        f"Expected exactly one reflex step, got {trace.steps!r}"
+    )
     step = trace.steps[0]
-    assert len(step.final_receipts) == 1, f"Expected exactly one final receipt, got {step!r}"
+    assert len(step.final_receipts) == 1, (
+        f"Expected exactly one final receipt, got {step!r}"
+    )
     final = step.final_receipts[0]
 
     # DEFEATED: the unrelated/unbound event content is now correctly REFUSED --
@@ -323,15 +330,15 @@ def test_mutation_dw2_calling_real_hook_reflex_function_directly_defaults_to_ski
     configured default (`False`) instead of trusting `bool(OptionInfo(...))`
     (always `True`).
     """
-    import typer
-
-    from autofde_lab.sa2a.cli import hook_reflex
-
     # The load-bearing premise for this mutation is still real and unchanged: the
     # function's OWN signature default for skip_admission_check is a truthy
     # sentinel, never the boolean False a CLI invocation would supply. The fix is in
     # the function BODY's runtime resolution of that sentinel, not in the signature.
     import inspect
+
+    import typer
+
+    from autofde_lab.sa2a.cli import hook_reflex
 
     sig = inspect.signature(hook_reflex)
     raw_default = sig.parameters["skip_admission_check"].default

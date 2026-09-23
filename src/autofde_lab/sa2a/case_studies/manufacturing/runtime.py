@@ -11,6 +11,7 @@ max-round safety bound lives here and nowhere else, per contract §7.
 Invocation: `python -m autofde_lab.sa2a.case_studies.manufacturing.runtime
 <seed> <output_ocel_json_path>`
 """
+
 from __future__ import annotations
 
 import sys
@@ -57,7 +58,9 @@ def run(seed: int, max_rounds: int = MAX_ROUNDS) -> dict:
         )
 
     agents = {rid: ResourceAgent(rid, seed, ref) for rid in RESOURCE_IDS}
-    authority = AuthorityAgent(ref, energy_budget_per_round_kwh=ENERGY_BUDGET_PER_ROUND_KWH)
+    authority = AuthorityAgent(
+        ref, energy_budget_per_round_kwh=ENERGY_BUDGET_PER_ROUND_KWH
+    )
     initial_state = {
         rid: {
             "resource_id": rid,
@@ -121,13 +124,27 @@ def run(seed: int, max_rounds: int = MAX_ROUNDS) -> dict:
 
         if consecutive_stable >= STABLE_ROUNDS_TO_STOP:
             return _finish(
-                ref, "stable", round_index, actuator, summaries,
-                total_proposals, total_admitted, total_refused, total_actuations,
+                ref,
+                "stable",
+                round_index,
+                actuator,
+                summaries,
+                total_proposals,
+                total_admitted,
+                total_refused,
+                total_actuations,
             )
 
     return _finish(
-        ref, "max_rounds", last_round_index, actuator, summaries,
-        total_proposals, total_admitted, total_refused, total_actuations,
+        ref,
+        "max_rounds",
+        last_round_index,
+        actuator,
+        summaries,
+        total_proposals,
+        total_admitted,
+        total_refused,
+        total_actuations,
     )
 
 
@@ -171,8 +188,12 @@ def _run_round_traced(
             telemetry.ACTIVITY_PROPOSE,
             attributes={
                 "round_index": round_index,
-                "proposal_id": telemetry.join_ids([p["proposal_id"] for p in proposals]),
-                "resource_id": telemetry.join_ids([p["resource_id"] for p in proposals]),
+                "proposal_id": telemetry.join_ids(
+                    [p["proposal_id"] for p in proposals]
+                ),
+                "resource_id": telemetry.join_ids(
+                    [p["resource_id"] for p in proposals]
+                ),
             },
         ):
             decisions = authority.decide_round(round_index, proposals)
@@ -181,7 +202,9 @@ def _run_round_traced(
             telemetry.ACTIVITY_AUTHORIZE,
             attributes={
                 "round_index": round_index,
-                "proposal_id": telemetry.join_ids([d["proposal_id"] for d in decisions]),
+                "proposal_id": telemetry.join_ids(
+                    [d["proposal_id"] for d in decisions]
+                ),
                 "verdict": telemetry.join_ids([d["verdict"] for d in decisions]),
                 "granted_energy_kwh": sum(d["granted_energy_kwh"] for d in decisions),
             },
@@ -197,7 +220,9 @@ def _run_round_traced(
                     ),
                 },
             ):
-                actuations = actuator.apply_round(round_index, decisions, proposals_by_id)
+                actuations = actuator.apply_round(
+                    round_index, decisions, proposals_by_id
+                )
 
                 with tracer.start_as_current_span(
                     telemetry.ACTIVITY_RECEIPT,
@@ -268,7 +293,9 @@ def _print_summary(result: dict) -> None:
 
 def main(argv: list[str]) -> int:
     if len(argv) != 3:
-        print(f"usage: python {argv[0]} <seed> <output_ocel_json_path>", file=sys.stderr)
+        print(
+            f"usage: python {argv[0]} <seed> <output_ocel_json_path>", file=sys.stderr
+        )
         return 2
     seed = int(argv[1])
     output_path = argv[2]

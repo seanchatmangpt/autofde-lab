@@ -74,7 +74,11 @@ def _chain_nodes_only() -> dict:
 
 
 def _arrow_lines(diagram: str) -> list[str]:
-    return [ln.strip() for ln in diagram.splitlines() if "-->" in ln and not ln.strip().startswith("%%")]
+    return [
+        ln.strip()
+        for ln in diagram.splitlines()
+        if "-->" in ln and not ln.strip().startswith("%%")
+    ]
 
 
 def _declared_node_ids(diagram: str) -> set[str]:
@@ -99,7 +103,11 @@ _ARROW_RE = re.compile(
 def test_explicit_relationship_is_drawn_with_its_real_qualifier():
     log = {
         "objects": [
-            _obj("urn:test:task:A", "Task", [{"objectId": "urn:test:goal:B", "qualifier": "pursues"}]),
+            _obj(
+                "urn:test:task:A",
+                "Task",
+                [{"objectId": "urn:test:goal:B", "qualifier": "pursues"}],
+            ),
             _obj("urn:test:goal:B", "Goal"),
         ]
     }
@@ -158,8 +166,12 @@ def test_partial_chain_draws_only_the_links_that_exist():
     """Two real links out of nine possible: exactly two arrows, no bridging."""
     objs = [_obj(f"urn:test:{r.lower()}", r) for r in _CHAIN_ROLES]
     by = {o["type"]: o for o in objs}
-    by["Task"]["relationships"] = [{"objectId": "urn:test:goal", "qualifier": "pursues"}]
-    by["Receipt"]["relationships"] = [{"objectId": "urn:test:replay", "qualifier": "replayedBy"}]
+    by["Task"]["relationships"] = [
+        {"objectId": "urn:test:goal", "qualifier": "pursues"}
+    ]
+    by["Receipt"]["relationships"] = [
+        {"objectId": "urn:test:replay", "qualifier": "replayedBy"}
+    ]
     out = ocel_to_mermaid({"objects": objs})
 
     arrows = _arrow_lines(out)
@@ -177,20 +189,28 @@ def test_partial_chain_draws_only_the_links_that_exist():
 def test_dangling_relationship_target_is_not_drawn_and_invents_no_node():
     log = {
         "objects": [
-            _obj("urn:test:task:A", "Task", [{"objectId": "urn:test:ghost:Z", "qualifier": "pursues"}]),
+            _obj(
+                "urn:test:task:A",
+                "Task",
+                [{"objectId": "urn:test:ghost:Z", "qualifier": "pursues"}],
+            ),
         ]
     }
     out = ocel_to_mermaid(log)
 
     assert "-->" not in out, out
-    assert "ghost" not in out, f"projection invented a node for a dangling target:\n{out}"
+    assert "ghost" not in out, (
+        f"projection invented a node for a dangling target:\n{out}"
+    )
     # Exactly one node -- the one object that really exists.
     assert len(_declared_node_ids(out)) == 1
     assert "NO EXPLICIT OBJECT-TO-OBJECT EDGES" in out
 
 
 def test_relationship_with_missing_objectId_key_is_not_drawn():
-    log = {"objects": [_obj("A", "Task", [{"qualifier": "pursues"}]), _obj("B", "Goal")]}
+    log = {
+        "objects": [_obj("A", "Task", [{"qualifier": "pursues"}]), _obj("B", "Goal")]
+    }
     out = ocel_to_mermaid(log)
     assert "-->" not in out
 
@@ -253,7 +273,9 @@ def test_many_events_over_the_full_chain_still_yield_no_edges():
         {
             "id": f"e{i}",
             "type": "Step",
-            "relationships": [{"objectId": o["id"], "qualifier": "touches"} for o in objs],
+            "relationships": [
+                {"objectId": o["id"], "qualifier": "touches"} for o in objs
+            ],
         }
         for i in range(20)
     ]
@@ -268,7 +290,9 @@ def test_many_events_over_the_full_chain_still_yield_no_edges():
 
 def test_projection_is_byte_identical_across_repeated_calls():
     log = _chain_nodes_only()
-    log["objects"][0]["relationships"] = [{"objectId": log["objects"][1]["id"], "qualifier": "q"}]
+    log["objects"][0]["relationships"] = [
+        {"objectId": log["objects"][1]["id"], "qualifier": "q"}
+    ]
     first = ocel_to_mermaid(log, title="t")
     for _ in range(5):
         assert ocel_to_mermaid(log, title="t") == first
@@ -277,7 +301,9 @@ def test_projection_is_byte_identical_across_repeated_calls():
 def test_node_order_is_stable_regardless_of_input_object_order():
     forward = _chain_nodes_only()
     reversed_input = {"objects": list(reversed(forward["objects"])), "events": []}
-    shuffled = {"objects": [forward["objects"][i] for i in (4, 0, 9, 2, 7, 1, 8, 3, 6, 5)]}
+    shuffled = {
+        "objects": [forward["objects"][i] for i in (4, 0, 9, 2, 7, 1, 8, 3, 6, 5)]
+    }
 
     a = ocel_to_mermaid(forward)
     b = ocel_to_mermaid(reversed_input)
@@ -291,7 +317,9 @@ def test_edge_order_is_stable_regardless_of_input_object_order():
         _obj("B", "Goal", [{"objectId": "C", "qualifier": "q2"}]),
         _obj("C", "Receipt"),
     ]
-    assert ocel_to_mermaid({"objects": objs}) == ocel_to_mermaid({"objects": list(reversed(objs))})
+    assert ocel_to_mermaid({"objects": objs}) == ocel_to_mermaid(
+        {"objects": list(reversed(objs))}
+    )
 
 
 def test_distinct_ids_sharing_a_long_prefix_stay_distinct_nodes():
@@ -305,14 +333,21 @@ def test_distinct_ids_sharing_a_long_prefix_stay_distinct_nodes():
     b = "urn:gymact:resource_flow:capability:burn_catalyst_beta"
     assert a[:48] == b[:48], "fixture no longer exercises the prefix collision"
     out = ocel_to_mermaid({"objects": [_obj(a, "capability"), _obj(b, "capability")]})
-    assert len(_declared_node_ids(out)) == 2, f"two distinct objects collapsed into one node:\n{out}"
+    assert len(_declared_node_ids(out)) == 2, (
+        f"two distinct objects collapsed into one node:\n{out}"
+    )
 
 
 def test_prefix_colliding_ids_do_not_misroute_an_edge():
     a = "urn:gymact:resource_flow:capability:burn_catalyst_alpha"
     b = "urn:gymact:resource_flow:capability:burn_catalyst_beta"
     out = ocel_to_mermaid(
-        {"objects": [_obj(a, "capability", [{"objectId": b, "qualifier": "feeds"}]), _obj(b, "capability")]}
+        {
+            "objects": [
+                _obj(a, "capability", [{"objectId": b, "qualifier": "feeds"}]),
+                _obj(b, "capability"),
+            ]
+        }
     )
     arrows = _arrow_lines(out)
     assert len(arrows) == 1
@@ -327,14 +362,20 @@ def test_prefix_colliding_ids_do_not_misroute_an_edge():
 
 def _real_federation() -> list[dict]:
     return [
-        {"planner": "lazy_astar", "outcome": "PLAN_CANDIDATE", "plan": ["mine", "refine", "assemble"]},
+        {
+            "planner": "lazy_astar",
+            "outcome": "PLAN_CANDIDATE",
+            "plan": ["mine", "refine", "assemble"],
+        },
         {"planner": "rllib_dqn", "outcome": "UNSUPPORTED:REQUIRES_CONFIGURATION"},
         {"planner": "cgp", "outcome": "FAILED"},
     ]
 
 
 def test_federation_shows_every_planner_including_refusal_and_failure():
-    out = federation_to_mermaid(_real_federation(), committed_plan=["mine", "refine", "assemble"])
+    out = federation_to_mermaid(
+        _real_federation(), committed_plan=["mine", "refine", "assemble"]
+    )
 
     for planner in ("lazy_astar", "rllib_dqn", "cgp"):
         assert planner in out, f"{planner} dropped from federation diagram:\n{out}"
@@ -348,7 +389,9 @@ def test_federation_shows_every_planner_including_refusal_and_failure():
 
 
 def test_federation_marks_no_winner_when_nothing_matches_the_commitment():
-    out = federation_to_mermaid(_real_federation(), committed_plan=["something", "else"])
+    out = federation_to_mermaid(
+        _real_federation(), committed_plan=["something", "else"]
+    )
     assert "✓committed" not in out
     # Losing candidates are still shown.
     assert "lazy_astar" in out and "PlanCandidate" in out
@@ -393,7 +436,11 @@ def test_trial_dir_with_a_real_ocel_file_is_projected_from_that_file(tmp_path: P
     act.mkdir(parents=True)
     log = {
         "objects": [
-            _obj("urn:t:task", "Task", [{"objectId": "urn:t:goal", "qualifier": "pursues"}]),
+            _obj(
+                "urn:t:task",
+                "Task",
+                [{"objectId": "urn:t:goal", "qualifier": "pursues"}],
+            ),
             _obj("urn:t:goal", "Goal"),
         ]
     }
@@ -410,7 +457,9 @@ def test_level4_log_is_preferred_over_episode_log(tmp_path: Path):
     trial = tmp_path / "realtrial_0002"
     act = trial / "actuation"
     act.mkdir(parents=True)
-    (act / "level4.ocel.json").write_text(json.dumps({"objects": [_obj("L", "Receipt")]}))
+    (act / "level4.ocel.json").write_text(
+        json.dumps({"objects": [_obj("L", "Receipt")]})
+    )
     (act / "episode.ocel.json").write_text(json.dumps({"objects": [_obj("E", "Task")]}))
 
     out = mermaid_for_trial(trial)
@@ -435,7 +484,9 @@ def _real_trial_dir() -> Path | None:
     return Path(hits[0]) if hits else None
 
 
-@pytest.mark.skipif(_real_trial_dir() is None, reason="real ev_a5 trial dir not on this machine")
+@pytest.mark.skipif(
+    _real_trial_dir() is None, reason="real ev_a5 trial dir not on this machine"
+)
 def test_real_gymact_episode_projects_to_disconnected_nodes():
     """The real episode really does have no O2O relationships -- so no arrows."""
     out = mermaid_for_trial(_real_trial_dir())
@@ -477,7 +528,11 @@ def _diagram_cases() -> list[tuple[str, str]]:
     ]
     hostile = {
         "objects": [
-            _obj('id"with:quote', 'Ty"pe [bracket]', [{"objectId": "b<tag>", "qualifier": 'q"|x'}]),
+            _obj(
+                'id"with:quote',
+                'Ty"pe [bracket]',
+                [{"objectId": "b<tag>", "qualifier": 'q"|x'}],
+            ),
             _obj("b<tag>", "Goal"),
         ]
     }
@@ -485,7 +540,10 @@ def _diagram_cases() -> list[tuple[str, str]]:
         ("chain_no_edges", ocel_to_mermaid(chain)),
         ("chain_one_edge", ocel_to_mermaid(linked, title="titled")),
         ("hostile_labels", ocel_to_mermaid(hostile)),
-        ("federation", federation_to_mermaid(_real_federation(), ["mine", "refine", "assemble"])),
+        (
+            "federation",
+            federation_to_mermaid(_real_federation(), ["mine", "refine", "assemble"]),
+        ),
     ]
     real = _real_trial_dir()
     if real is not None:

@@ -16,7 +16,6 @@ from enum import Enum
 from typing import Any, Literal, Mapping
 
 from autofde_lab.sa2a.unknown.allocator import (
-    CandidateAllocation,
     CMCACandidateAllocator,
     ExplorationBudget,
     FrontierAllocationPlan,
@@ -101,7 +100,8 @@ class UnknownResolutionPipeline:
         self,
         *,
         allocator: CMCACandidateAllocator | None = None,
-        admission_court: Callable[[CandidateResolution], AdmissionReceipt] | None = None,
+        admission_court: Callable[[CandidateResolution], AdmissionReceipt]
+        | None = None,
     ) -> None:
         self.allocator = allocator or CMCACandidateAllocator()
         self.admission_court = admission_court or self._default_admission_court
@@ -123,7 +123,10 @@ class UnknownResolutionPipeline:
             reasons.append("EMPTY_ASSERTION")
         if not candidate.evidence_payload:
             reasons.append("MISSING_EVIDENCE")
-        elif "error" in candidate.evidence_payload or "unsupported" in candidate.evidence_payload:
+        elif (
+            "error" in candidate.evidence_payload
+            or "unsupported" in candidate.evidence_payload
+        ):
             reasons.append("UNSUPPORTED_OR_ERROR_EVIDENCE")
 
         if reasons:

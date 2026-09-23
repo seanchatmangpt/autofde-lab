@@ -32,8 +32,7 @@ def test_real_per_agent_outcome_tallies_sum_to_episode_count():
     for agent, tally in result["outcomes"].items():
         total = tally["win"] + tally["loss"] + tally["draw"]
         assert total == num_episodes, (
-            f"{agent} outcome tally {tally} does not sum to "
-            f"num_episodes={num_episodes}"
+            f"{agent} outcome tally {tally} does not sum to num_episodes={num_episodes}"
         )
         # every bucket is a real, non-negative count
         assert tally["win"] >= 0

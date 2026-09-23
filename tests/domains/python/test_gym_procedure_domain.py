@@ -20,9 +20,22 @@ from pathlib import Path
 import pytest
 
 from autofde_lab import utils
-from autofde_lab.hub.domain.gym_procedure import GymProcedureDomain, Recipe, Step, load_recipe
+from autofde_lab.hub.domain.gym_procedure import (
+    GymProcedureDomain,
+    Recipe,
+    Step,
+    load_recipe,
+)
 
-RECIPES_DIR = Path(__file__).resolve().parents[3] / "src" / "autofde_lab" / "hub" / "domain" / "gym_procedure" / "recipes"
+RECIPES_DIR = (
+    Path(__file__).resolve().parents[3]
+    / "src"
+    / "autofde_lab"
+    / "hub"
+    / "domain"
+    / "gym_procedure"
+    / "recipes"
+)
 
 
 def test_load_recipe_reads_real_cybench_motp_json():

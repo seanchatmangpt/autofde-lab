@@ -28,10 +28,10 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(REPO_ROOT / "scripts") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
+import ocel_failure_signatures as fsig
+
 from autofde_lab.ocel.live_flush import record_and_flush
 from autofde_lab.ocel.mcp_instrumentation import OcelSessionRecorder
-
-import ocel_failure_signatures as fsig
 
 
 def _write_trial(
@@ -74,7 +74,14 @@ def test_recurring_kubectl_error_signature_is_detected_across_trials(tmp_path):
                 },
             ),
             ("kubectl describe", {"standing": "COMPLETED", "elapsed_s": 0.2}),
-            ("submit", {"standing": "COMPLETED", "elapsed_s": 0.1, "detail": "root cause is the misconfigured probe"}),
+            (
+                "submit",
+                {
+                    "standing": "COMPLETED",
+                    "elapsed_s": 0.1,
+                    "detail": "root cause is the misconfigured probe",
+                },
+            ),
         ],
     )
     _write_trial(
@@ -90,7 +97,14 @@ def test_recurring_kubectl_error_signature_is_detected_across_trials(tmp_path):
                     "detail": "TimeoutError: kubectl get pods -n staging timed out after 30s",
                 },
             ),
-            ("submit", {"standing": "COMPLETED", "elapsed_s": 0.1, "detail": "ingress targetPort mismatch"}),
+            (
+                "submit",
+                {
+                    "standing": "COMPLETED",
+                    "elapsed_s": 0.1,
+                    "detail": "ingress targetPort mismatch",
+                },
+            ),
         ],
     )
     _write_trial(
@@ -106,7 +120,14 @@ def test_recurring_kubectl_error_signature_is_detected_across_trials(tmp_path):
                     "detail": "ValueError: invalid manifest",
                 },
             ),
-            ("submit", {"standing": "COMPLETED", "elapsed_s": 0.1, "detail": "cronjob schedule was mutated"}),
+            (
+                "submit",
+                {
+                    "standing": "COMPLETED",
+                    "elapsed_s": 0.1,
+                    "detail": "cronjob schedule was mutated",
+                },
+            ),
         ],
     )
 
@@ -134,7 +155,14 @@ def test_recurring_generic_non_answer_is_detected_across_trials(tmp_path):
         problem_id="problem-d",
         events=[
             ("kubectl get", {"standing": "COMPLETED", "elapsed_s": 0.2}),
-            ("submit", {"standing": "COMPLETED", "elapsed_s": 0.1, "detail": "No anomaly detected."}),
+            (
+                "submit",
+                {
+                    "standing": "COMPLETED",
+                    "elapsed_s": 0.1,
+                    "detail": "No anomaly detected.",
+                },
+            ),
         ],
     )
     _write_trial(
@@ -143,7 +171,14 @@ def test_recurring_generic_non_answer_is_detected_across_trials(tmp_path):
         problem_id="problem-e",
         events=[
             ("kubectl describe", {"standing": "COMPLETED", "elapsed_s": 0.2}),
-            ("submit", {"standing": "COMPLETED", "elapsed_s": 0.1, "detail": "  No Anomaly Detected  "}),
+            (
+                "submit",
+                {
+                    "standing": "COMPLETED",
+                    "elapsed_s": 0.1,
+                    "detail": "  No Anomaly Detected  ",
+                },
+            ),
         ],
     )
     _write_trial(
@@ -152,7 +187,14 @@ def test_recurring_generic_non_answer_is_detected_across_trials(tmp_path):
         problem_id="problem-f",
         events=[
             ("kubectl get", {"standing": "COMPLETED", "elapsed_s": 0.2}),
-            ("submit", {"standing": "COMPLETED", "elapsed_s": 0.1, "detail": "the readiness probe path is wrong, fix it"}),
+            (
+                "submit",
+                {
+                    "standing": "COMPLETED",
+                    "elapsed_s": 0.1,
+                    "detail": "the readiness probe path is wrong, fix it",
+                },
+            ),
         ],
     )
 
@@ -176,7 +218,14 @@ def test_zero_kubectl_before_submit_is_flagged_even_once(tmp_path):
         session_id="sess-g",
         problem_id="problem-g",
         events=[
-            ("submit", {"standing": "COMPLETED", "elapsed_s": 0.1, "detail": "the deployment has a bad image tag"}),
+            (
+                "submit",
+                {
+                    "standing": "COMPLETED",
+                    "elapsed_s": 0.1,
+                    "detail": "the deployment has a bad image tag",
+                },
+            ),
         ],
     )
     _write_trial(
@@ -185,7 +234,14 @@ def test_zero_kubectl_before_submit_is_flagged_even_once(tmp_path):
         problem_id="problem-h",
         events=[
             ("kubectl get", {"standing": "COMPLETED", "elapsed_s": 0.2}),
-            ("submit", {"standing": "COMPLETED", "elapsed_s": 0.1, "detail": "real diagnosis after real investigation"}),
+            (
+                "submit",
+                {
+                    "standing": "COMPLETED",
+                    "elapsed_s": 0.1,
+                    "detail": "real diagnosis after real investigation",
+                },
+            ),
         ],
     )
 
@@ -210,9 +266,20 @@ def test_extract_trial_reads_real_activities_errors_and_submit_detail(tmp_path):
             ("kubectl get", {"standing": "COMPLETED", "elapsed_s": 0.1}),
             (
                 "kubectl logs",
-                {"standing": "ERROR", "elapsed_s": 0.2, "detail": "ConnectionError: refused"},
+                {
+                    "standing": "ERROR",
+                    "elapsed_s": 0.2,
+                    "detail": "ConnectionError: refused",
+                },
             ),
-            ("submit", {"standing": "COMPLETED", "elapsed_s": 0.05, "detail": "final answer text"}),
+            (
+                "submit",
+                {
+                    "standing": "COMPLETED",
+                    "elapsed_s": 0.05,
+                    "detail": "final answer text",
+                },
+            ),
         ],
     )
 

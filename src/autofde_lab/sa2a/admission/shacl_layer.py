@@ -7,7 +7,8 @@ returning structured validation reports.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, Sequence, Union
+from typing import Optional, Union
+
 import pyshacl
 import rdflib
 from rdflib.namespace import RDF, SH
@@ -97,7 +98,9 @@ class ShaclValidator:
                 result_path = report_graph.value(result, SH.resultPath)
                 result_message = report_graph.value(result, SH.resultMessage)
                 source_shape = report_graph.value(result, SH.sourceShape)
-                source_constraint = report_graph.value(result, SH.sourceConstraintComponent)
+                source_constraint = report_graph.value(
+                    result, SH.sourceConstraintComponent
+                )
 
                 parts = []
                 if focus_node:
@@ -120,7 +123,9 @@ class ShaclValidator:
             if cleaned_text:
                 violations_list.append(cleaned_text)
             else:
-                violations_list.append("SHACL validation failed with unspecified violations.")
+                violations_list.append(
+                    "SHACL validation failed with unspecified violations."
+                )
 
         return ShaclValidationReport(
             conforms=bool(conforms),

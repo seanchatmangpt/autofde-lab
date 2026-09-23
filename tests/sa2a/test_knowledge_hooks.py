@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
 from autofde_lab.sa2a.authority.broker import AuthorityBroker, AuthorityGrant
 from autofde_lab.sa2a.brce.boundary import (
     ConsequenceBoundary,
-    ConsequenceActuator,
-    ConsequenceVerifier,
 )
 from autofde_lab.sa2a.brce.receipts import TerminalReceiptState
 from autofde_lab.sa2a.hooks.engine import KnowledgeHookEngine
@@ -224,9 +221,11 @@ def test_multi_step_cascade_reflex_bounded():
 
 def test_sa2a_cli_hook_evaluate_and_reflex():
     """Verify Typer CLI sa2a hook subcommands."""
-    from typer.testing import CliRunner
-    from autofde_lab.sa2a.cli import app
     import json
+
+    from typer.testing import CliRunner
+
+    from autofde_lab.sa2a.cli import app
 
     runner = CliRunner()
 
@@ -320,4 +319,3 @@ def test_sa2a_cli_hook_evaluate_and_reflex():
     assert res_skip.exit_code == 0
     data_skip = json.loads(res_skip.stdout)
     assert data_skip["steps"][0]["receipt_states"] == ["EXECUTED"]
-

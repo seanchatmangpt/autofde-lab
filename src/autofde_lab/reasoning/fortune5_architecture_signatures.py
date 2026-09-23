@@ -55,7 +55,9 @@ class InferArchitectureVision(dspy.Signature):
     observed_state: str = dspy.InputField(
         desc="admitted, real facts about current enterprise state (e.g. OCEL-derived observations)"
     )
-    business_objective: str = dspy.InputField(desc="the real business goal driving this architecture work")
+    business_objective: str = dspy.InputField(
+        desc="the real business goal driving this architecture work"
+    )
     stakeholder_concerns: str = dspy.InputField(
         desc="real, named stakeholder concerns this vision must address, one per line"
     )
@@ -102,4 +104,6 @@ class SelectTransformationCandidate(dspy.Signature):
     candidate_label: str = dspy.OutputField(
         desc="a short, real transformation label, or the literal string 'NONE' if no real basis exists"
     )
-    rationale: str = dspy.OutputField(desc="why this candidate addresses the real, named delta item(s)")
+    rationale: str = dspy.OutputField(
+        desc="why this candidate addresses the real, named delta item(s)"
+    )

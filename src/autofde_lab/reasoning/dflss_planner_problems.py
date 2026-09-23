@@ -32,9 +32,7 @@ from autofde_lab.planner_league.catalog import NOVELTY_ORACLES, PRIMARY_PLANNERS
 # parents[0] = reasoning, [1] = autofde_lab, [2] = src, [3] = repo root
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 
-PROBLEMS_DIR = (
-    _REPO_ROOT / "docs" / "planning" / "dflss-dmedi-curriculum" / "problems"
-)
+PROBLEMS_DIR = _REPO_ROOT / "docs" / "planning" / "dflss-dmedi-curriculum" / "problems"
 
 # The real, canonical 57 planner names this manifest covers -- exactly
 # PRIMARY_PLANNERS + NOVELTY_ORACLES, in that order, no more and no fewer.

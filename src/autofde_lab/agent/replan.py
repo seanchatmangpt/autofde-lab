@@ -256,7 +256,9 @@ class Ledger:
 LedgerLike = "Ledger | OccurrenceLedger"
 
 
-def as_ledger(ledger: object, *, epoch: int = 0, committed_only: bool = False) -> Ledger:
+def as_ledger(
+    ledger: object, *, epoch: int = 0, committed_only: bool = False
+) -> Ledger:
     """Normalize a WAL or a view into the view. The single reconciliation point."""
     from autofde_lab.agent.ledger import OccurrenceLedger  # local: avoid a cycle
 
@@ -300,7 +302,9 @@ def activity_of(node: PowlNode) -> str:
     return activity_sha256(node) if isinstance(node, Atom) else node_id(node)
 
 
-def _covers_completion(model: PowlNode, path: NodePath, preserved: frozenset[NodePath]) -> bool:
+def _covers_completion(
+    model: PowlNode, path: NodePath, preserved: frozenset[NodePath]
+) -> bool:
     """Whether ``preserved`` implies the subtree at ``path`` is complete.
 
     Mirrors the executor's ``_is_complete``: every child of a partial order, but
@@ -377,7 +381,9 @@ def infer_preserve_map(
             # unmapped rather than guess. Re-planning a node is safe; skipping
             # one that never ran is not.
             continue
-        for path, entry in zip(new_paths, sorted(prior, key=lambda e: e.key.occurrence_index)):
+        for path, entry in zip(
+            new_paths, sorted(prior, key=lambda e: e.key.occurrence_index)
+        ):
             entries[path] = entry.key
 
     return PreserveMap(

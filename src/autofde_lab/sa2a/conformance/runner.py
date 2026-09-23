@@ -20,16 +20,14 @@ from __future__ import annotations
 import hashlib
 import json
 import subprocess
-import sys
 import tempfile
 import time
 import uuid
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from autofde_lab.ocel.object_centric_conformance import check_object_centric_conformance
-from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import AuthorityBroker
 from autofde_lab.sa2a.brce.boundary import (
     ColludingRolesError,
@@ -38,7 +36,6 @@ from autofde_lab.sa2a.brce.boundary import (
 )
 from autofde_lab.sa2a.brce.receipts import (
     FinalReceipt,
-    PreparedReceipt,
     ReceiptStore,
     TerminalReceiptState,
     compute_receipt_digest,
@@ -80,7 +77,11 @@ class RealDiskJournalActuator:
             ).hexdigest(),
         }
 
-        records = json.loads(self._journal_path.read_text(encoding="utf-8")) if self._journal_path.exists() else []
+        records = (
+            json.loads(self._journal_path.read_text(encoding="utf-8"))
+            if self._journal_path.exists()
+            else []
+        )
         records.append(entry)
         self._journal_path.parent.mkdir(parents=True, exist_ok=True)
         self._journal_path.write_text(json.dumps(records, indent=2), encoding="utf-8")
@@ -275,22 +276,72 @@ class ChicagoCrownQualificationRunner:
     """
 
     GATE_SPECS = [
-        ("CHI-ID", "Gate01_ExactIdentityFenced", "Exact Git identity fenced to release tag"),
-        ("CHI-WORLD", "Gate02_ExecutableWorldAdmitted", "Executable world admitted to lab candidate frontier"),
-        ("CHI-COLLAB", "Gate03_RealCollaboratorsZeroMocks", "Real load-bearing collaborators with zero mocks"),
-        ("CHI-PLAN", "Gate04_PlanningCandidateOnly", "Planning candidate only; ungranted consequence refused"),
-        ("CHI-BUDGET", "Gate05_WholeBoundedPlanPreflighted", "Whole bounded plan preflighted under CMCA budget"),
-        ("CHI-EXEC", "Gate06_AutonomousExecutionInsideEnvelope", "Autonomous reflex execution inside admitted envelope"),
-        ("CHI-BOUNDARY", "Gate07_SoleDOBoundaryBRCE", "Consequence traverses sole DO boundary (BRCE)"),
-        ("CHI-OBS", "Gate08_IndependentPostconditionObservation", "Independent postcondition observation on disk"),
-        ("CHI-BIND", "Gate09_CompleteReceiptIdentityBinding", "Complete receipt identity binding"),
-        ("CHI-REPLAY", "Gate10_ReplaySucceedsDeterministically", "Deterministic offline replay verification"),
-        ("CHI-FRESH", "Gate11_FreshConsumerProofSucceeds", "Fresh-consumer out-of-process reconstruction proof"),
-        ("CHI-KNOWN", "Gate12_ZeroRuntimeInferenceKnown", "Standing typed ALIVE with zero runtime inference for known class"),
+        (
+            "CHI-ID",
+            "Gate01_ExactIdentityFenced",
+            "Exact Git identity fenced to release tag",
+        ),
+        (
+            "CHI-WORLD",
+            "Gate02_ExecutableWorldAdmitted",
+            "Executable world admitted to lab candidate frontier",
+        ),
+        (
+            "CHI-COLLAB",
+            "Gate03_RealCollaboratorsZeroMocks",
+            "Real load-bearing collaborators with zero mocks",
+        ),
+        (
+            "CHI-PLAN",
+            "Gate04_PlanningCandidateOnly",
+            "Planning candidate only; ungranted consequence refused",
+        ),
+        (
+            "CHI-BUDGET",
+            "Gate05_WholeBoundedPlanPreflighted",
+            "Whole bounded plan preflighted under CMCA budget",
+        ),
+        (
+            "CHI-EXEC",
+            "Gate06_AutonomousExecutionInsideEnvelope",
+            "Autonomous reflex execution inside admitted envelope",
+        ),
+        (
+            "CHI-BOUNDARY",
+            "Gate07_SoleDOBoundaryBRCE",
+            "Consequence traverses sole DO boundary (BRCE)",
+        ),
+        (
+            "CHI-OBS",
+            "Gate08_IndependentPostconditionObservation",
+            "Independent postcondition observation on disk",
+        ),
+        (
+            "CHI-BIND",
+            "Gate09_CompleteReceiptIdentityBinding",
+            "Complete receipt identity binding",
+        ),
+        (
+            "CHI-REPLAY",
+            "Gate10_ReplaySucceedsDeterministically",
+            "Deterministic offline replay verification",
+        ),
+        (
+            "CHI-FRESH",
+            "Gate11_FreshConsumerProofSucceeds",
+            "Fresh-consumer out-of-process reconstruction proof",
+        ),
+        (
+            "CHI-KNOWN",
+            "Gate12_ZeroRuntimeInferenceKnown",
+            "Standing typed ALIVE with zero runtime inference for known class",
+        ),
     ]
 
     def __init__(self, workspace_root: Path | str | None = None) -> None:
-        self.workspace_root = Path(workspace_root).resolve() if workspace_root else Path.cwd().resolve()
+        self.workspace_root = (
+            Path(workspace_root).resolve() if workspace_root else Path.cwd().resolve()
+        )
 
     def run(
         self,
@@ -317,11 +368,23 @@ class ChicagoCrownQualificationRunner:
 
         # Register core objects in OCEL inventory
         tracer.declare_object(release_urn, "ReleaseArtifact", {"release": release_tag})
-        tracer.declare_object(actor_id, "AutonomousAgent", {"role": "autonomic_controller"})
-        tracer.declare_object("urn:authority:broker", "AuthorityBroker", {"type": "ODRLBroker"})
-        tracer.declare_object("urn:boundary:brce", "ConsequenceBoundary", {"type": "BRCEBoundary"})
-        tracer.declare_object("urn:gateway:novelty", "NoveltyGateway", {"type": "IngestionGateway"})
-        tracer.declare_object(idempotency_token, "ExecutionEnvelope", {"action_iri": action_iri, "actor_id": actor_id})
+        tracer.declare_object(
+            actor_id, "AutonomousAgent", {"role": "autonomic_controller"}
+        )
+        tracer.declare_object(
+            "urn:authority:broker", "AuthorityBroker", {"type": "ODRLBroker"}
+        )
+        tracer.declare_object(
+            "urn:boundary:brce", "ConsequenceBoundary", {"type": "BRCEBoundary"}
+        )
+        tracer.declare_object(
+            "urn:gateway:novelty", "NoveltyGateway", {"type": "IngestionGateway"}
+        )
+        tracer.declare_object(
+            idempotency_token,
+            "ExecutionEnvelope",
+            {"action_iri": action_iri, "actor_id": actor_id},
+        )
 
         gate_records: list[GateExecutionRecord] = []
 
@@ -350,7 +413,12 @@ class ChicagoCrownQualificationRunner:
             event_id="evt_gate_01_chi_id",
             activity="CHI-ID:ExactIdentityFenced",
             related_objects=[release_urn],
-            attributes={"exact_sha": exact_sha, "tag_sha": tag_sha, "tag_equality": tag_equality, "passed": g1_passed},
+            attributes={
+                "exact_sha": exact_sha,
+                "tag_sha": tag_sha,
+                "tag_equality": tag_equality,
+                "passed": g1_passed,
+            },
         )
         gate_records.append(
             GateExecutionRecord(
@@ -358,7 +426,11 @@ class ChicagoCrownQualificationRunner:
                 gate_name="Gate01_ExactIdentityFenced",
                 description="Exact Git identity fenced to release tag",
                 passed=g1_passed,
-                details={"exact_sha": exact_sha, "tag_sha": tag_sha, "tag_equality": tag_equality},
+                details={
+                    "exact_sha": exact_sha,
+                    "tag_sha": tag_sha,
+                    "tag_equality": tag_equality,
+                },
                 duration_ms=g1_duration,
             )
         )
@@ -400,16 +472,34 @@ class ChicagoCrownQualificationRunner:
                 verifier=verifier,
                 receipt_store=receipt_store,
             )
-            g3_passed = bool(actuator_not_verifier and zero_mock and collusion_prevented)
+            g3_passed = bool(
+                actuator_not_verifier and zero_mock and collusion_prevented
+            )
             g3_duration = (time.time() - g3_t0) * 1000
 
-            tracer.declare_object("urn:actuator:disk_journal", "Actuator", {"digest": actuator.actuator_digest()})
-            tracer.declare_object("urn:verifier:disk_journal", "Verifier", {"digest": verifier.verifier_digest()})
+            tracer.declare_object(
+                "urn:actuator:disk_journal",
+                "Actuator",
+                {"digest": actuator.actuator_digest()},
+            )
+            tracer.declare_object(
+                "urn:verifier:disk_journal",
+                "Verifier",
+                {"digest": verifier.verifier_digest()},
+            )
             tracer.record_event(
                 event_id="evt_gate_03_chi_collab",
                 activity="CHI-COLLAB:CollaboratorsInitialized",
-                related_objects=["urn:actuator:disk_journal", "urn:verifier:disk_journal", "urn:boundary:brce"],
-                attributes={"zero_mock": zero_mock, "collusion_prevented": collusion_prevented, "passed": g3_passed},
+                related_objects=[
+                    "urn:actuator:disk_journal",
+                    "urn:verifier:disk_journal",
+                    "urn:boundary:brce",
+                ],
+                attributes={
+                    "zero_mock": zero_mock,
+                    "collusion_prevented": collusion_prevented,
+                    "passed": g3_passed,
+                },
             )
             gate_records.append(
                 GateExecutionRecord(
@@ -446,20 +536,29 @@ class ChicagoCrownQualificationRunner:
             g4_duration = (time.time() - g4_t0) * 1000
 
             g7_t0 = time.time()
-            g7_passed = not journal_path.exists()  # Zero Unreceipted Actuation: disk NOT touched!
+            g7_passed = (
+                not journal_path.exists()
+            )  # Zero Unreceipted Actuation: disk NOT touched!
             g7_duration = (time.time() - g7_t0) * 1000
 
             tracer.record_event(
                 event_id="evt_gate_04_chi_plan",
                 activity="CHI-PLAN:CandidateRefusalEnforced",
                 related_objects=[idempotency_token, "urn:boundary:brce"],
-                attributes={"state": res0.state.value, "refusal_code": res0.refusal_code or "", "passed": g4_passed},
+                attributes={
+                    "state": res0.state.value,
+                    "refusal_code": res0.refusal_code or "",
+                    "passed": g4_passed,
+                },
             )
             tracer.record_event(
                 event_id="evt_gate_07_chi_boundary",
                 activity="CHI-BOUNDARY:SoleDOEnforcement",
                 related_objects=["urn:boundary:brce", idempotency_token],
-                attributes={"disk_unmutated_before_grant": g7_passed, "passed": g7_passed},
+                attributes={
+                    "disk_unmutated_before_grant": g7_passed,
+                    "passed": g7_passed,
+                },
             )
 
             gate_records.append(
@@ -468,7 +567,10 @@ class ChicagoCrownQualificationRunner:
                     gate_name="Gate04_PlanningCandidateOnly",
                     description="Planning candidate only; ungranted consequence refused",
                     passed=g4_passed,
-                    details={"state": res0.state.value, "refusal_code": res0.refusal_code},
+                    details={
+                        "state": res0.state.value,
+                        "refusal_code": res0.refusal_code,
+                    },
                     duration_ms=g4_duration,
                 )
             )
@@ -478,7 +580,10 @@ class ChicagoCrownQualificationRunner:
                     gate_name="Gate07_SoleDOBoundaryBRCE",
                     description="Consequence traverses sole DO boundary (BRCE)",
                     passed=g7_passed,
-                    details={"disk_unmutated_before_grant": g7_passed, "journal_exists": journal_path.exists()},
+                    details={
+                        "disk_unmutated_before_grant": g7_passed,
+                        "journal_exists": journal_path.exists(),
+                    },
                     duration_ms=g7_duration,
                 )
             )
@@ -487,8 +592,12 @@ class ChicagoCrownQualificationRunner:
             g2_t0 = time.time()
             gateway = NoveltyIngestionGateway()
             refusal_receipt = res0.final_receipt
-            assert refusal_receipt is not None, "Final receipt must be issued on refusal"
-            observed_state_ttl = "@prefix ex: <http://example.org/> . ex:node ex:condition 'CRITICAL' ."
+            assert refusal_receipt is not None, (
+                "Final receipt must be issued on refusal"
+            )
+            observed_state_ttl = (
+                "@prefix ex: <http://example.org/> . ex:node ex:condition 'CRITICAL' ."
+            )
 
             candidate = gateway.ingest_refusal_receipt(
                 refusal_receipt,
@@ -500,7 +609,9 @@ class ChicagoCrownQualificationRunner:
             g2_passed = bool(candidate.item_id.startswith("novelty-"))
             g2_duration = (time.time() - g2_t0) * 1000
 
-            tracer.declare_object(candidate.item_id, "NoveltyCandidate", {"action_iri": action_iri})
+            tracer.declare_object(
+                candidate.item_id, "NoveltyCandidate", {"action_iri": action_iri}
+            )
             tracer.record_event(
                 event_id="evt_gate_02_chi_world",
                 activity="CHI-WORLD:NoveltyAdmitted",
@@ -520,19 +631,29 @@ class ChicagoCrownQualificationRunner:
 
             # Gate 5: CHI-BUDGET (Whole Bounded Plan Preflighted)
             g5_t0 = time.time()
-            budget = ExplorationBudget(max_compute_ticks=500, max_tokens=5000, max_experiments=2)
+            budget = ExplorationBudget(
+                max_compute_ticks=500, max_tokens=5000, max_experiments=2
+            )
             allocator = CMCACandidateAllocator()
-            plan = allocator.allocate(plan_id="plan_chicago_crown_01", budget=budget, candidates=[candidate])
+            plan = allocator.allocate(
+                plan_id="plan_chicago_crown_01", budget=budget, candidates=[candidate]
+            )
             g5_passed = len(plan.allocations) == 1
             g5_duration = (time.time() - g5_t0) * 1000
             lab_tokens_spent = 2000
 
-            tracer.declare_object(plan.plan_id, "PlanAllocation", {"budget_tokens": 5000})
+            tracer.declare_object(
+                plan.plan_id, "PlanAllocation", {"budget_tokens": 5000}
+            )
             tracer.record_event(
                 event_id="evt_gate_05_chi_budget",
                 activity="CHI-BUDGET:PlanPreflighted",
                 related_objects=[plan.plan_id, candidate.item_id],
-                attributes={"allocations_count": len(plan.allocations), "lab_tokens_spent": lab_tokens_spent, "passed": g5_passed},
+                attributes={
+                    "allocations_count": len(plan.allocations),
+                    "lab_tokens_spent": lab_tokens_spent,
+                    "passed": g5_passed,
+                },
             )
             gate_records.append(
                 GateExecutionRecord(
@@ -540,7 +661,11 @@ class ChicagoCrownQualificationRunner:
                     gate_name="Gate05_WholeBoundedPlanPreflighted",
                     description="Whole bounded plan preflighted under CMCA budget",
                     passed=g5_passed,
-                    details={"plan_id": plan.plan_id, "allocations": len(plan.allocations), "lab_tokens_spent": lab_tokens_spent},
+                    details={
+                        "plan_id": plan.plan_id,
+                        "allocations": len(plan.allocations),
+                        "lab_tokens_spent": lab_tokens_spent,
+                    },
                     duration_ms=g5_duration,
                 )
             )
@@ -561,13 +686,23 @@ class ChicagoCrownQualificationRunner:
             hook_engine.register_hook(artifact.hook)
             broker.register_grant(artifact.suggested_grant)
 
-            tracer.declare_object(artifact.hook.iri, "KnowledgeHook", {"hook_name": "chicago_isolate_node_hook"})
-            tracer.declare_object(artifact.suggested_grant.grant_id, "AuthorityGrant", {"actor_id": actor_id})
+            tracer.declare_object(
+                artifact.hook.iri,
+                "KnowledgeHook",
+                {"hook_name": "chicago_isolate_node_hook"},
+            )
+            tracer.declare_object(
+                artifact.suggested_grant.grant_id,
+                "AuthorityGrant",
+                {"actor_id": actor_id},
+            )
 
             # Gate 6: CHI-EXEC (Autonomous Execution Inside Envelope)
             g6_t0 = time.time()
             base_ttl = "@prefix ex: <http://example.org/> . ex:cluster ex:status 'OK' ."
-            event_ttl = "@prefix ex: <http://example.org/> . ex:node ex:condition 'CRITICAL' ."
+            event_ttl = (
+                "@prefix ex: <http://example.org/> . ex:node ex:condition 'CRITICAL' ."
+            )
 
             loop = ReactiveSemanticLoop(
                 hook_engine=hook_engine,
@@ -587,7 +722,11 @@ class ChicagoCrownQualificationRunner:
             tracer.record_event(
                 event_id="evt_gate_06_chi_exec",
                 activity="CHI-EXEC:AutonomousEnvelopeReflex",
-                related_objects=[idempotency_token, artifact.hook.iri, artifact.suggested_grant.grant_id],
+                related_objects=[
+                    idempotency_token,
+                    artifact.hook.iri,
+                    artifact.suggested_grant.grant_id,
+                ],
                 attributes={
                     "quiescence_reached": trace.quiescence_reached,
                     "steps_count": len(trace.steps),
@@ -600,7 +739,10 @@ class ChicagoCrownQualificationRunner:
                     gate_name="Gate06_AutonomousExecutionInsideEnvelope",
                     description="Autonomous reflex execution inside admitted envelope",
                     passed=g6_passed,
-                    details={"quiescence_reached": trace.quiescence_reached, "steps_count": len(trace.steps)},
+                    details={
+                        "quiescence_reached": trace.quiescence_reached,
+                        "steps_count": len(trace.steps),
+                    },
                     duration_ms=g6_duration,
                 )
             )
@@ -608,10 +750,16 @@ class ChicagoCrownQualificationRunner:
             # Gate 8: CHI-OBS (Independent Postcondition Observation)
             g8_t0 = time.time()
             step0 = trace.steps[0]
-            assert len(step0.final_receipts) == 1, "Must produce exactly 1 final receipt"
+            assert len(step0.final_receipts) == 1, (
+                "Must produce exactly 1 final receipt"
+            )
             final_rec: FinalReceipt = step0.final_receipts[0]
 
-            disk_records = json.loads(journal_path.read_text(encoding="utf-8")) if journal_path.exists() else []
+            disk_records = (
+                json.loads(journal_path.read_text(encoding="utf-8"))
+                if journal_path.exists()
+                else []
+            )
             expected_payload_digest = hashlib.sha256(
                 json.dumps(dict(sorted(param_payload.items()))).encode("utf-8")
             ).hexdigest()
@@ -625,7 +773,11 @@ class ChicagoCrownQualificationRunner:
             )
             g8_duration = (time.time() - g8_t0) * 1000
 
-            tracer.declare_object(final_rec.prepared_receipt_digest, "FinalReceipt", {"state": final_rec.state.value})
+            tracer.declare_object(
+                final_rec.prepared_receipt_digest,
+                "FinalReceipt",
+                {"state": final_rec.state.value},
+            )
             tracer.record_event(
                 event_id="evt_gate_08_chi_obs",
                 activity="CHI-OBS:IndependentPostconditionVerified",
@@ -642,7 +794,10 @@ class ChicagoCrownQualificationRunner:
                     gate_name="Gate08_IndependentPostconditionObservation",
                     description="Independent postcondition observation on disk",
                     passed=g8_passed,
-                    details={"postcondition_verified": final_rec.postcondition_verified, "disk_entry_count": len(disk_records)},
+                    details={
+                        "postcondition_verified": final_rec.postcondition_verified,
+                        "disk_entry_count": len(disk_records),
+                    },
                     duration_ms=g8_duration,
                 )
             )
@@ -659,7 +814,9 @@ class ChicagoCrownQualificationRunner:
             g9_duration = (time.time() - g9_t0) * 1000
 
             if prep_rec is not None:
-                tracer.declare_object(prep_rec.prepared_id, "PreparedReceipt", {"actor_id": actor_id})
+                tracer.declare_object(
+                    prep_rec.prepared_id, "PreparedReceipt", {"actor_id": actor_id}
+                )
                 tracer.record_event(
                     event_id="evt_gate_09_chi_bind",
                     activity="CHI-BIND:CompleteReceiptIdentityBound",
@@ -667,7 +824,8 @@ class ChicagoCrownQualificationRunner:
                     attributes={
                         "actor_id": actor_id,
                         "target_resource": target_cap,
-                        "prepared_digest_match": prep_rec.digest == final_rec.prepared_receipt_digest,
+                        "prepared_digest_match": prep_rec.digest
+                        == final_rec.prepared_receipt_digest,
                         "passed": g9_passed,
                     },
                 )
@@ -689,8 +847,12 @@ class ChicagoCrownQualificationRunner:
             # Gate 10: CHI-REPLAY (Deterministic Offline Replay)
             g10_t0 = time.time()
             replay_engine = ReplayEngine(authority_broker=broker)
-            receipt_records = [prep_rec.to_dict(), final_rec.to_dict()] if prep_rec else []
-            replay_report: ReplayReport = replay_engine.verify_chain(receipt_records=receipt_records)
+            receipt_records = (
+                [prep_rec.to_dict(), final_rec.to_dict()] if prep_rec else []
+            )
+            replay_report: ReplayReport = replay_engine.verify_chain(
+                receipt_records=receipt_records
+            )
             g10_passed = (
                 replay_report.verdict == ReplayVerdict.VALID
                 and replay_report.standing == ReplayStanding.ALIVE
@@ -698,11 +860,19 @@ class ChicagoCrownQualificationRunner:
             )
             g10_duration = (time.time() - g10_t0) * 1000
 
-            tracer.declare_object("urn:engine:replay", "ReplayEngine", {"verdict": replay_report.verdict.value})
+            tracer.declare_object(
+                "urn:engine:replay",
+                "ReplayEngine",
+                {"verdict": replay_report.verdict.value},
+            )
             tracer.record_event(
                 event_id="evt_gate_10_chi_replay",
                 activity="CHI-REPLAY:DeterministicReplayVerified",
-                related_objects=["urn:engine:replay", prep_rec.prepared_id if prep_rec else "", final_rec.prepared_receipt_digest],
+                related_objects=[
+                    "urn:engine:replay",
+                    prep_rec.prepared_id if prep_rec else "",
+                    final_rec.prepared_receipt_digest,
+                ],
                 attributes={
                     "verdict": replay_report.verdict.value,
                     "standing": replay_report.standing.value,
@@ -716,7 +886,10 @@ class ChicagoCrownQualificationRunner:
                     gate_name="Gate10_ReplaySucceedsDeterministically",
                     description="Deterministic offline replay verification",
                     passed=g10_passed,
-                    details={"verdict": replay_report.verdict.value, "standing": replay_report.standing.value},
+                    details={
+                        "verdict": replay_report.verdict.value,
+                        "standing": replay_report.standing.value,
+                    },
                     duration_ms=g10_duration,
                 )
             )
@@ -727,7 +900,9 @@ class ChicagoCrownQualificationRunner:
             fresh_broker = AuthorityBroker()
             fresh_broker.register_grant(artifact.suggested_grant)
             fresh_engine = ReplayEngine(authority_broker=fresh_broker)
-            fresh_report = fresh_engine.verify_chain(receipt_records=raw_serialized_records)
+            fresh_report = fresh_engine.verify_chain(
+                receipt_records=raw_serialized_records
+            )
             g11_passed = (
                 fresh_report.verdict == ReplayVerdict.VALID
                 and fresh_report.standing == ReplayStanding.ALIVE
@@ -736,11 +911,19 @@ class ChicagoCrownQualificationRunner:
             )
             g11_duration = (time.time() - g11_t0) * 1000
 
-            tracer.declare_object("urn:engine:fresh_replay", "ReplayEngine", {"mode": "isolated_clean_room"})
+            tracer.declare_object(
+                "urn:engine:fresh_replay",
+                "ReplayEngine",
+                {"mode": "isolated_clean_room"},
+            )
             tracer.record_event(
                 event_id="evt_gate_11_chi_fresh",
                 activity="CHI-FRESH:FreshConsumerProofVerified",
-                related_objects=["urn:engine:fresh_replay", prep_rec.prepared_id if prep_rec else "", final_rec.prepared_receipt_digest],
+                related_objects=[
+                    "urn:engine:fresh_replay",
+                    prep_rec.prepared_id if prep_rec else "",
+                    final_rec.prepared_receipt_digest,
+                ],
                 attributes={
                     "verdict": fresh_report.verdict.value,
                     "standing": fresh_report.standing.value,
@@ -754,7 +937,10 @@ class ChicagoCrownQualificationRunner:
                     gate_name="Gate11_FreshConsumerProofSucceeds",
                     description="Fresh-consumer out-of-process reconstruction proof",
                     passed=g11_passed,
-                    details={"verdict": fresh_report.verdict.value, "standing": fresh_report.standing.value},
+                    details={
+                        "verdict": fresh_report.verdict.value,
+                        "standing": fresh_report.standing.value,
+                    },
                     duration_ms=g11_duration,
                 )
             )
@@ -762,7 +948,10 @@ class ChicagoCrownQualificationRunner:
             # Gate 12: CHI-KNOWN (Zero Runtime Inference for Known Class)
             g12_t0 = time.time()
             runtime_inference_tokens = 0
-            g12_passed = runtime_inference_tokens == 0 and runtime_inference_tokens < lab_tokens_spent
+            g12_passed = (
+                runtime_inference_tokens == 0
+                and runtime_inference_tokens < lab_tokens_spent
+            )
             g12_duration = (time.time() - g12_t0) * 1000
 
             tracer.record_event(
@@ -793,7 +982,8 @@ class ChicagoCrownQualificationRunner:
 
             # Sort gate records in canonical gate sequence CHI-ID -> CHI-KNOWN
             gate_records_ordered = [
-                next(r for r in gate_records if r.gate_id == spec[0]) for spec in self.GATE_SPECS
+                next(r for r in gate_records if r.gate_id == spec[0])
+                for spec in self.GATE_SPECS
             ]
 
             # -----------------------------------------------------------------
@@ -806,9 +996,7 @@ class ChicagoCrownQualificationRunner:
                     "CHI-ID:ExactIdentityFenced",
                     "CHI-KNOWN:ZeroRuntimeInferenceVerified",
                 ),
-                "urn:actuator:disk_journal": (
-                    "CHI-COLLAB:CollaboratorsInitialized",
-                ),
+                "urn:actuator:disk_journal": ("CHI-COLLAB:CollaboratorsInitialized",),
                 "urn:verifier:disk_journal": (
                     "CHI-COLLAB:CollaboratorsInitialized",
                     "CHI-OBS:IndependentPostconditionVerified",
@@ -825,12 +1013,8 @@ class ChicagoCrownQualificationRunner:
                     "CHI-OBS:IndependentPostconditionVerified",
                     "CHI-BIND:CompleteReceiptIdentityBound",
                 ),
-                "urn:engine:replay": (
-                    "CHI-REPLAY:DeterministicReplayVerified",
-                ),
-                "urn:engine:fresh_replay": (
-                    "CHI-FRESH:FreshConsumerProofVerified",
-                ),
+                "urn:engine:replay": ("CHI-REPLAY:DeterministicReplayVerified",),
+                "urn:engine:fresh_replay": ("CHI-FRESH:FreshConsumerProofVerified",),
             }
 
             conformance_eval = check_object_centric_conformance(
@@ -842,7 +1026,9 @@ class ChicagoCrownQualificationRunner:
                 ocpq_definition_2_valid=True,
                 total_events=len(tracer.log.events),
                 total_objects=len(tracer.log.objects),
-                object_types=tuple(sorted({obj.object_type for obj in tracer.log.objects})),
+                object_types=tuple(
+                    sorted({obj.object_type for obj in tracer.log.objects})
+                ),
                 activities=tuple(sorted({e.activity for e in tracer.log.events})),
                 overall_fitness=conformance_eval.overall_fitness,
                 all_objects_conform=conformance_eval.all_conform,
@@ -862,13 +1048,20 @@ class ChicagoCrownQualificationRunner:
                 action_iri=action_iri,
                 actor_id=actor_id,
                 target_resource=target_cap,
-                receipt_store_chain_valid=bool(prep_rec and prep_rec.digest == final_rec.prepared_receipt_digest),
+                receipt_store_chain_valid=bool(
+                    prep_rec and prep_rec.digest == final_rec.prepared_receipt_digest
+                ),
             )
 
-            all_passed = all(g.passed for g in gate_records_ordered) and ocel_summary.all_objects_conform
+            all_passed = (
+                all(g.passed for g in gate_records_ordered)
+                and ocel_summary.all_objects_conform
+            )
             standing = "ALIVE" if all_passed else "BUILD_BROKEN"
             duration_total_ms = int((time.time() - t0) * 1000)
-            receipt_id = f"urn:receipt:standing:chicago:{exact_sha[:12]}:{idempotency_token}"
+            receipt_id = (
+                f"urn:receipt:standing:chicago:{exact_sha[:12]}:{idempotency_token}"
+            )
 
             pre_body = {
                 "receipt_id": receipt_id,
@@ -889,7 +1082,9 @@ class ChicagoCrownQualificationRunner:
                 "ocel_conformance": ocel_summary.to_dict(),
                 "cryptographic_binding": crypto_binding.to_dict(),
             }
-            computed_digest = compute_receipt_digest({"kind": "standing_receipt", "body": pre_body})
+            computed_digest = compute_receipt_digest(
+                {"kind": "standing_receipt", "body": pre_body}
+            )
 
             receipt = StandingReceipt(
                 receipt_id=receipt_id,
@@ -913,11 +1108,24 @@ class ChicagoCrownQualificationRunner:
             )
 
             # Export reports
-            target_receipt_path = Path(receipt_path) if receipt_path else self.workspace_root / "reports" / "chicago_conformance_receipt.json"
-            target_ocel_path = Path(ocel_path) if ocel_path else self.workspace_root / "reports" / "chicago_conformance_ocel2.json"
+            target_receipt_path = (
+                Path(receipt_path)
+                if receipt_path
+                else self.workspace_root
+                / "reports"
+                / "chicago_conformance_receipt.json"
+            )
+            target_ocel_path = (
+                Path(ocel_path)
+                if ocel_path
+                else self.workspace_root / "reports" / "chicago_conformance_ocel2.json"
+            )
 
             target_receipt_path.parent.mkdir(parents=True, exist_ok=True)
-            target_receipt_path.write_text(json.dumps(receipt.to_dict(), indent=2, sort_keys=True), encoding="utf-8")
+            target_receipt_path.write_text(
+                json.dumps(receipt.to_dict(), indent=2, sort_keys=True),
+                encoding="utf-8",
+            )
 
             tracer.export_ocel2_json(target_ocel_path)
 

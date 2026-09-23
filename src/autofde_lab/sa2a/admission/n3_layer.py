@@ -7,20 +7,19 @@ admitted standing, never possessing ambient authority or side-effecting DO.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Sequence, Set, Tuple
+
 import rdflib
-from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.term import Node
 
 from autofde_lab.sa2a.admission.datalog_layer import (
     DatalogAtom,
-    DatalogRule,
     DatalogEngine,
+    DatalogRule,
     Term,
     is_variable,
 )
-
 
 SA2A_NS = rdflib.Namespace("https://spec.autofde.org/sa2a#")
 
@@ -28,11 +27,12 @@ SA2A_NS = rdflib.Namespace("https://spec.autofde.org/sa2a#")
 @dataclass(frozen=True)
 class CandidateDerivation:
     """A derived graph candidate awaiting admission or standing (§17).
-    
+
     CRITICAL INVARIANT: Candidate derivations NEVER possess ambient execution
     authority (A = μ(O*)), and NEVER side-effect execution DO. They are pure
     standing-requiring hypotheses.
     """
+
     subject: Node
     predicate: Node
     object: Node
@@ -48,13 +48,14 @@ class CandidateDerivation:
 @dataclass(frozen=True)
 class N3ImplicationRule:
     """N3 Implication Rule: { Body } => { Head } (§17).
-    
+
     Under the safe profile:
     - Body is a set of graph triple patterns (binary relations).
     - Head is a set of implied triple patterns.
     - Range-restricted: Variables in Head must be bound by Body.
     - No ungrounded term synthesis.
     """
+
     rule_id: str
     body_patterns: Tuple[Tuple[Term, Term, Term], ...]
     head_patterns: Tuple[Tuple[Term, Term, Term], ...]
@@ -83,25 +84,32 @@ class N3ImplicationRule:
 
     def to_datalog_rules(self) -> List[DatalogRule]:
         """Convert N3 implication { Body } => { Head } into equivalent Datalog rules."""
-        datalog_body = tuple(
-            DatalogAtom(p, s, o)
-            for s, p, o in self.body_patterns
-        )
+        datalog_body = tuple(DatalogAtom(p, s, o) for s, p, o in self.body_patterns)
         rules = []
         for s, p, o in self.head_patterns:
             head_atom = DatalogAtom(p, s, o)
-            rules.append(DatalogRule(head=head_atom, body=datalog_body, name=f"{self.rule_id}_{head_atom}"))
+            rules.append(
+                DatalogRule(
+                    head=head_atom,
+                    body=datalog_body,
+                    name=f"{self.rule_id}_{head_atom}",
+                )
+            )
         return rules
 
 
 class N3RuleEngine:
     """Admitted N3 derivation engine executing graph implication rules (§17).
-    
+
     Executes admitted implication rules over graphs, marking derivations as candidates
     requiring standing, and ensuring zero side-effecting DO execution.
     """
 
-    def __init__(self, rules: Optional[Sequence[N3ImplicationRule]] = None, max_iterations: int = 500):
+    def __init__(
+        self,
+        rules: Optional[Sequence[N3ImplicationRule]] = None,
+        max_iterations: int = 500,
+    ):
         self.rules: List[N3ImplicationRule] = list(rules) if rules else []
         self.max_iterations = max_iterations
 
@@ -114,16 +122,16 @@ class N3RuleEngine:
         graph: rdflib.Graph,
     ) -> Tuple[List[CandidateDerivation], rdflib.Graph, int]:
         """Execute admitted N3 implication rules over an RDF graph.
-        
+
         Evaluates rules using least fixpoint semantics until convergence.
         Every newly derived triple is wrapped in a `CandidateDerivation` with:
           - requires_standing = True
           - authority_verified = False
           - side_effect_do = False (ZERO ambient actuation)
-          
+
         Args:
             graph: Base admitted RDF graph.
-            
+
         Returns:
             Tuple of (candidate_derivations, updated_graph, iteration_count).
         """
@@ -136,8 +144,10 @@ class N3RuleEngine:
                 rule_map[str(dr.head.predicate)] = r.rule_id
 
         # Run safe Datalog fixpoint
-        datalog_engine = DatalogEngine(rules=datalog_rules, max_iterations=self.max_iterations)
-        
+        datalog_engine = DatalogEngine(
+            rules=datalog_rules, max_iterations=self.max_iterations
+        )
+
         initial_triples = set(graph)
         result_graph, iterations = datalog_engine.execute_graph_fixpoint(graph)
         derived_triples = set(result_graph) - initial_triples

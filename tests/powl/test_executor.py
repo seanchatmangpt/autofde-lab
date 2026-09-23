@@ -31,7 +31,6 @@ from autofde_lab.powl.algebra import (
     Silent,
 )
 from autofde_lab.powl.bounds import ExecutionBound
-from autofde_lab.powl.frequency import Frequency
 from autofde_lab.powl.executor import (
     INITIAL_MARKING,
     ChoiceRecord,
@@ -46,10 +45,11 @@ from autofde_lab.powl.executor import (
     replay,
     trace_of,
 )
+from autofde_lab.powl.frequency import Frequency
 from autofde_lab.powl.membership import explain, trace_in_language
-from autofde_lab.powl.semantics import language
 from autofde_lab.powl.normalize import canonical_form, model_digest
 from autofde_lab.powl.refusals import PowlError, PowlRefusal
+from autofde_lab.powl.semantics import language
 
 from ._accumulate import Failures
 
@@ -144,7 +144,9 @@ def test_cyclic_choice_graph_terminates_and_reports_bound_exhausted():
             break
         # a policy that refuses to take the exit, to force the cap
         looping = sorted(p for p in live if p != (1,))
-        marking = fire(model, marking, looping[0] if looping else sorted(live)[0], bound=bound)
+        marking = fire(
+            model, marking, looping[0] if looping else sorted(live)[0], bound=bound
+        )
     else:
         pytest.fail("cyclic choice graph did not terminate within 200 steps")
 
@@ -187,7 +189,9 @@ def test_a_choice_graph_with_no_way_forward_is_a_deadlock_not_a_bound():
 # ── replay ──────────────────────────────────────────────────────────────────
 
 
-def _record_run(model, bound=ExecutionBound(), seed="run") -> tuple[list[ChoiceRecord], Marking]:
+def _record_run(
+    model, bound=ExecutionBound(), seed="run"
+) -> tuple[list[ChoiceRecord], Marking]:
     rng = random.Random(seed)
     marking = INITIAL_MARKING
     records: list[ChoiceRecord] = []
@@ -248,7 +252,8 @@ def test_replay_reproduces_the_run_and_detects_every_kind_of_tampering():
     # the record stores the full enabled set precisely so this is catchable
     rec0 = records[0]
     narrowed = (
-        [ChoiceRecord(rec0.step, rec0.path, (rec0.chosen,), rec0.chosen, "x")] + records[1:]
+        [ChoiceRecord(rec0.step, rec0.path, (rec0.chosen,), rec0.chosen, "x")]
+        + records[1:]
         if len(rec0.enabled) > 1
         else None
     )
@@ -265,8 +270,10 @@ def test_replay_reproduces_the_run_and_detects_every_kind_of_tampering():
     for name, tampered in divergences:
         if tampered is None:
             continue
-        target = model if name != "fabricated record for a different model" else (
-            PartialOrder((Atom("a"), Atom("b")), frozenset({_oe(0, 1)}))
+        target = (
+            model
+            if name != "fabricated record for a different model"
+            else (PartialOrder((Atom("a"), Atom("b")), frozenset({_oe(0, 1)})))
         )
         try:
             replay(target, tampered)
@@ -461,7 +468,8 @@ def test_repetition_is_executed_round_by_round():
     twice = PartialOrder((Atom("a"), Atom("b")), frozenset(), frequency=Frequency(2, 2))
     marking, trace = _greedy_run(twice)
     failures.check(
-        marking.fires == 4, f"exactly-2: expected two rounds of two atoms, got {trace!r}"
+        marking.fires == 4,
+        f"exactly-2: expected two rounds of two atoms, got {trace!r}",
     )
     failures.check(is_final(twice, marking), "exactly-2: two full rounds must be final")
     failures.check(sorted(trace) == ["a", "a", "b", "b"], f"exactly-2: trace={trace!r}")
@@ -474,9 +482,12 @@ def test_repetition_is_executed_round_by_round():
     half = fire(twice, INITIAL_MARKING, (0,))
     half = fire(twice, half, (1,))
     failures.check(
-        not is_final(twice, half), "exactly-2: one round of a (2, 2) composite is not complete"
+        not is_final(twice, half),
+        "exactly-2: one round of a (2, 2) composite is not complete",
     )
-    failures.check(bool(enabled(twice, half)), "exactly-2: the second round must be offered")
+    failures.check(
+        bool(enabled(twice, half)), "exactly-2: the second round must be offered"
+    )
     # repetition must not have serialized concurrency
     failures.check(
         enabled(twice, half) == frozenset({(0,), (1,)}),

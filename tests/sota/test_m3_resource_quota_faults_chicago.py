@@ -19,17 +19,28 @@ LimitRange bound violation.
 
 from __future__ import annotations
 
-from autofde_lab_planner.detectors.limitrange_violation import detect_limitrange_violations
-from autofde_lab_planner.detectors.resourcequota_exhaustion import detect_resourcequota_exhaustion
+from autofde_lab_planner.detectors.limitrange_violation import (
+    detect_limitrange_violations,
+)
+from autofde_lab_planner.detectors.resourcequota_exhaustion import (
+    detect_resourcequota_exhaustion,
+)
 from autofde_lab_planner.engine import CompositePlannerEngine
-from autofde_lab_planner.models import LimitRangeViolationFault, ResourceQuotaExhaustionFault
-from autofde_lab_planner.remediators.limitrange_violation import decide_limitrange_remediation_commands
-from autofde_lab_planner.remediators.resourcequota_exhaustion import decide_resourcequota_remediation_commands
-
+from autofde_lab_planner.models import (
+    LimitRangeViolationFault,
+    ResourceQuotaExhaustionFault,
+)
+from autofde_lab_planner.remediators.limitrange_violation import (
+    decide_limitrange_remediation_commands,
+)
+from autofde_lab_planner.remediators.resourcequota_exhaustion import (
+    decide_resourcequota_remediation_commands,
+)
 
 # =============================================================================
 # ResourceQuota Exhaustion
 # =============================================================================
+
 
 def test_resourcequota_exceeded_detection_and_remediation():
     resourcequotas = {
@@ -47,7 +58,7 @@ def test_resourcequota_exceeded_detection_and_remediation():
         "items": [
             {
                 "reason": "FailedCreate",
-                "message": "pods \"checkout-service-abc123\" is forbidden: exceeded quota: "
+                "message": 'pods "checkout-service-abc123" is forbidden: exceeded quota: '
                 "compute-quota, requested: requests.cpu=500m, used: requests.cpu=4, limited: requests.cpu=4",
                 "involvedObject": {"name": "checkout-service"},
             }
@@ -69,8 +80,13 @@ def test_resourcequota_exceeded_detection_and_remediation():
     assert fault.used_ratio == 1.0
     assert fault.blocked_deployment == "checkout-service"
 
-    cmds, deps = decide_resourcequota_remediation_commands([fault], namespace="checkout")
-    assert any("kubectl patch resourcequota compute-quota" in c and "requests.cpu" in c for c in cmds)
+    cmds, deps = decide_resourcequota_remediation_commands(
+        [fault], namespace="checkout"
+    )
+    assert any(
+        "kubectl patch resourcequota compute-quota" in c and "requests.cpu" in c
+        for c in cmds
+    )
     assert any('"hard": {"requests.cpu": "6"' in c for c in cmds)
     assert any("rollout restart deployment/checkout-service" in c for c in cmds)
     assert "checkout-service" in deps
@@ -113,13 +129,16 @@ def test_resourcequota_healthy_produces_no_fault():
         ]
     }
 
-    faults = detect_resourcequota_exhaustion(resourcequotas_json=resourcequotas, namespace="cart")
+    faults = detect_resourcequota_exhaustion(
+        resourcequotas_json=resourcequotas, namespace="cart"
+    )
     assert faults == []
 
 
 # =============================================================================
 # LimitRange Violation
 # =============================================================================
+
 
 def test_limitrange_below_min_detection_and_remediation():
     limitranges = {
@@ -148,7 +167,9 @@ def test_limitrange_below_min_detection_and_remediation():
                             "containers": [
                                 {
                                     "name": "worker",
-                                    "resources": {"requests": {"cpu": "50m", "memory": "128Mi"}},
+                                    "resources": {
+                                        "requests": {"cpu": "50m", "memory": "128Mi"}
+                                    },
                                 }
                             ]
                         }
@@ -175,7 +196,12 @@ def test_limitrange_below_min_detection_and_remediation():
     assert fault.bound_value == "100m"
 
     cmds, deps = decide_limitrange_remediation_commands([fault], namespace="payments")
-    assert any("kubectl patch deployment payment-worker" in c and "requests/cpu" in c and "100m" in c for c in cmds)
+    assert any(
+        "kubectl patch deployment payment-worker" in c
+        and "requests/cpu" in c
+        and "100m" in c
+        for c in cmds
+    )
     assert any("rollout restart deployment/payment-worker" in c for c in cmds)
     assert "payment-worker" in deps
 
@@ -278,7 +304,11 @@ def test_limitrange_within_bounds_produces_no_fault():
                 "metadata": {"name": "container-limits", "namespace": "payments"},
                 "spec": {
                     "limits": [
-                        {"type": "Container", "min": {"cpu": "50m"}, "max": {"cpu": "2"}}
+                        {
+                            "type": "Container",
+                            "min": {"cpu": "50m"},
+                            "max": {"cpu": "2"},
+                        }
                     ]
                 },
             }
@@ -292,7 +322,10 @@ def test_limitrange_within_bounds_produces_no_fault():
                     "template": {
                         "spec": {
                             "containers": [
-                                {"name": "worker", "resources": {"requests": {"cpu": "200m"}}}
+                                {
+                                    "name": "worker",
+                                    "resources": {"requests": {"cpu": "200m"}},
+                                }
                             ]
                         }
                     }
@@ -313,6 +346,7 @@ def test_limitrange_within_bounds_produces_no_fault():
 # CompositePlannerEngine integration
 # =============================================================================
 
+
 def test_composite_engine_resource_quota_and_limitrange_integration():
     deployments = {
         "items": [
@@ -322,7 +356,10 @@ def test_composite_engine_resource_quota_and_limitrange_integration():
                     "template": {
                         "spec": {
                             "containers": [
-                                {"name": "worker", "resources": {"requests": {"cpu": "50m"}}}
+                                {
+                                    "name": "worker",
+                                    "resources": {"requests": {"cpu": "50m"}},
+                                }
                             ]
                         }
                     }
@@ -365,6 +402,8 @@ def test_composite_engine_resource_quota_and_limitrange_integration():
     assert "LimitRange violations" in diagnosis.diagnosis_text
 
     mitigation = engine.run_mitigation(diagnosis)
-    assert any("kubectl patch resourcequota compute-quota" in c for c in mitigation.commands)
+    assert any(
+        "kubectl patch resourcequota compute-quota" in c for c in mitigation.commands
+    )
     assert any("kubectl patch deployment worker" in c for c in mitigation.commands)
     assert "worker" in mitigation.rollout_wait_deployments

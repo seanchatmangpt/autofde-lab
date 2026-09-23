@@ -84,7 +84,9 @@ def _complete_log() -> dict:
             [("actuates_commitment", COMMITMENT), ("authorized_by", AUTHORITY)],
         ),
         _obj(DECOY_ACTUATION, "Actuation"),
-        _obj(OBSERVATION, "PostconditionObservation", [("observes_actuation", ACTUATION)]),
+        _obj(
+            OBSERVATION, "PostconditionObservation", [("observes_actuation", ACTUATION)]
+        ),
         _obj(RECEIPT_A, "Receipt"),
         _obj(RECEIPT_B, "Receipt", [("caused_by", RECEIPT_A)]),
         _obj(DECOY_RECEIPT, "Receipt"),
@@ -122,9 +124,11 @@ def _complete_log() -> dict:
 def _write_trial(root: Path, log: dict) -> Path:
     act = root / "actuation"
     act.mkdir(parents=True, exist_ok=True)
-    (act / "level4.ocel.json").write_text(json.dumps(log, sort_keys=True, separators=(",", ":")))
+    (act / "level4.ocel.json").write_text(
+        json.dumps(log, sort_keys=True, separators=(",", ":"))
+    )
     (act / "commitment.ttl").write_text(
-        '@prefix powl: <urn:powl:> .\n'
+        "@prefix powl: <urn:powl:> .\n"
         f'<urn:commitment:{COMMITMENT}> powl:episodeId "ep-1" .\n'
     )
     con = sqlite3.connect(act / "receipts.sqlite3")
@@ -174,7 +178,9 @@ def test_complete_chain_reconstructs_from_artifacts_alone(tmp_path: Path):
         ("receipt_ancestry_removed", "receipt->dag"),
     ],
 )
-def test_swapping_one_identity_is_rejected(tmp_path: Path, mutation: str, expected_broken: str):
+def test_swapping_one_identity_is_rejected(
+    tmp_path: Path, mutation: str, expected_broken: str
+):
     """Mutate exactly ONE identity. The graph stays fully populated and every
     activity is still present -- only the causal target changes. The verdict
     must collapse anyway, because a conforming-looking graph describing an
@@ -196,7 +202,9 @@ def test_swapping_one_identity_is_rejected(tmp_path: Path, mutation: str, expect
             {"objectId": AUTHORITY, "qualifier": "authorized_by"}
         )
         by_id[ACTUATION]["relationships"] = [
-            r for r in by_id[ACTUATION]["relationships"] if r["qualifier"] != "authorized_by"
+            r
+            for r in by_id[ACTUATION]["relationships"]
+            if r["qualifier"] != "authorized_by"
         ]
     elif mutation == "observation_observes_wrong_actuation":
         repoint(OBSERVATION, "observes_actuation", DECOY_ACTUATION)

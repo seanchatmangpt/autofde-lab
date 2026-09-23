@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable
 
 
@@ -74,7 +74,9 @@ class MachineExperienceCompiler:
         self,
         *,
         receipt_id: str,
-        resolved_items: Sequence[tuple[str, str, str | None]],  # (pattern/query, output/assertion, optional shacl)
+        resolved_items: Sequence[
+            tuple[str, str, str | None]
+        ],  # (pattern/query, output/assertion, optional shacl)
     ) -> ExperienceCompilationReceipt:
         """Compile resolved candidates into deterministic shapes and rules (§39)."""
         fingerprints: list[str] = []
@@ -104,7 +106,9 @@ class MachineExperienceCompiler:
             llm_inference_avoidance_rate=avoidance_rate,
         )
 
-    def resolve(self, query: str, fallback_llm_inference: Callable[[], Any] | None = None) -> Any:
+    def resolve(
+        self, query: str, fallback_llm_inference: Callable[[], Any] | None = None
+    ) -> Any:
         """Resolve a query using compiled deterministic rules first.
 
         If a compiled rule exists, execute deterministically without LLM inference,

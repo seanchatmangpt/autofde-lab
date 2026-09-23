@@ -19,7 +19,6 @@ import asyncio
 import json
 import sys
 
-import numpy  # noqa: F401  -- force full numpy init before dspy's lazy loader touches it;
 # without this, `import dspy` followed by `from autofde_lab... import numpy.typing`
 # re-enters numpy mid-init via dspy.utils.lazy_import and raises
 # "cannot import name 'NDArray' from partially initialized module 'numpy._typing'"
@@ -27,19 +26,26 @@ import numpy  # noqa: F401  -- force full numpy init before dspy's lazy loader t
 # modules import autofde_lab, which fully initializes numpy, before dspy is touched).
 from pathlib import Path
 
+import numpy  # noqa: F401  -- force full numpy init before dspy's lazy loader touches it;
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(Path.home() / "gymact" / "src"))
 
 import dspy  # noqa: E402
 
-from autofde_lab.reasoning.gymact_dspy_react import DiagnosisResult, run_dspy_diagnosis  # noqa: E402
+from autofde_lab.reasoning.gymact_dspy_react import (  # noqa: E402
+    DiagnosisResult,
+    run_dspy_diagnosis,
+)
 
 
 async def main() -> int:
     problem_id = sys.argv[1] if len(sys.argv) > 1 else "wrong_dns_policy_social_network"
 
-    print(f"[trial] problem_id={problem_id!r}, attempt_mitigation=True, live groq LM, real cluster")
+    print(
+        f"[trial] problem_id={problem_id!r}, attempt_mitigation=True, live groq LM, real cluster"
+    )
 
     lm = dspy.LM("groq/openai/gpt-oss-20b", max_tokens=16000, cache=False)
 
@@ -63,11 +69,15 @@ async def main() -> int:
     print(f"diagnosis={result.diagnosis[:400]!r}")
     print(f"confidence={result.confidence}")
     print(f"mitigation_attempted={result.mitigation_attempted}")
-    print(f"submit_mitigation_response={json.dumps(result.submit_mitigation_response, default=str)[:1000]}")
+    print(
+        f"submit_mitigation_response={json.dumps(result.submit_mitigation_response, default=str)[:1000]}"
+    )
     mitigation_execution = None
     if isinstance(result.trajectory, dict):
         mitigation_execution = result.trajectory.get("mitigation_execution")
-    print(f"mitigation_execution={json.dumps(mitigation_execution, default=str)[:1000]}")
+    print(
+        f"mitigation_execution={json.dumps(mitigation_execution, default=str)[:1000]}"
+    )
 
     out = {
         "problem_id": result.problem_id,

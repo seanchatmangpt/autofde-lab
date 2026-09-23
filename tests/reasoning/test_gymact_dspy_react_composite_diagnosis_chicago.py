@@ -90,11 +90,20 @@ def _manifest_with_run_kubectl(tmp_path) -> CapabilityGate:
 _FRONTEND_DEPLOYMENT = {
     "metadata": {"name": "frontend", "namespace": "astronomy-shop"},
     "spec": {
-        "strategy": {"type": "RollingUpdate", "rollingUpdate": {"maxSurge": "0%", "maxUnavailable": "100%"}},
+        "strategy": {
+            "type": "RollingUpdate",
+            "rollingUpdate": {"maxSurge": "0%", "maxUnavailable": "100%"},
+        },
         "template": {
             "spec": {
-                "affinity": {"podAntiAffinity": {"requiredDuringSchedulingIgnoredDuringExecution": []}},
-                "containers": [{"name": "frontend", "resources": {"requests": {"memory": "64Gi"}}}],
+                "affinity": {
+                    "podAntiAffinity": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": []
+                    }
+                },
+                "containers": [
+                    {"name": "frontend", "resources": {"requests": {"memory": "64Gi"}}}
+                ],
             }
         },
     },
@@ -142,7 +151,9 @@ class _RoutingKubectlEnvironment:
 
     async def actuate(self, capability: _FakeCapability, payload: dict) -> dict:
         self.call_log.append(capability.binding)
-        assert capability.binding == "run_kubectl", f"unexpected real actuate() call for {capability.binding!r}"
+        assert capability.binding == "run_kubectl", (
+            f"unexpected real actuate() call for {capability.binding!r}"
+        )
         command = payload["command"]
         self.kubectl_commands.append(command)
         kind, ns = _kind_and_namespace(command)
@@ -161,7 +172,9 @@ class _RoutingKubectlEnvironment:
 def test_build_gated_react_tools_exposes_run_composite_diagnosis(tmp_path) -> None:
     gate = _manifest_with_run_kubectl(tmp_path)
     env = _RoutingKubectlEnvironment()
-    tools = build_gated_react_tools(env, gate, _FAKE_CAPABILITIES, namespace="astronomy-shop")
+    tools = build_gated_react_tools(
+        env, gate, _FAKE_CAPABILITIES, namespace="astronomy-shop"
+    )
 
     names = [t.__name__ for t in tools]
     assert names == ["run_kubectl", "observe_cluster_state", "run_composite_diagnosis"]
@@ -176,8 +189,12 @@ def test_build_gated_react_tools_exposes_run_composite_diagnosis(tmp_path) -> No
 def test_run_composite_diagnosis_runs_real_engine_end_to_end(tmp_path) -> None:
     gate = _manifest_with_run_kubectl(tmp_path)
     env = _RoutingKubectlEnvironment()
-    tools = build_gated_react_tools(env, gate, _FAKE_CAPABILITIES, namespace="astronomy-shop")
-    run_composite_diagnosis = next(t for t in tools if t.__name__ == "run_composite_diagnosis")
+    tools = build_gated_react_tools(
+        env, gate, _FAKE_CAPABILITIES, namespace="astronomy-shop"
+    )
+    run_composite_diagnosis = next(
+        t for t in tools if t.__name__ == "run_composite_diagnosis"
+    )
 
     result_text = run_composite_diagnosis()
     result = json.loads(result_text)
@@ -223,8 +240,12 @@ def test_run_composite_diagnosis_reports_no_faults_on_clean_cluster(tmp_path) ->
     gate = _manifest_with_run_kubectl(tmp_path)
     env = _RoutingKubectlEnvironment()
     env._fixtures = {}  # every kubectl read returns a real, empty {"items": []}
-    tools = build_gated_react_tools(env, gate, _FAKE_CAPABILITIES, namespace="astronomy-shop")
-    run_composite_diagnosis = next(t for t in tools if t.__name__ == "run_composite_diagnosis")
+    tools = build_gated_react_tools(
+        env, gate, _FAKE_CAPABILITIES, namespace="astronomy-shop"
+    )
+    run_composite_diagnosis = next(
+        t for t in tools if t.__name__ == "run_composite_diagnosis"
+    )
 
     result = json.loads(run_composite_diagnosis())
 
@@ -232,5 +253,8 @@ def test_run_composite_diagnosis_reports_no_faults_on_clean_cluster(tmp_path) ->
     assert diagnosis["target_port_faults"] == []
     assert diagnosis["coredns_faults"] == []
     assert diagnosis["scheduling_deadlocks"] == []
-    assert "No fault mechanism anomalies detected in namespace astronomy-shop." == diagnosis["diagnosis_text"]
+    assert (
+        "No fault mechanism anomalies detected in namespace astronomy-shop."
+        == diagnosis["diagnosis_text"]
+    )
     assert result["mitigation"]["commands"] == []

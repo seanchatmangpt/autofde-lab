@@ -147,7 +147,7 @@ class KnowledgeHookEngine:
                 # only fires the hook if its real trigger_predicate/trigger_value
                 # actually matches the delta's content (AFDE-2612 local fix -- this
                 # used to fire on ANY non-empty delta regardless of content).
-                gated = (hook.on == HookEventTrigger.ASSERT and not event_ttl.strip())
+                gated = hook.on == HookEventTrigger.ASSERT and not event_ttl.strip()
                 if gated:
                     verdict = HookVerdict.GATED
                 elif event_ttl.strip() and self._local_fallback_condition_matches(
@@ -162,7 +162,10 @@ class KnowledgeHookEngine:
                 diag = None
 
             intent: SemanticIntent | None = None
-            if verdict == HookVerdict.FIRED and hook.effect == HookEffectKind.GROUND_ACTION:
+            if (
+                verdict == HookVerdict.FIRED
+                and hook.effect == HookEffectKind.GROUND_ACTION
+            ):
                 action_iri = hook.action_iri or f"{hook.iri}#action"
                 target_cap = hook.target_capability_iri or f"{action_iri}/capability"
                 goal = hook.goal_iri or f"{action_iri}/goal"

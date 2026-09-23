@@ -49,6 +49,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from gymact.powl._turtle import PowlModel as GymactPowlModel
 from gymact.powl.algebra import (
     Atom,
     ChoiceGraph,
@@ -60,7 +61,6 @@ from gymact.powl.algebra import (
 )
 from gymact.powl.spec import PowlPipelineSpec
 from gymact.powl.turtle_bridge import BridgeError, powl_model_to_node
-from gymact.powl._turtle import PowlModel as GymactPowlModel
 
 from autofde_lab.fabric.powl import PowlModel as AutofdeLabPowlModel
 from autofde_lab.fabric.powl import parse_powl_turtle, project_plan_to_powl
@@ -198,7 +198,9 @@ def _concurrent_read_block(labels: "list[str]") -> PartialOrder:
     verbatim from `autofde_lab.powl.runner._concurrent_read_block`, now
     built from `gymact.powl.algebra` types instead of the local ones (same
     shapes, different import source)."""
-    return PartialOrder(children=tuple(Atom(label=l) for l in labels), order=frozenset())
+    return PartialOrder(
+        children=tuple(Atom(label=l) for l in labels), order=frozenset()
+    )
 
 
 def _sequence(nodes: tuple[PowlNode, ...], *, start_index: int) -> frozenset[OrderEdge]:
@@ -236,7 +238,10 @@ def _to_gymact_powl_model(model: AutofdeLabPowlModel) -> GymactPowlModel:
         activity_count=model.activity_count,
         children={
             iri: GymactChildBinding(
-                iri=cb.iri, child_index=cb.child_index, child_model=cb.child_model, precedes=cb.precedes
+                iri=cb.iri,
+                child_index=cb.child_index,
+                child_model=cb.child_model,
+                precedes=cb.precedes,
             )
             for iri, cb in model.children.items()
         },
@@ -252,7 +257,10 @@ def _to_gymact_powl_model(model: AutofdeLabPowlModel) -> GymactPowlModel:
         },
         bindings={
             iri: GymactParameterBinding(
-                iri=pb.iri, binding_index=pb.binding_index, parameter=pb.parameter, bound_object=pb.bound_object
+                iri=pb.iri,
+                binding_index=pb.binding_index,
+                parameter=pb.parameter,
+                bound_object=pb.bound_object,
             )
             for iri, pb in model.bindings.items()
         },
@@ -291,7 +299,9 @@ def build_pipeline_powl_node(turtle_text: str | None = None) -> PowlNode:
             ChoiceGraphEdge(NodeId(2), NodeId(3)),
         }
     )
-    choice_graph = ChoiceGraph(children=choice_children, edges=choice_edges, start=0, end=3)
+    choice_graph = ChoiceGraph(
+        children=choice_children, edges=choice_edges, start=0, end=3
+    )
 
     record_atom = Atom(label=RECORD_LABEL)
 
@@ -325,7 +335,9 @@ def build_pipeline_powl_node(turtle_text: str | None = None) -> PowlNode:
     tail: tuple[PowlNode, ...] = (choice_graph, record_atom) + actuation_entries
     top_children: tuple[PowlNode, ...] = linear_atoms + tail
 
-    order_edges: set[OrderEdge] = {OrderEdge(edge.src, edge.dst) for edge in linear.order}
+    order_edges: set[OrderEdge] = {
+        OrderEdge(edge.src, edge.dst) for edge in linear.order
+    }
     order_edges.add(OrderEdge(NodeId(n_linear - 1), NodeId(n_linear)))
     order_edges |= _sequence(tail, start_index=n_linear)
 

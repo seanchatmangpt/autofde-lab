@@ -40,7 +40,9 @@ def main() -> int:
     print(f"  all_conform: {conformance.all_conform}")
     print(f"  overall_fitness: {conformance.overall_fitness}")
     for obj in conformance.per_object:
-        print(f"  object={obj.object_id!r} type={obj.object_type!r} conforms={obj.conforms} fitness={obj.fitness}")
+        print(
+            f"  object={obj.object_id!r} type={obj.object_type!r} conforms={obj.conforms} fitness={obj.fitness}"
+        )
         print(f"    observed: {obj.observed_trace}")
         print(f"    intended: {obj.intended_trace}")
 

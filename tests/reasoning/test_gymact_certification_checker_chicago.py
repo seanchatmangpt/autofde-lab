@@ -24,7 +24,9 @@ from typing import Any
 
 from gymact.models import Capability, Consequence
 
-from autofde_lab.reasoning.gymact_certification_checker import check_environment_provider_conformance
+from autofde_lab.reasoning.gymact_certification_checker import (
+    check_environment_provider_conformance,
+)
 from autofde_lab.reasoning.gymact_certification_types import StandingValue
 
 
@@ -38,10 +40,14 @@ def test_real_sregym_vendor_provider_passes_every_structural_check() -> None:
     provider = SregymVendorProvider()
 
     manifest, results = asyncio.run(
-        check_environment_provider_conformance(provider, gym_name="sregym", run_smoke_cycle=False)
+        check_environment_provider_conformance(
+            provider, gym_name="sregym", run_smoke_cycle=False
+        )
     )
 
-    assert manifest.manifest_conformance_level_ref == StandingValue.STRUCTURAL_ONLY.value
+    assert (
+        manifest.manifest_conformance_level_ref == StandingValue.STRUCTURAL_ONLY.value
+    )
     assert manifest.manifest_gym_name == "sregym"
     assert "SregymVendorProvider" in manifest.manifest_provider_class_ref
     # Pure structural pass (no materialize): provider Protocol conformance +
@@ -51,11 +57,16 @@ def test_real_sregym_vendor_provider_passes_every_structural_check() -> None:
     # Environment instance actually exists.
     assert len(results) == 2
     assert all(r.result_passed for r in results)
-    assert any(r.result_check_ref == "provider_satisfies_environment_provider_protocol" for r in results)
+    assert any(
+        r.result_check_ref == "provider_satisfies_environment_provider_protocol"
+        for r in results
+    )
     assert any(r.result_check_ref == "materialize_method_present" for r in results)
 
 
-def test_non_conformant_object_is_reported_build_broken_never_a_fabricated_pass() -> None:
+def test_non_conformant_object_is_reported_build_broken_never_a_fabricated_pass() -> (
+    None
+):
     """A real, plain object satisfying none of the Protocol must be
     reported honestly as CERT_BUILD_BROKEN, never coerced into a pass."""
 
@@ -63,12 +74,17 @@ def test_non_conformant_object_is_reported_build_broken_never_a_fabricated_pass(
         pass
 
     manifest, results = asyncio.run(
-        check_environment_provider_conformance(_NotAProvider(), gym_name="not-a-real-gym", run_smoke_cycle=False)
+        check_environment_provider_conformance(
+            _NotAProvider(), gym_name="not-a-real-gym", run_smoke_cycle=False
+        )
     )
 
-    assert manifest.manifest_conformance_level_ref == StandingValue.CERT_BUILD_BROKEN.value
+    assert (
+        manifest.manifest_conformance_level_ref == StandingValue.CERT_BUILD_BROKEN.value
+    )
     assert any(
-        r.result_check_ref == "provider_satisfies_environment_provider_protocol" and r.result_passed is False
+        r.result_check_ref == "provider_satisfies_environment_provider_protocol"
+        and r.result_passed is False
         for r in results
     )
 
@@ -98,8 +114,12 @@ class _FakeEnvironment:
     async def observe(self) -> dict[str, Any]:
         return {"real": "observed-state"}
 
-    async def actuate(self, capability: Capability, payload: dict[str, Any]) -> dict[str, Any]:
-        raise AssertionError("the checker must never call actuate() -- see module docstring")
+    async def actuate(
+        self, capability: Capability, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        raise AssertionError(
+            "the checker must never call actuate() -- see module docstring"
+        )
 
     async def verify(self, expected: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
         return True, dict(expected)
@@ -122,7 +142,9 @@ class _FakeProvider:
         self.materialization_requires_authority = False
         self.materialized_env: _FakeEnvironment | None = None
 
-    async def materialize(self, *, scenario: str | None, config: dict[str, Any]) -> _FakeEnvironment:
+    async def materialize(
+        self, *, scenario: str | None, config: dict[str, Any]
+    ) -> _FakeEnvironment:
         env = _FakeEnvironment()
         self.materialized_env = env
         return env
@@ -133,7 +155,10 @@ def test_real_smoke_cycle_against_a_conformant_fake_reports_smoke_tested() -> No
 
     manifest, results = asyncio.run(
         check_environment_provider_conformance(
-            provider, gym_name="fake-gym", scenario="test-scenario", run_smoke_cycle=True
+            provider,
+            gym_name="fake-gym",
+            scenario="test-scenario",
+            run_smoke_cycle=True,
         )
     )
 
@@ -145,7 +170,9 @@ def test_real_smoke_cycle_against_a_conformant_fake_reports_smoke_tested() -> No
     # Never actuate() -- the fake would raise AssertionError if it were
     # called for real. "smoke_environment_has_method_actuate" (a real,
     # presence-only check, never an invocation) is expected and fine.
-    assert any(r.result_check_ref == "smoke_environment_has_method_actuate" for r in results)
+    assert any(
+        r.result_check_ref == "smoke_environment_has_method_actuate" for r in results
+    )
 
 
 def test_smoke_cycle_is_skipped_when_structural_checks_already_failed() -> None:
@@ -162,6 +189,13 @@ def test_smoke_cycle_is_skipped_when_structural_checks_already_failed() -> None:
         )
     )
 
-    assert manifest.manifest_conformance_level_ref == StandingValue.CERT_BUILD_BROKEN.value
-    assert any(r.result_check_ref == "smoke_cycle_skipped_due_to_structural_failure" for r in results)
-    assert not any((r.result_check_ref or "").startswith("smoke_materialize") for r in results)
+    assert (
+        manifest.manifest_conformance_level_ref == StandingValue.CERT_BUILD_BROKEN.value
+    )
+    assert any(
+        r.result_check_ref == "smoke_cycle_skipped_due_to_structural_failure"
+        for r in results
+    )
+    assert not any(
+        (r.result_check_ref or "").startswith("smoke_materialize") for r in results
+    )

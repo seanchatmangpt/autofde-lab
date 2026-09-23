@@ -202,9 +202,7 @@ def _encode_dangling_reference(anomaly: Anomaly) -> GraphDomain:
     # is deliberately empty -- there is no reachable goal state, which is
     # exactly what "dangling" means.
     next_state_map: dict[str, dict[str, str]] = {dangling_state: {}}
-    next_state_attributes: dict[str, dict[str, dict[str, float]]] = {
-        dangling_state: {}
-    }
+    next_state_attributes: dict[str, dict[str, dict[str, float]]] = {dangling_state: {}}
     return GraphDomain(
         next_state_map=next_state_map,
         next_state_attributes=next_state_attributes,

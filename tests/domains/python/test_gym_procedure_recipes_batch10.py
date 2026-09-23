@@ -30,8 +30,6 @@ rejected).
 
 from pathlib import Path
 
-import pytest
-
 from autofde_lab import utils
 from autofde_lab.hub.domain.gym_procedure import GymProcedureDomain
 

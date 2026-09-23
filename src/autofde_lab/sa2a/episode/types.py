@@ -65,7 +65,9 @@ class ExplorationMeter:
     def __init__(self) -> None:
         self._usage: dict[str, IntelligenceUsage] = {}
 
-    def record(self, episode_id: str, engine: str, resource_class: str, amount: float) -> None:
+    def record(
+        self, episode_id: str, engine: str, resource_class: str, amount: float
+    ) -> None:
         key = (engine, resource_class)
         field_name = _FIELD_MAP.get(key)
         if field_name is None:
@@ -82,7 +84,9 @@ class ExplorationMeter:
         return self._usage.get(episode_id, IntelligenceUsage())
 
 
-def compute_frontier_clean(usage: IntelligenceUsage, *, known_route_observed: bool) -> bool:
+def compute_frontier_clean(
+    usage: IntelligenceUsage, *, known_route_observed: bool
+) -> bool:
     """Computed, never caller-supplied (ARD §22)."""
     return (
         known_route_observed
@@ -101,9 +105,13 @@ def guarded_frontier_clean(
     required_postcondition_verified: bool,
 ) -> bool:
     """Anti-vacuity guard (ARD §23): a zero-call result from a no-op run is not clean."""
-    if not (classification_is_known and route_executed and required_postcondition_verified):
+    if not (
+        classification_is_known and route_executed and required_postcondition_verified
+    ):
         return False
-    return compute_frontier_clean(usage, known_route_observed=classification_is_known and route_executed)
+    return compute_frontier_clean(
+        usage, known_route_observed=classification_is_known and route_executed
+    )
 
 
 @dataclass(frozen=True, slots=True)

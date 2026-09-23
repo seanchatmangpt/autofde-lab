@@ -28,8 +28,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass, field
-from typing import Any, Dict, FrozenSet, List, Mapping, Optional, Sequence, Set, Tuple
-
+from typing import Any, Dict, FrozenSet, List, Mapping, Optional, Set
 
 # ---------------------------------------------------------------------------
 # Query result types
@@ -39,6 +38,7 @@ from typing import Any, Dict, FrozenSet, List, Mapping, Optional, Sequence, Set,
 @dataclass
 class OcelQueryResult:
     """Result of a single OCEL conformance predicate query."""
+
     predicate_id: str
     passed: bool
     description: str
@@ -50,6 +50,7 @@ class OcelQueryResult:
 @dataclass
 class OcelConformanceReport:
     """Aggregated OCEL conformance query results for a log."""
+
     log_digest: str
     predicate_results: List[OcelQueryResult] = field(default_factory=list)
     passed: bool = True
@@ -61,10 +62,9 @@ class OcelConformanceReport:
         self.total_queries = len(self.predicate_results)
         self.failed_queries = sum(1 for r in self.predicate_results if not r.passed)
         self.passed = self.failed_queries == 0
-        payload = str([
-            (r.predicate_id, r.passed)
-            for r in self.predicate_results
-        ]).encode()
+        payload = str(
+            [(r.predicate_id, r.passed) for r in self.predicate_results]
+        ).encode()
         self.report_digest = hashlib.sha256(payload).hexdigest()
 
 
@@ -84,28 +84,50 @@ class OcelConformanceQueryEngine:
     """
 
     # Known actuation event types (RFC §7, §28)
-    ACTUATION_EVENT_TYPES: FrozenSet[str] = frozenset({
-        "actuation", "execute", "do", "consequence", "brce_execute",
-        "receipt_execute", "boundary_execute",
-    })
+    ACTUATION_EVENT_TYPES: FrozenSet[str] = frozenset(
+        {
+            "actuation",
+            "execute",
+            "do",
+            "consequence",
+            "brce_execute",
+            "receipt_execute",
+            "boundary_execute",
+        }
+    )
 
     # Known authority event types
-    AUTHORITY_EVENT_TYPES: FrozenSet[str] = frozenset({
-        "authority_grant", "grant_issued", "broker_authorize",
-        "authority_evaluate", "grant_registered",
-    })
+    AUTHORITY_EVENT_TYPES: FrozenSet[str] = frozenset(
+        {
+            "authority_grant",
+            "grant_issued",
+            "broker_authorize",
+            "authority_evaluate",
+            "grant_registered",
+        }
+    )
 
     # Known hook event types
-    HOOK_EVENT_TYPES: FrozenSet[str] = frozenset({
-        "hook_fired", "hook_evaluated", "hook_select", "hook_construct",
-        "hook_emit", "hook_ground_action",
-    })
+    HOOK_EVENT_TYPES: FrozenSet[str] = frozenset(
+        {
+            "hook_fired",
+            "hook_evaluated",
+            "hook_select",
+            "hook_construct",
+            "hook_emit",
+            "hook_ground_action",
+        }
+    )
 
     # Forbidden actuation markers that hooks MUST NOT embed
-    FORBIDDEN_DO_MARKERS: FrozenSet[str] = frozenset({
-        "hook_actuate", "hook_do", "hook_execute_consequence",
-        "hook_bypass_authority",
-    })
+    FORBIDDEN_DO_MARKERS: FrozenSet[str] = frozenset(
+        {
+            "hook_actuate",
+            "hook_do",
+            "hook_execute_consequence",
+            "hook_bypass_authority",
+        }
+    )
 
     def evaluate_log(
         self,
@@ -135,10 +157,14 @@ class OcelConformanceQueryEngine:
         results.append(self.p4_declared_object_types(ocel_json))
         results.append(self.p8_authority_precedes_actuation(ocel_json))
         results.append(self.p9_hook_no_do(ocel_json))
-        results.append(self.p10_log_digest_stable(ocel_json, log_digest, declared_digest))
+        results.append(
+            self.p10_log_digest_stable(ocel_json, log_digest, declared_digest)
+        )
 
         if producer_object_ids is not None:
-            results.append(self.p6_fresh_consumer_isolation(ocel_json, producer_object_ids))
+            results.append(
+                self.p6_fresh_consumer_isolation(ocel_json, producer_object_ids)
+            )
 
         return OcelConformanceReport(
             log_digest=log_digest,
@@ -173,17 +199,27 @@ class OcelConformanceQueryEngine:
                     )
                 )
                 if not has_receipt:
-                    violations.append(f"Event '{event_id}' (type={evt_type}) lacks PreparedReceipt binding")
+                    violations.append(
+                        f"Event '{event_id}' (type={evt_type}) lacks PreparedReceipt binding"
+                    )
 
         passed = len(violations) == 0
         return OcelQueryResult(
             predicate_id="SA2A-OCEL-P1",
             passed=passed,
             description="Every actuation event has a PreparedReceipt binding",
-            evidence={"actuation_events_checked": len([
-                e for e in events
-                if any(a in str(e.get("type", "")).lower() for a in self.ACTUATION_EVENT_TYPES)
-            ])},
+            evidence={
+                "actuation_events_checked": len(
+                    [
+                        e
+                        for e in events
+                        if any(
+                            a in str(e.get("type", "")).lower()
+                            for a in self.ACTUATION_EVENT_TYPES
+                        )
+                    ]
+                )
+            },
             violations=violations,
             error_message=f"{len(violations)} violations" if violations else None,
         )
@@ -195,8 +231,7 @@ class OcelConformanceQueryEngine:
     def p4_declared_object_types(self, ocel_json: Mapping[str, Any]) -> OcelQueryResult:
         """P4: All object types referenced in events must be declared in objectTypes."""
         object_types_declared = {
-            t.get("name", "")
-            for t in ocel_json.get("objectTypes", [])
+            t.get("name", "") for t in ocel_json.get("objectTypes", [])
         }
         objects = ocel_json.get("objects", [])
         violations: List[str] = []
@@ -204,14 +239,19 @@ class OcelConformanceQueryEngine:
         for obj in objects:
             obj_type = obj.get("type", "")
             if obj_type and obj_type not in object_types_declared:
-                violations.append(f"Object '{obj.get('id', '?')}' references undeclared type '{obj_type}'")
+                violations.append(
+                    f"Object '{obj.get('id', '?')}' references undeclared type '{obj_type}'"
+                )
 
         passed = len(violations) == 0
         return OcelQueryResult(
             predicate_id="SA2A-OCEL-P4",
             passed=passed,
             description="All object types referenced in events are declared",
-            evidence={"declared_types": sorted(object_types_declared), "object_count": len(objects)},
+            evidence={
+                "declared_types": sorted(object_types_declared),
+                "object_count": len(objects),
+            },
             violations=violations,
             error_message=f"{len(violations)} type violations" if violations else None,
         )
@@ -248,7 +288,9 @@ class OcelConformanceQueryEngine:
             description="Fresh consumer events do not reference producer-cached objects",
             evidence={"producer_objects_count": len(producer_object_ids)},
             violations=violations,
-            error_message=f"{len(violations)} isolation violations" if violations else None,
+            error_message=f"{len(violations)} isolation violations"
+            if violations
+            else None,
         )
 
     # ------------------------------------------------------------------
@@ -257,7 +299,12 @@ class OcelConformanceQueryEngine:
 
     def p7_schema_structure(self, ocel_json: Mapping[str, Any]) -> OcelQueryResult:
         """P7: OCEL log conforms to OCEL 2.0 schema (required fields present)."""
-        required_top_fields = {"ocel:version", "ocel:ordering"} | {"objectTypes", "eventTypes", "objects", "events"}
+        required_top_fields = {"ocel:version", "ocel:ordering"} | {
+            "objectTypes",
+            "eventTypes",
+            "objects",
+            "events",
+        }
         # OCEL 2.0 can use either camelCase or ocel: prefix forms
         top_keys = set(ocel_json.keys())
         violations: List[str] = []
@@ -296,7 +343,9 @@ class OcelConformanceQueryEngine:
     # P8: Authority grant events precede actuation events
     # ------------------------------------------------------------------
 
-    def p8_authority_precedes_actuation(self, ocel_json: Mapping[str, Any]) -> OcelQueryResult:
+    def p8_authority_precedes_actuation(
+        self, ocel_json: Mapping[str, Any]
+    ) -> OcelQueryResult:
         """P8: Authority grant events must temporally precede actuation events."""
         events = ocel_json.get("events", [])
         violations: List[str] = []
@@ -313,11 +362,17 @@ class OcelConformanceQueryEngine:
             actor = str(attrs.get("actor_id", attrs.get("subject_id", event_id)))
 
             if any(a in evt_type for a in self.AUTHORITY_EVENT_TYPES):
-                if actor not in actor_authority_time or timestamp < actor_authority_time[actor]:
+                if (
+                    actor not in actor_authority_time
+                    or timestamp < actor_authority_time[actor]
+                ):
                     actor_authority_time[actor] = timestamp
 
             if any(a in evt_type for a in self.ACTUATION_EVENT_TYPES):
-                if actor not in actor_actuation_time or timestamp < actor_actuation_time[actor]:
+                if (
+                    actor not in actor_actuation_time
+                    or timestamp < actor_actuation_time[actor]
+                ):
                     actor_actuation_time[actor] = timestamp
 
         # Check: for any actor with both events, authority must precede actuation
@@ -340,7 +395,9 @@ class OcelConformanceQueryEngine:
                 "actors_with_actuation": len(actor_actuation_time),
             },
             violations=violations,
-            error_message=f"{len(violations)} ordering violations" if violations else None,
+            error_message=f"{len(violations)} ordering violations"
+            if violations
+            else None,
         )
 
     # ------------------------------------------------------------------
@@ -366,9 +423,8 @@ class OcelConformanceQueryEngine:
                         )
 
             # Hook events must NOT be actuation events
-            if (
-                any(h in evt_type for h in self.HOOK_EVENT_TYPES)
-                and any(a in evt_type for a in self.ACTUATION_EVENT_TYPES)
+            if any(h in evt_type for h in self.HOOK_EVENT_TYPES) and any(
+                a in evt_type for a in self.ACTUATION_EVENT_TYPES
             ):
                 violations.append(
                     f"Hook event '{event_id}' is simultaneously an actuation event — "
@@ -380,12 +436,22 @@ class OcelConformanceQueryEngine:
             predicate_id="SA2A-OCEL-P9",
             passed=passed,
             description="Hook events produce only CANDIDATE intents (no embedded DO)",
-            evidence={"hook_events_checked": len([
-                e for e in events
-                if any(h in str(e.get("type", "")).lower() for h in self.HOOK_EVENT_TYPES)
-            ])},
+            evidence={
+                "hook_events_checked": len(
+                    [
+                        e
+                        for e in events
+                        if any(
+                            h in str(e.get("type", "")).lower()
+                            for h in self.HOOK_EVENT_TYPES
+                        )
+                    ]
+                )
+            },
             violations=violations,
-            error_message=f"{len(violations)} hook DO violations" if violations else None,
+            error_message=f"{len(violations)} hook DO violations"
+            if violations
+            else None,
         )
 
     # ------------------------------------------------------------------
@@ -420,7 +486,10 @@ class OcelConformanceQueryEngine:
             predicate_id="SA2A-OCEL-P10",
             passed=matches,
             description="OCEL log digest is stable and matches declared canonical digest",
-            evidence={"computed_digest": computed_digest, "declared_digest": declared_digest},
+            evidence={
+                "computed_digest": computed_digest,
+                "declared_digest": declared_digest,
+            },
             violations=violations,
             error_message=f"Digest mismatch" if not matches else None,
         )
@@ -461,8 +530,11 @@ def query_actuation_receipt_coverage(ocel_json: Mapping[str, Any]) -> float:
     result = engine.p1_actuation_has_receipt(ocel_json)
     events = ocel_json.get("events", [])
     actuation_events = [
-        e for e in events
-        if any(a in str(e.get("type", "")).lower() for a in engine.ACTUATION_EVENT_TYPES)
+        e
+        for e in events
+        if any(
+            a in str(e.get("type", "")).lower() for a in engine.ACTUATION_EVENT_TYPES
+        )
     ]
     if not actuation_events:
         return 1.0

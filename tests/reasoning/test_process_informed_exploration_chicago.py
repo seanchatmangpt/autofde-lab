@@ -35,7 +35,9 @@ from autofde_lab.reasoning.laboratory import (
     generate_montecarlo_candidates,
     generate_triz_candidates,
 )
-from autofde_lab.reasoning.process_informed_exploration import process_informed_hypotheses
+from autofde_lab.reasoning.process_informed_exploration import (
+    process_informed_hypotheses,
+)
 from autofde_lab.reasoning.scenarios.world_transformation_scenarios import (
     ScenarioMetadata_checkout_latency_scenario_v_1,
 )
@@ -50,24 +52,38 @@ def _build_real_log() -> OcelLog:
     log = OcelLog.new(
         objects=[
             OcelObject(
-                "session-1", "MCPSession",
-                (OcelAttribute("server", OcelAttributeValue.string("scikit-decide-fabric")),),
+                "session-1",
+                "MCPSession",
+                (
+                    OcelAttribute(
+                        "server", OcelAttributeValue.string("scikit-decide-fabric")
+                    ),
+                ),
             ),
-            OcelObject("domain-Maze", "Domain", (OcelAttribute("name", OcelAttributeValue.string("Maze")),)),
             OcelObject(
-                "domain-MasterMind", "Domain",
+                "domain-Maze",
+                "Domain",
+                (OcelAttribute("name", OcelAttributeValue.string("Maze")),),
+            ),
+            OcelObject(
+                "domain-MasterMind",
+                "Domain",
                 (OcelAttribute("name", OcelAttributeValue.string("MasterMind")),),
             ),
         ]
     )
     log = append_tool_call_event(
-        log, event_id="match-maze-0", activity="decision_match",
+        log,
+        event_id="match-maze-0",
+        activity="decision_match",
         object_ids=["session-1", "domain-Maze"],
         outcome={"standing": "MATCHED", "compatible_solvers": ["Astar", "MCTS"]},
         timestamp_ns=0,
     )
     log = append_tool_call_event(
-        log, event_id="match-maze-1", activity="decision_match",
+        log,
+        event_id="match-maze-1",
+        activity="decision_match",
         object_ids=["session-1", "domain-Maze"],
         outcome={"standing": "MATCHED", "compatible_solvers": ["MCTS", "Astar"]},
         timestamp_ns=1_000,
@@ -83,30 +99,42 @@ def _real_observation() -> EnterpriseObservation:
     )
 
 
-def test_process_informed_hypotheses_returns_two_real_hypotheses_from_real_signal(tmp_path) -> None:
+def test_process_informed_hypotheses_returns_two_real_hypotheses_from_real_signal(
+    tmp_path,
+) -> None:
     log = _build_real_log()
     db_path = tmp_path / "process_informed.sqlite"
     to_sqlite(log, db_path)
 
     metadata = ScenarioMetadata_checkout_latency_scenario_v_1()
-    hypotheses = process_informed_hypotheses(metadata, db_path=db_path, observation=_real_observation())
+    hypotheses = process_informed_hypotheses(
+        metadata, db_path=db_path, observation=_real_observation()
+    )
 
     assert len(hypotheses) == 2
     assert hypotheses[0].hypothesis_id == "rule-based-v1"
     assert hypotheses[1].hypothesis_id == "process-informed-v1"
-    assert any(ref.startswith("activity_duration:") for ref in hypotheses[1].evidence_used_refs)
+    assert any(
+        ref.startswith("activity_duration:") for ref in hypotheses[1].evidence_used_refs
+    )
 
 
-def test_process_informed_hypotheses_falls_back_to_one_when_no_real_signal(tmp_path) -> None:
+def test_process_informed_hypotheses_falls_back_to_one_when_no_real_signal(
+    tmp_path,
+) -> None:
     metadata = ScenarioMetadata_checkout_latency_scenario_v_1()
     hypotheses = process_informed_hypotheses(
-        metadata, db_path=tmp_path / "does-not-exist.sqlite", observation=_real_observation()
+        metadata,
+        db_path=tmp_path / "does-not-exist.sqlite",
+        observation=_real_observation(),
     )
     assert len(hypotheses) == 1
     assert hypotheses[0].hypothesis_id == "rule-based-v1"
 
 
-def test_real_process_informed_hypothesis_produces_its_own_real_triz_candidates(tmp_path) -> None:
+def test_real_process_informed_hypothesis_produces_its_own_real_triz_candidates(
+    tmp_path,
+) -> None:
     """The real gap this file closes: before this test, no exploration
     generator had ever been called with a real, sqlite/OCEL-sourced
     `"process-informed-v1"` hypothesis (confirmed via grep across every
@@ -119,12 +147,15 @@ def test_real_process_informed_hypothesis_produces_its_own_real_triz_candidates(
     to_sqlite(log, db_path)
 
     metadata = ScenarioMetadata_checkout_latency_scenario_v_1()
-    two_hypotheses = process_informed_hypotheses(metadata, db_path=db_path, observation=_real_observation())
+    two_hypotheses = process_informed_hypotheses(
+        metadata, db_path=db_path, observation=_real_observation()
+    )
     one_hypothesis = two_hypotheses[:1]
     assert len(two_hypotheses) == 2
 
     contradiction = TRIZContradiction(
-        improving_parameter=TRIZParameter.COST, worsening_parameter=TRIZParameter.AUTHORITY_NEEDS
+        improving_parameter=TRIZParameter.COST,
+        worsening_parameter=TRIZParameter.AUTHORITY_NEEDS,
     )
     candidates_from_one = generate_triz_candidates(one_hypothesis, contradiction)
     candidates_from_two = generate_triz_candidates(two_hypotheses, contradiction)
@@ -134,13 +165,17 @@ def test_real_process_informed_hypothesis_produces_its_own_real_triz_candidates(
     assert all(c.provenance == "triz-v1" for c in candidates_from_two)
 
 
-def test_real_process_informed_hypothesis_produces_its_own_real_doe_candidates(tmp_path) -> None:
+def test_real_process_informed_hypothesis_produces_its_own_real_doe_candidates(
+    tmp_path,
+) -> None:
     log = _build_real_log()
     db_path = tmp_path / "process_informed_doe.sqlite"
     to_sqlite(log, db_path)
 
     metadata = ScenarioMetadata_checkout_latency_scenario_v_1()
-    two_hypotheses = process_informed_hypotheses(metadata, db_path=db_path, observation=_real_observation())
+    two_hypotheses = process_informed_hypotheses(
+        metadata, db_path=db_path, observation=_real_observation()
+    )
     assert len(two_hypotheses) == 2
 
     candidates = generate_doe_candidates(
@@ -153,16 +188,22 @@ def test_real_process_informed_hypothesis_produces_its_own_real_doe_candidates(t
     assert all(c.provenance == "doe-v1" for c in candidates)
 
 
-def test_real_process_informed_hypothesis_produces_its_own_real_montecarlo_candidates(tmp_path) -> None:
+def test_real_process_informed_hypothesis_produces_its_own_real_montecarlo_candidates(
+    tmp_path,
+) -> None:
     log = _build_real_log()
     db_path = tmp_path / "process_informed_mc.sqlite"
     to_sqlite(log, db_path)
 
     metadata = ScenarioMetadata_checkout_latency_scenario_v_1()
-    two_hypotheses = process_informed_hypotheses(metadata, db_path=db_path, observation=_real_observation())
+    two_hypotheses = process_informed_hypotheses(
+        metadata, db_path=db_path, observation=_real_observation()
+    )
     assert len(two_hypotheses) == 2
 
-    cost_model = MonteCarloCostModel(distribution=MonteCarloDistribution.UNIFORM, low=10.0, high=50.0)
+    cost_model = MonteCarloCostModel(
+        distribution=MonteCarloDistribution.UNIFORM, low=10.0, high=50.0
+    )
     candidates = generate_montecarlo_candidates(two_hypotheses, cost_model, n=3)
 
     # 2 hypotheses * 3 real samples each.

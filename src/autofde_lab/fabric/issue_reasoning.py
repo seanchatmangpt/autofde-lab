@@ -72,7 +72,13 @@ ARCHETYPES: tuple[DiagnosticArchetype, ...] = (
         "infrastructure",
         frozenset({"workload_pending"}),
         frozenset(),
-        ("capacity_exhausted", "quota_exhausted", "affinity_blocked", "taint_blocked", "volume_unbound"),
+        (
+            "capacity_exhausted",
+            "quota_exhausted",
+            "affinity_blocked",
+            "taint_blocked",
+            "volume_unbound",
+        ),
         "construct a bounded scheduling/capacity repair candidate",
     ),
     DiagnosticArchetype(
@@ -80,7 +86,12 @@ ARCHETYPES: tuple[DiagnosticArchetype, ...] = (
         "distributed_system",
         frozenset({"restarting"}),
         frozenset({"workload_pending"}),
-        ("liveness_mismatch", "readiness_mismatch", "startup_timeout", "dependency_unready"),
+        (
+            "liveness_mismatch",
+            "readiness_mismatch",
+            "startup_timeout",
+            "dependency_unready",
+        ),
         "construct a probe/lifecycle repair candidate",
     ),
     DiagnosticArchetype(
@@ -88,7 +99,12 @@ ARCHETYPES: tuple[DiagnosticArchetype, ...] = (
         "networking",
         frozenset({"no_endpoints"}),
         frozenset({"dns_failure"}),
-        ("selector_mismatch", "target_port_mismatch", "backend_unready", "endpoint_stale"),
+        (
+            "selector_mismatch",
+            "target_port_mismatch",
+            "backend_unready",
+            "endpoint_stale",
+        ),
         "construct a service-routing repair candidate",
     ),
     DiagnosticArchetype(
@@ -104,7 +120,13 @@ ARCHETYPES: tuple[DiagnosticArchetype, ...] = (
         "security",
         frozenset({"authorization_denied"}),
         frozenset(),
-        ("missing_binding", "wrong_subject", "wrong_scope", "expired_credential", "policy_denial"),
+        (
+            "missing_binding",
+            "wrong_subject",
+            "wrong_scope",
+            "expired_credential",
+            "policy_denial",
+        ),
         "construct a least-authority policy/credential repair candidate",
     ),
     DiagnosticArchetype(
@@ -112,7 +134,13 @@ ARCHETYPES: tuple[DiagnosticArchetype, ...] = (
         "capacity",
         frozenset({"resource_exhausted"}),
         frozenset({"storage_io_failure"}),
-        ("memory_limit", "cpu_saturation", "fd_exhaustion", "connection_table_exhaustion", "ip_exhaustion"),
+        (
+            "memory_limit",
+            "cpu_saturation",
+            "fd_exhaustion",
+            "connection_table_exhaustion",
+            "ip_exhaustion",
+        ),
         "construct a bounded resource/capacity repair candidate",
     ),
     DiagnosticArchetype(
@@ -120,7 +148,13 @@ ARCHETYPES: tuple[DiagnosticArchetype, ...] = (
         "storage",
         frozenset({"storage_io_failure"}),
         frozenset({"dns_failure"}),
-        ("volume_unbound", "access_mode_conflict", "affinity_mismatch", "read_failure", "data_corruption"),
+        (
+            "volume_unbound",
+            "access_mode_conflict",
+            "affinity_mismatch",
+            "read_failure",
+            "data_corruption",
+        ),
         "construct a storage-path repair candidate",
     ),
     DiagnosticArchetype(
@@ -136,7 +170,13 @@ ARCHETYPES: tuple[DiagnosticArchetype, ...] = (
         "dependencies",
         frozenset({"dependency_unreachable"}),
         frozenset(),
-        ("dependency_down", "address_drift", "protocol_mismatch", "tls_mismatch", "timeout_budget"),
+        (
+            "dependency_down",
+            "address_drift",
+            "protocol_mismatch",
+            "tls_mismatch",
+            "timeout_budget",
+        ),
         "construct a dependency-path repair candidate",
     ),
     DiagnosticArchetype(
@@ -144,7 +184,13 @@ ARCHETYPES: tuple[DiagnosticArchetype, ...] = (
         "data",
         frozenset({"schema_validation_failure"}),
         frozenset(),
-        ("column_mismatch", "type_mismatch", "missing_field", "constraint_violation", "serialization_drift"),
+        (
+            "column_mismatch",
+            "type_mismatch",
+            "missing_field",
+            "constraint_violation",
+            "serialization_drift",
+        ),
         "construct a schema/data compatibility repair candidate",
     ),
     DiagnosticArchetype(
@@ -160,7 +206,13 @@ ARCHETYPES: tuple[DiagnosticArchetype, ...] = (
         "messaging",
         frozenset({"queue_lag"}),
         frozenset(),
-        ("consumer_slow", "poison_message", "retry_amplification", "partition_imbalance", "producer_flood"),
+        (
+            "consumer_slow",
+            "poison_message",
+            "retry_amplification",
+            "partition_imbalance",
+            "producer_flood",
+        ),
         "construct a queue/backpressure repair candidate",
     ),
     DiagnosticArchetype(
@@ -168,7 +220,13 @@ ARCHETYPES: tuple[DiagnosticArchetype, ...] = (
         "developer_tooling",
         frozenset({"build_failure"}),
         frozenset(),
-        ("compiler_mismatch", "dependency_missing", "generated_drift", "test_contract", "environment_drift"),
+        (
+            "compiler_mismatch",
+            "dependency_missing",
+            "generated_drift",
+            "test_contract",
+            "environment_drift",
+        ),
         "construct a build/toolchain repair candidate",
     ),
     DiagnosticArchetype(
@@ -176,7 +234,12 @@ ARCHETYPES: tuple[DiagnosticArchetype, ...] = (
         "governance",
         frozenset({"policy_violation"}),
         frozenset(),
-        ("required_control_missing", "forbidden_state", "scope_mismatch", "evidence_missing"),
+        (
+            "required_control_missing",
+            "forbidden_state",
+            "scope_mismatch",
+            "evidence_missing",
+        ),
         "construct a policy-conformance repair candidate",
     ),
     DiagnosticArchetype(
@@ -184,7 +247,13 @@ ARCHETYPES: tuple[DiagnosticArchetype, ...] = (
         "process",
         frozenset({"process_stuck"}),
         frozenset(),
-        ("missing_transition", "approval_wait", "dependency_wait", "dead_letter", "state_drift"),
+        (
+            "missing_transition",
+            "approval_wait",
+            "dependency_wait",
+            "dead_letter",
+            "state_drift",
+        ),
         "construct a bounded process-unblocking candidate",
     ),
     DiagnosticArchetype(
@@ -222,7 +291,9 @@ class CompiledIssueReasoner:
             for item in self._archetypes
         ]
 
-    def reason(self, evidence: Mapping[str, Any] | Iterable[str]) -> IssueReasoningResult:
+    def reason(
+        self, evidence: Mapping[str, Any] | Iterable[str]
+    ) -> IssueReasoningResult:
         normalized = self._normalize(evidence)
         evidence_identity = sha256({"evidence": sorted(normalized)})
         ranked = sorted(
@@ -246,7 +317,9 @@ class CompiledIssueReasoner:
         elif missing or contradictions:
             route = IssueRoute.REFUSED_EVIDENCE
             repair_intent = None
-            eliminated = max(0, len(archetype.hypotheses) - len(missing) - len(contradictions) - 1)
+            eliminated = max(
+                0, len(archetype.hypotheses) - len(missing) - len(contradictions) - 1
+            )
         else:
             route = IssueRoute.MATCHED
             repair_intent = archetype.repair_intent

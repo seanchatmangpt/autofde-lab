@@ -45,14 +45,13 @@ def test_membership_module_does_not_import_the_executor():
     import_lines = [
         line
         for line in src.splitlines()
-        if line.startswith(("import ", "from ")) or line.lstrip().startswith(("import ", "from "))
+        if line.startswith(("import ", "from "))
+        or line.lstrip().startswith(("import ", "from "))
     ]
     assert import_lines  # guard against a vacuous pass
     assert not [line for line in import_lines if "executor" in line]
     # and the loaded module object never grew the dependency either
-    assert not any(
-        "executor" in name for name in vars(m) if not name.startswith("__")
-    )
+    assert not any("executor" in name for name in vars(m) if not name.startswith("__"))
 
 
 # ── accept / reject, each with its own diagnostic reason ────────────────────
@@ -74,11 +73,21 @@ def test_decisions_and_reasons_over_the_diamond_and_nesting():
     cases = [
         ("diamond linearization 1", po, ("a", "b", "c", "d"), True, "accepted"),
         ("diamond linearization 2", po, ("a", "c", "b", "d"), True, "accepted"),
-        ("precedence violated (b before a)", po, ("b", "a", "c", "d"), False,
-         "precedence violated"),
+        (
+            "precedence violated (b before a)",
+            po,
+            ("b", "a", "c", "d"),
+            False,
+            "precedence violated",
+        ),
         ("missing occurrence of d", po, ("a", "b", "c"), False, "missing occurrence"),
-        ("duplicate occurrence of b", po, ("a", "b", "b", "c", "d"), False,
-         "duplicate occurrence"),
+        (
+            "duplicate occurrence of b",
+            po,
+            ("a", "b", "b", "c", "d"),
+            False,
+            "duplicate occurrence",
+        ),
         # a -> d only holds in the closure (the reduction has a->b->d, a->c->d)
         ("transitive precedence via the closure", po, ("b", "c", "d", "a"), False, ""),
         ("nested child accepted", nested, ("a", "b1", "b2"), True, "accepted"),
@@ -89,7 +98,8 @@ def test_decisions_and_reasons_over_the_diamond_and_nesting():
     for name, node, trace, expected, reason in cases:
         got = trace_in_language(node, trace)
         failures.check(
-            got is expected, f"{name}: trace_in_language({trace}) == {got}, want {expected}"
+            got is expected,
+            f"{name}: trace_in_language({trace}) == {got}, want {expected}",
         )
         explanation = explain(node, trace)
         failures.check(
@@ -97,9 +107,13 @@ def test_decisions_and_reasons_over_the_diamond_and_nesting():
             f"{name}: explain() said {explanation!r}",
         )
         if reason:
-            failures.check(reason in explanation, f"{name}: {reason!r} not in {explanation!r}")
+            failures.check(
+                reason in explanation, f"{name}: {reason!r} not in {explanation!r}"
+            )
     # the rejection reasons must name the offending activity, not just the class
-    failures.check("'d'" in explain(po, ("a", "b", "c")), "missing-occurrence reason must name 'd'")
+    failures.check(
+        "'d'" in explain(po, ("a", "b", "c")), "missing-occurrence reason must name 'd'"
+    )
     assert not failures, failures.report()
 
 

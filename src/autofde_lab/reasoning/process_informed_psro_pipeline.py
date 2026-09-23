@@ -58,7 +58,10 @@ from __future__ import annotations
 from typing import Any, Callable, Sequence
 
 from .exploration_gymact_falsification import falsify_exploration_candidate_via_gymact
-from .exploration_psro_loop import ExplorationPsroRoundOutcome, run_exploration_psro_round
+from .exploration_psro_loop import (
+    ExplorationPsroRoundOutcome,
+    run_exploration_psro_round,
+)
 from .laboratory import (
     ArchitectureCandidate,
     DesiredStateHypothesis,
@@ -70,7 +73,9 @@ from .process_informed_exploration import process_informed_hypotheses
 
 __all__ = ["run_process_informed_exploration_psro_round"]
 
-CandidateGenerator = Callable[[tuple[DesiredStateHypothesis, ...]], tuple[ArchitectureCandidate, ...]]
+CandidateGenerator = Callable[
+    [tuple[DesiredStateHypothesis, ...]], tuple[ArchitectureCandidate, ...]
+]
 
 
 def run_process_informed_exploration_psro_round(
@@ -112,10 +117,14 @@ def run_process_informed_exploration_psro_round(
     -- the real sqlite file the candidate's own generating hypothesis was
     actually observed from, never a fabricated reference.
     """
-    hypotheses = process_informed_hypotheses(metadata, db_path=db_path, observation=observation)
+    hypotheses = process_informed_hypotheses(
+        metadata, db_path=db_path, observation=observation
+    )
     candidates: tuple[ArchitectureCandidate, ...] = candidate_generator(hypotheses)
 
-    candidates_and_falsifications: list[tuple[ArchitectureCandidate, FalsificationResult]] = []
+    candidates_and_falsifications: list[
+        tuple[ArchitectureCandidate, FalsificationResult]
+    ] = []
     for candidate in candidates:
         outcome = falsify_exploration_candidate_via_gymact(
             candidate,

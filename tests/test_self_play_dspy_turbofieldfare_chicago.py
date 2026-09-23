@@ -97,9 +97,7 @@ def test_real_self_play_rollout_with_real_dspy_policy_produces_real_valid_zero_s
 
     with DSPyPolicy(domain_factory=domain_factory, lm=real_dspy_lm) as solver:
         solver.solve()
-        result = self_play_rollout(
-            num_episodes=2, max_steps=max_steps, solver=solver
-        )
+        result = self_play_rollout(num_episodes=2, max_steps=max_steps, solver=solver)
 
     assert result["num_episodes_run"] == 2
     assert len(result["episode_returns"]) == 2

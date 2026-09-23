@@ -72,7 +72,10 @@ from autofde_lab.ocel.wasm4pm_bridge import (
     resolve_wpm_binary,
 )
 from autofde_lab.powl.algebra import PartialOrder
-from autofde_lab.powl.conformance import check_ocel_conformance, observed_labels_from_events
+from autofde_lab.powl.conformance import (
+    check_ocel_conformance,
+    observed_labels_from_events,
+)
 from autofde_lab.powl.validate import validate_model
 from autofde_lab.reasoning.planner_federation import federate
 
@@ -81,14 +84,26 @@ _REPO_ROOT = os.path.join(_HERE, "..", "..")
 
 DOMAINS: dict[str, tuple[str, str]] = {
     "fortune5-k8s-state-space": (
-        os.path.join(_REPO_ROOT, "docs", "planning", "fortune5-k8s-state-space", "domain.pddl"),
-        os.path.join(_REPO_ROOT, "docs", "planning", "fortune5-k8s-state-space", "problem.pddl"),
+        os.path.join(
+            _REPO_ROOT, "docs", "planning", "fortune5-k8s-state-space", "domain.pddl"
+        ),
+        os.path.join(
+            _REPO_ROOT, "docs", "planning", "fortune5-k8s-state-space", "problem.pddl"
+        ),
     ),
     "blocks6": (
         os.path.join(
-            _REPO_ROOT, "tests", "domains", "python", "pddl_domains", "blocks", "domain.pddl"
+            _REPO_ROOT,
+            "tests",
+            "domains",
+            "python",
+            "pddl_domains",
+            "blocks",
+            "domain.pddl",
         ),
-        os.path.join(_REPO_ROOT, "tests", "reasoning", "fixtures", "blocks6-problem.pddl"),
+        os.path.join(
+            _REPO_ROOT, "tests", "reasoning", "fixtures", "blocks6-problem.pddl"
+        ),
     ),
 }
 
@@ -108,7 +123,9 @@ def federation_results() -> list[FederationCase]:
     (validation happens inside `federate()` itself) becomes one real case."""
     cases: list[FederationCase] = []
     for domain_name, (domain_path, problem_path) in DOMAINS.items():
-        results = federate(domain_path=domain_path, problem_path=problem_path, timeout_s=60.0)
+        results = federate(
+            domain_path=domain_path, problem_path=problem_path, timeout_s=60.0
+        )
         for solver_name, partial_order in results.items():
             if partial_order is None:
                 print(f"[federation] {domain_name} x {solver_name}: did not solve")
@@ -148,7 +165,9 @@ def test_at_least_two_real_domain_solver_combinations_solved(
 # ── Per-case: replay + self-conformance, for every real case ───────────────
 
 
-def test_every_case_replays_and_self_conforms(federation_results: list[FederationCase]) -> None:
+def test_every_case_replays_and_self_conforms(
+    federation_results: list[FederationCase],
+) -> None:
     """Each case's real `PartialOrder` (as returned by `planner_federation`)
     is driven directly through `replay_structural_fires` -- the same real
     executor path the single-plan proof already trusts -- and the resulting
@@ -167,7 +186,11 @@ def test_every_case_replays_and_self_conforms(federation_results: list[Federatio
         )
         assert result.final is True
         assert result.divergence_index is None
-        assert result.fired_count == result.observed_count == len(case.partial_order.children)
+        assert (
+            result.fired_count
+            == result.observed_count
+            == len(case.partial_order.children)
+        )
 
 
 # ── Multi-trace wasm4pm-compat log + real external discovery/conformance ──
@@ -200,14 +223,17 @@ def test_real_external_discovery_and_quality_dimensions_over_multiple_traces(
         # a fresh, real replay.
         log = replay_structural_fires(case.partial_order)
         labels = observed_labels_from_events(log.events)
-        assert labels, f"{case.domain_name} x {case.solver_name}: no fired labels to trace"
+        assert labels, (
+            f"{case.domain_name} x {case.solver_name}: no fired labels to trace"
+        )
 
         case_name = f"{case.domain_name}::{case.solver_name}"
         traces.append(
             {
                 "attributes": [_string_attr("concept:name", case_name)],
                 "events": [
-                    {"attributes": [_string_attr("concept:name", label)]} for label in labels
+                    {"attributes": [_string_attr("concept:name", label)]}
+                    for label in labels
                 ],
             }
         )
@@ -225,7 +251,9 @@ def test_real_external_discovery_and_quality_dimensions_over_multiple_traces(
     model_path = tmp_path / "scaled_plan_model.pnml"
 
     discovery = asyncio.run(
-        discover_petri_net(log_path, output_path=model_path, wpm_binary=binary, timeout_s=60)
+        discover_petri_net(
+            log_path, output_path=model_path, wpm_binary=binary, timeout_s=60
+        )
     )
     assert discovery.places > 0
     assert discovery.transitions > 0

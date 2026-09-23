@@ -101,7 +101,9 @@ def _remove_precondition(block: str, predicate: str) -> str:
     start, end = _precondition_span(block)
     section = block[start:end]
     atoms = _PRECOND_ATOM_RE.findall(section)
-    assert predicate in atoms, f"{predicate!r} is not a real precondition of this block: {atoms}"
+    assert predicate in atoms, (
+        f"{predicate!r} is not a real precondition of this block: {atoms}"
+    )
     remaining = [p for p in atoms if p != predicate]
     assert len(remaining) == len(atoms) - 1
     return block[:start] + _render_precondition_section(remaining) + block[end:]
@@ -111,15 +113,23 @@ def _add_contradictory_precondition(block: str, new_predicate: str) -> str:
     start, end = _precondition_span(block)
     section = block[start:end]
     atoms = _PRECOND_ATOM_RE.findall(section)
-    assert new_predicate not in atoms, f"{new_predicate!r} already a real precondition -- pick a fresh name"
-    return block[:start] + _render_precondition_section([*atoms, new_predicate]) + block[end:]
+    assert new_predicate not in atoms, (
+        f"{new_predicate!r} already a real precondition -- pick a fresh name"
+    )
+    return (
+        block[:start]
+        + _render_precondition_section([*atoms, new_predicate])
+        + block[end:]
+    )
 
 
 def _swap_effect_predicate(block: str, old_predicate: str, new_predicate: str) -> str:
     effect_idx = block.index("pd:effect")
     head, tail = block[:effect_idx], block[effect_idx:]
     marker = f'pd:ofPredicate "{old_predicate}"'
-    assert marker in tail, f"effect predicate {old_predicate!r} not found in this block's pd:effect section"
+    assert marker in tail, (
+        f"effect predicate {old_predicate!r} not found in this block's pd:effect section"
+    )
     tail = tail.replace(marker, f'pd:ofPredicate "{new_predicate}"', 1)
     return head + tail
 
@@ -128,7 +138,9 @@ def _remove_action_entirely(text: str, action_local: str) -> str:
     start, end, _block = _extract_action_block(text, action_local)
     text = text[:start] + text[end:]
     ref = f", ex:action-{action_local}"
-    assert ref in text, f"ex:action-{action_local} not referenced in pd:hasAction (or already removed)"
+    assert ref in text, (
+        f"ex:action-{action_local} not referenced in pd:hasAction (or already removed)"
+    )
     return text.replace(ref, "", 1)
 
 
@@ -212,7 +224,9 @@ _DSAR_MUTATION_PROBLEM_TTL = f"""
 """
 
 
-def test_dropping_approval_precondition_flips_a_correctly_refused_plan_to_solvable(tmp_path):
+def test_dropping_approval_precondition_flips_a_correctly_refused_plan_to_solvable(
+    tmp_path,
+):
     text_with_problem = ORIGINAL_TTL_TEXT + "\n" + _DSAR_MUTATION_PROBLEM_TTL
     baseline_ttl = _write_mutant(tmp_path, text_with_problem, "baseline-dsar")
 
@@ -251,8 +265,12 @@ def test_dropping_approval_precondition_flips_a_correctly_refused_plan_to_solvab
 # ---------------------------------------------------------------------------
 
 
-def test_swapping_the_sole_producing_effect_predicate_makes_a_solvable_goal_unreachable(tmp_path):
-    baseline_rc, baseline_plan_p = _solve(FIXTURE, PROBLEM_GATED, tmp_path, "baseline-schedule")
+def test_swapping_the_sole_producing_effect_predicate_makes_a_solvable_goal_unreachable(
+    tmp_path,
+):
+    baseline_rc, baseline_plan_p = _solve(
+        FIXTURE, PROBLEM_GATED, tmp_path, "baseline-schedule"
+    )
     assert baseline_rc == pddl_engine.EXIT_PLAN_FOUND
     assert "(castle-schedule res2)" in open(baseline_plan_p, encoding="utf-8").read()
 
@@ -263,7 +281,9 @@ def test_swapping_the_sole_producing_effect_predicate_makes_a_solvable_goal_unre
     )
     mutant_ttl = _write_mutant(tmp_path, mutated_text, "swap-effect")
 
-    mutated_rc, mutated_plan_p = _solve(mutant_ttl, PROBLEM_GATED, tmp_path, "mutated-schedule")
+    mutated_rc, mutated_plan_p = _solve(
+        mutant_ttl, PROBLEM_GATED, tmp_path, "mutated-schedule"
+    )
     assert mutated_rc == pddl_engine.EXIT_NO_PLAN, (
         "renaming castle-schedule's sole effect predicate away from "
         "'scheduled' must make the identical goal (scheduled(res2)) "
@@ -363,7 +383,9 @@ def _remove_all_actions(text: str) -> str:
     return mutated
 
 
-def test_removing_the_sole_producing_action_entirely_makes_the_goal_unreachable(tmp_path):
+def test_removing_the_sole_producing_action_entirely_makes_the_goal_unreachable(
+    tmp_path,
+):
     trimmed_text = _trim_domain_to_single_action(ORIGINAL_TTL_TEXT, "castle-schedule")
     assert "ex:action-castle-schedule a pd:Action" in trimmed_text
     # Confirms the trim really did drop every other real action -- this
@@ -434,10 +456,15 @@ def test_dropping_the_frozen_precondition_allows_the_domain_to_skip_a_required_o
     tmp_path,
 ):
     text_with_problem = _append_problem(ORIGINAL_TTL_TEXT, _FREEZE_ORDERING_PROBLEM_TTL)
-    baseline_ttl = _write_mutant(tmp_path, text_with_problem, "baseline-freeze-ordering")
+    baseline_ttl = _write_mutant(
+        tmp_path, text_with_problem, "baseline-freeze-ordering"
+    )
 
     baseline_rc, baseline_plan_p = _solve(
-        baseline_ttl, _FREEZE_ORDERING_PROBLEM_IRI, tmp_path, "baseline-freeze-ordering-solve"
+        baseline_ttl,
+        _FREEZE_ORDERING_PROBLEM_IRI,
+        tmp_path,
+        "baseline-freeze-ordering-solve",
     )
     assert baseline_rc == pddl_engine.EXIT_PLAN_FOUND
     baseline_plan = open(baseline_plan_p, encoding="utf-8").read().splitlines()
@@ -447,18 +474,25 @@ def test_dropping_the_frozen_precondition_allows_the_domain_to_skip_a_required_o
         "freeze-override-approved(o1)"
     )
     assert "(freeze-override o1)" in baseline_plan
-    assert baseline_plan.index("(freeze o1)") < baseline_plan.index("(freeze-override o1)"), (
+    assert baseline_plan.index("(freeze o1)") < baseline_plan.index(
+        "(freeze-override o1)"
+    ), (
         "freeze must be ordered strictly before freeze-override in the "
         "real, unmutated domain"
     )
 
     mutated_text = _splice(
-        text_with_problem, "freeze-override", lambda b: _remove_precondition(b, "frozen")
+        text_with_problem,
+        "freeze-override",
+        lambda b: _remove_precondition(b, "frozen"),
     )
     mutant_ttl = _write_mutant(tmp_path, mutated_text, "mutated-freeze-ordering")
 
     mutated_rc, mutated_plan_p = _solve(
-        mutant_ttl, _FREEZE_ORDERING_PROBLEM_IRI, tmp_path, "mutated-freeze-ordering-solve"
+        mutant_ttl,
+        _FREEZE_ORDERING_PROBLEM_IRI,
+        tmp_path,
+        "mutated-freeze-ordering-solve",
     )
     assert mutated_rc == pddl_engine.EXIT_PLAN_FOUND
     mutated_plan = open(mutated_plan_p, encoding="utf-8").read().splitlines()

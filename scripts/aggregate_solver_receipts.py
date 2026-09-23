@@ -158,11 +158,15 @@ def main() -> None:
     print()
     print(f"Evidence root : {os.path.join('docs', 'evidence')}")
     print(f"OCEL files globbed : {len(files)}")
-    print(f"Domains with real multi-candidate solver history "
-          f"(solver_refused/solver_selected present): {len(domains_multi)} "
-          f"-> {sorted(domains_multi)}")
-    print(f"Domains on the single-mechanism path (verify_mode/standing only): "
-          f"{len(domains_single)} -> {sorted(domains_single)}")
+    print(
+        f"Domains with real multi-candidate solver history "
+        f"(solver_refused/solver_selected present): {len(domains_multi)} "
+        f"-> {sorted(domains_multi)}"
+    )
+    print(
+        f"Domains on the single-mechanism path (verify_mode/standing only): "
+        f"{len(domains_single)} -> {sorted(domains_single)}"
+    )
     if parse_errors:
         print(f"Parse errors ({len(parse_errors)}):")
         for p, err in parse_errors:

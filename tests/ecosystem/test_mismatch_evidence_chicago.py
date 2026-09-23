@@ -50,7 +50,9 @@ pytestmark = pytest.mark.skipif(
 
 
 def _resource_flow_trials() -> list[Path]:
-    return sorted(p for p in CROWN1.glob("attempt*/realtrial_3979297810_*") if p.is_dir())
+    return sorted(
+        p for p in CROWN1.glob("attempt*/realtrial_3979297810_*") if p.is_dir()
+    )
 
 
 def _unmodeled_trials() -> list[Path]:
@@ -112,14 +114,19 @@ def test_every_mismatch_carries_all_three_identities():
 def test_ocel_digest_matches_the_real_log_reparsed_from_disk():
     """The observation identity is pinned to the durable document, so
     re-parsing that document independently must reproduce the same digest."""
-    from autofde_lab.ocel.log import OcelLog
     import json
+
+    from autofde_lab.ocel.log import OcelLog
 
     evidence = causal_model_error_from_trial(RESOURCE_FLOW_TRIAL)
     assert isinstance(evidence, CausalModelError)
 
-    document = json.loads(Path(evidence.observation.ocel_path).read_text(encoding="utf-8"))
-    assert OcelLog.from_ocel2_json(document).digest() == evidence.observation.ocel_digest
+    document = json.loads(
+        Path(evidence.observation.ocel_path).read_text(encoding="utf-8")
+    )
+    assert (
+        OcelLog.from_ocel2_json(document).digest() == evidence.observation.ocel_digest
+    )
 
 
 def test_the_same_finding_reproduces_across_every_archived_attempt():
@@ -227,7 +234,15 @@ def test_a_modeled_dimension_cannot_be_relabelled_unmodeled():
 def test_no_type_here_exposes_a_boolean_verdict_field():
     """No ``prediction_correct`` / ``matched`` / ``ok`` / ``accurate`` field,
     and no ``__bool__`` on any evidence type."""
-    banned = {"prediction_correct", "matched", "ok", "accurate", "correct", "agrees", "valid"}
+    banned = {
+        "prediction_correct",
+        "matched",
+        "ok",
+        "accurate",
+        "correct",
+        "agrees",
+        "valid",
+    }
     evidence = causal_model_error_from_trial(RESOURCE_FLOW_TRIAL)
     assert isinstance(evidence, CausalModelError)
 
@@ -242,7 +257,9 @@ def test_no_type_here_exposes_a_boolean_verdict_field():
     ]
     for subject in subjects:
         names = set(dir(subject))
-        assert not (names & banned), f"{type(subject).__name__} exposes {names & banned}"
+        assert not (names & banned), (
+            f"{type(subject).__name__} exposes {names & banned}"
+        )
         # No evidence type defines its own __bool__: `if evidence:` must never
         # compile to a verdict, exactly as CrownFactor denies `if factor:`.
         assert "__bool__" not in vars(type(subject))
@@ -260,7 +277,9 @@ def test_mismatch_refuses_to_record_an_agreement():
     assert isinstance(evidence, CausalModelError)
     solved = next(m for m in evidence.mismatches if m.dimension.name == "solved")
 
-    with pytest.raises(MismatchConstructionError, match="MISMATCH_REQUIRES_DISAGREEMENT"):
+    with pytest.raises(
+        MismatchConstructionError, match="MISMATCH_REQUIRES_DISAGREEMENT"
+    ):
         PredictionMismatch(
             dimension=solved.dimension,
             predicted_value=True,
@@ -276,7 +295,9 @@ def test_identities_are_mandatory_and_typed():
     assert isinstance(evidence, CausalModelError)
     solved = next(m for m in evidence.mismatches if m.dimension.name == "solved")
 
-    with pytest.raises(MismatchConstructionError, match="MISMATCH_REQUIRES_MODEL_IDENTITY"):
+    with pytest.raises(
+        MismatchConstructionError, match="MISMATCH_REQUIRES_MODEL_IDENTITY"
+    ):
         PredictionMismatch(
             dimension=solved.dimension,
             predicted_value=False,
@@ -286,13 +307,19 @@ def test_identities_are_mandatory_and_typed():
             commitment=solved.commitment,
         )
 
-    with pytest.raises(MismatchConstructionError, match="MODEL_IDENTITY_REQUIRES_OBSERVATION"):
+    with pytest.raises(
+        MismatchConstructionError, match="MODEL_IDENTITY_REQUIRES_OBSERVATION"
+    ):
         ModelIdentity(digest="3ac9d7f320c4c633", induced_from="x", n_probes=0)
 
-    with pytest.raises(MismatchConstructionError, match="COMMITMENT_IDENTITY_REQUIRES_PLAN"):
+    with pytest.raises(
+        MismatchConstructionError, match="COMMITMENT_IDENTITY_REQUIRES_PLAN"
+    ):
         CommitmentIdentity(plan=(), plan_digest="220f81bf978fe490", commitment_ref="x")
 
-    with pytest.raises(MismatchConstructionError, match="STATE_DIMENSION_REQUIRES_TYPED_KIND"):
+    with pytest.raises(
+        MismatchConstructionError, match="STATE_DIMENSION_REQUIRES_TYPED_KIND"
+    ):
         StateDimension(name="solved", kind="BOOLEAN")
 
 

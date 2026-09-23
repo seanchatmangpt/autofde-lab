@@ -88,14 +88,20 @@ class _FakeSregymEnvironment:
         if capability.binding == "run_kubectl":
             command = payload.get("command", "")
             self.kubectl_commands.append(command)
-            return {"result_text": [{"text": '{"items": [{"metadata": {"name": "api-0"}}]}'}]}
+            return {
+                "result_text": [
+                    {"text": '{"items": [{"metadata": {"name": "api-0"}}]}'}
+                ]
+            }
         if capability.binding == "submit_diagnosis":
             self.last_diagnosis_payload = dict(payload)
             return {"after": {"diagnosis": payload.get("diagnosis")}}
         if capability.binding == "submit_mitigation":
             self.last_mitigation_payload = dict(payload)
             return {"after": {"mitigation": payload.get("mitigation")}}
-        raise AssertionError(f"unexpected real actuate() call for binding={capability.binding!r}")
+        raise AssertionError(
+            f"unexpected real actuate() call for binding={capability.binding!r}"
+        )
 
     async def teardown(self) -> None:
         self.torn_down = True
@@ -117,7 +123,9 @@ def test_build_gated_react_tools_refuses_unlisted_capability(tmp_path) -> None:
     )
     gate = CapabilityGate.from_toml(manifest)
     env = _FakeSregymEnvironment()
-    tools = build_gated_react_tools(env, gate, _FAKE_CAPABILITIES, namespace="social-network")
+    tools = build_gated_react_tools(
+        env, gate, _FAKE_CAPABILITIES, namespace="social-network"
+    )
     run_kubectl = next(t for t in tools if t.__name__ == "run_kubectl")
 
     with pytest.raises(CapabilityRefused):
@@ -140,7 +148,9 @@ def test_build_gated_react_tools_run_kubectl_calls_real_actuate(tmp_path) -> Non
     )
     gate = CapabilityGate.from_toml(manifest)
     env = _FakeSregymEnvironment()
-    tools = build_gated_react_tools(env, gate, _FAKE_CAPABILITIES, namespace="social-network")
+    tools = build_gated_react_tools(
+        env, gate, _FAKE_CAPABILITIES, namespace="social-network"
+    )
     run_kubectl = next(t for t in tools if t.__name__ == "run_kubectl")
 
     result_text = run_kubectl("get pods -o json")
@@ -150,7 +160,9 @@ def test_build_gated_react_tools_run_kubectl_calls_real_actuate(tmp_path) -> Non
     assert "result_text" in result_text
 
 
-def test_build_gated_react_tools_run_kubectl_respects_explicit_namespace(tmp_path) -> None:
+def test_build_gated_react_tools_run_kubectl_respects_explicit_namespace(
+    tmp_path,
+) -> None:
     manifest = tmp_path / "capabilities.toml"
     manifest.write_text(
         '[gymact]\nenvironment = "sregym"\n\n'
@@ -158,7 +170,9 @@ def test_build_gated_react_tools_run_kubectl_respects_explicit_namespace(tmp_pat
     )
     gate = CapabilityGate.from_toml(manifest)
     env = _FakeSregymEnvironment()
-    tools = build_gated_react_tools(env, gate, _FAKE_CAPABILITIES, namespace="social-network")
+    tools = build_gated_react_tools(
+        env, gate, _FAKE_CAPABILITIES, namespace="social-network"
+    )
     run_kubectl = next(t for t in tools if t.__name__ == "run_kubectl")
 
     run_kubectl("get pods -n other-namespace -o json")
@@ -189,7 +203,9 @@ def test_run_kubectl_first_call_is_never_grounding_checked(tmp_path) -> None:
     first call)."""
     gate = _manifest_with_both_bindings(tmp_path)
     env = _FakeSregymEnvironment()
-    tools = build_gated_react_tools(env, gate, _FAKE_CAPABILITIES, namespace="social-network")
+    tools = build_gated_react_tools(
+        env, gate, _FAKE_CAPABILITIES, namespace="social-network"
+    )
     run_kubectl = next(t for t in tools if t.__name__ == "run_kubectl")
 
     # Real fake environment: any run_kubectl call returns a fixed result
@@ -198,16 +214,22 @@ def test_run_kubectl_first_call_is_never_grounding_checked(tmp_path) -> None:
     # happens to know about "nope-fabricated-pod".
     run_kubectl("describe pod nope-fabricated-pod")
 
-    assert env.kubectl_commands == ["kubectl describe pod nope-fabricated-pod -n social-network"]
+    assert env.kubectl_commands == [
+        "kubectl describe pod nope-fabricated-pod -n social-network"
+    ]
 
 
-def test_run_kubectl_refuses_fabricated_resource_after_real_observation(tmp_path) -> None:
+def test_run_kubectl_refuses_fabricated_resource_after_real_observation(
+    tmp_path,
+) -> None:
     """Once a real observation has happened, naming a resource that never
     appeared in any real prior tool result is mechanically refused --
     before any real actuate() call for that second command."""
     gate = _manifest_with_both_bindings(tmp_path)
     env = _FakeSregymEnvironment()
-    tools = build_gated_react_tools(env, gate, _FAKE_CAPABILITIES, namespace="social-network")
+    tools = build_gated_react_tools(
+        env, gate, _FAKE_CAPABILITIES, namespace="social-network"
+    )
     run_kubectl = next(t for t in tools if t.__name__ == "run_kubectl")
 
     # First, a real observation that grounds "api-0" (embedded as JSON text
@@ -228,7 +250,9 @@ def test_run_kubectl_accepts_a_really_grounded_resource_reference(tmp_path) -> N
     accepted, not refused -- the guard grounds, it doesn't just block."""
     gate = _manifest_with_both_bindings(tmp_path)
     env = _FakeSregymEnvironment()
-    tools = build_gated_react_tools(env, gate, _FAKE_CAPABILITIES, namespace="social-network")
+    tools = build_gated_react_tools(
+        env, gate, _FAKE_CAPABILITIES, namespace="social-network"
+    )
     run_kubectl = next(t for t in tools if t.__name__ == "run_kubectl")
 
     run_kubectl("get pods -o json")  # grounds "api-0" (see _FakeSregymEnvironment)
@@ -276,7 +300,13 @@ class _FixedDecisionBackend:
         self.calls: list[dict] = []
 
     def decide(
-        self, *, namespace, symptom_description, observed_resource_state, tools, max_iters
+        self,
+        *,
+        namespace,
+        symptom_description,
+        observed_resource_state,
+        tools,
+        max_iters,
     ) -> DecisionOutcome:
         self.calls.append(
             {
@@ -295,7 +325,9 @@ class _FixedDecisionBackend:
         )
 
 
-def test_gym_act_react_diagnoser_delegates_to_explicit_decision_backend(tmp_path) -> None:
+def test_gym_act_react_diagnoser_delegates_to_explicit_decision_backend(
+    tmp_path,
+) -> None:
     gate = _manifest_with_both_bindings(tmp_path)
     env = _FakeSregymEnvironment()
     backend = _FixedDecisionBackend()
@@ -309,7 +341,9 @@ def test_gym_act_react_diagnoser_delegates_to_explicit_decision_backend(tmp_path
         decision_backend=backend,
     )
 
-    outcome = diagnoser(problem_id="wrong_dns_policy_social_network", namespace="social-network")
+    outcome = diagnoser(
+        problem_id="wrong_dns_policy_social_network", namespace="social-network"
+    )
 
     assert isinstance(outcome, DecisionOutcome)
     assert outcome.root_cause == "fixed-root-cause"
@@ -377,7 +411,9 @@ def test_live_groq_react_diagnosis_against_fake_environment() -> None:
     assert env.torn_down is True
     # The real ReAct loop must have used at least one real tool call to
     # inspect the cluster before concluding -- not a zero-tool-call guess.
-    assert any(binding in ("run_kubectl", "observe_cluster_state") for binding in env.call_log)
+    assert any(
+        binding in ("run_kubectl", "observe_cluster_state") for binding in env.call_log
+    )
 
 
 async def _identity_async(value):

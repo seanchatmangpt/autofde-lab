@@ -122,7 +122,12 @@ class Guard:
         object.__setattr__(
             self,
             "key",
-            canonical_json({"predicate_name": self.predicate_name, "predicate_args": dict(self.predicate_args)}),
+            canonical_json(
+                {
+                    "predicate_name": self.predicate_name,
+                    "predicate_args": dict(self.predicate_args),
+                }
+            ),
         )
 
 
@@ -153,7 +158,11 @@ class ChoiceGraphEdge:
             return NotImplemented
         self_guard_key = self.guard.key if self.guard is not None else ""
         other_guard_key = other.guard.key if other.guard is not None else ""
-        return (self.src, self.dst, self_guard_key) < (other.src, other.dst, other_guard_key)
+        return (self.src, self.dst, self_guard_key) < (
+            other.src,
+            other.dst,
+            other_guard_key,
+        )
 
 
 # ── edge algebra ────────────────────────────────────────────────────────────

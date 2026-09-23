@@ -72,8 +72,7 @@ class Actuator(Protocol):
         than letting it propagate unreceipted."""
         ...
 
-    def adapter_digest(self) -> str:
-        ...
+    def adapter_digest(self) -> str: ...
 
 
 class PostconditionVerifier(Protocol):
@@ -81,11 +80,9 @@ class PostconditionVerifier(Protocol):
     actuator cannot self-certify its own effect. Called independently, even when the
     actuator raised."""
 
-    def verify(self, action: dict, evidence: dict | None) -> bool:
-        ...
+    def verify(self, action: dict, evidence: dict | None) -> bool: ...
 
-    def verifier_digest(self) -> str:
-        ...
+    def verifier_digest(self) -> str: ...
 
 
 @dataclass(frozen=True)
@@ -178,9 +175,7 @@ class Broker:
 
         postcondition_satisfied = False
         if outcome == EffectOutcome.SUCCEEDED:
-            postcondition_satisfied = bool(
-                self.verifier.verify(slot.action, evidence)
-            )
+            postcondition_satisfied = bool(self.verifier.verify(slot.action, evidence))
 
         body = {
             "sequence": self._sequence,
@@ -192,7 +187,9 @@ class Broker:
             "evidence": evidence,
             "closed_at_ms": _now_ms(),
         }
-        receipt = Certificate(kind="close", body=body, issued_at_ms=body["closed_at_ms"])
+        receipt = Certificate(
+            kind="close", body=body, issued_at_ms=body["closed_at_ms"]
+        )
         self._previous_receipt_digest = str(receipt.certificate_digest())
         return ClosedAction(
             outcome=outcome,

@@ -42,7 +42,21 @@ def _bump_quantity(value: str, factor: float) -> str:
     text = str(value).strip()
     suffix = ""
     numeric_part = text
-    for candidate in ("Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "m", "K", "M", "G", "T", "P", "E"):
+    for candidate in (
+        "Ki",
+        "Mi",
+        "Gi",
+        "Ti",
+        "Pi",
+        "Ei",
+        "m",
+        "K",
+        "M",
+        "G",
+        "T",
+        "P",
+        "E",
+    ):
         if text.endswith(candidate):
             suffix = candidate
             numeric_part = text[: -len(candidate)]

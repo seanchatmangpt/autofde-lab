@@ -34,6 +34,7 @@ except ImportError:
     class LegacyEnv:
         pass
 
+
 from autofde_lab import Domain, ImplicitSpace, Space, TransitionOutcome, Value
 from autofde_lab.builders.domain import (
     DeterministicInitialized,

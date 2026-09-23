@@ -42,7 +42,11 @@ class QualificationResult:
 
 
 class ExperienceQualifier:
-    def __init__(self, artifact_registry: ArtifactRegistry, known_route_registry: KnownRouteRegistry) -> None:
+    def __init__(
+        self,
+        artifact_registry: ArtifactRegistry,
+        known_route_registry: KnownRouteRegistry,
+    ) -> None:
         self._artifacts = artifact_registry
         self._routes = known_route_registry
 
@@ -69,10 +73,14 @@ class ExperienceQualifier:
         # lookups (episode 2) can actually invoke it; a route whose predicate was
         # never registered can never be looked up, by construction.
         if experience.equivalence_predicate_id:
-            self._routes.register_predicate(experience.equivalence_predicate_id, equivalence_predicate)
+            self._routes.register_predicate(
+                experience.equivalence_predicate_id, equivalence_predicate
+            )
         else:
             return self._refuse(
-                experience, REFUSED_PREDICATE_UNBOUND, ("equivalence_predicate_id is empty",)
+                experience,
+                REFUSED_PREDICATE_UNBOUND,
+                ("equivalence_predicate_id is empty",),
             )
 
         # Clause: compiled route exists + compiled route executes -- a real probe,
@@ -81,13 +89,19 @@ class ExperienceQualifier:
         # deterministic output it claims to for a real, matching input).
         artifact = self._artifacts.get(experience.compiled_artifact_ids[0])
         if artifact is None:
-            return self._refuse(experience, REFUSED_PROBE_FAILED, ("compiled artifact missing at qualification",))
+            return self._refuse(
+                experience,
+                REFUSED_PROBE_FAILED,
+                ("compiled artifact missing at qualification",),
+            )
         probe_output = artifact.evaluate(probe_input)
         if probe_output is None:
             return self._refuse(
                 experience,
                 REFUSED_PROBE_FAILED,
-                (f"artifact.evaluate({probe_input!r}) returned None -- route does not execute",),
+                (
+                    f"artifact.evaluate({probe_input!r}) returned None -- route does not execute",
+                ),
             )
 
         # Clause: stays inside declared resources -- every bound must be finite
@@ -96,7 +110,9 @@ class ExperienceQualifier:
         for key, value in envelope.items():
             if not isinstance(value, int) or value <= 0:
                 return self._refuse(
-                    experience, REFUSED_UNBOUNDED_RESOURCES, (f"resource bound {key}={value} is not finite/positive",)
+                    experience,
+                    REFUSED_UNBOUNDED_RESOURCES,
+                    (f"resource bound {key}={value} is not finite/positive",),
                 )
 
         qualified_experience = experience.with_state(ExperienceState.QUALIFIED)
@@ -135,11 +151,18 @@ class ExperienceQualifier:
             known_route=route,
             receipt_id=qualification_receipt,
             qualified=True,
-            reasons=("SEMANTIC_CLASS_BOUND", "PREDICATE_BOUND", "PROBE_EXECUTED", "RESOURCES_BOUNDED"),
+            reasons=(
+                "SEMANTIC_CLASS_BOUND",
+                "PREDICATE_BOUND",
+                "PROBE_EXECUTED",
+                "RESOURCES_BOUNDED",
+            ),
         )
 
     @staticmethod
-    def _refuse(experience: MachineExperience, code: str, reasons: tuple[str, ...]) -> QualificationResult:
+    def _refuse(
+        experience: MachineExperience, code: str, reasons: tuple[str, ...]
+    ) -> QualificationResult:
         refused = experience.with_state(ExperienceState.REFUSED, refusal_code=code)
         return QualificationResult(
             experience=refused,

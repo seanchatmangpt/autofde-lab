@@ -123,7 +123,11 @@ class TestShaclLayer:
         report = validator.validate(invalid_data)
         assert report.conforms is False
         assert len(report.violations) > 0
-        assert any("age" in v.lower() or "person must have at least one integer age" in v.lower() for v in report.violations)
+        assert any(
+            "age" in v.lower()
+            or "person must have at least one integer age" in v.lower()
+            for v in report.violations
+        )
 
     def test_shacl_validation_failure_wrong_datatype(self, person_shapes):
         validator = ShaclValidator(shapes=person_shapes)
@@ -149,8 +153,17 @@ class TestShexLayer:
             node_kind=NodeKind.IRI,
             required_types=(ex.Agent,),
             predicates=(
-                PredicateConstraint(predicate=ex.agentId, min_count=1, max_count=1, node_kind=NodeKind.LITERAL),
-                PredicateConstraint(predicate=ex.status, min_count=1, allowed_values=(Literal("ACTIVE"), Literal("IDLE"))),
+                PredicateConstraint(
+                    predicate=ex.agentId,
+                    min_count=1,
+                    max_count=1,
+                    node_kind=NodeKind.LITERAL,
+                ),
+                PredicateConstraint(
+                    predicate=ex.status,
+                    min_count=1,
+                    allowed_values=(Literal("ACTIVE"), Literal("IDLE")),
+                ),
             ),
             closed=True,
         )

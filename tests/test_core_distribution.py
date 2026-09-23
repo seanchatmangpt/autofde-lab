@@ -3,7 +3,13 @@ from autofde_lab.core import DiscreteDistribution, SingleValueDistribution
 
 def test_discrete_distribution_deduplicates_members_with_combined_weight():
     dist = DiscreteDistribution(
-        [("rock", 0.5), ("paper", 0.3), ("rock", 0.2), ("scissors", 0.1), ("paper", 0.1)]
+        [
+            ("rock", 0.5),
+            ("paper", 0.3),
+            ("rock", 0.2),
+            ("scissors", 0.1),
+            ("paper", 0.1),
+        ]
     )
     values = dist.get_values()
 

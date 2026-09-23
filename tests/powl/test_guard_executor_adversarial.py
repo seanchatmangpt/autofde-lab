@@ -22,18 +22,17 @@ from __future__ import annotations
 import threading
 
 import pytest
-from tests.powl.fixtures_upstream_powl_reference import (
-    hospital_concurrent_shape,
-    pools_and_lanes_choice_shape,
-    running_example_choice_concurrency_loop_shape,
-)
 
 from autofde_lab.powl.algebra import Atom, NodeId, OrderEdge, PartialOrder
 from autofde_lab.powl.frequency import Frequency
 from autofde_lab.powl.guard_executor import ExecutionContext, execute
 from autofde_lab.powl.refusals import PowlError, PowlRefusal
 from autofde_lab.powl.validate import validate_model
-
+from tests.powl.fixtures_upstream_powl_reference import (
+    hospital_concurrent_shape,
+    pools_and_lanes_choice_shape,
+    running_example_choice_concurrency_loop_shape,
+)
 
 # ---------------------------------------------------------------------------
 # 0. The fixtures themselves are real, admitted models -- proven, not assumed
@@ -42,9 +41,15 @@ from autofde_lab.powl.validate import validate_model
 
 @pytest.mark.parametrize(
     "build_fixture",
-    [running_example_choice_concurrency_loop_shape, hospital_concurrent_shape, pools_and_lanes_choice_shape],
+    [
+        running_example_choice_concurrency_loop_shape,
+        hospital_concurrent_shape,
+        pools_and_lanes_choice_shape,
+    ],
 )
-def test_upstream_reference_fixture_is_a_real_admitted_powl_model(build_fixture) -> None:
+def test_upstream_reference_fixture_is_a_real_admitted_powl_model(
+    build_fixture,
+) -> None:
     model = build_fixture()
     validate_model(model)  # raises PowlError on any structural refusal
 
@@ -54,7 +59,9 @@ def test_upstream_reference_fixture_is_a_real_admitted_powl_model(build_fixture)
 # ---------------------------------------------------------------------------
 
 
-def test_partial_trace_under_concurrent_failure_captures_the_other_completed_siblings() -> None:
+def test_partial_trace_under_concurrent_failure_captures_the_other_completed_siblings() -> (
+    None
+):
     """A realistic implementation mistake: a naive concurrent failure-handler
     might only record the ONE failing atom's step and drop whatever its
     concurrently-running siblings had already produced. `hospital_concurrent_shape`'s
@@ -73,7 +80,13 @@ def test_partial_trace_under_concurrent_failure_captures_the_other_completed_sib
         return "ok"
 
     with pytest.raises(PowlError) as excinfo:
-        execute(model, guard_evaluator=lambda n, a: True, atom_invoker=invoker, max_choice_transitions=10, max_workers=2)
+        execute(
+            model,
+            guard_evaluator=lambda n, a: True,
+            atom_invoker=invoker,
+            max_choice_transitions=10,
+            max_workers=2,
+        )
 
     assert excinfo.value.refusal == PowlRefusal.ATOM_INVOCATION_FAILED
     partial = excinfo.value.partial_trace
@@ -159,7 +172,9 @@ def test_resume_of_a_repeating_composite_continues_the_same_repetition_count() -
 # ---------------------------------------------------------------------------
 
 
-def test_running_example_fixture_loop_closes_after_real_context_driven_iterations() -> None:
+def test_running_example_fixture_loop_closes_after_real_context_driven_iterations() -> (
+    None
+):
     """`running_example_choice_concurrency_loop_shape()`'s real
     `reinitiate_request -> examine_and_check` back-edge is driven through
     exactly 2 real loop-backs before a real `ExecutionContext`-tracked round
@@ -184,7 +199,11 @@ def test_running_example_fixture_loop_closes_after_real_context_driven_iteration
         return "ok"
 
     trace = execute(
-        model, guard_evaluator=evaluator, atom_invoker=invoker, max_choice_transitions=30, context=context
+        model,
+        guard_evaluator=evaluator,
+        atom_invoker=invoker,
+        max_choice_transitions=30,
+        context=context,
     )
 
     assert context.attributes["round"] == 2
@@ -215,7 +234,13 @@ def test_pools_and_lanes_fixture_both_branches_reachable_under_real_execution() 
             invoked.append(atom.label)
             return "ok"
 
-        execute(model, guard_evaluator=evaluator, atom_invoker=invoker, max_choice_transitions=10, max_workers=2)
+        execute(
+            model,
+            guard_evaluator=evaluator,
+            atom_invoker=invoker,
+            max_choice_transitions=10,
+            max_workers=2,
+        )
 
         if wants_to_pay_first:
             assert invoked == ["order_coffee", "pay", "prepare_coffee", "serve_coffee"]

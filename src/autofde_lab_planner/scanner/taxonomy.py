@@ -42,7 +42,11 @@ def classify(anomaly: Anomaly) -> str:
     field = anomaly.field
     rel = anomaly.relation_class
 
-    if kind == "Deployment" and field == "readyReplicas" and rel == "declared_vs_observed":
+    if (
+        kind == "Deployment"
+        and field == "readyReplicas"
+        and rel == "declared_vs_observed"
+    ):
         return INJECT_SCALE_PODS_TO_ZERO
     if kind == "Deployment" and field == "image" and rel == "declared_vs_observed":
         return INJECT_MISCONFIG_K8S
