@@ -1,0 +1,60 @@
+{
+  "claim": "IEC_TRANSLATION_VALIDATED_FOR_git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:lib/ggen_igniter/discovery/examples/incremental_dfg.ex_UNDER_e172f59806ec8d3f",
+  "dimensions": {
+    "exact-subject-identity": "PASS",
+    "generator-reflexion": "PASS",
+    "syntax": "PASS"
+  },
+  "generated_identity": "ef3e64135906d42daa277bb2c9aeb14b09ad6b0c",
+  "original_identity": "ef3e64135906d42daa277bb2c9aeb14b09ad6b0c",
+  "receipt_id": "sha256:0e5ddc1cbcf132660beec7d0c69d99194057ff831702d77248a591b8e7004f2e",
+  "results": {
+    "byte-identity": {
+      "detail": "4790 bytes identical",
+      "evidence": {},
+      "verdict": "PASS"
+    },
+    "declared-template-mandatory-literals": {
+      "detail": "14 mandatory literal chunks embedded in order (0 in blocks not required)",
+      "evidence": {
+        "detail": "14 mandatory literal chunks embedded in order (0 in blocks not required)",
+        "holds": true,
+        "literal_bytes": 4640,
+        "literal_span_count": 14,
+        "missing": null
+      },
+      "verdict": "PASS"
+    },
+    "git-blob-identity": {
+      "detail": "generated blob id ef3e64135906d42daa277bb2c9aeb14b09ad6b0c equals frozen tree entry",
+      "evidence": {},
+      "verdict": "PASS"
+    }
+  },
+  "schema": "autofde-lab.iec.court-receipt/1",
+  "subject": "git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:lib/ggen_igniter/discovery/examples/incremental_dfg.ex",
+  "verdict": "PASS",
+  "verifier_set": {
+    "claim_prefix": "IEC_TRANSLATION_VALIDATED",
+    "id": "sha256:e172f59806ec8d3f6253fda1473fb011fe7217e7db763d94fd0b7527c5936bec",
+    "name": "iec-c1-static-flat/1",
+    "verifiers": [
+      {
+        "dimension": "syntax",
+        "name": "byte-identity",
+        "version": "1"
+      },
+      {
+        "dimension": "exact-subject-identity",
+        "name": "git-blob-identity",
+        "version": "1"
+      },
+      {
+        "dimension": "generator-reflexion",
+        "name": "declared-template-mandatory-literals",
+        "version": "1"
+      }
+    ]
+  },
+  "verifier_set_id": "sha256:e172f59806ec8d3f6253fda1473fb011fe7217e7db763d94fd0b7527c5936bec"
+}

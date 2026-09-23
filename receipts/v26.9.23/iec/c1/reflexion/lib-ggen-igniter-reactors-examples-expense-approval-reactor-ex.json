@@ -1,0 +1,18 @@
+{
+  "containment": {
+    "detail": "mandatory template literal at body line 58 not found in order",
+    "holds": false,
+    "literal_bytes": 1210,
+    "literal_span_count": 4,
+    "missing": {
+      "anchored_end": false,
+      "anchored_start": false,
+      "chunk_index": 67,
+      "line": 58,
+      "search_from": 1322,
+      "text": "\n  return :"
+    }
+  },
+  "finding_counts": {},
+  "findings": []
+}

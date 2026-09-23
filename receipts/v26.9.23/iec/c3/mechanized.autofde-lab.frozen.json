@@ -1,0 +1,414 @@
+{
+  "audit": {
+    "audit_version": "1",
+    "claim_ceiling": "mandatory (block-depth-0) template literals only; divergence confined to for/if block bodies is not observed by this audit",
+    "class_counts": {
+      "CONSISTENT_MODULO_WHITESPACE": 7,
+      "INCONSISTENT": 6
+    },
+    "id": "sha256:9bd485768eb23f49bd25c23ac9adcc5455e44008f955fd56cc740e9fb5a75030",
+    "include": "^src/autofde_lab/.*\\.py$",
+    "rows": [
+      {
+        "class": "INCONSISTENT",
+        "committed": true,
+        "declaration": "ggen.toml",
+        "evidence": {
+          "modulo_whitespace": {
+            "detail": "mandatory template literal at body line 1 not found in order",
+            "holds": false,
+            "literal_bytes": 0,
+            "literal_span_count": 0,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": true,
+              "chunk_index": 0,
+              "line": 1,
+              "search_from": 0,
+              "text": "\"\"\"AutoFDELabsemanticconstitution\u2014directPythonprojection.Manufacturedby`ggensyncrun`fromanontology/*.ttlfileinthemergedworking-backwardsLabconstitution(PR#37).Manufactureisprovenance,notarchitecture(ontology/manufacture.ttl)--thisisordinarysourceatitsordinaryimportpath,additiveonly,andisnotwiredintoanyexistingruntimecodepath(noplanner,nolevel4_crown,nogymactbridgeimportsit).Object-propertyfieldsho"
+            }
+          },
+          "raw": {
+            "detail": "mandatory template literal at body line 1 not found in order",
+            "holds": false,
+            "literal_bytes": 0,
+            "literal_span_count": 0,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": true,
+              "chunk_index": 0,
+              "line": 1,
+              "search_from": 0,
+              "text": "\"\"\"AutoFDE Lab semantic constitution \u2014 direct Python projection.\n\nManufactured by `ggen sync run` from an ontology/*.ttl file in the merged\nworking-backwards Lab constitution (PR #37). Manufacture is provenance, not\narchitecture (ontology/manufacture.ttl) -- this is ordinary source at its\nordinary import path, additive only, and is not wired into any existing\nruntime code path (no planner, no leve"
+            }
+          }
+        },
+        "rule": "constitution-authority",
+        "target": "src/autofde_lab/constitution/authority.py",
+        "template": "templates/constitution_module.py.tera"
+      },
+      {
+        "class": "INCONSISTENT",
+        "committed": true,
+        "declaration": "ggen.toml",
+        "evidence": {
+          "modulo_whitespace": {
+            "detail": "mandatory template literal at body line 1 not found in order",
+            "holds": false,
+            "literal_bytes": 0,
+            "literal_span_count": 0,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": true,
+              "chunk_index": 0,
+              "line": 1,
+              "search_from": 0,
+              "text": "\"\"\"AutoFDELabsemanticconstitution\u2014directPythonprojection.Manufacturedby`ggensyncrun`fromanontology/*.ttlfileinthemergedworking-backwardsLabconstitution(PR#37).Manufactureisprovenance,notarchitecture(ontology/manufacture.ttl)--thisisordinarysourceatitsordinaryimportpath,additiveonly,andisnotwiredintoanyexistingruntimecodepath(noplanner,nolevel4_crown,nogymactbridgeimportsit).Object-propertyfieldsho"
+            }
+          },
+          "raw": {
+            "detail": "mandatory template literal at body line 1 not found in order",
+            "holds": false,
+            "literal_bytes": 0,
+            "literal_span_count": 0,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": true,
+              "chunk_index": 0,
+              "line": 1,
+              "search_from": 0,
+              "text": "\"\"\"AutoFDE Lab semantic constitution \u2014 direct Python projection.\n\nManufactured by `ggen sync run` from an ontology/*.ttl file in the merged\nworking-backwards Lab constitution (PR #37). Manufacture is provenance, not\narchitecture (ontology/manufacture.ttl) -- this is ordinary source at its\nordinary import path, additive only, and is not wired into any existing\nruntime code path (no planner, no leve"
+            }
+          }
+        },
+        "rule": "constitution-evidence",
+        "target": "src/autofde_lab/constitution/evidence.py",
+        "template": "templates/constitution_module.py.tera"
+      },
+      {
+        "class": "INCONSISTENT",
+        "committed": true,
+        "declaration": "ggen.toml",
+        "evidence": {
+          "modulo_whitespace": {
+            "detail": "mandatory template literal at body line 1 not found in order",
+            "holds": false,
+            "literal_bytes": 0,
+            "literal_span_count": 0,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": true,
+              "chunk_index": 0,
+              "line": 1,
+              "search_from": 0,
+              "text": "\"\"\"AutoFDELabsemanticconstitution\u2014directPythonprojection.Manufacturedby`ggensyncrun`fromanontology/*.ttlfileinthemergedworking-backwardsLabconstitution(PR#37).Manufactureisprovenance,notarchitecture(ontology/manufacture.ttl)--thisisordinarysourceatitsordinaryimportpath,additiveonly,andisnotwiredintoanyexistingruntimecodepath(noplanner,nolevel4_crown,nogymactbridgeimportsit).Object-propertyfieldsho"
+            }
+          },
+          "raw": {
+            "detail": "mandatory template literal at body line 1 not found in order",
+            "holds": false,
+            "literal_bytes": 0,
+            "literal_span_count": 0,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": true,
+              "chunk_index": 0,
+              "line": 1,
+              "search_from": 0,
+              "text": "\"\"\"AutoFDE Lab semantic constitution \u2014 direct Python projection.\n\nManufactured by `ggen sync run` from an ontology/*.ttl file in the merged\nworking-backwards Lab constitution (PR #37). Manufacture is provenance, not\narchitecture (ontology/manufacture.ttl) -- this is ordinary source at its\nordinary import path, additive only, and is not wired into any existing\nruntime code path (no planner, no leve"
+            }
+          }
+        },
+        "rule": "constitution-interop",
+        "target": "src/autofde_lab/constitution/interop.py",
+        "template": "templates/constitution_module.py.tera"
+      },
+      {
+        "class": "INCONSISTENT",
+        "committed": true,
+        "declaration": "ggen.toml",
+        "evidence": {
+          "modulo_whitespace": {
+            "detail": "mandatory template literal at body line 1 not found in order",
+            "holds": false,
+            "literal_bytes": 0,
+            "literal_span_count": 0,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": true,
+              "chunk_index": 0,
+              "line": 1,
+              "search_from": 0,
+              "text": "\"\"\"AutoFDELabsemanticconstitution\u2014directPythonprojection.Manufacturedby`ggensyncrun`fromanontology/*.ttlfileinthemergedworking-backwardsLabconstitution(PR#37).Manufactureisprovenance,notarchitecture(ontology/manufacture.ttl)--thisisordinarysourceatitsordinaryimportpath,additiveonly,andisnotwiredintoanyexistingruntimecodepath(noplanner,nolevel4_crown,nogymactbridgeimportsit).Object-propertyfieldsho"
+            }
+          },
+          "raw": {
+            "detail": "mandatory template literal at body line 1 not found in order",
+            "holds": false,
+            "literal_bytes": 0,
+            "literal_span_count": 0,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": true,
+              "chunk_index": 0,
+              "line": 1,
+              "search_from": 0,
+              "text": "\"\"\"AutoFDE Lab semantic constitution \u2014 direct Python projection.\n\nManufactured by `ggen sync run` from an ontology/*.ttl file in the merged\nworking-backwards Lab constitution (PR #37). Manufacture is provenance, not\narchitecture (ontology/manufacture.ttl) -- this is ordinary source at its\nordinary import path, additive only, and is not wired into any existing\nruntime code path (no planner, no leve"
+            }
+          }
+        },
+        "rule": "constitution-lab",
+        "target": "src/autofde_lab/constitution/lab.py",
+        "template": "templates/constitution_module.py.tera"
+      },
+      {
+        "class": "INCONSISTENT",
+        "committed": true,
+        "declaration": "ggen.toml",
+        "evidence": {
+          "modulo_whitespace": {
+            "detail": "mandatory template literal at body line 1 not found in order",
+            "holds": false,
+            "literal_bytes": 0,
+            "literal_span_count": 0,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": true,
+              "chunk_index": 0,
+              "line": 1,
+              "search_from": 0,
+              "text": "\"\"\"AutoFDELabsemanticconstitution\u2014directPythonprojection.Manufacturedby`ggensyncrun`fromanontology/*.ttlfileinthemergedworking-backwardsLabconstitution(PR#37).Manufactureisprovenance,notarchitecture(ontology/manufacture.ttl)--thisisordinarysourceatitsordinaryimportpath,additiveonly,andisnotwiredintoanyexistingruntimecodepath(noplanner,nolevel4_crown,nogymactbridgeimportsit).Object-propertyfieldsho"
+            }
+          },
+          "raw": {
+            "detail": "mandatory template literal at body line 1 not found in order",
+            "holds": false,
+            "literal_bytes": 0,
+            "literal_span_count": 0,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": true,
+              "chunk_index": 0,
+              "line": 1,
+              "search_from": 0,
+              "text": "\"\"\"AutoFDE Lab semantic constitution \u2014 direct Python projection.\n\nManufactured by `ggen sync run` from an ontology/*.ttl file in the merged\nworking-backwards Lab constitution (PR #37). Manufacture is provenance, not\narchitecture (ontology/manufacture.ttl) -- this is ordinary source at its\nordinary import path, additive only, and is not wired into any existing\nruntime code path (no planner, no leve"
+            }
+          }
+        },
+        "rule": "constitution-planning",
+        "target": "src/autofde_lab/constitution/planning.py",
+        "template": "templates/constitution_module.py.tera"
+      },
+      {
+        "class": "CONSISTENT_MODULO_WHITESPACE",
+        "committed": true,
+        "declaration": "ggen.toml",
+        "evidence": {
+          "raw": {
+            "detail": "mandatory template literal at body line 1 not found in order",
+            "holds": false,
+            "literal_bytes": 0,
+            "literal_span_count": 0,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": true,
+              "chunk_index": 0,
+              "line": 1,
+              "search_from": 0,
+              "text": "\"\"\"AutoFDE Lab semantic constitution \u2014 direct Python projection.\n\nManufactured by `ggen sync run` from an ontology/*.ttl file in the merged\nworking-backwards Lab constitution (PR #37). Manufacture is provenance, not\narchitecture (ontology/manufacture.ttl) -- this is ordinary source at its\nordinary import path, additive only, and is not wired into any existing\nruntime code path (no planner, no leve"
+            }
+          }
+        },
+        "rule": "constitution-process",
+        "target": "src/autofde_lab/constitution/process.py",
+        "template": "templates/constitution_module.py.tera"
+      },
+      {
+        "class": "CONSISTENT_MODULO_WHITESPACE",
+        "committed": true,
+        "declaration": "ggen.toml",
+        "evidence": {
+          "raw": {
+            "detail": "mandatory template literal at body line 1 not found in order",
+            "holds": false,
+            "literal_bytes": 0,
+            "literal_span_count": 0,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": true,
+              "chunk_index": 0,
+              "line": 1,
+              "search_from": 0,
+              "text": "\"\"\"AutoFDE Lab semantic constitution \u2014 direct Python projection.\n\nManufactured by `ggen sync run` from an ontology/*.ttl file in the merged\nworking-backwards Lab constitution (PR #37). Manufacture is provenance, not\narchitecture (ontology/manufacture.ttl) -- this is ordinary source at its\nordinary import path, additive only, and is not wired into any existing\nruntime code path (no planner, no leve"
+            }
+          }
+        },
+        "rule": "constitution-standing",
+        "target": "src/autofde_lab/constitution/standing.py",
+        "template": "templates/constitution_module.py.tera"
+      },
+      {
+        "class": "CONSISTENT_MODULO_WHITESPACE",
+        "committed": true,
+        "declaration": "ggen.toml",
+        "evidence": {
+          "raw": {
+            "detail": "mandatory template literal at body line 1 not found in order",
+            "holds": false,
+            "literal_bytes": 0,
+            "literal_span_count": 0,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": true,
+              "chunk_index": 0,
+              "line": 1,
+              "search_from": 0,
+              "text": "\"\"\"AutoFDE Lab semantic constitution \u2014 direct Python projection.\n\nManufactured by `ggen sync run` from an ontology/*.ttl file in the merged\nworking-backwards Lab constitution (PR #37). Manufacture is provenance, not\narchitecture (ontology/manufacture.ttl) -- this is ordinary source at its\nordinary import path, additive only, and is not wired into any existing\nruntime code path (no planner, no leve"
+            }
+          }
+        },
+        "rule": "constitution-world",
+        "target": "src/autofde_lab/constitution/world.py",
+        "template": "templates/constitution_module.py.tera"
+      },
+      {
+        "class": "CONSISTENT_MODULO_WHITESPACE",
+        "committed": true,
+        "declaration": "ggen.toml",
+        "evidence": {
+          "raw": {
+            "detail": "mandatory template literal at body line 15 not found in order",
+            "holds": false,
+            "literal_bytes": 273,
+            "literal_span_count": 2,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": false,
+              "chunk_index": 16,
+              "line": 15,
+              "search_from": 1128,
+              "text": "\n)\nPLANNER_CAPABILITY_FIELDS = ("
+            }
+          }
+        },
+        "rule": "planner-league-catalog",
+        "target": "src/autofde_lab/planner_league/catalog.py",
+        "template": "templates/planner_league_catalog.py.tera"
+      },
+      {
+        "class": "CONSISTENT_MODULO_WHITESPACE",
+        "committed": true,
+        "declaration": "ggen.toml",
+        "evidence": {
+          "raw": {
+            "detail": "mandatory template literal at body line 1 not found in order",
+            "holds": false,
+            "literal_bytes": 0,
+            "literal_span_count": 0,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": true,
+              "chunk_index": 0,
+              "line": 1,
+              "search_from": 0,
+              "text": "\"\"\"AutoFDE Lab semantic constitution \u2014 direct Python projection.\n\nManufactured by `ggen sync run` from an ontology/*.ttl file in the merged\nworking-backwards Lab constitution (PR #37). Manufacture is provenance, not\narchitecture (ontology/manufacture.ttl) -- this is ordinary source at its\nordinary import path, additive only, and is not wired into any existing\nruntime code path (no planner, no leve"
+            }
+          }
+        },
+        "rule": "gymact-certification",
+        "target": "src/autofde_lab/reasoning/gymact_certification_types.py",
+        "template": "templates/constitution_module.py.tera"
+      },
+      {
+        "class": "INCONSISTENT",
+        "committed": true,
+        "declaration": "ggen.toml",
+        "evidence": {
+          "modulo_whitespace": {
+            "detail": "mandatory template literal at body line 1 not found in order",
+            "holds": false,
+            "literal_bytes": 0,
+            "literal_span_count": 0,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": true,
+              "chunk_index": 0,
+              "line": 1,
+              "search_from": 0,
+              "text": "\"\"\"World-transformationscenariofixtures\u2014directPythonprojection.Manufacturedby`ggensyncrun`from`ontology/world-transformation-taxonomy.ttl`via`queries/world-transformation/scenario_projection.rq`:onefixturefunctionperreal`afl:WorldTransformationScenario`individual,eachreturningareal,admitted`autofde_lab.powl.algebra.ChoiceGraph`:Start->observe->infer_desired_state->compute_delta->select_transformat"
+            }
+          },
+          "raw": {
+            "detail": "mandatory template literal at body line 1 not found in order",
+            "holds": false,
+            "literal_bytes": 0,
+            "literal_span_count": 0,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": true,
+              "chunk_index": 0,
+              "line": 1,
+              "search_from": 0,
+              "text": "\"\"\"World-transformation scenario fixtures \u2014 direct Python projection.\n\nManufactured by `ggen sync run` from `ontology/world-transformation-taxonomy.ttl`\nvia `queries/world-transformation/scenario_projection.rq`: one fixture\nfunction per real `afl:WorldTransformationScenario` individual, each\nreturning a real, admitted `autofde_lab.powl.algebra.ChoiceGraph`:\n\n    Start -> observe -> infer_desired_s"
+            }
+          }
+        },
+        "rule": "world-transformation-scenarios",
+        "target": "src/autofde_lab/reasoning/scenarios/world_transformation_scenarios.py",
+        "template": "templates/world_transformation_scenario.py.tera"
+      },
+      {
+        "class": "CONSISTENT_MODULO_WHITESPACE",
+        "committed": true,
+        "declaration": "ggen.toml",
+        "evidence": {
+          "raw": {
+            "detail": "mandatory template literal at body line 1 not found in order",
+            "holds": false,
+            "literal_bytes": 0,
+            "literal_span_count": 0,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": true,
+              "chunk_index": 0,
+              "line": 1,
+              "search_from": 0,
+              "text": "\"\"\"AutoFDE Lab semantic constitution \u2014 direct Python projection.\n\nManufactured by `ggen sync run` from an ontology/*.ttl file in the merged\nworking-backwards Lab constitution (PR #37). Manufacture is provenance, not\narchitecture (ontology/manufacture.ttl) -- this is ordinary source at its\nordinary import path, additive only, and is not wired into any existing\nruntime code path (no planner, no leve"
+            }
+          }
+        },
+        "rule": "togaf-artifacts",
+        "target": "src/autofde_lab/reasoning/togaf_artifacts.py",
+        "template": "templates/constitution_module.py.tera"
+      },
+      {
+        "class": "CONSISTENT_MODULO_WHITESPACE",
+        "committed": true,
+        "declaration": "ggen.toml",
+        "evidence": {
+          "raw": {
+            "detail": "mandatory template literal at body line 1 not found in order",
+            "holds": false,
+            "literal_bytes": 0,
+            "literal_span_count": 0,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": true,
+              "chunk_index": 0,
+              "line": 1,
+              "search_from": 0,
+              "text": "\"\"\"K8s fault-taxonomy universe fixtures \u2014 direct Python projection.\n\nManufactured by `ggen sync run` from `ontology/k8s-fault-taxonomy.ttl`'s real\nSPARQL cross-product (`queries/k8s-fault/cross_product.rq`): one fixture\nfunction per real `(Component, FailureMode, AppTopology, Severity)`\ncombination, each returning a real, admitted\n`autofde_lab.powl.algebra.ChoiceGraph` (`Start -> observe -> hypoth"
+            }
+          }
+        },
+        "rule": "k8s-fault-universes",
+        "target": "src/autofde_lab/reasoning/universes/k8s_fault_universes.py",
+        "template": "templates/k8s_fault_universe.py.tera"
+      }
+    ],
+    "schema": "autofde-lab.iec.generated-output-audit/1",
+    "subject": "git:seanchatmangpt/autofde-lab@ae255ad123dfdcef9b3de82395006834abb20a28"
+  },
+  "audit_source_digest": "sha256:f70c54fb5862bb3fea20de9f1c623db05166c4bf846cda6e06f6a17f8626c07e",
+  "frozen_before_claude_outcome": true
+}

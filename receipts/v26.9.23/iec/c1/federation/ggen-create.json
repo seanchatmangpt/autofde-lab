@@ -1,0 +1,352 @@
+{
+  "differential_probe": {
+    "contract": "render_concrete_many(x, [(name, s)], [(name, v)]) == render_concrete(x, s, v)",
+    "input": {
+      "seed": "hello",
+      "text": "dist/hello.js",
+      "value": "hola"
+    },
+    "lifecycle": {
+      "code": "TARGET_COLLISION_REFUSED",
+      "detail": "'test/hello.js' and 'src/hello.js' both project to 'hello.js' under case-insensitive path comparison",
+      "refused": true,
+      "steps": [
+        "start greeter",
+        "add src/hello.js test/hello.js",
+        "usename Hello",
+        "generate (package.build_package into the scratch root)"
+      ]
+    },
+    "render_concrete": "dist/hola.js",
+    "render_concrete_many": "hola.js",
+    "verdict": "COUNTEREXAMPLE"
+  },
+  "header_family_by_line": [
+    {
+      "attempts": [
+        {
+          "refusals": [],
+          "results": [
+            {
+              "exemplar_member": 2,
+              "held_out_member": 0,
+              "predicted_digest": "sha256:d61dba5e5079474f28aae2a8edd78e4d5d33261578bebf27c07a1c89c72899bf",
+              "seed_keys": [
+                "declaration:pack.name"
+              ],
+              "verdict": "PASS"
+            },
+            {
+              "exemplar_member": 0,
+              "held_out_member": 1,
+              "predicted_digest": "sha256:7a1177e73e0f21fcb4e9a4c99783abe027eb17272f6554171d7eac5d3fc6de97",
+              "seed_keys": [
+                "declaration:pack.name"
+              ],
+              "verdict": "PASS"
+            },
+            {
+              "exemplar_member": 1,
+              "held_out_member": 2,
+              "predicted_digest": "sha256:b6cec3bec6f38007bdd90e4a82f7fe204dd38903a1156d624248142693860370",
+              "seed_keys": [
+                "declaration:pack.name"
+              ],
+              "verdict": "PASS"
+            }
+          ],
+          "seed_keys": [
+            "declaration:pack.name"
+          ],
+          "verdict": "PASS"
+        },
+        {
+          "refusals": [
+            "PARAMETER_VALUE_REFUSED"
+          ],
+          "results": [
+            {
+              "detail": "parameter value may contain ASCII letters, digits, internal spaces, underscore, hyphen, and dot only; length must be at most 128",
+              "exemplar_member": 2,
+              "ggen_create_refusal": "PARAMETER_VALUE_REFUSED",
+              "held_out_member": 0,
+              "seed_keys": [
+                "declaration:pack.name",
+                "declaration:pack.ontology"
+              ],
+              "verdict": "UNSUPPORTED"
+            },
+            {
+              "detail": "parameter value may contain ASCII letters, digits, internal spaces, underscore, hyphen, and dot only; length must be at most 128",
+              "exemplar_member": 0,
+              "ggen_create_refusal": "PARAMETER_VALUE_REFUSED",
+              "held_out_member": 1,
+              "seed_keys": [
+                "declaration:pack.name",
+                "declaration:pack.ontology"
+              ],
+              "verdict": "UNSUPPORTED"
+            },
+            {
+              "detail": "parameter value may contain ASCII letters, digits, internal spaces, underscore, hyphen, and dot only; length must be at most 128",
+              "exemplar_member": 1,
+              "ggen_create_refusal": "PARAMETER_VALUE_REFUSED",
+              "held_out_member": 2,
+              "seed_keys": [
+                "declaration:pack.name",
+                "declaration:pack.ontology"
+              ],
+              "verdict": "UNSUPPORTED"
+            }
+          ],
+          "seed_keys": [
+            "declaration:pack.name",
+            "declaration:pack.ontology"
+          ],
+          "verdict": "UNSUPPORTED"
+        }
+      ],
+      "capability_falsifier": null,
+      "facts_occurring": [
+        "declaration:pack.name",
+        "declaration:pack.ontology"
+      ],
+      "line": 1,
+      "routed_to": "ggen-create"
+    },
+    {
+      "attempts": [
+        {
+          "refusals": [],
+          "results": [
+            {
+              "exemplar_member": 2,
+              "held_out_member": 0,
+              "predicted_digest": "sha256:95f7f380ee2755b7e8894885b286473a48decfd1488e1191383d1fea58740447",
+              "seed_keys": [
+                "declaration:pack.name"
+              ],
+              "verdict": "PASS"
+            },
+            {
+              "exemplar_member": 0,
+              "held_out_member": 1,
+              "predicted_digest": "sha256:95f7f380ee2755b7e8894885b286473a48decfd1488e1191383d1fea58740447",
+              "seed_keys": [
+                "declaration:pack.name"
+              ],
+              "verdict": "PASS"
+            },
+            {
+              "exemplar_member": 1,
+              "held_out_member": 2,
+              "predicted_digest": "sha256:95f7f380ee2755b7e8894885b286473a48decfd1488e1191383d1fea58740447",
+              "seed_keys": [
+                "declaration:pack.name"
+              ],
+              "verdict": "PASS"
+            }
+          ],
+          "seed_keys": [
+            "declaration:pack.name"
+          ],
+          "verdict": "PASS"
+        }
+      ],
+      "capability_falsifier": null,
+      "facts_occurring": [],
+      "line": 2,
+      "routed_to": "ggen-create"
+    },
+    {
+      "attempts": [
+        {
+          "refusals": [],
+          "results": [
+            {
+              "exemplar_member": 2,
+              "held_out_member": 0,
+              "predicted_digest": "sha256:61c358307838414cf07970cbb65a99ab7e98f5f1b09c9c89e7bf5650fc5020ab",
+              "seed_keys": [
+                "declaration:pack.name"
+              ],
+              "verdict": "PASS"
+            },
+            {
+              "exemplar_member": 0,
+              "held_out_member": 1,
+              "predicted_digest": "sha256:80a4aa44c2c7ca5b22e41ae18f1e7404f4c2e01e7e909618a900f8bdd1088ef9",
+              "seed_keys": [
+                "declaration:pack.name"
+              ],
+              "verdict": "PASS"
+            },
+            {
+              "exemplar_member": 1,
+              "held_out_member": 2,
+              "predicted_digest": "sha256:4df0ea03d6a91ee13ffd73a4b3416602f46f01083f698e18475aea496ed41bac",
+              "seed_keys": [
+                "declaration:pack.name"
+              ],
+              "verdict": "PASS"
+            }
+          ],
+          "seed_keys": [
+            "declaration:pack.name"
+          ],
+          "verdict": "PASS"
+        }
+      ],
+      "capability_falsifier": null,
+      "facts_occurring": [
+        "declaration:pack.name"
+      ],
+      "line": 3,
+      "routed_to": "ggen-create"
+    },
+    {
+      "attempts": [
+        {
+          "refusals": [],
+          "results": [
+            {
+              "actual": "#     --out lib/ggen_igniter/discovery/examples/incremental_dfg.ex\n",
+              "exemplar_member": 2,
+              "held_out_member": 0,
+              "predicted": "#     --out lib/ggen_igniter/stream/examples/sensor_sink.ex\n",
+              "predicted_digest": "sha256:f5735244b53461af67f9a3b68405647834f3baa9a9d22bc6729505be2a3417b8",
+              "seed_keys": [
+                "declaration:pack.name"
+              ],
+              "verdict": "COUNTEREXAMPLE"
+            },
+            {
+              "actual": "#     --out lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex\n",
+              "exemplar_member": 0,
+              "held_out_member": 1,
+              "predicted": "#     --out lib/ggen_igniter/discovery/examples/incremental_dfg.ex\n",
+              "predicted_digest": "sha256:e11fd3c7f947edf0257946c20f447b480dfe06f612fed3574bfd79af914c050d",
+              "seed_keys": [
+                "declaration:pack.name"
+              ],
+              "verdict": "COUNTEREXAMPLE"
+            },
+            {
+              "actual": "#     --out lib/ggen_igniter/stream/examples/sensor_sink.ex\n",
+              "exemplar_member": 1,
+              "held_out_member": 2,
+              "predicted": "#     --out lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex\n",
+              "predicted_digest": "sha256:38d061296f8e4be6ca7dbaca0e30c96a598f6ccf96da1e226b6f343d7cdb7e2f",
+              "seed_keys": [
+                "declaration:pack.name"
+              ],
+              "verdict": "COUNTEREXAMPLE"
+            }
+          ],
+          "seed_keys": [
+            "declaration:pack.name"
+          ],
+          "verdict": "COUNTEREXAMPLE"
+        },
+        {
+          "refusals": [
+            "PARAMETER_VALUE_REFUSED"
+          ],
+          "results": [
+            {
+              "detail": "parameter value may contain ASCII letters, digits, internal spaces, underscore, hyphen, and dot only; length must be at most 128",
+              "exemplar_member": 2,
+              "ggen_create_refusal": "PARAMETER_VALUE_REFUSED",
+              "held_out_member": 0,
+              "seed_keys": [
+                "declaration:template.to"
+              ],
+              "verdict": "UNSUPPORTED"
+            },
+            {
+              "detail": "parameter value may contain ASCII letters, digits, internal spaces, underscore, hyphen, and dot only; length must be at most 128",
+              "exemplar_member": 0,
+              "ggen_create_refusal": "PARAMETER_VALUE_REFUSED",
+              "held_out_member": 1,
+              "seed_keys": [
+                "declaration:template.to"
+              ],
+              "verdict": "UNSUPPORTED"
+            },
+            {
+              "detail": "parameter value may contain ASCII letters, digits, internal spaces, underscore, hyphen, and dot only; length must be at most 128",
+              "exemplar_member": 1,
+              "ggen_create_refusal": "PARAMETER_VALUE_REFUSED",
+              "held_out_member": 2,
+              "seed_keys": [
+                "declaration:template.to"
+              ],
+              "verdict": "UNSUPPORTED"
+            }
+          ],
+          "seed_keys": [
+            "declaration:template.to"
+          ],
+          "verdict": "UNSUPPORTED"
+        }
+      ],
+      "capability_falsifier": {
+        "pr": "PR-005",
+        "refusals": [
+          "PARAMETER_VALUE_REFUSED"
+        ],
+        "statement": "ggen-create cannot represent this line's hole as a seed"
+      },
+      "facts_occurring": [
+        "declaration:template.to"
+      ],
+      "line": 4,
+      "routed_to": "iec-anti-unification"
+    }
+  ],
+  "header_family_members": [
+    "lib/ggen_igniter/discovery/examples/incremental_dfg.ex",
+    "lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex",
+    "lib/ggen_igniter/stream/examples/sensor_sink.ex"
+  ],
+  "producer": {
+    "app_version": "0.4.0",
+    "commit": "eaa463af138d7aff88db813f0f65307bf5c9b5ba",
+    "repository": "seanchatmangpt/ggen-create",
+    "tree": "4e22ddd13af1b0d095d354d3866b4ba639476b10"
+  },
+  "role_classes": {
+    "contradicted_by_digest": [],
+    "joined": 690,
+    "not_observed_by_ggen_create": [
+      "test/fixtures/ash_manufacture_pack/bin/__pycache__/citation_check.cpython-314.pyc",
+      "test/fixtures/ash_manufacture_pack/bin/__pycache__/conformance.cpython-314.pyc",
+      "test/fixtures/ash_manufacture_pack/bin/__pycache__/drift_check.cpython-314.pyc",
+      "test/fixtures/ash_manufacture_pack/bin/__pycache__/evidence_check.cpython-314.pyc",
+      "test/fixtures/ash_manufacture_pack/bin/__pycache__/receipt.cpython-314.pyc"
+    ],
+    "predicate": "ggen-create:roleClass",
+    "producer": {
+      "app_version": "0.4.0",
+      "commit": "eaa463af138d7aff88db813f0f65307bf5c9b5ba",
+      "repository": "seanchatmangpt/ggen-create",
+      "tree": "4e22ddd13af1b0d095d354d3866b4ba639476b10"
+    },
+    "reading": "the class ggen-create's classifier assigns; a role (test, schema, template...), orthogonal to IEC's artifact origin",
+    "role_counts": {
+      "authority": 1,
+      "configuration": 17,
+      "documentation": 176,
+      "ontology": 12,
+      "other": 39,
+      "schema": 2,
+      "source": 85,
+      "template": 15,
+      "test": 340,
+      "workflow": 3
+    },
+    "roles_digest": "sha256:5b2a264e90d8784dcc5f675b71696774e1ae5e8f89bed9e6895eb8e6918cbcda",
+    "standing": "DERIVED_DETERMINISTIC"
+  },
+  "schema": "autofde-lab.iec.federation.ggen-create/1"
+}

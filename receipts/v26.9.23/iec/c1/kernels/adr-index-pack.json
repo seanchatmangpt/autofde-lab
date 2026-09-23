@@ -1,0 +1,79 @@
+{
+  "declaration": {
+    "pack.dir": "priv/ggen/adr-index-pack",
+    "pack.name": "adr-index-pack",
+    "pack.ontology": "priv/ggen/adr-index-pack/ontology.ttl",
+    "template.mode": "file",
+    "template.path": "priv/ggen/adr-index-pack/templates/readme.md.eex",
+    "template.to": "docs/architecture/adr/README.md"
+  },
+  "engine": {
+    "name": "rdflib",
+    "version": "7.6.0"
+  },
+  "gates": {
+    "adrs": {
+      "blob": "6e90bad92915243711978aa98aa3cd50b7e7dc9c",
+      "path": "priv/ggen/adr-index-pack/gates/010_adrs.rq"
+    }
+  },
+  "id": "sha256:ff97b51ecef5e2fec9b949883741d91ccd7bd671600c41302428233d64e13561",
+  "ontology_blob": "b503a5d4099a7e0a3aeaee1a8bfa3134f6d054e8",
+  "ontology_path": "priv/ggen/adr-index-pack/ontology.ttl",
+  "pack": "adr-index-pack",
+  "pack_dir": "priv/ggen/adr-index-pack",
+  "rows": {
+    "adrs": [
+      {
+        "filename": "0004-manifest-keyed-by-recipe-identity.md",
+        "number": "0004",
+        "status": "Accepted",
+        "title": "Reconciliation manifest keyed by `(template_path, out_template)` recipe identity"
+      },
+      {
+        "filename": "0007-sync-always-attempts-receipts.md",
+        "number": "0007",
+        "status": "Accepted",
+        "title": "`mix ggen_igniter.sync` Always Attempts the Reactor Pipeline (Receipts on Every Run), Gated Only by Delegatability"
+      },
+      {
+        "filename": "0003-plain-reactor-for-coordination.md",
+        "number": "0003",
+        "status": "Accepted",
+        "title": "Plain Reactor (not Ash.Reactor) for the target coordination pipeline"
+      },
+      {
+        "filename": "0008-evidence-ranked-multi-engine-registry.md",
+        "number": "0008",
+        "status": "Accepted",
+        "title": "Evidence-Ranked Multi-Engine Registry for `--engine` Comparison Mode"
+      },
+      {
+        "filename": "0005-receipt-independent-of-manifest.md",
+        "number": "0005",
+        "status": "Accepted",
+        "title": "Receipt as an independent, append-only attempt history distinct from the Manifest"
+      },
+      {
+        "filename": "0002-ash-phoenix-optional-consumer-side.md",
+        "number": "0002",
+        "status": "Accepted",
+        "title": "Ash and Phoenix remain optional, consumer-side integrations"
+      },
+      {
+        "filename": "0006-marker-based-injection-not-ast-patch.md",
+        "number": "0006",
+        "status": "Accepted",
+        "title": "Marker-based line splice for injection, deferring real AST-based mutation"
+      },
+      {
+        "filename": "0001-oxigraph-default-query-engine.md",
+        "number": "0001",
+        "status": "Accepted",
+        "title": "Oxigraph as the default SPARQL query engine"
+      }
+    ]
+  },
+  "schema": "autofde-lab.iec.pack-kernel/1",
+  "template_path": "priv/ggen/adr-index-pack/templates/readme.md.eex"
+}

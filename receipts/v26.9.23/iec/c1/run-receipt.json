@@ -1,0 +1,449 @@
+{
+  "claim_ceiling": "byte and exact-tree identity of regenerated subjects; mandatory-literal reflexion against the declared templates (static, never evaluated); held-out row and header prediction. NOT build, test, runtime, or formatter equivalence: the subject's native verifiers are BLOCKED in this run.",
+  "corpus_id": "sha256:cac136e77d31f98140403b01803c5bf2c8ca2bc3f828f039e428423cf4b844aa",
+  "declared_outputs": {
+    "committed": 4,
+    "literal": 9,
+    "total": 15
+  },
+  "federation": {
+    "differential_probe": "COUNTEREXAMPLE",
+    "header_lines_routed": [
+      "ggen-create",
+      "ggen-create",
+      "ggen-create",
+      "iec-anti-unification"
+    ],
+    "producer": {
+      "app_version": "0.4.0",
+      "commit": "eaa463af138d7aff88db813f0f65307bf5c9b5ba",
+      "repository": "seanchatmangpt/ggen-create",
+      "tree": "4e22ddd13af1b0d095d354d3866b4ba639476b10"
+    },
+    "role_classes_joined": 690
+  },
+  "files": {
+    "census.json": "sha256:a55d8d45063791137531acfdbd18f27819f0e6ff902cf421f710df10c2e97afd",
+    "corpus.json": "sha256:53b884d87808a8a0a2c0ac9fb2a9e35164f68ad255c2a1481229334e74fad3b5",
+    "counterexamples.jsonl": "sha256:263d4c5f2b06337edc072de292d4268a0690dd8f14a83f717ee97740febd575e",
+    "declared-outputs.json": "sha256:c605dff248ba4fe6e5c2a632b967a640f517f2ec91a2ad0b66585ef0cdbe105d",
+    "families/generated-header.json": "sha256:d7135d54852a07d63c3b85a5c1ec4de45a97b43fa2e85d189ed97b506394be7d",
+    "federation/ggen-create.json": "sha256:d6fe2814d6c7d275bb415b520fe6cc5024d4aaac4ce64cfeb33c9995485a0c46",
+    "hypotheses.jsonl": "sha256:13ec148b65d928850043d2ff3244703e62601feedfc7d72a1e5e24dc87db126d",
+    "promotion-plan.json": "sha256:3a39666489a1dc7a7d26d3333d2814bd06ee0ae9fc452590a17cf2a0a439b203",
+    "tree-identity.json": "sha256:6dbbeb7f4848364de9fd5084f15c4b195dadbfef807c04753c80e3c513723f7d"
+  },
+  "header_family": "PASS",
+  "native_verifier_set": {
+    "claim_prefix": "IEC_TRANSLATION_VALIDATED",
+    "id": "sha256:97307c417700282576cf768f6803321ec58aa3cb1656390bb1ec80734d1a1009",
+    "name": "ggen_igniter-native/1",
+    "verifiers": [
+      {
+        "dimension": "build",
+        "name": "mix-format-check-formatted",
+        "version": "1"
+      },
+      {
+        "dimension": "build",
+        "name": "mix-compile-warnings-as-errors",
+        "version": "1"
+      },
+      {
+        "dimension": "tests",
+        "name": "mix-test",
+        "version": "1"
+      }
+    ]
+  },
+  "origin_counts": {
+    "CANONICAL_SOURCE": 3,
+    "DERIVED_CACHE": 9,
+    "GENERATED_PROJECTION": 4,
+    "UNKNOWN": 679
+  },
+  "revision": "v26.9.23-iec-c1",
+  "run_id": "sha256:ddc6004d04871e35efb8b5ff528c50dd7d5efbadb9c7943ef505fc40a470ae70",
+  "schema": "autofde-lab.iec.c1-run-receipt/1",
+  "subject": {
+    "branch": "main",
+    "commit": "d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3",
+    "inclusion_reason": "IEC-C1: first regeneration crown (PRD/ARD v26.9.23 section 25)",
+    "remote_url": "https://github.com/seanchatmangpt/ggen_igniter",
+    "repository": "seanchatmangpt/ggen_igniter",
+    "tree": "2e95edb90efdfa0d6ba2f499fe0ce0c6d6654b14",
+    "visibility": "public"
+  },
+  "subjects": [
+    {
+      "computed_holes": [],
+      "counterexamples": [],
+      "courts": {
+        "ggen_igniter-native/1": {
+          "claim": "NOT_VALIDATED",
+          "dimensions": {
+            "build": "BLOCKED",
+            "tests": "BLOCKED"
+          },
+          "receipt_id": "sha256:09fe0954cc97b9853d300e93285323d0632d1cd1e0ce7de14381b82f80921dd1",
+          "verdict": "BLOCKED"
+        },
+        "iec-c1-static-row/1": {
+          "claim": "IEC_TRANSLATION_VALIDATED_FOR_git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:docs/architecture/adr/README.md_UNDER_7dde902f2f3674c4",
+          "dimensions": {
+            "exact-subject-identity": "PASS",
+            "generalization": "PASS",
+            "generator-reflexion": "PASS",
+            "syntax": "PASS"
+          },
+          "receipt_id": "sha256:66bedf2befec4951f006433058612bb83ce42ea34ebd627bc2d9200cfaf6f4e6",
+          "verdict": "PASS"
+        }
+      },
+      "digests": {
+        "courts": {
+          "ggen_igniter-native/1": "sha256:e9147d0a452e25c1654a8881a037bfa3bc415557abb4433f7e8b2575ec9074f6",
+          "iec-c1-static-row/1": "sha256:6b8812782b6dfb75a0532074213fbbe57418ab7bbd75ce461e6e84b4d53cf6ab"
+        },
+        "kernel": "sha256:4ef2e9641b5678fa5cb1126fe9dd0e815dc959c77b96e32a38ff7d7174db2c9c",
+        "program": "sha256:3d406f7d24ca61ee7846418fd64b08cca6f3a96eff3d392d4af2c280430ff074",
+        "reflexion": "sha256:ba8278b52591de93c204a5a87cda15bc353fb5c481fa6633ee20de1a39d8ceff"
+      },
+      "generated_blob": "aaf5b5526e3e1aa3bd036132d91fd06281cbb31e",
+      "hypotheses": [
+        {
+          "declared_by_template": [
+            "number"
+          ],
+          "falsifier": "a kernel whose rows sort differently under the surviving variables",
+          "id": "docs-architecture-adr-readme-md:row-order",
+          "question": "which kernel variable orders the adrs rows",
+          "reflexion": "CONVERGENT",
+          "standing": "UNKNOWN",
+          "subject": "git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:docs/architecture/adr/README.md",
+          "surviving": [
+            "filename",
+            "number"
+          ]
+        },
+        {
+          "declared_by_template": "interpolated",
+          "falsifier": "one row whose status differs from 'Accepted'",
+          "id": "docs-architecture-adr-readme-md:constant:status",
+          "observation": "every row has status='Accepted'; the recovered row template holds it as literal text",
+          "question": "is status a kernel variable or template text",
+          "standing": "UNKNOWN",
+          "subject": "git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:docs/architecture/adr/README.md"
+        }
+      ],
+      "kernel_id": "sha256:ff97b51ecef5e2fec9b949883741d91ccd7bd671600c41302428233d64e13561",
+      "kernel_path_coverage": [
+        {
+          "binding": "adrs",
+          "directory": "docs/architecture/adr",
+          "falsifier": "the uncovered file is excluded on purpose (e.g. not yet accepted)",
+          "kernel_members": 8,
+          "pattern": "{{X0}}-{{X1}}-{{X2}}-{{X3}}-{{X4...}}.md",
+          "regex": "^\\d{4,4}\\-[a-z0-9]+\\-[a-z0-9]+\\-[a-z0-9]+\\-[a-z0-9-]+\\.md$",
+          "standing": "INFERRED_CANDIDATE",
+          "uncovered_matches": [
+            "0009-runtime-shape-semantic-ir.md"
+          ],
+          "variable": "filename"
+        }
+      ],
+      "original_blob": "aaf5b5526e3e1aa3bd036132d91fd06281cbb31e",
+      "pack": "adr-index-pack",
+      "program_kind": "row",
+      "reflexion_counts": {
+        "CONVERGENT_HOLE": 32,
+        "LITERAL_MATCHES_KERNEL_VALUE": 1,
+        "LITERAL_RESTATES_DECLARATION": 3
+      },
+      "refusals": [],
+      "restated_declarations": [
+        "adr-index-pack",
+        "docs/architecture/adr/README.md",
+        "priv/ggen/adr-index-pack/ontology.ttl"
+      ],
+      "subject": "git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:docs/architecture/adr/README.md",
+      "target": "docs/architecture/adr/README.md",
+      "template": "priv/ggen/adr-index-pack/templates/readme.md.eex"
+    },
+    {
+      "computed_holes": [
+        {
+          "template_expression": "case_id_field_expr |> String.split(\".\") |> List.last()",
+          "value": "object_ids"
+        }
+      ],
+      "counterexamples": [],
+      "courts": {
+        "ggen_igniter-native/1": {
+          "claim": "NOT_VALIDATED",
+          "dimensions": {
+            "build": "BLOCKED",
+            "tests": "BLOCKED"
+          },
+          "receipt_id": "sha256:4a12d4f7661b780ba94eb25676d5a74e3d1250def83dde3759330524d623f5df",
+          "verdict": "BLOCKED"
+        },
+        "iec-c1-static-flat/1": {
+          "claim": "IEC_TRANSLATION_VALIDATED_FOR_git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:lib/ggen_igniter/discovery/examples/incremental_dfg.ex_UNDER_e172f59806ec8d3f",
+          "dimensions": {
+            "exact-subject-identity": "PASS",
+            "generator-reflexion": "PASS",
+            "syntax": "PASS"
+          },
+          "receipt_id": "sha256:0e5ddc1cbcf132660beec7d0c69d99194057ff831702d77248a591b8e7004f2e",
+          "verdict": "PASS"
+        }
+      },
+      "digests": {
+        "courts": {
+          "ggen_igniter-native/1": "sha256:4b34b8da360fc025f35f0c2f3510a9fc12ea51b8264a347a71784d634017e32f",
+          "iec-c1-static-flat/1": "sha256:bb3c9bcc754ed7caae8de30ee3027148cbbbcc56c502bf421a37981898f56977"
+        },
+        "kernel": "sha256:2337b7d17940afd5fe1bbbf8b313287ef14e7b4e5fdc678ec734f6e496eac12e",
+        "program": "sha256:800e90c8cae351fb1f00ad3b7816a884055a10dcc4225eca16b0d3fb15ebdf8e",
+        "reflexion": "sha256:306986e8054760e8b1231eaf5d90bd9191bbc2e54b9fb3c42accad6ac8f777d6"
+      },
+      "generated_blob": "ef3e64135906d42daa277bb2c9aeb14b09ad6b0c",
+      "hypotheses": [],
+      "kernel_id": "sha256:567e73483dc7742374206a849895f0094adb20aaa33894a2ddf258f3f8106920",
+      "kernel_path_coverage": [],
+      "original_blob": "ef3e64135906d42daa277bb2c9aeb14b09ad6b0c",
+      "pack": "incremental-discovery-pack",
+      "program_kind": "flat",
+      "reflexion_counts": {
+        "COMPUTED_HOLE": 1,
+        "CONVERGENT_HOLE": 12,
+        "LITERAL_MATCHES_KERNEL_VALUE": 11,
+        "LITERAL_RESTATES_DECLARATION": 6
+      },
+      "refusals": [],
+      "restated_declarations": [
+        "incremental-discovery-pack",
+        "lib/ggen_igniter/discovery/examples/incremental_dfg.ex",
+        "priv/ggen/incremental-discovery-pack/ontology.ttl"
+      ],
+      "subject": "git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:lib/ggen_igniter/discovery/examples/incremental_dfg.ex",
+      "target": "lib/ggen_igniter/discovery/examples/incremental_dfg.ex",
+      "template": "priv/ggen/incremental-discovery-pack/templates/incremental.ex.eex"
+    },
+    {
+      "computed_holes": [],
+      "counterexamples": [
+        {
+          "detail": "mandatory template literal at body line 58 not found in order",
+          "evidence": {
+            "detail": "mandatory template literal at body line 58 not found in order",
+            "holds": false,
+            "literal_bytes": 1210,
+            "literal_span_count": 4,
+            "missing": {
+              "anchored_end": false,
+              "anchored_start": false,
+              "chunk_index": 67,
+              "line": 58,
+              "search_from": 1322,
+              "text": "\n  return :"
+            }
+          },
+          "generated_identity": "4bd10dfd3e9dcbb3231ac498103257819707937f",
+          "original_identity": "4bd10dfd3e9dcbb3231ac498103257819707937f",
+          "subject": "git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex",
+          "verdict": "COUNTEREXAMPLE",
+          "verifier": "declared-template-mandatory-literals",
+          "verifier_set_id": "sha256:e172f59806ec8d3f6253fda1473fb011fe7217e7db763d94fd0b7527c5936bec"
+        }
+      ],
+      "courts": {
+        "ggen_igniter-native/1": {
+          "claim": "NOT_VALIDATED",
+          "dimensions": {
+            "build": "BLOCKED",
+            "tests": "BLOCKED"
+          },
+          "receipt_id": "sha256:a5267c6cd83ccbb9e534505a010bc0474d2cee2206b5ac23da94f38644c3dca2",
+          "verdict": "BLOCKED"
+        },
+        "iec-c1-static-flat/1": {
+          "claim": "NOT_VALIDATED",
+          "dimensions": {
+            "exact-subject-identity": "PASS",
+            "generator-reflexion": "COUNTEREXAMPLE",
+            "syntax": "PASS"
+          },
+          "receipt_id": "sha256:a455cbe92bf767ad26a4b6e5cde8af9dcb7bc64bfb2590fd39dcaf42fab6d7af",
+          "verdict": "COUNTEREXAMPLE"
+        },
+        "iec-c1-static-modulo-formatter-flat/1": {
+          "claim": "IEC_TRANSLATION_VALIDATED_FOR_git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex_UNDER_ad4263e88d3e99c6",
+          "dimensions": {
+            "exact-subject-identity": "PASS",
+            "generator-reflexion": "PASS",
+            "syntax": "PASS"
+          },
+          "receipt_id": "sha256:1b93f98d2b45c386b5b15189fe32d0bf5355156dbd21eda53d6b8b846fd39383",
+          "verdict": "PASS"
+        }
+      },
+      "digests": {
+        "courts": {
+          "ggen_igniter-native/1": "sha256:4fa1d9219a12543cb2ff9243667b59a8a1a3334151b53260d8b97f357022c6e3",
+          "iec-c1-static-flat/1": "sha256:692401db30bc08c2aea9b805e9789a4bc21cc2bb61fc5d44ca834d55f42b4779",
+          "iec-c1-static-modulo-formatter-flat/1": "sha256:3cd478e5315e616e37370efd6a22fe7b30f553c71b24d74cf4ae57d3c0b0f25f"
+        },
+        "kernel": "sha256:4940df0e1f697fe11b831a7b4068b93ff2c9913df0d8457ef5707cab97d039ca",
+        "program": "sha256:977bef757c2901beba9d0feffc792ed6da5072a05d63d09b2c47b5d4ccd89e76",
+        "reflexion": "sha256:cdb2f229b6f4c655c8fefd72c8e31cfd8f8934c6b008897b26d9a4ecc66b1ddb"
+      },
+      "generated_blob": "4bd10dfd3e9dcbb3231ac498103257819707937f",
+      "hypotheses": [
+        {
+          "evidence": [
+            {
+              "line": 276,
+              "path": "lib/ggen_igniter/reactors/reconcile_reactor.ex",
+              "text": "has its rendered body passed through `Code.format_string!/1` before it"
+            },
+            {
+              "line": 277,
+              "path": "lib/ggen_igniter/reactors/reconcile_reactor.ex",
+              "text": "reaches `PendingActuation.for_file/for_inject`. A `Code.format_string!/1`"
+            },
+            {
+              "line": 1601,
+              "path": "lib/ggen_igniter/reactors/reconcile_reactor.ex",
+              "text": "# `Code.format_string!/1` on that snippet alone formats it as"
+            },
+            {
+              "line": 1649,
+              "path": "lib/ggen_igniter/reactors/reconcile_reactor.ex",
+              "text": "# `.ex`/`.exs` output paths are run through `Code.format_string!/1`;"
+            },
+            {
+              "line": 1651,
+              "path": "lib/ggen_igniter/reactors/reconcile_reactor.ex",
+              "text": "# never touched. A `Code.format_string!/1` failure (the rendered body is"
+            },
+            {
+              "line": 1663,
+              "path": "lib/ggen_igniter/reactors/reconcile_reactor.ex",
+              "text": "|> Code.format_string!()"
+            },
+            {
+              "line": 1669,
+              "path": "lib/ggen_igniter/reactors/reconcile_reactor.ex",
+              "text": "\"GgenIgniter.Reactors.ReconcileReactor: Code.format_string!/1 failed for \" <>"
+            }
+          ],
+          "falsifier": "a template literal whose non-whitespace, non-parenthesis text is absent from the output",
+          "h_formatter": "committed = Code.format_string!(render) -- differences limited to layout and call parentheses",
+          "h_raw": "FALSIFIED by the declared-template-mandatory-literals counterexample",
+          "id": "lib-ggen-igniter-reactors-examples-expense-approval-reactor-ex:producer-postprocessing",
+          "question": "is the committed output the raw template render",
+          "standing": "INFERRED_CANDIDATE",
+          "subject": "git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex"
+        }
+      ],
+      "kernel_id": "sha256:8e4a5a748eef2c0111f034c384c6f6cf24dce1f727986562e3153c971ebe1969",
+      "kernel_path_coverage": [],
+      "original_blob": "4bd10dfd3e9dcbb3231ac498103257819707937f",
+      "pack": "reactor-scaffold-pack",
+      "program_kind": "flat",
+      "reflexion_counts": {},
+      "refusals": [
+        {
+          "code": "UNSUPPORTED_GENERATOR_CAPABILITY",
+          "detail": "steps: paired lines are not one contiguous line per row ([4, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 0, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 6, None, 0, None, None, None, None, None, None, None, None, 0, None, None, None, None, 0, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 0, None, None, None, None, 0, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, 0])",
+          "stage": "row-program"
+        }
+      ],
+      "restated_declarations": [],
+      "subject": "git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex",
+      "target": "lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex",
+      "template": "priv/ggen/reactor-scaffold-pack/templates/reactor.ex.eex"
+    },
+    {
+      "computed_holes": [
+        {
+          "template_expression": "inspect(rising_activity)",
+          "value": "\"threshold_crossed_above\""
+        },
+        {
+          "template_expression": "inspect(falling_activity)",
+          "value": "\"threshold_crossed_below\""
+        },
+        {
+          "template_expression": "inspect(rising_activity)",
+          "value": "\"threshold_crossed_above\""
+        },
+        {
+          "template_expression": "inspect(falling_activity)",
+          "value": "\"threshold_crossed_below\""
+        }
+      ],
+      "counterexamples": [],
+      "courts": {
+        "ggen_igniter-native/1": {
+          "claim": "NOT_VALIDATED",
+          "dimensions": {
+            "build": "BLOCKED",
+            "tests": "BLOCKED"
+          },
+          "receipt_id": "sha256:c027c82921a7c3d1a70fa2c7e9237e7c63018102e5bc9a6f13bfbe60b7a7fcf4",
+          "verdict": "BLOCKED"
+        },
+        "iec-c1-static-flat/1": {
+          "claim": "IEC_TRANSLATION_VALIDATED_FOR_git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:lib/ggen_igniter/stream/examples/sensor_sink.ex_UNDER_e172f59806ec8d3f",
+          "dimensions": {
+            "exact-subject-identity": "PASS",
+            "generator-reflexion": "PASS",
+            "syntax": "PASS"
+          },
+          "receipt_id": "sha256:4410f565d04336d558e9a20794ad464cc7750c8e4e36fe364106648a5f9d1412",
+          "verdict": "PASS"
+        }
+      },
+      "digests": {
+        "courts": {
+          "ggen_igniter-native/1": "sha256:3a35528d52a7f53822c9dc752e148ad1327e6b91b391fb431899f97db1405846",
+          "iec-c1-static-flat/1": "sha256:a2aa8c878c5059d3bb18acd99fcfc78a32a781672d246a8502d37a6b79c5a78c"
+        },
+        "kernel": "sha256:8c828ffcf2098bf49c91b8bcacc13fab374f041280195bf160610d08908a64aa",
+        "program": "sha256:7682fb3af4510e1464e9548e979697b69f68593eba64c814ce796a1dc4e2ba02",
+        "reflexion": "sha256:9c82a45dc08a312dd1980b64159fc3381ae6572b8e919eb88557db30d8a1a977"
+      },
+      "generated_blob": "052f31568aff7a66b0bc9ea27213b0a17853c57a",
+      "hypotheses": [],
+      "kernel_id": "sha256:73683f2e5169cbf366409954ae6fcdb91cfb0c924714e518430629827fe96ef5",
+      "kernel_path_coverage": [],
+      "original_blob": "052f31568aff7a66b0bc9ea27213b0a17853c57a",
+      "pack": "sensor-sink-pack",
+      "program_kind": "flat",
+      "reflexion_counts": {
+        "COMPUTED_HOLE": 4,
+        "CONVERGENT_HOLE": 14,
+        "LITERAL_RESTATES_DECLARATION": 6
+      },
+      "refusals": [],
+      "restated_declarations": [
+        "lib/ggen_igniter/stream/examples/sensor_sink.ex",
+        "priv/ggen/sensor-sink-pack/ontology.ttl",
+        "sensor-sink-pack"
+      ],
+      "subject": "git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:lib/ggen_igniter/stream/examples/sensor_sink.ex",
+      "target": "lib/ggen_igniter/stream/examples/sensor_sink.ex",
+      "template": "priv/ggen/sensor-sink-pack/templates/sensor_sink.ex.eex"
+    }
+  ],
+  "tree_identity": "PASS",
+  "validated_claims": [
+    "IEC_TRANSLATION_VALIDATED_FOR_git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:docs/architecture/adr/README.md_UNDER_7dde902f2f3674c4",
+    "IEC_TRANSLATION_VALIDATED_FOR_git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:lib/ggen_igniter/discovery/examples/incremental_dfg.ex_UNDER_e172f59806ec8d3f",
+    "IEC_TRANSLATION_VALIDATED_FOR_git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex_UNDER_ad4263e88d3e99c6",
+    "IEC_TRANSLATION_VALIDATED_FOR_git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:lib/ggen_igniter/stream/examples/sensor_sink.ex_UNDER_e172f59806ec8d3f"
+  ]
+}

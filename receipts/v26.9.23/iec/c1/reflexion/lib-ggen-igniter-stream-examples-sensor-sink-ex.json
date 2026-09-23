@@ -1,0 +1,300 @@
+{
+  "containment": {
+    "detail": "15 mandatory literal chunks embedded in order (0 in blocks not required)",
+    "holds": true,
+    "literal_bytes": 5037,
+    "literal_span_count": 15,
+    "missing": null
+  },
+  "finding_counts": {
+    "COMPUTED_HOLE": 4,
+    "CONVERGENT_HOLE": 14,
+    "LITERAL_RESTATES_DECLARATION": 6
+  },
+  "findings": [
+    {
+      "falsifier": "change the declaration value and re-render: the literal copy does not follow",
+      "kind": "LITERAL_RESTATES_DECLARATION",
+      "sources": [
+        "declaration:pack.ontology"
+      ],
+      "span": [
+        33,
+        72
+      ],
+      "value": "priv/ggen/sensor-sink-pack/ontology.ttl"
+    },
+    {
+      "falsifier": "change the declaration value and re-render: the literal copy does not follow",
+      "kind": "LITERAL_RESTATES_DECLARATION",
+      "sources": [
+        "declaration:pack.name"
+      ],
+      "span": [
+        139,
+        155
+      ],
+      "value": "sensor-sink-pack"
+    },
+    {
+      "falsifier": "change the declaration value and re-render: the literal copy does not follow",
+      "kind": "LITERAL_RESTATES_DECLARATION",
+      "sources": [
+        "declaration:template.to"
+      ],
+      "span": [
+        170,
+        217
+      ],
+      "value": "lib/ggen_igniter/stream/examples/sensor_sink.ex"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].moduleName"
+      ],
+      "span": [
+        408,
+        446
+      ],
+      "value": "GgenIgniter.Stream.Examples.SensorSink"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "span": [
+        556,
+        561
+      ],
+      "value": "Event"
+    },
+    {
+      "falsifier": "change the declaration value and re-render: the literal copy does not follow",
+      "kind": "LITERAL_RESTATES_DECLARATION",
+      "sources": [
+        "declaration:pack.name"
+      ],
+      "span": [
+        1297,
+        1313
+      ],
+      "value": "sensor-sink-pack"
+    },
+    {
+      "falsifier": "change the declaration value and re-render: the literal copy does not follow",
+      "kind": "LITERAL_RESTATES_DECLARATION",
+      "sources": [
+        "declaration:template.to"
+      ],
+      "span": [
+        1322,
+        1369
+      ],
+      "value": "lib/ggen_igniter/stream/examples/sensor_sink.ex"
+    },
+    {
+      "falsifier": "change the declaration value and re-render: the literal copy does not follow",
+      "kind": "LITERAL_RESTATES_DECLARATION",
+      "sources": [
+        "declaration:pack.ontology"
+      ],
+      "span": [
+        1409,
+        1448
+      ],
+      "value": "priv/ggen/sensor-sink-pack/ontology.ttl"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].eventModule"
+      ],
+      "span": [
+        1474,
+        1510
+      ],
+      "value": "GgenIgniter.Discovery.Examples.Event"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "span": [
+        1516,
+        1521
+      ],
+      "value": "Event"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].defaultThreshold"
+      ],
+      "span": [
+        1879,
+        1882
+      ],
+      "value": "0.0"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].risingActivity"
+      ],
+      "span": [
+        1914,
+        1937
+      ],
+      "value": "threshold_crossed_above"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].fallingActivity"
+      ],
+      "span": [
+        1971,
+        1994
+      ],
+      "value": "threshold_crossed_below"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].defaultThreshold"
+      ],
+      "span": [
+        2272,
+        2275
+      ],
+      "value": "0.0"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].risingActivity"
+      ],
+      "span": [
+        2338,
+        2361
+      ],
+      "value": "threshold_crossed_above"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].fallingActivity"
+      ],
+      "span": [
+        2427,
+        2450
+      ],
+      "value": "threshold_crossed_below"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "span": [
+        2758,
+        2763
+      ],
+      "value": "Event"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "span": [
+        3530,
+        3535
+      ],
+      "value": "Event"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "span": [
+        4330,
+        4335
+      ],
+      "value": "Event"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "span": [
+        4757,
+        4762
+      ],
+      "value": "Event"
+    },
+    {
+      "falsifier": "add the computed value to the kernel: the hole becomes convergent",
+      "kind": "COMPUTED_HOLE",
+      "sources": [],
+      "span": [
+        1913,
+        1938
+      ],
+      "template_expression": "inspect(rising_activity)",
+      "value": "\"threshold_crossed_above\""
+    },
+    {
+      "falsifier": "add the computed value to the kernel: the hole becomes convergent",
+      "kind": "COMPUTED_HOLE",
+      "sources": [],
+      "span": [
+        1970,
+        1995
+      ],
+      "template_expression": "inspect(falling_activity)",
+      "value": "\"threshold_crossed_below\""
+    },
+    {
+      "falsifier": "add the computed value to the kernel: the hole becomes convergent",
+      "kind": "COMPUTED_HOLE",
+      "sources": [],
+      "span": [
+        2337,
+        2362
+      ],
+      "template_expression": "inspect(rising_activity)",
+      "value": "\"threshold_crossed_above\""
+    },
+    {
+      "falsifier": "add the computed value to the kernel: the hole becomes convergent",
+      "kind": "COMPUTED_HOLE",
+      "sources": [],
+      "span": [
+        2426,
+        2451
+      ],
+      "template_expression": "inspect(falling_activity)",
+      "value": "\"threshold_crossed_below\""
+    }
+  ]
+}

@@ -1,0 +1,560 @@
+{
+  "bindings": [
+    {
+      "ambiguous": false,
+      "end": 77,
+      "sources": [
+        "declaration:pack.ontology"
+      ],
+      "start": 33,
+      "value": "priv/ggen/reactor-scaffold-pack/ontology.ttl"
+    },
+    {
+      "ambiguous": false,
+      "end": 165,
+      "sources": [
+        "declaration:pack.name"
+      ],
+      "start": 144,
+      "value": "reactor-scaffold-pack"
+    },
+    {
+      "ambiguous": false,
+      "end": 242,
+      "sources": [
+        "declaration:template.to"
+      ],
+      "start": 180,
+      "value": "lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex"
+    },
+    {
+      "ambiguous": true,
+      "end": 510,
+      "sources": [
+        "kernel:steps[0].kind",
+        "kernel:steps[4].kind",
+        "kernel:steps[6].kind",
+        "kernel:steps[8].kind"
+      ],
+      "start": 506,
+      "value": "step"
+    },
+    {
+      "ambiguous": true,
+      "end": 742,
+      "sources": [
+        "kernel:steps[0].moduleName",
+        "kernel:steps[10].moduleName",
+        "kernel:steps[11].moduleName",
+        "kernel:steps[1].moduleName",
+        "kernel:steps[2].moduleName",
+        "kernel:steps[3].moduleName",
+        "kernel:steps[4].moduleName",
+        "kernel:steps[5].moduleName",
+        "kernel:steps[6].moduleName",
+        "kernel:steps[7].moduleName",
+        "kernel:steps[8].moduleName",
+        "kernel:steps[9].moduleName"
+      ],
+      "start": 690,
+      "value": "GgenIgniter.Reactors.Examples.ExpenseApprovalReactor"
+    },
+    {
+      "ambiguous": false,
+      "end": 1072,
+      "sources": [
+        "declaration:pack.name"
+      ],
+      "start": 1051,
+      "value": "reactor-scaffold-pack"
+    },
+    {
+      "ambiguous": false,
+      "end": 1143,
+      "sources": [
+        "declaration:template.to"
+      ],
+      "start": 1081,
+      "value": "lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex"
+    },
+    {
+      "ambiguous": false,
+      "end": 1226,
+      "sources": [
+        "declaration:pack.ontology"
+      ],
+      "start": 1182,
+      "value": "priv/ggen/reactor-scaffold-pack/ontology.ttl"
+    },
+    {
+      "ambiguous": true,
+      "end": 1390,
+      "sources": [
+        "kernel:steps[0].kind",
+        "kernel:steps[4].kind",
+        "kernel:steps[6].kind",
+        "kernel:steps[8].kind"
+      ],
+      "start": 1386,
+      "value": "step"
+    },
+    {
+      "ambiguous": true,
+      "end": 1402,
+      "sources": [
+        "kernel:steps[0].waitFor",
+        "kernel:steps[8].name"
+      ],
+      "start": 1392,
+      "value": "fetch_user"
+    },
+    {
+      "ambiguous": true,
+      "end": 1506,
+      "sources": [
+        "kernel:steps[4].async",
+        "kernel:steps[8].async"
+      ],
+      "start": 1501,
+      "value": "false"
+    },
+    {
+      "ambiguous": false,
+      "end": 1747,
+      "sources": [
+        "kernel:steps[8].runBody"
+      ],
+      "start": 1517,
+      "value": "fn %{email: email, requested_currency: _currency}, _context ->\n      case GgenIgniter.Reactors.Examples.Support.fetch_user(email) do\n        {:ok, user} -> {:ok, user}\n        {:error, reason} -> {:error, reason}\n      end\n    end"
+    },
+    {
+      "ambiguous": true,
+      "end": 1762,
+      "sources": [
+        "kernel:steps[0].kind",
+        "kernel:steps[4].kind",
+        "kernel:steps[6].kind",
+        "kernel:steps[8].kind"
+      ],
+      "start": 1758,
+      "value": "step"
+    },
+    {
+      "ambiguous": false,
+      "end": 1777,
+      "sources": [
+        "kernel:steps[4].name"
+      ],
+      "start": 1764,
+      "value": "validate_user"
+    },
+    {
+      "ambiguous": true,
+      "end": 1819,
+      "sources": [
+        "kernel:steps[0].waitFor",
+        "kernel:steps[8].name"
+      ],
+      "start": 1809,
+      "value": "fetch_user"
+    },
+    {
+      "ambiguous": true,
+      "end": 1838,
+      "sources": [
+        "kernel:steps[4].async",
+        "kernel:steps[8].async"
+      ],
+      "start": 1833,
+      "value": "false"
+    },
+    {
+      "ambiguous": false,
+      "end": 2004,
+      "sources": [
+        "kernel:steps[4].runBody"
+      ],
+      "start": 1868,
+      "value": "fn %{user: user}, _context ->\n      if user.active? do\n        {:ok, user}\n      else\n        {:error, :inactive_user}\n      end\n    end"
+    },
+    {
+      "ambiguous": false,
+      "end": 2034,
+      "sources": [
+        "kernel:steps[4].whereBody"
+      ],
+      "start": 2017,
+      "value": "&(&1.user != nil)"
+    },
+    {
+      "ambiguous": false,
+      "end": 2180,
+      "sources": [
+        "kernel:steps[4].guardBody"
+      ],
+      "start": 2047,
+      "value": "fn %{user: user}, _context ->\n      if is_nil(user) do\n        {:halt, {:error, :no_user}}\n      else\n        :cont\n      end\n    end"
+    },
+    {
+      "ambiguous": true,
+      "end": 2195,
+      "sources": [
+        "kernel:steps[0].kind",
+        "kernel:steps[4].kind",
+        "kernel:steps[6].kind",
+        "kernel:steps[8].kind"
+      ],
+      "start": 2191,
+      "value": "step"
+    },
+    {
+      "ambiguous": true,
+      "end": 2211,
+      "sources": [
+        "kernel:steps[0].name",
+        "kernel:steps[0].returnStep",
+        "kernel:steps[10].returnStep",
+        "kernel:steps[11].returnStep",
+        "kernel:steps[1].returnStep",
+        "kernel:steps[2].returnStep",
+        "kernel:steps[3].returnStep",
+        "kernel:steps[4].returnStep",
+        "kernel:steps[5].returnStep",
+        "kernel:steps[6].returnStep",
+        "kernel:steps[7].returnStep",
+        "kernel:steps[8].returnStep",
+        "kernel:steps[9].returnStep"
+      ],
+      "start": 2197,
+      "value": "charge_payment"
+    },
+    {
+      "ambiguous": false,
+      "end": 2256,
+      "sources": [
+        "kernel:steps[4].name"
+      ],
+      "start": 2243,
+      "value": "validate_user"
+    },
+    {
+      "ambiguous": true,
+      "end": 2358,
+      "sources": [
+        "kernel:steps[0].async",
+        "kernel:steps[6].async"
+      ],
+      "start": 2354,
+      "value": "true"
+    },
+    {
+      "ambiguous": false,
+      "end": 2523,
+      "sources": [
+        "kernel:steps[0].runBody"
+      ],
+      "start": 2369,
+      "value": "fn %{user: user, amount: amount, card_token: card_token}, _context ->\n      GgenIgniter.Reactors.Examples.Support.charge(user, amount, card_token)\n    end"
+    },
+    {
+      "ambiguous": false,
+      "end": 2696,
+      "sources": [
+        "kernel:steps[0].compensateBody"
+      ],
+      "start": 2541,
+      "value": "fn _reason, %{amount: amount, card_token: card_token}, _context ->\n      GgenIgniter.Reactors.Examples.Support.refund(card_token, amount)\n      :ok\n    end"
+    },
+    {
+      "ambiguous": false,
+      "end": 2853,
+      "sources": [
+        "kernel:steps[0].undoBody"
+      ],
+      "start": 2708,
+      "value": "fn charge, %{card_token: card_token}, _context ->\n      GgenIgniter.Reactors.Examples.Support.refund(card_token, charge.amount)\n      :ok\n    end"
+    },
+    {
+      "ambiguous": true,
+      "end": 2880,
+      "sources": [
+        "kernel:steps[0].waitFor",
+        "kernel:steps[8].name"
+      ],
+      "start": 2870,
+      "value": "fetch_user"
+    },
+    {
+      "ambiguous": true,
+      "end": 2895,
+      "sources": [
+        "kernel:steps[0].kind",
+        "kernel:steps[4].kind",
+        "kernel:steps[6].kind",
+        "kernel:steps[8].kind"
+      ],
+      "start": 2891,
+      "value": "step"
+    },
+    {
+      "ambiguous": false,
+      "end": 2909,
+      "sources": [
+        "kernel:steps[6].name"
+      ],
+      "start": 2897,
+      "value": "send_receipt"
+    },
+    {
+      "ambiguous": false,
+      "end": 2954,
+      "sources": [
+        "kernel:steps[4].name"
+      ],
+      "start": 2941,
+      "value": "validate_user"
+    },
+    {
+      "ambiguous": true,
+      "end": 3001,
+      "sources": [
+        "kernel:steps[0].name",
+        "kernel:steps[0].returnStep",
+        "kernel:steps[10].returnStep",
+        "kernel:steps[11].returnStep",
+        "kernel:steps[1].returnStep",
+        "kernel:steps[2].returnStep",
+        "kernel:steps[3].returnStep",
+        "kernel:steps[4].returnStep",
+        "kernel:steps[5].returnStep",
+        "kernel:steps[6].returnStep",
+        "kernel:steps[7].returnStep",
+        "kernel:steps[8].returnStep",
+        "kernel:steps[9].returnStep"
+      ],
+      "start": 2987,
+      "value": "charge_payment"
+    },
+    {
+      "ambiguous": true,
+      "end": 3019,
+      "sources": [
+        "kernel:steps[0].async",
+        "kernel:steps[6].async"
+      ],
+      "start": 3015,
+      "value": "true"
+    },
+    {
+      "ambiguous": false,
+      "end": 3154,
+      "sources": [
+        "kernel:steps[6].runBody"
+      ],
+      "start": 3030,
+      "value": "fn %{user: user, charge: charge}, _context ->\n      GgenIgniter.Reactors.Examples.Support.send_receipt(user, charge)\n    end"
+    },
+    {
+      "ambiguous": true,
+      "end": 3230,
+      "sources": [
+        "kernel:steps[0].name",
+        "kernel:steps[0].returnStep",
+        "kernel:steps[10].returnStep",
+        "kernel:steps[11].returnStep",
+        "kernel:steps[1].returnStep",
+        "kernel:steps[2].returnStep",
+        "kernel:steps[3].returnStep",
+        "kernel:steps[4].returnStep",
+        "kernel:steps[5].returnStep",
+        "kernel:steps[6].returnStep",
+        "kernel:steps[7].returnStep",
+        "kernel:steps[8].returnStep",
+        "kernel:steps[9].returnStep"
+      ],
+      "start": 3216,
+      "value": "charge_payment"
+    },
+    {
+      "ambiguous": true,
+      "end": 3358,
+      "sources": [
+        "kernel:steps[0].name",
+        "kernel:steps[0].returnStep",
+        "kernel:steps[10].returnStep",
+        "kernel:steps[11].returnStep",
+        "kernel:steps[1].returnStep",
+        "kernel:steps[2].returnStep",
+        "kernel:steps[3].returnStep",
+        "kernel:steps[4].returnStep",
+        "kernel:steps[5].returnStep",
+        "kernel:steps[6].returnStep",
+        "kernel:steps[7].returnStep",
+        "kernel:steps[8].returnStep",
+        "kernel:steps[9].returnStep"
+      ],
+      "start": 3344,
+      "value": "charge_payment"
+    },
+    {
+      "ambiguous": true,
+      "end": 3508,
+      "sources": [
+        "kernel:steps[0].kind",
+        "kernel:steps[4].kind",
+        "kernel:steps[6].kind",
+        "kernel:steps[8].kind"
+      ],
+      "start": 3504,
+      "value": "step"
+    },
+    {
+      "ambiguous": true,
+      "end": 3798,
+      "sources": [
+        "kernel:steps[0].kind",
+        "kernel:steps[4].kind",
+        "kernel:steps[6].kind",
+        "kernel:steps[8].kind"
+      ],
+      "start": 3794,
+      "value": "step"
+    },
+    {
+      "ambiguous": true,
+      "end": 3939,
+      "sources": [
+        "kernel:steps[0].kind",
+        "kernel:steps[4].kind",
+        "kernel:steps[6].kind",
+        "kernel:steps[8].kind"
+      ],
+      "start": 3935,
+      "value": "step"
+    },
+    {
+      "ambiguous": true,
+      "end": 4154,
+      "sources": [
+        "kernel:steps[0].name",
+        "kernel:steps[0].returnStep",
+        "kernel:steps[10].returnStep",
+        "kernel:steps[11].returnStep",
+        "kernel:steps[1].returnStep",
+        "kernel:steps[2].returnStep",
+        "kernel:steps[3].returnStep",
+        "kernel:steps[4].returnStep",
+        "kernel:steps[5].returnStep",
+        "kernel:steps[6].returnStep",
+        "kernel:steps[7].returnStep",
+        "kernel:steps[8].returnStep",
+        "kernel:steps[9].returnStep"
+      ],
+      "start": 4140,
+      "value": "charge_payment"
+    },
+    {
+      "ambiguous": false,
+      "end": 4227,
+      "sources": [
+        "kernel:steps[4].name"
+      ],
+      "start": 4214,
+      "value": "validate_user"
+    },
+    {
+      "ambiguous": true,
+      "end": 4274,
+      "sources": [
+        "kernel:steps[0].name",
+        "kernel:steps[0].returnStep",
+        "kernel:steps[10].returnStep",
+        "kernel:steps[11].returnStep",
+        "kernel:steps[1].returnStep",
+        "kernel:steps[2].returnStep",
+        "kernel:steps[3].returnStep",
+        "kernel:steps[4].returnStep",
+        "kernel:steps[5].returnStep",
+        "kernel:steps[6].returnStep",
+        "kernel:steps[7].returnStep",
+        "kernel:steps[8].returnStep",
+        "kernel:steps[9].returnStep"
+      ],
+      "start": 4260,
+      "value": "charge_payment"
+    },
+    {
+      "ambiguous": true,
+      "end": 4569,
+      "sources": [
+        "kernel:steps[0].async",
+        "kernel:steps[6].async"
+      ],
+      "start": 4565,
+      "value": "true"
+    },
+    {
+      "ambiguous": true,
+      "end": 4580,
+      "sources": [
+        "kernel:steps[0].kind",
+        "kernel:steps[4].kind",
+        "kernel:steps[6].kind",
+        "kernel:steps[8].kind"
+      ],
+      "start": 4576,
+      "value": "step"
+    },
+    {
+      "ambiguous": true,
+      "end": 4818,
+      "sources": [
+        "kernel:steps[0].kind",
+        "kernel:steps[4].kind",
+        "kernel:steps[6].kind",
+        "kernel:steps[8].kind"
+      ],
+      "start": 4814,
+      "value": "step"
+    },
+    {
+      "ambiguous": false,
+      "end": 4972,
+      "sources": [
+        "kernel:steps[4].name"
+      ],
+      "start": 4959,
+      "value": "validate_user"
+    },
+    {
+      "ambiguous": true,
+      "end": 5065,
+      "sources": [
+        "kernel:steps[0].name",
+        "kernel:steps[0].returnStep",
+        "kernel:steps[10].returnStep",
+        "kernel:steps[11].returnStep",
+        "kernel:steps[1].returnStep",
+        "kernel:steps[2].returnStep",
+        "kernel:steps[3].returnStep",
+        "kernel:steps[4].returnStep",
+        "kernel:steps[5].returnStep",
+        "kernel:steps[6].returnStep",
+        "kernel:steps[7].returnStep",
+        "kernel:steps[8].returnStep",
+        "kernel:steps[9].returnStep"
+      ],
+      "start": 5051,
+      "value": "charge_payment"
+    }
+  ],
+  "coverage": {
+    "ambiguous_holes": 26,
+    "bytes_bound_to_facts": 1667,
+    "bytes_residue": 3404,
+    "bytes_total": 5071,
+    "holes": 46
+  },
+  "kind": "flat",
+  "note": "a flat program reconstructs by construction; its evidential value is exact-subject binding and declared-template reflexion, not generalization"
+}

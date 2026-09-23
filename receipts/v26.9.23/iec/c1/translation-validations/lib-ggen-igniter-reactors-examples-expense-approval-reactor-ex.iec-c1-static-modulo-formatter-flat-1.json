@@ -1,0 +1,60 @@
+{
+  "claim": "IEC_TRANSLATION_VALIDATED_FOR_git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex_UNDER_ad4263e88d3e99c6",
+  "dimensions": {
+    "exact-subject-identity": "PASS",
+    "generator-reflexion": "PASS",
+    "syntax": "PASS"
+  },
+  "generated_identity": "4bd10dfd3e9dcbb3231ac498103257819707937f",
+  "original_identity": "4bd10dfd3e9dcbb3231ac498103257819707937f",
+  "receipt_id": "sha256:1b93f98d2b45c386b5b15189fe32d0bf5355156dbd21eda53d6b8b846fd39383",
+  "results": {
+    "byte-identity": {
+      "detail": "5075 bytes identical",
+      "evidence": {},
+      "verdict": "PASS"
+    },
+    "declared-template-mandatory-literals-modulo-whitespace-and-call-parens": {
+      "detail": "4 mandatory literal chunks embedded in order (12 in blocks not required) (after deleting whitespace and call parentheses on both sides)",
+      "evidence": {
+        "detail": "4 mandatory literal chunks embedded in order (12 in blocks not required)",
+        "holds": true,
+        "literal_bytes": 1070,
+        "literal_span_count": 4,
+        "missing": null
+      },
+      "verdict": "PASS"
+    },
+    "git-blob-identity": {
+      "detail": "generated blob id 4bd10dfd3e9dcbb3231ac498103257819707937f equals frozen tree entry",
+      "evidence": {},
+      "verdict": "PASS"
+    }
+  },
+  "schema": "autofde-lab.iec.court-receipt/1",
+  "subject": "git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex",
+  "verdict": "PASS",
+  "verifier_set": {
+    "claim_prefix": "IEC_TRANSLATION_VALIDATED",
+    "id": "sha256:ad4263e88d3e99c63fd53dbb3fcda931fa0cbcede194d544b9039a3163b768f1",
+    "name": "iec-c1-static-modulo-formatter-flat/1",
+    "verifiers": [
+      {
+        "dimension": "syntax",
+        "name": "byte-identity",
+        "version": "1"
+      },
+      {
+        "dimension": "exact-subject-identity",
+        "name": "git-blob-identity",
+        "version": "1"
+      },
+      {
+        "dimension": "generator-reflexion",
+        "name": "declared-template-mandatory-literals-modulo-whitespace-and-call-parens",
+        "version": "1"
+      }
+    ]
+  },
+  "verifier_set_id": "sha256:ad4263e88d3e99c63fd53dbb3fcda931fa0cbcede194d544b9039a3163b768f1"
+}

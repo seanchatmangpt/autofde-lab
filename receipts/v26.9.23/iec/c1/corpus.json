@@ -1,0 +1,17 @@
+{
+  "fence": "public",
+  "id": "sha256:cac136e77d31f98140403b01803c5bf2c8ca2bc3f828f039e428423cf4b844aa",
+  "revision": "v26.9.23-iec-c1",
+  "schema": "autofde-lab.iec.corpus/1",
+  "subjects": [
+    {
+      "branch": "main",
+      "commit": "d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3",
+      "inclusion_reason": "IEC-C1: first regeneration crown (PRD/ARD v26.9.23 section 25)",
+      "remote_url": "https://github.com/seanchatmangpt/ggen_igniter",
+      "repository": "seanchatmangpt/ggen_igniter",
+      "tree": "2e95edb90efdfa0d6ba2f499fe0ce0c6d6654b14",
+      "visibility": "public"
+    }
+  ]
+}

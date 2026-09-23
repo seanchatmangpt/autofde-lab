@@ -1,0 +1,511 @@
+{
+  "containment": {
+    "detail": "2 mandatory literal chunks embedded in order (5 in blocks not required)",
+    "holds": true,
+    "literal_bytes": 1205,
+    "literal_span_count": 2,
+    "missing": null
+  },
+  "finding_counts": {
+    "CONVERGENT_HOLE": 32,
+    "LITERAL_MATCHES_KERNEL_VALUE": 1,
+    "LITERAL_RESTATES_DECLARATION": 3
+  },
+  "findings": [
+    {
+      "falsifier": "vary the kernel value: if the literal stays, the overlap was coincidental",
+      "kind": "LITERAL_MATCHES_KERNEL_VALUE",
+      "sources": [
+        "kernel:adrs[0].status",
+        "kernel:adrs[1].status",
+        "kernel:adrs[2].status",
+        "kernel:adrs[3].status",
+        "kernel:adrs[4].status",
+        "kernel:adrs[5].status",
+        "kernel:adrs[6].status",
+        "kernel:adrs[7].status"
+      ],
+      "span": [
+        218,
+        226
+      ],
+      "value": "Accepted"
+    },
+    {
+      "falsifier": "change the declaration value and re-render: the literal copy does not follow",
+      "kind": "LITERAL_RESTATES_DECLARATION",
+      "sources": [
+        "declaration:pack.ontology"
+      ],
+      "span": [
+        576,
+        613
+      ],
+      "value": "priv/ggen/adr-index-pack/ontology.ttl"
+    },
+    {
+      "falsifier": "change the declaration value and re-render: the literal copy does not follow",
+      "kind": "LITERAL_RESTATES_DECLARATION",
+      "sources": [
+        "declaration:pack.name"
+      ],
+      "span": [
+        693,
+        707
+      ],
+      "value": "adr-index-pack"
+    },
+    {
+      "falsifier": "change the declaration value and re-render: the literal copy does not follow",
+      "kind": "LITERAL_RESTATES_DECLARATION",
+      "sources": [
+        "declaration:template.to"
+      ],
+      "span": [
+        738,
+        769
+      ],
+      "value": "docs/architecture/adr/README.md"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[7].number"
+      ],
+      "span": [
+        1033,
+        1037
+      ],
+      "value": "0001"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[7].filename"
+      ],
+      "span": [
+        1039,
+        1076
+      ],
+      "value": "0001-oxigraph-default-query-engine.md"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[7].title"
+      ],
+      "span": [
+        1080,
+        1123
+      ],
+      "value": "Oxigraph as the default SPARQL query engine"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[0].status",
+        "kernel:adrs[1].status",
+        "kernel:adrs[2].status",
+        "kernel:adrs[3].status",
+        "kernel:adrs[4].status",
+        "kernel:adrs[5].status",
+        "kernel:adrs[6].status",
+        "kernel:adrs[7].status"
+      ],
+      "span": [
+        1126,
+        1134
+      ],
+      "value": "Accepted"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[5].number"
+      ],
+      "span": [
+        1140,
+        1144
+      ],
+      "value": "0002"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[5].filename"
+      ],
+      "span": [
+        1146,
+        1188
+      ],
+      "value": "0002-ash-phoenix-optional-consumer-side.md"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[5].title"
+      ],
+      "span": [
+        1192,
+        1251
+      ],
+      "value": "Ash and Phoenix remain optional, consumer-side integrations"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[0].status",
+        "kernel:adrs[1].status",
+        "kernel:adrs[2].status",
+        "kernel:adrs[3].status",
+        "kernel:adrs[4].status",
+        "kernel:adrs[5].status",
+        "kernel:adrs[6].status",
+        "kernel:adrs[7].status"
+      ],
+      "span": [
+        1254,
+        1262
+      ],
+      "value": "Accepted"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[2].number"
+      ],
+      "span": [
+        1268,
+        1272
+      ],
+      "value": "0003"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[2].filename"
+      ],
+      "span": [
+        1274,
+        1312
+      ],
+      "value": "0003-plain-reactor-for-coordination.md"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[2].title"
+      ],
+      "span": [
+        1316,
+        1384
+      ],
+      "value": "Plain Reactor (not Ash.Reactor) for the target coordination pipeline"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[0].status",
+        "kernel:adrs[1].status",
+        "kernel:adrs[2].status",
+        "kernel:adrs[3].status",
+        "kernel:adrs[4].status",
+        "kernel:adrs[5].status",
+        "kernel:adrs[6].status",
+        "kernel:adrs[7].status"
+      ],
+      "span": [
+        1387,
+        1395
+      ],
+      "value": "Accepted"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[0].number"
+      ],
+      "span": [
+        1401,
+        1405
+      ],
+      "value": "0004"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[0].filename"
+      ],
+      "span": [
+        1407,
+        1448
+      ],
+      "value": "0004-manifest-keyed-by-recipe-identity.md"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[0].title"
+      ],
+      "span": [
+        1452,
+        1532
+      ],
+      "value": "Reconciliation manifest keyed by `(template_path, out_template)` recipe identity"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[0].status",
+        "kernel:adrs[1].status",
+        "kernel:adrs[2].status",
+        "kernel:adrs[3].status",
+        "kernel:adrs[4].status",
+        "kernel:adrs[5].status",
+        "kernel:adrs[6].status",
+        "kernel:adrs[7].status"
+      ],
+      "span": [
+        1535,
+        1543
+      ],
+      "value": "Accepted"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[4].number"
+      ],
+      "span": [
+        1549,
+        1553
+      ],
+      "value": "0005"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[4].filename"
+      ],
+      "span": [
+        1555,
+        1594
+      ],
+      "value": "0005-receipt-independent-of-manifest.md"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[4].title"
+      ],
+      "span": [
+        1598,
+        1679
+      ],
+      "value": "Receipt as an independent, append-only attempt history distinct from the Manifest"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[0].status",
+        "kernel:adrs[1].status",
+        "kernel:adrs[2].status",
+        "kernel:adrs[3].status",
+        "kernel:adrs[4].status",
+        "kernel:adrs[5].status",
+        "kernel:adrs[6].status",
+        "kernel:adrs[7].status"
+      ],
+      "span": [
+        1682,
+        1690
+      ],
+      "value": "Accepted"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[6].number"
+      ],
+      "span": [
+        1696,
+        1700
+      ],
+      "value": "0006"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[6].filename"
+      ],
+      "span": [
+        1702,
+        1746
+      ],
+      "value": "0006-marker-based-injection-not-ast-patch.md"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[6].title"
+      ],
+      "span": [
+        1750,
+        1823
+      ],
+      "value": "Marker-based line splice for injection, deferring real AST-based mutation"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[0].status",
+        "kernel:adrs[1].status",
+        "kernel:adrs[2].status",
+        "kernel:adrs[3].status",
+        "kernel:adrs[4].status",
+        "kernel:adrs[5].status",
+        "kernel:adrs[6].status",
+        "kernel:adrs[7].status"
+      ],
+      "span": [
+        1826,
+        1834
+      ],
+      "value": "Accepted"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[1].number"
+      ],
+      "span": [
+        1840,
+        1844
+      ],
+      "value": "0007"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[1].filename"
+      ],
+      "span": [
+        1846,
+        1883
+      ],
+      "value": "0007-sync-always-attempts-receipts.md"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[1].title"
+      ],
+      "span": [
+        1887,
+        2001
+      ],
+      "value": "`mix ggen_igniter.sync` Always Attempts the Reactor Pipeline (Receipts on Every Run), Gated Only by Delegatability"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[0].status",
+        "kernel:adrs[1].status",
+        "kernel:adrs[2].status",
+        "kernel:adrs[3].status",
+        "kernel:adrs[4].status",
+        "kernel:adrs[5].status",
+        "kernel:adrs[6].status",
+        "kernel:adrs[7].status"
+      ],
+      "span": [
+        2004,
+        2012
+      ],
+      "value": "Accepted"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[3].number"
+      ],
+      "span": [
+        2018,
+        2022
+      ],
+      "value": "0008"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[3].filename"
+      ],
+      "span": [
+        2024,
+        2069
+      ],
+      "value": "0008-evidence-ranked-multi-engine-registry.md"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[3].title"
+      ],
+      "span": [
+        2073,
+        2141
+      ],
+      "value": "Evidence-Ranked Multi-Engine Registry for `--engine` Comparison Mode"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:adrs[0].status",
+        "kernel:adrs[1].status",
+        "kernel:adrs[2].status",
+        "kernel:adrs[3].status",
+        "kernel:adrs[4].status",
+        "kernel:adrs[5].status",
+        "kernel:adrs[6].status",
+        "kernel:adrs[7].status"
+      ],
+      "span": [
+        2144,
+        2152
+      ],
+      "value": "Accepted"
+    }
+  ]
+}

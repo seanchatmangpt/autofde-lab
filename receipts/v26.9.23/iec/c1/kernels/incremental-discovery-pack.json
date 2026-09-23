@@ -1,0 +1,39 @@
+{
+  "declaration": {
+    "pack.dir": "priv/ggen/incremental-discovery-pack",
+    "pack.name": "incremental-discovery-pack",
+    "pack.ontology": "priv/ggen/incremental-discovery-pack/ontology.ttl",
+    "template.mode": "file",
+    "template.path": "priv/ggen/incremental-discovery-pack/templates/incremental.ex.eex",
+    "template.to": "lib/ggen_igniter/discovery/examples/incremental_dfg.ex"
+  },
+  "engine": {
+    "name": "rdflib",
+    "version": "7.6.0"
+  },
+  "gates": {
+    "module": {
+      "blob": "f1e3452ea0a418d5ddce76be8aa6230fa62c5931",
+      "path": "priv/ggen/incremental-discovery-pack/gates/010_module.rq"
+    }
+  },
+  "id": "sha256:567e73483dc7742374206a849895f0094adb20aaa33894a2ddf258f3f8106920",
+  "ontology_blob": "a9a425863863955179050a2f487a2b2d9c554053",
+  "ontology_path": "priv/ggen/incremental-discovery-pack/ontology.ttl",
+  "pack": "incremental-discovery-pack",
+  "pack_dir": "priv/ggen/incremental-discovery-pack",
+  "rows": {
+    "module": [
+      {
+        "activityField": "activity",
+        "caseIdFieldExpr": "event.object_ids",
+        "defaultCaseId": ":__global__",
+        "eventAlias": "Event",
+        "eventModule": "GgenIgniter.Discovery.Examples.Event",
+        "moduleName": "GgenIgniter.Discovery.Examples.IncrementalDfg"
+      }
+    ]
+  },
+  "schema": "autofde-lab.iec.pack-kernel/1",
+  "template_path": "priv/ggen/incremental-discovery-pack/templates/incremental.ex.eex"
+}

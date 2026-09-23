@@ -1,0 +1,376 @@
+{
+  "containment": {
+    "detail": "14 mandatory literal chunks embedded in order (0 in blocks not required)",
+    "holds": true,
+    "literal_bytes": 4640,
+    "literal_span_count": 14,
+    "missing": null
+  },
+  "finding_counts": {
+    "COMPUTED_HOLE": 1,
+    "CONVERGENT_HOLE": 12,
+    "LITERAL_MATCHES_KERNEL_VALUE": 11,
+    "LITERAL_RESTATES_DECLARATION": 6
+  },
+  "findings": [
+    {
+      "falsifier": "change the declaration value and re-render: the literal copy does not follow",
+      "kind": "LITERAL_RESTATES_DECLARATION",
+      "sources": [
+        "declaration:pack.ontology"
+      ],
+      "span": [
+        33,
+        82
+      ],
+      "value": "priv/ggen/incremental-discovery-pack/ontology.ttl"
+    },
+    {
+      "falsifier": "change the declaration value and re-render: the literal copy does not follow",
+      "kind": "LITERAL_RESTATES_DECLARATION",
+      "sources": [
+        "declaration:pack.name"
+      ],
+      "span": [
+        149,
+        175
+      ],
+      "value": "incremental-discovery-pack"
+    },
+    {
+      "falsifier": "change the declaration value and re-render: the literal copy does not follow",
+      "kind": "LITERAL_RESTATES_DECLARATION",
+      "sources": [
+        "declaration:template.to"
+      ],
+      "span": [
+        190,
+        244
+      ],
+      "value": "lib/ggen_igniter/discovery/examples/incremental_dfg.ex"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].moduleName"
+      ],
+      "span": [
+        457,
+        502
+      ],
+      "value": "GgenIgniter.Discovery.Examples.IncrementalDfg"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "span": [
+        641,
+        646
+      ],
+      "value": "Event"
+    },
+    {
+      "falsifier": "change the declaration value and re-render: the literal copy does not follow",
+      "kind": "LITERAL_RESTATES_DECLARATION",
+      "sources": [
+        "declaration:pack.name"
+      ],
+      "span": [
+        1091,
+        1117
+      ],
+      "value": "incremental-discovery-pack"
+    },
+    {
+      "falsifier": "change the declaration value and re-render: the literal copy does not follow",
+      "kind": "LITERAL_RESTATES_DECLARATION",
+      "sources": [
+        "declaration:template.to"
+      ],
+      "span": [
+        1126,
+        1180
+      ],
+      "value": "lib/ggen_igniter/discovery/examples/incremental_dfg.ex"
+    },
+    {
+      "falsifier": "change the declaration value and re-render: the literal copy does not follow",
+      "kind": "LITERAL_RESTATES_DECLARATION",
+      "sources": [
+        "declaration:pack.ontology"
+      ],
+      "span": [
+        1220,
+        1269
+      ],
+      "value": "priv/ggen/incremental-discovery-pack/ontology.ttl"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].eventModule"
+      ],
+      "span": [
+        1297,
+        1333
+      ],
+      "value": "GgenIgniter.Discovery.Examples.Event"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "span": [
+        1339,
+        1344
+      ],
+      "value": "Event"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "span": [
+        1438,
+        1443
+      ],
+      "value": "Event"
+    },
+    {
+      "falsifier": "vary the kernel value: if the literal stays, the overlap was coincidental",
+      "kind": "LITERAL_MATCHES_KERNEL_VALUE",
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "span": [
+        2400,
+        2408
+      ],
+      "value": "activity"
+    },
+    {
+      "falsifier": "vary the kernel value: if the literal stays, the overlap was coincidental",
+      "kind": "LITERAL_MATCHES_KERNEL_VALUE",
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "span": [
+        2476,
+        2484
+      ],
+      "value": "activity"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "span": [
+        2544,
+        2549
+      ],
+      "value": "Event"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "span": [
+        2599,
+        2604
+      ],
+      "value": "Event"
+    },
+    {
+      "falsifier": "vary the kernel value: if the literal stays, the overlap was coincidental",
+      "kind": "LITERAL_MATCHES_KERNEL_VALUE",
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "span": [
+        2663,
+        2671
+      ],
+      "value": "activity"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "span": [
+        2680,
+        2688
+      ],
+      "value": "activity"
+    },
+    {
+      "falsifier": "vary the kernel value: if the literal stays, the overlap was coincidental",
+      "kind": "LITERAL_MATCHES_KERNEL_VALUE",
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "span": [
+        2736,
+        2744
+      ],
+      "value": "activity"
+    },
+    {
+      "falsifier": "vary the kernel value: if the literal stays, the overlap was coincidental",
+      "kind": "LITERAL_MATCHES_KERNEL_VALUE",
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "span": [
+        2914,
+        2922
+      ],
+      "value": "activity"
+    },
+    {
+      "falsifier": "vary the kernel value: if the literal stays, the overlap was coincidental",
+      "kind": "LITERAL_MATCHES_KERNEL_VALUE",
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "span": [
+        3177,
+        3185
+      ],
+      "value": "activity"
+    },
+    {
+      "falsifier": "vary the kernel value: if the literal stays, the overlap was coincidental",
+      "kind": "LITERAL_MATCHES_KERNEL_VALUE",
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "span": [
+        3256,
+        3264
+      ],
+      "value": "activity"
+    },
+    {
+      "falsifier": "vary the kernel value: if the literal stays, the overlap was coincidental",
+      "kind": "LITERAL_MATCHES_KERNEL_VALUE",
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "span": [
+        3475,
+        3483
+      ],
+      "value": "activity"
+    },
+    {
+      "falsifier": "vary the kernel value: if the literal stays, the overlap was coincidental",
+      "kind": "LITERAL_MATCHES_KERNEL_VALUE",
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "span": [
+        3628,
+        3636
+      ],
+      "value": "activity"
+    },
+    {
+      "falsifier": "vary the kernel value: if the literal stays, the overlap was coincidental",
+      "kind": "LITERAL_MATCHES_KERNEL_VALUE",
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "span": [
+        3894,
+        3902
+      ],
+      "value": "activity"
+    },
+    {
+      "falsifier": "vary the kernel value: if the literal stays, the overlap was coincidental",
+      "kind": "LITERAL_MATCHES_KERNEL_VALUE",
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "span": [
+        3936,
+        3944
+      ],
+      "value": "activity"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "span": [
+        4278,
+        4283
+      ],
+      "value": "Event"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "span": [
+        4693,
+        4698
+      ],
+      "value": "Event"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "span": [
+        4760,
+        4765
+      ],
+      "value": "Event"
+    },
+    {
+      "falsifier": "vary the kernel value: the output must change exactly here",
+      "kind": "CONVERGENT_HOLE",
+      "sources": [
+        "kernel:module[0].defaultCaseId"
+      ],
+      "span": [
+        4774,
+        4785
+      ],
+      "value": ":__global__"
+    },
+    {
+      "falsifier": "add the computed value to the kernel: the hole becomes convergent",
+      "kind": "COMPUTED_HOLE",
+      "sources": [],
+      "span": [
+        4699,
+        4709
+      ],
+      "template_expression": "case_id_field_expr |> String.split(\".\") |> List.last()",
+      "value": "object_ids"
+    }
+  ]
+}

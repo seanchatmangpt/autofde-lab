@@ -1,0 +1,156 @@
+{
+  "outputs": [
+    {
+      "committed": false,
+      "declaration": "docs/archive/ash_tier_matrix_pack/templates/ash_tier_task_receipt.sh.eex",
+      "literal": false,
+      "query": "",
+      "rule": "",
+      "syntax": "eex-frontmatter",
+      "target": ".ash-validation-receipts/<%= rank |> to_string() |> String.pad_leading(2, \"0\") %>-<%= module_name %>-<%= mix_task %>.sh",
+      "template": "docs/archive/ash_tier_matrix_pack/templates/ash_tier_task_receipt.sh.eex"
+    },
+    {
+      "committed": true,
+      "declaration": "priv/ggen/adr-index-pack/templates/readme.md.eex",
+      "literal": true,
+      "query": "",
+      "rule": "",
+      "syntax": "eex-frontmatter",
+      "target": "docs/architecture/adr/README.md",
+      "template": "priv/ggen/adr-index-pack/templates/readme.md.eex"
+    },
+    {
+      "committed": false,
+      "declaration": "priv/ggen/ash-notifier-load2-pack/templates/notifier_load2.ex.eex",
+      "literal": false,
+      "query": "",
+      "rule": "",
+      "syntax": "eex-frontmatter",
+      "target": "lib/<%= Macro.underscore(info_module) %>_load2_snippet.ex",
+      "template": "priv/ggen/ash-notifier-load2-pack/templates/notifier_load2.ex.eex"
+    },
+    {
+      "committed": false,
+      "declaration": "test/fixtures/qlever-concurrent-pack/templates/entity.ex.eex",
+      "literal": false,
+      "query": "",
+      "rule": "",
+      "syntax": "eex-frontmatter",
+      "target": "lib/<%= entity_name %>.ex",
+      "template": "test/fixtures/qlever-concurrent-pack/templates/entity.ex.eex"
+    },
+    {
+      "committed": false,
+      "declaration": "priv/ggen/process-discovery-pack/templates/token_replay.ex.eex",
+      "literal": true,
+      "query": "",
+      "rule": "",
+      "syntax": "eex-frontmatter",
+      "target": "lib/generated/conformance/token_replay.ex",
+      "template": "priv/ggen/process-discovery-pack/templates/token_replay.ex.eex"
+    },
+    {
+      "committed": false,
+      "declaration": "priv/ggen/process-discovery-pack/templates/inductive_miner.ex.eex",
+      "literal": true,
+      "query": "",
+      "rule": "",
+      "syntax": "eex-frontmatter",
+      "target": "lib/generated/discovery/inductive_miner.ex",
+      "template": "priv/ggen/process-discovery-pack/templates/inductive_miner.ex.eex"
+    },
+    {
+      "committed": true,
+      "declaration": "priv/ggen/incremental-discovery-pack/templates/incremental.ex.eex",
+      "literal": true,
+      "query": "",
+      "rule": "",
+      "syntax": "eex-frontmatter",
+      "target": "lib/ggen_igniter/discovery/examples/incremental_dfg.ex",
+      "template": "priv/ggen/incremental-discovery-pack/templates/incremental.ex.eex"
+    },
+    {
+      "committed": false,
+      "declaration": "priv/ggen/ocel2-ekg-pack/templates/ocel2.ex.eex",
+      "literal": true,
+      "query": "",
+      "rule": "",
+      "syntax": "eex-frontmatter",
+      "target": "lib/ggen_igniter/ocel2_example.ex",
+      "template": "priv/ggen/ocel2-ekg-pack/templates/ocel2.ex.eex"
+    },
+    {
+      "committed": true,
+      "declaration": "priv/ggen/reactor-scaffold-pack/templates/reactor.ex.eex",
+      "literal": true,
+      "query": "",
+      "rule": "",
+      "syntax": "eex-frontmatter",
+      "target": "lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex",
+      "template": "priv/ggen/reactor-scaffold-pack/templates/reactor.ex.eex"
+    },
+    {
+      "committed": true,
+      "declaration": "priv/ggen/sensor-sink-pack/templates/sensor_sink.ex.eex",
+      "literal": true,
+      "query": "",
+      "rule": "",
+      "syntax": "eex-frontmatter",
+      "target": "lib/ggen_igniter/stream/examples/sensor_sink.ex",
+      "template": "priv/ggen/sensor-sink-pack/templates/sensor_sink.ex.eex"
+    },
+    {
+      "committed": false,
+      "declaration": "test/fixtures/ash_manufacture_pack/templates/manufacture.ex.eex",
+      "literal": false,
+      "query": "",
+      "rule": "",
+      "syntax": "eex-frontmatter",
+      "target": "lib/mix/tasks/<%= task_name %>.ex",
+      "template": "test/fixtures/ash_manufacture_pack/templates/manufacture.ex.eex"
+    },
+    {
+      "committed": false,
+      "declaration": "priv/ggen/olap-pack/templates/olap.ex.eex",
+      "literal": true,
+      "query": "",
+      "rule": "",
+      "syntax": "eex-frontmatter",
+      "target": "lib/olap.ex",
+      "template": "priv/ggen/olap-pack/templates/olap.ex.eex"
+    },
+    {
+      "committed": false,
+      "declaration": "test/fixtures/ash-lifecycle-pack/templates/domain.ex.eex",
+      "literal": false,
+      "query": "",
+      "rule": "",
+      "syntax": "eex-frontmatter",
+      "target": "lib/support_desk/<%= String.downcase(domain_name) %>.ex",
+      "template": "test/fixtures/ash-lifecycle-pack/templates/domain.ex.eex"
+    },
+    {
+      "committed": false,
+      "declaration": "test/fixtures/ash-lifecycle-pack/templates/resource.ex.eex",
+      "literal": false,
+      "query": "",
+      "rule": "",
+      "syntax": "eex-frontmatter",
+      "target": "lib/support_desk/support/<%= String.downcase(resource_name) %>.ex",
+      "template": "test/fixtures/ash-lifecycle-pack/templates/resource.ex.eex"
+    },
+    {
+      "committed": false,
+      "declaration": "priv/ggen/chicago-fault-injection-pack/templates/fault_injection_test.exs.eex",
+      "literal": true,
+      "query": "",
+      "rule": "",
+      "syntax": "eex-frontmatter",
+      "target": "test/chicago/fault_injection_test.exs",
+      "template": "priv/ggen/chicago-fault-injection-pack/templates/fault_injection_test.exs.eex"
+    }
+  ],
+  "schema": "autofde-lab.iec.declared-outputs/1",
+  "subject": "git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3"
+}

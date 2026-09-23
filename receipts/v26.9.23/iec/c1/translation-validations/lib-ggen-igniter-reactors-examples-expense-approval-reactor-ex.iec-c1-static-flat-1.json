@@ -1,0 +1,67 @@
+{
+  "claim": "NOT_VALIDATED",
+  "dimensions": {
+    "exact-subject-identity": "PASS",
+    "generator-reflexion": "COUNTEREXAMPLE",
+    "syntax": "PASS"
+  },
+  "generated_identity": "4bd10dfd3e9dcbb3231ac498103257819707937f",
+  "original_identity": "4bd10dfd3e9dcbb3231ac498103257819707937f",
+  "receipt_id": "sha256:a455cbe92bf767ad26a4b6e5cde8af9dcb7bc64bfb2590fd39dcaf42fab6d7af",
+  "results": {
+    "byte-identity": {
+      "detail": "5075 bytes identical",
+      "evidence": {},
+      "verdict": "PASS"
+    },
+    "declared-template-mandatory-literals": {
+      "detail": "mandatory template literal at body line 58 not found in order",
+      "evidence": {
+        "detail": "mandatory template literal at body line 58 not found in order",
+        "holds": false,
+        "literal_bytes": 1210,
+        "literal_span_count": 4,
+        "missing": {
+          "anchored_end": false,
+          "anchored_start": false,
+          "chunk_index": 67,
+          "line": 58,
+          "search_from": 1322,
+          "text": "\n  return :"
+        }
+      },
+      "verdict": "COUNTEREXAMPLE"
+    },
+    "git-blob-identity": {
+      "detail": "generated blob id 4bd10dfd3e9dcbb3231ac498103257819707937f equals frozen tree entry",
+      "evidence": {},
+      "verdict": "PASS"
+    }
+  },
+  "schema": "autofde-lab.iec.court-receipt/1",
+  "subject": "git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex",
+  "verdict": "COUNTEREXAMPLE",
+  "verifier_set": {
+    "claim_prefix": "IEC_TRANSLATION_VALIDATED",
+    "id": "sha256:e172f59806ec8d3f6253fda1473fb011fe7217e7db763d94fd0b7527c5936bec",
+    "name": "iec-c1-static-flat/1",
+    "verifiers": [
+      {
+        "dimension": "syntax",
+        "name": "byte-identity",
+        "version": "1"
+      },
+      {
+        "dimension": "exact-subject-identity",
+        "name": "git-blob-identity",
+        "version": "1"
+      },
+      {
+        "dimension": "generator-reflexion",
+        "name": "declared-template-mandatory-literals",
+        "version": "1"
+      }
+    ]
+  },
+  "verifier_set_id": "sha256:e172f59806ec8d3f6253fda1473fb011fe7217e7db763d94fd0b7527c5936bec"
+}

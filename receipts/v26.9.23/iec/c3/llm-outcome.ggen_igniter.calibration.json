@@ -1,0 +1,73 @@
+{
+  "provenance": {
+    "actor": "Claude subagent (Explore): ggen_igniter archaeology, questions 1 and 4 of 7",
+    "cost": {
+      "duration_ms": 463464,
+      "note": "whole run",
+      "tokens": 204625,
+      "tool_uses": 100
+    },
+    "label_assignment": "the orchestrating session mapped the subagent's prose to audit classes; each row quotes the prose it was mapped from"
+  },
+  "reasoning_class": "RC-GENERATED-OUTPUT-AUDIT",
+  "role": "CALIBRATION -- the mechanism was built after this outcome was read; it can never retire the class",
+  "rows": [
+    {
+      "class": "RAW_RENDER_CONSISTENT",
+      "committed": true,
+      "quote": "(1) is byte-identical to template lines 5-32 with the 8 ontology rows sorted by number. diff printed nothing.",
+      "target": "docs/architecture/adr/README.md"
+    },
+    {
+      "class": "RAW_RENDER_CONSISTENT",
+      "committed": true,
+      "quote": "(2) and (4): after substituting the bindings from the single ontology row, the only lines that differ are ones where the template computes a value ... Both are consistent with the committed file.",
+      "target": "lib/ggen_igniter/discovery/examples/incremental_dfg.ex"
+    },
+    {
+      "class": "RAW_RENDER_CONSISTENT",
+      "committed": true,
+      "quote": "(2) and (4): ... the only lines that differ are ones where the template computes a value ... consistent with the committed file.",
+      "target": "lib/ggen_igniter/stream/examples/sensor_sink.ex"
+    },
+    {
+      "class": "CONSISTENT_MODULO_WHITESPACE_AND_CALL_PARENS",
+      "committed": true,
+      "quote": "the body only matches after formatting: the template emits input :<%= field %>, async? ... and run <%= ... %>, while the committed file has input(:email), async?(false) ... So committed = Code.format_string!(render).",
+      "target": "lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex"
+    },
+    {
+      "class": "NOT_COMMITTED",
+      "committed": false,
+      "quote": "process-discovery-pack ... \"lib/generated/conformance/token_replay.ex\" (not committed; lib/generated doesn't exist)",
+      "target": "lib/generated/conformance/token_replay.ex"
+    },
+    {
+      "class": "NOT_COMMITTED",
+      "committed": false,
+      "quote": "process-discovery-pack ... \"lib/generated/discovery/inductive_miner.ex\" (not committed; lib/generated doesn't exist)",
+      "target": "lib/generated/discovery/inductive_miner.ex"
+    },
+    {
+      "class": "NOT_COMMITTED",
+      "committed": false,
+      "quote": "ocel2-ekg-pack ... \"lib/ggen_igniter/ocel2_example.ex\" (not committed)",
+      "target": "lib/ggen_igniter/ocel2_example.ex"
+    },
+    {
+      "class": "NOT_COMMITTED",
+      "committed": false,
+      "quote": "olap-pack ... \"lib/olap.ex\" (not committed)",
+      "target": "lib/olap.ex"
+    },
+    {
+      "class": "NOT_COMMITTED",
+      "committed": false,
+      "quote": "chicago-fault-injection-pack ... \"test/chicago/fault_injection_test.exs\" (not committed; test/chicago doesn't exist)",
+      "target": "test/chicago/fault_injection_test.exs"
+    }
+  ],
+  "schema": "autofde-lab.iec.llm-outcome/1",
+  "standing": "INFERRED_CANDIDATE",
+  "subject": "seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3"
+}
