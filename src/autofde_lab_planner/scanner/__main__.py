@@ -28,10 +28,16 @@ from autofde_lab_planner.scanner.taxonomy import classify
 
 
 def _load_state(state_file: str | None) -> ClusterState:
-    raw = sys.stdin.read() if state_file is None else open(state_file, encoding="utf-8").read()
+    raw = (
+        sys.stdin.read()
+        if state_file is None
+        else open(state_file, encoding="utf-8").read()
+    )
     data = json.loads(raw)
     if not isinstance(data, dict):
-        raise ValueError(f"expected a JSON object (ClusterState), got {type(data).__name__}")
+        raise ValueError(
+            f"expected a JSON object (ClusterState), got {type(data).__name__}"
+        )
     return data  # type: ignore[return-value]
 
 

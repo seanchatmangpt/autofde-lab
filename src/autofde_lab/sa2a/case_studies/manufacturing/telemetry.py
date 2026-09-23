@@ -29,6 +29,7 @@ attributes, they are simply not exported anywhere, which is the documented
 "no-op exporter" default so `runtime.py`'s Chicago-style tests keep passing
 unmodified with no env var set.
 """
+
 from __future__ import annotations
 
 import os

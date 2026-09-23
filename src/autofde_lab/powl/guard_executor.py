@@ -216,14 +216,16 @@ def _node_fingerprint(node: PowlNode) -> Any:
             "kind": "ChoiceGraph",
             "children": [_node_fingerprint(c) for c in node.children],
             "edges": sorted(
-                [e.src, e.dst, e.guard.key if e.guard is not None else None] for e in node.edges
+                [e.src, e.dst, e.guard.key if e.guard is not None else None]
+                for e in node.edges
             ),
             "start": node.start,
             "end": node.end,
             "frequency": [node.frequency.min, node.frequency.max],
         }
     raise PowlError(  # pragma: no cover -- validate_model already refuses any other kind
-        PowlRefusal.PROHIBITED_NODE_KIND, f"{type(node).__name__} cannot be fingerprinted"
+        PowlRefusal.PROHIBITED_NODE_KIND,
+        f"{type(node).__name__} cannot be fingerprinted",
     )
 
 
@@ -238,7 +240,12 @@ class _CallbackArity:
 
     __slots__ = ("guard_takes_context", "invoker_takes_context")
 
-    def __init__(self, guard_evaluator: GuardEvaluator, atom_invoker: AtomInvoker, context: "ExecutionContext | None") -> None:
+    def __init__(
+        self,
+        guard_evaluator: GuardEvaluator,
+        atom_invoker: AtomInvoker,
+        context: "ExecutionContext | None",
+    ) -> None:
         if context is None:
             self.guard_takes_context = False
             self.invoker_takes_context = False
@@ -255,9 +262,12 @@ def _accepts_arity(fn: Callable[..., Any], n: int) -> bool:
     positional = [
         p
         for p in params.values()
-        if p.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+        if p.kind
+        in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
     ]
-    has_var_positional = any(p.kind is inspect.Parameter.VAR_POSITIONAL for p in params.values())
+    has_var_positional = any(
+        p.kind is inspect.Parameter.VAR_POSITIONAL for p in params.values()
+    )
     return len(positional) >= n or has_var_positional
 
 
@@ -290,7 +300,14 @@ class _StepSink:
     at the correct point.
     """
 
-    __slots__ = ("_steps", "_lock", "_on_step", "_transitions", "_top_level_cursor_fn", "_context")
+    __slots__ = (
+        "_steps",
+        "_lock",
+        "_on_step",
+        "_transitions",
+        "_top_level_cursor_fn",
+        "_context",
+    )
 
     def __init__(
         self,
@@ -376,12 +393,22 @@ def execute(
         )
 
     arity = _CallbackArity(guard_evaluator, atom_invoker, context)
-    steps: list[ExecutionStep] = list(resume_from.steps) if resume_from is not None else []
+    steps: list[ExecutionStep] = (
+        list(resume_from.steps) if resume_from is not None else []
+    )
     transitions_taken = _Counter()
-    transitions_taken.value = resume_from.choice_transitions_taken if resume_from is not None else 0
+    transitions_taken.value = (
+        resume_from.choice_transitions_taken if resume_from is not None else 0
+    )
 
     top_cursor_holder: dict[str, tuple[str, Any]] = {"cursor": ("leaf", None)}
-    sink = _StepSink(steps, transitions_taken, on_step, lambda: top_cursor_holder["cursor"], context=context)
+    sink = _StepSink(
+        steps,
+        transitions_taken,
+        on_step,
+        lambda: top_cursor_holder["cursor"],
+        context=context,
+    )
 
     _walk(
         node,
@@ -399,7 +426,9 @@ def execute(
         top_cursor_holder=top_cursor_holder,
         resume_cursor=resume_from.cursor if resume_from is not None else None,
     )
-    return ExecutionTrace(steps=sink.snapshot(), choice_transitions_taken=transitions_taken.value)
+    return ExecutionTrace(
+        steps=sink.snapshot(), choice_transitions_taken=transitions_taken.value
+    )
 
 
 def _invoke_guard(
@@ -444,49 +473,94 @@ def _walk(
     repetition_index: int = 0,
 ) -> None:
     if isinstance(node, Start):
-        sink.append(ExecutionStep(kind="Start", repetition_index=repetition_index), node_key=node_key)
+        sink.append(
+            ExecutionStep(kind="Start", repetition_index=repetition_index),
+            node_key=node_key,
+        )
     elif isinstance(node, End):
-        sink.append(ExecutionStep(kind="End", repetition_index=repetition_index), node_key=node_key)
+        sink.append(
+            ExecutionStep(kind="End", repetition_index=repetition_index),
+            node_key=node_key,
+        )
     elif isinstance(node, Silent):
-        sink.append(ExecutionStep(kind="Silent", repetition_index=repetition_index), node_key=node_key)
+        sink.append(
+            ExecutionStep(kind="Silent", repetition_index=repetition_index),
+            node_key=node_key,
+        )
     elif isinstance(node, Atom):
         try:
             result = _invoke_atom(atom_invoker, node, arity, context)
         except Exception as exc:
             failure_step = ExecutionStep(
-                kind="Atom", label=node.label, consequence=node.consequence, result=None,
-                repetition_index=repetition_index, failed=True,
+                kind="Atom",
+                label=node.label,
+                consequence=node.consequence,
+                result=None,
+                repetition_index=repetition_index,
+                failed=True,
             )
             sink.append(failure_step, node_key=node_key)
             raise PowlError(
                 PowlRefusal.ATOM_INVOCATION_FAILED,
                 f"atom_invoker raised for atom label={node.label!r}: {exc}",
-                partial_trace=ExecutionTrace(steps=sink.snapshot(), choice_transitions_taken=transitions_taken.value),
+                partial_trace=ExecutionTrace(
+                    steps=sink.snapshot(),
+                    choice_transitions_taken=transitions_taken.value,
+                ),
             ) from exc
         step = ExecutionStep(
-            kind="Atom", label=node.label, consequence=node.consequence, result=result,
+            kind="Atom",
+            label=node.label,
+            consequence=node.consequence,
+            result=result,
             repetition_index=repetition_index,
         )
         sink.append(step, node_key=node_key)
     elif isinstance(node, PartialOrder):
         _walk_partial_order_with_frequency(
-            node, guard_evaluator, atom_invoker, sink, transitions_taken, max_choice_transitions,
-            repeat_evaluator=repeat_evaluator, max_workers=max_workers, arity=arity, context=context,
-            node_key=node_key, is_top_level=is_top_level, top_cursor_holder=top_cursor_holder,
+            node,
+            guard_evaluator,
+            atom_invoker,
+            sink,
+            transitions_taken,
+            max_choice_transitions,
+            repeat_evaluator=repeat_evaluator,
+            max_workers=max_workers,
+            arity=arity,
+            context=context,
+            node_key=node_key,
+            is_top_level=is_top_level,
+            top_cursor_holder=top_cursor_holder,
             resume_cursor=resume_cursor,
         )
     elif isinstance(node, ChoiceGraph):
         _walk_choice_graph_with_frequency(
-            node, guard_evaluator, atom_invoker, sink, transitions_taken, max_choice_transitions,
-            repeat_evaluator=repeat_evaluator, max_workers=max_workers, arity=arity, context=context,
-            node_key=node_key, is_top_level=is_top_level, top_cursor_holder=top_cursor_holder,
+            node,
+            guard_evaluator,
+            atom_invoker,
+            sink,
+            transitions_taken,
+            max_choice_transitions,
+            repeat_evaluator=repeat_evaluator,
+            max_workers=max_workers,
+            arity=arity,
+            context=context,
+            node_key=node_key,
+            is_top_level=is_top_level,
+            top_cursor_holder=top_cursor_holder,
             resume_cursor=resume_cursor,
         )
     else:  # pragma: no cover -- validate_model already refuses any other kind
-        raise PowlError(PowlRefusal.PROHIBITED_NODE_KIND, f"{type(node).__name__} is not executable")
+        raise PowlError(
+            PowlRefusal.PROHIBITED_NODE_KIND, f"{type(node).__name__} is not executable"
+        )
 
 
-def _should_run_repetition(node: PartialOrder | ChoiceGraph, completed: int, repeat_evaluator: "RepeatEvaluator | None") -> bool:
+def _should_run_repetition(
+    node: PartialOrder | ChoiceGraph,
+    completed: int,
+    repeat_evaluator: "RepeatEvaluator | None",
+) -> bool:
     """Decides whether repetition number ``completed`` (0-indexed) should
     run at all -- called *before* every repetition, including the very
     first, so a genuinely zero-repetition composite (``frequency.max == 0``,
@@ -510,29 +584,72 @@ def _should_run_repetition(node: PartialOrder | ChoiceGraph, completed: int, rep
 
 
 def _walk_partial_order_with_frequency(
-    node: PartialOrder, guard_evaluator, atom_invoker, sink, transitions_taken, max_choice_transitions,
-    *, repeat_evaluator, max_workers, arity, context, node_key, is_top_level, top_cursor_holder, resume_cursor,
+    node: PartialOrder,
+    guard_evaluator,
+    atom_invoker,
+    sink,
+    transitions_taken,
+    max_choice_transitions,
+    *,
+    repeat_evaluator,
+    max_workers,
+    arity,
+    context,
+    node_key,
+    is_top_level,
+    top_cursor_holder,
+    resume_cursor,
 ) -> None:
     already_completed: frozenset[int] = frozenset()
-    if is_top_level and resume_cursor is not None and resume_cursor[0] == "partial_order":
+    if (
+        is_top_level
+        and resume_cursor is not None
+        and resume_cursor[0] == "partial_order"
+    ):
         already_completed = frozenset(resume_cursor[1])
 
     completed_repetitions = 0
     while _should_run_repetition(node, completed_repetitions, repeat_evaluator):
         _walk_partial_order_once(
-            node, guard_evaluator, atom_invoker, sink, transitions_taken, max_choice_transitions,
-            repeat_evaluator=repeat_evaluator, max_workers=max_workers, arity=arity, context=context,
-            node_key=node_key, is_top_level=is_top_level, top_cursor_holder=top_cursor_holder,
-            repetition_index=completed_repetitions, skip_indices=already_completed if completed_repetitions == 0 else frozenset(),
+            node,
+            guard_evaluator,
+            atom_invoker,
+            sink,
+            transitions_taken,
+            max_choice_transitions,
+            repeat_evaluator=repeat_evaluator,
+            max_workers=max_workers,
+            arity=arity,
+            context=context,
+            node_key=node_key,
+            is_top_level=is_top_level,
+            top_cursor_holder=top_cursor_holder,
+            repetition_index=completed_repetitions,
+            skip_indices=already_completed
+            if completed_repetitions == 0
+            else frozenset(),
         )
         already_completed = frozenset()
         completed_repetitions += 1
 
 
 def _walk_partial_order_once(
-    node: PartialOrder, guard_evaluator, atom_invoker, sink, transitions_taken, max_choice_transitions,
-    *, repeat_evaluator, max_workers, arity, context, node_key, is_top_level, top_cursor_holder,
-    repetition_index: int, skip_indices: frozenset[int],
+    node: PartialOrder,
+    guard_evaluator,
+    atom_invoker,
+    sink,
+    transitions_taken,
+    max_choice_transitions,
+    *,
+    repeat_evaluator,
+    max_workers,
+    arity,
+    context,
+    node_key,
+    is_top_level,
+    top_cursor_holder,
+    repetition_index: int,
+    skip_indices: frozenset[int],
 ) -> None:
     """Deterministic level-by-level Kahn's-algorithm walk (lowest-index-first
     among ready nodes within a level) over ``node.order``'s real transitive
@@ -554,7 +671,9 @@ def _walk_partial_order_once(
     for i in skip_indices:
         for j in adjacency[i]:
             indegree[j] -= 1
-    ready = sorted(set(ready) | {i for i in range(n) if indegree[i] == 0 and i not in completed})
+    ready = sorted(
+        set(ready) | {i for i in range(n) if indegree[i] == 0 and i not in completed}
+    )
 
     while len(completed) < n:
         level = [i for i in ready if i not in completed]
@@ -566,10 +685,21 @@ def _walk_partial_order_once(
 
         def _run_child(i: int, target_sink: _StepSink) -> None:
             _walk(
-                node.children[i], guard_evaluator, atom_invoker, target_sink, transitions_taken,
-                max_choice_transitions, repeat_evaluator=repeat_evaluator, max_workers=max_workers,
-                arity=arity, context=context, node_key=node_key, is_top_level=False,
-                top_cursor_holder=top_cursor_holder, resume_cursor=None, repetition_index=repetition_index,
+                node.children[i],
+                guard_evaluator,
+                atom_invoker,
+                target_sink,
+                transitions_taken,
+                max_choice_transitions,
+                repeat_evaluator=repeat_evaluator,
+                max_workers=max_workers,
+                arity=arity,
+                context=context,
+                node_key=node_key,
+                is_top_level=False,
+                top_cursor_holder=top_cursor_holder,
+                resume_cursor=None,
+                repetition_index=repetition_index,
             )
 
         if max_workers > 1 and len(level) > 1:
@@ -582,9 +712,16 @@ def _walk_partial_order_once(
             # deterministic sorted-index order -- this is what makes
             # concurrency change *when* work happens without ever changing
             # *what the trace records* or *in what order*.
-            def _run_child_buffered(i: int) -> tuple[list[ExecutionStep], PowlError | None]:
+            def _run_child_buffered(
+                i: int,
+            ) -> tuple[list[ExecutionStep], PowlError | None]:
                 local_steps: list[ExecutionStep] = []
-                local_sink = _StepSink(local_steps, transitions_taken, on_step=None, top_level_cursor_fn=lambda: top_cursor_holder["cursor"])
+                local_sink = _StepSink(
+                    local_steps,
+                    transitions_taken,
+                    on_step=None,
+                    top_level_cursor_fn=lambda: top_cursor_holder["cursor"],
+                )
                 try:
                     _run_child(i, local_sink)
                 except PowlError as exc:
@@ -596,7 +733,9 @@ def _walk_partial_order_once(
                 results = {i: futures[i].result() for i in level}
 
             first_error: PowlError | None = None
-            for i in level:  # deterministic flush order, regardless of real completion order
+            for i in (
+                level
+            ):  # deterministic flush order, regardless of real completion order
                 local_steps, error = results[i]
                 for step in local_steps:
                     sink.append(step, node_key=node_key)
@@ -606,7 +745,10 @@ def _walk_partial_order_once(
                 raise PowlError(
                     first_error.refusal,
                     first_error.detail,
-                    partial_trace=ExecutionTrace(steps=sink.snapshot(), choice_transitions_taken=transitions_taken.value),
+                    partial_trace=ExecutionTrace(
+                        steps=sink.snapshot(),
+                        choice_transitions_taken=transitions_taken.value,
+                    ),
                 ) from first_error.__cause__
         else:
             for i in level:
@@ -624,8 +766,21 @@ def _walk_partial_order_once(
 
 
 def _walk_choice_graph_with_frequency(
-    node: ChoiceGraph, guard_evaluator, atom_invoker, sink, transitions_taken, max_choice_transitions,
-    *, repeat_evaluator, max_workers, arity, context, node_key, is_top_level, top_cursor_holder, resume_cursor,
+    node: ChoiceGraph,
+    guard_evaluator,
+    atom_invoker,
+    sink,
+    transitions_taken,
+    max_choice_transitions,
+    *,
+    repeat_evaluator,
+    max_workers,
+    arity,
+    context,
+    node_key,
+    is_top_level,
+    top_cursor_holder,
+    resume_cursor,
 ) -> None:
     resume_current: int | None = None
     if is_top_level and resume_cursor is not None and resume_cursor[0] == "choice":
@@ -634,28 +789,62 @@ def _walk_choice_graph_with_frequency(
     completed_repetitions = 0
     while _should_run_repetition(node, completed_repetitions, repeat_evaluator):
         _walk_choice_graph_once(
-            node, guard_evaluator, atom_invoker, sink, transitions_taken, max_choice_transitions,
-            arity=arity, context=context, node_key=node_key, is_top_level=is_top_level,
-            top_cursor_holder=top_cursor_holder, repetition_index=completed_repetitions,
+            node,
+            guard_evaluator,
+            atom_invoker,
+            sink,
+            transitions_taken,
+            max_choice_transitions,
+            arity=arity,
+            context=context,
+            node_key=node_key,
+            is_top_level=is_top_level,
+            top_cursor_holder=top_cursor_holder,
+            repetition_index=completed_repetitions,
             resume_current=resume_current if completed_repetitions == 0 else None,
-            repeat_evaluator=repeat_evaluator, max_workers=max_workers,
+            repeat_evaluator=repeat_evaluator,
+            max_workers=max_workers,
         )
         resume_current = None
         completed_repetitions += 1
 
 
 def _walk_choice_graph_once(
-    node: ChoiceGraph, guard_evaluator, atom_invoker, sink, transitions_taken, max_choice_transitions,
-    *, arity, context, node_key, is_top_level, top_cursor_holder, repetition_index: int,
-    resume_current: int | None, repeat_evaluator, max_workers,
+    node: ChoiceGraph,
+    guard_evaluator,
+    atom_invoker,
+    sink,
+    transitions_taken,
+    max_choice_transitions,
+    *,
+    arity,
+    context,
+    node_key,
+    is_top_level,
+    top_cursor_holder,
+    repetition_index: int,
+    resume_current: int | None,
+    repeat_evaluator,
+    max_workers,
 ) -> None:
     current = resume_current if resume_current is not None else node.start
     if resume_current is None:
         _walk(
-            node.children[current], guard_evaluator, atom_invoker, sink, transitions_taken,
-            max_choice_transitions, repeat_evaluator=repeat_evaluator, max_workers=max_workers,
-            arity=arity, context=context, node_key=node_key, is_top_level=False,
-            top_cursor_holder=top_cursor_holder, resume_cursor=None, repetition_index=repetition_index,
+            node.children[current],
+            guard_evaluator,
+            atom_invoker,
+            sink,
+            transitions_taken,
+            max_choice_transitions,
+            repeat_evaluator=repeat_evaluator,
+            max_workers=max_workers,
+            arity=arity,
+            context=context,
+            node_key=node_key,
+            is_top_level=False,
+            top_cursor_holder=top_cursor_holder,
+            resume_cursor=None,
+            repetition_index=repetition_index,
         )
     if is_top_level:
         top_cursor_holder["cursor"] = ("choice", current)
@@ -674,7 +863,13 @@ def _walk_choice_graph_once(
             if edge.guard is None:
                 else_edge = edge
                 continue
-            if _invoke_guard(guard_evaluator, edge.guard.predicate_name, edge.guard.predicate_args, arity, context):
+            if _invoke_guard(
+                guard_evaluator,
+                edge.guard.predicate_name,
+                edge.guard.predicate_args,
+                arity,
+                context,
+            ):
                 chosen = edge
                 break
         if chosen is None:
@@ -690,8 +885,19 @@ def _walk_choice_graph_once(
         if is_top_level:
             top_cursor_holder["cursor"] = ("choice", current)
         _walk(
-            node.children[current], guard_evaluator, atom_invoker, sink, transitions_taken,
-            max_choice_transitions, repeat_evaluator=repeat_evaluator, max_workers=max_workers,
-            arity=arity, context=context, node_key=node_key, is_top_level=False,
-            top_cursor_holder=top_cursor_holder, resume_cursor=None, repetition_index=repetition_index,
+            node.children[current],
+            guard_evaluator,
+            atom_invoker,
+            sink,
+            transitions_taken,
+            max_choice_transitions,
+            repeat_evaluator=repeat_evaluator,
+            max_workers=max_workers,
+            arity=arity,
+            context=context,
+            node_key=node_key,
+            is_top_level=False,
+            top_cursor_holder=top_cursor_holder,
+            resume_cursor=None,
+            repetition_index=repetition_index,
         )

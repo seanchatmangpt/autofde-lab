@@ -65,7 +65,10 @@ def try_solver(build_and_solve_fn: Callable[[], Any], timeout_seconds: int) -> d
                 kind, payload = parent_conn.recv()
             except EOFError:
                 # child died without sending a result (e.g. killed by OS OOM)
-                outcome = {"status": "error", "error": "child process closed connection without a result"}
+                outcome = {
+                    "status": "error",
+                    "error": "child process closed connection without a result",
+                }
                 got_result = True
                 break
             if kind == "success":

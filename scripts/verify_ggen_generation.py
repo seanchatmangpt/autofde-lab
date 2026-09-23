@@ -66,9 +66,17 @@ import tomllib
 from pathlib import Path
 
 try:
-    from rdflib import Graph, Namespace, RDF, RDFS
+    from rdflib import RDF, RDFS, Graph, Namespace
 except ModuleNotFoundError as exc:  # pragma: no cover - environment gate
-    print(json.dumps({"standing": "UNSUPPORTED", "reason": "rdflib is required", "error": str(exc)}))
+    print(
+        json.dumps(
+            {
+                "standing": "UNSUPPORTED",
+                "reason": "rdflib is required",
+                "error": str(exc),
+            }
+        )
+    )
     raise SystemExit(3)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -78,16 +86,35 @@ AFL = Namespace("urn:autofde-lab:")
 GGEN_TOML = REPO_ROOT / "ggen.toml"
 
 K8S_TAXONOMY_TTL = REPO_ROOT / "ontology" / "k8s-fault-taxonomy.ttl"
-K8S_UNIVERSES_PY = REPO_ROOT / "src" / "autofde_lab" / "reasoning" / "universes" / "k8s_fault_universes.py"
+K8S_UNIVERSES_PY = (
+    REPO_ROOT
+    / "src"
+    / "autofde_lab"
+    / "reasoning"
+    / "universes"
+    / "k8s_fault_universes.py"
+)
 K8S_AXES = ("Component", "FailureMode", "AppTopology", "Severity")
 
 WORLD_TRANSFORMATION_TTL = REPO_ROOT / "ontology" / "world-transformation-taxonomy.ttl"
 WORLD_TRANSFORMATION_PY = (
-    REPO_ROOT / "src" / "autofde_lab" / "reasoning" / "scenarios" / "world_transformation_scenarios.py"
+    REPO_ROOT
+    / "src"
+    / "autofde_lab"
+    / "reasoning"
+    / "scenarios"
+    / "world_transformation_scenarios.py"
 )
 
 CONSTITUTION_FILES = (
-    "lab", "world", "planning", "process", "authority", "evidence", "standing", "interop",
+    "lab",
+    "world",
+    "planning",
+    "process",
+    "authority",
+    "evidence",
+    "standing",
+    "interop",
 )
 
 
@@ -114,7 +141,9 @@ def _verify_k8s_fault_universes() -> dict:
 
     actual_universe_count = _count_k8s_universe_functions(K8S_UNIVERSES_PY)
 
-    ok = expected_universe_count == actual_universe_count and all(c > 0 for c in axis_counts.values())
+    ok = expected_universe_count == actual_universe_count and all(
+        c > 0 for c in axis_counts.values()
+    )
     return {
         "check": "k8s-fault-universes",
         "axis_counts": axis_counts,
@@ -138,7 +167,9 @@ def _verify_world_transformation_scenarios() -> dict:
     expected_scenario_count = len(scenarios)
     actual_scenario_count = _count_scenario_functions(WORLD_TRANSFORMATION_PY)
 
-    ok = expected_scenario_count == actual_scenario_count and expected_scenario_count > 0
+    ok = (
+        expected_scenario_count == actual_scenario_count and expected_scenario_count > 0
+    )
     return {
         "check": "world-transformation-scenarios",
         "expected_scenario_count": expected_scenario_count,
@@ -177,11 +208,17 @@ def _load_merged_ontology_graph() -> Graph:
     return graph
 
 
-def _verify_dataclass_projection(*, check_name: str, graph: Graph, ontology_name: str, py_path: Path) -> dict:
+def _verify_dataclass_projection(
+    *, check_name: str, graph: Graph, ontology_name: str, py_path: Path
+) -> dict:
     ontology_iri = AFL[f"ontology:{ontology_name}"]
     owl_class = Namespace("http://www.w3.org/2002/07/owl#")["Class"]
 
-    all_classes = {s for s, _, _ in graph.triples((None, RDF.type, owl_class)) if (s, RDFS.isDefinedBy, ontology_iri) in graph}
+    all_classes = {
+        s
+        for s, _, _ in graph.triples((None, RDF.type, owl_class))
+        if (s, RDFS.isDefinedBy, ontology_iri) in graph
+    }
 
     # A class that owns real SKOS-vocabulary individuals (any real
     # `?individual a ?class`, individual != class) projects as an Enum
@@ -229,7 +266,11 @@ def _verify_gymact_certification(graph: Graph) -> dict:
         check_name="gymact-certification",
         graph=graph,
         ontology_name="gymact-certification",
-        py_path=REPO_ROOT / "src" / "autofde_lab" / "reasoning" / "gymact_certification_types.py",
+        py_path=REPO_ROOT
+        / "src"
+        / "autofde_lab"
+        / "reasoning"
+        / "gymact_certification_types.py",
     )
 
 
@@ -242,7 +283,9 @@ def main() -> int:
         _verify_togaf_artifacts(merged_graph),
         _verify_gymact_certification(merged_graph),
     ]
-    results.extend(_verify_constitution_file(name, merged_graph) for name in CONSTITUTION_FILES)
+    results.extend(
+        _verify_constitution_file(name, merged_graph) for name in CONSTITUTION_FILES
+    )
 
     all_match = all(r["match"] for r in results)
     receipt = {

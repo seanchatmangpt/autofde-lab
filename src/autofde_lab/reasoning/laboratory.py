@@ -148,7 +148,9 @@ class ProcessScienceProvider(Protocol):
     satisfy -- this repo defines the shape, never the algorithms
     (section 6, 21). A real implementation lives outside this repo."""
 
-    def request_process_observation(self, observation: EnterpriseObservation) -> ProcessObservation: ...
+    def request_process_observation(
+        self, observation: EnterpriseObservation
+    ) -> ProcessObservation: ...
 
 
 class UnsupportedProcessScienceProvider:
@@ -157,7 +159,9 @@ class UnsupportedProcessScienceProvider:
     `evidence_standing="UNSUPPORTED"` -- never a fabricated discovery
     result, per `absence-is-not-evidence.md`."""
 
-    def request_process_observation(self, observation: EnterpriseObservation) -> ProcessObservation:
+    def request_process_observation(
+        self, observation: EnterpriseObservation
+    ) -> ProcessObservation:
         return ProcessObservation(evidence_standing="UNSUPPORTED")
 
 
@@ -195,7 +199,9 @@ def infer_desired_state_hypotheses(
     second, real hypothesis when a real (non-`UNSUPPORTED`)
     `process_observation` is available -- never fabricates a second
     hypothesis out of nothing."""
-    from autofde_lab.reasoning.world_transformation_orchestrator import infer_desired_state
+    from autofde_lab.reasoning.world_transformation_orchestrator import (
+        infer_desired_state,
+    )
 
     envelope = infer_desired_state(metadata)
     rule_based = DesiredStateHypothesis(
@@ -210,13 +216,19 @@ def infer_desired_state_hypotheses(
     )
     hypotheses = [rule_based]
 
-    if process_observation is not None and process_observation.evidence_standing not in ("UNSUPPORTED", "UNKNOWN"):
+    if (
+        process_observation is not None
+        and process_observation.evidence_standing not in ("UNSUPPORTED", "UNKNOWN")
+    ):
         hypotheses.append(
             DesiredStateHypothesis(
                 hypothesis_id="process-informed-v1",
                 targets=envelope.targets,
-                evidence_used_refs=tuple(metadata.observations.keys()) + process_observation.performance_metric_refs,
-                assumptions=("process observation evidence_standing was real, not UNSUPPORTED",),
+                evidence_used_refs=tuple(metadata.observations.keys())
+                + process_observation.performance_metric_refs,
+                assumptions=(
+                    "process observation evidence_standing was real, not UNSUPPORTED",
+                ),
                 objective_coverage=tuple(t["kind"] for t in envelope.targets),
                 constraint_interpretation="informed by real process observation",
                 process_observation_ref=process_observation.computation_receipt_ref,
@@ -290,7 +302,9 @@ _PROBLEM_SHAPE_TO_OPERATOR: dict[str, str] = {
 }
 
 
-def classify_operator_applicability(problem_shape_signals: tuple[str, ...]) -> tuple[OperatorApplicability, ...]:
+def classify_operator_applicability(
+    problem_shape_signals: tuple[str, ...],
+) -> tuple[OperatorApplicability, ...]:
     """Real, deterministic classification -- never "run all operators."
     A signal not present in `_PROBLEM_SHAPE_TO_OPERATOR` is real evidence
     of nothing, not evidence of applicability."""
@@ -366,7 +380,9 @@ class UnsupportedWorldExperimentProvider:
     typed `standing="UNSUPPORTED"` -- never a fabricated consequence."""
 
     def submit_experiment(self, intent: ExperimentIntent) -> ExperimentReceipt:
-        return ExperimentReceipt(intent_id=intent.intent_id, observed_outcome_refs=(), standing="UNSUPPORTED")
+        return ExperimentReceipt(
+            intent_id=intent.intent_id, observed_outcome_refs=(), standing="UNSUPPORTED"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -407,7 +423,9 @@ def falsify_candidate(
             rationale="no real ExperimentReceipt exists yet for this candidate",
         )
 
-    usable_receipts = [r for r in receipts if r.standing not in ("UNSUPPORTED", "UNKNOWN")]
+    usable_receipts = [
+        r for r in receipts if r.standing not in ("UNSUPPORTED", "UNKNOWN")
+    ]
     if not usable_receipts:
         return FalsificationResult(
             candidate_id=candidate.candidate_id,
@@ -427,7 +445,11 @@ def falsify_candidate(
         )
 
     all_confirmed = all(r.postconditions_observed for r in usable_receipts)
-    standing = FalsificationStanding.SURVIVES if all_confirmed else FalsificationStanding.PARTIAL
+    standing = (
+        FalsificationStanding.SURVIVES
+        if all_confirmed
+        else FalsificationStanding.PARTIAL
+    )
     return FalsificationResult(
         candidate_id=candidate.candidate_id,
         standing=standing,
@@ -441,7 +463,7 @@ def falsify_candidate(
 
 
 def admit_surviving_candidates(
-    results: tuple[FalsificationResult, ...]
+    results: tuple[FalsificationResult, ...],
 ) -> tuple[FalsificationResult, ...]:
     """Real, explicit admission: only `SURVIVES` results are admitted.
     `PARTIAL`/`UNSUPPORTED`/`UNKNOWN`/`REFUSED` never silently pass."""
@@ -494,7 +516,9 @@ class TRIZParameter(StrEnum):
 # own coarse re-mapping, not Altshuller's original 39. Every other
 # (improving, worsening) pair is absent by construction and MUST be
 # classified UNSUPPORTED, never guessed.
-_CONTRADICTION_MATRIX: dict[tuple["TRIZParameter", "TRIZParameter"], tuple[int, ...]] = {
+_CONTRADICTION_MATRIX: dict[
+    tuple["TRIZParameter", "TRIZParameter"], tuple[int, ...]
+] = {
     (TRIZParameter.COST, TRIZParameter.AUTHORITY_NEEDS): (1, 10, 28, 35),
     # 1  Segmentation
     # 10 Prior action
@@ -540,7 +564,9 @@ class TRIZResolutionApplicability:
     reason: str = ""
 
 
-def classify_triz_contradiction(contradiction: TRIZContradiction) -> TRIZResolutionApplicability:
+def classify_triz_contradiction(
+    contradiction: TRIZContradiction,
+) -> TRIZResolutionApplicability:
     """Real, deterministic lookup against the partial matrix -- reuses the
     same ADMITTED/UNSUPPORTED vocabulary as `classify_operator_applicability`
     rather than inventing a parallel one."""
@@ -596,8 +622,13 @@ def generate_triz_candidates(
                 ArchitectureCandidate(
                     candidate_id=candidate_id,
                     target_state_assertions=assertions,
-                    assumptions=(f"TRIZ principle {principle}: {prescription}", *hypothesis.assumptions),
-                    migration_actions=(f"apply TRIZ principle {principle}: {prescription}",),
+                    assumptions=(
+                        f"TRIZ principle {principle}: {prescription}",
+                        *hypothesis.assumptions,
+                    ),
+                    migration_actions=(
+                        f"apply TRIZ principle {principle}: {prescription}",
+                    ),
                     provenance="triz-v1",
                     generator_identity="triz-contradiction-matrix-partial",
                 )
@@ -661,7 +692,11 @@ def generate_full_factorial_design(
                 DOEDesignPoint(
                     run_id=run_id,
                     levels=(
-                        DOELevel(factor=DOEFactor.COST_BOUND, level_id=cost_id, cost_value=cost_value),
+                        DOELevel(
+                            factor=DOEFactor.COST_BOUND,
+                            level_id=cost_id,
+                            cost_value=cost_value,
+                        ),
                         DOELevel(
                             factor=DOEFactor.AUTHORITY_NEEDS,
                             level_id=authority_id,
@@ -770,7 +805,9 @@ class MonteCarloCostModel:
             if self.mode is None:
                 raise ValueError("TRIANGULAR distribution requires a real mode value")
             if not (self.low <= self.mode <= self.high):
-                raise ValueError(f"mode ({self.mode}) must lie within [low, high] = [{self.low}, {self.high}]")
+                raise ValueError(
+                    f"mode ({self.mode}) must lie within [low, high] = [{self.low}, {self.high}]"
+                )
 
     def sample(self, rng: random.Random) -> float:
         """One real draw from the real, named distribution, using the
@@ -816,7 +853,10 @@ def draw_monte_carlo_samples(
     if n <= 0:
         raise ValueError(f"n must be >= 1, got {n}")
     rng = random.Random(seed)
-    return tuple(MonteCarloSample(draw_index=i, cost_bound=cost_model.sample(rng)) for i in range(n))
+    return tuple(
+        MonteCarloSample(draw_index=i, cost_bound=cost_model.sample(rng))
+        for i in range(n)
+    )
 
 
 def _mean_std(values: tuple[float, ...]) -> tuple[float, float]:
@@ -863,7 +903,9 @@ def generate_montecarlo_candidates(
     candidates: list[ArchitectureCandidate] = []
     for hypothesis in hypotheses:
         for sample in samples:
-            candidate_id = _digest(hypothesis.hypothesis_id, "montecarlo-v1", sample.sample_id)
+            candidate_id = _digest(
+                hypothesis.hypothesis_id, "montecarlo-v1", sample.sample_id
+            )
             assertions = tuple(str(t) for t in hypothesis.targets)
             candidates.append(
                 ArchitectureCandidate(

@@ -34,52 +34,91 @@ from autofde_lab.ocel.mcp_session import append_tool_call_event
 from autofde_lab.ocel.model import OcelAttribute, OcelAttributeValue, OcelObject
 from autofde_lab.ocel.sqlite_store import to_sqlite
 from autofde_lab.planner_league import PayoffHypergraph, PlannerLeague
-from autofde_lab.planner_league.cross_play_world_schedule import schedule_cross_play_for_world
+from autofde_lab.planner_league.cross_play_world_schedule import (
+    schedule_cross_play_for_world,
+)
 from autofde_lab.planner_league.psro import PolicySpaceResponseOracle, PsroState
-from autofde_lab.planner_league.psro_trajectory import dominant_response, run_psro_trajectory
-from autofde_lab.reasoning.cross_play_schedule_payoff import admit_cross_play_schedule_payoffs
+from autofde_lab.planner_league.psro_trajectory import (
+    dominant_response,
+    run_psro_trajectory,
+)
+from autofde_lab.reasoning.cross_play_schedule_payoff import (
+    admit_cross_play_schedule_payoffs,
+)
 from autofde_lab.reasoning.exploration_psro_loop import ExplorationPsroRoundOutcome
-from autofde_lab.reasoning.laboratory import EnterpriseObservation, TRIZContradiction, TRIZParameter
-from autofde_lab.reasoning.laboratory import generate_triz_candidates
-from autofde_lab.reasoning.psro_informed_exploration_round import run_psro_informed_next_round
+from autofde_lab.reasoning.laboratory import (
+    EnterpriseObservation,
+    TRIZContradiction,
+    TRIZParameter,
+    generate_triz_candidates,
+)
+from autofde_lab.reasoning.psro_informed_exploration_round import (
+    run_psro_informed_next_round,
+)
 
 
 def _real_converged_trajectory():
     league = PlannerLeague()
     schedule = schedule_cross_play_for_world(
-        league, "cyber_incident", left_role_id="plan_constructor", right_role_id="plan_falsifier"
+        league,
+        "cyber_incident",
+        left_role_id="plan_constructor",
+        right_role_id="plan_falsifier",
     )
     domain = BreachClockDomain()
     hypergraph = PayoffHypergraph()
     admit_cross_play_schedule_payoffs(schedule, domain, hypergraph=hypergraph, limit=6)
     oracle = PolicySpaceResponseOracle(
-        hypergraph, role_id="plan_constructor", opponent_role_id="plan_falsifier", world_id="cyber_incident"
+        hypergraph,
+        role_id="plan_constructor",
+        opponent_role_id="plan_falsifier",
+        world_id="cyber_incident",
     )
     initial_state = PsroState.seed(("Astar", "BFWS"))
-    return run_psro_trajectory(oracle, initial_state, candidates=("AOstar", "Astar"), max_rounds=4)
+    return run_psro_trajectory(
+        oracle, initial_state, candidates=("AOstar", "Astar"), max_rounds=4
+    )
 
 
 def _build_real_log() -> OcelLog:
     log = OcelLog.new(
         objects=[
             OcelObject(
-                "session-1", "MCPSession",
-                (OcelAttribute("server", OcelAttributeValue.string("scikit-decide-fabric")),),
+                "session-1",
+                "MCPSession",
+                (
+                    OcelAttribute(
+                        "server", OcelAttributeValue.string("scikit-decide-fabric")
+                    ),
+                ),
             ),
-            OcelObject("domain-Maze", "Domain", (OcelAttribute("name", OcelAttributeValue.string("Maze")),)),
             OcelObject(
-                "domain-MasterMind", "Domain",
+                "domain-Maze",
+                "Domain",
+                (OcelAttribute("name", OcelAttributeValue.string("Maze")),),
+            ),
+            OcelObject(
+                "domain-MasterMind",
+                "Domain",
                 (OcelAttribute("name", OcelAttributeValue.string("MasterMind")),),
             ),
         ]
     )
     log = append_tool_call_event(
-        log, event_id="m0", activity="decision_match", object_ids=["session-1", "domain-Maze"],
-        outcome={"standing": "MATCHED", "compatible_solvers": ["Astar", "MCTS"]}, timestamp_ns=0,
+        log,
+        event_id="m0",
+        activity="decision_match",
+        object_ids=["session-1", "domain-Maze"],
+        outcome={"standing": "MATCHED", "compatible_solvers": ["Astar", "MCTS"]},
+        timestamp_ns=0,
     )
     log = append_tool_call_event(
-        log, event_id="m1", activity="decision_match", object_ids=["session-1", "domain-Maze"],
-        outcome={"standing": "MATCHED", "compatible_solvers": ["MCTS", "Astar"]}, timestamp_ns=1_000,
+        log,
+        event_id="m1",
+        activity="decision_match",
+        object_ids=["session-1", "domain-Maze"],
+        outcome={"standing": "MATCHED", "compatible_solvers": ["MCTS", "Astar"]},
+        timestamp_ns=1_000,
     )
     return log
 
@@ -102,10 +141,13 @@ def test_dominant_response_flows_unmodified_into_a_real_next_round(tmp_path) -> 
 
     metadata = ScenarioMetadata_checkout_latency_scenario_v_1()
     observation = EnterpriseObservation(
-        ontology_graph_ref="ontology:psro-informed-test", source_provenance_ref="test", enterprise_world_ref="test-world"
+        ontology_graph_ref="ontology:psro-informed-test",
+        source_provenance_ref="test",
+        enterprise_world_ref="test-world",
     )
     contradiction = TRIZContradiction(
-        improving_parameter=TRIZParameter.COST, worsening_parameter=TRIZParameter.AUTHORITY_NEEDS
+        improving_parameter=TRIZParameter.COST,
+        worsening_parameter=TRIZParameter.AUTHORITY_NEEDS,
     )
 
     result = run_psro_informed_next_round(
@@ -125,7 +167,9 @@ def test_dominant_response_flows_unmodified_into_a_real_next_round(tmp_path) -> 
     # The derived falsifier is the real trajectory's own dominant
     # response, never a hardcoded string.
     assert all(
-        o.observation.match.right_policy.planner_id == "Astar" for o in result.admissions if o.observation
+        o.observation.match.right_policy.planner_id == "Astar"
+        for o in result.admissions
+        if o.observation
     )
     for obs in result.hypergraph.observations:
         assert obs.left_score == 0.0

@@ -53,7 +53,12 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass
 
-from autofde_lab.planner_league import LeagueMatch, PayoffHypergraph, PayoffObservation, PolicySpec
+from autofde_lab.planner_league import (
+    LeagueMatch,
+    PayoffHypergraph,
+    PayoffObservation,
+    PolicySpec,
+)
 from autofde_lab.planner_league.catalog import NOVELTY_ORACLES
 
 from .dflss_planner_solve import PlannerSolveOutcome, attempt_solve_dflss_curriculum
@@ -113,12 +118,18 @@ def admit_dflss_solve_payoff(
     """
     for planner_id in (left_planner_id, right_planner_id):
         if planner_id in NOVELTY_ORACLES:
-            refusal = PlannerSolveOutcome(planner_id, "REFUSED", "REFUSED:LLM_NOVELTY_BOUNDARY")
+            refusal = PlannerSolveOutcome(
+                planner_id, "REFUSED", "REFUSED:LLM_NOVELTY_BOUNDARY"
+            )
             return DflssSolvePayoffOutcome(
-                left_outcome=refusal if planner_id == left_planner_id else PlannerSolveOutcome(
+                left_outcome=refusal
+                if planner_id == left_planner_id
+                else PlannerSolveOutcome(
                     left_planner_id, "REFUSED", "REFUSED:LLM_NOVELTY_BOUNDARY:PEER"
                 ),
-                right_outcome=refusal if planner_id == right_planner_id else PlannerSolveOutcome(
+                right_outcome=refusal
+                if planner_id == right_planner_id
+                else PlannerSolveOutcome(
                     right_planner_id, "REFUSED", "REFUSED:LLM_NOVELTY_BOUNDARY:PEER"
                 ),
                 observation=None,
@@ -129,7 +140,10 @@ def admit_dflss_solve_payoff(
     left_outcome = attempt_solve_dflss_curriculum(left_planner_id)
     right_outcome = attempt_solve_dflss_curriculum(right_planner_id)
 
-    for planner_id, outcome in ((left_planner_id, left_outcome), (right_planner_id, right_outcome)):
+    for planner_id, outcome in (
+        (left_planner_id, left_outcome),
+        (right_planner_id, right_outcome),
+    ):
         if outcome.reason.startswith("REFUSED:UNKNOWN_PLANNER"):
             return DflssSolvePayoffOutcome(
                 left_outcome=left_outcome,
@@ -179,7 +193,9 @@ def admit_dflss_solve_payoff(
     left_score = _outcome_score(left_outcome)
     right_score = _outcome_score(right_outcome)
     try:
-        observation = PayoffObservation(match, left_score, right_score, receipt_id=receipt_id)
+        observation = PayoffObservation(
+            match, left_score, right_score, receipt_id=receipt_id
+        )
     except ValueError as exc:
         # Defensive only -- receipt_id is always real and non-empty above.
         return DflssSolvePayoffOutcome(

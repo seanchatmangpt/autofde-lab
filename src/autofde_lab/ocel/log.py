@@ -65,21 +65,21 @@ from typing import Any, Iterable, Mapping, Sequence
 from autofde_lab.fabric.canonical import canonical_json
 from autofde_lab.ocel.model import (
     OCEL,
-    OcelValueKind,
     EventObjectLink,
-    OCELEvent,
-    OCELEventAttribute,
-    OCELObject,
-    OCELObjectAttribute,
-    OCELRelationship,
-    OCELType,
-    OCELTypeAttribute,
     ObjectChange,
     ObjectObjectLink,
     OcelAttribute,
     OcelAttributeValue,
+    OCELEvent,
     OcelEvent,
+    OCELEventAttribute,
+    OCELObject,
     OcelObject,
+    OCELObjectAttribute,
+    OCELRelationship,
+    OCELType,
+    OCELTypeAttribute,
+    OcelValueKind,
     format_ns,
     parse_ns,
 )
@@ -193,7 +193,9 @@ class OcelLog:
         responsibility that the objects already exist (:meth:`with_objects`),
         which :meth:`validate` then checks.
         """
-        event = OcelEvent(event_id, activity, int(timestamp_ns), _as_attributes(attributes))
+        event = OcelEvent(
+            event_id, activity, int(timestamp_ns), _as_attributes(attributes)
+        )
         links = tuple(_as_link(event_id, spec) for spec in objects)
         return replace(
             self,
@@ -480,9 +482,7 @@ class OcelLog:
             return tuple(
                 OCELType(
                     name,
-                    tuple(
-                        OCELTypeAttribute(k, v) for k, v in sorted(attrs.items())
-                    ),
+                    tuple(OCELTypeAttribute(k, v) for k, v in sorted(attrs.items())),
                 )
                 for name, attrs in table.items()
             )
@@ -501,7 +501,9 @@ class OcelLog:
         def _type_json(t: OCELType) -> dict[str, Any]:
             return {
                 "name": t.name,
-                "attributes": [{"name": a.name, "type": a.value_type} for a in t.attributes],
+                "attributes": [
+                    {"name": a.name, "type": a.value_type} for a in t.attributes
+                ],
             }
 
         return {
@@ -513,7 +515,8 @@ class OcelLog:
                     "type": e.event_type,
                     "time": format_ns(e.time_ns),
                     "attributes": [
-                        {"name": a.name, "value": a.value.to_json()} for a in e.attributes
+                        {"name": a.name, "value": a.value.to_json()}
+                        for a in e.attributes
                     ],
                     "relationships": [
                         {"objectId": r.object_id, "qualifier": r.qualifier}
@@ -581,7 +584,9 @@ class OcelLog:
             )
             for rel in raw.get("relationships") or ():
                 e2o.append(
-                    EventObjectLink(raw["id"], rel["objectId"], rel.get("qualifier") or None)
+                    EventObjectLink(
+                        raw["id"], rel["objectId"], rel.get("qualifier") or None
+                    )
                 )
 
         objects: list[OcelObject] = []
@@ -602,7 +607,9 @@ class OcelLog:
             objects.append(OcelObject(raw["id"], otype, tuple(static)))
             for rel in raw.get("relationships") or ():
                 o2o.append(
-                    ObjectObjectLink(raw["id"], rel["objectId"], rel.get("qualifier") or None)
+                    ObjectObjectLink(
+                        raw["id"], rel["objectId"], rel.get("qualifier") or None
+                    )
                 )
 
         return cls.new(objects, events, e2o, o2o, changes)

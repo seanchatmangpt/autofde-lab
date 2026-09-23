@@ -20,6 +20,7 @@ misleading.
 Usage:
     python scripts/throughput_benchmark.py
 """
+
 from __future__ import annotations
 
 import json
@@ -40,7 +41,9 @@ def _percentile(sorted_values: list[float], pct: float) -> float:
     """Nearest-rank percentile over an already-sorted list."""
     if not sorted_values:
         return float("nan")
-    k = max(0, min(len(sorted_values) - 1, int(round(pct / 100 * (len(sorted_values) - 1)))))
+    k = max(
+        0, min(len(sorted_values) - 1, int(round(pct / 100 * (len(sorted_values) - 1))))
+    )
     return sorted_values[k]
 
 

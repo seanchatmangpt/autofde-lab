@@ -32,7 +32,7 @@ silently-unloadable solver cannot simply vanish from the tally.
 from __future__ import annotations
 
 import importlib.metadata
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 SKD = "urn:skdecide:capability:"
@@ -300,7 +300,9 @@ def collect_capabilities() -> List[Capability]:
     return capabilities
 
 
-def capabilities_of_kind(capabilities: List[Capability], kind: str) -> Dict[str, Capability]:
+def capabilities_of_kind(
+    capabilities: List[Capability], kind: str
+) -> Dict[str, Capability]:
     """Index ``capabilities`` of one kind by identifier."""
     return {c.identifier: c for c in capabilities if c.kind == kind}
 
@@ -326,12 +328,7 @@ def parse_kinds(text: str) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
 
 
 def _literal(text: str) -> str:
-    escaped = (
-        str(text)
-        .replace("\\", "\\\\")
-        .replace('"', '\\"')
-        .replace("\n", "\\n")
-    )
+    escaped = str(text).replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
     return f'"{escaped}"'
 
 
@@ -356,9 +353,7 @@ def emit_turtle(capabilities: List[Capability]) -> str:
         out.append(f"    skdt:standing {_literal(capability.standing)} ;")
         out.append(f"    skdt:evidence {_literal(capability.evidence)} ;")
         if capability.owning_module:
-            out.append(
-                f"    skdt:owningModule {_literal(capability.owning_module)} ;"
-            )
+            out.append(f"    skdt:owningModule {_literal(capability.owning_module)} ;")
         if capability.extras:
             out.append(f"    skdt:extrasMarker {_literal(capability.extras)} ;")
         for requirement in capability.requirements:
@@ -370,8 +365,7 @@ def emit_turtle(capabilities: List[Capability]) -> str:
         if capability.claim_ceiling:
             out.append(f"    skdt:claimCeiling {_literal(capability.claim_ceiling)} ;")
         out.append(
-            f"    skdt:capabilityCount "
-            f'"{len(capability.requirements)}"^^xsd:integer .'
+            f'    skdt:capabilityCount "{len(capability.requirements)}"^^xsd:integer .'
         )
         out.append("")
 
@@ -405,9 +399,7 @@ class TurtleParseError(ValueError):
     """Raised by :func:`parse_turtle` in ``strict`` mode on a malformed input."""
 
 
-def parse_turtle(
-    text: str, strict: bool = False
-) -> Dict[str, Dict[str, List[str]]]:
+def parse_turtle(text: str, strict: bool = False) -> Dict[str, Dict[str, List[str]]]:
     """Parse the Turtle subset this module emits.
 
     Deliberately a *subset* reader, not a general Turtle parser: `rdflib` is
@@ -508,9 +500,9 @@ def parse_turtle(
             value = obj.strip("<>")
         else:
             value = expand(obj)
-        graph[subject].setdefault(expand(predicate) if strict else predicate, []).append(
-            value
-        )
+        graph[subject].setdefault(
+            expand(predicate) if strict else predicate, []
+        ).append(value)
 
         if strict and terminal:
             # (c) the block really is closed.
@@ -530,7 +522,9 @@ def generate(output_path: str) -> List[Capability]:
 if __name__ == "__main__":
     import sys
 
-    target = sys.argv[1] if len(sys.argv) > 1 else "ontology/autofde-lab-capabilities.ttl"
+    target = (
+        sys.argv[1] if len(sys.argv) > 1 else "ontology/autofde-lab-capabilities.ttl"
+    )
     caps = generate(target)
     alive = sum(1 for c in caps if c.standing == STANDING_ALIVE)
     print(f"generated {target}: {len(caps)} capabilities, {alive} ALIVE")

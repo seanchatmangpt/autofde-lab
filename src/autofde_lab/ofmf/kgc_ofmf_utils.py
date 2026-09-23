@@ -22,24 +22,32 @@ This file intentionally contains utilities only.
 
 from __future__ import annotations
 
-import io
 import os
 import re
-import sys
-import json
-import time
 import shutil
-import tempfile
-import pathlib
 import subprocess
+import sys
+import tempfile
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Sequence, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 # -----------------------------
 # Exceptions (fail hard)
 # -----------------------------
+
 
 class OFMFError(RuntimeError):
     pass
@@ -73,6 +81,7 @@ class DeterminismError(OFMFError):
 # Hard dependencies (fail hard)
 # -----------------------------
 
+
 def require_module(modname: str, install_hint: str = "") -> Any:
     """
     Import-or-die. No graceful degradation.
@@ -82,19 +91,23 @@ def require_module(modname: str, install_hint: str = "") -> Any:
         return sys.modules[modname]
     except Exception as e:
         hint = f" Install: {install_hint}" if install_hint else ""
-        raise DependencyError(f"Missing required dependency: {modname}.{hint} Error: {e}") from e
+        raise DependencyError(
+            f"Missing required dependency: {modname}.{hint} Error: {e}"
+        ) from e
 
 
 def require_executable(exe: str, install_hint: str = "") -> None:
     """
     Executable-or-die (for external engines).
-    
+
     For automated installation, run:
         uv run python scripts/install-external-executables.py
     """
     if shutil.which(exe) is None:
         hint = f" Install: {install_hint}" if install_hint else ""
-        script_hint = "\n  Or run: uv run python scripts/install-external-executables.py"
+        script_hint = (
+            "\n  Or run: uv run python scripts/install-external-executables.py"
+        )
         raise DependencyError(f"Missing required executable: {exe}.{hint}{script_hint}")
 
 
@@ -104,8 +117,9 @@ pyld = require_module("pyld", "uv add pyld")
 blake3_mod = require_module("blake3", "uv add blake3")
 pyshacl = require_module("pyshacl", "uv add pyshacl")
 
-from rdflib import Graph, Dataset, URIRef, BNode, Literal, Namespace
-from rdflib.namespace import RDF, RDFS, XSD, DCTERMS
+from rdflib import BNode, Dataset, Graph, Literal, Namespace, URIRef
+from rdflib.namespace import RDF, XSD
+
 jsonld = pyld.jsonld
 blake3 = blake3_mod.blake3
 validate_shacl = pyshacl.validate
@@ -124,6 +138,7 @@ KGC = Namespace("http://unrdf.io/ontology/kgc#")
 # Time helpers
 # -----------------------------
 
+
 def now_ns() -> int:
     return time.time_ns()
 
@@ -135,6 +150,7 @@ def now_utc_iso() -> str:
 # -----------------------------
 # File I/O (atomic where possible)
 # -----------------------------
+
 
 def ensure_dir(path: Union[str, Path]) -> Path:
     p = Path(path)
@@ -176,7 +192,9 @@ def write_bytes_atomic(path: Union[str, Path], data: bytes) -> Path:
     return dst
 
 
-def write_text_atomic(path: Union[str, Path], text: str, encoding: str = "utf-8") -> Path:
+def write_text_atomic(
+    path: Union[str, Path], text: str, encoding: str = "utf-8"
+) -> Path:
     return write_bytes_atomic(path, text.encode(encoding))
 
 
@@ -223,7 +241,12 @@ def new_graph() -> Graph:
     return Graph()
 
 
-def load_graph(path: Union[str, Path], *, format: RDFFormat = "turtle", base_iri: Optional[str] = None) -> Graph:
+def load_graph(
+    path: Union[str, Path],
+    *,
+    format: RDFFormat = "turtle",
+    base_iri: Optional[str] = None,
+) -> Graph:
     p = Path(path)
     if not p.exists():
         raise FileNotFoundError(f"Missing RDF file: {p}")
@@ -235,7 +258,12 @@ def load_graph(path: Union[str, Path], *, format: RDFFormat = "turtle", base_iri
     return g
 
 
-def load_rdf(paths: Sequence[Union[str, Path]], *, format: RDFFormat = "turtle", base_iri: Optional[str] = None) -> Graph:
+def load_rdf(
+    paths: Sequence[Union[str, Path]],
+    *,
+    format: RDFFormat = "turtle",
+    base_iri: Optional[str] = None,
+) -> Graph:
     g = new_graph()
     for p in paths:
         fp = Path(p)
@@ -248,7 +276,9 @@ def load_rdf(paths: Sequence[Union[str, Path]], *, format: RDFFormat = "turtle",
     return g
 
 
-def graph_to_bytes(g: Union[Graph, Dataset], *, format: RDFFormat, base: Optional[str] = None) -> bytes:
+def graph_to_bytes(
+    g: Union[Graph, Dataset], *, format: RDFFormat, base: Optional[str] = None
+) -> bytes:
     try:
         data = g.serialize(format=format, base=base)
     except Exception as e:
@@ -258,7 +288,13 @@ def graph_to_bytes(g: Union[Graph, Dataset], *, format: RDFFormat, base: Optiona
     return bytes(data)
 
 
-def write_graph(g: Union[Graph, Dataset], path: Union[str, Path], *, format: RDFFormat = "turtle", base: Optional[str] = None) -> Path:
+def write_graph(
+    g: Union[Graph, Dataset],
+    path: Union[str, Path],
+    *,
+    format: RDFFormat = "turtle",
+    base: Optional[str] = None,
+) -> Path:
     return write_bytes_atomic(path, graph_to_bytes(g, format=format, base=base))
 
 
@@ -286,6 +322,7 @@ def dataset_from_graphs(graphs: Sequence[Graph]) -> Dataset:
 # Canonicalization (URDNA2015) + canonical hashing
 # -----------------------------
 
+
 def canonicalize_urdna2015_from_nquads(nq_bytes: bytes) -> bytes:
     """
     Canonicalize RDF dataset N-Quads using URDNA2015 via pyld.
@@ -308,7 +345,9 @@ def canonicalize_urdna2015_from_nquads(nq_bytes: bytes) -> bytes:
         raise CanonicalizationError(f"URDNA2015 normalization failed: {e}") from e
 
     if not isinstance(canon, str):
-        raise CanonicalizationError("URDNA2015 normalization returned non-string output.")
+        raise CanonicalizationError(
+            "URDNA2015 normalization returned non-string output."
+        )
     return canon.encode("utf-8")
 
 
@@ -340,7 +379,9 @@ def canonical_hash_rdf(g: Union[Graph, Dataset]) -> Tuple[bytes, HashBundle]:
     return canon, hb
 
 
-def emit_canonical_nquads(g: Union[Graph, Dataset], path: Union[str, Path]) -> HashBundle:
+def emit_canonical_nquads(
+    g: Union[Graph, Dataset], path: Union[str, Path]
+) -> HashBundle:
     canon, hb = canonical_hash_rdf(g)
     write_bytes_atomic(path, canon)
     return hb
@@ -349,6 +390,7 @@ def emit_canonical_nquads(g: Union[Graph, Dataset], path: Union[str, Path]) -> H
 # -----------------------------
 # SHACL gate (hard)
 # -----------------------------
+
 
 @dataclass(frozen=True)
 class ShaclReport:
@@ -412,7 +454,10 @@ def enforce_shacl_gate(
 # SPARQL helpers (rdflib)
 # -----------------------------
 
-def sparql_select(g: Graph, query: str, init_bindings: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+
+def sparql_select(
+    g: Graph, query: str, init_bindings: Optional[Dict[str, Any]] = None
+) -> List[Dict[str, Any]]:
     """
     SELECT -> list of dict rows. Hard-fail on query errors.
     """
@@ -430,7 +475,9 @@ def sparql_select(g: Graph, query: str, init_bindings: Optional[Dict[str, Any]] 
     return rows
 
 
-def sparql_construct(g: Graph, query: str, init_bindings: Optional[Dict[str, Any]] = None) -> Graph:
+def sparql_construct(
+    g: Graph, query: str, init_bindings: Optional[Dict[str, Any]] = None
+) -> Graph:
     """
     CONSTRUCT -> Graph.
     """
@@ -448,7 +495,9 @@ def sparql_construct(g: Graph, query: str, init_bindings: Optional[Dict[str, Any
     return out
 
 
-def sparql_update(g: Graph, update: str, init_bindings: Optional[Dict[str, Any]] = None) -> None:
+def sparql_update(
+    g: Graph, update: str, init_bindings: Optional[Dict[str, Any]] = None
+) -> None:
     """
     SPARQL Update (hard-fail).
     """
@@ -461,6 +510,7 @@ def sparql_update(g: Graph, update: str, init_bindings: Optional[Dict[str, Any]]
 # -----------------------------
 # Deltas (RDF-level representation + apply)
 # -----------------------------
+
 
 @dataclass(frozen=True)
 class RdfDelta:
@@ -498,7 +548,7 @@ def delta_to_graph(delta: RdfDelta, ns: Namespace = KH) -> Graph:
     g.add((dnode, ns.deleteCount, Literal(len(delta.deletes), datatype=XSD.integer)))
 
     def emit_set(set_node: BNode, triples: Iterable[Tuple[Any, Any, Any]]) -> None:
-        for (s, p, o) in triples:
+        for s, p, o in triples:
             t = BNode()
             g.add((set_node, ns.triple, t))
             g.add((t, ns.s, s))
@@ -518,12 +568,14 @@ def delta_to_graph(delta: RdfDelta, ns: Namespace = KH) -> Graph:
 # Receipts (split: Proof vs Meta)
 # -----------------------------
 
+
 @dataclass(frozen=True)
 class ReceiptProofInfo:
     """
     Hash-stable proof payload ONLY.
     Do NOT put timestamps, cwd, run id, or any varying fields here.
     """
+
     did_execute: bool
     input_hash: HashBundle
     output_hash: HashBundle
@@ -538,6 +590,7 @@ class ReceiptMetaInfo:
     """
     Non-hashed run metadata. Useful for ops; never included in determinism proofs.
     """
+
     started_ns: int
     ended_ns: int
     duration_ns: int
@@ -551,10 +604,10 @@ class ReceiptMetaInfo:
 
 
 def toolchain_versions() -> Dict[str, str]:
-    import rdflib as _rdflib
-    import pyshacl as _pyshacl
-    import pyld as _pyld
     import blake3 as _blake3
+    import pyld as _pyld
+    import pyshacl as _pyshacl
+    import rdflib as _rdflib
 
     return {
         "python": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
@@ -577,7 +630,9 @@ def build_receipt_proof_graph(
 
     receipt = URIRef(receipt_iri) if receipt_iri else BNode()
     g.add((receipt, RDF.type, KH.ReceiptProof))
-    g.add((receipt, KH.didExecute, Literal(bool(proof.did_execute), datatype=XSD.boolean)))
+    g.add(
+        (receipt, KH.didExecute, Literal(bool(proof.did_execute), datatype=XSD.boolean))
+    )
 
     def add_hashnode(pred: URIRef, hb: HashBundle) -> None:
         n = BNode()
@@ -624,7 +679,9 @@ def build_receipt_meta_graph(
     if meta.started_at:
         g.add((receipt, KH.startedAt, Literal(meta.started_at, datatype=XSD.dateTime)))
     if meta.finished_at:
-        g.add((receipt, KH.finishedAt, Literal(meta.finished_at, datatype=XSD.dateTime)))
+        g.add(
+            (receipt, KH.finishedAt, Literal(meta.finished_at, datatype=XSD.dateTime))
+        )
     if meta.cwd:
         g.add((receipt, KH.cwd, Literal(meta.cwd)))
     if meta.session_id:
@@ -661,7 +718,11 @@ def write_receipt_bundle(
     write_graph(proof_g, proof_path, format="turtle")
 
     proof_canon_path = out / "receipt_proof.canon.nq"
-    proof_hb = emit_canonical_nquads(proof_g, proof_canon_path) if write_canonical_nq else canonical_hash_rdf(proof_g)[1]
+    proof_hb = (
+        emit_canonical_nquads(proof_g, proof_canon_path)
+        if write_canonical_nq
+        else canonical_hash_rdf(proof_g)[1]
+    )
 
     result: Dict[str, Any] = {
         "receipt_proof_path": proof_path,
@@ -674,7 +735,11 @@ def write_receipt_bundle(
         write_graph(meta_g, meta_path, format="turtle")
 
         meta_canon_path = out / "receipt_meta.canon.nq"
-        meta_hb = emit_canonical_nquads(meta_g, meta_canon_path) if write_canonical_nq else canonical_hash_rdf(meta_g)[1]
+        meta_hb = (
+            emit_canonical_nquads(meta_g, meta_canon_path)
+            if write_canonical_nq
+            else canonical_hash_rdf(meta_g)[1]
+        )
 
         result.update(
             {
@@ -689,6 +754,7 @@ def write_receipt_bundle(
 # -----------------------------
 # Determinism harnesses
 # -----------------------------
+
 
 @dataclass(frozen=True)
 class ProofResult:
@@ -721,12 +787,16 @@ def run_twice_and_prove(
     _, out1_hb = canonical_hash_rdf(out1)
     _, out2_hb = canonical_hash_rdf(out2)
     if out1_hb.hex != out2_hb.hex:
-        raise DeterminismError(f"{label}: output nondeterminism: {out1_hb.hex} != {out2_hb.hex}")
+        raise DeterminismError(
+            f"{label}: output nondeterminism: {out1_hb.hex} != {out2_hb.hex}"
+        )
 
     _, rp1_hb = canonical_hash_rdf(rp1)
     _, rp2_hb = canonical_hash_rdf(rp2)
     if rp1_hb.hex != rp2_hb.hex:
-        raise DeterminismError(f"{label}: receipt_proof nondeterminism: {rp1_hb.hex} != {rp2_hb.hex}")
+        raise DeterminismError(
+            f"{label}: receipt_proof nondeterminism: {rp1_hb.hex} != {rp2_hb.hex}"
+        )
 
     return ProofResult(
         ok=True,
@@ -833,7 +903,9 @@ def run_twice_determinism_proof(
                 raise ArtifactError(f"Runner did not emit required artifact: {must}")
 
         # input hash: pack files + shapes (all in inputs dir)
-        input_paths = [art.inputs_dir / p.name for p in input_pack_files] + [art.inputs_dir / shacl_file.name]
+        input_paths = [art.inputs_dir / p.name for p in input_pack_files] + [
+            art.inputs_dir / shacl_file.name
+        ]
         input_g = load_rdf(input_paths, format="turtle")
         input_ds = graph_as_dataset(input_g)
         input_hb = emit_canonical_nquads(input_ds, art.input_canon_nq)
@@ -846,7 +918,9 @@ def run_twice_determinism_proof(
 
         diagnostics_hb = emit_canonical_nquads(diag_g, art.diagnostics_canon_nq)
         receipt_proof_g = load_graph(art.receipt_proof_ttl, format="turtle")
-        receipt_proof_hb = emit_canonical_nquads(receipt_proof_g, art.receipt_proof_canon_nq)
+        receipt_proof_hb = emit_canonical_nquads(
+            receipt_proof_g, art.receipt_proof_canon_nq
+        )
 
         # ReceiptProofInfo derived from what the harness computed (not from meta)
         proof = ReceiptProofInfo(
@@ -863,7 +937,9 @@ def run_twice_determinism_proof(
         ttl_text = read_text(art.receipt_proof_ttl)
         for hx in proof_hexes:
             if hx not in ttl_text:
-                raise ArtifactError(f"receipt_proof.ttl does not contain required hash hex: {hx}")
+                raise ArtifactError(
+                    f"receipt_proof.ttl does not contain required hash hex: {hx}"
+                )
 
         # receipt_proof hash is informational here; determinism check uses harness proof and receipt_proof canonical hash
         # Caller can choose to require receipt_proof_hb == something; we enforce cross-run equality below.
@@ -880,17 +956,29 @@ def run_twice_determinism_proof(
 
     # determinism checks: input, output, diagnostics (canonical hashes)
     if p1.input_hash.hex != p2.input_hash.hex:
-        raise DeterminismError(f"Input hash mismatch across runs: {p1.input_hash.hex} != {p2.input_hash.hex}")
+        raise DeterminismError(
+            f"Input hash mismatch across runs: {p1.input_hash.hex} != {p2.input_hash.hex}"
+        )
     if p1.output_hash.hex != p2.output_hash.hex:
-        raise DeterminismError(f"Output hash mismatch across runs: {p1.output_hash.hex} != {p2.output_hash.hex}")
-    if p1.diagnostics_hash and p2.diagnostics_hash and p1.diagnostics_hash.hex != p2.diagnostics_hash.hex:
-        raise DeterminismError(f"Diagnostics hash mismatch across runs: {p1.diagnostics_hash.hex} != {p2.diagnostics_hash.hex}")
+        raise DeterminismError(
+            f"Output hash mismatch across runs: {p1.output_hash.hex} != {p2.output_hash.hex}"
+        )
+    if (
+        p1.diagnostics_hash
+        and p2.diagnostics_hash
+        and p1.diagnostics_hash.hex != p2.diagnostics_hash.hex
+    ):
+        raise DeterminismError(
+            f"Diagnostics hash mismatch across runs: {p1.diagnostics_hash.hex} != {p2.diagnostics_hash.hex}"
+        )
 
     # receipt_proof determinism: compare canonical receipt_proof hashes
     r1 = blake3_hash_bytes(read_bytes(art1.receipt_proof_canon_nq))
     r2 = blake3_hash_bytes(read_bytes(art2.receipt_proof_canon_nq))
     if r1.hex != r2.hex:
-        raise DeterminismError(f"ReceiptProof hash mismatch across runs: {r1.hex} != {r2.hex}")
+        raise DeterminismError(
+            f"ReceiptProof hash mismatch across runs: {r1.hex} != {r2.hex}"
+        )
 
     return art1, p1, art2, p2
 
@@ -899,12 +987,15 @@ def run_twice_determinism_proof(
 # Assertion helpers (graph + file)
 # -----------------------------
 
+
 def assert_graph_has_triple(g: Graph, s: Any, p: Any, o: Any, *, msg: str = "") -> None:
     if (s, p, o) not in g:
         raise OFMFError(msg or f"Expected triple missing: {(s, p, o)}")
 
 
-def assert_graph_lacks_triple(g: Graph, s: Any, p: Any, o: Any, *, msg: str = "") -> None:
+def assert_graph_lacks_triple(
+    g: Graph, s: Any, p: Any, o: Any, *, msg: str = ""
+) -> None:
     if (s, p, o) in g:
         raise OFMFError(msg or f"Unexpected triple present: {(s, p, o)}")
 
@@ -914,7 +1005,9 @@ def assert_nonempty_graph(g: Graph, *, msg: str = "") -> None:
         raise OFMFError(msg or "Expected non-empty graph")
 
 
-def assert_file_contains(path: Union[str, Path], pattern: str, *, msg: str = "") -> None:
+def assert_file_contains(
+    path: Union[str, Path], pattern: str, *, msg: str = ""
+) -> None:
     txt = read_text(path)
     if re.search(pattern, txt) is None:
         raise OFMFError(msg or f"Expected pattern not found in {path}: {pattern}")
@@ -961,16 +1054,20 @@ def lint_commit_message_or_pr_body(path: Union[str, Path]) -> None:
 # Dialect engines: strict wrappers
 # -----------------------------
 
+
 def owlrl_materialize_in_place(g: Graph) -> None:
     """
     OWL RL materialization using owlrl (real library).
     """
     require_module("owlrl", "uv add owlrl")
     from owlrl import DeductiveClosure, OWLRL_Semantics
+
     DeductiveClosure(OWLRL_Semantics).expand(g)
 
 
-def shex_validate_hard(data_graph: Graph, shex_schema_text: str, focus: Optional[str] = None) -> None:
+def shex_validate_hard(
+    data_graph: Graph, shex_schema_text: str, focus: Optional[str] = None
+) -> None:
     """
     ShEx validation using pyshex (real library).
     """
@@ -978,7 +1075,9 @@ def shex_validate_hard(data_graph: Graph, shex_schema_text: str, focus: Optional
     from pyshex import ShExEvaluator
 
     target = URIRef(focus) if focus else None
-    evaluator = ShExEvaluator(rdf=data_graph, schema=shex_schema_text, focus=target, start=None)
+    evaluator = ShExEvaluator(
+        rdf=data_graph, schema=shex_schema_text, focus=target, start=None
+    )
     results = list(evaluator.evaluate())
     if not results:
         raise OFMFError("ShEx validation produced no results.")
@@ -987,7 +1086,9 @@ def shex_validate_hard(data_graph: Graph, shex_schema_text: str, focus: Optional
             raise OFMFError(f"ShEx validation failed: {r}")
 
 
-def datalog_query_pydatalog_hard(facts: Sequence[str], query: str) -> List[Tuple[Any, ...]]:
+def datalog_query_pydatalog_hard(
+    facts: Sequence[str], query: str
+) -> List[Tuple[Any, ...]]:
     """
     Datalog via pyDatalog (real library).
     """
@@ -1011,12 +1112,12 @@ def n3_reason_with_eye_hard(
 ) -> str:
     """
     N3 reasoning via EYE (external engine).
-    
+
     Args:
         n3_text: N3 text to pass via stdin (only used if flags is None)
         eye_exe: Path to eye executable (default: "eye")
         flags: List of command-line flags (if provided, n3_text is ignored)
-    
+
     Returns:
         EYE output as string (N3/Turtle format)
     """
@@ -1041,7 +1142,7 @@ def n3_reason_with_eye_hard(
             stderr=subprocess.PIPE,
             check=False,
         )
-    
+
     if proc.returncode != 0:
         raise OFMFError(
             f"EYE failed (code {proc.returncode}). stderr:\n{proc.stderr.decode('utf-8', errors='replace')}"
@@ -1103,30 +1204,32 @@ _CLAUDE_EVENT_MAP: Dict[str, URIRef] = {
 def claude_event_to_iri(event_name: str) -> URIRef:
     """
     Maps Claude Code event name to knowledge hook event IRI.
-    
+
     Args:
         event_name: Claude event name (e.g., "PostToolUse", "SessionStart")
-    
+
     Returns:
         URIRef for the corresponding kh:Event individual
-    
+
     Raises:
         OFMFError: If event_name is not recognized
     """
     event_iri = _CLAUDE_EVENT_MAP.get(event_name)
     if event_iri is None:
-        raise OFMFError(f"Unknown Claude event: {event_name}. Valid events: {list(_CLAUDE_EVENT_MAP.keys())}")
+        raise OFMFError(
+            f"Unknown Claude event: {event_name}. Valid events: {list(_CLAUDE_EVENT_MAP.keys())}"
+        )
     return event_iri
 
 
 def select_hooks_by_event(event_iri: URIRef, pack_graph: Graph) -> List[URIRef]:
     """
     Selects hooks from a pack graph that match the given event.
-    
+
     Args:
         event_iri: kh:Event IRI to match (e.g., KH.PostToolUse)
         pack_graph: Graph containing hook pack definitions
-    
+
     Returns:
         List of hook URIRefs whose triggers have matching kh:event
     """
@@ -1145,10 +1248,10 @@ def select_hooks_by_event(event_iri: URIRef, pack_graph: Graph) -> List[URIRef]:
 def validate_pack_events(pack_graph: Graph) -> List[URIRef]:
     """
     Extracts required events declared in a hook pack.
-    
+
     Args:
         pack_graph: Graph containing hook pack definitions
-    
+
     Returns:
         List of kh:Event IRIs that the pack requires
     """
@@ -1166,6 +1269,7 @@ def validate_pack_events(pack_graph: Graph) -> List[URIRef]:
 # -----------------------------
 # Minimal CLI: anti-lie lint only
 # -----------------------------
+
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     argv = list(argv or sys.argv[1:])

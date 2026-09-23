@@ -30,16 +30,16 @@ def decide_pvc_claim_mismatch_commands(
             commands.append(cmd)
         else:
             pvc_manifest = (
-                f'apiVersion: v1\n'
-                f'kind: PersistentVolumeClaim\n'
-                f'metadata:\n'
-                f'  name: {f.observed_claim_name}\n'
-                f'  namespace: {ns}\n'
-                f'spec:\n'
+                f"apiVersion: v1\n"
+                f"kind: PersistentVolumeClaim\n"
+                f"metadata:\n"
+                f"  name: {f.observed_claim_name}\n"
+                f"  namespace: {ns}\n"
+                f"spec:\n"
                 f'  accessModes: ["ReadWriteOnce"]\n'
-                f'  resources:\n'
-                f'    requests:\n'
-                f'      storage: 1Gi\n'
+                f"  resources:\n"
+                f"    requests:\n"
+                f"      storage: 1Gi\n"
             )
             commands.append(f"kubectl apply -n {ns} -f - <<'EOF'\n{pvc_manifest}EOF")
 

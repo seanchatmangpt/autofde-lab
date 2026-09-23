@@ -13,6 +13,7 @@ generated fixture-builder functions, and validates the real
 `autofde_lab.powl.validate.validate_model` structural checker — no fake
 validator, no patched builder, no interaction assertions.
 """
+
 from __future__ import annotations
 
 import importlib.util

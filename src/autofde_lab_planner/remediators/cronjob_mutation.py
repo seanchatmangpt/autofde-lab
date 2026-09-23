@@ -20,7 +20,9 @@ def decide_cronjob_remediation_commands(
         victim_ns = f.victim_namespace or namespace
 
         # Step 1: Suspend and delete CronJob + policy ConfigMap
-        commands.append(f"kubectl patch cronjob {cj_name} -n {cj_ns} -p '{{\"spec\":{{\"suspend\":true}}}}'")
+        commands.append(
+            f'kubectl patch cronjob {cj_name} -n {cj_ns} -p \'{{"spec":{{"suspend":true}}}}\''
+        )
         commands.append(f"kubectl delete cronjob {cj_name} -n {cj_ns}")
         if cj_name == "vpa-updater":
             commands.append(f"kubectl delete configmap vpa-updater-policy -n {cj_ns}")
@@ -29,7 +31,7 @@ def decide_cronjob_remediation_commands(
         c_idx = getattr(f, "container_index", 0)
         patch_cmd = (
             f"kubectl patch deployment {victim_dep} -n {victim_ns} --type=json "
-            f'-p=\'[{{\"op\": \"remove\", \"path\": \"/spec/template/spec/containers/{c_idx}/resources/limits/memory\"}}]\''
+            f'-p=\'[{{"op": "remove", "path": "/spec/template/spec/containers/{c_idx}/resources/limits/memory"}}]\''
         )
         commands.append(patch_cmd)
 

@@ -36,7 +36,11 @@ def _emit(payload: dict[str, Any]) -> None:
 
 
 def _load_ocel_log(raw_json: dict[str, Any]) -> OcelLog:
-    if "events" in raw_json and "objects" in raw_json and ("eventTypes" in raw_json or "objectTypes" in raw_json):
+    if (
+        "events" in raw_json
+        and "objects" in raw_json
+        and ("eventTypes" in raw_json or "objectTypes" in raw_json)
+    ):
         return OcelLog.from_ocel2_json(raw_json)
 
     # Support raw beam4pm capture format
@@ -53,6 +57,7 @@ def _load_ocel_log(raw_json: dict[str, Any]) -> OcelLog:
         if time_str:
             try:
                 from autofde_lab.ocel.model import parse_ns
+
                 t_ns = parse_ns(time_str)
             except Exception:
                 t_ns = 0
@@ -101,14 +106,16 @@ def validate(
             log.validate()
         except Exception as err:
             validation_error = str(err)
-        
-        _emit({
-            "ok": validation_error is None,
-            "canonical_digest": canonical_digest,
-            "event_count": len(log.events),
-            "object_count": len(log.objects),
-            "validation_error": validation_error,
-        })
+
+        _emit(
+            {
+                "ok": validation_error is None,
+                "canonical_digest": canonical_digest,
+                "event_count": len(log.events),
+                "object_count": len(log.objects),
+                "validation_error": validation_error,
+            }
+        )
     except Exception as exc:
         _emit({"ok": False, "error": str(exc), "type": type(exc).__name__})
         raise typer.Exit(code=2) from exc
@@ -117,7 +124,9 @@ def validate(
 @app.command("conformance")
 def conformance(
     log_path: Path = typer.Argument(..., help="Path to observed OCEL 2.0 JSON log"),
-    intended_traces_json: str = typer.Argument(..., help="JSON mapping object_id -> sequence of intended activity names"),
+    intended_traces_json: str = typer.Argument(
+        ..., help="JSON mapping object_id -> sequence of intended activity names"
+    ),
 ) -> None:
     """Perform exact object-centric conformance checking against intended object trace specifications."""
     if not log_path.exists():
@@ -138,20 +147,22 @@ def conformance(
             log, intended_traces_by_object_id=intended_map
         )
 
-        _emit({
-            "ok": True,
-            "all_conform": result.all_conform,
-            "overall_fitness": result.overall_fitness,
-            "object_results": {
-                r.object_id: {
-                    "fitness": r.fitness,
-                    "conforms": r.conforms,
-                    "observed": list(r.observed_trace),
-                    "intended": list(r.intended_trace),
-                }
-                for r in result.per_object
-            },
-        })
+        _emit(
+            {
+                "ok": True,
+                "all_conform": result.all_conform,
+                "overall_fitness": result.overall_fitness,
+                "object_results": {
+                    r.object_id: {
+                        "fitness": r.fitness,
+                        "conforms": r.conforms,
+                        "observed": list(r.observed_trace),
+                        "intended": list(r.intended_trace),
+                    }
+                    for r in result.per_object
+                },
+            }
+        )
     except Exception as exc:
         _emit({"ok": False, "error": str(exc), "type": type(exc).__name__})
         raise typer.Exit(code=2) from exc

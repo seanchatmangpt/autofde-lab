@@ -31,7 +31,6 @@ import pytest
 from autofde_lab.powl.algebra import Atom, NodeId, OrderEdge, PartialOrder
 from autofde_lab.powl.executor import (
     INITIAL_MARKING,
-    Marking,
     enabled,
     fire,
 )
@@ -87,7 +86,9 @@ def test_a_spurious_order_edge_between_two_checks_provably_serializes_them() -> 
 # ── 2. two independent partial-order blocks must not share closure state ───
 
 
-def test_two_genuinely_independent_partial_order_blocks_do_not_share_closure_state() -> None:
+def test_two_genuinely_independent_partial_order_blocks_do_not_share_closure_state() -> (
+    None
+):
     """Mimics the plan's ``observe_block -> aggregation -> remediate_block ->
     aggregation`` shape: block1 (5 unordered children), an aggregation atom,
     block2 (3 unordered children), a second aggregation atom, all chained
@@ -141,7 +142,9 @@ def test_two_genuinely_independent_partial_order_blocks_do_not_share_closure_sta
 # ── 3. AND-join atom must never be enabled on a strict subset ──────────────
 
 
-def test_an_and_join_atom_is_never_enabled_with_only_a_strict_subset_of_its_block_complete() -> None:
+def test_an_and_join_atom_is_never_enabled_with_only_a_strict_subset_of_its_block_complete() -> (
+    None
+):
     """A 4-child unordered PartialOrder followed by one AND-join Atom. Fires
     children 0, 1, 2 (deliberately withholding 3) and asserts the AND-join
     atom is NOT enabled after each of the first 3 fires — checking all 3
@@ -169,7 +172,9 @@ def test_an_and_join_atom_is_never_enabled_with_only_a_strict_subset_of_its_bloc
         # The still-unfired children (excluding the withheld child 3) remain
         # enabled, confirming the join withholding is specifically about the
         # aggregation atom and not a broader stall.
-        remaining = {(0, i) for i in range(4)} - {(0, i) for i in fire_order[: step + 1]}
+        remaining = {(0, i) for i in range(4)} - {
+            (0, i) for i in fire_order[: step + 1]
+        }
         assert remaining <= live
 
     # Now fire the last withheld child (3) — only then must the AND-join

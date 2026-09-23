@@ -2,10 +2,10 @@
 
 ## Chicago Conformance, Falsification, Benchmark, and OCEL v2 Qualification Standard for Semantic A2A Systems
 
-**Status:** Proposed Standard  
-**Version:** v26.9.16  
-**Category:** Protocol Conformance / Falsification / Process Evidence / Benchmarking  
-**Companion specification:** RFC-SA2A-001 v26.9.16 — *Semantic A2A: Admitted Semantic Interoperation for Machine-to-Machine Systems*  
+**Status:** Proposed Standard
+**Version:** v26.9.16
+**Category:** Protocol Conformance / Falsification / Process Evidence / Benchmarking
+**Companion specification:** RFC-SA2A-001 v26.9.16 — *Semantic A2A: Admitted Semantic Interoperation for Machine-to-Machine Systems*
 **Intended audience:** Implementers of Semantic A2A peers, semantic runtimes, planners, authority brokers, consequence engines, process-intelligence systems, conformance courts, benchmark harnesses, verifier authors, release engineers, and machine-to-machine platform operators.
 
 > This document uses RFC-style normative language but is not an IETF publication.

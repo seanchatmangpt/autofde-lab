@@ -17,35 +17,34 @@ from typing import List
 
 import pytest
 
-from autofde_lab.sa2a.admission.datalog_layer import DatalogAtom, DatalogEngine, DatalogRule
+from autofde_lab.sa2a.admission.datalog_layer import (
+    DatalogAtom,
+    DatalogRule,
+)
 from autofde_lab.sa2a.conformance.courts.logic_hook_court import (
-    AutoBoundedExecutionError,
     CHI_AUTO_BOUNDED_EXECUTION,
-    HookPerformsDOError,
-    LogicHookCheckResult,
-    LogicHookCourt,
-    LogicHookCourtReport,
-    LogicHookCourtError,
-    LogicHookVerdict,
     SA2A_HOOK_EFFECT_KIND,
     SA2A_HOOK_META_ADMISSION,
     SA2A_HOOK_NO_DO,
     SA2A_LOGIC_CLOSURE_COMPLETENESS,
     SA2A_LOGIC_N3_NON_AUTHORITY,
     SA2A_LOGIC_SAFE_TERMINATION,
+    AutoBoundedExecutionError,
+    HookPerformsDOError,
+    LogicHookCourt,
+    LogicHookCourtError,
+    LogicHookCourtReport,
+    LogicHookVerdict,
     test_datalog_safe_termination,
     test_hook_meta_admission_refusal,
     test_hook_no_do_violation,
 )
 from autofde_lab.sa2a.hooks.engine import KnowledgeHookEngine
 from autofde_lab.sa2a.hooks.model import (
-    HookEffectKind,
-    HookEventTrigger,
     HookExecutionRecord,
     KnowledgeHookDefinition,
 )
 from autofde_lab.sa2a.hooks.synthesis import HookSynthesizer
-
 
 # ---------------------------------------------------------------------------
 # Helper factories
@@ -146,7 +145,10 @@ def test_datalog_closure_completeness_ground_rule() -> None:
 def test_n3_non_authority_dict_output_passes() -> None:
     """Plain dict N3 output has no authority — passes."""
     court = LogicHookCourt()
-    n3_result = {"derived_triples": ["<urn:a> <urn:p> <urn:b>"], "status": "closure_complete"}
+    n3_result = {
+        "derived_triples": ["<urn:a> <urn:p> <urn:b>"],
+        "status": "closure_complete",
+    }
     res = court.verify_n3_non_authority(n3_result, fail_closed=True)
     assert res.passed is True
     assert res.rule_id == SA2A_LOGIC_N3_NON_AUTHORITY
@@ -170,14 +172,18 @@ def test_n3_non_authority_authority_key_refused() -> None:
     """Dict with 'execute' key violates non-authority — refused."""
     court = LogicHookCourt()
     with pytest.raises(LogicHookCourtError):
-        court.verify_n3_non_authority({"execute": "urn:action:dangerous"}, fail_closed=True)
+        court.verify_n3_non_authority(
+            {"execute": "urn:action:dangerous"}, fail_closed=True
+        )
 
 
 def test_n3_non_authority_actuate_key_refused() -> None:
     """Dict with 'actuate' key violates non-authority — refused."""
     court = LogicHookCourt()
     with pytest.raises(LogicHookCourtError):
-        court.verify_n3_non_authority({"actuate": True, "target": "urn:resource:prod"}, fail_closed=True)
+        court.verify_n3_non_authority(
+            {"actuate": True, "target": "urn:resource:prod"}, fail_closed=True
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -296,7 +302,6 @@ def test_hook_no_do_empty_records_pass() -> None:
 
 def test_hook_no_do_phantom_effect_refused() -> None:
     """HookExecutionRecord with phantom verdict string is refused."""
-    from autofde_lab.sa2a.hooks.model import HookVerdict
     court = LogicHookCourt()
     hook = _make_hook("phantom_record_hook")
     # Construct a record with a phantom verdict (not in HookVerdict enum)
@@ -412,6 +417,8 @@ def test_full_court_sweep_clean_setup() -> None:
     )
 
     assert isinstance(report, LogicHookCourtReport)
-    assert report.passed is True, f"Failed checks: {[r for r in report.gate_results if not r.passed]}"
+    assert report.passed is True, (
+        f"Failed checks: {[r for r in report.gate_results if not r.passed]}"
+    )
     assert report.total_checks > 0
     assert report.failed_checks == 0

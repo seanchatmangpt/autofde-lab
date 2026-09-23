@@ -10,6 +10,7 @@ the source ontology file ``ontology/process.ttl`` -- see that module's own docst
 for the manufacture provenance. This test treats the manufactured module as ordinary
 source and exercises it directly; it does not touch the ontology or the generator.
 """
+
 from __future__ import annotations
 
 import dataclasses
@@ -48,7 +49,12 @@ def test_standing_value_enum_carries_the_four_consequence_classes() -> None:
     named individuals ``ontology/process.ttl``'s ``afl:ConsequenceScheme``
     declares -- PURE/READ/DO/VERIFY, real activity-consequence classes, not
     guessed values."""
-    assert {member.value for member in process.StandingValue} == {"PURE", "READ", "DO", "VERIFY"}
+    assert {member.value for member in process.StandingValue} == {
+        "PURE",
+        "READ",
+        "DO",
+        "VERIFY",
+    }
 
 
 def test_activity_dataclass_has_the_real_ontology_fields() -> None:
@@ -72,7 +78,9 @@ def test_guard_dataclass_has_the_real_ontology_fields() -> None:
     assert instance.guards_edge == "urn:example:edge-1"
 
 
-def test_powl_commitment_and_powl_process_class_names_render_with_correct_casing() -> None:
+def test_powl_commitment_and_powl_process_class_names_render_with_correct_casing() -> (
+    None
+):
     """ggen manufacture must render POWL's internal acronym casing correctly and
     never mangle it into "Powlcommitment"/"Powlprocess"."""
     assert process.POWLCommitment.__name__ == "POWLCommitment"
@@ -134,8 +142,13 @@ def test_powl_process_all_fields_explicit() -> None:
 
 def test_partial_order_composite_all_fields_explicit() -> None:
     cls = getattr(process, "PartialOrderComposite")
-    instance = cls(has_order_edge=("urn:example:order-edge-1", "urn:example:order-edge-2"))
-    assert instance.has_order_edge == ("urn:example:order-edge-1", "urn:example:order-edge-2")
+    instance = cls(
+        has_order_edge=("urn:example:order-edge-1", "urn:example:order-edge-2")
+    )
+    assert instance.has_order_edge == (
+        "urn:example:order-edge-1",
+        "urn:example:order-edge-2",
+    )
 
 
 def test_process_node_all_fields_explicit() -> None:
@@ -146,7 +159,10 @@ def test_process_node_all_fields_explicit() -> None:
         precedes=("urn:example:node-successor-1",),
     )
     assert instance.affected_by_perturbation == ("urn:example:perturbation-1",)
-    assert instance.has_child_node == ("urn:example:node-child-1", "urn:example:node-child-2")
+    assert instance.has_child_node == (
+        "urn:example:node-child-1",
+        "urn:example:node-child-2",
+    )
     assert instance.precedes == ("urn:example:node-successor-1",)
 
 

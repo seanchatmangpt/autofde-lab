@@ -143,9 +143,13 @@ def _skip_reason() -> str | None:
     if not GYMACT_VENV_PYTHON.is_file():
         return f"BLOCKED:GYMACT_VENV_ABSENT: {GYMACT_VENV_PYTHON} does not exist"
     if not _terraform_or_tofu_available():
-        return "BLOCKED:TERRAFORM_BINARY_ABSENT: neither 'terraform' nor 'tofu' is on PATH"
+        return (
+            "BLOCKED:TERRAFORM_BINARY_ABSENT: neither 'terraform' nor 'tofu' is on PATH"
+        )
     if not _alicloud_findings_present():
-        return f"BLOCKED:TERRAGOAT_ALICLOUD_ABSENT: {ALICLOUD_DIR} has no real .tf files"
+        return (
+            f"BLOCKED:TERRAGOAT_ALICLOUD_ABSENT: {ALICLOUD_DIR} has no real .tf files"
+        )
     return None
 
 
@@ -168,8 +172,12 @@ def test_autofde_lab_plan_targets_match_gymacts_real_terraform_plan_evidence(tmp
             outcome = domain.step(action)
             obs = outcome.observation
 
-    assert domain._is_goal(obs), f"A* did not clear every alicloud finding. Plan: {plan_finding_ids}"
-    real_resources_touched = sorted({domain.describe_finding(fid).resource for fid in plan_finding_ids})
+    assert domain._is_goal(obs), (
+        f"A* did not clear every alicloud finding. Plan: {plan_finding_ids}"
+    )
+    real_resources_touched = sorted(
+        {domain.describe_finding(fid).resource for fid in plan_finding_ids}
+    )
     assert real_resources_touched == [
         "alicloud_actiontrail_trail.fail",
         "alicloud_db_instance.seeme",
@@ -196,7 +204,9 @@ def test_autofde_lab_plan_targets_match_gymacts_real_terraform_plan_evidence(tmp
     # `graph` is a pure static HCL analysis -- no provider auth, no network
     # call -- so it must have run to real, deterministic completion
     # regardless of whether this environment has any cloud credentials.
-    assert observed["init_attempted"] is True and observed["init_returncode"] == 0, observed
+    assert observed["init_attempted"] is True and observed["init_returncode"] == 0, (
+        observed
+    )
     assert observed["graph_attempted"] is True, observed
     assert observed["graph_returncode"] == 0, observed
     assert observed["graph_timed_out"] is False, observed

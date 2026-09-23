@@ -24,14 +24,14 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 import pytest
 
 from autofde_lab.sa2a.authority.broker import (
+    REFUSED_NO_GRANT,
     AuthorityBroker,
     AuthorityGrant,
-    REFUSED_NO_GRANT,
 )
 from autofde_lab.sa2a.brce.boundary import (
     ColludingRolesError,
@@ -40,10 +40,8 @@ from autofde_lab.sa2a.brce.boundary import (
     UnreceiptedActuationAttemptError,
 )
 from autofde_lab.sa2a.brce.receipts import (
-    FinalReceipt,
     PreparedReceipt,
     ReceiptStore,
-    TerminalReceiptState,
 )
 from autofde_lab.sa2a.brce.replay import (
     ReplayEngine,
@@ -54,23 +52,16 @@ from autofde_lab.sa2a.conformance.courts.consequence_court import (
     CHI_BRCE_01_PREPARED_COMMIT,
     CHI_BRCE_02_BYPASS_PREVENTION,
     CHI_BRCE_03_ANTI_COLLUSION,
-    CHI_POST_01_INDEPENDENT_OBSERVATION,
     CHI_BRCE_04_IDEMPOTENCY_REPLAY_REFUSAL,
+    CHI_POST_01_INDEPENDENT_OBSERVATION,
     ConsequenceCourt,
     ConsequenceCourtRuling,
-    DeceptiveDiskActuator,
     DurableDiskReceiptStore,
     GateVerdict,
     GuardedDiskJournalActuator,
     IndependentDiskJournalVerifier,
     RealDiskJournalActuator,
-    verify_anti_collusion,
-    verify_bypass_prevention,
-    verify_idempotency_replay_refusal,
-    verify_independent_postcondition_observation,
-    verify_prepared_commitment,
 )
-
 
 # =============================================================================
 # Gate 1: Strict PreparedReceipt Commitment Before Actuator Call
@@ -166,7 +157,9 @@ def test_strict_prepared_receipt_commitment_before_actuation(tmp_path: Path) -> 
         parameters=parameters,
     )
 
-    with pytest.raises(UnreceiptedActuationAttemptError, match="Zero Unreceipted Actuation violated"):
+    with pytest.raises(
+        UnreceiptedActuationAttemptError, match="Zero Unreceipted Actuation violated"
+    ):
         boundary_failing.execute(envelope_fail)
 
     # Actuator was NEVER called, physical disk journal was NEVER created
@@ -218,8 +211,12 @@ def test_actuator_bypass_prevention(tmp_path: Path) -> None:
     assert not journal_path.exists()
 
     # Direct bypass test: attempt to invoke GuardedDiskJournalActuator directly
-    guarded_actuator = GuardedDiskJournalActuator(journal_path, receipt_store=durable_store)
-    with pytest.raises(UnreceiptedActuationAttemptError, match="Actuator bypass attempt detected"):
+    guarded_actuator = GuardedDiskJournalActuator(
+        journal_path, receipt_store=durable_store
+    )
+    with pytest.raises(
+        UnreceiptedActuationAttemptError, match="Actuator bypass attempt detected"
+    ):
         guarded_actuator.actuate(
             action_iri=unauthorized_action,
             target_resource=target_resource,
@@ -342,23 +339,33 @@ def test_independent_disk_state_postcondition_observation(tmp_path: Path) -> Non
     # Verifier reads disk and immediately flags violation
     verifier = IndependentDiskJournalVerifier(journal_path)
     # Correct verify
-    assert verifier.verify_postcondition(
-        action_iri=action_iri,
-        target_resource=target_resource,
-        parameters=parameters,
-        evidence={"last_digest": hashlib.sha256(
-            json.dumps(dict(sorted(parameters.items())), sort_keys=True).encode("utf-8")
-        ).hexdigest()},
-    ) is True
+    assert (
+        verifier.verify_postcondition(
+            action_iri=action_iri,
+            target_resource=target_resource,
+            parameters=parameters,
+            evidence={
+                "last_digest": hashlib.sha256(
+                    json.dumps(dict(sorted(parameters.items())), sort_keys=True).encode(
+                        "utf-8"
+                    )
+                ).hexdigest()
+            },
+        )
+        is True
+    )
 
     # Overwrite physical disk file with tampered content
     journal_path.write_text(json.dumps([{"tampered": True}]), encoding="utf-8")
-    assert verifier.verify_postcondition(
-        action_iri=action_iri,
-        target_resource=target_resource,
-        parameters=parameters,
-        evidence=None,
-    ) is False
+    assert (
+        verifier.verify_postcondition(
+            action_iri=action_iri,
+            target_resource=target_resource,
+            parameters=parameters,
+            evidence=None,
+        )
+        is False
+    )
 
 
 # =============================================================================
@@ -471,7 +478,9 @@ def test_consequence_court_full_adjudication_and_fresh_consumer(tmp_path: Path) 
 
     # Fresh Consumer Proof:
     # Discover the court directory created during adjudication
-    court_subdirs = [d for d in tmp_path.iterdir() if d.is_dir() and d.name.startswith("court_")]
+    court_subdirs = [
+        d for d in tmp_path.iterdir() if d.is_dir() and d.name.startswith("court_")
+    ]
     assert len(court_subdirs) == 1
     receipts_dir = court_subdirs[0] / "receipts"
 
@@ -495,14 +504,21 @@ def test_consequence_court_full_adjudication_and_fresh_consumer(tmp_path: Path) 
 
     assert replay_report.verdict == ReplayVerdict.VALID
     # The full store contains both genuine executed receipts and adversarial refusal/falsification receipts
-    assert replay_report.standing in (ReplayStanding.ALIVE, ReplayStanding.PARTIAL_ALIVE)
+    assert replay_report.standing in (
+        ReplayStanding.ALIVE,
+        ReplayStanding.PARTIAL_ALIVE,
+    )
     assert replay_report.executed_count >= 1
     assert replay_report.verified_without_actuation is True
 
     # Check that replaying solely the executed pair yields pure ALIVE standing
     gate1_records = [
-        r for r in fresh_store.all_records()
-        if r.get("idempotency_token") == ruling.gate_results[CHI_BRCE_01_PREPARED_COMMIT].evidence["idempotency_token"]
+        r
+        for r in fresh_store.all_records()
+        if r.get("idempotency_token")
+        == ruling.gate_results[CHI_BRCE_01_PREPARED_COMMIT].evidence[
+            "idempotency_token"
+        ]
     ]
     gate1_report = replay_engine.verify_chain(gate1_records)
     assert gate1_report.verdict == ReplayVerdict.VALID

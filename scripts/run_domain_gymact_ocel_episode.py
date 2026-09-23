@@ -39,7 +39,9 @@ from pathlib import Path
 from typing import Callable
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-sys.path.insert(0, str(Path(__file__).parent.parent))  # for examples.scheduling.rcpsp_datasets
+sys.path.insert(
+    0, str(Path(__file__).parent.parent)
+)  # for examples.scheduling.rcpsp_datasets
 
 from autofde_lab import utils
 from autofde_lab.ocel.log import OcelLog
@@ -61,7 +63,9 @@ def _build_fix_git() -> object:
     from autofde_lab.hub.domain.fix_git import GitRecoveryDomain
 
     def _run_git(repo_dir: Path, *args: str) -> subprocess.CompletedProcess:
-        return subprocess.run(["git", *args], cwd=repo_dir, check=True, capture_output=True, text=True)
+        return subprocess.run(
+            ["git", *args], cwd=repo_dir, check=True, capture_output=True, text=True
+        )
 
     tmp_dir = Path(tempfile.mkdtemp(prefix="fix_git_domain_"))
     repo_dir = tmp_dir / "personal-site"
@@ -76,9 +80,22 @@ def _build_fix_git() -> object:
     _run_git(repo_dir, "add", "-A")
     _run_git(repo_dir, "commit", "-m", "Initial site")
     _run_git(repo_dir, "checkout", "--detach", "HEAD")
-    patch_dir = REPO_ROOT / "vendor" / "gyms" / "terminal-bench" / "fix-git" / "environment" / "resources" / "patch_files"
-    (repo_dir / "_includes" / "about.md").write_text((patch_dir / "about.md").read_text())
-    (repo_dir / "_layouts" / "default.html").write_text((patch_dir / "default.html").read_text())
+    patch_dir = (
+        REPO_ROOT
+        / "vendor"
+        / "gyms"
+        / "terminal-bench"
+        / "fix-git"
+        / "environment"
+        / "resources"
+        / "patch_files"
+    )
+    (repo_dir / "_includes" / "about.md").write_text(
+        (patch_dir / "about.md").read_text()
+    )
+    (repo_dir / "_layouts" / "default.html").write_text(
+        (patch_dir / "default.html").read_text()
+    )
     _run_git(repo_dir, "add", "-A")
     _run_git(repo_dir, "commit", "-m", "Move to Stanford")
     lost_commit = _run_git(repo_dir, "rev-parse", "HEAD").stdout.strip()
@@ -103,7 +120,11 @@ def _build_plado() -> object:
     (test_plado_domain_planning) calls solve()+rollout() but never asserts
     is_goal -- a real, pre-existing test gap this generic runner's episode
     now closes with a real goal-reaching check."""
-    from autofde_lab.hub.domain.plado import ActionEncoding, PladoPddlDomain, StateEncoding
+    from autofde_lab.hub.domain.plado import (
+        ActionEncoding,
+        PladoPddlDomain,
+        StateEncoding,
+    )
 
     return PladoPddlDomain(
         domain_path=_BLOCKS_DOMAIN,
@@ -143,7 +164,9 @@ def _build_up() -> object:
     problem.set_initial_value(x, False)
     problem.set_initial_value(y, False)
     problem.add_goal(x)
-    problem.add_quality_metric(unified_planning.model.metrics.MinimizeActionCosts({a: 10, b: 1, c: 1}))
+    problem.add_quality_metric(
+        unified_planning.model.metrics.MinimizeActionCosts({a: 10, b: 1, c: 1})
+    )
     return UPDomain(problem, state_encoding="native")
 
 
@@ -200,7 +223,7 @@ def _build_graph_domain() -> object:
     FullSpaceExploration -> GraphDomain, same construction as
     tests/domains/test_graph_domain.py -- proven this session
     (goal_reached=True, plan_length=3)."""
-    from autofde_lab import D, DeterministicPlanningDomain, ImplicitSpace, Value
+    from autofde_lab import DeterministicPlanningDomain, ImplicitSpace, Value
     from autofde_lab.hub.domain.graph_domain.graph_domain_builders.FullSpaceExploration import (
         FullSpaceExploration,
     )
@@ -240,7 +263,9 @@ def _build_graph_domain() -> object:
             return ImplicitSpace(lambda x: isinstance(x, int))
 
     source_domain = ChainDomain()
-    explorer = FullSpaceExploration(source_domain, max_nodes=1000, max_edges=1000, max_path=1000)
+    explorer = FullSpaceExploration(
+        source_domain, max_nodes=1000, max_edges=1000, max_path=1000
+    )
     built = explorer.build_graph_domain()
 
     # GraphDomain itself has no _get_initial_state_ (real, by design -- it's
@@ -254,7 +279,10 @@ def _build_graph_domain() -> object:
             return 0
 
     return _GraphDomainWithInitialState(
-        built.next_state_map, built.next_state_attributes, built.targets, built.attribute_weight
+        built.next_state_map,
+        built.next_state_attributes,
+        built.targets,
+        built.attribute_weight,
     )
 
 
@@ -270,7 +298,9 @@ def _build_rock_paper_scissors() -> object:
     """Real RockPaperScissors -- proven this session for the
     seeded-trajectory-replay closure (10-step self-play, bitwise-identical
     replay on a fresh instance)."""
-    from autofde_lab.hub.domain.rock_paper_scissors.rock_paper_scissors import RockPaperScissors
+    from autofde_lab.hub.domain.rock_paper_scissors.rock_paper_scissors import (
+        RockPaperScissors,
+    )
 
     return RockPaperScissors()
 
@@ -293,7 +323,11 @@ def _build_rddl() -> object:
     bitwise-identical trajectory on a fresh seeded instance)."""
     from autofde_lab.hub.domain.rddl.rddl import RDDLDomain
 
-    return RDDLDomain(rddl_domain="CartPole_Continuous_gym", rddl_instance="0", display_with_pygame=False)
+    return RDDLDomain(
+        rddl_domain="CartPole_Continuous_gym",
+        rddl_instance="0",
+        display_with_pygame=False,
+    )
 
 
 def _build_chatman_clean_session() -> object:
@@ -316,7 +350,9 @@ def _build_chatman_clean_session() -> object:
             constraints=("zero unreceipted actuation",),
             authority="repository owner",
         ),
-        routes=(RouteSpec("exact_sha_sparse_tree", cost=1.0, outcome=RouteOutcome.SUCCESS),),
+        routes=(
+            RouteSpec("exact_sha_sparse_tree", cost=1.0, outcome=RouteOutcome.SUCCESS),
+        ),
     )
 
 
@@ -373,8 +409,6 @@ def _rollout_rock_paper_scissors(domain, seed: int, horizon: int) -> list[dict]:
 
 
 def _rollout_gym_mountaincar(domain, seed: int, horizon: int) -> list:
-    import numpy as np
-
     action_space = domain.get_action_space()
     action_space.unwrapped().seed(seed)
     return [action_space.sample() for _ in range(horizon)]
@@ -402,7 +436,9 @@ _TRAJECTORY_REPLAY: dict[str, tuple[int, int, Callable]] = {
 }
 
 
-def _run_trajectory_replay(domain_key: str, spec, factory: Callable[[], object]) -> None:
+def _run_trajectory_replay(
+    domain_key: str, spec, factory: Callable[[], object]
+) -> None:
     """Real closure for reset()/step()-shaped domains with no single-agent
     goal predicate: a fixed-seed, fixed-horizon rollout, verified by
     replaying the exact recorded action sequence on a FRESH second instance
@@ -415,15 +451,26 @@ def _run_trajectory_replay(domain_key: str, spec, factory: Callable[[], object])
     domain_obj = f"domain:{domain_key}"
     log = log.with_objects(
         OcelObject(episode_obj, "episode"),
-        OcelObject(domain_obj, "domain", (OcelAttribute("domain_class", OcelAttributeValue.string(spec.domain_class_name)),)),
+        OcelObject(
+            domain_obj,
+            "domain",
+            (
+                OcelAttribute(
+                    "domain_class", OcelAttributeValue.string(spec.domain_class_name)
+                ),
+            ),
+        ),
     )
 
     t0 = time.time_ns()
     domain = factory()
     actions = rollout_fn(domain, seed, horizon)
     log = log.append_event(
-        "ev:materialize", "materialize", [episode_obj, domain_obj],
-        timestamp_ns=t0, attributes=_attr(standing="ALIVE", seed=seed, horizon=horizon),
+        "ev:materialize",
+        "materialize",
+        [episode_obj, domain_obj],
+        timestamp_ns=t0,
+        attributes=_attr(standing="ALIVE", seed=seed, horizon=horizon),
     )
 
     def _rollout(d, acts: list) -> tuple[list, int]:
@@ -463,8 +510,11 @@ def _run_trajectory_replay(domain_key: str, spec, factory: Callable[[], object])
 
     for i, a in enumerate(actions):
         log = log.append_event(
-            f"ev:act:{i}", "act", [episode_obj, domain_obj],
-            timestamp_ns=time.time_ns(), attributes=_attr(step_index=i),
+            f"ev:act:{i}",
+            "act",
+            [episode_obj, domain_obj],
+            timestamp_ns=time.time_ns(),
+            attributes=_attr(step_index=i),
         )
 
     # verify -- fresh second instance, identical seed, identical recorded
@@ -475,13 +525,22 @@ def _run_trajectory_replay(domain_key: str, spec, factory: Callable[[], object])
 
     verify_passed = trace1 == trace2
     log = log.append_event(
-        "ev:verify", "verify", [episode_obj, domain_obj],
+        "ev:verify",
+        "verify",
+        [episode_obj, domain_obj],
         timestamp_ns=time.time_ns(),
-        attributes=_attr(standing="ALIVE" if verify_passed else "REFUSED", verify_mode=spec.verify_mode, trace_length=len(trace1)),
+        attributes=_attr(
+            standing="ALIVE" if verify_passed else "REFUSED",
+            verify_mode=spec.verify_mode,
+            trace_length=len(trace1),
+        ),
     )
     log = log.append_event(
-        "ev:teardown", "teardown", [episode_obj, domain_obj],
-        timestamp_ns=time.time_ns(), attributes=_attr(standing="ALIVE"),
+        "ev:teardown",
+        "teardown",
+        [episode_obj, domain_obj],
+        timestamp_ns=time.time_ns(),
+        attributes=_attr(standing="ALIVE"),
     )
 
     validated = log.validate()
@@ -489,10 +548,15 @@ def _run_trajectory_replay(domain_key: str, spec, factory: Callable[[], object])
     out_path = REPO_ROOT / spec.evidence_out_path
     out_path.parent.mkdir(parents=True, exist_ok=True)
     import json
+
     out_path.write_text(json.dumps(document, indent=2, sort_keys=True))
 
-    print(f"domain_evidence[{domain_key}]: trajectory_length={len(trace1)} verify_passed={verify_passed}")
-    print(f"domain_evidence[{domain_key}]: wrote {len(validated.events)} events to {out_path}")
+    print(
+        f"domain_evidence[{domain_key}]: trajectory_length={len(trace1)} verify_passed={verify_passed}"
+    )
+    print(
+        f"domain_evidence[{domain_key}]: wrote {len(validated.events)} events to {out_path}"
+    )
 
     if not verify_passed:
         raise SystemExit(1)
@@ -516,7 +580,15 @@ def _run_mastermind_episode(spec) -> None:
     domain_obj = "domain:mastermind"
     log = log.with_objects(
         OcelObject(episode_obj, "episode"),
-        OcelObject(domain_obj, "domain", (OcelAttribute("domain_class", OcelAttributeValue.string(spec.domain_class_name)),)),
+        OcelObject(
+            domain_obj,
+            "domain",
+            (
+                OcelAttribute(
+                    "domain_class", OcelAttributeValue.string(spec.domain_class_name)
+                ),
+            ),
+        ),
     )
 
     module = importlib.import_module(spec.python_module_path)
@@ -534,12 +606,20 @@ def _run_mastermind_episode(spec) -> None:
     plan = [guess]
 
     log = log.append_event(
-        "ev:materialize", "materialize", [episode_obj, domain_obj],
-        timestamp_ns=t0, attributes=_attr(standing="ALIVE" if goal_reached else "PARTIAL_ALIVE", plan_length=1),
+        "ev:materialize",
+        "materialize",
+        [episode_obj, domain_obj],
+        timestamp_ns=t0,
+        attributes=_attr(
+            standing="ALIVE" if goal_reached else "PARTIAL_ALIVE", plan_length=1
+        ),
     )
     log = log.append_event(
-        "ev:act:0", "act", [episode_obj, domain_obj],
-        timestamp_ns=time.time_ns(), attributes=_attr(action_id=str(guess), step_index=0),
+        "ev:act:0",
+        "act",
+        [episode_obj, domain_obj],
+        timestamp_ns=time.time_ns(),
+        attributes=_attr(action_id=str(guess), step_index=0),
     )
 
     # verify -- fresh second domain instance, same concrete solution (not
@@ -550,16 +630,27 @@ def _run_mastermind_episode(spec) -> None:
     fresh_domain = domain_cls(n_colours=3, n_positions=3)
     fresh_initial = State(solution=initial_state.solution, score=Score(0, 0))
     fresh_next = fresh_domain._get_next_state(fresh_initial, guess)
-    verify_passed = fresh_domain._is_goal(fresh_next.score) and (fresh_next == next_state)
+    verify_passed = fresh_domain._is_goal(fresh_next.score) and (
+        fresh_next == next_state
+    )
 
     log = log.append_event(
-        "ev:verify", "verify", [episode_obj, domain_obj],
+        "ev:verify",
+        "verify",
+        [episode_obj, domain_obj],
         timestamp_ns=time.time_ns(),
-        attributes=_attr(standing="ALIVE" if verify_passed else "REFUSED", goal_reached=goal_reached, verify_mode=spec.verify_mode),
+        attributes=_attr(
+            standing="ALIVE" if verify_passed else "REFUSED",
+            goal_reached=goal_reached,
+            verify_mode=spec.verify_mode,
+        ),
     )
     log = log.append_event(
-        "ev:teardown", "teardown", [episode_obj, domain_obj],
-        timestamp_ns=time.time_ns(), attributes=_attr(standing="ALIVE"),
+        "ev:teardown",
+        "teardown",
+        [episode_obj, domain_obj],
+        timestamp_ns=time.time_ns(),
+        attributes=_attr(standing="ALIVE"),
     )
 
     validated = log.validate()
@@ -567,10 +658,15 @@ def _run_mastermind_episode(spec) -> None:
     out_path = REPO_ROOT / spec.evidence_out_path
     out_path.parent.mkdir(parents=True, exist_ok=True)
     import json
+
     out_path.write_text(json.dumps(document, indent=2, sort_keys=True))
 
-    print(f"domain_evidence[mastermind]: plan_length={len(plan)} goal_reached={goal_reached} verify_passed={verify_passed}")
-    print(f"domain_evidence[mastermind]: wrote {len(validated.events)} events to {out_path}")
+    print(
+        f"domain_evidence[mastermind]: plan_length={len(plan)} goal_reached={goal_reached} verify_passed={verify_passed}"
+    )
+    print(
+        f"domain_evidence[mastermind]: wrote {len(validated.events)} events to {out_path}"
+    )
 
     if not (goal_reached and verify_passed):
         raise SystemExit(1)
@@ -591,9 +687,8 @@ def _run_mastermind_episode(spec) -> None:
 
 
 def _build_rcpsp_for_astar() -> object:
-    from examples.scheduling.rcpsp_datasets import get_complete_path
-
     from autofde_lab.hub.domain.rcpsp.rcpsp_sk_parser import load_domain
+    from examples.scheduling.rcpsp_datasets import get_complete_path
 
     domain = load_domain(get_complete_path("j301_1.sm"))
     domain.set_inplace_environment(False)
@@ -614,7 +709,9 @@ def _strategy_astar_plain(domain_key: str) -> dict:
     if domain_key == "rcpsp":
         factory = _build_rcpsp_for_astar
     else:
-        factory = _DOMAIN_FACTORIES.get(domain_key, functools.partial(_default_construct, domain_key))
+        factory = _DOMAIN_FACTORIES.get(
+            domain_key, functools.partial(_default_construct, domain_key)
+        )
     domain = factory()
     astar_cls = utils.load_registered_solver("Astar")
     plan: list = []
@@ -635,7 +732,9 @@ def _strategy_astar_heuristic(domain_key: str) -> dict:
     domain = factory()
     astar_cls = utils.load_registered_solver("Astar")
     plan: list = []
-    with astar_cls(domain_factory=lambda: domain, heuristic=lambda d, s: d.heuristic(s)) as solver:
+    with astar_cls(
+        domain_factory=lambda: domain, heuristic=lambda d, s: d.heuristic(s)
+    ) as solver:
         solver.solve()
         state = domain.get_initial_state()
         for _ in range(200):
@@ -649,13 +748,16 @@ def _strategy_astar_heuristic(domain_key: str) -> dict:
 
 def _strategy_do_solver_cpsat(domain_key: str) -> dict:
     del domain_key  # only rcpsp uses this strategy today
-    from examples.scheduling.rcpsp_datasets import get_complete_path
+    from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
 
     from autofde_lab import rollout as do_rollout
     from autofde_lab.hub.domain.rcpsp.rcpsp_sk_parser import load_domain
     from autofde_lab.hub.solver.do_solver.do_solver_scheduling import DOSolver
-    from autofde_lab.hub.solver.do_solver.sgs_policies import BasePolicyMethod, PolicyMethodParams
-    from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
+    from autofde_lab.hub.solver.do_solver.sgs_policies import (
+        BasePolicyMethod,
+        PolicyMethodParams,
+    )
+    from examples.scheduling.rcpsp_datasets import get_complete_path
 
     domain = load_domain(get_complete_path("j301_1.sm"))
     domain.set_inplace_environment(False)
@@ -663,13 +765,19 @@ def _strategy_do_solver_cpsat(domain_key: str) -> dict:
     solver = DOSolver(
         domain_factory=lambda: domain,
         policy_method_params=PolicyMethodParams(
-            base_policy_method=BasePolicyMethod.SGS_PRECEDENCE, delta_index_freedom=0, delta_time_freedom=0
+            base_policy_method=BasePolicyMethod.SGS_PRECEDENCE,
+            delta_index_freedom=0,
+            delta_time_freedom=0,
         ),
         do_solver_type=CpSatRcpspSolver,
     )
     solver.solve()
     states, actions, _values = do_rollout(
-        domain=domain, solver=solver, from_memory=initial_state, max_steps=500, return_episodes=True
+        domain=domain,
+        solver=solver,
+        from_memory=initial_state,
+        max_steps=500,
+        return_episodes=True,
     )[0]
     return {"plan": list(actions), "goal_reached": domain.is_goal(states[-1])}
 
@@ -681,7 +789,9 @@ def _strategy_lrtastar_plain(domain_key: str) -> dict:
     solver hub; the registered one is this one). No `max_iter` kwarg
     (confirmed by a real TypeError before correcting -- its real signature
     is domain_factory/heuristic/time_budget/rollout_budget/max_depth/...)."""
-    factory = _DOMAIN_FACTORIES.get(domain_key, functools.partial(_default_construct, domain_key))
+    factory = _DOMAIN_FACTORIES.get(
+        domain_key, functools.partial(_default_construct, domain_key)
+    )
     domain = factory()
     solver_cls = utils.load_registered_solver("LRTAstar")
     plan: list = []
@@ -702,11 +812,15 @@ def _strategy_bfws_state_features(domain_key: str) -> dict:
     session for `simple_grid_world`. Requires a `state_features` callable
     (no generic default exists) -- the raw state itself is used as the
     novelty feature vector, the minimal real choice, not a stub."""
-    factory = _DOMAIN_FACTORIES.get(domain_key, functools.partial(_default_construct, domain_key))
+    factory = _DOMAIN_FACTORIES.get(
+        domain_key, functools.partial(_default_construct, domain_key)
+    )
     domain = factory()
     solver_cls = utils.load_registered_solver("BFWS")
     plan: list = []
-    with solver_cls(domain_factory=lambda: domain, state_features=lambda d, s: s) as solver:
+    with solver_cls(
+        domain_factory=lambda: domain, state_features=lambda d, s: s
+    ) as solver:
         solver.solve()
         state = domain.get_initial_state()
         for _ in range(200):
@@ -726,11 +840,15 @@ def _strategy_iw_state_features(domain_key: str) -> dict:
     'int'` when graph_domain's raw int state was passed directly (unlike
     BFWS, which accepted the same bare-int feature fine); wrapped in a
     1-tuple."""
-    factory = _DOMAIN_FACTORIES.get(domain_key, functools.partial(_default_construct, domain_key))
+    factory = _DOMAIN_FACTORIES.get(
+        domain_key, functools.partial(_default_construct, domain_key)
+    )
     domain = factory()
     solver_cls = utils.load_registered_solver("IW")
     plan: list = []
-    with solver_cls(domain_factory=lambda: domain, state_features=lambda d, s: (s,)) as solver:
+    with solver_cls(
+        domain_factory=lambda: domain, state_features=lambda d, s: (s,)
+    ) as solver:
         solver.solve()
         state = domain.get_initial_state()
         for _ in range(200):
@@ -863,7 +981,9 @@ _VERIFY_STRATEGIES: dict[str, Callable[[dict], bool]] = {
 }
 
 
-def _run_verify_portfolio(domain_key: str, spec, log, episode_obj: str, domain_obj: str, ctx: dict):
+def _run_verify_portfolio(
+    domain_key: str, spec, log, episode_obj: str, domain_obj: str, ctx: dict
+):
     """Real verifier-of-verifiers dispatch, mirroring
     `_run_solver_portfolio_episode`'s ev:solver_refused/ev:solver_selected
     pattern for verify_mode: try each `spec.verify_candidates` in order,
@@ -889,7 +1009,9 @@ def _run_verify_portfolio(domain_key: str, spec, log, episode_obj: str, domain_o
 
     for candidate in sorted(spec.verify_candidates, key=lambda c: c.order):
         subprocess_strategy_fn = _SUBPROCESS_VERIFY_STRATEGIES.get(candidate.strategy)
-        print(f"domain_evidence[{domain_key}]: trying verify candidate order={candidate.order} strategy={candidate.strategy} timeout={candidate.timeout_seconds}s")
+        print(
+            f"domain_evidence[{domain_key}]: trying verify candidate order={candidate.order} strategy={candidate.strategy} timeout={candidate.timeout_seconds}s"
+        )
         attempt_t0 = time.time()
         try:
             if subprocess_strategy_fn is not None:
@@ -898,34 +1020,66 @@ def _run_verify_portfolio(domain_key: str, spec, log, episode_obj: str, domain_o
                 passed = subprocess_strategy_fn(ctx, candidate.timeout_seconds)
             else:
                 strategy_fn = _VERIFY_STRATEGIES[candidate.strategy]
-                passed = _with_alarm_timeout(strategy_fn, candidate.timeout_seconds, ctx)
+                passed = _with_alarm_timeout(
+                    strategy_fn, candidate.timeout_seconds, ctx
+                )
             elapsed = time.time() - attempt_t0
         except Exception as exc:  # real SIGALRM timeout or a real check-raising failure
             elapsed = time.time() - attempt_t0
-            reason = "timeout" if isinstance(exc, _VerifyTimeout) else f"error:{exc.__class__.__name__}"
-            log = log.append_event(
-                f"ev:verifier_refused:{candidate.order}", "verifier_refused", [episode_obj, domain_obj],
-                timestamp_ns=time.time_ns(),
-                attributes=_attr(strategy=candidate.strategy, candidate_order=candidate.order, elapsed_seconds=elapsed, reason=reason),
+            reason = (
+                "timeout"
+                if isinstance(exc, _VerifyTimeout)
+                else f"error:{exc.__class__.__name__}"
             )
-            print(f"domain_evidence[{domain_key}]: verify candidate {candidate.strategy} refused ({reason}) after {elapsed:.2f}s")
+            log = log.append_event(
+                f"ev:verifier_refused:{candidate.order}",
+                "verifier_refused",
+                [episode_obj, domain_obj],
+                timestamp_ns=time.time_ns(),
+                attributes=_attr(
+                    strategy=candidate.strategy,
+                    candidate_order=candidate.order,
+                    elapsed_seconds=elapsed,
+                    reason=reason,
+                ),
+            )
+            print(
+                f"domain_evidence[{domain_key}]: verify candidate {candidate.strategy} refused ({reason}) after {elapsed:.2f}s"
+            )
             continue
 
         if passed:
             log = log.append_event(
-                f"ev:verifier_selected:{candidate.order}", "verifier_selected", [episode_obj, domain_obj],
+                f"ev:verifier_selected:{candidate.order}",
+                "verifier_selected",
+                [episode_obj, domain_obj],
                 timestamp_ns=time.time_ns(),
-                attributes=_attr(strategy=candidate.strategy, candidate_order=candidate.order, elapsed_seconds=elapsed),
+                attributes=_attr(
+                    strategy=candidate.strategy,
+                    candidate_order=candidate.order,
+                    elapsed_seconds=elapsed,
+                ),
             )
-            print(f"domain_evidence[{domain_key}]: verify candidate {candidate.strategy} succeeded in {elapsed:.2f}s")
+            print(
+                f"domain_evidence[{domain_key}]: verify candidate {candidate.strategy} succeeded in {elapsed:.2f}s"
+            )
             return True, log, candidate.strategy
 
         log = log.append_event(
-            f"ev:verifier_refused:{candidate.order}", "verifier_refused", [episode_obj, domain_obj],
+            f"ev:verifier_refused:{candidate.order}",
+            "verifier_refused",
+            [episode_obj, domain_obj],
             timestamp_ns=time.time_ns(),
-            attributes=_attr(strategy=candidate.strategy, candidate_order=candidate.order, elapsed_seconds=elapsed, reason="check_failed"),
+            attributes=_attr(
+                strategy=candidate.strategy,
+                candidate_order=candidate.order,
+                elapsed_seconds=elapsed,
+                reason="check_failed",
+            ),
         )
-        print(f"domain_evidence[{domain_key}]: verify candidate {candidate.strategy} refused (check_failed) after {elapsed:.2f}s")
+        print(
+            f"domain_evidence[{domain_key}]: verify candidate {candidate.strategy} refused (check_failed) after {elapsed:.2f}s"
+        )
 
     return False, log, None
 
@@ -945,7 +1099,15 @@ def _run_solver_portfolio_episode(domain_key: str, spec) -> None:
     domain_obj = f"domain:{domain_key}"
     log = log.with_objects(
         OcelObject(episode_obj, "episode"),
-        OcelObject(domain_obj, "domain", (OcelAttribute("domain_class", OcelAttributeValue.string(spec.domain_class_name)),)),
+        OcelObject(
+            domain_obj,
+            "domain",
+            (
+                OcelAttribute(
+                    "domain_class", OcelAttributeValue.string(spec.domain_class_name)
+                ),
+            ),
+        ),
     )
 
     t0 = time.time_ns()
@@ -953,50 +1115,91 @@ def _run_solver_portfolio_episode(domain_key: str, spec) -> None:
     outcome = None
     for candidate in sorted(spec.solver_candidates, key=lambda c: c.order):
         strategy_fn = _SOLVER_STRATEGIES[candidate.strategy]
-        print(f"domain_evidence[{domain_key}]: trying solver candidate order={candidate.order} strategy={candidate.strategy} timeout={candidate.timeout_seconds}s")
+        print(
+            f"domain_evidence[{domain_key}]: trying solver candidate order={candidate.order} strategy={candidate.strategy} timeout={candidate.timeout_seconds}s"
+        )
         attempt_t0 = time.time()
-        result = try_solver(functools.partial(strategy_fn, domain_key), candidate.timeout_seconds)
+        result = try_solver(
+            functools.partial(strategy_fn, domain_key), candidate.timeout_seconds
+        )
         elapsed = time.time() - attempt_t0
         if result["status"] == "success" and result["result"].get("goal_reached"):
             selected = candidate
             outcome = result["result"]
             log = log.append_event(
-                f"ev:solver_selected:{candidate.order}", "solver_selected", [episode_obj, domain_obj],
+                f"ev:solver_selected:{candidate.order}",
+                "solver_selected",
+                [episode_obj, domain_obj],
                 timestamp_ns=time.time_ns(),
-                attributes=_attr(strategy=candidate.strategy, candidate_order=candidate.order, elapsed_seconds=elapsed, plan_length=len(outcome["plan"])),
+                attributes=_attr(
+                    strategy=candidate.strategy,
+                    candidate_order=candidate.order,
+                    elapsed_seconds=elapsed,
+                    plan_length=len(outcome["plan"]),
+                ),
             )
-            print(f"domain_evidence[{domain_key}]: solver candidate {candidate.strategy} succeeded in {elapsed:.2f}s")
+            print(
+                f"domain_evidence[{domain_key}]: solver candidate {candidate.strategy} succeeded in {elapsed:.2f}s"
+            )
             break
         else:
-            reason = result["status"] if result["status"] != "success" else "goal_not_reached"
-            log = log.append_event(
-                f"ev:solver_refused:{candidate.order}", "solver_refused", [episode_obj, domain_obj],
-                timestamp_ns=time.time_ns(),
-                attributes=_attr(strategy=candidate.strategy, candidate_order=candidate.order, elapsed_seconds=elapsed, reason=reason),
+            reason = (
+                result["status"]
+                if result["status"] != "success"
+                else "goal_not_reached"
             )
-            print(f"domain_evidence[{domain_key}]: solver candidate {candidate.strategy} refused ({reason}) after {elapsed:.2f}s")
+            log = log.append_event(
+                f"ev:solver_refused:{candidate.order}",
+                "solver_refused",
+                [episode_obj, domain_obj],
+                timestamp_ns=time.time_ns(),
+                attributes=_attr(
+                    strategy=candidate.strategy,
+                    candidate_order=candidate.order,
+                    elapsed_seconds=elapsed,
+                    reason=reason,
+                ),
+            )
+            print(
+                f"domain_evidence[{domain_key}]: solver candidate {candidate.strategy} refused ({reason}) after {elapsed:.2f}s"
+            )
 
     if selected is None:
         log = log.append_event(
-            "ev:materialize", "materialize", [episode_obj, domain_obj],
-            timestamp_ns=t0, attributes=_attr(standing="BLOCKED", plan_length=0),
+            "ev:materialize",
+            "materialize",
+            [episode_obj, domain_obj],
+            timestamp_ns=t0,
+            attributes=_attr(standing="BLOCKED", plan_length=0),
         )
         log = log.append_event(
-            "ev:teardown", "teardown", [episode_obj, domain_obj], timestamp_ns=time.time_ns(), attributes=_attr(standing="ALIVE"),
+            "ev:teardown",
+            "teardown",
+            [episode_obj, domain_obj],
+            timestamp_ns=time.time_ns(),
+            attributes=_attr(standing="ALIVE"),
         )
         validated = log.validate()
         out_path = REPO_ROOT / spec.evidence_out_path
         out_path.parent.mkdir(parents=True, exist_ok=True)
         import json
-        out_path.write_text(json.dumps(validated.to_ocel2_json(), indent=2, sort_keys=True))
-        print(f"domain_evidence[{domain_key}]: ALL solver candidates refused -- no solution found")
+
+        out_path.write_text(
+            json.dumps(validated.to_ocel2_json(), indent=2, sort_keys=True)
+        )
+        print(
+            f"domain_evidence[{domain_key}]: ALL solver candidates refused -- no solution found"
+        )
         raise SystemExit(1)
 
     plan = outcome["plan"]
     for i, action_id in enumerate(plan):
         log = log.append_event(
-            f"ev:act:{i}", "act", [episode_obj, domain_obj],
-            timestamp_ns=time.time_ns(), attributes=_attr(action_id=str(action_id), step_index=i),
+            f"ev:act:{i}",
+            "act",
+            [episode_obj, domain_obj],
+            timestamp_ns=time.time_ns(),
+            attributes=_attr(action_id=str(action_id), step_index=i),
         )
 
     # verify -- verifier-of-verifiers dispatch (spec.verify_candidates),
@@ -1005,25 +1208,48 @@ def _run_solver_portfolio_episode(domain_key: str, spec) -> None:
     # re-attempt of the SAME winning strategy in a fresh subprocess --
     # equivalent to "independent-resolve"), via _run_verify_portfolio's
     # legacy fallback path.
-    factory = _DOMAIN_FACTORIES.get(domain_key, functools.partial(_default_construct, domain_key))
-    verify_ctx = {"domain_key": domain_key, "plan": plan, "factory": factory, "winning_strategy": selected.strategy}
+    factory = _DOMAIN_FACTORIES.get(
+        domain_key, functools.partial(_default_construct, domain_key)
+    )
+    verify_ctx = {
+        "domain_key": domain_key,
+        "plan": plan,
+        "factory": factory,
+        "winning_strategy": selected.strategy,
+    }
     if spec.verify_candidates:
         verify_passed, log, selected_verify_strategy = _run_verify_portfolio(
             domain_key, spec, log, episode_obj, domain_obj, verify_ctx
         )
     else:
-        verify_result = try_solver(functools.partial(_SOLVER_STRATEGIES[selected.strategy], domain_key), selected.timeout_seconds)
-        verify_passed = verify_result["status"] == "success" and verify_result["result"].get("goal_reached", False)
+        verify_result = try_solver(
+            functools.partial(_SOLVER_STRATEGIES[selected.strategy], domain_key),
+            selected.timeout_seconds,
+        )
+        verify_passed = verify_result["status"] == "success" and verify_result[
+            "result"
+        ].get("goal_reached", False)
         selected_verify_strategy = "independent-resolve"
 
     log = log.append_event(
-        "ev:verify", "verify", [episode_obj, domain_obj],
+        "ev:verify",
+        "verify",
+        [episode_obj, domain_obj],
         timestamp_ns=time.time_ns(),
-        attributes=_attr(standing="ALIVE" if verify_passed else "REFUSED", goal_reached=outcome["goal_reached"], verify_mode=spec.verify_mode, winning_strategy=selected.strategy, winning_verify_strategy=str(selected_verify_strategy)),
+        attributes=_attr(
+            standing="ALIVE" if verify_passed else "REFUSED",
+            goal_reached=outcome["goal_reached"],
+            verify_mode=spec.verify_mode,
+            winning_strategy=selected.strategy,
+            winning_verify_strategy=str(selected_verify_strategy),
+        ),
     )
     log = log.append_event(
-        "ev:teardown", "teardown", [episode_obj, domain_obj],
-        timestamp_ns=time.time_ns(), attributes=_attr(standing="ALIVE"),
+        "ev:teardown",
+        "teardown",
+        [episode_obj, domain_obj],
+        timestamp_ns=time.time_ns(),
+        attributes=_attr(standing="ALIVE"),
     )
 
     validated = log.validate()
@@ -1031,10 +1257,15 @@ def _run_solver_portfolio_episode(domain_key: str, spec) -> None:
     out_path = REPO_ROOT / spec.evidence_out_path
     out_path.parent.mkdir(parents=True, exist_ok=True)
     import json
+
     out_path.write_text(json.dumps(document, indent=2, sort_keys=True))
 
-    print(f"domain_evidence[{domain_key}]: winning_strategy={selected.strategy} plan_length={len(plan)} goal_reached={outcome['goal_reached']} verify_passed={verify_passed}")
-    print(f"domain_evidence[{domain_key}]: wrote {len(validated.events)} events to {out_path}")
+    print(
+        f"domain_evidence[{domain_key}]: winning_strategy={selected.strategy} plan_length={len(plan)} goal_reached={outcome['goal_reached']} verify_passed={verify_passed}"
+    )
+    print(
+        f"domain_evidence[{domain_key}]: wrote {len(validated.events)} events to {out_path}"
+    )
 
     if not (outcome["goal_reached"] and verify_passed):
         raise SystemExit(1)
@@ -1043,7 +1274,9 @@ def _run_solver_portfolio_episode(domain_key: str, spec) -> None:
 def run(domain_key: str) -> None:
     spec = DOMAIN_EVIDENCE_REGISTRY.get(domain_key)
     if spec is None:
-        print(f"domain_evidence: no registry entry for {domain_key!r}; known: {sorted(DOMAIN_EVIDENCE_REGISTRY)}")
+        print(
+            f"domain_evidence: no registry entry for {domain_key!r}; known: {sorted(DOMAIN_EVIDENCE_REGISTRY)}"
+        )
         raise SystemExit(1)
 
     module = importlib.import_module(spec.python_module_path)
@@ -1067,7 +1300,15 @@ def run(domain_key: str) -> None:
     domain_obj = f"domain:{domain_key}"
     log = log.with_objects(
         OcelObject(episode_obj, "episode"),
-        OcelObject(domain_obj, "domain", (OcelAttribute("domain_class", OcelAttributeValue.string(spec.domain_class_name)),)),
+        OcelObject(
+            domain_obj,
+            "domain",
+            (
+                OcelAttribute(
+                    "domain_class", OcelAttributeValue.string(spec.domain_class_name)
+                ),
+            ),
+        ),
     )
 
     # materialize -- a real domain instance, real Astar solve. (Domains
@@ -1092,19 +1333,28 @@ def run(domain_key: str) -> None:
 
     materialized_goal_reached = domain.is_goal(state)
     log = log.append_event(
-        "ev:materialize", "materialize", [episode_obj, domain_obj],
+        "ev:materialize",
+        "materialize",
+        [episode_obj, domain_obj],
         timestamp_ns=t0,
-        attributes=_attr(standing="ALIVE" if materialized_goal_reached else "PARTIAL_ALIVE", plan_length=len(plan)),
+        attributes=_attr(
+            standing="ALIVE" if materialized_goal_reached else "PARTIAL_ALIVE",
+            plan_length=len(plan),
+        ),
     )
 
     if not materialized_goal_reached:
-        print(f"domain_evidence[{domain_key}]: real Astar solve did not reach goal; partial plan={plan}")
+        print(
+            f"domain_evidence[{domain_key}]: real Astar solve did not reach goal; partial plan={plan}"
+        )
 
     # act -- one OCEL event per real capability applied, in solved-plan order.
     for i, action_id in enumerate(plan):
         t = time.time_ns()
         log = log.append_event(
-            f"ev:act:{i}", "act", [episode_obj, domain_obj],
+            f"ev:act:{i}",
+            "act",
+            [episode_obj, domain_obj],
             timestamp_ns=t,
             attributes=_attr(action_id=action_id, step_index=i),
         )
@@ -1119,18 +1369,32 @@ def run(domain_key: str) -> None:
     # above, replays the exact recorded action sequence and the terminal
     # check is re-derived against IT, not the acting instance's own
     # object).
-    verify_ctx = {"domain_key": domain_key, "plan": plan, "factory": factory, "final_state": final_state}
+    verify_ctx = {
+        "domain_key": domain_key,
+        "plan": plan,
+        "factory": factory,
+        "final_state": final_state,
+    }
     verify_passed, log, selected_verify_strategy = _run_verify_portfolio(
         domain_key, spec, log, episode_obj, domain_obj, verify_ctx
     )
 
     log = log.append_event(
-        "ev:verify", "verify", [episode_obj, domain_obj],
+        "ev:verify",
+        "verify",
+        [episode_obj, domain_obj],
         timestamp_ns=time.time_ns(),
-        attributes=_attr(standing="ALIVE" if verify_passed else "REFUSED", goal_reached=goal_reached, verify_mode=spec.verify_mode, winning_verify_strategy=str(selected_verify_strategy)),
+        attributes=_attr(
+            standing="ALIVE" if verify_passed else "REFUSED",
+            goal_reached=goal_reached,
+            verify_mode=spec.verify_mode,
+            winning_verify_strategy=str(selected_verify_strategy),
+        ),
     )
     log = log.append_event(
-        "ev:teardown", "teardown", [episode_obj, domain_obj],
+        "ev:teardown",
+        "teardown",
+        [episode_obj, domain_obj],
         timestamp_ns=time.time_ns(),
         attributes=_attr(standing="ALIVE"),
     )
@@ -1141,10 +1405,15 @@ def run(domain_key: str) -> None:
     out_path = REPO_ROOT / spec.evidence_out_path
     out_path.parent.mkdir(parents=True, exist_ok=True)
     import json
+
     out_path.write_text(json.dumps(document, indent=2, sort_keys=True))
 
-    print(f"domain_evidence[{domain_key}]: plan_length={len(plan)} goal_reached={goal_reached} verify_passed={verify_passed}")
-    print(f"domain_evidence[{domain_key}]: wrote {len(validated.events)} events to {out_path}")
+    print(
+        f"domain_evidence[{domain_key}]: plan_length={len(plan)} goal_reached={goal_reached} verify_passed={verify_passed}"
+    )
+    print(
+        f"domain_evidence[{domain_key}]: wrote {len(validated.events)} events to {out_path}"
+    )
 
     if not (goal_reached and verify_passed):
         raise SystemExit(1)
@@ -1152,6 +1421,8 @@ def run(domain_key: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--domain", required=True, choices=sorted(DOMAIN_EVIDENCE_REGISTRY))
+    parser.add_argument(
+        "--domain", required=True, choices=sorted(DOMAIN_EVIDENCE_REGISTRY)
+    )
     args = parser.parse_args()
     run(args.domain)

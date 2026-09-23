@@ -28,9 +28,7 @@ from autofde_lab.fabric.rdf_domain import (
     compile_rdf_to_pddl_files,
 )
 
-FIXTURE = os.path.join(
-    os.path.dirname(__file__), "fixtures", "blocks_rdf_domain.ttl"
-)
+FIXTURE = os.path.join(os.path.dirname(__file__), "fixtures", "blocks_rdf_domain.ttl")
 
 
 def test_fixture_is_valid_turtle_conforming_to_the_ontology():
@@ -128,7 +126,7 @@ def test_missing_required_field_raises_named_rdf_domain_error(tmp_path):
         "@prefix pd: <urn:autofde-lab:planning-domain:> .\n"
         "@prefix ex: <urn:autofde-lab:planning-domain:broken:> .\n"
         "ex:domain a pd:Domain .\n"  # missing pd:domainName
-        "ex:problem a pd:Problem ; pd:problemName \"broken\" ; pd:forDomain ex:domain .\n"
+        'ex:problem a pd:Problem ; pd:problemName "broken" ; pd:forDomain ex:domain .\n'
     )
     with pytest.raises(RdfDomainError):
         compile_rdf_to_pddl(str(broken_ttl))

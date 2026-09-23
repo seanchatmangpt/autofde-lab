@@ -22,8 +22,12 @@ def evidence(ref: str = "obs:1", admitted: bool = True) -> EvidenceBinding:
 
 
 def test_pipeline_preserves_bindings_and_builds_verifiable_solution() -> None:
-    baseline = BaselineSnapshot("baseline:1", "world:before", ("process:normal",), (evidence(),))
-    delta = WorldDelta("world:before", "world:after", baseline.digest, (evidence("obs:2"),))
+    baseline = BaselineSnapshot(
+        "baseline:1", "world:before", ("process:normal",), (evidence(),)
+    )
+    delta = WorldDelta(
+        "world:before", "world:after", baseline.digest, (evidence("obs:2"),)
+    )
     hypotheses = HypothesisPortfolio(
         delta.digest,
         (

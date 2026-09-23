@@ -152,10 +152,16 @@ def _repeatable_tool_use_choice_graph(tool_call_label: str) -> ChoiceGraph:
         children=(Silent(), Silent(), tool_call),
         edges=frozenset(
             {
-                ChoiceGraphEdge(NodeId(0), NodeId(1)),  # zero tool calls -> straight to submit
+                ChoiceGraphEdge(
+                    NodeId(0), NodeId(1)
+                ),  # zero tool calls -> straight to submit
                 ChoiceGraphEdge(NodeId(0), NodeId(2)),  # enter the loop
-                ChoiceGraphEdge(NodeId(2), NodeId(2)),  # repeat (self-loop -- real iteration)
-                ChoiceGraphEdge(NodeId(2), NodeId(1)),  # exit the loop, proceed to submit
+                ChoiceGraphEdge(
+                    NodeId(2), NodeId(2)
+                ),  # repeat (self-loop -- real iteration)
+                ChoiceGraphEdge(
+                    NodeId(2), NodeId(1)
+                ),  # exit the loop, proceed to submit
             }
         ),
         start=0,
@@ -176,9 +182,13 @@ def build_claudecode_agent_powl_node() -> PowlNode:
         Atom(label=CLAUDECODE_GET_APP_INFO_LABEL),
         Atom(label=CLAUDECODE_BUILD_INSTRUCTION_LABEL),
     )
-    diagnosis_loop = _repeatable_tool_use_choice_graph(CLAUDECODE_DIAGNOSIS_TOOL_CALL_LABEL)
+    diagnosis_loop = _repeatable_tool_use_choice_graph(
+        CLAUDECODE_DIAGNOSIS_TOOL_CALL_LABEL
+    )
     submit_diagnosis = Atom(label=CLAUDECODE_SUBMIT_DIAGNOSIS_LABEL)
-    mitigation_loop = _repeatable_tool_use_choice_graph(CLAUDECODE_MITIGATION_TOOL_CALL_LABEL)
+    mitigation_loop = _repeatable_tool_use_choice_graph(
+        CLAUDECODE_MITIGATION_TOOL_CALL_LABEL
+    )
     submit_mitigation = Atom(label=CLAUDECODE_SUBMIT_MITIGATION_LABEL)
     save_results = Atom(label=CLAUDECODE_SAVE_RESULTS_LABEL)
     generate_trajectory = Atom(label=CLAUDECODE_GENERATE_TRAJECTORY_LABEL)

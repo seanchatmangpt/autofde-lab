@@ -50,7 +50,9 @@ def _lm_server_up() -> bool:
     import urllib.request
 
     try:
-        with urllib.request.urlopen("http://127.0.0.1:8080/health", timeout=2.0) as resp:
+        with urllib.request.urlopen(
+            "http://127.0.0.1:8080/health", timeout=2.0
+        ) as resp:
             return resp.status == 200
     except (urllib.error.URLError, OSError):
         return False
@@ -73,7 +75,14 @@ def test_second_burn_catalyst_is_recorded_refused_not_alive(tmp_path) -> None:
     """
     plan = ("burn_catalyst", "burn_catalyst")
     config = {"seed": 7, "capacity": 8, "target": 3}
-    initial = {"capacity": 8, "target": 3, "mine_rate": 1, "raw": 0, "refined": 0, "output": 0}
+    initial = {
+        "capacity": 8,
+        "target": 3,
+        "mine_rate": 1,
+        "raw": 0,
+        "refined": 0,
+        "output": 0,
+    }
     expected = predict_step_postconditions(plan, "resource_flow", initial)
     commitment = commit(ValidatedPlan(plan=plan, model_digest="d"), "trial-doubleburn")
 
@@ -85,7 +94,9 @@ def test_second_burn_catalyst_is_recorded_refused_not_alive(tmp_path) -> None:
     assert standings == ["ALIVE", "REFUSED"], standings
     assert result["transitions"][0]["provider_applicable"] is True
     assert result["transitions"][1]["provider_applicable"] is False
-    assert result["transitions"][1]["reason"].startswith("PROVIDER_REPORTED_INAPPLICABLE")
+    assert result["transitions"][1]["reason"].startswith(
+        "PROVIDER_REPORTED_INAPPLICABLE"
+    )
     # The receipt gymact itself issued really did say ALIVE -- which is
     # precisely why the provider verdict had to be read separately.
     assert result["transitions"][1]["receipt_standing"] == "ALIVE"
@@ -105,13 +116,19 @@ def test_applicable_step_still_records_alive(tmp_path) -> None:
     plan = ("mine", "mine")
     config = {"seed": 7, "capacity": 8, "target": 3}
     initial = {
-        "capacity": 8, "target": 3, "mine_rate": mine_rate,
-        "raw": 0, "refined": 0, "output": 0,
+        "capacity": 8,
+        "target": 3,
+        "mine_rate": mine_rate,
+        "raw": 0,
+        "refined": 0,
+        "output": 0,
     }
     expected = predict_step_postconditions(plan, "resource_flow", initial)
     commitment = commit(ValidatedPlan(plan=plan, model_digest="d"), "trial-mine")
 
-    result = commit_and_execute(commitment, "resource_flow", config, expected, tmp_path / "mine")
+    result = commit_and_execute(
+        commitment, "resource_flow", config, expected, tmp_path / "mine"
+    )
 
     assert [t["provider_applicable"] for t in result["transitions"]] == [True, True]
     assert [t["standing"] for t in result["transitions"]] == ["ALIVE", "ALIVE"]
@@ -175,6 +192,7 @@ def test_real_local_lm_call_yields_source_dspy() -> None:
     """Real HTTP against the real local TurboFieldfare server, no stub."""
     pytest.importorskip("dspy")
     from autofde_lab.hub.solver.dspy_policy.dspy_policy import default_lm
+
     if not _lm_server_up():
         pytest.skip("no local LM server on 127.0.0.1:8080")
 
@@ -277,7 +295,9 @@ def test_relational_precondition_is_reported_unrepresentable_and_refused() -> No
     assert reason == "UNREPRESENTABLE:RELATIONAL_PRECONDITION"
 
 
-def test_a_flat_precondition_that_really_explains_refusals_stays_representable() -> None:
+def test_a_flat_precondition_that_really_explains_refusals_stays_representable() -> (
+    None
+):
     """The detector must only fire on a REAL falsification."""
     from autofde_lab.hub.domain.gym_procedure.typed_induction import induce_typed_domain
 
@@ -306,7 +326,9 @@ def test_a_flat_precondition_that_really_explains_refusals_stays_representable()
 # --------------------------------------------------------------------------
 
 
-def test_every_unsound_candidate_is_counted_not_only_those_before_the_first_valid() -> None:
+def test_every_unsound_candidate_is_counted_not_only_those_before_the_first_valid() -> (
+    None
+):
     """Real TypedDomain induced from real probe records, real PlannerAttempts,
     the real ranking function, and the same validation helper `run_real_trial`
     calls. The old loop broke on the first valid plan, so a candidate ranked
@@ -338,7 +360,9 @@ def test_every_unsound_candidate_is_counted_not_only_those_before_the_first_vali
     goal = lambda s: s.get("counter") == s.get("target")  # noqa: E731
 
     attempts = [
-        PlannerAttempt("good", "Recipe", "d", "PLAN_CANDIDATE", ("increment", "increment")),
+        PlannerAttempt(
+            "good", "Recipe", "d", "PLAN_CANDIDATE", ("increment", "increment")
+        ),
         PlannerAttempt("short", "Recipe", "d", "PLAN_CANDIDATE", ("increment",)),
         PlannerAttempt("bogus", "Recipe", "d", "PLAN_CANDIDATE", ("no_such_action",)),
     ]

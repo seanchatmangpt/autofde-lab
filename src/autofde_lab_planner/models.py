@@ -5,10 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-
 # -----------------------------------------------------------------------------
 # B4: Probe Fault Models
 # -----------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class ProbeFault:
@@ -31,6 +31,7 @@ class ProbeFault:
 # -----------------------------------------------------------------------------
 # B6: OTel Trace Diffing Models
 # -----------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class ParsedSpan:
@@ -78,6 +79,7 @@ class TraceAnomalyResult:
 # B9: flagd Config Drift Models
 # -----------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class FlagDriftItem:
     flag_name: str
@@ -99,6 +101,7 @@ class FlagdDriftResult:
 # B13: Object Reconstruction Models
 # -----------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class MissingObjectFault:
     kind: Literal["Service", "ConfigMap", "Secret", "PVC"]
@@ -119,6 +122,7 @@ class MissingObjectFault:
 # -----------------------------------------------------------------------------
 # Ingress & TargetPort Misconfig Models
 # -----------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class IngressMisrouteFault:
@@ -144,6 +148,7 @@ class TargetPortFault:
 # CronJob / Scheduled Mutation Models
 # -----------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class CronJobMutationFault:
     cronjob_name: str
@@ -159,6 +164,7 @@ class CronJobMutationFault:
 # B1: Scheduling & Anti-Affinity Deadlock Models
 # -----------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class SchedulingDeadlockFault:
     deployment_name: str
@@ -172,6 +178,7 @@ class SchedulingDeadlockFault:
 # CoreDNS & Service Discovery Fault Models
 # -----------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class CoreDNSFault:
     configmap_name: str = "coredns"
@@ -183,6 +190,7 @@ class CoreDNSFault:
 # -----------------------------------------------------------------------------
 # Workload & Rolling Update Misconfig Models
 # -----------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class WorkloadMisconfigFault:
@@ -197,6 +205,7 @@ class WorkloadMisconfigFault:
 # -----------------------------------------------------------------------------
 # Network/DNS Faults: DNS Policy Override & hostPort Conflict
 # -----------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class DnsPolicyOverrideFault:
@@ -222,6 +231,7 @@ class HostPortConflictFault:
 # -----------------------------------------------------------------------------
 # Storage / PVC Fault Models
 # -----------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class PVCClaimMismatchFault:
@@ -259,6 +269,7 @@ class PVCMultiAttachFault:
 # RBAC Misconfiguration Fault Models
 # -----------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class RBACMisconfigFault:
     deployment_name: str
@@ -280,6 +291,7 @@ class RBACMisconfigFault:
 # ResourceQuota Exhaustion Models
 # -----------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class ResourceQuotaExhaustionFault:
     quota_name: str
@@ -296,6 +308,7 @@ class ResourceQuotaExhaustionFault:
 # LimitRange Violation Models
 # -----------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class LimitRangeViolationFault:
     limitrange_name: str
@@ -311,6 +324,7 @@ class LimitRangeViolationFault:
 # -----------------------------------------------------------------------------
 # Aggregate Engine Diagnosis & Mitigation Models
 # -----------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class CategoryBDiagnosis:
@@ -339,4 +353,3 @@ class CategoryBMitigation:
     commands: tuple[str, ...] = ()
     rollout_wait_deployments: tuple[str, ...] = ()
     mitigation_text: str = ""
-

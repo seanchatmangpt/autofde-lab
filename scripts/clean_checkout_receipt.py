@@ -233,7 +233,9 @@ def build_isolated_env(clone: Path, empty_home: Path, venv_bin: Path) -> dict[st
     env: dict[str, str] = {
         "HOME": str(empty_home),
         "USERPROFILE": str(empty_home),
-        "PATH": os.pathsep.join([str(venv_bin), "/usr/bin", "/bin", "/usr/sbin", "/sbin"]),
+        "PATH": os.pathsep.join(
+            [str(venv_bin), "/usr/bin", "/bin", "/usr/sbin", "/sbin"]
+        ),
         "LANG": "C.UTF-8",
         "LC_ALL": "C.UTF-8",
         "TMPDIR": str(empty_home / "tmp"),
@@ -272,7 +274,11 @@ def probe_sibling_reachability(empty_home: Path, real_home: Path) -> dict[str, A
                 "reachable_from_isolated_home": iso.exists(),
             }
         )
-    proven = [e["sibling"] for e in entries if e["exists_in_real_home"] and not e["reachable_from_isolated_home"]]
+    proven = [
+        e["sibling"]
+        for e in entries
+        if e["exists_in_real_home"] and not e["reachable_from_isolated_home"]
+    ]
     vacuous = [e["sibling"] for e in entries if not e["exists_in_real_home"]]
     leaked = [e["sibling"] for e in entries if e["reachable_from_isolated_home"]]
     return {
@@ -289,7 +295,9 @@ def scan_for_absolute_sibling_paths(clone: Path) -> list[str]:
     """
     hits: list[str] = []
     pattern = re.compile(
-        r"[\"'](/(?:Users|home)/[^\"'\s]+/(?:" + "|".join(re.escape(n) for n in SIBLING_DIR_NAMES) + r")(?:/[^\"'\s]*)?)[\"']"
+        r"[\"'](/(?:Users|home)/[^\"'\s]+/(?:"
+        + "|".join(re.escape(n) for n in SIBLING_DIR_NAMES)
+        + r")(?:/[^\"'\s]*)?)[\"']"
     )
     for root in ("src", "tests", "scripts"):
         base = clone / root
@@ -309,7 +317,9 @@ def scan_for_absolute_sibling_paths(clone: Path) -> list[str]:
 # pytest parsing
 # ---------------------------------------------------------------------------
 
-_COUNT_RE = re.compile(r"(\d+) (passed|failed|error|errors|skipped|xfailed|xpassed|deselected)")
+_COUNT_RE = re.compile(
+    r"(\d+) (passed|failed|error|errors|skipped|xfailed|xpassed|deselected)"
+)
 _SUMMARY_TAIL_RE = re.compile(r"\bin \d+(?:\.\d+)?s\b")
 _SHORT_SKIP_RE = re.compile(r"^SKIPPED \[(\d+)\] ([^:]+:\d+): (.*)$")
 _SKIP_LINE_RE = re.compile(r"^(?:SKIPPED|s)\s")
@@ -324,7 +334,9 @@ def parse_pytest_output(text: str) -> dict[str, int]:
     this script reported ALIVE over a red suite. Match the trailing
     ``... in <n>s`` shape instead, decorated or not, last one wins.
     """
-    counts = {k: 0 for k in ("passed", "failed", "errors", "skipped", "xfailed", "xpassed")}
+    counts = {
+        k: 0 for k in ("passed", "failed", "errors", "skipped", "xfailed", "xpassed")
+    }
     for raw in text.splitlines():
         line = raw.strip().strip("=").strip()
         if not _SUMMARY_TAIL_RE.search(line):
@@ -355,13 +367,23 @@ def parse_skips(text: str, suite: str) -> list[SkipRecord]:
             count, loc, reason = m.group(1), m.group(2), m.group(3).strip()
             for _ in range(int(count)):
                 records.append(
-                    SkipRecord(suite=suite, location=loc, reason=reason, classification=classify_skip(reason))
+                    SkipRecord(
+                        suite=suite,
+                        location=loc,
+                        reason=reason,
+                        classification=classify_skip(reason),
+                    )
                 )
             continue
         if line.startswith("SKIPPED "):
             reason = line[len("SKIPPED ") :].strip()
             records.append(
-                SkipRecord(suite=suite, location="<unparsed>", reason=reason, classification=classify_skip(reason))
+                SkipRecord(
+                    suite=suite,
+                    location="<unparsed>",
+                    reason=reason,
+                    classification=classify_skip(reason),
+                )
             )
     return records
 
@@ -398,16 +420,26 @@ def parse_failure_ids(text: str) -> list[str]:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--source", default=str(Path(__file__).resolve().parents[1]), help="source repo to clone")
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    ap.add_argument(
+        "--source",
+        default=str(Path(__file__).resolve().parents[1]),
+        help="source repo to clone",
+    )
     ap.add_argument(
         "--extra",
         action="append",
         default=None,
         help="uv extra to install; repeatable. Default: none (base deps + dev/test groups).",
     )
-    ap.add_argument("--out", default=None, help="write JSON receipt here (also printed to stdout)")
-    ap.add_argument("--keep", action="store_true", help="keep the temp clone and record its path")
+    ap.add_argument(
+        "--out", default=None, help="write JSON receipt here (also printed to stdout)"
+    )
+    ap.add_argument(
+        "--keep", action="store_true", help="keep the temp clone and record its path"
+    )
     ap.add_argument("--sync-timeout", type=int, default=3600)
     ap.add_argument("--suite-timeout", type=int, default=1800)
     args = ap.parse_args()
@@ -455,7 +487,10 @@ def main() -> int:
     try:
         # -- 1. clone at exact HEAD -----------------------------------------
         t0 = time.time()
-        proc = run(["git", "clone", "--no-hardlinks", "--quiet", str(source), str(clone)], timeout=1800)
+        proc = run(
+            ["git", "clone", "--no-hardlinks", "--quiet", str(source), str(clone)],
+            timeout=1800,
+        )
         if proc.returncode != 0:
             receipt["status"] = "BLOCKED:GIT_CLONE_FAILED"
             receipt["detail"] = proc.stderr.strip()[-4000:]
@@ -469,7 +504,17 @@ def main() -> int:
         # clone leaves those directories empty and CMake configuration fails --
         # measured, not assumed. A true clean checkout is recursive.
         sub = run(
-            ["git", "submodule", "update", "--init", "--recursive", "--depth", "1", "--jobs", "4"],
+            [
+                "git",
+                "submodule",
+                "update",
+                "--init",
+                "--recursive",
+                "--depth",
+                "1",
+                "--jobs",
+                "4",
+            ],
             cwd=clone,
             timeout=1800,
         )
@@ -479,7 +524,10 @@ def main() -> int:
             receipt["detail"] = sub.stderr.strip()[-4000:]
             return emit(receipt, args, tmp, 1)
         receipt["submodules"] = [
-            line.strip() for line in run(["git", "submodule", "status"], cwd=clone).stdout.splitlines()
+            line.strip()
+            for line in run(
+                ["git", "submodule", "status"], cwd=clone
+            ).stdout.splitlines()
         ]
         receipt["clone_sha"] = git(clone, "rev-parse", "HEAD")
         receipt["clone_wall_clock_s"] = round(time.time() - t0, 2)
@@ -528,11 +576,22 @@ def main() -> int:
             "static_absolute_sibling_path_hits": scan_for_absolute_sibling_paths(clone),
         }
 
-        ver = run([str(py), "-c", "import sys,platform;print(sys.version.split()[0]);print(platform.platform())"], env=env)
-        receipt["target_python_version"] = ver.stdout.splitlines()[0] if ver.stdout else "UNKNOWN"
+        ver = run(
+            [
+                str(py),
+                "-c",
+                "import sys,platform;print(sys.version.split()[0]);print(platform.platform())",
+            ],
+            env=env,
+        )
+        receipt["target_python_version"] = (
+            ver.stdout.splitlines()[0] if ver.stdout else "UNKNOWN"
+        )
         freeze = run([str(py), "-m", "pip", "freeze"], env=env)
         receipt["installed_packages"] = sorted(
-            line.strip() for line in freeze.stdout.splitlines() if line.strip() and not line.startswith("#")
+            line.strip()
+            for line in freeze.stdout.splitlines()
+            if line.strip() and not line.startswith("#")
         )
 
         # -- run the suites --------------------------------------------------
@@ -541,12 +600,25 @@ def main() -> int:
         for suite in TARGET_SUITES:
             spath = clone / suite
             if not spath.exists():
-                results.append(SuiteResult(suite=suite, exists=False, returncode=-1, status="MISSING"))
+                results.append(
+                    SuiteResult(
+                        suite=suite, exists=False, returncode=-1, status="MISSING"
+                    )
+                )
                 continue
             t0 = time.time()
             try:
                 proc = run(
-                    [str(py), "-m", "pytest", suite, "-p", "no:cacheprovider", "-ra", "-q"],
+                    [
+                        str(py),
+                        "-m",
+                        "pytest",
+                        suite,
+                        "-p",
+                        "no:cacheprovider",
+                        "-ra",
+                        "-q",
+                    ],
                     cwd=clone,
                     env=env,
                     timeout=args.suite_timeout,
@@ -554,7 +626,11 @@ def main() -> int:
                 out = proc.stdout + "\n" + proc.stderr
                 rc = proc.returncode
             except subprocess.TimeoutExpired as exc:
-                out = (exc.stdout or b"").decode(errors="replace") if isinstance(exc.stdout, bytes) else (exc.stdout or "")
+                out = (
+                    (exc.stdout or b"").decode(errors="replace")
+                    if isinstance(exc.stdout, bytes)
+                    else (exc.stdout or "")
+                )
                 rc = 124
             elapsed = round(time.time() - t0, 2)
             counts = parse_pytest_output(out)
@@ -579,7 +655,9 @@ def main() -> int:
                     stdout_tail=out.strip()[-1200:],
                     # Failure detail must survive: a tail alone shows the skip
                     # summary and drops the tracebacks entirely.
-                    failure_detail=extract_failure_detail(out) if status != "PASS" else "",
+                    failure_detail=extract_failure_detail(out)
+                    if status != "PASS"
+                    else "",
                     failure_ids=parse_failure_ids(out),
                     **counts,
                 )
@@ -589,8 +667,12 @@ def main() -> int:
         receipt["skips"] = [asdict(s) for s in skips]
         receipt["skip_classification"] = {
             "UNSUPPORTED": sum(1 for s in skips if s.classification == "UNSUPPORTED"),
-            "RECORDED_NEGATIVE": sum(1 for s in skips if s.classification == "RECORDED_NEGATIVE"),
-            "UNCLASSIFIED_SKIP": sum(1 for s in skips if s.classification == "UNCLASSIFIED_SKIP"),
+            "RECORDED_NEGATIVE": sum(
+                1 for s in skips if s.classification == "RECORDED_NEGATIVE"
+            ),
+            "UNCLASSIFIED_SKIP": sum(
+                1 for s in skips if s.classification == "UNCLASSIFIED_SKIP"
+            ),
             "note": (
                 "UNSUPPORTED = environment gate (missing optional extra or external tool). "
                 "RECORDED_NEGATIVE = a named BLOCKED:<REASON> -- this is evidence, not a defect, "
@@ -612,15 +694,23 @@ def main() -> int:
         # parsing bug zeroed them and the receipt reported ALIVE over a suite
         # that had exited 1. A suite that went red must be able to fail the
         # receipt even if no count was parsed at all.
-        red_suites = [r.suite for r in results if r.exists and r.returncode not in (0, 5)]
-        bad = len(red_suites) + receipt["totals"]["failed"] + receipt["totals"]["errors"]
+        red_suites = [
+            r.suite for r in results if r.exists and r.returncode not in (0, 5)
+        ]
+        bad = (
+            len(red_suites) + receipt["totals"]["failed"] + receipt["totals"]["errors"]
+        )
         receipt["red_suites"] = red_suites
         timeouts = [r.suite for r in results if r.status == "TIMEOUT"]
         missing = [r.suite for r in results if r.status == "MISSING"]
         leaked = receipt["isolation"]["siblings"]["leaked_reachable"]
         # Anti-vacuity: a suite that exited 0 while collecting nothing is not
         # evidence of anything, and must never read as a green row.
-        vacuous = [r.suite for r in results if r.exists and r.status == "PASS" and r.passed == 0]
+        vacuous = [
+            r.suite
+            for r in results
+            if r.exists and r.status == "PASS" and r.passed == 0
+        ]
         receipt["vacuous_suites"] = vacuous
         if timeouts:
             receipt["status"] = "BLOCKED:SUITE_TIMEOUT"
@@ -646,7 +736,9 @@ def main() -> int:
             shutil.rmtree(tmp, ignore_errors=True)
 
 
-def emit(receipt: dict[str, Any], args: argparse.Namespace, tmp: Path, code: int) -> int:
+def emit(
+    receipt: dict[str, Any], args: argparse.Namespace, tmp: Path, code: int
+) -> int:
     receipt.setdefault("total_wall_clock_s", None)
     receipt["exit_code"] = code
     text = json.dumps(receipt, indent=2, sort_keys=False)

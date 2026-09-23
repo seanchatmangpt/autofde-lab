@@ -7,33 +7,43 @@ All tests exercise pure functions with real Python data structures and manifests
 from __future__ import annotations
 
 import json
+
 from autofde_lab_planner.detectors.coredns_fault import detect_coredns_faults
 from autofde_lab_planner.detectors.cronjob_mutation import detect_cronjob_mutations
-from autofde_lab_planner.detectors.ingress_targetport import detect_ingress_and_targetport_faults
-from autofde_lab_planner.detectors.object_reconstruction import detect_missing_objects
-from autofde_lab_planner.detectors.rolling_update_misconfig import detect_workload_and_rolling_update_misconfigs
-from autofde_lab_planner.detectors.scheduling_deadlock import detect_scheduling_deadlocks
-from autofde_lab_planner.engine import CompositePlannerEngine
-from autofde_lab_planner.models import (
-    CoreDNSFault,
-    CronJobMutationFault,
-    IngressMisrouteFault,
-    MissingObjectFault,
-    SchedulingDeadlockFault,
-    TargetPortFault,
-    WorkloadMisconfigFault,
+from autofde_lab_planner.detectors.ingress_targetport import (
+    detect_ingress_and_targetport_faults,
 )
-from autofde_lab_planner.remediators.coredns_fault import decide_coredns_remediation_commands
-from autofde_lab_planner.remediators.cronjob_mutation import decide_cronjob_remediation_commands
-from autofde_lab_planner.remediators.ingress_targetport import decide_ingress_targetport_remediation_commands
-from autofde_lab_planner.remediators.object_reconstruction import decide_object_reconstruction_commands
-from autofde_lab_planner.remediators.rolling_update_misconfig import decide_workload_remediation_commands
-from autofde_lab_planner.remediators.scheduling_deadlock import decide_scheduling_remediation_commands
-
+from autofde_lab_planner.detectors.object_reconstruction import detect_missing_objects
+from autofde_lab_planner.detectors.rolling_update_misconfig import (
+    detect_workload_and_rolling_update_misconfigs,
+)
+from autofde_lab_planner.detectors.scheduling_deadlock import (
+    detect_scheduling_deadlocks,
+)
+from autofde_lab_planner.engine import CompositePlannerEngine
+from autofde_lab_planner.remediators.coredns_fault import (
+    decide_coredns_remediation_commands,
+)
+from autofde_lab_planner.remediators.cronjob_mutation import (
+    decide_cronjob_remediation_commands,
+)
+from autofde_lab_planner.remediators.ingress_targetport import (
+    decide_ingress_targetport_remediation_commands,
+)
+from autofde_lab_planner.remediators.object_reconstruction import (
+    decide_object_reconstruction_commands,
+)
+from autofde_lab_planner.remediators.rolling_update_misconfig import (
+    decide_workload_remediation_commands,
+)
+from autofde_lab_planner.remediators.scheduling_deadlock import (
+    decide_scheduling_remediation_commands,
+)
 
 # =============================================================================
 # Category 1: ConfigMap & Secret Key Drift (B13)
 # =============================================================================
+
 
 def test_b13_configmap_key_drift_detection_and_remediation():
     deployments = {
@@ -44,7 +54,10 @@ def test_b13_configmap_key_drift_detection_and_remediation():
                     "template": {
                         "spec": {
                             "volumes": [
-                                {"name": "config-volume", "configMap": {"name": "geo-config"}}
+                                {
+                                    "name": "config-volume",
+                                    "configMap": {"name": "geo-config"},
+                                }
                             ]
                         }
                     }
@@ -79,7 +92,9 @@ def test_b13_configmap_key_drift_detection_and_remediation():
     assert "GeoMongoAddress" in cm_fault.missing_keys
     assert cm_fault.associated_deployment == "geo"
 
-    cmds, deps = decide_object_reconstruction_commands([cm_fault], namespace="hotel-reservation")
+    cmds, deps = decide_object_reconstruction_commands(
+        [cm_fault], namespace="hotel-reservation"
+    )
     assert any("kubectl apply" in cmd for cmd in cmds)
     assert any("GeoMongoAddress" in cmd for cmd in cmds)
     assert "geo" in deps
@@ -110,7 +125,9 @@ def test_b13_secret_key_drift_detection_and_remediation():
     assert sec_fault.reason == "corrupted_secret_keys"
     assert "password" in sec_fault.missing_keys
 
-    cmds, deps = decide_object_reconstruction_commands([sec_fault], namespace="hotel-reservation")
+    cmds, deps = decide_object_reconstruction_commands(
+        [sec_fault], namespace="hotel-reservation"
+    )
     assert any("kubectl apply" in cmd for cmd in cmds)
     assert any("password" in cmd for cmd in cmds)
 
@@ -119,11 +136,15 @@ def test_b13_secret_key_drift_detection_and_remediation():
 # Category 2: Ingress Misroute & TargetPort Mismatches
 # =============================================================================
 
+
 def test_ingress_misroute_detection_and_remediation():
     ingresses = {
         "items": [
             {
-                "metadata": {"name": "hotel-reservation-ingress", "namespace": "hotel-reservation"},
+                "metadata": {
+                    "name": "hotel-reservation-ingress",
+                    "namespace": "hotel-reservation",
+                },
                 "spec": {
                     "rules": [
                         {
@@ -132,7 +153,10 @@ def test_ingress_misroute_detection_and_remediation():
                                     {
                                         "path": "/api(/|$)(.*)",
                                         "backend": {
-                                            "service": {"name": "recommendation-service", "port": {"number": 80}}
+                                            "service": {
+                                                "name": "recommendation-service",
+                                                "port": {"number": 80},
+                                            }
                                         },
                                     }
                                 ]
@@ -157,7 +181,9 @@ def test_ingress_misroute_detection_and_remediation():
     assert fault.observed_backend_service == "recommendation-service"
     assert fault.expected_backend_service == "frontend-service"
 
-    cmds, deps = decide_ingress_targetport_remediation_commands(ing_faults, tp_faults, namespace="hotel-reservation")
+    cmds, deps = decide_ingress_targetport_remediation_commands(
+        ing_faults, tp_faults, namespace="hotel-reservation"
+    )
     assert len(cmds) == 1
     assert "kubectl patch ingress hotel-reservation-ingress" in cmds[0]
     assert "frontend-service" in cmds[0]
@@ -168,9 +194,7 @@ def test_targetport_mismatch_detection_and_remediation():
         "items": [
             {
                 "metadata": {"name": "user-service", "namespace": "social-network"},
-                "spec": {
-                    "ports": [{"port": 9090, "targetPort": 9999}]
-                },
+                "spec": {"ports": [{"port": 9090, "targetPort": 9999}]},
             }
         ]
     }
@@ -187,7 +211,9 @@ def test_targetport_mismatch_detection_and_remediation():
     assert fault.observed_target_port == 9999
     assert fault.expected_target_port == 9090
 
-    cmds, deps = decide_ingress_targetport_remediation_commands(ing_faults, tp_faults, namespace="social-network")
+    cmds, deps = decide_ingress_targetport_remediation_commands(
+        ing_faults, tp_faults, namespace="social-network"
+    )
     assert len(cmds) == 1
     assert "kubectl patch service user-service" in cmds[0]
     assert "9090" in cmds[0]
@@ -197,6 +223,7 @@ def test_targetport_mismatch_detection_and_remediation():
 # =============================================================================
 # Category 3: CronJob / Scheduled Mutations
 # =============================================================================
+
 
 def test_cronjob_mutation_detection_and_remediation():
     cronjobs = {
@@ -212,8 +239,18 @@ def test_cronjob_mutation_detection_and_remediation():
                                     "containers": [
                                         {
                                             "name": "patch",
-                                            "command": ["sh", "-c", 'kubectl patch deployment "$TARGET" -p "$PATCH"'],
-                                            "envFrom": [{"configMapRef": {"name": "vpa-updater-policy"}}],
+                                            "command": [
+                                                "sh",
+                                                "-c",
+                                                'kubectl patch deployment "$TARGET" -p "$PATCH"',
+                                            ],
+                                            "envFrom": [
+                                                {
+                                                    "configMapRef": {
+                                                        "name": "vpa-updater-policy"
+                                                    }
+                                                }
+                                            ],
                                         }
                                     ]
                                 }
@@ -228,7 +265,10 @@ def test_cronjob_mutation_detection_and_remediation():
     deployments = {
         "items": [
             {
-                "metadata": {"name": "recommendation", "namespace": "hotel-reservation"},
+                "metadata": {
+                    "name": "recommendation",
+                    "namespace": "hotel-reservation",
+                },
                 "spec": {
                     "template": {
                         "spec": {
@@ -270,16 +310,26 @@ def test_cronjob_mutation_detection_and_remediation():
     assert fault.cronjob_namespace == "kube-system"
     assert fault.victim_deployment == "recommendation"
 
-    cmds, deps = decide_cronjob_remediation_commands([fault], namespace="hotel-reservation")
-    assert any("kubectl patch cronjob vpa-updater -n kube-system -p '{\"spec\":{\"suspend\":true}}'" in c for c in cmds)
+    cmds, deps = decide_cronjob_remediation_commands(
+        [fault], namespace="hotel-reservation"
+    )
+    assert any(
+        'kubectl patch cronjob vpa-updater -n kube-system -p \'{"spec":{"suspend":true}}\''
+        in c
+        for c in cmds
+    )
     assert any("kubectl delete cronjob vpa-updater -n kube-system" in c for c in cmds)
-    assert any("kubectl patch deployment recommendation -n hotel-reservation" in c for c in cmds)
+    assert any(
+        "kubectl patch deployment recommendation -n hotel-reservation" in c
+        for c in cmds
+    )
     assert "recommendation" in deps
 
 
 # =============================================================================
 # Category 4: Pod Anti-Affinity & Scheduling Deadlocks (B1)
 # =============================================================================
+
 
 def test_scheduling_deadlock_detection_and_remediation():
     deployments = {
@@ -327,7 +377,9 @@ def test_scheduling_deadlock_detection_and_remediation():
     assert fault.deployment_name == "user-service"
     assert fault.constraint_type == "both"
 
-    cmds, deps = decide_scheduling_remediation_commands([fault], namespace="social-network")
+    cmds, deps = decide_scheduling_remediation_commands(
+        [fault], namespace="social-network"
+    )
     assert any("/spec/template/spec/affinity/podAntiAffinity" in c for c in cmds)
     assert any("/spec/template/spec/nodeSelector" in c for c in cmds)
     assert "user-service" in deps
@@ -336,6 +388,7 @@ def test_scheduling_deadlock_detection_and_remediation():
 # =============================================================================
 # Category 5: CoreDNS & Service Discovery Faults
 # =============================================================================
+
 
 def test_coredns_fault_detection_and_remediation():
     corrupted_corefile = """
@@ -377,13 +430,16 @@ def test_coredns_fault_detection_and_remediation():
 
     cmds, deps = decide_coredns_remediation_commands([fault], namespace="kube-system")
     assert any("kubectl apply -f -" in c for c in cmds)
-    assert any("kubectl rollout restart deployment/coredns -n kube-system" in c for c in cmds)
+    assert any(
+        "kubectl rollout restart deployment/coredns -n kube-system" in c for c in cmds
+    )
     assert "coredns" in deps
 
 
 # =============================================================================
 # Category 6: Workload & Rolling Update Misconfigurations
 # =============================================================================
+
 
 def test_workload_resource_request_too_large_detection_and_remediation():
     deployments = {
@@ -397,7 +453,9 @@ def test_workload_resource_request_too_large_detection_and_remediation():
                             "containers": [
                                 {
                                     "name": "mongodb-rate",
-                                    "resources": {"requests": {"memory": "500Gi", "cpu": "128"}},
+                                    "resources": {
+                                        "requests": {"memory": "500Gi", "cpu": "128"}
+                                    },
                                 }
                             ]
                         }
@@ -428,7 +486,9 @@ def test_workload_resource_request_too_large_detection_and_remediation():
     fault = next(f for f in faults if f.fault_kind == "resource_request_too_large")
     assert fault.deployment_name == "mongodb-rate"
 
-    cmds, deps = decide_workload_remediation_commands([fault], namespace="hotel-reservation")
+    cmds, deps = decide_workload_remediation_commands(
+        [fault], namespace="hotel-reservation"
+    )
     assert any("kubectl patch deployment mongodb-rate" in c for c in cmds)
     assert any("remove" in c and "requests" in c for c in cmds)
     assert "mongodb-rate" in deps
@@ -438,7 +498,10 @@ def test_rolling_update_misconfigured_detection_and_remediation():
     deployments = {
         "items": [
             {
-                "metadata": {"name": "recommendation", "namespace": "hotel-reservation"},
+                "metadata": {
+                    "name": "recommendation",
+                    "namespace": "hotel-reservation",
+                },
                 "spec": {
                     "strategy": {
                         "type": "RollingUpdate",
@@ -454,7 +517,10 @@ def test_rolling_update_misconfigured_detection_and_remediation():
                                 }
                             ],
                             "containers": [
-                                {"name": "recommendation", "image": "ghcr.io/sregym/hotel-reservation:latest"}
+                                {
+                                    "name": "recommendation",
+                                    "image": "ghcr.io/sregym/hotel-reservation:latest",
+                                }
                             ],
                         }
                     },
@@ -473,7 +539,9 @@ def test_rolling_update_misconfigured_detection_and_remediation():
     assert fault.deployment_name == "recommendation"
     assert fault.fault_kind == "rolling_update_misconfigured"
 
-    cmds, deps = decide_workload_remediation_commands([fault], namespace="hotel-reservation")
+    cmds, deps = decide_workload_remediation_commands(
+        [fault], namespace="hotel-reservation"
+    )
     assert any("maxSurge" in c and "25%" in c for c in cmds)
     assert any("remove" in c and "initContainers" in c for c in cmds)
     assert "recommendation" in deps
@@ -483,8 +551,11 @@ def test_rolling_update_misconfigured_detection_and_remediation():
 # Composite Engine Multi-Fault Integration Test
 # =============================================================================
 
+
 def test_composite_engine_m3_full_integration():
-    engine = CompositePlannerEngine(namespace="hotel-reservation", app_name="Hotel Reservation")
+    engine = CompositePlannerEngine(
+        namespace="hotel-reservation", app_name="Hotel Reservation"
+    )
 
     deployments = {
         "items": [
@@ -493,13 +564,18 @@ def test_composite_engine_m3_full_integration():
                 "spec": {
                     "template": {
                         "spec": {
-                            "volumes": [{"name": "cfg", "configMap": {"name": "geo-config"}}]
+                            "volumes": [
+                                {"name": "cfg", "configMap": {"name": "geo-config"}}
+                            ]
                         }
                     }
                 },
             },
             {
-                "metadata": {"name": "recommendation", "namespace": "hotel-reservation"},
+                "metadata": {
+                    "name": "recommendation",
+                    "namespace": "hotel-reservation",
+                },
                 "spec": {
                     "strategy": {
                         "type": "RollingUpdate",
@@ -507,7 +583,9 @@ def test_composite_engine_m3_full_integration():
                     },
                     "template": {
                         "spec": {
-                            "initContainers": [{"name": "hang-init", "command": ["sleep infinity"]}]
+                            "initContainers": [
+                                {"name": "hang-init", "command": ["sleep infinity"]}
+                            ]
                         }
                     },
                 },
@@ -533,7 +611,10 @@ def test_composite_engine_m3_full_integration():
     ingresses = {
         "items": [
             {
-                "metadata": {"name": "hotel-reservation-ingress", "namespace": "hotel-reservation"},
+                "metadata": {
+                    "name": "hotel-reservation-ingress",
+                    "namespace": "hotel-reservation",
+                },
                 "spec": {
                     "rules": [
                         {
@@ -541,7 +622,11 @@ def test_composite_engine_m3_full_integration():
                                 "paths": [
                                     {
                                         "path": "/api",
-                                        "backend": {"service": {"name": "recommendation-service"}},
+                                        "backend": {
+                                            "service": {
+                                                "name": "recommendation-service"
+                                            }
+                                        },
                                     }
                                 ]
                             }
@@ -561,7 +646,16 @@ def test_composite_engine_m3_full_integration():
                         "spec": {
                             "template": {
                                 "spec": {
-                                    "containers": [{"command": ["kubectl", "patch", "deployment", "recommendation"]}]
+                                    "containers": [
+                                        {
+                                            "command": [
+                                                "kubectl",
+                                                "patch",
+                                                "deployment",
+                                                "recommendation",
+                                            ]
+                                        }
+                                    ]
                                 }
                             }
                         }

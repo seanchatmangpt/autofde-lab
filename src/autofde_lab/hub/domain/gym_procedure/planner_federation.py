@@ -361,7 +361,12 @@ def _solve_one_isolated(
         except BaseException as exc:  # noqa: BLE001
             conn.send(
                 PlannerAttempt(
-                    solver_name, "recipe", problem_digest, "FAILED", (), 0.0,
+                    solver_name,
+                    "recipe",
+                    problem_digest,
+                    "FAILED",
+                    (),
+                    0.0,
                     detail=f"{type(exc).__name__}: {exc}"[:200],
                 )
             )
@@ -388,7 +393,11 @@ def _solve_one_isolated(
         proc.kill()
         proc.join(timeout=5.0)
         return PlannerAttempt(
-            solver_name, "recipe", problem_digest, "TIMEOUT", (),
+            solver_name,
+            "recipe",
+            problem_digest,
+            "TIMEOUT",
+            (),
             time.monotonic() - start,
             detail=f"killed after {timeout_s + 10.0:.1f}s wall clock (native solve did not return)",
         )
@@ -399,12 +408,20 @@ def _solve_one_isolated(
     if code is not None and code < 0:
         signame = _SIGNAL_NAMES.get(-code, f"signal {-code}")
         return PlannerAttempt(
-            solver_name, "recipe", problem_digest, "CRASHED", (),
+            solver_name,
+            "recipe",
+            problem_digest,
+            "CRASHED",
+            (),
             time.monotonic() - start,
             detail=f"planner process died with {signame} (native crash, no Python exception)",
         )
     return PlannerAttempt(
-        solver_name, "recipe", problem_digest, "CRASHED", (),
+        solver_name,
+        "recipe",
+        problem_digest,
+        "CRASHED",
+        (),
         time.monotonic() - start,
         detail=f"planner process exited with code {code} without returning an attempt",
     )
@@ -637,7 +654,7 @@ class CommonCandidateSet:
             "UNGOVERNED_CANDIDATE_SOURCED_COMMITMENT: plan "
             f"{list(plan_t)} (claimed source {planner_identity or 'unknown'!r}) "
             "did not enter the common candidate set via a PlannerAttempt; "
-            f"governed candidates={[ (c.planner_identity, list(c.plan)) for c in self._order ]}"
+            f"governed candidates={[(c.planner_identity, list(c.plan)) for c in self._order]}"
         )
 
 

@@ -21,17 +21,17 @@ from __future__ import annotations
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Mapping, Optional, Protocol, Sequence
+from typing import Any, Mapping, Optional, Protocol
 
 from rdflib import URIRef
 
 from autofde_lab.sa2a.admission.pipeline import AdmissionResult
 from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import (
+    REFUSED_NO_GRANT,
     AuthorityBroker,
     AuthorityDecision,
     ConsequenceRequest,
-    REFUSED_NO_GRANT,
 )
 from autofde_lab.sa2a.brce.receipts import (
     FinalReceipt,
@@ -132,7 +132,11 @@ def _admission_covers_action_target(
     if graph is None:
         return False
     try:
-        return (URIRef(action_iri), _AFL_TARGET_RESOURCE, URIRef(target_resource)) in graph
+        return (
+            URIRef(action_iri),
+            _AFL_TARGET_RESOURCE,
+            URIRef(target_resource),
+        ) in graph
     except Exception:
         return False
 
@@ -140,7 +144,9 @@ def _admission_covers_action_target(
 class ConsequenceActuator(Protocol):
     """Actuator responsible for executing external consequence (§30)."""
 
-    def actuate(self, action_iri: str, target_resource: str, parameters: Mapping[str, Any]) -> Mapping[str, Any]:
+    def actuate(
+        self, action_iri: str, target_resource: str, parameters: Mapping[str, Any]
+    ) -> Mapping[str, Any]:
         """Perform consequence actuation. Returns evidence mapping."""
         ...
 
@@ -428,7 +434,9 @@ class ConsequenceBoundary:
                     # comparing digests.
                     mismatch_receipt = FinalReceipt(
                         receipt_id=f"rec-replay-refused-{envelope.idempotency_token}",
-                        prepared_receipt_digest=prepared.digest if prepared is not None else "none",
+                        prepared_receipt_digest=prepared.digest
+                        if prepared is not None
+                        else "none",
                         idempotency_token=envelope.idempotency_token,
                         state=TerminalReceiptState.REFUSED,
                         postcondition_verified=False,
@@ -544,7 +552,10 @@ class ConsequenceBoundary:
         artifact_digest = "none"
         if envelope.artifact is not None:
             artifact_digest = envelope.artifact.artifact_digest
-            if envelope.construction_receipt is not None and envelope.admitted_semantics is not None:
+            if (
+                envelope.construction_receipt is not None
+                and envelope.admitted_semantics is not None
+            ):
                 admitted_input_digest = envelope.admitted_semantics.canonical_digest()
                 if not envelope.construction_receipt.verify(
                     envelope.admitted_semantics, envelope.artifact
@@ -577,7 +588,10 @@ class ConsequenceBoundary:
             # durable receipt itself, rather than leaving admission as an unrecorded
             # upstream fact this receipt only implicitly depended on.
             admission_digest: str = "none"
-            if envelope.admission_result is not None and envelope.admission_result.digest:
+            if (
+                envelope.admission_result is not None
+                and envelope.admission_result.digest
+            ):
                 admission_digest = envelope.admission_result.digest
             prepared_receipt = PreparedReceipt(
                 prepared_id=f"prep-{uuid.uuid4().hex[:12]}",
@@ -717,10 +731,12 @@ class ConsequenceBoundary:
             state=terminal_state,
             postcondition_verified=verified,
             evidence=evidence,
-            refusal_code="ACTUATION_FAILED" if not actuation_succeeded else (
-                "POSTCONDITION_UNSATISFIED" if not verified else None
-            ),
-            reason=failure_reason if failure_reason else ("Success" if verified else "Unverified"),
+            refusal_code="ACTUATION_FAILED"
+            if not actuation_succeeded
+            else ("POSTCONDITION_UNSATISFIED" if not verified else None),
+            reason=failure_reason
+            if failure_reason
+            else ("Success" if verified else "Unverified"),
             execution_duration_ms=duration_ms,
         )
         self._receipt_store.save_final(final_receipt)

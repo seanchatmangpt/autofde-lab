@@ -65,7 +65,9 @@ class ThreadOutcome:
     wrong_answer: str = ""  # non-empty names a specific silent-wrong-result finding
 
 
-def _run_one_thread(i: int, state_dir: Path, journal_path: Path, receipt_store_dir: Path) -> ThreadOutcome:
+def _run_one_thread(
+    i: int, state_dir: Path, journal_path: Path, receipt_store_dir: Path
+) -> ThreadOutcome:
     outcome = ThreadOutcome(thread_index=i)
     semantic_class = f"stress-class-{i}"
     action_iri = f"urn:action:stress-{i}"
@@ -84,10 +86,17 @@ def _run_one_thread(i: int, state_dir: Path, journal_path: Path, receipt_store_d
         )
 
     try:
-        runner1 = Episode1Runner(state_dir=state_dir, journal_path=journal_path, receipt_store_dir=receipt_store_dir)
+        runner1 = Episode1Runner(
+            state_dir=state_dir,
+            journal_path=journal_path,
+            receipt_store_dir=receipt_store_dir,
+        )
         ep1 = runner1.run(
             semantic_class_id=semantic_class,
-            query=UnknownQuery(query_id=f"q-{i}-1", predicate_or_topic=f"service:node-{i} {semantic_class}"),
+            query=UnknownQuery(
+                query_id=f"q-{i}-1",
+                predicate_or_topic=f"service:node-{i} {semantic_class}",
+            ),
             discover=discover,
             equivalence_predicate=build_topic_equivalence_predicate(semantic_class),
             equivalence_predicate_id=f"pred-{semantic_class}-v1",
@@ -98,13 +107,17 @@ def _run_one_thread(i: int, state_dir: Path, journal_path: Path, receipt_store_d
         outcome.ep1_classification = ep1.episode.classification
         outcome.ep1_standing = ep1.episode.standing
         outcome.ep1_boundary_attempted = ep1.boundary_result is not None
-        outcome.ep1_boundary_success = bool(ep1.boundary_result and ep1.boundary_result.success)
+        outcome.ep1_boundary_success = bool(
+            ep1.boundary_result and ep1.boundary_result.success
+        )
         outcome.ep1_final_digest = ep1.episode.final_receipt_digest
 
         if ep1.episode.classification != "KNOWN":
             return outcome
 
-        experience_store = {ep1.machine_experience.experience_id: ep1.machine_experience}
+        experience_store = {
+            ep1.machine_experience.experience_id: ep1.machine_experience
+        }
         runner2 = Episode2Runner(
             state_dir=state_dir,
             journal_path=journal_path,
@@ -131,22 +144,32 @@ def _run_one_thread(i: int, state_dir: Path, journal_path: Path, receipt_store_d
         )
         outcome.ep2_classification = ep2.episode.classification
         outcome.ep2_boundary_attempted = ep2.boundary_result is not None
-        outcome.ep2_boundary_success = bool(ep2.boundary_result and ep2.boundary_result.success)
+        outcome.ep2_boundary_success = bool(
+            ep2.boundary_result and ep2.boundary_result.success
+        )
         outcome.ep2_final_digest = ep2.episode.final_receipt_digest
 
         # Silent-wrong-answer check: a successful ep1 and ep2 within the SAME thread
         # must never carry the SAME final receipt digest -- that would mean episode 2
         # silently reused episode 1's cached receipt (idempotency-token collision /
         # cross-episode receipt bleed) instead of minting its own fresh actuation.
-        if outcome.ep1_boundary_success and outcome.ep2_boundary_success and outcome.ep1_final_digest == outcome.ep2_final_digest:
-            outcome.wrong_answer = "ep1_and_ep2_final_digest_identical_within_same_thread"
+        if (
+            outcome.ep1_boundary_success
+            and outcome.ep2_boundary_success
+            and outcome.ep1_final_digest == outcome.ep2_final_digest
+        ):
+            outcome.wrong_answer = (
+                "ep1_and_ep2_final_digest_identical_within_same_thread"
+            )
 
     except Exception as exc:  # noqa: BLE001 -- deliberately capturing ANY exception for reporting
         outcome.exception = f"{type(exc).__name__}: {exc}"
     return outcome
 
 
-def _run_episode_trial(tmp_path: Path, trial_index: int) -> tuple[list[ThreadOutcome], dict]:
+def _run_episode_trial(
+    tmp_path: Path, trial_index: int
+) -> tuple[list[ThreadOutcome], dict]:
     trial_dir = tmp_path / f"trial-{trial_index}"
     state_dir = trial_dir / "state"
     journal_path = trial_dir / "journal.json"
@@ -160,7 +183,9 @@ def _run_episode_trial(tmp_path: Path, trial_index: int) -> tuple[list[ThreadOut
 
     start = time.monotonic()
     for i in range(N_THREADS):
-        threads.append(threading.Thread(target=target, args=(i,), name=f"stress-{trial_index}-{i}"))
+        threads.append(
+            threading.Thread(target=target, args=(i,), name=f"stress-{trial_index}-{i}")
+        )
     for t in threads:
         t.start()
     for t in threads:
@@ -216,7 +241,9 @@ def _run_registry_trial(trial_index: int) -> dict:
         try:
             semantic_class = f"registry-stress-{trial_index}-{i}"
             pred_id = f"pred-{semantic_class}"
-            registry.register_predicate(pred_id, build_topic_equivalence_predicate(semantic_class))
+            registry.register_predicate(
+                pred_id, build_topic_equivalence_predicate(semantic_class)
+            )
             route = KnownRoute(
                 route_id=f"route-{semantic_class}",
                 semantic_class_id=semantic_class,
@@ -236,13 +263,19 @@ def _run_registry_trial(trial_index: int) -> dict:
             # dict mutation on other keys, and its own key's list append).
             for _ in range(20):
                 for j in range(N_THREADS):
-                    registry.lookup(f"registry-stress-{trial_index}-{j}", f"x {semantic_class}")
+                    registry.lookup(
+                        f"registry-stress-{trial_index}-{j}", f"x {semantic_class}"
+                    )
         except Exception as exc:  # noqa: BLE001
             with errors_lock:
                 errors.append(f"thread-{i}: {type(exc).__name__}: {exc}")
 
     threads = [
-        threading.Thread(target=register_predicate_and_route, args=(i,), name=f"reg-{trial_index}-{i}")
+        threading.Thread(
+            target=register_predicate_and_route,
+            args=(i,),
+            name=f"reg-{trial_index}-{i}",
+        )
         for i in range(N_THREADS)
     ]
     for t in threads:
@@ -252,7 +285,8 @@ def _run_registry_trial(trial_index: int) -> dict:
 
     still_alive = [t.name for t in threads if t.is_alive()]
     total_routes_visible = sum(
-        len(registry.routes_for_class(f"registry-stress-{trial_index}-{i}")) for i in range(N_THREADS)
+        len(registry.routes_for_class(f"registry-stress-{trial_index}-{i}"))
+        for i in range(N_THREADS)
     )
     return {
         "trial_index": trial_index,
@@ -281,16 +315,24 @@ N_REGISTRY_DEACTIVATE_REGISTER_THREADS = 6
 def _make_stress_route(i: int, trial: int) -> KnownRoute:
     cls = f"deact-race-{trial}-{i}"
     return KnownRoute(
-        route_id=f"route-{cls}", semantic_class_id=cls, experience_id=f"exp-{cls}",
-        equivalence_predicate_id=f"pred-{cls}", required_preconditions=(),
-        planner_or_policy_identity="stress-planner", manufacturer_identity="stress-manufacturer",
-        expected_capabilities=(), resource_envelope={}, qualification_receipt="qr",
+        route_id=f"route-{cls}",
+        semantic_class_id=cls,
+        experience_id=f"exp-{cls}",
+        equivalence_predicate_id=f"pred-{cls}",
+        required_preconditions=(),
+        planner_or_policy_identity="stress-planner",
+        manufacturer_identity="stress-manufacturer",
+        expected_capabilities=(),
+        resource_envelope={},
+        qualification_receipt="qr",
     )
 
 
 def _run_registry_deactivate_trial(trial_index: int) -> dict:
     registry = KnownRouteRegistry()
-    for i in range(3):  # seed routes so deactivate() has something to iterate immediately
+    for i in range(
+        3
+    ):  # seed routes so deactivate() has something to iterate immediately
         registry.register_route(_make_stress_route(i, trial_index))
 
     errors: list[str] = []
@@ -312,11 +354,14 @@ def _run_registry_deactivate_trial(trial_index: int) -> dict:
                 errors.append(f"deactivate: {type(exc).__name__}: {exc}")
 
     threads = [
-        threading.Thread(target=register_worker, args=(i,), name=f"deactreg-{trial_index}-{i}")
+        threading.Thread(
+            target=register_worker, args=(i,), name=f"deactreg-{trial_index}-{i}"
+        )
         for i in range(N_REGISTRY_DEACTIVATE_REGISTER_THREADS)
     ]
     threads += [
-        threading.Thread(target=deactivate_worker, name=f"deact-{trial_index}-{k}") for k in range(2)
+        threading.Thread(target=deactivate_worker, name=f"deact-{trial_index}-{k}")
+        for k in range(2)
     ]
     for t in threads:
         t.start()
@@ -345,11 +390,15 @@ def test_v26_9_17_concurrency_stress(tmp_path: Path) -> None:
 
     registry_summaries = [_run_registry_trial(trial) for trial in range(N_TRIALS)]
     registry_deactivate_summaries = [
-        _run_registry_deactivate_trial(trial) for trial in range(N_REGISTRY_DEACTIVATE_TRIALS)
+        _run_registry_deactivate_trial(trial)
+        for trial in range(N_REGISTRY_DEACTIVATE_TRIALS)
     ]
 
     _write_findings_document(
-        episode_outcomes, episode_summaries, registry_summaries, registry_deactivate_summaries
+        episode_outcomes,
+        episode_summaries,
+        registry_summaries,
+        registry_deactivate_summaries,
     )
 
     # --- Hard assertions on what must NEVER happen, regardless of legitimate races ---
@@ -376,16 +425,24 @@ def test_v26_9_17_concurrency_stress(tmp_path: Path) -> None:
         )
 
     for summary in registry_summaries:
-        assert not summary["still_alive_threads"], f"trial {summary['trial_index']}: hung threads {summary['still_alive_threads']}"
-        assert not summary["errors"], f"trial {summary['trial_index']}: errors {summary['errors']}"
+        assert not summary["still_alive_threads"], (
+            f"trial {summary['trial_index']}: hung threads {summary['still_alive_threads']}"
+        )
+        assert not summary["errors"], (
+            f"trial {summary['trial_index']}: errors {summary['errors']}"
+        )
         assert summary["lost_registrations"] == 0, (
             f"trial {summary['trial_index']}: {summary['lost_registrations']} of "
             f"{summary['expected_routes']} registrations lost under concurrent access"
         )
 
     for summary in registry_deactivate_summaries:
-        assert not summary["still_alive_threads"], f"deactivate-race trial {summary['trial_index']}: hung threads {summary['still_alive_threads']}"
-        assert not summary["errors"], f"deactivate-race trial {summary['trial_index']}: errors {summary['errors']}"
+        assert not summary["still_alive_threads"], (
+            f"deactivate-race trial {summary['trial_index']}: hung threads {summary['still_alive_threads']}"
+        )
+        assert not summary["errors"], (
+            f"deactivate-race trial {summary['trial_index']}: errors {summary['errors']}"
+        )
 
 
 def _write_findings_document(
@@ -395,7 +452,12 @@ def _write_findings_document(
     registry_deactivate_summaries: list[dict],
 ) -> None:
     findings_path = (
-        Path(__file__).resolve().parents[2] / "docs" / "jira" / "v26.9.17" / "benchmarks" / "concurrency-stress-findings.md"
+        Path(__file__).resolve().parents[2]
+        / "docs"
+        / "jira"
+        / "v26.9.17"
+        / "benchmarks"
+        / "concurrency-stress-findings.md"
     )
     lines: list[str] = []
     lines.append("# v26.9.17 concurrency/race stress findings (real, this session)")
@@ -408,9 +470,13 @@ def _write_findings_document(
         "tests/sa2a/test_v26_9_17_concurrency_stress_chicago.py -v`."
     )
     lines.append("")
-    lines.append(f"N_THREADS={N_THREADS}, N_TRIALS={N_TRIALS} (5 independent trials, fresh work_dir each).")
+    lines.append(
+        f"N_THREADS={N_THREADS}, N_TRIALS={N_TRIALS} (5 independent trials, fresh work_dir each)."
+    )
     lines.append("")
-    lines.append("## 1. Episode1Runner/Episode2Runner sharing journal_path/receipt_store_dir/state_dir")
+    lines.append(
+        "## 1. Episode1Runner/Episode2Runner sharing journal_path/receipt_store_dir/state_dir"
+    )
     lines.append("")
     lines.append(
         "Each thread constructs its OWN `Episode1Runner`/`Episode2Runner` (own "
@@ -436,7 +502,9 @@ def _write_findings_document(
     total_attempted = sum(s["attempted_actuations"] for s in episode_summaries)
     total_on_disk = sum(s["journal_records_on_disk"] for s in episode_summaries)
     total_lost = sum(s["lost_journal_records"] for s in episode_summaries)
-    trials_with_loss = sum(1 for s in episode_summaries if s["lost_journal_records"] > 0)
+    trials_with_loss = sum(
+        1 for s in episode_summaries if s["lost_journal_records"] > 0
+    )
 
     lines.append(
         f"**Real numbers across all {N_TRIALS} trials**: {total_attempted} total "
@@ -504,10 +572,16 @@ def _write_findings_document(
         if o.exception
     ]
     known_executed = sum(
-        1 for trial in episode_outcomes for o in trial if o.ep1_classification == "KNOWN" and o.ep1_standing == "EXECUTED"
+        1
+        for trial in episode_outcomes
+        for o in trial
+        if o.ep1_classification == "KNOWN" and o.ep1_standing == "EXECUTED"
     )
     ep1_boundary_failed = sum(
-        1 for trial in episode_outcomes for o in trial if o.ep1_boundary_attempted and not o.ep1_boundary_success
+        1
+        for trial in episode_outcomes
+        for o in trial
+        if o.ep1_boundary_attempted and not o.ep1_boundary_success
     )
     total_threads_run = N_THREADS * N_TRIALS
 
@@ -522,7 +596,9 @@ def _write_findings_document(
     )
     lines.append("")
     if any_exception:
-        lines.append("Exceptions observed (new bugs, distinct from the known journal race):")
+        lines.append(
+            "Exceptions observed (new bugs, distinct from the known journal race):"
+        )
         for trial_idx, thread_idx, exc in any_exception:
             lines.append(f"- trial {trial_idx} thread {thread_idx}: `{exc}`")
         lines.append("")
@@ -542,7 +618,9 @@ def _write_findings_document(
         "`register_route()`/`lookup()`."
     )
     lines.append("")
-    lines.append("| trial | errors | routes_registered | routes_visible | lost_registrations |")
+    lines.append(
+        "| trial | errors | routes_registered | routes_visible | lost_registrations |"
+    )
     lines.append("|---|---|---|---|---|")
     for s in registry_summaries:
         lines.append(
@@ -566,7 +644,9 @@ def _write_findings_document(
         )
     lines.append("")
 
-    lines.append("## 3. KnownRouteRegistry.register_route() racing .deactivate() (dict-resize-during-iteration hazard)")
+    lines.append(
+        "## 3. KnownRouteRegistry.register_route() racing .deactivate() (dict-resize-during-iteration hazard)"
+    )
     lines.append("")
     lines.append(
         f"`deactivate()`'s `for routes in self._routes_by_class.values(): ...` iterates the "
@@ -624,7 +704,7 @@ def _write_findings_document(
         "`episode1.py`, `episode2.py`, `conformance/benchmarks/harness.py`, "
         "`conformance/runner.py`, `conformance/courts/replay_court.py`) and imported by "
         "20 test files; `DurableDiskReceiptStore` similarly by 4 `src/` modules and 18 "
-        "test files (full list: `grep -rln \"RealDiskJournalActuator\\|DurableDiskReceiptStore\" "
+        'test files (full list: `grep -rln "RealDiskJournalActuator\\|DurableDiskReceiptStore" '
         "src/ tests/`). A lock added inside `actuate()`/`_sync_from_disk()`/`save_prepared`/"
         "`save_final` would need to be keyed by the resolved `journal_path`/`store_dir` "
         "(since separate instances currently share no Python-level state at all -- each "
@@ -635,7 +715,7 @@ def _write_findings_document(
         "Lens 4 R1/R2/R3 TOCTOU findings were deliberately left SURVIVED/open for "
         "(`docs/jira/v26.9.16/AFDE-2604-admission-fencing-local-closure.md`: \"Lens 4's "
         "R1/R2/R3 (TOCTOU/concurrency) deliberately left SURVIVED, verified not "
-        "accidentally masked\"). Named here as a NEWLY CONFIRMED instance of that same "
+        'accidentally masked"). Named here as a NEWLY CONFIRMED instance of that same '
         "open concurrency-safety gap, now reproduced against the v26.9.17 crown path "
         "specifically (Episode1Runner/Episode2Runner sharing a journal across real OS "
         "threads), not just against the older RFC-SA2A-001/AFDE-2604 courts."
@@ -644,7 +724,9 @@ def _write_findings_document(
     lines.append("## Reproduction")
     lines.append("")
     lines.append("```bash")
-    lines.append(".venv/bin/python -m pytest tests/sa2a/test_v26_9_17_concurrency_stress_chicago.py -v")
+    lines.append(
+        ".venv/bin/python -m pytest tests/sa2a/test_v26_9_17_concurrency_stress_chicago.py -v"
+    )
     lines.append("```")
     lines.append("")
 

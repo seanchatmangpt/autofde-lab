@@ -68,29 +68,51 @@ def _build_real_log() -> OcelLog:
     log = OcelLog.new(
         objects=[
             OcelObject(
-                "session-1", "MCPSession",
-                (OcelAttribute("server", OcelAttributeValue.string("scikit-decide-fabric")),),
+                "session-1",
+                "MCPSession",
+                (
+                    OcelAttribute(
+                        "server", OcelAttributeValue.string("scikit-decide-fabric")
+                    ),
+                ),
             ),
-            OcelObject("domain-Maze", "Domain", (OcelAttribute("name", OcelAttributeValue.string("Maze")),)),
             OcelObject(
-                "domain-MasterMind", "Domain",
+                "domain-Maze",
+                "Domain",
+                (OcelAttribute("name", OcelAttributeValue.string("Maze")),),
+            ),
+            OcelObject(
+                "domain-MasterMind",
+                "Domain",
                 (OcelAttribute("name", OcelAttributeValue.string("MasterMind")),),
             ),
         ]
     )
     log = append_tool_call_event(
-        log, event_id="m0", activity="decision_match", object_ids=["session-1", "domain-Maze"],
-        outcome={"standing": "MATCHED", "compatible_solvers": ["Astar", "MCTS"]}, timestamp_ns=0,
+        log,
+        event_id="m0",
+        activity="decision_match",
+        object_ids=["session-1", "domain-Maze"],
+        outcome={"standing": "MATCHED", "compatible_solvers": ["Astar", "MCTS"]},
+        timestamp_ns=0,
     )
     log = append_tool_call_event(
-        log, event_id="m1", activity="decision_match", object_ids=["session-1", "domain-Maze"],
-        outcome={"standing": "MATCHED", "compatible_solvers": ["MCTS", "Astar"]}, timestamp_ns=1_000,
+        log,
+        event_id="m1",
+        activity="decision_match",
+        object_ids=["session-1", "domain-Maze"],
+        outcome={"standing": "MATCHED", "compatible_solvers": ["MCTS", "Astar"]},
+        timestamp_ns=1_000,
     )
     return log
 
 
 def _real_observation(ref: str) -> EnterpriseObservation:
-    return EnterpriseObservation(ontology_graph_ref=ref, source_provenance_ref="test", enterprise_world_ref="test-world")
+    return EnterpriseObservation(
+        ontology_graph_ref=ref,
+        source_provenance_ref="test",
+        enterprise_world_ref="test-world",
+    )
 
 
 def _real_metadata():
@@ -101,13 +123,16 @@ def _real_metadata():
     return ScenarioMetadata_checkout_latency_scenario_v_1()
 
 
-def test_full_real_triz_pipeline_from_ocel_evidence_to_a_real_psro_advance(tmp_path) -> None:
+def test_full_real_triz_pipeline_from_ocel_evidence_to_a_real_psro_advance(
+    tmp_path,
+) -> None:
     log = _build_real_log()
     db_path = tmp_path / "pipeline_triz.sqlite"
     to_sqlite(log, db_path)
 
     contradiction = TRIZContradiction(
-        improving_parameter=TRIZParameter.COST, worsening_parameter=TRIZParameter.AUTHORITY_NEEDS
+        improving_parameter=TRIZParameter.COST,
+        worsening_parameter=TRIZParameter.AUTHORITY_NEEDS,
     )
 
     result = run_process_informed_exploration_psro_round(
@@ -148,7 +173,8 @@ def test_pipeline_falsifications_trace_back_to_real_candidates(tmp_path) -> None
     to_sqlite(log, db_path)
 
     contradiction = TRIZContradiction(
-        improving_parameter=TRIZParameter.COST, worsening_parameter=TRIZParameter.AUTHORITY_NEEDS
+        improving_parameter=TRIZParameter.COST,
+        worsening_parameter=TRIZParameter.AUTHORITY_NEEDS,
     )
 
     result = run_process_informed_exploration_psro_round(
@@ -171,7 +197,9 @@ def test_pipeline_falsifications_trace_back_to_real_candidates(tmp_path) -> None
     assert len(receipt_ids) == 8
 
 
-def test_full_real_montecarlo_pipeline_reaches_a_real_partial_falsification(tmp_path) -> None:
+def test_full_real_montecarlo_pipeline_reaches_a_real_partial_falsification(
+    tmp_path,
+) -> None:
     """Closes the real gap this pass's own investigation found: Monte
     Carlo candidates had real coverage only in `exploration_payoff_bridge.
     py`'s own unit test (hand-built `ExperimentReceipt` fixtures) -- never
@@ -189,13 +217,17 @@ def test_full_real_montecarlo_pipeline_reaches_a_real_partial_falsification(tmp_
     db_path = tmp_path / "pipeline_montecarlo.sqlite"
     to_sqlite(log, db_path)
 
-    cost_model = MonteCarloCostModel(distribution=MonteCarloDistribution.UNIFORM, low=10.0, high=50.0)
+    cost_model = MonteCarloCostModel(
+        distribution=MonteCarloDistribution.UNIFORM, low=10.0, high=50.0
+    )
 
     result = run_process_informed_exploration_psro_round(
         _real_metadata(),
         db_path=str(db_path),
         observation=_real_observation("ontology:pipeline-montecarlo-test"),
-        candidate_generator=lambda hyps: generate_montecarlo_candidates(hyps, cost_model, n=3),
+        candidate_generator=lambda hyps: generate_montecarlo_candidates(
+            hyps, cost_model, n=3
+        ),
         league=PlannerLeague(),
         domain=Maze(),
         constructor_planner_ids=["Astar"],
@@ -220,7 +252,9 @@ def test_full_real_montecarlo_pipeline_reaches_a_real_partial_falsification(tmp_
     assert result.psro_step.receipt.selected_best_response == "Astar"
 
 
-def test_montecarlo_and_triz_pipelines_produce_distinct_real_falsification_standings(tmp_path) -> None:
+def test_montecarlo_and_triz_pipelines_produce_distinct_real_falsification_standings(
+    tmp_path,
+) -> None:
     """Direct, single-test proof that this generic pipeline is not
     secretly TRIZ-shaped: the exact same real infrastructure (log, db,
     league, domain, planners) produces a real `FALSIFIED` outcome for TRIZ
@@ -231,7 +265,8 @@ def test_montecarlo_and_triz_pipelines_produce_distinct_real_falsification_stand
     triz_db_path = tmp_path / "compare_triz.sqlite"
     to_sqlite(log, triz_db_path)
     contradiction = TRIZContradiction(
-        improving_parameter=TRIZParameter.COST, worsening_parameter=TRIZParameter.AUTHORITY_NEEDS
+        improving_parameter=TRIZParameter.COST,
+        worsening_parameter=TRIZParameter.AUTHORITY_NEEDS,
     )
     triz_result = run_process_informed_exploration_psro_round(
         _real_metadata(),
@@ -246,20 +281,28 @@ def test_montecarlo_and_triz_pipelines_produce_distinct_real_falsification_stand
 
     mc_db_path = tmp_path / "compare_mc.sqlite"
     to_sqlite(log, mc_db_path)
-    cost_model = MonteCarloCostModel(distribution=MonteCarloDistribution.UNIFORM, low=10.0, high=50.0)
+    cost_model = MonteCarloCostModel(
+        distribution=MonteCarloDistribution.UNIFORM, low=10.0, high=50.0
+    )
     mc_result = run_process_informed_exploration_psro_round(
         _real_metadata(),
         db_path=str(mc_db_path),
         observation=_real_observation("ontology:compare-mc"),
-        candidate_generator=lambda hyps: generate_montecarlo_candidates(hyps, cost_model, n=3),
+        candidate_generator=lambda hyps: generate_montecarlo_candidates(
+            hyps, cost_model, n=3
+        ),
         league=PlannerLeague(),
         domain=Maze(),
         constructor_planner_ids=["Astar"],
         falsifier_planner_id="MCTS",
     )
 
-    triz_scores = {(o.left_score, o.right_score) for o in triz_result.hypergraph.observations}
-    mc_scores = {(o.left_score, o.right_score) for o in mc_result.hypergraph.observations}
+    triz_scores = {
+        (o.left_score, o.right_score) for o in triz_result.hypergraph.observations
+    }
+    mc_scores = {
+        (o.left_score, o.right_score) for o in mc_result.hypergraph.observations
+    }
     assert triz_scores == {(0.0, 1.0)}
     assert mc_scores == {(0.5, 0.5)}
     assert triz_scores != mc_scores

@@ -119,10 +119,15 @@ _REQUIRED_ENVIRONMENT_METHODS: tuple[str, ...] = (
     "restore",
     "teardown",
 )
-_REQUIRED_ENVIRONMENT_ATTRIBUTES: tuple[str, ...] = ("environment_id", "requires_authority")
+_REQUIRED_ENVIRONMENT_ATTRIBUTES: tuple[str, ...] = (
+    "environment_id",
+    "requires_authority",
+)
 
 
-def _result(check_ref: str, passed: bool, detail: str, evidence_ref: str | None = None) -> CertificationCheckResult:
+def _result(
+    check_ref: str, passed: bool, detail: str, evidence_ref: str | None = None
+) -> CertificationCheckResult:
     # `passed` is a real bool constructed here despite result_passed's
     # generated `str | None` type hint -- see module docstring's
     # "resultPassed's real generated-type quirk" section.
@@ -171,8 +176,13 @@ def _check_materialize_signature(provider: Any) -> CertificationCheckResult:
             f"materialize is present but its real signature could not be inspected: {exc}",
         )
     params = sig.parameters
-    has_scenario = "scenario" in params and params["scenario"].kind == inspect.Parameter.KEYWORD_ONLY
-    has_config = "config" in params and params["config"].kind == inspect.Parameter.KEYWORD_ONLY
+    has_scenario = (
+        "scenario" in params
+        and params["scenario"].kind == inspect.Parameter.KEYWORD_ONLY
+    )
+    has_config = (
+        "config" in params and params["config"].kind == inspect.Parameter.KEYWORD_ONLY
+    )
     if has_scenario and has_config:
         return _result(
             "materialize_method_present",
@@ -187,14 +197,20 @@ def _check_materialize_signature(provider: Any) -> CertificationCheckResult:
     )
 
 
-def _check_capabilities(provider_or_env: Any) -> tuple[CertificationCheckResult, tuple[Any, ...]]:
+def _check_capabilities(
+    provider_or_env: Any,
+) -> tuple[CertificationCheckResult, tuple[Any, ...]]:
     """Real check: does `capabilities()` return real `Capability` tuples
     with valid `Consequence` values? Returns the real capabilities alongside
     the check result so a caller can report the real count."""
     capabilities_fn = getattr(provider_or_env, "capabilities", None)
     if capabilities_fn is None:
         return (
-            _result("capabilities_returns_valid_consequences", False, "no capabilities() method present"),
+            _result(
+                "capabilities_returns_valid_consequences",
+                False,
+                "no capabilities() method present",
+            ),
             (),
         )
     try:
@@ -218,7 +234,11 @@ def _check_capabilities(provider_or_env: Any) -> tuple[CertificationCheckResult,
             ),
             (),
         )
-    invalid = [c for c in real_capabilities if not isinstance(getattr(c, "consequence", None), Consequence)]
+    invalid = [
+        c
+        for c in real_capabilities
+        if not isinstance(getattr(c, "consequence", None), Consequence)
+    ]
     if invalid:
         return (
             _result(
@@ -320,12 +340,20 @@ async def _run_smoke_cycle(
                 "smoke_observe_returns_dict",
                 isinstance(observed, dict),
                 f"real observe() returned {type(observed).__name__}"
-                + (f" with {len(observed)} real key(s)" if isinstance(observed, dict) else ""),
+                + (
+                    f" with {len(observed)} real key(s)"
+                    if isinstance(observed, dict)
+                    else ""
+                ),
             )
         )
     except Exception as exc:  # noqa: BLE001
         results.append(
-            _result("smoke_observe_returns_dict", False, f"real observe() raised: {type(exc).__name__}: {exc}")
+            _result(
+                "smoke_observe_returns_dict",
+                False,
+                f"real observe() raised: {type(exc).__name__}: {exc}",
+            )
         )
 
     try:
@@ -339,15 +367,29 @@ async def _run_smoke_cycle(
         )
     except Exception as exc:  # noqa: BLE001
         results.append(
-            _result("smoke_checkpoint_returns_dict", False, f"real checkpoint() raised: {type(exc).__name__}: {exc}")
+            _result(
+                "smoke_checkpoint_returns_dict",
+                False,
+                f"real checkpoint() raised: {type(exc).__name__}: {exc}",
+            )
         )
 
     try:
         await env.teardown()
-        results.append(_result("smoke_teardown_succeeds", True, "real teardown() completed without raising"))
+        results.append(
+            _result(
+                "smoke_teardown_succeeds",
+                True,
+                "real teardown() completed without raising",
+            )
+        )
     except Exception as exc:  # noqa: BLE001
         results.append(
-            _result("smoke_teardown_succeeds", False, f"real teardown() raised: {type(exc).__name__}: {exc}")
+            _result(
+                "smoke_teardown_succeeds",
+                False,
+                f"real teardown() raised: {type(exc).__name__}: {exc}",
+            )
         )
 
     return results, env

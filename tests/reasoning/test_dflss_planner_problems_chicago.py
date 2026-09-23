@@ -75,7 +75,9 @@ def test_no_orphaned_files_beyond_the_real_57_planner_names() -> None:
     orphaned = on_disk_stems - expected_stems
     missing = expected_stems - on_disk_stems
 
-    assert not orphaned, f"orphaned problem file(s) with no matching planner: {orphaned}"
+    assert not orphaned, (
+        f"orphaned problem file(s) with no matching planner: {orphaned}"
+    )
     assert not missing, f"real planner(s) missing a problem file: {missing}"
 
     # Also catch any non-.pddl stray file living in the same directory.

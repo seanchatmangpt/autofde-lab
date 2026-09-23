@@ -53,7 +53,14 @@ from dataclasses import dataclass
 from autofde_lab.ocel.model import OcelEvent
 from autofde_lab.powl.algebra import Atom, PowlNode
 from autofde_lab.powl.bounds import DEFAULT_BOUND, ExecutionBound
-from autofde_lab.powl.executor import INITIAL_MARKING, Marking, enabled, fire, is_final, node_at
+from autofde_lab.powl.executor import (
+    INITIAL_MARKING,
+    Marking,
+    enabled,
+    fire,
+    is_final,
+    node_at,
+)
 
 __all__ = ["ConformanceResult", "check_ocel_conformance", "observed_labels_from_events"]
 

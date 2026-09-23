@@ -10,7 +10,9 @@ Actions._get_enabled_events_from(), exercised through the real, already-existing
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "solvers" / "python" / "openevolve"))
+sys.path.insert(
+    0, str(Path(__file__).resolve().parents[2] / "solvers" / "python" / "openevolve")
+)
 
 from restricted_action_maze import Maze  # noqa: E402
 

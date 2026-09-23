@@ -240,9 +240,9 @@ def test_afde_2611_law2_no_authority_marker_law4_no_budget_bound(real_dspy_lm):
     # candidate into a consequence boundary itself, even though the two
     # subsystems now share one typed budget-standing vocabulary. Real
     # files on disk, read for real, not mocked.
-    service_source_text = (
-        _REPO_ROOT / "src/autofde_lab/fabric/service.py"
-    ).read_text(encoding="utf-8")
+    service_source_text = (_REPO_ROOT / "src/autofde_lab/fabric/service.py").read_text(
+        encoding="utf-8"
+    )
     assert (
         "autofde_lab.sa2a" not in service_source_text
         and "sa2a." not in service_source_text
@@ -290,7 +290,8 @@ def test_afde_2611_law2_no_authority_marker_law4_no_budget_bound(real_dspy_lm):
     # against the live, currently-imported source).
     # ---------------------------------------------------------------
 
-    from autofde_lab.fabric.dspy import bounded_compile, compile_request_text as _crt
+    from autofde_lab.fabric.dspy import bounded_compile
+    from autofde_lab.fabric.dspy import compile_request_text as _crt
 
     assert _crt is compile_request_text  # sanity: same function object
 
@@ -306,9 +307,7 @@ def test_afde_2611_law2_no_authority_marker_law4_no_budget_bound(real_dspy_lm):
         text=True,
         check=False,
     )
-    call_sites = [
-        line for line in call_site_grep.stdout.splitlines() if line.strip()
-    ]
+    call_sites = [line for line in call_site_grep.stdout.splitlines() if line.strip()]
     assert call_sites == [
         "src/autofde_lab/fabric/dspy.py:271:        compiler.compile,"
     ], (
@@ -325,9 +324,7 @@ def test_afde_2611_law2_no_authority_marker_law4_no_budget_bound(real_dspy_lm):
         check=False,
     )
     bounded_compile_sites = [
-        line
-        for line in bounded_compile_call_grep.stdout.splitlines()
-        if line.strip()
+        line for line in bounded_compile_call_grep.stdout.splitlines() if line.strip()
     ]
     # One definition (`def bounded_compile(`), one real call site inside
     # compile_request_text (`result = bounded_compile(`).
@@ -336,9 +333,7 @@ def test_afde_2611_law2_no_authority_marker_law4_no_budget_bound(real_dspy_lm):
         f"call site, found: {bounded_compile_sites!r} -- re-verify Law 4's "
         "wiring before reusing this test's conclusion"
     )
-    assert any(
-        "result = bounded_compile(" in line for line in bounded_compile_sites
-    ), (
+    assert any("result = bounded_compile(" in line for line in bounded_compile_sites), (
         "compile_request_text no longer routes its compile call through "
         f"bounded_compile(): {bounded_compile_sites!r}"
     )
@@ -489,8 +484,7 @@ def test_afde_2611_bounded_compile_returns_typed_exhausted_never_raises() -> Non
     # RuntimeError traceback, never reaching the assertions below.
     assert isinstance(result, BoundedCompileResult)
     assert result.standing is AllocationStanding.EXHAUSTED, (
-        f"an always-failing compile_fn must report EXHAUSTED standing, "
-        f"got: {result!r}"
+        f"an always-failing compile_fn must report EXHAUSTED standing, got: {result!r}"
     )
     assert result.request is None
     assert result.attempts_used == 4, (
@@ -514,9 +508,7 @@ def test_afde_2611_bounded_compile_returns_typed_exhausted_never_raises() -> Non
     # calls to it and only it); bounded_compile takes no other callable.
 
 
-def test_afde_2611_compile_request_text_converts_exhaustion_to_typed_refusal() -> (
-    None
-):
+def test_afde_2611_compile_request_text_converts_exhaustion_to_typed_refusal() -> None:
     """The real, fixed call site converts EXHAUSTED into a typed refusal.
 
     Closes the loop precisely at the call site AFDE-2611 named
@@ -697,7 +689,7 @@ def test_afde_2611_no_local_model_code_path_constructs_non_none_authority() -> N
         "src/autofde_lab/fabric/ (this repo's local-model integration layer) "
         f"now constructs a CandidateResolution somewhere: {fabric_hits!r} -- "
         "re-verify every such call site passes no authority= kwarg, or "
-        "passes exactly authority=\"none\", before assuming this falsifier "
+        'passes exactly authority="none", before assuming this falsifier '
         "still holds"
     )
 
@@ -740,9 +732,7 @@ def test_afde_2611_no_local_model_code_path_constructs_non_none_authority() -> N
             stripped = window_line.strip()
             if stripped.startswith(")"):
                 break
-            if stripped.startswith("authority") or stripped.startswith(
-                "authority="
-            ):
+            if stripped.startswith("authority") or stripped.startswith("authority="):
                 assert stripped.rstrip(",") in (
                     'authority="none"',
                     "authority='none'",
@@ -759,9 +749,7 @@ def test_afde_2611_no_local_model_code_path_constructs_non_none_authority() -> N
     # real court, never from a side marker on the candidate).
     from autofde_lab.sa2a.unknown.resolution import UnknownResolutionPipeline
 
-    court_source = inspect.getsource(
-        UnknownResolutionPipeline._default_admission_court
-    )
+    court_source = inspect.getsource(UnknownResolutionPipeline._default_admission_court)
     assert "authority" not in court_source, (
         "_default_admission_court now references 'authority' -- this would "
         "let the authority marker influence real admission standing, which "
@@ -846,9 +834,7 @@ def test_afde_2611_authority_field_never_bypasses_real_admission_court() -> None
     assert bad_receipt.epistemic_standing == EpistemicState.REFUSED
     assert "EMPTY_ASSERTION" in bad_receipt.reasons
 
-    bad_candidate_tampered = dc.replace(
-        bad_candidate, authority="GRANTED_BY_MODEL"
-    )
+    bad_candidate_tampered = dc.replace(bad_candidate, authority="GRANTED_BY_MODEL")
     bad_tampered_receipt = pipeline.admit_candidate(bad_candidate_tampered)
     assert bad_tampered_receipt.admitted is False, (
         "a malformed candidate with a tampered, non-'none' authority value "

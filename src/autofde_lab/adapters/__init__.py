@@ -85,5 +85,7 @@ def probe_all() -> dict[str, AdapterProbe]:
 def available() -> frozenset[str]:
     """Names of adapters whose backend was located (any non-UNAVAILABLE status)."""
     return frozenset(
-        name for name, probe in probe_all().items() if probe.status is not AdapterStatus.UNAVAILABLE
+        name
+        for name, probe in probe_all().items()
+        if probe.status is not AdapterStatus.UNAVAILABLE
     )

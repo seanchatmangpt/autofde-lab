@@ -61,8 +61,7 @@ from __future__ import annotations
 import hashlib
 import json
 import time
-import uuid
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
@@ -80,14 +79,18 @@ class TerminalReceiptState(str, Enum):
     UNKNOWN_OUTCOME = "UNKNOWN_OUTCOME"
 
 
-def compute_receipt_digest(data: Mapping[str, Any] | Sequence[Any] | str | bytes) -> str:
+def compute_receipt_digest(
+    data: Mapping[str, Any] | Sequence[Any] | str | bytes,
+) -> str:
     """Compute canonical SHA-256 hex digest for arbitrary receipt data."""
     if isinstance(data, bytes):
         payload = data
     elif isinstance(data, str):
         payload = data.encode("utf-8")
     else:
-        payload = json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        payload = json.dumps(
+            data, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        ).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
 
 
@@ -281,7 +284,9 @@ class ReceiptGrantValidationError(ValueError):
     feature is additive and opt-in), so no existing ODRL-policy call path is affected.
     """
 
-    def __init__(self, receipt: "PreparedReceipt | FinalReceipt", refusal_code: str, reason: str) -> None:
+    def __init__(
+        self, receipt: "PreparedReceipt | FinalReceipt", refusal_code: str, reason: str
+    ) -> None:
         self.receipt = receipt
         self.refusal_code = refusal_code
         self.reason = reason

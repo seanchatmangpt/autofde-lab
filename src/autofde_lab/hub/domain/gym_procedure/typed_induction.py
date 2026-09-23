@@ -82,7 +82,11 @@ class TypedEffect:
     def describe(self) -> str:
         if self.context_dependent:
             return f"{self.dimension}: CONTEXT_DEPENDENT (not claimed as an unconditional effect)"
-        suffix = " [ONCE_ONLY: repeatability unobserved]" if self.repeatability_unknown else ""
+        suffix = (
+            " [ONCE_ONLY: repeatability unobserved]"
+            if self.repeatability_unknown
+            else ""
+        )
         if self.delta is not None:
             return f"{self.dimension}: {self.delta:+g} (relative){suffix}"
         if self.flip:
@@ -178,7 +182,9 @@ class RelationalPrecondition:
 class TypedAction:
     id: str
     effects: dict[str, TypedEffect] = field(default_factory=dict)
-    preconditions: dict[str, Any] = field(default_factory=dict)  # non-metric dims that always held
+    preconditions: dict[str, Any] = field(
+        default_factory=dict
+    )  # non-metric dims that always held
     metric_lower_bounds: dict[str, float] = field(default_factory=dict)
     n_successes: int = 0
     n_refusals: int = 0
@@ -242,7 +248,9 @@ class TypedAction:
                 base = new.get(dim, 0)
                 if isinstance(base, (int, float)):
                     result = base + eff.delta
-                    new[dim] = int(result) if eff.kind is DimensionKind.INTEGER else result
+                    new[dim] = (
+                        int(result) if eff.kind is DimensionKind.INTEGER else result
+                    )
             elif eff.flip:
                 new[dim] = not bool(new.get(dim))
             else:
@@ -279,7 +287,9 @@ class TypedDomain:
             derived.update(act.context_dependent_dimensions())
         return sorted(derived)
 
-    def simulate(self, initial: dict[str, Any], plan: tuple[str, ...]) -> Optional[dict[str, Any]]:
+    def simulate(
+        self, initial: dict[str, Any], plan: tuple[str, ...]
+    ) -> Optional[dict[str, Any]]:
         """Simulate, REFUSING to reuse an action whose repeatability is unknown.
 
         This is the enforcement point for the inverted default. A plan that
@@ -349,7 +359,9 @@ def detect_derived_dimensions(
         for d in sorted(shared)
         if dims.get(d) is not None
         and dims[d].is_metric()
-        and all(isinstance(o[d], int) and not isinstance(o[d], bool) for o in observations)
+        and all(
+            isinstance(o[d], int) and not isinstance(o[d], bool) for o in observations
+        )
         and len({o[d] for o in observations}) > 1
     ]
 
@@ -604,7 +616,9 @@ def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
         dims = {
             name: (
                 StateDimension(
-                    name=name, kind=DimensionKind.INTEGER, observed_values=dim.observed_values
+                    name=name,
+                    kind=DimensionKind.INTEGER,
+                    observed_values=dim.observed_values,
                 )
                 if name in arithmetic_evidence
                 else dim
@@ -668,7 +682,11 @@ def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
 
     actions: dict[str, TypedAction] = {}
     for action_id, records in by_action.items():
-        successes = [r for r in records if r.get("applicable") and "observed_pre" in r and "observed_post" in r]
+        successes = [
+            r
+            for r in records
+            if r.get("applicable") and "observed_pre" in r and "observed_post" in r
+        ]
         refusals = [r for r in records if not r.get("applicable")]
 
         # Repeatability evidence. An effect induced from successes that all
@@ -685,7 +703,12 @@ def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
         unknown = not repeat_observed
 
         effects: dict[str, TypedEffect] = {}
-        touched = {k for r in successes for k in r["observed_post"] if r["observed_post"].get(k) != r["observed_pre"].get(k)}
+        touched = {
+            k
+            for r in successes
+            for k in r["observed_post"]
+            if r["observed_post"].get(k) != r["observed_pre"].get(k)
+        }
 
         for dim_name in sorted(touched):
             dim = dims.get(dim_name)
@@ -697,24 +720,47 @@ def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
                     if dim_name in r["observed_post"] and dim_name in r["observed_pre"]
                 }
                 if len(deltas) == 1:
-                    effects[dim_name] = TypedEffect(dim_name, kind, delta=float(next(iter(deltas))), observations=len(successes), repeatability_unknown=unknown)
+                    effects[dim_name] = TypedEffect(
+                        dim_name,
+                        kind,
+                        delta=float(next(iter(deltas))),
+                        observations=len(successes),
+                        repeatability_unknown=unknown,
+                    )
                 else:
                     # Different deltas in different contexts -- a real
                     # context dependency (e.g. a rate that varies), not a
                     # constant effect. Do not claim it.
-                    effects[dim_name] = TypedEffect(dim_name, kind, context_dependent=True, observations=len(successes))
+                    effects[dim_name] = TypedEffect(
+                        dim_name,
+                        kind,
+                        context_dependent=True,
+                        observations=len(successes),
+                    )
             else:
-                values = {r["observed_post"][dim_name] for r in successes if dim_name in r["observed_post"]}
+                values = {
+                    r["observed_post"][dim_name]
+                    for r in successes
+                    if dim_name in r["observed_post"]
+                }
                 paired = [
-                    r for r in successes
+                    r
+                    for r in successes
                     if dim_name in r["observed_post"] and dim_name in r["observed_pre"]
                 ]
                 if len(values) == 1:
-                    effects[dim_name] = TypedEffect(dim_name, kind, absolute_value=next(iter(values)), observations=len(successes), repeatability_unknown=unknown)
+                    effects[dim_name] = TypedEffect(
+                        dim_name,
+                        kind,
+                        absolute_value=next(iter(values)),
+                        observations=len(successes),
+                        repeatability_unknown=unknown,
+                    )
                 elif paired and all(
                     isinstance(r["observed_pre"][dim_name], bool)
                     and isinstance(r["observed_post"][dim_name], bool)
-                    and r["observed_post"][dim_name] is (not r["observed_pre"][dim_name])
+                    and r["observed_post"][dim_name]
+                    is (not r["observed_pre"][dim_name])
                     for r in paired
                 ):
                     # A boolean TOGGLE is a *relative* effect, exactly as
@@ -727,14 +773,25 @@ def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
                     # Measured: that made every `switchboard` goal
                     # unreachable (NO_TYPED_VALID_PLAN) the moment probing
                     # observed a toggle in both directions.
-                    effects[dim_name] = TypedEffect(dim_name, kind, flip=True, observations=len(successes), repeatability_unknown=unknown)
+                    effects[dim_name] = TypedEffect(
+                        dim_name,
+                        kind,
+                        flip=True,
+                        observations=len(successes),
+                        repeatability_unknown=unknown,
+                    )
                 else:
                     # THE cube_counter case: `solved` was False after some
                     # increments and True after the last one. It is derived
                     # from counter==target, not set by increment. Refusing to
                     # claim it here is what prevents the unsound "one
                     # increment establishes solved=True" model.
-                    effects[dim_name] = TypedEffect(dim_name, kind, context_dependent=True, observations=len(successes))
+                    effects[dim_name] = TypedEffect(
+                        dim_name,
+                        kind,
+                        context_dependent=True,
+                        observations=len(successes),
+                    )
 
         # SELF-INVERSE / DERIVED-METRIC RULE.
         #
@@ -764,7 +821,10 @@ def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
                 dim = dims.get(dim_name)
                 if dim is not None and dim.is_metric():
                     effects[dim_name] = TypedEffect(
-                        dim_name, eff.kind, context_dependent=True, observations=eff.observations
+                        dim_name,
+                        eff.kind,
+                        context_dependent=True,
+                        observations=eff.observations,
                     )
 
         # DERIVED DIMENSIONS ARE NEVER AN EFFECT. A dimension proven to be a
@@ -843,12 +903,15 @@ def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
                 if not dim.is_metric():
                     continue
                 success_values = [
-                    r["observed_pre"][dim_name] for r in successes if dim_name in r["observed_pre"]
+                    r["observed_pre"][dim_name]
+                    for r in successes
+                    if dim_name in r["observed_pre"]
                 ]
                 refusal_values = [
                     r["observed_pre"][dim_name]
                     for r in refusals
-                    if isinstance(r.get("observed_pre"), dict) and dim_name in r["observed_pre"]
+                    if isinstance(r.get("observed_pre"), dict)
+                    and dim_name in r["observed_pre"]
                 ]
                 if not success_values or not refusal_values:
                     continue
@@ -906,7 +969,9 @@ def induce_typed_domain(probe_records: list[dict]) -> TypedDomain:
             n_successes=len(successes),
             n_refusals=len(refusals),
             repeatability_unknown=any(
-                e.repeatability_unknown for e in effects.values() if not e.context_dependent
+                e.repeatability_unknown
+                for e in effects.values()
+                if not e.context_dependent
             ),
             n_distinct_success_states=len(distinct_pre),
         )

@@ -187,7 +187,9 @@ class WitnessJournal:
 
     # -- admission ---------------------------------------------------------
 
-    def admit_goal(self, *, goal_id: str, expression: str, target: Mapping[str, Any]) -> str:
+    def admit_goal(
+        self, *, goal_id: str, expression: str, target: Mapping[str, Any]
+    ) -> str:
         """At goal admission. The admitted Goal becomes a durable object with
         its own identity, so runtime ``final_state`` can never be what
         establishes standing."""
@@ -302,7 +304,9 @@ class WitnessJournal:
             # NOT `receipt_digest`; matching against that column silently
             # found nothing, which correctly recorded no replay at all rather
             # than binding an approximate receipt.
-            columns = {row[1] for row in conn.execute("PRAGMA table_info(receipt_evidence)")}
+            columns = {
+                row[1] for row in conn.execute("PRAGMA table_info(receipt_evidence)")
+            }
             if "record_digest" not in columns:
                 return None
             row = conn.execute(
@@ -324,7 +328,9 @@ class WitnessJournal:
         return str(row[0])
 
     @staticmethod
-    def final_actuation_receipt_id(ledger: Path, *, operations: tuple[str, ...] = ("act",)) -> str | None:
+    def final_actuation_receipt_id(
+        ledger: Path, *, operations: tuple[str, ...] = ("act",)
+    ) -> str | None:
         """The receipt of the last actuating step, for the producer's own use.
 
         Called by the producer immediately after execution, where "the last
@@ -358,7 +364,9 @@ class WitnessJournal:
         if not path.is_file():
             return ()
         return tuple(
-            json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
+            json.loads(line)
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
         )
 
 
@@ -425,11 +433,15 @@ def read_commitment(path: Path) -> Commitment:
     graph.parse(str(path), format="turtle")
 
     subject = None
-    for s, _p, _o in graph.triples((None, rdflib.RDF.type, rdflib.URIRef(_POWL + "Commitment"))):
+    for s, _p, _o in graph.triples(
+        (None, rdflib.RDF.type, rdflib.URIRef(_POWL + "Commitment"))
+    ):
         subject = str(s)
         break
     if subject is None:
-        raise ValueError(f"NO_POWL_COMMITMENT_SUBJECT: {path} declares no powl:Commitment")
+        raise ValueError(
+            f"NO_POWL_COMMITMENT_SUBJECT: {path} declares no powl:Commitment"
+        )
 
     def one(name: str) -> str | None:
         for value in graph.objects(rdflib.URIRef(subject), rdflib.URIRef(_POWL + name)):
@@ -437,7 +449,9 @@ def read_commitment(path: Path) -> Commitment:
         return None
 
     sequence: list[str] = []
-    for head in graph.objects(rdflib.URIRef(subject), rdflib.URIRef(_POWL + "sequence")):
+    for head in graph.objects(
+        rdflib.URIRef(subject), rdflib.URIRef(_POWL + "sequence")
+    ):
         node = head
         while node and node != rdflib.RDF.nil:
             for item in graph.objects(node, rdflib.RDF.first):
@@ -464,7 +478,9 @@ def read_commitment(path: Path) -> Commitment:
     )
 
 
-def link_commitment_ttl(path: Path, *, episode_id: str, environment_id: str) -> Commitment:
+def link_commitment_ttl(
+    path: Path, *, episode_id: str, environment_id: str
+) -> Commitment:
     """Write the observed episode and environment identity into the commitment.
 
     This is the half of the join that lives in the Turtle. The other half --
@@ -495,7 +511,9 @@ def link_commitment_ttl(path: Path, *, episode_id: str, environment_id: str) -> 
         # re-parsing below -- never assumed.
         stripped = text.rstrip()
         if not stripped.endswith("."):
-            raise ValueError(f"UNEXPECTED_COMMITMENT_SHAPE: {path} does not end a statement")
+            raise ValueError(
+                f"UNEXPECTED_COMMITMENT_SHAPE: {path} does not end a statement"
+            )
         body = stripped[:-1].rstrip()
         additions = []
         if existing.episode_id is None:
@@ -655,16 +673,24 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
         receipts = _read_receipts(ledger_path)
         sources_read.append("actuation/receipts.sqlite3")
     else:
-        sources_absent.append(("actuation/receipts.sqlite3", f"NOT_ON_DISK:{ledger_path}"))
+        sources_absent.append(
+            ("actuation/receipts.sqlite3", f"NOT_ON_DISK:{ledger_path}")
+        )
 
     # --- identities ------------------------------------------------------
     seed = _seed_from_dir(evidence_dir)
     manifest_digest = _crown_manifest_digest(evidence_dir)
-    run_id = evidence_dir.name.split("_", 2)[2] if len(evidence_dir.name.split("_", 2)) == 3 else evidence_dir.name
+    run_id = (
+        evidence_dir.name.split("_", 2)[2]
+        if len(evidence_dir.name.split("_", 2)) == 3
+        else evidence_dir.name
+    )
     task_id = f"urn:level4:task:{seed if seed is not None else run_id}"
 
     episode_ids = sorted({r["episode_id"] for r in receipts if r.get("episode_id")})
-    environment_ids = sorted({r["subject_ref"] for r in receipts if r.get("subject_ref")})
+    environment_ids = sorted(
+        {r["subject_ref"] for r in receipts if r.get("subject_ref")}
+    )
     episode_id = episode_ids[0] if len(episode_ids) == 1 else None
     environment_id = environment_ids[0] if len(environment_ids) == 1 else None
 
@@ -694,7 +720,9 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
     if journal:
         sources_read.append(WITNESS_JOURNAL_NAME)
     else:
-        sources_absent.append((WITNESS_JOURNAL_NAME, f"NOT_ON_DISK:{evidence_dir / WITNESS_JOURNAL_NAME}"))
+        sources_absent.append(
+            (WITNESS_JOURNAL_NAME, f"NOT_ON_DISK:{evidence_dir / WITNESS_JOURNAL_NAME}")
+        )
 
     def _records(kind: str) -> list[dict[str, Any]]:
         return [r for r in journal if r.get("kind") == kind]
@@ -716,7 +744,8 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
                         # secondary-representation drift this module refuses.
                         "target": _s(
                             ",".join(
-                                f"{k}={v}" for k, v in sorted((record.get("target") or {}).items())
+                                f"{k}={v}"
+                                for k, v in sorted((record.get("target") or {}).items())
                             )
                         )
                         if record.get("target")
@@ -738,12 +767,16 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
     # --- Environment / Capability (from receipts only) -------------------
     if environment_ids:
         for env_id in environment_ids:
-            objects.append(OcelObject(env_id, "Environment", _attrs({"subject_ref": _s(env_id)})))
+            objects.append(
+                OcelObject(env_id, "Environment", _attrs({"subject_ref": _s(env_id)}))
+            )
         populated_objects.append("Environment")
     else:
         absent_objects.append(("Environment", "NO_RECEIPTS_WITH_SUBJECT_REF"))
 
-    capability_ids = sorted({r["capability_ref"] for r in receipts if r.get("capability_ref")})
+    capability_ids = sorted(
+        {r["capability_ref"] for r in receipts if r.get("capability_ref")}
+    )
     if capability_ids:
         for cap in capability_ids:
             objects.append(
@@ -791,7 +824,9 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
                 _attrs(
                     {
                         "model_digest": _s(commitment.model_digest),
-                        "n_probes_induced_from": _i(len(probe_records)) if probe_records else None,
+                        "n_probes_induced_from": _i(len(probe_records))
+                        if probe_records
+                        else None,
                     }
                 ),
             )
@@ -799,7 +834,9 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
         o2o.append(ObjectObjectLink(domain_id, task_id, "domain_of_task"))
         populated_objects.append("DiscoveredDomain")
     else:
-        absent_objects.append(("DiscoveredDomain", "NO_COMMITMENT_TTL_SO_NO_MODEL_DIGEST"))
+        absent_objects.append(
+            ("DiscoveredDomain", "NO_COMMITMENT_TTL_SO_NO_MODEL_DIGEST")
+        )
 
     # --- PlannerAttempt / PlanCandidate ----------------------------------
     attempt_records = federation if isinstance(federation, list) else []
@@ -827,7 +864,9 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
             )
             o2o.append(ObjectObjectLink(attempt_id, task_id, "attempt_of_task"))
             if domain_id is not None:
-                o2o.append(ObjectObjectLink(attempt_id, domain_id, "planned_over_model"))
+                o2o.append(
+                    ObjectObjectLink(attempt_id, domain_id, "planned_over_model")
+                )
         populated_objects.append("PlannerAttempt")
     else:
         absent_objects.append(("PlannerAttempt", "NO_FEDERATION_JSON_OR_NO_ATTEMPTS"))
@@ -853,7 +892,9 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
                 ),
             )
         )
-        o2o.append(ObjectObjectLink(candidate_id, f"{task_id}:attempt:{index}", "proposed_by"))
+        o2o.append(
+            ObjectObjectLink(candidate_id, f"{task_id}:attempt:{index}", "proposed_by")
+        )
         candidate_ids.append(candidate_id)
     # The SELECTED candidate, stated by the producer at selection time. It is
     # not necessarily one of the federation attempts above -- a plan found by
@@ -892,7 +933,9 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
     if candidate_ids:
         populated_objects.append("PlanCandidate")
     else:
-        absent_objects.append(("PlanCandidate", "NO_PLANNER_ATTEMPT_RETURNED_A_NON_EMPTY_PLAN"))
+        absent_objects.append(
+            ("PlanCandidate", "NO_PLANNER_ATTEMPT_RETURNED_A_NON_EMPTY_PLAN")
+        )
 
     # --- POWLCommitment: the object that carries the join ----------------
     commitment_id: str | None = None
@@ -913,11 +956,14 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
                         if commitment.plan_length is not None
                         else None,
                         "sequence": OcelAttributeValue(
-                            OcelValueKind.LIST, tuple(_s(a) for a in commitment.sequence)
+                            OcelValueKind.LIST,
+                            tuple(_s(a) for a in commitment.sequence),
                         )
                         if commitment.sequence
                         else None,
-                        "episode_id": _s(commitment.episode_id) if commitment.episode_id else None,
+                        "episode_id": _s(commitment.episode_id)
+                        if commitment.episode_id
+                        else None,
                         "environment_id": _s(commitment.environment_id)
                         if commitment.environment_id
                         else None,
@@ -934,7 +980,9 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
                 continue
             candidate_id = str(record.get("candidate_id") or "")
             if candidate_id in candidate_ids:
-                o2o.append(ObjectObjectLink(commitment_id, candidate_id, "realizes_candidate"))
+                o2o.append(
+                    ObjectObjectLink(commitment_id, candidate_id, "realizes_candidate")
+                )
         if domain_id is not None:
             o2o.append(ObjectObjectLink(commitment_id, domain_id, "commits_model"))
         populated_objects.append("POWLCommitment")
@@ -960,18 +1008,25 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
                     _attrs(
                         {
                             "authority_ref": _s(ref),
-                            "authority_evidence_ref": _s(evidence) if evidence else None,
+                            "authority_evidence_ref": _s(evidence)
+                            if evidence
+                            else None,
                         }
                     ),
                 )
             )
         for r in receipts:
             if r.get("authority_ref"):
-                authority_of_receipt[r["receipt_id"]] = f"urn:level4:authority:{r['authority_ref']}"
+                authority_of_receipt[r["receipt_id"]] = (
+                    f"urn:level4:authority:{r['authority_ref']}"
+                )
         populated_objects.append("AuthorityEnvelope")
     else:
         absent_objects.append(
-            ("AuthorityEnvelope", "NO_RECEIPT_CARRIES_authority_ref (all NULL in this ledger)")
+            (
+                "AuthorityEnvelope",
+                "NO_RECEIPT_CARRIES_authority_ref (all NULL in this ledger)",
+            )
         )
 
     # --- Receipt / Actuation / PostconditionObservation -------------------
@@ -1000,7 +1055,9 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
                     {
                         "sequence": _i(r["_sequence"]),
                         "operation": _s(str(r.get("operation", ""))),
-                        "standing": _s(str(r["standing"])) if r.get("standing") else None,
+                        "standing": _s(str(r["standing"]))
+                        if r.get("standing")
+                        else None,
                         "idempotency_key": _s(str(r["idempotency_key"]))
                         if r.get("idempotency_key")
                         else None,
@@ -1008,7 +1065,9 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
                         "previous_digest": _s(str(r["_previous_digest"]))
                         if r.get("_previous_digest")
                         else None,
-                        "occurred_at": _s(str(r["occurred_at"])) if r.get("occurred_at") else None,
+                        "occurred_at": _s(str(r["occurred_at"]))
+                        if r.get("occurred_at")
+                        else None,
                     }
                 ),
             )
@@ -1058,11 +1117,21 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
             # The edge that did not exist before this module: the committed
             # plan and the thing that actually ran.
             if commitment_id is not None:
-                o2o.append(ObjectObjectLink(actuation_id, commitment_id, "actuates_commitment"))
+                o2o.append(
+                    ObjectObjectLink(actuation_id, commitment_id, "actuates_commitment")
+                )
             if r.get("capability_ref") in capability_ids:
-                o2o.append(ObjectObjectLink(actuation_id, r["capability_ref"], "exercises_capability"))
+                o2o.append(
+                    ObjectObjectLink(
+                        actuation_id, r["capability_ref"], "exercises_capability"
+                    )
+                )
             if r.get("subject_ref") in environment_ids:
-                o2o.append(ObjectObjectLink(actuation_id, r["subject_ref"], "acts_on_environment"))
+                o2o.append(
+                    ObjectObjectLink(
+                        actuation_id, r["subject_ref"], "acts_on_environment"
+                    )
+                )
             envelope = authority_of_receipt.get(rid)
             if envelope is not None:
                 o2o.append(ObjectObjectLink(actuation_id, envelope, "authorized_by"))
@@ -1082,11 +1151,17 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
                                 "verified": _b(r["verified"])
                                 if isinstance(r.get("verified"), bool)
                                 else None,
-                                "acknowledgement_status": _s(str(r["acknowledgement_status"]))
+                                "acknowledgement_status": _s(
+                                    str(r["acknowledgement_status"])
+                                )
                                 if r.get("acknowledgement_status")
                                 else None,
-                                "observation_confidence": _f(r["observation_confidence"])
-                                if isinstance(r.get("observation_confidence"), (int, float))
+                                "observation_confidence": _f(
+                                    r["observation_confidence"]
+                                )
+                                if isinstance(
+                                    r.get("observation_confidence"), (int, float)
+                                )
                                 else None,
                             }
                         ),
@@ -1098,7 +1173,9 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
             for parent in r.get("parent_receipt_ids") or []:
                 target = actuation_of_receipt.get(parent)
                 if target is not None:
-                    o2o.append(ObjectObjectLink(observation_id, target, "observes_actuation"))
+                    o2o.append(
+                        ObjectObjectLink(observation_id, target, "observes_actuation")
+                    )
 
     # --- independent goal consequence ------------------------------------
     #
@@ -1117,7 +1194,9 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
     # narrower, loop-2-only set).
     for record in _records("goal_consequence_observed"):
         goal_id = str(record.get("goal_id") or "")
-        actuation_id = actuation_of_receipt.get(str(record.get("actuation_receipt_id") or ""))
+        actuation_id = actuation_of_receipt.get(
+            str(record.get("actuation_receipt_id") or "")
+        )
         if goal_id not in goal_ids or actuation_id is None:
             continue
         observation_id = f"urn:level4:postcondition:{record['verification_id']}"
@@ -1141,7 +1220,9 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
             ObjectObjectLink(
                 observation_id,
                 goal_id,
-                "establishes_goal" if record["outcome"] == "ESTABLISHED" else "refutes_goal",
+                "establishes_goal"
+                if record["outcome"] == "ESTABLISHED"
+                else "refutes_goal",
             )
         )
         goal_observations.append(observation_id)
@@ -1170,12 +1251,17 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
         populated_objects.append("IndependentVerifier")
     else:
         absent_objects.append(
-            ("IndependentVerifier", "NO_goal_consequence_observed_RECORD_IN_WITNESS_JOURNAL")
+            (
+                "IndependentVerifier",
+                "NO_goal_consequence_observed_RECORD_IN_WITNESS_JOURNAL",
+            )
         )
     if actuation_of_receipt:
         populated_objects.append("Actuation")
     else:
-        absent_objects.append(("Actuation", "NO_RECEIPT_WITH_OPERATION_IN_{act,materialize}"))
+        absent_objects.append(
+            ("Actuation", "NO_RECEIPT_WITH_OPERATION_IN_{act,materialize}")
+        )
     if observation_of_receipt or goal_observations:
         populated_objects.append("PostconditionObservation")
     else:
@@ -1238,7 +1324,9 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
     # `log = log.validate()` call near the end of this function).
 
     first_receipt_ns = (
-        parse_ns(receipts[0]["occurred_at"]) if receipts and receipts[0].get("occurred_at") else 0
+        parse_ns(receipts[0]["occurred_at"])
+        if receipts and receipts[0].get("occurred_at")
+        else 0
     )
 
     pre: list[tuple[str, str, list[Any], dict[str, OcelAttributeValue | None]]] = []
@@ -1267,7 +1355,9 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
         links_sel: list[Any] = [(task_id, "task"), (candidate_id, "candidate")]
         for goal_id in goal_ids:
             links_sel.append((goal_id, "goal"))
-        pre.append((f"{candidate_id}:CandidateSelected", "CandidateSelected", links_sel, {}))
+        pre.append(
+            (f"{candidate_id}:CandidateSelected", "CandidateSelected", links_sel, {})
+        )
     if environment_id is not None:
         pre.append(
             (
@@ -1308,7 +1398,10 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
             )
         )
     for index, attempt in enumerate(attempt_records):
-        links: list[Any] = [(task_id, "task"), (f"{task_id}:attempt:{index}", "attempt")]
+        links: list[Any] = [
+            (task_id, "task"),
+            (f"{task_id}:attempt:{index}", "attempt"),
+        ]
         candidate_id = f"{task_id}:candidate:{index}"
         if candidate_id in candidate_ids:
             links.append((candidate_id, "candidate"))
@@ -1335,7 +1428,9 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
                 {
                     "plan_digest": _s(commitment.plan_digest),
                     "model_digest": _s(commitment.model_digest),
-                    "episode_id": _s(commitment.episode_id) if commitment.episode_id else None,
+                    "episode_id": _s(commitment.episode_id)
+                    if commitment.episode_id
+                    else None,
                 },
             )
         )
@@ -1374,7 +1469,10 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
                 [(task_id, "task"), (envelope, "authority")],
                 timestamp_ns=when,
                 attributes=_attrs(
-                    {"authority_ref": _s(str(r["authority_ref"])), "time_basis": _s("OBSERVED")}
+                    {
+                        "authority_ref": _s(str(r["authority_ref"])),
+                        "time_basis": _s("OBSERVED"),
+                    }
                 ),
             )
             populated_events.append("AuthorityAdmitted")
@@ -1446,7 +1544,9 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
                     attributes=_attrs(
                         {
                             "verified": _b(r["verified"]),
-                            "acknowledgement_status": _s(str(r["acknowledgement_status"]))
+                            "acknowledgement_status": _s(
+                                str(r["acknowledgement_status"])
+                            )
                             if r.get("acknowledgement_status")
                             else None,
                             "time_basis": _s("OBSERVED"),
@@ -1471,7 +1571,11 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
         populated_events.append("ReceiptEmitted")
 
     if goal_observations and receipts:
-        after_ns = parse_ns(receipts[-1]["occurred_at"]) if receipts[-1].get("occurred_at") else 0
+        after_ns = (
+            parse_ns(receipts[-1]["occurred_at"])
+            if receipts[-1].get("occurred_at")
+            else 0
+        )
         for record in _records("goal_consequence_observed"):
             observation_id = f"urn:level4:postcondition:{record['verification_id']}"
             if observation_id not in goal_observations:
@@ -1499,7 +1603,11 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
             populated_events.append("GoalConsequenceObserved")
 
     if replay_id is not None and receipts:
-        last_ns = parse_ns(receipts[-1]["occurred_at"]) if receipts[-1].get("occurred_at") else 0
+        last_ns = (
+            parse_ns(receipts[-1]["occurred_at"])
+            if receipts[-1].get("occurred_at")
+            else 0
+        )
         log = log.append_event(
             f"{task_id}:ReplayCompleted",
             "ReplayCompleted",
@@ -1515,14 +1623,20 @@ def build_level4_ocel(evidence_dir: Path) -> Level4Ocel:
         )
         populated_events.append("ReplayCompleted")
 
-    populated_event_set = tuple(t for t in LEVEL4_EVENT_TYPES if t in set(populated_events))
+    populated_event_set = tuple(
+        t for t in LEVEL4_EVENT_TYPES if t in set(populated_events)
+    )
     for name in LEVEL4_EVENT_TYPES:
         if name in populated_event_set:
             continue
-        absent_events.append((name, _EVENT_ABSENCE_REASON.get(name, "NO_SOURCE_DATA_ON_DISK")))
+        absent_events.append(
+            (name, _EVENT_ABSENCE_REASON.get(name, "NO_SOURCE_DATA_ON_DISK"))
+        )
 
     report = Level4OcelReport(
-        populated_object_types=tuple(t for t in LEVEL4_OBJECT_TYPES if t in set(populated_objects)),
+        populated_object_types=tuple(
+            t for t in LEVEL4_OBJECT_TYPES if t in set(populated_objects)
+        ),
         populated_event_types=populated_event_set,
         absent_object_types=tuple(absent_objects),
         absent_event_types=tuple(absent_events),

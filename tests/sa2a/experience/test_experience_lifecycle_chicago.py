@@ -10,15 +10,25 @@ MachineExperience/KnownRoute objects. Zero mocks.
 from __future__ import annotations
 
 from autofde_lab.sa2a.experience.admission import ExperienceAdmissionGate
-from autofde_lab.sa2a.experience.compiler import ArtifactRegistry, EpisodeEvidence, ExperienceCompiler
+from autofde_lab.sa2a.experience.compiler import (
+    ArtifactRegistry,
+    EpisodeEvidence,
+    ExperienceCompiler,
+)
 from autofde_lab.sa2a.experience.invalidation import check_and_invalidate
 from autofde_lab.sa2a.experience.known_route import KnownRouteRegistry
 from autofde_lab.sa2a.experience.qualification import ExperienceQualifier
 from autofde_lab.sa2a.experience.types import ExperienceState, MachineExperience
-from autofde_lab.sa2a.unknown.resolution import AdmissionReceipt, CandidateResolution, EpistemicState
+from autofde_lab.sa2a.unknown.resolution import (
+    AdmissionReceipt,
+    CandidateResolution,
+    EpistemicState,
+)
 
 
-def _admitted_candidate(candidate_id: str = "cand-1", query_id: str = "q-1") -> tuple[CandidateResolution, AdmissionReceipt]:
+def _admitted_candidate(
+    candidate_id: str = "cand-1", query_id: str = "q-1"
+) -> tuple[CandidateResolution, AdmissionReceipt]:
     candidate = CandidateResolution(
         candidate_id=candidate_id,
         query_id=query_id,
@@ -39,7 +49,9 @@ def _admitted_candidate(candidate_id: str = "cand-1", query_id: str = "q-1") -> 
     return candidate, receipt
 
 
-def _build_active_experience() -> tuple[ExperienceCompiler, KnownRouteRegistry, MachineExperience]:
+def _build_active_experience() -> tuple[
+    ExperienceCompiler, KnownRouteRegistry, MachineExperience
+]:
     candidate, receipt = _admitted_candidate()
     compiler = ExperienceCompiler()
     experience = compiler.compile(
@@ -47,7 +59,9 @@ def _build_active_experience() -> tuple[ExperienceCompiler, KnownRouteRegistry, 
         admitted_solution=candidate,
         admission_receipt=receipt,
         episode_evidence=EpisodeEvidence(
-            episode_id="ep1-test", discovery_identity="formal-port-probe", discovery_resource_receipt="budget-1"
+            episode_id="ep1-test",
+            discovery_identity="formal-port-probe",
+            discovery_resource_receipt="budget-1",
         ),
         equivalence_predicate_id="pred-requires-port-v1",
         invalidation_set={"ontology_digest": "digest-v1"},
@@ -75,7 +89,11 @@ def test_compile_produces_candidate_state_never_auto_known() -> None:
         semantic_class_id="requires-port",
         admitted_solution=candidate,
         admission_receipt=receipt,
-        episode_evidence=EpisodeEvidence(episode_id="ep1", discovery_identity="probe", discovery_resource_receipt="r1"),
+        episode_evidence=EpisodeEvidence(
+            episode_id="ep1",
+            discovery_identity="probe",
+            discovery_resource_receipt="r1",
+        ),
         equivalence_predicate_id="pred-1",
     )
     assert experience.state == ExperienceState.CANDIDATE
@@ -86,14 +104,23 @@ def test_compile_refuses_unadmitted_candidate() -> None:
     """Compiler never compiles unadmitted candidate content into machinery (PRD §6.7)."""
     candidate, _ = _admitted_candidate()
     refused_receipt = AdmissionReceipt(
-        receipt_id="rec-refused", candidate_hash=candidate.candidate_hash, admitted=False,
-        epistemic_standing=EpistemicState.REFUSED, reasons=("MISSING_EVIDENCE",),
+        receipt_id="rec-refused",
+        candidate_hash=candidate.candidate_hash,
+        admitted=False,
+        epistemic_standing=EpistemicState.REFUSED,
+        reasons=("MISSING_EVIDENCE",),
     )
     compiler = ExperienceCompiler()
     try:
         compiler.compile(
-            semantic_class_id="requires-port", admitted_solution=candidate, admission_receipt=refused_receipt,
-            episode_evidence=EpisodeEvidence(episode_id="ep1", discovery_identity="probe", discovery_resource_receipt="r1"),
+            semantic_class_id="requires-port",
+            admitted_solution=candidate,
+            admission_receipt=refused_receipt,
+            episode_evidence=EpisodeEvidence(
+                episode_id="ep1",
+                discovery_identity="probe",
+                discovery_resource_receipt="r1",
+            ),
             equivalence_predicate_id="pred-1",
         )
         assert False, "compile() must reject an unadmitted admission_receipt"
@@ -107,13 +134,21 @@ def test_qualification_before_admission_is_refused() -> None:
     candidate, receipt = _admitted_candidate()
     compiler = ExperienceCompiler()
     experience = compiler.compile(
-        semantic_class_id="requires-port", admitted_solution=candidate, admission_receipt=receipt,
-        episode_evidence=EpisodeEvidence(episode_id="ep1", discovery_identity="probe", discovery_resource_receipt="r1"),
+        semantic_class_id="requires-port",
+        admitted_solution=candidate,
+        admission_receipt=receipt,
+        episode_evidence=EpisodeEvidence(
+            episode_id="ep1",
+            discovery_identity="probe",
+            discovery_resource_receipt="r1",
+        ),
         equivalence_predicate_id="pred-1",
     )
     routes = KnownRouteRegistry()
     qualifier = ExperienceQualifier(compiler.artifact_registry, routes)
-    result = qualifier.qualify(experience, equivalence_predicate=lambda c: True, probe_input="requires-port")
+    result = qualifier.qualify(
+        experience, equivalence_predicate=lambda c: True, probe_input="requires-port"
+    )
     assert not result.qualified
     assert result.experience.state == ExperienceState.REFUSED
 
@@ -137,7 +172,10 @@ def test_known_route_lookup_is_semantic_class_not_prompt_similarity() -> None:
     # falsifier is meaningful: accepts same-topic text, rejects different-topic text.
     from autofde_lab.sa2a.episode.equivalence import build_topic_equivalence_predicate
 
-    routes.register_predicate(experience.equivalence_predicate_id, build_topic_equivalence_predicate("requires-port"))
+    routes.register_predicate(
+        experience.equivalence_predicate_id,
+        build_topic_equivalence_predicate("requires-port"),
+    )
 
     different_text_same_topic = "service:billing-worker requires-port"
     found = routes.lookup("requires-port", different_text_same_topic)
@@ -154,10 +192,16 @@ def test_invalidation_deactivates_route_when_dependency_digest_changes() -> None
     _, routes, experience = _build_active_experience()
     route_id = experience.known_route_id
 
-    unchanged = check_and_invalidate(experience, {"ontology_digest": "digest-v1"}, routes)
+    unchanged = check_and_invalidate(
+        experience, {"ontology_digest": "digest-v1"}, routes
+    )
     assert not unchanged.invalidated
-    assert routes.lookup("requires-port", "anything") is not None or True  # predicate not registered here; state check below is authoritative
-    still_active = [r for r in routes.routes_for_class("requires-port") if r.route_id == route_id][0]
+    assert (
+        routes.lookup("requires-port", "anything") is not None or True
+    )  # predicate not registered here; state check below is authoritative
+    still_active = [
+        r for r in routes.routes_for_class("requires-port") if r.route_id == route_id
+    ][0]
     assert still_active.state == "ACTIVE"
 
     changed = check_and_invalidate(experience, {"ontology_digest": "digest-v2"}, routes)
@@ -165,7 +209,9 @@ def test_invalidation_deactivates_route_when_dependency_digest_changes() -> None
     assert changed.changed_dependencies == ("ontology_digest",)
     assert changed.experience.state == ExperienceState.INVALIDATED
 
-    invalidated_route = [r for r in routes.routes_for_class("requires-port") if r.route_id == route_id][0]
+    invalidated_route = [
+        r for r in routes.routes_for_class("requires-port") if r.route_id == route_id
+    ][0]
     assert invalidated_route.state == "INVALIDATED"
 
 
@@ -176,11 +222,19 @@ def test_experience_admission_refuses_when_artifact_missing_from_registry() -> N
     candidate, receipt = _admitted_candidate()
     compiler = ExperienceCompiler()
     experience = compiler.compile(
-        semantic_class_id="requires-port", admitted_solution=candidate, admission_receipt=receipt,
-        episode_evidence=EpisodeEvidence(episode_id="ep1", discovery_identity="probe", discovery_resource_receipt="r1"),
+        semantic_class_id="requires-port",
+        admitted_solution=candidate,
+        admission_receipt=receipt,
+        episode_evidence=EpisodeEvidence(
+            episode_id="ep1",
+            discovery_identity="probe",
+            discovery_resource_receipt="r1",
+        ),
         equivalence_predicate_id="pred-1",
     )
-    empty_registry = ArtifactRegistry()  # a DIFFERENT registry than the one compiler wrote into
+    empty_registry = (
+        ArtifactRegistry()
+    )  # a DIFFERENT registry than the one compiler wrote into
     gate = ExperienceAdmissionGate(empty_registry)
     result = gate.admit(experience)
     assert not result.admitted

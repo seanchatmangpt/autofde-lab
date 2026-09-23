@@ -55,7 +55,10 @@ from __future__ import annotations
 import random
 import time
 
-from autofde_lab.fabric.gymact_capability_gate import DEFAULT_MANIFEST_PATH, CapabilityGate
+from autofde_lab.fabric.gymact_capability_gate import (
+    DEFAULT_MANIFEST_PATH,
+    CapabilityGate,
+)
 from autofde_lab.ocel.powl_replay import replay_structural_fires
 from autofde_lab.powl.algebra import (
     Atom,
@@ -67,7 +70,10 @@ from autofde_lab.powl.algebra import (
     PowlNode,
     Silent,
 )
-from autofde_lab.powl.conformance import check_ocel_conformance, observed_labels_from_events
+from autofde_lab.powl.conformance import (
+    check_ocel_conformance,
+    observed_labels_from_events,
+)
 from autofde_lab.powl.runner import (
     GYMACT_CHECK_DEPLOYMENTS_LABEL,
     GYMACT_CHECK_NAMESPACE_LABEL,
@@ -90,7 +96,9 @@ def _full_order(n: int) -> frozenset[OrderEdge]:
     `n` children, i.e. a strict total order (`PartialOrder.__post_init__`
     normalizes this down to its transitive reduction, the `i -> i+1` chain,
     but the input relation is equivalent either way)."""
-    return frozenset(OrderEdge(NodeId(i), NodeId(j)) for i in range(n) for j in range(n) if i < j)
+    return frozenset(
+        OrderEdge(NodeId(i), NodeId(j)) for i in range(n) for j in range(n) if i < j
+    )
 
 
 class _LabelCounter:
@@ -111,7 +119,9 @@ class _LabelCounter:
 # ── generator 1: wide structural variety, for the positive control ─────────
 
 
-def _random_variety_node(rng: random.Random, counter: _LabelCounter, depth: int) -> PowlNode:
+def _random_variety_node(
+    rng: random.Random, counter: _LabelCounter, depth: int
+) -> PowlNode:
     """A real, randomly-shaped POWL node: `Atom`, `Silent`, `PartialOrder`
     (randomly either genuinely concurrent -- no order edges -- or totally
     ordered), or an acyclic, unbranched `ChoiceGraph` chain. `depth` bounds
@@ -141,7 +151,9 @@ def _random_variety_root(rng: random.Random, counter: _LabelCounter) -> PowlNode
 # ── generator 2: strictly totally ordered, for the negative control ────────
 
 
-def _random_totally_ordered_node(rng: random.Random, counter: _LabelCounter, depth: int) -> PowlNode:
+def _random_totally_ordered_node(
+    rng: random.Random, counter: _LabelCounter, depth: int
+) -> PowlNode:
     """Same shape space as `_random_variety_node`, but every `PartialOrder`
     is forced to the full total order and every `ChoiceGraph` is a simple,
     unbranched chain -- so the generated tree has exactly one legal firing
@@ -151,7 +163,9 @@ def _random_totally_ordered_node(rng: random.Random, counter: _LabelCounter, dep
 
     kind = rng.choice(["partial_order", "choice_graph"])
     n = rng.randint(2, 3)
-    children = tuple(_random_totally_ordered_node(rng, counter, depth - 1) for _ in range(n))
+    children = tuple(
+        _random_totally_ordered_node(rng, counter, depth - 1) for _ in range(n)
+    )
 
     if kind == "partial_order":
         return PartialOrder(children=children, order=_full_order(n))
@@ -160,9 +174,13 @@ def _random_totally_ordered_node(rng: random.Random, counter: _LabelCounter, dep
     return ChoiceGraph(children=children, edges=edges, start=0, end=n - 1)
 
 
-def _random_totally_ordered_root(rng: random.Random, counter: _LabelCounter) -> PowlNode:
+def _random_totally_ordered_root(
+    rng: random.Random, counter: _LabelCounter
+) -> PowlNode:
     n = rng.randint(2, 4)
-    children = tuple(_random_totally_ordered_node(rng, counter, depth=2) for _ in range(n))
+    children = tuple(
+        _random_totally_ordered_node(rng, counter, depth=2) for _ in range(n)
+    )
     return PartialOrder(children=children, order=_full_order(n))
 
 
@@ -241,8 +259,12 @@ def test_property_based_positive_control_never_false_negatives_across_wide_varie
     for i in range(30):
         counter = _LabelCounter(f"pos{i}")
         model = _random_variety_root(rng, counter)
-        log = replay_structural_fires(model, session_id=f"conformance-property-positive-{i}")
-        assert len(log.events) >= 2, f"iteration {i}: generator produced a degenerate 0/1-fire model"
+        log = replay_structural_fires(
+            model, session_id=f"conformance-property-positive-{i}"
+        )
+        assert len(log.events) >= 2, (
+            f"iteration {i}: generator produced a degenerate 0/1-fire model"
+        )
 
         result = check_ocel_conformance(model, log.events)
         if not result.conforms:
@@ -270,8 +292,12 @@ def test_property_based_negative_control_totally_ordered_mutations_always_diverg
     for i in range(30):
         counter = _LabelCounter(f"neg{i}")
         model = _random_totally_ordered_root(rng, counter)
-        log = replay_structural_fires(model, session_id=f"conformance-property-negative-{i}")
-        assert len(log.events) >= 2, f"iteration {i}: generator produced a degenerate 0/1-fire model"
+        log = replay_structural_fires(
+            model, session_id=f"conformance-property-negative-{i}"
+        )
+        assert len(log.events) >= 2, (
+            f"iteration {i}: generator produced a degenerate 0/1-fire model"
+        )
 
         baseline = check_ocel_conformance(model, log.events)
         assert baseline.conforms is True, (
@@ -320,7 +346,9 @@ def test_run_pipeline_produced_log_conforms_via_the_concurrent_batch_executor_pa
 # ── (5) genuine concurrency does not cause a false divergence ─────────────
 
 
-def _staggered_binding(gate: CapabilityGate, capability_name: str, sleep_s: float) -> GatedCapabilityBinding:
+def _staggered_binding(
+    gate: CapabilityGate, capability_name: str, sleep_s: float
+) -> GatedCapabilityBinding:
     """A real `GatedCapabilityBinding` around a real, simple callable that
     really sleeps a real, deterministic (but distinct per-label) duration --
     the repo's established real-degraded-alternative pattern, so the 5
@@ -331,7 +359,9 @@ def _staggered_binding(gate: CapabilityGate, capability_name: str, sleep_s: floa
         time.sleep(sleep_s)
         return {"label": atom_attrs["label"]}
 
-    return GatedCapabilityBinding(capability_name=capability_name, callable_=_target, gate=gate)
+    return GatedCapabilityBinding(
+        capability_name=capability_name, callable_=_target, gate=gate
+    )
 
 
 def test_concurrent_observe_block_staggered_real_completion_order_still_conforms():
@@ -348,7 +378,9 @@ def test_concurrent_observe_block_staggered_real_completion_order_still_conforms
     # before status (slowest), inverting the structural declaration order
     # for at least that pair.
     action_bindings = {
-        GYMACT_CHECK_STATUS_LABEL: _staggered_binding(gate, "observe_cluster_state", 0.09),
+        GYMACT_CHECK_STATUS_LABEL: _staggered_binding(
+            gate, "observe_cluster_state", 0.09
+        ),
         GYMACT_CHECK_NAMESPACE_LABEL: _staggered_binding(gate, "run_kubectl", 0.07),
         GYMACT_CHECK_DEPLOYMENTS_LABEL: _staggered_binding(gate, "run_kubectl", 0.05),
         GYMACT_CHECK_PODS_LABEL: _staggered_binding(gate, "run_kubectl", 0.03),
@@ -373,7 +405,9 @@ def test_concurrent_observe_block_staggered_real_completion_order_still_conforms
     }
     observed_labels = observed_labels_from_events(log.events)
     observed_check_order = [label for label in observed_labels if label in check_labels]
-    assert set(observed_check_order) == check_labels, "all 5 real checks must have really fired"
+    assert set(observed_check_order) == check_labels, (
+        "all 5 real checks must have really fired"
+    )
 
     result = check_ocel_conformance(node, log.events)
     assert result.conforms is True

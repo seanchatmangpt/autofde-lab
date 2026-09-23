@@ -31,14 +31,10 @@ from autofde_lab.sa2a.authority.broker import (
 )
 from autofde_lab.sa2a.brce.boundary import (
     ConsequenceBoundary,
-    ExecutionEnvelope,
 )
 from autofde_lab.sa2a.brce.receipts import (
-    FinalReceipt,
-    PreparedReceipt,
     ReceiptStore,
     TerminalReceiptState,
-    compute_receipt_digest,
 )
 from autofde_lab.sa2a.brce.replay import (
     ReplayEngine,
@@ -151,7 +147,9 @@ class NonActuatingReplayProbe:
 
     def actuate(self, *args: Any, **kwargs: Any) -> Any:
         self.actuation_attempts += 1
-        raise AssertionError("Replay attempted external actuation! Replay != DO violated.")
+        raise AssertionError(
+            "Replay attempted external actuation! Replay != DO violated."
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -216,11 +214,17 @@ class ReplayCourt:
         2. No file or physical disk modifications take place during replay.
         3. Verified without actuation flag is True.
         """
-        initial_mtime = journal_path.stat().st_mtime_ns if (journal_path and journal_path.exists()) else None
+        initial_mtime = (
+            journal_path.stat().st_mtime_ns
+            if (journal_path and journal_path.exists())
+            else None
+        )
         initial_record_count = 0
         if journal_path and journal_path.exists():
             try:
-                initial_record_count = len(json.loads(journal_path.read_text(encoding="utf-8")))
+                initial_record_count = len(
+                    json.loads(journal_path.read_text(encoding="utf-8"))
+                )
             except Exception:
                 initial_record_count = 0
 
@@ -228,23 +232,33 @@ class ReplayCourt:
         report = engine.verify_chain(receipt_records=receipt_records)
 
         # Check post-replay disk state: must be completely untouched
-        current_mtime = journal_path.stat().st_mtime_ns if (journal_path and journal_path.exists()) else None
+        current_mtime = (
+            journal_path.stat().st_mtime_ns
+            if (journal_path and journal_path.exists())
+            else None
+        )
         current_record_count = 0
         if journal_path and journal_path.exists():
             try:
-                current_record_count = len(json.loads(journal_path.read_text(encoding="utf-8")))
+                current_record_count = len(
+                    json.loads(journal_path.read_text(encoding="utf-8"))
+                )
             except Exception:
                 current_record_count = 0
 
-        actuation_occurred = (
-            (initial_mtime != current_mtime) or (initial_record_count != current_record_count)
+        actuation_occurred = (initial_mtime != current_mtime) or (
+            initial_record_count != current_record_count
         )
 
         return ReplayValidationResult(
             report=report,
             actuation_occurred=actuation_occurred,
             disk_records_count=current_record_count,
-            is_valid=(report.verdict == ReplayVerdict.VALID and report.standing in (ReplayStanding.ALIVE, ReplayStanding.PARTIAL_ALIVE)),
+            is_valid=(
+                report.verdict == ReplayVerdict.VALID
+                and report.standing
+                in (ReplayStanding.ALIVE, ReplayStanding.PARTIAL_ALIVE)
+            ),
             errors=report.errors,
         )
 
@@ -297,7 +311,10 @@ class ReplayCourt:
             report=report,
             producer_memory_isolated=True,
             cold_payload_size_bytes=cold_bytes,
-            verified_valid=(report.verdict == ReplayVerdict.VALID and report.standing == ReplayStanding.ALIVE),
+            verified_valid=(
+                report.verdict == ReplayVerdict.VALID
+                and report.standing == ReplayStanding.ALIVE
+            ),
             total_pairs=report.total_pairs,
         )
 

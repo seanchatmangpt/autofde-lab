@@ -37,7 +37,9 @@ def test_frequency_repetition_count_always_satisfies_frequency_allows() -> None:
         freq_min = rng.randint(0, 3)
         freq_max = freq_min + rng.randint(0, 3)
         freq = Frequency(min=freq_min, max=freq_max)
-        target_reps = rng.randint(0, freq_max + 2)  # may exceed max -- evaluator must be capped by the runner
+        target_reps = rng.randint(
+            0, freq_max + 2
+        )  # may exceed max -- evaluator must be capped by the runner
 
         node = PartialOrder(
             children=(Atom(label=f"s{i}_a"), Atom(label=f"s{i}_b")),
@@ -54,11 +56,19 @@ def test_frequency_repetition_count_always_satisfies_frequency_allows() -> None:
             calls.append(atom.label)
             return "ok"
 
-        execute(node, guard_evaluator=lambda n, a: True, atom_invoker=invoker, max_choice_transitions=10, repeat_evaluator=repeat_evaluator)
+        execute(
+            node,
+            guard_evaluator=lambda n, a: True,
+            atom_invoker=invoker,
+            max_choice_transitions=10,
+            repeat_evaluator=repeat_evaluator,
+        )
 
         real_reps = len(calls) // 2
         if not freq.allows(real_reps):
-            failures.append(f"structure {i}: freq={freq} real_reps={real_reps} target={target_reps} -- Frequency.allows() rejects the real repetition count")
+            failures.append(
+                f"structure {i}: freq={freq} real_reps={real_reps} target={target_reps} -- Frequency.allows() rejects the real repetition count"
+            )
         if real_reps < freq_min:
             failures.append(f"structure {i}: real_reps={real_reps} < min={freq_min}")
         if real_reps > freq_max:
@@ -73,7 +83,9 @@ def test_frequency_repetition_count_always_satisfies_frequency_allows() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_concurrent_trace_order_is_always_deterministic_regardless_of_max_workers() -> None:
+def test_concurrent_trace_order_is_always_deterministic_regardless_of_max_workers() -> (
+    None
+):
     rng = random.Random(20260810002)
     failures: list[str] = []
 
@@ -95,15 +107,25 @@ def test_concurrent_trace_order_is_always_deterministic_regardless_of_max_worker
                 thread_ids.add(threading.get_ident())
             return atom.label
 
-        trace = execute(node, guard_evaluator=lambda n, a: True, atom_invoker=invoker, max_choice_transitions=10, max_workers=max_workers)
+        trace = execute(
+            node,
+            guard_evaluator=lambda n, a: True,
+            atom_invoker=invoker,
+            max_choice_transitions=10,
+            max_workers=max_workers,
+        )
 
         labels = [s.label for s in trace.steps if s.kind == "Atom"]
         expected = [f"s{i}_a{j}" for j in range(width)]
         if labels != expected:
-            failures.append(f"structure {i}: max_workers={max_workers} width={width} trace order {labels} != expected {expected}")
+            failures.append(
+                f"structure {i}: max_workers={max_workers} width={width} trace order {labels} != expected {expected}"
+            )
 
         if max_workers > 1 and width > 1 and len(thread_ids) < 2:
-            failures.append(f"structure {i}: max_workers={max_workers} width={width} but only {len(thread_ids)} distinct thread(s) observed")
+            failures.append(
+                f"structure {i}: max_workers={max_workers} width={width} but only {len(thread_ids)} distinct thread(s) observed"
+            )
 
     assert not failures, "\n".join(failures)
 
@@ -114,7 +136,9 @@ def test_concurrent_trace_order_is_always_deterministic_regardless_of_max_worker
 # ---------------------------------------------------------------------------
 
 
-def test_partial_trace_on_failure_always_matches_the_real_atoms_invoked_before_it() -> None:
+def test_partial_trace_on_failure_always_matches_the_real_atoms_invoked_before_it() -> (
+    None
+):
     rng = random.Random(20260810003)
     failures: list[str] = []
 
@@ -134,7 +158,12 @@ def test_partial_trace_on_failure_always_matches_the_real_atoms_invoked_before_i
             return "ok"
 
         try:
-            execute(node, guard_evaluator=lambda n, a: True, atom_invoker=invoker, max_choice_transitions=10)
+            execute(
+                node,
+                guard_evaluator=lambda n, a: True,
+                atom_invoker=invoker,
+                max_choice_transitions=10,
+            )
             failures.append(f"structure {i}: expected PowlError, none raised")
             continue
         except PowlError as exc:
@@ -148,11 +177,17 @@ def test_partial_trace_on_failure_always_matches_the_real_atoms_invoked_before_i
         expected_labels = [f"s{i}_a{j}" for j in range(fail_at)] + [f"s{i}_a{fail_at}"]
         real_labels = [s.label for s in atom_steps]
         if real_labels != expected_labels:
-            failures.append(f"structure {i}: partial_trace labels {real_labels} != expected {expected_labels}")
+            failures.append(
+                f"structure {i}: partial_trace labels {real_labels} != expected {expected_labels}"
+            )
         if atom_steps and not atom_steps[-1].failed:
-            failures.append(f"structure {i}: last step {atom_steps[-1].label!r} not marked failed=True")
+            failures.append(
+                f"structure {i}: last step {atom_steps[-1].label!r} not marked failed=True"
+            )
         if any(s.failed for s in atom_steps[:-1]):
-            failures.append(f"structure {i}: an earlier, genuinely-succeeded step is incorrectly marked failed=True")
+            failures.append(
+                f"structure {i}: an earlier, genuinely-succeeded step is incorrectly marked failed=True"
+            )
 
     assert not failures, "\n".join(failures)
 
@@ -163,7 +198,9 @@ def test_partial_trace_on_failure_always_matches_the_real_atoms_invoked_before_i
 # ---------------------------------------------------------------------------
 
 
-def test_resume_from_any_captured_checkpoint_never_reinvokes_already_completed_atoms() -> None:
+def test_resume_from_any_captured_checkpoint_never_reinvokes_already_completed_atoms() -> (
+    None
+):
     rng = random.Random(20260810004)
     failures: list[str] = []
 
@@ -178,7 +215,13 @@ def test_resume_from_any_captured_checkpoint_never_reinvokes_already_completed_a
         def invoker(atom: Atom) -> str:
             return "ok"
 
-        execute(node, guard_evaluator=lambda n, a: True, atom_invoker=invoker, max_choice_transitions=10, on_step=checkpoints.append)
+        execute(
+            node,
+            guard_evaluator=lambda n, a: True,
+            atom_invoker=invoker,
+            max_choice_transitions=10,
+            on_step=checkpoints.append,
+        )
 
         # Resume from a random mid-walk checkpoint (not the last one, which
         # would have nothing left to resume).
@@ -197,11 +240,21 @@ def test_resume_from_any_captured_checkpoint_never_reinvokes_already_completed_a
             calls.append(atom.label)
             return "ok"
 
-        execute(node, guard_evaluator=lambda n, a: True, atom_invoker=real_invoker, max_choice_transitions=10, resume_from=checkpoint)
+        execute(
+            node,
+            guard_evaluator=lambda n, a: True,
+            atom_invoker=real_invoker,
+            max_choice_transitions=10,
+            resume_from=checkpoint,
+        )
 
-        reinvoked = {children[idx].label for idx in already_completed} & set(second_calls)
+        reinvoked = {children[idx].label for idx in already_completed} & set(
+            second_calls
+        )
         if reinvoked:
-            failures.append(f"structure {i}: resume re-invoked already-completed atoms {reinvoked}")
+            failures.append(
+                f"structure {i}: resume re-invoked already-completed atoms {reinvoked}"
+            )
 
     assert not failures, "\n".join(failures)
 
@@ -224,7 +277,13 @@ def test_execution_context_history_always_mirrors_trace_steps() -> None:
         def invoker(atom: Atom) -> str:
             return "ok"
 
-        trace = execute(node, guard_evaluator=lambda n, a: True, atom_invoker=invoker, max_choice_transitions=10, context=context)
+        trace = execute(
+            node,
+            guard_evaluator=lambda n, a: True,
+            atom_invoker=invoker,
+            max_choice_transitions=10,
+            context=context,
+        )
 
         if list(context.history) != list(trace.steps):
             failures.append(f"structure {i}: context.history != trace.steps")

@@ -12,13 +12,19 @@ structures shaped like real `kubectl get deployment ... -o json` output.
 
 from __future__ import annotations
 
-from autofde_lab_planner.detectors.dns_policy_override import detect_dns_policy_overrides
+from autofde_lab_planner.detectors.dns_policy_override import (
+    detect_dns_policy_overrides,
+)
 from autofde_lab_planner.engine import CompositePlannerEngine
 from autofde_lab_planner.models import DnsPolicyOverrideFault
-from autofde_lab_planner.remediators.dns_policy_override import decide_dns_policy_remediation_commands
+from autofde_lab_planner.remediators.dns_policy_override import (
+    decide_dns_policy_remediation_commands,
+)
 
 
-def _deployment(name: str, namespace: str, dns_policy: str | None, dns_config: dict | None = None) -> dict:
+def _deployment(
+    name: str, namespace: str, dns_policy: str | None, dns_config: dict | None = None
+) -> dict:
     pod_spec: dict = {"containers": [{"name": name, "image": "app:latest"}]}
     if dns_policy is not None:
         pod_spec["dnsPolicy"] = dns_policy
@@ -46,7 +52,9 @@ def test_detects_dns_policy_override_to_none_with_external_nameserver():
         ]
     }
 
-    faults = detect_dns_policy_overrides(deployments_json=deployments, namespace="hotel-reservation")
+    faults = detect_dns_policy_overrides(
+        deployments_json=deployments, namespace="hotel-reservation"
+    )
 
     assert len(faults) == 1
     f = faults[0]
@@ -64,7 +72,9 @@ def test_no_fault_when_dns_policy_is_cluster_default():
         ]
     }
 
-    faults = detect_dns_policy_overrides(deployments_json=deployments, namespace="hotel-reservation")
+    faults = detect_dns_policy_overrides(
+        deployments_json=deployments, namespace="hotel-reservation"
+    )
 
     assert faults == []
 
@@ -78,7 +88,9 @@ def test_no_fault_when_dns_policy_is_unset():
         ]
     }
 
-    faults = detect_dns_policy_overrides(deployments_json=deployments, namespace="hotel-reservation")
+    faults = detect_dns_policy_overrides(
+        deployments_json=deployments, namespace="hotel-reservation"
+    )
 
     assert faults == []
 
@@ -90,7 +102,9 @@ def test_detects_override_even_without_dns_config_present():
         ]
     }
 
-    faults = detect_dns_policy_overrides(deployments_json=deployments, namespace="hotel-reservation")
+    faults = detect_dns_policy_overrides(
+        deployments_json=deployments, namespace="hotel-reservation"
+    )
 
     assert len(faults) == 1
     assert faults[0].observed_dns_policy == "Default"
@@ -112,7 +126,7 @@ def test_remediation_emits_json_patch_removing_dnspolicy_and_dnsconfig_then_rest
     assert len(commands) == 2
     assert commands[0] == (
         "kubectl patch deployment geo -n hotel-reservation --type json -p "
-        "'[{\"op\":\"remove\",\"path\":\"/spec/template/spec/dnsPolicy\"},"
+        '\'[{"op":"remove","path":"/spec/template/spec/dnsPolicy"},'
         '{"op":"remove","path":"/spec/template/spec/dnsConfig"}]\''
     )
     assert commands[1] == "kubectl rollout restart deployment geo -n hotel-reservation"

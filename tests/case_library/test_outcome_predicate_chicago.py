@@ -29,7 +29,6 @@ from autofde_lab.case_library.outcome_predicate import (
     evaluate_outcome,
 )
 
-
 # ---------------------------------------------------------------------------
 # The six real, constructible (structural_passed, oracle) combinations.
 # ---------------------------------------------------------------------------
@@ -44,7 +43,9 @@ def test_structural_passed_oracle_absent_is_confirmed_structural_only() -> None:
     assert confirmed_via == "structural_only"
 
 
-def test_structural_passed_oracle_present_and_passed_is_confirmed_structural_and_oracle() -> None:
+def test_structural_passed_oracle_present_and_passed_is_confirmed_structural_and_oracle() -> (
+    None
+):
     oracle = OracleVerdict(present=True, passed=True)
 
     verdict, confirmed_via = evaluate_outcome(structural_passed=True, oracle=oracle)
@@ -111,7 +112,9 @@ def test_oracle_present_with_none_passed_is_refused_at_construction() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_default_structural_recheck_passes_when_observed_value_now_matches_expected() -> None:
+def test_default_structural_recheck_passes_when_observed_value_now_matches_expected() -> (
+    None
+):
     anomaly = Anomaly(
         kind="Deployment",
         object_name="checkout",
@@ -141,7 +144,9 @@ def test_default_structural_recheck_fails_when_observed_value_still_diverges() -
     assert default_structural_recheck(anomaly, observe) is False
 
 
-def test_default_structural_recheck_passes_for_absence_check_when_field_now_gone() -> None:
+def test_default_structural_recheck_passes_for_absence_check_when_field_now_gone() -> (
+    None
+):
     anomaly = Anomaly(
         kind="CronJob",
         object_name="nightly-backup",
@@ -156,7 +161,9 @@ def test_default_structural_recheck_passes_for_absence_check_when_field_now_gone
     assert default_structural_recheck(anomaly, observe) is True
 
 
-def test_default_structural_recheck_fails_for_absence_check_when_field_still_present() -> None:
+def test_default_structural_recheck_fails_for_absence_check_when_field_still_present() -> (
+    None
+):
     anomaly = Anomaly(
         kind="CronJob",
         object_name="nightly-backup",

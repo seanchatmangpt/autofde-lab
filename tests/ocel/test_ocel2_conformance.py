@@ -213,6 +213,7 @@ def _sample_log() -> OcelLog:
         ],
     )
 
+
 # ── check 1: document shape, schema validity, and type declarations ───────
 
 
@@ -252,12 +253,17 @@ def test_declared_attribute_types_stay_inside_the_spec_vocabulary():
                         "l", OcelAttributeValue.listing([OcelAttributeValue.integer(1)])
                     ),
                     OcelAttribute(
-                        "m", OcelAttributeValue.mapping({"a": OcelAttributeValue.string("b")})
+                        "m",
+                        OcelAttributeValue.mapping(
+                            {"a": OcelAttributeValue.string("b")}
+                        ),
                     ),
                 ),
             )
         ],
-        events=[OcelEvent("e1", "A", 0, (OcelAttribute("x", OcelAttributeValue.null()),))],
+        events=[
+            OcelEvent("e1", "A", 0, (OcelAttribute("x", OcelAttributeValue.null()),))
+        ],
         event_object_links=[EventObjectLink("e1", "o1", None)],
     )
 
@@ -270,9 +276,13 @@ def test_declared_attribute_types_stay_inside_the_spec_vocabulary():
                     failures.append(f"{label}/{section}: entry keys {set(entry)}")
                 for attr in entry["attributes"]:
                     if set(attr) != {"name", "type"}:
-                        failures.append(f"{label}/{section}: attribute keys {set(attr)}")
+                        failures.append(
+                            f"{label}/{section}: attribute keys {set(attr)}"
+                        )
                     if attr["type"] not in SPEC_ATTRIBUTE_TYPES:
-                        failures.append(f"{label}/{section}: out-of-spec type {attr['type']!r}")
+                        failures.append(
+                            f"{label}/{section}: out-of-spec type {attr['type']!r}"
+                        )
         if OcelLog.from_ocel2_json(doc) != log:
             failures.append(f"{label}: the type remap cost fidelity")
     assert not failures, f"declared types left the spec vocabulary: {failures}"
@@ -284,7 +294,9 @@ def test_time_values_round_trip_only_because_the_declaration_is_right():
     log = OcelLog.new(
         objects=[OcelObject("o1", "T")],
         events=[
-            OcelEvent("e1", "A", 0, (OcelAttribute("due", OcelAttributeValue.time_ns(when)),))
+            OcelEvent(
+                "e1", "A", 0, (OcelAttribute("due", OcelAttributeValue.time_ns(when)),)
+            )
         ],
         event_object_links=[EventObjectLink("e1", "o1", None)],
     )
@@ -366,7 +378,10 @@ def test_timestamps_parse_every_iso8601_variant_and_survive_nanosecond_exact():
             failures.append(f"parse_ns({text!r}) -> {exc!r}")
 
     # fractional widths recover the exact sub-second component
-    for text, expected in (("2026-06-19T06:22:27.725Z", 725_000_000), ("2026-06-19T06:22:27Z", 0)):
+    for text, expected in (
+        ("2026-06-19T06:22:27.725Z", 725_000_000),
+        ("2026-06-19T06:22:27Z", 0),
+    ):
         got = parse_ns(text) % 1_000_000_000
         if got != expected:
             failures.append(f"parse_ns({text!r}) sub-second {got} != {expected}")
@@ -376,13 +391,17 @@ def test_timestamps_parse_every_iso8601_variant_and_survive_nanosecond_exact():
         failures.append("a +02:00 offset was not normalised to UTC")
 
     # our own output is nanosecond-exact and passes a date-time format checker
-    jsonschema = pytest.importorskip("jsonschema", reason="UNSUPPORTED: jsonschema not installed")
+    jsonschema = pytest.importorskip(
+        "jsonschema", reason="UNSUPPORTED: jsonschema not installed"
+    )
     fmt = jsonschema.FormatChecker()
     for ns in (0, 1, 999_999_999, 1_500_000_000_123_456_789, 1_700_000_000_123_456_789):
         if parse_ns(format_ns(ns)) != ns:
             failures.append(f"format_ns/parse_ns round trip lost {ns}")
         if not fmt.conforms(format_ns(ns), "date-time"):
-            failures.append(f"format_ns({ns}) = {format_ns(ns)!r} is not a valid date-time")
+            failures.append(
+                f"format_ns({ns}) = {format_ns(ns)!r} is not a valid date-time"
+            )
     assert not failures, f"timestamp handling broken: {failures}"
 
 
@@ -403,12 +422,15 @@ def test_only_an_untimed_object_change_degrades_and_it_degrades_at_most_once():
     epoch). What is lost is the ability to distinguish "static" from "changed at
     time 0" after a round trip.
     """
+
     def _log(ts):
         return OcelLog.new(
             objects=[OcelObject("o1", "T")],
             events=[OcelEvent("e1", "A", 0)],
             event_object_links=[EventObjectLink("e1", "o1", None)],
-            object_changes=[ObjectChange("o1", "st", OcelAttributeValue.string("done"), ts)],
+            object_changes=[
+                ObjectChange("o1", "st", OcelAttributeValue.string("done"), ts)
+            ],
         )
 
     # control: a timed change is not lossy at all
@@ -470,7 +492,11 @@ def test_every_third_party_fixture_is_ocel2_validates_and_round_trips_faithfully
             o["id"]: (
                 o["type"],
                 sorted(
-                    (a["name"], json.dumps(a["value"]), parse_ns(a["time"]) if a.get("time") else 0)
+                    (
+                        a["name"],
+                        json.dumps(a["value"]),
+                        parse_ns(a["time"]) if a.get("time") else 0,
+                    )
                     for a in o.get("attributes") or ()
                 ),
                 sorted(
@@ -507,7 +533,9 @@ def test_every_third_party_fixture_is_ocel2_validates_and_round_trips_faithfully
         emitted = log.to_ocel2_json()
         errors = [e.message for e in validator.iter_errors(emitted)]
         if errors:
-            failures.append(f"{name}: emitted document is not schema-valid: {errors[:3]}")
+            failures.append(
+                f"{name}: emitted document is not schema-valid: {errors[:3]}"
+            )
         if OcelLog.from_ocel2_json(emitted) != log:
             failures.append(f"{name}: re-parsing our own emission is not idempotent")
 
@@ -517,7 +545,9 @@ def test_every_third_party_fixture_is_ocel2_validates_and_round_trips_faithfully
         if _ob(emitted) != _ob(doc):
             failures.append(f"{name}: object fields changed across the round trip")
 
-    assert not failures, f"{len(_FIXTURES)} fixtures, {len(failures)} defects: {failures}"
+    assert not failures, (
+        f"{len(_FIXTURES)} fixtures, {len(failures)} defects: {failures}"
+    )
 
 
 @pytest.mark.skipif(
@@ -526,7 +556,9 @@ def test_every_third_party_fixture_is_ocel2_validates_and_round_trips_faithfully
 )
 def test_excluded_fixture_really_is_ocel_1_0():
     """Checks the PROVENANCE.md exclusion claim rather than trusting it."""
-    doc = json.loads(pathlib.Path.home().joinpath("powlv2lsp/ocel_fig3b.json").read_text())
+    doc = json.loads(
+        pathlib.Path.home().joinpath("powlv2lsp/ocel_fig3b.json").read_text()
+    )
     assert any(k.startswith("ocel:") for k in doc)
     assert not {"eventTypes", "objectTypes", "events", "objects"} & set(doc)
     assert list(_validator().iter_errors(doc))  # fails the OCEL 2.0 schema
@@ -595,11 +627,15 @@ def test_recorded_deviations_from_the_published_schema_still_hold():
             if not isinstance(OcelLog.from_ocel2_json(doc), OcelLog):
                 failures.append(f"{label}: did not return an OcelLog")
         except Exception as exc:
-            failures.append(f"{label}: now raises {exc!r} -- promote this to a refusal test")
+            failures.append(
+                f"{label}: now raises {exc!r} -- promote this to a refusal test"
+            )
 
     # 2. an out-of-vocabulary attribute type declaration is accepted silently
     quaternion = {
-        "eventTypes": [{"name": "A", "attributes": [{"name": "x", "type": "quaternion"}]}],
+        "eventTypes": [
+            {"name": "A", "attributes": [{"name": "x", "type": "quaternion"}]}
+        ],
         "objectTypes": [],
         "objects": [{"id": "o1", "type": "T"}],
         "events": [
@@ -619,7 +655,9 @@ def test_recorded_deviations_from_the_published_schema_still_hold():
                 f"unknown-attribute-type: sniffed as {log.events[0].attributes[0].value.kind!r}"
             )
     except Exception as exc:
-        failures.append(f"unknown-attribute-type: now raises {exc!r} -- promote to a refusal test")
+        failures.append(
+            f"unknown-attribute-type: now raises {exc!r} -- promote to a refusal test"
+        )
 
     # 3. an event missing ``id`` escapes as a raw KeyError, not an OcelError
     missing_id = {
@@ -633,7 +671,9 @@ def test_recorded_deviations_from_the_published_schema_still_hold():
     except KeyError:
         pass
     except OcelError as exc:
-        failures.append(f"event-missing-id: now a named refusal {exc.refusal!r} -- promote it")
+        failures.append(
+            f"event-missing-id: now a named refusal {exc.refusal!r} -- promote it"
+        )
     except Exception as exc:
         failures.append(f"event-missing-id: raised {exc!r}, expected KeyError")
     else:
@@ -656,7 +696,9 @@ def test_native_typed_values_fail_the_published_schema_but_match_the_spec_text()
     log = OcelLog.new(
         objects=[OcelObject("o1", "T")],
         events=[
-            OcelEvent("e1", "A", 0, (OcelAttribute("n", OcelAttributeValue.integer(7)),))
+            OcelEvent(
+                "e1", "A", 0, (OcelAttribute("n", OcelAttributeValue.integer(7)),)
+            )
         ],
         event_object_links=[EventObjectLink("e1", "o1", "q")],
     )

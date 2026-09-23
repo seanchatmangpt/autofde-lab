@@ -112,7 +112,9 @@ from autofde_lab.sa2a.brce.receipts import (
     ReceiptStore,
     TerminalReceiptState,
 )
-from autofde_lab.sa2a.conformance.courts.consequence_court import DurableDiskReceiptStore
+from autofde_lab.sa2a.conformance.courts.consequence_court import (
+    DurableDiskReceiptStore,
+)
 
 GENESIS = "genesis:0" * 4
 
@@ -136,7 +138,9 @@ def _prepared(*, idempotency_token: str, grant_id: str) -> PreparedReceipt:
     )
 
 
-def _final_executed(*, idempotency_token: str, prepared_receipt_digest: str) -> FinalReceipt:
+def _final_executed(
+    *, idempotency_token: str, prepared_receipt_digest: str
+) -> FinalReceipt:
     return FinalReceipt(
         receipt_id=f"final-{idempotency_token}",
         prepared_receipt_digest=prepared_receipt_digest,
@@ -153,7 +157,9 @@ def _final_executed(*, idempotency_token: str, prepared_receipt_digest: str) -> 
 # ---------------------------------------------------------------------------
 
 
-def test_save_final_bypasses_grant_validation_entirely_for_a_never_prepared_receipt() -> None:
+def test_save_final_bypasses_grant_validation_entirely_for_a_never_prepared_receipt() -> (
+    None
+):
     """DEFEATED (was SURVIVES): `save_final` now calls `_validate_final_grant_id`, which --
     when a broker is configured -- looks up the corresponding `PreparedReceipt` by
     `idempotency_token` and refuses (typed `ReceiptGrantValidationError`,
@@ -161,7 +167,9 @@ def test_save_final_bypasses_grant_validation_entirely_for_a_never_prepared_rece
     can no longer be durably persisted for an identity that was never granted anything and
     never had a corresponding PreparedReceipt at all.
     """
-    broker = AuthorityBroker()  # Zero grants registered anywhere -- nothing is authorized.
+    broker = (
+        AuthorityBroker()
+    )  # Zero grants registered anywhere -- nothing is authorized.
     store = ReceiptStore(authority_broker=broker)
 
     never_prepared_token = "idemp-never-prepared-001"
@@ -172,7 +180,9 @@ def test_save_final_bypasses_grant_validation_entirely_for_a_never_prepared_rece
 
     # Confirm, honestly, that the underlying identity is not authorized at all (positive
     # control): a real save_prepared attempt for this same identity WOULD be refused.
-    honest_prepare_attempt = _prepared(idempotency_token=never_prepared_token, grant_id="grant-does-not-exist")
+    honest_prepare_attempt = _prepared(
+        idempotency_token=never_prepared_token, grant_id="grant-does-not-exist"
+    )
     with pytest.raises(Exception):
         store.save_prepared(honest_prepare_attempt)
 
@@ -214,8 +224,12 @@ def test_disk_store_save_final_bypass_writes_real_terminal_bytes_with_no_prepare
 
     final_file = store_dir / f"final_{token}.json"
     prep_file = store_dir / f"prep_{token}.json"
-    assert not final_file.exists(), "Refused terminal receipt must never reach physical disk."
-    assert not prep_file.exists(), "No PreparedReceipt was ever saved for this identity."
+    assert not final_file.exists(), (
+        "Refused terminal receipt must never reach physical disk."
+    )
+    assert not prep_file.exists(), (
+        "No PreparedReceipt was ever saved for this identity."
+    )
     assert store.get_final(token) is None
 
 
@@ -225,7 +239,9 @@ def test_disk_store_save_final_bypass_writes_real_terminal_bytes_with_no_prepare
 # ---------------------------------------------------------------------------
 
 
-def test_grant_expiring_between_save_prepared_and_save_final_leaves_final_commit_unchecked() -> None:
+def test_grant_expiring_between_save_prepared_and_save_final_leaves_final_commit_unchecked() -> (
+    None
+):
     """DEFEATED (was SURVIVES -- a genuine TOCTOU bypass): a grant valid at `save_prepared`
     time (accepted) genuinely expires (real `valid_until` elapsed, real `time.sleep`) before
     `save_final` is called for the same identity. `save_final` now performs a FRESH grant
@@ -268,7 +284,9 @@ def test_grant_expiring_between_save_prepared_and_save_final_leaves_final_commit
     assert fresh_decision.refusal_code == REFUSED_EXPIRED_GRANT
 
     # The (now-defeated) TOCTOU attempt: save_final for the same token is refused.
-    final = _final_executed(idempotency_token=token, prepared_receipt_digest=receipt.digest)
+    final = _final_executed(
+        idempotency_token=token, prepared_receipt_digest=receipt.digest
+    )
     with pytest.raises(ReceiptGrantValidationError) as excinfo:
         store.save_final(final)
 
@@ -276,7 +294,9 @@ def test_grant_expiring_between_save_prepared_and_save_final_leaves_final_commit
     assert store.get_final(token) is None
 
 
-def test_disk_store_grant_expiry_toctou_commits_real_bytes_after_expiry(tmp_path: Path) -> None:
+def test_disk_store_grant_expiry_toctou_commits_real_bytes_after_expiry(
+    tmp_path: Path,
+) -> None:
     """DEFEATED (was SURVIVES): same TOCTOU mutation against the disk-backed store is refused
     before any disk write -- the terminal receipt's bytes never land on disk once the
     authorizing grant has genuinely expired.
@@ -304,20 +324,27 @@ def test_disk_store_grant_expiry_toctou_commits_real_bytes_after_expiry(tmp_path
 
     fresh_decision = broker.evaluate(
         ConsequenceRequest(
-            actor_id=ACTOR, action_iri=ACTION, target_resource=TARGET, grant_id=short_lived_grant.grant_id
+            actor_id=ACTOR,
+            action_iri=ACTION,
+            target_resource=TARGET,
+            grant_id=short_lived_grant.grant_id,
         )
     )
     assert fresh_decision.authorized is False
     assert fresh_decision.refusal_code == REFUSED_EXPIRED_GRANT
 
-    final = _final_executed(idempotency_token=token, prepared_receipt_digest=receipt.digest)
+    final = _final_executed(
+        idempotency_token=token, prepared_receipt_digest=receipt.digest
+    )
     with pytest.raises(ReceiptGrantValidationError) as excinfo:
         store.save_final(final)
 
     assert excinfo.value.refusal_code == REFUSED_EXPIRED_GRANT
 
     final_file = store_dir / f"final_{token}.json"
-    assert not final_file.exists(), "Refused terminal receipt must never reach physical disk."
+    assert not final_file.exists(), (
+        "Refused terminal receipt must never reach physical disk."
+    )
     assert store.get_final(token) is None
 
 
@@ -342,7 +369,9 @@ def test_save_final_without_broker_still_behaves_exactly_as_before() -> None:
         prepared_receipt_digest="sha256:no-broker-means-no-validation-at-all",
     )
 
-    store.save_final(forged_final)  # Must NOT raise -- zero validation without a broker.
+    store.save_final(
+        forged_final
+    )  # Must NOT raise -- zero validation without a broker.
 
     persisted = store.get_final(token)
     assert persisted is not None
@@ -372,7 +401,9 @@ def test_grant_id_string_reused_for_a_different_actor_is_correctly_refused() -> 
     store = ReceiptStore(authority_broker=broker)
     token = "idemp-coincidental-collision-001"
     # Self-asserts the SAME grant_id string, but for a totally different actor/action/target.
-    colliding_receipt = _prepared(idempotency_token=token, grant_id="grant-shared-id-001")
+    colliding_receipt = _prepared(
+        idempotency_token=token, grant_id="grant-shared-id-001"
+    )
 
     with pytest.raises(ReceiptGrantValidationError) as excinfo:
         store.save_prepared(colliding_receipt)

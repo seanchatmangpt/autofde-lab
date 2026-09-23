@@ -34,6 +34,7 @@ from autofde_lab.reasoning.sre_mitigation_portfolio import (
     construct_mitigation_portfolio,
     parse_process_steps,
 )
+
 # ---------------------------------------------------------------------------
 # Pure, LLM-free unit tests of the step-parser
 # ---------------------------------------------------------------------------
@@ -68,9 +69,7 @@ def test_parse_process_steps_builds_real_partial_order_of_atoms() -> None:
     # reduction keeps only the direct 0->1, 1->2, 2->3 edges).
     from autofde_lab.powl.algebra import OrderEdge
 
-    assert node.order == frozenset(
-        {OrderEdge(0, 1), OrderEdge(1, 2), OrderEdge(2, 3)}
-    )
+    assert node.order == frozenset({OrderEdge(0, 1), OrderEdge(1, 2), OrderEdge(2, 3)})
     assert (0, 3) in {(e.src, e.dst) for e in node.closure}
 
     # And it is genuinely admitted by the real, independent validator.
@@ -93,7 +92,9 @@ def test_parse_process_steps_rejects_fewer_than_two_steps() -> None:
 def test_parse_process_steps_rejects_missing_colon() -> None:
     text = "READ: check current state\nDO patch the deployment\n"
 
-    with pytest.raises(MitigationProcessParseError, match="missing '<CONSEQUENCE>: ' prefix"):
+    with pytest.raises(
+        MitigationProcessParseError, match="missing '<CONSEQUENCE>: ' prefix"
+    ):
         parse_process_steps(text)
 
 
@@ -154,7 +155,9 @@ class _RealVariedMitigationProcessModule(dspy.Module):
         super().__init__()
         self._call_count = 0
 
-    def forward(self, *, root_cause: str, relevant_resource_spec: str, capability_catalog: str) -> dspy.Prediction:
+    def forward(
+        self, *, root_cause: str, relevant_resource_spec: str, capability_catalog: str
+    ) -> dspy.Prediction:
         text = self._CANDIDATES[self._call_count % len(self._CANDIDATES)]
         self._call_count += 1
         return dspy.Prediction(
@@ -187,18 +190,25 @@ def test_construct_mitigation_portfolio_returns_real_admitted_candidates() -> No
     for candidate in portfolio:
         assert isinstance(candidate, MitigationPortfolioCandidate)
         assert isinstance(candidate.node, PartialOrder)
-        validate_model(candidate.node)  # each returned candidate is independently admitted
+        validate_model(
+            candidate.node
+        )  # each returned candidate is independently admitted
         # The real prediction's safety fields survive, not discarded.
         assert candidate.safe_to_actuate is True
         assert candidate.expected_consequence == "the OOMKilled restarts stop"
-        assert candidate.rollback_plan == "revert the deployment memory limit/request change"
+        assert (
+            candidate.rollback_plan
+            == "revert the deployment memory limit/request change"
+        )
 
     # The two admitted candidates are genuinely different processes (a real
     # portfolio, not padded duplicates).
     assert portfolio[0].node.children != portfolio[1].node.children
 
 
-def test_construct_mitigation_portfolio_makes_exactly_portfolio_size_real_calls() -> None:
+def test_construct_mitigation_portfolio_makes_exactly_portfolio_size_real_calls() -> (
+    None
+):
     program = _RealVariedMitigationProcessModule()
 
     construct_mitigation_portfolio(
@@ -239,13 +249,17 @@ requires_real_groq_key = pytest.mark.skipif(
 
 
 @requires_real_groq_key
-def test_live_construct_mitigation_portfolio_produces_real_admitted_candidates() -> None:
+def test_live_construct_mitigation_portfolio_produces_real_admitted_candidates() -> (
+    None
+):
     """Real, live: makes real Groq LM calls (model
     'groq/openai/gpt-oss-120b', max_tokens=16000 -- this exact combination
     was found necessary this session; gpt-oss-20b has a confirmed
     tool-choice incompatibility bug) and asserts the real portfolio is
     non-empty and every member independently passes `validate_model`."""
-    lm = dspy.LM("groq/openai/gpt-oss-120b", api_key=_GROQ_API_KEY, cache=False, max_tokens=16000)
+    lm = dspy.LM(
+        "groq/openai/gpt-oss-120b", api_key=_GROQ_API_KEY, cache=False, max_tokens=16000
+    )
 
     with dspy.context(lm=lm):
         portfolio = construct_mitigation_portfolio(

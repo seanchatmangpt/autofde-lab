@@ -36,30 +36,44 @@ def detect_flagd_config_drift(
     if isinstance(configmap_json_input, str):
         raw_str = configmap_json_input.strip()
         if not raw_str:
-            return FlagdDriftResult(has_drift=False, configmap_name=configmap_name, namespace=namespace)
+            return FlagdDriftResult(
+                has_drift=False, configmap_name=configmap_name, namespace=namespace
+            )
         try:
             cm_dict = json.loads(raw_str)
         except json.JSONDecodeError:
-            return FlagdDriftResult(has_drift=False, configmap_name=configmap_name, namespace=namespace)
+            return FlagdDriftResult(
+                has_drift=False, configmap_name=configmap_name, namespace=namespace
+            )
     elif isinstance(configmap_json_input, dict):
         cm_dict = configmap_json_input
 
     data = cm_dict.get("data", {})
     if not isinstance(data, dict):
-        return FlagdDriftResult(has_drift=False, configmap_name=configmap_name, namespace=namespace)
+        return FlagdDriftResult(
+            has_drift=False, configmap_name=configmap_name, namespace=namespace
+        )
 
-    flagd_json_str = data.get("demo.flagd.json") or data.get("flags.json") or data.get("config.json")
+    flagd_json_str = (
+        data.get("demo.flagd.json") or data.get("flags.json") or data.get("config.json")
+    )
     if not flagd_json_str:
-        return FlagdDriftResult(has_drift=False, configmap_name=configmap_name, namespace=namespace)
+        return FlagdDriftResult(
+            has_drift=False, configmap_name=configmap_name, namespace=namespace
+        )
 
     try:
         flagd_dict = json.loads(flagd_json_str)
     except json.JSONDecodeError:
-        return FlagdDriftResult(has_drift=False, configmap_name=configmap_name, namespace=namespace)
+        return FlagdDriftResult(
+            has_drift=False, configmap_name=configmap_name, namespace=namespace
+        )
 
     flags = flagd_dict.get("flags", {})
     if not isinstance(flags, dict):
-        return FlagdDriftResult(has_drift=False, configmap_name=configmap_name, namespace=namespace)
+        return FlagdDriftResult(
+            has_drift=False, configmap_name=configmap_name, namespace=namespace
+        )
 
     drifted_items: list[FlagDriftItem] = []
     repaired_flagd_dict = json.loads(json.dumps(flagd_dict))  # deep copy
@@ -81,7 +95,9 @@ def detect_flagd_config_drift(
             repaired_flagd_dict["flags"][flag_name]["defaultVariant"] = "off"
 
     if not drifted_items:
-        return FlagdDriftResult(has_drift=False, configmap_name=configmap_name, namespace=namespace)
+        return FlagdDriftResult(
+            has_drift=False, configmap_name=configmap_name, namespace=namespace
+        )
 
     repaired_json_str = json.dumps(repaired_flagd_dict, indent=2)
     return FlagdDriftResult(

@@ -156,8 +156,7 @@ class K8sGoatRBACEscalation(D):
         applicable = [
             step.id
             for step in self._steps.values()
-            if step.id not in known
-            and set(step.prerequisite_ids).issubset(known)
+            if step.id not in known and set(step.prerequisite_ids).issubset(known)
         ]
         return ListSpace(applicable)
 

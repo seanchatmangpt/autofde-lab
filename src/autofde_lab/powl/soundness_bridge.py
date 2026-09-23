@@ -139,8 +139,7 @@ class WfNetRequest:
                 {"id": tid, "name": name} for tid, name in self.transitions
             ],
             "flow": [
-                {"from": src, "to": dst, "kind": kind}
-                for src, dst, kind in self.flow
+                {"from": src, "to": dst, "kind": kind} for src, dst, kind in self.flow
             ],
             "source": self.source,
             "sink": self.sink,

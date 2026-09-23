@@ -45,7 +45,9 @@ HELLO_WORLD_TASK_PATH = HARBOR_ROOT / "examples" / "tasks" / "hello-world"
 #: phase (`vendor/gyms/harbor/src/harbor/trial/single_step.py:38-56`). For hello-world this is
 #: `tests/test.sh` running `pytest tests/test_state.py`, confirmed live this session
 #: (reward 1.0).
-HARBOR_VERIFIER_ORACLE = "harbor.Verifier (task-bundled tests/ script, e.g. tests/test.sh)"
+HARBOR_VERIFIER_ORACLE = (
+    "harbor.Verifier (task-bundled tests/ script, e.g. tests/test.sh)"
+)
 
 
 def current_harbor_terminus2_basis(
@@ -153,7 +155,9 @@ def current_harbor_terminus2_basis(
     )
 
 
-def materialize_harbor_invocation(basis: DecisionBasis) -> tuple[list[str], dict[str, str]]:
+def materialize_harbor_invocation(
+    basis: DecisionBasis,
+) -> tuple[list[str], dict[str, str]]:
     """The real, exact `harbor run` argv this DecisionBasis point runs as -- the inverse of
     `current_harbor_terminus2_basis()`.
 
@@ -175,10 +179,14 @@ def materialize_harbor_invocation(basis: DecisionBasis) -> tuple[list[str], dict
             f"got {basis.planner.name!r}"
         )
     argv = [
-        "harbor", "run",
-        "--agent", "terminus-2",
-        "--model", basis.model.id,
-        "--path", basis.extra.get("task_path", "examples/tasks/hello-world"),
+        "harbor",
+        "run",
+        "--agent",
+        "terminus-2",
+        "--model",
+        basis.model.id,
+        "--path",
+        basis.extra.get("task_path", "examples/tasks/hello-world"),
     ]
     if basis.model.api_base:
         argv += ["--ak", f"api_base={basis.model.api_base}"]

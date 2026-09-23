@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
+
 from autofde_lab_planner.models import IngressMisrouteFault, TargetPortFault
 
 # Known baseline target ports for application microservices across benchmarks
@@ -57,13 +58,16 @@ def detect_ingress_and_targetport_faults(
                     continue
                 path = path_entry.get("path", "")
                 backend_svc = (
-                    (path_entry.get("backend") or {})
-                    .get("service") or {}
+                    (path_entry.get("backend") or {}).get("service") or {}
                 ).get("name", "")
 
                 # Check if path starts with a known route (e.g. /api)
                 for known_path, expected_svc in KNOWN_INGRESS_PATH_MAP.items():
-                    if path.startswith(known_path) and backend_svc and backend_svc != expected_svc:
+                    if (
+                        path.startswith(known_path)
+                        and backend_svc
+                        and backend_svc != expected_svc
+                    ):
                         ingress_faults.append(
                             IngressMisrouteFault(
                                 ingress_name=ing_name,
@@ -80,12 +84,14 @@ def detect_ingress_and_targetport_faults(
     dep_ports_by_name: dict[str, set[int | str]] = {}
     for dep in deployment_items:
         d_name = (dep.get("metadata") or {}).get("name", "")
-        containers = (((dep.get("spec") or {}).get("template") or {}).get("spec") or {}).get("containers") or []
+        containers = (
+            ((dep.get("spec") or {}).get("template") or {}).get("spec") or {}
+        ).get("containers") or []
         ports = set()
         for c in containers:
             if not isinstance(c, dict):
                 continue
-            for p in (c.get("ports") or []):
+            for p in c.get("ports") or []:
                 if not isinstance(p, dict):
                     continue
                 cp = p.get("containerPort")
@@ -105,7 +111,14 @@ def detect_ingress_and_targetport_faults(
             if not isinstance(port_spec, dict):
                 continue
             p_name = (port_spec.get("name") or "").lower()
-            if p_name in ("metrics", "telemetry", "prometheus", "health", "healthz", "admin"):
+            if p_name in (
+                "metrics",
+                "telemetry",
+                "prometheus",
+                "health",
+                "healthz",
+                "admin",
+            ):
                 continue
             target_port = port_spec.get("targetPort")
             if target_port is None:
@@ -133,7 +146,9 @@ def detect_ingress_and_targetport_faults(
     return ingress_faults, target_port_faults
 
 
-def _to_item_list(data: dict[str, Any] | list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+def _to_item_list(
+    data: dict[str, Any] | list[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
     if not data:
         return []
     if isinstance(data, dict):
@@ -147,4 +162,3 @@ def _to_item_list(data: dict[str, Any] | list[dict[str, Any]] | None) -> list[di
     else:
         return []
     return [i for i in items if isinstance(i, dict)]
-

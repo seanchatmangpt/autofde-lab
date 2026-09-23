@@ -14,28 +14,26 @@ from __future__ import annotations
 
 import pytest
 
-from autofde_lab.sa2a.authority.broker import AuthorityBroker, AuthorityGrant, ConsequenceRequest
+from autofde_lab.sa2a.authority.broker import (
+    AuthorityBroker,
+    AuthorityGrant,
+    ConsequenceRequest,
+)
 from autofde_lab.sa2a.conformance.courts.authority_court import (
+    CHI_PLAN_AUTH_PLANNER_NON_AUTHORITY,
+    CHI_PLAN_AUTH_TOKEN_REBINDING,
     SA2A_AUTH_AGENT_NOT_AUTHORITY,
     SA2A_AUTH_CAPABILITY_NOT_AUTHORITY,
     SA2A_AUTH_CONFUSED_DEPUTY,
     SA2A_AUTH_GRANT_REQUIRED,
     SA2A_AUTH_PLAN_NOT_AUTHORITY,
     SA2A_AUTH_PROOF_NOT_AUTHORITY,
-    CHI_PLAN_AUTH_PLANNER_NON_AUTHORITY,
-    CHI_PLAN_AUTH_TOKEN_REBINDING,
-    AgentIsAuthorityViolationError,
     AuthorityCourt,
-    AuthorityCourtError,
     AuthorityCourtReport,
-    AuthorityVerdict,
-    ConfusedDeputyViolationError,
     PlanIsAuthorityViolationError,
-    TokenRebindingViolationError,
     test_agent_not_authority,
     test_confused_deputy_prevented,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helper factories
@@ -116,8 +114,12 @@ def test_plan_not_authority_court_invariant() -> None:
     ]:
         broker = AuthorityBroker()
         res = court.verify_plan_not_authority(
-            broker, "urn:agent:any", "urn:action:any", "urn:resource:any",
-            fake_plan=plan, fail_closed=True
+            broker,
+            "urn:agent:any",
+            "urn:action:any",
+            "urn:resource:any",
+            fake_plan=plan,
+            fail_closed=True,
         )
         assert res.passed is True, f"Plan should not grant authority: {plan}"
 
@@ -319,7 +321,9 @@ def test_planner_non_authority_authorize_key_refused() -> None:
 def test_token_rebinding_refused() -> None:
     """Grant token for legitimate actor MUST NOT be usable by rebinding actor."""
     court = AuthorityCourt()
-    grant = _make_grant(subject_id="urn:agent:original-owner", grant_id="grant-rebind-test")
+    grant = _make_grant(
+        subject_id="urn:agent:original-owner", grant_id="grant-rebind-test"
+    )
     broker = AuthorityBroker()
     res = court.verify_token_rebinding_detected(
         broker=broker,
@@ -357,6 +361,8 @@ def test_full_court_sweep_clean_setup() -> None:
         fail_closed=False,
     )
     assert isinstance(report, AuthorityCourtReport)
-    assert report.passed is True, f"Failed: {[r for r in report.gate_results if not r.passed]}"
+    assert report.passed is True, (
+        f"Failed: {[r for r in report.gate_results if not r.passed]}"
+    )
     assert report.total_checks > 0
     assert report.failed_checks == 0

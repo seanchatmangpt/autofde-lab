@@ -28,7 +28,9 @@ def main() -> None:
     domain = sys.argv[1] if len(sys.argv) > 1 else "Maze"
     solver = sys.argv[2] if len(sys.argv) > 2 else "Astar"
     max_steps = int(sys.argv[3]) if len(sys.argv) > 3 else 100
-    result, falsification = solve_and_falsify(domain, solver=solver, max_steps=max_steps)
+    result, falsification = solve_and_falsify(
+        domain, solver=solver, max_steps=max_steps
+    )
     print(
         json.dumps(
             {

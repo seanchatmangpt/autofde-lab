@@ -104,7 +104,9 @@ def test_run_exploration_psro_round_advances_with_one_surviving_candidate() -> N
     assert len(result.psro_step.receipt.identity_sha256) == 64
 
 
-def test_run_exploration_psro_round_refuses_when_the_only_candidate_has_no_coverage() -> None:
+def test_run_exploration_psro_round_refuses_when_the_only_candidate_has_no_coverage() -> (
+    None
+):
     candidate, falsification = _surviving_triz_candidate_and_falsification()
     domain = Maze()
     league = PlannerLeague()
@@ -147,7 +149,9 @@ def test_run_exploration_psro_round_refuses_when_the_only_candidate_has_no_cover
     assert step.state == state
 
 
-def test_run_exploration_psro_round_collects_real_refusal_for_incompatible_falsifier() -> None:
+def test_run_exploration_psro_round_collects_real_refusal_for_incompatible_falsifier() -> (
+    None
+):
     candidate, falsification = _surviving_triz_candidate_and_falsification()
     domain = Maze()
     league = PlannerLeague()
@@ -166,7 +170,9 @@ def test_run_exploration_psro_round_collects_real_refusal_for_incompatible_falsi
     assert result.admitted_count == 0
     assert len(result.admissions) == 1
     assert not result.admissions[0].admitted
-    assert result.admissions[0].reason.startswith("falsifier:REFUSED:DOMAIN_CONTRACT_MISMATCH")
+    assert result.admissions[0].reason.startswith(
+        "falsifier:REFUSED:DOMAIN_CONTRACT_MISMATCH"
+    )
     assert result.hypergraph.observations == []
 
     # No real payoff edges at all -> PSRO must refuse, never fabricate an
@@ -245,12 +251,18 @@ def test_run_exploration_psro_round_picks_the_real_higher_scoring_constructor() 
     from autofde_lab.planner_league.psro import PolicySpaceResponseOracle, PsroState
 
     merged = PayoffHypergraph()
-    for obs in (*result_astar.hypergraph.observations, *result_mcts.hypergraph.observations):
+    for obs in (
+        *result_astar.hypergraph.observations,
+        *result_mcts.hypergraph.observations,
+    ):
         merged.add(obs)
     assert len(merged.observations) == 3
 
     oracle = PolicySpaceResponseOracle(
-        merged, role_id="plan_constructor", opponent_role_id="plan_falsifier", world_id="generic_enterprise"
+        merged,
+        role_id="plan_constructor",
+        opponent_role_id="plan_falsifier",
+        world_id="generic_enterprise",
     )
     state = PsroState.seed(["MCTS"])
     step = oracle.step(state, candidates=["Astar", "MCTS"])

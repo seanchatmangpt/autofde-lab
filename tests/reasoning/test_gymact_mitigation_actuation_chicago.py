@@ -31,7 +31,9 @@ import pytest
 from autofde_lab.fabric.gymact_capability_gate import CapabilityGate
 from autofde_lab.ocel.object_centric_conformance import check_object_centric_conformance
 from autofde_lab.powl.ocel_bridge import OcelExecutionRecorder
-from autofde_lab.reasoning.gymact_mitigation_actuation import execute_and_submit_mitigation
+from autofde_lab.reasoning.gymact_mitigation_actuation import (
+    execute_and_submit_mitigation,
+)
 
 _MANIFEST_PATH = (
     __import__("pathlib").Path(__file__).resolve().parents[2]
@@ -71,7 +73,9 @@ class _FakeSregymEnvironment:
         if capability.binding == "submit_mitigation":
             self.last_mitigation_payload = dict(payload)
             return {"after": {"mitigation": payload.get("mitigation")}}
-        raise AssertionError(f"unexpected real actuate() call for binding={capability.binding!r}")
+        raise AssertionError(
+            f"unexpected real actuate() call for binding={capability.binding!r}"
+        )
 
 
 class _FixedPortfolioModule(dspy.Module):
@@ -83,7 +87,9 @@ class _FixedPortfolioModule(dspy.Module):
         super().__init__()
         self._safe_to_actuate = safe_to_actuate
 
-    def forward(self, *, root_cause: str, relevant_resource_spec: str, capability_catalog: str) -> dspy.Prediction:
+    def forward(
+        self, *, root_cause: str, relevant_resource_spec: str, capability_catalog: str
+    ) -> dspy.Prediction:
         return dspy.Prediction(
             process_steps=(
                 "READ: describe the current deployment spec\n"
@@ -103,12 +109,20 @@ class _FixedTranslatorModule(dspy.Module):
     """Real, deterministic `dspy.Module` standing in for
     `TranslateMitigationStepToKubectlCommand`."""
 
-    def forward(self, *, step_description: str, step_consequence: str, relevant_resource_spec: str) -> dspy.Prediction:
+    def forward(
+        self,
+        *,
+        step_description: str,
+        step_consequence: str,
+        relevant_resource_spec: str,
+    ) -> dspy.Prediction:
         if step_consequence == "READ":
             command = "kubectl get deployment geo -n hotel-reservation -o json"
         else:
             command = "kubectl patch deployment geo -n hotel-reservation --patch '{\"spec\":{}}'"
-        return dspy.Prediction(kubectl_command=command, is_safe_readonly_or_reversible=True)
+        return dspy.Prediction(
+            kubectl_command=command, is_safe_readonly_or_reversible=True
+        )
 
     def __call__(self, **kwargs):
         return self.forward(**kwargs)
@@ -173,7 +187,9 @@ def test_safe_candidate_is_really_executed_in_real_order_and_submitted() -> None
     assert env.last_mitigation_payload is not None
     assert env.last_mitigation_payload["mitigation"] != "not_attempted"
     assert "2 real step(s) executed" in env.last_mitigation_payload["mitigation"]
-    assert any(stage["stage"] == "verify_intent" for stage in result.trajectory["stages"])
+    assert any(
+        stage["stage"] == "verify_intent" for stage in result.trajectory["stages"]
+    )
 
 
 def test_translated_command_missing_kubectl_prefix_is_refused_not_actuated() -> None:
@@ -181,7 +197,9 @@ def test_translated_command_missing_kubectl_prefix_is_refused_not_actuated() -> 
 
     class _BadPrefixTranslator(dspy.Module):
         def forward(self, **kwargs) -> dspy.Prediction:
-            return dspy.Prediction(kubectl_command="rm -rf /", is_safe_readonly_or_reversible=True)
+            return dspy.Prediction(
+                kubectl_command="rm -rf /", is_safe_readonly_or_reversible=True
+            )
 
         def __call__(self, **kwargs):
             return self.forward(**kwargs)
@@ -205,10 +223,15 @@ def test_translated_command_missing_kubectl_prefix_is_refused_not_actuated() -> 
 
     assert result.executed_commands == ()  # both DO/READ steps refused, never actuated
     assert "run_kubectl" not in env.call_log
-    assert any(stage["stage"] == "translate_step_refused" for stage in result.trajectory["stages"])
+    assert any(
+        stage["stage"] == "translate_step_refused"
+        for stage in result.trajectory["stages"]
+    )
 
 
-def test_real_ocel_v2_trace_is_produced_when_a_recorder_is_supplied_and_conforms() -> None:
+def test_real_ocel_v2_trace_is_produced_when_a_recorder_is_supplied_and_conforms() -> (
+    None
+):
     env = _FakeSregymEnvironment()
     recorder = OcelExecutionRecorder(execution_id="mitigation-actuation-run-001")
 
@@ -235,10 +258,13 @@ def test_real_ocel_v2_trace_is_produced_when_a_recorder_is_supplied_and_conforms
     assert len(log.events) == 2  # one per real executed DO/READ step
 
     real_labels = tuple(
-        next(attr.value.value for attr in event.attributes if attr.key == "label") for event in log.events
+        next(attr.value.value for attr in event.attributes if attr.key == "label")
+        for event in log.events
     )
     intended = {"mitigation-actuation-run-001": real_labels}
-    conformance = check_object_centric_conformance(log, intended_traces_by_object_id=intended)
+    conformance = check_object_centric_conformance(
+        log, intended_traces_by_object_id=intended
+    )
     assert conformance.all_conform is True
     assert conformance.overall_fitness == 1.0
 
@@ -265,7 +291,9 @@ def test_live_translate_mitigation_step_produces_a_real_kubectl_command() -> Non
         TranslateMitigationStepToKubectlCommand,
     )
 
-    lm = dspy.LM("groq/openai/gpt-oss-120b", api_key=_GROQ_API_KEY, cache=False, max_tokens=8000)
+    lm = dspy.LM(
+        "groq/openai/gpt-oss-120b", api_key=_GROQ_API_KEY, cache=False, max_tokens=8000
+    )
     translate = dspy.Predict(TranslateMitigationStepToKubectlCommand)
 
     with dspy.context(lm=lm):
@@ -277,4 +305,7 @@ def test_live_translate_mitigation_step_produces_a_real_kubectl_command() -> Non
         )
 
     assert prediction.kubectl_command.startswith("kubectl ")
-    assert "geo" in prediction.kubectl_command or "hotel-reservation" in prediction.kubectl_command
+    assert (
+        "geo" in prediction.kubectl_command
+        or "hotel-reservation" in prediction.kubectl_command
+    )

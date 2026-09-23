@@ -88,7 +88,9 @@ def test_information_gain_per_cost_clamps_gain_to_unit_interval() -> None:
 
 def test_safe_reversible_recovery_score_zero_when_not_safe() -> None:
     unsafe = dspy.Prediction(
-        safe_to_actuate=False, rollback_plan="revert the patch", expected_consequence="pods restart"
+        safe_to_actuate=False,
+        rollback_plan="revert the patch",
+        expected_consequence="pods restart",
     )
 
     assert safe_reversible_recovery_score({}, unsafe) == 0.0
@@ -96,20 +98,26 @@ def test_safe_reversible_recovery_score_zero_when_not_safe() -> None:
 
 def test_safe_reversible_recovery_score_full_marks_when_complete() -> None:
     complete = dspy.Prediction(
-        safe_to_actuate=True, rollback_plan="kubectl rollout undo", expected_consequence="brief restart"
+        safe_to_actuate=True,
+        rollback_plan="kubectl rollout undo",
+        expected_consequence="brief restart",
     )
 
     assert safe_reversible_recovery_score({}, complete) == pytest.approx(1.0)
 
 
 def test_safe_reversible_recovery_score_penalizes_missing_rollback() -> None:
-    no_rollback = dspy.Prediction(safe_to_actuate=True, rollback_plan="", expected_consequence="brief restart")
+    no_rollback = dspy.Prediction(
+        safe_to_actuate=True, rollback_plan="", expected_consequence="brief restart"
+    )
 
     assert safe_reversible_recovery_score({}, no_rollback) == pytest.approx(0.5)
 
 
 def test_safe_reversible_recovery_score_penalizes_missing_consequence_too() -> None:
-    minimal = dspy.Prediction(safe_to_actuate=True, rollback_plan="", expected_consequence="")
+    minimal = dspy.Prediction(
+        safe_to_actuate=True, rollback_plan="", expected_consequence=""
+    )
 
     assert safe_reversible_recovery_score({}, minimal) == pytest.approx(0.25)
 
@@ -172,7 +180,10 @@ def test_gym_act_react_diagnoser_accepts_sre_troubleshooting_backend(tmp_path) -
         async def teardown(self):
             return None
 
-    capabilities = (_FakeCapability("run_kubectl"), _FakeCapability("observe_cluster_state"))
+    capabilities = (
+        _FakeCapability("run_kubectl"),
+        _FakeCapability("observe_cluster_state"),
+    )
     backend = SreTroubleshootingDecisionBackend(probe_rounds=0)
 
     diagnoser = GymActReActDiagnoser(
@@ -219,7 +230,9 @@ def test_live_full_pipeline_chain_produces_real_outcome() -> None:
     within a bounded budget -- the same 'materializing a real cluster is
     genuinely infeasible in a unit test' exception this repo already relies
     on elsewhere for the fixture itself."""
-    lm = dspy.LM("groq/openai/gpt-oss-120b", api_key=_GROQ_API_KEY, cache=False, max_tokens=16000)
+    lm = dspy.LM(
+        "groq/openai/gpt-oss-120b", api_key=_GROQ_API_KEY, cache=False, max_tokens=16000
+    )
 
     def observe_cluster_state() -> str:
         """Read real (fixture) cluster state, including the specific
@@ -251,7 +264,9 @@ def test_live_full_pipeline_chain_produces_real_outcome() -> None:
 
 
 @requires_real_groq_key
-def test_live_ocel_v2_trace_is_produced_when_a_recorder_is_supplied_and_conforms() -> None:
+def test_live_ocel_v2_trace_is_produced_when_a_recorder_is_supplied_and_conforms() -> (
+    None
+):
     """Closes the third and final OCEL-wiring gap the van der Aalst-style
     audit found: `SreTroubleshootingDecisionBackend.decide` walks a real,
     admitted, cyclic `ChoiceGraph` (probe/hypothesize rounds looping back
@@ -269,10 +284,14 @@ def test_live_ocel_v2_trace_is_produced_when_a_recorder_is_supplied_and_conforms
     correct ordering, no dangling/duplicate identities) -- not a prediction
     of which LM path will be taken.
     """
-    from autofde_lab.ocel.object_centric_conformance import check_object_centric_conformance
+    from autofde_lab.ocel.object_centric_conformance import (
+        check_object_centric_conformance,
+    )
     from autofde_lab.powl.ocel_bridge import OcelExecutionRecorder
 
-    lm = dspy.LM("groq/openai/gpt-oss-120b", api_key=_GROQ_API_KEY, cache=False, max_tokens=16000)
+    lm = dspy.LM(
+        "groq/openai/gpt-oss-120b", api_key=_GROQ_API_KEY, cache=False, max_tokens=16000
+    )
 
     def observe_cluster_state() -> str:
         return (
@@ -301,9 +320,12 @@ def test_live_ocel_v2_trace_is_produced_when_a_recorder_is_supplied_and_conforms
     assert len(log.events) >= 3  # normalize -> hypothesize -> commit_diagnosis, minimum
 
     real_activity_sequence = tuple(
-        next(attr.value for attr in event.attributes if attr.key == "label") for event in log.events
+        next(attr.value for attr in event.attributes if attr.key == "label")
+        for event in log.events
     )
     intended = {"sre-troubleshooting-decide-run-001": real_activity_sequence}
-    conformance = check_object_centric_conformance(log, intended_traces_by_object_id=intended)
+    conformance = check_object_centric_conformance(
+        log, intended_traces_by_object_id=intended
+    )
     assert conformance.all_conform is True
     assert conformance.overall_fitness == 1.0

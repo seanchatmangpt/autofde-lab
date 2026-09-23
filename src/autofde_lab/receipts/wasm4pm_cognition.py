@@ -176,8 +176,13 @@ async def run_cognition(
     """
     node_bin, script_path = resolve_wpm_cognition_entry()
     payload = _breed_input_json(
-        intent=intent, facts=facts, rules=rules, cases=cases,
-        goals=goals, candidates=candidates, state=state,
+        intent=intent,
+        facts=facts,
+        rules=rules,
+        cases=cases,
+        goals=goals,
+        candidates=candidates,
+        state=state,
     )
 
     import tempfile
@@ -191,9 +196,18 @@ async def run_cognition(
     try:
         outcome = await run_subprocess_bounded(
             [
-                node_bin, script_path, "lab", "cognition", "run",
-                "--contract", breed, "--input", tmp_path,
-                "--format", "json", "--no-save",
+                node_bin,
+                script_path,
+                "lab",
+                "cognition",
+                "run",
+                "--contract",
+                breed,
+                "--input",
+                tmp_path,
+                "--format",
+                "json",
+                "--no-save",
             ],
             timeout_s=timeout_s,
         )
@@ -220,7 +234,9 @@ async def run_cognition(
 
     if "error" in envelope or envelope.get("status") != "ok":
         detail = envelope.get("error", envelope)
-        raise NoEvidence(f"cognition run for breed={breed!r} returned no evidence: {detail}")
+        raise NoEvidence(
+            f"cognition run for breed={breed!r} returned no evidence: {detail}"
+        )
 
     body = envelope.get("payload", {})
     if body.get("status") != "ok":

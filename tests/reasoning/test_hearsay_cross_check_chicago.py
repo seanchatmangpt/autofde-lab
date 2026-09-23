@@ -94,9 +94,24 @@ def test_translator_emits_one_real_wildcard_triggered_rule_per_hypothesis() -> N
     )
 
     assert result["rules"] == [
-        {"id": "rule-0", "premise": ["fact-hypotheses"], "conclusion": "hypothesis:OOMKill - supported", "certainty": 1.0},
-        {"id": "rule-1", "premise": ["fact-hypotheses"], "conclusion": "hypothesis:config drift - refuted", "certainty": 0.0},
-        {"id": "rule-2", "premise": ["fact-hypotheses"], "conclusion": "hypothesis:disk pressure - unclear", "certainty": 0.5},
+        {
+            "id": "rule-0",
+            "premise": ["fact-hypotheses"],
+            "conclusion": "hypothesis:OOMKill - supported",
+            "certainty": 1.0,
+        },
+        {
+            "id": "rule-1",
+            "premise": ["fact-hypotheses"],
+            "conclusion": "hypothesis:config drift - refuted",
+            "certainty": 0.0,
+        },
+        {
+            "id": "rule-2",
+            "premise": ["fact-hypotheses"],
+            "conclusion": "hypothesis:disk pressure - unclear",
+            "certainty": 0.5,
+        },
     ]
 
 
@@ -105,12 +120,16 @@ def test_translator_emits_no_rules_when_there_are_no_facts_to_trigger_on() -> No
     emitting a rule with nothing to ever trigger it would be dishonest
     (a rule that can never fire), so no rules are emitted at all when
     there are no admitted facts, even if hypotheses are present."""
-    result = hypotheses_to_breed_input(admitted_facts="none", hypothesis_portfolio="- OOMKill - supported")
+    result = hypotheses_to_breed_input(
+        admitted_facts="none", hypothesis_portfolio="- OOMKill - supported"
+    )
     assert result["rules"] == []
 
 
 def test_translator_strips_leading_bullet_markers_not_just_whitespace() -> None:
-    result = hypotheses_to_breed_input(admitted_facts="- - double-dash edge case", hypothesis_portfolio="none")
+    result = hypotheses_to_breed_input(
+        admitted_facts="- - double-dash edge case", hypothesis_portfolio="none"
+    )
     assert result["facts"][0]["value"] == "- double-dash edge case"
 
 
@@ -123,7 +142,9 @@ def test_translator_ignores_non_bullet_lines() -> None:
 
 
 def test_translator_none_sentinel_produces_no_facts_candidates_or_rules() -> None:
-    result = hypotheses_to_breed_input(admitted_facts="none", hypothesis_portfolio="none")
+    result = hypotheses_to_breed_input(
+        admitted_facts="none", hypothesis_portfolio="none"
+    )
     assert result == {"facts": [], "candidates": [], "rules": []}
 
 
@@ -142,40 +163,58 @@ def test_hypotheses_agree_strips_the_real_hypothesis_prefix_before_comparing() -
     """A real Hearsay `selected` value carries the "hypothesis:" prefix
     (see module docstring) -- it must not count as a spurious shared word
     and must not prevent a real match on the remaining text."""
-    assert hypotheses_agree(
-        hearsay_selected="hypothesis:memory pressure exhaustion",
-        committed_root_cause="root cause is memory pressure exhaustion in the container",
-    ) == AgreementOutcome.AGREES
+    assert (
+        hypotheses_agree(
+            hearsay_selected="hypothesis:memory pressure exhaustion",
+            committed_root_cause="root cause is memory pressure exhaustion in the container",
+        )
+        == AgreementOutcome.AGREES
+    )
 
 
 def test_hypotheses_agree_agrees_on_partial_but_sufficient_word_overlap() -> None:
-    """"OOMKill" (selected) never matches "OOMKilled" (root cause)
+    """ "OOMKill" (selected) never matches "OOMKilled" (root cause)
     verbatim -- this is a real, literal word check, not stemming/fuzzy
     matching -- but "memory"/"pressure" both do, giving 2/3 real shared
     words, above the real 0.3 overlap threshold."""
-    assert hypotheses_agree(
-        hearsay_selected="hypothesis:OOMKill memory pressure",
-        committed_root_cause="the container was OOMKilled due to memory pressure exhaustion",
-    ) == AgreementOutcome.AGREES
+    assert (
+        hypotheses_agree(
+            hearsay_selected="hypothesis:OOMKill memory pressure",
+            committed_root_cause="the container was OOMKilled due to memory pressure exhaustion",
+        )
+        == AgreementOutcome.AGREES
+    )
 
 
 def test_hypotheses_agree_disagrees_below_the_real_overlap_threshold() -> None:
-    assert hypotheses_agree(
-        hearsay_selected="hypothesis:OOMKill readiness timeout scheduler",
-        committed_root_cause="the container was OOMKilled due to memory pressure exhaustion",
-    ) == AgreementOutcome.DISAGREES  # only 0/4 words match verbatim
+    assert (
+        hypotheses_agree(
+            hearsay_selected="hypothesis:OOMKill readiness timeout scheduler",
+            committed_root_cause="the container was OOMKilled due to memory pressure exhaustion",
+        )
+        == AgreementOutcome.DISAGREES
+    )  # only 0/4 words match verbatim
 
 
 def test_hypotheses_agree_disagrees_on_unrelated_text() -> None:
-    assert hypotheses_agree(
-        hearsay_selected="hypothesis:network dns resolution failure",
-        committed_root_cause="the container was OOMKilled due to memory exhaustion",
-    ) == AgreementOutcome.DISAGREES
+    assert (
+        hypotheses_agree(
+            hearsay_selected="hypothesis:network dns resolution failure",
+            committed_root_cause="the container was OOMKilled due to memory exhaustion",
+        )
+        == AgreementOutcome.DISAGREES
+    )
 
 
 def test_hypotheses_agree_disagrees_on_empty_inputs() -> None:
-    assert hypotheses_agree(hearsay_selected=None, committed_root_cause="something") == AgreementOutcome.DISAGREES
-    assert hypotheses_agree(hearsay_selected="something", committed_root_cause="") == AgreementOutcome.DISAGREES
+    assert (
+        hypotheses_agree(hearsay_selected=None, committed_root_cause="something")
+        == AgreementOutcome.DISAGREES
+    )
+    assert (
+        hypotheses_agree(hearsay_selected="something", committed_root_cause="")
+        == AgreementOutcome.DISAGREES
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -212,7 +251,9 @@ requires_real_hearsay_cli = pytest.mark.skipif(
 
 
 @requires_real_hearsay_cli
-def test_live_cross_check_genuinely_reasons_and_selects_the_supported_hypothesis() -> None:
+def test_live_cross_check_genuinely_reasons_and_selects_the_supported_hypothesis() -> (
+    None
+):
     """The real, corrected integration test: Hearsay's real rule-firing
     (not a seed-only tie-break, per this module's earlier, confirmed-broken
     design) genuinely selects the hypothesis this module marked SUPPORTED
@@ -226,7 +267,9 @@ def test_live_cross_check_genuinely_reasons_and_selects_the_supported_hypothesis
     )
 
     evidence = asyncio.run(
-        cross_check_via_hearsay(admitted_facts=admitted_facts, hypothesis_portfolio=hypothesis_portfolio)
+        cross_check_via_hearsay(
+            admitted_facts=admitted_facts, hypothesis_portfolio=hypothesis_portfolio
+        )
     )
 
     assert isinstance(evidence, CognitionEvidence)
@@ -259,4 +302,6 @@ def test_live_cross_check_with_no_facts_or_hypotheses_raises_no_evidence() -> No
     over, so this must surface as a real `NoEvidence`, not a fabricated
     success."""
     with pytest.raises(NoEvidence):
-        asyncio.run(cross_check_via_hearsay(admitted_facts="none", hypothesis_portfolio="none"))
+        asyncio.run(
+            cross_check_via_hearsay(admitted_facts="none", hypothesis_portfolio="none")
+        )

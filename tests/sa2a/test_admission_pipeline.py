@@ -15,12 +15,10 @@ Tests complete end-to-end admission flow:
 """
 
 import pytest
-import rdflib
-from rdflib import Literal, Namespace, URIRef
-from rdflib.namespace import RDF, XSD
+from rdflib import Literal, Namespace
+from rdflib.namespace import RDF
 
 from autofde_lab.sa2a.admission import (
-    REFUSED_DATALOG_FAILURE,
     REFUSED_FALSIFIER,
     REFUSED_IDENTITY,
     REFUSED_META_RIGOR,
@@ -31,7 +29,6 @@ from autofde_lab.sa2a.admission import (
     REFUSED_STRUCTURE,
     AdmissionPipeline,
     AdmissionReceipt,
-    AdmissionResult,
     DatalogAtom,
     DatalogEngine,
     DatalogRule,
@@ -49,7 +46,6 @@ from autofde_lab.sa2a.admission import (
 )
 from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.envelope import ProvenanceRecord, SemanticEnvelope, SemanticGraph
-
 
 EX = Namespace("http://example.org/")
 
@@ -85,8 +81,18 @@ def base_shex_validator():
         node_kind=NodeKind.IRI,
         required_types=(EX.Device,),
         predicates=(
-            PredicateConstraint(predicate=EX.deviceId, min_count=1, max_count=1, node_kind=NodeKind.LITERAL),
-            PredicateConstraint(predicate=EX.status, min_count=1, max_count=1, node_kind=NodeKind.LITERAL),
+            PredicateConstraint(
+                predicate=EX.deviceId,
+                min_count=1,
+                max_count=1,
+                node_kind=NodeKind.LITERAL,
+            ),
+            PredicateConstraint(
+                predicate=EX.status,
+                min_count=1,
+                max_count=1,
+                node_kind=NodeKind.LITERAL,
+            ),
         ),
     )
     return ShexValidator([device_shape])
@@ -113,25 +119,29 @@ class TestAdmissionPipelineSuccess:
     ):
         """Test happy path through all 10 stages resulting in Standing.ADMITTED."""
         # 1. Setup Datalog rule: online devices have high availability
-        datalog = DatalogEngine([
-            DatalogRule(
-                head=DatalogAtom(EX.hasAvailability, "?D", Literal("HIGH")),
-                body=(
-                    DatalogAtom(RDF.type, "?D", EX.Device),
-                    DatalogAtom(EX.status, "?D", Literal("ONLINE")),
-                ),
-                name="online_high_availability",
-            )
-        ])
+        datalog = DatalogEngine(
+            [
+                DatalogRule(
+                    head=DatalogAtom(EX.hasAvailability, "?D", Literal("HIGH")),
+                    body=(
+                        DatalogAtom(RDF.type, "?D", EX.Device),
+                        DatalogAtom(EX.status, "?D", Literal("ONLINE")),
+                    ),
+                    name="online_high_availability",
+                )
+            ]
+        )
 
         # 2. Setup N3 implication rule: high availability triggers candidate active lease
-        n3 = N3RuleEngine([
-            N3ImplicationRule(
-                rule_id="lease_implication",
-                body_patterns=(( "?D", EX.hasAvailability, Literal("HIGH") ),),
-                head_patterns=(( "?D", EX.activeLease, Literal("TRUE") ),),
-            )
-        ])
+        n3 = N3RuleEngine(
+            [
+                N3ImplicationRule(
+                    rule_id="lease_implication",
+                    body_patterns=(("?D", EX.hasAvailability, Literal("HIGH")),),
+                    head_patterns=(("?D", EX.activeLease, Literal("TRUE")),),
+                )
+            ]
+        )
 
         # 3. SPARQL Falsifier: Falsify if any device has status ERROR
         falsifier = SparqlFalsifier(
@@ -143,7 +153,10 @@ class TestAdmissionPipelineSuccess:
         pipeline = AdmissionPipeline(
             identity_policy=IdentityPolicy(
                 allowed_subject_namespaces=("http://example.org/",),
-                allowed_predicate_namespaces=("http://example.org/", "http://www.w3.org/1999/02/22-rdf-syntax-ns#"),
+                allowed_predicate_namespaces=(
+                    "http://example.org/",
+                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+                ),
             ),
             shex_validator=base_shex_validator,
             shacl_validator=ShaclValidator(base_shacl_shapes),
@@ -203,6 +216,7 @@ class TestAdmissionPipelineSuccess:
     def test_admit_semantic_envelope(self, base_shacl_shapes, valid_candidate_turtle):
         """Admission succeeds directly from a SemanticEnvelope model (§11)."""
         import hashlib
+
         digest = hashlib.sha256(valid_candidate_turtle.encode("utf-8")).hexdigest()
 
         envelope = SemanticEnvelope(
@@ -253,7 +267,9 @@ class TestAdmissionPipelineFailClosedRefusals:
             identity_policy=IdentityPolicy(
                 allowed_subject_namespaces=("http://trusted.org/",),
             ),
-            provenance_policy=ProvenancePolicy(require_issuer=False, require_timestamp=False),
+            provenance_policy=ProvenancePolicy(
+                require_issuer=False, require_timestamp=False
+            ),
         )
 
         untrusted_ttl = """
@@ -271,7 +287,9 @@ class TestAdmissionPipelineFailClosedRefusals:
             identity_policy=IdentityPolicy(
                 disallowed_iris=("http://example.org/forbidden",),
             ),
-            provenance_policy=ProvenancePolicy(require_issuer=False, require_timestamp=False),
+            provenance_policy=ProvenancePolicy(
+                require_issuer=False, require_timestamp=False
+            ),
         )
 
         ttl = """
@@ -287,7 +305,9 @@ class TestAdmissionPipelineFailClosedRefusals:
         """Missing required structural property in ShEx triggers REFUSED_STRUCTURE."""
         pipeline = AdmissionPipeline(
             shex_validator=base_shex_validator,
-            provenance_policy=ProvenancePolicy(require_issuer=False, require_timestamp=False),
+            provenance_policy=ProvenancePolicy(
+                require_issuer=False, require_timestamp=False
+            ),
         )
 
         # Missing ex:status
@@ -306,7 +326,9 @@ class TestAdmissionPipelineFailClosedRefusals:
         """Violating datatype constraint in SHACL triggers REFUSED_SHACL."""
         pipeline = AdmissionPipeline(
             shacl_validator=ShaclValidator(base_shacl_shapes),
-            provenance_policy=ProvenancePolicy(require_issuer=False, require_timestamp=False),
+            provenance_policy=ProvenancePolicy(
+                require_issuer=False, require_timestamp=False
+            ),
         )
 
         # deviceId should be xsd:string, but integer provided
@@ -334,14 +356,18 @@ class TestAdmissionPipelineFailClosedRefusals:
 
         pipeline = AdmissionPipeline(
             sparql_falsifiers=[falsifier],
-            provenance_policy=ProvenancePolicy(require_issuer=False, require_timestamp=False),
+            provenance_policy=ProvenancePolicy(
+                require_issuer=False, require_timestamp=False
+            ),
         )
 
         result = pipeline.admit(valid_candidate_turtle)
         assert result.is_admitted is False
         assert result.standing == Standing.REFUSED
         assert result.refusal_code == REFUSED_FALSIFIER
-        assert "Online status forbidden in quarantine test environment" in result.reasons
+        assert (
+            "Online status forbidden in quarantine test environment" in result.reasons
+        )
 
     def test_refuse_missing_provenance(self, valid_candidate_turtle):
         """Missing issuer/timestamp in provenance triggers REFUSED_PROVENANCE."""
@@ -369,7 +395,9 @@ class TestAdmissionPipelineFailClosedRefusals:
             )
         )
 
-        result = pipeline.admit(valid_candidate_turtle, provenance_record={"issuer": "rogue-agent"})
+        result = pipeline.admit(
+            valid_candidate_turtle, provenance_record={"issuer": "rogue-agent"}
+        )
         assert result.is_admitted is False
         assert result.standing == Standing.REFUSED
         assert result.refusal_code == REFUSED_PROVENANCE
@@ -379,7 +407,9 @@ class TestAdmissionPipelineFailClosedRefusals:
         """Graph violating max_triples constraint triggers REFUSED_META_RIGOR."""
         pipeline = AdmissionPipeline(
             meta_policy=MetaAdmissionPolicy(min_triples=1, max_triples=2),
-            provenance_policy=ProvenancePolicy(require_issuer=False, require_timestamp=False),
+            provenance_policy=ProvenancePolicy(
+                require_issuer=False, require_timestamp=False
+            ),
         )
 
         ttl = """

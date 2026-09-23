@@ -40,7 +40,9 @@ import dspy
 from autofde_lab.powl.algebra import Atom, OrderEdge, PartialOrder, PowlNode
 from autofde_lab.powl.refusals import PowlError
 from autofde_lab.powl.validate import validate_model
-from autofde_lab.reasoning.sre_mitigation_portfolio_signatures import ConstructSreMitigationProcess
+from autofde_lab.reasoning.sre_mitigation_portfolio_signatures import (
+    ConstructSreMitigationProcess,
+)
 
 __all__ = [
     "MitigationPortfolioCandidate",
@@ -67,6 +69,7 @@ class MitigationPortfolioCandidate:
     safe_to_actuate: bool
     expected_consequence: str
     rollback_plan: str
+
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +118,9 @@ def parse_process_steps(process_steps: str) -> PartialOrder:
                 f"{sorted(_VALID_CONSEQUENCES)}: {line!r}"
             )
         if not description:
-            raise MitigationProcessParseError(f"malformed step line (empty description): {line!r}")
+            raise MitigationProcessParseError(
+                f"malformed step line (empty description): {line!r}"
+            )
         atoms.append(Atom(label=description, consequence=tag))  # type: ignore[arg-type]
 
     n = len(atoms)
@@ -165,7 +170,9 @@ def construct_mitigation_portfolio(
     if portfolio_size < 1:
         raise ValueError(f"portfolio_size must be >= 1, got {portfolio_size}")
 
-    predictor: dspy.Module = program if program is not None else dspy.Predict(ConstructSreMitigationProcess)
+    predictor: dspy.Module = (
+        program if program is not None else dspy.Predict(ConstructSreMitigationProcess)
+    )
 
     portfolio: list[MitigationPortfolioCandidate] = []
     for i in range(portfolio_size):
@@ -185,14 +192,18 @@ def construct_mitigation_portfolio(
         try:
             validate_model(node)
         except PowlError as exc:
-            logger.warning("portfolio candidate %d skipped: admission failure: %s", i, exc)
+            logger.warning(
+                "portfolio candidate %d skipped: admission failure: %s", i, exc
+            )
             continue
 
         portfolio.append(
             MitigationPortfolioCandidate(
                 node=node,
                 safe_to_actuate=bool(getattr(prediction, "safe_to_actuate", False)),
-                expected_consequence=str(getattr(prediction, "expected_consequence", "")),
+                expected_consequence=str(
+                    getattr(prediction, "expected_consequence", "")
+                ),
                 rollback_plan=str(getattr(prediction, "rollback_plan", "")),
             )
         )

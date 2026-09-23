@@ -35,7 +35,9 @@ from autofde_lab.reasoning.laboratory import (
     generate_montecarlo_candidates,
 )
 
-UNIFORM_MODEL = MonteCarloCostModel(distribution=MonteCarloDistribution.UNIFORM, low=10.0, high=100.0)
+UNIFORM_MODEL = MonteCarloCostModel(
+    distribution=MonteCarloDistribution.UNIFORM, low=10.0, high=100.0
+)
 TRIANGULAR_MODEL = MonteCarloCostModel(
     distribution=MonteCarloDistribution.TRIANGULAR, low=10.0, high=100.0, mode=25.0
 )
@@ -58,15 +60,25 @@ def test_draw_monte_carlo_samples_is_deterministic_across_two_real_runs() -> Non
     samples_1 = draw_monte_carlo_samples(UNIFORM_MODEL, 8, seed=DETERMINISTIC_SEED)
     samples_2 = draw_monte_carlo_samples(UNIFORM_MODEL, 8, seed=DETERMINISTIC_SEED)
 
-    assert tuple(s.cost_bound for s in samples_1) == tuple(s.cost_bound for s in samples_2)
-    assert tuple(s.sample_id for s in samples_1) == tuple(s.sample_id for s in samples_2)
+    assert tuple(s.cost_bound for s in samples_1) == tuple(
+        s.cost_bound for s in samples_2
+    )
+    assert tuple(s.sample_id for s in samples_1) == tuple(
+        s.sample_id for s in samples_2
+    )
 
     # a real different seed must not (in this fixed case, does not) collide
-    samples_other_seed = draw_monte_carlo_samples(UNIFORM_MODEL, 8, seed=DETERMINISTIC_SEED + 1)
-    assert tuple(s.cost_bound for s in samples_1) != tuple(s.cost_bound for s in samples_other_seed)
+    samples_other_seed = draw_monte_carlo_samples(
+        UNIFORM_MODEL, 8, seed=DETERMINISTIC_SEED + 1
+    )
+    assert tuple(s.cost_bound for s in samples_1) != tuple(
+        s.cost_bound for s in samples_other_seed
+    )
 
 
-def test_generate_montecarlo_candidates_candidate_id_sequence_is_deterministic_across_two_real_runs() -> None:
+def test_generate_montecarlo_candidates_candidate_id_sequence_is_deterministic_across_two_real_runs() -> (
+    None
+):
     """The explicit determinism test: same seed and n, called for real
     twice, must produce a byte-identical candidate_id sequence."""
     hypothesis = DesiredStateHypothesis(
@@ -75,8 +87,12 @@ def test_generate_montecarlo_candidates_candidate_id_sequence_is_deterministic_a
         evidence_used_refs=("obs-1",),
     )
 
-    run_1 = generate_montecarlo_candidates((hypothesis,), UNIFORM_MODEL, 6, seed=DETERMINISTIC_SEED)
-    run_2 = generate_montecarlo_candidates((hypothesis,), UNIFORM_MODEL, 6, seed=DETERMINISTIC_SEED)
+    run_1 = generate_montecarlo_candidates(
+        (hypothesis,), UNIFORM_MODEL, 6, seed=DETERMINISTIC_SEED
+    )
+    run_2 = generate_montecarlo_candidates(
+        (hypothesis,), UNIFORM_MODEL, 6, seed=DETERMINISTIC_SEED
+    )
 
     assert tuple(c.candidate_id for c in run_1) == tuple(c.candidate_id for c in run_2)
     assert tuple(c.cost_bound for c in run_1) == tuple(c.cost_bound for c in run_2)
@@ -84,7 +100,9 @@ def test_generate_montecarlo_candidates_candidate_id_sequence_is_deterministic_a
     assert len({c.candidate_id for c in run_1}) == 6
 
 
-def test_generate_montecarlo_candidates_emits_one_real_candidate_per_sample_with_real_summary_stats() -> None:
+def test_generate_montecarlo_candidates_emits_one_real_candidate_per_sample_with_real_summary_stats() -> (
+    None
+):
     hypothesis = DesiredStateHypothesis(
         hypothesis_id="rule-based-v1",
         targets=({"kind": "latency_reduction"},),
@@ -92,7 +110,9 @@ def test_generate_montecarlo_candidates_emits_one_real_candidate_per_sample_with
         assumptions=("objectives read directly from admitted ScenarioMetadata",),
     )
     n = 10
-    candidates = generate_montecarlo_candidates((hypothesis,), UNIFORM_MODEL, n, seed=DETERMINISTIC_SEED)
+    candidates = generate_montecarlo_candidates(
+        (hypothesis,), UNIFORM_MODEL, n, seed=DETERMINISTIC_SEED
+    )
 
     assert len(candidates) == n
     expected_mean = statistics.fmean(c.cost_bound for c in candidates)
@@ -108,7 +128,9 @@ def test_generate_montecarlo_candidates_emits_one_real_candidate_per_sample_with
         # every candidate maps to one real individual draw, never a summary value
         assert candidate.assumptions[0].startswith("Monte Carlo draw ")
         assert f"cost_bound={candidate.cost_bound:.4f}" in candidate.assumptions[0]
-        assert candidate.assumptions[1].startswith("Monte Carlo summary over 10 real seeded draws")
+        assert candidate.assumptions[1].startswith(
+            "Monte Carlo summary over 10 real seeded draws"
+        )
         assert f"mean cost_bound={expected_mean:.4f}" in candidate.assumptions[1]
         assert f"std cost_bound={expected_std:.4f}" in candidate.assumptions[1]
         assert candidate.assumptions[2:] == hypothesis.assumptions
@@ -130,27 +152,48 @@ def test_generate_montecarlo_candidates_is_plural_across_multiple_hypotheses() -
             evidence_used_refs=("obs-2",),
         ),
     )
-    candidates = generate_montecarlo_candidates(hypotheses, UNIFORM_MODEL, 4, seed=DETERMINISTIC_SEED)
+    candidates = generate_montecarlo_candidates(
+        hypotheses, UNIFORM_MODEL, 4, seed=DETERMINISTIC_SEED
+    )
 
     assert len(candidates) == 8
     assert len({c.candidate_id for c in candidates}) == 8
-    hyp_1 = tuple(c for c in candidates if c.target_state_assertions == ("{'kind': 'latency_reduction'}",))
-    hyp_2 = tuple(c for c in candidates if c.target_state_assertions == ("{'kind': 'cost_reduction'}",))
+    hyp_1 = tuple(
+        c
+        for c in candidates
+        if c.target_state_assertions == ("{'kind': 'latency_reduction'}",)
+    )
+    hyp_2 = tuple(
+        c
+        for c in candidates
+        if c.target_state_assertions == ("{'kind': 'cost_reduction'}",)
+    )
     assert len(hyp_1) == 4
     assert len(hyp_2) == 4
     # same underlying 4 real draws feed both hypotheses -- real, equal cost_bound sequences
     assert tuple(c.cost_bound for c in hyp_1) == tuple(c.cost_bound for c in hyp_2)
 
 
-def test_montecarlo_cost_model_rejects_invalid_ranges_missing_mode_and_out_of_range_mode() -> None:
+def test_montecarlo_cost_model_rejects_invalid_ranges_missing_mode_and_out_of_range_mode() -> (
+    None
+):
     with pytest.raises(ValueError, match="low .* must be <= high"):
-        MonteCarloCostModel(distribution=MonteCarloDistribution.UNIFORM, low=100.0, high=10.0)
+        MonteCarloCostModel(
+            distribution=MonteCarloDistribution.UNIFORM, low=100.0, high=10.0
+        )
 
     with pytest.raises(ValueError, match="requires a real mode value"):
-        MonteCarloCostModel(distribution=MonteCarloDistribution.TRIANGULAR, low=10.0, high=100.0)
+        MonteCarloCostModel(
+            distribution=MonteCarloDistribution.TRIANGULAR, low=10.0, high=100.0
+        )
 
     with pytest.raises(ValueError, match="must lie within"):
-        MonteCarloCostModel(distribution=MonteCarloDistribution.TRIANGULAR, low=10.0, high=100.0, mode=200.0)
+        MonteCarloCostModel(
+            distribution=MonteCarloDistribution.TRIANGULAR,
+            low=10.0,
+            high=100.0,
+            mode=200.0,
+        )
 
     # a real, valid TRIANGULAR model draws within [low, high]
     samples = draw_monte_carlo_samples(TRIANGULAR_MODEL, 5, seed=DETERMINISTIC_SEED)

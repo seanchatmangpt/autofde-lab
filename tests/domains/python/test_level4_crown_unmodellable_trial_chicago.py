@@ -84,7 +84,7 @@ pytestmark = pytest.mark.skipif(
         "so there is no remaining config-level way to reproduce a "
         "LIVE_AUTHORITY_REQUIRED refusal from this provider through this "
         "bridge. Verified failing against current HEAD: "
-        "`record[\"applicable\"]` is True (increment succeeds, "
+        '`record["applicable"]` is True (increment succeeds, '
         "counter 0 -> 1), not False. Retired rather than reworded because "
         "the current design has no analogous authority-refusal case to "
         "assert instead for this provider/binding pair -- an authority "

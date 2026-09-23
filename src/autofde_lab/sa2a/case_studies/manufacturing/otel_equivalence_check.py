@@ -28,6 +28,7 @@ If an id does not match that convention, this script raises rather than
 silently skipping it — a naming-convention mismatch is a real defect to
 surface, not one to paper over.
 """
+
 from __future__ import annotations
 
 import json
@@ -116,7 +117,11 @@ def summarize(ocel_json_path: str) -> OcelSummary:
                 proposal_id = rel["objectId"]
             if rel.get("qualifier") == "odrl:assignee":
                 resource_id = rel["objectId"]
-        if verdict == "admitted" and proposal_id is not None and resource_id is not None:
+        if (
+            verdict == "admitted"
+            and proposal_id is not None
+            and resource_id is not None
+        ):
             admitted_proposal_ids.add(proposal_id)
             rid, rnd = _resource_round(proposal_id)
             s.admitted_tuples.add((rid, rnd))
@@ -128,7 +133,9 @@ def summarize(ocel_json_path: str) -> OcelSummary:
     # span attaches exactly this per-round total, per the real span attribute
     # observed live: `granted_energy_kwh: Double(222.5)` on a 4-resource
     # round -- the sum, not one resource's individual grant).
-    s.max_granted_energy_kwh = max(round_energy_kwh.values()) if round_energy_kwh else 0.0
+    s.max_granted_energy_kwh = (
+        max(round_energy_kwh.values()) if round_energy_kwh else 0.0
+    )
 
     receipted_actuation_count = 0
     for e in actuation_events:
@@ -151,7 +158,11 @@ def summarize(ocel_json_path: str) -> OcelSummary:
         else:
             s.unreceipted_actuations += 1
         applied = _attr_value(e.get("attributes", []), "applied")
-        if applied and proposal_id is not None and proposal_id not in admitted_proposal_ids:
+        if (
+            applied
+            and proposal_id is not None
+            and proposal_id not in admitted_proposal_ids
+        ):
             s.unauthorized_actuations += 1
 
     s.total_receipts = receipted_actuation_count

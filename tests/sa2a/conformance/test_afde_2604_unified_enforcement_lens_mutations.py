@@ -96,11 +96,17 @@ from autofde_lab.sa2a.conformance.courts.consequence_court import (
     RealDiskJournalActuator,
 )
 from autofde_lab.sa2a.hooks.engine import KnowledgeHookEngine
-from autofde_lab.sa2a.hooks.model import HookEffectKind, HookEventTrigger, KnowledgeHookDefinition
+from autofde_lab.sa2a.hooks.model import (
+    HookEffectKind,
+    HookEventTrigger,
+    KnowledgeHookDefinition,
+)
 from autofde_lab.sa2a.hooks.reactive_loop import ReactiveSemanticLoop
 
 
-def _real_boundary(tmp_path: Path, name: str, broker: AuthorityBroker, *, require_admission: bool):
+def _real_boundary(
+    tmp_path: Path, name: str, broker: AuthorityBroker, *, require_admission: bool
+):
     journal = tmp_path / name / "journal.json"
     store = DurableDiskReceiptStore(tmp_path / name / "receipts")
     actuator = RealDiskJournalActuator(journal)
@@ -121,7 +127,9 @@ def _real_boundary(tmp_path: Path, name: str, broker: AuthorityBroker, *, requir
 # ---------------------------------------------------------------------------
 
 
-def test_mutation_ue1_raw_execute_refuses_admitted_but_unbound_content(tmp_path: Path) -> None:
+def test_mutation_ue1_raw_execute_refuses_admitted_but_unbound_content(
+    tmp_path: Path,
+) -> None:
     """A real, genuinely `Standing.ADMITTED` `AdmissionResult` exists (a real
     `AdmissionPipeline().admit()` call actually ran and passed), but for UNRELATED
     content that never asserts the `afl:targetResource` triple binding this exact
@@ -141,14 +149,16 @@ def test_mutation_ue1_raw_execute_refuses_admitted_but_unbound_content(tmp_path:
             target_resource_iri=target_resource,
         )
     )
-    boundary, actuator, journal = _real_boundary(tmp_path, "ue1", broker, require_admission=True)
+    boundary, actuator, journal = _real_boundary(
+        tmp_path, "ue1", broker, require_admission=True
+    )
 
     # Real admission pipeline call -- genuinely reaches Standing.ADMITTED, but for
     # content that never mentions action_iri/target_resource at all, let alone binds
     # them via afl:targetResource.
     pipeline = AdmissionPipeline()
     unrelated_ttl = (
-        "@prefix ex: <http://example.org/> . ex:unrelated-node ex:status \"OK\" ."
+        '@prefix ex: <http://example.org/> . ex:unrelated-node ex:status "OK" .'
     )
     admission_result = pipeline.admit(
         unrelated_ttl,
@@ -219,7 +229,9 @@ def test_mutation_ue2_loop_admission_pipeline_does_not_imply_boundary_require_ad
     # The caller DOES wire a real admission pipeline into the loop, believing this
     # secures the whole reflex path -- but never passes require_admission=True to the
     # boundary (the class default stays False; nothing warns or refuses this).
-    boundary, actuator, journal = _real_boundary(tmp_path, "ue2", broker, require_admission=False)
+    boundary, actuator, journal = _real_boundary(
+        tmp_path, "ue2", broker, require_admission=False
+    )
     assert boundary.require_admission is False
 
     engine = KnowledgeHookEngine()
@@ -242,8 +254,10 @@ def test_mutation_ue2_loop_admission_pipeline_does_not_imply_boundary_require_ad
         admission_pipeline=AdmissionPipeline(),
     )
 
-    base_ttl = "@prefix ex: <http://example.org/> . ex:cluster ex:status \"OK\" ."
-    unbound_event_ttl = "@prefix ex: <http://example.org/> . ex:pod ex:status \"CRASH_LOOP\" ."
+    base_ttl = '@prefix ex: <http://example.org/> . ex:cluster ex:status "OK" .'
+    unbound_event_ttl = (
+        '@prefix ex: <http://example.org/> . ex:pod ex:status "CRASH_LOOP" .'
+    )
 
     trace = loop.run_reflex_cycle(
         base_ttl,
@@ -257,17 +271,21 @@ def test_mutation_ue2_loop_admission_pipeline_does_not_imply_boundary_require_ad
     # afl:targetResource, exactly like CD-1's unbound case).
     assert len(trace.steps) == 1
     step = trace.steps[0]
-    assert len(step.intents_synthesized) == 1, "The hook must have fired for this to be a meaningful control."
+    assert len(step.intents_synthesized) == 1, (
+        "The hook must have fired for this to be a meaningful control."
+    )
     assert [r.state for r in step.final_receipts] == [TerminalReceiptState.REFUSED], (
         f"Precondition failed: loop.run_reflex_cycle()'s own gated dispatch must "
         f"refuse this unbound content for the bypass below to be meaningful. "
         f"receipt states={[r.state for r in step.final_receipts]!r}"
     )
-    assert [r.refusal_code for r in step.final_receipts] == [REFUSED_ADMISSION_CONTENT_NOT_BOUND] or [
-        r.refusal_code for r in step.final_receipts
-    ] == [REFUSED_NOT_ADMITTED]
+    assert [r.refusal_code for r in step.final_receipts] == [
+        REFUSED_ADMISSION_CONTENT_NOT_BOUND
+    ] or [r.refusal_code for r in step.final_receipts] == [REFUSED_NOT_ADMITTED]
     assert actuator.call_count == 0
-    assert journal.exists() is False, "Zero real actuation via the loop's own gated dispatch."
+    assert journal.exists() is False, (
+        "Zero real actuation via the loop's own gated dispatch."
+    )
 
     # THE BYPASS: the exact same ConsequenceBoundary instance the "secured" loop just
     # used, reached via the loop's own public attribute, called directly with NO
@@ -293,7 +311,9 @@ def test_mutation_ue2_loop_admission_pipeline_does_not_imply_boundary_require_ad
             "using only a real, already-registered AuthorityGrant and ZERO admission "
             f"binding. bypassed={bypassed!r}"
         )
-        assert journal.exists(), "Real physical disk consequence via the direct-boundary bypass."
+        assert journal.exists(), (
+            "Real physical disk consequence via the direct-boundary bypass."
+        )
     else:
         # If this ever fails, the desync this test targets has been closed --
         # documented here so a future run's flip is visible and expected, not a
@@ -313,7 +333,9 @@ def test_mutation_ue2_loop_admission_pipeline_does_not_imply_boundary_require_ad
 # ---------------------------------------------------------------------------
 
 
-def test_mutation_ue3_require_admission_flag_is_not_tamper_resistant(tmp_path: Path) -> None:
+def test_mutation_ue3_require_admission_flag_is_not_tamper_resistant(
+    tmp_path: Path,
+) -> None:
     """`ConsequenceBoundary._require_admission` is an ordinary instance attribute (no
     `__slots__` write guard, no frozen dataclass, no property setter rejection).
     Any code holding a boundary reference can flip it post-construction. Named
@@ -333,7 +355,9 @@ def test_mutation_ue3_require_admission_flag_is_not_tamper_resistant(tmp_path: P
             target_resource_iri=target_resource,
         )
     )
-    boundary, actuator, journal = _real_boundary(tmp_path, "ue3", broker, require_admission=True)
+    boundary, actuator, journal = _real_boundary(
+        tmp_path, "ue3", broker, require_admission=True
+    )
 
     # Control: execute_admitted() refuses, as expected, before tampering.
     gated = boundary.execute_admitted(

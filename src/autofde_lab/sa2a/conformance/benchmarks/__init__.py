@@ -9,6 +9,7 @@ Chicago Zero-Mock Standard:
 from __future__ import annotations
 
 from autofde_lab.sa2a.conformance.benchmarks.harness import (
+    ALL_BENCHMARKS,
     SA2A_B1_ADMISSION,
     SA2A_B2_LOGIC_CLOSURE,
     SA2A_B3_HOOK_REFLEX,
@@ -19,7 +20,6 @@ from autofde_lab.sa2a.conformance.benchmarks.harness import (
     SA2A_B8_REPLAY_VERIFICATION,
     SA2A_B9_OCEL_OVERHEAD,
     SA2A_B10_RECOVERY_RECONCILIATION,
-    ALL_BENCHMARKS,
     BenchmarkHarness,
     BenchmarkMetric,
     BenchmarkResult,

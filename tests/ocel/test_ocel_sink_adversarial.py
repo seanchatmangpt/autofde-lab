@@ -82,15 +82,15 @@ def test_every_lifecycle_phase_is_recordable():
         if phase is LifecyclePhase.COMMITTED:
             continue
         sink = sink.note(
-            phase, f"ev-{index}", phase.value, [("case-1", "concerns")],
+            phase,
+            f"ev-{index}",
+            phase.value,
+            [("case-1", "concerns")],
             timestamp_ns=1000 + index,
         )
     log = sink.validated()
     phases = {
-        a.value.value
-        for e in log.events
-        for a in e.attributes
-        if a.key == "phase"
+        a.value.value for e in log.events for a in e.attributes if a.key == "phase"
     }
     assert phases == {p.value for p in LifecyclePhase}
 
@@ -262,12 +262,16 @@ def test_a_redo_emits_a_fresh_occurrence_rather_than_overwriting():
 def test_a_superseding_phase_event_does_not_erase_what_it_supersedes():
     ledger = _ledger_with()
     (committed,) = ledger.committed()
-    sink = _sink().absorb(ledger).note(
-        LifecyclePhase.SUPERSEDED,
-        "ev-supersede",
-        "supersede",
-        [("case-1", "concerns")],
-        timestamp_ns=10_000,
+    sink = (
+        _sink()
+        .absorb(ledger)
+        .note(
+            LifecyclePhase.SUPERSEDED,
+            "ev-supersede",
+            "supersede",
+            [("case-1", "concerns")],
+            timestamp_ns=10_000,
+        )
     )
     sink.validated()
     assert committed.token_id in {e.id for e in sink.log.events}
@@ -315,7 +319,10 @@ def test_two_legal_redos_are_distinguishable_from_a_dedup_bug():
     keys = []
     for _ in range(2):
         token = ledger.intend(
-            (0,), "ctx-a", activity_sha256="act-a", activity="Same",
+            (0,),
+            "ctx-a",
+            activity_sha256="act-a",
+            activity="Same",
             objects=(("case-1", "belongs_to"),),
         )
         keys.append(ledger.commit(token, activity_sha256="act-a"))
@@ -340,9 +347,7 @@ def test_duplicate_event_ids_are_refused_by_the_validator_independently():
     log = OcelLog.new(
         objects=(OcelObject("case-1", "WorkflowCase"),),
         events=(OcelEvent("e1", "Draft", 1), OcelEvent("e1", "Draft", 2)),
-        event_object_links=(
-            EventObjectLink("e1", "case-1", "belongs_to"),
-        ),
+        event_object_links=(EventObjectLink("e1", "case-1", "belongs_to"),),
     )
     with pytest.raises(OcelError) as excinfo:
         log.validate()
@@ -369,7 +374,10 @@ def test_a_note_cannot_reuse_an_existing_event_id():
 def test_the_sink_is_immutable_so_a_refused_absorb_leaves_no_partial_log():
     ledger = OccurrenceLedger()
     good = ledger.intend(
-        (0,), "ctx-a", activity_sha256="act-a", activity="Draft",
+        (0,),
+        "ctx-a",
+        activity_sha256="act-a",
+        activity="Draft",
         objects=(("case-1", "belongs_to"),),
     )
     ledger.commit(good, activity_sha256="act-a")

@@ -101,7 +101,11 @@ from autofde_lab.sa2a.conformance.courts.consequence_court import (
 
 
 def _boundary(
-    tmp_path: Path, name: str, broker: AuthorityBroker, *, require_admission: bool = False
+    tmp_path: Path,
+    name: str,
+    broker: AuthorityBroker,
+    *,
+    require_admission: bool = False,
 ):
     journal = tmp_path / name / "journal.json"
     store = DurableDiskReceiptStore(tmp_path / name / "receipts")
@@ -122,7 +126,9 @@ def _boundary(
 # ---------------------------------------------------------------------------
 
 
-def test_mutation_cd1_reactive_loop_default_admission_pipeline_bypasses_fence_entirely() -> None:
+def test_mutation_cd1_reactive_loop_default_admission_pipeline_bypasses_fence_entirely() -> (
+    None
+):
     """Drive the REAL, unmodified `sa2a/cli.py hook reflex` Typer command in-process via
     `CliRunner` (not a hand-reproduction of its construction) and confirm the AFDE-2604
     architecture fix's default-wiring closure (Problem 3): SECURE BY DEFAULT.
@@ -149,8 +155,10 @@ def test_mutation_cd1_reactive_loop_default_admission_pipeline_bypasses_fence_en
     point directly instead of a hand copy of its (now-outdated) construction.
     """
     runner = CliRunner()
-    base_ttl = "@prefix ex: <http://example.org/> . ex:cluster ex:status \"OK\" ."
-    unbound_event_ttl = "@prefix ex: <http://example.org/> . ex:pod ex:status \"CRASH_LOOP\" ."
+    base_ttl = '@prefix ex: <http://example.org/> . ex:cluster ex:status "OK" .'
+    unbound_event_ttl = (
+        '@prefix ex: <http://example.org/> . ex:pod ex:status "CRASH_LOOP" .'
+    )
     action_iri = "urn:action:fresh-mut-d:wire-transfer"
     target_resource = "urn:cap:fresh-mut-d:treasury"
     bound_event_ttl = (
@@ -314,8 +322,12 @@ def test_mutation_cd2_raw_execute_bypasses_execute_admitted_fence_on_same_instan
     )
     assert bypassed.state == TerminalReceiptState.REFUSED
     assert bypassed.refusal_code == REFUSED_NOT_ADMITTED
-    assert actuator.call_count == 0, "Zero real actuation via raw execute() on a strict instance."
-    assert journal.exists() is False, "Zero disk mutation via raw execute() on a strict instance."
+    assert actuator.call_count == 0, (
+        "Zero real actuation via raw execute() on a strict instance."
+    )
+    assert journal.exists() is False, (
+        "Zero disk mutation via raw execute() on a strict instance."
+    )
     assert bypassed.final_receipt is not None
     assert bypassed.final_receipt.state == TerminalReceiptState.REFUSED
 

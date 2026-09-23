@@ -16,25 +16,36 @@ from autofde_lab.sa2a.episode.episode2 import Episode2Runner
 from autofde_lab.sa2a.episode.equivalence import build_topic_equivalence_predicate
 from autofde_lab.sa2a.episode.types import EpisodeKind
 from autofde_lab.sa2a.unknown.resolution import CandidateResolution, UnknownQuery
-from autofde_lab.sa2a.unknown.router import DiscoveryEngine, DiscoveryEngineKind, DiscoveryRouter
+from autofde_lab.sa2a.unknown.router import (
+    DiscoveryEngine,
+    DiscoveryEngineKind,
+    DiscoveryRouter,
+)
 
 
 def _discover_port_requirement(query: UnknownQuery) -> CandidateResolution:
     return CandidateResolution(
-        candidate_id="cand-ep1", query_id=query.query_id,
+        candidate_id="cand-ep1",
+        query_id=query.query_id,
         proposed_assertion="service:api-gateway requires-port",
-        evidence_payload={"source": "formal-port-probe"}, source_identity="formal-port-probe",
-        consumed_ticks=2, consumed_tokens=0,
+        evidence_payload={"source": "formal-port-probe"},
+        source_identity="formal-port-probe",
+        consumed_ticks=2,
+        consumed_tokens=0,
     )
 
 
 def _run_episode1(tmp_path: Path) -> tuple[Episode1Runner, Episode1Result]:
     runner1 = Episode1Runner(
-        state_dir=tmp_path / "state", journal_path=tmp_path / "journal.json", receipt_store_dir=tmp_path / "receipts"
+        state_dir=tmp_path / "state",
+        journal_path=tmp_path / "journal.json",
+        receipt_store_dir=tmp_path / "receipts",
     )
     result = runner1.run(
         semantic_class_id="requires-port",
-        query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        query=UnknownQuery(
+            query_id="q-1", predicate_or_topic="service:api-gateway requires-port"
+        ),
         discover=_discover_port_requirement,
         equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
         equivalence_predicate_id="pred-requires-port-v1",
@@ -45,7 +56,9 @@ def _run_episode1(tmp_path: Path) -> tuple[Episode1Runner, Episode1Result]:
     return runner1, result
 
 
-def test_episode1_solves_a_genuine_unknown_and_reaches_active_experience(tmp_path: Path) -> None:
+def test_episode1_solves_a_genuine_unknown_and_reaches_active_experience(
+    tmp_path: Path,
+) -> None:
     runner1, result = _run_episode1(tmp_path)
     assert result.episode.kind == EpisodeKind.UNKNOWN_DISCOVERY
     assert result.episode.classification == "KNOWN"
@@ -59,7 +72,9 @@ def test_episode1_solves_a_genuine_unknown_and_reaches_active_experience(tmp_pat
     assert result.episode.final_receipt_digest
 
 
-def test_episode1_checkpoints_intermediate_state_for_crash_recovery(tmp_path: Path) -> None:
+def test_episode1_checkpoints_intermediate_state_for_crash_recovery(
+    tmp_path: Path,
+) -> None:
     """ARD §16: 'SHALL persist intermediate state for crash recovery/diagnosis.'"""
     runner1, result = _run_episode1(tmp_path)
     snapshot_path = (tmp_path / "state") / f"{result.episode.episode_id}.json"
@@ -71,7 +86,9 @@ def test_episode1_checkpoints_intermediate_state_for_crash_recovery(tmp_path: Pa
     assert snapshot["episode_id"] == result.episode.episode_id
 
 
-def test_episode2_fresh_equivalent_request_resolves_known_with_zero_exploration(tmp_path: Path) -> None:
+def test_episode2_fresh_equivalent_request_resolves_known_with_zero_exploration(
+    tmp_path: Path,
+) -> None:
     """The core v26.9.17 claim: a FRESH, textually-different-but-semantically-
     equivalent Episode 2 request routes through KNOWN machinery with zero
     equivalent exploratory inference (PRD §6.13, ARD §22-23)."""
@@ -79,18 +96,28 @@ def test_episode2_fresh_equivalent_request_resolves_known_with_zero_exploration(
 
     experience_store = {ep1.machine_experience.experience_id: ep1.machine_experience}
     runner2 = Episode2Runner(
-        state_dir=tmp_path / "state", journal_path=tmp_path / "journal.json", receipt_store_dir=tmp_path / "receipts",
-        known_route_registry=runner1.routes, artifact_registry=runner1.artifacts, experience_store=experience_store,
+        state_dir=tmp_path / "state",
+        journal_path=tmp_path / "journal.json",
+        receipt_store_dir=tmp_path / "receipts",
+        known_route_registry=runner1.routes,
+        artifact_registry=runner1.artifacts,
+        experience_store=experience_store,
     )
     fresh_candidate = CandidateResolution(
-        candidate_id="cand-ep2-different", query_id="q-2-fresh",
+        candidate_id="cand-ep2-different",
+        query_id="q-2-fresh",
         proposed_assertion="service:billing-worker requires-port",  # same topic, different subject/text
-        evidence_payload={"source": "fresh-request"}, source_identity="fresh-request",
-        consumed_ticks=0, consumed_tokens=0,
+        evidence_payload={"source": "fresh-request"},
+        source_identity="fresh-request",
+        consumed_ticks=0,
+        consumed_tokens=0,
     )
     ep2 = runner2.run(
-        semantic_class_id="requires-port", fresh_candidate=fresh_candidate, probe_input="requires-port",
-        action_iri="urn:action:open-port", target_resource="urn:cap:billing-worker",
+        semantic_class_id="requires-port",
+        fresh_candidate=fresh_candidate,
+        probe_input="requires-port",
+        action_iri="urn:action:open-port",
+        target_resource="urn:cap:billing-worker",
     )
 
     assert ep2.episode.kind == EpisodeKind.KNOWN_REPLAY
@@ -115,23 +142,36 @@ def test_episode2_fresh_equivalent_request_resolves_known_with_zero_exploration(
     assert ep2.episode.prepared_receipt_digest != ep1.episode.prepared_receipt_digest
 
 
-def test_episode2_non_equivalent_candidate_is_unknown_not_a_false_known(tmp_path: Path) -> None:
+def test_episode2_non_equivalent_candidate_is_unknown_not_a_false_known(
+    tmp_path: Path,
+) -> None:
     """Falsifier for PRD §6.9/§6.10: a candidate outside the semantic class must
     never resolve KNOWN merely because SOME route exists for that class."""
     runner1, ep1 = _run_episode1(tmp_path)
     experience_store = {ep1.machine_experience.experience_id: ep1.machine_experience}
     runner2 = Episode2Runner(
-        state_dir=tmp_path / "state", journal_path=tmp_path / "journal.json", receipt_store_dir=tmp_path / "receipts",
-        known_route_registry=runner1.routes, artifact_registry=runner1.artifacts, experience_store=experience_store,
+        state_dir=tmp_path / "state",
+        journal_path=tmp_path / "journal.json",
+        receipt_store_dir=tmp_path / "receipts",
+        known_route_registry=runner1.routes,
+        artifact_registry=runner1.artifacts,
+        experience_store=experience_store,
     )
     unrelated_candidate = CandidateResolution(
-        candidate_id="cand-unrelated", query_id="q-unrelated",
+        candidate_id="cand-unrelated",
+        query_id="q-unrelated",
         proposed_assertion="service:database-cluster requires-replication-factor",
-        evidence_payload={}, source_identity="unrelated", consumed_ticks=0, consumed_tokens=0,
+        evidence_payload={},
+        source_identity="unrelated",
+        consumed_ticks=0,
+        consumed_tokens=0,
     )
     ep2 = runner2.run(
-        semantic_class_id="requires-port", fresh_candidate=unrelated_candidate, probe_input="requires-port",
-        action_iri="urn:action:open-port", target_resource="urn:cap:database-cluster",
+        semantic_class_id="requires-port",
+        fresh_candidate=unrelated_candidate,
+        probe_input="requires-port",
+        action_iri="urn:action:open-port",
+        target_resource="urn:cap:database-cluster",
     )
     assert ep2.episode.classification == "UNKNOWN"
     assert ep2.known_route is None
@@ -145,51 +185,81 @@ def test_episode2_before_any_episode1_is_unknown_not_a_crash(tmp_path: Path) -> 
     from autofde_lab.sa2a.experience.known_route import KnownRouteRegistry
 
     runner2 = Episode2Runner(
-        state_dir=tmp_path / "state", journal_path=tmp_path / "journal.json", receipt_store_dir=tmp_path / "receipts",
-        known_route_registry=KnownRouteRegistry(), artifact_registry=ArtifactRegistry(), experience_store={},
+        state_dir=tmp_path / "state",
+        journal_path=tmp_path / "journal.json",
+        receipt_store_dir=tmp_path / "receipts",
+        known_route_registry=KnownRouteRegistry(),
+        artifact_registry=ArtifactRegistry(),
+        experience_store={},
     )
     candidate = CandidateResolution(
-        candidate_id="cand-cold", query_id="q-cold", proposed_assertion="service:x requires-port",
-        evidence_payload={}, source_identity="cold", consumed_ticks=0, consumed_tokens=0,
+        candidate_id="cand-cold",
+        query_id="q-cold",
+        proposed_assertion="service:x requires-port",
+        evidence_payload={},
+        source_identity="cold",
+        consumed_ticks=0,
+        consumed_tokens=0,
     )
     ep2 = runner2.run(
-        semantic_class_id="requires-port", fresh_candidate=candidate, probe_input="requires-port",
-        action_iri="urn:action:open-port", target_resource="urn:cap:x",
+        semantic_class_id="requires-port",
+        fresh_candidate=candidate,
+        probe_input="requires-port",
+        action_iri="urn:action:open-port",
+        target_resource="urn:cap:x",
     )
     assert ep2.episode.classification == "UNKNOWN"
     assert ep2.episode.route_executed is False
     assert ep2.boundary_result is None
 
 
-def test_episode1_run_requires_exactly_one_of_discover_or_discovery_router(tmp_path: Path) -> None:
+def test_episode1_run_requires_exactly_one_of_discover_or_discovery_router(
+    tmp_path: Path,
+) -> None:
     runner1 = Episode1Runner(
-        state_dir=tmp_path / "state", journal_path=tmp_path / "journal.json", receipt_store_dir=tmp_path / "receipts"
+        state_dir=tmp_path / "state",
+        journal_path=tmp_path / "journal.json",
+        receipt_store_dir=tmp_path / "receipts",
     )
     kwargs = dict(
         semantic_class_id="requires-port",
-        query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        query=UnknownQuery(
+            query_id="q-1", predicate_or_topic="service:api-gateway requires-port"
+        ),
         equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
-        equivalence_predicate_id="pred-1", probe_input="requires-port",
-        action_iri="urn:action:open-port", target_resource="urn:cap:api-gateway",
+        equivalence_predicate_id="pred-1",
+        probe_input="requires-port",
+        action_iri="urn:action:open-port",
+        target_resource="urn:cap:api-gateway",
     )
     try:
         runner1.run(**kwargs)  # neither discover nor discovery_router supplied
-        assert False, "must refuse when neither discover nor discovery_router is supplied"
+        assert False, (
+            "must refuse when neither discover nor discovery_router is supplied"
+        )
     except ValueError as exc:
         assert "exactly one" in str(exc)
 
     router = DiscoveryRouter()
     router.register(
-        DiscoveryEngine("e1", DiscoveryEngineKind.EXACT_REUSABLE_MACHINERY, lambda q: _discover_port_requirement(q))
+        DiscoveryEngine(
+            "e1",
+            DiscoveryEngineKind.EXACT_REUSABLE_MACHINERY,
+            lambda q: _discover_port_requirement(q),
+        )
     )
     try:
-        runner1.run(discover=_discover_port_requirement, discovery_router=router, **kwargs)  # both supplied
+        runner1.run(
+            discover=_discover_port_requirement, discovery_router=router, **kwargs
+        )  # both supplied
         assert False, "must refuse when both discover and discovery_router are supplied"
     except ValueError as exc:
         assert "exactly one" in str(exc)
 
 
-def test_episode1_via_discovery_router_prefers_exact_machinery_and_records_intelligence_usage(tmp_path: Path) -> None:
+def test_episode1_via_discovery_router_prefers_exact_machinery_and_records_intelligence_usage(
+    tmp_path: Path,
+) -> None:
     """ARD §14-15 integration: Episode1Runner routes through DiscoveryRouter instead
     of a raw callable, real precedence-ordered selection, real accounting of which
     engine kind answered."""
@@ -204,38 +274,67 @@ def test_episode1_via_discovery_router_prefers_exact_machinery_and_records_intel
         calls.append("general")
         return _discover_port_requirement(query)
 
-    router.register(DiscoveryEngine("general-1", DiscoveryEngineKind.GENERAL_EXPLORATORY_INTELLIGENCE, general))
-    router.register(DiscoveryEngine("exact-1", DiscoveryEngineKind.EXACT_REUSABLE_MACHINERY, exact))
+    router.register(
+        DiscoveryEngine(
+            "general-1", DiscoveryEngineKind.GENERAL_EXPLORATORY_INTELLIGENCE, general
+        )
+    )
+    router.register(
+        DiscoveryEngine("exact-1", DiscoveryEngineKind.EXACT_REUSABLE_MACHINERY, exact)
+    )
 
     runner1 = Episode1Runner(
-        state_dir=tmp_path / "state", journal_path=tmp_path / "journal.json", receipt_store_dir=tmp_path / "receipts"
+        state_dir=tmp_path / "state",
+        journal_path=tmp_path / "journal.json",
+        receipt_store_dir=tmp_path / "receipts",
     )
     result = runner1.run(
         semantic_class_id="requires-port",
-        query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        query=UnknownQuery(
+            query_id="q-1", predicate_or_topic="service:api-gateway requires-port"
+        ),
         discovery_router=router,
         equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
-        equivalence_predicate_id="pred-1", probe_input="requires-port",
-        action_iri="urn:action:open-port", target_resource="urn:cap:api-gateway",
+        equivalence_predicate_id="pred-1",
+        probe_input="requires-port",
+        action_iri="urn:action:open-port",
+        target_resource="urn:cap:api-gateway",
     )
     assert result.episode.classification == "KNOWN"
-    assert calls == ["exact"], "general exploratory intelligence must not be invoked when exact machinery already answered"
+    assert calls == ["exact"], (
+        "general exploratory intelligence must not be invoked when exact machinery already answered"
+    )
     assert result.episode.intelligence_usage.frontier_model_calls == 0
 
 
-def test_episode1_via_discovery_router_with_no_matching_engine_is_unknown_not_a_crash(tmp_path: Path) -> None:
+def test_episode1_via_discovery_router_with_no_matching_engine_is_unknown_not_a_crash(
+    tmp_path: Path,
+) -> None:
     router = DiscoveryRouter()
-    router.register(DiscoveryEngine("e1", DiscoveryEngineKind.EXACT_REUSABLE_MACHINERY, lambda q: None))
+    router.register(
+        DiscoveryEngine(
+            "e1", DiscoveryEngineKind.EXACT_REUSABLE_MACHINERY, lambda q: None
+        )
+    )
     runner1 = Episode1Runner(
-        state_dir=tmp_path / "state", journal_path=tmp_path / "journal.json", receipt_store_dir=tmp_path / "receipts"
+        state_dir=tmp_path / "state",
+        journal_path=tmp_path / "journal.json",
+        receipt_store_dir=tmp_path / "receipts",
     )
     result = runner1.run(
         semantic_class_id="requires-port",
-        query=UnknownQuery(query_id="q-1", predicate_or_topic="service:api-gateway requires-port"),
+        query=UnknownQuery(
+            query_id="q-1", predicate_or_topic="service:api-gateway requires-port"
+        ),
         discovery_router=router,
         equivalence_predicate=build_topic_equivalence_predicate("requires-port"),
-        equivalence_predicate_id="pred-1", probe_input="requires-port",
-        action_iri="urn:action:open-port", target_resource="urn:cap:api-gateway",
+        equivalence_predicate_id="pred-1",
+        probe_input="requires-port",
+        action_iri="urn:action:open-port",
+        target_resource="urn:cap:api-gateway",
     )
     assert result.episode.classification == "UNKNOWN"
-    assert result.machine_experience.refusal_code == "REFUSED_NO_DISCOVERY_ENGINE_PRODUCED_CANDIDATE"
+    assert (
+        result.machine_experience.refusal_code
+        == "REFUSED_NO_DISCOVERY_ENGINE_PRODUCED_CANDIDATE"
+    )

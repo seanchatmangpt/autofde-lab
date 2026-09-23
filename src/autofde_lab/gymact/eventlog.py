@@ -30,8 +30,14 @@ class EventLog:
         self._events: list[KernelEvent] = []
         self._next_timestamp = 0
 
-    def append(self, *, episode_id: str, activity: str, subject: str,
-               attributes: dict | None = None) -> KernelEvent:
+    def append(
+        self,
+        *,
+        episode_id: str,
+        activity: str,
+        subject: str,
+        attributes: dict | None = None,
+    ) -> KernelEvent:
         event = KernelEvent(
             episode_id=episode_id,
             activity=activity,

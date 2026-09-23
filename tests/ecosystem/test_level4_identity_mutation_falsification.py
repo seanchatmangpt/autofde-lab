@@ -125,14 +125,18 @@ def _mutate_one_link(log, *, qualifier: str, new_target: str):
         if link.qualifier == qualifier:
             links[i] = ObjectObjectLink(link.source_id, new_target, link.qualifier)
             return replace(log, object_object_links=tuple(links))
-    raise AssertionError(f"PREMISE_GONE: no real {qualifier!r} edge in this trial's graph")
+    raise AssertionError(
+        f"PREMISE_GONE: no real {qualifier!r} edge in this trial's graph"
+    )
 
 
 @pytest.mark.parametrize(
     "qualifier",
     ["actuates_commitment", "authorized_by", "observes_actuation", "caused_by"],
 )
-def test_wrong_but_plausible_identity_swap_is_refused(linked_trial, qualifier: str) -> None:
+def test_wrong_but_plausible_identity_swap_is_refused(
+    linked_trial, qualifier: str
+) -> None:
     """Real edge, real mutation, real refusal.
 
     Each of these four qualifiers is a genuinely constructed, typed
@@ -176,7 +180,6 @@ def test_goal_event_pointing_at_a_different_episode_is_silently_accepted_by_stan
     import hashlib
     import uuid
 
-    from gymact import AllowListAuthorityResolver, GymAct, MaterializationIntent
     from gymact.gyms.switchboard import SwitchboardProvider
     from gymact.models import ActuationIntent
     from gymact.ocel import receipts_to_ocel
@@ -188,21 +191,32 @@ def test_goal_event_pointing_at_a_different_episode_is_silently_accepted_by_stan
         Level4AliveEvidence,
         standing_from_episode,
     )
+    from gymact import AllowListAuthorityResolver, GymAct, MaterializationIntent
 
     def _digest(obj: object) -> str:
-        return hashlib.sha256(json.dumps(obj, sort_keys=True, default=str).encode()).hexdigest()
+        return hashlib.sha256(
+            json.dumps(obj, sort_keys=True, default=str).encode()
+        ).hexdigest()
 
     async def _run() -> dict:
         tmp = linked_trial / "actuation" / "identity_mutation_probe"
         tmp.mkdir(exist_ok=True)
         ledger = SQLiteReceiptLedger(str(tmp / "receipts.sqlite3"))
         auth = "urn:autofde-lab:test-identity-mutation"
-        gym = GymAct(receipt_ledger=ledger, authority_resolver=AllowListAuthorityResolver({auth}))
+        gym = GymAct(
+            receipt_ledger=ledger, authority_resolver=AllowListAuthorityResolver({auth})
+        )
         gym.register_provider(SwitchboardProvider())
-        m = await gym.materialize(MaterializationIntent(provider="switchboard", config={}))
+        m = await gym.materialize(
+            MaterializationIntent(provider="switchboard", config={})
+        )
         episode_id = m.episode.episode_id
         cap = gym.capabilities(episode_id)[0]
-        await gym.act(ActuationIntent(episode_id=episode_id, capability=cap.iri, authority_ref=auth))
+        await gym.act(
+            ActuationIntent(
+                episode_id=episode_id, capability=cap.iri, authority_ref=auth
+            )
+        )
         await gym.teardown(episode_id)
         receipts = gym.episode_receipts(episode_id)
         log = receipts_to_ocel(receipts)
@@ -243,9 +257,14 @@ def test_goal_event_pointing_at_a_different_episode_is_silently_accepted_by_stan
             "relationships": [{"objectId": wrong_episode_id, "qualifier": "episode"}],
         }
     )
-    if not any(et["name"] == GOAL_CONSEQUENCE_EVENT_TYPE for et in mutated_log["eventTypes"]):
+    if not any(
+        et["name"] == GOAL_CONSEQUENCE_EVENT_TYPE for et in mutated_log["eventTypes"]
+    ):
         mutated_log["eventTypes"].append(
-            {"name": GOAL_CONSEQUENCE_EVENT_TYPE, "attributes": [{"name": "passed", "type": "string"}]}
+            {
+                "name": GOAL_CONSEQUENCE_EVENT_TYPE,
+                "attributes": [{"name": "passed", "type": "string"}],
+            }
         )
 
     standing = standing_from_episode(

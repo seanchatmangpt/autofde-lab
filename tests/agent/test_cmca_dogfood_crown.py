@@ -49,7 +49,9 @@ def test_two_episode_dogfood_crown_compiles_experience_and_replays_without_front
         assert len(case.experience_receipt_digest) == 64
 
 
-def test_hosted_receipt_binds_subject_identity_without_changing_semantic_crown() -> None:
+def test_hosted_receipt_binds_subject_identity_without_changing_semantic_crown() -> (
+    None
+):
     crown = run_cmca_dogfood_crown()
     identity = {
         "repository": "seanchatmangpt/autofde-lab",

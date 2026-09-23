@@ -68,9 +68,7 @@ def test_action_binding_invoked_with_real_side_effect_and_recorded_in_ocel() -> 
     assert invocations[0]["bindings"] == {}
 
     validated = log.validate()
-    fire_events = [
-        e for e in validated.events if e.activity == "powl_structural_fire"
-    ]
+    fire_events = [e for e in validated.events if e.activity == "powl_structural_fire"]
     assert len(fire_events) == len(plan_lines)
     ordered = sorted(fire_events, key=lambda e: e.timestamp_ns)
 
@@ -212,7 +210,9 @@ def test_action_bindings_with_no_matching_atom_label_is_refused() -> None:
         replay_structural_fires(
             model,
             session_id="test-session-typo-refusal",
-            action_bindings={"(this-label-does-not-exist)": lambda attrs: "unreachable"},
+            action_bindings={
+                "(this-label-does-not-exist)": lambda attrs: "unreachable"
+            },
         )
 
 

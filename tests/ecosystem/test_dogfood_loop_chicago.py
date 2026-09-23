@@ -109,9 +109,7 @@ def test_ingest_episode_returns_named_unknown_when_no_ocel(
     result = ingest_episode(unactuated_trial)
     assert isinstance(result, Unknown)
     assert result.status == "UNKNOWN"
-    assert result.absent == (
-        str(unactuated_trial / "actuation" / "episode.ocel.json"),
-    )
+    assert result.absent == (str(unactuated_trial / "actuation" / "episode.ocel.json"),)
     assert "Absent, not empty" in result.detail
 
 

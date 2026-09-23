@@ -167,8 +167,7 @@ class NotFound(Unsupported):
             )
         if not ways:
             raise ValueError(
-                "NotFound requires at least one method: 'we looked' is not a "
-                "method"
+                "NotFound requires at least one method: 'we looked' is not a method"
             )
         self.searched = surfaces
         self.methods = ways

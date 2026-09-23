@@ -49,13 +49,34 @@ FORBIDDEN_RUNTIME_MODULES: tuple[str, ...] = (
 )
 
 REQUIRED_CHAIN: tuple[tuple[str, str], ...] = (
-    ("episode1->experience", "did Episode 1 produce an ACTIVE MachineExperience for a real KnownRoute?"),
-    ("episode1_ocel->experience", "does Episode 1's own OCEL evidence relate that exact experience/route, not just the checkpoint's word for it?"),
-    ("episode2->same_route", "did Episode 2 resolve the SAME experience/route Episode 1 produced?"),
-    ("episode2_ocel->route", "does Episode 2's own OCEL evidence relate that exact route?"),
-    ("episode2->fresh_identity", "did Episode 2 use an actuation identity distinct from Episode 1's?"),
-    ("episode2->frontier_clean_recomputed", "does frontier_clean, RECOMPUTED from raw counters, match what Episode 2 claimed?"),
-    ("episode2->anti_vacuity", "did Episode 2's route genuinely execute and get independently verified, not merely classify KNOWN?"),
+    (
+        "episode1->experience",
+        "did Episode 1 produce an ACTIVE MachineExperience for a real KnownRoute?",
+    ),
+    (
+        "episode1_ocel->experience",
+        "does Episode 1's own OCEL evidence relate that exact experience/route, not just the checkpoint's word for it?",
+    ),
+    (
+        "episode2->same_route",
+        "did Episode 2 resolve the SAME experience/route Episode 1 produced?",
+    ),
+    (
+        "episode2_ocel->route",
+        "does Episode 2's own OCEL evidence relate that exact route?",
+    ),
+    (
+        "episode2->fresh_identity",
+        "did Episode 2 use an actuation identity distinct from Episode 1's?",
+    ),
+    (
+        "episode2->frontier_clean_recomputed",
+        "does frontier_clean, RECOMPUTED from raw counters, match what Episode 2 claimed?",
+    ),
+    (
+        "episode2->anti_vacuity",
+        "did Episode 2's route genuinely execute and get independently verified, not merely classify KNOWN?",
+    ),
 )
 
 
@@ -96,7 +117,10 @@ class IndependentStanding:
         return "CONFORMANT_EVIDENCE_RECONSTRUCTED"
 
     def report(self) -> list[str]:
-        return [f"{'OK ' if e.established else '-- '}{e.name}: {e.basis}" for e in self.edges]
+        return [
+            f"{'OK ' if e.established else '-- '}{e.name}: {e.basis}"
+            for e in self.edges
+        ]
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -105,7 +129,12 @@ class IndependentStanding:
             "episode2_id": self.episode2_id,
             "verdict": self.verdict(),
             "edges": [
-                {"name": e.name, "question": e.question, "established": e.established, "basis": e.basis}
+                {
+                    "name": e.name,
+                    "question": e.question,
+                    "established": e.established,
+                    "basis": e.basis,
+                }
                 for e in self.edges
             ],
             "artifacts_seen": list(self.artifacts_seen),
@@ -167,7 +196,9 @@ def _ocel_event_objects(ocel: dict, activity: str) -> list[list[str]]:
         relationships = event.get("relationships", []) or []
         if not isinstance(relationships, list):
             relationships = []
-        out.append([r.get("objectId", "") for r in relationships if isinstance(r, dict)])
+        out.append(
+            [r.get("objectId", "") for r in relationships if isinstance(r, dict)]
+        )
     return out
 
 
@@ -182,13 +213,21 @@ def verify(state_dir: Path, episode1_id: str, episode2_id: str) -> IndependentSt
     seen = [k for k, p in paths.items() if p.is_file()]
     absent = [k for k, p in paths.items() if not p.is_file()]
     if absent:
-        return IndependentStanding(str(state_dir), episode1_id, episode2_id, (), tuple(seen), tuple(absent))
+        return IndependentStanding(
+            str(state_dir), episode1_id, episode2_id, (), tuple(seen), tuple(absent)
+        )
 
     loaded = {k: _load_json(p) for k, p in paths.items()}
     corrupt = [k for k, v in loaded.items() if isinstance(v, _Corrupt)]
     if corrupt:
         return IndependentStanding(
-            str(state_dir), episode1_id, episode2_id, (), tuple(seen), (), artifacts_corrupt=tuple(corrupt)
+            str(state_dir),
+            episode1_id,
+            episode2_id,
+            (),
+            tuple(seen),
+            (),
+            artifacts_corrupt=tuple(corrupt),
         )
     # Every value is now a real dict (or None, handled by `or {}` below) -- `corrupt`
     # being empty proves no `_Corrupt` sentinel survived, so this narrowing is safe.
@@ -206,46 +245,70 @@ def verify(state_dir: Path, episode1_id: str, episode2_id: str) -> IndependentSt
 
     ep1_experience_id = ep1.get("experience_id", "")
     ep1_route_id = ep1.get("known_route_id", "")
-    ep1_active = bool(ep1_experience_id) and bool(ep1_route_id) and ep1.get("classification") == "KNOWN"
+    ep1_active = (
+        bool(ep1_experience_id)
+        and bool(ep1_route_id)
+        and ep1.get("classification") == "KNOWN"
+    )
     add(
-        "episode1->experience", REQUIRED_CHAIN[0][1], ep1_active,
+        "episode1->experience",
+        REQUIRED_CHAIN[0][1],
+        ep1_active,
         f"episode1.experience_id={ep1_experience_id!r} known_route_id={ep1_route_id!r} classification={ep1.get('classification')!r}",
     )
 
     ep1_ocel_objs = _ocel_event_objects(ep1_ocel, "Episode1Completed")
-    ep1_ocel_binds = any(
-        episode1_id in objs and ep1_experience_id in objs for objs in ep1_ocel_objs
-    ) if ep1_experience_id else False
+    ep1_ocel_binds = (
+        any(episode1_id in objs and ep1_experience_id in objs for objs in ep1_ocel_objs)
+        if ep1_experience_id
+        else False
+    )
     add(
-        "episode1_ocel->experience", REQUIRED_CHAIN[1][1], ep1_ocel_binds,
+        "episode1_ocel->experience",
+        REQUIRED_CHAIN[1][1],
+        ep1_ocel_binds,
         f"{len(ep1_ocel_objs)} Episode1Completed event(s); "
         f"{'an' if ep1_ocel_binds else 'no'} explicit event relates episode1_id and experience_id together",
     )
 
     ep2_experience_id = ep2.get("experience_id", "")
     ep2_route_id = ep2.get("known_route_id", "")
-    same_route = bool(ep1_active) and ep2_experience_id == ep1_experience_id and ep2_route_id == ep1_route_id
+    same_route = (
+        bool(ep1_active)
+        and ep2_experience_id == ep1_experience_id
+        and ep2_route_id == ep1_route_id
+    )
     add(
-        "episode2->same_route", REQUIRED_CHAIN[2][1], same_route,
+        "episode2->same_route",
+        REQUIRED_CHAIN[2][1],
+        same_route,
         f"episode2.experience_id={ep2_experience_id!r}/known_route_id={ep2_route_id!r} vs "
         f"episode1.experience_id={ep1_experience_id!r}/known_route_id={ep1_route_id!r}",
     )
 
     ep2_ocel_objs = _ocel_event_objects(ep2_ocel, "Episode2Completed")
-    ep2_ocel_binds = any(
-        episode2_id in objs and ep2_route_id in objs for objs in ep2_ocel_objs
-    ) if ep2_route_id else False
+    ep2_ocel_binds = (
+        any(episode2_id in objs and ep2_route_id in objs for objs in ep2_ocel_objs)
+        if ep2_route_id
+        else False
+    )
     add(
-        "episode2_ocel->route", REQUIRED_CHAIN[3][1], ep2_ocel_binds,
+        "episode2_ocel->route",
+        REQUIRED_CHAIN[3][1],
+        ep2_ocel_binds,
         f"{len(ep2_ocel_objs)} Episode2Completed event(s); "
         f"{'an' if ep2_ocel_binds else 'no'} explicit event relates episode2_id and known_route_id together",
     )
 
     ep1_actuation = ep1.get("actuation_identity", "")
     ep2_actuation = ep2.get("actuation_identity", "")
-    fresh_identity = bool(ep1_actuation) and bool(ep2_actuation) and ep1_actuation != ep2_actuation
+    fresh_identity = (
+        bool(ep1_actuation) and bool(ep2_actuation) and ep1_actuation != ep2_actuation
+    )
     add(
-        "episode2->fresh_identity", REQUIRED_CHAIN[4][1], fresh_identity,
+        "episode2->fresh_identity",
+        REQUIRED_CHAIN[4][1],
+        fresh_identity,
         f"episode1.actuation_identity={ep1_actuation!r} episode2.actuation_identity={ep2_actuation!r}",
     )
 
@@ -262,9 +325,12 @@ def verify(state_dir: Path, episode1_id: str, episode2_id: str) -> IndependentSt
     stored_clean = bool(ep2.get("frontier_clean"))
     frontier_matches = recomputed_clean == stored_clean
     add(
-        "episode2->frontier_clean_recomputed", REQUIRED_CHAIN[5][1], frontier_matches,
+        "episode2->frontier_clean_recomputed",
+        REQUIRED_CHAIN[5][1],
+        frontier_matches,
         f"recomputed={recomputed_clean} stored={stored_clean} "
-        f"(from raw counters: {usage})" + ("" if frontier_matches else " -- MISMATCH, producer's claim not trusted"),
+        f"(from raw counters: {usage})"
+        + ("" if frontier_matches else " -- MISMATCH, producer's claim not trusted"),
     )
 
     anti_vacuity = (
@@ -274,12 +340,16 @@ def verify(state_dir: Path, episode1_id: str, episode2_id: str) -> IndependentSt
         and bool(ep2.get("final_receipt_digest"))
     )
     add(
-        "episode2->anti_vacuity", REQUIRED_CHAIN[6][1], anti_vacuity,
+        "episode2->anti_vacuity",
+        REQUIRED_CHAIN[6][1],
+        anti_vacuity,
         f"route_executed={ep2.get('route_executed')} required_postcondition_verified={ep2.get('required_postcondition_verified')} "
         f"final_receipt_digest={'present' if ep2.get('final_receipt_digest') else 'ABSENT'}",
     )
 
-    return IndependentStanding(str(state_dir), episode1_id, episode2_id, tuple(results), tuple(seen), ())
+    return IndependentStanding(
+        str(state_dir), episode1_id, episode2_id, tuple(results), tuple(seen), ()
+    )
 
 
 def assert_no_runtime_imports() -> None:
@@ -293,7 +363,10 @@ def assert_no_runtime_imports() -> None:
 
 def main(argv: list[str]) -> int:
     if len(argv) != 4:
-        print("usage: fresh_consumer.py <state_dir> <episode1_id> <episode2_id>", file=sys.stderr)
+        print(
+            "usage: fresh_consumer.py <state_dir> <episode1_id> <episode2_id>",
+            file=sys.stderr,
+        )
         return 2
     standing = verify(Path(argv[1]), argv[2], argv[3])
     assert_no_runtime_imports()

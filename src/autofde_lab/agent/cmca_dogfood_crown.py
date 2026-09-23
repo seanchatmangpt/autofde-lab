@@ -597,8 +597,7 @@ class DogfoodCrownResult:
         }
         if subject_identity is not None:
             payload["subject_identity"] = {
-                str(key): str(value)
-                for key, value in sorted(subject_identity.items())
+                str(key): str(value) for key, value in sorted(subject_identity.items())
             }
             payload["artifact_receipt_hash"] = _digest(payload)
         return payload

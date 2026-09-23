@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 from typing import Union
+
 import rdflib
 from rdflib.compare import to_canonical_graph
 

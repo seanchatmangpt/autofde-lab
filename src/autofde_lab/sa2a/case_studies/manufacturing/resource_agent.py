@@ -32,6 +32,7 @@ this package's real relative-import path. `BASELINE`, `RESOURCE_IDS`,
 `seed_all_agents` are byte-identical to
 ``.claude/scratch/sa2a-mfg-01/resource_agent.py``.
 """
+
 from __future__ import annotations
 
 import random
@@ -78,7 +79,9 @@ class ResourceAgent:
 
     def __init__(self, resource_id: str, seed: int, log_ref: LogRef) -> None:
         if resource_id not in RESOURCE_IDS:
-            raise ValueError(f"unknown resource_id {resource_id!r}, expected one of {RESOURCE_IDS}")
+            raise ValueError(
+                f"unknown resource_id {resource_id!r}, expected one of {RESOURCE_IDS}"
+            )
         self.resource_id = resource_id
         self._log_ref = log_ref
         self._rng = random.Random(f"{seed}:{resource_id}")
@@ -97,7 +100,9 @@ class ResourceAgent:
         if below_target:
             proposal_id = f"{self.resource_id}-r{round_index}-prop"
             plan_object_id = proposal_id
-            requested_energy_kwh = BASELINE[self.resource_id]["energy_kwh"] * ADJUSTMENT_ENERGY_FRACTION
+            requested_energy_kwh = (
+                BASELINE[self.resource_id]["energy_kwh"] * ADJUSTMENT_ENERGY_FRACTION
+            )
             proposal = {
                 "proposal_id": proposal_id,
                 "resource_id": self.resource_id,

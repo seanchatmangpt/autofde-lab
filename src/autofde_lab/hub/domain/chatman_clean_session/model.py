@@ -10,7 +10,6 @@ from enum import Enum
 from hashlib import sha256
 from typing import Any, Mapping, Sequence
 
-
 PRIMARY_STANDINGS = frozenset(
     {
         "UNKNOWN",
@@ -347,9 +346,7 @@ class ExecutionReceipt:
             "task_identity": self.task_identity,
             "standing": self.standing,
             "state_digest": self.state_digest,
-            "broker_receipts": [
-                receipt.receipt_id for receipt in self.broker_receipts
-            ],
+            "broker_receipts": [receipt.receipt_id for receipt in self.broker_receipts],
             "actions": [action.to_dict() for action in self.actions],
             "replay_of": self.replay_of,
         }
@@ -407,8 +404,7 @@ class ExecutionReceipt:
             state_digest=str(value["state_digest"]),
             state=dict(value["state"]),
             broker_receipts=tuple(
-                BrokerReceipt.from_mapping(item)
-                for item in value["broker_receipts"]
+                BrokerReceipt.from_mapping(item) for item in value["broker_receipts"]
             ),
             actions=tuple(actions),
             replay_of=(
@@ -424,9 +420,7 @@ class ExecutionReceipt:
             "standing": self.standing,
             "state_digest": self.state_digest,
             "state": dict(self.state),
-            "broker_receipts": [
-                receipt.to_dict() for receipt in self.broker_receipts
-            ],
+            "broker_receipts": [receipt.to_dict() for receipt in self.broker_receipts],
             "actions": [action.to_dict() for action in self.actions],
             "replay_of": self.replay_of,
         }

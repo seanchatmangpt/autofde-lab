@@ -26,8 +26,6 @@ from __future__ import annotations
 import json
 from typing import Callable
 
-import pytest
-
 from autofde_lab.ocel import (
     EventObjectLink,
     ObjectChange,
@@ -48,7 +46,12 @@ def lawful_log() -> OcelLog:
     return (
         OcelLog()
         .with_objects(OcelObject("o1", "order"))
-        .append_event("e1", "place", [("o1", "belongs_to")], timestamp_ns=1_700_000_000_000_000_000)
+        .append_event(
+            "e1",
+            "place",
+            [("o1", "belongs_to")],
+            timestamp_ns=1_700_000_000_000_000_000,
+        )
     )
 
 
@@ -80,7 +83,9 @@ def _collect(cases: dict[str, tuple]) -> None:
         for name, args in cases.items()
         if (problem := _expect_refusal(*args)) is not None
     }
-    assert not failures, f"{len(failures)}/{len(cases)} adversarial cases lost their refusal: {failures}"
+    assert not failures, (
+        f"{len(failures)}/{len(cases)} adversarial cases lost their refusal: {failures}"
+    )
 
 
 # ── the lawful baseline ───────────────────────────────────────────────────
@@ -118,6 +123,7 @@ def test_structural_refusals_all_fire_with_the_right_name_and_detail():
     still executed and named individually; the accumulation only changes how the
     failures are *reported*, never whether they are *checked*.
     """
+
     def _objectless_log():
         return OcelLog.new(objects=[OcelObject("o1", "order")])
 
@@ -130,21 +136,29 @@ def test_structural_refusals_all_fire_with_the_right_name_and_detail():
         )
 
     def _dangling_e2o():
-        return OcelLog().with_objects(OcelObject("o1", "order")).append_event(
-            "e1", "place", ["missing"]
+        return (
+            OcelLog()
+            .with_objects(OcelObject("o1", "order"))
+            .append_event("e1", "place", ["missing"])
         )
 
     def _link_from_unknown_event():
         return OcelLog.new(
             objects=[OcelObject("o1", "order")],
             events=[OcelEvent("e1", "place")],
-            event_object_links=[EventObjectLink("e1", "o1"), EventObjectLink("ghost", "o1")],
+            event_object_links=[
+                EventObjectLink("e1", "o1"),
+                EventObjectLink("ghost", "o1"),
+            ],
         )
 
     def _dangling_o2o():
         base = lawful_log()
         return OcelLog.new(
-            base.objects, base.events, base.event_object_links, [ObjectObjectLink("o1", "nope")]
+            base.objects,
+            base.events,
+            base.event_object_links,
+            [ObjectObjectLink("o1", "nope")],
         )
 
     def _dangling_object_change():
@@ -233,7 +247,9 @@ def test_time_stable_attributes_may_not_change_but_others_may():
                         "type": "place",
                         "time": "2026-01-01T00:00:00Z",
                         "attributes": [],
-                        "relationships": [{"objectId": "o1", "qualifier": "belongs_to"}],
+                        "relationships": [
+                            {"objectId": "o1", "qualifier": "belongs_to"}
+                        ],
                     }
                 ],
                 "objects": [
@@ -241,7 +257,11 @@ def test_time_stable_attributes_may_not_change_but_others_may():
                         "id": "o1",
                         "type": "order",
                         "attributes": [
-                            {"name": "type", "value": "invoice", "time": "2026-02-01T00:00:00Z"}
+                            {
+                                "name": "type",
+                                "value": "invoice",
+                                "time": "2026-02-01T00:00:00Z",
+                            }
                         ],
                         "relationships": [],
                     }
@@ -269,7 +289,9 @@ def test_time_stable_attributes_may_not_change_but_others_may():
             ObjectChange("o1", "city", OcelAttributeValue.string("Aachen"), 9),
         ],
     )
-    assert mutable.validate() is mutable, "a non-time-stable attribute was wrongly refused"
+    assert mutable.validate() is mutable, (
+        "a non-time-stable attribute was wrongly refused"
+    )
 
 
 def test_strict_qualifiers_is_opt_in_and_bites_both_link_tables():
@@ -280,15 +302,23 @@ def test_strict_qualifiers_is_opt_in_and_bites_both_link_tables():
     formally admissible; the lenient assertions below are what prove the flag is
     genuinely opt-in rather than always-on.
     """
-    unqualified_e2o = OcelLog().with_objects(OcelObject("o1", "order")).append_event(
-        "e1", "place", ["o1"]
+    unqualified_e2o = (
+        OcelLog()
+        .with_objects(OcelObject("o1", "order"))
+        .append_event("e1", "place", ["o1"])
     )
     base = lawful_log().with_objects(OcelObject("i1", "item"))
     unqualified_o2o = OcelLog.new(
-        base.objects, base.events, base.event_object_links, [ObjectObjectLink("o1", "i1", None)]
+        base.objects,
+        base.events,
+        base.event_object_links,
+        [ObjectObjectLink("o1", "i1", None)],
     )
     qualified_o2o = OcelLog.new(
-        base.objects, base.events, base.event_object_links, [ObjectObjectLink("o1", "i1", "contains")]
+        base.objects,
+        base.events,
+        base.event_object_links,
+        [ObjectObjectLink("o1", "i1", "contains")],
     )
 
     # lenient by default
@@ -312,6 +342,7 @@ def test_strict_qualifiers_is_opt_in_and_bites_both_link_tables():
 
 def test_locality_refusals_fire_and_a_lawful_hierarchy_passes():
     """Collapses four former items — three named refusals plus the positive control."""
+
     def _no_team():
         return (
             OcelLog()
@@ -336,7 +367,9 @@ def test_locality_refusals_fire_and_a_lawful_hierarchy_passes():
         return (
             OcelLog()
             .with_objects(
-                OcelObject("t1", "team"), OcelObject("t2", "team"), OcelObject("p2", "employee")
+                OcelObject("t1", "team"),
+                OcelObject("t2", "team"),
+                OcelObject("p2", "employee"),
             )
             .append_event("evt1", "create_team", ["t1", "p2"])
             .append_event("evt2", "create_team", ["t2", "p2"])
@@ -345,7 +378,10 @@ def test_locality_refusals_fire_and_a_lawful_hierarchy_passes():
     cases = {
         "no-reference-object": (_no_team, OcelRefusal.MISSING_REFERENCE_OBJECT),
         "two-reference-objects": (_two_teams, OcelRefusal.MULTIPLE_REFERENCE_OBJECTS),
-        "child-moved-between-parents": (_steals_a_member, OcelRefusal.VIOLATES_LOCALITY_PRINCIPLE),
+        "child-moved-between-parents": (
+            _steals_a_member,
+            OcelRefusal.VIOLATES_LOCALITY_PRINCIPLE,
+        ),
     }
     failures = {}
     for name, (build, expected) in cases.items():
@@ -435,7 +471,12 @@ def rich_log() -> OcelLog:
         ],
         object_object_links=[ObjectObjectLink("o1", "i1", "contains")],
         object_changes=[
-            ObjectChange("o1", "status", OcelAttributeValue.string("shipped"), 1_700_000_060_000_000_000)
+            ObjectChange(
+                "o1",
+                "status",
+                OcelAttributeValue.string("shipped"),
+                1_700_000_060_000_000_000,
+            )
         ],
     )
 
@@ -456,7 +497,10 @@ def test_round_trip_preserves_the_whole_model_not_merely_its_shape():
         failures.append("round trip is not value-equal")
     if restored is log:
         failures.append("round trip returned the same object, so it proved nothing")
-    if attrs["opened"].kind is not OcelValueKind.TIME or attrs["opened"].value != 1_000_000_007:
+    if (
+        attrs["opened"].kind is not OcelValueKind.TIME
+        or attrs["opened"].value != 1_000_000_007
+    ):
         failures.append(f"typed time value degraded to {attrs['opened']!r}")
     if attrs["note"].kind is not OcelValueKind.NULL:
         failures.append(f"null value degraded to {attrs['note']!r}")
@@ -477,7 +521,10 @@ def test_digest_is_stable_across_equal_logs_and_sensitive_to_any_change():
     failures = []
     if rich_log().digest() != rich_log().digest():
         failures.append("digest is not stable across two equal logs")
-    if OcelLog.from_ocel2_json(rich_log().to_ocel2_json()).digest() != rich_log().digest():
+    if (
+        OcelLog.from_ocel2_json(rich_log().to_ocel2_json()).digest()
+        != rich_log().digest()
+    ):
         failures.append("digest is not stable across a round trip")
     if rich_log().append_event("e3", "cancel", ["o1"]).digest() == rich_log().digest():
         failures.append("digest did not change when the log changed")

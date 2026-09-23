@@ -38,12 +38,16 @@ def test_pipeline_composes_the_four_real_documented_stages_in_declared_order():
     pipeline = KubernetesDiagnosisPipeline()
 
     assert isinstance(pipeline.summarize, dspy.Predict)
-    assert pipeline.summarize.signature is SummarizeKubernetesResourceState \
+    assert (
+        pipeline.summarize.signature is SummarizeKubernetesResourceState
         or pipeline.summarize.signature == SummarizeKubernetesResourceState
+    )
 
     assert isinstance(pipeline.classify, dspy.Predict)
-    assert pipeline.classify.signature is ClassifyKubernetesAnomaly \
+    assert (
+        pipeline.classify.signature is ClassifyKubernetesAnomaly
         or pipeline.classify.signature == ClassifyKubernetesAnomaly
+    )
 
     assert isinstance(pipeline.diagnose, dspy.ChainOfThought)
     # ChainOfThought wraps its real underlying Predict as `.predict`, and
@@ -56,8 +60,10 @@ def test_pipeline_composes_the_four_real_documented_stages_in_declared_order():
     assert set(DiagnoseKubernetesFault.model_fields) <= compiled_field_names
 
     assert isinstance(pipeline.propose_remediation, dspy.Predict)
-    assert pipeline.propose_remediation.signature is ProposeKubernetesRemediation \
+    assert (
+        pipeline.propose_remediation.signature is ProposeKubernetesRemediation
         or pipeline.propose_remediation.signature == ProposeKubernetesRemediation
+    )
 
 
 def test_pipeline_forward_signature_names_every_stage_input_it_needs():
@@ -67,7 +73,12 @@ def test_pipeline_forward_signature_names_every_stage_input_it_needs():
     import inspect
 
     params = set(inspect.signature(KubernetesDiagnosisPipeline.forward).parameters)
-    assert {"namespace", "symptom_description", "raw_resource_json", "expected_state"} <= params
+    assert {
+        "namespace",
+        "symptom_description",
+        "raw_resource_json",
+        "expected_state",
+    } <= params
 
 
 # ── Live Groq end-to-end: named skip, never a mock, when GROQ_API_KEY is unset ──
@@ -120,4 +131,7 @@ def test_live_groq_full_pipeline_run_produces_a_real_prediction_with_every_stage
         assert hasattr(result, field), f"missing real stage output field: {field}"
     assert isinstance(result.summary, str) and len(result.summary) > 0
     assert isinstance(result.root_cause, str) and len(result.root_cause) > 0
-    assert isinstance(result.remediation_action, str) and len(result.remediation_action) > 0
+    assert (
+        isinstance(result.remediation_action, str)
+        and len(result.remediation_action) > 0
+    )

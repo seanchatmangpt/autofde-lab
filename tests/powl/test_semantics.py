@@ -97,36 +97,80 @@ def test_exact_language_of_every_hand_computable_model():
         ("silent", Silent(), {}, {()}),
         ("start", Start(), {}, {()}),
         # partial orders
-        ("unordered pair gives both orders", PartialOrder((A, B)), {},
-         {("a", "b"), ("b", "a")}),
-        ("edge a->b gives only one order", PartialOrder((A, B), frozenset({edge(0, 1)})),
-         {}, {("a", "b")}),
-        ("silent child contributes no symbol",
-         PartialOrder((A, Silent()), frozenset({edge(0, 1)})), {}, {("a",)}),
+        (
+            "unordered pair gives both orders",
+            PartialOrder((A, B)),
+            {},
+            {("a", "b"), ("b", "a")},
+        ),
+        (
+            "edge a->b gives only one order",
+            PartialOrder((A, B), frozenset({edge(0, 1)})),
+            {},
+            {("a", "b")},
+        ),
+        (
+            "silent child contributes no symbol",
+            PartialOrder((A, Silent()), frozenset({edge(0, 1)})),
+            {},
+            {("a",)},
+        ),
         # a -> c, b unordered with both
-        ("three atoms with one edge", PartialOrder((A, B, C), frozenset({edge(0, 2)})),
-         {}, {("a", "b", "c"), ("a", "c", "b"), ("b", "a", "c")}),
+        (
+            "three atoms with one edge",
+            PartialOrder((A, B, C), frozenset({edge(0, 2)})),
+            {},
+            {("a", "b", "c"), ("a", "c", "b"), ("b", "a", "c")},
+        ),
         # (a -> c) concurrent with b: b may land between a and c
-        ("nested partial orders interleave symbol by symbol",
-         PartialOrder((inner_ac, B)), {},
-         {("a", "c", "b"), ("a", "b", "c"), ("b", "a", "c")}),
-        ("frequency repeats the body",
-         PartialOrder((A, B), frozenset({edge(0, 1)}), Frequency(0, 2)), {},
-         {(), ("a", "b"), ("a", "b", "a", "b")}),
-        ("unbounded frequency is capped, not refused",
-         PartialOrder((A, Silent()), frozenset({edge(0, 1)}), Frequency(1, None)),
-         {"max_unrolls": 3}, {("a",), ("a", "a"), ("a", "a", "a")}),
+        (
+            "nested partial orders interleave symbol by symbol",
+            PartialOrder((inner_ac, B)),
+            {},
+            {("a", "c", "b"), ("a", "b", "c"), ("b", "a", "c")},
+        ),
+        (
+            "frequency repeats the body",
+            PartialOrder((A, B), frozenset({edge(0, 1)}), Frequency(0, 2)),
+            {},
+            {(), ("a", "b"), ("a", "b", "a", "b")},
+        ),
+        (
+            "unbounded frequency is capped, not refused",
+            PartialOrder((A, Silent()), frozenset({edge(0, 1)}), Frequency(1, None)),
+            {"max_unrolls": 3},
+            {("a",), ("a", "a"), ("a", "a", "a")},
+        ),
         # choice graphs
-        ("choice graph is the union of its branches", two_branch_choice(), {},
-         {("a",), ("b",)}),
-        ("cyclic choice graph at max_unrolls=1", _self_looping_a(),
-         {"max_unrolls": 1}, {("a",)}),
-        ("cyclic choice graph at max_unrolls=3", _self_looping_a(),
-         {"max_unrolls": 3}, {("a",), ("a", "a"), ("a", "a", "a")}),
-        ("branches of different lengths", ChoiceGraph(
-            (Silent(), Silent(), inner_ab, C),
-            frozenset({cedge(0, 2), cedge(2, 1), cedge(0, 3), cedge(3, 1)}),
-            start=0, end=1), {}, {("a", "b"), ("c",)}),
+        (
+            "choice graph is the union of its branches",
+            two_branch_choice(),
+            {},
+            {("a",), ("b",)},
+        ),
+        (
+            "cyclic choice graph at max_unrolls=1",
+            _self_looping_a(),
+            {"max_unrolls": 1},
+            {("a",)},
+        ),
+        (
+            "cyclic choice graph at max_unrolls=3",
+            _self_looping_a(),
+            {"max_unrolls": 3},
+            {("a",), ("a", "a"), ("a", "a", "a")},
+        ),
+        (
+            "branches of different lengths",
+            ChoiceGraph(
+                (Silent(), Silent(), inner_ab, C),
+                frozenset({cedge(0, 2), cedge(2, 1), cedge(0, 3), cedge(3, 1)}),
+                start=0,
+                end=1,
+            ),
+            {},
+            {("a", "b"), ("c",)},
+        ),
     ]
 
     failures = Failures()
@@ -154,13 +198,25 @@ def test_bounds_raise_rather_than_truncating():
 
     cases = [
         ("max_traces exceeded", lambda: lang(po3, max_traces=3)),
-        ("cyclic choice graph exceeds max_traces",
-         lambda: lang(ChoiceGraph(
-             (Silent(), Silent(), A),
-             frozenset({cedge(0, 2), cedge(2, 2), cedge(2, 1)}),
-             start=0, end=1), max_traces=2, max_unrolls=5)),
-        ("explicit frequency beyond the unroll cap",
-         lambda: lang(PartialOrder((A, B), frequency=Frequency(1, 9)), max_unrolls=3)),
+        (
+            "cyclic choice graph exceeds max_traces",
+            lambda: lang(
+                ChoiceGraph(
+                    (Silent(), Silent(), A),
+                    frozenset({cedge(0, 2), cedge(2, 2), cedge(2, 1)}),
+                    start=0,
+                    end=1,
+                ),
+                max_traces=2,
+                max_unrolls=5,
+            ),
+        ),
+        (
+            "explicit frequency beyond the unroll cap",
+            lambda: lang(
+                PartialOrder((A, B), frequency=Frequency(1, 9)), max_unrolls=3
+            ),
+        ),
         ("nonsense bounds", lambda: language(A, max_traces=0, max_unrolls=1)),
     ]
     failures = Failures()
@@ -178,8 +234,11 @@ def test_enabled_labels_of_every_shape():
         ("silent", Silent(), set()),
         ("unordered pair", PartialOrder((A, B)), {"a", "b"}),
         ("precedence a->b", PartialOrder((A, B), frozenset({edge(0, 1)})), {"a"}),
-        ("nullable predecessor is seen through",
-         PartialOrder((Silent(), B), frozenset({edge(0, 1)})), {"b"}),
+        (
+            "nullable predecessor is seen through",
+            PartialOrder((Silent(), B), frozenset({edge(0, 1)})),
+            {"b"},
+        ),
         ("choice graph is the union of its branches", two_branch_choice(), {"a", "b"}),
     ]
     failures = Failures()

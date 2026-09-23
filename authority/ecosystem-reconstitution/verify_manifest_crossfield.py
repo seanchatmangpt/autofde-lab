@@ -82,7 +82,9 @@ def check_content_receipts(manifest: dict) -> tuple[bool, list[str]]:
                         f"real content at that sha hashes to {actual_digest}"
                     )
     if not failures:
-        return True, [f"{checked} content_receipts entries verified against real GitHub content"]
+        return True, [
+            f"{checked} content_receipts entries verified against real GitHub content"
+        ]
     return False, failures
 
 
@@ -103,7 +105,9 @@ def check_source_id_uniqueness(manifest: dict) -> tuple[bool, list[str]]:
                     f"(must be unique within a repository entry)"
                 )
     if not failures:
-        return True, [f"sources[].id uniqueness held across {checked_repos} repository entries"]
+        return True, [
+            f"sources[].id uniqueness held across {checked_repos} repository entries"
+        ]
     return False, failures
 
 
@@ -160,7 +164,9 @@ def check_depends_on_resolves(manifest: dict) -> tuple[bool, list[str]]:
                     f"(known repos: {sorted(known_repos)})"
                 )
     if not failures:
-        return True, [f"{checked} depends_on references all resolved to real repositories[] entries"]
+        return True, [
+            f"{checked} depends_on references all resolved to real repositories[] entries"
+        ]
     return False, failures
 
 
@@ -175,7 +181,9 @@ def check_expected_repository_count(manifest: dict) -> tuple[bool, list[str]]:
     expected = manifest.get("expected_repository_count")
     actual = len(manifest.get("repositories", []))
     if expected == actual:
-        return True, [f"expected_repository_count ({expected}) == len(repositories) ({actual})"]
+        return True, [
+            f"expected_repository_count ({expected}) == len(repositories) ({actual})"
+        ]
     return False, [
         f"expected_repository_count declares {expected} but repositories[] "
         f"contains {actual} entries -- these must be equal"
@@ -187,7 +195,10 @@ CHECKS = [
     ("sources[].id uniqueness within repo (gap 2)", check_source_id_uniqueness),
     ("sha uniqueness across repositories (gap 3)", check_sha_cross_repo_uniqueness),
     ("depends_on dangling-reference check (gap 5)", check_depends_on_resolves),
-    ("expected_repository_count == len(repositories) (gap 6)", check_expected_repository_count),
+    (
+        "expected_repository_count == len(repositories) (gap 6)",
+        check_expected_repository_count,
+    ),
 ]
 
 

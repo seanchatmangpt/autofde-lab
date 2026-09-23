@@ -42,26 +42,25 @@ from __future__ import annotations
 # Must patch BEFORE any imports that might trigger pyshex submodules
 try:
     import typing
-    if not hasattr(typing, 'io'):
+
+    if not hasattr(typing, "io"):
         import io
+
         typing.io = io  # type: ignore
 except Exception:
     pass  # If patching fails, let import errors propagate naturally
 
 import dataclasses
-import hashlib
 import multiprocessing
-import os
-import shutil
-import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 # ---------- Hard dependency gate (no placeholders) ----------
+
 
 def _require_import(module: str, pip_hint: str) -> Any:
     try:
@@ -91,40 +90,25 @@ pyoxigraph = _require_import("pyoxigraph", "pyoxigraph")
 # SpiffWorkflow (BPMN executor)
 spiff = _require_import("SpiffWorkflow", "SpiffWorkflow")
 
-from rdflib import BNode, ConjunctiveGraph, Graph, Literal, Namespace, URIRef
-from rdflib.namespace import RDF, RDFS, XSD
-
 from blake3 import blake3  # type: ignore
+from owlrl import DeductiveClosure, OWLRL_Semantics  # type: ignore
 
 # pyshacl.validate signature is stable in common releases
 from pyshacl import validate as shacl_validate  # type: ignore
-
-from owlrl import DeductiveClosure, OWLRL_Semantics  # type: ignore
+from rdflib import BNode, ConjunctiveGraph, Graph, Literal, Namespace, URIRef
+from rdflib.namespace import RDF, XSD
 
 # SpiffWorkflow imports (BPMN)
 from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnParser  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 
+from autofde_lab.ofmf.event_adapter import EventAdapter
+
 # Import utilities from kgc_ofmf_utils
 from autofde_lab.ofmf.kgc_ofmf_utils import (
     KH,
-    claude_event_to_iri,
-    select_hooks_by_event,
-    sparql_select,
-    shacl_gate,
-    enforce_shacl_gate,
-    canonical_hash_rdf,
-    write_receipt_bundle,
-    ReceiptProofInfo,
-    ReceiptMetaInfo,
-    now_ns,
-    new_graph,
-    load_graph,
-    write_graph,
     OFMFError,
-    SHACLValidationError,
 )
-from autofde_lab.ofmf.event_adapter import EventAdapter
 
 # ---------- Namespaces ----------
 
@@ -133,6 +117,7 @@ XES = Namespace("https://chatmangpt.com/kgc/xes#")
 OTEL = Namespace("https://chatmangpt.com/kgc/otel#")
 
 # ---------- Utility: canonical RDF bytes for receipts ----------
+
 
 def graph_to_canonical_nquads_bytes(g: ConjunctiveGraph) -> bytes:
     """
@@ -159,6 +144,7 @@ def blake3_hex(data: bytes) -> str:
 
 
 # ---------- OFMF Delta ----------
+
 
 @dataclass(frozen=True)
 class RDFDelta:
@@ -187,7 +173,10 @@ class RDFDelta:
         graph.add((delta_iri, RDF.type, KH.Delta))
 
         # Add quad additions
-        for s, p, o, g_ctx in sorted(self.adds, key=lambda x: (str(x[0]), str(x[1]), str(x[2]), str(x[3]) if x[3] else "")):
+        for s, p, o, g_ctx in sorted(
+            self.adds,
+            key=lambda x: (str(x[0]), str(x[1]), str(x[2]), str(x[3]) if x[3] else ""),
+        ):
             quad_node = BNode()
             graph.add((delta_iri, KH.addQuad, quad_node))
             graph.add((quad_node, RDF.type, KH.QuadAddition))
@@ -198,7 +187,10 @@ class RDFDelta:
                 graph.add((quad_node, KH.graph, g_ctx))
 
         # Add quad deletions
-        for s, p, o, g_ctx in sorted(self.deletes, key=lambda x: (str(x[0]), str(x[1]), str(x[2]), str(x[3]) if x[3] else "")):
+        for s, p, o, g_ctx in sorted(
+            self.deletes,
+            key=lambda x: (str(x[0]), str(x[1]), str(x[2]), str(x[3]) if x[3] else ""),
+        ):
             quad_node = BNode()
             graph.add((delta_iri, KH.deleteQuad, quad_node))
             graph.add((quad_node, RDF.type, KH.QuadDeletion))
@@ -288,11 +280,17 @@ class RDFDelta:
         lines = []
 
         # Sort adds
-        for s, p, o, g in sorted(self.adds, key=lambda x: (str(x[0]), str(x[1]), str(x[2]), str(x[3]) if x[3] else "")):
+        for s, p, o, g in sorted(
+            self.adds,
+            key=lambda x: (str(x[0]), str(x[1]), str(x[2]), str(x[3]) if x[3] else ""),
+        ):
             lines.append(f"ADD {s} {p} {o} {g or ''}")
 
         # Sort deletes
-        for s, p, o, g in sorted(self.deletes, key=lambda x: (str(x[0]), str(x[1]), str(x[2]), str(x[3]) if x[3] else "")):
+        for s, p, o, g in sorted(
+            self.deletes,
+            key=lambda x: (str(x[0]), str(x[1]), str(x[2]), str(x[3]) if x[3] else ""),
+        ):
             lines.append(f"DEL {s} {p} {o} {g or ''}")
 
         return "\n".join(lines).encode("utf-8")
@@ -300,12 +298,14 @@ class RDFDelta:
 
 # ---------- Hook model (loaded from Turtle) ----------
 
+
 @dataclass(frozen=True)
 class HookTrigger:
     """
     Exactly one trigger dialect is allowed per trigger node.
     Trigger nodes are RDF resources; content is referenced as RDF, not stringly-typed.
     """
+
     kind: str  # 'sparql' | 'shacl' | 'owl' | 'n3' | 'datalog' | 'shex'
     ref: URIRef
 
@@ -319,6 +319,7 @@ class HookAction:
       - Emit OTEL/XES records (as RDF event quads)
       - Route to BPMN executor (emit BPMN + submit to SpiffWorkflow)
     """
+
     kind: str  # 'construct' | 'emit_bpmn' | 'emit_event' | 'route_to_bpmn'
     ref: URIRef
 
@@ -327,8 +328,12 @@ class HookAction:
 class KnowledgeHook:
     hook_id: str
     iri: URIRef
-    phase: Optional[str]  # Optional for event-based hooks (validate-before-write | transform-after-write | etc)
-    event: Optional[str]  # Optional for phase-based hooks (e.g., "PostToolUse", "SessionStart")
+    phase: Optional[
+        str
+    ]  # Optional for event-based hooks (validate-before-write | transform-after-write | etc)
+    event: Optional[
+        str
+    ]  # Optional for phase-based hooks (e.g., "PostToolUse", "SessionStart")
     trigger: HookTrigger
     actions: Tuple[HookAction, ...]
     depends_on: Tuple[str, ...]
@@ -336,6 +341,7 @@ class KnowledgeHook:
 
 
 # ---------- Hook pack loader (Turtle => hook objects) ----------
+
 
 class HookPackLoader:
     def __init__(self, validate: bool = True) -> None:
@@ -347,9 +353,15 @@ class HookPackLoader:
                      Set to False only for testing invalid packs. Default: True (lawful).
         """
         self.validate = validate
-        self.law_pack_path = Path(__file__).parent.parent.parent.parent / "ontology" / "ofmf-law.shacl.ttl"
+        self.law_pack_path = (
+            Path(__file__).parent.parent.parent.parent
+            / "ontology"
+            / "ofmf-law.shacl.ttl"
+        )
 
-    def load_from_turtle(self, ttl_path: Path) -> Tuple[ConjunctiveGraph, List[KnowledgeHook]]:
+    def load_from_turtle(
+        self, ttl_path: Path
+    ) -> Tuple[ConjunctiveGraph, List[KnowledgeHook]]:
         """
         Load hook pack from Turtle file.
 
@@ -385,7 +397,11 @@ class HookPackLoader:
             event_iri = ds.value(trigger_node, KH.event)
             if event_iri is not None:
                 # Event-based hook: parse event name from IRI
-                event_name = str(event_iri).split('#')[-1] if '#' in str(event_iri) else str(event_iri).split('/')[-1]
+                event_name = (
+                    str(event_iri).split("#")[-1]
+                    if "#" in str(event_iri)
+                    else str(event_iri).split("/")[-1]
+                )
                 phase = None
             else:
                 # Phase-based hook: parse phase
@@ -395,7 +411,11 @@ class HookPackLoader:
                         f"Hook {hook_iri} must have either kh:phase (phase-based) or trigger with kh:event (event-based)"
                     )
                 # Store the local name as the phase string for internal use
-                phase = str(phase_iri).split('#')[-1] if '#' in str(phase_iri) else str(phase_iri).split('/')[-1]
+                phase = (
+                    str(phase_iri).split("#")[-1]
+                    if "#" in str(phase_iri)
+                    else str(phase_iri).split("/")[-1]
+                )
                 event_name = None
 
             # Validate: hook must have exactly one of phase OR event
@@ -417,7 +437,9 @@ class HookPackLoader:
                 try:
                     priority = int(priority_lit)
                 except (ValueError, TypeError):
-                    raise RuntimeError(f"kh:priority must be an integer for hook {hook_iri}: {priority_lit}")
+                    raise RuntimeError(
+                        f"kh:priority must be an integer for hook {hook_iri}: {priority_lit}"
+                    )
             else:
                 priority = 0  # Default priority
 
@@ -438,7 +460,9 @@ class HookPackLoader:
         hooks.sort(key=lambda h: (-h.priority, h.hook_id))
         return ds, hooks
 
-    def _validate_hook_pack(self, hook_pack_ds: ConjunctiveGraph, ttl_path: Path) -> None:
+    def _validate_hook_pack(
+        self, hook_pack_ds: ConjunctiveGraph, ttl_path: Path
+    ) -> None:
         """
         Validate hook pack against OFMF Law Pack (constitutional gate).
 
@@ -501,12 +525,18 @@ class HookPackLoader:
                 yield str(dep)
             else:
                 # dependency references are hookIds; enforce literal to keep determinism
-                raise RuntimeError(f"dependsOn must be a literal hookId for {hook_iri}: {dep}")
+                raise RuntimeError(
+                    f"dependsOn must be a literal hookId for {hook_iri}: {dep}"
+                )
 
-    def _parse_actions(self, ds: ConjunctiveGraph, hook_iri: URIRef) -> Iterable[HookAction]:
+    def _parse_actions(
+        self, ds: ConjunctiveGraph, hook_iri: URIRef
+    ) -> Iterable[HookAction]:
         for act_node in ds.objects(hook_iri, KH.action):
             if not isinstance(act_node, (URIRef, BNode)):
-                raise RuntimeError(f"KH.action must point to a node: {hook_iri} -> {act_node}")
+                raise RuntimeError(
+                    f"KH.action must point to a node: {hook_iri} -> {act_node}"
+                )
 
             # Determine action kind by rdf:type
             if (act_node, RDF.type, KH.SparqlConstructAction) in ds:
@@ -522,7 +552,9 @@ class HookPackLoader:
                 ref = self._require_iri(ds, act_node, KH.bpmnGraph)
                 yield HookAction(kind="route_to_bpmn", ref=ref)
             else:
-                raise RuntimeError(f"Unknown action type for {act_node} in hook {hook_iri}")
+                raise RuntimeError(
+                    f"Unknown action type for {act_node} in hook {hook_iri}"
+                )
 
     def _parse_trigger(self, ds: ConjunctiveGraph, trigger_node: URIRef) -> HookTrigger:
         # SPARQL trigger
@@ -572,13 +604,13 @@ class HookPackLoader:
     def _gate_pack(self, pack: ConjunctiveGraph) -> None:
         """
         Constitutional guards: reject forbidden predicates and action types.
-        
+
         This enforces the safety-critical constraint that hook packs cannot
         execute arbitrary commands or use unallowlisted action types.
-        
+
         Args:
             pack: Hook pack dataset to validate
-            
+
         Raises:
             RuntimeError: If pack contains forbidden predicates or unallowlisted action types
         """
@@ -586,18 +618,22 @@ class HookPackLoader:
         pack_g = Graph()
         for ctx in pack.contexts():
             pack_g += ctx
-        
+
         # Forbidden predicates (if they exist in ontology)
         # Note: These predicates may not exist yet, but we check for them defensively
         FORBIDDEN_PREDICATES: Set[URIRef] = set()
         # Check if kh:command, kh:shell, kh:exec exist in the pack
         for s, p, o in pack_g.triples((None, None, None)):
             p_str = str(p)
-            if "command" in p_str.lower() or "shell" in p_str.lower() or "exec" in p_str.lower():
+            if (
+                "command" in p_str.lower()
+                or "shell" in p_str.lower()
+                or "exec" in p_str.lower()
+            ):
                 # Check if it's in the KH namespace
                 if p_str.startswith(str(KH)):
                     FORBIDDEN_PREDICATES.add(p)
-        
+
         # Reject forbidden predicates
         for s, p, o in pack_g.triples((None, None, None)):
             if p in FORBIDDEN_PREDICATES:
@@ -605,7 +641,7 @@ class HookPackLoader:
                     f"Forbidden predicate in pack: {p}. "
                     f"Hook packs cannot execute arbitrary commands."
                 )
-        
+
         # Ensure all actions are allowlisted
         # Existing action types are already allowlisted (SparqlConstructAction, EmitBpmnAction, etc.)
         # This is a future-proofing guard for any new action types that might be added
@@ -615,7 +651,7 @@ class HookPackLoader:
             KH.EmitEventAction,
             KH.RouteToBpmnAction,
         }
-        
+
         for action in pack_g.subjects(RDF.type, KH.Action):
             action_type = pack_g.value(action, KH.actionType)
             if action_type is not None:
@@ -629,7 +665,7 @@ class HookPackLoader:
                             # Skip the base kh:Action class, only check specific subclasses
                             action_rdf_type = rdf_type
                             break
-                    
+
                     if action_rdf_type and action_rdf_type not in ALLOWED_ACTION_TYPES:
                         raise RuntimeError(
                             f"Action type not allowed: {action_rdf_type}. "
@@ -650,12 +686,13 @@ class HookPackLoader:
                                 f"Action type not allowed: {rdf_type}. "
                                 f"Allowed types: {ALLOWED_ACTION_TYPES}"
                             )
-                
+
                 # If action has only kh:Action (base class) and no specific type, that's OK
                 # (it will be validated by SHACL shapes)
 
 
 # ---------- Dialect evaluators (dialects decide) ----------
+
 
 class DialectSuite:
     """
@@ -679,13 +716,15 @@ class DialectSuite:
                 return True
             return False
 
-    def sparql_construct_to_delta(self, data_ds: ConjunctiveGraph, construct_query_node: URIRef) -> RDFDelta:
+    def sparql_construct_to_delta(
+        self, data_ds: ConjunctiveGraph, construct_query_node: URIRef
+    ) -> RDFDelta:
         q = self._load_text_from_node(construct_query_node)
         result = data_ds.query(q)
         # rdflib CONSTRUCT returns a Result object that is iterable over triples
         # We can also access result.graph which is a Graph
         adds: Set[Tuple[Any, Any, Any, Optional[Any]]] = set()
-        if hasattr(result, 'graph') and isinstance(result.graph, Graph):
+        if hasattr(result, "graph") and isinstance(result.graph, Graph):
             # Preferred: use result.graph
             for s, p, o in result.graph.triples((None, None, None)):
                 adds.add((s, p, o, None))
@@ -712,7 +751,9 @@ class DialectSuite:
         )
         return bool(conforms)
 
-    def shacl_validate_full(self, data_g: Graph, shapes_g: Graph) -> Tuple[bool, Graph, str]:
+    def shacl_validate_full(
+        self, data_g: Graph, shapes_g: Graph
+    ) -> Tuple[bool, Graph, str]:
         """
         Full SHACL validation returning conforms flag, report graph, and report text.
 
@@ -738,13 +779,15 @@ class DialectSuite:
 
     # ---- ShEx ----
 
-    def shex_validate(self, data_g: Graph, schema_text: str, focus_nodes: List[str]) -> bool:
+    def shex_validate(
+        self, data_g: Graph, schema_text: str, focus_nodes: List[str]
+    ) -> bool:
         """
         Uses pyshex Python API to validate focus nodes against schema.
-        
+
         Hard requirement: `pyshex` module is installed.
         TPS jidoka: crashes hard if module not found (no graceful degradation).
-        
+
         Note: Python 3.13 compatibility handled via _pyshex_compat wrapper.
         """
         # Load schema from text (not file path)
@@ -754,19 +797,20 @@ class DialectSuite:
 
         # Extract start shape from schema object (first shape ID)
         start_shape = None
-        if hasattr(schema, 'shapes') and schema.shapes:
+        if hasattr(schema, "shapes") and schema.shapes:
             # Get first shape ID from shapes list
-            first_shape = schema.shapes[0] if isinstance(schema.shapes, list) and schema.shapes else None
-            if first_shape and hasattr(first_shape, 'id') and first_shape.id:
+            first_shape = (
+                schema.shapes[0]
+                if isinstance(schema.shapes, list) and schema.shapes
+                else None
+            )
+            if first_shape and hasattr(first_shape, "id") and first_shape.id:
                 start_shape = str(first_shape.id)
 
         # Validate each focus node; all must pass
         for node in focus_nodes:
             evaluator = ShExEvaluator(
-                rdf=data_g,
-                schema=schema,
-                focus=node,
-                start=start_shape
+                rdf=data_g, schema=schema, focus=node, start=start_shape
             )
             results = list(evaluator.evaluate())
             if not results:
@@ -778,12 +822,14 @@ class DialectSuite:
 
     # ---- N3 (cwm) ----
 
-    def n3_entails(self, data_g: Graph, n3_rules_path: Path, ask_query_text: str) -> bool:
+    def n3_entails(
+        self, data_g: Graph, n3_rules_path: Path, ask_query_text: str
+    ) -> bool:
         """
         N3 rule execution via EYE reasoner.
         Hard requirement: `eye` executable exists.
         TPS jidoka: crashes hard if executable not found (no graceful degradation).
-        
+
         Process:
         1. Write data in N3 format and load rules
         2. Concatenate data + rules into single N3 file (EYE works better this way)
@@ -792,22 +838,24 @@ class DialectSuite:
         5. Evaluate SPARQL ASK query over the entailed closure
         """
         import shutil
-        if shutil.which("eye") is None:
-            raise ImportError("EYE N3 reasoner not found. Install: npm install -g eyereasoner")
 
+        if shutil.which("eye") is None:
+            raise ImportError(
+                "EYE N3 reasoner not found. Install: npm install -g eyereasoner"
+            )
 
         tmp_dir = Path(".ofmf_tmp_n3")
         tmp_dir.mkdir(parents=True, exist_ok=True)
         try:
             # Serialize data in N3 format (not Turtle) for better EYE compatibility
             data_n3 = data_g.serialize(format="n3")
-            
+
             # Load rules text
             rules_text = n3_rules_path.read_text(encoding="utf-8")
             # Ensure rules_text is a string (not URIRef or other type)
             if not isinstance(rules_text, str):
                 rules_text = str(rules_text)
-            
+
             # Check if the ASK pattern already exists in the original data
             # If it does, we don't need to run EYE
             res_original = data_g.query(ask_query_text)
@@ -832,35 +880,40 @@ class DialectSuite:
             # parseable by rdflib. Without --nope, EYE wraps inferred triples inside
             # r:gives graph structures that SPARQL queries cannot traverse directly.
             import subprocess
+
             proc = subprocess.run(
                 ["eye", "--n3", combined_path.as_posix(), "--pass", "--nope"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 check=False,
             )
-            
+
             if proc.returncode != 0:
                 raise OFMFError(
                     f"EYE failed (code {proc.returncode}). stderr:\n{proc.stderr.decode('utf-8', errors='replace')}"
                 )
-            
+
             n3_output = proc.stdout.decode("utf-8", errors="strict")
             n3_stderr = proc.stderr.decode("utf-8", errors="replace")
-            
+
             # Check stderr for entailment count (ent=X)
             # If ent > 0, EYE computed entailments
             import re
-            ent_match = re.search(r'ent=(\d+)', n3_stderr)
+
+            ent_match = re.search(r"ent=(\d+)", n3_stderr)
             entailed_count = int(ent_match.group(1)) if ent_match else 0
 
             # Try to parse any output EYE produced
             entailed = Graph()
             if n3_output.strip():
                 # Filter out comment lines before parsing
-                lines = [l for l in n3_output.split("\n") 
-                        if l.strip() and not l.strip().startswith("#")]
+                lines = [
+                    l
+                    for l in n3_output.split("\n")
+                    if l.strip() and not l.strip().startswith("#")
+                ]
                 filtered_output = "\n".join(lines)
-                
+
                 if filtered_output.strip():
                     try:
                         entailed.parse(data=filtered_output, format="n3")
@@ -889,8 +942,8 @@ class DialectSuite:
                 # Check if query returns any results
                 for _ in res:
                     return True
-            
-            # If no results in output but EYE computed entailments, 
+
+            # If no results in output but EYE computed entailments,
             # manually check if the rules would infer the pattern
             # This is a workaround for EYE not outputting inferred triples
             # Check if EYE computed entailments (ent > 0) and we didn't find the pattern in output
@@ -898,11 +951,14 @@ class DialectSuite:
                 # EYE computed entailments but didn't output them
                 # Extract the predicate from ASK query pattern
                 import re
-                ask_pattern = re.search(r'ASK\s*\{([^}]+)\}', ask_query_text, re.IGNORECASE | re.DOTALL)
+
+                ask_pattern = re.search(
+                    r"ASK\s*\{([^}]+)\}", ask_query_text, re.IGNORECASE | re.DOTALL
+                )
                 if ask_pattern:
                     pattern_text = ask_pattern.group(1).strip()
                     # Extract predicate from pattern (e.g., "kh:decision" from "?request kh:decision ?decision")
-                    pattern_pred_match = re.search(r'(\w+):(\w+)', pattern_text)
+                    pattern_pred_match = re.search(r"(\w+):(\w+)", pattern_text)
                     if pattern_pred_match:
                         pred_full = f"{pattern_pred_match.group(1)}:{pattern_pred_match.group(2)}"
                         # Check if rules contain this predicate in a conclusion (after =>)
@@ -911,10 +967,14 @@ class DialectSuite:
                         if pred_full in rules_text:
                             # Rules mention this predicate - check if any premise pattern exists in data
                             # Extract all premise patterns from rules (before =>)
-                            rule_premise_matches = re.findall(r'\{\s*([^}]+)\s*\}\s*=>', rules_text, re.IGNORECASE | re.DOTALL)
+                            rule_premise_matches = re.findall(
+                                r"\{\s*([^}]+)\s*\}\s*=>",
+                                rules_text,
+                                re.IGNORECASE | re.DOTALL,
+                            )
                             for premise in rule_premise_matches:
                                 # Extract predicate from premise
-                                premise_pred_match = re.search(r'(\w+):(\w+)', premise)
+                                premise_pred_match = re.search(r"(\w+):(\w+)", premise)
                                 if premise_pred_match:
                                     prem_ns = premise_pred_match.group(1)
                                     prem_name = premise_pred_match.group(2)
@@ -928,7 +988,7 @@ class DialectSuite:
                                             # Premise pattern exists in data, and rules would infer the conclusion
                                             # Since EYE computed entailments, assume the pattern is inferred
                                             return True
-            
+
             return False
         finally:
             for f in tmp_dir.glob("*"):
@@ -943,7 +1003,9 @@ class DialectSuite:
 
     # ---- Datalog ----
 
-    def datalog_run(self, facts: List[Tuple[str, str, str]], program_text: str, goal: str) -> bool:
+    def datalog_run(
+        self, facts: List[Tuple[str, str, str]], program_text: str, goal: str
+    ) -> bool:
         """
         Datalog engine is pyDatalog. Facts are derived from RDF via CONSTRUCT
         or via explicit mapping hooks you define in Turtle.
@@ -987,6 +1049,7 @@ class DialectSuite:
 
 # ---------- BPMN: Turtle => BPMN XML (for Spiff + pm4py) ----------
 
+
 class BpmnEmitter:
     """
     Emits BPMN 2.0 XML from a Turtle BPMN graph.
@@ -1016,7 +1079,7 @@ class BpmnEmitter:
 
     def emit_bpmn_xml(self, ds: ConjunctiveGraph, bpmn_graph_iri: URIRef) -> bytes:
         g = ds.get_context(bpmn_graph_iri)
-        
+
         # If named graph is empty, check default graph (for Turtle-loaded hook packs)
         if len(list(g.triples((None, None, None)))) == 0:
             # Try default graph
@@ -1057,10 +1120,10 @@ class BpmnEmitter:
         def esc(s: str) -> str:
             return (
                 s.replace("&", "&amp;")
-                 .replace("<", "&lt;")
-                 .replace(">", "&gt;")
-                 .replace('"', "&quot;")
-                 .replace("'", "&apos;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace('"', "&quot;")
+                .replace("'", "&apos;")
             )
 
         xml = []
@@ -1069,26 +1132,42 @@ class BpmnEmitter:
             f'<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
             f'xmlns:bpmn="{self.BPMN2}" id="Definitions_1" targetNamespace="https://chatmangpt.com/kgc/bpmn">'
         )
-        xml.append(f'  <bpmn:process id="{esc(proc_id)}" name="{esc(proc_name)}" isExecutable="true">')
+        xml.append(
+            f'  <bpmn:process id="{esc(proc_id)}" name="{esc(proc_name)}" isExecutable="true">'
+        )
 
         # Emit nodes
         for tag, n in nodes:
             node_id = self._req_lit(g, n, BPMN.nodeId)
             name = self._opt_lit(g, n, BPMN.name)
             if tag == "task":
-                xml.append(f'    <bpmn:task id="{esc(node_id)}" name="{esc(name or node_id)}"/>')
+                xml.append(
+                    f'    <bpmn:task id="{esc(node_id)}" name="{esc(name or node_id)}"/>'
+                )
             elif tag == "userTask":
-                xml.append(f'    <bpmn:userTask id="{esc(node_id)}" name="{esc(name or node_id)}"/>')
+                xml.append(
+                    f'    <bpmn:userTask id="{esc(node_id)}" name="{esc(name or node_id)}"/>'
+                )
             elif tag == "startEvent":
-                xml.append(f'    <bpmn:startEvent id="{esc(node_id)}" name="{esc(name or node_id)}"/>')
+                xml.append(
+                    f'    <bpmn:startEvent id="{esc(node_id)}" name="{esc(name or node_id)}"/>'
+                )
             elif tag == "endEvent":
-                xml.append(f'    <bpmn:endEvent id="{esc(node_id)}" name="{esc(name or node_id)}"/>')
+                xml.append(
+                    f'    <bpmn:endEvent id="{esc(node_id)}" name="{esc(name or node_id)}"/>'
+                )
             elif tag == "exclusiveGateway":
-                xml.append(f'    <bpmn:exclusiveGateway id="{esc(node_id)}" name="{esc(name or node_id)}"/>')
+                xml.append(
+                    f'    <bpmn:exclusiveGateway id="{esc(node_id)}" name="{esc(name or node_id)}"/>'
+                )
             elif tag == "parallelGateway":
-                xml.append(f'    <bpmn:parallelGateway id="{esc(node_id)}" name="{esc(name or node_id)}"/>')
+                xml.append(
+                    f'    <bpmn:parallelGateway id="{esc(node_id)}" name="{esc(name or node_id)}"/>'
+                )
             elif tag == "inclusiveGateway":
-                xml.append(f'    <bpmn:inclusiveGateway id="{esc(node_id)}" name="{esc(name or node_id)}"/>')
+                xml.append(
+                    f'    <bpmn:inclusiveGateway id="{esc(node_id)}" name="{esc(name or node_id)}"/>'
+                )
 
         # Emit sequence flows
         for f in flows:
@@ -1110,7 +1189,9 @@ class BpmnEmitter:
     def _single_subject_of_type(self, g: Graph, t: URIRef) -> URIRef:
         subs = list(g.subjects(RDF.type, t))
         if len(subs) != 1:
-            raise RuntimeError(f"Expected exactly 1 subject of type {t}, found {len(subs)}")
+            raise RuntimeError(
+                f"Expected exactly 1 subject of type {t}, found {len(subs)}"
+            )
         if not isinstance(subs[0], URIRef):
             raise RuntimeError("Process subject must be an IRI")
         return subs[0]
@@ -1136,6 +1217,7 @@ class BpmnEmitter:
 
 # ---------- SpiffWorkflow executor (optional entrypoint) ----------
 
+
 class SpiffExecutor:
     """
     Reads BPMN XML emitted by BpmnEmitter and executes via SpiffWorkflow.
@@ -1144,7 +1226,9 @@ class SpiffExecutor:
     def __init__(self) -> None:
         pass
 
-    def run(self, bpmn_xml_path: Path, start_task_name: Optional[str] = None) -> Dict[str, Any]:
+    def run(
+        self, bpmn_xml_path: Path, start_task_name: Optional[str] = None
+    ) -> Dict[str, Any]:
         parser = BpmnParser()
         parser.add_bpmn_file(bpmn_xml_path.as_posix())
         workflow = BpmnWorkflow(parser.get_spec("Definitions_1"))
@@ -1158,6 +1242,7 @@ class SpiffExecutor:
 
 
 # ---------- SpiffWorkflow adapter (HTTP submission) ----------
+
 
 class SpiffWorkflowAdapter:
     """
@@ -1174,7 +1259,9 @@ class SpiffWorkflowAdapter:
     def __init__(self, endpoint: Optional[str] = None) -> None:
         self.endpoint = endpoint
 
-    def submit_workflow(self, bpmn_xml: bytes, context: Optional[Dict[str, Any]] = None) -> str:
+    def submit_workflow(
+        self, bpmn_xml: bytes, context: Optional[Dict[str, Any]] = None
+    ) -> str:
         """
         Submit BPMN workflow to SpiffWorkflow API.
 
@@ -1274,12 +1361,14 @@ class SpiffWorkflowAdapter:
 
 # ---------- Diagnostics ----------
 
+
 @dataclass(frozen=True)
 class Diagnostic:
     """
     Typed diagnostic emitted during execution.
     Maps to kh:Diagnostic ontology.
     """
+
     diagnostic_type: URIRef  # kh:UnlawfulInput, kh:MissingArtifact, etc.
     message: str
     context: str  # IRI or literal context
@@ -1306,7 +1395,7 @@ class DiagnosticEmitter:
         diagnostic_type: URIRef,
         message: str,
         context: str,
-        diagnostic_code: str = "UNKNOWN"
+        diagnostic_code: str = "UNKNOWN",
     ) -> None:
         """
         Emit a diagnostic.
@@ -1322,7 +1411,7 @@ class DiagnosticEmitter:
             diagnostic_type=diagnostic_type,
             message=message,
             context=context,
-            diagnostic_code=diagnostic_code
+            diagnostic_code=diagnostic_code,
         )
         self.diagnostics.append(diag)
 
@@ -1344,7 +1433,11 @@ class DiagnosticEmitter:
             g.add((diag_node, KH.diagnosticCode, Literal(diag.diagnostic_code)))
 
             # Context can be IRI or literal
-            if diag.context.startswith("http://") or diag.context.startswith("https://") or diag.context.startswith("urn:"):
+            if (
+                diag.context.startswith("http://")
+                or diag.context.startswith("https://")
+                or diag.context.startswith("urn:")
+            ):
                 g.add((diag_node, KH.context, URIRef(diag.context)))
             else:
                 g.add((diag_node, KH.context, Literal(diag.context)))
@@ -1357,6 +1450,7 @@ class DiagnosticEmitter:
 
 
 # ---------- OFMF Engine ----------
+
 
 @dataclass
 class HookResult:
@@ -1383,7 +1477,9 @@ class OFMFReceipt:
     cache_misses: int = 0
     cache_evictions: int = 0
     cache_hit_rate: float = 0.0
-    conflict_report_graph: Optional[Graph] = None  # RDF graph of conflict resolution report
+    conflict_report_graph: Optional[Graph] = (
+        None  # RDF graph of conflict resolution report
+    )
     conflicts_detected: int = 0  # Number of conflicts detected
     conflicts_resolved: bool = True  # Whether all conflicts were resolved
 
@@ -1471,7 +1567,9 @@ class OFMFEngine:
         # Materialize event if event-based
         if event_name:
             event_adapter = EventAdapter()
-            event_graph = event_adapter.materialize_event(event_name, event_payload or {})
+            event_graph = event_adapter.materialize_event(
+                event_name, event_payload or {}
+            )
             event_adapter.merge_event_into_state(event_graph, working)
 
         # Filter hooks by mode (phase-based or event-based)
@@ -1480,7 +1578,9 @@ class OFMFEngine:
             filtered_hooks = [h for h in self.hooks if h.event == event_name]
         else:
             # Phase-based: select hooks where hook.phase == phase_filter (or all if None)
-            filtered_hooks = [h for h in self.hooks if not phase_filter or h.phase == phase_filter]
+            filtered_hooks = [
+                h for h in self.hooks if not phase_filter or h.phase == phase_filter
+            ]
 
         # Detect priority ties (Λ ≺-total order)
         if filtered_hooks:
@@ -1492,16 +1592,21 @@ class OFMFEngine:
         # Choose execution mode: parallel or sequential
         if parallel:
             # Parallel execution with deterministic ordering
-            results, bpmn_artifacts, event_artifacts, routed_job_ids, executed_hook_ids = \
-                self._execute_parallel(
-                    batches=batches,
-                    working=working,
-                    out_dir=out_dir,
-                    phase_filter=phase_filter,
-                    event_name=event_name,
-                    max_workers=max_workers,
-                    diagnostic_emitter=diagnostic_emitter
-                )
+            (
+                results,
+                bpmn_artifacts,
+                event_artifacts,
+                routed_job_ids,
+                executed_hook_ids,
+            ) = self._execute_parallel(
+                batches=batches,
+                working=working,
+                out_dir=out_dir,
+                phase_filter=phase_filter,
+                event_name=event_name,
+                max_workers=max_workers,
+                diagnostic_emitter=diagnostic_emitter,
+            )
         else:
             # Sequential execution (unified code path)
             for batch in batches:
@@ -1514,7 +1619,13 @@ class OFMFEngine:
                         if hook.phase != phase_filter:
                             continue
 
-                    hr = HookResult(hook_id=hook.hook_id, satisfied=False, executed_actions=[], errors=[], diagnostics=[])
+                    hr = HookResult(
+                        hook_id=hook.hook_id,
+                        satisfied=False,
+                        executed_actions=[],
+                        errors=[],
+                        diagnostics=[],
+                    )
                     try:
                         satisfied = self._eval_trigger(hook, working)
                         hr.satisfied = satisfied
@@ -1525,7 +1636,9 @@ class OFMFEngine:
                         # Execute actions
                         for action in hook.actions:
                             if action.kind == "construct":
-                                d2 = self.dialects.sparql_construct_to_delta(working, action.ref)
+                                d2 = self.dialects.sparql_construct_to_delta(
+                                    working, action.ref
+                                )
                                 self._apply_delta(working, d2)
                                 # Write CONSTRUCT output to file for testability
                                 if emit_construct_deltas and d2.adds:
@@ -1534,10 +1647,15 @@ class OFMFEngine:
                                         construct_graph.add((s, p, o))
                                     fname = f"{hook.hook_id}.delta.ttl"
                                     fpath = out_dir / fname
-                                    fpath.write_text(construct_graph.serialize(format="turtle"), encoding="utf-8")
+                                    fpath.write_text(
+                                        construct_graph.serialize(format="turtle"),
+                                        encoding="utf-8",
+                                    )
                                 hr.executed_actions.append(f"construct:{action.ref}")
                             elif action.kind == "emit_bpmn":
-                                bpmn_bytes = self.bpmn.emit_bpmn_xml(self.hook_pack_ds, action.ref)
+                                bpmn_bytes = self.bpmn.emit_bpmn_xml(
+                                    self.hook_pack_ds, action.ref
+                                )
                                 fname = f"{hook.hook_id}.bpmn.xml"
                                 fpath = out_dir / fname
                                 fpath.write_bytes(bpmn_bytes)
@@ -1545,7 +1663,9 @@ class OFMFEngine:
                                 hr.executed_actions.append(f"emit_bpmn:{action.ref}")
                             elif action.kind == "emit_event":
                                 # Execute SPARQL CONSTRUCT to produce event RDF
-                                d3 = self.dialects.sparql_construct_to_delta(working, action.ref)
+                                d3 = self.dialects.sparql_construct_to_delta(
+                                    working, action.ref
+                                )
                                 # Convert delta to graph for emission
                                 event_graph = Graph()
                                 for s, p, o, g_ctx in d3.adds:
@@ -1553,14 +1673,19 @@ class OFMFEngine:
                                 # Write events to events.ttl
                                 fname = f"{hook.hook_id}.events.ttl"
                                 fpath = out_dir / fname
-                                fpath.write_text(event_graph.serialize(format="turtle"), encoding="utf-8")
+                                fpath.write_text(
+                                    event_graph.serialize(format="turtle"),
+                                    encoding="utf-8",
+                                )
                                 event_artifacts.append(fname)
                                 # Also apply to working dataset
                                 self._apply_delta(working, d3)
                                 hr.executed_actions.append(f"emit_event:{action.ref}")
                             elif action.kind == "route_to_bpmn":
                                 # Emit BPMN XML
-                                bpmn_bytes = self.bpmn.emit_bpmn_xml(self.hook_pack_ds, action.ref)
+                                bpmn_bytes = self.bpmn.emit_bpmn_xml(
+                                    self.hook_pack_ds, action.ref
+                                )
                                 fname = f"{hook.hook_id}.bpmn.xml"
                                 fpath = out_dir / fname
                                 fpath.write_bytes(bpmn_bytes)
@@ -1568,15 +1693,21 @@ class OFMFEngine:
 
                                 # Check for executor endpoint
                                 action_node = self._find_action_node(hook, action)
-                                endpoint = self.hook_pack_ds.value(action_node, KH.executorEndpoint)
+                                endpoint = self.hook_pack_ds.value(
+                                    action_node, KH.executorEndpoint
+                                )
 
                                 if endpoint:
                                     # Submit to SpiffWorkflow API
                                     adapter = SpiffWorkflowAdapter(str(endpoint))
                                     try:
-                                        job_id = adapter.submit_workflow(bpmn_bytes, context=None)
+                                        job_id = adapter.submit_workflow(
+                                            bpmn_bytes, context=None
+                                        )
                                         routed_job_ids.append(job_id)
-                                        hr.executed_actions.append(f"route_to_bpmn:{action.ref}:job_id={job_id}")
+                                        hr.executed_actions.append(
+                                            f"route_to_bpmn:{action.ref}:job_id={job_id}"
+                                        )
                                     except Exception as routing_err:
                                         # Routing failure is a diagnostic, not hard fail
                                         diagnostic_emitter.emit_diagnostic(
@@ -1585,12 +1716,18 @@ class OFMFEngine:
                                             context=str(action_node),
                                             diagnostic_code="BPMN_ROUTING_FAILED",
                                         )
-                                        hr.executed_actions.append(f"route_to_bpmn:{action.ref}:routing_failed")
+                                        hr.executed_actions.append(
+                                            f"route_to_bpmn:{action.ref}:routing_failed"
+                                        )
                                 else:
                                     # No endpoint: just emit (routing receipt only)
-                                    hr.executed_actions.append(f"route_to_bpmn:{action.ref}:no_endpoint")
+                                    hr.executed_actions.append(
+                                        f"route_to_bpmn:{action.ref}:no_endpoint"
+                                    )
                             else:
-                                raise RuntimeError(f"Unknown action kind: {action.kind}")
+                                raise RuntimeError(
+                                    f"Unknown action kind: {action.kind}"
+                                )
 
                         executed_hook_ids.append(hook.hook_id)
                         results.append(hr)
@@ -1601,10 +1738,12 @@ class OFMFEngine:
                             diagnostic_type=KH.DialectFailure,
                             message=f"Hook execution failed: {str(e)}",
                             context=hook.hook_id,
-                            diagnostic_code="HOOK_EXECUTION_ERROR"
+                            diagnostic_code="HOOK_EXECUTION_ERROR",
                         )
                         # Collect diagnostics for this hook result
-                        hr = dataclasses.replace(hr, diagnostics=list(diagnostic_emitter.diagnostics))
+                        hr = dataclasses.replace(
+                            hr, diagnostics=list(diagnostic_emitter.diagnostics)
+                        )
                         diagnostic_emitter.clear()
                         results.append(hr)
 
@@ -1624,7 +1763,11 @@ class OFMFEngine:
             all_diagnostics_emitter.diagnostics.extend(result.diagnostics)
 
         # Create diagnostic graph (empty if no diagnostics)
-        diagnostic_graph = all_diagnostics_emitter.to_graph() if all_diagnostics_emitter.diagnostics else None
+        diagnostic_graph = (
+            all_diagnostics_emitter.to_graph()
+            if all_diagnostics_emitter.diagnostics
+            else None
+        )
 
         # Collect cache statistics (if cache enabled)
         cache_hits = 0
@@ -1681,7 +1824,9 @@ class OFMFEngine:
                 enforcement_mode = KH.BlockWrite
 
             # Run SHACL validation
-            conforms, report_graph, report_text = self.dialects.shacl_validate_full(data_g, shapes_g)
+            conforms, report_graph, report_text = self.dialects.shacl_validate_full(
+                data_g, shapes_g
+            )
 
             if conforms:
                 # Validation passed: hook satisfied
@@ -1696,12 +1841,19 @@ class OFMFEngine:
                 # AllowButAnnotate: persist validation report to working dataset, return True
                 # Add report triples to working dataset with timestamp and source metadata
                 from rdflib.namespace import XSD
+
                 report_iri = URIRef(f"urn:shacl-report:{hook.hook_id}:{time.time_ns()}")
 
                 # Add report metadata
                 data_ds.add((report_iri, RDF.type, KH.ShaclValidationReport))
                 data_ds.add((report_iri, KH.hookId, Literal(hook.hook_id)))
-                data_ds.add((report_iri, KH.timestampNs, Literal(time.time_ns(), datatype=XSD.integer)))
+                data_ds.add(
+                    (
+                        report_iri,
+                        KH.timestampNs,
+                        Literal(time.time_ns(), datatype=XSD.integer),
+                    )
+                )
 
                 # Add all report triples to working dataset
                 for s, p, o in report_graph.triples((None, None, None)):
@@ -1713,7 +1865,9 @@ class OFMFEngine:
             elif enforcement_mode == KH.AutoRepair:
                 # AutoRepair: attempt repair using repairConstruct query
                 # Load repair CONSTRUCT query from trigger node
-                repair_construct_node = self.hook_pack_ds.value(trigger_node, KH.repairConstruct)
+                repair_construct_node = self.hook_pack_ds.value(
+                    trigger_node, KH.repairConstruct
+                )
                 if repair_construct_node is None:
                     raise RuntimeError(
                         f"AutoRepair mode requires kh:repairConstruct on trigger node: {trigger_node}\n"
@@ -1727,7 +1881,9 @@ class OFMFEngine:
                     )
 
                 # Execute repair CONSTRUCT query to generate repair delta
-                repair_delta = self.dialects.sparql_construct_to_delta(data_ds, repair_construct_node)
+                repair_delta = self.dialects.sparql_construct_to_delta(
+                    data_ds, repair_construct_node
+                )
 
                 # Apply repair delta to working dataset
                 self._apply_delta(data_ds, repair_delta)
@@ -1737,7 +1893,9 @@ class OFMFEngine:
                 for ctx in data_ds.contexts():
                     data_g_repaired += ctx
 
-                conforms_after_repair, _, _ = self.dialects.shacl_validate_full(data_g_repaired, shapes_g)
+                conforms_after_repair, _, _ = self.dialects.shacl_validate_full(
+                    data_g_repaired, shapes_g
+                )
 
                 # Return True if repair succeeded, False otherwise
                 return conforms_after_repair
@@ -1762,7 +1920,9 @@ class OFMFEngine:
             trigger_node = self.hook_pack_ds.value(hook.iri, KH.trigger)
             ask_node = self.hook_pack_ds.value(trigger_node, KH.entailedAskQuery)
             if not isinstance(ask_node, URIRef):
-                raise RuntimeError(f"Missing KH.entailedAskQuery IRI for trigger {trigger_node}")
+                raise RuntimeError(
+                    f"Missing KH.entailedAskQuery IRI for trigger {trigger_node}"
+                )
             ask_text = self.dialects._load_text_from_node(ask_node)
 
             # Evaluate ASK query over closure
@@ -1787,7 +1947,6 @@ class OFMFEngine:
             else:
                 # Load text from node and write to temp file
                 rules_text = self.dialects._load_text_from_node(rules_iri)
-                import tempfile
                 tmp_dir = Path(".ofmf_tmp_n3_rules")
                 tmp_dir.mkdir(parents=True, exist_ok=True)
                 rules_path = tmp_dir / f"{hook.hook_id}_rules.n3"
@@ -1796,7 +1955,9 @@ class OFMFEngine:
             trigger_node = self.hook_pack_ds.value(hook.iri, KH.trigger)
             ask_node = self.hook_pack_ds.value(trigger_node, KH.n3AskQuery)
             if not isinstance(ask_node, URIRef):
-                raise RuntimeError(f"Missing KH.n3AskQuery IRI for trigger {trigger_node}")
+                raise RuntimeError(
+                    f"Missing KH.n3AskQuery IRI for trigger {trigger_node}"
+                )
             ask_text = self.dialects._load_text_from_node(ask_node)
             data_g = Graph()
             for ctx in data_ds.contexts():
@@ -1810,11 +1971,17 @@ class OFMFEngine:
 
             # Get facts construct from trigger node (not hook node)
             trigger_node = self.hook_pack_ds.value(hook.iri, KH.trigger)
-            facts_construct_node = self.hook_pack_ds.value(trigger_node, KH.datalogFactsConstruct)
+            facts_construct_node = self.hook_pack_ds.value(
+                trigger_node, KH.datalogFactsConstruct
+            )
             if not isinstance(facts_construct_node, URIRef):
-                raise RuntimeError(f"Missing KH.datalogFactsConstruct for trigger {trigger_node}")
+                raise RuntimeError(
+                    f"Missing KH.datalogFactsConstruct for trigger {trigger_node}"
+                )
 
-            facts_delta = self.dialects.sparql_construct_to_delta(data_ds, facts_construct_node)
+            facts_delta = self.dialects.sparql_construct_to_delta(
+                data_ds, facts_construct_node
+            )
             facts: List[Tuple[str, str, str]] = []
             for s, p, o, _g in facts_delta.adds:
                 facts.append((str(s), str(p), str(o)))
@@ -1822,7 +1989,9 @@ class OFMFEngine:
             # Get goal from trigger node (not hook node)
             goal_lit = self.hook_pack_ds.value(trigger_node, KH.datalogGoal)
             if not isinstance(goal_lit, Literal):
-                raise RuntimeError(f"Missing KH.datalogGoal literal for trigger {trigger_node}")
+                raise RuntimeError(
+                    f"Missing KH.datalogGoal literal for trigger {trigger_node}"
+                )
             goal = str(goal_lit)
 
             return self.dialects.datalog_run(facts, prog_text, goal)
@@ -1833,16 +2002,20 @@ class OFMFEngine:
 
             # Get focus nodes by evaluating kh:focusSelectQuery (on trigger node, not hook node)
             trigger_node = self.hook_pack_ds.value(hook.iri, KH.trigger)
-            focus_query_node = self.hook_pack_ds.value(trigger_node, KH.focusSelectQuery)
+            focus_query_node = self.hook_pack_ds.value(
+                trigger_node, KH.focusSelectQuery
+            )
             if not isinstance(focus_query_node, URIRef):
-                raise RuntimeError(f"Missing KH.focusSelectQuery IRI for trigger {trigger_node}")
+                raise RuntimeError(
+                    f"Missing KH.focusSelectQuery IRI for trigger {trigger_node}"
+                )
             focus_query_text = self.dialects._load_text_from_node(focus_query_node)
 
             # Execute SELECT query to get focus nodes
             res = data_ds.query(focus_query_text)
             focus_nodes = []
             for row in res:
-                if hasattr(row, 'focus'):
+                if hasattr(row, "focus"):
                     focus_nodes.append(str(row.focus))
                 elif isinstance(row, tuple) and len(row) > 0:
                     focus_nodes.append(str(row[0]))
@@ -1861,14 +2034,14 @@ class OFMFEngine:
     def _find_action_node(self, hook: KnowledgeHook, action: HookAction) -> URIRef:
         """
         Find the action node URI in the hook pack for a given action.
-        
+
         Args:
             hook: KnowledgeHook instance
             action: HookAction instance
-        
+
         Returns:
             URIRef of the action node
-        
+
         Raises:
             RuntimeError: If action node not found
         """
@@ -1876,29 +2049,45 @@ class OFMFEngine:
         for act_node in self.hook_pack_ds.objects(hook.iri, KH.action):
             if not isinstance(act_node, (URIRef, BNode)):
                 continue
-            
+
             # Check if this is the right action type
-            if action.kind == "route_to_bpmn" and (act_node, RDF.type, KH.RouteToBpmnAction) in self.hook_pack_ds:
+            if (
+                action.kind == "route_to_bpmn"
+                and (act_node, RDF.type, KH.RouteToBpmnAction) in self.hook_pack_ds
+            ):
                 # Verify bpmnGraph matches
                 bpmn_graph = self.hook_pack_ds.value(act_node, KH.bpmnGraph)
                 if bpmn_graph == action.ref:
                     return act_node
-            elif action.kind == "emit_bpmn" and (act_node, RDF.type, KH.EmitBpmnAction) in self.hook_pack_ds:
+            elif (
+                action.kind == "emit_bpmn"
+                and (act_node, RDF.type, KH.EmitBpmnAction) in self.hook_pack_ds
+            ):
                 bpmn_graph = self.hook_pack_ds.value(act_node, KH.bpmnGraph)
                 if bpmn_graph == action.ref:
                     return act_node
-            elif action.kind == "emit_event" and (act_node, RDF.type, KH.EmitEventAction) in self.hook_pack_ds:
+            elif (
+                action.kind == "emit_event"
+                and (act_node, RDF.type, KH.EmitEventAction) in self.hook_pack_ds
+            ):
                 event_construct = self.hook_pack_ds.value(act_node, KH.eventConstruct)
                 if event_construct == action.ref:
                     return act_node
-            elif action.kind == "construct" and (act_node, RDF.type, KH.SparqlConstructAction) in self.hook_pack_ds:
+            elif (
+                action.kind == "construct"
+                and (act_node, RDF.type, KH.SparqlConstructAction) in self.hook_pack_ds
+            ):
                 construct_query = self.hook_pack_ds.value(act_node, KH.constructQuery)
                 if construct_query == action.ref:
                     return act_node
-        
-        raise RuntimeError(f"Action node not found for hook {hook.hook_id}, action kind {action.kind}, ref {action.ref}")
 
-    def _dependency_batches(self, hooks: List[KnowledgeHook]) -> List[List[KnowledgeHook]]:
+        raise RuntimeError(
+            f"Action node not found for hook {hook.hook_id}, action kind {action.kind}, ref {action.ref}"
+        )
+
+    def _dependency_batches(
+        self, hooks: List[KnowledgeHook]
+    ) -> List[List[KnowledgeHook]]:
         by_id = {h.hook_id: h for h in hooks}
         batches: List[List[KnowledgeHook]] = []
         assigned: Dict[str, int] = {}
@@ -1911,7 +2100,9 @@ class OFMFEngine:
             max_dep = 0
             for dep in h.depends_on:
                 if dep not in by_id:
-                    raise RuntimeError(f"Hook {h.hook_id} depends on unknown hookId {dep}")
+                    raise RuntimeError(
+                        f"Hook {h.hook_id} depends on unknown hookId {dep}"
+                    )
                 max_dep = max(max_dep, assigned.get(dep, 0))
             assigned[h.hook_id] = max_dep + 1
 
@@ -1952,10 +2143,10 @@ class OFMFEngine:
     def _detect_priority_ties(self, hooks: List[KnowledgeHook]) -> None:
         """
         Validate Λ ≺-total order: no priority ties allowed.
-        
+
         Args:
             hooks: List of hooks to validate
-            
+
         Raises:
             RuntimeError: If any two hooks have the same priority
         """
@@ -1963,6 +2154,7 @@ class OFMFEngine:
         if len(priorities) != len(set(priorities)):
             # Find ties for error message
             from collections import Counter
+
             counts = Counter(priorities)
             ties = [p for p, c in counts.items() if c > 1]
             tied_hooks = [h.hook_id for h in hooks if h.priority in ties]
@@ -1982,7 +2174,7 @@ class OFMFEngine:
         event_name: Optional[str],
         emit_construct_deltas: bool,
         max_workers: Optional[int],
-        diagnostic_emitter: DiagnosticEmitter
+        diagnostic_emitter: DiagnosticEmitter,
     ) -> Tuple[List[HookResult], List[str], List[str], List[str], List[str]]:
         """
         Execute hooks in parallel batches with deterministic ordering.
@@ -2023,7 +2215,9 @@ class OFMFEngine:
             if event_name:
                 batch_hooks = [h for h in batch if h.event == event_name]
             else:
-                batch_hooks = [h for h in batch if not phase_filter or h.phase == phase_filter]
+                batch_hooks = [
+                    h for h in batch if not phase_filter or h.phase == phase_filter
+                ]
             if not batch_hooks:
                 continue
 
@@ -2037,7 +2231,7 @@ class OFMFEngine:
                     working=working,
                     out_dir=out_dir,
                     max_workers=max_workers,
-                    diagnostic_emitter=diagnostic_emitter
+                    diagnostic_emitter=diagnostic_emitter,
                 )
             except Exception as e:
                 # Graceful degradation: fall back to sequential execution
@@ -2046,7 +2240,7 @@ class OFMFEngine:
                     diagnostic_type=KH.PolicyViolation,
                     message=f"Parallel execution failed, falling back to sequential: {e}",
                     context="parallel_batch_execution",
-                    diagnostic_code="PARALLEL_EXECUTION_FAILED"
+                    diagnostic_code="PARALLEL_EXECUTION_FAILED",
                 )
                 # Execute sequentially as fallback
                 batch_results = []
@@ -2055,7 +2249,7 @@ class OFMFEngine:
                         hook=hook,
                         working=working,
                         out_dir=out_dir,
-                        diagnostic_emitter=diagnostic_emitter
+                        diagnostic_emitter=diagnostic_emitter,
                     )
                     batch_results.append(hr)
 
@@ -2078,7 +2272,10 @@ class OFMFEngine:
                         fname = f"{hr.hook_id}.events.ttl"
                         if fname not in event_artifacts:
                             event_artifacts.append(fname)
-                    elif action_str.startswith("route_to_bpmn:") and ":job_id=" in action_str:
+                    elif (
+                        action_str.startswith("route_to_bpmn:")
+                        and ":job_id=" in action_str
+                    ):
                         job_id = action_str.split(":job_id=")[1]
                         if job_id not in routed_job_ids:
                             routed_job_ids.append(job_id)
@@ -2089,7 +2286,13 @@ class OFMFEngine:
         routed_job_ids.sort()
         executed_hook_ids.sort()
 
-        return results, bpmn_artifacts, event_artifacts, routed_job_ids, executed_hook_ids
+        return (
+            results,
+            bpmn_artifacts,
+            event_artifacts,
+            routed_job_ids,
+            executed_hook_ids,
+        )
 
     def _execute_batch_parallel(
         self,
@@ -2097,7 +2300,7 @@ class OFMFEngine:
         working: ConjunctiveGraph,
         out_dir: Path,
         max_workers: int,
-        diagnostic_emitter: DiagnosticEmitter
+        diagnostic_emitter: DiagnosticEmitter,
     ) -> List[HookResult]:
         """
         Execute a batch of hooks in parallel with isolated working copies.
@@ -2130,7 +2333,7 @@ class OFMFEngine:
                     hook,
                     working_snapshot_bytes,
                     out_dir,
-                    diagnostic_emitter
+                    diagnostic_emitter,
                 ): hook
                 for hook in batch_hooks
             }
@@ -2163,13 +2366,17 @@ class OFMFEngine:
                         action_ref_str = action_str.split(":", 1)[1]
                         action_ref = URIRef(action_ref_str)
                         # Execute CONSTRUCT and apply delta
-                        d2 = self.dialects.sparql_construct_to_delta(working, action_ref)
+                        d2 = self.dialects.sparql_construct_to_delta(
+                            working, action_ref
+                        )
                         self._apply_delta(working, d2)
                     elif action_str.startswith("emit_event:"):
                         # Extract action ref and apply delta
                         action_ref_str = action_str.split(":", 1)[1]
                         action_ref = URIRef(action_ref_str)
-                        d3 = self.dialects.sparql_construct_to_delta(working, action_ref)
+                        d3 = self.dialects.sparql_construct_to_delta(
+                            working, action_ref
+                        )
                         self._apply_delta(working, d3)
 
         return results
@@ -2179,7 +2386,7 @@ class OFMFEngine:
         hook: KnowledgeHook,
         working_snapshot_bytes: bytes,
         out_dir: Path,
-        diagnostic_emitter: DiagnosticEmitter
+        diagnostic_emitter: DiagnosticEmitter,
     ) -> HookResult:
         """
         Execute a single hook with an isolated copy of the working dataset.
@@ -2209,7 +2416,7 @@ class OFMFEngine:
             hook=hook,
             working=working_local,
             out_dir=out_dir,
-            diagnostic_emitter=diagnostic_emitter
+            diagnostic_emitter=diagnostic_emitter,
         )
 
     def _execute_single_hook(
@@ -2217,7 +2424,7 @@ class OFMFEngine:
         hook: KnowledgeHook,
         working: ConjunctiveGraph,
         out_dir: Path,
-        diagnostic_emitter: DiagnosticEmitter
+        diagnostic_emitter: DiagnosticEmitter,
     ) -> HookResult:
         """
         Execute a single hook (shared by sequential and parallel execution).
@@ -2231,7 +2438,13 @@ class OFMFEngine:
         Returns:
             HookResult
         """
-        hr = HookResult(hook_id=hook.hook_id, satisfied=False, executed_actions=[], errors=[], diagnostics=[])
+        hr = HookResult(
+            hook_id=hook.hook_id,
+            satisfied=False,
+            executed_actions=[],
+            errors=[],
+            diagnostics=[],
+        )
         try:
             satisfied = self._eval_trigger(hook, working)
             hr.satisfied = satisfied
@@ -2260,7 +2473,9 @@ class OFMFEngine:
                     # Write events to events.ttl
                     fname = f"{hook.hook_id}.events.ttl"
                     fpath = out_dir / fname
-                    fpath.write_text(event_graph.serialize(format="turtle"), encoding="utf-8")
+                    fpath.write_text(
+                        event_graph.serialize(format="turtle"), encoding="utf-8"
+                    )
                     # Also apply to working dataset
                     self._apply_delta(working, d3)
                     hr.executed_actions.append(f"emit_event:{action.ref}")
@@ -2280,7 +2495,9 @@ class OFMFEngine:
                         adapter = SpiffWorkflowAdapter(str(endpoint))
                         try:
                             job_id = adapter.submit_workflow(bpmn_bytes, context=None)
-                            hr.executed_actions.append(f"route_to_bpmn:{action.ref}:job_id={job_id}")
+                            hr.executed_actions.append(
+                                f"route_to_bpmn:{action.ref}:job_id={job_id}"
+                            )
                         except Exception as routing_err:
                             # Routing failure is a diagnostic, not hard fail
                             diagnostic_emitter.emit_diagnostic(
@@ -2289,10 +2506,14 @@ class OFMFEngine:
                                 context=str(action_node),
                                 diagnostic_code="BPMN_ROUTING_FAILED",
                             )
-                            hr.executed_actions.append(f"route_to_bpmn:{action.ref}:routing_failed")
+                            hr.executed_actions.append(
+                                f"route_to_bpmn:{action.ref}:routing_failed"
+                            )
                     else:
                         # No endpoint: just emit (routing receipt only)
-                        hr.executed_actions.append(f"route_to_bpmn:{action.ref}:no_endpoint")
+                        hr.executed_actions.append(
+                            f"route_to_bpmn:{action.ref}:no_endpoint"
+                        )
                 else:
                     raise RuntimeError(f"Unknown action kind: {action.kind}")
 
@@ -2304,25 +2525,45 @@ class OFMFEngine:
                 diagnostic_type=KH.DialectFailure,
                 message=f"Hook execution failed: {str(e)}",
                 context=hook.hook_id,
-                diagnostic_code="HOOK_EXECUTION_ERROR"
+                diagnostic_code="HOOK_EXECUTION_ERROR",
             )
             # Collect diagnostics for this hook result
-            hr = dataclasses.replace(hr, diagnostics=list(diagnostic_emitter.diagnostics))
+            hr = dataclasses.replace(
+                hr, diagnostics=list(diagnostic_emitter.diagnostics)
+            )
             return hr
 
 
 # ---------- Example CLI (real entrypoint) ----------
 
+
 def main(argv: List[str]) -> int:
     import argparse
 
-    ap = argparse.ArgumentParser(description="OFMF Keystone Omniverse — Turtle hooks, BPMN emit, receipts")
+    ap = argparse.ArgumentParser(
+        description="OFMF Keystone Omniverse — Turtle hooks, BPMN emit, receipts"
+    )
     ap.add_argument("--hooks", required=True, help="Path to hook pack Turtle (.ttl)")
     ap.add_argument("--data", required=True, help="Path to data Turtle (.ttl)")
-    ap.add_argument("--out", required=True, help="Output directory for BPMN and receipts")
-    ap.add_argument("--phase", default=None, help="Optional phase filter (validate-before-write, etc)")
-    ap.add_argument("--parallel", action="store_true", help="Enable parallel execution of hooks within batches")
-    ap.add_argument("--max-workers", type=int, default=None, help="Maximum number of parallel workers (default: CPU count)")
+    ap.add_argument(
+        "--out", required=True, help="Output directory for BPMN and receipts"
+    )
+    ap.add_argument(
+        "--phase",
+        default=None,
+        help="Optional phase filter (validate-before-write, etc)",
+    )
+    ap.add_argument(
+        "--parallel",
+        action="store_true",
+        help="Enable parallel execution of hooks within batches",
+    )
+    ap.add_argument(
+        "--max-workers",
+        type=int,
+        default=None,
+        help="Maximum number of parallel workers (default: CPU count)",
+    )
     args = ap.parse_args(argv)
 
     hooks_path = Path(args.hooks)
@@ -2346,7 +2587,7 @@ def main(argv: List[str]) -> int:
         out_dir,
         phase_filter=args.phase,
         parallel=args.parallel,
-        max_workers=getattr(args, 'max_workers', None)
+        max_workers=getattr(args, "max_workers", None),
     )
 
     # Write receipt as Turtle too (OFMF)
@@ -2356,7 +2597,9 @@ def main(argv: List[str]) -> int:
     receipt_graph.add((rid, KH.inputHash, Literal(receipt.input_hash)))
     receipt_graph.add((rid, KH.deltaHash, Literal(receipt.delta_hash)))
     receipt_graph.add((rid, KH.outputHash, Literal(receipt.output_hash)))
-    receipt_graph.add((rid, KH.timestampNs, Literal(receipt.timestamp_ns, datatype=XSD.integer)))
+    receipt_graph.add(
+        (rid, KH.timestampNs, Literal(receipt.timestamp_ns, datatype=XSD.integer))
+    )
 
     for hid in receipt.executed_hook_ids:
         receipt_graph.add((rid, KH.executedHookId, Literal(hid)))
@@ -2364,10 +2607,18 @@ def main(argv: List[str]) -> int:
         receipt_graph.add((rid, KH.emittedBpmn, Literal(bpmn)))
 
     # Add cache statistics
-    receipt_graph.add((rid, KH.cacheHits, Literal(receipt.cache_hits, datatype=XSD.integer)))
-    receipt_graph.add((rid, KH.cacheMisses, Literal(receipt.cache_misses, datatype=XSD.integer)))
-    receipt_graph.add((rid, KH.cacheEvictions, Literal(receipt.cache_evictions, datatype=XSD.integer)))
-    receipt_graph.add((rid, KH.cacheHitRate, Literal(receipt.cache_hit_rate, datatype=XSD.decimal)))
+    receipt_graph.add(
+        (rid, KH.cacheHits, Literal(receipt.cache_hits, datatype=XSD.integer))
+    )
+    receipt_graph.add(
+        (rid, KH.cacheMisses, Literal(receipt.cache_misses, datatype=XSD.integer))
+    )
+    receipt_graph.add(
+        (rid, KH.cacheEvictions, Literal(receipt.cache_evictions, datatype=XSD.integer))
+    )
+    receipt_graph.add(
+        (rid, KH.cacheHitRate, Literal(receipt.cache_hit_rate, datatype=XSD.decimal))
+    )
 
     receipt_path = out_dir / "receipt.ttl"
     receipt_path.write_text(receipt_graph.serialize(format="turtle"), encoding="utf-8")
@@ -2375,14 +2626,18 @@ def main(argv: List[str]) -> int:
     # Write diagnostics if any were collected
     if receipt.diagnostic_graph is not None and len(receipt.diagnostic_graph) > 0:
         diagnostics_path = out_dir / "diagnostics.ttl"
-        diagnostics_path.write_text(receipt.diagnostic_graph.serialize(format="turtle"), encoding="utf-8")
+        diagnostics_path.write_text(
+            receipt.diagnostic_graph.serialize(format="turtle"), encoding="utf-8"
+        )
         print(f"Diagnostics written: {diagnostics_path.as_posix()}")
 
     # Deterministic console output
     for r in results:
         status = "SATISFIED" if r.satisfied else "SKIPPED"
         diag_count = len(r.diagnostics)
-        print(f"{r.hook_id}\t{status}\tactions={len(r.executed_actions)}\terrors={len(r.errors)}\tdiagnostics={diag_count}")
+        print(
+            f"{r.hook_id}\t{status}\tactions={len(r.executed_actions)}\terrors={len(r.errors)}\tdiagnostics={diag_count}"
+        )
         for e in r.errors:
             print(f"  ERROR: {e}")
 
@@ -2396,6 +2651,7 @@ if __name__ == "__main__":
 
 
 # ---------- BPMN XML Parser (BPMN XML => Turtle/RDF) ----------
+
 
 class BpmnXmlParser:
     """
@@ -2440,20 +2696,20 @@ class BpmnXmlParser:
 
         # BPMN 2.0 namespaces
         ns = {
-            'bpmn': 'http://www.omg.org/spec/BPMN/20100524/MODEL',
-            'bpmndi': 'http://www.omg.org/spec/BPMN/20100524/DI',
-            'dc': 'http://www.omg.org/spec/DD/20100524/DC',
-            'di': 'http://www.omg.org/spec/DD/20100524/DI',
-            'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
+            "bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL",
+            "bpmndi": "http://www.omg.org/spec/BPMN/20100524/DI",
+            "dc": "http://www.omg.org/spec/DD/20100524/DC",
+            "di": "http://www.omg.org/spec/DD/20100524/DI",
+            "xsi": "http://www.w3.org/2001/XMLSchema-instance",
         }
 
         g = Graph()
-        g.bind('bpmn', BPMN)
-        g.bind('rdf', RDF)
-        g.bind('xsd', XSD)
+        g.bind("bpmn", BPMN)
+        g.bind("rdf", RDF)
+        g.bind("xsd", XSD)
 
         # Parse process elements
-        for process_elem in root.findall('.//bpmn:process', ns):
+        for process_elem in root.findall(".//bpmn:process", ns):
             self._parse_process(g, process_elem, ns)
 
         return g
@@ -2469,11 +2725,11 @@ class BpmnXmlParser:
             Turtle string
         """
         g = self.parse_xml_to_graph(xml_path)
-        return g.serialize(format='turtle')
+        return g.serialize(format="turtle")
 
     def _parse_process(self, g: Graph, process_elem, ns: Dict[str, str]) -> URIRef:
         """Parse BPMN process element and add to graph."""
-        proc_id = process_elem.get('id')
+        proc_id = process_elem.get("id")
         if not proc_id:
             raise RuntimeError("Process element missing 'id' attribute")
 
@@ -2481,35 +2737,43 @@ class BpmnXmlParser:
         g.add((proc_iri, RDF.type, BPMN.Process))
         g.add((proc_iri, BPMN.processId, Literal(proc_id)))
 
-        proc_name = process_elem.get('name', proc_id)
+        proc_name = process_elem.get("name", proc_id)
         g.add((proc_iri, BPMN.name, Literal(proc_name)))
 
-        is_exec = process_elem.get('isExecutable', 'true')
-        g.add((proc_iri, BPMN.isExecutable, Literal(is_exec == 'true', datatype=XSD.boolean)))
+        is_exec = process_elem.get("isExecutable", "true")
+        g.add(
+            (
+                proc_iri,
+                BPMN.isExecutable,
+                Literal(is_exec == "true", datatype=XSD.boolean),
+            )
+        )
 
         # Parse all child elements
         for child in process_elem:
-            tag = child.tag.replace('{' + ns['bpmn'] + '}', '')
+            tag = child.tag.replace("{" + ns["bpmn"] + "}", "")
 
-            if tag == 'startEvent':
+            if tag == "startEvent":
                 self._parse_start_event(g, child, proc_iri, ns)
-            elif tag == 'endEvent':
+            elif tag == "endEvent":
                 self._parse_end_event(g, child, proc_iri, ns)
-            elif tag == 'task':
+            elif tag == "task":
                 self._parse_task(g, child, proc_iri, BPMN.Task, ns)
-            elif tag == 'userTask':
+            elif tag == "userTask":
                 self._parse_task(g, child, proc_iri, BPMN.UserTask, ns)
-            elif tag == 'exclusiveGateway':
+            elif tag == "exclusiveGateway":
                 self._parse_gateway(g, child, proc_iri, BPMN.ExclusiveGateway, ns)
-            elif tag == 'parallelGateway':
+            elif tag == "parallelGateway":
                 self._parse_gateway(g, child, proc_iri, BPMN.ParallelGateway, ns)
-            elif tag == 'sequenceFlow':
+            elif tag == "sequenceFlow":
                 self._parse_sequence_flow(g, child, proc_iri, ns)
 
         return proc_iri
 
-    def _parse_start_event(self, g: Graph, elem, proc_iri: URIRef, ns: Dict[str, str]) -> URIRef:
-        node_id = elem.get('id')
+    def _parse_start_event(
+        self, g: Graph, elem, proc_iri: URIRef, ns: Dict[str, str]
+    ) -> URIRef:
+        node_id = elem.get("id")
         if not node_id:
             raise RuntimeError("StartEvent missing 'id' attribute")
 
@@ -2518,13 +2782,15 @@ class BpmnXmlParser:
         g.add((node_iri, BPMN.inProcess, proc_iri))
         g.add((node_iri, BPMN.nodeId, Literal(node_id)))
 
-        name = elem.get('name', node_id)
+        name = elem.get("name", node_id)
         g.add((node_iri, BPMN.name, Literal(name)))
 
         return node_iri
 
-    def _parse_end_event(self, g: Graph, elem, proc_iri: URIRef, ns: Dict[str, str]) -> URIRef:
-        node_id = elem.get('id')
+    def _parse_end_event(
+        self, g: Graph, elem, proc_iri: URIRef, ns: Dict[str, str]
+    ) -> URIRef:
+        node_id = elem.get("id")
         if not node_id:
             raise RuntimeError("EndEvent missing 'id' attribute")
 
@@ -2533,14 +2799,16 @@ class BpmnXmlParser:
         g.add((node_iri, BPMN.inProcess, proc_iri))
         g.add((node_iri, BPMN.nodeId, Literal(node_id)))
 
-        name = elem.get('name', node_id)
+        name = elem.get("name", node_id)
         g.add((node_iri, BPMN.name, Literal(name)))
 
         return node_iri
 
-    def _parse_task(self, g: Graph, elem, proc_iri: URIRef, task_type: URIRef, ns: Dict[str, str]) -> URIRef:
+    def _parse_task(
+        self, g: Graph, elem, proc_iri: URIRef, task_type: URIRef, ns: Dict[str, str]
+    ) -> URIRef:
         """Generic task parser for Task, UserTask, ServiceTask, etc."""
-        node_id = elem.get('id')
+        node_id = elem.get("id")
         if not node_id:
             raise RuntimeError(f"Task missing 'id' attribute")
 
@@ -2549,14 +2817,16 @@ class BpmnXmlParser:
         g.add((node_iri, BPMN.inProcess, proc_iri))
         g.add((node_iri, BPMN.nodeId, Literal(node_id)))
 
-        name = elem.get('name', node_id)
+        name = elem.get("name", node_id)
         g.add((node_iri, BPMN.name, Literal(name)))
 
         return node_iri
 
-    def _parse_gateway(self, g: Graph, elem, proc_iri: URIRef, gateway_type: URIRef, ns: Dict[str, str]) -> URIRef:
+    def _parse_gateway(
+        self, g: Graph, elem, proc_iri: URIRef, gateway_type: URIRef, ns: Dict[str, str]
+    ) -> URIRef:
         """Generic gateway parser for Exclusive, Parallel, Inclusive, etc."""
-        node_id = elem.get('id')
+        node_id = elem.get("id")
         if not node_id:
             raise RuntimeError(f"Gateway missing 'id' attribute")
 
@@ -2565,14 +2835,16 @@ class BpmnXmlParser:
         g.add((node_iri, BPMN.inProcess, proc_iri))
         g.add((node_iri, BPMN.nodeId, Literal(node_id)))
 
-        name = elem.get('name', node_id)
+        name = elem.get("name", node_id)
         g.add((node_iri, BPMN.name, Literal(name)))
 
         return node_iri
 
-    def _parse_sequence_flow(self, g: Graph, elem, proc_iri: URIRef, ns: Dict[str, str]) -> URIRef:
+    def _parse_sequence_flow(
+        self, g: Graph, elem, proc_iri: URIRef, ns: Dict[str, str]
+    ) -> URIRef:
         """Parse SequenceFlow."""
-        flow_id = elem.get('id')
+        flow_id = elem.get("id")
         if not flow_id:
             raise RuntimeError("SequenceFlow missing 'id' attribute")
 
@@ -2582,8 +2854,8 @@ class BpmnXmlParser:
         g.add((flow_iri, BPMN.flowId, Literal(flow_id)))
 
         # Source and target refs
-        src_id = elem.get('sourceRef')
-        tgt_id = elem.get('targetRef')
+        src_id = elem.get("sourceRef")
+        tgt_id = elem.get("targetRef")
 
         if not src_id or not tgt_id:
             raise RuntimeError(f"SequenceFlow {flow_id} missing sourceRef or targetRef")
@@ -2595,7 +2867,7 @@ class BpmnXmlParser:
         g.add((flow_iri, BPMN.targetRef, tgt_iri))
 
         # Condition expression
-        cond_elem = elem.find('bpmn:conditionExpression', ns)
+        cond_elem = elem.find("bpmn:conditionExpression", ns)
         if cond_elem is not None and cond_elem.text:
             g.add((flow_iri, BPMN.conditionExpression, Literal(cond_elem.text.strip())))
 

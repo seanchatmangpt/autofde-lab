@@ -92,7 +92,9 @@ def test_cube_counter_typed_search_derives_unobserved_goal_state(tmp_path) -> No
 
     domain = induce_typed_domain(typed_records)
     typed_initial = dict(typed_records[0]["observed_pre"])
-    goal_predicate, _ = model_goal_predicate("cube_counter", typed_initial, {"target": 3})
+    goal_predicate, _ = model_goal_predicate(
+        "cube_counter", typed_initial, {"target": 3}
+    )
     plan = search_plan_typed(domain, typed_initial, goal_predicate, max_len=12)
 
     assert plan == ("increment", "increment", "increment")

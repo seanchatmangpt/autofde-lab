@@ -61,8 +61,6 @@ from pathlib import Path
 from typing import Any, Union
 
 from autofde_lab.hub.domain.gym_procedure.dogfood import (
-    EpisodeOcel,
-    ModelObservationDivergence,
     Unknown,
     _read_commitment,
     compare_discovered_model_vs_observed,
@@ -231,7 +229,9 @@ class CommitmentIdentity:
         if not self.plan_digest:
             raise MismatchConstructionError("COMMITMENT_IDENTITY_REQUIRES_PLAN_DIGEST")
         if not self.commitment_ref:
-            raise MismatchConstructionError("COMMITMENT_IDENTITY_REQUIRES_COMMITMENT_REF")
+            raise MismatchConstructionError(
+                "COMMITMENT_IDENTITY_REQUIRES_COMMITMENT_REF"
+            )
 
     def describe(self) -> str:
         return f"plan:{self.plan_digest}[{' -> '.join(self.plan)}]"
@@ -468,7 +468,9 @@ class CausalModelError:
 # ── construction from real archived artifacts ─────────────────────────────
 
 
-def causal_model_error_from_trial(trial_dir: Path | str) -> Union[CausalModelError, Unknown]:
+def causal_model_error_from_trial(
+    trial_dir: Path | str,
+) -> Union[CausalModelError, Unknown]:
     """Build typed mismatch evidence from one real archived trial directory.
 
     Reads through :func:`dogfood.compare_discovered_model_vs_observed` (the
@@ -559,7 +561,9 @@ def causal_model_error_from_trial(trial_dir: Path | str) -> Union[CausalModelErr
 
     unmodeled = tuple(
         UnmodeledDimension(
-            dimension=StateDimension(name=name, kind=DimensionKind.of(observed.get(name))),
+            dimension=StateDimension(
+                name=name, kind=DimensionKind.of(observed.get(name))
+            ),
             observed_value=observed.get(name),
             model=model,
             observation=observation,

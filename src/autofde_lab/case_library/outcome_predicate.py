@@ -85,7 +85,9 @@ class StructuralRecheck(Protocol):
     ) -> bool: ...
 
 
-def default_structural_recheck(anomaly: Anomaly, observe: Callable[[], str | None]) -> bool:
+def default_structural_recheck(
+    anomaly: Anomaly, observe: Callable[[], str | None]
+) -> bool:
     """Reference :class:`StructuralRecheck`: fault is gone iff the current
     observed value no longer equals the anomaly's ``expected`` mismatch.
 

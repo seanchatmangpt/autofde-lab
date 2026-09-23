@@ -85,8 +85,8 @@ from autofde_lab.sa2a.admission.pipeline import AdmissionPipeline
 from autofde_lab.sa2a.algebra import Standing
 from autofde_lab.sa2a.authority.broker import (
     AuthorityBroker,
-    AuthorityGrant,
     AuthorityDecision,
+    AuthorityGrant,
     ConsequenceRequest,
 )
 from autofde_lab.sa2a.brce.boundary import (
@@ -120,7 +120,9 @@ class CountingAuthorityBroker(AuthorityBroker):
         return super().evaluate(request)
 
 
-def test_idempotency_replay_does_not_bind_replaying_actor_identity(tmp_path: Path) -> None:
+def test_idempotency_replay_does_not_bind_replaying_actor_identity(
+    tmp_path: Path,
+) -> None:
     """Mutation: swap the `actor_id` identity on a replayed idempotency-token request.
 
     Step 1 -- otherwise-complete, currently-valid episode (real `ConsequenceBoundary`, real
@@ -329,12 +331,12 @@ def test_idempotency_replay_does_not_bind_replaying_actor_identity(tmp_path: Pat
     )
 
     impersonation_envelope = ExecutionEnvelope(
-        idempotency_token=token,        # SAME token as the granted actor's real execution
+        idempotency_token=token,  # SAME token as the granted actor's real execution
         action_iri=action_iri,
         target_resource=target_resource,
-        actor_id=adversary_actor_id,    # MUTATED identity: ungranted adversary
+        actor_id=adversary_actor_id,  # MUTATED identity: ungranted adversary
         parameters=parameters,
-        admission_result=admitted,      # SAME real admission (action/target-bound, not actor-bound)
+        admission_result=admitted,  # SAME real admission (action/target-bound, not actor-bound)
     )
 
     calls_before_impersonation = broker.evaluate_call_count
