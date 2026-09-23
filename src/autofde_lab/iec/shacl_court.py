@@ -10,6 +10,7 @@ from dataclasses import dataclass
 
 from pyshacl import validate
 from rdflib import Graph
+from rdflib.compare import to_canonical_graph
 
 from .model import digest
 
@@ -30,9 +31,10 @@ class ShaclAdmission:
 
 
 def _graph_digest(graph: Graph) -> str:
+    canonical = to_canonical_graph(graph)
     lines = [
         line
-        for line in graph.serialize(format="nt").splitlines()
+        for line in canonical.serialize(format="nt").splitlines()
         if line.strip()
     ]
     return digest(sorted(lines))
