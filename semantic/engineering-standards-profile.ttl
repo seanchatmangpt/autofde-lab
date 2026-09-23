@@ -1,0 +1,14 @@
+@prefix es: <https://w3id.org/chatman/engineering-standards#> .
+@prefix prof: <http://www.w3.org/ns/dx/prof/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix project: <https://w3id.org/chatman/project/seanchatmangpt-autofde-lab#> .
+
+project:Profile a prof:Profile ;
+  dcterms:title "seanchatmangpt/autofde-lab engineering-standards adoption" ;
+  dcterms:description "formal planning, experimentation, GALL verification, and process-intelligence lab" ;
+  prof:isProfileOf <https://w3id.org/chatman/engineering-standards> ;
+  dcterms:source <https://github.com/seanchatmangpt/engineering-standards/commit/5a3bb6446aeaee2255a7523d4d8cebf6042960c3> .
+
+project:Repository a es:RepositorySubject ;
+  es:repository "seanchatmangpt/autofde-lab" ;
+  es:baseSha "c6712549295003e777dd5bb5722231b08571cfa2" .

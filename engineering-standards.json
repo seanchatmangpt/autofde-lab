@@ -1,0 +1,21 @@
+{
+  "schema": "engineering-standards.repository-adoption.v26.9.21",
+  "repository": "seanchatmangpt/autofde-lab",
+  "base_sha": "c6712549295003e777dd5bb5722231b08571cfa2",
+  "mode": "SEMANTIC_WORK",
+  "role": "formal planning, experimentation, GALL verification, and process-intelligence lab",
+  "root": {
+    "repository": "seanchatmangpt/engineering-standards",
+    "sha": "5a3bb6446aeaee2255a7523d4d8cebf6042960c3",
+    "version": "26.9.21"
+  },
+  "local_constitution": "AGENTS.md",
+  "project_profile": "semantic/engineering-standards-profile.ttl",
+  "standing": "ALIVE",
+  "generator_identity": "engineering-standards/scripts/render-repository-adoption.py@5a3bb6446aeaee2255a7523d4d8cebf6042960c3",
+  "non_claims": [
+    "root adoption does not prove local runtime behavior",
+    "root adoption does not grant merge, release, deploy, or external DO authority",
+    "local repository courts remain authoritative for local runtime standing"
+  ]
+}
