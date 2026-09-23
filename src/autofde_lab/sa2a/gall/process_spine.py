@@ -9,6 +9,12 @@ from dataclasses import asdict, dataclass
 from typing import Any, Mapping
 
 CHECKPOINT_REPOSITORIES = {
+    "GALL-015": "seanchatmangpt/ex4pm",
+    "GALL-016": "seanchatmangpt/ex4pm",
+    "GALL-017": "seanchatmangpt/ex4pm",
+    "GALL-018": "seanchatmangpt/ex4pm",
+    "GALL-019": "seanchatmangpt/ex4pm",
+    "GALL-020": "seanchatmangpt/ex4pm",
     "GALL-021": "seanchatmangpt/wasm4pm",
     "GALL-022": "seanchatmangpt/wasm4pm",
     "GALL-023": "seanchatmangpt/wasm4pm",
@@ -19,18 +25,6 @@ CHECKPOINT_REPOSITORIES = {
     "GALL-028": "seanchatmangpt/beam4pm",
     "GALL-029": "seanchatmangpt/ash_a2a",
     "GALL-030": "seanchatmangpt/ash_a2a",
-}
-CHECKPOINT_CEILINGS = {
-    "GALL-021": frozenset({"COMPUTE_ONLY", "COMPILE_COMPUTE", "QUERY_COMPUTE"}),
-    "GALL-022": frozenset({"COMPUTE_ONLY", "COMPILE_COMPUTE", "QUERY_COMPUTE"}),
-    "GALL-023": frozenset({"COMPUTE_ONLY", "COMPILE_COMPUTE", "QUERY_COMPUTE"}),
-    "GALL-024": frozenset({"OBSERVE"}),
-    "GALL-025": frozenset({"COMPARE"}),
-    "GALL-026": frozenset({"ANALYZE"}),
-    "GALL-027": frozenset({"OBSERVE_ACCOUNT"}),
-    "GALL-028": frozenset({"RECOMMEND"}),
-    "GALL-029": frozenset({"ADMIT_ONLY", "CANDIDATE"}),
-    "GALL-030": frozenset({"AUTHORIZED_DO"}),
 }
 REQUIRED = tuple(CHECKPOINT_REPOSITORIES)
 _GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
@@ -76,10 +70,41 @@ class ProcessSpine:
                 raise ValueError(
                     f"{checkpoint} subject_digest must be content-addressed"
                 )
-            if item.evidence_ceiling not in CHECKPOINT_CEILINGS[checkpoint]:
+            if not item.evidence_ceiling:
+                raise ValueError(f"{checkpoint} evidence_ceiling is required")
+
+        # Authority conservation: reference/process-compute checkpoints cannot claim DO.
+        exact_ex4pm_ceilings = {
+            "GALL-015": "REFERENCE_CORPUS",
+            "GALL-016": "COMPILE_COMPUTE",
+            "GALL-017": "QUERY_COMPUTE",
+            "GALL-018": "DISCOVERY_CANDIDATE",
+            "GALL-019": "PREDICTION_CANDIDATE",
+            "GALL-020": "COMPUTE_ONLY",
+        }
+        for checkpoint, ceiling in exact_ex4pm_ceilings.items():
+            if by_id[checkpoint].evidence_ceiling != ceiling:
                 raise ValueError(
-                    f"{checkpoint} evidence ceiling {item.evidence_ceiling!r} exceeds its authority boundary"
+                    f"{checkpoint} evidence ceiling must be {ceiling}, "
+                    f"got {by_id[checkpoint].evidence_ceiling}"
                 )
+
+        for checkpoint in ("GALL-021", "GALL-022", "GALL-023"):
+            if by_id[checkpoint].evidence_ceiling not in {
+                "COMPUTE_ONLY",
+                "COMPILE_COMPUTE",
+                "QUERY_COMPUTE",
+            }:
+                raise ValueError(
+                    f"{checkpoint} exceeded portable compute authority ceiling"
+                )
+        for checkpoint in ("GALL-024", "GALL-025", "GALL-026", "GALL-027", "GALL-028"):
+            if by_id[checkpoint].evidence_ceiling in {"DO", "AUTHORIZED_DO"}:
+                raise ValueError(f"{checkpoint} observer evidence cannot grant DO")
+        if by_id["GALL-029"].evidence_ceiling not in {"ADMIT_ONLY", "CANDIDATE"}:
+            raise ValueError("GALL-029 must remain candidate admission only")
+        if by_id["GALL-030"].evidence_ceiling != "AUTHORIZED_DO":
+            raise ValueError("GALL-030 is the sole bounded DO checkpoint in this spine")
 
     def verify_exact_evidence(self, evidence: Mapping[str, bytes]) -> None:
         """Bind every manifest entry to independently hashed canonical evidence.
@@ -89,12 +114,14 @@ class ProcessSpine:
         GALL-030 additionally requires an explicit independent-authority witness
         and CommandBus-only route. Evidence is still evidence: this method does
         not execute a producer or manufacture cross-repository standing.
+        (Carried over from gall/integrate-021-030-process-spine: strictly
+        additive evidence binding on top of this spine's authority model.)
         """
         self.validate()
         by_id = {item.checkpoint: item for item in self.checkpoints}
         if set(evidence) != set(REQUIRED):
             raise ValueError(
-                "exact evidence requires one receipt for every GALL-021..030 checkpoint"
+                "exact evidence requires one receipt for every GALL-015..030 checkpoint"
             )
 
         for checkpoint in REQUIRED:
