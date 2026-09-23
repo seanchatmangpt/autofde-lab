@@ -113,6 +113,10 @@ jobs:
           assert copied >= 1, "compiled hub module missing from the built wheel"
           print(f"materialized {copied} compiled hub module(s) into src/")
           PY
+          # Register the project entry points (autofde_lab.solvers): the
+          # unattended solve loads Astar through importlib.metadata, which
+          # only sees an installed distribution.
+          python -m pip install --no-deps --disable-pip-version-check dist/*.whl
 
       - name: Run one Phase H tick (state outside the tracked tree)
         env:
