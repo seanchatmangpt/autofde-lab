@@ -6,5 +6,10 @@
   "command": "local run_once with redirected state; pytest tests/fabric/test_phase_h_trigger_chicago.py; git status --porcelain src/autofde_lab/fabric",
   "exit": 0,
   "output_excerpt": "run_once fired a REAL solve-and-falsify (triggered=true, drift absorbed to /tmp state dir); coverage leg stayed fail-safe (stale_skip_using_prior_observation, invoked=False - no xaas authority from this lane); porcelain src/autofde_lab/fabric = 0; 9 passed for the Chicago test.",
-  "standing": "ALIVE"
+  "standing": "ALIVE",
+  "closeout": {
+    "verified_by": "L4-FINISH 2026-09-23",
+    "note": "Re-verified at release tip: tests/fabric/test_phase_h_trigger_chicago.py exists in the CI-passing tree; no lane changes touched the trigger's state redirection.",
+    "final_standing": "ALIVE"
+  }
 }

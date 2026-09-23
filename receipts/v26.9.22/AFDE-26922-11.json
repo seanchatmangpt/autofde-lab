@@ -6,5 +6,11 @@
   "command": "submodule preserve branches + restore; docs/jira commits; standing doc addendum; worktree removals",
   "exit": 0,
   "output_excerpt": "7 submodules preserved on preserve/v26922-local-mods and restored to recorded SHAs. Deferred environment artifacts (recorded in ticket 004): enterprisebench workflow.png case-collision on case-insensitive macOS; sregym nested SREGym-applications generated-thrift churn. Worktree removals pending at landing.",
-  "standing": "PARTIAL_ALIVE"
+  "standing": "PARTIAL_ALIVE",
+  "closeout": {
+    "verified_by": "L4-FINISH 2026-09-23",
+    "residual": "Worktree removals pending at landing",
+    "residual_disposition": "PARKED — removal not safely bounded for this lane. All four worktrees from the W0 preserve list still exist and are registered: /Users/sac/autofde-lab/.claude/worktrees/wf_095332b4-828-3 (fix/uv-sync-fresh-clone-race @ 62426ec5), /Users/sac/autofde-lab/.claude/worktrees/wf_5556f1de-848-2 (feat/openclaw-ecosystem-interop-crown @ 9243bd0e), /Users/sac/crown-2-integration/autofde-lab (crown-2/autofde-compose @ e950e155), /Users/sac/crown-2-orthogonal (crown-2/orthogonal-ws @ 5c451741). Content is snapshotted on the W0 preserve/v26.9.22/* refs, BUT the working copies still carry other lanes' un-preserved-in-any-other-form WIP (W0 census: 18 + 18 + 37 + 26 dirty files respectively); git worktree remove would require --force and destroy those working copies. Removal is an operator cut after the owning lanes confirm. The two vendor submodule artifacts (enterprisebench workflow.png case-collision, sregym thrift churn) remain dirty in the main checkout exactly as ticket 004 documented them; their per-submodule preserve branches hold byte-exact snapshots.",
+    "final_standing": "PARTIAL_ALIVE"
+  }
 }

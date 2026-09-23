@@ -4,6 +4,13 @@
   "base_sha": "f5cc664bac7598d5cf53cab399876df300bb6b14",
   "command": "merge origin/master into both branches; pre-commit run --files; pytest test_gall_semantic_work; gh pr merge bottom-up",
   "exit": null,
-  "output_excerpt": "#163 merge result vs master = fabric/gall.py (frontier(), to_hddl_problem, MachineExperience) + tests/fabric/test_gall_semantic_work.py only; beam_port_bridge.py and phase_h_trigger.py untouched by the merge. Exact-head qualification pass after pre-commit fixes (64ababed). Decision: #167 landed (operator stack list #160-#171); feat/v26.9.19-work-envelope-v2 superseded (divergent 2-commit alternative, no PR); local feat/gall-swf-v26.9.18 select_frontier superseded by #163's frontier() \u2014 recorded as failed-edge alternative.",
-  "standing": "IN_PROGRESS"
+  "output_excerpt": "#163 merge result vs master = fabric/gall.py (frontier(), to_hddl_problem, MachineExperience) + tests/fabric/test_gall_semantic_work.py only; beam_port_bridge.py and phase_h_trigger.py untouched by the merge. Exact-head qualification pass after pre-commit fixes (64ababed). Decision: #167 landed (operator stack list #160-#171); feat/v26.9.19-work-envelope-v2 superseded (divergent 2-commit alternative, no PR); local feat/gall-swf-v26.9.18 select_frontier superseded by #163's frontier() — recorded as failed-edge alternative.",
+  "standing": "PARTIAL_ALIVE",
+  "closeout": {
+    "verified_by": "L4-FINISH 2026-09-23",
+    "residual": "#163 and #167 OPEN, unlanded; exact-head-fabric check red on both stale heads",
+    "residual_closed_for_163": "Diagnosed the red: tests/fabric/test_cli.py:18 CliRunner(mix_stderr=False) TypeError under click >=8.2 (collection error, run 35811466049 job 107023775389). Fixed with a click-era try/except construction preserving the pure-stdout intent; branch merged with origin/master (e5efc169); all six exact-head checks green (fabric 15m48s pass); MERGED as 2beeebf5.",
+    "residual_disposition_for_167": "BLOCKED, PR left OPEN unmerged. After the shared click fix, exact-head-fabric fails deterministically with a DIFFERENT signature: full suite green (283 passed, 232 skipped) then interpreter-teardown segfault (exit 139), reproduced on rerun (job 107088716286). Not a test failure; unique to #167's auto-merged gall.py delta (suspects: torch/wasm4pm/hub .so teardown order). Disposition comment posted on the PR with full evidence (issuecomment-5791536598). failed(edge_167-teardown) != failed(WO-06); #163's landing carries the stack's semantic core (frontier(), to_hddl_problem, MachineExperience, semantic-work tests).",
+    "final_standing": "PARTIAL_ALIVE"
+  }
 }

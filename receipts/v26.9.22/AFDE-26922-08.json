@@ -6,5 +6,11 @@
   "command": "gh run view --log-failed diagnosis + ci.yml/agentic-fabric.yml repair + push",
   "exit": 0,
   "output_excerpt": "Root cause proven from run 35791445157 logs: pyproject pytest pythonpath=['src'] shadows the installed wheel, so the compiled __autofde_lab_hub_cpp never resolves (test_pomcp collection error). Fix: materialize the .so from the exact-SHA wheel into src/autofde_lab/hub before the partition runs; same build for agentic-fabric court. Baseline honesty: master ci.yml was 0/306 green BEFORE this lane (pre-existing). #169 regeneration and the first green run are pending.",
-  "standing": "PARTIAL_ALIVE"
+  "standing": "PARTIAL_ALIVE",
+  "closeout": {
+    "verified_by": "L4-FINISH 2026-09-23",
+    "residual": "#169 regeneration and the first green run pending",
+    "residual_closed": "#169 superseded: CLOSED unmerged, its content regenerated and MERGED as #172 (w9-sweep/format-drift-v2, 2026-09-23T05:21:02Z). First green: the last blocking red was the Deterministic-quality job (pre-commit --all-files) \u2014 diagnosed from run 35824804442 job logs: (1) all eleven receipts/v26.9.22 JSONs missing trailing newlines (lane-introduced at f8da2ebb), (2) harness.py stdlib import sort (pre-existing at baseline f5cc664b). Both cured deterministically in e333ed51; clang-format on py_pddl.cc deliberately NOT changed (CI's pinned v13 passes it; a local newer clang-format disagrees \u2014 local artifact reverted). VERDICT: see closeout receipt for the first-green run id and verdict.",
+    "final_standing": "PARTIAL_ALIVE"
+  }
 }

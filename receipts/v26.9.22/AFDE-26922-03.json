@@ -5,5 +5,12 @@
   "command": ".venv/bin/python scripts/run_chicago_qualification.py && .venv/bin/python scripts/verify_rfc_sa2a_002_qualification.py",
   "exit": null,
   "output_excerpt": "Deferred to the master landing merge so the receipts name the final exact subject SHA.",
-  "standing": "PENDING"
+  "standing": "PARTIAL_ALIVE",
+  "closeout": {
+    "verified_by": "L4-FINISH 2026-09-23",
+    "diagnosis": "The dying agent's run at master 1c25fdc7 (uncommitted in the main checkout) failed all_gates_passed=false, standing BUILD_BROKEN: the CHI-ID exact-identity fence was hard-pinned to release_tag v26.9.17 (tag 334b3eb6), so any later HEAD fail-closes by design. Correct fail-closed behavior of a stale pin, not a court defect.",
+    "residual_closed": "Fence parameterized: ChicagoCrownQualificationRunner.run()/run_chicago_qualification() take release_tag (default unchanged, v26.9.17); scripts/run_chicago_qualification.py gains --release-tag. Landed as 5d86b1cb on release/v26.9.22, merged to master inside b34c0713. Plumbing witnessed: run at release tip 5d86b1cb with --release-tag v26.9.22 -> receipt records release v26.9.22, tag_sha unreleased, tag_equality false, standing BUILD_BROKEN, exit 1 - the court fail-closes on the not-yet-cut tag exactly as designed.",
+    "residual_open": "Cutting tag v26.9.22 on release/v26.9.22 @ 5d86b1cb is gated on first-green ci.yml (BLOCKED, see AFDE-26922-12); the qualification receipt refresh at the exact tagged subject is the single remaining command after that gate: python scripts/run_chicago_qualification.py --release-tag v26.9.22 (release checkout) && verify_rfc_sa2a_002_qualification.py.",
+    "final_standing": "PARTIAL_ALIVE"
+  }
 }

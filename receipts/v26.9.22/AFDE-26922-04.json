@@ -6,5 +6,10 @@
   "command": "git push origin afde-26922-04-fabric-gymnasium:master",
   "exit": 0,
   "output_excerpt": "f5cc664b..bde04bde master -> master. Exact-head-fabric collection gap removed; remaining fabric failures were the hub build gap, fixed under AFDE-26922-08 (a090ca00).",
-  "standing": "ALIVE"
+  "standing": "ALIVE",
+  "closeout": {
+    "verified_by": "L4-FINISH 2026-09-23",
+    "note": "bde04bde confirmed on origin/master ancestry; gymnasium install present in agentic-fabric.yml at the release tip.",
+    "final_standing": "ALIVE"
+  }
 }

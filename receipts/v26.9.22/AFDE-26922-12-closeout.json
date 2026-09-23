@@ -1,0 +1,39 @@
+{
+  "wo": "AFDE-26922-12-closeout",
+  "title": "Lane L4 finish: integration verified, residuals closed, first-green verdict, release state",
+  "base_sha": "f5cc664bac7598d5cf53cab399876df300bb6b14",
+  "command": "verify receipts; git log/status census; ruff+pre-commit+pytest lane gate; gh run/pr forensics; land residuals; tag gate",
+  "exit": 0,
+  "output_excerpt": "All 11 predecessor WO receipts verified against live repo+GitHub state; residuals of 01/03/06/07/08/11 assessed; 01/07 closed ALIVE, 03/06/08/11 PARTIAL_ALIVE with precise one-command-or-one-lane next acts. FIRST GREEN ci.yml NOT achieved: the newest master run (35836880705, head b34c0713) is green on 11 of 12 jobs but Linux integration authority fails with 35 tests/solvers/python failures, single root cause 'No module named solvers' at Ray GraphRolloutWorker creation inside the wheel-integration packaging — pre-existing (zero lane attribution f5cc664b..b34c0713; masked until AFDE-26922-08's hub materialization fix let the partition run past collection for the first time). Tag v26.9.22 NOT cut: gated on green by the release law.",
+  "standing": "PARTIAL_ALIVE",
+  "verification": {
+    "integration_branch": "release/v26.9.22 @ 5d86b1cb (pushed; was 290cf5e7 on arrival)",
+    "master": "b34c0713 (pushed; = 111d3c95 landing + 347e42ba WO-01 row + 2beeebf5 #163 merge + b34c0713 release-param merge)",
+    "lane_gate_release_tip": {
+      "ruff_format_check": "clean with the repo's own exclusions (pre-commit ruff-format hook excludes cpp/; a bare global run flags 39 vendored cpp/sdk files the repo's law deliberately excludes)",
+      "ruff_check": "clean (0.14.0, matching the pinned pre-commit rev)",
+      "pre_commit_all_files": "reproduced CI's Deterministic-quality failure locally: ruff sort-imports on harness.py (fixed, e333ed51) + receipts newlines (fixed, e333ed51); 5 other hooks failed only on missing local executables (env rot, pass on CI); clang-format local-only disagreement on py_pddl.cc reverted, CI v13 passes it",
+      "pytest_local": "BLOCKED:ENV - the full justfile test selection cannot run locally: main .venv (rebuilt 2026-09-22 23:01) is incomplete (pyDatalog missing, entry-point registry empty, no cpp build) and the int-worktree .venv lacks ruff; matches W0's BLOCKED:DISK baseline; the deciding pytest boundary is CI's Linux integration authority job",
+      "ci_first_green_candidate": "run 35836880705 (master b34c0713): Deterministic quality SUCCESS, all 3 wheels SUCCESS, cache qualifications SUCCESS, source dist SUCCESS, documentation SUCCESS - Linux integration authority FAILURE (see below)"
+    },
+    "first_green_verdict": "NOT ACHIEVED. Newest master run red. 35 failures, ALL in tests/solvers/python (test_gnn_ray_rllib.py 33, test_python_solvers.py 2, test_ray_rllib.py 2 by signature; 35 total, 0 non-solver). Single root cause: ray.exceptions.RaySystemError 'No module named solvers' when Ray creates GraphRolloutWorker actors - the wheel-integration job packages tests/solvers/python for the Ray cluster but actor deserialization cannot import the test-tree module. PRE-EXISTING, newly EXPOSED: (a) zero lane attribution - f5cc664b..b34c0713 touches tests/solvers only via the inert format sweep 814615fa; (b) before AFDE-26922-08's hub .so materialization the partition aborted at collection (test_pomcp), so these tests never executed in any prior integration run; (c) survey baseline 0/306 green. Repair path for the next lane: fix the solvers-module import mechanism inside the Ray rollout-worker packaging (src/autofde_lab/hub/solver/ray_rllib/gnn/evaluation/rollout_worker.py creation path / tests/solvers/python conftest sys.path assumptions), then rerun the partition; every other job is already green.",
+    "pr_stack": "#157,#159,#160,#161,#163(2beeebf5 this session),#164,#165,#166,#168,#170,#171,#172 MERGED; #158 CLOSED (superseded by #159); #169 CLOSED (superseded by #172); #167 OPEN-BLOCKED (deterministic interpreter-teardown segfault exit 139 AFTER a fully green suite 283 passed/232 skipped, reproduced on rerun, unique to its auto-merged gall.py delta; disposition comment issuecomment-5791536598)",
+    "dirty_file_dispositions": {
+      "int_worktree_concurrency_stress_findings_md": "test-generated artifact of the dying agent's gate run (the stress test writes the doc each run); preserved byte-exact at 868f6486 on branch preserve/v26.9.22/int-stress-findings-regen, then worktree restored to clean",
+      "main_ecosystem_standing_md": "WO-01 pass-5 row rewrite (in-flight, witnessed: 4 passed at merged SHA); committed 347e42ba",
+      "main_rfc_sa2a_002_chicago_crown_receipt_json": "WO-03 dying-agent run output, fail-closed BUILD_BROKEN (stale fence pin) - diagnosed, NOT committed as completion evidence; superseded by the fence parameterization 5d86b1cb",
+      "main_rfc_sa2a_002_chicago_crown_ocel_json": "untracked sibling of the same run; left untracked",
+      "main_vendor_submodules_enterprisebench_sregym": "documented deferred environment artifacts (ticket 004: workflow.png case-collision, sregym thrift churn); per-submodule preserve branches hold snapshots; left as documented"
+    },
+    "release_state": "STAGED, NOT CUT. release/v26.9.22 pushed @ 5d86b1cb (landing + first-green repair e333ed51 + fence parameterization 5d86b1cb). master pushed @ b34c0713. Tag v26.9.22 NOT cut: the release law gates the tag on green and the newest master run is red on the pre-existing solver partition. Completion after the solver repair: git tag -a v26.9.22 <release-tip> + git push origin release/v26.9.22 v26.9.22, then the WO-03 qualification command in AFDE-26922-03's closeout. setuptools_scm will resolve 26.9.22 exactly at the tag.",
+    "environment_notes": "uv-managed cpython-3.13.9 binary had lost its exec bit (mode 600) breaking BOTH repo venvs; restored chmod +x this session. Disk: /System/Volumes/Data at 100% (0 GB free mid-session; W0 threshold 15 GB; ~2 GB after removing the two temporary PR worktrees) - the lane's local full-suite gate stays BLOCKED:DISK/ENV until the operator frees space."
+  },
+  "falsifiers_attempted": [
+    "clang-format py_pddl.cc drift: falsified as local-version artifact (CI v13 passes; local newer toolchain disagrees) - reverted, not committed",
+    "#167 exact-head-fabric red as stale-branch mix_stderr: falsified - fix landed, check passed on #163 but #167 fails on a DIFFERENT deterministic signature (teardown segfault)",
+    "#167 segfault as flaky: falsified - reproduced identically on rerun (283 passed then exit 139, twice)",
+    "integration red as lane-introduced: falsified - 35/35 failures in untouched solver partition, single packaging root cause, previously masked pre-WO-08",
+    "WO-03 failure as court defect: falsified - court fail-closes correctly on stale v26.9.17 fence pin; parameterization preserves the fence semantics"
+  ],
+  "standing": "PARTIAL_ALIVE"
+}
