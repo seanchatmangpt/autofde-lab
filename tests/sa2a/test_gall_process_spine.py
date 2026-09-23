@@ -42,7 +42,7 @@ def _spine() -> ProcessSpine:
             ProcessCheckpointReference(
                 checkpoint=checkpoint,
                 repository=repo,
-                repo_sha=f"{index:x}" * 40,
+                repo_sha=f"{index:040x}",  # deterministic exact 40-hex (f"{index:x}"*40 breaks for index >= 16)
                 evidence_digest=_digest(f"e{index}"),
                 subject_digest=_digest(f"s{index}"),
                 evidence_ceiling=ceilings[checkpoint],
