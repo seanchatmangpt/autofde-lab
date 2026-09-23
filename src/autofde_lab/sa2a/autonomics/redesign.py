@@ -47,15 +47,24 @@ class CanaryEnvelope:
             "rollback_condition": rollback_condition,
             "authority_required": True,
         }
-        digest = "sha256:" + hashlib.sha256(
-            json.dumps(payload, sort_keys=True).encode()
-        ).hexdigest()
-        return cls(candidate=candidate, envelope_digest=digest, **{
-            key: payload[key] for key in (
-                "baseline_digest", "scope", "event_budget",
-                "rollback_condition", "authority_required"
-            )
-        })
+        digest = (
+            "sha256:"
+            + hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
+        )
+        return cls(
+            candidate=candidate,
+            envelope_digest=digest,
+            **{
+                key: payload[key]
+                for key in (
+                    "baseline_digest",
+                    "scope",
+                    "event_budget",
+                    "rollback_condition",
+                    "authority_required",
+                )
+            },
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,9 +76,13 @@ class CanaryEvidence:
     postcondition_verified: bool
     rolled_back: bool = False
 
-    def promotion_candidate(self, *, metric: str, higher_is_better: bool = True) -> dict[str, str]:
+    def promotion_candidate(
+        self, *, metric: str, higher_is_better: bool = True
+    ) -> dict[str, str]:
         if not self.postcondition_verified or self.rolled_back:
-            raise RuntimeError("REFUSED(promotion-without-successful-independent-canary)")
+            raise RuntimeError(
+                "REFUSED(promotion-without-successful-independent-canary)"
+            )
         before = self.baseline_metrics[metric]
         after = self.canary_metrics[metric]
         improved = after > before if higher_is_better else after < before

@@ -34,9 +34,12 @@ class BeliefState:
             "observation_projection": self.observation_projection,
             "provenance_digest": self.provenance_digest,
         }
-        return "sha256:" + hashlib.sha256(
-            json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest()
+        return (
+            "sha256:"
+            + hashlib.sha256(
+                json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest()
+        )
 
     def require(self, requirements: Mapping[str, bool]) -> tuple[bool, tuple[str, ...]]:
         unknown: list[str] = []
@@ -57,7 +60,10 @@ class BeliefState:
         prefix: str = "observe",
     ) -> tuple[InformationAction, ...]:
         _, unknown = self.require(requirements)
-        return tuple(InformationAction(fact=fact, action_id=f"{prefix}:{fact}") for fact in unknown)
+        return tuple(
+            InformationAction(fact=fact, action_id=f"{prefix}:{fact}")
+            for fact in unknown
+        )
 
     def observe(self, fact: str, value: bool) -> "BeliefState":
         next_facts = dict(self.facts)

@@ -84,9 +84,12 @@ class RepairSelector:
             "semantic_subject": semantic_subject,
             "belief_digest": belief.digest,
         }
-        selection_digest = "sha256:" + hashlib.sha256(
-            json.dumps(payload, sort_keys=True, default=str).encode()
-        ).hexdigest()
+        selection_digest = (
+            "sha256:"
+            + hashlib.sha256(
+                json.dumps(payload, sort_keys=True, default=str).encode()
+            ).hexdigest()
+        )
         return InterventionRequest(
             candidate_id=selected.candidate_id,
             capability_id=selected.capability_id,

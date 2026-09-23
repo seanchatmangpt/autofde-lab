@@ -7,7 +7,6 @@ import json
 from dataclasses import asdict, dataclass
 from typing import Mapping
 
-
 _REQUIRED = tuple(f"GALL-{index:03d}" for index in range(1, 32))
 
 
@@ -20,7 +19,9 @@ class ExternalAutonomicsManifest:
     runtime_identity: str
 
     def validate(self) -> None:
-        missing = [checkpoint for checkpoint in _REQUIRED if checkpoint not in self.receipts]
+        missing = [
+            checkpoint for checkpoint in _REQUIRED if checkpoint not in self.receipts
+        ]
         if missing:
             raise ValueError(f"BLOCKED(missing predecessor receipts: {missing})")
         for checkpoint, digest in self.receipts.items():
@@ -39,9 +40,12 @@ class ExternalAutonomicsManifest:
             "authority_policy_digest": self.authority_policy_digest,
             "runtime_identity": self.runtime_identity,
         }
-        return "sha256:" + hashlib.sha256(
-            json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest()
+        return (
+            "sha256:"
+            + hashlib.sha256(
+                json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest()
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,7 +72,9 @@ class ExternalCrownEvidence:
         if not self.episode_2_fresh_process:
             raise RuntimeError("REFUSED(episode-2 reuses episode-1 process state)")
         if self.episode_2_frontier_calls != 0 or self.episode_2_llm_allocations != 0:
-            raise RuntimeError("REFUSED(KNOWN recurrence repurchased exploratory cognition)")
+            raise RuntimeError(
+                "REFUSED(KNOWN recurrence repurchased exploratory cognition)"
+            )
         if self.episode_2_planner_calls != 0:
             raise RuntimeError("REFUSED(KNOWN reflex still invokes equivalent planner)")
         if self.episode_2_reflex_executions < 1:

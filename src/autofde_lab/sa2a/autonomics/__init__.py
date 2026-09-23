@@ -12,7 +12,7 @@ from .external_crown import ExternalAutonomicsManifest, ExternalCrownEvidence
 from .falsifier import ActiveFalsifier, FalsifierResult, Invariant
 from .feedback import AdmittedFeedback, FeedbackAdmission, FeedbackFinding, FeedbackRule
 from .predictor import PredictionCandidate, PredictionStanding
-from .redesign import CanaryEvidence, CanaryEnvelope, RedesignCandidate
+from .redesign import CanaryEnvelope, CanaryEvidence, RedesignCandidate
 from .repair import InterventionRequest, RepairCandidate, RepairSelector
 from .telemetry import Measurement, SemanticCorrelation, SemanticTelemetryArtifact
 
