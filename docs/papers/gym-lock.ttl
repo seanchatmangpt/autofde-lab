@@ -51,3 +51,4 @@
 <https://github.com/seanchatmangpt/autofde-lab/data/forwardbench/vendor-webarena> afb:pinnedRevision "dce04686a56253aefba7b18a4fa0937cf1dc987b" ; afb:resolutionStanding "PINNED" .
 <https://github.com/seanchatmangpt/autofde-lab/data/forwardbench/vendor-wonderbread> afb:pinnedRevision "ed052c67aeada04167cdfe92ff8de454aa94627a" ; afb:resolutionStanding "PINNED" .
 <https://github.com/seanchatmangpt/autofde-lab/data/forwardbench/vendor-workarena> afb:pinnedRevision "a772230a94cf1caf4166b8ead3983f3b3786455b" ; afb:resolutionStanding "PINNED" .
+<https://github.com/seanchatmangpt/autofde-lab/data/forwardbench/vendor-skill2env> afb:pinnedRevision "9beb0b64a70290f862c8374bbef21f2ac88992ab" ; afb:resolutionStanding "PINNED" .
