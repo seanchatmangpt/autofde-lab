@@ -1,0 +1,10 @@
+PREFIX iec: <urn:autofde-lab:iec:>
+
+SELECT DISTINCT ?artifact ?path ?reason
+WHERE {
+  ?artifact a iec:ArtifactRecord ;
+            iec:artifactClass "UNKNOWN" ;
+            iec:sourcePath ?path .
+  OPTIONAL { ?artifact iec:unknownReason ?reason . }
+}
+ORDER BY ?path ?artifact

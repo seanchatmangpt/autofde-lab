@@ -1,0 +1,148 @@
+@prefix iec: <urn:autofde-lab:iec:> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:autofde-lab:iec> a owl:Ontology ;
+    rdfs:label "Inverse Ecosystem Compiler semantic vocabulary" ;
+    rdfs:comment "Design vocabulary for bounded semantic archaeology and translation validation. Declaring an individual grants no BRCE DO authority or execution standing." .
+
+iec:RepositorySubject a owl:Class .
+iec:ArtifactRecord a owl:Class .
+iec:Observation a owl:Class .
+iec:SemanticNode a owl:Class .
+iec:SemanticEdge a owl:Class .
+iec:SemanticClaim a owl:Class .
+iec:AdmittedClaim a owl:Class ;
+    rdfs:subClassOf iec:SemanticClaim .
+iec:CorrespondenceCandidate a owl:Class .
+iec:Generalization a owl:Class .
+iec:EquivalenceCourt a owl:Class .
+iec:TranslationValidation a owl:Class .
+iec:Counterexample a owl:Class .
+iec:ReasoningClass a owl:Class .
+iec:DispositionCandidate a owl:Class .
+iec:ReplacementDispositionCandidate a owl:Class ;
+    rdfs:subClassOf iec:DispositionCandidate .
+iec:PromotionCandidate a owl:Class .
+iec:Generator a owl:Class .
+iec:Verifier a owl:Class .
+iec:AuthorityBoundary a owl:Class .
+
+iec:CanonicalSource a owl:Class ; rdfs:subClassOf iec:ArtifactRecord .
+iec:GeneratedProjection a owl:Class ; rdfs:subClassOf iec:ArtifactRecord .
+iec:DerivedCache a owl:Class ; rdfs:subClassOf iec:ArtifactRecord .
+iec:HandwrittenIrreducible a owl:Class ; rdfs:subClassOf iec:ArtifactRecord .
+iec:HistoricalResidue a owl:Class ; rdfs:subClassOf iec:ArtifactRecord .
+iec:ExternalVendored a owl:Class ; rdfs:subClassOf iec:ArtifactRecord .
+iec:UnknownArtifact a owl:Class ; rdfs:subClassOf iec:ArtifactRecord .
+
+iec:repository a owl:DatatypeProperty ;
+    rdfs:domain iec:RepositorySubject ;
+    rdfs:range xsd:string .
+iec:revision a owl:DatatypeProperty ;
+    rdfs:domain iec:RepositorySubject ;
+    rdfs:range xsd:string .
+iec:defaultBranch a owl:DatatypeProperty ;
+    rdfs:domain iec:RepositorySubject ;
+    rdfs:range xsd:string .
+iec:visibility a owl:DatatypeProperty ;
+    rdfs:domain iec:RepositorySubject ;
+    rdfs:range xsd:string .
+iec:subjectDigest a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:sourcePath a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:contentDigest a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:evidenceKind a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:evidenceId a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:claimCeiling a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:standing a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:score a owl:DatatypeProperty ;
+    rdfs:range xsd:decimal .
+iec:passed a owl:DatatypeProperty ;
+    rdfs:range xsd:boolean .
+iec:recurrenceCount a owl:DatatypeProperty ;
+    rdfs:range xsd:nonNegativeInteger .
+iec:replacementPath a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:rollbackPath a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:falsifier a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:unknownReason a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:relation a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:predicate a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:value a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:artifactClass a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:producer a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:nodeKind a owl:DatatypeProperty ;
+    rdfs:domain iec:SemanticNode ;
+    rdfs:range xsd:string .
+iec:nodeKey a owl:DatatypeProperty ;
+    rdfs:domain iec:SemanticNode ;
+    rdfs:range xsd:string .
+
+iec:observedAt a owl:ObjectProperty ;
+    rdfs:domain iec:Observation ;
+    rdfs:range iec:RepositorySubject .
+iec:derivedFrom a owl:ObjectProperty .
+iec:generatedBy a owl:ObjectProperty ;
+    rdfs:domain iec:GeneratedProjection ;
+    rdfs:range iec:Generator .
+iec:verifiedBy a owl:ObjectProperty ;
+    rdfs:range iec:Verifier .
+iec:leftSubject a owl:ObjectProperty ;
+    rdfs:domain iec:CorrespondenceCandidate .
+iec:rightSubject a owl:ObjectProperty ;
+    rdfs:domain iec:CorrespondenceCandidate .
+iec:requiresVerifier a owl:ObjectProperty ;
+    rdfs:range iec:Verifier .
+iec:hasCounterexample a owl:ObjectProperty ;
+    rdfs:range iec:Counterexample .
+iec:hasFalsifier a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+iec:originalSubject a owl:ObjectProperty ;
+    rdfs:domain iec:TranslationValidation ;
+    rdfs:range iec:RepositorySubject .
+iec:generatedSubject a owl:ObjectProperty ;
+    rdfs:domain iec:TranslationValidation ;
+    rdfs:range iec:RepositorySubject .
+iec:verifierSet a owl:ObjectProperty ;
+    rdfs:domain iec:TranslationValidation ;
+    rdfs:range iec:EquivalenceCourt .
+iec:retiredBy a owl:ObjectProperty ;
+    rdfs:domain iec:ReasoningClass .
+iec:promotesToRepository a owl:DatatypeProperty ;
+    rdfs:domain iec:PromotionCandidate ;
+    rdfs:range xsd:string .
+iec:requiresAuthority a owl:ObjectProperty ;
+    rdfs:range iec:AuthorityBoundary .
+iec:source a owl:ObjectProperty ;
+    rdfs:domain iec:SemanticEdge ;
+    rdfs:range iec:SemanticNode .
+iec:target a owl:ObjectProperty ;
+    rdfs:domain iec:SemanticEdge ;
+    rdfs:range iec:SemanticNode .
+
+iec:Observed a owl:NamedIndividual .
+iec:DerivedDeterministic a owl:NamedIndividual .
+iec:InferredCandidate a owl:NamedIndividual .
+iec:Admitted a owl:NamedIndividual .
+iec:Contradicted a owl:NamedIndividual .
+iec:Unknown a owl:NamedIndividual .
+
+iec:SelectConstructVerifyOnly a iec:AuthorityBoundary ;
+    rdfs:label "IEC SELECT/CONSTRUCT/VERIFY authority ceiling; external DO excluded" .

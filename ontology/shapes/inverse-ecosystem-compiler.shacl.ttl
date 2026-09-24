@@ -1,0 +1,119 @@
+@prefix iec: <urn:autofde-lab:iec:> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+iec:RepositorySubjectShape a sh:NodeShape ;
+    sh:targetClass iec:RepositorySubject ;
+    sh:property [
+        sh:path iec:repository ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1
+    ] ;
+    sh:property [
+        sh:path iec:revision ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1
+    ] ;
+    sh:property [
+        sh:path iec:defaultBranch ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1
+    ] ;
+    sh:property [
+        sh:path iec:visibility ;
+        sh:minCount 1 ; sh:maxCount 1 ;
+        sh:in ("public" "private" "internal")
+    ] .
+
+iec:ObservationShape a sh:NodeShape ;
+    sh:targetClass iec:Observation ;
+    sh:property [
+        sh:path iec:observedAt ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:class iec:RepositorySubject
+    ] ;
+    sh:property [
+        sh:path iec:sourcePath ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1
+    ] ;
+    sh:property [
+        sh:path iec:evidenceKind ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] .
+
+iec:ArtifactRecordShape a sh:NodeShape ;
+    sh:targetClass iec:ArtifactRecord ;
+    sh:property [
+        sh:path iec:subjectDigest ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1
+    ] ;
+    sh:property [
+        sh:path iec:sourcePath ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1
+    ] ;
+    sh:property [
+        sh:path iec:contentDigest ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1
+    ] .
+
+iec:GeneratedProjectionShape a sh:NodeShape ;
+    sh:targetClass iec:GeneratedProjection ;
+    sh:property [
+        sh:path iec:generatedBy ;
+        sh:minCount 1 ; sh:class iec:Generator
+    ] .
+
+iec:AdmittedClaimShape a sh:NodeShape ;
+    sh:targetClass iec:AdmittedClaim ;
+    sh:property [
+        sh:path iec:hasFalsifier ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1
+    ] .
+
+iec:CorrespondenceCandidateShape a sh:NodeShape ;
+    sh:targetClass iec:CorrespondenceCandidate ;
+    sh:property [ sh:path iec:leftSubject ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path iec:rightSubject ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [
+        sh:path iec:requiresVerifier ;
+        sh:minCount 1 ; sh:class iec:Verifier
+    ] ;
+    sh:property [
+        sh:path iec:score ;
+        sh:maxCount 1 ; sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ; sh:maxInclusive 1
+    ] .
+
+iec:TranslationValidationShape a sh:NodeShape ;
+    sh:targetClass iec:TranslationValidation ;
+    sh:property [
+        sh:path iec:originalSubject ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:class iec:RepositorySubject
+    ] ;
+    sh:property [
+        sh:path iec:generatedSubject ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:class iec:RepositorySubject
+    ] ;
+    sh:property [
+        sh:path iec:verifierSet ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:class iec:EquivalenceCourt
+    ] ;
+    sh:property [
+        sh:path iec:claimCeiling ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path iec:passed ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:boolean
+    ] .
+
+iec:ReplacementDispositionShape a sh:NodeShape ;
+    sh:targetClass iec:ReplacementDispositionCandidate ;
+    sh:property [
+        sh:path iec:replacementPath ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1
+    ] ;
+    sh:property [
+        sh:path iec:rollbackPath ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ; sh:minLength 1
+    ] ;
+    sh:property [
+        sh:path iec:verifierSet ;
+        sh:minCount 1 ; sh:class iec:EquivalenceCourt
+    ] .
