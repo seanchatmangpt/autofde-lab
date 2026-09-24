@@ -23,6 +23,7 @@ from autofde_lab.sa2a.unknown.resolution import (
 EXPECTED_MARKETPLACE_REPOSITORY = "seanchatmangpt/ggen-marketplace"
 EXPECTED_PACK_NAME = "collective-skill-court-pack"
 EXPECTED_PACK_VERSION = "26.9.24"
+EXPECTED_MARKETPLACE_COMMIT = "02c13c468892c040c8abfd5023db4c1a19fa4820"
 EXPECTED_AUTHORITY_CEILING = "OBSERVE|SELECT|CONSTRUCT"
 
 
@@ -40,6 +41,8 @@ class CollectiveSkillCompiler:
             reasons.append("MARKETPLACE_PACK_MISMATCH")
         if spec.marketplace.pack_version != EXPECTED_PACK_VERSION:
             reasons.append("MARKETPLACE_PACK_VERSION_MISMATCH")
+        if spec.marketplace.commit_sha != EXPECTED_MARKETPLACE_COMMIT:
+            reasons.append("MARKETPLACE_COMMIT_MISMATCH")
         if spec.work_order.repository != "seanchatmangpt/autofde-lab":
             reasons.append("SJIRA_REPOSITORY_MISMATCH")
         if spec.work_order.authority_ceiling != EXPECTED_AUTHORITY_CEILING:
