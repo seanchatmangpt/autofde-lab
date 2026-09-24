@@ -41,7 +41,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install focused court
-        run: python -m pip install "pytest==8.3.5"
+        run: python -m pip install "pytest==8.3.5" "pydantic>=2,<3"
 
       - name: Reject London-school test doubles
         shell: bash
