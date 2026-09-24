@@ -50,10 +50,7 @@ class StructuralParser(Protocol):
 
 def _ast_value(value: Any) -> Any:
     if isinstance(value, ast.AST):
-        fields = {
-            name: _ast_value(child)
-            for name, child in ast.iter_fields(value)
-        }
+        fields = {name: _ast_value(child) for name, child in ast.iter_fields(value)}
         return {"_type": value.__class__.__name__, **fields}
     if isinstance(value, list):
         return [_ast_value(item) for item in value]

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Callable, Iterable
 
 from .manufacture import ManufactureRequirement, ManufactureRoute, ManufactureRouter
-from .model import ArtifactClass, ArtifactRecord, Failure, FailureKind, digest
+from .model import ArtifactClass, ArtifactRecord, Failure, digest
 
 
 @dataclass(frozen=True, slots=True)

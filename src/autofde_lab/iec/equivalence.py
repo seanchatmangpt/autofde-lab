@@ -68,9 +68,7 @@ class EquivalenceCourt:
         return digest(
             [
                 self._verifiers[dimension].spec_id
-                for dimension in sorted(
-                    self._verifiers, key=lambda item: item.value
-                )
+                for dimension in sorted(self._verifiers, key=lambda item: item.value)
             ]
         )
 
@@ -96,9 +94,7 @@ class EquivalenceCourt:
         for dimension in ordered_dimensions:
             spec = self._verifiers.get(dimension)
             if spec is None:
-                raise KeyError(
-                    f"UNSUPPORTED_EQUIVALENCE_DIMENSION:{dimension.value}"
-                )
+                raise KeyError(f"UNSUPPORTED_EQUIVALENCE_DIMENSION:{dimension.value}")
 
             passed, expected, actual, detail = spec.verifier(original, generated)
             receipt = digest(

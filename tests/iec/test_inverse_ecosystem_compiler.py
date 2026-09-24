@@ -437,7 +437,10 @@ def test_engine_composes_pure_first_slice_end_to_end() -> None:
         ),
     )
     assert len(session.analyses) == 1
-    assert session.analyses[0].artifacts[0].artifact_class is ArtifactClass.CANONICAL_SOURCE
+    assert (
+        session.analyses[0].artifacts[0].artifact_class
+        is ArtifactClass.CANONICAL_SOURCE
+    )
 
     session = compiler.generalize(
         session,

@@ -15,7 +15,11 @@ class LineageEdge:
     relation: str
 
     def __post_init__(self) -> None:
-        if not self.parent_id.strip() or not self.child_id.strip() or not self.relation.strip():
+        if (
+            not self.parent_id.strip()
+            or not self.child_id.strip()
+            or not self.relation.strip()
+        ):
             raise ValueError("lineage edge requires parent, child, and relation")
         if self.parent_id == self.child_id:
             raise ValueError("lineage self-cycle refused")

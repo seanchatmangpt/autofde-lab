@@ -34,12 +34,8 @@ def compare_python_api(
     left_keys = set(left)
     right_keys = set(right)
 
-    added = tuple(
-        sorted(f"{kind}:{name}" for kind, name in right_keys - left_keys)
-    )
-    removed = tuple(
-        sorted(f"{kind}:{name}" for kind, name in left_keys - right_keys)
-    )
+    added = tuple(sorted(f"{kind}:{name}" for kind, name in right_keys - left_keys))
+    removed = tuple(sorted(f"{kind}:{name}" for kind, name in left_keys - right_keys))
     changed = tuple(
         sorted(
             f"{kind}:{name}"

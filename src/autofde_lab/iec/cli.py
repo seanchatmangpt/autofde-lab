@@ -129,7 +129,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    scan = subparsers.add_parser("scan", help="passively inventory and observe a checkout")
+    scan = subparsers.add_parser(
+        "scan", help="passively inventory and observe a checkout"
+    )
     scan.add_argument("root")
     scan.add_argument("--repository", required=True)
     scan.add_argument("--revision", required=True)
@@ -143,7 +145,9 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--rdf", action="store_true")
     scan.set_defaults(func=_scan)
 
-    parse = subparsers.add_parser("parse", help="structurally parse one known-format file")
+    parse = subparsers.add_parser(
+        "parse", help="structurally parse one known-format file"
+    )
     parse.add_argument("path")
     parse.set_defaults(func=_parse)
 

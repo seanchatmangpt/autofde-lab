@@ -70,9 +70,7 @@ class ClaimCeiling(str, Enum):
     BUILD_AND_TEST_EQUIVALENCE_ONLY = "BUILD_AND_TEST_EQUIVALENCE_ONLY"
     BOUNDED_RUNTIME_EQUIVALENCE_ONLY = "BOUNDED_RUNTIME_EQUIVALENCE_ONLY"
     AUTHORITY_MODEL_EQUIVALENCE_ONLY = "AUTHORITY_MODEL_EQUIVALENCE_ONLY"
-    TRANSLATION_VALIDATED_FOR_EXACT_SUBJECT = (
-        "TRANSLATION_VALIDATED_FOR_EXACT_SUBJECT"
-    )
+    TRANSLATION_VALIDATED_FOR_EXACT_SUBJECT = "TRANSLATION_VALIDATED_FOR_EXACT_SUBJECT"
 
 
 class FailureKind(str, Enum):
@@ -89,9 +87,7 @@ class FailureKind(str, Enum):
     REFUSED_SYMLINK = "REFUSED_SYMLINK"
     REFUSED_AMBIGUOUS_AUTHORITY = "REFUSED_AMBIGUOUS_AUTHORITY"
     REFUSED_UNBOUNDED_EQUIVALENCE = "REFUSED_UNBOUNDED_EQUIVALENCE"
-    REFUSED_DISPOSITION_WITHOUT_REPLACEMENT = (
-        "REFUSED_DISPOSITION_WITHOUT_REPLACEMENT"
-    )
+    REFUSED_DISPOSITION_WITHOUT_REPLACEMENT = "REFUSED_DISPOSITION_WITHOUT_REPLACEMENT"
     BUILD_BROKEN_GENERATED_SUBJECT = "BUILD_BROKEN_GENERATED_SUBJECT"
     COUNTEREXAMPLE_EQUIVALENCE = "COUNTEREXAMPLE_EQUIVALENCE"
     CONTRADICTED_SEMANTIC_FACT = "CONTRADICTED_SEMANTIC_FACT"
@@ -148,10 +144,16 @@ class RepositorySubject:
     tree_digest: str | None = None
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "repository", require_nonempty(self.repository, "repository"))
-        object.__setattr__(self, "revision", require_nonempty(self.revision, "revision"))
         object.__setattr__(
-            self, "default_branch", require_nonempty(self.default_branch, "default_branch")
+            self, "repository", require_nonempty(self.repository, "repository")
+        )
+        object.__setattr__(
+            self, "revision", require_nonempty(self.revision, "revision")
+        )
+        object.__setattr__(
+            self,
+            "default_branch",
+            require_nonempty(self.default_branch, "default_branch"),
         )
         if self.visibility not in {"public", "private", "internal"}:
             raise ValueError(f"unsupported visibility: {self.visibility}")
@@ -188,7 +190,9 @@ class Observation:
     tags: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "predicate", require_nonempty(self.predicate, "predicate"))
+        object.__setattr__(
+            self, "predicate", require_nonempty(self.predicate, "predicate")
+        )
         if self.evidence_kind not in {
             EvidenceKind.OBSERVED,
             EvidenceKind.DERIVED_DETERMINISTIC,
@@ -298,7 +302,10 @@ class ArtifactRecord:
     def __post_init__(self) -> None:
         for name in ("subject_id", "path", "content_digest"):
             object.__setattr__(self, name, require_nonempty(getattr(self, name), name))
-        if self.artifact_class is ArtifactClass.GENERATED_PROJECTION and not self.producer:
+        if (
+            self.artifact_class is ArtifactClass.GENERATED_PROJECTION
+            and not self.producer
+        ):
             raise ValueError("generated projection requires producer")
         if self.artifact_class is ArtifactClass.UNKNOWN and not self.unknown_reason:
             raise ValueError("UNKNOWN artifact requires unknown_reason")

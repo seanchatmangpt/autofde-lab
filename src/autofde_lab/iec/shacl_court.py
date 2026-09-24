@@ -33,9 +33,7 @@ class ShaclAdmission:
 def _graph_digest(graph: Graph) -> str:
     canonical = to_canonical_graph(graph)
     lines = [
-        line
-        for line in canonical.serialize(format="nt").splitlines()
-        if line.strip()
+        line for line in canonical.serialize(format="nt").splitlines() if line.strip()
     ]
     return digest(sorted(lines))
 
@@ -65,9 +63,7 @@ def validate_graph(
         data_digest=_graph_digest(data_graph),
         shapes_digest=_graph_digest(shapes_graph),
         ontology_digest=(
-            _graph_digest(ontology_graph)
-            if ontology_graph is not None
-            else None
+            _graph_digest(ontology_graph) if ontology_graph is not None else None
         ),
         conforms=bool(conforms),
         report_graph_digest=_graph_digest(report_graph),

@@ -102,9 +102,7 @@ class WorkOrderProjector:
                 "root cause is narrowed to one boundary",
                 "repair or explicit unsupported state is recorded",
             ),
-            falsifiers=(
-                "failure is hidden without changing the failed transition",
-            ),
+            falsifiers=("failure is hidden without changing the failed transition",),
             dependencies=tuple(sorted(set(dependencies))),
         )
 
@@ -119,8 +117,7 @@ class WorkOrderProjector:
             kind=WorkKind.PROMOTE,
             title=f"Promote {promotion.kind.value}: {promotion.artifact_identity}",
             subject_ids=(promotion.artifact_identity,),
-            evidence_ids=promotion.source_evidence_ids
-            + promotion.verifier_receipt_ids,
+            evidence_ids=promotion.source_evidence_ids + promotion.verifier_receipt_ids,
             acceptance=(
                 "owner repository doctrine is read",
                 "artifact is represented in owner-native canonical form",

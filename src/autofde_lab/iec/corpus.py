@@ -5,7 +5,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, Mapping, Sequence
 
-from .model import Failure, FailureKind, RepositorySubject, aggregate_digest, digest, ensure_unique
+from .model import (
+    Failure,
+    FailureKind,
+    RepositorySubject,
+    aggregate_digest,
+    digest,
+    ensure_unique,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,9 +63,7 @@ class CorpusFreezer:
         return CorpusRevision(revision_id, admitted, excluded_items)
 
     @staticmethod
-    def compare(
-        prior: CorpusRevision, current: CorpusRevision
-    ) -> tuple[Failure, ...]:
+    def compare(prior: CorpusRevision, current: CorpusRevision) -> tuple[Failure, ...]:
         prior_map = {s.repository: s for s in prior.subjects}
         current_map = {s.repository: s for s in current.subjects}
         failures: list[Failure] = []

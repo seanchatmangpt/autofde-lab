@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Mapping
 
 from .model import digest
 
@@ -106,9 +105,7 @@ class NativeParserRegistry:
         )
 
     def capabilities(self) -> tuple[NativeParserCapability, ...]:
-        return tuple(
-            self._capabilities[key] for key in sorted(self._capabilities)
-        )
+        return tuple(self._capabilities[key] for key in sorted(self._capabilities))
 
 
 def candidate_native_parsers() -> tuple[NativeParserCapability, ...]:
