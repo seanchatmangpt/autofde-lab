@@ -1,5 +1,8 @@
 # RFC — Collective Skill Court Compiler v26.9.24
 
+**Status:** FINAL_SPEC — v26.9.24
+**Implementation standing:** exact-head court required
+
 ## Subject
 
 Compile procedural knowledge into discriminating executable courts without granting the
