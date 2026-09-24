@@ -23,14 +23,14 @@ from pathlib import Path
 
 import pytest
 
-from autofde_lab.iec.antiunify import template_text
-from autofde_lab.iec.census import census
-from autofde_lab.iec.corpus import observe_checkout
-from autofde_lab.iec.crown import run_c1
-from autofde_lab.iec.decompile import flat_program, leave_one_out, row_program
-from autofde_lab.iec.generators import declared_outputs, declared_targets
-from autofde_lab.iec.kernel import pack_kernel
-from autofde_lab.iec.model import IECRefusal
+from autofde_lab.iec.crowns.antiunify import template_text
+from autofde_lab.iec.crowns.census import census
+from autofde_lab.iec.crowns.corpus import observe_checkout
+from autofde_lab.iec.crowns.crown import run_c1
+from autofde_lab.iec.crowns.decompile import flat_program, leave_one_out, row_program
+from autofde_lab.iec.crowns.generators import declared_outputs, declared_targets
+from autofde_lab.iec.crowns.kernel import pack_kernel
+from autofde_lab.iec.crowns.model import IECRefusal
 
 REPOSITORY = "example/packs"
 REMOTE = f"https://github.com/{REPOSITORY}.git"

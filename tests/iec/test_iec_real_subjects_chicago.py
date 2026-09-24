@@ -23,8 +23,8 @@ from pathlib import Path
 
 import pytest
 
-from autofde_lab.iec.c3 import HELD_OUT_COMMIT, run_c3
-from autofde_lab.iec.crown import run_c1
+from autofde_lab.iec.crowns.c3 import HELD_OUT_COMMIT, run_c3
+from autofde_lab.iec.crowns.crown import run_c1
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 RECEIPTS = REPO_ROOT / "receipts" / "v26.9.23" / "iec"

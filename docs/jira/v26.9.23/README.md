@@ -17,7 +17,7 @@ Standing is recorded in the ledgers and receipts, never in this directory:
 - cross-repo: [`docs/ecosystem-standing.md`](../../ecosystem-standing.md), pass 6;
 - evidence: `receipts/v26.9.23/iec/c1/` (IEC-C1) and `receipts/v26.9.23/iec/c3/`
   (IEC-C3), replayed byte for byte by `tests/iec/test_iec_real_subjects_chicago.py`;
-- code: `src/autofde_lab/iec/` (doctrine in its `CLAUDE.md`).
+- code: `src/autofde_lab/iec/crowns/` (doctrine in its `CLAUDE.md`).
 
 | Work package | First-execution state (2026-09-23) |
 | --- | --- |

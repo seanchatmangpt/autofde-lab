@@ -12,15 +12,15 @@ from pathlib import Path
 
 import pytest
 
-from autofde_lab.iec.antiunify import anti_unify, apply, render, template_text, tokenize
-from autofde_lab.iec.census import census, read_blob, tree_id
-from autofde_lab.iec.corpus import (
+from autofde_lab.iec.crowns.antiunify import anti_unify, apply, render, template_text, tokenize
+from autofde_lab.iec.crowns.census import census, read_blob, tree_id
+from autofde_lab.iec.crowns.corpus import (
     CorpusManifest,
     RepositorySubject,
     freeze_corpus,
     observe_checkout,
 )
-from autofde_lab.iec.court import (
+from autofde_lab.iec.crowns.court import (
     BLOB_IDENTITY,
     BYTE_IDENTITY,
     Verifier,
@@ -29,7 +29,7 @@ from autofde_lab.iec.court import (
     git_blob_id,
     run_court,
 )
-from autofde_lab.iec.model import (
+from autofde_lab.iec.crowns.model import (
     ArtifactOrigin,
     EvidenceStrength,
     FactStanding,
@@ -38,7 +38,7 @@ from autofde_lab.iec.model import (
     Verdict,
     admit,
 )
-from autofde_lab.iec.templates import (
+from autofde_lab.iec.crowns.templates import (
     chunk_depths,
     eex_chunks,
     literal_containment,

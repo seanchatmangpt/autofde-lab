@@ -23,7 +23,7 @@ is checked by recomputing git tree ids in Python (`census.tree_id`).
 
 Run from the command line:
 
-    python -m autofde_lab.iec.crown --checkout ~/ggen_igniter --out receipts/v26.9.23/iec/c1
+    python -m autofde_lab.iec.crowns.crown --checkout ~/ggen_igniter --out receipts/v26.9.23/iec/c1
 """
 
 from __future__ import annotations

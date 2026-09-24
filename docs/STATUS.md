@@ -10,7 +10,7 @@ execution: IEC-C1 technical crown on ggen_igniter@d84da14 (static courts `ALIVE`
 courts `BLOCKED`), IEC-C3 held-out retirement of one reasoning class (`ALIVE` on the compared
 fields), ggen-create federated with one sibling defect found (`PARTIAL_ALIVE`).**
 
-New package `src/autofde_lab/iec/` (stdlib + rdflib; doctrine in its `CLAUDE.md`), receipts
+New subpackage `src/autofde_lab/iec/crowns/` (stdlib + rdflib; `CLAUDE.md`), receipts
 in `receipts/v26.9.23/iec/{c1,c3}/`, tests in `tests/iec/`, CI lane "IEC courts" in
 `.github/workflows/pr-ci.yml` (fetches both siblings by SHA).
 
@@ -20,7 +20,7 @@ tests/iec` → **30 passed in 10.64s** (Python 3.12.3, the pr-ci qualification d
 Includes byte-for-byte replay of every committed C1 and C3 receipt file.
 `grep -rn "unittest.mock\|Mock(\|MagicMock\|patch(\|monkeypatch" tests/iec` → no matches.
 
-**Measured win** — IEC-C1: `python -m autofde_lab.iec.crown --checkout <ggen_igniter>
+**Measured win** — IEC-C1: `python -m autofde_lab.iec.crowns.crown --checkout <ggen_igniter>
 --ggen-create <ggen-create> --out receipts/v26.9.23/iec/c1` (1.3 s). All 4 committed generated
 outputs of ggen_igniter@d84da14 (the ADR index README and three `lib/**/examples/*.ex`) were
 decompiled against their pack kernels (recomputed with rdflib, not ggen_igniter's engines),

@@ -60,7 +60,7 @@ entry in the same pass.
 ## Generated outputs and their producers (IEC, v26.9.23)
 
 - **2026-09-23** — Before hand-auditing whether a committed generated file matches its
-  template, run the mechanized audit instead: `autofde_lab.iec.audit.audit_generated_outputs`
+  template, run the mechanized audit instead: `autofde_lab.iec.crowns.audit.audit_generated_outputs`
   (EEx frontmatter, Tera frontmatter, and `ggen.toml` rules). It agreed with an independent LLM
   hand audit on 13/13 rows of a held-out subject (`receipts/v26.9.23/iec/c3/`). Its ceiling:
   only block-depth-0 template literals are checked.

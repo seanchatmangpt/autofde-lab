@@ -36,8 +36,8 @@ templates read from the frozen commit; LLM outcomes only as `INFERRED_CANDIDATE`
 
 # Outputs
 
-`receipts/v26.9.23/iec/c1/` (`python -m autofde_lab.iec.crown`) and
-`receipts/v26.9.23/iec/c3/` (`python -m autofde_lab.iec.c3`). The JSON files are the only
+`receipts/v26.9.23/iec/c1/` (`python -m autofde_lab.iec.crowns.crown`) and
+`receipts/v26.9.23/iec/c3/` (`python -m autofde_lab.iec.crowns.c3`). The JSON files are the only
 durable record; `Census.observations()` is a projection of `census.json`, not a second copy.
 
 # Invariants

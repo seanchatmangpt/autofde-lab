@@ -58,7 +58,7 @@ __all__ = [
     "read_blob",
 ]
 
-CENSUS_EXTRACTOR = "autofde_lab.iec.census"
+CENSUS_EXTRACTOR = "autofde_lab.iec.crowns.census"
 CENSUS_VERSION = "1"
 
 _BINARY_PROBE = 8000  # the same window git uses to decide a blob is binary

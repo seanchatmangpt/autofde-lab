@@ -16,7 +16,7 @@ was executed (the receipts record the digests that make the order checkable):
 A calibration comparison on ggen_igniter (the subject the mechanism was built
 from) is run too, and can never retire anything.
 
-    python -m autofde_lab.iec.c3 --autofde-lab . --c3-dir receipts/v26.9.23/iec/c3 \\
+    python -m autofde_lab.iec.crowns.c3 --autofde-lab . --c3-dir receipts/v26.9.23/iec/c3 \\
         [--ggen-igniter ~/ggen_igniter]
 """
 
@@ -106,7 +106,7 @@ REASONING_CLASSES = (
                 "finding": "`from enum import Enum` removed where no enum is rendered",
             },
         ),
-        deterministic_replacement="autofde_lab.iec.crown (producer-postprocessing hypothesis "
+        deterministic_replacement="autofde_lab.iec.crowns.crown (producer-postprocessing hypothesis "
         "+ producer-source evidence search); cause-to-commit attribution not mechanized",
         compared_fields=(),
         last_llm_required_reason="attributing a divergence to a specific hook and commit "
@@ -125,7 +125,7 @@ REASONING_CLASSES = (
                 "in adr-index-pack/ontology.ttl",
             },
         ),
-        deterministic_replacement="autofde_lab.iec.crown._kernel_path_coverage",
+        deterministic_replacement="autofde_lab.iec.crowns.crown._kernel_path_coverage",
         compared_fields=(),
         last_llm_required_reason="observed once; mechanized but not yet repeated",
     ),
@@ -141,7 +141,7 @@ REASONING_CLASSES = (
                 "cost": {"tokens": 213326, "tool_uses": 47, "duration_ms": 199790},
             },
         ),
-        deterministic_replacement="autofde_lab.iec.federation.GgenCreate",
+        deterministic_replacement="autofde_lab.iec.crowns.federation.GgenCreate",
         compared_fields=(),
         last_llm_required_reason="observed once; the adapter pins the surface it found",
     ),

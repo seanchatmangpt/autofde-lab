@@ -71,7 +71,7 @@ GENERATED_OUTPUT_AUDIT = ReasoningClass(
     "and is each one what its template literally emits (exactly, modulo whitespace, "
     "modulo whitespace and call parentheses, or not at all)?",
     observations=(),
-    deterministic_replacement="autofde_lab.iec.audit.audit_generated_outputs",
+    deterministic_replacement="autofde_lab.iec.crowns.audit.audit_generated_outputs",
     compared_fields=("committed", "class"),
 )
 
