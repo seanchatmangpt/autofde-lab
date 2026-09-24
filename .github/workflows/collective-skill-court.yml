@@ -47,8 +47,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ! grep -R -nE "unittest\\.mock|Mock\\(|MagicMock|patch\\(|monkeypatch" \\
-            tests/sa2a/collective_skill
+          ! grep -R -nE "unittest\\.mock|Mock\\(|MagicMock|patch\\(|monkeypatch" tests/sa2a/collective_skill
 
       - name: Execute focused court
         env:
