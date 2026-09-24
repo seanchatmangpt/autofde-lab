@@ -154,7 +154,10 @@ class CollectiveSkillCompiler:
                 reasons.append("CANDIDATE_IDENTITY_MISMATCH")
             if candidate_under_test.authority != "none":
                 reasons.append("CANDIDATE_AUTHORITY_PRESENT")
-            if candidate_under_test.evidence_payload.get("grants_do_authority") is not False:
+            if (
+                candidate_under_test.evidence_payload.get("grants_do_authority")
+                is not False
+            ):
                 reasons.append("AMBIENT_DO_AUTHORITY")
             if (
                 candidate_under_test.evidence_payload.get("court_admission_receipt")
