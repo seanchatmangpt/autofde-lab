@@ -49,8 +49,7 @@ class MarketplacePackRef:
     @property
     def identity(self) -> str:
         return (
-            f"{self.repository}@{self.commit_sha}:"
-            f"{self.pack_name}@{self.pack_version}"
+            f"{self.repository}@{self.commit_sha}:{self.pack_name}@{self.pack_version}"
         )
 
 
