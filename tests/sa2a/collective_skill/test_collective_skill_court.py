@@ -17,7 +17,8 @@ from autofde_lab.sa2a.collective_skill import (
 from autofde_lab.sa2a.experience.compiler import EpisodeEvidence
 from autofde_lab.sa2a.experience.types import ExperienceState
 
-SHA = "1" * 40
+MARKETPLACE_SHA = "02c13c468892c040c8abfd5023db4c1a19fa4820"
+SUBJECT_SHA = "1" * 40
 DIGEST_A = "sha256:" + "a" * 64
 DIGEST_B = "sha256:" + "b" * 64
 DIGEST_C = "sha256:" + "c" * 64
@@ -38,7 +39,7 @@ def admitted_spec() -> CourtSpec:
         ),
         marketplace=MarketplacePackRef(
             repository="seanchatmangpt/ggen-marketplace",
-            commit_sha=SHA,
+            commit_sha=MARKETPLACE_SHA,
             pack_name="collective-skill-court-pack",
             pack_version="26.9.24",
             pack_source_digest=DIGEST_B,
@@ -46,11 +47,11 @@ def admitted_spec() -> CourtSpec:
         work_order=SjiraWorkOrderRef(
             identity="AFDE-CSKILL-26924-001",
             repository="seanchatmangpt/autofde-lab",
-            base_sha=SHA,
+            base_sha=SUBJECT_SHA,
             evidence_ceiling="REPO_LOCAL_COURT",
             authority_ceiling="OBSERVE|SELECT|CONSTRUCT",
         ),
-        exact_subject_sha=SHA,
+        exact_subject_sha=SUBJECT_SHA,
         oracle=ProbeObservation("oracle", "oracle", True, DIGEST_C),
         noop=ProbeObservation("noop", "noop", False, DIGEST_D),
         mutations=(
@@ -88,6 +89,7 @@ def test_admitted_court_projects_to_powerless_candidate_and_candidate_experience
     assert experience.known_route_id == ""
     assert experience.invalidation_set["court"] == spec.digest
     assert experience.invalidation_set["marketplace_pack"] == DIGEST_B
+    assert experience.invalidation_set["marketplace_commit"] == MARKETPLACE_SHA
 
 
 @pytest.mark.parametrize(
@@ -114,16 +116,28 @@ def test_admitted_court_projects_to_powerless_candidate_and_candidate_experience
                 "work_order": SjiraWorkOrderRef(
                     identity="AFDE-CSKILL-26924-001",
                     repository="seanchatmangpt/autofde-lab",
-                    base_sha=SHA,
+                    base_sha=SUBJECT_SHA,
                     evidence_ceiling="REPO_LOCAL_COURT",
                     authority_ceiling="AUTHORIZED_DO",
                 )
             },
             "AUTHORITY_CEILING_EXCEEDED",
         ),
+        (
+            {
+                "marketplace": MarketplacePackRef(
+                    repository="seanchatmangpt/ggen-marketplace",
+                    commit_sha="2" * 40,
+                    pack_name="collective-skill-court-pack",
+                    pack_version="26.9.24",
+                    pack_source_digest=DIGEST_B,
+                )
+            },
+            "MARKETPLACE_COMMIT_MISMATCH",
+        ),
     ],
 )
-def test_court_refuses_failed_discriminators_and_do_authority(change, reason):
+def test_court_refuses_failed_discriminators_and_identity_drift(change, reason):
     compiler = CollectiveSkillCompiler()
     spec = replace(admitted_spec(), **change)
     receipt = compiler.admit(spec)
