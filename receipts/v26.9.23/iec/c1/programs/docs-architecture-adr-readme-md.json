@@ -1,0 +1,45 @@
+{
+  "ambiguous_holes": [],
+  "binding": "adrs",
+  "compression": {
+    "cost_function": "iec.cost/1: literal characters + 1 per hole + 1 per substitution binding",
+    "generalized_cost": 991,
+    "original_cost": 1125,
+    "ratio": 1.135217
+  },
+  "constant_literals": [
+    {
+      "value": "Accepted",
+      "variable": "status"
+    }
+  ],
+  "hole_variables": {
+    "X0": [
+      "number"
+    ],
+    "X1": [
+      "filename"
+    ],
+    "X2": [
+      "title"
+    ]
+  },
+  "kind": "row",
+  "order_hypotheses": [
+    "filename",
+    "number"
+  ],
+  "paired_rows": [
+    7,
+    5,
+    2,
+    0,
+    4,
+    6,
+    1,
+    3
+  ],
+  "prefix_bytes": 1030,
+  "row_template": "| [{{X0}}]({{X1}}) | {{X2}} | Accepted |\n",
+  "suffix_bytes": 175
+}

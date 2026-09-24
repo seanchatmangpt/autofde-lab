@@ -1,0 +1,149 @@
+{
+  "provenance": {
+    "actor": "Claude subagent (Explore), launched after the mechanized outcome was frozen",
+    "cost": {
+      "duration_ms": 310616,
+      "tokens": 114650,
+      "tool_uses": 38
+    },
+    "frozen_mechanized_file_sha256_recorded_before_launch": "4372b88c42278572e4905efd33d45462b9ed4edeaac5957b1f6955f5136a2edd",
+    "instructions": "read files with git show at the exact commit; do not write or run a program that computes the answer; classify each src/autofde_lab/**/*.py ggen.toml rule target",
+    "transcription": "rows copied verbatim from the subagent's final JSON"
+  },
+  "reasoning_class": "RC-GENERATED-OUTPUT-AUDIT",
+  "rows": [
+    {
+      "cause": "The pre-commit hook `ruff-check --fix --select=F401` deleted the unused Enum import (the template always imports Enum, even when no StandingValue enum is rendered). ruff-format made the whitespace changes. Both ran in the repo-wide `pre-commit run --all-files` sweep.",
+      "cause_evidence": "The .pre-commit-config.yaml hook 'ruff clean unused imports' has args [--fix, --select=F401]; that config last changed in d5ac60f (2026-09-18), before the sweep. `git show 814615f -- src/autofde_lab/constitution/lab.py` shows '-from enum import Enum' and '+' blank line after the docstring. The pre-sweep file (814615f^) has a header byte-identical to the template. The 814615f message only mentions ruff-format, trailing-whitespace and end-of-file and says 'No semantic change', but the diff also contains F401 import removals.",
+      "class": "INCONSISTENT",
+      "committed": true,
+      "declaration": "ggen.toml",
+      "difference": "from dataclasses import dataclass\nfrom enum import Enum\n -> from dataclasses import dataclass\n (import line missing; no StandingValue emitted in this file). Whitespace too: \"\"\"\nfrom __future__ -> \"\"\"\n\nfrom __future__; blank line added after class docstrings; 3 blank lines before the first @dataclass cut to 2",
+      "target": "src/autofde_lab/constitution/lab.py",
+      "template": "templates/constitution_module.py.tera"
+    },
+    {
+      "cause": "ruff-format (pre-commit), applied in sweep 814615f",
+      "cause_evidence": "The ruff-format hook in .pre-commit-config.yaml; the 814615f diff shows '+' blank after the docstring and '-' one of the 3 blank lines. The rule is mode=\"Overwrite\", so a fresh `ggen sync run` would bring back the raw form.",
+      "class": "CONSISTENT_MODULO_WHITESPACE",
+      "committed": true,
+      "declaration": "ggen.toml",
+      "difference": "\"\"\"\nfrom __future__ import annotations -> \"\"\"\n\nfrom __future__ import annotations (blank line added after the module docstring). In conditional text, 3 blank lines before `class StandingValue` and before the first @dataclass became 2, and a blank line was added after class docstrings.",
+      "target": "src/autofde_lab/constitution/world.py",
+      "template": "templates/constitution_module.py.tera"
+    },
+    {
+      "cause": "ruff-check --fix --select=F401 removed the unused import; ruff-format did the whitespace (sweep 814615f)",
+      "cause_evidence": "The 814615f diff shows '-from enum import Enum' for planning.py; the F401 hook is in .pre-commit-config.yaml.",
+      "class": "INCONSISTENT",
+      "committed": true,
+      "declaration": "ggen.toml",
+      "difference": "from enum import Enum\n -> (absent); plus the same whitespace changes as lab.py",
+      "target": "src/autofde_lab/constitution/planning.py",
+      "template": "templates/constitution_module.py.tera"
+    },
+    {
+      "cause": "ruff-format, applied in sweep 814615f",
+      "cause_evidence": "The 814615f diff shows '+    expected_information_gain: str | None = (' and the blank line after the docstring; the ruff-format hook is in .pre-commit-config.yaml.",
+      "class": "CONSISTENT_MODULO_WHITESPACE",
+      "committed": true,
+      "declaration": "ggen.toml",
+      "difference": "\"\"\"\nfrom __future__ -> \"\"\"\n\nfrom __future__. Note that loop-body text also got formatter-added parentheses, e.g. `expected_information_gain: str | None = None  # ...` -> `... = (\n        None  # ...\n    )`, and `tuple[str, ...]` split across lines. That is not in always-emitted text.",
+      "target": "src/autofde_lab/constitution/process.py",
+      "template": "templates/constitution_module.py.tera"
+    },
+    {
+      "cause": "ruff-check --fix --select=F401 plus ruff-format (sweep 814615f)",
+      "cause_evidence": "The 814615f diff shows '-from enum import Enum' for authority.py; the F401 hook is in .pre-commit-config.yaml.",
+      "class": "INCONSISTENT",
+      "committed": true,
+      "declaration": "ggen.toml",
+      "difference": "from enum import Enum\n -> (absent); plus the same whitespace changes as lab.py, and loop-body `tuple[str, ...]` split across lines",
+      "target": "src/autofde_lab/constitution/authority.py",
+      "template": "templates/constitution_module.py.tera"
+    },
+    {
+      "cause": "ruff-check --fix --select=F401 plus ruff-format (sweep 814615f)",
+      "cause_evidence": "The 814615f diff shows '-from enum import Enum' for evidence.py; the F401 hook is in .pre-commit-config.yaml.",
+      "class": "INCONSISTENT",
+      "committed": true,
+      "declaration": "ggen.toml",
+      "difference": "from enum import Enum\n -> (absent); plus the same whitespace changes as lab.py",
+      "target": "src/autofde_lab/constitution/evidence.py",
+      "template": "templates/constitution_module.py.tera"
+    },
+    {
+      "cause": "ruff-format (and/or the trailing-whitespace hook), applied in sweep 814615f",
+      "cause_evidence": "The 814615f diff shows '-    standing_subject: str | None = None  # ' / '+ ...  #' and the blank line after the docstring.",
+      "class": "CONSISTENT_MODULO_WHITESPACE",
+      "committed": true,
+      "declaration": "ggen.toml",
+      "difference": "\"\"\"\nfrom __future__ -> \"\"\"\n\nfrom __future__. In loop-body text, the trailing space in `standing_subject: str | None = None  # ` was stripped to `  #`.",
+      "target": "src/autofde_lab/constitution/standing.py",
+      "template": "templates/constitution_module.py.tera"
+    },
+    {
+      "cause": "ruff-check --fix --select=F401 plus ruff-format (sweep 814615f)",
+      "cause_evidence": "The 814615f diff shows '-from enum import Enum' for interop.py; the F401 hook is in .pre-commit-config.yaml.",
+      "class": "INCONSISTENT",
+      "committed": true,
+      "declaration": "ggen.toml",
+      "difference": "from enum import Enum\n -> (absent); plus the same whitespace changes as lab.py",
+      "target": "src/autofde_lab/constitution/interop.py",
+      "template": "templates/constitution_module.py.tera"
+    },
+    {
+      "cause": "ruff-format, applied in sweep 814615f",
+      "cause_evidence": "The 814615f diff (776 lines) shows '+' blank before __all__ and after the docstring; the ruff-format hook is in .pre-commit-config.yaml. Callable is still used by ALL_UNIVERSES, so F401 left it alone.",
+      "class": "CONSISTENT_MODULO_WHITESPACE",
+      "committed": true,
+      "declaration": "ggen.toml",
+      "difference": "\"\"\"\nfrom __future__ -> \"\"\"\n\nfrom __future__. `    )\n\n__all__ = [` became `    )\n\n\n__all__ = [` (the template's `{% endfor -%}` leaves only 1 blank line). In loop-body text, `remediate = Atom(label=..., consequence=\"DO\")` was re-wrapped across 3 lines; no tokens changed.",
+      "target": "src/autofde_lab/reasoning/universes/k8s_fault_universes.py",
+      "template": "templates/k8s_fault_universe.py.tera"
+    },
+    {
+      "cause": "ruff-check --fix --select=F401 removed `from typing import Callable`, which the template always emits but never uses; ruff-format did the whitespace and magic trailing commas (sweep 814615f)",
+      "cause_evidence": "The 814615f diff shows '-from typing import Callable' for this file; the F401 hook is in .pre-commit-config.yaml; the template has no use of Callable.",
+      "class": "INCONSISTENT",
+      "committed": true,
+      "declaration": "ggen.toml",
+      "difference": "from dataclasses import dataclass, field\nfrom typing import Callable\n -> from dataclasses import dataclass, field\n (import missing; nothing in the template body uses Callable). Whitespace: blank line added after the docstring and before __all__. In loop-body text, dict literals and the children=(...) tuple were exploded with trailing commas added (e.g. `\"unit\": \"percent\"}` -> `\"unit\": \"percent\",\n            }`, `verify)` -> `verify,\n        )`).",
+      "target": "src/autofde_lab/reasoning/scenarios/world_transformation_scenarios.py",
+      "template": "templates/world_transformation_scenario.py.tera"
+    },
+    {
+      "cause": "ruff-format, applied in sweep 814615f",
+      "cause_evidence": "The 814615f diff shows '+    IntegratedInfoInfrastructureReferenceModel = (' and the blank line after the docstring. Enum is kept because StandingValue is rendered.",
+      "class": "CONSISTENT_MODULO_WHITESPACE",
+      "committed": true,
+      "declaration": "ggen.toml",
+      "difference": "\"\"\"\nfrom __future__ -> \"\"\"\n\nfrom __future__. In the StandingValue for-loop (not always-emitted), the formatter added parentheses: `IntegratedInfoInfrastructureReferenceModel = \"IntegratedInfo...\"` -> `... = (\n        \"IntegratedInfoInfrastructureReferenceModel\"\n    )`.",
+      "target": "src/autofde_lab/reasoning/togaf_artifacts.py",
+      "template": "templates/constitution_module.py.tera"
+    },
+    {
+      "cause": "ruff-format, applied in sweep 814615f",
+      "cause_evidence": "The 814615f diff shows '+    check_description: str | None = (' and similar lines; the ruff-format hook is in .pre-commit-config.yaml.",
+      "class": "CONSISTENT_MODULO_WHITESPACE",
+      "committed": true,
+      "declaration": "ggen.toml",
+      "difference": "\"\"\"\nfrom __future__ -> \"\"\"\n\nfrom __future__. In loop-body text, the formatter wrapped many fields in parentheses, e.g. `check_description: str | None = None  # ...` -> `= (\n        None  # ...\n    )`.",
+      "target": "src/autofde_lab/reasoning/gymact_certification_types.py",
+      "template": "templates/constitution_module.py.tera"
+    },
+    {
+      "cause": "Best explanation is ruff-format: a one-element tuple's trailing comma is not treated as a formatting hint, so the tuple collapses onto one line, and lines over 88 characters are split with a trailing comma added. This is inferred from the style.",
+      "cause_evidence": "The ruff-format hook is in .pre-commit-config.yaml, and .github/workflows/ci.yml runs `pre-commit run --all-files`. The file was not touched by 814615f, so it was already formatter-clean. Its only visible commit is 3aa2493, the shallow-clone boundary, so the generation commit is not visible and the attribution cannot be confirmed. The rule is mode=\"Overwrite\", so a fresh `ggen sync run` would rewrite the raw, unformatted form.",
+      "class": "CONSISTENT_MODULO_WHITESPACE",
+      "committed": true,
+      "declaration": "ggen.toml",
+      "difference": "NOVELTY_ORACLES = (\n    \"DSPyPolicy\",\n) -> NOVELTY_ORACLES = (\"DSPyPolicy\",) (the always-emitted newline before `)` is gone). In loop-body text, ROLE_SPECS one-line entries `{\"objective\": ..., \"action_projection\": ...},` were exploded onto several lines with a trailing comma added.",
+      "target": "src/autofde_lab/planner_league/catalog.py",
+      "template": "templates/planner_league_catalog.py.tera"
+    }
+  ],
+  "schema": "autofde-lab.iec.llm-outcome/1",
+  "standing": "INFERRED_CANDIDATE",
+  "subject": "seanchatmangpt/autofde-lab@ae255ad123dfdcef9b3de82395006834abb20a28"
+}

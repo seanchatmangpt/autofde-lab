@@ -1,0 +1,12 @@
+PREFIX iec: <urn:autofde-lab:iec:>
+
+SELECT DISTINCT ?validation ?original ?generated ?counterexample ?ceiling
+WHERE {
+  ?validation a iec:TranslationValidation ;
+              iec:originalSubject ?original ;
+              iec:generatedSubject ?generated ;
+              iec:passed false ;
+              iec:claimCeiling ?ceiling ;
+              iec:hasCounterexample ?counterexample .
+}
+ORDER BY ?validation ?counterexample

@@ -1,0 +1,39 @@
+{
+  "declaration": {
+    "pack.dir": "priv/ggen/sensor-sink-pack",
+    "pack.name": "sensor-sink-pack",
+    "pack.ontology": "priv/ggen/sensor-sink-pack/ontology.ttl",
+    "template.mode": "file",
+    "template.path": "priv/ggen/sensor-sink-pack/templates/sensor_sink.ex.eex",
+    "template.to": "lib/ggen_igniter/stream/examples/sensor_sink.ex"
+  },
+  "engine": {
+    "name": "rdflib",
+    "version": "7.6.0"
+  },
+  "gates": {
+    "module": {
+      "blob": "cb3bedf2a00fe416982889446399a5d8e81a4539",
+      "path": "priv/ggen/sensor-sink-pack/gates/010_module.rq"
+    }
+  },
+  "id": "sha256:73683f2e5169cbf366409954ae6fcdb91cfb0c924714e518430629827fe96ef5",
+  "ontology_blob": "945706aad9c6331669a68d8cda8b8ee41d0ca174",
+  "ontology_path": "priv/ggen/sensor-sink-pack/ontology.ttl",
+  "pack": "sensor-sink-pack",
+  "pack_dir": "priv/ggen/sensor-sink-pack",
+  "rows": {
+    "module": [
+      {
+        "defaultThreshold": "0.0",
+        "eventAlias": "Event",
+        "eventModule": "GgenIgniter.Discovery.Examples.Event",
+        "fallingActivity": "threshold_crossed_below",
+        "moduleName": "GgenIgniter.Stream.Examples.SensorSink",
+        "risingActivity": "threshold_crossed_above"
+      }
+    ]
+  },
+  "schema": "autofde-lab.iec.pack-kernel/1",
+  "template_path": "priv/ggen/sensor-sink-pack/templates/sensor_sink.ex.eex"
+}

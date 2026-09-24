@@ -57,6 +57,23 @@ entry in the same pass.
   Verify: `docs/level4-migration-matrix.md:18`, `docs/ecosystem-standing.md`
   (search "byte-identical"), `ontology/CLAUDE.md:96`.
 
+## Generated outputs and their producers (IEC, v26.9.23)
+
+- **2026-09-23** — Before hand-auditing whether a committed generated file matches its
+  template, run the mechanized audit instead: `autofde_lab.iec.crowns.audit.audit_generated_outputs`
+  (EEx frontmatter, Tera frontmatter, and `ggen.toml` rules). It agreed with an independent LLM
+  hand audit on 13/13 rows of a held-out subject (`receipts/v26.9.23/iec/c3/`). Its ceiling:
+  only block-depth-0 template literals are checked.
+  Verify: `tests/iec/test_iec_real_subjects_chicago.py`.
+- **2026-09-23** — This repo's `ggen.toml` outputs under `src/autofde_lab/` are not raw
+  renders. The pre-commit ruff hooks reformat them, and `ruff-check --fix --select=F401` removes
+  template-emitted imports (sweep `814615f`). The two `mode = "Overwrite"` rules
+  (`constitution-world`, `planner-league-catalog`) would revert to the raw render on the next
+  `ggen sync run`. Verify: `receipts/v26.9.23/iec/c3/llm-outcome.autofde-lab.json`.
+- **2026-09-23** — `ggen-create@eaa463af` `cases.render_concrete_many` drops the text before
+  each replacement. Use its single-seed `cases.render_concrete` when federating one seed.
+  Verify: `receipts/v26.9.23/iec/c1/federation/ggen-create.json` (`differential_probe`).
+
 ## How to use this file
 
 Before re-implementing domain-construction fallback logic, re-deriving the

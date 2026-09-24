@@ -1,0 +1,157 @@
+{
+  "declaration": {
+    "pack.dir": "priv/ggen/reactor-scaffold-pack",
+    "pack.name": "reactor-scaffold-pack",
+    "pack.ontology": "priv/ggen/reactor-scaffold-pack/ontology.ttl",
+    "template.mode": "file",
+    "template.path": "priv/ggen/reactor-scaffold-pack/templates/reactor.ex.eex",
+    "template.to": "lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex"
+  },
+  "engine": {
+    "name": "rdflib",
+    "version": "7.6.0"
+  },
+  "gates": {
+    "steps": {
+      "blob": "a52fa0c7245ca36cf0ad0416faaddd7f6cd98340",
+      "path": "priv/ggen/reactor-scaffold-pack/gates/010_steps.rq"
+    }
+  },
+  "id": "sha256:8e4a5a748eef2c0111f034c384c6f6cf24dce1f727986562e3153c971ebe1969",
+  "ontology_blob": "15961c62cba58f87514388cf078c65af8c3cf4f3",
+  "ontology_path": "priv/ggen/reactor-scaffold-pack/ontology.ttl",
+  "pack": "reactor-scaffold-pack",
+  "pack_dir": "priv/ggen/reactor-scaffold-pack",
+  "rows": {
+    "steps": [
+      {
+        "arguments": "argument :user, result(:validate_user)\n    argument :amount, input(:amount)\n    argument :card_token, input(:card_token)",
+        "async": "true",
+        "compensateBody": "fn _reason, %{amount: amount, card_token: card_token}, _context ->\n      GgenIgniter.Reactors.Examples.Support.refund(card_token, amount)\n      :ok\n    end",
+        "inputs": "email, amount, card_token",
+        "kind": "step",
+        "middlewares": "middlewares do\n    middleware Reactor.Middleware.Telemetry\n  end",
+        "moduleName": "GgenIgniter.Reactors.Examples.ExpenseApprovalReactor",
+        "name": "charge_payment",
+        "order": "3",
+        "returnStep": "charge_payment",
+        "runBody": "fn %{user: user, amount: amount, card_token: card_token}, _context ->\n      GgenIgniter.Reactors.Examples.Support.charge(user, amount, card_token)\n    end",
+        "undoBody": "fn charge, %{card_token: card_token}, _context ->\n      GgenIgniter.Reactors.Examples.Support.refund(card_token, charge.amount)\n      :ok\n    end",
+        "waitFor": "fetch_user"
+      },
+      {
+        "body": "switch :route_by_amount do\n    on input(:amount)\n\n    matches? &(&1 > 1000) do\n      return :flag_large\n\n      step :flag_large do\n        run fn _args, _context -> {:ok, :large} end\n      end\n    end\n\n    default do\n      return :flag_normal\n\n      step :flag_normal do\n        run fn _args, _context -> {:ok, :normal} end\n      end\n    end\n  end",
+        "inputs": "email, amount, card_token",
+        "kind": "raw",
+        "middlewares": "middlewares do\n    middleware Reactor.Middleware.Telemetry\n  end",
+        "moduleName": "GgenIgniter.Reactors.Examples.ExpenseApprovalReactor",
+        "order": "7",
+        "returnStep": "charge_payment"
+      },
+      {
+        "body": "map :notify_admins do\n    source value([\"ops@example.com\", \"audit@example.com\"])\n    batch_size 2\n    allow_async? true\n\n    step :notify do\n      argument :email, element(:notify_admins)\n      run fn %{email: email}, _context -> {:ok, \"notified #{email}\"} end\n    end\n  end",
+        "inputs": "email, amount, card_token",
+        "kind": "raw",
+        "middlewares": "middlewares do\n    middleware Reactor.Middleware.Telemetry\n  end",
+        "moduleName": "GgenIgniter.Reactors.Examples.ExpenseApprovalReactor",
+        "order": "10",
+        "returnStep": "charge_payment"
+      },
+      {
+        "body": "collect :summary do\n    argument :user, result(:validate_user)\n    argument :charge, result(:charge_payment)\n    argument :notified, result(:notify_admins)\n\n    transform fn inputs -> %{user: inputs.user, charge: inputs.charge, notified: inputs.notified} end\n  end",
+        "inputs": "email, amount, card_token",
+        "kind": "raw",
+        "middlewares": "middlewares do\n    middleware Reactor.Middleware.Telemetry\n  end",
+        "moduleName": "GgenIgniter.Reactors.Examples.ExpenseApprovalReactor",
+        "order": "9",
+        "returnStep": "charge_payment"
+      },
+      {
+        "arguments": "argument :user, result(:fetch_user)",
+        "async": "false",
+        "guardBody": "fn %{user: user}, _context ->\n      if is_nil(user) do\n        {:halt, {:error, :no_user}}\n      else\n        :cont\n      end\n    end",
+        "inputs": "email, amount, card_token",
+        "kind": "step",
+        "maxRetries": "3",
+        "middlewares": "middlewares do\n    middleware Reactor.Middleware.Telemetry\n  end",
+        "moduleName": "GgenIgniter.Reactors.Examples.ExpenseApprovalReactor",
+        "name": "validate_user",
+        "order": "2",
+        "returnStep": "charge_payment",
+        "runBody": "fn %{user: user}, _context ->\n      if user.active? do\n        {:ok, user}\n      else\n        {:error, :inactive_user}\n      end\n    end",
+        "whereBody": "&(&1.user != nil)"
+      },
+      {
+        "body": "debug :log_charge do\n    argument :charge, result(:charge_payment)\n    argument :message, value(\"charge completed\")\n  end",
+        "inputs": "email, amount, card_token",
+        "kind": "raw",
+        "middlewares": "middlewares do\n    middleware Reactor.Middleware.Telemetry\n  end",
+        "moduleName": "GgenIgniter.Reactors.Examples.ExpenseApprovalReactor",
+        "order": "5",
+        "returnStep": "charge_payment"
+      },
+      {
+        "arguments": "argument :user, result(:validate_user)\n    argument :charge, result(:charge_payment)",
+        "async": "true",
+        "inputs": "email, amount, card_token",
+        "kind": "step",
+        "middlewares": "middlewares do\n    middleware Reactor.Middleware.Telemetry\n  end",
+        "moduleName": "GgenIgniter.Reactors.Examples.ExpenseApprovalReactor",
+        "name": "send_receipt",
+        "order": "4",
+        "returnStep": "charge_payment",
+        "runBody": "fn %{user: user, charge: charge}, _context ->\n      GgenIgniter.Reactors.Examples.Support.send_receipt(user, charge)\n    end"
+      },
+      {
+        "body": "group :audit_group do\n    argument :charge, result(:charge_payment)\n    before_all &GgenIgniter.Reactors.Examples.Support.audit_before/3\n    after_all &GgenIgniter.Reactors.Examples.Support.audit_after/1\n\n    step :record_audit do\n      argument :charge, input(:charge)\n      run fn %{charge: charge}, _context ->\n        {:ok, \"audited #{charge.amount}\"}\n      end\n    end\n  end",
+        "inputs": "email, amount, card_token",
+        "kind": "raw",
+        "middlewares": "middlewares do\n    middleware Reactor.Middleware.Telemetry\n  end",
+        "moduleName": "GgenIgniter.Reactors.Examples.ExpenseApprovalReactor",
+        "order": "6",
+        "returnStep": "charge_payment"
+      },
+      {
+        "arguments": "argument :email, input(:email)\n    argument :requested_currency, value(\"USD\")",
+        "async": "false",
+        "inputs": "email, amount, card_token",
+        "kind": "step",
+        "middlewares": "middlewares do\n    middleware Reactor.Middleware.Telemetry\n  end",
+        "moduleName": "GgenIgniter.Reactors.Examples.ExpenseApprovalReactor",
+        "name": "fetch_user",
+        "order": "1",
+        "returnStep": "charge_payment",
+        "runBody": "fn %{email: email, requested_currency: _currency}, _context ->\n      case GgenIgniter.Reactors.Examples.Support.fetch_user(email) do\n        {:ok, user} -> {:ok, user}\n        {:error, reason} -> {:error, reason}\n      end\n    end"
+      },
+      {
+        "body": "around :with_logging, &GgenIgniter.Reactors.Examples.Support.with_logging/4 do\n    step :logged_step do\n      run fn _args, _context -> {:ok, :done} end\n    end\n  end",
+        "inputs": "email, amount, card_token",
+        "kind": "raw",
+        "middlewares": "middlewares do\n    middleware Reactor.Middleware.Telemetry\n  end",
+        "moduleName": "GgenIgniter.Reactors.Examples.ExpenseApprovalReactor",
+        "order": "11",
+        "returnStep": "charge_payment"
+      },
+      {
+        "body": "template :welcome_message do\n    argument :user, result(:validate_user)\n\n    template \"\"\"\n    Welcome <%= @user.email %>!\n    \"\"\"\n  end",
+        "inputs": "email, amount, card_token",
+        "kind": "raw",
+        "middlewares": "middlewares do\n    middleware Reactor.Middleware.Telemetry\n  end",
+        "moduleName": "GgenIgniter.Reactors.Examples.ExpenseApprovalReactor",
+        "order": "12",
+        "returnStep": "charge_payment"
+      },
+      {
+        "body": "compose :sub_receipt, GgenIgniter.Reactors.Examples.ReceiptSubReactor do\n    argument :charge, result(:charge_payment)\n  end",
+        "inputs": "email, amount, card_token",
+        "kind": "raw",
+        "middlewares": "middlewares do\n    middleware Reactor.Middleware.Telemetry\n  end",
+        "moduleName": "GgenIgniter.Reactors.Examples.ExpenseApprovalReactor",
+        "order": "8",
+        "returnStep": "charge_payment"
+      }
+    ]
+  },
+  "schema": "autofde-lab.iec.pack-kernel/1",
+  "template_path": "priv/ggen/reactor-scaffold-pack/templates/reactor.ex.eex"
+}

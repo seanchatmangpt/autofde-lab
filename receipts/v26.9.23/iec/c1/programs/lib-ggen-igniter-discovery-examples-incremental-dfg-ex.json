@@ -1,0 +1,274 @@
+{
+  "bindings": [
+    {
+      "ambiguous": false,
+      "end": 82,
+      "sources": [
+        "declaration:pack.ontology"
+      ],
+      "start": 33,
+      "value": "priv/ggen/incremental-discovery-pack/ontology.ttl"
+    },
+    {
+      "ambiguous": false,
+      "end": 175,
+      "sources": [
+        "declaration:pack.name"
+      ],
+      "start": 149,
+      "value": "incremental-discovery-pack"
+    },
+    {
+      "ambiguous": false,
+      "end": 244,
+      "sources": [
+        "declaration:template.to"
+      ],
+      "start": 190,
+      "value": "lib/ggen_igniter/discovery/examples/incremental_dfg.ex"
+    },
+    {
+      "ambiguous": false,
+      "end": 502,
+      "sources": [
+        "kernel:module[0].moduleName"
+      ],
+      "start": 457,
+      "value": "GgenIgniter.Discovery.Examples.IncrementalDfg"
+    },
+    {
+      "ambiguous": false,
+      "end": 646,
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "start": 641,
+      "value": "Event"
+    },
+    {
+      "ambiguous": false,
+      "end": 1117,
+      "sources": [
+        "declaration:pack.name"
+      ],
+      "start": 1091,
+      "value": "incremental-discovery-pack"
+    },
+    {
+      "ambiguous": false,
+      "end": 1180,
+      "sources": [
+        "declaration:template.to"
+      ],
+      "start": 1126,
+      "value": "lib/ggen_igniter/discovery/examples/incremental_dfg.ex"
+    },
+    {
+      "ambiguous": false,
+      "end": 1269,
+      "sources": [
+        "declaration:pack.ontology"
+      ],
+      "start": 1220,
+      "value": "priv/ggen/incremental-discovery-pack/ontology.ttl"
+    },
+    {
+      "ambiguous": false,
+      "end": 1333,
+      "sources": [
+        "kernel:module[0].eventModule"
+      ],
+      "start": 1297,
+      "value": "GgenIgniter.Discovery.Examples.Event"
+    },
+    {
+      "ambiguous": false,
+      "end": 1344,
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "start": 1339,
+      "value": "Event"
+    },
+    {
+      "ambiguous": false,
+      "end": 1443,
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "start": 1438,
+      "value": "Event"
+    },
+    {
+      "ambiguous": false,
+      "end": 2408,
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "start": 2400,
+      "value": "activity"
+    },
+    {
+      "ambiguous": false,
+      "end": 2484,
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "start": 2476,
+      "value": "activity"
+    },
+    {
+      "ambiguous": false,
+      "end": 2549,
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "start": 2544,
+      "value": "Event"
+    },
+    {
+      "ambiguous": false,
+      "end": 2604,
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "start": 2599,
+      "value": "Event"
+    },
+    {
+      "ambiguous": false,
+      "end": 2671,
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "start": 2663,
+      "value": "activity"
+    },
+    {
+      "ambiguous": false,
+      "end": 2688,
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "start": 2680,
+      "value": "activity"
+    },
+    {
+      "ambiguous": false,
+      "end": 2744,
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "start": 2736,
+      "value": "activity"
+    },
+    {
+      "ambiguous": false,
+      "end": 2922,
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "start": 2914,
+      "value": "activity"
+    },
+    {
+      "ambiguous": false,
+      "end": 3185,
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "start": 3177,
+      "value": "activity"
+    },
+    {
+      "ambiguous": false,
+      "end": 3264,
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "start": 3256,
+      "value": "activity"
+    },
+    {
+      "ambiguous": false,
+      "end": 3483,
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "start": 3475,
+      "value": "activity"
+    },
+    {
+      "ambiguous": false,
+      "end": 3636,
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "start": 3628,
+      "value": "activity"
+    },
+    {
+      "ambiguous": false,
+      "end": 3902,
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "start": 3894,
+      "value": "activity"
+    },
+    {
+      "ambiguous": false,
+      "end": 3944,
+      "sources": [
+        "kernel:module[0].activityField"
+      ],
+      "start": 3936,
+      "value": "activity"
+    },
+    {
+      "ambiguous": false,
+      "end": 4283,
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "start": 4278,
+      "value": "Event"
+    },
+    {
+      "ambiguous": false,
+      "end": 4698,
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "start": 4693,
+      "value": "Event"
+    },
+    {
+      "ambiguous": false,
+      "end": 4765,
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "start": 4760,
+      "value": "Event"
+    },
+    {
+      "ambiguous": false,
+      "end": 4785,
+      "sources": [
+        "kernel:module[0].defaultCaseId"
+      ],
+      "start": 4774,
+      "value": ":__global__"
+    }
+  ],
+  "coverage": {
+    "ambiguous_holes": 0,
+    "bytes_bound_to_facts": 486,
+    "bytes_residue": 4304,
+    "bytes_total": 4790,
+    "holes": 29
+  },
+  "kind": "flat",
+  "note": "a flat program reconstructs by construction; its evidential value is exact-subject binding and declared-template reflexion, not generalization"
+}

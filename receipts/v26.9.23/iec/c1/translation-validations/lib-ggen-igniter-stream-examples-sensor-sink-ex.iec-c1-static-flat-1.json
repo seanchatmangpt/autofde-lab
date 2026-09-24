@@ -1,0 +1,60 @@
+{
+  "claim": "IEC_TRANSLATION_VALIDATED_FOR_git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:lib/ggen_igniter/stream/examples/sensor_sink.ex_UNDER_e172f59806ec8d3f",
+  "dimensions": {
+    "exact-subject-identity": "PASS",
+    "generator-reflexion": "PASS",
+    "syntax": "PASS"
+  },
+  "generated_identity": "052f31568aff7a66b0bc9ea27213b0a17853c57a",
+  "original_identity": "052f31568aff7a66b0bc9ea27213b0a17853c57a",
+  "receipt_id": "sha256:4410f565d04336d558e9a20794ad464cc7750c8e4e36fe364106648a5f9d1412",
+  "results": {
+    "byte-identity": {
+      "detail": "5247 bytes identical",
+      "evidence": {},
+      "verdict": "PASS"
+    },
+    "declared-template-mandatory-literals": {
+      "detail": "15 mandatory literal chunks embedded in order (0 in blocks not required)",
+      "evidence": {
+        "detail": "15 mandatory literal chunks embedded in order (0 in blocks not required)",
+        "holds": true,
+        "literal_bytes": 5037,
+        "literal_span_count": 15,
+        "missing": null
+      },
+      "verdict": "PASS"
+    },
+    "git-blob-identity": {
+      "detail": "generated blob id 052f31568aff7a66b0bc9ea27213b0a17853c57a equals frozen tree entry",
+      "evidence": {},
+      "verdict": "PASS"
+    }
+  },
+  "schema": "autofde-lab.iec.court-receipt/1",
+  "subject": "git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:lib/ggen_igniter/stream/examples/sensor_sink.ex",
+  "verdict": "PASS",
+  "verifier_set": {
+    "claim_prefix": "IEC_TRANSLATION_VALIDATED",
+    "id": "sha256:e172f59806ec8d3f6253fda1473fb011fe7217e7db763d94fd0b7527c5936bec",
+    "name": "iec-c1-static-flat/1",
+    "verifiers": [
+      {
+        "dimension": "syntax",
+        "name": "byte-identity",
+        "version": "1"
+      },
+      {
+        "dimension": "exact-subject-identity",
+        "name": "git-blob-identity",
+        "version": "1"
+      },
+      {
+        "dimension": "generator-reflexion",
+        "name": "declared-template-mandatory-literals",
+        "version": "1"
+      }
+    ]
+  },
+  "verifier_set_id": "sha256:e172f59806ec8d3f6253fda1473fb011fe7217e7db763d94fd0b7527c5936bec"
+}

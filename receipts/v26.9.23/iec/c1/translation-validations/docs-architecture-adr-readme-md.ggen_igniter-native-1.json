@@ -1,0 +1,53 @@
+{
+  "claim": "NOT_VALIDATED",
+  "dimensions": {
+    "build": "BLOCKED",
+    "tests": "BLOCKED"
+  },
+  "generated_identity": "aaf5b5526e3e1aa3bd036132d91fd06281cbb31e",
+  "original_identity": "aaf5b5526e3e1aa3bd036132d91fd06281cbb31e",
+  "receipt_id": "sha256:09fe0954cc97b9853d300e93285323d0632d1cd1e0ce7de14381b82f80921dd1",
+  "results": {
+    "mix-compile-warnings-as-errors": {
+      "detail": "BLOCKED_EXECUTION_AUTHORITY: this session's execution policy refused running the subject's Mix build (`mix deps.get && mix compile`); ARD section 22 requires brokered execution for active probes",
+      "evidence": {},
+      "verdict": "BLOCKED"
+    },
+    "mix-format-check-formatted": {
+      "detail": "BLOCKED_EXECUTION_AUTHORITY: this session's execution policy refused running the subject's Mix build (`mix deps.get && mix compile`); ARD section 22 requires brokered execution for active probes",
+      "evidence": {},
+      "verdict": "BLOCKED"
+    },
+    "mix-test": {
+      "detail": "BLOCKED_EXECUTION_AUTHORITY: this session's execution policy refused running the subject's Mix build (`mix deps.get && mix compile`); ARD section 22 requires brokered execution for active probes",
+      "evidence": {},
+      "verdict": "BLOCKED"
+    }
+  },
+  "schema": "autofde-lab.iec.court-receipt/1",
+  "subject": "git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:docs/architecture/adr/README.md",
+  "verdict": "BLOCKED",
+  "verifier_set": {
+    "claim_prefix": "IEC_TRANSLATION_VALIDATED",
+    "id": "sha256:97307c417700282576cf768f6803321ec58aa3cb1656390bb1ec80734d1a1009",
+    "name": "ggen_igniter-native/1",
+    "verifiers": [
+      {
+        "dimension": "build",
+        "name": "mix-format-check-formatted",
+        "version": "1"
+      },
+      {
+        "dimension": "build",
+        "name": "mix-compile-warnings-as-errors",
+        "version": "1"
+      },
+      {
+        "dimension": "tests",
+        "name": "mix-test",
+        "version": "1"
+      }
+    ]
+  },
+  "verifier_set_id": "sha256:97307c417700282576cf768f6803321ec58aa3cb1656390bb1ec80734d1a1009"
+}

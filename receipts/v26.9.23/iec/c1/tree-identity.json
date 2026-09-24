@@ -1,0 +1,15 @@
+{
+  "frozen_tree": "2e95edb90efdfa0d6ba2f499fe0ce0c6d6654b14",
+  "reading": "delete the generated subjects, regenerate them from kernel + program, and the frozen root tree id is restored",
+  "regenerated_paths": [
+    "docs/architecture/adr/README.md",
+    "lib/ggen_igniter/discovery/examples/incremental_dfg.ex",
+    "lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex",
+    "lib/ggen_igniter/stream/examples/sensor_sink.ex"
+  ],
+  "schema": "autofde-lab.iec.tree-identity/1",
+  "subject": "git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3",
+  "tree_with_regenerated_subjects": "2e95edb90efdfa0d6ba2f499fe0ce0c6d6654b14",
+  "tree_without_regenerated_subjects": "f6d0f04c853340f892fc998d9e5ae1013b706ff4",
+  "verdict": "PASS"
+}

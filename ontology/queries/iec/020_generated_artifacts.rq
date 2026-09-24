@@ -1,0 +1,10 @@
+PREFIX iec: <urn:autofde-lab:iec:>
+
+SELECT DISTINCT ?artifact ?path ?producer
+WHERE {
+  ?artifact a iec:ArtifactRecord ;
+            iec:artifactClass "GENERATED_PROJECTION" ;
+            iec:sourcePath ?path ;
+            iec:producer ?producer .
+}
+ORDER BY ?producer ?path

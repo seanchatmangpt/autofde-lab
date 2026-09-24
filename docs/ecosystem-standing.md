@@ -1001,6 +1001,10 @@ modules exist.
   `ggen-legacy`'s existing `equivalence_runner.py`.
 - **Resume condition**: S1 → `PARTIAL_ALIVE`; the chain gains its front end and the career
   payload can enter as an exemplar rather than as hand-authored authority.
+- **Correction (2026-09-23, pass 6)**: "0 lines" above is stale. At
+  `ggen-create@eaa463af` the exemplar → package reverse compiler is real, pure-Python
+  code. This session imported it from its pinned checkout, ran its capture lifecycle,
+  and found one defect in it (pass 6 below). The row is kept as written; this note corrects it.
 
 ### RP-7 — wire bcinr's executor to mfw's broker  *(owner: `~/mfw` + `~/bcinr`)* — **the crown capability**
 
@@ -1363,6 +1367,23 @@ and the discrepancy is named below, not silently resolved.
 (per their own commit messages), but those branches are unmerged in `~/xaas`; propagating them
 into `~/xaas`'s own committed ticket files/index is real, necessary follow-up work outside this
 ticket's scope and is reported back rather than performed here.
+
+## Pass 6 — Inverse Ecosystem Compiler, first cross-repo execution (2026-09-23, v26.9.23)
+
+Driven from `autofde-lab` (`src/autofde_lab/iec/crowns/`, spec `docs/jira/v26.9.23/`). Every
+sibling was read at an exact commit through its git object database. No sibling code was
+executed except ggen-create's pure-Python modules, imported from its pinned checkout. Nothing
+was written into any sibling.
+
+| Subject | Standing | Command | Evidence |
+|---|---|---|---|
+| `ggen_igniter@d84da141` — 4 committed generated outputs | `ALIVE` (static courts); `BLOCKED_EXECUTION_AUTHORITY` (native) | `python -m autofde_lab.iec.crowns.crown --checkout <ggen_igniter> --ggen-create <ggen-create> --out receipts/v26.9.23/iec/c1` | All 4 regenerated from kernel + recovered program. The frozen tree `2e95edb9…` is restored after delete-and-regenerate. The ADR index and the generated-header family pass held-out prediction. The reactor's raw-render hypothesis is falsified (formatter); its claim rests on a weaker, separately named court. Findings: nothing in ggen_igniter re-renders its committed outputs (no in-sync check). ADR `0009-runtime-shape-semantic-ir.md` matches the index kernel's own filename shape but is absent from `adr-index-pack/ontology.ttl`. Templates restate their own `to:`, pack name, and ontology path as literal header text. |
+| `ggen-create@eaa463af` — federated reverse-compiler primitive | `PARTIAL_ALIVE` | same run; `receipts/v26.9.23/iec/c1/federation/ggen-create.json` | Role classifier joined to IEC's census on 690 files by path and digest. Its single-seed `cases.render_concrete` predicts header lines 1–3 of the ggen_igniter family held-out (reuse). Line 4 is a path, and ggen-create refuses path-valued seeds (`PARAMETER_VALUE_REFUSED`): the PR-005 capability falsifier licensing IEC's own generalization there. **Defect**: `cases.render_concrete_many` omits the text before each replacement (`render_concrete("dist/hello.js","hello","hola")` = `dist/hola.js`; `_many` = `hola.js`). Through the public lifecycle (`start`, `add src/hello.js test/hello.js`, `usename Hello`, `generate`) it surfaces as a false `TARGET_COLLISION_REFUSED`. Recorded as promotion candidate `PROMO-C1-04`; not fixed from here. |
+| `autofde-lab@ae255ad1` — held-out C3 subject | `ALIVE` (C3, compared fields) | `python -m autofde_lab.iec.crowns.c3 --autofde-lab . --c3-dir receipts/v26.9.23/iec/c3 --ggen-igniter <ggen_igniter>` | Frozen mechanized audit vs an independent LLM hand audit of 13 `ggen.toml` targets: 13/13 agree on (`committed`, `class`); replay reproduces the frozen outcome. See `docs/STATUS.md` pass 46 for the ruff-F401 finding. |
+
+**Not claimed**: IEC-C2 (≥3-repository semantic collapse) and IEC-C4 (ecosystem census) have
+not run. No repository disposition (`MERGE`/`ARCHIVE`/`DELETE`) is proposed. None of the rows
+above moves S1–S7 or the crown.
 
 ## How to read this
 

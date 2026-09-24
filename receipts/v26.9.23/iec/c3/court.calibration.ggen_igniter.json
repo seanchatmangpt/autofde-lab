@@ -1,0 +1,109 @@
+{
+  "claim": "NOT_VALIDATED",
+  "dimensions": {
+    "generalization": "UNSUPPORTED",
+    "outcome": "PASS",
+    "replay": "PASS"
+  },
+  "generated_identity": "sha256:82092625938cdfc497fe7cae45f63ddd1f8ded4eeb7b3da5bb02e7ed77fb142b",
+  "original_identity": "sha256:03cd1ffffac639e76e883b276ea525b830669fc70b7647256ee19abf0351b4e6",
+  "receipt_id": "sha256:a9be9f0a0723d20bf3fa4e5046457afe074fdc853af390d6f7415b7d570fe0bf",
+  "results": {
+    "held-out-subject": {
+      "detail": "calibration subject: the mechanism was built after reading this LLM outcome",
+      "evidence": {},
+      "verdict": "UNSUPPORTED"
+    },
+    "mechanized-replay": {
+      "detail": "replay reproduced outcome sha256:82092625938cdfc497fe7cae45f63ddd1f8ded4eeb7b3da5bb02e7ed77fb142b",
+      "evidence": {},
+      "verdict": "PASS"
+    },
+    "row-field-equality": {
+      "detail": "9 of 9 rows agree",
+      "evidence": {
+        "agreed": 9,
+        "fields": [
+          "committed",
+          "class"
+        ],
+        "key": "target",
+        "rows": [
+          {
+            "agree": true,
+            "disagreements": {},
+            "target": "docs/architecture/adr/README.md"
+          },
+          {
+            "agree": true,
+            "disagreements": {},
+            "target": "lib/generated/conformance/token_replay.ex"
+          },
+          {
+            "agree": true,
+            "disagreements": {},
+            "target": "lib/generated/discovery/inductive_miner.ex"
+          },
+          {
+            "agree": true,
+            "disagreements": {},
+            "target": "lib/ggen_igniter/discovery/examples/incremental_dfg.ex"
+          },
+          {
+            "agree": true,
+            "disagreements": {},
+            "target": "lib/ggen_igniter/ocel2_example.ex"
+          },
+          {
+            "agree": true,
+            "disagreements": {},
+            "target": "lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex"
+          },
+          {
+            "agree": true,
+            "disagreements": {},
+            "target": "lib/ggen_igniter/stream/examples/sensor_sink.ex"
+          },
+          {
+            "agree": true,
+            "disagreements": {},
+            "target": "lib/olap.ex"
+          },
+          {
+            "agree": true,
+            "disagreements": {},
+            "target": "test/chicago/fault_injection_test.exs"
+          }
+        ],
+        "total": 9
+      },
+      "verdict": "PASS"
+    }
+  },
+  "schema": "autofde-lab.iec.court-receipt/1",
+  "subject": "git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3",
+  "verdict": "UNSUPPORTED",
+  "verifier_set": {
+    "claim_prefix": "IEC_OUTCOME_EQUIVALENT_TO_LLM",
+    "id": "sha256:a518c0ec44c35a7f6e618c64f55c07a60604d3c35483c7f5048de7e8c827e8bd",
+    "name": "iec-c3-outcome-equivalence/RC-GENERATED-OUTPUT-AUDIT",
+    "verifiers": [
+      {
+        "dimension": "outcome",
+        "name": "row-field-equality",
+        "version": "1"
+      },
+      {
+        "dimension": "replay",
+        "name": "mechanized-replay",
+        "version": "1"
+      },
+      {
+        "dimension": "generalization",
+        "name": "held-out-subject",
+        "version": "1"
+      }
+    ]
+  },
+  "verifier_set_id": "sha256:a518c0ec44c35a7f6e618c64f55c07a60604d3c35483c7f5048de7e8c827e8bd"
+}

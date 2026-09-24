@@ -1,0 +1,130 @@
+{
+  "audit_version": "1",
+  "claim_ceiling": "mandatory (block-depth-0) template literals only; divergence confined to for/if block bodies is not observed by this audit",
+  "class_counts": {
+    "CONSISTENT_MODULO_WHITESPACE_AND_CALL_PARENS": 1,
+    "NOT_COMMITTED": 5,
+    "RAW_RENDER_CONSISTENT": 3
+  },
+  "id": "sha256:82092625938cdfc497fe7cae45f63ddd1f8ded4eeb7b3da5bb02e7ed77fb142b",
+  "include": ".*",
+  "rows": [
+    {
+      "class": "RAW_RENDER_CONSISTENT",
+      "committed": true,
+      "declaration": "priv/ggen/adr-index-pack/templates/readme.md.eex",
+      "evidence": {
+        "raw": {
+          "detail": "2 mandatory literal chunks embedded in order (5 in blocks not required)",
+          "holds": true,
+          "literal_bytes": 1205,
+          "literal_span_count": 2,
+          "missing": null
+        }
+      },
+      "rule": "",
+      "target": "docs/architecture/adr/README.md",
+      "template": "priv/ggen/adr-index-pack/templates/readme.md.eex"
+    },
+    {
+      "class": "NOT_COMMITTED",
+      "committed": false,
+      "declaration": "priv/ggen/process-discovery-pack/templates/token_replay.ex.eex",
+      "rule": "",
+      "target": "lib/generated/conformance/token_replay.ex",
+      "template": "priv/ggen/process-discovery-pack/templates/token_replay.ex.eex"
+    },
+    {
+      "class": "NOT_COMMITTED",
+      "committed": false,
+      "declaration": "priv/ggen/process-discovery-pack/templates/inductive_miner.ex.eex",
+      "rule": "",
+      "target": "lib/generated/discovery/inductive_miner.ex",
+      "template": "priv/ggen/process-discovery-pack/templates/inductive_miner.ex.eex"
+    },
+    {
+      "class": "RAW_RENDER_CONSISTENT",
+      "committed": true,
+      "declaration": "priv/ggen/incremental-discovery-pack/templates/incremental.ex.eex",
+      "evidence": {
+        "raw": {
+          "detail": "14 mandatory literal chunks embedded in order (0 in blocks not required)",
+          "holds": true,
+          "literal_bytes": 4640,
+          "literal_span_count": 14,
+          "missing": null
+        }
+      },
+      "rule": "",
+      "target": "lib/ggen_igniter/discovery/examples/incremental_dfg.ex",
+      "template": "priv/ggen/incremental-discovery-pack/templates/incremental.ex.eex"
+    },
+    {
+      "class": "NOT_COMMITTED",
+      "committed": false,
+      "declaration": "priv/ggen/ocel2-ekg-pack/templates/ocel2.ex.eex",
+      "rule": "",
+      "target": "lib/ggen_igniter/ocel2_example.ex",
+      "template": "priv/ggen/ocel2-ekg-pack/templates/ocel2.ex.eex"
+    },
+    {
+      "class": "CONSISTENT_MODULO_WHITESPACE_AND_CALL_PARENS",
+      "committed": true,
+      "declaration": "priv/ggen/reactor-scaffold-pack/templates/reactor.ex.eex",
+      "evidence": {
+        "raw": {
+          "detail": "mandatory template literal at body line 58 not found in order",
+          "holds": false,
+          "literal_bytes": 1210,
+          "literal_span_count": 4,
+          "missing": {
+            "anchored_end": false,
+            "anchored_start": false,
+            "chunk_index": 67,
+            "line": 58,
+            "search_from": 1322,
+            "text": "\n  return :"
+          }
+        }
+      },
+      "rule": "",
+      "target": "lib/ggen_igniter/reactors/examples/expense_approval_reactor.ex",
+      "template": "priv/ggen/reactor-scaffold-pack/templates/reactor.ex.eex"
+    },
+    {
+      "class": "RAW_RENDER_CONSISTENT",
+      "committed": true,
+      "declaration": "priv/ggen/sensor-sink-pack/templates/sensor_sink.ex.eex",
+      "evidence": {
+        "raw": {
+          "detail": "15 mandatory literal chunks embedded in order (0 in blocks not required)",
+          "holds": true,
+          "literal_bytes": 5037,
+          "literal_span_count": 15,
+          "missing": null
+        }
+      },
+      "rule": "",
+      "target": "lib/ggen_igniter/stream/examples/sensor_sink.ex",
+      "template": "priv/ggen/sensor-sink-pack/templates/sensor_sink.ex.eex"
+    },
+    {
+      "class": "NOT_COMMITTED",
+      "committed": false,
+      "declaration": "priv/ggen/olap-pack/templates/olap.ex.eex",
+      "rule": "",
+      "target": "lib/olap.ex",
+      "template": "priv/ggen/olap-pack/templates/olap.ex.eex"
+    },
+    {
+      "class": "NOT_COMMITTED",
+      "committed": false,
+      "declaration": "priv/ggen/chicago-fault-injection-pack/templates/fault_injection_test.exs.eex",
+      "rule": "",
+      "target": "test/chicago/fault_injection_test.exs",
+      "template": "priv/ggen/chicago-fault-injection-pack/templates/fault_injection_test.exs.eex"
+    }
+  ],
+  "schema": "autofde-lab.iec.generated-output-audit/1",
+  "subject": "git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3"
+}

@@ -1,0 +1,193 @@
+{
+  "bindings": [
+    {
+      "ambiguous": false,
+      "end": 72,
+      "sources": [
+        "declaration:pack.ontology"
+      ],
+      "start": 33,
+      "value": "priv/ggen/sensor-sink-pack/ontology.ttl"
+    },
+    {
+      "ambiguous": false,
+      "end": 155,
+      "sources": [
+        "declaration:pack.name"
+      ],
+      "start": 139,
+      "value": "sensor-sink-pack"
+    },
+    {
+      "ambiguous": false,
+      "end": 217,
+      "sources": [
+        "declaration:template.to"
+      ],
+      "start": 170,
+      "value": "lib/ggen_igniter/stream/examples/sensor_sink.ex"
+    },
+    {
+      "ambiguous": false,
+      "end": 446,
+      "sources": [
+        "kernel:module[0].moduleName"
+      ],
+      "start": 408,
+      "value": "GgenIgniter.Stream.Examples.SensorSink"
+    },
+    {
+      "ambiguous": false,
+      "end": 561,
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "start": 556,
+      "value": "Event"
+    },
+    {
+      "ambiguous": false,
+      "end": 1313,
+      "sources": [
+        "declaration:pack.name"
+      ],
+      "start": 1297,
+      "value": "sensor-sink-pack"
+    },
+    {
+      "ambiguous": false,
+      "end": 1369,
+      "sources": [
+        "declaration:template.to"
+      ],
+      "start": 1322,
+      "value": "lib/ggen_igniter/stream/examples/sensor_sink.ex"
+    },
+    {
+      "ambiguous": false,
+      "end": 1448,
+      "sources": [
+        "declaration:pack.ontology"
+      ],
+      "start": 1409,
+      "value": "priv/ggen/sensor-sink-pack/ontology.ttl"
+    },
+    {
+      "ambiguous": false,
+      "end": 1510,
+      "sources": [
+        "kernel:module[0].eventModule"
+      ],
+      "start": 1474,
+      "value": "GgenIgniter.Discovery.Examples.Event"
+    },
+    {
+      "ambiguous": false,
+      "end": 1521,
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "start": 1516,
+      "value": "Event"
+    },
+    {
+      "ambiguous": false,
+      "end": 1882,
+      "sources": [
+        "kernel:module[0].defaultThreshold"
+      ],
+      "start": 1879,
+      "value": "0.0"
+    },
+    {
+      "ambiguous": false,
+      "end": 1937,
+      "sources": [
+        "kernel:module[0].risingActivity"
+      ],
+      "start": 1914,
+      "value": "threshold_crossed_above"
+    },
+    {
+      "ambiguous": false,
+      "end": 1994,
+      "sources": [
+        "kernel:module[0].fallingActivity"
+      ],
+      "start": 1971,
+      "value": "threshold_crossed_below"
+    },
+    {
+      "ambiguous": false,
+      "end": 2275,
+      "sources": [
+        "kernel:module[0].defaultThreshold"
+      ],
+      "start": 2272,
+      "value": "0.0"
+    },
+    {
+      "ambiguous": false,
+      "end": 2361,
+      "sources": [
+        "kernel:module[0].risingActivity"
+      ],
+      "start": 2338,
+      "value": "threshold_crossed_above"
+    },
+    {
+      "ambiguous": false,
+      "end": 2450,
+      "sources": [
+        "kernel:module[0].fallingActivity"
+      ],
+      "start": 2427,
+      "value": "threshold_crossed_below"
+    },
+    {
+      "ambiguous": false,
+      "end": 2763,
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "start": 2758,
+      "value": "Event"
+    },
+    {
+      "ambiguous": false,
+      "end": 3535,
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "start": 3530,
+      "value": "Event"
+    },
+    {
+      "ambiguous": false,
+      "end": 4335,
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "start": 4330,
+      "value": "Event"
+    },
+    {
+      "ambiguous": false,
+      "end": 4762,
+      "sources": [
+        "kernel:module[0].eventAlias"
+      ],
+      "start": 4757,
+      "value": "Event"
+    }
+  ],
+  "coverage": {
+    "ambiguous_holes": 0,
+    "bytes_bound_to_facts": 406,
+    "bytes_residue": 4841,
+    "bytes_total": 5247,
+    "holes": 20
+  },
+  "kind": "flat",
+  "note": "a flat program reconstructs by construction; its evidential value is exact-subject binding and declared-template reflexion, not generalization"
+}

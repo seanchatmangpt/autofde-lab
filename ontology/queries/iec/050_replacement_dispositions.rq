@@ -1,0 +1,10 @@
+PREFIX iec: <urn:autofde-lab:iec:>
+
+SELECT DISTINCT ?candidate ?replacement ?rollback ?verifier
+WHERE {
+  ?candidate a iec:ReplacementDispositionCandidate ;
+             iec:replacementPath ?replacement ;
+             iec:rollbackPath ?rollback ;
+             iec:verifierSet ?verifier .
+}
+ORDER BY ?candidate

@@ -1,0 +1,71 @@
+{
+  "claim": "IEC_TRANSLATION_VALIDATED_FOR_git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:docs/architecture/adr/README.md_UNDER_7dde902f2f3674c4",
+  "dimensions": {
+    "exact-subject-identity": "PASS",
+    "generalization": "PASS",
+    "generator-reflexion": "PASS",
+    "syntax": "PASS"
+  },
+  "generated_identity": "aaf5b5526e3e1aa3bd036132d91fd06281cbb31e",
+  "original_identity": "aaf5b5526e3e1aa3bd036132d91fd06281cbb31e",
+  "receipt_id": "sha256:66bedf2befec4951f006433058612bb83ce42ea34ebd627bc2d9200cfaf6f4e6",
+  "results": {
+    "byte-identity": {
+      "detail": "2334 bytes identical",
+      "evidence": {},
+      "verdict": "PASS"
+    },
+    "declared-template-mandatory-literals": {
+      "detail": "2 mandatory literal chunks embedded in order (5 in blocks not required)",
+      "evidence": {
+        "detail": "2 mandatory literal chunks embedded in order (5 in blocks not required)",
+        "holds": true,
+        "literal_bytes": 1205,
+        "literal_span_count": 2,
+        "missing": null
+      },
+      "verdict": "PASS"
+    },
+    "git-blob-identity": {
+      "detail": "generated blob id aaf5b5526e3e1aa3bd036132d91fd06281cbb31e equals frozen tree entry",
+      "evidence": {},
+      "verdict": "PASS"
+    },
+    "row-template-leave-one-out": {
+      "detail": "8 of 8 rows predicted from a template learned without them",
+      "evidence": {},
+      "verdict": "PASS"
+    }
+  },
+  "schema": "autofde-lab.iec.court-receipt/1",
+  "subject": "git:seanchatmangpt/ggen_igniter@d84da1419a6945c6a8a64b8f6cdca9d0b2c9e0f3:docs/architecture/adr/README.md",
+  "verdict": "PASS",
+  "verifier_set": {
+    "claim_prefix": "IEC_TRANSLATION_VALIDATED",
+    "id": "sha256:7dde902f2f3674c47d5f17f2f73cdd12c886026b6d7c8d2bd7e1304532667e5b",
+    "name": "iec-c1-static-row/1",
+    "verifiers": [
+      {
+        "dimension": "syntax",
+        "name": "byte-identity",
+        "version": "1"
+      },
+      {
+        "dimension": "exact-subject-identity",
+        "name": "git-blob-identity",
+        "version": "1"
+      },
+      {
+        "dimension": "generator-reflexion",
+        "name": "declared-template-mandatory-literals",
+        "version": "1"
+      },
+      {
+        "dimension": "generalization",
+        "name": "row-template-leave-one-out",
+        "version": "1"
+      }
+    ]
+  },
+  "verifier_set_id": "sha256:7dde902f2f3674c47d5f17f2f73cdd12c886026b6d7c8d2bd7e1304532667e5b"
+}

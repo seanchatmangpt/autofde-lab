@@ -1,0 +1,11 @@
+PREFIX iec: <urn:autofde-lab:iec:>
+
+SELECT DISTINCT ?candidate ?left ?right ?score ?verifier
+WHERE {
+  ?candidate a iec:CorrespondenceCandidate ;
+             iec:leftSubject ?left ;
+             iec:rightSubject ?right ;
+             iec:requiresVerifier ?verifier .
+  OPTIONAL { ?candidate iec:score ?score . }
+}
+ORDER BY DESC(?score) ?left ?right
