@@ -12,7 +12,13 @@ from pathlib import Path
 
 import pytest
 
-from autofde_lab.iec.crowns.antiunify import anti_unify, apply, render, template_text, tokenize
+from autofde_lab.iec.crowns.antiunify import (
+    anti_unify,
+    apply,
+    render,
+    template_text,
+    tokenize,
+)
 from autofde_lab.iec.crowns.census import census, read_blob, tree_id
 from autofde_lab.iec.crowns.corpus import (
     CorpusManifest,

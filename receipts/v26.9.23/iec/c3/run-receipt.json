@@ -1,11 +1,11 @@
 {
   "calibration_verdict": "UNSUPPORTED",
-  "current_mechanism_digest": "sha256:8f1a84a3123370a440f1dbbd0569c0f3e2a7ffc45cb96bdd9f1836497e4a2a99",
+  "current_mechanism_digest": "sha256:fd56553f871bed5765c53ceb950db4ad2439da113dc2229fa831508990adc31d",
   "files": {
     "court.calibration.ggen_igniter.json": "sha256:b098da74d074fb3a7de1e652cee2e252630763b401e2a137deb77b48ff9d1865",
     "court.held-out.autofde-lab.json": "sha256:9e6a871827b89a269e5b34681382a44d526a0929216376b34eca30493c245d13",
     "mechanized.ggen_igniter.json": "sha256:884488c1d10670d3d1b35905e3435b971ab10a15f92e80088dd7f0aacc14845b",
-    "retirement-ledger.jsonl": "sha256:7fcb3844d6d5f030f9e2ce9ad8e336f58aa8a8decbe7f5ad6259bcacc484583e"
+    "retirement-ledger.jsonl": "sha256:eb7777b2085c79702628d290a1e8748190b66e878b910d710a0198d20bce08be"
   },
   "frozen_file_sha256": "4372b88c42278572e4905efd33d45462b9ed4edeaac5957b1f6955f5136a2edd",
   "frozen_mechanism_digest": "sha256:f70c54fb5862bb3fea20de9f1c623db05166c4bf846cda6e06f6a17f8626c07e",
@@ -24,6 +24,6 @@
   "ordering_evidence": "the frozen outcome file's sha256 was recorded in the session transcript before the held-out agent was launched; no external timestamp authority attests that order",
   "reasoning_class": "RC-GENERATED-OUTPUT-AUDIT",
   "replayed_outcome_id": "sha256:9bd485768eb23f49bd25c23ac9adcc5455e44008f955fd56cc740e9fb5a75030",
-  "run_id": "sha256:bb3fd2fe74451ed78761f71953b450cd509334b8b27ad026d5cececd094f02d8",
+  "run_id": "sha256:0faefb2d784d78385e3ffec2924eddd760640e5cc8177fff3555825301cb0365",
   "schema": "autofde-lab.iec.c3-run-receipt/1"
 }

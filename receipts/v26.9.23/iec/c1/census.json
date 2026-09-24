@@ -1,5 +1,5 @@
 {
-  "extractor": "autofde_lab.iec.census",
+  "extractor": "autofde_lab.iec.crowns.census",
   "extractor_version": "1",
   "files": [
     {
