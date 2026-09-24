@@ -1,0 +1,31 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix sjira: <urn:seanchatmangpt:sjira:v1#> .
+@prefix work: <urn:seanchatmangpt:autofde-lab:sjira:v26.9.24:> .
+
+work:package
+  a sjira:WorkPackage ;
+  dcterms:title "Collective skill court compiler" ;
+  sjira:project "autofde-lab" ;
+  sjira:repository "seanchatmangpt/autofde-lab" ;
+  sjira:trackingBaseSha "29ffb8f9749b0b693579bc68c7f61ac15b16841f" ;
+  sjira:evidenceCeiling "REPO_LOCAL_COURT" ;
+  sjira:authorityCeiling "OBSERVE|SELECT|CONSTRUCT" ;
+  sjira:contains work:AFDE-CSKILL-26924-001 .
+
+work:AFDE-CSKILL-26924-001
+  a sjira:WorkOrder ;
+  dcterms:title "Compile a provenance-bound skill court through marketplace and SA2A" ;
+  sjira:status "UNKNOWN" ;
+  sjira:subject "collective-skill court compiler" ;
+  sjira:dependsOn "ggen-marketplace@02c13c468892c040c8abfd5023db4c1a19fa4820:collective-skill-court-pack@26.9.24" ;
+  sjira:desiredConsequence "An admitted Oracle/NOP/mutation court projects to a powerless SA2A Candidate and compiles only to CANDIDATE MachineExperience." ;
+  sjira:acceptancePredicate "Oracle success is required." ;
+  sjira:acceptancePredicate "A successful no-op is refused." ;
+  sjira:acceptancePredicate "Any surviving known-wrong mutation is refused." ;
+  sjira:acceptancePredicate "The candidate has authority=none and grants_do_authority=false." ;
+  sjira:acceptancePredicate "Experience compilation stops at CANDIDATE; it does not become ACTIVE or acquire a known route." ;
+  sjira:falsifier "A failed oracle, successful no-op, surviving mutation, or DO authority produces an admitted court." ;
+  sjira:falsifier "Court compilation creates ACTIVE MachineExperience or a known route without independent qualification." ;
+  sjira:verificationCourt "PYTHONPATH=src python -m pytest -vv tests/sa2a/collective_skill/test_collective_skill_court.py" ;
+  sjira:authority "OBSERVE|SELECT|CONSTRUCT" ;
+  sjira:productionActuation false .
