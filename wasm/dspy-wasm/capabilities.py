@@ -155,7 +155,10 @@ class WasmGuestInterpreter:
         self._started = True
 
     def _tool_globals(self) -> dict[str, Any]:
-        return {name: fn for name, fn in self._tools.items()}
+        def submit(**kwargs):
+            return FinalOutput(kwargs)
+
+        return {"SUBMIT": submit, **{name: fn for name, fn in self._tools.items()}}
 
     def execute(self, code: str, variables: dict[str, Any] | None = None):
         if self._closed:
@@ -521,6 +524,383 @@ def _mipro_construct() -> dict[str, Any]:
     return {"optimizer": type(optimizer).__name__, "auto": optimizer.auto}
 
 
+
+def _majority() -> dict[str, Any]:
+    pred = dspy.majority(
+        [{"answer": "A"}, {"answer": "A"}, {"answer": "B"}],
+        normalize=lambda value: value,
+        field="answer",
+    )
+    assert pred.answer == "A"
+    return {"answer": pred.answer, "votes": 3}
+
+
+def _embedder_knn() -> dict[str, Any]:
+    import numpy as np
+
+    def vectors(texts):
+        return np.asarray(
+            [
+                [
+                    float("alpha" in text.lower()),
+                    float("beta" in text.lower()),
+                    float(len(text)),
+                ]
+                for text in texts
+            ],
+            dtype=np.float32,
+        )
+
+    embedder = dspy.Embedder(vectors, caching=False)
+    matrix = embedder(["alpha", "beta"])
+    assert matrix.shape == (2, 3)
+
+    train = [
+        dspy.Example(text="alpha", answer="A").with_inputs("text"),
+        dspy.Example(text="beta", answer="B").with_inputs("text"),
+    ]
+    knn = dspy.KNN(k=1, trainset=train, vectorizer=embedder)
+    nearest = knn(text="alpha")[0]
+    assert nearest.answer == "A"
+    return {"shape": list(matrix.shape), "nearest": nearest.answer}
+
+
+def _multi_chain() -> dict[str, Any]:
+    engine = lm("multi_chain")
+    module = dspy.MultiChainComparison("question -> answer", M=2)
+    module.set_lm(engine)
+    completions = [
+        {"reasoning": "path one", "answer": "X"},
+        {"reasoning": "path two", "answer": "Y"},
+    ]
+    with dspy.context(adapter=dspy.JSONAdapter(use_native_function_calling=False)):
+        pred = module(completions=completions, question="choose")
+    assert pred.answer == "MC"
+    assert pred.rationale == "selected"
+    return {"answer": pred.answer, "rationale": pred.rationale, "calls": engine._engine_spec.calls}
+
+
+def _program_of_thought() -> dict[str, Any]:
+    engine = lm("program_of_thought")
+    module = dspy.ProgramOfThought(
+        "question -> answer",
+        max_iters=1,
+        interpreter_factory=WasmGuestInterpreter,
+    )
+    module.set_lm(engine)
+    with dspy.context(adapter=dspy.JSONAdapter(use_native_function_calling=False)):
+        pred = module(question="return POT")
+    assert pred.answer == "POT"
+    return {"answer": pred.answer, "calls": engine._engine_spec.calls}
+
+
+def _code_act() -> dict[str, Any]:
+    def local_add(x: int, y: int) -> int:
+        return x + y
+
+    engine = lm("code_act")
+    module = dspy.CodeAct(
+        "question -> answer",
+        tools=[local_add],
+        max_iters=1,
+        interpreter_factory=WasmGuestInterpreter,
+    )
+    module.set_lm(engine)
+    with dspy.context(adapter=dspy.JSONAdapter(use_native_function_calling=False)):
+        pred = module(question="add")
+    assert pred.answer == "5"
+    return {"answer": pred.answer, "calls": engine._engine_spec.calls, "trajectory": sorted(pred.trajectory)}
+
+
+def _react_v2() -> dict[str, Any]:
+    engine = lm("react_v2")
+    module = dspy.ReActV2("question -> answer", tools=[host_add], max_iters=2)
+    module.set_lm(engine)
+    with dspy.context(adapter=dspy.JSONAdapter(use_native_function_calling=False)):
+        pred = module(question="return V2")
+    assert pred.answer == "V2"
+    assert pred.termination_reason == "submit"
+    return {
+        "answer": pred.answer,
+        "termination_reason": pred.termination_reason,
+        "history_events": len(pred.history.messages),
+    }
+
+
+def _rlm() -> dict[str, Any]:
+    engine = lm("rlm")
+    module = dspy.RLM(
+        "context -> output",
+        max_iters=1,
+        max_llm_calls=1,
+        interpreter_factory=WasmGuestInterpreter,
+    )
+    module.set_lm(engine)
+    with dspy.context(adapter=dspy.JSONAdapter(use_native_function_calling=False)):
+        pred = module(context="bounded")
+    assert pred.output == "RLM"
+    return {
+        "output": pred.output,
+        "calls": engine._engine_spec.calls,
+        "trajectory_steps": len(pred.trajectory),
+    }
+
+
+def _refine() -> dict[str, Any]:
+    engine = lm("refine")
+    module = dspy.Predict("text -> answer")
+    module.set_lm(engine)
+
+    def reward(_args, pred):
+        return 1.0 if pred.answer == "REFINE" else 0.0
+
+    refined = dspy.Refine(module, N=2, reward_fn=reward, threshold=1.0)
+    with dspy.context(adapter=dspy.JSONAdapter(use_native_function_calling=False)):
+        pred = refined(text="x")
+    assert pred.answer == "REFINE"
+    return {"answer": pred.answer, "calls": engine._engine_spec.calls}
+
+
+def _ensemble() -> dict[str, Any]:
+    class Static(dspy.Module):
+        def __init__(self, answer: str):
+            self.answer = answer
+
+        def forward(self, **kwargs):
+            return dspy.Prediction(answer=self.answer)
+
+    ensemble = dspy.Ensemble(reduce_fn=dspy.majority).compile(
+        [Static("A"), Static("A"), Static("B")]
+    )
+    pred = ensemble(question="ignored")
+    assert pred.answer == "A"
+    return {"answer": pred.answer, "members": 3}
+
+
+def _bootstrap_random_search() -> dict[str, Any]:
+    engine = lm("random_search")
+    student = dspy.Predict("text -> answer")
+    student.set_lm(engine)
+    train = [dspy.Example(text="x", answer="RS").with_inputs("text")]
+
+    def metric(example, prediction, trace=None):
+        return float(example.answer == prediction.answer)
+
+    optimizer = dspy.BootstrapFewShotWithRandomSearch(
+        metric=metric,
+        max_bootstrapped_demos=1,
+        max_labeled_demos=1,
+        max_rounds=1,
+        num_candidate_programs=1,
+        num_threads=1,
+        stop_at_score=100,
+    )
+    with dspy.context(adapter=dspy.JSONAdapter(use_native_function_calling=False)):
+        compiled = optimizer.compile(
+            student,
+            trainset=train,
+            valset=train,
+            restrict=[-3],
+        )
+    assert compiled.candidate_programs
+    return {
+        "candidates": len(compiled.candidate_programs),
+        "score": float(compiled.candidate_programs[0]["score"]),
+    }
+
+
+def _knn_fewshot() -> dict[str, Any]:
+    import numpy as np
+
+    def vectors(texts):
+        return np.asarray(
+            [[float("x" in text), float(len(text))] for text in texts],
+            dtype=np.float32,
+        )
+
+    embedder = dspy.Embedder(vectors, caching=False)
+    train = [
+        dspy.Example(text="x", answer="KNN").with_inputs("text"),
+        dspy.Example(text="y", answer="KNN").with_inputs("text"),
+    ]
+    engine = lm("knn_fewshot")
+    student = dspy.Predict("text -> answer")
+    student.set_lm(engine)
+
+    def metric(example, prediction, trace=None):
+        return True
+
+    optimizer = dspy.KNNFewShot(
+        k=1,
+        trainset=train,
+        vectorizer=embedder,
+        metric=metric,
+        max_bootstrapped_demos=1,
+        max_labeled_demos=1,
+        max_rounds=1,
+    )
+    compiled = optimizer.compile(student)
+    with dspy.context(adapter=dspy.JSONAdapter(use_native_function_calling=False)):
+        pred = compiled(text="x")
+    assert pred.answer == "KNN"
+    return {"answer": pred.answer, "calls": engine._engine_spec.calls}
+
+
+def _gepa_execute() -> dict[str, Any]:
+    engine = lm("gepa")
+    student = dspy.Predict("text -> answer")
+    student.set_lm(engine)
+    train = [dspy.Example(text="x", answer="GEPA").with_inputs("text")]
+
+    def metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
+        return float(pred.answer == "GEPA")
+
+    def proposer(candidate, reflective_dataset, components_to_update, *, metadata=None):
+        return {name: candidate[name] for name in components_to_update}
+
+    optimizer = dspy.GEPA(
+        metric=metric,
+        max_metric_calls=2,
+        instruction_proposer=proposer,
+        skip_perfect_score=False,
+        use_merge=False,
+        num_threads=1,
+        reflection_minibatch_size=1,
+    )
+    with dspy.context(adapter=dspy.JSONAdapter(use_native_function_calling=False)):
+        compiled = optimizer.compile(student, trainset=train, valset=train)
+        pred = compiled(text="x")
+    assert pred.answer == "GEPA"
+    return {
+        "answer": pred.answer,
+        "metric_budget": optimizer.max_metric_calls,
+        "calls": engine._engine_spec.calls,
+    }
+
+
+def _better_together_prompt_only() -> dict[str, Any]:
+    engine = lm("random_search")
+    student = dspy.Predict("text -> answer")
+    student.set_lm(engine)
+    train = [dspy.Example(text="x", answer="RS").with_inputs("text")]
+
+    def metric(example, prediction, trace=None):
+        return float(example.answer == prediction.answer)
+
+    optimizer = dspy.BetterTogether(
+        metric=metric,
+        p=dspy.LabeledFewShot(k=1),
+    )
+    with dspy.context(adapter=dspy.JSONAdapter(use_native_function_calling=False)):
+        compiled = optimizer.compile(
+            student,
+            trainset=train,
+            valset=train,
+            strategy="p",
+            num_threads=1,
+        )
+        pred = compiled(text="x")
+    assert pred.answer == "RS"
+    return {
+        "answer": pred.answer,
+        "candidate_programs": len(compiled.candidate_programs),
+    }
+
+
+def _copro() -> dict[str, Any]:
+    prompt_engine = lm("copro_prompt")
+    task_engine = lm("copro_task")
+    student = dspy.Predict("text -> answer")
+    student.set_lm(task_engine)
+    train = [dspy.Example(text="x", answer="COPRO").with_inputs("text")]
+
+    def metric(example, prediction, trace=None):
+        return float(example.answer == prediction.answer)
+
+    optimizer = dspy.COPRO(
+        prompt_model=prompt_engine,
+        metric=metric,
+        breadth=2,
+        depth=1,
+        track_stats=False,
+    )
+    with dspy.context(adapter=dspy.JSONAdapter(use_native_function_calling=False)):
+        compiled = optimizer.compile(
+            student,
+            trainset=train,
+            eval_kwargs={"num_threads": 1, "display_progress": False, "display_table": False},
+        )
+        pred = compiled(text="x")
+    assert pred.answer == "COPRO"
+    return {
+        "answer": pred.answer,
+        "prompt_calls": prompt_engine._engine_spec.calls,
+        "task_calls": task_engine._engine_spec.calls,
+    }
+
+
+def _infer_rules() -> dict[str, Any]:
+    teacher_engine = lm("infer_rules")
+    task_engine = lm("infer_task")
+    student = dspy.Predict("text -> answer")
+    student.set_lm(task_engine)
+    train = [
+        dspy.Example(text=f"x{i}", answer="RULE").with_inputs("text")
+        for i in range(4)
+    ]
+
+    def metric(example, prediction, trace=None):
+        return float(example.answer == prediction.answer)
+
+    optimizer = dspy.InferRules(
+        num_candidates=1,
+        num_rules=1,
+        num_threads=1,
+        teacher_settings={
+            "lm": teacher_engine,
+            "adapter": dspy.JSONAdapter(use_native_function_calling=False),
+        },
+        metric=metric,
+        max_bootstrapped_demos=0,
+        max_labeled_demos=1,
+        max_rounds=1,
+    )
+    with dspy.context(
+        lm=task_engine,
+        adapter=dspy.JSONAdapter(use_native_function_calling=False),
+    ):
+        compiled = optimizer.compile(student, trainset=train)
+        pred = compiled(text="x9")
+    assert pred.answer == "RULE"
+    return {
+        "answer": pred.answer,
+        "teacher_calls": teacher_engine._engine_spec.calls,
+        "task_calls": task_engine._engine_spec.calls,
+    }
+
+
+def _cache_control() -> dict[str, Any]:
+    dspy.configure_cache(enable_disk_cache=False, enable_memory_cache=False)
+    cache = dspy.cache
+    assert cache.enable_disk_cache is False
+    assert cache.enable_memory_cache is False
+    return {"disk": cache.enable_disk_cache, "memory": cache.enable_memory_cache}
+
+
+def _primitive_types() -> dict[str, Any]:
+    history = dspy.History(messages=[{"question": "q", "answer": "a"}])
+    example = dspy.Example(x=1, y=2).with_inputs("x")
+    prediction = dspy.Prediction(answer="A")
+    assert history.messages[0]["answer"] == "a"
+    assert example.inputs().x == 1
+    assert prediction.answer == "A"
+    return {
+        "history": len(history.messages),
+        "example_input": example.inputs().x,
+        "prediction": prediction.answer,
+    }
+
+
 def _context() -> dict[str, Any]:
     before = dspy.settings.get("max_errors")
     with dspy.context(max_errors=7):
@@ -552,6 +932,23 @@ async def run_all() -> dict[str, Any]:
         ("module.flex_wasm_interpreter", "compose", _flex),
         ("optimizer.gepa", "construct", _gepa_construct),
         ("optimizer.mipro_v2", "construct", _mipro_construct),
+        ("aggregation.majority", "execute", _majority),
+        ("embedding.custom+knn", "compose", _embedder_knn),
+        ("module.multi_chain_comparison", "execute", _multi_chain),
+        ("module.program_of_thought", "compose", _program_of_thought),
+        ("module.code_act", "compose", _code_act),
+        ("module.react_v2", "compose", _react_v2),
+        ("module.rlm", "compose", _rlm),
+        ("module.refine", "execute", _refine),
+        ("optimizer.ensemble", "optimize", _ensemble),
+        ("optimizer.bootstrap_random_search", "optimize", _bootstrap_random_search),
+        ("optimizer.knn_fewshot", "optimize", _knn_fewshot),
+        ("optimizer.gepa_execute", "optimize", _gepa_execute),
+        ("optimizer.better_together_prompt_only", "optimize", _better_together_prompt_only),
+        ("optimizer.copro", "optimize", _copro),
+        ("optimizer.infer_rules", "optimize", _infer_rules),
+        ("cache.configure", "execute", _cache_control),
+        ("primitives.example-history-prediction", "execute", _primitive_types),
         ("settings.context", "execute", _context),
     ]
     for name, phase, fn in courts:
@@ -583,6 +980,24 @@ async def run_all() -> dict[str, Any]:
     return {
         "schema": "autofde.dspy-wasm.capabilities.v1",
         "capabilities": [r.as_dict() for r in rows],
+        "excluded": [
+            {
+                "name": "optimizer.bootstrap_finetune",
+                "reason": "provider-training authority is host-owned in autofde-core-no-provider-io-v1",
+            },
+            {
+                "name": "optimizer.better_together.weight_path",
+                "reason": "weight optimization delegates to provider-training authority",
+            },
+            {
+                "name": "client.hosted_embedder",
+                "reason": "ambient LiteLLM/provider networking is excluded; callable Embedder is admitted",
+            },
+            {
+                "name": "interpreter.local_subprocess",
+                "reason": "ambient subprocess authority is excluded; WasmGuestInterpreter is admitted",
+            },
+        ],
         "summary": {
             "total": len(rows),
             "alive": len(alive),
