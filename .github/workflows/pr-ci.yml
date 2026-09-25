@@ -188,7 +188,9 @@ jobs:
           fetch() {
             local repository="$1" sha="$2" destination="${RUNNER_TEMP}/$3"
             git init -q "${destination}"
-            git -C "${destination}" remote add origin "https://github.com/${repository}.git"
+            # No ".git" suffix: RepositorySubject records remote_url verbatim, and the
+            # committed c1 receipts were produced from https://github.com/<owner>/<name>.
+            git -C "${destination}" remote add origin "https://github.com/${repository}"
             git -C "${destination}" fetch -q --depth 1 origin "${sha}"
             git -C "${destination}" checkout -q --detach FETCH_HEAD
             test "$(git -C "${destination}" rev-parse HEAD)" = "${sha}"
