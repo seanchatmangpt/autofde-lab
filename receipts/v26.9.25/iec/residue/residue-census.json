@@ -36,14 +36,14 @@
       "question": "Choose the single most plausible plan from a numbered list of"
     },
     {
-      "blob": "0dd0034628f1a5e773f1ed214eda3c47d70728e6",
+      "blob": "5752e8fe8546f9e7fb97801fb23e6cd192e7df12",
       "line": 67,
       "name": "ChooseMove",
       "path": "src/autofde_lab/hub/solver/dspy_policy/dspy_policy.py",
       "question": "Choose the next move in a game given a short text description of the"
     },
     {
-      "blob": "0dd0034628f1a5e773f1ed214eda3c47d70728e6",
+      "blob": "5752e8fe8546f9e7fb97801fb23e6cd192e7df12",
       "line": 78,
       "name": "GenerateStructuredAction",
       "path": "src/autofde_lab/hub/solver/dspy_policy/dspy_policy.py",
@@ -78,7 +78,7 @@
       "question": "TOGAF Phase E: given a real computed delta (observed vs. desired"
     },
     {
-      "blob": "177d7ab87cfeb65151a5e19dac8befd3fe3be91d",
+      "blob": "3e757d4ef03c0dfc4f46613a5d3aef5223ff5a03",
       "line": 310,
       "name": "DiagnoseClusterFault",
       "path": "src/autofde_lab/reasoning/gymact_dspy_react.py",
@@ -322,6 +322,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "other"
     },
@@ -337,6 +338,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "sig",
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "other"
     },
@@ -352,6 +354,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "sig",
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "other"
     },
@@ -367,6 +370,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "sig",
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "other"
     },
@@ -382,6 +386,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "sig",
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "other"
     },
@@ -397,6 +402,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "sig",
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "other"
     },
@@ -412,6 +418,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "other"
     },
@@ -427,6 +434,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "SelectPlanningRoute",
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -442,6 +450,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "JobToDecision",
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -457,6 +466,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "SameRootCause",
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -472,14 +482,15 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "_RankPlans",
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "package"
     },
     {
       "api": "dspy.LM",
-      "blob": "0dd0034628f1a5e773f1ed214eda3c47d70728e6",
+      "blob": "5752e8fe8546f9e7fb97801fb23e6cd192e7df12",
       "declaration": {},
-      "id": "sha256:4556accf08903137983c73a2a684b76b5ed233c20c7346982ec80680162102cc",
+      "id": "sha256:9935af12c78cadf26c8efab132193c903280445b6e7cda39f8d74c0c2de0c12c",
       "kind": "UNKNOWN",
       "line": 64,
       "path": "src/autofde_lab/hub/solver/dspy_policy/dspy_policy.py",
@@ -487,36 +498,43 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "package"
     },
     {
       "api": "dspy.Predict",
-      "blob": "0dd0034628f1a5e773f1ed214eda3c47d70728e6",
-      "declaration": {},
-      "id": "sha256:94d7fd33c5e97e7a9931f0c9c6ea4fb8fb71eddffd7037b5c6eda0a97b73b03a",
-      "kind": "UNKNOWN",
-      "line": 195,
+      "blob": "5752e8fe8546f9e7fb97801fb23e6cd192e7df12",
+      "declaration": {
+        "class": "RC-GAME-MOVE-CHOICE",
+        "kind": "planning",
+        "marker_line": "195"
+      },
+      "id": "sha256:0e54c21c9369bdfde06ce06665455db01e21dd9deb7f532a6bdcfa9fd74e51f1",
+      "kind": "planning",
+      "line": 196,
       "path": "src/autofde_lab/hub/solver/dspy_policy/dspy_policy.py",
-      "reasoning_class": "UNKNOWN",
-      "retirement_mechanism": "UNKNOWN",
+      "reasoning_class": "RC-GAME-MOVE-CHOICE",
+      "retirement_mechanism": "HDDL/PDDL/FOND",
       "role": "program",
       "signature": "ChooseMove",
+      "signature_origin": "src/autofde_lab/hub/solver/dspy_policy/dspy_policy.py::ChooseMove",
       "standing": "OBSERVED",
       "zone": "package"
     },
     {
       "api": "dspy.Predict",
-      "blob": "0dd0034628f1a5e773f1ed214eda3c47d70728e6",
+      "blob": "5752e8fe8546f9e7fb97801fb23e6cd192e7df12",
       "declaration": {},
-      "id": "sha256:62a04ecbebc0380efd7af571d084478a539f3e957e39cf0ce0cfaa449625f34d",
+      "id": "sha256:55c900fcba8570a7881c2a5091eb0b2c469952129a66506ba0d92e2b6930e5e2",
       "kind": "UNKNOWN",
-      "line": 196,
+      "line": 197,
       "path": "src/autofde_lab/hub/solver/dspy_policy/dspy_policy.py",
       "reasoning_class": "UNKNOWN",
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "GenerateStructuredAction",
+      "signature_origin": "src/autofde_lab/hub/solver/dspy_policy/dspy_policy.py::GenerateStructuredAction",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -532,6 +550,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -547,51 +566,63 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "InterpretBreedEnsemble",
+      "signature_origin": "src/autofde_lab/reasoning/breed_ensemble_loop.py::InterpretBreedEnsemble",
       "standing": "OBSERVED",
       "zone": "package"
     },
     {
       "api": "dspy.ReAct",
-      "blob": "c5fc4ec6836a101e4c6e56862832ccb724448e6b",
-      "declaration": {},
-      "id": "sha256:d70abda1692a19e1b28d402e2e94879a00baaeab349951a0eecb32dab6574bb0",
-      "kind": "UNKNOWN",
-      "line": 273,
+      "blob": "5c6e246d2af8605a1f0d46700d4b068f1442cd48",
+      "declaration": {
+        "class": "RC-K8S-FAULT-DIAGNOSIS",
+        "kind": "classification",
+        "marker_line": "273"
+      },
+      "id": "sha256:d7515c8e11e4f7414eab4e069446e0d1a4ce2dd95c17f70b6c9453b1ddce5fb1",
+      "kind": "classification",
+      "line": 274,
       "path": "src/autofde_lab/reasoning/gepa_train.py",
-      "reasoning_class": "UNKNOWN",
-      "retirement_mechanism": "UNKNOWN",
+      "reasoning_class": "RC-K8S-FAULT-DIAGNOSIS",
+      "retirement_mechanism": "ontology + SPARQL/Datalog",
       "role": "program",
       "signature": "DiagnoseKubernetesFault",
+      "signature_origin": "src/autofde_lab/reasoning/k8s_signatures.py::DiagnoseKubernetesFault",
       "standing": "OBSERVED",
       "zone": "package"
     },
     {
       "api": "dspy.LM",
-      "blob": "177d7ab87cfeb65151a5e19dac8befd3fe3be91d",
+      "blob": "3e757d4ef03c0dfc4f46613a5d3aef5223ff5a03",
       "declaration": {},
-      "id": "sha256:275e72816e9b105907b6f6871fb829417a39cbe78d08d36ebfa9883b860e90fd",
+      "id": "sha256:6383e0057651d6f166ac8f50b615979b368b0bbac442015012b838607d4090f0",
       "kind": "UNKNOWN",
-      "line": 1265,
+      "line": 1266,
       "path": "src/autofde_lab/reasoning/gymact_dspy_react.py",
       "reasoning_class": "UNKNOWN",
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "package"
     },
     {
       "api": "dspy.ReAct",
-      "blob": "177d7ab87cfeb65151a5e19dac8befd3fe3be91d",
-      "declaration": {},
-      "id": "sha256:103f685a514e88487ec8fc9e49aca087f312661d616fd570c68d0cec4189ef3b",
-      "kind": "UNKNOWN",
-      "line": 593,
+      "blob": "3e757d4ef03c0dfc4f46613a5d3aef5223ff5a03",
+      "declaration": {
+        "class": "RC-K8S-FAULT-DIAGNOSIS",
+        "kind": "classification",
+        "marker_line": "593"
+      },
+      "id": "sha256:9661e96abb5ced6ac678cb066bce1ab188bc518f0bb85589895c09595ed270e2",
+      "kind": "classification",
+      "line": 594,
       "path": "src/autofde_lab/reasoning/gymact_dspy_react.py",
-      "reasoning_class": "UNKNOWN",
-      "retirement_mechanism": "UNKNOWN",
+      "reasoning_class": "RC-K8S-FAULT-DIAGNOSIS",
+      "retirement_mechanism": "ontology + SPARQL/Datalog",
       "role": "program",
       "signature": "DiagnoseKubernetesFault",
+      "signature_origin": "src/autofde_lab/reasoning/k8s_signatures.py::DiagnoseKubernetesFault",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -607,6 +638,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "ObserveCluster",
+      "signature_origin": "src/autofde_lab/reasoning/gymact_dspy_signatures.py::ObserveCluster",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -622,6 +654,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "ClassifyAnomaly",
+      "signature_origin": "src/autofde_lab/reasoning/gymact_dspy_signatures.py::ClassifyAnomaly",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -637,6 +670,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "DiagnoseRootCause",
+      "signature_origin": "src/autofde_lab/reasoning/gymact_dspy_signatures.py::DiagnoseRootCause",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -652,6 +686,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "SynthesizeMitigation",
+      "signature_origin": "src/autofde_lab/reasoning/gymact_dspy_signatures.py::SynthesizeMitigation",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -667,6 +702,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "VerifyMitigationOutcome",
+      "signature_origin": "src/autofde_lab/reasoning/gymact_dspy_signatures.py::VerifyMitigationOutcome",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -682,6 +718,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -697,14 +734,15 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "TranslateMitigationStepToKubectlCommand",
+      "signature_origin": "src/autofde_lab/reasoning/mitigation_kubectl_translation_signatures.py::TranslateMitigationStepToKubectlCommand",
       "standing": "OBSERVED",
       "zone": "package"
     },
     {
       "api": "dspy.Predict",
-      "blob": "eddbc8650c3e03d8ba5b2b467a5570011c667bb3",
+      "blob": "8bfe222f29da3ab3ffbbf28d6cc6eeea4c484d1a",
       "declaration": {},
-      "id": "sha256:fce6285b9ad3290ba57b50fae83437f6e6bed15298b8b019183d5b7ea58c5bd0",
+      "id": "sha256:5a87c8dd4ffeb02c70f9cafc4bf36f72e8e8c245143a6f067c53647881bc9706",
       "kind": "UNKNOWN",
       "line": 71,
       "path": "src/autofde_lab/reasoning/k8s_diagnosis_pipeline.py",
@@ -712,14 +750,15 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "SummarizeKubernetesResourceState",
+      "signature_origin": "src/autofde_lab/reasoning/k8s_signatures.py::SummarizeKubernetesResourceState",
       "standing": "OBSERVED",
       "zone": "package"
     },
     {
       "api": "dspy.Predict",
-      "blob": "eddbc8650c3e03d8ba5b2b467a5570011c667bb3",
+      "blob": "8bfe222f29da3ab3ffbbf28d6cc6eeea4c484d1a",
       "declaration": {},
-      "id": "sha256:27e72d4ea85cde5bc019184e4262a8351ae7437e52f1e403afa8d160024feba6",
+      "id": "sha256:f0c2bd8ee8240ad1715abc6ca6cfed1060ae5eee22ca9b2e5d06da55f42b493a",
       "kind": "UNKNOWN",
       "line": 72,
       "path": "src/autofde_lab/reasoning/k8s_diagnosis_pipeline.py",
@@ -727,36 +766,43 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "ClassifyKubernetesAnomaly",
+      "signature_origin": "src/autofde_lab/reasoning/k8s_signatures.py::ClassifyKubernetesAnomaly",
       "standing": "OBSERVED",
       "zone": "package"
     },
     {
       "api": "dspy.ChainOfThought",
-      "blob": "eddbc8650c3e03d8ba5b2b467a5570011c667bb3",
-      "declaration": {},
-      "id": "sha256:7c27f7e996d80e09d9433fcca421ff24952cf517d89045465d97b0e08181dc75",
-      "kind": "UNKNOWN",
-      "line": 73,
+      "blob": "8bfe222f29da3ab3ffbbf28d6cc6eeea4c484d1a",
+      "declaration": {
+        "class": "RC-K8S-FAULT-DIAGNOSIS",
+        "kind": "classification",
+        "marker_line": "73"
+      },
+      "id": "sha256:90cb6daa5e927d4099178bb39a6fce28fed14c1927dcb7c4549d65f11220b55c",
+      "kind": "classification",
+      "line": 74,
       "path": "src/autofde_lab/reasoning/k8s_diagnosis_pipeline.py",
-      "reasoning_class": "UNKNOWN",
-      "retirement_mechanism": "UNKNOWN",
+      "reasoning_class": "RC-K8S-FAULT-DIAGNOSIS",
+      "retirement_mechanism": "ontology + SPARQL/Datalog",
       "role": "program",
       "signature": "DiagnoseKubernetesFault",
+      "signature_origin": "src/autofde_lab/reasoning/k8s_signatures.py::DiagnoseKubernetesFault",
       "standing": "OBSERVED",
       "zone": "package"
     },
     {
       "api": "dspy.Predict",
-      "blob": "eddbc8650c3e03d8ba5b2b467a5570011c667bb3",
+      "blob": "8bfe222f29da3ab3ffbbf28d6cc6eeea4c484d1a",
       "declaration": {},
-      "id": "sha256:53599181ae204e124e98b76d5ef999abdd5d14183271b0e4520a6df717d35698",
+      "id": "sha256:2b6dbb009b22a754d4211ba809110019a3237faf9f5195d3186f7b14c8bfd495",
       "kind": "UNKNOWN",
-      "line": 74,
+      "line": 75,
       "path": "src/autofde_lab/reasoning/k8s_diagnosis_pipeline.py",
       "reasoning_class": "UNKNOWN",
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "ProposeKubernetesRemediation",
+      "signature_origin": "src/autofde_lab/reasoning/k8s_signatures.py::ProposeKubernetesRemediation",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -772,6 +818,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "ConstructSreMitigationProcess",
+      "signature_origin": "src/autofde_lab/reasoning/sre_mitigation_portfolio_signatures.py::ConstructSreMitigationProcess",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -787,6 +834,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "OrientSreIncident",
+      "signature_origin": "src/autofde_lab/reasoning/sre_troubleshooting_signatures.py::OrientSreIncident",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -802,6 +850,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "NormalizeSreEvidence",
+      "signature_origin": "src/autofde_lab/reasoning/sre_troubleshooting_signatures.py::NormalizeSreEvidence",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -817,6 +866,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "HypothesizeSreCauses",
+      "signature_origin": "src/autofde_lab/reasoning/sre_troubleshooting_signatures.py::HypothesizeSreCauses",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -832,6 +882,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "HypothesizeSreCauses",
+      "signature_origin": "src/autofde_lab/reasoning/sre_troubleshooting_signatures.py::HypothesizeSreCauses",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -847,6 +898,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "ProposeDiscriminatingObservation",
+      "signature_origin": "src/autofde_lab/reasoning/sre_troubleshooting_signatures.py::ProposeDiscriminatingObservation",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -862,6 +914,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "self._propose_probe",
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -877,6 +930,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "CommitSreDiagnosis",
+      "signature_origin": "src/autofde_lab/reasoning/sre_troubleshooting_signatures.py::CommitSreDiagnosis",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -892,6 +946,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "CommitSreDiagnosis",
+      "signature_origin": "src/autofde_lab/reasoning/sre_troubleshooting_signatures.py::CommitSreDiagnosis",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -907,6 +962,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "ConstructSreMitigation",
+      "signature_origin": "src/autofde_lab/reasoning/sre_troubleshooting_signatures.py::ConstructSreMitigation",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -922,6 +978,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "self._construct_mitigation",
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -937,6 +994,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "TaxonomyClassification",
+      "signature_origin": "src/autofde_lab/reasoning/sregym_pipeline.py::TaxonomyClassification",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -952,6 +1010,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "TaxonomyClassification",
+      "signature_origin": "src/autofde_lab/reasoning/sregym_pipeline.py::TaxonomyClassification",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -967,6 +1026,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -982,6 +1042,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "DiagnoseFault",
+      "signature_origin": "src/autofde_lab/reasoning/sregym_pipeline.py::DiagnoseFault",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -997,6 +1058,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "ExtractSemanticDelta",
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -1012,6 +1074,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "OrientIncident",
+      "signature_origin": "src/autofde_lab/sregym_sota/signatures.py::OrientIncident",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -1027,6 +1090,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "GenerateHypotheses",
+      "signature_origin": "src/autofde_lab/sregym_sota/signatures.py::GenerateHypotheses",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -1042,6 +1106,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "RelateEvidence",
+      "signature_origin": "src/autofde_lab/sregym_sota/signatures.py::RelateEvidence",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -1057,6 +1122,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "ConstructDiscriminationProcess",
+      "signature_origin": "src/autofde_lab/sregym_sota/signatures.py::ConstructDiscriminationProcess",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -1072,6 +1138,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "CommitDiagnosis",
+      "signature_origin": "src/autofde_lab/sregym_sota/signatures.py::CommitDiagnosis",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -1087,6 +1154,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "ChallengeDiagnosis",
+      "signature_origin": "src/autofde_lab/sregym_sota/signatures.py::ChallengeDiagnosis",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -1102,6 +1170,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "ConstructMitigationProcesses",
+      "signature_origin": "src/autofde_lab/sregym_sota/signatures.py::ConstructMitigationProcesses",
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -1117,6 +1186,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "package"
     },
@@ -1132,6 +1202,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1147,6 +1218,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1162,6 +1234,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1177,6 +1250,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "ArithmeticClaim",
+      "signature_origin": "tests/fabric/test_dspy_ensemble_chicago.py::ArithmeticClaim",
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1192,6 +1266,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "ArithmeticClaim",
+      "signature_origin": "tests/fabric/test_dspy_ensemble_chicago.py::ArithmeticClaim",
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1207,6 +1282,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "ArithmeticClaim",
+      "signature_origin": "tests/fabric/test_dspy_ensemble_chicago.py::ArithmeticClaim",
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1222,6 +1298,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "ArithmeticClaim",
+      "signature_origin": "tests/fabric/test_dspy_ensemble_chicago.py::ArithmeticClaim",
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1237,6 +1314,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1252,6 +1330,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1267,6 +1346,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1282,6 +1362,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "InferArchitectureVision",
+      "signature_origin": "src/autofde_lab/reasoning/fortune5_architecture_signatures.py::InferArchitectureVision",
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1297,6 +1378,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1312,6 +1394,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1327,6 +1410,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1342,36 +1426,43 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
     {
       "api": "dspy.ReAct",
-      "blob": "8f53719be55f1acff6baa6b4ea5d867005b42c0b",
-      "declaration": {},
-      "id": "sha256:7d2c42ba2df2760015cf55391d02499f16f31de3a17b06a163fed706bfb1616d",
-      "kind": "UNKNOWN",
-      "line": 280,
+      "blob": "365b5b21bd2100b7735d109b68525a77be223690",
+      "declaration": {
+        "class": "RC-K8S-FAULT-DIAGNOSIS",
+        "kind": "classification",
+        "marker_line": "280"
+      },
+      "id": "sha256:3fb68f5f20421045ba7c016965d2cbbe824346c5dbda1cae4a7f4c2e90a2917b",
+      "kind": "classification",
+      "line": 281,
       "path": "tests/reasoning/test_gymact_dspy_react_chicago.py",
-      "reasoning_class": "UNKNOWN",
-      "retirement_mechanism": "UNKNOWN",
+      "reasoning_class": "RC-K8S-FAULT-DIAGNOSIS",
+      "retirement_mechanism": "ontology + SPARQL/Datalog",
       "role": "program",
       "signature": "DiagnoseKubernetesFault",
+      "signature_origin": "src/autofde_lab/reasoning/k8s_signatures.py::DiagnoseKubernetesFault",
       "standing": "OBSERVED",
       "zone": "test"
     },
     {
       "api": "dspy.LM",
-      "blob": "8f53719be55f1acff6baa6b4ea5d867005b42c0b",
+      "blob": "365b5b21bd2100b7735d109b68525a77be223690",
       "declaration": {},
-      "id": "sha256:33c8b409402b80d7c3b283f67b5659848166ca9d83edd0fba86eaaf86db2b49a",
+      "id": "sha256:6180ff5a89678aaa819cf2f22eb2aaa668c154b90e6101d59681fd9964df73bf",
       "kind": "UNKNOWN",
-      "line": 387,
+      "line": 388,
       "path": "tests/reasoning/test_gymact_dspy_react_chicago.py",
       "reasoning_class": "UNKNOWN",
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1387,6 +1478,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1402,6 +1494,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "ClassifyAnomaly",
+      "signature_origin": "src/autofde_lab/reasoning/gymact_dspy_signatures.py::ClassifyAnomaly",
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1417,6 +1510,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1432,6 +1526,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "DiagnoseRootCause",
+      "signature_origin": "src/autofde_lab/reasoning/gymact_dspy_signatures.py::DiagnoseRootCause",
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1447,6 +1542,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1462,6 +1558,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "SynthesizeMitigation",
+      "signature_origin": "src/autofde_lab/reasoning/gymact_dspy_signatures.py::SynthesizeMitigation",
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1477,6 +1574,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1492,6 +1590,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "VerifyMitigationOutcome",
+      "signature_origin": "src/autofde_lab/reasoning/gymact_dspy_signatures.py::VerifyMitigationOutcome",
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1507,6 +1606,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1522,6 +1622,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1537,6 +1638,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1552,6 +1654,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "TranslateMitigationStepToKubectlCommand",
+      "signature_origin": "src/autofde_lab/reasoning/mitigation_kubectl_translation_signatures.py::TranslateMitigationStepToKubectlCommand",
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1567,6 +1670,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1582,6 +1686,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1597,6 +1702,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "SummarizeKubernetesResourceState",
+      "signature_origin": "src/autofde_lab/reasoning/k8s_signatures.py::SummarizeKubernetesResourceState",
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1612,6 +1718,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "sig",
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1627,6 +1734,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1642,6 +1750,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1657,6 +1766,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1672,6 +1782,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "client",
       "signature": null,
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1687,6 +1798,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "ChooseMove",
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1702,6 +1814,7 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "ChooseMove",
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "test"
     },
@@ -1717,15 +1830,44 @@
       "retirement_mechanism": "UNKNOWN",
       "role": "program",
       "signature": "SuspicionOfAllocationMismatch",
+      "signature_origin": null,
       "standing": "OBSERVED",
       "zone": "other"
     }
   ],
   "extractor": "autofde_lab.iec.crowns.residue",
-  "extractor_version": "1",
+  "extractor_version": "2",
   "frontier": [
     {
       "call_sites": 4,
+      "declared_classes": [
+        "RC-K8S-FAULT-DIAGNOSIS"
+      ],
+      "declared_kinds": [
+        "classification"
+      ],
+      "edge_ids": [
+        "sha256:3fb68f5f20421045ba7c016965d2cbbe824346c5dbda1cae4a7f4c2e90a2917b",
+        "sha256:90cb6daa5e927d4099178bb39a6fce28fed14c1927dcb7c4549d65f11220b55c",
+        "sha256:9661e96abb5ced6ac678cb066bce1ab188bc518f0bb85589895c09595ed270e2",
+        "sha256:d7515c8e11e4f7414eab4e069446e0d1a4ce2dd95c17f70b6c9453b1ddce5fb1"
+      ],
+      "files": 4,
+      "formalizability": "UNKNOWN",
+      "grouping_evidence": "EXPLICIT_DECLARATION:import-resolved-class-definition",
+      "llm_cost": "UNKNOWN",
+      "reuse": "UNKNOWN",
+      "signature": "src/autofde_lab/reasoning/k8s_signatures.py::DiagnoseKubernetesFault",
+      "standing": "INFERRED_CANDIDATE"
+    },
+    {
+      "call_sites": 4,
+      "declared_classes": [
+        "UNKNOWN"
+      ],
+      "declared_kinds": [
+        "UNKNOWN"
+      ],
       "edge_ids": [
         "sha256:1d34e78a0595b298029d56f505704137a2a878bae48a6bddb29c38a4a509bb38",
         "sha256:b5494ff105861be3686ec3621d2a624d57bdcae96afe7603d0a769bea0326d90",
@@ -1734,171 +1876,194 @@
       ],
       "files": 1,
       "formalizability": "UNKNOWN",
-      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
+      "grouping_evidence": "EXPLICIT_DECLARATION:import-resolved-class-definition",
       "llm_cost": "UNKNOWN",
       "reuse": "UNKNOWN",
-      "signature": "ArithmeticClaim",
-      "standing": "INFERRED_CANDIDATE"
-    },
-    {
-      "call_sites": 4,
-      "edge_ids": [
-        "sha256:103f685a514e88487ec8fc9e49aca087f312661d616fd570c68d0cec4189ef3b",
-        "sha256:7c27f7e996d80e09d9433fcca421ff24952cf517d89045465d97b0e08181dc75",
-        "sha256:7d2c42ba2df2760015cf55391d02499f16f31de3a17b06a163fed706bfb1616d",
-        "sha256:d70abda1692a19e1b28d402e2e94879a00baaeab349951a0eecb32dab6574bb0"
-      ],
-      "files": 4,
-      "formalizability": "UNKNOWN",
-      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
-      "llm_cost": "UNKNOWN",
-      "reuse": "UNKNOWN",
-      "signature": "DiagnoseKubernetesFault",
-      "standing": "INFERRED_CANDIDATE"
-    },
-    {
-      "call_sites": 3,
-      "edge_ids": [
-        "sha256:6f9d86daf512fe6c056be153e2aef0b2dc559cf26850ad501ee6428ceb87f9cd",
-        "sha256:94d7fd33c5e97e7a9931f0c9c6ea4fb8fb71eddffd7037b5c6eda0a97b73b03a",
-        "sha256:cd0cbe35c9fee41552e3d8612876217488f6668039d09f53d3bce557804b324d"
-      ],
-      "files": 3,
-      "formalizability": "UNKNOWN",
-      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
-      "llm_cost": "UNKNOWN",
-      "reuse": "UNKNOWN",
-      "signature": "ChooseMove",
+      "signature": "tests/fabric/test_dspy_ensemble_chicago.py::ArithmeticClaim",
       "standing": "INFERRED_CANDIDATE"
     },
     {
       "call_sites": 2,
+      "declared_classes": [
+        "UNKNOWN"
+      ],
+      "declared_kinds": [
+        "UNKNOWN"
+      ],
       "edge_ids": [
         "sha256:cfa864538ff07bf545e4de7c193ebd881d6d68769b8ed520a07afeae74f3a653",
         "sha256:f43673125644f40201b510e1f333a40a938ddb7e9946cae928511bcfbdee8761"
       ],
       "files": 2,
       "formalizability": "UNKNOWN",
-      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
+      "grouping_evidence": "EXPLICIT_DECLARATION:import-resolved-class-definition",
       "llm_cost": "UNKNOWN",
       "reuse": "UNKNOWN",
-      "signature": "ClassifyAnomaly",
+      "signature": "src/autofde_lab/reasoning/gymact_dspy_signatures.py::ClassifyAnomaly",
       "standing": "INFERRED_CANDIDATE"
     },
     {
       "call_sites": 2,
-      "edge_ids": [
-        "sha256:1da2b6ab1793a6e77db29546d175e637e569dba083df82caaf050e75785206a8",
-        "sha256:9e744db86682a3ac25ce5e91d5a904afd078e0d267c9bf8234b735abd45871bc"
+      "declared_classes": [
+        "UNKNOWN"
       ],
-      "files": 1,
-      "formalizability": "UNKNOWN",
-      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
-      "llm_cost": "UNKNOWN",
-      "reuse": "UNKNOWN",
-      "signature": "CommitSreDiagnosis",
-      "standing": "INFERRED_CANDIDATE"
-    },
-    {
-      "call_sites": 2,
+      "declared_kinds": [
+        "UNKNOWN"
+      ],
       "edge_ids": [
         "sha256:f7f20e971f70b53473e5f24dc0bfd7bf766d7ffb69f00d47ef080ad108a1a26a",
         "sha256:ffc37f7b32eca69be98477288500b54ec2df7ca7d7b0f65dc2f2a30f091f1b7b"
       ],
       "files": 2,
       "formalizability": "UNKNOWN",
-      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
+      "grouping_evidence": "EXPLICIT_DECLARATION:import-resolved-class-definition",
       "llm_cost": "UNKNOWN",
       "reuse": "UNKNOWN",
-      "signature": "DiagnoseRootCause",
+      "signature": "src/autofde_lab/reasoning/gymact_dspy_signatures.py::DiagnoseRootCause",
       "standing": "INFERRED_CANDIDATE"
     },
     {
       "call_sites": 2,
-      "edge_ids": [
-        "sha256:0540f1387eea5beb912f0c3b0fcdddb148da3ec2023121df870cce5cf43fbf33",
-        "sha256:abd56a0575cebcf3ed30613a0605cf939558229fa5c2f7ec74dd2522d28e28f9"
+      "declared_classes": [
+        "UNKNOWN"
       ],
-      "files": 1,
-      "formalizability": "UNKNOWN",
-      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
-      "llm_cost": "UNKNOWN",
-      "reuse": "UNKNOWN",
-      "signature": "HypothesizeSreCauses",
-      "standing": "INFERRED_CANDIDATE"
-    },
-    {
-      "call_sites": 2,
-      "edge_ids": [
-        "sha256:12c876fa1bef3f8b740c142a2c9d3d3dce1dffe9e590dc8f92dd3d91d292a2e1",
-        "sha256:fce6285b9ad3290ba57b50fae83437f6e6bed15298b8b019183d5b7ea58c5bd0"
+      "declared_kinds": [
+        "UNKNOWN"
       ],
-      "files": 2,
-      "formalizability": "UNKNOWN",
-      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
-      "llm_cost": "UNKNOWN",
-      "reuse": "UNKNOWN",
-      "signature": "SummarizeKubernetesResourceState",
-      "standing": "INFERRED_CANDIDATE"
-    },
-    {
-      "call_sites": 2,
       "edge_ids": [
         "sha256:29ae5feae65f737d24137bd69ecd04f2a6743c054c2b580061c19d126347592a",
         "sha256:9ac146342e4834c80bdb065254037fed1ddd35a580a12868405e022f93a32b9f"
       ],
       "files": 2,
       "formalizability": "UNKNOWN",
-      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
+      "grouping_evidence": "EXPLICIT_DECLARATION:import-resolved-class-definition",
       "llm_cost": "UNKNOWN",
       "reuse": "UNKNOWN",
-      "signature": "SynthesizeMitigation",
+      "signature": "src/autofde_lab/reasoning/gymact_dspy_signatures.py::SynthesizeMitigation",
       "standing": "INFERRED_CANDIDATE"
     },
     {
       "call_sites": 2,
-      "edge_ids": [
-        "sha256:2ce0c37550d575556d8ce36ee4dda221437a852a7290e5a55259d51f0d19b1be",
-        "sha256:35fe289cbbdbad53079d23282bf3600e1ce0517f7034ff6e7aca4ddb4f3191b0"
+      "declared_classes": [
+        "UNKNOWN"
       ],
-      "files": 1,
-      "formalizability": "UNKNOWN",
-      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
-      "llm_cost": "UNKNOWN",
-      "reuse": "UNKNOWN",
-      "signature": "TaxonomyClassification",
-      "standing": "INFERRED_CANDIDATE"
-    },
-    {
-      "call_sites": 2,
-      "edge_ids": [
-        "sha256:562638fb2b825f598257a4e0528281c88a958a28423deaf1c640ab4b73c2c050",
-        "sha256:ad12e61a7013c695b33b3b88c93c5eab7234072807791bda8008d455d255c5ae"
+      "declared_kinds": [
+        "UNKNOWN"
       ],
-      "files": 2,
-      "formalizability": "UNKNOWN",
-      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
-      "llm_cost": "UNKNOWN",
-      "reuse": "UNKNOWN",
-      "signature": "TranslateMitigationStepToKubectlCommand",
-      "standing": "INFERRED_CANDIDATE"
-    },
-    {
-      "call_sites": 2,
       "edge_ids": [
         "sha256:9e9c03303492e5894457d32e03f3949c1f9a277d1452fa40430e93d9973a9c73",
         "sha256:9f47886974f4c6257cb8396df8b7fdca61e4d7c3fd437759e663a2b14bbeb027"
       ],
       "files": 2,
       "formalizability": "UNKNOWN",
-      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
+      "grouping_evidence": "EXPLICIT_DECLARATION:import-resolved-class-definition",
       "llm_cost": "UNKNOWN",
       "reuse": "UNKNOWN",
-      "signature": "VerifyMitigationOutcome",
+      "signature": "src/autofde_lab/reasoning/gymact_dspy_signatures.py::VerifyMitigationOutcome",
+      "standing": "INFERRED_CANDIDATE"
+    },
+    {
+      "call_sites": 2,
+      "declared_classes": [
+        "UNKNOWN"
+      ],
+      "declared_kinds": [
+        "UNKNOWN"
+      ],
+      "edge_ids": [
+        "sha256:12c876fa1bef3f8b740c142a2c9d3d3dce1dffe9e590dc8f92dd3d91d292a2e1",
+        "sha256:5a87c8dd4ffeb02c70f9cafc4bf36f72e8e8c245143a6f067c53647881bc9706"
+      ],
+      "files": 2,
+      "formalizability": "UNKNOWN",
+      "grouping_evidence": "EXPLICIT_DECLARATION:import-resolved-class-definition",
+      "llm_cost": "UNKNOWN",
+      "reuse": "UNKNOWN",
+      "signature": "src/autofde_lab/reasoning/k8s_signatures.py::SummarizeKubernetesResourceState",
+      "standing": "INFERRED_CANDIDATE"
+    },
+    {
+      "call_sites": 2,
+      "declared_classes": [
+        "UNKNOWN"
+      ],
+      "declared_kinds": [
+        "UNKNOWN"
+      ],
+      "edge_ids": [
+        "sha256:562638fb2b825f598257a4e0528281c88a958a28423deaf1c640ab4b73c2c050",
+        "sha256:ad12e61a7013c695b33b3b88c93c5eab7234072807791bda8008d455d255c5ae"
+      ],
+      "files": 2,
+      "formalizability": "UNKNOWN",
+      "grouping_evidence": "EXPLICIT_DECLARATION:import-resolved-class-definition",
+      "llm_cost": "UNKNOWN",
+      "reuse": "UNKNOWN",
+      "signature": "src/autofde_lab/reasoning/mitigation_kubectl_translation_signatures.py::TranslateMitigationStepToKubectlCommand",
+      "standing": "INFERRED_CANDIDATE"
+    },
+    {
+      "call_sites": 2,
+      "declared_classes": [
+        "UNKNOWN"
+      ],
+      "declared_kinds": [
+        "UNKNOWN"
+      ],
+      "edge_ids": [
+        "sha256:1da2b6ab1793a6e77db29546d175e637e569dba083df82caaf050e75785206a8",
+        "sha256:9e744db86682a3ac25ce5e91d5a904afd078e0d267c9bf8234b735abd45871bc"
+      ],
+      "files": 1,
+      "formalizability": "UNKNOWN",
+      "grouping_evidence": "EXPLICIT_DECLARATION:import-resolved-class-definition",
+      "llm_cost": "UNKNOWN",
+      "reuse": "UNKNOWN",
+      "signature": "src/autofde_lab/reasoning/sre_troubleshooting_signatures.py::CommitSreDiagnosis",
+      "standing": "INFERRED_CANDIDATE"
+    },
+    {
+      "call_sites": 2,
+      "declared_classes": [
+        "UNKNOWN"
+      ],
+      "declared_kinds": [
+        "UNKNOWN"
+      ],
+      "edge_ids": [
+        "sha256:0540f1387eea5beb912f0c3b0fcdddb148da3ec2023121df870cce5cf43fbf33",
+        "sha256:abd56a0575cebcf3ed30613a0605cf939558229fa5c2f7ec74dd2522d28e28f9"
+      ],
+      "files": 1,
+      "formalizability": "UNKNOWN",
+      "grouping_evidence": "EXPLICIT_DECLARATION:import-resolved-class-definition",
+      "llm_cost": "UNKNOWN",
+      "reuse": "UNKNOWN",
+      "signature": "src/autofde_lab/reasoning/sre_troubleshooting_signatures.py::HypothesizeSreCauses",
+      "standing": "INFERRED_CANDIDATE"
+    },
+    {
+      "call_sites": 2,
+      "declared_classes": [
+        "UNKNOWN"
+      ],
+      "declared_kinds": [
+        "UNKNOWN"
+      ],
+      "edge_ids": [
+        "sha256:2ce0c37550d575556d8ce36ee4dda221437a852a7290e5a55259d51f0d19b1be",
+        "sha256:35fe289cbbdbad53079d23282bf3600e1ce0517f7034ff6e7aca4ddb4f3191b0"
+      ],
+      "files": 1,
+      "formalizability": "UNKNOWN",
+      "grouping_evidence": "EXPLICIT_DECLARATION:import-resolved-class-definition",
+      "llm_cost": "UNKNOWN",
+      "reuse": "UNKNOWN",
+      "signature": "src/autofde_lab/reasoning/sregym_pipeline.py::TaxonomyClassification",
       "standing": "INFERRED_CANDIDATE"
     }
   ],
-  "id": "sha256:6f94f688b99e913f2dbaf8027d7ea70b32ecf070e406cd46b263cc0798df3fd1",
+  "id": "sha256:db4960436272a41b9d4409e9c0273e8a7e837b5fe437d7ecbe568fcf91bf5626",
   "import_only": [
     "src/autofde_lab/reasoning/fortune5_architecture_metrics.py",
     "src/autofde_lab/reasoning/fortune5_architecture_signatures.py",
@@ -1923,7 +2088,9 @@
     "dspy.Refine": 1
   },
   "llm_residue_by_kind": {
-    "UNKNOWN": 94
+    "UNKNOWN": 89,
+    "classification": 4,
+    "planning": 1
   },
   "llm_residue_by_zone": {
     "other": 8,
@@ -2134,11 +2301,11 @@
   },
   "subject": {
     "branch": "",
-    "commit": "f718d65cff85148806cbfdeb307854565fa6eedd",
+    "commit": "85c367467889cb8bb55574b8629b4cabdacff47c",
     "inclusion_reason": "LLM residue census",
     "remote_url": "https://github.com/seanchatmangpt/autofde-lab",
     "repository": "seanchatmangpt/autofde-lab",
-    "tree": "5d9de35300d43db79b83bd4090e74c84ee1010a9",
+    "tree": "27a44e81ac11380dec65218743f9f159a6c39b6b",
     "visibility": "public"
   },
   "unparseable": {}

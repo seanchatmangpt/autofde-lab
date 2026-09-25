@@ -204,6 +204,19 @@ jobs:
           IEC_GGEN_CREATE_CHECKOUT: ${{ runner.temp }}/ggen-create
         run: python -m pytest -q -rs tests/iec
 
+      # IEC-011: LLM residue may grow only when every added edge declares its kind
+      # (`# llm-residue: kind=... class=RC-...`). Unfenced growth fails the PR.
+      - name: IEC LLM residue gate / Python 3.12
+        if: steps.routes.outputs.python == 'true' && github.event_name == 'pull_request'
+        env:
+          PYTHONPATH: src
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="$(git merge-base "${{ github.event.pull_request.base.sha }}" HEAD)"
+          python -m autofde_lab.iec.crowns.residue "${RUNNER_TEMP}/residue" \
+            --commit HEAD --base "${base}" --gate
+
       - name: Fortune-5 runtime court / Python 3.12
         if: steps.routes.outputs.fortune5 == 'true'
         env:

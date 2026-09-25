@@ -287,7 +287,7 @@ def test_census_of_this_repository() -> None:
 
 
 RECEIPT = REPO_ROOT / "receipts" / "v26.9.25" / "iec" / "residue"
-RECEIPT_COMMIT = "f718d65cff85148806cbfdeb307854565fa6eedd"
+RECEIPT_COMMIT = "85c367467889cb8bb55574b8629b4cabdacff47c"
 RECEIPT_BASE = "98b6cc9bfe3af8a25b3ad53019f5fb71fe2d37d0"
 
 
