@@ -163,7 +163,13 @@ def cost(template: Term, substitutions: Sequence[Mapping[int, Binding]] = ()) ->
 def template_text(
     template: Term, *, open_mark: str = "{{", close_mark: str = "}}"
 ) -> str:
-    """A human-readable rendering with `{{Xn}}` / `{{Xn...}}` placeholders."""
+    """A human-readable rendering with ``open_mark Xn close_mark`` placeholders.
+
+    A hedge hole renders as ``Xn...`` between the marks. (The default marks
+    are double braces; they are named, not written, here because the
+    VuePress reference build treats a literal double-brace pair in a
+    docstring as a Vue template expression and ``Xn...`` does not parse.)
+    """
     if isinstance(template, str):
         if open_mark in template or close_mark in template:
             raise IECRefusal(
