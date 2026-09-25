@@ -77,7 +77,11 @@ jobs:
               raise SystemExit(1)
           assert observation["output"]["module_output"] == "WASM"
           assert observation["output"]["host_output"] == "WASM-HOST"
-          assert observation["output"]["host_calls"] == 1
+          assert observation["output"]["core_host_calls"] == 1
+          caps = observation["output"]["capabilities"]["summary"]
+          print("capabilities=", caps)
+          assert caps["blocked"] == 0
+          assert caps["alive"] == caps["total"]
           assert observation["output"]["provider_io"] is False
           assert observation["output"]["authority"]["actuation"] == "none"
           PY
