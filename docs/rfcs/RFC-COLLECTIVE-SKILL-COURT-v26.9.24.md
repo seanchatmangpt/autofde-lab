@@ -52,8 +52,10 @@ skill / runbook / receipt trace / standard
 
 - `ggen-marketplace` source base:
   `dafc1d45a02692ed3a18520627f5ad292c2b4b19`
-- staged marketplace pack head:
-  `02c13c468892c040c8abfd5023db4c1a19fa4820`
+- durable marketplace pack subject (ggen-marketplace PR #484 merge):
+  `5eb71f7ed947f705a8d6b145cb9b0be82855d793`
+  (pack tree `b9a530850ade6328c8347b1f32b72afd001048d5`, identical to the former staged head
+  `02c13c46`, which is no longer pinned)
 - upstream Skill2Env reference:
   `NVlabs/Skill2Env@9beb0b64a70290f862c8374bbef21f2ac88992ab`
 

@@ -17,7 +17,7 @@ from autofde_lab.sa2a.collective_skill import (
 from autofde_lab.sa2a.experience.compiler import EpisodeEvidence
 from autofde_lab.sa2a.experience.types import ExperienceState
 
-MARKETPLACE_SHA = "02c13c468892c040c8abfd5023db4c1a19fa4820"
+MARKETPLACE_SHA = "5eb71f7ed947f705a8d6b145cb9b0be82855d793"
 SUBJECT_SHA = "1" * 40
 DIGEST_A = "sha256:" + "a" * 64
 DIGEST_B = "sha256:" + "b" * 64

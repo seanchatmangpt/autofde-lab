@@ -17,7 +17,7 @@ work:AFDE-CSKILL-26924-001
   dcterms:title "Compile a provenance-bound skill court through marketplace and SA2A" ;
   sjira:status "UNKNOWN" ;
   sjira:subject "collective-skill court compiler" ;
-  sjira:dependsOn "ggen-marketplace@02c13c468892c040c8abfd5023db4c1a19fa4820:collective-skill-court-pack@26.9.24" ;
+  sjira:dependsOn "ggen-marketplace@5eb71f7ed947f705a8d6b145cb9b0be82855d793:collective-skill-court-pack@26.9.24" ;
   sjira:desiredConsequence "An admitted Oracle/NOP/mutation court projects to a powerless SA2A Candidate and compiles only to CANDIDATE MachineExperience." ;
   sjira:acceptancePredicate "Oracle success is required." ;
   sjira:acceptancePredicate "A successful no-op is refused." ;
