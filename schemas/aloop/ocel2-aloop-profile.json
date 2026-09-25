@@ -69,6 +69,11 @@
     "consequence": ["Consequence"],
     "cause": "*"
   },
+  "e2oQualifierTargetsByEvent": {
+    "rule": "per-event narrowing of e2oQualifiers: identity-binding events must bind an exact Subject (a sha), never a Repository",
+    "episode.start": {"subject": ["Subject"]},
+    "receipt.persist": {"subject": ["Subject"]}
+  },
   "o2oQualifiers": ["partOf", "boundTo", "derivedFrom", "supersedes"],
   "causalQualifiers": ["input", "cause"],
   "producingQualifiers": ["output"],
@@ -114,6 +119,13 @@
   "o2oHumanTaint": {
     "rule": "a consumed object with an O2O path over any o2oQualifiers link to a Human (or origin=human) object is a human cause; paths do not enter humanPreEpochAllowedOutputTypes",
     "qualifiers": ["partOf", "boundTo", "derivedFrom", "supersedes"]
+  },
+  "humanTouch": {
+    "rule": "every object a human.intervene event links under any qualifier (other than episode and originAuthority) is human-touched: post-epoch always, pre-epoch unless it is of a humanPreEpochAllowedOutputTypes type; a later event consuming a human-touched object has a human causal in-edge, and O2O paths reaching it are human paths",
+    "exemptQualifiers": ["episode", "originAuthority"]
+  },
+  "authorizedActuation": {
+    "rule": "every actuation must have a workorder.issue of its own episode among its causal ancestors; an actuation with none is an unleased DO (R_missing_authority) and fails the episode"
   },
   "unattributedCause": {
     "rule": "a post-epoch input with no producer in the log, consumed in a workorder's decision segment by anything other than observe/reobserve, makes that workorder not self-generated"

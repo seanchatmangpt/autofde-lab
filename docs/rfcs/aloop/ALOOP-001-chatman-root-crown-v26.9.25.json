@@ -1,9 +1,9 @@
 {
   "authority": "NONE (court verdict only; grants no DO authority)",
   "court": "ALOOP-001",
-  "court_source_sha256": "0886e4b7e57a899fee803e1b0c0ca6abf1015df39a026266bcf57271e9ee6911",
+  "court_source_sha256": "f6f5382a7a14e0531f8428fa7b13a15da492861a032d33da02f19f7215a274c5",
   "court_subject_sha": null,
-  "court_version": "aloop-001/v26.9.25-r1",
+  "court_version": "aloop-001/v26.9.25-r2",
   "episodes": [
     {
       "class": "FAILED",
@@ -37,6 +37,7 @@
         "self_generated_workorders": 0,
         "stale_subject_receipts": 0,
         "unattributed_cause_workorders": 0,
+        "unauthorized_actuations": 2,
         "uncaused_actuations": 1,
         "unknown_frontier_leakage": 0,
         "unreceipted_actuations": 2,
@@ -48,6 +49,12 @@
           "code": "UNRECEIPTED_ACTUATION",
           "detail": "2/2 actuations lack a receipt.persist bound to their consequence: ['actuate-tag-v26.9.25', 'commit-68bacd8dcc9a']",
           "failure_class": "EVIDENCE_FAILURE"
+        },
+        {
+          "broken_term": "R_missing_authority",
+          "code": "UNAUTHORIZED_ACTUATION",
+          "detail": "2/2 actuations have no workorder.issue upstream (1 with no cause at all): ['commit-68bacd8dcc9a', 'actuate-tag-v26.9.25']",
+          "failure_class": "AUTHORITY_FAILURE"
         },
         {
           "broken_term": "R_not_fed_back",
@@ -86,17 +93,18 @@
     "human_causal_edges_after_epoch": 1,
     "orphan_receipts": 0,
     "stale_subject_receipts": 0,
+    "unauthorized_actuations": 2,
     "unreceipted_actuations": 2
   },
   "profile": "aloop-ocel2/v26.9.25",
-  "profile_sha256": "22fd02cfb425e31293ff41c4eb6b6147e74d7071ebf6c4e28610b8f33aae01a9",
+  "profile_sha256": "afb00136128de022c99f60f2db6415cb32e1f964ba16ac19f8edb844d6146ef8",
   "qualification_thresholds": {
     "HIR": 0,
     "UAR": 0,
     "min_actuations": 1,
     "min_consecutive_self_generated_transitions": 100
   },
-  "receipt_digest": "sha256:8a77ce712bf459d3386fa3ed645c7c2115597742f6da1adf56479dd5e041ae14",
+  "receipt_digest": "sha256:8cc9cd842609ba8ed62d48ff3aa7844478ded75d909ef3299190998569bff7aa",
   "refusals": [],
   "schema": "autofde-lab/aloop-court-receipt/v1",
   "standing": "BLOCKED",

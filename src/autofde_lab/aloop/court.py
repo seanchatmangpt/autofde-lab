@@ -36,6 +36,11 @@ A loop that never actuates, or that re-receipts an earlier consequence, cannot
 close; ALOOP-001 additionally requires ``actuations > 0`` (``UAR`` is never
 defaulted from 0/0).
 
+Repair round 2: every object a ``human.intervene`` links under any qualifier
+is human-touched (consuming it is a human causal edge); every actuation must
+have a ``workorder.issue`` of its episode upstream (``UNAUTHORIZED_ACTUATION``);
+``episode.start``/``receipt.persist`` must bind a ``Subject``, not a Repository.
+
 The verdict is a pure function of (log bytes, profile bytes, court source):
 the receipt carries no wall-clock value, so a cold replay is byte-identical.
 """
@@ -65,7 +70,7 @@ __all__ = [
 ]
 
 COURT_ID = "ALOOP-001"
-COURT_VERSION = "aloop-001/v26.9.25-r1"
+COURT_VERSION = "aloop-001/v26.9.25-r2"
 RECEIPT_SCHEMA = "autofde-lab/aloop-court-receipt/v1"
 
 EXIT_QUALIFIED = 0
@@ -224,6 +229,21 @@ def _admit(document: Any, profile: Mapping[str, Any]) -> OcelLog:
                 f"event {link.event_id} {q} -> {otype[link.object_id]} {link.object_id}",
             )
         links[link.event_id].append((q, link.object_id))
+    activity = {e.id: e.activity for e in log.events}
+    narrowing: Mapping[str, Any] = profile["e2oQualifierTargetsByEvent"]
+    for link in log.event_object_links:
+        allowed_here = narrowing.get(activity.get(link.event_id, ""), {}).get(
+            link.qualifier or ""
+        )
+        if allowed_here is not None and otype[link.object_id] not in allowed_here:
+            _refuse(
+                "PROFILE_QUALIFIER_TARGET_TYPE",
+                f"event {link.event_id} ({activity[link.event_id]}) "
+                f"{link.qualifier} -> {otype[link.object_id]} {link.object_id}; "
+                f"needs {allowed_here}",
+                "R_missing_identity",
+                "SUBJECT_FAILURE",
+            )
     for link in log.object_object_links:
         if (link.qualifier or "") not in profile["o2oQualifiers"]:
             _refuse(
@@ -359,12 +379,39 @@ class _Graph:
         for e in self.events:
             start_pos = self.pos[self.start[self.episode[e.id]]]
             self.post[e.id] = self.pos[e.id] > start_pos
+        # Repair round 2 (B1): a human act taints every object it links, under
+        # any qualifier -- not only what it ``output``s. Post-epoch: always;
+        # pre-epoch: unless the object is on the lawful channel (Objective,
+        # Authority). ``touched[o]`` is the earliest such human event.
+        exempt = set(profile["humanTouch"]["exemptQualifiers"])
+        self.touched: dict[str, str] = {}
+        for e in self.events:
+            if e.activity != _HUMAN:
+                continue
+            for q, o in self.links[e.id]:
+                if q in exempt or o in self.touched:
+                    continue
+                if self.post[e.id] or self.otype[o] not in allowed_pre:
+                    self.touched[o] = e.id
         for e in self.events:
             eid = e.id
             if not self.post[eid]:
                 self.human[eid] = False
                 continue
             hit = e.activity == _HUMAN
+            direct = {p for p, _ in self.preds[eid] if self.act[p] == _HUMAN}
+            for q, o in self.links[eid]:
+                if q not in causal:
+                    continue
+                h = self.touched.get(o)
+                if (
+                    h is not None
+                    and h != eid
+                    and h not in direct
+                    and self.pos[h] < self.pos[eid]
+                ):
+                    self.human_edges.append((f"<touch:{h}>", eid, o))
+                    hit = True
             for p, o in self.preds[eid]:
                 if self.act[p] == _HUMAN:
                     outputs_ok = all(
@@ -416,7 +463,11 @@ class _Graph:
                     )
 
     def is_human_object(self, o: str) -> bool:
-        return self.otype[o] == "Human" or self.oattr[o].get("origin") == "human"
+        return (
+            self.otype[o] == "Human"
+            or self.oattr[o].get("origin") == "human"
+            or o in self.touched
+        )
 
     def o2o_human(self, obj: str) -> str | None:
         """The Human-side object ``obj`` reaches over O2O links, or ``None``.
@@ -645,6 +696,17 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
         if not any(g.act[a] == "candidate.admit" for a in g.ascend(w, stop=_WORKORDER))
     ]
     uncaused = [a for a in actuations if not g.preds[a] and not g.exogenous[a]]
+    # Repair round 2 (B3b): every DO needs a WorkOrder of its own episode
+    # upstream (whose originAuthority admission already checked). An actuation
+    # with none -- uncaused, or caused only by exogenous/unrelated objects --
+    # is an unleased DO; ``uncaused`` is a subset and no longer a dead metric.
+    unauthorized = [
+        a
+        for a in actuations
+        if not any(
+            g.act[x] == _WORKORDER and x in in_ep for x in g.ascend(a, stop=_WORKORDER)
+        )
+    ]
     exogenous_post = sorted(
         {
             o
@@ -671,6 +733,7 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
         "unreceipted_actuations": len(unreceipted),
         "actuations": len(actuations),
         "uncaused_actuations": len(uncaused),
+        "unauthorized_actuations": len(unauthorized),
         "duplicate_consequences": len(duplicates),
         "orphan_receipts": len(orphans),
         "receipts_without_fresh_consequence": len(unclosed_receipts),
@@ -706,6 +769,17 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
                 "EVIDENCE_FAILURE",
                 f"{len(unreceipted)}/{len(actuations)} actuations lack a receipt.persist "
                 f"bound to their consequence: {sorted(unreceipted)[:8]}",
+            )
+        )
+    if unauthorized:
+        integrity.append(
+            _reason(
+                "UNAUTHORIZED_ACTUATION",
+                "R_missing_authority",
+                "AUTHORITY_FAILURE",
+                f"{len(unauthorized)}/{len(actuations)} actuations have no "
+                f"{_WORKORDER} upstream ({len(uncaused)} with no cause at all): "
+                f"{sorted(unauthorized, key=g.pos.__getitem__)[:8]}",
             )
         )
     if orphans:
@@ -865,6 +939,7 @@ def _aggregate(episodes: list[dict[str, Any]]) -> dict[str, Any]:
         "duplicate_consequences": total("duplicate_consequences"),
         "orphan_receipts": total("orphan_receipts"),
         "stale_subject_receipts": total("stale_subject_receipts"),
+        "unauthorized_actuations": total("unauthorized_actuations"),
     }
 
 

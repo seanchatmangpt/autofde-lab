@@ -523,6 +523,106 @@ def m_timestamp_only_loop(doc):
         ]
 
 
+# ── repair round 2: adversarial-court attacks B1, B2, B3b as committed mutants ──
+
+_EPOCH_ATTR_TIME = "1970-01-01T00:00:00.000000000Z"
+
+
+def m_human_evidence_side_channel(doc):
+    """B1: a post-epoch human act links a hint under a non-producing qualifier."""
+    for i in range(1, POSITIVE_ITERATIONS):
+        doc["objects"] += [
+            {
+                "id": f"hint-{i}",
+                "type": "Evidence",
+                "attributes": [
+                    {
+                        "name": "locator",
+                        "value": "operator says: do X next",
+                        "time": _EPOCH_ATTR_TIME,
+                    }
+                ],
+                "relationships": [],
+            },
+            {
+                "id": f"hack-{i}",
+                "type": "Evidence",
+                "attributes": [],
+                "relationships": [],
+            },
+        ]
+        _insert_before(
+            doc,
+            f"e-reobserve-{i}",
+            {
+                "id": f"h-post-{i}",
+                "type": "human.intervene",
+                "time": _time_before(doc, f"e-reobserve-{i}"),
+                "attributes": [
+                    {"name": "basis", "value": "operator chose the next action"}
+                ],
+                "relationships": [
+                    {"objectId": "ep-1", "qualifier": "episode"},
+                    {"objectId": "hum-operator", "qualifier": "originAuthority"},
+                    {"objectId": f"hack-{i}", "qualifier": "output"},
+                    {"objectId": f"hint-{i}", "qualifier": "evidence"},
+                ],
+            },
+        )
+        _event(doc, f"e-reobserve-{i}")["relationships"].append(
+            {"objectId": f"hint-{i}", "qualifier": "input"}
+        )
+
+
+def m_receipt_subject_is_repository(doc):
+    """B2: receipts bind the Repository instead of an exact Subject sha."""
+    for i in range(POSITIVE_ITERATIONS):
+        for r in _event(doc, f"e-rcpt-{i}")["relationships"]:
+            if r["qualifier"] == "subject":
+                r["objectId"] = "repo-1"
+
+
+def m_uncaused_unauthorized_commit(doc):
+    """B3b: a commit with no input, no cause, no WorkOrder upstream, receipted."""
+    for i in range(POSITIVE_ITERATIONS):
+        doc["objects"] += [
+            {
+                "id": f"rogue-csq-{i}",
+                "type": "Consequence",
+                "attributes": [
+                    {"name": "key", "value": f"rogue:{i}", "time": _EPOCH_ATTR_TIME}
+                ],
+                "relationships": [],
+            },
+            {
+                "id": f"rogue-out-{i}",
+                "type": "Evidence",
+                "attributes": [],
+                "relationships": [],
+            },
+        ]
+        _insert_before(
+            doc,
+            f"e-rcpt-{i}",
+            {
+                "id": f"e-rogue-{i}",
+                "type": "commit",
+                "time": _time_before(doc, f"e-rcpt-{i}"),
+                "attributes": [],
+                "relationships": [
+                    {"objectId": "ep-1", "qualifier": "episode"},
+                    {"objectId": "repo-1", "qualifier": "subject"},
+                    {"objectId": f"rogue-csq-{i}", "qualifier": "consequence"},
+                    {"objectId": f"rogue-out-{i}", "qualifier": "output"},
+                ],
+            },
+        )
+        _event(doc, f"e-rcpt-{i}")["relationships"] += [
+            {"objectId": f"rogue-csq-{i}", "qualifier": "consequence"},
+            {"objectId": f"rogue-out-{i}", "qualifier": "input"},
+        ]
+
+
 MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     "human_after_epoch": (
         m_human_after_epoch,
@@ -587,6 +687,18 @@ MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     "timestamp_only_loop": (
         m_timestamp_only_loop,
         {"exit": 3, "class": "FAILED", "code": "AUTOMATION_NOT_AUTONOMY"},
+    ),
+    "human_evidence_side_channel": (
+        m_human_evidence_side_channel,
+        {"exit": 3, "class": "ASSISTED", "code": "HUMAN_CAUSALITY_AFTER_EPOCH"},
+    ),
+    "receipt_subject_is_repository": (
+        m_receipt_subject_is_repository,
+        {"exit": 2, "class": None, "code": "PROFILE_QUALIFIER_TARGET_TYPE"},
+    ),
+    "uncaused_unauthorized_commit": (
+        m_uncaused_unauthorized_commit,
+        {"exit": 3, "class": "FAILED", "code": "UNAUTHORIZED_ACTUATION"},
     ),
 }
 

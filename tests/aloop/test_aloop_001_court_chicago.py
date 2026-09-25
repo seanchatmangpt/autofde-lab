@@ -113,8 +113,8 @@ def test_mutation_kill_ratio_is_total(corpus: Path) -> None:
     killed = sum(
         evaluate_path(corpus / rel)[0] != EXIT_QUALIFIED for rel in MUTANT_FILES
     )
-    assert len(MUTANT_FILES) == 19
-    assert (killed, len(MUTANT_FILES)) == (19, 19)
+    assert len(MUTANT_FILES) == 22
+    assert (killed, len(MUTANT_FILES)) == (22, 22)
 
 
 def test_empty_log_is_refused_not_vacuously_qualified(tmp_path: Path) -> None:
@@ -201,6 +201,9 @@ def test_real_trace_verdict_is_automation_not_autonomy() -> None:
     assert "AUTOMATION_NOT_AUTONOMY" in codes
     assert "UNRECEIPTED_ACTUATION" in codes
     assert "HUMAN_CAUSALITY_AFTER_EPOCH" in codes
+    # the inferred commit and the tag creation have no WorkOrder upstream
+    assert "UNAUTHORIZED_ACTUATION" in codes
+    assert m["unauthorized_actuations"] == m["actuations"] == 2
     # receipts do feed the next observation (previous_receipt_digest chain) ...
     assert m["receipts"] == 3
     # ... but nothing in the chain issues a WorkOrder, so no loop closes
@@ -241,3 +244,60 @@ def test_o2o_derived_from_human_is_a_human_causal_edge(corpus: Path) -> None:
     assert episode["class"] == "ASSISTED"
     assert episode["metrics"]["human_causal_edges_after_epoch"] == 101
     assert episode["metrics"]["HIR"] > 0
+
+
+# ── repair round 2 (adversarial court r1: B1, B2, B3b) ─────────────────────
+
+
+def test_human_linked_object_under_any_qualifier_is_a_human_cause(
+    corpus: Path,
+) -> None:
+    """B1: a hint linked by a post-epoch human act via ``evidence`` is not exogenous."""
+    code, receipt = evaluate_path(
+        corpus / "mutants/human_evidence_side_channel.ocel.json"
+    )
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    m = episode["metrics"]
+    assert episode["class"] == "ASSISTED"
+    assert episode["human_events_recorded"] == 101
+    assert m["human_causal_edges_after_epoch"] >= 100 and m["HIR"] > 0
+    assert m["ALD"] < 100
+
+
+def test_receipt_must_bind_an_exact_subject_not_a_repository(corpus: Path) -> None:
+    """B2: a Repository carries no sha; binding it would bypass the stale check."""
+    code, receipt = evaluate_path(
+        corpus / "mutants/receipt_subject_is_repository.ocel.json"
+    )
+    assert code == EXIT_REFUSED
+    (refusal,) = receipt["refusals"]
+    assert refusal["code"] == "PROFILE_QUALIFIER_TARGET_TYPE"
+    assert refusal["broken_term"] == "R_missing_identity"
+    assert "receipt.persist" in refusal["detail"]
+
+
+def test_actuation_without_a_workorder_upstream_fails_the_episode(
+    corpus: Path,
+) -> None:
+    """B3b: ``uncaused_actuations`` is no longer a metric that gates nothing."""
+    code, receipt = evaluate_path(
+        corpus / "mutants/uncaused_unauthorized_commit.ocel.json"
+    )
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    m = episode["metrics"]
+    assert episode["class"] == "FAILED"
+    assert m["uncaused_actuations"] == 101 == m["unauthorized_actuations"]
+    reason = next(
+        r for r in episode["reasons"] if r["code"] == "UNAUTHORIZED_ACTUATION"
+    )
+    assert reason["broken_term"] == "R_missing_authority"
+    assert receipt["metrics"]["unauthorized_actuations"] == 101
+
+
+def test_positive_log_has_no_unauthorized_or_human_touched_input() -> None:
+    _, receipt = evaluate_path(SYNTH / "positive.ocel.json")
+    (episode,) = receipt["episodes"]
+    assert episode["metrics"]["unauthorized_actuations"] == 0
+    assert episode["metrics"]["uncaused_actuations"] == 0

@@ -112,8 +112,10 @@ human.intervene`.
 E2O qualifiers: `subject, originAuthority, provider, input, output, evidence, consequence,
 cause`, plus `episode` (exactly one per event, binding it to its Episode). Target types are
 constrained (`originAuthority → Authority|Human`, `consequence → Consequence`, `provider →
-Provider`, `subject → Subject|Repository`, `episode → Episode`). Per-event cardinalities (for
-example `workorder.issue` needs exactly one `originAuthority`) live in the profile file.
+Provider`, `subject → Subject|Repository`, `episode → Episode`), and narrowed per event:
+`episode.start` and `receipt.persist` must bind `subject → Subject` (a sha), never a Repository
+(`R_missing_identity`). Per-event cardinalities (for example `workorder.issue` needs exactly one
+`originAuthority`) live in the profile file.
 
 Causal edges are derived, never declared: `p → e` iff `e` consumes (`input`/`cause`) an object
 that `p` produced (`output`, or `consequence` on `actuate|commit|merge`). Timestamps never
@@ -122,6 +124,15 @@ create an edge; a cause produced at or after its consumer is refused as forged.
 O2O links carry human provenance: a consumed object with an O2O path (`partOf`, `boundTo`,
 `derivedFrom`, `supersedes`) to a `Human` object, or to an object whose `origin` is `human`, is
 a human causal edge. Paths do not enter the lawful pre-epoch channel (`Objective`, `Authority`).
+
+Human touch: every object a `human.intervene` event links under any qualifier (not only
+`output`; `episode` and `originAuthority` excepted) is human-touched — always after `t0`, and
+before `t0` unless it is on the lawful channel. A later event consuming a human-touched object
+has a human causal in-edge, and O2O paths reaching one are human paths.
+
+Authorized actuation: every `actuate|commit|merge` must have a `workorder.issue` of its own
+episode among its causal ancestors. An actuation with none is an unleased DO
+(`UNAUTHORIZED_ACTUATION`, `R_missing_authority`) and fails the episode.
 
 ## Courts
 
@@ -170,7 +181,7 @@ ALOOP-004 owns the semantic-equivalence half.
 Also reported: cold replay (the receipt holds no wall-clock value; two runs are byte-identical),
 exact-subject binding (stale-subject receipts), mutation kill ratio, duplicate consequences,
 orphan receipts, unknown-frontier leakage (work orders with no `candidate.admit` ancestor in
-their iteration), uncaused actuations, exogenous post-epoch inputs, inter-iteration time.
+their iteration), uncaused and unauthorized actuations, exogenous post-epoch inputs, inter-iteration time.
 
 ## Receipt and exit codes
 
@@ -227,11 +238,21 @@ The architecture is falsified if a fixed-task cron qualifies; if a human act aft
 laundered into a qualifying chain; if an actuation without a bound receipt yields UAR = 0; if a
 forged authority, future cause or unknown qualifier is admitted; if a loop that never actuates
 qualifies; if one consequence receipted by many iterations qualifies; if a next action derived
-(O2O) from a Human, or caused by an unattributed exogenous input, qualifies; or if two runs over
+(O2O) from a Human, or caused by an unattributed exogenous input, qualifies; if an object a
+post-epoch human act links under a non-producing qualifier drives the next action and still
+qualifies; if receipts bound to a Repository instead of a Subject sha qualify; if an actuation
+with no WorkOrder upstream qualifies; or if two runs over
 the same bytes produce different receipts. Each has a mutant in the regenerated corpus whose
-sha256 is committed in `tests/aloop/fixtures/synthetic/MANIFEST.json` (19 mutants, 19 killed).
+sha256 is committed in `tests/aloop/fixtures/synthetic/MANIFEST.json` (22 mutants, 22 killed).
 
 Repair round 1 (court version `aloop-001/v26.9.25-r1`) closed three adversarial-court findings
 against round 0: a vacuous non-actuating loop qualified (`admission_vacuous`,
 `R_missing_consequence`); a receipt bound to an earlier iteration's consequence qualified
 (`R_missing_consequence`); an O2O `derivedFrom` Human cause went undetected (`mu_on_O`).
+
+Repair round 2 (court version `aloop-001/v26.9.25-r2`) closed three adversarial-court findings
+against round 1: a hint linked by a post-epoch `human.intervene` under `evidence` was treated as
+an exogenous observation input, so 100 human acts gave HumanCausalEdges = 0 (`mu_on_O`); 101
+commits with no input, cause or authority qualified while `uncaused_actuations` gated nothing
+(`R_missing_authority`); receipts bound to the Repository bypassed the exact-subject and
+stale-subject checks (`R_missing_identity`).

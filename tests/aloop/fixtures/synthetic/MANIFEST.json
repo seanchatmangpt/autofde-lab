@@ -56,6 +56,14 @@
       },
       "sha256": "b0cd6f2fb96ea01d73a47f188a30e92f8b86739cce19930ffdc328fe7781ca58"
     },
+    "mutants/human_evidence_side_channel.ocel.json": {
+      "expect": {
+        "class": "ASSISTED",
+        "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
+        "exit": 3
+      },
+      "sha256": "4fc9d3f68596792abe959109aaa493e430f9427aa01098d0dd126f04e3c85273"
+    },
     "mutants/human_prose_cause.ocel.json": {
       "expect": {
         "class": "ASSISTED",
@@ -112,6 +120,14 @@
       },
       "sha256": "f0df8000c7689bdd59ebf92486c36b1e9adddb09f4e873eded3b57ed0fee4920"
     },
+    "mutants/receipt_subject_is_repository.ocel.json": {
+      "expect": {
+        "class": null,
+        "code": "PROFILE_QUALIFIER_TARGET_TYPE",
+        "exit": 2
+      },
+      "sha256": "3bfd9a46b1d99e2187d3c65ab6a0af02b5a903416e410a3e6297127219b3f7bb"
+    },
     "mutants/schema_violation.ocel.json": {
       "expect": {
         "class": null,
@@ -143,6 +159,14 @@
         "exit": 3
       },
       "sha256": "2b5ab15b44258855b338c66fa87106f7da0f9f25367430eec543d972a160f510"
+    },
+    "mutants/uncaused_unauthorized_commit.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "UNAUTHORIZED_ACTUATION",
+        "exit": 3
+      },
+      "sha256": "eb3b2a9dd4cf0c4129344dde4ddcb2ade570d97ab7c6ac48da71cbcb6aa6e2ce"
     },
     "mutants/vacuous_no_actuation.ocel.json": {
       "expect": {
