@@ -1,6 +1,8 @@
 """Bounded companion kernels."""
 
 from .osiris import (
+    OSIRIS,
+    OSIRIS_EXPANSION,
     ActionCandidate,
     BRCERequest,
     CompanionDecision,
@@ -11,8 +13,6 @@ from .osiris import (
     EventPriority,
     IntentKind,
     Observation,
-    OSIRIS,
-    OSIRIS_EXPANSION,
     ResponsePolicy,
     SpeechCandidate,
     Standing,
