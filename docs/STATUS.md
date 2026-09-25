@@ -5,6 +5,32 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
+Last update: **pass 47** (2026-09-25) — **IEC-011 LLM residue census: the *Find* step in
+front of the retirement ledger. `LLMResidue = 94` static edges at autofde-lab@85c3674
+(`ALIVE`, replayed byte for byte); 5 edges fenced; unfenced growth now fails PR CI;
+`LLMDependencyRatio` recorded as `UNREPRESENTABLE:NO_REACHABILITY_OBSERVATION`.** Full
+account: `docs/2026-09-25-llm-retirement-foundry.md`.
+
+**Measured win** — `PYTHONPATH=src python -m pytest -o addopts="" -q tests/iec` →
+**161 passed, 16 skipped** (Python 3.13.12; skips are the named `TLC_TOOLCHAIN_ABSENT` and
+missing-sibling-checkout gates). `tests/iec/test_residue_census_chicago.py`: 8 passed
+(also on 3.12.3), real `git` repositories, no doubles (`grep -n "unittest.mock\|Mock(\|MagicMock\|patch(\|monkeypatch"`
+→ no matches). Mutation check: dropping `dspy.ChainOfThought` from the rule table and
+disabling the import-only rule failed 3 of the then-5 tests (v1).
+
+**Measured win** — `python -m autofde_lab.iec.crowns.residue receipts/v26.9.25/iec/residue
+--commit 85c3674 --base 98b6cc9 --gate` → exit 0: 94 edges (47 `src/`, 39 `tests/`, 8 other),
+all dspy; 44 declared `dspy.Signature` reasoning classes; kind 89 `UNKNOWN` / 4
+`classification` / 1 `planning`. Delta `UNCHANGED` 94 → 94, gate `PASS`. Top frontier:
+`k8s_signatures.py::DiagnoseKubernetesFault` (4 sites in 4 files, all importing that one
+class; now fenced as `RC-K8S-FAULT-DIAGNOSIS`). A re-run under Python 3.12.3: `diff -r` empty.
+
+**Recorded negative** — v1's frontier grouped `ChooseMove` ×3 by name. They are three
+distinct classes. v2 groups only by the import-resolved defining file; the group is gone.
+
+**Recorded negative** — `LLMDependencyRatio` has no denominator: no component observes which
+edges are reachable in production. It is not approximated by the static count.
+
 Last update: **pass 46** (2026-09-23) — **v26.9.23 Inverse Ecosystem Compiler, first
 execution: IEC-C1 technical crown on ggen_igniter@d84da14 (static courts `ALIVE`, native
 courts `BLOCKED`), IEC-C3 held-out retirement of one reasoning class (`ALIVE` on the compared

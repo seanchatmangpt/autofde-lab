@@ -70,6 +70,7 @@ class KubernetesDiagnosisPipeline(dspy.Module):
         super().__init__()
         self.summarize = dspy.Predict(SummarizeKubernetesResourceState)
         self.classify = dspy.Predict(ClassifyKubernetesAnomaly)
+        # llm-residue: kind=classification class=RC-K8S-FAULT-DIAGNOSIS
         self.diagnose = dspy.ChainOfThought(DiagnoseKubernetesFault)
         self.propose_remediation = dspy.Predict(ProposeKubernetesRemediation)
 
