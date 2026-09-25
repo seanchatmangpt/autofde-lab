@@ -25,8 +25,27 @@ def _payload(status: str = "ALIVE") -> dict[str, object]:
         "module_type": "Prediction",
         "lm_calls": 1,
         "host_output": "WASM-HOST",
-        "host_calls": 1,
+        "core_host_calls": 1,
         "provider_io": False,
+        "capabilities": {
+            "schema": "autofde.dspy-wasm.capabilities.v1",
+            "capabilities": [
+                {
+                    "name": "module.predict",
+                    "status": "ALIVE",
+                    "phase": "execute",
+                    "evidence": {"output": "WASM-HOST"},
+                    "error": None,
+                }
+            ],
+            "summary": {
+                "total": 1,
+                "alive": 1,
+                "blocked": 0,
+                "alive_names": ["module.predict"],
+                "blocked_names": [],
+            },
+        },
         "authority": {"class": "candidate", "actuation": "none"},
     }
     if status != "ALIVE":
@@ -44,7 +63,7 @@ def _payload(status: str = "ALIVE") -> dict[str, object]:
             "pyodide": PYODIDE_VERSION,
             "runtime": "node-pyodide",
             "profile": "autofde-core-no-provider-io-v1",
-            "court": "import+deterministic-module+host-engine",
+            "court": "full-capability-matrix",
         },
         "stages": [{"name": "dspy-module", "status": status}],
         "blocker": blocker,
@@ -83,7 +102,7 @@ def test_subject_drift_is_refused() -> None:
         "pyodide": PYODIDE_VERSION,
         "runtime": "node-pyodide",
         "profile": "autofde-core-no-provider-io-v1",
-        "court": "import+deterministic-module+host-engine",
+        "court": "full-capability-matrix",
     }
     with pytest.raises(DSPyWasmProtocolViolation, match="DSPy subject drift"):
         DSPyWasmResult.from_payload(payload, replay_command=())
@@ -125,13 +144,17 @@ def test_real_node_pyodide_probe_when_dependency_is_materialized() -> None:
     if result.status == "ALIVE":
         assert result.output["module_output"] == "WASM"
         assert result.output["host_output"] == "WASM-HOST"
-        assert result.output["host_calls"] == 1
+        assert result.output["core_host_calls"] == 1
+        assert result.output["capabilities"]["summary"]["blocked"] == 0
         assert result.output["provider_io"] is False
         assert result.output["authority"] == {"class": "candidate", "actuation": "none"}
     else:
         assert result.blocker is not None
         assert result.blocker["code"] in {
+            "DSPY_WASM_PROFILE_UNAVAILABLE",
             "DSPY_DEPENDENCY_CLOSURE_UNAVAILABLE",
             "DSPY_MODULE_EXECUTION_FAILED",
+            "DSPY_CAPABILITY_MATRIX_INCOMPLETE",
+            "DSPY_CAPABILITY_MATRIX_FAILED",
             "PYODIDE_START_FAILED",
         }
