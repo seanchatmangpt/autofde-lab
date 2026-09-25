@@ -1,0 +1,62 @@
+name: Collective skill court
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "src/autofde_lab/sa2a/collective_skill/**"
+      - "tests/sa2a/collective_skill/**"
+      - "docs/sjira/v26.9.24/**"
+      - "docs/rfcs/RFC-COLLECTIVE-SKILL-COURT-v26.9.24.md"
+      - "docs/papers/gym-lock.ttl"
+      - ".github/workflows/collective-skill-court.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  court:
+    name: Exact-head Oracle/NOP/mutation + SA2A court
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Assert exact subject identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="${{ github.event.pull_request.head.sha || github.sha }}"
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$expected"
+          printf "collective_skill_exact_head=%s\n" "$actual"
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Install focused court
+        run: >-
+          python -m pip install
+          "pytest==8.3.5"
+          "pydantic>=2,<3"
+          "rdflib==7.2.1"
+          "pyshacl>=0.30,<1"
+
+      - name: Reject London-school test doubles
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -R -nE "unittest\\.mock|Mock\\(|MagicMock|patch\\(|monkeypatch" tests/sa2a/collective_skill
+
+      - name: Execute focused court
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m pytest -vv
+          tests/sa2a/collective_skill/test_collective_skill_court.py
