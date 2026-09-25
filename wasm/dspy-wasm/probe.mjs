@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import process from "node:process";
 
 const SCHEMA = "autofde.dspy-wasm.probe.v1";
@@ -5,7 +6,8 @@ const DSPY_VERSION = "3.4.0";
 const GEPA_VERSION = "0.1.4";
 const PYODIDE_VERSION = "314.0.7";
 const stages = [];
-let hostCalls = 0;
+const hostCounters = { complete: 0, tool: 0, retrieve: 0, observe: 0 };
+const hostReceipts = [];
 
 function stage(name, status, detail = {}) {
   stages.push({ name, status, ...detail });
@@ -22,7 +24,7 @@ function emit(status, { blocker = null, output = {} } = {}) {
         pyodide: PYODIDE_VERSION,
         runtime: "node-pyodide",
         profile: "autofde-core-no-provider-io-v1",
-        court: "import+deterministic-module+host-engine",
+        court: "full-capability-matrix",
       },
       stages,
       blocker,
@@ -38,6 +40,63 @@ function blocker(code, layer, error) {
     type: error?.name ?? "Error",
     detail: String(error?.message ?? error),
   };
+}
+
+function requireNoActuation(request) {
+  if (request.authority?.actuation !== "none") {
+    throw new Error("host capability refused non-observational authority");
+  }
+}
+
+function receipt(capability, request = {}) {
+  const r = {
+    schema: "autofde.dspy-wasm.host-receipt.v1",
+    capability,
+    authority: { class: "candidate", actuation: "none" },
+    request_model: request.model ?? null,
+    ordinal: hostReceipts.length + 1,
+  };
+  hostReceipts.push(r);
+  return r;
+}
+
+function completionText(request) {
+  const mode = request.mode ?? "predict";
+  const ordinal = Number(request.ordinal ?? 1);
+  switch (mode) {
+    case "predict":
+      return JSON.stringify({ output: "WASM-HOST" });
+    case "cot":
+      return JSON.stringify({ reasoning: "bounded", answer: "42" });
+    case "typed":
+      return JSON.stringify({ y: 42 });
+    case "react":
+      return ordinal === 1
+        ? JSON.stringify({
+            next_thought: "use the admitted host tool",
+            next_tool_name: "host_add",
+            next_tool_args: { x: 2, y: 3 },
+          })
+        : JSON.stringify({ reasoning: "host tool returned five", answer: "5" });
+    case "bootstrap":
+      return JSON.stringify({ answer: "OK" });
+    case "best_of_n":
+      return JSON.stringify({ answer: "BEST" });
+    case "two_step_main":
+      return "The extracted answer is TWO.";
+    case "two_step_extract":
+      return "[[ ## answer ## ]]\nTWO\n\n[[ ## completed ## ]]";
+    case "async":
+      return JSON.stringify({ output: "ASYNC" });
+    case "flex":
+      return JSON.stringify({ output: "FLEX" });
+    case "gepa":
+      return JSON.stringify({ answer: "GEPA" });
+    case "mipro":
+      return JSON.stringify({ answer: "MIPRO" });
+    default:
+      return JSON.stringify({ answer: "OK", output: "WASM-HOST" });
+  }
 }
 
 let loadPyodide;
@@ -74,12 +133,16 @@ try {
 }
 
 try {
-  await pyodide.loadPackage(["micropip", "numpy", "pydantic", "regex", "jsonschema"]);
+  await pyodide.loadPackage([
+    "micropip",
+    "numpy",
+    "pydantic",
+    "regex",
+    "jsonschema",
+  ]);
   await pyodide.runPythonAsync(`
 import micropip
 
-# The WASM profile intentionally excludes DSPy's ambient provider stack
-# (LiteLLM/OpenAI) and installs only the surfaces needed by the admitted court.
 for requirement in [
     "tqdm>=4.66.1",
     "requests>=2.31.0",
@@ -92,9 +155,6 @@ for requirement in [
 ]:
     await micropip.install(requirement)
 
-# GEPA 0.1.4's base package has no mandatory dependencies. DSPy declares the
-# empty [dspy] extra; dependency expansion is deliberately disabled here so
-# provider-only packages cannot acquire ambient guest authority.
 await micropip.install("gepa==${GEPA_VERSION}", deps=False)
 await micropip.install("dspy==${DSPY_VERSION}", deps=False)
 `);
@@ -117,9 +177,6 @@ import json as _json
 import sys as _sys
 import types as _types
 
-# DSPy 3.4.0 hard-imports orjson on serialization/cache paths. Pyodide does
-# not ship an orjson wheel, so provide the exact tiny surface DSPy references
-# in this release. This is a host compatibility projection, not a DSPy fork.
 _orjson = _types.ModuleType("orjson")
 _orjson.OPT_INDENT_2 = 1
 _orjson.OPT_APPEND_NEWLINE = 2
@@ -128,11 +185,7 @@ _orjson.JSONEncodeError = TypeError
 _orjson.JSONDecodeError = ValueError
 
 def _dumps(value, option=0, default=None):
-    kwargs = {
-        "ensure_ascii": False,
-        "allow_nan": False,
-        "default": default,
-    }
+    kwargs = {"ensure_ascii": False, "allow_nan": False, "default": default}
     if option & _orjson.OPT_SORT_KEYS:
         kwargs["sort_keys"] = True
     if option & _orjson.OPT_INDENT_2:
@@ -208,19 +261,44 @@ json.dumps({
 
 pyodide.registerJsModule("autofde_host", {
   complete: (requestJson) => {
-    hostCalls += 1;
+    hostCounters.complete += 1;
     const request = JSON.parse(String(requestJson));
-    if (request.authority?.actuation !== "none") {
-      throw new Error("host capability refused non-observational authority");
-    }
+    requireNoActuation(request);
     return JSON.stringify({
-      text: JSON.stringify({ output: "WASM-HOST" }),
-      receipt: {
-        schema: "autofde.dspy-wasm.host-receipt.v1",
-        capability: "lm.complete",
-        authority: { class: "candidate", actuation: "none" },
-        request_model: request.model,
-      },
+      text: completionText(request),
+      receipt: receipt("lm.complete", request),
+    });
+  },
+  tool: (requestJson) => {
+    hostCounters.tool += 1;
+    const request = JSON.parse(String(requestJson));
+    requireNoActuation(request);
+    if (request.name !== "add") {
+      throw new Error(`unsupported host tool: ${request.name}`);
+    }
+    const result = Number(request.args?.x) + Number(request.args?.y);
+    return JSON.stringify({
+      result,
+      receipt: receipt("tool.add", request),
+    });
+  },
+  retrieve: (requestJson) => {
+    hostCounters.retrieve += 1;
+    const request = JSON.parse(String(requestJson));
+    requireNoActuation(request);
+    const k = Number(request.k ?? 3);
+    return JSON.stringify({
+      passages: Array.from({ length: k }, (_, i) => `${request.query}:${i}`),
+      receipt: receipt("retrieve", request),
+    });
+  },
+  observe: (eventJson) => {
+    hostCounters.observe += 1;
+    const event = JSON.parse(String(eventJson));
+    return JSON.stringify({
+      accepted: true,
+      event,
+      receipt: receipt("observe", {}),
     });
   },
 });
@@ -236,13 +314,12 @@ from dspy.lm15 import Message, Response, Usage
 class HostEngine:
     def complete(self, request):
         envelope = {
+            "mode": "predict",
+            "ordinal": 1,
             "model": request.model,
             "authority": {"class": "candidate", "actuation": "none"},
             "messages": [
-                {
-                    "role": message.role,
-                    "text": message.text,
-                }
+                {"role": message.role, "text": message.text}
                 for message in request.messages
             ],
         }
@@ -281,11 +358,13 @@ json.dumps({
   if (hostGuest.host_receipt?.authority?.actuation !== "none") {
     throw new Error("host receipt lost zero-actuation authority");
   }
-  if (hostCalls !== 1) {
-    throw new Error(`expected one host capability call, observed ${hostCalls}`);
+  if (hostCounters.complete !== 1) {
+    throw new Error(
+      `expected one core host capability call, observed ${hostCounters.complete}`,
+    );
   }
   stage("dspy-host-engine", "ALIVE", {
-    calls: hostCalls,
+    calls: hostCounters.complete,
     output: hostGuest.host_output,
     authority: hostGuest.host_receipt.authority,
   });
@@ -297,17 +376,66 @@ json.dumps({
   process.exit(0);
 }
 
+let capabilityMatrix;
+try {
+  const source = readFileSync(new URL("./capabilities.py", import.meta.url), "utf8");
+  const raw = await pyodide.runPythonAsync(source);
+  capabilityMatrix = JSON.parse(String(raw));
+  const blocked = capabilityMatrix.summary.blocked;
+  stage("dspy-capability-matrix", blocked === 0 ? "ALIVE" : "BLOCKED", {
+    total: capabilityMatrix.summary.total,
+    alive: capabilityMatrix.summary.alive,
+    blocked,
+    blocked_names: capabilityMatrix.summary.blocked_names,
+  });
+  if (blocked !== 0) {
+    emit("BLOCKED", {
+      blocker: {
+        code: "DSPY_CAPABILITY_MATRIX_INCOMPLETE",
+        layer: "capability",
+        type: "CapabilityMatrix",
+        detail: capabilityMatrix.summary.blocked_names.join(", "),
+      },
+      output: {
+        dspy_version: guest.dspy_version,
+        gepa_version: guest.gepa_version,
+        module_output: guest.module_output,
+        host_output: hostGuest.host_output,
+        provider_io: false,
+        authority: { class: "candidate", actuation: "none" },
+        host_counters: hostCounters,
+        capabilities: capabilityMatrix,
+      },
+    });
+    process.exit(0);
+  }
+} catch (error) {
+  stage("dspy-capability-matrix", "BLOCKED");
+  emit("BLOCKED", {
+    blocker: blocker("DSPY_CAPABILITY_MATRIX_FAILED", "capability", error),
+    output: {
+      dspy_version: guest.dspy_version,
+      module_output: guest.module_output,
+      provider_io: false,
+      authority: { class: "candidate", actuation: "none" },
+    },
+  });
+  process.exit(0);
+}
+
 emit("ALIVE", {
   output: {
     dspy_version: guest.dspy_version,
     gepa_version: guest.gepa_version,
     module_output: guest.module_output,
     module_type: guest.module_type,
-    lm_calls: 1,
     host_output: hostGuest.host_output,
-    host_calls: hostCalls,
+    core_host_calls: 1,
     host_receipt: hostGuest.host_receipt,
+    host_counters: hostCounters,
+    host_receipts: hostReceipts,
     provider_io: false,
     authority: { class: "candidate", actuation: "none" },
+    capabilities: capabilityMatrix,
   },
 });
