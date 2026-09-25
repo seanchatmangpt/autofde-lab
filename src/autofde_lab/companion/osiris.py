@@ -18,12 +18,11 @@ deterministic, replayable, and suitable for later retirement into formal machine
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from enum import Enum, IntEnum
 from hashlib import sha256
-import json
 from typing import Any, Mapping, Protocol
-
 
 OSIRIS_EXPANSION = "Onboard Situational Insight and Resource Interface Support"
 
@@ -252,9 +251,7 @@ class Deliberator(Protocol):
 class EcosystemRouter:
     """Typed deterministic routing; no semantic guessing at the DO boundary."""
 
-    def __init__(
-        self, routes: Mapping[IntentKind, Surface] | None = None
-    ) -> None:
+    def __init__(self, routes: Mapping[IntentKind, Surface] | None = None) -> None:
         self._routes = dict(routes or DEFAULT_ROUTES)
 
     def target_for(self, intent: IntentKind) -> Surface:
@@ -274,9 +271,7 @@ def default_event(
 ) -> Event:
     """Manufacture an event using the paper-inspired response policy lattice."""
 
-    policies: dict[
-        str, tuple[EventPriority, ResponsePolicy, ResponsePolicy]
-    ] = {
+    policies: dict[str, tuple[EventPriority, ResponsePolicy, ResponsePolicy]] = {
         "voice.user": (
             EventPriority.DIRECT,
             ResponsePolicy.REQUIRE,
@@ -417,9 +412,7 @@ class OSIRIS:
     def context(self, now_ms: int) -> TurnContext:
         """Build bounded context and purge expired events."""
 
-        self._pending = [
-            event for event in self._pending if event.is_fresh(now_ms)
-        ]
+        self._pending = [event for event in self._pending if event.is_fresh(now_ms)]
         events = tuple(self._pending[: self.batch_size])
         observations = {
             key: observation
@@ -454,14 +447,15 @@ class OSIRIS:
         speech_refusal = self._validate_speech(context, decision.speech)
         action_refusal = self._validate_action(context, decision.action)
         emitted_speech = (
-            decision.speech if decision.speech is not None and speech_refusal is None else None
+            decision.speech
+            if decision.speech is not None and speech_refusal is None
+            else None
         )
 
         brce_request: BRCERequest | None = None
         if decision.action is not None and action_refusal is None:
-            target = (
-                decision.action.target_surface
-                or self.router.target_for(decision.action.intent)
+            target = decision.action.target_surface or self.router.target_for(
+                decision.action.intent
             )
             request_payload = {
                 "subject": self.subject,
@@ -546,12 +540,8 @@ class OSIRIS:
         if len(speech.text.split()) > self.voice.max_words:
             return "REFUSED:VOICE_BUDGET_EXCEEDED"
 
-        if (
-            context.events
-            and all(
-                event.speech_policy is ResponsePolicy.DO_NOT
-                for event in context.events
-            )
+        if context.events and all(
+            event.speech_policy is ResponsePolicy.DO_NOT for event in context.events
         ):
             return "REFUSED:EVENT_POLICY_DO_NOT_SPEAK"
         return None
@@ -566,8 +556,7 @@ class OSIRIS:
         if not context.events:
             return "REFUSED:NO_TRIGGER_EVENT"
         if all(
-            event.action_policy is ResponsePolicy.DO_NOT
-            for event in context.events
+            event.action_policy is ResponsePolicy.DO_NOT for event in context.events
         ):
             return "REFUSED:EVENT_POLICY_DO_NOT_ACT"
         return None
