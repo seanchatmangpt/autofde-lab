@@ -21,6 +21,8 @@ from pathlib import Path
 import pytest
 
 from autofde_lab.aloop import (
+    CONSISTENT,
+    EXIT_CONSISTENT_UNDER_ASSUMED_COMPLETENESS,
     EXIT_NOT_QUALIFIED,
     EXIT_QUALIFIED,
     EXIT_REFUSED,
@@ -85,13 +87,26 @@ def test_synthetic_corpus_regenerates_byte_identical(corpus: Path) -> None:
         assert hashlib.sha256(data).hexdigest() == entry["sha256"], rel
 
 
-def test_positive_closed_loop_qualifies() -> None:
+def _consistent(code: int, receipt: dict) -> None:
+    """r9 lattice: an unsealed log that passes every rule is never QUALIFIED."""
+    assert code == EXIT_CONSISTENT_UNDER_ASSUMED_COMPLETENESS, receipt["unmet"]
+    assert code != EXIT_QUALIFIED
+    assert receipt["verdict"] == CONSISTENT and receipt["rules_consistent"] is True
+    assert receipt["standing"] == "PARTIAL_ALIVE"
+    for episode in receipt["episodes"]:
+        assert episode["class"] != "AUTONOMOUS"
+
+
+def test_positive_closed_loop_is_consistent_not_qualified_unsealed() -> None:
     code, receipt = evaluate_path(SYNTH / "positive.ocel.json")
-    assert code == EXIT_QUALIFIED
-    assert receipt["verdict"] == "QUALIFIED"
+    _consistent(code, receipt)
     (episode,) = receipt["episodes"]
     m = episode["metrics"]
-    assert episode["class"] == "AUTONOMOUS"
+    assert episode["rule_class"] == "AUTONOMOUS"
+    assert episode["class"] == CONSISTENT
+    assert receipt["envelope_sha256"].startswith("sha256:")
+    assert receipt["envelope_sha256"] in receipt["claim"]
+    assert receipt["sealing"]["sealed"] is False
     assert m["consecutive_self_generated_transitions"] >= 100
     assert m["ALD"] == 100
     assert m["HIR"] == 0.0 and m["UAR"] == 0.0
@@ -108,23 +123,27 @@ def test_each_mutant_is_refused_or_downgraded(corpus: Path, rel: str) -> None:
     code, receipt = evaluate_path(corpus / rel)
     assert code == expect["exit"], (rel, receipt.get("refusals"), receipt.get("unmet"))
     assert code != EXIT_QUALIFIED
+    assert receipt["rules_consistent"] is False, rel
     assert expect["code"] in set(iter_reasons(receipt)), rel
     if expect["class"] is not None:
         # cross-episode mutants append a short foreign episode ``x-ep-1``; the
         # judged episode is always the first (episodes are reported sorted).
         n_eps = 2 if "cross_episode" in rel else 1
         assert len(receipt["episodes"]) == n_eps, rel
-        assert receipt["episodes"][0]["class"] == expect["class"], rel
+        assert receipt["episodes"][0]["rule_class"] == expect["class"], rel
+        assert receipt["episodes"][0]["class"] != "AUTONOMOUS", rel
     else:
         assert receipt["verdict"] == "REFUSED" and receipt["episodes"] == []
 
 
 def test_mutation_kill_ratio_is_total(corpus: Path) -> None:
+    # r9: a kill is a rule failure, not merely exit != 0 (every unsealed log
+    # exits != 0 now, so exit status alone would be a vacuous kill).
     killed = sum(
-        evaluate_path(corpus / rel)[0] != EXIT_QUALIFIED for rel in MUTANT_FILES
+        not evaluate_path(corpus / rel)[1]["rules_consistent"] for rel in MUTANT_FILES
     )
-    assert len(MUTANT_FILES) == 56
-    assert (killed, len(MUTANT_FILES)) == (56, 56)
+    assert len(MUTANT_FILES) == 65
+    assert (killed, len(MUTANT_FILES)) == (65, 65)
 
 
 def test_empty_log_is_refused_not_vacuously_qualified(tmp_path: Path) -> None:
@@ -161,7 +180,9 @@ def test_cli_exit_codes_and_cold_replay_are_byte_identical(
     a, b = tmp_path / "a.json", tmp_path / "b.json"
     first = _cli(str(SYNTH / "positive.ocel.json"), "--out", str(a))
     second = _cli(str(SYNTH / "positive.ocel.json"), "--out", str(b))
-    assert (first.returncode, second.returncode) == (0, 0), first.stderr
+    # r9: the unsealed positive is CONSISTENT_UNDER_ASSUMED_COMPLETENESS, exit 3
+    assert (first.returncode, second.returncode) == (3, 3), first.stderr
+    assert json.loads(a.read_text())["verdict"] == CONSISTENT
     assert a.read_bytes() == b.read_bytes()
     assert (
         _cli(
@@ -462,9 +483,9 @@ def test_post_epoch_grant_through_the_envelope_stays_autonomous(
     path = tmp_path / "envelope-lease.ocel.json"
     dump(_envelope_lease_doc(range(50, 51)), path)
     code, receipt = evaluate_path(path)
-    assert code == EXIT_QUALIFIED, receipt["unmet"]
+    _consistent(code, receipt)
     (episode,) = receipt["episodes"]
-    assert episode["class"] == "AUTONOMOUS"
+    assert episode["rule_class"] == "AUTONOMOUS"
     assert episode["metrics"]["human_causal_edges_after_epoch"] == 0
     assert episode["metrics"]["ALD"] == 100
     assert episode["metrics"]["stale_reobserve_transitions"] == 0
@@ -569,9 +590,9 @@ def test_pre_epoch_objective_in_the_cone_is_not_stale(tmp_path: Path) -> None:
     path = tmp_path / "reobserve-reads-objective.ocel.json"
     dump(doc, path)
     code, receipt = evaluate_path(path)
-    assert code == EXIT_QUALIFIED, receipt["unmet"]
+    _consistent(code, receipt)
     (episode,) = receipt["episodes"]
-    assert episode["class"] == "AUTONOMOUS"
+    assert episode["rule_class"] == "AUTONOMOUS"
     assert episode["metrics"]["ALD"] == 100
     assert episode["metrics"]["stale_reobserve_transitions"] == 0
 
@@ -628,15 +649,9 @@ def test_envelope_is_exactly_what_episode_start_consumes() -> None:
 @pytest.mark.parametrize(
     ("name", "why"),
     [
-        # r8 P3: a family of 102 bound Objectives is an indexed envelope, so no
-        # step (and not the goal either) is exempt: each is older state.
-        ("envelope_bound_human_objective_script_decorative", "produced by e-prescript"),
-        ("envelope_bound_human_objective_script", "produced by e-prescript"),
-        (
-            "envelope_bound_machine_objective_script_decorative",
-            "produced by e-prescript",
-        ),
-        ("envelope_bound_whole_script_every_iteration", "produced by e-prescript"),
+        # r9: the four bound-script mutants (H1/H2/H3/X1) now fail P1 first --
+        # an indexed envelope loses the P1 exemption, see
+        # test_indexed_envelope_is_unattributed_everywhere_r9.
         ("decide_from_goal_only_decorative_reobserve", "not causally downstream"),
     ],
 )
@@ -671,7 +686,7 @@ def test_every_work_order_citing_the_bound_goal_still_qualifies(tmp_path: Path) 
     path = tmp_path / "wo-cites-goal.ocel.json"
     dump(doc, path)
     code, receipt = evaluate_path(path)
-    assert code == EXIT_QUALIFIED, receipt["unmet"]
+    _consistent(code, receipt)
     (episode,) = receipt["episodes"]
     assert episode["metrics"]["ALD"] == 100
     assert episode["metrics"]["stale_reobserve_transitions"] == 0
@@ -696,9 +711,7 @@ P2_MUTANTS = [
     "postepoch_human_picks_provider",
 ]
 P3_MUTANTS = {
-    "whole_bound_script_plus_candidate_inflation": "produced by e-prescript",
     "forked_next_action": "a forked next action",
-    "script_in_envelope_attribute": "consumes obj-1 produced by h-pre",
 }
 
 
@@ -765,6 +778,8 @@ def test_positive_log_is_closed_world_and_unindexed() -> None:
     log = _admit(json.loads((SYNTH / "positive.ocel.json").read_text()), profile)
     g = _Graph(log, profile)
     assert g.indexed == {"ep-1": frozenset()}
+    assert g.varying == {"ep-1": frozenset()}
+    assert g.p1_exempt == g.frozen
     assert (
         g.declared["ep-1"]
         == g.frozen["ep-1"]
@@ -815,5 +830,164 @@ def test_single_valued_goal_attribute_is_not_indexed(tmp_path: Path) -> None:
     path = tmp_path / "goal-description.ocel.json"
     dump(doc, path)
     code, receipt = evaluate_path(path)
-    assert code == EXIT_QUALIFIED, receipt["unmet"]
+    _consistent(code, receipt)
     assert receipt["episodes"][0]["metrics"]["ALD"] == 100
+
+
+# ── repair round 9 (finish adversarial attacks-r8 K1..K9: P1-P3 over the ──
+# ── whole episode, not the work-order cone)                                ──
+
+#: mutants r8 QUALIFIED (exit 0, ALD 100; witnessed on r7 faaad7ab and r8
+#: a44b03a1) and the P1 detail r9 refuses them with.
+R9_P1_MUTANTS = {
+    "envelope_human_script_into_actuate": "envelope object indexed per iteration",
+    "envelope_human_script_into_execution_start": "envelope object indexed",
+    "envelope_machine_plan_script_into_execution": "envelope object indexed",
+    "envelope_human_plan_script_workorder_evidence": "envelope object indexed",
+    "envelope_human_script_gap_evidence": "envelope object indexed",
+    "envelope_multikey_script": "envelope object indexed",
+    "envelope_iteration_indexed_distinct_types": (
+        "cited by some occurrences of actuate but not all"
+    ),
+    "unattributed_attribute_change": "has no producing event",
+    # r8's P3 mutants and the r7 bound scripts: the indexed envelope now loses
+    # the P1 exemption itself, so P1 refuses before the cone is walked.
+    "script_in_envelope_attribute": "envelope object indexed",
+    "whole_bound_script_plus_candidate_inflation": "envelope object indexed",
+    "envelope_bound_human_objective_script_decorative": "envelope object indexed",
+    "envelope_bound_human_objective_script": "envelope object indexed",
+    "envelope_bound_machine_objective_script_decorative": "envelope object indexed",
+    "envelope_bound_whole_script_every_iteration": "envelope object indexed",
+}
+
+
+@pytest.mark.parametrize(("name", "why"), sorted(R9_P1_MUTANTS.items()))
+def test_indexed_envelope_is_unattributed_everywhere_r9(
+    corpus: Path, name: str, why: str
+) -> None:
+    """P1+P3 over the whole episode: an iteration-indexed envelope object (a
+    same-typed family, a multi-valued or out-of-vocabulary attribute, or one
+    cited by some occurrences of an activity and not others) is not frozen
+    envelope state wherever it is cited -- actuate, execution.start, gap.detect,
+    workorder.issue, under any qualifier incl. ``evidence`` -- and an OCEL
+    ObjectChange no event produces is unattributed. The episode FAILS."""
+    code, receipt = evaluate_path(corpus / f"mutants/{name}.ocel.json")
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    m = episode["metrics"]
+    assert episode["class"] == "FAILED"
+    assert m["ALD"] == 0 and m["unattributed_post_epoch_events"] >= 5
+    assert m["human_causal_edges_after_epoch"] == 0
+    reason = next(
+        r for r in episode["reasons"] if r["code"] == "UNATTRIBUTED_EXOGENOUS_CAUSE"
+    )
+    assert reason["broken_term"] == "mu_on_O"
+    assert why in reason["detail"]
+
+
+def test_attribute_change_after_human_act_is_assisted_r9(corpus: Path) -> None:
+    """P2 (K8): a post-epoch human act outputs only a no-op memo; 1 ns later a
+    machine-produced candidate gains ``choice = human-n``. The change is not
+    co-timed with the act, but no event produces it and it follows a human
+    act: human contact, ASSISTED (and P1-unattributed)."""
+    code, receipt = evaluate_path(
+        corpus / "mutants/attribute_change_after_human.ocel.json"
+    )
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    m = episode["metrics"]
+    assert episode["class"] == "ASSISTED"
+    assert m["ALD"] == 0 and m["human_causal_edges_after_epoch"] >= 100
+    reason = next(
+        r for r in episode["reasons"] if r["code"] == "HUMAN_CAUSALITY_AFTER_EPOCH"
+    )
+    assert "attribute-after-human:adm-1.choice" in reason["detail"]
+    assert "UNATTRIBUTED_EXOGENOUS_CAUSE" in {r["code"] for r in episode["reasons"]}
+
+
+def test_invariant_envelope_citation_outside_the_cone_still_qualifies(
+    tmp_path: Path,
+) -> None:
+    """Anti-vacuity control for the r9 invariance clause: every actuate cites
+    the same declared goal (an invariant citation, not an indexed one), so
+    the loop still qualifies with ALD 100."""
+    doc = build_positive()
+    for i in range(101):
+        _event(doc, f"e-act-{i}")["relationships"].append(
+            {"objectId": "obj-1", "qualifier": "input"}
+        )
+    path = tmp_path / "act-cites-goal.ocel.json"
+    dump(doc, path)
+    code, receipt = evaluate_path(path)
+    _consistent(code, receipt)
+    assert receipt["episodes"][0]["metrics"]["ALD"] == 100
+
+
+def test_attribute_set_by_its_machine_producer_still_qualifies(tmp_path: Path) -> None:
+    """Anti-vacuity control for the r9 ObjectChange rule: a value timed exactly
+    at the post-epoch machine event that outputs the object is set by that
+    event, so it is attributed and the loop still qualifies with ALD 100."""
+    doc = build_positive()
+    for i in range(1, 101):
+        t = _event(doc, f"e-admit-{i}")["time"]
+        adm = next(o for o in doc["objects"] if o["id"] == f"adm-{i}")
+        adm.setdefault("attributes", []).append(
+            {"name": "choice", "value": f"machine-{i}", "time": t}
+        )
+    path = tmp_path / "producer-set-attr.ocel.json"
+    dump(doc, path)
+    code, receipt = evaluate_path(path)
+    _consistent(code, receipt)
+    (episode,) = receipt["episodes"]
+    assert episode["metrics"]["ALD"] == 100
+    assert episode["metrics"]["unattributed_post_epoch_events"] == 0
+
+
+def test_envelope_attribute_vocabulary_is_closed(tmp_path: Path) -> None:
+    """P3 (K6): an envelope key outside the profile's envelopeAttributes for
+    its type is a key-indexed script; one in-vocabulary key is not."""
+    profile = load_profile()
+    assert (
+        "description"
+        in profile["failClosedProvenance"]["envelopeAttributes"]["Objective"]
+    )
+    doc = build_positive()
+    goal = next(o for o in doc["objects"] if o["id"] == "obj-1")
+    goal.setdefault("attributes", []).append(
+        {"name": "step0", "value": "do thing 0", "time": "1970-01-01T00:00:00Z"}
+    )
+    path = tmp_path / "goal-one-foreign-key.ocel.json"
+    dump(doc, path)
+    code, receipt = evaluate_path(path)
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    assert episode["class"] == "FAILED"
+    reason = next(
+        r for r in episode["reasons"] if r["code"] == "UNATTRIBUTED_EXOGENOUS_CAUSE"
+    )
+    assert "obj-1" in reason["detail"] and "indexed" in reason["detail"]
+
+
+def test_k_mutant_witness_r9_side_replays(corpus: Path) -> None:
+    """The committed K-mutant witness (r8 a44b03a1 vs r9): the corpus bytes it
+    names are the regenerated ones, and the r9 column is what this court
+    computes now (the r8 column was computed by the r8 court source)."""
+    witness = json.loads(
+        (REPO_ROOT / "docs/rfcs/aloop/ALOOP-001-r9-k-mutant-witness.json").read_text()
+    )
+    assert witness["summary"] == {
+        "k_mutants": 9,
+        "qualified_on_r8": 9,
+        "rule_failures_on_r9": 9,
+    }
+    for rel, row in witness["mutants"].items():
+        data = (corpus / rel).read_bytes()
+        assert hashlib.sha256(data).hexdigest() == row["sha256"], rel
+        assert row["r8_a44b03a1"]["exit"] == EXIT_QUALIFIED
+        code, receipt = evaluate_path(corpus / rel)
+        assert receipt["rules_consistent"] is False, rel
+        assert (code, receipt["verdict"], receipt["episodes"][0]["class"]) == (
+            row["r9"]["exit"],
+            row["r9"]["verdict"],
+            row["r9"]["class"],
+        ), rel

@@ -1365,6 +1365,139 @@ def m_script_in_envelope_attribute(doc):
         _link(doc, f"e-wo-{i}", "cause", "obj-1")
 
 
+# ── repair round 9: P1-P3 over the whole episode (attacks-r8 K1..K9) ──
+
+
+def _declared_script(doc, actor: str, otype: str) -> None:
+    """A pre-epoch ``actor`` mints ``step-0..100`` of ``otype`` and
+    ``episode.start`` declares every step, so each is frozen envelope state
+    under r8's P1 (created before t0, never modified)."""
+    _objective_script(doc, actor, "e-start", "e-prescript")
+    for i in range(POSITIVE_ITERATIONS):
+        _object(doc, f"step-{i}")["type"] = otype
+    _bind_script_into_envelope(doc)
+
+
+def _cite_step(doc, event_prefix: str, qualifier: str) -> None:
+    for i in range(POSITIVE_ITERATIONS):
+        _link(doc, f"{event_prefix}-{i}", qualifier, f"step-{i}")
+
+
+def m_envelope_human_script_into_actuate(doc):
+    """P1+P3 (attacks-r8 K1): a declared pre-epoch human Objective script;
+    actuate[n] takes step-n as input, so each consequence is produced from a
+    human-authored, iteration-indexed step. The work-order cone is untouched;
+    r8 applied its indexed clause only there and qualified it (ALD 100)."""
+    _declared_script(doc, "human.intervene", "Objective")
+    _cite_step(doc, "e-act", "input")
+
+
+def m_envelope_human_script_into_execution_start(doc):
+    """P1+P3 (attacks-r8 K1, execution.start variant); r8 qualified it."""
+    _declared_script(doc, "human.intervene", "Objective")
+    _cite_step(doc, "e-exec", "input")
+
+
+def m_envelope_machine_plan_script_into_execution(doc):
+    """P1+P3 (attacks-r8 K3): the same with a pre-epoch MACHINE Plan script;
+    Plan is outside the Objective/Authority envelope r8 indexed. r8 qualified it."""
+    _declared_script(doc, "candidate.construct", "Plan")
+    _cite_step(doc, "e-exec", "input")
+
+
+def m_envelope_human_plan_script_workorder_evidence(doc):
+    """P1+P3 (attacks-r8 K4b): a declared pre-epoch human Plan script; every
+    workorder.issue[n] cites step-n under the non-causal ``evidence``
+    qualifier. r8 computed invariance over causal qualifiers only and
+    qualified it."""
+    _declared_script(doc, "human.intervene", "Plan")
+    _cite_step(doc, "e-wo", "evidence")
+
+
+def m_envelope_human_script_gap_evidence(doc):
+    """P1+P3 (attacks-r8 K5): step-n cited by gap.detect[n] under ``evidence``;
+    r8 qualified it."""
+    _declared_script(doc, "human.intervene", "Objective")
+    _cite_step(doc, "e-gap", "evidence")
+
+
+def m_envelope_multikey_script(doc):
+    """P3 (attacks-r8 K6): one declared goal with 101 distinct attribute keys
+    (``step0``..``step100``), every value timed before t0; every work order
+    cites the goal. Each key is a step: a key-indexed script, outside the
+    profile's closed envelopeAttributes vocabulary. r8 qualified it."""
+    _object(doc, "obj-1").setdefault("attributes", []).extend(
+        {"name": f"step{i}", "value": f"do thing {i}", "time": _EPOCH_ATTR_TIME}
+        for i in range(POSITIVE_ITERATIONS)
+    )
+    for i in range(POSITIVE_ITERATIONS):
+        _link(doc, f"e-wo-{i}", "cause", "obj-1")
+
+
+def m_envelope_iteration_indexed_distinct_types(doc):
+    """P3 invariance, whole episode (the varying clause alone): a pre-epoch
+    machine event mints five objects of five DIFFERENT types (no family, no
+    attribute), episode.start declares them, and actuate[k] cites the k-th for
+    k = 0..4 -- a short iteration-indexed script no family or attribute rule
+    sees. actuate occurrences cite different envelope sets. r8 qualified it."""
+    kinds = ["Plan", "Evidence", "Capability", "Release", "WorkerRun"]
+    for k, otype in enumerate(kinds):
+        _obj(doc, f"idx-{k}", otype)
+    _insert_before(
+        doc,
+        "e-start",
+        _raw_event(
+            "e-prescript",
+            "candidate.construct",
+            _time_before(doc, "e-start"),
+            [("episode", "ep-1"), ("cause", "obj-1")]
+            + [("output", f"idx-{k}") for k in range(len(kinds))],
+        ),
+    )
+    for k in range(len(kinds)):
+        _link(doc, "e-start", "input", f"idx-{k}")
+        _link(doc, f"e-act-{k}", "input", f"idx-{k}")
+
+
+def m_attribute_change_after_human(doc):
+    """P2+P1 (attacks-r8 K8): a post-epoch human act h-n outputs only an
+    unconsumed no-op memo; 1 ns later the machine-produced candidate adm-n,
+    read by plan.select[n], gains ``choice = human-n``. r8 caught only a change
+    co-timed to the nanosecond and qualified it."""
+    from autofde_lab.ocel.model import format_ns, parse_ns
+
+    for i in range(1, POSITIVE_ITERATIONS):
+        _obj(doc, f"hn-{i}", "Evidence")
+        _insert_before(
+            doc,
+            f"e-cand-{i}",
+            _human_event(
+                f"h-{i}",
+                _time_before(doc, f"e-cand-{i}"),
+                "ep-1",
+                "hum-operator",
+                [("output", f"hn-{i}")],
+            ),
+        )
+        t = parse_ns(_event(doc, f"h-{i}")["time"]) + 1
+        _object(doc, f"adm-{i}").setdefault("attributes", []).append(
+            {"name": "choice", "value": f"human-{i}", "time": format_ns(t)}
+        )
+
+
+def m_unattributed_attribute_change(doc):
+    """P1 (attacks-r8 K9): the same attribute change on adm-n with no human act
+    at all, timed 1 ns before plan.select[n]. An OCEL ObjectChange has no
+    producing event; r8 checked modification only on envelope objects."""
+    from autofde_lab.ocel.model import format_ns, parse_ns
+
+    for i in range(1, POSITIVE_ITERATIONS):
+        t = parse_ns(_event(doc, f"e-plan-{i}")["time"]) - 1
+        _object(doc, f"adm-{i}").setdefault("attributes", []).append(
+            {"name": "choice", "value": f"x-{i}", "time": format_ns(t)}
+        )
+
+
 MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     "human_after_epoch": (
         m_human_after_epoch,
@@ -1516,19 +1649,19 @@ MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     ),
     "envelope_bound_human_objective_script_decorative": (
         m_envelope_bound_human_objective_script_decorative,
-        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
     ),
     "envelope_bound_human_objective_script": (
         m_envelope_bound_human_objective_script,
-        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
     ),
     "envelope_bound_machine_objective_script_decorative": (
         m_envelope_bound_machine_objective_script_decorative,
-        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
     ),
     "envelope_bound_whole_script_every_iteration": (
         m_envelope_bound_whole_script_every_iteration,
-        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
     ),
     "decide_from_goal_only_decorative_reobserve": (
         m_decide_from_goal_only_decorative_reobserve,
@@ -1548,7 +1681,7 @@ MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     ),
     "whole_bound_script_plus_candidate_inflation": (
         m_whole_bound_script_plus_candidate_inflation,
-        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
     ),
     "forked_next_action": (
         m_forked_next_action,
@@ -1576,7 +1709,43 @@ MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     ),
     "script_in_envelope_attribute": (
         m_script_in_envelope_attribute,
-        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
+    ),
+    "envelope_human_script_into_actuate": (
+        m_envelope_human_script_into_actuate,
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
+    ),
+    "envelope_human_script_into_execution_start": (
+        m_envelope_human_script_into_execution_start,
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
+    ),
+    "envelope_machine_plan_script_into_execution": (
+        m_envelope_machine_plan_script_into_execution,
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
+    ),
+    "envelope_human_plan_script_workorder_evidence": (
+        m_envelope_human_plan_script_workorder_evidence,
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
+    ),
+    "envelope_human_script_gap_evidence": (
+        m_envelope_human_script_gap_evidence,
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
+    ),
+    "envelope_multikey_script": (
+        m_envelope_multikey_script,
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
+    ),
+    "envelope_iteration_indexed_distinct_types": (
+        m_envelope_iteration_indexed_distinct_types,
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
+    ),
+    "attribute_change_after_human": (
+        m_attribute_change_after_human,
+        {"exit": 3, "class": "ASSISTED", "code": "HUMAN_CAUSALITY_AFTER_EPOCH"},
+    ),
+    "unattributed_attribute_change": (
+        m_unattributed_attribute_change,
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
     ),
 }
 
@@ -1699,6 +1868,18 @@ def build_short_loop() -> dict[str, Any]:
     return build_positive(iterations=20)
 
 
+def bind_commits(doc: dict[str, Any], base: str, shas: list[str]) -> dict[str, Any]:
+    """Sealed-variant helper (r9): rebind the positive's Subject SHAs to real
+    commits -- ``sub-0`` to ``base`` and ``sub-{i+1}`` to ``shas[i]`` -- so the
+    commit completeness witness (``git rev-list base..head``) can be checked."""
+    subjects = {o["id"]: o for o in doc["objects"] if o["type"] == "Subject"}
+    for i, sha in enumerate([base, *shas]):
+        for a in subjects[f"sub-{i}"].get("attributes", ()):
+            if a["name"] == "sha":
+                a["value"] = sha
+    return doc
+
+
 def write_all(out: Path) -> dict[str, Any]:
     out = Path(out)
     manifest: dict[str, Any] = {
@@ -1708,7 +1889,10 @@ def write_all(out: Path) -> dict[str, Any]:
     }
     positive = build_positive()
     manifest["files"]["positive.ocel.json"] = {
-        "expect": {"exit": 0, "class": "AUTONOMOUS", "code": None},
+        # r9 verdict lattice: the unsealed positive passes every rule (rule
+        # class AUTONOMOUS) but can only be CONSISTENT_UNDER_ASSUMED_COMPLETENESS
+        # (exit 3); its sealed+witnessed variant (bind_commits + seal) exits 0.
+        "expect": {"exit": 3, "class": "AUTONOMOUS", "code": None},
         "sha256": hashlib.sha256(
             dump(positive, out / "positive.ocel.json")
         ).hexdigest(),

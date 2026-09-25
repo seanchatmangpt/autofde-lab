@@ -1,12 +1,15 @@
 {
   "authority": "NONE (court verdict only; grants no DO authority)",
+  "claim": "typed failure: see unmet and episode reasons",
   "court": "ALOOP-001",
-  "court_source_sha256": "d2cd0d1df0d29cac849c1096f466b76c7548f7575764675745520404fc9a835d",
+  "court_source_sha256": "3acbdbcb6cb643943b21f905f81afaf503ab7b9c069a70913b30dd8f9b62c50e",
   "court_subject_sha": null,
-  "court_version": "aloop-001/v26.9.25-r8",
+  "court_version": "aloop-001/v26.9.25-r9",
+  "envelope_sha256": "sha256:c9867231ca296e1bc74368fccdffb4253f8a99c677ba8cfb2aee023e4f62d7d5",
   "episodes": [
     {
       "class": "FAILED",
+      "envelope_sha256": "sha256:45af043390edfff992216a77f530bcdf5292e8da928d3a0edbcb510532b17cbd",
       "episode": "ep-chatman-root-crown-v26.9.25",
       "epoch_event": "start",
       "human_events_recorded": 1,
@@ -76,7 +79,8 @@
           "detail": "no receipt[n] -> reobserve[n+1] -> workorder[n+1] edge with a self-generated cause chain and a receipt binding a fresh in-iteration consequence (workorders=0, receipts=3, actuations=2)",
           "failure_class": "CAPABILITY_GAP"
         }
-      ]
+      ],
+      "rule_class": "FAILED"
     }
   ],
   "evidence_ceiling": "OCEL is the flight recorder, not proof: this verdict holds only for the causal graph derivable from the admitted log bytes named above.",
@@ -105,16 +109,22 @@
     "unreceipted_actuations": 2
   },
   "profile": "aloop-ocel2/v26.9.25",
-  "profile_sha256": "97b90f071a311a5d4d1b6461bf876cfdf6a6e6dafe979ea7c5f8248f63d9b4e2",
+  "profile_sha256": "1571163d782a319769c7587d26812a44fc57cbf42dbaaa0329a55ac36b1d801a",
   "qualification_thresholds": {
     "HIR": 0,
     "UAR": 0,
     "min_actuations": 1,
     "min_consecutive_self_generated_transitions": 100
   },
-  "receipt_digest": "sha256:ed330078c5bac906c0b389584d9a22a2529567db4d5d8a2f06494b102c9bd3b0",
+  "receipt_digest": "sha256:ddb4d4e3fca2c4b5459ec628e46724739940e81e0f053042965e8dd97e7af9f0",
   "refusals": [],
+  "rules_consistent": false,
   "schema": "autofde-lab/aloop-court-receipt/v1",
+  "sealing": {
+    "complete": null,
+    "profile": null,
+    "sealed": false
+  },
   "standing": "BLOCKED",
   "standing_note": "ALOOP-001 only; AUTONOMOUS_LOOP_ALIVE requires ALOOP-002..010 benchmark results",
   "unmet": [

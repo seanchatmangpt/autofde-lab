@@ -2,7 +2,8 @@
 
 **Status:** FINAL_SPEC candidate
 **Scope:** NEXT_CALVER (post-tag; makes no claim about the immutable `v26.9.25` tag standing)
-**Implementation standing:** ALOOP-001 implemented; ALOOP-002..010 typed obligations
+**Implementation standing:** ALOOP-001 implemented (court `aloop-001/v26.9.25-r9`, with the
+sealed-recorder profile); ALOOP-002..010 typed obligations
 
 ## Subject
 
@@ -55,6 +56,7 @@ that is not policy/goal/authority; an event consuming an unproduced object of ty
 | `BLOCKED_AUTHORITY` | machine-derived `goal.blocked` with `reason = authority` |
 | `BLOCKED_INFORMATION` | machine-derived `goal.blocked` with `reason = information` |
 | `FAILED` | an integrity failure (unreceipted actuation, orphan receipt, duplicate consequence, stale subject, failed substitution, absent recovery) or no closed loop at all |
+| `CONSISTENT_UNDER_ASSUMED_COMPLETENESS` | (since r9) every rule holds, but the log is not sealed and complete, so `AUTONOMOUS` would be a claim about absence the log cannot carry; `rule_class` keeps `AUTONOMOUS` |
 
 Integrity failures dominate: an episode with both a human edge and an unreceipted actuation is
 `FAILED`, and every reason is still listed in the receipt.
@@ -118,7 +120,11 @@ earlier in time than the linking event, or
 (ii) frozen envelope state: declared by the episode's `episode.start` (linked by it under any
 qualifier), created at or before `episode.start` (no producer after it), and never modified
 after `t0` (no attribute value timed after `t0`, no post-epoch output, no post-epoch or
-foreign-episode human link).
+foreign-episode human link), and (since r9) neither indexed nor varying under P3.
+An OCEL `ObjectChange` has no producing event: since r9 a value on a non-envelope object is
+attributed only when it is timed exactly at the object's post-epoch machine producer (the event
+that created it set it); any other value -- changed after creation, or timed before the object
+existed -- is unattributed.
 Anything else fails the episode: no producer and no declaration, a producer in another episode,
 a pre-epoch producer whose output `episode.start` does not declare, a timestamp-only ordering,
 an equal timestamp. The affected work orders are not self-generated (ALD drops) and the episode
@@ -131,8 +137,10 @@ A post-epoch event is human-caused if any object it links, under any qualifier (
 `provider`, `subject` and `originAuthority` included, `episode` excepted), or any object in that
 object's O2O component (either direction, every O2O qualifier, any depth, no type exemption):
 is a `Human` or has `origin = human`; is linked, under any qualifier, by a `human.intervene`
-after the consumer's `t0` (or of another episode) that is no later than the consumer; or carries
-an attribute value timed after `t0` and exactly at a human act. Any such edge makes the episode
+after the consumer's `t0` (or of another episode) that is no later than the consumer; carries
+an attribute value timed after `t0` and exactly at a human act; or (since r9) carries an
+attribute value no event attributes (P1 above), timed at or after any post-epoch or foreign
+human act -- whatever the nanosecond offset. Any such edge makes the episode
 `ASSISTED`. There is no exemption list; only the frozen pre-epoch envelope of the consumer's own
 episode is lawful human origin.
 
@@ -150,13 +158,84 @@ ordered value history) can be indexed per iteration, so it loses the exemption. 
 r7 count bound (an invariant envelope at least as large as the candidate count), which candidate
 inflation defeated (J3).
 
+Since r9 the indexed and invariant clauses hold over the whole episode, not only the cone of
+`workorder.issue`, and they bind P1. Indexed is judged over every object `episode.start`
+declares, of any type and under any qualifier (not only `Objective`/`Authority`): a same-typed
+family, a multi-valued attribute, or an attribute key outside the profile's closed
+`failClosedProvenance.envelopeAttributes` vocabulary for the object's type (a key-indexed
+script). Varying: among the post-epoch machine events of one activity that cite envelope objects
+(under any qualifier but `episode`), an object cited by some and not all. An indexed or varying
+envelope object is not frozen envelope state for P1, so citing it anywhere after `t0` --
+`actuate`, `execution.start`, `provider.select`, `commit`, `gap.detect`, `workorder.issue`, under
+`input`, `cause` or the non-causal `evidence` -- is `UNATTRIBUTED_EXOGENOUS_CAUSE`.
+
 Evidence ceiling: a script written into one scalar attribute value of a single-valued envelope
-object (for example a long `description` string) is not visible to an OCEL court. It is a named
-residual (`UNKNOWN`), not a claim of absence.
+object (for example a long `description` string) is not visible to an OCEL court. Neither is a
+script of at most one object per (type, `Authority` kind) pair, each cited identically by every
+occurrence of an activity, whose step order lives only outside the log. Both are named residuals
+(`UNKNOWN`), not claims of absence.
 
 **Automation ≠ Autonomy.** A fixed-task cron whose receipts never feed a
 `consequence → observation → new WorkOrder` edge fails with `AUTOMATION_NOT_AUTONOMY`, however
 many receipts it writes.
+
+## Non-convergence and the sealed recorder
+
+Repair round 9 stops treating the rules as able to certify autonomy on their own.
+
+**Non-convergence theorem.** Let the log `L` be authored by the party `A` whose process is
+judged, and let a court be any predicate `C(L)` over the log bytes. (1) `A` controls every byte
+of `L`: qualifiers, types, timestamps, O2O links, attributes, and which events exist. (2) A
+human cause that `A` does not record leaves no byte in `L`: for any `L` with a human act `h`
+there is `L' = L \ {h}` (with `h`'s outputs re-attributed to machine events) that `A` could have
+written. (3) If `C(L') = QUALIFIED` for a faithful fully-autonomous log `L'`, it also holds for
+the same bytes written after an unrecorded human step. So no shape rule over `L` certifies the
+absence of human causation, and completeness is not observable from `L`. Generate-and-kill over
+shape rules cannot converge: every rule's complement is the next attack (rounds 1-9 measured
+this: each round's exemption was the next round's attack), and the omission attack needs no
+shape at all. `NOT_QUALIFIED` stays sound (a log that incriminates its author is evidence
+against it); `QUALIFIED` does not, against an adversarial author.
+
+**Verdict lattice.** `QUALIFIED` (exit 0, episode `AUTONOMOUS`) requires three things: the log
+is sealed (below), it is complete against external witnesses, and every ALOOP-001 rule holds.
+An unsealed log that passes every rule, or a sealed one without both witnesses, is
+`CONSISTENT_UNDER_ASSUMED_COMPLETENESS` relative to `envelope_sha256` (sha256 of the canonical
+frozen envelope objects), standing ceiling `PARTIAL_ALIVE`, exit 3; its receipt states the
+assumption in `claim`. `NOT_QUALIFIED` (exit 3) and `REFUSED` (exit 2) are unchanged. A sealed
+log whose chain, signature, bijection or completeness fails is `REFUSED` (exit 2). The receipt
+field `rules_consistent` records the rule verdict alone; mutation kill counts use it, not the
+exit code (every unsealed log exits non-zero, so exit status alone would be a vacuous kill).
+
+**Sealed-recorder profile** (`aloop-sealed-recorder/v1`, `src/autofde_lab/aloop/seal.py`). The
+recorder, not the judged author, writes the evidence stream: each OCEL event, in log order, is
+carried by one record of the `ProvenanceLedger` (`src/autofde_lab/_cache/provenance.py`, its
+record type generalized rather than duplicated): `sequence`, `previous_digest` hash chain,
+`record_digest`, and an HMAC-SHA256 `AttestationSigner` signature by a recorder key that is not
+in the log (key material found in the log or ledger bytes is `SEAL_KEY_DISCLOSED`). A final
+`close` record binds sha256 of the whole canonical document, so objects, attribute changes and
+O2O are sealed too. The verifier checks, in order: the chain and signatures under its own
+keyring (`SEAL_CHAIN_INVALID`, `R_missing_identity`); the OCEL<->ledger bijection -- one record
+per event, same order, same digest, and the close digest (`SEAL_BIJECTION`); then completeness:
+(a) every commit of each named repository's `git rev-list <range>` maps to exactly one sealed
+`actuate`/`commit`/`merge` event whose output `Subject` has that `repository` and `sha`
+(`SEAL_INCOMPLETE_COMMIT`, `R_missing_consequence`: a missing or duplicated commit event), and
+every such event naming a witnessed repository is inside the range
+(`SEAL_UNWITNESSED_COMMIT`); (b) every entry of the supplied human-message ledger timed after
+`t0` maps to exactly one sealed `human.intervene` event carrying that `messageId`
+(`SEAL_INCOMPLETE_HUMAN`, `mu_on_O`). CLI: `--seal LEDGER --key-file F --key-id ID --git
+REPO_ID=PATH:RANGE --human-ledger FILE`.
+
+**Claim scope.** A `QUALIFIED` verdict says: the recorder holding the key emitted exactly these
+events, nothing in the witnessed git range and nothing in the witnessed human-message ledger is
+missing from them, and the recorded causal graph satisfies P1-P3 and the thresholds. It does not
+say the recorder itself saw every human act (a human channel outside the message ledger is
+outside the witness), nor that the key was not shared with the judged party.
+
+**Residuals.** Inside a sealed envelope, whether a declared `Objective` is a goal or a script
+(a script in one scalar attribute, or one object per type cited invariantly) remains reviewer
+judgement relative to `envelope_sha256`; the court pins the envelope's content hash so that
+judgement is about named bytes. Human channels not in the message ledger and key custody are
+out of scope (`UNKNOWN`), not claims of absence.
 
 ## OCEL 2.0 profile
 
@@ -273,8 +352,13 @@ their iteration), uncaused and unauthorized actuations, exogenous post-epoch inp
 `python -m autofde_lab.aloop LOG --out RECEIPT` writes a deterministic JSON receipt: court
 source sha256, profile sha256, log sha256 and locator, optional court subject SHA, per-episode
 class/metrics/typed reasons, typed refusals, and `receipt_digest` over the canonical form. Every
-reason carries a `broken_term` (Chatman taxonomy) and an RFC-0004 §39 failure class. Exit codes:
-`0` qualified, `3` not qualified (typed), `2` refused (malformed or forged log).
+reason carries a `broken_term` (Chatman taxonomy) and an RFC-0004 §39 failure class. Since r9 the
+receipt also carries `rules_consistent`, `envelope_sha256`, `claim` and `sealing` (the seal
+report: profile, ledger sha256, key ids, sealed, complete, witnesses, records, tail digest).
+Exit codes: `0` qualified (sealed, complete, every rule holds -- the only route to 0), `3` not
+qualified or `CONSISTENT_UNDER_ASSUMED_COMPLETENESS` (typed; distinguished by `verdict`), `2`
+refused (malformed or forged log, or a sealed log failing chain, signature, bijection or
+completeness).
 
 ## AUTONOMY STANDING report shape
 
@@ -295,9 +379,11 @@ subject; a qualified ALOOP-001 alone yields `PARTIAL_ALIVE`.
 The committed chatman root-crown chain (runs 36160116076, 36161744816, 36161856985; bytes copied
 from `git:seanchatmangpt/chatman-ecosystem@c599667a84ec79d832bb779bce1730b33b43fdd4`) is
 converted by `python -m autofde_lab.aloop.chatman_trace` and judged in
-`docs/rfcs/aloop/ALOOP-001-chatman-root-crown-v26.9.25.json`: `NOT_QUALIFIED`, episode `FAILED`
-with `UNRECEIPTED_ACTUATION` (the inter-run commit and the tag creation have no receipt in the
-admitted inputs), `UNATTRIBUTED_EXOGENOUS_CAUSE` (since r8: post-epoch links to objects neither
+`docs/rfcs/aloop/ALOOP-001-chatman-root-crown-v26.9.25.json` (regenerated by the r9 court; the
+trace is unsealed, `sealing.sealed = false`, so even a rules pass would be capped at
+`CONSISTENT_UNDER_ASSUMED_COMPLETENESS`): `NOT_QUALIFIED`, `rules_consistent = false`, ALD 0,
+episode `FAILED` with `UNRECEIPTED_ACTUATION` (the inter-run commit and the tag creation have no
+receipt in the admitted inputs), `UNAUTHORIZED_ACTUATION`, `UNATTRIBUTED_EXOGENOUS_CAUSE` (since r8: post-epoch links to objects neither
 produced in the episode nor declared by its `episode.start`), `HUMAN_CAUSALITY_AFTER_EPOCH` (the release-crown environment approval that the
 tag decision names) and `AUTOMATION_NOT_AUTONOMY` (receipts do feed the next observation through
 `previous_receipt_digest`, but no WorkOrder is ever issued). The verdict is about the recorded
@@ -309,8 +395,9 @@ process, not about the tag's release standing.
   corpus for the court only).
 - Granting authority: court verdicts carry `authority = NONE`.
 - Treating OCEL as proof: it is the flight recorder; a log that omits a human act is a forged
-  log, and detecting omissions requires independent observation (ALOOP-009 soak, crown
-  observations), not this court.
+  log. Since r9 omissions are detected only against independent observation -- the sealed
+  recorder's external witnesses (git rev-list, human-message ledger) -- never from the log's own
+  bytes; an unsealed log is at most `CONSISTENT_UNDER_ASSUMED_COMPLETENESS`.
 
 ## Relation to other RFCs
 
@@ -354,9 +441,16 @@ the episode is not `FAILED` (P1); if a Human reached over any E2O qualifier (`ev
 human act after `t0`, leaves the episode anything but `ASSISTED` (P2); or if a forked next
 action (one reobserve rooting two work orders), an indexed envelope (a family of bound
 `Objective`s, whatever the candidate count) or an envelope attribute holding an ordered value
-history still counts as a transition (P3); or if two runs over the same bytes produce different
-receipts. Each has a mutant in the regenerated corpus whose sha256 is committed in
-`tests/aloop/fixtures/synthetic/MANIFEST.json` (56 mutants, 56 killed). Disabling any one of P1,
+history still counts as a transition (P3); if a declared envelope object indexed per iteration
+-- a same-typed family of any type, an out-of-vocabulary attribute key, or an object cited by
+some occurrences of an activity and not others -- reaches any post-epoch event (an actuation,
+`execution.start`, `gap.detect`, a work order under `evidence`) and the episode is not `FAILED`
+(P1+P3, r9); if an attribute value no event produces reaches a post-epoch event and the episode
+is not `FAILED` (P1, r9), or follows a post-epoch human act and the episode is not `ASSISTED`
+(P2, r9); or if two runs over the same bytes produce different receipts. Each has a mutant in
+the regenerated corpus whose sha256 is committed in
+`tests/aloop/fixtures/synthetic/MANIFEST.json` (65 mutants, 65 killed by the rules:
+`rules_consistent = false` for each). Disabling any one of P1,
 P2, P3 lets at least one mutant qualify again.
 
 Repair round 1 (court version `aloop-001/v26.9.25-r1`) closed three adversarial-court findings
@@ -471,3 +565,46 @@ it under `provider`; the positive fixture's bytes change for that one link and i
 every work order, the objective re-read by every reobserve, a single-valued goal description.
 Known residual, not closed here: a script in one scalar attribute value of a single-valued
 envelope object (evidence ceiling above).
+
+Repair round 9 (court version `aloop-001/v26.9.25-r9`) closed the finish adversarial attacks-r8
+K1, K4b, K8 and K9 (plus K3, K4, K5, K6), each exit 0 `QUALIFIED`, `AUTONOMOUS`, ALD 100 on
+r8. K1 (`admission_vacuous`): a pre-epoch human act minted 101 per-iteration `Objective`
+steps, `episode.start` declared them, and `actuate[n]` (or `execution.start`, `provider.select`,
+`commit`) took step-n as input -- r8 applied its indexed clause only inside the cone of
+`workorder.issue`, and its P1 frozen exemption never consulted it. K4b (`admission_vacuous`):
+the same with `Plan` steps, outside the `Objective`/`Authority` set r8 indexed, cited by every
+work order under the non-causal `evidence` qualifier. K8 (`mu_on_O`): a post-epoch human act
+outputs a no-op memo and 1 ns later a machine-produced candidate gains `choice = human-n`; r8
+caught only a change co-timed to the nanosecond. K9 (`mu_on_O`): the same change with no human
+act; r8 checked modification only on envelope objects. Round 9 closes P1-P3 over the whole
+episode (indexed over every declared object, closed attribute-key vocabulary, per-activity
+citation invariance; the P1 exemption is frozen AND unindexed AND invariant) and over OCEL
+`ObjectChange` values (attributed only at the producing machine event; unattributed after a
+human act is P2 human contact). Nine new mutants -- K1 on `actuate` and on `execution.start`,
+K3 (machine `Plan` script into `execution.start`), K4b, K5 (step-n on `gap.detect` under
+`evidence`), K6 (101 attribute keys on the goal), a five-object script of five distinct types
+(the varying clause alone), K8 and K9 -- each return exit 0 `QUALIFIED`, ALD 100 on the r7
+(`faaad7ab`) and r8 (`a44b03a1`) courts and exit 3 `NOT_QUALIFIED` on r9 (K8 `ASSISTED`, the
+rest `FAILED` `UNATTRIBUTED_EXOGENOUS_CAUSE`). Six earlier mutants (r7 H1/H2/H3/X1, r8 J3 and
+script-in-attributes) are now refused by P1 before the cone law runs and list
+`UNATTRIBUTED_EXOGENOUS_CAUSE` instead of `STALE_REOBSERVE`. Ablation: without P1, K1, K3, K4b,
+K5, K9, the distinct-types script, F9 and J2 qualify; without P2, F6 and H8 qualify; without
+P3, every K script, K6, J3, J3c, H1-H3, X1, X5 and script-in-attributes qualify. The positive
+log does not violate P1-P3 (`rules_consistent`, rule class `AUTONOMOUS`, ALD 100); unsealed it
+is `CONSISTENT_UNDER_ASSUMED_COMPLETENESS` (exit 3), and its sealed variant bound to 101 real git
+commits with an empty post-t0 human ledger is `QUALIFIED` (exit 0). Controls still pass every
+rule: every `actuate` citing the goal (an invariant citation), a candidate attribute timed
+exactly at its producing machine event, a single in-vocabulary goal `description`.
+
+The same round adds the sealed-recorder falsifiers (`tests/aloop/test_aloop_seal.py`, real git
+repositories and a random recorder key per test): the architecture is falsified if an unsealed
+log exits 0 or classifies an episode `AUTONOMOUS`; if a sealed log qualifies with a post-t0
+human message the log omits, an event deleted or an object edited after sealing, a record's
+`previous_digest` forged, a record dropped, a wrong verification key, a re-seal by the author
+under its own key, a git commit no sealed event produced (synthetic and real `git rev-list`), a
+duplicated commit event, a commit claim outside the witnessed range, or the recorder key inside
+the log. Each of these 12 is `REFUSED` (exit 2) with its typed code; the sealed positive exits 0;
+sealed without witnesses it is `CONSISTENT_UNDER_ASSUMED_COMPLETENESS`; four sealed, complete
+K-mutants stay `NOT_QUALIFIED` (sealing certifies authorship and completeness, not the rules).
+K-mutant witness (`docs/rfcs/aloop/ALOOP-001-r9-k-mutant-witness.json`): the nine K-class
+synthetic mutants exit 0 `QUALIFIED` on the r8 court (`a44b03a1`) and are rule failures on r9.

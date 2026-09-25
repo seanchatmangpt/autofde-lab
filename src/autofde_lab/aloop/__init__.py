@@ -9,10 +9,15 @@ Spec: ``docs/rfcs/RFC-ALOOP-v26.9.25.md`` (FINAL_SPEC candidate, NEXT_CALVER).
 Only ALOOP-001 (basic closed loop) is implemented here; ALOOP-002..010 are
 typed obligations in the RFC. The OCEL log is evidence, never proof: the
 court derives a causal graph from qualified E2O relations and refuses or
-downgrades whatever that graph does not support.
+downgrades whatever that graph does not support. Since court r9 an unsealed
+log can at most be CONSISTENT_UNDER_ASSUMED_COMPLETENESS (exit 3); QUALIFIED
+(exit 0) requires the sealed-recorder profile (``aloop.seal``) and complete
+external witnesses.
 """
 
 from autofde_lab.aloop.court import (
+    CONSISTENT,
+    EXIT_CONSISTENT_UNDER_ASSUMED_COMPLETENESS,
     EXIT_NOT_QUALIFIED,
     EXIT_QUALIFIED,
     EXIT_REFUSED,
@@ -23,6 +28,8 @@ from autofde_lab.aloop.court import (
 )
 
 __all__ = [
+    "CONSISTENT",
+    "EXIT_CONSISTENT_UNDER_ASSUMED_COMPLETENESS",
     "EXIT_QUALIFIED",
     "EXIT_NOT_QUALIFIED",
     "EXIT_REFUSED",

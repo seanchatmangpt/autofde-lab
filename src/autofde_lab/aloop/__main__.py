@@ -2,10 +2,19 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-"""``python -m autofde_lab.aloop LOG.ocel.json [--out RECEIPT.json]``.
+"""``python -m autofde_lab.aloop LOG.ocel.json [--out RECEIPT.json] [seal options]``.
 
-Exit codes: 0 qualified, 3 not qualified (typed), 2 refused (malformed or
-forged log). The receipt is printed to stdout when ``--out`` is omitted.
+Exit codes: 0 qualified (sealed + complete + every rule holds), 3 not
+qualified OR consistent under assumed completeness (typed; an unsealed log
+never exits 0), 2 refused (malformed or forged log, or a sealed log whose
+chain, signature, bijection or completeness fails). The receipt is printed to
+stdout when ``--out`` is omitted.
+
+Seal options (sealed-recorder profile, court r9): ``--seal LEDGER.jsonl``
+``--key-file FILE --key-id ID`` (recorder verification key; never inside the
+log), completeness witnesses ``--git REPO_OBJECT_ID=PATH:REV_RANGE``
+(repeatable; real ``git rev-list``) and ``--human-ledger FILE`` (JSON list of
+``{"id", "time"}`` human messages).
 """
 
 from __future__ import annotations
@@ -27,12 +36,53 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--locator", default=None, help="provenance locator for the log bytes"
     )
+    parser.add_argument(
+        "--seal", type=Path, default=None, help="sealed-recorder ledger"
+    )
+    parser.add_argument("--key-file", type=Path, default=None)
+    parser.add_argument("--key-id", default=None)
+    parser.add_argument(
+        "--git",
+        action="append",
+        default=[],
+        metavar="REPO_ID=PATH:RANGE",
+        help="commit completeness witness (git rev-list RANGE in PATH)",
+    )
+    parser.add_argument("--human-ledger", type=Path, default=None)
     args = parser.parse_args(argv)
+    seal = None
+    if args.seal is not None:
+        from autofde_lab.aloop.seal import (
+            SealInputs,
+            git_rev_list,
+            keyring_from_file,
+            load_json,
+        )
+
+        if args.key_file is None or not args.key_id:
+            parser.error("--seal requires --key-file and --key-id")
+        keyring, key = keyring_from_file(args.key_file, args.key_id)
+        commits = None
+        if args.git:
+            commits = {}
+            for spec in args.git:
+                repo_id, _, rest = spec.partition("=")
+                path, _, rev_range = rest.rpartition(":")
+                commits[repo_id] = git_rev_list(path, rev_range)
+        humans = load_json(args.human_ledger) if args.human_ledger else None
+        seal = SealInputs(
+            ledger=args.seal,
+            keyring=keyring,
+            commits=commits,
+            human_messages=humans,
+            key_material=(key,),
+        )
     code, receipt = evaluate_path(
         args.log,
         profile_path=args.profile,
         court_subject_sha=args.subject_sha,
         log_locator=args.locator,
+        seal=seal,
     )
     if args.out is not None:
         write_receipt(receipt, args.out)

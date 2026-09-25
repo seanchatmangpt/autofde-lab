@@ -117,8 +117,41 @@ transition); an envelope family of same-typed objects or an envelope object
 with a multi-valued attribute is indexed per iteration and not exempt. A
 script in one scalar attribute value remains beyond an OCEL court (UNKNOWN).
 
-The verdict is a pure function of (log bytes, profile bytes, court source):
-the receipt carries no wall-clock value, so a cold replay is byte-identical.
+Repair round 9 closes P1-P3 over the whole episode, not over the work-order
+cone (finish adversarial r0 attacks-r8 K1/K4b/K8/K9, each QUALIFIED on r8):
+the indexed and invariance clauses of P3 were applied only inside the cone of
+``workorder.issue`` and only to Objective/Authority envelope members, and
+P1's frozen exemption did not consult them, so a human-authored step-n cited by
+``actuate[n]`` (K1) or by ``workorder.issue[n]`` under ``evidence`` (K4b) rode
+through as "frozen envelope state". P1 now exempts only the frozen AND
+unindexed AND invariant part of the envelope, where -- over every object
+episode.start declares, of any type, under any qualifier -- indexed means a
+same-typed family, a multi-valued attribute, or an attribute key outside the
+profile's closed ``envelopeAttributes`` vocabulary (a key-indexed script), and
+invariant means every post-epoch machine event of one activity that cites
+envelope objects (any qualifier) cites the same set. OCEL ``ObjectChange``
+values have no producing event: P1 attributes a value on a non-envelope object
+only when it is timed exactly at the object's post-epoch machine producer, so
+an attribute changed after creation (K9) is unattributed; P2 treats such an
+unattributed change at or after any post-epoch human act as human contact
+(K8), not only one co-timed to the nanosecond.
+
+Round 9 also admits what generate-and-kill cannot converge on (RFC section
+"Non-convergence and the sealed recorder"): the log's author controls every
+byte, so no shape rule certifies the *absence* of a human cause, and
+completeness is not observable from the log. The verdict lattice is therefore:
+``QUALIFIED`` (exit 0, episode ``AUTONOMOUS``) only for a log sealed by the
+recorder profile (``autofde_lab.aloop.seal``) AND complete against external
+witnesses (git rev-list, human-message ledger) AND passing every rule; an
+unsealed (or sealed but unwitnessed) log that passes every rule is
+``CONSISTENT_UNDER_ASSUMED_COMPLETENESS`` relative to the content hash of its
+frozen envelope, standing ceiling PARTIAL_ALIVE, exit 3; a sealed log whose
+chain, signature, bijection or completeness fails is REFUSED (exit 2).
+``NOT_QUALIFIED``/``REFUSED`` from the rules are unchanged.
+
+The verdict is a pure function of (log bytes, profile bytes, court source,
+seal ledger bytes and witnesses): the receipt carries no wall-clock value, so a
+cold replay is byte-identical.
 """
 
 from __future__ import annotations
@@ -138,6 +171,8 @@ __all__ = [
     "EXIT_QUALIFIED",
     "EXIT_NOT_QUALIFIED",
     "EXIT_REFUSED",
+    "EXIT_CONSISTENT_UNDER_ASSUMED_COMPLETENESS",
+    "CONSISTENT",
     "AloopRefusal",
     "load_profile",
     "evaluate_document",
@@ -146,12 +181,15 @@ __all__ = [
 ]
 
 COURT_ID = "ALOOP-001"
-COURT_VERSION = "aloop-001/v26.9.25-r8"
+COURT_VERSION = "aloop-001/v26.9.25-r9"
 RECEIPT_SCHEMA = "autofde-lab/aloop-court-receipt/v1"
 
 EXIT_QUALIFIED = 0
 EXIT_REFUSED = 2
 EXIT_NOT_QUALIFIED = 3
+#: r9 verdict lattice: rules pass but the log is not sealed+complete. Never 0.
+EXIT_CONSISTENT_UNDER_ASSUMED_COMPLETENESS = 3
+CONSISTENT = "CONSISTENT_UNDER_ASSUMED_COMPLETENESS"
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_PROFILE = REPO_ROOT / "schemas" / "aloop" / "ocel2-aloop-profile.json"
@@ -230,6 +268,8 @@ def load_profile(path: Path | None = None) -> dict[str, Any]:
 def _court_source_sha256(profile: Mapping[str, Any]) -> str:
     digest = hashlib.sha256()
     digest.update(Path(__file__).read_bytes())
+    # r9: the sealed-recorder verifier is part of the verdict function
+    digest.update((Path(__file__).parent / "seal.py").read_bytes())
     digest.update(profile["_profile_sha256"].encode())
     digest.update(profile["base_schema"]["sha256"].encode())
     return digest.hexdigest()
@@ -459,6 +499,18 @@ class _Graph:
                     if q != "episode" and e.id not in self.touch_any[o]:
                         self.touch_any[o].append(e.id)
         self.human_ts = {e.timestamp_ns for e in self.events if e.activity == _HUMAN}
+        # Repair round 9 (P2, K8): per episode, the earliest human act after
+        # its epoch or of another episode.
+        self.first_post_human: dict[str, int] = {}
+        for ep, s in self.start.items():
+            ts = [
+                self.ts[e.id]
+                for e in self.events
+                if e.activity == _HUMAN
+                and (self.episode[e.id] != ep or self.pos[e.id] > self.pos[s])
+            ]
+            if ts:
+                self.first_post_human[ep] = min(ts)
         self.declared: dict[str, frozenset[str]] = {
             ep: frozenset(o for _, o in self.links[s]) for ep, s in self.start.items()
         }
@@ -479,8 +531,15 @@ class _Graph:
         # same-typed objects (same type and Authority kind), or an envelope
         # object whose attribute holds an ordered sequence of values, can be
         # indexed per iteration -- a script, not a goal or a policy.
+        # Repair round 9: judged over EVERY object episode.start declares (any
+        # type, any qualifier), not only its Objective/Authority members; an
+        # attribute key outside the profile's closed envelope vocabulary for
+        # the object's type is a key-indexed script (K6), fail closed.
+        env_keys: Mapping[str, Any] = profile["failClosedProvenance"][
+            "envelopeAttributes"
+        ]
         self.indexed: dict[str, frozenset[str]] = {}
-        for ep, members in declared_state.items():
+        for ep, members in self.declared.items():
             family: dict[tuple[str, Any], list[str]] = defaultdict(list)
             for o in members:
                 family[(self.otype[o], self.oattr[o].get("kind"))].append(o)
@@ -489,13 +548,51 @@ class _Graph:
                 for o in members
                 if len(family[(self.otype[o], self.oattr[o].get("kind"))]) > 1
                 or any(n > 1 for n in self.values.get(o, {}).values())
+                or set(self.values.get(o, {})) - set(env_keys.get(self.otype[o], ()))
             )
+        # Repair round 9 (P3 invariant, whole episode): every post-epoch machine
+        # event of one activity that cites envelope objects, under any
+        # qualifier but ``episode``, must cite the same set. An envelope object
+        # cited by some occurrences of an activity and not by others is
+        # iteration-indexed decision state (K1: step-n into actuate[n]; K4b:
+        # step-n under ``evidence`` on workorder.issue[n]).
+        cites: dict[tuple[str, str], list[frozenset[str]]] = defaultdict(list)
+        for e in self.events:
+            ep = self.episode[e.id]
+            if e.activity == _HUMAN or self.pos[e.id] <= self.pos[self.start[ep]]:
+                continue
+            cited = frozenset(
+                o
+                for q, o in self.links[e.id]
+                if q != "episode" and o in self.declared[ep]
+            )
+            if cited:
+                cites[(ep, e.activity)].append(cited)
+        self.varying: dict[str, frozenset[str]] = {ep: frozenset() for ep in self.start}
+        for (ep, _a), sets in cites.items():
+            self.varying[ep] = self.varying[ep] | (
+                frozenset().union(*sets) - frozenset.intersection(*sets)
+            )
+        # What P1 exempts as envelope state: frozen, and (P3) unindexed and
+        # invariant.
+        self.p1_exempt: dict[str, frozenset[str]] = {
+            ep: frozenset(
+                o
+                for o in self.frozen[ep]
+                if "P3" not in _LAWS
+                or (o not in self.indexed[ep] and o not in self.varying[ep])
+            )
+            for ep in self.start
+        }
         self.envelope_state: dict[str, frozenset[str]] = {
             ep: frozenset(
                 o
                 for o in members
                 if ("P1" not in _LAWS or o in self.frozen[ep])
-                and ("P3" not in _LAWS or o not in self.indexed[ep])
+                and (
+                    "P3" not in _LAWS
+                    or (o not in self.indexed[ep] and o not in self.varying[ep])
+                )
             )
             for ep, members in declared_state.items()
         }
@@ -792,9 +889,17 @@ class _Graph:
                 and (self.pos[ps[0]] > self.pos[start] or self.episode[ps[0]] != ep)
             ):
                 continue
-            if o in self.frozen[ep]:
+            if o in self.p1_exempt[ep]:
                 continue
-            if not ps:
+            if o in self.frozen[ep]:
+                why = (
+                    "envelope object indexed per iteration (same-typed family, "
+                    "multi-valued or out-of-vocabulary attribute)"
+                    if o in self.indexed[ep]
+                    else "envelope object cited by some occurrences of "
+                    f"{self.act[eid]} but not all (iteration-indexed)"
+                )
+            elif not ps:
                 why = "no producer and not frozen envelope state"
             else:
                 p = ps[0]
@@ -804,10 +909,34 @@ class _Graph:
                     why = f"produced before t0 by {p} but not frozen envelope state"
                 elif self.ts[p] >= self.ts[eid]:
                     why = f"producer {p} is not strictly earlier in time"
+                elif (ch := self.unattributed_change(o)) is not None:
+                    why = (
+                        f"attribute {ch[0]!r} value timed {ch[1]} has no producing "
+                        f"event ({p} created {o} at {self.ts[p]})"
+                    )
                 else:
                     continue
             bad.append((q, o, why))
         return bad
+
+    def unattributed_change(self, o: str) -> tuple[str, int] | None:
+        """Repair round 9: the first OCEL ``ObjectChange`` on a non-envelope
+        object that no event attributes -- i.e. not timed exactly at the
+        object's post-epoch machine producer (which set it on creation)."""
+        for attr, t in self.changes.get(o, ()):
+            if not self.change_attributed(o, t):
+                return attr, t
+        return None
+
+    def change_attributed(self, o: str, t: int) -> bool:
+        """A value timed ``t`` on ``o`` is set by its post-epoch machine producer."""
+        ps = self.producers.get(o)
+        return bool(
+            ps
+            and self.act[ps[0]] != _HUMAN
+            and self.post[ps[0]]
+            and t == self.ts[ps[0]]
+        )
 
     def p2_taint(self, eid: str) -> tuple[str, str] | None:
         """P2: the first Human contact of post-epoch event ``eid``, qualifier-agnostic.
@@ -823,6 +952,7 @@ class _Graph:
         if self.pos[eid] <= self.pos[start]:
             return None
         t0, te = self.ts[start], self.ts[eid]
+        first_human = self.first_post_human.get(ep)
 
         def human_contact(m: str) -> str | None:
             if self.otype[m] == "Human" or self.oattr[m].get("origin") == "human":
@@ -837,6 +967,17 @@ class _Graph:
             for attr, t in self.changes.get(m, ()):
                 if t0 < t <= te and t in self.human_ts:
                     return f"cotimed-attribute:{m}.{attr}"
+            # Repair round 9 (K8): an attribute value no event attributes,
+            # timed at or after a post-epoch (or foreign) human act, is a human
+            # hand on the object, whatever the nanosecond offset.
+            if m not in self.frozen[ep] and first_human is not None:
+                for attr, t in self.changes.get(m, ()):
+                    if (
+                        first_human <= t <= te
+                        and t > t0
+                        and not self.change_attributed(m, t)
+                    ):
+                        return f"attribute-after-human:{m}.{attr}"
             return None
 
         for q, o in self.links[eid]:
@@ -1590,6 +1731,24 @@ def _aggregate(episodes: list[dict[str, Any]]) -> dict[str, Any]:
 # ── entry points ────────────────────────────────────────────────────────────
 
 
+def _envelope_digests(document: Any, g: _Graph) -> dict[str, str]:
+    """Per episode: sha256 of the canonical frozen envelope objects (r9 claim anchor)."""
+    raw = {
+        str(o.get("id")): o
+        for o in (document.get("objects") or ())
+        if isinstance(o, Mapping)
+    }
+    return {
+        ep: "sha256:"
+        + _sha256(
+            canonical([raw[o] for o in sorted(g.frozen[ep]) if o in raw]).encode(
+                "utf-8"
+            )
+        )
+        for ep in sorted(g.start)
+    }
+
+
 def _seal(receipt: dict[str, Any]) -> dict[str, Any]:
     receipt["receipt_digest"] = "sha256:" + _sha256(canonical(receipt).encode("utf-8"))
     return receipt
@@ -1602,8 +1761,14 @@ def evaluate_document(
     profile: Mapping[str, Any] | None = None,
     court_subject_sha: str | None = None,
     log_locator: str | None = None,
+    seal_report: Mapping[str, Any] | None = None,
 ) -> tuple[int, dict[str, Any]]:
-    """Run ALOOP-001 over an already-parsed OCEL 2.0 document."""
+    """Run ALOOP-001 over an already-parsed OCEL 2.0 document.
+
+    ``seal_report`` is :func:`autofde_lab.aloop.seal.verify_seal`'s report, or
+    ``None`` for an unsealed log (verdict ceiling
+    ``CONSISTENT_UNDER_ASSUMED_COMPLETENESS``).
+    """
     prof = profile if profile is not None else load_profile()
     threshold = prof["qualification"][COURT_ID]
     receipt: dict[str, Any] = {
@@ -1621,7 +1786,24 @@ def evaluate_document(
             "causal graph derivable from the admitted log bytes named above."
         ),
         "qualification_thresholds": threshold,
+        "sealing": dict(seal_report)
+        if seal_report is not None
+        else {"profile": None, "sealed": False, "complete": None},
     }
+    if seal_report is not None and seal_report.get("refusals"):
+        receipt.update(
+            {
+                "verdict": "REFUSED",
+                "exit_code": EXIT_REFUSED,
+                "standing": "REFUSED",
+                "rules_consistent": False,
+                "refusals": list(seal_report["refusals"]),
+                "episodes": [],
+                "metrics": None,
+                "log_subjects": [],
+            }
+        )
+        return EXIT_REFUSED, _seal(receipt)
     try:
         log = _admit(document, prof)
         graph = _Graph(log, prof)
@@ -1631,6 +1813,7 @@ def evaluate_document(
                 "verdict": "REFUSED",
                 "exit_code": EXIT_REFUSED,
                 "standing": "REFUSED",
+                "rules_consistent": False,
                 "refusals": [refusal.as_json()],
                 "episodes": [],
                 "metrics": None,
@@ -1705,12 +1888,58 @@ def evaluate_document(
                     f"episode {ep['episode']}",
                 )
             )
-    qualified = not unmet
+    rules_consistent = not unmet
+    witnessed = bool(
+        seal_report is not None
+        and seal_report.get("sealed") is True
+        and seal_report.get("complete") is True
+    )
+    qualified = rules_consistent and witnessed
+    envelopes = _envelope_digests(document, graph)
+    envelope_sha = "sha256:" + _sha256(canonical(envelopes).encode("utf-8"))
+    for ep in episodes:
+        ep["rule_class"] = ep["class"]
+        ep["envelope_sha256"] = envelopes.get(ep["episode"])
+        if ep["class"] == "AUTONOMOUS" and not witnessed:
+            # r9: AUTONOMOUS is a claim about absence (no human cause, nothing
+            # omitted); an unsealed or unwitnessed log cannot carry it.
+            ep["class"] = CONSISTENT
+    if qualified:
+        verdict, code, standing = "QUALIFIED", EXIT_QUALIFIED, "PARTIAL_ALIVE"
+        claim = (
+            "sealed+complete: every OCEL event is recorder-signed and "
+            "hash-chained, every witnessed commit and post-t0 human message maps "
+            "to exactly one sealed event, and every ALOOP-001 rule holds"
+        )
+    elif rules_consistent:
+        verdict, code, standing = (
+            CONSISTENT,
+            EXIT_CONSISTENT_UNDER_ASSUMED_COMPLETENESS,
+            "PARTIAL_ALIVE",
+        )
+        claim = (
+            f"consistent under assumed completeness relative to envelope "
+            f"{envelope_sha}: every ALOOP-001 rule holds over the log bytes, but "
+            "the log is not "
+            + (
+                "complete against external witnesses"
+                if seal_report is not None and seal_report.get("sealed")
+                else "sealed"
+            )
+            + ", so the absence of human causation and of omitted events is "
+            "assumed, not observed"
+        )
+    else:
+        verdict, code, standing = "NOT_QUALIFIED", EXIT_NOT_QUALIFIED, "BLOCKED"
+        claim = "typed failure: see unmet and episode reasons"
     receipt.update(
         {
-            "verdict": "QUALIFIED" if qualified else "NOT_QUALIFIED",
-            "exit_code": EXIT_QUALIFIED if qualified else EXIT_NOT_QUALIFIED,
-            "standing": "PARTIAL_ALIVE" if qualified else "BLOCKED",
+            "verdict": verdict,
+            "exit_code": code,
+            "standing": standing,
+            "rules_consistent": rules_consistent,
+            "envelope_sha256": envelope_sha,
+            "claim": claim,
             "standing_note": (
                 "ALOOP-001 only; AUTONOMOUS_LOOP_ALIVE requires ALOOP-002..010 benchmark results"
             ),
@@ -1727,7 +1956,7 @@ def evaluate_document(
             ),
         }
     )
-    return (EXIT_QUALIFIED if qualified else EXIT_NOT_QUALIFIED), _seal(receipt)
+    return code, _seal(receipt)
 
 
 def evaluate_path(
@@ -1736,8 +1965,13 @@ def evaluate_path(
     profile_path: Path | None = None,
     court_subject_sha: str | None = None,
     log_locator: str | None = None,
+    seal: Any = None,
 ) -> tuple[int, dict[str, Any]]:
-    """Read an OCEL 2.0 JSON file from disk and run ALOOP-001 over its exact bytes."""
+    """Read an OCEL 2.0 JSON file from disk and run ALOOP-001 over its exact bytes.
+
+    ``seal`` is an :class:`autofde_lab.aloop.seal.SealInputs` (sealed-recorder
+    ledger + verification key + completeness witnesses) or ``None``.
+    """
     raw = Path(path).read_bytes()
     digest = _sha256(raw)
     profile = load_profile(profile_path)
@@ -1745,12 +1979,18 @@ def evaluate_path(
         document = json.loads(raw)
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         document = {"__malformed__": str(exc)}
+    seal_report = None
+    if seal is not None:
+        from autofde_lab.aloop.seal import verify_seal
+
+        seal_report = verify_seal(document, seal, raw)
     return evaluate_document(
         document,
         log_sha256=digest,
         profile=profile,
         court_subject_sha=court_subject_sha,
         log_locator=log_locator,
+        seal_report=seal_report,
     )
 
 
