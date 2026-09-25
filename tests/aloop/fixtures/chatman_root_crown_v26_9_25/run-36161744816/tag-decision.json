@@ -1,0 +1,11 @@
+{
+  "authority": "NONE (decision only; tagging requires the release-crown environment approval)",
+  "crown_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5",
+  "decision": "LEGAL",
+  "existing_tag_sha": null,
+  "head_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5",
+  "reasons": [],
+  "receipt_digest": "sha256:2323f877bca4d3fdca217ace53e7501f7978ed66e4afbdd39904e1f1cda0fa0c",
+  "remaining": [],
+  "tag": "v26.9.25"
+}

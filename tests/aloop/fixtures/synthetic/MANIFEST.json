@@ -1,0 +1,126 @@
+{
+  "files": {
+    "mutants/actuate_without_receipt.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "UNRECEIPTED_ACTUATION",
+        "exit": 3
+      },
+      "sha256": "612cbad92c33b663dbfa94e953dab90dcde4b1113ca85e597c1f0728f15a9234"
+    },
+    "mutants/cause_from_future.ocel.json": {
+      "expect": {
+        "class": null,
+        "code": "CAUSALITY_VIOLATION",
+        "exit": 2
+      },
+      "sha256": "06209c4583ba38719c4cf7f77ae66414e964c9859f57d21fb3743d7b4ea38b4b"
+    },
+    "mutants/duplicate_consequence.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "DUPLICATE_CONSEQUENCE",
+        "exit": 3
+      },
+      "sha256": "f63fedd15f0a9eca5a161e55a45fb03eff295e649407be5e8e8ba112180169cf"
+    },
+    "mutants/fixed_task_cron.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "AUTOMATION_NOT_AUTONOMY",
+        "exit": 3
+      },
+      "sha256": "5477a264b3c7b9c1bc2a54e0a78309acba86ee9fd889020bb1fd51543564d213"
+    },
+    "mutants/forged_origin_authority.ocel.json": {
+      "expect": {
+        "class": null,
+        "code": "FORGED_ORIGIN_AUTHORITY",
+        "exit": 2
+      },
+      "sha256": "96a6561a75d3799d199d8e345c4ef7af92ed9fb84f52375999873719a809478a"
+    },
+    "mutants/human_after_epoch.ocel.json": {
+      "expect": {
+        "class": "ASSISTED",
+        "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
+        "exit": 3
+      },
+      "sha256": "b0cd6f2fb96ea01d73a47f188a30e92f8b86739cce19930ffdc328fe7781ca58"
+    },
+    "mutants/human_prose_cause.ocel.json": {
+      "expect": {
+        "class": "ASSISTED",
+        "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
+        "exit": 3
+      },
+      "sha256": "332227af5bc8fbb42b6fa38a793738330029a2a35b11f726018274ccfb3c0024"
+    },
+    "mutants/malformed_qualifier.ocel.json": {
+      "expect": {
+        "class": null,
+        "code": "PROFILE_UNKNOWN_QUALIFIER",
+        "exit": 2
+      },
+      "sha256": "b0490a74edd4cc4fd8269d7504115c10f62e72977e2b2cb77d551a0d080afeab"
+    },
+    "mutants/missing_origin_authority.ocel.json": {
+      "expect": {
+        "class": null,
+        "code": "PROFILE_QUALIFIER_CARDINALITY",
+        "exit": 2
+      },
+      "sha256": "6a8787e5b692f537679e54f7baf5c65d55e84a4aa8860d4b216cfc0d8f0abb59"
+    },
+    "mutants/orphan_receipt.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "ORPHAN_RECEIPT",
+        "exit": 3
+      },
+      "sha256": "a5913d8b5c64b5be9e8dc3aec9268722578c5bf3157d746796bd57b8e9aa7a25"
+    },
+    "mutants/provider_replaced_by_human.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "PROVIDER_SUBSTITUTION_FAILED",
+        "exit": 3
+      },
+      "sha256": "4ee48e7d7633bd2b02408c4165ab1bda4138fe04dadd09ebcc5fb76c5ad72de6"
+    },
+    "mutants/schema_violation.ocel.json": {
+      "expect": {
+        "class": null,
+        "code": "OCEL2_SCHEMA_VIOLATION",
+        "exit": 2
+      },
+      "sha256": "f1cea74b99f8384ac18036f6212659f7047b061f033bb4cd8d138a0880481790"
+    },
+    "mutants/short_loop.ocel.json": {
+      "expect": {
+        "class": "AUTONOMOUS",
+        "code": "INSUFFICIENT_LOOP_DEPTH",
+        "exit": 3
+      },
+      "sha256": "67cd4f32eb285d3f8caf5961cda1dd5830cd30905e3186a24fa77d81a1369803"
+    },
+    "mutants/stale_subject.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "STALE_SUBJECT",
+        "exit": 3
+      },
+      "sha256": "4de16d2633c344bac0dbb8acbdaf678dc7db963ce995f00d66e151c017bae04f"
+    },
+    "positive.ocel.json": {
+      "expect": {
+        "class": "AUTONOMOUS",
+        "code": null,
+        "exit": 0
+      },
+      "sha256": "b10dddf870f446732dfdbdc0215c6e62b5231049031a29457ace097a3ccd1aa5"
+    }
+  },
+  "generator": "python -m autofde_lab.aloop.synth <out>",
+  "note": "synthetic falsifier corpus for ALOOP-001; not evidence about any real system"
+}
