@@ -93,7 +93,7 @@ def test_stale_observation_claim_is_refused_not_guessed():
     assert output.brce_request is None
     assert output.receipt.standing is Standing.REFUSED
     assert output.receipt.reason == (
-        "REFUSED:STALE_OR_MISSING_OBSERVATION:repo.head"
+        "SPEECH:REFUSED:STALE_OR_MISSING_OBSERVATION:repo.head"
     )
 
 
@@ -123,7 +123,7 @@ def test_action_is_a_candidate_brce_request_not_do():
     assert output.receipt.reason == "CANDIDATE_ONLY:NO_DO"
 
 
-def test_event_policy_can_forbid_action():
+def test_event_policy_can_forbid_action_without_suppressing_valid_speech():
     kernel = OSIRIS(subject="sean")
     kernel.ingest(
         Event(
@@ -140,15 +140,18 @@ def test_event_policy_can_forbid_action():
     output = kernel.cycle(
         now_ms=101,
         deliberator=lambda _context: CompanionDecision(
+            speech=SpeechCandidate(text="I can record the observation."),
             action=ActionCandidate(
                 intent=IntentKind.WORK,
                 capability="sjira.create-work-item",
-            )
+            ),
         ),
     )
+    assert output.speech is not None
     assert output.brce_request is None
     assert output.receipt.standing is Standing.REFUSED
-    assert output.receipt.reason == "REFUSED:EVENT_POLICY_DO_NOT_ACT"
+    assert output.receipt.speech_emitted
+    assert output.receipt.reason == "ACTION:REFUSED:EVENT_POLICY_DO_NOT_ACT"
 
 
 def test_proactive_action_requires_an_admitted_trigger_event():
@@ -163,7 +166,7 @@ def test_proactive_action_requires_an_admitted_trigger_event():
         ),
     )
     assert output.brce_request is None
-    assert output.receipt.reason == "REFUSED:NO_TRIGGER_EVENT"
+    assert output.receipt.reason == "ACTION:REFUSED:NO_TRIGGER_EVENT"
 
 
 def test_plan_compaction_persists_obligations_not_consumed_events():
@@ -227,4 +230,4 @@ def test_voice_budget_is_enforced_by_fast_loop():
         ),
     )
     assert output.speech is None
-    assert output.receipt.reason == "REFUSED:VOICE_BUDGET_EXCEEDED"
+    assert output.receipt.reason == "SPEECH:REFUSED:VOICE_BUDGET_EXCEEDED"
