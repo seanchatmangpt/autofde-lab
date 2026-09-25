@@ -117,7 +117,9 @@ def classify_prior_art(
     )
 
     complete = [
-        candidate for candidate in candidate_list if required.issubset(candidate.semantics)
+        candidate
+        for candidate in candidate_list
+        if required.issubset(candidate.semantics)
     ]
     if complete:
         selected = min(complete, key=lambda item: (len(item.semantics), item.id))
@@ -206,6 +208,4 @@ def assert_novelty_receipt(verdict: PriorArtVerdict) -> None:
         raise NoveltyRefusal("REFUSED:NOVELTY_WITHOUT_RESIDUAL")
     for failure in verdict.failures:
         if not failure.missing_semantics:
-            raise NoveltyRefusal(
-                f"REFUSED:NOVELTY_FAILURE_UNTYPED:{failure.id}"
-            )
+            raise NoveltyRefusal(f"REFUSED:NOVELTY_FAILURE_UNTYPED:{failure.id}")
