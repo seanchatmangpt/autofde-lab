@@ -120,6 +120,30 @@
       },
       "sha256": "a5913d8b5c64b5be9e8dc3aec9268722578c5bf3157d746796bd57b8e9aa7a25"
     },
+    "mutants/postepoch_human_amends_authority.ocel.json": {
+      "expect": {
+        "class": "ASSISTED",
+        "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
+        "exit": 3
+      },
+      "sha256": "bd822a80a41822cafc94b651cf07240ae362eea6b2a8f4d49d310583699d5fdf"
+    },
+    "mutants/postepoch_human_o2o_authority.ocel.json": {
+      "expect": {
+        "class": "ASSISTED",
+        "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
+        "exit": 3
+      },
+      "sha256": "a825cc35f375f5978fcc55e91f076d2a4a33dbe2e761b2d074e4b9fb0a003a8f"
+    },
+    "mutants/postepoch_unenveloped_authority_grant.ocel.json": {
+      "expect": {
+        "class": "ASSISTED",
+        "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
+        "exit": 3
+      },
+      "sha256": "e6ba8b4bbb2334e3c8f25186fb4e89e9a23b287838fe547648704ec56d542cb7"
+    },
     "mutants/preepoch_laundered_human_script.ocel.json": {
       "expect": {
         "class": "ASSISTED",
@@ -167,6 +191,22 @@
         "exit": 3
       },
       "sha256": "67cd4f32eb285d3f8caf5961cda1dd5830cd30905e3186a24fa77d81a1369803"
+    },
+    "mutants/stale_reobserve_old_subject.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "STALE_REOBSERVE",
+        "exit": 3
+      },
+      "sha256": "033f6e9027ad733fb2a3eb78528f50984d3ad8d367e9358f517d2ca692797be5"
+    },
+    "mutants/stale_reobserve_older_observation.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "STALE_REOBSERVE",
+        "exit": 3
+      },
+      "sha256": "23bdd58dc825b06233aa69dc92490937e1552c2ecb6ffb6331df260f9d994a7a"
     },
     "mutants/stale_subject.ocel.json": {
       "expect": {

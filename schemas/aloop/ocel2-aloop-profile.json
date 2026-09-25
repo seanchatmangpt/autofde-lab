@@ -125,6 +125,12 @@
     "crossEpisodeCausality": "a causal E2O flow (input/cause consuming an object produced in another episode) is REFUSED CROSS_EPISODE_CAUSALITY (R_missing_authority, AUTHORITY_FAILURE): no single epoch can judge it",
     "exemptQualifiers": ["episode", "originAuthority"]
   },
+  "freshReobserve": {
+    "rule": "a transition receipt[n] -> reobserve[n+1] -> workorder[n+1] counts only if reobserve[n+1] consumes receipt[n]'s output strictly after it, no other receipt.persist of the episode lies between receipt[n] and workorder[n+1], workorder[n+1]'s iteration segment reaches no observe/reobserve older than receipt[n], and no event of that segment after receipt[n] reads (input/cause/subject) a Subject superseded at its position; otherwise the transition is not counted (ALD drops) and the episode lists STALE_REOBSERVE (R_not_fed_back, SUBJECT_FAILURE)"
+  },
+  "postEpochAuthorityChannel": {
+    "rule": "a human.intervene that outputs, modifies or links (any qualifier but episode, or one O2O hop from any object it links) an Objective or Authority opens a human next-action channel through that object; every later non-human event citing it (originAuthority, input, cause) whose epoch precedes the human act (or of another episode) has a human causal edge. An Authority output by a machine event after t0 is the same channel unless that event consumes the pre-declared envelope (an Authority granted at its episode.start), in which case it inherits the envelope's channel"
+  },
   "authorizedActuation": {
     "rule": "every actuation must have a workorder.issue of its own episode among its causal ancestors; an actuation with none is an unleased DO (R_missing_authority) and fails the episode"
   },

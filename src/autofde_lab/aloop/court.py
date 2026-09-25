@@ -47,6 +47,18 @@ causal E2O flow across episodes is refused (``CROSS_EPISODE_CAUSALITY``); and
 human taint propagates transitively through pre-epoch machine events, so a
 pre-epoch hop cannot launder a human-authored next action.
 
+Repair round 4: a transition ``receipt[n] -> reobserve[n+1] -> workorder[n+1]``
+counts only if the reobserve is fresh -- strictly after ``receipt[n]``, consuming
+its output, with no later receipt persisted before ``workorder[n+1]``, no older
+observation in ``workorder[n+1]``'s segment, and no superseded Subject read in
+that segment; a stale transition is dropped from ALD and reported as
+``STALE_REOBSERVE`` (B4). A post-epoch human act that outputs, modifies or links
+(E2O, or O2O through what it links) an ``Authority``/``Objective`` object makes
+every later event citing that object (``originAuthority``/``input``/``cause``)
+human-caused; an ``Authority`` a machine event outputs after ``t0`` without
+consuming the pre-declared envelope (an ``Authority`` granted at
+``episode.start``) is the same human next-action channel (C9).
+
 The verdict is a pure function of (log bytes, profile bytes, court source):
 the receipt carries no wall-clock value, so a cold replay is byte-identical.
 """
@@ -76,7 +88,7 @@ __all__ = [
 ]
 
 COURT_ID = "ALOOP-001"
-COURT_VERSION = "aloop-001/v26.9.25-r3"
+COURT_VERSION = "aloop-001/v26.9.25-r4"
 RECEIPT_SCHEMA = "autofde-lab/aloop-court-receipt/v1"
 
 EXIT_QUALIFIED = 0
@@ -409,6 +421,68 @@ class _Graph:
             for q, o in self.links[e.id]:
                 if q not in exempt and e.id not in self.touches[o]:
                     self.touches[o].append(e.id)
+        # Repair round 4 (C9): the lawful pre-epoch channel (Objective,
+        # Authority) is lawful only while no post-epoch hand reaches it. A
+        # human act that outputs, modifies or links such an object -- directly
+        # under any qualifier but ``episode``, or over one O2O hop from any
+        # object it links -- opens a human next-action channel through it from
+        # that act on (judged against each consumer's epoch in
+        # :meth:`authority_channel`). A machine event that outputs an
+        # ``Authority`` after its epoch is the same channel unless it consumes
+        # the pre-declared envelope (an Authority granted at its episode's
+        # ``episode.start``); if it does, it inherits the envelope's channel.
+        # ``channel[o]`` lists the opening events in log order.
+        o2o_any: dict[str, set[str]] = defaultdict(set)
+        for link in log.object_object_links:
+            o2o_any[link.source_id].add(link.target_id)
+            o2o_any[link.target_id].add(link.source_id)
+        self.channel: dict[str, list[str]] = defaultdict(list)
+        envelope = {
+            ep: {
+                o
+                for q, o in self.links[s]
+                if q in ("input", "originAuthority")
+                and self.otype.get(o) == "Authority"
+            }
+            for ep, s in self.start.items()
+        }
+        for e in self.events:
+            eid = e.id
+            opened: set[str] = set()
+            if e.activity == _HUMAN:
+                for q, o in self.links[eid]:
+                    if q == "episode":
+                        continue
+                    for x in (o, *sorted(o2o_any.get(o, ()))):
+                        if self.otype.get(x) in allowed_pre:
+                            opened.add(x)
+                for x in sorted(opened):
+                    if eid not in self.channel[x]:
+                        self.channel[x].append(eid)
+                continue
+            if not self.post[eid]:
+                continue
+            granted_out = [
+                o
+                for q, o in self.links[eid]
+                if q in producing and self.otype[o] == "Authority"
+            ]
+            if not granted_out:
+                continue
+            via = [
+                o
+                for q, o in self.links[eid]
+                if q in causal and o in envelope[self.episode[eid]]
+            ]
+            origins = (
+                [h for o in via for h in self.channel.get(o, ()) if h != eid]
+                if via
+                else [eid]
+            )
+            for x in granted_out:
+                for h in origins:
+                    if h not in self.channel[x]:
+                        self.channel[x].append(h)
         # Repair round 3 (C1): human-touch taint propagates transitively through
         # machine events that run before their episode's epoch. A pre-epoch
         # machine hop that consumes a human-authored object outside the lawful
@@ -483,6 +557,15 @@ class _Graph:
                     if q == "originAuthority" and self.otype[o] == "Human":
                         self.human_edges.append(("<originAuthority>", eid, o))
                         hit = True
+                # Repair round 4 (C9): citing an Authority/Objective whose
+                # channel a post-epoch hand opened is a human cause.
+                for q, o in self.links[eid]:
+                    if q not in ("originAuthority", "input", "cause"):
+                        continue
+                    h = self.authority_channel(o, eid)
+                    if h is not None:
+                        self.human_edges.append((f"<authority:{h}>", eid, o))
+                        hit = True
             self.human[eid] = hit
 
         for e in self.events:
@@ -531,11 +614,29 @@ class _Graph:
                 return h
         return None
 
+    def authority_channel(self, o: str, consumer: str) -> str | None:
+        """The earliest event that opened a post-epoch channel through ``o`` for ``consumer``.
+
+        Repair round 4 (C9): a human act counts when it is after ``consumer``'s
+        epoch or in another episode; a machine grant (an ``Authority`` output
+        after ``t0`` without the pre-declared envelope) counts when it is after
+        ``consumer``'s epoch. Only acts strictly before ``consumer`` count.
+        """
+        for h in self.channel.get(o, ()):
+            if h == consumer or self.pos[h] >= self.pos[consumer]:
+                continue
+            if self.act[h] == _HUMAN and self.episode[h] != self.episode[consumer]:
+                return h
+            if self.post_for(h, consumer):
+                return h
+        return None
+
     def is_human_object(self, o: str, consumer: str) -> bool:
         return (
             self.otype[o] == "Human"
             or self.oattr[o].get("origin") == "human"
             or self.unlawful_touch(o, consumer) is not None
+            or self.authority_channel(o, consumer) is not None
             or any(self.pos[h] < self.pos[consumer] for h in self.laundered.get(o, ()))
         )
 
@@ -655,6 +756,57 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
             and ps[0] in segment
         ]
 
+    # Repair round 4 (B4): the Subject that is current at each log position
+    # (the episode.start subject, then each commit/merge output Subject).
+    subject_timeline: list[tuple[int, str]] = [
+        (g.pos[start], o)
+        for o in g.objects(start, "subject")
+        if g.otype[o] == "Subject"
+    ]
+    for e in events:
+        if g.act[e] in ("commit", "merge"):
+            subject_timeline.extend(
+                (g.pos[e], o) for o in g.objects(e, "output") if g.otype[o] == "Subject"
+            )
+
+    def current_subject(at: int) -> str | None:
+        cur = None
+        for p, o in subject_timeline:
+            if p < at:
+                cur = o
+        return cur
+
+    episode_receipts = [e for e in events if g.act[e] == _RECEIPT]
+
+    def stale_reobserve(r: str, o: str, w2: str) -> str | None:
+        """Why ``receipt r -> reobserve o -> workorder w2`` is not a fresh transition, or None."""
+        if g.pos[o] <= g.pos[r] or not any(p == r for p, _ in g.preds[o]):
+            return f"{o} does not consume {r}'s output strictly after it"
+        later = [x for x in episode_receipts if g.pos[r] < g.pos[x] < g.pos[w2]]
+        if later:
+            return f"{later[0]} persisted before {w2} but {o} observes only {r}"
+        segment = g.ascend(w2, stop=segment_stops)
+        older = [
+            a
+            for a in segment
+            if g.act[a] in ("observe", _REOBSERVE) and g.pos[a] < g.pos[r]
+        ]
+        if older:
+            return f"{w2} reuses observation {older[0]} older than {r}"
+        for a in [w2, *segment]:
+            if g.pos[a] <= g.pos[r]:
+                continue
+            cur = current_subject(g.pos[a])
+            for q, x in g.links[a]:
+                if (
+                    q in ("input", "cause", "subject")
+                    and g.otype[x] == "Subject"
+                    and x != cur
+                ):
+                    return f"{a} reads Subject {x} superseded by {cur}"
+        return None
+
+    stale_transitions: list[tuple[str, str, str, str, str]] = []
     nxt: dict[str, set[str]] = defaultdict(set)
     closing_receipts: set[str] = set()
     unclosed_receipts: set[str] = set()
@@ -673,6 +825,10 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
                 reached = [o] + g.descend(o, stop=_WORKORDER, machine_only=True)
                 for w2 in reached:
                     if g.act[w2] == _WORKORDER and w2 in sg and w2 != w and w2 in in_ep:
+                        why = stale_reobserve(r, o, w2)
+                        if why is not None:
+                            stale_transitions.append((w, r, o, w2, why))
+                            continue
                         nxt[w].add(w2)
                         closing_receipts.add(r)
     depth = {w: 0 for w in self_generated}
@@ -802,6 +958,7 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
         "PSR": _ratio(len(substituted), len(unavailable)),
         "consecutive_self_generated_transitions": ald,
         "closed_loop_cycles": closed_cycles,
+        "stale_reobserve_transitions": len(stale_transitions),
         "human_causal_edges_after_epoch": len(human_edges),
         "unreceipted_actuations": len(unreceipted),
         "actuations": len(actuations),
@@ -951,6 +1108,17 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
                 "AUTHORITY_FAILURE",
                 f"{len(human_edges)} human causal edges after t0={start}: "
                 f"{[list(h) for h in human_edges[:4]]}",
+            )
+        )
+    if stale_transitions:
+        reasons.append(
+            _reason(
+                "STALE_REOBSERVE",
+                "R_not_fed_back",
+                "SUBJECT_FAILURE",
+                f"{len(stale_transitions)} receipt -> reobserve -> workorder transitions "
+                "not counted (the next action does not observe the state receipt[n] "
+                f"left): {[list(t) for t in stale_transitions[:3]]}",
             )
         )
     if closed_cycles == 0:

@@ -31,7 +31,13 @@ from autofde_lab.aloop import (
 from autofde_lab.aloop.chatman_trace import convert
 from autofde_lab.aloop.court import REPO_ROOT, iter_reasons
 from autofde_lab.aloop.ocel_builder import dump
-from autofde_lab.aloop.synth import write_all
+from autofde_lab.aloop.synth import (
+    _event,
+    _insert_before,
+    _time_before,
+    build_positive,
+    write_all,
+)
 
 HERE = Path(__file__).resolve().parent
 SYNTH = HERE / "fixtures" / "synthetic"
@@ -117,8 +123,8 @@ def test_mutation_kill_ratio_is_total(corpus: Path) -> None:
     killed = sum(
         evaluate_path(corpus / rel)[0] != EXIT_QUALIFIED for rel in MUTANT_FILES
     )
-    assert len(MUTANT_FILES) == 25
-    assert (killed, len(MUTANT_FILES)) == (25, 25)
+    assert len(MUTANT_FILES) == 30
+    assert (killed, len(MUTANT_FILES)) == (30, 30)
 
 
 def test_empty_log_is_refused_not_vacuously_qualified(tmp_path: Path) -> None:
@@ -338,3 +344,125 @@ def test_cross_episode_causal_flow_is_refused_with_authority_term(
     (refusal,) = receipt["refusals"]
     assert refusal["code"] == "CROSS_EPISODE_CAUSALITY"
     assert refusal["broken_term"] == "R_missing_authority"
+
+
+# ── repair round 4 (adversarial court r1 B4, r2 C9) ─────────────────────────
+
+
+@pytest.mark.parametrize(
+    "name", ["stale_reobserve_older_observation", "stale_reobserve_old_subject"]
+)
+def test_stale_reobserve_is_not_a_loop_transition(corpus: Path, name: str) -> None:
+    """B4: receipt[n] -> reobserve[n+1] exists, but workorder[n+1] acts on state
+    older than receipt[n] (a reused observation, or a superseded Subject)."""
+    code, receipt = evaluate_path(corpus / f"mutants/{name}.ocel.json")
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    m = episode["metrics"]
+    # every direct n -> n+1 transition (100) plus the n -> n+2 skips are stale
+    assert m["stale_reobserve_transitions"] >= 100
+    assert m["ALD"] == 0 and m["closed_loop_cycles"] == 0
+    assert episode["class"] == "FAILED"
+    reason = next(r for r in episode["reasons"] if r["code"] == "STALE_REOBSERVE")
+    assert reason["broken_term"] == "R_not_fed_back"
+
+
+def test_reobserve_skipping_a_receipt_is_stale_at_scale(tmp_path: Path) -> None:
+    """B4 at 201 iterations: gap[n] reads reobserve[n-1]'s evidence, so
+    workorder[n+1] never observes receipt[n]; r3 counted ALD 100 (QUALIFIED)."""
+    doc = build_positive(201)
+    for i in range(2, 201):
+        gap = _event(doc, f"e-gap-{i}")
+        gap["relationships"] = [
+            {"objectId": f"ev-obs-{i - 1}", "qualifier": "cause"}
+            if r["qualifier"] == "cause"
+            else r
+            for r in gap["relationships"]
+        ]
+    path = tmp_path / "b4-201.ocel.json"
+    dump(doc, path)
+    code, receipt = evaluate_path(path)
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    assert episode["metrics"]["ALD"] < 100
+    assert episode["metrics"]["stale_reobserve_transitions"] >= 100
+    assert "STALE_REOBSERVE" in set(iter_reasons(receipt))
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "postepoch_human_amends_authority",
+        "postepoch_human_o2o_authority",
+        "postepoch_unenveloped_authority_grant",
+    ],
+)
+def test_post_epoch_authority_channel_is_human_causality(
+    corpus: Path, name: str
+) -> None:
+    """C9: authority reached by a post-epoch hand (or granted after t0 outside
+    the pre-declared envelope) makes every later work order citing it assisted."""
+    code, receipt = evaluate_path(corpus / f"mutants/{name}.ocel.json")
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    m = episode["metrics"]
+    assert episode["class"] == "ASSISTED"
+    # work orders 50..100 cite the channel object: 51 human edges, chain cut at 49
+    assert m["human_causal_edges_after_epoch"] == 51
+    assert m["ALD"] == 49 and m["HIR"] > 0
+    reason = next(
+        r for r in episode["reasons"] if r["code"] == "HUMAN_CAUSALITY_AFTER_EPOCH"
+    )
+    assert "<authority:" in reason["detail"]
+
+
+def test_post_epoch_grant_through_the_envelope_stays_autonomous(
+    tmp_path: Path,
+) -> None:
+    """Anti-vacuity control for C9: the same late grant, derived by a machine
+    event from the pre-declared envelope Authority (instead of the Objective),
+    is lawful."""
+    doc = build_positive()
+    doc["objects"].append(
+        {
+            "id": "auth-late",
+            "type": "Authority",
+            "attributes": [
+                {"name": "kind", "value": "lease", "time": "1970-01-01T00:00:00Z"}
+            ],
+            "relationships": [],
+        }
+    )
+    _insert_before(
+        doc,
+        "e-wo-50",
+        {
+            "id": "e-lease",
+            "type": "reconcile",
+            "time": _time_before(doc, "e-wo-50"),
+            "attributes": [],
+            "relationships": [
+                {"objectId": "ep-1", "qualifier": "episode"},
+                {"objectId": "auth-policy", "qualifier": "input"},
+                {"objectId": "auth-late", "qualifier": "output"},
+            ],
+        },
+    )
+    for i in range(50, 101):
+        _event(doc, f"e-wo-{i}")["relationships"].append(
+            {"objectId": "auth-late", "qualifier": "cause"}
+        )
+    path = tmp_path / "envelope-lease.ocel.json"
+    dump(doc, path)
+    code, receipt = evaluate_path(path)
+    assert code == EXIT_QUALIFIED, receipt["unmet"]
+    (episode,) = receipt["episodes"]
+    assert episode["class"] == "AUTONOMOUS"
+    assert episode["metrics"]["human_causal_edges_after_epoch"] == 0
+    assert episode["metrics"]["ALD"] == 100
+
+
+def test_positive_log_has_no_stale_transition() -> None:
+    _, receipt = evaluate_path(SYNTH / "positive.ocel.json")
+    (episode,) = receipt["episodes"]
+    assert episode["metrics"]["stale_reobserve_transitions"] == 0

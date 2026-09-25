@@ -763,6 +763,107 @@ def m_cross_episode_o2o_human_objective(doc):
         )
 
 
+# ── repair round 4: B4 stale reobserve, C9 post-epoch authority laundering ──
+
+
+def m_stale_reobserve_older_observation(doc):
+    """B4 (r1 adversarial): each next action also reads the previous iteration's
+    observation, older than receipt[n]; every receipt->reobserve edge still exists."""
+    for i in range(1, POSITIVE_ITERATIONS):
+        prev = "ev-obs-0" if i == 1 else f"ev-obs-{i - 1}"
+        _event(doc, f"e-gap-{i}")["relationships"].append(
+            {"objectId": prev, "qualifier": "cause"}
+        )
+
+
+def m_stale_reobserve_old_subject(doc):
+    """B4: reobserve[n+1] is caused by receipt[n] but observes the Subject that
+    iteration n's commit already superseded."""
+    for i in range(1, POSITIVE_ITERATIONS):
+        _event(doc, f"e-reobserve-{i}")["relationships"].append(
+            {"objectId": f"sub-{i - 1}", "qualifier": "input"}
+        )
+
+
+def m_postepoch_human_amends_authority(doc):
+    """C9 (r2 adversarial): a post-epoch human act re-touches the granted policy;
+    every later work order keeps citing it as originAuthority."""
+    doc["objects"].append(
+        {"id": "hmemo", "type": "Evidence", "attributes": [], "relationships": []}
+    )
+    _insert_before(
+        doc,
+        "e-wo-50",
+        _human_event(
+            "h-auth",
+            _time_before(doc, "e-wo-50"),
+            "ep-1",
+            "hum-operator",
+            [("input", "auth-policy"), ("output", "hmemo")],
+        ),
+    )
+
+
+def m_postepoch_human_o2o_authority(doc):
+    """C9 over O2O: the post-epoch human act links only a memo that supersedes
+    the granted policy; work orders cite the policy."""
+    doc["objects"].append(
+        {
+            "id": "hmemo",
+            "type": "Evidence",
+            "attributes": [],
+            "relationships": [{"objectId": "auth-policy", "qualifier": "supersedes"}],
+        }
+    )
+    _insert_before(
+        doc,
+        "e-wo-50",
+        _human_event(
+            "h-auth",
+            _time_before(doc, "e-wo-50"),
+            "ep-1",
+            "hum-operator",
+            [("output", "hmemo")],
+        ),
+    )
+
+
+def m_postepoch_unenveloped_authority_grant(doc):
+    """C9: after t0 a machine event outputs a new Authority from the Objective
+    alone, without consuming the pre-declared envelope Authority; later work
+    orders consume it as a cause."""
+    doc["objects"] += [
+        {
+            "id": "auth-late",
+            "type": "Authority",
+            "attributes": [
+                {"name": "kind", "value": "grant", "time": _EPOCH_ATTR_TIME},
+                {"name": "grantedBy", "value": "unknown", "time": _EPOCH_ATTR_TIME},
+            ],
+            "relationships": [],
+        },
+    ]
+    _insert_before(
+        doc,
+        "e-wo-50",
+        {
+            "id": "e-late-grant",
+            "type": "reconcile",
+            "time": _time_before(doc, "e-wo-50"),
+            "attributes": [],
+            "relationships": [
+                {"objectId": "ep-1", "qualifier": "episode"},
+                {"objectId": "obj-1", "qualifier": "input"},
+                {"objectId": "auth-late", "qualifier": "output"},
+            ],
+        },
+    )
+    for i in range(50, POSITIVE_ITERATIONS):
+        _event(doc, f"e-wo-{i}")["relationships"].append(
+            {"objectId": "auth-late", "qualifier": "cause"}
+        )
+
+
 MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     "human_after_epoch": (
         m_human_after_epoch,
@@ -850,6 +951,26 @@ MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     ),
     "cross_episode_o2o_human_objective": (
         m_cross_episode_o2o_human_objective,
+        {"exit": 3, "class": "ASSISTED", "code": "HUMAN_CAUSALITY_AFTER_EPOCH"},
+    ),
+    "stale_reobserve_older_observation": (
+        m_stale_reobserve_older_observation,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+    ),
+    "stale_reobserve_old_subject": (
+        m_stale_reobserve_old_subject,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+    ),
+    "postepoch_human_amends_authority": (
+        m_postepoch_human_amends_authority,
+        {"exit": 3, "class": "ASSISTED", "code": "HUMAN_CAUSALITY_AFTER_EPOCH"},
+    ),
+    "postepoch_human_o2o_authority": (
+        m_postepoch_human_o2o_authority,
+        {"exit": 3, "class": "ASSISTED", "code": "HUMAN_CAUSALITY_AFTER_EPOCH"},
+    ),
+    "postepoch_unenveloped_authority_grant": (
+        m_postepoch_unenveloped_authority_grant,
         {"exit": 3, "class": "ASSISTED", "code": "HUMAN_CAUSALITY_AFTER_EPOCH"},
     ),
 }

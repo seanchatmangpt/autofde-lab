@@ -1,9 +1,9 @@
 {
   "authority": "NONE (court verdict only; grants no DO authority)",
   "court": "ALOOP-001",
-  "court_source_sha256": "af854b7624841ecb8e8bd7aa673112e5b10cf6663b91f85cb4b4e8187e53c35b",
+  "court_source_sha256": "142e70399262f92b642cbbc031ecc6f50e2fc44d3cf9cd8ba86f4ad862287d3c",
   "court_subject_sha": null,
-  "court_version": "aloop-001/v26.9.25-r3",
+  "court_version": "aloop-001/v26.9.25-r4",
   "episodes": [
     {
       "class": "FAILED",
@@ -35,6 +35,7 @@
         "receipts_out_of_segment": 0,
         "receipts_without_fresh_consequence": 0,
         "self_generated_workorders": 0,
+        "stale_reobserve_transitions": 0,
         "stale_subject_receipts": 0,
         "unattributed_cause_workorders": 0,
         "unauthorized_actuations": 2,
@@ -97,14 +98,14 @@
     "unreceipted_actuations": 2
   },
   "profile": "aloop-ocel2/v26.9.25",
-  "profile_sha256": "4586b53e2f6ba8dac12d6ea2113fb87b9d3ec85863df4100757cfaf110b00ac9",
+  "profile_sha256": "f8af1ca720a81ebf9370bd21abf68e8f6d9146b66b538794d96386a6353100a8",
   "qualification_thresholds": {
     "HIR": 0,
     "UAR": 0,
     "min_actuations": 1,
     "min_consecutive_self_generated_transitions": 100
   },
-  "receipt_digest": "sha256:9e75ea75448dcec7fa61b87fc85dbe2b603ff9e117dd2aea05c5e560071cc856",
+  "receipt_digest": "sha256:dea9f9242cdffbfd14539cec6d543a99fa6b7d60fcaf087a016b5e8cb787a349",
   "refusals": [],
   "schema": "autofde-lab/aloop-court-receipt/v1",
   "standing": "BLOCKED",
