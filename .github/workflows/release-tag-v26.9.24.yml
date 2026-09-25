@@ -1,0 +1,30 @@
+name: v26.9.24 repository tag
+on:
+  push:
+    branches: [master]
+    paths: [.github/workflows/release-tag-v26.9.24.yml]
+permissions:
+  contents: write
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Create or verify exact release tag
+        env: {GH_TOKEN: ${{ github.token }}}
+        run: |
+          set -euo pipefail
+          subject="$(git rev-parse HEAD)"
+          test "$subject" = "$GITHUB_SHA"
+          if git ls-remote --exit-code --tags origin refs/tags/v26.9.24 >/dev/null 2>&1; then
+            observed="$(git ls-remote --tags origin refs/tags/v26.9.24 | cut -f1)"
+            test "$observed" = "$subject"
+          else
+            git config user.name github-actions
+            git config user.email github-actions@users.noreply.github.com
+            git tag -a v26.9.24 "$subject" -m v26.9.24
+            git push origin refs/tags/v26.9.24
+          fi
+          if ! gh release view v26.9.24 >/dev/null 2>&1; then gh release create v26.9.24 --target "$subject" --title v26.9.24 --generate-notes; fi
+          test "$(gh api "repos/$GITHUB_REPOSITORY/commits/v26.9.24" --jq .sha)" = "$subject"
