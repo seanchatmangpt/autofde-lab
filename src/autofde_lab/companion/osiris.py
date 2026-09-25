@@ -451,15 +451,14 @@ class OSIRIS:
         decision_digest = _digest(_decision_payload(decision))
         event_ids = tuple(event.event_id for event in context.events)
 
-        refusal = self._validate(context, decision)
-        brce_request: BRCERequest | None = None
-        standing = Standing.CANDIDATE
-        reason = "CANDIDATE_ONLY:NO_DO"
+        speech_refusal = self._validate_speech(context, decision.speech)
+        action_refusal = self._validate_action(context, decision.action)
+        emitted_speech = (
+            decision.speech if decision.speech is not None and speech_refusal is None else None
+        )
 
-        if refusal is not None:
-            standing = Standing.REFUSED
-            reason = refusal
-        elif decision.action is not None:
+        brce_request: BRCERequest | None = None
+        if decision.action is not None and action_refusal is None:
             target = (
                 decision.action.target_surface
                 or self.router.target_for(decision.action.intent)
@@ -482,6 +481,17 @@ class OSIRIS:
                 decision_digest=decision_digest,
             )
 
+        refusals = tuple(
+            item
+            for item in (
+                f"SPEECH:{speech_refusal}" if speech_refusal is not None else None,
+                f"ACTION:{action_refusal}" if action_refusal is not None else None,
+            )
+            if item is not None
+        )
+        standing = Standing.REFUSED if refusals else Standing.CANDIDATE
+        reason = ";".join(refusals) if refusals else "CANDIDATE_ONLY:NO_DO"
+
         # Only compact obligations/plan. Raw events are consumed, and stale
         # observations are reconstructed on the next context call.
         self._carry_plan = tuple(decision.carry_plan)
@@ -496,7 +506,7 @@ class OSIRIS:
             "decision_digest": decision_digest,
             "standing": standing.value,
             "reason": reason,
-            "speech_emitted": decision.speech is not None and refusal is None,
+            "speech_emitted": emitted_speech is not None,
             "brce_request_id": (
                 brce_request.request_id if brce_request is not None else None
             ),
@@ -508,50 +518,56 @@ class OSIRIS:
             decision_digest=decision_digest,
             standing=standing,
             reason=reason,
-            speech_emitted=decision.speech is not None and refusal is None,
+            speech_emitted=emitted_speech is not None,
             brce_request_id=(
                 brce_request.request_id if brce_request is not None else None
             ),
         )
         return CompanionOutput(
-            speech=decision.speech if refusal is None else None,
+            speech=emitted_speech,
             brce_request=brce_request,
             receipt=receipt,
         )
 
-    def _validate(
+    def _validate_speech(
         self,
         context: TurnContext,
-        decision: CompanionDecision,
+        speech: SpeechCandidate | None,
     ) -> str | None:
-        if decision.speech is not None:
-            missing = sorted(
-                claim
-                for claim in decision.speech.claims
-                if claim not in context.observations
-            )
-            if missing:
-                return "REFUSED:STALE_OR_MISSING_OBSERVATION:" + ",".join(missing)
+        if speech is None:
+            return None
 
-            if len(decision.speech.text.split()) > self.voice.max_words:
-                return "REFUSED:VOICE_BUDGET_EXCEEDED"
+        missing = sorted(
+            claim for claim in speech.claims if claim not in context.observations
+        )
+        if missing:
+            return "REFUSED:STALE_OR_MISSING_OBSERVATION:" + ",".join(missing)
 
-            if (
-                context.events
-                and all(
-                    event.speech_policy is ResponsePolicy.DO_NOT
-                    for event in context.events
-                )
-            ):
-                return "REFUSED:EVENT_POLICY_DO_NOT_SPEAK"
+        if len(speech.text.split()) > self.voice.max_words:
+            return "REFUSED:VOICE_BUDGET_EXCEEDED"
 
-        if decision.action is not None:
-            if not context.events:
-                return "REFUSED:NO_TRIGGER_EVENT"
-            if all(
-                event.action_policy is ResponsePolicy.DO_NOT
+        if (
+            context.events
+            and all(
+                event.speech_policy is ResponsePolicy.DO_NOT
                 for event in context.events
-            ):
-                return "REFUSED:EVENT_POLICY_DO_NOT_ACT"
+            )
+        ):
+            return "REFUSED:EVENT_POLICY_DO_NOT_SPEAK"
+        return None
 
+    def _validate_action(
+        self,
+        context: TurnContext,
+        action: ActionCandidate | None,
+    ) -> str | None:
+        if action is None:
+            return None
+        if not context.events:
+            return "REFUSED:NO_TRIGGER_EVENT"
+        if all(
+            event.action_policy is ResponsePolicy.DO_NOT
+            for event in context.events
+        ):
+            return "REFUSED:EVENT_POLICY_DO_NOT_ACT"
         return None
