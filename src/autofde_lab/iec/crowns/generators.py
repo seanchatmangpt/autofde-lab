@@ -12,8 +12,7 @@ One relation, several surface syntaxes:
   (ggen-create emits these, `src/ggen_create/package.py`).
 
 A target is `literal` only when it contains no template syntax. A parameterized
-target (`lib/<%= name %>.ex`, or a Tera output tag around `row.lower` followed by
-`.js`) names a *family* of paths; this
+target (`lib/<%= name %>.ex`, `{{ row.lower }}.js`) names a *family* of paths; this
 module records it and does not try to evaluate it, so it can never be mistaken for
 a claim about one specific committed file.
 
