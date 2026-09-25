@@ -45,7 +45,9 @@ class PriorArtNoveltyCourtTest(unittest.TestCase):
             {"transition-system", "execution-observation"},
             [
                 candidate("prior:tla-plus", "transition-system", "safety"),
-                candidate("prior:ocel2", "execution-observation", "object-centric-events"),
+                candidate(
+                    "prior:ocel2", "execution-observation", "object-centric-events"
+                ),
             ],
         )
         self.assertEqual(verdict.disposition, PriorArtDisposition.COMPOSE)
