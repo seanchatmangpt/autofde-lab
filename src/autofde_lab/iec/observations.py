@@ -59,7 +59,11 @@ class ObservationExtractor:
     def normalize_path(path: str) -> str:
         candidate = path.replace("\\", "/")
         normalized = posixpath.normpath(candidate)
-        if normalized.startswith("../") or normalized == ".." or normalized.startswith("/"):
+        if (
+            normalized.startswith("../")
+            or normalized == ".."
+            or normalized.startswith("/")
+        ):
             raise PermissionError(f"REFUSED_PATH_ESCAPE:{path}")
         if normalized in {".", ""}:
             raise ValueError("file path must identify a file")
@@ -104,7 +108,11 @@ class ObservationExtractor:
         if lower_path.startswith(("archive/", "docs/archive/")):
             return ArtifactClass.HISTORICAL_RESIDUE, None, None
 
-        return ArtifactClass.UNKNOWN, None, "no deterministic producer/source rule matched"
+        return (
+            ArtifactClass.UNKNOWN,
+            None,
+            "no deterministic producer/source rule matched",
+        )
 
     def extract_file(
         self, subject: RepositorySubject, file: PassiveFile

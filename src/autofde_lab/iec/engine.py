@@ -71,13 +71,9 @@ class InverseEcosystemCompiler:
     ) -> None:
         self.corpus = CorpusFreezer(permit_private=permit_private)
         self.observer = ObservationExtractor()
-        self.correspondence = CorrespondenceEngine(
-            threshold=correspondence_threshold
-        )
+        self.correspondence = CorrespondenceEngine(threshold=correspondence_threshold)
         self.anti_unifier = AntiUnifier()
-        self.retirement = RetirementLedger(
-            recurrence_threshold=recurrence_threshold
-        )
+        self.retirement = RetirementLedger(recurrence_threshold=recurrence_threshold)
 
     def freeze(self, subjects: Iterable[RepositorySubject]) -> IECSession:
         revision = self.corpus.freeze(subjects)
@@ -98,13 +94,9 @@ class InverseEcosystemCompiler:
             artifacts=records,
             observations=observations,
         )
-        analyses_by_repo = {
-            item.subject.repository: item for item in session.analyses
-        }
+        analyses_by_repo = {item.subject.repository: item for item in session.analyses}
         analyses_by_repo[subject.repository] = analysis
-        analyses = tuple(
-            analyses_by_repo[key] for key in sorted(analyses_by_repo)
-        )
+        analyses = tuple(analyses_by_repo[key] for key in sorted(analyses_by_repo))
 
         return IECSession(
             corpus=session.corpus,

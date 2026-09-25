@@ -145,9 +145,7 @@ class ManufactureRouter:
         )
 
     def capabilities(self) -> tuple[GeneratorCapability, ...]:
-        return tuple(
-            self._capabilities[key] for key in sorted(self._capabilities)
-        )
+        return tuple(self._capabilities[key] for key in sorted(self._capabilities))
 
 
 def ecosystem_capabilities(

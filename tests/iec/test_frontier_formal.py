@@ -115,7 +115,9 @@ def test_claude_hypothesis_cannot_self_admit_or_gain_authority() -> None:
     )
     assert hypothesis.evidence_kind is EvidenceKind.INFERRED_CANDIDATE
     assert hypothesis.authority == "NONE"
-    assert hypothesis.as_semantic_claim().evidence_kind is EvidenceKind.INFERRED_CANDIDATE
+    assert (
+        hypothesis.as_semantic_claim().evidence_kind is EvidenceKind.INFERRED_CANDIDATE
+    )
 
     with pytest.raises(ValueError, match="starts as INFERRED_CANDIDATE"):
         ArchaeologyHypothesis(

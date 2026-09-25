@@ -68,9 +68,7 @@ class RetirementLedger:
                 status=RetirementStatus.OBSERVED_ONCE,
             )
         else:
-            occurrences = tuple(
-                sorted(set(current.occurrence_ids + (occurrence_id,)))
-            )
+            occurrences = tuple(sorted(set(current.occurrence_ids + (occurrence_id,))))
             status = current.status
             if len(occurrences) >= self.recurrence_threshold:
                 if status in {

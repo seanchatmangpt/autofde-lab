@@ -65,8 +65,7 @@ class HypothesisFrontier:
             counterexample_ids=tuple(
                 sorted(
                     set(
-                        current.counterexample_ids
-                        + (counterexample.counterexample_id,)
+                        current.counterexample_ids + (counterexample.counterexample_id,)
                     )
                 )
             ),

@@ -11,7 +11,6 @@ from typing import Iterable
 
 from .model import ArtifactRecord, Observation, RepositorySubject, digest
 
-
 IEC = "urn:autofde-lab:iec:"
 
 
@@ -52,7 +51,9 @@ def project_repository(
         lines.add(_triple(node, "subjectDigest", _literal(artifact.subject_id)))
         lines.add(_triple(node, "sourcePath", _literal(artifact.path)))
         lines.add(_triple(node, "contentDigest", _literal(artifact.content_digest)))
-        lines.add(_triple(node, "artifactClass", _literal(artifact.artifact_class.value)))
+        lines.add(
+            _triple(node, "artifactClass", _literal(artifact.artifact_class.value))
+        )
         if artifact.producer:
             lines.add(_triple(node, "producer", _literal(artifact.producer)))
         if artifact.unknown_reason:
@@ -68,7 +69,9 @@ def project_repository(
         lines.add(_triple(node, "sourcePath", _literal(observation.provenance.path)))
         lines.add(_triple(node, "predicate", _literal(observation.predicate)))
         lines.add(_triple(node, "value", _literal(observation.value)))
-        lines.add(_triple(node, "evidenceKind", _literal(observation.evidence_kind.value)))
+        lines.add(
+            _triple(node, "evidenceKind", _literal(observation.evidence_kind.value))
+        )
 
     return "\n".join(sorted(lines)) + "\n"
 

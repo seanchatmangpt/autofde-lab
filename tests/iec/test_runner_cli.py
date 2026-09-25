@@ -51,9 +51,7 @@ def test_passive_runner_observes_parses_projects_and_receipts(tmp_path: Path) ->
     )
     source = tmp_path / "src"
     source.mkdir()
-    (source / "api.py").write_text(
-        "def public(x: int) -> int:\n    return x + 1\n"
-    )
+    (source / "api.py").write_text("def public(x: int) -> int:\n    return x + 1\n")
 
     result = PassiveCorpusRunner().run(
         (
@@ -69,8 +67,7 @@ def test_passive_runner_observes_parses_projects_and_receipts(tmp_path: Path) ->
     assert "RepositorySubject" in repository.rdf_projection
     assert len(repository.structural_documents) == 2
     standings = {
-        path: document.standing
-        for path, document in repository.structural_documents
+        path: document.standing for path, document in repository.structural_documents
     }
     assert standings["pyproject.toml"] is ParseStanding.OBSERVED
     assert standings["src/api.py"] is ParseStanding.OBSERVED

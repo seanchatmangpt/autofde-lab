@@ -64,8 +64,12 @@ def test_semantic_graph_refuses_dangling_edge() -> None:
 
 def test_reachability_is_graph_structural_evidence() -> None:
     graph = two_node_graph("a")
-    source = next(node for node in graph.nodes if dict(node.attributes)["role"] == "source")
-    target = next(node for node in graph.nodes if dict(node.attributes)["role"] == "verifier")
+    source = next(
+        node for node in graph.nodes if dict(node.attributes)["role"] == "source"
+    )
+    target = next(
+        node for node in graph.nodes if dict(node.attributes)["role"] == "verifier"
+    )
     reachable = graph.reachable(source.node_id)
     assert source.node_id in reachable
     assert target.node_id in reachable
@@ -76,7 +80,9 @@ def test_graph_fingerprint_matching_proposes_candidate_not_equivalence() -> None
     right = two_node_graph("right")
     matches = candidate_matches(left, right, rounds=2)
     assert len(matches) == 2
-    assert all(match.required_verifier == "iec.translation-validation" for match in matches)
+    assert all(
+        match.required_verifier == "iec.translation-validation" for match in matches
+    )
     assert {match.left_graph_id for match in matches} == {left.graph_id}
     assert {match.right_graph_id for match in matches} == {right.graph_id}
 
@@ -84,8 +90,12 @@ def test_graph_fingerprint_matching_proposes_candidate_not_equivalence() -> None
 def test_graph_fingerprint_changes_when_structure_changes() -> None:
     graph = two_node_graph("a")
     baseline = {item.node_id: item.fingerprint for item in fingerprints(graph)}
-    source = next(node for node in graph.nodes if dict(node.attributes)["role"] == "source")
-    target = next(node for node in graph.nodes if dict(node.attributes)["role"] == "verifier")
+    source = next(
+        node for node in graph.nodes if dict(node.attributes)["role"] == "source"
+    )
+    target = next(
+        node for node in graph.nodes if dict(node.attributes)["role"] == "verifier"
+    )
     extra = SemanticEdge.create(
         source=target.node_id,
         predicate="references",
@@ -96,7 +106,9 @@ def test_graph_fingerprint_changes_when_structure_changes() -> None:
     assert baseline != changed_fp
 
 
-def test_transition_system_refuses_consequence_without_known_variable_reference() -> None:
+def test_transition_system_refuses_consequence_without_known_variable_reference() -> (
+    None
+):
     variable = StateVariable("phase", '"INIT"')
     bad_action = make_action(
         "Bad",
@@ -150,7 +162,10 @@ def test_tla_projection_is_deterministic_and_source_bound() -> None:
     assert first.source_system_id == system.system_id
     assert first.projection_id == second.projection_id
     assert "---- MODULE BRCEReference ----" in first.tla
-    assert "VARIABLES phase, authority, receipt, verified, standing, consequenceCount" in first.tla
+    assert (
+        "VARIABLES phase, authority, receipt, verified, standing, consequenceCount"
+        in first.tla
+    )
     assert "Actuate ==" in first.tla
     assert "INVARIANT NoStandingWithoutReceipt" in first.cfg
     assert "PROPERTY AdmittedEventuallyTerminal" in first.cfg

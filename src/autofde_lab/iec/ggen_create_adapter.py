@@ -78,7 +78,9 @@ class GgenCreateAdapter:
     ) -> GgenCreateCapturePlan:
         paths = tuple(sorted(set(included_paths)))
         if not generator_name.strip() or not paths:
-            raise ValueError("generator_name and at least one included path are required")
+            raise ValueError(
+                "generator_name and at least one included path are required"
+            )
         base = ("--project", project_file, "--json")
         commands = [
             ("capture-init", ("capture", "init", generator_name)),

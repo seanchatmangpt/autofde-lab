@@ -7,7 +7,6 @@ client and no autonomous execution loop.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 from .frontier import FrontierItem
 from .model import EvidenceKind, SemanticClaim, digest
