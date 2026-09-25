@@ -1,9 +1,9 @@
 # OSIRIS Companion — PUBG Ally translated into the Chatman ecosystem
 
-**Date:** 2026-09-25  
-**Repository:** seanchatmangpt/autofde-lab  
-**Research input:** PUBG Ally: A Conversational Embodied Agent as an AI Teammate, arXiv:2609.29837  
-**Fictional product reference:** Richard K. Morgan, Thin Air. OSIRIS expands to **Onboard Situational Insight and Resource Interface Support**.  
+**Date:** 2026-09-25
+**Repository:** seanchatmangpt/autofde-lab
+**Research input:** PUBG Ally: A Conversational Embodied Agent as an AI Teammate, arXiv:2609.29837
+**Fictional product reference:** Richard K. Morgan, Thin Air. OSIRIS expands to **Onboard Situational Insight and Resource Interface Support**.
 **Standing ceiling:** repository-local candidate kernel. This PR does not claim a live microphone, TTS, production BRCE connection, or external actuation.
 
 ## Translation
