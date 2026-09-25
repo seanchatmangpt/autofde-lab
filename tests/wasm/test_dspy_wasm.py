@@ -23,7 +23,11 @@ def _payload(status: str = "ALIVE") -> dict[str, object]:
         "dspy_version": DSPY_VERSION,
         "module_output": "WASM",
         "module_type": "Prediction",
-        "lm_calls": 0,
+        "lm_calls": 1,
+        "host_output": "WASM-HOST",
+        "host_calls": 1,
+        "provider_io": False,
+        "authority": {"class": "candidate", "actuation": "none"},
     }
     if status != "ALIVE":
         blocker = {
@@ -39,7 +43,8 @@ def _payload(status: str = "ALIVE") -> dict[str, object]:
             "dspy": DSPY_VERSION,
             "pyodide": PYODIDE_VERSION,
             "runtime": "node-pyodide",
-            "court": "import+deterministic-module",
+            "profile": "autofde-core-no-provider-io-v1",
+            "court": "import+deterministic-module+host-engine",
         },
         "stages": [{"name": "dspy-module", "status": status}],
         "blocker": blocker,
@@ -77,7 +82,8 @@ def test_subject_drift_is_refused() -> None:
         "dspy": "3.3.1",
         "pyodide": PYODIDE_VERSION,
         "runtime": "node-pyodide",
-        "court": "import+deterministic-module",
+        "profile": "autofde-core-no-provider-io-v1",
+        "court": "import+deterministic-module+host-engine",
     }
     with pytest.raises(DSPyWasmProtocolViolation, match="DSPy subject drift"):
         DSPyWasmResult.from_payload(payload, replay_command=())
@@ -118,7 +124,10 @@ def test_real_node_pyodide_probe_when_dependency_is_materialized() -> None:
     assert result.status in {"ALIVE", "BLOCKED"}
     if result.status == "ALIVE":
         assert result.output["module_output"] == "WASM"
-        assert result.output["lm_calls"] == 0
+        assert result.output["host_output"] == "WASM-HOST"
+        assert result.output["host_calls"] == 1
+        assert result.output["provider_io"] is False
+        assert result.output["authority"] == {"class": "candidate", "actuation": "none"}
     else:
         assert result.blocker is not None
         assert result.blocker["code"] in {
