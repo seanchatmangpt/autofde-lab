@@ -864,6 +864,134 @@ def m_postepoch_unenveloped_authority_grant(doc):
         )
 
 
+# ── repair round 5: B4' stale state beyond the reobserve, C9 unbounded O2O ──
+
+
+def m_stale_reobserve_reads_older_observation(doc):
+    """B4' (finish adversarial F2): reobserve[n+1] consumes receipt[n] AND the
+    observation of iteration n, older than receipt[n]. The segment ascent
+    stopped at the reobserve, so its own inputs were never inspected."""
+    for i in range(1, POSITIVE_ITERATIONS):
+        prev = "ev-obs-0" if i == 1 else f"ev-obs-{i - 1}"
+        _event(doc, f"e-reobserve-{i}")["relationships"].append(
+            {"objectId": prev, "qualifier": "cause"}
+        )
+
+
+def m_stale_reobserve_via_machine_copy(doc):
+    """B4' (finish adversarial F14): a machine ``reconcile`` after receipt[n]
+    copies the observation of iteration n; reobserve[n+1] consumes the copy."""
+    for i in range(1, POSITIVE_ITERATIONS):
+        prev = "ev-obs-0" if i == 1 else f"ev-obs-{i - 1}"
+        doc["objects"].append(
+            {"id": f"cp-{i}", "type": "Evidence", "attributes": [], "relationships": []}
+        )
+        _insert_before(
+            doc,
+            f"e-reobserve-{i}",
+            {
+                "id": f"e-cp-{i}",
+                "type": "reconcile",
+                "time": _time_before(doc, f"e-reobserve-{i}"),
+                "attributes": [],
+                "relationships": [
+                    {"objectId": "ep-1", "qualifier": "episode"},
+                    {"objectId": prev, "qualifier": "input"},
+                    {"objectId": f"cp-{i}", "qualifier": "output"},
+                ],
+            },
+        )
+        _event(doc, f"e-reobserve-{i}")["relationships"].append(
+            {"objectId": f"cp-{i}", "qualifier": "cause"}
+        )
+
+
+def m_stale_decision_old_verify_evidence(doc):
+    """B4' (finish adversarial F1b): gap.detect[n] decides only from the verify
+    evidence of iteration n-2 (a Subject superseded twice); the fresh reobserve
+    output is attached to plan.select as a decorative input."""
+    for i in range(2, POSITIVE_ITERATIONS):
+        gap = _event(doc, f"e-gap-{i}")
+        gap["relationships"] = [
+            r for r in gap["relationships"] if r["objectId"] != f"ev-obs-{i}"
+        ] + [{"objectId": f"ver-{i - 2}", "qualifier": "cause"}]
+        _event(doc, f"e-plan-{i}")["relationships"].append(
+            {"objectId": f"ev-obs-{i}", "qualifier": "input"}
+        )
+
+
+def m_stale_reobserve_reads_old_verify_evidence(doc):
+    """B4' (finish adversarial F2b): reobserve[n+1] also reads the verify
+    evidence of iteration n-1, i.e. state of an already superseded Subject."""
+    for i in range(2, POSITIVE_ITERATIONS):
+        _event(doc, f"e-reobserve-{i}")["relationships"].append(
+            {"objectId": f"ver-{i - 2}", "qualifier": "input"}
+        )
+
+
+def m_preepoch_machine_script(doc):
+    """B4' (finish adversarial F4): a pre-epoch machine event precomputes every
+    iteration's Plan; each work order cites its scripted Plan next to the
+    genuine reobserve chain, so the next action is not derived from receipt[n]."""
+    doc["objects"] += [
+        {"id": f"pre-plan-{i}", "type": "Plan", "attributes": [], "relationships": []}
+        for i in range(POSITIVE_ITERATIONS)
+    ]
+    _insert_before(
+        doc,
+        "e-start",
+        {
+            "id": "e-prescript",
+            "type": "candidate.construct",
+            "time": _time_before(doc, "e-start"),
+            "attributes": [],
+            "relationships": [
+                {"objectId": "ep-1", "qualifier": "episode"},
+                {"objectId": "obj-1", "qualifier": "cause"},
+            ]
+            + [
+                {"objectId": f"pre-plan-{i}", "qualifier": "output"}
+                for i in range(POSITIVE_ITERATIONS)
+            ],
+        },
+    )
+    for i in range(POSITIVE_ITERATIONS):
+        _event(doc, f"e-wo-{i}")["relationships"].append(
+            {"objectId": f"pre-plan-{i}", "qualifier": "cause"}
+        )
+
+
+def m_postepoch_human_two_hop_o2o_authority(doc):
+    """C9' (finish adversarial F5): after t0 a human outputs a memo that is
+    partOf a bundle which supersedes the granted policy (two O2O hops); work
+    orders keep citing the policy. r4 followed O2O exactly one hop."""
+    doc["objects"] += [
+        {
+            "id": "hmemo",
+            "type": "Evidence",
+            "attributes": [],
+            "relationships": [{"objectId": "bundle", "qualifier": "partOf"}],
+        },
+        {
+            "id": "bundle",
+            "type": "Evidence",
+            "attributes": [],
+            "relationships": [{"objectId": "auth-policy", "qualifier": "supersedes"}],
+        },
+    ]
+    _insert_before(
+        doc,
+        "e-wo-50",
+        _human_event(
+            "h-auth",
+            _time_before(doc, "e-wo-50"),
+            "ep-1",
+            "hum-operator",
+            [("output", "hmemo")],
+        ),
+    )
+
+
 MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     "human_after_epoch": (
         m_human_after_epoch,
@@ -971,6 +1099,30 @@ MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     ),
     "postepoch_unenveloped_authority_grant": (
         m_postepoch_unenveloped_authority_grant,
+        {"exit": 3, "class": "ASSISTED", "code": "HUMAN_CAUSALITY_AFTER_EPOCH"},
+    ),
+    "stale_reobserve_reads_older_observation": (
+        m_stale_reobserve_reads_older_observation,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+    ),
+    "stale_reobserve_via_machine_copy": (
+        m_stale_reobserve_via_machine_copy,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+    ),
+    "stale_decision_old_verify_evidence": (
+        m_stale_decision_old_verify_evidence,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+    ),
+    "stale_reobserve_reads_old_verify_evidence": (
+        m_stale_reobserve_reads_old_verify_evidence,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+    ),
+    "preepoch_machine_script": (
+        m_preepoch_machine_script,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+    ),
+    "postepoch_human_two_hop_o2o_authority": (
+        m_postepoch_human_two_hop_o2o_authority,
         {"exit": 3, "class": "ASSISTED", "code": "HUMAN_CAUSALITY_AFTER_EPOCH"},
     ),
 }

@@ -59,6 +59,15 @@ human-caused; an ``Authority`` a machine event outputs after ``t0`` without
 consuming the pre-declared envelope (an ``Authority`` granted at
 ``episode.start``) is the same human next-action channel (C9).
 
+Repair round 5: freshness is judged over the whole causal cone of
+``workorder[n+1]`` back to ``receipt[n]`` -- including the reobserve's own
+inputs and every machine hop between them. Every object consumed in that cone
+must be ``receipt[n]``'s own output, produced strictly after ``receipt[n]``, or
+a lawful ``Objective``/``Authority``; any other older state, of any activity
+and any type, makes the transition ``STALE_REOBSERVE`` (B4'). The C9 channel
+follows O2O links with no hop bound: a post-epoch human act opens the channel
+of every ``Objective``/``Authority`` in the O2O component of anything it links.
+
 The verdict is a pure function of (log bytes, profile bytes, court source):
 the receipt carries no wall-clock value, so a cold replay is byte-identical.
 """
@@ -88,7 +97,7 @@ __all__ = [
 ]
 
 COURT_ID = "ALOOP-001"
-COURT_VERSION = "aloop-001/v26.9.25-r4"
+COURT_VERSION = "aloop-001/v26.9.25-r5"
 RECEIPT_SCHEMA = "autofde-lab/aloop-court-receipt/v1"
 
 EXIT_QUALIFIED = 0
@@ -425,7 +434,9 @@ class _Graph:
         # Authority) is lawful only while no post-epoch hand reaches it. A
         # human act that outputs, modifies or links such an object -- directly
         # under any qualifier but ``episode``, or over one O2O hop from any
-        # object it links -- opens a human next-action channel through it from
+        # object it links (repair round 5: any number of O2O hops in either
+        # direction, i.e. the whole O2O component) -- opens a human next-action
+        # channel through it from
         # that act on (judged against each consumer's epoch in
         # :meth:`authority_channel`). A machine event that outputs an
         # ``Authority`` after its epoch is the same channel unless it consumes
@@ -453,9 +464,16 @@ class _Graph:
                 for q, o in self.links[eid]:
                     if q == "episode":
                         continue
-                    for x in (o, *sorted(o2o_any.get(o, ()))):
+                    seen_o2o = {o}
+                    frontier = deque([o])
+                    while frontier:
+                        x = frontier.popleft()
                         if self.otype.get(x) in allowed_pre:
                             opened.add(x)
+                        for y in sorted(o2o_any.get(x, ())):
+                            if y not in seen_o2o:
+                                seen_o2o.add(y)
+                                frontier.append(y)
                 for x in sorted(opened):
                     if eid not in self.channel[x]:
                         self.channel[x].append(eid)
@@ -793,6 +811,28 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
         ]
         if older:
             return f"{w2} reuses observation {older[0]} older than {r}"
+        # Repair round 5 (B4'): the segment ascent stops AT the reobserve, so
+        # its own inputs, and any non-observe producer of older state, were
+        # never inspected. Walk the full causal cone of w2 back to r: every
+        # consumed object must be r's output, produced strictly after r, or a
+        # lawful Objective/Authority (whose post-epoch misuse C9 judges).
+        seen_cone: set[str] = set()
+        cone = deque([w2])
+        while cone:
+            a = cone.popleft()
+            if a in seen_cone:
+                continue
+            seen_cone.add(a)
+            for p, x in g.preds[a]:
+                if p == r:
+                    continue
+                if g.pos[p] > g.pos[r]:
+                    cone.append(p)
+                elif g.otype[x] not in g.allowed_pre:
+                    return (
+                        f"{a} consumes {x} produced by {p}, older than {r}; "
+                        f"{w2} does not act on the state {r} left"
+                    )
         for a in [w2, *segment]:
             if g.pos[a] <= g.pos[r]:
                 continue
@@ -1146,7 +1186,8 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
         )
     elif human_edges:
         klass = "ASSISTED"
-    elif closed_cycles == 0 or not actuations:
+    elif closed_cycles == 0 or not actuations or stale_transitions:
+        # repair round 5: a loop with any stale transition is not AUTONOMOUS
         klass = "FAILED"
     else:
         klass = "AUTONOMOUS"

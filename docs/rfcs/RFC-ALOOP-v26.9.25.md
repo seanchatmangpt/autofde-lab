@@ -80,9 +80,13 @@ edge, and `receipt[n]` must be reachable from `workorder[n]` through machine-onl
 `receipt[n]`: it consumes `receipt[n]`'s output strictly after it; no other `receipt.persist` of
 the episode lies between `receipt[n]` and `workorder[n+1]`; `workorder[n+1]`'s iteration segment
 reaches no `observe`/`reobserve` older than `receipt[n]`; and no event of that segment after
-`receipt[n]` reads (`input`/`cause`/`subject`) a `Subject` already superseded at its position. A
-stale transition is not counted (ALD drops) and the episode lists `STALE_REOBSERVE`
-(`R_not_fed_back`, `SUBJECT_FAILURE`, metric `stale_reobserve_transitions`).
+`receipt[n]` reads (`input`/`cause`/`subject`) a `Subject` already superseded at its position;
+and every object consumed (`input`/`cause`) anywhere in the causal cone of `workorder[n+1]` back
+to `receipt[n]` -- including the reobserve's own inputs and every machine hop between them -- is
+`receipt[n]`'s output, produced strictly after `receipt[n]`, or an `Objective`/`Authority`. A
+stale transition is not counted (ALD drops), the episode lists `STALE_REOBSERVE`
+(`R_not_fed_back`, `SUBJECT_FAILURE`, metric `stale_reobserve_transitions`), and an episode with
+any stale transition is not `AUTONOMOUS`.
 
 **Closing rule.** `receipt[n]` closes iteration `n` only if it binds at least one
 `consequence` produced by an actuation (`actuate|commit|merge`) that is causally downstream of
@@ -148,7 +152,8 @@ another episode) is refused (`CROSS_EPISODE_CAUSALITY`, `R_missing_authority`,
 
 Post-epoch authority channel: the lawful pre-epoch channel stays lawful only while no post-epoch
 hand reaches it. A `human.intervene` that outputs, modifies or links an `Objective`/`Authority`
-object (under any qualifier but `episode`, or one O2O hop from any object it links) opens a
+object (under any qualifier but `episode`, or over any number of O2O hops in either direction from
+any object it links, i.e. its whole O2O component) opens a
 human next-action channel through that object; every later non-human event citing it
 (`originAuthority`, `input`, `cause`) after its own epoch is a human causal edge, so every
 downstream work order citing it is `ASSISTED`. An `Authority` a machine event outputs after `t0`
@@ -272,10 +277,13 @@ pre-epoch machine hop into qualifying next actions; if another episode's human a
 for that episode, post-epoch for this one) drive this episode's next actions over E2O or O2O and
 it still qualifies; if a next action whose cause chain reaches a reobserve that is not the one
 following `receipt[n]` (an older observation, or a superseded Subject) counts as a loop
-transition; if a post-epoch human act on (or O2O-linked to) the granted Authority, or an
-Authority granted after `t0` outside the pre-declared envelope, leaves the work orders citing it
-self-generated; or if two runs over the same bytes produce different receipts. Each has a mutant in
-the regenerated corpus whose sha256 is committed in `tests/aloop/fixtures/synthetic/MANIFEST.json` (30 mutants, 30 killed).
+transition; if older state reaches the next action through the reobserve's own inputs, a
+machine copy of an older observation, verify evidence of a superseded Subject, or a pre-epoch
+machine script, and it still counts; if a post-epoch human act on (or O2O-linked, at any hop
+count, to) the granted Authority, or an Authority granted after `t0` outside the pre-declared
+envelope, leaves the work orders citing it self-generated; or if two runs over the same bytes
+produce different receipts. Each has a mutant in the regenerated corpus whose sha256 is committed
+in `tests/aloop/fixtures/synthetic/MANIFEST.json` (36 mutants, 36 killed).
 
 Repair round 1 (court version `aloop-001/v26.9.25-r1`) closed three adversarial-court findings
 against round 0: a vacuous non-actuating loop qualified (`admission_vacuous`,
@@ -307,3 +315,18 @@ court r2, `admission_vacuous` / `AUTHORITY_FAILURE`): a post-epoch human act on 
 policy Authority (directly or over O2O), or a machine-granted post-epoch Authority outside the
 envelope, left every later work order citing it self-generated (now human causal edges,
 `ASSISTED`). All five new mutants return exit 0 `QUALIFIED` on the r3 court.
+
+Repair round 5 (court version `aloop-001/v26.9.25-r5`) closed three bypasses the finish
+adversarial court found against round 4. B4' (`R_not_fed_back`): the round-4 older-observation
+check ran only over the work order's segment, which ends AT the reobserve, so a reobserve that
+also consumed the previous observation (directly, or through a machine `reconcile` copy)
+qualified with ALD 100 while listing thousands of non-adjacent stale transitions; and state older
+than `receipt[n]` reached through any non-observe producer (verify evidence of a superseded
+Subject, a pre-epoch machine script) was never inspected. Freshness is now judged over the full
+causal cone of `workorder[n+1]` back to `receipt[n]`, and any stale transition makes the episode
+`FAILED`. C9' (`R_not_fed_back` / `AUTHORITY_FAILURE`): the post-epoch authority channel followed
+O2O exactly one hop, so a human memo `partOf` a bundle that `supersedes` the policy escaped; it now
+follows the whole O2O component. All six new mutants return exit 0 `QUALIFIED` on both the r3 and
+the r4 court. Known residuals, not closed here: a post-epoch human memo linked to a next action
+under a non-causal qualifier (`evidence`), and a post-epoch attribute change on an Authority with
+no event, both still qualify.

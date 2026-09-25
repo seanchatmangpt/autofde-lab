@@ -123,8 +123,8 @@ def test_mutation_kill_ratio_is_total(corpus: Path) -> None:
     killed = sum(
         evaluate_path(corpus / rel)[0] != EXIT_QUALIFIED for rel in MUTANT_FILES
     )
-    assert len(MUTANT_FILES) == 30
-    assert (killed, len(MUTANT_FILES)) == (30, 30)
+    assert len(MUTANT_FILES) == 36
+    assert (killed, len(MUTANT_FILES)) == (36, 36)
 
 
 def test_empty_log_is_refused_not_vacuously_qualified(tmp_path: Path) -> None:
@@ -465,4 +465,86 @@ def test_post_epoch_grant_through_the_envelope_stays_autonomous(
 def test_positive_log_has_no_stale_transition() -> None:
     _, receipt = evaluate_path(SYNTH / "positive.ocel.json")
     (episode,) = receipt["episodes"]
+    assert episode["metrics"]["stale_reobserve_transitions"] == 0
+
+
+# ── repair round 5 (finish adversarial court r0: B4', C9') ─────────────────
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "stale_reobserve_reads_older_observation",
+        "stale_reobserve_via_machine_copy",
+        "stale_decision_old_verify_evidence",
+        "stale_reobserve_reads_old_verify_evidence",
+        "preepoch_machine_script",
+    ],
+)
+def test_stale_state_anywhere_in_the_cone_is_not_a_transition(
+    corpus: Path, name: str
+) -> None:
+    """B4': older state reaching workorder[n+1] through the reobserve's own
+    inputs, a machine copy, verify evidence or a pre-epoch script is stale.
+    Each of these returned exit 0 QUALIFIED, ALD 100 on the r3 and r4 courts."""
+    code, receipt = evaluate_path(corpus / f"mutants/{name}.ocel.json")
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    m = episode["metrics"]
+    assert episode["class"] == "FAILED"
+    assert m["ALD"] <= 1
+    assert m["stale_reobserve_transitions"] >= 99
+    assert m["human_causal_edges_after_epoch"] == 0
+    reason = next(r for r in episode["reasons"] if r["code"] == "STALE_REOBSERVE")
+    assert reason["broken_term"] == "R_not_fed_back"
+    assert reason["failure_class"] == "SUBJECT_FAILURE"
+
+
+def test_reobserve_reading_older_observation_is_refused_on_every_transition(
+    corpus: Path,
+) -> None:
+    """B4' adjacent case: r4 listed STALE_REOBSERVE yet kept ALD 100 because
+    the n -> n+1 transition passed; now no transition survives."""
+    _, receipt = evaluate_path(
+        corpus / "mutants/stale_reobserve_reads_older_observation.ocel.json"
+    )
+    (episode,) = receipt["episodes"]
+    assert episode["metrics"]["ALD"] == 0
+    assert episode["metrics"]["closed_loop_cycles"] == 0
+    assert "INSUFFICIENT_LOOP_DEPTH" in set(iter_reasons(receipt))
+
+
+def test_post_epoch_authority_channel_follows_o2o_at_any_depth(corpus: Path) -> None:
+    """C9': a human memo partOf a bundle that supersedes the policy (two O2O
+    hops) opens the channel; r4 stopped at one hop and qualified it."""
+    code, receipt = evaluate_path(
+        corpus / "mutants/postepoch_human_two_hop_o2o_authority.ocel.json"
+    )
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    assert episode["class"] == "ASSISTED"
+    assert episode["metrics"]["human_causal_edges_after_epoch"] == 51
+    assert episode["metrics"]["ALD"] == 49
+    reason = next(
+        r for r in episode["reasons"] if r["code"] == "HUMAN_CAUSALITY_AFTER_EPOCH"
+    )
+    assert "<authority:h-auth>" in reason["detail"]
+
+
+def test_pre_epoch_objective_in_the_cone_is_not_stale(tmp_path: Path) -> None:
+    """Anti-vacuity control for B4': every reobserve also re-reads the
+    pre-epoch Objective (lawful channel, older than every receipt) and the
+    loop still qualifies with ALD 100."""
+    doc = build_positive()
+    for i in range(1, 101):
+        _event(doc, f"e-reobserve-{i}")["relationships"].append(
+            {"objectId": "obj-1", "qualifier": "input"}
+        )
+    path = tmp_path / "reobserve-reads-objective.ocel.json"
+    dump(doc, path)
+    code, receipt = evaluate_path(path)
+    assert code == EXIT_QUALIFIED, receipt["unmet"]
+    (episode,) = receipt["episodes"]
+    assert episode["class"] == "AUTONOMOUS"
+    assert episode["metrics"]["ALD"] == 100
     assert episode["metrics"]["stale_reobserve_transitions"] == 0

@@ -136,6 +136,14 @@
       },
       "sha256": "a825cc35f375f5978fcc55e91f076d2a4a33dbe2e761b2d074e4b9fb0a003a8f"
     },
+    "mutants/postepoch_human_two_hop_o2o_authority.ocel.json": {
+      "expect": {
+        "class": "ASSISTED",
+        "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
+        "exit": 3
+      },
+      "sha256": "57e8d0d090a74725574f711ecd81ab4261a12ff1be1047cdd76105b270d021f0"
+    },
     "mutants/postepoch_unenveloped_authority_grant.ocel.json": {
       "expect": {
         "class": "ASSISTED",
@@ -151,6 +159,14 @@
         "exit": 3
       },
       "sha256": "6095952faf59fb24330ce16ca2e2791c2b74e1d78be6ac47cb0b89a1a515eba4"
+    },
+    "mutants/preepoch_machine_script.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "STALE_REOBSERVE",
+        "exit": 3
+      },
+      "sha256": "725bebf218037ab6320959be62837f8aae7435596b7bc9e972af833f2ad38fc0"
     },
     "mutants/provider_replaced_by_human.ocel.json": {
       "expect": {
@@ -192,6 +208,14 @@
       },
       "sha256": "67cd4f32eb285d3f8caf5961cda1dd5830cd30905e3186a24fa77d81a1369803"
     },
+    "mutants/stale_decision_old_verify_evidence.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "STALE_REOBSERVE",
+        "exit": 3
+      },
+      "sha256": "e9462617bfe34d73c0ecea0b8b824a051f0ba20bef349b9cd5edf86eb1cc2307"
+    },
     "mutants/stale_reobserve_old_subject.ocel.json": {
       "expect": {
         "class": "FAILED",
@@ -207,6 +231,30 @@
         "exit": 3
       },
       "sha256": "23bdd58dc825b06233aa69dc92490937e1552c2ecb6ffb6331df260f9d994a7a"
+    },
+    "mutants/stale_reobserve_reads_old_verify_evidence.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "STALE_REOBSERVE",
+        "exit": 3
+      },
+      "sha256": "37e0717f95aa54c6d60a77b43dd87c1d09a3a915ea5fd3197f0614a00d7a4a33"
+    },
+    "mutants/stale_reobserve_reads_older_observation.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "STALE_REOBSERVE",
+        "exit": 3
+      },
+      "sha256": "03fe3cdc35b03dcdaa62ea51c182080616746170aa5ea1de8f0c143e59e15183"
+    },
+    "mutants/stale_reobserve_via_machine_copy.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "STALE_REOBSERVE",
+        "exit": 3
+      },
+      "sha256": "501959da135fdfc26318a1e7e7da0b3a698bd7d2435b6b74d4a469421e5bd49d"
     },
     "mutants/stale_subject.ocel.json": {
       "expect": {
