@@ -1,0 +1,552 @@
+{
+  "authority": "NONE",
+  "command": "for m in brce mutant:DO_WITHOUT_AUTHORITY mutant:DUPLICATE_CONSEQUENCE mutant:STANDING_WITHOUT_VERIFY mutant:NO_FAIRNESS; do python -m autofde_lab.iec tlc-court --model $m --out <DIR>/<slug>; done",
+  "court_tests": {
+    "command": "AUTOFDE_TLC_REQUIRED=1 python -m pytest -q -o addopts= -rs tests/iec/test_tlc_court.py tests/iec/test_tlc_transcript.py tests/iec/test_tla_projection_fairness.py tests/iec/test_graph_protocol_tla.py tests/iec/test_frontier_formal.py",
+    "exit_code": 0,
+    "output_sha256": "ccd1db9fc492fdf43dc790209beef9fc58ae35e0857e2c9169c810e32d6176f1",
+    "summary": "54 passed in 36.13s"
+  },
+  "evidence_ceiling": "Bounded explicit-state model check of the projected BRCE TLA+ model and its four mutants by pinned TLC; not a proof, not evidence about any production implementation.",
+  "formal_proof": {
+    "reason": "UNSUPPORTED(formal-proof-runtime:tlaps-not-installed)",
+    "verdict": "UNSUPPORTED"
+  },
+  "models": [
+    {
+      "bounds": {
+        "constant_values": [],
+        "deadlock_check": false,
+        "deadlock_exemption_reason": "terminal STANDING is intended quiescence",
+        "fairness": [
+          "WF_vars(Next)"
+        ],
+        "search": "breadth-first, exhaustive over reachable states within constraints",
+        "state_constraints": [],
+        "workers": 1
+      },
+      "cli_exit_code": 0,
+      "expected_violation": null,
+      "killed": null,
+      "model": "brce",
+      "model_check": "MODEL_CHECK_ALIVE",
+      "module": "BRCEReference",
+      "parse": "MODEL_PARSE_ALIVE",
+      "per_model_receipt_digest": "sha256:ffed7f63d8ab69a82bffe263cd3b79e8aa5a5468678b3a33aaf3abb537344cd8",
+      "per_model_receipt_file_sha256": "01f5aa0f9db1b1749db92a592fa9cb5337551ea759e2c8ee01427df71c142e72",
+      "properties": [
+        {
+          "config_digest": "sha256:92d64e2ec5ca192f80831f397928eba68800270cee262dc12114320df89f445e",
+          "depth": 10,
+          "distinct_states": 10,
+          "exit_code": 0,
+          "kind": "invariant",
+          "name": "NoStandingWithoutReceipt",
+          "states_generated": 10,
+          "stdout_digest": "sha256:fb13ca3669296116e232049542b6f820b625df0182f51c763d4babb4578e0887",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        },
+        {
+          "config_digest": "sha256:45490405340ecdeb3233c68f7683bbd21fdd514454901ef653223de44dec61e2",
+          "depth": 10,
+          "distinct_states": 10,
+          "exit_code": 0,
+          "kind": "invariant",
+          "name": "NoStandingWithoutVerification",
+          "states_generated": 10,
+          "stdout_digest": "sha256:ac05a899562194e42bff7f43f4ae6964938861553c4157c103b68c863b0bcf00",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        },
+        {
+          "config_digest": "sha256:61a4a07bd298e5b5578212c515750c30cb7b6944a7afcc6564a38feeed0048a6",
+          "depth": 10,
+          "distinct_states": 10,
+          "exit_code": 0,
+          "kind": "invariant",
+          "name": "AtMostOneConsequence",
+          "states_generated": 10,
+          "stdout_digest": "sha256:b1d4ddcdc0bcd4f172213e4ff321aa60da067e92248e5db36a2e3b614b99e9de",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        },
+        {
+          "config_digest": "sha256:8f5650bf79bc01c9d13c00d35755078c6890ec53223e28797cfc8d49df3c8667",
+          "depth": 10,
+          "distinct_states": 10,
+          "exit_code": 0,
+          "kind": "invariant",
+          "name": "ExecutedRequiresAuthority",
+          "states_generated": 10,
+          "stdout_digest": "sha256:4ad8df2533e28418aa8d2d96eaba44257c2e976aa0f3fbcf0f19fa04117c6349",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        },
+        {
+          "config_digest": "sha256:b9cd66493b0905c1bcf92eaef178aff437659cd8ecbc9aacb882fd8147ebda5e",
+          "depth": 10,
+          "distinct_states": 10,
+          "exit_code": 0,
+          "kind": "liveness",
+          "name": "AdmittedEventuallyTerminal",
+          "states_generated": 10,
+          "stdout_digest": "sha256:837da1ebc8a5b024c22bf45fd307755dcfe49fcfb46ba4c3edde76dbd4be6681",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        }
+      ],
+      "replay_identity": "sha256:235fe585c319ad99cd72a2bb7d442d37ea541e88bfe85f797d905294b82fd350",
+      "role": "reference",
+      "sany_exit_code": 0,
+      "spec_digest": "sha256:eb81f00635f08955200784ee084eba3ac9d648658d2fc1c5d9b92334b38006b8",
+      "summary_sha256": "a2bda890678bda2fc89d2048321a4ef83a93a1df8a9397ba13e50da3c0c9d667"
+    },
+    {
+      "bounds": {
+        "constant_values": [],
+        "deadlock_check": false,
+        "deadlock_exemption_reason": "terminal STANDING is intended quiescence",
+        "fairness": [
+          "WF_vars(Next)"
+        ],
+        "search": "breadth-first, exhaustive over reachable states within constraints",
+        "state_constraints": [],
+        "workers": 1
+      },
+      "cli_exit_code": 0,
+      "expected_violation": "ExecutedRequiresAuthority",
+      "killed": true,
+      "model": "mutant:DO_WITHOUT_AUTHORITY",
+      "model_check": "MODEL_CHECK_ALIVE",
+      "module": "BRCEMutantDoWithoutAuthority",
+      "parse": "MODEL_PARSE_ALIVE",
+      "per_model_receipt_digest": "sha256:da0353719f93bcb70d3d2d6cd828e2b8ee31047ba6a92a5a140486188c2063d8",
+      "per_model_receipt_file_sha256": "dc4a9eb3a62e70c3c183ea5cae42bf7d505e9f124a24efa356e018a110f42832",
+      "properties": [
+        {
+          "config_digest": "sha256:92d64e2ec5ca192f80831f397928eba68800270cee262dc12114320df89f445e",
+          "depth": 9,
+          "distinct_states": 10,
+          "exit_code": 0,
+          "kind": "invariant",
+          "name": "NoStandingWithoutReceipt",
+          "states_generated": 10,
+          "stdout_digest": "sha256:02726e7d1f596c52d5aa4a3af80a2fe7b2d17eed0192eb918bd6a9d884b340ef",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        },
+        {
+          "config_digest": "sha256:45490405340ecdeb3233c68f7683bbd21fdd514454901ef653223de44dec61e2",
+          "depth": 9,
+          "distinct_states": 10,
+          "exit_code": 0,
+          "kind": "invariant",
+          "name": "NoStandingWithoutVerification",
+          "states_generated": 10,
+          "stdout_digest": "sha256:c00f3cef2254e18e3299d95704ba5eacc7599366cceaffe8870fc8edf6ed72d8",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        },
+        {
+          "config_digest": "sha256:61a4a07bd298e5b5578212c515750c30cb7b6944a7afcc6564a38feeed0048a6",
+          "depth": 9,
+          "distinct_states": 10,
+          "exit_code": 0,
+          "kind": "invariant",
+          "name": "AtMostOneConsequence",
+          "states_generated": 10,
+          "stdout_digest": "sha256:4eca8bdb28179e7124f1792711f060b8214ff9ee39d3c2ae9621b86f03dd6f47",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        },
+        {
+          "config_digest": "sha256:8f5650bf79bc01c9d13c00d35755078c6890ec53223e28797cfc8d49df3c8667",
+          "counterexample": {
+            "actions": [
+              "Init",
+              "Parse",
+              "Route",
+              "Admit",
+              "Construct",
+              "Actuate"
+            ],
+            "length": 6,
+            "loop": null,
+            "ocel_digest": "sha256:e02e3cf823ae60a9ee69b360ebbc88e05114246e15b5bd37e98cb4a75032db79",
+            "ocel_file_sha256": "8f09a70792544b95bd7bcb88036fa19f4d5ac89ae0191b7200928ea4942d44a5",
+            "transition_trace_digest": "sha256:0e644e9766fcc912343ce85ba0420d81ff39e00e13165158ca1b2e4a2c396f7c",
+            "violation": "INVARIANT_VIOLATED"
+          },
+          "depth": 6,
+          "distinct_states": 7,
+          "exit_code": 12,
+          "kind": "invariant",
+          "name": "ExecutedRequiresAuthority",
+          "states_generated": 7,
+          "stdout_digest": "sha256:30ab2a307d3b85978f180c56a31810eaf18173efdaafb58cbe25e4205fe0a1b4",
+          "verdict": "COUNTEREXAMPLE_FOUND"
+        },
+        {
+          "config_digest": "sha256:b9cd66493b0905c1bcf92eaef178aff437659cd8ecbc9aacb882fd8147ebda5e",
+          "counterexample": {
+            "actions": [
+              "Init",
+              "Parse",
+              "Route",
+              "Admit",
+              "Construct",
+              "Authorize"
+            ],
+            "length": 6,
+            "loop": "STUTTERING",
+            "ocel_digest": "sha256:e6d99eb29d156903319564cfab688d23813a7c91c97f2a19c614de6ae50991e8",
+            "ocel_file_sha256": "ef114df7dc045cb53f522c11fea4d186a29bb7eb8a36c23386548b85c182fd6f",
+            "transition_trace_digest": "sha256:71a32921f8b06ab2a4ba94b40be79e4116fba3c61a31ea4f5b3245e87a081dae",
+            "violation": "TEMPORAL_VIOLATED"
+          },
+          "depth": null,
+          "distinct_states": 10,
+          "exit_code": 13,
+          "kind": "liveness",
+          "name": "AdmittedEventuallyTerminal",
+          "states_generated": 10,
+          "stdout_digest": "sha256:b871e68b1f3ce724a432d4d06fd670f2f66a4b096546557e7e12a722de1d4149",
+          "verdict": "COUNTEREXAMPLE_FOUND"
+        }
+      ],
+      "replay_identity": "sha256:7bd1aa3f828ed32758fcef826ee7a4cfa913ef825208ce2ae447c90e1a97d025",
+      "role": "mutant",
+      "sany_exit_code": 0,
+      "spec_digest": "sha256:5e93856bba6954f673f32b46b2fea833e5ff5a48b1a033ef94490942732585a7",
+      "summary_sha256": "aea6bdae34226939e4e4ea1e04309ccd7d66742bdf8e98b7bef6b0163eb03ce2"
+    },
+    {
+      "bounds": {
+        "constant_values": [],
+        "deadlock_check": false,
+        "deadlock_exemption_reason": "terminal STANDING is intended quiescence",
+        "fairness": [
+          "WF_vars(Next)"
+        ],
+        "search": "breadth-first, exhaustive over reachable states within constraints",
+        "state_constraints": [
+          {
+            "expression": "consequenceCount <= 2",
+            "name": "ConsequenceBound"
+          }
+        ],
+        "workers": 1
+      },
+      "cli_exit_code": 0,
+      "expected_violation": "AtMostOneConsequence",
+      "killed": true,
+      "model": "mutant:DUPLICATE_CONSEQUENCE",
+      "model_check": "MODEL_CHECK_ALIVE",
+      "module": "BRCEMutantDuplicateConsequence",
+      "parse": "MODEL_PARSE_ALIVE",
+      "per_model_receipt_digest": "sha256:23e2dce9738c16621ae1f4a72e0bc090d1a27e89d13892801b9658710a33d63b",
+      "per_model_receipt_file_sha256": "8f23f526390980812a8ec9d815522999c1887f5460d6350e49e549a53ec1f61b",
+      "properties": [
+        {
+          "config_digest": "sha256:56c0b67a42de431ce7a2100cd1523712ecef1a619d2be314055c11d99f5ae7f1",
+          "depth": 11,
+          "distinct_states": 14,
+          "exit_code": 0,
+          "kind": "invariant",
+          "name": "NoStandingWithoutReceipt",
+          "states_generated": 15,
+          "stdout_digest": "sha256:a278edf0cf04eb115b601ec03bfb06ae55106429ba68db8f5f3ab463313ee120",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        },
+        {
+          "config_digest": "sha256:27463ba48672e2778c5673a4d45ab814776a52240a95f34dd73b56e06a439569",
+          "depth": 11,
+          "distinct_states": 14,
+          "exit_code": 0,
+          "kind": "invariant",
+          "name": "NoStandingWithoutVerification",
+          "states_generated": 15,
+          "stdout_digest": "sha256:b0b0b2ce5008c58f6fd1e1712821e30cb41dd62179a3cb2c2c3b8d82c780caba",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        },
+        {
+          "config_digest": "sha256:1244427c313bc096a91573b2d9b421d30669f7642fe4eadb066446bd53c21f75",
+          "counterexample": {
+            "actions": [
+              "Init",
+              "Parse",
+              "Route",
+              "Admit",
+              "Construct",
+              "Authorize",
+              "Actuate",
+              "RetryActuate"
+            ],
+            "length": 8,
+            "loop": null,
+            "ocel_digest": "sha256:f4f1fbd3cfb066ac844271fcb7626bd84863b2caa1189e37904490998b06aa00",
+            "ocel_file_sha256": "5e21a154bfecaca16e387248292acd4841076136c3748eb6a9bdc8139e53eaa1",
+            "transition_trace_digest": "sha256:f0117eace09c24c662c8c798749465f4c90e2f9d7c015f34643f15597c5a6cc5",
+            "violation": "INVARIANT_VIOLATED"
+          },
+          "depth": 8,
+          "distinct_states": 9,
+          "exit_code": 12,
+          "kind": "invariant",
+          "name": "AtMostOneConsequence",
+          "states_generated": 9,
+          "stdout_digest": "sha256:9a0c6adf42836f7fbe23b7f664371c618470676a71fa7e3631e02d55d7da9ff8",
+          "verdict": "COUNTEREXAMPLE_FOUND"
+        },
+        {
+          "config_digest": "sha256:cdb684f098ef0ee36b6e6fc15403a54b08c5581a5b8292240f0ea0f5e0a5af9b",
+          "depth": 11,
+          "distinct_states": 14,
+          "exit_code": 0,
+          "kind": "invariant",
+          "name": "ExecutedRequiresAuthority",
+          "states_generated": 15,
+          "stdout_digest": "sha256:b6306bd86929061135feb7c4391aa5015e8d3c5b610c5474ea526c96bdb0a711",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        },
+        {
+          "config_digest": "sha256:8477f8c133118dbd993b121db712549570cdf42c55cb9971895d646b1b12267e",
+          "depth": 11,
+          "distinct_states": 14,
+          "exit_code": 0,
+          "kind": "liveness",
+          "name": "AdmittedEventuallyTerminal",
+          "states_generated": 15,
+          "stdout_digest": "sha256:62b05269f6243d244fff3151c2ede795b06362184699660e52530ca4d3573bd3",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        }
+      ],
+      "replay_identity": "sha256:32eaec29a197b42b39bb7add92e5323a32a3d69fc70e722f2d3b4f3c5a212f8e",
+      "role": "mutant",
+      "sany_exit_code": 0,
+      "spec_digest": "sha256:7f77bfe26483c0b91c3cb883fb19ae04101235685e6bec41532e85e6f80e7504",
+      "summary_sha256": "3c17c01b50439a52b8c1f9fac57897866abe72a64610160bbd04751bdc8d0fce"
+    },
+    {
+      "bounds": {
+        "constant_values": [],
+        "deadlock_check": false,
+        "deadlock_exemption_reason": "terminal STANDING is intended quiescence",
+        "fairness": [
+          "WF_vars(Next)"
+        ],
+        "search": "breadth-first, exhaustive over reachable states within constraints",
+        "state_constraints": [],
+        "workers": 1
+      },
+      "cli_exit_code": 0,
+      "expected_violation": "NoStandingWithoutVerification",
+      "killed": true,
+      "model": "mutant:STANDING_WITHOUT_VERIFY",
+      "model_check": "MODEL_CHECK_ALIVE",
+      "module": "BRCEMutantStandingWithoutVerify",
+      "parse": "MODEL_PARSE_ALIVE",
+      "per_model_receipt_digest": "sha256:86f3a4741882f6834c2fd6ae73700a860a7f72b6b4c7e8489ebddfb90efec032",
+      "per_model_receipt_file_sha256": "1c2cbc33dadf3d30a2df20afff0f3741129ad4a0fcf804d73da1c58384baa152",
+      "properties": [
+        {
+          "config_digest": "sha256:92d64e2ec5ca192f80831f397928eba68800270cee262dc12114320df89f445e",
+          "depth": 9,
+          "distinct_states": 10,
+          "exit_code": 0,
+          "kind": "invariant",
+          "name": "NoStandingWithoutReceipt",
+          "states_generated": 10,
+          "stdout_digest": "sha256:914a3b3673be7748b033c499471e444d609090d1c6fb97403ebb8bcc90e1f89f",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        },
+        {
+          "config_digest": "sha256:45490405340ecdeb3233c68f7683bbd21fdd514454901ef653223de44dec61e2",
+          "counterexample": {
+            "actions": [
+              "Init",
+              "Parse",
+              "Route",
+              "Admit",
+              "Construct",
+              "Authorize",
+              "Actuate",
+              "Receipt",
+              "GrantStanding"
+            ],
+            "length": 9,
+            "loop": null,
+            "ocel_digest": "sha256:0c271ee908a7c3805e21dd6ffebd2280daa42b483cfa82677c0b7b6def90e2c0",
+            "ocel_file_sha256": "c70d00ddd235461e889001c9453395bd72e0be13e9ddb3578ab8481c411cb0a8",
+            "transition_trace_digest": "sha256:75e7d32961dcf07fc99c121eca5d78c005872b537f801cf697c1966fef80488d",
+            "violation": "INVARIANT_VIOLATED"
+          },
+          "depth": 9,
+          "distinct_states": 10,
+          "exit_code": 12,
+          "kind": "invariant",
+          "name": "NoStandingWithoutVerification",
+          "states_generated": 10,
+          "stdout_digest": "sha256:4746680908647b3880709f3f3216f491e9bf7d38cc4607e655cf1106d33ecfd2",
+          "verdict": "COUNTEREXAMPLE_FOUND"
+        },
+        {
+          "config_digest": "sha256:61a4a07bd298e5b5578212c515750c30cb7b6944a7afcc6564a38feeed0048a6",
+          "depth": 9,
+          "distinct_states": 10,
+          "exit_code": 0,
+          "kind": "invariant",
+          "name": "AtMostOneConsequence",
+          "states_generated": 10,
+          "stdout_digest": "sha256:96341bf55cb696026f2cce3f53df0fca4f94e9385980bbdd064603cadc6792a5",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        },
+        {
+          "config_digest": "sha256:8f5650bf79bc01c9d13c00d35755078c6890ec53223e28797cfc8d49df3c8667",
+          "depth": 9,
+          "distinct_states": 10,
+          "exit_code": 0,
+          "kind": "invariant",
+          "name": "ExecutedRequiresAuthority",
+          "states_generated": 10,
+          "stdout_digest": "sha256:fc4595ab9991344d9cdb0e0781616ea013d9beb111cbe61951755ffa87ec81af",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        },
+        {
+          "config_digest": "sha256:b9cd66493b0905c1bcf92eaef178aff437659cd8ecbc9aacb882fd8147ebda5e",
+          "depth": 9,
+          "distinct_states": 10,
+          "exit_code": 0,
+          "kind": "liveness",
+          "name": "AdmittedEventuallyTerminal",
+          "states_generated": 10,
+          "stdout_digest": "sha256:cac81bfdd8cf6e20255fb5f4c5d6a138dc9798d65af66f89cc85a9c5899db8af",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        }
+      ],
+      "replay_identity": "sha256:b6b7c4e31f15b17941e77a77a9c255279d8a1f531c150b91e839af37db5230b7",
+      "role": "mutant",
+      "sany_exit_code": 0,
+      "spec_digest": "sha256:9cbe30d84740b911198dfb3c91b8ee3a655c1490ca2d0813d96cf16428e3a1b1",
+      "summary_sha256": "3b4cad0f028df522fb75f2214f16874bf618a951281abad7025717addc2cf066"
+    },
+    {
+      "bounds": {
+        "constant_values": [],
+        "deadlock_check": false,
+        "deadlock_exemption_reason": "terminal STANDING is intended quiescence",
+        "fairness": [],
+        "search": "breadth-first, exhaustive over reachable states within constraints",
+        "state_constraints": [],
+        "workers": 1
+      },
+      "cli_exit_code": 0,
+      "expected_violation": "AdmittedEventuallyTerminal",
+      "killed": true,
+      "model": "mutant:NO_FAIRNESS",
+      "model_check": "MODEL_CHECK_ALIVE",
+      "module": "BRCEMutantNoFairness",
+      "parse": "MODEL_PARSE_ALIVE",
+      "per_model_receipt_digest": "sha256:efd9e28bd0bc792322dad27ec380e179db580ed74dd94c03633c3bb014c92db2",
+      "per_model_receipt_file_sha256": "7992d4f02a1303e6562ead9b9a1d402b20bb5a06deb33a23ace7c83d418abf52",
+      "properties": [
+        {
+          "config_digest": "sha256:92d64e2ec5ca192f80831f397928eba68800270cee262dc12114320df89f445e",
+          "depth": 10,
+          "distinct_states": 10,
+          "exit_code": 0,
+          "kind": "invariant",
+          "name": "NoStandingWithoutReceipt",
+          "states_generated": 10,
+          "stdout_digest": "sha256:237bca6ceab46a0ed57bd227b433a731a4bcb00a36a1516340a06bf648faa305",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        },
+        {
+          "config_digest": "sha256:45490405340ecdeb3233c68f7683bbd21fdd514454901ef653223de44dec61e2",
+          "depth": 10,
+          "distinct_states": 10,
+          "exit_code": 0,
+          "kind": "invariant",
+          "name": "NoStandingWithoutVerification",
+          "states_generated": 10,
+          "stdout_digest": "sha256:8c1c9d00dbd7a4e0710554fbb3daa2a5c191f0801081a2b639318372f813e933",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        },
+        {
+          "config_digest": "sha256:61a4a07bd298e5b5578212c515750c30cb7b6944a7afcc6564a38feeed0048a6",
+          "depth": 10,
+          "distinct_states": 10,
+          "exit_code": 0,
+          "kind": "invariant",
+          "name": "AtMostOneConsequence",
+          "states_generated": 10,
+          "stdout_digest": "sha256:365b0b6b182f583dd5258e68026ca74e8e7b44a11369071354d38e9f541cad49",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        },
+        {
+          "config_digest": "sha256:8f5650bf79bc01c9d13c00d35755078c6890ec53223e28797cfc8d49df3c8667",
+          "depth": 10,
+          "distinct_states": 10,
+          "exit_code": 0,
+          "kind": "invariant",
+          "name": "ExecutedRequiresAuthority",
+          "states_generated": 10,
+          "stdout_digest": "sha256:b243163a860cc2378807055ed020b48743267167453e47217ce63492284672e4",
+          "verdict": "PROPERTY_HOLDS_IN_BOUND"
+        },
+        {
+          "config_digest": "sha256:b9cd66493b0905c1bcf92eaef178aff437659cd8ecbc9aacb882fd8147ebda5e",
+          "counterexample": {
+            "actions": [
+              "Init",
+              "Parse",
+              "Route",
+              "Admit",
+              "Construct",
+              "Authorize",
+              "Actuate"
+            ],
+            "length": 7,
+            "loop": "STUTTERING",
+            "ocel_digest": "sha256:55c31ce7b058536d20dda0def751e5a18a84a63496ecf5495fc94e1d9d98d82b",
+            "ocel_file_sha256": "ba250c635c56b968c1eb09bf1714c9f4cc4d7a0ee63eba47e7726cb25fcd428f",
+            "transition_trace_digest": "sha256:50ec8f4cf44bb0d5cd3ac7c537402f72a28c189f206aabc16f573e7cb76394af",
+            "violation": "TEMPORAL_VIOLATED"
+          },
+          "depth": null,
+          "distinct_states": 10,
+          "exit_code": 13,
+          "kind": "liveness",
+          "name": "AdmittedEventuallyTerminal",
+          "states_generated": 10,
+          "stdout_digest": "sha256:3cc0637522447289c99533522ac0a2bd24c82e711b55d3d9d1a358cb18e4dde2",
+          "verdict": "COUNTEREXAMPLE_FOUND"
+        }
+      ],
+      "replay_identity": "sha256:49e458cd594225f58308deca28042519be9b7db8576764976c0a14c6938288c1",
+      "role": "mutant",
+      "sany_exit_code": 0,
+      "spec_digest": "sha256:b96b11227d918b566a22ec95ce6e9a5bd5c9869074ae6d4da0f788f443f11f4e",
+      "summary_sha256": "e4f41374edf0df576d0d517ec42dfe6227951a53f33c2694e7f3a153d50bb24c"
+    }
+  ],
+  "output_sha256": "be98f222ac24f2156c724f4266c621f49ee58dbc8c7dcbf935c7094854bff675",
+  "refusals": [],
+  "release": "v26.9.25",
+  "repository": "seanchatmangpt/autofde-lab",
+  "requirements": [
+    "AC-07",
+    "F-08"
+  ],
+  "schema": "autofde-lab/release-tlc-court-receipt/v1",
+  "standing": "ALIVE",
+  "subject_note": "evaluated commit = parent of the receipt commit (a commit cannot contain its own hash)",
+  "subject_sha": "6fbe1807388e8c44ae5d5f75455a082a745055c7",
+  "toolchain": {
+    "jar_digest_matches_pin": true,
+    "jar_sha256": "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88",
+    "jar_sha256_pin_file": "tools/tla/tla2tools-1.7.4.sha256",
+    "jar_sha256_pinned": "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88",
+    "java_version": [
+      "26.0.2.1"
+    ],
+    "tla2tools_release": "1.7.4",
+    "tool_version": [
+      "2.19 of 08 August 2024 (rev: 5a47802)"
+    ]
+  },
+  "type": null
+}
