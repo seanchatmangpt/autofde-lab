@@ -992,6 +992,89 @@ def m_postepoch_human_two_hop_o2o_authority(doc):
     )
 
 
+# ── repair round 6: B4'' Objective/Authority exempt by provenance, not type ──
+
+
+def _objective_script(doc, actor: str, before: str, name: str) -> None:
+    """One event mints a per-iteration ``Objective`` ``step-i`` for every iteration.
+
+    A machine actor derives it from the pre-declared objective; a human actor
+    authors it directly. Either way ``episode.start`` never binds it."""
+    doc["objects"] += [
+        {"id": f"step-{i}", "type": "Objective", "attributes": [], "relationships": []}
+        for i in range(POSITIVE_ITERATIONS)
+    ]
+    rels = [{"objectId": "ep-1", "qualifier": "episode"}]
+    rels.append(
+        {"objectId": "hum-operator", "qualifier": "originAuthority"}
+        if actor == "human.intervene"
+        else {"objectId": "obj-1", "qualifier": "cause"}
+    )
+    rels += [
+        {"objectId": f"step-{i}", "qualifier": "output"}
+        for i in range(POSITIVE_ITERATIONS)
+    ]
+    _insert_before(
+        doc,
+        before,
+        {
+            "id": name,
+            "type": actor,
+            "time": _time_before(doc, before),
+            "attributes": [],
+            "relationships": rels,
+        },
+    )
+
+
+def _decide_from_script(doc, first: int) -> None:
+    """gap.detect[i] decides only from ``step-i``; the fresh reobserve output is
+    attached to plan.select as a decorative input."""
+    for i in range(first, POSITIVE_ITERATIONS):
+        gap = _event(doc, f"e-gap-{i}")
+        gap["relationships"] = [
+            r for r in gap["relationships"] if r["objectId"] != f"ev-obs-{i}"
+        ] + [{"objectId": f"step-{i}", "qualifier": "cause"}]
+        _event(doc, f"e-plan-{i}")["relationships"].append(
+            {"objectId": f"ev-obs-{i}", "qualifier": "input"}
+        )
+
+
+def m_preepoch_machine_objective_script_decorative(doc):
+    """B4'' (finish adversarial r1 G1): F1b with the stale per-iteration state
+    typed ``Objective``: a pre-epoch machine event mints step-0..100 and each
+    gap.detect decides only from its step. r5 exempted the type and qualified."""
+    _objective_script(doc, "candidate.construct", "e-start", "e-prescript")
+    _decide_from_script(doc, 0)
+
+
+def m_preepoch_machine_objective_script(doc):
+    """B4'' (finish adversarial r1 G3): F4 (``preepoch_machine_script``) with
+    the script typed ``Objective``; every work order cites its scripted step
+    next to the genuine reobserve chain. r5 qualified it."""
+    _objective_script(doc, "candidate.construct", "e-start", "e-prescript")
+    for i in range(POSITIVE_ITERATIONS):
+        _event(doc, f"e-wo-{i}")["relationships"].append(
+            {"objectId": f"step-{i}", "qualifier": "cause"}
+        )
+
+
+def m_postepoch_machine_objective_script(doc):
+    """B4'' (finish adversarial r1 G4): after t0, before reobserve-1, a machine
+    event (no human) mints an ``Objective`` per iteration; gap.detect[i] decides
+    from step-i, state older than receipt[i-1]. r5 qualified it."""
+    _objective_script(doc, "candidate.construct", "e-reobserve-1", "e-midscript")
+    _decide_from_script(doc, 1)
+
+
+def m_preepoch_human_objective_script_decorative(doc):
+    """B4'' (finish adversarial r1 G2): a pre-epoch human mints a per-iteration
+    ``Objective`` script that episode.start never binds; each gap.detect decides
+    only from its step. Not the pre-declared envelope, so it is stale state."""
+    _objective_script(doc, "human.intervene", "e-start", "e-prescript")
+    _decide_from_script(doc, 0)
+
+
 MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     "human_after_epoch": (
         m_human_after_epoch,
@@ -1124,6 +1207,22 @@ MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     "postepoch_human_two_hop_o2o_authority": (
         m_postepoch_human_two_hop_o2o_authority,
         {"exit": 3, "class": "ASSISTED", "code": "HUMAN_CAUSALITY_AFTER_EPOCH"},
+    ),
+    "preepoch_machine_objective_script_decorative": (
+        m_preepoch_machine_objective_script_decorative,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+    ),
+    "preepoch_machine_objective_script": (
+        m_preepoch_machine_objective_script,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+    ),
+    "postepoch_machine_objective_script": (
+        m_postepoch_machine_objective_script,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+    ),
+    "preepoch_human_objective_script_decorative": (
+        m_preepoch_human_objective_script_decorative,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
     ),
 }
 

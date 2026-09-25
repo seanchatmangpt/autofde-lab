@@ -68,6 +68,15 @@ and any type, makes the transition ``STALE_REOBSERVE`` (B4'). The C9 channel
 follows O2O links with no hop bound: a post-epoch human act opens the channel
 of every ``Objective``/``Authority`` in the O2O component of anything it links.
 
+Repair round 6: the B4' cone exempts an ``Objective``/``Authority`` by
+provenance, never by type. Only the pre-declared envelope -- the
+``Objective``/``Authority`` objects the episode's ``episode.start`` consumes
+(``input``/``cause``/``originAuthority``) -- is lawful older state. Any other
+object of those types (a pre-epoch per-iteration script, a post-epoch machine
+output, a pre-epoch human script that ``episode.start`` never bound) is judged
+by its producer's position like any other state: produced before ``receipt[n]``
+it is stale (B4'', ``R_not_fed_back``).
+
 The verdict is a pure function of (log bytes, profile bytes, court source):
 the receipt carries no wall-clock value, so a cold replay is byte-identical.
 """
@@ -97,7 +106,7 @@ __all__ = [
 ]
 
 COURT_ID = "ALOOP-001"
-COURT_VERSION = "aloop-001/v26.9.25-r5"
+COURT_VERSION = "aloop-001/v26.9.25-r6"
 RECEIPT_SCHEMA = "autofde-lab/aloop-court-receipt/v1"
 
 EXIT_QUALIFIED = 0
@@ -357,6 +366,19 @@ class _Graph:
                     f"episode {ep} has {len(starts[ep])} {_START}",
                 )
         self.start = {ep: ids[0] for ep, ids in starts.items()}
+        # Repair round 6 (B4''): the pre-declared envelope of each episode --
+        # the Objective/Authority objects its episode.start consumes. This is
+        # the only older state the B4' freshness cone exempts.
+        allowed_pre_types = set(profile["humanPreEpochAllowedOutputTypes"])
+        self.envelope_state: dict[str, frozenset[str]] = {
+            ep: frozenset(
+                o
+                for q, o in self.links[s]
+                if q in ("input", "cause", "originAuthority")
+                and self.otype.get(o) in allowed_pre_types
+            )
+            for ep, s in self.start.items()
+        }
 
         self.producers: dict[str, list[str]] = defaultdict(list)
         for e in self.events:
@@ -814,8 +836,13 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
         # Repair round 5 (B4'): the segment ascent stops AT the reobserve, so
         # its own inputs, and any non-observe producer of older state, were
         # never inspected. Walk the full causal cone of w2 back to r: every
-        # consumed object must be r's output, produced strictly after r, or a
-        # lawful Objective/Authority (whose post-epoch misuse C9 judges).
+        # consumed object must be r's output, produced strictly after r, or
+        # part of the pre-declared envelope (whose post-epoch misuse C9
+        # judges). Repair round 6 (B4''): the exemption is by provenance --
+        # episode.start must consume the object -- never by type, so an
+        # Objective/Authority minted as per-iteration state is judged by its
+        # producer's position like any other state.
+        envelope_state = g.envelope_state[ep]
         seen_cone: set[str] = set()
         cone = deque([w2])
         while cone:
@@ -828,7 +855,7 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
                     continue
                 if g.pos[p] > g.pos[r]:
                     cone.append(p)
-                elif g.otype[x] not in g.allowed_pre:
+                elif x not in envelope_state:
                     return (
                         f"{a} consumes {x} produced by {p}, older than {r}; "
                         f"{w2} does not act on the state {r} left"

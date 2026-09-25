@@ -123,8 +123,8 @@ def test_mutation_kill_ratio_is_total(corpus: Path) -> None:
     killed = sum(
         evaluate_path(corpus / rel)[0] != EXIT_QUALIFIED for rel in MUTANT_FILES
     )
-    assert len(MUTANT_FILES) == 36
-    assert (killed, len(MUTANT_FILES)) == (36, 36)
+    assert len(MUTANT_FILES) == 40
+    assert (killed, len(MUTANT_FILES)) == (40, 40)
 
 
 def test_empty_log_is_refused_not_vacuously_qualified(tmp_path: Path) -> None:
@@ -416,12 +416,7 @@ def test_post_epoch_authority_channel_is_human_causality(
     assert "<authority:" in reason["detail"]
 
 
-def test_post_epoch_grant_through_the_envelope_stays_autonomous(
-    tmp_path: Path,
-) -> None:
-    """Anti-vacuity control for C9: the same late grant, derived by a machine
-    event from the pre-declared envelope Authority (instead of the Objective),
-    is lawful."""
+def _envelope_lease_doc(cited_by: range) -> dict:
     doc = build_positive()
     doc["objects"].append(
         {
@@ -448,18 +443,48 @@ def test_post_epoch_grant_through_the_envelope_stays_autonomous(
             ],
         },
     )
-    for i in range(50, 101):
+    for i in cited_by:
         _event(doc, f"e-wo-{i}")["relationships"].append(
             {"objectId": "auth-late", "qualifier": "cause"}
         )
+    return doc
+
+
+def test_post_epoch_grant_through_the_envelope_stays_autonomous(
+    tmp_path: Path,
+) -> None:
+    """Anti-vacuity control for C9: the same late grant, derived by a machine
+    event from the pre-declared envelope Authority (instead of the Objective)
+    after receipt[49] and cited by the work order it was derived for, is
+    lawful and fresh."""
     path = tmp_path / "envelope-lease.ocel.json"
-    dump(doc, path)
+    dump(_envelope_lease_doc(range(50, 51)), path)
     code, receipt = evaluate_path(path)
     assert code == EXIT_QUALIFIED, receipt["unmet"]
     (episode,) = receipt["episodes"]
     assert episode["class"] == "AUTONOMOUS"
     assert episode["metrics"]["human_causal_edges_after_epoch"] == 0
     assert episode["metrics"]["ALD"] == 100
+    assert episode["metrics"]["stale_reobserve_transitions"] == 0
+
+
+def test_envelope_derived_grant_reused_after_later_receipts_is_stale(
+    tmp_path: Path,
+) -> None:
+    """Repair round 6 boundary (B4''): the envelope-derived grant is no human
+    channel (C9 stays lawful), but it is not the envelope itself. Cited as a
+    cause by work orders 51..100 it is state older than receipt[50..99], so
+    those transitions are not counted. r5 exempted it by type (ALD 100)."""
+    path = tmp_path / "envelope-lease-reused.ocel.json"
+    dump(_envelope_lease_doc(range(50, 101)), path)
+    code, receipt = evaluate_path(path)
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    m = episode["metrics"]
+    assert m["human_causal_edges_after_epoch"] == 0
+    assert m["stale_reobserve_transitions"] == 50
+    assert m["ALD"] == 50
+    assert "STALE_REOBSERVE" in {r["code"] for r in episode["reasons"]}
 
 
 def test_positive_log_has_no_stale_transition() -> None:
@@ -548,3 +573,48 @@ def test_pre_epoch_objective_in_the_cone_is_not_stale(tmp_path: Path) -> None:
     assert episode["class"] == "AUTONOMOUS"
     assert episode["metrics"]["ALD"] == 100
     assert episode["metrics"]["stale_reobserve_transitions"] == 0
+
+
+# ── repair round 6 (finish adversarial court r1: B4'' type-based exemption) ──
+
+
+@pytest.mark.parametrize(
+    ("name", "ald"),
+    [
+        ("preepoch_machine_objective_script_decorative", 0),
+        ("preepoch_machine_objective_script", 0),
+        ("postepoch_machine_objective_script", 1),
+        ("preepoch_human_objective_script_decorative", 0),
+    ],
+)
+def test_objective_minted_outside_the_envelope_is_stale_state(
+    corpus: Path, name: str, ald: int
+) -> None:
+    """B4'': r5 exempted any consumed Objective/Authority by TYPE, so stale
+    per-iteration state relabelled Objective (pre-epoch machine script, the
+    same script cited by each work order, a post-epoch machine script minted
+    before reobserve-1, a pre-epoch human script episode.start never bound)
+    returned exit 0 QUALIFIED, ALD 100 on the r5 court. Only the pre-declared
+    envelope -- what episode.start consumes -- is exempt now."""
+    code, receipt = evaluate_path(corpus / f"mutants/{name}.ocel.json")
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    m = episode["metrics"]
+    assert episode["class"] == "FAILED"
+    assert m["ALD"] == ald
+    assert m["stale_reobserve_transitions"] == 100 - ald
+    assert m["human_causal_edges_after_epoch"] == 0
+    reason = next(r for r in episode["reasons"] if r["code"] == "STALE_REOBSERVE")
+    assert reason["broken_term"] == "R_not_fed_back"
+    assert "step-" in reason["detail"]
+
+
+def test_envelope_is_exactly_what_episode_start_consumes() -> None:
+    """The exemption is by provenance: the positive log's envelope is the
+    Objective and the Authority its episode.start consumes, nothing else."""
+    from autofde_lab.aloop.court import _admit, _Graph
+
+    profile = load_profile()
+    log = _admit(json.loads((SYNTH / "positive.ocel.json").read_text()), profile)
+    g = _Graph(log, profile)
+    assert g.envelope_state == {"ep-1": frozenset({"obj-1", "auth-policy"})}

@@ -83,7 +83,11 @@ reaches no `observe`/`reobserve` older than `receipt[n]`; and no event of that s
 `receipt[n]` reads (`input`/`cause`/`subject`) a `Subject` already superseded at its position;
 and every object consumed (`input`/`cause`) anywhere in the causal cone of `workorder[n+1]` back
 to `receipt[n]` -- including the reobserve's own inputs and every machine hop between them -- is
-`receipt[n]`'s output, produced strictly after `receipt[n]`, or an `Objective`/`Authority`. A
+`receipt[n]`'s output, produced strictly after `receipt[n]`, or part of the pre-declared
+envelope: an `Objective`/`Authority` that the episode's `episode.start` consumes
+(`input`/`cause`/`originAuthority`). The exemption is by provenance, never by type: any other
+`Objective`/`Authority` (a per-iteration script, an envelope-derived grant reused by later
+iterations) is judged by its producer's position like any other state. A
 stale transition is not counted (ALD drops), the episode lists `STALE_REOBSERVE`
 (`R_not_fed_back`, `SUBJECT_FAILURE`, metric `stale_reobserve_transitions`), and an episode with
 any stale transition is not `AUTONOMOUS`.
@@ -279,11 +283,14 @@ it still qualifies; if a next action whose cause chain reaches a reobserve that 
 following `receipt[n]` (an older observation, or a superseded Subject) counts as a loop
 transition; if older state reaches the next action through the reobserve's own inputs, a
 machine copy of an older observation, verify evidence of a superseded Subject, or a pre-epoch
-machine script, and it still counts; if a post-epoch human act on (or O2O-linked, at any hop
+machine script, and it still counts; if that older state is typed `Objective`/`Authority`
+without being the pre-declared envelope `episode.start` consumes (a pre-epoch machine or human
+per-iteration script, or a post-epoch machine script minted before `receipt[n]`) and it still
+counts; if a post-epoch human act on (or O2O-linked, at any hop
 count, to) the granted Authority, or an Authority granted after `t0` outside the pre-declared
 envelope, leaves the work orders citing it self-generated; or if two runs over the same bytes
 produce different receipts. Each has a mutant in the regenerated corpus whose sha256 is committed
-in `tests/aloop/fixtures/synthetic/MANIFEST.json` (36 mutants, 36 killed).
+in `tests/aloop/fixtures/synthetic/MANIFEST.json` (40 mutants, 40 killed).
 
 Repair round 1 (court version `aloop-001/v26.9.25-r1`) closed three adversarial-court findings
 against round 0: a vacuous non-actuating loop qualified (`admission_vacuous`,
@@ -330,3 +337,18 @@ follows the whole O2O component. All six new mutants return exit 0 `QUALIFIED` o
 the r4 court. Known residuals, not closed here: a post-epoch human memo linked to a next action
 under a non-causal qualifier (`evidence`), and a post-epoch attribute change on an Authority with
 no event, both still qualify.
+
+Repair round 6 (court version `aloop-001/v26.9.25-r6`) closed B4'' (`R_not_fed_back`), found by
+the finish adversarial court r1 against round 5: the B4' cone exempted any consumed object whose
+type was `Objective` or `Authority`, whoever produced it and whenever. Relabelling stale
+per-iteration state from `Plan` to `Objective` therefore reopened the round-5 mutants: a pre-epoch
+machine script with a decorative reobserve, the same script cited by every work order, and a
+post-epoch machine script minted before reobserve 1 each returned exit 0 `QUALIFIED`, ALD 100
+(the `Plan`-typed control returned `NOT_QUALIFIED`, ALD 0). Only the pre-declared envelope, the
+`Objective`/`Authority` objects `episode.start` consumes, is exempt now. Four new mutants
+(including a pre-epoch human `Objective` script `episode.start` never binds) each return exit 0
+`QUALIFIED` on the r5 court and `NOT_QUALIFIED` `FAILED` `STALE_REOBSERVE` on r6. Boundary made
+explicit: an envelope-derived grant cited by the work order it was derived for stays fresh and
+lawful; cited again after later receipts it is stale state. Known residual, not closed here: a
+reobserve with the same timestamp as `receipt[n]` (ordered after it only by the causal edge and
+log position) still counts as strictly after it.

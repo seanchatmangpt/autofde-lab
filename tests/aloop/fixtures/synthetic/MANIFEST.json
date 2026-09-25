@@ -144,6 +144,14 @@
       },
       "sha256": "57e8d0d090a74725574f711ecd81ab4261a12ff1be1047cdd76105b270d021f0"
     },
+    "mutants/postepoch_machine_objective_script.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "STALE_REOBSERVE",
+        "exit": 3
+      },
+      "sha256": "9c8e613a54218c5972f5d98f10e4467675933e8e7e9b2342920a66deb2ea56ff"
+    },
     "mutants/postepoch_unenveloped_authority_grant.ocel.json": {
       "expect": {
         "class": "ASSISTED",
@@ -152,6 +160,14 @@
       },
       "sha256": "e6ba8b4bbb2334e3c8f25186fb4e89e9a23b287838fe547648704ec56d542cb7"
     },
+    "mutants/preepoch_human_objective_script_decorative.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "STALE_REOBSERVE",
+        "exit": 3
+      },
+      "sha256": "012828e9b692d02852cdd36ceb82d63f00b4d5e8a5bbe87491887199311c68af"
+    },
     "mutants/preepoch_laundered_human_script.ocel.json": {
       "expect": {
         "class": "ASSISTED",
@@ -159,6 +175,22 @@
         "exit": 3
       },
       "sha256": "6095952faf59fb24330ce16ca2e2791c2b74e1d78be6ac47cb0b89a1a515eba4"
+    },
+    "mutants/preepoch_machine_objective_script.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "STALE_REOBSERVE",
+        "exit": 3
+      },
+      "sha256": "56cf0d489ddce6b04335b4358c0499963ec16b613c45a62ea36bee2db7da7717"
+    },
+    "mutants/preepoch_machine_objective_script_decorative.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "STALE_REOBSERVE",
+        "exit": 3
+      },
+      "sha256": "109254e414992c4f81dddacb9bf5eefb552acaae91ec1816ccba813f5b924413"
     },
     "mutants/preepoch_machine_script.ocel.json": {
       "expect": {
