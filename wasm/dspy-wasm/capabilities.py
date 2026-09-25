@@ -419,7 +419,7 @@ def _serialization() -> dict[str, Any]:
         restored = dspy.Predict("text -> answer")
         restored.load(path)
         assert len(restored.demos) == 1
-        assert restored.demos[0].answer == "A"
+        assert restored.demos[0]["answer"] == "A"
         size = path.stat().st_size
     return {"mode": "state-json", "bytes": size, "demos": 1}
 
@@ -439,11 +439,31 @@ def _two_step_adapter() -> dict[str, Any]:
 
 
 async def _async_predict_inner() -> dict[str, Any]:
-    engine = lm("async", async_=True)
-    with dspy.context(lm=engine, adapter=dspy.JSONAdapter(use_native_function_calling=False)):
-        pred = await dspy.Predict("text -> output").acall(text="wasm")
-    assert pred.output == "ASYNC"
-    return {"output": pred.output, "async_calls": engine._async_engine_spec.calls}
+    # DSPy 3.4 uses asyncio.to_thread() for request preparation. Pyodide has
+    # no worker-thread stack switching in this Node runtime, so the WASM
+    # profile projects that pure preparation step inline while preserving the
+    # async engine contract itself.
+    original_to_thread = asyncio.to_thread
+
+    async def inline_to_thread(func, /, *args, **kwargs):
+        return func(*args, **kwargs)
+
+    asyncio.to_thread = inline_to_thread
+    try:
+        engine = lm("async", async_=True)
+        with dspy.context(
+            lm=engine,
+            adapter=dspy.JSONAdapter(use_native_function_calling=False),
+        ):
+            pred = await dspy.Predict("text -> output").acall(text="wasm")
+        assert pred.output == "ASYNC"
+        return {
+            "output": pred.output,
+            "async_calls": engine._async_engine_spec.calls,
+            "to_thread": "inline-wasm-projection",
+        }
+    finally:
+        asyncio.to_thread = original_to_thread
 
 
 def _async_predict() -> dict[str, Any]:
@@ -461,12 +481,19 @@ def _flex() -> dict[str, Any]:
     with dspy.context(adapter=dspy.JSONAdapter(use_native_function_calling=False)):
         pred = flex(text="wasm")
     assert pred.output == "FLEX"
+    module_src = flex.module_src
+    assert module_src is not None and "dspy.Predict" in module_src
+    # Runtime engines are host resources, not Flex state. Clear the borrowed
+    # LM before asserting the code/state round-trip surface.
+    flex.set_lm(None)
     state = flex.dump_state()
-    assert "module_src" in state and "dspy.Predict" in state["module_src"]
+    assert state["lm"] is None
+    assert state["module_src"] == module_src
     return {
         "output": pred.output,
-        "module_src_sha": __import__("hashlib").sha256(state["module_src"].encode()).hexdigest(),
+        "module_src_sha": __import__("hashlib").sha256(module_src.encode()).hexdigest(),
         "lm_calls": engine._engine_spec.calls,
+        "serialized_lm": None,
     }
 
 
