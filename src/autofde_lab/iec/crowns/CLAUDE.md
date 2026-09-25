@@ -17,7 +17,11 @@ Nothing in it actuates.
   SPARQL), `decompile` (flat and row programs), `antiunify` (n-ary LGG with hedge holes).
 - **Verify** with named verifier sets: `court.run_court` returns `PASS` / `COUNTEREXAMPLE` /
   `BLOCKED` / `UNSUPPORTED` per verifier and a claim naming the verifier-set id.
+- **Find** LLM residue (`residue.residue_census`): every `ast`-resolved construction of an LLM
+  program or client at one commit. Kind and ledger class come from explicit
+  `# llm-residue: kind=… class=RC-…` markers only; otherwise `UNKNOWN`.
 - **Retire** a reasoning class only through `retirement.ledger_entry` over a held-out C3 court.
+  A residue edge *removed* between commits (`residue_delta`) is not retired.
 
 # Non-authority
 
@@ -37,7 +41,8 @@ templates read from the frozen commit; LLM outcomes only as `INFERRED_CANDIDATE`
 # Outputs
 
 `receipts/v26.9.23/iec/c1/` (`python -m autofde_lab.iec.crowns.crown`) and
-`receipts/v26.9.23/iec/c3/` (`python -m autofde_lab.iec.crowns.c3`). The JSON files are the only
+`receipts/v26.9.23/iec/c3/` (`python -m autofde_lab.iec.crowns.c3`), and
+`receipts/v26.9.25/iec/residue/` (`python -m autofde_lab.iec.crowns.residue`). The JSON files are the only
 durable record; `Census.observations()` is a projection of `census.json`, not a second copy.
 
 # Invariants
@@ -83,6 +88,10 @@ minimality.
 - Changing a verifier's logic → bump its `version`; the verifier-set id changes with it.
 - Changing census rules, kernel extraction, or decompile → re-run both crowns and commit the
   receipts; the replay test fails until you do.
+- Changing residue rules (`INVOCATION_APIS`, `RESIDUE_KINDS`, marker grammar) → bump
+  `RESIDUE_VERSION` and re-emit the residue receipt at its pinned commits; its replay test fails
+  until you do. `LLMDependencyRatio` stays `UNREPRESENTABLE` until a reachability observation
+  exists. Never fill it from the static count.
 - Changing the audit mechanism → the C3 frozen outcome must still replay (`replayed_outcome_id`
   == `frozen_outcome_id`), or the retirement is void and must be re-earned on a new held-out
   subject.

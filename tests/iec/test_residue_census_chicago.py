@@ -276,3 +276,34 @@ def test_census_of_this_repository() -> None:
         for edge in census["edges"]
     )
     assert canonical_json(census) == canonical_json(residue_census(subject, REPO_ROOT))
+
+
+RECEIPT = REPO_ROOT / "receipts" / "v26.9.25" / "iec" / "residue"
+RECEIPT_COMMIT = "f718d65cff85148806cbfdeb307854565fa6eedd"
+RECEIPT_BASE = "98b6cc9bfe3af8a25b3ad53019f5fb71fe2d37d0"
+
+
+def _has_commits(*commits: str) -> bool:
+    return _this_checkout_is_autofde_lab() and all(
+        subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "cat-file", "-e", f"{c}^{{commit}}"],
+            capture_output=True,
+        ).returncode
+        == 0
+        for c in commits
+    )
+
+
+@pytest.mark.skipif(
+    not _has_commits(RECEIPT_COMMIT, RECEIPT_BASE),
+    reason=f"UNSUPPORTED: checkout lacks {RECEIPT_COMMIT[:8]} or {RECEIPT_BASE[:8]}",
+)
+def test_committed_receipt_replays_byte_for_byte(tmp_path: Path) -> None:
+    argv = [str(tmp_path), "--checkout", str(REPO_ROOT)]
+    assert main([*argv, "--commit", RECEIPT_COMMIT, "--base", RECEIPT_BASE]) == 0
+    for name in (
+        "residue-census.json",
+        "residue-census.base.json",
+        "residue-delta.json",
+    ):
+        assert (tmp_path / name).read_bytes() == (RECEIPT / name).read_bytes(), name

@@ -1,0 +1,2145 @@
+{
+  "declared_reasoning_classes": [
+    {
+      "blob": "5cff0ed2ff92e7a3a968f5bda57acf5645529835",
+      "line": 203,
+      "name": "MaximalAnswer",
+      "path": "scripts/dspy_maximal.py",
+      "question": "Answer the bounded question accurately and concisely."
+    },
+    {
+      "blob": "82c9ad37226337a49dc03877c1743615dffcbb6f",
+      "line": 290,
+      "name": "SelectPlanningRoute",
+      "path": "src/autofde_lab/autofde/ercc_control_plane.py",
+      "question": "Select exactly one supplied route_id or abstain."
+    },
+    {
+      "blob": "3501274bd9b04c943b4c2074e84d2bc46e235ae9",
+      "line": 70,
+      "name": "JobToDecision",
+      "path": "src/autofde_lab/fabric/dspy.py",
+      "question": "Map a job to one registered domain and compatible solver."
+    },
+    {
+      "blob": "70d72c4747ba78c030e35113e0de7c43dccd4d3d",
+      "line": 98,
+      "name": "SameRootCause",
+      "path": "src/autofde_lab/fabric/dspy_ensemble.py",
+      "question": "Decide whether two short diagnostic claims describe the same"
+    },
+    {
+      "blob": "2907b30727c3890995e61e1f935eb5be0ee86e2a",
+      "line": 212,
+      "name": "_RankPlans",
+      "path": "src/autofde_lab/hub/domain/gym_procedure/level4_crown.py",
+      "question": "Choose the single most plausible plan from a numbered list of"
+    },
+    {
+      "blob": "0dd0034628f1a5e773f1ed214eda3c47d70728e6",
+      "line": 67,
+      "name": "ChooseMove",
+      "path": "src/autofde_lab/hub/solver/dspy_policy/dspy_policy.py",
+      "question": "Choose the next move in a game given a short text description of the"
+    },
+    {
+      "blob": "0dd0034628f1a5e773f1ed214eda3c47d70728e6",
+      "line": 78,
+      "name": "GenerateStructuredAction",
+      "path": "src/autofde_lab/hub/solver/dspy_policy/dspy_policy.py",
+      "question": "Generate a real action for a domain whose action space cannot be"
+    },
+    {
+      "blob": "c8f2c5307e32aec716747fae23c4089295ca4ee0",
+      "line": 51,
+      "name": "InterpretBreedEnsemble",
+      "path": "src/autofde_lab/reasoning/breed_ensemble_loop.py",
+      "question": "Given one round's real breed-ensemble result, interpret why it did or"
+    },
+    {
+      "blob": "bad699221e52e95f062c996a55816f890eaee5f8",
+      "line": 47,
+      "name": "InferArchitectureVision",
+      "path": "src/autofde_lab/reasoning/fortune5_architecture_signatures.py",
+      "question": "TOGAF Phase A: given observed enterprise state and a business"
+    },
+    {
+      "blob": "bad699221e52e95f062c996a55816f890eaee5f8",
+      "line": 72,
+      "name": "DeriveBusinessArchitecture",
+      "path": "src/autofde_lab/reasoning/fortune5_architecture_signatures.py",
+      "question": "TOGAF Phase B: given an architecture vision, derive real,"
+    },
+    {
+      "blob": "bad699221e52e95f062c996a55816f890eaee5f8",
+      "line": 88,
+      "name": "SelectTransformationCandidate",
+      "path": "src/autofde_lab/reasoning/fortune5_architecture_signatures.py",
+      "question": "TOGAF Phase E: given a real computed delta (observed vs. desired"
+    },
+    {
+      "blob": "177d7ab87cfeb65151a5e19dac8befd3fe3be91d",
+      "line": 310,
+      "name": "DiagnoseClusterFault",
+      "path": "src/autofde_lab/reasoning/gymact_dspy_react.py",
+      "question": "Diagnose a live Kubernetes cluster fault for the given sregym"
+    },
+    {
+      "blob": "bfa5d456824f55ba0b9729dae468f1b1f1936bb6",
+      "line": 167,
+      "name": "ObserveCluster",
+      "path": "src/autofde_lab/reasoning/gymact_dspy_signatures.py",
+      "question": "Gather real, current Kubernetes cluster state for the given"
+    },
+    {
+      "blob": "bfa5d456824f55ba0b9729dae468f1b1f1936bb6",
+      "line": 253,
+      "name": "ClassifyAnomaly",
+      "path": "src/autofde_lab/reasoning/gymact_dspy_signatures.py",
+      "question": ""
+    },
+    {
+      "blob": "bfa5d456824f55ba0b9729dae468f1b1f1936bb6",
+      "line": 284,
+      "name": "DiagnoseRootCause",
+      "path": "src/autofde_lab/reasoning/gymact_dspy_signatures.py",
+      "question": "Given a real cluster summary and candidate fault labels, produce the"
+    },
+    {
+      "blob": "bfa5d456824f55ba0b9729dae468f1b1f1936bb6",
+      "line": 310,
+      "name": "SynthesizeMitigation",
+      "path": "src/autofde_lab/reasoning/gymact_dspy_signatures.py",
+      "question": "Given a diagnosed root cause, synthesize ONE real, syntactically"
+    },
+    {
+      "blob": "bfa5d456824f55ba0b9729dae468f1b1f1936bb6",
+      "line": 368,
+      "name": "VerifyMitigationOutcome",
+      "path": "src/autofde_lab/reasoning/gymact_dspy_signatures.py",
+      "question": "Advisory, LLM-assisted second opinion on whether a post-mitigation"
+    },
+    {
+      "blob": "675b2697790af39009c82d0a7c88a3547f000dec",
+      "line": 61,
+      "name": "SummarizeKubernetesResourceState",
+      "path": "src/autofde_lab/reasoning/k8s_signatures.py",
+      "question": "Summarize raw Kubernetes resource state (as returned by a real"
+    },
+    {
+      "blob": "675b2697790af39009c82d0a7c88a3547f000dec",
+      "line": 80,
+      "name": "DiagnoseKubernetesFault",
+      "path": "src/autofde_lab/reasoning/k8s_signatures.py",
+      "question": "Diagnose the likely root cause of a Kubernetes application fault,"
+    },
+    {
+      "blob": "675b2697790af39009c82d0a7c88a3547f000dec",
+      "line": 109,
+      "name": "ClassifyKubernetesAnomaly",
+      "path": "src/autofde_lab/reasoning/k8s_signatures.py",
+      "question": "Classify whether a Kubernetes resource's observed state represents"
+    },
+    {
+      "blob": "675b2697790af39009c82d0a7c88a3547f000dec",
+      "line": 138,
+      "name": "ProposeKubernetesRemediation",
+      "path": "src/autofde_lab/reasoning/k8s_signatures.py",
+      "question": "Propose a concrete remediation for a diagnosed Kubernetes fault."
+    },
+    {
+      "blob": "675b2697790af39009c82d0a7c88a3547f000dec",
+      "line": 159,
+      "name": "DecideNextKubernetesInvestigationStep",
+      "path": "src/autofde_lab/reasoning/k8s_signatures.py",
+      "question": "Decide the single next real investigation action to take, given the"
+    },
+    {
+      "blob": "47399a3a841e72c6dc1d5f440f9ca154d7414e81",
+      "line": 48,
+      "name": "TranslateMitigationStepToKubectlCommand",
+      "path": "src/autofde_lab/reasoning/mitigation_kubectl_translation_signatures.py",
+      "question": "Translate ONE real mitigation-process step description into a"
+    },
+    {
+      "blob": "134370be6f2c617affc2d7e2bd4080c404875c90",
+      "line": 37,
+      "name": "ConstructSreMitigationProcess",
+      "path": "src/autofde_lab/reasoning/sre_mitigation_portfolio_signatures.py",
+      "question": "Construct ONE candidate mitigation PROCESS for an already-committed"
+    },
+    {
+      "blob": "0e3924fe9258fa4cb828aad526f6460c356675da",
+      "line": 48,
+      "name": "OrientSreIncident",
+      "path": "src/autofde_lab/reasoning/sre_troubleshooting_signatures.py",
+      "question": "Bound the system under investigation and propose an initial"
+    },
+    {
+      "blob": "0e3924fe9258fa4cb828aad526f6460c356675da",
+      "line": 70,
+      "name": "NormalizeSreEvidence",
+      "path": "src/autofde_lab/reasoning/sre_troubleshooting_signatures.py",
+      "question": "Transform raw, real observations into explicit admitted facts (O ->"
+    },
+    {
+      "blob": "0e3924fe9258fa4cb828aad526f6460c356675da",
+      "line": 94,
+      "name": "HypothesizeSreCauses",
+      "path": "src/autofde_lab/reasoning/sre_troubleshooting_signatures.py",
+      "question": "Given the currently admitted facts, maintain a REAL portfolio of"
+    },
+    {
+      "blob": "0e3924fe9258fa4cb828aad526f6460c356675da",
+      "line": 115,
+      "name": "ProposeDiscriminatingObservation",
+      "path": "src/autofde_lab/reasoning/sre_troubleshooting_signatures.py",
+      "question": "Construct ONE candidate real observation (a READ, never a DO) whose"
+    },
+    {
+      "blob": "0e3924fe9258fa4cb828aad526f6460c356675da",
+      "line": 145,
+      "name": "CommitSreDiagnosis",
+      "path": "src/autofde_lab/reasoning/sre_troubleshooting_signatures.py",
+      "question": "Commit to a single diagnosis -- symptom, causal mechanism, root"
+    },
+    {
+      "blob": "0e3924fe9258fa4cb828aad526f6460c356675da",
+      "line": 174,
+      "name": "ConstructSreMitigation",
+      "path": "src/autofde_lab/reasoning/sre_troubleshooting_signatures.py",
+      "question": "Construct the smallest, safest, most reversible real mitigation for"
+    },
+    {
+      "blob": "830b7191a8c3c089fb7d5b2ad1a0d6c43c29ec9d",
+      "line": 233,
+      "name": "DiagnoseFault",
+      "path": "src/autofde_lab/reasoning/sregym_pipeline.py",
+      "question": "Diagnose a Kubernetes cluster fault. Use the provided tools to inspect"
+    },
+    {
+      "blob": "830b7191a8c3c089fb7d5b2ad1a0d6c43c29ec9d",
+      "line": 244,
+      "name": "TaxonomyClassification",
+      "path": "src/autofde_lab/reasoning/sregym_pipeline.py",
+      "question": "Classify a diagnosed Kubernetes fault into exactly one of a fixed,"
+    },
+    {
+      "blob": "4d929929c288380638b40bec85021366c1c658e3",
+      "line": 36,
+      "name": "ExtractSemanticDelta",
+      "path": "src/autofde_lab/semantic_models/dspy_program.py",
+      "question": "Map an observation to a candidate graph delta using only supplied ontology context."
+    },
+    {
+      "blob": "0653b3d87198e8c9e03056f17bb301d7c8308f99",
+      "line": 16,
+      "name": "OrientIncident",
+      "path": "src/autofde_lab/sregym_sota/signatures.py",
+      "question": "Orient to the observed operational system without assuming a fault taxonomy."
+    },
+    {
+      "blob": "0653b3d87198e8c9e03056f17bb301d7c8308f99",
+      "line": 31,
+      "name": "GenerateHypotheses",
+      "path": "src/autofde_lab/sregym_sota/signatures.py",
+      "question": "Manufacture a causally diverse portfolio of falsifiable hypotheses."
+    },
+    {
+      "blob": "0653b3d87198e8c9e03056f17bb301d7c8308f99",
+      "line": 50,
+      "name": "RelateEvidence",
+      "path": "src/autofde_lab/sregym_sota/signatures.py",
+      "question": "Propose mechanism-specific relationships between admitted fact IDs and hypotheses."
+    },
+    {
+      "blob": "0653b3d87198e8c9e03056f17bb301d7c8308f99",
+      "line": 67,
+      "name": "ConstructDiscriminationProcess",
+      "path": "src/autofde_lab/sregym_sota/signatures.py",
+      "question": "Construct a bounded POWL-compatible process that maximally partitions survivors."
+    },
+    {
+      "blob": "0653b3d87198e8c9e03056f17bb301d7c8308f99",
+      "line": 95,
+      "name": "CommitDiagnosis",
+      "path": "src/autofde_lab/sregym_sota/signatures.py",
+      "question": "Describe the smallest causal explanation justified by externally computed"
+    },
+    {
+      "blob": "0653b3d87198e8c9e03056f17bb301d7c8308f99",
+      "line": 106,
+      "name": "ChallengeDiagnosis",
+      "path": "src/autofde_lab/sregym_sota/signatures.py",
+      "question": "Try to falsify the proposed diagnosis and return evidence obligations only."
+    },
+    {
+      "blob": "0653b3d87198e8c9e03056f17bb301d7c8308f99",
+      "line": 119,
+      "name": "ConstructMitigationProcesses",
+      "path": "src/autofde_lab/sregym_sota/signatures.py",
+      "question": "Construct multiple lawful POWL-compatible recovery processes for the admitted"
+    },
+    {
+      "blob": "6703b3a29c2d5c2ae6715ff4a28548beb100d966",
+      "line": 48,
+      "name": "ArithmeticClaim",
+      "path": "tests/fabric/test_dspy_ensemble_chicago.py",
+      "question": "Answer a simple arithmetic question with a short claim sentence."
+    },
+    {
+      "blob": "f5944f5d22d286806951171739f2987c69c3a414",
+      "line": 61,
+      "name": "ChooseMove",
+      "path": "tests/test_self_play_dspy_groq_chicago.py",
+      "question": ""
+    },
+    {
+      "blob": "3ca77cbd6b65a6d423374145025099d1f60b846c",
+      "line": 61,
+      "name": "ChooseMove",
+      "path": "tests/test_self_play_dspy_turbofieldfare_chicago.py",
+      "question": ""
+    },
+    {
+      "blob": "887aa9478336c215b5fa2d921452a0499d3614e1",
+      "line": 34,
+      "name": "SuspicionOfAllocationMismatch",
+      "path": "vendor/bcinr/crates/bcinr-cmca/scripts/dspy_cmca_verifier.py",
+      "question": "Score how suspicious a claimed allocation is against a reference"
+    }
+  ],
+  "edges": [
+    {
+      "api": "dspy.LM",
+      "blob": "5cff0ed2ff92e7a3a968f5bda57acf5645529835",
+      "declaration": {},
+      "id": "sha256:d316798925bd25ea0cda00fe94fa4c01ecbd1be48c237ff1ba61e6142495d492",
+      "kind": "UNKNOWN",
+      "line": 606,
+      "path": "scripts/dspy_maximal.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "other"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "5cff0ed2ff92e7a3a968f5bda57acf5645529835",
+      "declaration": {},
+      "id": "sha256:5972f187ac71ae769992dc5d3e1abd3806af6710f19d4598eac4f7658d0a3837",
+      "kind": "UNKNOWN",
+      "line": 230,
+      "path": "scripts/dspy_maximal.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "sig",
+      "standing": "OBSERVED",
+      "zone": "other"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "5cff0ed2ff92e7a3a968f5bda57acf5645529835",
+      "declaration": {},
+      "id": "sha256:c015efb31e0b4ac4c7a96faf3602a7b28e620005536255b6d7d4ad6d5880a948",
+      "kind": "UNKNOWN",
+      "line": 233,
+      "path": "scripts/dspy_maximal.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "sig",
+      "standing": "OBSERVED",
+      "zone": "other"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "5cff0ed2ff92e7a3a968f5bda57acf5645529835",
+      "declaration": {},
+      "id": "sha256:4080342060fc58110cd4328481a64bb9d03de1b2ab6bfc957d2c55102bb4c7d5",
+      "kind": "UNKNOWN",
+      "line": 298,
+      "path": "scripts/dspy_maximal.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "sig",
+      "standing": "OBSERVED",
+      "zone": "other"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "5cff0ed2ff92e7a3a968f5bda57acf5645529835",
+      "declaration": {},
+      "id": "sha256:36ba18c73b72a4718c047bbef8953371f52e119ee5fea8cfd9a6fcbe75e7b3b8",
+      "kind": "UNKNOWN",
+      "line": 309,
+      "path": "scripts/dspy_maximal.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "sig",
+      "standing": "OBSERVED",
+      "zone": "other"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "5cff0ed2ff92e7a3a968f5bda57acf5645529835",
+      "declaration": {},
+      "id": "sha256:ad52e390ef865a7ab0b263a31f73440e60e40142383a590d7dce079d11a095da",
+      "kind": "UNKNOWN",
+      "line": 310,
+      "path": "scripts/dspy_maximal.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "sig",
+      "standing": "OBSERVED",
+      "zone": "other"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "0ad4574a3a251a8939f22cc5a4b777643b2af964",
+      "declaration": {},
+      "id": "sha256:395bdfe8b5a9e0eb98928e6896acec469ff165ec9410bdacae552eda1d2ec50d",
+      "kind": "UNKNOWN",
+      "line": 50,
+      "path": "scripts/run_gymact_dspy_diagnosis_trial.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "other"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "82c9ad37226337a49dc03877c1743615dffcbb6f",
+      "declaration": {},
+      "id": "sha256:d354841fd56be35e26112f28f7ec8f074224904245a350214b15759b2e099641",
+      "kind": "UNKNOWN",
+      "line": 306,
+      "path": "src/autofde_lab/autofde/ercc_control_plane.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "SelectPlanningRoute",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "3501274bd9b04c943b4c2074e84d2bc46e235ae9",
+      "declaration": {},
+      "id": "sha256:4465113b1923bfd9fb6f958597040880d033bb368799ca4043843ea22d0fb555",
+      "kind": "UNKNOWN",
+      "line": 86,
+      "path": "src/autofde_lab/fabric/dspy.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "JobToDecision",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "70d72c4747ba78c030e35113e0de7c43dccd4d3d",
+      "declaration": {},
+      "id": "sha256:2d88f09c52e068e98ee2e036909cb3ec2aa74a82bbb66c8595ae2b11873289bd",
+      "kind": "UNKNOWN",
+      "line": 106,
+      "path": "src/autofde_lab/fabric/dspy_ensemble.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "SameRootCause",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "2907b30727c3890995e61e1f935eb5be0ee86e2a",
+      "declaration": {},
+      "id": "sha256:68debe5d822a7690b2be431d806de8d21a7fb854de5bfe48a2f8ebcee2c46ddf",
+      "kind": "UNKNOWN",
+      "line": 226,
+      "path": "src/autofde_lab/hub/domain/gym_procedure/level4_crown.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "_RankPlans",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "0dd0034628f1a5e773f1ed214eda3c47d70728e6",
+      "declaration": {},
+      "id": "sha256:4556accf08903137983c73a2a684b76b5ed233c20c7346982ec80680162102cc",
+      "kind": "UNKNOWN",
+      "line": 64,
+      "path": "src/autofde_lab/hub/solver/dspy_policy/dspy_policy.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "0dd0034628f1a5e773f1ed214eda3c47d70728e6",
+      "declaration": {},
+      "id": "sha256:94d7fd33c5e97e7a9931f0c9c6ea4fb8fb71eddffd7037b5c6eda0a97b73b03a",
+      "kind": "UNKNOWN",
+      "line": 195,
+      "path": "src/autofde_lab/hub/solver/dspy_policy/dspy_policy.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ChooseMove",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "0dd0034628f1a5e773f1ed214eda3c47d70728e6",
+      "declaration": {},
+      "id": "sha256:62a04ecbebc0380efd7af571d084478a539f3e957e39cf0ce0cfaa449625f34d",
+      "kind": "UNKNOWN",
+      "line": 196,
+      "path": "src/autofde_lab/hub/solver/dspy_policy/dspy_policy.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "GenerateStructuredAction",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "6a697c9960ca7694eee1bea725dbb1e0a05a091f",
+      "declaration": {},
+      "id": "sha256:0fe450a6bb98623d5047c142260fff0543145c140d02e453bd8db886dbb59957",
+      "kind": "UNKNOWN",
+      "line": 314,
+      "path": "src/autofde_lab/planner_league/llm_candidate_producer.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "c8f2c5307e32aec716747fae23c4089295ca4ee0",
+      "declaration": {},
+      "id": "sha256:1a471f16132428ff64efa23152bde0eef8f0ceb051276d3f88bb48952908b6e5",
+      "kind": "UNKNOWN",
+      "line": 160,
+      "path": "src/autofde_lab/reasoning/breed_ensemble_loop.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "InterpretBreedEnsemble",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.ReAct",
+      "blob": "c5fc4ec6836a101e4c6e56862832ccb724448e6b",
+      "declaration": {},
+      "id": "sha256:d70abda1692a19e1b28d402e2e94879a00baaeab349951a0eecb32dab6574bb0",
+      "kind": "UNKNOWN",
+      "line": 273,
+      "path": "src/autofde_lab/reasoning/gepa_train.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "DiagnoseKubernetesFault",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "177d7ab87cfeb65151a5e19dac8befd3fe3be91d",
+      "declaration": {},
+      "id": "sha256:275e72816e9b105907b6f6871fb829417a39cbe78d08d36ebfa9883b860e90fd",
+      "kind": "UNKNOWN",
+      "line": 1265,
+      "path": "src/autofde_lab/reasoning/gymact_dspy_react.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.ReAct",
+      "blob": "177d7ab87cfeb65151a5e19dac8befd3fe3be91d",
+      "declaration": {},
+      "id": "sha256:103f685a514e88487ec8fc9e49aca087f312661d616fd570c68d0cec4189ef3b",
+      "kind": "UNKNOWN",
+      "line": 593,
+      "path": "src/autofde_lab/reasoning/gymact_dspy_react.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "DiagnoseKubernetesFault",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.ReAct",
+      "blob": "bfa5d456824f55ba0b9729dae468f1b1f1936bb6",
+      "declaration": {},
+      "id": "sha256:b0248bdae963a0b4f6aa43f7c7bb3c10377f374c22169e937c67183ea9473630",
+      "kind": "UNKNOWN",
+      "line": 242,
+      "path": "src/autofde_lab/reasoning/gymact_dspy_signatures.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ObserveCluster",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "bfa5d456824f55ba0b9729dae468f1b1f1936bb6",
+      "declaration": {},
+      "id": "sha256:f43673125644f40201b510e1f333a40a938ddb7e9946cae928511bcfbdee8761",
+      "kind": "UNKNOWN",
+      "line": 426,
+      "path": "src/autofde_lab/reasoning/gymact_dspy_signatures.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ClassifyAnomaly",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "bfa5d456824f55ba0b9729dae468f1b1f1936bb6",
+      "declaration": {},
+      "id": "sha256:ffc37f7b32eca69be98477288500b54ec2df7ca7d7b0f65dc2f2a30f091f1b7b",
+      "kind": "UNKNOWN",
+      "line": 427,
+      "path": "src/autofde_lab/reasoning/gymact_dspy_signatures.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "DiagnoseRootCause",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "bfa5d456824f55ba0b9729dae468f1b1f1936bb6",
+      "declaration": {},
+      "id": "sha256:9ac146342e4834c80bdb065254037fed1ddd35a580a12868405e022f93a32b9f",
+      "kind": "UNKNOWN",
+      "line": 428,
+      "path": "src/autofde_lab/reasoning/gymact_dspy_signatures.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "SynthesizeMitigation",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "bfa5d456824f55ba0b9729dae468f1b1f1936bb6",
+      "declaration": {},
+      "id": "sha256:9e9c03303492e5894457d32e03f3949c1f9a277d1452fa40430e93d9973a9c73",
+      "kind": "UNKNOWN",
+      "line": 429,
+      "path": "src/autofde_lab/reasoning/gymact_dspy_signatures.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "VerifyMitigationOutcome",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "bfa5d456824f55ba0b9729dae468f1b1f1936bb6",
+      "declaration": {},
+      "id": "sha256:c14e73c5b337983598ae8074134b8eb2ca486581d8d08cebbd92f7027bbcb528",
+      "kind": "UNKNOWN",
+      "line": 548,
+      "path": "src/autofde_lab/reasoning/gymact_dspy_signatures.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "adeba9d6e58e81f8025c326ea38df4826d705b2f",
+      "declaration": {},
+      "id": "sha256:ad12e61a7013c695b33b3b88c93c5eab7234072807791bda8008d455d255c5ae",
+      "kind": "UNKNOWN",
+      "line": 162,
+      "path": "src/autofde_lab/reasoning/gymact_mitigation_actuation.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "TranslateMitigationStepToKubectlCommand",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "eddbc8650c3e03d8ba5b2b467a5570011c667bb3",
+      "declaration": {},
+      "id": "sha256:fce6285b9ad3290ba57b50fae83437f6e6bed15298b8b019183d5b7ea58c5bd0",
+      "kind": "UNKNOWN",
+      "line": 71,
+      "path": "src/autofde_lab/reasoning/k8s_diagnosis_pipeline.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "SummarizeKubernetesResourceState",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "eddbc8650c3e03d8ba5b2b467a5570011c667bb3",
+      "declaration": {},
+      "id": "sha256:27e72d4ea85cde5bc019184e4262a8351ae7437e52f1e403afa8d160024feba6",
+      "kind": "UNKNOWN",
+      "line": 72,
+      "path": "src/autofde_lab/reasoning/k8s_diagnosis_pipeline.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ClassifyKubernetesAnomaly",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "eddbc8650c3e03d8ba5b2b467a5570011c667bb3",
+      "declaration": {},
+      "id": "sha256:7c27f7e996d80e09d9433fcca421ff24952cf517d89045465d97b0e08181dc75",
+      "kind": "UNKNOWN",
+      "line": 73,
+      "path": "src/autofde_lab/reasoning/k8s_diagnosis_pipeline.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "DiagnoseKubernetesFault",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "eddbc8650c3e03d8ba5b2b467a5570011c667bb3",
+      "declaration": {},
+      "id": "sha256:53599181ae204e124e98b76d5ef999abdd5d14183271b0e4520a6df717d35698",
+      "kind": "UNKNOWN",
+      "line": 74,
+      "path": "src/autofde_lab/reasoning/k8s_diagnosis_pipeline.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ProposeKubernetesRemediation",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "56098742743cb062a65894693a91c21a6738a1a6",
+      "declaration": {},
+      "id": "sha256:604db346fdf8e39cb49165e49f11609ebf934548def4bd115a6d545ea44222c8",
+      "kind": "UNKNOWN",
+      "line": 174,
+      "path": "src/autofde_lab/reasoning/sre_mitigation_portfolio.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ConstructSreMitigationProcess",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "6ceba35ff8bef480e10fce0932b88f1d1cc8e146",
+      "declaration": {},
+      "id": "sha256:f5117c1cfe84b5dd3aa1a2e80ea36a02438cba330ffb0fe9b66d3e0229fa6a70",
+      "kind": "UNKNOWN",
+      "line": 139,
+      "path": "src/autofde_lab/reasoning/sre_troubleshooting_pipeline.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "OrientSreIncident",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "6ceba35ff8bef480e10fce0932b88f1d1cc8e146",
+      "declaration": {},
+      "id": "sha256:23cabe40c8c4a99b26bc3cd63b9e2dd60eda9e9e2a2743d8564438163b3c63d0",
+      "kind": "UNKNOWN",
+      "line": 140,
+      "path": "src/autofde_lab/reasoning/sre_troubleshooting_pipeline.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "NormalizeSreEvidence",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "6ceba35ff8bef480e10fce0932b88f1d1cc8e146",
+      "declaration": {},
+      "id": "sha256:0540f1387eea5beb912f0c3b0fcdddb148da3ec2023121df870cce5cf43fbf33",
+      "kind": "UNKNOWN",
+      "line": 142,
+      "path": "src/autofde_lab/reasoning/sre_troubleshooting_pipeline.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "HypothesizeSreCauses",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.MultiChainComparison",
+      "blob": "6ceba35ff8bef480e10fce0932b88f1d1cc8e146",
+      "declaration": {},
+      "id": "sha256:abd56a0575cebcf3ed30613a0605cf939558229fa5c2f7ec74dd2522d28e28f9",
+      "kind": "UNKNOWN",
+      "line": 143,
+      "path": "src/autofde_lab/reasoning/sre_troubleshooting_pipeline.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "HypothesizeSreCauses",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "6ceba35ff8bef480e10fce0932b88f1d1cc8e146",
+      "declaration": {},
+      "id": "sha256:88f652afd70c15d6e3c38eb55283cc649f7c0416f3ba67a43a658cf8d8b88e3d",
+      "kind": "UNKNOWN",
+      "line": 147,
+      "path": "src/autofde_lab/reasoning/sre_troubleshooting_pipeline.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ProposeDiscriminatingObservation",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.BestOfN",
+      "blob": "6ceba35ff8bef480e10fce0932b88f1d1cc8e146",
+      "declaration": {},
+      "id": "sha256:33c7bd99994d52440d5ae98324ace80ccc047e165335831f8c16591e055098f0",
+      "kind": "UNKNOWN",
+      "line": 148,
+      "path": "src/autofde_lab/reasoning/sre_troubleshooting_pipeline.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "self._propose_probe",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "6ceba35ff8bef480e10fce0932b88f1d1cc8e146",
+      "declaration": {},
+      "id": "sha256:9e744db86682a3ac25ce5e91d5a904afd078e0d267c9bf8234b735abd45871bc",
+      "kind": "UNKNOWN",
+      "line": 155,
+      "path": "src/autofde_lab/reasoning/sre_troubleshooting_pipeline.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "CommitSreDiagnosis",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.MultiChainComparison",
+      "blob": "6ceba35ff8bef480e10fce0932b88f1d1cc8e146",
+      "declaration": {},
+      "id": "sha256:1da2b6ab1793a6e77db29546d175e637e569dba083df82caaf050e75785206a8",
+      "kind": "UNKNOWN",
+      "line": 156,
+      "path": "src/autofde_lab/reasoning/sre_troubleshooting_pipeline.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "CommitSreDiagnosis",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "6ceba35ff8bef480e10fce0932b88f1d1cc8e146",
+      "declaration": {},
+      "id": "sha256:47a5b1c75b4c8e661df00888f0ba19b6fdbf2047b2a747e1bcc96d257ccf6edb",
+      "kind": "UNKNOWN",
+      "line": 160,
+      "path": "src/autofde_lab/reasoning/sre_troubleshooting_pipeline.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ConstructSreMitigation",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.BestOfN",
+      "blob": "6ceba35ff8bef480e10fce0932b88f1d1cc8e146",
+      "declaration": {},
+      "id": "sha256:cef184383bc4104f99ced7dd5439145223f220a5913324f675a76d4018d15a95",
+      "kind": "UNKNOWN",
+      "line": 161,
+      "path": "src/autofde_lab/reasoning/sre_troubleshooting_pipeline.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "self._construct_mitigation",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "830b7191a8c3c089fb7d5b2ad1a0d6c43c29ec9d",
+      "declaration": {},
+      "id": "sha256:2ce0c37550d575556d8ce36ee4dda221437a852a7290e5a55259d51f0d19b1be",
+      "kind": "UNKNOWN",
+      "line": 447,
+      "path": "src/autofde_lab/reasoning/sregym_pipeline.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "TaxonomyClassification",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.MultiChainComparison",
+      "blob": "830b7191a8c3c089fb7d5b2ad1a0d6c43c29ec9d",
+      "declaration": {},
+      "id": "sha256:35fe289cbbdbad53079d23282bf3600e1ce0517f7034ff6e7aca4ddb4f3191b0",
+      "kind": "UNKNOWN",
+      "line": 448,
+      "path": "src/autofde_lab/reasoning/sregym_pipeline.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "TaxonomyClassification",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Refine",
+      "blob": "830b7191a8c3c089fb7d5b2ad1a0d6c43c29ec9d",
+      "declaration": {},
+      "id": "sha256:465f575b6be5c4581a9fdff142c36e18a0ce5e65ed408f91decdb24be67bc133",
+      "kind": "UNKNOWN",
+      "line": 536,
+      "path": "src/autofde_lab/reasoning/sregym_pipeline.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.ReAct",
+      "blob": "830b7191a8c3c089fb7d5b2ad1a0d6c43c29ec9d",
+      "declaration": {},
+      "id": "sha256:2cc49c84cca8beb3c7b2d3ec504578195c0dd69ad58025cf2f29e21ef1e532ce",
+      "kind": "UNKNOWN",
+      "line": 531,
+      "path": "src/autofde_lab/reasoning/sregym_pipeline.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "DiagnoseFault",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "4d929929c288380638b40bec85021366c1c658e3",
+      "declaration": {},
+      "id": "sha256:c221625e0909329c8ccca158f6adc41010fbbac0a4d83b53e7eb124834af3bdc",
+      "kind": "UNKNOWN",
+      "line": 50,
+      "path": "src/autofde_lab/semantic_models/dspy_program.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ExtractSemanticDelta",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "abad7559983a55581f2de242166ac30ff6a97d82",
+      "declaration": {},
+      "id": "sha256:b97bcc5c8086adb13dd95f1a13edc7de5dec11231cbbf81fece021bb0faf06d4",
+      "kind": "UNKNOWN",
+      "line": 62,
+      "path": "src/autofde_lab/sregym_sota/agent.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "OrientIncident",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "abad7559983a55581f2de242166ac30ff6a97d82",
+      "declaration": {},
+      "id": "sha256:e791d956e2bac183b241da7c475d99aaa3c49a92d1159a2a62147c617f380494",
+      "kind": "UNKNOWN",
+      "line": 63,
+      "path": "src/autofde_lab/sregym_sota/agent.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "GenerateHypotheses",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "abad7559983a55581f2de242166ac30ff6a97d82",
+      "declaration": {},
+      "id": "sha256:311c02a0ebb1dbf508dfe9605f7e18699ebb074830f9a60f61b610902208df1a",
+      "kind": "UNKNOWN",
+      "line": 64,
+      "path": "src/autofde_lab/sregym_sota/agent.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "RelateEvidence",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "abad7559983a55581f2de242166ac30ff6a97d82",
+      "declaration": {},
+      "id": "sha256:4cf7e908a385b793033ebaabbca7aa3de44ae489376f9ac7b749744362e70d7e",
+      "kind": "UNKNOWN",
+      "line": 65,
+      "path": "src/autofde_lab/sregym_sota/agent.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ConstructDiscriminationProcess",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "abad7559983a55581f2de242166ac30ff6a97d82",
+      "declaration": {},
+      "id": "sha256:b07313b32a993e5e01506ae9d28ee1db92ea00a5cde78b5749fca6b12135d328",
+      "kind": "UNKNOWN",
+      "line": 66,
+      "path": "src/autofde_lab/sregym_sota/agent.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "CommitDiagnosis",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "abad7559983a55581f2de242166ac30ff6a97d82",
+      "declaration": {},
+      "id": "sha256:09745e861aa62644a234df698dfc531cb5db533639b75b3b64b92d2a5e267b77",
+      "kind": "UNKNOWN",
+      "line": 67,
+      "path": "src/autofde_lab/sregym_sota/agent.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ChallengeDiagnosis",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "abad7559983a55581f2de242166ac30ff6a97d82",
+      "declaration": {},
+      "id": "sha256:e47c1ea634bafe96b146135b5f6b617dc38f18a605a337356e786c231ef348e5",
+      "kind": "UNKNOWN",
+      "line": 68,
+      "path": "src/autofde_lab/sregym_sota/agent.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ConstructMitigationProcesses",
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "abad7559983a55581f2de242166ac30ff6a97d82",
+      "declaration": {},
+      "id": "sha256:c5509e5e79349cf62b9d9679411f7828326f8e0231369b307f9c4f1eacf5f3aa",
+      "kind": "UNKNOWN",
+      "line": 257,
+      "path": "src/autofde_lab/sregym_sota/agent.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "package"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "df978f24296f241ca0a4b89c5ac58bcdf654d774",
+      "declaration": {},
+      "id": "sha256:b342f87ba78e0d409d7756ff81e0ba839c098d0f536e48aa6b0621572103a57b",
+      "kind": "UNKNOWN",
+      "line": 131,
+      "path": "tests/conftest.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "df978f24296f241ca0a4b89c5ac58bcdf654d774",
+      "declaration": {},
+      "id": "sha256:4f31baf2a3f21179264767c7f7e07623bf4ca442b7fef4a58acb59eee1d702d2",
+      "kind": "UNKNOWN",
+      "line": 166,
+      "path": "tests/conftest.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "6703b3a29c2d5c2ae6715ff4a28548beb100d966",
+      "declaration": {},
+      "id": "sha256:6c1cf35f62cc3b13808b4cd96d166313976b9c4774bfbdfec019e8273e69dd28",
+      "kind": "UNKNOWN",
+      "line": 58,
+      "path": "tests/fabric/test_dspy_ensemble_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "6703b3a29c2d5c2ae6715ff4a28548beb100d966",
+      "declaration": {},
+      "id": "sha256:e76e868209edf5aa154ffc8776f28fcf47196d7772d110a1de1c9f0b1ffe4793",
+      "kind": "UNKNOWN",
+      "line": 74,
+      "path": "tests/fabric/test_dspy_ensemble_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ArithmeticClaim",
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "6703b3a29c2d5c2ae6715ff4a28548beb100d966",
+      "declaration": {},
+      "id": "sha256:b81b01ed6bcbf0c0cfd94708ef4885d02084ceddde08bf57b98c7264d4024acf",
+      "kind": "UNKNOWN",
+      "line": 93,
+      "path": "tests/fabric/test_dspy_ensemble_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ArithmeticClaim",
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "6703b3a29c2d5c2ae6715ff4a28548beb100d966",
+      "declaration": {},
+      "id": "sha256:1d34e78a0595b298029d56f505704137a2a878bae48a6bddb29c38a4a509bb38",
+      "kind": "UNKNOWN",
+      "line": 110,
+      "path": "tests/fabric/test_dspy_ensemble_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ArithmeticClaim",
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "6703b3a29c2d5c2ae6715ff4a28548beb100d966",
+      "declaration": {},
+      "id": "sha256:b5494ff105861be3686ec3621d2a624d57bdcae96afe7603d0a769bea0326d90",
+      "kind": "UNKNOWN",
+      "line": 131,
+      "path": "tests/fabric/test_dspy_ensemble_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ArithmeticClaim",
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "890fd88e1f2b3a822c6bda044e7c08961e33cda0",
+      "declaration": {},
+      "id": "sha256:28e5cdea381d2a080b646236486a68a1790c0fb6b7e21f4a7a7caf1a883e4c4c",
+      "kind": "UNKNOWN",
+      "line": 148,
+      "path": "tests/planner_league/test_llm_candidate_producer.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "57b1dac64e5553759093a73b6c4e2b90c9e17bf5",
+      "declaration": {},
+      "id": "sha256:a01b648249ccc9780a1fe2ed3786268e79e4ff5a617b31f4743cbd8051579bc2",
+      "kind": "UNKNOWN",
+      "line": 282,
+      "path": "tests/reasoning/test_breed_ensemble_loop_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "25038ee7070158c066ae3500fc2c11626b0d4caa",
+      "declaration": {},
+      "id": "sha256:d5ef66a3f166ca9aeeadab921b80e4c9f04648a90ed4847df37886d8ff9279ab",
+      "kind": "UNKNOWN",
+      "line": 170,
+      "path": "tests/reasoning/test_fortune5_architecture_signatures_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "25038ee7070158c066ae3500fc2c11626b0d4caa",
+      "declaration": {},
+      "id": "sha256:6d979abd20b4a420c16a4b2d7b7b9059d80798cd17e9f19d457da24efefe7120",
+      "kind": "UNKNOWN",
+      "line": 172,
+      "path": "tests/reasoning/test_fortune5_architecture_signatures_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "InferArchitectureVision",
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "87ce604e143cf165a8e2c7fef831ac3aa68336c0",
+      "declaration": {},
+      "id": "sha256:a4d12144765011d521a6f8db3a86e1c2034028d0e6d04799bb8730b1f1b30b84",
+      "kind": "UNKNOWN",
+      "line": 228,
+      "path": "tests/reasoning/test_gepa_train_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "87ce604e143cf165a8e2c7fef831ac3aa68336c0",
+      "declaration": {},
+      "id": "sha256:0439d5b9f8afe5e14fd6cd2e60930dcb6198c44525873600aacfbae4f5e0a162",
+      "kind": "UNKNOWN",
+      "line": 229,
+      "path": "tests/reasoning/test_gepa_train_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "87ce604e143cf165a8e2c7fef831ac3aa68336c0",
+      "declaration": {},
+      "id": "sha256:19c2575a470357a9746ddabc74611f44cc789cf1e9c8a2337a1af52effc88932",
+      "kind": "UNKNOWN",
+      "line": 251,
+      "path": "tests/reasoning/test_gepa_train_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "87ce604e143cf165a8e2c7fef831ac3aa68336c0",
+      "declaration": {},
+      "id": "sha256:700c284e51592a52687b5fab39c5dca63dbbc34cacbc39659fe5cf091ac515a6",
+      "kind": "UNKNOWN",
+      "line": 254,
+      "path": "tests/reasoning/test_gepa_train_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.ReAct",
+      "blob": "8f53719be55f1acff6baa6b4ea5d867005b42c0b",
+      "declaration": {},
+      "id": "sha256:7d2c42ba2df2760015cf55391d02499f16f31de3a17b06a163fed706bfb1616d",
+      "kind": "UNKNOWN",
+      "line": 280,
+      "path": "tests/reasoning/test_gymact_dspy_react_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "DiagnoseKubernetesFault",
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "8f53719be55f1acff6baa6b4ea5d867005b42c0b",
+      "declaration": {},
+      "id": "sha256:33c8b409402b80d7c3b283f67b5659848166ca9d83edd0fba86eaaf86db2b49a",
+      "kind": "UNKNOWN",
+      "line": 387,
+      "path": "tests/reasoning/test_gymact_dspy_react_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "58ab5f2fcf0f16d8d9399e744f081b632cf871f2",
+      "declaration": {},
+      "id": "sha256:b6ab518521367dbd5902a0e7f272d44ba8b89ddb30c347abbd18ed362d58097b",
+      "kind": "UNKNOWN",
+      "line": 188,
+      "path": "tests/reasoning/test_gymact_dspy_signatures_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "58ab5f2fcf0f16d8d9399e744f081b632cf871f2",
+      "declaration": {},
+      "id": "sha256:cfa864538ff07bf545e4de7c193ebd881d6d68769b8ed520a07afeae74f3a653",
+      "kind": "UNKNOWN",
+      "line": 189,
+      "path": "tests/reasoning/test_gymact_dspy_signatures_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ClassifyAnomaly",
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "58ab5f2fcf0f16d8d9399e744f081b632cf871f2",
+      "declaration": {},
+      "id": "sha256:bc4a5eb64e3f9b78c9db4d4945e33eed713c95800502a8f569a38a8860d6a5fe",
+      "kind": "UNKNOWN",
+      "line": 205,
+      "path": "tests/reasoning/test_gymact_dspy_signatures_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "58ab5f2fcf0f16d8d9399e744f081b632cf871f2",
+      "declaration": {},
+      "id": "sha256:f7f20e971f70b53473e5f24dc0bfd7bf766d7ffb69f00d47ef080ad108a1a26a",
+      "kind": "UNKNOWN",
+      "line": 206,
+      "path": "tests/reasoning/test_gymact_dspy_signatures_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "DiagnoseRootCause",
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "58ab5f2fcf0f16d8d9399e744f081b632cf871f2",
+      "declaration": {},
+      "id": "sha256:040b5cde93c2f673439af1de440384e9daf5cb844bf84991a3af87864db0bb49",
+      "kind": "UNKNOWN",
+      "line": 226,
+      "path": "tests/reasoning/test_gymact_dspy_signatures_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "58ab5f2fcf0f16d8d9399e744f081b632cf871f2",
+      "declaration": {},
+      "id": "sha256:29ae5feae65f737d24137bd69ecd04f2a6743c054c2b580061c19d126347592a",
+      "kind": "UNKNOWN",
+      "line": 227,
+      "path": "tests/reasoning/test_gymact_dspy_signatures_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "SynthesizeMitigation",
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "58ab5f2fcf0f16d8d9399e744f081b632cf871f2",
+      "declaration": {},
+      "id": "sha256:24724b66eebbf163084e538470bed1b3265c287aa569b969ddec69ad84492c9f",
+      "kind": "UNKNOWN",
+      "line": 252,
+      "path": "tests/reasoning/test_gymact_dspy_signatures_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "58ab5f2fcf0f16d8d9399e744f081b632cf871f2",
+      "declaration": {},
+      "id": "sha256:9f47886974f4c6257cb8396df8b7fdca61e4d7c3fd437759e663a2b14bbeb027",
+      "kind": "UNKNOWN",
+      "line": 253,
+      "path": "tests/reasoning/test_gymact_dspy_signatures_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "VerifyMitigationOutcome",
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "58ab5f2fcf0f16d8d9399e744f081b632cf871f2",
+      "declaration": {},
+      "id": "sha256:9fd5fdd0e4b66110564a23e874f5300a8015e515ea43cb3aa02592f895e9179b",
+      "kind": "UNKNOWN",
+      "line": 280,
+      "path": "tests/reasoning/test_gymact_dspy_signatures_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "58ab5f2fcf0f16d8d9399e744f081b632cf871f2",
+      "declaration": {},
+      "id": "sha256:808c8e886f8e77021ba4904ad1df6488f4e02bac0397b43ff055c943932d9130",
+      "kind": "UNKNOWN",
+      "line": 319,
+      "path": "tests/reasoning/test_gymact_dspy_signatures_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "2e5f3733c3189e69ba03197e51e28d948d96fdff",
+      "declaration": {},
+      "id": "sha256:ce24ce9a09485471185cf812e7993f0892fe989171c3a29c149808788e599e33",
+      "kind": "UNKNOWN",
+      "line": 294,
+      "path": "tests/reasoning/test_gymact_mitigation_actuation_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "2e5f3733c3189e69ba03197e51e28d948d96fdff",
+      "declaration": {},
+      "id": "sha256:562638fb2b825f598257a4e0528281c88a958a28423deaf1c640ab4b73c2c050",
+      "kind": "UNKNOWN",
+      "line": 297,
+      "path": "tests/reasoning/test_gymact_mitigation_actuation_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "TranslateMitigationStepToKubectlCommand",
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "e191fa8972550a4763505b3d3000b55ee2dc196e",
+      "declaration": {},
+      "id": "sha256:ebd610c7049f8705bc736b14478c36ff181911c77fa2ff7160f481e75a82ae2b",
+      "kind": "UNKNOWN",
+      "line": 104,
+      "path": "tests/reasoning/test_k8s_diagnosis_pipeline_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "1e72467f3d1b7017351be916dfd99cedc7991e14",
+      "declaration": {},
+      "id": "sha256:0411335a7cf85b7dec9a5076a8945add8eb827e0466397f1048b5c1f8dbbbeb6",
+      "kind": "UNKNOWN",
+      "line": 137,
+      "path": "tests/reasoning/test_k8s_signatures_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "1e72467f3d1b7017351be916dfd99cedc7991e14",
+      "declaration": {},
+      "id": "sha256:12c876fa1bef3f8b740c142a2c9d3d3dce1dffe9e590dc8f92dd3d91d292a2e1",
+      "kind": "UNKNOWN",
+      "line": 138,
+      "path": "tests/reasoning/test_k8s_signatures_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "SummarizeKubernetesResourceState",
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "1e72467f3d1b7017351be916dfd99cedc7991e14",
+      "declaration": {},
+      "id": "sha256:4c25a47bd084de9ecf4e96c36d83172d392cb83e0864f0efc98ba12175c3decb",
+      "kind": "UNKNOWN",
+      "line": 99,
+      "path": "tests/reasoning/test_k8s_signatures_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "sig",
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "5bef0d7e8ac17e145036483b85c0ed6a673a5fe7",
+      "declaration": {},
+      "id": "sha256:acb3314fe392f19452452ac3954d49b71f145f9abc723e700feddf1a90221660",
+      "kind": "UNKNOWN",
+      "line": 260,
+      "path": "tests/reasoning/test_sre_mitigation_portfolio_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "b1bdfb25e1a3c0add99112c2bc4c27e6fa22cdb7",
+      "declaration": {},
+      "id": "sha256:2e95ded9cb08b6a384af7caf8455226144a2d6c9f72b86a1e663cb0cd7628b56",
+      "kind": "UNKNOWN",
+      "line": 233,
+      "path": "tests/reasoning/test_sre_troubleshooting_pipeline_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "b1bdfb25e1a3c0add99112c2bc4c27e6fa22cdb7",
+      "declaration": {},
+      "id": "sha256:c203b53be083abed24715c122f0e1177f9ce54c769ba000aac20fceb1210e4ed",
+      "kind": "UNKNOWN",
+      "line": 292,
+      "path": "tests/reasoning/test_sre_troubleshooting_pipeline_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.LM",
+      "blob": "f410c1ffc48dbd01fa9ce48a1ef733e808721648",
+      "declaration": {},
+      "id": "sha256:b6e7abc06a6e911a9a5594d657fcb4847fe80e8dc2dc2ee8b138f6ca4843a995",
+      "kind": "UNKNOWN",
+      "line": 344,
+      "path": "tests/reasoning/test_sregym_pipeline_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "client",
+      "signature": null,
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "f5944f5d22d286806951171739f2987c69c3a414",
+      "declaration": {},
+      "id": "sha256:6f9d86daf512fe6c056be153e2aef0b2dc559cf26850ad501ee6428ceb87f9cd",
+      "kind": "UNKNOWN",
+      "line": 66,
+      "path": "tests/test_self_play_dspy_groq_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ChooseMove",
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.Predict",
+      "blob": "3ca77cbd6b65a6d423374145025099d1f60b846c",
+      "declaration": {},
+      "id": "sha256:cd0cbe35c9fee41552e3d8612876217488f6668039d09f53d3bce557804b324d",
+      "kind": "UNKNOWN",
+      "line": 66,
+      "path": "tests/test_self_play_dspy_turbofieldfare_chicago.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "ChooseMove",
+      "standing": "OBSERVED",
+      "zone": "test"
+    },
+    {
+      "api": "dspy.ChainOfThought",
+      "blob": "887aa9478336c215b5fa2d921452a0499d3614e1",
+      "declaration": {},
+      "id": "sha256:f5926eab0df2af8cdd57c0ea65f33508cb1656eecaa083db6304912acdf04dab",
+      "kind": "UNKNOWN",
+      "line": 66,
+      "path": "vendor/bcinr/crates/bcinr-cmca/scripts/dspy_cmca_verifier.py",
+      "reasoning_class": "UNKNOWN",
+      "retirement_mechanism": "UNKNOWN",
+      "role": "program",
+      "signature": "SuspicionOfAllocationMismatch",
+      "standing": "OBSERVED",
+      "zone": "other"
+    }
+  ],
+  "extractor": "autofde_lab.iec.crowns.residue",
+  "extractor_version": "1",
+  "frontier": [
+    {
+      "call_sites": 4,
+      "edge_ids": [
+        "sha256:1d34e78a0595b298029d56f505704137a2a878bae48a6bddb29c38a4a509bb38",
+        "sha256:b5494ff105861be3686ec3621d2a624d57bdcae96afe7603d0a769bea0326d90",
+        "sha256:b81b01ed6bcbf0c0cfd94708ef4885d02084ceddde08bf57b98c7264d4024acf",
+        "sha256:e76e868209edf5aa154ffc8776f28fcf47196d7772d110a1de1c9f0b1ffe4793"
+      ],
+      "files": 1,
+      "formalizability": "UNKNOWN",
+      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
+      "llm_cost": "UNKNOWN",
+      "reuse": "UNKNOWN",
+      "signature": "ArithmeticClaim",
+      "standing": "INFERRED_CANDIDATE"
+    },
+    {
+      "call_sites": 4,
+      "edge_ids": [
+        "sha256:103f685a514e88487ec8fc9e49aca087f312661d616fd570c68d0cec4189ef3b",
+        "sha256:7c27f7e996d80e09d9433fcca421ff24952cf517d89045465d97b0e08181dc75",
+        "sha256:7d2c42ba2df2760015cf55391d02499f16f31de3a17b06a163fed706bfb1616d",
+        "sha256:d70abda1692a19e1b28d402e2e94879a00baaeab349951a0eecb32dab6574bb0"
+      ],
+      "files": 4,
+      "formalizability": "UNKNOWN",
+      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
+      "llm_cost": "UNKNOWN",
+      "reuse": "UNKNOWN",
+      "signature": "DiagnoseKubernetesFault",
+      "standing": "INFERRED_CANDIDATE"
+    },
+    {
+      "call_sites": 3,
+      "edge_ids": [
+        "sha256:6f9d86daf512fe6c056be153e2aef0b2dc559cf26850ad501ee6428ceb87f9cd",
+        "sha256:94d7fd33c5e97e7a9931f0c9c6ea4fb8fb71eddffd7037b5c6eda0a97b73b03a",
+        "sha256:cd0cbe35c9fee41552e3d8612876217488f6668039d09f53d3bce557804b324d"
+      ],
+      "files": 3,
+      "formalizability": "UNKNOWN",
+      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
+      "llm_cost": "UNKNOWN",
+      "reuse": "UNKNOWN",
+      "signature": "ChooseMove",
+      "standing": "INFERRED_CANDIDATE"
+    },
+    {
+      "call_sites": 2,
+      "edge_ids": [
+        "sha256:cfa864538ff07bf545e4de7c193ebd881d6d68769b8ed520a07afeae74f3a653",
+        "sha256:f43673125644f40201b510e1f333a40a938ddb7e9946cae928511bcfbdee8761"
+      ],
+      "files": 2,
+      "formalizability": "UNKNOWN",
+      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
+      "llm_cost": "UNKNOWN",
+      "reuse": "UNKNOWN",
+      "signature": "ClassifyAnomaly",
+      "standing": "INFERRED_CANDIDATE"
+    },
+    {
+      "call_sites": 2,
+      "edge_ids": [
+        "sha256:1da2b6ab1793a6e77db29546d175e637e569dba083df82caaf050e75785206a8",
+        "sha256:9e744db86682a3ac25ce5e91d5a904afd078e0d267c9bf8234b735abd45871bc"
+      ],
+      "files": 1,
+      "formalizability": "UNKNOWN",
+      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
+      "llm_cost": "UNKNOWN",
+      "reuse": "UNKNOWN",
+      "signature": "CommitSreDiagnosis",
+      "standing": "INFERRED_CANDIDATE"
+    },
+    {
+      "call_sites": 2,
+      "edge_ids": [
+        "sha256:f7f20e971f70b53473e5f24dc0bfd7bf766d7ffb69f00d47ef080ad108a1a26a",
+        "sha256:ffc37f7b32eca69be98477288500b54ec2df7ca7d7b0f65dc2f2a30f091f1b7b"
+      ],
+      "files": 2,
+      "formalizability": "UNKNOWN",
+      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
+      "llm_cost": "UNKNOWN",
+      "reuse": "UNKNOWN",
+      "signature": "DiagnoseRootCause",
+      "standing": "INFERRED_CANDIDATE"
+    },
+    {
+      "call_sites": 2,
+      "edge_ids": [
+        "sha256:0540f1387eea5beb912f0c3b0fcdddb148da3ec2023121df870cce5cf43fbf33",
+        "sha256:abd56a0575cebcf3ed30613a0605cf939558229fa5c2f7ec74dd2522d28e28f9"
+      ],
+      "files": 1,
+      "formalizability": "UNKNOWN",
+      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
+      "llm_cost": "UNKNOWN",
+      "reuse": "UNKNOWN",
+      "signature": "HypothesizeSreCauses",
+      "standing": "INFERRED_CANDIDATE"
+    },
+    {
+      "call_sites": 2,
+      "edge_ids": [
+        "sha256:12c876fa1bef3f8b740c142a2c9d3d3dce1dffe9e590dc8f92dd3d91d292a2e1",
+        "sha256:fce6285b9ad3290ba57b50fae83437f6e6bed15298b8b019183d5b7ea58c5bd0"
+      ],
+      "files": 2,
+      "formalizability": "UNKNOWN",
+      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
+      "llm_cost": "UNKNOWN",
+      "reuse": "UNKNOWN",
+      "signature": "SummarizeKubernetesResourceState",
+      "standing": "INFERRED_CANDIDATE"
+    },
+    {
+      "call_sites": 2,
+      "edge_ids": [
+        "sha256:29ae5feae65f737d24137bd69ecd04f2a6743c054c2b580061c19d126347592a",
+        "sha256:9ac146342e4834c80bdb065254037fed1ddd35a580a12868405e022f93a32b9f"
+      ],
+      "files": 2,
+      "formalizability": "UNKNOWN",
+      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
+      "llm_cost": "UNKNOWN",
+      "reuse": "UNKNOWN",
+      "signature": "SynthesizeMitigation",
+      "standing": "INFERRED_CANDIDATE"
+    },
+    {
+      "call_sites": 2,
+      "edge_ids": [
+        "sha256:2ce0c37550d575556d8ce36ee4dda221437a852a7290e5a55259d51f0d19b1be",
+        "sha256:35fe289cbbdbad53079d23282bf3600e1ce0517f7034ff6e7aca4ddb4f3191b0"
+      ],
+      "files": 1,
+      "formalizability": "UNKNOWN",
+      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
+      "llm_cost": "UNKNOWN",
+      "reuse": "UNKNOWN",
+      "signature": "TaxonomyClassification",
+      "standing": "INFERRED_CANDIDATE"
+    },
+    {
+      "call_sites": 2,
+      "edge_ids": [
+        "sha256:562638fb2b825f598257a4e0528281c88a958a28423deaf1c640ab4b73c2c050",
+        "sha256:ad12e61a7013c695b33b3b88c93c5eab7234072807791bda8008d455d255c5ae"
+      ],
+      "files": 2,
+      "formalizability": "UNKNOWN",
+      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
+      "llm_cost": "UNKNOWN",
+      "reuse": "UNKNOWN",
+      "signature": "TranslateMitigationStepToKubectlCommand",
+      "standing": "INFERRED_CANDIDATE"
+    },
+    {
+      "call_sites": 2,
+      "edge_ids": [
+        "sha256:9e9c03303492e5894457d32e03f3949c1f9a277d1452fa40430e93d9973a9c73",
+        "sha256:9f47886974f4c6257cb8396df8b7fdca61e4d7c3fd437759e663a2b14bbeb027"
+      ],
+      "files": 2,
+      "formalizability": "UNKNOWN",
+      "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
+      "llm_cost": "UNKNOWN",
+      "reuse": "UNKNOWN",
+      "signature": "VerifyMitigationOutcome",
+      "standing": "INFERRED_CANDIDATE"
+    }
+  ],
+  "id": "sha256:6f94f688b99e913f2dbaf8027d7ea70b32ecf070e406cd46b263cc0798df3fd1",
+  "import_only": [
+    "src/autofde_lab/reasoning/fortune5_architecture_metrics.py",
+    "src/autofde_lab/reasoning/fortune5_architecture_signatures.py",
+    "src/autofde_lab/reasoning/k8s_signatures.py",
+    "src/autofde_lab/reasoning/mitigation_kubectl_translation_signatures.py",
+    "src/autofde_lab/reasoning/sre_mitigation_portfolio_signatures.py",
+    "src/autofde_lab/reasoning/sre_troubleshooting_signatures.py",
+    "src/autofde_lab/sregym_sota/signatures.py",
+    "tests/fabric/test_afde_2611_shllm_bounded_tier_closure.py",
+    "tests/fabric/test_dspy_mcp_planner_loop_chicago.py",
+    "tests/sregym_sota/test_signature_contract.py"
+  ],
+  "llm_dependency_ratio": "UNREPRESENTABLE:NO_REACHABILITY_OBSERVATION",
+  "llm_residue": 94,
+  "llm_residue_by_api": {
+    "dspy.BestOfN": 2,
+    "dspy.ChainOfThought": 19,
+    "dspy.LM": 31,
+    "dspy.MultiChainComparison": 3,
+    "dspy.Predict": 33,
+    "dspy.ReAct": 5,
+    "dspy.Refine": 1
+  },
+  "llm_residue_by_kind": {
+    "UNKNOWN": 94
+  },
+  "llm_residue_by_zone": {
+    "other": 8,
+    "package": 47,
+    "test": 39
+  },
+  "other_provider_calls": {
+    "scripts/dspy_maximal.py": {
+      "dspy.Example": 1,
+      "dspy.InputField": 2,
+      "dspy.OutputField": 1,
+      "dspy.configure": 1
+    },
+    "src/autofde_lab/autofde/ercc_control_plane.py": {
+      "dspy.InputField": 3,
+      "dspy.OutputField": 5
+    },
+    "src/autofde_lab/fabric/dspy.py": {
+      "dspy.InputField": 3,
+      "dspy.OutputField": 5
+    },
+    "src/autofde_lab/fabric/dspy_ensemble.py": {
+      "dspy.InputField": 2,
+      "dspy.OutputField": 1
+    },
+    "src/autofde_lab/hub/domain/gym_procedure/level4_crown.py": {
+      "dspy.InputField": 1,
+      "dspy.OutputField": 1,
+      "dspy.context": 1
+    },
+    "src/autofde_lab/hub/solver/dspy_policy/dspy_policy.py": {
+      "dspy.InputField": 4,
+      "dspy.OutputField": 2,
+      "dspy.context": 2
+    },
+    "src/autofde_lab/reasoning/breed_ensemble_loop.py": {
+      "dspy.InputField": 5,
+      "dspy.OutputField": 2
+    },
+    "src/autofde_lab/reasoning/fortune5_architecture_metrics.py": {
+      "dspy.Prediction": 1
+    },
+    "src/autofde_lab/reasoning/fortune5_architecture_signatures.py": {
+      "dspy.InputField": 5,
+      "dspy.OutputField": 6
+    },
+    "src/autofde_lab/reasoning/gepa_train.py": {
+      "dspy.Example": 1,
+      "dspy.GEPA": 2,
+      "dspy.Prediction": 2
+    },
+    "src/autofde_lab/reasoning/gymact_dspy_react.py": {
+      "dspy.InputField": 2,
+      "dspy.OutputField": 2,
+      "dspy.context": 1
+    },
+    "src/autofde_lab/reasoning/gymact_dspy_signatures.py": {
+      "dspy.InputField": 8,
+      "dspy.OutputField": 8,
+      "dspy.context": 1
+    },
+    "src/autofde_lab/reasoning/k8s_diagnosis_pipeline.py": {
+      "dspy.Prediction": 1
+    },
+    "src/autofde_lab/reasoning/k8s_signatures.py": {
+      "dspy.InputField": 11,
+      "dspy.OutputField": 11
+    },
+    "src/autofde_lab/reasoning/mitigation_kubectl_translation_signatures.py": {
+      "dspy.InputField": 3,
+      "dspy.OutputField": 2
+    },
+    "src/autofde_lab/reasoning/sre_mitigation_portfolio_signatures.py": {
+      "dspy.InputField": 3,
+      "dspy.OutputField": 4
+    },
+    "src/autofde_lab/reasoning/sre_troubleshooting_signatures.py": {
+      "dspy.InputField": 15,
+      "dspy.OutputField": 19
+    },
+    "src/autofde_lab/reasoning/sregym_pipeline.py": {
+      "dspy.InputField": 4,
+      "dspy.OutputField": 3
+    },
+    "src/autofde_lab/semantic_models/dspy_program.py": {
+      "dspy.BootstrapFewShot": 1,
+      "dspy.Example": 1,
+      "dspy.GEPA": 1,
+      "dspy.InputField": 4,
+      "dspy.MIPROv2": 1,
+      "dspy.OutputField": 1
+    },
+    "src/autofde_lab/sregym_sota/agent.py": {
+      "dspy.configure": 1
+    },
+    "src/autofde_lab/sregym_sota/signatures.py": {
+      "dspy.InputField": 26,
+      "dspy.OutputField": 8
+    },
+    "tests/conftest.py": {
+      "dspy.configure": 2
+    },
+    "tests/fabric/test_afde_2611_shllm_bounded_tier_closure.py": {
+      "dspy.context": 2
+    },
+    "tests/fabric/test_dspy_ensemble_chicago.py": {
+      "dspy.InputField": 1,
+      "dspy.OutputField": 1,
+      "dspy.configure": 1
+    },
+    "tests/fabric/test_dspy_mcp_planner_loop_chicago.py": {
+      "dspy.context": 1
+    },
+    "tests/reasoning/test_breed_ensemble_loop_chicago.py": {
+      "dspy.Prediction": 2,
+      "dspy.context": 1
+    },
+    "tests/reasoning/test_fortune5_architecture_signatures_chicago.py": {
+      "dspy.Example": 3,
+      "dspy.Prediction": 3,
+      "dspy.context": 1
+    },
+    "tests/reasoning/test_gepa_train_chicago.py": {
+      "dspy.Example": 3,
+      "dspy.Prediction": 4
+    },
+    "tests/reasoning/test_gymact_dspy_signatures_chicago.py": {
+      "dspy.context": 4
+    },
+    "tests/reasoning/test_gymact_mitigation_actuation_chicago.py": {
+      "dspy.Prediction": 3,
+      "dspy.context": 1
+    },
+    "tests/reasoning/test_k8s_diagnosis_pipeline_chicago.py": {
+      "dspy.context": 1
+    },
+    "tests/reasoning/test_k8s_signatures_chicago.py": {
+      "dspy.context": 1
+    },
+    "tests/reasoning/test_sre_mitigation_portfolio_chicago.py": {
+      "dspy.Prediction": 1,
+      "dspy.context": 1
+    },
+    "tests/reasoning/test_sre_troubleshooting_pipeline_chicago.py": {
+      "dspy.Prediction": 8,
+      "dspy.context": 2
+    },
+    "tests/reasoning/test_sregym_pipeline_chicago.py": {
+      "dspy.Prediction": 4,
+      "dspy.configure": 2
+    },
+    "tests/test_self_play_dspy_groq_chicago.py": {
+      "dspy.InputField": 2,
+      "dspy.OutputField": 1
+    },
+    "tests/test_self_play_dspy_turbofieldfare_chicago.py": {
+      "dspy.InputField": 2,
+      "dspy.OutputField": 1
+    },
+    "vendor/bcinr/crates/bcinr-cmca/scripts/dspy_cmca_verifier.py": {
+      "dspy.InputField": 2,
+      "dspy.OutputField": 2
+    }
+  },
+  "rejected_declarations": [],
+  "rules": {
+    "invocation_apis": {
+      "anthropic.Anthropic": "client",
+      "anthropic.AsyncAnthropic": "client",
+      "dspy.BestOfN": "program",
+      "dspy.ChainOfThought": "program",
+      "dspy.ChainOfThoughtWithHint": "program",
+      "dspy.CodeAct": "program",
+      "dspy.LM": "client",
+      "dspy.MultiChainComparison": "program",
+      "dspy.Predict": "program",
+      "dspy.ProgramOfThought": "program",
+      "dspy.ReAct": "program",
+      "dspy.Refine": "program",
+      "litellm.acompletion": "client",
+      "litellm.completion": "client",
+      "ollama.chat": "client",
+      "ollama.generate": "client",
+      "openai.AsyncOpenAI": "client",
+      "openai.OpenAI": "client"
+    },
+    "providers": [
+      "anthropic",
+      "dspy",
+      "litellm",
+      "ollama",
+      "openai"
+    ],
+    "residue_kinds": {
+      "classification": "ontology + SPARQL/Datalog",
+      "concurrency": "TLA+",
+      "constraint": "SAT/SMT/CP",
+      "evidence": "court receipt",
+      "generation": "ggen",
+      "optimization": "OR",
+      "planning": "HDDL/PDDL/FOND",
+      "process": "OCEL + conformance",
+      "proof": "Lean",
+      "statistical": "SPC",
+      "validation": "SHACL",
+      "workflow": "deterministic automation"
+    }
+  },
+  "subject": {
+    "branch": "",
+    "commit": "f718d65cff85148806cbfdeb307854565fa6eedd",
+    "inclusion_reason": "LLM residue census",
+    "remote_url": "https://github.com/seanchatmangpt/autofde-lab",
+    "repository": "seanchatmangpt/autofde-lab",
+    "tree": "5d9de35300d43db79b83bd4090e74c84ee1010a9",
+    "visibility": "public"
+  },
+  "unparseable": {}
+}

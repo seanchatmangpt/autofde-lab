@@ -5,6 +5,28 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
+Last update: **pass 47** (2026-09-25) — **IEC-011 LLM residue census: the *Find* step in
+front of the retirement ledger. `LLMResidue = 94` static edges at autofde-lab@f718d65
+(`ALIVE`, replayed byte for byte); `LLMDependencyRatio` recorded as
+`UNREPRESENTABLE:NO_REACHABILITY_OBSERVATION`.** Full account:
+`docs/2026-09-25-llm-retirement-foundry.md`.
+
+**Measured win** — `PYTHONPATH=src python -m pytest -o addopts="" -q tests/iec` →
+**159 passed, 16 skipped** (Python 3.13.12; skips are the named `TLC_TOOLCHAIN_ABSENT` and
+missing-sibling-checkout gates). `tests/iec/test_residue_census_chicago.py`: 6 passed, real
+`git` repositories, no doubles (`grep -n "unittest.mock\|Mock(\|MagicMock\|patch(\|monkeypatch"`
+→ no matches). Mutation check: dropping `dspy.ChainOfThought` from the rule table and
+disabling the import-only rule fails 3 of the 5 fixture tests.
+
+**Measured win** — `python -m autofde_lab.iec.crowns.residue receipts/v26.9.25/iec/residue
+--commit f718d65 --base 98b6cc9`: 94 edges (47 `src/`, 39 `tests/`, 8 other), all dspy; 44
+declared `dspy.Signature` reasoning classes; kind `UNKNOWN` on 94/94 (nothing fenced yet).
+Delta `UNCHANGED` 94 → 94. Top frontier candidate is `DiagnoseKubernetesFault` (4 call sites in 4
+files). Second run into a scratch dir: `diff -r` empty.
+
+**Recorded negative** — `LLMDependencyRatio` has no denominator: no component observes which
+edges are reachable in production. It is not approximated by the static count.
+
 Last update: **pass 46** (2026-09-23) — **v26.9.23 Inverse Ecosystem Compiler, first
 execution: IEC-C1 technical crown on ggen_igniter@d84da14 (static courts `ALIVE`, native
 courts `BLOCKED`), IEC-C3 held-out retirement of one reasoning class (`ALIVE` on the compared
