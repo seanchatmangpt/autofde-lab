@@ -43,10 +43,13 @@ from autofde_lab.aloop.synth import (
     POSITIVE_ITERATIONS,
     SECOND,
     T0,
+    _event,
+    _insert_before,
+    _time_before,
     bind_commits,
     build_positive,
 )
-from autofde_lab.ocel.model import format_ns
+from autofde_lab.ocel.model import format_ns, parse_ns
 
 KEY_ID = "aloop-recorder-test"
 
@@ -228,6 +231,130 @@ def test_recorded_human_event_is_sealed_but_assisted(tmp_path, repo, signer) -> 
     assert code == EXIT_NOT_QUALIFIED, receipt["refusals"]
     assert receipt["sealing"]["complete"] is True
     assert receipt["episodes"][0]["class"] == "ASSISTED"
+
+
+def _decoy_human(doc: dict, before: str, eid: str, mid: str, out: str) -> None:
+    """Insert a sealed human.intervene carrying ``mid`` just before ``before``,
+    producing one unconsumed Evidence object (court attack A1b shape)."""
+    doc["objects"].append(
+        {"id": out, "type": "Evidence", "attributes": [], "relationships": []}
+    )
+    _insert_before(
+        doc,
+        before,
+        {
+            "id": eid,
+            "type": "human.intervene",
+            "time": _time_before(doc, before),
+            "attributes": [
+                {"name": "messageId", "value": mid},
+                {"name": "basis", "value": "x"},
+            ],
+            "relationships": [
+                {"objectId": "ep-1", "qualifier": "episode"},
+                {"objectId": "hum-operator", "qualifier": "originAuthority"},
+                {"objectId": out, "qualifier": "output"},
+            ],
+        },
+    )
+
+
+def _assert_human_relabel_refused(tmp_path, repo, signer, doc, humans) -> None:
+    log, ledger = _write(tmp_path, doc, signer)
+    code, receipt = evaluate_path(
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, humans)
+    )
+    assert code == EXIT_REFUSED and receipt["verdict"] == "REFUSED", receipt
+    assert "SEAL_INCOMPLETE_HUMAN" in _codes(receipt)
+    assert receipt["sealing"]["complete"] is False
+    assert all(
+        r["broken_term"] == "mu_on_O"
+        for r in receipt["refusals"]
+        if r["code"] == "SEAL_INCOMPLETE_HUMAN"
+    )
+
+
+def test_post_t0_message_on_inserted_pre_epoch_event_is_refused(
+    tmp_path, repo, signer
+) -> None:
+    """A1b: a mid-loop human message is carried by a new human.intervene placed
+    before episode.start (pre-epoch time) -- relabelled as goal supply."""
+    doc = _bound(repo)
+    _decoy_human(doc, "e-start", "h-decoy", "msg-7", "note-x")
+    humans = [{"id": "msg-7", "time": format_ns(T0 + 50 * SECOND)}]
+    _assert_human_relabel_refused(tmp_path, repo, signer, doc, humans)
+
+
+def test_post_t0_message_relabelled_onto_h_pre_is_refused(
+    tmp_path, repo, signer
+) -> None:
+    """A3: the existing pre-epoch goal act h-pre carries the messageId of a
+    human message the external ledger dates inside the episode."""
+    doc = _bound(repo)
+    _event(doc, "h-pre")["attributes"].append({"name": "messageId", "value": "m1"})
+    mid_time = _event(doc, "e-reobserve-50")["time"]
+    _assert_human_relabel_refused(
+        tmp_path, repo, signer, doc, [{"id": "m1", "time": mid_time}]
+    )
+
+
+def test_two_post_t0_messages_absorbed_by_h_pre_are_refused(
+    tmp_path, repo, signer
+) -> None:
+    """A4: two post-t0 messages absorbed as extra messageIds on h-pre."""
+    doc = _bound(repo)
+    attrs = _event(doc, "h-pre")["attributes"]
+    attrs.append({"name": "messageId", "value": "msg-a"})
+    attrs.append({"name": "messageId", "value": "msg-b"})
+    humans = [
+        {"id": "msg-a", "time": format_ns(T0 + 50 * SECOND)},
+        {"id": "msg-b", "time": format_ns(T0 + 70 * SECOND)},
+    ]
+    _assert_human_relabel_refused(tmp_path, repo, signer, doc, humans)
+
+
+def test_post_t0_message_with_mismatched_time_is_refused(
+    tmp_path, repo, signer
+) -> None:
+    """The sealed post-t0 human event exists but its time differs from the
+    externally witnessed message time (backdated by one nanosecond)."""
+    doc = _bound(repo)
+    MUTANTS["human_after_epoch"][0](doc)
+    human = _event(doc, "h-post-50")
+    human["attributes"].append({"name": "messageId", "value": "msg-7"})
+    witnessed = format_ns(parse_ns(human["time"]) + 1)
+    _assert_human_relabel_refused(
+        tmp_path, repo, signer, doc, [{"id": "msg-7", "time": witnessed}]
+    )
+
+
+def test_message_exactly_at_t0_must_be_sealed(tmp_path, repo, signer) -> None:
+    """A5: a human message witnessed at exactly t0 is not pre-epoch goal
+    supply; omitting it from the sealed log is refused."""
+    doc = _bound(repo)
+    t0 = next(e for e in doc["events"] if e["type"] == "episode.start")["time"]
+    _assert_human_relabel_refused(
+        tmp_path, repo, signer, doc, [{"id": "m2", "time": t0}]
+    )
+
+
+def test_commit_event_naming_unwitnessed_repository_is_refused(
+    tmp_path, repo, signer
+) -> None:
+    """A4_unnamed_repo: every sealed commit event names a repository outside
+    the witnessed set, and the witnessed range is empty -- the commits escape
+    the rev-list bijection unless unwitnessed repositories are refused."""
+    doc = _bound(repo)
+    for o in doc["objects"]:
+        if o["type"] == "Subject":
+            for a in o["attributes"]:
+                if a["name"] == "repository":
+                    a["value"] = "repo-unnamed"
+    log, ledger = _write(tmp_path, doc, signer)
+    code, receipt = evaluate_path(log, seal=_inputs(ledger, signer, {"repo-1": []}))
+    assert code == EXIT_REFUSED and receipt["verdict"] == "REFUSED"
+    assert _codes(receipt) == {"SEAL_UNWITNESSED_COMMIT"}
+    assert receipt["sealing"]["complete"] is False
 
 
 def test_event_deleted_after_sealing_is_refused(tmp_path, repo, signer) -> None:

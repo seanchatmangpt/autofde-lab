@@ -24,8 +24,11 @@ A sealed log moves authorship of the evidence stream out of the judged party:
   named repository's ``git rev-list`` range maps to exactly one sealed
   ``actuate``/``commit``/``merge`` event whose output ``Subject`` carries that
   SHA (and every such sealed event claiming a named repository is in the
-  range); (b) every entry of a supplied human-message ledger after ``t0`` maps
-  to exactly one sealed ``human.intervene`` event with that ``messageId``.
+  range, and no sealed commit claim names an unwitnessed repository); (b)
+  every entry of a supplied human-message ledger at or after ``t0`` maps to
+  exactly one sealed ``human.intervene`` event with that ``messageId``, at
+  exactly the witnessed time and after ``episode.start`` in log order; an
+  event carries at most one ``messageId``.
 
 The chain and signature code is the ledger's own
 (:func:`~autofde_lab._cache.provenance.verify_ledger_records`), generalized
@@ -258,6 +261,20 @@ def verify_seal(document: Any, inputs: SealInputs, log_bytes: bytes) -> dict[str
                 key = (str(attr(o, "repository")), str(attr(o, "sha")))
                 claims.setdefault(key, []).append(str(e["id"]))
         witnessed = {repo: list(shas) for repo, shas in inputs.commits.items()}
+        # Every sealed commit claim must be mapped by the witness: a claim naming
+        # a repository outside the witnessed set would otherwise escape the
+        # rev-list bijection (court r9 repair, A4_unnamed_repo).
+        for (r, sha), hits in sorted(claims.items()):
+            if r not in witnessed:
+                refusals.append(
+                    _refusal(
+                        "SEAL_UNWITNESSED_COMMIT",
+                        "R_missing_identity",
+                        f"{hits[:3]} claim {r}@{sha}: repository not in the "
+                        f"witnessed set {sorted(witnessed)}",
+                    )
+                )
+                complete = False
         report["witnesses"]["commits"] = {
             repo: len(shas) for repo, shas in sorted(witnessed.items())
         }
@@ -288,17 +305,40 @@ def verify_seal(document: Any, inputs: SealInputs, log_bytes: bytes) -> dict[str
     if inputs.human_messages is None:
         complete = None if complete is not False else False
     else:
-        by_msg: dict[str, list[str]] = {}
-        for e in events:
+        # A human message is witnessed out of band with its own time. Its sealed
+        # human.intervene must carry exactly that messageId, at exactly that
+        # time, and (after t0) sit after episode.start in log order: otherwise
+        # a mid-loop human act can be relabelled as pre-epoch goal supply
+        # (court r9 repair, attacks A1b/A3/A4).
+        start_pos = min(
+            (i for i, e in enumerate(events) if e.get("type") == "episode.start"),
+            default=None,
+        )
+        by_msg: dict[str, list[tuple[int, dict[str, Any]]]] = {}
+        for i, e in enumerate(events):
             if e.get("type") != _HUMAN:
                 continue
-            for a in e.get("attributes", ()):
-                if a.get("name") == "messageId":
-                    by_msg.setdefault(str(a.get("value")), []).append(str(e["id"]))
+            mids = [
+                str(a.get("value"))
+                for a in e.get("attributes", ())
+                if a.get("name") == "messageId"
+            ]
+            if len(mids) > 1:
+                refusals.append(
+                    _refusal(
+                        "SEAL_INCOMPLETE_HUMAN",
+                        "mu_on_O",
+                        f"human.intervene {e.get('id')!r} carries {len(mids)} "
+                        "messageIds (at most 1 per event)",
+                    )
+                )
+                complete = False
+            for mid in mids:
+                by_msg.setdefault(mid, []).append((i, e))
         after = [
             m
             for m in inputs.human_messages
-            if t0 is None or parse_ns(str(m["time"])) > t0
+            if t0 is None or parse_ns(str(m["time"])) >= t0
         ]
         report["witnesses"]["human_messages"] = len(after)
         for m in after:
@@ -308,8 +348,24 @@ def verify_seal(document: Any, inputs: SealInputs, log_bytes: bytes) -> dict[str
                     _refusal(
                         "SEAL_INCOMPLETE_HUMAN",
                         "mu_on_O",
-                        f"human message {m['id']!r} after t0: {len(hits)} sealed "
+                        f"human message {m['id']!r} at/after t0: {len(hits)} sealed "
                         "human.intervene events (exactly 1 required)",
+                    )
+                )
+                complete = False
+                continue
+            pos, ev = hits[0]
+            m_ns = parse_ns(str(m["time"]))
+            e_ns = parse_ns(str(ev["time"]))
+            if e_ns != m_ns or (start_pos is not None and pos <= start_pos):
+                refusals.append(
+                    _refusal(
+                        "SEAL_INCOMPLETE_HUMAN",
+                        "mu_on_O",
+                        f"human message {m['id']!r} witnessed at {m['time']} at/after "
+                        f"t0 but sealed as {ev.get('id')!r} at {ev.get('time')} "
+                        f"(log position {pos}, episode.start at {start_pos}): "
+                        "time must match and the event must follow episode.start",
                     )
                 )
                 complete = False

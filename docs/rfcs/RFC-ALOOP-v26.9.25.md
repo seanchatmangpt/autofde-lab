@@ -219,10 +219,14 @@ per event, same order, same digest, and the close digest (`SEAL_BIJECTION`); the
 (a) every commit of each named repository's `git rev-list <range>` maps to exactly one sealed
 `actuate`/`commit`/`merge` event whose output `Subject` has that `repository` and `sha`
 (`SEAL_INCOMPLETE_COMMIT`, `R_missing_consequence`: a missing or duplicated commit event), and
-every such event naming a witnessed repository is inside the range
-(`SEAL_UNWITNESSED_COMMIT`); (b) every entry of the supplied human-message ledger timed after
-`t0` maps to exactly one sealed `human.intervene` event carrying that `messageId`
-(`SEAL_INCOMPLETE_HUMAN`, `mu_on_O`). CLI: `--seal LEDGER --key-file F --key-id ID --git
+every such event is inside the range of a witnessed repository -- a claim naming a repository
+outside the witnessed set is refused too (`SEAL_UNWITNESSED_COMMIT`); (b) every entry of the
+supplied human-message ledger timed at or after `t0` maps to exactly one sealed
+`human.intervene` event carrying that `messageId`, whose time equals the message's witnessed
+time and which follows `episode.start` in log order; a `human.intervene` carries at most one
+`messageId` (`SEAL_INCOMPLETE_HUMAN`, `mu_on_O`). Matching on `messageId` alone would let the
+author relabel a mid-loop human message as pre-epoch goal supply by attaching its id to an
+earlier event (repair of court attacks A1b, A3, A4 on `5a1cd259`). CLI: `--seal LEDGER --key-file F --key-id ID --git
 REPO_ID=PATH:RANGE --human-ledger FILE`.
 
 **Claim scope.** A `QUALIFIED` verdict says: the recorder holding the key emitted exactly these
@@ -602,8 +606,12 @@ log exits 0 or classifies an episode `AUTONOMOUS`; if a sealed log qualifies wit
 human message the log omits, an event deleted or an object edited after sealing, a record's
 `previous_digest` forged, a record dropped, a wrong verification key, a re-seal by the author
 under its own key, a git commit no sealed event produced (synthetic and real `git rev-list`), a
-duplicated commit event, a commit claim outside the witnessed range, or the recorder key inside
-the log. Each of these 12 is `REFUSED` (exit 2) with its typed code; the sealed positive exits 0;
+duplicated commit event, a commit claim outside the witnessed range, a commit claim naming an
+unwitnessed repository, the recorder key inside the log, or a witnessed human message sealed
+under the wrong time or position: a post-t0 message carried by a new pre-epoch event (A1b),
+relabelled onto the pre-epoch goal act (A3), two post-t0 messages absorbed by one event (A4), a
+post-t0 message sealed one nanosecond off its witnessed time, or a message at exactly `t0`
+omitted (A5). Each of these 18 is `REFUSED` (exit 2) with its typed code; the sealed positive exits 0;
 sealed without witnesses it is `CONSISTENT_UNDER_ASSUMED_COMPLETENESS`; four sealed, complete
 K-mutants stay `NOT_QUALIFIED` (sealing certifies authorship and completeness, not the rules).
 K-mutant witness (`docs/rfcs/aloop/ALOOP-001-r9-k-mutant-witness.json`): the nine K-class
