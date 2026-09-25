@@ -16,6 +16,22 @@
       },
       "sha256": "06209c4583ba38719c4cf7f77ae66414e964c9859f57d21fb3743d7b4ea38b4b"
     },
+    "mutants/cross_episode_human_next_action.ocel.json": {
+      "expect": {
+        "class": null,
+        "code": "CROSS_EPISODE_CAUSALITY",
+        "exit": 2
+      },
+      "sha256": "853ace1e8d09b5fa27f99b68c50ff27b40753fe287a67166ae6e2c800f9ee98f"
+    },
+    "mutants/cross_episode_o2o_human_objective.ocel.json": {
+      "expect": {
+        "class": "ASSISTED",
+        "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
+        "exit": 3
+      },
+      "sha256": "f3edb8d09c2029b89be5b59841af537829d9e03196e54663bffe7a6a88265164"
+    },
     "mutants/duplicate_consequence.ocel.json": {
       "expect": {
         "class": "FAILED",
@@ -103,6 +119,14 @@
         "exit": 3
       },
       "sha256": "a5913d8b5c64b5be9e8dc3aec9268722578c5bf3157d746796bd57b8e9aa7a25"
+    },
+    "mutants/preepoch_laundered_human_script.ocel.json": {
+      "expect": {
+        "class": "ASSISTED",
+        "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
+        "exit": 3
+      },
+      "sha256": "6095952faf59fb24330ce16ca2e2791c2b74e1d78be6ac47cb0b89a1a515eba4"
     },
     "mutants/provider_replaced_by_human.ocel.json": {
       "expect": {

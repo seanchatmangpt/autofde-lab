@@ -41,6 +41,12 @@ is human-touched (consuming it is a human causal edge); every actuation must
 have a ``workorder.issue`` of its episode upstream (``UNAUTHORIZED_ACTUATION``);
 ``episode.start``/``receipt.persist`` must bind a ``Subject``, not a Repository.
 
+Repair round 3: whether a human touch is a human cause is judged relative to
+the consuming event's episode epoch (never the human event's own episode); a
+causal E2O flow across episodes is refused (``CROSS_EPISODE_CAUSALITY``); and
+human taint propagates transitively through pre-epoch machine events, so a
+pre-epoch hop cannot launder a human-authored next action.
+
 The verdict is a pure function of (log bytes, profile bytes, court source):
 the receipt carries no wall-clock value, so a cold replay is byte-identical.
 """
@@ -70,7 +76,7 @@ __all__ = [
 ]
 
 COURT_ID = "ALOOP-001"
-COURT_VERSION = "aloop-001/v26.9.25-r2"
+COURT_VERSION = "aloop-001/v26.9.25-r3"
 RECEIPT_SCHEMA = "autofde-lab/aloop-court-receipt/v1"
 
 EXIT_QUALIFIED = 0
@@ -358,6 +364,17 @@ class _Graph:
                         "CAUSALITY_VIOLATION",
                         f"event {e.id} consumes {o} produced by later/same event {p}",
                     )
+                if self.episode[p] != self.episode[e.id]:
+                    # Repair round 3 (C2): each episode has its own epoch t0, so a
+                    # causal flow across episodes has no single epoch to judge a
+                    # human cause against. Refuse rather than guess.
+                    _refuse(
+                        "CROSS_EPISODE_CAUSALITY",
+                        f"event {e.id} (episode {self.episode[e.id]}) consumes {o} "
+                        f"produced by {p} (episode {self.episode[p]})",
+                        "R_missing_authority",
+                        "AUTHORITY_FAILURE",
+                    )
                 self.preds[e.id].append((p, o))
                 if e.id not in self.children[p]:
                     self.children[p].append(e.id)
@@ -369,30 +386,58 @@ class _Graph:
         for link in log.object_object_links:
             if (link.qualifier or "") in taint:
                 self.o2o[link.source_id].append((link.qualifier or "", link.target_id))
-        self._o2o_human_cache: dict[str, str | None] = {}
+        self._o2o_human_cache: dict[tuple[str, str], str | None] = {}
         self.human_edges: list[tuple[str, str, str]] = []
         # ``human[e]``: e is a post-epoch human act, or has a *direct* human
-        # causal in-edge. Deliberately not transitive: one human act does not
-        # poison every later iteration; each iteration's own segment is judged.
+        # causal in-edge. Deliberately not transitive *after* the epoch: one
+        # human act does not poison every later iteration; each iteration's own
+        # segment is judged. Before the epoch taint is transitive (``laundered``).
         self.human: dict[str, bool] = {}
         self.post: dict[str, bool] = {}
         for e in self.events:
-            start_pos = self.pos[self.start[self.episode[e.id]]]
-            self.post[e.id] = self.pos[e.id] > start_pos
-        # Repair round 2 (B1): a human act taints every object it links, under
-        # any qualifier -- not only what it ``output``s. Post-epoch: always;
-        # pre-epoch: unless the object is on the lawful channel (Objective,
-        # Authority). ``touched[o]`` is the earliest such human event.
+            self.post[e.id] = self.pos[e.id] > self.pos[self.start[self.episode[e.id]]]
+        # Repair round 2 (B1): a human act touches every object it links, under
+        # any qualifier -- not only what it ``output``s. ``touches[o]`` lists all
+        # such human events in log order. Whether a touch is a human *cause* is
+        # decided relative to the CONSUMER (repair round 3, C2), never relative
+        # to the human event's own episode: see :meth:`unlawful_touch`.
         exempt = set(profile["humanTouch"]["exemptQualifiers"])
-        self.touched: dict[str, str] = {}
+        self.touches: dict[str, list[str]] = defaultdict(list)
         for e in self.events:
             if e.activity != _HUMAN:
                 continue
             for q, o in self.links[e.id]:
-                if q in exempt or o in self.touched:
+                if q not in exempt and e.id not in self.touches[o]:
+                    self.touches[o].append(e.id)
+        # Repair round 3 (C1): human-touch taint propagates transitively through
+        # machine events that run before their episode's epoch. A pre-epoch
+        # machine hop that consumes a human-authored object outside the lawful
+        # Objective/Authority channel (or a foreign/post-epoch human's object)
+        # yields outputs that carry that human origin, so one hop cannot launder
+        # a human script for every iteration into an "autonomous" loop.
+        # ``laundered[o]`` = the human events o transitively derives from.
+        self.laundered: dict[str, list[str]] = defaultdict(list)
+        for e in self.events:
+            eid = e.id
+            if self.post[eid] or e.activity == _HUMAN:
+                continue
+            origins: list[str] = []
+            for q, o in self.links[eid]:
+                if q not in causal:
                     continue
-                if self.post[e.id] or self.otype[o] not in allowed_pre:
-                    self.touched[o] = e.id
+                h = self.unlawful_touch(o, eid)
+                if h is not None and h not in origins:
+                    origins.append(h)
+                for h2 in self.laundered.get(o, ()):
+                    if h2 not in origins:
+                        origins.append(h2)
+            if not origins:
+                continue
+            for q, x in self.links[eid]:
+                if q in producing:
+                    for h in origins:
+                        if h not in self.laundered[x]:
+                            self.laundered[x].append(h)
         for e in self.events:
             eid = e.id
             if not self.post[eid]:
@@ -403,15 +448,15 @@ class _Graph:
             for q, o in self.links[eid]:
                 if q not in causal:
                     continue
-                h = self.touched.get(o)
-                if (
-                    h is not None
-                    and h != eid
-                    and h not in direct
-                    and self.pos[h] < self.pos[eid]
-                ):
+                h = self.unlawful_touch(o, eid)
+                if h is not None and h not in direct:
                     self.human_edges.append((f"<touch:{h}>", eid, o))
                     hit = True
+                for h2 in self.laundered.get(o, ()):
+                    if self.pos[h2] < self.pos[eid]:
+                        self.human_edges.append((f"<laundered:{h2}>", eid, o))
+                        hit = True
+                        break
             for p, o in self.preds[eid]:
                 if self.act[p] == _HUMAN:
                     outputs_ok = all(
@@ -419,7 +464,7 @@ class _Graph:
                         for q, x in self.links[p]
                         if q == "output"
                     )
-                    if self.post[p] or not outputs_ok:
+                    if self.post_for(p, eid) or not outputs_ok:
                         self.human_edges.append((p, eid, o))
                         hit = True
             for o in self.exogenous[eid]:
@@ -429,7 +474,7 @@ class _Graph:
             for q, o in self.links[eid]:
                 if q not in causal:
                     continue
-                via = self.o2o_human(o)
+                via = self.o2o_human(o, eid)
                 if via is not None:
                     self.human_edges.append((f"<o2o:{via}>", eid, o))
                     hit = True
@@ -462,22 +507,50 @@ class _Graph:
                         "AUTHORITY_FAILURE",
                     )
 
-    def is_human_object(self, o: str) -> bool:
+    def post_for(self, h: str, consumer: str) -> bool:
+        """Is event ``h`` after the epoch of ``consumer``'s episode (repair round 3, C2)?"""
+        return self.pos[h] > self.pos[self.start[self.episode[consumer]]]
+
+    def unlawful_touch(self, o: str, consumer: str) -> str | None:
+        """The earliest human event whose touch on ``o`` is a human cause for ``consumer``.
+
+        A touch is lawful only when the human act is in the consumer's own
+        episode, strictly before that episode's epoch, and ``o`` is on the lawful
+        pre-epoch channel (``Objective``, ``Authority``). A human act of another
+        episode, or after the consumer's epoch, is never lawful.
+        """
+        for h in self.touches.get(o, ()):
+            if h == consumer or self.pos[h] >= self.pos[consumer]:
+                continue
+            lawful = (
+                self.episode[h] == self.episode[consumer]
+                and not self.post_for(h, consumer)
+                and self.otype[o] in self.allowed_pre
+            )
+            if not lawful:
+                return h
+        return None
+
+    def is_human_object(self, o: str, consumer: str) -> bool:
         return (
             self.otype[o] == "Human"
             or self.oattr[o].get("origin") == "human"
-            or o in self.touched
+            or self.unlawful_touch(o, consumer) is not None
+            or any(self.pos[h] < self.pos[consumer] for h in self.laundered.get(o, ()))
         )
 
-    def o2o_human(self, obj: str) -> str | None:
+    def o2o_human(self, obj: str, consumer: str) -> str | None:
         """The Human-side object ``obj`` reaches over O2O links, or ``None``.
 
         Traversal does not enter the lawful pre-epoch channel (``Objective``,
-        ``Authority``): those are human-originated by design and admitted at t0.
+        ``Authority``): those are human-originated by design and admitted at t0
+        -- unless the channel object was itself touched unlawfully relative to
+        ``consumer`` (repair round 3), in which case it is the human side.
         A consumed object that *is* of such a type is likewise not tainted.
         """
-        if obj in self._o2o_human_cache:
-            return self._o2o_human_cache[obj]
+        key = (obj, consumer)
+        if key in self._o2o_human_cache:
+            return self._o2o_human_cache[key]
         found: str | None = None
         if self.otype[obj] not in self.allowed_pre:
             seen = {obj}
@@ -487,11 +560,11 @@ class _Graph:
                 if n in seen or n not in self.otype:
                     continue
                 seen.add(n)
-                if self.is_human_object(n):
+                if self.is_human_object(n, consumer):
                     found = n
                 elif self.otype[n] not in self.allowed_pre:
                     queue.extend(t for _, t in self.o2o[n])
-        self._o2o_human_cache[obj] = found
+        self._o2o_human_cache[key] = found
         return found
 
     def objects(self, eid: str, qualifier: str) -> list[str]:
@@ -561,7 +634,7 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
                 for a in [w, *g.ascend(w, stop=segment_stops)]
                 if g.post[a] and g.act[a] not in ("observe", _REOBSERVE)
                 for o in g.exogenous[a]
-                if not g.is_human_object(o) and g.o2o_human(o) is None
+                if not g.is_human_object(o, a) and g.o2o_human(o, a) is None
             }
         )
 

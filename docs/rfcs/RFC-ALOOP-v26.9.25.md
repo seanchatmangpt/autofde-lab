@@ -126,9 +126,17 @@ O2O links carry human provenance: a consumed object with an O2O path (`partOf`, 
 a human causal edge. Paths do not enter the lawful pre-epoch channel (`Objective`, `Authority`).
 
 Human touch: every object a `human.intervene` event links under any qualifier (not only
-`output`; `episode` and `originAuthority` excepted) is human-touched — always after `t0`, and
-before `t0` unless it is on the lawful channel. A later event consuming a human-touched object
-has a human causal in-edge, and O2O paths reaching one are human paths.
+`output`; `episode` and `originAuthority` excepted) is human-touched. The epoch that judges a
+touch is always the consuming event's episode epoch, never the human event's own: a touch is
+lawful only if the human act is in the consumer's episode, strictly before that episode's `t0`,
+and the object is on the lawful channel. A later event consuming an unlawfully touched object has
+a human causal in-edge, and O2O paths reaching one are human paths. Before `t0` taint is
+transitive: a pre-epoch machine event that consumes a tainted object taints everything it
+outputs, so one pre-epoch hop cannot launder a human-authored next action.
+
+Episode isolation: a causal E2O flow across episodes (an `input`/`cause` of an object produced in
+another episode) is refused (`CROSS_EPISODE_CAUSALITY`, `R_missing_authority`,
+`AUTHORITY_FAILURE`), because no single epoch can judge whether it is a human cause.
 
 Authorized actuation: every `actuate|commit|merge` must have a `workorder.issue` of its own
 episode among its causal ancestors. An actuation with none is an unleased DO
@@ -241,9 +249,12 @@ qualifies; if one consequence receipted by many iterations qualifies; if a next 
 (O2O) from a Human, or caused by an unattributed exogenous input, qualifies; if an object a
 post-epoch human act links under a non-producing qualifier drives the next action and still
 qualifies; if receipts bound to a Repository instead of a Subject sha qualify; if an actuation
-with no WorkOrder upstream qualifies; or if two runs over
+with no WorkOrder upstream qualifies; if a pre-epoch human script is laundered through a
+pre-epoch machine hop into qualifying next actions; if another episode's human acts (pre-epoch
+for that episode, post-epoch for this one) drive this episode's next actions over E2O or O2O and
+it still qualifies; or if two runs over
 the same bytes produce different receipts. Each has a mutant in the regenerated corpus whose
-sha256 is committed in `tests/aloop/fixtures/synthetic/MANIFEST.json` (22 mutants, 22 killed).
+sha256 is committed in `tests/aloop/fixtures/synthetic/MANIFEST.json` (25 mutants, 25 killed).
 
 Repair round 1 (court version `aloop-001/v26.9.25-r1`) closed three adversarial-court findings
 against round 0: a vacuous non-actuating loop qualified (`admission_vacuous`,
@@ -256,3 +267,11 @@ an exogenous observation input, so 100 human acts gave HumanCausalEdges = 0 (`mu
 commits with no input, cause or authority qualified while `uncaused_actuations` gated nothing
 (`R_missing_authority`); receipts bound to the Repository bypassed the exact-subject and
 stale-subject checks (`R_missing_identity`).
+
+Repair round 3 (court version `aloop-001/v26.9.25-r3`) closed two adversarial-court findings
+against round 2, both `admission_vacuous` / `AUTHORITY_FAILURE`: human events tagged with a
+second episode were judged against that episode's later epoch, so 100 post-`t0` human next
+actions for the first episode counted as lawful pre-epoch goals (now refused as cross-episode
+causality, and over O2O counted as human edges against the consumer's epoch); and a pre-epoch
+human `Plan` per iteration, copied through one pre-epoch machine hop, qualified with 0 human edges
+(taint is now transitive before `t0`).

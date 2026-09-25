@@ -104,7 +104,11 @@ def test_each_mutant_is_refused_or_downgraded(corpus: Path, rel: str) -> None:
     assert code != EXIT_QUALIFIED
     assert expect["code"] in set(iter_reasons(receipt)), rel
     if expect["class"] is not None:
-        assert [ep["class"] for ep in receipt["episodes"]] == [expect["class"]]
+        # cross-episode mutants append a short foreign episode ``x-ep-1``; the
+        # judged episode is always the first (episodes are reported sorted).
+        n_eps = 2 if "cross_episode" in rel else 1
+        assert len(receipt["episodes"]) == n_eps, rel
+        assert receipt["episodes"][0]["class"] == expect["class"], rel
     else:
         assert receipt["verdict"] == "REFUSED" and receipt["episodes"] == []
 
@@ -113,8 +117,8 @@ def test_mutation_kill_ratio_is_total(corpus: Path) -> None:
     killed = sum(
         evaluate_path(corpus / rel)[0] != EXIT_QUALIFIED for rel in MUTANT_FILES
     )
-    assert len(MUTANT_FILES) == 22
-    assert (killed, len(MUTANT_FILES)) == (22, 22)
+    assert len(MUTANT_FILES) == 25
+    assert (killed, len(MUTANT_FILES)) == (25, 25)
 
 
 def test_empty_log_is_refused_not_vacuously_qualified(tmp_path: Path) -> None:
@@ -301,3 +305,36 @@ def test_positive_log_has_no_unauthorized_or_human_touched_input() -> None:
     (episode,) = receipt["episodes"]
     assert episode["metrics"]["unauthorized_actuations"] == 0
     assert episode["metrics"]["uncaused_actuations"] == 0
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["preepoch_laundered_human_script", "cross_episode_o2o_human_objective"],
+)
+def test_every_scripted_next_action_is_a_counted_human_edge(
+    corpus: Path, name: str
+) -> None:
+    """Repair r3: a human script for each iteration -- laundered through a
+    pre-epoch machine hop (C1), or authored by another episode's pre-epoch human
+    and reached over O2O (C2') -- is one human causal edge per iteration."""
+    code, receipt = evaluate_path(corpus / f"mutants/{name}.ocel.json")
+    assert code == EXIT_NOT_QUALIFIED
+    ep1 = receipt["episodes"][0]
+    assert ep1["episode"] == "ep-1"
+    assert ep1["class"] == "ASSISTED"
+    assert ep1["metrics"]["human_causal_edges_after_epoch"] >= 100
+    assert ep1["metrics"]["ALD"] == 0
+    assert receipt["metrics"]["human_causal_edges_after_epoch"] >= 100
+
+
+def test_cross_episode_causal_flow_is_refused_with_authority_term(
+    corpus: Path,
+) -> None:
+    """Repair r3 (C2): no episode's epoch can judge a flow that crosses episodes."""
+    code, receipt = evaluate_path(
+        corpus / "mutants/cross_episode_human_next_action.ocel.json"
+    )
+    assert code == EXIT_REFUSED
+    (refusal,) = receipt["refusals"]
+    assert refusal["code"] == "CROSS_EPISODE_CAUSALITY"
+    assert refusal["broken_term"] == "R_missing_authority"

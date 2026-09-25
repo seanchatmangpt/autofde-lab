@@ -121,7 +121,8 @@
     "qualifiers": ["partOf", "boundTo", "derivedFrom", "supersedes"]
   },
   "humanTouch": {
-    "rule": "every object a human.intervene event links under any qualifier (other than episode and originAuthority) is human-touched: post-epoch always, pre-epoch unless it is of a humanPreEpochAllowedOutputTypes type; a later event consuming a human-touched object has a human causal in-edge, and O2O paths reaching it are human paths",
+    "rule": "every object a human.intervene event links under any qualifier (other than episode and originAuthority) is human-touched; the touch is a human cause for a later consumer unless the human act is in the consumer's own episode, strictly before that episode's epoch, and the object is of a humanPreEpochAllowedOutputTypes type (epoch is always the CONSUMER's); a later event consuming a human-touched object has a human causal in-edge, and O2O paths reaching it are human paths; taint propagates transitively through pre-epoch machine events to every object they output, so a pre-epoch hop cannot launder a human-authored next action",
+    "crossEpisodeCausality": "a causal E2O flow (input/cause consuming an object produced in another episode) is REFUSED CROSS_EPISODE_CAUSALITY (R_missing_authority, AUTHORITY_FAILURE): no single epoch can judge it",
     "exemptQualifiers": ["episode", "originAuthority"]
   },
   "authorizedActuation": {

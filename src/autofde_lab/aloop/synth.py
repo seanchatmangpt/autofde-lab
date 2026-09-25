@@ -623,6 +623,146 @@ def m_uncaused_unauthorized_commit(doc):
         ]
 
 
+def _human_event(eid: str, time: str, episode: str, human: str, rels) -> dict[str, Any]:
+    return {
+        "id": eid,
+        "type": "human.intervene",
+        "time": time,
+        "attributes": [{"name": "basis", "value": "operator picks the next action"}],
+        "relationships": [
+            {"objectId": episode, "qualifier": "episode"},
+            {"objectId": human, "qualifier": "originAuthority"},
+            *({"objectId": o, "qualifier": q} for q, o in rels),
+        ],
+    }
+
+
+def m_preepoch_laundered_human_script(doc):
+    """C1 (r2 adversarial): a pre-epoch human scripts every next action as Plans;
+    one pre-epoch machine hop copies them into Evidence each iteration consumes."""
+    from autofde_lab.ocel.model import format_ns, parse_ns
+
+    for i in range(POSITIVE_ITERATIONS):
+        doc["objects"] += [
+            {
+                "id": f"script-{i}",
+                "type": "Plan",
+                "attributes": [],
+                "relationships": [],
+            },
+            {
+                "id": f"step-{i}",
+                "type": "Evidence",
+                "attributes": [],
+                "relationships": [],
+            },
+        ]
+    _insert_before(
+        doc,
+        "e-start",
+        _human_event(
+            "h-script",
+            _time_before(doc, "e-start"),
+            "ep-1",
+            "hum-operator",
+            [("output", f"script-{i}") for i in range(POSITIVE_ITERATIONS)],
+        ),
+    )
+    start = parse_ns(_event(doc, "e-start")["time"])
+    _insert_before(
+        doc,
+        "e-start",
+        {
+            "id": "e-launder",
+            "type": "candidate.construct",
+            "time": format_ns(start - SECOND // 4),
+            "attributes": [],
+            "relationships": [
+                {"objectId": "ep-1", "qualifier": "episode"},
+                *(
+                    {"objectId": f"script-{i}", "qualifier": "cause"}
+                    for i in range(POSITIVE_ITERATIONS)
+                ),
+                *(
+                    {"objectId": f"step-{i}", "qualifier": "output"}
+                    for i in range(POSITIVE_ITERATIONS)
+                ),
+            ],
+        },
+    )
+    for i in range(POSITIVE_ITERATIONS):
+        _event(doc, f"e-cand-{i}")["relationships"].append(
+            {"objectId": f"step-{i}", "qualifier": "cause"}
+        )
+
+
+def _add_foreign_episode(doc) -> None:
+    """Append a renamed 3-iteration positive episode ``x-ep-1`` starting after ep-1 ends."""
+    from autofde_lab.ocel.model import format_ns, parse_ns
+
+    mini = build_positive(3)
+    for o in mini["objects"]:
+        o["id"] = "x-" + o["id"]
+        for a in o.get("attributes", []):
+            if a["name"] == "grantedBy":
+                a["value"] = "x-" + a["value"]
+    last = parse_ns(_event(doc, f"e-rcpt-{POSITIVE_ITERATIONS - 1}")["time"])
+    shift = last - T0 + 10 * SECOND
+    for e in mini["events"]:
+        e["id"] = "x-" + e["id"]
+        e["time"] = format_ns(parse_ns(e["time"]) + shift)
+        for r in e["relationships"]:
+            r["objectId"] = "x-" + r["objectId"]
+    doc["objects"] += mini["objects"]
+    doc["events"] += mini["events"]
+
+
+def _foreign_human_goals(doc) -> None:
+    """Human acts tagged x-ep-1 (pre-epoch for x-ep-1, post-epoch for ep-1) author
+    one 'next action' Objective per ep-1 iteration."""
+    _add_foreign_episode(doc)
+    for i in range(1, POSITIVE_ITERATIONS):
+        doc["objects"].append(
+            {
+                "id": f"x-goal-{i}",
+                "type": "Objective",
+                "attributes": [],
+                "relationships": [],
+            }
+        )
+        _insert_before(
+            doc,
+            f"e-cand-{i}",
+            _human_event(
+                f"x-h-{i}",
+                _time_before(doc, f"e-cand-{i}"),
+                "x-ep-1",
+                "x-hum-operator",
+                [("output", f"x-goal-{i}")],
+            ),
+        )
+
+
+def m_cross_episode_human_next_action(doc):
+    """C2 (r2 adversarial): ep-1's next actions consume Objectives authored by
+    human acts of another episode, judged against that episode's later epoch."""
+    _foreign_human_goals(doc)
+    for i in range(1, POSITIVE_ITERATIONS):
+        _event(doc, f"e-cand-{i}")["relationships"].append(
+            {"objectId": f"x-goal-{i}", "qualifier": "cause"}
+        )
+
+
+def m_cross_episode_o2o_human_objective(doc):
+    """C2' (r3): the same foreign-episode human goals reached over O2O instead of E2O."""
+    _foreign_human_goals(doc)
+    for i in range(1, POSITIVE_ITERATIONS):
+        (gap,) = [o for o in doc["objects"] if o["id"] == f"gap-{i}"]
+        gap.setdefault("relationships", []).append(
+            {"objectId": f"x-goal-{i}", "qualifier": "derivedFrom"}
+        )
+
+
 MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     "human_after_epoch": (
         m_human_after_epoch,
@@ -699,6 +839,18 @@ MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     "uncaused_unauthorized_commit": (
         m_uncaused_unauthorized_commit,
         {"exit": 3, "class": "FAILED", "code": "UNAUTHORIZED_ACTUATION"},
+    ),
+    "preepoch_laundered_human_script": (
+        m_preepoch_laundered_human_script,
+        {"exit": 3, "class": "ASSISTED", "code": "HUMAN_CAUSALITY_AFTER_EPOCH"},
+    ),
+    "cross_episode_human_next_action": (
+        m_cross_episode_human_next_action,
+        {"exit": 2, "class": None, "code": "CROSS_EPISODE_CAUSALITY"},
+    ),
+    "cross_episode_o2o_human_objective": (
+        m_cross_episode_o2o_human_objective,
+        {"exit": 3, "class": "ASSISTED", "code": "HUMAN_CAUSALITY_AFTER_EPOCH"},
     ),
 }
 
