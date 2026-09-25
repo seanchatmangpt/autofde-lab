@@ -1,0 +1,41 @@
+{
+  "id": "ALOOP-005",
+  "title": "Crash windows",
+  "objective": "Injected worker crashes must be reconciled by machine: each execution.crash opens a crash window that closes only when a machine-caused reconcile resumes execution and the iteration still reaches receipt.persist. CRR = reconciled crash windows / crash windows must be 1.0 and RR must be 1.0.",
+  "repository_scope": ["autofde-lab"],
+  "seeds": [20260925, 20260926, 20260927, 20260928, 20260929],
+  "scenario_identity": {
+    "family": "crash_windows",
+    "generator": "autofde_lab.aloop.bench_synth:build_scenario",
+    "params": {"iterations": 101, "crash_windows": 5, "crash_at": [15, 30, 50, 65, 85], "recovery": "reconcile", "providers": ["claude"]},
+    "identity_rule": "sha256 over the canonical manifest bytes; per-trial corpus identity pinned by MANIFEST.json sha256"
+  },
+  "setup": {
+    "epoch": "ALOOP-001 epoch",
+    "crash_window": "execution.crash -> (reconcile -> execution.start on a fresh WorkerRun -> ... -> receipt.persist) closes the window",
+    "placement": "crashes at iterations 15, 30, 50, 65, 85; all other iterations clean"
+  },
+  "acceptance_criteria": [
+    "court verdict QUALIFIED with episode class AUTONOMOUS",
+    "CRR == 1.0 (every crash window closed by a machine reconcile)",
+    "RR == 1.0 (every injected failure correctly recovered)",
+    "metrics.HIR == 0.0 and UAR == 0.0",
+    "ALD >= 100 despite the injected windows"
+  ],
+  "falsifier": "Remove one reconcile event so one crash window is closed only by a bare re-execution: CRR must drop below 1.0 and the scenario must FAIL. If the window still counts as reconciled, CRR is vacuous.",
+  "expected_outcome_classes": ["AUTONOMOUS"],
+  "negative_control": {
+    "name": "unrecovered crash",
+    "cases": [
+      {
+        "mutant": "unreconciled_crash",
+        "expect": {"class": "FAILED", "code": "SELF_RECOVERY_ABSENT", "exit": 3}
+      }
+    ],
+    "requirement": "a crash with no machine recovery path must fail the scenario"
+  },
+  "metrics": ["RR", "CRR", "HIR", "ALD", "UAR", "DCR", "OCR", "RPR"],
+  "actuation_ceiling": "AutoFDE SELECTS/PLANS/EXPERIMENTS; never production actuation.",
+  "status": "RECONSTRUCTED",
+  "status_note": "Synthetic crash injection; measures recovery-accounting semantics, not real crash handling."
+}

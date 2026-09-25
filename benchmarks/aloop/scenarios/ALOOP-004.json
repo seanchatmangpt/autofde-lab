@@ -1,0 +1,40 @@
+{
+  "id": "ALOOP-004",
+  "title": "Provider extinction (Claude absent)",
+  "objective": "When the incumbent provider disappears mid-episode, the loop must substitute providers by machine (provider.unavailable -> provider.replace) and the SEMANTIC projection of the run must be unchanged: work order identity, origin authority, acceptance criteria, receipt schema and replay binding identical; only capacity, latency, cost and capability inventory may differ. Measured as PDR = 0.",
+  "repository_scope": ["autofde-lab"],
+  "seeds": [20260925, 20260926, 20260927, 20260928, 20260929],
+  "scenario_identity": {
+    "family": "provider_extinction",
+    "generator": "autofde_lab.aloop.bench_synth:build_scenario",
+    "params": {"iterations": 101, "providers": ["claude", "zcode"], "extinction_at": 70, "extinction_kind": "machine_substitute"},
+    "identity_rule": "sha256 over the canonical manifest bytes; per-trial corpus identity pinned by MANIFEST.json sha256"
+  },
+  "setup": {
+    "epoch": "ALOOP-001 epoch",
+    "extinction": "at iteration 70 the claude Provider emits provider.unavailable; the loop itself issues provider.replace -> zcode (machine-caused, no human edge)",
+    "semantic_pair": "the same seed is generated twice: with extinction+substitution and with zcode-only; the two court receipts must be semantically identical"
+  },
+  "acceptance_criteria": [
+    "court verdict QUALIFIED with episode class AUTONOMOUS on the extinction corpus",
+    "PSR == 1.0 (the provider-loss episode completed without human intervention)",
+    "PDR == 0.0 over the semantic pair (semantic_projection(receipt_A) == semantic_projection(receipt_B))",
+    "semantic projection = court receipt minus inter_iteration_ns timings (the only licensed difference class)"
+  ],
+  "falsifier": "Change any semantic field across the provider pair (workorder id scheme, authority kind, receipt digest scheme): PDR must become 1.0 and the scenario must FAIL. If a semantic change still scores PDR=0, the divergence detector is vacuous.",
+  "expected_outcome_classes": ["AUTONOMOUS"],
+  "negative_control": {
+    "name": "human-performed substitution",
+    "cases": [
+      {
+        "mutant": "provider_replaced_by_human",
+        "expect": {"class": "FAILED", "code": "PROVIDER_SUBSTITUTION_FAILED", "exit": 3}
+      }
+    ],
+    "requirement": "a provider swap caused by a human act must downgrade the episode (not AUTONOMOUS)"
+  },
+  "metrics": ["HIR", "ALD", "UAR", "PSR", "PDR", "DCR", "OCR", "RPR"],
+  "actuation_ceiling": "AutoFDE SELECTS/PLANS/EXPERIMENTS; never production actuation.",
+  "status": "RECONSTRUCTED",
+  "status_note": "Synthetic providers named claude/zcode; measures provider-independence of the semantic contract, not real provider failover."
+}

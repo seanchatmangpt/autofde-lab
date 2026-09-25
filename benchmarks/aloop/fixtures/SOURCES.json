@@ -1,0 +1,28 @@
+{
+  "files": {
+    "fixed-task-cron-30.ocel.ndjson": {
+      "bytes": 51479,
+      "note": "negative control: severed recurrence -> AUTOMATION_NOT_AUTONOMY; RECONSTRUCTED",
+      "sha256": "7a12b9c7aff097d610827435db3946ce4f383e00c8524f22badee6943fb7cc58"
+    },
+    "human-after-epoch-60.ocel.ndjson": {
+      "bytes": 345218,
+      "note": "negative control: planted post-epoch human edge -> ASSISTED; RECONSTRUCTED",
+      "sha256": "0532e7b6c21a8902b9896f664a85d5857c95bb1aca7a66dcac5033417cc5bbd9"
+    },
+    "positive-60.ocel.ndjson": {
+      "bytes": 344683,
+      "note": "closed loop, crash window at 40 machine-reconciled; RECONSTRUCTED",
+      "sha256": "69effd4323a49fcd4c1c84e07d78b469192fac2e96cb4ad78172d33c0e41027d"
+    },
+    "provider-renamed-20.ocel.ndjson": {
+      "bytes": 115894,
+      "note": "PDR counterpart of synth.build_positive(iterations=20) with the execution provider renamed; semantic signature must be equal; RECONSTRUCTED",
+      "sha256": "7e7b9e0986928812cf0bc6ad38261af03ed2ad11733e90881c25484ca4eeb736"
+    }
+  },
+  "generator": "python benchmarks/aloop/fixtures/generate_fixtures.py",
+  "note": "synthetic falsifier corpus for the ALOOP metrics calculator; regenerate byte-for-byte with generate_fixtures.py; not evidence about any real system",
+  "profile_sha": "\"aloop-ocel2/v26.9.25\"",
+  "status": "RECONSTRUCTED"
+}

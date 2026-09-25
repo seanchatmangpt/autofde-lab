@@ -1,0 +1,40 @@
+{
+  "id": "ALOOP-010",
+  "title": "Autonomous capability extension",
+  "objective": "The loop must extend its own capability inventory autonomously: new Capability objects are constructed and admitted inside the episode (candidate.construct -> candidate.admit) before any work order consumes them. Every consumed capability must have a machine-caused admission ancestor (unknown_frontier_leakage == 0).",
+  "repository_scope": ["autofde-lab"],
+  "seeds": [20260925, 20260926, 20260927, 20260928, 20260929],
+  "scenario_identity": {
+    "family": "capability_extension",
+    "generator": "autofde_lab.aloop.bench_synth:build_scenario",
+    "params": {"iterations": 101, "capability_mints": [20, 60], "providers": ["claude"]},
+    "identity_rule": "sha256 over the canonical manifest bytes; per-trial corpus identity pinned by MANIFEST.json sha256"
+  },
+  "setup": {
+    "epoch": "ALOOP-001 epoch",
+    "extension": "at iterations 20 and 60 the loop constructs a new Capability (candidate.construct output type Capability) and admits it (candidate.admit) before its workorder.issue consumes it via input",
+    "leakage_rule": "a work order consuming a capability with no candidate.admit ancestor is unknown_frontier_leakage > 0 and fails the scenario"
+  },
+  "acceptance_criteria": [
+    "court verdict QUALIFIED with episode class AUTONOMOUS",
+    "unknown_frontier_leakage == 0",
+    "both minted Capability objects are consumed by a later workorder (extension is real, not decorative)",
+    "metrics.HIR == 0.0 and UAR == 0.0"
+  ],
+  "falsifier": "Remove one candidate.admit event while keeping the consumption: unknown_frontier_leakage must become >= 1 and the scenario must FAIL. If consumption without admission still passes, the leakage criterion is vacuous.",
+  "expected_outcome_classes": ["AUTONOMOUS"],
+  "negative_control": {
+    "name": "unadmitted capability consumption",
+    "cases": [
+      {
+        "mutant": "unadmitted_capability",
+        "expect": {"class": "FAILED", "code": "UNKNOWN_FRONTIER_LEAKAGE", "exit": 3}
+      }
+    ],
+    "requirement": "a work order consuming an unadmitted capability must fail the scenario"
+  },
+  "metrics": ["HIR", "ALD", "LCR", "UAR", "DCR", "OCR", "RPR"],
+  "actuation_ceiling": "AutoFDE SELECTS/PLANS/EXPERIMENTS; capability extension is graph-level, never production deployment.",
+  "status": "RECONSTRUCTED",
+  "status_note": "Synthetic capabilities; measures admission-gated extension semantics, not real tool acquisition."
+}

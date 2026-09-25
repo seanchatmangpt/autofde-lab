@@ -1,0 +1,40 @@
+{
+  "id": "ALOOP-002",
+  "title": "Held-out objectives",
+  "objective": "The loop must close over objectives it has never seen in any seed-0 corpus: objective identity is varied per trial seed and the loop must still be admitted AUTONOMOUS with zero human causal edges. Generalization of recurrence, not memorization of one objective id.",
+  "repository_scope": ["autofde-lab"],
+  "seeds": [20260925, 20260926, 20260927, 20260928, 20260929],
+  "scenario_identity": {
+    "family": "held_out_generalization",
+    "generator": "autofde_lab.aloop.bench_synth:build_scenario",
+    "params": {"iterations": 101, "objective_namespace": "heldout-<seed>", "providers": ["claude"]},
+    "identity_rule": "sha256 over the canonical manifest bytes; per-trial corpus identity pinned by MANIFEST.json sha256"
+  },
+  "setup": {
+    "epoch": "pre-epoch grant of a seed-specific Objective id never reused across trials",
+    "loop": "identical to ALOOP-001 but every Objective/Evidence object id carries the held-out namespace",
+    "heldout_rule": "trial k uses seed[k]; objective ids are derived from seed[k] and appear in no other trial's corpus"
+  },
+  "acceptance_criteria": [
+    "court verdict QUALIFIED for every trial seed",
+    "episode class AUTONOMOUS for every trial seed",
+    "metrics.HIR == 0.0 and UAR == 0.0 in every trial",
+    "held-out objective namespace observed in the corpus (the trial really ran on unseen ids)"
+  ],
+  "falsifier": "Run trial 0 against trial 1's corpus and require the objective namespaces to differ; if they do not differ, the held-out property is vacuous and the scenario is invalid.",
+  "expected_outcome_classes": ["AUTONOMOUS"],
+  "negative_control": {
+    "name": "ungranted authority over a held-out objective",
+    "cases": [
+      {
+        "mutant": "forged_origin_authority",
+        "expect": {"class": null, "code": "FORGED_ORIGIN_AUTHORITY", "exit": 2}
+      }
+    ],
+    "requirement": "a work order claiming authority that the epoch never granted over the held-out objective must be REFUSED, not scored"
+  },
+  "metrics": ["HIR", "ALD", "LCR", "UAR", "DCR", "OCR", "RPR"],
+  "actuation_ceiling": "AutoFDE SELECTS/PLANS/EXPERIMENTS; never production actuation.",
+  "status": "RECONSTRUCTED",
+  "status_note": "Synthetic corpus; measures the court's sensitivity to objective identity, not real generalization of a deployed agent."
+}

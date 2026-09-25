@@ -1,0 +1,43 @@
+{
+  "id": "ALOOP-009",
+  "title": "Soak (24h then 168h)",
+  "objective": "Harness configuration for a 24-hour soak extended to 168 hours: continuous closed-loop operation with the ALOOP-001 invariants holding over wall-clock time. DO NOT RUN as part of the dogfood episode: soak requires a standing operator authority grant and a dedicated window. The runner must refuse to execute this scenario (SOAK_EXECUTION_FORBIDDEN).",
+  "repository_scope": ["autofde-lab"],
+  "seeds": [20260925],
+  "scenario_identity": {
+    "family": "soak",
+    "generator": null,
+    "params": {"duration_hours": 24, "extend_to_hours": 168, "cadence_seconds": 60},
+    "identity_rule": "sha256 over the canonical manifest bytes"
+  },
+  "do_not_run": true,
+  "refusal_code": "SOAK_EXECUTION_FORBIDDEN",
+  "setup": {
+    "harness": "continuous ALOOP-001 loop at 60s cadence for 24h; if every 24h window ends AUTONOMOUS with UAR=0, extend to 168h",
+    "invariants": "HIR=0, UAR=0, DCR=0, OCR=0, PSR=1.0 over the whole window; no human causal edge after epoch",
+    "telemetry": "OCEL ndjson episode stream, one file per hour, scoreboard recomputed hourly",
+    "authority": "requires a fresh operator authority grant naming this manifest id; a request naming authority is not that authority"
+  },
+  "acceptance_criteria": [
+    "24h window: every hourly scoreboard has UAR == 0.0 and HIR == 0.0",
+    "zero unreceipted actuations across the window (invariant)",
+    "168h extension only after the 24h window is fully qualified",
+    "no wall-clock metric is averaged over a window containing a BLOCKED or FAILED episode without a typed reason"
+  ],
+  "falsifier": "Call the runner on this manifest: it must refuse with SOAK_EXECUTION_FORBIDDEN. If the runner executes any part of the soak, the guard is vacuous and the run is an authority violation.",
+  "expected_outcome_classes": ["UNRUN_BY_ORDER"],
+  "negative_control": {
+    "name": "runner refusal is itself the control",
+    "cases": [
+      {
+        "mutant": "runner invoked on ALOOP-009",
+        "expect": {"class": null, "code": "SOAK_EXECUTION_FORBIDDEN", "exit": 2}
+      }
+    ],
+    "requirement": "the soak guard must be witnessed firing before soak results are ever admitted"
+  },
+  "metrics": ["HIR", "ALD", "UAR", "DCR", "OCR", "PSR"],
+  "actuation_ceiling": "AutoFDE SELECTS/PLANS/EXPERIMENTS; never production actuation.",
+  "status": "HARNESS_ONLY",
+  "status_note": "Configuration manifest only. No corpus, no execution, by operator order (2026-09-25 lane-6 mission: 'DO NOT RUN')."
+}

@@ -1,0 +1,41 @@
+{
+  "id": "ALOOP-006",
+  "title": "Concurrency",
+  "objective": "Two autonomous episodes must interleave over one repository without semantic interference: distinct consequence key spaces, no duplicate consequences, both episodes admitted AUTONOMOUS in one log. DCR = 0 is an invariant, not a target.",
+  "repository_scope": ["autofde-lab"],
+  "seeds": [20260925, 20260926, 20260927, 20260928, 20260929],
+  "scenario_identity": {
+    "family": "concurrency",
+    "generator": "autofde_lab.aloop.bench_synth:build_scenario",
+    "params": {"iterations": 101, "episodes": 2, "interleave": "round_robin", "key_namespaces": ["ep-a", "ep-b"], "providers": ["claude"]},
+    "identity_rule": "sha256 over the canonical manifest bytes; per-trial corpus identity pinned by MANIFEST.json sha256"
+  },
+  "setup": {
+    "epoch": "two episode.start events, one per Episode object, each with its own pre-epoch grant",
+    "interleave": "iteration i of ep-a is followed by iteration i of ep-b in the event stream; each episode runs the full ALOOP-001 loop at half pace",
+    "key_rule": "consequence keys are namespaced per episode (ep-a:change:i, ep-b:change:i); equal keys across episodes are a DUPLICATE_CONSEQUENCE integrity failure"
+  },
+  "acceptance_criteria": [
+    "court verdict QUALIFIED (both episodes)",
+    "every episode class AUTONOMOUS",
+    "DCR == 0.0 (duplicate consequence rate is an invariant zero)",
+    "closed_loop_cycles > 0 in both episodes",
+    "metrics.HIR == 0.0 and UAR == 0.0"
+  ],
+  "falsifier": "Give iteration 60 of ep-b the same consequence key as iteration 60 of ep-a: the court must report DUPLICATE_CONSEQUENCE and both episodes must fail. If the collision still scores DCR=0, the invariant is vacuous.",
+  "expected_outcome_classes": ["AUTONOMOUS"],
+  "negative_control": {
+    "name": "cross-episode consequence key collision",
+    "cases": [
+      {
+        "mutant": "duplicate_consequence",
+        "expect": {"class": "FAILED", "code": "DUPLICATE_CONSEQUENCE", "exit": 3}
+      }
+    ],
+    "requirement": "a duplicated consequence must fail the scenario (DCR invariant 0)"
+  },
+  "metrics": ["HIR", "ALD", "UAR", "DCR", "OCR", "RPR"],
+  "actuation_ceiling": "AutoFDE SELECTS/PLANS/EXPERIMENTS; never production actuation.",
+  "status": "RECONSTRUCTED",
+  "status_note": "Interleaving is stream-level, not wall-clock parallelism; measures per-episode causal isolation."
+}

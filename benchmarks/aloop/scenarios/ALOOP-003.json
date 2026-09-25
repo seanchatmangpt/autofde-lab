@@ -1,0 +1,41 @@
+{
+  "id": "ALOOP-003",
+  "title": "Cross-repo objective",
+  "objective": "One episode spans two Repository subjects: work orders, commits and receipts must each bind to the correct per-repo current Subject, and the episode must still be admitted AUTONOMOUS with zero stale-subject receipts.",
+  "repository_scope": ["autofde-lab", "second-repo (synthetic)"],
+  "seeds": [20260925, 20260926, 20260927, 20260928, 20260929],
+  "scenario_identity": {
+    "family": "cross_repo",
+    "generator": "autofde_lab.aloop.bench_synth:build_scenario",
+    "params": {"iterations": 101, "repositories": 2, "providers": ["claude"]},
+    "identity_rule": "sha256 over the canonical manifest bytes; per-trial corpus identity pinned by MANIFEST.json sha256"
+  },
+  "setup": {
+    "epoch": "pre-epoch grant covers both repositories",
+    "loop": "ALOOP-001 loop, but iteration i commits into repo[i % 2]; each receipt.persist binds subject = the CURRENT head of the repo it touched",
+    "subject_rule": "receipt for repo-A commits binds repo-A's current Subject; binding the other repo's head is a STALE_SUBJECT integrity failure"
+  },
+  "acceptance_criteria": [
+    "court verdict QUALIFIED",
+    "episode class AUTONOMOUS",
+    "stale_subject_receipts == 0",
+    "both Repository objects appear as subject of at least one receipt",
+    "metrics.HIR == 0.0 and UAR == 0.0"
+  ],
+  "falsifier": "Rebind one receipt's subject to the sibling repo's head: the court must report STALE_SUBJECT and the scenario verdict must flip to FAIL.",
+  "expected_outcome_classes": ["AUTONOMOUS"],
+  "negative_control": {
+    "name": "stale cross-repo subject binding",
+    "cases": [
+      {
+        "mutant": "stale_subject",
+        "expect": {"class": "FAILED", "code": "STALE_SUBJECT", "exit": 3}
+      }
+    ],
+    "requirement": "a receipt bound to a superseded Subject must fail the scenario"
+  },
+  "metrics": ["HIR", "ALD", "UAR", "DCR", "OCR", "RPR"],
+  "actuation_ceiling": "AutoFDE SELECTS/PLANS/EXPERIMENTS; never production actuation.",
+  "status": "RECONSTRUCTED",
+  "status_note": "Synthetic corpus; second repository is a synthetic Subject stream, not a real checkout."
+}

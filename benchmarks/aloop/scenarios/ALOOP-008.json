@@ -1,0 +1,40 @@
+{
+  "id": "ALOOP-008",
+  "title": "Resource pressure",
+  "objective": "Under pressure (long episodes, tight inter-iteration budgets), the loop must hold its semantic invariants: ALD >= 100, HIR = 0, UAR = 0, DCR = 0 while the inter-iteration latency distribution shrinks. Pressure changes pacing, never semantics.",
+  "repository_scope": ["autofde-lab"],
+  "seeds": [20260925, 20260926, 20260927, 20260928, 20260929],
+  "scenario_identity": {
+    "family": "resource_pressure",
+    "generator": "autofde_lab.aloop.bench_synth:build_scenario",
+    "params": {"iterations": 160, "tick_seconds": 1, "pressure": "tight_inter_iteration_budget", "providers": ["claude"]},
+    "identity_rule": "sha256 over the canonical manifest bytes; per-trial corpus identity pinned by MANIFEST.json sha256"
+  },
+  "setup": {
+    "epoch": "ALOOP-001 epoch",
+    "pressure": "160 iterations at a 1-second tick (the ALOOP-001 baseline paces at the same tick but 101 iterations); pressure = longer horizon under the same per-iteration budget",
+    "observation": "inter_iteration_ns min/median/max are recorded per episode for the pacing distribution"
+  },
+  "acceptance_criteria": [
+    "court verdict QUALIFIED with episode class AUTONOMOUS",
+    "ALD >= 100 at the longer horizon",
+    "metrics.HIR == 0.0, UAR == 0.0, DCR == 0.0, OCR == 0.0",
+    "inter_iteration_ns recorded (distribution, not a single-episode claim)"
+  ],
+  "falsifier": "Truncate the corpus to 20 iterations (pressure removed): the court must report INSUFFICIENT_LOOP_DEPTH and the scenario must FAIL. If the short corpus still passes, the ALD criterion is vacuous.",
+  "expected_outcome_classes": ["AUTONOMOUS"],
+  "negative_control": {
+    "name": "short loop under relieved pressure",
+    "cases": [
+      {
+        "mutant": "short_loop",
+        "expect": {"class": "AUTONOMOUS", "code": "INSUFFICIENT_LOOP_DEPTH", "exit": 3}
+      }
+    ],
+    "requirement": "an autonomous-but-too-shallow loop must NOT qualify (depth criterion has teeth)"
+  },
+  "metrics": ["ALD", "HIR", "UAR", "DCR", "OCR", "RPR"],
+  "actuation_ceiling": "AutoFDE SELECTS/PLANS/EXPERIMENTS; never production actuation.",
+  "status": "RECONSTRUCTED",
+  "status_note": "Pressure is event-stream pacing; wall-clock soak belongs to ALOOP-009."
+}

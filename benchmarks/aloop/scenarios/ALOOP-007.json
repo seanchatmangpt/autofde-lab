@@ -1,0 +1,40 @@
+{
+  "id": "ALOOP-007",
+  "title": "Semantic corruption",
+  "objective": "Corrupted logs must be refused or downgraded, never scored as autonomous: a corpus of semantic corruptions (forged authority, causality violations, malformed qualifiers, forged receipts, schema violations) must be killed at 100%. MKR (mutants killed / executed) = 1.0 is the scenario invariant.",
+  "repository_scope": ["autofde-lab"],
+  "seeds": [20260925, 20260926, 20260927, 20260928, 20260929],
+  "scenario_identity": {
+    "family": "semantic_corruption",
+    "generator": "autofde_lab.aloop.synth:write_all (mutant corpus) + bench_synth corruption set",
+    "params": {"base_iterations": 101, "mutants": "all", "providers": ["claude"]},
+    "identity_rule": "sha256 over the canonical manifest bytes; per-mutant identity pinned by MANIFEST.json sha256"
+  },
+  "setup": {
+    "base": "the ALOOP-001 positive corpus",
+    "corruption": "each mutant applies exactly one semantic corruption to the base: human_after_epoch, actuate_without_receipt, duplicate_consequence, forged_origin_authority, missing_origin_authority, human_prose_cause, provider_replaced_by_human, stale_subject, malformed_qualifier, cause_from_future, orphan_receipt, schema_violation",
+    "admission": "the court must REFUSE (exit 2) or downgrade (exit 3, class FAILED/ASSISTED) every corrupted log"
+  },
+  "acceptance_criteria": [
+    "MKR == 1.0: every mutant verdict matches its MANIFEST expectation",
+    "no corrupted log is admitted AUTONOMOUS",
+    "the unmutated base still scores QUALIFIED (the kills are not blanket refusals)"
+  ],
+  "falsifier": "Mutate one mutant's expectation in the MANIFEST (claim a refused log qualified): the scenario must FAIL on the mismatch. If mismatches still pass, MKR is vacuous.",
+  "expected_outcome_classes": ["FAILED", "ASSISTED"],
+  "expected_refusals": ["FORGED_ORIGIN_AUTHORITY", "PROFILE_QUALIFIER_CARDINALITY", "CAUSALITY_VIOLATION", "PROFILE_UNKNOWN_QUALIFIER", "OCEL2_SCHEMA_VIOLATION"],
+  "negative_control": {
+    "name": "unmutated base must stay qualified",
+    "cases": [
+      {
+        "mutant": "(none) -- base positive corpus",
+        "expect": {"class": "AUTONOMOUS", "code": null, "exit": 0}
+      }
+    ],
+    "requirement": "the kill-corpus must not be satisfiable by a court that refuses everything (anti-vacuity: the base must still qualify)"
+  },
+  "metrics": ["MKR", "UAR", "DCR", "OCR", "RPR"],
+  "actuation_ceiling": "AutoFDE SELECTS/PLANS/EXPERIMENTS; never production actuation.",
+  "status": "RECONSTRUCTED",
+  "status_note": "Reuse of the ALOOP-001 mutant corpus (adversarial discipline: every surviving falsifier becomes a permanent tripwire)."
+}
