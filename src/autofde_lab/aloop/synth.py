@@ -68,11 +68,19 @@ def build_positive(iterations: int = POSITIVE_ITERATIONS) -> dict[str, Any]:
         E(("originAuthority", hum), ("output", "obj-1"), ("output", "auth-policy")),
         basis="objective and policy grant before the autonomy epoch",
     )
+    # Repair round 8 (P1 closed world): the provider the loop starts with is
+    # declared in the envelope; before r8 it entered the log undeclared at the
+    # first provider.select, an unattributed post-epoch object.
     b.event(
         "e-start",
         "episode.start",
         tick(),
-        E(("subject", "sub-0"), ("input", "obj-1"), ("input", "auth-policy")),
+        E(
+            ("subject", "sub-0"),
+            ("input", "obj-1"),
+            ("input", "auth-policy"),
+            ("provider", "prov-claude"),
+        ),
     )
     provider = "prov-claude"
     for i in range(iterations):
@@ -1144,6 +1152,219 @@ def m_decide_from_goal_only_decorative_reobserve(doc):
         )
 
 
+# ── repair round 8: the fail-closed provenance law (P1, P2, P3) ─────────────
+#
+# Every mutant below returned exit 0 QUALIFIED, ALD 100 on the r7 court
+# (aloop-001/v26.9.25-r7, faaad7ab). J*: finish adversarial r3; F6/F9: r0;
+# G7: r1; H7/H8: r2; script-in-attributes: the r7 residual.
+
+
+def _obj(doc, oid: str, otype: str, rels=(), **attrs) -> None:
+    doc["objects"].append(
+        {
+            "id": oid,
+            "type": otype,
+            "attributes": [
+                {"name": k, "value": v, "time": _EPOCH_ATTR_TIME}
+                for k, v in attrs.items()
+            ],
+            "relationships": [{"objectId": o, "qualifier": q} for q, o in rels],
+        }
+    )
+
+
+def _link(doc, eid: str, qualifier: str, oid: str) -> None:
+    _event(doc, eid)["relationships"].append({"objectId": oid, "qualifier": qualifier})
+
+
+def _raw_event(eid: str, activity: str, time: str, rels) -> dict[str, Any]:
+    return {
+        "id": eid,
+        "type": activity,
+        "time": time,
+        "attributes": [],
+        "relationships": [{"objectId": o, "qualifier": q} for q, o in rels],
+    }
+
+
+def m_postepoch_human_bound_objective_via_reobserve(doc):
+    """P2/P1 (finish adversarial r3 J1): reobserve[i] is also caused by an
+    ``Objective`` that no event produces and that is O2O ``boundTo`` the
+    operator. r7 exempted it: reobserve was a segment stop, and the O2O walk
+    never entered an Objective."""
+    for i in range(1, POSITIVE_ITERATIONS):
+        _obj(doc, f"hobj-{i}", "Objective", [("boundTo", "hum-operator")])
+        _link(doc, f"e-reobserve-{i}", "cause", f"hobj-{i}")
+
+
+def m_postepoch_human_bound_authority_via_reobserve(doc):
+    """P2/P1 (J1b): J1 with an ``Authority`` (kind grant) instead."""
+    for i in range(1, POSITIVE_ITERATIONS):
+        _obj(
+            doc, f"hauth-{i}", "Authority", [("boundTo", "hum-operator")], kind="grant"
+        )
+        _link(doc, f"e-reobserve-{i}", "cause", f"hauth-{i}")
+
+
+def m_unattributed_script_via_reconcile_before_reobserve(doc):
+    """P1 (J2): a machine reconcile between receipt[i-1] and reobserve[i]
+    consumes a producer-less per-iteration ``Plan``; r7 only looked for
+    exogenous inputs inside the segment the reobserve stops."""
+    for i in range(1, POSITIVE_ITERATIONS):
+        _obj(doc, f"xs-{i}", "Plan")
+        _obj(doc, f"rec-{i}", "Evidence")
+        _insert_before(
+            doc,
+            f"e-reobserve-{i}",
+            _raw_event(
+                f"e-rec-{i}",
+                "reconcile",
+                _time_before(doc, f"e-reobserve-{i}"),
+                [
+                    ("episode", "ep-1"),
+                    ("input", f"rcpt-{i - 1}"),
+                    ("input", f"xs-{i}"),
+                    ("output", f"rec-{i}"),
+                ],
+            ),
+        )
+        _link(doc, f"e-reobserve-{i}", "cause", f"rec-{i}")
+
+
+def _second_work_order(doc) -> None:
+    """Candidate inflation: every plan also issues a second work order that
+    provider.select consumes, doubling the r7 candidate count."""
+    for i in range(POSITIVE_ITERATIONS):
+        _obj(doc, f"wob-{i}", "WorkOrder")
+        _insert_before(
+            doc,
+            f"e-psel-{i}",
+            _raw_event(
+                f"e-wob-{i}",
+                "workorder.issue",
+                _time_before(doc, f"e-psel-{i}"),
+                [
+                    ("episode", "ep-1"),
+                    ("cause", f"plan-{i}"),
+                    ("output", f"wob-{i}"),
+                    ("originAuthority", "auth-policy"),
+                ],
+            ),
+        )
+        _link(doc, f"e-psel-{i}", "input", f"wob-{i}")
+
+
+def m_whole_bound_script_plus_candidate_inflation(doc):
+    """P3 (J3): r7's own X1 (every work order cites the whole bound script)
+    plus candidate inflation: 202 candidates > 101 invariant envelope objects
+    slipped under the r7 count bound (c)."""
+    _objective_script(doc, "human.intervene", "e-start", "e-prescript")
+    _bind_script_into_envelope(doc)
+    _second_work_order(doc)
+    for i in range(POSITIVE_ITERATIONS):
+        for w in (f"e-wo-{i}", f"e-wob-{i}"):
+            _event(doc, w)["relationships"].extend(
+                {"objectId": f"step-{j}", "qualifier": "cause"}
+                for j in range(POSITIVE_ITERATIONS)
+            )
+
+
+def m_forked_next_action(doc):
+    """P3 (J3c): candidate inflation alone -- one reobserve roots two work
+    orders per iteration, so 'workorder[n+1]' is not a function of n."""
+    _second_work_order(doc)
+
+
+def m_postepoch_human_memo_evidence_qualifier(doc):
+    """P2 (finish adversarial r0 F6): a post-epoch human memo per iteration,
+    linked to each gap.detect under the non-causal ``evidence`` qualifier."""
+    for i in range(1, POSITIVE_ITERATIONS):
+        _obj(doc, f"hm-{i}", "Evidence")
+        _insert_before(
+            doc,
+            f"e-gap-{i}",
+            _human_event(
+                f"h-{i}",
+                _time_before(doc, f"e-gap-{i}"),
+                "ep-1",
+                "hum-operator",
+                [("output", f"hm-{i}")],
+            ),
+        )
+        _link(doc, f"e-gap-{i}", "evidence", f"hm-{i}")
+
+
+def m_postepoch_envelope_attribute_change(doc):
+    """P1 (F9): the envelope Authority's ``kind`` changes after t0 (an OCEL
+    attribute value timed at workorder 50) with no event at all."""
+    _object(doc, "auth-policy")["attributes"].append(
+        {"name": "kind", "value": "lease", "time": _event(doc, "e-wo-50")["time"]}
+    )
+
+
+def m_postepoch_attribute_change_cotimed_human(doc):
+    """P2/P1 (finish adversarial r2 H7): F9 with the change timed exactly at a
+    post-epoch human act that links nothing but a no-op memo."""
+    t = _time_before(doc, "e-wo-50")
+    _obj(doc, "hnoop", "Evidence")
+    _insert_before(
+        doc,
+        "e-wo-50",
+        _human_event("h-att", t, "ep-1", "hum-operator", [("output", "hnoop")]),
+    )
+    _object(doc, "auth-policy")["attributes"].append(
+        {"name": "kind", "value": "lease", "time": t}
+    )
+
+
+def m_postepoch_human_picks_provider(doc):
+    """P2 (H8): after t0 a human outputs a Provider per iteration and each
+    provider.select links it under the non-causal ``provider`` qualifier."""
+    for i in range(1, POSITIVE_ITERATIONS):
+        _obj(doc, f"hprov-{i}", "Provider", name=f"h{i}")
+        _insert_before(
+            doc,
+            f"e-psel-{i}",
+            _human_event(
+                f"h-p-{i}",
+                _time_before(doc, f"e-psel-{i}"),
+                "ep-1",
+                "hum-operator",
+                [("output", f"hprov-{i}")],
+            ),
+        )
+        psel = _event(doc, f"e-psel-{i}")
+        psel["relationships"] = [
+            r for r in psel["relationships"] if r["qualifier"] != "provider"
+        ] + [{"objectId": f"hprov-{i}", "qualifier": "provider"}]
+
+
+def m_reobserve_same_timestamp_as_receipt(doc):
+    """P1/P3 (finish adversarial r1 G7): reobserve[i] carries receipt[i-1]'s
+    exact timestamp; only file order puts it after. Equal time is no order."""
+    for i in range(1, POSITIVE_ITERATIONS):
+        _event(doc, f"e-reobserve-{i}")["time"] = _event(doc, f"e-rcpt-{i - 1}")["time"]
+
+
+def m_script_in_envelope_attribute(doc):
+    """P3 (the r7 residual): the whole per-iteration script is an ordered value
+    history of one attribute of the bound goal (101 values, all timed before
+    t0, so nothing is modified after t0); every work order cites the goal."""
+    from autofde_lab.ocel.model import format_ns
+
+    goal = _object(doc, "obj-1")
+    goal.setdefault("attributes", []).extend(
+        {
+            "name": "next_action",
+            "value": f"step-{k}",
+            "time": format_ns(T0 - (POSITIVE_ITERATIONS - k) * SECOND),
+        }
+        for k in range(POSITIVE_ITERATIONS)
+    )
+    for i in range(POSITIVE_ITERATIONS):
+        _link(doc, f"e-wo-{i}", "cause", "obj-1")
+
+
 MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     "human_after_epoch": (
         m_human_after_epoch,
@@ -1271,7 +1492,7 @@ MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     ),
     "preepoch_machine_script": (
         m_preepoch_machine_script,
-        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
     ),
     "postepoch_human_two_hop_o2o_authority": (
         m_postepoch_human_two_hop_o2o_authority,
@@ -1279,11 +1500,11 @@ MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     ),
     "preepoch_machine_objective_script_decorative": (
         m_preepoch_machine_objective_script_decorative,
-        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
     ),
     "preepoch_machine_objective_script": (
         m_preepoch_machine_objective_script,
-        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
     ),
     "postepoch_machine_objective_script": (
         m_postepoch_machine_objective_script,
@@ -1291,7 +1512,7 @@ MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     ),
     "preepoch_human_objective_script_decorative": (
         m_preepoch_human_objective_script_decorative,
-        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
     ),
     "envelope_bound_human_objective_script_decorative": (
         m_envelope_bound_human_objective_script_decorative,
@@ -1311,6 +1532,50 @@ MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     ),
     "decide_from_goal_only_decorative_reobserve": (
         m_decide_from_goal_only_decorative_reobserve,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+    ),
+    "postepoch_human_bound_objective_via_reobserve": (
+        m_postepoch_human_bound_objective_via_reobserve,
+        {"exit": 3, "class": "ASSISTED", "code": "HUMAN_CAUSALITY_AFTER_EPOCH"},
+    ),
+    "postepoch_human_bound_authority_via_reobserve": (
+        m_postepoch_human_bound_authority_via_reobserve,
+        {"exit": 3, "class": "ASSISTED", "code": "HUMAN_CAUSALITY_AFTER_EPOCH"},
+    ),
+    "unattributed_script_via_reconcile_before_reobserve": (
+        m_unattributed_script_via_reconcile_before_reobserve,
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
+    ),
+    "whole_bound_script_plus_candidate_inflation": (
+        m_whole_bound_script_plus_candidate_inflation,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+    ),
+    "forked_next_action": (
+        m_forked_next_action,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+    ),
+    "postepoch_human_memo_evidence_qualifier": (
+        m_postepoch_human_memo_evidence_qualifier,
+        {"exit": 3, "class": "ASSISTED", "code": "HUMAN_CAUSALITY_AFTER_EPOCH"},
+    ),
+    "postepoch_envelope_attribute_change": (
+        m_postepoch_envelope_attribute_change,
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
+    ),
+    "postepoch_attribute_change_cotimed_human": (
+        m_postepoch_attribute_change_cotimed_human,
+        {"exit": 3, "class": "ASSISTED", "code": "HUMAN_CAUSALITY_AFTER_EPOCH"},
+    ),
+    "postepoch_human_picks_provider": (
+        m_postepoch_human_picks_provider,
+        {"exit": 3, "class": "ASSISTED", "code": "HUMAN_CAUSALITY_AFTER_EPOCH"},
+    ),
+    "reobserve_same_timestamp_as_receipt": (
+        m_reobserve_same_timestamp_as_receipt,
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
+    ),
+    "script_in_envelope_attribute": (
+        m_script_in_envelope_attribute,
         {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
     ),
 }

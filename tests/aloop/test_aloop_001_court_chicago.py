@@ -123,8 +123,8 @@ def test_mutation_kill_ratio_is_total(corpus: Path) -> None:
     killed = sum(
         evaluate_path(corpus / rel)[0] != EXIT_QUALIFIED for rel in MUTANT_FILES
     )
-    assert len(MUTANT_FILES) == 45
-    assert (killed, len(MUTANT_FILES)) == (45, 45)
+    assert len(MUTANT_FILES) == 56
+    assert (killed, len(MUTANT_FILES)) == (56, 56)
 
 
 def test_empty_log_is_refused_not_vacuously_qualified(tmp_path: Path) -> None:
@@ -390,15 +390,17 @@ def test_reobserve_skipping_a_receipt_is_stale_at_scale(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    "name",
+    ("name", "ald"),
     [
-        "postepoch_human_amends_authority",
-        "postepoch_human_o2o_authority",
-        "postepoch_unenveloped_authority_grant",
+        # r8 P1: the human act links the envelope policy itself after t0, so the
+        # policy is no longer frozen envelope state for ANY work order (r7: 49)
+        ("postepoch_human_amends_authority", 0),
+        ("postepoch_human_o2o_authority", 49),
+        ("postepoch_unenveloped_authority_grant", 49),
     ],
 )
 def test_post_epoch_authority_channel_is_human_causality(
-    corpus: Path, name: str
+    corpus: Path, name: str, ald: int
 ) -> None:
     """C9: authority reached by a post-epoch hand (or granted after t0 outside
     the pre-declared envelope) makes every later work order citing it assisted."""
@@ -407,9 +409,9 @@ def test_post_epoch_authority_channel_is_human_causality(
     (episode,) = receipt["episodes"]
     m = episode["metrics"]
     assert episode["class"] == "ASSISTED"
-    # work orders 50..100 cite the channel object: 51 human edges, chain cut at 49
+    # work orders 50..100 cite the channel object: 51 human edges
     assert m["human_causal_edges_after_epoch"] == 51
-    assert m["ALD"] == 49 and m["HIR"] > 0
+    assert m["ALD"] == ald and m["HIR"] > 0
     reason = next(
         r for r in episode["reasons"] if r["code"] == "HUMAN_CAUSALITY_AFTER_EPOCH"
     )
@@ -503,7 +505,6 @@ def test_positive_log_has_no_stale_transition() -> None:
         "stale_reobserve_via_machine_copy",
         "stale_decision_old_verify_evidence",
         "stale_reobserve_reads_old_verify_evidence",
-        "preepoch_machine_script",
     ],
 )
 def test_stale_state_anywhere_in_the_cone_is_not_a_transition(
@@ -581,13 +582,11 @@ def test_pre_epoch_objective_in_the_cone_is_not_stale(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("name", "ald"),
     [
-        ("preepoch_machine_objective_script_decorative", 0),
-        ("preepoch_machine_objective_script", 0),
         # r6 counted transition 0 -> 1 (step-1 minted after receipt[0]); r7's
         # rooted cone drops it too: gap.detect[1] decides from step-1 alone,
-        # not from anything receipt[0] left (B4''' a).
+        # not from anything receipt[0] left (B4''' a). The three pre-epoch
+        # variants are refused earlier by r8 P1 (see below).
         ("postepoch_machine_objective_script", 0),
-        ("preepoch_human_objective_script_decorative", 0),
     ],
 )
 def test_objective_minted_outside_the_envelope_is_stale_state(
@@ -629,13 +628,15 @@ def test_envelope_is_exactly_what_episode_start_consumes() -> None:
 @pytest.mark.parametrize(
     ("name", "why"),
     [
-        ("envelope_bound_human_objective_script_decorative", "not causally downstream"),
-        ("envelope_bound_human_objective_script", "not every transition consumes"),
+        # r8 P3: a family of 102 bound Objectives is an indexed envelope, so no
+        # step (and not the goal either) is exempt: each is older state.
+        ("envelope_bound_human_objective_script_decorative", "produced by e-prescript"),
+        ("envelope_bound_human_objective_script", "produced by e-prescript"),
         (
             "envelope_bound_machine_objective_script_decorative",
-            "not causally downstream",
+            "produced by e-prescript",
         ),
-        ("envelope_bound_whole_script_every_iteration", "capacity of a per-iteration"),
+        ("envelope_bound_whole_script_every_iteration", "produced by e-prescript"),
         ("decide_from_goal_only_decorative_reobserve", "not causally downstream"),
     ],
 )
@@ -674,3 +675,145 @@ def test_every_work_order_citing_the_bound_goal_still_qualifies(tmp_path: Path) 
     (episode,) = receipt["episodes"]
     assert episode["metrics"]["ALD"] == 100
     assert episode["metrics"]["stale_reobserve_transitions"] == 0
+
+
+# ── repair round 8 (finish adversarial court r3 J1: fail-closed provenance) ──
+
+P1_MUTANTS = [
+    "unattributed_script_via_reconcile_before_reobserve",
+    "postepoch_envelope_attribute_change",
+    "reobserve_same_timestamp_as_receipt",
+    "preepoch_machine_script",
+    "preepoch_machine_objective_script_decorative",
+    "preepoch_machine_objective_script",
+    "preepoch_human_objective_script_decorative",
+]
+P2_MUTANTS = [
+    "postepoch_human_bound_objective_via_reobserve",
+    "postepoch_human_bound_authority_via_reobserve",
+    "postepoch_human_memo_evidence_qualifier",
+    "postepoch_attribute_change_cotimed_human",
+    "postepoch_human_picks_provider",
+]
+P3_MUTANTS = {
+    "whole_bound_script_plus_candidate_inflation": "produced by e-prescript",
+    "forked_next_action": "a forked next action",
+    "script_in_envelope_attribute": "consumes obj-1 produced by h-pre",
+}
+
+
+@pytest.mark.parametrize("name", P1_MUTANTS)
+def test_p1_unattributed_post_epoch_link_fails_the_episode(
+    corpus: Path, name: str
+) -> None:
+    """P1 closed world: an object a post-epoch machine event links that is
+    neither output by an earlier machine event of the episode (strictly earlier
+    in time) nor frozen envelope state is unattributed; the episode FAILS."""
+    code, receipt = evaluate_path(corpus / f"mutants/{name}.ocel.json")
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    m = episode["metrics"]
+    assert episode["class"] == "FAILED"
+    assert m["ALD"] == 0 and m["unattributed_post_epoch_events"] >= 1
+    assert m["human_causal_edges_after_epoch"] == 0
+    reason = next(
+        r for r in episode["reasons"] if r["code"] == "UNATTRIBUTED_EXOGENOUS_CAUSE"
+    )
+    assert reason["broken_term"] == "mu_on_O"
+    assert "(P1)" in reason["detail"]
+
+
+@pytest.mark.parametrize("name", P2_MUTANTS)
+def test_p2_any_human_contact_after_epoch_is_assisted(corpus: Path, name: str) -> None:
+    """P2 is qualifier-agnostic: a Human reached over any E2O qualifier (causal
+    or not), any O2O relation of any type, or an attribute change co-timed with
+    a human act makes the episode ASSISTED."""
+    code, receipt = evaluate_path(corpus / f"mutants/{name}.ocel.json")
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    m = episode["metrics"]
+    assert episode["class"] == "ASSISTED"
+    assert m["human_causal_edges_after_epoch"] >= 51 and m["HIR"] > 0
+    assert m["ALD"] <= 1
+    reason = next(
+        r for r in episode["reasons"] if r["code"] == "HUMAN_CAUSALITY_AFTER_EPOCH"
+    )
+    assert "<p2:" in reason["detail"]
+
+
+@pytest.mark.parametrize(("name", "why"), sorted(P3_MUTANTS.items()))
+def test_p3_rooted_functional_unindexed_cone(corpus: Path, name: str, why: str) -> None:
+    """P3: one reobserve[n+1] roots exactly one workorder[n+1] (J3/J3c), and an
+    envelope object carrying an ordered value history is an indexed script,
+    not a goal (the r7 script-in-attributes residual)."""
+    code, receipt = evaluate_path(corpus / f"mutants/{name}.ocel.json")
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    m = episode["metrics"]
+    assert episode["class"] == "FAILED"
+    assert m["ALD"] == 0 and m["stale_reobserve_transitions"] >= 100
+    reason = next(r for r in episode["reasons"] if r["code"] == "STALE_REOBSERVE")
+    assert why in reason["detail"]
+
+
+def test_positive_log_is_closed_world_and_unindexed() -> None:
+    """The positive log satisfies P1-P3 outright: no unattributed link, a frozen
+    envelope, no indexed envelope object."""
+    from autofde_lab.aloop.court import _admit, _Graph
+
+    profile = load_profile()
+    log = _admit(json.loads((SYNTH / "positive.ocel.json").read_text()), profile)
+    g = _Graph(log, profile)
+    assert g.indexed == {"ep-1": frozenset()}
+    assert (
+        g.declared["ep-1"]
+        == g.frozen["ep-1"]
+        == frozenset({"ep-1", "sub-0", "obj-1", "auth-policy", "prov-claude"})
+    )
+    assert [e.id for e in g.events if g.p1_unattributed(e.id)] == []
+    _, receipt = evaluate_path(SYNTH / "positive.ocel.json")
+    assert receipt["episodes"][0]["metrics"]["unattributed_post_epoch_events"] == 0
+
+
+def test_undeclared_provider_is_an_unattributed_cause(tmp_path: Path) -> None:
+    """Why the r8 positive declares its provider in episode.start: without that
+    link the provider enters the log at the first provider.select with no
+    producer and no declaration -- P1 fails the episode."""
+    doc = build_positive()
+    start = _event(doc, "e-start")
+    start["relationships"] = [
+        r for r in start["relationships"] if r["qualifier"] != "provider"
+    ]
+    path = tmp_path / "undeclared-provider.ocel.json"
+    dump(doc, path)
+    code, receipt = evaluate_path(path)
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    assert episode["class"] == "FAILED"
+    reason = next(
+        r for r in episode["reasons"] if r["code"] == "UNATTRIBUTED_EXOGENOUS_CAUSE"
+    )
+    assert "prov-claude" in reason["detail"]
+
+
+def test_single_valued_goal_attribute_is_not_indexed(tmp_path: Path) -> None:
+    """Anti-vacuity control for P3: a goal with one pre-epoch attribute value
+    (a description), cited by every work order, still qualifies with ALD 100."""
+    doc = build_positive()
+    goal = next(o for o in doc["objects"] if o["id"] == "obj-1")
+    goal.setdefault("attributes", []).append(
+        {
+            "name": "description",
+            "value": "keep the crown green",
+            "time": "1970-01-01T00:00:00Z",
+        }
+    )
+    for i in range(101):
+        _event(doc, f"e-wo-{i}")["relationships"].append(
+            {"objectId": "obj-1", "qualifier": "cause"}
+        )
+    path = tmp_path / "goal-description.ocel.json"
+    dump(doc, path)
+    code, receipt = evaluate_path(path)
+    assert code == EXIT_QUALIFIED, receipt["unmet"]
+    assert receipt["episodes"][0]["metrics"]["ALD"] == 100

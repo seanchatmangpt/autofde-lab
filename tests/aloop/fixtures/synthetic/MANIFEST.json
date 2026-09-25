@@ -6,7 +6,7 @@
         "code": "UNRECEIPTED_ACTUATION",
         "exit": 3
       },
-      "sha256": "612cbad92c33b663dbfa94e953dab90dcde4b1113ca85e597c1f0728f15a9234"
+      "sha256": "65a9d456e4ef7e6be3d52e2783be9ba6710ac50b38b6d3d15f10125b43a905d3"
     },
     "mutants/cause_from_future.ocel.json": {
       "expect": {
@@ -14,7 +14,7 @@
         "code": "CAUSALITY_VIOLATION",
         "exit": 2
       },
-      "sha256": "06209c4583ba38719c4cf7f77ae66414e964c9859f57d21fb3743d7b4ea38b4b"
+      "sha256": "c9d51997090aad57cd13842dfceeb52de0a082651ef41940e299dcb3ec3a1220"
     },
     "mutants/cross_episode_human_next_action.ocel.json": {
       "expect": {
@@ -22,7 +22,7 @@
         "code": "CROSS_EPISODE_CAUSALITY",
         "exit": 2
       },
-      "sha256": "853ace1e8d09b5fa27f99b68c50ff27b40753fe287a67166ae6e2c800f9ee98f"
+      "sha256": "eaebbdf95f9923a3c86c1b444d2156355cf7b9f179bc53ba545028cdf919c505"
     },
     "mutants/cross_episode_o2o_human_objective.ocel.json": {
       "expect": {
@@ -30,7 +30,7 @@
         "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
         "exit": 3
       },
-      "sha256": "f3edb8d09c2029b89be5b59841af537829d9e03196e54663bffe7a6a88265164"
+      "sha256": "b9dfc9fa80c356485fa6691e3cf6eca02863d40d92db29f08e4456d4134076bc"
     },
     "mutants/decide_from_goal_only_decorative_reobserve.ocel.json": {
       "expect": {
@@ -38,7 +38,7 @@
         "code": "STALE_REOBSERVE",
         "exit": 3
       },
-      "sha256": "a18b8560a0ff42ef21c24b4b353df17cfbf1bdaeff3fefd3d1c51d4d576eec48"
+      "sha256": "9da7585c1c625a74a5bd7a540613e29b0015f0e3b01f66a0ab15aa50f63bb53d"
     },
     "mutants/duplicate_consequence.ocel.json": {
       "expect": {
@@ -46,7 +46,7 @@
         "code": "DUPLICATE_CONSEQUENCE",
         "exit": 3
       },
-      "sha256": "f63fedd15f0a9eca5a161e55a45fb03eff295e649407be5e8e8ba112180169cf"
+      "sha256": "e37c212b24f3e9dcc35ccd4b5004018a616c876d65ff7868faddbb610d6ddb73"
     },
     "mutants/envelope_bound_human_objective_script.ocel.json": {
       "expect": {
@@ -54,7 +54,7 @@
         "code": "STALE_REOBSERVE",
         "exit": 3
       },
-      "sha256": "b75529f342230245b37305a101575e6c5a917efe23254b3e4d1e226ab426a39d"
+      "sha256": "182bef3d6b8bbca753a98e97ed7d762418608920a3a35360a83b33d55c67d9b4"
     },
     "mutants/envelope_bound_human_objective_script_decorative.ocel.json": {
       "expect": {
@@ -62,7 +62,7 @@
         "code": "STALE_REOBSERVE",
         "exit": 3
       },
-      "sha256": "74d0f1b2c25831a94559d7c7211db9c98b892905259fa356fa771e5330dbe409"
+      "sha256": "6463dd113c335e228cdd806ed8f50dc2d2087fc77614a70546c381e209e7708e"
     },
     "mutants/envelope_bound_machine_objective_script_decorative.ocel.json": {
       "expect": {
@@ -70,7 +70,7 @@
         "code": "STALE_REOBSERVE",
         "exit": 3
       },
-      "sha256": "9cd07122d98f3a175ad913f97a064fe861709c29d5de4bd1c8c7ccc75e7dee6a"
+      "sha256": "0801811151177b6618e169d22c0068bb2c03450e5cb12a87a97ec760dae401dc"
     },
     "mutants/envelope_bound_whole_script_every_iteration.ocel.json": {
       "expect": {
@@ -78,7 +78,7 @@
         "code": "STALE_REOBSERVE",
         "exit": 3
       },
-      "sha256": "22450a63770a4dc709faa4d24ddc3827545b511e413f172d3c447ee2bf6ac08a"
+      "sha256": "80e91d47af463d9e8387b3ea68ce18e70a2ee58883dcc22640554e4eb328ef05"
     },
     "mutants/exogenous_unattributed_cause.ocel.json": {
       "expect": {
@@ -86,7 +86,7 @@
         "code": "UNATTRIBUTED_EXOGENOUS_CAUSE",
         "exit": 3
       },
-      "sha256": "0af474b32e2bf50f6e5dc4599ab21b980f1edb6e77f39654f94ba6c24d7b86d7"
+      "sha256": "89145d6417f388c376d5d0f676de4120c8e41c5b01ce9677c59c494bbcc38e00"
     },
     "mutants/fixed_task_cron.ocel.json": {
       "expect": {
@@ -102,7 +102,15 @@
         "code": "FORGED_ORIGIN_AUTHORITY",
         "exit": 2
       },
-      "sha256": "96a6561a75d3799d199d8e345c4ef7af92ed9fb84f52375999873719a809478a"
+      "sha256": "36f39a601403614033dee1520ed3b248298c59578514a00c8cbecf7c636243bd"
+    },
+    "mutants/forked_next_action.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "STALE_REOBSERVE",
+        "exit": 3
+      },
+      "sha256": "8aebc812254b9320839f4e65513b2599535e35f1bf9afbc2a378444e36a45923"
     },
     "mutants/human_after_epoch.ocel.json": {
       "expect": {
@@ -110,7 +118,7 @@
         "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
         "exit": 3
       },
-      "sha256": "b0cd6f2fb96ea01d73a47f188a30e92f8b86739cce19930ffdc328fe7781ca58"
+      "sha256": "0abdc6c2e175d940aa41318bde83ccea017b9fb4461f435b6df639871331f71d"
     },
     "mutants/human_evidence_side_channel.ocel.json": {
       "expect": {
@@ -118,7 +126,7 @@
         "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
         "exit": 3
       },
-      "sha256": "4fc9d3f68596792abe959109aaa493e430f9427aa01098d0dd126f04e3c85273"
+      "sha256": "3d47698e085d4bdee1f84717b4d554bf67339c3ce48686fd505ca2faf3f02325"
     },
     "mutants/human_prose_cause.ocel.json": {
       "expect": {
@@ -126,7 +134,7 @@
         "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
         "exit": 3
       },
-      "sha256": "332227af5bc8fbb42b6fa38a793738330029a2a35b11f726018274ccfb3c0024"
+      "sha256": "1c94a7f44bab0f6614fc5fa6ee0ab52d81f823491b8a67ca759ff51fc50a796b"
     },
     "mutants/malformed_qualifier.ocel.json": {
       "expect": {
@@ -134,7 +142,7 @@
         "code": "PROFILE_UNKNOWN_QUALIFIER",
         "exit": 2
       },
-      "sha256": "b0490a74edd4cc4fd8269d7504115c10f62e72977e2b2cb77d551a0d080afeab"
+      "sha256": "29d3309e57c2bf48639512c3bed1acd1212a5368a4275dee790f45f3bf07acc8"
     },
     "mutants/missing_origin_authority.ocel.json": {
       "expect": {
@@ -142,7 +150,7 @@
         "code": "PROFILE_QUALIFIER_CARDINALITY",
         "exit": 2
       },
-      "sha256": "6a8787e5b692f537679e54f7baf5c65d55e84a4aa8860d4b216cfc0d8f0abb59"
+      "sha256": "0a1c903381d43632d027c8aa71586ff4cffb51a92bed7a451e0d2596f616c42e"
     },
     "mutants/o2o_hidden_human_plan.ocel.json": {
       "expect": {
@@ -150,7 +158,7 @@
         "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
         "exit": 3
       },
-      "sha256": "14a31fbcbff3f10582a9278daf90ff153f2efb8d867fd3362d12b07bd9335dad"
+      "sha256": "e26110b639de6d99dae5cb9e14666e06e7cffe7c9e7787e0a30d0a4ce09549c1"
     },
     "mutants/orphan_receipt.ocel.json": {
       "expect": {
@@ -158,7 +166,23 @@
         "code": "ORPHAN_RECEIPT",
         "exit": 3
       },
-      "sha256": "a5913d8b5c64b5be9e8dc3aec9268722578c5bf3157d746796bd57b8e9aa7a25"
+      "sha256": "387d6b94d7d709a843e45e06aba7c0bffc22bc6fae377d163d80c04c907ee063"
+    },
+    "mutants/postepoch_attribute_change_cotimed_human.ocel.json": {
+      "expect": {
+        "class": "ASSISTED",
+        "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
+        "exit": 3
+      },
+      "sha256": "5b8ea0c8bf7056994dbeffb242e4461b315d235a074577636572faecfb88e020"
+    },
+    "mutants/postepoch_envelope_attribute_change.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "UNATTRIBUTED_EXOGENOUS_CAUSE",
+        "exit": 3
+      },
+      "sha256": "d912a42a431853355042ce0676dbef840472289a03543bc91b75b70256a5a785"
     },
     "mutants/postepoch_human_amends_authority.ocel.json": {
       "expect": {
@@ -166,7 +190,31 @@
         "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
         "exit": 3
       },
-      "sha256": "bd822a80a41822cafc94b651cf07240ae362eea6b2a8f4d49d310583699d5fdf"
+      "sha256": "63caf92391c55b2a0cda262beba06d87bcd9f51ca698d5fab63fc90dea17dc60"
+    },
+    "mutants/postepoch_human_bound_authority_via_reobserve.ocel.json": {
+      "expect": {
+        "class": "ASSISTED",
+        "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
+        "exit": 3
+      },
+      "sha256": "118bc8bf7b1a13be85c389148bb3d54eede288711a0c2a0391c1bd3e9ae90476"
+    },
+    "mutants/postepoch_human_bound_objective_via_reobserve.ocel.json": {
+      "expect": {
+        "class": "ASSISTED",
+        "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
+        "exit": 3
+      },
+      "sha256": "ef10eee829dd98498b7d3f2e2825044e8368a32dd5519ec3406a4924d3cfd6d2"
+    },
+    "mutants/postepoch_human_memo_evidence_qualifier.ocel.json": {
+      "expect": {
+        "class": "ASSISTED",
+        "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
+        "exit": 3
+      },
+      "sha256": "9fa231db200826c11a82ee37f4a15454aea1a497c9a0fb76208be6b4ed6344a7"
     },
     "mutants/postepoch_human_o2o_authority.ocel.json": {
       "expect": {
@@ -174,7 +222,15 @@
         "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
         "exit": 3
       },
-      "sha256": "a825cc35f375f5978fcc55e91f076d2a4a33dbe2e761b2d074e4b9fb0a003a8f"
+      "sha256": "11ea7bfdbf82857a90c4e4ee0f40e625e86453a805593488edec2dcb19e7b789"
+    },
+    "mutants/postepoch_human_picks_provider.ocel.json": {
+      "expect": {
+        "class": "ASSISTED",
+        "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
+        "exit": 3
+      },
+      "sha256": "de18bcbca27b4bc452c7e891b03e0f7b129903cdb08cc9c96f877a0115fed793"
     },
     "mutants/postepoch_human_two_hop_o2o_authority.ocel.json": {
       "expect": {
@@ -182,7 +238,7 @@
         "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
         "exit": 3
       },
-      "sha256": "57e8d0d090a74725574f711ecd81ab4261a12ff1be1047cdd76105b270d021f0"
+      "sha256": "4f51d6f56f72a42f99cd285280bb2d472169d1196fb8f0801d8d7e1ec07da93d"
     },
     "mutants/postepoch_machine_objective_script.ocel.json": {
       "expect": {
@@ -190,7 +246,7 @@
         "code": "STALE_REOBSERVE",
         "exit": 3
       },
-      "sha256": "9c8e613a54218c5972f5d98f10e4467675933e8e7e9b2342920a66deb2ea56ff"
+      "sha256": "f15b243e42a601b5ac2b76c081b0c083d21eb954b5438ea3ee231822ee8da7ed"
     },
     "mutants/postepoch_unenveloped_authority_grant.ocel.json": {
       "expect": {
@@ -198,15 +254,15 @@
         "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
         "exit": 3
       },
-      "sha256": "e6ba8b4bbb2334e3c8f25186fb4e89e9a23b287838fe547648704ec56d542cb7"
+      "sha256": "3fa224f8581541edcbaab7741b4c8447feb5d4ae04455b37f36fcae4c7c8efc8"
     },
     "mutants/preepoch_human_objective_script_decorative.ocel.json": {
       "expect": {
         "class": "FAILED",
-        "code": "STALE_REOBSERVE",
+        "code": "UNATTRIBUTED_EXOGENOUS_CAUSE",
         "exit": 3
       },
-      "sha256": "012828e9b692d02852cdd36ceb82d63f00b4d5e8a5bbe87491887199311c68af"
+      "sha256": "23aee9e9eeb6f13b9015479d47c015c5ae166594a1c6184ee1dca1a9ca0c1d6a"
     },
     "mutants/preepoch_laundered_human_script.ocel.json": {
       "expect": {
@@ -214,31 +270,31 @@
         "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
         "exit": 3
       },
-      "sha256": "6095952faf59fb24330ce16ca2e2791c2b74e1d78be6ac47cb0b89a1a515eba4"
+      "sha256": "f09c8f365e2f9a5005e7032554e59df0b6fa89a0dd01d685b61ee53e578b27d9"
     },
     "mutants/preepoch_machine_objective_script.ocel.json": {
       "expect": {
         "class": "FAILED",
-        "code": "STALE_REOBSERVE",
+        "code": "UNATTRIBUTED_EXOGENOUS_CAUSE",
         "exit": 3
       },
-      "sha256": "56cf0d489ddce6b04335b4358c0499963ec16b613c45a62ea36bee2db7da7717"
+      "sha256": "64fc87b072db692d0b765d80fbc04d949fa5b59934eed1d8292643ac71976c2c"
     },
     "mutants/preepoch_machine_objective_script_decorative.ocel.json": {
       "expect": {
         "class": "FAILED",
-        "code": "STALE_REOBSERVE",
+        "code": "UNATTRIBUTED_EXOGENOUS_CAUSE",
         "exit": 3
       },
-      "sha256": "109254e414992c4f81dddacb9bf5eefb552acaae91ec1816ccba813f5b924413"
+      "sha256": "12f239ef7db3846f05d90364251b797a210aab6d53b0a7a35efc238a11e8c02e"
     },
     "mutants/preepoch_machine_script.ocel.json": {
       "expect": {
         "class": "FAILED",
-        "code": "STALE_REOBSERVE",
+        "code": "UNATTRIBUTED_EXOGENOUS_CAUSE",
         "exit": 3
       },
-      "sha256": "725bebf218037ab6320959be62837f8aae7435596b7bc9e972af833f2ad38fc0"
+      "sha256": "d73f464a72aa0bf004008bebc68c310593c25d647415f145785f742d1a58399f"
     },
     "mutants/provider_replaced_by_human.ocel.json": {
       "expect": {
@@ -246,7 +302,7 @@
         "code": "PROVIDER_SUBSTITUTION_FAILED",
         "exit": 3
       },
-      "sha256": "4ee48e7d7633bd2b02408c4165ab1bda4138fe04dadd09ebcc5fb76c5ad72de6"
+      "sha256": "1130de266847cb5f79afd9580a34eec548e8fec319e97243095de845494a7673"
     },
     "mutants/receipt_reuses_old_consequence.ocel.json": {
       "expect": {
@@ -254,7 +310,7 @@
         "code": "CONSEQUENCE_RECEIPTED_TWICE",
         "exit": 3
       },
-      "sha256": "f0df8000c7689bdd59ebf92486c36b1e9adddb09f4e873eded3b57ed0fee4920"
+      "sha256": "5a985b8ef22991f59dfe5c3bee851534b19d276d6d4922bdc48772976fef81ad"
     },
     "mutants/receipt_subject_is_repository.ocel.json": {
       "expect": {
@@ -262,7 +318,15 @@
         "code": "PROFILE_QUALIFIER_TARGET_TYPE",
         "exit": 2
       },
-      "sha256": "3bfd9a46b1d99e2187d3c65ab6a0af02b5a903416e410a3e6297127219b3f7bb"
+      "sha256": "c458c101d23b4dead7586668c8f7cb17e06536d4cedb3ea87ca5cd10f73410fe"
+    },
+    "mutants/reobserve_same_timestamp_as_receipt.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "UNATTRIBUTED_EXOGENOUS_CAUSE",
+        "exit": 3
+      },
+      "sha256": "bd4e80b57b55c50e2ae7a9792e8ff2c8d9fdc6b127f7a236948017df06dbaac6"
     },
     "mutants/schema_violation.ocel.json": {
       "expect": {
@@ -270,7 +334,15 @@
         "code": "OCEL2_SCHEMA_VIOLATION",
         "exit": 2
       },
-      "sha256": "f1cea74b99f8384ac18036f6212659f7047b061f033bb4cd8d138a0880481790"
+      "sha256": "87e2372854c6f788e09c5ae73295127be448d4e89c9abcdc7104a9e0b380d929"
+    },
+    "mutants/script_in_envelope_attribute.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "STALE_REOBSERVE",
+        "exit": 3
+      },
+      "sha256": "f9922ef76e5f7f1001cfbe2dc9c9efdb5e972429110110cee98edeb10e5859ed"
     },
     "mutants/short_loop.ocel.json": {
       "expect": {
@@ -278,7 +350,7 @@
         "code": "INSUFFICIENT_LOOP_DEPTH",
         "exit": 3
       },
-      "sha256": "67cd4f32eb285d3f8caf5961cda1dd5830cd30905e3186a24fa77d81a1369803"
+      "sha256": "bcfd4624608536bf185d49bb5ef4894656b74de12c740546d772f4fdd25540af"
     },
     "mutants/stale_decision_old_verify_evidence.ocel.json": {
       "expect": {
@@ -286,7 +358,7 @@
         "code": "STALE_REOBSERVE",
         "exit": 3
       },
-      "sha256": "e9462617bfe34d73c0ecea0b8b824a051f0ba20bef349b9cd5edf86eb1cc2307"
+      "sha256": "95e80b5619c34d532236fcbdb33dd9ae28e7cc3710b03b6828fc05ad7be61632"
     },
     "mutants/stale_reobserve_old_subject.ocel.json": {
       "expect": {
@@ -294,7 +366,7 @@
         "code": "STALE_REOBSERVE",
         "exit": 3
       },
-      "sha256": "033f6e9027ad733fb2a3eb78528f50984d3ad8d367e9358f517d2ca692797be5"
+      "sha256": "7c8a18d3b31c6c3e9c71ac20deb692b0491d87794fc906acc66cce6c8e2eed2a"
     },
     "mutants/stale_reobserve_older_observation.ocel.json": {
       "expect": {
@@ -302,7 +374,7 @@
         "code": "STALE_REOBSERVE",
         "exit": 3
       },
-      "sha256": "23bdd58dc825b06233aa69dc92490937e1552c2ecb6ffb6331df260f9d994a7a"
+      "sha256": "9af789b1915807c2f707fcb5a5296213ddf5314ebfa7c01caa91539d80a74aaa"
     },
     "mutants/stale_reobserve_reads_old_verify_evidence.ocel.json": {
       "expect": {
@@ -310,7 +382,7 @@
         "code": "STALE_REOBSERVE",
         "exit": 3
       },
-      "sha256": "37e0717f95aa54c6d60a77b43dd87c1d09a3a915ea5fd3197f0614a00d7a4a33"
+      "sha256": "7d7fbb5e999d12c9c26ea26fcc96e23de06660d587ffb1a7b23a86b3e21e79f7"
     },
     "mutants/stale_reobserve_reads_older_observation.ocel.json": {
       "expect": {
@@ -318,7 +390,7 @@
         "code": "STALE_REOBSERVE",
         "exit": 3
       },
-      "sha256": "03fe3cdc35b03dcdaa62ea51c182080616746170aa5ea1de8f0c143e59e15183"
+      "sha256": "01db412c57eb8a4f56e4c2e3624149625a3abaf2081836ce1b7a1b0a44eeda1c"
     },
     "mutants/stale_reobserve_via_machine_copy.ocel.json": {
       "expect": {
@@ -326,7 +398,7 @@
         "code": "STALE_REOBSERVE",
         "exit": 3
       },
-      "sha256": "501959da135fdfc26318a1e7e7da0b3a698bd7d2435b6b74d4a469421e5bd49d"
+      "sha256": "ba86dc3c80fb8a50de824619deb9ee88ebe1cef9c36bc77d5bfc73ab5886e743"
     },
     "mutants/stale_subject.ocel.json": {
       "expect": {
@@ -334,7 +406,7 @@
         "code": "STALE_SUBJECT",
         "exit": 3
       },
-      "sha256": "4de16d2633c344bac0dbb8acbdaf678dc7db963ce995f00d66e151c017bae04f"
+      "sha256": "dedf832d41b1c2f8fade35b022b1e1e774edf7001800d92740479af5491f5514"
     },
     "mutants/timestamp_only_loop.ocel.json": {
       "expect": {
@@ -342,7 +414,15 @@
         "code": "AUTOMATION_NOT_AUTONOMY",
         "exit": 3
       },
-      "sha256": "2b5ab15b44258855b338c66fa87106f7da0f9f25367430eec543d972a160f510"
+      "sha256": "6ec7c874e59c1caf867f3d536b13f1078d5cf4d4fe088361f67ce10b14e64c22"
+    },
+    "mutants/unattributed_script_via_reconcile_before_reobserve.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "UNATTRIBUTED_EXOGENOUS_CAUSE",
+        "exit": 3
+      },
+      "sha256": "9412665f7c1d35b54aa8e5a341ff7b2370b1d098e00d5539c81acdbf5376049b"
     },
     "mutants/uncaused_unauthorized_commit.ocel.json": {
       "expect": {
@@ -350,7 +430,7 @@
         "code": "UNAUTHORIZED_ACTUATION",
         "exit": 3
       },
-      "sha256": "eb3b2a9dd4cf0c4129344dde4ddcb2ade570d97ab7c6ac48da71cbcb6aa6e2ce"
+      "sha256": "2758dc69d9efb1a11e5b834bfaaa31213bda7ccdff9e41f30c18f566fcf4b1c1"
     },
     "mutants/vacuous_no_actuation.ocel.json": {
       "expect": {
@@ -360,13 +440,21 @@
       },
       "sha256": "82d5b7c0dcbf100fd5cc1003c88ce45759011db6be5e87dbe0f786e026f6693a"
     },
+    "mutants/whole_bound_script_plus_candidate_inflation.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "STALE_REOBSERVE",
+        "exit": 3
+      },
+      "sha256": "3d4e75882b4a8f745a46868a771cd2312d64c0acbe3b02f7787649cbfbfa788f"
+    },
     "positive.ocel.json": {
       "expect": {
         "class": "AUTONOMOUS",
         "code": null,
         "exit": 0
       },
-      "sha256": "b10dddf870f446732dfdbdc0215c6e62b5231049031a29457ace097a3ccd1aa5"
+      "sha256": "806ef10b7bef83bea458f84bba917db8f4b46ca822dc08da4d9df86363baa29f"
     }
   },
   "generator": "python -m autofde_lab.aloop.synth <out>",

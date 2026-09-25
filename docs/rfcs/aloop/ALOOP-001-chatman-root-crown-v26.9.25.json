@@ -1,9 +1,9 @@
 {
   "authority": "NONE (court verdict only; grants no DO authority)",
   "court": "ALOOP-001",
-  "court_source_sha256": "cb6addabf068dff8b5d1f1ce157dd97450584dd5ea04211f95f7ca132a429850",
+  "court_source_sha256": "d2cd0d1df0d29cac849c1096f466b76c7548f7575764675745520404fc9a835d",
   "court_subject_sha": null,
-  "court_version": "aloop-001/v26.9.25-r7",
+  "court_version": "aloop-001/v26.9.25-r8",
   "episodes": [
     {
       "class": "FAILED",
@@ -38,6 +38,7 @@
         "stale_reobserve_transitions": 0,
         "stale_subject_receipts": 0,
         "unattributed_cause_workorders": 0,
+        "unattributed_post_epoch_events": 14,
         "unauthorized_actuations": 2,
         "uncaused_actuations": 1,
         "unknown_frontier_leakage": 0,
@@ -56,6 +57,12 @@
           "code": "UNAUTHORIZED_ACTUATION",
           "detail": "2/2 actuations have no workorder.issue upstream (1 with no cause at all): ['commit-68bacd8dcc9a', 'actuate-tag-v26.9.25']",
           "failure_class": "AUTHORITY_FAILURE"
+        },
+        {
+          "broken_term": "mu_on_O",
+          "code": "UNATTRIBUTED_EXOGENOUS_CAUSE",
+          "detail": "0 workorders are caused by post-epoch inputs with no producer in the log: []; 14 post-epoch events link unattributed objects (P1): [['verify-crown-36160116076', [['input', 'ev-observations-36160116076', 'producer observe-36160116076 is not strictly earlier in time'], ['provider', 'prov-github-actions', 'no producer and not frozen envelope state']]], ['gap-36160116076', [['cause', 'ev-crown-terms-36160116076', 'producer verify-crown-36160116076 is not strictly earlier in time']]], ['receipt-36160116076', [['input', 'ev-crown-terms-36160116076', 'producer verify-crown-36160116076 is not strictly earlier in time']]]]",
+          "failure_class": "EVIDENCE_FAILURE"
         },
         {
           "broken_term": "R_not_fed_back",
@@ -98,14 +105,14 @@
     "unreceipted_actuations": 2
   },
   "profile": "aloop-ocel2/v26.9.25",
-  "profile_sha256": "457a09dc2eaeb399ea30799c67ace482971125c6256ee0f011b085ebc3628a13",
+  "profile_sha256": "97b90f071a311a5d4d1b6461bf876cfdf6a6e6dafe979ea7c5f8248f63d9b4e2",
   "qualification_thresholds": {
     "HIR": 0,
     "UAR": 0,
     "min_actuations": 1,
     "min_consecutive_self_generated_transitions": 100
   },
-  "receipt_digest": "sha256:44f25a89f9c38aaddd0ac5f18fbce976f0afe47bd2d0d6683aed9f1d14633745",
+  "receipt_digest": "sha256:ed330078c5bac906c0b389584d9a22a2529567db4d5d8a2f06494b102c9bd3b0",
   "refusals": [],
   "schema": "autofde-lab/aloop-court-receipt/v1",
   "standing": "BLOCKED",

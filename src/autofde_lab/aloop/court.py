@@ -94,8 +94,28 @@ and loses the exemption;
 (c) the envelope is bounded -- an invariant envelope with at least as many
 objects consumed in every cone as there are candidate transitions has the
 capacity of a one-step-per-iteration script (every work order citing the whole
-bound script), so none of it is exempt. A script encoded inside one object's
-attributes is beyond what an OCEL court can see (residual, UNKNOWN).
+bound script), so none of it is exempt. (Law (c) is replaced in round 8.)
+
+Repair round 8 stops closing channels one at a time. The finish adversarial
+court r3 refused r7 with J1 (a producer-less post-epoch Objective, O2O-bound
+to the Human, causing every reobserve: QUALIFIED). A fail-closed provenance
+law replaces the channel-by-channel exemptions (RFC "Fail-closed provenance
+law"; gated by ``_LAWS`` so the ablation witness can drop exactly one):
+P1 closed world -- every object a post-epoch machine event links, under any
+qualifier but its own output, is output by an earlier (strictly, in time)
+post-epoch machine event of the episode, or is frozen envelope state
+(declared by episode.start, created at or before it, never modified after
+t0); anything else is ``UNATTRIBUTED_EXOGENOUS_CAUSE`` and the episode FAILS.
+P2 human taint is qualifier-agnostic -- a Human reached over any E2O
+qualifier, any O2O relation (either direction, any depth, any type), or an
+attribute change co-timed with a human act after t0 makes the episode
+ASSISTED. P3 rooted, functional, unindexed cone -- hops before reobserve[n+1]
+descend from receipt[n], every other hop from reobserve[n+1]; strict time
+order (G7); invariant envelope; one reobserve roots one work order (a forked
+next action, the J3 candidate inflation that defeated law (c), is not a
+transition); an envelope family of same-typed objects or an envelope object
+with a multi-valued attribute is indexed per iteration and not exempt. A
+script in one scalar attribute value remains beyond an OCEL court (UNKNOWN).
 
 The verdict is a pure function of (log bytes, profile bytes, court source):
 the receipt carries no wall-clock value, so a cold replay is byte-identical.
@@ -126,7 +146,7 @@ __all__ = [
 ]
 
 COURT_ID = "ALOOP-001"
-COURT_VERSION = "aloop-001/v26.9.25-r7"
+COURT_VERSION = "aloop-001/v26.9.25-r8"
 RECEIPT_SCHEMA = "autofde-lab/aloop-court-receipt/v1"
 
 EXIT_QUALIFIED = 0
@@ -141,6 +161,11 @@ _WORKORDER = "workorder.issue"
 _RECEIPT = "receipt.persist"
 _REOBSERVE = "reobserve"
 _START = "episode.start"
+
+#: Repair round 8: the fail-closed provenance law is three clauses (RFC
+#: section "Fail-closed provenance law"). Each is gated here so the ablation
+#: witness can disable exactly one and show a mutant survives without it.
+_LAWS = frozenset({"P1", "P2", "P3"})
 
 
 def canonical(value: Any) -> str:
@@ -363,6 +388,17 @@ class _Graph:
         self.oattr = {
             o.id: {a.key: a.value.to_json() for a in o.attributes} for o in log.objects
         }
+        # Repair round 8: time-stamped attribute values (OCEL ``ObjectChange``)
+        # -- a value history, read by P1 (modified after t0), P2 (co-timed with
+        # a human act) and P3 (an ordered value sequence is an indexed script).
+        self.values: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+        for o in log.objects:
+            for a in o.attributes:
+                self.values[o.id][a.key] += 1
+        self.changes: dict[str, list[tuple[str, int]]] = defaultdict(list)
+        for ch in log.object_changes:
+            self.values[ch.object_id][ch.attribute] += 1
+            self.changes[ch.object_id].append((ch.attribute, ch.timestamp_ns or 0))
         self.links: dict[str, list[tuple[str, str]]] = defaultdict(list)
         for link in log.event_object_links:
             self.links[link.event_id].append((link.qualifier or "", link.object_id))
@@ -390,13 +426,13 @@ class _Graph:
         # the Objective/Authority objects its episode.start consumes. This is
         # the only older state the B4' freshness cone exempts.
         allowed_pre_types = set(profile["humanPreEpochAllowedOutputTypes"])
-        self.envelope_state: dict[str, frozenset[str]] = {
-            ep: frozenset(
+        declared_state: dict[str, set[str]] = {
+            ep: {
                 o
                 for q, o in self.links[s]
                 if q in ("input", "cause", "originAuthority")
                 and self.otype.get(o) in allowed_pre_types
-            )
+            }
             for ep, s in self.start.items()
         }
 
@@ -409,6 +445,60 @@ class _Graph:
         for o, ps in sorted(self.producers.items()):
             if len(ps) > 1 and self.otype[o] != "Consequence":
                 _refuse("MULTIPLE_PRODUCERS", f"object {o} produced by {ps}")
+
+        # Repair round 8 (P1 closed world): the envelope an episode.start
+        # declares, under ANY qualifier, and the part of it that is frozen --
+        # created at or before episode.start, never modified after t0 (no
+        # post-epoch attribute value, no post-epoch output, no post-epoch
+        # human link). ``touch_any[o]``: every human.intervene linking ``o``
+        # under any qualifier but ``episode`` (P2 is qualifier-agnostic).
+        self.touch_any: dict[str, list[str]] = defaultdict(list)
+        for e in self.events:
+            if e.activity == _HUMAN:
+                for q, o in self.links[e.id]:
+                    if q != "episode" and e.id not in self.touch_any[o]:
+                        self.touch_any[o].append(e.id)
+        self.human_ts = {e.timestamp_ns for e in self.events if e.activity == _HUMAN}
+        self.declared: dict[str, frozenset[str]] = {
+            ep: frozenset(o for _, o in self.links[s]) for ep, s in self.start.items()
+        }
+        self.frozen: dict[str, frozenset[str]] = {}
+        for ep, s in self.start.items():
+            t0, p0 = self.ts[s], self.pos[s]
+            self.frozen[ep] = frozenset(
+                o
+                for o in self.declared[ep]
+                if all(self.pos[p] <= p0 for p in self.producers.get(o, ()))
+                and all(t <= t0 for _, t in self.changes.get(o, ()))
+                and not any(
+                    self.pos[h] > p0 or self.episode[h] != ep
+                    for h in self.touch_any.get(o, ())
+                )
+            )
+        # Repair round 8 (P3 not indexed): an envelope that is a family of
+        # same-typed objects (same type and Authority kind), or an envelope
+        # object whose attribute holds an ordered sequence of values, can be
+        # indexed per iteration -- a script, not a goal or a policy.
+        self.indexed: dict[str, frozenset[str]] = {}
+        for ep, members in declared_state.items():
+            family: dict[tuple[str, Any], list[str]] = defaultdict(list)
+            for o in members:
+                family[(self.otype[o], self.oattr[o].get("kind"))].append(o)
+            self.indexed[ep] = frozenset(
+                o
+                for o in members
+                if len(family[(self.otype[o], self.oattr[o].get("kind"))]) > 1
+                or any(n > 1 for n in self.values.get(o, {}).values())
+            )
+        self.envelope_state: dict[str, frozenset[str]] = {
+            ep: frozenset(
+                o
+                for o in members
+                if ("P1" not in _LAWS or o in self.frozen[ep])
+                and ("P3" not in _LAWS or o not in self.indexed[ep])
+            )
+            for ep, members in declared_state.items()
+        }
 
         self.preds: dict[str, list[tuple[str, str]]] = defaultdict(list)
         self.children: dict[str, list[str]] = defaultdict(list)
@@ -450,6 +540,24 @@ class _Graph:
             if (link.qualifier or "") in taint:
                 self.o2o[link.source_id].append((link.qualifier or "", link.target_id))
         self._o2o_human_cache: dict[tuple[str, str], str | None] = {}
+        # Repair round 8 (P2): O2O components, both directions, every profile
+        # qualifier, no hop bound and no type exemption.
+        parent: dict[str, str] = {o: o for o in self.otype}
+
+        def root(x: str) -> str:
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
+
+        for link in log.object_object_links:
+            a, b = root(link.source_id), root(link.target_id)
+            if a != b:
+                parent[max(a, b)] = min(a, b)
+        self.component: dict[str, list[str]] = defaultdict(list)
+        for o in sorted(self.otype):
+            self.component[root(o)].append(o)
+        self.comp_of = {o: root(o) for o in self.otype}
         self.human_edges: list[tuple[str, str, str]] = []
         # ``human[e]``: e is a post-epoch human act, or has a *direct* human
         # causal in-edge. Deliberately not transitive *after* the epoch: one
@@ -626,6 +734,11 @@ class _Graph:
                     if h is not None:
                         self.human_edges.append((f"<authority:{h}>", eid, o))
                         hit = True
+            if not hit and "P2" in _LAWS:
+                taint = self.p2_taint(eid)
+                if taint is not None:
+                    self.human_edges.append((f"<p2:{taint[0]}>", eid, taint[1]))
+                    hit = True
             self.human[eid] = hit
 
         for e in self.events:
@@ -649,6 +762,91 @@ class _Graph:
                         "R_missing_authority",
                         "AUTHORITY_FAILURE",
                     )
+
+    def p1_unattributed(self, eid: str) -> list[tuple[str, str, str]]:
+        """P1 closed world: every object a post-epoch machine event links.
+
+        Under any qualifier except its own ``output`` (or an actuation's
+        ``consequence``), the object must be (i) output by a machine event of
+        the same episode after t0 and strictly earlier in time, or (ii) frozen
+        envelope state. Human objects, and objects a human act outputs after
+        t0 or in another episode, are P2's jurisdiction; a pre-epoch human
+        output that episode.start does not declare is unattributed here.
+        """
+        ep = self.episode[eid]
+        start = self.start[ep]
+        if self.act[eid] == _HUMAN or self.pos[eid] <= self.pos[start]:
+            return []
+        bad: list[tuple[str, str, str]] = []
+        for q, o in self.links[eid]:
+            if q == "output" or (
+                q == "consequence" and self.act[eid] in self.actuations
+            ):
+                continue
+            if self.otype[o] == "Human":
+                continue
+            ps = self.producers.get(o)
+            if (
+                ps
+                and self.act[ps[0]] == _HUMAN
+                and (self.pos[ps[0]] > self.pos[start] or self.episode[ps[0]] != ep)
+            ):
+                continue
+            if o in self.frozen[ep]:
+                continue
+            if not ps:
+                why = "no producer and not frozen envelope state"
+            else:
+                p = ps[0]
+                if self.episode[p] != ep:
+                    why = f"produced by {p} of episode {self.episode[p]}"
+                elif self.pos[p] <= self.pos[start]:
+                    why = f"produced before t0 by {p} but not frozen envelope state"
+                elif self.ts[p] >= self.ts[eid]:
+                    why = f"producer {p} is not strictly earlier in time"
+                else:
+                    continue
+            bad.append((q, o, why))
+        return bad
+
+    def p2_taint(self, eid: str) -> tuple[str, str] | None:
+        """P2: the first Human contact of post-epoch event ``eid``, qualifier-agnostic.
+
+        Any object ``eid`` links (any qualifier but ``episode``) that is a Human,
+        is linked by a human act after its epoch (or of another episode) no
+        later than ``eid``, carries an attribute value timed with a human act
+        after t0, or shares an O2O component (either direction, any depth, any
+        type) with any of those.
+        """
+        ep = self.episode[eid]
+        start = self.start[ep]
+        if self.pos[eid] <= self.pos[start]:
+            return None
+        t0, te = self.ts[start], self.ts[eid]
+
+        def human_contact(m: str) -> str | None:
+            if self.otype[m] == "Human" or self.oattr[m].get("origin") == "human":
+                return f"human-object:{m}"
+            for h in self.touch_any.get(m, ()):
+                if (
+                    h != eid
+                    and self.ts[h] <= te
+                    and (self.episode[h] != ep or self.pos[h] > self.pos[start])
+                ):
+                    return f"touch:{h}"
+            for attr, t in self.changes.get(m, ()):
+                if t0 < t <= te and t in self.human_ts:
+                    return f"cotimed-attribute:{m}.{attr}"
+            return None
+
+        for q, o in self.links[eid]:
+            if q == "episode":
+                continue
+            for m in [o, *(x for x in self.component[self.comp_of[o]] if x != o)]:
+                why = human_contact(m)
+                if why is not None:
+                    return why, o
+        return None
 
     def post_for(self, h: str, consumer: str) -> bool:
         """Is event ``h`` after the epoch of ``consumer``'s episode (repair round 3, C2)?"""
@@ -799,7 +997,21 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
             }
         )
 
-    unattributed = {w: iteration_exogenous(w) for w in workorders}
+    # Repair round 8 (P1 closed world): every post-epoch machine event of the
+    # episode whose links are not attributed (produced by an earlier machine
+    # event of this episode after t0, or frozen envelope state).
+    p1_events = (
+        {e: bad for e in post if (bad := g.p1_unattributed(e))} if "P1" in _LAWS else {}
+    )
+
+    def p1_cone(w: str) -> list[str]:
+        return sorted(
+            {o for a in [w, *g.ascend(w)] if a in p1_events for _, o, _ in p1_events[a]}
+        )
+
+    unattributed = {
+        w: sorted(set(iteration_exogenous(w)) | set(p1_cone(w))) for w in workorders
+    }
     self_generated = [
         w for w in workorders if not iteration_human(w) and not unattributed[w]
     ]
@@ -842,6 +1054,8 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
         """Why ``receipt r -> reobserve o -> workorder w2`` is not a fresh transition, or None."""
         if g.pos[o] <= g.pos[r] or not any(p == r for p, _ in g.preds[o]):
             return f"{o} does not consume {r}'s output strictly after it"
+        if "P3" in _LAWS and g.ts[o] <= g.ts[r]:
+            return f"{o} is not strictly later in time than {r} (timestamp-only order)"
         later = [x for x in episode_receipts if g.pos[r] < g.pos[x] < g.pos[w2]]
         if later:
             return f"{later[0]} persisted before {w2} but {o} observes only {r}"
@@ -864,6 +1078,11 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
         # producer's position like any other state.
         envelope_state = g.envelope_state[ep]
         rooted = rooted_at(r)
+        # Repair round 8 (P3): the cone has two roots. Hops between receipt[n]
+        # and reobserve[n+1] descend from receipt[n]; every other hop of the
+        # cone of workorder[n+1] descends from reobserve[n+1] itself.
+        before_o = set(g.ascend(o))
+        after_o = rooted_at(o) | {o}
         used = envelope_used.setdefault((r, w2), set())
         unrooted: str | None = None
         seen_cone: set[str] = set()
@@ -879,8 +1098,9 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
             # every causal input is envelope state and whose every output is an
             # Objective/Authority (a lease derived from the granted policy).
             if (
-                unrooted is None
-                and a not in rooted
+                "P3" in _LAWS
+                and unrooted is None
+                and a not in (rooted if a in before_o else after_o)
                 and not (
                     g.preds[a]
                     and all(x in envelope_state for _, x in g.preds[a])
@@ -898,6 +1118,11 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
                 if q in ("input", "cause", "originAuthority") and x in envelope_state
             )
             for p, x in g.preds[a]:
+                if "P3" in _LAWS and g.ts[p] >= g.ts[a]:
+                    return (
+                        f"{a} consumes {x} from {p} at an equal or later timestamp: "
+                        "no strict causal order"
+                    )
                 if p == r:
                     continue
                 if g.pos[p] > g.pos[r]:
@@ -909,8 +1134,8 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
                     )
         if unrooted is not None:
             return (
-                f"{unrooted} in the cone of {w2} is not causally downstream of {r}; "
-                f"{w2} does not act on the state {r} left"
+                f"{unrooted} in the cone of {w2} is not causally downstream of {r} "
+                f"through {o}; {w2} does not act on the state {r} left"
             )
         for a in [w2, *segment]:
             if g.pos[a] <= g.pos[r]:
@@ -958,37 +1183,37 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
                             stale_transitions.append((w, r, o, w2, why))
                             continue
                         candidates.append((w, r, o, w2))
-    # Repair round 7 (B4''' b): the envelope is invariant across the episode's
-    # transitions. An envelope object consumed in the cone of some candidate
-    # transition but not of every one is per-iteration decision state bound
-    # into episode.start to borrow the exemption: that transition is stale.
+    # Repair round 7 (B4''' b, kept as P3): the envelope is invariant across
+    # the episode's transitions. An envelope object consumed in the cone of
+    # some candidate transition but not of every one is per-iteration decision
+    # state bound into episode.start to borrow the exemption: that transition
+    # is stale. Repair round 8 replaces the r7 count bound (c) -- gamed by
+    # inflating the candidate count (J3) -- with P3's structural clauses: the
+    # envelope is not indexed (``_Graph.indexed``) and the transition relation
+    # is a function (one reobserve[n+1] roots one workorder[n+1]).
     invariant: set[str] | None = None
     for _w, r, _o, w2 in candidates:
         used = envelope_used.get((r, w2), set())
         invariant = set(used) if invariant is None else invariant & used
-    # Repair round 7 (B4''' c): the envelope is bounded. An invariant envelope
-    # as large as the number of transitions can hold one step per iteration.
-    script_capacity = (
-        len(candidates) > 1
-        and invariant is not None
-        and len(invariant) >= len(candidates)
-    )
+    successors: dict[tuple[str, str], set[str]] = defaultdict(set)
+    for _w, r, o, w2 in candidates:
+        successors[(r, o)].add(w2)
     for w, r, o, w2 in candidates:
         varying = sorted(envelope_used.get((r, w2), set()) - (invariant or set()))
-        if script_capacity:
+        if "P3" in _LAWS and len(successors[(r, o)]) > 1:
             stale_transitions.append(
                 (
                     w,
                     r,
                     o,
                     w2,
-                    f"{w2} decides from {len(invariant or ())} envelope objects bound "
-                    f"into {start}, >= {len(candidates)} transitions: the envelope "
-                    "has the capacity of a per-iteration script",
+                    f"{o} roots {len(successors[(r, o)])} work orders "
+                    f"{sorted(successors[(r, o)])[:3]}: a forked next action is "
+                    "not one transition",
                 )
             )
             continue
-        if varying:
+        if "P3" in _LAWS and varying:
             stale_transitions.append(
                 (
                     w,
@@ -1142,6 +1367,7 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
         "receipts_out_of_segment": len(out_of_segment),
         "consequences_receipted_more_than_once": len(rereceipted),
         "unattributed_cause_workorders": sum(1 for w in workorders if unattributed[w]),
+        "unattributed_post_epoch_events": len(p1_events),
         "stale_subject_receipts": len(stale),
         "unknown_frontier_leakage": len(leakage),
         "workorders": len(workorders),
@@ -1252,7 +1478,8 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
     unattributed_ws = sorted(
         (w for w in workorders if unattributed[w]), key=g.pos.__getitem__
     )
-    if unattributed_ws:
+    p1_first = sorted(p1_events, key=g.pos.__getitem__)[:3]
+    if unattributed_ws or p1_events:
         reasons.append(
             _reason(
                 "UNATTRIBUTED_EXOGENOUS_CAUSE",
@@ -1260,7 +1487,9 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
                 "EVIDENCE_FAILURE",
                 f"{len(unattributed_ws)} workorders are caused by post-epoch inputs with "
                 f"no producer in the log: "
-                f"{[[w, unattributed[w][:2]] for w in unattributed_ws[:4]]}",
+                f"{[[w, unattributed[w][:2]] for w in unattributed_ws[:4]]}; "
+                f"{len(p1_events)} post-epoch events link unattributed objects (P1): "
+                f"{[[e, [list(x) for x in p1_events[e][:2]]] for e in p1_first]}",
             )
         )
     if not actuations:
@@ -1318,8 +1547,9 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
         )
     elif human_edges:
         klass = "ASSISTED"
-    elif closed_cycles == 0 or not actuations or stale_transitions:
-        # repair round 5: a loop with any stale transition is not AUTONOMOUS
+    elif closed_cycles == 0 or not actuations or stale_transitions or p1_events:
+        # repair round 5: a loop with any stale transition is not AUTONOMOUS;
+        # repair round 8 (P1): nor is one with any unattributed post-epoch link
         klass = "FAILED"
     else:
         klass = "AUTONOMOUS"

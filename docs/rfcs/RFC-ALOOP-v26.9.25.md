@@ -101,8 +101,58 @@ several receipts) fail the episode.
 
 **Unattributed causes.** A post-epoch input with no producer in the log, consumed in a work
 order's decision segment by anything other than `observe`/`reobserve`, makes that work order
-not self-generated (`UNATTRIBUTED_EXOGENOUS_CAUSE`). Observation of the world is lawful; an
-unexplained instruction feeding the next action is not.
+not self-generated (`UNATTRIBUTED_EXOGENOUS_CAUSE`). Since repair round 8 this is one instance of
+the closed-world clause P1 below, which covers every post-epoch link, observations included.
+
+## Fail-closed provenance law
+
+Repair round 8 (court `aloop-001/v26.9.25-r8`) stops closing channels one at a time. Rounds 1-7
+each exempted a class of object (by qualifier, type, envelope membership or count) and each
+exemption was the next attack surface. Three clauses replace the exemptions; each fails closed.
+
+**P1 closed world** (`UNATTRIBUTED_EXOGENOUS_CAUSE`, `mu_on_O`, `EVIDENCE_FAILURE`). Every
+object a post-epoch machine event links, under any qualifier except its own `output` (and an
+actuation's `consequence`), must be either
+(i) output by a machine event of the same episode that is itself after `t0` and strictly
+earlier in time than the linking event, or
+(ii) frozen envelope state: declared by the episode's `episode.start` (linked by it under any
+qualifier), created at or before `episode.start` (no producer after it), and never modified
+after `t0` (no attribute value timed after `t0`, no post-epoch output, no post-epoch or
+foreign-episode human link).
+Anything else fails the episode: no producer and no declaration, a producer in another episode,
+a pre-epoch producer whose output `episode.start` does not declare, a timestamp-only ordering,
+an equal timestamp. The affected work orders are not self-generated (ALD drops) and the episode
+is `FAILED` (`unattributed_post_epoch_events` > 0). Human objects, and objects a human act
+outputs after `t0` or in another episode, are P2's jurisdiction. A causal flow across episodes
+is still refused earlier (`CROSS_EPISODE_CAUSALITY`).
+
+**P2 human taint is qualifier-agnostic** (`HUMAN_CAUSALITY_AFTER_EPOCH`, `R_not_fed_back`).
+A post-epoch event is human-caused if any object it links, under any qualifier (`evidence`,
+`provider`, `subject` and `originAuthority` included, `episode` excepted), or any object in that
+object's O2O component (either direction, every O2O qualifier, any depth, no type exemption):
+is a `Human` or has `origin = human`; is linked, under any qualifier, by a `human.intervene`
+after the consumer's `t0` (or of another episode) that is no later than the consumer; or carries
+an attribute value timed after `t0` and exactly at a human act. Any such edge makes the episode
+`ASSISTED`. There is no exemption list; only the frozen pre-epoch envelope of the consumer's own
+episode is lawful human origin.
+
+**P3 rooted, functional, unindexed cone** (`STALE_REOBSERVE`, `R_not_fed_back`,
+`SUBJECT_FAILURE`). A transition `receipt[n] -> reobserve[n+1] -> workorder[n+1]` counts only if:
+every hop of the cone of `workorder[n+1]` between `receipt[n]` and `reobserve[n+1]` descends from
+`receipt[n]`, and every other hop descends from `reobserve[n+1]` itself (the r7 envelope
+derivation, every causal input envelope state and every output an `Objective`/`Authority`, stays
+allowed); every causal hop is strictly increasing in time, `reobserve[n+1]` included (G7); the
+envelope objects cited in the cone are the same for every transition (invariant); one
+`reobserve[n+1]` roots exactly one `workorder[n+1]` (a forked next action is not one
+transition); and the envelope is not indexed -- a family of same-typed envelope objects (same
+type and `Authority` kind) or an envelope object whose attribute holds more than one value (an
+ordered value history) can be indexed per iteration, so it loses the exemption. P3 replaces the
+r7 count bound (an invariant envelope at least as large as the candidate count), which candidate
+inflation defeated (J3).
+
+Evidence ceiling: a script written into one scalar attribute value of a single-valued envelope
+object (for example a long `description` string) is not visible to an OCEL court. It is a named
+residual (`UNKNOWN`), not a claim of absence.
 
 **Automation ≠ Autonomy.** A fixed-task cron whose receipts never feed a
 `consequence → observation → new WorkOrder` edge fails with `AUTOMATION_NOT_AUTONOMY`, however
@@ -247,7 +297,8 @@ from `git:seanchatmangpt/chatman-ecosystem@c599667a84ec79d832bb779bce1730b33b43f
 converted by `python -m autofde_lab.aloop.chatman_trace` and judged in
 `docs/rfcs/aloop/ALOOP-001-chatman-root-crown-v26.9.25.json`: `NOT_QUALIFIED`, episode `FAILED`
 with `UNRECEIPTED_ACTUATION` (the inter-run commit and the tag creation have no receipt in the
-admitted inputs), `HUMAN_CAUSALITY_AFTER_EPOCH` (the release-crown environment approval that the
+admitted inputs), `UNATTRIBUTED_EXOGENOUS_CAUSE` (since r8: post-epoch links to objects neither
+produced in the episode nor declared by its `episode.start`), `HUMAN_CAUSALITY_AFTER_EPOCH` (the release-crown environment approval that the
 tag decision names) and `AUTOMATION_NOT_AUTONOMY` (receipts do feed the next observation through
 `previous_receipt_digest`, but no WorkOrder is ever issued). The verdict is about the recorded
 process, not about the tag's release standing.
@@ -293,9 +344,20 @@ envelope object is cited by some transitions but not by all, or because every wo
 an envelope as large as the loop -- or if a decision taken from the bound goal alone, with the
 fresh observation attached decoratively, still counts; if a post-epoch human act on (or O2O-linked, at any hop
 count, to) the granted Authority, or an Authority granted after `t0` outside the pre-declared
-envelope, leaves the work orders citing it self-generated; or if two runs over the same bytes
-produce different receipts. Each has a mutant in the regenerated corpus whose sha256 is committed
-in `tests/aloop/fixtures/synthetic/MANIFEST.json` (45 mutants, 45 killed).
+envelope, leaves the work orders citing it self-generated; if a post-epoch machine event links
+an object that is neither output by an earlier machine event of its episode (strictly earlier in
+time) nor frozen envelope state -- a producer-less per-iteration object reaching the next action
+through a hop between `receipt[n]` and the reobserve, a post-epoch attribute change on the
+envelope, a reobserve timestamped equal to `receipt[n]`, an undeclared pre-epoch script -- and
+the episode is not `FAILED` (P1); if a Human reached over any E2O qualifier (`evidence`,
+`provider`), any O2O relation to an object of any type, or an attribute change co-timed with a
+human act after `t0`, leaves the episode anything but `ASSISTED` (P2); or if a forked next
+action (one reobserve rooting two work orders), an indexed envelope (a family of bound
+`Objective`s, whatever the candidate count) or an envelope attribute holding an ordered value
+history still counts as a transition (P3); or if two runs over the same bytes produce different
+receipts. Each has a mutant in the regenerated corpus whose sha256 is committed in
+`tests/aloop/fixtures/synthetic/MANIFEST.json` (56 mutants, 56 killed). Disabling any one of P1,
+P2, P3 lets at least one mutant qualify again.
 
 Repair round 1 (court version `aloop-001/v26.9.25-r1`) closed three adversarial-court findings
 against round 0: a vacuous non-actuating loop qualified (`admission_vacuous`,
@@ -384,3 +446,28 @@ of a single envelope object (not visible to an OCEL court); a post-epoch `Author
 change coincident with an unrelated human event, and a post-epoch human-output `Provider` linked
 by `provider.select` under the non-causal `provider` qualifier, both still qualify (finish
 adversarial r2 H7/H8).
+
+Repair round 8 (court version `aloop-001/v26.9.25-r8`) replaced the channel-by-channel
+exemptions with the fail-closed provenance law (P1, P2, P3 above) after the finish adversarial
+court r3 refused round 7 with J1: a post-epoch `Objective` O2O `boundTo` the Human, produced by
+no event, caused every reobserve and returned exit 0 `QUALIFIED`, ALD 100 (the reobserve was a
+segment stop and the O2O walk never entered an `Objective`). Eleven new mutants -- J1, J1b (the
+same with an `Authority`), J2 (a producer-less script consumed by a machine `reconcile` between
+`receipt[n]` and the reobserve), J3 (r7's X1 plus candidate inflation), J3c (inflation alone, a
+forked next action), F6 (post-epoch human memo under `evidence`), F9 (post-epoch envelope
+attribute change, no event), H7 (the same change co-timed with a human act), H8 (human-picked
+`Provider` under `provider`), G7 (reobserve timestamp equal to the receipt's) and the r7
+script-in-attributes residual (a 101-value history on the bound goal's attribute) -- each
+return exit 0 `QUALIFIED`, ALD 100 on the r7 court (`faaad7ab`) and exit 3 `NOT_QUALIFIED` on
+r8. Ablation: without P1, J2 and F9 qualify; without P2, F6 and H8 qualify; without P3, J3, J3c,
+X1, H1-H3, X5 and script-in-attributes qualify. P1 refuses four earlier mutants before the cone
+law runs (the pre-epoch machine and human scripts `episode.start` never declares); they now list
+`UNATTRIBUTED_EXOGENOUS_CAUSE` instead of `STALE_REOBSERVE`. A post-epoch human act on the
+envelope policy itself now cuts the chain at 0, not 49: the policy is no longer frozen for any
+work order. The positive log genuinely violated P1: its first provider (`prov-claude`) entered
+at the first `provider.select` with no producer and no declaration. `episode.start` now declares
+it under `provider`; the positive fixture's bytes change for that one link and it stays
+`QUALIFIED`, `AUTONOMOUS`, ALD 100. Controls still qualify: the envelope lease, the goal cited by
+every work order, the objective re-read by every reobserve, a single-valued goal description.
+Known residual, not closed here: a script in one scalar attribute value of a single-valued
+envelope object (evidence ceiling above).
