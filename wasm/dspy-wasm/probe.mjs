@@ -106,7 +106,7 @@ function completionText(request) {
         : JSON.stringify({ reasoning: "extract bounded result", answer: "POT" });
     case "code_act":
       return ordinal === 1
-        ? JSON.stringify({ generated_code: "print(host_add(2, 3))", finished: true })
+        ? JSON.stringify({ generated_code: "print(local_add(2, 3))", finished: true })
         : JSON.stringify({ reasoning: "extract tool result", answer: "5" });
     case "react_v2":
       return JSON.stringify({
