@@ -88,6 +88,23 @@ class DSPyWasmResult:
                 raise DSPyWasmProtocolViolation(
                     "ALIVE requires observed deterministic dspy.Module output 'WASM'"
                 )
+            if output.get("host_output") != "WASM-HOST":
+                raise DSPyWasmProtocolViolation(
+                    "ALIVE requires observed DSPy custom-engine host output 'WASM-HOST'"
+                )
+            if output.get("host_calls") != 1:
+                raise DSPyWasmProtocolViolation(
+                    "ALIVE requires exactly one explicit host capability call"
+                )
+            if output.get("provider_io") is not False:
+                raise DSPyWasmProtocolViolation(
+                    "ALIVE requires provider_io=false"
+                )
+            authority = output.get("authority")
+            if not isinstance(authority, Mapping) or authority.get("actuation") != "none":
+                raise DSPyWasmProtocolViolation(
+                    "ALIVE requires zero-actuation authority"
+                )
             if blocker is not None:
                 raise DSPyWasmProtocolViolation("ALIVE result cannot carry a blocker")
         elif blocker is None:
@@ -225,7 +242,8 @@ class DSPyWasmProbe:
                 "dspy": DSPY_VERSION,
                 "pyodide": PYODIDE_VERSION,
                 "runtime": "node-pyodide",
-                "court": "import+deterministic-module",
+                "profile": "autofde-core-no-provider-io-v1",
+                "court": "import+deterministic-module+host-engine",
             },
             "stages": [],
             "blocker": {"code": code, "detail": detail, "layer": "host"},
