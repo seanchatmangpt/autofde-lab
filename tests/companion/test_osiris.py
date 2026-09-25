@@ -1,4 +1,6 @@
 from autofde_lab.companion.osiris import (
+    OSIRIS,
+    OSIRIS_EXPANSION,
     ActionCandidate,
     CompanionDecision,
     EcosystemRouter,
@@ -6,8 +8,6 @@ from autofde_lab.companion.osiris import (
     EventPriority,
     IntentKind,
     Observation,
-    OSIRIS,
-    OSIRIS_EXPANSION,
     ResponsePolicy,
     SpeechCandidate,
     Standing,
@@ -18,7 +18,9 @@ from autofde_lab.companion.osiris import (
 
 
 def test_thin_air_identity_and_voice_profile_are_explicit():
-    assert OSIRIS_EXPANSION == "Onboard Situational Insight and Resource Interface Support"
+    assert (
+        OSIRIS_EXPANSION == "Onboard Situational Insight and Resource Interface Support"
+    )
 
 
 def test_voice_profile_is_exact_0_2_6_6():
