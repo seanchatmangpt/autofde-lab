@@ -71,13 +71,21 @@ function completionText(request) {
     case "typed":
       return JSON.stringify({ y: 42 });
     case "react":
-      return ordinal === 1
-        ? JSON.stringify({
-            next_thought: "use the admitted host tool",
-            next_tool_name: "host_add",
-            next_tool_args: { x: 2, y: 3 },
-          })
-        : JSON.stringify({ reasoning: "host tool returned five", answer: "5" });
+      if (ordinal === 1) {
+        return JSON.stringify({
+          next_thought: "use the admitted host tool",
+          next_tool_name: "host_add",
+          next_tool_args: { x: 2, y: 3 },
+        });
+      }
+      if (ordinal === 2) {
+        return JSON.stringify({
+          next_thought: "the required observation is available",
+          next_tool_name: "finish",
+          next_tool_args: {},
+        });
+      }
+      return JSON.stringify({ reasoning: "host tool returned five", answer: "5" });
     case "bootstrap":
       return JSON.stringify({ answer: "OK" });
     case "best_of_n":
