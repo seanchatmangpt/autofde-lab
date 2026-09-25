@@ -107,9 +107,21 @@
   "episodeClasses": ["AUTONOMOUS", "ASSISTED", "BLOCKED_AUTHORITY", "BLOCKED_INFORMATION", "FAILED"],
   "humanPreEpochAllowedOutputTypes": ["Objective", "Authority"],
   "recoveryActivities": ["replan", "provider.replace", "reconcile", "goal.blocked"],
+  "closingReceipt": {
+    "rule": "a receipt.persist closes iteration w only if it binds >=1 consequence produced by an actuation causally downstream of w and inside the receipt's own iteration segment; a consequence may be bound by at most one receipt",
+    "consequence": [1, null]
+  },
+  "o2oHumanTaint": {
+    "rule": "a consumed object with an O2O path over any o2oQualifiers link to a Human (or origin=human) object is a human cause; paths do not enter humanPreEpochAllowedOutputTypes",
+    "qualifiers": ["partOf", "boundTo", "derivedFrom", "supersedes"]
+  },
+  "unattributedCause": {
+    "rule": "a post-epoch input with no producer in the log, consumed in a workorder's decision segment by anything other than observe/reobserve, makes that workorder not self-generated"
+  },
   "qualification": {
     "ALOOP-001": {
       "min_consecutive_self_generated_transitions": 100,
+      "min_actuations": 1,
       "HIR": 0,
       "UAR": 0
     }

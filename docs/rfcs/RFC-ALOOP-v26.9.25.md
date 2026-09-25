@@ -76,6 +76,18 @@ receipt[n] -> reobserve[n+1] -> … -> frontier -> workorder[n+1]
 iteration segment (ancestors back to the nearest `reobserve`/`observe`) must contain no human
 edge, and `receipt[n]` must be reachable from `workorder[n]` through machine-only events.
 
+**Closing rule.** `receipt[n]` closes iteration `n` only if it binds at least one
+`consequence` produced by an actuation (`actuate|commit|merge`) that is causally downstream of
+`workorder[n]` and inside the receipt's own iteration segment. A loop that never actuates, or
+that re-receipts an earlier iteration's consequence, cannot close. Integrity reasons
+`RECEIPT_CONSEQUENCE_OUT_OF_SEGMENT` and `CONSEQUENCE_RECEIPTED_TWICE` (one DO receipted by
+several receipts) fail the episode.
+
+**Unattributed causes.** A post-epoch input with no producer in the log, consumed in a work
+order's decision segment by anything other than `observe`/`reobserve`, makes that work order
+not self-generated (`UNATTRIBUTED_EXOGENOUS_CAUSE`). Observation of the world is lawful; an
+unexplained instruction feeding the next action is not.
+
 **Automation ≠ Autonomy.** A fixed-task cron whose receipts never feed a
 `consequence → observation → new WorkOrder` edge fails with `AUTOMATION_NOT_AUTONOMY`, however
 many receipts it writes.
@@ -106,6 +118,10 @@ example `workorder.issue` needs exactly one `originAuthority`) live in the profi
 Causal edges are derived, never declared: `p → e` iff `e` consumes (`input`/`cause`) an object
 that `p` produced (`output`, or `consequence` on `actuate|commit|merge`). Timestamps never
 create an edge; a cause produced at or after its consumer is refused as forged.
+
+O2O links carry human provenance: a consumed object with an O2O path (`partOf`, `boundTo`,
+`derivedFrom`, `supersedes`) to a `Human` object, or to an object whose `origin` is `human`, is
+a human causal edge. Paths do not enter the lawful pre-epoch channel (`Objective`, `Authority`).
 
 ## Courts
 
@@ -144,11 +160,11 @@ ALOOP-004 owns the semantic-equivalence half.
 
 | metric | definition |
 |---|---|
-| HIR | post-epoch events with a human causal in-edge / post-epoch events with any causal in-edge |
+| HIR | post-epoch events with a human causal in-edge / post-epoch events with any causal in-edge (0/0 → `HIR_UNDEFINED`) |
 | ALD | longest chain of consecutive self-generated closed-loop transitions |
 | LCR | receipts that close a loop / receipts |
 | RR | failures with a machine-caused recovery descendant / failures |
-| UAR | actuations whose consequence lacks a later bound `receipt.persist` / actuations — **must be 0** |
+| UAR | actuations whose consequence lacks a later bound `receipt.persist` / actuations — **must be 0**; 0/0 is undefined, never 0, and ALOOP-001 requires ≥1 actuation (`NO_ACTUATION`) |
 | PSR | unavailable providers with a machine-caused `provider.replace` / unavailable providers |
 
 Also reported: cold replay (the receipt holds no wall-clock value; two runs are byte-identical),
@@ -209,6 +225,13 @@ by name only; no text is imported.
 
 The architecture is falsified if a fixed-task cron qualifies; if a human act after `t0` can be
 laundered into a qualifying chain; if an actuation without a bound receipt yields UAR = 0; if a
-forged authority, future cause or unknown qualifier is admitted; or if two runs over the same
-bytes produce different receipts. Each has a committed mutant under
-`tests/aloop/fixtures/synthetic/mutants/`.
+forged authority, future cause or unknown qualifier is admitted; if a loop that never actuates
+qualifies; if one consequence receipted by many iterations qualifies; if a next action derived
+(O2O) from a Human, or caused by an unattributed exogenous input, qualifies; or if two runs over
+the same bytes produce different receipts. Each has a mutant in the regenerated corpus whose
+sha256 is committed in `tests/aloop/fixtures/synthetic/MANIFEST.json` (19 mutants, 19 killed).
+
+Repair round 1 (court version `aloop-001/v26.9.25-r1`) closed three adversarial-court findings
+against round 0: a vacuous non-actuating loop qualified (`admission_vacuous`,
+`R_missing_consequence`); a receipt bound to an earlier iteration's consequence qualified
+(`R_missing_consequence`); an O2O `derivedFrom` Human cause went undetected (`mu_on_O`).

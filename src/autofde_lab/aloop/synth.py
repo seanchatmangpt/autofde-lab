@@ -8,7 +8,7 @@
 ``mutants/<name>.ocel.json`` and ``MANIFEST.json`` (expected verdict and
 sha256 per file). Only ``positive.ocel.json`` and ``MANIFEST.json`` are
 committed (the mutants would breach the repo's 500 KB large-file gate
-fourteen times over); the test suite regenerates the whole corpus as real
+many times over); the test suite regenerates the whole corpus as real
 files on disk, requires every file's sha256 to equal the committed manifest
 and the positive log to equal the committed bytes, then runs the court over
 those files.
@@ -437,6 +437,92 @@ def m_schema_violation(doc):
     del _event(doc, "e-verify-3")["time"]
 
 
+# ── repair round 1: adversarial-court attacks A1..A4, A6 as committed mutants ──
+
+
+def m_receipt_reuses_old_consequence(doc):
+    """A4: one DO receipted 100 times -- later iterations drop their actuations."""
+    drop = set()
+    for i in range(1, POSITIVE_ITERATIONS):
+        drop |= {f"e-act-{i}", f"e-commit-{i}"}
+        rcpt = _event(doc, f"e-rcpt-{i}")
+        rcpt["relationships"] = [
+            r
+            for r in rcpt["relationships"]
+            if r["qualifier"] not in ("consequence", "subject")
+        ] + [
+            {"objectId": "sub-1", "qualifier": "subject"},
+            {"objectId": "csq-0", "qualifier": "consequence"},
+        ]
+        run = f"run-{i}b" if i == CRASH_AT else f"run-{i}"
+        verify = _event(doc, f"e-verify-{i}")
+        verify["relationships"] = [
+            {"objectId": run, "qualifier": "input"} if r["qualifier"] == "input" else r
+            for r in verify["relationships"]
+        ]
+    doc["events"] = [e for e in doc["events"] if e["id"] not in drop]
+
+
+def m_o2o_hidden_human_plan(doc):
+    """A2: every next-action consumes a Plan the log itself says derivedFrom a Human."""
+    for i in range(POSITIVE_ITERATIONS):
+        doc["objects"].append(
+            {
+                "id": f"hplan-{i}",
+                "type": "Plan",
+                "attributes": [],
+                "relationships": [
+                    {"objectId": "hum-operator", "qualifier": "derivedFrom"}
+                ],
+            }
+        )
+        _event(doc, f"e-wo-{i}")["relationships"].append(
+            {"objectId": f"hplan-{i}", "qualifier": "cause"}
+        )
+
+
+def m_exogenous_unattributed_cause(doc):
+    """A3: every next-action consumes an input with no producer in the log."""
+    for i in range(POSITIVE_ITERATIONS):
+        doc["objects"].append(
+            {
+                "id": f"instr-{i}",
+                "type": "Evidence",
+                "attributes": [
+                    {
+                        "name": "locator",
+                        "value": "slack://operator/msg",
+                        "time": "1970-01-01T00:00:00.000000000Z",
+                    }
+                ],
+                "relationships": [],
+            }
+        )
+        _event(doc, f"e-wo-{i}")["relationships"].append(
+            {"objectId": f"instr-{i}", "qualifier": "cause"}
+        )
+
+
+def m_timestamp_only_loop(doc):
+    """A6: reobserve[n+1] is caused by an exogenous tick, not by receipt[n]."""
+    for i in range(1, POSITIVE_ITERATIONS):
+        doc["objects"].append(
+            {
+                "id": f"tick-{i}",
+                "type": "Evidence",
+                "attributes": [],
+                "relationships": [],
+            }
+        )
+        ro = _event(doc, f"e-reobserve-{i}")
+        ro["relationships"] = [
+            {"objectId": f"tick-{i}", "qualifier": "cause"}
+            if r["qualifier"] == "cause"
+            else r
+            for r in ro["relationships"]
+        ]
+
+
 MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     "human_after_epoch": (
         m_human_after_epoch,
@@ -485,6 +571,22 @@ MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     "schema_violation": (
         m_schema_violation,
         {"exit": 2, "class": None, "code": "OCEL2_SCHEMA_VIOLATION"},
+    ),
+    "receipt_reuses_old_consequence": (
+        m_receipt_reuses_old_consequence,
+        {"exit": 3, "class": "FAILED", "code": "CONSEQUENCE_RECEIPTED_TWICE"},
+    ),
+    "o2o_hidden_human_plan": (
+        m_o2o_hidden_human_plan,
+        {"exit": 3, "class": "ASSISTED", "code": "HUMAN_CAUSALITY_AFTER_EPOCH"},
+    ),
+    "exogenous_unattributed_cause": (
+        m_exogenous_unattributed_cause,
+        {"exit": 3, "class": "FAILED", "code": "UNATTRIBUTED_EXOGENOUS_CAUSE"},
+    ),
+    "timestamp_only_loop": (
+        m_timestamp_only_loop,
+        {"exit": 3, "class": "FAILED", "code": "AUTOMATION_NOT_AUTONOMY"},
     ),
 }
 
@@ -541,6 +643,68 @@ def build_fixed_task_cron(runs: int = 104) -> dict[str, Any]:
     return b.document()
 
 
+def build_vacuous_loop(iterations: int = POSITIVE_ITERATIONS) -> dict[str, Any]:
+    """A1: observe -> workorder -> receipt (no consequence) -> reobserve, never DO."""
+    profile = load_profile()
+    b = Builder(profile["objectTypes"], profile["eventTypes"])
+    t = T0
+    ep = b.obj("ep-v", "Episode")
+    hum = b.obj("hum-v", "Human", role="operator")
+    b.obj("obj-v", "Objective")
+    b.obj("auth-v", "Authority", kind="policy", grantedBy="hum-v")
+    b.obj("sub-v", "Subject", sha=_sha("vacuous-subject"), repository="repo-v")
+    E = lambda *rels: [("episode", ep), *rels]  # noqa: E731
+    t += SECOND
+    b.event(
+        "v-pre",
+        "human.intervene",
+        t,
+        E(("originAuthority", hum), ("output", "obj-v"), ("output", "auth-v")),
+    )
+    t += SECOND
+    b.event(
+        "v-start",
+        "episode.start",
+        t,
+        E(("subject", "sub-v"), ("input", "obj-v"), ("input", "auth-v")),
+    )
+    for i in range(iterations):
+        b.obj(f"v-ev-{i}", "Evidence")
+        t += SECOND
+        if i == 0:
+            b.event(
+                "v-observe-0", "observe", t, E(("input", "obj-v"), ("output", "v-ev-0"))
+            )
+        else:
+            b.event(
+                f"v-reobserve-{i}",
+                "reobserve",
+                t,
+                E(("cause", f"v-rcpt-{i - 1}"), ("output", f"v-ev-{i}")),
+            )
+        b.obj(f"v-wo-{i}", "WorkOrder")
+        t += SECOND
+        b.event(
+            f"v-issue-{i}",
+            "workorder.issue",
+            t,
+            E(
+                ("cause", f"v-ev-{i}"),
+                ("output", f"v-wo-{i}"),
+                ("originAuthority", "auth-v"),
+            ),
+        )
+        b.obj(f"v-rcpt-{i}", "Receipt", digest=_sha(f"v-rcpt-{i}"))
+        t += SECOND
+        b.event(
+            f"v-receipt-{i}",
+            "receipt.persist",
+            t,
+            E(("input", f"v-wo-{i}"), ("output", f"v-rcpt-{i}"), ("subject", "sub-v")),
+        )
+    return b.document()
+
+
 def build_short_loop() -> dict[str, Any]:
     return build_positive(iterations=20)
 
@@ -567,6 +731,10 @@ def write_all(out: Path) -> dict[str, Any]:
         "short_loop": (
             build_short_loop(),
             {"exit": 3, "class": "AUTONOMOUS", "code": "INSUFFICIENT_LOOP_DEPTH"},
+        ),
+        "vacuous_no_actuation": (
+            build_vacuous_loop(),
+            {"exit": 3, "class": "FAILED", "code": "NO_ACTUATION"},
         ),
     }
     for name, (mutate, expect) in MUTANTS.items():

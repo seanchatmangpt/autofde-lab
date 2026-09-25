@@ -1,9 +1,9 @@
 {
   "authority": "NONE (court verdict only; grants no DO authority)",
   "court": "ALOOP-001",
-  "court_source_sha256": "c9ff9462ec72fea344ee7a10f82dab1163d198a095b84d1807399c732c2e2b18",
+  "court_source_sha256": "0886e4b7e57a899fee803e1b0c0ca6abf1015df39a026266bcf57271e9ee6911",
   "court_subject_sha": null,
-  "court_version": "aloop-001/v26.9.25",
+  "court_version": "aloop-001/v26.9.25-r1",
   "episodes": [
     {
       "class": "FAILED",
@@ -21,6 +21,7 @@
         "actuations": 2,
         "closed_loop_cycles": 0,
         "consecutive_self_generated_transitions": 0,
+        "consequences_receipted_more_than_once": 0,
         "duplicate_consequences": 0,
         "exogenous_post_epoch_inputs": [
           "ev-local-worktrees-32bbd585a5c4d1fd"
@@ -31,8 +32,11 @@
         "orphan_receipts": 0,
         "provider_unavailable": 0,
         "receipts": 3,
+        "receipts_out_of_segment": 0,
+        "receipts_without_fresh_consequence": 0,
         "self_generated_workorders": 0,
         "stale_subject_receipts": 0,
+        "unattributed_cause_workorders": 0,
         "uncaused_actuations": 1,
         "unknown_frontier_leakage": 0,
         "unreceipted_actuations": 2,
@@ -54,7 +58,7 @@
         {
           "broken_term": "R_not_fed_back",
           "code": "AUTOMATION_NOT_AUTONOMY",
-          "detail": "no receipt[n] -> reobserve[n+1] -> workorder[n+1] edge with a self-generated cause chain (workorders=0, receipts=3)",
+          "detail": "no receipt[n] -> reobserve[n+1] -> workorder[n+1] edge with a self-generated cause chain and a receipt binding a fresh in-iteration consequence (workorders=0, receipts=3, actuations=2)",
           "failure_class": "CAPABILITY_GAP"
         }
       ]
@@ -75,6 +79,7 @@
     "ALD_max": 0,
     "HIR_max": 0.066667,
     "UAR": 1.0,
+    "actuations": 2,
     "closed_loop_cycles": 0,
     "duplicate_consequences": 0,
     "episodes": 1,
@@ -84,13 +89,14 @@
     "unreceipted_actuations": 2
   },
   "profile": "aloop-ocel2/v26.9.25",
-  "profile_sha256": "66331775521539126dcbf4933e0a88a0bbab2162e00cc50887e37ac7cd630a55",
+  "profile_sha256": "22fd02cfb425e31293ff41c4eb6b6147e74d7071ebf6c4e28610b8f33aae01a9",
   "qualification_thresholds": {
     "HIR": 0,
     "UAR": 0,
+    "min_actuations": 1,
     "min_consecutive_self_generated_transitions": 100
   },
-  "receipt_digest": "sha256:50ba081c1df5369394ceca48e2de4599e092afcc89b964e9db27382f68636738",
+  "receipt_digest": "sha256:8a77ce712bf459d3386fa3ed645c7c2115597742f6da1adf56479dd5e041ae14",
   "refusals": [],
   "schema": "autofde-lab/aloop-court-receipt/v1",
   "standing": "BLOCKED",

@@ -16,14 +16,23 @@ import json
 from dataclasses import asdict, dataclass
 from typing import Mapping
 
-__all__ = ["ExecutionSemantics", "ProviderExtinctionResult", "compare_provider_substitution"]
+__all__ = [
+    "ExecutionSemantics",
+    "ProviderExtinctionResult",
+    "compare_provider_substitution",
+]
+
 
 def _canonical(value: object) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    return json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode()
+
 
 @dataclass(frozen=True)
 class ExecutionSemantics:
     """Provider-independent semantic identity plus provider-local observation."""
+
     workorder_digest: str
     command_digest: str
     candidate_digest: str
@@ -42,7 +51,11 @@ class ExecutionSemantics:
 
     @property
     def semantic_digest(self) -> str:
-        return "sha256:" + hashlib.sha256(_canonical(self.semantic_projection())).hexdigest()
+        return (
+            "sha256:"
+            + hashlib.sha256(_canonical(self.semantic_projection())).hexdigest()
+        )
+
 
 @dataclass(frozen=True)
 class ProviderExtinctionResult:
@@ -58,7 +71,10 @@ class ProviderExtinctionResult:
     def verdict(self) -> str:
         return "QUALIFIED" if self.qualified else "NOT_QUALIFIED"
 
-def compare_provider_substitution(before: ExecutionSemantics, after: ExecutionSemantics) -> ProviderExtinctionResult:
+
+def compare_provider_substitution(
+    before: ExecutionSemantics, after: ExecutionSemantics
+) -> ProviderExtinctionResult:
     """Require provider replacement while conserving execution semantics."""
     left = before.semantic_projection()
     right = after.semantic_projection()

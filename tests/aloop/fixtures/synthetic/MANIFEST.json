@@ -24,6 +24,14 @@
       },
       "sha256": "f63fedd15f0a9eca5a161e55a45fb03eff295e649407be5e8e8ba112180169cf"
     },
+    "mutants/exogenous_unattributed_cause.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "UNATTRIBUTED_EXOGENOUS_CAUSE",
+        "exit": 3
+      },
+      "sha256": "0af474b32e2bf50f6e5dc4599ab21b980f1edb6e77f39654f94ba6c24d7b86d7"
+    },
     "mutants/fixed_task_cron.ocel.json": {
       "expect": {
         "class": "FAILED",
@@ -72,6 +80,14 @@
       },
       "sha256": "6a8787e5b692f537679e54f7baf5c65d55e84a4aa8860d4b216cfc0d8f0abb59"
     },
+    "mutants/o2o_hidden_human_plan.ocel.json": {
+      "expect": {
+        "class": "ASSISTED",
+        "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
+        "exit": 3
+      },
+      "sha256": "14a31fbcbff3f10582a9278daf90ff153f2efb8d867fd3362d12b07bd9335dad"
+    },
     "mutants/orphan_receipt.ocel.json": {
       "expect": {
         "class": "FAILED",
@@ -87,6 +103,14 @@
         "exit": 3
       },
       "sha256": "4ee48e7d7633bd2b02408c4165ab1bda4138fe04dadd09ebcc5fb76c5ad72de6"
+    },
+    "mutants/receipt_reuses_old_consequence.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "CONSEQUENCE_RECEIPTED_TWICE",
+        "exit": 3
+      },
+      "sha256": "f0df8000c7689bdd59ebf92486c36b1e9adddb09f4e873eded3b57ed0fee4920"
     },
     "mutants/schema_violation.ocel.json": {
       "expect": {
@@ -111,6 +135,22 @@
         "exit": 3
       },
       "sha256": "4de16d2633c344bac0dbb8acbdaf678dc7db963ce995f00d66e151c017bae04f"
+    },
+    "mutants/timestamp_only_loop.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "AUTOMATION_NOT_AUTONOMY",
+        "exit": 3
+      },
+      "sha256": "2b5ab15b44258855b338c66fa87106f7da0f9f25367430eec543d972a160f510"
+    },
+    "mutants/vacuous_no_actuation.ocel.json": {
+      "expect": {
+        "class": "FAILED",
+        "code": "NO_ACTUATION",
+        "exit": 3
+      },
+      "sha256": "82d5b7c0dcbf100fd5cc1003c88ce45759011db6be5e87dbe0f786e026f6693a"
     },
     "positive.ocel.json": {
       "expect": {

@@ -23,7 +23,18 @@ Admission, in order (any failure -> ``REFUSED``, exit 2):
 Causal graph: event ``p -> e`` iff ``e`` consumes (qualifier ``input`` or
 ``cause``) an object that ``p`` produced (qualifier ``output``; or
 ``consequence`` on an actuation). Nothing else creates an edge -- in
-particular timestamps and log order never do.
+particular timestamps and log order never do. O2O links are read for human
+provenance: a consumed object with an O2O path (any profile qualifier) to a
+``Human`` -- or to an object whose ``origin`` is ``human`` -- is a human cause,
+unless the path passes through the lawful pre-epoch channel (``Objective``,
+``Authority``).
+
+Closing rule (repair round 1): a ``receipt.persist`` closes iteration ``w`` only
+if it binds at least one ``consequence`` produced by an actuation that is
+causally downstream of ``w`` and inside the receipt's own iteration segment.
+A loop that never actuates, or that re-receipts an earlier consequence, cannot
+close; ALOOP-001 additionally requires ``actuations > 0`` (``UAR`` is never
+defaulted from 0/0).
 
 The verdict is a pure function of (log bytes, profile bytes, court source):
 the receipt carries no wall-clock value, so a cold replay is byte-identical.
@@ -54,7 +65,7 @@ __all__ = [
 ]
 
 COURT_ID = "ALOOP-001"
-COURT_VERSION = "aloop-001/v26.9.25"
+COURT_VERSION = "aloop-001/v26.9.25-r1"
 RECEIPT_SCHEMA = "autofde-lab/aloop-court-receipt/v1"
 
 EXIT_QUALIFIED = 0
@@ -332,6 +343,13 @@ class _Graph:
                     self.children[p].append(e.id)
 
         allowed_pre = set(profile["humanPreEpochAllowedOutputTypes"])
+        self.allowed_pre = allowed_pre
+        self.o2o: dict[str, list[tuple[str, str]]] = defaultdict(list)
+        taint = set(profile["o2oHumanTaint"]["qualifiers"])
+        for link in log.object_object_links:
+            if (link.qualifier or "") in taint:
+                self.o2o[link.source_id].append((link.qualifier or "", link.target_id))
+        self._o2o_human_cache: dict[str, str | None] = {}
         self.human_edges: list[tuple[str, str, str]] = []
         # ``human[e]``: e is a post-epoch human act, or has a *direct* human
         # causal in-edge. Deliberately not transitive: one human act does not
@@ -361,6 +379,13 @@ class _Graph:
                 if self.otype[o] == "Human" or self.oattr[o].get("origin") == "human":
                     self.human_edges.append(("<exogenous>", eid, o))
                     hit = True
+            for q, o in self.links[eid]:
+                if q not in causal:
+                    continue
+                via = self.o2o_human(o)
+                if via is not None:
+                    self.human_edges.append((f"<o2o:{via}>", eid, o))
+                    hit = True
             if e.activity != _HUMAN:
                 for q, o in self.links[eid]:
                     if q == "originAuthority" and self.otype[o] == "Human":
@@ -389,6 +414,34 @@ class _Graph:
                         "R_missing_authority",
                         "AUTHORITY_FAILURE",
                     )
+
+    def is_human_object(self, o: str) -> bool:
+        return self.otype[o] == "Human" or self.oattr[o].get("origin") == "human"
+
+    def o2o_human(self, obj: str) -> str | None:
+        """The Human-side object ``obj`` reaches over O2O links, or ``None``.
+
+        Traversal does not enter the lawful pre-epoch channel (``Objective``,
+        ``Authority``): those are human-originated by design and admitted at t0.
+        A consumed object that *is* of such a type is likewise not tainted.
+        """
+        if obj in self._o2o_human_cache:
+            return self._o2o_human_cache[obj]
+        found: str | None = None
+        if self.otype[obj] not in self.allowed_pre:
+            seen = {obj}
+            queue = deque(t for _, t in self.o2o[obj])
+            while queue and found is None:
+                n = queue.popleft()
+                if n in seen or n not in self.otype:
+                    continue
+                seen.add(n)
+                if self.is_human_object(n):
+                    found = n
+                elif self.otype[n] not in self.allowed_pre:
+                    queue.extend(t for _, t in self.o2o[n])
+        self._o2o_human_cache[obj] = found
+        return found
 
     def objects(self, eid: str, qualifier: str) -> list[str]:
         return [o for q, o in self.links[eid] if q == qualifier]
@@ -447,13 +500,48 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
     def iteration_human(w: str) -> bool:
         return g.human[w] or any(g.human[a] for a in g.ascend(w, stop=segment_stops))
 
-    self_generated = [w for w in workorders if not iteration_human(w)]
+    def iteration_exogenous(w: str) -> list[str]:
+        # observe/reobserve legitimately read the world; any other post-epoch
+        # input with no producer in the log is an unattributed cause of w.
+        # Inputs already attributed to a Human are counted as human edges instead.
+        return sorted(
+            {
+                o
+                for a in [w, *g.ascend(w, stop=segment_stops)]
+                if g.post[a] and g.act[a] not in ("observe", _REOBSERVE)
+                for o in g.exogenous[a]
+                if not g.is_human_object(o) and g.o2o_human(o) is None
+            }
+        )
+
+    unattributed = {w: iteration_exogenous(w) for w in workorders}
+    self_generated = [
+        w for w in workorders if not iteration_human(w) and not unattributed[w]
+    ]
     sg = set(self_generated)
+
+    def fresh_consequences(r: str, downstream: set[str]) -> list[str]:
+        segment = set(g.ascend(r, stop=segment_stops))
+        return [
+            c
+            for c in g.objects(r, "consequence")
+            if (ps := g.producers.get(c))
+            and g.act[ps[0]] in g.actuations
+            and ps[0] in downstream
+            and ps[0] in segment
+        ]
+
     nxt: dict[str, set[str]] = defaultdict(set)
     closing_receipts: set[str] = set()
+    unclosed_receipts: set[str] = set()
     for w in self_generated:
-        for r in g.descend(w, stop=_WORKORDER, machine_only=True):
+        downstream = g.descend(w, stop=_WORKORDER, machine_only=True)
+        down = set(downstream)
+        for r in downstream:
             if g.act[r] != _RECEIPT:
+                continue
+            if not fresh_consequences(r, down):
+                unclosed_receipts.add(r)
                 continue
             for o in g.children[r]:
                 if g.act[o] != _REOBSERVE or g.human[o]:
@@ -504,6 +592,17 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
             if not ps or g.act[ps[0]] not in g.actuations or g.pos[ps[0]] > g.pos[r]:
                 orphans.append(r)
                 break
+    receipted_by: dict[str, list[str]] = defaultdict(list)
+    out_of_segment: list[str] = []
+    for r in [e for e in events if g.act[e] == _RECEIPT]:
+        segment = set(g.ascend(r, stop=segment_stops))
+        for c in g.objects(r, "consequence"):
+            receipted_by[c].append(r)
+            ps = g.producers.get(c) or []
+            if ps and g.act[ps[0]] in g.actuations and ps[0] not in segment:
+                if r not in out_of_segment:
+                    out_of_segment.append(r)
+    rereceipted = sorted(c for c, rs in receipted_by.items() if len(rs) > 1)
     by_key: dict[str, set[str]] = defaultdict(set)
     for a in actuations:
         for c in g.objects(a, "consequence"):
@@ -560,11 +659,11 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
     human_events = [e for e in events if g.act[e] == _HUMAN]
 
     metrics = {
-        "HIR": _ratio(len(human_targets), len(caused_post)) or 0.0,
+        "HIR": _ratio(len(human_targets), len(caused_post)),
         "ALD": ald,
         "LCR": _ratio(len(closing_receipts), len(receipts)),
         "RR": _ratio(len(recovered), len(failures)),
-        "UAR": _ratio(len(unreceipted), len(actuations)) or 0.0,
+        "UAR": _ratio(len(unreceipted), len(actuations)),
         "PSR": _ratio(len(substituted), len(unavailable)),
         "consecutive_self_generated_transitions": ald,
         "closed_loop_cycles": closed_cycles,
@@ -574,6 +673,10 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
         "uncaused_actuations": len(uncaused),
         "duplicate_consequences": len(duplicates),
         "orphan_receipts": len(orphans),
+        "receipts_without_fresh_consequence": len(unclosed_receipts),
+        "receipts_out_of_segment": len(out_of_segment),
+        "consequences_receipted_more_than_once": len(rereceipted),
+        "unattributed_cause_workorders": sum(1 for w in workorders if unattributed[w]),
         "stale_subject_receipts": len(stale),
         "unknown_frontier_leakage": len(leakage),
         "workorders": len(workorders),
@@ -614,6 +717,25 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
                 f"{sorted(orphans)[:8]}",
             )
         )
+    if out_of_segment:
+        integrity.append(
+            _reason(
+                "RECEIPT_CONSEQUENCE_OUT_OF_SEGMENT",
+                "R_missing_consequence",
+                "EVIDENCE_FAILURE",
+                "receipts bind a consequence produced outside their own iteration "
+                f"segment: {sorted(out_of_segment)[:8]}",
+            )
+        )
+    if rereceipted:
+        integrity.append(
+            _reason(
+                "CONSEQUENCE_RECEIPTED_TWICE",
+                "R_missing_consequence",
+                "EVIDENCE_FAILURE",
+                f"one DO receipted by several receipts: {rereceipted[:8]}",
+            )
+        )
     if duplicates:
         integrity.append(
             _reason(
@@ -651,6 +773,29 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
             )
         )
     reasons.extend(integrity)
+    unattributed_ws = sorted(
+        (w for w in workorders if unattributed[w]), key=g.pos.__getitem__
+    )
+    if unattributed_ws:
+        reasons.append(
+            _reason(
+                "UNATTRIBUTED_EXOGENOUS_CAUSE",
+                "mu_on_O",
+                "EVIDENCE_FAILURE",
+                f"{len(unattributed_ws)} workorders are caused by post-epoch inputs with "
+                f"no producer in the log: "
+                f"{[[w, unattributed[w][:2]] for w in unattributed_ws[:4]]}",
+            )
+        )
+    if not actuations:
+        reasons.append(
+            _reason(
+                "NO_ACTUATION",
+                "admission_vacuous",
+                "CAPABILITY_GAP",
+                "the episode never actuates; a loop without DO cannot close",
+            )
+        )
     if human_edges:
         reasons.append(
             _reason(
@@ -668,7 +813,9 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
                 "R_not_fed_back",
                 "CAPABILITY_GAP",
                 "no receipt[n] -> reobserve[n+1] -> workorder[n+1] edge with a self-generated "
-                f"cause chain (workorders={len(workorders)}, receipts={len(receipts)})",
+                "cause chain and a receipt binding a fresh in-iteration consequence "
+                f"(workorders={len(workorders)}, receipts={len(receipts)}, "
+                f"actuations={len(actuations)})",
             )
         )
     blocked = [
@@ -684,7 +831,7 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
         )
     elif human_edges:
         klass = "ASSISTED"
-    elif closed_cycles == 0:
+    elif closed_cycles == 0 or not actuations:
         klass = "FAILED"
     else:
         klass = "AUTONOMOUS"
@@ -704,11 +851,14 @@ def _aggregate(episodes: list[dict[str, Any]]) -> dict[str, Any]:
         return sum(ep["metrics"][key] for ep in episodes)
 
     human = total("human_causal_edges_after_epoch")
+    hirs = [ep["metrics"]["HIR"] for ep in episodes]
     return {
         "episodes": len(episodes),
         "ALD_max": max((ep["metrics"]["ALD"] for ep in episodes), default=0),
-        "HIR_max": max((ep["metrics"]["HIR"] for ep in episodes), default=0.0),
-        "UAR": _ratio(total("unreceipted_actuations"), total("actuations")) or 0.0,
+        # undefined (0/0) is never defaulted to 0: None propagates and fails the gate
+        "HIR_max": None if not hirs or None in hirs else max(hirs),
+        "UAR": _ratio(total("unreceipted_actuations"), total("actuations")),
+        "actuations": total("actuations"),
         "human_causal_edges_after_epoch": human,
         "closed_loop_cycles": total("closed_loop_cycles"),
         "unreceipted_actuations": total("unreceipted_actuations"),
@@ -785,7 +935,16 @@ def evaluate_document(
                 f"ALD={metrics['ALD_max']} < {threshold['min_consecutive_self_generated_transitions']}",
             )
         )
-    if metrics["HIR_max"] != threshold["HIR"]:
+    if metrics["HIR_max"] is None:
+        unmet.append(
+            _reason(
+                "HIR_UNDEFINED",
+                "admission_vacuous",
+                "EVIDENCE_FAILURE",
+                "HIR is 0/0: no caused post-epoch event to measure",
+            )
+        )
+    elif metrics["HIR_max"] != threshold["HIR"]:
         unmet.append(
             _reason(
                 "HIR_NONZERO",
@@ -794,7 +953,17 @@ def evaluate_document(
                 f"HIR={metrics['HIR_max']}",
             )
         )
-    if metrics["UAR"] != threshold["UAR"]:
+    if metrics["actuations"] < threshold["min_actuations"]:
+        unmet.append(
+            _reason(
+                "NO_ACTUATION",
+                "admission_vacuous",
+                "CAPABILITY_GAP",
+                f"actuations={metrics['actuations']} < {threshold['min_actuations']}; "
+                "UAR is undefined, not 0",
+            )
+        )
+    elif metrics["UAR"] != threshold["UAR"]:
         unmet.append(
             _reason(
                 "UAR_NONZERO",

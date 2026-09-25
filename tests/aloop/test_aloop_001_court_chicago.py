@@ -113,7 +113,8 @@ def test_mutation_kill_ratio_is_total(corpus: Path) -> None:
     killed = sum(
         evaluate_path(corpus / rel)[0] != EXIT_QUALIFIED for rel in MUTANT_FILES
     )
-    assert (killed, len(MUTANT_FILES)) == (14, 14)
+    assert len(MUTANT_FILES) == 19
+    assert (killed, len(MUTANT_FILES)) == (19, 19)
 
 
 def test_empty_log_is_refused_not_vacuously_qualified(tmp_path: Path) -> None:
@@ -204,3 +205,39 @@ def test_real_trace_verdict_is_automation_not_autonomy() -> None:
     assert m["receipts"] == 3
     # ... but nothing in the chain issues a WorkOrder, so no loop closes
     assert m["workorders"] == 0 and m["closed_loop_cycles"] == 0 and m["ALD"] == 0
+
+
+def test_vacuous_loop_never_qualifies_and_uar_is_not_defaulted(corpus: Path) -> None:
+    code, receipt = evaluate_path(corpus / "mutants/vacuous_no_actuation.ocel.json")
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    m = episode["metrics"]
+    assert (
+        m["actuations"] == 0 and m["UAR"] is None and receipt["metrics"]["UAR"] is None
+    )
+    assert m["closed_loop_cycles"] == 0 and m["ALD"] == 0
+    assert m["receipts_without_fresh_consequence"] == 101
+    assert "NO_ACTUATION" in set(iter_reasons(receipt))
+
+
+def test_receipt_of_an_earlier_consequence_does_not_close_a_loop(corpus: Path) -> None:
+    code, receipt = evaluate_path(
+        corpus / "mutants/receipt_reuses_old_consequence.ocel.json"
+    )
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    m = episode["metrics"]
+    assert m["ALD"] <= 1 and m["consequences_receipted_more_than_once"] == 1
+    assert m["receipts_out_of_segment"] == 100
+    assert {"CONSEQUENCE_RECEIPTED_TWICE", "RECEIPT_CONSEQUENCE_OUT_OF_SEGMENT"} <= set(
+        iter_reasons(receipt)
+    )
+
+
+def test_o2o_derived_from_human_is_a_human_causal_edge(corpus: Path) -> None:
+    code, receipt = evaluate_path(corpus / "mutants/o2o_hidden_human_plan.ocel.json")
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    assert episode["class"] == "ASSISTED"
+    assert episode["metrics"]["human_causal_edges_after_epoch"] == 101
+    assert episode["metrics"]["HIR"] > 0
