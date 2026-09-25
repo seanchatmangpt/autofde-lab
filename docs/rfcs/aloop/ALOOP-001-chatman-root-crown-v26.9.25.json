@@ -2,7 +2,7 @@
   "authority": "NONE (court verdict only; grants no DO authority)",
   "claim": "typed failure: see unmet and episode reasons",
   "court": "ALOOP-001",
-  "court_source_sha256": "fa1bdf121590c04dd7d55637359f1708ec9f36d8fc6b780215f274f85daad236",
+  "court_source_sha256": "a58d14526ce0cd8710f9271734f6e57e6724c5415233440e8ea325a81ce6eb49",
   "court_subject_sha": null,
   "court_version": "aloop-001/v26.9.25-r9",
   "envelope_sha256": "sha256:c9867231ca296e1bc74368fccdffb4253f8a99c677ba8cfb2aee023e4f62d7d5",
@@ -116,7 +116,7 @@
     "min_actuations": 1,
     "min_consecutive_self_generated_transitions": 100
   },
-  "receipt_digest": "sha256:1e4495ee8ec2ef304750c98cbe2de499e6c452f5cf6198a4ef50305ac5dbb3c3",
+  "receipt_digest": "sha256:4926021ceec9c13b7b433cd7b3c8b9973c7b4a6f7c590fa009067a9b64ec4944",
   "refusals": [],
   "rules_consistent": false,
   "schema": "autofde-lab/aloop-court-receipt/v1",

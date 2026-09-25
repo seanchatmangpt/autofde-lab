@@ -25,10 +25,19 @@ A sealed log moves authorship of the evidence stream out of the judged party:
   ``actuate``/``commit``/``merge`` event whose output ``Subject`` carries that
   SHA (and every such sealed event claiming a named repository is in the
   range, and no sealed commit claim names an unwitnessed repository); (b)
-  every entry of a supplied human-message ledger at or after ``t0`` maps to
-  exactly one sealed ``human.intervene`` event with that ``messageId``, at
-  exactly the witnessed time and after ``episode.start`` in log order; an
-  event carries at most one ``messageId``.
+  EVERY entry of a supplied human-message ledger maps to exactly one sealed
+  ``human.intervene`` event with that ``messageId``, at exactly the witnessed
+  time, on the same side of ``episode.start`` in log order as its witnessed
+  time is of ``t0``; an event carries at most one ``messageId``;
+* the log clock is anchored outside the author's bytes (court r9 repair,
+  attack C2 "clock shift"): each sealed commit event's time must equal, to
+  the second, the git committer time of its SHA, and ``t0`` (the declared
+  ``episode.start``) must lie in ``[base committer time, first witnessed
+  commit event]``. Without that anchor a witnessed human message cannot be
+  placed relative to ``t0`` at all -- the author could shift every event
+  time and push a mid-loop message before a declared epoch -- so a non-empty
+  human ledger over an unanchored clock yields ``complete = None`` (never
+  QUALIFIED), and a mismatch is refused ``SEAL_CLOCK_MISMATCH``.
 
 The chain and signature code is the ledger's own
 (:func:`~autofde_lab._cache.provenance.verify_ledger_records`), generalized
@@ -55,8 +64,10 @@ from autofde_lab.ocel.model import parse_ns
 __all__ = [
     "COMMIT_ACTIVITIES",
     "AloopSealRecord",
+    "CommitClock",
     "SealInputs",
     "git_rev_list",
+    "git_witness",
     "seal_document",
     "verify_seal",
 ]
@@ -64,6 +75,7 @@ __all__ = [
 #: activities whose output ``Subject`` is a repository commit.
 COMMIT_ACTIVITIES = frozenset({"actuate", "commit", "merge"})
 _HUMAN = "human.intervene"
+_SECOND = 1_000_000_000
 
 
 def _canonical(value: Any) -> bytes:
@@ -89,6 +101,19 @@ class AloopSealRecord:
 
 
 @dataclass(frozen=True)
+class CommitClock:
+    """The git clock of one witnessed range, read from git, not from the log.
+
+    ``times``: commit SHA -> committer time (epoch seconds). ``floor``: the
+    latest committer time of the range's excluded boundary (the base), or
+    ``None`` when the range has no lower boundary.
+    """
+
+    times: Mapping[str, int]
+    floor: int | None = None
+
+
+@dataclass(frozen=True)
 class SealInputs:
     """What a verifier supplies that the judged author does not control.
 
@@ -96,6 +121,8 @@ class SealInputs:
     -> ordered commit SHAs from ``git rev-list`` (``None`` = not witnessed).
     ``human_messages``: the out-of-band human-message ledger, entries
     ``{"id": ..., "time": <OCEL time>}`` (``None`` = not witnessed).
+    ``commit_clock``: repository object id -> :class:`CommitClock` (``None``
+    = clock not witnessed; a non-empty human ledger then cannot be complete).
     """
 
     ledger: Path
@@ -103,6 +130,7 @@ class SealInputs:
     commits: Mapping[str, Sequence[str]] | None = None
     human_messages: Sequence[Mapping[str, str]] | None = None
     key_material: Sequence[bytes] = field(default_factory=tuple)
+    commit_clock: Mapping[str, CommitClock] | None = None
 
 
 def git_rev_list(repo: Path | str, rev_range: str) -> list[str]:
@@ -114,6 +142,42 @@ def git_rev_list(repo: Path | str, rev_range: str) -> list[str]:
         check=True,
     )
     return [line for line in out.stdout.split() if line]
+
+
+def _git_out(repo: Path | str, *args: str) -> str:
+    return subprocess.run(
+        ["git", "-C", str(repo), *args], capture_output=True, text=True, check=True
+    ).stdout
+
+
+def git_witness(repo: Path | str, rev_range: str) -> tuple[list[str], CommitClock]:
+    """Commits of ``rev_range`` (oldest first) and their git clock (real ``git``).
+
+    The floor is the newest committer time among the range's excluded
+    revisions (``git rev-parse`` lines starting with ``^``).
+    """
+    shas = git_rev_list(repo, rev_range)
+    times: dict[str, int] = {}
+    if shas:
+        for line in _git_out(
+            repo, "log", "--no-walk=unsorted", "--format=%H %ct", *shas
+        ).splitlines():
+            sha, _, ct = line.partition(" ")
+            times[sha] = int(ct)
+    excluded = [
+        line[1:]
+        for line in _git_out(repo, "rev-parse", rev_range).split()
+        if line.startswith("^")
+    ]
+    floor = None
+    if excluded:
+        floor = max(
+            int(x)
+            for x in _git_out(
+                repo, "log", "--no-walk=unsorted", "--format=%ct", *excluded
+            ).split()
+        )
+    return shas, CommitClock(times=times, floor=floor)
 
 
 def seal_document(
@@ -244,6 +308,8 @@ def verify_seal(document: Any, inputs: SealInputs, log_bytes: bytes) -> dict[str
     starts = [parse_ns(e["time"]) for e in events if e.get("type") == "episode.start"]
     t0 = min(starts) if starts else None
 
+    by_id = {str(e.get("id")): e for e in events}
+    anchored = False
     complete = True
     if inputs.commits is None:
         complete = None
@@ -302,6 +368,60 @@ def verify_seal(document: Any, inputs: SealInputs, log_bytes: bytes) -> dict[str
                         )
                     )
                     complete = False
+        # Clock anchor (court r9 repair, attack C2): the author signs whatever
+        # times it writes, so the epoch must be tied to a clock it does not
+        # write. Each sealed commit event is dated by git's committer time of
+        # its SHA, and t0 is bounded by the base and the first commit.
+        clock = inputs.commit_clock
+        if clock is not None and all(r in clock for r in witnessed):
+            anchor_ns: list[int] = []
+            clock_ok = True
+            for repo, shas in sorted(witnessed.items()):
+                for sha in shas:
+                    hits = claims.get((repo, sha), [])
+                    if len(hits) != 1:
+                        continue
+                    ev = by_id[hits[0]]
+                    e_ns = parse_ns(str(ev["time"]))
+                    ct = clock[repo].times.get(sha)
+                    if ct is None or e_ns // _SECOND != ct:
+                        refusals.append(
+                            _refusal(
+                                "SEAL_CLOCK_MISMATCH",
+                                "R_missing_identity",
+                                f"{hits[0]!r} claims {repo}@{sha} at {ev.get('time')} "
+                                f"but git committer time is {ct} (epoch s)",
+                            )
+                        )
+                        clock_ok = False
+                        continue
+                    anchor_ns.append(e_ns)
+            floors = [c.floor for r, c in clock.items() if r in witnessed]
+            floor_s = max((f for f in floors if f is not None), default=None)
+            if t0 is not None and floor_s is not None and t0 < floor_s * _SECOND:
+                refusals.append(
+                    _refusal(
+                        "SEAL_CLOCK_MISMATCH",
+                        "R_missing_identity",
+                        f"episode.start at {t0} ns precedes the witnessed base "
+                        f"commit time {floor_s} s",
+                    )
+                )
+                clock_ok = False
+            if t0 is not None and anchor_ns and t0 > min(anchor_ns):
+                refusals.append(
+                    _refusal(
+                        "SEAL_CLOCK_MISMATCH",
+                        "R_missing_identity",
+                        f"episode.start at {t0} ns follows the first witnessed "
+                        f"commit event at {min(anchor_ns)} ns",
+                    )
+                )
+                clock_ok = False
+            if not clock_ok:
+                complete = False
+            anchored = clock_ok and bool(anchor_ns) and t0 is not None
+    report["clock_anchored"] = anchored
     if inputs.human_messages is None:
         complete = None if complete is not False else False
     else:
@@ -335,21 +455,20 @@ def verify_seal(document: Any, inputs: SealInputs, log_bytes: bytes) -> dict[str
                 complete = False
             for mid in mids:
                 by_msg.setdefault(mid, []).append((i, e))
-        after = [
-            m
-            for m in inputs.human_messages
-            if t0 is None or parse_ns(str(m["time"])) >= t0
-        ]
-        report["witnesses"]["human_messages"] = len(after)
-        for m in after:
+        # Every witnessed message, pre-epoch ones included: a pre-t0 filter
+        # read t0 from the author's bytes, so a shifted clock dropped genuine
+        # mid-loop messages from the witness set (court r9 repair, C2).
+        messages = list(inputs.human_messages)
+        report["witnesses"]["human_messages"] = len(messages)
+        for m in messages:
             hits = by_msg.get(str(m["id"]), [])
             if len(hits) != 1:
                 refusals.append(
                     _refusal(
                         "SEAL_INCOMPLETE_HUMAN",
                         "mu_on_O",
-                        f"human message {m['id']!r} at/after t0: {len(hits)} sealed "
-                        "human.intervene events (exactly 1 required)",
+                        f"human message {m['id']!r} at {m['time']}: {len(hits)} "
+                        "sealed human.intervene events (exactly 1 required)",
                     )
                 )
                 complete = False
@@ -357,18 +476,24 @@ def verify_seal(document: Any, inputs: SealInputs, log_bytes: bytes) -> dict[str
             pos, ev = hits[0]
             m_ns = parse_ns(str(m["time"]))
             e_ns = parse_ns(str(ev["time"]))
-            if e_ns != m_ns or (start_pos is not None and pos <= start_pos):
+            wrong_side = False
+            if start_pos is not None and t0 is not None:
+                wrong_side = (pos <= start_pos) if m_ns >= t0 else (pos > start_pos)
+            if e_ns != m_ns or wrong_side:
                 refusals.append(
                     _refusal(
                         "SEAL_INCOMPLETE_HUMAN",
                         "mu_on_O",
-                        f"human message {m['id']!r} witnessed at {m['time']} at/after "
-                        f"t0 but sealed as {ev.get('id')!r} at {ev.get('time')} "
-                        f"(log position {pos}, episode.start at {start_pos}): "
-                        "time must match and the event must follow episode.start",
+                        f"human message {m['id']!r} witnessed at {m['time']} but "
+                        f"sealed as {ev.get('id')!r} at {ev.get('time')} (log "
+                        f"position {pos}, episode.start at {start_pos}): time must "
+                        "match and log order must agree with t0",
                     )
                 )
                 complete = False
+        if messages and not anchored and complete is True:
+            # the messages cannot be placed relative to an author-chosen t0
+            complete = None
     report["complete"] = complete
     return report
 

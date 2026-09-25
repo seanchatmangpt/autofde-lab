@@ -13,8 +13,9 @@ stdout when ``--out`` is omitted.
 Seal options (sealed-recorder profile, court r9): ``--seal LEDGER.jsonl``
 ``--key-file FILE --key-id ID`` (recorder verification key; never inside the
 log), completeness witnesses ``--git REPO_OBJECT_ID=PATH:REV_RANGE``
-(repeatable; real ``git rev-list``) and ``--human-ledger FILE`` (JSON list of
-``{"id", "time"}`` human messages).
+(repeatable; real ``git rev-list`` plus the committer clock of the range and
+its base, which anchors the log's epoch) and ``--human-ledger FILE`` (JSON list
+of ``{"id", "time"}`` human messages; every entry must be sealed).
 """
 
 from __future__ import annotations
@@ -54,7 +55,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.seal is not None:
         from autofde_lab.aloop.seal import (
             SealInputs,
-            git_rev_list,
+            git_witness,
             keyring_from_file,
             load_json,
         )
@@ -63,12 +64,13 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("--seal requires --key-file and --key-id")
         keyring, key = keyring_from_file(args.key_file, args.key_id)
         commits = None
+        clock = None
         if args.git:
-            commits = {}
+            commits, clock = {}, {}
             for spec in args.git:
                 repo_id, _, rest = spec.partition("=")
                 path, _, rev_range = rest.rpartition(":")
-                commits[repo_id] = git_rev_list(path, rev_range)
+                commits[repo_id], clock[repo_id] = git_witness(path, rev_range)
         humans = load_json(args.human_ledger) if args.human_ledger else None
         seal = SealInputs(
             ledger=args.seal,
@@ -76,6 +78,7 @@ def main(argv: list[str] | None = None) -> int:
             commits=commits,
             human_messages=humans,
             key_material=(key,),
+            commit_clock=clock,
         )
     code, receipt = evaluate_path(
         args.log,

@@ -37,7 +37,13 @@ from autofde_lab.aloop import (
 )
 from autofde_lab.aloop.court import REPO_ROOT
 from autofde_lab.aloop.ocel_builder import dump
-from autofde_lab.aloop.seal import SealInputs, git_rev_list, seal_document
+from autofde_lab.aloop.seal import (
+    CommitClock,
+    SealInputs,
+    git_rev_list,
+    git_witness,
+    seal_document,
+)
 from autofde_lab.aloop.synth import (
     MUTANTS,
     POSITIVE_ITERATIONS,
@@ -76,18 +82,57 @@ def _git(repo: Path, *args: str) -> str:
     ).stdout.strip()
 
 
+def _commit_at(repo: Path, message: str, epoch_s: int) -> None:
+    """A real commit whose committer (and author) clock is ``epoch_s``."""
+    stamp = f"@{epoch_s} +0000"
+    env = dict(
+        os.environ,
+        GIT_CONFIG_NOSYSTEM="1",
+        GIT_CONFIG_GLOBAL=os.devnull,
+        GIT_COMMITTER_DATE=stamp,
+        GIT_AUTHOR_DATE=stamp,
+    )
+    subprocess.run(
+        [
+            "git", "-C", str(repo),
+            "-c", "user.name=aloop-recorder",
+            "-c", "user.email=aloop@example.invalid",
+            "-c", "commit.gpgsign=false",
+            "commit", "-q", "--allow-empty", "-m", message,
+        ],
+        capture_output=True, text=True, check=True, env=env,
+    )  # fmt: skip
+
+
+def _commit_event_seconds() -> list[int]:
+    """Epoch seconds of the positive's commit events, in iteration order: the
+    recorder dated each one by the commit it produced."""
+    doc = build_positive()
+    return [
+        parse_ns(e["time"]) // SECOND for e in doc["events"] if e["type"] == "commit"
+    ]
+
+
 @pytest.fixture(scope="module")
-def repo(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, str, list[str]]:
-    """A real repository: a base commit plus one commit per loop iteration."""
+def repo(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> tuple[Path, str, list[str], CommitClock]:
+    """A real repository: a base commit at the synthetic epoch plus one commit
+    per loop iteration, each committed at its commit event's time, and the git
+    clock read back through :func:`git_witness`."""
     path = tmp_path_factory.mktemp("aloop-repo")
     _git(path, "init", "-q")
-    _git(path, "commit", "-q", "--allow-empty", "-m", "base")
+    _commit_at(path, "base", T0 // SECOND)
     base = _git(path, "rev-parse", "HEAD")
-    for i in range(POSITIVE_ITERATIONS):
-        _git(path, "commit", "-q", "--allow-empty", "-m", f"iteration {i}")
-    shas = git_rev_list(path, f"{base}..HEAD")
-    assert len(shas) == POSITIVE_ITERATIONS
-    return path, base, shas
+    seconds = _commit_event_seconds()
+    assert len(seconds) == POSITIVE_ITERATIONS
+    for i, when in enumerate(seconds):
+        _commit_at(path, f"iteration {i}", when)
+    shas, clock = git_witness(path, f"{base}..HEAD")
+    assert shas == git_rev_list(path, f"{base}..HEAD")
+    assert len(shas) == POSITIVE_ITERATIONS and clock.floor == T0 // SECOND
+    assert [clock.times[s] for s in shas] == seconds
+    return path, base, shas, clock
 
 
 @pytest.fixture
@@ -115,6 +160,7 @@ def _inputs(
     signer: AttestationSigner,
     commits: dict | None,
     humans: list | None = None,
+    clock: CommitClock | None = None,
 ) -> SealInputs:
     return SealInputs(
         ledger=ledger,
@@ -122,11 +168,12 @@ def _inputs(
         commits=commits,
         human_messages=humans if humans is not None else [],
         key_material=(_key(signer),),
+        commit_clock={"repo-1": clock} if clock is not None else None,
     )
 
 
 def _bound(repo: tuple[Path, str, list[str]]) -> dict:
-    _path, base, shas = repo
+    _path, base, shas, _clock = repo
     return bind_commits(build_positive(), base, shas)
 
 
@@ -137,7 +184,7 @@ def _codes(receipt: dict) -> set[str]:
 def test_sealed_complete_positive_qualifies(tmp_path, repo, signer) -> None:
     log, ledger = _write(tmp_path, _bound(repo), signer)
     code, receipt = evaluate_path(
-        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]})
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, clock=repo[3])
     )
     assert code == EXIT_QUALIFIED, (receipt.get("refusals"), receipt.get("unmet"))
     assert receipt["verdict"] == "QUALIFIED" and receipt["rules_consistent"]
@@ -203,17 +250,152 @@ def test_omitted_human_event_is_refused(tmp_path, repo, signer) -> None:
     log, ledger = _write(tmp_path, _bound(repo), signer)
     humans = [{"id": "msg-7", "time": format_ns(T0 + 50 * SECOND)}]
     code, receipt = evaluate_path(
-        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, humans)
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, humans, clock=repo[3])
     )
     assert code == EXIT_REFUSED and receipt["verdict"] == "REFUSED"
     assert _codes(receipt) == {"SEAL_INCOMPLETE_HUMAN"}
     assert receipt["refusals"][0]["broken_term"] == "mu_on_O"
-    # a message before t0 is the lawful goal channel: not required in the log
+    # a pre-epoch message is still witnessed: omitting it is refused too (the
+    # pre-t0 filter read t0 from the author's bytes -- court r9 repair, C2)
     early = [{"id": "msg-0", "time": format_ns(T0 + SECOND)}]
+    code, receipt = evaluate_path(
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, early, clock=repo[3])
+    )
+    assert code == EXIT_REFUSED and _codes(receipt) == {"SEAL_INCOMPLETE_HUMAN"}
+
+
+def test_pre_epoch_goal_message_sealed_on_h_pre_qualifies(
+    tmp_path, repo, signer
+) -> None:
+    """Control: the lawful goal channel -- a witnessed pre-t0 message sealed as
+    the pre-epoch human.intervene at its witnessed time -- qualifies."""
+    doc = _bound(repo)
+    h_pre = _event(doc, "h-pre")
+    h_pre["attributes"].append({"name": "messageId", "value": "msg-0"})
+    log, ledger = _write(tmp_path, doc, signer)
+    early = [{"id": "msg-0", "time": h_pre["time"]}]
+    code, receipt = evaluate_path(
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, early, clock=repo[3])
+    )
+    assert code == EXIT_QUALIFIED, receipt["refusals"]
+    assert receipt["sealing"]["clock_anchored"] is True
+    assert receipt["sealing"]["witnesses"]["human_messages"] == 1
+
+
+def _shift_clock(doc: dict, delta_ns: int) -> dict:
+    """Court attack C2: move every event time and every post-epoch attribute
+    time by ``delta_ns`` -- the recorder signs whatever times it is handed."""
+    for e in doc["events"]:
+        e["time"] = format_ns(parse_ns(e["time"]) + delta_ns)
+    for o in doc["objects"]:
+        for a in o.get("attributes", ()):
+            if "time" in a and parse_ns(a["time"]) > 0:
+                a["time"] = format_ns(parse_ns(a["time"]) + delta_ns)
+    return doc
+
+
+DAY = 86_400 * SECOND
+
+
+def test_clock_shift_hiding_mid_loop_message_is_refused(tmp_path, repo, signer) -> None:
+    """C2: the whole log clock is shifted one day forward so a genuine mid-loop
+    human message (omitted from the log) falls before the declared t0. The
+    commit events no longer match git's committer clock: refused."""
+    doc = _shift_clock(_bound(repo), DAY)
+    log, ledger = _write(tmp_path, doc, signer)
+    humans = [{"id": "m-mid", "time": format_ns(T0 + 50 * SECOND)}]
+    code, receipt = evaluate_path(
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, humans, clock=repo[3])
+    )
+    assert code == EXIT_REFUSED and receipt["verdict"] == "REFUSED", receipt
+    assert {"SEAL_CLOCK_MISMATCH", "SEAL_INCOMPLETE_HUMAN"} <= _codes(receipt)
+    assert receipt["sealing"]["complete"] is False
+    assert receipt["sealing"]["clock_anchored"] is False
+    # without the git clock the same log cannot be complete: never exit 0
+    code, receipt = evaluate_path(
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, humans)
+    )
+    assert code != EXIT_QUALIFIED and receipt["verdict"] != "QUALIFIED"
+
+
+def test_clock_shift_with_message_sealed_pre_epoch_is_refused(
+    tmp_path, repo, signer
+) -> None:
+    """C2 variant: the shifted log does seal the mid-loop message, at its true
+    time, as a pre-epoch act -- the git clock still refuses the epoch."""
+    doc = _shift_clock(_bound(repo), DAY)
+    _decoy_human(doc, "e-start", "h-mid", "m-mid", "note-mid")
+    _event(doc, "h-mid")["time"] = format_ns(T0 + 50 * SECOND)
+    log, ledger = _write(tmp_path, doc, signer)
+    humans = [{"id": "m-mid", "time": format_ns(T0 + 50 * SECOND)}]
+    code, receipt = evaluate_path(
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, humans, clock=repo[3])
+    )
+    assert code == EXIT_REFUSED, receipt
+    assert "SEAL_CLOCK_MISMATCH" in _codes(receipt)
+
+
+def test_epoch_declared_after_first_commit_is_refused(tmp_path, repo, signer) -> None:
+    """Only episode.start moves (commit events keep git's clock): t0 later than
+    the first witnessed commit is refused."""
+    doc = _bound(repo)
+    first = _event(doc, "e-commit-0")["time"]
+    _event(doc, "e-start")["time"] = format_ns(parse_ns(first) + 1)
+    log, ledger = _write(tmp_path, doc, signer)
+    code, receipt = evaluate_path(
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, [], clock=repo[3])
+    )
+    assert code == EXIT_REFUSED
+    assert "SEAL_CLOCK_MISMATCH" in _codes(receipt)
+
+
+def test_epoch_before_base_commit_is_refused(tmp_path, repo, signer) -> None:
+    doc = _bound(repo)
+    _event(doc, "h-pre")["time"] = format_ns(T0 - 3 * SECOND)
+    _event(doc, "e-start")["time"] = format_ns(T0 - 2 * SECOND)
+    log, ledger = _write(tmp_path, doc, signer)
+    code, receipt = evaluate_path(
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, [], clock=repo[3])
+    )
+    assert code == EXIT_REFUSED
+    assert "SEAL_CLOCK_MISMATCH" in _codes(receipt)
+
+
+def test_commit_event_off_git_clock_by_one_second_is_refused(
+    tmp_path, repo, signer
+) -> None:
+    doc = _bound(repo)
+    ev = _event(doc, "e-commit-50")
+    ev["time"] = format_ns(parse_ns(ev["time"]) + SECOND)
+    log, ledger = _write(tmp_path, doc, signer)
+    code, receipt = evaluate_path(
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, [], clock=repo[3])
+    )
+    assert code == EXIT_REFUSED
+    assert "SEAL_CLOCK_MISMATCH" in _codes(receipt)
+    assert all(
+        r["broken_term"] == "R_missing_identity"
+        for r in receipt["refusals"]
+        if r["code"] == "SEAL_CLOCK_MISMATCH"
+    )
+
+
+def test_human_ledger_over_unanchored_clock_is_never_complete(
+    tmp_path, repo, signer
+) -> None:
+    """A non-empty human ledger with no git clock: the messages cannot be
+    placed relative to an author-chosen t0, so the seal is not complete."""
+    doc = _bound(repo)
+    h_pre = _event(doc, "h-pre")
+    h_pre["attributes"].append({"name": "messageId", "value": "msg-0"})
+    log, ledger = _write(tmp_path, doc, signer)
+    early = [{"id": "msg-0", "time": h_pre["time"]}]
     code, receipt = evaluate_path(
         log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, early)
     )
-    assert code == EXIT_QUALIFIED, receipt["refusals"]
+    assert code == EXIT_NOT_QUALIFIED and receipt["verdict"] == CONSISTENT
+    assert receipt["sealing"]["complete"] is None
+    assert receipt["sealing"]["clock_anchored"] is False
 
 
 def test_recorded_human_event_is_sealed_but_assisted(tmp_path, repo, signer) -> None:
@@ -226,7 +408,7 @@ def test_recorded_human_event_is_sealed_but_assisted(tmp_path, repo, signer) -> 
     log, ledger = _write(tmp_path, doc, signer)
     humans = [{"id": "msg-7", "time": human["time"]}]
     code, receipt = evaluate_path(
-        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, humans)
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, humans, clock=repo[3])
     )
     assert code == EXIT_NOT_QUALIFIED, receipt["refusals"]
     assert receipt["sealing"]["complete"] is True
@@ -262,7 +444,7 @@ def _decoy_human(doc: dict, before: str, eid: str, mid: str, out: str) -> None:
 def _assert_human_relabel_refused(tmp_path, repo, signer, doc, humans) -> None:
     log, ledger = _write(tmp_path, doc, signer)
     code, receipt = evaluate_path(
-        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, humans)
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, humans, clock=repo[3])
     )
     assert code == EXIT_REFUSED and receipt["verdict"] == "REFUSED", receipt
     assert "SEAL_INCOMPLETE_HUMAN" in _codes(receipt)
@@ -365,7 +547,7 @@ def test_event_deleted_after_sealing_is_refused(tmp_path, repo, signer) -> None:
     edited["events"] = [e for e in edited["events"] if e["id"] != "h-post-50"]
     dump(edited, log)
     code, receipt = evaluate_path(
-        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]})
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, clock=repo[3])
     )
     assert code == EXIT_REFUSED
     assert _codes(receipt) == {"SEAL_BIJECTION"}
@@ -380,7 +562,7 @@ def test_object_edited_after_sealing_is_refused(tmp_path, repo, signer) -> None:
     )
     dump(edited, log)
     code, receipt = evaluate_path(
-        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]})
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, clock=repo[3])
     )
     assert code == EXIT_REFUSED
     assert "close digest" in receipt["refusals"][0]["detail"]
@@ -394,7 +576,7 @@ def test_forged_chain_is_refused(tmp_path, repo, signer) -> None:
     lines[10] = json.dumps(record, sort_keys=True, separators=(",", ":"))
     ledger.write_text("\n".join(lines) + "\n")
     code, receipt = evaluate_path(
-        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]})
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, clock=repo[3])
     )
     assert code == EXIT_REFUSED
     assert _codes(receipt) == {"SEAL_CHAIN_INVALID"}
@@ -406,7 +588,7 @@ def test_dropped_ledger_record_is_refused(tmp_path, repo, signer) -> None:
     lines = ledger.read_text().splitlines()
     ledger.write_text("\n".join(lines[:5] + lines[6:]) + "\n")
     code, receipt = evaluate_path(
-        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]})
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, clock=repo[3])
     )
     assert code == EXIT_REFUSED
     assert _codes(receipt) == {"SEAL_CHAIN_INVALID"}
@@ -415,7 +597,9 @@ def test_dropped_ledger_record_is_refused(tmp_path, repo, signer) -> None:
 def test_wrong_key_is_refused(tmp_path, repo, signer) -> None:
     log, ledger = _write(tmp_path, _bound(repo), signer)
     other = AttestationSigner(os.urandom(32), key_id=KEY_ID)
-    code, receipt = evaluate_path(log, seal=_inputs(ledger, other, {"repo-1": repo[2]}))
+    code, receipt = evaluate_path(
+        log, seal=_inputs(ledger, other, {"repo-1": repo[2]}, clock=repo[3])
+    )
     assert code == EXIT_REFUSED
     assert _codes(receipt) == {"SEAL_CHAIN_INVALID"}
     assert "signature mismatch" in receipt["refusals"][0]["detail"]
@@ -430,7 +614,7 @@ def test_resealed_by_author_with_other_key_is_refused(tmp_path, repo, signer) ->
     author = AttestationSigner(os.urandom(32), key_id=KEY_ID)
     log, ledger = _write(tmp_path, doc, author)
     code, receipt = evaluate_path(
-        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]})
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, clock=repo[3])
     )
     assert code == EXIT_REFUSED
     assert _codes(receipt) == {"SEAL_CHAIN_INVALID"}
@@ -438,7 +622,7 @@ def test_resealed_by_author_with_other_key_is_refused(tmp_path, repo, signer) ->
 
 def test_missing_commit_event_is_refused(tmp_path, repo, signer) -> None:
     """git has a commit no sealed actuate/commit/merge event produced."""
-    path, base, shas = repo
+    path, base, shas, _clock = repo
     log, ledger = _write(tmp_path, _bound(repo), signer)
     extra = shas + ["f" * 40]
     code, receipt = evaluate_path(log, seal=_inputs(ledger, signer, {"repo-1": extra}))
@@ -476,7 +660,7 @@ def test_duplicated_commit_event_is_refused(tmp_path, repo, signer) -> None:
     doc["events"].insert(i + 1, dup)
     log, ledger = _write(tmp_path, doc, signer)
     code, receipt = evaluate_path(
-        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]})
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, clock=repo[3])
     )
     assert code == EXIT_REFUSED
     assert _codes(receipt) == {"SEAL_INCOMPLETE_COMMIT"}
@@ -488,7 +672,7 @@ def test_commit_claim_outside_witnessed_range_is_refused(
 ) -> None:
     log, ledger = _write(tmp_path, _bound(repo), signer)
     code, receipt = evaluate_path(
-        log, seal=_inputs(ledger, signer, {"repo-1": repo[2][:-1]})
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2][:-1]}, clock=repo[3])
     )
     assert code == EXIT_REFUSED
     assert _codes(receipt) == {"SEAL_UNWITNESSED_COMMIT"}
@@ -502,7 +686,7 @@ def test_recorder_key_inside_the_log_is_refused(tmp_path, repo, signer) -> None:
     )
     log, ledger = _write(tmp_path, doc, signer)
     code, receipt = evaluate_path(
-        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]})
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, clock=repo[3])
     )
     assert code == EXIT_REFUSED
     assert _codes(receipt) == {"SEAL_KEY_DISCLOSED"}
@@ -524,7 +708,7 @@ def test_sealed_k_mutant_still_fails_the_rules(tmp_path, repo, signer, mutant) -
     MUTANTS[mutant][0](doc)
     log, ledger = _write(tmp_path, doc, signer)
     code, receipt = evaluate_path(
-        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]})
+        log, seal=_inputs(ledger, signer, {"repo-1": repo[2]}, clock=repo[3])
     )
     assert code == EXIT_NOT_QUALIFIED, receipt["refusals"]
     assert receipt["sealing"]["complete"] is True
@@ -544,3 +728,36 @@ def test_provenance_ledger_default_record_type_unchanged(tmp_path, signer) -> No
     ledger.append(att)
     check = ledger.verify()
     assert check.valid and check.records == 2
+
+
+def test_cli_clock_shift_hiding_mid_loop_message_exits_two(
+    tmp_path, repo, signer
+) -> None:
+    """C2 through the real CLI: ``--git`` reads the committer clock, so the
+    shifted log is refused (exit 2), not QUALIFIED (exit 0 on f9a1fcd9)."""
+    log, ledger = _write(tmp_path, _shift_clock(_bound(repo), DAY), signer)
+    key_file = tmp_path / "recorder.key"
+    key_file.write_text(_key(signer).hex())
+    humans = tmp_path / "humans.json"
+    humans.write_text(
+        json.dumps([{"id": "m-mid", "time": format_ns(T0 + 50 * SECOND)}])
+    )
+    env = dict(os.environ)
+    env["PYTHONPATH"] = str(REPO_ROOT / "src") + os.pathsep + env.get("PYTHONPATH", "")
+    out = tmp_path / "receipt.json"
+    proc = subprocess.run(
+        [
+            sys.executable, "-m", "autofde_lab.aloop", str(log),
+            "--out", str(out),
+            "--seal", str(ledger),
+            "--key-file", str(key_file),
+            "--key-id", KEY_ID,
+            "--git", f"repo-1={repo[0]}:{repo[1]}..HEAD",
+            "--human-ledger", str(humans),
+        ],
+        capture_output=True, text=True, env=env, cwd=REPO_ROOT, check=False,
+    )  # fmt: skip
+    assert proc.returncode == 2, proc.stderr
+    receipt = json.loads(out.read_text())
+    assert receipt["verdict"] == "REFUSED"
+    assert "SEAL_CLOCK_MISMATCH" in _codes(receipt)

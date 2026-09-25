@@ -221,25 +221,41 @@ per event, same order, same digest, and the close digest (`SEAL_BIJECTION`); the
 (`SEAL_INCOMPLETE_COMMIT`, `R_missing_consequence`: a missing or duplicated commit event), and
 every such event is inside the range of a witnessed repository -- a claim naming a repository
 outside the witnessed set is refused too (`SEAL_UNWITNESSED_COMMIT`); (b) every entry of the
-supplied human-message ledger timed at or after `t0` maps to exactly one sealed
+supplied human-message ledger -- pre-epoch entries included -- maps to exactly one sealed
 `human.intervene` event carrying that `messageId`, whose time equals the message's witnessed
-time and which follows `episode.start` in log order; a `human.intervene` carries at most one
-`messageId` (`SEAL_INCOMPLETE_HUMAN`, `mu_on_O`). Matching on `messageId` alone would let the
-author relabel a mid-loop human message as pre-epoch goal supply by attaching its id to an
-earlier event (repair of court attacks A1b, A3, A4 on `5a1cd259`). CLI: `--seal LEDGER --key-file F --key-id ID --git
-REPO_ID=PATH:RANGE --human-ledger FILE`.
+time and which sits on the same side of `episode.start` in log order as its witnessed time is
+of `t0`; a `human.intervene` carries at most one `messageId` (`SEAL_INCOMPLETE_HUMAN`,
+`mu_on_O`). Matching on `messageId` alone would let the author relabel a mid-loop human message
+as pre-epoch goal supply by attaching its id to an earlier event (repair of court attacks A1b,
+A3, A4 on `5a1cd259`). (c) The log clock is anchored outside the author's bytes: each sealed
+commit event's time equals, to the second, the git committer time of its SHA, and `t0` lies in
+`[base committer time, first witnessed commit event]` (`SEAL_CLOCK_MISMATCH`,
+`R_missing_identity`). Without (c) the recorder signs whatever times it is handed: on
+`f9a1fcd9` shifting every event time one day forward pushed a genuine mid-loop human message
+before the declared `t0`, where the old pre-`t0` filter dropped it from the witness set, and the
+sealed log exited 0 `QUALIFIED` (court attack C2; API and CLI). A non-empty human ledger over an
+unanchored clock (no git clock supplied, or an empty witnessed range) is `complete = None`,
+never `QUALIFIED`. CLI: `--seal LEDGER --key-file F --key-id ID --git REPO_ID=PATH:RANGE
+--human-ledger FILE`; `--git` reads the range's committer clock and its base's (`git_witness`).
 
 **Claim scope.** A `QUALIFIED` verdict says: the recorder holding the key emitted exactly these
 events, nothing in the witnessed git range and nothing in the witnessed human-message ledger is
 missing from them, and the recorded causal graph satisfies P1-P3 and the thresholds. It does not
 say the recorder itself saw every human act (a human channel outside the message ledger is
-outside the witness), nor that the key was not shared with the judged party.
+outside the witness), nor that the key was not shared with the judged party, nor that the git
+committer clock is honest (it is the anchor, see Residuals).
 
 **Residuals.** Inside a sealed envelope, whether a declared `Objective` is a goal or a script
 (a script in one scalar attribute, or one object per type cited invariantly) remains reviewer
 judgement relative to `envelope_sha256`; the court pins the envelope's content hash so that
 judgement is about named bytes. Human channels not in the message ledger and key custody are
-out of scope (`UNKNOWN`), not claims of absence.
+out of scope (`UNKNOWN`), not claims of absence. The epoch anchor is the git committer clock,
+which the committing party sets at commit time (`GIT_COMMITTER_DATE`): a judged party that
+forges committer dates when committing can still move the epoch; a forge receive time (push or
+check-run timestamps) or a recorder-stamped clock is the stronger anchor and is
+`UNSUPPORTED(gap: forge-clock anchor)` here. A witnessed human message between the base commit
+and the first witnessed commit can be sealed as pre-epoch; it is then judged by P1-P3 as a
+pre-epoch human act (it may only supply the frozen envelope).
 
 ## OCEL 2.0 profile
 
@@ -596,7 +612,7 @@ K5, K9, the distinct-types script, F9 and J2 qualify; without P2, F6 and H8 qual
 P3, every K script, K6, J3, J3c, H1-H3, X1, X5 and script-in-attributes qualify. The positive
 log does not violate P1-P3 (`rules_consistent`, rule class `AUTONOMOUS`, ALD 100); unsealed it
 is `CONSISTENT_UNDER_ASSUMED_COMPLETENESS` (exit 3), and its sealed variant bound to 101 real git
-commits with an empty post-t0 human ledger is `QUALIFIED` (exit 0). Controls still pass every
+commits (dated by their committer clock) with an empty human ledger is `QUALIFIED` (exit 0). Controls still pass every
 rule: every `actuate` citing the goal (an invariant citation), a candidate attribute timed
 exactly at its producing machine event, a single in-vocabulary goal `description`.
 
@@ -611,7 +627,12 @@ unwitnessed repository, the recorder key inside the log, or a witnessed human me
 under the wrong time or position: a post-t0 message carried by a new pre-epoch event (A1b),
 relabelled onto the pre-epoch goal act (A3), two post-t0 messages absorbed by one event (A4), a
 post-t0 message sealed one nanosecond off its witnessed time, or a message at exactly `t0`
-omitted (A5). Each of these 18 is `REFUSED` (exit 2) with its typed code; the sealed positive exits 0;
+omitted (A5); or a log clock off the git clock: the whole log shifted one day to hide a mid-loop
+message (C2, API and CLI), the same shift with the message sealed pre-epoch at its true time,
+`t0` after the first commit, `t0` before the base commit, a commit event one second off its
+committer time, or a pre-epoch witnessed message omitted. Each of these 25 is `REFUSED` (exit
+2) with its typed code; a non-empty human ledger without the git clock is never complete (exit
+3); the sealed positive exits 0, also with its pre-epoch goal message sealed on `h-pre`;
 sealed without witnesses it is `CONSISTENT_UNDER_ASSUMED_COMPLETENESS`; four sealed, complete
 K-mutants stay `NOT_QUALIFIED` (sealing certifies authorship and completeness, not the rules).
 K-mutant witness (`docs/rfcs/aloop/ALOOP-001-r9-k-mutant-witness.json`): the nine K-class
