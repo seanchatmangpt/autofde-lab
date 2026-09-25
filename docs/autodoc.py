@@ -181,7 +181,22 @@ def md_escape(md):
 
 
 def doc_escape(md):
-    return re.sub(r"[<]", lambda m: f"\\{m.group()}", md)
+    return mustache_guard(re.sub(r"[<]", lambda m: f"\\{m.group()}", md))
+
+
+def mustache_guard(md):
+    """Keep docstring text out of Vue template compilation.
+
+    VuePress compiles each page as a Vue template, so a literal double-brace
+    pair in a docstring (e.g. a Tera/Jinja placeholder) is evaluated as a JS
+    expression and can fail the build (``Xn...``) or throw at SSR render
+    (``row.lower`` on undefined). Docstrings are prose, never templates: wrap
+    any text containing one in a ``v-pre`` block, which Vue does not compile.
+    Blank lines around the content keep markdown rendering inside the block.
+    """
+    if "{{" not in md and "}}" not in md:
+        return md
+    return f"<div v-pre>\n\n{md}\n\n</div>"
 
 
 def write_signature(md, member):
@@ -318,7 +333,7 @@ if __name__ == "__main__":
 
         # Write module doc (if any)
         if "doc" in module:
-            md += f"{module['doc']}\n\n"
+            md += f"{mustache_guard(module['doc'])}\n\n"
 
         # Write domain spec summary
         md += "::: tip Domain specification\n<autofde_lab-summary></autofde_lab-summary>\n:::\n\n"
