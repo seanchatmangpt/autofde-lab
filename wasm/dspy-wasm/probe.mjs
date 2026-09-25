@@ -98,10 +98,50 @@ function completionText(request) {
       return JSON.stringify({ output: "ASYNC" });
     case "flex":
       return JSON.stringify({ output: "FLEX" });
+    case "multi_chain":
+      return JSON.stringify({ rationale: "selected", answer: "MC" });
+    case "program_of_thought":
+      return ordinal === 1
+        ? JSON.stringify({ reasoning: "execute bounded expression", generated_code: "'POT'" })
+        : JSON.stringify({ reasoning: "extract bounded result", answer: "POT" });
+    case "code_act":
+      return ordinal === 1
+        ? JSON.stringify({ generated_code: "print(host_add(2, 3))", finished: true })
+        : JSON.stringify({ reasoning: "extract tool result", answer: "5" });
+    case "react_v2":
+      return JSON.stringify({
+        next_thought: "submit admitted result",
+        tool_calls: { tool_calls: [{ name: "submit", args: { answer: "V2" } }] },
+      });
+    case "rlm":
+      return JSON.stringify({
+        reasoning: "submit bounded output",
+        code: "SUBMIT(output='RLM')",
+      });
+    case "refine":
+      return JSON.stringify({ answer: "REFINE" });
+    case "random_search":
+      return JSON.stringify({ answer: "RS" });
+    case "knn_fewshot":
+      return JSON.stringify({ answer: "KNN" });
     case "gepa":
       return JSON.stringify({ answer: "GEPA" });
     case "mipro":
       return JSON.stringify({ answer: "MIPRO" });
+    case "copro_prompt":
+      return JSON.stringify({
+        proposed_instruction: "Return the admitted answer.",
+        proposed_prefix_for_output_field: "Answer:",
+      });
+    case "copro_task":
+      return JSON.stringify({ answer: "COPRO" });
+    case "infer_rules":
+      return JSON.stringify({
+        reasoning: "extract concise rule",
+        natural_language_rules: "Return the admitted answer.",
+      });
+    case "infer_task":
+      return JSON.stringify({ answer: "RULE" });
     default:
       return JSON.stringify({ answer: "OK", output: "WASM-HOST" });
   }
