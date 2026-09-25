@@ -466,10 +466,6 @@ async def _async_predict_inner() -> dict[str, Any]:
         asyncio.to_thread = original_to_thread
 
 
-def _async_predict() -> dict[str, Any]:
-    return asyncio.run(_async_predict_inner())
-
-
 def _flex() -> dict[str, Any]:
     engine = lm("flex")
     flex = dspy.Flex(
@@ -535,7 +531,7 @@ def _context() -> dict[str, Any]:
     return {"before": before, "inside": inside, "after": after}
 
 
-def run_all() -> dict[str, Any]:
+async def run_all() -> dict[str, Any]:
     rows: list[CapabilityResult] = []
     courts = [
         ("signature.typed", "execute", _signatures),
@@ -553,7 +549,6 @@ def run_all() -> dict[str, Any]:
         ("module.best_of_n", "execute", _best_of_n),
         ("serialization.state_json", "serialize", _serialization),
         ("adapter.two_step", "compose", _two_step_adapter),
-        ("async.predict", "execute", _async_predict),
         ("module.flex_wasm_interpreter", "compose", _flex),
         ("optimizer.gepa", "construct", _gepa_construct),
         ("optimizer.mipro_v2", "construct", _mipro_construct),
@@ -561,6 +556,27 @@ def run_all() -> dict[str, Any]:
     ]
     for name, phase, fn in courts:
         _record(rows, name, phase, fn)
+
+    try:
+        evidence = await _async_predict_inner()
+        rows.append(CapabilityResult("async.predict", "ALIVE", "execute", evidence))
+        _host_observe(json.dumps({"capability": "async.predict", "status": "ALIVE"}, sort_keys=True))
+    except Exception as exc:
+        rows.append(
+            CapabilityResult(
+                "async.predict",
+                "BLOCKED",
+                "execute",
+                {},
+                {"type": type(exc).__name__, "detail": str(exc)},
+            )
+        )
+        _host_observe(
+            json.dumps(
+                {"capability": "async.predict", "status": "BLOCKED", "error": type(exc).__name__},
+                sort_keys=True,
+            )
+        )
 
     alive = [r.name for r in rows if r.status == "ALIVE"]
     blocked = [r.name for r in rows if r.status == "BLOCKED"]
@@ -577,5 +593,5 @@ def run_all() -> dict[str, Any]:
     }
 
 
-result = run_all()
+result = await run_all()
 json.dumps(result, sort_keys=True)
