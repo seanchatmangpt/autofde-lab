@@ -85,9 +85,7 @@ class OwnershipResolver:
             )
 
         producers = tuple(sorted({item.producer for item in applicable}))
-        evidence_ids = tuple(
-            sorted(item.ownership_evidence_id for item in applicable)
-        )
+        evidence_ids = tuple(sorted(item.ownership_evidence_id for item in applicable))
         if len(producers) > 1:
             return ArtifactOwnership(
                 artifact_id=artifact_id,

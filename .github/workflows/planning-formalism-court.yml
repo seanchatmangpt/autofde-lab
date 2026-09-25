@@ -3,6 +3,8 @@ name: 🧭 Canonical FOND + HDDL court
 on:
   pull_request:
     branches: [master]
+  push:
+    branches: [master]
   workflow_dispatch:
 
 permissions:
@@ -67,14 +69,58 @@ jobs:
           print(f"unified-planning={version('unified-planning')}")
           print(f"up-aries={version('up-aries')}")
 
-      - name: Execute canonical FOND + HDDL court
+      - name: Execute FOND court
         env:
           PYTHONPATH: src
         run: |
           # Runtime entry-point discovery is packaging evidence and remains in the
-          # installed-wheel/full-integration rail. This court is formalism semantics.
-          python -m pytest -q \
-            tests/planning/test_fond_policy.py \
-            tests/planning/test_fond_hddl_frontier.py \
+          # installed-wheel/full-integration rail. These courts are formalism semantics,
+          # split so each formalism leaves its own independent junit + log evidence.
+          mkdir -p planning-out/fond planning-out/hddl planning-out/frontier
+          python -m pytest -q -o addopts="" -rs \
+            --junitxml=planning-out/fond/junit.xml \
+            tests/planning/test_fond_policy.py 2>&1 | tee planning-out/fond/pytest.log
+
+      - name: Execute HDDL court
+        if: always()
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q -o addopts="" -rs \
+            --junitxml=planning-out/hddl/junit.xml \
             tests/domains/python/test_hddl_bridge_domain.py::test_hddl_parse_solve_decompose_and_execute_real_plan \
-            tests/domains/python/test_hddl_bridge_domain.py::test_hddl_domain_refuses_flat_problem
+            tests/domains/python/test_hddl_bridge_domain.py::test_hddl_domain_refuses_flat_problem \
+            2>&1 | tee planning-out/hddl/pytest.log
+
+      - name: Execute FOND x HDDL frontier court
+        if: always()
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q -o addopts="" -rs \
+            --junitxml=planning-out/frontier/junit.xml \
+            tests/planning/test_fond_hddl_frontier.py 2>&1 | tee planning-out/frontier/pytest.log
+
+      - name: Upload FOND evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: planning-fond-${{ github.event.pull_request.head.sha || github.sha }}
+          path: planning-out/fond
+          if-no-files-found: error
+
+      - name: Upload HDDL evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: planning-hddl-${{ github.event.pull_request.head.sha || github.sha }}
+          path: planning-out/hddl
+          if-no-files-found: error
+
+      - name: Upload FRONTIER evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: planning-frontier-${{ github.event.pull_request.head.sha || github.sha }}
+          path: planning-out/frontier
+          if-no-files-found: error

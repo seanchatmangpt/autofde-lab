@@ -6,7 +6,6 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-
 _DEFAULT_EXCLUDES = frozenset(
     {
         ".git",
@@ -113,8 +112,7 @@ class RepositoryInventoryScanner:
                     )
                 if total_bytes > self.policy.max_total_bytes:
                     raise ValueError(
-                        "BLOCKED_INVENTORY_BYTE_LIMIT:"
-                        f"{self.policy.max_total_bytes}"
+                        f"BLOCKED_INVENTORY_BYTE_LIMIT:{self.policy.max_total_bytes}"
                     )
 
                 with path.open("rb") as handle:

@@ -10,7 +10,6 @@ from autofde_lab.iec.cli import main
 from autofde_lab.iec.graph_ir import SemanticEdge, SemanticGraph, SemanticNode
 from autofde_lab.iec.kernel import KernelAssembler, Residue
 from autofde_lab.iec.model import (
-    ClaimCeiling,
     Counterexample,
     EquivalenceDimension,
     Failure,
@@ -86,7 +85,9 @@ def test_kernel_proposal_keeps_explicit_irreducible_residue() -> None:
     assert candidate.covered_observation_ids == ("o1", "o2")
 
 
-def test_work_order_from_counterexample_carries_regression_witness_requirements() -> None:
+def test_work_order_from_counterexample_carries_regression_witness_requirements() -> (
+    None
+):
     counterexample = Counterexample(
         hypothesis_id="hypothesis",
         dimension=EquivalenceDimension.PROTOCOL,

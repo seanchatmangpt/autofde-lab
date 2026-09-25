@@ -7,7 +7,7 @@ promote the RDF projection separately.
 
 from __future__ import annotations
 
-from rdflib import Graph, Literal, Namespace, RDF, URIRef
+from rdflib import RDF, Graph, Literal, Namespace, URIRef
 
 from .graph_ir import SemanticGraph
 from .model import digest
@@ -55,9 +55,7 @@ def to_rdf(graph: SemanticGraph) -> Graph:
 def canonical_ntriples(graph: SemanticGraph) -> str:
     rdf_graph = to_rdf(graph)
     lines = [
-        line
-        for line in rdf_graph.serialize(format="nt").splitlines()
-        if line.strip()
+        line for line in rdf_graph.serialize(format="nt").splitlines() if line.strip()
     ]
     return "\n".join(sorted(lines)) + "\n"
 

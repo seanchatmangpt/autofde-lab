@@ -102,8 +102,7 @@ def extract_python_api(source: str, *, module_name: str) -> PythonApiSurface:
                 and not child.name.startswith("_")
             ]
             method_sig = ";".join(
-                f"{child.name}{_signature(child)}"
-                for child in public_methods
+                f"{child.name}{_signature(child)}" for child in public_methods
             )
             symbols.append(
                 PublicSymbol(
@@ -124,5 +123,7 @@ def python_api_verifier(
     generated: PythonApiSurface,
 ) -> tuple[bool, object, object, str]:
     left = tuple((s.kind, s.name, s.signature, s.decorators) for s in original.symbols)
-    right = tuple((s.kind, s.name, s.signature, s.decorators) for s in generated.symbols)
+    right = tuple(
+        (s.kind, s.name, s.signature, s.decorators) for s in generated.symbols
+    )
     return left == right, left, right, "deterministic Python public API surface"

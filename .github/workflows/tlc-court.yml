@@ -1,0 +1,211 @@
+name: 🧮 TLA+ TLC court
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "src/autofde_lab/iec/**"
+      - "tests/iec/**"
+      - "tools/tla/**"
+      - "scripts/fetch_tla2tools.sh"
+      - ".github/workflows/tlc-court.yml"
+  push:
+    branches: [master]
+    paths:
+      - "src/autofde_lab/iec/**"
+      - "tests/iec/**"
+      - "tools/tla/**"
+      - "scripts/fetch_tla2tools.sh"
+      - ".github/workflows/tlc-court.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tlc-court-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PYTHONUNBUFFERED: "1"
+  TLA2TOOLS_URL: https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar
+  TLA2TOOLS_SIZE: "2274532"
+
+jobs:
+  tlc-court:
+    name: TLC court (tla2tools 1.7.4, JDK 21)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Assert exact subject identity
+        id: subject
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="${{ github.event.pull_request.head.sha || github.sha }}"
+          actual="$(git rev-parse HEAD)"
+          if [[ "${actual}" != "${expected}" ]]; then
+            echo "::error title=REFUSED:EXACT_HEAD_MISMATCH::actual=${actual} expected=${expected}"
+            exit 2
+          fi
+          printf 'tlc_exact_head=%s\n' "${actual}"
+          printf 'sha=%s\n' "${actual}" >> "${GITHUB_OUTPUT}"
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Select runner JDK 21
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${JAVA_HOME_21_X64:-}"
+          echo "JAVA_HOME=${JAVA_HOME_21_X64}" >> "${GITHUB_ENV}"
+          "${JAVA_HOME_21_X64}/bin/java" -version
+
+      - name: Fetch and verify pinned tla2tools.jar
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="${HOME}/.cache/autofde-lab/tla2tools/1.7.4"
+          mkdir -p "${dest}"
+          curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 --retry 3 \
+            -o "${dest}/tla2tools.jar" "${TLA2TOOLS_URL}"
+          size="$(wc -c < "${dest}/tla2tools.jar" | tr -d ' ')"
+          if [[ "${size}" != "${TLA2TOOLS_SIZE}" ]]; then
+            echo "::error title=REFUSED:JAR_SIZE_MISMATCH::${size} != ${TLA2TOOLS_SIZE}"
+            exit 2
+          fi
+          cp tools/tla/tla2tools-1.7.4.sha256 "${dest}/"
+          (cd "${dest}" && sha256sum --check --strict tla2tools-1.7.4.sha256)
+          echo "AUTOFDE_TLA2TOOLS_JAR=${dest}/tla2tools.jar" >> "${GITHUB_ENV}"
+
+      - name: Install minimal court dependencies
+        run: python -m pip install "pytest==8.3.5"
+
+      - name: Reject mockist formal proof
+        shell: python
+        run: |
+          import ast
+          from pathlib import Path
+
+          banned_names = {"Mock", "MagicMock", "patch", "monkeypatch"}
+          paths = sorted(Path("tests/iec").glob("test_tlc_*.py")) + [
+              Path("tests/iec/test_tla_projection_fairness.py")
+          ]
+          violations = []
+          for path in paths:
+              tree = ast.parse(path.read_text(), filename=str(path))
+              for node in ast.walk(tree):
+                  if isinstance(node, ast.Import):
+                      for alias in node.names:
+                          if alias.name == "unittest.mock":
+                              violations.append((path, node.lineno, f"import {alias.name}"))
+                  elif isinstance(node, ast.ImportFrom):
+                      if node.module == "unittest.mock":
+                          violations.append((path, node.lineno, "from unittest.mock import ..."))
+                  elif isinstance(node, ast.Name) and node.id in banned_names:
+                      violations.append((path, node.lineno, node.id))
+                  elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                      args = (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs)
+                      for arg in args:
+                          if arg.arg == "monkeypatch":
+                              violations.append((path, node.lineno, "monkeypatch fixture"))
+          if violations:
+              for path, line, detail in violations:
+                  print(f"{path}:{line}: banned mockist construct: {detail}")
+              raise SystemExit(1)
+          print(f"no-mock: {len(paths)} files clean")
+
+      - name: Import smoke (minimal dependency set)
+        env:
+          PYTHONPATH: src
+        run: python -c "import autofde_lab.iec.tlc_court, autofde_lab.iec.cli, autofde_lab.ocel.log; print('import-ok')"
+
+      - name: Execute real TLC court tests
+        env:
+          PYTHONPATH: src
+          AUTOFDE_TLC_REQUIRED: "1"
+        run: |
+          mkdir -p tlc-out
+          python -m pytest -q -o addopts="" -rs \
+            --junitxml=tlc-out/junit.xml \
+            tests/iec/test_tlc_court.py \
+            tests/iec/test_tlc_transcript.py \
+            tests/iec/test_tla_projection_fairness.py \
+            tests/iec/test_graph_protocol_tla.py \
+            tests/iec/test_frontier_formal.py 2>&1 | tee tlc-out/pytest.log
+
+      - name: Run court CLI per model
+        env:
+          PYTHONPATH: src
+        shell: bash
+        run: |
+          set -euo pipefail
+          for model in brce mutant:DO_WITHOUT_AUTHORITY mutant:DUPLICATE_CONSEQUENCE \
+                       mutant:STANDING_WITHOUT_VERIFY mutant:NO_FAIRNESS; do
+            slug="${model//:/-}"; slug="${slug,,}"
+            python -m autofde_lab.iec tlc-court --model "${model}" --out "tlc-out/${slug}" \
+              | tee "tlc-out/${slug}.summary.json"
+            rm -rf "tlc-out/${slug}/work"
+          done
+          sha256sum tlc-out/*/receipt.json tlc-out/*/*.ocel.json | tee tlc-out/DIGESTS.sha256
+
+      - name: Upload brce receipt
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: tlc-court-brce-${{ steps.subject.outputs.sha }}
+          path: |
+            tlc-out/brce
+            tlc-out/brce.summary.json
+            tlc-out/junit.xml
+            tlc-out/pytest.log
+            tlc-out/DIGESTS.sha256
+          if-no-files-found: error
+
+      - name: Upload DO_WITHOUT_AUTHORITY receipt
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: tlc-court-mutant-do_without_authority-${{ steps.subject.outputs.sha }}
+          path: |
+            tlc-out/mutant-do_without_authority
+            tlc-out/mutant-do_without_authority.summary.json
+          if-no-files-found: error
+
+      - name: Upload DUPLICATE_CONSEQUENCE receipt
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: tlc-court-mutant-duplicate_consequence-${{ steps.subject.outputs.sha }}
+          path: |
+            tlc-out/mutant-duplicate_consequence
+            tlc-out/mutant-duplicate_consequence.summary.json
+          if-no-files-found: error
+
+      - name: Upload STANDING_WITHOUT_VERIFY receipt
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: tlc-court-mutant-standing_without_verify-${{ steps.subject.outputs.sha }}
+          path: |
+            tlc-out/mutant-standing_without_verify
+            tlc-out/mutant-standing_without_verify.summary.json
+          if-no-files-found: error
+
+      - name: Upload NO_FAIRNESS receipt
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: tlc-court-mutant-no_fairness-${{ steps.subject.outputs.sha }}
+          path: |
+            tlc-out/mutant-no_fairness
+            tlc-out/mutant-no_fairness.summary.json
+          if-no-files-found: error

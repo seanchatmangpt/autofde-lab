@@ -24,9 +24,11 @@ repos:
         # receipts/v26.9.23/iec excluded: IEC receipts are replayed byte for byte by
         # tests/iec, and the C3 frozen outcome's sha256 was recorded before the
         # held-out audit ran -- normalizing either would destroy the evidence.
-        exclude: "^(examples/discrete_optimization/data/|notebooks/.*\\.sm$|notebooks/data/|vendor/bcinr/|receipts/v26\\.9\\.23/iec/)"
+        # tests/iec/fixtures/tlc excluded: real tla2tools.jar stdout captures
+        # (MANIFEST.json records jar sha256/argv); TLC emits trailing spaces.
+        exclude: "^(examples/discrete_optimization/data/|notebooks/.*\\.sm$|notebooks/data/|vendor/bcinr/|receipts/v26\\.9\\.23/iec/|tests/iec/fixtures/tlc/)"
     -   id: end-of-file-fixer
-        exclude: "^(vendor/bcinr/|receipts/v26\\.9\\.23/iec/)"
+        exclude: "^(vendor/bcinr/|receipts/v26\\.9\\.23/iec/|tests/iec/fixtures/tlc/)"
     -   id: check-yaml
     -   id: check-added-large-files
         exclude: |

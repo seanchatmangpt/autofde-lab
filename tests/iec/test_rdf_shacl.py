@@ -11,7 +11,6 @@ from autofde_lab.iec.observations import ObservationExtractor, PassiveFile
 from autofde_lab.iec.rdf_projection import project_repository
 from autofde_lab.iec.shacl_court import validate_graph
 
-
 ROOT = Path(__file__).parents[2]
 ONTOLOGY = ROOT / "ontology" / "inverse-ecosystem-compiler.ttl"
 SHAPES = ROOT / "ontology" / "shapes" / "inverse-ecosystem-compiler.shacl.ttl"
@@ -39,7 +38,9 @@ def test_iec_ontology_and_shapes_are_real_parseable_rdf() -> None:
     assert len(shapes) > 20
 
 
-def test_pyshacl_accepts_valid_repository_subject_and_rejects_missing_revision() -> None:
+def test_pyshacl_accepts_valid_repository_subject_and_rejects_missing_revision() -> (
+    None
+):
     ontology = load_graph(ONTOLOGY)
     shapes = load_graph(SHAPES)
 

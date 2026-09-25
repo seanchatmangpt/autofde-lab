@@ -10,7 +10,6 @@ from autofde_lab.iec.native_parser import (
     candidate_native_parsers,
 )
 from autofde_lab.iec.ownership import (
-    ArtifactOwnership,
     OwnershipEvidence,
     OwnershipEvidenceKind,
     OwnershipResolver,

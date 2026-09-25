@@ -73,9 +73,7 @@ class PassiveCorpusRunner:
         self.parsers = parsers or StructuralParserRegistry()
 
     def run(self, repositories: Iterable[RepositoryInput]) -> PassiveRunResult:
-        inputs = tuple(
-            sorted(repositories, key=lambda item: item.subject.repository)
-        )
+        inputs = tuple(sorted(repositories, key=lambda item: item.subject.repository))
         if not inputs:
             raise ValueError("at least one repository input is required")
 

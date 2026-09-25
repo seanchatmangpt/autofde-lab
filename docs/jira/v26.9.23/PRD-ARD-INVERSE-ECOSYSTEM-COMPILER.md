@@ -1,10 +1,10 @@
 # PRD/ARD — v26.9.23 Inverse Ecosystem Compiler
 
-**Status:** PROPOSED  
-**Release:** v26.9.23  
-**Host repository:** seanchatmangpt/autofde-lab  
-**Base subject:** master@ae255ad123dfdcef9b3de82395006834abb20a28  
-**Working name:** Inverse Ecosystem Compiler (IEC)  
+**Status:** PROPOSED
+**Release:** v26.9.23
+**Host repository:** seanchatmangpt/autofde-lab
+**Base subject:** master@ae255ad123dfdcef9b3de82395006834abb20a28
+**Working name:** Inverse Ecosystem Compiler (IEC)
 **Standing ceiling:** documentation and architecture only until executable courts run
 
 > This document specifies a new capability. It does not establish that the

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .model import digest
-from .verification_intent import VerificationCommandIntent, VerifierSet
+from .verification_intent import VerifierSet
 
 
 @dataclass(frozen=True, slots=True)

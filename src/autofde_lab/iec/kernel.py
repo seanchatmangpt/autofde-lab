@@ -23,7 +23,11 @@ class Residue:
     generator_failure_id: str | None = None
 
     def __post_init__(self) -> None:
-        if not self.subject_id.strip() or not self.path.strip() or not self.reason.strip():
+        if (
+            not self.subject_id.strip()
+            or not self.path.strip()
+            or not self.reason.strip()
+        ):
             raise ValueError("residue requires subject, path, and reason")
 
     @property

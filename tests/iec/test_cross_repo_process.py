@@ -50,12 +50,8 @@ def analysis(name: str, revision: str, generated_by: str = "ggen"):
 
 
 def test_repository_family_signature_discovers_repeated_topology() -> None:
-    left = repository_signature(
-        analysis("seanchatmangpt/a", "a" * 40)
-    )
-    right = repository_signature(
-        analysis("seanchatmangpt/b", "b" * 40)
-    )
+    left = repository_signature(analysis("seanchatmangpt/a", "a" * 40))
+    right = repository_signature(analysis("seanchatmangpt/b", "b" * 40))
     candidates = family_candidates((left, right), threshold=0.8)
     assert len(candidates) == 1
     assert candidates[0].score == 1.0
@@ -63,12 +59,8 @@ def test_repository_family_signature_discovers_repeated_topology() -> None:
 
 
 def test_repository_family_is_only_candidate_even_when_score_is_one() -> None:
-    left = repository_signature(
-        analysis("seanchatmangpt/a", "a" * 40)
-    )
-    right = repository_signature(
-        analysis("seanchatmangpt/b", "b" * 40)
-    )
+    left = repository_signature(analysis("seanchatmangpt/a", "a" * 40))
+    right = repository_signature(analysis("seanchatmangpt/b", "b" * 40))
     candidate = family_candidates((left, right), threshold=1.0)[0]
     assert not hasattr(candidate, "equivalent")
     assert candidate.required_verifier

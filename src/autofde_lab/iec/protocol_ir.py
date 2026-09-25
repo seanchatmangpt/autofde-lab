@@ -74,6 +74,37 @@ class LivenessProperty:
             raise ValueError("liveness expression must be non-empty")
 
 
+class UnboundConstantError(ValueError):
+    """UNBOUND_CONSTANT: a declared CONSTANT has no model value.
+
+    TLC cannot check a model whose constants are unassigned, so the IR refuses
+    to construct one rather than emitting a cfg that fails at tool time.
+    """
+
+    code = "UNBOUND_CONSTANT"
+
+
+@dataclass(frozen=True, slots=True)
+class Fairness:
+    """A fairness conjunct: ``WF_vars(A)`` or ``SF_vars(A)``.
+
+    ``action=None`` means the whole next-state relation (``Next``).
+    """
+
+    kind: str = "WF"
+    action: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.kind not in ("WF", "SF"):
+            raise ValueError(f"fairness kind must be WF or SF, got {self.kind!r}")
+        if self.action is not None:
+            require_identifier(self.action, "fairness action")
+
+    @property
+    def target(self) -> str:
+        return self.action or "Next"
+
+
 @dataclass(frozen=True, slots=True)
 class TransitionSystem:
     name: str
@@ -82,9 +113,25 @@ class TransitionSystem:
     invariants: tuple[Invariant, ...]
     liveness: tuple[LivenessProperty, ...] = ()
     constants: tuple[str, ...] = ()
+    fairness: tuple[Fairness, ...] = ()
+    constant_values: tuple[tuple[str, str], ...] = ()
+    state_constraints: tuple[Invariant, ...] = ()
 
     def __post_init__(self) -> None:
         require_identifier(self.name, "transition-system name")
+        bound = {name for name, _ in self.constant_values}
+        for name, value in self.constant_values:
+            require_identifier(name, "constant")
+            if not value.strip():
+                raise UnboundConstantError(f"UNBOUND_CONSTANT: {name} has empty value")
+        unknown_bound = bound - set(self.constants)
+        if unknown_bound:
+            raise ValueError(
+                f"values bound to undeclared constants: {sorted(unknown_bound)}"
+            )
+        unbound = [name for name in self.constants if name not in bound]
+        if unbound:
+            raise UnboundConstantError(f"UNBOUND_CONSTANT: {unbound}")
         variable_names = [variable.name for variable in self.variables]
         if not variable_names:
             raise ValueError("transition system requires at least one variable")
@@ -114,6 +161,17 @@ class TransitionSystem:
         liveness_names = [item.name for item in self.liveness]
         if len(liveness_names) != len(set(liveness_names)):
             raise ValueError("duplicate liveness property")
+        constraint_names = [item.name for item in self.state_constraints]
+        if len(constraint_names) != len(set(constraint_names)):
+            raise ValueError("duplicate state constraint")
+        all_names = invariant_names + liveness_names + constraint_names + action_names
+        if len(all_names) != len(set(all_names)):
+            raise ValueError(
+                "definition name collision between actions/properties/constraints"
+            )
+        for item in self.fairness:
+            if item.action is not None and item.action not in action_names:
+                raise ValueError(f"fairness names unknown action {item.action}")
 
     @property
     def system_id(self) -> str:

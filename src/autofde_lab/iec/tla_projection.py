@@ -1,7 +1,8 @@
 """Deterministic TLA+ projection from IEC transition-system IR.
 
 This module renders formal artifacts. It does not invoke SANY, TLC, or TLAPS,
-and therefore cannot claim model-check or proof standing.
+and therefore cannot claim model-check or proof standing. Execution lives in
+:mod:`autofde_lab.iec.tlc_court`, which consumes these projections.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ class TlaProjection:
     tla: str
     cfg: str
     source_system_id: str
+    warnings: tuple[str, ...] = ()
 
     @property
     def projection_id(self) -> str:
@@ -69,13 +71,11 @@ def render_tla(system: TransitionSystem) -> TlaProjection:
         parts.append(f"{prefix} {action.name}")
     parts.append("")
 
-    tuple_expr = f"<<{variables}>>"
-    parts.extend(
-        [
-            f"Spec == Init /\\ [][Next]_{tuple_expr}",
-            "",
-        ]
-    )
+    parts.extend([f"vars == <<{variables}>>", ""])
+    spec = "Spec == Init /\\ [][Next]_vars"
+    for item in system.fairness:
+        spec += f" /\\ {item.kind}_vars({item.target})"
+    parts.extend([spec, ""])
 
     for invariant in system.invariants:
         parts.extend(
@@ -93,17 +93,60 @@ def render_tla(system: TransitionSystem) -> TlaProjection:
                 "",
             ]
         )
+    for constraint in system.state_constraints:
+        parts.extend(
+            [
+                f"{constraint.name} ==",
+                f"    {constraint.expression}",
+                "",
+            ]
+        )
     parts.append("====")
 
-    cfg_lines = ["SPECIFICATION Spec"]
-    for invariant in system.invariants:
-        cfg_lines.append(f"INVARIANT {invariant.name}")
-    for liveness in system.liveness:
-        cfg_lines.append(f"PROPERTY {liveness.name}")
+    warnings: list[str] = []
+    if system.liveness and not system.fairness:
+        warnings.append("LIVENESS_WITHOUT_FAIRNESS")
 
     return TlaProjection(
         module_name=system.name,
         tla="\n".join(parts) + "\n",
-        cfg="\n".join(cfg_lines) + "\n",
+        cfg=render_cfg(system),
         source_system_id=system.system_id,
+        warnings=tuple(warnings),
     )
+
+
+def render_cfg(
+    system: TransitionSystem,
+    *,
+    invariants: tuple[str, ...] | None = None,
+    properties: tuple[str, ...] | None = None,
+) -> str:
+    """Render a TLC configuration.
+
+    ``invariants``/``properties`` default to every declared one. Passing an
+    explicit subset yields a per-property cfg: TLC stops at the first
+    violation, so a single combined run would leave later properties UNKNOWN.
+    """
+
+    known_invariants = tuple(item.name for item in system.invariants)
+    known_properties = tuple(item.name for item in system.liveness)
+    chosen_invariants = known_invariants if invariants is None else tuple(invariants)
+    chosen_properties = known_properties if properties is None else tuple(properties)
+    for name in chosen_invariants:
+        if name not in known_invariants:
+            raise ValueError(f"unknown invariant {name}")
+    for name in chosen_properties:
+        if name not in known_properties:
+            raise ValueError(f"unknown property {name}")
+
+    cfg_lines = ["SPECIFICATION Spec"]
+    for name, value in system.constant_values:
+        cfg_lines.append(f"CONSTANT {name} = {value}")
+    for constraint in system.state_constraints:
+        cfg_lines.append(f"CONSTRAINT {constraint.name}")
+    for name in chosen_invariants:
+        cfg_lines.append(f"INVARIANT {name}")
+    for name in chosen_properties:
+        cfg_lines.append(f"PROPERTY {name}")
+    return "\n".join(cfg_lines) + "\n"
