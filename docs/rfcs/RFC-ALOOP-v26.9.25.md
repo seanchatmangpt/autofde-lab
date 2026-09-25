@@ -286,11 +286,16 @@ machine copy of an older observation, verify evidence of a superseded Subject, o
 machine script, and it still counts; if that older state is typed `Objective`/`Authority`
 without being the pre-declared envelope `episode.start` consumes (a pre-epoch machine or human
 per-iteration script, or a post-epoch machine script minted before `receipt[n]`) and it still
-counts; if a post-epoch human act on (or O2O-linked, at any hop
+counts; if a per-iteration script bound into the envelope by `episode.start` still counts --
+because a decision in the cone after `receipt[n]` is not causally downstream of `receipt[n]`
+(it decides from a bound step alone, the fresh observation attached decoratively), because an
+envelope object is cited by some transitions but not by all, or because every work order cites
+an envelope as large as the loop -- or if a decision taken from the bound goal alone, with the
+fresh observation attached decoratively, still counts; if a post-epoch human act on (or O2O-linked, at any hop
 count, to) the granted Authority, or an Authority granted after `t0` outside the pre-declared
 envelope, leaves the work orders citing it self-generated; or if two runs over the same bytes
 produce different receipts. Each has a mutant in the regenerated corpus whose sha256 is committed
-in `tests/aloop/fixtures/synthetic/MANIFEST.json` (40 mutants, 40 killed).
+in `tests/aloop/fixtures/synthetic/MANIFEST.json` (45 mutants, 45 killed).
 
 Repair round 1 (court version `aloop-001/v26.9.25-r1`) closed three adversarial-court findings
 against round 0: a vacuous non-actuating loop qualified (`admission_vacuous`,
@@ -352,3 +357,30 @@ explicit: an envelope-derived grant cited by the work order it was derived for s
 lawful; cited again after later receipts it is stale state. Known residual, not closed here: a
 reobserve with the same timestamp as `receipt[n]` (ordered after it only by the causal edge and
 log position) still counts as strictly after it.
+
+Repair round 7 (court version `aloop-001/v26.9.25-r7`) closed B4''' (`R_not_fed_back` /
+`admission_vacuous`), found by the finish adversarial court r2 against round 6: the envelope
+exemption held every `Objective`/`Authority` that `episode.start` consumes, with no bound, so
+adding 101 `input` links from `episode.start` to a per-iteration script brought the round-6
+kill targets back (H1 pre-epoch human script with a decorative reobserve, H2 the human script
+cited by every work order, H3 pre-epoch machine script with a decorative reobserve: each exit 0
+`QUALIFIED`, ALD 100, stale 0 on the r6 court). Three laws close it: the freshness cone is
+rooted (every event of the cone after `receipt[n]` must itself descend from `receipt[n]`, except
+an envelope derivation whose every causal input is envelope state and every output an
+`Objective`/`Authority`, such as a lease derived from the granted policy), the envelope is
+invariant (an envelope object cited under `input`/`cause`/`originAuthority` by some candidate
+transitions but not all is per-iteration decision state and loses the exemption), and the
+envelope is bounded (an invariant envelope at least as large as the number of candidate
+transitions has the capacity of a one-step-per-iteration script). The r7 author's own attacks
+added two more channels: X1, every work order citing the whole bound script (killed only by the
+bound), and X5, every decision taken from the bound goal alone with the fresh observation
+attached decoratively (killed only by the rooted cone). Five new mutants each return exit 0
+`QUALIFIED` on the r6 court and `NOT_QUALIFIED` `FAILED` `STALE_REOBSERVE` on r7; disabling any
+one law lets at least one of them qualify again. A loop whose every work order also cites the
+bound goal still qualifies, and the r6 envelope-lease control stays `AUTONOMOUS`, ALD 100. The
+r6 mutant `postepoch_machine_objective_script` drops from ALD 1 to ALD 0: gap.detect[1] decides
+from a step minted after `receipt[0]` but not derived from it. Known residuals, not closed here: a script encoded in the attributes
+of a single envelope object (not visible to an OCEL court); a post-epoch `Authority` attribute
+change coincident with an unrelated human event, and a post-epoch human-output `Provider` linked
+by `provider.select` under the non-causal `provider` qualifier, both still qualify (finish
+adversarial r2 H7/H8).

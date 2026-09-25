@@ -77,6 +77,26 @@ output, a pre-epoch human script that ``episode.start`` never bound) is judged
 by its producer's position like any other state: produced before ``receipt[n]``
 it is stale (B4'', ``R_not_fed_back``).
 
+Repair round 7: the envelope exemption is not a laundering slot. Binding a
+per-iteration next-action script into ``episode.start`` made every scripted
+step "pre-declared" and brought the r6 kill-target mutants back to
+``AUTONOMOUS`` (finish adversarial r2 H1/H2/H3). Two laws close it (B4'''):
+(a) the cone is rooted -- every event in the cone of ``workorder[n+1]`` after
+``receipt[n]`` must itself be causally downstream of ``receipt[n]``, so a
+decision taken from envelope state alone (a gap.detect whose only cause is a
+bound script step, the fresh observation attached decoratively later) is
+stale; the only unrooted hop allowed is an envelope derivation (every causal
+input envelope state, every output an ``Objective``/``Authority``);
+(b) the envelope is invariant -- an envelope object cited (``input``/``cause``/
+``originAuthority``) in the cone of some candidate transition of the episode
+but not in every one is per-iteration decision state, not a goal or a policy,
+and loses the exemption;
+(c) the envelope is bounded -- an invariant envelope with at least as many
+objects consumed in every cone as there are candidate transitions has the
+capacity of a one-step-per-iteration script (every work order citing the whole
+bound script), so none of it is exempt. A script encoded inside one object's
+attributes is beyond what an OCEL court can see (residual, UNKNOWN).
+
 The verdict is a pure function of (log bytes, profile bytes, court source):
 the receipt carries no wall-clock value, so a cold replay is byte-identical.
 """
@@ -106,7 +126,7 @@ __all__ = [
 ]
 
 COURT_ID = "ALOOP-001"
-COURT_VERSION = "aloop-001/v26.9.25-r6"
+COURT_VERSION = "aloop-001/v26.9.25-r7"
 RECEIPT_SCHEMA = "autofde-lab/aloop-court-receipt/v1"
 
 EXIT_QUALIFIED = 0
@@ -843,6 +863,9 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
         # Objective/Authority minted as per-iteration state is judged by its
         # producer's position like any other state.
         envelope_state = g.envelope_state[ep]
+        rooted = rooted_at(r)
+        used = envelope_used.setdefault((r, w2), set())
+        unrooted: str | None = None
         seen_cone: set[str] = set()
         cone = deque([w2])
         while cone:
@@ -850,6 +873,30 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
             if a in seen_cone:
                 continue
             seen_cone.add(a)
+            # Repair round 7 (B4''' a): a rooted cone -- every hop after r must
+            # itself descend from r, or it decided from state r never touched.
+            # The one exception is an envelope derivation: a machine event whose
+            # every causal input is envelope state and whose every output is an
+            # Objective/Authority (a lease derived from the granted policy).
+            if (
+                unrooted is None
+                and a not in rooted
+                and not (
+                    g.preds[a]
+                    and all(x in envelope_state for _, x in g.preds[a])
+                    and all(
+                        g.otype.get(x) in g.allowed_pre for x in g.objects(a, "output")
+                    )
+                )
+            ):
+                unrooted = a
+            # B4''' b: what the cone cites of the envelope, including the
+            # non-causal originAuthority grant, is compared across transitions.
+            used.update(
+                x
+                for q, x in g.links[a]
+                if q in ("input", "cause", "originAuthority") and x in envelope_state
+            )
             for p, x in g.preds[a]:
                 if p == r:
                     continue
@@ -860,6 +907,11 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
                         f"{a} consumes {x} produced by {p}, older than {r}; "
                         f"{w2} does not act on the state {r} left"
                     )
+        if unrooted is not None:
+            return (
+                f"{unrooted} in the cone of {w2} is not causally downstream of {r}; "
+                f"{w2} does not act on the state {r} left"
+            )
         for a in [w2, *segment]:
             if g.pos[a] <= g.pos[r]:
                 continue
@@ -873,7 +925,16 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
                     return f"{a} reads Subject {x} superseded by {cur}"
         return None
 
+    rooted_cache: dict[str, set[str]] = {}
+
+    def rooted_at(r: str) -> set[str]:
+        if r not in rooted_cache:
+            rooted_cache[r] = set(g.descend(r))
+        return rooted_cache[r]
+
+    envelope_used: dict[tuple[str, str], set[str]] = {}
     stale_transitions: list[tuple[str, str, str, str, str]] = []
+    candidates: list[tuple[str, str, str, str]] = []
     nxt: dict[str, set[str]] = defaultdict(set)
     closing_receipts: set[str] = set()
     unclosed_receipts: set[str] = set()
@@ -896,8 +957,52 @@ def _episode_report(g: _Graph, ep: str, profile: Mapping[str, Any]) -> dict[str,
                         if why is not None:
                             stale_transitions.append((w, r, o, w2, why))
                             continue
-                        nxt[w].add(w2)
-                        closing_receipts.add(r)
+                        candidates.append((w, r, o, w2))
+    # Repair round 7 (B4''' b): the envelope is invariant across the episode's
+    # transitions. An envelope object consumed in the cone of some candidate
+    # transition but not of every one is per-iteration decision state bound
+    # into episode.start to borrow the exemption: that transition is stale.
+    invariant: set[str] | None = None
+    for _w, r, _o, w2 in candidates:
+        used = envelope_used.get((r, w2), set())
+        invariant = set(used) if invariant is None else invariant & used
+    # Repair round 7 (B4''' c): the envelope is bounded. An invariant envelope
+    # as large as the number of transitions can hold one step per iteration.
+    script_capacity = (
+        len(candidates) > 1
+        and invariant is not None
+        and len(invariant) >= len(candidates)
+    )
+    for w, r, o, w2 in candidates:
+        varying = sorted(envelope_used.get((r, w2), set()) - (invariant or set()))
+        if script_capacity:
+            stale_transitions.append(
+                (
+                    w,
+                    r,
+                    o,
+                    w2,
+                    f"{w2} decides from {len(invariant or ())} envelope objects bound "
+                    f"into {start}, >= {len(candidates)} transitions: the envelope "
+                    "has the capacity of a per-iteration script",
+                )
+            )
+            continue
+        if varying:
+            stale_transitions.append(
+                (
+                    w,
+                    r,
+                    o,
+                    w2,
+                    f"{w2} decides from envelope object(s) {varying[:3]} that not "
+                    f"every transition consumes: per-iteration state bound into "
+                    f"{start}, not a goal or a policy",
+                )
+            )
+            continue
+        nxt[w].add(w2)
+        closing_receipts.add(r)
     depth = {w: 0 for w in self_generated}
     back: dict[str, str | None] = {w: None for w in self_generated}
     for w in sorted(self_generated, key=g.pos.__getitem__):

@@ -1075,6 +1075,75 @@ def m_preepoch_human_objective_script_decorative(doc):
     _decide_from_script(doc, 0)
 
 
+# ── repair round 7: B4''' the envelope is rooted, invariant and bounded ──
+
+
+def _bind_script_into_envelope(doc) -> None:
+    """``episode.start`` consumes every ``step-i`` so each borrows the r6
+    envelope exemption (finish adversarial r2 H1/H2/H3)."""
+    for i in range(POSITIVE_ITERATIONS):
+        _event(doc, "e-start")["relationships"].append(
+            {"objectId": f"step-{i}", "qualifier": "input"}
+        )
+
+
+def m_envelope_bound_human_objective_script_decorative(doc):
+    """B4''' (finish adversarial r2 H1): the r6 mutant
+    ``preepoch_human_objective_script_decorative`` with the script bound into
+    the envelope. gap.detect[i] decides from step-i alone; r6 qualified it."""
+    _objective_script(doc, "human.intervene", "e-start", "e-prescript")
+    _bind_script_into_envelope(doc)
+    _decide_from_script(doc, 0)
+
+
+def m_envelope_bound_human_objective_script(doc):
+    """B4''' (finish adversarial r2 H2): reobserve chain intact, every work
+    order also cites its bound per-iteration human step; r6 qualified it."""
+    _objective_script(doc, "human.intervene", "e-start", "e-prescript")
+    _bind_script_into_envelope(doc)
+    for i in range(POSITIVE_ITERATIONS):
+        _event(doc, f"e-wo-{i}")["relationships"].append(
+            {"objectId": f"step-{i}", "qualifier": "cause"}
+        )
+
+
+def m_envelope_bound_machine_objective_script_decorative(doc):
+    """B4''' (finish adversarial r2 H3): the r6 mutant
+    ``preepoch_machine_objective_script_decorative`` with the script bound into
+    the envelope. Each decision is state older than consequence n; r6 qualified it."""
+    _objective_script(doc, "candidate.construct", "e-start", "e-prescript")
+    _bind_script_into_envelope(doc)
+    _decide_from_script(doc, 0)
+
+
+def m_envelope_bound_whole_script_every_iteration(doc):
+    """B4''' (r7 own adversarial X1): every work order cites the WHOLE bound
+    script, so the envelope is invariant across transitions; its size equals the
+    loop length, the capacity of a one-step-per-iteration script."""
+    _objective_script(doc, "human.intervene", "e-start", "e-prescript")
+    _bind_script_into_envelope(doc)
+    for i in range(POSITIVE_ITERATIONS):
+        _event(doc, f"e-wo-{i}")["relationships"].extend(
+            {"objectId": f"step-{j}", "qualifier": "cause"}
+            for j in range(POSITIVE_ITERATIONS)
+        )
+
+
+def m_decide_from_goal_only_decorative_reobserve(doc):
+    """B4''' a (r7 own adversarial X5): gap.detect[i] decides from the bound
+    goal ``obj-1`` alone; the fresh reobserve output is attached decoratively
+    to plan.select. The envelope is invariant and small, so only the rooted
+    cone law sees that no decision is fed back from receipt[n]."""
+    for i in range(POSITIVE_ITERATIONS):
+        gap = _event(doc, f"e-gap-{i}")
+        gap["relationships"] = [
+            r for r in gap["relationships"] if r["objectId"] != f"ev-obs-{i}"
+        ] + [{"objectId": "obj-1", "qualifier": "cause"}]
+        _event(doc, f"e-plan-{i}")["relationships"].append(
+            {"objectId": f"ev-obs-{i}", "qualifier": "input"}
+        )
+
+
 MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     "human_after_epoch": (
         m_human_after_epoch,
@@ -1222,6 +1291,26 @@ MUTANTS: dict[str, tuple[Callable[[dict[str, Any]], None], dict[str, Any]]] = {
     ),
     "preepoch_human_objective_script_decorative": (
         m_preepoch_human_objective_script_decorative,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+    ),
+    "envelope_bound_human_objective_script_decorative": (
+        m_envelope_bound_human_objective_script_decorative,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+    ),
+    "envelope_bound_human_objective_script": (
+        m_envelope_bound_human_objective_script,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+    ),
+    "envelope_bound_machine_objective_script_decorative": (
+        m_envelope_bound_machine_objective_script_decorative,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+    ),
+    "envelope_bound_whole_script_every_iteration": (
+        m_envelope_bound_whole_script_every_iteration,
+        {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
+    ),
+    "decide_from_goal_only_decorative_reobserve": (
+        m_decide_from_goal_only_decorative_reobserve,
         {"exit": 3, "class": "FAILED", "code": "STALE_REOBSERVE"},
     ),
 }

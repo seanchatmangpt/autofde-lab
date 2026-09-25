@@ -123,8 +123,8 @@ def test_mutation_kill_ratio_is_total(corpus: Path) -> None:
     killed = sum(
         evaluate_path(corpus / rel)[0] != EXIT_QUALIFIED for rel in MUTANT_FILES
     )
-    assert len(MUTANT_FILES) == 40
-    assert (killed, len(MUTANT_FILES)) == (40, 40)
+    assert len(MUTANT_FILES) == 45
+    assert (killed, len(MUTANT_FILES)) == (45, 45)
 
 
 def test_empty_log_is_refused_not_vacuously_qualified(tmp_path: Path) -> None:
@@ -583,7 +583,10 @@ def test_pre_epoch_objective_in_the_cone_is_not_stale(tmp_path: Path) -> None:
     [
         ("preepoch_machine_objective_script_decorative", 0),
         ("preepoch_machine_objective_script", 0),
-        ("postepoch_machine_objective_script", 1),
+        # r6 counted transition 0 -> 1 (step-1 minted after receipt[0]); r7's
+        # rooted cone drops it too: gap.detect[1] decides from step-1 alone,
+        # not from anything receipt[0] left (B4''' a).
+        ("postepoch_machine_objective_script", 0),
         ("preepoch_human_objective_script_decorative", 0),
     ],
 )
@@ -618,3 +621,56 @@ def test_envelope_is_exactly_what_episode_start_consumes() -> None:
     log = _admit(json.loads((SYNTH / "positive.ocel.json").read_text()), profile)
     g = _Graph(log, profile)
     assert g.envelope_state == {"ep-1": frozenset({"obj-1", "auth-policy"})}
+
+
+# ── repair round 7 (finish adversarial court r2: B4''' envelope laundering) ──
+
+
+@pytest.mark.parametrize(
+    ("name", "why"),
+    [
+        ("envelope_bound_human_objective_script_decorative", "not causally downstream"),
+        ("envelope_bound_human_objective_script", "not every transition consumes"),
+        (
+            "envelope_bound_machine_objective_script_decorative",
+            "not causally downstream",
+        ),
+        ("envelope_bound_whole_script_every_iteration", "capacity of a per-iteration"),
+        ("decide_from_goal_only_decorative_reobserve", "not causally downstream"),
+    ],
+)
+def test_script_bound_into_the_envelope_is_still_stale_state(
+    corpus: Path, name: str, why: str
+) -> None:
+    """B4''': r6 exempted every Objective/Authority episode.start consumes, so
+    binding a 101-step script into episode.start returned exit 0 QUALIFIED,
+    ALD 100 (H1/H2/H3; X1 whole script cited by every work order). The cone is
+    now rooted at receipt[n], and the envelope is invariant and bounded."""
+    code, receipt = evaluate_path(corpus / f"mutants/{name}.ocel.json")
+    assert code == EXIT_NOT_QUALIFIED
+    (episode,) = receipt["episodes"]
+    m = episode["metrics"]
+    assert episode["class"] == "FAILED"
+    assert m["ALD"] == 0
+    assert m["stale_reobserve_transitions"] == 100
+    reason = next(r for r in episode["reasons"] if r["code"] == "STALE_REOBSERVE")
+    assert reason["broken_term"] == "R_not_fed_back"
+    assert why in reason["detail"]
+
+
+def test_every_work_order_citing_the_bound_goal_still_qualifies(tmp_path: Path) -> None:
+    """Anti-vacuity control for B4''': an envelope object cited by EVERY
+    transition (the goal) is invariant and far smaller than the loop, so the
+    loop still qualifies with ALD 100."""
+    doc = build_positive()
+    for i in range(101):
+        _event(doc, f"e-wo-{i}")["relationships"].append(
+            {"objectId": "obj-1", "qualifier": "cause"}
+        )
+    path = tmp_path / "wo-cites-goal.ocel.json"
+    dump(doc, path)
+    code, receipt = evaluate_path(path)
+    assert code == EXIT_QUALIFIED, receipt["unmet"]
+    (episode,) = receipt["episodes"]
+    assert episode["metrics"]["ALD"] == 100
+    assert episode["metrics"]["stale_reobserve_transitions"] == 0
