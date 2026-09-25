@@ -92,9 +92,27 @@ class DSPyWasmResult:
                 raise DSPyWasmProtocolViolation(
                     "ALIVE requires observed DSPy custom-engine host output 'WASM-HOST'"
                 )
-            if output.get("host_calls") != 1:
+            if output.get("core_host_calls") != 1:
                 raise DSPyWasmProtocolViolation(
-                    "ALIVE requires exactly one explicit host capability call"
+                    "ALIVE requires exactly one core host-engine handshake"
+                )
+            capabilities = output.get("capabilities")
+            if not isinstance(capabilities, Mapping):
+                raise DSPyWasmProtocolViolation(
+                    "ALIVE requires a capability matrix"
+                )
+            summary = capabilities.get("summary")
+            if not isinstance(summary, Mapping):
+                raise DSPyWasmProtocolViolation(
+                    "ALIVE capability matrix requires a summary"
+                )
+            if summary.get("blocked") != 0:
+                raise DSPyWasmProtocolViolation(
+                    "ALIVE requires zero blocked capabilities"
+                )
+            if summary.get("alive") != summary.get("total"):
+                raise DSPyWasmProtocolViolation(
+                    "ALIVE requires every capability row to be alive"
                 )
             if output.get("provider_io") is not False:
                 raise DSPyWasmProtocolViolation(
@@ -243,7 +261,7 @@ class DSPyWasmProbe:
                 "pyodide": PYODIDE_VERSION,
                 "runtime": "node-pyodide",
                 "profile": "autofde-core-no-provider-io-v1",
-                "court": "import+deterministic-module+host-engine",
+                "court": "full-capability-matrix",
             },
             "stages": [],
             "blocker": {"code": code, "detail": detail, "layer": "host"},
