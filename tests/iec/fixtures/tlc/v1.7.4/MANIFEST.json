@@ -1,0 +1,236 @@
+{
+  "captured_by": "scripts/capture_tlc_fixtures.py",
+  "fixtures": {
+    "sany_parse_error": {
+      "argv": [
+        "java",
+        "-cp",
+        "$TLA2TOOLS_JAR",
+        "tla2sany.SANY",
+        "Broken.tla"
+      ],
+      "exit_code": 255,
+      "stderr_nonempty": false
+    },
+    "sany_reference_ok": {
+      "argv": [
+        "java",
+        "-cp",
+        "$TLA2TOOLS_JAR",
+        "tla2sany.SANY",
+        "BRCEReference.tla"
+      ],
+      "exit_code": 0,
+      "stderr_nonempty": false
+    },
+    "sany_semantic_error": {
+      "argv": [
+        "java",
+        "-cp",
+        "$TLA2TOOLS_JAR",
+        "tla2sany.SANY",
+        "Sem.tla"
+      ],
+      "exit_code": 0,
+      "stderr_nonempty": false
+    },
+    "tlc_config_error": {
+      "argv": [
+        "java",
+        "-XX:+UseParallelGC",
+        "-cp",
+        "$TLA2TOOLS_JAR",
+        "tlc2.TLC",
+        "-tool",
+        "-workers",
+        "1",
+        "-fp",
+        "0",
+        "-seed",
+        "0",
+        "-deadlock",
+        "-metadir",
+        "meta",
+        "-config",
+        "M.cfg",
+        "BRCEReference.tla"
+      ],
+      "exit_code": 151,
+      "stderr_nonempty": false
+    },
+    "tlc_mutant_do_without_authority": {
+      "argv": [
+        "java",
+        "-XX:+UseParallelGC",
+        "-cp",
+        "$TLA2TOOLS_JAR",
+        "tlc2.TLC",
+        "-tool",
+        "-workers",
+        "1",
+        "-fp",
+        "0",
+        "-seed",
+        "0",
+        "-deadlock",
+        "-metadir",
+        "meta",
+        "-config",
+        "M.cfg",
+        "BRCEMutantDoWithoutAuthority.tla"
+      ],
+      "exit_code": 12,
+      "stderr_nonempty": false
+    },
+    "tlc_mutant_duplicate_consequence": {
+      "argv": [
+        "java",
+        "-XX:+UseParallelGC",
+        "-cp",
+        "$TLA2TOOLS_JAR",
+        "tlc2.TLC",
+        "-tool",
+        "-workers",
+        "1",
+        "-fp",
+        "0",
+        "-seed",
+        "0",
+        "-deadlock",
+        "-metadir",
+        "meta",
+        "-config",
+        "M.cfg",
+        "BRCEMutantDuplicateConsequence.tla"
+      ],
+      "exit_code": 12,
+      "stderr_nonempty": false
+    },
+    "tlc_mutant_no_fairness": {
+      "argv": [
+        "java",
+        "-XX:+UseParallelGC",
+        "-cp",
+        "$TLA2TOOLS_JAR",
+        "tlc2.TLC",
+        "-tool",
+        "-workers",
+        "1",
+        "-fp",
+        "0",
+        "-seed",
+        "0",
+        "-deadlock",
+        "-metadir",
+        "meta",
+        "-config",
+        "M.cfg",
+        "BRCEMutantNoFairness.tla"
+      ],
+      "exit_code": 13,
+      "stderr_nonempty": false
+    },
+    "tlc_mutant_standing_without_verify": {
+      "argv": [
+        "java",
+        "-XX:+UseParallelGC",
+        "-cp",
+        "$TLA2TOOLS_JAR",
+        "tlc2.TLC",
+        "-tool",
+        "-workers",
+        "1",
+        "-fp",
+        "0",
+        "-seed",
+        "0",
+        "-deadlock",
+        "-metadir",
+        "meta",
+        "-config",
+        "M.cfg",
+        "BRCEMutantStandingWithoutVerify.tla"
+      ],
+      "exit_code": 12,
+      "stderr_nonempty": false
+    },
+    "tlc_reference_deadlock": {
+      "argv": [
+        "java",
+        "-XX:+UseParallelGC",
+        "-cp",
+        "$TLA2TOOLS_JAR",
+        "tlc2.TLC",
+        "-tool",
+        "-workers",
+        "1",
+        "-fp",
+        "0",
+        "-seed",
+        "0",
+        "-metadir",
+        "meta",
+        "-config",
+        "M.cfg",
+        "BRCEReference.tla"
+      ],
+      "exit_code": 11,
+      "stderr_nonempty": false
+    },
+    "tlc_reference_invariant_holds": {
+      "argv": [
+        "java",
+        "-XX:+UseParallelGC",
+        "-cp",
+        "$TLA2TOOLS_JAR",
+        "tlc2.TLC",
+        "-tool",
+        "-workers",
+        "1",
+        "-fp",
+        "0",
+        "-seed",
+        "0",
+        "-deadlock",
+        "-metadir",
+        "meta",
+        "-config",
+        "M.cfg",
+        "BRCEReference.tla"
+      ],
+      "exit_code": 0,
+      "stderr_nonempty": false
+    },
+    "tlc_reference_liveness_holds": {
+      "argv": [
+        "java",
+        "-XX:+UseParallelGC",
+        "-cp",
+        "$TLA2TOOLS_JAR",
+        "tlc2.TLC",
+        "-tool",
+        "-workers",
+        "1",
+        "-fp",
+        "0",
+        "-seed",
+        "0",
+        "-deadlock",
+        "-metadir",
+        "meta",
+        "-config",
+        "M.cfg",
+        "BRCEReference.tla"
+      ],
+      "exit_code": 0,
+      "stderr_nonempty": false
+    }
+  },
+  "jar_sha256": "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88",
+  "java_version": "26.0.2.1",
+  "substitutions": {
+    "$JAVA_TMPDIR": "JVM temp dir holding SANY's extracted standard modules",
+    "$WORKDIR": "per-run working directory"
+  },
+  "tla2tools_release": "1.7.4"
+}

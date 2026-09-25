@@ -1,0 +1,140 @@
+@!@!@STARTMSG 2262:0 @!@!@
+TLC2 Version 2.19 of 08 August 2024 (rev: 5a47802)
+@!@!@ENDMSG 2262 @!@!@
+@!@!@STARTMSG 2187:0 @!@!@
+Running breadth-first search Model-Checking with fp 0 and seed 0 with 1 worker on 16 cores with 10923MB heap and 64MB offheap memory [pid: 67205] (Mac OS X 26.2 aarch64, Homebrew 26.0.2.1 x86_64, MSBDiskFPSet, DiskStateQueue).
+@!@!@ENDMSG 2187 @!@!@
+@!@!@STARTMSG 2220:0 @!@!@
+Starting SANY...
+@!@!@ENDMSG 2220 @!@!@
+Parsing file $WORKDIR/BRCEMutantStandingWithoutVerify.tla
+Parsing file $JAVA_TMPDIR/Naturals.tla
+Parsing file $JAVA_TMPDIR/Sequences.tla
+Parsing file $JAVA_TMPDIR/FiniteSets.tla
+Semantic processing of module Naturals
+Semantic processing of module Sequences
+Semantic processing of module FiniteSets
+Semantic processing of module BRCEMutantStandingWithoutVerify
+@!@!@STARTMSG 2219:0 @!@!@
+SANY finished.
+@!@!@ENDMSG 2219 @!@!@
+@!@!@STARTMSG 2185:0 @!@!@
+Starting... (2026-09-24 22:35:03)
+@!@!@ENDMSG 2185 @!@!@
+@!@!@STARTMSG 2189:0 @!@!@
+Computing initial states...
+@!@!@ENDMSG 2189 @!@!@
+@!@!@STARTMSG 2190:0 @!@!@
+Finished computing initial states: 1 distinct state generated at 2026-09-24 22:35:03.
+@!@!@ENDMSG 2190 @!@!@
+@!@!@STARTMSG 2110:1 @!@!@
+Invariant NoStandingWithoutVerification is violated.
+@!@!@ENDMSG 2110 @!@!@
+@!@!@STARTMSG 2121:1 @!@!@
+The behavior up to this point is:
+@!@!@ENDMSG 2121 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+1: <Initial predicate>
+/\ authority = FALSE
+/\ consequenceCount = 0
+/\ verified = FALSE
+/\ phase = "RECEIVED"
+/\ receipt = FALSE
+/\ standing = FALSE
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+2: <Parse line 15, col 5 to line 17, col 77 of module BRCEMutantStandingWithoutVerify>
+/\ authority = FALSE
+/\ consequenceCount = 0
+/\ verified = FALSE
+/\ phase = "PARSED"
+/\ receipt = FALSE
+/\ standing = FALSE
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+3: <Route line 20, col 5 to line 22, col 77 of module BRCEMutantStandingWithoutVerify>
+/\ authority = FALSE
+/\ consequenceCount = 0
+/\ verified = FALSE
+/\ phase = "ROUTED"
+/\ receipt = FALSE
+/\ standing = FALSE
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+4: <Admit line 25, col 5 to line 27, col 77 of module BRCEMutantStandingWithoutVerify>
+/\ authority = FALSE
+/\ consequenceCount = 0
+/\ verified = FALSE
+/\ phase = "ADMITTED"
+/\ receipt = FALSE
+/\ standing = FALSE
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+5: <Construct line 30, col 5 to line 32, col 77 of module BRCEMutantStandingWithoutVerify>
+/\ authority = FALSE
+/\ consequenceCount = 0
+/\ verified = FALSE
+/\ phase = "CONSTRUCTED"
+/\ receipt = FALSE
+/\ standing = FALSE
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+6: <Authorize line 35, col 5 to line 38, col 66 of module BRCEMutantStandingWithoutVerify>
+/\ authority = TRUE
+/\ consequenceCount = 0
+/\ verified = FALSE
+/\ phase = "AUTHORIZED"
+/\ receipt = FALSE
+/\ standing = FALSE
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+7: <Actuate line 41, col 5 to line 44, col 59 of module BRCEMutantStandingWithoutVerify>
+/\ authority = TRUE
+/\ consequenceCount = 1
+/\ verified = FALSE
+/\ phase = "EXECUTED"
+/\ receipt = FALSE
+/\ standing = FALSE
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+8: <Receipt line 47, col 5 to line 50, col 68 of module BRCEMutantStandingWithoutVerify>
+/\ authority = TRUE
+/\ consequenceCount = 1
+/\ verified = FALSE
+/\ phase = "RECEIPTED"
+/\ receipt = TRUE
+/\ standing = FALSE
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+9: <GrantStanding line 59, col 5 to line 62, col 67 of module BRCEMutantStandingWithoutVerify>
+/\ authority = TRUE
+/\ consequenceCount = 1
+/\ verified = FALSE
+/\ phase = "STANDING"
+/\ receipt = TRUE
+/\ standing = TRUE
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2200:0 @!@!@
+Progress(9) at 2026-09-24 22:35:03: 10 states generated (1,282 s/min), 10 distinct states found (1,282 ds/min), 1 states left on queue.
+@!@!@ENDMSG 2200 @!@!@
+@!@!@STARTMSG 2199:0 @!@!@
+10 states generated, 10 distinct states found, 1 states left on queue.
+@!@!@ENDMSG 2199 @!@!@
+@!@!@STARTMSG 2194:0 @!@!@
+The depth of the complete state graph search is 9.
+@!@!@ENDMSG 2194 @!@!@
+@!@!@STARTMSG 2268:0 @!@!@
+The average outdegree of the complete state graph is 1 (minimum is 1, the maximum 1 and the 95th percentile is 1).
+@!@!@ENDMSG 2268 @!@!@
+@!@!@STARTMSG 2186:0 @!@!@
+Finished in 474ms at (2026-09-24 22:35:03)
+@!@!@ENDMSG 2186 @!@!@

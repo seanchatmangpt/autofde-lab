@@ -1,0 +1,30 @@
+@!@!@STARTMSG 2262:0 @!@!@
+TLC2 Version 2.19 of 08 August 2024 (rev: 5a47802)
+@!@!@ENDMSG 2262 @!@!@
+@!@!@STARTMSG 2187:0 @!@!@
+Running breadth-first search Model-Checking with fp 0 and seed 0 with 1 worker on 16 cores with 10923MB heap and 64MB offheap memory [pid: 67233] (Mac OS X 26.2 aarch64, Homebrew 26.0.2.1 x86_64, MSBDiskFPSet, DiskStateQueue).
+@!@!@ENDMSG 2187 @!@!@
+@!@!@STARTMSG 2220:0 @!@!@
+Starting SANY...
+@!@!@ENDMSG 2220 @!@!@
+Parsing file $WORKDIR/BRCEReference.tla
+Parsing file $JAVA_TMPDIR/Naturals.tla
+Parsing file $JAVA_TMPDIR/Sequences.tla
+Parsing file $JAVA_TMPDIR/FiniteSets.tla
+Semantic processing of module Naturals
+Semantic processing of module Sequences
+Semantic processing of module FiniteSets
+Semantic processing of module BRCEReference
+@!@!@STARTMSG 2219:0 @!@!@
+SANY finished.
+@!@!@ENDMSG 2219 @!@!@
+@!@!@STARTMSG 2185:0 @!@!@
+Starting... (2026-09-24 22:35:04)
+@!@!@ENDMSG 2185 @!@!@
+@!@!@STARTMSG 2229:1 @!@!@
+The invariant Nope specified in the configuration file
+is not defined in the specification.
+@!@!@ENDMSG 2229 @!@!@
+@!@!@STARTMSG 2186:0 @!@!@
+Finished in 228ms at (2026-09-24 22:35:04)
+@!@!@ENDMSG 2186 @!@!@

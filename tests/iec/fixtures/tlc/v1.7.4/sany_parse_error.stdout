@@ -1,0 +1,24 @@
+
+****** SANY2 Version 2.1 created 24 February 2014
+
+Parsing file $WORKDIR/Broken.tla
+***Parse Error***
+Was expecting "Expression or Instance"
+Encountered "Beginning of definition" at line 3, column 9 and token "==" 
+
+Residual stack trace follows:
+Definition starting at line 3, column 1.
+Module body starting at line 2, column 1.
+Module definition starting at line 1, column 1.
+
+
+Fatal errors while parsing TLA+ spec in file Broken.tla
+
+tla2sany.semantic.AbortException
+*** Abort messages: 1
+
+In module Broken
+
+Could not parse module Broken from file Broken.tla
+
+
