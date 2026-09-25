@@ -74,7 +74,7 @@ try {
 }
 
 try {
-  await pyodide.loadPackage(["micropip", "numpy", "pydantic", "regex"]);
+  await pyodide.loadPackage(["micropip", "numpy", "pydantic", "regex", "jsonschema"]);
   await pyodide.runPythonAsync(`
 import micropip
 
