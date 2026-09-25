@@ -85,7 +85,7 @@ def test_structural_json_and_toml_are_deterministic() -> None:
     )
     toml_doc = registry.parse(
         path="a.toml",
-        content=b'[x]\na = 1\n',
+        content=b"[x]\na = 1\n",
         source_digest="sha256:t",
     )
     assert json_doc.structure == {"b": 2, "a": 1}

@@ -114,7 +114,18 @@ def make_tlc_intent(
     executable_digest: str,
     module_path: str,
     config_path: str,
+    jar_path: str | None = None,
+    flags: tuple[str, ...] = (),
 ) -> FormalVerificationIntent:
+    """Build a zero-authority TLC intent.
+
+    Without ``jar_path`` the argv is the historical ``java tlc2.TLC ...`` form
+    (classpath supplied by the environment). With ``jar_path`` the argv pins
+    the classpath to that jar; ``executable_digest`` should then be the jar's
+    sha256, as :mod:`autofde_lab.iec.tlc_court` records it.
+    """
+
+    classpath = ("-cp", jar_path) if jar_path is not None else ()
     return FormalVerificationIntent(
         projection_id=projection.projection_id,
         tool_identity="tlc2.TLC",
@@ -122,7 +133,9 @@ def make_tlc_intent(
         executable_digest=executable_digest,
         argv=(
             "java",
+            *classpath,
             "tlc2.TLC",
+            *flags,
             "-config",
             config_path,
             module_path,

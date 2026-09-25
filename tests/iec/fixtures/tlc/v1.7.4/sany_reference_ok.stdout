@@ -1,0 +1,11 @@
+
+****** SANY2 Version 2.1 created 24 February 2014
+
+Parsing file $WORKDIR/BRCEReference.tla
+Parsing file $JAVA_TMPDIR/Naturals.tla
+Parsing file $JAVA_TMPDIR/Sequences.tla
+Parsing file $JAVA_TMPDIR/FiniteSets.tla
+Semantic processing of module Naturals
+Semantic processing of module Sequences
+Semantic processing of module FiniteSets
+Semantic processing of module BRCEReference

@@ -74,9 +74,7 @@ def test_capability_composer_prefers_alive_path_at_equal_topology() -> None:
 
 
 def test_capability_composer_returns_typed_unsupported_after_exhausting_graph() -> None:
-    route = CapabilityComposer(()).route(
-        ManufactureRequirement("a", "z", "subject")
-    )
+    route = CapabilityComposer(()).route(ManufactureRequirement("a", "z", "subject"))
     assert not route.routable
     assert route.failure is not None
     assert route.failure.kind.value == "UNSUPPORTED_GENERATOR_CAPABILITY"

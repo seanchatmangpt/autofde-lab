@@ -6,7 +6,6 @@ Fingerprints compress the search space; they are not equivalence proofs.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Mapping
 
 from .graph_ir import SemanticGraph
 from .model import digest

@@ -1,0 +1,15 @@
+
+****** SANY2 Version 2.1 created 24 February 2014
+
+Parsing file $WORKDIR/Sem.tla
+Semantic processing of module Sem
+Semantic errors:
+
+*** Errors: 1
+
+line 4, col 14 to line 4, col 14 of module Sem
+
+Unknown operator: `y'.
+
+
+

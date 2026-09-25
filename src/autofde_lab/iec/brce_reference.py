@@ -8,6 +8,7 @@ already exists.
 from __future__ import annotations
 
 from .protocol_ir import (
+    Fairness,
     Invariant,
     LivenessProperty,
     StateVariable,
@@ -111,6 +112,9 @@ def brce_reference_system() -> TransitionSystem:
         actions=actions,
         invariants=invariants,
         liveness=liveness,
+        # Weak fairness on Next: an enabled step is eventually taken, so the
+        # liveness obligation is not trivially refuted by infinite stuttering.
+        fairness=(Fairness("WF"),),
     )
     if system.authority_gaps():
         raise AssertionError(

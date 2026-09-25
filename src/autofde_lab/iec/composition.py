@@ -123,9 +123,7 @@ class CapabilityComposer:
                 tuple[str, ...],
                 tuple[GeneratorCapability, ...],
             ]
-        ] = [
-            (0, 0, requirement.input_kind, (), ())
-        ]
+        ] = [(0, 0, requirement.input_kind, (), ())]
         best: dict[tuple[str, int], int] = {(requirement.input_kind, 0): 0}
 
         while queue:

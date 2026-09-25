@@ -122,6 +122,65 @@ def _brce_tla(args: argparse.Namespace) -> int:
     return 0
 
 
+def _tlc_court(args: argparse.Namespace) -> int:
+    from .brce_mutants import brce_mutant
+    from .tlc_court import (
+        DEADLOCK_EXEMPTION_REASON,
+        TlaToolchain,
+        TlcVerdict,
+        court,
+        write_court_outputs,
+    )
+
+    if args.model == "brce":
+        system = brce_reference_system()
+    elif args.model.startswith("mutant:"):
+        system = brce_mutant(args.model.split(":", 1)[1])
+    else:
+        raise SystemExit(f"unknown model {args.model!r}; use brce or mutant:<KIND>")
+    tc = TlaToolchain.discover(args.jar)
+    out = Path(args.out)
+    if not isinstance(tc, TlaToolchain):
+        out.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "model": args.model,
+            "verdict": "REFUSED" if tc.refused else "UNSUPPORTED",
+            "code": tc.code,
+            "reason": tc.reason,
+            "authority": "NONE",
+        }
+        (out / "receipt.json").write_text(canonical_json(payload) + "\n")
+        print(canonical_json(payload))
+        return 3
+    receipt = court(
+        system,
+        tc,
+        workdir=out / "work",
+        deadlock_check=False,
+        deadlock_reason=DEADLOCK_EXEMPTION_REASON,
+        replay_command=f"python -m autofde_lab.iec tlc-court --model {args.model} --out <DIR>",
+    )
+    write_court_outputs(receipt, out)
+    (out / f"{system.name}.tla").write_text(
+        (out / "work" / f"{system.name}.tla").read_text()
+    )
+    print(
+        canonical_json(
+            {
+                "model": args.model,
+                "module": system.name,
+                "parse": receipt.payload["parse"]["verdict"],
+                "model_check": receipt.payload["model_check"],
+                "verdicts": receipt.verdicts,
+                "receipt_digest": receipt.payload["receipt_digest"],
+                "replay_identity": receipt.replay_identity,
+            }
+        )
+    )
+    ok = receipt.payload["model_check"] == TlcVerdict.MODEL_CHECK_ALIVE.value
+    return 0 if ok else 2
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m autofde_lab.iec",
@@ -129,7 +188,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    scan = subparsers.add_parser("scan", help="passively inventory and observe a checkout")
+    scan = subparsers.add_parser(
+        "scan", help="passively inventory and observe a checkout"
+    )
     scan.add_argument("root")
     scan.add_argument("--repository", required=True)
     scan.add_argument("--revision", required=True)
@@ -143,7 +204,9 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--rdf", action="store_true")
     scan.set_defaults(func=_scan)
 
-    parse = subparsers.add_parser("parse", help="structurally parse one known-format file")
+    parse = subparsers.add_parser(
+        "parse", help="structurally parse one known-format file"
+    )
     parse.add_argument("path")
     parse.set_defaults(func=_parse)
 
@@ -173,6 +236,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="render BRCE reference TLA+ without executing a model checker",
     )
     tla.set_defaults(func=_brce_tla)
+
+    tlc = subparsers.add_parser(
+        "tlc-court",
+        help="run SANY + TLC (pinned tla2tools.jar) on the BRCE reference or a mutant",
+    )
+    tlc.add_argument(
+        "--model",
+        required=True,
+        help="brce | mutant:DO_WITHOUT_AUTHORITY | mutant:DUPLICATE_CONSEQUENCE | "
+        "mutant:STANDING_WITHOUT_VERIFY | mutant:NO_FAIRNESS",
+    )
+    tlc.add_argument("--out", required=True)
+    tlc.add_argument("--jar", default=None, help="tla2tools.jar path (digest-checked)")
+    tlc.set_defaults(func=_tlc_court)
 
     return parser
 
