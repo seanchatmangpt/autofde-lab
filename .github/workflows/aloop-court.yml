@@ -62,12 +62,13 @@ jobs:
           PYTHONPATH: src
         shell: bash
         run: |
-          set -uo pipefail
+          set -euo pipefail
           locator="$(python -c 'import json;print(json.load(open("docs/rfcs/aloop/ALOOP-001-chatman-root-crown-v26.9.25.json"))["log"]["locator"])')"
+          # the runner shell is `bash -e`: capture the court's typed exit code explicitly
+          code=0
           python -m autofde_lab.aloop \
             tests/aloop/fixtures/chatman_root_crown_v26_9_25/chatman-root-crown-v26.9.25.ocel.json \
-            --locator "$locator" --out "$RUNNER_TEMP/replay.json"
-          code=$?
+            --locator "$locator" --out "$RUNNER_TEMP/replay.json" || code=$?
           test "$code" = 3
           python - "$RUNNER_TEMP/replay.json" <<'PY'
           import json, sys
