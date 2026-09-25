@@ -37,8 +37,14 @@ What this census cannot say, and therefore does not:
   removed edge is not a retired one -- deleting a feature also removes its LLM
   call. Only `retirement.ledger_entry` over a held-out C3 court retires anything.
 * **Frontier value.** The frontier ranks candidate recurrence by the one factor
-  observable here (call sites sharing a signature expression). Cost, reuse and
-  formalizability stay `UNKNOWN`; they are not zero.
+  observable here: call sites whose own `from ... import` (or same-file definition)
+  leads to one declared `dspy.Signature` class, or that pass an identical literal
+  signature. Two classes that share a name are two questions, not one. Cost, reuse
+  and formalizability stay `UNKNOWN`; they are not zero.
+
+`residue_delta(...)["gate"]` is `PASS` unless an edge added between the two commits
+carries no declared kind -- growth is allowed, unfenced growth is the failed-edge
+signal. `--gate` turns that into a non-zero exit for CI.
 """
 
 from __future__ import annotations
@@ -49,7 +55,7 @@ import json
 import re
 import warnings
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from pathlib import Path, PurePosixPath
 from typing import Any, Iterable, Mapping
 
@@ -69,7 +75,7 @@ __all__ = [
 ]
 
 RESIDUE_EXTRACTOR = "autofde_lab.iec.crowns.residue"
-RESIDUE_VERSION = "1"
+RESIDUE_VERSION = "2"
 LDR_UNREPRESENTABLE = "UNREPRESENTABLE:NO_REACHABILITY_OBSERVATION"
 
 LLM_PROVIDERS = ("anthropic", "dspy", "litellm", "ollama", "openai")
@@ -187,6 +193,42 @@ def _signature_expression(call: ast.Call) -> str | None:
     return None
 
 
+def _module_candidates(path: str, module: str | None, level: int) -> tuple[str, ...]:
+    """Files a `from <module> import X` in `path` can name, most specific first."""
+    parts = [part for part in (module or "").split(".") if part]
+    if level:
+        base = PurePosixPath(path).parent
+        for _ in range(level - 1):
+            base = base.parent
+        roots = [base.joinpath(*parts)] if parts else [base]
+    else:
+        roots = [PurePosixPath("src", *parts), PurePosixPath(*parts)]
+    return tuple(
+        str(candidate)
+        for root in roots
+        for candidate in (root.with_suffix(".py"), root / "__init__.py")
+    )
+
+
+def _class_imports(
+    path: str, tree: ast.Module
+) -> dict[str, tuple[str, tuple[str, ...]]]:
+    """Local name -> (imported name, candidate defining files), from this file's
+    `from ... import` statements. An import is the producer's own statement of where
+    a name comes from; a matching name elsewhere is not."""
+    imports: dict[str, tuple[str, tuple[str, ...]]] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            candidates = _module_candidates(path, node.module, node.level)
+            for alias in node.names:
+                if alias.name != "*":
+                    imports[alias.asname or alias.name] = (alias.name, candidates)
+    for node in tree.body:
+        if isinstance(node, ast.ClassDef):
+            imports[node.name] = (node.name, (path,))
+    return imports
+
+
 def _declaration(lines: list[str], lineno: int) -> dict[str, str]:
     for index in (lineno - 1, lineno - 2):
         if 0 <= index < len(lines):
@@ -212,6 +254,10 @@ class ResidueEdge:
     kind: str
     reasoning_class: str
     declaration: Mapping[str, str]
+    signature_ref: tuple[str, tuple[str, ...]] | None = field(
+        default=None, compare=False
+    )
+    signature_origin: str | None = None
 
     @property
     def zone(self) -> str:
@@ -236,6 +282,7 @@ class ResidueEdge:
             "api": self.api,
             "role": self.role,
             "signature": self.signature,
+            "signature_origin": self.signature_origin,
             "kind": self.kind,
             "retirement_mechanism": RESIDUE_KINDS.get(self.kind, "UNKNOWN"),
             "reasoning_class": self.reasoning_class,
@@ -257,6 +304,7 @@ def _scan(path: str, blob: str, source: bytes) -> dict[str, Any]:
     if not aliases:
         return {}
     lines = text.splitlines()
+    class_imports = _class_imports(path, tree)
     edges: list[ResidueEdge] = []
     other: Counter[str] = Counter()
     rejected: list[dict[str, Any]] = []
@@ -290,6 +338,7 @@ def _scan(path: str, blob: str, source: bytes) -> dict[str, Any]:
         if kind != "UNKNOWN" and kind not in RESIDUE_KINDS:
             rejected.append({"path": path, "line": node.lineno, "declared_kind": kind})
             kind = "UNKNOWN"
+        signature = _signature_expression(node) if role == "program" else None
         edges.append(
             ResidueEdge(
                 path=path,
@@ -297,10 +346,11 @@ def _scan(path: str, blob: str, source: bytes) -> dict[str, Any]:
                 line=node.lineno,
                 api=api,
                 role=role,
-                signature=_signature_expression(node) if role == "program" else None,
+                signature=signature,
                 kind=kind,
                 reasoning_class=declared.get("class", "UNKNOWN"),
                 declaration=declared,
+                signature_ref=class_imports.get(signature or ""),
             )
         )
     return {
@@ -312,20 +362,35 @@ def _scan(path: str, blob: str, source: bytes) -> dict[str, Any]:
     }
 
 
-def _frontier(
-    edges: Iterable[ResidueEdge], declared: Iterable[str]
-) -> list[dict[str, Any]]:
-    """Recurring signatures. Only a string literal or a name whose last segment is a
-    declared `dspy.Signature` class is grouped: a local variable (`sig`) shared by two
-    files is a coincidence of spelling, not a recurring question."""
-    declared = set(declared)
+def _resolve_origins(
+    edges: Iterable[ResidueEdge], declared: Iterable[Mapping[str, Any]]
+) -> list[ResidueEdge]:
+    """Bind each program edge to the `path::Class` that defines its signature, when
+    the edge's own imports lead to a file that declares that class. Anything else
+    (re-exports, variables, dotted module access) stays unresolved (`None`)."""
+    defined = {(entry["path"], entry["name"]) for entry in declared}
+    resolved = []
+    for edge in edges:
+        origin = None
+        if edge.signature and edge.signature.startswith(("'", '"')):
+            origin = f"literal:{edge.signature}"
+        elif edge.signature_ref is not None:
+            name, candidates = edge.signature_ref
+            origin = next(
+                (f"{c}::{name}" for c in candidates if (c, name) in defined), None
+            )
+        resolved.append(replace(edge, signature_origin=origin))
+    return resolved
+
+
+def _frontier(edges: Iterable[ResidueEdge]) -> list[dict[str, Any]]:
+    """Recurring signatures, grouped by the class definition each call site's own
+    imports resolve to (or by an identical literal signature). Two classes that
+    merely share a name -- three unrelated `ChooseMove`s, say -- never group."""
     groups: dict[str, list[ResidueEdge]] = {}
     for edge in edges:
-        signature = edge.signature
-        if edge.role != "program" or signature is None:
-            continue
-        if signature.startswith(("'", '"')) or signature.split(".")[-1] in declared:
-            groups.setdefault(signature.split(".")[-1], []).append(edge)
+        if edge.role == "program" and edge.signature_origin is not None:
+            groups.setdefault(edge.signature_origin, []).append(edge)
     ranked = sorted(groups.items(), key=lambda item: (-len(item[1]), item[0]))
     return [
         {
@@ -333,7 +398,13 @@ def _frontier(
             "call_sites": len(members),
             "files": len({edge.path for edge in members}),
             "edge_ids": sorted(edge.id for edge in members),
-            "grouping_evidence": "CONVENTION:same-signature-name-or-literal",
+            "declared_kinds": sorted({edge.kind for edge in members}),
+            "declared_classes": sorted({edge.reasoning_class for edge in members}),
+            "grouping_evidence": (
+                "VALUE:identical-literal-signature"
+                if signature.startswith("literal:")
+                else "EXPLICIT_DECLARATION:import-resolved-class-definition"
+            ),
             "standing": FactStanding.INFERRED_CANDIDATE.value,
             "llm_cost": "UNKNOWN",
             "reuse": "UNKNOWN",
@@ -378,6 +449,7 @@ def residue_census(subject: RepositorySubject, checkout: Path) -> dict[str, Any]
         if not scanned["edges"]:
             import_only.append(path)
 
+    edges = _resolve_origins(edges, signatures)
     document: dict[str, Any] = {
         "extractor": RESIDUE_EXTRACTOR,
         "extractor_version": RESIDUE_VERSION,
@@ -398,7 +470,7 @@ def residue_census(subject: RepositorySubject, checkout: Path) -> dict[str, Any]
         "other_provider_calls": other,
         "rejected_declarations": rejected,
         "unparseable": unparseable,
-        "frontier": _frontier(edges, (s["name"] for s in signatures)),
+        "frontier": _frontier(edges),
     }
     document["id"] = content_id(document)
     return document
@@ -427,6 +499,20 @@ def residue_delta(
             for (p, a, s), n in sorted(counter.items())
         ]
 
+    # Growth is allowed; *unfenced* growth is the failed-edge signal. An added edge
+    # passes only when every after-edge under its key carries a declared kind.
+    unknown_after = Counter(
+        (edge["path"], edge["api"], edge["signature"] or "")
+        for edge in after["edges"]
+        if edge["kind"] == "UNKNOWN"
+    )
+    unfenced = Counter(
+        {
+            key: min(n, unknown_after[key])
+            for key, n in added.items()
+            if unknown_after[key]
+        }
+    )
     total_before, total_after = sum(old.values()), sum(new.values())
     direction = (
         "DECREASED"
@@ -443,6 +529,8 @@ def residue_delta(
         "direction": direction,
         "removed": rows(removed),
         "added": rows(added),
+        "unfenced_added": rows(unfenced),
+        "gate": "COUNTEREXAMPLE" if unfenced else "PASS",
         "retired": "UNKNOWN:removal-is-not-retirement;see-retirement-ledger",
     }
     delta["id"] = content_id(delta)
@@ -465,6 +553,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--commit", default="HEAD")
     parser.add_argument("--base", help="earlier commit to diff against")
     parser.add_argument("--visibility", default="public")
+    parser.add_argument(
+        "--gate",
+        action="store_true",
+        help="exit 1 when --base is given and an added edge carries no declared kind",
+    )
     args = parser.parse_args(argv)
 
     def subject(commit: str) -> RepositorySubject:
@@ -493,10 +586,21 @@ def main(argv: list[str] | None = None) -> int:
             canonical_json(
                 {
                     k: delta[k]
-                    for k in ("direction", "llm_residue_before", "llm_residue_after")
+                    for k in (
+                        "direction",
+                        "llm_residue_before",
+                        "llm_residue_after",
+                        "gate",
+                    )
                 }
             )
         )
+        if args.gate and delta["gate"] != "PASS":
+            for row in delta["unfenced_added"]:
+                print(
+                    f"unfenced LLM edge: {row['path']} {row['api']} {row['signature']}"
+                )
+            return 1
     return 0
 
 

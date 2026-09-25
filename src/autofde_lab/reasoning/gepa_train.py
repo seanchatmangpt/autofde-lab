@@ -270,6 +270,7 @@ def run_gepa_optimization(
     split = max(1, len(examples) * 2 // 3)
     trainset, valset = examples[:split], examples[split:] or examples[:1]
 
+    # llm-residue: kind=classification class=RC-K8S-FAULT-DIAGNOSIS
     program = dspy.ReAct(DiagnoseKubernetesFault, tools=[], max_iters=1)
     if task_lm is not None:
         program.set_lm(task_lm)

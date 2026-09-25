@@ -277,6 +277,7 @@ def test_dspy_react_decision_backend_uses_generic_k8s_signature() -> None:
     # dspy.ReAct(DiagnoseKubernetesFault, ...) inside decide() -- assert
     # against the real signature class it is documented to use, the same
     # way the module under test constructs it.
+    # llm-residue: kind=classification class=RC-K8S-FAULT-DIAGNOSIS
     program = dspy.ReAct(DiagnoseKubernetesFault, tools=[_fake_tool], max_iters=1)
 
     assert program.signature is DiagnoseKubernetesFault

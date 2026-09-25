@@ -162,8 +162,12 @@ def test_census_counts_resolved_invocations_and_nothing_else(
         }
     ]
     [frontier] = census["frontier"]
-    assert frontier["signature"] == "ClassifyTicket"
+    assert frontier["signature"] == "src/pkg/programs.py::ClassifyTicket"
     assert frontier["call_sites"] == 3
+    assert frontier["declared_kinds"] == ["UNKNOWN", "classification"]
+    assert frontier["grouping_evidence"] == (
+        "EXPLICIT_DECLARATION:import-resolved-class-definition"
+    )
     assert frontier["standing"] == "INFERRED_CANDIDATE"
     assert frontier["llm_cost"] == "UNKNOWN"
     assert census["llm_dependency_ratio"] == LDR_UNREPRESENTABLE
@@ -206,11 +210,15 @@ def test_delta_ignores_line_moves_and_does_not_call_removal_retirement(
         }
     ]
     assert delta["added"] == []
+    assert delta["gate"] == "PASS"
     assert delta["retired"].startswith("UNKNOWN:")
 
+    # The reverse change adds an edge nobody fenced: that is the failed-edge signal.
     grown = residue_delta(after, before)
     assert grown["direction"] == "INCREASED"
     assert grown["added"] == delta["removed"]
+    assert grown["unfenced_added"] == delta["removed"]
+    assert grown["gate"] == "COUNTEREXAMPLE"
 
 
 def test_cli_replays_byte_for_byte(fixture_repo: Path, tmp_path: Path) -> None:
@@ -307,3 +315,114 @@ def test_committed_receipt_replays_byte_for_byte(tmp_path: Path) -> None:
         "residue-delta.json",
     ):
         assert (tmp_path / name).read_bytes() == (RECEIPT / name).read_bytes(), name
+
+
+SIGNATURES = '''\
+import dspy
+
+
+class Diagnose(dspy.Signature):
+    """Why did the pod crash?"""
+
+    evidence = dspy.InputField()
+    cause = dspy.OutputField()
+'''
+
+USES_IMPORTED = """\
+import dspy
+
+from pkg.signatures import Diagnose
+
+
+def first():
+    return dspy.Predict(Diagnose)
+
+
+def second():
+    return dspy.ReAct(Diagnose, tools=[])
+"""
+
+RELATIVE_IMPORT = """\
+import dspy
+
+from .signatures import Diagnose as D
+
+PROGRAM = dspy.ChainOfThought(D)
+"""
+
+SAME_NAME_OTHER_CLASS = '''\
+import dspy
+
+
+class Diagnose(dspy.Signature):
+    """A different question that happens to share the name."""
+
+    x = dspy.InputField()
+    y = dspy.OutputField()
+
+
+PROGRAM = dspy.Predict(Diagnose)
+'''
+
+
+def test_frontier_groups_by_class_definition_not_by_name(fixture_repo: Path) -> None:
+    _commit(
+        fixture_repo,
+        {
+            "src/pkg/signatures.py": SIGNATURES,
+            "src/pkg/uses.py": USES_IMPORTED,
+            "src/pkg/relative.py": RELATIVE_IMPORT,
+            "tests/test_other.py": SAME_NAME_OTHER_CLASS,
+        },
+        "signatures",
+    )
+    census = residue_census(_subject(fixture_repo), fixture_repo)
+    origins = {(e["path"], e["line"]): e["signature_origin"] for e in census["edges"]}
+    shared = "src/pkg/signatures.py::Diagnose"
+    assert origins == {
+        ("src/pkg/relative.py", 5): shared,
+        ("src/pkg/uses.py", 7): shared,
+        ("src/pkg/uses.py", 11): shared,
+        ("tests/test_other.py", 11): "tests/test_other.py::Diagnose",
+    }
+    [frontier] = census["frontier"]
+    assert frontier["signature"] == shared
+    assert (frontier["call_sites"], frontier["files"]) == (3, 2)
+
+
+def test_cli_gate_fails_on_unfenced_growth_only(
+    fixture_repo: Path, tmp_path: Path
+) -> None:
+    base = _commit(fixture_repo, {"src/pkg/signatures.py": SIGNATURES}, "base")
+    fenced = _commit(
+        fixture_repo,
+        {
+            "src/pkg/a.py": "import dspy\n\n"
+            "# llm-residue: kind=classification class=RC-POD-CRASH\n"
+            "P = dspy.Predict('evidence -> cause')\n"
+        },
+        "fenced growth",
+    )
+    unfenced = _commit(
+        fixture_repo,
+        {"src/pkg/b.py": "import dspy\n\nP = dspy.Predict('evidence -> cause')\n"},
+        "unfenced growth",
+    )
+    argv = ["--checkout", str(fixture_repo), "--repository", "example/residue-fixture"]
+    ok = main(
+        [str(tmp_path / "ok"), *argv, "--commit", fenced, "--base", base, "--gate"]
+    )
+    assert ok == 0
+    bad = main(
+        [str(tmp_path / "bad"), *argv, "--commit", unfenced, "--base", fenced, "--gate"]
+    )
+    assert bad == 1
+    delta = json.loads((tmp_path / "bad" / "residue-delta.json").read_text())
+    assert delta["unfenced_added"] == [
+        {
+            "path": "src/pkg/b.py",
+            "api": "dspy.Predict",
+            "signature": "'evidence -> cause'",
+            "count": 1,
+        }
+    ]
