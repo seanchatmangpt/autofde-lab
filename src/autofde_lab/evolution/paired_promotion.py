@@ -14,10 +14,10 @@ The output digests are replay identities, not authority tokens.
 
 from __future__ import annotations
 
+import json
 from dataclasses import asdict, dataclass
 from enum import IntEnum, StrEnum
 from hashlib import sha256
-import json
 from math import isfinite
 from typing import Iterable
 
