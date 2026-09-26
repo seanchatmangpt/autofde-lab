@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
-from autofde_lab.iec.crowns.survival_ocel import survival_episode_to_ocel
+import pytest
+
+from autofde_lab.iec.crowns.model import IECRefusal
+from autofde_lab.iec.crowns.survival_ocel import (
+    survival_episode_to_ocel,
+    survival_episodes_to_ocel,
+)
 
 
 def episode() -> dict:
@@ -96,3 +102,31 @@ def test_survival_projection_keeps_exact_subject_as_object_attribute() -> None:
     projected = {attribute.key: attribute.value.value for attribute in subject.attributes}
 
     assert projected["exactSubject"] == episode()["subject"]
+
+
+def test_campaign_projection_deduplicates_shared_subject_and_policy_objects() -> None:
+    first = episode()
+    second = episode()
+    second["episode_id"] = "episode-ocel-2"
+
+    log = survival_episodes_to_ocel((first, second))
+
+    assert len(log.events) == 8
+    assert len(log.objects) == 4
+    assert sum(obj.object_type == "Subject" for obj in log.objects) == 1
+    assert sum(obj.object_type == "Policy" for obj in log.objects) == 1
+    assert sum(obj.object_type == "SurvivalEpisode" for obj in log.objects) == 2
+
+
+def test_campaign_projection_refuses_conflicting_reuse_of_episode_identity() -> None:
+    first = episode()
+    conflicting = episode()
+    conflicting["workload_id"] = "sha256:different-workload"
+
+    with pytest.raises(IECRefusal, match="OBJECT_COLLISION"):
+        survival_episodes_to_ocel((first, conflicting))
+
+
+def test_campaign_projection_refuses_empty_campaign() -> None:
+    with pytest.raises(IECRefusal, match="REFUSED_SURVIVAL_OCEL_EMPTY"):
+        survival_episodes_to_ocel(())
