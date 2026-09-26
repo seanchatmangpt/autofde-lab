@@ -13,6 +13,7 @@ It never exposes hidden truth to the evaluated agent and never calls a model.
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass
 from itertools import combinations
 from pathlib import Path
@@ -34,6 +35,18 @@ class ProjectionAudit:
     @property
     def sufficient(self) -> bool:
         return self.report.information_sufficient
+
+
+@dataclass(frozen=True, slots=True)
+class ProjectionPlan:
+    """One sufficient evidence surface with explicit acquisition cost."""
+
+    audit: ProjectionAudit
+    total_cost: float
+
+    @property
+    def observation_paths(self) -> tuple[str, ...]:
+        return self.audit.observation_paths
 
 
 def _read_json(path: Path) -> Any:
@@ -173,3 +186,55 @@ def search_sufficient_dgf_projections(
         if admitted:
             return admitted
     return ()
+
+
+def search_min_cost_sufficient_projection(
+    dataset_root: Path,
+    *,
+    candidate_costs: dict[str, float],
+    max_width: int,
+    case_dirs: Sequence[Path] | None = None,
+) -> ProjectionPlan | None:
+    """Return the least-cost sufficient evidence projection.
+
+    Search is exhaustive over all supplied paths up to max_width. Cost is an
+    explicit caller input; this function never guesses acquisition expense.
+    Ties are resolved by fewer paths, then lexical path order.
+    """
+    if not candidate_costs:
+        raise ValueError("DGF_CANDIDATE_COSTS_REQUIRED")
+    for path, cost in candidate_costs.items():
+        if not path:
+            raise ValueError("DGF_CANDIDATE_PATH_REQUIRED")
+        if not math.isfinite(cost) or cost < 0:
+            raise ValueError(f"DGF_CANDIDATE_COST_INVALID:{path}")
+    if max_width < 1:
+        raise ValueError("DGF_MAX_WIDTH_MUST_BE_POSITIVE")
+
+    paths = tuple(sorted(candidate_costs))
+    plans: list[ProjectionPlan] = []
+    for width in range(1, min(max_width, len(paths)) + 1):
+        for subset in combinations(paths, width):
+            audit = audit_dgf_projection(
+                dataset_root,
+                observation_paths=subset,
+                case_dirs=case_dirs,
+            )
+            if audit.sufficient:
+                plans.append(
+                    ProjectionPlan(
+                        audit=audit,
+                        total_cost=sum(candidate_costs[path] for path in subset),
+                    )
+                )
+
+    if not plans:
+        return None
+    return min(
+        plans,
+        key=lambda plan: (
+            plan.total_cost,
+            len(plan.observation_paths),
+            plan.observation_paths,
+        ),
+    )
