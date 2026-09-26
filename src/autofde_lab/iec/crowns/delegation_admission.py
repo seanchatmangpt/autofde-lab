@@ -204,7 +204,11 @@ def compare_delegation(
     capacity_delta = (
         right["admission_capacity_units"] - left["admission_capacity_units"]
     )
-    growth_law = delegation_delta <= capacity_delta
+    # The delta law constrains growth, not safe contraction. If delegation
+    # shrinks, the candidate snapshot's own capacity gate is authoritative.
+    # This prevents a large evidence revocation from falsely rejecting a
+    # candidate that also reduced delegation back inside the new boundary.
+    growth_law = delegation_delta <= 0 or delegation_delta <= capacity_delta
     falsifiers = list(right["falsifiers"])
     if not growth_law:
         falsifiers.append("DELEGATION_GROWTH_OUTRUNS_ADMISSION_GROWTH")
@@ -222,7 +226,7 @@ def compare_delegation(
             ),
         },
         "growth_law": {
-            "law": "delta(delegation) <= delta(admission_capacity)",
+            "law": "positive delta(delegation) <= delta(admission_capacity)",
             "verdict": (
                 Verdict.PASS.value if growth_law else Verdict.COUNTEREXAMPLE.value
             ),
