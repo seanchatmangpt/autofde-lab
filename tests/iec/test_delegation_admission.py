@@ -87,6 +87,17 @@ def test_verifier_must_be_independent() -> None:
     assert result["admission_capacity_units"] == 0
 
 
+def test_verifier_identity_must_differ_from_producer_identity() -> None:
+    candidate = artifact()
+    candidate["obligations"]["verify"]["verifier_id"] = candidate["delegation"][
+        "producer_id"
+    ]
+    result = evaluate_delegation(candidate)
+    assert result["gate"] == "COUNTEREXAMPLE"
+    assert "VERIFY_PRODUCER_EQUALS_VERIFIER" in result["falsifiers"]
+    assert result["admission_capacity_units"] == 0
+
+
 def test_changed_requirement_probe_is_a_required_obligation() -> None:
     candidate = artifact(modify_verdict="COUNTEREXAMPLE")
     result = evaluate_delegation(candidate)
