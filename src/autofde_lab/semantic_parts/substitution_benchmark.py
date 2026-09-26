@@ -29,7 +29,7 @@ class SubstitutionCase:
             raise ValueError("subject_id cannot verify itself as a substitution")
 
 
-def _top_k_unique(candidates: Sequence[str], k: int, subject_id: str) -> tuple[str, ...]:
+def _top_k_unique(\n    candidates: Sequence[str], k: int, subject_id: str\n) -> tuple[str, ...]:
     seen: set[str] = set()
     result: list[str] = []
     for candidate in candidates:
@@ -42,7 +42,7 @@ def _top_k_unique(candidates: Sequence[str], k: int, subject_id: str) -> tuple[s
     return tuple(result)
 
 
-def _metrics(cases: Sequence[SubstitutionCase], attr: str, k: int) -> dict[str, float | int]:
+def _metrics(\n    cases: Sequence[SubstitutionCase], attr: str, k: int\n) -> dict[str, float | int]:
     hits = 0
     true_positives = 0
     returned = 0
