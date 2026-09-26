@@ -49,6 +49,8 @@ def test_bundle_is_deterministic_and_binds_cohort_recurrence_and_ocel() -> None:
     assert first["actuation_performed"] is False
     assert first["cohort_id"]
     assert first["recurrence_id"]
+    assert set(first["policy_uncertainty_ids"]) == {"formal", "llm"}
+    assert all(first["policy_uncertainty_ids"].values())
     assert len(first["episode_evidence"]) == 4
     assert all(row["ocel_digest"] for row in first["episode_evidence"])
 
