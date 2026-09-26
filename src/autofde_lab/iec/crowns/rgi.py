@@ -541,11 +541,93 @@ def _fidelity(
     }
 
 
+def _retirement_standing(
+    receipt: Mapping[str, Any] | None,
+    *,
+    subject: str,
+    workload_id: str,
+    candidate: Mapping[str, Any],
+) -> dict[str, Any]:
+    if receipt is None:
+        return {
+            "standing": (
+                "OBSERVED_ZERO_LLM_ONLY"
+                if candidate["metrics"]["zero_llm_observed"]
+                else "LLM_OBSERVED"
+            ),
+            "reason": (
+                "zero observed LLM calls are execution evidence, not "
+                "RETIRED_FROM_LLM standing"
+            ),
+        }
+    if receipt.get("subject") != subject:
+        raise IECRefusal(
+            "REFUSED_EXACT_SUBJECT_MISMATCH",
+            "retirement receipt subject does not match benchmark subject",
+        )
+    if receipt.get("workload_id") != workload_id:
+        raise IECRefusal(
+            "REFUSED_WORKLOAD_MISMATCH",
+            "retirement receipt workload does not match benchmark workload",
+        )
+    required = (
+        "ledger_entry_id",
+        "verifier_set_id",
+        "evidence_digest",
+        "producer_digest",
+    )
+    missing = [name for name in required if not receipt.get(name)]
+    if missing:
+        raise IECRefusal(
+            "REFUSED_INVALID_RETIREMENT_RECEIPT",
+            f"retirement receipt missing {missing!r}",
+        )
+    evidence_digest = _validate_sha256_digest(
+        receipt["evidence_digest"], "retirement.evidence_digest"
+    )
+    producer_digest = _validate_sha256_digest(
+        receipt["producer_digest"], "retirement.producer_digest"
+    )
+    candidate_producer = candidate.get("producer_digest")
+    if candidate_producer is None:
+        return {
+            "standing": "UNSUPPORTED",
+            "reason": "candidate trace does not bind a producer digest",
+        }
+    if producer_digest != candidate_producer:
+        raise IECRefusal(
+            "REFUSED_PRODUCER_MISMATCH",
+            "retirement receipt producer does not match candidate producer",
+        )
+    if not candidate["metrics"]["zero_llm_observed"]:
+        return {
+            "standing": "COUNTEREXAMPLE",
+            "reason": "retirement receipt supplied but candidate observed LLM execution",
+        }
+    if (
+        receipt.get("verdict") != Verdict.PASS.value
+        or receipt.get("standing") != "RETIRED_FROM_LLM"
+    ):
+        return {
+            "standing": "NOT_RETIRED",
+            "reason": "IEC-C3 retirement evidence is not PASS/RETIRED_FROM_LLM",
+            "ledger_entry_id": receipt["ledger_entry_id"],
+        }
+    return {
+        "standing": "RETIRED_FROM_LLM",
+        "ledger_entry_id": receipt["ledger_entry_id"],
+        "verifier_set_id": receipt["verifier_set_id"],
+        "evidence_digest": evidence_digest,
+        "producer_digest": producer_digest,
+    }
+
+
 def compare_runs(
     reference: Mapping[str, Any],
     candidate: Mapping[str, Any],
     *,
     fidelity_receipt: Mapping[str, Any] | None = None,
+    retirement_receipt: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Compare fixed-workload modes; semantic fidelity is receipt-gated."""
     left = benchmark_trace(reference)
@@ -574,17 +656,16 @@ def compare_runs(
         failures.append("CANDIDATE_EDGE_UNIVERSE_NOT_COVERED")
     if fidelity["verdict"] != Verdict.PASS.value:
         failures.append("SEMANTIC_FIDELITY_NOT_PASS")
-    if right["metrics"]["llm_leakage_count"]:
-        failures.append("GENERAL_LLM_OUTSIDE_UNKNOWN_REGION")
-    if right["metrics"]["llm_do_count"]:
-        failures.append("GENERAL_LLM_IN_DO")
-    if right["metrics"]["unreceipted_do_count"]:
-        failures.append("UNRECEIPTED_DO")
-    if (
-        right["mode"] in {"MACHINE_SERIAL", "ZERO_LLM"}
-        and right["metrics"]["llm_edge_executions"]
-    ):
-        failures.append("LLM_PRESENT_IN_ZERO_LLM_MODE")
+    for failure in right["mode_falsifiers"]:
+        if failure not in failures:
+            failures.append(failure)
+
+    retirement_standing = _retirement_standing(
+        retirement_receipt,
+        subject=left["subject"],
+        workload_id=left["workload_id"],
+        candidate=right,
+    )
 
     ref_wall = left["run_wall_ms"]
     cand_wall = right["run_wall_ms"]
@@ -631,6 +712,7 @@ def compare_runs(
             "UNCHANGED:benchmark-observation-does-not-write-"
             "retirement-ledger"
         ),
+        "retirement_standing": retirement_standing,
     }
     comparison["id"] = content_id(comparison)
     return comparison
@@ -654,6 +736,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("candidate", type=Path)
     parser.add_argument("out", type=Path)
     parser.add_argument("--fidelity-receipt", type=Path)
+    parser.add_argument("--retirement-receipt", type=Path)
     parser.add_argument("--gate", action="store_true")
     args = parser.parse_args(argv)
 
@@ -662,19 +745,20 @@ def main(argv: list[str] | None = None) -> int:
         if args.fidelity_receipt
         else None
     )
+    retirement_receipt = (
+        _read(args.retirement_receipt)
+        if args.retirement_receipt
+        else None
+    )
     result = compare_runs(
         _read(args.reference),
         _read(args.candidate),
         fidelity_receipt=receipt,
+        retirement_receipt=retirement_receipt,
     )
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(
-        json.dumps(
-            result,
-            indent=2,
-            sort_keys=True,
-        )
-        + "\n",
+        canonical_json(result) + "\n",
         encoding="utf-8",
     )
     print(
