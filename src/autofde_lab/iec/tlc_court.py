@@ -941,7 +941,60 @@ def court(
 def to_formal_evidence(
     receipt: TlcCourtReceipt, run: TlcRun, intent: FormalVerificationIntent
 ) -> FormalVerificationEvidence:
-    """Bridge one per-property run into the pre-existing FormalResult contract."""
+    """Bridge one per-property run into the FormalResult contract.
+
+    Admission is exact-subject/tool bound: a real TLC observation cannot be
+    relabeled with a different projection, tool version, executable digest, or
+    property intent. The bridge carries no authority and never upgrades bounded
+    model checking to formal proof.
+    """
+
+    payload = receipt.payload
+    expected_executable = "sha256:" + str(payload["jar_sha256"])
+    checks = (
+        (
+            intent.projection_id == payload["projection_id"],
+            "FORMAL_INTENT_PROJECTION_MISMATCH",
+        ),
+        (
+            intent.tool_identity == "tlc2.TLC",
+            "FORMAL_INTENT_TOOL_MISMATCH",
+        ),
+        (
+            intent.tool_version == payload["tool_version"],
+            "FORMAL_INTENT_TOOL_VERSION_MISMATCH",
+        ),
+        (
+            intent.executable_digest == expected_executable,
+            "FORMAL_INTENT_EXECUTABLE_MISMATCH",
+        ),
+        (
+            payload["jar_sha256"] == TLA2TOOLS_SHA256,
+            "FORMAL_EVIDENCE_UNPINNED_TLA2TOOLS",
+        ),
+        (
+            payload["parse"]["verdict"] == TlcVerdict.MODEL_PARSE_ALIVE.value,
+            "FORMAL_EVIDENCE_SANY_NOT_ALIVE",
+        ),
+        (
+            run.property_name in payload["properties_checked"],
+            "FORMAL_EVIDENCE_PROPERTY_NOT_IN_RECEIPT",
+        ),
+    )
+    for admitted, code in checks:
+        if not admitted:
+            raise ValueError(code)
+
+    matching = [
+        item for item in payload["properties"] if item["name"] == run.property_name
+    ]
+    if len(matching) != 1:
+        raise ValueError("FORMAL_EVIDENCE_PROPERTY_CARDINALITY")
+    observed = matching[0]
+    if observed["verdict"] != run.verdict.value:
+        raise ValueError("FORMAL_EVIDENCE_VERDICT_DRIFT")
+    if observed["stdout_digest"] != _text_digest(run.stdout):
+        raise ValueError("FORMAL_EVIDENCE_STDOUT_DIGEST_DRIFT")
 
     mapping = {
         TlcVerdict.PROPERTY_HOLDS_IN_BOUND: FormalResult.PASS,
