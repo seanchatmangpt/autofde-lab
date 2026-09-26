@@ -19,7 +19,6 @@ from autofde_lab.evidence.information_obstruction import (
     observation_fingerprint,
 )
 
-
 # --- false-equality falsifiers: distinct observations must never collide ---
 
 
