@@ -34,8 +34,8 @@ TRACE_SCHEMA_V2 = "autofde-lab.rgi-trace/2"
 SUPPORTED_TRACE_SCHEMAS = frozenset({TRACE_SCHEMA, TRACE_SCHEMA_V2})
 BENCHMARK_SCHEMA = "autofde-lab.rgi-benchmark/1"
 
-MODES = {"LLM_NATIVE", "MACHINE_SERIAL", "REGION_HYBRID", "ZERO_LLM"}
-EXECUTORS = {"GENERAL_LLM", "MACHINE"}
+MODES = {"LLM_NATIVE", "DSPY_WASM_CANDIDATE", "MACHINE_SERIAL", "REGION_HYBRID", "ZERO_LLM"}
+EXECUTORS = {"GENERAL_LLM", "DSPY_WASM", "MACHINE"}
 ROUTE_STATES = {"UNKNOWN", "KNOWN", "ADMITTED"}
 PHASES = {"OBSERVE", "SELECT", "CONSTRUCT", "DO", "VERIFY"}
 LLM_ALLOWED_PHASES = {"OBSERVE", "SELECT", "CONSTRUCT"}
@@ -141,10 +141,10 @@ class EdgeExecution:
                 "REFUSED_INVALID_RGI_TRACE",
                 "llm_tokens must be a non-negative integer",
             )
-        if executor == "MACHINE" and llm_tokens:
+        if executor in {"MACHINE", "DSPY_WASM"} and llm_tokens:
             raise IECRefusal(
                 "REFUSED_INVALID_RGI_TRACE",
-                f"machine edge {edge_id} reports {llm_tokens} LLM tokens",
+                f"{executor} edge {edge_id} reports {llm_tokens} LLM tokens",
             )
         receipt = row.get("receipt_id")
         receipt_id = None if receipt is None else str(receipt).strip() or None
