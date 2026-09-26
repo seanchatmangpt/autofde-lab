@@ -10,73 +10,15 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Iterable
-from dataclasses import asdict, dataclass, field, is_dataclass
+from dataclasses import dataclass, field
 from math import fsum
-from types import FunctionType
 from typing import Any
 
 from .catalog import ROLE_SPECS
 from .core import PolicySpec
 from .policy_ecology import ConditionedPolicy, PolicyEcology
+from .policy_identity import policy_identity
 
-
-def _stable_value(value: Any) -> Any:
-    if value is None or isinstance(value, (bool, int, float, str)):
-        return value
-    if isinstance(value, tuple):
-        return [_stable_value(item) for item in value]
-    if isinstance(value, list):
-        return [_stable_value(item) for item in value]
-    if isinstance(value, dict):
-        return {
-            str(key): _stable_value(item)
-            for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
-        }
-    if is_dataclass(value):
-        return {
-            "dataclass": f"{type(value).__module__}.{type(value).__qualname__}",
-            "value": _stable_value(asdict(value)),
-        }
-    if isinstance(value, FunctionType) or callable(value):
-        code = getattr(value, "__code__", None)
-        if code is None:
-            raise ValueError(
-                "REFUSED:UNSTABLE_POLICY_PARAMETER_IDENTITY:"
-                f"{type(value).__qualname__}"
-            )
-        closure = tuple(
-            _stable_value(cell.cell_contents)
-            for cell in (getattr(value, "__closure__", None) or ())
-        )
-        code_digest = hashlib.sha256(
-            code.co_code + repr(code.co_consts).encode("utf-8")
-        ).hexdigest()
-        return {
-            "callable": (
-                f"{getattr(value, '__module__', '')}."
-                f"{getattr(value, '__qualname__', '')}"
-            ),
-            "code_sha256": code_digest,
-            "defaults": _stable_value(getattr(value, "__defaults__", None)),
-            "closure": closure,
-        }
-    raise ValueError(
-        "REFUSED:UNSTABLE_POLICY_PARAMETER_IDENTITY:"
-        f"{type(value).__module__}.{type(value).__qualname__}"
-    )
-
-
-def policy_identity(policy: PolicySpec) -> str:
-    payload = {
-        "planner_id": policy.planner_id,
-        "parameters": _stable_value(policy.parameters),
-        "objective_id": policy.objective_id,
-        "observation_projection_id": policy.observation_projection_id,
-        "action_projection_id": policy.action_projection_id,
-        "budget_id": policy.budget_id,
-    }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
 
 
 def _validate_role_binding(ecology: PolicyEcology, role_id: str, side: str) -> None:
