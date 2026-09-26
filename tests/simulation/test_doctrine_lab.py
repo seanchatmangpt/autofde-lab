@@ -233,6 +233,24 @@ def test_unmutated_catalog_repinned_is_admitted(tmp_path: Path):
         (_set(0, "primitives", []), "has no primitives"),
         (_set(20, "primitives", ["probe"]), "stub with primitives"),
         (_set(0, "primitives", "probe"), "not a list"),
+        (lambda d: d.__setitem__("summary", "free text"), r"extra=\['summary'\]"),
+        (
+            lambda d: d.pop("schema"),
+            r"top-level keys outside allow-list: .*missing=\['schema'\]",
+        ),
+        (lambda d: d.pop("primitives"), r"missing=\['primitives'\]"),
+        (
+            lambda d: d["primitives"][0].__setitem__("quote", "x"),
+            r"primitive 'shape' keys outside allow-list: extra=\['quote'\]",
+        ),
+        (
+            lambda d: d["primitives"][2].__setitem__("dual", "probe"),
+            r"primitive 'conceal' dual 'probe' differs",
+        ),
+        (
+            lambda d: d["primitives"][0].__setitem__("iri", "sd:wrong"),
+            r"primitive 'shape' iri 'sd:wrong' is not sd:",
+        ),
     ],
     ids=[
         "authority_DO",
@@ -250,11 +268,29 @@ def test_unmutated_catalog_repinned_is_admitted(tmp_path: Path):
         "operationalized_without_primitives",
         "stub_with_primitives",
         "primitives_not_list",
+        "top_level_summary",
+        "top_level_missing_schema",
+        "top_level_missing_primitives_no_keyerror",
+        "primitive_extra_quote",
+        "primitive_dual_off_algebra",
+        "primitive_iri_not_sd",
     ],
 )
 def test_catalog_gates_refuse_under_repinned_digest(tmp_path: Path, mutate, refusal):
     path, digest = _repinned(tmp_path, mutate)
     with pytest.raises(CatalogIntegrityError, match=refusal):
+        load_catalog(path, expected_sha256=digest)
+
+
+def test_duplicate_json_keys_are_refused_under_repinned_digest(tmp_path: Path):
+    raw = CATALOG_PATH.read_text()
+    needle = '"short_title": "Probe, then mass on the weak point"'
+    assert raw.count(needle) == 1
+    forged = raw.replace(needle, f'"short_title": "dupe", {needle}', 1)
+    path = tmp_path / "catalog.json"
+    path.write_text(forged)
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    with pytest.raises(CatalogIntegrityError, match="duplicate JSON key 'short_title'"):
         load_catalog(path, expected_sha256=digest)
 
 
