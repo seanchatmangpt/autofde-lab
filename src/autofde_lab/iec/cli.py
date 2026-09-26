@@ -240,6 +240,15 @@ def _delegation_admission_batch(args: argparse.Namespace) -> int:
     return batch_main(argv)
 
 
+def _delegation_admission_repair(args: argparse.Namespace) -> int:
+    from .crowns.delegation_admission_repair import main as repair_main
+
+    argv = [args.candidate, args.receipt]
+    if args.costs:
+        argv.extend(["--costs", args.costs])
+    return repair_main(argv)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m autofde_lab.iec",
@@ -350,6 +359,15 @@ def build_parser() -> argparse.ArgumentParser:
     batch.add_argument("receipt")
     batch.add_argument("--gate", action="store_true")
     batch.set_defaults(func=_delegation_admission_batch)
+
+    repair = subparsers.add_parser(
+        "delegation-admission-repair",
+        help="plan minimum numeric evidence-scope repair",
+    )
+    repair.add_argument("candidate")
+    repair.add_argument("receipt")
+    repair.add_argument("--costs")
+    repair.set_defaults(func=_delegation_admission_repair)
 
     return parser
 
