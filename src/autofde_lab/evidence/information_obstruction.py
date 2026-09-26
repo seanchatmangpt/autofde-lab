@@ -2,7 +2,7 @@
 
 If two admissible cases are indistinguishable under the permitted observation
 interface but require disjoint accepted outputs, no decision procedure using
-only that interface can be correct on both.  This module turns that condition
+only that interface can be correct on both. This module turns that condition
 into a deterministic preflight check.
 
 The result is deliberately model-agnostic: an evidence ceiling is a property
@@ -34,15 +34,18 @@ def _canonical(value: Any) -> Any:
     return repr(value)
 
 
-def observation_fingerprint(observation: Any) -> str:
-    """Content-address an exact permitted observation."""
-    payload = json.dumps(
+def _canonical_payload(observation: Any) -> str:
+    return json.dumps(
         _canonical(observation),
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=False,
-    ).encode("utf-8")
-    return hashlib.sha256(payload).hexdigest()
+    )
+
+
+def observation_fingerprint(observation: Any) -> str:
+    """Content-address an exact permitted observation."""
+    return hashlib.sha256(_canonical_payload(observation).encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,18 +101,22 @@ def find_information_obstruction(
         and
         Accept(x1) intersection Accept(x2) == empty
 
-    The scan is stable in input order and never calls a model or heuristic.
+    Equality is checked on the exact canonical observation payload. SHA-256 is
+    emitted only as witness identity; hash equality is never used as proof that
+    two observations are equal.
     """
     buckets: dict[str, list[DecisionCase]] = {}
 
     for case in cases:
-        fingerprint = observation_fingerprint(case.observation)
-        bucket = buckets.setdefault(fingerprint, [])
+        canonical = _canonical_payload(case.observation)
+        bucket = buckets.setdefault(canonical, [])
 
         for prior in bucket:
             if prior.accepted_outputs.isdisjoint(case.accepted_outputs):
                 return InformationObstructionWitness(
-                    observation_fingerprint=fingerprint,
+                    observation_fingerprint=hashlib.sha256(
+                        canonical.encode("utf-8")
+                    ).hexdigest(),
                     left_case_id=prior.case_id,
                     right_case_id=case.case_id,
                     left_accepted_outputs=tuple(sorted(prior.accepted_outputs)),
