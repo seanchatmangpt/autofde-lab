@@ -1,0 +1,35 @@
+name: v26.9.24 repository tag
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - .github/workflows/release-tag-v26.9.24.yml
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create or verify exact lightweight tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          subject="$(git rev-parse HEAD)"
+          test "$subject" = "$GITHUB_SHA"
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v26.9.24" >/dev/null 2>&1; then
+            test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v26.9.24" --jq .object.sha)" = "$subject"
+          else
+            gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/v26.9.24" -f sha="$subject" >/dev/null
+          fi
+          if ! gh release view v26.9.24 >/dev/null 2>&1; then
+            gh release create v26.9.24 --target "$subject" --title "v26.9.24" --generate-notes
+          fi
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v26.9.24" --jq .object.sha)" = "$subject"
