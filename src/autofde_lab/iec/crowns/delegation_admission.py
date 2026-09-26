@@ -102,9 +102,7 @@ def _obligation_result(
     if name == "verify" and raw.get("independent") is not True:
         issues.append("VERIFY_NOT_INDEPENDENT")
 
-    result_verdict = (
-        Verdict.PASS.value if not issues else Verdict.COUNTEREXAMPLE.value
-    )
+    result_verdict = Verdict.PASS.value if not issues else Verdict.COUNTEREXAMPLE.value
     return {
         "verdict": result_verdict,
         "scope_units": scope_units if result_verdict == Verdict.PASS.value else 0,
@@ -147,11 +145,7 @@ def evaluate_delegation(document: Mapping[str, Any]) -> dict[str, Any]:
     }
 
     all_issues = sorted(
-        {
-            issue
-            for result in obligations.values()
-            for issue in result["issues"]
-        }
+        {issue for result in obligations.values() for issue in result["issues"]}
     )
     capacity = min(result["scope_units"] for result in obligations.values())
     debt_units = max(0, units - capacity)
@@ -163,9 +157,7 @@ def evaluate_delegation(document: Mapping[str, Any]) -> dict[str, Any]:
         "provenance": any(i.startswith("EXPLAIN_") for i in all_issues),
         "verification": any(i.startswith("VERIFY_") for i in all_issues),
         "modification": any(i.startswith("MODIFY_") for i in all_issues),
-        "authority_receipt_replay": any(
-            i.startswith("ACCOUNT_") for i in all_issues
-        ),
+        "authority_receipt_replay": any(i.startswith("ACCOUNT_") for i in all_issues),
     }
 
     gate = Verdict.PASS.value if not all_issues else Verdict.COUNTEREXAMPLE.value
@@ -226,16 +218,13 @@ def compare_delegation(
             "delegation_units": delegation_delta,
             "admission_capacity_units": capacity_delta,
             "admission_debt_units": (
-                right["admission_debt"]["units"]
-                - left["admission_debt"]["units"]
+                right["admission_debt"]["units"] - left["admission_debt"]["units"]
             ),
         },
         "growth_law": {
             "law": "delta(delegation) <= delta(admission_capacity)",
             "verdict": (
-                Verdict.PASS.value
-                if growth_law
-                else Verdict.COUNTEREXAMPLE.value
+                Verdict.PASS.value if growth_law else Verdict.COUNTEREXAMPLE.value
             ),
         },
         "falsifiers": sorted(set(falsifiers)),
