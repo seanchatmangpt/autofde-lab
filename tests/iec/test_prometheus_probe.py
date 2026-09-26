@@ -11,6 +11,7 @@ import pytest
 
 from autofde_lab.iec.crowns.model import IECRefusal
 from autofde_lab.iec.crowns.prometheus import DIMENSIONS
+from autofde_lab.iec.crowns.prometheus_mutation import MUTATION_REPORT_SCHEMA
 from autofde_lab.iec.crowns.prometheus_probe import (
     MANIFEST_SCHEMA,
     SCORECARD_SCHEMA,
@@ -359,3 +360,72 @@ def test_probe_runner_never_assigns_governance_scores(tmp_path) -> None:
     )
     assert '"base_score"' not in encoded
     assert '"treated_score"' not in encoded
+
+
+def test_reversible_mutation_report_overrides_compatibility_probe_classification(
+    tmp_path,
+) -> None:
+    doc, base_run, treated_run, _ = paired(
+        tmp_path,
+        mutation_exit=1,
+    )
+    report = {
+        "schema": MUTATION_REPORT_SCHEMA,
+        "repository": doc["repository"],
+        "base_commit": doc["base_commit"],
+        "patch_digest": doc["patch_digest"],
+        "gate_strength": "detected",
+        "receipt_id": "sha256:reversible-court",
+    }
+    pair = pair_runs(
+        doc,
+        base_run,
+        treated_run,
+        mutation_report=report,
+    )
+    assert pair["gate_strength"] == "detected"
+    assert pair["mutation_receipt_id"] == "sha256:reversible-court"
+    assert pair["mutation_source"] == "reversible-mutation-court"
+
+
+def test_mutation_report_subject_drift_is_refused(tmp_path) -> None:
+    doc, base_run, treated_run, _ = paired(tmp_path)
+    report = {
+        "schema": MUTATION_REPORT_SCHEMA,
+        "repository": "other/repo",
+        "base_commit": doc["base_commit"],
+        "patch_digest": doc["patch_digest"],
+        "gate_strength": "detected",
+        "receipt_id": "sha256:other",
+    }
+    with pytest.raises(
+        IECRefusal,
+        match="REFUSED_EXACT_SUBJECT_MISMATCH",
+    ):
+        pair_runs(
+            doc,
+            base_run,
+            treated_run,
+            mutation_report=report,
+        )
+
+
+def test_detected_mutation_override_requires_receipt_id(tmp_path) -> None:
+    doc, base_run, treated_run, _ = paired(tmp_path)
+    report = {
+        "schema": MUTATION_REPORT_SCHEMA,
+        "repository": doc["repository"],
+        "base_commit": doc["base_commit"],
+        "patch_digest": doc["patch_digest"],
+        "gate_strength": "detected",
+    }
+    with pytest.raises(
+        IECRefusal,
+        match="REFUSED_UNBOUNDED_EQUIVALENCE",
+    ):
+        pair_runs(
+            doc,
+            base_run,
+            treated_run,
+            mutation_report=report,
+        )
