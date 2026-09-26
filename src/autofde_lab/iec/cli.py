@@ -249,6 +249,19 @@ def _delegation_admission_repair(args: argparse.Namespace) -> int:
     return repair_main(argv)
 
 
+def _delegation_admission_spc(args: argparse.Namespace) -> int:
+    from .crowns.delegation_admission_spc import main as spc_main
+
+    return spc_main(
+        [
+            args.history_receipt,
+            args.spc_receipt,
+            "--baseline-count",
+            str(args.baseline_count),
+        ]
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m autofde_lab.iec",
@@ -368,6 +381,15 @@ def build_parser() -> argparse.ArgumentParser:
     repair.add_argument("receipt")
     repair.add_argument("--costs")
     repair.set_defaults(func=_delegation_admission_repair)
+
+    spc = subparsers.add_parser(
+        "delegation-admission-spc",
+        help="detect downward drift in admission headroom",
+    )
+    spc.add_argument("history_receipt")
+    spc.add_argument("spc_receipt")
+    spc.add_argument("--baseline-count", type=int, default=5)
+    spc.set_defaults(func=_delegation_admission_spc)
 
     return parser
 
