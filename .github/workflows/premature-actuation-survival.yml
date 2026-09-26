@@ -1,0 +1,89 @@
+name: Premature actuation survival exact head
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "src/autofde_lab/iec/crowns/survival.py"
+      - "src/autofde_lab/iec/crowns/survival_compare.py"
+      - "src/autofde_lab/iec/crowns/survival_recurrence.py"
+      - "src/autofde_lab/iec/crowns/survival_ocel.py"
+      - "tests/iec/test_survival_benchmark.py"
+      - "tests/iec/test_survival_compare.py"
+      - "tests/iec/test_survival_recurrence.py"
+      - "tests/iec/test_survival_ocel.py"
+      - ".github/workflows/premature-actuation-survival.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  survival-court:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Admit exact subject
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="${{ github.event.pull_request.head.sha || github.sha }}"
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$expected"
+          printf "survival_exact_head=%s\n" "$actual"
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.11.32"
+
+      - name: Resolve dependency closure
+        run: uv sync --group dev
+
+      - name: Compile survival surface
+        run: |
+          uv run python -m compileall -q \
+            src/autofde_lab/iec/crowns/survival.py \
+            src/autofde_lab/iec/crowns/survival_compare.py \
+            src/autofde_lab/iec/crowns/survival_recurrence.py \
+            src/autofde_lab/iec/crowns/survival_ocel.py \
+            tests/iec/test_survival_benchmark.py \
+            tests/iec/test_survival_compare.py \
+            tests/iec/test_survival_recurrence.py \
+            tests/iec/test_survival_ocel.py
+
+      - name: Execute survival courts
+        run: |
+          uv run pytest -q \
+            tests/iec/test_survival_benchmark.py \
+            tests/iec/test_survival_compare.py \
+            tests/iec/test_survival_recurrence.py \
+            tests/iec/test_survival_ocel.py
+
+      - name: Static contract
+        run: |
+          uv run ruff check \
+            src/autofde_lab/iec/crowns/survival.py \
+            src/autofde_lab/iec/crowns/survival_compare.py \
+            src/autofde_lab/iec/crowns/survival_recurrence.py \
+            src/autofde_lab/iec/crowns/survival_ocel.py \
+            tests/iec/test_survival_benchmark.py \
+            tests/iec/test_survival_compare.py \
+            tests/iec/test_survival_recurrence.py \
+            tests/iec/test_survival_ocel.py
+
+      - name: Format contract
+        run: |
+          uv run ruff format --check \
+            src/autofde_lab/iec/crowns/survival.py \
+            src/autofde_lab/iec/crowns/survival_compare.py \
+            src/autofde_lab/iec/crowns/survival_recurrence.py \
+            src/autofde_lab/iec/crowns/survival_ocel.py \
+            tests/iec/test_survival_benchmark.py \
+            tests/iec/test_survival_compare.py \
+            tests/iec/test_survival_recurrence.py \
+            tests/iec/test_survival_ocel.py
