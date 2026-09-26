@@ -58,9 +58,17 @@ class DSPyWasmSemanticWitness:
             raise ValueError("DSPy-WASM candidate execution cannot claim DO phase")
         if self.route_state not in _ROUTE_STATES:
             raise ValueError("route_state must be KNOWN or ADMITTED")
-        if isinstance(self.duration_ms, bool) or self.duration_ms < 0:
-            raise ValueError("duration_ms must be non-negative")
-        if isinstance(self.sequence, bool) or self.sequence < 0:
+        if (
+            isinstance(self.duration_ms, bool)
+            or not isinstance(self.duration_ms, (int, float))
+            or self.duration_ms < 0
+        ):
+            raise ValueError("duration_ms must be a non-negative number")
+        if (
+            isinstance(self.sequence, bool)
+            or not isinstance(self.sequence, int)
+            or self.sequence < 0
+        ):
             raise ValueError("sequence must be a non-negative integer")
 
 
