@@ -81,6 +81,7 @@ def evaluate_batch(document: Mapping[str, Any]) -> dict[str, Any]:
                 "subject": receipt["subject"],
                 "boundary_id": receipt["boundary_id"],
                 "authority_scope_id": receipt["authority_scope_id"],
+                "producer_id": receipt["producer_id"],
                 "delegation_units": receipt["delegation_units"],
                 "admission_capacity_units": receipt["admission_capacity_units"],
                 "gate": receipt["gate"],
