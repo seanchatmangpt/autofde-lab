@@ -8,6 +8,7 @@ oracle labels it is evaluated against.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import comb
 import re
 from typing import Iterable, Mapping, Sequence
 
@@ -176,6 +177,50 @@ def _metrics(
     }
 
 
+
+def _paired_outcomes(
+    cases: Sequence[SubstitutionCase], k: int
+) -> dict[str, float | int | bool]:
+    semantic_wins = 0
+    lexical_wins = 0
+    ties = 0
+
+    for case in cases:
+        verified = set(case.verified_equivalents)
+        lexical_hit = bool(
+            set(_top_k_unique(case.lexical_candidates, k, case.subject_id)) & verified
+        )
+        semantic_hit = bool(
+            set(_top_k_unique(case.semantic_candidates, k, case.subject_id)) & verified
+        )
+        if semantic_hit and not lexical_hit:
+            semantic_wins += 1
+        elif lexical_hit and not semantic_hit:
+            lexical_wins += 1
+        else:
+            ties += 1
+
+    non_ties = semantic_wins + lexical_wins
+    if non_ties == 0:
+        p_value = 1.0
+    else:
+        tail = min(semantic_wins, lexical_wins)
+        one_tail = sum(comb(non_ties, i) for i in range(tail + 1)) / (2**non_ties)
+        p_value = min(1.0, 2.0 * one_tail)
+
+    return {
+        "semantic_wins": semantic_wins,
+        "lexical_wins": lexical_wins,
+        "ties": ties,
+        "non_ties": non_ties,
+        "two_sided_sign_test_p_value": p_value,
+        "semantic_advantage": semantic_wins > lexical_wins,
+        "statistically_supported_0_05": (
+            semantic_wins > lexical_wins and p_value <= 0.05
+        ),
+    }
+
+
 def evaluate_substitution_discovery(
     cases: Iterable[SubstitutionCase],
     *,
@@ -213,6 +258,7 @@ def evaluate_substitution_discovery(
     )
     mrr_lift = float(semantic["mrr_at_k"]) - float(lexical["mrr_at_k"])
     recall_lift = float(semantic["recall_at_k"]) - float(lexical["recall_at_k"])
+    paired = _paired_outcomes(admitted, k)
 
     return {
         "schema": "autofde.semantic-substitution-benchmark.v1",
@@ -228,6 +274,7 @@ def evaluate_substitution_discovery(
         "discovery_rate_lift": discovery_lift,
         "mrr_lift": mrr_lift,
         "recall_lift": recall_lift,
+        "paired": paired,
         "falsifier": "semantic_discovery_rate <= lexical_discovery_rate",
         "falsifier_triggered": discovery_lift <= 0.0,
         "authority": "NONE",
