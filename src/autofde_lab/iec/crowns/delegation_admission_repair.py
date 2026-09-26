@@ -188,7 +188,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     except (IECRefusal, OSError, json.JSONDecodeError):
         return 2
-    return 0 if report["standing"] in {Verdict.PASS.value, Verdict.UNSUPPORTED.value} else 3
+    return 0 if report["standing"] == Verdict.PASS.value else 3
 
 
 if __name__ == "__main__":  # pragma: no cover
