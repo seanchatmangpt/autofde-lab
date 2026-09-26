@@ -37,11 +37,22 @@ NAMESPACE = "autofde-lab.simulation.doctrine-lab"
 OBSERVED_AT = 0.0
 
 
+class SealKeyRefused(ValueError):
+    """The seal key env var is not usable: it must be hex decoding to >= 32 bytes."""
+
+
 def signer_from_env(env: Mapping[str, str] | None = None) -> AttestationSigner:
     env = os.environ if env is None else env
     raw = env.get(KEY_ENV)
     if raw:
-        key = bytes.fromhex(raw)
+        try:
+            key = bytes.fromhex(raw)
+        except ValueError as exc:
+            raise SealKeyRefused(f"{KEY_ENV} is not hex: {exc}") from exc
+        if len(key) < 32:
+            raise SealKeyRefused(
+                f"{KEY_ENV} decodes to {len(key)} bytes; >= 32 bytes required"
+            )
         key_id = "doctrine-lab-env-" + hashlib.sha256(key).hexdigest()[:12]
         return AttestationSigner(key, key_id=key_id)
     return AttestationSigner(FIXTURE_KEY, key_id=FIXTURE_KEY_ID)

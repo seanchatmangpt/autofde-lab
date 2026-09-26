@@ -723,3 +723,14 @@ def test_verify_run_refuses_a_resealed_ledger_with_wall_clock_observed_at(
     assert not check.valid
     assert all("observed_at is not pinned" in f for f in check.failures)
     assert len(check.failures) == len(rows)
+
+
+def test_seal_key_from_env_is_typed_refusal_unless_hex_32_bytes():
+    """R6: a short or non-hex AUTOFDE_DOCTRINE_LAB_KEY is a typed refusal
+    (SealKeyRefused, a ValueError), not a silent short key or a raw crash."""
+    with pytest.raises(seal.SealKeyRefused, match=">= 32 bytes"):
+        seal.signer_from_env({seal.KEY_ENV: "00000000"})
+    with pytest.raises(seal.SealKeyRefused, match="is not hex"):
+        seal.signer_from_env({seal.KEY_ENV: "zz"})
+    signer = seal.signer_from_env({seal.KEY_ENV: _KEY_HEX})
+    assert signer.key_id.startswith("doctrine-lab-env-")
