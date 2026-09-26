@@ -488,6 +488,34 @@ def test_verify_run_detects_report_edit_even_with_recomputed_digest(tmp_path: Pa
     assert "replay: report body differs from re-execution" in replayed.failures
 
 
+def test_verify_run_refuses_authority_escalation_without_replay(tmp_path: Path):
+    """A self-consistent forgery that escalates authority, ceiling or selection
+    in the report is refused by verify_run even with replay=False (R3)."""
+    from autofde_lab.simulation.doctrine_lab.report import report_body
+    from autofde_lab.simulation.fortune5_safe.model import stable_digest
+
+    _small_run(tmp_path)
+    path = tmp_path / "report.json"
+    report = json.loads(path.read_text())
+    report["authority"] = "DO"
+    report["selection"] = "sd-05"
+    report["report_digest"] = stable_digest(report_body(report))
+    path.write_text(json.dumps(report))
+    check = verify_run(tmp_path, replay=False)
+    assert not check.valid
+    assert any("report authority 'DO' != NONE" in f for f in check.failures)
+    assert any("report selection 'sd-05' is not None" in f for f in check.failures)
+
+    report["authority"] = "NONE"
+    report["selection"] = None
+    report["authority_ceiling"] = "DO"
+    report["report_digest"] = stable_digest(report_body(report))
+    path.write_text(json.dumps(report))
+    check = verify_run(tmp_path, replay=False)
+    assert not check.valid
+    assert any("not <= CONSTRUCT" in f for f in check.failures)
+
+
 def test_verify_run_detects_ledger_tail_truncation(tmp_path: Path):
     _small_run(tmp_path)
     ledger = tmp_path / "ledger.jsonl"

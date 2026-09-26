@@ -8,7 +8,9 @@ file edited on disk, a report edited on disk, or a ledger whose tail was cut
   and there is exactly one OCEL file per record;
 * the ledger's record count and tail digest equal the anchor in report.json
   (external anchor against tail truncation);
-* report.json's ``report_digest`` recomputes from its body;
+* report.json's ``report_digest`` recomputes from its body, and the report
+  carries authority NONE, ceiling <= CONSTRUCT and no selection — refused
+  independently of ``replay``;
 * with ``replay=True`` the whole run is re-executed from the report's own
   parameters and every artifact must be byte/field identical.
 """
@@ -92,6 +94,15 @@ def verify_run(
             )
     if stable_digest(report_body(report)) != report.get("report_digest"):
         failures.append("report_digest does not recompute from report body")
+    if report.get("authority") != "NONE":
+        failures.append(f"report authority {report.get('authority')!r} != NONE")
+    if report.get("authority_ceiling") not in ("SELECT", "CONSTRUCT"):
+        failures.append(
+            f"report authority_ceiling {report.get('authority_ceiling')!r} "
+            "not <= CONSTRUCT"
+        )
+    if report.get("selection") is not None:
+        failures.append(f"report selection {report.get('selection')!r} is not None")
 
     attestations = _ledger_attestations(ledger_path)
     key_ids = _ledger_key_ids(ledger_path)
