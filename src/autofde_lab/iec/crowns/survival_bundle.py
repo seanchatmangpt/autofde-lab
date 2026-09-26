@@ -12,6 +12,7 @@ from .survival import analyze_episode
 from .survival_compare import cohort_report
 from .survival_ocel import episode_to_ocel_log
 from .survival_recurrence import recurrence_report
+from .survival_uncertainty import survival_uncertainty
 
 BUNDLE_SCHEMA = "autofde-lab.premature-actuation-bundle/1"
 REPLAY_SCHEMA = "autofde-lab.premature-actuation-bundle-replay/1"
@@ -56,6 +57,10 @@ def build_survival_bundle(
         min_occurrences=min_occurrences,
     )
     episode_evidence = _episode_evidence(documents)
+    policy_uncertainty = {
+        policy_id: survival_uncertainty(report)
+        for policy_id, report in cohort["policies"].items()
+    }
 
     bundle = {
         "schema": BUNDLE_SCHEMA,
@@ -66,6 +71,10 @@ def build_survival_bundle(
         "policy_count": cohort["policy_count"],
         "cohort_id": cohort["id"],
         "recurrence_id": recurrence["id"],
+        "policy_uncertainty_ids": {
+            policy_id: report["id"]
+            for policy_id, report in sorted(policy_uncertainty.items())
+        },
         "min_occurrences": min_occurrences,
         "episode_evidence": episode_evidence,
         "authority": "none",
@@ -110,6 +119,7 @@ def replay_survival_bundle(
         ("policy_count", "POLICY_COUNT_MISMATCH"),
         ("cohort_id", "COHORT_MISMATCH"),
         ("recurrence_id", "RECURRENCE_MISMATCH"),
+        ("policy_uncertainty_ids", "UNCERTAINTY_MISMATCH"),
         ("episode_evidence", "OCEL_OR_EPISODE_EVIDENCE_MISMATCH"),
         ("id", "BUNDLE_ID_MISMATCH"),
     ):
