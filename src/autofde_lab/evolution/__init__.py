@@ -10,7 +10,6 @@ from .capability_ecology import (
     qualify_retirement,
     qualify_substitution,
 )
-
 from .paired_promotion import (
     CompiledRetirementRoute,
     IntelligenceRung,
@@ -30,25 +29,36 @@ from .paired_promotion import (
     StatisticalPromotionPolicy,
     compile_retirement_route,
 )
+from .promotion_campaign import (
+    CampaignStatus,
+    PromotionCampaign,
+    PromotionCampaignController,
+    PromotionCommit,
+)
+from .promotion_registry import ChampionRegistry, ChampionState, PromotionRecord
 
 __all__ = [
+    "CampaignStatus",
     "CapabilityRetirementReceipt",
     "CapabilitySubstitutionReceipt",
+    "ChampionRegistry",
+    "ChampionState",
+    "CompiledRetirementRoute",
     "FrozenCapabilityRecord",
     "GitCapabilitySubject",
-    "ResidualHumanWork",
-    "freeze_promoted_candidate",
-    "qualify_retirement",
-    "qualify_substitution",
-        "CompiledRetirementRoute",
     "IntelligenceRung",
     "PairedPromotionCourt",
     "PairedPromotionPolicy",
     "PairedTrial",
+    "PromotionCampaign",
+    "PromotionCampaignController",
+    "PromotionCommit",
     "PromotionDecision",
+    "PromotionRecord",
     "PromotionStatistics",
     "PromotionVerdict",
     "ReasoningRetirementCourt",
+    "ResidualHumanWork",
     "RetirementDecision",
     "RetirementTrial",
     "RetirementVerdict",
@@ -57,4 +67,7 @@ __all__ = [
     "StatisticalPairedPromotionCourt",
     "StatisticalPromotionPolicy",
     "compile_retirement_route",
+    "freeze_promoted_candidate",
+    "qualify_retirement",
+    "qualify_substitution",
 ]
