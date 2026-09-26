@@ -9,7 +9,7 @@ history. It performs no deployment or consequential actuation.
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from hashlib import sha256
 from typing import Protocol
 
