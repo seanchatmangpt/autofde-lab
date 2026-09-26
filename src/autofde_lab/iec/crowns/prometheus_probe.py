@@ -18,6 +18,7 @@ from typing import Any, Callable, Mapping
 
 from .model import IECRefusal, Verdict, canonical_json, content_id
 from .prometheus import CASE_SCHEMA, DIMENSIONS, evaluate_case
+from .prometheus_mutation import MUTATION_REPORT_SCHEMA
 
 MANIFEST_SCHEMA = "autofde-lab.swe-prometheus-probe-manifest/1"
 RUN_SCHEMA = "autofde-lab.swe-prometheus-probe-run/1"
@@ -381,6 +382,8 @@ def pair_runs(
     manifest_document: Mapping[str, Any],
     base_run: Mapping[str, Any],
     treated_run: Mapping[str, Any],
+    *,
+    mutation_report: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Bind independent base/treated observations to one fixed manifest."""
     manifest = parse_manifest(manifest_document)
@@ -463,24 +466,54 @@ def pair_runs(
         if probe["role"] == "mutation"
         and treated.get(probe["id"]) is not None
     ]
-    if behavior_probe is None:
-        gate_strength = "none"
-    elif not mutations:
-        gate_strength = "vacuous"
-    elif all(row["status"] == "pass" for row in mutations):
-        gate_strength = "detected"
-    else:
-        gate_strength = "blind"
-
-    mutation_receipt_id = (
-        None
-        if gate_strength != "detected"
-        else content_id(
-            "mutation-court",
-            manifest["manifest_id"],
-            [row["semantic_id"] for row in mutations],
+    if mutation_report is not None:
+        if mutation_report.get("schema") != MUTATION_REPORT_SCHEMA:
+            raise IECRefusal(
+                "REFUSED_INVALID_MUTATION_REPORT",
+                "mutation report schema mismatch",
+            )
+        for field in ("repository", "base_commit", "patch_digest"):
+            if mutation_report.get(field) != manifest[field]:
+                raise IECRefusal(
+                    "REFUSED_EXACT_SUBJECT_MISMATCH",
+                    f"mutation report {field} does not match probe manifest",
+                )
+        gate_strength = str(mutation_report.get("gate_strength", "none"))
+        if gate_strength not in {"detected", "blind", "vacuous", "none"}:
+            raise IECRefusal(
+                "REFUSED_INVALID_MUTATION_REPORT",
+                f"invalid mutation gate strength {gate_strength!r}",
+            )
+        mutation_receipt_id = (
+            str(mutation_report.get("receipt_id"))
+            if gate_strength == "detected"
+            else None
         )
-    )
+        if gate_strength == "detected" and not mutation_receipt_id:
+            raise IECRefusal(
+                "REFUSED_UNBOUNDED_EQUIVALENCE",
+                "detected mutation report has no receipt_id",
+            )
+        mutation_source = "reversible-mutation-court"
+    else:
+        if behavior_probe is None:
+            gate_strength = "none"
+        elif not mutations:
+            gate_strength = "vacuous"
+        elif all(row["status"] == "pass" for row in mutations):
+            gate_strength = "detected"
+        else:
+            gate_strength = "blind"
+        mutation_receipt_id = (
+            None
+            if gate_strength != "detected"
+            else content_id(
+                "mutation-court",
+                manifest["manifest_id"],
+                [row["semantic_id"] for row in mutations],
+            )
+        )
+        mutation_source = "manifest-mutation-probes"
 
     def singleton_role(role: str) -> dict[str, str]:
         probe = next(
@@ -522,6 +555,7 @@ def pair_runs(
         "behavior": behavior,
         "gate_strength": gate_strength,
         "mutation_receipt_id": mutation_receipt_id,
+        "mutation_source": mutation_source,
         "clean_environment": singleton_role("clean_environment"),
         "replay": singleton_role("replay"),
         "governance_evidence": governance,
@@ -669,6 +703,7 @@ def main(argv: list[str] | None = None) -> int:
     pair.add_argument("base_run", type=Path)
     pair.add_argument("treated_run", type=Path)
     pair.add_argument("out", type=Path)
+    pair.add_argument("--mutation-report", type=Path)
 
     assemble = sub.add_parser("assemble")
     assemble.add_argument("pair", type=Path)
@@ -688,6 +723,11 @@ def main(argv: list[str] | None = None) -> int:
             _read(args.manifest),
             _read(args.base_run),
             _read(args.treated_run),
+            mutation_report=(
+                _read(args.mutation_report)
+                if args.mutation_report
+                else None
+            ),
         )
     else:
         result = assemble_case(
