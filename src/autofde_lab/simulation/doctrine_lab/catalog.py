@@ -17,20 +17,39 @@ from pathlib import Path
 
 from autofde_lab.simulation.fortune5_safe.model import PolicyVector
 
-from .primitives import PRIMITIVE_NAMES, compose, concealed
+from .primitives import PRIMITIVE_NAMES, PRIMITIVES, compose, concealed
 
 CATALOG_PATH = Path(__file__).with_name("data") / "catalog.json"
 CATALOG_SHA256 = "49d404d32300e17704580455bbbd3e4a60773dbd1ff091c90e4a310a3bb65e30"
 DOCTRINE_IRI = "https://ggen.dev/ontology/strategic-doctrine#"
 MAX_TITLE = 60
+CATALOG_SCHEMA = "autofde-lab.doctrine-lab.catalog/v1"
+# The two allowed free-text values (provenance, non_claim) are bounded single-line
+# strings: a short statement fits, a paragraph of source text does not.
+MAX_FREE_TEXT = 160
 # Allow-lists: anything outside them (free text such as ``quote`` or ``summary``)
 # is refused, so no source text can ride in under a re-pinned digest.
+TOP_LEVEL_KEYS = frozenset(
+    {
+        "iri",
+        "prefix",
+        "schema",
+        "authority",
+        "authority_ceiling",
+        "non_claim",
+        "provenance",
+        "primitives",
+        "strategies",
+    }
+)
 ENTRY_KEYS = frozenset({"ordinal", "iri", "short_title", "status", "primitives"})
+PRIMITIVE_KEYS = frozenset({"name", "dual", "iri"})
 STATUSES = frozenset({"operationalized", "stub"})
 
-# Digests of catalogs that passed ``load_catalog`` in this process. Episodes and
-# seals refuse any catalog digest not in this set (forged-origin guard).
-_ADMITTED_DIGESTS: set[str] = set()
+# Catalogs that passed ``load_catalog`` in this process, by sha256. Episodes and
+# seals refuse any catalog digest not in this map (forged-origin guard), and
+# seals resolve the admitted Strategy from it to bind a receipt's signature.
+_ADMITTED: dict[str, "Catalog"] = {}
 
 
 class CatalogIntegrityError(ValueError):
@@ -90,12 +109,52 @@ def _check(doc: dict) -> None:
         raise CatalogIntegrityError("catalog authority ceiling must be <= CONSTRUCT")
     if "no text reproduced" not in str(doc.get("non_claim", "")):
         raise CatalogIntegrityError("catalog licensing non-claim is absent")
+    keys = set(doc)
+    if keys != TOP_LEVEL_KEYS:
+        raise CatalogIntegrityError(
+            "catalog top-level keys outside allow-list: "
+            f"extra={sorted(keys - TOP_LEVEL_KEYS)} "
+            f"missing={sorted(TOP_LEVEL_KEYS - keys)}"
+        )
+    if doc["schema"] != CATALOG_SCHEMA:
+        raise CatalogIntegrityError(
+            f"catalog schema {doc['schema']!r} is not {CATALOG_SCHEMA}"
+        )
+    for field in ("provenance", "non_claim"):
+        value = doc[field]
+        if (
+            not isinstance(value, str)
+            or len(value) > MAX_FREE_TEXT
+            or any(ch in value for ch in "\n\r")
+        ):
+            raise CatalogIntegrityError(
+                f"catalog {field} is not a single-line string <= {MAX_FREE_TEXT} chars"
+            )
     declared = tuple(
         p.get("name") if isinstance(p, dict) else None
         for p in doc.get("primitives", ())
     )
     if declared != PRIMITIVE_NAMES:
         raise CatalogIntegrityError("catalog primitive algebra differs from sd: 14")
+    for primitive in doc["primitives"]:
+        if not isinstance(primitive, dict):
+            raise CatalogIntegrityError(f"primitive {primitive!r} is not an object")
+        primitive_keys = set(primitive)
+        if primitive_keys != PRIMITIVE_KEYS:
+            raise CatalogIntegrityError(
+                f"primitive {primitive.get('name')!r} keys outside allow-list: "
+                f"extra={sorted(primitive_keys - PRIMITIVE_KEYS)} "
+                f"missing={sorted(PRIMITIVE_KEYS - primitive_keys)}"
+            )
+        if primitive["iri"] != f"sd:{primitive['name']}":
+            raise CatalogIntegrityError(
+                f"primitive {primitive['name']!r} iri {primitive['iri']!r} is not sd:"
+            )
+        if primitive["dual"] != PRIMITIVES[primitive["name"]].dual:
+            raise CatalogIntegrityError(
+                f"primitive {primitive['name']!r} dual {primitive['dual']!r} "
+                "differs from the sd: algebra"
+            )
     strategies = doc.get("strategies")
     if not isinstance(strategies, list):
         raise CatalogIntegrityError("catalog strategies is not a list")
@@ -144,7 +203,21 @@ def _check_entry(entry: object) -> None:
 
 def is_admitted(digest: str) -> bool:
     """True iff a catalog with this sha256 passed ``load_catalog`` in-process."""
-    return digest in _ADMITTED_DIGESTS
+    return digest in _ADMITTED
+
+
+def admitted_catalog(digest: str) -> Catalog | None:
+    """The Catalog admitted in-process under ``digest``, or None."""
+    return _ADMITTED.get(digest)
+
+
+def _no_duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    seen: set[str] = set()
+    for key, _ in pairs:
+        if key in seen:
+            raise CatalogIntegrityError(f"duplicate JSON key {key!r} in catalog bytes")
+        seen.add(key)
+    return dict(pairs)
 
 
 def load_catalog(
@@ -157,7 +230,9 @@ def load_catalog(
             f"catalog sha256 {digest} does not match pinned {expected_sha256}"
         )
     try:
-        doc = json.loads(data)
+        doc = json.loads(data, object_pairs_hook=_no_duplicate_keys)
+    except CatalogIntegrityError:
+        raise
     except ValueError as exc:
         raise CatalogIntegrityError(f"catalog is not JSON: {exc}") from exc
     if not isinstance(doc, dict):
@@ -178,5 +253,5 @@ def load_catalog(
             for s in doc["strategies"]
         ),
     )
-    _ADMITTED_DIGESTS.add(digest)
+    _ADMITTED[digest] = catalog
     return catalog
