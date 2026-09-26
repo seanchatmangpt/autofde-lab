@@ -120,6 +120,22 @@ def test_growth_law_passes_when_capacity_grows_with_delegation() -> None:
     assert result["growth_law"]["verdict"] == "PASS"
 
 
+
+
+def test_growth_law_allows_safe_contraction_after_evidence_revocation() -> None:
+    # Reference carries surplus evidence. The candidate loses most of that
+    # evidence but also contracts delegation back inside the new boundary.
+    # No positive delegation growth occurred, so the growth law must not
+    # manufacture a failure from negative deltas.
+    result = compare_delegation(
+        artifact(units=2, scope=5),
+        artifact(units=1, scope=1),
+    )
+    assert result["gate"] == "PASS"
+    assert result["delta"]["delegation_units"] == -1
+    assert result["delta"]["admission_capacity_units"] == -4
+    assert result["growth_law"]["verdict"] == "PASS"
+
 def test_compare_refuses_boundary_drift() -> None:
     candidate = artifact()
     candidate["delegation"]["boundary_id"] = "sha256:other-boundary"
