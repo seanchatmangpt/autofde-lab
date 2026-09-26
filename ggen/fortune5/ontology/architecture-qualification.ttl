@@ -1,0 +1,34 @@
+@prefix ce: <urn:chatman:equilibrium:> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ce:ArchitectureQualificationCourt a ce:Court ;
+  ce:schema "autofde.architecture-qualification.v1" ;
+  ce:requires ce:ExactSubject, ce:PositiveEvidence, ce:FalsifierEvidence,
+              ce:AuthorityCeiling, ce:DeterministicReplay ;
+  ce:standing ce:RepositoryLocal ;
+  ce:confersAuthority false .
+
+ce:UNKNOWN a ce:Standing .
+ce:QUALIFIED a ce:Standing .
+ce:REFUSED a ce:Standing .
+ce:ExactSubject a ce:Requirement .
+ce:PositiveEvidence a ce:Requirement .
+ce:FalsifierEvidence a ce:Requirement .
+ce:AuthorityCeiling a ce:Requirement .
+ce:DeterministicReplay a ce:Requirement .
+ce:RepositoryLocal a ce:StandingScope .
+
+ce:CandidateQualificationShape a ce:QualificationShape ;
+  ce:exactSubjectPattern "^sha256:[0-9a-f]{64}$" ;
+  ce:authorityMaximum "CONSTRUCT" ;
+  ce:unknownMustRemainRepresentable true ;
+  ce:requiresIndependentEvidence true ;
+  ce:requiresFalsifierEvidence true ;
+  ce:replayMustMatchReceipt true .
+
+ce:StaleSubject a ce:Falsifier .
+ce:CrossSubjectReuse a ce:Falsifier .
+ce:ForgedReceipt a ce:Falsifier .
+ce:AuthorityLaundering a ce:Falsifier .
+ce:ReplayDivergence a ce:Falsifier .
+ce:MissingIndependentEvidence a ce:Falsifier .
