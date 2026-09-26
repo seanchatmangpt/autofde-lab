@@ -198,6 +198,13 @@ def complete_heterogeneity_trial(
     homogeneous = expected_payoff(cell.homogeneous_schedule, homogeneous_outcomes)
     engineered = expected_payoff(cell.engineered_schedule, engineered_outcomes)
 
+    reused_receipts = set(homogeneous.receipt_ids).intersection(engineered.receipt_ids)
+    if reused_receipts:
+        raise ValueError(
+            "REFUSED:HETEROGENEITY_ARM_RECEIPT_REUSE:"
+            + ",".join(sorted(reused_receipts))
+        )
+
     return HeterogeneityTrial(
         mission_id=program.mission_id,
         homogeneous_score=homogeneous.weighted_left_score,
