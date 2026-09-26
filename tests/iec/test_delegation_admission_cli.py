@@ -146,6 +146,27 @@ def test_canonical_cli_runs_history_and_batch(tmp_path) -> None:
     )
 
 
+def test_canonical_cli_plans_numeric_repair(tmp_path) -> None:
+    candidate = tmp_path / "candidate.json"
+    receipt = tmp_path / "repair.json"
+    write(candidate, artifact(units=4, scope=2))
+
+    assert (
+        iec_main(
+            [
+                "delegation-admission-repair",
+                str(candidate),
+                str(receipt),
+            ]
+        )
+        == 0
+    )
+    result = json.loads(receipt.read_text())
+    assert result["standing"] == "PASS"
+    assert result["total_increment_units"] == 8
+    assert result["expected_admission_debt_units"] == 0
+
+
 def test_canonical_tlc_parser_accepts_delegation_models() -> None:
     parser = build_parser()
     reference = parser.parse_args(
