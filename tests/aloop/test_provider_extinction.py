@@ -11,8 +11,11 @@ import dataclasses
 import pytest
 
 from autofde_lab.aloop.provider_extinction import (
+    ArtifactHandoff,
     ExecutionSemantics,
+    FailureInjection,
     compare_provider_substitution,
+    qualify_fresh_job_recovery,
 )
 
 
@@ -83,3 +86,106 @@ def test_run_identity_cannot_be_reused_across_provider_boundary(
     )
     assert not result.qualified
     assert result.reasons == ("RUN_ID_REUSED_ACROSS_PROVIDER_REPLACEMENT",)
+
+
+
+def test_fresh_job_recovery_uses_content_identity_not_workstation_path(
+    claude_run: ExecutionSemantics,
+) -> None:
+    artifact = "sha256:" + "d" * 64
+    before = dataclasses.replace(claude_run, candidate_digest=artifact)
+    after = dataclasses.replace(
+        before,
+        provider="zcode",
+        run_id="run-zcode-2",
+    )
+    handoff = ArtifactHandoff(
+        artifact_digest=artifact,
+        manifest_digest="sha256:" + "e" * 64,
+        producer_digest="sha256:" + "f" * 64,
+        source_provider="claude",
+        source_run_id="run-claude-1",
+        target_provider="zcode",
+        target_run_id="run-zcode-2",
+        source_locator="/tmp/job-a/out/candidate.bin",
+        target_locator="/workspace/job-b/in/candidate.bin",
+    )
+    result = qualify_fresh_job_recovery(
+        before,
+        after,
+        handoff=handoff,
+        failure=FailureInjection(
+            injection_id="fi:provider-extinction:1",
+            kind="PROVIDER_EXTINCTION",
+            failed_provider="claude",
+            failed_run_id="run-claude-1",
+        ),
+    )
+    assert result.qualified
+    assert result.verdict == "QUALIFIED"
+    assert result.reasons == ()
+
+    relocated = dataclasses.replace(
+        handoff,
+        source_locator="C:/ephemeral/job-a/candidate.bin",
+        target_locator="/another/fresh/job/candidate.bin",
+    )
+    relocated_result = qualify_fresh_job_recovery(
+        before,
+        after,
+        handoff=relocated,
+        failure=FailureInjection(
+            injection_id="fi:provider-extinction:1",
+            kind="PROVIDER_EXTINCTION",
+            failed_provider="claude",
+            failed_run_id="run-claude-1",
+        ),
+    )
+    assert relocated_result.handoff_content_digest == result.handoff_content_digest
+
+
+def test_fresh_job_recovery_refuses_artifact_or_failure_identity_drift(
+    claude_run: ExecutionSemantics,
+) -> None:
+    artifact = "sha256:" + "1" * 64
+    before = dataclasses.replace(claude_run, candidate_digest=artifact)
+    after = dataclasses.replace(
+        before,
+        provider="zcode",
+        run_id="run-zcode-3",
+        candidate_digest="sha256:" + "2" * 64,
+    )
+    handoff = ArtifactHandoff(
+        artifact_digest=artifact,
+        manifest_digest="sha256:" + "3" * 64,
+        producer_digest="sha256:" + "4" * 64,
+        source_provider="claude",
+        source_run_id="run-claude-1",
+        target_provider="zcode",
+        target_run_id="run-zcode-3",
+    )
+    result = qualify_fresh_job_recovery(
+        before,
+        after,
+        handoff=handoff,
+        failure=FailureInjection(
+            injection_id="fi:crash:wrong-run",
+            kind="CRASH",
+            failed_provider="claude",
+            failed_run_id="run-other",
+        ),
+    )
+    assert not result.qualified
+    assert "SEMANTIC_DRIFT:candidate_digest" in result.reasons
+    assert "TARGET_ARTIFACT_IDENTITY_MISMATCH" in result.reasons
+    assert "FAILURE_RUN_MISMATCH" in result.reasons
+
+
+def test_failure_injection_kind_is_typed() -> None:
+    with pytest.raises(ValueError, match="unsupported failure injection kind"):
+        FailureInjection(
+            injection_id="fi:bad",
+            kind="NETWORK_MAYBE",
+            failed_provider="claude",
+            failed_run_id="run-claude-1",
+        )
