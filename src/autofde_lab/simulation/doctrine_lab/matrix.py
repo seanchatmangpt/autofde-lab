@@ -25,7 +25,7 @@ from autofde_lab.simulation.fortune5_safe.model import (
 )
 from autofde_lab.simulation.fortune5_safe.topology import build_topology
 
-from .catalog import Catalog, Strategy, is_admitted, load_catalog
+from .catalog import Catalog, Strategy, admitted_catalog, load_catalog
 from .opponent import Opponent, OpponentMove
 from .relations import diversity, is_feasible, pareto_front
 from .world import World
@@ -175,9 +175,19 @@ def run_strategy_episode(
 ) -> EpisodeRecord:
     if rounds < 1:
         raise ValueError("rounds must be positive")
-    if not is_admitted(catalog_sha256):
+    catalog = admitted_catalog(catalog_sha256)
+    if catalog is None:
         raise ProvenanceRefused(
             f"catalog sha256 {catalog_sha256!r} was never admitted by load_catalog"
+        )
+    try:
+        entry = catalog.get(strategy.ordinal)
+    except KeyError:
+        entry = None
+    if entry is None or entry.signature != strategy.signature:
+        raise ProvenanceRefused(
+            f"strategy {strategy.id} signature {strategy.signature!r} is not the "
+            f"admitted catalog entry for ordinal {strategy.ordinal}"
         )
     if strategy.status != "operationalized":
         raise ValueError("stub strategies have no primitive composition to run")

@@ -24,7 +24,7 @@ from autofde_lab._cache.provenance import (
 
 from autofde_lab.simulation.fortune5_safe.model import stable_digest
 
-from .catalog import is_admitted
+from .catalog import admitted_catalog
 from .matrix import EVIDENCE_CEILING, EpisodeRecord, ProvenanceRefused, receipt_body
 from .ocel import episode_log, log_sha256
 
@@ -84,14 +84,30 @@ def attestation_for(episode: EpisodeRecord, ocel_sha256: str) -> CacheAttestatio
 def admit_for_seal(episode: EpisodeRecord, ocel_sha256: str) -> None:
     """Refuse an episode whose origin or digests do not recompute.
 
-    The catalog digest must have been admitted by ``load_catalog`` in-process,
+    The catalog digest must have been admitted by ``load_catalog`` in-process
+    and the receipt's strategy signature must be the admitted catalog entry
+    for its ordinal (a forged strategy under a genuine digest is refused),
     the receipt's ``episode_digest`` must recompute from its own fields, the
     receipt must carry authority NONE, and the supplied OCEL digest must equal
     the digest of the episode's own deterministic log.
     """
     r = episode.receipt
-    if not is_admitted(r.catalog_sha256):
+    catalog = admitted_catalog(r.catalog_sha256)
+    if catalog is None:
         raise ProvenanceRefused(f"catalog {r.catalog_sha256!r} was never admitted")
+    try:
+        entry = catalog.get(r.strategy_ordinal)
+    except KeyError:
+        raise ProvenanceRefused(
+            f"episode {episode.id} strategy ordinal {r.strategy_ordinal} "
+            "is outside the admitted catalog"
+        ) from None
+    if entry.signature != r.strategy_signature:
+        raise ProvenanceRefused(
+            f"episode {episode.id} strategy {r.strategy_signature!r} is not the "
+            f"admitted catalog entry for ordinal {r.strategy_ordinal} "
+            f"({entry.signature!r})"
+        )
     if r.authority != "NONE" or r.authority_ceiling not in ("SELECT", "CONSTRUCT"):
         raise ProvenanceRefused(
             f"receipt authority {r.authority}/{r.authority_ceiling}"

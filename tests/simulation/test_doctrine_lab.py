@@ -391,8 +391,57 @@ def test_forged_catalog_origin_is_refused(tmp_path: Path):
     relabelled = dataclasses.replace(
         episode, receipt=dataclasses.replace(episode.receipt, strategy_ordinal=9)
     )
-    with pytest.raises(ProvenanceRefused, match="digest does not recompute"):
+    with pytest.raises(ProvenanceRefused, match="not the admitted catalog entry"):
         seal_episodes([(relabelled, log_sha256(episode_log(relabelled)))], ledger)
+    retargeted = dataclasses.replace(
+        episode,
+        receipt=dataclasses.replace(episode.receipt, outcome_digest="e" * 64),
+    )
+    with pytest.raises(ProvenanceRefused, match="digest does not recompute"):
+        seal_episodes([(retargeted, log_sha256(episode_log(retargeted)))], ledger)
+    assert not ledger.exists() or ledger.read_text() == ""
+
+
+def test_forged_strategy_signature_is_refused_at_episode_and_seal(tmp_path: Path):
+    """A forged strategy under a GENUINE catalog digest, with every receipt
+    digest recomputed, is still refused: the signature binds to the admitted
+    Catalog object, not to its digest."""
+    import dataclasses
+
+    from autofde_lab.simulation.doctrine_lab.matrix import receipt_body
+    from autofde_lab.simulation.fortune5_safe.model import stable_digest
+
+    catalog = load_catalog()
+    forged_strategy = dataclasses.replace(
+        catalog.get(1), primitives=("conceal", "withdraw", "delay")
+    )
+    with pytest.raises(ProvenanceRefused, match="not the admitted catalog entry"):
+        run_strategy_episode(7, forged_strategy, MIRROR, catalog_sha256=catalog.sha256)
+    with pytest.raises(ProvenanceRefused, match="not the admitted catalog entry"):
+        run_doctrine_matrix([7], [MIRROR], [forged_strategy], catalog=catalog)
+
+    episode = run_strategy_episode(
+        7, catalog.get(1), MIRROR, catalog_sha256=catalog.sha256
+    )
+    fully_forged = dataclasses.replace(
+        episode,
+        strategy=forged_strategy,
+        receipt=dataclasses.replace(
+            episode.receipt,
+            strategy_signature=forged_strategy.signature,
+            episode_digest=stable_digest(
+                receipt_body(
+                    catalog.sha256,
+                    1,
+                    forged_strategy.signature,
+                    episode.receipt.outcome_digest,
+                )
+            ),
+        ),
+    )
+    ledger = tmp_path / "ledger.jsonl"
+    with pytest.raises(ProvenanceRefused, match="is not the admitted catalog entry"):
+        seal_episodes([(fully_forged, log_sha256(episode_log(fully_forged)))], ledger)
     assert not ledger.exists() or ledger.read_text() == ""
 
 

@@ -15,6 +15,7 @@ from .catalog import (
     Catalog,
     CatalogIntegrityError,
     Strategy,
+    admitted_catalog,
     is_admitted,
     load_catalog,
 )
@@ -92,6 +93,7 @@ __all__ = [
     "RunVerification",
     "Strategy",
     "World",
+    "admitted_catalog",
     "build_report",
     "compose",
     "episode_log",

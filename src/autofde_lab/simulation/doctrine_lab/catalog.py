@@ -42,9 +42,11 @@ ENTRY_KEYS = frozenset({"ordinal", "iri", "short_title", "status", "primitives"}
 PRIMITIVE_KEYS = frozenset({"name", "dual", "iri"})
 STATUSES = frozenset({"operationalized", "stub"})
 
-# Digests of catalogs that passed ``load_catalog`` in this process. Episodes and
-# seals refuse any catalog digest not in this set (forged-origin guard).
-_ADMITTED_DIGESTS: set[str] = set()
+# Catalogs that passed ``load_catalog`` in this process, keyed by sha256.
+# Episodes and seals refuse any catalog digest not in this registry
+# (forged-origin guard) and bind strategy signatures against the admitted
+# Catalog object, not only its digest.
+_ADMITTED_CATALOGS: dict[str, Catalog] = {}
 
 
 class CatalogIntegrityError(ValueError):
@@ -184,7 +186,12 @@ def _check_entry(entry: object) -> None:
 
 def is_admitted(digest: str) -> bool:
     """True iff a catalog with this sha256 passed ``load_catalog`` in-process."""
-    return digest in _ADMITTED_DIGESTS
+    return digest in _ADMITTED_CATALOGS
+
+
+def admitted_catalog(digest: str) -> Catalog | None:
+    """The admitted Catalog object for this sha256, or None if never admitted."""
+    return _ADMITTED_CATALOGS.get(digest)
 
 
 def _no_duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -229,5 +236,5 @@ def load_catalog(
             for s in doc["strategies"]
         ),
     )
-    _ADMITTED_DIGESTS.add(digest)
+    _ADMITTED_CATALOGS[digest] = catalog
     return catalog
