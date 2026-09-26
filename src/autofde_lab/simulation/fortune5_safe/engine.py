@@ -30,6 +30,7 @@ from .model import (
     stable_digest,
 )
 from .topology import build_topology
+from .worldgen import WorldSample
 
 PRIORITY_EFFECTS: Mapping[PriorityRule, tuple[float, float, float, float]] = {
     PriorityRule.WSJF: (1.04, 0.98, 0.98, 1.03),
@@ -67,19 +68,54 @@ RISK_EFFECTS: Mapping[RiskRule, tuple[float, float, float]] = {
 }
 
 
-def _episode_rng(seed: int, policy: PolicyVector, scenario: Scenario) -> random.Random:
-    material = f"{seed}|{policy.id}|{scenario.name.value}".encode()
+def _episode_rng(seed: int, policy: PolicyVector, world_label: str) -> random.Random:
+    material = f"{seed}|{policy.id}|{world_label}".encode()
     return random.Random(int.from_bytes(hashlib.sha256(material).digest()[:8], "big"))
+
+
+def _world_axes(
+    scenario: Scenario | WorldSample,
+) -> tuple[str, float, float, float, float, float]:
+    """Project either input kind onto the engine's strategic-axis parameters.
+
+    Returns ``(world_label, jitter_low, jitter_width, volatility,
+    information_factor, authority_factor)``. For `Scenario` inputs every factor
+    is the exact pre-worldgen default (jitter band [0.985, 1.015], no extra
+    noise, both factors 1.0), so the Scenario fast path stays byte-identical.
+    WorldSample axes map as documented in `worldgen`: timing_jitter widens the
+    jitter band symmetrically, volatility adds an extra zero-mean demand noise
+    draw, information_quality scales predictability by 0.70 + 0.30 * iq, and
+    authority_concentration scales coordination overhead by
+    0.85 + 0.15 * authority_concentration.
+    """
+    if isinstance(scenario, WorldSample):
+        return (
+            scenario.world_id,
+            0.985 - scenario.timing_jitter / 2.0,
+            0.03 + scenario.timing_jitter,
+            scenario.volatility,
+            0.70 + 0.30 * scenario.information_quality,
+            0.85 + 0.15 * scenario.authority_concentration,
+        )
+    return (scenario.name.value, 0.985, 0.03, 0.0, 1.0, 1.0)
 
 
 def run_episode(
     policy: PolicyVector,
-    scenario: Scenario,
+    scenario: Scenario | WorldSample,
     config: Fortune5Config = Fortune5Config(),
     topology: EnterpriseTopology | None = None,
 ) -> EpisodeResult:
     topology = topology or build_topology(config)
-    rng = _episode_rng(config.seed, policy, scenario)
+    (
+        world_label,
+        jitter_low,
+        jitter_width,
+        volatility,
+        information_factor,
+        authority_factor,
+    ) = _world_axes(scenario)
+    rng = _episode_rng(config.seed, policy, world_label)
     priority_flow, priority_dependency, priority_risk, priority_value = (
         PRIORITY_EFFECTS[policy.priority]
     )
@@ -104,13 +140,18 @@ def run_episode(
     trace: list[PIMetrics] = []
 
     for pi in range(1, config.planning_intervals + 1):
-        jitter = 0.985 + rng.random() * 0.03
+        jitter = jitter_low + rng.random() * jitter_width
+        if volatility > 0.0:
+            volatility_noise = 1.0 + (rng.random() - 0.5) * 2.0 * volatility
+        else:
+            volatility_noise = 1.0
         demand = (
             config.base_team_demand
             * config.teams
             * scenario.demand_multiplier
             * (1.0 + 0.012 * (pi - 1))
             * jitter
+            * volatility_noise
         )
         dependency_penalty = min(
             0.24,
@@ -175,6 +216,7 @@ def run_episode(
             * coordination_density
             * scenario.coordination_multiplier
             * cadence_coordination
+            * authority_factor
             * (1.0 + 0.20 * dependency_penalty),
         )
         predictability = min(
@@ -184,6 +226,7 @@ def run_episode(
                 completed
                 / max(demand, 1.0)
                 * cadence_predictability
+                * information_factor
                 * (1.0 - 0.45 * compliance_risk)
                 * (1.0 - 0.25 * change_penalty),
             ),
@@ -275,7 +318,7 @@ def run_episode(
         AUTOFDE_BASE_SHA,
         topology.digest,
         policy.digest,
-        scenario.name.value,
+        world_label,
         config.seed,
         input_digest,
         output_digest,

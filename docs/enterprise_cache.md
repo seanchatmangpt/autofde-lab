@@ -117,8 +117,10 @@ namespace binding, TTL clamping, production invalidation, quotas, deterministic
 rollout, kill switch, circuit recovery, signing-key rotation, tamper detection,
 concurrent multi-process ledger writes, quarantine rotation, observer isolation,
 SLO evaluation, protected metadata, governed invalidation, and typed fail-open
-behavior. The GitHub Actions matrix runs on Python 3.10, 3.12, and 3.13 and also
-executes the original cache verifier.
+behavior. The GitHub Actions matrix runs on Python 3.10, 3.12, and 3.13 (PR
+rail) and also
+executes the original cache verifier. (The full/release rail moved to 3.12/3.13
+after the 2026-09-18 Python-floor bump to 3.12.)
 
 Persistent SQLite/pickle remains a trusted-local cache artifact. Signing secrets
 must come from a company secret manager. Full repository integration and platform-

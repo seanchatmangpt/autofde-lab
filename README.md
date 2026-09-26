@@ -94,6 +94,9 @@ Where the repository declares RDF/ontology, queries, and templates canonical, gg
 
 ## Installation
 
+Requires Python >= 3.12 (`requires-python = ">=3.12"`; 3.10/3.11 installs
+hard-fail since `d5ac60ff`).
+
 ```bash
 pip install autofde-lab[all]
 ```

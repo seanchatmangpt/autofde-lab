@@ -5,10 +5,13 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from dataclasses import dataclass, fields, is_dataclass
+from dataclasses import dataclass, field, fields, is_dataclass
 from enum import Enum
 from functools import cached_property
-from typing import Mapping
+from typing import TYPE_CHECKING, Mapping
+
+if TYPE_CHECKING:  # pragma: no cover - annotation-only, avoids worldgen cycle
+    from .worldgen import WorldSample
 
 APS_SOURCE_REPOSITORY = "seanchatmangpt/agile-protocol-specification"
 APS_SOURCE_SHA = "b5916330905195b124409ca0e857f43b897ffc80"
@@ -317,6 +320,114 @@ class PolicyVector:
         return stable_digest(self)
 
 
+_DOCTRINE_AXES: Mapping[str, type[Enum]] = {
+    "priority": PriorityRule,
+    "funding": FundingRule,
+    "capacity": CapacityRule,
+    "cadence": CadenceRule,
+    "architecture": ArchitectureRule,
+    "risk": RiskRule,
+}
+
+
+def _axis_scores(axis: str) -> dict[str, float]:
+    """Canonical weight scores for one rule axis, in enum declaration order.
+
+    Declaration order is the axis's documented value ordering (e.g. priority
+    runs value-driven -> architecture-driven); scores spread the enum evenly
+    over [0.0, 1.0]. This is the shared scale `resolve` maps doctrine weights
+    onto; it is derived from the enums so it cannot drift from them.
+    """
+    values = [item.value for item in _DOCTRINE_AXES[axis]]
+    if len(values) == 1:
+        return {values[0]: 0.0}
+    step = 1.0 / (len(values) - 1)
+    return {value: index * step for index, value in enumerate(values)}
+
+
+@dataclass(frozen=True)
+class DoctrineSpec:
+    """An arbitrary strategy doctrine outside the 2,160-policy enum space.
+
+    `weights` maps the six rule axis names onto [0.0, 1.0] positions on each
+    axis's documented score scale (see `_axis_scores`); keys that are not rule
+    axis names are doctrine-level metadata (e.g. "robustness" assertions
+    consumed by the doctrine falsifier) and are ignored by `resolve` while
+    still participating in the doctrine's digest. `rule_overrides` optionally
+    pins an axis directly to an enum value name and takes precedence over the
+    weight for that axis. Hashability and digest follow the `stable_digest`
+    idiom (mappings canonicalized with sorted keys).
+    """
+
+    id: str
+    text: str
+    weights: Mapping[str, float] = field(default_factory=dict)
+    rule_overrides: Mapping[str, str] | None = None
+
+    @cached_property
+    def digest(self) -> str:
+        return stable_digest(self)
+
+    def __hash__(self) -> int:
+        return int(self.digest[:16], 16)
+
+
+def resolve(doctrine: DoctrineSpec) -> PolicyVector:
+    """Map arbitrary doctrine weights onto the six rule enums, deterministically.
+
+    For each axis: a missing weight defaults to 0.5 (axis midpoint); weights
+    outside the enum space clamp to the nearest legal endpoint — this is
+    intrinsic to the nearest-legal mapping, since any weight <= 0.0 is closest
+    to the lowest-score enum and any weight >= 1.0 to the highest-score enum
+    (the clamp needs no separate guard; removing one could not change any
+    resolved vector). The nearest enum value by absolute score distance wins,
+    exact ties breaking toward the lower score (earlier in declaration order).
+    Scores are `index * (1 / (len - 1))` computed in float, so
+    near-ties (e.g. weight 0.5 on a 4-value axis, distances 1/3 vs 2/3) are
+    decided by exact float distance and only exact ties reach the tie-break.
+    `rule_overrides` bypass weight mapping per axis and are validated: unknown
+    axis names or unknown enum value names raise ValueError. Non-finite weights
+    raise ValueError (they are not receiptable, matching `_canonical`). The
+    mapping is a pure function of (weights, overrides): same doctrine =>
+    byte-identical PolicyVector.
+    """
+    if doctrine.rule_overrides:
+        unknown = sorted(set(doctrine.rule_overrides) - set(_DOCTRINE_AXES))
+        if unknown:
+            raise ValueError(f"rule_overrides name unknown axes: {unknown}")
+    chosen: dict[str, Enum] = {}
+    for axis, enum_cls in _DOCTRINE_AXES.items():
+        if doctrine.rule_overrides and axis in doctrine.rule_overrides:
+            raw = doctrine.rule_overrides[axis]
+            legal = {item.value: item for item in enum_cls}
+            if raw not in legal:
+                raise ValueError(
+                    f"rule_overrides[{axis!r}] = {raw!r} is not a legal "
+                    f"{enum_cls.__name__} value"
+                )
+            chosen[axis] = legal[raw]
+            continue
+        weight = doctrine.weights.get(axis, 0.5)
+        if not math.isfinite(weight):
+            raise ValueError(f"weights[{axis!r}] must be finite, got {weight!r}")
+        raw_weight = float(weight)
+        scores = _axis_scores(axis)
+        order = {value: index for index, value in enumerate(scores)}
+        best_value = min(
+            scores,
+            key=lambda value: (abs(raw_weight - scores[value]), order[value]),
+        )
+        chosen[axis] = enum_cls(best_value)
+    return PolicyVector(
+        chosen["priority"],
+        chosen["funding"],
+        chosen["capacity"],
+        chosen["cadence"],
+        chosen["architecture"],
+        chosen["risk"],
+    )
+
+
 @dataclass(frozen=True)
 class Scenario:
     name: ScenarioName
@@ -391,7 +502,7 @@ class SimulationReceipt:
 @dataclass(frozen=True)
 class EpisodeResult:
     policy: PolicyVector
-    scenario: Scenario
+    scenario: Scenario | WorldSample
     trace: tuple[PIMetrics, ...]
     metrics: EpisodeMetrics
     receipt: SimulationReceipt

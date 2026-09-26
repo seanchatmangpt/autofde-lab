@@ -164,6 +164,23 @@ class/metrics/typed reasons, typed refusals, and `receipt_digest` over the canon
 reason carries a `broken_term` (Chatman taxonomy) and an RFC-0004 §39 failure class. Exit codes:
 `0` qualified, `3` not qualified (typed), `2` refused (malformed or forged log).
 
+## Score CLI and benchmark corpus
+
+`python -m autofde_lab.aloop.score` (`fb87a617`) is the metrics sibling of the court CLI, with four
+subcommands: `score LOG...` scores one or more OCEL 2.0 logs (JSON or NDJSON); `corpus [DIR]` scores
+a synth mutant battery against its `MANIFEST.json`; `trials SEED...` runs repeated seeded trials
+plus the mutant battery and emits the report-form scoreboard — metric distributions with Wilson 95%
+intervals and negative-control outcomes; `validate-manifests DIR` checks scenario manifests for the
+required contract fields. Exit codes: `0` all checks passed, `1` any check failed, `2` usage error;
+the scoreboard/receipt JSON goes to stdout or `--out`, human status to stderr.
+
+The benchmark corpus (`9e76a687`) lives under `benchmarks/aloop/`: scenario manifests
+`scenarios/ALOOP-001.json`..`ALOOP-010.json` (one per court in the table above) and the synthetic
+OCEL 2.0 flight-recorder corpus under `fixtures/`. Each manifest is enforced by
+`validate-manifests` for the contract fields `id`, `objective`, `repository_scope`, `seeds`,
+`scenario_identity`, `setup`, `acceptance_criteria`, `falsifier`, `expected_outcome_classes`,
+`negative_control`.
+
 ## AUTONOMY STANDING report shape
 
 ```text

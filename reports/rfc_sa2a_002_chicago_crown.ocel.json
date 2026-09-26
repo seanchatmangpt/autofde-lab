@@ -1,0 +1,873 @@
+{
+  "eventTypes": [
+    {
+      "name": "CHI-ID:ExactIdentityFenced",
+      "attributes": [
+        {
+          "name": "exact_sha",
+          "type": "string"
+        },
+        {
+          "name": "passed",
+          "type": "boolean"
+        },
+        {
+          "name": "tag_equality",
+          "type": "boolean"
+        },
+        {
+          "name": "tag_sha",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "CHI-COLLAB:CollaboratorsInitialized",
+      "attributes": [
+        {
+          "name": "collusion_prevented",
+          "type": "boolean"
+        },
+        {
+          "name": "passed",
+          "type": "boolean"
+        },
+        {
+          "name": "zero_mock",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "CHI-PLAN:CandidateRefusalEnforced",
+      "attributes": [
+        {
+          "name": "passed",
+          "type": "boolean"
+        },
+        {
+          "name": "refusal_code",
+          "type": "string"
+        },
+        {
+          "name": "state",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "CHI-BOUNDARY:SoleDOEnforcement",
+      "attributes": [
+        {
+          "name": "disk_unmutated_before_grant",
+          "type": "boolean"
+        },
+        {
+          "name": "passed",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "CHI-WORLD:NoveltyAdmitted",
+      "attributes": [
+        {
+          "name": "candidate_id",
+          "type": "string"
+        },
+        {
+          "name": "passed",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "CHI-BUDGET:PlanPreflighted",
+      "attributes": [
+        {
+          "name": "allocations_count",
+          "type": "integer"
+        },
+        {
+          "name": "lab_tokens_spent",
+          "type": "integer"
+        },
+        {
+          "name": "passed",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "CHI-EXEC:AutonomousEnvelopeReflex",
+      "attributes": [
+        {
+          "name": "passed",
+          "type": "boolean"
+        },
+        {
+          "name": "quiescence_reached",
+          "type": "boolean"
+        },
+        {
+          "name": "steps_count",
+          "type": "integer"
+        }
+      ]
+    },
+    {
+      "name": "CHI-OBS:IndependentPostconditionVerified",
+      "attributes": [
+        {
+          "name": "disk_record_count",
+          "type": "integer"
+        },
+        {
+          "name": "passed",
+          "type": "boolean"
+        },
+        {
+          "name": "postcondition_verified",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "CHI-REPLAY:DeterministicReplayVerified",
+      "attributes": [
+        {
+          "name": "passed",
+          "type": "boolean"
+        },
+        {
+          "name": "standing",
+          "type": "string"
+        },
+        {
+          "name": "verdict",
+          "type": "string"
+        },
+        {
+          "name": "verified_without_actuation",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "CHI-FRESH:FreshConsumerProofVerified",
+      "attributes": [
+        {
+          "name": "isolated_clean_room",
+          "type": "boolean"
+        },
+        {
+          "name": "passed",
+          "type": "boolean"
+        },
+        {
+          "name": "standing",
+          "type": "string"
+        },
+        {
+          "name": "verdict",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "CHI-KNOWN:ZeroRuntimeInferenceVerified",
+      "attributes": [
+        {
+          "name": "lab_tokens_spent",
+          "type": "integer"
+        },
+        {
+          "name": "passed",
+          "type": "boolean"
+        },
+        {
+          "name": "runtime_inference_tokens",
+          "type": "integer"
+        },
+        {
+          "name": "standing",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "objectTypes": [
+    {
+      "name": "ReleaseArtifact",
+      "attributes": [
+        {
+          "name": "release",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "AutonomousAgent",
+      "attributes": [
+        {
+          "name": "role",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityBroker",
+      "attributes": [
+        {
+          "name": "type",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ConsequenceBoundary",
+      "attributes": [
+        {
+          "name": "type",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "NoveltyGateway",
+      "attributes": [
+        {
+          "name": "type",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ExecutionEnvelope",
+      "attributes": [
+        {
+          "name": "action_iri",
+          "type": "string"
+        },
+        {
+          "name": "actor_id",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Actuator",
+      "attributes": [
+        {
+          "name": "digest",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Verifier",
+      "attributes": [
+        {
+          "name": "digest",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "NoveltyCandidate",
+      "attributes": [
+        {
+          "name": "action_iri",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "PlanAllocation",
+      "attributes": [
+        {
+          "name": "budget_tokens",
+          "type": "integer"
+        }
+      ]
+    },
+    {
+      "name": "KnowledgeHook",
+      "attributes": [
+        {
+          "name": "hook_name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "AuthorityGrant",
+      "attributes": [
+        {
+          "name": "actor_id",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "FinalReceipt",
+      "attributes": [
+        {
+          "name": "state",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ReplayEngine",
+      "attributes": [
+        {
+          "name": "mode",
+          "type": "string"
+        },
+        {
+          "name": "verdict",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "GenericEntity",
+      "attributes": []
+    }
+  ],
+  "events": [
+    {
+      "id": "evt_gate_01_chi_id",
+      "type": "CHI-ID:ExactIdentityFenced",
+      "time": "2026-09-23T06:02:55.567544000Z",
+      "attributes": [
+        {
+          "name": "exact_sha",
+          "value": "1c25fdc7766c019f3738193145f7873a1e8f1fd3"
+        },
+        {
+          "name": "tag_sha",
+          "value": "334b3eb6c245539e844ecac559c929a3d8e76a00"
+        },
+        {
+          "name": "tag_equality",
+          "value": false
+        },
+        {
+          "name": "passed",
+          "value": false
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "urn:release:v26.9.17",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "evt_gate_03_chi_collab",
+      "type": "CHI-COLLAB:CollaboratorsInitialized",
+      "time": "2026-09-23T06:02:55.568531000Z",
+      "attributes": [
+        {
+          "name": "zero_mock",
+          "value": true
+        },
+        {
+          "name": "collusion_prevented",
+          "value": true
+        },
+        {
+          "name": "passed",
+          "value": true
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "urn:actuator:disk_journal",
+          "qualifier": ""
+        },
+        {
+          "objectId": "urn:verifier:disk_journal",
+          "qualifier": ""
+        },
+        {
+          "objectId": "urn:boundary:brce",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "evt_gate_04_chi_plan",
+      "type": "CHI-PLAN:CandidateRefusalEnforced",
+      "time": "2026-09-23T06:02:55.569198000Z",
+      "attributes": [
+        {
+          "name": "state",
+          "value": "REFUSED"
+        },
+        {
+          "name": "refusal_code",
+          "value": "REFUSED_NOT_ADMITTED"
+        },
+        {
+          "name": "passed",
+          "value": false
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "idemp-chicago-259d971484ce",
+          "qualifier": ""
+        },
+        {
+          "objectId": "urn:boundary:brce",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "evt_gate_07_chi_boundary",
+      "type": "CHI-BOUNDARY:SoleDOEnforcement",
+      "time": "2026-09-23T06:02:55.569224000Z",
+      "attributes": [
+        {
+          "name": "disk_unmutated_before_grant",
+          "value": true
+        },
+        {
+          "name": "passed",
+          "value": true
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "urn:boundary:brce",
+          "qualifier": ""
+        },
+        {
+          "objectId": "idemp-chicago-259d971484ce",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "evt_gate_02_chi_world",
+      "type": "CHI-WORLD:NoveltyAdmitted",
+      "time": "2026-09-23T06:02:55.569299000Z",
+      "attributes": [
+        {
+          "name": "candidate_id",
+          "value": "novelty-36c11f453cab"
+        },
+        {
+          "name": "passed",
+          "value": true
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "novelty-36c11f453cab",
+          "qualifier": ""
+        },
+        {
+          "objectId": "urn:gateway:novelty",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "evt_gate_05_chi_budget",
+      "type": "CHI-BUDGET:PlanPreflighted",
+      "time": "2026-09-23T06:02:55.569385000Z",
+      "attributes": [
+        {
+          "name": "allocations_count",
+          "value": 1
+        },
+        {
+          "name": "lab_tokens_spent",
+          "value": 2000
+        },
+        {
+          "name": "passed",
+          "value": true
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "plan_chicago_crown_01",
+          "qualifier": ""
+        },
+        {
+          "objectId": "novelty-36c11f453cab",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "evt_gate_06_chi_exec",
+      "type": "CHI-EXEC:AutonomousEnvelopeReflex",
+      "time": "2026-09-23T06:02:56.054701000Z",
+      "attributes": [
+        {
+          "name": "quiescence_reached",
+          "value": true
+        },
+        {
+          "name": "steps_count",
+          "value": 1
+        },
+        {
+          "name": "passed",
+          "value": true
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "idemp-chicago-259d971484ce",
+          "qualifier": ""
+        },
+        {
+          "objectId": "http://example.org/hook/chicago_isolate_node_hook",
+          "qualifier": ""
+        },
+        {
+          "objectId": "grant-chicago_isolate_node_hook-d9c93eac",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "evt_gate_08_chi_obs",
+      "type": "CHI-OBS:IndependentPostconditionVerified",
+      "time": "2026-09-23T06:02:56.055021000Z",
+      "attributes": [
+        {
+          "name": "postcondition_verified",
+          "value": false
+        },
+        {
+          "name": "disk_record_count",
+          "value": 0
+        },
+        {
+          "name": "passed",
+          "value": false
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "urn:verifier:disk_journal",
+          "qualifier": ""
+        },
+        {
+          "objectId": "idemp-chicago-259d971484ce",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "evt_gate_10_chi_replay",
+      "type": "CHI-REPLAY:DeterministicReplayVerified",
+      "time": "2026-09-23T06:02:56.055088000Z",
+      "attributes": [
+        {
+          "name": "verdict",
+          "value": "VALID"
+        },
+        {
+          "name": "standing",
+          "value": "ALIVE"
+        },
+        {
+          "name": "verified_without_actuation",
+          "value": true
+        },
+        {
+          "name": "passed",
+          "value": true
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "urn:engine:replay",
+          "qualifier": ""
+        },
+        {
+          "objectId": "",
+          "qualifier": ""
+        },
+        {
+          "objectId": "none",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "evt_gate_11_chi_fresh",
+      "type": "CHI-FRESH:FreshConsumerProofVerified",
+      "time": "2026-09-23T06:02:56.055148000Z",
+      "attributes": [
+        {
+          "name": "verdict",
+          "value": "VALID"
+        },
+        {
+          "name": "standing",
+          "value": "ALIVE"
+        },
+        {
+          "name": "isolated_clean_room",
+          "value": true
+        },
+        {
+          "name": "passed",
+          "value": false
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "urn:engine:fresh_replay",
+          "qualifier": ""
+        },
+        {
+          "objectId": "",
+          "qualifier": ""
+        },
+        {
+          "objectId": "none",
+          "qualifier": ""
+        }
+      ]
+    },
+    {
+      "id": "evt_gate_12_chi_known",
+      "type": "CHI-KNOWN:ZeroRuntimeInferenceVerified",
+      "time": "2026-09-23T06:02:56.055166000Z",
+      "attributes": [
+        {
+          "name": "runtime_inference_tokens",
+          "value": 0
+        },
+        {
+          "name": "lab_tokens_spent",
+          "value": 2000
+        },
+        {
+          "name": "standing",
+          "value": "ALIVE"
+        },
+        {
+          "name": "passed",
+          "value": true
+        }
+      ],
+      "relationships": [
+        {
+          "objectId": "urn:agent:autonomic-controller",
+          "qualifier": ""
+        },
+        {
+          "objectId": "urn:release:v26.9.17",
+          "qualifier": ""
+        }
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "id": "urn:release:v26.9.17",
+      "type": "ReleaseArtifact",
+      "attributes": [
+        {
+          "name": "release",
+          "value": "v26.9.17",
+          "time": "1970-01-01T00:00:00.000000000Z"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "urn:agent:autonomic-controller",
+      "type": "AutonomousAgent",
+      "attributes": [
+        {
+          "name": "role",
+          "value": "autonomic_controller",
+          "time": "1970-01-01T00:00:00.000000000Z"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "urn:authority:broker",
+      "type": "AuthorityBroker",
+      "attributes": [
+        {
+          "name": "type",
+          "value": "ODRLBroker",
+          "time": "1970-01-01T00:00:00.000000000Z"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "urn:boundary:brce",
+      "type": "ConsequenceBoundary",
+      "attributes": [
+        {
+          "name": "type",
+          "value": "BRCEBoundary",
+          "time": "1970-01-01T00:00:00.000000000Z"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "urn:gateway:novelty",
+      "type": "NoveltyGateway",
+      "attributes": [
+        {
+          "name": "type",
+          "value": "IngestionGateway",
+          "time": "1970-01-01T00:00:00.000000000Z"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "idemp-chicago-259d971484ce",
+      "type": "ExecutionEnvelope",
+      "attributes": [
+        {
+          "name": "action_iri",
+          "value": "urn:action:quarantine_compromised_node",
+          "time": "1970-01-01T00:00:00.000000000Z"
+        },
+        {
+          "name": "actor_id",
+          "value": "urn:agent:autonomic-controller",
+          "time": "1970-01-01T00:00:00.000000000Z"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "urn:actuator:disk_journal",
+      "type": "Actuator",
+      "attributes": [
+        {
+          "name": "digest",
+          "value": "actuator:disk_journal:chicago_consequence_journal.json",
+          "time": "1970-01-01T00:00:00.000000000Z"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "urn:verifier:disk_journal",
+      "type": "Verifier",
+      "attributes": [
+        {
+          "name": "digest",
+          "value": "verifier:disk_journal:chicago_consequence_journal.json",
+          "time": "1970-01-01T00:00:00.000000000Z"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "novelty-36c11f453cab",
+      "type": "NoveltyCandidate",
+      "attributes": [
+        {
+          "name": "action_iri",
+          "value": "urn:action:quarantine_compromised_node",
+          "time": "1970-01-01T00:00:00.000000000Z"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "plan_chicago_crown_01",
+      "type": "PlanAllocation",
+      "attributes": [
+        {
+          "name": "budget_tokens",
+          "value": 5000,
+          "time": "1970-01-01T00:00:00.000000000Z"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "http://example.org/hook/chicago_isolate_node_hook",
+      "type": "KnowledgeHook",
+      "attributes": [
+        {
+          "name": "hook_name",
+          "value": "chicago_isolate_node_hook",
+          "time": "1970-01-01T00:00:00.000000000Z"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "grant-chicago_isolate_node_hook-d9c93eac",
+      "type": "AuthorityGrant",
+      "attributes": [
+        {
+          "name": "actor_id",
+          "value": "urn:agent:autonomic-controller",
+          "time": "1970-01-01T00:00:00.000000000Z"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "none",
+      "type": "FinalReceipt",
+      "attributes": [
+        {
+          "name": "state",
+          "value": "REFUSED",
+          "time": "1970-01-01T00:00:00.000000000Z"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "urn:engine:replay",
+      "type": "ReplayEngine",
+      "attributes": [
+        {
+          "name": "verdict",
+          "value": "VALID",
+          "time": "1970-01-01T00:00:00.000000000Z"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "",
+      "type": "GenericEntity",
+      "attributes": [],
+      "relationships": []
+    },
+    {
+      "id": "urn:engine:fresh_replay",
+      "type": "ReplayEngine",
+      "attributes": [
+        {
+          "name": "mode",
+          "value": "isolated_clean_room",
+          "time": "1970-01-01T00:00:00.000000000Z"
+        }
+      ],
+      "relationships": []
+    }
+  ]
+}

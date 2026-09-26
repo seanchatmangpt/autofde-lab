@@ -14,6 +14,13 @@ New subpackage `src/autofde_lab/iec/crowns/` (stdlib + rdflib; `CLAUDE.md`), rec
 in `receipts/v26.9.23/iec/{c1,c3}/`, tests in `tests/iec/`, CI lane "IEC courts" in
 `.github/workflows/pr-ci.yml` (fetches both siblings by SHA).
 
+The package itself is a read-only exploration surface with a module CLI
+(`python -m autofde_lab.iec`) exposing six subcommands — `scan`, `parse`,
+`anti-unify`, `ggen-create-plan`, `brce-tla`, `tlc-court` — plus a ~40-name
+public API in `src/autofde_lab/iec/__init__.py`; until this note, only the
+`python -m autofde_lab.iec.crowns.crown` / `.c3` entry points were documented
+anywhere.
+
 **Measured win** — test suite, real siblings present:
 `IEC_GGEN_IGNITER_CHECKOUT=… IEC_GGEN_CREATE_CHECKOUT=… PYTHONPATH=src python -m pytest -v
 tests/iec` → **30 passed in 10.64s** (Python 3.12.3, the pr-ci qualification dependency set).
@@ -1647,6 +1654,10 @@ in 0.34s**).
   **Overall `PARTIAL_ALIVE`**: the CLI's own designed exit-0/print-JSON success path never ran,
   but a bounded, real, independently-readable checkpoint (the 12/12-gate receipt) exists.
   Neither `runner.py` nor `ocel/log.py` was edited, per task scope.
+  The wrapper supports `--release-tag` (default: the court's pinned
+  `v26.9.17`, `runner.py:365`), naming the git tag the CHI-ID
+  exact-identity fence certifies HEAD against; it fails closed unless HEAD
+  is exactly that tag, so release waves must cut and name their own tag.
 - `scripts/verify_rfc_sa2a_002_qualification.py` — independent, stdlib-only fresh-consumer
   verifier; zero import of `runner.py` or any court module (confirmed by grepping the file's own
   imports). `.venv/bin/python scripts/verify_rfc_sa2a_002_qualification.py` → exit **0**,

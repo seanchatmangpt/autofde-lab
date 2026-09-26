@@ -64,3 +64,16 @@ simulation standing. It does **not** claim real cloud actuation, customer
 acceptance, enterprise deployment, or cross-repository publication. The
 GitHub workflow is the exact-head court; only a successful run at an exact
 commit should advance this subject beyond candidate/local evidence.
+
+## Behavioral gates (added since this doc was written)
+
+- The production CLI exits **3** when the OCEL court fails:
+  `return 0 if court["ok"] else 3`
+  (`src/autofde_lab/fortune5/production/__main__.py:73`).
+- Stale observations and projected budget breaches are refused (`d11a9993`,
+  `protocol.py`: `REFUSED:STALE_OBSERVATION`, projected-consequence refusals
+  against admitted enterprise budgets, and per-round change/cost/energy/carbon
+  budget refusals).
+- Evidence standing requires adversarial gap detection (`a6924e2a`,
+  `artifacts.py`: readiness standing additionally requires
+  `gap_court["all_detected"]`).
