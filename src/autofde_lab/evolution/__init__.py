@@ -1,5 +1,6 @@
 """Evolution courts for bounded candidate promotion and cognition retirement."""
 
+from .promotion_registry import ChampionRegistry, ChampionState, PromotionRecord
 from .paired_promotion import (
     CompiledRetirementRoute,
     IntelligenceRung,
@@ -21,12 +22,15 @@ from .paired_promotion import (
 )
 
 __all__ = [
+    "ChampionRegistry",
+    "ChampionState",
     "CompiledRetirementRoute",
     "IntelligenceRung",
     "PairedPromotionCourt",
     "PairedPromotionPolicy",
     "PairedTrial",
     "PromotionDecision",
+    "PromotionRecord",
     "PromotionStatistics",
     "PromotionVerdict",
     "ReasoningRetirementCourt",
