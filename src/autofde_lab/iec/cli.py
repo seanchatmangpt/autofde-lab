@@ -136,8 +136,23 @@ def _tlc_court(args: argparse.Namespace) -> int:
         system = brce_reference_system()
     elif args.model.startswith("mutant:"):
         system = brce_mutant(args.model.split(":", 1)[1])
+    elif args.model == "delegation-admission":
+        from .delegation_admission_formal import delegation_admission_system
+
+        system = delegation_admission_system()
+    elif args.model.startswith("delegation-mutant:"):
+        from .delegation_admission_formal import (
+            DelegationAdmissionMutant,
+            delegation_admission_mutant,
+        )
+
+        kind = DelegationAdmissionMutant(args.model.split(":", 1)[1])
+        system = delegation_admission_mutant(kind)
     else:
-        raise SystemExit(f"unknown model {args.model!r}; use brce or mutant:<KIND>")
+        raise SystemExit(
+            f"unknown model {args.model!r}; use brce, mutant:<KIND>, "
+            "delegation-admission, or delegation-mutant:<KIND>"
+        )
     tc = TlaToolchain.discover(args.jar)
     out = Path(args.out)
     if not isinstance(tc, TlaToolchain):
@@ -179,6 +194,50 @@ def _tlc_court(args: argparse.Namespace) -> int:
     )
     ok = receipt.payload["model_check"] == TlcVerdict.MODEL_CHECK_ALIVE.value
     return 0 if ok else 2
+
+
+
+def _delegation_admission(args: argparse.Namespace) -> int:
+    from .crowns.delegation_admission import main as delegation_main
+
+    argv = [args.candidate, args.receipt]
+    if args.reference:
+        argv.extend(["--reference", args.reference])
+    if args.gate:
+        argv.append("--gate")
+    return delegation_main(argv)
+
+
+def _delegation_admission_benchmark(args: argparse.Namespace) -> int:
+    from .crowns.delegation_admission_benchmark import main as benchmark_main
+
+    argv = [
+        args.candidate,
+        args.receipt,
+        "--max-units",
+        str(args.max_units),
+    ]
+    if args.gate:
+        argv.append("--gate")
+    return benchmark_main(argv)
+
+
+def _delegation_admission_history(args: argparse.Namespace) -> int:
+    from .crowns.delegation_admission_history import main as history_main
+
+    argv = [args.history, args.receipt]
+    if args.gate:
+        argv.append("--gate")
+    return history_main(argv)
+
+
+def _delegation_admission_batch(args: argparse.Namespace) -> int:
+    from .crowns.delegation_admission_batch import main as batch_main
+
+    argv = [args.batch, args.receipt]
+    if args.gate:
+        argv.append("--gate")
+    return batch_main(argv)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -244,12 +303,53 @@ def build_parser() -> argparse.ArgumentParser:
     tlc.add_argument(
         "--model",
         required=True,
-        help="brce | mutant:DO_WITHOUT_AUTHORITY | mutant:DUPLICATE_CONSEQUENCE | "
-        "mutant:STANDING_WITHOUT_VERIFY | mutant:NO_FAIRNESS",
+        help=(
+            "brce | mutant:<BRCE_KIND> | delegation-admission | "
+            "delegation-mutant:<UNBOUNDED_DELEGATION|SELF_VERIFICATION|"
+            "MODIFY_WITHOUT_CHANGE|STANDING_WITHOUT_CAPACITY>"
+        ),
     )
     tlc.add_argument("--out", required=True)
     tlc.add_argument("--jar", default=None, help="tla2tools.jar path (digest-checked)")
     tlc.set_defaults(func=_tlc_court)
+
+    delegation = subparsers.add_parser(
+        "delegation-admission",
+        help="evaluate one exact-subject delegation/admission artifact",
+    )
+    delegation.add_argument("candidate")
+    delegation.add_argument("receipt")
+    delegation.add_argument("--reference")
+    delegation.add_argument("--gate", action="store_true")
+    delegation.set_defaults(func=_delegation_admission)
+
+    benchmark = subparsers.add_parser(
+        "delegation-admission-benchmark",
+        help="run mutation and capacity-sweep courts",
+    )
+    benchmark.add_argument("candidate")
+    benchmark.add_argument("receipt")
+    benchmark.add_argument("--max-units", type=int, default=32)
+    benchmark.add_argument("--gate", action="store_true")
+    benchmark.set_defaults(func=_delegation_admission_benchmark)
+
+    history = subparsers.add_parser(
+        "delegation-admission-history",
+        help="evaluate an ordered delegation/admission history",
+    )
+    history.add_argument("history")
+    history.add_argument("receipt")
+    history.add_argument("--gate", action="store_true")
+    history.set_defaults(func=_delegation_admission_history)
+
+    batch = subparsers.add_parser(
+        "delegation-admission-batch",
+        help="evaluate generated marketplace delegation batches",
+    )
+    batch.add_argument("batch")
+    batch.add_argument("receipt")
+    batch.add_argument("--gate", action="store_true")
+    batch.set_defaults(func=_delegation_admission_batch)
 
     return parser
 
