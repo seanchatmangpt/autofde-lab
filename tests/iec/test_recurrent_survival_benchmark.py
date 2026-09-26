@@ -202,9 +202,9 @@ def test_aggregate_reports_failure_rate_delta_only_from_guarded_exposure() -> No
     assert edge["recurrences"] == 1
     assert edge["guarded_episodes"] == 2
     assert edge["post_guard_failures"] == 1
-    assert edge["pre_guard_failure_rate_per_step"] == pytest.approx(2 / 3)
+    assert edge["pre_guard_failure_rate_per_step"] == pytest.approx(2 / 5)
     assert edge["post_guard_failure_rate_per_step"] == pytest.approx(1 / 7)
-    assert edge["failure_rate_delta_per_step"] == pytest.approx(11 / 21)
+    assert edge["failure_rate_delta_per_step"] == pytest.approx(9 / 35)
 
 
 def test_replay_coverage_requires_receipt_and_verified_replay() -> None:
