@@ -4,7 +4,12 @@
   "title": "Delegation Admission Artifact v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "subject", "delegation", "obligations"],
+  "required": [
+    "schema",
+    "subject",
+    "delegation",
+    "obligations"
+  ],
   "properties": {
     "schema": {
       "const": "autofde-lab.delegation-admission/1"
@@ -16,38 +21,88 @@
     "delegation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["units", "boundary_id", "authority_scope_id"],
+      "required": [
+        "units",
+        "boundary_id",
+        "authority_scope_id",
+        "producer_id"
+      ],
       "properties": {
-        "units": {"type": "integer", "minimum": 0},
-        "boundary_id": {"type": "string", "minLength": 1},
-        "authority_scope_id": {"type": "string", "minLength": 1}
+        "units": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "boundary_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authority_scope_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "producer_id": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "obligations": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["explain", "verify", "modify", "account"],
+      "required": [
+        "explain",
+        "verify",
+        "modify",
+        "account"
+      ],
       "properties": {
-        "explain": {"$ref": "#/$defs/explain"},
-        "verify": {"$ref": "#/$defs/verify"},
-        "modify": {"$ref": "#/$defs/modify"},
-        "account": {"$ref": "#/$defs/account"}
+        "explain": {
+          "$ref": "#/$defs/explain"
+        },
+        "verify": {
+          "$ref": "#/$defs/verify"
+        },
+        "modify": {
+          "$ref": "#/$defs/modify"
+        },
+        "account": {
+          "$ref": "#/$defs/account"
+        }
       }
     }
   },
   "$defs": {
     "baseEvidence": {
       "type": "object",
-      "required": ["subject", "verdict", "scope_units"],
+      "required": [
+        "subject",
+        "verdict",
+        "scope_units"
+      ],
       "properties": {
-        "subject": {"type": "string", "minLength": 1},
-        "verdict": {"enum": ["PASS", "COUNTEREXAMPLE", "BLOCKED", "UNSUPPORTED"]},
-        "scope_units": {"type": "integer", "minimum": 0}
+        "subject": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verdict": {
+          "enum": [
+            "PASS",
+            "COUNTEREXAMPLE",
+            "BLOCKED",
+            "UNSUPPORTED"
+          ]
+        },
+        "scope_units": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     },
     "explain": {
       "allOf": [
-        {"$ref": "#/$defs/baseEvidence"},
+        {
+          "$ref": "#/$defs/baseEvidence"
+        },
         {
           "type": "object",
           "additionalProperties": false,
@@ -60,12 +115,34 @@
             "rationale_id"
           ],
           "properties": {
-            "subject": {"type": "string", "minLength": 1},
-            "verdict": {"enum": ["PASS", "COUNTEREXAMPLE", "BLOCKED", "UNSUPPORTED"]},
-            "scope_units": {"type": "integer", "minimum": 0},
-            "provenance_id": {"type": "string", "minLength": 1},
-            "ontology_id": {"type": "string", "minLength": 1},
-            "rationale_id": {"type": "string", "minLength": 1}
+            "subject": {
+              "type": "string",
+              "minLength": 1
+            },
+            "verdict": {
+              "enum": [
+                "PASS",
+                "COUNTEREXAMPLE",
+                "BLOCKED",
+                "UNSUPPORTED"
+              ]
+            },
+            "scope_units": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "provenance_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "ontology_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "rationale_id": {
+              "type": "string",
+              "minLength": 1
+            }
           }
         }
       ]
@@ -77,17 +154,43 @@
         "subject",
         "verdict",
         "scope_units",
+        "verifier_id",
         "verifier_set_id",
         "receipt_id",
         "independent"
       ],
       "properties": {
-        "subject": {"type": "string", "minLength": 1},
-        "verdict": {"enum": ["PASS", "COUNTEREXAMPLE", "BLOCKED", "UNSUPPORTED"]},
-        "scope_units": {"type": "integer", "minimum": 0},
-        "verifier_set_id": {"type": "string", "minLength": 1},
-        "receipt_id": {"type": "string", "minLength": 1},
-        "independent": {"type": "boolean"}
+        "subject": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verdict": {
+          "enum": [
+            "PASS",
+            "COUNTEREXAMPLE",
+            "BLOCKED",
+            "UNSUPPORTED"
+          ]
+        },
+        "scope_units": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "verifier_set_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "receipt_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "independent": {
+          "type": "boolean"
+        },
+        "verifier_id": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "modify": {
@@ -102,12 +205,34 @@
         "replay_id"
       ],
       "properties": {
-        "subject": {"type": "string", "minLength": 1},
-        "verdict": {"enum": ["PASS", "COUNTEREXAMPLE", "BLOCKED", "UNSUPPORTED"]},
-        "scope_units": {"type": "integer", "minimum": 0},
-        "change_id": {"type": "string", "minLength": 1},
-        "result_id": {"type": "string", "minLength": 1},
-        "replay_id": {"type": "string", "minLength": 1}
+        "subject": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verdict": {
+          "enum": [
+            "PASS",
+            "COUNTEREXAMPLE",
+            "BLOCKED",
+            "UNSUPPORTED"
+          ]
+        },
+        "scope_units": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "change_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "result_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "replay_id": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "account": {
@@ -124,14 +249,42 @@
         "standing"
       ],
       "properties": {
-        "subject": {"type": "string", "minLength": 1},
-        "verdict": {"enum": ["PASS", "COUNTEREXAMPLE", "BLOCKED", "UNSUPPORTED"]},
-        "scope_units": {"type": "integer", "minimum": 0},
-        "authority_id": {"type": "string", "minLength": 1},
-        "consequence_id": {"type": "string", "minLength": 1},
-        "receipt_id": {"type": "string", "minLength": 1},
-        "replay_id": {"type": "string", "minLength": 1},
-        "standing": {"type": "string", "minLength": 1}
+        "subject": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verdict": {
+          "enum": [
+            "PASS",
+            "COUNTEREXAMPLE",
+            "BLOCKED",
+            "UNSUPPORTED"
+          ]
+        },
+        "scope_units": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "authority_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "consequence_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "receipt_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "replay_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "standing": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     }
   }
