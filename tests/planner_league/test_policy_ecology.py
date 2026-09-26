@@ -1,12 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
-from autofde_lab.planner_league import PolicySpec
-from autofde_lab.planner_league.policy_ecology import (
-    ConditionedPolicy,
-    PolicyEcology,
-)
 from gymact.policy_ecology import (
     ConditionAxis,
     PopulationKind,
@@ -14,8 +8,16 @@ from gymact.policy_ecology import (
     StrategicCondition,
 )
 
+from autofde_lab.planner_league import PolicySpec
+from autofde_lab.planner_league.policy_ecology import (
+    ConditionedPolicy,
+    PolicyEcology,
+)
 
-def test_engineered_policy_ecology_preserves_policy_and_exposes_population_metrics() -> None:
+
+def test_engineered_policy_ecology_preserves_policy_and_exposes_population_metrics() -> (
+    None
+):
     ecology = PolicyEcology(
         kind=PopulationKind.ENGINEERED,
         members=(
@@ -31,9 +33,7 @@ def test_engineered_policy_ecology_preserves_policy_and_exposes_population_metri
     )
     payload = ecology.as_gymact_candidate()
     assert payload["population_kind"] == "engineered"
-    assert payload["diversity"] == pytest.approx(
-        {"disparity": 1.0, "complexity": 2.0}
-    )
+    assert payload["diversity"] == pytest.approx({"disparity": 1.0, "complexity": 2.0})
     assert {member["planner_id"] for member in payload["members"]} == {"Astar"}
 
 
