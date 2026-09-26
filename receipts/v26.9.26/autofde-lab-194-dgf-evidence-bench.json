@@ -1,0 +1,38 @@
+{
+  "benchmark": "autofde-lab PR #194 DGF substitution + evidence ceiling",
+  "llm_calls": 0,
+  "machine": "arm64",
+  "platform": "macOS-26.2-arm64-arm-64bit-Mach-O",
+  "python": "3.13.9",
+  "repeats": 5,
+  "results": {
+    "dgf_dataset_load_once": {
+      "gates_per_case": 8,
+      "median_s": 0.1810666669625789,
+      "n": 500,
+      "per_item_us": 362.1333339251578
+    },
+    "dgf_dataset_reload_per_case": {
+      "gates_per_case": 8,
+      "median_s": 0.2457064159680158,
+      "n": 500,
+      "per_item_us": 491.4128319360316
+    },
+    "obstruction_single_bucket_distinct": {
+      "median_s": 0.034550457959994674,
+      "n": 1000,
+      "per_item_us": 34.550457959994674
+    },
+    "obstruction_single_bucket_dup": {
+      "median_s": 0.1456764170434326,
+      "n": 20000,
+      "per_item_us": 7.28382085217163
+    },
+    "obstruction_unique": {
+      "median_s": 0.23584312503226101,
+      "n": 20000,
+      "per_item_us": 11.79215625161305
+    }
+  },
+  "speedup_load_once_vs_reload": 1.3569941949547015
+}

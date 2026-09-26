@@ -1,0 +1,228 @@
+{
+  "authority": "NONE",
+  "court_source_sha256": "sha256:b23259e654f43260def45ec860e7e67fce598201a35029496a4d14ce57ac8635",
+  "evidence_ceiling": "HOST_LOCAL_TIMING",
+  "falsifier_coverage": {
+    "coverage": 1.0,
+    "operators": 32,
+    "refused": 32,
+    "results": {
+      "abb_mismatch": {
+        "refusal_codes": [
+          "ABB_MISMATCH"
+        ],
+        "standing": "REFUSED"
+      },
+      "authority_do": {
+        "refusal_codes": [
+          "AUTHORITY_WIDENING"
+        ],
+        "standing": "REFUSED"
+      },
+      "authority_incompatible": {
+        "refusal_codes": [
+          "AUTHORITY_INCOMPATIBLE"
+        ],
+        "standing": "REFUSED"
+      },
+      "authority_unhashable": {
+        "refusal_codes": [
+          "UNKNOWN_AUTHORITY"
+        ],
+        "standing": "REFUSED"
+      },
+      "authority_unknown": {
+        "refusal_codes": [
+          "UNKNOWN_AUTHORITY"
+        ],
+        "standing": "REFUSED"
+      },
+      "blank_candidate_id": {
+        "refusal_codes": [
+          "MISSING_CANDIDATE_ID"
+        ],
+        "standing": "REFUSED"
+      },
+      "blank_evidence": {
+        "refusal_codes": [
+          "MALFORMED_EVIDENCE"
+        ],
+        "standing": "REFUSED"
+      },
+      "dimensions_not_mapping": {
+        "refusal_codes": [
+          "MALFORMED_DIMENSION"
+        ],
+        "standing": "REFUSED"
+      },
+      "duplicate_evidence": {
+        "refusal_codes": [
+          "DUPLICATE_EVIDENCE"
+        ],
+        "standing": "REFUSED"
+      },
+      "effect_incompatible": {
+        "refusal_codes": [
+          "EFFECT_INCOMPATIBLE"
+        ],
+        "standing": "REFUSED"
+      },
+      "evidence_bare_string": {
+        "refusal_codes": [
+          "MALFORMED_EVIDENCE"
+        ],
+        "standing": "REFUSED"
+      },
+      "evidence_incompatible": {
+        "refusal_codes": [
+          "EVIDENCE_INCOMPATIBLE"
+        ],
+        "standing": "REFUSED"
+      },
+      "evidence_unhashable_entry": {
+        "refusal_codes": [
+          "MALFORMED_EVIDENCE"
+        ],
+        "standing": "REFUSED"
+      },
+      "failure_incompatible": {
+        "refusal_codes": [
+          "FAILURE_INCOMPATIBLE"
+        ],
+        "standing": "REFUSED"
+      },
+      "functional_incompatible": {
+        "refusal_codes": [
+          "FUNCTIONAL_INCOMPATIBLE"
+        ],
+        "standing": "REFUSED"
+      },
+      "lifecycle_incompatible": {
+        "refusal_codes": [
+          "LIFECYCLE_INCOMPATIBLE"
+        ],
+        "standing": "REFUSED"
+      },
+      "malformed_dimension": {
+        "refusal_codes": [
+          "MALFORMED_DIMENSION"
+        ],
+        "standing": "REFUSED"
+      },
+      "malformed_subject_short": {
+        "refusal_codes": [
+          "MALFORMED_DIGEST"
+        ],
+        "standing": "REFUSED"
+      },
+      "malformed_subject_tag": {
+        "refusal_codes": [
+          "MALFORMED_DIGEST"
+        ],
+        "standing": "REFUSED"
+      },
+      "missing_evidence": {
+        "refusal_codes": [
+          "MISSING_EVIDENCE"
+        ],
+        "standing": "REFUSED"
+      },
+      "missing_subject": {
+        "refusal_codes": [
+          "MISSING_EXACT_SUBJECT"
+        ],
+        "standing": "REFUSED"
+      },
+      "mutable_subject": {
+        "refusal_codes": [
+          "MUTABLE_SUBJECT"
+        ],
+        "standing": "REFUSED"
+      },
+      "mutable_truthy_string": {
+        "refusal_codes": [
+          "MUTABLE_SUBJECT"
+        ],
+        "standing": "REFUSED"
+      },
+      "pack_as_ea_kind": {
+        "refusal_codes": [
+          "PACK_AS_EA"
+        ],
+        "standing": "REFUSED"
+      },
+      "pack_as_ea_subject": {
+        "refusal_codes": [
+          "PACK_AS_EA"
+        ],
+        "standing": "REFUSED"
+      },
+      "resource_incompatible": {
+        "refusal_codes": [
+          "RESOURCE_INCOMPATIBLE"
+        ],
+        "standing": "REFUSED"
+      },
+      "semantic_incompatible": {
+        "refusal_codes": [
+          "SEMANTIC_INCOMPATIBLE"
+        ],
+        "standing": "REFUSED"
+      },
+      "stale_contract": {
+        "refusal_codes": [
+          "STALE_CONTRACT"
+        ],
+        "standing": "REFUSED"
+      },
+      "undeclared_dimension": {
+        "refusal_codes": [
+          "UNDECLARED_DIMENSION"
+        ],
+        "standing": "REFUSED"
+      },
+      "unknown_kind": {
+        "refusal_codes": [
+          "UNKNOWN_KIND"
+        ],
+        "standing": "REFUSED"
+      },
+      "vendor_as_abb_kind": {
+        "refusal_codes": [
+          "VENDOR_AS_ABB"
+        ],
+        "standing": "REFUSED"
+      },
+      "vendor_as_abb_subject": {
+        "refusal_codes": [
+          "VENDOR_AS_ABB"
+        ],
+        "standing": "REFUSED"
+      }
+    }
+  },
+  "frontier_order_invariant": true,
+  "host": {
+    "machine": "arm64",
+    "platform": "macOS-26.2-arm64-arm-64bit-Mach-O",
+    "python": "3.13.9"
+  },
+  "parameters": {
+    "frontier_size": 64,
+    "repeats": 30,
+    "replays": 2000
+  },
+  "replay_determinism": {
+    "clean_replays": 200,
+    "distinct_receipt_digests": 1,
+    "qualified": true,
+    "receipt_digest": "sha256:4c270c84dd3a47204654336bbcf3e51f940d1d06a7bdbf7750622e224e537b43",
+    "replays": 2000
+  },
+  "schema": "autofde.architecture-qualification-bench.v1",
+  "throughput_ns": {
+    "frontier64_median": 5965375.0,
+    "qualify_median": 60813.75,
+    "replay_median": 90590.83499999999
+  }
+}

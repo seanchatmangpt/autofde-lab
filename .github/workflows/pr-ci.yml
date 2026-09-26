@@ -47,7 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            printf 'cache=true\npython=true\npackage=true\nfortune5=true\n' >> "$GITHUB_OUTPUT"
+            printf 'cache=true\npython=true\npackage=true\nfortune5=true\narchq=true\n' >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git diff --name-only \
@@ -69,6 +69,10 @@ jobs:
           route package '^(src/|cpp/|scripts/|pyproject\.toml|uv\.lock|CMakeLists\.txt|\.github/workflows/)'
           route fortune5 \
             '^(ggen/fortune5/|src/autofde_lab/fortune5/|tests/fortune5/|scripts/verify-fortune5-ggen\.sh|\.github/workflows/(fortune5-ggen|pr-ci)\.yml)'
+          # The architecture qualification court guards its own subjects: the court
+          # module, its benchmark, its committed bench receipt, its tests and charter.
+          route archq \
+            '^(src/autofde_lab/enterprise_architecture\.py|benchmarks/architecture_qualification\.py|receipts/v26\.9\.26/architecture-qualification-bench\.json|tests/fortune5/test_architecture_qualification_[a-z_]+\.py|docs/rfc/v26\.9\.26/abb-sbb-implementation\.md|\.github/workflows/pr-ci\.yml)$'
 
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
@@ -224,6 +228,21 @@ jobs:
         env:
           PYTHONPATH: src
         run: python -m pytest -q tests/fortune5/test_space.py
+
+      # RFC v26.9.26 ABB -> SBB qualification court: positive, adversarial
+      # (fail-closed digests/authority/evidence/replay/frontier) and the bench
+      # regression bound (replay determinism, falsifier coverage, timing).
+      - name: Architecture qualification court / Python 3.12
+        if: steps.routes.outputs.archq == 'true'
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q \
+            tests/fortune5/test_architecture_qualification_court.py \
+            tests/fortune5/test_architecture_qualification_adversarial.py \
+            tests/fortune5/test_architecture_qualification_bench.py \
+            tests/fortune5/test_architecture_qualification_category.py \
+            tests/fortune5/test_architecture_qualification_route.py
 
       - name: Cache qualification / Python 3.12
         if: steps.routes.outputs.cache == 'true'

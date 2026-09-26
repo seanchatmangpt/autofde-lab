@@ -30,7 +30,15 @@ from .matrix import (
 from .ocel import episode_log, log_bytes, log_sha256, ocel_filename
 from .primitives import BASE_POLICY, DUALS, PRIMITIVES, compose
 from .report import build_report
-from .seal import key_provenance, seal_episodes, signer_from_env, verify_ledger
+from .seal import (
+    SealKeyRefused,
+    admit_for_seal,
+    key_provenance,
+    report_signature,
+    seal_episodes,
+    signer_from_env,
+    verify_ledger,
+)
 from .verify import RunVerification, verify_run
 from .world import ALL_WORLDS, World, world_by_id
 
@@ -69,6 +77,12 @@ def run_lab(
         "valid": verification.valid,
         "records": verification.records,
         "tail_digest": verification.tail_digest,
+        "report_signature": report_signature(
+            signer,
+            report["report_digest"],
+            verification.records,
+            verification.tail_digest,
+        ),
         **key_provenance(signer),
     }
     (out / "report.json").write_text(
@@ -90,8 +104,10 @@ __all__ = [
     "EpisodeRecord",
     "ProvenanceRefused",
     "RunVerification",
+    "SealKeyRefused",
     "Strategy",
     "World",
+    "admit_for_seal",
     "build_report",
     "compose",
     "episode_log",
@@ -103,6 +119,7 @@ __all__ = [
     "ocel_filename",
     "run_doctrine_matrix",
     "run_lab",
+    "report_signature",
     "run_strategy_episode",
     "seal_episodes",
     "signer_from_env",

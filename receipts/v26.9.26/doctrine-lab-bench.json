@@ -1,0 +1,54 @@
+{
+ "authority": "NONE",
+ "authority_ceiling": "CONSTRUCT",
+ "evidence_ceiling": "REPO_LOCAL_FIXTURE",
+ "host": {
+  "machine": "arm64",
+  "platform": "macOS-26.2-arm64-arm-64bit-Mach-O",
+  "python": "3.13.9"
+ },
+ "median_ms": {
+  "admit_for_seal_ms": 745.735,
+  "run_lab_ms": 2725.933,
+  "verify_run_ms": 64.36,
+  "verify_run_replay_ms": 737.945
+ },
+ "passed": true,
+ "per_unit_ms": {
+  "admit_for_seal_ms_per_episode": 2.9593,
+  "run_lab_ms_per_episode": 10.8172,
+  "verify_run_ms_per_record": 0.2554,
+  "verify_run_replay_ms_per_record": 2.9284
+ },
+ "regression_bounds_ms": {
+  "admit_for_seal_ms_per_episode": 10.0,
+  "run_lab_ms_per_episode": 40.0,
+  "verify_run_ms_per_record": 5.0,
+  "verify_run_replay_ms_per_record": 40.0
+ },
+ "schema": "autofde-lab.simulation.doctrine-lab.bench/v1",
+ "subject": {
+  "catalog_sha256": "49d404d32300e17704580455bbbd3e4a60773dbd1ff091c90e4a310a3bb65e30",
+  "ledger_tail_digest": "f10e2294dbd5c6d7ee1c8b97b3af36fcb706326e6a6dc7ed88f5c8db441c8665",
+  "matrix_digest": "762fab0feebe2109c4d1e1aef1618119a9e4f29ee5c425ad1931cb21af123ef7",
+  "report_digest": "5e4c530b1ef265d16401605972405399f6e0c9949ae11aaa4b7ee4a3c2371cf3",
+  "source_files": 14,
+  "source_tree_sha256": "291f904784db1fe25e8b67eb87d72894e58a529ba86c3ea5f7b25787d8dceac0"
+ },
+ "within_bounds": {
+  "admit_for_seal_ms_per_episode": true,
+  "run_lab_ms_per_episode": true,
+  "verify_run_ms_per_record": true,
+  "verify_run_replay_ms_per_record": true
+ },
+ "workload": {
+  "episodes": 252,
+  "samples": 5,
+  "seeds": [
+   2030,
+   2031
+  ],
+  "strategies": 14,
+  "worlds": 9
+ }
+}
