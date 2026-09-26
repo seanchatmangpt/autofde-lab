@@ -89,11 +89,11 @@ def test_benchmark_pair_holds_policy_and_mean_targets_constant() -> None:
     pair = manufacture_design_benchmark_pair(
         policy,
         design(),
-        engineered_member_count=5,
+        engineered_member_count=4,
     )
 
     assert pair.homogeneous.member_count == 1
-    assert pair.engineered.member_count == 5
+    assert pair.engineered.member_count == 4
     assert pair.homogeneous.policy == pair.engineered.policy == policy
     assert pair.homogeneous.population_ref != pair.engineered.population_ref
 
