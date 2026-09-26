@@ -77,6 +77,7 @@ def evaluate_history(document: Mapping[str, Any]) -> dict[str, Any]:
         snapshot_receipts.append(
             {
                 "sequence": expected,
+                "subject": receipt["subject"],
                 "receipt_id": receipt["receipt_id"],
                 "gate": receipt["gate"],
                 "delegation_units": receipt["delegation_units"],
@@ -133,8 +134,7 @@ def evaluate_history(document: Mapping[str, Any]) -> dict[str, Any]:
     gate = Verdict.PASS.value if not falsifiers else Verdict.COUNTEREXAMPLE.value
     report: dict[str, Any] = {
         "schema": "autofde-lab.delegation-admission-history-receipt/1",
-        "subject": snapshot_receipts[0]["receipt_id"]
-        and evaluate_delegation(artifacts[0])["subject"],
+        "subject": snapshot_receipts[0]["subject"],
         "snapshot_count": len(snapshot_receipts),
         "transition_count": len(transitions),
         "snapshots": snapshot_receipts,
