@@ -23,12 +23,15 @@ from .core import (
     PlannerLeague,
     PolicySpec,
 )
+from .policy_ecology import ConditionedPolicy, PolicyEcology
 from .psro import PolicySpaceResponseOracle, PsroReceipt, PsroState, PsroStep
 
 __all__ = [
     "ACTION_PROJECTIONS",
     "AgentBinding",
     "BUDGETS",
+    "ConditionedPolicy",
+    "PolicyEcology",
     "CompatibilityResult",
     "CompatibilityStanding",
     "EXPERIMENT_DIMENSIONS",
