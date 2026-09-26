@@ -21,6 +21,7 @@ def artifact(subject: str, *, units: int = 2, scope: int = 2) -> dict:
             "units": units,
             "boundary_id": f"sha256:boundary:{subject}",
             "authority_scope_id": f"sha256:authority:{subject}",
+            "producer_id": "urn:producer:subject",
         },
         "obligations": {
             "explain": {
