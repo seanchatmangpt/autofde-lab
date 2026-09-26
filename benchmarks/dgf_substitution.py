@@ -8,7 +8,10 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from autofde_lab.evidence.dgf_substitution import run_dgf_dataset
+from autofde_lab.evidence.dgf_substitution import (
+    dgf_evaluator_digest,
+    run_dgf_dataset,
+)
 
 
 def main() -> int:
@@ -30,6 +33,7 @@ def main() -> int:
         json.dumps(
             {
                 "kernel": "DGF evaluator.py",
+                "kernel_digest": dgf_evaluator_digest(args.dgf_root),
                 "llm_calls": 0,
                 "summary": summary.to_dict(),
                 "cases": [
