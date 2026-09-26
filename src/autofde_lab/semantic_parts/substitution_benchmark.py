@@ -8,7 +8,40 @@ oracle labels it is evaluated against.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 from typing import Iterable, Mapping, Sequence
+
+
+@dataclass(frozen=True)
+class BehavioralWitness:
+    """Receipt-backed evidence for one behavioral-equivalence judgement."""
+
+    candidate_id: str
+    receipt_digest: str
+    verifier: str
+
+    def __post_init__(self) -> None:
+        if not self.candidate_id:
+            raise ValueError("behavioral witness candidate_id must be non-empty")
+        if not self.verifier:
+            raise ValueError("behavioral witness verifier must be non-empty")
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}", self.receipt_digest):
+            raise ValueError(
+                "behavioral witness receipt_digest must be sha256:<64 lowercase hex>"
+            )
+
+    @classmethod
+    def from_mapping(cls, value: Mapping[str, object]) -> "BehavioralWitness":
+        candidate_id = value.get("candidate_id")
+        receipt_digest = value.get("receipt_digest")
+        verifier = value.get("verifier")
+        if not all(isinstance(item, str) for item in (candidate_id, receipt_digest, verifier)):
+            raise ValueError("behavioral witness fields must be strings")
+        return cls(
+            candidate_id=candidate_id,
+            receipt_digest=receipt_digest,
+            verifier=verifier,
+        )
 
 
 @dataclass(frozen=True)
@@ -19,6 +52,7 @@ class SubstitutionCase:
     verified_equivalents: frozenset[str]
     lexical_candidates: tuple[str, ...]
     semantic_candidates: tuple[str, ...]
+    behavioral_witnesses: tuple[BehavioralWitness, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.subject_id:
@@ -28,6 +62,21 @@ class SubstitutionCase:
         if self.subject_id in self.verified_equivalents:
             raise ValueError("subject_id cannot verify itself as a substitution")
 
+        witness_ids = [witness.candidate_id for witness in self.behavioral_witnesses]
+        if len(set(witness_ids)) != len(witness_ids):
+            raise ValueError("behavioral witness candidate_ids must be unique")
+        unknown_witnesses = set(witness_ids) - set(self.verified_equivalents)
+        if unknown_witnesses:
+            raise ValueError(
+                "behavioral witnesses may only reference verified_equivalents: "
+                + ",".join(sorted(unknown_witnesses))
+            )
+
+    @property
+    def oracle_receipted(self) -> bool:
+        witnessed = {witness.candidate_id for witness in self.behavioral_witnesses}
+        return witnessed == set(self.verified_equivalents)
+
     @classmethod
     def from_mapping(cls, value: Mapping[str, object]) -> "SubstitutionCase":
         """Admit one JSON-compatible benchmark case."""
@@ -36,6 +85,7 @@ class SubstitutionCase:
         verified = value.get("verified_equivalents")
         lexical = value.get("lexical_candidates", [])
         semantic = value.get("semantic_candidates", [])
+        witnesses = value.get("behavioral_witnesses", [])
 
         if not isinstance(subject, str):
             raise ValueError("subject_id must be a string")
@@ -51,12 +101,19 @@ class SubstitutionCase:
             isinstance(item, str) for item in semantic
         ):
             raise ValueError("semantic_candidates must be a list of strings")
+        if not isinstance(witnesses, list) or not all(
+            isinstance(item, dict) for item in witnesses
+        ):
+            raise ValueError("behavioral_witnesses must be a list of objects")
 
         return cls(
             subject_id=subject,
             verified_equivalents=frozenset(verified),
             lexical_candidates=tuple(lexical),
             semantic_candidates=tuple(semantic),
+            behavioral_witnesses=tuple(
+                BehavioralWitness.from_mapping(item) for item in witnesses
+            ),
         )
 
 
@@ -123,6 +180,7 @@ def evaluate_substitution_discovery(
     cases: Iterable[SubstitutionCase],
     *,
     k: int = 5,
+    require_receipts: bool = False,
 ) -> dict[str, object]:
     """Compare semantic discovery with a lexical baseline.
 
@@ -142,6 +200,12 @@ def evaluate_substitution_discovery(
     if not all(isinstance(case, SubstitutionCase) for case in admitted):
         raise TypeError("cases must contain SubstitutionCase values")
 
+    receipted_cases = sum(case.oracle_receipted for case in admitted)
+    if require_receipts and receipted_cases != len(admitted):
+        raise ValueError(
+            "behavioral witness receipts are required for every verified equivalent"
+        )
+
     lexical = _metrics(admitted, "lexical_candidates", k)
     semantic = _metrics(admitted, "semantic_candidates", k)
     discovery_lift = float(semantic["discovery_rate"]) - float(
@@ -155,6 +219,10 @@ def evaluate_substitution_discovery(
         "k": k,
         "case_count": len(admitted),
         "oracle": "independent_behavioral_verification",
+        "oracle_standing": (
+            "RECEIPTED" if receipted_cases == len(admitted) else "DECLARED"
+        ),
+        "receipted_cases": receipted_cases,
         "lexical": lexical,
         "semantic": semantic,
         "discovery_rate_lift": discovery_lift,
@@ -171,6 +239,7 @@ def evaluate_at_cutoffs(
     cases: Iterable[SubstitutionCase],
     *,
     cutoffs: Sequence[int] = (1, 3, 5, 10),
+    require_receipts: bool = False,
 ) -> dict[str, object]:
     """Evaluate the same admitted court at several retrieval budgets."""
 
@@ -186,12 +255,17 @@ def evaluate_at_cutoffs(
         raise ValueError("cutoffs must be unique")
 
     reports = {
-        str(k): evaluate_substitution_discovery(admitted, k=k)
+        str(k): evaluate_substitution_discovery(
+            admitted, k=k, require_receipts=require_receipts
+        )
         for k in sorted(normalized)
     }
     return {
         "schema": "autofde.semantic-substitution-sweep.v1",
         "oracle": "independent_behavioral_verification",
+        "oracle_standing": (
+            "RECEIPTED" if all(case.oracle_receipted for case in admitted) else "DECLARED"
+        ),
         "cutoffs": sorted(normalized),
         "reports": reports,
         "authority": "NONE",
