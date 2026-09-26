@@ -168,3 +168,48 @@ def test_behavioral_witness_refuses_bad_digest_and_unknown_candidate():
         assert "verified_equivalents" in str(error)
     else:
         raise AssertionError("witness for an unverified candidate must be refused")
+
+
+
+def test_paired_sign_test_tracks_recurrence_of_semantic_wins():
+    cases = [
+        SubstitutionCase(
+            subject_id=f"s{i}",
+            verified_equivalents=frozenset({f"v{i}"}),
+            lexical_candidates=(f"x{i}",),
+            semantic_candidates=(f"v{i}",),
+        )
+        for i in range(8)
+    ]
+
+    result = evaluate_substitution_discovery(cases, k=1)
+
+    assert result["paired"]["semantic_wins"] == 8
+    assert result["paired"]["lexical_wins"] == 0
+    assert result["paired"]["ties"] == 0
+    assert result["paired"]["two_sided_sign_test_p_value"] == 0.0078125
+    assert result["paired"]["statistically_supported_0_05"] is True
+
+
+def test_paired_sign_test_does_not_treat_ties_as_evidence():
+    cases = [
+        SubstitutionCase(
+            subject_id="a",
+            verified_equivalents=frozenset({"b"}),
+            lexical_candidates=("b",),
+            semantic_candidates=("b",),
+        ),
+        SubstitutionCase(
+            subject_id="c",
+            verified_equivalents=frozenset({"d"}),
+            lexical_candidates=("x",),
+            semantic_candidates=("y",),
+        ),
+    ]
+
+    result = evaluate_substitution_discovery(cases, k=1)
+
+    assert result["paired"]["non_ties"] == 0
+    assert result["paired"]["ties"] == 2
+    assert result["paired"]["two_sided_sign_test_p_value"] == 1.0
+    assert result["paired"]["statistically_supported_0_05"] is False
