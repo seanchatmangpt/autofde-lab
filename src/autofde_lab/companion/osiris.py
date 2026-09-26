@@ -196,9 +196,11 @@ class BRCERequest:
     target_surface: Surface
     parameters: Mapping[str, Any]
     cause_event_ids: tuple[str, ...]
+    context_digest: str
     decision_digest: str
     route_surface: Surface = Surface.BRCE
     standing: Standing = Standing.CANDIDATE
+    authority_claim: str = "NONE"
 
 
 @dataclass(frozen=True)
@@ -206,6 +208,7 @@ class CompanionReceipt:
     receipt_id: str
     subject: str
     event_ids: tuple[str, ...]
+    context_digest: str
     decision_digest: str
     standing: Standing
     reason: str
@@ -228,8 +231,10 @@ class CompanionReceipt:
             "type": "osiris.CompanionTurn",
             "attributes": {
                 "subject": self.subject,
+                "context_digest": self.context_digest,
                 "decision_digest": self.decision_digest,
                 "standing": self.standing.value,
+                "authority": "NONE",
                 "reason": self.reason,
                 "speech_emitted": self.speech_emitted,
             },
@@ -325,6 +330,42 @@ def _canonical(value: Any) -> str:
 
 def _digest(value: Any) -> str:
     return sha256(_canonical(value).encode("utf-8")).hexdigest()
+
+
+def _context_payload(context: TurnContext) -> dict[str, Any]:
+    return {
+        "subject": context.subject,
+        "events": [
+            {
+                "event_id": event.event_id,
+                "kind": event.kind,
+                "observed_at_ms": event.observed_at_ms,
+                "ttl_ms": event.ttl_ms,
+                "priority": int(event.priority),
+                "speech_policy": event.speech_policy.value,
+                "action_policy": event.action_policy.value,
+                "payload": dict(event.payload),
+            }
+            for event in context.events
+        ],
+        "observations": {
+            key: {
+                "value": observation.value,
+                "observed_at_ms": observation.observed_at_ms,
+                "ttl_ms": observation.ttl_ms,
+                "provenance": observation.provenance,
+            }
+            for key, observation in sorted(context.observations.items())
+        },
+        "carry_plan": list(context.carry_plan),
+        "voice": {
+            "dominance": context.voice.dominance,
+            "influence": context.voice.influence,
+            "steadiness": context.voice.steadiness,
+            "conscientiousness": context.voice.conscientiousness,
+            "max_words": context.voice.max_words,
+        },
+    }
 
 
 def _decision_payload(decision: CompanionDecision) -> dict[str, Any]:
@@ -440,6 +481,7 @@ class OSIRIS:
         """
 
         context = self.context(now_ms)
+        context_digest = _digest(_context_payload(context))
         decision = deliberator(context)
         decision_digest = _digest(_decision_payload(decision))
         event_ids = tuple(event.event_id for event in context.events)
@@ -463,7 +505,9 @@ class OSIRIS:
                 "target_surface": target.value,
                 "parameters": dict(decision.action.parameters),
                 "cause_event_ids": list(event_ids),
+                "context_digest": context_digest,
                 "decision_digest": decision_digest,
+                "authority": "NONE",
             }
             brce_request = BRCERequest(
                 request_id=f"osiris-brce-{_digest(request_payload)[:24]}",
@@ -472,6 +516,7 @@ class OSIRIS:
                 target_surface=target,
                 parameters=dict(decision.action.parameters),
                 cause_event_ids=event_ids,
+                context_digest=context_digest,
                 decision_digest=decision_digest,
             )
 
@@ -497,6 +542,7 @@ class OSIRIS:
         receipt_payload = {
             "subject": self.subject,
             "event_ids": list(event_ids),
+            "context_digest": context_digest,
             "decision_digest": decision_digest,
             "standing": standing.value,
             "reason": reason,
@@ -509,6 +555,7 @@ class OSIRIS:
             receipt_id=f"osiris-receipt-{_digest(receipt_payload)[:24]}",
             subject=self.subject,
             event_ids=event_ids,
+            context_digest=context_digest,
             decision_digest=decision_digest,
             standing=standing,
             reason=reason,
@@ -553,6 +600,17 @@ class OSIRIS:
     ) -> str | None:
         if action is None:
             return None
+        if not action.capability.strip():
+            return "REFUSED:EMPTY_CAPABILITY"
+        expected_target = self.router.target_for(action.intent)
+        if (
+            action.target_surface is not None
+            and action.target_surface is not expected_target
+        ):
+            return (
+                "REFUSED:TARGET_ROUTE_MISMATCH:"
+                f"{action.target_surface.value}!={expected_target.value}"
+            )
         if not context.events:
             return "REFUSED:NO_TRIGGER_EVENT"
         if all(
