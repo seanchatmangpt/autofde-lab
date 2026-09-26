@@ -119,7 +119,14 @@ class TransitionSystem:
 
     def __post_init__(self) -> None:
         require_identifier(self.name, "transition-system name")
-        bound = {name for name, _ in self.constant_values}
+        for name in self.constants:
+            require_identifier(name, "constant")
+        if len(self.constants) != len(set(self.constants)):
+            raise ValueError("duplicate constant declaration")
+        value_names = [name for name, _ in self.constant_values]
+        if len(value_names) != len(set(value_names)):
+            raise ValueError("duplicate constant value binding")
+        bound = set(value_names)
         for name, value in self.constant_values:
             require_identifier(name, "constant")
             if not value.strip():
@@ -169,6 +176,9 @@ class TransitionSystem:
             raise ValueError(
                 "definition name collision between actions/properties/constraints"
             )
+        fairness_keys = [(item.kind, item.target) for item in self.fairness]
+        if len(fairness_keys) != len(set(fairness_keys)):
+            raise ValueError("duplicate fairness constraint")
         for item in self.fairness:
             if item.action is not None and item.action not in action_names:
                 raise ValueError(f"fairness names unknown action {item.action}")
