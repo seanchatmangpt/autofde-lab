@@ -18,6 +18,7 @@ def ecology(
     planner_id: str,
     values: tuple[float, ...],
     *,
+    role_id: str,
     adaptive: bool = False,
 ) -> PolicyEcology:
     return PolicyEcology(
@@ -27,7 +28,7 @@ def ecology(
         ),
         members=tuple(
             ConditionedPolicy(
-                policy=PolicySpec.for_role(planner_id, "blue_defender"),
+                policy=PolicySpec.for_role(planner_id, role_id),
                 condition=StrategicCondition(values=(("exploration", value),)),
                 weight=float(index + 1),
             )
@@ -67,8 +68,8 @@ def test_policy_identity_handles_callable_parameters_without_memory_addresses() 
 
 def test_conditioned_cross_play_exposes_full_cardinality_and_truncation() -> None:
     schedule = manufacture_ecology_schedule(
-        ecology("Astar", (0.0, 0.5, 1.0)),
-        ecology("MCTS", (0.1, 0.9)),
+        ecology("Astar", (0.0, 0.5, 1.0), role_id="blue_defender"),
+        ecology("MCTS", (0.1, 0.9), role_id="red_disturbance"),
         world_id="cyber_incident",
         left_role_id="blue_defender",
         right_role_id="red_disturbance",
@@ -81,8 +82,8 @@ def test_conditioned_cross_play_exposes_full_cardinality_and_truncation() -> Non
 
 def test_conditioned_cross_play_is_candidate_only_and_authority_free() -> None:
     schedule = manufacture_ecology_schedule(
-        ecology("Astar", (0.2,)),
-        ecology("MCTS", (0.8,)),
+        ecology("Astar", (0.2,), role_id="blue_defender"),
+        ecology("MCTS", (0.8,), role_id="red_disturbance"),
         world_id="cyber_incident",
         left_role_id="blue_defender",
         right_role_id="red_disturbance",
@@ -99,8 +100,8 @@ def test_conditioned_cross_play_is_candidate_only_and_authority_free() -> None:
 
 def test_cue_conditions_adaptive_ecology_before_schedule_manufacture() -> None:
     schedule = manufacture_ecology_schedule(
-        ecology("Astar", (0.25,), adaptive=True),
-        ecology("MCTS", (0.5,), adaptive=True),
+        ecology("Astar", (0.25,), role_id="blue_defender", adaptive=True),
+        ecology("MCTS", (0.5,), role_id="red_disturbance", adaptive=True),
         world_id="cyber_incident",
         left_role_id="blue_defender",
         right_role_id="red_disturbance",
@@ -114,8 +115,8 @@ def test_cue_conditions_adaptive_ecology_before_schedule_manufacture() -> None:
 
 def test_ecology_payoff_requires_external_execution_receipt() -> None:
     match = manufacture_ecology_schedule(
-        ecology("Astar", (0.2,)),
-        ecology("MCTS", (0.8,)),
+        ecology("Astar", (0.2,), role_id="blue_defender"),
+        ecology("MCTS", (0.8,), role_id="red_disturbance"),
         world_id="cyber_incident",
         left_role_id="blue_defender",
         right_role_id="red_disturbance",
@@ -171,4 +172,15 @@ def test_heterogeneity_trial_refuses_same_population_as_both_arms() -> None:
             receipt_ids=("receipt:1",),
             homogeneous_population_ref="pop:same",
             engineered_population_ref="pop:same",
+        )
+
+
+def test_schedule_refuses_policy_bound_to_wrong_role() -> None:
+    with pytest.raises(ValueError, match="REFUSED:ECOLOGY_POLICY_ROLE_MISMATCH:right"):
+        manufacture_ecology_schedule(
+            ecology("Astar", (0.2,), role_id="blue_defender"),
+            ecology("MCTS", (0.8,), role_id="blue_defender"),
+            world_id="cyber_incident",
+            left_role_id="blue_defender",
+            right_role_id="red_disturbance",
         )
