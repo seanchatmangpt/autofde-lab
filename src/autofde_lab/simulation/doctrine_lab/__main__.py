@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 
-from . import ALL_WORLDS, run_lab
+from . import ALL_WORLDS, run_lab, verify_run
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -17,6 +17,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--ordinals", type=int, nargs="*", default=None)
     parser.add_argument("--rounds", type=int, default=3)
+    parser.add_argument(
+        "--replay", action="store_true", help="re-execute the run inside verify_run"
+    )
     args = parser.parse_args(argv)
     worlds = ALL_WORLDS if args.worlds == "all" else ALL_WORLDS[: int(args.worlds)]
     report = run_lab(
@@ -26,6 +29,7 @@ def main(argv: list[str] | None = None) -> int:
         ordinals=args.ordinals or None,
         rounds=args.rounds,
     )
+    run_check = verify_run(args.out, replay=args.replay)
     print(
         json.dumps(
             {
@@ -38,12 +42,17 @@ def main(argv: list[str] | None = None) -> int:
                 "ledger": report["ledger"],
                 "clusters": len(report["primitive_equivalence_clusters"]),
                 "selection": None,
+                "verify_run": {
+                    "valid": run_check.valid,
+                    "replayed": args.replay,
+                    "failures": list(run_check.failures),
+                },
             },
             indent=2,
             sort_keys=True,
         )
     )
-    return 0 if report["ledger"]["valid"] else 1
+    return 0 if report["ledger"]["valid"] and run_check.valid else 1
 
 
 if __name__ == "__main__":

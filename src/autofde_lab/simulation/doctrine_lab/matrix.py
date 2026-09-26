@@ -13,11 +13,6 @@ from functools import lru_cache
 from statistics import fmean
 from typing import Sequence
 
-from autofde_lab.simulation.fortune5_safe.dfcm import (
-    _diversity,
-    _dominates,
-    _is_feasible,
-)
 from autofde_lab.simulation.fortune5_safe.engine import run_episode
 from autofde_lab.simulation.fortune5_safe.model import (
     EnterpriseTopology,
@@ -30,8 +25,9 @@ from autofde_lab.simulation.fortune5_safe.model import (
 )
 from autofde_lab.simulation.fortune5_safe.topology import build_topology
 
-from .catalog import Catalog, Strategy, load_catalog
+from .catalog import Catalog, Strategy, is_admitted, load_catalog
 from .opponent import Opponent, OpponentMove
+from .relations import diversity, is_feasible, pareto_front
 from .world import World
 
 RECEIPT_SCHEMA = "autofde-lab.simulation.doctrine-lab/v1"
@@ -41,8 +37,16 @@ DEFAULT_ROUNDS = 3
 LAB_CONFIG = Fortune5Config()
 
 
+class ProvenanceRefused(ValueError):
+    """An episode or seal names a catalog/receipt origin that was never admitted."""
+
+
 def wilson(k: int, n: int, z: float = 1.959963984540054) -> tuple[float, float] | None:
-    """Wilson score interval for k successes in n trials (None when n == 0)."""
+    """Wilson score interval for k successes in n trials (None when n == 0).
+
+    Lab-local: at the lab's base there is no committed shared Wilson primitive
+    (aloop ``stats.run_trials`` is not on master). Rebind here once it lands.
+    """
     if n <= 0:
         return None
     p = k / n
@@ -145,7 +149,19 @@ def _aggregate(
         fmean(m.budget_variance for m in metrics),
         max(m.employee_load for m in metrics),
     )
-    return replace(provisional, feasible=_is_feasible(provisional))
+    return replace(provisional, feasible=is_feasible(provisional))
+
+
+def receipt_body(
+    catalog_sha256: str, ordinal: int, signature: str, outcome_digest: str
+) -> dict[str, object]:
+    """The fields the DoctrineReceipt ``episode_digest`` commits to."""
+    return {
+        "catalog": catalog_sha256,
+        "ordinal": ordinal,
+        "signature": signature,
+        "outcome": outcome_digest,
+    }
 
 
 def run_strategy_episode(
@@ -159,6 +175,12 @@ def run_strategy_episode(
 ) -> EpisodeRecord:
     if rounds < 1:
         raise ValueError("rounds must be positive")
+    if not is_admitted(catalog_sha256):
+        raise ProvenanceRefused(
+            f"catalog sha256 {catalog_sha256!r} was never admitted by load_catalog"
+        )
+    if strategy.status != "operationalized":
+        raise ValueError("stub strategies have no primitive composition to run")
     episode_config = replace(config, seed=seed)
     topology = topology_for(config)
     policy = strategy.policy
@@ -183,12 +205,9 @@ def run_strategy_episode(
             "opponent": opponent_digest,
         }
     )
-    body = {
-        "catalog": catalog_sha256,
-        "ordinal": strategy.ordinal,
-        "signature": strategy.signature,
-        "outcome": outcome_digest,
-    }
+    body = receipt_body(
+        catalog_sha256, strategy.ordinal, strategy.signature, outcome_digest
+    )
     receipt = DoctrineReceipt(
         RECEIPT_SCHEMA,
         "NONE",
@@ -211,17 +230,7 @@ def run_strategy_episode(
 
 
 def _frontier(cells: Sequence[Cell]) -> tuple[str, ...]:
-    feasible = [c for c in cells if c.aggregate.feasible]
-    return tuple(
-        sorted(
-            c.strategy_id
-            for c in feasible
-            if not any(
-                o.strategy_id != c.strategy_id and _dominates(o.aggregate, c.aggregate)
-                for o in feasible
-            )
-        )
-    )
+    return pareto_front((c.strategy_id, c.aggregate) for c in cells)
 
 
 def run_doctrine_matrix(
@@ -242,7 +251,7 @@ def run_doctrine_matrix(
     episodes: list[EpisodeRecord] = []
     cells: list[Cell] = []
     frontiers: list[tuple[str, tuple[str, ...]]] = []
-    diversity: list[tuple[str, float]] = []
+    diversities: list[tuple[str, float]] = []
     for world in worlds:
         world_cells: list[Cell] = []
         for strategy in strategy_space:
@@ -275,8 +284,8 @@ def run_doctrine_matrix(
         front = _frontier(world_cells)
         frontiers.append((world.id, front))
         by_id = {s.id: s for s in strategy_space}
-        diversity.append(
-            (world.id, round(_diversity([by_id[i].policy for i in front]), 12))
+        diversities.append(
+            (world.id, round(diversity([by_id[i].policy for i in front]), 12))
         )
     matrix_digest = stable_digest(
         {
@@ -298,6 +307,6 @@ def run_doctrine_matrix(
         tuple(episodes),
         tuple(cells),
         tuple(frontiers),
-        tuple(diversity),
+        tuple(diversities),
         matrix_digest,
     )

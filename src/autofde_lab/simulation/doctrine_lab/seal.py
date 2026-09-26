@@ -22,7 +22,11 @@ from autofde_lab._cache.provenance import (
     ProvenanceLedger,
 )
 
-from .matrix import EVIDENCE_CEILING, EpisodeRecord
+from autofde_lab.simulation.fortune5_safe.model import stable_digest
+
+from .catalog import is_admitted
+from .matrix import EVIDENCE_CEILING, EpisodeRecord, ProvenanceRefused, receipt_body
+from .ocel import episode_log, log_sha256
 
 KEY_ENV = "AUTOFDE_DOCTRINE_LAB_KEY"
 FIXTURE_KEY_ID = "doctrine-lab-fixture-v1"
@@ -41,6 +45,20 @@ def signer_from_env(env: Mapping[str, str] | None = None) -> AttestationSigner:
         key_id = "doctrine-lab-env-" + hashlib.sha256(key).hexdigest()[:12]
         return AttestationSigner(key, key_id=key_id)
     return AttestationSigner(FIXTURE_KEY, key_id=FIXTURE_KEY_ID)
+
+
+def key_provenance(signer: AttestationSigner) -> dict[str, object]:
+    """Which key sealed a ledger, and whether that key can attest the writer.
+
+    A FIXTURE key is published in source: its ledger proves chain integrity and
+    replay only. An env key is operator-held: its ledger also binds the writer.
+    """
+    fixture = signer.key_id == FIXTURE_KEY_ID
+    return {
+        "key_id": signer.key_id,
+        "key_kind": "fixture" if fixture else "env",
+        "attests_writer": not fixture,
+    }
 
 
 def attestation_for(episode: EpisodeRecord, ocel_sha256: str) -> CacheAttestation:
@@ -63,6 +81,32 @@ def attestation_for(episode: EpisodeRecord, ocel_sha256: str) -> CacheAttestatio
     )
 
 
+def admit_for_seal(episode: EpisodeRecord, ocel_sha256: str) -> None:
+    """Refuse an episode whose origin or digests do not recompute.
+
+    The catalog digest must have been admitted by ``load_catalog`` in-process,
+    the receipt's ``episode_digest`` must recompute from its own fields, the
+    receipt must carry authority NONE, and the supplied OCEL digest must equal
+    the digest of the episode's own deterministic log.
+    """
+    r = episode.receipt
+    if not is_admitted(r.catalog_sha256):
+        raise ProvenanceRefused(f"catalog {r.catalog_sha256!r} was never admitted")
+    if r.authority != "NONE" or r.authority_ceiling not in ("SELECT", "CONSTRUCT"):
+        raise ProvenanceRefused(
+            f"receipt authority {r.authority}/{r.authority_ceiling}"
+        )
+    expected = stable_digest(
+        receipt_body(
+            r.catalog_sha256, r.strategy_ordinal, r.strategy_signature, r.outcome_digest
+        )
+    )
+    if expected != r.episode_digest:
+        raise ProvenanceRefused(f"episode {episode.id} digest does not recompute")
+    if ocel_sha256 != log_sha256(episode_log(episode)):
+        raise ProvenanceRefused(f"episode {episode.id} OCEL digest does not recompute")
+
+
 def seal_episodes(
     episodes: Iterable[tuple[EpisodeRecord, str]],
     ledger_path: Path | str,
@@ -73,7 +117,10 @@ def seal_episodes(
     ledger = ProvenanceLedger(
         ledger_path, signer=signer or signer_from_env(), fsync=False
     )
-    for episode, ocel_sha in episodes:
+    admitted = list(episodes)
+    for episode, ocel_sha in admitted:
+        admit_for_seal(episode, ocel_sha)
+    for episode, ocel_sha in admitted:
         ledger.append(attestation_for(episode, ocel_sha))
     return ledger.verify()
 

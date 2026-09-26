@@ -83,3 +83,9 @@ def log_bytes(document: dict[str, Any]) -> bytes:
 
 def log_sha256(document: dict[str, Any]) -> str:
     return hashlib.sha256(log_bytes(document)).hexdigest()
+
+
+def ocel_filename(episode_id: str) -> str:
+    """On-disk name of an episode's log inside a run's ``ocel/`` directory."""
+    safe = episode_id.replace("/", "_").replace("@", "__").replace("#", "__")
+    return f"{safe}.ocel.json"

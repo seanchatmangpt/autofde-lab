@@ -10,11 +10,11 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
-from autofde_lab.simulation.fortune5_safe.dfcm import _dominates
 from autofde_lab.simulation.fortune5_safe.model import stable_digest
 
 from .catalog import Catalog
 from .matrix import EVIDENCE_CEILING, DoctrineMatrixResult
+from .relations import dominates
 from .world import AXES, world_by_id
 
 REPORT_SCHEMA = "autofde-lab.simulation.doctrine-lab.report/v1"
@@ -67,7 +67,7 @@ def counter_dominance(result: DoctrineMatrixResult) -> dict[str, Any]:
     for aggregates in by_world.values():
         for a in result.strategy_ids:
             for b in result.strategy_ids:
-                if a != b and _dominates(aggregates[a], aggregates[b]):
+                if a != b and dominates(aggregates[a], aggregates[b]):
                     counts[(a, b)] += 1
     dominance = [
         {"dominant": a, "dominated": b, "worlds": n}
@@ -110,6 +110,11 @@ def equivalence_clusters(
     return clusters
 
 
+def report_body(report: dict[str, Any]) -> dict[str, Any]:
+    """The digested part of a report (drops ``report_digest`` and the ledger anchor)."""
+    return {k: v for k, v in report.items() if k not in ("report_digest", "ledger")}
+
+
 def build_report(result: DoctrineMatrixResult, catalog: Catalog) -> dict[str, Any]:
     body = {
         "schema": REPORT_SCHEMA,
@@ -126,6 +131,7 @@ def build_report(result: DoctrineMatrixResult, catalog: Catalog) -> dict[str, An
         "seeds": list(result.seeds),
         "rounds": result.rounds,
         "world_count": len(result.world_ids),
+        "world_ids": list(result.world_ids),
         "strategy_ids": list(result.strategy_ids),
         "episode_count": len(result.episodes),
         "matrix_digest": result.matrix_digest,

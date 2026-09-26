@@ -15,20 +15,23 @@ from .catalog import (
     Catalog,
     CatalogIntegrityError,
     Strategy,
+    is_admitted,
     load_catalog,
 )
 from .matrix import (
     EVIDENCE_CEILING,
     DoctrineMatrixResult,
     EpisodeRecord,
+    ProvenanceRefused,
     run_doctrine_matrix,
     run_strategy_episode,
     wilson,
 )
-from .ocel import episode_log, log_bytes, log_sha256
+from .ocel import episode_log, log_bytes, log_sha256, ocel_filename
 from .primitives import BASE_POLICY, DUALS, PRIMITIVES, compose
 from .report import build_report
-from .seal import seal_episodes, verify_ledger
+from .seal import key_provenance, seal_episodes, signer_from_env, verify_ledger
+from .verify import RunVerification, verify_run
 from .world import ALL_WORLDS, World, world_by_id
 
 
@@ -54,18 +57,19 @@ def run_lab(
     sealed: list[tuple[EpisodeRecord, str]] = []
     for episode in result.episodes:
         document = episode_log(episode)
-        name = episode.id.replace("/", "_").replace("@", "__").replace("#", "__")
-        (ocel_dir / f"{name}.ocel.json").write_bytes(log_bytes(document))
+        (ocel_dir / ocel_filename(episode.id)).write_bytes(log_bytes(document))
         sealed.append((episode, log_sha256(document)))
     ledger_path = out / "ledger.jsonl"
     if ledger_path.exists():
         ledger_path.unlink()
-    verification = seal_episodes(sealed, ledger_path)
+    signer = signer_from_env()
+    verification = seal_episodes(sealed, ledger_path, signer=signer)
     report = build_report(result, catalog)
     report["ledger"] = {
         "valid": verification.valid,
         "records": verification.records,
         "tail_digest": verification.tail_digest,
+        **key_provenance(signer),
     }
     (out / "report.json").write_text(
         json.dumps(report, indent=1, sort_keys=True) + "\n", encoding="utf-8"
@@ -84,19 +88,26 @@ __all__ = [
     "CatalogIntegrityError",
     "DoctrineMatrixResult",
     "EpisodeRecord",
+    "ProvenanceRefused",
+    "RunVerification",
     "Strategy",
     "World",
     "build_report",
     "compose",
     "episode_log",
+    "is_admitted",
+    "key_provenance",
     "load_catalog",
     "log_bytes",
     "log_sha256",
+    "ocel_filename",
     "run_doctrine_matrix",
     "run_lab",
     "run_strategy_episode",
     "seal_episodes",
+    "signer_from_env",
     "verify_ledger",
+    "verify_run",
     "wilson",
     "world_by_id",
 ]
