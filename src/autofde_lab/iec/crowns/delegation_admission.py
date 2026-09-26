@@ -34,7 +34,7 @@ RECEIPT_SCHEMA = "autofde-lab.delegation-admission-receipt/1"
 OBLIGATIONS = ("explain", "verify", "modify", "account")
 REQUIRED_FIELDS: dict[str, tuple[str, ...]] = {
     "explain": ("provenance_id", "ontology_id", "rationale_id"),
-    "verify": ("verifier_set_id", "receipt_id"),
+    "verify": ("verifier_id", "verifier_set_id", "receipt_id"),
     "modify": ("change_id", "result_id", "replay_id"),
     "account": (
         "authority_id",
@@ -70,6 +70,7 @@ def _obligation_result(
     raw: Any,
     *,
     subject: str,
+    producer_id: str,
 ) -> dict[str, Any]:
     if not isinstance(raw, Mapping):
         return {
@@ -99,8 +100,12 @@ def _obligation_result(
         if not isinstance(value, str) or not value.strip():
             issues.append(f"{name.upper()}_{field.upper()}_MISSING")
 
-    if name == "verify" and raw.get("independent") is not True:
-        issues.append("VERIFY_NOT_INDEPENDENT")
+    if name == "verify":
+        if raw.get("independent") is not True:
+            issues.append("VERIFY_NOT_INDEPENDENT")
+        verifier_id = raw.get("verifier_id")
+        if isinstance(verifier_id, str) and verifier_id.strip() == producer_id:
+            issues.append("VERIFY_PRODUCER_EQUALS_VERIFIER")
 
     result_verdict = Verdict.PASS.value if not issues else Verdict.COUNTEREXAMPLE.value
     return {
@@ -130,6 +135,7 @@ def evaluate_delegation(document: Mapping[str, Any]) -> dict[str, Any]:
     authority_scope_id = _required_string(
         delegation, "authority_scope_id", "delegation"
     )
+    producer_id = _required_string(delegation, "producer_id", "delegation")
 
     obligations_raw = document.get("obligations")
     if not isinstance(obligations_raw, Mapping):
@@ -140,6 +146,7 @@ def evaluate_delegation(document: Mapping[str, Any]) -> dict[str, Any]:
             name,
             obligations_raw.get(name),
             subject=subject,
+            producer_id=producer_id,
         )
         for name in OBLIGATIONS
     }
@@ -166,6 +173,7 @@ def evaluate_delegation(document: Mapping[str, Any]) -> dict[str, Any]:
         "subject": subject,
         "boundary_id": boundary_id,
         "authority_scope_id": authority_scope_id,
+        "producer_id": producer_id,
         "delegation_units": units,
         "admission_capacity_units": capacity,
         "admission_debt": debt,
