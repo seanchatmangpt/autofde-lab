@@ -14,12 +14,31 @@ from autofde_lab.sa2a.algebra import (
     validate_refusal,
     validate_transition,
 )
+from autofde_lab.sa2a.computation import (
+    ComputationArtifact,
+    ComputationRuntime,
+    EvidenceClass,
+    PlanningAdvice,
+    PlanningAdviceKind,
+    RuntimeEquivalence,
+    ScoredCandidate,
+    SemanticClaim,
+    order_formally_admitted,
+    qualify_runtime_equivalence,
+)
 from autofde_lab.sa2a.envelope import (
     AuthorityRequirement,
     EnvelopeBounds,
     ProvenanceRecord,
     SemanticEnvelope,
     SemanticGraph,
+)
+from autofde_lab.sa2a.learning import (
+    LearnerQualification,
+    LearnerTier,
+    TrainingExample,
+    TrainingOrigin,
+    select_least_complex_qualifying,
 )
 from autofde_lab.sa2a.root_manifest import RootManifest
 
@@ -40,4 +59,19 @@ __all__ = [
     "EnvelopeBounds",
     "SemanticEnvelope",
     "RootManifest",
+    "ComputationArtifact",
+    "ComputationRuntime",
+    "EvidenceClass",
+    "PlanningAdvice",
+    "PlanningAdviceKind",
+    "RuntimeEquivalence",
+    "ScoredCandidate",
+    "SemanticClaim",
+    "order_formally_admitted",
+    "qualify_runtime_equivalence",
+    "LearnerQualification",
+    "LearnerTier",
+    "TrainingExample",
+    "TrainingOrigin",
+    "select_least_complex_qualifying",
 ]
