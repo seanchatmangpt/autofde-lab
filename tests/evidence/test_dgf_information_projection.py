@@ -8,6 +8,7 @@ from autofde_lab.evidence.dgf_information_projection import (
     build_dgf_decision_cases,
     dotted_get,
     route_signature,
+    search_min_cost_sufficient_projection,
     search_sufficient_dgf_projections,
 )
 
@@ -189,6 +190,53 @@ def test_search_returns_empty_when_candidate_vocabulary_cannot_distinguish(tmp_p
         )
         == ()
     )
+
+
+def test_min_cost_search_chooses_cheapest_sufficient_surface(tmp_path: Path) -> None:
+    dataset = tmp_path / "dataset"
+    left = _case(
+        dataset,
+        "left",
+        public_kind="same",
+        signing_authority=True,
+        disposition="GO",
+    )
+    right = _case(
+        dataset,
+        "right",
+        public_kind="same",
+        signing_authority=False,
+        disposition="NO_GO",
+    )
+
+    for case_dir, copy_value in ((left, True), (right, False)):
+        hidden = json.loads((case_dir / "99_hidden_ground_truth.json").read_text())
+        hidden["canonical_truth"]["legal"]["signing_authority_copy"] = copy_value
+        _write_json(case_dir / "99_hidden_ground_truth.json", hidden)
+
+    plan = search_min_cost_sufficient_projection(
+        dataset,
+        candidate_costs={
+            "public.kind": 0.1,
+            "legal.signing_authority": 5.0,
+            "legal.signing_authority_copy": 2.0,
+        },
+        max_width=2,
+    )
+
+    assert plan is not None
+    assert plan.observation_paths == ("legal.signing_authority_copy",)
+    assert plan.total_cost == 2.0
+    assert plan.audit.sufficient is True
+
+
+def test_min_cost_search_refuses_invalid_costs(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="DGF_CANDIDATE_COST_INVALID"):
+        search_min_cost_sufficient_projection(
+            tmp_path,
+            candidate_costs={"public.kind": -1.0},
+            max_width=1,
+        )
 
 
 def test_projection_refuses_duplicate_paths_and_empty_dataset(tmp_path: Path) -> None:
