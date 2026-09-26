@@ -253,9 +253,7 @@ def run_benchmark(
         "capacity_sweep": sweep,
         "falsifiers": falsifiers,
         "gate": (
-            Verdict.PASS.value
-            if not falsifiers
-            else Verdict.COUNTEREXAMPLE.value
+            Verdict.PASS.value if not falsifiers else Verdict.COUNTEREXAMPLE.value
         ),
         "claim_ceiling": (
             "bounded court robustness only; not production or actuation standing"
