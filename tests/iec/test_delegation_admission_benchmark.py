@@ -40,6 +40,7 @@ def artifact(*, units: int = 4, scope: int = 4) -> dict:
                 "subject": SUBJECT,
                 "verdict": "PASS",
                 "scope_units": scope,
+                "verifier_id": "urn:verifier:independent",
                 "verifier_set_id": "sha256:verifiers",
                 "receipt_id": "sha256:verify",
                 "independent": True,
