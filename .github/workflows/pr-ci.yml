@@ -225,6 +225,19 @@ jobs:
           PYTHONPATH: src
         run: python -m pytest -q tests/fortune5/test_space.py
 
+      # RFC v26.9.26 ABB -> SBB qualification court: positive, adversarial
+      # (fail-closed digests/authority/evidence/replay/frontier) and the bench
+      # regression bound (replay determinism, falsifier coverage, timing).
+      - name: Architecture qualification court / Python 3.12
+        if: steps.routes.outputs.fortune5 == 'true'
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m pytest -q \
+            tests/fortune5/test_architecture_qualification_court.py \
+            tests/fortune5/test_architecture_qualification_adversarial.py \
+            tests/fortune5/test_architecture_qualification_bench.py
+
       - name: Cache qualification / Python 3.12
         if: steps.routes.outputs.cache == 'true'
         env:
