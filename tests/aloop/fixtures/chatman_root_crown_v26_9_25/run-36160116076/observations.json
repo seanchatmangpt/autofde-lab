@@ -1,0 +1,1590 @@
+{
+  "artifacts": {
+    "seanchatmangpt/affidavit:release/v26.9.25/receipts/brce-ledger.json": {
+      "blob_sha": "6eb8ab92e5ef03e4580ade7f4bb80aff387bae3f",
+      "head_sha": "d70b0e40f9920136510cb0f7f24bf9720feeb4f2",
+      "json": {
+        "anti_vacuity": {
+          "killed": 8,
+          "mutants": [
+            {
+              "killed": true,
+              "mutation": "flip Done.result.changed in place, chain not recomputed",
+              "rule": "CHAIN_INTEGRITY",
+              "standing": "REFUSED"
+            },
+            {
+              "killed": true,
+              "mutation": "external effect 'rogue-unreceipted' written outside the pipeline",
+              "rule": "ZERO_UNRECEIPTED_ACTUATION",
+              "standing": "REFUSED"
+            },
+            {
+              "killed": true,
+              "mutation": "Done appended for an attempt that never passed PREPARED/authority",
+              "rule": "DO_REQUIRES_AUTHORITY",
+              "standing": "REFUSED"
+            },
+            {
+              "killed": true,
+              "mutation": "every Admitted outcome rewritten to Refused, construct kept",
+              "rule": "CONSTRUCT_REQUIRES_ADMISSION",
+              "standing": "REFUSED"
+            },
+            {
+              "killed": true,
+              "mutation": "receipt.effect.changed flipped after sealing; ledger re-chained",
+              "rule": "RECEIPT_DIGEST_VALID",
+              "standing": "REFUSED"
+            },
+            {
+              "killed": true,
+              "mutation": "second PREPARED+Done(changed=true) for an already-receipted consequence",
+              "rule": "AT_MOST_ONCE_CONSEQUENCE",
+              "standing": "REFUSED"
+            },
+            {
+              "killed": true,
+              "mutation": "PREPARED appended with no Done/receipt/reconciliation",
+              "rule": "CRASH_WINDOW_RECONCILED",
+              "standing": "REFUSED"
+            },
+            {
+              "killed": true,
+              "mutation": "EXECUTION_UNKNOWN reconciliation followed by an executed=true receipt",
+              "rule": "UNKNOWN_NOT_PROMOTED",
+              "standing": "REFUSED"
+            }
+          ],
+          "total": 8
+        },
+        "authority": "NONE (court is receipt-level evidence; Verification does not imply DO)",
+        "court": {
+          "consequences_observed": 3,
+          "ledger_head": "d3fe6c9278a4839042b25518edb8461b660068189aed4a954edc985fae9bee23",
+          "receipts": 4,
+          "records": 36,
+          "refusals": [],
+          "rules": [
+            "CHAIN_INTEGRITY",
+            "ZERO_UNRECEIPTED_ACTUATION",
+            "DO_REQUIRES_AUTHORITY",
+            "CONSTRUCT_REQUIRES_ADMISSION",
+            "RECEIPT_DIGEST_VALID",
+            "AT_MOST_ONCE_CONSEQUENCE",
+            "CRASH_WINDOW_RECONCILED",
+            "UNKNOWN_NOT_PROMOTED"
+          ],
+          "standing": "ADMITTED",
+          "zero_unreceipted_actuation": true
+        },
+        "detail": "Court src/brce.rs::court executed at the merged subject via examples/brce_court: real JSON-lines ledgers and real file consequences in two independent run dirs; lawful receipted write, idempotent retry (executed=true changed=false), expired-grant DO refused with zero consequence, crash after DO before receipt reconciled to a brce-reconciliation/v1 receipt (EFFECT_CONFIRMED), crash before consequence reconciled NO_EFFECT_CONFIRMED. Pre-reconcile court REFUSED (ZERO_UNRECEIPTED_ACTUATION, CRASH_WINDOW_RECONCILED); post-reconcile ADMITTED. Supersedes the typed BLOCKED receipt of PR#82 at f3b01d77.",
+        "evidence_ceiling": "LOCAL_RUN",
+        "execution": {
+          "command": "git archive 9d158477fc4706f4fdaf30cfc073c547b57e783e | tar -x -C tree && cd tree && cargo run -q --example brce_court -- <work_dir> 9d158477fc4706f4fdaf30cfc073c547b57e783e",
+          "exit_code": 0,
+          "exit_meaning": "0 iff court ADMITTED both runs, replay digests equal, replay consequence-free, every mutant killed",
+          "output_sha256": "d5bf6c22169f8fa62d37ead66066f0cae9e1ef7084665147448f6a06449c0357",
+          "rerun_byte_identical": true,
+          "scenario_log": [
+            "c-lawful: receipted",
+            "c-idem: retry executed=true changed=false",
+            "c-expired: REFUSED(GRANT_EXPIRED:grant-c-expired)",
+            "crash: pipeline dropped after c-crash DO and c-precrash PREPARED",
+            "pre-reconcile court: REFUSED {ZeroUnreceiptedActuation, CrashWindowReconciled}",
+            "reconcile c-crash: EffectConfirmed",
+            "reconcile c-precrash: NoEffectConfirmed"
+          ],
+          "toolchain": "rustc 1.99.0-nightly (3d6c19bb9 2026-08-11); cargo 1.99.0-nightly (b07e5a086 2026-08-07) [rust-toolchain.toml nightly-2026-08-12]"
+        },
+        "gates": {
+          "act_rust_yml_fmt": "BLOCKED(TRANSPORT_FAILURE:act-runtime) act cannot resolve pinned dtolnay/rust-toolchain@7c8d7d13 (pre-existing)",
+          "brce_ledger_tests": {
+            "failed": 0,
+            "passed": 12
+          },
+          "cargo_clippy_all_targets_D_warnings": 0,
+          "cargo_fmt_check": 0,
+          "cargo_test_all_targets": {
+            "exit": 0,
+            "failed": 0,
+            "passed": 806
+          },
+          "cargo_test_doc": {
+            "exit": 0,
+            "ignored": 6,
+            "passed": 32
+          },
+          "mock_grep_touched_files": 0,
+          "subject": "e574b421010784737db031a5008459e79903aa36 (PR#83 head; merge 9d158477 tree-equal to it plus main)"
+        },
+        "generated_at": "2026-09-25T16:19:02+00:00",
+        "ledger": {
+          "format": "JSON-lines, BLAKE3 chain H(seq,prev,entry)",
+          "head": "d3fe6c9278a4839042b25518edb8461b660068189aed4a954edc985fae9bee23",
+          "ledger_blake3": "a88e85605f36358cc0c589d311ec8accdd42ced2dd2cd0557fb2c13b71521099",
+          "receipts": 4,
+          "records": 36
+        },
+        "name": "brce-ledger",
+        "release": "v26.9.25",
+        "replay": {
+          "consequence_free": true,
+          "consequences_after_replay": 3,
+          "consequences_before_replay": 3,
+          "digest_equal": true,
+          "digest_run_a": "7e90c82673f15cbe24c2fa2d7ca7ffeb0e7c6bc5676eb88e4478331f205685f7",
+          "digest_run_a_rejudged": "7e90c82673f15cbe24c2fa2d7ca7ffeb0e7c6bc5676eb88e4478331f205685f7",
+          "digest_run_b": "7e90c82673f15cbe24c2fa2d7ca7ffeb0e7c6bc5676eb88e4478331f205685f7"
+        },
+        "repo": "seanchatmangpt/affidavit",
+        "requirements": [
+          "AC-08",
+          "F-05"
+        ],
+        "schema": "chatman/release-receipt/v1",
+        "standing": "ALIVE",
+        "subject": {
+          "implementation_commit": "e574b421010784737db031a5008459e79903aa36",
+          "merged_pr": 83,
+          "ref": "origin/main",
+          "repo": "seanchatmangpt/affidavit",
+          "sha": "9d158477fc4706f4fdaf30cfc073c547b57e783e"
+        },
+        "subject_sha": "9d158477fc4706f4fdaf30cfc073c547b57e783e",
+        "supersedes": {
+          "pr": 82,
+          "standing": "BLOCKED",
+          "subject_sha": "f3b01d77909ef37f1a1775fe2a3ed88ddc54d030",
+          "type": "CAPABILITY_GAP:BRCE_LEDGER_ADAPTER_NOT_IMPLEMENTED"
+        },
+        "type": "BRCE_ZERO_UNRECEIPTED_ACTUATION_COURT"
+      },
+      "sha256": "ae37069d19cc6d70562a9b9dd4211e73604e778e89465ad2c80f82ee243fbe38",
+      "subject_compare": "ahead"
+    },
+    "seanchatmangpt/autofde-lab:release/v26.9.25/receipts/tlc-court.json": {
+      "blob_sha": "3e7e8068e6997ae328d42758fbcd4598590f085a",
+      "head_sha": "98b6cc9bfe3af8a25b3ad53019f5fb71fe2d37d0",
+      "json": {
+        "authority": "NONE",
+        "command": "for m in brce mutant:DO_WITHOUT_AUTHORITY mutant:DUPLICATE_CONSEQUENCE mutant:STANDING_WITHOUT_VERIFY mutant:NO_FAIRNESS; do python -m autofde_lab.iec tlc-court --model $m --out <DIR>/<slug>; done",
+        "court_tests": {
+          "command": "AUTOFDE_TLC_REQUIRED=1 python -m pytest -q -o addopts= -rs tests/iec/test_tlc_court.py tests/iec/test_tlc_transcript.py tests/iec/test_tla_projection_fairness.py tests/iec/test_graph_protocol_tla.py tests/iec/test_frontier_formal.py",
+          "exit_code": 0,
+          "output_sha256": "ccd1db9fc492fdf43dc790209beef9fc58ae35e0857e2c9169c810e32d6176f1",
+          "summary": "54 passed in 36.13s"
+        },
+        "evidence_ceiling": "Bounded explicit-state model check of the projected BRCE TLA+ model and its four mutants by pinned TLC; not a proof, not evidence about any production implementation.",
+        "formal_proof": {
+          "reason": "UNSUPPORTED(formal-proof-runtime:tlaps-not-installed)",
+          "verdict": "UNSUPPORTED"
+        },
+        "models": [
+          {
+            "bounds": {
+              "constant_values": [],
+              "deadlock_check": false,
+              "deadlock_exemption_reason": "terminal STANDING is intended quiescence",
+              "fairness": [
+                "WF_vars(Next)"
+              ],
+              "search": "breadth-first, exhaustive over reachable states within constraints",
+              "state_constraints": [],
+              "workers": 1
+            },
+            "cli_exit_code": 0,
+            "expected_violation": null,
+            "killed": null,
+            "model": "brce",
+            "model_check": "MODEL_CHECK_ALIVE",
+            "module": "BRCEReference",
+            "parse": "MODEL_PARSE_ALIVE",
+            "per_model_receipt_digest": "sha256:ffed7f63d8ab69a82bffe263cd3b79e8aa5a5468678b3a33aaf3abb537344cd8",
+            "per_model_receipt_file_sha256": "01f5aa0f9db1b1749db92a592fa9cb5337551ea759e2c8ee01427df71c142e72",
+            "properties": [
+              {
+                "config_digest": "sha256:92d64e2ec5ca192f80831f397928eba68800270cee262dc12114320df89f445e",
+                "depth": 10,
+                "distinct_states": 10,
+                "exit_code": 0,
+                "kind": "invariant",
+                "name": "NoStandingWithoutReceipt",
+                "states_generated": 10,
+                "stdout_digest": "sha256:fb13ca3669296116e232049542b6f820b625df0182f51c763d4babb4578e0887",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              },
+              {
+                "config_digest": "sha256:45490405340ecdeb3233c68f7683bbd21fdd514454901ef653223de44dec61e2",
+                "depth": 10,
+                "distinct_states": 10,
+                "exit_code": 0,
+                "kind": "invariant",
+                "name": "NoStandingWithoutVerification",
+                "states_generated": 10,
+                "stdout_digest": "sha256:ac05a899562194e42bff7f43f4ae6964938861553c4157c103b68c863b0bcf00",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              },
+              {
+                "config_digest": "sha256:61a4a07bd298e5b5578212c515750c30cb7b6944a7afcc6564a38feeed0048a6",
+                "depth": 10,
+                "distinct_states": 10,
+                "exit_code": 0,
+                "kind": "invariant",
+                "name": "AtMostOneConsequence",
+                "states_generated": 10,
+                "stdout_digest": "sha256:b1d4ddcdc0bcd4f172213e4ff321aa60da067e92248e5db36a2e3b614b99e9de",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              },
+              {
+                "config_digest": "sha256:8f5650bf79bc01c9d13c00d35755078c6890ec53223e28797cfc8d49df3c8667",
+                "depth": 10,
+                "distinct_states": 10,
+                "exit_code": 0,
+                "kind": "invariant",
+                "name": "ExecutedRequiresAuthority",
+                "states_generated": 10,
+                "stdout_digest": "sha256:4ad8df2533e28418aa8d2d96eaba44257c2e976aa0f3fbcf0f19fa04117c6349",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              },
+              {
+                "config_digest": "sha256:b9cd66493b0905c1bcf92eaef178aff437659cd8ecbc9aacb882fd8147ebda5e",
+                "depth": 10,
+                "distinct_states": 10,
+                "exit_code": 0,
+                "kind": "liveness",
+                "name": "AdmittedEventuallyTerminal",
+                "states_generated": 10,
+                "stdout_digest": "sha256:837da1ebc8a5b024c22bf45fd307755dcfe49fcfb46ba4c3edde76dbd4be6681",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              }
+            ],
+            "replay_identity": "sha256:235fe585c319ad99cd72a2bb7d442d37ea541e88bfe85f797d905294b82fd350",
+            "role": "reference",
+            "sany_exit_code": 0,
+            "spec_digest": "sha256:eb81f00635f08955200784ee084eba3ac9d648658d2fc1c5d9b92334b38006b8",
+            "summary_sha256": "a2bda890678bda2fc89d2048321a4ef83a93a1df8a9397ba13e50da3c0c9d667"
+          },
+          {
+            "bounds": {
+              "constant_values": [],
+              "deadlock_check": false,
+              "deadlock_exemption_reason": "terminal STANDING is intended quiescence",
+              "fairness": [
+                "WF_vars(Next)"
+              ],
+              "search": "breadth-first, exhaustive over reachable states within constraints",
+              "state_constraints": [],
+              "workers": 1
+            },
+            "cli_exit_code": 0,
+            "expected_violation": "ExecutedRequiresAuthority",
+            "killed": true,
+            "model": "mutant:DO_WITHOUT_AUTHORITY",
+            "model_check": "MODEL_CHECK_ALIVE",
+            "module": "BRCEMutantDoWithoutAuthority",
+            "parse": "MODEL_PARSE_ALIVE",
+            "per_model_receipt_digest": "sha256:da0353719f93bcb70d3d2d6cd828e2b8ee31047ba6a92a5a140486188c2063d8",
+            "per_model_receipt_file_sha256": "dc4a9eb3a62e70c3c183ea5cae42bf7d505e9f124a24efa356e018a110f42832",
+            "properties": [
+              {
+                "config_digest": "sha256:92d64e2ec5ca192f80831f397928eba68800270cee262dc12114320df89f445e",
+                "depth": 9,
+                "distinct_states": 10,
+                "exit_code": 0,
+                "kind": "invariant",
+                "name": "NoStandingWithoutReceipt",
+                "states_generated": 10,
+                "stdout_digest": "sha256:02726e7d1f596c52d5aa4a3af80a2fe7b2d17eed0192eb918bd6a9d884b340ef",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              },
+              {
+                "config_digest": "sha256:45490405340ecdeb3233c68f7683bbd21fdd514454901ef653223de44dec61e2",
+                "depth": 9,
+                "distinct_states": 10,
+                "exit_code": 0,
+                "kind": "invariant",
+                "name": "NoStandingWithoutVerification",
+                "states_generated": 10,
+                "stdout_digest": "sha256:c00f3cef2254e18e3299d95704ba5eacc7599366cceaffe8870fc8edf6ed72d8",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              },
+              {
+                "config_digest": "sha256:61a4a07bd298e5b5578212c515750c30cb7b6944a7afcc6564a38feeed0048a6",
+                "depth": 9,
+                "distinct_states": 10,
+                "exit_code": 0,
+                "kind": "invariant",
+                "name": "AtMostOneConsequence",
+                "states_generated": 10,
+                "stdout_digest": "sha256:4eca8bdb28179e7124f1792711f060b8214ff9ee39d3c2ae9621b86f03dd6f47",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              },
+              {
+                "config_digest": "sha256:8f5650bf79bc01c9d13c00d35755078c6890ec53223e28797cfc8d49df3c8667",
+                "counterexample": {
+                  "actions": [
+                    "Init",
+                    "Parse",
+                    "Route",
+                    "Admit",
+                    "Construct",
+                    "Actuate"
+                  ],
+                  "length": 6,
+                  "loop": null,
+                  "ocel_digest": "sha256:e02e3cf823ae60a9ee69b360ebbc88e05114246e15b5bd37e98cb4a75032db79",
+                  "ocel_file_sha256": "8f09a70792544b95bd7bcb88036fa19f4d5ac89ae0191b7200928ea4942d44a5",
+                  "transition_trace_digest": "sha256:0e644e9766fcc912343ce85ba0420d81ff39e00e13165158ca1b2e4a2c396f7c",
+                  "violation": "INVARIANT_VIOLATED"
+                },
+                "depth": 6,
+                "distinct_states": 7,
+                "exit_code": 12,
+                "kind": "invariant",
+                "name": "ExecutedRequiresAuthority",
+                "states_generated": 7,
+                "stdout_digest": "sha256:30ab2a307d3b85978f180c56a31810eaf18173efdaafb58cbe25e4205fe0a1b4",
+                "verdict": "COUNTEREXAMPLE_FOUND"
+              },
+              {
+                "config_digest": "sha256:b9cd66493b0905c1bcf92eaef178aff437659cd8ecbc9aacb882fd8147ebda5e",
+                "counterexample": {
+                  "actions": [
+                    "Init",
+                    "Parse",
+                    "Route",
+                    "Admit",
+                    "Construct",
+                    "Authorize"
+                  ],
+                  "length": 6,
+                  "loop": "STUTTERING",
+                  "ocel_digest": "sha256:e6d99eb29d156903319564cfab688d23813a7c91c97f2a19c614de6ae50991e8",
+                  "ocel_file_sha256": "ef114df7dc045cb53f522c11fea4d186a29bb7eb8a36c23386548b85c182fd6f",
+                  "transition_trace_digest": "sha256:71a32921f8b06ab2a4ba94b40be79e4116fba3c61a31ea4f5b3245e87a081dae",
+                  "violation": "TEMPORAL_VIOLATED"
+                },
+                "depth": null,
+                "distinct_states": 10,
+                "exit_code": 13,
+                "kind": "liveness",
+                "name": "AdmittedEventuallyTerminal",
+                "states_generated": 10,
+                "stdout_digest": "sha256:b871e68b1f3ce724a432d4d06fd670f2f66a4b096546557e7e12a722de1d4149",
+                "verdict": "COUNTEREXAMPLE_FOUND"
+              }
+            ],
+            "replay_identity": "sha256:7bd1aa3f828ed32758fcef826ee7a4cfa913ef825208ce2ae447c90e1a97d025",
+            "role": "mutant",
+            "sany_exit_code": 0,
+            "spec_digest": "sha256:5e93856bba6954f673f32b46b2fea833e5ff5a48b1a033ef94490942732585a7",
+            "summary_sha256": "aea6bdae34226939e4e4ea1e04309ccd7d66742bdf8e98b7bef6b0163eb03ce2"
+          },
+          {
+            "bounds": {
+              "constant_values": [],
+              "deadlock_check": false,
+              "deadlock_exemption_reason": "terminal STANDING is intended quiescence",
+              "fairness": [
+                "WF_vars(Next)"
+              ],
+              "search": "breadth-first, exhaustive over reachable states within constraints",
+              "state_constraints": [
+                {
+                  "expression": "consequenceCount <= 2",
+                  "name": "ConsequenceBound"
+                }
+              ],
+              "workers": 1
+            },
+            "cli_exit_code": 0,
+            "expected_violation": "AtMostOneConsequence",
+            "killed": true,
+            "model": "mutant:DUPLICATE_CONSEQUENCE",
+            "model_check": "MODEL_CHECK_ALIVE",
+            "module": "BRCEMutantDuplicateConsequence",
+            "parse": "MODEL_PARSE_ALIVE",
+            "per_model_receipt_digest": "sha256:23e2dce9738c16621ae1f4a72e0bc090d1a27e89d13892801b9658710a33d63b",
+            "per_model_receipt_file_sha256": "8f23f526390980812a8ec9d815522999c1887f5460d6350e49e549a53ec1f61b",
+            "properties": [
+              {
+                "config_digest": "sha256:56c0b67a42de431ce7a2100cd1523712ecef1a619d2be314055c11d99f5ae7f1",
+                "depth": 11,
+                "distinct_states": 14,
+                "exit_code": 0,
+                "kind": "invariant",
+                "name": "NoStandingWithoutReceipt",
+                "states_generated": 15,
+                "stdout_digest": "sha256:a278edf0cf04eb115b601ec03bfb06ae55106429ba68db8f5f3ab463313ee120",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              },
+              {
+                "config_digest": "sha256:27463ba48672e2778c5673a4d45ab814776a52240a95f34dd73b56e06a439569",
+                "depth": 11,
+                "distinct_states": 14,
+                "exit_code": 0,
+                "kind": "invariant",
+                "name": "NoStandingWithoutVerification",
+                "states_generated": 15,
+                "stdout_digest": "sha256:b0b0b2ce5008c58f6fd1e1712821e30cb41dd62179a3cb2c2c3b8d82c780caba",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              },
+              {
+                "config_digest": "sha256:1244427c313bc096a91573b2d9b421d30669f7642fe4eadb066446bd53c21f75",
+                "counterexample": {
+                  "actions": [
+                    "Init",
+                    "Parse",
+                    "Route",
+                    "Admit",
+                    "Construct",
+                    "Authorize",
+                    "Actuate",
+                    "RetryActuate"
+                  ],
+                  "length": 8,
+                  "loop": null,
+                  "ocel_digest": "sha256:f4f1fbd3cfb066ac844271fcb7626bd84863b2caa1189e37904490998b06aa00",
+                  "ocel_file_sha256": "5e21a154bfecaca16e387248292acd4841076136c3748eb6a9bdc8139e53eaa1",
+                  "transition_trace_digest": "sha256:f0117eace09c24c662c8c798749465f4c90e2f9d7c015f34643f15597c5a6cc5",
+                  "violation": "INVARIANT_VIOLATED"
+                },
+                "depth": 8,
+                "distinct_states": 9,
+                "exit_code": 12,
+                "kind": "invariant",
+                "name": "AtMostOneConsequence",
+                "states_generated": 9,
+                "stdout_digest": "sha256:9a0c6adf42836f7fbe23b7f664371c618470676a71fa7e3631e02d55d7da9ff8",
+                "verdict": "COUNTEREXAMPLE_FOUND"
+              },
+              {
+                "config_digest": "sha256:cdb684f098ef0ee36b6e6fc15403a54b08c5581a5b8292240f0ea0f5e0a5af9b",
+                "depth": 11,
+                "distinct_states": 14,
+                "exit_code": 0,
+                "kind": "invariant",
+                "name": "ExecutedRequiresAuthority",
+                "states_generated": 15,
+                "stdout_digest": "sha256:b6306bd86929061135feb7c4391aa5015e8d3c5b610c5474ea526c96bdb0a711",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              },
+              {
+                "config_digest": "sha256:8477f8c133118dbd993b121db712549570cdf42c55cb9971895d646b1b12267e",
+                "depth": 11,
+                "distinct_states": 14,
+                "exit_code": 0,
+                "kind": "liveness",
+                "name": "AdmittedEventuallyTerminal",
+                "states_generated": 15,
+                "stdout_digest": "sha256:62b05269f6243d244fff3151c2ede795b06362184699660e52530ca4d3573bd3",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              }
+            ],
+            "replay_identity": "sha256:32eaec29a197b42b39bb7add92e5323a32a3d69fc70e722f2d3b4f3c5a212f8e",
+            "role": "mutant",
+            "sany_exit_code": 0,
+            "spec_digest": "sha256:7f77bfe26483c0b91c3cb883fb19ae04101235685e6bec41532e85e6f80e7504",
+            "summary_sha256": "3c17c01b50439a52b8c1f9fac57897866abe72a64610160bbd04751bdc8d0fce"
+          },
+          {
+            "bounds": {
+              "constant_values": [],
+              "deadlock_check": false,
+              "deadlock_exemption_reason": "terminal STANDING is intended quiescence",
+              "fairness": [
+                "WF_vars(Next)"
+              ],
+              "search": "breadth-first, exhaustive over reachable states within constraints",
+              "state_constraints": [],
+              "workers": 1
+            },
+            "cli_exit_code": 0,
+            "expected_violation": "NoStandingWithoutVerification",
+            "killed": true,
+            "model": "mutant:STANDING_WITHOUT_VERIFY",
+            "model_check": "MODEL_CHECK_ALIVE",
+            "module": "BRCEMutantStandingWithoutVerify",
+            "parse": "MODEL_PARSE_ALIVE",
+            "per_model_receipt_digest": "sha256:86f3a4741882f6834c2fd6ae73700a860a7f72b6b4c7e8489ebddfb90efec032",
+            "per_model_receipt_file_sha256": "1c2cbc33dadf3d30a2df20afff0f3741129ad4a0fcf804d73da1c58384baa152",
+            "properties": [
+              {
+                "config_digest": "sha256:92d64e2ec5ca192f80831f397928eba68800270cee262dc12114320df89f445e",
+                "depth": 9,
+                "distinct_states": 10,
+                "exit_code": 0,
+                "kind": "invariant",
+                "name": "NoStandingWithoutReceipt",
+                "states_generated": 10,
+                "stdout_digest": "sha256:914a3b3673be7748b033c499471e444d609090d1c6fb97403ebb8bcc90e1f89f",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              },
+              {
+                "config_digest": "sha256:45490405340ecdeb3233c68f7683bbd21fdd514454901ef653223de44dec61e2",
+                "counterexample": {
+                  "actions": [
+                    "Init",
+                    "Parse",
+                    "Route",
+                    "Admit",
+                    "Construct",
+                    "Authorize",
+                    "Actuate",
+                    "Receipt",
+                    "GrantStanding"
+                  ],
+                  "length": 9,
+                  "loop": null,
+                  "ocel_digest": "sha256:0c271ee908a7c3805e21dd6ffebd2280daa42b483cfa82677c0b7b6def90e2c0",
+                  "ocel_file_sha256": "c70d00ddd235461e889001c9453395bd72e0be13e9ddb3578ab8481c411cb0a8",
+                  "transition_trace_digest": "sha256:75e7d32961dcf07fc99c121eca5d78c005872b537f801cf697c1966fef80488d",
+                  "violation": "INVARIANT_VIOLATED"
+                },
+                "depth": 9,
+                "distinct_states": 10,
+                "exit_code": 12,
+                "kind": "invariant",
+                "name": "NoStandingWithoutVerification",
+                "states_generated": 10,
+                "stdout_digest": "sha256:4746680908647b3880709f3f3216f491e9bf7d38cc4607e655cf1106d33ecfd2",
+                "verdict": "COUNTEREXAMPLE_FOUND"
+              },
+              {
+                "config_digest": "sha256:61a4a07bd298e5b5578212c515750c30cb7b6944a7afcc6564a38feeed0048a6",
+                "depth": 9,
+                "distinct_states": 10,
+                "exit_code": 0,
+                "kind": "invariant",
+                "name": "AtMostOneConsequence",
+                "states_generated": 10,
+                "stdout_digest": "sha256:96341bf55cb696026f2cce3f53df0fca4f94e9385980bbdd064603cadc6792a5",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              },
+              {
+                "config_digest": "sha256:8f5650bf79bc01c9d13c00d35755078c6890ec53223e28797cfc8d49df3c8667",
+                "depth": 9,
+                "distinct_states": 10,
+                "exit_code": 0,
+                "kind": "invariant",
+                "name": "ExecutedRequiresAuthority",
+                "states_generated": 10,
+                "stdout_digest": "sha256:fc4595ab9991344d9cdb0e0781616ea013d9beb111cbe61951755ffa87ec81af",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              },
+              {
+                "config_digest": "sha256:b9cd66493b0905c1bcf92eaef178aff437659cd8ecbc9aacb882fd8147ebda5e",
+                "depth": 9,
+                "distinct_states": 10,
+                "exit_code": 0,
+                "kind": "liveness",
+                "name": "AdmittedEventuallyTerminal",
+                "states_generated": 10,
+                "stdout_digest": "sha256:cac81bfdd8cf6e20255fb5f4c5d6a138dc9798d65af66f89cc85a9c5899db8af",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              }
+            ],
+            "replay_identity": "sha256:b6b7c4e31f15b17941e77a77a9c255279d8a1f531c150b91e839af37db5230b7",
+            "role": "mutant",
+            "sany_exit_code": 0,
+            "spec_digest": "sha256:9cbe30d84740b911198dfb3c91b8ee3a655c1490ca2d0813d96cf16428e3a1b1",
+            "summary_sha256": "3b4cad0f028df522fb75f2214f16874bf618a951281abad7025717addc2cf066"
+          },
+          {
+            "bounds": {
+              "constant_values": [],
+              "deadlock_check": false,
+              "deadlock_exemption_reason": "terminal STANDING is intended quiescence",
+              "fairness": [],
+              "search": "breadth-first, exhaustive over reachable states within constraints",
+              "state_constraints": [],
+              "workers": 1
+            },
+            "cli_exit_code": 0,
+            "expected_violation": "AdmittedEventuallyTerminal",
+            "killed": true,
+            "model": "mutant:NO_FAIRNESS",
+            "model_check": "MODEL_CHECK_ALIVE",
+            "module": "BRCEMutantNoFairness",
+            "parse": "MODEL_PARSE_ALIVE",
+            "per_model_receipt_digest": "sha256:efd9e28bd0bc792322dad27ec380e179db580ed74dd94c03633c3bb014c92db2",
+            "per_model_receipt_file_sha256": "7992d4f02a1303e6562ead9b9a1d402b20bb5a06deb33a23ace7c83d418abf52",
+            "properties": [
+              {
+                "config_digest": "sha256:92d64e2ec5ca192f80831f397928eba68800270cee262dc12114320df89f445e",
+                "depth": 10,
+                "distinct_states": 10,
+                "exit_code": 0,
+                "kind": "invariant",
+                "name": "NoStandingWithoutReceipt",
+                "states_generated": 10,
+                "stdout_digest": "sha256:237bca6ceab46a0ed57bd227b433a731a4bcb00a36a1516340a06bf648faa305",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              },
+              {
+                "config_digest": "sha256:45490405340ecdeb3233c68f7683bbd21fdd514454901ef653223de44dec61e2",
+                "depth": 10,
+                "distinct_states": 10,
+                "exit_code": 0,
+                "kind": "invariant",
+                "name": "NoStandingWithoutVerification",
+                "states_generated": 10,
+                "stdout_digest": "sha256:8c1c9d00dbd7a4e0710554fbb3daa2a5c191f0801081a2b639318372f813e933",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              },
+              {
+                "config_digest": "sha256:61a4a07bd298e5b5578212c515750c30cb7b6944a7afcc6564a38feeed0048a6",
+                "depth": 10,
+                "distinct_states": 10,
+                "exit_code": 0,
+                "kind": "invariant",
+                "name": "AtMostOneConsequence",
+                "states_generated": 10,
+                "stdout_digest": "sha256:365b0b6b182f583dd5258e68026ca74e8e7b44a11369071354d38e9f541cad49",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              },
+              {
+                "config_digest": "sha256:8f5650bf79bc01c9d13c00d35755078c6890ec53223e28797cfc8d49df3c8667",
+                "depth": 10,
+                "distinct_states": 10,
+                "exit_code": 0,
+                "kind": "invariant",
+                "name": "ExecutedRequiresAuthority",
+                "states_generated": 10,
+                "stdout_digest": "sha256:b243163a860cc2378807055ed020b48743267167453e47217ce63492284672e4",
+                "verdict": "PROPERTY_HOLDS_IN_BOUND"
+              },
+              {
+                "config_digest": "sha256:b9cd66493b0905c1bcf92eaef178aff437659cd8ecbc9aacb882fd8147ebda5e",
+                "counterexample": {
+                  "actions": [
+                    "Init",
+                    "Parse",
+                    "Route",
+                    "Admit",
+                    "Construct",
+                    "Authorize",
+                    "Actuate"
+                  ],
+                  "length": 7,
+                  "loop": "STUTTERING",
+                  "ocel_digest": "sha256:55c31ce7b058536d20dda0def751e5a18a84a63496ecf5495fc94e1d9d98d82b",
+                  "ocel_file_sha256": "ba250c635c56b968c1eb09bf1714c9f4cc4d7a0ee63eba47e7726cb25fcd428f",
+                  "transition_trace_digest": "sha256:50ec8f4cf44bb0d5cd3ac7c537402f72a28c189f206aabc16f573e7cb76394af",
+                  "violation": "TEMPORAL_VIOLATED"
+                },
+                "depth": null,
+                "distinct_states": 10,
+                "exit_code": 13,
+                "kind": "liveness",
+                "name": "AdmittedEventuallyTerminal",
+                "states_generated": 10,
+                "stdout_digest": "sha256:3cc0637522447289c99533522ac0a2bd24c82e711b55d3d9d1a358cb18e4dde2",
+                "verdict": "COUNTEREXAMPLE_FOUND"
+              }
+            ],
+            "replay_identity": "sha256:49e458cd594225f58308deca28042519be9b7db8576764976c0a14c6938288c1",
+            "role": "mutant",
+            "sany_exit_code": 0,
+            "spec_digest": "sha256:b96b11227d918b566a22ec95ce6e9a5bd5c9869074ae6d4da0f788f443f11f4e",
+            "summary_sha256": "e4f41374edf0df576d0d517ec42dfe6227951a53f33c2694e7f3a153d50bb24c"
+          }
+        ],
+        "output_sha256": "be98f222ac24f2156c724f4266c621f49ee58dbc8c7dcbf935c7094854bff675",
+        "refusals": [],
+        "release": "v26.9.25",
+        "repository": "seanchatmangpt/autofde-lab",
+        "requirements": [
+          "AC-07",
+          "F-08"
+        ],
+        "schema": "autofde-lab/release-tlc-court-receipt/v1",
+        "standing": "ALIVE",
+        "subject_note": "evaluated commit = parent of the receipt commit (a commit cannot contain its own hash)",
+        "subject_sha": "6fbe1807388e8c44ae5d5f75455a082a745055c7",
+        "toolchain": {
+          "jar_digest_matches_pin": true,
+          "jar_sha256": "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88",
+          "jar_sha256_pin_file": "tools/tla/tla2tools-1.7.4.sha256",
+          "jar_sha256_pinned": "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88",
+          "java_version": [
+            "26.0.2.1"
+          ],
+          "tla2tools_release": "1.7.4",
+          "tool_version": [
+            "2.19 of 08 August 2024 (rev: 5a47802)"
+          ]
+        },
+        "type": null
+      },
+      "sha256": "bd59d140d8db9095851556281b164f348a2d3d9708c0afd31543ef93a7ef1017",
+      "subject_compare": "ahead"
+    },
+    "seanchatmangpt/engineering-standards:docs/engineering/rfc/0004-v26.9.25-self-closing-release.md@7e8d4c5cb5ae9f4b691d1cd342ee1d7ddb308629": {
+      "sha256": "cefb3ab55e4afa25f7b107b5e73400036051b006231a9aea31ab7ea2aa50ed32"
+    },
+    "seanchatmangpt/ggen_igniter:release/v26.9.25/receipts/prose-inert.json": {
+      "blob_sha": "096249db81c1ffb079f6c4cd3cfde67fdd87002f",
+      "head_sha": "9639198b5c3e0e25906acc5b36dd9eb17bd592be",
+      "json": {
+        "authority_claim": "NONE",
+        "command": "MIX_BUILD_ROOT=_build-receipts mix test test/ggen_igniter_semantic_jira_frontier_origin_test.exs test/ggen_igniter_semantic_jira_prose_test.exs test/ggen_igniter_semantic_jira_authority_test.exs --include integration --trace --seed 0",
+        "cwd": "/Users/sac/ggen_igniter @ 780a81d81c6e579084ba3048037419aab7d7386e",
+        "dfcm_receipt": {
+          "authority": {
+            "actor": "claude-code lane receipts-ggen_igniter",
+            "ceiling": "OBSERVE",
+            "grant": "NONE"
+          },
+          "consequence": {
+            "commits": [],
+            "files_changed": [
+              "release/v26.9.25/receipts/prose-inert.json"
+            ],
+            "remote_effects": []
+          },
+          "identity": {
+            "base_sha": "780a81d81c6e579084ba3048037419aab7d7386e",
+            "repo": "seanchatmangpt/ggen_igniter",
+            "subject": "prose-inert",
+            "subject_sha": "780a81d81c6e579084ba3048037419aab7d7386e"
+          },
+          "replay": {
+            "commands": [
+              {
+                "cmd": "MIX_BUILD_ROOT=_build-receipts mix test test/ggen_igniter_semantic_jira_frontier_origin_test.exs test/ggen_igniter_semantic_jira_prose_test.exs test/ggen_igniter_semantic_jira_authority_test.exs --include integration --trace --seed 0",
+                "cwd": "ggen_igniter@780a81d81c6e579084ba3048037419aab7d7386e",
+                "exit": 0,
+                "output_sha256": "ff2fb3350ae0ec99a0b6fc839a6698a0ea56ea37d33de902a369cff7b0323638",
+                "summary": "56 tests, 0 failures"
+              }
+            ],
+            "durable_location": "release/v26.9.25/receipts/prose-inert.json"
+          },
+          "standing": {
+            "derived_from": "mix test (3 files) at 780a81d81c6e579084ba3048037419aab7d7386e",
+            "value": "ALIVE"
+          }
+        },
+        "evidence_ceiling": "LOCAL_RUN",
+        "evidence_kind": "receipt_artifact",
+        "exit_code": 0,
+        "falsifier_cases_refused": [
+          "verify_origin/3 refuses a fresh self-declared objective with a forged digest",
+          "verify_origin/3 refuses a forged digest restated on the canonical code-work-authority IRI",
+          "the centerpiece falsifier \u2014 typed is not admitted a typed, well-formed rogue passes the SHACL court and is still refused by verify_origin/3",
+          "AC-04: a prose-typed origin with a correct self-computed digest is blocked the proposition's stated digest really does recompute (the forgery is internally valid)",
+          "AC-04: a prose-typed origin with a correct self-computed digest is blocked in-process frontier/4 blocks it with origin_not_admitted",
+          "AC-04: a prose-typed origin with a correct self-computed digest is blocked Cli.frontier/1 with real temp JSON and Turtle files blocks it",
+          "AC-04: a prose-typed origin with a correct self-computed digest is blocked a real `mix semantic_jira.frontier --authority-graph` subprocess blocks it",
+          "the default path is gated (no authority passed) a ProseObservation origin in the real ontology is blocked",
+          "the default path is gated (no authority passed) a fresh, nonexistent IRI is blocked",
+          "the refusal vocabulary a node typed both StrategicObjective and Proposition is authority_type_mismatch",
+          "the refusal vocabulary an edited description under a kept digest is authority_digest_mismatch",
+          "the refusal vocabulary a sha256:PENDING-SJ-002 placeholder is authority_digest_mismatch",
+          "the refusal vocabulary Authority.resolve/2 over index/1 names each refusal",
+          "the refusal vocabulary verify_origin/3 shares the law: a tampered canonical objective is refused",
+          "every selection surface applies the gate frontier_from_events/4",
+          "every selection surface applies the gate schedule/4",
+          "every selection surface applies the gate Descriptor.build/4",
+          "every selection surface applies the gate Descriptor.build_xaas_contract/4",
+          "every selection surface applies the gate Reconciler.frontier/3",
+          "Reconciler.reconcile/4 (promote path) refuses an unadmitted origin the admitted origin's receipt appends; the prose origin's identical receipt is refused",
+          "fail closed an unreadable authority path blocks every order with authority_index_unavailable",
+          "fail closed Cli.frontier/1 with an unreadable --authority-graph is invalid invocation (exit 2)",
+          "fail closed Cli.frontier/1 with an unparseable --authority-graph is a typed refusal (exit 1)",
+          "fail closed canonical_index/1 is keyed by content: an edited file is never served stale",
+          "observation authority discipline the observed projection contains zero work orders",
+          "observation authority discipline every proposition is stamped UNKNOWN standing, NONE authority claim, and no digest",
+          "observation authority discipline the observer writes exactly one file, propositions.ttl",
+          "observation authority discipline the manufacture surface is deleted from the observer module"
+        ],
+        "mock_grep": {
+          "cmd": "grep -n 'unittest.mock|Mock|mock(|patch(|monkeypatch|Mox|:meck' <3 test files>",
+          "matches": 0
+        },
+        "observed_at": "2026-09-25T13:24:05Z",
+        "output_sha256": "ff2fb3350ae0ec99a0b6fc839a6698a0ea56ea37d33de902a369cff7b0323638",
+        "release": "v26.9.25",
+        "repo": "seanchatmangpt/ggen_igniter",
+        "requirement_ids": [
+          "AC-04",
+          "F-01"
+        ],
+        "schema": "ggen_igniter/prose-inert/v1",
+        "standing": "ALIVE",
+        "subject": {
+          "repo": "seanchatmangpt/ggen_igniter",
+          "sha": "780a81d81c6e579084ba3048037419aab7d7386e"
+        },
+        "subject_sha": "780a81d81c6e579084ba3048037419aab7d7386e",
+        "test_summary": "56 tests, 0 failures",
+        "tests_passed": [
+          "admission_digest/2 is deterministic over the same graph and IRI and matches the sha256 shape",
+          "admission_digest/2 the exclusion law: stated sj:admissionDigest literals never enter the digest",
+          "admission_digest/2 content sensitivity: changing the node's dcterms:description changes the digest",
+          "replay gate each pinned objective's stated digest matches the pattern AND the recomputed digest",
+          "admit/2 stamps the real ontology and returns a report of every pinned objective digest",
+          "admit/2 admit over an already-stamped graph is idempotent (byte-identical N-Triples)",
+          "verify_origin/3 accepts SJ-002 when the candidate restates no objective (order names origin; no restatement)",
+          "verify_origin/3 accepts SJ-002 against the canonical graph verbatim",
+          "verify_origin/3 refuses a fresh self-declared objective with a forged digest",
+          "verify_origin/3 refuses a forged digest restated on the canonical code-work-authority IRI",
+          "the centerpiece falsifier \u2014 typed is not admitted a typed, well-formed rogue passes the SHACL court and is still refused by verify_origin/3",
+          "positive control: an admitted origin is eligible and carries its witness default (canonical) authority index",
+          "positive control: an admitted origin is eligible and carries its witness explicit authority graph and explicit index agree with the default",
+          "AC-04: a prose-typed origin with a correct self-computed digest is blocked the proposition's stated digest really does recompute (the forgery is internally valid)",
+          "AC-04: a prose-typed origin with a correct self-computed digest is blocked in-process frontier/4 blocks it with origin_not_admitted",
+          "AC-04: a prose-typed origin with a correct self-computed digest is blocked Cli.frontier/1 with real temp JSON and Turtle files blocks it",
+          "AC-04: a prose-typed origin with a correct self-computed digest is blocked a real `mix semantic_jira.frontier --authority-graph` subprocess blocks it",
+          "the default path is gated (no authority passed) a ProseObservation origin in the real ontology is blocked",
+          "the default path is gated (no authority passed) a fresh, nonexistent IRI is blocked",
+          "the refusal vocabulary a node typed both StrategicObjective and Proposition is authority_type_mismatch",
+          "the refusal vocabulary an edited description under a kept digest is authority_digest_mismatch",
+          "the refusal vocabulary a sha256:PENDING-SJ-002 placeholder is authority_digest_mismatch",
+          "the refusal vocabulary Authority.resolve/2 over index/1 names each refusal",
+          "the refusal vocabulary verify_origin/3 shares the law: a tampered canonical objective is refused",
+          "every selection surface applies the gate frontier_from_events/4",
+          "every selection surface applies the gate schedule/4",
+          "every selection surface applies the gate Descriptor.build/4",
+          "every selection surface applies the gate Descriptor.build_xaas_contract/4",
+          "every selection surface applies the gate Reconciler.frontier/3",
+          "Reconciler.reconcile/4 (promote path) refuses an unadmitted origin the admitted origin's receipt appends; the prose origin's identical receipt is refused",
+          "bootstrap selects only from an admitted goal root the committed goal yields eligible work; a tampered GC-T description yields none",
+          "fail closed an unreadable authority path blocks every order with authority_index_unavailable",
+          "fail closed Cli.frontier/1 with an unreadable --authority-graph is invalid invocation (exit 2)",
+          "fail closed Cli.frontier/1 with an unparseable --authority-graph is a typed refusal (exit 1)",
+          "fail closed canonical_index/1 is keyed by content: an edited file is never served stale",
+          "observe/1 (observation over the committed fixture) admits every candidate and stamps UNKNOWN standing with NO authority onto each",
+          "observe/1 (observation over the committed fixture) a second run is byte-identical and check/2 confirms the written propositions",
+          "observe/1 provenance admission (step a) one changed source byte refuses every proposition and the root, each by IRI",
+          "observe/1 provenance admission (step a) a changed sj:sourceText refuses exactly that proposition",
+          "observe/1 provenance admission (step a) a shifted offset refuses the proposition (span bytes and IRI no longer recompute)",
+          "observe/1 provenance admission (step a) a renamed candidate IRI refuses (the IRI must recompute per PVOCAB)",
+          "observe/1 provenance admission (step a) an anonymous (blank-node) candidate has no identity and is refused",
+          "observe/1 provenance admission (step a) a candidate file cannot smuggle a non-proposition subject past admission",
+          "observe/1 SHACL and domain admission (steps b, c) a kind outside the ARD 5.2 list is refused by the proposition shape",
+          "observe/1 SHACL and domain admission (steps b, c) an uncovered gate is refused by name",
+          "observe/1 SHACL and domain admission (steps b, c) an Exclusion that restates a required Postcondition of the same gate is a contradiction",
+          "observe/1 SHACL and domain admission (steps b, c) a proposition required by a checkpoint outside the root's gates is refused",
+          "admit_goal/1 (GC23-3 shapes court, then Authority stamping) the fixture goal admits and every GoalCheckpoint carries exactly one recomputable digest",
+          "admit_goal/1 (GC23-3 shapes court, then Authority stamping) F1: deleting one mandatory tuple field of the goal's order is refused, naming it",
+          "admit_goal/1 (GC23-3 shapes court, then Authority stamping) a pre-existing placeholder digest is refused, never trusted or silently restamped",
+          "admit_goal/1 (GC23-3 shapes court, then Authority stamping) a predecessor reference resolves only through --context; context violations are out of scope",
+          "mix semantic_jira.observe_prose (real subprocess, no LLM credentials) writes propositions only, --check confirms them, drift and refusals exit 1",
+          "observation authority discipline the observed projection contains zero work orders",
+          "observation authority discipline every proposition is stamped UNKNOWN standing, NONE authority claim, and no digest",
+          "observation authority discipline the observer writes exactly one file, propositions.ttl",
+          "observation authority discipline the manufacture surface is deleted from the observer module"
+        ]
+      },
+      "sha256": "3e2bfdd90b5ab2050f173e1e7eecbe95fd497763033285db71323957c904d442",
+      "subject_compare": "ahead"
+    },
+    "seanchatmangpt/ggen_igniter:release/v26.9.25/receipts/sjira-origin-authority.json": {
+      "blob_sha": "a71078a21a32fc9e8e17228c904ceaa33611bb64",
+      "head_sha": "9639198b5c3e0e25906acc5b36dd9eb17bd592be",
+      "json": {
+        "authority_claim": "NONE",
+        "command": "MIX_BUILD_ROOT=_build-receipts MIX_ENV=test mix run --no-start release/v26.9.25/receipts/replay/origin_probe.exs",
+        "cwd": "/Users/sac/ggen_igniter @ 780a81d81c6e579084ba3048037419aab7d7386e",
+        "dfcm_receipt": {
+          "authority": {
+            "actor": "claude-code lane receipts-ggen_igniter",
+            "ceiling": "OBSERVE",
+            "grant": "NONE"
+          },
+          "consequence": {
+            "commits": [],
+            "files_changed": [
+              "release/v26.9.25/receipts/sjira-origin-authority.json"
+            ],
+            "remote_effects": []
+          },
+          "identity": {
+            "base_sha": "780a81d81c6e579084ba3048037419aab7d7386e",
+            "repo": "seanchatmangpt/ggen_igniter",
+            "subject": "sjira-origin-authority",
+            "subject_sha": "780a81d81c6e579084ba3048037419aab7d7386e"
+          },
+          "replay": {
+            "commands": [
+              {
+                "cmd": "MIX_BUILD_ROOT=_build-receipts MIX_ENV=test mix run --no-start release/v26.9.25/receipts/replay/origin_probe.exs",
+                "cwd": "ggen_igniter@780a81d81c6e579084ba3048037419aab7d7386e",
+                "exit": 0,
+                "output_sha256": "97f235292388767b08f32037e8e0a123b6266f300977127827314b59b19249c0",
+                "summary": "34/34 orders one admitted origin; counts 32/1/1; 0 unadmitted; zero/multiple-origin mutations refused"
+              }
+            ],
+            "durable_location": "release/v26.9.25/receipts/replay/"
+          },
+          "standing": {
+            "derived_from": "origin_probe.exs at 780a81d81c6e579084ba3048037419aab7d7386e",
+            "value": "ALIVE"
+          }
+        },
+        "evidence_ceiling": "LOCAL_RUN",
+        "evidence_kind": "origin_authority",
+        "exit_code": 0,
+        "falsifiers_refused": {
+          "multiple_origin": {
+            "order": "https://ggen-igniter.dev/ontology/semantic-jira#gall-023",
+            "shacl_conforms": false,
+            "shacl_violations": 1,
+            "verify_origin": "{:error, {:refused_origin, {:ambiguous_origin_authority, [\"https://ggen-igniter.dev/ontology/semantic-jira#objective-project-manufacturer\", \"https://ggen-igniter.dev/ontology/semantic-jira#objective-semantic-jira-mvp\"]}}}"
+          },
+          "zero_origin": {
+            "order": "https://ggen-igniter.dev/ontology/semantic-jira#gall-023",
+            "shacl_conforms": false,
+            "shacl_violations": 1,
+            "verify_origin": "{:error, {:refused_origin, :origin_authority_missing}}"
+          }
+        },
+        "inputs": {
+          "law": "GgenIgniter.SemanticJira.Shacl.validate/2 + Authority.index/1 + Authority.resolve/2 (+ verify_origin/3 for falsifiers)",
+          "ontology": "priv/ggen/semantic-jira-pack/ontology.ttl",
+          "shapes": "priv/ggen/semantic-jira-pack/shapes/work-order.shacl.ttl"
+        },
+        "observed_at": "2026-09-25T13:24:05Z",
+        "output_path": "release/v26.9.25/receipts/replay/origin-probe.out.json",
+        "output_sha256": "97f235292388767b08f32037e8e0a123b6266f300977127827314b59b19249c0",
+        "release": "v26.9.25",
+        "repo": "seanchatmangpt/ggen_igniter",
+        "requirement_ids": [
+          "AC-03",
+          "F-02"
+        ],
+        "result": {
+          "authority_admitted": [
+            "https://ggen-igniter.dev/ontology/semantic-jira#objective-code-work-authority",
+            "https://ggen-igniter.dev/ontology/semantic-jira#objective-project-manufacturer",
+            "https://ggen-igniter.dev/ontology/semantic-jira#objective-semantic-jira-mvp"
+          ],
+          "authority_refused": [],
+          "origin_counts": {
+            "https://ggen-igniter.dev/ontology/semantic-jira#objective-code-work-authority": 1,
+            "https://ggen-igniter.dev/ontology/semantic-jira#objective-project-manufacturer": 32,
+            "https://ggen-igniter.dev/ontology/semantic-jira#objective-semantic-jira-mvp": 1
+          },
+          "shacl_conforms": true,
+          "shacl_focus_nodes": 243,
+          "shacl_violations": 0,
+          "unadmitted": [],
+          "work_orders_total": 34,
+          "work_orders_with_exactly_one_admitted_origin": 34
+        },
+        "schema": "ggen_igniter/sjira-origin-authority/v1",
+        "standing": "ALIVE",
+        "subject": {
+          "repo": "seanchatmangpt/ggen_igniter",
+          "sha": "780a81d81c6e579084ba3048037419aab7d7386e"
+        },
+        "subject_sha": "780a81d81c6e579084ba3048037419aab7d7386e"
+      },
+      "sha256": "6369a68761d30dd74b5ca45937a40a8e109b547897ea54d9483afdb84f34e329",
+      "subject_compare": "ahead"
+    },
+    "seanchatmangpt/xaas:release/v26.9.25/receipts/case-study-schema.json": {
+      "blob_sha": "1de26101e2589f54cce8ffcba7d54995fecf68f0",
+      "head_sha": "e039967dac9f88961873b6a958f3979a106854f2",
+      "json": {
+        "case": {
+          "case_iri": "urn:xaas:wd-cs2:case",
+          "case_revision_digest": "6bd9762edbdf7c8f2a267106343601c60eef8c5cf32f52e183b963cc6453806f",
+          "generator_identity": "ggen_igniter@26.9.15+engine=sparql;wd_cs2_case_study_pack=sha256:32704e04ec1ea4fc15eebb00a73678eabb0feac1720c8ad8ebb64b57c8a07693",
+          "projections_sha256": {
+            "SLIDE-EVIDENCE-MAP.json": "75718e877208625f67ef54d6b6957a4da304c097e4da782a131b754d3a3bfb80",
+            "case-study.json": "301906a8cdc1db0847e0b9e2f2733736b1a5905bdee1ac73cf9e6648b930f883",
+            "claims-ledger.json": "c0bb3d8afea7cea6c6cc82a09e2a3343e9dfdb2afc820812e8dfa2b76aa04cc3"
+          }
+        },
+        "checks": {
+          "court_exit_0": true,
+          "court_schema_v2": true,
+          "court_standing_alive": true,
+          "gate_count_ge_9": true,
+          "pytest_exit_0": true,
+          "pytest_no_skips": true,
+          "refusal_rows_0": true,
+          "shacl_conforms": true,
+          "wd_deck_check_exit_0": true,
+          "wd_deck_no_projection_drift": true
+        },
+        "commands": [
+          {
+            "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 scripts/stogaf_semantic_court.py --pack priv/packs/wd_cs2_pack --output /private/tmp/claude-501/-Users-sac/90d06f90-3c25-4b15-bede-3d0e7e58ac78/scratchpad/v26925/lanes/receipts-xaas/out/receipts/work/semantic-report.json",
+            "cwd": "<subject-dir>",
+            "exit_code": 0,
+            "output_sha256": "4fd863f520737165f75d1c68292f805f2ba6c9d1f52a2eae8148f41a523da105",
+            "report_file_sha256": "7e25a5869bcd9e7aa1335d04ccd356e9b4fc8d7eca0a7f7bfc94f67a15fe7ff1"
+          },
+          {
+            "command": "/private/tmp/claude-501/-Users-sac/90d06f90-3c25-4b15-bede-3d0e7e58ac78/scratchpad/v26925/lanes/receipts-xaas/venv/bin/python tools/wd_deck/wd_deck.py case-study --check --build-dir tmp/wd-case-study",
+            "cwd": "<subject-dir>",
+            "exit_code": 0,
+            "output_sha256": "b4cea3df28ff3a183af3adf1b9701a81642ee5c10c99ca77c8b05e69039fcc14"
+          },
+          {
+            "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -m pytest -v -p no:cacheprovider test/wd_case_study_court_test.py",
+            "cwd": "<subject-dir>",
+            "exit_code": 0,
+            "output_sha256": "164072230ddd83180c4544a6c9c5b2b9a73b381708131386d6474d4635cab32d",
+            "summary": "25 passed"
+          }
+        ],
+        "court_report": {
+          "data_triples": 1542,
+          "gate_count": 9,
+          "inputs_sha256_digest": "55523efd594d6fe9ef793f24df472bc33066ccd2a1ce95227ddd1944becd166e",
+          "refusal_rows": 0,
+          "report_sha256": "eb552608c37b93e1d8cb5b2963551f948392dae39ff448c8ead02a75184bffde",
+          "schema": "STOGAF_SEMANTIC_COURT_V2",
+          "shacl_conforms": true
+        },
+        "evidence_ceiling": "REPO_LOCAL_FIXTURE",
+        "manufactured_at": "2026-09-25T13:27:50Z",
+        "manufacturer": "release/v26.9.25/receipts/manufacture.py",
+        "name": "case-study-schema",
+        "non_claims": [
+          "EXTERNAL_STANDING",
+          "WD_ACCEPTANCE",
+          "ST-6 AUTONOMIC",
+          "ST-7 ACTUATED"
+        ],
+        "receipt_sha256": "d32afca859a3b633584532c40be44a46a5343c68516fc292f508862a538f6d40",
+        "refusals": [],
+        "repository": "seanchatmangpt/xaas",
+        "requirement_ids": [
+          "AC-13"
+        ],
+        "schema": "xaas.release-receipt/v26.9.25",
+        "standing": "ALIVE",
+        "subject": {
+          "materialization": "git archive <subject_sha> (plain dir)",
+          "repository": "seanchatmangpt/xaas",
+          "sha": "c10cdab95b927ed82c5c212a3f36d02b52ed525e"
+        },
+        "subject_sha": "c10cdab95b927ed82c5c212a3f36d02b52ed525e"
+      },
+      "sha256": "c302ddafb20ae0c1d5150e2d408dac0ce42a0b59b94474c1f96feaea7ccd0c8f",
+      "subject_compare": "ahead"
+    },
+    "seanchatmangpt/xaas:release/v26.9.25/receipts/cloud-runtime.json": {
+      "blob_sha": "75e882da422071dbfa8f40ef626d0381c9f4b579",
+      "head_sha": "e039967dac9f88961873b6a958f3979a106854f2",
+      "json": {
+        "broken_term": "R_missing_authority",
+        "claim": "cloud-to-ZCode execution is NOT claimed; only the local loopback fabric leg is ALIVE",
+        "execution_receipt": null,
+        "legs": [
+          {
+            "evidence_ceiling": "LOCAL_LOOPBACK",
+            "execution_receipt": {
+              "blob_sha256": "bcf57fe91d9e5a11d51ceaaeed917473fcc02c9f606680d9fb9ab5b6c99ab99a",
+              "merge_sha": "d6727fef06b170bc6c3839bbf2a9456e33111920",
+              "path": "xaas-runtime/receipts/20260925T100606Z-fabric-live-loopback.receipt.json",
+              "pr": 42,
+              "receipt_sha256": "c9956484ce65fd3aae26b06fab2c7f9c37d5645adc485c33777559107126bf98",
+              "repository": "seanchatmangpt/chatgpt-cloud-elixir",
+              "sealed_receipt_replay_verified": true,
+              "sealed_receipt_sha256": "3aaad2ce67fb60f5508bec79dbd59964aa502aff983b278ba68e4db4adefee67",
+              "server_subject": "seanchatmangpt/xaas@99de79bbf3eadefa15f5bbe52be9d4403b52b84d (ancestor of subject_sha)"
+            },
+            "leg": "fabric local loopback (xaas /internal-api/fabric <- ChatGPTCloud.Xaas client)",
+            "standing": "ALIVE",
+            "subject_tests": {
+              "command": "MIX_ENV=test MIX_TEST_PARTITION=_receipts mix test test/xaas/tunnel test/xaas_web/fabric_controller_test.exs",
+              "exit_code": 0,
+              "output_sha256": "48d38643e10ecbec28dad43abd17685c7a570080c8957fa7bf6ac098eb07b7a8",
+              "summary": "43 tests, 0 failures"
+            }
+          },
+          {
+            "broken_term": "R_missing_identity",
+            "class": null,
+            "leg": "head-verified close",
+            "standing": "BLOCKED(CAPABILITY_GAP)"
+          },
+          {
+            "broken_term": "R_missing_authority",
+            "class": "TRANSPORT_FAILURE",
+            "leg": "ChatGPT container -> xaas",
+            "standing": "BLOCKED(IRREDUCIBLE_TRANSPORT_CONFIG)"
+          },
+          {
+            "broken_term": "R_missing_authority",
+            "class": "AUTHORITY_FAILURE",
+            "leg": "fabric scope on Fly",
+            "standing": "BLOCKED(DEPLOY_AUTHORITY)"
+          },
+          {
+            "broken_term": "R_missing_authority",
+            "class": "AUTHORITY_FAILURE",
+            "leg": "production org token",
+            "standing": "BLOCKED(IRREDUCIBLE_AUTHORITY)"
+          },
+          {
+            "broken_term": "R_missing_consequence",
+            "class": "TRANSPORT_FAILURE",
+            "leg": "container egress + long-poll through Fly proxy",
+            "standing": "BLOCKED(NETWORK)"
+          },
+          {
+            "broken_term": "R_missing_authority",
+            "class": "DEPENDENCY_FAILURE",
+            "leg": "real zcode-cli executor",
+            "standing": "BLOCKED(IRREDUCIBLE_PROVIDER_CONFIG)"
+          },
+          {
+            "broken_term": "admission_vacuous",
+            "class": "CAPABILITY_GAP",
+            "leg": "exposure beyond loopback",
+            "standing": "REFUSED(UNBOUND_PRINCIPAL_CAPABILITIES)"
+          },
+          {
+            "broken_term": "R_missing_authority",
+            "class": "AUTHORITY_FAILURE",
+            "leg": "actuate",
+            "standing": "REFUSED(authority_ceiling)"
+          }
+        ],
+        "manufactured_at": "2026-09-25T13:27:50Z",
+        "manufacturer": "release/v26.9.25/receipts/manufacture.py",
+        "name": "cloud-runtime",
+        "non_claims": [
+          "CHATGPT_CONTAINER_EGRESS",
+          "CLOUD_TO_ZCODE_EXECUTION",
+          "CLOUD_TRANSPORT",
+          "FLY_DEPLOYMENT",
+          "ZCODE_CLI_EXECUTION"
+        ],
+        "receipt_sha256": "4f3626101249b5ba2ee4c486f7abcc74b81de938c761cb54e211705d321ded08",
+        "repository": "seanchatmangpt/xaas",
+        "requirement_ids": [
+          "F-09"
+        ],
+        "schema": "xaas.release-receipt/v26.9.25",
+        "standing": "BLOCKED",
+        "subject": {
+          "materialization": "git archive <subject_sha> (plain dir)",
+          "repository": "seanchatmangpt/xaas",
+          "sha": "c10cdab95b927ed82c5c212a3f36d02b52ed525e"
+        },
+        "subject_sha": "c10cdab95b927ed82c5c212a3f36d02b52ed525e",
+        "transport_receipt": null,
+        "type": "TRANSPORT_FAILURE:cloud-to-zcode-leg-unreceipted"
+      },
+      "sha256": "7ed9435de6c1f6713b849f8fc40499a9fe69f45f98cf4244bad85d8301715354",
+      "subject_compare": "ahead"
+    },
+    "seanchatmangpt/xaas:release/v26.9.25/receipts/wd-evidence-ceiling.json": {
+      "blob_sha": "45f75358a1be607911ba6b6051469a4e52469422",
+      "head_sha": "e039967dac9f88961873b6a958f3979a106854f2",
+      "json": {
+        "authority_ceiling": "SELECT_CONSTRUCT_ONLY",
+        "baseline_report_sha256": "eb552608c37b93e1d8cb5b2963551f948392dae39ff448c8ead02a75184bffde",
+        "checks": {
+          "authority_select_construct_only": true,
+          "baseline_court_alive": true,
+          "current_conformance_st4": true,
+          "engineer_disposition_required": true,
+          "every_ceiling_control_refused": true,
+          "evidence_ceiling_repo_local_fixture": true,
+          "gates_020_060_070_all_exercised": true,
+          "st6_st7_declared_non_claims": true,
+          "st6_st7_unclaimed_in_ledger": true
+        },
+        "claimed_levels": [
+          "ST-4 CONSTRAINED"
+        ],
+        "commands": [
+          {
+            "command": "python3 scripts/stogaf_semantic_court.py --pack priv/packs/wd_cs2_pack --extra <tmp>/authority_drift.ttl --output <tmp>/authority_drift.report.json",
+            "cwd": "<subject-dir>",
+            "exit_code": 1,
+            "output_sha256": "38b0d7e380482bb34a9e158d8816f07fb70ea5b5828e03204c8900ac5dce2284"
+          },
+          {
+            "command": "python3 scripts/stogaf_semantic_court.py --pack priv/packs/wd_cs2_pack --extra <tmp>/claim_at_st6.ttl --output <tmp>/claim_at_st6.report.json",
+            "cwd": "<subject-dir>",
+            "exit_code": 1,
+            "output_sha256": "8ed82723d5a2991e5228ce31c4623e326f202751284457f0623ae10d23f1f920"
+          },
+          {
+            "command": "python3 scripts/stogaf_semantic_court.py --pack priv/packs/wd_cs2_pack --extra <tmp>/claim_at_st7.ttl --output <tmp>/claim_at_st7.report.json",
+            "cwd": "<subject-dir>",
+            "exit_code": 1,
+            "output_sha256": "852470e9b8f32a6b33ac785f6852785e9ea69a0119d3b7ca7efd94bb85a74428"
+          },
+          {
+            "command": "python3 scripts/stogaf_semantic_court.py --pack priv/packs/wd_cs2_pack --extra <tmp>/claim_text_autonomic.ttl --output <tmp>/claim_text_autonomic.report.json",
+            "cwd": "<subject-dir>",
+            "exit_code": 1,
+            "output_sha256": "c95ba50bc001e20e742fc0dc5d89ecabd490875a25a3d176015f2057fd34d955"
+          },
+          {
+            "command": "python3 scripts/stogaf_semantic_court.py --pack priv/packs/wd_cs2_pack --extra <tmp>/claim_text_mttr.ttl --output <tmp>/claim_text_mttr.report.json",
+            "cwd": "<subject-dir>",
+            "exit_code": 1,
+            "output_sha256": "8b84e6d012f5fd5aa2f71edee135be823d84f63d42ac3d80f3b48575d20d0ad2"
+          },
+          {
+            "command": "python3 scripts/stogaf_semantic_court.py --pack priv/packs/wd_cs2_pack --extra <tmp>/claim_without_falsifier.ttl --output <tmp>/claim_without_falsifier.report.json",
+            "cwd": "<subject-dir>",
+            "exit_code": 1,
+            "output_sha256": "dcf2d3d4ff9802c98bfa0e1992a6b5f16e24a01ba08748facbdd8ebc42e7a6f5"
+          },
+          {
+            "command": "python3 scripts/stogaf_semantic_court.py --pack priv/packs/wd_cs2_pack --extra <tmp>/current_conformance_st6.ttl --output <tmp>/current_conformance_st6.report.json",
+            "cwd": "<subject-dir>",
+            "exit_code": 1,
+            "output_sha256": "6302f1d9ae2c58539757dd92c3ea5305f57d9203794b7fd27b7e4985ec4d1345"
+          },
+          {
+            "command": "python3 scripts/stogaf_semantic_court.py --pack priv/packs/wd_cs2_pack --extra <tmp>/current_conformance_st7.ttl --output <tmp>/current_conformance_st7.report.json",
+            "cwd": "<subject-dir>",
+            "exit_code": 1,
+            "output_sha256": "7c586e7e8684ed27aff6ada9e7357ecbd6cc360ef982d9ecedbc83e161ac1279"
+          },
+          {
+            "command": "python3 scripts/stogaf_semantic_court.py --pack priv/packs/wd_cs2_pack --extra <tmp>/evidence_on_foreign_subject.ttl --output <tmp>/evidence_on_foreign_subject.report.json",
+            "cwd": "<subject-dir>",
+            "exit_code": 1,
+            "output_sha256": "9e5d1cee6cc3873b56e594410267e6e25b00fac5ebeea78d4b34b15af2062c8a"
+          }
+        ],
+        "current_conformance": "ST-4 CONSTRAINED",
+        "evidence_ceiling": "REPO_LOCAL_FIXTURE",
+        "human_gate": "ENGINEER_DISPOSITION_REQUIRED",
+        "manufactured_at": "2026-09-25T13:27:50Z",
+        "manufacturer": "release/v26.9.25/receipts/manufacture.py",
+        "name": "wd-evidence-ceiling",
+        "negative_controls": [
+          {
+            "control": "authority_drift",
+            "control_ttl_sha256": "d72e2c97af6ff7c9abdaf2bcdcb6f7180fc95d44a859b889f39e6602b6cc1e32",
+            "court_standing": "REFUSED",
+            "expected_gate": "020_authority_ceiling.rq",
+            "gate_refusal_rows": 1,
+            "refused_by_expected_gate": true,
+            "report_sha256": "3d36c364d87f98d4b5080ab00e4e6d4c26709520969864d6cbe3e3f162d75be6"
+          },
+          {
+            "control": "claim_at_st6",
+            "control_ttl_sha256": "0059d08b8eb7762c8ef2dabc70a0db0653990012a216c5e9d70fb70134f82733",
+            "court_standing": "REFUSED",
+            "expected_gate": "060_claim_ceiling.rq",
+            "gate_refusal_rows": 1,
+            "refused_by_expected_gate": true,
+            "report_sha256": "67ef052adf0f8391ba4aa3b53b0f08725602585ed58766281d59d487b3db32cd"
+          },
+          {
+            "control": "claim_at_st7",
+            "control_ttl_sha256": "bd26b521b3879a17da6c1c079492e37985e2146054cbcf4c5223b79289240bbb",
+            "court_standing": "REFUSED",
+            "expected_gate": "060_claim_ceiling.rq",
+            "gate_refusal_rows": 1,
+            "refused_by_expected_gate": true,
+            "report_sha256": "b8eec9afdd3b8001772039076a100b2ca25e27e82e229787a4962fc9bb417ae2"
+          },
+          {
+            "control": "claim_text_autonomic",
+            "control_ttl_sha256": "f5713c45dc6e32115139bef0f8e7433118ca1e7a5a6d9c8e6edc30f8e72c113c",
+            "court_standing": "REFUSED",
+            "expected_gate": "060_claim_ceiling.rq",
+            "gate_refusal_rows": 1,
+            "refused_by_expected_gate": true,
+            "report_sha256": "436f1a1587eff5839cce8c22644f0c255cd9fa5f81dfd6fd4ac7a45fdd62de5c"
+          },
+          {
+            "control": "claim_text_mttr",
+            "control_ttl_sha256": "d98d6600039a9b9852b25cfc7839a19594984df7acdaec6bf66255c33bb7e4f0",
+            "court_standing": "REFUSED",
+            "expected_gate": "060_claim_ceiling.rq",
+            "gate_refusal_rows": 1,
+            "refused_by_expected_gate": true,
+            "report_sha256": "8950066c5e287b6dfea99dfcab0b78aca2c89bf32c6382f409d86bf024273bbd"
+          },
+          {
+            "control": "claim_without_falsifier",
+            "control_ttl_sha256": "94649f3e9ce64eea17d5f4918779d0eea778e7d35d1862bc807379a259e4b0bf",
+            "court_standing": "REFUSED",
+            "expected_gate": "070_claim_evidence.rq",
+            "gate_refusal_rows": 2,
+            "refused_by_expected_gate": true,
+            "report_sha256": "23cf19773a3446935380565803c00e0cb29ed0080daddddaa771f88b6fdd46e8"
+          },
+          {
+            "control": "current_conformance_st6",
+            "control_ttl_sha256": "407c7430bebbaf48de406c9ca3f8daa0099febf75b2357586309d5d8137851f2",
+            "court_standing": "REFUSED",
+            "expected_gate": "020_authority_ceiling.rq",
+            "gate_refusal_rows": 1,
+            "refused_by_expected_gate": true,
+            "report_sha256": "dd48bacf68d83d98f7e5acfe18d7c18385bc8ba686a65a855458e4540e0b963a"
+          },
+          {
+            "control": "current_conformance_st7",
+            "control_ttl_sha256": "6f60a692ec438bc0d3ad40e57a2440b6e97732fb5ba5e38ab99db82eadc3a386",
+            "court_standing": "REFUSED",
+            "expected_gate": "020_authority_ceiling.rq",
+            "gate_refusal_rows": 1,
+            "refused_by_expected_gate": true,
+            "report_sha256": "9653c09c7db6a38b5b52b1c492522e8b70af9c03e7c8d63f5fc318c0534fcf65"
+          },
+          {
+            "control": "evidence_on_foreign_subject",
+            "control_ttl_sha256": "d7a6e79ffa3a59bbe75fcfa9c8234a32f7b9c2c86caff55cbf735c074374e05a",
+            "court_standing": "REFUSED",
+            "expected_gate": "070_claim_evidence.rq",
+            "gate_refusal_rows": 1,
+            "refused_by_expected_gate": true,
+            "report_sha256": "da7b48d5dd2eaa83632b49936a292afebff8217a067a470eb3dc8f48aff58fac"
+          }
+        ],
+        "non_claims": [
+          "ST-6 AUTONOMIC",
+          "ST-7 ACTUATED",
+          "ST-8 CLOSED_LOOP",
+          "ST-9 LEARNING",
+          "WD acceptance",
+          "measured WD MTTR reduction",
+          "production deployment"
+        ],
+        "receipt_sha256": "ed4aff4a0c77f8e934ca8035c66ab78621387f6a13ce54af43b5b3ab6767b3d5",
+        "refusals": [],
+        "repository": "seanchatmangpt/xaas",
+        "requirement_ids": [
+          "AC-14",
+          "F-12"
+        ],
+        "schema": "xaas.release-receipt/v26.9.25",
+        "standing": "ALIVE",
+        "subject": {
+          "materialization": "git archive <subject_sha> (plain dir)",
+          "repository": "seanchatmangpt/xaas",
+          "sha": "c10cdab95b927ed82c5c212a3f36d02b52ed525e"
+        },
+        "subject_sha": "c10cdab95b927ed82c5c212a3f36d02b52ed525e",
+        "target_conformance": "ST-6 AUTONOMIC",
+        "unclaimed": [
+          "ST-6 AUTONOMIC",
+          "ST-7 ACTUATED"
+        ]
+      },
+      "sha256": "9972ec3ce010f372adc6e1e393ca9e93d892d61618af60e85222c5f908bab73c",
+      "subject_compare": "ahead"
+    },
+    "seanchatmangpt/zoela:release/v26.9.25/receipts/godslaw-interpretation.json": {
+      "error": "repo-unobserved:HTTP404"
+    },
+    "seanchatmangpt/zoela:release/v26.9.25/receipts/godslaw-migration.json": {
+      "error": "repo-unobserved:HTTP404"
+    },
+    "seanchatmangpt/zoela:release/v26.9.25/receipts/vision2027-admission.json": {
+      "error": "repo-unobserved:HTTP404"
+    }
+  },
+  "authority": "github-api:GITHUB_TOKEN:read",
+  "environment": {
+    "cold": true,
+    "run_id": "36160116076"
+  },
+  "observed_at": "2026-09-25T16:21:43Z",
+  "private_public_compare": {},
+  "private_repos": {
+    "authority": "gh-cli:operator:read",
+    "observed_at": "2026-09-25T16:09:43Z",
+    "observer": "operator-local",
+    "release": "v26.9.25",
+    "repos": {
+      "seanchatmangpt/zoela": {
+        "check_runs": [
+          {
+            "conclusion": "failure",
+            "head_sha": "3d16cf3e43e195092161aaba4d481c7654b4035d",
+            "name": "ggen-planning-via-ecosystem",
+            "status": "completed"
+          },
+          {
+            "conclusion": "failure",
+            "head_sha": "3d16cf3e43e195092161aaba4d481c7654b4035d",
+            "name": "source-contract",
+            "status": "completed"
+          }
+        ],
+        "compare_status": "identical",
+        "default_branch": "main",
+        "head_sha": "3d16cf3e43e195092161aaba4d481c7654b4035d",
+        "observed_at": "2026-09-25T16:09:43Z",
+        "observer": "operator-local",
+        "pin_sha": "3d16cf3e43e195092161aaba4d481c7654b4035d",
+        "receipts": [
+          {
+            "blob_sha": "21bed5fe74a07b610f818564e949c115c0f9bb1b",
+            "content": "{\n  \"command\": \"D=$(mktemp -d) && git archive f1313f1c1462b9d2f4dd3cb010dbe5921f53185d ontology packs/zoela-ggen-pack ggen.toml | tar -x -C $D && python3 release/v26.9.25/receipts/godslaw-gate-witness.py $D f1313f1c1462b9d2f4dd3cb010dbe5921f53185d . $D/witness-out.json\",\n  \"evidence_ceiling\": \"LOCAL_WITNESS_RUN\",\n  \"exit_code\": 0,\n  \"falsifier\": \"Refuse if GodsLaw collapses differing doctrinal interpretations into an unproven universal platform assertion.\",\n  \"gate_rows\": {\n    \"125_doctrine_layer_distinct.rq\": 0,\n    \"130_interpretation_provenance.rq\": 0,\n    \"135_disagreement_preserved.rq\": 0\n  },\n  \"graph\": {\n    \"ontologies\": [\n      \"ontology/zoela.ttl\",\n      \"packs/zoela-ggen-pack/ontology.ttl\",\n      \"ontology/zoe-recovers.ttl\",\n      \"ontology/kingdom-capability.ttl\",\n      \"ontology/design-closure.ttl\",\n      \"ontology/planning-center-surface.ttl\",\n      \"ontology/ground-network.ttl\",\n      \"ontology/godslaw.ttl\",\n      \"ontology/vision-2027.ttl\",\n      \"ontology/gall/foundation.ttl\",\n      \"ontology/gall/dependency.ttl\",\n      \"ontology/gall/projection.ttl\",\n      \"ontology/gall/planning.ttl\",\n      \"ontology/gall/evidence.ttl\"\n    ],\n    \"triples\": 2157\n  },\n  \"id\": \"F-13\",\n  \"log_sha256\": \"sha256:e15717191faef673316d1524f3abacd27aaf37de02cfb2e5279c54e2f9372c47\",\n  \"mutants\": [\n    {\n      \"falsifier_group\": \"F-13\",\n      \"first_row\": \"layer-collapse:https://zoela.org/ontology/witness-interpretation-a\",\n      \"gate\": \"125_doctrine_layer_distinct.rq\",\n      \"mutant\": \"interpretation double-typed as Doctrine (layer collapse)\",\n      \"rows\": 1,\n      \"verdict\": \"REFUSED\"\n    },\n    {\n      \"falsifier_group\": \"F-13\",\n      \"first_row\": \"class-collapse:https://zoela.org/ontology/Interpretation\",\n      \"gate\": \"125_doctrine_layer_distinct.rq\",\n      \"mutant\": \"Interpretation made a subclass of Doctrine (class collapse)\",\n      \"rows\": 1,\n      \"verdict\": \"REFUSED\"\n    },\n    {\n      \"falsifier_group\": \"F-13\",\n      \"first_row\": \"layer-collapse:https://zoela.org/ontology/witness-community-policy\",\n      \"gate\": \"125_doctrine_layer_distinct.rq\",\n      \"mutant\": \"community policy asserted as Scripture (universal assertion)\",\n      \"rows\": 1,\n      \"verdict\": \"REFUSED\"\n    },\n    {\n      \"falsifier_group\": \"F-13\",\n      \"first_row\": \"interpretation-unattributed:https://zoela.org/ontology/witness-interpretation-b\",\n      \"gate\": \"130_interpretation_provenance.rq\",\n      \"mutant\": \"interpretation stripped of attribution\",\n      \"rows\": 1,\n      \"verdict\": \"REFUSED\"\n    },\n    {\n      \"falsifier_group\": \"F-13\",\n      \"first_row\": \"interpretation-without-attributed-profile:https://zoela.org/ontology/witness-interpretation-b\",\n      \"gate\": \"130_interpretation_provenance.rq\",\n      \"mutant\": \"interpretation with no interpretive profile\",\n      \"rows\": 1,\n      \"verdict\": \"REFUSED\"\n    },\n    {\n      \"falsifier_group\": \"F-13\",\n      \"first_row\": \"doctrine-without-profile:https://zoela.org/ontology/universal-doctrine\",\n      \"gate\": \"130_interpretation_provenance.rq\",\n      \"mutant\": \"doctrine asserted without a profile (unproven universal)\",\n      \"rows\": 1,\n      \"verdict\": \"REFUSED\"\n    },\n    {\n      \"falsifier_group\": \"F-13\",\n      \"first_row\": \"community-policy-unscoped:https://zoela.org/ontology/witness-community-policy\",\n      \"gate\": \"130_interpretation_provenance.rq\",\n      \"mutant\": \"community policy not tenant-scoped (platform-wide)\",\n      \"rows\": 1,\n      \"verdict\": \"REFUSED\"\n    },\n    {\n      \"falsifier_group\": \"F-13\",\n      \"first_row\": \"disagreement-resolved:https://zoela.org/ontology/witness-disagreement-1\",\n      \"gate\": \"135_disagreement_preserved.rq\",\n      \"mutant\": \"platform resolves the disagreement\",\n      \"rows\": 1,\n      \"verdict\": \"REFUSED\"\n    },\n    {\n      \"falsifier_group\": \"F-13\",\n      \"first_row\": \"disagreement-under-two-positions:https://zoela.org/ontology/witness-disagreement-1\",\n      \"gate\": \"135_disagreement_preserved.rq\",\n      \"mutant\": \"disagreement collapsed to one position\",\n      \"rows\": 1,\n      \"verdict\": \"REFUSED\"\n    },\n    {\n      \"falsifier_group\": \"F-13\",\n      \"first_row\": \"disagreement-not-preserved:https://zoela.org/ontology/witness-disagreement-1\",\n      \"gate\": \"135_disagreement_preserved.rq\",\n      \"mutant\": \"disagreement state not PRESERVED\",\n      \"rows\": 1,\n      \"verdict\": \"REFUSED\"\n    },\n    {\n      \"falsifier_group\": \"F-13\",\n      \"first_row\": \"disagreement-under-two-positions:https://zoela.org/ontology/witness-disagreement-1\",\n      \"gate\": \"135_disagreement_preserved.rq\",\n      \"mutant\": \"both positions under one profile\",\n      \"rows\": 1,\n      \"verdict\": \"REFUSED\"\n    }\n  ],\n  \"mutants_refused\": 11,\n  \"mutants_total\": 11,\n  \"name\": \"godslaw-interpretation\",\n  \"observation\": {\n    \"broken_term\": \"R_not_fed_back\",\n    \"crown_observer\": \"chatman-ecosystem scripts/release_train/root_crown (GitHub API contents read)\",\n    \"crown_typing_on_404\": \"root_crown evidence._artifact maps HTTP 404 to BLOCKED(EVIDENCE_ABSENT, R_missing_consequence); witnessed in lane crown-eval run against chatman-ecosystem origin/main fb54a2f5727385ef89ba15151d09c303487873b2\",\n    \"detail\": \"seanchatmangpt/zoela is private; the crown's GitHub observer receives HTTP 404, so this receipt is committed but unobservable by the crown until a read token for zoela exists\",\n    \"standing\": \"BLOCKED(TRANSPORT_FAILURE)\"\n  },\n  \"output_sha256\": \"sha256:63b6c6c395f4ac13b66f3db05ebfa1e91e21a2bddaf3220a9d6ed0cfa9ce9d1f\",\n  \"receipt\": {\n    \"authority\": {\n      \"actor\": \"claude-code lane receipts-zoela\",\n      \"ceiling\": \"OBSERVE\",\n      \"grant\": \"NONE\"\n    },\n    \"consequence\": {\n      \"commits\": [],\n      \"files_changed\": [\"release/v26.9.25/receipts/godslaw-interpretation.json\"],\n      \"remote_effects\": []\n    },\n    \"identity\": {\n      \"base_sha\": \"0aad42580458f36c298c92b13ba0961a7023ef7a\",\n      \"repo\": \"seanchatmangpt/zoela\",\n      \"subject\": \"godslaw-interpretation\",\n      \"subject_sha\": \"f1313f1c1462b9d2f4dd3cb010dbe5921f53185d\"\n    },\n    \"replay\": {\n      \"commands\": [\n        {\n          \"cmd\": \"D=$(mktemp -d) && git archive f1313f1c1462b9d2f4dd3cb010dbe5921f53185d ontology packs/zoela-ggen-pack ggen.toml | tar -x -C $D && python3 release/v26.9.25/receipts/godslaw-gate-witness.py $D f1313f1c1462b9d2f4dd3cb010dbe5921f53185d . $D/witness-out.json\",\n          \"cwd\": \"zoela repository root\",\n          \"exit\": 0,\n          \"output_sha256\": \"63b6c6c395f4ac13b66f3db05ebfa1e91e21a2bddaf3220a9d6ed0cfa9ce9d1f\",\n          \"summary\": \"pyoxigraph 0.5.7 + rdflib 7.6.0 gate witness over the git-archived subject\"\n        }\n      ],\n      \"durable_location\": \"release/v26.9.25/receipts/godslaw-interpretation.json\"\n    },\n    \"standing\": {\n      \"derived_from\": \"gates 125/130/135 zero rows at subject; 11/11 collapse mutants refused\",\n      \"value\": \"ALIVE\"\n    }\n  },\n  \"refusals\": [],\n  \"release\": \"v26.9.25\",\n  \"repo\": \"seanchatmangpt/zoela\",\n  \"schema\": \"zoela.release.receipt/v1\",\n  \"standing\": \"ALIVE\",\n  \"subject_note\": \"evaluated commit = parent of the receipt commit (a commit cannot contain its own hash)\",\n  \"subject_sha\": \"f1313f1c1462b9d2f4dd3cb010dbe5921f53185d\",\n  \"toolchain\": {\n    \"pyoxigraph\": \"0.5.7\",\n    \"python\": \"3.14\",\n    \"rdflib\": \"7.6.0\"\n  },\n  \"type\": null,\n  \"verdict\": \"falsifier did not fire: the admitted graph keeps interpretations layered, attributed, profile-bound and in preserved disagreement; every collapse mutant is refused\",\n  \"witness_script\": \"release/v26.9.25/receipts/godslaw-gate-witness.py\",\n  \"witness_script_sha256\": \"sha256:fe54fa787c9ae2631200999111887f62c1b7cf836123a754031ce391f8c660e5\"\n}\n",
+            "path": "release/v26.9.25/receipts/godslaw-interpretation.json",
+            "sha256": "1ca3c2f9d5bb2b720841ed84474d5925cabe8a91da01526037533591070947d7",
+            "subject_compare": "ahead"
+          },
+          {
+            "blob_sha": "29e5ea15501851fad6de93ce110eb4bcea6b7b4c",
+            "content": "{\n  \"acceptance\": \"The GodsLaw semantic migration has a terminal standing on a merged zoela SHA.\",\n  \"all_gates_zero_rows\": true,\n  \"broken_term\": \"R_missing_authority\",\n  \"command\": \"D=$(mktemp -d) && git archive f1313f1c1462b9d2f4dd3cb010dbe5921f53185d ontology packs/zoela-ggen-pack ggen.toml | tar -x -C $D && python3 release/v26.9.25/receipts/godslaw-gate-witness.py $D f1313f1c1462b9d2f4dd3cb010dbe5921f53185d . $D/witness-out.json\",\n  \"evidence_ceiling\": \"LOCAL_WITNESS_RUN\",\n  \"exit_code\": 0,\n  \"gate_rows\": {\n    \"120_godslaw_domain_topology.rq\": 0,\n    \"125_doctrine_layer_distinct.rq\": 0,\n    \"130_interpretation_provenance.rq\": 0,\n    \"135_disagreement_preserved.rq\": 0\n  },\n  \"graph\": {\n    \"ontologies\": [\n      \"ontology/zoela.ttl\",\n      \"packs/zoela-ggen-pack/ontology.ttl\",\n      \"ontology/zoe-recovers.ttl\",\n      \"ontology/kingdom-capability.ttl\",\n      \"ontology/design-closure.ttl\",\n      \"ontology/planning-center-surface.ttl\",\n      \"ontology/ground-network.ttl\",\n      \"ontology/godslaw.ttl\",\n      \"ontology/vision-2027.ttl\",\n      \"ontology/gall/foundation.ttl\",\n      \"ontology/gall/dependency.ttl\",\n      \"ontology/gall/projection.ttl\",\n      \"ontology/gall/planning.ttl\",\n      \"ontology/gall/evidence.ttl\"\n    ],\n    \"triples\": 2157\n  },\n  \"id\": \"AC-15\",\n  \"log_sha256\": \"sha256:e15717191faef673316d1524f3abacd27aaf37de02cfb2e5279c54e2f9372c47\",\n  \"mutants\": [\n    {\n      \"falsifier_group\": \"AC-15\",\n      \"first_row\": \"rename-step-not-blocked-after-semantic\",\n      \"gate\": \"120_godslaw_domain_topology.rq\",\n      \"mutant\": \"rename step unblocked\",\n      \"rows\": 2,\n      \"verdict\": \"REFUSED\"\n    },\n    {\n      \"falsifier_group\": \"AC-15\",\n      \"first_row\": \"rename-step-not-blocked-after-semantic\",\n      \"gate\": \"120_godslaw_domain_topology.rq\",\n      \"mutant\": \"rename recorded as the migration itself\",\n      \"rows\": 1,\n      \"verdict\": \"REFUSED\"\n    },\n    {\n      \"falsifier_group\": \"AC-15\",\n      \"first_row\": \"rename-step-not-blocked-after-semantic\",\n      \"gate\": \"120_godslaw_domain_topology.rq\",\n      \"mutant\": \"rename ordered before semantic migration\",\n      \"rows\": 1,\n      \"verdict\": \"REFUSED\"\n    },\n    {\n      \"falsifier_group\": \"AC-15\",\n      \"first_row\": \"canonical-domain-count:2\",\n      \"gate\": \"120_godslaw_domain_topology.rq\",\n      \"mutant\": \"second canonical domain\",\n      \"rows\": 1,\n      \"verdict\": \"REFUSED\"\n    }\n  ],\n  \"name\": \"godslaw-migration\",\n  \"observation\": {\n    \"broken_term\": \"R_not_fed_back\",\n    \"crown_observer\": \"chatman-ecosystem scripts/release_train/root_crown (GitHub API contents read)\",\n    \"crown_typing_on_404\": \"root_crown evidence._artifact maps HTTP 404 to BLOCKED(EVIDENCE_ABSENT, R_missing_consequence); witnessed in lane crown-eval run against chatman-ecosystem origin/main fb54a2f5727385ef89ba15151d09c303487873b2\",\n    \"detail\": \"seanchatmangpt/zoela is private; the crown's GitHub observer receives HTTP 404, so this receipt is committed but unobservable by the crown until a read token for zoela exists\",\n    \"standing\": \"BLOCKED(TRANSPORT_FAILURE)\"\n  },\n  \"output_sha256\": \"sha256:63b6c6c395f4ac13b66f3db05ebfa1e91e21a2bddaf3220a9d6ed0cfa9ce9d1f\",\n  \"receipt\": {\n    \"authority\": {\n      \"actor\": \"claude-code lane receipts-zoela\",\n      \"ceiling\": \"OBSERVE\",\n      \"grant\": \"NONE\"\n    },\n    \"consequence\": {\n      \"commits\": [],\n      \"files_changed\": [\"release/v26.9.25/receipts/godslaw-migration.json\"],\n      \"remote_effects\": []\n    },\n    \"identity\": {\n      \"base_sha\": \"0aad42580458f36c298c92b13ba0961a7023ef7a\",\n      \"repo\": \"seanchatmangpt/zoela\",\n      \"subject\": \"godslaw-migration\",\n      \"subject_sha\": \"f1313f1c1462b9d2f4dd3cb010dbe5921f53185d\"\n    },\n    \"replay\": {\n      \"commands\": [\n        {\n          \"cmd\": \"D=$(mktemp -d) && git archive f1313f1c1462b9d2f4dd3cb010dbe5921f53185d ontology packs/zoela-ggen-pack ggen.toml | tar -x -C $D && python3 release/v26.9.25/receipts/godslaw-gate-witness.py $D f1313f1c1462b9d2f4dd3cb010dbe5921f53185d . $D/witness-out.json\",\n          \"cwd\": \"zoela repository root\",\n          \"exit\": 0,\n          \"output_sha256\": \"63b6c6c395f4ac13b66f3db05ebfa1e91e21a2bddaf3220a9d6ed0cfa9ce9d1f\",\n          \"summary\": \"pyoxigraph 0.5.7 + rdflib 7.6.0 gate witness over the git-archived subject\"\n        }\n      ],\n      \"durable_location\": \"release/v26.9.25/receipts/godslaw-migration.json\"\n    },\n    \"standing\": {\n      \"broken_term\": \"R_missing_authority\",\n      \"derived_from\": \"gate 120 zero rows at subject; 4/4 AC-15 mutants refused; rename step BLOCKED in graph\",\n      \"value\": \"BLOCKED:AUTHORITY_FAILURE:operator-repo-rename\"\n    }\n  },\n  \"refusals\": [],\n  \"release\": \"v26.9.25\",\n  \"repo\": \"seanchatmangpt/zoela\",\n  \"schema\": \"zoela.release.receipt/v1\",\n  \"semantic_migration\": {\n    \"execution_authority\": \"NONE\",\n    \"note\": \"Step 1 (SEMANTIC) is ADMITTED in the graph. Steps 2 (DEPENDENCY_CONSUMER_ANALYSIS) and 3 (COMPATIBILITY_LAYER) are UNKNOWN in the graph at the subject; they are recorded as observed, not claimed done. Step 7 REPOSITORY_RENAME is BLOCKED on authority:operator-repo-rename and constitutesMigration false; the rename is transport, never the migration.\",\n    \"plan\": \"https://zoela.org/ontology/godslaw-migration\",\n    \"steps\": [\n      {\n        \"blocked_by\": null,\n        \"constitutes_migration\": null,\n        \"kind\": \"SEMANTIC\",\n        \"ordinal\": 1,\n        \"state\": \"ADMITTED\",\n        \"step\": \"https://zoela.org/ontology/godslaw-migration-step-1\"\n      },\n      {\n        \"blocked_by\": null,\n        \"constitutes_migration\": null,\n        \"kind\": \"DEPENDENCY_CONSUMER_ANALYSIS\",\n        \"ordinal\": 2,\n        \"state\": \"UNKNOWN\",\n        \"step\": \"https://zoela.org/ontology/godslaw-migration-step-2\"\n      },\n      {\n        \"blocked_by\": null,\n        \"constitutes_migration\": null,\n        \"kind\": \"COMPATIBILITY_LAYER\",\n        \"ordinal\": 3,\n        \"state\": \"UNKNOWN\",\n        \"step\": \"https://zoela.org/ontology/godslaw-migration-step-3\"\n      },\n      {\n        \"blocked_by\": null,\n        \"constitutes_migration\": null,\n        \"kind\": \"DATA_CONFIGURATION_PRESERVATION\",\n        \"ordinal\": 4,\n        \"state\": \"UNKNOWN\",\n        \"step\": \"https://zoela.org/ontology/godslaw-migration-step-4\"\n      },\n      {\n        \"blocked_by\": null,\n        \"constitutes_migration\": null,\n        \"kind\": \"GENERATED_ARTIFACTS\",\n        \"ordinal\": 5,\n        \"state\": \"UNKNOWN\",\n        \"step\": \"https://zoela.org/ontology/godslaw-migration-step-5\"\n      },\n      {\n        \"blocked_by\": null,\n        \"constitutes_migration\": null,\n        \"kind\": \"RUNTIME_VERIFICATION\",\n        \"ordinal\": 6,\n        \"state\": \"UNKNOWN\",\n        \"step\": \"https://zoela.org/ontology/godslaw-migration-step-6\"\n      },\n      {\n        \"blocked_by\": \"authority:operator-repo-rename\",\n        \"constitutes_migration\": \"false\",\n        \"kind\": \"REPOSITORY_RENAME\",\n        \"ordinal\": 7,\n        \"state\": \"BLOCKED\",\n        \"step\": \"https://zoela.org/ontology/godslaw-migration-step-7\"\n      },\n      {\n        \"blocked_by\": null,\n        \"constitutes_migration\": null,\n        \"kind\": \"ROLLBACK_QUALIFICATION\",\n        \"ordinal\": 8,\n        \"state\": \"UNKNOWN\",\n        \"step\": \"https://zoela.org/ontology/godslaw-migration-step-8\"\n      }\n    ],\n    \"steps_1_3_observed\": {\n      \"1\": \"ADMITTED\",\n      \"2\": \"UNKNOWN\",\n      \"3\": \"UNKNOWN\"\n    }\n  },\n  \"standing\": \"BLOCKED\",\n  \"subject_note\": \"evaluated commit = parent of the receipt commit (a commit cannot contain its own hash)\",\n  \"subject_sha\": \"f1313f1c1462b9d2f4dd3cb010dbe5921f53185d\",\n  \"terminal\": true,\n  \"toolchain\": {\n    \"pyoxigraph\": \"0.5.7\",\n    \"python\": \"3.14\",\n    \"rdflib\": \"7.6.0\"\n  },\n  \"type\": \"AUTHORITY_FAILURE:operator-repo-rename\",\n  \"witness_script\": \"release/v26.9.25/receipts/godslaw-gate-witness.py\",\n  \"witness_script_sha256\": \"sha256:fe54fa787c9ae2631200999111887f62c1b7cf836123a754031ce391f8c660e5\"\n}\n",
+            "path": "release/v26.9.25/receipts/godslaw-migration.json",
+            "sha256": "04c6bee0c61d0c8f42d50b9fd3c87320bd509538ff52e4a62552bd2c753e5cd9",
+            "subject_compare": "ahead"
+          },
+          {
+            "blob_sha": "ec4e8ce73fe83bb47d946edbe85ac9c369d02c88",
+            "content": "{\n  \"acceptance\": \"Vision 2027 has an admitted machine-readable strategic representation.\",\n  \"all_digests_recompute\": true,\n  \"all_gates_zero_rows\": true,\n  \"command\": \"D=$(mktemp -d) && git archive f1313f1c1462b9d2f4dd3cb010dbe5921f53185d ontology packs/zoela-ggen-pack ggen.toml | tar -x -C $D && python3 release/v26.9.25/receipts/godslaw-gate-witness.py $D f1313f1c1462b9d2f4dd3cb010dbe5921f53185d . $D/witness-out.json\",\n  \"digest_law\": \"sha256(\\\"code-work-authority:v1\\\\n\\\" <> IRI <> \\\"\\\\n\\\" <> sorted N-Triples of the node description with sj:admissionDigest deleted) -- GgenIgniter.SemanticJira.Authority.node_digest/2\",\n  \"digest_tamper_mutant\": {\n    \"iri\": \"https://zoela.org/ontology/objective-planning-center-compatibility\",\n    \"recomputed_after_title_edit\": \"sha256:15586bb0e84ba49ffa7f79fd12213870c5f6b6a129dcb3bac81c84a0b7eaf52d\",\n    \"refused\": true,\n    \"stated\": \"sha256:9aa9c7edebff98b399f96426776e177ee042e61620dad2ee99ffdc260b5507b1\"\n  },\n  \"evidence_ceiling\": \"LOCAL_WITNESS_RUN\",\n  \"exit_code\": 0,\n  \"gate_rows\": {\n    \"140_strategic_objective_admission.rq\": 0,\n    \"145_vision_loop_complete.rq\": 0,\n    \"150_provider_substitutability.rq\": 0,\n    \"155_activation_outcome_semantics.rq\": 0\n  },\n  \"graph\": {\n    \"ontologies\": [\n      \"ontology/zoela.ttl\",\n      \"packs/zoela-ggen-pack/ontology.ttl\",\n      \"ontology/zoe-recovers.ttl\",\n      \"ontology/kingdom-capability.ttl\",\n      \"ontology/design-closure.ttl\",\n      \"ontology/planning-center-surface.ttl\",\n      \"ontology/ground-network.ttl\",\n      \"ontology/godslaw.ttl\",\n      \"ontology/vision-2027.ttl\",\n      \"ontology/gall/foundation.ttl\",\n      \"ontology/gall/dependency.ttl\",\n      \"ontology/gall/projection.ttl\",\n      \"ontology/gall/planning.ttl\",\n      \"ontology/gall/evidence.ttl\"\n    ],\n    \"triples\": 2157\n  },\n  \"id\": \"AC-16\",\n  \"log_sha256\": \"sha256:e15717191faef673316d1524f3abacd27aaf37de02cfb2e5279c54e2f9372c47\",\n  \"mutants\": [\n    {\n      \"falsifier_group\": \"AC-16\",\n      \"first_row\": \"objective-without-falsifier:https://zoela.org/ontology/objective-provider-substitutability\",\n      \"gate\": \"140_strategic_objective_admission.rq\",\n      \"mutant\": \"objective without falsifier\",\n      \"rows\": 1,\n      \"verdict\": \"REFUSED\"\n    },\n    {\n      \"falsifier_group\": \"AC-16\",\n      \"first_row\": \"objective-authority-granted:https://zoela.org/ontology/objective-godslaw-canonical-domain\",\n      \"gate\": \"140_strategic_objective_admission.rq\",\n      \"mutant\": \"objective granted execution authority\",\n      \"rows\": 2,\n      \"verdict\": \"REFUSED\"\n    },\n    {\n      \"falsifier_group\": \"AC-16\",\n      \"first_row\": \"objective-digest-count:https://zoela.org/ontology/objective-planning-center-compatibility\",\n      \"gate\": \"140_strategic_objective_admission.rq\",\n      \"mutant\": \"second admission digest\",\n      \"rows\": 1,\n      \"verdict\": \"REFUSED\"\n    },\n    {\n      \"falsifier_group\": \"AC-16\",\n      \"first_row\": \"objective-digest-malformed:https://zoela.org/ontology/objective-ecosystem-activation-loop\",\n      \"gate\": \"140_strategic_objective_admission.rq\",\n      \"mutant\": \"malformed admission digest\",\n      \"rows\": 1,\n      \"verdict\": \"REFUSED\"\n    }\n  ],\n  \"name\": \"vision2027-admission\",\n  \"objective_count\": 5,\n  \"observation\": {\n    \"broken_term\": \"R_not_fed_back\",\n    \"crown_observer\": \"chatman-ecosystem scripts/release_train/root_crown (GitHub API contents read)\",\n    \"crown_typing_on_404\": \"root_crown evidence._artifact maps HTTP 404 to BLOCKED(EVIDENCE_ABSENT, R_missing_consequence); witnessed in lane crown-eval run against chatman-ecosystem origin/main fb54a2f5727385ef89ba15151d09c303487873b2\",\n    \"detail\": \"seanchatmangpt/zoela is private; the crown's GitHub observer receives HTTP 404, so this receipt is committed but unobservable by the crown until a read token for zoela exists\",\n    \"standing\": \"BLOCKED(TRANSPORT_FAILURE)\"\n  },\n  \"output_sha256\": \"sha256:63b6c6c395f4ac13b66f3db05ebfa1e91e21a2bddaf3220a9d6ed0cfa9ce9d1f\",\n  \"receipt\": {\n    \"authority\": {\n      \"actor\": \"claude-code lane receipts-zoela\",\n      \"ceiling\": \"OBSERVE\",\n      \"grant\": \"NONE\"\n    },\n    \"consequence\": {\n      \"commits\": [],\n      \"files_changed\": [\"release/v26.9.25/receipts/vision2027-admission.json\"],\n      \"remote_effects\": []\n    },\n    \"identity\": {\n      \"base_sha\": \"0aad42580458f36c298c92b13ba0961a7023ef7a\",\n      \"repo\": \"seanchatmangpt/zoela\",\n      \"subject\": \"vision2027-admission\",\n      \"subject_sha\": \"f1313f1c1462b9d2f4dd3cb010dbe5921f53185d\"\n    },\n    \"replay\": {\n      \"commands\": [\n        {\n          \"cmd\": \"D=$(mktemp -d) && git archive f1313f1c1462b9d2f4dd3cb010dbe5921f53185d ontology packs/zoela-ggen-pack ggen.toml | tar -x -C $D && python3 release/v26.9.25/receipts/godslaw-gate-witness.py $D f1313f1c1462b9d2f4dd3cb010dbe5921f53185d . $D/witness-out.json\",\n          \"cwd\": \"zoela repository root\",\n          \"exit\": 0,\n          \"output_sha256\": \"63b6c6c395f4ac13b66f3db05ebfa1e91e21a2bddaf3220a9d6ed0cfa9ce9d1f\",\n          \"summary\": \"pyoxigraph 0.5.7 + rdflib 7.6.0 gate witness over the git-archived subject\"\n        }\n      ],\n      \"durable_location\": \"release/v26.9.25/receipts/vision2027-admission.json\"\n    },\n    \"standing\": {\n      \"derived_from\": \"5/5 sj:admissionDigest recompute; gates 140-155 zero rows; 4/4 mutants + digest tamper refused; doc blob pin matches\",\n      \"value\": \"ALIVE\"\n    }\n  },\n  \"refusals\": [],\n  \"release\": \"v26.9.25\",\n  \"repo\": \"seanchatmangpt/zoela\",\n  \"schema\": \"zoela.release.receipt/v1\",\n  \"standing\": \"ALIVE\",\n  \"strategic_objectives\": [\n    {\n      \"iri\": \"https://zoela.org/ontology/objective-christchella-broadcast-to-actuation\",\n      \"recomputed_digest\": \"sha256:f94aac1479457ab64dc249f31def8816196755b09cfaa00d41d974b92adc9c00\",\n      \"recomputes\": true,\n      \"stated_digest\": [\"sha256:f94aac1479457ab64dc249f31def8816196755b09cfaa00d41d974b92adc9c00\"],\n      \"title\": \"Christchella: broadcast produces verified local actuation, not viewership\"\n    },\n    {\n      \"iri\": \"https://zoela.org/ontology/objective-ecosystem-activation-loop\",\n      \"recomputed_digest\": \"sha256:eaa55accdd22e992d313d49ce9e6a73827312dfb881d6907af53b9d077485efb\",\n      \"recomputes\": true,\n      \"stated_digest\": [\"sha256:eaa55accdd22e992d313d49ce9e6a73827312dfb881d6907af53b9d077485efb\"],\n      \"title\": \"Repeated ZOE activations run the Observe-Nucleate-Genesis-Match-Activate-Receipt loop\"\n    },\n    {\n      \"iri\": \"https://zoela.org/ontology/objective-godslaw-canonical-domain\",\n      \"recomputed_digest\": \"sha256:e856c92c2e20a72973dd0cf146f8a9ec5a85b69eede42f4f6cca020c3e7a6777\",\n      \"recomputes\": true,\n      \"stated_digest\": [\"sha256:e856c92c2e20a72973dd0cf146f8a9ec5a85b69eede42f4f6cca020c3e7a6777\"],\n      \"title\": \"GodsLaw is the canonical domain; ZOELA is its community configuration\"\n    },\n    {\n      \"iri\": \"https://zoela.org/ontology/objective-planning-center-compatibility\",\n      \"recomputed_digest\": \"sha256:9aa9c7edebff98b399f96426776e177ee042e61620dad2ee99ffdc260b5507b1\",\n      \"recomputes\": true,\n      \"stated_digest\": [\"sha256:9aa9c7edebff98b399f96426776e177ee042e61620dad2ee99ffdc260b5507b1\"],\n      \"title\": \"Planning Center compatibility with parity, shadow execution, and reversible cutover\"\n    },\n    {\n      \"iri\": \"https://zoela.org/ontology/objective-provider-substitutability\",\n      \"recomputed_digest\": \"sha256:f3101f9b1b5efdcbf87872f2da9d30ebd15a77984ca01b6b904205da4466fc7c\",\n      \"recomputes\": true,\n      \"stated_digest\": [\"sha256:f3101f9b1b5efdcbf87872f2da9d30ebd15a77984ca01b6b904205da4466fc7c\"],\n      \"title\": \"Remove(provider) does not imply Stop(system)\"\n    }\n  ],\n  \"subject_note\": \"evaluated commit = parent of the receipt commit (a commit cannot contain its own hash)\",\n  \"subject_sha\": \"f1313f1c1462b9d2f4dd3cb010dbe5921f53185d\",\n  \"toolchain\": {\n    \"pyoxigraph\": \"0.5.7\",\n    \"python\": \"3.14\",\n    \"rdflib\": \"7.6.0\"\n  },\n  \"type\": null,\n  \"vision_doc_pin\": {\n    \"matches\": true,\n    \"observed_blob\": \"ec032bc1540b37bf438c52543b4e24764341d461\",\n    \"observed_content_sha256\": \"sha256:6f06b7d6ffea0899210bf4d3789bd1ee49040f5330a994993e7fe5c828fa8fd0\",\n    \"stated_blob\": \"ec032bc1540b37bf438c52543b4e24764341d461\",\n    \"stated_content_sha256\": \"sha256:6f06b7d6ffea0899210bf4d3789bd1ee49040f5330a994993e7fe5c828fa8fd0\"\n  },\n  \"witness_script\": \"release/v26.9.25/receipts/godslaw-gate-witness.py\",\n  \"witness_script_sha256\": \"sha256:fe54fa787c9ae2631200999111887f62c1b7cf836123a754031ce391f8c660e5\"\n}\n",
+            "path": "release/v26.9.25/receipts/vision2027-admission.json",
+            "sha256": "d8dfc6510d74f187f07a4d4c2f6158808bb6495d9956c27fdfcde9df3b046683",
+            "subject_compare": "ahead"
+          }
+        ],
+        "repository": "seanchatmangpt/zoela",
+        "visibility": "private"
+      }
+    },
+    "schema": "https://chatman.dev/root-crown/private-observations/v1"
+  },
+  "release": "v26.9.25",
+  "repos": {
+    "seanchatmangpt/affidavit": {
+      "compare_status": "ahead",
+      "default_branch": "main",
+      "head_sha": "d70b0e40f9920136510cb0f7f24bf9720feeb4f2",
+      "pin_sha": "cc1577a8de1e4e92625386ebbecb0c6df9abd66a",
+      "visibility": "public"
+    },
+    "seanchatmangpt/ash_a2a": {
+      "compare_status": "identical",
+      "default_branch": "main",
+      "head_sha": "7999524d0b98aa5dc650a0538c1be5ec8b867477",
+      "pin_sha": "7999524d0b98aa5dc650a0538c1be5ec8b867477",
+      "visibility": "public"
+    },
+    "seanchatmangpt/ash_r2rml": {
+      "compare_status": "identical",
+      "default_branch": "main",
+      "head_sha": "901bfb8a08dac5ea30ad77f0bb6de7a29eb8cd34",
+      "pin_sha": "901bfb8a08dac5ea30ad77f0bb6de7a29eb8cd34",
+      "visibility": "public"
+    },
+    "seanchatmangpt/ash_surface": {
+      "compare_status": "identical",
+      "default_branch": "main",
+      "head_sha": "7d5492795d9b9a0956f51545ed1ad1932768b77e",
+      "pin_sha": "7d5492795d9b9a0956f51545ed1ad1932768b77e",
+      "visibility": "public"
+    },
+    "seanchatmangpt/autofde-lab": {
+      "compare_status": "identical",
+      "default_branch": "master",
+      "head_sha": "98b6cc9bfe3af8a25b3ad53019f5fb71fe2d37d0",
+      "pin_sha": "98b6cc9bfe3af8a25b3ad53019f5fb71fe2d37d0",
+      "visibility": "public"
+    },
+    "seanchatmangpt/beam4pm": {
+      "compare_status": "identical",
+      "default_branch": "main",
+      "head_sha": "8c3f5e09c297023059ad384629a55ddb2ac785b1",
+      "pin_sha": "8c3f5e09c297023059ad384629a55ddb2ac785b1",
+      "visibility": "public"
+    },
+    "seanchatmangpt/chatgpt-cloud-elixir": {
+      "compare_status": "identical",
+      "default_branch": "main",
+      "head_sha": "d6727fef06b170bc6c3839bbf2a9456e33111920",
+      "pin_sha": "d6727fef06b170bc6c3839bbf2a9456e33111920",
+      "visibility": "public"
+    },
+    "seanchatmangpt/chatman-ecosystem": {
+      "compare_status": "ahead",
+      "default_branch": "main",
+      "head_sha": "8321663d02b849cbb7879b3eaf548d5bdca7a7e9",
+      "pin_sha": "fb54a2f5727385ef89ba15151d09c303487873b2",
+      "visibility": "public"
+    },
+    "seanchatmangpt/engineering-standards": {
+      "compare_status": "identical",
+      "default_branch": "main",
+      "head_sha": "7e8d4c5cb5ae9f4b691d1cd342ee1d7ddb308629",
+      "pin_sha": "7e8d4c5cb5ae9f4b691d1cd342ee1d7ddb308629",
+      "visibility": "public"
+    },
+    "seanchatmangpt/ex4pm": {
+      "compare_status": "identical",
+      "default_branch": "main",
+      "head_sha": "c4ca84410c379888305c85201710734afb21f9bf",
+      "pin_sha": "c4ca84410c379888305c85201710734afb21f9bf",
+      "visibility": "public"
+    },
+    "seanchatmangpt/ggen-ecosystem": {
+      "compare_status": "ahead",
+      "default_branch": "main",
+      "head_sha": "8bf231242b5fa30587a3d7357c8aaa57905ccfdf",
+      "pin_sha": "f3cc60f8b65a57980455e93c026176bd446f3f3d",
+      "visibility": "public"
+    },
+    "seanchatmangpt/ggen-marketplace": {
+      "compare_status": "identical",
+      "default_branch": "main",
+      "head_sha": "1f4abc53084e3376a7fed2c1d153029e8711fcee",
+      "pin_sha": "1f4abc53084e3376a7fed2c1d153029e8711fcee",
+      "visibility": "public"
+    },
+    "seanchatmangpt/ggen_igniter": {
+      "compare_status": "identical",
+      "default_branch": "main",
+      "head_sha": "9639198b5c3e0e25906acc5b36dd9eb17bd592be",
+      "pin_sha": "9639198b5c3e0e25906acc5b36dd9eb17bd592be",
+      "visibility": "public"
+    },
+    "seanchatmangpt/gymact": {
+      "compare_status": "identical",
+      "default_branch": "main",
+      "head_sha": "281009dfd8ef435f0027009fc1a88fd86688f8b9",
+      "pin_sha": "281009dfd8ef435f0027009fc1a88fd86688f8b9",
+      "visibility": "public"
+    },
+    "seanchatmangpt/wasm4pm": {
+      "compare_status": "identical",
+      "default_branch": "main",
+      "head_sha": "9fc4f1ae3cc99cf65a5f014580db8e1ea3d08b55",
+      "pin_sha": "9fc4f1ae3cc99cf65a5f014580db8e1ea3d08b55",
+      "visibility": "public"
+    },
+    "seanchatmangpt/xaas": {
+      "compare_status": "identical",
+      "default_branch": "main",
+      "head_sha": "e039967dac9f88961873b6a958f3979a106854f2",
+      "pin_sha": "e039967dac9f88961873b6a958f3979a106854f2",
+      "visibility": "public"
+    },
+    "seanchatmangpt/zcode-cli": {
+      "compare_status": "identical",
+      "default_branch": "main",
+      "head_sha": "d1abfbe56660ade672af1125a3f11d91fc50a09e",
+      "pin_sha": "d1abfbe56660ade672af1125a3f11d91fc50a09e",
+      "visibility": "public"
+    },
+    "seanchatmangpt/zoela": {
+      "error": "HTTP404",
+      "pin_sha": "3d16cf3e43e195092161aaba4d481c7654b4035d"
+    }
+  },
+  "schema": "https://chatman.dev/root-crown/observations/v1",
+  "subjects": {
+    "seanchatmangpt/autofde-lab@6fbe1807388e8c44ae5d5f75455a082a745055c7": "ahead",
+    "seanchatmangpt/engineering-standards@7e8d4c5cb5ae9f4b691d1cd342ee1d7ddb308629": "identical",
+    "seanchatmangpt/gymact@281009dfd8ef435f0027009fc1a88fd86688f8b9": "identical",
+    "seanchatmangpt/xaas@c10cdab95b927ed82c5c212a3f36d02b52ed525e": "ahead"
+  },
+  "tag": {
+    "name": "v26.9.25",
+    "sha": null
+  }
+}
