@@ -71,13 +71,13 @@ def design() -> TemperamentDesignPlan:
     )
 
 
-def observed(schedule, scores):
+def observed(schedule, scores, *, prefix="receipt"):
     return tuple(
         ObservedEcologyOutcome(
             match=match,
             left_score=left,
             right_score=right,
-            receipt_ids=(f"receipt:{index}",),
+            receipt_ids=(f"{prefix}:{index}",),
         )
         for index, (match, (left, right)) in enumerate(
             zip(schedule.matches, scores, strict=True)
@@ -166,10 +166,15 @@ def test_complete_trial_requires_both_full_receipted_arms() -> None:
         engineering_cost=0.05,
     )
     cell = program.cells[0]
-    homogeneous = observed(cell.homogeneous_schedule, ((0.5, 0.5),))
+    homogeneous = observed(
+        cell.homogeneous_schedule,
+        ((0.5, 0.5),),
+        prefix="control",
+    )
     engineered = observed(
         cell.engineered_schedule,
         ((0.2, 0.8), (0.4, 0.6), (0.8, 0.2), (1.0, 0.0)),
+        prefix="engineered",
     )
 
     trial = complete_heterogeneity_trial(
@@ -182,7 +187,7 @@ def test_complete_trial_requires_both_full_receipted_arms() -> None:
     assert trial.engineered_score == pytest.approx(0.6)
     assert trial.gross_gain == pytest.approx(0.1)
     assert trial.net_gain == pytest.approx(0.05)
-    assert len(trial.receipt_ids) == 4
+    assert len(trial.receipt_ids) == 5
 
 
 def test_truncated_schedule_cannot_be_promoted_to_expected_payoff() -> None:
@@ -203,4 +208,46 @@ def test_truncated_schedule_cannot_be_promoted_to_expected_payoff() -> None:
         expected_payoff(
             schedule,
             observed(schedule, ((1.0, 0.0),)),
+        )
+
+
+def test_same_receipt_cannot_prove_both_benchmark_arms() -> None:
+    pair = manufacture_design_benchmark_pair(
+        PolicySpec.for_role("Astar", "blue_defender"),
+        design(),
+        engineered_member_count=2,
+    )
+    program = manufacture_heterogeneity_program(
+        pair,
+        static_ecology("MCTS", "red_disturbance", ((0.5, 1.0),)),
+        world_id="cyber_incident",
+        left_role_id="blue_defender",
+        right_role_id="red_disturbance",
+        cues=(0.0,),
+        engineering_cost=0.0,
+    )
+    cell = program.cells[0]
+    control = observed(
+        cell.homogeneous_schedule,
+        ((0.5, 0.5),),
+        prefix="shared",
+    )
+    engineered = tuple(
+        ObservedEcologyOutcome(
+            match=match,
+            left_score=0.5,
+            right_score=0.5,
+            receipt_ids=("shared:0",) if index == 0 else (f"eng:{index}",),
+        )
+        for index, match in enumerate(cell.engineered_schedule.matches)
+    )
+    with pytest.raises(
+        ValueError,
+        match="REFUSED:HETEROGENEITY_ARM_RECEIPT_REUSE",
+    ):
+        complete_heterogeneity_trial(
+            program,
+            cue=0.0,
+            homogeneous_outcomes=control,
+            engineered_outcomes=engineered,
         )
