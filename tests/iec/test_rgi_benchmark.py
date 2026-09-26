@@ -300,3 +300,120 @@ def test_cli_gate_writes_deterministic_receipt(tmp_path) -> None:
         == 0
     )
     assert out_path.read_bytes() == first
+
+
+def test_edge_universe_identity_is_set_stable_across_orderings() -> None:
+    rows = [event(0, "e1"), event(1, "e2"), event(2, "e3")]
+    reference = trace(
+        "MACHINE_SERIAL",
+        rows,
+        universe=["e1", "e2", "e3"],
+    )
+    candidate = trace(
+        "ZERO_LLM",
+        rows,
+        universe=["e3", "e1", "e2"],
+    )
+    result = compare_runs(reference, candidate, fidelity_receipt=fidelity())
+    assert result["gate"] == "PASS"
+    assert (
+        result["reference"]["edge_universe_id"]
+        == result["candidate"]["edge_universe_id"]
+    )
+
+
+def test_v2_trace_requires_exact_producer_and_canonical_universe_binding() -> None:
+    rows = [event(0, "e1"), event(1, "e2"), event(2, "e3")]
+    base = trace("ZERO_LLM", rows, universe=["e3", "e1", "e2"])
+    universe_id = benchmark_trace(base)["edge_universe_id"]
+    v2 = {
+        **base,
+        "schema": "autofde-lab.rgi-trace/2",
+        "producer_digest": "sha256:" + "a" * 64,
+        "edge_universe_id": universe_id,
+    }
+    report = benchmark_trace(v2)
+    assert report["trace_schema"] == "autofde-lab.rgi-trace/2"
+    assert report["producer_digest"] == "sha256:" + "a" * 64
+
+    missing_producer = dict(v2)
+    missing_producer.pop("producer_digest")
+    with pytest.raises(IECRefusal, match="v2 trace requires producer_digest"):
+        benchmark_trace(missing_producer)
+
+    forged_universe = dict(v2)
+    forged_universe["edge_universe_id"] = "sha256:" + "f" * 64
+    with pytest.raises(IECRefusal, match="edge_universe_id does not match"):
+        benchmark_trace(forged_universe)
+
+
+def test_retirement_standing_is_evidence_bound_not_inferred_from_zero_llm() -> None:
+    rows = [event(0, "e1"), event(1, "e2"), event(2, "e3")]
+    reference = trace("MACHINE_SERIAL", rows)
+    base_candidate = trace("ZERO_LLM", rows)
+    universe_id = benchmark_trace(base_candidate)["edge_universe_id"]
+    producer = "sha256:" + "b" * 64
+    candidate = {
+        **base_candidate,
+        "schema": "autofde-lab.rgi-trace/2",
+        "producer_digest": producer,
+        "edge_universe_id": universe_id,
+    }
+
+    observed_only = compare_runs(
+        reference,
+        candidate,
+        fidelity_receipt=fidelity(),
+    )
+    assert observed_only["retirement_standing"]["standing"] == (
+        "OBSERVED_ZERO_LLM_ONLY"
+    )
+
+    retired = compare_runs(
+        reference,
+        candidate,
+        fidelity_receipt=fidelity(),
+        retirement_receipt={
+            "subject": SUBJECT,
+            "workload_id": WORKLOAD,
+            "verdict": "PASS",
+            "standing": "RETIRED_FROM_LLM",
+            "ledger_entry_id": "iec-c3:rc-example",
+            "verifier_set_id": "court:iec-c3:v26.9.25",
+            "evidence_digest": "sha256:" + "c" * 64,
+            "producer_digest": producer,
+        },
+    )
+    assert retired["retirement_standing"] == {
+        "standing": "RETIRED_FROM_LLM",
+        "ledger_entry_id": "iec-c3:rc-example",
+        "verifier_set_id": "court:iec-c3:v26.9.25",
+        "evidence_digest": "sha256:" + "c" * 64,
+        "producer_digest": producer,
+    }
+
+
+def test_machine_only_mode_emits_typed_mode_falsifiers() -> None:
+    report = benchmark_trace(
+        trace(
+            "ZERO_LLM",
+            [
+                event(
+                    0,
+                    "e1",
+                    executor="GENERAL_LLM",
+                    route_state="KNOWN",
+                    phase="DO",
+                    llm_tokens=3,
+                ),
+                event(1, "e2"),
+                event(2, "e3"),
+            ],
+        )
+    )
+    assert report["mode_falsifiers"] == [
+        "GENERAL_LLM_OUTSIDE_UNKNOWN_REGION",
+        "GENERAL_LLM_IN_DO",
+        "UNRECEIPTED_DO",
+        "LLM_PRESENT_IN_ZERO_LLM_MODE",
+    ]
