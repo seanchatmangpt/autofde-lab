@@ -1,4 +1,5 @@
 """Batch league for SWE-Prometheus/VGG reports with comparability guards."""
+
 from __future__ import annotations
 
 import argparse
@@ -104,8 +105,7 @@ def _metrics(reports: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
             "replay_pass_rate": 0.0,
             "falsifiers": {},
             "dimensions": {
-                dimension: _dimension_stats([], dimension)
-                for dimension in DIMENSIONS
+                dimension: _dimension_stats([], dimension) for dimension in DIMENSIONS
             },
         }
 
@@ -120,8 +120,7 @@ def _metrics(reports: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         ),
         "detected_gate_rate": _ratio(
             sum(
-                report["paper"].get("gate_strength") == "detected"
-                for report in reports
+                report["paper"].get("gate_strength") == "detected" for report in reports
             ),
             len(reports),
         ),
@@ -160,8 +159,7 @@ def _metrics(reports: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
             )
         ),
         "dimensions": {
-            dimension: _dimension_stats(reports, dimension)
-            for dimension in DIMENSIONS
+            dimension: _dimension_stats(reports, dimension) for dimension in DIMENSIONS
         },
     }
 
@@ -200,9 +198,9 @@ def build_league(
     all_sets = list(subject_sets.values())
     common_subjects = set.intersection(*all_sets) if all_sets else set()
     union_subjects = set.union(*all_sets) if all_sets else set()
-    fully_comparable = all(
-        subjects == all_sets[0] for subjects in all_sets[1:]
-    ) if all_sets else True
+    fully_comparable = (
+        all(subjects == all_sets[0] for subjects in all_sets[1:]) if all_sets else True
+    )
 
     if require_common_subjects and not fully_comparable:
         missing = {
@@ -218,9 +216,7 @@ def build_league(
     systems: dict[str, Any] = {}
     for system, rows in sorted(grouped.items()):
         common_rows = [
-            report
-            for report in rows
-            if str(report["subject"]) in common_subjects
+            report for report in rows if str(report["subject"]) in common_subjects
         ]
         systems[system] = {
             "model": rows[0].get("model"),

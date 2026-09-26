@@ -82,11 +82,7 @@ def executor(
         key = argv[-1]
         side = "treated" if "treated" in Path(cwd).name else "base"
         if key == "behavior":
-            stdout = (
-                behavior_treated
-                if side == "treated"
-                else b"same\n"
-            )
+            stdout = behavior_treated if side == "treated" else b"same\n"
             return SimpleNamespace(returncode=0, stdout=stdout, stderr=b"")
         if key == "mutation-1":
             return SimpleNamespace(
@@ -142,8 +138,7 @@ def scorecard(pair_id: str) -> dict:
         "model": "MACHINE_SERIAL",
         "scaffold": "typed-probes",
         "dimensions": {
-            dimension: {"base": 2, "treated": 4}
-            for dimension in DIMENSIONS
+            dimension: {"base": 2, "treated": 4} for dimension in DIMENSIONS
         },
     }
 
@@ -183,11 +178,7 @@ def test_behavior_without_mutations_is_vacuous(tmp_path) -> None:
     base.mkdir()
     treated.mkdir()
     doc = manifest()
-    doc["probes"] = [
-        probe
-        for probe in doc["probes"]
-        if probe["role"] != "mutation"
-    ]
+    doc["probes"] = [probe for probe in doc["probes"] if probe["role"] != "mutation"]
     run = executor()
     pair = pair_runs(
         doc,
@@ -230,9 +221,7 @@ def test_scorecard_is_bound_to_exact_pair_and_only_pass_evidence(tmp_path) -> No
         "base": 2.0,
         "treated": 4.0,
     }
-    assert case["dimensions"]["quality_gates"] == {
-        "evidence_status": "fail"
-    }
+    assert case["dimensions"]["quality_gates"] == {"evidence_status": "fail"}
 
 
 def test_scorecard_cannot_move_to_another_pair(tmp_path) -> None:
@@ -286,9 +275,7 @@ def test_missing_cwd_is_unavailable_not_pass(tmp_path) -> None:
         env={},
     )
     row = next(
-        receipt
-        for receipt in report["receipts"]
-        if receipt["probe_id"] == "gov-1"
+        receipt for receipt in report["receipts"] if receipt["probe_id"] == "gov-1"
     )
     assert row["status"] == "unavailable"
     assert row["exit_code"] is None

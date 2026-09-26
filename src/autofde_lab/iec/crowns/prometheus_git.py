@@ -1,4 +1,5 @@
 """Clean git reconstruction and replay harness for SWE-Prometheus/VGG."""
+
 from __future__ import annotations
 
 import argparse
@@ -61,9 +62,7 @@ def _run(
             "status": "unavailable",
             "exit_code": None,
             "stdout_digest": _sha256(b""),
-            "stderr_digest": _sha256(
-                str(exc).encode("utf-8", errors="replace")
-            ),
+            "stderr_digest": _sha256(str(exc).encode("utf-8", errors="replace")),
         }
 
     stdout = bytes(proc.stdout or b"")
@@ -178,8 +177,7 @@ def _remove_worktree(repo_root: Path, target: Path) -> None:
     if result.get("status") != "pass" and target.exists():
         raise IECRefusal(
             "REFUSED_RECONSTRUCTION_CLEANUP_FAILED",
-            f"could not remove worktree {target}: "
-            f"{result.get('stderr_digest')}",
+            f"could not remove worktree {target}: {result.get('stderr_digest')}",
         )
 
 
@@ -416,11 +414,7 @@ def run_reconstruction(
                 clean_receipt,
                 replay_receipt,
                 pair["pair_id"],
-                (
-                    None
-                    if mutation_report is None
-                    else mutation_report["receipt_id"]
-                ),
+                (None if mutation_report is None else mutation_report["receipt_id"]),
             )
             return result
         finally:
@@ -503,9 +497,7 @@ def main(argv: list[str] | None = None) -> int:
             repo_root=args.repo_root,
             patch_path=args.patch,
             mutation_manifest=(
-                _read(args.mutation_manifest)
-                if args.mutation_manifest
-                else None
+                _read(args.mutation_manifest) if args.mutation_manifest else None
             ),
         )
         summary = {

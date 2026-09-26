@@ -135,8 +135,7 @@ def scorecard(pair_id: str) -> dict:
         "model": "MACHINE_SERIAL",
         "scaffold": "git-reconstruction",
         "dimensions": {
-            dimension: {"base": 2, "treated": 4}
-            for dimension in DIMENSIONS
+            dimension: {"base": 2, "treated": 4} for dimension in DIMENSIONS
         },
     }
 
@@ -162,10 +161,7 @@ def test_full_exact_git_mutation_replay_vgg_round_trip(tmp_path) -> None:
     assert reconstruction["replay"]["verdict"] == "PASS"
     assert reconstruction["replay_diff"] == []
     assert reconstruction["pair"]["gate_strength"] == "detected"
-    assert (
-        reconstruction["pair"]["mutation_source"]
-        == "reversible-mutation-court"
-    )
+    assert reconstruction["pair"]["mutation_source"] == "reversible-mutation-court"
 
     admitted = admit_reconstruction(
         reconstruction,
@@ -246,10 +242,7 @@ def test_nondeterministic_probe_is_replay_counterexample(tmp_path) -> None:
     )
     assert reconstruction["replay"]["verdict"] == "COUNTEREXAMPLE"
     assert reconstruction["replay_diff"]
-    assert any(
-        row["probe_id"] == "gov-1"
-        for row in reconstruction["replay_diff"]
-    )
+    assert any(row["probe_id"] == "gov-1" for row in reconstruction["replay_diff"])
 
 
 def test_empty_patch_is_a_lawful_noop_baseline(tmp_path) -> None:
@@ -276,9 +269,7 @@ def test_detached_worktrees_are_removed_after_execution(tmp_path) -> None:
     )
     listing = git(repo, "worktree", "list", "--porcelain").decode()
     worktree_lines = [
-        line
-        for line in listing.splitlines()
-        if line.startswith("worktree ")
+        line for line in listing.splitlines() if line.startswith("worktree ")
     ]
     assert len(worktree_lines) == 1
     assert str(repo.resolve()) in worktree_lines[0]

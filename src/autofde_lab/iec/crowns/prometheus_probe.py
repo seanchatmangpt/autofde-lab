@@ -4,6 +4,7 @@ The probe layer manufactures observations only. It never assigns governance
 scores and never promotes a repository to ALIVE. A scorer may bind 1..5 values
 to successful paired observations; the VGG court remains the admission authority.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -316,13 +317,10 @@ def execute_manifest(
 
     manifest = parse_manifest(document)
     selected = [
-        probe
-        for probe in manifest["probes"]
-        if probe["scope"] in {"both", side}
+        probe for probe in manifest["probes"] if probe["scope"] in {"both", side}
     ]
     receipts = [
-        _execute_one(probe, root=root, executor=executor, env=env)
-        for probe in selected
+        _execute_one(probe, root=root, executor=executor, env=env) for probe in selected
     ]
     report: dict[str, Any] = {
         "schema": RUN_SCHEMA,
@@ -397,9 +395,7 @@ def pair_runs(
             )
         for field in ("manifest_id", "repository", "base_commit", "patch_digest"):
             expected = (
-                manifest["manifest_id"]
-                if field == "manifest_id"
-                else manifest[field]
+                manifest["manifest_id"] if field == "manifest_id" else manifest[field]
             )
             if run.get(field) != expected:
                 raise IECRefusal(
@@ -438,11 +434,7 @@ def pair_runs(
         )
 
     behavior_probe = next(
-        (
-            probe
-            for probe in manifest["probes"]
-            if probe["role"] == "behavior"
-        ),
+        (probe for probe in manifest["probes"] if probe["role"] == "behavior"),
         None,
     )
     behavior = "unavailable"
@@ -465,8 +457,7 @@ def pair_runs(
     mutations = [
         treated.get(probe["id"])
         for probe in manifest["probes"]
-        if probe["role"] == "mutation"
-        and treated.get(probe["id"]) is not None
+        if probe["role"] == "mutation" and treated.get(probe["id"]) is not None
     ]
     if mutation_report is not None:
         if mutation_report.get("schema") != MUTATION_REPORT_SCHEMA:
@@ -631,11 +622,7 @@ def assemble_case(
             dimensions[dimension] = {"evidence_status": "unavailable"}
             continue
 
-        statuses = {
-            str(row.get("status"))
-            for row in rows
-            if isinstance(row, Mapping)
-        }
+        statuses = {str(row.get("status")) for row in rows if isinstance(row, Mapping)}
         if statuses != {"pass"}:
             if "timeout" in statuses:
                 status = "timeout"
@@ -746,19 +733,13 @@ def main(argv: list[str] | None = None) -> int:
             _read(args.base_run),
             _read(args.treated_run),
             mutation_report=(
-                _read(args.mutation_report)
-                if args.mutation_report
-                else None
+                _read(args.mutation_report) if args.mutation_report else None
             ),
             clean_environment_receipt=(
-                _read(args.clean_receipt)
-                if args.clean_receipt
-                else None
+                _read(args.clean_receipt) if args.clean_receipt else None
             ),
             replay_receipt=(
-                _read(args.replay_receipt)
-                if args.replay_receipt
-                else None
+                _read(args.replay_receipt) if args.replay_receipt else None
             ),
         )
     else:
@@ -773,9 +754,7 @@ def main(argv: list[str] | None = None) -> int:
             {
                 "schema": result["schema"],
                 "id": (
-                    result.get("run_id")
-                    or result.get("pair_id")
-                    or content_id(result)
+                    result.get("run_id") or result.get("pair_id") or content_id(result)
                 ),
             }
         )

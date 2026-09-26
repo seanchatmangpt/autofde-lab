@@ -1,11 +1,12 @@
 """OCEL 2.0 projection for observed SWE-Prometheus/VGG probe execution."""
+
 from __future__ import annotations
 
 import argparse
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping
 
 from .model import IECRefusal, canonical_json, content_id
 from .prometheus import DIMENSIONS, REPORT_SCHEMA
@@ -186,9 +187,7 @@ def project_ocel(
                 _relationship(subject, "observes"),
             ]
             if side == "treated":
-                relationships.append(
-                    _relationship(patch_object, "under-patch")
-                )
+                relationships.append(_relationship(patch_object, "under-patch"))
             dimension = row.get("dimension")
             if dimension in DIMENSIONS:
                 relationships.append(

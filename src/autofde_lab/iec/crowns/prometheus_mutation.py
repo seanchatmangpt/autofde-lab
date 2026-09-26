@@ -1,4 +1,5 @@
 """Reversible mutation court for SWE-Prometheus characterization gates."""
+
 from __future__ import annotations
 
 import argparse
@@ -222,11 +223,7 @@ def _run_verifier(
         stdout = bytes(proc.stdout or b"")
         stderr = bytes(proc.stderr or b"")
         exit_code = int(proc.returncode)
-        status = (
-            "pass"
-            if exit_code == int(verifier["expected_exit"])
-            else "fail"
-        )
+        status = "pass" if exit_code == int(verifier["expected_exit"]) else "fail"
     except subprocess.TimeoutExpired as exc:
         stdout = bytes(exc.stdout or b"")
         stderr = bytes(exc.stderr or b"")

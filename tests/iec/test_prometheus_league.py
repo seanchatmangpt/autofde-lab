@@ -30,9 +30,7 @@ def case(
         "behavior": behavior,
         "gate_strength": gate,
         "mutation_receipt_id": (
-            f"sha256:mutation-{model}-{commit}"
-            if gate == "detected"
-            else None
+            f"sha256:mutation-{model}-{commit}" if gate == "detected" else None
         ),
         "clean_environment": {
             "verdict": clean,
@@ -128,9 +126,7 @@ def test_metrics_separate_ngi_from_admitted_vgg() -> None:
     assert metrics["vgg_admission_rate"] == 0.5
     assert metrics["mean_ngi"] == pytest.approx(2 / 3)
     assert metrics["mean_numeric_vgg"] == pytest.approx(2 / 3)
-    assert metrics["falsifiers"] == {
-        "NON_DISCRIMINATIVE_BEHAVIOR_GATE": 1
-    }
+    assert metrics["falsifiers"] == {"NON_DISCRIMINATIVE_BEHAVIOR_GATE": 1}
 
 
 def test_dimension_stats_keep_regressions_visible() -> None:
@@ -145,9 +141,7 @@ def test_dimension_stats_keep_regressions_visible() -> None:
         ),
     ]
     result = build_league(documents)
-    tests_ci = result["systems"]["A::s"]["all_observed"]["dimensions"][
-        "tests_ci"
-    ]
+    tests_ci = result["systems"]["A::s"]["all_observed"]["dimensions"]["tests_ci"]
     assert tests_ci["scorable"] == 2
     assert tests_ci["regressions"] == 1
     assert tests_ci["mean_delta"] == pytest.approx(0.5)
