@@ -7,7 +7,12 @@ substitutions; it does not manufacture equivalence labels itself.
 
 from .substitution_benchmark import (
     SubstitutionCase,
+    evaluate_at_cutoffs,
     evaluate_substitution_discovery,
 )
 
-__all__ = ["SubstitutionCase", "evaluate_substitution_discovery"]
+__all__ = [
+    "SubstitutionCase",
+    "evaluate_at_cutoffs",
+    "evaluate_substitution_discovery",
+]
