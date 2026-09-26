@@ -36,6 +36,14 @@ from .policy_ecology_experiment import (
     policy_identity,
     summarize_heterogeneity,
 )
+from .policy_ecology_sweep import (
+    CueResponsePoint,
+    CueResponseSurface,
+    CueSweep,
+    CueSweepSpec,
+    build_cue_response_surface,
+    manufacture_cue_sweep,
+)
 from .psro import PolicySpaceResponseOracle, PsroReceipt, PsroState, PsroStep
 
 __all__ = [
@@ -54,6 +62,12 @@ __all__ = [
     "manufacture_ecology_schedule",
     "policy_identity",
     "summarize_heterogeneity",
+    "CueResponsePoint",
+    "CueResponseSurface",
+    "CueSweep",
+    "CueSweepSpec",
+    "build_cue_response_surface",
+    "manufacture_cue_sweep",
     "CompatibilityResult",
     "CompatibilityStanding",
     "EXPERIMENT_DIMENSIONS",
