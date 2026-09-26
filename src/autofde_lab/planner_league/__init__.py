@@ -68,6 +68,10 @@ __all__ = [
     "CueSweepSpec",
     "build_cue_response_surface",
     "manufacture_cue_sweep",
+    "DesignBenchmarkPair",
+    "DesignedPolicyEcology",
+    "manufacture_design_benchmark_pair",
+    "manufacture_designed_policy_ecology",
     "CompatibilityResult",
     "CompatibilityStanding",
     "EXPERIMENT_DIMENSIONS",
@@ -91,3 +95,9 @@ __all__ = [
     "identity_quadruple",
     "match_from_bindings",
 ]
+\nfrom .temperament_design_bridge import (
+    DesignBenchmarkPair,
+    DesignedPolicyEcology,
+    manufacture_design_benchmark_pair,
+    manufacture_designed_policy_ecology,
+)
