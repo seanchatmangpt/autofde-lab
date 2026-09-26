@@ -1,0 +1,357 @@
+{
+ "authority": "NONE",
+ "authority_ceiling": "CONSTRUCT",
+ "iri": "https://ggen.dev/ontology/strategic-doctrine#",
+ "non_claim": "not licensed, no endorsement, no text reproduced; ordinals and own paraphrased labels only",
+ "prefix": "sd",
+ "primitives": [
+  {
+   "dual": null,
+   "iri": "sd:shape",
+   "name": "shape"
+  },
+  {
+   "dual": null,
+   "iri": "sd:probe",
+   "name": "probe"
+  },
+  {
+   "dual": "reveal",
+   "iri": "sd:conceal",
+   "name": "conceal"
+  },
+  {
+   "dual": "conceal",
+   "iri": "sd:reveal",
+   "name": "reveal"
+  },
+  {
+   "dual": "disperse",
+   "iri": "sd:concentrate",
+   "name": "concentrate"
+  },
+  {
+   "dual": "concentrate",
+   "iri": "sd:disperse",
+   "name": "disperse"
+  },
+  {
+   "dual": "accelerate",
+   "iri": "sd:delay",
+   "name": "delay"
+  },
+  {
+   "dual": "delay",
+   "iri": "sd:accelerate",
+   "name": "accelerate"
+  },
+  {
+   "dual": "withdraw",
+   "iri": "sd:commit",
+   "name": "commit"
+  },
+  {
+   "dual": "commit",
+   "iri": "sd:withdraw",
+   "name": "withdraw"
+  },
+  {
+   "dual": "combine",
+   "iri": "sd:divide",
+   "name": "divide"
+  },
+  {
+   "dual": "divide",
+   "iri": "sd:combine",
+   "name": "combine"
+  },
+  {
+   "dual": null,
+   "iri": "sd:substitute",
+   "name": "substitute"
+  },
+  {
+   "dual": null,
+   "iri": "sd:transform",
+   "name": "transform"
+  }
+ ],
+ "provenance": "VENDORED_MINIMAL: lab-local stand-in until ggen-marketplace packs/strategic-doctrine-pack generated/catalog.json lands",
+ "schema": "autofde-lab.doctrine-lab.catalog/v1",
+ "strategies": [
+  {
+   "iri": "sd:strategy-01",
+   "ordinal": 1,
+   "primitives": [
+    "probe",
+    "concentrate"
+   ],
+   "short_title": "Probe, then mass on the weak point",
+   "status": "operationalized"
+  },
+  {
+   "iri": "sd:strategy-02",
+   "ordinal": 2,
+   "primitives": [
+    "conceal",
+    "accelerate"
+   ],
+   "short_title": "Hide intent, then move fast",
+   "status": "operationalized"
+  },
+  {
+   "iri": "sd:strategy-03",
+   "ordinal": 3,
+   "primitives": [
+    "divide",
+    "concentrate"
+   ],
+   "short_title": "Split the opposing coalition",
+   "status": "operationalized"
+  },
+  {
+   "iri": "sd:strategy-04",
+   "ordinal": 4,
+   "primitives": [
+    "delay",
+    "probe"
+   ],
+   "short_title": "Keep options open while probing",
+   "status": "operationalized"
+  },
+  {
+   "iri": "sd:strategy-05",
+   "ordinal": 5,
+   "primitives": [
+    "shape",
+    "commit"
+   ],
+   "short_title": "Shape the ground, then commit",
+   "status": "operationalized"
+  },
+  {
+   "iri": "sd:strategy-06",
+   "ordinal": 6,
+   "primitives": [
+    "withdraw",
+    "combine"
+   ],
+   "short_title": "Pull back and regroup with allies",
+   "status": "operationalized"
+  },
+  {
+   "iri": "sd:strategy-07",
+   "ordinal": 7,
+   "primitives": [
+    "substitute",
+    "transform"
+   ],
+   "short_title": "Swap the contested channel",
+   "status": "operationalized"
+  },
+  {
+   "iri": "sd:strategy-08",
+   "ordinal": 8,
+   "primitives": [
+    "disperse",
+    "delay"
+   ],
+   "short_title": "Spread out to absorb pressure",
+   "status": "operationalized"
+  },
+  {
+   "iri": "sd:strategy-09",
+   "ordinal": 9,
+   "primitives": [
+    "reveal",
+    "commit"
+   ],
+   "short_title": "Show strength to deter",
+   "status": "operationalized"
+  },
+  {
+   "iri": "sd:strategy-10",
+   "ordinal": 10,
+   "primitives": [
+    "combine",
+    "shape"
+   ],
+   "short_title": "Gather allies on a shared platform",
+   "status": "operationalized"
+  },
+  {
+   "iri": "sd:strategy-11",
+   "ordinal": 11,
+   "primitives": [
+    "transform",
+    "accelerate"
+   ],
+   "short_title": "Change the arena, then accelerate",
+   "status": "operationalized"
+  },
+  {
+   "iri": "sd:strategy-12",
+   "ordinal": 12,
+   "primitives": [
+    "probe",
+    "concentrate"
+   ],
+   "short_title": "Probe, then mass (second framing)",
+   "status": "operationalized"
+  },
+  {
+   "iri": "sd:strategy-13",
+   "ordinal": 13,
+   "primitives": [
+    "concentrate",
+    "reveal",
+    "conceal"
+   ],
+   "short_title": "Mass openly, then go dark",
+   "status": "operationalized"
+  },
+  {
+   "iri": "sd:strategy-14",
+   "ordinal": 14,
+   "primitives": [
+    "conceal",
+    "concentrate"
+   ],
+   "short_title": "Go dark, then mass",
+   "status": "operationalized"
+  },
+  {
+   "iri": "sd:strategy-15",
+   "ordinal": 15,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 15",
+   "status": "stub"
+  },
+  {
+   "iri": "sd:strategy-16",
+   "ordinal": 16,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 16",
+   "status": "stub"
+  },
+  {
+   "iri": "sd:strategy-17",
+   "ordinal": 17,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 17",
+   "status": "stub"
+  },
+  {
+   "iri": "sd:strategy-18",
+   "ordinal": 18,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 18",
+   "status": "stub"
+  },
+  {
+   "iri": "sd:strategy-19",
+   "ordinal": 19,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 19",
+   "status": "stub"
+  },
+  {
+   "iri": "sd:strategy-20",
+   "ordinal": 20,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 20",
+   "status": "stub"
+  },
+  {
+   "iri": "sd:strategy-21",
+   "ordinal": 21,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 21",
+   "status": "stub"
+  },
+  {
+   "iri": "sd:strategy-22",
+   "ordinal": 22,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 22",
+   "status": "stub"
+  },
+  {
+   "iri": "sd:strategy-23",
+   "ordinal": 23,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 23",
+   "status": "stub"
+  },
+  {
+   "iri": "sd:strategy-24",
+   "ordinal": 24,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 24",
+   "status": "stub"
+  },
+  {
+   "iri": "sd:strategy-25",
+   "ordinal": 25,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 25",
+   "status": "stub"
+  },
+  {
+   "iri": "sd:strategy-26",
+   "ordinal": 26,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 26",
+   "status": "stub"
+  },
+  {
+   "iri": "sd:strategy-27",
+   "ordinal": 27,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 27",
+   "status": "stub"
+  },
+  {
+   "iri": "sd:strategy-28",
+   "ordinal": 28,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 28",
+   "status": "stub"
+  },
+  {
+   "iri": "sd:strategy-29",
+   "ordinal": 29,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 29",
+   "status": "stub"
+  },
+  {
+   "iri": "sd:strategy-30",
+   "ordinal": 30,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 30",
+   "status": "stub"
+  },
+  {
+   "iri": "sd:strategy-31",
+   "ordinal": 31,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 31",
+   "status": "stub"
+  },
+  {
+   "iri": "sd:strategy-32",
+   "ordinal": 32,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 32",
+   "status": "stub"
+  },
+  {
+   "iri": "sd:strategy-33",
+   "ordinal": 33,
+   "primitives": [],
+   "short_title": "Unoperationalized entry 33",
+   "status": "stub"
+  }
+ ]
+}
