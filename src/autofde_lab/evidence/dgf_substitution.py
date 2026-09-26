@@ -1,7 +1,7 @@
 """DGF-Bench deterministic substitution and retirement accounting.
 
 This module intentionally reuses the DGF-Bench repository's executable
-`evaluator.py` as the policy kernel.  It does not copy governance policy into
+evaluator.py as the policy kernel. It does not copy governance policy into
 AutoFDE and it performs no model calls.
 
 A local DGF-Bench checkout provides:
@@ -10,12 +10,13 @@ A local DGF-Bench checkout provides:
 - evaluator.py, the executable reference policy.
 
 The harness re-evaluates the canonical facts through that policy and compares
-the produced route to the stored reference route.  This is a direct
+the produced route to the stored reference route. This is a direct
 reproduction surface for the benchmark's deterministic-control experiment.
 """
 
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import math
@@ -96,6 +97,14 @@ def residual_work_ratio(inputs: ResidualWorkInputs) -> float:
     return numerator / (1.0 + inputs.baseline_overhead)
 
 
+def dgf_evaluator_digest(dgf_root: Path) -> str:
+    """Bind a run to the exact executable policy bytes used for evaluation."""
+    evaluator_path = dgf_root / "evaluator.py"
+    if not evaluator_path.is_file():
+        raise FileNotFoundError(f"DGF evaluator not found: {evaluator_path}")
+    return "sha256:" + hashlib.sha256(evaluator_path.read_bytes()).hexdigest()
+
+
 def _load_evaluator(dgf_root: Path) -> ModuleType:
     evaluator_path = dgf_root / "evaluator.py"
     if not evaluator_path.is_file():
@@ -140,10 +149,7 @@ def run_dgf_case(case_dir: Path, *, dgf_root: Path) -> DGFCaseScore:
         for got, want in zip(actual, expected, strict=False)
         if _canonical(got) == _canonical(want)
     )
-    route_match = (
-        len(actual) == len(expected)
-        and gate_matches == gate_total
-    )
+    route_match = len(actual) == len(expected) and gate_matches == gate_total
 
     return DGFCaseScore(
         case_id=str(hidden.get("case_id", case_dir.name)),
