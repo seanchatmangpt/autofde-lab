@@ -1,0 +1,9 @@
+@prefix spc: <urn:chatman:semantic-projection:> .
+@prefix ex: <urn:chatman:witness:> .
+ex:owner a spc:SemanticContract ; spc:declaresTerm ex:WorkOrder, ex:Receipt .
+ex:consumer a spc:ConsumerWitness .
+ex:projection a spc:Projection ;
+ spc:projectsContract ex:owner ;
+ spc:projectsTerm ex:WorkOrder, ex:Receipt ;
+ spc:consumer ex:consumer ;
+ spc:authorityCeiling "NONE" .
