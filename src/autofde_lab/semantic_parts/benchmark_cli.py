@@ -58,6 +58,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--cutoffs",
         help="comma-separated retrieval budgets; when supplied, emits a sweep",
     )
+    parser.add_argument(
+        "--require-receipts",
+        action="store_true",
+        help="refuse cases whose verified equivalents lack behavioral receipts",
+    )
     parser.add_argument("--out", type=Path)
     args = parser.parse_args(argv)
 
@@ -65,9 +70,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         cases = _load_cases(args.input)
         if args.cutoffs:
             cutoffs = tuple(int(value) for value in args.cutoffs.split(",") if value)
-            result = evaluate_at_cutoffs(cases, cutoffs=cutoffs)
+            result = evaluate_at_cutoffs(
+                cases,
+                cutoffs=cutoffs,
+                require_receipts=args.require_receipts,
+            )
         else:
-            result = evaluate_substitution_discovery(cases, k=args.k)
+            result = evaluate_substitution_discovery(
+                cases,
+                k=args.k,
+                require_receipts=args.require_receipts,
+            )
         receipt = _receipt(input_path=args.input, cases=cases, result=result)
     except (OSError, ValueError, TypeError, json.JSONDecodeError) as error:
         payload = {
