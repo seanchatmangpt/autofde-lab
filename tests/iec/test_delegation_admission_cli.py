@@ -167,6 +167,47 @@ def test_canonical_cli_plans_numeric_repair(tmp_path) -> None:
     assert result["expected_admission_debt_units"] == 0
 
 
+def test_canonical_cli_runs_headroom_spc(tmp_path) -> None:
+    history_receipt = tmp_path / "history-receipt.json"
+    spc_receipt = tmp_path / "spc.json"
+    write(
+        history_receipt,
+        {
+            "schema": "autofde-lab.delegation-admission-history-receipt/1",
+            "subject": SUBJECT,
+            "receipt_id": "sha256:history",
+            "snapshots": [
+                {
+                    "sequence": index,
+                    "subject": SUBJECT,
+                    "receipt_id": f"sha256:{index}",
+                    "gate": "PASS",
+                    "delegation_units": 1,
+                    "admission_capacity_units": 5 if index < 5 else 4,
+                    "admission_debt_units": 0,
+                    "standing": "PARTIAL_ALIVE",
+                    "falsifiers": [],
+                }
+                for index in range(6)
+            ],
+            "transitions": [],
+        },
+    )
+    assert (
+        iec_main(
+            [
+                "delegation-admission-spc",
+                str(history_receipt),
+                str(spc_receipt),
+                "--baseline-count",
+                "5",
+            ]
+        )
+        == 0
+    )
+    assert json.loads(spc_receipt.read_text())["standing"] == "DRIFT_SIGNAL"
+
+
 def test_canonical_tlc_parser_accepts_delegation_models() -> None:
     parser = build_parser()
     reference = parser.parse_args(
