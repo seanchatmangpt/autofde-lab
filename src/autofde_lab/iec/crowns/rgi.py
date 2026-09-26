@@ -569,14 +569,17 @@ def _retirement_standing(
     candidate: Mapping[str, Any],
 ) -> dict[str, Any]:
     if receipt is None:
+        metrics = candidate["metrics"]
+        if metrics["machine_only_observed"]:
+            standing = "OBSERVED_MACHINE_ONLY"
+        elif metrics["zero_general_llm_observed"]:
+            standing = "OBSERVED_BOUNDED_NON_LLM_ONLY"
+        else:
+            standing = "GENERAL_LLM_OBSERVED"
         return {
-            "standing": (
-                "OBSERVED_ZERO_LLM_ONLY"
-                if candidate["metrics"]["zero_llm_observed"]
-                else "LLM_OBSERVED"
-            ),
+            "standing": standing,
             "reason": (
-                "zero observed LLM calls are execution evidence, not "
+                "executor observation is execution evidence, not "
                 "RETIRED_FROM_LLM standing"
             ),
         }
@@ -619,10 +622,13 @@ def _retirement_standing(
             "REFUSED_PRODUCER_MISMATCH",
             "retirement receipt producer does not match candidate producer",
         )
-    if not candidate["metrics"]["zero_llm_observed"]:
+    if not candidate["metrics"]["machine_only_observed"]:
         return {
             "standing": "COUNTEREXAMPLE",
-            "reason": "retirement receipt supplied but candidate observed LLM execution",
+            "reason": (
+                "retirement receipt requires an observed deterministic MACHINE-only "
+                "candidate; DSPY_WASM remains a bounded candidate executor"
+            ),
         }
     if (
         receipt.get("verdict") != Verdict.PASS.value
