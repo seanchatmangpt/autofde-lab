@@ -23,6 +23,10 @@ CATALOG_PATH = Path(__file__).with_name("data") / "catalog.json"
 CATALOG_SHA256 = "49d404d32300e17704580455bbbd3e4a60773dbd1ff091c90e4a310a3bb65e30"
 DOCTRINE_IRI = "https://ggen.dev/ontology/strategic-doctrine#"
 MAX_TITLE = 60
+CATALOG_SCHEMA = "autofde-lab.doctrine-lab.catalog/v1"
+# The two allowed free-text values (provenance, non_claim) are bounded single-line
+# strings: a short statement fits, a paragraph of source text does not.
+MAX_FREE_TEXT = 160
 # Allow-lists: anything outside them (free text such as ``quote`` or ``summary``)
 # is refused, so no source text can ride in under a re-pinned digest.
 TOP_LEVEL_KEYS = frozenset(
@@ -112,6 +116,20 @@ def _check(doc: dict) -> None:
             f"extra={sorted(keys - TOP_LEVEL_KEYS)} "
             f"missing={sorted(TOP_LEVEL_KEYS - keys)}"
         )
+    if doc["schema"] != CATALOG_SCHEMA:
+        raise CatalogIntegrityError(
+            f"catalog schema {doc['schema']!r} is not {CATALOG_SCHEMA}"
+        )
+    for field in ("provenance", "non_claim"):
+        value = doc[field]
+        if (
+            not isinstance(value, str)
+            or len(value) > MAX_FREE_TEXT
+            or any(ch in value for ch in "\n\r")
+        ):
+            raise CatalogIntegrityError(
+                f"catalog {field} is not a single-line string <= {MAX_FREE_TEXT} chars"
+            )
     declared = tuple(
         p.get("name") if isinstance(p, dict) else None
         for p in doc.get("primitives", ())

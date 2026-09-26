@@ -17,8 +17,20 @@ file edited on disk, a report edited on disk, or a ledger whose tail was cut
   catalog (a forged primitive composition is refused without replay);
 * subjects are unique (duplicate delivery) and the keyed ``report_signature``
   binds report_digest, record count and tail digest under the ledger key;
+* the report's scope fields are validated before use: ``strategy_ids`` name
+  distinct operationalized catalog strategies, ``world_ids`` resolve to lab
+  worlds, ``seeds`` is a list of distinct integers, ``rounds`` a positive
+  integer, ``episode_count`` equals strategies x worlds x seeds, and the ledger
+  subjects are exactly that product (a stub, unknown world or zero-round scope
+  is a failure, never a raise);
 * with ``replay=True`` the whole run is re-executed from the report's own
-  parameters and every artifact must be byte/field identical.
+  parameters and every artifact must be byte/field identical; an exception
+  raised by re-execution is reported as a failure.
+
+Limit: without replay the record's ``key_digest`` (the episode outcome) cannot
+be recomputed, so a forger holding the ledger key can seal an outcome that no
+execution produced; ``admit_for_seal`` refuses such episodes by re-execution
+before they reach the ledger, and ``replay=True`` refuses such ledgers.
 """
 
 from __future__ import annotations
@@ -32,7 +44,12 @@ from autofde_lab._cache.provenance import AttestationSigner
 from autofde_lab.simulation.fortune5_safe.model import stable_digest
 
 from .catalog import Catalog, CatalogIntegrityError, load_catalog
-from .matrix import EVIDENCE_CEILING, receipt_body, run_doctrine_matrix
+from .matrix import (
+    EVIDENCE_CEILING,
+    ProvenanceRefused,
+    receipt_body,
+    run_doctrine_matrix,
+)
 from .ocel import episode_log, log_bytes, ocel_filename
 from .report import build_report, report_body
 from .seal import (
@@ -97,7 +114,103 @@ def _check_authority(report: dict) -> list[str]:
     return failures
 
 
-def _check_record(att: dict, subject: str, report: dict, catalog: Catalog) -> list[str]:
+@dataclass(frozen=True)
+class RunScope:
+    strategy_ids: frozenset[str]
+    world_ids: frozenset[str]
+    seeds: frozenset[int]
+    subjects: frozenset[str]
+
+
+def _is_int(value: object) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def check_scope(report: dict, catalog: Catalog | None) -> tuple[RunScope, list[str]]:
+    """Validate the report's own scope fields; return the scope and failures.
+
+    Never raises on a malformed report: every defect is a failure string, and the
+    returned scope only contains the entries that validated.
+    """
+    failures: list[str] = []
+    strategy_ids: list[str] = []
+    raw = report.get("strategy_ids")
+    if not isinstance(raw, list) or not raw:
+        failures.append(f"report strategy_ids {raw!r} is not a non-empty list")
+        raw = []
+    for sid in raw:
+        if not (isinstance(sid, str) and sid.startswith("sd-") and sid[3:].isdigit()):
+            failures.append(f"report strategy_id {sid!r} is not sd-NN")
+            continue
+        if catalog is not None:
+            try:
+                strategy = catalog.get(int(sid[3:]))
+            except KeyError:
+                failures.append(f"report strategy_id {sid} is not in the catalog")
+                continue
+            if strategy.status != "operationalized" or strategy.id != sid:
+                failures.append(f"report strategy_id {sid} is not operationalized")
+                continue
+        strategy_ids.append(sid)
+    if len(set(strategy_ids)) != len(strategy_ids):
+        failures.append("report strategy_ids are not distinct")
+    world_ids: list[str] = []
+    raw = report.get("world_ids")
+    if not isinstance(raw, list) or not raw:
+        failures.append(f"report world_ids {raw!r} is not a non-empty list")
+        raw = []
+    for wid in raw:
+        try:
+            if not isinstance(wid, str):
+                raise ValueError("not a string")
+            world_by_id(wid)
+        except (ValueError, KeyError) as exc:
+            failures.append(f"report world_id {wid!r} is not a lab world: {exc}")
+            continue
+        world_ids.append(wid)
+    if len(set(world_ids)) != len(world_ids):
+        failures.append("report world_ids are not distinct")
+    seeds: list[int] = []
+    raw = report.get("seeds")
+    if not isinstance(raw, list) or not raw:
+        failures.append(f"report seeds {raw!r} is not a non-empty list")
+        raw = []
+    for seed in raw:
+        if not _is_int(seed):
+            failures.append(f"report seed {seed!r} is not an integer")
+            continue
+        seeds.append(seed)
+    if len(set(seeds)) != len(seeds):
+        failures.append("report seeds are not distinct")
+    rounds = report.get("rounds")
+    if not _is_int(rounds) or rounds < 1:
+        failures.append(f"report rounds {rounds!r} is not a positive integer")
+    subjects = frozenset(
+        f"{SUBJECT_PREFIX}{s}@{w}#s{seed}"
+        for s in strategy_ids
+        for w in world_ids
+        for seed in seeds
+    )
+    lists = [report.get(k) for k in ("strategy_ids", "world_ids", "seeds")]
+    expected_count = (
+        len(lists[0]) * len(lists[1]) * len(lists[2])
+        if all(isinstance(v, list) for v in lists)
+        else None
+    )
+    if report.get("episode_count") != expected_count:
+        failures.append(
+            f"report episode_count {report.get('episode_count')!r} != "
+            f"strategies x worlds x seeds {expected_count!r}"
+        )
+    scope = RunScope(
+        frozenset(strategy_ids), frozenset(world_ids), frozenset(seeds), subjects
+    )
+    return scope, failures
+
+
+def _check_record(
+    att: dict, subject: str, scope: RunScope, catalog: Catalog
+) -> list[str]:
     failures = []
     owner = str(att.get("owner", ""))
     ceiling = owner.removeprefix(f"authority={AUTHORITY};ceiling=")
@@ -115,11 +228,11 @@ def _check_record(att: dict, subject: str, report: dict, catalog: Catalog) -> li
     if strategy.status != "operationalized":
         failures.append(f"{subject} names stub ordinal {ordinal}")
         return failures
-    if strategy.id not in report.get("strategy_ids", ()):
+    if strategy.id not in scope.strategy_ids:
         failures.append(f"{subject} strategy is not in the report's strategy_ids")
-    if world_id not in report.get("world_ids", ()):
+    if world_id not in scope.world_ids:
         failures.append(f"{subject} world is not in the report's world_ids")
-    if seed not in report.get("seeds", ()):
+    if seed not in scope.seeds:
         failures.append(f"{subject} seed is not in the report's seeds")
     if att.get("policy_digest") != strategy.policy.digest:
         failures.append(f"{subject} policy_digest is not the catalog strategy's")
@@ -199,6 +312,8 @@ def verify_run(
     except CatalogIntegrityError as exc:
         failures.append(f"report catalog is not the admitted catalog: {exc}")
 
+    scope, scope_failures = check_scope(report, catalog)
+    failures.extend(scope_failures)
     if key_ids - {expected_key["key_id"]}:
         failures.append(
             f"ledger sealed by {sorted(key_ids)} not {expected_key['key_id']}"
@@ -217,14 +332,18 @@ def verify_run(
         if att.get("observed_at") != OBSERVED_AT:
             failures.append(f"{subject} observed_at is not pinned to {OBSERVED_AT}")
         if catalog is not None:
-            failures.extend(_check_record(att, subject, report, catalog))
+            failures.extend(_check_record(att, subject, scope, catalog))
         name = ocel_filename(subject[len(SUBJECT_PREFIX) :])
         expected_files.add(name)
         path = ocel_dir / name
         if not path.exists():
             failures.append(f"missing ocel/{name}")
             continue
-        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        try:
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError as exc:
+            failures.append(f"ocel/{name} is unreadable: {exc.strerror or exc}")
+            continue
         if att.get("data_fingerprint") != f"ocel:{digest}":
             failures.append(f"ocel/{name} does not match its ledger fingerprint")
         if att.get("release_id") != f"catalog:{catalog_meta.get('sha256')}":
@@ -234,9 +353,17 @@ def verify_run(
         failures.append(f"ocel/{extra} is not bound by any ledger record")
     if report.get("episode_count") != len(attestations):
         failures.append("report episode_count != ledger records")
+    if not scope_failures and seen_subjects != scope.subjects:
+        missing = sorted(scope.subjects - seen_subjects)
+        failures.append(
+            f"ledger subjects are not the report scope: missing {missing[:3]}"
+        )
 
     if replay and not failures:
-        failures.extend(_replay(report, ocel_dir, attestations))
+        try:
+            failures.extend(_replay(report, ocel_dir, attestations))
+        except (ValueError, KeyError, TypeError, ProvenanceRefused, OSError) as exc:
+            failures.append(f"replay: re-execution refused: {exc}")
     return RunVerification(not failures, chain.records, tuple(failures))
 
 

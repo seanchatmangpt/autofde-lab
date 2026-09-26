@@ -25,15 +25,17 @@ from autofde_lab._cache.provenance import (
 )
 from autofde_lab.simulation.fortune5_safe.model import stable_digest
 
-from .catalog import admitted_catalog
+from .catalog import CATALOG_SHA256, admitted_catalog
 from .matrix import (
     EVIDENCE_CEILING,
     RECEIPT_SCHEMA,
     EpisodeRecord,
     ProvenanceRefused,
     receipt_body,
+    run_strategy_episode,
 )
 from .ocel import episode_log, log_sha256
+from .world import world_by_id
 
 KEY_ENV = "AUTOFDE_DOCTRINE_LAB_KEY"
 FIXTURE_KEY_ID = "doctrine-lab-fixture-v1"
@@ -117,20 +119,30 @@ def outcome_digest_of(episode: EpisodeRecord) -> str:
 
 
 def admit_for_seal(episode: EpisodeRecord, ocel_sha256: str) -> None:
-    """Refuse an episode whose origin or digests do not recompute.
+    """Refuse an episode whose origin, rounds or digests do not recompute.
 
-    The catalog digest must have been admitted by ``load_catalog`` in-process and
-    the receipt's ordinal must resolve, in THAT catalog, to an operationalized
-    Strategy whose signature and policy digest the receipt carries (a receipt
-    cannot bring its own primitive composition). The receipt must carry authority
-    NONE with a SELECT/CONSTRUCT ceiling, its ``outcome_digest`` must recompute
-    from the episode's rounds, its ``episode_digest`` from its own fields, and
-    the supplied OCEL digest must equal the digest of the episode's own log.
+    The catalog digest must have been admitted by ``load_catalog`` in-process AND
+    be the pinned vendored ``CATALOG_SHA256`` (the catalog ``verify_run`` reloads;
+    a re-pinned catalog admitted from another path cannot be sealed). The
+    receipt's ordinal must resolve, in that catalog, to an operationalized
+    Strategy whose signature and policy digest the receipt carries. The receipt
+    must carry authority NONE with a SELECT/CONSTRUCT ceiling and the lab schema
+    and evidence ceiling; its world/seed/rounds must be the episode's; every
+    round's engine receipt must carry the admitted policy digest; and the episode
+    is RE-EXECUTED from (admitted Strategy, world, seed, rounds) under the lab
+    config: rounds, opponent moves and the whole receipt must be identical to the
+    re-execution. A relabelled episode that ran a foreign composition therefore
+    cannot be sealed even with every digest recomputed. Finally the supplied OCEL
+    digest must equal the digest of the episode's own log.
     """
     r = episode.receipt
     catalog = admitted_catalog(r.catalog_sha256)
     if catalog is None:
         raise ProvenanceRefused(f"catalog {r.catalog_sha256!r} was never admitted")
+    if r.catalog_sha256 != CATALOG_SHA256:
+        raise ProvenanceRefused(
+            f"catalog {r.catalog_sha256!r} is not the pinned catalog {CATALOG_SHA256}"
+        )
     if r.authority != AUTHORITY or r.authority_ceiling not in CEILINGS:
         raise ProvenanceRefused(
             f"receipt authority {r.authority}/{r.authority_ceiling}"
@@ -162,6 +174,16 @@ def admit_for_seal(episode: EpisodeRecord, ocel_sha256: str) -> None:
         len(episode.rounds),
     ):
         raise ProvenanceRefused(f"episode {episode.id} world/seed/rounds mismatch")
+    foreign = [
+        rr.round
+        for rr in episode.rounds
+        if rr.receipt.policy_digest != admitted.policy.digest
+    ]
+    if foreign:
+        raise ProvenanceRefused(
+            f"episode {episode.id} rounds {foreign} ran a policy that is not the "
+            f"admitted catalog's for ordinal {admitted.ordinal}"
+        )
     if outcome_digest_of(episode) != r.outcome_digest:
         raise ProvenanceRefused(f"episode {episode.id} outcome does not recompute")
     expected = stable_digest(
@@ -171,6 +193,24 @@ def admit_for_seal(episode: EpisodeRecord, ocel_sha256: str) -> None:
     )
     if expected != r.episode_digest:
         raise ProvenanceRefused(f"episode {episode.id} digest does not recompute")
+    try:
+        world = world_by_id(r.world_id)
+        rerun = run_strategy_episode(
+            r.seed, admitted, world, catalog_sha256=r.catalog_sha256, rounds=r.rounds
+        )
+    except (ValueError, KeyError, TypeError) as exc:
+        raise ProvenanceRefused(
+            f"episode {episode.id} cannot be re-executed: {exc}"
+        ) from None
+    if episode.world != world or episode.rounds != rerun.rounds:
+        raise ProvenanceRefused(
+            f"episode {episode.id} rounds differ from re-execution of the admitted "
+            f"strategy {admitted.id}"
+        )
+    if r != rerun.receipt:
+        raise ProvenanceRefused(
+            f"episode {episode.id} receipt differs from re-execution"
+        )
     if ocel_sha256 != log_sha256(episode_log(episode)):
         raise ProvenanceRefused(f"episode {episode.id} OCEL digest does not recompute")
 

@@ -16,6 +16,12 @@ Measured (median over ``--samples`` wall-clock samples, perf_counter_ns):
 sit roughly 10x above the numbers recorded on the authoring host so that a
 genuine complexity regression (e.g. a quadratic ledger scan) fails while host
 noise does not. Evidence ceiling REPO_LOCAL_FIXTURE.
+
+Subject identity: a commit cannot contain its own hash, so the receipt names the
+code it timed by ``source_tree_sha256``, a sha256 over (path, bytes) of every
+file in the doctrine_lab package and this script, recomputable from any
+checkout. ``source_identity`` recomputes it; the test suite refuses a committed
+receipt whose digest differs from the tree it is committed in.
 """
 
 from __future__ import annotations
@@ -43,6 +49,12 @@ from autofde_lab.simulation.doctrine_lab import (
 )
 
 SCHEMA = "autofde-lab.simulation.doctrine-lab.bench/v1"
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE_ROOTS = (
+    Path("src/autofde_lab/simulation/doctrine_lab"),
+    Path("benchmarks/doctrine_lab_bench.py"),
+)
+SOURCE_SUFFIXES = frozenset({".py", ".json"})
 # ms per unit; see module docstring
 REGRESSION_BOUNDS = {
     "run_lab_ms_per_episode": 40.0,
@@ -50,6 +62,30 @@ REGRESSION_BOUNDS = {
     "verify_run_ms_per_record": 5.0,
     "verify_run_replay_ms_per_record": 40.0,
 }
+
+
+def source_identity(root: Path = ROOT) -> dict[str, object]:
+    """sha256 over sorted (relative path, bytes) of the timed source files."""
+    files: list[Path] = []
+    for entry in SOURCE_ROOTS:
+        path = root / entry
+        if path.is_file():
+            files.append(path)
+        else:
+            files.extend(
+                p
+                for p in path.rglob("*")
+                if p.is_file()
+                and p.suffix in SOURCE_SUFFIXES
+                and "__pycache__" not in p.parts
+            )
+    digest = hashlib.sha256()
+    names = sorted(p.relative_to(root).as_posix() for p in files)
+    for name in names:
+        data = (root / name).read_bytes()
+        digest.update(f"{name}\0{len(data)}\0".encode())
+        digest.update(data)
+    return {"source_tree_sha256": digest.hexdigest(), "source_files": len(names)}
 
 
 def _median_ms(fn: Callable[[], object], samples: int) -> float:
@@ -115,6 +151,7 @@ def run_bench(
             "report_digest": report["report_digest"],
             "matrix_digest": report["matrix_digest"],
             "ledger_tail_digest": report["ledger"]["tail_digest"],
+            **source_identity(),
         },
         "workload": {
             "seeds": seeds,
