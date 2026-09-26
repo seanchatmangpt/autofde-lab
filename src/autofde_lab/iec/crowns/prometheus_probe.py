@@ -477,9 +477,10 @@ def pair_runs(
                 "REFUSED_INVALID_MUTATION_REPORT",
                 f"invalid mutation gate strength {gate_strength!r}",
             )
+        raw_receipt_id = mutation_report.get("receipt_id")
         mutation_receipt_id = (
-            str(mutation_report.get("receipt_id"))
-            if gate_strength == "detected"
+            str(raw_receipt_id).strip()
+            if gate_strength == "detected" and raw_receipt_id is not None
             else None
         )
         if gate_strength == "detected" and not mutation_receipt_id:
