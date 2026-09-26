@@ -1,0 +1,12 @@
+{
+  "name": "autofde-lab-dspy-wasm-court",
+  "private": true,
+  "type": "module",
+  "description": "Bounded DSPy 3.4.0 on Pyodide 314.0.7 compatibility court",
+  "dependencies": {
+    "pyodide": "314.0.7"
+  },
+  "scripts": {
+    "probe": "node probe.mjs"
+  }
+}
