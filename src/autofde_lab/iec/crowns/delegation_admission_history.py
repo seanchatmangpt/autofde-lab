@@ -78,6 +78,7 @@ def evaluate_history(document: Mapping[str, Any]) -> dict[str, Any]:
             {
                 "sequence": expected,
                 "subject": receipt["subject"],
+                "producer_id": receipt["producer_id"],
                 "receipt_id": receipt["receipt_id"],
                 "gate": receipt["gate"],
                 "delegation_units": receipt["delegation_units"],
