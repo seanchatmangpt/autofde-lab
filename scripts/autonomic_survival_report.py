@@ -24,7 +24,6 @@ the repository's canonical validated OCEL 2.0 projection.
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -32,45 +31,25 @@ from typing import Any
 from autofde_lab.iec.crowns.recurrent_survival import recurrent_survival_report
 from autofde_lab.iec.crowns.survival import survival_report
 from autofde_lab.iec.crowns.survival_compare import compare_survival_policies
+from autofde_lab.iec.crowns.survival_io import (
+    load_episode_file,
+    load_episode_files,
+    render_report_json,
+    write_report_json,
+)
 from autofde_lab.iec.crowns.survival_ocel import survival_episodes_to_ocel
 from autofde_lab.iec.crowns.survival_strata import stratified_survival_report
 from autofde_lab.iec.crowns.survival_uncertainty import survival_uncertainty_report
 
 
 def _load(path: Path) -> list[dict[str, Any]]:
-    raw = path.read_text(encoding="utf-8").strip()
-    if not raw:
-        return []
-    try:
-        value = json.loads(raw)
-    except json.JSONDecodeError:
-        rows = []
-        for line_number, line in enumerate(raw.splitlines(), start=1):
-            if not line.strip():
-                continue
-            try:
-                value = json.loads(line)
-            except json.JSONDecodeError as exc:
-                raise ValueError(
-                    f"{path}:{line_number}: invalid JSONL: {exc.msg}"
-                ) from exc
-            if not isinstance(value, dict):
-                raise ValueError(f"{path}:{line_number}: episode must be an object")
-            rows.append(value)
-        return rows
+    """Compatibility wrapper around the shared artifact parser."""
 
-    if isinstance(value, dict):
-        return [value]
-    if isinstance(value, list) and all(isinstance(row, dict) for row in value):
-        return list(value)
-    raise ValueError(f"{path}: expected episode object or array of episode objects")
+    return load_episode_file(path)
 
 
 def _load_all(paths: list[Path]) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for path in paths:
-        rows.extend(_load(path))
-    return rows
+    return load_episode_files(paths)
 
 
 def _group_by_policy(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
@@ -149,12 +128,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"survival-report-refused: {exc}", file=sys.stderr)
         return 2
 
-    rendered = json.dumps(report, sort_keys=True, indent=2) + "\n"
     if args.output is None:
-        sys.stdout.write(rendered)
+        sys.stdout.write(render_report_json(report))
     else:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(rendered, encoding="utf-8")
+        write_report_json(args.output, report)
     return 0
 
 
