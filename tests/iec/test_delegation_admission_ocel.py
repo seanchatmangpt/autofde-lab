@@ -18,6 +18,7 @@ def artifact(*, units: int, scope: int) -> dict:
             "units": units,
             "boundary_id": "sha256:b",
             "authority_scope_id": "sha256:a",
+            "producer_id": "urn:producer:subject",
         },
         "obligations": {
             "explain": {
