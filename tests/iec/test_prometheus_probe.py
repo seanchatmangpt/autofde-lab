@@ -429,3 +429,62 @@ def test_detected_mutation_override_requires_receipt_id(tmp_path) -> None:
             treated_run,
             mutation_report=report,
         )
+
+
+def test_clean_and_replay_receipts_can_be_supplied_by_reconstruction_court(
+    tmp_path,
+) -> None:
+    doc, base_run, treated_run, _ = paired(tmp_path)
+    pair = pair_runs(
+        doc,
+        base_run,
+        treated_run,
+        clean_environment_receipt={
+            "verdict": "PASS",
+            "receipt_id": "sha256:clean-reconstruction",
+        },
+        replay_receipt={
+            "verdict": "PASS",
+            "receipt_id": "sha256:replay-reconstruction",
+        },
+    )
+    assert pair["clean_environment"] == {
+        "verdict": "PASS",
+        "receipt_id": "sha256:clean-reconstruction",
+    }
+    assert pair["replay"] == {
+        "verdict": "PASS",
+        "receipt_id": "sha256:replay-reconstruction",
+    }
+
+
+def test_external_reconstruction_receipts_require_typed_verdict_and_id(
+    tmp_path,
+) -> None:
+    doc, base_run, treated_run, _ = paired(tmp_path)
+    with pytest.raises(
+        IECRefusal,
+        match="REFUSED_INVALID_PROBE_RECEIPT",
+    ):
+        pair_runs(
+            doc,
+            base_run,
+            treated_run,
+            clean_environment_receipt={
+                "verdict": "YES",
+                "receipt_id": "sha256:x",
+            },
+        )
+    with pytest.raises(
+        IECRefusal,
+        match="REFUSED_INVALID_PROBE_RECEIPT",
+    ):
+        pair_runs(
+            doc,
+            base_run,
+            treated_run,
+            replay_receipt={
+                "verdict": "PASS",
+                "receipt_id": "",
+            },
+        )
