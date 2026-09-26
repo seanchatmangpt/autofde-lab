@@ -22,6 +22,7 @@ from .model import IECRefusal, Verdict, canonical_json, content_id
 __all__ = [
     "BENCHMARK_SCHEMA",
     "TRACE_SCHEMA",
+    "TRACE_SCHEMA_V2",
     "EdgeExecution",
     "benchmark_trace",
     "compare_runs",
@@ -29,6 +30,8 @@ __all__ = [
 ]
 
 TRACE_SCHEMA = "autofde-lab.rgi-trace/1"
+TRACE_SCHEMA_V2 = "autofde-lab.rgi-trace/2"
+SUPPORTED_TRACE_SCHEMAS = frozenset({TRACE_SCHEMA, TRACE_SCHEMA_V2})
 BENCHMARK_SCHEMA = "autofde-lab.rgi-benchmark/1"
 
 MODES = {"LLM_NATIVE", "MACHINE_SERIAL", "REGION_HYBRID", "ZERO_LLM"}
@@ -51,6 +54,30 @@ def _nonnegative_number(value: Any, name: str) -> float:
             "REFUSED_INVALID_RGI_TRACE", f"{name} must be non-negative"
         )
     return value
+
+
+def _validate_sha256_digest(value: Any, name: str) -> str:
+    if not isinstance(value, str):
+        raise IECRefusal(
+            "REFUSED_INVALID_RGI_TRACE", f"{name} must be a sha256 digest"
+        )
+    digest = value.strip().lower()
+    payload = digest.removeprefix("sha256:")
+    if (
+        not digest.startswith("sha256:")
+        or len(payload) != 64
+        or any(ch not in "0123456789abcdef" for ch in payload)
+    ):
+        raise IECRefusal(
+            "REFUSED_INVALID_RGI_TRACE",
+            f"{name} must be sha256:<64 lowercase hex>",
+        )
+    return digest
+
+
+def _edge_universe_identity(universe: Sequence[str]) -> str:
+    """Order-independent identity for the semantic edge set."""
+    return content_id(sorted(universe))
 
 
 @dataclass(frozen=True)
@@ -154,10 +181,12 @@ class EdgeExecution:
 def _parse_trace(
     document: Mapping[str, Any],
 ) -> tuple[dict[str, Any], tuple[EdgeExecution, ...]]:
-    if document.get("schema") != TRACE_SCHEMA:
+    trace_schema = str(document.get("schema", ""))
+    if trace_schema not in SUPPORTED_TRACE_SCHEMAS:
         raise IECRefusal(
             "REFUSED_INVALID_RGI_TRACE",
-            f"schema must be {TRACE_SCHEMA}, got {document.get('schema')!r}",
+            "schema must be one of "
+            f"{sorted(SUPPORTED_TRACE_SCHEMAS)!r}, got {trace_schema!r}",
         )
     subject = str(document.get("subject", "")).strip()
     workload_id = str(document.get("workload_id", "")).strip()
@@ -175,10 +204,23 @@ def _parse_trace(
         document.get("run_wall_ms", 0), "run_wall_ms"
     )
 
-    universe = tuple(
-        str(edge).strip()
-        for edge in document.get("edge_universe", ())
-    )
+    producer_digest: str | None = None
+    if document.get("producer_digest") is not None:
+        producer_digest = _validate_sha256_digest(
+            document.get("producer_digest"), "producer_digest"
+        )
+    if trace_schema == TRACE_SCHEMA_V2 and producer_digest is None:
+        raise IECRefusal(
+            "REFUSED_INVALID_RGI_TRACE",
+            "v2 trace requires producer_digest",
+        )
+
+    universe_raw = document.get("edge_universe", ())
+    if not isinstance(universe_raw, list):
+        raise IECRefusal(
+            "REFUSED_INVALID_RGI_TRACE", "edge_universe must be a list"
+        )
+    universe = tuple(sorted(str(edge).strip() for edge in universe_raw))
     if (
         any(not edge for edge in universe)
         or len(universe) != len(set(universe))
@@ -186,6 +228,22 @@ def _parse_trace(
         raise IECRefusal(
             "REFUSED_INVALID_RGI_TRACE",
             "edge_universe must contain unique non-empty ids",
+        )
+    edge_universe_id = _edge_universe_identity(universe)
+    declared_universe_id = document.get("edge_universe_id")
+    if trace_schema == TRACE_SCHEMA_V2 and declared_universe_id != edge_universe_id:
+        raise IECRefusal(
+            "REFUSED_INVALID_RGI_TRACE",
+            "edge_universe_id does not match the canonical edge set",
+        )
+    if (
+        trace_schema != TRACE_SCHEMA_V2
+        and declared_universe_id is not None
+        and declared_universe_id != edge_universe_id
+    ):
+        raise IECRefusal(
+            "REFUSED_INVALID_RGI_TRACE",
+            "edge_universe_id does not match the canonical edge set",
         )
 
     rows = document.get("events")
@@ -229,11 +287,14 @@ def _parse_trace(
 
     return (
         {
+            "trace_schema": trace_schema,
             "subject": subject,
             "workload_id": workload_id,
             "mode": mode,
             "run_wall_ms": run_wall_ms,
+            "producer_digest": producer_digest,
             "edge_universe": universe,
+            "edge_universe_id": edge_universe_id,
             "ranking": ranking,
         },
         events,
@@ -269,6 +330,22 @@ def _coverage(
         "missing": missing,
         "outside": outside,
     }
+
+
+def _mode_falsifiers(
+    mode: str, events: Sequence[EdgeExecution]
+) -> list[str]:
+    llm_events = [event for event in events if event.executor == "GENERAL_LLM"]
+    failures: list[str] = []
+    if any(event.llm_leakage for event in llm_events):
+        failures.append("GENERAL_LLM_OUTSIDE_UNKNOWN_REGION")
+    if any(event.llm_do for event in llm_events):
+        failures.append("GENERAL_LLM_IN_DO")
+    if any(event.unreceipted_do for event in events):
+        failures.append("UNRECEIPTED_DO")
+    if mode in {"MACHINE_SERIAL", "ZERO_LLM"} and llm_events:
+        failures.append("LLM_PRESENT_IN_ZERO_LLM_MODE")
+    return failures
 
 
 def benchmark_trace(document: Mapping[str, Any]) -> dict[str, Any]:
@@ -337,14 +414,14 @@ def benchmark_trace(document: Mapping[str, Any]) -> dict[str, Any]:
         "zero_llm_observed": not llm_events,
     }
     report = {
-        "schema": "autofde-lab.rgi-run-report/1",
+        "schema": "autofde-lab.rgi-run-report/2",
+        "trace_schema": header["trace_schema"],
         "subject": header["subject"],
         "workload_id": header["workload_id"],
+        "producer_digest": header["producer_digest"],
         "mode": header["mode"],
         "run_wall_ms": header["run_wall_ms"],
-        "edge_universe_id": content_id(
-            list(header["edge_universe"])
-        ),
+        "edge_universe_id": header["edge_universe_id"],
         "coverage": coverage,
         "metrics": metrics,
         "leakage": [
@@ -357,6 +434,7 @@ def benchmark_trace(document: Mapping[str, Any]) -> dict[str, Any]:
             }
             for event in leakage
         ],
+        "mode_falsifiers": _mode_falsifiers(header["mode"], events),
         "retirement_frontier": dict(
             sorted(
                 Counter(
