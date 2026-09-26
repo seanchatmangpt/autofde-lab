@@ -273,7 +273,7 @@ def recurrent_survival_report(
                 continue
             guarded_episodes += 1
             post_guard_failures += int(edge["post_guard_failures"])
-            pre_guard_exposure += max(0, int(installed) - 1)
+            pre_guard_exposure += int(installed)
             post_guard_exposure += max(0, int(episode["horizon"]) - int(installed))
             pre_guard_failures += sum(
                 1 for step in edge["failure_steps"] if step <= int(installed)
