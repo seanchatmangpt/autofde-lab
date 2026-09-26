@@ -1,5 +1,6 @@
 from autofde_lab.semantic_parts import (
     SubstitutionCase,
+    evaluate_at_cutoffs,
     evaluate_substitution_discovery,
 )
 
@@ -57,3 +58,42 @@ def test_oracle_cannot_self_verify_subject():
         assert "cannot verify itself" in str(error)
     else:
         raise AssertionError("self-verification must be refused")
+
+
+def test_metrics_capture_rank_and_recall_not_only_hit_rate():
+    cases = [
+        SubstitutionCase(
+            subject_id="a",
+            verified_equivalents=frozenset({"b", "c"}),
+            lexical_candidates=("x", "b"),
+            semantic_candidates=("b", "c"),
+        )
+    ]
+
+    result = evaluate_substitution_discovery(cases, k=2)
+
+    assert result["lexical"]["mrr_at_k"] == 0.5
+    assert result["semantic"]["mrr_at_k"] == 1.0
+    assert result["lexical"]["recall_at_k"] == 0.5
+    assert result["semantic"]["recall_at_k"] == 1.0
+    assert result["mrr_lift"] == 0.5
+    assert result["recall_lift"] == 0.5
+
+
+def test_cutoff_sweep_reuses_the_same_oracle():
+    cases = [
+        SubstitutionCase(
+            subject_id="a",
+            verified_equivalents=frozenset({"c"}),
+            lexical_candidates=("x", "c"),
+            semantic_candidates=("c",),
+        )
+    ]
+
+    sweep = evaluate_at_cutoffs(cases, cutoffs=(1, 2))
+
+    assert sweep["cutoffs"] == [1, 2]
+    assert sweep["reports"]["1"]["semantic"]["discovery_rate"] == 1.0
+    assert sweep["reports"]["1"]["lexical"]["discovery_rate"] == 0.0
+    assert sweep["reports"]["2"]["lexical"]["discovery_rate"] == 1.0
+    assert sweep["authority"] == "NONE"
