@@ -1,0 +1,10 @@
+{
+  "subject": "autofde-lab 8d366dcd88fa17f79737f96b94a6a60d07643ca5 src/autofde_lab/evidence/information_obstruction.py (pre-hardening)",
+  "command": "git show 8d366dcd:src/autofde_lab/evidence/information_obstruction.py > old_obstruction.py; python -S: find_information_obstruction over n DecisionCase({docs:[same]}, {GO,HOLD}), median of 3 (n=20000: 1 run)",
+  "python": "3.13.9",
+  "machine": "arm64 macOS-26.2",
+  "median_s": {"2000": 0.0701, "4000": 0.2530, "20000": 6.6519},
+  "shape": "quadratic: each case rescans every prior case in its observation bucket",
+  "after_hardening_20000_median_s": {"idle_host": 0.0809, "loaded_host": 0.1457},
+  "after_hardening_receipt": "receipts/v26.9.26/autofde-lab-194-dgf-evidence-bench.json"
+}
