@@ -384,6 +384,8 @@ def pair_runs(
     treated_run: Mapping[str, Any],
     *,
     mutation_report: Mapping[str, Any] | None = None,
+    clean_environment_receipt: Mapping[str, Any] | None = None,
+    replay_receipt: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Bind independent base/treated observations to one fixed manifest."""
     manifest = parse_manifest(manifest_document)
@@ -515,7 +517,19 @@ def pair_runs(
         )
         mutation_source = "manifest-mutation-probes"
 
-    def singleton_role(role: str) -> dict[str, str]:
+    def singleton_role(
+        role: str,
+        override: Mapping[str, Any] | None = None,
+    ) -> dict[str, str]:
+        if override is not None:
+            verdict = str(override.get("verdict", ""))
+            receipt_id = str(override.get("receipt_id", "")).strip()
+            if verdict not in {value.value for value in Verdict} or not receipt_id:
+                raise IECRefusal(
+                    "REFUSED_INVALID_PROBE_RECEIPT",
+                    f"{role} override must carry typed verdict + receipt_id",
+                )
+            return {"verdict": verdict, "receipt_id": receipt_id}
         probe = next(
             (p for p in manifest["probes"] if p["role"] == role),
             None,
@@ -556,8 +570,14 @@ def pair_runs(
         "gate_strength": gate_strength,
         "mutation_receipt_id": mutation_receipt_id,
         "mutation_source": mutation_source,
-        "clean_environment": singleton_role("clean_environment"),
-        "replay": singleton_role("replay"),
+        "clean_environment": singleton_role(
+            "clean_environment",
+            clean_environment_receipt,
+        ),
+        "replay": singleton_role(
+            "replay",
+            replay_receipt,
+        ),
         "governance_evidence": governance,
     }
     pair["pair_id"] = content_id(pair)
@@ -704,6 +724,8 @@ def main(argv: list[str] | None = None) -> int:
     pair.add_argument("treated_run", type=Path)
     pair.add_argument("out", type=Path)
     pair.add_argument("--mutation-report", type=Path)
+    pair.add_argument("--clean-receipt", type=Path)
+    pair.add_argument("--replay-receipt", type=Path)
 
     assemble = sub.add_parser("assemble")
     assemble.add_argument("pair", type=Path)
@@ -726,6 +748,16 @@ def main(argv: list[str] | None = None) -> int:
             mutation_report=(
                 _read(args.mutation_report)
                 if args.mutation_report
+                else None
+            ),
+            clean_environment_receipt=(
+                _read(args.clean_receipt)
+                if args.clean_receipt
+                else None
+            ),
+            replay_receipt=(
+                _read(args.replay_receipt)
+                if args.replay_receipt
                 else None
             ),
         )
