@@ -24,6 +24,18 @@ from .core import (
     PolicySpec,
 )
 from .policy_ecology import ConditionedPolicy, PolicyEcology
+from .policy_ecology_experiment import (
+    EcologyMatch,
+    EcologyParticipant,
+    EcologyPayoffSurface,
+    EcologySchedule,
+    HeterogeneityEvidence,
+    HeterogeneityTrial,
+    ObservedEcologyOutcome,
+    manufacture_ecology_schedule,
+    policy_identity,
+    summarize_heterogeneity,
+)
 from .psro import PolicySpaceResponseOracle, PsroReceipt, PsroState, PsroStep
 
 __all__ = [
@@ -32,6 +44,16 @@ __all__ = [
     "BUDGETS",
     "ConditionedPolicy",
     "PolicyEcology",
+    "EcologyMatch",
+    "EcologyParticipant",
+    "EcologyPayoffSurface",
+    "EcologySchedule",
+    "HeterogeneityEvidence",
+    "HeterogeneityTrial",
+    "ObservedEcologyOutcome",
+    "manufacture_ecology_schedule",
+    "policy_identity",
+    "summarize_heterogeneity",
     "CompatibilityResult",
     "CompatibilityStanding",
     "EXPERIMENT_DIMENSIONS",
