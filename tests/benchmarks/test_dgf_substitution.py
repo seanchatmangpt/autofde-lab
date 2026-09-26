@@ -5,8 +5,12 @@ import pytest
 
 from autofde_lab.evidence.dgf_substitution import (
     ResidualWorkInputs,
+    assert_evaluator_digest,
+    dgf_dataset_digest,
+    dgf_evaluator_digest,
     residual_work_ratio,
     run_dgf_dataset,
+    run_receipted_dgf_dataset,
 )
 
 
@@ -80,15 +84,98 @@ def test_dataset_reports_gate_and_route_success_separately(tmp_path: Path) -> No
 
     scores, summary = run_dgf_dataset(dataset, dgf_root=dgf_root)
 
-    assert [score.route_match for score in scores] == [False, True] or [
-        score.route_match for score in scores
-    ] == [True, False]
+    assert sorted(score.route_match for score in scores) == [False, True]
     assert summary.cases == 2
     assert summary.routes_passed == 1
     assert summary.gates == 2
     assert summary.gates_passed == 1
     assert summary.route_success_rate == 0.5
     assert summary.gate_success_rate == 0.5
+
+
+def test_empty_dataset_refuses_instead_of_vacuously_passing(tmp_path: Path) -> None:
+    dgf_root = _fake_dgf_root(tmp_path)
+    dataset = tmp_path / "empty"
+    dataset.mkdir()
+
+    with pytest.raises(ValueError, match="DGF_EMPTY_DATASET"):
+        run_dgf_dataset(dataset, dgf_root=dgf_root)
+
+
+def test_run_receipt_binds_kernel_and_dataset_subject(tmp_path: Path) -> None:
+    dgf_root = _fake_dgf_root(tmp_path)
+    dataset = tmp_path / "dataset"
+    _case(dataset, "pass")
+
+    scores, summary, receipt = run_receipted_dgf_dataset(
+        dataset,
+        dgf_root=dgf_root,
+    )
+
+    assert len(scores) == 1
+    assert summary.routes_passed == 1
+    assert receipt.kernel_digest == dgf_evaluator_digest(dgf_root)
+    assert receipt.dataset_digest == dgf_dataset_digest(
+        [dataset / "pass"],
+        dataset_root=dataset,
+    )
+    assert receipt.llm_calls == 0
+    assert receipt.standing == "ALIVE"
+
+
+def test_dataset_digest_changes_when_truth_changes(tmp_path: Path) -> None:
+    dataset = tmp_path / "dataset"
+    case_dir = _case(dataset, "case")
+    first = dgf_dataset_digest([case_dir], dataset_root=dataset)
+
+    hidden = json.loads((case_dir / "99_hidden_ground_truth.json").read_text())
+    hidden["case_id"] = "changed"
+    _write_json(case_dir / "99_hidden_ground_truth.json", hidden)
+
+    second = dgf_dataset_digest([case_dir], dataset_root=dataset)
+    assert first != second
+
+
+def test_kernel_digest_pin_refuses_policy_drift(tmp_path: Path) -> None:
+    dgf_root = _fake_dgf_root(tmp_path)
+    expected = dgf_evaluator_digest(dgf_root)
+    assert assert_evaluator_digest(dgf_root, expected) == expected
+
+    (dgf_root / "evaluator.py").write_text(
+        (dgf_root / "evaluator.py").read_text() + "\n# drift\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="DGF_EVALUATOR_DIGEST_MISMATCH"):
+        assert_evaluator_digest(dgf_root, expected)
+
+
+def test_case_contract_count_mismatch_refuses(tmp_path: Path) -> None:
+    dgf_root = _fake_dgf_root(tmp_path)
+    dataset = tmp_path / "dataset"
+    case_dir = _case(dataset, "case")
+    _write_json(
+        case_dir / "01_route_manifest.json",
+        {
+            "occurrences": [
+                {
+                    "occurrence_id": "case-01",
+                    "gate": "general",
+                    "phase": "governance",
+                    "position": 1,
+                },
+                {
+                    "occurrence_id": "case-02",
+                    "gate": "security",
+                    "phase": "governance",
+                    "position": 2,
+                },
+            ]
+        },
+    )
+
+    with pytest.raises(ValueError, match="DGF_CASE_CONTRACT_COUNT_MISMATCH"):
+        run_dgf_dataset(dataset, dgf_root=dgf_root)
 
 
 def test_residual_work_ratio_matches_paper_equation() -> None:
