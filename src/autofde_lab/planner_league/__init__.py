@@ -44,6 +44,12 @@ from .policy_ecology_sweep import (
     build_cue_response_surface,
     manufacture_cue_sweep,
 )
+from .temperament_design_bridge import (
+    DesignBenchmarkPair,
+    DesignedPolicyEcology,
+    manufacture_design_benchmark_pair,
+    manufacture_designed_policy_ecology,
+)
 from .psro import PolicySpaceResponseOracle, PsroReceipt, PsroState, PsroStep
 
 __all__ = [
@@ -95,9 +101,4 @@ __all__ = [
     "identity_quadruple",
     "match_from_bindings",
 ]
-\nfrom .temperament_design_bridge import (
-    DesignBenchmarkPair,
-    DesignedPolicyEcology,
-    manufacture_design_benchmark_pair,
-    manufacture_designed_policy_ecology,
-)
+\n
