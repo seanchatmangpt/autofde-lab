@@ -17,10 +17,10 @@ from typing import Any, Mapping
 from autofde_lab.ocel.log import OcelLog
 from autofde_lab.ocel.model import OcelAttribute, OcelAttributeValue, OcelObject
 
-from .model import content_id
+from .model import IECRefusal, content_id
 from .survival import analyze_episode
 
-__all__ = ["survival_episode_to_ocel"]
+__all__ = ["survival_episode_to_ocel", "survival_episodes_to_ocel"]
 
 
 def _object_id(kind: str, value: str) -> str:
@@ -119,3 +119,43 @@ def survival_episode_to_ocel(document: Mapping[str, Any]) -> OcelLog:
         )
 
     return log.validate(strict_qualifiers=True)
+
+
+def survival_episodes_to_ocel(documents: tuple[Mapping[str, Any], ...]) -> OcelLog:
+    """Compose exact episode projections into one validated campaign log."""
+
+    if not documents:
+        raise IECRefusal(
+            "REFUSED_SURVIVAL_OCEL_EMPTY",
+            "at least one survival episode is required",
+        )
+
+    logs = tuple(survival_episode_to_ocel(document) for document in documents)
+    objects: dict[str, OcelObject] = {}
+    events = []
+    event_object_links = []
+    object_object_links = []
+    object_changes = []
+
+    for log in logs:
+        for obj in log.objects:
+            existing = objects.get(obj.id)
+            if existing is not None and existing != obj:
+                raise IECRefusal(
+                    "REFUSED_SURVIVAL_OCEL_OBJECT_COLLISION",
+                    f"object id {obj.id!r} projects to conflicting values",
+                )
+            objects[obj.id] = obj
+        events.extend(log.events)
+        event_object_links.extend(log.event_object_links)
+        object_object_links.extend(log.object_object_links)
+        object_changes.extend(log.object_changes)
+
+    composed = OcelLog.new(
+        objects=tuple(objects[key] for key in sorted(objects)),
+        events=tuple(events),
+        event_object_links=tuple(event_object_links),
+        object_object_links=tuple(object_object_links),
+        object_changes=tuple(object_changes),
+    )
+    return composed.validate(strict_qualifiers=True)
