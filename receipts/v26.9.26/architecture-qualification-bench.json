@@ -1,11 +1,11 @@
 {
   "authority": "NONE",
-  "court_source_sha256": "sha256:be8beb7a481da59d26aaef7103a497eff205fe9dd3a8845fbef74080eecea90f",
+  "court_source_sha256": "sha256:b23259e654f43260def45ec860e7e67fce598201a35029496a4d14ce57ac8635",
   "evidence_ceiling": "HOST_LOCAL_TIMING",
   "falsifier_coverage": {
     "coverage": 1.0,
-    "operators": 23,
-    "refused": 23,
+    "operators": 32,
+    "refused": 32,
     "results": {
       "abb_mismatch": {
         "refusal_codes": [
@@ -22,6 +22,12 @@
       "authority_incompatible": {
         "refusal_codes": [
           "AUTHORITY_INCOMPATIBLE"
+        ],
+        "standing": "REFUSED"
+      },
+      "authority_unhashable": {
+        "refusal_codes": [
+          "UNKNOWN_AUTHORITY"
         ],
         "standing": "REFUSED"
       },
@@ -43,6 +49,12 @@
         ],
         "standing": "REFUSED"
       },
+      "dimensions_not_mapping": {
+        "refusal_codes": [
+          "MALFORMED_DIMENSION"
+        ],
+        "standing": "REFUSED"
+      },
       "duplicate_evidence": {
         "refusal_codes": [
           "DUPLICATE_EVIDENCE"
@@ -55,9 +67,21 @@
         ],
         "standing": "REFUSED"
       },
+      "evidence_bare_string": {
+        "refusal_codes": [
+          "MALFORMED_EVIDENCE"
+        ],
+        "standing": "REFUSED"
+      },
       "evidence_incompatible": {
         "refusal_codes": [
           "EVIDENCE_INCOMPATIBLE"
+        ],
+        "standing": "REFUSED"
+      },
+      "evidence_unhashable_entry": {
+        "refusal_codes": [
+          "MALFORMED_EVIDENCE"
         ],
         "standing": "REFUSED"
       },
@@ -121,6 +145,18 @@
         ],
         "standing": "REFUSED"
       },
+      "pack_as_ea_kind": {
+        "refusal_codes": [
+          "PACK_AS_EA"
+        ],
+        "standing": "REFUSED"
+      },
+      "pack_as_ea_subject": {
+        "refusal_codes": [
+          "PACK_AS_EA"
+        ],
+        "standing": "REFUSED"
+      },
       "resource_incompatible": {
         "refusal_codes": [
           "RESOURCE_INCOMPATIBLE"
@@ -144,6 +180,24 @@
           "UNDECLARED_DIMENSION"
         ],
         "standing": "REFUSED"
+      },
+      "unknown_kind": {
+        "refusal_codes": [
+          "UNKNOWN_KIND"
+        ],
+        "standing": "REFUSED"
+      },
+      "vendor_as_abb_kind": {
+        "refusal_codes": [
+          "VENDOR_AS_ABB"
+        ],
+        "standing": "REFUSED"
+      },
+      "vendor_as_abb_subject": {
+        "refusal_codes": [
+          "VENDOR_AS_ABB"
+        ],
+        "standing": "REFUSED"
       }
     }
   },
@@ -162,13 +216,13 @@
     "clean_replays": 200,
     "distinct_receipt_digests": 1,
     "qualified": true,
-    "receipt_digest": "sha256:05038e24f102176e510efcedfe1cc7d3eeb7566677086f302067762e5f236dc0",
+    "receipt_digest": "sha256:4c270c84dd3a47204654336bbcf3e51f940d1d06a7bdbf7750622e224e537b43",
     "replays": 2000
   },
   "schema": "autofde.architecture-qualification-bench.v1",
   "throughput_ns": {
-    "frontier64_median": 20101575.0,
-    "qualify_median": 174774.48,
-    "replay_median": 141067.08000000002
+    "frontier64_median": 5965375.0,
+    "qualify_median": 60813.75,
+    "replay_median": 90590.83499999999
   }
 }

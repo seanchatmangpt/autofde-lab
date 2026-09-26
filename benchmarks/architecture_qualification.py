@@ -89,6 +89,19 @@ def mutation_operators() -> dict[str, CandidateSBB]:
         "blank_candidate_id": replace(base, candidate_id=""),
         "undeclared_dimension": replace(base, dimensions=_dims(semantics=True)),
         "malformed_dimension": replace(base, dimensions=_dims(effect="yes")),
+        "vendor_as_abb_subject": replace(
+            base, exact_subject_digest=CONTRACT.abb_digest
+        ),
+        "vendor_as_abb_kind": replace(base, kind="VENDOR"),
+        "pack_as_ea_subject": replace(
+            base, exact_subject_digest=CONTRACT.contract_digest
+        ),
+        "pack_as_ea_kind": replace(base, kind="PACK"),
+        "unknown_kind": replace(base, kind="sbb"),
+        "evidence_bare_string": replace(base, evidence="e:1"),
+        "evidence_unhashable_entry": replace(base, evidence=(["e:1"],)),
+        "dimensions_not_mapping": replace(base, dimensions=list(DIMENSIONS)),
+        "authority_unhashable": replace(base, authority=["DO"]),
     }
     for dimension in DIMENSIONS:
         worlds[f"{dimension}_incompatible"] = replace(

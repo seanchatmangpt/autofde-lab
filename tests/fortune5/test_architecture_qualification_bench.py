@@ -52,7 +52,7 @@ def test_bench_replay_determinism_falsifier_coverage_and_time_bound():
     assert report["frontier_order_invariant"] is True
     coverage = report["falsifier_coverage"]
     assert coverage["coverage"] == 1.0
-    assert coverage["operators"] >= 23
+    assert coverage["operators"] >= 32
     assert all(r["refusal_codes"] for r in coverage["results"].values())
     timing = report["throughput_ns"]
     assert 0 < timing["qualify_median"] < QUALIFY_MEDIAN_NS_BOUND
