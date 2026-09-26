@@ -23,6 +23,7 @@ def artifact(*, units: int, scope: int, standing: str = "PARTIAL_ALIVE") -> dict
             "units": units,
             "boundary_id": "sha256:boundary",
             "authority_scope_id": "sha256:authority-scope",
+            "producer_id": "urn:producer:subject",
         },
         "obligations": {
             "explain": {
