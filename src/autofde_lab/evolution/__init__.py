@@ -1,5 +1,11 @@
 """Evolution courts for bounded candidate promotion and cognition retirement."""
 
+from .promotion_campaign import (
+    CampaignStatus,
+    PromotionCampaign,
+    PromotionCampaignController,
+    PromotionCommit,
+)
 from .promotion_registry import ChampionRegistry, ChampionState, PromotionRecord
 from .paired_promotion import (
     CompiledRetirementRoute,
@@ -22,6 +28,7 @@ from .paired_promotion import (
 )
 
 __all__ = [
+    "CampaignStatus",
     "ChampionRegistry",
     "ChampionState",
     "CompiledRetirementRoute",
@@ -29,6 +36,9 @@ __all__ = [
     "PairedPromotionCourt",
     "PairedPromotionPolicy",
     "PairedTrial",
+    "PromotionCampaign",
+    "PromotionCampaignController",
+    "PromotionCommit",
     "PromotionDecision",
     "PromotionRecord",
     "PromotionStatistics",
