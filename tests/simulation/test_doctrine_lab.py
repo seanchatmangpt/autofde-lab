@@ -29,6 +29,7 @@ from autofde_lab.simulation.doctrine_lab import (
     CatalogIntegrityError,
     ProvenanceRefused,
     build_report,
+    concealed,
     episode_log,
     load_catalog,
     log_bytes,
@@ -526,6 +527,59 @@ def test_verify_run_detects_ledger_tail_truncation(tmp_path: Path):
     assert not check.valid
     assert any("report anchor" in f for f in check.failures)
     assert any("not bound by any ledger record" in f for f in check.failures)
+
+
+def test_verify_run_refuses_tail_truncation_with_resynced_anchor_records(
+    tmp_path: Path,
+):
+    """M9 kill: resync the report anchor's record count to the truncated chain
+    and only the tail-digest anchor check still fires. A verify_run mutant with
+    the tail_digest check removed passes this test's expectations no more."""
+    from autofde_lab.simulation.doctrine_lab.report import report_body
+    from autofde_lab.simulation.fortune5_safe.model import stable_digest
+
+    _small_run(tmp_path)
+    ledger = tmp_path / "ledger.jsonl"
+    lines = ledger.read_text().splitlines()
+    ledger.write_text("\n".join(lines[:-1]) + "\n")
+    chain = verify_ledger(ledger)
+    assert chain.valid  # a prefix of a chain is still a chain
+    path = tmp_path / "report.json"
+    report = json.loads(path.read_text())
+    report["ledger"]["records"] = chain.records  # resync count, keep stale tail
+    # the ledger anchor is outside report_body, so report_digest still recomputes
+    assert stable_digest(report_body(report)) == report["report_digest"]
+    path.write_text(json.dumps(report))
+    check = verify_run(tmp_path)
+    assert not check.valid
+    assert any("ledger tail digest != report anchor" in f for f in check.failures)
+
+
+def test_concealed_is_the_last_conceal_reveal_operator():
+    """M10 kill (direct): concealed() is the last conceal/reveal operator, not
+    a constant False."""
+    assert concealed(("probe", "conceal", "delay")) is True
+    assert concealed(("reveal",)) is False
+    assert concealed(("conceal", "reveal")) is False
+    assert concealed(("reveal", "probe")) is False
+    assert concealed(()) is False
+
+
+def test_conceal_strategies_and_golden_episode_digest():
+    """M10 kill (behavioural): conceal-carrying catalog strategies are marked
+    concealed and their episode digest is pinned — an always-False concealed()
+    changes the opponent and moves the digest off the golden value."""
+    catalog = load_catalog()
+    for ordinal in (2, 13, 14):
+        assert catalog.get(ordinal).concealed is True
+    assert catalog.get(1).concealed is False
+    episode = run_strategy_episode(
+        2030, catalog.get(2), MIRROR, catalog_sha256=catalog.sha256
+    )
+    assert (
+        episode.receipt.episode_digest
+        == "81073c357e6907f6586758bc032c3c9e457a7838de3a33fe39030b9b4de6e793"
+    )
 
 
 _SRC = Path(doctrine_lab.__file__).resolve().parents[3]

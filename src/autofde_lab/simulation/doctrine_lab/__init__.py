@@ -29,7 +29,7 @@ from .matrix import (
     wilson,
 )
 from .ocel import episode_log, log_bytes, log_sha256, ocel_filename
-from .primitives import BASE_POLICY, DUALS, PRIMITIVES, compose
+from .primitives import BASE_POLICY, DUALS, PRIMITIVES, compose, concealed
 from .report import build_report
 from .seal import key_provenance, seal_episodes, signer_from_env, verify_ledger
 from .verify import RunVerification, verify_run
@@ -96,6 +96,7 @@ __all__ = [
     "admitted_catalog",
     "build_report",
     "compose",
+    "concealed",
     "episode_log",
     "is_admitted",
     "key_provenance",
