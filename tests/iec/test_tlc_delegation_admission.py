@@ -28,8 +28,7 @@ def tc() -> TlaToolchain:
     if isinstance(_DISCOVERED, TlaToolchain):
         return _DISCOVERED
     reason = (
-        "UNSUPPORTED:TLC_TOOLCHAIN_ABSENT "
-        f"({_DISCOVERED.code}: {_DISCOVERED.reason})"
+        f"UNSUPPORTED:TLC_TOOLCHAIN_ABSENT ({_DISCOVERED.code}: {_DISCOVERED.reason})"
     )
     if os.environ.get("AUTOFDE_TLC_REQUIRED") == "1":
         pytest.fail(f"AUTOFDE_TLC_REQUIRED=1 but {reason}")
@@ -52,9 +51,7 @@ def test_delegation_reference_holds_all_capacity_invariants(
 ) -> None:
     receipt = _court(delegation_admission_system(), tc, tmp_path, "reference")
     assert receipt.payload["model_check"] == TlcVerdict.MODEL_CHECK_ALIVE.value
-    assert set(receipt.verdicts.values()) == {
-        TlcVerdict.PROPERTY_HOLDS_IN_BOUND.value
-    }
+    assert set(receipt.verdicts.values()) == {TlcVerdict.PROPERTY_HOLDS_IN_BOUND.value}
     assert set(receipt.verdicts) == {
         "NoDelegationBeyondExplain",
         "NoDelegationBeyondVerify",
