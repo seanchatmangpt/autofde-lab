@@ -8,6 +8,7 @@ CI) that skip becomes a failure, so absence can never pass as green.
 
 from __future__ import annotations
 
+import dataclasses
 import os
 import shutil
 from pathlib import Path
@@ -197,3 +198,41 @@ def test_cli_refuses_tampered_jar(tmp_path: Path, tc: TlaToolchain) -> None:
     assert (
         '"code":"JAR_DIGEST_MISMATCH"' in (tmp_path / "o" / "receipt.json").read_text()
     )
+
+
+
+def test_formal_bridge_refuses_relabelled_tool_evidence(
+    tc: TlaToolchain, tmp_path: Path
+) -> None:
+    system = brce_reference_system()
+    receipt = _court(system, tc, tmp_path, "intent-binding")
+    from autofde_lab.iec.tla_projection import render_tla
+
+    intent = make_tlc_intent(
+        render_tla(system),
+        tool_version=receipt.payload["tool_version"],
+        executable_digest="sha256:" + receipt.payload["jar_sha256"],
+        module_path="BRCEReference.tla",
+        config_path="x.cfg",
+        jar_path="tla2tools.jar",
+    )
+    run = next(item for item in receipt.runs if item.property_name == "AtMostOneConsequence")
+
+    with pytest.raises(ValueError, match="FORMAL_INTENT_PROJECTION_MISMATCH"):
+        to_formal_evidence(
+            receipt,
+            run,
+            dataclasses.replace(intent, projection_id="sha256:other"),
+        )
+    with pytest.raises(ValueError, match="FORMAL_INTENT_TOOL_VERSION_MISMATCH"):
+        to_formal_evidence(
+            receipt,
+            run,
+            dataclasses.replace(intent, tool_version="other"),
+        )
+    with pytest.raises(ValueError, match="FORMAL_INTENT_EXECUTABLE_MISMATCH"):
+        to_formal_evidence(
+            receipt,
+            run,
+            dataclasses.replace(intent, executable_digest="sha256:" + "0" * 64),
+        )
