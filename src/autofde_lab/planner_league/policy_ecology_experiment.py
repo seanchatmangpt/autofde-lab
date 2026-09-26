@@ -9,11 +9,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field, is_dataclass
 from math import fsum
 from types import FunctionType
-from typing import Any, Iterable
+from typing import Any
 
+from .catalog import ROLE_SPECS
 from .core import PolicySpec
 from .policy_ecology import ConditionedPolicy, PolicyEcology
 
@@ -75,6 +77,21 @@ def policy_identity(policy: PolicySpec) -> str:
     }
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def _validate_role_binding(ecology: PolicyEcology, role_id: str, side: str) -> None:
+    role = ROLE_SPECS.get(role_id)
+    if role is None:
+        raise ValueError(f"REFUSED:UNKNOWN_ROLE:{role_id}")
+    for index, member in enumerate(ecology.members):
+        policy = member.policy
+        if (
+            policy.objective_id != role["objective"]
+            or policy.action_projection_id != role["action_projection"]
+        ):
+            raise ValueError(
+                f"REFUSED:ECOLOGY_POLICY_ROLE_MISMATCH:{side}:{index}:{role_id}"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -196,6 +213,8 @@ def manufacture_ecology_schedule(
     """Enumerate the bounded phenotype cross-product without executing it."""
     if max_matches < 1:
         raise ValueError("REFUSED:MAX_MATCHES_MUST_BE_POSITIVE")
+    _validate_role_binding(left, left_role_id, "left")
+    _validate_role_binding(right, right_role_id, "right")
     if cue is not None:
         left = left.condition(cue=cue)
         right = right.condition(cue=cue)
