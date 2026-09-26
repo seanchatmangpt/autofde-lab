@@ -57,9 +57,7 @@ def test_single_task_regression_holds_candidate_even_with_positive_total() -> No
 
 def test_duplicate_cohort_identity_is_refused() -> None:
     trial = _paired(task="same", champion=0.5, candidate=0.6)
-    verdict = PairedPromotionCourt(
-        PairedPromotionPolicy(minimum_trials=2)
-    ).evaluate(
+    verdict = PairedPromotionCourt(PairedPromotionPolicy(minimum_trials=2)).evaluate(
         champion_id="cap:v1",
         candidate_id="cap:v2",
         trials=(trial, trial),
