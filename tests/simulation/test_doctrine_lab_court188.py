@@ -26,6 +26,7 @@ import json
 from pathlib import Path
 
 import pytest
+from test_doctrine_lab_hardening import _reseal, _rewrite_report, _rows, _run
 
 from autofde_lab.simulation.doctrine_lab import (
     CATALOG_SHA256,
@@ -48,8 +49,6 @@ from autofde_lab.simulation.doctrine_lab.catalog import (
 from autofde_lab.simulation.doctrine_lab.matrix import receipt_body
 from autofde_lab.simulation.doctrine_lab.seal import outcome_digest_of
 from autofde_lab.simulation.fortune5_safe.model import stable_digest
-
-from test_doctrine_lab_hardening import _reseal, _rewrite_report, _rows, _run
 
 PARITY = world_by_id("static/full/solo/mid/parity")
 MIRROR = world_by_id("mirror/deceptive/fracturing/late/inferior")
