@@ -1,5 +1,16 @@
 """Evolution courts for bounded candidate promotion and cognition retirement."""
 
+from .capability_ecology import (
+    CapabilityRetirementReceipt,
+    CapabilitySubstitutionReceipt,
+    FrozenCapabilityRecord,
+    GitCapabilitySubject,
+    ResidualHumanWork,
+    freeze_promoted_candidate,
+    qualify_retirement,
+    qualify_substitution,
+)
+
 from .paired_promotion import (
     CompiledRetirementRoute,
     IntelligenceRung,
@@ -21,7 +32,15 @@ from .paired_promotion import (
 )
 
 __all__ = [
-    "CompiledRetirementRoute",
+    "CapabilityRetirementReceipt",
+    "CapabilitySubstitutionReceipt",
+    "FrozenCapabilityRecord",
+    "GitCapabilitySubject",
+    "ResidualHumanWork",
+    "freeze_promoted_candidate",
+    "qualify_retirement",
+    "qualify_substitution",
+        "CompiledRetirementRoute",
     "IntelligenceRung",
     "PairedPromotionCourt",
     "PairedPromotionPolicy",
