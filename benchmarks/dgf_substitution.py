@@ -8,10 +8,7 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from autofde_lab.evidence.dgf_substitution import (
-    dgf_evaluator_digest,
-    run_dgf_dataset,
-)
+from autofde_lab.evidence.dgf_substitution import run_receipted_dgf_dataset
 
 
 def main() -> int:
@@ -23,18 +20,22 @@ def main() -> int:
     )
     parser.add_argument("--dgf-root", type=Path, required=True)
     parser.add_argument("--dataset-root", type=Path, required=True)
+    parser.add_argument(
+        "--expect-kernel-digest",
+        help="optional exact sha256:<hex> pin for evaluator.py; drift refuses the run",
+    )
     args = parser.parse_args()
 
-    scores, summary = run_dgf_dataset(
+    scores, summary, receipt = run_receipted_dgf_dataset(
         args.dataset_root,
         dgf_root=args.dgf_root,
+        expected_evaluator_digest=args.expect_kernel_digest,
     )
     print(
         json.dumps(
             {
                 "kernel": "DGF evaluator.py",
-                "kernel_digest": dgf_evaluator_digest(args.dgf_root),
-                "llm_calls": 0,
+                "receipt": receipt.to_dict(),
                 "summary": summary.to_dict(),
                 "cases": [
                     {
@@ -48,7 +49,7 @@ def main() -> int:
             sort_keys=True,
         )
     )
-    return 0 if summary.routes_passed == summary.cases else 1
+    return 0 if receipt.standing == "ALIVE" else 1
 
 
 if __name__ == "__main__":
