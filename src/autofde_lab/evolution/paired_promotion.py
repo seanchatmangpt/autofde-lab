@@ -18,7 +18,8 @@ import json
 from dataclasses import asdict, dataclass
 from enum import IntEnum, StrEnum
 from hashlib import sha256
-from math import isfinite
+from math import isfinite, sqrt
+from statistics import mean, stdev
 from typing import Iterable
 
 
@@ -117,7 +118,7 @@ class PairedPromotionCourt:
     ) -> PromotionVerdict:
         _require_nonempty("champion_id", champion_id)
         _require_nonempty("candidate_id", candidate_id)
-        cohort = tuple(trials)
+        cohort = tuple(sorted(trials, key=lambda trial: trial.cohort_key))
 
         reasons: list[str] = []
         if champion_id == candidate_id:
@@ -235,7 +236,7 @@ class ReasoningRetirementCourt:
         candidate_rung: IntelligenceRung,
         trials: Iterable[RetirementTrial],
     ) -> RetirementVerdict:
-        cohort = tuple(trials)
+        cohort = tuple(sorted(trials, key=lambda trial: trial.input_id))
         reasons: list[str] = []
 
         if candidate_rung >= incumbent_rung:
@@ -297,3 +298,225 @@ class ReasoningRetirementCourt:
             reasons=tuple(reasons),
             evidence_digest=_digest(evidence),
         )
+
+
+
+@dataclass(frozen=True, slots=True)
+class PromotionStatistics:
+    """Order-independent paired statistics for one exact cohort."""
+
+    trial_count: int
+    mean_delta: float
+    sample_stdev: float
+    standard_error: float
+    lower_confidence_bound: float
+    upper_confidence_bound: float
+    wins: int
+    ties: int
+    losses: int
+
+
+@dataclass(frozen=True, slots=True)
+class StatisticalPromotionPolicy:
+    """Promotion bounds that require a positive paired confidence floor."""
+
+    minimum_trials: int = 3
+    maximum_trials: int = 64
+    minimum_mean_delta: float = 0.0
+    minimum_lower_bound: float = 0.0
+    max_single_trial_regression: float = 0.0
+    confidence_z: float = 1.96
+
+    def __post_init__(self) -> None:
+        if self.minimum_trials < 2:
+            raise ValueError("STATISTICAL_MINIMUM_TRIALS_MUST_BE_AT_LEAST_TWO")
+        if self.maximum_trials < self.minimum_trials:
+            raise ValueError("MAXIMUM_TRIALS_BELOW_MINIMUM")
+        if self.max_single_trial_regression < 0:
+            raise ValueError("MAX_REGRESSION_MUST_BE_NONNEGATIVE")
+        if not isfinite(self.confidence_z) or self.confidence_z <= 0:
+            raise ValueError("CONFIDENCE_Z_MUST_BE_POSITIVE")
+
+
+class SequentialDecision(StrEnum):
+    """Bounded sequential decision without overloading HOLD."""
+
+    CONTINUE = "CONTINUE"
+    PROMOTE = "PROMOTE"
+    HOLD = "HOLD"
+    REFUSE = "REFUSE"
+
+
+@dataclass(frozen=True, slots=True)
+class SequentialPromotionVerdict:
+    decision: SequentialDecision
+    champion_id: str
+    candidate_id: str
+    statistics: PromotionStatistics
+    reasons: tuple[str, ...]
+    evidence_digest: str
+    remaining_trials: int
+    authority: str = "none"
+
+
+class StatisticalPairedPromotionCourt:
+    """Bounded sequential promotion over paired evidence."""
+
+    def __init__(self, policy: StatisticalPromotionPolicy | None = None) -> None:
+        self.policy = policy or StatisticalPromotionPolicy()
+
+    def evaluate(
+        self,
+        *,
+        champion_id: str,
+        candidate_id: str,
+        trials: Iterable[PairedTrial],
+    ) -> SequentialPromotionVerdict:
+        _require_nonempty("champion_id", champion_id)
+        _require_nonempty("candidate_id", candidate_id)
+        cohort = tuple(sorted(trials, key=lambda trial: trial.cohort_key))
+        reasons: list[str] = []
+
+        if champion_id == candidate_id:
+            reasons.append("CANDIDATE_EQUALS_CHAMPION")
+
+        keys = [trial.cohort_key for trial in cohort]
+        if len(keys) != len(set(keys)):
+            reasons.append("DUPLICATE_COHORT_IDENTITY")
+        if len(cohort) > self.policy.maximum_trials:
+            reasons.append("MAXIMUM_TRIALS_EXCEEDED")
+
+        stats = self.statistics(cohort)
+        remaining = max(0, self.policy.maximum_trials - len(cohort))
+
+        if reasons:
+            decision = SequentialDecision.REFUSE
+        elif stats.losses and min(trial.delta for trial in cohort) < (
+            -self.policy.max_single_trial_regression
+        ):
+            decision = SequentialDecision.HOLD
+            reasons.append("REGRESSION_BOUND_EXCEEDED")
+        elif len(cohort) < self.policy.minimum_trials:
+            decision = SequentialDecision.CONTINUE
+            reasons.append("MORE_PAIRED_EVIDENCE_REQUIRED")
+        elif (
+            stats.mean_delta > self.policy.minimum_mean_delta
+            and stats.lower_confidence_bound > self.policy.minimum_lower_bound
+        ):
+            decision = SequentialDecision.PROMOTE
+            reasons.append("STATISTICAL_PROMOTION_CONFORMS")
+        elif len(cohort) >= self.policy.maximum_trials:
+            decision = SequentialDecision.HOLD
+            reasons.append("EVIDENCE_BUDGET_EXHAUSTED")
+        else:
+            decision = SequentialDecision.CONTINUE
+            reasons.append("PROMOTION_BOUND_NOT_YET_PROVEN")
+
+        evidence = {
+            "champion_id": champion_id,
+            "candidate_id": candidate_id,
+            "policy": asdict(self.policy),
+            "statistics": asdict(stats),
+            "trials": [asdict(trial) for trial in cohort],
+            "decision": decision.value,
+            "reasons": reasons,
+        }
+        return SequentialPromotionVerdict(
+            decision=decision,
+            champion_id=champion_id,
+            candidate_id=candidate_id,
+            statistics=stats,
+            reasons=tuple(reasons),
+            evidence_digest=_digest(evidence),
+            remaining_trials=remaining,
+        )
+
+    def statistics(self, trials: Iterable[PairedTrial]) -> PromotionStatistics:
+        cohort = tuple(sorted(trials, key=lambda trial: trial.cohort_key))
+        deltas = [trial.delta for trial in cohort]
+        count = len(deltas)
+        if count == 0:
+            return PromotionStatistics(
+                trial_count=0,
+                mean_delta=0.0,
+                sample_stdev=0.0,
+                standard_error=0.0,
+                lower_confidence_bound=float("-inf"),
+                upper_confidence_bound=float("inf"),
+                wins=0,
+                ties=0,
+                losses=0,
+            )
+
+        average = mean(deltas)
+        deviation = stdev(deltas) if count > 1 else 0.0
+        standard_error = deviation / sqrt(count) if count > 1 else 0.0
+        margin = self.policy.confidence_z * standard_error
+        return PromotionStatistics(
+            trial_count=count,
+            mean_delta=average,
+            sample_stdev=deviation,
+            standard_error=standard_error,
+            lower_confidence_bound=average - margin,
+            upper_confidence_bound=average + margin,
+            wins=sum(1 for delta in deltas if delta > 0),
+            ties=sum(1 for delta in deltas if delta == 0),
+            losses=sum(1 for delta in deltas if delta < 0),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class CompiledRetirementRoute:
+    """Machine-consumable result of successfully retiring recurring reasoning."""
+
+    signature_id: str
+    incumbent_rung: IntelligenceRung
+    candidate_rung: IntelligenceRung
+    candidate_artifact_digest: str
+    behavioral_court_digest: str
+    cohort_digest: str
+    trial_count: int
+    authority: str = "none"
+
+    @property
+    def route_digest(self) -> str:
+        return _digest(asdict(self))
+
+
+def compile_retirement_route(
+    *,
+    signature_id: str,
+    candidate_artifact_digest: str,
+    verdict: RetirementVerdict,
+    trials: Iterable[RetirementTrial],
+) -> CompiledRetirementRoute:
+    """Compile an admitted retirement verdict into a powerless route."""
+
+    _require_nonempty("signature_id", signature_id)
+    _require_nonempty("candidate_artifact_digest", candidate_artifact_digest)
+    if verdict.decision is not RetirementDecision.RETIRE_INCUMBENT:
+        raise ValueError("RETIREMENT_VERDICT_NOT_ADMITTED")
+
+    cohort = tuple(sorted(trials, key=lambda trial: trial.input_id))
+    if len(cohort) != verdict.trial_count:
+        raise ValueError("RETIREMENT_COHORT_SIZE_MISMATCH")
+
+    replay = ReasoningRetirementCourt(minimum_trials=max(1, verdict.trial_count)).evaluate(
+        incumbent_rung=verdict.incumbent_rung,
+        candidate_rung=verdict.candidate_rung,
+        trials=cohort,
+    )
+    if replay.decision is not RetirementDecision.RETIRE_INCUMBENT:
+        raise ValueError("RETIREMENT_REPLAY_DID_NOT_ADMIT")
+    if replay.evidence_digest != verdict.evidence_digest:
+        raise ValueError("RETIREMENT_VERDICT_DIGEST_MISMATCH")
+
+    return CompiledRetirementRoute(
+        signature_id=signature_id,
+        incumbent_rung=verdict.incumbent_rung,
+        candidate_rung=verdict.candidate_rung,
+        candidate_artifact_digest=candidate_artifact_digest,
+        behavioral_court_digest=verdict.evidence_digest,
+        cohort_digest=_digest([asdict(trial) for trial in cohort]),
+        trial_count=verdict.trial_count,
+    )
