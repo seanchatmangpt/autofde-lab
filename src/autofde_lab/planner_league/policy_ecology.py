@@ -103,7 +103,9 @@ class PolicyEcology:
                     weight=target.weight,
                     evidence_refs=target.phenotype.evidence_refs,
                 )
-                for source, target in zip(self.members, conditioned.members, strict=True)
+                for source, target in zip(
+                    self.members, conditioned.members, strict=True
+                )
             ),
         )
 
