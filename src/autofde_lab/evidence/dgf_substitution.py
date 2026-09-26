@@ -1,17 +1,7 @@
 """DGF-Bench deterministic substitution and retirement accounting.
 
-This module intentionally reuses the DGF-Bench repository's executable
-evaluator.py as the policy kernel. It does not copy governance policy into
-AutoFDE and it performs no model calls.
-
-A local DGF-Bench checkout provides:
-- generated case directories containing 01_route_manifest.json and
-  99_hidden_ground_truth.json;
-- evaluator.py, the executable reference policy.
-
-The harness re-evaluates the canonical facts through that policy and compares
-the produced route to the stored reference route. This is a direct
-reproduction surface for the benchmark's deterministic-control experiment.
+The harness reuses DGF-Bench's executable evaluator.py as the policy kernel.
+It performs no model calls and receipts both policy bytes and corpus bytes.
 """
 
 from __future__ import annotations
@@ -63,9 +53,32 @@ class DGFSubstitutionSummary:
 
 
 @dataclass(frozen=True, slots=True)
-class ResidualWorkInputs:
-    """Normalized recurring-work terms from the paper's retirement equation."""
+class DGFRunReceipt:
+    kernel_digest: str
+    dataset_digest: str
+    case_count: int
+    gate_count: int
+    routes_passed: int
+    gates_passed: int
+    llm_calls: int = 0
 
+    @property
+    def standing(self) -> str:
+        return (
+            "ALIVE"
+            if self.case_count > 0
+            and self.gate_count > 0
+            and self.routes_passed == self.case_count
+            and self.gates_passed == self.gate_count
+            else "PARTIAL_ALIVE"
+        )
+
+    def to_dict(self) -> dict[str, str | int]:
+        return {**asdict(self), "standing": self.standing}
+
+
+@dataclass(frozen=True, slots=True)
+class ResidualWorkInputs:
     exception_share: float
     exception_effort_multiplier: float
     ordinary_review_multiplier: float
@@ -75,10 +88,6 @@ class ResidualWorkInputs:
 
 
 def residual_work_ratio(inputs: ResidualWorkInputs) -> float:
-    """Compute remaining recurring work relative to the original baseline.
-
-    rho = (phi*eta + (1-phi)*mu + r + b_A) / (1 + b_H)
-    """
     values = asdict(inputs)
     if not 0.0 <= inputs.exception_share <= 1.0:
         raise ValueError("exception_share must be in [0, 1]")
@@ -98,11 +107,19 @@ def residual_work_ratio(inputs: ResidualWorkInputs) -> float:
 
 
 def dgf_evaluator_digest(dgf_root: Path) -> str:
-    """Bind a run to the exact executable policy bytes used for evaluation."""
     evaluator_path = dgf_root / "evaluator.py"
     if not evaluator_path.is_file():
         raise FileNotFoundError(f"DGF evaluator not found: {evaluator_path}")
     return "sha256:" + hashlib.sha256(evaluator_path.read_bytes()).hexdigest()
+
+
+def assert_evaluator_digest(dgf_root: Path, expected: str) -> str:
+    actual = dgf_evaluator_digest(dgf_root)
+    if actual != expected:
+        raise ValueError(
+            f"DGF_EVALUATOR_DIGEST_MISMATCH:expected={expected}:actual={actual}"
+        )
+    return actual
 
 
 def _load_evaluator(dgf_root: Path) -> ModuleType:
@@ -132,16 +149,23 @@ def _canonical(value: Any) -> str:
 
 
 def run_dgf_case(case_dir: Path, *, dgf_root: Path) -> DGFCaseScore:
-    """Re-run one DGF case through its executable deterministic policy."""
     hidden = _read_json(case_dir / "99_hidden_ground_truth.json")
     manifest = _read_json(case_dir / "01_route_manifest.json")
+    occurrences = manifest.get("occurrences")
+    expected = hidden.get("reference_decisions")
+
+    if not isinstance(occurrences, list) or not occurrences:
+        raise ValueError(f"DGF_CASE_HAS_NO_GATE_OCCURRENCES:{case_dir}")
+    if not isinstance(expected, list) or not expected:
+        raise ValueError(f"DGF_CASE_HAS_NO_REFERENCE_DECISIONS:{case_dir}")
+    if len(occurrences) != len(expected):
+        raise ValueError(
+            f"DGF_CASE_CONTRACT_COUNT_MISMATCH:{case_dir}:"
+            f"occurrences={len(occurrences)}:reference={len(expected)}"
+        )
 
     evaluator = _load_evaluator(dgf_root)
-    actual = evaluator.evaluate_route(
-        hidden["canonical_truth"],
-        manifest["occurrences"],
-    )
-    expected = hidden["reference_decisions"]
+    actual = evaluator.evaluate_route(hidden["canonical_truth"], occurrences)
 
     gate_total = max(len(actual), len(expected))
     gate_matches = sum(
@@ -161,13 +185,41 @@ def run_dgf_case(case_dir: Path, *, dgf_root: Path) -> DGFCaseScore:
 
 
 def discover_dgf_cases(dataset_root: Path) -> tuple[Path, ...]:
-    """Discover generated DGF cases without depending on a manifest dialect."""
     cases = {
         path.parent
         for path in dataset_root.rglob("99_hidden_ground_truth.json")
         if (path.parent / "01_route_manifest.json").is_file()
     }
     return tuple(sorted(cases))
+
+
+def dgf_dataset_digest(
+    case_dirs: Sequence[Path],
+    *,
+    dataset_root: Path | None = None,
+) -> str:
+    if not case_dirs:
+        raise ValueError("DGF_EMPTY_DATASET")
+
+    root = dataset_root.resolve() if dataset_root is not None else None
+    digest = hashlib.sha256()
+    for case_dir in sorted((path.resolve() for path in case_dirs), key=str):
+        label = (
+            case_dir.relative_to(root).as_posix()
+            if root is not None and case_dir.is_relative_to(root)
+            else case_dir.name
+        )
+        digest.update(label.encode("utf-8"))
+        digest.update(b"\0")
+        for filename in ("01_route_manifest.json", "99_hidden_ground_truth.json"):
+            path = case_dir / filename
+            if not path.is_file():
+                raise FileNotFoundError(path)
+            digest.update(filename.encode("utf-8"))
+            digest.update(b"\0")
+            digest.update(path.read_bytes())
+            digest.update(b"\0")
+    return "sha256:" + digest.hexdigest()
 
 
 def summarize_dgf_scores(scores: Iterable[DGFCaseScore]) -> DGFSubstitutionSummary:
@@ -186,7 +238,40 @@ def run_dgf_dataset(
     dgf_root: Path,
     case_dirs: Sequence[Path] | None = None,
 ) -> tuple[tuple[DGFCaseScore, ...], DGFSubstitutionSummary]:
-    """Run every discovered case through the deterministic reference kernel."""
     cases = tuple(case_dirs) if case_dirs is not None else discover_dgf_cases(dataset_root)
+    if not cases:
+        raise ValueError("DGF_EMPTY_DATASET")
     scores = tuple(run_dgf_case(case_dir, dgf_root=dgf_root) for case_dir in cases)
     return scores, summarize_dgf_scores(scores)
+
+
+def run_receipted_dgf_dataset(
+    dataset_root: Path,
+    *,
+    dgf_root: Path,
+    case_dirs: Sequence[Path] | None = None,
+    expected_evaluator_digest: str | None = None,
+) -> tuple[tuple[DGFCaseScore, ...], DGFSubstitutionSummary, DGFRunReceipt]:
+    cases = tuple(case_dirs) if case_dirs is not None else discover_dgf_cases(dataset_root)
+    if not cases:
+        raise ValueError("DGF_EMPTY_DATASET")
+
+    kernel_digest = (
+        assert_evaluator_digest(dgf_root, expected_evaluator_digest)
+        if expected_evaluator_digest is not None
+        else dgf_evaluator_digest(dgf_root)
+    )
+    scores, summary = run_dgf_dataset(
+        dataset_root,
+        dgf_root=dgf_root,
+        case_dirs=cases,
+    )
+    receipt = DGFRunReceipt(
+        kernel_digest=kernel_digest,
+        dataset_digest=dgf_dataset_digest(cases, dataset_root=dataset_root),
+        case_count=summary.cases,
+        gate_count=summary.gates,
+        routes_passed=summary.routes_passed,
+        gates_passed=summary.gates_passed,
+    )
+    return scores, summary, receipt
