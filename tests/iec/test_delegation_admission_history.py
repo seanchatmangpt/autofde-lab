@@ -38,6 +38,7 @@ def artifact(*, units: int, scope: int, standing: str = "PARTIAL_ALIVE") -> dict
                 "subject": SUBJECT,
                 "verdict": "PASS",
                 "scope_units": scope,
+                "verifier_id": "urn:verifier:independent",
                 "verifier_set_id": "sha256:v",
                 "receipt_id": "sha256:vr",
                 "independent": True,
