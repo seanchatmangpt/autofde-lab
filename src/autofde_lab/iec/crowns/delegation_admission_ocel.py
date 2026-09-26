@@ -82,6 +82,7 @@ def history_receipt_to_ocel(receipt: Mapping[str, Any]) -> OcelLog:
         attributes = [
             OcelAttribute("sequence", _integer(sequence)),
             OcelAttribute("receipt_id", _string(snapshot.get("receipt_id"))),
+            OcelAttribute("producer_id", _string(snapshot.get("producer_id"))),
             OcelAttribute("gate", _string(snapshot.get("gate"))),
             OcelAttribute(
                 "delegation_units",
