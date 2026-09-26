@@ -45,6 +45,7 @@ def artifact(
                 "subject": SUBJECT,
                 "verdict": "PASS",
                 "scope_units": scope,
+                "verifier_id": "urn:verifier:independent",
                 "verifier_set_id": "sha256:verifiers",
                 "receipt_id": "sha256:verify-receipt",
                 "independent": independent,
