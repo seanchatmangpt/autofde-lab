@@ -142,3 +142,24 @@ def test_tlc_intent_with_jar_pins_classpath() -> None:
     )
     legacy = dataclasses.replace(intent, argv=("java", "tlc2.TLC"))
     assert legacy.authority == "NONE"
+
+
+
+def test_duplicate_constant_declarations_and_bindings_are_refused() -> None:
+    with pytest.raises(ValueError, match="duplicate constant declaration"):
+        _counter(constants=("Max", "Max"), constant_values=(("Max", "3"),))
+    with pytest.raises(ValueError, match="duplicate constant value binding"):
+        _counter(
+            constants=("Max",),
+            constant_values=(("Max", "3"), ("Max", "4")),
+        )
+
+
+def test_invalid_constant_identifier_is_refused_before_render() -> None:
+    with pytest.raises(ValueError, match="invalid constant"):
+        _counter(constants=("Max-Value",), constant_values=(("Max-Value", "3"),))
+
+
+def test_duplicate_fairness_is_refused() -> None:
+    with pytest.raises(ValueError, match="duplicate fairness constraint"):
+        _counter(fairness=(Fairness("WF", "Inc"), Fairness("WF", "Inc")))
