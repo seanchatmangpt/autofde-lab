@@ -343,8 +343,13 @@ def _mode_falsifiers(
         failures.append("GENERAL_LLM_IN_DO")
     if any(event.unreceipted_do for event in events):
         failures.append("UNRECEIPTED_DO")
-    if mode in {"MACHINE_SERIAL", "ZERO_LLM"} and llm_events:
-        failures.append("LLM_PRESENT_IN_ZERO_LLM_MODE")
+    dspy_events = [event for event in events if event.executor == "DSPY_WASM"]
+    if mode in {"MACHINE_SERIAL", "ZERO_LLM", "DSPY_WASM_CANDIDATE"} and llm_events:
+        failures.append("GENERAL_LLM_PRESENT_IN_NON_LLM_MODE")
+    if mode == "MACHINE_SERIAL" and dspy_events:
+        failures.append("BOUNDED_EXECUTOR_PRESENT_IN_MACHINE_MODE")
+    if mode == "DSPY_WASM_CANDIDATE" and not dspy_events:
+        failures.append("DSPY_WASM_EXECUTOR_NOT_OBSERVED")
     return failures
 
 
@@ -355,6 +360,9 @@ def benchmark_trace(document: Mapping[str, Any]) -> dict[str, Any]:
     total_duration = sum(event.duration_ms for event in events)
     llm_events = [
         event for event in events if event.executor == "GENERAL_LLM"
+    ]
+    dspy_events = [
+        event for event in events if event.executor == "DSPY_WASM"
     ]
     machine_events = [
         event for event in events if event.executor == "MACHINE"
@@ -387,7 +395,14 @@ def benchmark_trace(document: Mapping[str, Any]) -> dict[str, Any]:
         "declared_reachable_edges": len(universe),
         "observed_unique_edges": len(observed_unique),
         "llm_edge_executions": len(llm_events),
+        "dspy_wasm_edge_executions": len(dspy_events),
         "machine_edge_executions": len(machine_events),
+        "bounded_candidate_fraction": _ratio(
+            len(dspy_events), len(events)
+        ),
+        "deterministic_machine_fraction": _ratio(
+            len(machine_events), len(events)
+        ),
         "machine_closed_fraction": _ratio(
             len(machine_events), len(events)
         ),
@@ -412,6 +427,11 @@ def benchmark_trace(document: Mapping[str, Any]) -> dict[str, Any]:
             else 1000.0 * len(events) / header["run_wall_ms"]
         ),
         "zero_llm_observed": not llm_events,
+        "zero_general_llm_observed": not llm_events,
+        "machine_only_observed": bool(events)
+        and not llm_events
+        and not dspy_events
+        and len(machine_events) == len(events),
     }
     report = {
         "schema": "autofde-lab.rgi-run-report/2",
