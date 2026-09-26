@@ -1,4 +1,5 @@
 from autofde_lab.semantic_parts import (
+    BehavioralWitness,
     SubstitutionCase,
     evaluate_at_cutoffs,
     evaluate_substitution_discovery,
@@ -97,3 +98,73 @@ def test_cutoff_sweep_reuses_the_same_oracle():
     assert sweep["reports"]["1"]["lexical"]["discovery_rate"] == 0.0
     assert sweep["reports"]["2"]["lexical"]["discovery_rate"] == 1.0
     assert sweep["authority"] == "NONE"
+
+
+
+def test_receipt_backed_oracle_can_be_required_fail_closed():
+    witness = BehavioralWitness(
+        candidate_id="b",
+        receipt_digest="sha256:" + "a" * 64,
+        verifier="behavioral-equivalence-court",
+    )
+    receipted = SubstitutionCase(
+        subject_id="a",
+        verified_equivalents=frozenset({"b"}),
+        lexical_candidates=("x",),
+        semantic_candidates=("b",),
+        behavioral_witnesses=(witness,),
+    )
+
+    result = evaluate_substitution_discovery(
+        [receipted],
+        k=1,
+        require_receipts=True,
+    )
+
+    assert result["oracle_standing"] == "RECEIPTED"
+    assert result["receipted_cases"] == 1
+
+    declared = SubstitutionCase(
+        subject_id="x",
+        verified_equivalents=frozenset({"y"}),
+        lexical_candidates=(),
+        semantic_candidates=("y",),
+    )
+
+    try:
+        evaluate_substitution_discovery([declared], require_receipts=True)
+    except ValueError as error:
+        assert "behavioral witness receipts are required" in str(error)
+    else:
+        raise AssertionError("unreceipted oracle must be refused when receipts are required")
+
+
+def test_behavioral_witness_refuses_bad_digest_and_unknown_candidate():
+    try:
+        BehavioralWitness(
+            candidate_id="b",
+            receipt_digest="not-a-digest",
+            verifier="court",
+        )
+    except ValueError as error:
+        assert "sha256" in str(error)
+    else:
+        raise AssertionError("bad receipt digest must be refused")
+
+    witness = BehavioralWitness(
+        candidate_id="c",
+        receipt_digest="sha256:" + "b" * 64,
+        verifier="court",
+    )
+    try:
+        SubstitutionCase(
+            subject_id="a",
+            verified_equivalents=frozenset({"b"}),
+            lexical_candidates=(),
+            semantic_candidates=("b",),
+            behavioral_witnesses=(witness,),
+        )
+    except ValueError as error:
+        assert "verified_equivalents" in str(error)
+    else:
+        raise AssertionError("witness for an unverified candidate must be refused")
