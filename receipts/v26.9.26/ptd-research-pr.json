@@ -1,0 +1,24 @@
+{
+  "schema": "autofde-lab.research-change-receipt/v1",
+  "calver": "v26.9.26",
+  "capability": "phasing-target-defense-public-experimental-surface",
+  "base_commit": "ae51e29dfb13c0101acd07914c19f52ffc7fc5c0",
+  "branch": "feat/v26.9.26-phasing-target-defense",
+  "authority": "NONE",
+  "authority_ceiling": "CONSTRUCT",
+  "constructor_visibility": "OPAQUE",
+  "public_surface": [
+    "docs/dissertation/phasing-target-defense.md",
+    "src/autofde_lab/ptd",
+    "benchmarks/ptd_knowledge_depreciation.py",
+    "schemas/ptd-experiment-v1.schema.json",
+    "tests/ptd"
+  ],
+  "claims": [
+    "PTD metrics are evaluable without constructor internals",
+    "large realization distance does not itself imply knowledge depreciation",
+    "semantic admission failure is a PTD failure",
+    "common-mode persistence and persistent-authority compromise are explicit falsifiers"
+  ],
+  "private_mechanism_disclosed": false
+}
