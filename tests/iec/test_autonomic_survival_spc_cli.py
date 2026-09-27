@@ -40,10 +40,7 @@ def episode(batch: str, index: int, *, failed: bool) -> dict:
 
 
 def write_batch(path: Path, batch: str, failures: int, total: int = 4) -> None:
-    rows = [
-        episode(batch, index, failed=index < failures)
-        for index in range(total)
-    ]
+    rows = [episode(batch, index, failed=index < failures) for index in range(total)]
     path.write_text(
         "\n".join(json.dumps(row) for row in rows) + "\n",
         encoding="utf-8",
