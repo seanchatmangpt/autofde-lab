@@ -7,9 +7,9 @@ import pytest
 from autofde_lab.iec.crowns.model import IECRefusal
 from autofde_lab.iec.crowns.survival import EPISODE_SCHEMA
 from autofde_lab.iec.crowns.survival_compare import (
+    PolicyMetrics,
     compare_survival_policies,
     observed_pareto_frontier,
-    PolicyMetrics,
 )
 
 SUBJECT = "git:seanchatmangpt/autofde-lab@0123456789abcdef"
@@ -147,9 +147,7 @@ def test_comparison_refuses_subject_workload_or_horizon_drift() -> None:
 
 def test_comparison_refuses_policy_key_mismatch_or_single_stratum() -> None:
     with pytest.raises(IECRefusal, match="UNDERPOWERED"):
-        compare_survival_policies(
-            {"formal": [episode("a", "formal", clean_do())]}
-        )
+        compare_survival_policies({"formal": [episode("a", "formal", clean_do())]})
 
     with pytest.raises(IECRefusal, match="REFUSED_POLICY_MISMATCH"):
         compare_survival_policies(
