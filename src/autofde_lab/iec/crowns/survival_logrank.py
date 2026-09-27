@@ -101,11 +101,7 @@ def logrank_survival_test(
         d_right = right_failures.get(step, 0)
         d_total = d_left + d_right
         n_total = left_at_risk + right_at_risk
-        expected = (
-            d_total * left_at_risk / n_total
-            if d_total and n_total
-            else 0.0
-        )
+        expected = d_total * left_at_risk / n_total if d_total and n_total else 0.0
         var = 0.0
         if d_total and n_total > 1:
             var = (
