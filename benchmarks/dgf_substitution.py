@@ -8,10 +8,7 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from autofde_lab.evidence.dgf_substitution import (
-    dgf_evaluator_digest,
-    run_dgf_dataset,
-)
+from autofde_lab.evidence.dgf_substitution import run_dgf_dataset
 
 
 def main() -> int:
@@ -23,17 +20,35 @@ def main() -> int:
     )
     parser.add_argument("--dgf-root", type=Path, required=True)
     parser.add_argument("--dataset-root", type=Path, required=True)
+    parser.add_argument(
+        "--expected-kernel-digest",
+        default=None,
+        help="refuse (KERNEL_DIGEST_MISMATCH) unless evaluator.py hashes to this",
+    )
     args = parser.parse_args()
 
     scores, summary = run_dgf_dataset(
         args.dataset_root,
         dgf_root=args.dgf_root,
+        expected_kernel_digest=args.expected_kernel_digest,
     )
+    if summary.cases == 0:
+        print(
+            json.dumps(
+                {
+                    "refusal": "EMPTY_DATASET",
+                    "dataset_root": str(args.dataset_root),
+                    "kernel_digest": summary.kernel_digest,
+                },
+                sort_keys=True,
+            )
+        )
+        return 2
     print(
         json.dumps(
             {
                 "kernel": "DGF evaluator.py",
-                "kernel_digest": dgf_evaluator_digest(args.dgf_root),
+                "kernel_digest": summary.kernel_digest,
                 "llm_calls": 0,
                 "summary": summary.to_dict(),
                 "cases": [

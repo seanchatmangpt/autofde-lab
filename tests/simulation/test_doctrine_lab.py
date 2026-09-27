@@ -36,13 +36,13 @@ from autofde_lab.simulation.doctrine_lab import (
     run_doctrine_matrix,
     run_lab,
     run_strategy_episode,
+    seal,
     seal_episodes,
     verify_ledger,
     verify_run,
     wilson,
     world_by_id,
 )
-from autofde_lab.simulation.doctrine_lab import seal
 from autofde_lab.simulation.doctrine_lab.catalog import CATALOG_PATH
 from autofde_lab.simulation.doctrine_lab.matrix import EVIDENCE_CEILING
 from autofde_lab.simulation.doctrine_lab.opponent import opponent_rng
@@ -233,6 +233,24 @@ def test_unmutated_catalog_repinned_is_admitted(tmp_path: Path):
         (_set(0, "primitives", []), "has no primitives"),
         (_set(20, "primitives", ["probe"]), "stub with primitives"),
         (_set(0, "primitives", "probe"), "not a list"),
+        (lambda d: d.__setitem__("summary", "free text"), r"extra=\['summary'\]"),
+        (
+            lambda d: d.pop("schema"),
+            r"top-level keys outside allow-list: .*missing=\['schema'\]",
+        ),
+        (lambda d: d.pop("primitives"), r"missing=\['primitives'\]"),
+        (
+            lambda d: d["primitives"][0].__setitem__("quote", "x"),
+            r"primitive 'shape' keys outside allow-list: extra=\['quote'\]",
+        ),
+        (
+            lambda d: d["primitives"][2].__setitem__("dual", "probe"),
+            r"primitive 'conceal' dual 'probe' differs",
+        ),
+        (
+            lambda d: d["primitives"][0].__setitem__("iri", "sd:wrong"),
+            r"primitive 'shape' iri 'sd:wrong' is not sd:",
+        ),
     ],
     ids=[
         "authority_DO",
@@ -250,11 +268,29 @@ def test_unmutated_catalog_repinned_is_admitted(tmp_path: Path):
         "operationalized_without_primitives",
         "stub_with_primitives",
         "primitives_not_list",
+        "top_level_summary",
+        "top_level_missing_schema",
+        "top_level_missing_primitives_no_keyerror",
+        "primitive_extra_quote",
+        "primitive_dual_off_algebra",
+        "primitive_iri_not_sd",
     ],
 )
 def test_catalog_gates_refuse_under_repinned_digest(tmp_path: Path, mutate, refusal):
     path, digest = _repinned(tmp_path, mutate)
     with pytest.raises(CatalogIntegrityError, match=refusal):
+        load_catalog(path, expected_sha256=digest)
+
+
+def test_duplicate_json_keys_are_refused_under_repinned_digest(tmp_path: Path):
+    raw = CATALOG_PATH.read_text()
+    needle = '"short_title": "Probe, then mass on the weak point"'
+    assert raw.count(needle) == 1
+    forged = raw.replace(needle, f'"short_title": "dupe", {needle}', 1)
+    path = tmp_path / "catalog.json"
+    path.write_text(forged)
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    with pytest.raises(CatalogIntegrityError, match="duplicate JSON key 'short_title'"):
         load_catalog(path, expected_sha256=digest)
 
 
@@ -355,8 +391,13 @@ def test_forged_catalog_origin_is_refused(tmp_path: Path):
     relabelled = dataclasses.replace(
         episode, receipt=dataclasses.replace(episode.receipt, strategy_ordinal=9)
     )
-    with pytest.raises(ProvenanceRefused, match="digest does not recompute"):
+    with pytest.raises(ProvenanceRefused, match="is not the admitted catalog's"):
         seal_episodes([(relabelled, log_sha256(episode_log(relabelled)))], ledger)
+    redigested = dataclasses.replace(
+        episode, receipt=dataclasses.replace(episode.receipt, episode_digest="0" * 64)
+    )
+    with pytest.raises(ProvenanceRefused, match="digest does not recompute"):
+        seal_episodes([(redigested, log_sha256(episode_log(redigested)))], ledger)
     assert not ledger.exists() or ledger.read_text() == ""
 
 
@@ -397,7 +438,20 @@ def test_verify_run_detects_report_edit_even_with_recomputed_digest(tmp_path: Pa
 
     report["report_digest"] = stable_digest(report_body(report))
     path.write_text(json.dumps(report))
-    assert verify_run(tmp_path).valid  # self-consistent forgery passes hash checks
+    rehashed = verify_run(tmp_path)  # the unkeyed digest alone no longer suffices
+    assert rehashed.failures == (
+        "report_signature does not bind report body to the ledger key",
+    )
+    # a forger holding the PUBLISHED fixture key can re-sign; that key attests no
+    # writer (attests_writer False), so only replay can refuse this forgery
+    fixture = seal.signer_from_env({})
+    anchor = report["ledger"]
+    anchor["report_signature"] = seal.report_signature(
+        fixture, report["report_digest"], anchor["records"], anchor["tail_digest"]
+    )
+    path.write_text(json.dumps(report))
+    assert anchor["attests_writer"] is False
+    assert verify_run(tmp_path).valid  # self-consistent fixture-key forgery
     replayed = verify_run(tmp_path, replay=True)
     assert not replayed.valid
     assert "replay: report body differs from re-execution" in replayed.failures
@@ -550,7 +604,16 @@ def test_verify_run_refuses_a_resealed_ledger_with_wall_clock_observed_at(
     assert chain.valid
     report_path = tmp_path / "report.json"
     report = json.loads(report_path.read_text())
-    report["ledger"].update(records=chain.records, tail_digest=chain.tail_digest)
+    report["ledger"].update(
+        records=chain.records,
+        tail_digest=chain.tail_digest,
+        report_signature=seal.report_signature(
+            seal.signer_from_env({}),
+            report["report_digest"],
+            chain.records,
+            chain.tail_digest,
+        ),
+    )
     report_path.write_text(json.dumps(report))
     check = verify_run(tmp_path)
     assert not check.valid
