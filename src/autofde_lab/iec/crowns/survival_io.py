@@ -52,18 +52,24 @@ def load_episode_files(paths: Iterable[Path]) -> list[dict[str, Any]]:
 
 def render_report_json(report: Any, *, pretty: bool = True) -> str:
     if pretty:
-        return json.dumps(
+        return (
+            json.dumps(
+                report,
+                sort_keys=True,
+                indent=2,
+                ensure_ascii=False,
+            )
+            + "\n"
+        )
+    return (
+        json.dumps(
             report,
             sort_keys=True,
-            indent=2,
+            separators=(",", ":"),
             ensure_ascii=False,
-        ) + "\n"
-    return json.dumps(
-        report,
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-    ) + "\n"
+        )
+        + "\n"
+    )
 
 
 def write_report_json(path: Path, report: Any, *, pretty: bool = True) -> bytes:
