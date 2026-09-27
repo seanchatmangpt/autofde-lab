@@ -42,7 +42,9 @@ def episode(
     }
 
 
-def batch(label: str, failures: int, total: int = 4, **kwargs) -> tuple[str, list[dict]]:
+def batch(
+    label: str, failures: int, total: int = 4, **kwargs
+) -> tuple[str, list[dict]]:
     return (
         label,
         [
@@ -52,7 +54,9 @@ def batch(label: str, failures: int, total: int = 4, **kwargs) -> tuple[str, lis
     )
 
 
-def test_positive_cusum_signals_sustained_failure_rate_drift_across_exact_subjects() -> None:
+def test_positive_cusum_signals_sustained_failure_rate_drift_across_exact_subjects() -> (
+    None
+):
     report = survival_spc_report(
         [
             batch("sha-a", 1),
