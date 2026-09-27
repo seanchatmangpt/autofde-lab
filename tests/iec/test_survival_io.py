@@ -44,7 +44,9 @@ def test_loader_refuses_scalar_or_invalid_jsonl(tmp_path: Path) -> None:
         load_episode_file(broken)
 
 
-def test_report_rendering_is_key_sorted_and_write_returns_exact_bytes(tmp_path: Path) -> None:
+def test_report_rendering_is_key_sorted_and_write_returns_exact_bytes(
+    tmp_path: Path,
+) -> None:
     report = {"z": 1, "a": {"b": 2}}
     pretty = render_report_json(report)
     compact = render_report_json(report, pretty=False)
