@@ -15,7 +15,7 @@ def episode(
     failure_step: int | None,
     subject: str = "subject",
 ) -> dict:
-    events = [{"step": 1, "phase": "OBSERVE"}]
+    events = [] if failure_step == 1 else [{"step": 1, "phase": "OBSERVE"}]
     if failure_step is None:
         events.append(
             {
