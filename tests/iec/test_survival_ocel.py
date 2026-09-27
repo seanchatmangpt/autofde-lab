@@ -99,7 +99,9 @@ def test_survival_projection_keeps_exact_subject_as_object_attribute() -> None:
     log = survival_episode_to_ocel(episode())
     subject = next(obj for obj in log.objects if obj.object_type == "Subject")
 
-    projected = {attribute.key: attribute.value.value for attribute in subject.attributes}
+    projected = {
+        attribute.key: attribute.value.value for attribute in subject.attributes
+    }
 
     assert projected["exactSubject"] == episode()["subject"]
 
