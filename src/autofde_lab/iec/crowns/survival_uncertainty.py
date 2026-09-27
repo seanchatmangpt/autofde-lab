@@ -19,11 +19,7 @@ def _wilson_interval(successes: int, total: int, z: float) -> tuple[float, float
     z2 = z * z
     denominator = 1.0 + z2 / total
     center = (p + z2 / (2.0 * total)) / denominator
-    half = (
-        z
-        * math.sqrt((p * (1.0 - p) + z2 / (4.0 * total)) / total)
-        / denominator
-    )
+    half = z * math.sqrt((p * (1.0 - p) + z2 / (4.0 * total)) / total) / denominator
     return max(0.0, center - half), min(1.0, center + half)
 
 
@@ -74,11 +70,7 @@ def survival_uncertainty_report(
         if failures and at_risk > failures:
             greenwood_sum += failures / (at_risk * (at_risk - failures))
         survival = float(point["survival"])
-        variance = (
-            survival * survival * greenwood_sum
-            if 0.0 < survival < 1.0
-            else 0.0
-        )
+        variance = survival * survival * greenwood_sum if 0.0 < survival < 1.0 else 0.0
         lower, upper = _km_loglog_interval(survival, greenwood_sum, z)
         curve.append(
             {
