@@ -6,7 +6,9 @@ import importlib.util
 import json
 from pathlib import Path
 
-SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "autonomic_survival_report.py"
+SCRIPT = (
+    Path(__file__).resolve().parents[2] / "scripts" / "autonomic_survival_report.py"
+)
 
 
 def _module():
@@ -50,8 +52,7 @@ def test_load_accepts_object_array_and_jsonl(tmp_path: Path) -> None:
     jsonl = tmp_path / "rows.jsonl"
     jsonl.write_text(
         "\n".join(
-            json.dumps(row)
-            for row in (episode("x", "formal"), episode("y", "formal"))
+            json.dumps(row) for row in (episode("x", "formal"), episode("y", "formal"))
         )
         + "\n",
         encoding="utf-8",
