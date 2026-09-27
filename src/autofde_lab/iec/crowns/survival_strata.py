@@ -89,9 +89,7 @@ def _stratum(
         key.append(
             (
                 "fault_plan_id",
-                "baseline"
-                if fault_plan_id in (None, "")
-                else str(fault_plan_id),
+                "baseline" if fault_plan_id in (None, "") else str(fault_plan_id),
             )
         )
     return tuple(key)
@@ -168,7 +166,9 @@ def stratified_survival_report(
                 "policy_ids": sorted(by_policy),
                 "machinery_by_policy": dict(sorted(machinery_by_policy.items())),
                 "comparison_status": (
-                    "COMPARED" if comparison is not None else "INSUFFICIENT_POLICY_STRATA"
+                    "COMPARED"
+                    if comparison is not None
+                    else "INSUFFICIENT_POLICY_STRATA"
                 ),
                 "comparison": comparison,
             }
