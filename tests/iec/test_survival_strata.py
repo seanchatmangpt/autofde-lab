@@ -106,9 +106,10 @@ def test_strata_preserve_factor_levels_as_separate_comparison_courts() -> None:
     report = stratified_survival_report(documents, factor_names=("authority",))
 
     assert report["strata_count"] == 2
-    assert {
-        row["key"]["factor:authority"] for row in report["strata"]
-    } == {"filtered", "expired"}
+    assert {row["key"]["factor:authority"] for row in report["strata"]} == {
+        "filtered",
+        "expired",
+    }
 
 
 def test_single_policy_stratum_is_retained_as_coverage_gap() -> None:
