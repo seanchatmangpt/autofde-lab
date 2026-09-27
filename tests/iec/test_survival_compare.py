@@ -7,9 +7,9 @@ import pytest
 from autofde_lab.iec.crowns.model import IECRefusal
 from autofde_lab.iec.crowns.survival import EPISODE_SCHEMA
 from autofde_lab.iec.crowns.survival_compare import (
+    PolicyMetrics,
     compare_survival_policies,
     observed_pareto_frontier,
-    PolicyMetrics,
 )
 
 SUBJECT = "git:seanchatmangpt/autofde-lab@0123456789abcdef"
@@ -86,6 +86,8 @@ def test_comparison_keeps_policy_strata_separate_and_reports_observed_deltas() -
     assert rows["formal"]["receipt_coverage"] == 1.0
     assert rows["formal"]["replay_coverage"] == 1.0
     assert rows["formal"]["llm_dependency_fraction"] == 0.0
+    assert rows["formal"]["uncertainty"]["confidence"] == 0.95
+    assert rows["formal"]["uncertainty"]["failure_probability_wilson"]["upper"] > 0.0
 
     assert rows["llm"]["failures"] == 1
     assert rows["llm"]["terminal_survival"] == pytest.approx(0.5)
@@ -95,6 +97,9 @@ def test_comparison_keeps_policy_strata_separate_and_reports_observed_deltas() -
     assert {pair["left_policy_id"], pair["right_policy_id"]} == {"formal", "llm"}
     assert pair["left_observed_dominates_right"] is True
     assert pair["right_observed_dominates_left"] is False
+    assert pair["logrank"]["left_policy_id"] == "formal"
+    assert pair["logrank"]["right_policy_id"] == "llm"
+    assert 0.0 <= pair["logrank"]["p_value"] <= 1.0
     assert report["observed_pareto_frontier"] == ["formal"]
 
 
@@ -142,9 +147,7 @@ def test_comparison_refuses_subject_workload_or_horizon_drift() -> None:
 
 def test_comparison_refuses_policy_key_mismatch_or_single_stratum() -> None:
     with pytest.raises(IECRefusal, match="UNDERPOWERED"):
-        compare_survival_policies(
-            {"formal": [episode("a", "formal", clean_do())]}
-        )
+        compare_survival_policies({"formal": [episode("a", "formal", clean_do())]})
 
     with pytest.raises(IECRefusal, match="REFUSED_POLICY_MISMATCH"):
         compare_survival_policies(

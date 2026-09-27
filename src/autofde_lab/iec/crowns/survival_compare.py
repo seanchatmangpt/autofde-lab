@@ -17,6 +17,8 @@ from typing import Any, Mapping, Sequence
 from .model import IECRefusal, content_id
 from .recurrent_survival import recurrent_survival_report
 from .survival import survival_report
+from .survival_logrank import logrank_survival_test
+from .survival_uncertainty import survival_uncertainty_report
 
 __all__ = [
     "PolicyMetrics",
@@ -172,6 +174,10 @@ def compare_survival_policies(
                     - right.llm_dependency_fraction,
                     "left_observed_dominates_right": _dominates(left, right),
                     "right_observed_dominates_left": _dominates(right, left),
+                    "logrank": logrank_survival_test(
+                        policy_documents[left.policy_id],
+                        policy_documents[right.policy_id],
+                    ),
                 }
             )
 
@@ -192,6 +198,9 @@ def compare_survival_policies(
                 "replay_coverage": row.replay_coverage,
                 "llm_dependency_fraction": row.llm_dependency_fraction,
                 "llm_tokens": row.llm_tokens,
+                "uncertainty": survival_uncertainty_report(
+                    policy_documents[row.policy_id]
+                ),
             }
             for row in rows
         ],

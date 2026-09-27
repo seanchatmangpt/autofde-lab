@@ -1,0 +1,121 @@
+name: Autonomic survival closure exact head
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "src/autofde_lab/iec/crowns/survival_compare.py"
+      - "src/autofde_lab/iec/crowns/survival_adapter.py"
+      - "src/autofde_lab/iec/crowns/survival_ocel.py"
+      - "src/autofde_lab/iec/crowns/survival_strata.py"
+      - "src/autofde_lab/iec/crowns/survival_uncertainty.py"
+      - "src/autofde_lab/iec/crowns/survival_logrank.py"
+      - "src/autofde_lab/iec/crowns/survival_spc.py"
+      - "src/autofde_lab/iec/crowns/survival_io.py"
+      - "scripts/autonomic_survival_report.py"
+      - "scripts/autonomic_survival_spc.py"
+      - "tests/iec/test_survival*.py"
+      - "tests/iec/test_autonomic_survival*.py"
+      - ".github/workflows/autonomic-survival-closure.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  survival-closure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Assert exact subject identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="${{ github.event.pull_request.head.sha || github.sha }}"
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$expected"
+          printf 'survival_closure_exact_head=%s\n' "$actual"
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Install focused court dependencies
+        run: python -m pip install "pytest==8.3.5" "ruff==0.16.9"
+
+      - name: Compile survival closure
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m compileall -q
+          src/autofde_lab/iec/crowns
+          scripts/autonomic_survival_report.py
+          scripts/autonomic_survival_spc.py
+          tests/iec/test_survival*.py
+          tests/iec/test_autonomic_survival*.py
+
+      - name: Execute survival closure courts
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m pytest -q
+          tests/iec/test_survival*.py
+          tests/iec/test_autonomic_survival*.py
+
+      - name: Static contract
+        run: >-
+          ruff check
+          src/autofde_lab/iec/crowns/survival_compare.py
+          src/autofde_lab/iec/crowns/survival_adapter.py
+          src/autofde_lab/iec/crowns/survival_ocel.py
+          src/autofde_lab/iec/crowns/survival_strata.py
+          src/autofde_lab/iec/crowns/survival_uncertainty.py
+          src/autofde_lab/iec/crowns/survival_logrank.py
+          src/autofde_lab/iec/crowns/survival_spc.py
+          src/autofde_lab/iec/crowns/survival_io.py
+          scripts/autonomic_survival_report.py
+          scripts/autonomic_survival_spc.py
+          tests/iec/test_survival_ocel.py
+          tests/iec/test_survival_strata.py
+          tests/iec/test_survival_uncertainty.py
+          tests/iec/test_survival_logrank.py
+          tests/iec/test_survival_spc.py
+          tests/iec/test_survival_io.py
+          tests/iec/test_autonomic_survival_report_cli.py
+          tests/iec/test_autonomic_survival_spc_cli.py
+
+      - name: Format contract
+        run: >-
+          ruff format --check
+          src/autofde_lab/iec/crowns/survival_compare.py
+          src/autofde_lab/iec/crowns/survival_adapter.py
+          src/autofde_lab/iec/crowns/survival_ocel.py
+          src/autofde_lab/iec/crowns/survival_strata.py
+          src/autofde_lab/iec/crowns/survival_uncertainty.py
+          src/autofde_lab/iec/crowns/survival_logrank.py
+          src/autofde_lab/iec/crowns/survival_spc.py
+          src/autofde_lab/iec/crowns/survival_io.py
+          scripts/autonomic_survival_report.py
+          scripts/autonomic_survival_spc.py
+          tests/iec/test_survival_ocel.py
+          tests/iec/test_survival_strata.py
+          tests/iec/test_survival_uncertainty.py
+          tests/iec/test_survival_logrank.py
+          tests/iec/test_survival_spc.py
+          tests/iec/test_survival_io.py
+          tests/iec/test_autonomic_survival_report_cli.py
+          tests/iec/test_autonomic_survival_spc_cli.py
+
+      - name: No consequential actuation imports
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -REn 'requests\.(post|put|patch|delete)|subprocess\.|os\.system|boto3|azure\.|google\.cloud'             src/autofde_lab/iec/crowns/survival_*.py             scripts/autonomic_survival_*.py
