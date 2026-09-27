@@ -87,9 +87,7 @@ def survival_episode_to_ocel(document: Mapping[str, Any]) -> OcelLog:
             "exactSubject": OcelAttributeValue.boolean(
                 bool(row.get("exact_subject", True))
             ),
-            "authorized": OcelAttributeValue.boolean(
-                bool(row.get("authorized", True))
-            ),
+            "authorized": OcelAttributeValue.boolean(bool(row.get("authorized", True))),
             "admitted": OcelAttributeValue.boolean(bool(row.get("admitted", True))),
             "terminalReady": OcelAttributeValue.boolean(
                 bool(row.get("terminal_ready", True))
