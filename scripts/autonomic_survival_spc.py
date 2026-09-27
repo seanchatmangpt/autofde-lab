@@ -50,10 +50,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        batches = [
-            (label, load_episode_file(path))
-            for label, path in args.batch
-        ]
+        batches = [(label, load_episode_file(path)) for label, path in args.batch]
         report = survival_spc_report(
             batches,
             series_id=args.series_id,
