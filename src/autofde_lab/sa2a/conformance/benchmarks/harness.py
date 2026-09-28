@@ -1487,7 +1487,9 @@ class BenchmarkHarness:
             SA2A_B7_PORTABILITY: lambda: self.run_b7_portability(iterations),
             SA2A_B8_REPLAY_VERIFICATION: lambda: self.run_b8_replay_verification(),
             SA2A_B9_OCEL_OVERHEAD: lambda: self.run_b9_ocel_overhead(),
-            SA2A_B10_RECOVERY_RECONCILIATION: lambda: self.run_b10_recovery_reconciliation(),
+            SA2A_B10_RECOVERY_RECONCILIATION: lambda: (
+                self.run_b10_recovery_reconciliation()
+            ),
         }
 
         for bid in targets:
