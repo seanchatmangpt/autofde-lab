@@ -12,8 +12,9 @@ projected bytes.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 from .model import IECRefusal, content_id
 from .survival import EPISODE_SCHEMA, PHASES
@@ -76,7 +77,9 @@ def _optional_bool(row: Mapping[str, Any], key: str, default: bool) -> bool:
     return value
 
 
-def _optional_nonnegative_int(row: Mapping[str, Any], key: str, default: int = 0) -> int:
+def _optional_nonnegative_int(
+    row: Mapping[str, Any], key: str, default: int = 0
+) -> int:
     value = row.get(key, default)
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise IECRefusal(

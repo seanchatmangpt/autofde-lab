@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:PTDResilience a ptd:ResearchWave ; ptd:requires ptd:Epoch, ptd:SemanticSpecification, ptd:ConstructionProcess, ptd:Realization .

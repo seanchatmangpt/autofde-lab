@@ -8,8 +8,9 @@ remain fixed or the series is refused.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 from .model import IECRefusal, content_id
 from .recurrent_survival import recurrent_survival_report

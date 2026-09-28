@@ -1,0 +1,2 @@
+PREFIX ptd: <https://chatmangpt.com/ptd#>
+ASK { ptd:SemanticCompiler a ptd:ResearchWave ; ptd:requires ptd:SourceIdentity, ptd:SemanticIR, ptd:ArtifactProvenance . }

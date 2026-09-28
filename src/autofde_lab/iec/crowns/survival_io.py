@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 __all__ = [
     "load_episode_file",
@@ -32,7 +33,7 @@ def load_episode_file(path: Path) -> list[dict[str, Any]]:
                     f"{path}:{line_number}: invalid JSONL: {exc.msg}"
                 ) from exc
             if not isinstance(value, dict):
-                raise ValueError(f"{path}:{line_number}: episode must be an object")
+                raise ValueError(f"{path}:{line_number}: episode must be an object")  # noqa: TRY004 - malformed input data, not a programming type error; callers expect ValueError
             rows.append(value)
         return rows
 

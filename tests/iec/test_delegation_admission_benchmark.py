@@ -25,6 +25,7 @@ def artifact(*, units: int = 4, scope: int = 4) -> dict:
             "units": units,
             "boundary_id": "sha256:boundary",
             "authority_scope_id": "sha256:authority-scope",
+            "producer_id": "urn:producer:subject",
         },
         "obligations": {
             "explain": {
@@ -39,6 +40,7 @@ def artifact(*, units: int = 4, scope: int = 4) -> dict:
                 "subject": SUBJECT,
                 "verdict": "PASS",
                 "scope_units": scope,
+                "verifier_id": "urn:verifier:independent",
                 "verifier_set_id": "sha256:verifiers",
                 "receipt_id": "sha256:verify",
                 "independent": True,

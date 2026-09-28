@@ -2484,6 +2484,48 @@ hand-authored ontology file.
 No pytest was run in this pass (concurrent agents were editing `src/` and `tests/`); no row
 above claims a test result. Pass-3 changes to this repo are documentation only.
 
+## v26.9.28 PTD closure pass (2026-09-28)
+
+**measured win** — `PYTHONPATH=src python -m pytest tests/ptd tests/ptd_exp --import-mode=importlib`
+→ 56 passed (Python 3.13 venv). `grep unittest.mock|Mock(|MagicMock|patch(|monkeypatch tests/ptd tests/ptd_exp`
+→ no matches. Scope: unit + integration checkpoint of the PTD court over 8 real manifests
+(`tests/ptd_exp/fixtures/`), incl. negative controls (semantic drift → REFUSED, no metrics;
+authority compromise, common-mode, churn-without-depreciation, bad economics → FALSIFIED).
+Not a Chicago/crown claim; says nothing about a real defended system. `organizationalStanding`
+stays `UNKNOWN`.
+
+Changes: `ptd_exp.{economics,transfer,temporal}` now re-export the guarded `ptd.metrics`
+(previously an unguarded duplicate accepting NaN); digests via `fabric.canonical`; OCEL via
+`autofde_lab.ocel.OcelLog`; confidence band is Student-t on sample stddev via `scipy.stats`
+and is `None` (UNKNOWN) for n<2.
+
+**recorded negative** — `feat/v26.9.28-frontier-ptd-run200`, `-research-waves` and
+`frontier/v26.9.28-hilt-qualification-r5b` were NOT merged. They are RDF/SPARQL wave corpora
+with no runtime consumer, and the `admit.rq` ASK queries read only `contract.ttl`: measured
+with rdflib on `hilt/waves/08-portable-runtime`, the ASK is `True` for the contract while
+`negative.json` expects `REFUSED_PORTABILITY_WIDENING` — the check cannot fail
+(see `absence-is-not-evidence.md`). Integrating them needs a consumer that binds the fixture
+into the graph before the ASK; until then they stay unmerged, not deleted.
+
+**merge sweep (2026-09-28)** — 20 branches integrated into PR #205 by semantic (hunk-level) merge,
+no `-X`/`-s` side-picking. Real merges: sa2a (#162), dfcm-xaas (#167), release-tag (#175),
+production-hardening, ecology, rgi-hardening, semantic-projection court/receipt, phasing-target-defense
+(#204), frontier-ptd x2, hilt-r5b, inverse-ecosystem-compiler, ea-rdf-standing, codegraph-benchmark,
+work-envelope-v2 (union with #167's `execution_descriptor`), evidence-topology-r2 (union of DGF kernel
+hardening + receipted runs), aasee-delegation (#187; adds producer≠verifier falsifier, contraction-safe growth
+law), premature-actuation-court (#186; union of survival APIs). Ancestry-only (content already on master,
+verified byte-identical or stricter on master): swe-prometheus-vgg, w9-sweep/format-drift,
+preserve/detached-test-fixes. Superseded, NOT merged: premature-actuation-court-v2 (13 files byte-identical to
+the court branch), survival-ocel-closure (all features already on master). Not merged, unrelated history:
+openclaw-ecosystem-interop, agent/cloud-benchmark-crown-docs. Measured:
+`pytest tests/iec tests/evidence tests/semantic_parts tests/ptd tests/ptd_exp tests/benchmarks tests/fabric/test_gall_semantic_work.py`
+(minus 3 files needing pyshacl / native build) → 552 passed, 22 skipped (TLC jar absent), 0 failed.
+Known follow-up: two survival-episode OCEL projections coexist (`survival_episode_to_ocel` and
+`episode_to_ocel_log`); `survival_uncertainty` (pointwise Greenwood) is weaker than the log-log report.
+
+**deferred** — removal of now-redundant `ptd_exp` one-line modules (permission-gated);
+closing superseded PR #204 (its head is subsumed by `77279976`+`cf1d27bf`).
+
 ## Pass 2 — ecosystem closure ledger (2026-08-06)
 
 | Item | State | Witness |

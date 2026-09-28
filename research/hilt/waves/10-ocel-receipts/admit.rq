@@ -1,0 +1,2 @@
+PREFIX hilt: <https://chatman.dev/hilt#>
+ASK { ?q a hilt:QualificationBoundary ; hilt:authority "NONE" ; hilt:refusal "REFUSED_RECEIPT_IDENTITY" ; hilt:law ?law . }

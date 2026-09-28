@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:PortableRuntime a ptd:ResearchWave ; ptd:requires ptd:RuntimeBoundary, ptd:PortableArtifact ; ptd:preserves ptd:ObservableBehavior .

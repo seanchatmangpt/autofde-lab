@@ -25,6 +25,7 @@ from gymact.policy_ecology import (
 )
 
 from .core import PolicySpec
+from .policy_identity import policy_ref
 
 
 @dataclass(frozen=True, slots=True)
@@ -40,12 +41,7 @@ class ConditionedPolicy:
 
     @property
     def policy_ref(self) -> str:
-        p = self.policy
-        return (
-            "urn:autofde:policy:"
-            f"{p.planner_id}:{p.objective_id}:{p.observation_projection_id}:"
-            f"{p.action_projection_id}:{p.budget_id}"
-        )
+        return policy_ref(self.policy)
 
 
 @dataclass(frozen=True, slots=True)

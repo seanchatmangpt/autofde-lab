@@ -30,6 +30,7 @@ def artifact(
             "units": units,
             "boundary_id": "sha256:boundary",
             "authority_scope_id": "sha256:authority-scope",
+            "producer_id": "urn:producer:subject",
         },
         "obligations": {
             "explain": {
@@ -44,6 +45,7 @@ def artifact(
                 "subject": SUBJECT,
                 "verdict": "PASS",
                 "scope_units": scope,
+                "verifier_id": "urn:verifier:independent",
                 "verifier_set_id": "sha256:verifiers",
                 "receipt_id": "sha256:verify-receipt",
                 "independent": independent,
@@ -85,6 +87,17 @@ def test_verifier_must_be_independent() -> None:
     assert result["admission_capacity_units"] == 0
 
 
+def test_verifier_identity_must_differ_from_producer_identity() -> None:
+    candidate = artifact()
+    candidate["obligations"]["verify"]["verifier_id"] = candidate["delegation"][
+        "producer_id"
+    ]
+    result = evaluate_delegation(candidate)
+    assert result["gate"] == "COUNTEREXAMPLE"
+    assert "VERIFY_PRODUCER_EQUALS_VERIFIER" in result["falsifiers"]
+    assert result["admission_capacity_units"] == 0
+
+
 def test_changed_requirement_probe_is_a_required_obligation() -> None:
     candidate = artifact(modify_verdict="COUNTEREXAMPLE")
     result = evaluate_delegation(candidate)
@@ -117,6 +130,21 @@ def test_growth_law_passes_when_capacity_grows_with_delegation() -> None:
         artifact(units=4, scope=4),
     )
     assert result["gate"] == "PASS"
+    assert result["growth_law"]["verdict"] == "PASS"
+
+
+def test_growth_law_allows_safe_contraction_after_evidence_revocation() -> None:
+    # Reference carries surplus evidence. The candidate loses most of that
+    # evidence but also contracts delegation back inside the new boundary.
+    # No positive delegation growth occurred, so the growth law must not
+    # manufacture a failure from negative deltas.
+    result = compare_delegation(
+        artifact(units=2, scope=5),
+        artifact(units=1, scope=1),
+    )
+    assert result["gate"] == "PASS"
+    assert result["delta"]["delegation_units"] == -1
+    assert result["delta"]["admission_capacity_units"] == -4
     assert result["growth_law"]["verdict"] == "PASS"
 
 

@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:witness-ptd a ptd:PositiveWitness ; ptd:epoch "e1" ; ptd:expected ptd:ADMIT .

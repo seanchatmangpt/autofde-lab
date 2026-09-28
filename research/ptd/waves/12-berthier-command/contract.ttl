@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:BerthierCommand a ptd:ResearchWave ; ptd:requires ptd:Intent, ptd:Partition, ptd:Candidate ; ptd:refuses ptd:ImplicitAuthority .

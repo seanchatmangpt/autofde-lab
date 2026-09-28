@@ -1,0 +1,17 @@
+@prefix spa: <https://seanchatmangpt.github.io/autofde-lab/semantic-projection#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+spa:SemanticContract a rdfs:Class .
+spa:ConsumerProjection a rdfs:Class .
+spa:ProjectionReceipt a rdfs:Class .
+spa:ProjectionCourt a rdfs:Class .
+spa:sourceSubject a rdf:Property .
+spa:consumerSubject a rdf:Property .
+spa:requiresTerm a rdf:Property .
+spa:projectsTerm a rdf:Property .
+spa:authorityCeiling a rdf:Property .
+spa:receiptDigest a rdf:Property .
+spa:court a spa:ProjectionCourt ; spa:authorityCeiling "NONE" .
+spa:contract a spa:SemanticContract ;
+ spa:requiresTerm "exact-subject", "content-digest", "semantic-coverage",
+ "authority-nonwidening", "consequence-witness", "receipt-replay" .
