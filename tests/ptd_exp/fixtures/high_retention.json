@@ -1,0 +1,9 @@
+{
+  "schema": "autofde-lab.ptd.fixture/v1",
+  "case": "high_retention",
+  "retention": 1.1,
+  "regeneration_advantage": 5,
+  "semantic_ok": true,
+  "common_mode": 0.1,
+  "authority_compromised": false
+}

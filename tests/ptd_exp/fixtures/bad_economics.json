@@ -1,0 +1,9 @@
+{
+  "schema": "autofde-lab.ptd.fixture/v1",
+  "case": "bad_economics",
+  "retention": 0.2,
+  "regeneration_advantage": 0.5,
+  "semantic_ok": true,
+  "common_mode": 0.1,
+  "authority_compromised": false
+}
