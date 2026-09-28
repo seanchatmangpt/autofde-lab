@@ -1,6 +1,14 @@
 """Role-conditioned planner league public surface."""
 
 from .agent_binding import AgentBinding, identity_quadruple, match_from_bindings
+from .heterogeneity_benchmark import (
+    ExpectedPayoff,
+    HeterogeneityBenchmarkCell,
+    HeterogeneityBenchmarkProgram,
+    complete_heterogeneity_trial,
+    expected_payoff,
+    manufacture_heterogeneity_program,
+)
 from .catalog import (
     ACTION_PROJECTIONS,
     BUDGETS,
@@ -24,6 +32,33 @@ from .core import (
     PolicySpec,
 )
 from .policy_ecology import ConditionedPolicy, PolicyEcology
+from .policy_identity import policy_identity, policy_identity_payload, policy_ref
+from .policy_ecology_experiment import (
+    EcologyMatch,
+    EcologyParticipant,
+    EcologyPayoffSurface,
+    EcologySchedule,
+    HeterogeneityEvidence,
+    HeterogeneityTrial,
+    ObservedEcologyOutcome,
+    manufacture_ecology_schedule,
+    policy_identity,
+    summarize_heterogeneity,
+)
+from .policy_ecology_sweep import (
+    CueResponsePoint,
+    CueResponseSurface,
+    CueSweep,
+    CueSweepSpec,
+    build_cue_response_surface,
+    manufacture_cue_sweep,
+)
+from .temperament_design_bridge import (
+    DesignBenchmarkPair,
+    DesignedPolicyEcology,
+    manufacture_design_benchmark_pair,
+    manufacture_designed_policy_ecology,
+)
 from .psro import PolicySpaceResponseOracle, PsroReceipt, PsroState, PsroStep
 
 __all__ = [
@@ -32,6 +67,34 @@ __all__ = [
     "BUDGETS",
     "ConditionedPolicy",
     "PolicyEcology",
+    "EcologyMatch",
+    "EcologyParticipant",
+    "EcologyPayoffSurface",
+    "EcologySchedule",
+    "HeterogeneityEvidence",
+    "HeterogeneityTrial",
+    "ObservedEcologyOutcome",
+    "manufacture_ecology_schedule",
+    "policy_identity",
+    "summarize_heterogeneity",
+    "CueResponsePoint",
+    "CueResponseSurface",
+    "CueSweep",
+    "CueSweepSpec",
+    "build_cue_response_surface",
+    "manufacture_cue_sweep",
+    "DesignBenchmarkPair",
+    "DesignedPolicyEcology",
+    "manufacture_design_benchmark_pair",
+    "manufacture_designed_policy_ecology",
+    "ExpectedPayoff",
+    "HeterogeneityBenchmarkCell",
+    "HeterogeneityBenchmarkProgram",
+    "complete_heterogeneity_trial",
+    "expected_payoff",
+    "manufacture_heterogeneity_program",
+    "policy_identity_payload",
+    "policy_ref",
     "CompatibilityResult",
     "CompatibilityStanding",
     "EXPERIMENT_DIMENSIONS",

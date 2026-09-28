@@ -70,3 +70,23 @@ def test_adaptive_ecology_changes_condition_not_policy_or_authority() -> None:
 def test_policy_ecology_refuses_authority_as_temperament_axis() -> None:
     with pytest.raises(ValueError, match="REFUSED:TEMPERAMENT_CANNOT_ENCODE_AUTHORITY"):
         StrategicCondition(values=(("authority", 1.0),))
+
+
+def test_policy_ref_separates_same_planner_with_different_parameters() -> None:
+    zero = ConditionedPolicy(
+        policy=PolicySpec.for_role(
+            "Astar",
+            "plan_constructor",
+            parameters={"heuristic": "zero"},
+        )
+    )
+    manhattan = ConditionedPolicy(
+        policy=PolicySpec.for_role(
+            "Astar",
+            "plan_constructor",
+            parameters={"heuristic": "manhattan"},
+        )
+    )
+    assert zero.policy_ref != manhattan.policy_ref
+    assert zero.policy_ref.startswith("urn:autofde:policy:")
+    assert manhattan.policy_ref.startswith("urn:autofde:policy:")
