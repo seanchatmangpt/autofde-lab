@@ -1,9 +1,73 @@
 {
-  "schema": "autofde-lab.ptd.fixture/v1",
-  "case": "high_retention",
-  "retention": 1.1,
-  "regeneration_advantage": 5,
-  "semantic_ok": true,
-  "common_mode": 0.1,
-  "authority_compromised": false
+  "allowed_authorities": [
+    "auth:1"
+  ],
+  "attacks": [
+    {
+      "fresh_performance": 4,
+      "predicted_surface": [
+        "a",
+        "b"
+      ],
+      "realignment_cost": 8,
+      "realignment_time": 20,
+      "source_epoch": "e1",
+      "stale_facts": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "stale_performance": 4.4,
+      "target_epoch": "e2",
+      "task_id": "t1"
+    }
+  ],
+  "criteria": {
+    "max_common_mode": 0.5,
+    "max_retention": 0.5,
+    "min_regeneration_advantage": 1.0,
+    "require_temporal_advantage": true
+  },
+  "epochs": [
+    {
+      "authority_id": "auth:1",
+      "critical": [
+        "a"
+      ],
+      "defender_cost": 2,
+      "epoch_id": "e1",
+      "phase_duration": 10,
+      "realization_digest": "r1",
+      "semantic_digest": "sem",
+      "subject_id": "subject:s1",
+      "surface": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ]
+    },
+    {
+      "authority_id": "auth:1",
+      "critical": [
+        "w"
+      ],
+      "defender_cost": 2,
+      "epoch_id": "e2",
+      "phase_duration": 10,
+      "realization_digest": "r2",
+      "semantic_digest": "sem",
+      "subject_id": "subject:s1",
+      "surface": [
+        "a",
+        "b",
+        "c",
+        "w"
+      ]
+    }
+  ],
+  "experiment_id": "exp:ptd",
+  "schema": "autofde-lab.ptd.campaign/v2",
+  "subject_id": "subject:s1"
 }

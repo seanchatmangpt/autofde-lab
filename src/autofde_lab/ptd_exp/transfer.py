@@ -1,4 +1,4 @@
-def knowledge_retention(stale,fresh):
- if fresh<=0 or stale<0: raise ValueError("invalid performance")
- return stale/fresh
-def knowledge_depreciation(stale,fresh): return 1-knowledge_retention(stale,fresh)
+"""Re-export of the canonical knowledge-transfer metrics from ``autofde_lab.ptd.metrics``."""
+from autofde_lab.ptd.metrics import knowledge_depreciation, knowledge_retention
+
+__all__ = ["knowledge_depreciation", "knowledge_retention"]

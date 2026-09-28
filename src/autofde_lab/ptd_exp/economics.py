@@ -1,5 +1,4 @@
-def regeneration_advantage(attacker_cost,defender_cost):
- if defender_cost<=0 or attacker_cost<0: raise ValueError("invalid cost")
- return attacker_cost/defender_cost
-def ptd_efficiency(dep,defender_cost): return dep/defender_cost
-def ptd_advantage(dep,attacker_cost,defender_cost): return dep*regeneration_advantage(attacker_cost,defender_cost)
+"""Re-export of the canonical PTD economics; the guarded implementation lives in ``autofde_lab.ptd.metrics``."""
+from autofde_lab.ptd.metrics import ptd_advantage, ptd_efficiency, regeneration_advantage
+
+__all__ = ["ptd_advantage", "ptd_efficiency", "regeneration_advantage"]
