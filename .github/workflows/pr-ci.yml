@@ -242,6 +242,7 @@ jobs:
             tests/fortune5/test_architecture_qualification_adversarial.py \
             tests/fortune5/test_architecture_qualification_bench.py \
             tests/fortune5/test_architecture_qualification_category.py \
+            tests/fortune5/test_architecture_qualification_rdf_court.py \
             tests/fortune5/test_architecture_qualification_route.py
 
       - name: Cache qualification / Python 3.12
