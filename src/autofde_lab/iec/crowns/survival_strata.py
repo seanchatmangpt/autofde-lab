@@ -11,7 +11,8 @@ run are never silently pooled when fault stratification is enabled.
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, Mapping, Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from .model import IECRefusal, content_id
 from .survival_compare import compare_survival_policies

@@ -12,7 +12,8 @@ clock is consulted.
 from __future__ import annotations
 
 import json
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from autofde_lab.ocel.log import OcelLog
 from autofde_lab.ocel.model import OcelAttribute, OcelAttributeValue, OcelObject

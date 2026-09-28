@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping, Sequence
 from statistics import NormalDist
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 from .model import IECRefusal, content_id
 from .survival import REPORT_SCHEMA, survival_report

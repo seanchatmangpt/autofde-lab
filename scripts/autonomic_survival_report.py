@@ -124,7 +124,7 @@ def main(argv: list[str] | None = None) -> int:
             factor_names=tuple(args.factor),
             stratify_fault=not args.no_stratify_fault,
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - CLI boundary: any failure becomes a typed refusal (exit 2)
         print(f"survival-report-refused: {exc}", file=sys.stderr)
         return 2
 

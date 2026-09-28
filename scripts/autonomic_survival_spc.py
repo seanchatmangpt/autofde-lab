@@ -61,7 +61,7 @@ def main(argv: list[str] | None = None) -> int:
                 decision_interval=args.decision_interval,
             ),
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - CLI boundary: any failure becomes a typed refusal (exit 2)
         print(f"survival-spc-refused: {exc}", file=sys.stderr)
         return 2
 

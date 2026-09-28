@@ -15,9 +15,10 @@ a causal claim and does not grant production standing or execution authority.
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from itertools import combinations
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 from .model import IECRefusal, content_id
 from .recurrent_survival import recurrent_survival_report
@@ -225,7 +226,7 @@ def compare_survival_policies(
     return result
 
 
-def _mean(total: int | float, count: int) -> float:
+def _mean(total: float, count: int) -> float:
     return 0.0 if count == 0 else float(total) / count
 
 
