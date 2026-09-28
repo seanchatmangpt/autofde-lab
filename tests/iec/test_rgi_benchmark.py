@@ -240,7 +240,7 @@ def test_compare_refuses_subject_or_workload_drift() -> None:
 def test_machine_executor_cannot_hide_llm_tokens() -> None:
     with pytest.raises(
         IECRefusal,
-        match="machine edge e1 reports 1 LLM tokens",
+        match="MACHINE edge e1 reports 1 LLM tokens",
     ):
         benchmark_trace(
             trace(
