@@ -8,7 +8,10 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from autofde_lab.evidence.dgf_substitution import run_dgf_dataset
+from autofde_lab.evidence.dgf_substitution import (
+    DGFAdmissionError,
+    run_receipted_dgf_dataset,
+)
 
 
 def main() -> int:
@@ -22,23 +25,30 @@ def main() -> int:
     parser.add_argument("--dataset-root", type=Path, required=True)
     parser.add_argument(
         "--expected-kernel-digest",
+        "--expect-kernel-digest",
+        dest="expected_kernel_digest",
         default=None,
-        help="refuse (KERNEL_DIGEST_MISMATCH) unless evaluator.py hashes to this",
+        help=(
+            "exact sha256:<hex> pin for evaluator.py; drift refuses the run "
+            "(KERNEL_DIGEST_MISMATCH)"
+        ),
     )
     args = parser.parse_args()
 
-    scores, summary = run_dgf_dataset(
-        args.dataset_root,
-        dgf_root=args.dgf_root,
-        expected_kernel_digest=args.expected_kernel_digest,
-    )
-    if summary.cases == 0:
+    try:
+        scores, summary, receipt = run_receipted_dgf_dataset(
+            args.dataset_root,
+            dgf_root=args.dgf_root,
+            expected_kernel_digest=args.expected_kernel_digest,
+        )
+    except DGFAdmissionError as exc:
+        if exc.refusal_code != "DGF_EMPTY_DATASET":
+            raise
         print(
             json.dumps(
                 {
                     "refusal": "EMPTY_DATASET",
                     "dataset_root": str(args.dataset_root),
-                    "kernel_digest": summary.kernel_digest,
                 },
                 sort_keys=True,
             )
@@ -49,7 +59,8 @@ def main() -> int:
             {
                 "kernel": "DGF evaluator.py",
                 "kernel_digest": summary.kernel_digest,
-                "llm_calls": 0,
+                "llm_calls": receipt.llm_calls,
+                "receipt": receipt.to_dict(),
                 "summary": summary.to_dict(),
                 "cases": [
                     {
@@ -63,7 +74,7 @@ def main() -> int:
             sort_keys=True,
         )
     )
-    return 0 if summary.routes_passed == summary.cases else 1
+    return 0 if receipt.standing == "ALIVE" else 1
 
 
 if __name__ == "__main__":
