@@ -1,6 +1,12 @@
+# ruff: noqa: E402 - the importorskip gate must run before the gymact imports below
 from __future__ import annotations
 
 import pytest
+
+pytest.importorskip(
+    "gymact.policy_ecology",
+    reason="UNSUPPORTED: gymact.policy_ecology is absent from the admitted gymact pin",
+)
 from gymact.policy_ecology import PopulationKind, ReactionNorm, StrategicCondition
 
 from autofde_lab.planner_league import PolicySpec

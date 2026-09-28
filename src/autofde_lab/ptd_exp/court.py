@@ -7,18 +7,26 @@ All verdicts are ``technicalStanding`` only; nothing here claims organizational 
 
 from __future__ import annotations
 
+from autofde_lab.ptd.metrics import (
+    knowledge_depreciation,
+    knowledge_retention,
+    ptd_advantage,
+    regeneration_advantage,
+    strong_phase_regime,
+)
+
 from .authority import AuthorityBoundary, admit_authority
 from .common_mode import common_mode_persistence
-from .economics import ptd_advantage, regeneration_advantage
+from .disclosure import disclosure_frontier
 from .identity import require_distinct_epochs, require_same_subject
 from .manifest import manifest_digest, parse_manifest
 from .models import PTDThresholds
 from .ocel import project_ocel
 from .predictor import normalized_prediction_error
 from .report import seal_report
+from .resiliency import resiliency_report
 from .statistics import confidence_band, mean
-from .temporal import strong_temporal_regime
-from .transfer import knowledge_depreciation, knowledge_retention
+from .stress import phase_budget
 
 
 def _refused(src, tgt, attack, reasons):
@@ -96,7 +104,7 @@ def evaluate_epoch_pair(src, tgt, attack, t: PTDThresholds, allowed=()):
         falsifiers.append("retention_evidence_disagree")
     if adv < t.min_regeneration_advantage:
         falsifiers.append("regeneration_advantage_too_low")
-    if t.require_temporal_advantage and not strong_temporal_regime(
+    if t.require_temporal_advantage and not strong_phase_regime(
         attack.realignment_time, tgt.phase_duration
     ):
         falsifiers.append("attacker_realigns_within_phase")
@@ -146,16 +154,12 @@ def evaluate_campaign(rows, epochs=(), t: PTDThresholds | None = None):
         "retention_band_95": confidence_band(retentions),  # None == UNKNOWN (n<2)
     }
     if t is not None and t.budget is not None and epochs:
-        spent, funded = 0.0, 0
-        for e in epochs[1:]:
-            if spent + e.defender_cost > t.budget:
-                break
-            spent += e.defender_cost
-            funded += 1
+        required = len(epochs) - 1
+        funded = phase_budget([e.defender_cost for e in epochs[1:]], t.budget)
         out["budget"] = {
             "funded_phases": funded,
-            "required_phases": len(epochs) - 1,
-            "exhausted": funded < len(epochs) - 1,
+            "required_phases": required,
+            "exhausted": funded < required,
         }
         out["all_pass"] = out["all_pass"] and not out["budget"]["exhausted"]
     return out
@@ -188,6 +192,10 @@ def evaluate_experiment(manifest: dict) -> dict:
             "ocel_sha256": ocel.digest(),
             "rows": rows,
             "campaign": evaluate_campaign(rows, epochs, t),
+            "disclosure_frontier": disclosure_frontier(
+                manifest.get("disclosures"), manifest.get("disclosure_weight", 1.0)
+            ),
+            "resiliency": resiliency_report(manifest.get("techniques_observed")),
             "standing": {
                 "court_verdict": "PASS"
                 if rows and all(r["status"] == "PASS" for r in rows)

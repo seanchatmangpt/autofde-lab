@@ -2523,8 +2523,38 @@ openclaw-ecosystem-interop, agent/cloud-benchmark-crown-docs. Measured:
 Known follow-up: two survival-episode OCEL projections coexist (`survival_episode_to_ocel` and
 `episode_to_ocel_log`); `survival_uncertainty` (pointwise Greenwood) is weaker than the log-log report.
 
-**deferred** — removal of now-redundant `ptd_exp` one-line modules (permission-gated);
-closing superseded PR #204 (its head is subsumed by `77279976`+`cf1d27bf`).
+**resolved** — the `ptd_exp` one-line modules were removed (see the closure follow-up below);
+PR #204 closed as merged content.
+
+## v26.9.28 closure follow-up (2026-09-28)
+
+**measured win** — `ptd_exp` consolidated. Deleted 11 redundant modules with no consumer
+outside their own trivial test (`economics`, `transfer`, `temporal`, `metrics`, `admission`,
+`attacker`, `epochs`, `falsifiers`, `invariants`, `campaign`, `migration`) and their 9 tests; the
+court now imports the guarded `autofde_lab.ptd.metrics` directly and uses `stress.phase_budget`.
+`disclosure`/`buyer_value`/`redteam_value`/`resiliency` now have a consumer: optional manifest
+sections `disclosures` and `techniques_observed` (absent -> `None`, i.e. UNKNOWN, never zero).
+`buyer_value`/`redteam_value` let `NaN` through their range check; fixed. `validate_manifest`
+checks the schema first, so a v1 manifest is refused as `unsupported PTD schema`.
+There is deliberately no v1 -> v2 migration: v1 trials carry no semantic/realization digests
+or epoch identity, and inventing them would manufacture evidence from absence.
+
+**recorded negative** — gymact at the admitted pin `524d0bc` has no `gymact.policy_ecology`
+(measured: `pip install gymact@524d0bc` then `import gymact.policy_ecology` ->
+`ModuleNotFoundError`). Before this change `import autofde_lab.planner_league` failed outright at
+that pin, taking `psro`/`core`/`catalog` down with it. The five ecology-dependent submodules are
+now loaded lazily (PEP 562) and raise a named `ImportError` (UNSUPPORTED) at first use; the five
+ecology test modules `importorskip` with that reason. `test_policy_identity` + `test_psro`
+(9 tests) now run at the admitted pin. The six `*_chicago` planner_league tests remain gated on
+the native compiled domains. Re-enable path: qualify a gymact revision that has `policy_ecology`
+in `ecosystem/autofde-rust-handoff.toml` (7bca1c5 has it but its `.ggen/marketplace` submodule
+needs Git LFS, which GitHub currently refuses: "exceeded its LFS budget").
+
+**deferred (decision needed, not skipped)** — two survival-episode OCEL projections coexist:
+`survival_episode_to_ocel` (used by `scripts/autonomic_survival_report.py`) and
+`episode_to_ocel_log` (used by `survival_bundle`). They emit different object-id schemes and
+event sets, so unifying them changes emitted evidence and digests for one of the two consumers.
+Someone must choose the canonical scheme; this was not decided here.
 
 ## Pass 2 — ecosystem closure ledger (2026-08-06)
 

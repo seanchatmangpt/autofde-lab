@@ -1,5 +1,7 @@
 """Role-conditioned planner league public surface."""
 
+import importlib
+
 from .agent_binding import AgentBinding, identity_quadruple, match_from_bindings
 from .catalog import (
     ACTION_PROJECTIONS,
@@ -23,43 +25,69 @@ from .core import (
     PlannerLeague,
     PolicySpec,
 )
-from .heterogeneity_benchmark import (
-    ExpectedPayoff,
-    HeterogeneityBenchmarkCell,
-    HeterogeneityBenchmarkProgram,
-    complete_heterogeneity_trial,
-    expected_payoff,
-    manufacture_heterogeneity_program,
-)
-from .policy_ecology import ConditionedPolicy, PolicyEcology
-from .policy_ecology_experiment import (
-    EcologyMatch,
-    EcologyParticipant,
-    EcologyPayoffSurface,
-    EcologySchedule,
-    HeterogeneityEvidence,
-    HeterogeneityTrial,
-    ObservedEcologyOutcome,
-    manufacture_ecology_schedule,
-    policy_identity,
-    summarize_heterogeneity,
-)
-from .policy_ecology_sweep import (
-    CueResponsePoint,
-    CueResponseSurface,
-    CueSweep,
-    CueSweepSpec,
-    build_cue_response_surface,
-    manufacture_cue_sweep,
-)
 from .policy_identity import policy_identity, policy_identity_payload, policy_ref
 from .psro import PolicySpaceResponseOracle, PsroReceipt, PsroState, PsroStep
-from .temperament_design_bridge import (
-    DesignBenchmarkPair,
-    DesignedPolicyEcology,
-    manufacture_design_benchmark_pair,
-    manufacture_designed_policy_ecology,
-)
+
+# The ecology surface depends on ``gymact.policy_ecology`` / ``gymact.temperament_engineering``,
+# which the admitted gymact pin may not provide. Loading it lazily keeps ``psro``, ``core`` and
+# ``catalog`` importable on any admitted pin, and turns a missing dependency into an explicit,
+# named ImportError (UNSUPPORTED) at first use instead of breaking the whole package at import.
+_LAZY_EXPORTS = {
+    "heterogeneity_benchmark": (
+        "ExpectedPayoff",
+        "HeterogeneityBenchmarkCell",
+        "HeterogeneityBenchmarkProgram",
+        "complete_heterogeneity_trial",
+        "expected_payoff",
+        "manufacture_heterogeneity_program",
+    ),
+    "policy_ecology": ("ConditionedPolicy", "PolicyEcology"),
+    "policy_ecology_experiment": (
+        "EcologyMatch",
+        "EcologyParticipant",
+        "EcologyPayoffSurface",
+        "EcologySchedule",
+        "HeterogeneityEvidence",
+        "HeterogeneityTrial",
+        "ObservedEcologyOutcome",
+        "manufacture_ecology_schedule",
+        "summarize_heterogeneity",
+    ),
+    "policy_ecology_sweep": (
+        "CueResponsePoint",
+        "CueResponseSurface",
+        "CueSweep",
+        "CueSweepSpec",
+        "build_cue_response_surface",
+        "manufacture_cue_sweep",
+    ),
+    "temperament_design_bridge": (
+        "DesignBenchmarkPair",
+        "DesignedPolicyEcology",
+        "manufacture_design_benchmark_pair",
+        "manufacture_designed_policy_ecology",
+    ),
+}
+_LAZY_SOURCE = {name: mod for mod, names in _LAZY_EXPORTS.items() for name in names}
+
+
+def __getattr__(name: str):
+    module_name = _LAZY_SOURCE.get(name)
+    if module_name is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    try:
+        module = importlib.import_module(f".{module_name}", __name__)
+    except ModuleNotFoundError as error:
+        if error.name and error.name.split(".")[0] == "gymact":
+            raise ImportError(
+                f"{name} requires {error.name}, which the installed gymact does not provide "
+                "(UNSUPPORTED until a gymact revision that has it is admitted)"
+            ) from error
+        raise
+    value = getattr(module, name)
+    globals()[name] = value
+    return value
+
 
 __all__ = [
     "ACTION_PROJECTIONS",
