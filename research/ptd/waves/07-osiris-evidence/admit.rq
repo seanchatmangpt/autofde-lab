@@ -1,0 +1,2 @@
+PREFIX ptd: <https://chatmangpt.com/ptd#>
+ASK { ptd:OSIRISEvidence a ptd:ResearchWave ; ptd:requires ptd:evidence, ptd:admission . }
