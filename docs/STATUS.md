@@ -2507,6 +2507,22 @@ with rdflib on `hilt/waves/08-portable-runtime`, the ASK is `True` for the contr
 (see `absence-is-not-evidence.md`). Integrating them needs a consumer that binds the fixture
 into the graph before the ASK; until then they stay unmerged, not deleted.
 
+**merge sweep (2026-09-28)** — 20 branches integrated into PR #205 by semantic (hunk-level) merge,
+no `-X`/`-s` side-picking. Real merges: sa2a (#162), dfcm-xaas (#167), release-tag (#175),
+production-hardening, ecology, rgi-hardening, semantic-projection court/receipt, phasing-target-defense
+(#204), frontier-ptd x2, hilt-r5b, inverse-ecosystem-compiler, ea-rdf-standing, codegraph-benchmark,
+work-envelope-v2 (union with #167's `execution_descriptor`), evidence-topology-r2 (union of DGF kernel
+hardening + receipted runs), aasee-delegation (#187; adds producer≠verifier falsifier, contraction-safe growth
+law), premature-actuation-court (#186; union of survival APIs). Ancestry-only (content already on master,
+verified byte-identical or stricter on master): swe-prometheus-vgg, w9-sweep/format-drift,
+preserve/detached-test-fixes. Superseded, NOT merged: premature-actuation-court-v2 (13 files byte-identical to
+the court branch), survival-ocel-closure (all features already on master). Not merged, unrelated history:
+openclaw-ecosystem-interop, agent/cloud-benchmark-crown-docs. Measured:
+`pytest tests/iec tests/evidence tests/semantic_parts tests/ptd tests/ptd_exp tests/benchmarks tests/fabric/test_gall_semantic_work.py`
+(minus 3 files needing pyshacl / native build) → 552 passed, 22 skipped (TLC jar absent), 0 failed.
+Known follow-up: two survival-episode OCEL projections coexist (`survival_episode_to_ocel` and
+`episode_to_ocel_log`); `survival_uncertainty` (pointwise Greenwood) is weaker than the log-log report.
+
 **deferred** — removal of now-redundant `ptd_exp` one-line modules (permission-gated);
 closing superseded PR #204 (its head is subsumed by `77279976`+`cf1d27bf`).
 
