@@ -100,7 +100,6 @@ def test_cutoff_sweep_reuses_the_same_oracle():
     assert sweep["authority"] == "NONE"
 
 
-
 def test_receipt_backed_oracle_can_be_required_fail_closed():
     witness = BehavioralWitness(
         candidate_id="b",
@@ -136,7 +135,9 @@ def test_receipt_backed_oracle_can_be_required_fail_closed():
     except ValueError as error:
         assert "behavioral witness receipts are required" in str(error)
     else:
-        raise AssertionError("unreceipted oracle must be refused when receipts are required")
+        raise AssertionError(
+            "unreceipted oracle must be refused when receipts are required"
+        )
 
 
 def test_behavioral_witness_refuses_bad_digest_and_unknown_candidate():
@@ -168,7 +169,6 @@ def test_behavioral_witness_refuses_bad_digest_and_unknown_candidate():
         assert "verified_equivalents" in str(error)
     else:
         raise AssertionError("witness for an unverified candidate must be refused")
-
 
 
 def test_paired_sign_test_tracks_recurrence_of_semantic_wins():

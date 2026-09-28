@@ -1,4 +1,4 @@
-from autofde_lab.ptd import PTDCriteria, PhaseTrial, evaluate_trial, summarize_trials
+from autofde_lab.ptd import PhaseTrial, PTDCriteria, evaluate_trial, summarize_trials
 
 
 def trial(**overrides: object) -> PhaseTrial:

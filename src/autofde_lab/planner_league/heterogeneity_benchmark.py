@@ -59,14 +59,10 @@ def expected_payoff(
     missing = expected_ids.difference(observed_by_id)
     if missing:
         raise ValueError(
-            "REFUSED:INCOMPLETE_SCHEDULE_EVIDENCE:"
-            + ",".join(sorted(missing))
+            "REFUSED:INCOMPLETE_SCHEDULE_EVIDENCE:" + ",".join(sorted(missing))
         )
 
-    raw_weights = [
-        match.left.weight * match.right.weight
-        for match in schedule.matches
-    ]
+    raw_weights = [match.left.weight * match.right.weight for match in schedule.matches]
     total_weight = fsum(raw_weights)
     if total_weight <= 0.0:
         raise ValueError("REFUSED:NONPOSITIVE_JOINT_POPULATION_WEIGHT")
@@ -117,7 +113,9 @@ class HeterogeneityBenchmarkProgram:
         if self.engineering_cost < 0.0:
             raise ValueError("REFUSED:NEGATIVE_HETEROGENEITY_COST")
         if self.homogeneous_population_ref == self.engineered_population_ref:
-            raise ValueError("REFUSED:HETEROGENEITY_PROGRAM_REQUIRES_DISTINCT_POPULATIONS")
+            raise ValueError(
+                "REFUSED:HETEROGENEITY_PROGRAM_REQUIRES_DISTINCT_POPULATIONS"
+            )
         cues = [cell.cue for cell in self.cells]
         if len(cues) != len(set(cues)):
             raise ValueError("REFUSED:DUPLICATE_HETEROGENEITY_PROGRAM_CUE")
@@ -149,9 +147,7 @@ def manufacture_heterogeneity_program(
             world_id=world_id,
             left_role_id=left_role_id,
             right_role_id=right_role_id,
-            max_matches=(
-                len(pair.homogeneous.ecology.members) * len(opponent.members)
-            ),
+            max_matches=(len(pair.homogeneous.ecology.members) * len(opponent.members)),
             cue=cue,
         )
         engineered = manufacture_ecology_schedule(
@@ -160,9 +156,7 @@ def manufacture_heterogeneity_program(
             world_id=world_id,
             left_role_id=left_role_id,
             right_role_id=right_role_id,
-            max_matches=(
-                len(pair.engineered.ecology.members) * len(opponent.members)
-            ),
+            max_matches=(len(pair.engineered.ecology.members) * len(opponent.members)),
             cue=cue,
         )
         cells.append(

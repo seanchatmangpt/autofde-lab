@@ -13,7 +13,6 @@ from autofde_lab.iec.grasp import (
     select_candidate,
 )
 
-
 SUBJECT = "urn:berthier:v26.9.25:mission-1"
 
 
@@ -67,7 +66,9 @@ def candidate(partition, *, candidate_id="c1", score=1.0, **changes):
     return StrategyCandidate(**values)
 
 
-def test_partitioning_refuses_constraint_weakening_and_cross_partition_overlap() -> None:
+def test_partitioning_refuses_constraint_weakening_and_cross_partition_overlap() -> (
+    None
+):
     d = doctrine()
     with pytest.raises(ValueError, match="CONSTRAINT_WEAKENING"):
         partition_doctrine(
@@ -93,7 +94,9 @@ def test_partitioning_refuses_constraint_weakening_and_cross_partition_overlap()
         )
 
 
-def test_candidate_court_refuses_constraint_partition_authority_and_route_drift() -> None:
+def test_candidate_court_refuses_constraint_partition_authority_and_route_drift() -> (
+    None
+):
     d = doctrine()
     direct, indirect = partitions(d)
     mutated = candidate(
@@ -157,7 +160,9 @@ def test_equal_scores_break_ties_by_content_identity_not_input_order() -> None:
     assert first.replay_digest == replay.replay_digest
 
 
-def test_unbounded_candidate_fanout_blocks_selection_even_with_passing_candidates() -> None:
+def test_unbounded_candidate_fanout_blocks_selection_even_with_passing_candidates() -> (
+    None
+):
     d = doctrine(max_candidates_per_partition=1)
     direct, _indirect = partitions(d)
     result = select_candidate(
@@ -176,7 +181,9 @@ def test_unbounded_candidate_fanout_blocks_selection_even_with_passing_candidate
 def test_candidate_partition_digest_prevents_relabelled_partition() -> None:
     d = doctrine()
     direct, _indirect = partitions(d)
-    altered = dataclasses.replace(direct, constraints=direct.constraints | {"new-boundary"})
+    altered = dataclasses.replace(
+        direct, constraints=direct.constraints | {"new-boundary"}
+    )
     court = evaluate_candidate(d, altered, candidate(direct))
     assert court.verdict is Verdict.COUNTEREXAMPLE
     assert "PARTITION_DIGEST_MISMATCH" in court.failures

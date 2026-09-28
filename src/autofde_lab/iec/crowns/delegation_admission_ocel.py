@@ -115,9 +115,7 @@ def history_receipt_to_ocel(receipt: Mapping[str, Any]) -> OcelLog:
             attributes={
                 "gate": _string(snapshot.get("gate")),
                 "delegation_units": _integer(snapshot.get("delegation_units")),
-                "capacity_units": _integer(
-                    snapshot.get("admission_capacity_units")
-                ),
+                "capacity_units": _integer(snapshot.get("admission_capacity_units")),
             },
         )
         if snapshot.get("gate") != "PASS":

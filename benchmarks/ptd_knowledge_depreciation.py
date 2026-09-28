@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from autofde_lab.ptd import PTDCriteria, PhaseTrial, summarize_trials
+from autofde_lab.ptd import PhaseTrial, PTDCriteria, summarize_trials
 
 SCHEMA = "autofde-lab.ptd.experiment/v1"
 

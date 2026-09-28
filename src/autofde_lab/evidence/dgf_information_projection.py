@@ -17,7 +17,7 @@ import math
 from dataclasses import dataclass
 from itertools import combinations
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Sequence
 
 from autofde_lab.evidence.dgf_substitution import discover_dgf_cases
 from autofde_lab.evidence.information_obstruction import (
@@ -112,7 +112,9 @@ def build_dgf_decision_cases(
     if len(paths) != len(set(paths)):
         raise ValueError("DGF_PROJECTION_PATHS_DUPLICATE")
 
-    cases = tuple(case_dirs) if case_dirs is not None else discover_dgf_cases(dataset_root)
+    cases = (
+        tuple(case_dirs) if case_dirs is not None else discover_dgf_cases(dataset_root)
+    )
     if not cases:
         raise ValueError("DGF_EMPTY_DATASET")
 

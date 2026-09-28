@@ -80,7 +80,6 @@ def test_cli_refuses_malformed_oracle_input(tmp_path, capsys):
     assert payload["code"] == "REFUSED_BENCHMARK_INPUT"
 
 
-
 def test_cli_require_receipts_refuses_declared_only_oracle(tmp_path, capsys):
     input_path = _fixture(tmp_path)
 

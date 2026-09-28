@@ -104,6 +104,4 @@ def test_overlapping_accepted_sets_are_not_an_obstruction() -> None:
 
 def test_empty_accepted_output_set_is_refused_as_malformed_contract() -> None:
     with pytest.raises(ValueError, match="ACCEPTED_OUTPUTS_REQUIRED"):
-        analyze_information_obstruction(
-            [DecisionCase("bad", {"x": 1}, frozenset())]
-        )
+        analyze_information_obstruction([DecisionCase("bad", {"x": 1}, frozenset())])

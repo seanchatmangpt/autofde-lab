@@ -165,7 +165,9 @@ def test_search_finds_minimal_sufficient_projection_width(tmp_path: Path) -> Non
     assert all(audit.sufficient for audit in audits)
 
 
-def test_search_returns_empty_when_candidate_vocabulary_cannot_distinguish(tmp_path: Path) -> None:
+def test_search_returns_empty_when_candidate_vocabulary_cannot_distinguish(
+    tmp_path: Path,
+) -> None:
     dataset = tmp_path / "dataset"
     _case(
         dataset,

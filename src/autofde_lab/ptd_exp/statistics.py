@@ -1,4 +1,5 @@
 """Sample statistics for PTD campaigns, delegated to stdlib/scipy rather than hand-rolled."""
+
 from __future__ import annotations
 
 import statistics as _st

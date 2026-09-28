@@ -1,4 +1,5 @@
 """Exact-subject and epoch identity; digests use the repo-wide canonical serializer."""
+
 from autofde_lab.fabric.canonical import sha256 as canonical_digest
 
 __all__ = ["canonical_digest", "require_distinct_epochs", "require_same_subject"]

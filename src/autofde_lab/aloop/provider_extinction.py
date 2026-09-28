@@ -101,7 +101,6 @@ def compare_provider_substitution(
     )
 
 
-
 @dataclass(frozen=True)
 class ArtifactHandoff:
     """Content-addressed artifact handoff across provider/run boundaries.
@@ -129,9 +128,10 @@ class ArtifactHandoff:
 
     @property
     def content_digest(self) -> str:
-        return "sha256:" + hashlib.sha256(
-            _canonical(self.content_projection())
-        ).hexdigest()
+        return (
+            "sha256:"
+            + hashlib.sha256(_canonical(self.content_projection())).hexdigest()
+        )
 
 
 @dataclass(frozen=True)
@@ -213,7 +213,8 @@ def qualify_fresh_job_recovery(
     locators = (handoff.source_locator, handoff.target_locator)
     if any(
         locator is not None
-        and locator in {
+        and locator
+        in {
             handoff.artifact_digest,
             handoff.manifest_digest,
             handoff.producer_digest,

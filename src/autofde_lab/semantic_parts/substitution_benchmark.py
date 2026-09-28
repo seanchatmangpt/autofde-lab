@@ -7,9 +7,9 @@ oracle labels it is evaluated against.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from math import comb
-import re
 from typing import Iterable, Mapping, Sequence
 
 
@@ -36,7 +36,9 @@ class BehavioralWitness:
         candidate_id = value.get("candidate_id")
         receipt_digest = value.get("receipt_digest")
         verifier = value.get("verifier")
-        if not all(isinstance(item, str) for item in (candidate_id, receipt_digest, verifier)):
+        if not all(
+            isinstance(item, str) for item in (candidate_id, receipt_digest, verifier)
+        ):
             raise ValueError("behavioral witness fields must be strings")
         return cls(
             candidate_id=candidate_id,
@@ -155,7 +157,11 @@ def _metrics(
         top1_hits += int(bool(candidates and candidates[0] in verified))
 
         first_rank = next(
-            (rank for rank, candidate in enumerate(candidates, start=1) if candidate in verified),
+            (
+                rank
+                for rank, candidate in enumerate(candidates, start=1)
+                if candidate in verified
+            ),
             None,
         )
         if first_rank is not None:
@@ -175,7 +181,6 @@ def _metrics(
         "relevant_candidates": relevant,
         "returned_candidates": returned,
     }
-
 
 
 def _paired_outcomes(
@@ -311,7 +316,9 @@ def evaluate_at_cutoffs(
         "schema": "autofde.semantic-substitution-sweep.v1",
         "oracle": "independent_behavioral_verification",
         "oracle_standing": (
-            "RECEIPTED" if all(case.oracle_receipted for case in admitted) else "DECLARED"
+            "RECEIPTED"
+            if all(case.oracle_receipted for case in admitted)
+            else "DECLARED"
         ),
         "cutoffs": sorted(normalized),
         "reports": reports,

@@ -1,4 +1,5 @@
 """Temporal regime; the strong-phase predicate is the canonical one in ``autofde_lab.ptd.metrics``."""
+
 from autofde_lab.ptd.metrics import strong_phase_regime as strong_temporal_regime
 
 __all__ = ["strong_temporal_regime", "temporal_advantage"]

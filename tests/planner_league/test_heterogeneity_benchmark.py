@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+from gymact.policy_ecology import PopulationKind, StrategicCondition
 from gymact.temperament_engineering import (
     AxisTarget,
     ControlTopology,
@@ -24,7 +25,6 @@ from autofde_lab.planner_league.policy_ecology_experiment import (
 from autofde_lab.planner_league.temperament_design_bridge import (
     manufacture_design_benchmark_pair,
 )
-from gymact.policy_ecology import PopulationKind, StrategicCondition
 
 
 def static_ecology(

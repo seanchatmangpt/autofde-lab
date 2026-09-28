@@ -68,9 +68,7 @@ def _case(dataset: Path, name: str, *, expected_disposition: str = "GO") -> Path
                     }
                 ]
             },
-            "reference_decisions": [
-                {**decision, "disposition": expected_disposition}
-            ],
+            "reference_decisions": [{**decision, "disposition": expected_disposition}],
         },
     )
     return case_dir

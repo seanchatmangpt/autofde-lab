@@ -144,7 +144,6 @@ def test_tlc_intent_with_jar_pins_classpath() -> None:
     assert legacy.authority == "NONE"
 
 
-
 def test_duplicate_constant_declarations_and_bindings_are_refused() -> None:
     with pytest.raises(ValueError, match="duplicate constant declaration"):
         _counter(constants=("Max", "Max"), constant_values=(("Max", "3"),))

@@ -133,9 +133,7 @@ def plan_capacity_repair(
     expected_capacity = min(max(scopes[name], target) for name in OBLIGATIONS)
     expected_debt = max(0, target - expected_capacity)
     standing = (
-        Verdict.PASS.value
-        if expected_debt == 0
-        else Verdict.COUNTEREXAMPLE.value
+        Verdict.PASS.value if expected_debt == 0 else Verdict.COUNTEREXAMPLE.value
     )
     report = {
         "schema": PLAN_SCHEMA,
@@ -149,9 +147,7 @@ def plan_capacity_repair(
         "expected_admission_debt_units": expected_debt,
         "unit_costs": costs,
         "actions": actions,
-        "total_increment_units": sum(
-            action["increment_units"] for action in actions
-        ),
+        "total_increment_units": sum(action["increment_units"] for action in actions),
         "total_cost": total_cost,
         "claim_ceiling": (
             "closed-form candidate plan over declared scope costs; executing evidence "

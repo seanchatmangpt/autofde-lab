@@ -38,9 +38,7 @@ def _is_sha256(value: str) -> bool:
     if not value.startswith("sha256:"):
         return False
     payload = value[7:]
-    return len(payload) == 64 and all(
-        char in "0123456789abcdef" for char in payload
-    )
+    return len(payload) == 64 and all(char in "0123456789abcdef" for char in payload)
 
 
 def _bytes_digest(value: bytes) -> str:
@@ -134,9 +132,7 @@ def make_relation_witness(
     return RelationWitness(**basis, witness_digest=content_id(basis))
 
 
-def _connected(
-    required: set[str], witnesses: Sequence[RelationWitness]
-) -> bool:
+def _connected(required: set[str], witnesses: Sequence[RelationWitness]) -> bool:
     if not required:
         return True
     adjacency = {surface: set() for surface in required}
@@ -204,7 +200,10 @@ def qualify_xprod(
             failures.append(f"AUTHORITY_INCREASE:{surface}")
 
     for witness in witnesses:
-        if witness.left_surface not in by_surface or witness.right_surface not in by_surface:
+        if (
+            witness.left_surface not in by_surface
+            or witness.right_surface not in by_surface
+        ):
             failures.append(
                 "RELATION_UNKNOWN_SURFACE:"
                 f"{witness.left_surface}->{witness.right_surface}"
@@ -234,7 +233,10 @@ def qualify_xprod(
         for witness in sorted(
             witnesses,
             key=lambda item: (
-                item.left_surface, item.right_surface, item.relation, item.witness_digest
+                item.left_surface,
+                item.right_surface,
+                item.relation,
+                item.witness_digest,
             ),
         )
     ]

@@ -2,8 +2,8 @@
 
 ## Knowledge-Depreciating Cyber Defense Through Semantic Rematerialization
 
-Status: public dissertation thesis and experimental contract  
-Version: v26.9.26  
+Status: public dissertation thesis and experimental contract
+Version: v26.9.26
 Construction boundary: opaque by design
 
 ## Abstract

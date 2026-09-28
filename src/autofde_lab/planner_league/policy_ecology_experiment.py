@@ -20,7 +20,6 @@ from .policy_ecology import ConditionedPolicy, PolicyEcology
 from .policy_identity import policy_identity
 
 
-
 def _validate_role_binding(ecology: PolicyEcology, role_id: str, side: str) -> None:
     role = ROLE_SPECS.get(role_id)
     if role is None:
@@ -207,7 +206,9 @@ class ObservedEcologyOutcome:
     def __post_init__(self) -> None:
         if not self.execution_observed:
             raise ValueError("REFUSED:UNOBSERVED_ECOLOGY_PAYOFF")
-        if not self.receipt_ids or any(not receipt.strip() for receipt in self.receipt_ids):
+        if not self.receipt_ids or any(
+            not receipt.strip() for receipt in self.receipt_ids
+        ):
             raise ValueError("REFUSED:UNRECEIPTED_ECOLOGY_PAYOFF")
 
 
@@ -261,10 +262,14 @@ class HeterogeneityTrial:
     def __post_init__(self) -> None:
         if self.engineering_cost < 0.0:
             raise ValueError("REFUSED:NEGATIVE_HETEROGENEITY_COST")
-        if not self.receipt_ids or any(not receipt.strip() for receipt in self.receipt_ids):
+        if not self.receipt_ids or any(
+            not receipt.strip() for receipt in self.receipt_ids
+        ):
             raise ValueError("REFUSED:UNRECEIPTED_HETEROGENEITY_TRIAL")
         if self.homogeneous_population_ref == self.engineered_population_ref:
-            raise ValueError("REFUSED:HETEROGENEITY_TRIAL_REQUIRES_DISTINCT_POPULATIONS")
+            raise ValueError(
+                "REFUSED:HETEROGENEITY_TRIAL_REQUIRES_DISTINCT_POPULATIONS"
+            )
 
     @property
     def gross_gain(self) -> float:

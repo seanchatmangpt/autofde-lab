@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-
 import pytest
 
 from autofde_lab.iec.crowns.delegation_admission_repair import (

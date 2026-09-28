@@ -34,7 +34,13 @@ TRACE_SCHEMA_V2 = "autofde-lab.rgi-trace/2"
 SUPPORTED_TRACE_SCHEMAS = frozenset({TRACE_SCHEMA, TRACE_SCHEMA_V2})
 BENCHMARK_SCHEMA = "autofde-lab.rgi-benchmark/1"
 
-MODES = {"LLM_NATIVE", "DSPY_WASM_CANDIDATE", "MACHINE_SERIAL", "REGION_HYBRID", "ZERO_LLM"}
+MODES = {
+    "LLM_NATIVE",
+    "DSPY_WASM_CANDIDATE",
+    "MACHINE_SERIAL",
+    "REGION_HYBRID",
+    "ZERO_LLM",
+}
 EXECUTORS = {"GENERAL_LLM", "DSPY_WASM", "MACHINE"}
 ROUTE_STATES = {"UNKNOWN", "KNOWN", "ADMITTED"}
 PHASES = {"OBSERVE", "SELECT", "CONSTRUCT", "DO", "VERIFY"}
@@ -50,17 +56,13 @@ def _nonnegative_number(value: Any, name: str) -> float:
         raise IECRefusal("REFUSED_INVALID_RGI_TRACE", f"{name} must be numeric")
     value = float(value)
     if value < 0:
-        raise IECRefusal(
-            "REFUSED_INVALID_RGI_TRACE", f"{name} must be non-negative"
-        )
+        raise IECRefusal("REFUSED_INVALID_RGI_TRACE", f"{name} must be non-negative")
     return value
 
 
 def _validate_sha256_digest(value: Any, name: str) -> str:
     if not isinstance(value, str):
-        raise IECRefusal(
-            "REFUSED_INVALID_RGI_TRACE", f"{name} must be a sha256 digest"
-        )
+        raise IECRefusal("REFUSED_INVALID_RGI_TRACE", f"{name} must be a sha256 digest")
     digest = value.strip().lower()
     payload = digest.removeprefix("sha256:")
     if (
@@ -95,20 +97,14 @@ class EdgeExecution:
     @classmethod
     def from_mapping(cls, row: Mapping[str, Any]) -> "EdgeExecution":
         sequence = row.get("sequence")
-        if (
-            isinstance(sequence, bool)
-            or not isinstance(sequence, int)
-            or sequence < 0
-        ):
+        if isinstance(sequence, bool) or not isinstance(sequence, int) or sequence < 0:
             raise IECRefusal(
                 "REFUSED_INVALID_RGI_TRACE",
                 "event sequence must be a non-negative integer",
             )
         edge_id = str(row.get("edge_id", "")).strip()
         if not edge_id:
-            raise IECRefusal(
-                "REFUSED_INVALID_RGI_TRACE", "event edge_id is empty"
-            )
+            raise IECRefusal("REFUSED_INVALID_RGI_TRACE", "event edge_id is empty")
         reasoning_class = (
             str(row.get("reasoning_class", "UNKNOWN")).strip() or "UNKNOWN"
         )
@@ -125,12 +121,8 @@ class EdgeExecution:
                 f"unknown route_state {route_state!r}",
             )
         if phase not in PHASES:
-            raise IECRefusal(
-                "REFUSED_INVALID_RGI_TRACE", f"unknown phase {phase!r}"
-            )
-        duration_ms = _nonnegative_number(
-            row.get("duration_ms", 0), "duration_ms"
-        )
+            raise IECRefusal("REFUSED_INVALID_RGI_TRACE", f"unknown phase {phase!r}")
+        duration_ms = _nonnegative_number(row.get("duration_ms", 0), "duration_ms")
         llm_tokens = row.get("llm_tokens", 0)
         if (
             isinstance(llm_tokens, bool)
@@ -164,10 +156,7 @@ class EdgeExecution:
     def llm_leakage(self) -> bool:
         if self.executor != "GENERAL_LLM":
             return False
-        return (
-            self.route_state != "UNKNOWN"
-            or self.phase not in LLM_ALLOWED_PHASES
-        )
+        return self.route_state != "UNKNOWN" or self.phase not in LLM_ALLOWED_PHASES
 
     @property
     def llm_do(self) -> bool:
@@ -197,12 +186,8 @@ def _parse_trace(
             "subject and workload_id are required",
         )
     if mode not in MODES:
-        raise IECRefusal(
-            "REFUSED_INVALID_RGI_TRACE", f"unknown mode {mode!r}"
-        )
-    run_wall_ms = _nonnegative_number(
-        document.get("run_wall_ms", 0), "run_wall_ms"
-    )
+        raise IECRefusal("REFUSED_INVALID_RGI_TRACE", f"unknown mode {mode!r}")
+    run_wall_ms = _nonnegative_number(document.get("run_wall_ms", 0), "run_wall_ms")
 
     producer_digest: str | None = None
     if document.get("producer_digest") is not None:
@@ -217,14 +202,9 @@ def _parse_trace(
 
     universe_raw = document.get("edge_universe", ())
     if not isinstance(universe_raw, list):
-        raise IECRefusal(
-            "REFUSED_INVALID_RGI_TRACE", "edge_universe must be a list"
-        )
+        raise IECRefusal("REFUSED_INVALID_RGI_TRACE", "edge_universe must be a list")
     universe = tuple(sorted(str(edge).strip() for edge in universe_raw))
-    if (
-        any(not edge for edge in universe)
-        or len(universe) != len(set(universe))
-    ):
+    if any(not edge for edge in universe) or len(universe) != len(set(universe)):
         raise IECRefusal(
             "REFUSED_INVALID_RGI_TRACE",
             "edge_universe must contain unique non-empty ids",
@@ -248,9 +228,7 @@ def _parse_trace(
 
     rows = document.get("events")
     if not isinstance(rows, list):
-        raise IECRefusal(
-            "REFUSED_INVALID_RGI_TRACE", "events must be a list"
-        )
+        raise IECRefusal("REFUSED_INVALID_RGI_TRACE", "events must be a list")
     events = tuple(
         sorted(
             (EdgeExecution.from_mapping(row) for row in rows),
@@ -275,9 +253,7 @@ def _parse_trace(
     ranking: tuple[str, ...] | None = None
     if ranking_raw is not None:
         if not isinstance(ranking_raw, list):
-            raise IECRefusal(
-                "REFUSED_INVALID_RGI_TRACE", "ranking must be a list"
-            )
+            raise IECRefusal("REFUSED_INVALID_RGI_TRACE", "ranking must be a list")
         ranking = tuple(str(value) for value in ranking_raw)
         if len(ranking) != len(set(ranking)):
             raise IECRefusal(
@@ -315,11 +291,7 @@ def _coverage(
     observed = {event.edge_id for event in events}
     missing = sorted(declared - observed)
     outside = sorted(observed - declared)
-    verdict = (
-        Verdict.PASS
-        if not missing and not outside
-        else Verdict.COUNTEREXAMPLE
-    )
+    verdict = Verdict.PASS if not missing and not outside else Verdict.COUNTEREXAMPLE
     return {
         "verdict": verdict.value,
         "detail": (
@@ -332,9 +304,7 @@ def _coverage(
     }
 
 
-def _mode_falsifiers(
-    mode: str, events: Sequence[EdgeExecution]
-) -> list[str]:
+def _mode_falsifiers(mode: str, events: Sequence[EdgeExecution]) -> list[str]:
     llm_events = [event for event in events if event.executor == "GENERAL_LLM"]
     failures: list[str] = []
     if any(event.llm_leakage for event in llm_events):
@@ -358,20 +328,12 @@ def benchmark_trace(document: Mapping[str, Any]) -> dict[str, Any]:
     header, events = _parse_trace(document)
     coverage = _coverage(header["edge_universe"], events)
     total_duration = sum(event.duration_ms for event in events)
-    llm_events = [
-        event for event in events if event.executor == "GENERAL_LLM"
-    ]
-    dspy_events = [
-        event for event in events if event.executor == "DSPY_WASM"
-    ]
-    machine_events = [
-        event for event in events if event.executor == "MACHINE"
-    ]
+    llm_events = [event for event in events if event.executor == "GENERAL_LLM"]
+    dspy_events = [event for event in events if event.executor == "DSPY_WASM"]
+    machine_events = [event for event in events if event.executor == "MACHINE"]
     leakage = [event for event in llm_events if event.llm_leakage]
     llm_do = [event for event in llm_events if event.llm_do]
-    unreceipted_do = [
-        event for event in events if event.unreceipted_do
-    ]
+    unreceipted_do = [event for event in events if event.unreceipted_do]
     universe = set(header["edge_universe"])
     llm_unique = {event.edge_id for event in llm_events}
     observed_unique = {event.edge_id for event in events}
@@ -397,18 +359,10 @@ def benchmark_trace(document: Mapping[str, Any]) -> dict[str, Any]:
         "llm_edge_executions": len(llm_events),
         "dspy_wasm_edge_executions": len(dspy_events),
         "machine_edge_executions": len(machine_events),
-        "bounded_candidate_fraction": _ratio(
-            len(dspy_events), len(events)
-        ),
-        "deterministic_machine_fraction": _ratio(
-            len(machine_events), len(events)
-        ),
-        "machine_closed_fraction": _ratio(
-            len(machine_events), len(events)
-        ),
-        "observed_llm_execution_fraction": _ratio(
-            len(llm_events), len(events)
-        ),
+        "bounded_candidate_fraction": _ratio(len(dspy_events), len(events)),
+        "deterministic_machine_fraction": _ratio(len(machine_events), len(events)),
+        "machine_closed_fraction": _ratio(len(machine_events), len(events)),
+        "observed_llm_execution_fraction": _ratio(len(llm_events), len(events)),
         "llm_dependency_ratio": dependency,
         "llm_wall_fraction": _ratio(
             sum(event.duration_ms for event in llm_events),
@@ -416,9 +370,7 @@ def benchmark_trace(document: Mapping[str, Any]) -> dict[str, Any]:
         ),
         "llm_tokens": sum(event.llm_tokens for event in llm_events),
         "llm_leakage_count": len(leakage),
-        "llm_leakage_ratio": _ratio(
-            len(leakage), len(llm_events)
-        ),
+        "llm_leakage_ratio": _ratio(len(leakage), len(llm_events)),
         "llm_do_count": len(llm_do),
         "unreceipted_do_count": len(unreceipted_do),
         "throughput_edges_per_second": (
@@ -456,18 +408,9 @@ def benchmark_trace(document: Mapping[str, Any]) -> dict[str, Any]:
         ],
         "mode_falsifiers": _mode_falsifiers(header["mode"], events),
         "retirement_frontier": dict(
-            sorted(
-                Counter(
-                    event.reasoning_class
-                    for event in llm_events
-                ).items()
-            )
+            sorted(Counter(event.reasoning_class for event in llm_events).items())
         ),
-        "ranking": (
-            list(header["ranking"])
-            if header["ranking"] is not None
-            else None
-        ),
+        "ranking": (list(header["ranking"]) if header["ranking"] is not None else None),
         "claim_ceiling": (
             "run-scoped execution observation; zero LLM is not "
             "RETIRED_FROM_LLM; retirement requires the IEC-C3 ledger"
@@ -492,20 +435,14 @@ def _ranking_comparison(
             "standing": "UNSUPPORTED",
             "reason": "fewer than two shared candidates",
         }
-    left_pos = {
-        value: index for index, value in enumerate(left)
-    }
-    right_pos = {
-        value: index for index, value in enumerate(right)
-    }
+    left_pos = {value: index for index, value in enumerate(left)}
+    right_pos = {value: index for index, value in enumerate(right)}
     pairs = 0
     flips = 0
     for index, first in enumerate(common):
         for second in common[index + 1 :]:
             pairs += 1
-            if (
-                left_pos[first] < left_pos[second]
-            ) != (
+            if (left_pos[first] < left_pos[second]) != (
                 right_pos[first] < right_pos[second]
             ):
                 flips += 1
@@ -532,22 +469,14 @@ def _fidelity(
     if receipt.get("subject") != subject:
         raise IECRefusal(
             "REFUSED_AMBIGUOUS_AUTHORITY",
-            f"fidelity receipt is about "
-            f"{receipt.get('subject')!r}, not {subject!r}",
+            f"fidelity receipt is about {receipt.get('subject')!r}, not {subject!r}",
         )
-    if (
-        not receipt.get("verifier_set_id")
-        or not receipt.get("receipt_id")
-    ):
+    if not receipt.get("verifier_set_id") or not receipt.get("receipt_id"):
         raise IECRefusal(
             "REFUSED_UNBOUNDED_EQUIVALENCE",
             "fidelity receipt must name verifier_set_id and receipt_id",
         )
-    verdict = str(
-        receipt.get(
-            "verdict", Verdict.UNSUPPORTED.value
-        )
-    )
+    verdict = str(receipt.get("verdict", Verdict.UNSUPPORTED.value))
     if verdict not in {value.value for value in Verdict}:
         raise IECRefusal(
             "REFUSED_UNBOUNDED_EQUIVALENCE",
@@ -666,14 +595,12 @@ def compare_runs(
     if left["workload_id"] != right["workload_id"]:
         raise IECRefusal(
             "REFUSED_WORKLOAD_MISMATCH",
-            f"{left['workload_id']} != "
-            f"{right['workload_id']}",
+            f"{left['workload_id']} != {right['workload_id']}",
         )
     if left["edge_universe_id"] != right["edge_universe_id"]:
         raise IECRefusal(
             "REFUSED_WORKLOAD_MISMATCH",
-            "declared run-scoped edge universes differ "
-            "under the same workload_id",
+            "declared run-scoped edge universes differ under the same workload_id",
         )
 
     fidelity = _fidelity(fidelity_receipt, left["subject"])
@@ -703,40 +630,24 @@ def compare_runs(
         "candidate": right,
         "delta": {
             "llm_execution_fraction": (
-                right["metrics"][
-                    "observed_llm_execution_fraction"
-                ]
-                - left["metrics"][
-                    "observed_llm_execution_fraction"
-                ]
+                right["metrics"]["observed_llm_execution_fraction"]
+                - left["metrics"]["observed_llm_execution_fraction"]
             ),
             "machine_closed_fraction": (
                 right["metrics"]["machine_closed_fraction"]
                 - left["metrics"]["machine_closed_fraction"]
             ),
             "llm_tokens": (
-                right["metrics"]["llm_tokens"]
-                - left["metrics"]["llm_tokens"]
+                right["metrics"]["llm_tokens"] - left["metrics"]["llm_tokens"]
             ),
-            "speedup": (
-                None
-                if cand_wall == 0
-                else ref_wall / cand_wall
-            ),
+            "speedup": (None if cand_wall == 0 else ref_wall / cand_wall),
         },
-        "ranking_preservation": _ranking_comparison(
-            left["ranking"], right["ranking"]
-        ),
+        "ranking_preservation": _ranking_comparison(left["ranking"], right["ranking"]),
         "fidelity": fidelity,
         "falsifiers": failures,
-        "gate": (
-            Verdict.PASS.value
-            if not failures
-            else Verdict.COUNTEREXAMPLE.value
-        ),
+        "gate": (Verdict.PASS.value if not failures else Verdict.COUNTEREXAMPLE.value),
         "retirement": (
-            "UNCHANGED:benchmark-observation-does-not-write-"
-            "retirement-ledger"
+            "UNCHANGED:benchmark-observation-does-not-write-retirement-ledger"
         ),
         "retirement_standing": retirement_standing,
     }
@@ -755,9 +666,7 @@ def _read(path: Path) -> Mapping[str, Any]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description=__doc__.splitlines()[0]
-    )
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("reference", type=Path)
     parser.add_argument("candidate", type=Path)
     parser.add_argument("out", type=Path)
@@ -766,15 +675,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--gate", action="store_true")
     args = parser.parse_args(argv)
 
-    receipt = (
-        _read(args.fidelity_receipt)
-        if args.fidelity_receipt
-        else None
-    )
+    receipt = _read(args.fidelity_receipt) if args.fidelity_receipt else None
     retirement_receipt = (
-        _read(args.retirement_receipt)
-        if args.retirement_receipt
-        else None
+        _read(args.retirement_receipt) if args.retirement_receipt else None
     )
     result = compare_runs(
         _read(args.reference),
@@ -796,12 +699,7 @@ def main(argv: list[str] | None = None) -> int:
             }
         )
     )
-    return (
-        1
-        if args.gate
-        and result["gate"] != Verdict.PASS.value
-        else 0
-    )
+    return 1 if args.gate and result["gate"] != Verdict.PASS.value else 0
 
 
 if __name__ == "__main__":

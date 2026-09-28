@@ -1,5 +1,6 @@
 """Typed PTD observations; numeric fields are validated at construction so NaN or
 negative values can never reach a metric."""
+
 from __future__ import annotations
 
 import math

@@ -1,4 +1,5 @@
 """PTD campaign manifest (v2): validation, typed parsing, canonical digest."""
+
 from __future__ import annotations
 
 from .identity import canonical_digest
@@ -28,13 +29,29 @@ def parse_manifest(data):
     validate_manifest(data)
     fs = frozenset
     epochs = [
-        EpochObservation(**{**e, "surface": fs(e.get("surface", ())), "critical": fs(e.get("critical", ())),
-                            "nondeterministic": fs(e.get("nondeterministic", ()))})
+        EpochObservation(
+            **{
+                **e,
+                "surface": fs(e.get("surface", ())),
+                "critical": fs(e.get("critical", ())),
+                "nondeterministic": fs(e.get("nondeterministic", ())),
+            }
+        )
         for e in data["epochs"]
     ]
     attacks = [
-        AttackObservation(**{**a, "stale_facts": fs(a.get("stale_facts", ())),
-                             "predicted_surface": fs(a.get("predicted_surface", ()))})
+        AttackObservation(
+            **{
+                **a,
+                "stale_facts": fs(a.get("stale_facts", ())),
+                "predicted_surface": fs(a.get("predicted_surface", ())),
+            }
+        )
         for a in data["attacks"]
     ]
-    return epochs, attacks, PTDThresholds(**data["criteria"]), tuple(data.get("allowed_authorities", ()))
+    return (
+        epochs,
+        attacks,
+        PTDThresholds(**data["criteria"]),
+        tuple(data.get("allowed_authorities", ())),
+    )

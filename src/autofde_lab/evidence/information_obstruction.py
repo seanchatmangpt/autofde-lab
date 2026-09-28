@@ -165,7 +165,9 @@ class InformationObstructionReport:
 
     @property
     def standing(self) -> str:
-        return "ADMITTED" if self.information_sufficient else "REFUSED(EVIDENCE_CEILING)"
+        return (
+            "ADMITTED" if self.information_sufficient else "REFUSED(EVIDENCE_CEILING)"
+        )
 
 
 class EvidenceCeilingError(ValueError):
@@ -234,7 +236,9 @@ def analyze_information_obstruction(
     bucketed = _bucket_cases(rows)
     classes = tuple(
         ObservationClass(
-            observation_fingerprint=hashlib.sha256(canonical.encode("utf-8")).hexdigest(),
+            observation_fingerprint=hashlib.sha256(
+                canonical.encode("utf-8")
+            ).hexdigest(),
             case_ids=tuple(case.case_id for case in bucket),
             accepted_output_sets=tuple(
                 tuple(sorted(case.accepted_outputs)) for case in bucket

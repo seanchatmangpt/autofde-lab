@@ -228,18 +228,13 @@ def run_dgf_case(
     # Anti-vacuity: a case with no gates or no reference decisions cannot
     # witness substitution, and a count mismatch is a broken contract.
     if not occurrences:
-        raise DGFAdmissionError(
-            "DGF_CASE_HAS_NO_GATE_OCCURRENCES", str(case_dir)
-        )
+        raise DGFAdmissionError("DGF_CASE_HAS_NO_GATE_OCCURRENCES", str(case_dir))
     if not expected:
-        raise DGFAdmissionError(
-            "DGF_CASE_HAS_NO_REFERENCE_DECISIONS", str(case_dir)
-        )
+        raise DGFAdmissionError("DGF_CASE_HAS_NO_REFERENCE_DECISIONS", str(case_dir))
     if len(occurrences) != len(expected):
         raise DGFAdmissionError(
             "DGF_CASE_CONTRACT_COUNT_MISMATCH",
-            f"{case_dir}: occurrences={len(occurrences)}:"
-            f"reference={len(expected)}",
+            f"{case_dir}: occurrences={len(occurrences)}:reference={len(expected)}",
         )
 
     active = kernel if kernel is not None else load_dgf_kernel(dgf_root)

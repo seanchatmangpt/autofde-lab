@@ -4,6 +4,7 @@ Every attack row is PASS, FALSIFIED (measured, with named falsifiers) or REFUSED
 admissible, so *no* metric is computed -- a refusal is a result, not a gap to fill).
 All verdicts are ``technicalStanding`` only; nothing here claims organizational standing.
 """
+
 from __future__ import annotations
 
 from .authority import AuthorityBoundary, admit_authority
@@ -21,8 +22,15 @@ from .transfer import knowledge_depreciation, knowledge_retention
 
 
 def _refused(src, tgt, attack, reasons):
-    return {"task_id": attack.task_id, "source_epoch": src.epoch_id, "target_epoch": tgt.epoch_id,
-            "status": "REFUSED", "refusals": reasons, "falsifiers": [], "metrics": None}
+    return {
+        "task_id": attack.task_id,
+        "source_epoch": src.epoch_id,
+        "target_epoch": tgt.epoch_id,
+        "status": "REFUSED",
+        "refusals": reasons,
+        "falsifiers": [],
+        "metrics": None,
+    }
 
 
 def _admission_refusals(src, tgt, attack, allowed):
@@ -46,7 +54,11 @@ def _admission_refusals(src, tgt, attack, allowed):
     if allowed:
         for e in (src, tgt):
             try:
-                admit_authority(AuthorityBoundary(e.subject_id, e.authority_id), e.subject_id, allowed)
+                admit_authority(
+                    AuthorityBoundary(e.subject_id, e.authority_id),
+                    e.subject_id,
+                    allowed,
+                )
             except PermissionError:
                 out.append(f"authority_refused:{e.epoch_id}")
     return out
@@ -60,23 +72,33 @@ def evaluate_epoch_pair(src, tgt, attack, t: PTDThresholds, allowed=()):
     retention = knowledge_retention(attack.stale_performance, attack.fresh_performance)
     adv = regeneration_advantage(attack.realignment_cost, tgt.defender_cost)
     # Structural evidence, independent of the measured performance.
-    fact_retention = (len(attack.stale_facts & tgt.stable_surface) / len(tgt.stable_surface)
-                      if tgt.stable_surface else 0.0)
+    fact_retention = (
+        len(attack.stale_facts & tgt.stable_surface) / len(tgt.stable_surface)
+        if tgt.stable_surface
+        else 0.0
+    )
     common_mode = common_mode_persistence(src.stable_surface, tgt.stable_surface)
-    persisted_critical = sorted(src.critical & tgt.critical & src.stable_surface & tgt.stable_surface)
+    persisted_critical = sorted(
+        src.critical & tgt.critical & src.stable_surface & tgt.stable_surface
+    )
     pred_err = normalized_prediction_error(attack.predicted_surface, tgt.stable_surface)
 
     falsifiers = []
     if retention > t.max_retention:
         # churn: surface changed yet attacker facts still cover it; otherwise performance
         # transferred through a channel the recorded surface does not explain.
-        falsifiers.append("churn_without_depreciation" if fact_retention > t.max_retention
-                          else "unexplained_transfer_channel")
+        falsifiers.append(
+            "churn_without_depreciation"
+            if fact_retention > t.max_retention
+            else "unexplained_transfer_channel"
+        )
     elif abs(retention - fact_retention) > t.max_fact_disagreement:
         falsifiers.append("retention_evidence_disagree")
     if adv < t.min_regeneration_advantage:
         falsifiers.append("regeneration_advantage_too_low")
-    if t.require_temporal_advantage and not strong_temporal_regime(attack.realignment_time, tgt.phase_duration):
+    if t.require_temporal_advantage and not strong_temporal_regime(
+        attack.realignment_time, tgt.phase_duration
+    ):
         falsifiers.append("attacker_realigns_within_phase")
     if common_mode > t.max_common_mode:
         falsifiers.append("common_mode_persisted")
@@ -87,13 +109,27 @@ def evaluate_epoch_pair(src, tgt, attack, t: PTDThresholds, allowed=()):
 
     dep = knowledge_depreciation(attack.stale_performance, attack.fresh_performance)
     return {
-        "task_id": attack.task_id, "source_epoch": src.epoch_id, "target_epoch": tgt.epoch_id,
-        "status": "FALSIFIED" if falsifiers else "PASS", "refusals": [], "falsifiers": falsifiers,
+        "task_id": attack.task_id,
+        "source_epoch": src.epoch_id,
+        "target_epoch": tgt.epoch_id,
+        "status": "FALSIFIED" if falsifiers else "PASS",
+        "refusals": [],
+        "falsifiers": falsifiers,
         "persisted_critical": persisted_critical,
-        "nondeterministic_surfaces": sorted(src.nondeterministic | tgt.nondeterministic),
-        "metrics": {"retention": retention, "depreciation": dep, "fact_retention": fact_retention,
-                    "regeneration_advantage": adv, "ptd_advantage": ptd_advantage(dep, attack.realignment_cost, tgt.defender_cost),
-                    "common_mode": common_mode, "prediction_error": pred_err},
+        "nondeterministic_surfaces": sorted(
+            src.nondeterministic | tgt.nondeterministic
+        ),
+        "metrics": {
+            "retention": retention,
+            "depreciation": dep,
+            "fact_retention": fact_retention,
+            "regeneration_advantage": adv,
+            "ptd_advantage": ptd_advantage(
+                dep, attack.realignment_cost, tgt.defender_cost
+            ),
+            "common_mode": common_mode,
+            "prediction_error": pred_err,
+        },
     }
 
 
@@ -116,8 +152,11 @@ def evaluate_campaign(rows, epochs=(), t: PTDThresholds | None = None):
                 break
             spent += e.defender_cost
             funded += 1
-        out["budget"] = {"funded_phases": funded, "required_phases": len(epochs) - 1,
-                         "exhausted": funded < len(epochs) - 1}
+        out["budget"] = {
+            "funded_phases": funded,
+            "required_phases": len(epochs) - 1,
+            "exhausted": funded < len(epochs) - 1,
+        }
         out["all_pass"] = out["all_pass"] and not out["budget"]["exhausted"]
     return out
 
@@ -134,13 +173,26 @@ def evaluate_experiment(manifest: dict) -> dict:
         if src is None or tgt is None:
             raise ValueError(f"attack {a.task_id} references an unknown epoch")
         rows.append(evaluate_epoch_pair(src, tgt, a, t, allowed))
-    ocel = project_ocel(manifest["subject_id"], manifest["experiment_id"], [e.epoch_id for e in epochs], rows)
-    return seal_report({
-        "schema": "autofde-lab.ptd.report/v2",
-        "experiment_id": manifest["experiment_id"], "subject_id": manifest["subject_id"],
-        "manifest_sha256": manifest_digest(manifest),
-        "ocel_sha256": ocel.digest(),
-        "rows": rows, "campaign": evaluate_campaign(rows, epochs, t),
-        "standing": {"court_verdict": "PASS" if rows and all(r["status"] == "PASS" for r in rows) else "NOT_PASS",
-                     "organizationalStanding": "UNKNOWN"},
-    })
+    ocel = project_ocel(
+        manifest["subject_id"],
+        manifest["experiment_id"],
+        [e.epoch_id for e in epochs],
+        rows,
+    )
+    return seal_report(
+        {
+            "schema": "autofde-lab.ptd.report/v2",
+            "experiment_id": manifest["experiment_id"],
+            "subject_id": manifest["subject_id"],
+            "manifest_sha256": manifest_digest(manifest),
+            "ocel_sha256": ocel.digest(),
+            "rows": rows,
+            "campaign": evaluate_campaign(rows, epochs, t),
+            "standing": {
+                "court_verdict": "PASS"
+                if rows and all(r["status"] == "PASS" for r in rows)
+                else "NOT_PASS",
+                "organizationalStanding": "UNKNOWN",
+            },
+        }
+    )

@@ -132,7 +132,9 @@ def test_llm_on_known_edge_is_leakage_and_llm_do_is_separate_violation() -> None
     assert report["metrics"]["unreceipted_do_count"] == 1
 
 
-def test_zero_llm_mode_passes_only_with_typed_fidelity_and_reports_ranking_noise() -> None:
+def test_zero_llm_mode_passes_only_with_typed_fidelity_and_reports_ranking_noise() -> (
+    None
+):
     reference = trace(
         "LLM_NATIVE",
         [
@@ -365,9 +367,7 @@ def test_retirement_standing_is_evidence_bound_not_inferred_from_zero_llm() -> N
         candidate,
         fidelity_receipt=fidelity(),
     )
-    assert observed_only["retirement_standing"]["standing"] == (
-        "OBSERVED_MACHINE_ONLY"
-    )
+    assert observed_only["retirement_standing"]["standing"] == ("OBSERVED_MACHINE_ONLY")
 
     retired = compare_runs(
         reference,
@@ -425,7 +425,9 @@ def test_dspy_wasm_is_bounded_candidate_executor_not_retirement_endpoint() -> No
         event(1, "e2", executor="DSPY_WASM", route_state="KNOWN"),
         event(2, "e3", executor="MACHINE", route_state="ADMITTED"),
     ]
-    reference = trace("MACHINE_SERIAL", [event(0, "e1"), event(1, "e2"), event(2, "e3")])
+    reference = trace(
+        "MACHINE_SERIAL", [event(0, "e1"), event(1, "e2"), event(2, "e3")]
+    )
     candidate = trace("DSPY_WASM_CANDIDATE", rows)
     report = benchmark_trace(candidate)
     assert report["metrics"]["llm_edge_executions"] == 0
@@ -451,7 +453,9 @@ def test_dspy_wasm_cannot_be_promoted_to_retired_by_receipt_alone() -> None:
         event(1, "e2", executor="MACHINE", route_state="ADMITTED"),
         event(2, "e3", executor="MACHINE", route_state="ADMITTED"),
     ]
-    reference = trace("MACHINE_SERIAL", [event(0, "e1"), event(1, "e2"), event(2, "e3")])
+    reference = trace(
+        "MACHINE_SERIAL", [event(0, "e1"), event(1, "e2"), event(2, "e3")]
+    )
     base = trace("DSPY_WASM_CANDIDATE", rows)
     universe_id = benchmark_trace(base)["edge_universe_id"]
     producer = "sha256:" + "d" * 64
@@ -491,6 +495,4 @@ def test_machine_mode_refuses_bounded_executor_residue() -> None:
             ],
         )
     )
-    assert report["mode_falsifiers"] == [
-        "BOUNDED_EXECUTOR_PRESENT_IN_MACHINE_MODE"
-    ]
+    assert report["mode_falsifiers"] == ["BOUNDED_EXECUTOR_PRESENT_IN_MACHINE_MODE"]

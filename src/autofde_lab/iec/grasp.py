@@ -51,11 +51,13 @@ class Doctrine:
         if not self.doctrine_id.strip() or not self.exact_subject.strip():
             raise ValueError("doctrine_id and exact_subject are required")
         object.__setattr__(
-            self, "required_constraints",
+            self,
+            "required_constraints",
             _clean_set(self.required_constraints, "required_constraints"),
         )
         object.__setattr__(
-            self, "allowed_strategy_ids",
+            self,
+            "allowed_strategy_ids",
             _clean_set(self.allowed_strategy_ids, "allowed_strategy_ids"),
         )
         if self.max_partitions < 1:
@@ -310,7 +312,9 @@ def select_candidate(
                 )
             )
             continue
-        court_pairs.append((candidate, evaluate_candidate(doctrine, partition, candidate)))
+        court_pairs.append(
+            (candidate, evaluate_candidate(doctrine, partition, candidate))
+        )
     for partition_id, count in counts.items():
         if count > doctrine.max_candidates_per_partition:
             failures.append(f"UNBOUNDED_CANDIDATES:{partition_id}")
@@ -326,10 +330,12 @@ def select_candidate(
         failures.append("NO_ADMITTED_CANDIDATE")
 
     route: tuple[str, ...] = selected.route if selected is not None else ()
-    verdict = Verdict.PASS if selected is not None and not failures else Verdict.COUNTEREXAMPLE
-    court_digests = tuple(
-        sorted(court.digest for _candidate, court in court_pairs)
+    verdict = (
+        Verdict.PASS
+        if selected is not None and not failures
+        else Verdict.COUNTEREXAMPLE
     )
+    court_digests = tuple(sorted(court.digest for _candidate, court in court_pairs))
     return SelectionReceipt(
         schema="autofde-lab.grasp-selection/1",
         exact_subject=doctrine.exact_subject,

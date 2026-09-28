@@ -41,7 +41,10 @@ class Dependency:
             raise ValueError("dependency iri must be absolute")
         if self.standing not in _STANDING and not self.standing.startswith("REFUSED_"):
             raise ValueError(f"unsupported standing: {self.standing}")
-        if self.required_standing not in _STANDING and not self.required_standing.startswith("REFUSED_"):
+        if (
+            self.required_standing not in _STANDING
+            and not self.required_standing.startswith("REFUSED_")
+        ):
             raise ValueError(f"unsupported required standing: {self.required_standing}")
         if (self.receipt_iri is None) != (self.receipt_digest is None):
             raise ValueError(
@@ -102,7 +105,10 @@ class Checkpoint:
             raise ValueError("verifier is required")
         if self.standing not in _STANDING and not self.standing.startswith("REFUSED_"):
             raise ValueError(f"unsupported standing: {self.standing}")
-        if self.execution_policy is not None and self.execution_policy not in _EXECUTION_POLICIES:
+        if (
+            self.execution_policy is not None
+            and self.execution_policy not in _EXECUTION_POLICIES
+        ):
             raise ValueError(f"unsupported execution_policy: {self.execution_policy}")
 
     @property

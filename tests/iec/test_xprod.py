@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import hashlib
 import dataclasses
+import hashlib
 
 from autofde_lab.iec.crowns.model import Verdict, content_id
 from autofde_lab.iec.xprod import (
@@ -11,7 +11,6 @@ from autofde_lab.iec.xprod import (
     qualify_xprod,
 )
 
-
 SUBJECT = "urn:autofde:xprod:v26.9.25:subject-1"
 
 
@@ -20,7 +19,10 @@ def sha(data: bytes) -> str:
 
 
 def fixture():
-    materials = {surface: f"producer:{surface}:v26.9.25".encode() for surface in REQUIRED_SURFACES}
+    materials = {
+        surface: f"producer:{surface}:v26.9.25".encode()
+        for surface in REQUIRED_SURFACES
+    }
     projections = [
         ProjectionEvidence(
             surface=surface,
@@ -46,7 +48,9 @@ def fixture():
     return projections, witnesses, materials
 
 
-def test_all_required_surfaces_pass_with_recomputed_producers_and_zero_authority() -> None:
+def test_all_required_surfaces_pass_with_recomputed_producers_and_zero_authority() -> (
+    None
+):
     projections, witnesses, materials = fixture()
     first = qualify_xprod(
         exact_subject=SUBJECT,
@@ -84,7 +88,9 @@ def test_claimed_producer_digest_is_not_self_authenticating() -> None:
     assert f"PRODUCER_DIGEST_MISMATCH:{REQUIRED_SURFACES[0]}" in result.failures
 
 
-def test_missing_producer_material_is_evidence_ceiling_not_false_counterexample() -> None:
+def test_missing_producer_material_is_evidence_ceiling_not_false_counterexample() -> (
+    None
+):
     projections, witnesses, materials = fixture()
     materials.pop("TLA+")
     result = qualify_xprod(
@@ -124,12 +130,10 @@ def test_relation_witness_must_bind_the_exact_artifacts_and_connect_graph() -> N
     )
     assert result.verdict is Verdict.COUNTEREXAMPLE
     assert any(
-        item.startswith("RELATION_RIGHT_ARTIFACT_MISMATCH:")
-        for item in result.failures
+        item.startswith("RELATION_RIGHT_ARTIFACT_MISMATCH:") for item in result.failures
     )
     assert any(
-        item.startswith("RELATION_WITNESS_DIGEST_MISMATCH:")
-        for item in result.failures
+        item.startswith("RELATION_WITNESS_DIGEST_MISMATCH:") for item in result.failures
     )
 
 

@@ -85,9 +85,7 @@ def test_ocel_projection_is_valid_and_deterministic() -> None:
     assert [event.activity for event in first.events].count(
         "AdmissionSnapshotObserved"
     ) == 3
-    assert [event.activity for event in first.events].count(
-        "AdmissionTransition"
-    ) == 2
+    assert [event.activity for event in first.events].count("AdmissionTransition") == 2
     assert "AdmissionFailed" not in [event.activity for event in first.events]
 
 

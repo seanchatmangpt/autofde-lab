@@ -200,7 +200,6 @@ def test_cli_refuses_tampered_jar(tmp_path: Path, tc: TlaToolchain) -> None:
     )
 
 
-
 def test_formal_bridge_refuses_relabelled_tool_evidence(
     tc: TlaToolchain, tmp_path: Path
 ) -> None:
@@ -216,7 +215,9 @@ def test_formal_bridge_refuses_relabelled_tool_evidence(
         config_path="x.cfg",
         jar_path="tla2tools.jar",
     )
-    run = next(item for item in receipt.runs if item.property_name == "AtMostOneConsequence")
+    run = next(
+        item for item in receipt.runs if item.property_name == "AtMostOneConsequence"
+    )
 
     with pytest.raises(ValueError, match="FORMAL_INTENT_PROJECTION_MISMATCH"):
         to_formal_evidence(

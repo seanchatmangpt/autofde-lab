@@ -88,7 +88,6 @@ def test_run_identity_cannot_be_reused_across_provider_boundary(
     assert result.reasons == ("RUN_ID_REUSED_ACROSS_PROVIDER_REPLACEMENT",)
 
 
-
 def test_fresh_job_recovery_uses_content_identity_not_workstation_path(
     claude_run: ExecutionSemantics,
 ) -> None:

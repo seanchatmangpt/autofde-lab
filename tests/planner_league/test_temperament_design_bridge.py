@@ -98,12 +98,10 @@ def test_benchmark_pair_holds_policy_and_mean_targets_constant() -> None:
     assert pair.homogeneous.population_ref != pair.engineered.population_ref
 
     homogeneous_fit = {
-        fit.axis_id: fit.observed_mean
-        for fit in pair.homogeneous.evaluation.axis_fit
+        fit.axis_id: fit.observed_mean for fit in pair.homogeneous.evaluation.axis_fit
     }
     engineered_fit = {
-        fit.axis_id: fit.observed_mean
-        for fit in pair.engineered.evaluation.axis_fit
+        fit.axis_id: fit.observed_mean for fit in pair.engineered.evaluation.axis_fit
     }
     assert homogeneous_fit == pytest.approx(engineered_fit)
 
@@ -125,8 +123,7 @@ def test_platform_coupling_changes_realized_distribution_and_carries_evidence() 
         member_count=3,
     )
     explorations = [
-        member.condition.as_dict()["exploration"]
-        for member in result.ecology.members
+        member.condition.as_dict()["exploration"] for member in result.ecology.members
     ]
     assert explorations == pytest.approx([0.0, 0.4, 0.9])
     assert all(

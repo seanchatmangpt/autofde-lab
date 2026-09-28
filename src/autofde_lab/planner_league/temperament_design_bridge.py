@@ -44,7 +44,9 @@ class DesignBenchmarkPair:
     engineered: DesignedPolicyEcology
 
     def __post_init__(self) -> None:
-        if policy_identity(self.homogeneous.policy) != policy_identity(self.engineered.policy):
+        if policy_identity(self.homogeneous.policy) != policy_identity(
+            self.engineered.policy
+        ):
             raise ValueError("REFUSED:DESIGN_BENCHMARK_POLICY_MISMATCH")
         if self.homogeneous.population_ref == self.engineered.population_ref:
             raise ValueError("REFUSED:DESIGN_BENCHMARK_REQUIRES_DISTINCT_POPULATIONS")

@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 
-from autofde_lab.iec.cli import build_parser, main as iec_main
+from autofde_lab.iec.cli import build_parser
+from autofde_lab.iec.cli import main as iec_main
 
 SUBJECT = "git:seanchatmangpt/autofde-lab@cli"
 

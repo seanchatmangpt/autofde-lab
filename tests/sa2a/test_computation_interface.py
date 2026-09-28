@@ -23,7 +23,9 @@ from autofde_lab.sa2a.graph_learning import (
 )
 
 
-def _artifact(runtime: ComputationRuntime = ComputationRuntime.ONNX) -> ComputationArtifact:
+def _artifact(
+    runtime: ComputationRuntime = ComputationRuntime.ONNX,
+) -> ComputationArtifact:
     return ComputationArtifact(
         artifact_identity="sha256:model",
         capability_iri="https://schema.org/Action",

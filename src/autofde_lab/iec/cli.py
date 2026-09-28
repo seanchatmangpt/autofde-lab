@@ -196,7 +196,6 @@ def _tlc_court(args: argparse.Namespace) -> int:
     return 0 if ok else 2
 
 
-
 def _delegation_admission(args: argparse.Namespace) -> int:
     from .crowns.delegation_admission import main as delegation_main
 

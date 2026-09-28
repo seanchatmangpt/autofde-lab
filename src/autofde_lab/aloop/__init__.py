@@ -27,7 +27,6 @@ from autofde_lab.aloop.court import (
     evaluate_path,
     load_profile,
 )
-
 from autofde_lab.aloop.provider_extinction import (
     ArtifactHandoff,
     ExecutionSemantics,

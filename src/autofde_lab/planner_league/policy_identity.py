@@ -37,8 +37,7 @@ def _stable_value(value: Any) -> Any:
         code = getattr(value, "__code__", None)
         if code is None:
             raise ValueError(
-                "REFUSED:UNSTABLE_POLICY_PARAMETER_IDENTITY:"
-                f"{type(value).__qualname__}"
+                f"REFUSED:UNSTABLE_POLICY_PARAMETER_IDENTITY:{type(value).__qualname__}"
             )
         closure = tuple(
             _stable_value(cell.cell_contents)

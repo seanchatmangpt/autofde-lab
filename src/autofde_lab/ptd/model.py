@@ -134,8 +134,7 @@ def summarize_trials(
         "ptd_advantage",
     )
     means = {
-        name: mean(float(row[name]) for row in metric_rows)
-        for name in numeric_names
+        name: mean(float(row[name]) for row in metric_rows) for name in numeric_names
     }
     passed_count = sum(bool(row["passed"]) for row in evaluations)
     strong_count = sum(bool(row["strong_phase_regime"]) for row in metric_rows)

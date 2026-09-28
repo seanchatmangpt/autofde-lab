@@ -9,7 +9,7 @@ from .metrics import (
     regeneration_advantage,
     strong_phase_regime,
 )
-from .model import PTDCriteria, PhaseTrial, evaluate_trial, summarize_trials
+from .model import PhaseTrial, PTDCriteria, evaluate_trial, summarize_trials
 
 __all__ = [
     "PTDCriteria",
