@@ -2556,6 +2556,84 @@ needs Git LFS, which GitHub currently refuses: "exceeded its LFS budget").
 event sets, so unifying them changes emitted evidence and digests for one of the two consumers.
 Someone must choose the canonical scheme; this was not decided here.
 
+## Validation against intended purpose (2026-09-28, master `d88d88cc`)
+
+Method: built the real native hub from source (cmake 3.28, Boost 1.83, 390 targets), then ran the
+real suites. Environment: Ubuntu 24.04, Python 3.13.12, full extras from an *unlocked* resolve with
+Ray pinned to the lock's 2.56.1 afterwards (torch 2.14.0 vs the lock's 2.12.1 was not aligned; a
+full `uv pip sync` from `uv.lock` is impossible on 3.13 because the locked `dm-tree==0.1.8` has no
+cp313 wheel and does not build here). Every number below is from a command run this session.
+
+**measured win**
+- *Registry.* Registered is not runnable. Without the native hub 7/58 solvers and 23/33 domains
+  load (even `Astar` needs the C++ hub); with it 41/58; with light extras 53/58 and 29/33; with the
+  full extras **58/58 and 33/33**.
+- *Ontology drift.* With the full extras `python -m autofde_lab.fabric.ontology` regenerates
+  `ontology/autofde-lab-capabilities.ttl` **byte-identical** to the committed file (121 capabilities,
+  113 `ALIVE`). With a partial environment it differs in exactly the dependency-gated capabilities
+  (RDDL, flight planning, RL) -- environmental, not tampering.
+- *Planning is correct, not just present.* `Astar`, `ILAOstar`, `LRTDP`, `VI`, `PI` (and `AOstar`,
+  in the committed test) return plans whose validity and cost were **re-derived with independent
+  dynamics**: goal reached at cost 18 on a 10x10 grid whose optimum is 18
+  (`tests/solvers/cpp/test_independent_plan_verification.py`, with an anti-vacuity test).
+- *Native solver suite.* `tests/solvers/cpp`: **262 passed, 0 failed**.
+- *PDDL requirements gate (CLAUDE.md rule 3).* 6/6: a clean chain problem is solved and its 3-step
+  plan replays to the goal independently; `:derived-predicates`, `:constraints`, `:preferences`
+  each exit 2 `REFUSED: UNSUPPORTED_REQUIREMENT` naming the requirement; malformed PDDL exits 2; an
+  unsolvable problem exits 1 (distinct from a refusal).
+- *RL / GNN (upstream's advanced surface).* `test_ray_rllib`, `test_gnn_ray_rllib`, `test_gnn_utils`,
+  `test_gnn_ray_rllib_space_utils` (and the SB3 GNN path): **83 passed, 2 failed** in 16m16s on Ray
+  2.56.1, with `tests/` on `PYTHONPATH`. Graph observations, action masking and the GNN utilities work.
+- *Real solve against a vendored reference.* A* solves the terragoat remediation problem against the
+  real vendored checkout (`vendor/gyms/terragoat` initialised at its exact pin).
+- *gymact compatibility.* Of 34 gymact submodules the repo references, 29 import at the admitted rev
+  (`524d0bc`, gymact 26.8.8) and every imported name in them exists. The 5 missing: three
+  planner-league ecology modules (now lazy, see the closure follow-up above), `gymact.planning`
+  (guarded, typed `UNSUPPORTED:GYMACT_PLAN_PROVENANCE_API`), and a platform-console provider used
+  only by live-tenant-gated tests.
+- *Broad suites in the full environment* (fabric, domains, planning, scheduling, autofde, ptd,
+  ptd_exp, sa2a, aloop): 1465 passed, 48 failed, 277 skipped, 2 errors -- classified below.
+
+**recorded negative** (each with its measured cause)
+- *Old-API-stack DQN is broken in Ray 2.56.1 and 2.58.0* for every replay-buffer configuration
+  (string or class, prioritized or plain), inside Ray's `_create_local_replay_buffer_if_necessary`
+  (`TypeError: argument of type 'ABCMeta' is not iterable`; Ray resolves the type to a class before
+  its own string check). Not configurable from this repo. Now a named `UNSUPPORTED:RAY_OLD_STACK_DQN`
+  refusal; `test_up_bridge_domain_rl` skips on exactly that refusal and runs again when Ray works.
+- *RLlib checkpoint restore fails on the locked Ray:* `test_ray_rllib_solver` and
+  `test_ray_rllib_solver_with_filtered_actions` train fine, then `solver.load(...)` raises
+  `AttributeError: 'NoneType' object has no attribute 'enable_env_runner_and_connector_v2'` in
+  `Algorithm.__setstate__` (`config` is `None`). The wrapper already carries several compatibility
+  layers around Ray's restore path; not patched blind. Open.
+- *Ray workers could not import test classes.* CI recorded `No module named 'solvers'` and "fixed" it
+  with the repo root on `PYTHONPATH`, which cannot work: `tests/solvers` has `__init__.py` markers
+  (all five exist on master; the earlier "all removed" is stale) and `tests/` has none, so modules are
+  `solvers.python.*` rooted at `tests/`. `Justfile` and `ci.yml` now export `tests/` as well.
+- *Environment-gated, not product defects* (of the 48): 32 need the sibling `praxis-graphlaw-wasm`
+  build at a hard-coded `/Users/sac/...` path (now relocatable via `AUTOFDE_PRAXIS_WASMPKG_DIR`);
+  5 need MiniZinc's `chuffed` solver (a `discrete-optimization` default, absent from Ubuntu's
+  MiniZinc); 3 call an external LLM (Groq); 2 need the sibling `wasm4pm-compat` `ocel_diff_cli`
+  binary (they assert rather than skip, deliberately); 1 needs `cmca_rank_cli`/`wasmtime`. Of the 231
+  fabric skips, 227 need live sibling systems (platform-console tenant, `~/wasm4pm`, `chatman-ecosystem`,
+  `turbo-fieldfare`, gymact ontology provider) and 4 are installable extras (`dspy`, `a2a`).
+  Cross-repo standing therefore remains `UNKNOWN` from here.
+- *`plado` and `process_science_contract`* collection errors: sibling packages absent.
+
+**fixed in this pass** (guards verified against injected mutants or violations)
+`test_crown_release_fence_wiring` (rewritten to the WO-03 design; naming a tag is not a bypass);
+`test_explore_boundary` false positive and its absence from CI; the new gym-boundary guard; the
+Ray-worker `PYTHONPATH`; the named DQN refusal; the relocatable praxis path.
+
+**deferred (decisions needed, not skipped)**
+- `sregym_sota/mcp.py` (`McpBroker.call`) drives SREGym's live kubectl/submit MCP surfaces via
+  `fastmcp` outside `gymact`. Recorded in `KNOWN_EXCEPTIONS` as a fact with the ruling **pending**:
+  either an allowlisted agent-under-test client (SREGym's conductor mediates authority) or the
+  parallel actuation path `gym-actuation-boundary.md` forbids.
+- The PDDL engine reaches "no plan" for an unsolvable problem through a caught exception
+  (`'ImplicitSpace' object has no attribute 'sample'`); the documented design (the goal check is the
+  correctness gate) holds, but a genuine internal error would present the same way.
+- Two survival-episode OCEL projections still coexist (see the closure follow-up above).
+
 ## Pass 2 — ecosystem closure ledger (2026-08-06)
 
 | Item | State | Witness |
