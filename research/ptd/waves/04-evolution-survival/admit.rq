@@ -1,0 +1,2 @@
+PREFIX ptd: <https://chatmangpt.com/ptd#>
+ASK { ptd:EvolutionSurvival a ptd:ResearchWave ; ptd:preserves ptd:AdmittedSemantics . }

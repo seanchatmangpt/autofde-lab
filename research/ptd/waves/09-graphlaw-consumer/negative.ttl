@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:falsifier-graphlaw a ptd:Falsifier ; ptd:present ptd:DuplicateVocabulary ; ptd:expected ptd:REFUSE .

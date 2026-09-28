@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:falsifier-compiler a ptd:Falsifier ; ptd:missing ptd:ArtifactProvenance ; ptd:expected ptd:REFUSE .

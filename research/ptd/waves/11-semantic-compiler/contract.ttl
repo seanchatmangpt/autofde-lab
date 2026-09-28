@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:SemanticCompiler a ptd:ResearchWave ; ptd:requires ptd:SourceIdentity, ptd:SemanticIR, ptd:ArtifactProvenance .

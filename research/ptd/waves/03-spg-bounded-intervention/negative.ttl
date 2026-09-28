@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:falsifier-spg a ptd:Falsifier ; ptd:missing ptd:authority ; ptd:expected ptd:REFUSE .

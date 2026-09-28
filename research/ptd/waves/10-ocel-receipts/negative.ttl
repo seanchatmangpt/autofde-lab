@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:falsifier-ocel a ptd:Falsifier ; ptd:missing ptd:ReplayBinding ; ptd:expected ptd:REFUSE .

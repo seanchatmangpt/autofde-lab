@@ -1,0 +1,2 @@
+PREFIX ptd: <https://chatmangpt.com/ptd#>
+ASK { ptd:FONDReplanning a ptd:ResearchWave ; ptd:requires ptd:policy, ptd:recovery . }
