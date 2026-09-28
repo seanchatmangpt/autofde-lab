@@ -3,6 +3,7 @@ from autofde_lab.fabric.gall import (
     Dependency,
     MachineExperience,
     checkpoint_descriptor,
+    execution_descriptor,
     frontier,
     to_hddl_problem,
 )
@@ -72,3 +73,72 @@ def test_machine_experience_refuses_unadmitted_selection():
         assert "admitted" in str(error)
     else:
         raise AssertionError("selection outside admitted actions must fail")
+
+
+def test_execution_descriptor_matches_xaas_semantic_work_contract_without_authority():
+    cp = checkpoint(
+        "urn:gall:checkpoint:xaas:001",
+        dependencies=(
+            Dependency(
+                "urn:gall:work-order:dep-1",
+                "ALIVE",
+                receipt_iri="urn:gall:receipt:dep-1",
+                receipt_digest="sha256:" + "c" * 64,
+            ),
+        ),
+    )
+
+    value = execution_descriptor(
+        cp,
+        work_order_iri="urn:gall:work-order:xaas:001",
+        execution_repo_alias="xaas",
+        provider="zcode",
+        execution_policy="continuous_epoch_run",
+    )
+
+    assert value == {
+        "work_order_iri": "urn:gall:work-order:xaas:001",
+        "checkpoint_iri": "urn:gall:checkpoint:xaas:001",
+        "graph_digest": BASE["graph_digest"],
+        "repository_identity": "seanchatmangpt/xaas",
+        "execution_repo_alias": "xaas",
+        "base_sha": BASE["base_sha"],
+        "goal": BASE["goal"],
+        "provider": "zcode",
+        "verifier_suite": "xaas-dod",
+        "execution_policy": "continuous_epoch_run",
+        "dependencies": [
+            {
+                "work_order_iri": "urn:gall:work-order:dep-1",
+                "required_standing": "ALIVE",
+                "observed_standing": "ALIVE",
+                "receipt_iri": "urn:gall:receipt:dep-1",
+                "receipt_digest": "sha256:" + "c" * 64,
+            }
+        ],
+        "standing": "UNKNOWN",
+    }
+    for forbidden in ("lease_token", "epoch_id", "worker_id", "authority"):
+        assert forbidden not in value
+
+
+def test_execution_descriptor_refuses_generic_alive_without_receipt_identity():
+    cp = checkpoint(
+        "urn:gall:checkpoint:xaas:001",
+        dependencies=(Dependency("urn:gall:work-order:dep-1", "ALIVE"),),
+    )
+
+    try:
+        execution_descriptor(
+            cp,
+            work_order_iri="urn:gall:work-order:xaas:001",
+            execution_repo_alias="xaas",
+            provider="zcode",
+            execution_policy="continuous_epoch_run",
+        )
+    except ValueError as error:
+        assert "exact receipt identity" in str(error)
+    else:
+        raise AssertionError(
+            "generic ALIVE adjacency cannot satisfy XaaS execution admission"
+        )

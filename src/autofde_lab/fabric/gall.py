@@ -14,6 +14,9 @@ from typing import Iterable, Sequence
 
 _SHA = re.compile(r"^[0-9a-f]{40}$")
 _DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
+_REPOSITORY = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+_REPO_ALIAS = re.compile(r"^[A-Za-z0-9_.-]{1,128}$")
+_EXECUTION_POLICIES = {"continuous_epoch_run", "autonomic_wave_attempt"}
 _STANDING = {
     "UNKNOWN",
     "PARTIAL_ALIVE",
@@ -28,12 +31,29 @@ _STANDING = {
 class Dependency:
     iri: str
     standing: str
+    receipt_iri: str | None = None
+    receipt_digest: str | None = None
+    required_standing: str = "ALIVE"
 
     def __post_init__(self) -> None:
-        if not self.iri:
-            raise ValueError("dependency iri is required")
+        if not self.iri or ":" not in self.iri:
+            raise ValueError("dependency iri must be absolute")
         if self.standing not in _STANDING and not self.standing.startswith("REFUSED_"):
             raise ValueError(f"unsupported standing: {self.standing}")
+        if self.required_standing not in _STANDING:
+            raise ValueError(f"unsupported required standing: {self.required_standing}")
+        if (self.receipt_iri is None) != (self.receipt_digest is None):
+            raise ValueError(
+                "dependency receipt identity and digest must be supplied together"
+            )
+        if self.receipt_iri is not None and ":" not in self.receipt_iri:
+            raise ValueError("dependency receipt iri must be absolute")
+        if self.receipt_digest is not None and not _DIGEST.fullmatch(
+            self.receipt_digest
+        ):
+            raise ValueError(
+                "dependency receipt digest must be sha256:<64 lowercase hex>"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,8 +72,8 @@ class Checkpoint:
     def __post_init__(self) -> None:
         if not self.iri or ":" not in self.iri:
             raise ValueError("checkpoint iri must be absolute")
-        if not self.repository:
-            raise ValueError("repository is required")
+        if not _REPOSITORY.fullmatch(self.repository):
+            raise ValueError("repository must be owner/name")
         if not _SHA.fullmatch(self.base_sha):
             raise ValueError("base_sha must be a full lowercase git sha")
         if not _DIGEST.fullmatch(self.graph_digest):
@@ -176,5 +196,70 @@ def checkpoint_descriptor(checkpoint: Checkpoint) -> dict[str, object]:
         ],
         "required_capabilities": list(checkpoint.required_capabilities),
         "forbidden_capabilities": list(checkpoint.forbidden_capabilities),
+        "standing": checkpoint.standing,
+    }
+
+
+def execution_descriptor(
+    checkpoint: Checkpoint,
+    *,
+    work_order_iri: str,
+    execution_repo_alias: str,
+    provider: str,
+    execution_policy: str,
+) -> dict[str, object]:
+    """Manufacture the authority-free descriptor admitted by XaaS SemanticWork.
+
+    This is still SELECT/CONSTRUCT input, not a lease.  It intentionally carries
+    no epoch, worker, lease token, actuation authority, or standing promotion.
+    Exact upstream receipt edges are required here because XaaS must never infer
+    dependency evidence from generic ALIVE adjacency.
+    """
+
+    if not work_order_iri or ":" not in work_order_iri:
+        raise ValueError("work_order_iri must be absolute")
+    if not _REPO_ALIAS.fullmatch(execution_repo_alias):
+        raise ValueError("execution_repo_alias is invalid")
+    if not provider:
+        raise ValueError("provider is required")
+    if execution_policy not in _EXECUTION_POLICIES:
+        raise ValueError(f"unsupported execution policy: {execution_policy}")
+
+    dependencies: list[dict[str, str]] = []
+    for dependency in checkpoint.dependencies:
+        if dependency.required_standing != "ALIVE":
+            raise ValueError(
+                f"XaaS execution descriptor supports required ALIVE only: {dependency.iri}"
+            )
+        if dependency.standing != "ALIVE":
+            raise ValueError(
+                f"dependency is not admitted for execution: {dependency.iri}={dependency.standing}"
+            )
+        if dependency.receipt_iri is None or dependency.receipt_digest is None:
+            raise ValueError(
+                f"dependency requires exact receipt identity for execution: {dependency.iri}"
+            )
+        dependencies.append(
+            {
+                "work_order_iri": dependency.iri,
+                "required_standing": dependency.required_standing,
+                "observed_standing": dependency.standing,
+                "receipt_iri": dependency.receipt_iri,
+                "receipt_digest": dependency.receipt_digest,
+            }
+        )
+
+    return {
+        "work_order_iri": work_order_iri,
+        "checkpoint_iri": checkpoint.iri,
+        "graph_digest": checkpoint.graph_digest,
+        "repository_identity": checkpoint.repository,
+        "execution_repo_alias": execution_repo_alias,
+        "base_sha": checkpoint.base_sha,
+        "goal": checkpoint.goal,
+        "provider": provider,
+        "verifier_suite": checkpoint.verifier,
+        "execution_policy": execution_policy,
+        "dependencies": dependencies,
         "standing": checkpoint.standing,
     }
