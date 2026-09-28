@@ -32,6 +32,7 @@ def guarded_candidate(
     input_guards: Sequence[Callable[[Mapping[str, object]], bool]] = (),
     output_guards: Sequence[Callable[[Mapping[str, object]], bool]] = (),
     allowed_tools: frozenset[str] = frozenset(),
+    court: Callable[[Mapping[str, object]], object] | None = None,
 ) -> CandidateDecision:
     if not all(guard(observation) for guard in input_guards):
         return CandidateDecision(GuardrailStanding.REFUSED_INPUT, None, "input refused")
@@ -40,6 +41,19 @@ def guarded_candidate(
         return CandidateDecision(
             GuardrailStanding.REFUSED_OUTPUT, None, "output refused"
         )
+    if court is not None:
+        try:
+            court(candidate)
+        except Exception as refusal:
+            # Only typed court refusals (``court_refusal = True``, e.g. graphlaw
+            # PlanRefused) become a refusal; protocol faults propagate.
+            if not getattr(refusal, "court_refusal", False):
+                raise
+            return CandidateDecision(
+                GuardrailStanding.REFUSED_OUTPUT,
+                None,
+                f"court refused: {refusal}",
+            )
     requested_tool = candidate.get("tool")
     if requested_tool is not None and str(requested_tool) not in allowed_tools:
         return CandidateDecision(GuardrailStanding.REFUSED_TOOL, None, "tool refused")
