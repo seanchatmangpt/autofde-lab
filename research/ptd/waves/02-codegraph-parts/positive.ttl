@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:witness-02-codegraph-parts a ptd:PositiveWitness ; ptd:wave ptd:CodeGraphParts ; ptd:exactSubject "autofde-lab/PTD/02-codegraph-parts" ; ptd:expected ptd:ADMIT .
