@@ -38,9 +38,7 @@ def _failure_observation(
             )
 
     matching = [
-        report
-        for report in reports
-        if failure_type in report["first_failure_types"]
+        report for report in reports if failure_type in report["first_failure_types"]
     ]
     return {
         "subject": first["subject"],
@@ -65,11 +63,7 @@ def verify_guard(
         min_occurrences=1,
     )["guard_candidates"]
     candidate = next(
-        (
-            row
-            for row in candidates
-            if row["failure_type"] == failure_type
-        ),
+        (row for row in candidates if row["failure_type"] == failure_type),
         None,
     )
     if candidate is None:
@@ -103,8 +97,7 @@ def verify_guard(
         "guarded": after,
         "delta_rate": after["rate"] - before["rate"],
         "observed_elimination": (
-            before["occurrences"] > 0
-            and after["occurrences"] == 0
+            before["occurrences"] > 0 and after["occurrences"] == 0
         ),
         "standing": "OBSERVED_RUN_SCOPE",
         "authority": "none",

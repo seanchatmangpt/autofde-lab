@@ -175,8 +175,12 @@ def test_survival_episode_projects_to_valid_replay_stable_ocel() -> None:
 
 def test_literal_ocel_projection_contains_qualified_failure_and_receipt_links() -> None:
     document = episode_to_ocel2_json(court_episode())
-    do_event = next(event for event in document["events"] if event["type"] == "survival.do")
-    qualifiers = {relationship["qualifier"] for relationship in do_event["relationships"]}
+    do_event = next(
+        event for event in document["events"] if event["type"] == "survival.do"
+    )
+    qualifiers = {
+        relationship["qualifier"] for relationship in do_event["relationships"]
+    }
 
     assert {"subject", "policy", "episode", "receipt", "failure"} <= qualifiers
     assert document["objects"]

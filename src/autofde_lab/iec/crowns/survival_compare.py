@@ -272,8 +272,7 @@ def compare_policy_reports(
             ),
             "rmst_steps": float(right["rmst_steps"]) - float(left["rmst_steps"]),
             "terminal_cumulative_hazard": (
-                _terminal_cumulative_hazard(right)
-                - _terminal_cumulative_hazard(left)
+                _terminal_cumulative_hazard(right) - _terminal_cumulative_hazard(left)
             ),
             "tool_invocations_per_episode": (
                 _mean(int(right["tool_invocations"]), right_episodes)
@@ -327,8 +326,7 @@ def cohort_report(
         grouped[str(report["policy_id"])].append(document)
 
     policies = {
-        policy_id: survival_report(grouped[policy_id])
-        for policy_id in sorted(grouped)
+        policy_id: survival_report(grouped[policy_id]) for policy_id in sorted(grouped)
     }
     pairwise = [
         compare_policy_reports(policies[left], policies[right])

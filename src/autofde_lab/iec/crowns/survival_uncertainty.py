@@ -137,9 +137,7 @@ def survival_uncertainty(
         failures = int(point["failures"])
         survival = float(point["survival"])
         if failures and at_risk > failures:
-            greenwood_sum += failures / (
-                at_risk * (at_risk - failures)
-            )
+            greenwood_sum += failures / (at_risk * (at_risk - failures))
         variance = survival * survival * greenwood_sum
         standard_error = math.sqrt(max(0.0, variance))
         curve.append(
@@ -154,7 +152,9 @@ def survival_uncertainty(
 
     failures = int(report["failures"])
     episodes = int(report["episodes"])
-    failure_lower, failure_upper = _wilson_interval(failures, episodes, z) if episodes > 0 else (0.0, 1.0)
+    failure_lower, failure_upper = (
+        _wilson_interval(failures, episodes, z) if episodes > 0 else (0.0, 1.0)
+    )
     result = {
         "schema": "autofde-lab.premature-actuation-uncertainty/1",
         "survival_report_id": report["id"],

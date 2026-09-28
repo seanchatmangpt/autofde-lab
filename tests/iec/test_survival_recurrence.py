@@ -30,7 +30,9 @@ def failed(episode_id: str, *, failure: str) -> dict:
     }
 
 
-def test_recurrence_compresses_repeated_failure_into_powerless_guard_candidate() -> None:
+def test_recurrence_compresses_repeated_failure_into_powerless_guard_candidate() -> (
+    None
+):
     report = recurrence_report(
         [
             failed("a", failure="UNAUTHORIZED_DO"),

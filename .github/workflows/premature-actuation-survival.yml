@@ -27,6 +27,8 @@ permissions:
 jobs:
   survival-court:
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: src
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v7
@@ -43,16 +45,19 @@ jobs:
           test "$actual" = "$expected"
           printf "survival_exact_head=%s\n" "$actual"
 
-      - uses: astral-sh/setup-uv@v7
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          version: "0.11.32"
+          python-version: "3.12"
 
-      - name: Resolve dependency closure
-        run: uv sync --group dev
+      # The survival courts are pure Python; a full dependency sync would compile the
+      # whole C++ extension (Boost, CMake) for no benefit, as autonomic-survival.yml avoids.
+      - name: Install focused court dependencies
+        run: python -m pip install "pytest==8.3.5" "ruff==0.14.0"
 
       - name: Compile survival surface
         run: |
-          uv run python -m compileall -q \
+          python -m compileall -q \
             src/autofde_lab/iec/crowns/survival.py \
             src/autofde_lab/iec/crowns/survival_compare.py \
             src/autofde_lab/iec/crowns/survival_recurrence.py \
@@ -70,7 +75,7 @@ jobs:
 
       - name: Execute survival courts
         run: |
-          uv run pytest -q \
+          python -m pytest -q \
             tests/iec/test_survival_benchmark.py \
             tests/iec/test_survival_compare.py \
             tests/iec/test_survival_recurrence.py \
@@ -81,7 +86,7 @@ jobs:
 
       - name: Static contract
         run: |
-          uv run ruff check \
+          ruff check \
             src/autofde_lab/iec/crowns/survival.py \
             src/autofde_lab/iec/crowns/survival_compare.py \
             src/autofde_lab/iec/crowns/survival_recurrence.py \
@@ -99,7 +104,7 @@ jobs:
 
       - name: Format contract
         run: |
-          uv run ruff format --check \
+          ruff format --check \
             src/autofde_lab/iec/crowns/survival.py \
             src/autofde_lab/iec/crowns/survival_compare.py \
             src/autofde_lab/iec/crowns/survival_recurrence.py \

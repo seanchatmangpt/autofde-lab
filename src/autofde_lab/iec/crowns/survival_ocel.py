@@ -225,11 +225,7 @@ def episode_to_ocel_log(document: Mapping[str, Any]) -> OcelLog:
     ]
 
     receipt_ids = sorted(
-        {
-            event.receipt_id
-            for event in events
-            if event.receipt_id is not None
-        }
+        {event.receipt_id for event in events if event.receipt_id is not None}
     )
     objects.extend(
         OcelObject(
@@ -241,11 +237,7 @@ def episode_to_ocel_log(document: Mapping[str, Any]) -> OcelLog:
     )
 
     failure_types = sorted(
-        {
-            failure_type
-            for event in events
-            for failure_type in event.failure_types
-        }
+        {failure_type for event in events for failure_type in event.failure_types}
     )
     objects.extend(
         OcelObject(
