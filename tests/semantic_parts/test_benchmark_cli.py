@@ -78,3 +78,44 @@ def test_cli_refuses_malformed_oracle_input(tmp_path, capsys):
     assert payload["standing"] == "REFUSED"
     assert payload["authority"] == "NONE"
     assert payload["code"] == "REFUSED_BENCHMARK_INPUT"
+
+
+
+def test_cli_require_receipts_refuses_declared_only_oracle(tmp_path, capsys):
+    input_path = _fixture(tmp_path)
+
+    assert main(["--input", str(input_path), "--require-receipts"]) == 2
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["standing"] == "REFUSED"
+    assert "behavioral witness receipts are required" in payload["detail"]
+
+
+def test_cli_require_receipts_accepts_receipted_oracle(tmp_path, capsys):
+    path = tmp_path / "receipted.json"
+    path.write_text(
+        json.dumps(
+            [
+                {
+                    "subject_id": "a",
+                    "verified_equivalents": ["b"],
+                    "lexical_candidates": ["x"],
+                    "semantic_candidates": ["b"],
+                    "behavioral_witnesses": [
+                        {
+                            "candidate_id": "b",
+                            "receipt_digest": "sha256:" + "c" * 64,
+                            "verifier": "behavioral-equivalence-court",
+                        }
+                    ],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    assert main(["--input", str(path), "--require-receipts"]) == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["result"]["oracle_standing"] == "RECEIPTED"
+    assert payload["result"]["falsifier_triggered"] is False

@@ -1,5 +1,7 @@
 from autofde_lab.semantic_parts import (
+    BehavioralWitness,
     SubstitutionCase,
+    evaluate_at_cutoffs,
     evaluate_substitution_discovery,
 )
 
@@ -57,3 +59,157 @@ def test_oracle_cannot_self_verify_subject():
         assert "cannot verify itself" in str(error)
     else:
         raise AssertionError("self-verification must be refused")
+
+
+def test_metrics_capture_rank_and_recall_not_only_hit_rate():
+    cases = [
+        SubstitutionCase(
+            subject_id="a",
+            verified_equivalents=frozenset({"b", "c"}),
+            lexical_candidates=("x", "b"),
+            semantic_candidates=("b", "c"),
+        )
+    ]
+
+    result = evaluate_substitution_discovery(cases, k=2)
+
+    assert result["lexical"]["mrr_at_k"] == 0.5
+    assert result["semantic"]["mrr_at_k"] == 1.0
+    assert result["lexical"]["recall_at_k"] == 0.5
+    assert result["semantic"]["recall_at_k"] == 1.0
+    assert result["mrr_lift"] == 0.5
+    assert result["recall_lift"] == 0.5
+
+
+def test_cutoff_sweep_reuses_the_same_oracle():
+    cases = [
+        SubstitutionCase(
+            subject_id="a",
+            verified_equivalents=frozenset({"c"}),
+            lexical_candidates=("x", "c"),
+            semantic_candidates=("c",),
+        )
+    ]
+
+    sweep = evaluate_at_cutoffs(cases, cutoffs=(1, 2))
+
+    assert sweep["cutoffs"] == [1, 2]
+    assert sweep["reports"]["1"]["semantic"]["discovery_rate"] == 1.0
+    assert sweep["reports"]["1"]["lexical"]["discovery_rate"] == 0.0
+    assert sweep["reports"]["2"]["lexical"]["discovery_rate"] == 1.0
+    assert sweep["authority"] == "NONE"
+
+
+
+def test_receipt_backed_oracle_can_be_required_fail_closed():
+    witness = BehavioralWitness(
+        candidate_id="b",
+        receipt_digest="sha256:" + "a" * 64,
+        verifier="behavioral-equivalence-court",
+    )
+    receipted = SubstitutionCase(
+        subject_id="a",
+        verified_equivalents=frozenset({"b"}),
+        lexical_candidates=("x",),
+        semantic_candidates=("b",),
+        behavioral_witnesses=(witness,),
+    )
+
+    result = evaluate_substitution_discovery(
+        [receipted],
+        k=1,
+        require_receipts=True,
+    )
+
+    assert result["oracle_standing"] == "RECEIPTED"
+    assert result["receipted_cases"] == 1
+
+    declared = SubstitutionCase(
+        subject_id="x",
+        verified_equivalents=frozenset({"y"}),
+        lexical_candidates=(),
+        semantic_candidates=("y",),
+    )
+
+    try:
+        evaluate_substitution_discovery([declared], require_receipts=True)
+    except ValueError as error:
+        assert "behavioral witness receipts are required" in str(error)
+    else:
+        raise AssertionError("unreceipted oracle must be refused when receipts are required")
+
+
+def test_behavioral_witness_refuses_bad_digest_and_unknown_candidate():
+    try:
+        BehavioralWitness(
+            candidate_id="b",
+            receipt_digest="not-a-digest",
+            verifier="court",
+        )
+    except ValueError as error:
+        assert "sha256" in str(error)
+    else:
+        raise AssertionError("bad receipt digest must be refused")
+
+    witness = BehavioralWitness(
+        candidate_id="c",
+        receipt_digest="sha256:" + "b" * 64,
+        verifier="court",
+    )
+    try:
+        SubstitutionCase(
+            subject_id="a",
+            verified_equivalents=frozenset({"b"}),
+            lexical_candidates=(),
+            semantic_candidates=("b",),
+            behavioral_witnesses=(witness,),
+        )
+    except ValueError as error:
+        assert "verified_equivalents" in str(error)
+    else:
+        raise AssertionError("witness for an unverified candidate must be refused")
+
+
+
+def test_paired_sign_test_tracks_recurrence_of_semantic_wins():
+    cases = [
+        SubstitutionCase(
+            subject_id=f"s{i}",
+            verified_equivalents=frozenset({f"v{i}"}),
+            lexical_candidates=(f"x{i}",),
+            semantic_candidates=(f"v{i}",),
+        )
+        for i in range(8)
+    ]
+
+    result = evaluate_substitution_discovery(cases, k=1)
+
+    assert result["paired"]["semantic_wins"] == 8
+    assert result["paired"]["lexical_wins"] == 0
+    assert result["paired"]["ties"] == 0
+    assert result["paired"]["two_sided_sign_test_p_value"] == 0.0078125
+    assert result["paired"]["statistically_supported_0_05"] is True
+
+
+def test_paired_sign_test_does_not_treat_ties_as_evidence():
+    cases = [
+        SubstitutionCase(
+            subject_id="a",
+            verified_equivalents=frozenset({"b"}),
+            lexical_candidates=("b",),
+            semantic_candidates=("b",),
+        ),
+        SubstitutionCase(
+            subject_id="c",
+            verified_equivalents=frozenset({"d"}),
+            lexical_candidates=("x",),
+            semantic_candidates=("y",),
+        ),
+    ]
+
+    result = evaluate_substitution_discovery(cases, k=1)
+
+    assert result["paired"]["non_ties"] == 0
+    assert result["paired"]["ties"] == 2
+    assert result["paired"]["two_sided_sign_test_p_value"] == 1.0
+    assert result["paired"]["statistically_supported_0_05"] is False
