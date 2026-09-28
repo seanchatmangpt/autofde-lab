@@ -1,0 +1,7 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+ptd:BoundedIntervention a ptd:ResearchWave ; ptd:requires ptd:procedure, ptd:command, ptd:budget, ptd:authority ; ptd:preserves ptd:AdmittedSemantics ; ptd:refuses ptd:UnboundConsequence .
+ptd:procedure a ptd:Invariant .
+ptd:command a ptd:Invariant .
+ptd:budget a ptd:Invariant .
+ptd:authority a ptd:Invariant .

@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:witness-identity a ptd:PositiveWitness ; ptd:exactSubject "autofde-lab/PTD/identity" ; ptd:expected ptd:ADMIT .

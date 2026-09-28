@@ -1,0 +1,2 @@
+PREFIX ptd: <https://chatmangpt.com/ptd#>
+ASK { ptd:TrimtabControl a ptd:ResearchWave ; ptd:refuses ptd:ContextAsAuthority . }

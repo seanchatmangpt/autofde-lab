@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:EpochSourceBinding a ptd:IntegrationContract ; ptd:binds ptd:SemanticSpecification, ptd:ConstructionProcess, ptd:Realization ; ptd:requires ptd:ExactSourceIdentity .
