@@ -1,0 +1,3 @@
+@prefix hilt: <https://chatman.dev/hilt#> .
+@prefix q: <https://chatman.dev/qualification#> .
+q:ReceiptIdentity a hilt:QualificationBoundary ; hilt:law "receipt must bind exact actor subject task and tool identities" ; hilt:authority "NONE" ; hilt:refusal "REFUSED_RECEIPT_IDENTITY" .
