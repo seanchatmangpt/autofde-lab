@@ -6,8 +6,9 @@
 
 Spec: ``docs/rfcs/RFC-ALOOP-v26.9.25.md`` (FINAL_SPEC candidate, NEXT_CALVER).
 
-Only ALOOP-001 (basic closed loop) is implemented here; ALOOP-002..010 are
-typed obligations in the RFC. The OCEL log is evidence, never proof: the
+ALOOP-001 supplies the causal closed-loop court and ALOOP-004 supplies the
+provider-extinction/fresh-job recovery court. The remaining ALOOP obligations
+stay typed in the RFC until executable courts exist. The OCEL log is evidence, never proof: the
 court derives a causal graph from qualified E2O relations and refuses or
 downgrades whatever that graph does not support. Since court r9 an unsealed
 log can at most be CONSISTENT_UNDER_ASSUMED_COMPLETENESS (exit 3); QUALIFIED
@@ -27,6 +28,16 @@ from autofde_lab.aloop.court import (
     load_profile,
 )
 
+from autofde_lab.aloop.provider_extinction import (
+    ArtifactHandoff,
+    ExecutionSemantics,
+    FailureInjection,
+    ProviderExtinctionResult,
+    RecoveryQualification,
+    compare_provider_substitution,
+    qualify_fresh_job_recovery,
+)
+
 __all__ = [
     "CONSISTENT",
     "EXIT_CONSISTENT_UNDER_ASSUMED_COMPLETENESS",
@@ -37,4 +48,11 @@ __all__ = [
     "evaluate_document",
     "evaluate_path",
     "load_profile",
+    "ArtifactHandoff",
+    "ExecutionSemantics",
+    "FailureInjection",
+    "ProviderExtinctionResult",
+    "RecoveryQualification",
+    "compare_provider_substitution",
+    "qualify_fresh_job_recovery",
 ]
