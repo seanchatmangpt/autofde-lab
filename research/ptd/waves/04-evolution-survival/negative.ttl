@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:falsifier-04-evolution-survival a ptd:Falsifier ; ptd:wave ptd:EvolutionSurvival ; ptd:missing ptd:generation ; ptd:expected ptd:REFUSE ; ptd:reason "required invariant absent" .
