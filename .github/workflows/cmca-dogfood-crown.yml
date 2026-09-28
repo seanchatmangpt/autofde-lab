@@ -58,10 +58,11 @@ jobs:
         run: |
           uv sync --no-install-project --extra bcinr-wasm
 
-      - name: Planning-probe and dogfood Chicago tests
+      - name: Planning-probe, SA2A advice, and dogfood Chicago tests
         run: |
           uv run --no-sync pytest -q \
             tests/planning/test_cmca_planning_probe.py \
+            tests/planning/test_sa2a_advice.py \
             tests/agent/test_cmca_dogfood_crown.py
 
       - name: Existing eight-use-case CMCA benchmark

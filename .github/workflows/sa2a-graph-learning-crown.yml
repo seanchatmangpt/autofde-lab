@@ -5,8 +5,13 @@ on:
     branches: [master]
     paths:
       - "src/autofde_lab/sa2a/graph_learning/**"
+      - "src/autofde_lab/sa2a/computation.py"
+      - "src/autofde_lab/sa2a/learning.py"
       - "tests/sa2a/test_graph_learning.py"
+      - "tests/sa2a/test_computation_interface.py"
+      - "tests/sa2a/test_learning_selection.py"
       - "docs/sa2a/graph-learning.md"
+      - "docs/sa2a/universal-computation.md"
       - ".github/workflows/sa2a-graph-learning-crown.yml"
   workflow_dispatch:
 
@@ -19,7 +24,7 @@ concurrency:
 
 jobs:
   crown:
-    name: Exact-head GraphSAGE candidate/admission court
+    name: Exact-head SA2A computation and GraphSAGE court
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -36,13 +41,13 @@ jobs:
           expected="${{ github.event.pull_request.head.sha || github.sha }}"
           actual="$(git rev-parse HEAD)"
           test "$actual" = "$expected"
-          printf 'sa2a_graph_learning_exact_head=%s\n' "$actual"
+          printf 'sa2a_computation_exact_head=%s\n' "$actual"
 
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
 
-      - name: Install bounded graph-learning court
+      - name: Install bounded computation court
         run: |
           python -m pip install \
             "pytest==8.3.5" \
@@ -57,9 +62,15 @@ jobs:
         run: |
           set -euo pipefail
           ! grep -nE 'unittest\.mock|Mock\(|MagicMock|patch\(|monkeypatch' \
-            tests/sa2a/test_graph_learning.py
+            tests/sa2a/test_graph_learning.py \
+            tests/sa2a/test_computation_interface.py \
+            tests/sa2a/test_learning_selection.py
 
-      - name: Execute real GraphSAGE candidate/admission court
+      - name: Execute universal computation, learner, and GraphSAGE courts
         env:
           PYTHONPATH: src
-        run: python -m pytest -vv tests/sa2a/test_graph_learning.py
+        run: |
+          python -m pytest -vv \
+            tests/sa2a/test_computation_interface.py \
+            tests/sa2a/test_learning_selection.py \
+            tests/sa2a/test_graph_learning.py
