@@ -119,6 +119,12 @@ def _actions(
         )
     )
 
+    standing_updates = {"standing": "TRUE"}
+    if mutant is DelegationAdmissionMutant.STANDING_WITHOUT_CAPACITY:
+        # Avoid a vacuous mutant: standing over delegation=0 still satisfies
+        # every capacity inequality. Force one unsupported delegated unit.
+        standing_updates["delegation"] = "1"
+
     return (
         make_action(
             "ExplainEvidence",
@@ -158,7 +164,7 @@ def _actions(
         make_action(
             "GrantStanding",
             guard=standing_guard,
-            updates={"standing": "TRUE"},
+            updates=standing_updates,
         ),
     )
 
