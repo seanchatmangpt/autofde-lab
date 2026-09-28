@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:falsifier-01-exact-identity-hilt a ptd:Falsifier ; ptd:wave ptd:ExactIdentityHILT ; ptd:missing ptd:subjectIdentity ; ptd:expected ptd:REFUSE ; ptd:reason "required invariant absent" .
