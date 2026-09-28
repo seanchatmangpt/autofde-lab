@@ -216,3 +216,92 @@ def test_ocel_projection_is_valid_and_carries_attack_status():
             ],
         ).digest()
     )
+
+
+def _with_surfaces():
+    m = load("strong_phase")
+    m["disclosures"] = [
+        {
+            "name": "full_source",
+            "buyer": dict(
+                auditability=1,
+                operability=1,
+                compliance=1,
+                interoperability=1,
+                assurance=1,
+            ),
+            "redteam": dict(
+                recon_reuse=1, predictability=1, authority_reuse=1, common_mode=1
+            ),
+        },
+        {
+            "name": "attested_summary",
+            "buyer": dict(
+                auditability=0.8,
+                operability=0.6,
+                compliance=0.8,
+                interoperability=0.6,
+                assurance=0.8,
+            ),
+            "redteam": dict(
+                recon_reuse=0.1, predictability=0.1, authority_reuse=0, common_mode=0.1
+            ),
+        },
+    ]
+    m["techniques_observed"] = ["diversity", "non_persistence", "made_up_technique"]
+    return m
+
+
+def test_disclosure_frontier_ranks_buyer_value_against_opposing_party_value():
+    frontier = evaluate_experiment(_with_surfaces())["disclosure_frontier"]
+    assert [d["name"] for d in frontier] == ["attested_summary", "full_source"]
+    assert frontier[0]["score"] > 0  # 0.72 buyer value vs 0.075 opposing-party value
+    assert (
+        frontier[1]["score"] == 0.0
+    )  # full disclosure: everything an attacker gains, the buyer gains
+
+
+def test_disclosure_weight_changes_the_ranking():
+    m = _with_surfaces()
+    m["disclosure_weight"] = 0.0  # ignore the opposing party: full disclosure now wins
+    assert evaluate_experiment(m)["disclosure_frontier"][0]["name"] == "full_source"
+
+
+def test_undeclared_surfaces_are_unknown_not_zero():
+    r = evaluate_experiment(load("strong_phase"))
+    assert r["disclosure_frontier"] is None and r["resiliency"] is None
+
+
+def test_resiliency_reports_declared_undeclared_and_unknown_techniques():
+    r = evaluate_experiment(_with_surfaces())["resiliency"]
+    assert r["declared"] == ["diversity", "non_persistence"] and r["coverage"] == 0.25
+    assert "segmentation" in r["not_declared"] and r["unknown_techniques"] == [
+        "made_up_technique"
+    ]
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda m: m["disclosures"][0]["buyer"].update(assurance=math.nan),
+        lambda m: m["disclosures"][0]["redteam"].update(common_mode=1.5),
+        lambda m: m["disclosures"][0]["buyer"].pop("assurance"),
+        lambda m: m["disclosures"].append(dict(m["disclosures"][0])),
+    ],
+)
+def test_malformed_or_nan_disclosure_is_refused(mutate):
+    m = _with_surfaces()
+    mutate(m)
+    with pytest.raises(ValueError):
+        evaluate_experiment(m)
+
+
+def test_v1_manifests_are_not_silently_migrated():
+    v1 = {
+        "schema": "autofde-lab.ptd.experiment/v1",
+        "experiment_id": "x",
+        "criteria": {},
+        "trials": [],
+    }
+    with pytest.raises(ValueError, match="unsupported PTD schema"):
+        evaluate_experiment(v1)
