@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:falsifier-runtime a ptd:Falsifier ; ptd:missing ptd:RuntimeBoundary ; ptd:expected ptd:REFUSE .
