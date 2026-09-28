@@ -1,0 +1,7 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+ptd:EvolutionSurvival a ptd:ResearchWave ; ptd:requires ptd:generation, ptd:campaign, ptd:survival, ptd:replay ; ptd:preserves ptd:AdmittedSemantics ; ptd:refuses ptd:UnboundConsequence .
+ptd:generation a ptd:Invariant .
+ptd:campaign a ptd:Invariant .
+ptd:survival a ptd:Invariant .
+ptd:replay a ptd:Invariant .
