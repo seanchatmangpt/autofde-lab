@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:falsifier-07-osiris-evidence a ptd:Falsifier ; ptd:wave ptd:OSIRISEvidence ; ptd:missing ptd:evidence ; ptd:expected ptd:REFUSE .
