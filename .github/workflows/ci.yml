@@ -292,7 +292,11 @@ jobs:
           # regression from this session's own PRs (none touch tests/solvers
           # or Ray config) -- the install had simply never succeeded far
           # enough for this gap to be observable before.
-          PYTHONPATH: ${{ github.workspace }}
+          # CORRECTION (2026-09-28): the workspace root alone cannot fix this. With
+          # __init__.py markers under tests/solvers (and none at tests/), pytest names the
+          # modules `solvers.python.*`, rooted at tests/, so the worker must find `solvers`
+          # via tests/ on the path. Root-only left this failing exactly as recorded above.
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/tests
         run: |
           set -euo pipefail
           pytest -vv tests/solvers/python \
