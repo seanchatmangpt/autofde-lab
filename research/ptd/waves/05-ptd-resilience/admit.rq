@@ -1,0 +1,6 @@
+PREFIX ptd: <https://chatmangpt.com/ptd#>
+ASK {
+  ptd:PTDResilience a ptd:ResearchWave ; ptd:preserves ptd:AdmittedSemantics ; ptd:refuses ptd:UnboundConsequence .
+  FILTER EXISTS { ptd:epoch a ptd:Invariant }
+  FILTER EXISTS { ptd:semanticSpecification a ptd:Invariant }
+}
