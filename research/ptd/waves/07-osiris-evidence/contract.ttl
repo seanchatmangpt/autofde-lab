@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:OSIRISEvidence a ptd:ResearchWave ; ptd:requires ptd:evidence, ptd:admission ; ptd:preserves ptd:AdmittedSemantics ; ptd:refuses ptd:UnboundConsequence .
