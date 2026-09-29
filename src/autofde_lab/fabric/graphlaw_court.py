@@ -17,10 +17,11 @@ import json
 import os
 import re
 import threading
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 try:
     import wasmtime  # type: ignore[import-not-found]
@@ -53,11 +54,23 @@ class PlanRefused(RuntimeError):
 
     court_refusal = True
 
-    def __init__(self, index: int | None, action: str | None, message: str) -> None:
+    def __init__(
+        self,
+        index: int | None,
+        action: str | None,
+        message: str,
+        *,
+        unmet: Sequence[str] = (),
+        details: Mapping[str, Any] | None = None,
+    ) -> None:
         super().__init__(message)
         self.index = index
         self.action = action
         self.message = message
+        #: N-Quads lines the failing step required but the state lacked.
+        self.unmet: tuple[str, ...] = tuple(unmet)
+        #: The graphlaw ``error.details`` object (``code``, ``index``, ...), if any.
+        self.details = details
 
 
 @dataclass(frozen=True, slots=True)
@@ -193,6 +206,19 @@ def admit_plan(
     if response.get("ok") is not True:
         err = response.get("error")
         message = str(err.get("message", err)) if isinstance(err, dict) else str(err)
+        details = err.get("details") if isinstance(err, dict) else None
+        if isinstance(details, dict) and details.get("code") == "PlanRefused":
+            index = int(details["index"])
+            name = str(details["action"]) if details.get("action") is not None else None
+            raise PlanRefused(
+                index,
+                name,
+                message,
+                unmet=tuple(str(u) for u in details.get("unmet", ())),
+                details=details,
+            )
+        # A module built before structured details existed: fall back to the
+        # message text. Refusals other than a plan refusal keep no index.
         m = _STEP_RE.match(message)
         index = int(m.group(1)) if m else None
         name = (
@@ -200,7 +226,12 @@ def admit_plan(
             if index is not None and index < len(actions)
             else None
         )
-        raise PlanRefused(index, name, message)
+        raise PlanRefused(
+            index,
+            name,
+            message,
+            details=details if isinstance(details, dict) else None,
+        )
     return AdmittedPlan(
         receipts=tuple(response.get("receipts", ())),
         states=tuple(response.get("states", ())),

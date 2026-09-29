@@ -54,6 +54,18 @@ def test_falsifier_missing_precondition_refused_at_index():
     assert exc.value.message.startswith("plan refused at step 1")
 
 
+def test_refusal_carries_structured_details_not_scraped_text():
+    """index/action/unmet come from graphlaw's `details`, not the message."""
+    plan = _plan()
+    plan[1] = dict(plan[1], pre=[_t("a", "nowhere")])
+    with pytest.raises(gc.PlanRefused) as exc:
+        gc.admit_plan(STATE, plan, GOAL)
+    details = exc.value.details
+    assert details is not None and details["code"] == "PlanRefused"
+    assert details["index"] == exc.value.index == 1
+    assert len(exc.value.unmet) == 1 and "nowhere" in exc.value.unmet[0]
+
+
 def test_replay_is_byte_identical():
     a = gc.admit_plan(STATE, _plan(), GOAL)
     b = gc.admit_plan(STATE, _plan(), GOAL)
