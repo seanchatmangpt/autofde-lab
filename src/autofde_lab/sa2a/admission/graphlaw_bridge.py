@@ -23,13 +23,23 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-PRAXIS_WASMPKG_DIR = Path("/Users/sac/praxis/crates/praxis-graphlaw-wasm/pkg")
+#: Where the built ``praxis-graphlaw-wasm`` package lives. ``AUTOFDE_PRAXIS_WASMPKG_DIR``
+#: points at another checkout without editing source; the default is unchanged. The bytes
+#: are still pinned by content hash below, so an override cannot substitute a different
+#: artifact -- it only relocates the same one.
+PRAXIS_WASMPKG_DIR = Path(
+    os.environ.get(
+        "AUTOFDE_PRAXIS_WASMPKG_DIR",
+        "/Users/sac/praxis/crates/praxis-graphlaw-wasm/pkg",
+    )
+)
 
 # Pinned content-addressed identity of the real local praxis-graphlaw-wasm
 # artifact, confirmed via `shasum -a 256` against the real file bytes this

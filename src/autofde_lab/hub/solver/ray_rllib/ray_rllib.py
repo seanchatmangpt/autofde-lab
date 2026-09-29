@@ -680,7 +680,25 @@ class RayRLlib(Solver, Policies, Restorable):
         self.set_callback()
 
         # Instantiate algo
-        self._algo = self._algo_class(config=self._config)
+        try:
+            self._algo = self._algo_class(config=self._config)
+        except TypeError as error:
+            # Measured (2026-09-28, ray 2.56.1 locked and 2.58.0): on the old API stack this
+            # wrapper forces, DQN fails inside ray itself for *every* replay_buffer_config
+            # (string or class, prioritized or plain) with
+            # "TypeError: argument of type 'ABCMeta' is not iterable" at
+            # Algorithm._create_local_replay_buffer_if_necessary: ray resolves the buffer
+            # `type` to a class before its own `"EpisodeReplayBuffer" in type` check. That is
+            # upstream, not configurable here, so surface it as a named refusal instead of an
+            # opaque crash deep in a dependency.
+            if self._algo_class is DQN and "'ABCMeta' is not iterable" in str(error):
+                raise RuntimeError(
+                    "UNSUPPORTED:RAY_OLD_STACK_DQN: DQN cannot be constructed on RLlib's old API "
+                    "stack with the installed ray (its replay-buffer setup raises "
+                    f"{error!s}); this solver requires the old stack for GNN observations and "
+                    "action masking. Use another algorithm or a ray release where old-stack DQN works."
+                ) from error
+            raise
 
     def set_callback(self):
         """Set back callback.

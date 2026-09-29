@@ -13,7 +13,12 @@
 # `ModuleNotFoundError: No module named 'tests.solvers'` inside a Ray actor
 # without this, and confirming it disappears with PYTHONPATH set, holding
 # --import-mode/pyproject.toml constant. Harmless for every other recipe.
-export PYTHONPATH := justfile_directory()
+#
+# CORRECTION (2026-09-28): the repo root alone does not fix `No module named 'solvers'`.
+# tests/solvers carries __init__.py markers and tests/ has none, so pytest names the modules
+# `solvers.python.*` rooted at tests/; the worker must find `solvers` through tests/ itself.
+# Measured: with tests/ on PYTHONPATH the Ray-worker tests import and run; without it they fail.
+export PYTHONPATH := justfile_directory() + ":" + justfile_directory() + "/tests"
 
 # Hot loop: unit-weight tests only, measured ~5.9-6.0s over several runs
 # (-n 4). Excludes, on top of the native/RL/scheduling/crown exclusions
