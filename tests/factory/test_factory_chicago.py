@@ -56,7 +56,9 @@ def test_fresh_verifier_without_runtime(run):
         "bad=[m for m in ('autofde_lab.factory.loop','autofde_lab.factory.world') if m in sys.modules];"
         "print(json.dumps([v.technical_standing,bad]))"
     )
-    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
+    out = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True
+    )
     assert json.loads(out.stdout) == ["ALIVE", []]
 
 
@@ -75,6 +77,7 @@ def _first(rows, route):
 def test_mutation_tampered_receipt(run, tmp_path):
     def f(rows):
         _first(rows, "investigation")["receipt"]["receipt_digest"] = "0" * 64
+
     v = _mutated(run, tmp_path, f)
     assert v.technical_standing == "BUILD_BROKEN"
     assert any(x.startswith("INVALID_RECEIPT") for x in v.findings)
@@ -86,6 +89,7 @@ def test_mutation_experience_joined_to_wrong_investigation(run, tmp_path):
         exp = _first(rows, "experience")
         other = next(i for i in invs if i["class_key"] != exp["class_key"])
         exp["derived_from_case"] = other["case_id"]
+
     v = _mutated(run, tmp_path, f)
     assert any(x.startswith("UNDERIVED_EXPERIENCE") for x in v.findings)
 
@@ -96,6 +100,7 @@ def test_mutation_experience_without_its_investigation(run, tmp_path):
         rows[:] = [r for r in rows if r["case_id"] != exp["derived_from_case"]]
         for i, r in enumerate(rows):
             r["seq"] = i
+
     v = _mutated(run, tmp_path, f)
     assert v.technical_standing == "BUILD_BROKEN"
 
@@ -103,6 +108,7 @@ def test_mutation_experience_without_its_investigation(run, tmp_path):
 def test_mutation_solved_class_reinvestigated_is_regression(run, tmp_path):
     def f(rows):
         _first(rows, "experience")["cost"] = 3
+
     v = _mutated(run, tmp_path, f)
     assert any(x.startswith("ARCHITECTURE_REGRESSION") for x in v.findings)
 
@@ -111,6 +117,7 @@ def test_mutation_self_certified_receipt(run, tmp_path):
     def f(rows):
         rc = _first(rows, "investigation")["receipt"]
         rc["verifier_id"] = rc["producer_id"]
+
     v = _mutated(run, tmp_path, f)
     assert any(x.startswith("INVALID_RECEIPT") for x in v.findings)
 
@@ -129,8 +136,16 @@ def test_empty_ledger_is_unknown(tmp_path):
 
 def test_cli_end_to_end_no_llm_modules(tmp_path):
     p = subprocess.run(
-        [sys.executable, "-m", "autofde_lab.factory", "--out", str(tmp_path / "o"), "--no-sony"],
-        capture_output=True, text=True,
+        [
+            sys.executable,
+            "-m",
+            "autofde_lab.factory",
+            "--out",
+            str(tmp_path / "o"),
+            "--no-sony",
+        ],
+        capture_output=True,
+        text=True,
     )
     assert p.returncode == 0, p.stderr[-800:]
     assert json.loads(p.stdout)["llm_modules_loaded"] == []

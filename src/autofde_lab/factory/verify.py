@@ -48,8 +48,10 @@ def verify_ledger(path: Path) -> FactoryVerdict:
             rc = r["receipt"]
             if rc is None or not verify_receipt(_receipt(rc)):
                 findings.append(f"INVALID_RECEIPT:{r['case_id']}")
-            elif (rc["subject_id"] != r["case_id"]
-                  or rc["observed_disposition"] != r["admitted_mode"]):
+            elif (
+                rc["subject_id"] != r["case_id"]
+                or rc["observed_disposition"] != r["admitted_mode"]
+            ):
                 findings.append(f"RECEIPT_BINDING:{r['case_id']}")
             if key in compiled:
                 findings.append(f"ARCHITECTURE_REGRESSION:{r['case_id']}")
@@ -58,19 +60,30 @@ def verify_ledger(path: Path) -> FactoryVerdict:
             routes += 1
             replay_cost += r["cost"]
             src = by_case.get(r["derived_from_case"])
-            if (src is None or src["route"] != "investigation"
-                    or src["seq"] >= r["seq"]
-                    or tuple(src["class_key"]) != key
-                    or src["admitted_mode"] != r["admitted_mode"]):
+            if (
+                src is None
+                or src["route"] != "investigation"
+                or src["seq"] >= r["seq"]
+                or tuple(src["class_key"]) != key
+                or src["admitted_mode"] != r["admitted_mode"]
+            ):
                 findings.append(f"UNDERIVED_EXPERIENCE:{r['case_id']}")
             if r["cost"] != 0:
                 findings.append(f"ARCHITECTURE_REGRESSION:{r['case_id']}")
         elif r["route"] == "unresolved" and r["standing"] == "ALIVE":
             findings.append(f"ALIVE_WITHOUT_ROUTE:{r['case_id']}")
     if findings:
-        return FactoryVerdict("BUILD_BROKEN", findings=tuple(findings),
-                              experience_routes=routes,
-                              investigation_cost=inv_cost, replay_cost=replay_cost)
+        return FactoryVerdict(
+            "BUILD_BROKEN",
+            findings=tuple(findings),
+            experience_routes=routes,
+            investigation_cost=inv_cost,
+            replay_cost=replay_cost,
+        )
     standing = "ALIVE" if routes > 0 else "UNKNOWN"
-    return FactoryVerdict(standing, experience_routes=routes,
-                          investigation_cost=inv_cost, replay_cost=replay_cost)
+    return FactoryVerdict(
+        standing,
+        experience_routes=routes,
+        investigation_cost=inv_cost,
+        replay_cost=replay_cost,
+    )

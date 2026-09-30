@@ -20,7 +20,7 @@ from autofde_lab.wd_fa.synthetic import RULES
 from autofde_lab.wd_fa.triage import compile_experience, triage
 
 from .verify import verify_ledger
-from .world import PRODUCER_ID, WORLD_ID, class_key, generate_stream
+from .world import PRODUCER_ID, class_key, generate_stream
 
 LEDGER = "ledger.jsonl"
 _FORBIDDEN_LLM_MODULES = ("dspy", "openai", "anthropic", "litellm", "langchain")
@@ -76,28 +76,52 @@ def run_factory(
                 )
                 continue
             if result.standing is not Standing.UNKNOWN:
-                emit({**base, "standing": result.standing.value,
-                      "route": "unresolved", "cost": result.exploratory_steps})
+                emit(
+                    {
+                        **base,
+                        "standing": result.standing.value,
+                        "route": "unresolved",
+                        "cost": result.exploratory_steps,
+                    }
+                )
                 continue
             obs = world.investigate(case, budget)
             if obs is None:
-                emit({**base, "standing": "UNKNOWN", "route": "unresolved",
-                      "cost": budget})
+                emit(
+                    {
+                        **base,
+                        "standing": "UNKNOWN",
+                        "route": "unresolved",
+                        "cost": budget,
+                    }
+                )
                 continue
             receipt = issue_receipt(
-                case, result, producer_id=PRODUCER_ID, verifier_id=obs.observer_id,
+                case,
+                result,
+                producer_id=PRODUCER_ID,
+                verifier_id=obs.observer_id,
                 observed_disposition=obs.mode_id,
             )
             exp = compile_experience(
-                case, result, receipt, mode_id=obs.mode_id,
+                case,
+                result,
+                receipt,
+                mode_id=obs.mode_id,
                 next_action=f"repeat_verified_procedure_{obs.mode_id}",
             )
             rules.append(exp.mode)
             experiences[obs.mode_id] = exp
             emit(
-                {**base, "standing": "ALIVE", "route": "investigation",
-                 "admitted_mode": obs.mode_id, "cost": obs.probes,
-                 "receipt": asdict(receipt), "experience_id": exp.experience_id}
+                {
+                    **base,
+                    "standing": "ALIVE",
+                    "route": "investigation",
+                    "admitted_mode": obs.mode_id,
+                    "cost": obs.probes,
+                    "receipt": asdict(receipt),
+                    "experience_id": exp.experience_id,
+                }
             )
 
     report: dict = {"ledger": str(ledger_path), "cases": len(cases)}
@@ -126,8 +150,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--budget", type=int, default=6)
     p.add_argument("--no-sony", action="store_true")
     a = p.parse_args(argv)
-    r = run_factory(a.out, n_classes=a.classes, repeats=a.repeats, seed=a.seed,
-                    budget=a.budget, sony=not a.no_sony)
+    r = run_factory(
+        a.out,
+        n_classes=a.classes,
+        repeats=a.repeats,
+        seed=a.seed,
+        budget=a.budget,
+        sony=not a.no_sony,
+    )
     print(json.dumps(r, indent=2, sort_keys=True))
     ok = r["verdict"]["technical_standing"] == "ALIVE" and not r["llm_modules_loaded"]
     return 0 if ok else 1
