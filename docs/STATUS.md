@@ -2713,3 +2713,18 @@ Not deferred-for-later — structurally not WIP:
   the three standing dimensions. Legitimately hand-authored **because it is a vocabulary, not a
   standing claim**; nothing in it is `ALIVE`.
 - `.claude/rules/fde-authority-boundary.md` — the organizational-layer boundary rule.
+
+## Pass — autonomous LLM-free factory loop (`autofde_lab.factory`)
+
+Scope: one driver for EXPLORE -> MANUFACTURE -> EXPLOIT over the WD failure-analysis surface
+(`wd_fa`) with no human gate awaited and no language model.
+
+| Item | State | Witness |
+|---|---|---|
+| Loop + fresh ledger verifier | **measured win** (technicalStanding, in-process simulator only) | `PYTHONPATH=src .venv/bin/python -m pytest tests/factory -q --import-mode=importlib` -> 11 passed. Run of `python -m autofde_lab.factory`: 25 cases, 18 resolved by compiled experience at cost 0, 6 classes investigated once each, `llm_modules_loaded: []`. |
+| Mutation falsifiers | **measured win** | tampered receipt, wrong-investigation join, missing investigation, re-investigated solved class, self-certified receipt each yield `BUILD_BROKEN` with a typed finding. |
+| Unobservable class | **measured win** | world with no ground truth leaves the case `UNKNOWN`, no receipt, no experience. |
+| Sony crown inside the run | **PARTIAL_ALIVE** | invoked as a runtime projection only (`ALIVE`, ceiling `BOUNDED_LOCAL_SONY_ROLE_ACCEPTANCE_ONLY_NO_SONY_CLOUD_AUTHORITY`); it does not participate in the factory's standing. |
+| `organizationalStanding` / `enterpriseStanding` | **UNKNOWN** | no component computes them; emitted as `UNKNOWN` by construction. |
+| Real WD sources / real Sony platform | **BLOCKED:NO_ACCESS** | the "world" is a seeded simulator; it proves the loop's mechanics, not any real failure class. |
+| `uv sync --extra=all` in this container | **recorded negative** | `dm-tree` source build fails (gcc 13 / abseil), and the C++ extension fails CMake generate; ran from `src/` with pure-Python extras. `tests/wd_fa` needs `tpot` (**UNSUPPORTED** here), not used by the loop. |
