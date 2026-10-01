@@ -19,10 +19,18 @@ from autofde_lab.wd_fa.receipts import issue_receipt
 from autofde_lab.wd_fa.synthetic import RULES
 from autofde_lab.wd_fa.triage import compile_experience, triage
 
-from .verify import verify_ledger
+from .chain import GENESIS, seal
+from .verify import SCHEMA, verify_ledger
 from .world import PRODUCER_ID, class_key, generate_stream
 
 LEDGER = "ledger.jsonl"
+
+
+def seal_one(row: dict, prev: str) -> list[dict]:
+    # incremental form of chain.seal so rows hit disk as they occur
+    return seal([row], prev)
+
+
 _FORBIDDEN_LLM_MODULES = ("dspy", "openai", "anthropic", "litellm", "langchain")
 
 
@@ -42,14 +50,29 @@ def run_factory(
     rules = list(RULES)
     experiences: dict[str, object] = {}
 
+    prev = GENESIS
     with ledger_path.open("a", encoding="utf-8") as ledger:
 
         def emit(record: dict) -> None:
+            nonlocal prev
             record["seq"] = emit.n
             emit.n += 1
-            ledger.write(json.dumps(record, sort_keys=True, default=str) + "\n")
+            record["human_gate"] = "NOT_AWAITED_DISPOSITION_UNCLAIMED"
+            record["authority"] = "SELECT_ONLY"
+            (sealed,) = seal_one(record, prev)
+            prev = sealed["digest"]
+            ledger.write(json.dumps(sealed, sort_keys=True, default=str) + "\n")
             ledger.flush()
 
+        header = {
+            "type": "header",
+            "schema": SCHEMA,
+            "budget": budget,
+            "world": world.spec(),
+        }
+        (sealed,) = seal_one(header, prev)
+        prev = sealed["digest"]
+        ledger.write(json.dumps(sealed, sort_keys=True) + "\n")
         emit.n = 0
         for case in cases:
             result = triage(case, rules)
@@ -81,6 +104,7 @@ def run_factory(
                         **base,
                         "standing": result.standing.value,
                         "route": "unresolved",
+                        "reason": "TRIAGE_NOT_ALIVE_NOT_UNKNOWN",
                         "cost": result.exploratory_steps,
                     }
                 )
@@ -92,6 +116,7 @@ def run_factory(
                         **base,
                         "standing": "UNKNOWN",
                         "route": "unresolved",
+                        "reason": "NO_OBSERVATION_WITHIN_BUDGET",
                         "cost": budget,
                     }
                 )
@@ -124,6 +149,7 @@ def run_factory(
                 }
             )
 
+    ledger_path.with_suffix(".head").write_text(prev + "\n")
     report: dict = {"ledger": str(ledger_path), "cases": len(cases)}
     report["verdict"] = asdict(verify_ledger(ledger_path))
     if sony:

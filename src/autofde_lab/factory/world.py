@@ -41,9 +41,18 @@ class FaultWorld:
         h = hashlib.sha256(f"{self._seed}:{key}".encode()).digest()
         return _CAUSES[h[0] % len(_CAUSES)]
 
-    def investigate(self, case: FailureCase, budget: int) -> Observation | None:
+    def spec(self) -> dict:
+        return {
+            "seed": self._seed,
+            "unobservable": sorted(list(k) for k in self._unobservable),
+        }
+
+    @classmethod
+    def from_spec(cls, spec: Mapping) -> "FaultWorld":
+        return cls(int(spec["seed"]), frozenset(tuple(k) for k in spec["unobservable"]))
+
+    def investigate_key(self, key: tuple, budget: int) -> Observation | None:
         """Spend probes walking candidate causes; refuse if the budget runs out."""
-        key = class_key(case.facts)
         if key in self._unobservable:
             return None
         truth = self._cause(key)
@@ -53,6 +62,9 @@ class FaultWorld:
             if cause == truth:
                 return Observation(mode_id=f"MODE-{truth}-{_tag(key)}", probes=probes)
         return None
+
+    def investigate(self, case: FailureCase, budget: int) -> Observation | None:
+        return self.investigate_key(class_key(case.facts), budget)
 
 
 def _tag(key: tuple) -> str:

@@ -2717,14 +2717,19 @@ Not deferred-for-later — structurally not WIP:
 ## Pass — autonomous LLM-free factory loop (`autofde_lab.factory`)
 
 Scope: one driver for EXPLORE -> MANUFACTURE -> EXPLOIT over the WD failure-analysis surface
-(`wd_fa`) with no human gate awaited and no language model.
+(`wd_fa`) with no human gate awaited and no language model. Hardened after an ERRC audit
+(83 read-only agents; 39 candidates, 20 survived two independent skeptics each).
 
 | Item | State | Witness |
 |---|---|---|
-| Loop + fresh ledger verifier | **measured win** (technicalStanding, in-process simulator only) | `PYTHONPATH=src .venv/bin/python -m pytest tests/factory -q --import-mode=importlib` -> 11 passed. Run of `python -m autofde_lab.factory`: 25 cases, 18 resolved by compiled experience at cost 0, 6 classes investigated once each, `llm_modules_loaded: []`. |
-| Mutation falsifiers | **measured win** | tampered receipt, wrong-investigation join, missing investigation, re-investigated solved class, self-certified receipt each yield `BUILD_BROKEN` with a typed finding. |
-| Unobservable class | **measured win** | world with no ground truth leaves the case `UNKNOWN`, no receipt, no experience. |
-| Sony crown inside the run | **PARTIAL_ALIVE** | invoked as a runtime projection only (`ALIVE`, ceiling `BOUNDED_LOCAL_SONY_ROLE_ACCEPTANCE_ONLY_NO_SONY_CLOUD_AUTHORITY`); it does not participate in the factory's standing. |
+| Loop + fresh ledger verifier | **measured win** (technicalStanding, in-process simulator only) | `PYTHONPATH=src .venv/bin/python -m pytest tests/factory -q --import-mode=importlib` -> 24 passed. `python -m autofde_lab.factory`: 25 cases, 18 resolved by compiled experience at cost 0, 6 classes investigated once each, 1 unresolved (counted), `llm_modules_loaded: []`, Sony runtime projection `ALIVE`. Two same-seed runs are byte-identical (ledger + head). |
+| **Verifier defect found and fixed** | **recorded negative, then measured win** | The first verifier marked a fully fabricated 2-row ledger (no world, invented mode, verifier id `"anyone-i-like"`) `ALIVE` with zero findings; reproduced locally before fixing. The original mutation tests only edited genuine ledgers, so they could not express forgery. Fix: ledger header carries the world spec and the verifier replays every investigation against it; row schema + closed enums; hash chain + head file; seed_rule claims checked. The same forged ledger is now `BUILD_BROKEN`. |
+| Mutation + forgery falsifiers | **measured win** | tampered receipt, wrong-investigation join, missing investigation, re-investigated solved class, self-certified receipt, wrong mode, unobservable-class-claimed-resolved, unresolved-but-observable, fabricated seed_rule, forged ledger with/without own header, broken chain, tail truncation, missing head, malformed row. Mutations are re-sealed so the semantic check, not the chain, must fire. |
+| Unobservable class | **measured win** | world with no ground truth leaves the case `UNKNOWN` with typed `reason`, no receipt, no experience; counted in `unresolved`. |
+| Human gate | **measured win** | each row carries `human_gate: NOT_AWAITED_DISPOSITION_UNCLAIMED`, `authority: SELECT_ONLY`; nothing waits on a person and no disposition is claimed. |
+| Sony crown inside the run | **PARTIAL_ALIVE** | invoked as a runtime projection only (`ALIVE`, ceiling `BOUNDED_LOCAL_SONY_ROLE_ACCEPTANCE_ONLY_NO_SONY_CLOUD_AUTHORITY`); not ledger rows, does not participate in factory standing. Its BRCE-backed path is not reconciled with the repo boundary here. |
+| World spec identity | **UNKNOWN (open dependency)** | a forger who writes rows *and* a consistent fake world spec in the header is not caught; the spec must be pinned externally. The hash chain does not change this. |
 | `organizationalStanding` / `enterpriseStanding` | **UNKNOWN** | no component computes them; emitted as `UNKNOWN` by construction. |
-| Real WD sources / real Sony platform | **BLOCKED:NO_ACCESS** | the "world" is a seeded simulator; it proves the loop's mechanics, not any real failure class. |
+| Real WD sources / real Sony platform | **BLOCKED:NO_ACCESS** | the "world" is a seeded simulator; it proves loop mechanics, not any real failure class. |
+| Deferred from the audit (not built) | **deferred/scoped** | durable evidence/observation artifacts bound to rows and Goal-bound consequence witness; role-requirements-as-data ingest; multi-engagement stream with persisted experience store (ledger is rewritten each run, no cross-run compounding); typed UNREPRESENTABLE routing for unknown class_key schema; adopting `sa2a/experience` lifecycle/`receipts` ledger instead of the factory's own; capability/ontology registration. Nothing under these was executed. |
 | `uv sync --extra=all` in this container | **recorded negative** | `dm-tree` source build fails (gcc 13 / abseil), and the C++ extension fails CMake generate; ran from `src/` with pure-Python extras. `tests/wd_fa` needs `tpot` (**UNSUPPORTED** here), not used by the loop. |
