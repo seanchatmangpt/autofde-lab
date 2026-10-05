@@ -5,6 +5,28 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
+Last update: **pass 48** (2026-09-25/26) — **v26.9.25 ALOOP cycle merged: ALOOP-001
+autonomous-loop court r9 (PR #181), OSIRIS bounded companion control kernel (PR #185),
+doctrine boundary lab (Lane 6), bounded DSPy 3.4.0 Pyodide compatibility court (#182),
+region-granular non-LLM benchmark (#184).** Spec: `docs/rfcs/RFC-ALOOP-v26.9.25.md`
+(ALOOP-001 implemented at court `aloop-001/v26.9.25-r9`).
+
+**Measured win** — merge census this session (`git log --oneline --since="2026-09-25 16:00"`,
+22 commits naming the five capabilities): ALOOP-001 court r9 via merge `b417eea6` (PR #181;
+court r9 repair C2 `ccec4dd3`); OSIRIS companion via merge `cef0663e` (PR #185; kernel
+`7208c041`, exports `631419d7`, gate-independence tests `daabd369`/`ac8bec18`); doctrine
+lab Lane 6 `91678ab5` plus repair commits `d6becb59`→`79dfa24e` (direct commits — no PR
+merge named in the log); DSPy WASM court `44b8bc5d` (#182); RGI benchmark `4fae1e68` (#184).
+
+**Measured win** — both merged packages present as documented this session:
+`src/autofde_lab/simulation/doctrine_lab/` ships `__main__.py`
+(`python -m autofde_lab.simulation.doctrine_lab --out DIR`), seal key from
+`AUTOFDE_DOCTRINE_LAB_KEY` (hex, ≥ 32 bytes; short/non-hex keys refused, `seal.py`), and
+`verify_run` enforcing authority NONE, ceiling ≤ CONSTRUCT and no selection independently
+of replay (`verify.py`). `src/autofde_lab/companion/__init__.py` exports the typed
+`__all__` surface (`OSIRIS`, `CompanionDecision`, `CompanionReceipt`, …) with independent
+speech and action policy gates.
+
 Last update: **pass 47** (2026-09-25) — **IEC-011 LLM residue census: the *Find* step in
 front of the retirement ledger. `LLMResidue = 94` static edges at autofde-lab@85c3674
 (`ALIVE`, replayed byte for byte); 5 edges fenced; unfenced growth now fails PR CI;

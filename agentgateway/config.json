@@ -1,0 +1,35 @@
+{
+  "config": {
+    "logging": {
+      "format": "json"
+    }
+  },
+  "frontendPolicies": {
+    "cors": {
+      "allowOrigins": ["*"],
+      "allowHeaders": ["content-type", "authorization", "cache-control"]
+    }
+  },
+  "binds": [
+    {
+      "port": 8080,
+      "listeners": [
+        {
+          "routes": [
+            {
+              "policies": {
+                "a2a": {},
+                "mcp": {}
+              },
+              "backends": [
+                {
+                  "host": "http://127.0.0.1:9977"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

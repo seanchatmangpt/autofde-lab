@@ -1,0 +1,6 @@
+# Goose Project Hints (.goosehints)
+# Generated from AAIF Vanilla Standards Pack
+
+Use decision_catalog/decision_match/decision_solve MCP tools. Never claim SOLVED without a receipt_sha256. Typed refusals are results, not errors.
+
+@AGENTS.md

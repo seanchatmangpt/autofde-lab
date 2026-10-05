@@ -27,9 +27,33 @@ notably received contributions through the [ANITI](https://aniti.univ-toulouse.f
 [TUPLES](https://tuples.ai/) projects, and also from [ANU](https://www.anu.edu.au/). Renaming
 this fork does not transfer that copyright — see `NOTICE`.
 
-## What's new in v26.9.1
+## What's new
 
-Two additive capabilities merged this cycle, per `docs/jira/v26.9.1/PLAN.md` (that plan's own
+**v26.9.28** — independent plan and formal-method admission courts:
+
+- **Graphlaw plan-admission court** — `guarded_candidate(..., court=...)` in the fabric
+  guardrails accepts an independent court callable backed by the published graphlaw WASM
+  module; a typed `PlanRefused` (structured index/action/unmet N-Quads details) becomes
+  `REFUSED_OUTPUT` while protocol faults re-raise. `src/autofde_lab/fabric/graphlaw_court.py`,
+  merges `55266bde`, `12ab0552`.
+- **TLA+ TLC court** — `python -m autofde_lab.iec tlc-court --model brce|mutant:<KIND> --out DIR`
+  model-checks the BRCE reference and its mutants with the digest-pinned tla2tools 1.7.4
+  (typed refusals `JAR_DIGEST_MISMATCH`, `UNBOUND_CONSTANT`); `AUTOFDE_TLC_REQUIRED=1` turns
+  the toolchain-absent skip into a failure. `src/autofde_lab/iec/tlc_court.py`, merge `2df06f46`.
+
+**v26.9.25** — the ALOOP autonomous-loop-courts cycle, per `docs/rfcs/RFC-ALOOP-v26.9.25.md`
+(ALOOP-001 implemented at court `aloop-001/v26.9.25-r9`):
+
+- **Doctrine boundary lab** — a boundary-respecting lab over the Fortune-5 twin:
+  `python -m autofde_lab.simulation.doctrine_lab` runs and verifies a sealed doctrine
+  matrix (seal key from `AUTOFDE_DOCTRINE_LAB_KEY`, hex ≥ 32 bytes); `verify_run`
+  enforces authority NONE, ceiling ≤ CONSTRUCT and no selection independently of
+  replay. `src/autofde_lab/simulation/doctrine_lab/`, merge `91678ab5`.
+- **OSIRIS bounded companion control kernel** — typed companion kernel
+  (`autofde_lab.companion`, `__all__` exports) with independent speech and action
+  policy gates. `src/autofde_lab/companion/`, merges `631419d7`, `7208c041`.
+
+**v26.9.1** — Two additive capabilities merged this cycle, per `docs/jira/v26.9.1/PLAN.md` (that plan's own
 "Last Updated" section carries the full merge closure record):
 
 - **Fortune-5 SAFe DfCM digital twin simulation** — a simulatable full SAFe backlog hierarchy

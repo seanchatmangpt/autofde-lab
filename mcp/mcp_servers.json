@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+
+    "autofde_decision_fabric": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "autofde_lab.aaif"]
+    },
+
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/workspace"]
+    },
+    "fetch": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["mcp-server-fetch"]
+    },
+    "remote_service": {
+      "type": "streamable_http",
+      "url": "https://mcp.internal.net/sse",
+      "headers": {
+        "Authorization": "Bearer ${MCP_REMOTE_TOKEN}"
+      }
+    }
+  }
+}
