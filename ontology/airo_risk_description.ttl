@@ -1,0 +1,140 @@
+# AIRo risk description for autofde-lab's beam-diagnosis automation system.
+# Vocabulary: https://w3id.org/airo (DelaramGlp/airo airo.ttl).
+# Every evidence citation below is a real path in this repository.
+
+@prefix airo: <https://w3id.org/airo#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix afl: <https://autofde-lab.example/ontology/airo#> .
+
+<https://autofde-lab.example/airo/beam-diagnosis-system> rdf:type airo:AISystem ;
+    rdfs:label "AutoFDE Lab beam-diagnosis automation system"@en ;
+    dcterms:description """Non-LLM planner that automates fault diagnosis and
+        mitigation for beam/sregym benchmark problems: reads problem evidence,
+        proposes a diagnosis class and a mitigation action, and reports
+        Diagnosis.success / Mitigation.success to the sregym grader."""@en ;
+    airo:hasPurpose afl:Purpose_AutomatedDiagnosis ;
+    airo:hasRisk afl:Risk_SilentUndercount ;
+    airo:hasRisk afl:Risk_MisclassificationDrift ;
+    airo:hasRiskControl afl:Control_SregymComparisonEvidence ;
+    airo:hasRiskControl afl:Control_YieldAccounting ;
+    airo:hasRiskControl afl:Control_PlannerCourts .
+
+# ---------------------------------------------------------------- Purpose
+afl:Purpose_AutomatedDiagnosis rdf:type airo:Purpose ;
+    rdfs:label "Automate beam fault diagnosis and mitigation on the sregym benchmark"@en .
+
+# ---------------------------------------------------------------- Risks
+afl:Risk_SilentUndercount rdf:type airo:Risk ;
+    rdfs:label "Environment-blocked problems silently counted as model failures (or wins)"@en ;
+    dcterms:description """10 of 25 sampled sregym problems were structurally
+        undeployable in this environment (0-file Helm charts in
+        SREGym-applications/astronomy-shop, FleetCast, train-ticket). STATUS.md
+        pass 20 separates them as BLOCKED:ENVIRONMENT rather than counting them
+        either way; the risk is that this class is silently folded into the
+        comparable denominator."""@en ;
+    rdfs:seeAlso <file:docs/STATUS.md> ;
+    rdfs:seeAlso <file:docs/2026-08-09-representative-sample-batch-results.tsv> ;
+    airo:hasConsequence afl:Consequence_InflatedRate .
+
+afl:Risk_MisclassificationDrift rdf:type airo:Risk ;
+    rdfs:label "Diagnosis/mitigation misclassification drift vs published SOTA"@en ;
+    dcterms:description """The measured representative-sample rate (Diagnosis 1/15,
+        Mitigation 1/15 = 6.7% each) is far below sregym's published aggregate
+        (diagnosis 38.9-72.6%, mitigation 57.3-78.5%) and far below the earlier
+        hand-picked 4-trial 75%/75% — the latter confirmed its own caveat. Risk:
+        classification of diagnosis vs mitigation outcomes drifts from the
+        grader's ground truth and overstates capability."""@en ;
+    rdfs:seeAlso <file:docs/STATUS.md> ;
+    rdfs:seeAlso <file:docs/2026-08-09-lane-c-non-llm-planner-design.md> ;
+    airo:hasConsequence afl:Consequence_InflatedRate .
+
+# ------------------------------------------------------------- Consequences
+afl:Consequence_InflatedRate rdf:type airo:Consequence ;
+    rdfs:label "Reported capability rate overstated against real yield"@en ;
+    airo:hasSeverity afl:Severity_Moderate ;
+    airo:hasImpact afl:Impact_EvidenceIntegrity .
+
+afl:Impact_EvidenceIntegrity rdf:type airo:Impact ;
+    rdfs:label "Loss of evidence integrity in benchmark reporting"@en ;
+    airo:hasSeverity afl:Severity_Major ;
+    airo:hasImpactOnStakeholder afl:Stakeholder_BenchmarkConsumer .
+
+afl:Stakeholder_BenchmarkConsumer rdf:type airo:Stakeholder ;
+    rdfs:label "Consumers of autofde-lab benchmark claims (downstream repos, this operator)"@en .
+
+afl:Severity_Moderate rdf:type airo:Severity ;
+    rdfs:label "moderate (qualitative, self-assessed)"@en .
+
+afl:Severity_Major rdf:type airo:Severity ;
+    rdfs:label "major (qualitative, self-assessed)"@en .
+
+# --------------------------------------------------------- Risk sources
+afl:Source_EnvironmentBlockedClass rdf:type airo:RiskSource ;
+    rdfs:label "Structurally undeployable sregym environments (BLOCKED:ENVIRONMENT class)"@en ;
+    dcterms:description """Documented in STATUS.md pass 20: 10/25 sampled problems
+        have 0-file Helm chart_path before the driver's own logic runs."""@en ;
+    airo:isRiskSourceFor afl:Risk_SilentUndercount .
+
+afl:Source_GraderClassificationGap rdf:type airo:RiskSource ;
+    rdfs:label "Gap between grader ground truth and the planner's own success classification"@en ;
+    dcterms:description """STATUS.md pass 19/20: a real run can complete all three
+        kubectl rollout undo commands yet report Diagnosis.success=False and
+        Mitigation.success=False — diagnosis/mitigation outcomes are not the same
+        thing as command success."""@en ;
+    airo:isRiskSourceFor afl:Risk_MisclassificationDrift .
+
+# --------------------------------------------------------- Risk controls
+afl:Control_SregymComparisonEvidence rdf:type airo:RiskControl ;
+    rdfs:label "sregym-comparison evidence: representative-sample run + decision-basis court"@en ;
+    dcterms:description """A programmatically generated stride-5 systematic sample
+        (25 of 123 registrations, never hand-edited), raw TSV retained; the
+        decision-basis sregym test pins the comparison basis. Paths:
+        docs/2026-08-09-representative-sample-batch-results.tsv,
+        tests/sota/test_decision_basis_sregym_chicago.py."""@en ;
+    rdfs:seeAlso <file:docs/2026-08-09-representative-sample-batch-results.tsv> ;
+    rdfs:seeAlso <file:tests/sota/test_decision_basis_sregym_chicago.py> ;
+    airo:mitigatesRiskConcept afl:Risk_SilentUndercount ;
+    airo:mitigatesRiskConcept afl:Risk_MisclassificationDrift .
+
+afl:Control_YieldAccounting rdf:type airo:RiskControl ;
+    rdfs:label "Yield accounting: result-summary grader-field contract test"@en ;
+    dcterms:description """tests/sregym_sota/test_result_summary.py asserts the
+        summary uses only real sregym grader fields (Diagnosis.success,
+        Mitigation.success, TTL, TTM) — the yield table cannot silently change
+        its denominator or fields."""@en ;
+    rdfs:seeAlso <file:tests/sregym_sota/test_result_summary.py> ;
+    airo:mitigatesRiskConcept afl:Risk_SilentUndercount .
+
+afl:Control_PlannerCourts rdf:type airo:RiskControl ;
+    rdfs:label "Planner courts: non-LLM planner behaviour tests"@en ;
+    dcterms:description """tests/reasoning/test_planner_federation_chicago.py and
+        tests/reasoning/test_dflss_planner_solve_chicago.py exercise the real
+        planner; a diagnosis/mitigation classification change must pass these
+        before any claim moves."""@en ;
+    rdfs:seeAlso <file:tests/reasoning/test_planner_federation_chicago.py> ;
+    rdfs:seeAlso <file:tests/reasoning/test_dflss_planner_solve_chicago.py> ;
+    airo:mitigatesRiskConcept afl:Risk_MisclassificationDrift .
+
+# ------------------------------------------------- Qualitative assessment
+afl:Risk_SilentUndercount airo:hasLikelihood afl:Likelihood_Possible ;
+    airo:hasRiskControl afl:Control_SregymComparisonEvidence ,
+                        afl:Control_YieldAccounting .
+
+afl:Risk_MisclassificationDrift airo:hasLikelihood afl:Likelihood_Rare ;
+    airo:hasRiskControl afl:Control_SregymComparisonEvidence ,
+                        afl:Control_PlannerCourts .
+
+afl:Likelihood_Possible rdf:type airo:Likelihood ;
+    rdfs:label "possible (qualitative, self-assessed: class observed in 10/25 sampled problems)"@en .
+
+afl:Likelihood_Rare rdf:type airo:Likelihood ;
+    rdfs:label "rare (qualitative, self-assessed: grader-field contract test gates it)"@en .
+
+# -------------------------------------------------------- Modality / scope
+afl:Modality_Assessed rdf:type airo:Modality ;
+    rdfs:label "as-is assessment, qualitative, self-assessed on this checkout"@en .
+
+<https://autofde-lab.example/airo/beam-diagnosis-system> airo:hasModality afl:Modality_Assessed .
