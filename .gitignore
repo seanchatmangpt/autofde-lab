@@ -72,3 +72,9 @@ vendor/bcinr/target/
 *.out
 *.toc
 *.synctex.gz
+
+# lane-lease build roots (fan-out campaign)
+_build/
+target/
+_build-lane*/
+target-lane*/
