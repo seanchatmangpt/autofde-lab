@@ -89,6 +89,15 @@ whole-suite collection is `ALIVE`. An exported `PYTHONPATH` in the
 processes need it explicitly, since they don't inherit pytest's in-process
 `sys.path` mutation.
 
+**Correction, 2026-09-28 (measured, do not cite the paragraph above without it):** the five
+`__init__.py` files under `tests/solvers/` **exist on master** (`git ls-files tests/solvers | grep
+__init__` lists five; three were already present at `ae51e29`, and `tests/` itself has never had
+one). Consequence: pytest names those modules `solvers.python.*`, rooted at `tests/`, so Ray's
+spawned workers need `tests/` on `PYTHONPATH` -- the repo root alone gives
+`ModuleNotFoundError: No module named 'solvers'`, which is exactly what CI recorded. `Justfile`
+and the `ci.yml` integration step now export both paths. `--import-mode=importlib` remains the
+right flag for a *combined* collection.
+
 Separately, joblib and pyarrow were missing from the venv entirely (not
 corrupt — absent), causing `tests/domains` and `tests/scheduling` collection
 errors; fixed by installing both, then a full `uv sync --extra=all` to also

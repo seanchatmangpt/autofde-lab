@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:falsifier-06-fond-replanning a ptd:Falsifier ; ptd:wave ptd:FONDReplanning ; ptd:missing ptd:policy ; ptd:expected ptd:REFUSE .

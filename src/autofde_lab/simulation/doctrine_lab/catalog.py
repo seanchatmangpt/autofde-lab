@@ -23,6 +23,10 @@ CATALOG_PATH = Path(__file__).with_name("data") / "catalog.json"
 CATALOG_SHA256 = "49d404d32300e17704580455bbbd3e4a60773dbd1ff091c90e4a310a3bb65e30"
 DOCTRINE_IRI = "https://ggen.dev/ontology/strategic-doctrine#"
 MAX_TITLE = 60
+CATALOG_SCHEMA = "autofde-lab.doctrine-lab.catalog/v1"
+# The two allowed free-text values (provenance, non_claim) are bounded single-line
+# strings: a short statement fits, a paragraph of source text does not.
+MAX_FREE_TEXT = 160
 # Allow-lists: anything outside them (free text such as ``quote`` or ``summary``)
 # is refused, so no source text can ride in under a re-pinned digest.
 TOP_LEVEL_KEYS = frozenset(
@@ -42,11 +46,10 @@ ENTRY_KEYS = frozenset({"ordinal", "iri", "short_title", "status", "primitives"}
 PRIMITIVE_KEYS = frozenset({"name", "dual", "iri"})
 STATUSES = frozenset({"operationalized", "stub"})
 
-# Catalogs that passed ``load_catalog`` in this process, keyed by sha256.
-# Episodes and seals refuse any catalog digest not in this registry
-# (forged-origin guard) and bind strategy signatures against the admitted
-# Catalog object, not only its digest.
-_ADMITTED_CATALOGS: dict[str, Catalog] = {}
+# Catalogs that passed ``load_catalog`` in this process, by sha256. Episodes and
+# seals refuse any catalog digest not in this map (forged-origin guard), and
+# seals resolve the admitted Strategy from it to bind a receipt's signature.
+_ADMITTED: dict[str, "Catalog"] = {}
 
 
 class CatalogIntegrityError(ValueError):
@@ -113,6 +116,20 @@ def _check(doc: dict) -> None:
             f"extra={sorted(keys - TOP_LEVEL_KEYS)} "
             f"missing={sorted(TOP_LEVEL_KEYS - keys)}"
         )
+    if doc["schema"] != CATALOG_SCHEMA:
+        raise CatalogIntegrityError(
+            f"catalog schema {doc['schema']!r} is not {CATALOG_SCHEMA}"
+        )
+    for field in ("provenance", "non_claim"):
+        value = doc[field]
+        if (
+            not isinstance(value, str)
+            or len(value) > MAX_FREE_TEXT
+            or any(ch in value for ch in "\n\r")
+        ):
+            raise CatalogIntegrityError(
+                f"catalog {field} is not a single-line string <= {MAX_FREE_TEXT} chars"
+            )
     declared = tuple(
         p.get("name") if isinstance(p, dict) else None
         for p in doc.get("primitives", ())
@@ -186,12 +203,12 @@ def _check_entry(entry: object) -> None:
 
 def is_admitted(digest: str) -> bool:
     """True iff a catalog with this sha256 passed ``load_catalog`` in-process."""
-    return digest in _ADMITTED_CATALOGS
+    return digest in _ADMITTED
 
 
 def admitted_catalog(digest: str) -> Catalog | None:
-    """The admitted Catalog object for this sha256, or None if never admitted."""
-    return _ADMITTED_CATALOGS.get(digest)
+    """The Catalog admitted in-process under ``digest``, or None."""
+    return _ADMITTED.get(digest)
 
 
 def _no_duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -236,5 +253,5 @@ def load_catalog(
             for s in doc["strategies"]
         ),
     )
-    _ADMITTED_CATALOGS[digest] = catalog
+    _ADMITTED[digest] = catalog
     return catalog

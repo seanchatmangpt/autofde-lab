@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:OCELReceipts a ptd:ResearchWave ; ptd:requires ptd:EventIdentity, ptd:ObjectIdentity, ptd:ReplayBinding .

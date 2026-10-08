@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chatmangpt.com/schema/autofde/delegation-admission-history/v1",
+  "title": "Delegation Admission History v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "snapshots"],
+  "properties": {
+    "schema": {
+      "const": "autofde-lab.delegation-admission-history/1"
+    },
+    "snapshots": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sequence", "artifact"],
+        "properties": {
+          "sequence": {"type": "integer", "minimum": 0},
+          "artifact": {
+            "$ref": "delegation-admission-artifact-v1.schema.json"
+          }
+        }
+      }
+    }
+  }
+}

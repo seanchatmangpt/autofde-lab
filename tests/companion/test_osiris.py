@@ -233,3 +233,72 @@ def test_voice_budget_is_enforced_by_fast_loop():
     )
     assert output.speech is None
     assert output.receipt.reason == "SPEECH:REFUSED:VOICE_BUDGET_EXCEEDED"
+
+
+def test_receipt_identity_binds_exact_context_not_only_decision() -> None:
+    def run_with(value: str):
+        kernel = OSIRIS(subject="sean")
+        kernel.ingest(default_event("voice-1", "voice.user", 1_000))
+        kernel.observe(
+            Observation(
+                key="repo.head",
+                value=value,
+                observed_at_ms=1_000,
+                ttl_ms=5_000,
+                provenance="github",
+            )
+        )
+        return kernel.cycle(
+            now_ms=1_001,
+            deliberator=lambda _context: CompanionDecision(
+                speech=SpeechCandidate(
+                    text="The repository head is admitted.",
+                    claims=("repo.head",),
+                )
+            ),
+        )
+
+    left = run_with("a" * 40)
+    replay = run_with("a" * 40)
+    changed = run_with("b" * 40)
+
+    assert left.receipt.context_digest == replay.receipt.context_digest
+    assert left.receipt.receipt_id == replay.receipt.receipt_id
+    assert changed.receipt.context_digest != left.receipt.context_digest
+    assert changed.receipt.receipt_id != left.receipt.receipt_id
+
+
+def test_deliberator_cannot_override_typed_route() -> None:
+    kernel = OSIRIS(subject="sean")
+    kernel.ingest(default_event("voice-1", "voice.user", 1_000))
+    output = kernel.cycle(
+        now_ms=1_001,
+        deliberator=lambda _context: CompanionDecision(
+            action=ActionCandidate(
+                intent=IntentKind.WORK,
+                capability="sjira.route",
+                target_surface=Surface.BRCE,
+            )
+        ),
+    )
+    assert output.brce_request is None
+    assert output.receipt.standing is Standing.REFUSED
+    assert "TARGET_ROUTE_MISMATCH:brce!=sjira" in output.receipt.reason
+
+
+def test_voice_candidate_never_mints_authority() -> None:
+    kernel = OSIRIS(subject="sean")
+    kernel.ingest(default_event("voice-1", "voice.user", 1_000))
+    output = kernel.cycle(
+        now_ms=1_001,
+        deliberator=lambda _context: CompanionDecision(
+            action=ActionCandidate(
+                intent=IntentKind.PLAN,
+                capability="autofde.plan",
+                parameters={"requested_scope": "production"},
+            )
+        ),
+    )
+    assert output.brce_request is not None
+    assert output.brce_request.authority_claim == "NONE"
+    assert output.receipt.to_ocel_event()["attributes"]["authority"] == "NONE"

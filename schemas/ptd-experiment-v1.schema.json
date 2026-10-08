@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://autofde-lab.dev/schemas/ptd-experiment-v1.schema.json",
+  "title": "Phasing Target Defense Experiment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "experiment_id", "criteria", "trials"],
+  "properties": {
+    "schema": {"const": "autofde-lab.ptd.experiment/v1"},
+    "experiment_id": {"type": "string", "minLength": 1},
+    "criteria": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_knowledge_retention", "min_regeneration_advantage", "require_strong_phase_regime"],
+      "properties": {
+        "max_knowledge_retention": {"type": "number", "minimum": 0},
+        "min_regeneration_advantage": {"type": "number", "minimum": 0},
+        "require_strong_phase_regime": {"type": "boolean"}
+      }
+    },
+    "trials": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["trial_id", "from_phase", "to_phase", "semantic_admitted", "prior_phase_attack_performance", "fresh_phase_attack_performance", "attacker_realign_cost", "defender_reconstruction_cost", "attacker_realignment_time", "phase_duration", "realization_distance"],
+        "properties": {
+          "trial_id": {"type": "string", "minLength": 1},
+          "from_phase": {"type": "string", "minLength": 1},
+          "to_phase": {"type": "string", "minLength": 1},
+          "semantic_admitted": {"type": "boolean"},
+          "prior_phase_attack_performance": {"type": "number", "minimum": 0},
+          "fresh_phase_attack_performance": {"type": "number", "exclusiveMinimum": 0},
+          "attacker_realign_cost": {"type": "number", "minimum": 0},
+          "defender_reconstruction_cost": {"type": "number", "exclusiveMinimum": 0},
+          "attacker_realignment_time": {"type": "number", "minimum": 0},
+          "phase_duration": {"type": "number", "exclusiveMinimum": 0},
+          "realization_distance": {"type": "number", "minimum": 0},
+          "common_mode_failure": {"type": "boolean", "default": false},
+          "persistent_authority_compromised": {"type": "boolean", "default": false}
+        }
+      }
+    }
+  }
+}

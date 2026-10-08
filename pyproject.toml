@@ -47,6 +47,7 @@ dependencies = [
 [project.scripts]
 autofde = "autofde_lab.cli:main"
 autofde-lab = "autofde_lab.cli:main"
+autofde-semantic-parts = "autofde_lab.semantic_parts.benchmark_cli:main"
 
 [project.urls]
 documentation = "https://seanchatmangpt.github.io/autofde-lab/"

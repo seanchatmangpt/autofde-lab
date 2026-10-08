@@ -11,13 +11,20 @@ but do not admit, authorize, execute, or promote a policy. FOND↔HDDL frontier 
 retain HDDL task-network progress as a separate state dimension and carry the same
 candidate-only authority ceiling.
 
-Public surface: ``EngineConfig``, ``EnginesConfig``, ``probe_engine``, ``run_engine``,
-``FONDProblem``, ``CandidatePolicy``, ``PolicySemantics``, ``PolicyCheck``,
-``check_candidate_policy``, ``HDDLProgressWitness``, ``FONDHDDLFrontierCheck``, and
-``check_fond_hddl_frontier_closure``.
+Effect compatibility is also planner-only: it classifies pairwise footprints and
+commutativity but never grants authority or performs DO.
 """
 
 from .config import EngineConfig, EnginesConfig, OutputMode
+from .effects import (
+    CompatibilityCheck,
+    Effect,
+    check_parallel_candidate,
+    commutes,
+    conflicts,
+    independent,
+    parallel_candidate,
+)
 from .fond_hddl import (
     FONDHDDLFrontierCheck,
     HDDLProgressWitness,
@@ -34,6 +41,8 @@ from .runner import EngineOutcome, EngineRunReceipt, probe_engine, run_engine
 
 __all__ = [
     "CandidatePolicy",
+    "CompatibilityCheck",
+    "Effect",
     "EngineConfig",
     "EngineOutcome",
     "EngineRunReceipt",
@@ -46,6 +55,11 @@ __all__ = [
     "PolicySemantics",
     "check_candidate_policy",
     "check_fond_hddl_frontier_closure",
+    "check_parallel_candidate",
+    "commutes",
+    "conflicts",
+    "independent",
+    "parallel_candidate",
     "probe_engine",
     "run_engine",
 ]

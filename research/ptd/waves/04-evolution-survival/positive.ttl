@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:witness-04-evolution-survival a ptd:PositiveWitness ; ptd:wave ptd:EvolutionSurvival ; ptd:exactSubject "autofde-lab/PTD/04-evolution-survival" ; ptd:expected ptd:ADMIT .

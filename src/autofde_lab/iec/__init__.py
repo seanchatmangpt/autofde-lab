@@ -29,6 +29,15 @@ from .model import (
     Standing,
 )
 from .observations import ObservationExtractor, PassiveFile
+from .prior_art import (
+    CandidateFailure,
+    NoveltyRefusal,
+    PriorArtCandidate,
+    PriorArtDisposition,
+    PriorArtVerdict,
+    assert_novelty_receipt,
+    classify_prior_art,
+)
 from .probe import ProbeCandidate, ProbePlanner
 from .promotion import PromotionKind, PromotionRouter
 from .python_api import extract_python_api, python_api_verifier
@@ -71,6 +80,13 @@ __all__ = [
     "PreservationFence",
     "ProbeCandidate",
     "ProbePlanner",
+    "CandidateFailure",
+    "NoveltyRefusal",
+    "PriorArtCandidate",
+    "PriorArtDisposition",
+    "PriorArtVerdict",
+    "assert_novelty_receipt",
+    "classify_prior_art",
     "PromotionKind",
     "PromotionRouter",
     "ReceiptChain",

@@ -5,28 +5,6 @@ the witness that's still alive — the sheet gets corrected to match it, not the
 around. Every line below is either a measured win (command run, output checked, in this
 session) or a recorded negative (attempted, blocked, reason named) — no self-graded claims.
 
-Last update: **pass 48** (2026-09-25/26) — **v26.9.25 ALOOP cycle merged: ALOOP-001
-autonomous-loop court r9 (PR #181), OSIRIS bounded companion control kernel (PR #185),
-doctrine boundary lab (Lane 6), bounded DSPy 3.4.0 Pyodide compatibility court (#182),
-region-granular non-LLM benchmark (#184).** Spec: `docs/rfcs/RFC-ALOOP-v26.9.25.md`
-(ALOOP-001 implemented at court `aloop-001/v26.9.25-r9`).
-
-**Measured win** — merge census this session (`git log --oneline --since="2026-09-25 16:00"`,
-22 commits naming the five capabilities): ALOOP-001 court r9 via merge `b417eea6` (PR #181;
-court r9 repair C2 `ccec4dd3`); OSIRIS companion via merge `cef0663e` (PR #185; kernel
-`7208c041`, exports `631419d7`, gate-independence tests `daabd369`/`ac8bec18`); doctrine
-lab Lane 6 `91678ab5` plus repair commits `d6becb59`→`79dfa24e` (direct commits — no PR
-merge named in the log); DSPy WASM court `44b8bc5d` (#182); RGI benchmark `4fae1e68` (#184).
-
-**Measured win** — both merged packages present as documented this session:
-`src/autofde_lab/simulation/doctrine_lab/` ships `__main__.py`
-(`python -m autofde_lab.simulation.doctrine_lab --out DIR`), seal key from
-`AUTOFDE_DOCTRINE_LAB_KEY` (hex, ≥ 32 bytes; short/non-hex keys refused, `seal.py`), and
-`verify_run` enforcing authority NONE, ceiling ≤ CONSTRUCT and no selection independently
-of replay (`verify.py`). `src/autofde_lab/companion/__init__.py` exports the typed
-`__all__` surface (`OSIRIS`, `CompanionDecision`, `CompanionReceipt`, …) with independent
-speech and action policy gates.
-
 Last update: **pass 47** (2026-09-25) — **IEC-011 LLM residue census: the *Find* step in
 front of the retirement ledger. `LLMResidue = 94` static edges at autofde-lab@85c3674
 (`ALIVE`, replayed byte for byte); 5 edges fenced; unfenced growth now fails PR CI;
@@ -2506,6 +2484,156 @@ hand-authored ontology file.
 No pytest was run in this pass (concurrent agents were editing `src/` and `tests/`); no row
 above claims a test result. Pass-3 changes to this repo are documentation only.
 
+## v26.9.28 PTD closure pass (2026-09-28)
+
+**measured win** — `PYTHONPATH=src python -m pytest tests/ptd tests/ptd_exp --import-mode=importlib`
+→ 56 passed (Python 3.13 venv). `grep unittest.mock|Mock(|MagicMock|patch(|monkeypatch tests/ptd tests/ptd_exp`
+→ no matches. Scope: unit + integration checkpoint of the PTD court over 8 real manifests
+(`tests/ptd_exp/fixtures/`), incl. negative controls (semantic drift → REFUSED, no metrics;
+authority compromise, common-mode, churn-without-depreciation, bad economics → FALSIFIED).
+Not a Chicago/crown claim; says nothing about a real defended system. `organizationalStanding`
+stays `UNKNOWN`.
+
+Changes: `ptd_exp.{economics,transfer,temporal}` now re-export the guarded `ptd.metrics`
+(previously an unguarded duplicate accepting NaN); digests via `fabric.canonical`; OCEL via
+`autofde_lab.ocel.OcelLog`; confidence band is Student-t on sample stddev via `scipy.stats`
+and is `None` (UNKNOWN) for n<2.
+
+**recorded negative** — `feat/v26.9.28-frontier-ptd-run200`, `-research-waves` and
+`frontier/v26.9.28-hilt-qualification-r5b` were NOT merged. They are RDF/SPARQL wave corpora
+with no runtime consumer, and the `admit.rq` ASK queries read only `contract.ttl`: measured
+with rdflib on `hilt/waves/08-portable-runtime`, the ASK is `True` for the contract while
+`negative.json` expects `REFUSED_PORTABILITY_WIDENING` — the check cannot fail
+(see `absence-is-not-evidence.md`). Integrating them needs a consumer that binds the fixture
+into the graph before the ASK; until then they stay unmerged, not deleted.
+
+**merge sweep (2026-09-28)** — 20 branches integrated into PR #205 by semantic (hunk-level) merge,
+no `-X`/`-s` side-picking. Real merges: sa2a (#162), dfcm-xaas (#167), release-tag (#175),
+production-hardening, ecology, rgi-hardening, semantic-projection court/receipt, phasing-target-defense
+(#204), frontier-ptd x2, hilt-r5b, inverse-ecosystem-compiler, ea-rdf-standing, codegraph-benchmark,
+work-envelope-v2 (union with #167's `execution_descriptor`), evidence-topology-r2 (union of DGF kernel
+hardening + receipted runs), aasee-delegation (#187; adds producer≠verifier falsifier, contraction-safe growth
+law), premature-actuation-court (#186; union of survival APIs). Ancestry-only (content already on master,
+verified byte-identical or stricter on master): swe-prometheus-vgg, w9-sweep/format-drift,
+preserve/detached-test-fixes. Superseded, NOT merged: premature-actuation-court-v2 (13 files byte-identical to
+the court branch), survival-ocel-closure (all features already on master). Not merged, unrelated history:
+openclaw-ecosystem-interop, agent/cloud-benchmark-crown-docs. Measured:
+`pytest tests/iec tests/evidence tests/semantic_parts tests/ptd tests/ptd_exp tests/benchmarks tests/fabric/test_gall_semantic_work.py`
+(minus 3 files needing pyshacl / native build) → 552 passed, 22 skipped (TLC jar absent), 0 failed.
+Known follow-up: two survival-episode OCEL projections coexist (`survival_episode_to_ocel` and
+`episode_to_ocel_log`); `survival_uncertainty` (pointwise Greenwood) is weaker than the log-log report.
+
+**resolved** — the `ptd_exp` one-line modules were removed (see the closure follow-up below);
+PR #204 closed as merged content.
+
+## v26.9.28 closure follow-up (2026-09-28)
+
+**measured win** — `ptd_exp` consolidated. Deleted 11 redundant modules with no consumer
+outside their own trivial test (`economics`, `transfer`, `temporal`, `metrics`, `admission`,
+`attacker`, `epochs`, `falsifiers`, `invariants`, `campaign`, `migration`) and their 9 tests; the
+court now imports the guarded `autofde_lab.ptd.metrics` directly and uses `stress.phase_budget`.
+`disclosure`/`buyer_value`/`redteam_value`/`resiliency` now have a consumer: optional manifest
+sections `disclosures` and `techniques_observed` (absent -> `None`, i.e. UNKNOWN, never zero).
+`buyer_value`/`redteam_value` let `NaN` through their range check; fixed. `validate_manifest`
+checks the schema first, so a v1 manifest is refused as `unsupported PTD schema`.
+There is deliberately no v1 -> v2 migration: v1 trials carry no semantic/realization digests
+or epoch identity, and inventing them would manufacture evidence from absence.
+
+**recorded negative** — gymact at the admitted pin `524d0bc` has no `gymact.policy_ecology`
+(measured: `pip install gymact@524d0bc` then `import gymact.policy_ecology` ->
+`ModuleNotFoundError`). Before this change `import autofde_lab.planner_league` failed outright at
+that pin, taking `psro`/`core`/`catalog` down with it. The five ecology-dependent submodules are
+now loaded lazily (PEP 562) and raise a named `ImportError` (UNSUPPORTED) at first use; the five
+ecology test modules `importorskip` with that reason. `test_policy_identity` + `test_psro`
+(9 tests) now run at the admitted pin. The six `*_chicago` planner_league tests remain gated on
+the native compiled domains. Re-enable path: qualify a gymact revision that has `policy_ecology`
+in `ecosystem/autofde-rust-handoff.toml` (7bca1c5 has it but its `.ggen/marketplace` submodule
+needs Git LFS, which GitHub currently refuses: "exceeded its LFS budget").
+
+**deferred (decision needed, not skipped)** — two survival-episode OCEL projections coexist:
+`survival_episode_to_ocel` (used by `scripts/autonomic_survival_report.py`) and
+`episode_to_ocel_log` (used by `survival_bundle`). They emit different object-id schemes and
+event sets, so unifying them changes emitted evidence and digests for one of the two consumers.
+Someone must choose the canonical scheme; this was not decided here.
+
+## Validation against intended purpose (2026-09-28, master `d88d88cc`)
+
+Method: built the real native hub from source (cmake 3.28, Boost 1.83, 390 targets), then ran the
+real suites. Environment: Ubuntu 24.04, Python 3.13.12, full extras from an *unlocked* resolve with
+Ray pinned to the lock's 2.56.1 afterwards (torch 2.14.0 vs the lock's 2.12.1 was not aligned; a
+full `uv pip sync` from `uv.lock` is impossible on 3.13 because the locked `dm-tree==0.1.8` has no
+cp313 wheel and does not build here). Every number below is from a command run this session.
+
+**measured win**
+- *Registry.* Registered is not runnable. Without the native hub 7/58 solvers and 23/33 domains
+  load (even `Astar` needs the C++ hub); with it 41/58; with light extras 53/58 and 29/33; with the
+  full extras **58/58 and 33/33**.
+- *Ontology drift.* With the full extras `python -m autofde_lab.fabric.ontology` regenerates
+  `ontology/autofde-lab-capabilities.ttl` **byte-identical** to the committed file (121 capabilities,
+  113 `ALIVE`). With a partial environment it differs in exactly the dependency-gated capabilities
+  (RDDL, flight planning, RL) -- environmental, not tampering.
+- *Planning is correct, not just present.* `Astar`, `ILAOstar`, `LRTDP`, `VI`, `PI` (and `AOstar`,
+  in the committed test) return plans whose validity and cost were **re-derived with independent
+  dynamics**: goal reached at cost 18 on a 10x10 grid whose optimum is 18
+  (`tests/solvers/cpp/test_independent_plan_verification.py`, with an anti-vacuity test).
+- *Native solver suite.* `tests/solvers/cpp`: **262 passed, 0 failed**.
+- *PDDL requirements gate (CLAUDE.md rule 3).* 6/6: a clean chain problem is solved and its 3-step
+  plan replays to the goal independently; `:derived-predicates`, `:constraints`, `:preferences`
+  each exit 2 `REFUSED: UNSUPPORTED_REQUIREMENT` naming the requirement; malformed PDDL exits 2; an
+  unsolvable problem exits 1 (distinct from a refusal).
+- *RL / GNN (upstream's advanced surface).* `test_ray_rllib`, `test_gnn_ray_rllib`, `test_gnn_utils`,
+  `test_gnn_ray_rllib_space_utils` (and the SB3 GNN path): **83 passed, 2 failed** in 16m16s on Ray
+  2.56.1, with `tests/` on `PYTHONPATH`. Graph observations, action masking and the GNN utilities work.
+- *Real solve against a vendored reference.* A* solves the terragoat remediation problem against the
+  real vendored checkout (`vendor/gyms/terragoat` initialised at its exact pin).
+- *gymact compatibility.* Of 34 gymact submodules the repo references, 29 import at the admitted rev
+  (`524d0bc`, gymact 26.8.8) and every imported name in them exists. The 5 missing: three
+  planner-league ecology modules (now lazy, see the closure follow-up above), `gymact.planning`
+  (guarded, typed `UNSUPPORTED:GYMACT_PLAN_PROVENANCE_API`), and a platform-console provider used
+  only by live-tenant-gated tests.
+- *Broad suites in the full environment* (fabric, domains, planning, scheduling, autofde, ptd,
+  ptd_exp, sa2a, aloop): 1465 passed, 48 failed, 277 skipped, 2 errors -- classified below.
+
+**recorded negative** (each with its measured cause)
+- *Old-API-stack DQN is broken in Ray 2.56.1 and 2.58.0* for every replay-buffer configuration
+  (string or class, prioritized or plain), inside Ray's `_create_local_replay_buffer_if_necessary`
+  (`TypeError: argument of type 'ABCMeta' is not iterable`; Ray resolves the type to a class before
+  its own string check). Not configurable from this repo. Now a named `UNSUPPORTED:RAY_OLD_STACK_DQN`
+  refusal; `test_up_bridge_domain_rl` skips on exactly that refusal and runs again when Ray works.
+- *RLlib checkpoint restore fails on the locked Ray:* `test_ray_rllib_solver` and
+  `test_ray_rllib_solver_with_filtered_actions` train fine, then `solver.load(...)` raises
+  `AttributeError: 'NoneType' object has no attribute 'enable_env_runner_and_connector_v2'` in
+  `Algorithm.__setstate__` (`config` is `None`). The wrapper already carries several compatibility
+  layers around Ray's restore path; not patched blind. Open.
+- *Ray workers could not import test classes.* CI recorded `No module named 'solvers'` and "fixed" it
+  with the repo root on `PYTHONPATH`, which cannot work: `tests/solvers` has `__init__.py` markers
+  (all five exist on master; the earlier "all removed" is stale) and `tests/` has none, so modules are
+  `solvers.python.*` rooted at `tests/`. `Justfile` and `ci.yml` now export `tests/` as well.
+- *Environment-gated, not product defects* (of the 48): 32 need the sibling `praxis-graphlaw-wasm`
+  build at a hard-coded `/Users/sac/...` path (now relocatable via `AUTOFDE_PRAXIS_WASMPKG_DIR`);
+  5 need MiniZinc's `chuffed` solver (a `discrete-optimization` default, absent from Ubuntu's
+  MiniZinc); 3 call an external LLM (Groq); 2 need the sibling `wasm4pm-compat` `ocel_diff_cli`
+  binary (they assert rather than skip, deliberately); 1 needs `cmca_rank_cli`/`wasmtime`. Of the 231
+  fabric skips, 227 need live sibling systems (platform-console tenant, `~/wasm4pm`, `chatman-ecosystem`,
+  `turbo-fieldfare`, gymact ontology provider) and 4 are installable extras (`dspy`, `a2a`).
+  Cross-repo standing therefore remains `UNKNOWN` from here.
+- *`plado` and `process_science_contract`* collection errors: sibling packages absent.
+
+**fixed in this pass** (guards verified against injected mutants or violations)
+`test_crown_release_fence_wiring` (rewritten to the WO-03 design; naming a tag is not a bypass);
+`test_explore_boundary` false positive and its absence from CI; the new gym-boundary guard; the
+Ray-worker `PYTHONPATH`; the named DQN refusal; the relocatable praxis path.
+
+**deferred (decisions needed, not skipped)**
+- `sregym_sota/mcp.py` (`McpBroker.call`) drives SREGym's live kubectl/submit MCP surfaces via
+  `fastmcp` outside `gymact`. Recorded in `KNOWN_EXCEPTIONS` as a fact with the ruling **pending**:
+  either an allowlisted agent-under-test client (SREGym's conductor mediates authority) or the
+  parallel actuation path `gym-actuation-boundary.md` forbids.
+- The PDDL engine reaches "no plan" for an unsolvable problem through a caught exception
+  (`'ImplicitSpace' object has no attribute 'sample'`); the documented design (the goal check is the
+  correctness gate) holds, but a genuine internal error would present the same way.
+- Two survival-episode OCEL projections still coexist (see the closure follow-up above).
+
 ## Pass 2 — ecosystem closure ledger (2026-08-06)
 
 | Item | State | Witness |
@@ -2585,7 +2713,23 @@ Not deferred-for-later — structurally not WIP:
   the three standing dimensions. Legitimately hand-authored **because it is a vocabulary, not a
   standing claim**; nothing in it is `ALIVE`.
 - `.claude/rules/fde-authority-boundary.md` — the organizational-layer boundary rule.
-- `~/ggen-marketplace` `docs/sjira/v26.10.8/_CLOSURE_RECEIPT.md` — the v26.10.8
-  campaign closure receipt (FINAL, 2026-10-08), where the campaign's
-  autofde-lab-facing work orders — including the AAIF wrap projection
-  (`4122fa6b1`) — are receipted on the ggen-marketplace side.
+
+## Pass — autonomous LLM-free factory loop (`autofde_lab.factory`)
+
+Scope: one driver for EXPLORE -> MANUFACTURE -> EXPLOIT over the WD failure-analysis surface
+(`wd_fa`) with no human gate awaited and no language model. Hardened after an ERRC audit
+(83 read-only agents; 39 candidates, 20 survived two independent skeptics each).
+
+| Item | State | Witness |
+|---|---|---|
+| Loop + fresh ledger verifier | **measured win** (technicalStanding, in-process simulator only) | `PYTHONPATH=src .venv/bin/python -m pytest tests/factory -q --import-mode=importlib` -> 24 passed. `python -m autofde_lab.factory`: 25 cases, 18 resolved by compiled experience at cost 0, 6 classes investigated once each, 1 unresolved (counted), `llm_modules_loaded: []`, Sony runtime projection `ALIVE`. Two same-seed runs are byte-identical (ledger + head). |
+| **Verifier defect found and fixed** | **recorded negative, then measured win** | The first verifier marked a fully fabricated 2-row ledger (no world, invented mode, verifier id `"anyone-i-like"`) `ALIVE` with zero findings; reproduced locally before fixing. The original mutation tests only edited genuine ledgers, so they could not express forgery. Fix: ledger header carries the world spec and the verifier replays every investigation against it; row schema + closed enums; hash chain + head file; seed_rule claims checked. The same forged ledger is now `BUILD_BROKEN`. |
+| Mutation + forgery falsifiers | **measured win** | tampered receipt, wrong-investigation join, missing investigation, re-investigated solved class, self-certified receipt, wrong mode, unobservable-class-claimed-resolved, unresolved-but-observable, fabricated seed_rule, forged ledger with/without own header, broken chain, tail truncation, missing head, malformed row. Mutations are re-sealed so the semantic check, not the chain, must fire. |
+| Unobservable class | **measured win** | world with no ground truth leaves the case `UNKNOWN` with typed `reason`, no receipt, no experience; counted in `unresolved`. |
+| Human gate | **measured win** | each row carries `human_gate: NOT_AWAITED_DISPOSITION_UNCLAIMED`, `authority: SELECT_ONLY`; nothing waits on a person and no disposition is claimed. |
+| Sony crown inside the run | **PARTIAL_ALIVE** | invoked as a runtime projection only (`ALIVE`, ceiling `BOUNDED_LOCAL_SONY_ROLE_ACCEPTANCE_ONLY_NO_SONY_CLOUD_AUTHORITY`); not ledger rows, does not participate in factory standing. Its BRCE-backed path is not reconciled with the repo boundary here. |
+| World spec identity | **UNKNOWN (open dependency)** | a forger who writes rows *and* a consistent fake world spec in the header is not caught; the spec must be pinned externally. The hash chain does not change this. |
+| `organizationalStanding` / `enterpriseStanding` | **UNKNOWN** | no component computes them; emitted as `UNKNOWN` by construction. |
+| Real WD sources / real Sony platform | **BLOCKED:NO_ACCESS** | the "world" is a seeded simulator; it proves loop mechanics, not any real failure class. |
+| Deferred from the audit (not built) | **deferred/scoped** | durable evidence/observation artifacts bound to rows and Goal-bound consequence witness; role-requirements-as-data ingest; multi-engagement stream with persisted experience store (ledger is rewritten each run, no cross-run compounding); typed UNREPRESENTABLE routing for unknown class_key schema; adopting `sa2a/experience` lifecycle/`receipts` ledger instead of the factory's own; capability/ontology registration. Nothing under these was executed. |
+| `uv sync --extra=all` in this container | **recorded negative** | `dm-tree` source build fails (gcc 13 / abseil), and the C++ extension fails CMake generate; ran from `src/` with pure-Python extras. `tests/wd_fa` needs `tpot` (**UNSUPPORTED** here), not used by the loop. |

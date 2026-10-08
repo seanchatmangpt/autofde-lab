@@ -1,0 +1,2 @@
+PREFIX ptd: <https://chatmangpt.com/ptd#>
+ASK { ptd:CrossRepoClosure a ptd:ResearchWave ; ptd:requires ptd:ProducerIdentity, ptd:ContractIdentity, ptd:ConsumerIdentity . }

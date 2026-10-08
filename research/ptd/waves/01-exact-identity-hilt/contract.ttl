@@ -1,0 +1,7 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+ptd:ExactIdentityHILT a ptd:ResearchWave ; ptd:requires ptd:subjectIdentity, ptd:authority, ptd:standing, ptd:provenance ; ptd:preserves ptd:AdmittedSemantics ; ptd:refuses ptd:UnboundConsequence .
+ptd:subjectIdentity a ptd:Invariant .
+ptd:authority a ptd:Invariant .
+ptd:standing a ptd:Invariant .
+ptd:provenance a ptd:Invariant .

@@ -55,7 +55,14 @@ CORE_MODULES = sorted(
 #: That is a false positive on the *spelling*, not a real boundary crossing:
 #: neither string is an import, and the extraction boundary this file defends
 #: is about the ``autofde`` subpackage, not about the word.
-_AUTOFDE_WORD = re.compile(r"\bautofde\b(?![-_]lab\b)")
+#:
+#: A third exemption covers schema identifiers of the form ``autofde.<a>.<b>/v<N>``
+#: (e.g. ``"autofde.cmca.dogfood-crown/v26.9.17"``). Such a string names a receipt
+#: schema; it is not an import path (a module path never contains ``/``), so it is
+#: an identifier spelling, exactly like the hyphenated display name above. The
+#: exemption requires the trailing ``/v<digits>`` so a real dotted module path
+#: such as ``autofde.graph`` is still flagged.
+_AUTOFDE_WORD = re.compile(r"\bautofde\b(?![-_]lab\b)(?!\.[a-z0-9_.-]*[a-z0-9]/v\d)")
 
 
 def _names_autofde(dotted: str) -> bool:
@@ -112,6 +119,8 @@ def test_the_autofde_word_pattern_still_detects_a_real_crossing():
         "importlib.import_module('autofde_lab.autofde.graph')",
         "getattr(mod, 'autofde')",
         "path = SRC / 'autofde' / 'graph.py'",
+        "importlib.import_module('autofde.graph')",
+        "mod = 'autofde.graph/notaversion'",
     ]
     for line in must_match:
         assert _AUTOFDE_WORD.search(line), f"pattern missed a real crossing: {line!r}"
@@ -120,6 +129,7 @@ def test_the_autofde_word_pattern_still_detects_a_real_crossing():
         "from autofde_lab.powl.algebra import Atom",
         'APP_NAME = "autofde-lab-fabric"',
         '"ontology/autofde-lab-capabilities.ttl"',
+        'CROWN_SCHEMA = "autofde.cmca.dogfood-crown/v26.9.17"',
         "AUTOFDE_LAB_DATAHOME_ENVVARNAME = 'AUTOFDE_LAB_DATA'".lower(),
     ]
     for line in must_not_match:

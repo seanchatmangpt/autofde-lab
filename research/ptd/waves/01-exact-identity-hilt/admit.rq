@@ -1,0 +1,6 @@
+PREFIX ptd: <https://chatmangpt.com/ptd#>
+ASK {
+  ptd:ExactIdentityHILT a ptd:ResearchWave ; ptd:preserves ptd:AdmittedSemantics ; ptd:refuses ptd:UnboundConsequence .
+  FILTER EXISTS { ptd:subjectIdentity a ptd:Invariant }
+  FILTER EXISTS { ptd:authority a ptd:Invariant }
+}

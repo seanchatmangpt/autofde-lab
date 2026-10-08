@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:witness-compiler a ptd:PositiveWitness ; ptd:expected ptd:ADMIT .

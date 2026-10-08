@@ -10,6 +10,7 @@ from autofde_lab.sa2a.graph_learning.model import (
     SemanticFeatureGraph,
     candidate_batch_from_scores,
 )
+from autofde_lab.sa2a.graph_learning.planning import candidate_batch_to_planning_advice
 from autofde_lab.sa2a.graph_learning.torch_geometric import (
     GraphLearningBackendUnavailable,
     GraphSAGECandidateScorer,
@@ -22,4 +23,5 @@ __all__ = [
     "GraphSAGECandidateScorer",
     "SemanticFeatureGraph",
     "candidate_batch_from_scores",
+    "candidate_batch_to_planning_advice",
 ]

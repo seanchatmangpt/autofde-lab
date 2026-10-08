@@ -1,0 +1,3 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:CodeGraphParts a ptd:ResearchWave ; ptd:requires ptd:PartIdentity, ptd:ConsequencePreservation ; ptd:preserves ptd:AdmittedSemantics ; ptd:refuses ptd:UnboundConsequence .
+ptd:PartIdentity a ptd:Invariant . ptd:ConsequencePreservation a ptd:Invariant .

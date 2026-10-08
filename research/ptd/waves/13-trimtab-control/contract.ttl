@@ -1,0 +1,2 @@
+@prefix ptd: <https://chatmangpt.com/ptd#> .
+ptd:TrimtabControl a ptd:ResearchWave ; ptd:requires ptd:ExternalState, ptd:BoundedContext, ptd:SteeringReceipt ; ptd:refuses ptd:ContextAsAuthority .

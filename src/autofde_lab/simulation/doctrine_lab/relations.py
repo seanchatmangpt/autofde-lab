@@ -18,7 +18,11 @@ from typing import Hashable, Iterable
 
 from autofde_lab.simulation.fortune5_safe.dfcm import (
     _diversity as diversity,
+)
+from autofde_lab.simulation.fortune5_safe.dfcm import (
     _dominates as dominates,
+)
+from autofde_lab.simulation.fortune5_safe.dfcm import (
     _is_feasible as is_feasible,
 )
 from autofde_lab.simulation.fortune5_safe.model import PolicyAggregate

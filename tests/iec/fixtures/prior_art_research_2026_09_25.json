@@ -1,0 +1,32 @@
+{
+  "schema": "chatman.prior-art-benchmark.v1",
+  "cases": [
+    {
+      "id": "procedural-graph",
+      "source": "arXiv:2609.09153v1",
+      "observed_semantics": [
+        "procedure-nodes",
+        "typed-relations",
+        "transition-conditions",
+        "guidance",
+        "pitfalls",
+        "offline-refinement"
+      ],
+      "court_question": "Which observed semantics are already covered by established planning, process, ontology, or verification machinery, and what residual remains?"
+    },
+    {
+      "id": "oak",
+      "source": "Toward Effective and Reliable LLM Agents via Dynamic Ontology (arXiv:2608.22974v1)",
+      "observed_semantics": [
+        "task-oriented-schema",
+        "typed-functions",
+        "evidence-graph",
+        "formal-schema-check",
+        "iterative-repair",
+        "frozen-inference-kernel"
+      ],
+      "court_question": "Which observed semantics are reusable or composable from public ontology/formal machinery, and what residual remains?"
+    }
+  ],
+  "standing": "REFERENCE_FIXTURE_ONLY"
+}
