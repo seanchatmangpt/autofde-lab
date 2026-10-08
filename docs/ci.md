@@ -34,6 +34,17 @@ The full rail runs only for pushes to `master`, weekly scheduled qualification, 
 
 A high-risk branch can be escalated through **Actions → Full qualification and release → Run workflow**. Ordinary pull requests do not pay for the cross-platform release matrix.
 
+## Standing courts (per-capability, non-gating)
+
+In addition to the two rails, per-capability courts run path-scoped evidence where a capability lives. They answer a different question — is this capability's own admission court green — and are not branch-protection requirements:
+
+- `aloop-court.yml` — path-filtered `pull_request` on `src/autofde_lab/aloop/**`, `src/autofde_lab/ocel/**`, `tests/aloop/**`, `schemas/aloop/**`, and the ALOOP RFC (`docs/rfcs/RFC-ALOOP-v26.9.25.md`, `docs/rfcs/aloop/**`), plus manual dispatch; runs the exact-head ALOOP-001 court with mutants and real trace replay.
+- `dspy-wasm-court.yml` — `pull_request` (and `push` on its feature branch) filtered to `src/autofde_lab/wasm/dspy.py`, `tests/wasm/test_dspy_wasm.py`, and `wasm/dspy-wasm/**`.
+- `tlc-court.yml` — path-filtered `pull_request`/`push` on `src/autofde_lab/iec/**`, `tests/iec/**`, `tools/tla/**`, and `scripts/fetch_tla2tools.sh`, plus manual dispatch; fetches and digest-verifies the pinned tla2tools 1.7.4, then runs the real TLC court tests with `AUTOFDE_TLC_REQUIRED=1` and the court CLI per model (BRCE reference plus its mutants) on JDK 21.
+- `collective-skill-court.yml` — path-filtered `pull_request` on `src/autofde_lab/sa2a/collective_skill/**`, `tests/sa2a/collective_skill/**`, the collective-skill RFC and docs, plus manual dispatch; runs the exact-head Oracle/NOP/mutation + SA2A court.
+
+Branch protection continues to require only **`CI gate`**.
+
 ## 80/20 ERRC
 
 ### Eliminate

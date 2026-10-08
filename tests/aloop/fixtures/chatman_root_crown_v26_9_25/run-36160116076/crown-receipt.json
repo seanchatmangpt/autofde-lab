@@ -1,0 +1,527 @@
+{
+  "authority": "NONE",
+  "berthier_digest": "58f2eb2a709aba8dc44fa76a2b34bdeb5cb98e81cc06f694d2b7d6ed82a671d4",
+  "crown_sha": "8321663d02b849cbb7879b3eaf548d5bdca7a7e9",
+  "evaluated_at": "2026-09-25T16:21:43Z",
+  "genesis": false,
+  "global_refusals": [],
+  "heads": {
+    "seanchatmangpt/affidavit": "d70b0e40f9920136510cb0f7f24bf9720feeb4f2",
+    "seanchatmangpt/ash_a2a": "7999524d0b98aa5dc650a0538c1be5ec8b867477",
+    "seanchatmangpt/ash_r2rml": "901bfb8a08dac5ea30ad77f0bb6de7a29eb8cd34",
+    "seanchatmangpt/ash_surface": "7d5492795d9b9a0956f51545ed1ad1932768b77e",
+    "seanchatmangpt/autofde-lab": "98b6cc9bfe3af8a25b3ad53019f5fb71fe2d37d0",
+    "seanchatmangpt/beam4pm": "8c3f5e09c297023059ad384629a55ddb2ac785b1",
+    "seanchatmangpt/chatgpt-cloud-elixir": "d6727fef06b170bc6c3839bbf2a9456e33111920",
+    "seanchatmangpt/chatman-ecosystem": "8321663d02b849cbb7879b3eaf548d5bdca7a7e9",
+    "seanchatmangpt/engineering-standards": "7e8d4c5cb5ae9f4b691d1cd342ee1d7ddb308629",
+    "seanchatmangpt/ex4pm": "c4ca84410c379888305c85201710734afb21f9bf",
+    "seanchatmangpt/ggen-ecosystem": "8bf231242b5fa30587a3d7357c8aaa57905ccfdf",
+    "seanchatmangpt/ggen-marketplace": "1f4abc53084e3376a7fed2c1d153029e8711fcee",
+    "seanchatmangpt/ggen_igniter": "9639198b5c3e0e25906acc5b36dd9eb17bd592be",
+    "seanchatmangpt/gymact": "281009dfd8ef435f0027009fc1a88fd86688f8b9",
+    "seanchatmangpt/wasm4pm": "9fc4f1ae3cc99cf65a5f014580db8e1ea3d08b55",
+    "seanchatmangpt/xaas": "e039967dac9f88961873b6a958f3979a106854f2",
+    "seanchatmangpt/zcode-cli": "d1abfbe56660ade672af1125a3f11d91fc50a09e",
+    "seanchatmangpt/zoela": "3d16cf3e43e195092161aaba4d481c7654b4035d"
+  },
+  "input_digests": {
+    "closure.json": "4a25df968d6ca1a1e7645624590cb96d407adf2e4f7a3927208d9965ff270f8b",
+    "imports/IMPORTS.json": "40d98ed53bb1e3d49141e16509555bb896a54330bcb47662af133aec9323937c",
+    "imports/RFC-0004.md": "cefb3ab55e4afa25f7b107b5e73400036051b006231a9aea31ab7ea2aa50ed32",
+    "pins.json": "3b97c571fd23808596054bf849cb8f04adf72aec597173e62add59d6a87b1701",
+    "requirements.json": "22c33da7e61f6d499fe67c48df1ec89dde097c4bb462aac4100177b760777448",
+    "worktrees-allow.json": "92611da875cf01fa80afc4582f797e273871e0ceae72e5f3975806ce0d3862df"
+  },
+  "next_observations": {
+    "cascade": [
+      "AC-01",
+      "AC-02",
+      "AC-05",
+      "AC-06",
+      "AC-08",
+      "AC-09",
+      "AC-10",
+      "AC-11",
+      "AC-12",
+      "AC-17",
+      "AC-18",
+      "AC-19",
+      "F-03",
+      "F-04",
+      "F-05",
+      "F-06",
+      "F-07",
+      "F-10",
+      "F-11",
+      "F-14"
+    ],
+    "locators": [
+      "local:release/v26.9.25/closure.json",
+      "local:release/v26.9.25/manifest.toml",
+      "local:release/v26.9.25/observations/TOPOLOGY-RECEIPT.json",
+      "local:release/v26.9.25/observations/local-worktrees.json",
+      "seanchatmangpt/affidavit:release/v26.9.25/receipts/brce-ledger.json"
+    ],
+    "repos": [
+      "seanchatmangpt/affidavit",
+      "seanchatmangpt/ash_a2a",
+      "seanchatmangpt/ash_r2rml",
+      "seanchatmangpt/ash_surface",
+      "seanchatmangpt/autofde-lab",
+      "seanchatmangpt/beam4pm",
+      "seanchatmangpt/chatgpt-cloud-elixir",
+      "seanchatmangpt/chatman-ecosystem",
+      "seanchatmangpt/engineering-standards",
+      "seanchatmangpt/ex4pm",
+      "seanchatmangpt/ggen-ecosystem",
+      "seanchatmangpt/ggen-marketplace",
+      "seanchatmangpt/ggen_igniter",
+      "seanchatmangpt/gymact",
+      "seanchatmangpt/wasm4pm",
+      "seanchatmangpt/xaas",
+      "seanchatmangpt/zcode-cli",
+      "seanchatmangpt/zoela"
+    ]
+  },
+  "observation_authority": "github-api:GITHUB_TOKEN:read",
+  "observations_digest": "sha256:8c8653441a95ad226363052b30ed150b3f9e18203d31bb66607e1f403ed90175",
+  "packets_digest": "bfc5c24f0919c47a74324a4206149a5a83f16e91d2729588646ffa8624ee7117",
+  "previous_receipt_digest": "sha256:ebd103bacce757499250abe37afd901c6c4887b61cbdd7925561350282b1d08a",
+  "receipt_digest": "sha256:1842e92881f1a576e0e0c00e7b3102ae755f3cc2c187ea7d61b17d5b3aa2594f",
+  "refusals": [],
+  "release": "v26.9.25",
+  "remaining": [
+    {
+      "broken_term": "R_missing_standing",
+      "code": "CLOSURE_PARTIAL",
+      "detail": "closure PARTIAL_ALIVE; remaining=18; receipt=sha256:bf4c9ad0af8a98f22926fefb6ca13247e5af1c74243e6877e4fadd123e5bbb46",
+      "failure_class": "DEPENDENCY_FAILURE",
+      "id": "AC-02",
+      "state": "BLOCKED",
+      "subject_sha": null,
+      "term": "C"
+    },
+    {
+      "broken_term": "R_missing_identity",
+      "code": "NEW_HEAD_UNEVIDENCED",
+      "detail": "heads moved: seanchatmangpt/affidavit; evidence bound to 9d158477fc4706f4fdaf30cfc073c547b57e783e",
+      "failure_class": "EVIDENCE_FAILURE",
+      "id": "AC-08",
+      "state": "UNKNOWN",
+      "subject_sha": "9d158477fc4706f4fdaf30cfc073c547b57e783e",
+      "term": "R"
+    },
+    {
+      "broken_term": "R_missing_consequence",
+      "code": "EVIDENCE_ABSENT",
+      "detail": "no operator-local worktree observation",
+      "failure_class": "EVIDENCE_FAILURE",
+      "id": "AC-09",
+      "state": "BLOCKED",
+      "subject_sha": null,
+      "term": "M"
+    },
+    {
+      "broken_term": "R_missing_standing",
+      "code": "ARTIFACT_BLOCKED",
+      "detail": "local:release/v26.9.25/observations/TOPOLOGY-RECEIPT.json:{'derived_from': 'replay commands above at subject_sha (git blob id of INVENTORY.json); gate PASS + byte-exact drill PASS for every retired inventory copy; m_term.holds recomputed by verify (exit 0 iff holds)', 'value': 'ALIVE'}(untyped)",
+      "failure_class": "DEPENDENCY_FAILURE",
+      "id": "AC-10",
+      "state": "BLOCKED",
+      "subject_sha": null,
+      "term": "M"
+    },
+    {
+      "broken_term": "R_missing_standing",
+      "code": "CROWN_DEPENDENCIES_OPEN",
+      "detail": "AC-02,AC-08,AC-09,AC-10,F-03,F-05,F-10,F-11",
+      "failure_class": "DEPENDENCY_FAILURE",
+      "id": "AC-18",
+      "state": "BLOCKED",
+      "subject_sha": null,
+      "term": "C"
+    },
+    {
+      "broken_term": "R_missing_standing",
+      "code": "CLOSURE_PARTIAL",
+      "detail": "closure PARTIAL_ALIVE; remaining=18; receipt=sha256:bf4c9ad0af8a98f22926fefb6ca13247e5af1c74243e6877e4fadd123e5bbb46",
+      "failure_class": "DEPENDENCY_FAILURE",
+      "id": "F-03",
+      "state": "BLOCKED",
+      "subject_sha": null,
+      "term": "C"
+    },
+    {
+      "broken_term": "R_missing_identity",
+      "code": "NEW_HEAD_UNEVIDENCED",
+      "detail": "heads moved: seanchatmangpt/affidavit; evidence bound to 9d158477fc4706f4fdaf30cfc073c547b57e783e",
+      "failure_class": "EVIDENCE_FAILURE",
+      "id": "F-05",
+      "state": "UNKNOWN",
+      "subject_sha": "9d158477fc4706f4fdaf30cfc073c547b57e783e",
+      "term": "R"
+    },
+    {
+      "broken_term": "R_missing_consequence",
+      "code": "EVIDENCE_ABSENT",
+      "detail": "no operator-local worktree observation",
+      "failure_class": "EVIDENCE_FAILURE",
+      "id": "F-10",
+      "state": "BLOCKED",
+      "subject_sha": null,
+      "term": "M"
+    },
+    {
+      "broken_term": "R_missing_standing",
+      "code": "ARTIFACT_BLOCKED",
+      "detail": "local:release/v26.9.25/observations/TOPOLOGY-RECEIPT.json:{'derived_from': 'replay commands above at subject_sha (git blob id of INVENTORY.json); gate PASS + byte-exact drill PASS for every retired inventory copy; m_term.holds recomputed by verify (exit 0 iff holds)', 'value': 'ALIVE'}(untyped)",
+      "failure_class": "DEPENDENCY_FAILURE",
+      "id": "F-11",
+      "state": "BLOCKED",
+      "subject_sha": null,
+      "term": "M"
+    }
+  ],
+  "requirements": {
+    "AC-01": {
+      "broken_term": null,
+      "code": null,
+      "detail": "manifest sha256=764808de1d3c7dc6822c2cdf75f1bfb7a797faf9ebb57731faa8d74195ae19c4",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "8321663d02b849cbb7879b3eaf548d5bdca7a7e9"
+    },
+    "AC-02": {
+      "broken_term": "R_missing_standing",
+      "code": "CLOSURE_PARTIAL",
+      "detail": "closure PARTIAL_ALIVE; remaining=18; receipt=sha256:bf4c9ad0af8a98f22926fefb6ca13247e5af1c74243e6877e4fadd123e5bbb46",
+      "failure_class": "DEPENDENCY_FAILURE",
+      "state": "BLOCKED",
+      "subject_sha": null
+    },
+    "AC-03": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/ggen_igniter:release/v26.9.25/receipts/sjira-origin-authority.json ALIVE at 780a81d81c6e579084ba3048037419aab7d7386e (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "780a81d81c6e579084ba3048037419aab7d7386e"
+    },
+    "AC-04": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/ggen_igniter:release/v26.9.25/receipts/prose-inert.json ALIVE at 780a81d81c6e579084ba3048037419aab7d7386e (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "780a81d81c6e579084ba3048037419aab7d7386e"
+    },
+    "AC-05": {
+      "broken_term": null,
+      "code": null,
+      "detail": "berthier ALIVE; RFC \u00a79 crown test: section=\u00a73 dependents=58 affected=['AC-01', 'AC-02', 'AC-03', 'AC-04', 'AC-05', 'AC-06', 'AC-07', 'AC-08', 'AC-09', 'AC-10', 'AC-11', 'AC-12', 'AC-13', 'AC-14', 'AC-15', 'AC-16', 'AC-17', 'AC-18', 'AC-19', 'F-01', 'F-02', 'F-03', 'F-04', 'F-05', 'F-06', 'F-07', 'F-08', 'F-09', 'F-10', 'F-11', 'F-12', 'F-13', 'F-14'] owners=['seanchatmangpt/affidavit', 'seanchatmangpt/autofde-lab', 'seanchatmangpt/chatman-ecosystem', 'seanchatmangpt/ggen_igniter', 'seanchatmangpt/xaas', 'seanchatmangpt/zoela'] ManualRestatementCount=0",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "8321663d02b849cbb7879b3eaf548d5bdca7a7e9"
+    },
+    "AC-06": {
+      "broken_term": null,
+      "code": null,
+      "detail": "XPROD ALIVE receipt=sha256:08ab0156c6410810bbf82635832acaf6371cd125f02fc7ff4f90e5a41ebad769",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "8321663d02b849cbb7879b3eaf548d5bdca7a7e9"
+    },
+    "AC-07": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/autofde-lab:release/v26.9.25/receipts/tlc-court.json ALIVE at 6fbe1807388e8c44ae5d5f75455a082a745055c7 (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "6fbe1807388e8c44ae5d5f75455a082a745055c7"
+    },
+    "AC-08": {
+      "broken_term": "R_missing_identity",
+      "code": "NEW_HEAD_UNEVIDENCED",
+      "detail": "heads moved: seanchatmangpt/affidavit; evidence bound to 9d158477fc4706f4fdaf30cfc073c547b57e783e",
+      "failure_class": "EVIDENCE_FAILURE",
+      "state": "UNKNOWN",
+      "subject_sha": "9d158477fc4706f4fdaf30cfc073c547b57e783e"
+    },
+    "AC-09": {
+      "broken_term": "R_missing_consequence",
+      "code": "EVIDENCE_ABSENT",
+      "detail": "no operator-local worktree observation",
+      "failure_class": "EVIDENCE_FAILURE",
+      "state": "BLOCKED",
+      "subject_sha": null
+    },
+    "AC-10": {
+      "broken_term": "R_missing_standing",
+      "code": "ARTIFACT_BLOCKED",
+      "detail": "local:release/v26.9.25/observations/TOPOLOGY-RECEIPT.json:{'derived_from': 'replay commands above at subject_sha (git blob id of INVENTORY.json); gate PASS + byte-exact drill PASS for every retired inventory copy; m_term.holds recomputed by verify (exit 0 iff holds)', 'value': 'ALIVE'}(untyped)",
+      "failure_class": "DEPENDENCY_FAILURE",
+      "state": "BLOCKED",
+      "subject_sha": null
+    },
+    "AC-11": {
+      "broken_term": null,
+      "code": null,
+      "detail": "18 pins durable",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "8321663d02b849cbb7879b3eaf548d5bdca7a7e9"
+    },
+    "AC-12": {
+      "broken_term": null,
+      "code": null,
+      "detail": "cold projector --check current (run 36160116076)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "8321663d02b849cbb7879b3eaf548d5bdca7a7e9"
+    },
+    "AC-13": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/xaas:release/v26.9.25/receipts/case-study-schema.json ALIVE at c10cdab95b927ed82c5c212a3f36d02b52ed525e (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "c10cdab95b927ed82c5c212a3f36d02b52ed525e"
+    },
+    "AC-14": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/xaas:release/v26.9.25/receipts/wd-evidence-ceiling.json ALIVE at c10cdab95b927ed82c5c212a3f36d02b52ed525e (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "c10cdab95b927ed82c5c212a3f36d02b52ed525e"
+    },
+    "AC-15": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/zoela:release/v26.9.25/receipts/godslaw-migration.json ALIVE at f1313f1c1462b9d2f4dd3cb010dbe5921f53185d (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "f1313f1c1462b9d2f4dd3cb010dbe5921f53185d"
+    },
+    "AC-16": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/zoela:release/v26.9.25/receipts/vision2027-admission.json ALIVE at f1313f1c1462b9d2f4dd3cb010dbe5921f53185d (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "f1313f1c1462b9d2f4dd3cb010dbe5921f53185d"
+    },
+    "AC-17": {
+      "broken_term": null,
+      "code": null,
+      "detail": "every pin identical-to or ancestor-of its default-branch head",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "8321663d02b849cbb7879b3eaf548d5bdca7a7e9"
+    },
+    "AC-18": {
+      "broken_term": "R_missing_standing",
+      "code": "CROWN_DEPENDENCIES_OPEN",
+      "detail": "AC-02,AC-08,AC-09,AC-10,F-03,F-05,F-10,F-11",
+      "failure_class": "DEPENDENCY_FAILURE",
+      "state": "BLOCKED",
+      "subject_sha": null
+    },
+    "AC-19": {
+      "broken_term": null,
+      "code": null,
+      "detail": "v26.9.25 absent; tag job binds it to crown_sha only after ALIVE",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "8321663d02b849cbb7879b3eaf548d5bdca7a7e9"
+    },
+    "F-01": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/ggen_igniter:release/v26.9.25/receipts/prose-inert.json ALIVE at 780a81d81c6e579084ba3048037419aab7d7386e (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "780a81d81c6e579084ba3048037419aab7d7386e"
+    },
+    "F-02": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/ggen_igniter:release/v26.9.25/receipts/sjira-origin-authority.json ALIVE at 780a81d81c6e579084ba3048037419aab7d7386e (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "780a81d81c6e579084ba3048037419aab7d7386e"
+    },
+    "F-03": {
+      "broken_term": "R_missing_standing",
+      "code": "CLOSURE_PARTIAL",
+      "detail": "closure PARTIAL_ALIVE; remaining=18; receipt=sha256:bf4c9ad0af8a98f22926fefb6ca13247e5af1c74243e6877e4fadd123e5bbb46",
+      "failure_class": "DEPENDENCY_FAILURE",
+      "state": "BLOCKED",
+      "subject_sha": null
+    },
+    "F-04": {
+      "broken_term": null,
+      "code": null,
+      "detail": "18 pins durable",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "8321663d02b849cbb7879b3eaf548d5bdca7a7e9"
+    },
+    "F-05": {
+      "broken_term": "R_missing_identity",
+      "code": "NEW_HEAD_UNEVIDENCED",
+      "detail": "heads moved: seanchatmangpt/affidavit; evidence bound to 9d158477fc4706f4fdaf30cfc073c547b57e783e",
+      "failure_class": "EVIDENCE_FAILURE",
+      "state": "UNKNOWN",
+      "subject_sha": "9d158477fc4706f4fdaf30cfc073c547b57e783e"
+    },
+    "F-06": {
+      "broken_term": null,
+      "code": null,
+      "detail": "berthier ALIVE; RFC \u00a79 crown test: section=\u00a73 dependents=58 affected=['AC-01', 'AC-02', 'AC-03', 'AC-04', 'AC-05', 'AC-06', 'AC-07', 'AC-08', 'AC-09', 'AC-10', 'AC-11', 'AC-12', 'AC-13', 'AC-14', 'AC-15', 'AC-16', 'AC-17', 'AC-18', 'AC-19', 'F-01', 'F-02', 'F-03', 'F-04', 'F-05', 'F-06', 'F-07', 'F-08', 'F-09', 'F-10', 'F-11', 'F-12', 'F-13', 'F-14'] owners=['seanchatmangpt/affidavit', 'seanchatmangpt/autofde-lab', 'seanchatmangpt/chatman-ecosystem', 'seanchatmangpt/ggen_igniter', 'seanchatmangpt/xaas', 'seanchatmangpt/zoela'] ManualRestatementCount=0",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "8321663d02b849cbb7879b3eaf548d5bdca7a7e9"
+    },
+    "F-07": {
+      "broken_term": null,
+      "code": null,
+      "detail": "XPROD ALIVE receipt=sha256:08ab0156c6410810bbf82635832acaf6371cd125f02fc7ff4f90e5a41ebad769",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "8321663d02b849cbb7879b3eaf548d5bdca7a7e9"
+    },
+    "F-08": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/autofde-lab:release/v26.9.25/receipts/tlc-court.json ALIVE at 6fbe1807388e8c44ae5d5f75455a082a745055c7 (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "6fbe1807388e8c44ae5d5f75455a082a745055c7"
+    },
+    "F-09": {
+      "broken_term": null,
+      "code": null,
+      "detail": "typed blocker TRANSPORT_FAILURE:cloud-to-zcode-leg-unreceipted (RFC \u00a755)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "c10cdab95b927ed82c5c212a3f36d02b52ed525e"
+    },
+    "F-10": {
+      "broken_term": "R_missing_consequence",
+      "code": "EVIDENCE_ABSENT",
+      "detail": "no operator-local worktree observation",
+      "failure_class": "EVIDENCE_FAILURE",
+      "state": "BLOCKED",
+      "subject_sha": null
+    },
+    "F-11": {
+      "broken_term": "R_missing_standing",
+      "code": "ARTIFACT_BLOCKED",
+      "detail": "local:release/v26.9.25/observations/TOPOLOGY-RECEIPT.json:{'derived_from': 'replay commands above at subject_sha (git blob id of INVENTORY.json); gate PASS + byte-exact drill PASS for every retired inventory copy; m_term.holds recomputed by verify (exit 0 iff holds)', 'value': 'ALIVE'}(untyped)",
+      "failure_class": "DEPENDENCY_FAILURE",
+      "state": "BLOCKED",
+      "subject_sha": null
+    },
+    "F-12": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/xaas:release/v26.9.25/receipts/wd-evidence-ceiling.json ALIVE at c10cdab95b927ed82c5c212a3f36d02b52ed525e (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "c10cdab95b927ed82c5c212a3f36d02b52ed525e"
+    },
+    "F-13": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/zoela:release/v26.9.25/receipts/godslaw-interpretation.json ALIVE at f1313f1c1462b9d2f4dd3cb010dbe5921f53185d (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "f1313f1c1462b9d2f4dd3cb010dbe5921f53185d"
+    },
+    "F-14": {
+      "broken_term": null,
+      "code": null,
+      "detail": "v26.9.25 absent; tag job binds it to crown_sha only after ALIVE",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "8321663d02b849cbb7879b3eaf548d5bdca7a7e9"
+    }
+  },
+  "root_repository": "seanchatmangpt/chatman-ecosystem",
+  "schema": "https://chatman.dev/root-crown/receipt/v1",
+  "standing": "BLOCKED",
+  "terms": {
+    "A": {
+      "detail": "",
+      "requirements": [
+        "AC-03",
+        "AC-04",
+        "AC-14",
+        "AC-16",
+        "F-01",
+        "F-02",
+        "F-12",
+        "F-13"
+      ],
+      "state": "PASS"
+    },
+    "C": {
+      "detail": "REFUSED[INCOMPLETE_CURRENT_FRONTIER]:[('AC-02', 'BLOCKED'), ('AC-18', 'BLOCKED'), ('F-03', 'BLOCKED')]",
+      "requirements": [
+        "AC-01",
+        "AC-02",
+        "AC-15",
+        "AC-17",
+        "AC-18",
+        "AC-19",
+        "F-03",
+        "F-14"
+      ],
+      "state": "BLOCKED"
+    },
+    "F": {
+      "detail": "",
+      "requirements": [
+        "AC-05",
+        "AC-07",
+        "F-06",
+        "F-08"
+      ],
+      "state": "PASS"
+    },
+    "M": {
+      "detail": "REFUSED[INCOMPLETE_CURRENT_FRONTIER]:[('AC-09', 'BLOCKED'), ('AC-10', 'BLOCKED'), ('F-10', 'BLOCKED'), ('F-11', 'BLOCKED')]",
+      "requirements": [
+        "AC-09",
+        "AC-10",
+        "AC-11",
+        "F-04",
+        "F-10",
+        "F-11"
+      ],
+      "state": "BLOCKED"
+    },
+    "R": {
+      "detail": "REFUSED[INCOMPLETE_CURRENT_FRONTIER]:[('AC-08', 'UNKNOWN'), ('F-05', 'UNKNOWN')]",
+      "requirements": [
+        "AC-08",
+        "AC-12",
+        "F-05",
+        "F-09"
+      ],
+      "state": "BLOCKED"
+    },
+    "X": {
+      "detail": "",
+      "requirements": [
+        "AC-06",
+        "AC-13",
+        "F-07"
+      ],
+      "state": "PASS"
+    }
+  },
+  "theorem": "RELEASE = C AND A AND R AND X AND F AND M"
+}

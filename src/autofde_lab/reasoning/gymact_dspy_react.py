@@ -590,6 +590,7 @@ class DspyReActDecisionBackend:
         # attach to. Real OCEL wiring belongs to SreTroubleshootingDecisionBackend.decide
         # below, the implementation that actually calls execute_powl.
         del recorder
+        # llm-residue: kind=classification class=RC-K8S-FAULT-DIAGNOSIS
         program = self._program or dspy.ReAct(
             DiagnoseKubernetesFault, tools=tools, max_iters=max_iters
         )

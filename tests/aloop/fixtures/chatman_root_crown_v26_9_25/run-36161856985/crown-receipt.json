@@ -1,0 +1,409 @@
+{
+  "authority": "NONE",
+  "berthier_digest": "363650782b4f995727ba9ae056b54c9f914a8240d7bcd0c889ce1b464eba9bea",
+  "crown_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5",
+  "evaluated_at": "2026-09-25T16:37:16Z",
+  "genesis": false,
+  "global_refusals": [],
+  "heads": {
+    "seanchatmangpt/affidavit": "d70b0e40f9920136510cb0f7f24bf9720feeb4f2",
+    "seanchatmangpt/ash_a2a": "7999524d0b98aa5dc650a0538c1be5ec8b867477",
+    "seanchatmangpt/ash_r2rml": "901bfb8a08dac5ea30ad77f0bb6de7a29eb8cd34",
+    "seanchatmangpt/ash_surface": "7d5492795d9b9a0956f51545ed1ad1932768b77e",
+    "seanchatmangpt/autofde-lab": "98b6cc9bfe3af8a25b3ad53019f5fb71fe2d37d0",
+    "seanchatmangpt/beam4pm": "8c3f5e09c297023059ad384629a55ddb2ac785b1",
+    "seanchatmangpt/chatgpt-cloud-elixir": "d6727fef06b170bc6c3839bbf2a9456e33111920",
+    "seanchatmangpt/chatman-ecosystem": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5",
+    "seanchatmangpt/engineering-standards": "7e8d4c5cb5ae9f4b691d1cd342ee1d7ddb308629",
+    "seanchatmangpt/ex4pm": "c4ca84410c379888305c85201710734afb21f9bf",
+    "seanchatmangpt/ggen-ecosystem": "8bf231242b5fa30587a3d7357c8aaa57905ccfdf",
+    "seanchatmangpt/ggen-marketplace": "1f4abc53084e3376a7fed2c1d153029e8711fcee",
+    "seanchatmangpt/ggen_igniter": "9639198b5c3e0e25906acc5b36dd9eb17bd592be",
+    "seanchatmangpt/gymact": "281009dfd8ef435f0027009fc1a88fd86688f8b9",
+    "seanchatmangpt/wasm4pm": "9fc4f1ae3cc99cf65a5f014580db8e1ea3d08b55",
+    "seanchatmangpt/xaas": "e039967dac9f88961873b6a958f3979a106854f2",
+    "seanchatmangpt/zcode-cli": "d1abfbe56660ade672af1125a3f11d91fc50a09e",
+    "seanchatmangpt/zoela": "3d16cf3e43e195092161aaba4d481c7654b4035d"
+  },
+  "input_digests": {
+    "closure.json": "be08fa0654260cb615708144f6cc63a84f5f55f5568ebc60c75d7b206a3bafee",
+    "imports/IMPORTS.json": "40d98ed53bb1e3d49141e16509555bb896a54330bcb47662af133aec9323937c",
+    "imports/RFC-0004.md": "cefb3ab55e4afa25f7b107b5e73400036051b006231a9aea31ab7ea2aa50ed32",
+    "pins.json": "ea07d4d802fab4133ebcf7db2f6c064154011bfff0efdbe32a91341ddb57c0f4",
+    "requirements.json": "f1939b124c54962d58242a0932a016ede15e366b0fdbab185984c76eb1ec1aa3",
+    "worktrees-allow.json": "92611da875cf01fa80afc4582f797e273871e0ceae72e5f3975806ce0d3862df"
+  },
+  "next_observations": {
+    "cascade": [],
+    "locators": [],
+    "repos": [
+      "seanchatmangpt/affidavit",
+      "seanchatmangpt/ash_a2a",
+      "seanchatmangpt/ash_r2rml",
+      "seanchatmangpt/ash_surface",
+      "seanchatmangpt/autofde-lab",
+      "seanchatmangpt/beam4pm",
+      "seanchatmangpt/chatgpt-cloud-elixir",
+      "seanchatmangpt/chatman-ecosystem",
+      "seanchatmangpt/engineering-standards",
+      "seanchatmangpt/ex4pm",
+      "seanchatmangpt/ggen-ecosystem",
+      "seanchatmangpt/ggen-marketplace",
+      "seanchatmangpt/ggen_igniter",
+      "seanchatmangpt/gymact",
+      "seanchatmangpt/wasm4pm",
+      "seanchatmangpt/xaas",
+      "seanchatmangpt/zcode-cli",
+      "seanchatmangpt/zoela"
+    ]
+  },
+  "observation_authority": "github-api:GITHUB_TOKEN:read",
+  "observations_digest": "sha256:2a733f16eb8ef23b546725ce51545f561820c9f71036a99b0a293855ff49dbe6",
+  "packets_digest": "d9f68134f4ba6742acf341198c2f349ea9ccceb96560d4bcf69a59176c791f82",
+  "previous_receipt_digest": "sha256:2323f877bca4d3fdca217ace53e7501f7978ed66e4afbdd39904e1f1cda0fa0c",
+  "receipt_digest": "sha256:7e7e9c80c3cd4649d9e00039d2336c8b5ff477b53227332dd4b445de3c2cc856",
+  "refusals": [],
+  "release": "v26.9.25",
+  "remaining": [],
+  "requirements": {
+    "AC-01": {
+      "broken_term": null,
+      "code": null,
+      "detail": "manifest sha256=1b462b47f0701a5c0f77fd8a83d1f0be35ee93fa88b3bde2b8fc866eb1ca0743",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5"
+    },
+    "AC-02": {
+      "broken_term": null,
+      "code": null,
+      "detail": "13 required subjects terminal (11 typed non-ALIVE dispositions); closure court PARTIAL_ALIVE; receipt=sha256:f95b998cd8f7b02ba80612b1d1f87d716360330256e2c4d8743aa105e2326180",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5"
+    },
+    "AC-03": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/ggen_igniter:release/v26.9.25/receipts/sjira-origin-authority.json ALIVE at 780a81d81c6e579084ba3048037419aab7d7386e (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "780a81d81c6e579084ba3048037419aab7d7386e"
+    },
+    "AC-04": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/ggen_igniter:release/v26.9.25/receipts/prose-inert.json ALIVE at 780a81d81c6e579084ba3048037419aab7d7386e (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "780a81d81c6e579084ba3048037419aab7d7386e"
+    },
+    "AC-05": {
+      "broken_term": null,
+      "code": null,
+      "detail": "berthier ALIVE; RFC \u00a79 crown test: section=\u00a73 dependents=58 affected=['AC-01', 'AC-02', 'AC-03', 'AC-04', 'AC-05', 'AC-06', 'AC-07', 'AC-08', 'AC-09', 'AC-10', 'AC-11', 'AC-12', 'AC-13', 'AC-14', 'AC-15', 'AC-16', 'AC-17', 'AC-18', 'AC-19', 'F-01', 'F-02', 'F-03', 'F-04', 'F-05', 'F-06', 'F-07', 'F-08', 'F-09', 'F-10', 'F-11', 'F-12', 'F-13', 'F-14'] owners=['seanchatmangpt/affidavit', 'seanchatmangpt/autofde-lab', 'seanchatmangpt/chatman-ecosystem', 'seanchatmangpt/ggen_igniter', 'seanchatmangpt/xaas', 'seanchatmangpt/zoela'] ManualRestatementCount=0",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5"
+    },
+    "AC-06": {
+      "broken_term": null,
+      "code": null,
+      "detail": "XPROD ALIVE receipt=sha256:08ab0156c6410810bbf82635832acaf6371cd125f02fc7ff4f90e5a41ebad769",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5"
+    },
+    "AC-07": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/autofde-lab:release/v26.9.25/receipts/tlc-court.json ALIVE at 6fbe1807388e8c44ae5d5f75455a082a745055c7 (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "6fbe1807388e8c44ae5d5f75455a082a745055c7"
+    },
+    "AC-08": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/affidavit:release/v26.9.25/receipts/brce-ledger.json ALIVE at 9d158477fc4706f4fdaf30cfc073c547b57e783e (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "9d158477fc4706f4fdaf30cfc073c547b57e783e"
+    },
+    "AC-09": {
+      "broken_term": null,
+      "code": null,
+      "detail": "0 unauthorized worktrees (TOPOLOGY-RECEIPT.json)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5"
+    },
+    "AC-10": {
+      "broken_term": null,
+      "code": null,
+      "detail": "local artifact local:release/v26.9.25/observations/TOPOLOGY-RECEIPT.json",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5"
+    },
+    "AC-11": {
+      "broken_term": null,
+      "code": null,
+      "detail": "18 pins durable",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5"
+    },
+    "AC-12": {
+      "broken_term": null,
+      "code": null,
+      "detail": "cold projector --check current (run 36161856985)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5"
+    },
+    "AC-13": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/xaas:release/v26.9.25/receipts/case-study-schema.json ALIVE at c10cdab95b927ed82c5c212a3f36d02b52ed525e (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "c10cdab95b927ed82c5c212a3f36d02b52ed525e"
+    },
+    "AC-14": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/xaas:release/v26.9.25/receipts/wd-evidence-ceiling.json ALIVE at c10cdab95b927ed82c5c212a3f36d02b52ed525e (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "c10cdab95b927ed82c5c212a3f36d02b52ed525e"
+    },
+    "AC-15": {
+      "broken_term": null,
+      "code": null,
+      "detail": "terminal BLOCKED(AUTHORITY_FAILURE:operator-repo-rename) (RFC \u00a738); seanchatmangpt/zoela:release/v26.9.25/receipts/godslaw-migration.json ALIVE at f1313f1c1462b9d2f4dd3cb010dbe5921f53185d (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "f1313f1c1462b9d2f4dd3cb010dbe5921f53185d"
+    },
+    "AC-16": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/zoela:release/v26.9.25/receipts/vision2027-admission.json ALIVE at f1313f1c1462b9d2f4dd3cb010dbe5921f53185d (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "f1313f1c1462b9d2f4dd3cb010dbe5921f53185d"
+    },
+    "AC-17": {
+      "broken_term": null,
+      "code": null,
+      "detail": "every pin identical-to or ancestor-of its default-branch head",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5"
+    },
+    "AC-18": {
+      "broken_term": null,
+      "code": null,
+      "detail": "every other requirement PASS",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5"
+    },
+    "AC-19": {
+      "broken_term": null,
+      "code": null,
+      "detail": "v26.9.25=68bacd8dcc9ae12e4e97727a284c14abdc7520c5 == crown_sha",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5"
+    },
+    "F-01": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/ggen_igniter:release/v26.9.25/receipts/prose-inert.json ALIVE at 780a81d81c6e579084ba3048037419aab7d7386e (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "780a81d81c6e579084ba3048037419aab7d7386e"
+    },
+    "F-02": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/ggen_igniter:release/v26.9.25/receipts/sjira-origin-authority.json ALIVE at 780a81d81c6e579084ba3048037419aab7d7386e (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "780a81d81c6e579084ba3048037419aab7d7386e"
+    },
+    "F-03": {
+      "broken_term": null,
+      "code": null,
+      "detail": "13 required subjects terminal (11 typed non-ALIVE dispositions); closure court PARTIAL_ALIVE; receipt=sha256:f95b998cd8f7b02ba80612b1d1f87d716360330256e2c4d8743aa105e2326180",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5"
+    },
+    "F-04": {
+      "broken_term": null,
+      "code": null,
+      "detail": "18 pins durable",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5"
+    },
+    "F-05": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/affidavit:release/v26.9.25/receipts/brce-ledger.json ALIVE at 9d158477fc4706f4fdaf30cfc073c547b57e783e (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "9d158477fc4706f4fdaf30cfc073c547b57e783e"
+    },
+    "F-06": {
+      "broken_term": null,
+      "code": null,
+      "detail": "berthier ALIVE; RFC \u00a79 crown test: section=\u00a73 dependents=58 affected=['AC-01', 'AC-02', 'AC-03', 'AC-04', 'AC-05', 'AC-06', 'AC-07', 'AC-08', 'AC-09', 'AC-10', 'AC-11', 'AC-12', 'AC-13', 'AC-14', 'AC-15', 'AC-16', 'AC-17', 'AC-18', 'AC-19', 'F-01', 'F-02', 'F-03', 'F-04', 'F-05', 'F-06', 'F-07', 'F-08', 'F-09', 'F-10', 'F-11', 'F-12', 'F-13', 'F-14'] owners=['seanchatmangpt/affidavit', 'seanchatmangpt/autofde-lab', 'seanchatmangpt/chatman-ecosystem', 'seanchatmangpt/ggen_igniter', 'seanchatmangpt/xaas', 'seanchatmangpt/zoela'] ManualRestatementCount=0",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5"
+    },
+    "F-07": {
+      "broken_term": null,
+      "code": null,
+      "detail": "XPROD ALIVE receipt=sha256:08ab0156c6410810bbf82635832acaf6371cd125f02fc7ff4f90e5a41ebad769",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5"
+    },
+    "F-08": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/autofde-lab:release/v26.9.25/receipts/tlc-court.json ALIVE at 6fbe1807388e8c44ae5d5f75455a082a745055c7 (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "6fbe1807388e8c44ae5d5f75455a082a745055c7"
+    },
+    "F-09": {
+      "broken_term": null,
+      "code": null,
+      "detail": "typed blocker TRANSPORT_FAILURE:cloud-to-zcode-leg-unreceipted (RFC \u00a755)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "c10cdab95b927ed82c5c212a3f36d02b52ed525e"
+    },
+    "F-10": {
+      "broken_term": null,
+      "code": null,
+      "detail": "0 unauthorized worktrees (TOPOLOGY-RECEIPT.json)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5"
+    },
+    "F-11": {
+      "broken_term": null,
+      "code": null,
+      "detail": "local artifact local:release/v26.9.25/observations/TOPOLOGY-RECEIPT.json",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5"
+    },
+    "F-12": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/xaas:release/v26.9.25/receipts/wd-evidence-ceiling.json ALIVE at c10cdab95b927ed82c5c212a3f36d02b52ed525e (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "c10cdab95b927ed82c5c212a3f36d02b52ed525e"
+    },
+    "F-13": {
+      "broken_term": null,
+      "code": null,
+      "detail": "seanchatmangpt/zoela:release/v26.9.25/receipts/godslaw-interpretation.json ALIVE at f1313f1c1462b9d2f4dd3cb010dbe5921f53185d (ahead)",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "f1313f1c1462b9d2f4dd3cb010dbe5921f53185d"
+    },
+    "F-14": {
+      "broken_term": null,
+      "code": null,
+      "detail": "v26.9.25=68bacd8dcc9ae12e4e97727a284c14abdc7520c5 == crown_sha",
+      "failure_class": null,
+      "state": "PASS",
+      "subject_sha": "68bacd8dcc9ae12e4e97727a284c14abdc7520c5"
+    }
+  },
+  "root_repository": "seanchatmangpt/chatman-ecosystem",
+  "schema": "https://chatman.dev/root-crown/receipt/v1",
+  "standing": "ALIVE",
+  "terms": {
+    "A": {
+      "detail": "",
+      "requirements": [
+        "AC-03",
+        "AC-04",
+        "AC-14",
+        "AC-16",
+        "F-01",
+        "F-02",
+        "F-12",
+        "F-13"
+      ],
+      "state": "PASS"
+    },
+    "C": {
+      "detail": "",
+      "requirements": [
+        "AC-01",
+        "AC-02",
+        "AC-15",
+        "AC-17",
+        "AC-18",
+        "AC-19",
+        "F-03",
+        "F-14"
+      ],
+      "state": "PASS"
+    },
+    "F": {
+      "detail": "",
+      "requirements": [
+        "AC-05",
+        "AC-07",
+        "F-06",
+        "F-08"
+      ],
+      "state": "PASS"
+    },
+    "M": {
+      "detail": "",
+      "requirements": [
+        "AC-09",
+        "AC-10",
+        "AC-11",
+        "F-04",
+        "F-10",
+        "F-11"
+      ],
+      "state": "PASS"
+    },
+    "R": {
+      "detail": "",
+      "requirements": [
+        "AC-08",
+        "AC-12",
+        "F-05",
+        "F-09"
+      ],
+      "state": "PASS"
+    },
+    "X": {
+      "detail": "",
+      "requirements": [
+        "AC-06",
+        "AC-13",
+        "F-07"
+      ],
+      "state": "PASS"
+    }
+  },
+  "theorem": "RELEASE = C AND A AND R AND X AND F AND M"
+}

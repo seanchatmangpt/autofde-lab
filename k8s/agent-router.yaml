@@ -1,0 +1,70 @@
+apiVersion: aigateway.envoyproxy.io/v1alpha1
+kind: GatewayConfig
+metadata:
+  name: autofde-router-gw-config
+spec:
+  tracing:
+    enabled: true
+---
+apiVersion: aigateway.envoyproxy.io/v1alpha1
+kind: BackendSecurityPolicy
+metadata:
+  name: autofde-router-sec-policy
+spec:
+  anthropicAPIKey:
+    secretRef:
+      name: anthropic-credentials
+---
+apiVersion: aigateway.envoyproxy.io/v1alpha1
+kind: AIServiceBackend
+metadata:
+  name: vertex-gemini
+spec:
+  provider:
+    type: GCPVertexAI
+---
+apiVersion: aigateway.envoyproxy.io/v1alpha1
+kind: AIServiceBackend
+metadata:
+  name: anthropic-claude
+spec:
+  provider:
+    type: OpenAI
+---
+apiVersion: aigateway.envoyproxy.io/v1alpha1
+kind: AIGatewayRoute
+metadata:
+  name: autofde-router-route
+spec:
+  rules:
+    - matches:
+        - headers:
+            - name: x-model-tier
+              value: primary
+      backends:
+        - name: vertex-gemini
+          weight: 100
+    - matches:
+        - headers:
+            - name: x-model-tier
+              value: fallback
+      backends:
+        - name: anthropic-claude
+          weight: 100
+---
+apiVersion: aigateway.envoyproxy.io/v1alpha1
+kind: MCPRoute
+metadata:
+  name: autofde-router-mcp-route
+spec:
+  backendRefs:
+    - name: mcp-upstream-service
+---
+apiVersion: aigateway.envoyproxy.io/v1alpha1
+kind: QuotaPolicy
+metadata:
+  name: autofde-router-quota
+spec:
+  rules:
+    - limit: 1000
+      period: 1m

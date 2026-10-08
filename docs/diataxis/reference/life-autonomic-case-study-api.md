@@ -4,7 +4,7 @@ This page documents the public surface of
 `src/autofde_lab/agent/life_autonomic_case_study.py`: its module-level constants,
 dataclasses, functions, CLI entrypoint, and the test surface that verifies it. For the
 narrative explanation of why this case study exists and what it demonstrates, see
-[`docs/case-studies/life-autonomic-controller.md`](../case-studies/life-autonomic-controller.md).
+[`docs/case-studies/life-autonomic-controller.md`](../../case-studies/life-autonomic-controller.md).
 
 The module is SELECT/CONSTRUCT only. It never actuates, sends a message, or grants
 authority. Every candidate plan carries `required_authority_classes == ()`, and the

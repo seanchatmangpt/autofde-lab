@@ -13,7 +13,7 @@ import os
 import threading
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any, Callable, Iterable, Mapping, Protocol
 
 from .locking import InterProcessFileLock
 
@@ -25,6 +25,7 @@ __all__ = [
     "ProvenanceError",
     "ProvenanceLedger",
     "SignedAttestation",
+    "verify_ledger_records",
 ]
 
 
@@ -39,6 +40,18 @@ def _canonical_json(value: Mapping[str, Any]) -> bytes:
         separators=(",", ":"),
         ensure_ascii=False,
     ).encode("utf-8")
+
+
+class Attestable(Protocol):
+    """Any record a signer can sign: a frozen dataclass with ``to_dict``.
+
+    The ledger was written for :class:`CacheAttestation`; the record type is a
+    parameter so other append-only evidence streams (e.g. the ALOOP sealed
+    recorder, ``autofde_lab.aloop.seal``) reuse the same chain and signature
+    instead of duplicating them.
+    """
+
+    def to_dict(self) -> dict[str, Any]: ...
 
 
 @dataclass(frozen=True)
@@ -66,7 +79,7 @@ class CacheAttestation:
 
 @dataclass(frozen=True)
 class SignedAttestation:
-    attestation: CacheAttestation
+    attestation: Attestable
     key_id: str
     algorithm: str
     signature: str
@@ -93,7 +106,7 @@ class AttestationSigner:
         self._key = bytes(key)
         self.key_id = key_id
 
-    def sign(self, attestation: CacheAttestation) -> SignedAttestation:
+    def sign(self, attestation: Attestable) -> SignedAttestation:
         payload = _canonical_json(attestation.to_dict())
         signature = hmac.new(self._key, payload, hashlib.sha256).hexdigest()
         return SignedAttestation(
@@ -140,8 +153,91 @@ class LedgerVerification:
     error: str | None = None
 
 
+def _record_body(record: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "sequence": record["sequence"],
+        "previous_digest": record["previous_digest"],
+        "signed_attestation": record["signed_attestation"],
+    }
+
+
+def verify_ledger_records(
+    lines: Iterable[str],
+    *,
+    keyring: AttestationKeyring,
+    attestation_type: Callable[..., Attestable] = CacheAttestation,
+) -> tuple[LedgerVerification, list[dict[str, Any]]]:
+    """Verify ledger JSONL lines without touching the file system.
+
+    Checks contiguous sequence, hash chain, record digest and signature under
+    ``keyring``; returns the verification and the records verified so far.
+    Pure over its inputs, so a verifier can check a ledger it must not write
+    (no lock file) -- :meth:`ProvenanceLedger.verify` delegates here.
+    """
+    previous: str | None = None
+    expected_sequence = 1
+    records: list[dict[str, Any]] = []
+    try:
+        for line in lines:
+            if not line.strip():
+                continue
+            record = json.loads(line)
+            if record["sequence"] != expected_sequence:
+                raise ProvenanceError("ledger sequence is not contiguous")
+            if record["previous_digest"] != previous:
+                raise ProvenanceError("ledger hash chain is broken")
+            digest = hashlib.sha256(_canonical_json(_record_body(record))).hexdigest()
+            if not hmac.compare_digest(digest, record["record_digest"]):
+                raise ProvenanceError("ledger record digest mismatch")
+            signed_data = record["signed_attestation"]
+            attestation = attestation_type(**signed_data["attestation"])
+            if attestation.to_dict() != signed_data["attestation"]:
+                raise ProvenanceError("ledger attestation does not round-trip")
+            signed = SignedAttestation(
+                attestation=attestation,
+                key_id=signed_data["key_id"],
+                algorithm=signed_data["algorithm"],
+                signature=signed_data["signature"],
+            )
+            if not keyring.verify(signed):
+                raise ProvenanceError("ledger attestation signature mismatch")
+            records.append(record)
+            previous = record["record_digest"]
+            expected_sequence += 1
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+        return (
+            LedgerVerification(
+                valid=False,
+                records=expected_sequence - 1,
+                tail_digest=previous,
+                error=f"{type(error).__name__}: {error}",
+            ),
+            records,
+        )
+    except ProvenanceError as error:
+        return (
+            LedgerVerification(
+                valid=False,
+                records=expected_sequence - 1,
+                tail_digest=previous,
+                error=str(error),
+            ),
+            records,
+        )
+    return (
+        LedgerVerification(
+            valid=True, records=expected_sequence - 1, tail_digest=previous
+        ),
+        records,
+    )
+
+
 class ProvenanceLedger:
-    """JSONL ledger with sequence, hash-chain, signature, flush, and fsync."""
+    """JSONL ledger with sequence, hash-chain, signature, flush, and fsync.
+
+    ``attestation_type`` is the record type the ledger carries (default
+    :class:`CacheAttestation`); any :class:`Attestable` dataclass works.
+    """
 
     def __init__(
         self,
@@ -151,8 +247,10 @@ class ProvenanceLedger:
         keyring: AttestationKeyring | None = None,
         fsync: bool = True,
         lock_timeout_seconds: float = 5.0,
+        attestation_type: Callable[..., Attestable] = CacheAttestation,
     ) -> None:
         self.path = Path(path)
+        self.attestation_type = attestation_type
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.signer = signer
         self.keyring = keyring or AttestationKeyring((signer,))
@@ -179,7 +277,7 @@ class ProvenanceLedger:
                 tail = str(record["record_digest"])
         return sequence, tail
 
-    def append(self, attestation: CacheAttestation) -> SignedAttestation:
+    def append(self, attestation: Attestable) -> SignedAttestation:
         signed = self.signer.sign(attestation)
         with self._lock, self._file_lock:
             sequence, previous = self._scan_tail()
@@ -205,54 +303,8 @@ class ProvenanceLedger:
     def _verify_locked(self) -> LedgerVerification:
         if not self.path.exists():
             return LedgerVerification(valid=True, records=0, tail_digest=None)
-        previous: str | None = None
-        expected_sequence = 1
-        try:
-            with self.path.open("r", encoding="utf-8") as stream:
-                for line in stream:
-                    if not line.strip():
-                        continue
-                    record = json.loads(line)
-                    if record["sequence"] != expected_sequence:
-                        raise ProvenanceError("ledger sequence is not contiguous")
-                    if record["previous_digest"] != previous:
-                        raise ProvenanceError("ledger hash chain is broken")
-                    body = {
-                        "sequence": record["sequence"],
-                        "previous_digest": record["previous_digest"],
-                        "signed_attestation": record["signed_attestation"],
-                    }
-                    digest = hashlib.sha256(_canonical_json(body)).hexdigest()
-                    if not hmac.compare_digest(digest, record["record_digest"]):
-                        raise ProvenanceError("ledger record digest mismatch")
-                    signed_data = record["signed_attestation"]
-                    attestation = CacheAttestation(**signed_data["attestation"])
-                    signed = SignedAttestation(
-                        attestation=attestation,
-                        key_id=signed_data["key_id"],
-                        algorithm=signed_data["algorithm"],
-                        signature=signed_data["signature"],
-                    )
-                    if not self.keyring.verify(signed):
-                        raise ProvenanceError("ledger attestation signature mismatch")
-                    previous = record["record_digest"]
-                    expected_sequence += 1
-        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
-            return LedgerVerification(
-                valid=False,
-                records=expected_sequence - 1,
-                tail_digest=previous,
-                error=f"{type(error).__name__}: {error}",
+        with self.path.open("r", encoding="utf-8") as stream:
+            verification, _records = verify_ledger_records(
+                stream, keyring=self.keyring, attestation_type=self.attestation_type
             )
-        except ProvenanceError as error:
-            return LedgerVerification(
-                valid=False,
-                records=expected_sequence - 1,
-                tail_digest=previous,
-                error=str(error),
-            )
-        return LedgerVerification(
-            valid=True,
-            records=expected_sequence - 1,
-            tail_digest=previous,
-        )
+        return verification

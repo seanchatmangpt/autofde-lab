@@ -1,0 +1,19 @@
+{
+  "added": [],
+  "after": {
+    "census_id": "sha256:db4960436272a41b9d4409e9c0273e8a7e837b5fe437d7ecbe568fcf91bf5626",
+    "commit": "85c367467889cb8bb55574b8629b4cabdacff47c"
+  },
+  "before": {
+    "census_id": "sha256:4713b213f9e1a3f39c6c7a892bb023dd706cb9a473ae30e6e95a82667793a75e",
+    "commit": "98b6cc9bfe3af8a25b3ad53019f5fb71fe2d37d0"
+  },
+  "direction": "UNCHANGED",
+  "gate": "PASS",
+  "id": "sha256:f70a42f7e24da9b4959866ea8d3c16afa9d28cfa7eff71a017d4936d9d7c7903",
+  "llm_residue_after": 94,
+  "llm_residue_before": 94,
+  "removed": [],
+  "retired": "UNKNOWN:removal-is-not-retirement;see-retirement-ledger",
+  "unfenced_added": []
+}

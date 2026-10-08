@@ -1,0 +1,95 @@
+{
+  "authority": "NONE (decision only; tagging requires the release-crown environment approval)",
+  "crown_sha": "8321663d02b849cbb7879b3eaf548d5bdca7a7e9",
+  "decision": "ILLEGAL",
+  "existing_tag_sha": null,
+  "head_sha": "8321663d02b849cbb7879b3eaf548d5bdca7a7e9",
+  "reasons": [
+    "TAG_ILLEGAL:CROWN_NOT_ALIVE:BLOCKED:terms=C,M,R"
+  ],
+  "receipt_digest": "sha256:1842e92881f1a576e0e0c00e7b3102ae755f3cc2c187ea7d61b17d5b3aa2594f",
+  "remaining": [
+    {
+      "broken_term": "R_missing_standing",
+      "code": "CLOSURE_PARTIAL",
+      "detail": "closure PARTIAL_ALIVE; remaining=18; receipt=sha256:bf4c9ad0af8a98f22926fefb6ca13247e5af1c74243e6877e4fadd123e5bbb46",
+      "failure_class": "DEPENDENCY_FAILURE",
+      "id": "AC-02",
+      "state": "BLOCKED",
+      "term": "C"
+    },
+    {
+      "broken_term": "R_missing_identity",
+      "code": "NEW_HEAD_UNEVIDENCED",
+      "detail": "heads moved: seanchatmangpt/affidavit; evidence bound to 9d158477fc4706f4fdaf30cfc073c547b57e783e",
+      "failure_class": "EVIDENCE_FAILURE",
+      "id": "AC-08",
+      "state": "UNKNOWN",
+      "term": "R"
+    },
+    {
+      "broken_term": "R_missing_consequence",
+      "code": "EVIDENCE_ABSENT",
+      "detail": "no operator-local worktree observation",
+      "failure_class": "EVIDENCE_FAILURE",
+      "id": "AC-09",
+      "state": "BLOCKED",
+      "term": "M"
+    },
+    {
+      "broken_term": "R_missing_standing",
+      "code": "ARTIFACT_BLOCKED",
+      "detail": "local:release/v26.9.25/observations/TOPOLOGY-RECEIPT.json:{'derived_from': 'replay commands above at subject_sha (git blob id of INVENTORY.json); gate PASS + byte-exact drill PASS for every retired inventory copy; m_term.holds recomputed by verify (exit 0 iff holds)', 'value': 'ALIVE'}(untyped)",
+      "failure_class": "DEPENDENCY_FAILURE",
+      "id": "AC-10",
+      "state": "BLOCKED",
+      "term": "M"
+    },
+    {
+      "broken_term": "R_missing_standing",
+      "code": "CROWN_DEPENDENCIES_OPEN",
+      "detail": "AC-02,AC-08,AC-09,AC-10,F-03,F-05,F-10,F-11",
+      "failure_class": "DEPENDENCY_FAILURE",
+      "id": "AC-18",
+      "state": "BLOCKED",
+      "term": "C"
+    },
+    {
+      "broken_term": "R_missing_standing",
+      "code": "CLOSURE_PARTIAL",
+      "detail": "closure PARTIAL_ALIVE; remaining=18; receipt=sha256:bf4c9ad0af8a98f22926fefb6ca13247e5af1c74243e6877e4fadd123e5bbb46",
+      "failure_class": "DEPENDENCY_FAILURE",
+      "id": "F-03",
+      "state": "BLOCKED",
+      "term": "C"
+    },
+    {
+      "broken_term": "R_missing_identity",
+      "code": "NEW_HEAD_UNEVIDENCED",
+      "detail": "heads moved: seanchatmangpt/affidavit; evidence bound to 9d158477fc4706f4fdaf30cfc073c547b57e783e",
+      "failure_class": "EVIDENCE_FAILURE",
+      "id": "F-05",
+      "state": "UNKNOWN",
+      "term": "R"
+    },
+    {
+      "broken_term": "R_missing_consequence",
+      "code": "EVIDENCE_ABSENT",
+      "detail": "no operator-local worktree observation",
+      "failure_class": "EVIDENCE_FAILURE",
+      "id": "F-10",
+      "state": "BLOCKED",
+      "term": "M"
+    },
+    {
+      "broken_term": "R_missing_standing",
+      "code": "ARTIFACT_BLOCKED",
+      "detail": "local:release/v26.9.25/observations/TOPOLOGY-RECEIPT.json:{'derived_from': 'replay commands above at subject_sha (git blob id of INVENTORY.json); gate PASS + byte-exact drill PASS for every retired inventory copy; m_term.holds recomputed by verify (exit 0 iff holds)', 'value': 'ALIVE'}(untyped)",
+      "failure_class": "DEPENDENCY_FAILURE",
+      "id": "F-11",
+      "state": "BLOCKED",
+      "term": "M"
+    }
+  ],
+  "tag": "v26.9.25"
+}

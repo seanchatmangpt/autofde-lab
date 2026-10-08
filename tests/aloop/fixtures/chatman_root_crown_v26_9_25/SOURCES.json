@@ -1,0 +1,41 @@
+{
+  "files": {
+    "run-36160116076/crown-receipt.json": {
+      "locator": "git:seanchatmangpt/chatman-ecosystem@c599667a84ec79d832bb779bce1730b33b43fdd4:release/v26.9.25/hardening/receipts/run-36160116076/crown-receipt.json",
+      "sha256": "f656d0d154947988c89209cbce20d908ab34a1836a1d0a6f8ff8b46e6369827b"
+    },
+    "run-36160116076/observations.json": {
+      "locator": "git:seanchatmangpt/chatman-ecosystem@c599667a84ec79d832bb779bce1730b33b43fdd4:release/v26.9.25/hardening/receipts/run-36160116076/observations.json",
+      "sha256": "edac215f8b777e6bd501e58dbd51affa1faf0aca0cacfeddf401216f82a0094b"
+    },
+    "run-36160116076/tag-decision.json": {
+      "locator": "git:seanchatmangpt/chatman-ecosystem@c599667a84ec79d832bb779bce1730b33b43fdd4:release/v26.9.25/hardening/receipts/run-36160116076/tag-decision.json",
+      "sha256": "166b35e6a58796b172f89c9fee44b676fd559934503bfa68c8f1d7af48607d17"
+    },
+    "run-36161744816/crown-receipt.json": {
+      "locator": "git:seanchatmangpt/chatman-ecosystem@c599667a84ec79d832bb779bce1730b33b43fdd4:release/v26.9.25/hardening/receipts/run-36161744816/crown-receipt.json",
+      "sha256": "152900efa367ced50c05605bebcbeb0f3450aef0e09871ae4ba0d13d00406fc0"
+    },
+    "run-36161744816/observations.json": {
+      "locator": "git:seanchatmangpt/chatman-ecosystem@c599667a84ec79d832bb779bce1730b33b43fdd4:release/v26.9.25/hardening/receipts/run-36161744816/observations.json",
+      "sha256": "6df3312811054a0a80e35a19c5f9492be0611c30825322c0a46686b8236f7210"
+    },
+    "run-36161744816/tag-decision.json": {
+      "locator": "git:seanchatmangpt/chatman-ecosystem@c599667a84ec79d832bb779bce1730b33b43fdd4:release/v26.9.25/hardening/receipts/run-36161744816/tag-decision.json",
+      "sha256": "9bc9109e95612f2075b72753f11f2f6a676a4271158efdbd757df0b7f4803f6d"
+    },
+    "run-36161856985/crown-receipt.json": {
+      "locator": "git:seanchatmangpt/chatman-ecosystem@c599667a84ec79d832bb779bce1730b33b43fdd4:release/v26.9.25/hardening/receipts/run-36161856985/crown-receipt.json",
+      "sha256": "10d0c98ebb480294a744520ca15e5f983a988e3759e1e434ee2a55bd51d9deea"
+    },
+    "run-36161856985/observations.json": {
+      "locator": "git:seanchatmangpt/chatman-ecosystem@c599667a84ec79d832bb779bce1730b33b43fdd4:release/v26.9.25/hardening/receipts/run-36161856985/observations.json",
+      "sha256": "b122838d415ed44f7f77d7d5c5b64d9d6339b3aad9dc84f2a2eb49eb4d9694f5"
+    },
+    "run-36161856985/tag-decision.json": {
+      "locator": "git:seanchatmangpt/chatman-ecosystem@c599667a84ec79d832bb779bce1730b33b43fdd4:release/v26.9.25/hardening/receipts/run-36161856985/tag-decision.json",
+      "sha256": "89c337af49a05b48eb8cc0a9eaac246ae938c0e3ca66cd2f0553ce4f173d3fe1"
+    }
+  },
+  "note": "byte-for-byte copies via git show <commit>:<path>; sha256 of the copied bytes"
+}

@@ -13,6 +13,16 @@ from ._mfw import (
 )
 from ._model import ComponentDescriptor, Invocation, InvocationResult
 from ._registry import ComponentRegistry
+from .dspy import (
+    DSPY_VERSION,
+    DSPY_WASM_RECEIPT_SCHEMA,
+    DSPY_WASM_SCHEMA,
+    PYODIDE_VERSION,
+    DSPyWasmError,
+    DSPyWasmProbe,
+    DSPyWasmProtocolViolation,
+    DSPyWasmResult,
+)
 from ._runtime import (
     AbiViolation,
     ArtifactImage,
@@ -37,6 +47,14 @@ __all__ = [
     "INTEROP_SCHEMA",
     "RECEIPT_SCHEMA",
     "AbiViolation",
+    "DSPY_VERSION",
+    "DSPY_WASM_RECEIPT_SCHEMA",
+    "DSPY_WASM_SCHEMA",
+    "PYODIDE_VERSION",
+    "DSPyWasmError",
+    "DSPyWasmProbe",
+    "DSPyWasmProtocolViolation",
+    "DSPyWasmResult",
     "ArtifactImage",
     "ArtifactIntegrityError",
     "AutoBackend",

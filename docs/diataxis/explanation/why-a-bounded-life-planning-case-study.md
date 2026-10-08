@@ -4,7 +4,7 @@ Continuous planning in AutoFDE Lab needed a worked example that exercises real
 admission, reuse, repair, and refusal semantics under load. This document explains
 the reasoning behind `src/autofde_lab/agent/life_autonomic_case_study.py`, not how
 to run it — see
-[`docs/case-studies/life-autonomic-controller.md`](case-studies/life-autonomic-controller.md)
+[`docs/case-studies/life-autonomic-controller.md`](../../case-studies/life-autonomic-controller.md)
 for the replay commands and falsifiers.
 
 ## 1. Why "life as a planning world" at all
@@ -18,7 +18,7 @@ was land an executable, tested instance of the idea. `life_autonomic_case_study.
 is that first instance: it does not introduce a new concept, it closes the loop on
 one the repo had already tried several times, with `tests/agent/test_life_autonomic_case_study.py`
 (3 passed, verified this session — see the pytest command in
-[`docs/case-studies/life-autonomic-controller.md`](case-studies/life-autonomic-controller.md))
+[`docs/case-studies/life-autonomic-controller.md`](../../case-studies/life-autonomic-controller.md))
 as the evidence that distinguishes it from its predecessors.
 
 ## 2. Why the subject is deliberately generic
@@ -177,7 +177,7 @@ in-progress work:
 
 ## See also
 
-- [`docs/case-studies/life-autonomic-controller.md`](case-studies/life-autonomic-controller.md) —
+- [`docs/case-studies/life-autonomic-controller.md`](../../case-studies/life-autonomic-controller.md) —
   the how-to-shaped companion doc: replay commands, exact falsifiers, and standing.
 - `src/autofde_lab/agent/continuous_planning.py` — the real kernel this case study
   composes rather than reimplements.

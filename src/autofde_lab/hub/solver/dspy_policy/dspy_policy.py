@@ -192,6 +192,7 @@ class DSPyPolicy(DeterministicPolicySolver):
         """
         super().__init__(domain_factory=domain_factory)
         self._lm = lm or default_lm()
+        # llm-residue: kind=planning class=RC-GAME-MOVE-CHOICE
         self._predict = dspy.Predict(ChooseMove)
         self._generate_predict = dspy.Predict(GenerateStructuredAction)
         self._situation_formatter = situation_formatter

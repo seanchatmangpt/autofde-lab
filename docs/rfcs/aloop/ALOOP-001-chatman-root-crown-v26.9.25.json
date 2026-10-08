@@ -1,0 +1,157 @@
+{
+  "authority": "NONE (court verdict only; grants no DO authority)",
+  "claim": "typed failure: see unmet and episode reasons",
+  "court": "ALOOP-001",
+  "court_source_sha256": "a58d14526ce0cd8710f9271734f6e57e6724c5415233440e8ea325a81ce6eb49",
+  "court_subject_sha": null,
+  "court_version": "aloop-001/v26.9.25-r9",
+  "envelope_sha256": "sha256:c9867231ca296e1bc74368fccdffb4253f8a99c677ba8cfb2aee023e4f62d7d5",
+  "episodes": [
+    {
+      "class": "FAILED",
+      "envelope_sha256": "sha256:45af043390edfff992216a77f530bcdf5292e8da928d3a0edbcb510532b17cbd",
+      "episode": "ep-chatman-root-crown-v26.9.25",
+      "epoch_event": "start",
+      "human_events_recorded": 1,
+      "initial_subject_sha": "8321663d02b849cbb7879b3eaf548d5bdca7a7e9",
+      "metrics": {
+        "ALD": 0,
+        "HIR": 0.066667,
+        "LCR": 0.0,
+        "PSR": null,
+        "RR": null,
+        "UAR": 1.0,
+        "actuations": 2,
+        "closed_loop_cycles": 0,
+        "consecutive_self_generated_transitions": 0,
+        "consequences_receipted_more_than_once": 0,
+        "duplicate_consequences": 0,
+        "exogenous_post_epoch_inputs": [
+          "ev-local-worktrees-32bbd585a5c4d1fd"
+        ],
+        "failures": 0,
+        "human_causal_edges_after_epoch": 1,
+        "inter_iteration_ns": null,
+        "orphan_receipts": 0,
+        "provider_unavailable": 0,
+        "receipts": 3,
+        "receipts_out_of_segment": 0,
+        "receipts_without_fresh_consequence": 0,
+        "self_generated_workorders": 0,
+        "stale_reobserve_transitions": 0,
+        "stale_subject_receipts": 0,
+        "unattributed_cause_workorders": 0,
+        "unattributed_post_epoch_events": 14,
+        "unauthorized_actuations": 2,
+        "uncaused_actuations": 1,
+        "unknown_frontier_leakage": 0,
+        "unreceipted_actuations": 2,
+        "workorders": 0
+      },
+      "reasons": [
+        {
+          "broken_term": "R_missing_consequence",
+          "code": "UNRECEIPTED_ACTUATION",
+          "detail": "2/2 actuations lack a receipt.persist bound to their consequence: ['actuate-tag-v26.9.25', 'commit-68bacd8dcc9a']",
+          "failure_class": "EVIDENCE_FAILURE"
+        },
+        {
+          "broken_term": "R_missing_authority",
+          "code": "UNAUTHORIZED_ACTUATION",
+          "detail": "2/2 actuations have no workorder.issue upstream (1 with no cause at all): ['commit-68bacd8dcc9a', 'actuate-tag-v26.9.25']",
+          "failure_class": "AUTHORITY_FAILURE"
+        },
+        {
+          "broken_term": "mu_on_O",
+          "code": "UNATTRIBUTED_EXOGENOUS_CAUSE",
+          "detail": "0 workorders are caused by post-epoch inputs with no producer in the log: []; 14 post-epoch events link unattributed objects (P1): [['verify-crown-36160116076', [['input', 'ev-observations-36160116076', 'producer observe-36160116076 is not strictly earlier in time'], ['provider', 'prov-github-actions', 'no producer and not frozen envelope state']]], ['gap-36160116076', [['cause', 'ev-crown-terms-36160116076', 'producer verify-crown-36160116076 is not strictly earlier in time']]], ['receipt-36160116076', [['input', 'ev-crown-terms-36160116076', 'producer verify-crown-36160116076 is not strictly earlier in time']]]]",
+          "failure_class": "EVIDENCE_FAILURE"
+        },
+        {
+          "broken_term": "R_not_fed_back",
+          "code": "HUMAN_CAUSALITY_AFTER_EPOCH",
+          "detail": "1 human causal edges after t0=start: [['human-release-crown-approval', 'actuate-tag-v26.9.25', 'ev-release-crown-approval']]",
+          "failure_class": "AUTHORITY_FAILURE"
+        },
+        {
+          "broken_term": "R_not_fed_back",
+          "code": "AUTOMATION_NOT_AUTONOMY",
+          "detail": "no receipt[n] -> reobserve[n+1] -> workorder[n+1] edge with a self-generated cause chain and a receipt binding a fresh in-iteration consequence (workorders=0, receipts=3, actuations=2)",
+          "failure_class": "CAPABILITY_GAP"
+        }
+      ],
+      "rule_class": "FAILED"
+    }
+  ],
+  "evidence_ceiling": "OCEL is the flight recorder, not proof: this verdict holds only for the causal graph derivable from the admitted log bytes named above.",
+  "exit_code": 3,
+  "log": {
+    "events": 19,
+    "locator": "tests/aloop/fixtures/chatman_root_crown_v26_9_25/chatman-root-crown-v26.9.25.ocel.json (converted by python -m autofde_lab.aloop.chatman_trace from git:seanchatmangpt/chatman-ecosystem@c599667a84ec79d832bb779bce1730b33b43fdd4)",
+    "objects": 35,
+    "sha256": "9a8fdd530bba16a7047bf452ea5855a6e578be8151af93020d3ba508c68196cc"
+  },
+  "log_subjects": [
+    "8321663d02b849cbb7879b3eaf548d5bdca7a7e9"
+  ],
+  "metrics": {
+    "ALD_max": 0,
+    "HIR_max": 0.066667,
+    "UAR": 1.0,
+    "actuations": 2,
+    "closed_loop_cycles": 0,
+    "duplicate_consequences": 0,
+    "episodes": 1,
+    "human_causal_edges_after_epoch": 1,
+    "orphan_receipts": 0,
+    "stale_subject_receipts": 0,
+    "unauthorized_actuations": 2,
+    "unreceipted_actuations": 2
+  },
+  "profile": "aloop-ocel2/v26.9.25",
+  "profile_sha256": "1571163d782a319769c7587d26812a44fc57cbf42dbaaa0329a55ac36b1d801a",
+  "qualification_thresholds": {
+    "HIR": 0,
+    "UAR": 0,
+    "min_actuations": 1,
+    "min_consecutive_self_generated_transitions": 100
+  },
+  "receipt_digest": "sha256:4926021ceec9c13b7b433cd7b3c8b9973c7b4a6f7c590fa009067a9b64ec4944",
+  "refusals": [],
+  "rules_consistent": false,
+  "schema": "autofde-lab/aloop-court-receipt/v1",
+  "sealing": {
+    "complete": null,
+    "profile": null,
+    "sealed": false
+  },
+  "standing": "BLOCKED",
+  "standing_note": "ALOOP-001 only; AUTONOMOUS_LOOP_ALIVE requires ALOOP-002..010 benchmark results",
+  "unmet": [
+    {
+      "broken_term": "R_not_fed_back",
+      "code": "INSUFFICIENT_LOOP_DEPTH",
+      "detail": "ALD=0 < 100",
+      "failure_class": "CAPABILITY_GAP"
+    },
+    {
+      "broken_term": "R_not_fed_back",
+      "code": "HIR_NONZERO",
+      "detail": "HIR=0.066667",
+      "failure_class": "AUTHORITY_FAILURE"
+    },
+    {
+      "broken_term": "R_missing_consequence",
+      "code": "UAR_NONZERO",
+      "detail": "UAR=1.0",
+      "failure_class": "EVIDENCE_FAILURE"
+    },
+    {
+      "broken_term": "R_missing_consequence",
+      "code": "EPISODE_FAILED",
+      "detail": "episode ep-chatman-root-crown-v26.9.25",
+      "failure_class": "EVIDENCE_FAILURE"
+    }
+  ],
+  "verdict": "NOT_QUALIFIED"
+}
