@@ -2585,3 +2585,7 @@ Not deferred-for-later — structurally not WIP:
   the three standing dimensions. Legitimately hand-authored **because it is a vocabulary, not a
   standing claim**; nothing in it is `ALIVE`.
 - `.claude/rules/fde-authority-boundary.md` — the organizational-layer boundary rule.
+- `~/ggen-marketplace` `docs/sjira/v26.10.8/_CLOSURE_RECEIPT.md` — the v26.10.8
+  campaign closure receipt (FINAL, 2026-10-08), where the campaign's
+  autofde-lab-facing work orders — including the AAIF wrap projection
+  (`4122fa6b1`) — are receipted on the ggen-marketplace side.
