@@ -98,14 +98,16 @@ def parse_subject(subject: str) -> tuple[int, str, int]:
 def _check_authority(report: dict) -> list[str]:
     failures = []
     if report.get("authority") != AUTHORITY:
-        failures.append(f"report authority {report.get('authority')!r} is not NONE")
+        failures.append(
+            f"report authority {report.get('authority')!r} != NONE (is not NONE)"
+        )
     if report.get("authority_ceiling") not in CEILINGS:
         failures.append(
             f"report authority_ceiling {report.get('authority_ceiling')!r} "
-            "is not SELECT/CONSTRUCT"
+            "is not SELECT/CONSTRUCT, not <= CONSTRUCT"
         )
     if report.get("selection") is not None:
-        failures.append("report selection is not None")
+        failures.append(f"report selection {report.get('selection')!r} is not None")
     if report.get("evidence_ceiling") != EVIDENCE_CEILING:
         failures.append(
             f"report evidence_ceiling {report.get('evidence_ceiling')!r} "

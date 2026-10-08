@@ -63,7 +63,7 @@ def signer_from_env(env: Mapping[str, str] | None = None) -> AttestationSigner:
             raise SealKeyRefused(f"{KEY_ENV} is not hex: {exc}") from None
         if len(key) < MIN_KEY_BYTES:
             raise SealKeyRefused(
-                f"{KEY_ENV} carries {len(key)} bytes; at least {MIN_KEY_BYTES} required"
+                f"{KEY_ENV} carries {len(key)} bytes; >= {MIN_KEY_BYTES} bytes required"
             )
         key_id = "doctrine-lab-env-" + hashlib.sha256(key).hexdigest()[:12]
         return AttestationSigner(key, key_id=key_id)
@@ -162,11 +162,12 @@ def admit_for_seal(episode: EpisodeRecord, ocel_sha256: str) -> None:
     if r.strategy_signature != admitted.signature:
         raise ProvenanceRefused(
             f"episode {episode.id} signature {r.strategy_signature!r} is not the "
-            f"admitted catalog's {admitted.signature!r} for ordinal {admitted.ordinal}"
+            f"admitted catalog entry and is not the admitted catalog's signature "
+            f"for ordinal {admitted.ordinal} ({admitted.signature!r})"
         )
     if episode.strategy != admitted or r.policy_digest != admitted.policy.digest:
         raise ProvenanceRefused(
-            f"episode {episode.id} strategy/policy is not the admitted catalog's"
+            f"episode {episode.id} strategy/policy is not the admitted catalog entry"
         )
     if (r.world_id, r.seed, r.rounds) != (
         episode.world.id,

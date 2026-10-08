@@ -28,7 +28,7 @@ from .matrix import (
     wilson,
 )
 from .ocel import episode_log, log_bytes, log_sha256, ocel_filename
-from .primitives import BASE_POLICY, DUALS, PRIMITIVES, compose
+from .primitives import BASE_POLICY, DUALS, PRIMITIVES, compose, concealed
 from .report import build_report
 from .seal import (
     SealKeyRefused,
@@ -110,6 +110,7 @@ __all__ = [
     "admit_for_seal",
     "build_report",
     "compose",
+    "concealed",
     "episode_log",
     "is_admitted",
     "key_provenance",
