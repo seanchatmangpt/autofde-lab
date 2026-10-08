@@ -185,6 +185,6 @@ For why this design looks the way it does — why observations are explicitly
 admitted rather than inferred, why three plans are preserved instead of one
 winner, and why the receipt is evidence rather than an execution artifact —
 see the [explanation doc](../explanation/why-a-bounded-life-planning-case-study.md)
-and the [case study record](../case-studies/life-autonomic-controller.md).
+and the [case study record](../../case-studies/life-autonomic-controller.md).
 For the exact API surface used above, see the
 [reference doc](../reference/life-autonomic-case-study-api.md).

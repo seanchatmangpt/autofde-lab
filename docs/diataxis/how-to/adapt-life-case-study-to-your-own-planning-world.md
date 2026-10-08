@@ -5,7 +5,7 @@ This guide adapts the pattern from the autonomic-life planning case study
 own choosing. It assumes you already know the basics of `ContinuousPlanner`,
 `PlanningContext`, and `PlanArtifact` from the tutorial. For the design
 rationale behind the case study itself, see
-[the case-study explanation doc](../case-studies/life-autonomic-controller.md)
+[the case-study explanation doc](../../case-studies/life-autonomic-controller.md)
 -- this guide does not repeat that material.
 
 Everything here stays SELECT/CONSTRUCT only: no message is sent, no calendar
@@ -319,7 +319,7 @@ some part of your payload is not deterministically ordered. Check for:
 
 ## See also
 
-- [Autonomic Life Planning Case Study](../case-studies/life-autonomic-controller.md)
+- [Autonomic Life Planning Case Study](../../case-studies/life-autonomic-controller.md)
   -- the explanation doc this guide's pattern is drawn from.
 - `src/autofde_lab/agent/life_autonomic_case_study.py` -- the real source
   every code snippet in this guide adapts.
