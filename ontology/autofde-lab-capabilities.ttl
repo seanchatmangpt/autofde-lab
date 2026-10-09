@@ -36,9 +36,8 @@
 <urn:skdecide:capability:domain/FlightPlanningDomain> a skdt:Domain ;
     skdt:identifier "FlightPlanningDomain" ;
     skdt:entryPoint "autofde_lab.hub.domain.flight_planning:FlightPlanningDomain [domains]" ;
-    skdt:standing "ALIVE" ;
-    skdt:evidence "imported autofde_lab.hub.domain.flight_planning.domain.FlightPlanningDomain" ;
-    skdt:owningModule "autofde_lab.hub.domain.flight_planning.domain" ;
+    skdt:standing "UNSUPPORTED" ;
+    skdt:evidence "load_registered_* returned None (dependency missing)" ;
     skdt:extrasMarker "domains" ;
     skdt:capabilityCount "0"^^xsd:integer .
 
@@ -180,27 +179,24 @@
 <urn:skdecide:capability:domain/RDDLDomain> a skdt:Domain ;
     skdt:identifier "RDDLDomain" ;
     skdt:entryPoint "autofde_lab.hub.domain.rddl:RDDLDomain [domains]" ;
-    skdt:standing "ALIVE" ;
-    skdt:evidence "imported autofde_lab.hub.domain.rddl.rddl.RDDLDomain" ;
-    skdt:owningModule "autofde_lab.hub.domain.rddl.rddl" ;
+    skdt:standing "UNSUPPORTED" ;
+    skdt:evidence "load_registered_* returned None (dependency missing)" ;
     skdt:extrasMarker "domains" ;
     skdt:capabilityCount "0"^^xsd:integer .
 
 <urn:skdecide:capability:domain/RDDLDomainRL> a skdt:Domain ;
     skdt:identifier "RDDLDomainRL" ;
     skdt:entryPoint "autofde_lab.hub.domain.rddl:RDDLDomainRL [domains]" ;
-    skdt:standing "ALIVE" ;
-    skdt:evidence "imported autofde_lab.hub.domain.rddl.rddl.RDDLDomainRL" ;
-    skdt:owningModule "autofde_lab.hub.domain.rddl.rddl" ;
+    skdt:standing "UNSUPPORTED" ;
+    skdt:evidence "load_registered_* returned None (dependency missing)" ;
     skdt:extrasMarker "domains" ;
     skdt:capabilityCount "0"^^xsd:integer .
 
 <urn:skdecide:capability:domain/RDDLDomainSimplifiedSpaces> a skdt:Domain ;
     skdt:identifier "RDDLDomainSimplifiedSpaces" ;
     skdt:entryPoint "autofde_lab.hub.domain.rddl:RDDLDomainSimplifiedSpaces [domains]" ;
-    skdt:standing "ALIVE" ;
-    skdt:evidence "imported autofde_lab.hub.domain.rddl.rddl.RDDLDomainSimplifiedSpaces" ;
-    skdt:owningModule "autofde_lab.hub.domain.rddl.rddl" ;
+    skdt:standing "UNSUPPORTED" ;
+    skdt:evidence "load_registered_* returned None (dependency missing)" ;
     skdt:extrasMarker "domains" ;
     skdt:capabilityCount "0"^^xsd:integer .
 
@@ -989,38 +985,18 @@
 <urn:skdecide:capability:solver/RDDLGurobiSolver> a skdt:Solver ;
     skdt:identifier "RDDLGurobiSolver" ;
     skdt:entryPoint "autofde_lab.hub.solver.rddl:RDDLGurobiSolver [solvers]" ;
-    skdt:standing "ALIVE" ;
-    skdt:evidence "imported autofde_lab.hub.solver.rddl.rddl.RDDLGurobiSolver" ;
-    skdt:owningModule "autofde_lab.hub.solver.rddl.rddl" ;
+    skdt:standing "UNSUPPORTED" ;
+    skdt:evidence "load_registered_* returned None (dependency missing)" ;
     skdt:extrasMarker "solvers" ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Environment> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/FullyObservable> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Initializable> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Markovian> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Renderable> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Rewards> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Sequential> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/SingleAgent> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/UnrestrictedActions> ;
-    skdt:capabilityCount "9"^^xsd:integer .
+    skdt:capabilityCount "0"^^xsd:integer .
 
 <urn:skdecide:capability:solver/RDDLJaxSolver> a skdt:Solver ;
     skdt:identifier "RDDLJaxSolver" ;
     skdt:entryPoint "autofde_lab.hub.solver.rddl:RDDLJaxSolver [solvers]" ;
-    skdt:standing "ALIVE" ;
-    skdt:evidence "imported autofde_lab.hub.solver.rddl.rddl.RDDLJaxSolver" ;
-    skdt:owningModule "autofde_lab.hub.solver.rddl.rddl" ;
+    skdt:standing "UNSUPPORTED" ;
+    skdt:evidence "load_registered_* returned None (dependency missing)" ;
     skdt:extrasMarker "solvers" ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Environment> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/FullyObservable> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Initializable> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Markovian> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Renderable> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Rewards> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Sequential> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/SingleAgent> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/UnrestrictedActions> ;
-    skdt:capabilityCount "9"^^xsd:integer .
+    skdt:capabilityCount "0"^^xsd:integer .
 
 <urn:skdecide:capability:solver/RFF> a skdt:Solver ;
     skdt:identifier "RFF" ;
@@ -1077,19 +1053,10 @@
 <urn:skdecide:capability:solver/RayRLlib> a skdt:Solver ;
     skdt:identifier "RayRLlib" ;
     skdt:entryPoint "autofde_lab.hub.solver.ray_rllib:RayRLlib [solvers]" ;
-    skdt:standing "ALIVE" ;
-    skdt:evidence "imported autofde_lab.hub.solver.ray_rllib.ray_rllib.RayRLlib" ;
-    skdt:owningModule "autofde_lab.hub.solver.ray_rllib.ray_rllib" ;
+    skdt:standing "UNSUPPORTED" ;
+    skdt:evidence "load_registered_* returned None (dependency missing)" ;
     skdt:extrasMarker "solvers" ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Actions> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Environment> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Initializable> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Markovian> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/MultiAgent> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Rewards> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Sequential> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/TransformedObservable> ;
-    skdt:capabilityCount "8"^^xsd:integer .
+    skdt:capabilityCount "0"^^xsd:integer .
 
 <urn:skdecide:capability:solver/SARSOP> a skdt:Solver ;
     skdt:identifier "SARSOP" ;
@@ -1212,19 +1179,10 @@
 <urn:skdecide:capability:solver/StableBaseline> a skdt:Solver ;
     skdt:identifier "StableBaseline" ;
     skdt:entryPoint "autofde_lab.hub.solver.stable_baselines:StableBaseline [solvers]" ;
-    skdt:standing "ALIVE" ;
-    skdt:evidence "imported autofde_lab.hub.solver.stable_baselines.stable_baselines.StableBaseline" ;
-    skdt:owningModule "autofde_lab.hub.solver.stable_baselines.stable_baselines" ;
+    skdt:standing "UNSUPPORTED" ;
+    skdt:evidence "load_registered_* returned None (dependency missing)" ;
     skdt:extrasMarker "solvers" ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Actions> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Environment> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/History> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Initializable> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/PartiallyObservable> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Rewards> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/Sequential> ;
-    skdt:requiresCharacteristic <urn:skdecide:capability:characteristic/SingleAgent> ;
-    skdt:capabilityCount "8"^^xsd:integer .
+    skdt:capabilityCount "0"^^xsd:integer .
 
 <urn:skdecide:capability:solver/UCT> a skdt:Solver ;
     skdt:identifier "UCT" ;

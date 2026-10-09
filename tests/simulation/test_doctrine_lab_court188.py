@@ -106,13 +106,32 @@ def _relabel(episode, admitted, *, relabel_rounds: bool):
 
 
 def test_seal_refuses_foreign_rounds_relabelled_as_the_admitted_strategy(tmp_path):
-    """The court's exact probe: rounds ran withdraw>delay, label says ordinal 1."""
+    """The court's exact probe, repaired for the 28f8a7a7 run-time signature
+    binding: a foreign composition can no longer be RUN through the guarded
+    entry point (that admission point has its own falsifier in
+    test_doctrine_lab.py), so the forged artifact is constructed from a genuine
+    admitted run whose per-round engine receipts are rewritten to carry the
+    foreign composition's policy digest while every outer label says ordinal 1.
+    The forged artifact is exactly the historical attack: every label-level
+    digest recomputes; only the round binding can refuse."""
     catalog = load_catalog()
     admitted = catalog.get(1)
     foreign = dataclasses.replace(admitted, primitives=("withdraw", "delay"))
     assert foreign.policy.digest != admitted.policy.digest
-    ran = run_strategy_episode(7, foreign, PARITY, catalog_sha256=catalog.sha256)
+    ran = run_strategy_episode(7, admitted, PARITY, catalog_sha256=catalog.sha256)
     forged = _relabel(ran, admitted, relabel_rounds=False)
+    forged = dataclasses.replace(
+        forged,
+        rounds=tuple(
+            dataclasses.replace(
+                rr,
+                receipt=dataclasses.replace(
+                    rr.receipt, policy_digest=foreign.policy.digest
+                ),
+            )
+            for rr in forged.rounds
+        ),
+    )
     # every label-level digest recomputes: only the round binding can refuse
     assert forged.receipt.outcome_digest == outcome_digest_of(forged)
     with pytest.raises(
@@ -128,12 +147,51 @@ def test_seal_refuses_foreign_rounds_relabelled_as_the_admitted_strategy(tmp_pat
 
 
 def test_seal_refuses_foreign_rounds_even_with_round_receipts_relabelled():
-    """Round receipts rewritten to the admitted policy digest: re-execution refuses."""
+    """Round receipts consistent with the admitted policy digest: re-execution
+    still refuses.
+
+    Repaired for the 28f8a7a7 run-time signature binding: the foreign
+    composition cannot be run through the guarded entry, so the forged artifact
+    is a genuine admitted run with one round's opponent move tampered and every
+    attacker-side digest (outcome, episode) recomputed -- only re-execution can
+    tell the forgery from the real thing."""
     catalog = load_catalog()
     admitted = catalog.get(1)
-    foreign = dataclasses.replace(admitted, primitives=("withdraw", "delay"))
-    ran = run_strategy_episode(7, foreign, PARITY, catalog_sha256=catalog.sha256)
-    forged = _relabel(ran, admitted, relabel_rounds=True)
+    ran = run_strategy_episode(7, admitted, PARITY, catalog_sha256=catalog.sha256)
+    tampered_round = dataclasses.replace(
+        ran.rounds[-1],
+        move=dataclasses.replace(ran.rounds[-1].move, delta=99.0),
+    )
+    forged = dataclasses.replace(
+        ran,
+        rounds=ran.rounds[:-1] + (tampered_round,),
+        receipt=dataclasses.replace(
+            ran.receipt,
+            outcome_digest=outcome_digest_of(ran),
+        ),
+    )
+    # attacker-side digest hygiene: outcome and episode digests both recompute
+    forged = dataclasses.replace(
+        forged,
+        receipt=dataclasses.replace(
+            forged.receipt, outcome_digest=outcome_digest_of(forged)
+        ),
+    )
+    r = forged.receipt
+    forged = dataclasses.replace(
+        forged,
+        receipt=dataclasses.replace(
+            r,
+            episode_digest=stable_digest(
+                receipt_body(
+                    r.catalog_sha256,
+                    r.strategy_ordinal,
+                    r.strategy_signature,
+                    r.outcome_digest,
+                )
+            ),
+        ),
+    )
     with pytest.raises(ProvenanceRefused, match="differ from re-execution"):
         admit_for_seal(forged, _ocel(forged))
 

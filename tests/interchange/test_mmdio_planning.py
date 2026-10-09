@@ -1,22 +1,20 @@
 from __future__ import annotations
 
 import importlib
-import sys
-import types
 from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
 
 ROOT = Path(__file__).parents[2]
-SRC = ROOT / "src"
 
-# Load only the interchange package for this crown. AutoFDE's root package eagerly
-# imports the full planner/solver surface; the interchange package deliberately has
-# a stdlib-only boundary and must remain independently importable.
-autofde = types.ModuleType("autofde_lab")
-autofde.__path__ = [str(SRC / "autofde_lab")]
-sys.modules["autofde_lab"] = autofde
+# Load the interchange package. It previously installed a bare module-type stub
+# for `autofde_lab` into sys.modules at collection time and never removed it, which
+# shadowed the real package for every later test module in the session (measured:
+# `from autofde_lab import DeterministicPlanningDomain` failed with
+# "unknown location" in tests/planner_league and tests/reasoning). The real
+# package imports in ~0.3s, so import it for real; the stub shortcut is not
+# worth the session-wide pollution.
 m = importlib.import_module("autofde_lab.interchange")
 
 

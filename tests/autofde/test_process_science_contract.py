@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from autofde.process_science_contract import PlanningEvidence, bind_process_evidence
+from autofde_lab.process_science_contract import PlanningEvidence, bind_process_evidence
 
 
 def _valid_payload() -> dict[str, object]:

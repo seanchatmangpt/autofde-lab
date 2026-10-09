@@ -1,16 +1,12 @@
 from __future__ import annotations
 
-import sys
-import types
-from pathlib import Path
-
 # Root tests/conftest.py intentionally imports numpy before DSPy. After that
-# repository-wide bootstrap, this focused court narrows import scope to the
-# subsystem under test: the source package path is made available without
-# executing autofde_lab/__init__.py and its historical planner/domain imports.
-_SOURCE_PACKAGE = Path(__file__).resolve().parents[2] / "src" / "autofde_lab"
-if "autofde_lab" not in sys.modules:
-    package = types.ModuleType("autofde_lab")
-    package.__path__ = [str(_SOURCE_PACKAGE)]
-    package.__package__ = "autofde_lab"
-    sys.modules["autofde_lab"] = package
+# repository-wide bootstrap, import the real package once here. This conftest
+# previously installed a bare module-type stub for `autofde_lab` into
+# sys.modules at collection time and never removed it, which shadowed the real
+# package for every test module collected afterwards in the same session
+# (measured: `from autofde_lab import DeterministicPlanningDomain` failed with
+# "unknown location" in tests/planner_league and tests/reasoning). The real
+# package imports cleanly in ~0.3s, so the stub shortcut is not worth the
+# session-wide pollution.
+import autofde_lab  # noqa: F401

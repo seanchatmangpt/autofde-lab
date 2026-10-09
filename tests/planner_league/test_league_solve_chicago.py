@@ -89,7 +89,11 @@ def test_llm_novelty_oracle_is_refused_per_side_without_loading_it():
     left, right = solve_league_match(match, league=PlannerLeague())
     assert left.status == "REFUSED:LLM_NOVELTY_BOUNDARY"
     assert left.goal_reached is None and left.actions == ()
-    assert "dspy" not in sys.modules
+    # The property is "the refused path loads no dspy module of its own"; an
+    # absolute `"dspy" not in sys.modules` also fails when an EARLIER test in
+    # the same session legitimately imported dspy (the root conftest orders
+    # the numpy/dspy bootstrap for exactly that reason), so pin the delta
+    # against the `before` snapshot only.
     assert not any(m.startswith("dspy") for m in set(sys.modules) - before)
     assert right.status == "PLAN_CANDIDATE"
 

@@ -2063,7 +2063,7 @@
       "standing": "INFERRED_CANDIDATE"
     }
   ],
-  "id": "sha256:db4960436272a41b9d4409e9c0273e8a7e837b5fe437d7ecbe568fcf91bf5626",
+  "id": "sha256:8a58c664fc49ed1d0d3d915da4da99c6a0fb5f7efdfb090726810bc0ffb35368",
   "import_only": [
     "src/autofde_lab/reasoning/fortune5_architecture_metrics.py",
     "src/autofde_lab/reasoning/fortune5_architecture_signatures.py",
@@ -2303,7 +2303,7 @@
     "branch": "",
     "commit": "85c367467889cb8bb55574b8629b4cabdacff47c",
     "inclusion_reason": "LLM residue census",
-    "remote_url": "https://github.com/seanchatmangpt/autofde-lab",
+    "remote_url": "https://github.com/seanchatmangpt/autofde-lab.git",
     "repository": "seanchatmangpt/autofde-lab",
     "tree": "27a44e81ac11380dec65218743f9f159a6c39b6b",
     "visibility": "public"
