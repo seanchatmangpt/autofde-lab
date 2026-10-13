@@ -146,7 +146,7 @@ def test_projection_emits_public_vocabulary_and_real_triples() -> None:
     assert "prov:startedAtTime" in turtle or "startedAtTime" in turtle
     assert "^^xsd:dateTime" in turtle
     assert "prov:Activity" in turtle and "prov:Entity" in turtle
-    assert "prov:Activity" in TERM_PROVENANCE["prov:Activity"] or True
+    assert TERM_PROVENANCE["prov:Activity"].startswith("PROV-O")
     assert set(TERM_PROVENANCE) >= {"prov:Activity", "prov:Entity", "prov:used"}
 
 
@@ -156,7 +156,10 @@ def test_projection_emits_public_vocabulary_and_real_triples() -> None:
 def test_a_conforming_level4_chain_conforms(capsys) -> None:
     result = _validate(_conforming_log())
     if result.conforms is None:
-        pytest.skip(result.status + ": " + str(result.unknown_reason))
+        pytest.fail(
+            f"SHACL engine returned UNKNOWN ({result.status}: {result.unknown_reason}); "
+            "a broken engine is exactly what this test exists to catch"
+        )
     assert result.status == "CONFORMS", result.report_text
     assert result.violations == ()
 

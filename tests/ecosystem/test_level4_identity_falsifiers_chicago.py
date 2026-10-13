@@ -222,8 +222,11 @@ def _drop_edge(
 
 def _validate(log: OcelLog):
     result = check_graph_shacl(project_log_to_graph(log).graph, SHAPES)
-    if result.conforms is None:  # pragma: no cover - only without the extra
-        pytest.skip(f"{result.status}: {result.unknown_reason}")
+    if result.conforms is None:
+        pytest.fail(
+            f"SHACL engine returned UNKNOWN ({result.status}: {result.unknown_reason}); "
+            "a broken engine is exactly what these falsifiers exist to catch"
+        )
     return result
 
 

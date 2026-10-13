@@ -196,9 +196,7 @@ def test_invalidation_deactivates_route_when_dependency_digest_changes() -> None
         experience, {"ontology_digest": "digest-v1"}, routes
     )
     assert not unchanged.invalidated
-    assert (
-        routes.lookup("requires-port", "anything") is not None or True
-    )  # predicate not registered here; state check below is authoritative
+    assert routes.lookup("requires-port", "anything") is not None
     still_active = [
         r for r in routes.routes_for_class("requires-port") if r.route_id == route_id
     ][0]

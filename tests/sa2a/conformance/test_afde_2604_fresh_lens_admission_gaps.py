@@ -328,7 +328,6 @@ def test_fresh_lens_2_admission_never_binds_actuation_parameters(
     assert len(records) == 2
     assert (
         records[0]["parameters"] == {k: benign_params[k] for k in sorted(benign_params)}
-        or True
     )
     written_param_sets = [r["parameters"] for r in records]
     assert dict(sorted(dangerous_params.items())) in written_param_sets, (
