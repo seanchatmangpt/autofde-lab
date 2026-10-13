@@ -8,17 +8,17 @@
   "python": "3.13.9"
  },
  "median_ms": {
-  "admit_for_seal_ms": 745.735,
-  "run_lab_ms": 2725.933,
-  "verify_run_ms": 64.36,
-  "verify_run_replay_ms": 737.945
+  "admit_for_seal_ms": 561.051,
+  "run_lab_ms": 1730.684,
+  "verify_run_ms": 56.122,
+  "verify_run_replay_ms": 742.293
  },
  "passed": true,
  "per_unit_ms": {
-  "admit_for_seal_ms_per_episode": 2.9593,
-  "run_lab_ms_per_episode": 10.8172,
-  "verify_run_ms_per_record": 0.2554,
-  "verify_run_replay_ms_per_record": 2.9284
+  "admit_for_seal_ms_per_episode": 2.2264,
+  "run_lab_ms_per_episode": 6.8678,
+  "verify_run_ms_per_record": 0.2227,
+  "verify_run_replay_ms_per_record": 2.9456
  },
  "regression_bounds_ms": {
   "admit_for_seal_ms_per_episode": 10.0,
@@ -33,7 +33,7 @@
   "matrix_digest": "762fab0feebe2109c4d1e1aef1618119a9e4f29ee5c425ad1931cb21af123ef7",
   "report_digest": "5e4c530b1ef265d16401605972405399f6e0c9949ae11aaa4b7ee4a3c2371cf3",
   "source_files": 14,
-  "source_tree_sha256": "291f904784db1fe25e8b67eb87d72894e58a529ba86c3ea5f7b25787d8dceac0"
+  "source_tree_sha256": "fa403285fd4ca5a3f8780d0366f9f0f3ed78a8273a85c86d80a016ba0eb52817"
  },
  "within_bounds": {
   "admit_for_seal_ms_per_episode": true,

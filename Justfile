@@ -148,3 +148,24 @@ test-level4:
 # Every Level 4 suite, federation-bound ones included. Minutes, not seconds.
 test-level4-full:
     .venv/bin/python -m pytest -q tests/ecosystem
+
+# Build the external `wpm` (wasm4pm-cli) binary that
+# src/autofde_lab/ocel/wasm4pm_bridge.py:resolve_wpm_binary looks for at
+# $WASM4PM_CLI, then ~/wasm4pm/target/{debug,release}/wpm, then PATH.
+# Source repo: ~/wasm4pm (pinned toolchain nightly-2026-04-15 via
+# rust-toolchain.toml; rustup selects it automatically). Builds in a
+# throwaway CARGO_TARGET_DIR so the canonical checkout keeps no build
+# artifacts; installs into the resolver's own search path.
+#
+# Until this recipe has been run, the two wpm-gated suites
+# (tests/ocel/test_wasm4pm_bridge.py,
+# tests/planning/test_planner_powl_ocel_proof_chicago.py) skip by name.
+wpm-build:
+    #!/bin/sh
+    set -e
+    CARGO_TARGET_DIR=/tmp/wpm-build-target cargo +nightly-2026-04-15 build --release -p wasm4pm-cli --manifest-path "$HOME/wasm4pm/Cargo.toml"
+    mkdir -p "$HOME/wasm4pm/target/release"
+    cp /tmp/wpm-build-target/release/wpm "$HOME/wasm4pm/target/release/wpm"
+    rm -rf /tmp/wpm-build-target
+    "$HOME/wasm4pm/target/release/wpm" --help > /dev/null
+    echo "wpm installed at $HOME/wasm4pm/target/release/wpm"

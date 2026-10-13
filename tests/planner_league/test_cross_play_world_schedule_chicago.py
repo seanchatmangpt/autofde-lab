@@ -17,8 +17,10 @@ real 56-planner population. No `unittest.mock` / `Mock` / `MagicMock` /
 Every count below was confirmed live before being written, not assumed:
 45 of 56 real planners are real-`COMPATIBLE` with both `BreachClockDomain`
 and `CloudGoatIamPrivescDomain` under `plan_constructor`/`plan_falsifier`,
-and `cover_cross_play(rounds=3)` produces 135 real `LeagueMatch` objects
-for each.
+and `cover_cross_play(rounds=3)` produces 138 real `LeagueMatch` objects
+for each. (2026-10-09: 135 -> 138 -- three more planners became
+real-COMPATIBLE for these worlds after the HDDL/planner-league planner
+registrations landed; re-confirmed live this session.)
 """
 
 from __future__ import annotations
@@ -43,7 +45,7 @@ def test_schedules_real_cross_play_for_the_real_cyber_incident_world() -> None:
     assert isinstance(result, CrossPlayScheduleOutcome)
     assert result.standing == "ALIVE"
     assert result.scheduled
-    assert len(result.matches) == 135
+    assert len(result.matches) == 138
     assert all(isinstance(m, LeagueMatch) for m in result.matches)
     assert all(m.world_id == "cyber_incident" for m in result.matches)
     assert all(m.left_role_id == "plan_constructor" for m in result.matches)
@@ -70,7 +72,7 @@ def test_schedules_real_cross_play_for_the_real_identity_degradation_world_deter
     )
 
     assert result_a.standing == "ALIVE"
-    assert len(result_a.matches) == 135
+    assert len(result_a.matches) == 138
     # Real, deterministic covering schedule -- same real digest sequence
     # across two independent real calls.
     assert [m.identity_sha256 for m in result_a.matches] == [

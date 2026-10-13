@@ -34,8 +34,12 @@ LEGACY_SOLVER_ENTRYPOINT_GROUP = "skdecide.solvers"
 # azuregoat_privesc, cloudgoat_iam_privesc, fix_git_recovery) as real
 # autofde_lab.domains entry points; re-verify with
 # `entry_points(group="autofde_lab.domains")` before citing this number.
-EXPECTED_DOMAIN_COUNT = 31
-EXPECTED_SOLVER_COUNT = 57
+# 2026-10-09: 31 -> 33 domains, 57 -> 58 solvers after the HDL/HTN and
+# planner-league domains (HDDLDomain, HTNDomain) and HDDLSolver landed as real
+# pyproject.toml entry points without this file's counts being advanced.
+# Re-verify with `entry_points(group=...)` before citing.
+EXPECTED_DOMAIN_COUNT = 33
+EXPECTED_SOLVER_COUNT = 58
 
 NATIVE_EXTENSION_NAME = "__autofde_lab_hub_cpp"
 LEGACY_NATIVE_EXTENSION_NAME = "__skdecide_hub_cpp"

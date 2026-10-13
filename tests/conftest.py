@@ -131,8 +131,15 @@ def real_dspy_lm(real_turbo_fieldfare_server):
     lm = dspy.LM(
         DEFAULT_LM_MODEL, api_base=f"{real_turbo_fieldfare_server}/v1", api_key="local"
     )
+    previous = dspy.settings.lm
     dspy.configure(lm=lm)
-    return lm
+    # dspy.configure mutates process-global settings; without this restore the
+    # fixture leaks a configured LM to every later test in the same xdist
+    # worker (measured: tests/reasoning/test_sregym_pipeline_chicago.py's
+    # `dspy.settings.lm is None` precondition fails whenever it lands in a
+    # worker after one of these fixtures).
+    yield lm
+    dspy.configure(lm=previous)
 
 
 # Real Groq-backed alternative to `real_dspy_lm` for the same non-sregym
@@ -140,12 +147,13 @@ def real_dspy_lm(real_turbo_fieldfare_server):
 # real DSPyPolicy action-resolution code paths (ChooseMove /
 # GenerateStructuredAction) against a real, always-reachable Groq endpoint
 # instead of depending on a locally-built TurboFieldfareServer binary + model
-# weights being present on this machine. `llama-3.1-8b-instant` is Groq's
-# smallest/fastest hosted chat model -- adequate for these short,
-# structured-output prompts and cheap enough to run per-test, matching the
-# gpt-oss-20b choice other GROQ_API_KEY-gated tests in this repo use for the
-# same "small model, real call, never a mock" reasoning.
-GROQ_DSPY_POLICY_MODEL = "groq/llama-3.1-8b-instant"
+# weights being present on this machine. 2026-10-09: Groq removed every hosted
+# llama chat model (`llama-3.1-8b-instant` now 404s against a live key --
+# measured via GET /openai/v1/models this session: only prompt-guard llama
+# variants remain), so the model moves to `openai/gpt-oss-20b`, the same
+# "small model, real call, never a mock" choice other GROQ_API_KEY-gated
+# tests in this repo already use.
+GROQ_DSPY_POLICY_MODEL = "groq/openai/gpt-oss-20b"
 
 _GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
@@ -164,5 +172,9 @@ def real_groq_dspy_lm():
     import dspy
 
     lm = dspy.LM(GROQ_DSPY_POLICY_MODEL, api_key=_GROQ_API_KEY, cache=False)
+    previous = dspy.settings.lm
     dspy.configure(lm=lm)
-    return lm
+    # same global-state restore as real_dspy_lm above -- never leak the
+    # configured LM past this fixture's test.
+    yield lm
+    dspy.configure(lm=previous)

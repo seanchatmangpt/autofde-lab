@@ -110,16 +110,16 @@ def _reseal(out: Path, mutate, *, update_anchor: bool = True) -> None:
 
 
 def test_seal_refuses_a_receipt_that_brings_its_own_composition():
+    """Repaired for the 28f8a7a7 run-time signature binding: a forged
+    composition can no longer even be run through the guarded entry point, so
+    the receipt that brings its own composition is refused at its birth -- the
+    same failure-closed property, pinned at the earlier admission point."""
     catalog = load_catalog()
     forged = dataclasses.replace(catalog.get(1), primitives=("withdraw", "delay"))
-    episode = run_strategy_episode(7, forged, PARITY, catalog_sha256=catalog.sha256)
-    # the receipt is internally consistent: episode_digest recomputes
-    r = episode.receipt
-    assert r.episode_digest == stable_digest(
-        receipt_body(r.catalog_sha256, 1, "withdraw>delay", r.outcome_digest)
-    )
-    with pytest.raises(ProvenanceRefused, match="not the admitted catalog's"):
-        admit_for_seal(episode, log_sha256(episode_log(episode)))
+    with pytest.raises(
+        ProvenanceRefused, match="not the admitted catalog entry"
+    ):
+        run_strategy_episode(7, forged, PARITY, catalog_sha256=catalog.sha256)
 
 
 def test_seal_refuses_a_forged_signature_on_the_admitted_strategy():
@@ -251,9 +251,9 @@ def test_verify_run_refuses_a_foreign_policy_digest(tmp_path: Path):
 @pytest.mark.parametrize(
     ("field", "value", "refusal"),
     [
-        ("authority", "DO", "report authority 'DO' is not NONE"),
+        ("authority", "DO", "report authority 'DO' != NONE (is not NONE)"),
         ("authority_ceiling", "DO", "report authority_ceiling 'DO'"),
-        ("selection", "sd-01", "report selection is not None"),
+        ("selection", "sd-01", "report selection 'sd-01' is not None"),
         ("evidence_ceiling", "PRODUCTION", "report evidence_ceiling 'PRODUCTION'"),
     ],
 )

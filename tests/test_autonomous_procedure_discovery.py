@@ -123,8 +123,32 @@ def test_worker_isolated_stdio_protocol_has_no_parent_object_graph() -> None:
         assert ready["type"] == "ready"
         assert ready["isolated"] is True
         assert set(ready["cwd_sources"]) == {"discovery.py", "discovery_worker.py"}
-        assert set(ready["environment_keys"]) <= {"LANG", "PYTHONIOENCODING"}
-        assert all(str(ROOT) not in entry for entry in ready["sys_path"])
+        # '__CF_USER_TEXT_ENCODING' is injected by macOS into every process's
+        # environment at exec time (measured: present even under `python -I`
+        # with an explicit two-key `env=`), so it carries no parent-repo state;
+        # the property under test is that nothing ELSE leaks through.
+        assert set(ready["environment_keys"]) <= {
+            "LANG",
+            "PYTHONIOENCODING",
+            "__CF_USER_TEXT_ENCODING",
+        }
+        # The isolation property is "the worker cannot see the parent TEST
+        # tree", not "the worker's sys.path nowhere mentions the checkout":
+        # the child is launched with the same .venv interpreter, and that
+        # venv lives inside ROOT -- its site-packages (plus the editable
+        # install's src path, measured this session) legitimately appear on
+        # `python -I` sys.path and expose no test modules. What must never
+        # appear is the repo root itself, the tests tree, or any parent dir
+        # of the copied worker.
+        forbidden = {
+            str(ROOT),
+            str(ROOT / "tests"),
+            str(worker_root.parent),
+        }
+        assert all(
+            entry not in forbidden and not entry.startswith(str(ROOT / "tests"))
+            for entry in ready["sys_path"]
+        )
 
         process.stdin.write(
             json.dumps(

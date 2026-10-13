@@ -8,7 +8,7 @@ backed by a real Groq call instead of a local TurboFieldfareServer process.
 This mirrors `tests/test_self_play_dspy_turbofieldfare_chicago.py` exactly
 (same domain, same solver, same assertions) but swaps `real_dspy_lm` (a real
 local TurboFieldfare server) for `real_groq_dspy_lm` (a real
-`groq/llama-3.1-8b-instant` call, `GROQ_API_KEY`-gated) -- confirming
+`groq/openai/gpt-oss-20b` call, `GROQ_API_KEY`-gated) -- confirming
 DSPyPolicy, the non-sregym generic dspy solver, genuinely works against a
 real, always-reachable hosted endpoint and not only against a locally-built
 server binary + model weights that may not be present on every machine.
