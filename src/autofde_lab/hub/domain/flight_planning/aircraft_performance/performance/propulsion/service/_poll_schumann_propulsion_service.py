@@ -92,6 +92,9 @@ class _PollSchumannPropulsionService(PropulsionServiceInterface):
         aircraft_state: AircraftState,
     ) -> float:
         """Bound of the normalised throttle setting (tsp) in [0, 1] (idle: zero normalised throttle)."""
+        # Poll-Schumann net thrust is the force balance (drag + weight component) at the
+        # given state and never reads AircraftState.tsp, so no model-derived thrust range exists as a function of tsp.
+        # tsp is therefore a normalised throttle, and its bounds are the contract values.
         return 0.0
 
     def compute_max_rating(
@@ -100,6 +103,9 @@ class _PollSchumannPropulsionService(PropulsionServiceInterface):
         aircraft_state: AircraftState,
     ) -> float:
         """Bound of the normalised throttle setting (tsp) in [0, 1] (full normalised throttle)."""
+        # Poll-Schumann net thrust is the force balance (drag + weight component) at the
+        # given state and never reads AircraftState.tsp, so no model-derived thrust range exists as a function of tsp.
+        # tsp is therefore a normalised throttle, and its bounds are the contract values.
         return 1.0
 
     def _fuel_flow_idle(

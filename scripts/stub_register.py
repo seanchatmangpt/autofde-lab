@@ -4,7 +4,7 @@
 Scans src/autofde_lab with ``ast`` (code stubs) and ``tokenize`` (comment markers).
 Every site is classified ABSTRACT_BY_DESIGN, CLOSED, BLOCKED or OPEN.
 
-  python scripts/stub_register.py --check   # exit 1 on OPEN / bad rows
+  python scripts/stub_register.py --check   # exit 1 on OPEN / REGRESSED_STUB / bad rows
   python scripts/stub_register.py --write   # regenerate docs/STUB-REGISTER.md
 """
 
@@ -226,6 +226,9 @@ def problems(sites: list[dict], disp: dict[str, dict], repo: Path) -> list[str]:
     for s in sites:
         if s["status"] == "OPEN":
             out.append(f"OPEN {s['key']} (line {s['line']})")
+        elif s["status"] == "CLOSED":
+            # a CLOSED key that still scans as a stub means the closure regressed
+            out.append(f"REGRESSED_STUB {s['key']} (line {s['line']})")
     return out
 
 

@@ -1,7 +1,7 @@
 [project]
 name = "autofde-lab-constitution"
 version = "0.1.0"
-description = "Direct Python projection of the working-backwards AutoFDE Lab semantic constitution (PR #37) into src/autofde_lab/constitution/ -- no generated/ directory, manufacture is provenance."
+description = "Direct Python projection of the working-backwards AutoFDE Lab semantic constitution (PR #37) into src/autofde_lab/constitution/ -- no hand-copied/ directory, manufacture is provenance."
 authors = ["AutoFDE Lab"]
 license = "MIT"
 
@@ -22,6 +22,7 @@ imports = [
     "ontology/autofde-lab-capabilities.ttl",
     "ontology/planner-league.ttl",
     "ontology/hook_contracts.ttl",
+    "ontology/standing_vocabulary.ttl",
 ]
 base_iri = "urn:autofde-lab:"
 
@@ -153,6 +154,20 @@ conflict_mode = "fail"
 formats = ["turtle"]
 default_format = "turtle"
 strict_validation = false
+
+[[generation.rules]]
+name = "standing-vocabulary-module"
+query = { file = "../ggen-marketplace/packs/autofde-lab-standing-vocabulary-pack/queries/standing_vocabulary.rq" }
+template = { file = "../ggen-marketplace/packs/autofde-lab-standing-vocabulary-pack/templates/standing_vocabulary.py.tmpl" }
+output_file = "src/autofde_lab/standing_vocab/vocabulary.py"
+mode = "Overwrite"
+
+[[generation.rules]]
+name = "standing-vocabulary-registry"
+query = { file = "../ggen-marketplace/packs/autofde-lab-standing-vocabulary-pack/queries/standing_registry.rq" }
+template = { file = "../ggen-marketplace/packs/autofde-lab-standing-vocabulary-pack/templates/standing_registry.json.tmpl" }
+output_file = "src/autofde_lab/standing_vocab/registry.json"
+mode = "Overwrite"
 
 [templates]
 enable_caching = true

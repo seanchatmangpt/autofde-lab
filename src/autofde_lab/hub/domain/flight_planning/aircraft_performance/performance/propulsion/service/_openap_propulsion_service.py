@@ -107,6 +107,9 @@ class _OpenapPropulsionService(PropulsionServiceInterface):
         aircraft_state: AircraftState,
     ) -> float:
         """Bound of the normalised throttle setting (tsp) in [0, 1] (idle: zero normalised throttle)."""
+        # OpenAP thrust (cruise/climb/descent_idle) and FuelFlow.enroute take (tas, alt, roc)
+        # and never read AircraftState.tsp, so no model-derived thrust range exists as a function of tsp.
+        # tsp is therefore a normalised throttle, and its bounds are the contract values.
         return 0.0
 
     def compute_max_rating(
@@ -115,4 +118,7 @@ class _OpenapPropulsionService(PropulsionServiceInterface):
         aircraft_state: AircraftState,
     ) -> float:
         """Bound of the normalised throttle setting (tsp) in [0, 1] (full normalised throttle)."""
+        # OpenAP thrust (cruise/climb/descent_idle) and FuelFlow.enroute take (tas, alt, roc)
+        # and never read AircraftState.tsp, so no model-derived thrust range exists as a function of tsp.
+        # tsp is therefore a normalised throttle, and its bounds are the contract values.
         return 1.0

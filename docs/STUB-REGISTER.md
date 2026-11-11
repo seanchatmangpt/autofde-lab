@@ -14,8 +14,8 @@ BLOCKED row without evidence, or CLOSED row whose test file is missing).
 | status | count |
 |---|---|
 | OPEN | 0 |
-| BLOCKED | 0 |
-| CLOSED | 1 |
+| BLOCKED | 1 |
+| CLOSED | 0 |
 | ABSTRACT_BY_DESIGN | 83 |
 | TOTAL | 84 |
 
@@ -25,7 +25,7 @@ BLOCKED row without evidence, or CLOSED row whose test file is missing).
 |---|---|---|---|---|
 | EMPTY_BODY | 0 | 0 | 0 | 65 |
 | NIE_BARE | 0 | 0 | 0 | 12 |
-| NIE_CALL | 0 | 0 | 1 | 6 |
+| NIE_CALL | 0 | 1 | 0 | 6 |
 
 ## By directory (first level under src/autofde_lab)
 
@@ -40,7 +40,7 @@ BLOCKED row without evidence, or CLOSED row whose test file is missing).
 | case_library | 0 | 0 | 0 | 1 |
 | companion | 0 | 0 | 0 | 1 |
 | fabric | 0 | 0 | 0 | 7 |
-| hub | 0 | 0 | 1 | 24 |
+| hub | 0 | 1 | 0 | 24 |
 | iec | 0 | 0 | 0 | 1 |
 | powl | 0 | 0 | 0 | 2 |
 | reasoning | 0 | 0 | 0 | 3 |
@@ -51,5 +51,5 @@ BLOCKED row without evidence, or CLOSED row whose test file is missing).
 
 ## Non-trivial rows (every site not ABSTRACT_BY_DESIGN)
 
-- CLOSED NIE_CALL line 131
-  `autofde_lab/hub/solver/dspy_policy/dspy_policy.py::_describe_gym_dict_of_discrete_schema::NIE_CALL` evidence: tests/solvers/python/test_rl_misc_stub_closure_l8_chicago.py
+- BLOCKED NIE_CALL line 131
+  `autofde_lab/hub/solver/dspy_policy/dspy_policy.py::_describe_gym_dict_of_discrete_schema::NIE_CALL` evidence: tests/solvers/python/test_rl_misc_stub_closure_l8_chicago.py (typed refusal of unsupported gym spaces is deliberate; site still raises by design)

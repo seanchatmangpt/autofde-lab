@@ -1,7 +1,7 @@
 """ggen-produced from autofde-lab-hook-contracts-pack. Edit the ontology, not this file.
 
 Chicago-style contract court for the abstract hooks autofde-lab hand-writes.
-Real classes, no mocks: per hook a concrete subclass must satisfy the hook and
+Real classes only: per hook a concrete subclass must satisfy the hook and
 a bare subclass must raise the typed error. Classes that cannot be instantiated
 generically fail loudly (UNINSTANTIABLE), never skip silently.
 Evidence only: authority NONE.

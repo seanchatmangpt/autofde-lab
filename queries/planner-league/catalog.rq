@@ -6,6 +6,8 @@ WHERE {
   {
     ?subject a skdt:Solver ;
              skdt:identifier ?id .
+    # HDDLSolver is a hub-level HTN solver outside the 56 primary planners.
+    FILTER(?id != "HDDLSolver")
     BIND("planner" AS ?kind)
     BIND("" AS ?aux1)
     BIND("" AS ?aux2)

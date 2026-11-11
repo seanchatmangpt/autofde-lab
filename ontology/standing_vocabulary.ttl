@@ -1,0 +1,148 @@
+@prefix afl:     <urn:autofde-lab:> .
+@prefix dct:     <http://purl.org/dc/terms/> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov:    <http://www.w3.org/ns/prov#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+
+# Standing vocabulary of autofde-lab, lifted from the hand-written runtime
+# hierarchy in src/autofde_lab/standing.py (338 LOC) and the already-projected
+# ontology/standing.ttl. Public vocabularies reused: skos (concept scheme for
+# the standing values), dct (titles/descriptions), prov (a standing assertion
+# is a prov:Entity derived from a witness).
+
+<urn:autofde-lab:pack:standing-vocabulary>
+    a skos:ConceptScheme ;
+    dct:title "AutoFDE Lab standing vocabulary" ;
+    dct:description "Standing values and unlawful-transition violations, single-sourced for the runtime exception hierarchy." .
+
+# ---------------------------------------------------------------------------
+# Standing values -> base StandingError subclasses (src/autofde_lab/standing.py)
+# ---------------------------------------------------------------------------
+
+afl:standing-blocked a skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    skos:prefLabel "BLOCKED" ;
+    dct:title "Blocked" ;
+    dct:description "A named external prerequisite prevents lawful progress." ;
+    afl:parentClass "StandingError" .
+
+afl:standing-unsupported a skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    skos:prefLabel "UNSUPPORTED" ;
+    dct:title "Unsupported" ;
+    dct:description "A required capability or dependency is absent; an environment gate, not incomplete work." ;
+    afl:parentClass "StandingError" .
+
+afl:standing-unknown a skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    skos:prefLabel "UNKNOWN" ;
+    dct:title "Unknown" ;
+    dct:description "Observation is insufficient to classify standing. Never a synonym for probably fine." ;
+    afl:parentClass "StandingError" .
+
+afl:standing-not-run a skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    skos:prefLabel "NOT_RUN" ;
+    dct:title "NotRun" ;
+    dct:description "The path exists, is committed, and has never been executed." ;
+    afl:parentClass "StandingError" .
+
+afl:standing-build-broken a skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    skos:prefLabel "BUILD_BROKEN" ;
+    dct:title "BuildBroken" ;
+    dct:description "The relevant build or test suite fails." ;
+    afl:parentClass "StandingError" .
+
+afl:standing-partial-alive a skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    skos:prefLabel "PARTIAL_ALIVE" ;
+    dct:title "PartialAlive" ;
+    dct:description "A bounded working checkpoint exists; the larger claim does not follow." ;
+    afl:parentClass "StandingError" .
+
+afl:standing-not-found a skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    skos:prefLabel "NOT_FOUND" ;
+    dct:title "NotFound" ;
+    dct:description "An absence claim carrying the search boundary that produced it." ;
+    afl:parentClass "Unsupported" .
+
+afl:standing-alive a skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    skos:prefLabel "ALIVE" ;
+    dct:title "Alive" ;
+    dct:description "Terminal admitted standing. Never raisable: no exception class is rendered for it." ;
+    afl:parentClass "" .
+
+# ---------------------------------------------------------------------------
+# Unlawful standing transitions -> TransitionViolation subclasses
+# Each names one skipped transition and the standing the claim is entitled to.
+# ---------------------------------------------------------------------------
+
+afl:violation-authored-not-executed a prov:Entity , skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    dct:title "AuthoredNotExecuted" ;
+    dct:description "The artifact exists; no execution witness does." ;
+    afl:lawfulStanding "NOT_RUN" .
+
+afl:violation-declared-mapping-only a prov:Entity , skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    dct:title "DeclaredMappingOnly" ;
+    dct:description "Vocabulary exists; no executable derivation computes it." ;
+    afl:lawfulStanding "ABSENT" .
+
+afl:violation-mock-evidence-promoted a prov:Entity , skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    dct:title "MockEvidencePromoted" ;
+    dct:description "A mocked test was cited as evidence for a real external boundary." ;
+    afl:lawfulStanding "CONFIGURATION_VALIDATED" .
+
+afl:violation-predicted-standing-cited a prov:Entity , skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    dct:title "PredictedStandingCited" ;
+    dct:description "A forecast was quoted as an observation." ;
+    afl:lawfulStanding "UNKNOWN" .
+
+afl:violation-self-certified-postcondition a prov:Entity , skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    dct:title "SelfCertifiedPostcondition" ;
+    dct:description "The performer declared its own consequence successful." ;
+    afl:lawfulStanding "UNKNOWN" .
+
+afl:violation-advisory-authority-used-as-bearer a prov:Entity , skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    dct:title "AdvisoryAuthorityUsedAsBearer" ;
+    dct:description "An advisory allow was treated as bearer authority; permits() is advisory by construction." ;
+    afl:lawfulStanding "UNKNOWN" .
+
+afl:violation-declared-deployed-mismatch a prov:Entity , skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    dct:title "DeclaredDeployedMismatch" ;
+    dct:description "The declared architecture and the deployed one describe different systems." ;
+    afl:lawfulStanding "ABSENT" .
+
+afl:violation-inert-integration-surface a prov:Entity , skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    dct:title "InertIntegrationSurface" ;
+    dct:description "The surface is declared but has no executable path from input to effect." ;
+    afl:lawfulStanding "ABSENT" .
+
+afl:violation-undeclared-evidence-dependency a prov:Entity , skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    dct:title "UndeclaredEvidenceDependency" ;
+    dct:description "A proof passed only because of an ambient, undeclared provider." ;
+    afl:lawfulStanding "UNKNOWN" .
+
+afl:violation-false-green a prov:Entity , skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    dct:title "FalseGreen" ;
+    dct:description "A report announced success over a run that did not succeed." ;
+    afl:lawfulStanding "BUILD_BROKEN" .
+
+afl:violation-sibling-promoted-to-core-dependency a prov:Entity , skos:Concept ;
+    skos:inScheme <urn:autofde-lab:pack:standing-vocabulary> ;
+    dct:title "SiblingPromotedToCoreDependency" ;
+    dct:description "An optional sibling adapter became a prerequisite of the core." ;
+    afl:lawfulStanding "UNSUPPORTED" .

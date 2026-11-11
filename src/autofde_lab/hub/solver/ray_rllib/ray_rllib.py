@@ -24,7 +24,8 @@ from ray.rllib.algorithms.callbacks import DefaultCallbacks
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from ray.rllib.models import ModelCatalog
 from ray.rllib.policy.policy import Policy
-from ray.rllib.utils.from_config import NotProvided
+from ray.rllib.utils.from_config import NotProvided, from_config
+from ray.rllib.utils.replay_buffers.replay_buffer import ReplayBuffer
 from ray.tune.registry import register_env
 
 from autofde_lab import Domain, Solver
@@ -55,6 +56,25 @@ from .gnn.utils.spaces.space_utils import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class _OldStackDQN(DQN):
+    """DQN tolerant of a replay-buffer `type` already resolved to a class.
+
+    Ray 2.60 resolves `replay_buffer_config["type"]` to a class before
+    `Algorithm._create_local_replay_buffer_if_necessary` applies a substring
+    test to it (TypeError: argument of type 'ABCMeta' is not iterable).
+    """
+
+    def _create_local_replay_buffer_if_necessary(self, config):
+        rb_config = config.get("replay_buffer_config")
+        if (
+            rb_config
+            and not rb_config.get("no_local_replay_buffer")
+            and not isinstance(rb_config.get("type"), str)
+        ):
+            return from_config(ReplayBuffer, rb_config)
+        return super()._create_local_replay_buffer_if_necessary(config)
 
 
 class D(MultiAgentRLDomain):
@@ -681,7 +701,8 @@ class RayRLlib(Solver, Policies, Restorable):
 
         # Instantiate algo
         try:
-            self._algo = self._algo_class(config=self._config)
+            build_class = _OldStackDQN if self._algo_class is DQN else self._algo_class
+            self._algo = build_class(config=self._config)
         except TypeError as error:
             # Measured (2026-09-28, ray 2.56.1 locked and 2.58.0): on the old API stack this
             # wrapper forces, DQN fails inside ray itself for *every* replay_buffer_config
@@ -727,6 +748,13 @@ class RayRLlib(Solver, Policies, Restorable):
             callbacks_class=callbacks_class, config=self._config
         )
         if hasattr(self, "_algo"):
+            # ray >= 2.5x copies the config into the algorithm, so the
+            # algorithm's own config must carry the callback class too
+            # (else its checkpoint state pickles the solver-bound class).
+            if self._algo.config is not self._config:
+                _set_callbackclass_in_config(
+                    callbacks_class=callbacks_class, config=self._algo.config
+                )
             tmp = self._algo.callbacks
             if (
                 self._algo_callbacks

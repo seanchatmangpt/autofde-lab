@@ -398,32 +398,32 @@ lane = "wf_78a1f7f1"
 
 ["autofde_lab/hub/domain/htn/planner.py::HTNTotalOrderPlanner.initial_state::NIE_CALL (line 328)"]
 disposition = "CLOSED"
-evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses"
+evidence = "tests/scripts/test_stub_register_chicago.py::test_htn_initial_state_raises_on_unsupported_initial_value"
 lane = "wf_78a1f7f1"
 
 ["autofde_lab/hub/domain/htn/planner.py::_apply_effects::NIE_CALL (line 264)"]
 disposition = "CLOSED"
-evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses"
+evidence = "tests/scripts/test_stub_register_chicago.py::test_htn_apply_effects_raises_on_unsupported_numeric_effect_kind"
 lane = "wf_78a1f7f1"
 
 ["autofde_lab/hub/domain/htn/planner.py::_apply_effects::NIE_CALL#2 (line 269)"]
 disposition = "CLOSED"
-evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses"
+evidence = "tests/scripts/test_stub_register_chicago.py::test_htn_apply_effects_raises_on_unsupported_boolean_effect_kind"
 lane = "wf_78a1f7f1"
 
 ["autofde_lab/hub/domain/htn/planner.py::_eval_condition::NIE_CALL (line 180)"]
 disposition = "CLOSED"
-evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses"
+evidence = "tests/scripts/test_stub_register_chicago.py::test_htn_eval_condition_raises_typed_on_unsupported_node"
 lane = "wf_78a1f7f1"
 
 ["autofde_lab/hub/domain/htn/planner.py::_eval_number::NIE_CALL (line 130)"]
 disposition = "CLOSED"
-evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses"
+evidence = "tests/scripts/test_stub_register_chicago.py::test_htn_eval_number_raises_typed_on_unsupported_node"
 lane = "wf_78a1f7f1"
 
 ["autofde_lab/hub/domain/htn/planner.py::_resolve_arg::NIE_CALL (line 93)"]
 disposition = "CLOSED"
-evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses"
+evidence = "tests/scripts/test_stub_register_chicago.py::test_htn_resolve_arg_raises_typed_on_unsupported_node"
 lane = "wf_78a1f7f1"
 
 ["autofde_lab/hub/domain/maze/maze.py::clear_output::EMPTY_BODY"]
@@ -558,7 +558,7 @@ lane = "wf_78a1f7f1"
 
 ["autofde_lab/hub/solver/ray_rllib/gnn/utils/spaces/space_utils.py::_add_dummy_shape_to_repeated_space::NIE_CALL (line 46)"]
 disposition = "CLOSED"
-evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses"
+evidence = "tests/scripts/test_stub_register_chicago.py::test_rllib_dummy_shape_refuses_unsupported_child_space"
 lane = "wf_78a1f7f1"
 
 ["autofde_lab/hub/solver/stable_baselines/autoregressive/common/buffers.py::ApplicableActionsRolloutBuffer._add_action_masks::NIE_CALL"]
@@ -648,17 +648,17 @@ lane = "wf_78a1f7f1"
 
 ["autofde_lab/hub/solver/stable_baselines/gnn/common/policies.py::BaseGNN2NodeActorCriticPolicy._build::TODO"]
 disposition = "CLOSED"
-evidence = "stale comment: features_extractor is already in module_gains in _build; comment replaced with factual note. Verified by tests/solvers/python/test_gnn_sb3.py (policies build and train)"
+evidence = "tests/solvers/python/test_gnn_sb3.py::test_graph2node_ppo"
 lane = "wf_78a1f7f1"
 
 ["autofde_lab/hub/solver/stable_baselines/gnn/common/utils.py::obs_as_tensor::NIE_CALL"]
 disposition = "CLOSED"
-evidence = "tests/solvers/python/test_gnn_utils.py (already converted to typed UnsupportedInputError(NotImplementedError) in file by another lane before my edit; register shows no OPEN)"
+evidence = "tests/scripts/test_stub_register_chicago.py::test_obs_as_tensor_refuses_vectorized_graph_obs_and_converts_arrays"
 lane = "wf_78a1f7f1"
 
 ["autofde_lab/hub/solver/stable_baselines/gnn/common/utils.py::obs_as_tensor::NIE_CALL (line 55)"]
 disposition = "CLOSED"
-evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses"
+evidence = "tests/scripts/test_stub_register_chicago.py::test_obs_as_tensor_refuses_vectorized_graph_obs_and_converts_arrays"
 lane = "wf_78a1f7f1"
 
 ["autofde_lab/hub/solver/stable_baselines/gnn/ppo_mask/ppo_mask.py::MaskableGraph2NodePPO.__init__::NIE_CALL"]
@@ -668,12 +668,12 @@ lane = "wf_78a1f7f1"
 
 ["autofde_lab/hub/solver/stable_baselines/stable_baselines.py::StableBaseline._solve::TODO"]
 disposition = "CLOSED"
-evidence = "stale improvement TODO; comment replaced with factual note (single learning env, no vectorized rollouts wired). Verified by tests/solvers/python/test_python_solvers.py (_solve path)"
+evidence = "tests/solvers/python/test_python_solvers.py::test_solve_python"
 lane = "wf_78a1f7f1"
 
 ["autofde_lab/hub/solver/utils/gnn/space_utils.py::add_onehot_encoded_discrete_feature_to_graph_space::NIE_CALL (line 14)"]
 disposition = "CLOSED"
-evidence = "tests/core/test_stubsites_g4_chicago.py::test_gnn_space_refuses_non_box_node_space_with_typed_error"
+evidence = "tests/scripts/test_stub_register_chicago.py::test_gnn_space_refuses_non_box_node_space_real_call"
 lane = "wf_78a1f7f1"
 
 ["autofde_lab/hub/solver/utils/gnn/torch_utils.py::thg_data_to_graph_instance::NIE_CALL (line 52)"]
@@ -768,6 +768,6 @@ lane = "wf_78a1f7f1"
 
 
 ["autofde_lab/hub/solver/dspy_policy/dspy_policy.py::_describe_gym_dict_of_discrete_schema::NIE_CALL"]
-disposition = "CLOSED"
-evidence = "tests/solvers/python/test_rl_misc_stub_closure_l8_chicago.py"
+disposition = "BLOCKED"
+evidence = "tests/solvers/python/test_rl_misc_stub_closure_l8_chicago.py (typed refusal of unsupported gym spaces is deliberate; site still raises by design)"
 lane = "coordinator"

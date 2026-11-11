@@ -5,6 +5,8 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+import logging
+import warnings
 from copy import deepcopy
 from enum import Enum
 from typing import Any, Optional, Union
@@ -14,6 +16,7 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
     GenericSchedulingImplSolution,
 )
 from discrete_optimization.generic_tools.callbacks.callback import Callback
+from discrete_optimization.generic_tools import cp_tools as _do_cp_tools
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
@@ -41,6 +44,44 @@ from autofde_lab.hub.solver.do_solver.sk_to_do_binding import (
 )
 from autofde_lab.solvers import DeterministicPolicies, Solver
 
+
+
+_LOG = logging.getLogger(__name__)
+_CHUFFED_FALLBACK_ORDER = ("gecode", "coin-bc", "highs")
+
+
+def _ensure_available_minizinc_solver() -> str:
+    """Resolve the MiniZinc solver behind CpSolverName.CHUFFED.
+
+    discrete-optimization defaults many CP models to chuffed. When the local
+    MiniZinc install lacks it, rebind the chuffed tag to the first available
+    solver and say so loudly (warning + log); never silent.
+    """
+    import minizinc
+
+    cp = _do_cp_tools
+    current = cp.map_cp_solver_name[cp.CpSolverName.CHUFFED]
+    try:
+        minizinc.Solver.lookup(current)
+        return current
+    except LookupError:
+        pass
+    for candidate in _CHUFFED_FALLBACK_ORDER:
+        try:
+            minizinc.Solver.lookup(candidate)
+        except LookupError:
+            continue
+        msg = (
+            f"MiniZinc solver '{current}' is not installed; falling back to "
+            f"'{candidate}' for CpSolverName.CHUFFED"
+        )
+        _LOG.warning(msg)
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
+        cp.map_cp_solver_name[cp.CpSolverName.CHUFFED] = candidate
+        return candidate
+    raise LookupError(
+        f"No MiniZinc solver available for '{current}' or {_CHUFFED_FALLBACK_ORDER}"
+    )
 
 class D(SchedulingDomain):
     pass
@@ -299,6 +340,7 @@ class DOSolver(Solver, DeterministicPolicies):
             self.do_domain = build_do_domain(self.domain)
 
     def _solve(self) -> None:
+        _ensure_available_minizinc_solver()
         self._build_do_domain()
         solver_cls, solver_kwargs = build_solver(
             solving_method=self.method,

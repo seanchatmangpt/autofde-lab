@@ -5,6 +5,26 @@
 > docs-only cuts of the working tree. Entries are grouped candidate entries
 > derived from the git history, not per-commit release notes.
 
+## v26.11.12 (2026-11-11) — full-substrate wave
+
+- Coprocessor CLI `python -m autofde_lab.coprocessor <kind>` (JSON envelope in, canonical JSON out;
+  exit 0 PLAN, 2 NO_PLAN/INFEASIBLE/REFUSED, 3 BLOCKED): pddl, temporal_pddl, htn, fond, mdp,
+  search, rcpsp, cp, portfolio, rl_shielded, powl; `scripts/verify_rom_clean.py` runs all kinds
+  against a read-only copy of the source tree (PASS).
+- `law_bridge/graphlaw_admitter.py`: ~/graphlaw WASM admission (ADMITTED with BLAKE3 receipt chain,
+  or REFUSED at step k with the unmet triple), courts on the Ch1 and Ch8 plans.
+- Register gate: a CLOSED key whose stub reappears fails `--check` with REGRESSED_STUB.
+- ggen: one manifest, `Overwrite` kept, two consecutive `ggen sync run --skip-ea-admission`
+  runs byte-stable; template headers no longer use the retired wording; hook-contract tests in
+  tests/hooks come from ggen.
+- Ray 2.60 DQN old-stack shim (ray_rllib tests: 110 passed, 8 skipped); MiniZinc solver fallback.
+- Limits: `--skip-ea-admission` required (no ea.graph.json); tests/scheduling still has 2 failures
+  (MiniZinc 'minimum of empty set' in the library, chuffed absent); propulsion min/max rating
+  remain normalised 0.0/1.0 (model-derived bounds need thrust to depend on tsp); tests/fabric
+  segfault root-caused to pddl_engine thread-safety in the console stress test (not fixed);
+  tests/domains failures remain where vendor/gyms/* are empty; ARS reached only 11/20 zero-conflict
+  episodes on seed 6.
+
 ## v26.11.11 (2026-11-11) — stub closure
 
 Every stub, TODO and empty-body site under `src/autofde_lab` now has a recorded

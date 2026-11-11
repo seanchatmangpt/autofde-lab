@@ -1,0 +1,26 @@
+{
+  "produced_by": "ggen / autofde-lab-standing-vocabulary-pack",
+  "authority": "declarative-only; no runtime actuation authority; consequential DO stays behind GymAct/BRCE admission",
+  "standing_values": [
+    {"standing": "BLOCKED", "class": "Blocked", "description": "A named external prerequisite prevents lawful progress."},
+    {"standing": "BUILD_BROKEN", "class": "BuildBroken", "description": "The relevant build or test suite fails."},
+    {"standing": "NOT_RUN", "class": "NotRun", "description": "The path exists, is committed, and has never been executed."},
+    {"standing": "PARTIAL_ALIVE", "class": "PartialAlive", "description": "A bounded working checkpoint exists; the larger claim does not follow."},
+    {"standing": "UNKNOWN", "class": "Unknown", "description": "Observation is insufficient to classify standing. Never a synonym for probably fine."},
+    {"standing": "UNSUPPORTED", "class": "Unsupported", "description": "A required capability or dependency is absent; an environment gate, not incomplete work."},
+    {"standing": "NOT_FOUND", "class": "NotFound", "description": "An absence claim carrying the search boundary that produced it."}
+  ],
+  "transition_violations": [
+    {"class": "AdvisoryAuthorityUsedAsBearer", "lawful_standing": "UNKNOWN", "description": "An advisory allow was treated as bearer authority; permits() is advisory by construction."},
+    {"class": "AuthoredNotExecuted", "lawful_standing": "NOT_RUN", "description": "The artifact exists; no execution witness does."},
+    {"class": "DeclaredDeployedMismatch", "lawful_standing": "ABSENT", "description": "The declared architecture and the deployed one describe different systems."},
+    {"class": "DeclaredMappingOnly", "lawful_standing": "ABSENT", "description": "Vocabulary exists; no executable derivation computes it."},
+    {"class": "FalseGreen", "lawful_standing": "BUILD_BROKEN", "description": "A report announced success over a run that did not succeed."},
+    {"class": "InertIntegrationSurface", "lawful_standing": "ABSENT", "description": "The surface is declared but has no executable path from input to effect."},
+    {"class": "MockEvidencePromoted", "lawful_standing": "CONFIGURATION_VALIDATED", "description": "A mocked test was cited as evidence for a real external boundary."},
+    {"class": "PredictedStandingCited", "lawful_standing": "UNKNOWN", "description": "A forecast was quoted as an observation."},
+    {"class": "SelfCertifiedPostcondition", "lawful_standing": "UNKNOWN", "description": "The performer declared its own consequence successful."},
+    {"class": "SiblingPromotedToCoreDependency", "lawful_standing": "UNSUPPORTED", "description": "An optional sibling adapter became a prerequisite of the core."},
+    {"class": "UndeclaredEvidenceDependency", "lawful_standing": "UNKNOWN", "description": "A proof passed only because of an ambient, undeclared provider."}
+  ]
+}
