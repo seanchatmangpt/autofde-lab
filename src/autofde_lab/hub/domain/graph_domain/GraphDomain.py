@@ -14,6 +14,7 @@ from autofde_lab import (
     D,
     DeterministicPlanningDomain,
     Distribution,
+    DiscreteDistribution,
     Domain,
     EnumerableSpace,
     ImplicitSpace,
@@ -28,6 +29,8 @@ from autofde_lab.builders.domain import (
     Goals,
     Markovian,
     PositiveCosts,
+    Sequential,
+    SingleAgent,
     UncertainTransitions,
 )
 
@@ -37,7 +40,7 @@ class ActionSpace(EnumerableSpace, SamplableSpace):
         return random.choice(self.l)
 
     def contains(self, x: T) -> bool:
-        pass
+        return x in self.l
 
     def __init__(self, l: list[object]):
         self.l = l
@@ -48,6 +51,8 @@ class ActionSpace(EnumerableSpace, SamplableSpace):
 
 class GraphDomainUncertain(
     Domain,
+    SingleAgent,
+    Sequential,
     UncertainTransitions,
     Actions,
     Goals,
@@ -133,13 +138,12 @@ class GraphDomainUncertain(
         memory: D.T_memory[D.T_state],
         action: D.T_agent[D.T_concurrency[D.T_event]],
     ) -> Distribution[D.T_state]:
-        possible_states = [
-            (s, self.next_state_map[memory][action][s][0])
-            for s in self.next_state_map[memory][action]
-        ]
-        return random.choices(
-            possible_states, weights=[p[1] for p in possible_states], k=1
-        )[0]
+        return DiscreteDistribution(
+            [
+                (s, self.next_state_map[memory][action][s][0])
+                for s in self.next_state_map[memory][action]
+            ]
+        )
 
 
 class GraphDomain(DeterministicPlanningDomain):
@@ -225,7 +229,11 @@ class GraphDomain(DeterministicPlanningDomain):
         return state in self.targets
 
     def _get_observation_space_(self) -> Space[D.T_observation]:
-        pass
+        # fully observable: observations are the graph states (nodes)
+        return ImplicitSpace(
+            lambda x: x in self.next_state_map
+            or any(x in nxt.values() for nxt in self.next_state_map.values())
+        )
 
     def set_sources_targets(self, sources, targets):
         """

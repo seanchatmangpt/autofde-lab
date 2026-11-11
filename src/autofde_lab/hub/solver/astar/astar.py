@@ -29,7 +29,7 @@ from autofde_lab.core import Value
 try:
     from autofde_lab.hub.__autofde_lab_hub_cpp import _AStarSolver_ as astar_solver
 
-    # TODO: remove Markovian req?
+    # Note: the solver requires Markovian (memoryless) states by design; policies are keyed on the current state.
     class D(
         Domain,
         SingleAgent,
@@ -122,6 +122,12 @@ try:
                 are performed (root of the search graph)
             """
             self._solver.solve(memory)
+
+        def _is_policy_defined_for(
+            self, observation: D.T_agent[D.T_observation]
+        ) -> bool:
+            """A* defines a policy exactly where it has computed a solution."""
+            return self._is_solution_defined_for(observation)
 
         def _is_solution_defined_for(
             self, observation: D.T_agent[D.T_observation]

@@ -1,3 +1,4 @@
+from autofde_lab.hub.solver.stable_baselines.errors import UnsupportedConfigurationError
 from typing import Optional, Tuple, Union
 
 import torch as th
@@ -127,7 +128,7 @@ class MultiMaskableCategoricalDistribution(Distribution):
                     marginal_logp = th.zeros(
                         self.get_proba_distribution_component_batch_shape(i_component),
                         device=x.device,
-                        dtype=x.dtype,
+                        dtype=marginal_dist.logits.dtype,
                     )
                     ind_valid_samples = self._ind_valid_samples_by_distributions[
                         i_component
@@ -169,21 +170,51 @@ class MultiMaskableCategoricalDistribution(Distribution):
         return sum(marginal_entropies)
 
     def sample(self) -> th.Tensor:
-        raise NotImplementedError()
+        """Part of the SB3 Distribution contract; unsupported by design (autoregressive)."""
+        raise UnsupportedConfigurationError(
+            "MultiMaskableCategoricalDistribution is autoregressive: use "
+            "set_proba_distribution_component / get_actions_component / "
+            "apply_masking_component instead of sample()."
+        )
 
     def mode(self) -> th.Tensor:
-        raise NotImplementedError()
+        """Part of the SB3 Distribution contract; unsupported by design (autoregressive)."""
+        raise UnsupportedConfigurationError(
+            "MultiMaskableCategoricalDistribution is autoregressive: use "
+            "set_proba_distribution_component / get_actions_component / "
+            "apply_masking_component instead of mode()."
+        )
 
     def actions_from_params(self, *args, **kwargs) -> th.Tensor:
-        raise NotImplementedError()
+        """Part of the SB3 Distribution contract; unsupported by design (autoregressive)."""
+        raise UnsupportedConfigurationError(
+            "MultiMaskableCategoricalDistribution is autoregressive: use "
+            "set_proba_distribution_component / get_actions_component / "
+            "apply_masking_component instead of actions_from_params()."
+        )
 
     def log_prob_from_params(self, *args, **kwargs) -> Tuple[th.Tensor, th.Tensor]:
-        raise NotImplementedError()
+        """Part of the SB3 Distribution contract; unsupported by design (autoregressive)."""
+        raise UnsupportedConfigurationError(
+            "MultiMaskableCategoricalDistribution is autoregressive: use "
+            "set_proba_distribution_component / get_actions_component / "
+            "apply_masking_component instead of log_prob_from_params()."
+        )
 
     def proba_distribution_net(
         self, *args, **kwargs
     ) -> Union[nn.Module, Tuple[nn.Module, nn.Parameter]]:
-        raise NotImplementedError()
+        """Part of the SB3 Distribution contract; unsupported by design (autoregressive)."""
+        raise UnsupportedConfigurationError(
+            "MultiMaskableCategoricalDistribution is autoregressive: use "
+            "set_proba_distribution_component / get_actions_component / "
+            "apply_masking_component instead of proba_distribution_net()."
+        )
 
     def proba_distribution(self: SelfDistribution, *args, **kwargs) -> SelfDistribution:
-        raise NotImplementedError()
+        """Part of the SB3 Distribution contract; unsupported by design (autoregressive)."""
+        raise UnsupportedConfigurationError(
+            "MultiMaskableCategoricalDistribution is autoregressive: use "
+            "set_proba_distribution_component / get_actions_component / "
+            "apply_masking_component instead of proba_distribution()."
+        )

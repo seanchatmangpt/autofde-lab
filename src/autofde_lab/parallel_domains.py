@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import abc
 import logging
 import os
 import tempfile
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 dill.settings["byref"] = True
 
 
-class ParallelDomain:
+class ParallelDomain(abc.ABC):
     """Base class for creating and launching n domains in separate processes.
     Each domain listens for incoming domain requests.
     Each request can indicate which domain should serve it, otherwise the first available
@@ -48,14 +49,19 @@ class ParallelDomain:
         self._ipc_connections[i] = "ipc://" + self._temp_connections[i].name + ".ipc"
 
     def close_ipc_connection(self, i):
-        self._temp_connections[i].close()
+        # The handle is None on an unpickled copy whose backing file is gone.
+        if self._temp_connections[i] is not None:
+            self._temp_connections[i].close()
+            self._temp_connections[i] = None
         self._ipc_connections[i] = None
 
+    @abc.abstractmethod
     def _launch_processes(self):
-        raise NotImplementedError
+        """Start one server process per domain and wait until all are ready."""
 
+    @abc.abstractmethod
     def close(self):
-        raise NotImplementedError
+        """Stop every server process and release all IPC resources."""
 
     def __enter__(self):
         self._launch_processes()
@@ -64,11 +70,13 @@ class ParallelDomain:
     def __exit__(self, type, value, tb):
         self.close()
 
+    @abc.abstractmethod
     def launch(self, i, name, *args):
-        raise NotImplementedError
+        """Dispatch method/lambda ``name`` to domain ``i``; return the domain id used."""
 
-    def get_proc_connections(self):  # process connections for use in python
-        raise NotImplementedError
+    @abc.abstractmethod
+    def get_proc_connections(self):
+        """Return the process connections for use in python."""
 
     def get_ipc_connections(self):  # inter-process connections for use with C++
         return self._ipc_connections
@@ -184,7 +192,16 @@ class ParallelDomain:
     # Required on Windows when spawning the main process.
     def __setstate__(self, state):
         self.__dict__ = state
-        # TODO: reopen the temp connection from _ipc_connections
+        # Reopen a non-owning handle on each existing ipc socket path so the
+        # copy has the same per-domain connection bookkeeping as the original.
+        # The original owns (and deletes) the backing temporary file.
+        self._temp_connections = [None] * len(self._ipc_connections)
+        for i, conn in enumerate(self._ipc_connections):
+            if conn is None:
+                continue
+            path = conn[len("ipc://") : -len(".ipc")]
+            if os.path.exists(path):
+                self._temp_connections[i] = open(path, "rb")
 
 
 def _launch_domain_server_(domain_factory, lambdas, conn, init, cond, ipc_conn, logger):

@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import Optional
 
 from autofde_lab import Domain
-from autofde_lab.core import D, Distribution, SingleValueDistribution, autocastable
+from autofde_lab.core import D, Distribution, HookNotImplementedError, SingleValueDistribution, autocastable
 
 __all__ = ["Policies", "UncertainPolicies", "DeterministicPolicies"]
 
@@ -46,7 +46,7 @@ class Policies:
         # Returns
         The sampled action.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "Policies._sample_action")
 
     @autocastable
     def is_policy_defined_for(self, observation: D.T_agent[D.T_observation]) -> bool:
@@ -69,7 +69,7 @@ class Policies:
         # Returns
         True if the policy is defined for the given observation memory (False otherwise).
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "Policies._is_policy_defined_for")
 
 
 class UncertainPolicies(Policies):
@@ -114,7 +114,7 @@ class UncertainPolicies(Policies):
         # Returns
         The probabilistic distribution of next action.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "UncertainPolicies._get_next_action_distribution")
 
 
 class DeterministicPolicies(UncertainPolicies):
@@ -160,4 +160,4 @@ class DeterministicPolicies(UncertainPolicies):
         # Returns
         The next deterministic action.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "DeterministicPolicies._get_next_action")

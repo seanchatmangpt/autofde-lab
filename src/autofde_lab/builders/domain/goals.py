@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from autofde_lab.core import HookNotImplementedError
+
 from typing import Union
 
 import wrapt
@@ -65,7 +67,7 @@ class Goals:
         # Returns
         The goals space.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_goals_")
 
     @autocastable
     def is_goal(

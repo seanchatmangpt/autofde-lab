@@ -224,7 +224,10 @@ def from_solution_to_policy(
             for task, variable in solution.raw_sol.task_variables.items()
         }
     else:
-        raise NotImplementedError()
+        raise TypeError(
+            "from_solution_to_policy expects an RcpspSolution, MultiskillRcpspSolution "
+            f"or GenericSchedulingImplSolution, got {type(solution).__name__}."
+        )
 
     return PolicyRCPSP(
         domain=domain,

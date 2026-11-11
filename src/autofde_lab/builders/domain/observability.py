@@ -8,6 +8,7 @@ from typing import Optional, Union
 
 import wrapt
 
+from autofde_lab.core import HookNotImplementedError
 from autofde_lab.core import (
     D,
     Distribution,
@@ -65,8 +66,12 @@ class PartiallyObservable:
 
         # Returns
         The observation space.
+
+        # Raises
+        NotImplementedError: Abstract hook (template method) - a concrete domain
+        class must override it; the base class provides no default.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_observation_space_")
 
     @autocastable
     def is_observation(self, observation: D.T_agent[D.T_observation]) -> bool:
@@ -141,8 +146,12 @@ class PartiallyObservable:
 
         # Returns
         The probability distribution of the observation.
+
+        # Raises
+        NotImplementedError: Abstract hook (template method) - a concrete domain
+        class must override it; the base class provides no default.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_observation_distribution")
 
     def __getstate__(self):
         """Get state for pickle.
@@ -202,8 +211,12 @@ class TransformedObservable(PartiallyObservable):
 
         # Returns
         The probability distribution of the observation.
+
+        # Raises
+        NotImplementedError: Abstract hook (template method) - a concrete domain
+        class must override it; the base class provides no default.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_observation")
 
 
 class FullyObservable(TransformedObservable):

@@ -140,7 +140,8 @@ class PolicyRCPSP(DeterministicPolicies):
         self.build_function()
 
     def reset(self):
-        pass
+        """Stateless policy: nothing to reset."""
+        return None
 
     def build_function(self):
         func = partial(

@@ -64,7 +64,7 @@ class MasterMind(D):
         # Input is a state and an action; output is a next state.
         if (
             action is None
-        ):  # TODO: handle this option on algo side rather than domain; here action should never be None
+        ):  # Solvers may emit None (no guess) at episode start; the state is unchanged
             return memory
         else:
             return State(memory.solution, self._calc_score(memory, action))

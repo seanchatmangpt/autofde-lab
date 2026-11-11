@@ -1,0 +1,773 @@
+# Stub dispositions, keyed by "path::qualname::kind" (path relative to src/).
+# disposition in {CLOSED, ABSTRACT_BY_DESIGN, BLOCKED}; evidence = test node id or command.
+# Example:
+# ["autofde_lab/x/y.py::Foo.bar::NIE_CALL"]
+# disposition = "CLOSED"
+# evidence = "tests/x/test_y.py::test_bar"
+# lane = "L00"
+
+["autofde_lab/builders/domain/dynamics.py::DeterministicTransitions._get_next_state::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/builders/test_stubsites_g2_chicago.py::test_bare_class_raises_typed_hook_error[DeterministicTransitions-_get_next_state-2]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/dynamics.py::EnumerableTransitions._get_next_state_distribution::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/builders/test_stubsites_g2_chicago.py::test_bare_class_raises_typed_hook_error[EnumerableTransitions-_get_next_state_distribution-2]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/dynamics.py::Environment._state_step::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/builders/test_stubsites_g2_chicago.py::test_bare_class_raises_typed_hook_error[Environment-_state_step-1]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/dynamics.py::Simulation._state_sample::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/builders/test_stubsites_g2_chicago.py::test_bare_class_raises_typed_hook_error[Simulation-_state_sample-2]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/dynamics.py::UncertainTransitions._get_next_state_distribution::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/builders/test_stubsites_g2_chicago.py::test_bare_class_raises_typed_hook_error[UncertainTransitions-_get_next_state_distribution-2]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/dynamics.py::UncertainTransitions._get_transition_value::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/builders/test_stubsites_g2_chicago.py::test_bare_class_raises_typed_hook_error[UncertainTransitions-_get_transition_value-3]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/dynamics.py::UncertainTransitions._is_terminal::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/builders/test_stubsites_g2_chicago.py::test_bare_class_raises_typed_hook_error[UncertainTransitions-_is_terminal-1]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/events.py::Events._get_action_space_::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/builders/test_stubsites_g2_chicago.py::test_bare_class_raises_typed_hook_error[Events-_get_action_space_-0]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/events.py::Events._get_applicable_actions_from::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/builders/test_stubsites_g2_chicago.py::test_bare_class_raises_typed_hook_error[Events-_get_applicable_actions_from-1]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/events.py::Events._get_enabled_events_from::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/builders/test_stubsites_g2_chicago.py::test_bare_class_raises_typed_hook_error[Events-_get_enabled_events_from-1]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/initialization.py::DeterministicInitialized._get_initial_state_::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/builders/test_stubsites_g2_chicago.py::test_bare_class_raises_typed_hook_error[DeterministicInitialized-_get_initial_state_-0]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/initialization.py::Initializable._state_reset::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/builders/test_stubsites_g2_chicago.py::test_bare_class_raises_typed_hook_error[Initializable-_state_reset-0]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/initialization.py::UncertainInitialized._get_initial_state_distribution_::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/builders/test_stubsites_g2_chicago.py::test_bare_class_raises_typed_hook_error[UncertainInitialized-_get_initial_state_distribution_-0]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/observability.py::PartiallyObservable._get_observation_distribution::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/builders/test_stubsites_g2_chicago.py::test_bare_class_raises_typed_hook_error[PartiallyObservable-_get_observation_distribution-2]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/observability.py::PartiallyObservable._get_observation_space_::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/builders/test_stubsites_g2_chicago.py::test_bare_class_raises_typed_hook_error[PartiallyObservable-_get_observation_space_-0]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/observability.py::TransformedObservable._get_observation::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/builders/test_stubsites_g2_chicago.py::test_bare_class_raises_typed_hook_error[TransformedObservable-_get_observation-1]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/conditional_tasks.py::WithConditionalTasks._get_all_condition_items::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithConditionalTasks._get_all_condition_items]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/conditional_tasks.py::WithConditionalTasks._get_task_existence_conditions::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithConditionalTasks._get_task_existence_conditions]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/conditional_tasks.py::WithConditionalTasks._get_task_on_completion_added_conditions::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithConditionalTasks._get_task_on_completion_added_conditions]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/modes.py::ConstantModeConsumption.__init__::TODO"]
+disposition = "CLOSED"
+evidence = "stale comment replaced by factual note; tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[ModeConsumption._get_resource_need_at_time]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/modes.py::ModeConsumption._get_non_zero_ressource_need_names::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[ModeConsumption._get_non_zero_ressource_need_names]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/modes.py::ModeConsumption._get_resource_need_at_time::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[ModeConsumption._get_resource_need_at_time]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/modes.py::ModeConsumption._get_ressource_names::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[ModeConsumption._get_ressource_names]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/modes.py::MultiMode._get_tasks_ids::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[MultiMode._get_tasks_ids]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/modes.py::MultiMode._get_tasks_modes::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[MultiMode._get_tasks_modes]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/modes.py::SingleMode._get_tasks_mode::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[SingleMode._get_tasks_mode]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/modes.py::SingleMode._get_tasks_mode::TODO"]
+disposition = "CLOSED"
+evidence = "commented-out dead check removed; tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[SingleMode._get_tasks_mode]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/preallocations.py::WithPreallocations._get_preallocations::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithPreallocations._get_preallocations]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/preallocations.py::WithPreallocations._get_preallocations::TODO"]
+disposition = "CLOSED"
+evidence = "comment replaced by factual note; tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithPreallocations._get_preallocations]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/preallocations.py::WithPreallocations.get_preallocations::TODO"]
+disposition = "CLOSED"
+evidence = "comment replaced by factual note; tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithPreallocations._get_preallocations]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/preemptivity.py::WithPreemptivity._get_task_paused_non_renewable_resource_returned::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithPreemptivity._get_task_paused_non_renewable_resource_returned]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/preemptivity.py::WithPreemptivity._get_task_preemptivity::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithPreemptivity._get_task_preemptivity]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/preemptivity.py::WithPreemptivity._get_task_resuming_type::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithPreemptivity._get_task_resuming_type]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/resource_availability.py::DeterministicResourceAvailabilityChanges._get_quantity_resource::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[DeterministicResourceAvailabilityChanges._get_quantity_resource]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/resource_availability.py::UncertainResourceAvailabilityChanges._sample_quantity_resource::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[UncertainResourceAvailabilityChanges._sample_quantity_resource]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/resource_availability.py::UncertainResourceAvailabilityChanges.check_unique_resource_names::TODO"]
+disposition = "CLOSED"
+evidence = "comment replaced by factual note (opt-in call); tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[UncertainResourceAvailabilityChanges._sample_quantity_resource]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/resource_availability.py::WithoutResourceAvailabilityChange._get_original_quantity_resource::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithoutResourceAvailabilityChange._get_original_quantity_resource]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/resource_costs.py::WithModeCosts._get_mode_costs::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithModeCosts._get_mode_costs]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/resource_costs.py::WithModeCosts._get_mode_costs::TODO"]
+disposition = "CLOSED"
+evidence = "comment replaced by factual note; tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithModeCosts._get_mode_costs]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/resource_costs.py::WithModeCosts.get_mode_costs::TODO"]
+disposition = "CLOSED"
+evidence = "comment replaced by factual note; tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithModeCosts._get_mode_costs]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/resource_costs.py::WithResourceCosts._get_resource_cost_per_time_unit::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithResourceCosts._get_resource_cost_per_time_unit]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/resource_costs.py::WithResourceCosts._get_resource_cost_per_time_unit::TODO"]
+disposition = "CLOSED"
+evidence = "comment replaced by factual note; tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithResourceCosts._get_resource_cost_per_time_unit]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/resource_costs.py::WithResourceCosts.get_resource_cost_per_time_unit::TODO"]
+disposition = "CLOSED"
+evidence = "comment replaced by factual note; tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithResourceCosts._get_resource_cost_per_time_unit]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/resource_type.py::WithResourceTypes._get_resource_types_names::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithResourceTypes._get_resource_types_names]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/resource_type.py::WithResourceUnits._get_resource_type_for_unit::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithResourceUnits._get_resource_type_for_unit]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/resource_type.py::WithResourceUnits._get_resource_units_names::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithResourceUnits._get_resource_units_names]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/scheduling_domains.py::<module>::TODO"]
+disposition = "CLOSED"
+evidence = "comment reworded; tests/domains/python/test_stubsites_g1_chicago.py::test_action_and_observation_spaces_are_real_membership_spaces"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/scheduling_domains.py::SchedulingDomain._get_action_space_::EMPTY_BODY"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_action_and_observation_spaces_are_real_membership_spaces"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/scheduling_domains.py::SchedulingDomain._get_max_horizon::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[SchedulingDomain._get_max_horizon]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/scheduling_domains.py::SchedulingDomain._get_objectives::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[SchedulingDomain._get_objectives]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/scheduling_domains.py::SchedulingDomain._get_observation_space_::EMPTY_BODY"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_action_and_observation_spaces_are_real_membership_spaces"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/scheduling_domains.py::SchedulingDomain.initialize_domain::TODO"]
+disposition = "CLOSED"
+evidence = "comment reworded; tests/domains/python/test_stubsites_g1_chicago.py::test_action_and_observation_spaces_are_real_membership_spaces"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/scheduling_domains.py::SchedulingDomain.initialize_domain::TODO#2"]
+disposition = "CLOSED"
+evidence = "comment reworded; tests/domains/python/test_stubsites_g1_chicago.py::test_action_and_observation_spaces_are_real_membership_spaces"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/scheduling_domains.py::SchedulingDomain.update_resource_availability::TODO"]
+disposition = "CLOSED"
+evidence = "comment reworded; tests/domains/python/test_stubsites_g1_chicago.py::test_action_and_observation_spaces_are_real_membership_spaces"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/scheduling_domains.py::SchedulingDomain.update_resource_availability_uncertain::TODO"]
+disposition = "CLOSED"
+evidence = "comment reworded; tests/domains/python/test_stubsites_g1_chicago.py::test_action_and_observation_spaces_are_real_membership_spaces"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/scheduling_domains.py::SchedulingDomain.update_resume_tasks::TODO"]
+disposition = "CLOSED"
+evidence = "comment reworded; tests/domains/python/test_stubsites_g1_chicago.py::test_action_and_observation_spaces_are_real_membership_spaces"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/scheduling_domains.py::SchedulingDomain.update_start_tasks::TODO"]
+disposition = "CLOSED"
+evidence = "comment reworded; tests/domains/python/test_stubsites_g1_chicago.py::test_action_and_observation_spaces_are_real_membership_spaces"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/scheduling_domains.py::SchedulingDomain::TODO"]
+disposition = "CLOSED"
+evidence = "comment reworded; tests/domains/python/test_stubsites_g1_chicago.py::test_action_and_observation_spaces_are_real_membership_spaces"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/scheduling_domains.py::SchedulingDomain::TODO#2"]
+disposition = "CLOSED"
+evidence = "comment reworded; tests/domains/python/test_stubsites_g1_chicago.py::test_action_and_observation_spaces_are_real_membership_spaces"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/scheduling_domains_modelling.py::State::TODO"]
+disposition = "CLOSED"
+evidence = "stale: __hash__/__eq__ exist; tests/domains/python/test_stubsites_g1_chicago.py::test_state_defines_hash_based_equality"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/scheduling_domains_modelling.py::State::TODO#2"]
+disposition = "CLOSED"
+evidence = "stale: attributes assigned in __init__; tests/domains/python/test_stubsites_g1_chicago.py::test_state_defines_hash_based_equality"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/skills.py::WithResourceSkills._get_all_resources_skills::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithResourceSkills._get_all_resources_skills]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/skills.py::WithResourceSkills._get_all_tasks_skills::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[WithResourceSkills._get_all_tasks_skills]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/task_duration.py::<module>::TODO"]
+disposition = "CLOSED"
+evidence = "comment replaced; tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[UncertainMultivariateTaskDuration._get_task_duration_distribution]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/task_duration.py::DeterministicTaskDuration._get_task_duration::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[DeterministicTaskDuration._get_task_duration]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/task_duration.py::SimulatedTaskDuration._sample_task_duration::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[SimulatedTaskDuration._sample_task_duration]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/task_duration.py::SimulatedTaskDuration::TODO"]
+disposition = "CLOSED"
+evidence = "comment replaced; tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[SimulatedTaskDuration._sample_task_duration]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/task_duration.py::UncertainBoundedTaskDuration._get_task_duration_distribution::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[UncertainBoundedTaskDuration._get_task_duration_distribution]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/task_duration.py::UncertainBoundedTaskDuration._get_task_duration_lower_bound::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[UncertainBoundedTaskDuration._get_task_duration_lower_bound]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/task_duration.py::UncertainBoundedTaskDuration._get_task_duration_upper_bound::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[UncertainBoundedTaskDuration._get_task_duration_upper_bound]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/task_duration.py::UncertainMultivariateTaskDuration._get_task_duration_distribution::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[UncertainMultivariateTaskDuration._get_task_duration_distribution]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/task_duration.py::UncertainUnivariateTaskDuration._get_task_duration_distribution::NIE_BARE"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[UncertainUnivariateTaskDuration._get_task_duration_distribution]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/builders/domain/scheduling/task_duration.py::UncertainUnivariateTaskDuration._get_task_duration_distribution::TODO"]
+disposition = "CLOSED"
+evidence = "comment replaced; tests/domains/python/test_stubsites_g1_chicago.py::test_bare_hook_raises_typed_error_and_subclass_satisfies[UncertainUnivariateTaskDuration._get_task_duration_distribution]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/graph_domain/GraphDomain.py::ActionSpace.contains::EMPTY_BODY"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g6_chicago.py::test_action_space_contains_reflects_membership"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/graph_domain/GraphDomain.py::GraphDomain._get_observation_space_::EMPTY_BODY"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g6_chicago.py::test_graph_domain_observation_space_is_the_graph_states"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/gym/gym.py::<module>::TODO"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g6_chicago.py::test_gym_domain_step_returns_reward_as_first_value_and_rewards_kept"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/gym/gym.py::<module>::TODO#2"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g6_chicago.py::test_gym_domain_step_returns_reward_as_first_value_and_rewards_kept"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/gym/gym.py::D::TODO"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g6_chicago.py::test_gym_domain_step_returns_reward_as_first_value_and_rewards_kept"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/htn/planner.py::HTNTotalOrderPlanner.initial_state::NIE_CALL (line 328)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/htn/planner.py::_apply_effects::NIE_CALL (line 264)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/htn/planner.py::_apply_effects::NIE_CALL#2 (line 269)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/htn/planner.py::_eval_condition::NIE_CALL (line 180)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/htn/planner.py::_eval_number::NIE_CALL (line 130)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/htn/planner.py::_resolve_arg::NIE_CALL (line 93)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/maze/maze.py::clear_output::EMPTY_BODY"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g6_chicago.py::test_maze_display_fallbacks_without_ipython_are_functional"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/maze/maze.py::display::EMPTY_BODY"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g6_chicago.py::test_maze_display_fallbacks_without_ipython_are_functional"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/plado/llg_encoder.py::LLGEncoder._encode_action::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g3_chicago.py::test_llg_unsupported_atomic_effect_type"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/plado/llg_encoder.py::LLGEncoder._encode_numeric_expression::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g3_chicago.py::test_llg_unsupported_numeric_binary_operator_and_expression"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/plado/llg_encoder.py::LLGEncoder._encode_numeric_expression::NIE_CALL#2"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g3_chicago.py::test_llg_unsupported_numeric_binary_operator_and_expression"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/plado/llg_encoder.py::LLGEncoder.index_function::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g3_chicago.py::test_llg_index_function_unsupported_type"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/plado/llg_encoder.py::LLGEncoder.index_function_inverse::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g3_chicago.py::test_llg_index_function_unsupported_type"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/plado/plado.py::BasePladoDomain._get_action_space_::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g3_chicago.py::test_base_domain_unsupported_encoding"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/plado/plado.py::BasePladoDomain._get_observation_space_::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g3_chicago.py::test_base_domain_unsupported_encoding"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/plado/plado.py::BasePladoDomain._init_action_encoding::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g3_chicago.py::test_base_domain_unsupported_encoding"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/plado/plado.py::BasePladoDomain._init_state_encoding::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g3_chicago.py::test_base_domain_unsupported_encoding"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/plado/plado.py::BasePladoDomain._transform_state_to_hashable::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g3_chicago.py::test_base_domain_unsupported_encoding"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/plado/plado.py::BasePladoDomain._translate_action_from_plado::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g3_chicago.py::test_base_domain_unsupported_encoding"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/plado/plado.py::BasePladoDomain._translate_action_to_plado::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g3_chicago.py::test_base_domain_unsupported_encoding"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/plado/plado.py::BasePladoDomain._translate_state_from_plado::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g3_chicago.py::test_base_domain_unsupported_encoding"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/plado/plado.py::BasePladoDomain._translate_state_to_plado::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g3_chicago.py::test_base_domain_unsupported_encoding"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/plado/plado.py::BasePladoDomain.get_action_components_node_flag_indices::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g3_chicago.py::test_base_domain_unsupported_encoding"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/plado/plado.py::BasePladoTransformedObservableDomain._get_observation::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g3_chicago.py::test_transformed_observable_unsupported_obs_encoding"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/plado/plado.py::BasePladoTransformedObservableDomain._get_observation_space_::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g3_chicago.py::test_transformed_observable_unsupported_obs_encoding"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/domain/plado/plado.py::BasePladoTransformedObservableDomain._init_obs_encoding::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g3_chicago.py::test_transformed_observable_unsupported_obs_encoding"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/cgp/cgp.py::SkDecideEvaluator.evaluate::TODO"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g6_chicago.py::test_gym_domain_step_returns_reward_as_first_value_and_rewards_kept"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/cgp/cgp.py::change_interval::TODO"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g6_chicago.py::test_cgp_change_interval_accepts_infinite_bounds_with_fallback"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/openevolve/initial_program_builder.py::build_initial_program::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g6_chicago.py::test_build_initial_program_refuses_untemplated_domain_with_typed_error"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/openevolve/initial_program_builder.py::build_initial_program::NIE_CALL#2"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g6_chicago.py::test_build_initial_program_refuses_untemplated_domain_with_typed_error"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/ray_rllib/gnn/algorithms/ppo/ppo.py::GraphPPO.get_default_policy_class::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g6_chicago.py::test_graph_ppo_refuses_non_torch_framework_with_typed_error"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/ray_rllib/gnn/policy/sample_batch_original_code.py::original_concat_samples::EMPTY_BODY"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g6_chicago.py::test_original_concat_samples_delegates_to_rllib_and_patch_roundtrips"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/ray_rllib/gnn/utils/spaces/space_utils.py::_add_dummy_shape_to_repeated_space::NIE_CALL (line 46)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/autoregressive/common/buffers.py::ApplicableActionsRolloutBuffer._add_action_masks::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_stubsites_g5_chicago.py::test_applicable_actions_buffer_add_masks_guard_and_flatten_noop"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/autoregressive/common/buffers.py::ApplicableActionsRolloutBuffer._swap_and_flatten_action_masks::EMPTY_BODY"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_stubsites_g5_chicago.py::test_applicable_actions_buffer_add_masks_guard_and_flatten_noop"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/autoregressive/common/distributions.py::MultiMaskableCategoricalDistribution.actions_from_params::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_stubsites_g5_chicago.py::test_multi_maskable_distribution_typed_contract"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/autoregressive/common/distributions.py::MultiMaskableCategoricalDistribution.log_prob_from_params::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_stubsites_g5_chicago.py::test_multi_maskable_distribution_typed_contract"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/autoregressive/common/distributions.py::MultiMaskableCategoricalDistribution.mode::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_stubsites_g5_chicago.py::test_multi_maskable_distribution_typed_contract"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/autoregressive/common/distributions.py::MultiMaskableCategoricalDistribution.proba_distribution::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_stubsites_g5_chicago.py::test_multi_maskable_distribution_typed_contract"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/autoregressive/common/distributions.py::MultiMaskableCategoricalDistribution.proba_distribution_net::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_stubsites_g5_chicago.py::test_multi_maskable_distribution_typed_contract"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/autoregressive/common/distributions.py::MultiMaskableCategoricalDistribution.sample::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_stubsites_g5_chicago.py::test_multi_maskable_distribution_typed_contract"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/autoregressive/common/on_policy_algorithm.py::ApplicableActionsOnPolicyAlgorithm.__init__::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_stubsites_g5_chicago.py::test_applicable_actions_on_policy_rejects_real_vectorization"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/autoregressive/common/policies.py::AutoregressiveActorCriticPolicy.get_distribution::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_stubsites_g5_chicago.py::test_autoregressive_policy_get_distribution_typed_contract"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/common/buffers.py::ScikitDecideRolloutBuffer._swap_and_flatten_action_masks::EMPTY_BODY"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_stubsites_g5_chicago.py::test_base_rollout_buffer_flatten_masks_default_is_noop"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/gnn/common/buffers.py::GraphReplayBuffer.__init__::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_stubsites_g5_chicago.py::test_graph_replay_buffer_typed_guards"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/gnn/common/buffers.py::GraphReplayBuffer.__init__::NIE_CALL#2"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_stubsites_g5_chicago.py::test_graph_replay_buffer_typed_guards"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/gnn/common/buffers.py::MaskableGraph2NodeRolloutBufferMixin._add_action_masks::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_stubsites_g5_chicago.py::test_maskable_graph2node_buffer_typed_guards_and_flatten"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/gnn/common/buffers.py::MaskableGraph2NodeRolloutBufferMixin._swap_and_flatten_action_masks::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_stubsites_g5_chicago.py::test_maskable_graph2node_buffer_typed_guards_and_flatten"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/gnn/common/off_policy_algorithm.py::GraphOffPolicyAlgorithm.__init__::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_stubsites_g5_chicago.py::test_graph_off_policy_rejects_real_vectorization"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/gnn/common/on_policy_algorithm.py::GraphOnPolicyAlgorithm.__init__::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_stubsites_g5_chicago.py::test_graph_on_policy_rejects_real_vectorization"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/gnn/common/policies.py::BaseGNN2NodeActorCriticPolicy._build::TODO"]
+disposition = "CLOSED"
+evidence = "stale comment: features_extractor is already in module_gains in _build; comment replaced with factual note. Verified by tests/solvers/python/test_gnn_sb3.py (policies build and train)"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/gnn/common/utils.py::obs_as_tensor::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_gnn_utils.py (already converted to typed UnsupportedInputError(NotImplementedError) in file by another lane before my edit; register shows no OPEN)"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/gnn/common/utils.py::obs_as_tensor::NIE_CALL (line 55)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/gnn/ppo_mask/ppo_mask.py::MaskableGraph2NodePPO.__init__::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_stubsites_g5_chicago.py::test_maskable_graph2node_ppo_rejects_dict_observations"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/stable_baselines/stable_baselines.py::StableBaseline._solve::TODO"]
+disposition = "CLOSED"
+evidence = "stale improvement TODO; comment replaced with factual note (single learning env, no vectorized rollouts wired). Verified by tests/solvers/python/test_python_solvers.py (_solve path)"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/utils/gnn/space_utils.py::add_onehot_encoded_discrete_feature_to_graph_space::NIE_CALL (line 14)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_gnn_space_refuses_non_box_node_space_with_typed_error"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/solver/utils/gnn/torch_utils.py::thg_data_to_graph_instance::NIE_CALL (line 52)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/space/gym/gym.py::DataSpace.from_unwrapped::TODO"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g6_chicago.py::test_gym_space_mirrors_shape_dtype_and_data_space_roundtrips"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/space/gym/gym.py::DataSpace.sample::TODO"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g6_chicago.py::test_gym_space_mirrors_shape_dtype_and_data_space_roundtrips"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/space/gym/gym.py::GymSpace.__init__::TODO"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g6_chicago.py::test_gym_space_mirrors_shape_dtype_and_data_space_roundtrips"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/hub/space/gym/gym.py::GymSpace.__init__::TODO#2"]
+disposition = "CLOSED"
+evidence = "tests/domains/python/test_stubsites_g6_chicago.py::test_gym_space_mirrors_shape_dtype_and_data_space_roundtrips"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/ofmf/ofmf_keystone.py::BpmnEmitter.__init__::EMPTY_BODY (line 1077)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses (body now super().__init__(); stub_register --check no longer lists it)"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/ofmf/ofmf_keystone.py::BpmnXmlParser.__init__::EMPTY_BODY (line 2673)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses (body now super().__init__())"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/ofmf/ofmf_keystone.py::SpiffExecutor.__init__::EMPTY_BODY (line 1226)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_unsupported_errors_are_typed_nie_subclasses (body now super().__init__())"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/openclaw_http.py::_Handler.log_message::EMPTY_BODY (line 41)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_openclaw_handler_log_message_is_silent_and_serves"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/receipts/tests/test_ocel_optimization_agent.py::MazeDomain._get_observation_space_::EMPTY_BODY (line 108)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_maze_observation_space_is_the_walkable_cells[autofde_lab.receipts.tests.test_ocel_optimization_agent]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/receipts/tests/test_real_rollout.py::MazeDomain._get_observation_space_::EMPTY_BODY (line 100)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_maze_observation_space_is_the_walkable_cells[autofde_lab.receipts.tests.test_real_rollout]"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/solvers.py::Solver._cleanup::EMPTY_BODY (line 178)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_solver_default_hooks_return_none"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/solvers.py::Solver._initialize::EMPTY_BODY (line 174)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_solver_default_hooks_return_none"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/solvers.py::Solver._reset::EMPTY_BODY (line 166)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_solver_default_hooks_return_none"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/utils.py::RolloutCallback.at_episode_end::EMPTY_BODY (line 783)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_rollout_callback_hooks_return_none"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/utils.py::RolloutCallback.at_episode_start::EMPTY_BODY (line 779)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_rollout_callback_hooks_return_none"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/utils.py::RolloutCallback.at_rollout_end::EMPTY_BODY (line 775)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_rollout_callback_hooks_return_none"
+lane = "wf_78a1f7f1"
+
+["autofde_lab/utils.py::RolloutCallback.at_rollout_start::EMPTY_BODY (line 771)"]
+disposition = "CLOSED"
+evidence = "tests/core/test_stubsites_g4_chicago.py::test_rollout_callback_hooks_return_none"
+lane = "wf_78a1f7f1"
+
+
+["autofde_lab/hub/solver/dspy_policy/dspy_policy.py::_describe_gym_dict_of_discrete_schema::NIE_CALL"]
+disposition = "CLOSED"
+evidence = "tests/solvers/python/test_rl_misc_stub_closure_l8_chicago.py"
+lane = "coordinator"

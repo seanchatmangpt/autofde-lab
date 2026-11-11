@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from autofde_lab.core import HookNotImplementedError
+
 from typing import Any
 
 __all__ = ["WithResourceSkills", "WithoutResourceSkills"]
@@ -39,7 +41,7 @@ class WithResourceSkills:
         """Return a nested dictionary where the first key is the name of a resource type or resource unit
         and the second key is the name of a skill. The value defines the details of the skill.
          E.g. {unit: {skill: (detail of skill)}}"""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_all_resources_skills")
 
     def get_skills_of_resource(self, resource: str) -> dict[str, Any]:
         """Return the skills of a given resource"""
@@ -55,7 +57,7 @@ class WithResourceSkills:
         """Return a nested dictionary where the first key is the name of a task
         and the second key is the name of a skill. The value defines the details of the skill.
          E.g. {task: {skill: (detail of skill)}}"""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_all_tasks_skills")
 
     def get_skills_of_task(self, task: int, mode: int) -> dict[str, Any]:
         """Return the skill requirements for a given task"""

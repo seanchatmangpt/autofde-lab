@@ -85,12 +85,17 @@ class MaxentIRL(Solver, Policies):
         self.expert_trajectories = expert_trajectories
 
         self.score = 0
-        if os.path.isfile(expert_trajectories[:-4] + "_maxent_q_table.npy"):
-            self.q_table = np.load(
-                file=expert_trajectories[:-4] + "_maxent_q_table.npy"
-            )
+        if os.path.isfile(self._q_table_path()):
+            self.q_table = np.load(file=self._q_table_path())
         else:
             self.q_table = None
+
+    def _q_table_path(self) -> str:
+        """Where the learned Q-table lives: next to the expert trajectories file.
+
+        Works for relative and absolute `expert_trajectories` paths alike.
+        """
+        return os.path.splitext(self.expert_trajectories)[0] + "_maxent_q_table.npy"
 
     def expert_feature_expectations(self, demonstrations):
         feature_expectations = np.zeros(self.feature_matrix.shape[0])
@@ -228,7 +233,7 @@ class MaxentIRL(Solver, Policies):
                 )
                 action = np.argmax(self.q_table[state_index])
                 next_state, transition_value, done, _ = self.env.step(action).astuple()
-                reward = transition_value[0]  # TODO: correct Gym wrapper
+                reward = transition_value[0]  # gym wrapper packs reward as the first transition-value component
 
                 irl_rewards = self.feature_matrix.dot(theta).reshape((self.n_states,))
                 irl_reward = irl_rewards[state_index]
@@ -256,18 +261,13 @@ class MaxentIRL(Solver, Policies):
                 print("{} episode score is {:.2f}".format(episode, score_avg))
                 pylab.plot(episodes, scores, "b")
                 pylab.savefig("./maxent.png")
-                np.save(
-                    "./" + self.expert_trajectories[:-4] + "_maxent_q_table",
-                    arr=self.q_table,
-                )
+                np.save(self._q_table_path(), arr=self.q_table)
 
             # Stopping because of user's callback?
             if self.callback(self):
                 break
 
-        self.q_table = np.load(
-            file=self.expert_trajectories[:-4] + "_maxent_q_table.npy"
-        )
+        self.q_table = np.load(file=self._q_table_path())
 
     def _sample_action(
         self, observation: D.T_agent[D.T_observation], domain: Optional[Domain] = None
@@ -285,4 +285,4 @@ class MaxentIRL(Solver, Policies):
         self.score = 0
 
     def _is_policy_defined_for(self, observation: D.T_agent[D.T_observation]) -> bool:
-        pass
+        return self.q_table is not None

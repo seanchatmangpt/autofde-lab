@@ -2,6 +2,11 @@ import gymnasium as gym
 import numpy as np
 
 
+
+class UnsupportedInputError(NotImplementedError):
+    """Typed refusal for an input shape this GNN helper does not support."""
+
+
 def add_onehot_encoded_discrete_feature_to_graph_space(
     graph_space: gym.spaces.Graph, new_dim: int
 ) -> gym.spaces.Graph:
@@ -11,7 +16,7 @@ def add_onehot_encoded_discrete_feature_to_graph_space(
             node_space, new_dim
         )
     else:
-        raise NotImplementedError()
+        raise UnsupportedInputError(f"unsupported node space {type(node_space).__name__}")
     return gym.spaces.Graph(
         node_space=node_space,
         edge_space=graph_space.edge_space,

@@ -16,6 +16,11 @@ DEFAULT_N_EDGES = (
 )
 
 
+
+class UnsupportedInputError(NotImplementedError):
+    """Typed refusal for an input shape this GNN helper does not support."""
+
+
 def convert_graph_space_to_dict_space(space: gym.spaces.Graph) -> gym.spaces.Dict:
     converted_node_space = Repeated(space.node_space, max_len=DEFAULT_N_NODES)
     converted_edge_space = Repeated(space.edge_space, max_len=DEFAULT_N_EDGES)
@@ -43,7 +48,7 @@ def _add_dummy_shape_to_repeated_space(space: Repeated) -> None:
     elif isinstance(space.child_space, gym.spaces.Discrete):
         space._shape = (n_rep, 1)
     else:
-        raise NotImplementedError()
+        raise UnsupportedInputError(f"unsupported child space {type(space.child_space).__name__}")
 
 
 def pad_axis(

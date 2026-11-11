@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from autofde_lab.core import HookNotImplementedError
+
 from autofde_lab.builders.domain.scheduling.scheduling_domains_modelling import State
 
 __all__ = ["MixedRenewable", "RenewableOnly"]
@@ -22,10 +24,12 @@ class MixedRenewable:
         """
         Return a dictionary where the key is a resource name (string)
         and the value whether this resource is renewable (True) or not (False)."""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_resource_renewability")
 
     def is_renewable(self, resource: str):
-        return self.get_resource_renewability()[resource]
+        """Whether the resource is renewable. A resource absent from the renewability
+        mapping is renewable (the lawful default: only declared non-renewable resources deplete)."""
+        return self.get_resource_renewability().get(resource, True)
 
     def all_tasks_possible(self, state: State) -> bool:
         """Return a True is for each task there is at least one mode in which the task can be executed, given the

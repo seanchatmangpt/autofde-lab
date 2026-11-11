@@ -1,3 +1,4 @@
+from autofde_lab.hub.solver.stable_baselines.errors import UnsupportedConfigurationError
 from collections.abc import Generator
 from typing import Any, Optional, TypeVar
 
@@ -65,7 +66,7 @@ class ScikitDecideRolloutBuffer(RolloutBuffer):
     def _swap_and_flatten_action_masks(self) -> None:
         """Method to override in buffers meant to be used with action masks."""
         # by default, no action masks
-        ...
+        return None
 
     def get(
         self, batch_size: Optional[int] = None

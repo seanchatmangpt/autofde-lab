@@ -1,3 +1,4 @@
+from autofde_lab.hub.solver.stable_baselines.errors import UnsupportedConfigurationError
 from typing import ClassVar, Optional, Union
 
 from gymnasium import spaces
@@ -104,7 +105,9 @@ class MaskableGraph2NodePPO(GraphOnPolicyAlgorithm, MaskablePPO):
             if isinstance(env.observation_space, spaces.Graph):
                 rollout_buffer_class = MaskableGraph2NodeRolloutBuffer
             elif isinstance(env.observation_space, spaces.Dict):
-                raise NotImplementedError()
+                raise UnsupportedConfigurationError(
+                    "MaskableGraph2NodePPO does not support Dict observation spaces."
+                )
 
         super().__init__(
             policy=policy,

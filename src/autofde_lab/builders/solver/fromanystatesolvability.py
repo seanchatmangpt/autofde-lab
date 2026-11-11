@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import abc
+
 from typing import Optional
 
 from autofde_lab.builders.domain.initialization import Initializable
@@ -26,6 +28,7 @@ class FromInitialState:
         """
         self._solve()
 
+    @abc.abstractmethod
     def _solve(
         self,
     ) -> None:
@@ -35,7 +38,9 @@ class FromInitialState:
             The nature of the solutions produced here depends on other solver's characteristics like
             #policy and #assessibility.
         """
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"{type(self).__name__} must implement _solve()"
+        )
 
 
 class FromAnyState(FromInitialState):
@@ -96,6 +101,7 @@ class FromAnyState(FromInitialState):
         """
         self._solve_from(memory)
 
+    @abc.abstractmethod
     def _solve_from(self, memory: D.T_memory[D.T_state]) -> None:
         """Run the solving process from a given state.
 
@@ -106,4 +112,6 @@ class FromAnyState(FromInitialState):
             The nature of the solutions produced here depends on other solver's characteristics like
             #policy and #assessibility.
         """
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"{type(self).__name__} must implement _solve_from(memory)"
+        )

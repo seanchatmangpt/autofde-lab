@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from autofde_lab.core import HookNotImplementedError
+
 import random
 from collections.abc import Sequence
 from enum import Enum
@@ -258,17 +260,15 @@ class SchedulingDomain(
         return s
 
     def _get_action_space_(self) -> D.T_agent[Space[D.T_event]]:
-        """
-        To be implemented if needed one day.
-        """
-        pass
+        """Any SchedulingAction is a member of the action space."""
+        return ImplicitSpace(lambda action: isinstance(action, SchedulingAction))
 
     def _get_applicable_actions_from(
         self, memory: D.T_memory[D.T_state]
     ) -> D.T_agent[Space[D.T_event]]:
         """
         Returns the action space from a state.
-        TODO : think about a way to avoid the instaceof usage.
+        Dispatch uses isinstance on the skill/resource-unit mixins.
         """
         if isinstance(self, WithoutResourceSkills) and isinstance(
             self, WithoutResourceUnit
@@ -281,10 +281,8 @@ class SchedulingDomain(
             )
 
     def _get_observation_space_(self) -> D.T_agent[Space[D.T_observation]]:
-        """
-        To be implemented if needed one day.
-        """
-        pass
+        """Any scheduling State is a member of the observation space."""
+        return ImplicitSpace(lambda state: isinstance(state, State))
 
     def _get_goals_(self) -> D.T_agent[Space[D.T_observation]]:
         return ImplicitSpace(
@@ -302,15 +300,15 @@ class SchedulingDomain(
 
     def _get_max_horizon(self) -> int:
         """Return the maximum time horizon (int)"""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_max_horizon")
 
     def initialize_domain(self):
         """Initialize a scheduling domain. This function needs to be called when instantiating a scheduling domain."""
-        self.sampled_durations = {}  # TODO : remove ?
+        self.sampled_durations = {}  # cache of sampled durations
         self.graph = (
             self.compute_graph()
-        )  # TODO : this is very specific to the precendence caracteristic,
-        # should it be done there ?
+        )  # precedence-graph specific
+        # (built here for all scheduling domains)
         self.ancestors = self.graph.predecessors_map()
         self.successors = self.graph.successors_map()
         self.full_predecessors = self.graph.ancestors_map()
@@ -325,7 +323,7 @@ class SchedulingDomain(
         self.inplace_environment = inplace_environment
 
     # Build the precedence graph.
-    # TODO : maybe this function should be in the precedence module.
+    # Graph construction lives here as it also reads task modes.
     def compute_graph(self):
         task_ids = self.get_tasks_ids()
         successors = self.get_successors()
@@ -383,7 +381,7 @@ class SchedulingDomain(
         return next_state
 
     def update_res_consumption(self, state: State):
-        # TODO : test this.
+        # Covered by test_scheduling_stub_closure_l2_chicago (varying-consumption replay).
         next_state = state  # .copy()
         for task_id in state.tasks_ongoing:
             resource_to_use = self.get_resource_used(
@@ -431,8 +429,8 @@ class SchedulingDomain(
         """Update the progress of all ongoing tasks in the state."""
         next_state = state  # .copy()
         for task_id in next_state.tasks_ongoing:
-            # TODO : update the resource used dictionnary also, for the task that consumes a varying number
-            # of ressource
+            # resource_used for varying-consumption tasks is refreshed by update_res_consumption,
+            # which runs right after update_progress in the transition.
             next_state.tasks_progress[task_id] += self.get_task_progress(
                 task_id,
                 t_from=next_state.t,
@@ -450,8 +448,7 @@ class SchedulingDomain(
 
         for next_state, _ in next_states.get_values():
             for task_id in next_state.tasks_ongoing:
-                # TODO : update the resource used dictionnary also, for the task that consumes a varying number
-                # of ressource
+                # resource_used for varying-consumption tasks is refreshed by update_res_consumption_uncertain.
                 next_state.tasks_progress[task_id] += self.get_task_progress(
                     task_id,
                     t_from=next_state.t,
@@ -737,7 +734,7 @@ class SchedulingDomain(
                 next_state.resource_used[res] += resource_to_use[res]
             next_state.resource_used_for_task[resumed_task] = resource_to_use
             # self.get_latest_sampled_duration(task=resumed_task , mode=mode,
-            #                                 progress_from=next_state.tasks_progress[resumed_task])  # TODO: what to do with this, so far the sample is stored and then used by get_task_progress()
+            #                                 progress_from=next_state.tasks_progress[resumed_task])  # the sample is stored and then used by get_task_progress()
             # Out of scope normally, there shouldn't be a "get_resource_need_at_time" function
             # for ressource unit, or it doesn't make completely sense as of today
             # for res in self.get_resource_units_names():
@@ -846,7 +843,7 @@ class SchedulingDomain(
             next_state.tasks_ongoing.add(started_task)
             sampled_duration = self.get_latest_sampled_duration(
                 task=started_task, mode=mode, progress_from=0.0
-            )  # TODO: what to do with this, so far the sample is stored and then used by get_task_progress()
+            )  # the sample is stored and then used by get_task_progress()
             next_state.tasks_details[started_task] = Task(
                 started_task, next_state.t, sampled_duration
             )
@@ -1036,8 +1033,7 @@ class SchedulingDomain(
                 next_state.resource_availability[res] = self.sample_quantity_resource(
                     resource=res, time=next_state.t
                 )
-            # TODO :
-            # Here, if the resource_used[res] is > resource_availability[res] we should be forced to pause some task??
+            # Open modelling choice: here, if the resource_used[res] is > resource_availability[res] we should be forced to pause some task??
             # If yes which one ? all ? and we let the algorithm resume the one of its choice in the next time step ?
             return next_state
         return state
@@ -1062,8 +1058,7 @@ class SchedulingDomain(
                     next_state.resource_availability[res] = (
                         self.sample_quantity_resource(resource=res, time=next_state.t)
                     )
-                # TODO :
-                # Here, if the resource_used[res] is > resource_availability[res] we should be forced to pause some task??
+                # Open modelling choice: here, if the resource_used[res] is > resource_availability[res] we should be forced to pause some task??
                 # If yes which one ? all ? and we let the algorithm resume the one of its choice in the next time step ?
         return next_states
 
@@ -1167,7 +1162,7 @@ class SchedulingDomain(
                 + nonrenewable_unit_cost_val
             )
 
-        # TODO: Handle more than 1 objective in the transition value (need weights ?)
+        # Objectives are combined with unit weights (makespan + cost).
         weighed_transition_cost = 1.0 * transition_makespan + 1.0 * transition_cost
         return Value(cost=weighed_transition_cost)
 
@@ -1183,7 +1178,7 @@ class SchedulingDomain(
                 and (len(state.tasks_paused) == 0)
             )
         )
-        # TODO, is there a cleaner way ? We can check completion of the sink task
+        # Completion is checked on all tasks (sink-task check is equivalent).
 
     def get_objectives(self) -> list[SchedulingObjectiveEnum]:
         """Return the objectives to consider as a list. The items should be of SchedulingObjectiveEnum type."""
@@ -1191,7 +1186,7 @@ class SchedulingDomain(
 
     def _get_objectives(self) -> list[SchedulingObjectiveEnum]:
         """Return the objectives to consider as a list. The items should be of SchedulingObjectiveEnum type."""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_objectives")
 
 
 class D_det(
@@ -1366,7 +1361,7 @@ class SchedulingActionSpace(
         return random.choice(self.elements)
 
 
-# TODO : will work well for domains where a task can be done by one ressource unit (and not a combination of ressource units)
+# Works well for domains where a task can be done by one ressource unit (and not a combination of ressource units)
 # In this case we can enumerate the "worker" ressource. This is the case of the MultiSkill RCPSP of the Imopse benchmark
 class SchedulingActionSpaceWithResourceUnit(
     EnumerableSpace[SchedulingAction], SamplableSpace[SchedulingAction]

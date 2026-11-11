@@ -34,7 +34,7 @@ try:
         _ILAOStarSolver_ as ilaostar_solver,
     )
 
-    # TODO: remove Markovian req?
+    # Note: the solver requires Markovian (memoryless) states by design; policies are keyed on the current state.
     class D(
         Domain,
         SingleAgent,

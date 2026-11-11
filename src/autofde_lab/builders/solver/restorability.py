@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import abc
+
 __all__ = ["Restorable"]
 
 
@@ -19,13 +21,16 @@ class Restorable:
         """
         return self._save(path)
 
+    @abc.abstractmethod
     def _save(self, path: str) -> None:
         """Save the solver state to given path.
 
         # Parameters
         path: The path to store the saved state.
         """
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"{type(self).__name__} must implement _save(path)"
+        )
 
     def load(self, path: str) -> None:
         """Restore the solver state from given path.
@@ -35,10 +40,13 @@ class Restorable:
         """
         self._load(path)
 
+    @abc.abstractmethod
     def _load(self, path: str) -> None:
         """Restore the solver state from given path.
 
         # Parameters
         path: The path where the solver state was saved.
         """
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"{type(self).__name__} must implement _load(path)"
+        )

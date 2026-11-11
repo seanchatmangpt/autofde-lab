@@ -8,6 +8,10 @@ from autofde_lab.hub.solver.ray_rllib.gnn.algorithms.ppo.ppo_torch_policy import
 )
 
 
+class UnsupportedFrameworkError(NotImplementedError):
+    """GraphPPO only has a torch policy."""
+
+
 class GraphPPO(PPO):
     @classmethod
     def get_default_policy_class(
@@ -15,7 +19,8 @@ class GraphPPO(PPO):
     ) -> Optional[type[Policy]]:
         if config["framework"] == "torch":
             return PPOTorchGraphPolicy
-        elif config["framework"] == "tf":
-            raise NotImplementedError("GraphPPO implemented for torch context")
         else:
-            raise NotImplementedError("GraphPPO implemented for torch context")
+            raise UnsupportedFrameworkError(
+                f"GraphPPO implemented for torch context only; got framework "
+                f"{config['framework']!r}"
+            )

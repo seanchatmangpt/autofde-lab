@@ -1,3 +1,4 @@
+from autofde_lab.hub.solver.stable_baselines.errors import UnsupportedConfigurationError
 from typing import Optional
 
 import numpy as np
@@ -39,13 +40,16 @@ class ApplicableActionsRolloutBuffer(
 
     def _add_action_masks(self, action_masks: Optional[np.ndarray]) -> None:
         if action_masks is None or action_masks.shape[0] > 1:
-            raise NotImplementedError()
+            raise UnsupportedConfigurationError(
+                "ApplicableActionsRolloutBuffer requires action masks and a single "
+                "(dummy-vectorized) environment."
+            )
 
         self.action_masks.append(action_masks[0])
 
     def _swap_and_flatten_action_masks(self) -> None:
         # already done when squeezing first dimension in _add_action_masks()
-        ...
+        return None
 
     def _get_action_masks_samples(self, batch_inds: np.ndarray) -> list[th.Tensor]:
         return [self.to_torch(self.action_masks[idx]) for idx in batch_inds]

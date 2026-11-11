@@ -1,0 +1,773 @@
+@prefix hc:   <urn:autofde-lab:hook-contract:> .
+@prefix afl:  <urn:autofde-lab:> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# Abstract hook contracts hand-written in autofde-lab builders/domain and
+# builders/solver. Each hc:Hook is a method whose body raises
+# HookNotImplementedError (typed) or bare NotImplementedError (bare), lifted
+# mechanically from the AST by scripts-of-record (extract.py, scratch) and then
+# authored here. hc:skipReason is non-empty only when the owning class cannot
+# be instantiated generically; the ggen court fails LOUDLY for those.
+
+<urn:autofde-lab:pack:hook-contracts> a hc:Registry ;
+    dct:title "AutoFDE Lab abstract hook contracts" .
+
+hc:Constrained._get_constraints_ a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.constraints" ;
+    hc:className "Constrained" ;
+    hc:hookName "_get_constraints_" ;
+    hc:raises "bare" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Get the domain constraints." ;
+    hc:skipReason "" .
+
+hc:Environment._state_step a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.dynamics" ;
+    hc:className "Environment" ;
+    hc:hookName "_state_step" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, action: D.T_agent[D.T_concurrency[D.T_event]]" ;
+    hc:contract "Compute one step of the transition's dynamics." ;
+    hc:skipReason "" .
+
+hc:Simulation._state_sample a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.dynamics" ;
+    hc:className "Simulation" ;
+    hc:hookName "_state_sample" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "2"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, memory: D.T_memory[D.T_state], action: D.T_agent[D.T_concurrency[D.T_event]]" ;
+    hc:contract "Compute one sample of the transition's dynamics." ;
+    hc:skipReason "" .
+
+hc:UncertainTransitions._get_next_state_distribution a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.dynamics" ;
+    hc:className "UncertainTransitions" ;
+    hc:hookName "_get_next_state_distribution" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "2"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, memory: D.T_memory[D.T_state], action: D.T_agent[D.T_concurrency[D.T_event]]" ;
+    hc:contract "Get the probability distribution of next state given a memory and action." ;
+    hc:skipReason "" .
+
+hc:UncertainTransitions._get_transition_value a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.dynamics" ;
+    hc:className "UncertainTransitions" ;
+    hc:hookName "_get_transition_value" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "2"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, memory: D.T_memory[D.T_state], action: D.T_agent[D.T_concurrency[D.T_event]], next_state: Optional[D.T_state]=None" ;
+    hc:contract "Get the value (reward or cost) of a transition." ;
+    hc:skipReason "" .
+
+hc:UncertainTransitions._is_terminal a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.dynamics" ;
+    hc:className "UncertainTransitions" ;
+    hc:hookName "_is_terminal" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, state: D.T_state" ;
+    hc:contract "Indicate whether a state is terminal." ;
+    hc:skipReason "" .
+
+hc:EnumerableTransitions._get_next_state_distribution a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.dynamics" ;
+    hc:className "EnumerableTransitions" ;
+    hc:hookName "_get_next_state_distribution" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "2"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, memory: D.T_memory[D.T_state], action: D.T_agent[D.T_concurrency[D.T_event]]" ;
+    hc:contract "Get the discrete probability distribution of next state given a memory and action." ;
+    hc:skipReason "" .
+
+hc:DeterministicTransitions._get_next_state a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.dynamics" ;
+    hc:className "DeterministicTransitions" ;
+    hc:hookName "_get_next_state" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "2"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, memory: D.T_memory[D.T_state], action: D.T_agent[D.T_concurrency[D.T_event]]" ;
+    hc:contract "Get the next state given a memory and action." ;
+    hc:skipReason "" .
+
+hc:Events._get_enabled_events_from a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.events" ;
+    hc:className "Events" ;
+    hc:hookName "_get_enabled_events_from" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, memory: D.T_memory[D.T_state]" ;
+    hc:contract "Get the space (finite or infinite set) of enabled uncontrollable events in the given memory (state or" ;
+    hc:skipReason "" .
+
+hc:Events._get_action_space_ a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.events" ;
+    hc:className "Events" ;
+    hc:hookName "_get_action_space_" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Get the domain action space (finite or infinite set)." ;
+    hc:skipReason "" .
+
+hc:Events._get_applicable_actions_from a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.events" ;
+    hc:className "Events" ;
+    hc:hookName "_get_applicable_actions_from" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, memory: D.T_memory[D.T_state]" ;
+    hc:contract "Get the space (finite or infinite set) of applicable actions in the given memory (state or history)." ;
+    hc:skipReason "" .
+
+hc:Goals._get_goals_ a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.goals" ;
+    hc:className "Goals" ;
+    hc:hookName "_get_goals_" ;
+    hc:raises "bare" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Get the domain goals space (finite or infinite set)." ;
+    hc:skipReason "" .
+
+hc:Initializable._state_reset a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.initialization" ;
+    hc:className "Initializable" ;
+    hc:hookName "_state_reset" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Reset the state of the environment and return an initial state." ;
+    hc:skipReason "" .
+
+hc:UncertainInitialized._get_initial_state_distribution_ a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.initialization" ;
+    hc:className "UncertainInitialized" ;
+    hc:hookName "_get_initial_state_distribution_" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Get the probability distribution of initial states." ;
+    hc:skipReason "" .
+
+hc:DeterministicInitialized._get_initial_state_ a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.initialization" ;
+    hc:className "DeterministicInitialized" ;
+    hc:hookName "_get_initial_state_" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Get the initial state." ;
+    hc:skipReason "" .
+
+hc:FiniteHistory._get_memory_maxlen_ a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.memory" ;
+    hc:className "FiniteHistory" ;
+    hc:hookName "_get_memory_maxlen_" ;
+    hc:raises "bare" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Get the memory max length." ;
+    hc:skipReason "" .
+
+hc:PartiallyObservable._get_observation_space_ a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.observability" ;
+    hc:className "PartiallyObservable" ;
+    hc:hookName "_get_observation_space_" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Get the observation space (finite or infinite set)." ;
+    hc:skipReason "" .
+
+hc:PartiallyObservable._get_observation_distribution a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.observability" ;
+    hc:className "PartiallyObservable" ;
+    hc:hookName "_get_observation_distribution" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, state: D.T_state, action: Optional[D.T_agent[D.T_concurrency[D.T_event]]]=None" ;
+    hc:contract "Get the probability distribution of the observation given a state and action." ;
+    hc:skipReason "" .
+
+hc:TransformedObservable._get_observation a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.observability" ;
+    hc:className "TransformedObservable" ;
+    hc:hookName "_get_observation" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, state: D.T_state, action: Optional[D.T_agent[D.T_concurrency[D.T_event]]]=None" ;
+    hc:contract "Get the deterministic observation given a state and action." ;
+    hc:skipReason "" .
+
+hc:Renderable._render_from a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.renderability" ;
+    hc:className "Renderable" ;
+    hc:hookName "_render_from" ;
+    hc:raises "bare" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, memory: D.T_memory[D.T_state], **kwargs: Any" ;
+    hc:contract "Compute a visual render of the given memory (state or history)." ;
+    hc:skipReason "" .
+
+hc:WithConditionalTasks._get_all_condition_items a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.conditional_tasks" ;
+    hc:className "WithConditionalTasks" ;
+    hc:hookName "_get_all_condition_items" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "" ;
+    hc:skipReason "" .
+
+hc:WithConditionalTasks._get_task_on_completion_added_conditions a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.conditional_tasks" ;
+    hc:className "WithConditionalTasks" ;
+    hc:hookName "_get_task_on_completion_added_conditions" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "" ;
+    hc:skipReason "" .
+
+hc:WithConditionalTasks._get_task_existence_conditions a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.conditional_tasks" ;
+    hc:className "WithConditionalTasks" ;
+    hc:hookName "_get_task_existence_conditions" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return a dictionary where the key is a task id and the value a list of conditions to be respected (True)" ;
+    hc:skipReason "" .
+
+hc:ModeConsumption._get_resource_need_at_time a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.modes" ;
+    hc:className "ModeConsumption" ;
+    hc:hookName "_get_resource_need_at_time" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "2"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, resource_name: str, time: int" ;
+    hc:contract "Return the resource consumption for the given resource at the given time." ;
+    hc:skipReason "" .
+
+hc:ModeConsumption._get_non_zero_ressource_need_names a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.modes" ;
+    hc:className "ModeConsumption" ;
+    hc:hookName "_get_non_zero_ressource_need_names" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, time: int" ;
+    hc:contract "" ;
+    hc:skipReason "" .
+
+hc:ModeConsumption._get_ressource_names a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.modes" ;
+    hc:className "ModeConsumption" ;
+    hc:hookName "_get_ressource_names" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "" ;
+    hc:skipReason "" .
+
+hc:MultiMode._get_tasks_ids a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.modes" ;
+    hc:className "MultiMode" ;
+    hc:hookName "_get_tasks_ids" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return a set or dict of int = id of tasks" ;
+    hc:skipReason "" .
+
+hc:MultiMode._get_tasks_modes a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.modes" ;
+    hc:className "MultiMode" ;
+    hc:hookName "_get_tasks_modes" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return a nested dictionary where the first key is a task id and the second key is a mode id." ;
+    hc:skipReason "" .
+
+hc:SingleMode._get_tasks_mode a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.modes" ;
+    hc:className "SingleMode" ;
+    hc:hookName "_get_tasks_mode" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return a dictionary where the key is a task id and the value is a ModeConsumption object defining" ;
+    hc:skipReason "" .
+
+hc:WithPreallocations._get_preallocations a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.preallocations" ;
+    hc:className "WithPreallocations" ;
+    hc:hookName "_get_preallocations" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return a dictionary where the key is the id of a task (int)" ;
+    hc:skipReason "" .
+
+hc:WithPrecedence._get_successors a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.precedence" ;
+    hc:className "WithPrecedence" ;
+    hc:hookName "_get_successors" ;
+    hc:raises "bare" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return the successors of the tasks. Successors are given as a list for a task given as a key." ;
+    hc:skipReason "" .
+
+hc:WithPreemptivity._get_task_preemptivity a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.preemptivity" ;
+    hc:className "WithPreemptivity" ;
+    hc:hookName "_get_task_preemptivity" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return a dictionary where the key is a task id and the value a boolean indicating" ;
+    hc:skipReason "" .
+
+hc:WithPreemptivity._get_task_resuming_type a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.preemptivity" ;
+    hc:className "WithPreemptivity" ;
+    hc:hookName "_get_task_resuming_type" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return a dictionary where the key is a task id and the value is of type ResumeType indicating" ;
+    hc:skipReason "" .
+
+hc:WithPreemptivity._get_task_paused_non_renewable_resource_returned a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.preemptivity" ;
+    hc:className "WithPreemptivity" ;
+    hc:hookName "_get_task_paused_non_renewable_resource_returned" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return a dictionary where the key is a task id and the value is of type bool indicating" ;
+    hc:skipReason "" .
+
+hc:UncertainResourceAvailabilityChanges._sample_quantity_resource a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.resource_availability" ;
+    hc:className "UncertainResourceAvailabilityChanges" ;
+    hc:hookName "_sample_quantity_resource" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "2"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, resource: str, time: int, **kwargs" ;
+    hc:contract "Sample an amount of resource availability (int) for the given resource" ;
+    hc:skipReason "" .
+
+hc:DeterministicResourceAvailabilityChanges._get_quantity_resource a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.resource_availability" ;
+    hc:className "DeterministicResourceAvailabilityChanges" ;
+    hc:hookName "_get_quantity_resource" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "2"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, resource: str, time: int, **kwargs" ;
+    hc:contract "Return the resource availability (int) for the given resource" ;
+    hc:skipReason "" .
+
+hc:WithoutResourceAvailabilityChange._get_original_quantity_resource a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.resource_availability" ;
+    hc:className "WithoutResourceAvailabilityChange" ;
+    hc:hookName "_get_original_quantity_resource" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, resource: str, **kwargs" ;
+    hc:contract "Return the resource availability (int) for the given resource (either resource type or resource unit)." ;
+    hc:skipReason "" .
+
+hc:WithModeCosts._get_mode_costs a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.resource_costs" ;
+    hc:className "WithModeCosts" ;
+    hc:hookName "_get_mode_costs" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return a nested dictionary where the first key is the id of a task (int), the second key the id of a mode" ;
+    hc:skipReason "" .
+
+hc:WithResourceCosts._get_resource_cost_per_time_unit a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.resource_costs" ;
+    hc:className "WithResourceCosts" ;
+    hc:hookName "_get_resource_cost_per_time_unit" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return a dictionary where the key is the name of a resource (str)" ;
+    hc:skipReason "" .
+
+hc:MixedRenewable._get_resource_renewability a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.resource_renewability" ;
+    hc:className "MixedRenewable" ;
+    hc:hookName "_get_resource_renewability" ;
+    hc:raises "bare" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return a dictionary where the key is a resource name (string)" ;
+    hc:skipReason "" .
+
+hc:WithResourceTypes._get_resource_types_names a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.resource_type" ;
+    hc:className "WithResourceTypes" ;
+    hc:hookName "_get_resource_types_names" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return the names (string) of all resource types as a list." ;
+    hc:skipReason "" .
+
+hc:WithResourceUnits._get_resource_units_names a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.resource_type" ;
+    hc:className "WithResourceUnits" ;
+    hc:hookName "_get_resource_units_names" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return the names (string) of all resource units as a list." ;
+    hc:skipReason "" .
+
+hc:WithResourceUnits._get_resource_type_for_unit a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.resource_type" ;
+    hc:className "WithResourceUnits" ;
+    hc:hookName "_get_resource_type_for_unit" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return a dictionary where the key is a resource unit name and the value a resource type name." ;
+    hc:skipReason "" .
+
+hc:SchedulingDomain._get_max_horizon a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.scheduling_domains" ;
+    hc:className "SchedulingDomain" ;
+    hc:hookName "_get_max_horizon" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return the maximum time horizon (int)" ;
+    hc:skipReason "" .
+
+hc:SchedulingDomain._get_objectives a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.scheduling_domains" ;
+    hc:className "SchedulingDomain" ;
+    hc:hookName "_get_objectives" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return the objectives to consider as a list. The items should be of SchedulingObjectiveEnum type." ;
+    hc:skipReason "" .
+
+hc:WithResourceSkills._get_all_resources_skills a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.skills" ;
+    hc:className "WithResourceSkills" ;
+    hc:hookName "_get_all_resources_skills" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return a nested dictionary where the first key is the name of a resource type or resource unit" ;
+    hc:skipReason "" .
+
+hc:WithResourceSkills._get_all_tasks_skills a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.skills" ;
+    hc:className "WithResourceSkills" ;
+    hc:hookName "_get_all_tasks_skills" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return a nested dictionary where the first key is the name of a task" ;
+    hc:skipReason "" .
+
+hc:SimulatedTaskDuration._sample_task_duration a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.task_duration" ;
+    hc:className "SimulatedTaskDuration" ;
+    hc:hookName "_sample_task_duration" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, task: int, mode: int=1, progress_from: float=0.0" ;
+    hc:contract "Return a task duration for the given task in the given mode." ;
+    hc:skipReason "" .
+
+hc:UncertainMultivariateTaskDuration._get_task_duration_distribution a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.task_duration" ;
+    hc:className "UncertainMultivariateTaskDuration" ;
+    hc:hookName "_get_task_duration_distribution" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, task: int, mode: int=1, progress_from: float=0.0, multivariate_settings: Optional[dict[str, int]]=None" ;
+    hc:contract "Return the multivariate Distribution of the duration of the given task in the given mode." ;
+    hc:skipReason "" .
+
+hc:UncertainUnivariateTaskDuration._get_task_duration_distribution a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.task_duration" ;
+    hc:className "UncertainUnivariateTaskDuration" ;
+    hc:hookName "_get_task_duration_distribution" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, task: int, mode: int=1, progress_from: float=0.0, multivariate_settings: Optional[dict[str, int]]=None" ;
+    hc:contract "Return the univariate Distribution of the duration of the given task in the given mode." ;
+    hc:skipReason "" .
+
+hc:UncertainBoundedTaskDuration._get_task_duration_distribution a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.task_duration" ;
+    hc:className "UncertainBoundedTaskDuration" ;
+    hc:hookName "_get_task_duration_distribution" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, task: int, mode: int=1, progress_from: float=0.0, multivariate_settings: Optional[dict[str, int]]=None" ;
+    hc:contract "Return the Distribution of the duration of the given task in the given mode." ;
+    hc:skipReason "" .
+
+hc:UncertainBoundedTaskDuration._get_task_duration_upper_bound a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.task_duration" ;
+    hc:className "UncertainBoundedTaskDuration" ;
+    hc:hookName "_get_task_duration_upper_bound" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, task: int, mode: int=1, progress_from: float=0.0" ;
+    hc:contract "Return the upper bound for the task duration of the given task in the given mode." ;
+    hc:skipReason "" .
+
+hc:UncertainBoundedTaskDuration._get_task_duration_lower_bound a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.task_duration" ;
+    hc:className "UncertainBoundedTaskDuration" ;
+    hc:hookName "_get_task_duration_lower_bound" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, task: int, mode: int=1, progress_from: float=0.0" ;
+    hc:contract "Return the lower bound for the task duration of the given task in the given mode." ;
+    hc:skipReason "" .
+
+hc:DeterministicTaskDuration._get_task_duration a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.task_duration" ;
+    hc:className "DeterministicTaskDuration" ;
+    hc:hookName "_get_task_duration" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, task: int, mode: int=1, progress_from: float=0.0" ;
+    hc:contract "Return the fixed deterministic task duration of the given task in the given mode." ;
+    hc:skipReason "" .
+
+hc:CustomTaskProgress._get_task_progress a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.task_progress" ;
+    hc:className "CustomTaskProgress" ;
+    hc:hookName "_get_task_progress" ;
+    hc:raises "bare" ;
+    hc:requiredArgs "4"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, task: int, t_from: int, t_to: int, mode: Optional[int], sampled_duration: Optional[int]=None" ;
+    hc:contract "# Returns" ;
+    hc:skipReason "" .
+
+hc:WithTimeLag._get_time_lags a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.time_lag" ;
+    hc:className "WithTimeLag" ;
+    hc:hookName "_get_time_lags" ;
+    hc:raises "bare" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return nested dictionaries where the first key is the id of a task (int)" ;
+    hc:skipReason "" .
+
+hc:WithTimeWindow._get_time_window a hc:Hook ;
+    hc:module "autofde_lab.builders.domain.scheduling.time_windows" ;
+    hc:className "WithTimeWindow" ;
+    hc:hookName "_get_time_window" ;
+    hc:raises "bare" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Return a dictionary where the key is the id of a task (int)" ;
+    hc:skipReason "" .
+
+hc:Utilities._get_utility a hc:Hook ;
+    hc:module "autofde_lab.builders.solver.assessability" ;
+    hc:className "Utilities" ;
+    hc:hookName "_get_utility" ;
+    hc:raises "bare" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, observation: D.T_agent[D.T_observation]" ;
+    hc:contract "Get the estimated on-policy utility of the given observation." ;
+    hc:skipReason "" .
+
+hc:QValues._get_q_value a hc:Hook ;
+    hc:module "autofde_lab.builders.solver.assessability" ;
+    hc:className "QValues" ;
+    hc:hookName "_get_q_value" ;
+    hc:raises "bare" ;
+    hc:requiredArgs "2"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, observation: D.T_agent[D.T_observation], action: D.T_agent[D.T_concurrency[D.T_event]]" ;
+    hc:contract "Get the estimated on-policy Q value of the given observation and action." ;
+    hc:skipReason "" .
+
+hc:FromInitialState._solve a hc:Hook ;
+    hc:module "autofde_lab.builders.solver.fromanystatesolvability" ;
+    hc:className "FromInitialState" ;
+    hc:hookName "_solve" ;
+    hc:raises "bare" ;
+    hc:requiredArgs "0"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self" ;
+    hc:contract "Run the solving process." ;
+    hc:skipReason "" .
+
+hc:FromAnyState._solve_from a hc:Hook ;
+    hc:module "autofde_lab.builders.solver.fromanystatesolvability" ;
+    hc:className "FromAnyState" ;
+    hc:hookName "_solve_from" ;
+    hc:raises "bare" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, memory: D.T_memory[D.T_state]" ;
+    hc:contract "Run the solving process from a given state." ;
+    hc:skipReason "" .
+
+hc:Policies._sample_action a hc:Hook ;
+    hc:module "autofde_lab.builders.solver.policy" ;
+    hc:className "Policies" ;
+    hc:hookName "_sample_action" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, observation: D.T_agent[D.T_observation], domain: Optional[Domain]=None" ;
+    hc:contract "Sample an action for the given observation (from the solver's current policy)." ;
+    hc:skipReason "" .
+
+hc:Policies._is_policy_defined_for a hc:Hook ;
+    hc:module "autofde_lab.builders.solver.policy" ;
+    hc:className "Policies" ;
+    hc:hookName "_is_policy_defined_for" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, observation: D.T_agent[D.T_observation]" ;
+    hc:contract "Check whether the solver's current policy is defined for the given observation." ;
+    hc:skipReason "" .
+
+hc:UncertainPolicies._get_next_action_distribution a hc:Hook ;
+    hc:module "autofde_lab.builders.solver.policy" ;
+    hc:className "UncertainPolicies" ;
+    hc:hookName "_get_next_action_distribution" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, observation: D.T_agent[D.T_observation], domain: Optional[Domain]=None" ;
+    hc:contract "Get the probabilistic distribution of next action for the given observation (from the solver's current" ;
+    hc:skipReason "" .
+
+hc:DeterministicPolicies._get_next_action a hc:Hook ;
+    hc:module "autofde_lab.builders.solver.policy" ;
+    hc:className "DeterministicPolicies" ;
+    hc:hookName "_get_next_action" ;
+    hc:raises "typed" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, observation: D.T_agent[D.T_observation], domain: Optional[Domain]=None" ;
+    hc:contract "Get the next deterministic action (from the solver's current policy)." ;
+    hc:skipReason "" .
+
+hc:Restorable._save a hc:Hook ;
+    hc:module "autofde_lab.builders.solver.restorability" ;
+    hc:className "Restorable" ;
+    hc:hookName "_save" ;
+    hc:raises "bare" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, path: str" ;
+    hc:contract "Save the solver state to given path." ;
+    hc:skipReason "" .
+
+hc:Restorable._load a hc:Hook ;
+    hc:module "autofde_lab.builders.solver.restorability" ;
+    hc:className "Restorable" ;
+    hc:hookName "_load" ;
+    hc:raises "bare" ;
+    hc:requiredArgs "1"^^xsd:integer ;
+    hc:requiredKwOnly "" ;
+    hc:signature "self, path: str" ;
+    hc:contract "Restore the solver state from given path." ;
+    hc:skipReason "" .
+
+# ---- SHACL shapes (copied verbatim from shapes/hook.shacl.ttl) ----
+@prefix hc:  <urn:autofde-lab:hook-contract:> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:autofde-lab:shape:hook-contract>
+    a sh:NodeShape ;
+    sh:targetClass hc:Hook ;
+    sh:property [ sh:path hc:module ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+        sh:message "A hook must name exactly one owning module." ] ;
+    sh:property [ sh:path hc:className ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+        sh:message "A hook must name exactly one owning class." ] ;
+    sh:property [ sh:path hc:hookName ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+        sh:message "A hook must name exactly one method." ] ;
+    sh:property [ sh:path hc:raises ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "typed" "bare" ) ;
+        sh:message "hc:raises must be typed (HookNotImplementedError) or bare (NotImplementedError)." ] ;
+    sh:property [ sh:path hc:requiredArgs ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:integer ;
+        sh:message "A hook must declare its required positional arg count." ] ;
+    sh:property [ sh:path hc:skipReason ; sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string ;
+        sh:message "skipReason is mandatory (empty string = instantiable); skipping must be explicit." ] .

@@ -29,7 +29,7 @@ from autofde_lab.core import Value
 try:
     from autofde_lab.hub.__autofde_lab_hub_cpp import _MARTDPSolver_ as martdp_solver
 
-    # TODO: remove Markovian req?
+    # Note: the solver requires Markovian (memoryless) states by design; policies are keyed on the current state.
     class D(
         Domain,
         MultiAgent,

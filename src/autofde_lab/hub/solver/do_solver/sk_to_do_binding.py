@@ -43,6 +43,15 @@ from autofde_lab.hub.domain.rcpsp.rcpsp_sk import (
     MSRCPSPCalendar,
 )
 
+class UnsupportedSchedulingModelError(NotImplementedError):
+    """The scheduling domain uses a feature the discrete-optimization backend cannot express.
+
+    Subclasses NotImplementedError so existing handlers keep working, but names the exact
+    offending feature so callers can classify it as an external-library capability gap
+    (BLOCKED:DO_LIBRARY_CAPABILITY) rather than unfinished code in this package.
+    """
+
+
 DOSchedulingProblem = (
     RcpspProblem | MultiskillRcpspProblem | GenericSchedulingImplProblem
 )
@@ -301,9 +310,13 @@ def build_do_domain(
         }
         skills = scheduling_domain.get_skills_names()
         unary_resources = set(scheduling_domain.get_resource_units_names())
-        if any(not renewability[r] for r in unary_resources):
-            raise NotImplementedError(
-                "Discrete-optimization cannot yet managed non-renewable unary resources."
+        non_renewable_unary = sorted(
+            r for r in unary_resources if not renewability[r]
+        )
+        if non_renewable_unary:
+            raise UnsupportedSchedulingModelError(
+                "Discrete-optimization cannot yet managed non-renewable unary resources: "
+                f"{non_renewable_unary}."
             )
         unary_resources_skills = {
             resource: skills_details

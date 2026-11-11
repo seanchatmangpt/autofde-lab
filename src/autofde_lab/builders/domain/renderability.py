@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from autofde_lab.core import HookNotImplementedError
+
 from typing import Any, Optional
 
 from autofde_lab.core import D, autocastable
@@ -48,4 +50,4 @@ class Renderable:
         # Returns
         A render (e.g. image) or nothing (if the function handles the display directly).
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_render_from")

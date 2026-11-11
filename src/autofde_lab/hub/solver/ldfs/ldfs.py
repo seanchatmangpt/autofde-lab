@@ -176,6 +176,12 @@ try:
         ) -> bool:
             return self._solver.is_solution_defined_for(observation)
 
+        def _is_policy_defined_for(
+            self, observation: D.T_agent[D.T_observation]
+        ) -> bool:
+            """Policy-contract hook: the policy is defined where the solution is."""
+            return self._is_solution_defined_for(observation)
+
         def _get_next_action(
             self,
             observation: D.T_agent[D.T_observation],

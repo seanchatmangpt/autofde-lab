@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from autofde_lab.core import HookNotImplementedError
+
 import wrapt
 
 from autofde_lab.core import Constraint, D, autocastable
@@ -71,7 +73,7 @@ class Constrained:
         # Returns
         The list of constraints.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_constraints_")
 
     def __getstate__(self):
         """Get state for pickle.

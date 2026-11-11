@@ -1,3 +1,4 @@
+from autofde_lab.hub.solver.stable_baselines.errors import UnsupportedConfigurationError
 from typing import Optional, Union
 
 import numpy as np
@@ -25,7 +26,11 @@ from ...common.buffers import (
     swap_and_flatten_nested_list,
 )
 from .preprocessing import get_obs_shape
-from .utils import copy_graph_instance, graph_instance_to_thg_data
+from .utils import (
+    copy_graph_instance,
+    graph_instance_to_thg_data,
+    normalize_graph_instance,
+)
 
 
 class GraphBaseBuffer(BaseBuffer):
@@ -48,13 +53,26 @@ class GraphBaseBuffer(BaseBuffer):
         self.n_envs = n_envs
 
     def _graphlist_to_torch(
-        self, graph_list: list[spaces.GraphInstance], batch_inds: np.ndarray
+        self,
+        graph_list: list[spaces.GraphInstance],
+        batch_inds: np.ndarray,
+        obs_rms=None,
+        epsilon: float = 1e-8,
+        clip_obs: float = 10.0,
     ) -> thg.data.Data:
-        return thg.data.Batch.from_data_list(
-            [
-                graph_instance_to_thg_data(graph_list[idx], device=self.device)
-                for idx in batch_inds
+        """Batch graphs as thg data, optionally normalized (VecNormalize math)."""
+        # entries are a bare graph or a 1-element list (single wrapped env)
+        graphs = [
+            g[0] if isinstance(g, list) else g
+            for g in (graph_list[idx] for idx in batch_inds)
+        ]
+        if obs_rms is not None:
+            graphs = [
+                normalize_graph_instance(g, obs_rms, epsilon=epsilon, clip_obs=clip_obs)
+                for g in graphs
             ]
+        return thg.data.Batch.from_data_list(
+            [graph_instance_to_thg_data(g, device=self.device) for g in graphs]
         )
 
 
@@ -168,12 +186,16 @@ class MaskableGraph2NodeRolloutBufferMixin(MaskableScikitDecideRolloutBufferMixi
 
     def _add_action_masks(self, action_masks: Optional[np.ndarray] = None):
         if action_masks is None:
-            raise NotImplementedError()
+            raise UnsupportedConfigurationError(
+                "MaskableGraph2NodeRolloutBufferMixin requires action_masks."
+            )
         self.action_masks.append(action_masks.reshape(self.n_envs, -1))
 
     def _swap_and_flatten_action_masks(self) -> None:
         if self.n_envs > 1:
-            raise NotImplementedError()
+            raise UnsupportedConfigurationError(
+                "Action-mask flattening is not supported with several vectorized envs."
+            )
         else:
             self.action_masks = [a.flatten() for a in self.action_masks]
 
@@ -225,11 +247,11 @@ class GraphReplayBuffer(ScikitDecideReplayBuffer, GraphBaseBuffer):
             handle_timeout_termination=handle_timeout_termination,
         )
         if optimize_memory_usage:
-            raise NotImplementedError(
+            raise UnsupportedConfigurationError(
                 "No memory usage optimization implemented for GraphReplayBuffer."
             )
         if n_envs > 1:
-            raise NotImplementedError(
+            raise UnsupportedConfigurationError(
                 "No multiple vectorized environements implemented for GraphReplayBuffer."
             )
 
@@ -251,22 +273,29 @@ class GraphReplayBuffer(ScikitDecideReplayBuffer, GraphBaseBuffer):
         env_indices: np.ndarray,
         env: Optional[VecNormalize] = None,
     ) -> tuple[thg.data.Data, thg.data.Data]:
-        if env is not None:
-            raise NotImplementedError(
-                "observation normalization not yet implemented for graphReplayBuffer."
-            )
         observations = self._extract_observations_samples(
-            self.observations, batch_inds=batch_inds
+            self.observations, batch_inds=batch_inds, env=env
         )
         next_observations = self._extract_observations_samples(
-            self.next_observations, batch_inds=batch_inds
+            self.next_observations, batch_inds=batch_inds, env=env
         )
         return observations, next_observations
 
     def _extract_observations_samples(
-        self, observations: list[spaces.GraphInstance], batch_inds: np.ndarray
+        self,
+        observations: list[spaces.GraphInstance],
+        batch_inds: np.ndarray,
+        env: Optional[VecNormalize] = None,
     ) -> thg.data.Data:
-        return self._graphlist_to_torch(self.observations, batch_inds=batch_inds)
+        if env is None or not getattr(env, "norm_obs", True):
+            return self._graphlist_to_torch(observations, batch_inds=batch_inds)
+        return self._graphlist_to_torch(
+            observations,
+            batch_inds=batch_inds,
+            obs_rms=env.obs_rms,
+            epsilon=env.epsilon,
+            clip_obs=env.clip_obs,
+        )
 
 
 class DictGraphReplayBuffer(GraphReplayBuffer, DictReplayBuffer):
@@ -349,10 +378,27 @@ class DictGraphReplayBuffer(GraphReplayBuffer, DictReplayBuffer):
             ],
         ],
         batch_inds: np.ndarray,
+        env: Optional[VecNormalize] = None,
     ) -> dict[str, Union[thg.data.Data, th.Tensor]]:
-        return {
-            k: self._graphlist_to_torch(obs, batch_inds=batch_inds)
-            if self.is_observation_subspace_graph[k]
-            else self.to_torch(obs[batch_inds])
-            for k, obs in observations.items()
-        }
+        norm = env is not None and getattr(env, "norm_obs", True)
+        samples = {}
+        for k, obs in observations.items():
+            rms = env.obs_rms[k] if norm and isinstance(env.obs_rms, dict) else None
+            if self.is_observation_subspace_graph[k]:
+                samples[k] = self._graphlist_to_torch(
+                    obs,
+                    batch_inds=batch_inds,
+                    obs_rms=rms,
+                    epsilon=env.epsilon if norm else 1e-8,
+                    clip_obs=env.clip_obs if norm else 10.0,
+                )
+            else:
+                arr = obs[batch_inds]
+                if rms is not None:
+                    arr = np.clip(
+                        (arr - rms.mean) / np.sqrt(rms.var + env.epsilon),
+                        -env.clip_obs,
+                        env.clip_obs,
+                    ).astype(np.float32)
+                samples[k] = self.to_torch(arr)
+        return samples

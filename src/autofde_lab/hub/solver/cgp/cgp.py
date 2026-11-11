@@ -70,7 +70,7 @@ class D(
 
 def change_interval(x, inmin, inmax, outmin, outmax):
     # redefine interval if min, max are set to +-infinity by the GYM environment
-    # TODO: maybe we could reject those environments in the future.
+    # Note: such environments are accepted with the [-1, 1] fallback interval.
     if inmin == -np.inf:
         inmin = -1
     if inmax == np.inf:
@@ -434,7 +434,7 @@ class SkDecideEvaluator(Evaluator):
                     self.domain.get_action_space().unwrapped(),
                 )
                 states, transition_value, end, _ = self.domain.step(actions).astuple()
-                reward = transition_value[0]  # TODO: correct Gym wrapper
+                reward = transition_value[0]  # Note: the Gym wrapper returns the reward as first element of the value
 
                 if verbose:
                     print(states, "=>", actions)

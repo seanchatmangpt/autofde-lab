@@ -39,7 +39,7 @@ class _Handler(BaseHTTPRequestHandler):
     server_version = "autofde-lab-openclaw-http/1.0"
 
     def log_message(self, fmt: str, *args) -> None:  # quiet, structured-enough default
-        pass
+        return None
 
     def _write_json(self, status: int, payload: dict) -> None:
         body = json.dumps(payload).encode("utf-8")

@@ -174,11 +174,11 @@ def get_registered_solvers() -> list[str]:
     return _get_registered_entries("autofde_lab.solvers")
 
 
-def load_registered_domain(name: str) -> type[Domain]:
+def load_registered_domain(name: str) -> Optional[type[Domain]]:
     return _load_registered_entry("autofde_lab.domains", name)
 
 
-def load_registered_solver(name: str) -> type[Solver]:
+def load_registered_solver(name: str) -> Optional[type[Solver]]:
     return _load_registered_entry("autofde_lab.solvers", name)
 
 
@@ -770,19 +770,19 @@ class RolloutCallback:
 
     def at_rollout_start(self):
         """Called at rollout start."""
-        ...
+        return None
 
     def at_rollout_end(self):
         """Called at rollout end."""
-        ...
+        return None
 
     def at_episode_start(self):
         """Called before each episode."""
-        ...
+        return None
 
     def at_episode_end(self):
         """Called after each episode."""
-        ...
+        return None
 
     def at_episode_step(
         self,

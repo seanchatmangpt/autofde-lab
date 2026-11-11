@@ -58,7 +58,7 @@ class PropulsionService:
         self,
         propulsion_settings: PropulsionSettings,
         aircraft_state: AircraftState,
-    ) -> RatingEnum:
+    ) -> float:
         return self.all_propulsion_services[
             propulsion_settings.performance_model_type
         ].compute_min_rating(propulsion_settings, aircraft_state)
@@ -67,7 +67,7 @@ class PropulsionService:
         self,
         propulsion_settings: PropulsionSettings,
         aircraft_state: AircraftState,
-    ) -> RatingEnum:
+    ) -> float:
         return self.all_propulsion_services[
             propulsion_settings.performance_model_type
         ].compute_max_rating(propulsion_settings, aircraft_state)

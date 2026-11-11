@@ -169,17 +169,17 @@ class Solver(Hyperparametrizable, FromInitialState):
         This function does nothing by default but can be overridden if needed (e.g. to reset the hidden state of a LSTM
         policy network, which carries information about past observations seen in the previous episode).
         """
-        pass
+        return None
 
     def _initialize(self):
         """Runs long-lasting initialization code here."""
-        pass
+        return None
 
     def _cleanup(self):
         """Runs cleanup code here, or code to be executed at the exit of a
         'with' context statement.
         """
-        pass
+        return None
 
     def __enter__(self):
         """Allow for calling the solver within a 'with' context statement.

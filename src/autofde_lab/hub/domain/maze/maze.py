@@ -18,9 +18,13 @@ try:
     from IPython.display import clear_output, display
 except ImportError:
     # jupyter not installed
-    def display(figure): ...
+    def display(figure):
+        # no jupyter: redraw the matplotlib figure canvas instead
+        figure.canvas.draw_idle()
 
-    def clear_output(wait=False): ...
+    def clear_output(wait=False):
+        # no jupyter: there is no notebook cell output to clear
+        return None
 
 
 DEFAULT_MAZE = """

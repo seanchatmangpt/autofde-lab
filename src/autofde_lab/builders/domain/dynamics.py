@@ -8,6 +8,7 @@ from typing import Optional
 
 import wrapt
 
+from autofde_lab.core import HookNotImplementedError
 from autofde_lab.core import (
     D,
     DiscreteDistribution,
@@ -96,8 +97,12 @@ class Environment:
 
         # Returns
         The transition outcome of this step.
+
+        # Raises
+        NotImplementedError: Abstract hook (template method) - a concrete domain
+        class must override it; the base class provides no default.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_state_step")
 
 
 class Simulation(Environment):
@@ -221,8 +226,12 @@ class Simulation(Environment):
 
         # Returns
         The transition outcome of the sampled transition.
+
+        # Raises
+        NotImplementedError: Abstract hook (template method) - a concrete domain
+        class must override it; the base class provides no default.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_state_sample")
 
 
 class UncertainTransitions(Simulation):
@@ -284,8 +293,12 @@ class UncertainTransitions(Simulation):
 
         # Returns
         The probability distribution of next state.
+
+        # Raises
+        NotImplementedError: Abstract hook (template method) - a concrete domain
+        class must override it; the base class provides no default.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_next_state_distribution")
 
     @autocastable
     def get_transition_value(
@@ -337,8 +350,12 @@ class UncertainTransitions(Simulation):
 
         # Returns
         The transition value (reward or cost).
+
+        # Raises
+        NotImplementedError: Abstract hook (template method) - a concrete domain
+        class must override it; the base class provides no default.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_transition_value")
 
     @autocastable
     def is_transition_value_dependent_on_next_state(self) -> bool:
@@ -406,8 +423,12 @@ class UncertainTransitions(Simulation):
 
         # Returns
         True if the state is terminal (False otherwise).
+
+        # Raises
+        NotImplementedError: Abstract hook (template method) - a concrete domain
+        class must override it; the base class provides no default.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_is_terminal")
 
     def __getstate__(self):
         """Get state for pickle.
@@ -474,8 +495,12 @@ class EnumerableTransitions(UncertainTransitions):
 
         # Returns
         The discrete probability distribution of next state.
+
+        # Raises
+        NotImplementedError: Abstract hook (template method) - a concrete domain
+        class must override it; the base class provides no default.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_next_state_distribution")
 
 
 class DeterministicTransitions(EnumerableTransitions):
@@ -527,5 +552,9 @@ class DeterministicTransitions(EnumerableTransitions):
 
         # Returns
         The deterministic next state.
+
+        # Raises
+        NotImplementedError: Abstract hook (template method) - a concrete domain
+        class must override it; the base class provides no default.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_next_state")

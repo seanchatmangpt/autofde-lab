@@ -7,6 +7,11 @@ import torch_geometric as thg
 from torch.nn.functional import pad
 
 
+
+class UnsupportedInputError(NotImplementedError):
+    """Typed refusal for an input shape this GNN helper does not support."""
+
+
 def graph_instance_to_thg_data(
     graph: gym.spaces.GraphInstance,
     device: Optional[th.device] = None,
@@ -49,7 +54,7 @@ def thg_data_to_graph_instance(
         else:
             return graph
     else:
-        raise NotImplementedError()
+        raise UnsupportedInputError("batched thg Data cannot be converted to a single GraphInstance")
 
 
 def unbatch_node_logits(

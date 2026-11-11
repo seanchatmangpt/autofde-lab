@@ -1,3 +1,4 @@
+from autofde_lab.hub.solver.stable_baselines.errors import UnsupportedConfigurationError
 from typing import Optional, Union
 
 from gymnasium import spaces
@@ -30,8 +31,8 @@ class GraphOffPolicyAlgorithm(OffPolicyAlgorithm):
 
         # Check only using dummy VecEnv
         if isinstance(env, VecEnv) and env.num_envs > 1:
-            raise NotImplementedError(
-                "GraphOnPolicyAlgorithm not implemented for real vectorized environment "
+            raise UnsupportedConfigurationError(
+                "GraphOffPolicyAlgorithm not implemented for real vectorized environment "
                 "(ie. with more than 1 wrapped environment)"
             )
 

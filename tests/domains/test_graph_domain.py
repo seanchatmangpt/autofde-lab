@@ -201,15 +201,42 @@ class TestGraphDomainUncertain:
         assert domain.get_applicable_actions("A").get_elements() == ["go"]
         assert domain.get_applicable_actions("C").get_elements() == []
 
-    def test_next_state_distribution_returns_a_reachable_successor(self):
+    def test_next_state_distribution_returns_a_real_distribution(self):
         domain = make_graph_domain_uncertain()
-        next_state, proba = domain.get_next_state_distribution("A", "go")
-        assert next_state == "B"
-        assert proba == 1.0
+        dist = domain.get_next_state_distribution("A", "go")
+        assert dict(dist.get_values()) == {"B": 1.0}
+        assert dist.sample() == "B"
 
-        next_state, proba = domain.get_next_state_distribution("B", "go")
-        assert next_state in {"A", "C"}
-        assert proba == 0.5
+        dist = domain.get_next_state_distribution("B", "go")
+        assert dict(dist.get_values()) == {"C": 0.5, "A": 0.5}
+        assert dist.sample() in {"A", "C"}
+
+    def test_is_a_single_agent_sequential_domain_so_probabilistic_solvers_accept_it(self):
+        from autofde_lab.hub.solver.lrtdp import LRTDP
+
+        assert LRTDP.check_domain(make_graph_domain_uncertain())
+
+    def test_lrtdp_solves_it_to_the_analytic_expected_cost(self):
+        """Real solver, exact oracle: V(A) = 1 + V(B), V(B) = 1 + 0.5*V(A) -> V(A) = 4."""
+        from autofde_lab import Value
+        from autofde_lab.hub.solver.lrtdp import LRTDP
+
+        domain = make_graph_domain_uncertain()
+        with LRTDP(
+            domain_factory=lambda: domain,
+            heuristic=lambda d, s: Value(cost=0.0),
+            use_labels=True,
+            time_budget=5000,
+            rollout_budget=2000,
+            max_depth=100,
+            discount=1.0,
+            epsilon=0.0001,
+            online_node_garbage=False,
+            continuous_planning=False,
+        ) as solver:
+            solver.solve(from_memory="A")
+            assert abs(solver.get_utility("A").cost - 4.0) < 0.05
+            assert solver.get_next_action("A") == "go"
 
     def test_get_transition_value(self):
         domain = make_graph_domain_uncertain()

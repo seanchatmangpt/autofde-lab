@@ -106,7 +106,14 @@ class MazeDomain(D):
         return EnumSpace(Action)
 
     def _get_observation_space_(self) -> Space[D.T_observation]:
-        pass
+        return ListSpace(
+            [
+                State(x, y)
+                for x, row in enumerate(self.maze)
+                for y, cell in enumerate(row)
+                if cell != "."
+            ]
+        )
 
 
 START = State(1, 1)

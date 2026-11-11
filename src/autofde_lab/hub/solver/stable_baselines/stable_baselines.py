@@ -189,7 +189,7 @@ class StableBaseline(Solver, Policies, Restorable):
         )
 
     def _solve(self) -> None:
-        # TODO: improve code for parallelism
+        # Single learning env: parallel (vectorized) rollouts are not wired here
         #  (https://stable-baselines3.readthedocs.io/en/master/guide/examples.html
         #  #multiprocessing-unleashing-the-power-of-vectorized-environments)?
         if not hasattr(

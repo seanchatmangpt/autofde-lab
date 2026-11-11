@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import abc
+
 from autofde_lab.core import D, autocastable
 
 __all__ = ["Utilities", "QValues"]
@@ -29,6 +31,7 @@ class Utilities:
         """
         return self._get_utility(observation)
 
+    @abc.abstractmethod
     def _get_utility(self, observation: D.T_agent[D.T_observation]) -> D.T_value:
         """Get the estimated on-policy utility of the given observation.
 
@@ -43,7 +46,9 @@ class Utilities:
         # Returns
         The estimated on-policy utility of the given observation.
         """
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"{type(self).__name__} must implement _get_utility(observation)"
+        )
 
 
 class QValues(Utilities):
@@ -72,6 +77,7 @@ class QValues(Utilities):
         """
         return self._get_q_value(observation, action)
 
+    @abc.abstractmethod
     def _get_q_value(
         self,
         observation: D.T_agent[D.T_observation],
@@ -92,4 +98,6 @@ class QValues(Utilities):
         # Returns
         The estimated on-policy Q value of the given observation and action.
         """
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"{type(self).__name__} must implement _get_q_value(observation, action)"
+        )

@@ -38,7 +38,11 @@ from autofde_lab.builders.domain import (
     SingleAgent,
     TransformedObservable,
 )
-from autofde_lab.hub.domain.plado.llg_encoder import LLGEncoder, NodeLabel
+from autofde_lab.hub.domain.plado.llg_encoder import (
+    LLGEncoder,
+    NodeLabel,
+    UnsupportedEncodingError,
+)
 from autofde_lab.hub.space.gym import (
     BoxSpace,
     DiscreteSpace,
@@ -313,7 +317,7 @@ class BasePladoDomain(D):
             else:
                 return (1 + self._max_action_arity) * [None]
         else:
-            raise NotImplementedError()
+            raise UnsupportedEncodingError("action component flags", self.action_encoding)
 
     def _init_state_encoding(self):
         if self.state_encoding == StateEncoding.NATIVE:
@@ -327,7 +331,7 @@ class BasePladoDomain(D):
                 **self.llg_encoder_kwargs,
             )
         else:
-            raise NotImplementedError()
+            raise UnsupportedEncodingError("state encoding", self.state_encoding)
 
     def _init_action_encoding(self):
         if self.action_encoding == ActionEncoding.NATIVE:
@@ -337,7 +341,7 @@ class BasePladoDomain(D):
         elif self.action_encoding == ActionEncoding.GYM_MULTIDISCRETE:
             self._init_action_encoding_multidiscrete()
         else:
-            raise NotImplementedError()
+            raise UnsupportedEncodingError("action encoding", self.action_encoding)
 
     def _translate_state_from_plado(self, state: PladoState) -> D.T_state:
         if self.state_encoding == StateEncoding.NATIVE:
@@ -349,7 +353,7 @@ class BasePladoDomain(D):
         elif self.state_encoding == StateEncoding.GYM_GRAPH_LLG:
             return self._llg_encoder.encode(state)
         else:
-            raise NotImplementedError()
+            raise UnsupportedEncodingError("state encoding", self.state_encoding)
 
     def repr_obs_as_plado(self, obs: D.T_observation) -> str:
         """Return a string representation of the observation similar to plado representation."""
@@ -364,7 +368,7 @@ class BasePladoDomain(D):
         elif self.state_encoding == StateEncoding.GYM_GRAPH_LLG:
             return self._llg_encoder.decode(state)
         else:
-            raise NotImplementedError()
+            raise UnsupportedEncodingError("state encoding", self.state_encoding)
 
     def _transform_state_to_hashable(self, state: D.T_state) -> Hashable:
         if self.state_encoding == StateEncoding.NATIVE:
@@ -377,7 +381,7 @@ class BasePladoDomain(D):
                 cost_functions=self.cost_functions,
             )
         else:
-            raise NotImplementedError()
+            raise UnsupportedEncodingError("state encoding", self.state_encoding)
 
     def _transform_action_to_hashable(self, action: D.T_event) -> Hashable:
         if self.action_encoding == ActionEncoding.GYM_MULTIDISCRETE:
@@ -393,7 +397,7 @@ class BasePladoDomain(D):
         elif self.action_encoding == ActionEncoding.GYM_MULTIDISCRETE:
             return self._action2multidiscrete(action)
         else:
-            raise NotImplementedError()
+            raise UnsupportedEncodingError("action encoding", self.action_encoding)
 
     def _translate_action_to_plado(self, action: D.T_event) -> PladoAction:
         if self.action_encoding == ActionEncoding.NATIVE:
@@ -403,7 +407,7 @@ class BasePladoDomain(D):
         elif self.action_encoding == ActionEncoding.GYM_MULTIDISCRETE:
             return self._multidiscrete2action(action)
         else:
-            raise NotImplementedError()
+            raise UnsupportedEncodingError("action encoding", self.action_encoding)
 
     def _action2multidiscrete(self, action: PladoAction) -> GymMultidiscreteType:
         action_id, params_id = action
@@ -461,7 +465,7 @@ class BasePladoDomain(D):
         elif self.state_encoding == StateEncoding.GYM_GRAPH_LLG:
             return GymSpace(self._llg_encoder.graph_space)
         else:
-            raise NotImplementedError()
+            raise UnsupportedEncodingError("state encoding", self.state_encoding)
 
     def _get_action_space_(self) -> Space[D.T_event]:
         if self.action_encoding == ActionEncoding.NATIVE:
@@ -477,7 +481,7 @@ class BasePladoDomain(D):
                 nvec=[n_actions] + self._max_action_arity * [n_objects]
             )
         else:
-            raise NotImplementedError()
+            raise UnsupportedEncodingError("action encoding", self.action_encoding)
 
     def _get_goals_(self) -> Space[D.T_observation]:
         return ImplicitSpace(
@@ -799,7 +803,7 @@ class BasePladoTransformedObservableDomain(D):
         if self.obs_encoding == ObservationEncoding.GYM_GRAPH_OBJECTS:
             self._init_obs_encoding_graph_objects()
         else:
-            raise NotImplementedError()
+            raise UnsupportedEncodingError("observation encoding", self.obs_encoding)
 
     def _state_sample(
         self,
@@ -871,7 +875,7 @@ class BasePladoTransformedObservableDomain(D):
         if self.obs_encoding == ObservationEncoding.GYM_GRAPH_OBJECTS:
             return self._state2graphobjects(state)
         else:
-            raise NotImplementedError()
+            raise UnsupportedEncodingError("observation encoding", self.obs_encoding)
 
     def _get_observation_space_(self) -> D.T_agent[Space[D.T_observation]]:
         if self.obs_encoding == ObservationEncoding.GYM_GRAPH_OBJECTS:
@@ -934,7 +938,7 @@ class BasePladoTransformedObservableDomain(D):
                 )
             )
         else:
-            raise NotImplementedError()
+            raise UnsupportedEncodingError("observation encoding", self.obs_encoding)
 
     @property
     def task(self) -> Task:

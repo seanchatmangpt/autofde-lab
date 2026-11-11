@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from autofde_lab.core import HookNotImplementedError
+
 from enum import Enum
 
 __all__ = ["WithPreemptivity", "WithoutPreemptivity"]
@@ -30,7 +32,7 @@ class WithPreemptivity:
                 6: False
                 }
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_task_preemptivity")
 
     def get_task_preemptivity(self) -> dict[int, bool]:
         """Return a dictionary where the key is a task id and the value a boolean indicating
@@ -59,7 +61,7 @@ class WithPreemptivity:
                 6: ResumeType.NA
                 }
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_task_resuming_type")
 
     def get_task_resuming_type(self) -> dict[int, ResumeType]:
         """Return a dictionary where the key is a task id and the value is of type ResumeType indicating
@@ -84,7 +86,7 @@ class WithPreemptivity:
                 5: True  # if paused, the non-renewable resource will be available again
                 }
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_task_paused_non_renewable_resource_returned")
 
     def get_task_paused_non_renewable_resource_returned(self) -> dict[int, bool]:
         """Return a dictionary where the key is a task id and the value is of type bool indicating

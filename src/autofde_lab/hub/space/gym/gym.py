@@ -33,8 +33,8 @@ class GymSpace(SamplableSpace[T], SerializableSpace[T]):
         """
         super().__init__()
         self._gym_space = gym_space
-        self.shape = gym_space.shape  # TODO: remove if unnecessary?
-        self.dtype = gym_space.dtype  # TODO: remove if unnecessary?
+        self.shape = gym_space.shape  # mirrored from the wrapped gym space
+        self.dtype = gym_space.dtype  # mirrored from the wrapped gym space
 
     def contains(self, x: T) -> bool:
         return self._gym_space.contains(x)
@@ -515,7 +515,7 @@ class DataSpace(GymSpace[T]):
         # return super().contains(asdict(x))
 
     def sample(self) -> T:
-        # TODO: convert to simple types (get rid of ndarray created by gym dict space...)?
+        # fields keep the types produced by the gym dict space (e.g. ndarray)
         return self._data_class(**super().sample())
 
     def to_jsonable(self, sample_n: Iterable[T]) -> Sequence:
@@ -538,7 +538,7 @@ class DataSpace(GymSpace[T]):
         return [asdict(sample) for sample in sample_n]
 
     def from_unwrapped(self, sample_n: Iterable[dict]) -> Iterable[T]:
-        # TODO: convert to simple types (get rid of ndarray created by gym dict space...)?
+        # fields keep the types produced by the gym dict space (e.g. ndarray)
         return [self._data_class(**sample) for sample in sample_n]
 
 

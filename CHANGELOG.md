@@ -5,6 +5,25 @@
 > docs-only cuts of the working tree. Entries are grouped candidate entries
 > derived from the git history, not per-commit release notes.
 
+## v26.11.11 (2026-11-11) — stub closure
+
+Every stub, TODO and empty-body site under `src/autofde_lab` now has a recorded
+disposition; `scripts/stub_register.py --check` exits 0 (ledger: `docs/STUB-REGISTER.md`,
+rows: `docs/jira/v26.11.11/stub-dispositions.toml`).
+
+- Typed hook contracts: `HookNotImplementedError`, `AutocastError` (core.py); abstract
+  mixins in `builders/solver`; `ParallelDomain` is an ABC with a restored IPC `__setstate__`.
+- Real implementations: HTN numeric/fluent effects and conditions; PPDDL LLG encoding (plado);
+  PDDL state-conditioned action space; p_astar path/cost exposure; IW/RIW/BFWS default features;
+  graph observation normalization and autoregressive policy fixes (stable_baselines).
+- Defect fixes: `GraphDomainUncertain` single-agent/sequential + real `Distribution`;
+  `pddl_engine` reports unsolvable problems cleanly (exit 1, no traceback); RCPSP renewability
+  default and 1-based task id validation; MAHD per-agent goal and exit-order crash; MaxentIRL
+  absolute Q-table path.
+- Known limits: min/max thrust rating are normalised 0.0/1.0 bounds; up-aries rejects numeric
+  HDDL (simulator replay is the oracle); non-renewable unary resources unsupported by
+  discrete-optimization; chuffed MiniZinc solver absent (6 scheduling tests fail).
+
 ## v26.10.8 (2026-10-08) — docs-only cut
 
 Tag `v26.10.8` at `45e0a6bc`; range `v26.9.17` (`334b3eb6`, 2026-09-17) → HEAD,

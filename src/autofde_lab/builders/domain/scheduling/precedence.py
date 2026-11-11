@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from autofde_lab.core import HookNotImplementedError
+
 from autofde_lab.builders.domain.scheduling.graph_toolbox import Graph
 from autofde_lab.builders.domain.scheduling.scheduling_domains_modelling import State
 
@@ -15,7 +17,7 @@ class WithPrecedence:
 
     def _get_successors(self) -> dict[int, list[int]]:
         """Return the successors of the tasks. Successors are given as a list for a task given as a key."""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_successors")
 
     def get_successors(self) -> dict[int, list[int]]:
         """Return the successors of the tasks. Successors are given as a list for a task given as a key."""

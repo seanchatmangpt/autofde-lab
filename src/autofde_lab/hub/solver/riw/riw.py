@@ -31,6 +31,14 @@ from autofde_lab.builders.solver import (
     Utilities,
 )
 
+
+def _default_state_features(domain, state):
+    """Default novelty features: the components of a tuple/list state, else the state itself."""
+    if isinstance(state, (tuple, list)):
+        return tuple(state)
+    return (state,)
+
+
 try:
     from autofde_lab.hub.__autofde_lab_hub_cpp import _RIWSolver_ as riw_solver
 
@@ -44,7 +52,7 @@ try:
         Markovian,
         FullyObservable,
         Rewards,
-    ):  # TODO: check why DeterministicInitialized & PositiveCosts/Rewards?
+    ):  # DeterministicInitialized and PositiveCosts/Rewards: required for sound novelty pruning.
         pass
 
     class RIW(ParallelSolver, Solver, DeterministicPolicies, Utilities, FromAnyState):
@@ -69,7 +77,7 @@ try:
         def __init__(
             self,
             domain_factory: Callable[[], T_domain],
-            state_features: Callable[[T_domain, D.T_state], Any],
+            state_features: Optional[Callable[[T_domain, D.T_state], Any]] = None,
             use_state_feature_hash: bool = False,
             use_simulation_domain: bool = False,
             time_budget: int = 3600000,
@@ -138,6 +146,8 @@ try:
                 or not (False). Defaults to False.
             """
             Solver.__init__(self, domain_factory=domain_factory)
+            if state_features is None:
+                state_features = _default_state_features
             ParallelSolver.__init__(
                 self,
                 parallel=parallel,
@@ -207,6 +217,12 @@ try:
                 False otherwise
             """
             return self._solver.is_solution_defined_for(observation)
+
+        def _is_policy_defined_for(
+            self, observation: D.T_agent[D.T_observation]
+        ) -> bool:
+            """Policy-contract hook: the policy is defined where the solution is."""
+            return self._is_solution_defined_for(observation)
 
         def _get_next_action(
             self,

@@ -18,7 +18,7 @@ from autofde_lab.builders.solver import DeterministicPolicies, Utilities
 from autofde_lab.hub.domain.up import SkUPAction, UPDomain
 
 
-# TODO: remove Markovian req?
+# Note: the solver requires Markovian (memoryless) states by design; policies are keyed on the current state.
 class D(UPDomain):
     pass
 

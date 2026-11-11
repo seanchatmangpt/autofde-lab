@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from autofde_lab.core import HookNotImplementedError
+
 __all__ = [
     "UncertainResourceAvailabilityChanges",
     "DeterministicResourceAvailabilityChanges",
@@ -18,7 +20,7 @@ class UncertainResourceAvailabilityChanges:
         """Sample an amount of resource availability (int) for the given resource
         (either resource type or resource unit) at the given time. This number should be the sum of the number of
         resource available at time t and the number of resource of this type consumed so far)."""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_sample_quantity_resource")
 
     def sample_quantity_resource(self, resource: str, time: int, **kwargs) -> int:
         """Sample an amount of resource availability (int) for the given resource
@@ -30,7 +32,7 @@ class UncertainResourceAvailabilityChanges:
         self,
     ) -> (
         bool
-    ):  # TODO: How to enforce a call to this function when initialising a domain ?
+    ):  # Not called by initialize_domain: domains opt in by calling it explicitly.
         """Return True if there are no duplicates in resource names across both resource types
         and resource units name lists."""
         list1 = self.get_resource_types_names() + self.get_resource_units_names()
@@ -46,7 +48,7 @@ class DeterministicResourceAvailabilityChanges(UncertainResourceAvailabilityChan
     def _get_quantity_resource(self, resource: str, time: int, **kwargs) -> int:
         """Return the resource availability (int) for the given resource
         (either resource type or resource unit) at the given time."""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_quantity_resource")
 
     def get_quantity_resource(self, resource: str, time: int, **kwargs) -> int:
         """Return the resource availability (int) for the given resource
@@ -65,7 +67,7 @@ class WithoutResourceAvailabilityChange(DeterministicResourceAvailabilityChanges
 
     def _get_original_quantity_resource(self, resource: str, **kwargs) -> int:
         """Return the resource availability (int) for the given resource (either resource type or resource unit)."""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_original_quantity_resource")
 
     def get_original_quantity_resource(self, resource: str, **kwargs) -> int:
         """Return the resource availability (int) for the given resource (either resource type or resource unit)."""

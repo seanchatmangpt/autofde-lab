@@ -1,3 +1,4 @@
+from autofde_lab.hub.solver.stable_baselines.errors import UnsupportedConfigurationError
 from typing import Optional, Union
 
 import numpy as np
@@ -35,7 +36,7 @@ class ApplicableActionsOnPolicyAlgorithm(SkdecideOnPolicyAlgorithm):
 
         # Check only using dummy VecEnv
         if isinstance(env, VecEnv) and env.num_envs > 1:
-            raise NotImplementedError(
+            raise UnsupportedConfigurationError(
                 "ApplicableActionsOnPolicyAlgorithm not implemented for real vectorized environment "
                 "(ie. with more than 1 wrapped environment)"
             )

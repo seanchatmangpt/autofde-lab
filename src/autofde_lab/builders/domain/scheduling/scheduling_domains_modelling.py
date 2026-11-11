@@ -127,7 +127,7 @@ class State:
 
     """
 
-    # TODO : code efficient hash/eq functions. will probably be mandatory in some planning algo.
+    # __hash__/__eq__ are defined below (hash-based equality).
     t: int
     tasks_unsatisfiable: set[int]
     tasks_ongoing: set[int]
@@ -148,7 +148,7 @@ class State:
     tasks_complete_mode: SinglyLinkedList
     _current_conditions: set
 
-    # TODO : put the attributes in the __init__ ?!
+    # Attributes are annotated above and assigned in __init__.
     def __init__(self, task_ids: Iterable[int], tasks_available: set[int] = None):
         """Initialize a scheduling state.
 

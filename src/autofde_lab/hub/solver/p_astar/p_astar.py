@@ -27,7 +27,7 @@ from autofde_lab.builders.domain import (
 from autofde_lab.builders.solver import DeterministicPolicies, FromAnyState, Utilities
 
 
-# TODO: remove Markovian req?
+# Note: the solver requires Markovian (memoryless) states by design; policies are keyed on the current state.
 class D(
     Domain,
     SingleAgent,
@@ -90,6 +90,30 @@ class Astar(Solver, DeterministicPolicies, Utilities, FromAnyState):
         self._render = render
         self._values = {}
         self._plan: list[D.T_event] = []
+        self._path: list[tuple[D.T_state, Optional[D.T_event]]] = []
+        self._estimated_total_cost: Optional[float] = None
+        self._path_cost: Optional[float] = None
+
+    def get_path(self) -> list[tuple[D.T_state, Optional[D.T_event]]]:
+        """Return the computed path as (state, action taken from it) pairs.
+
+        The last pair carries ``None`` as action. Empty if no goal was reached.
+        """
+        return [
+            (node, None if label is None else label["action"])
+            for node, label in self._path
+        ]
+
+    def get_estimated_total_cost(self) -> Optional[float]:
+        """Return the f-value (cost-so-far + weighted heuristic) of the last popped node.
+
+        At a goal node with a zero heuristic this equals the path cost.
+        """
+        return self._estimated_total_cost
+
+    def get_path_cost(self) -> Optional[float]:
+        """Return the cumulated cost of the found path, None if no goal was reached."""
+        return self._path_cost
 
     def get_plan(self) -> list[D.T_event]:
         """Return the computed plan."""
@@ -140,7 +164,7 @@ class Astar(Solver, DeterministicPolicies, Utilities, FromAnyState):
         # priority and is guaranteed unique for all nodes in the graph.
         c = count()
 
-        # TODO: check if necessary (a priori used to keep additional infos)
+        # Labels carry per-source info used by path reconstruction.
         initial_label = {source: None for source in sources}
         # Maps enqueued nodes to distance of discovered paths and the
         # computed heuristics to target. We avoid computing the heuristics
@@ -160,6 +184,8 @@ class Astar(Solver, DeterministicPolicies, Utilities, FromAnyState):
         self.explored = {}
         path = []
         estim_total = 0.0
+        path_cost = None
+        self._plan = []
         while self.queue and not self.callback(self):
             # Pop the smallest item from queue, i.e. with smallest f-value
             estim_total, __, curnode, dist, parent, label = pop(self.queue)
@@ -172,7 +198,10 @@ class Astar(Solver, DeterministicPolicies, Utilities, FromAnyState):
                     f"- cumulated cost: {dist} - estimated total cost: {estim_total}",
                 )
             if self._domain.is_goal(curnode):
-                path = [(parent, label), (curnode, None)]
+                path_cost = dist
+                path = [(curnode, None)]
+                if parent is not None:
+                    path.insert(0, (parent, label))
                 node = parent
                 while node is not None:
                     (parent, label) = self.explored[node]
@@ -216,7 +245,9 @@ class Astar(Solver, DeterministicPolicies, Utilities, FromAnyState):
             self._values[node] = estim_total - enqueued[node][0]
             if self._policy[node] is not None:
                 self._plan.append(self._policy[node])
-        # return estim_total, path  # TODO: find a way to expose these things through public API?
+        self._path = list(path)
+        self._estimated_total_cost = estim_total
+        self._path_cost = path_cost
 
     def _get_next_action(
         self, observation: D.T_agent[D.T_observation], domain: Optional[Domain] = None

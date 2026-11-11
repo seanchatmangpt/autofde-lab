@@ -19,7 +19,7 @@ from autofde_lab.builders.solver import DeterministicPolicies, FromAnyState, Uti
 from autofde_lab.core import Value
 
 
-# TODO: remove Markovian req?
+# Note: the solver requires Markovian (memoryless) states by design; policies are keyed on the current state.
 class D(Domain, MultiAgent, Sequential):
     pass
 
@@ -135,8 +135,12 @@ class MAHD(Solver, DeterministicPolicies, Utilities, FromAnyState):
 
         for a in self._multiagent_domain.get_agents():
             singleagent_solver_kwargs = dict(self._singleagent_solver_kwargs)
+            # bind the agent now: a bare closure over the loop variable would hand
+            # every single-agent solver the domain of the *last* agent
             singleagent_solver_kwargs["domain_factory"] = (
-                lambda: self._singleagent_domain_factory(self._multiagent_domain, a)
+                lambda agent=a: self._singleagent_domain_factory(
+                    self._multiagent_domain, agent
+                )
             )
             self._singleagent_solvers[a] = self._singleagent_solver_class(
                 **singleagent_solver_kwargs
@@ -318,9 +322,12 @@ class MAHD(Solver, DeterministicPolicies, Utilities, FromAnyState):
         """Cleans up the higher-level multi-agent solver and each lower-level
         single-agent solver
         """
-        self._multiagent_solver._cleanup()
-        for a, s in self._singleagent_solvers.items():
+        # Native solvers must be destroyed in the reverse order of their creation
+        # (multi-agent solver first built, so last destroyed): destroying two of them
+        # in creation order segfaults the interpreter at exit.
+        for a, s in reversed(list(self._singleagent_solvers.items())):
             s._cleanup()
+        self._multiagent_solver._cleanup()
 
 
 class MahdCallback:

@@ -194,13 +194,14 @@ def solve_to_plan_file(
             for _ in range(MAX_PLAN_STEPS):
                 if domain._is_terminal(observation):
                     break
-                # NOTE: no is_policy_defined_for() guard here -- Astar
-                # inherits the abstract version, which raises
-                # NotImplementedError (builders/solver/policy.py:72).
-                # Verified this session. A state the search never covered
-                # surfaces as an exception from sample_action instead, and
-                # is caught below as EXIT_NO_PLAN; the final goal check is
-                # the real correctness gate either way.
+                # Astar defines a policy exactly where its search covered the
+                # state. An uncovered state means the search exhausted without
+                # reaching the goal: a clean "no plan exists", not a crash in
+                # sample_action. The final goal check below stays the
+                # correctness gate for plans that were found.
+                if not solver.is_policy_defined_for(observation):
+                    print(f"{PROG}: no plan exists (search exhausted)", file=log)
+                    return EXIT_NO_PLAN
                 action = solver.sample_action(observation)
                 actions.append(action)
                 outcome = domain.step(action)

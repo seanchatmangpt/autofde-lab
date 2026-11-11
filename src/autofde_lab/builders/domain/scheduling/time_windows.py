@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from autofde_lab.core import HookNotImplementedError
+
 __all__ = [
     "TimeWindow",
     "ClassicTimeWindow",
@@ -171,7 +173,7 @@ class WithTimeWindow:
         A dictionary of TimeWindow objects.
 
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_time_window")
 
 
 class WithoutTimeWindow(WithTimeWindow):

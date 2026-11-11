@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from autofde_lab.core import HookNotImplementedError
+
 __all__ = ["WithPreallocations", "WithoutPreallocations"]
 
 
@@ -12,15 +14,15 @@ class WithPreallocations:
 
     def _get_preallocations(
         self,
-    ) -> dict[int, list[str]]:  # TODO: To be handled by domain (applicable actions)
+    ) -> dict[int, list[str]]:  # Enforced by the domain when it builds applicable actions.
         """
         Return a dictionary where the key is the id of a task (int)
         and the value indicates the pre-allocated resources for this task (as a list of str)"""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_preallocations")
 
     def get_preallocations(
         self,
-    ) -> dict[int, list[str]]:  # TODO: To be handled by domain (applicable actions)
+    ) -> dict[int, list[str]]:  # Enforced by the domain when it builds applicable actions.
         """
         Return a dictionary where the key is the id of a task (int)
         and the value indicates the pre-allocated resources for this task (as a list of str)"""

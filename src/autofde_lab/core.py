@@ -21,6 +21,8 @@ import wrapt
 __all__ = [
     "T",
     "D",
+    "HookNotImplementedError",
+    "AutocastError",
     "Space",
     "ImplicitSpace",
     "EnumerableSpace",
@@ -61,6 +63,21 @@ class D:
     T_concurrency = TypeVar("T_concurrency")
 
 
+class HookNotImplementedError(NotImplementedError):
+    """Typed error raised by abstract-by-design hooks that a subclass must override."""
+
+    def __init__(self, obj: object, hook: str):
+        self.hook = hook
+        self.owner = type(obj).__name__
+        super().__init__(
+            f"{self.owner} must override the abstract hook {hook}() of its contract"
+        )
+
+
+class AutocastError(RuntimeError):
+    """Raised when casting an argument or return value inside an autocast wrapper fails."""
+
+
 # Tree (utility class)
 class Tree:
     def __init__(self, type_: object, sub: list[Tree] = []):
@@ -71,7 +88,7 @@ class Tree:
 # Castable (utility class)
 class Castable:
     def _cast(self, src_sub: list[Tree], dst_sub: list[Tree]):
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "Castable._cast")
 
 
 # Space
@@ -90,7 +107,7 @@ class Space(Container[T], Generic[T]):
         # Returns
         True if x is a valid member of this space (False otherwise).
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "Space.contains")
 
     def __contains__(self, item: T) -> bool:
         return self.contains(item)
@@ -125,7 +142,7 @@ class EnumerableSpace(Space[T], Sequence[T]):
         # Returns
         The elements of this space.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "EnumerableSpace.get_elements")
 
     def contains(self, x: T) -> bool:
         return x in self.get_elements()
@@ -173,7 +190,7 @@ class SamplableSpace(Space[T]):
         # Returns
         The sampled element.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "SamplableSpace.sample")
 
 
 class SerializableSpace(Space[T]):
@@ -214,7 +231,7 @@ class Distribution(Generic[T], Castable):
         # Returns
         The sampled element.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "Distribution.sample")
 
 
 class ImplicitDistribution(Distribution[T]):
@@ -519,7 +536,7 @@ class Constraint(Generic[D.T_memory, D.T_event, D.T_state], Castable):
         # Returns
         True if the constraint is checked (False otherwise).
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "Constraint.check")
 
     @wrapt.lru_cache()
     def is_constraint_dependent_on_next_state(self) -> bool:
@@ -547,7 +564,7 @@ class Constraint(Generic[D.T_memory, D.T_event, D.T_state], Castable):
         # Returns
         True if the constraint computation depends on next_state (False otherwise).
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "Constraint._is_constraint_dependent_on_next_state_")
 
     def __getstate__(self):
         """Get state for pickle.
@@ -833,21 +850,26 @@ def autocast(func: Callable, src: object, dst: object, hint_obj: str = "D") -> C
                 cast_args.append(arg)
 
     @functools.wraps(func)
-    def wrapper_autocast(
-        *args, **kwargs
-    ):  # TODO: raise autocast exception when problem inside wrapper?
-        # print('Wrapper used for:', func, src_hintrees, dst_hintrees)
+    def wrapper_autocast(*args, **kwargs):
         args_dict = get_args_dict(func, args, kwargs)
-        cast_args_dict = {
-            k: (cast(v, dst_hintrees[k], src_hintrees[k]) if k in cast_args else v)
-            for k, v in args_dict.items()
-        }
+        try:
+            cast_args_dict = {
+                k: (cast(v, dst_hintrees[k], src_hintrees[k]) if k in cast_args else v)
+                for k, v in args_dict.items()
+            }
+        except Exception as e:
+            raise AutocastError(
+                f"autocast of arguments of {func.__qualname__} failed: {e!r}"
+            ) from e
         result = func(**cast_args_dict)
-        return (
-            cast(result, src_hintrees["return"], dst_hintrees["return"])
-            if "return" in cast_args
-            else result
-        )
+        if "return" not in cast_args:
+            return result
+        try:
+            return cast(result, src_hintrees["return"], dst_hintrees["return"])
+        except Exception as e:
+            raise AutocastError(
+                f"autocast of return value of {func.__qualname__} failed: {e!r}"
+            ) from e
 
     return wrapper_autocast if len(cast_args) > 0 else func
 

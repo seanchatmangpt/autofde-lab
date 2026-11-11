@@ -3,7 +3,7 @@
 > **AutoFDE Lab v26.9.16 closes the local machine-experience loop: admitted semantic change can trigger deterministic Knowledge Hooks, synthesize non-authoritative intent, traverse explicit authority and BRCE, produce receipted consequence, and feed resulting semantic change back into a bounded reflex until quiescence. The Lab remains EXPLORE/qualification infrastructure; production authority remains outside it.**
 
 **Version:** `v26.9.16`
-**Status:** Tag Candidate
+**Status:** Tagged (v26.9.16 tag exists)
 **Architecture:** Semantic Machine Experience Qualification and Compilation
 
 ---

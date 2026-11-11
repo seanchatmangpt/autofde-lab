@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from autofde_lab.core import HookNotImplementedError
+
 from typing import Optional, Union
 
 import wrapt
@@ -82,7 +84,7 @@ class FiniteHistory(History):
         # Returns
         The memory max length.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_memory_maxlen_")
 
     def __getstate__(self):
         """Get state for pickle.

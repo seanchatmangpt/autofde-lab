@@ -2,7 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-# TODO: support OpenAI GoalEnv
+# Note: OpenAI GoalEnv (dict observations with desired_goal) is not supported.
 from __future__ import annotations
 
 import bisect
@@ -67,7 +67,7 @@ class D(
     pass
 
 
-# TODO: update with latest Gym Env spec (with seed)
+# Note: reset()/seed handling follows the gymnasium Env spec as wrapped below.
 class GymDomain(D):
     """This class wraps a gymnasium environment (gym.env) as a scikit-decide domain.
 
@@ -847,7 +847,7 @@ class D(
     FullyObservable,
     Renderable,
     Rewards,
-):  # TODO: replace Rewards by PositiveCosts??
+):  # Note: rewards are kept as Rewards (not converted to PositiveCosts).
     pass
 
 

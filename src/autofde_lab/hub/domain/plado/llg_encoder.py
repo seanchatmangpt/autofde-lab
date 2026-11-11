@@ -89,6 +89,15 @@ class IndexFunctionType(Enum):
     RANDSPHERE = "random_injection_to_sphere"
 
 
+class UnsupportedEncodingError(NotImplementedError):
+    """Typed error for an encoding/expression variant this encoder does not implement."""
+
+    def __init__(self, what: str, value: object):
+        self.what = what
+        self.value = value
+        super().__init__(f"unsupported {what}: {value!r}")
+
+
 class LLGEncoder:
     """Lifted Learning Graph encoder for plado state.
 
@@ -326,53 +335,27 @@ class LLGEncoder:
             ax=ax,
         )
 
+    def _iter_atomic_outcomes(self, effect):
+        """Yield every atomic (conditioned) effect of every outcome of an action effect."""
+        for outcome in effect.outcomes:
+            yield from outcome[1]
+
     def _check_actions_hypotheses(self):
         # hyp:
         #   - actions
-        #      - effect: no probabilistic effect, no conditional effect
-        assert (
-            # no probabilistic effects
-            all(
-                [
-                    all([e.num_effects == 1 for e in action.effect.effects])
-                    for action in self.task.actions
-                ]
-            )
-            # no conditional effects
-            and all(
-                [
-                    all(
-                        [
-                            len(e.outcomes[0][1][0].condition.negated_atoms) == 0
-                            for e in action.effect.effects
-                        ]
-                    )
-                    for action in self.task.actions
-                ]
-            )
-            and all(
-                [
-                    all(
-                        [
-                            len(e.outcomes[0][1][0].condition.atoms) == 0
-                            for e in action.effect.effects
-                        ]
-                    )
-                    for action in self.task.actions
-                ]
-            )
-            and all(
-                [
-                    all(
-                        [
-                            len(e.outcomes[0][1][0].condition.constraints) == 0
-                            for e in action.effect.effects
-                        ]
-                    )
-                    for action in self.task.actions
-                ]
-            )
-        )
+        #      - effect: no conditional effect
+        #      - probabilistic effects (PPDDL) are encoded as the union of the atomic effects
+        #        of all their possible outcomes (the encoding is lifted and only describes
+        #        which effects an action may have, not their probabilities)
+        for action in self.task.actions:
+            for e in action.effect.effects:
+                for item in self._iter_atomic_outcomes(e):
+                    cond = item.condition
+                    assert (
+                        len(cond.negated_atoms) == 0
+                        and len(cond.atoms) == 0
+                        and len(cond.constraints) == 0
+                    ), f"conditional effects are not supported (action {action.name})"
 
     def _init_graph(self):
         self._check_actions_hypotheses()
@@ -590,7 +573,7 @@ class LLGEncoder:
                 x
             ]  # shape: x_shape + (if_dim,)
         else:
-            raise NotImplementedError()
+            raise UnsupportedEncodingError("index function", self.index_function_type)
 
     def index_function_inverse(
         self, y: npt.NDArray[Union[np.int_, np.float64]]
@@ -600,7 +583,7 @@ class LLGEncoder:
             assert y.shape[-1] == self.index_function_dim
             return np.argmax(y, -1)
         else:
-            raise NotImplementedError()
+            raise UnsupportedEncodingError("index function", self.index_function_type)
 
     def _get_new_node_id(self) -> int:
         self._last_node += 1
@@ -824,8 +807,11 @@ class LLGEncoder:
             subgraph=subgraph,
         )
         # add and del effects
-        for e in action.effect.effects:
-            atomic_effect = e.outcomes[0][1][0].effect
+        for atomic_effect in (
+            item.effect
+            for e in action.effect.effects
+            for item in self._iter_atomic_outcomes(e)
+        ):
             edge_label = EdgeLabel.EFFECT
             if isinstance(atomic_effect, (AddEffect, DelEffect)):
                 atom = atomic_effect.atom
@@ -865,7 +851,7 @@ class LLGEncoder:
                     subgraph=subgraph,
                 )
             else:
-                raise NotImplementedError()
+                raise UnsupportedEncodingError("numeric assignment expression", type(atomic_effect).__name__)
 
     def _encode_binary_operation(
         self,
@@ -945,7 +931,7 @@ class LLGEncoder:
             elif isinstance(expr, Multiplication):
                 operator_label = NodeLabel.MULTIPLY
             else:
-                raise NotImplementedError()
+                raise UnsupportedEncodingError("numeric binary operator", type(expr).__name__)
             expr_node = self._encode_binary_operation(
                 operator_label=operator_label,
                 lhs_node=lhs_node,
@@ -966,7 +952,7 @@ class LLGEncoder:
             expr_node = self._get_new_node_id()
             self._map_node2value[expr_node] = float(expr.value)
         else:
-            raise NotImplementedError()
+            raise UnsupportedEncodingError("numeric expression", type(expr).__name__)
         return expr_node
 
     def _encode_fluent(

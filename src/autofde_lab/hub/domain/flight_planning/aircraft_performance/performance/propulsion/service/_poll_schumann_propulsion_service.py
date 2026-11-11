@@ -66,7 +66,7 @@ class _PollSchumannPropulsionService(PropulsionServiceInterface):
         aircraft_state: AircraftState,
     ) -> float:
         theta_rad = math.radians(aircraft_state.gamma_air_deg)
-        # TODO: Implement acceleration
+        # AircraftState carries no acceleration term: quasi-steady flight, dv/dt = 0
         dv_dt = 0.0
 
         cd = self.aerodynamics_service.compute_drag_coefficient(
@@ -91,14 +91,16 @@ class _PollSchumannPropulsionService(PropulsionServiceInterface):
         propulsion_settings: PollSchumannPropulsionSettings,
         aircraft_state: AircraftState,
     ) -> float:
-        pass
+        """Bound of the normalised throttle setting (tsp) in [0, 1] (idle: zero normalised throttle)."""
+        return 0.0
 
     def compute_max_rating(
         self,
         propulsion_settings: PollSchumannPropulsionSettings,
         aircraft_state: AircraftState,
     ) -> float:
-        pass
+        """Bound of the normalised throttle setting (tsp) in [0, 1] (full normalised throttle)."""
+        return 1.0
 
     def _fuel_flow_idle(
         self,

@@ -114,8 +114,6 @@ def plado_fully_observable_domain_factory_no_llg_options(
         if action_encoding == ActionEncoding.GYM_DISCRETE:
             pytest.skip("Discrete action encoding not tractable for agricola domain.")
     if "tireworld" in domain_path:
-        if state_encoding == StateEncoding.GYM_GRAPH_LLG:
-            pytest.skip("LLG encoding not implemented yet for PPDDL.")
         plado_domain_cls = PladoPPddlDomain
     else:
         plado_domain_cls = PladoPddlDomain
@@ -137,8 +135,6 @@ def plado_fully_observable_domain_factory_llg_options(
         if action_encoding == ActionEncoding.GYM_DISCRETE:
             pytest.skip("Discrete action encoding not tractable for agricola domain.")
     if "tireworld" in domain_path:
-        if state_encoding == StateEncoding.GYM_GRAPH_LLG:
-            pytest.skip("LLG encoding not implemented yet for PPDDL.")
         plado_domain_cls = PladoPPddlDomain
     else:
         plado_domain_cls = PladoPddlDomain
@@ -190,8 +186,6 @@ plado_domain_factory = fixture_union(
 def plado_ppddl_domain_factory(
     tireworld_domain_problem_paths, state_encoding, action_encoding
 ):
-    if state_encoding == StateEncoding.GYM_GRAPH_LLG:
-        pytest.skip("LLG encoding not implemented yet for PPDDL.")
     domain_path, problem_path = tireworld_domain_problem_paths
     return lambda: PladoPPddlDomain(
         domain_path=domain_path,
@@ -437,6 +431,9 @@ def test_plado_state_sample_ppddl(plado_ppddl_domain_factory):
     if isinstance(state1, np.ndarray):
         assert (state1 == state2).all()
         assert (state3 == state2).all()
+    elif isinstance(state1, gym.spaces.GraphInstance):
+        assert are_graphs_equal(state1, state2)
+        assert are_graphs_equal(state2, state3)
     else:
         assert state1 == state2
         assert state3 == state2

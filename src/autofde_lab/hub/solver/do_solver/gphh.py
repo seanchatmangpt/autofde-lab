@@ -849,7 +849,8 @@ class GPHHPolicy(DeterministicPolicies):
         self.cpm_data = cpm_data
 
     def reset(self):
-        pass
+        """Stateless policy: nothing to reset."""
+        return None
 
     def _get_next_action(
         self, observation: D.T_agent[D.T_observation], domain: Optional[Domain] = None
@@ -1002,7 +1003,8 @@ class PooledGPHHPolicy(DeterministicPolicies):
         self.remove_extremes_values = remove_extremes_values
 
     def reset(self):
-        pass
+        """Stateless policy: nothing to reset."""
+        return None
 
     def _get_next_action(
         self, observation: D.T_agent[D.T_observation], domain: Optional[Domain] = None
@@ -1154,7 +1156,8 @@ class FixedPermutationPolicy(DeterministicPolicies):
         self.fixed_perm = fixed_perm
 
     def reset(self):
-        pass
+        """Stateless policy: nothing to reset."""
+        return None
 
     def _get_next_action(
         self, observation: D.T_agent[D.T_observation], domain: Optional[Domain] = None

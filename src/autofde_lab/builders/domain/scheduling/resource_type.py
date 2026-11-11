@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from autofde_lab.core import HookNotImplementedError
+
 __all__ = [
     "WithResourceTypes",
     "WithoutResourceTypes",
@@ -22,7 +24,7 @@ class WithResourceTypes:
 
     def _get_resource_types_names(self) -> list[str]:
         """Return the names (string) of all resource types as a list."""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_resource_types_names")
 
 
 class WithoutResourceTypes(WithResourceTypes):
@@ -42,7 +44,7 @@ class WithResourceUnits:
 
     def _get_resource_units_names(self) -> list[str]:
         """Return the names (string) of all resource units as a list."""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_resource_units_names")
 
     def get_resource_type_for_unit(self) -> dict[str, str]:
         """Return a dictionary where the key is a resource unit name and the value a resource type name.
@@ -52,7 +54,7 @@ class WithResourceUnits:
     def _get_resource_type_for_unit(self) -> dict[str, str]:
         """Return a dictionary where the key is a resource unit name and the value a resource type name.
         An empty dictionary can be used if there are no resource unit matching a resource type."""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_resource_type_for_unit")
 
 
 class SingleResourceUnit(WithResourceUnits):

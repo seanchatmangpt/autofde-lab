@@ -9,6 +9,7 @@ from typing import Optional, Union
 import numpy as np
 import wrapt
 
+from autofde_lab.core import HookNotImplementedError
 from autofde_lab.core import D, Mask, Space, autocastable
 
 __all__ = ["Events", "Actions", "UnrestrictedActions"]
@@ -54,8 +55,12 @@ class Events:
 
         # Returns
         The space of enabled events.
+
+        # Raises
+        NotImplementedError: Abstract hook (template method) - a concrete domain
+        class must override it; the base class provides no default.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_enabled_events_from")
 
     @autocastable
     def is_enabled_event(
@@ -139,8 +144,12 @@ class Events:
 
         # Returns
         The action space.
+
+        # Raises
+        NotImplementedError: Abstract hook (template method) - a concrete domain
+        class must override it; the base class provides no default.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_action_space_")
 
     @autocastable
     def is_action(self, event: D.T_event) -> bool:
@@ -209,8 +218,12 @@ class Events:
 
         # Returns
         The space of applicable actions.
+
+        # Raises
+        NotImplementedError: Abstract hook (template method) - a concrete domain
+        class must override it; the base class provides no default.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_applicable_actions_from")
 
     @autocastable
     def is_applicable_action(

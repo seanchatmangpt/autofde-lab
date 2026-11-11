@@ -48,6 +48,42 @@ except Exception:
     _HAS_Z3_PYTHON = False
 
 
+class PDDLActionSpace(ImplicitSpace):
+    """State-dependent action space of a PDDL domain.
+
+    Membership is checked by type; sampling needs a state because the set of
+    applicable ground actions differs per state.
+    """
+
+    def __init__(self, action_type, applicable_from) -> None:
+        super().__init__(lambda a: isinstance(a, action_type))
+        self._applicable_from = applicable_from
+
+    def applicable(self, state):
+        """Applicable ground actions in `state`."""
+        space = self._applicable_from(state)
+        return list(
+            space.get_elements() if hasattr(space, "get_elements") else space
+        )
+
+    def sample_from(self, state, rng=None):
+        """Uniformly sample an applicable action in `state`.
+
+        Raises LookupError when no action is applicable (dead end).
+        """
+        import random
+
+        actions = self.applicable(state)
+        if not actions:
+            raise LookupError("no applicable action in this state")
+        return (rng or random).choice(actions)
+
+    def sample(self):
+        raise TypeError(
+            "PDDL action space is state-dependent; use sample_from(state)"
+        )
+
+
 class PDDLState:
     """Immutable, hashable PDDL state wrapping the C++ State."""
 
@@ -191,7 +227,7 @@ class PDDLDomain(DeterministicPlanningDomain, UnrestrictedActions):
         return len(actions) == 0
 
     def _get_action_space_(self) -> D.T_agent[Space[D.T_event]]:
-        return ImplicitSpace(lambda a: isinstance(a, PDDLAction))
+        return PDDLActionSpace(PDDLAction, self._get_applicable_actions_from)
 
     def _get_observation_space_(self) -> D.T_agent[Space[D.T_observation]]:
         return ImplicitSpace(lambda s: isinstance(s, PDDLState))
@@ -301,7 +337,7 @@ class PPDDLDomain(GoalMDPDomain, UnrestrictedActions):
         return len(actions) == 0
 
     def _get_action_space_(self) -> D.T_agent[Space[D.T_event]]:
-        return ImplicitSpace(lambda a: isinstance(a, PDDLAction))
+        return PDDLActionSpace(PDDLAction, self._get_applicable_actions_from)
 
     def _get_observation_space_(self) -> D.T_agent[Space[D.T_observation]]:
         return ImplicitSpace(lambda s: isinstance(s, PDDLState))
@@ -569,7 +605,7 @@ class TPDDLDomain(DeterministicPlanningDomain, UnrestrictedActions):
         return self._sim.is_goal(state.to_cpp())
 
     def _get_action_space_(self) -> D.T_agent[Space[D.T_event]]:
-        return ImplicitSpace(lambda a: isinstance(a, TPDDLAction))
+        return PDDLActionSpace(TPDDLAction, self._get_applicable_actions_from)
 
     def _get_observation_space_(self) -> D.T_agent[Space[D.T_observation]]:
         return ImplicitSpace(lambda s: isinstance(s, TPDDLState))

@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from autofde_lab.core import HookNotImplementedError
+
 __all__ = [
     "TimeLag",
     "MinimumOnlyTimeLag",
@@ -94,7 +96,7 @@ class WithTimeLag:
         # Returns
         A dictionary of TimeLag objects.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_time_lags")
 
 
 class WithoutTimeLag(WithTimeLag):

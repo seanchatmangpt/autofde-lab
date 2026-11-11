@@ -36,19 +36,26 @@ Rust/Python cross-language binding exists between the two repos (report 3),
 and every line below is a from-scratch Python implementation against
 unified-planning's real HTN object model.
 
-Evaluation is intentionally scoped to what this planner's own verification
-targets exercise: boolean 0-ary/n-ary fluents, ``and``/``or``/``not``,
-boolean constants, and unconditional effects that set a fluent to a boolean
-constant. This is not a claim of full HDDL/PDDL expression coverage.
+Expression coverage: boolean and numeric n-ary fluents; ``and``/``or``/``not``/
+``implies``/``iff``/``forall``/``exists``; ``<=``/``<``/``=`` over numbers and
+objects; ``+``/``-``/``*``/``/`` arithmetic with exact ``Fraction`` values;
+conditional effects; ``assign``/``increase``/``decrease`` effects whose value
+is any supported expression (constants, fluents, arithmetic). All effects of
+one action are evaluated against the pre-state (simultaneous semantics, as in
+PDDL). Numeric state values live in the same frozenset as boolean atoms, as
+3-tuples ``(fluent_name, arg_names, Fraction)``. Anything outside this list
+still raises ``NotImplementedError`` loudly.
 """
 
 from __future__ import annotations
 
 import itertools
 from dataclasses import dataclass
+from fractions import Fraction
 from typing import Optional
 
 from unified_planning.model.htn.hierarchical_problem import HierarchicalProblem
+from unified_planning.model.effect import EffectKind
 from unified_planning.shortcuts import OperatorKind
 
 Atom = tuple  # (fluent_name: str, args: tuple[str, ...])
@@ -73,6 +80,10 @@ class HTNPlanningFailure(Exception):
     decomposition of the initial task network exists."""
 
 
+class UnsupportedConstructError(NotImplementedError):
+    """Typed refusal: the planner meets a unified_planning construct outside its supported fragment."""
+
+
 def _resolve_arg(expr, bindings: dict) -> str:
     """Resolve a unified_planning argument expression (a PARAM_EXP referring
     to an enclosing method/action parameter, or an OBJECT_EXP constant) to a
@@ -83,9 +94,50 @@ def _resolve_arg(expr, bindings: dict) -> str:
         return expr.object().name
     if expr.node_type == OperatorKind.VARIABLE_EXP:
         return bindings[expr.variable().name]
-    raise NotImplementedError(
+    raise UnsupportedConstructError(
         f"HTNTotalOrderPlanner: unsupported argument expression node {expr.node_type}"
     )
+
+
+def _numeric_lookup(state: State, name: str, args: tuple) -> Fraction:
+    for atom in state:
+        if len(atom) == 3 and atom[0] == name and atom[1] == args:
+            return atom[2]
+    raise KeyError(
+        f"HTNTotalOrderPlanner: numeric fluent {name}{args} has no value in state"
+    )
+
+
+def _eval_number(expr, bindings: dict, state: State) -> Fraction:
+    """Evaluate a numeric unified_planning expression to an exact Fraction."""
+    nt = expr.node_type
+    if nt in (OperatorKind.INT_CONSTANT, OperatorKind.REAL_CONSTANT):
+        return Fraction(expr.constant_value())
+    if nt == OperatorKind.FLUENT_EXP:
+        args = tuple(_resolve_arg(a, bindings) for a in expr.args)
+        return _numeric_lookup(state, expr.fluent().name, args)
+    if nt == OperatorKind.PLUS:
+        return sum((_eval_number(a, bindings, state) for a in expr.args), Fraction(0))
+    if nt == OperatorKind.MINUS:
+        a, b = (_eval_number(x, bindings, state) for x in expr.args)
+        return a - b
+    if nt == OperatorKind.TIMES:
+        out = Fraction(1)
+        for a in expr.args:
+            out *= _eval_number(a, bindings, state)
+        return out
+    if nt == OperatorKind.DIV:
+        a, b = (_eval_number(x, bindings, state) for x in expr.args)
+        if b == 0:
+            raise ZeroDivisionError("HTNTotalOrderPlanner: division by zero in expression")
+        return a / b
+    raise UnsupportedConstructError(
+        f"HTNTotalOrderPlanner: unsupported numeric expression node {nt} ({expr})"
+    )
+
+
+def _is_numeric_expr(expr) -> bool:
+    return expr.type.is_int_type() or expr.type.is_real_type()
 
 
 def _eval_condition(expr, bindings: dict, state: State) -> bool:
@@ -105,13 +157,31 @@ def _eval_condition(expr, bindings: dict, state: State) -> bool:
         fluent_name = expr.fluent().name
         arg_names = tuple(_resolve_arg(a, bindings) for a in expr.args)
         return (fluent_name, arg_names) in state
+    if nt == OperatorKind.IMPLIES:
+        return (not _eval_condition(expr.args[0], bindings, state)) or _eval_condition(
+            expr.args[1], bindings, state
+        )
+    if nt == OperatorKind.IFF:
+        return _eval_condition(expr.args[0], bindings, state) == _eval_condition(
+            expr.args[1], bindings, state
+        )
+    if nt in (OperatorKind.LE, OperatorKind.LT):
+        a, b = (_eval_number(x, bindings, state) for x in expr.args)
+        return a <= b if nt == OperatorKind.LE else a < b
+    if nt == OperatorKind.EQUALS:
+        l, r = expr.args
+        if _is_numeric_expr(l):
+            return _eval_number(l, bindings, state) == _eval_number(r, bindings, state)
+        return _resolve_arg(l, bindings) == _resolve_arg(r, bindings)
+    if nt == OperatorKind.EXISTS:
+        return _eval_exists(expr.args[0], expr.variables(), bindings, state)
     if nt == OperatorKind.FORALL:
         # expr.args[0] is the quantified body; expr.variables() gives the
         # bound Variable(s). Enumerate real objects of each variable's type.
         body = expr.args[0]
         variables = expr.variables()
         return _eval_forall(body, variables, bindings, state)
-    raise NotImplementedError(
+    raise UnsupportedConstructError(
         f"HTNTotalOrderPlanner: unsupported condition node {nt} ({expr})"
     )
 
@@ -136,6 +206,20 @@ def _eval_forall(body, variables, bindings: dict, state: State) -> bool:
     return True
 
 
+def _eval_exists(body, variables, bindings: dict, state: State) -> bool:
+    """Bounded existential quantification over the problem's real objects."""
+    if not variables:
+        return _eval_condition(body, bindings, state)
+    var, rest = variables[0], variables[1:]
+    problem = _FORALL_PROBLEM.get()
+    for obj in problem.objects(var.type):
+        sub = dict(bindings)
+        sub[var.name] = obj.name
+        if _eval_exists(body, rest, sub, state):
+            return True
+    return False
+
+
 class _ProblemContext:
     """Tiny real (not mocked) context holder so FORALL evaluation can reach
     the enclosing HierarchicalProblem's object set without threading an
@@ -158,27 +242,52 @@ _FORALL_PROBLEM = _ProblemContext()
 
 
 def _apply_effects(action, bindings: dict, state: State) -> State:
-    """Apply an InstantaneousAction's unconditional boolean effects to
-    `state`, returning the resulting state. Real state mutation, no
-    simulated/mocked transition."""
-    atoms = set(state)
+    """Apply an InstantaneousAction's effects (boolean and numeric,
+    conditional or not) to `state`. Every condition and value is evaluated
+    against the pre-state `state` (simultaneous PDDL semantics); the result
+    is a new immutable state."""
+    adds, dels = set(), set()
+    assigns: dict = {}
+    deltas: dict = {}
     for eff in action.effects:
         if eff.condition is not None and not eff.condition.is_true():
-            # Conditional effects are out of scope for the verification
-            # targets this planner is built and checked against.
             if not _eval_condition(eff.condition, bindings, state):
                 continue
         fluent_name = eff.fluent.fluent().name
         arg_names = tuple(_resolve_arg(a, bindings) for a in eff.fluent.args)
-        atom = (fluent_name, arg_names)
-        if eff.value.is_true():
-            atoms.add(atom)
-        elif eff.value.is_false():
-            atoms.discard(atom)
+        key = (fluent_name, arg_names)
+        if _is_numeric_expr(eff.fluent):
+            val = _eval_number(eff.value, bindings, state)
+            if eff.kind == EffectKind.ASSIGN:
+                assigns[key] = val
+            elif eff.kind == EffectKind.INCREASE:
+                deltas[key] = deltas.get(key, Fraction(0)) + val
+            elif eff.kind == EffectKind.DECREASE:
+                deltas[key] = deltas.get(key, Fraction(0)) - val
+            else:
+                raise UnsupportedConstructError(
+                    f"HTNTotalOrderPlanner: unsupported effect kind {eff.kind}"
+                )
         else:
-            raise NotImplementedError(
-                "HTNTotalOrderPlanner: only boolean-constant effect values are supported"
-            )
+            if eff.kind != EffectKind.ASSIGN:
+                raise UnsupportedConstructError(
+                    f"HTNTotalOrderPlanner: unsupported boolean effect kind {eff.kind}"
+                )
+            if _eval_condition(eff.value, bindings, state):
+                adds.add(key)
+            else:
+                dels.add(key)
+    atoms = {a for a in state if len(a) == 2}
+    atoms -= dels
+    atoms |= adds
+    numeric = {(a[0], a[1]): a[2] for a in state if len(a) == 3}
+    numeric.update(assigns)
+    for key, d in deltas.items():
+        base = assigns.get(key, numeric.get(key))
+        if base is None:
+            raise KeyError(f"HTNTotalOrderPlanner: numeric fluent {key} uninitialised")
+        numeric[key] = base + d
+    atoms |= {(k[0], k[1], v) for k, v in numeric.items()}
     return frozenset(atoms)
 
 
@@ -209,12 +318,20 @@ class HTNTotalOrderPlanner:
     def initial_state(self) -> State:
         atoms = set()
         for fexp, value in self.problem.initial_values.items():
-            if not value.is_bool_constant():
-                continue
-            if value.is_true():
-                fluent_name = fexp.fluent().name
-                arg_names = tuple(a.object().name for a in fexp.args)
-                atoms.add((fluent_name, arg_names))
+            fluent_name = fexp.fluent().name
+            arg_names = tuple(a.object().name for a in fexp.args)
+            if value.is_bool_constant():
+                if value.is_true():
+                    atoms.add((fluent_name, arg_names))
+            elif value.node_type in (
+                OperatorKind.INT_CONSTANT,
+                OperatorKind.REAL_CONSTANT,
+            ):
+                atoms.add((fluent_name, arg_names, Fraction(value.constant_value())))
+            else:
+                raise UnsupportedConstructError(
+                    f"HTNTotalOrderPlanner: unsupported initial value {value}"
+                )
         return frozenset(atoms)
 
     def initial_task_network(self) -> tuple:

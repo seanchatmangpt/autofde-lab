@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from enum import Enum
 
-from autofde_lab.core import Distribution
+from autofde_lab.core import Distribution, HookNotImplementedError
 
 # from autofde_lab.builders.scheduling.scheduling_domains import State
 
@@ -43,7 +43,7 @@ class WithConditionalTasks:
         return self._get_all_condition_items()
 
     def _get_all_condition_items(self) -> Enum:
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_all_condition_items")
 
     def get_task_on_completion_added_conditions(self) -> dict[int, list[Distribution]]:
         """Return a dict of list. The key of the dict is the task id and each list is composed of a list of tuples.
@@ -64,7 +64,7 @@ class WithConditionalTasks:
         return self._get_task_on_completion_added_conditions()
 
     def _get_task_on_completion_added_conditions(self) -> dict[int, list[Distribution]]:
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_task_on_completion_added_conditions")
 
     def _sample_completion_conditions(self, task: int) -> list[int]:
         """Samples the condition distributions associated with the given task and return a list of sampled
@@ -94,7 +94,7 @@ class WithConditionalTasks:
                  }e
 
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_task_existence_conditions")
 
     def get_task_existence_conditions(self) -> dict[int, list[int]]:
         """Return a dictionary where the key is a task id and the value a list of conditions to be respected (True)

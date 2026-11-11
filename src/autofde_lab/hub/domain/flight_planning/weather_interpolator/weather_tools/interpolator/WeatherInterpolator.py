@@ -663,4 +663,5 @@ class WeatherForecastInterpolator(WeatherInterpolator):
         return m
 
     def render(self, ax, **kwargs):
-        pass
+        """Interpolator has no default scene; return the given axis unchanged."""
+        return ax

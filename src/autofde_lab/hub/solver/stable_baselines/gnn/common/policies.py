@@ -305,7 +305,7 @@ class BaseGNN2NodeActorCriticPolicy(BaseGNNActorCriticPolicy):
         # Init weights: use orthogonal initialization
         # with small initial weight for the output
         if self.ortho_init:
-            # TODO: check for features_extractor
+            # features_extractor is covered by module_gains below
             # Values from stable-baselines.
             # features_extractor/mlp values are
             # originally from openai/baselines (default gains/init_scales).

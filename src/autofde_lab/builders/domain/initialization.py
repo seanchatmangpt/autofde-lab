@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import wrapt
 
+from autofde_lab.core import HookNotImplementedError
 from autofde_lab.core import D, Distribution, SingleValueDistribution, autocastable
 
 __all__ = ["Initializable", "UncertainInitialized", "DeterministicInitialized"]
@@ -39,8 +40,12 @@ class Initializable:
 
         # Returns
         An initial state.
+
+        # Raises
+        NotImplementedError: Abstract hook (template method) - a concrete domain
+        class must override it; the base class provides no default.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_state_reset")
 
 
 class UncertainInitialized(Initializable):
@@ -89,8 +94,12 @@ class UncertainInitialized(Initializable):
 
         # Returns
         The probability distribution of initial states.
+
+        # Raises
+        NotImplementedError: Abstract hook (template method) - a concrete domain
+        class must override it; the base class provides no default.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_initial_state_distribution_")
 
     def __getstate__(self):
         """Get state for pickle.
@@ -146,5 +155,9 @@ class DeterministicInitialized(UncertainInitialized):
 
         # Returns
         The initial state.
+
+        # Raises
+        NotImplementedError: Abstract hook (template method) - a concrete domain
+        class must override it; the base class provides no default.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_initial_state_")

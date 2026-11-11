@@ -16,6 +16,10 @@ DOMAIN_MODULE_PLACEHOLDER = "{{domain_module}}"
 DOMAIN_CLS_PLACEHOLDER = "{{domain_cls}}"
 
 
+class UnsupportedDomainTraitsError(NotImplementedError):
+    """No program template exists for the given domain characteristics."""
+
+
 def build_initial_program(
     domain_cls: type[Domain], include_rollout: bool = True
 ) -> str:
@@ -37,7 +41,7 @@ def build_initial_program(
                     f"{template_dir}/initial_program_sequential_singleagent.py.template"
                 )
     else:
-        raise NotImplementedError(
+        raise UnsupportedDomainTraitsError(
             "No initial program template defined for this domain characteristics."
         )
 
@@ -67,7 +71,7 @@ def build_initial_program(
                 else:
                     rollout_template_path = f"{template_dir}/rollout_sequential_singleagent_initializable.py.template"
         else:
-            raise NotImplementedError(
+            raise UnsupportedDomainTraitsError(
                 "No rollout template defined for this domain characteristics."
             )
 

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from autofde_lab.core import DiscreteDistribution, Distribution
+from autofde_lab.core import DiscreteDistribution, Distribution, HookNotImplementedError
 
 __all__ = [
     "SimulatedTaskDuration",
@@ -22,8 +22,8 @@ __all__ = [
 class SimulatedTaskDuration:
     """A domain must inherit this class if the task duration requires sampling from a simulation."""
 
-    # TODO, this can be challenged.. for uncertain domain (with adistribution, you want to sample a different value each time.
-    # that 's why i override this sample_task_duration in below level.
+    # Samples are cached per (task, mode, progress_from); uncertain-distribution
+    # subclasses override sample_task_duration to draw a fresh value on each call.
     def sample_task_duration(
         self, task: int, mode: int = 1, progress_from: float = 0.0
     ) -> int:
@@ -42,7 +42,7 @@ class SimulatedTaskDuration:
         self, task: int, mode: int = 1, progress_from: float = 0.0
     ) -> int:
         """Return a task duration for the given task in the given mode."""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_sample_task_duration")
 
     def get_latest_sampled_duration(
         self, task: int, mode: int = 1, progress_from: float = 0.0
@@ -54,7 +54,7 @@ class SimulatedTaskDuration:
         return self.sample_task_duration(task, mode, progress_from)
 
 
-# TODO: Can we currently model multivariate distribution with the Distribution object ?
+# Multivariate durations are modelled through multivariate_settings on the distribution hook.
 class UncertainMultivariateTaskDuration(SimulatedTaskDuration):
     """A domain must inherit this class if the task duration is uncertain and follows a know multivariate
     distribution."""
@@ -99,7 +99,7 @@ class UncertainMultivariateTaskDuration(SimulatedTaskDuration):
     ) -> Distribution:
         """Return the multivariate Distribution of the duration of the given task in the given mode.
         Multivariate seetings need to be provided."""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_task_duration_distribution")
 
 
 class UncertainUnivariateTaskDuration(UncertainMultivariateTaskDuration):
@@ -111,9 +111,9 @@ class UncertainUnivariateTaskDuration(UncertainMultivariateTaskDuration):
         mode: int = 1,
         progress_from: float = 0.0,
         multivariate_settings: Optional[dict[str, int]] = None,
-    ) -> Distribution:  # TODO, problem here i think
+    ) -> Distribution:  # Signature mirrors the multivariate hook (multivariate_settings).
         """Return the univariate Distribution of the duration of the given task in the given mode."""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_task_duration_distribution")
 
 
 class UncertainBoundedTaskDuration(UncertainUnivariateTaskDuration):
@@ -129,7 +129,7 @@ class UncertainBoundedTaskDuration(UncertainUnivariateTaskDuration):
     ) -> DiscreteDistribution:
         """Return the Distribution of the duration of the given task in the given mode.
         The distribution returns values beween the defined lower and upper bounds."""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_task_duration_distribution")
 
     def get_task_duration_upper_bound(
         self, task: int, mode: int = 1, progress_from: float = 0.0
@@ -141,7 +141,7 @@ class UncertainBoundedTaskDuration(UncertainUnivariateTaskDuration):
         self, task: int, mode: int = 1, progress_from: float = 0.0
     ) -> int:
         """Return the upper bound for the task duration of the given task in the given mode."""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_task_duration_upper_bound")
 
     def get_task_duration_lower_bound(
         self, task: int, mode: int = 1, progress_from: float = 0.0
@@ -153,7 +153,7 @@ class UncertainBoundedTaskDuration(UncertainUnivariateTaskDuration):
         self, task: int, mode: int = 1, progress_from: float = 0.0
     ) -> int:
         """Return the lower bound for the task duration of the given task in the given mode."""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_task_duration_lower_bound")
 
 
 class UniformBoundedTaskDuration(UncertainBoundedTaskDuration):
@@ -212,7 +212,7 @@ class DeterministicTaskDuration(EnumerableTaskDuration):
         self, task: int, mode: int = 1, progress_from: float = 0.0
     ) -> int:
         """Return the fixed deterministic task duration of the given task in the given mode."""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_task_duration")
 
     def _get_task_duration_distribution(
         self,

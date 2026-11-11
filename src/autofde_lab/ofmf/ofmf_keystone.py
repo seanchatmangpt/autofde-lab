@@ -1075,7 +1075,7 @@ class BpmnEmitter:
     DI = "http://www.omg.org/spec/DD/20100524/DI"
 
     def __init__(self) -> None:
-        pass
+        super().__init__()
 
     def emit_bpmn_xml(self, ds: ConjunctiveGraph, bpmn_graph_iri: URIRef) -> bytes:
         g = ds.get_context(bpmn_graph_iri)
@@ -1224,7 +1224,7 @@ class SpiffExecutor:
     """
 
     def __init__(self) -> None:
-        pass
+        super().__init__()
 
     def run(
         self, bpmn_xml_path: Path, start_task_name: Optional[str] = None
@@ -2671,7 +2671,7 @@ class BpmnXmlParser:
     """
 
     def __init__(self) -> None:
-        pass
+        super().__init__()
 
     def parse_xml_to_graph(self, xml_path: Path) -> Graph:
         """

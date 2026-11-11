@@ -106,11 +106,13 @@ class _OpenapPropulsionService(PropulsionServiceInterface):
         propulsion_settings: OpenapPropulsionSettings,
         aircraft_state: AircraftState,
     ) -> float:
-        pass
+        """Bound of the normalised throttle setting (tsp) in [0, 1] (idle: zero normalised throttle)."""
+        return 0.0
 
     def compute_max_rating(
         self,
         propulsion_settings: OpenapPropulsionSettings,
         aircraft_state: AircraftState,
     ) -> float:
-        pass
+        """Bound of the normalised throttle setting (tsp) in [0, 1] (full normalised throttle)."""
+        return 1.0

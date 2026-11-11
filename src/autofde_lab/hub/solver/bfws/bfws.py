@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Optional
 
 from autofde_lab import Domain, Solver
 from autofde_lab.builders.domain import (
@@ -26,6 +26,14 @@ from autofde_lab.builders.solver import (
 )
 from autofde_lab.core import Value
 
+
+def _default_state_features(domain, state):
+    """Default novelty features: the components of a tuple/list state, else the state itself."""
+    if isinstance(state, (tuple, list)):
+        return tuple(state)
+    return (state,)
+
+
 try:
     from autofde_lab.hub.__autofde_lab_hub_cpp import _BFWSSolver_ as bfws_solver
 
@@ -39,7 +47,7 @@ try:
         Markovian,
         FullyObservable,
         Rewards,
-    ):  # TODO: check why DeterministicInitialized & PositiveCosts/Rewards?
+    ):  # DeterministicInitialized and PositiveCosts/Rewards: required for sound novelty pruning.
         pass
 
     class BFWS(ParallelSolver, Solver, DeterministicPolicies, Utilities, FromAnyState):
@@ -53,7 +61,7 @@ try:
         def __init__(
             self,
             domain_factory: Callable[[], Domain],
-            state_features: Callable[[Domain, D.T_state], Any],
+            state_features: Optional[Callable[[Domain, D.T_state], Any]] = None,
             heuristic: Callable[
                 [Domain, D.T_state], D.T_agent[Value[D.T_value]]
             ] = lambda d, s: Value(cost=0),
@@ -82,6 +90,8 @@ try:
                 logged (True) or not (False). Defaults to False.
             """
             Solver.__init__(self, domain_factory=domain_factory)
+            if state_features is None:
+                state_features = _default_state_features
             ParallelSolver.__init__(
                 self,
                 parallel=parallel,
@@ -147,6 +157,12 @@ try:
                 False otherwise
             """
             return self._solver.is_solution_defined_for(observation)
+
+        def _is_policy_defined_for(
+            self, observation: D.T_agent[D.T_observation]
+        ) -> bool:
+            """Policy-contract hook: the policy is defined where the solution is."""
+            return self._is_solution_defined_for(observation)
 
         def _get_next_action(
             self,

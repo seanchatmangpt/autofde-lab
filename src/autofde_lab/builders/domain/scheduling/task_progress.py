@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from autofde_lab.core import HookNotImplementedError
+
 from typing import Optional
 
 __all__ = ["CustomTaskProgress", "DeterministicTaskProgress"]
@@ -38,7 +40,7 @@ class CustomTaskProgress:
         # Returns
          The task progress (float) between t_from and t_to.
         """
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_task_progress")
 
 
 class DeterministicTaskProgress(CustomTaskProgress):

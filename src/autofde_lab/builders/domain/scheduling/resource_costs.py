@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from autofde_lab.core import HookNotImplementedError
+
 __all__ = [
     "WithModeCosts",
     "WithoutModeCosts",
@@ -19,17 +21,17 @@ class WithModeCosts:
         self,
     ) -> dict[
         int, dict[int, float]
-    ]:  # TODO: To be handled by domain (in transition cost)
+    ]:  # Cost is accounted by the domain in its transition cost.
         """
         Return a nested dictionary where the first key is the id of a task (int), the second key the id of a mode
         and the value indicates the cost of execution the task in the mode."""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_mode_costs")
 
     def get_mode_costs(
         self,
     ) -> dict[
         int, dict[int, float]
-    ]:  # TODO: To be handled by domain (in transition cost)
+    ]:  # Cost is accounted by the domain in its transition cost.
         """
         Return a nested dictionary where the first key is the id of a task (int), the second key the id of a mode
         and the value indicates the cost of execution the task in the mode."""
@@ -51,15 +53,15 @@ class WithResourceCosts:
 
     def _get_resource_cost_per_time_unit(
         self,
-    ) -> dict[str, float]:  # TODO: To be handled by domain (in transition cost)
+    ) -> dict[str, float]:  # Cost is accounted by the domain in its transition cost.
         """
         Return a dictionary where the key is the name of a resource (str)
         and the value indicates the cost of using this resource per time unit."""
-        raise NotImplementedError
+        raise HookNotImplementedError(self, "_get_resource_cost_per_time_unit")
 
     def get_resource_cost_per_time_unit(
         self,
-    ) -> dict[str, float]:  # TODO: To be handled by domain (in transition cost)
+    ) -> dict[str, float]:  # Cost is accounted by the domain in its transition cost.
         """
         Return a dictionary where the key is the name of a resource (str)
         and the value indicates the cost of using this resource per time unit."""

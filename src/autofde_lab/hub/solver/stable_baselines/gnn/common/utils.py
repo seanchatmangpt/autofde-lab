@@ -14,6 +14,11 @@ TorchSubObsType = Union[th.Tensor, thg.data.Data]
 TorchObsType = Union[TorchSubObsType, dict[str, TorchSubObsType]]
 
 
+
+class UnsupportedInputError(NotImplementedError):
+    """Typed refusal for an input shape this GNN helper does not support."""
+
+
 def copy_graph_instance(g: gym.spaces.GraphInstance) -> gym.spaces.GraphInstance:
     nodes = np.copy(g.nodes)
     edge_links = np.copy(g.edge_links)
@@ -52,7 +57,7 @@ def obs_as_tensor(
         return graph_instance_to_thg_data(obs, device=device)
     elif isinstance(obs, list) and isinstance(obs[0], gym.spaces.GraphInstance):
         if len(obs) > 1:
-            raise NotImplementedError(
+            raise UnsupportedInputError(
                 "Not implemented for real vectorized environment "
                 "(ie. with more than 1 wrapped environment)"
             )
@@ -82,3 +87,50 @@ def is_vectorized_observation(
         return stable_baselines3.common.utils.is_vectorized_observation(
             observation=observation, observation_space=observation_space
         )
+
+
+def _normalize_array(
+    arr: np.ndarray, rms, epsilon: float, clip_obs: float
+) -> np.ndarray:
+    """Same math as stable_baselines3 VecNormalize.normalize_obs on one array."""
+    flat = arr.reshape((len(arr), -1)).astype(np.float64)
+    normalized = np.clip(
+        (flat - rms.mean) / np.sqrt(rms.var + epsilon), -clip_obs, clip_obs
+    )
+    return normalized.astype(np.float32).reshape(arr.shape)
+
+
+def normalize_graph_instance(
+    g: gym.spaces.GraphInstance,
+    obs_rms,
+    epsilon: float = 1e-8,
+    clip_obs: float = 10.0,
+) -> gym.spaces.GraphInstance:
+    """Normalize node (and edge) features of a graph like SB3's VecNormalize.
+
+    Args:
+        g: graph to normalize (not modified)
+        obs_rms: either a RunningMeanStd applied to node features, or a dict
+            with optional keys "nodes" and "edges" mapping to RunningMeanStd.
+        epsilon, clip_obs: same meaning as in VecNormalize.
+
+    """
+    if isinstance(obs_rms, dict):
+        nodes_rms = obs_rms.get("nodes")
+        edges_rms = obs_rms.get("edges")
+    else:
+        nodes_rms, edges_rms = obs_rms, None
+    nodes = (
+        np.copy(g.nodes)
+        if nodes_rms is None
+        else _normalize_array(g.nodes, nodes_rms, epsilon, clip_obs)
+    )
+    if g.edges is None:
+        edges = None
+    elif edges_rms is None:
+        edges = np.copy(g.edges)
+    else:
+        edges = _normalize_array(g.edges, edges_rms, epsilon, clip_obs)
+    return gym.spaces.GraphInstance(
+        nodes=nodes, edges=edges, edge_links=np.copy(g.edge_links)
+    )

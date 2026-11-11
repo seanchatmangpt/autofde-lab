@@ -1,3 +1,4 @@
+from autofde_lab.hub.solver.stable_baselines.errors import UnsupportedConfigurationError
 import copy
 from functools import partial
 from typing import Any, Optional, Union
@@ -90,9 +91,6 @@ class AutoregressiveActorCriticPolicy(MaskableActorCriticPolicy):
                 "action_space must be a *flat* multidiscrete space. "
                 "(i.e action_space.nvec is a 1-d array)."
             )
-
-        if not share_features_extractor:
-            raise NotImplementedError()
 
         # default list of flags for action components graph nodes (not relevant if not in
         # AutoregressiveHeteroGraph2NodeActorCriticPolicy)
@@ -221,7 +219,14 @@ class AutoregressiveActorCriticPolicy(MaskableActorCriticPolicy):
 
         if self.ortho_init:
             module_gains = {
-                self.features_extractor: np.sqrt(2),
+                **{
+                    extractor: np.sqrt(2)
+                    for extractor in (
+                        [self.features_extractor]
+                        if self.share_features_extractor
+                        else [self.pi_features_extractor, self.vf_features_extractor]
+                    )
+                },
                 self.mlp_extractor_value: np.sqrt(2),
                 **{
                     mlp_extractor: np.sqrt(2)
@@ -244,6 +249,19 @@ class AutoregressiveActorCriticPolicy(MaskableActorCriticPolicy):
             self.parameters(), lr=lr_schedule(1), **self.optimizer_kwargs
         )  # type: ignore[call-arg]
 
+    def _extract_pi_vf_features(self, obs: ObsType) -> tuple[th.Tensor, th.Tensor]:
+        """Extract (actor features, critic features).
+
+        Same tensor twice when the features extractor is shared, else the outputs
+        of the separate pi and vf extractors.
+
+        """
+        features = self.extract_features(obs)
+        if self.share_features_extractor:
+            return features, features
+        pi_features, vf_features = features
+        return pi_features, vf_features
+
     def forward(
         self,
         obs: ObsType,
@@ -251,10 +269,10 @@ class AutoregressiveActorCriticPolicy(MaskableActorCriticPolicy):
         action_masks: Optional[Union[th.Tensor, np.ndarray]] = None,
     ) -> tuple[th.Tensor, th.Tensor, th.Tensor]:
         # features
-        features = self.extract_features(obs)
+        features, vf_features = self._extract_pi_vf_features(obs)
 
         # value
-        latent_vf = self.mlp_extractor_value.forward_critic(features)
+        latent_vf = self.mlp_extractor_value.forward_critic(vf_features)
         values = self.value_net(latent_vf)
 
         # actions + distribution update
@@ -280,7 +298,7 @@ class AutoregressiveActorCriticPolicy(MaskableActorCriticPolicy):
         assert len(actions.shape) == 2
 
         # features
-        features = self.extract_features(obs)
+        features, vf_features = self._extract_pi_vf_features(obs)
         # hyp: features are flat
         assert len(features.shape) == 2
 
@@ -351,7 +369,7 @@ class AutoregressiveActorCriticPolicy(MaskableActorCriticPolicy):
             n_node_features_before_position_feature = 0
 
         # value
-        latent_vf = self.mlp_extractor_value.forward_critic(features)
+        latent_vf = self.mlp_extractor_value.forward_critic(vf_features)
         values = self.value_net(latent_vf)
 
         # reset action distrib to forget previous marginals parametrization/masking
@@ -506,7 +524,18 @@ class AutoregressiveActorCriticPolicy(MaskableActorCriticPolicy):
         obs: ObsType,
         action_masks: Optional[th.Tensor] = None,
     ) -> Distribution:
-        raise NotImplementedError()
+        """Not defined for an autoregressive policy (abstract-by-design).
+
+        Each action component is distributed conditionally on the components
+        sampled before it, so no single distribution exists for an observation
+        alone. Use `forward`, `evaluate_actions` or `predict` instead.
+
+        """
+        raise UnsupportedConfigurationError(
+            "An autoregressive policy has no observation-only action distribution: "
+            "components are conditioned on previously sampled ones. "
+            "Use forward(), evaluate_actions() or predict()."
+        )
 
     def _predict(
         self,
@@ -515,7 +544,7 @@ class AutoregressiveActorCriticPolicy(MaskableActorCriticPolicy):
         action_masks: Optional[np.ndarray] = None,
     ) -> th.Tensor:
         # features
-        features = self.extract_features(observation)
+        features, _ = self._extract_pi_vf_features(observation)
 
         # action prediction as in forward()
         return self._compute_distribution_and_sample_action(

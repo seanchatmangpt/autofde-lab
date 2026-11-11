@@ -24,6 +24,28 @@ from autofde_lab.builders.domain.scheduling.scheduling_domains import (
 )
 
 
+
+def _default_renewability(
+    resource_names: Optional[list[str]],
+    resource_renewable: Optional[dict[str, bool]],
+) -> dict[str, bool]:
+    """Every declared resource is renewable unless explicitly specified."""
+    result = {r: True for r in (resource_names or [])}
+    if resource_renewable:
+        result.update(resource_renewable)
+    return result
+
+
+def _validate_one_based_task_ids(task_ids) -> None:
+    """The DO solver bridge indexes tasks from 1; reject 0-based ids early."""
+    if 0 in task_ids:
+        raise ValueError(
+            "RCPSP task ids must be 1-based (found task id 0). The DO solver "
+            "bridge (sgs_policies) indexes tasks starting at 1; renumber tasks "
+            "and successors so ids run 1..N."
+        )
+
+
 class D(MultiModeRCPSP):
     pass
 
@@ -64,10 +86,10 @@ class MRCPSP(D):
             self.resource_availability: dict[str, int] = {}
         else:
             self.resource_availability = resource_availability
-        if resource_renewable is None:
-            self.resource_renewable: dict[str, bool] = {}
-        else:
-            self.resource_renewable = resource_renewable
+        self.resource_renewable: dict[str, bool] = _default_renewability(
+            self.resource_names, resource_renewable
+        )
+        _validate_one_based_task_ids(tasks_mode)
         self.task_ids = list(tasks_mode)
         # transform the "mode_details" dict that we largely used in DO in the good format.
         self.task_mode_dict = {}
@@ -159,10 +181,10 @@ class MRCPSPCalendar(D):
             self.resource_availability: dict[str, list[int]] = {}
         else:
             self.resource_availability = resource_availability
-        if resource_renewable is None:
-            self.resource_renewable: dict[str, bool] = {}
-        else:
-            self.resource_renewable = resource_renewable
+        self.resource_renewable: dict[str, bool] = _default_renewability(
+            self.resource_names, resource_renewable
+        )
+        _validate_one_based_task_ids(tasks_mode)
         self.task_ids = list(tasks_mode)
         # transform the "mode_details" dict that we largely used in DO in the good format.
         self.task_mode_dict = {}
@@ -332,10 +354,9 @@ class Stochastic_RCPSP(MultiModeRCPSP_Stochastic_Durations):
             self.resource_availability: dict[str, int] = {}
         else:
             self.resource_availability = resource_availability
-        if resource_renewable is None:
-            self.resource_renewable: dict[str, bool] = {}
-        else:
-            self.resource_renewable = resource_renewable
+        self.resource_renewable: dict[str, bool] = _default_renewability(
+            self.resource_names, resource_renewable
+        )
         if tasks_mode is None:
             self.task_mode_dict: dict[int, dict[int, ModeConsumption]] = {}
         else:
@@ -501,10 +522,9 @@ class SMRCPSPCalendar(D):
             self.resource_availability: dict[str, list[int]] = {}
         else:
             self.resource_availability = resource_availability
-        if resource_renewable is None:
-            self.resource_renewable: dict[str, bool] = {}
-        else:
-            self.resource_renewable = resource_renewable
+        self.resource_renewable: dict[str, bool] = _default_renewability(
+            self.resource_names, resource_renewable
+        )
         if tasks_mode is None:
             self.task_mode_dict: dict[int, dict[int, ModeConsumption]] = {}
         else:
@@ -594,10 +614,10 @@ class MSRCPSP(D):
             self.resource_availability: dict[str, int] = {}
         else:
             self.resource_availability = resource_availability
-        if resource_renewable is None:
-            self.resource_renewable: dict[str, bool] = {}
-        else:
-            self.resource_renewable = resource_renewable
+        self.resource_renewable: dict[str, bool] = _default_renewability(
+            self.resource_names, resource_renewable
+        )
+        _validate_one_based_task_ids(tasks_mode)
         self.task_ids = list(tasks_mode)
         # transform the "mode_details" dict that we largely used in DO in the good format.
         self.task_mode_dict = {}
@@ -718,10 +738,10 @@ class MSRCPSPCalendar(D):
             self.resource_availability: dict[str, list[int]] = {}
         else:
             self.resource_availability = resource_availability
-        if resource_renewable is None:
-            self.resource_renewable: dict[str, bool] = {}
-        else:
-            self.resource_renewable = resource_renewable
+        self.resource_renewable: dict[str, bool] = _default_renewability(
+            self.resource_names, resource_renewable
+        )
+        _validate_one_based_task_ids(tasks_mode)
         self.task_ids = list(tasks_mode)
         # transform the "mode_details" dict that we largely used in DO in the good format.
         self.task_mode_dict = {}

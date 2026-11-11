@@ -2,10 +2,16 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from abc import ABC, abstractmethod
 
-class Evaluator:
+
+class Evaluator(ABC):
+    """Contract for CGP fitness evaluators; subclasses must implement both methods."""
+
+    @abstractmethod
     def evaluate(self, cgp, it):
-        raise NotImplementedError("evaluation method not implemented")
+        """Return the fitness of individual `cgp` at iteration `it`."""
 
+    @abstractmethod
     def clone(self):
-        raise NotImplementedError("clone method not implemented")
+        """Return an independent copy usable from another worker."""
