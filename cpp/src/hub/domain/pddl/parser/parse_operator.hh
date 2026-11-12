@@ -6,6 +6,8 @@
 #ifndef SKDECIDE_PDDL_PARSE_ACTION_HH
 #define SKDECIDE_PDDL_PARSE_ACTION_HH
 
+#include <iostream>
+
 #include "pegtl.hpp"
 
 #include "parser_state.hh"
@@ -183,6 +185,28 @@ template <typename Rule> struct close_operator_precondition_action {
   }
 };
 
+// AFL-14 fix: the `:duration` constraint of a durative action was parsed but
+// never bound to the operator, so TemporalSimulator::evaluate_duration always
+// fell back to the 1.0 default and durative actions ended one tick after
+// start. Bind the parsed formula here.
+template <typename Operator>
+struct open_operator_duration
+    : pegtl::seq<ignored, keyword<':', 'd', 'u', 'r', 'a', 't', 'i', 'o', 'n'>,
+                 ignored> {};
+
+template <typename Operator>
+struct close_operator_duration
+    : pegtl::action<action, pegtl::seq<duration_constraint, ignored>> {
+  typedef Operator OP;
+};
+
+template <typename Rule> struct close_operator_duration_action {
+  static void apply0(state &s) {
+    typedef typename Rule::OP OP;
+    OP::get_operator(s)->set_duration_constraint(s.formula);
+  }
+};
+
 struct open_operator_effect
     : pegtl::seq<keyword<':', 'e', 'f', 'f', 'e', 'c', 't'>, ignored> {};
 
@@ -216,10 +240,10 @@ struct close_operator
                                         close_operator_parameters<Operator>>>,
               typename std::conditional<
                   std::is_same<Operator, DurativeActionOperator>::value,
-                  pegtl::seq<
-                      ignored,
-                      keyword<':', 'd', 'u', 'r', 'a', 't', 'i', 'o', 'n'>,
-                      ignored, duration_constraint, ignored>,
+                  pegtl::opt<pegtl::if_must<
+                      open_operator_duration<Operator>,
+                      pegtl::action<close_operator_duration_action,
+                                    close_operator_duration<Operator>>>>,
                   ignored>::type,
               pegtl::opt<pegtl::if_must<
                   open_operator_precondition<Operator>,

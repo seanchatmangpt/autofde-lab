@@ -301,8 +301,12 @@ struct close_operation_expression
               ignored,
               typename std::conditional<
                   std::is_same<ExpressionRule, duration_expression>::value,
+                  // AFL-14 fix: RHS of a duration comparison must accept
+                  // ?duration and numeric constants; plain `expression` can
+                  // match neither, so `(= ?duration 5)` never parsed and the
+                  // duration constraint was silently dropped.
                   pegtl::action<operation_rhs_action,
-                                operation_rhs<Operator, expression>>,
+                                operation_rhs<Operator, durative_expression>>,
                   typename std::conditional<
                       std::is_same<Operator, SubOperator>::value,
                       pegtl::opt<pegtl::action<

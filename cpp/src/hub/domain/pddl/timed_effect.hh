@@ -12,6 +12,15 @@ namespace skdecide {
 
 namespace pddl {
 
+// Gating for timed effects of durative actions. TemporalSimulator applies the
+// full action effect (a conjunction whose children may be AtStart/AtEnd
+// wrappers) at BOTH start_durative_action and end_durative_action; without a
+// gate, at-end effects would wrongly fire at start and at-start effects at
+// end. The simulator sets the gate so only the relevant timed effects apply.
+enum class TimedEffectMode { All, AtStartOnly, AtEndOnly };
+
+void set_timed_effect_mode(TimedEffectMode mode);
+
 class AtStartEffect : public UnaryEffect<AtStartEffect> {
 public:
   static constexpr char class_name[] = "at start";

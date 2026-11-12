@@ -221,11 +221,14 @@ State TemporalSimulator::start_durative_action(
 
   State s = state.copy();
 
-  // Apply at-start effects
+  // Apply at-start effects only (at-end effects must not fire at start —
+  // AFL-14 fix, W4-19/AFL-6 fix shape).
   auto &effect = da->get_effect();
   if (effect) {
     s.duration = dur;
+    set_timed_effect_mode(TimedEffectMode::AtStartOnly);
     auto outcomes = effect->apply(s, _task, da_action.binding);
+    set_timed_effect_mode(TimedEffectMode::All);
     if (!outcomes.empty()) {
       s = std::move(outcomes[0].second);
     }
@@ -254,11 +257,13 @@ State TemporalSimulator::end_durative_action(const State &state,
 
   State s = state.copy();
 
-  // Apply at-end effects
+  // Apply at-end effects only (at-start effects must not re-fire at end).
   auto &effect = da->get_effect();
   if (effect) {
     s.duration = ada.end_time - ada.start_time;
+    set_timed_effect_mode(TimedEffectMode::AtEndOnly);
     auto outcomes = effect->apply(s, _task, ada.binding);
+    set_timed_effect_mode(TimedEffectMode::All);
     if (!outcomes.empty()) {
       s = std::move(outcomes[0].second);
     }

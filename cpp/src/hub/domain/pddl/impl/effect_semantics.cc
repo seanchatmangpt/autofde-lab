@@ -28,6 +28,15 @@ namespace skdecide {
 
 namespace pddl {
 
+// Timed-effect gate (see timed_effect.hh): which timed effects may apply.
+namespace {
+thread_local TimedEffectMode g_timed_effect_mode = TimedEffectMode::All;
+}
+
+void set_timed_effect_mode(TimedEffectMode mode) {
+  g_timed_effect_mode = mode;
+}
+
 // === collect_add_atoms / collect_cost_increase overrides ===
 
 // --- PredicateEffect ---
@@ -557,14 +566,23 @@ Effect::Outcomes ScaleDownEffect::apply(const State &state, const Task &task,
 }
 
 // --- AtStartEffect ---
-Effect::Outcomes AtStartEffect::apply(const State &state, const Task &task,
+Effect::Outcomes AtStartEffect::apply(const State &start_state_unused, const Task &task,
                                       const Binding &binding) const {
-  return get_effect()->apply(state, task, binding);
+  if (g_timed_effect_mode == TimedEffectMode::AtEndOnly) {
+    // Blocked at end of durative action: at-start effects must not re-fire.
+    return {{1.0, start_state_unused.copy()}};
+  }
+  return get_effect()->apply(start_state_unused, task, binding);
 }
 
 // --- AtEndEffect ---
 Effect::Outcomes AtEndEffect::apply(const State &state, const Task &task,
                                     const Binding &binding) const {
+  if (g_timed_effect_mode == TimedEffectMode::AtStartOnly) {
+    // Blocked at start of durative action: at-end effects must not fire
+    // before the action completes (AFL-14 fix, W4-19/AFL-6 fix shape).
+    return {{1.0, state.copy()}};
+  }
   return get_effect()->apply(state, task, binding);
 }
 
