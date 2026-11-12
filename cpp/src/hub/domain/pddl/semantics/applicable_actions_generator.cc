@@ -94,14 +94,44 @@ ApplicableActionsGenerator::get_applicable_actions(const State &state,
   for (auto &model : handle) {
     auto symbols = model.symbols(Clingo::ShowType::Shown);
     for (auto &sym : symbols) {
-      // Match applicable_N(...) atoms
+      // Match applicable_N(...) atoms. The shared ASP program also emits
+      // applicable_da_N(...) rules for durative actions (task.cc), and the
+      // temporal simulator's active_process_N / event_trigger_N atoms never
+      // carry the applicable_ prefix. Without a digit guard, a shown
+      // applicable_da_N atom reached std::stoi("da_N") and aborted solving
+      // with "stoi: no conversion" on any durative-action domain
+      // (witnessed: the servengine FM domain, which declares only
+      // :durative-action operators).
       std::string name = sym.name();
       if (name.substr(0, 11) != "applicable_")
         continue;
 
-      int action_id = std::stoi(name.substr(11));
-      auto &action = _task.actions()[action_id];
-      auto &params = action->get_variables();
+      // Durative actions participate in the classical relaxation: their
+      // at-start ASP rule gates applicability, and the successor generator
+      // applies their full (at-start + at-end) effect set at once
+      // (TimedEffectMode::All). They are addressed by unified ids offset by
+      // the instantaneous-action count so _task.actions() is never indexed
+      // out of range.
+      const auto num_actions =
+          static_cast<int>(_task.actions().size());
+      int action_id;
+      const std::vector<std::shared_ptr<Variable>> *params;
+      const Formula::Ptr *condition;
+      if (name.rfind("applicable_da_", 0) == 0) {
+        int da_id = std::stoi(name.substr(14));
+        auto &da = _task.durative_actions().at(da_id);
+        action_id = num_actions + da_id;
+        params = &da->get_variables();
+        condition = &da->get_condition();
+      } else if (std::isdigit(static_cast<unsigned char>(name[11]))) {
+        action_id = std::stoi(name.substr(11));
+        auto &action = _task.actions().at(action_id);
+        params = &action->get_variables();
+        condition = &action->get_condition();
+      } else {
+        // Unknown auxiliary applicable_* atom: skip rather than stoi-crash.
+        continue;
+      }
 
       GroundAction ga;
       ga.action_id = action_id;
@@ -111,12 +141,12 @@ ApplicableActionsGenerator::get_applicable_actions(const State &state,
       for (std::size_t i = 0; i < args.size(); ++i) {
         int obj_id = args[i].number();
         ga.arguments.push_back(obj_id);
-        ga.binding[params[i]->get_name()] = obj_id;
+        ga.binding[(*params)[i]->get_name()] = obj_id;
       }
 
       // Post-filter: check numeric preconditions via polymorphic holds()
       if (check_numeric) {
-        auto &precond = action->get_condition();
+        auto &precond = *condition;
         if (precond) {
           if (!precond->holds(state, _task, ga.binding)) {
             continue;

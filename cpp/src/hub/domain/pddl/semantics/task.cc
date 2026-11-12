@@ -184,6 +184,14 @@ const std::string &Task::durative_action_name(int da_id) const {
   return _durative_actions.at(da_id)->get_name();
 }
 
+const std::string &Task::unified_action_name(int unified_id) const {
+  if (unified_id < static_cast<int>(_actions.size())) {
+    return _actions.at(unified_id)->get_name();
+  }
+  return _durative_actions.at(unified_id - static_cast<int>(_actions.size()))
+      ->get_name();
+}
+
 const State &Task::initial_state() const { return _initial_state; }
 
 const std::shared_ptr<Formula> &Task::goal() const {

@@ -1428,6 +1428,8 @@ void init_pypddl(py::module &m) {
            py::return_value_policy::reference_internal)
       .def("action_name", &Task::action_name, py::arg("action_id"),
            py::return_value_policy::reference_internal)
+      .def("unified_action_name", &Task::unified_action_name,
+           py::arg("unified_id"), py::return_value_policy::reference_internal)
       .def("num_events", &Task::num_events)
       .def("event_name", &Task::event_name, py::arg("event_id"),
            py::return_value_policy::reference_internal)

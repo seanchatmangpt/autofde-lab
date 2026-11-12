@@ -55,6 +55,12 @@ public:
   const std::vector<std::shared_ptr<Action>> &actions() const;
   const std::string &action_name(int action_id) const;
 
+  // Name for unified ids: instantaneous actions first, then durative actions
+  // offset by the instantaneous count (the ApplicableActionsGenerator emits
+  // durative actions with exactly this offset under the classical
+  // relaxation).
+  const std::string &unified_action_name(int unified_id) const;
+
   int num_events() const;
   const std::vector<std::shared_ptr<Event>> &events() const;
   const std::string &event_name(int event_id) const;

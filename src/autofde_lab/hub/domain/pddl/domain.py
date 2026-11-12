@@ -141,7 +141,9 @@ class PDDLAction:
         )
 
     def __repr__(self):
-        name = self._task.action_name(self.action_id)
+        # Unified ids: instantaneous actions first, then durative actions
+        # (classical relaxation) offset by the instantaneous count.
+        name = self._task.unified_action_name(self.action_id)
         args = " ".join(self._task.object_name(a) for a in self.arguments)
         if args:
             return f"({name} {args})"
