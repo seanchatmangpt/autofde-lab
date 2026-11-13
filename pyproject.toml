@@ -56,7 +56,10 @@ upstream = "https://github.com/airbus/scikit-decide"
 
 [project.optional-dependencies]
 shared = [  # define a common extra to avoid redefining dependencies in both domains and solvers
-    "gymnasium>=0.29.1,<2",  # verified real: gymnasium>=1 is required by ray[rllib]>=2.52.1 (real
+    # PIN 2026-11-13: gymnasium 1.4.0 raised ImportError (T_cov) when imported; <1.1 is the
+    # observed-good range. (Older note below about ray[rllib] wanting gymnasium>=1 is
+    # superseded by this pin: 1.0.x satisfies >=1.)
+    "gymnasium>=0.29.1,<1.1",  # was <2; verified real: gymnasium>=1 is required by ray[rllib]>=2.52.1 (real
     # gymnasium.VectorizeMode import at rllib import time) and works with GymDomain (real
     # PPO train+rollout via RayRLlib on gymnasium==1.3.0); <2 matches stable-baselines3's own
     # real declared ceiling (gymnasium<2.0,>=0.29.1). AsLegacyGymV21Env/AsGymnasiumEnv (which
@@ -107,6 +110,25 @@ receipts = [  # autofde_lab.receipts admission/broker layer: typed process-minin
     # of an exact wasm4pm-compat GitHub revision below.
     "wasm4pm-compat-pydantic",
 ]
+plan = [  # plan/ pipeline + Justfile recipes (run on this venv; pm4pytest is installed editable separately)
+    "ortools",
+    "minizinc",
+    "pm4py>=2.7.23",
+    "hypothesis",
+    "factory-boy",
+    "faker",
+    "unified-planning[aries]>=1.3",
+    "up-aries>=0.5.0",
+    "pytest",
+    "pytest-xdist",
+    "rdflib",
+    "pyshacl",
+    "pandas",
+    "plotly",
+    "allpairspy",  # imported by test_vince_continuum_mega / fast tier
+    "streamlit",  # console.py live server
+    "playwright",  # ui_driver
+]
 domains = [
     "autofde-lab[shared]", # self-reference allowed by pip since 21.2 (https://github.com/pypa/pip/issues/11296)
     "matplotlib>=3.3.4",
@@ -136,6 +158,7 @@ solvers = [
     # upper bound is no longer needed -- real PPO train+rollout verified on ray==2.52.1).
     "stable-baselines3>=2",
     "sb3_contrib>=2.3",
+    "sb3-contrib",  # same group as stable-baselines3 (PEP 503 alias of sb3_contrib)
     # up-tamer dropped 2026-09-19: its own marker (python_version < '3.12')
     # is permanently unsatisfiable now that this project's floor is >=3.12,
     # and it was unused (no import anywhere in src/ or tests/).
