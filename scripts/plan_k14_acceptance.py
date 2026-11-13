@@ -1,6 +1,6 @@
-"""Acceptance: run every ~/plan K14 case through k14_autofde.run and compare to Case.expect.
+"""Acceptance: run every ~/fnox K14 case through k14_autofde.run and compare to Case.expect.
 
-Run: cd /Users/sac/plan && PYTHONPATH=pipeline:pipeline/tests uv run --quiet python <this file>
+Run: cd /Users/sac/fnox && PYTHONPATH=pipeline:pipeline/tests uv run --quiet python <this file>
 Exit 1 on any mismatch, any SKIP, or a Traceback in the unsolvable case's output.
 """
 from __future__ import annotations

@@ -1,6 +1,6 @@
 """Consumer acceptance: K14 cases + every coprocessor kind + graphlaw round-trip.
 
-Run: cd /Users/sac/plan && PYTHONPATH=pipeline:pipeline/tests \
+Run: cd /Users/sac/fnox && PYTHONPATH=pipeline:pipeline/tests \
      uv run --quiet python /Users/sac/autofde-lab/scripts/gall_consumer_acceptance.py
 Each coprocessor kind has a PLAN case and an anti-vacuity REFUSED/INFEASIBLE/NO_PLAN case.
 Exit 1 on any mismatch, any SKIP, any absent module, or a Traceback in a child.
