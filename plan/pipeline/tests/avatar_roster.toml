@@ -1,0 +1,40 @@
+# Every role named in the Tony/Vince walkthrough, mapped to the console avatar that can act for
+# it today, or to "unsupported" (a loud, counted gap, never a silent skip). Avatar strings are
+# the `avatar` field the console writes into the event store.
+
+[roles]
+super_user = "admin"
+project_coordinator = "coord"
+reactive_sp_hirer = "coord"
+proactive_sp_hirer = "align"
+sp_alignment = "align"
+escalations_officer = "align"
+checkin_checkout_admin = "field"
+closing_admin = "qa"
+invoicer = "system"
+
+[unsupported]
+entity_lead = "no per-entity or per-client access scoping in the console"
+team_lead = "no team or client-ownership model"
+assistant = "no assistant role"
+proposal_specialist = "no proposal authoring or generation view"
+trade_sme = "no SME review step"
+communications_admin = "no client-system update channel"
+admin_manager = "no admin hierarchy"
+ap_manager = "no card or bank-account access control"
+ap_officer = "no AP workflow beyond the exact ledger"
+collections = "no aging summary"
+bookkeeper = "no QuickBooks expense posting"
+recruiter = "no post-payment recruiter call"
+sp_coach = "no performance coaching view"
+sales_rep = "no out-of-coverage notification to the sales rep"
+procurement_manager = "no procurement request view"
+procurement_officer = "no procurement request view"
+
+# L5 [kinds]: event kind -> scope the authorization check keys on ("entity" or "client").
+# An entity_lead may act on kinds scoped "entity" or "client" inside its entity; a team_lead only
+# on kinds scoped "client" for its client; super_user on any.
+[kinds]
+client = "entity"
+site = "client"
+work_order = "client"

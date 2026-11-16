@@ -1,0 +1,33 @@
+# Root build. Lane modules are optional (import? tolerates absence).
+import? 'justfile.d/01-l1.just'
+import? 'justfile.d/07-executor.just'
+import? 'justfile.d/10-root.just'
+import? 'justfile.d/20-alignment.just'
+import? 'justfile.d/30-l3-cpsat.just'
+import? 'justfile.d/40-pipeline.just'
+import? 'justfile.d/45-ui.just'
+import? 'justfile.d/46-plankinds.just'
+import? 'justfile.d/47-rules.just'
+import? 'justfile.d/48-fast.just'
+import? 'justfile.d/50-pm.just'
+import? 'justfile.d/60-procurepass.just'
+import? 'justfile.d/80-l8.just'
+import? 'justfile.d/90-ledger.just'
+import? 'justfile.d/95-diataxis.just'
+
+default:
+    @just --list
+
+bootstrap:
+    bash scripts/bootstrap.sh
+
+ontology:
+    python3 scripts/pddl_to_ttl.py spec/servengine_ideal_domain.pddl ontology/servengine.ttl
+    uv run --quiet --with rdflib --with pyshacl python scripts/validate_ttl.py ontology/servengine.ttl
+
+receipts-lint:
+    python3 scripts/receipts_lint.py receipts
+
+# Aggregate gate: runs each lane's gate recipe (gate-* / *-gate) that exists.
+check:
+    python3 scripts/check.py

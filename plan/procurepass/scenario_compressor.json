@@ -1,0 +1,9 @@
+{"sla_minutes": 4320, "nte_limit": 400000, "labor_cost": 100000, "markup_pct": 20,
+ "diagnose_minutes": 120, "install_minutes": 180, "order_delay_minutes": 60, "travel_minutes": 45,
+ "options": [
+  {"supplier": "acme_hvac", "warehouse": "wh_la", "part_cost": 150000, "ship_cost": 5000, "lead_minutes": 1440,
+   "slots": [{"start": 1500, "fee": 0}, {"start": 2000, "fee": 0}]},
+  {"supplier": "coolparts", "warehouse": "wh_sd", "part_cost": 140000, "ship_cost": 9000, "lead_minutes": 2880,
+   "slots": [{"start": 3000, "fee": 0}]},
+  {"supplier": "slowco", "warehouse": "wh_ny", "part_cost": 100000, "ship_cost": 2000, "lead_minutes": 6000,
+   "slots": [{"start": 6100, "fee": 0}]}]}

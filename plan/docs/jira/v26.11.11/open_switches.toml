@@ -1,0 +1,50 @@
+# schema: open-v1
+# Defaults not stated by the operator are the conservative option; the code was not read by lane L0.
+
+[clock_policy]
+default = "strict_internal"
+options = ["strict_internal", "quoted_safe_harbor", "auto_gpm_density"]
+
+[clock_policy_auto]
+default = "strict_internal"
+options = ["auto_gpm_density", "strict_internal"]
+desolate_market_provider_threshold = 3
+gpm_safe_harbor_bps = 5500
+low_rate_safe_harbor_cents = 7500
+
+[change_order_parent_wait]
+default = "independent"
+options = ["wait_for_parent", "independent"]
+
+[change_order_nte_cap]
+default = "own_nte"
+options = ["own_nte", "parent_nte"]
+
+[handoff_semantics]
+default = "end_at_handoff"
+options = ["end_at_handoff", "continue_after_hire"]
+
+[entity_dba_model]
+default = "entity_dba_on_one_entity"
+options = ["entity_dba_on_one_entity", "one_entity_row_per_dba_with_parent_ref"]
+
+[document_expiry_enforcement]
+default = "veto_dispatch_when_expired"
+options = ["veto_dispatch_when_expired", "record_and_warn"]
+
+[provider_filter_validation]
+default = "strict"
+options = ["strict", "record_then_warn"]
+
+[media_prompt_mode]
+default = "soft_only"
+options = ["soft_only", "hard_refuse"]
+
+[pm_daily_minutes_cap]
+default = "uncapped"
+options = ["capped", "uncapped"]
+pm_daily_minutes_cap = 480
+
+[secondary_out_of_coverage]
+default = "flag_and_plan"
+options = ["flag_and_plan", "refuse"]

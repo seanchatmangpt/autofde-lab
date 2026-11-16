@@ -1,0 +1,35 @@
+# Structural vocabulary for the factory-generated JTBD plans. Domain type names are checked
+# against the static domain at import (jtbd_factories.py); no entity, rate or outcome values here.
+
+[domain]
+entity_docs = ["ss4_doc", "w9_doc"]
+provider_docs = ["w9_doc", "contract_doc", "coi_doc", "license_doc"]
+expiring_provider_docs = ["coi_doc", "license_doc"]
+taxonomy = ["trade", "sub_trade", "state_jurisdiction", "priority_tier"]
+media_before = "before_media"
+media_after = "after_media"
+media_tag = "model_tag_photo"
+
+[bounds]
+attest_mismatch_extra_min = 1
+attest_mismatch_extra_max = 60
+expired_days_min = 1
+expired_days_max = 365
+
+[expect]
+recorded = "RECORDED"
+refused = "REFUSED"
+no_plan = "NO_PLAN"
+plan_ok = "PLAN_OK"
+ledger_ok = "LEDGER_OK"
+ledger_refused = "LEDGER_REFUSED"
+
+# Vince's worked examples as economic envelopes (cents per hour): the premium technician who
+# never pads the clock (~$300/h), the budget technician who does (~$45/h).
+[mega]
+premium_rate_min_cents = 25000
+premium_rate_max_cents = 35000
+budget_rate_min_cents = 4000
+budget_rate_max_cents = 5000
+client_spread_min_cents = 3000
+client_spread_max_cents = 9000

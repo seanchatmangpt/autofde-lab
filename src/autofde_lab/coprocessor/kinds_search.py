@@ -110,6 +110,10 @@ def _fond(env: Envelope) -> Result:
     )
 
     p = env.payload
+    if "hddl_domain_text" in p or "hddl_domain_path" in p:
+        p, bad = _fond_from_hddl(p, env)
+        if bad is not None:
+            return bad
     err = _need(p, "initial", "goals", "transitions")
     if err:
         return refused(err, kind="fond")
@@ -325,6 +329,8 @@ def _mdp(env: Envelope) -> Result:
     from autofde_lab import Value
 
     p = env.payload
+    if "ppddl_domain_text" in p or "ppddl_domain_path" in p:
+        return _mdp_from_ppddl(env)
     err = _need(p, "initial", "goals", "transitions")
     if err:
         return refused(err, kind="mdp")
@@ -405,3 +411,340 @@ def _mdp(env: Envelope) -> Result:
     diag["most_likely_path_end"] = cur
     diag["policy_first_action"] = plan[0] if plan else None
     return Result(Status.PLAN, solver=name, actions=plan, cost=cost, diagnostics=diag)
+
+
+# ----------------------------------------------------------- lane M3 additions
+# HDDL-FOND ("fond" with hddl_* payload) and PPDDL ("mdp" with ppddl_* payload).
+# Both ground a small propositional/typed fragment into an explicit transition
+# system, then reuse the fond fixpoint / an exact value iteration.
+
+import itertools
+import re
+
+_SEXP_TOK = re.compile(r"[()]|[^\s()]+")
+
+
+def _sexp(text: str):
+    text = re.sub(r";[^\n]*", "", text).lower()
+    stack: List[list] = [[]]
+    for tok in _SEXP_TOK.findall(text):
+        if tok == "(":
+            stack.append([])
+        elif tok == ")":
+            if len(stack) < 2:
+                raise ValueError("unbalanced ')'")
+            done = stack.pop()
+            stack[-1].append(done)
+        else:
+            stack[-1].append(tok)
+    if len(stack) != 1:
+        raise ValueError("unbalanced '('")
+    return stack[0]
+
+
+def _section(form, key):
+    return [x for x in form if isinstance(x, list) and x and x[0] == key]
+
+
+def _text_of(payload, role, prefix):
+    t = payload.get(f"{prefix}{role}_text")
+    if t is None and payload.get(f"{prefix}{role}_path"):
+        with open(payload[f"{prefix}{role}_path"], encoding="utf-8") as fh:
+            t = fh.read()
+    return t
+
+
+def _typed_list(items):
+    """['a','b','-','t','c'] -> [('a','t'),('b','t'),('c','object')]"""
+    out, pend, i = [], [], 0
+    while i < len(items):
+        if items[i] == "-":
+            out += [(n, items[i + 1]) for n in pend]
+            pend, i = [], i + 2
+        else:
+            pend.append(items[i])
+            i += 1
+    return out + [(n, "object") for n in pend]
+
+
+def _subst(x, b):
+    if isinstance(x, list):
+        return [_subst(y, b) for y in x]
+    return b.get(x, x)
+
+
+def _atom(x):
+    return x[0] + "(" + ",".join(x[1:]) + ")"
+
+
+def _cond(c, pos, neg, num):
+    if not c:
+        return
+    h = c[0]
+    if h == "and":
+        for y in c[1:]:
+            _cond(y, pos, neg, num)
+    elif h == "not":
+        inner = c[1]
+        if inner and inner[0] in ("=", ">", "<", ">=", "<="):
+            raise ValueError("negated numeric condition unsupported")
+        neg.add(_atom(inner))
+    elif h in (">", "<", ">=", "<=", "="):
+        f, v = c[1], c[2]
+        if isinstance(f, list) and not isinstance(v, list):
+            num.append((_atom(f), h, float(v)))
+        else:
+            raise ValueError(f"unsupported numeric condition {c}")
+    else:
+        pos.add(_atom(c))
+
+
+def _eff(e):
+    """-> [(prob, adds, dels, deltas{fluent: ('inc'|'dec'|'set', v)})] (product over 'and')."""
+    if not e:
+        return [(1.0, frozenset(), frozenset(), ())]
+    h = e[0]
+    if h == "and":
+        outs = [(1.0, frozenset(), frozenset(), ())]
+        for y in e[1:]:
+            nxt = []
+            for (p, a, d, n), (p2, a2, d2, n2) in itertools.product(outs, _eff(y)):
+                nxt.append((p * p2, a | a2, d | d2, n + n2))
+            outs = nxt
+        return outs
+    if h == "not":
+        return [(1.0, frozenset(), frozenset([_atom(e[1])]), ())]
+    if h in ("increase", "decrease", "assign"):
+        return [(1.0, frozenset(), frozenset(), ((_atom(e[1]), h, float(e[2])),))]
+    if h == "probabilistic":
+        rest, outs, tot, i = e[1:], [], 0.0, 0
+        while i < len(rest):
+            p = float(rest[i])
+            tot += p
+            outs += [(p * q, a, d, n) for q, a, d, n in _eff(rest[i + 1])]
+            i += 2
+        if tot > 1 + 1e-9:
+            raise ValueError("probabilities exceed 1")
+        if tot < 1 - 1e-9:
+            outs.append((1.0 - tot, frozenset(), frozenset(), ()))
+        return outs
+    if h == "oneof":
+        k = len(e) - 1
+        return [(1.0 / k, a, d, n) for y in e[1:] for _, a, d, n in _eff(y)]
+    if h in ("when", "forall"):
+        raise ValueError(f"unsupported effect construct {h!r}")
+    return [(1.0, frozenset([_atom(e)]), frozenset(), ())]
+
+
+def _ground(dom, prob, task_free=True):
+    """Ground actions of a parsed (define (domain ..)) / problem pair."""
+    objs = _typed_list(next(iter(_section(prob, ":objects")), [":objects"])[1:])
+    consts = _typed_list(next(iter(_section(dom, ":constants")), [":constants"])[1:])
+    objs = consts + objs
+    parents = {"object": None}
+    for ty in _section(dom, ":types"):
+        for n, par in _typed_list(ty[1:]):
+            parents[n] = par
+
+    def is_a(t, want):
+        while t is not None:
+            if t == want:
+                return True
+            t = parents.get(t)
+        return want == "object"
+
+    gacts = []
+    for act in _section(dom, ":action"):
+        name = act[1]
+        kv = {act[i]: act[i + 1] for i in range(2, len(act) - 1, 2)}
+        params = _typed_list(kv.get(":parameters", []))
+        pools = [[o for o, t in objs if is_a(t, pt)] for _, pt in params]
+        size = 1
+        for p in pools:
+            size *= max(len(p), 1)
+        if size > 500_000:
+            raise ValueError(f"grounding bound exceeded for action {name}")
+        for combo in itertools.product(*pools):
+            b = {v: c for (v, _), c in zip(params, combo)}
+            pos, neg, num = set(), set(), []
+            _cond(_subst(kv.get(":precondition", []), b), pos, neg, num)
+            gacts.append((f"{name} {' '.join(combo)}".strip(), pos, neg, num,
+                          _eff(_subst(kv.get(":effect", []), b))))
+    init = next(iter(_section(prob, ":init")), [":init"])[1:]
+    facts, fluents = set(), {}
+    for x in init:
+        if x and x[0] == "=":
+            fluents[_atom(x[1])] = float(x[2])
+        else:
+            facts.add(_atom(x))
+    goal = next(iter(_section(prob, ":goal")), [":goal", []])[1]
+    gpos, gneg, gnum = set(), set(), []
+    _cond(goal, gpos, gneg, gnum)
+    metric = next(iter(_section(prob, ":metric")), None)
+    return gacts, facts, fluents, (gpos, gneg, gnum), metric
+
+
+_OPS = {">": lambda a, b: a > b, "<": lambda a, b: a < b, ">=": lambda a, b: a >= b,
+        "<=": lambda a, b: a <= b, "=": lambda a, b: a == b}
+
+
+def _explore(gacts, facts, fluents, goal, cost_fluent, max_states, with_cost):
+    """BFS -> (states list, index, edges{idx: [(action, [(p, cost, nxt)])]}, goal flags)."""
+    gpos, gneg, gnum = goal
+    fl_keys = sorted(k for k in fluents if k != cost_fluent)
+    start = (frozenset(facts), tuple(fluents[k] for k in fl_keys))
+    idx, states, edges, queue = {start: 0}, [start], {}, deque([0])
+    is_goal = {}
+
+    def holds(fs, fv, pos, neg, num):
+        if not pos <= fs or neg & fs:
+            return False
+        val = dict(zip(fl_keys, fv))
+        return all(_OPS[op](val.get(f, 0.0), v) for f, op, v in num)
+
+    while queue:
+        i = queue.popleft()
+        fs, fv = states[i]
+        is_goal[i] = holds(fs, fv, gpos, gneg, gnum)
+        edges[i] = []
+        if is_goal[i]:
+            continue
+        for name, pos, neg, num, outs in gacts:
+            if not holds(fs, fv, pos, neg, num):
+                continue
+            res = []
+            for p, adds, dels, deltas in outs:
+                val = dict(zip(fl_keys, fv))
+                c = 0.0
+                for f, op, v in deltas:
+                    if f == cost_fluent:
+                        c += v if op == "increase" else -v if op == "decrease" else 0.0
+                    elif op == "increase":
+                        val[f] = val.get(f, 0.0) + v
+                    elif op == "decrease":
+                        val[f] = val.get(f, 0.0) - v
+                    else:
+                        val[f] = v
+                ns = ((fs - dels) | adds, tuple(val.get(k, 0.0) for k in fl_keys))
+                if ns not in idx:
+                    if len(states) >= max_states:
+                        raise OverflowError(f"state bound exceeded ({max_states})")
+                    idx[ns] = len(states)
+                    states.append(ns)
+                    queue.append(idx[ns])
+                res.append((p, c if with_cost and cost_fluent else (1.0 if with_cost else 0.0),
+                            idx[ns]))
+            edges[i].append((name, res))
+    return states, edges, is_goal
+
+
+def _method_names_ok(dom):
+    known = {t[1] for t in _section(dom, ":task")} | {a[1] for a in _section(dom, ":action")}
+    bad = []
+
+    def walk(x):
+        if isinstance(x, list) and x:
+            if x[0] in ("and",):
+                for y in x[1:]:
+                    walk(y)
+            elif len(x) == 2 and isinstance(x[1], list) and isinstance(x[0], str) \
+                    and x[0] not in ("and",) and x[1] and isinstance(x[1][0], str):
+                walk(x[1])  # labelled subtask (label (name args))
+            elif isinstance(x[0], str) and x[0] not in known:
+                bad.append(x[0])
+
+    for m in _section(dom, ":method"):
+        kv = {m[i]: m[i + 1] for i in range(2, len(m) - 1, 2) if isinstance(m[i], str)}
+        walk(kv.get(":ordered-subtasks", []))
+    return sorted(set(bad))
+
+
+def _fond_from_hddl(p, env):
+    """HDDL with oneof effects -> explicit transitions payload (methods validated, not enforced)."""
+    dt, pt = _text_of(p, "domain", "hddl_"), _text_of(p, "problem", "hddl_")
+    if dt is None or pt is None:
+        return None, refused("hddl_domain_text/path and hddl_problem_text/path required", kind="fond")
+    try:
+        dom, prob = _sexp(dt)[0], _sexp(pt)[0]
+        bad = _method_names_ok(dom)
+        if bad:
+            return None, refused(f"subtask(s) neither task nor action: {bad}", kind="fond")
+        gacts, facts, fluents, goal, _ = _ground(dom, prob)
+        states, edges, is_goal = _explore(gacts, facts, fluents, goal, None,
+                                          int(env.options.get("max_states", 100000)), False)
+    except (ValueError, OverflowError, IndexError, KeyError) as exc:
+        return None, refused(f"cannot ground: {type(exc).__name__}: {exc}", kind="fond")
+    name = lambda i: "|".join(sorted(states[i][0]))  # noqa: E731
+    trans: Dict[str, Dict[str, List[str]]] = {}
+    for i, acts in edges.items():
+        trans[name(i)] = {a: sorted({name(n) for _, _, n in outs}) for a, outs in acts}
+    goals = [name(i) for i, g in is_goal.items() if g]
+    return {"initial": name(0), "goals": goals, "transitions": trans,
+            "semantics": p.get("semantics", "strong_cyclic")}, None
+
+
+def _mdp_from_ppddl(env):
+    p = env.payload
+    dt, pt = _text_of(p, "domain", "ppddl_"), _text_of(p, "problem", "ppddl_")
+    if dt is None or pt is None:
+        return refused("ppddl_domain_text/path and ppddl_problem_text/path required", kind="mdp")
+    try:
+        dom, prob = _sexp(dt)[0], _sexp(pt)[0]
+        gacts, facts, fluents, goal, metric = _ground(dom, prob)
+        cost_fluent = "total-cost()" if metric and "total-cost" in str(metric) else None
+        states, edges, is_goal = _explore(gacts, facts, fluents, goal, cost_fluent,
+                                          int(env.options.get("max_states", 100000)), True)
+    except (ValueError, OverflowError, IndexError, KeyError) as exc:
+        return refused(f"cannot ground: {type(exc).__name__}: {exc}", kind="mdp")
+    n = len(states)
+    pmax = [1.0 if is_goal[i] else 0.0 for i in range(n)]
+    for _ in range(10000):
+        delta = 0.0
+        for i in range(n):
+            if is_goal[i]:
+                continue
+            best = max((sum(q * pmax[s] for q, _, s in outs) for _, outs in edges[i]), default=0.0)
+            delta = max(delta, abs(best - pmax[i]))
+            pmax[i] = best
+        if delta < 1e-13:
+            break
+    if pmax[0] <= 1e-12:
+        return Result(Status.INFEASIBLE, solver="ppddl_vi",
+                      diagnostics={"states": n, "goal_probability": 0.0})
+    opt = {}
+    for i in range(n):
+        if is_goal[i] or pmax[i] <= 1e-12:
+            continue
+        opt[i] = [(a, outs) for a, outs in edges[i]
+                  if sum(q * pmax[s] for q, _, s in outs) >= pmax[i] - 1e-9]
+    val = [0.0] * n
+    for _ in range(200000):
+        delta = 0.0
+        for i, acts in opt.items():
+            best = min(sum(q * (c + val[s]) for q, c, s in outs) for _, outs in acts)
+            delta = max(delta, abs(best - val[i]))
+            val[i] = best
+        if delta < 1e-12:
+            break
+    policy = {i: min(acts, key=lambda ao: (sum(q * (c + val[s]) for q, c, s in ao[1]), ao[0]))[0]
+              for i, acts in opt.items()}
+    # greedy most-likely path from the initial state
+    path, cur, seen = [], 0, set()
+    while cur in policy and cur not in seen:
+        seen.add(cur)
+        a = policy[cur]
+        path.append(a)
+        outs = dict(edges[cur])[a]
+        cur = max(outs, key=lambda o: (o[0], o[2] in policy or is_goal[o[2]]))[2]
+    reach, q = {0}, deque([0])
+    while q:
+        i = q.popleft()
+        if i in policy:
+            for _, _, s in dict(edges[i])[policy[i]]:
+                if s not in reach:
+                    reach.add(s)
+                    q.append(s)
+    diag = {"states": n, "goal_probability": pmax[0], "policy_entries": sum(1 for i in reach if i in policy),
+            "initial_action": path[0] if path else None}
+    return Result(Status.PLAN, solver="ppddl_vi", actions=[[a] for a in path],
+                  cost=val[0], diagnostics=diag)

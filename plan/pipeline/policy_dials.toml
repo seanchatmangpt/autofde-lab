@@ -1,0 +1,10 @@
+# schema: policy-dials-v1
+# One table per switch in docs/jira/v26.11.11/open_switches.toml with value = "<option>".
+# Unset -> that file's default. Values below mirror open_switches.toml; edit to flip policy.
+[clock_policy]
+value = "strict_internal"
+
+[clock_policy_auto]
+desolate_market_provider_threshold = 3
+gpm_safe_harbor_bps = 5500
+low_rate_safe_harbor_cents = 7500

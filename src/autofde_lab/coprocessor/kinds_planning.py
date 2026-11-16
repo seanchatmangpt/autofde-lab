@@ -132,6 +132,92 @@ def _rcpsp(env: Envelope) -> Result:
                   cost=float(sched[sink]["end_time"]), solver="DOSolver/CpSat")
 
 
+
+_OPS = ("<=", ">=", "==")
+
+
+def _cp_model(env: Envelope) -> Result:
+    """General declarative CP-SAT payload.
+
+    payload.model:
+      vars: {name: [lo, hi]}                       (bool = [0, 1]; fixed = [v, v])
+      constraints: list of
+        {"type":"exactly_one","vars":[...]}
+        {"type":"linear","terms":[[coef,var]...],"op":"<=|>=|==","rhs":int,"only_if":var?}
+        {"type":"implies","a":var,"b":var}
+        {"type":"no_overlap","intervals":[{"start":int|var,"size":int,"present":var?}]}
+        {"type":"infeasible"}
+      objective: {"sense":"min|max","terms":[[coef,var]...]}   (optional)
+    Reply: actions=[{"var","value"}...] sorted by name, cost=objective value,
+    diagnostics.optimal=True when CP-SAT proved optimality.
+    """
+    from ortools.sat.python import cp_model
+
+    mod = env.payload["model"]
+    vs = mod.get("vars")
+    if not isinstance(vs, dict) or not vs:
+        return refused("model.vars must be a non-empty object", kind="cp")
+    m = cp_model.CpModel()
+    try:
+        v = {n: m.NewIntVar(int(lo), int(hi), n) for n, (lo, hi) in vs.items()}
+
+        def lin(terms):
+            return sum(int(c) * v[n] for c, n in terms)
+
+        for c in mod.get("constraints", []):
+            t = c["type"]
+            if t == "exactly_one":
+                m.AddExactlyOne(v[n] for n in c["vars"])
+            elif t == "linear":
+                if c["op"] not in _OPS:
+                    return refused(f"bad op {c['op']!r}", kind="cp")
+                e = lin(c["terms"])
+                r = int(c["rhs"])
+                ct = e <= r if c["op"] == "<=" else e >= r if c["op"] == ">=" else e == r
+                k = m.Add(ct)
+                if c.get("only_if"):
+                    k.OnlyEnforceIf(v[c["only_if"]])
+            elif t == "implies":
+                m.AddImplication(v[c["a"]], v[c["b"]])
+            elif t == "no_overlap":
+                ivs = []
+                for i, iv in enumerate(c["intervals"]):
+                    st = iv["start"]
+                    st = v[st] if isinstance(st, str) else int(st)
+                    sz = int(iv["size"])
+                    if iv.get("present"):
+                        ivs.append(m.NewOptionalFixedSizeIntervalVar(st, sz, v[iv["present"]], f"iv{i}"))
+                    else:
+                        ivs.append(m.NewFixedSizeIntervalVar(st, sz, f"iv{i}"))
+                m.AddNoOverlap(ivs)
+            elif t == "infeasible":
+                m.AddBoolOr([])
+            else:
+                return refused(f"unknown constraint type {t!r}", kind="cp")
+        obj = mod.get("objective")
+        if obj:
+            if obj.get("sense") not in ("min", "max"):
+                return refused("objective.sense must be min|max", kind="cp")
+            (m.Minimize if obj["sense"] == "min" else m.Maximize)(lin(obj["terms"]))
+    except (KeyError, ValueError, TypeError) as exc:
+        return refused(f"bad cp model: {exc!r}", kind="cp")
+    solver = cp_model.CpSolver()
+    solver.parameters.random_seed = 0
+    solver.parameters.num_workers = 1
+    solver.parameters.max_time_in_seconds = float(env.options.get("time_limit", 30))
+    st = solver.Solve(m)
+    if st in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+        actions = [{"var": n, "value": int(solver.Value(v[n]))} for n in sorted(v)]
+        return Result(Status.PLAN, kind="cp", actions=actions,
+                      cost=float(solver.ObjectiveValue()) if obj else 0.0, solver="ortools-cpsat",
+                      diagnostics={"optimal": st == cp_model.OPTIMAL})
+    if st == cp_model.INFEASIBLE:
+        return Result(Status.INFEASIBLE, kind="cp", solver="ortools-cpsat",
+                      diagnostics={"reason": "model_infeasible"})
+    return Result(Status.NO_PLAN, kind="cp", solver="ortools-cpsat",
+                  diagnostics={"reason": "unknown_within_time_limit"})
+
+
 @register_kind("cp", module="kinds_planning")
 def _cp(env: Envelope) -> Result:
     """Stand assignment: payload.flights [[name, arrive, depart]], payload.stands int."""
@@ -140,6 +226,8 @@ def _cp(env: Envelope) -> Result:
     except ModuleNotFoundError:
         return blocked("ortools", kind="cp", solver="ortools-cpsat")
     p = env.payload
+    if "model" in p:
+        return _cp_model(env)
     flights = p.get("flights")
     stands = p.get("stands")
     if not isinstance(flights, list) or not flights or not isinstance(stands, int) or stands < 1:

@@ -466,7 +466,7 @@ def _write_findings_document(
         "Real Python `threading` (OS threads under the GIL), real filesystem I/O, real "
         "`Episode1Runner`/`Episode2Runner`/`KnownRouteRegistry` objects. Zero mocks. "
         "Produced by `tests/sa2a/test_v26_9_17_concurrency_stress_chicago.py`, run this "
-        "session with `.venv/bin/python -m pytest "
+        "session with `python3 -m pytest "
         "tests/sa2a/test_v26_9_17_concurrency_stress_chicago.py -v`."
     )
     lines.append("")
@@ -694,7 +694,7 @@ def _write_findings_document(
         "calling any caller-supplied `predicate(candidate)` (foreign code must never run "
         "while holding this registry's own lock). Owned single-file class, no fan-out to "
         "other callers' internals -- re-verified safe against the full `tests/sa2a` suite "
-        "(`.venv/bin/python -m pytest tests/sa2a -q`, exit 0, all passing) after the change."
+        "(`python3 -m pytest tests/sa2a -q`, exit 0, all passing) after the change."
     )
     lines.append(
         "- **`RealDiskJournalActuator`/`DurableDiskReceiptStore` "
@@ -725,7 +725,7 @@ def _write_findings_document(
     lines.append("")
     lines.append("```bash")
     lines.append(
-        ".venv/bin/python -m pytest tests/sa2a/test_v26_9_17_concurrency_stress_chicago.py -v"
+        "python3 -m pytest tests/sa2a/test_v26_9_17_concurrency_stress_chicago.py -v"
     )
     lines.append("```")
     lines.append("")

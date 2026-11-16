@@ -191,6 +191,8 @@ def _rl_shielded(env: Envelope) -> Result:
 
 @register_kind("powl", module="kinds_rl")
 def _powl(env: Envelope) -> Result:
+    if "trace" in env.payload:
+        return _powl_conformance(env)
     plan = env.payload.get("plan")
     if not isinstance(plan, list) or not all(isinstance(x, str) for x in plan):
         return refused("payload.plan must be a list of VAL plan lines", kind="powl")
@@ -225,3 +227,50 @@ def _powl(env: Envelope) -> Result:
         solver="autofde_lab.fabric.powl",
         diagnostics={"turtle_bytes": len(turtle), "base_iri": base},
     )
+
+
+def powl_fitness(reference: list, trace: list) -> dict:
+    """Second conformance oracle: discover a POWL model (PyPI ``powl.discover``) from the
+    reference activity sequence, convert it to a Petri net, and replay ``trace`` on it.
+    Returns token-replay and alignment fitness (1.0 = the trace is a behaviour of the model)."""
+    from datetime import datetime, timedelta
+
+    import pandas as pd
+    import pm4py
+    import powl
+
+    def frame(traces):
+        rows = [
+            {"case:concept:name": f"c{c}", "concept:name": a,
+             "time:timestamp": datetime(2026, 1, 1) + timedelta(seconds=i)}
+            for c, t in enumerate(traces) for i, a in enumerate(t)
+        ]
+        return pm4py.format_dataframe(
+            pd.DataFrame(rows), case_id="case:concept:name", activity_key="concept:name",
+            timestamp_key="time:timestamp")
+
+    model = powl.discover(frame([list(reference)]))
+    net, im, fm = powl.convert_to_petri_net(model)
+    log = frame([list(trace)])
+    return {
+        "token_fitness": float(pm4py.fitness_token_based_replay(log, net, im, fm)["log_fitness"]),
+        "alignment_fitness": float(
+            pm4py.fitness_alignments(log, net, im, fm)["average_trace_fitness"]),
+        "model": type(model).__name__,
+    }
+
+
+def _powl_conformance(env: Envelope) -> Result:
+    ref, trace = env.payload.get("reference"), env.payload.get("trace")
+    ok = lambda x: isinstance(x, list) and x and all(isinstance(a, str) for a in x)
+    if not (ok(ref) and ok(trace)):
+        return refused("payload.reference and payload.trace must be non-empty activity lists",
+                       kind="powl")
+    try:
+        fit = powl_fitness(ref, trace)
+    except ImportError as exc:
+        return blocked(exc.name or "powl", kind="powl")
+    if fit["token_fitness"] < 1.0 or fit["alignment_fitness"] < 1.0:
+        return refused(f"trace deviates from POWL model: {fit}", kind="powl")
+    return Result(Status.PLAN, kind="powl", actions=list(trace), cost=float(len(trace)),
+                  solver="powl.discover+pm4py", diagnostics=fit)

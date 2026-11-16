@@ -1,0 +1,34 @@
+# Envelopes for test_tutorial_walkthrough.py. Bounds only; no policy thresholds chosen here.
+[activities]
+checkin = "checkin"
+checkout = "checkout"
+dispatch = "dispatch"
+plan_closed = "plan_closed"
+ledger_settled = "ledger_settled"
+work_order = "work_order"
+model_tag_media = "media:model_tag_photo"
+
+[objects]
+required = ["entity", "client", "site", "provider", "work_order"]
+traversal = ["entity", "client", "site", "work_order", "provider"]
+
+[ratios]
+checkin_to_checkout = 1.0
+plan_closed_to_ledger_settled = 1.0
+
+[fitness]
+min = 1.0
+
+[sla_seconds]
+dispatch_to_checkin = 600
+checkin_to_checkout = 600
+work_order_to_ledger_settled = 900
+
+[media]
+visit_types = ["before_media", "after_media"]
+tag_type = "model_tag_photo"
+bytes_len = 32
+
+[quote]
+minutes_lo = 30
+minutes_hi = 400

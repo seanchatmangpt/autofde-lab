@@ -1,0 +1,71 @@
+# Structural bounds, relations, ARIA contracts and oracle predicate lists only.
+# No entity, client, provider names, no rates, no outcomes: the test draws every value
+# inside these envelopes at run time. Parsed with stdlib tomllib.
+
+[server]
+startup_timeout_ms = 60000
+solver_timeout_ms = 240000
+step_timeout_ms = 20000
+open_window_ms = 2500       # per open-list attempt before a recorded retry
+
+[generators]
+symbol_length = 10          # must satisfy store.NAME_RE ^[a-z][a-z0-9_]*$
+
+[bounds.economics]
+provider_rate_min_cents = 2500
+provider_rate_max_cents = 15000
+margin_spread_min_cents = 1000
+margin_spread_max_cents = 12000
+nte_headroom_multiplier_min = 4
+nte_headroom_multiplier_max = 10
+payment_terms_days_min = 15
+payment_terms_days_max = 90
+
+[bounds.temporal]
+doc_valid_future_days_min = 90
+doc_valid_future_days_max = 730
+onsite_sla_min_floor = 120
+onsite_sla_min_ceil = 1440
+complete_sla_spread_min = 240
+complete_sla_spread_max = 2880
+quoted_duration_min_floor = 60
+quoted_duration_min_ceil = 360
+upload_bytes_size = 64
+
+[views]
+super_admin = "A. Super Admin"
+alignment   = "B. Alignment"
+coordinator = "C. Coordinator"
+field_qa    = "D. Field / QA / AR"
+compile     = "E. Compile and plan"
+event_log   = "F. Event log"
+
+[ui]
+submit_event = "Record event"
+submit_dispatch = "Record dispatch"
+submit_media = "Record media"
+compile_button = "Compile and plan (planner/run.sh)"
+settle_button = "Settle with exact ledger"
+problem_expander = "Compiled problem (exactly what was sent)"
+blank_text = "Store is empty."
+refusal_marker = "REFUSED"
+no_plan_marker = "NO PLAN"
+ledger_metric = "Ledger exit code"
+ledger_refusal_marker = "refused"
+work_order_select = "Work order"
+
+[oracles]
+stage1_forbidden_predicates = [
+  "media-captured",
+  "geofence-attested",
+  "internal-actual-duration",
+  "external-client-duration",
+  "ai-vision-verified",
+]
+stage1_required_action = "auto-dispatch-aligned-provider"
+stage2_refusal_exit_code = 2
+terminal_event_kinds = ["plan_dispatched", "plan_closed", "ledger_settled"]
+stage2_required_actions = [
+  "emit-and-deliver-client-invoice",
+  "settle-provider-ap-payout",
+]

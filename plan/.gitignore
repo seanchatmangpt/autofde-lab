@@ -1,0 +1,52 @@
+# virtualenvs
+.venv/
+venv/
+env/
+# caches / bytecode
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.hypothesis/
+.benchmarks/
+.mypy_cache/
+.ruff_cache/
+.cache/
+.gates/
+# build dirs
+_build*/
+build/
+dist/
+*.egg-info/
+node_modules/
+target/
+# generated test results, event stores, traces, screenshots
+pipeline/tests/.results/
+.results/
+store/
+*.ndjson
+*.sqlite
+*.sqlite3
+*.db
+*.zip
+*.png
+# large binaries
+*.so
+*.dylib
+*.whl
+*.wasm
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.swp
+# secrets
+.env
+.env.*
+*.pem
+*.key
+
+# F8 repo hygiene: generated artifacts
+courts/work/*.out
+courts/work/problem.pddl
+pm/out/instance.pddl

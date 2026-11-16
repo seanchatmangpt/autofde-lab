@@ -1,0 +1,10 @@
+; expected trace (L7 fixture, derived from spec baseline)
+0: (activate-entity ent_national_hvac doc_ent_ss4 doc_ent_w9) [1]
+1: (certify-provider-alignment prov_sean_hvac ent_national_hvac tr_hvac sub_commercial_refrig doc_prov_w9 doc_prov_coi doc_prov_lic doc_prov_con) [5]
+6: (triage-and-route-work-order wo_reactive_9001 ent_national_hvac cli_facility_broker site_sbux_0094 tr_hvac sub_commercial_refrig coord_alice) [2]
+8: (auto-dispatch-aligned-provider wo_reactive_9001 vis_9001_01 prov_sean_hvac ent_national_hvac tr_hvac sub_commercial_refrig doc_prov_coi doc_prov_lic) [3]
+11: (execute-site-visit wo_reactive_9001 vis_9001_01 prov_sean_hvac site_sbux_0094 pic_uni pic_foot pic_veh med_before med_during med_after) [3]
+14: (commit-external-client-attendance wo_reactive_9001 vis_9001_01) [1]
+15: (run-ai-vision-closeout-gate wo_reactive_9001 vis_9001_01 asset_rtu_compressor_01 med_before med_after pic_compressor_tag) [2]
+17: (emit-and-deliver-client-invoice wo_reactive_9001 vis_9001_01 inv_9001 cli_facility_broker ent_national_hvac tr_hvac sub_commercial_refrig ch_portal_api) [2]
+19: (settle-provider-ap-payout wo_reactive_9001 vis_9001_01 prov_sean_hvac tr_hvac pay_9001) [2]

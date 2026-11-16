@@ -1,0 +1,67 @@
+(define (problem servengine-canonical-execution)
+  (:domain servengine-autonomous-fm)
+  (:objects
+    ent_national_hvac - tenant_entity  dba_arctic_air - dba_brand
+    cli_starbucks_corp - primary_client  cli_facility_broker - secondary_client
+    site_sbux_0094 - site  asset_rtu_compressor_01 - asset  coord_alice - coordinator
+    prov_sean_hvac - sub_1099  wo_reactive_9001 - reactive_wo  vis_9001_01 - visit
+    prop_9001 - proposal  inv_9001 - invoice  pay_9001 - ap_payout
+    tr_hvac - trade  sub_commercial_refrig - sub_trade  st_california - state_jurisdiction
+    prio_24h_urgent - priority_tier  doc_ent_ss4 - ss4_doc  doc_ent_w9 doc_prov_w9 - w9_doc
+    doc_prov_coi - coi_doc  doc_prov_lic - license_doc  doc_prov_con - contract_doc
+    pic_uni - uniform_photo  pic_foot - footwear_photo  pic_veh - vehicle_photo
+    med_before - before_media  med_during - during_media  med_after - after_media
+    pic_compressor_tag - model_tag_photo)
+  (:init
+    (= (current-clock) 0)
+    (belongs-to-entity dba_arctic_air ent_national_hvac)
+    (entity-doc-verified ent_national_hvac doc_ent_ss4)
+    (entity-doc-verified ent_national_hvac doc_ent_w9)
+    (entity-templates-bound ent_national_hvac)
+    (client-bound-to-entity cli_starbucks_corp ent_national_hvac)
+    (client-bound-to-entity cli_facility_broker ent_national_hvac)
+    (contracted-through cli_facility_broker cli_starbucks_corp)
+    (client-delivery-mode cli_facility_broker ch_portal_api)
+    (= (client-labor-rate cli_facility_broker tr_hvac) 14500)
+    (= (client-payment-terms-days cli_facility_broker) 45)
+    (site-belongs-to site_sbux_0094 cli_facility_broker)
+    (site-in-state site_sbux_0094 st_california)
+    (site-in-territory site_sbux_0094 cli_facility_broker)
+    (asset-at-site asset_rtu_compressor_01 site_sbux_0094)
+    (provider-onboarded prov_sean_hvac ent_national_hvac)
+    (provider-doc-valid prov_sean_hvac doc_prov_w9)
+    (provider-doc-valid prov_sean_hvac doc_prov_coi)
+    (provider-doc-valid prov_sean_hvac doc_prov_lic)
+    (provider-doc-valid prov_sean_hvac doc_prov_con)
+    (= (doc-expiry-time prov_sean_hvac doc_prov_coi) 525600)
+    (= (doc-expiry-time prov_sean_hvac doc_prov_lic) 525600)
+    (provider-trade-approved prov_sean_hvac tr_hvac sub_commercial_refrig)
+    (provider-rate-approved prov_sean_hvac tr_hvac)
+    (= (provider-agreed-rate prov_sean_hvac tr_hvac) 8500)
+    (= (provider-dispatch-rank prov_sean_hvac tr_hvac) 1)
+    (eligible-for-wo prov_sean_hvac wo_reactive_9001)
+    (wo-state-intake wo_reactive_9001)
+    (wo-under-entity wo_reactive_9001 ent_national_hvac)
+    (wo-for-client wo_reactive_9001 cli_facility_broker)
+    (wo-at-site wo_reactive_9001 site_sbux_0094)
+    (wo-requires-trade wo_reactive_9001 tr_hvac sub_commercial_refrig)
+    (wo-priority wo_reactive_9001 prio_24h_urgent)
+    (requires-part-replacement wo_reactive_9001 asset_rtu_compressor_01)
+    (visit-of-wo vis_9001_01 wo_reactive_9001)
+    (= (wo-nte-limit wo_reactive_9001) 150000)
+    (= (wo-onsite-sla wo_reactive_9001) 1440)
+    (= (wo-complete-sla wo_reactive_9001) 2880)
+    (= (coordinator-active-load coord_alice) 0)
+    (device-integrity-attested prov_sean_hvac)
+    (geofence-attested vis_9001_01 prov_sean_hvac site_sbux_0094)
+    (media-captured vis_9001_01 pic_uni)
+    (media-captured vis_9001_01 pic_foot)
+    (media-captured vis_9001_01 pic_veh)
+    (media-captured vis_9001_01 pic_compressor_tag)
+    (= (internal-actual-duration vis_9001_01) 3)
+    (= (proposal-quoted-duration wo_reactive_9001) 4)
+    (= (external-client-duration vis_9001_01) 4)
+    (at 525600 (not (provider-doc-valid prov_sean_hvac doc_prov_coi))))
+  (:goal (and (wo-state-closed wo_reactive_9001) (ai-vision-verified vis_9001_01)
+              (invoice-delivered inv_9001 ch_portal_api) (ap-payout-settled pay_9001)))
+  (:metric minimize (total-time)))

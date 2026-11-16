@@ -1,0 +1,76 @@
+# Factor levels and literals for the gate-order oracle. No literal lives outside this file.
+[domain]
+wo_root = "work_order"
+client_root = "client"
+provider_root = "provider"
+
+[stages]
+order = ["store", "territory", "eligibility", "dispatch", "stage2", "ledger"]
+
+[main]
+# Cartesian product = wo_kind(6, from store) x 3 x 4 x 4 x 2 x 3 x 2 x 3 x 6 = 62208
+part = ["no_part", "part_tag", "part_no_tag"]     # part_tag: part replaced, model tag photo withheld
+docs = ["ok", "coi_expired", "license_expired", "doc_invalid"]
+site_filter = ["none", "exc_hit", "inc_miss", "inc_hit"]
+territory = ["in", "out"]
+nte = ["ample", "between_provider_rate_and_charge", "below_provider_rate"]
+attest = ["match", "mismatch"]
+provider_count = [1, 2, 3]
+expected_cells = 62208
+
+[side]
+# swept in a separate product (collapsed out of the main product)
+client_kind = ["primary_client", "secondary_client", "bad_kind"]
+provider_kind = ["w2_tech", "sub_1099", "bad_kind"]
+blacklist = [false, true]
+nte = ["ample", "between_provider_rate_and_charge", "below_provider_rate", "nonpositive"]
+provider_count = [1, 2, 3]
+
+[defaults]
+client_kind = "primary_client"
+provider_kind = "w2_tech"
+blacklist = false
+
+[rates]
+client_cents_per_hour = 9000
+provider_cents_per_hour = 5000
+attest_minutes = 60
+mismatch_quote_minutes = 45
+ample_multiplier = 2
+
+[names]
+entity = "acme_fm"
+dba = "acme_brand"
+trade = "hvac"
+sub_trade = "rooftop_unit"
+state = "tx"
+priority = "p1"
+coordinator = "coord_one"
+client = "cli_primary"
+other_client = "cli_other"
+site = "site_one"
+other_site = "site_elsewhere"
+asset = "asset_one"
+provider_prefix = "prov"
+wo = "wo_one"
+bad_kind = "no_such_kind"
+bogus_dim = "bogus_dim"
+wo_type = "service_call"
+secondary_client = "cli_secondary"
+state_name_dba_taxonomy = "unused"
+
+[docs]
+types = ["w9_doc", "contract_doc", "coi_doc", "license_doc"]
+expired_date = "2000-01-01"
+future_date = "2100-01-01"
+doc_invalid_type = "w9_doc"
+coi_type = "coi_doc"
+license_type = "license_doc"
+
+[events]
+t0 = 1700000000.0
+step_seconds = 1.0
+onsite_sla_min = 60
+complete_sla_min = 240
+provider_rank = 1
+avatar = "oracle"

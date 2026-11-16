@@ -1,0 +1,86 @@
+{
+ "a_canonical": {
+  "selected": "prov_sean_hvac",
+  "trigger_reactive_hire": false
+ },
+ "b_dim_brand": {
+  "selected": "p_inc_ok",
+  "trigger_reactive_hire": false
+ },
+ "b_dim_client": {
+  "selected": "p_inc_ok",
+  "trigger_reactive_hire": false
+ },
+ "b_dim_coord": {
+  "selected": "p_inc_ok",
+  "trigger_reactive_hire": false
+ },
+ "b_dim_entity": {
+  "selected": "p_inc_ok",
+  "trigger_reactive_hire": false
+ },
+ "b_dim_prio": {
+  "selected": "p_inc_ok",
+  "trigger_reactive_hire": false
+ },
+ "b_dim_site": {
+  "selected": "p_inc_ok",
+  "trigger_reactive_hire": false
+ },
+ "b_dim_state": {
+  "selected": "p_inc_ok",
+  "trigger_reactive_hire": false
+ },
+ "b_dim_sub": {
+  "selected": "p_inc_ok",
+  "trigger_reactive_hire": false
+ },
+ "b_dim_trade": {
+  "selected": "p_inc_ok",
+  "trigger_reactive_hire": false
+ },
+ "b_dim_wotype": {
+  "selected": "p_inc_ok",
+  "trigger_reactive_hire": false
+ },
+ "b_exc_other_wins": {
+  "selected": "p_a",
+  "trigger_reactive_hire": false
+ },
+ "b_tiebreak_index": {
+  "selected": "p_m",
+  "trigger_reactive_hire": false
+ },
+ "b_tiebreak_rate": {
+  "selected": "p_y",
+  "trigger_reactive_hire": false
+ },
+ "c_none_eligible": {
+  "selected": null,
+  "trigger_reactive_hire": true
+ },
+ "d_margin_all_fail": {
+  "selected": null,
+  "trigger_reactive_hire": true
+ },
+ "d_margin_guard": {
+  "selected": "p_ok",
+  "trigger_reactive_hire": false
+ },
+ "d_nte_boundary_equal_ok": {
+  "selected": "p_eq",
+  "trigger_reactive_hire": false
+ },
+ "d_veto_blacklisted": {
+  "selected": "p_ok",
+  "trigger_reactive_hire": false
+ },
+ "d_veto_coi": {
+  "selected": "p_ok",
+  "trigger_reactive_hire": false
+ },
+ "d_veto_rate_gt_nte": {
+  "selected": "p_ok",
+  "trigger_reactive_hire": false
+ }
+}

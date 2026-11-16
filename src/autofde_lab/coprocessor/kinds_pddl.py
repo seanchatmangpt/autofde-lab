@@ -85,13 +85,92 @@ def _pddl(env: Envelope) -> Result:
         return Result(REFUSED, solver=solver, diagnostics=diag)
 
 
+TIL_HORIZON = 10000
+
+
+def _purge_items_list(self, items_list, params, conds):
+    """GrounderHelper._purge_items_list without the double-remove: some unified-planning
+    1.3.0 builds call ``temp_list.remove(obj)`` once per static condition that excludes
+    ``obj``, raising ValueError when two conditions prune the same object."""
+    out = []
+    for param, object_list in zip(params, items_list):
+        keep = list(object_list)
+        pexp = self._problem.environment.expression_manager.ParameterExp(param)
+        for cond in conds:
+            pos = next((i for i, fp in enumerate(cond.args) if fp == pexp), -1)
+            if pos != -1:
+                valid = self._bool_static_fluent_valid_parameters(cond, pos)
+                keep = [o for o in keep if o in valid]
+        out.append(keep)
+    return out
+
+
+def _fix_grounder() -> None:
+    from unified_planning.engines.compilers.grounder import GrounderHelper
+    GrounderHelper._purge_items_list = _purge_items_list
+REAL_AS_INT_MAX = 100_000_000
+
+
+def _solve_temporal(dom: str, prob: str, timeout: float, horizon: float):
+    """Search on an Int-typed, grounded copy (aries has no Real; TILs past
+    ``horizon`` deferred), then validate the plan on the ORIGINAL problem.
+
+    Returns (status, timed_actions|None, diagnostics)."""
+    from unified_planning.engines import CompilationKind
+    from unified_planning.engines.results import POSITIVE_OUTCOMES
+    from unified_planning.engines import ValidationResultStatus
+    from unified_planning.io import PDDLReader
+    from unified_planning.shortcuts import Compiler, OneshotPlanner, PlanValidator, get_environment
+    import unified_planning.plans as plans
+    from unified_planning.plans import ActionInstance
+
+    _fix_grounder()
+    orig = PDDLReader().parse_problem(dom, prob)
+    tm = get_environment().type_manager
+    saved = tm.RealType
+    tm.RealType = lambda *a, **k: tm.IntType(0, REAL_AS_INT_MAX)
+    try:
+        sp = PDDLReader().parse_problem(dom, prob)
+    finally:
+        tm.RealType = saved
+    late = [t for t in list(sp.timed_effects) if float(t.delay) > horizon]
+    for t in late:
+        del sp._timed_effects[t]
+    with Compiler(name="up_grounder", compilation_kind=CompilationKind.GROUNDING) as c:
+        g = c.compile(sp, CompilationKind.GROUNDING)
+    with OneshotPlanner(name="aries") as pl:
+        res = pl.solve(g.problem, timeout=timeout)
+    diag = {"engine_status": res.status.name, "deferred_tils": len(late)}
+    if res.status not in POSITIVE_OUTCOMES or res.plan is None:
+        return NO_PLAN, None, diag
+    plan = res.plan.replace_action_instances(g.map_back_action_instance)
+    em = orig.environment.expression_manager
+    timed = [
+        (s, ActionInstance(orig.action(a.action.name),
+                           tuple(em.ObjectExp(orig.object(p.object().name))
+                                 for p in a.actual_parameters)), d)
+        for s, a, d in plan.timed_actions
+    ]
+    plan_o = plans.TimeTriggeredPlan(timed)
+    end = max((float(s) + float(d or 0) for s, _a, d in timed), default=0.0)
+    if end >= horizon:
+        diag["reason"] = "plan reaches deferred TIL horizon"
+        return REFUSED, None, diag
+    with PlanValidator(name="up_time_triggered_validator") as v:
+        vr = v.validate(orig, plan_o)
+    diag["validator"] = vr.status.name
+    if vr.status != ValidationResultStatus.VALID:
+        diag["reason"] = "VALIDATION_FAILED"
+        return REFUSED, None, diag
+    return PLAN, timed, diag
+
+
 @register_kind("temporal_pddl", module="kinds_pddl")
 def _temporal(env: Envelope) -> Result:
     solver = "unified_planning:aries"
     try:
-        from unified_planning.io import PDDLReader
-        from unified_planning.shortcuts import OneshotPlanner
-        from unified_planning.engines.results import POSITIVE_OUTCOMES
+        import unified_planning  # noqa: F401
+        from unified_planning.io import PDDLReader  # noqa: F401
     except ModuleNotFoundError as exc:
         return blocked(exc.name or "unified-planning", solver=solver)
     with tempfile.TemporaryDirectory(dir=scratch_dir(), prefix="cop-tpddl-") as wd:
@@ -100,29 +179,24 @@ def _temporal(env: Envelope) -> Result:
         except ValueError as exc:
             return refused(str(exc), solver=solver)
         try:
-            problem = PDDLReader().parse_problem(dom, prob)
+            from unified_planning.io import PDDLReader
+            PDDLReader().parse_problem(dom, prob)
         except Exception as exc:  # noqa: BLE001
             return refused(f"cannot parse: {type(exc).__name__}: {exc}", solver=solver)
         try:
-            with OneshotPlanner(name="aries") as planner:
-                res = planner.solve(problem, timeout=float(env.options.get("timeout", 30)))
+            status, timed, diag = _solve_temporal(
+                dom, prob, float(env.options.get("timeout", 30)),
+                float(env.options.get("til_horizon", TIL_HORIZON)))
         except ModuleNotFoundError as exc:
             return blocked(exc.name or "aries", solver=solver)
-        diag = {"engine_status": res.status.name}
-        if res.status not in POSITIVE_OUTCOMES or res.plan is None:
-            return Result(NO_PLAN, solver=solver, diagnostics=diag)
-        timed = getattr(res.plan, "timed_actions", None)
+        if status != PLAN:
+            return Result(status, solver=solver, diagnostics=diag)
         actions, makespan = [], 0.0
-        if timed is None:
-            for i, a in enumerate(res.plan.actions):
-                actions.append({"action": str(a), "start": float(i), "duration": 0.0})
-            makespan = float(len(actions))
-        else:
-            for start, act, dur in timed:
-                s = float(start)
-                d = float(dur) if dur is not None else 0.0
-                actions.append({"action": str(act), "start": s, "duration": d})
-                makespan = max(makespan, s + d)
+        for start, act, dur in timed:
+            s = float(start)
+            d = float(dur) if dur is not None else 0.0
+            actions.append({"action": str(act), "start": s, "duration": d})
+            makespan = max(makespan, s + d)
         return Result(PLAN, actions=actions, cost=makespan, solver=solver, diagnostics=diag)
 
 

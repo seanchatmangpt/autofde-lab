@@ -1,0 +1,175 @@
+{
+ "problem_name": "servengine-canonical-execution",
+ "domain_name": "servengine-autonomous-fm",
+ "clock": 525600,
+ "entity": {
+  "id": "ent_national_hvac",
+  "dba": "dba_arctic_air",
+  "docs": [
+   {
+    "id": "doc_ent_ss4",
+    "type": "ss4_doc"
+   },
+   {
+    "id": "doc_ent_w9",
+    "type": "w9_doc"
+   }
+  ],
+  "templates_bound": true
+ },
+ "clients": [
+  {
+   "id": "cli_starbucks_corp",
+   "kind": "primary_client"
+  },
+  {
+   "id": "cli_facility_broker",
+   "kind": "secondary_client",
+   "contracted_through": "cli_starbucks_corp",
+   "delivery_mode": "ch_portal_api",
+   "labor_rates": {
+    "tr_hvac": 14500
+   },
+   "payment_terms_days": 45
+  }
+ ],
+ "states": [
+  "st_california"
+ ],
+ "trades": [
+  "tr_hvac"
+ ],
+ "sub_trades": [
+  "sub_commercial_refrig"
+ ],
+ "priorities": [
+  "prio_24h_urgent"
+ ],
+ "coordinators": [
+  {
+   "id": "coord_alice",
+   "active_load": 0
+  }
+ ],
+ "sites": [
+  {
+   "id": "site_sbux_0094",
+   "client": "cli_facility_broker",
+   "state": "st_california",
+   "territory_client": "cli_facility_broker",
+   "assets": [
+    "asset_rtu_compressor_01"
+   ]
+  }
+ ],
+ "providers": [
+  {
+   "id": "prov_sean_hvac",
+   "kind": "sub_1099",
+   "device_attested": true,
+   "docs": [
+    {
+     "id": "doc_prov_w9",
+     "type": "w9_doc",
+     "valid": true
+    },
+    {
+     "id": "doc_prov_coi",
+     "type": "coi_doc",
+     "valid": true,
+     "expiry": 525600,
+     "expiry_event": true
+    },
+    {
+     "id": "doc_prov_lic",
+     "type": "license_doc",
+     "valid": true,
+     "expiry": 525600
+    },
+    {
+     "id": "doc_prov_con",
+     "type": "contract_doc",
+     "valid": true
+    }
+   ],
+   "trade_approvals": [
+    {
+     "trade": "tr_hvac",
+     "sub_trade": "sub_commercial_refrig"
+    }
+   ],
+   "rate_approved": [
+    "tr_hvac"
+   ],
+   "rates": {
+    "tr_hvac": 8500
+   },
+   "dispatch_rank": {
+    "tr_hvac": 1
+   },
+   "blacklisted": false,
+   "filters": {}
+  }
+ ],
+ "work_orders": [
+  {
+   "id": "wo_reactive_9001",
+   "kind": "reactive_wo",
+   "wo_type": "reactive",
+   "client": "cli_facility_broker",
+   "site": "site_sbux_0094",
+   "trade": "tr_hvac",
+   "sub_trade": "sub_commercial_refrig",
+   "priority": "prio_24h_urgent",
+   "coordinator": "coord_alice",
+   "requires_part_replacement": "asset_rtu_compressor_01",
+   "nte_limit": 150000,
+   "onsite_sla": 1440,
+   "complete_sla": 2880,
+   "proposal": "prop_9001",
+   "invoice": "inv_9001",
+   "payout": "pay_9001",
+   "visit": {
+    "id": "vis_9001_01",
+    "geofence_provider": "prov_sean_hvac",
+    "media": [
+     {
+      "id": "pic_uni",
+      "type": "uniform_photo",
+      "captured": true
+     },
+     {
+      "id": "pic_foot",
+      "type": "footwear_photo",
+      "captured": true
+     },
+     {
+      "id": "pic_veh",
+      "type": "vehicle_photo",
+      "captured": true
+     },
+     {
+      "id": "med_before",
+      "type": "before_media"
+     },
+     {
+      "id": "med_during",
+      "type": "during_media"
+     },
+     {
+      "id": "med_after",
+      "type": "after_media"
+     },
+     {
+      "id": "pic_compressor_tag",
+      "type": "model_tag_photo",
+      "captured": true
+     }
+    ],
+    "internal_actual_duration": 3,
+    "proposal_quoted_duration": 4,
+    "external_client_duration": 4
+   }
+  }
+ ]
+}

@@ -1,0 +1,37 @@
+;; PM sweep module (L5): PDDL 2.1, timed initial literals for PM windows. Time unit = day.
+(define (domain servengine-pm-sweep)
+  (:requirements :typing :fluents :durative-actions :timed-initial-literals :negative-preconditions)
+  (:types
+    asset site provider cadence - object
+    preventive_wo inspection_wo - pm_wo)
+  (:predicates
+    (asset-at-site ?a - asset ?s - site)
+    (pm-for-asset ?wo - pm_wo ?a - asset)
+    (pm-cadence ?wo - pm_wo ?c - cadence)
+    (pm-window-open ?wo - pm_wo)
+    (pm-window-closed ?wo - pm_wo)
+    (pm-done ?wo - pm_wo)
+    (provider-free ?p - provider)
+    (provider-covers-site ?p - provider ?s - site)
+    (provider-on-blackout ?p - provider))
+  (:functions
+    (pm-duration ?wo - pm_wo)
+    (pm-sla-slack ?wo - pm_wo)
+    (tech-capacity ?p - provider)
+    (visits-completed))
+  (:durative-action perform-pm-visit
+    :parameters (?wo - pm_wo ?a - asset ?s - site ?p - provider)
+    :duration (= ?duration (pm-duration ?wo))
+    :condition (and (at start (pm-for-asset ?wo ?a))
+                    (at start (asset-at-site ?a ?s))
+                    (at start (provider-covers-site ?p ?s))
+                    (at start (provider-free ?p))
+                    (at start (> (tech-capacity ?p) 0))
+                    (at start (not (pm-done ?wo)))
+                    (over all (pm-window-open ?wo))
+                    (over all (not (provider-on-blackout ?p))))
+    :effect (and (at start (not (provider-free ?p)))
+                 (at start (decrease (tech-capacity ?p) 1))
+                 (at end (provider-free ?p))
+                 (at end (pm-done ?wo))
+                 (at end (increase (visits-completed) 1)))))

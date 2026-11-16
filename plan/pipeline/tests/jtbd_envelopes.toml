@@ -1,0 +1,10 @@
+# Bounds for jtbd_specs.py. Only SUPPORTED JTBDs carry envelopes.
+[compressor_model_tag]
+min_fitness = 1.0
+# every checkout must be matched by at least this many model-tag photos
+model_tag_per_checkout = 1.0
+# model_tag media artifacts linked to each work order
+media_min = 1
+media_max = 8
+# transcript states no latency SLA for QA; empty list = no temporal relation
+sla = []
